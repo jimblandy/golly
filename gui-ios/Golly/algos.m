@@ -482,19 +482,33 @@ static void CreateDefaultIcons(AlgoData* ad)
         // create icons using given algo's default XPM data
         ad->icons7x7 = CreateIconBitmaps(ad->defxpm7x7, ad->maxstates);
         ad->icons15x15 = CreateIconBitmaps(ad->defxpm15x15, ad->maxstates);
+        ad->icons31x31 = CreateIconBitmaps(ad->defxpm31x31, ad->maxstates);
         
-        // create scaled bitmaps if only one size was supplied
-        if (!ad->icons15x15) {
-            // scale up 7x7 bitmaps (looks ugly)
-            ad->icons15x15 = ScaleIconBitmaps(ad->icons7x7, 15);
-        }
+        // create scaled bitmaps if size(s) not supplied
         if (!ad->icons7x7) {
-            // scale down 15x15 bitmaps (not too bad)
-            ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 7);
+            if (ad->icons15x15)
+                // scale down 15x15 bitmaps
+                ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 7);
+            else
+                // scale down 31x31 bitmaps
+                ad->icons7x7 = ScaleIconBitmaps(ad->icons31x31, 7);
         }
-        
-        // scale up 15x15 bitmaps for 1:32
-        ad->icons31x31 = ScaleIconBitmaps(ad->icons15x15, 31);
+        if (!ad->icons15x15) {
+            if (ad->icons31x31)
+                // scale down 31x31 bitmaps
+                ad->icons15x15 = ScaleIconBitmaps(ad->icons31x31, 15);
+            else
+                // scale up 7x7 bitmaps
+                ad->icons15x15 = ScaleIconBitmaps(ad->icons7x7, 15);
+        }
+        if (!ad->icons31x31) {
+            if (ad->icons15x15)
+                // scale up 15x15 bitmaps
+                ad->icons31x31 = ScaleIconBitmaps(ad->icons15x15, 31);
+            else
+                // scale up 7x7 bitmaps
+                ad->icons31x31 = ScaleIconBitmaps(ad->icons7x7, 31);
+        }
     } else {
         // algo didn't supply any icons so use static XPM data defined above
         ad->icons7x7 = CreateIconBitmaps(default7x7, ad->maxstates);

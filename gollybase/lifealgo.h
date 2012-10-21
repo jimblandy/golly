@@ -190,6 +190,7 @@ public:
    // default icon data (in XPM format)
    const char **defxpm7x7;                // 7x7 icons
    const char **defxpm15x15;              // 15x15 icons
+   const char **defxpm31x31;              // 31x31 icons
    
    // basic data
    const char *algoName ;

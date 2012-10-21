@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 #include "ruleloaderalgo.h"
 
+#include "util.h"      // for lifegetuserrules, lifegetrulesdir, lifefatal
+
 int ruleloaderalgo::NumCellStates()
 {
     if (rule_type == TABLE)
@@ -68,6 +70,9 @@ ruleloaderalgo::ruleloaderalgo()
 {
     LocalRuleTable = new ruletable_algo();
     LocalRuleTree = new ruletreealgo();
+    
+    if (LocalRuleTable == NULL) lifefatal("RuleLoader failed to create local RuleTable!");
+    if (LocalRuleTree == NULL) lifefatal("RuleLoader failed to create local RuleTree!");
 
     // probably don't need to do anything else, but play safe
     LocalRuleTree->setrule( LocalRuleTree->DefaultRule() );

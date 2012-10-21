@@ -329,6 +329,7 @@ staticAlgoInfo::staticAlgoInfo() {
    // init default icon data
    defxpm7x7 = NULL;
    defxpm15x15 = NULL;
+   defxpm31x31 = NULL;
 }
 staticAlgoInfo *staticAlgoInfo::byName(const char *s) {
    for (staticAlgoInfo *i=head; i; i=i->next)
