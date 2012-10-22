@@ -815,6 +815,7 @@ void MainFrame::UpdateMenuItems(bool active)
         mbar->Check(ID_SCALE_4,       viewptr->GetMag() == 2);
         mbar->Check(ID_SCALE_8,       viewptr->GetMag() == 3);
         mbar->Check(ID_SCALE_16,      viewptr->GetMag() == 4);
+        mbar->Check(ID_SCALE_32,      viewptr->GetMag() == 5);
         mbar->Check(ID_SYNC_VIEW,     syncviews);
         mbar->Check(ID_SYNC_CURS,     synccursors);
         mbar->Check(ID_STACK,         stacklayers);
@@ -1417,6 +1418,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_SCALE_4:        viewptr->SetPixelsPerCell(4); break;
         case ID_SCALE_8:        viewptr->SetPixelsPerCell(8); break;
         case ID_SCALE_16:       viewptr->SetPixelsPerCell(16); break;
+        case ID_SCALE_32:       viewptr->SetPixelsPerCell(32); break;
         case ID_TOOL_BAR:       ToggleToolBar(); break;
         case ID_LAYER_BAR:      ToggleLayerBar(); break;
         case ID_EDIT_BAR:       ToggleEditBar(); break;
@@ -2249,6 +2251,7 @@ void MainFrame::CreateMenus()
     scaleSubMenu->AppendCheckItem(ID_SCALE_4,    _("1:4") + GetAccelerator(DO_SCALE4));
     scaleSubMenu->AppendCheckItem(ID_SCALE_8,    _("1:8") + GetAccelerator(DO_SCALE8));
     scaleSubMenu->AppendCheckItem(ID_SCALE_16,   _("1:16") + GetAccelerator(DO_SCALE16));
+    scaleSubMenu->AppendCheckItem(ID_SCALE_32,   _("1:32") + GetAccelerator(DO_SCALE32));
     
     fileMenu->Append(wxID_NEW,                   _("New Pattern") + GetAccelerator(DO_NEWPATT));
     fileMenu->AppendSeparator();
@@ -2454,6 +2457,7 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_SCALE_4,         DO_SCALE4);
         SetAccelerator(mbar, ID_SCALE_8,         DO_SCALE8);
         SetAccelerator(mbar, ID_SCALE_16,        DO_SCALE16);
+        SetAccelerator(mbar, ID_SCALE_32,        DO_SCALE32);
         
         SetAccelerator(mbar, wxID_NEW,           DO_NEWPATT);
         SetAccelerator(mbar, wxID_OPEN,          DO_OPENPATT);

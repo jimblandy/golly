@@ -1699,6 +1699,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_SCALE4:      SetPixelsPerCell(4); break;
         case DO_SCALE8:      SetPixelsPerCell(8); break;
         case DO_SCALE16:     SetPixelsPerCell(16); break;
+        case DO_SCALE32:     SetPixelsPerCell(32); break;
         case DO_SHOWTOOL:    mainptr->ToggleToolBar(); break;
         case DO_SHOWLAYER:   ToggleLayerBar(); break;
         case DO_SHOWEDIT:    ToggleEditBar(); break;
@@ -1797,6 +1798,8 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
         iconmaps = currlayer->icons7x7;
     } else if (currlayer->view->getmag() == 4) {
         iconmaps = currlayer->icons15x15;
+    } else if (currlayer->view->getmag() == 5) {
+        iconmaps = currlayer->icons31x31;
     }
     
     if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&

@@ -888,7 +888,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
         DrawPixmap((unsigned char*) pmdata, x, y, w, h, stride);
         
     } else if (showicons && pmscale > 4 && iconmaps) {
-        // draw icons only at scales 1:8 or 1:16
+        // draw icons only at scales 1:8 or 1:16 or 1:32
         DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
         
     } else {
@@ -1482,12 +1482,14 @@ void DrawOneLayer(wxDC& dc)
     wxMemoryDC layerdc;
     layerdc.SelectObject(*layerbitmap);
     
-    // only show icons at scales 1:8 and 1:16
+    // only show icons at scales 1:8 or 1:16 or 1:32
     if (showicons && currlayer->view->getmag() > 2) {
         if (currlayer->view->getmag() == 3) {
             iconmaps = currlayer->icons7x7;
-        } else {
+        } else if (currlayer->view->getmag() == 4) {
             iconmaps = currlayer->icons15x15;
+        } else {
+            iconmaps = currlayer->icons31x31;
         }
     }
     
@@ -1683,12 +1685,14 @@ void DrawView(wxDC& dc, int tileindex)
         colorindex = currindex;
     }
     
-    // only show icons at scales 1:8 and 1:16
+    // only show icons at scales 1:8 or 1:16 or 1:32
     if (showicons && currlayer->view->getmag() > 2) {
         if (currlayer->view->getmag() == 3) {
             iconmaps = currlayer->icons7x7;
-        } else {
+        } else if (currlayer->view->getmag() == 4) {
             iconmaps = currlayer->icons15x15;
+        } else {
+            iconmaps = currlayer->icons31x31;
         }
     }
     

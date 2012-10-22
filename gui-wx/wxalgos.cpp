@@ -55,9 +55,11 @@ AlgoData* algoinfo[MAX_ALGOS];      // static info for each algorithm
 
 wxBitmap** hexicons7x7;             // hexagonal icon bitmaps for scale 1:8
 wxBitmap** hexicons15x15;           // hexagonal icon bitmaps for scale 1:16
+wxBitmap** hexicons31x31;           // hexagonal icon bitmaps for scale 1:32
 
 wxBitmap** vnicons7x7;              // diamond-shaped icon bitmaps for scale 1:8
 wxBitmap** vnicons15x15;            // diamond-shaped icon bitmaps for scale 1:16
+wxBitmap** vnicons31x31;            // diamond-shaped icon bitmaps for scale 1:32
 
 // -----------------------------------------------------------------------------
 
@@ -155,6 +157,47 @@ static const char* default15x15[] = {
     "..............."
 };
 
+// XPM data for default 31x31 icon
+static const char* default31x31[] = {
+// width height ncolors chars_per_pixel
+"31 31 2 1",
+// colors
+". c #000000000000",    // black will be transparent
+"W c #FFFFFFFFFFFF",    // white
+// pixels
+"...............................",
+"...............................",
+"............WWWWWWW............",
+"..........WWWWWWWWWWW..........",
+"........WWWWWWWWWWWWWWW........",
+".......WWWWWWWWWWWWWWWWW.......",
+"......WWWWWWWWWWWWWWWWWWW......",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+"......WWWWWWWWWWWWWWWWWWW......",
+".......WWWWWWWWWWWWWWWWW.......",
+"........WWWWWWWWWWWWWWW........",
+"..........WWWWWWWWWWW..........",
+"............WWWWWWW............",
+"...............................",
+"..............................."
+};
+
 // XPM data for the 7x7 icon used for hexagonal CA
 static const char* hex7x7[] = {
     // width height ncolors chars_per_pixel
@@ -194,6 +237,47 @@ static const char* hex15x15[] = {
     "......WWWWWWWW.",
     "........WWWWW..",
     "..........WW..."};
+
+// XPM data for 31x31 icon used for hexagonal CA
+static const char* hex31x31[] = {
+// width height ncolors chars_per_pixel
+"31 31 2 1",
+// colors
+". c #000000000000",    // black will be transparent
+"W c #FFFFFFFFFFFF",    // white
+// pixels
+".....WW........................",
+"....WWWWW......................",
+"...WWWWWWWW....................",
+"..WWWWWWWWWWW..................",
+".WWWWWWWWWWWWWW................",
+"WWWWWWWWWWWWWWWWW..............",
+"WWWWWWWWWWWWWWWWWWW............",
+".WWWWWWWWWWWWWWWWWWWW..........",
+".WWWWWWWWWWWWWWWWWWWWWW........",
+"..WWWWWWWWWWWWWWWWWWWWW........",
+"..WWWWWWWWWWWWWWWWWWWWWW.......",
+"...WWWWWWWWWWWWWWWWWWWWW.......",
+"...WWWWWWWWWWWWWWWWWWWWWW......",
+"....WWWWWWWWWWWWWWWWWWWWW......",
+"....WWWWWWWWWWWWWWWWWWWWWW.....",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+".....WWWWWWWWWWWWWWWWWWWWWW....",
+"......WWWWWWWWWWWWWWWWWWWWW....",
+"......WWWWWWWWWWWWWWWWWWWWWW...",
+".......WWWWWWWWWWWWWWWWWWWWW...",
+".......WWWWWWWWWWWWWWWWWWWWWW..",
+"........WWWWWWWWWWWWWWWWWWWWW..",
+"........WWWWWWWWWWWWWWWWWWWWWW.",
+"..........WWWWWWWWWWWWWWWWWWWW.",
+"............WWWWWWWWWWWWWWWWWWW",
+"..............WWWWWWWWWWWWWWWWW",
+"................WWWWWWWWWWWWWW.",
+"..................WWWWWWWWWWW..",
+"....................WWWWWWWW...",
+"......................WWWWW....",
+"........................WW....."
+};
 
 // XPM data for the 7x7 icon used for von Neumann CA
 static const char* vn7x7[] = {
@@ -237,6 +321,46 @@ static const char* vn15x15[] = {
     "..............."
 };
 
+// XPM data for 31x31 icon used for von Neumann CA
+static const char* vn31x31[] = {
+// width height ncolors chars_per_pixel
+"31 31 2 1",
+// colors
+". c #000000000000",    // black will be transparent
+"W c #FFFFFFFFFFFF",    // white
+// pixels
+"...............................",
+"...............................",
+"...............W...............",
+"..............WWW..............",
+".............WWWWW.............",
+"............WWWWWWW............",
+"...........WWWWWWWWW...........",
+"..........WWWWWWWWWWW..........",
+".........WWWWWWWWWWWWW.........",
+"........WWWWWWWWWWWWWWW........",
+".......WWWWWWWWWWWWWWWWW.......",
+"......WWWWWWWWWWWWWWWWWWW......",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
+"....WWWWWWWWWWWWWWWWWWWWWWW....",
+".....WWWWWWWWWWWWWWWWWWWWW.....",
+"......WWWWWWWWWWWWWWWWWWW......",
+".......WWWWWWWWWWWWWWWWW.......",
+"........WWWWWWWWWWWWWWW........",
+".........WWWWWWWWWWWWW.........",
+"..........WWWWWWWWWWW..........",
+"...........WWWWWWWWW...........",
+"............WWWWWWW............",
+".............WWWWW.............",
+"..............WWW..............",
+"...............W...............",
+"...............................",
+"..............................."
+};
 
 // -----------------------------------------------------------------------------
 
@@ -355,24 +479,42 @@ static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
 
 static void CreateDefaultIcons(AlgoData* ad)
 {
-    if (ad->defxpm7x7 || ad->defxpm15x15) {
+    if (ad->defxpm7x7 || ad->defxpm15x15 || ad->defxpm31x31) {
         // create icons using given algo's default XPM data
         ad->icons7x7 = CreateIconBitmaps(ad->defxpm7x7, ad->maxstates);
         ad->icons15x15 = CreateIconBitmaps(ad->defxpm15x15, ad->maxstates);
+        ad->icons31x31 = CreateIconBitmaps(ad->defxpm31x31, ad->maxstates);
         
-        // create scaled bitmaps if only one size was supplied
-        if (!ad->icons15x15) {
-            // scale up 7x7 bitmaps (looks ugly)
-            ad->icons15x15 = ScaleIconBitmaps(ad->icons7x7, 15);
-        }
+        // create scaled bitmaps if size(s) not supplied
         if (!ad->icons7x7) {
-            // scale down 15x15 bitmaps (not too bad)
-            ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 7);
+            if (ad->icons15x15)
+                // scale down 15x15 bitmaps
+                ad->icons7x7 = ScaleIconBitmaps(ad->icons15x15, 7);
+            else
+                // scale down 31x31 bitmaps
+                ad->icons7x7 = ScaleIconBitmaps(ad->icons31x31, 7);
+        }
+        if (!ad->icons15x15) {
+            if (ad->icons31x31)
+                // scale down 31x31 bitmaps
+                ad->icons15x15 = ScaleIconBitmaps(ad->icons31x31, 15);
+            else
+                // scale up 7x7 bitmaps
+                ad->icons15x15 = ScaleIconBitmaps(ad->icons7x7, 15);
+        }
+        if (!ad->icons31x31) {
+            if (ad->icons15x15)
+                // scale up 15x15 bitmaps
+                ad->icons31x31 = ScaleIconBitmaps(ad->icons15x15, 31);
+            else
+                // scale up 7x7 bitmaps
+                ad->icons31x31 = ScaleIconBitmaps(ad->icons7x7, 31);
         }
     } else {
         // algo didn't supply any icons so use static XPM data defined above
         ad->icons7x7 = CreateIconBitmaps(default7x7, ad->maxstates);
         ad->icons15x15 = CreateIconBitmaps(default15x15, ad->maxstates);
+        ad->icons31x31 = CreateIconBitmaps(default31x31, ad->maxstates);
     }
 }
 
@@ -381,7 +523,9 @@ static void CreateDefaultIcons(AlgoData* ad)
 AlgoData::AlgoData() {
     algomem = defbase = 0;
     statusbrush = NULL;
-    icons7x7 = icons15x15 = NULL;
+    icons7x7 = NULL;
+    icons15x15 = NULL;
+    icons31x31 = NULL;
     iconfile = wxEmptyString;
 }
 
@@ -391,6 +535,7 @@ AlgoData::~AlgoData()
 {
     FreeIconBitmaps(icons7x7);
     FreeIconBitmaps(icons15x15);
+    FreeIconBitmaps(icons31x31);
     delete statusbrush;
 }
 
@@ -474,9 +619,11 @@ void InitAlgorithms()
     
     hexicons7x7 = CreateIconBitmaps(hex7x7,256);
     hexicons15x15 = CreateIconBitmaps(hex15x15,256);
+    hexicons31x31 = CreateIconBitmaps(hex31x31,256);
     
     vnicons7x7 = CreateIconBitmaps(vn7x7,256);
     vnicons15x15 = CreateIconBitmaps(vn15x15,256);
+    vnicons31x31 = CreateIconBitmaps(vn31x31,256);
 }
 
 // -----------------------------------------------------------------------------
@@ -487,8 +634,10 @@ void DeleteAlgorithms()
         delete algoinfo[i];
     FreeIconBitmaps(hexicons7x7);
     FreeIconBitmaps(hexicons15x15);
+    FreeIconBitmaps(hexicons31x31);
     FreeIconBitmaps(vnicons7x7);
     FreeIconBitmaps(vnicons15x15);
+    FreeIconBitmaps(vnicons31x31);
     delete algomenupop;
 }
 
@@ -525,7 +674,7 @@ int NumAlgos()
 // -----------------------------------------------------------------------------
 
 bool LoadIconFile(const wxString& path, int maxstate,
-                  wxBitmap*** out15x15, wxBitmap*** out7x7)
+                  wxBitmap*** out7x7, wxBitmap*** out15x15, wxBitmap*** out31x31)
 {
     wxImage image;
     if (!image.LoadFile(path)) {
@@ -614,6 +763,9 @@ bool LoadIconFile(const wxString& path, int maxstate,
         // create 7x7 icons by scaling down 15x15 icons
         *out7x7 = ScaleIconBitmaps(*out15x15, 7);
     }
+
+    // create 31x31 icons by scaling up 15x15 icons
+    *out31x31 = ScaleIconBitmaps(*out15x15, 31);
     
     return true;
 }
@@ -625,22 +777,29 @@ void LoadIcons(algo_type algotype)
     AlgoData* ad = algoinfo[algotype];
     
     // deallocate old algo icons if they exist
+    if (ad->icons7x7) {
+        for (int i = 0; i < 256; i++) delete ad->icons7x7[i];
+        free(ad->icons7x7);
+        ad->icons7x7 = NULL;
+    }
     if (ad->icons15x15) {
         for (int i = 0; i < 256; i++) delete ad->icons15x15[i];
         free(ad->icons15x15);
         ad->icons15x15 = NULL;
     }
-    if (ad->icons7x7) {
-        for (int i = 0; i < 256; i++) delete ad->icons7x7[i];
-        free(ad->icons7x7);
-        ad->icons7x7 = NULL;
+    if (ad->icons31x31) {
+        for (int i = 0; i < 256; i++) delete ad->icons31x31[i];
+        free(ad->icons31x31);
+        ad->icons31x31 = NULL;
     }
     
     if (ad->iconfile.length() > 0) {
         // try to load icons from this file
         if (!wxFileName::FileExists(ad->iconfile)) {
             Warning(_("Icon file does not exist:\n") + ad->iconfile);
-        } else if (LoadIconFile(ad->iconfile, ad->maxstates-1, &ad->icons15x15, &ad->icons7x7)) {
+        } else if (LoadIconFile(ad->iconfile, ad->maxstates-1, &ad->icons7x7,
+                                                               &ad->icons15x15,
+                                                               &ad->icons31x31)) {
             // icons were successfully loaded
             return;
         }

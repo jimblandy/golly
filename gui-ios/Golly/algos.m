@@ -478,7 +478,7 @@ static CGImageRef* ScaleIconBitmaps(CGImageRef* srcicons, int size)
 
 static void CreateDefaultIcons(AlgoData* ad)
 {
-    if (ad->defxpm7x7 || ad->defxpm15x15) {
+    if (ad->defxpm7x7 || ad->defxpm15x15 || ad->defxpm31x31) {
         // create icons using given algo's default XPM data
         ad->icons7x7 = CreateIconBitmaps(ad->defxpm7x7, ad->maxstates);
         ad->icons15x15 = CreateIconBitmaps(ad->defxpm15x15, ad->maxstates);
@@ -521,10 +521,10 @@ static void CreateDefaultIcons(AlgoData* ad)
 
 AlgoData::AlgoData() {
     defbase = 0;
-    iconfile = "";
     icons7x7 = NULL;
     icons15x15 = NULL;
     icons31x31 = NULL;
+    iconfile = "";
 }
 
 // -----------------------------------------------------------------------------

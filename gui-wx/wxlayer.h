@@ -111,8 +111,9 @@ public:
     wxPen* boldpen;               // pen for drawing bold grid
     
     // icons for this layer
-    wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
-    wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
+    wxBitmap** icons7x7;          // icons for scale 1:8
+    wxBitmap** icons15x15;        // icons for scale 1:16
+    wxBitmap** icons31x31;        // icons for scale 1:32
     
     // used if the layer has a timeline (see wxtimeline.cpp)
     int currframe;                // current frame in timeline

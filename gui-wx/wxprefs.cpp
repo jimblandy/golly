@@ -472,6 +472,7 @@ void AddDefaultKeyActions()
     keyaction[(int)'4'][0].id =         DO_SCALE4;
     keyaction[(int)'8'][0].id =         DO_SCALE8;
     keyaction[(int)'6'][0].id =         DO_SCALE16;
+    keyaction[(int)'3'][0].id =         DO_SCALE32;
     keyaction[(int)'\''][0].id =        DO_SHOWTOOL;
     keyaction[(int)'\\'][0].id =        DO_SHOWLAYER;
     keyaction[(int)'/'][0].id =         DO_SHOWEDIT;
@@ -520,7 +521,7 @@ const char* GetActionName(action_id action)
     switch (action) {
         case DO_NOTHING:        return "NONE";
         case DO_OPENFILE:       return "Open:";
-            // File menu
+        // File menu
         case DO_NEWPATT:        return "New Pattern";
         case DO_OPENPATT:       return "Open Pattern...";
         case DO_OPENCLIP:       return "Open Clipboard";
@@ -534,7 +535,7 @@ const char* GetActionName(action_id action)
         case DO_SCRIPTDIR:      return "Set Script Folder...";
         case DO_PREFS:          return "Preferences...";
         case DO_QUIT:           return "Quit Golly";
-            // Edit menu
+        // Edit menu
         case DO_UNDO:           return "Undo";
         case DO_REDO:           return "Redo";
         case DO_DISABLE:        return "Disable Undo/Redo";
@@ -562,7 +563,7 @@ const char* GetActionName(action_id action)
         case DO_CURSIN:         return "Cursor Mode: Zoom In";
         case DO_CURSOUT:        return "Cursor Mode: Zoom Out";
         case DO_CURSCYCLE:      return "Cycle Cursor Mode";
-            // Control menu
+        // Control menu
         case DO_STARTSTOP:      return "Start/Stop Generating";
         case DO_NEXTGEN:        return "Next Generation";
         case DO_NEXTSTEP:       return "Next Step";
@@ -584,7 +585,7 @@ const char* GetActionName(action_id action)
         case DO_ADVANCE:        return "Advance Selection";
         case DO_ADVANCEOUT:     return "Advance Outside";
         case DO_TIMING:         return "Show Timing";
-            // View menu
+        // View menu
         case DO_LEFT:           return "Scroll Left";
         case DO_RIGHT:          return "Scroll Right";
         case DO_UP:             return "Scroll Up";
@@ -606,6 +607,7 @@ const char* GetActionName(action_id action)
         case DO_SCALE4:         return "Set Scale 1:4";
         case DO_SCALE8:         return "Set Scale 1:8";
         case DO_SCALE16:        return "Set Scale 1:16";
+        case DO_SCALE32:        return "Set Scale 1:32";
         case DO_SHOWTOOL:       return "Show Tool Bar";
         case DO_SHOWLAYER:      return "Show Layer Bar";
         case DO_SHOWEDIT:       return "Show Edit Bar";
@@ -619,7 +621,7 @@ const char* GetActionName(action_id action)
         case DO_BUFFERED:       return "Buffered";
         case DO_SHOWTIME:       return "Show Timeline";
         case DO_INFO:           return "Pattern Info";
-            // Layer menu
+        // Layer menu
         case DO_ADD:            return "Add Layer";
         case DO_CLONE:          return "Clone Layer";
         case DO_DUPLICATE:      return "Duplicate Layer";
@@ -631,7 +633,7 @@ const char* GetActionName(action_id action)
         case DO_SYNCCURS:       return "Synchronize Cursors";
         case DO_STACK:          return "Stack Layers";
         case DO_TILE:           return "Tile Layers";
-            // Help menu
+        // Help menu
         case DO_HELP:           return "Show Help";
         case DO_ABOUT:          return "About Golly";
         default:                Warning(_("Bug detected in GetActionName!"));
@@ -1775,6 +1777,8 @@ void GetPrefs()
 {
     int algoindex = -1;                 // unknown algorithm
     bool sawkeyaction = false;          // saw at least one key_action entry?
+    
+    MAX_MAG = 5;                        // maximum cell size = 32x32
     
     InitPaths();                        // init datadir, tempdir and prefspath
     InitAlgorithms();                   // init algoinfo data
@@ -3245,6 +3249,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     newscaleChoices.Add(wxT("1:4"));
     newscaleChoices.Add(wxT("1:8"));
     newscaleChoices.Add(wxT("1:16"));
+    newscaleChoices.Add(wxT("1:32"));
     
     // on new pattern
     
@@ -3665,6 +3670,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     mingridChoices.Add(wxT("1:4"));
     mingridChoices.Add(wxT("1:8"));
     mingridChoices.Add(wxT("1:16"));
+    mingridChoices.Add(wxT("1:32"));
     wxChoice* choice3 = new wxChoice(panel, PREF_MIN_GRID_SCALE,
                                      wxDefaultPosition, wxDefaultSize,
                                      mingridChoices);

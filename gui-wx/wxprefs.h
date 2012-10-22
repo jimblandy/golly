@@ -238,6 +238,7 @@ typedef enum {
     DO_SCALE4,                    // set scale 1:4
     DO_SCALE8,                    // set scale 1:8
     DO_SCALE16,                   // set scale 1:16
+    DO_SCALE32,                   // set scale 1:32
     DO_SCRIPTDIR,                 // set script folder...
     DO_SHOWSTATES,                // show all states
     DO_SHOWICONS,                 // show cell icons

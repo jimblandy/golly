@@ -346,6 +346,7 @@ enum {
     ID_SCALE_4,
     ID_SCALE_8,
     ID_SCALE_16,
+    ID_SCALE_32,
     
     // Layer menu
     ID_ADD_LAYER,

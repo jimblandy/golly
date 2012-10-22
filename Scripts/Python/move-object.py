@@ -56,8 +56,8 @@ def findlivecell(x, y):
     maxd = 10
     mag = g.getmag()
     if mag > 0:
-        # mag can be 1..4 (ie. scales 1:2 to 1:16)
-        maxd = 2 * (5 - mag)    # 8, 6, 4, 2
+        # mag can be 1..5 (ie. scales 1:2 to 1:32)
+        maxd = 2 * (6 - mag)    # 10, 8, 6, 4, 2
     d = 1
     while d <= maxd:
         x -= 1

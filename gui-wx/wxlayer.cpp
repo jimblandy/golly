@@ -1105,7 +1105,7 @@ static wxBitmap** CopyIcons(wxBitmap** srcicons, int size, int maxstate)
     if (iconptr) {
         wxRect rect(0, 0, size, size);
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
-        for (int i = 1; i <= maxstate; i++) {
+        for (int i = 0; i <= maxstate; i++) {
             if (srcicons && srcicons[i])
                 iconptr[i] = new wxBitmap(srcicons[i]->GetSubBitmap(rect));
         }
@@ -1166,13 +1166,15 @@ void AddLayer()
         currlayer->boldpen->SetColour( oldlayer->boldpen->GetColour() );
         if (cloning) {
             // use same icon pointers
-            currlayer->icons15x15 = oldlayer->icons15x15;
             currlayer->icons7x7 = oldlayer->icons7x7;
+            currlayer->icons15x15 = oldlayer->icons15x15;
+            currlayer->icons31x31 = oldlayer->icons31x31;
         } else {
             // duplicate icons from old layer
             int maxstate = currlayer->algo->NumCellStates() - 1;
-            currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, 15, maxstate);
             currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, 7, maxstate);
+            currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, 15, maxstate);
+            currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, 31, maxstate);
         }
     } else {
         // set new layer's colors+icons to default colors+icons for current algo+rule
@@ -1752,8 +1754,9 @@ void UpdateCloneColors()
                 }
                 
                 // use same icon pointers
-                cloneptr->icons15x15 = currlayer->icons15x15;
                 cloneptr->icons7x7 = currlayer->icons7x7;
+                cloneptr->icons15x15 = currlayer->icons15x15;
+                cloneptr->icons31x31 = currlayer->icons31x31;
                 
                 // use same colors in deadbrush, gridpen and boldpen
                 cloneptr->deadbrush->SetColour( currlayer->deadbrush->GetColour() );
@@ -1843,6 +1846,28 @@ static bool LoadRuleColors(const wxString& rule, int maxstate)
 
 // -----------------------------------------------------------------------------
 
+static void DeleteIcons(Layer* layer)
+{
+    // delete given layer's existing icons
+    if (layer->icons7x7) {
+        for (int i = 0; i < 256; i++) delete layer->icons7x7[i];
+        free(layer->icons7x7);
+        layer->icons7x7 = NULL;
+    }
+    if (layer->icons15x15) {
+        for (int i = 0; i < 256; i++) delete layer->icons15x15[i];
+        free(layer->icons15x15);
+        layer->icons15x15 = NULL;
+    }
+    if (layer->icons31x31) {
+        for (int i = 0; i < 256; i++) delete layer->icons31x31[i];
+        free(layer->icons31x31);
+        layer->icons31x31 = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 static bool FindIconFile(const wxString& rule, const wxString& dir, wxString& path)
 {
     const wxString extn = wxT(".icons");
@@ -1869,23 +1894,16 @@ static bool FindIconFile(const wxString& rule, const wxString& dir, wxString& pa
 static bool LoadRuleIcons(const wxString& rule, int maxstate)
 {
     // deallocate current layer's old icons if they exist
-    if (currlayer->icons15x15) {
-        for (int i = 0; i < 256; i++) delete currlayer->icons15x15[i];
-        free(currlayer->icons15x15);
-        currlayer->icons15x15 = NULL;
-    }
-    if (currlayer->icons7x7) {
-        for (int i = 0; i < 256; i++) delete currlayer->icons7x7[i];
-        free(currlayer->icons7x7);
-        currlayer->icons7x7 = NULL;
-    }
+    DeleteIcons(currlayer);
     
     // if rule.icons file exists in userrules or rulesdir then
     // load icons for current layer
     wxString path;
     return (FindIconFile(rule, userrules, path) ||
             FindIconFile(rule, rulesdir, path)) &&
-    LoadIconFile(path, maxstate, &currlayer->icons15x15, &currlayer->icons7x7);
+    LoadIconFile(path, maxstate, &currlayer->icons7x7,
+                                 &currlayer->icons15x15,
+                                 &currlayer->icons31x31);
 }
 
 // -----------------------------------------------------------------------------
@@ -1992,16 +2010,19 @@ void UpdateCurrentColors()
     if ( !LoadRuleIcons(rule, maxstate) ) {
         if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
             // use hexagonal icons
-            currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
             currlayer->icons7x7 = CopyIcons(hexicons7x7, 7, maxstate);
+            currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
+            currlayer->icons31x31 = CopyIcons(hexicons31x31, 31, maxstate);
         } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
             // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
-            currlayer->icons15x15 = CopyIcons(vnicons15x15, 15, maxstate);
             currlayer->icons7x7 = CopyIcons(vnicons7x7, 7, maxstate);
+            currlayer->icons15x15 = CopyIcons(vnicons15x15, 15, maxstate);
+            currlayer->icons31x31 = CopyIcons(vnicons31x31, 31, maxstate);
         } else {
             // otherwise copy default icons from current algo
-            currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
             currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
+            currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
+            currlayer->icons31x31 = CopyIcons(ad->icons31x31, 31, maxstate);
         }
     }   
     // if rule.colors file wasn't loaded and icons are multi-color then we
@@ -2121,8 +2142,10 @@ Layer::Layer()
     currfile.Clear();             // no pattern file has been loaded
     originx = 0;                  // no X origin offset
     originy = 0;                  // no Y origin offset
-    icons15x15 = NULL;            // no 15x15 icons
+    
     icons7x7 = NULL;              // no 7x7 icons
+    icons15x15 = NULL;            // no 15x15 icons
+    icons31x31 = NULL;            // no 31x31 icons
     
     currframe = 0;                // first frame in timeline
     autoplay = 0;                 // not playing
@@ -2365,14 +2388,7 @@ Layer::~Layer()
         if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
         
         // delete any icons
-        if (icons15x15) {
-            for (int i = 0; i < 256; i++) delete icons15x15[i];
-            free(icons15x15);
-        }
-        if (icons7x7) {
-            for (int i = 0; i < 256; i++) delete icons7x7[i];
-            free(icons7x7);
-        }
+        DeleteIcons(this);
     }
 }
 
