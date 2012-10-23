@@ -467,9 +467,17 @@ static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
             if (srcicons[i] == NULL) {
                 iconptr[i] = NULL;
             } else {
-                int depth = srcicons[i]->GetDepth();
                 wxImage image = srcicons[i]->ConvertToImage();
-                iconptr[i] = new wxBitmap(image.Scale(size, size, wxIMAGE_QUALITY_HIGH), depth);
+                image.Rescale(size, size, wxIMAGE_QUALITY_HIGH);
+                int depth = srcicons[i]->GetDepth();
+                #if defined(__WXGTK__)
+                    if (depth == 1)
+                        iconptr[i] = new wxBitmap(image,depth);
+                    else
+                        iconptr[i] = new wxBitmap(image);
+                #else
+                    iconptr[i] = new wxBitmap(image,depth);
+                #endif
             }
         }
     }
