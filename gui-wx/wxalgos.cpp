@@ -468,15 +468,25 @@ static wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
                 iconptr[i] = NULL;
             } else {
                 wxImage image = srcicons[i]->ConvertToImage();
-                image.Rescale(size, size, wxIMAGE_QUALITY_HIGH);
+                // do NOT scale using wxIMAGE_QUALITY_HIGH (thin lines can disappear)
+                image.Rescale(size, size, wxIMAGE_QUALITY_NORMAL);
                 int depth = srcicons[i]->GetDepth();
                 #if defined(__WXGTK__)
                     if (depth == 1)
-                        iconptr[i] = new wxBitmap(image,depth);
+                        iconptr[i] = new wxBitmap(image, depth);
                     else
                         iconptr[i] = new wxBitmap(image);
+                #elif defined(__WXMSW__)
+                    if (depth == 1) {
+                        // this stupidity avoids a wxMSW bug
+                        wxBitmap monoicon(image, 1);
+                        wxRect rect(0, 0, size, size);
+                        iconptr[i] = new wxBitmap(monoicon.GetSubBitmap(rect));
+                    } else {
+                        iconptr[i] = new wxBitmap(image, depth);
+                    }
                 #else
-                    iconptr[i] = new wxBitmap(image,depth);
+                    iconptr[i] = new wxBitmap(image, depth);
                 #endif
             }
         }
