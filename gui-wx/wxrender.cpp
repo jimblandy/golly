@@ -540,7 +540,7 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
 void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, int stride)
 {
     // called from wx_render::pixblit to draw icons for each live cell;
-    // assume pmscale > 2 (should be 8 or 16)
+    // assume pmscale > 2 (should be 8 or 16 or 32)
     int cellsize = pmscale - 1;
     bool drawgap = (pmscale < (1 << mingridmag)) ||
 #ifdef __WXMAC__
