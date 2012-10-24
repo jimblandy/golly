@@ -33,7 +33,7 @@ class ruleloaderalgo : public ghashbase {
 
 public:
 
-    ruleloaderalgo() ;
+    ruleloaderalgo();
     virtual ~ruleloaderalgo();
     virtual state slowcalc(state nw, state n, state ne, state w, state c,
                            state e, state sw, state s, state se);
@@ -49,5 +49,8 @@ protected:
     ruletreealgo* LocalRuleTree;         // local instance of RuleTree algo
 
     enum RuleTypes {TABLE, TREE} rule_type;
+    
+    void SetAlgoVariables(RuleTypes ruletype);
+    const char* LoadTableOrTree(FILE* rulefile, const char* rule);
 };
 #endif

@@ -35,6 +35,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string>
 using namespace std ;
 
+bool ruletreealgo::IsDefaultRule(const char* rulename)
+{
+    // nicer to check for different versions of default rule
+    return (stricmp(rulename, "B3/S23") == 0 ||
+            stricmp(rulename, "B3S23") == 0 ||
+            strcmp(rulename, "23/3") == 0);
+}
+
+static FILE* static_rulefile = NULL;
+static int static_lineno = 0;
+static char static_endchar = 0;
+
+const char* ruletreealgo::LoadTree(FILE* rulefile, int lineno, char endchar, const char* s)
+{
+    // set static vars so setrule() will load tree data from .rule file
+    static_rulefile = rulefile;
+    static_lineno = lineno;
+    static_endchar = endchar;
+    
+    const char* err = setrule(s);
+    
+    // reset static vars
+    static_rulefile = NULL;
+    static_lineno = 0;
+    static_endchar = 0;
+    
+    return err;
+}
+
 int ruletreealgo::NumCellStates() {
    return num_states ;
 }
@@ -71,14 +100,20 @@ const char* ruletreealgo::setrule(const char* s) {
    if (colonptr)
       rule_name.assign(s,colonptr);
 
-   // nicer to check for different versions of default rule
-   int isDefaultRule = (stricmp(rule_name.c_str(), "B3/S23") == 0 ||
-                        stricmp(rule_name.c_str(), "B3S23") == 0 ||
-                        strcmp(rule_name.c_str(), "23/3") == 0) ;
    char strbuf[MAXFILELEN+1] ;
    FILE *f = 0 ;
    linereader lr(0) ;
-   if (!isDefaultRule) {
+   int lineno = 0 ;
+   
+   bool isDefaultRule = IsDefaultRule(rule_name.c_str()) ;
+   if (isDefaultRule) {
+      // no need to read tree data from a file
+   } else if (static_rulefile) {
+      // read tree data from currently open .rule file
+      lr.setfile(static_rulefile);
+      lr.setcloseonfree();
+      lineno = static_lineno;
+   } else {
       if (strlen(rule_name.c_str()) >= (unsigned int)MAXRULESIZE) {
          return "Rule length too long" ;
       }
@@ -103,7 +138,6 @@ const char* ruletreealgo::setrule(const char* s) {
       gridht = 0;
    }
    
-   int lineno = 0 ;
    int mnum_states=-1, mnum_neighbors=-1, mnum_nodes=-1 ;
    vector<int> dat ;
    vector<state> datb ;
@@ -117,6 +151,8 @@ const char* ruletreealgo::setrule(const char* s) {
       } else {
          if (lr.fgets(strbuf, MAXFILELEN) == 0)
             break ;
+         if (static_rulefile && strbuf[0] == static_endchar)
+            break;
       }
       lineno++ ;
       if (strbuf[0] != '#' && strbuf[0] != 0 &&
@@ -129,7 +165,7 @@ const char* ruletreealgo::setrule(const char* s) {
             return "Bad basic values" ;
          }
          if (strbuf[0] < '1' || strbuf[0] > '0' + 1 + mnum_neighbors) {
-            return "Bad line in ruletree file 1" ;
+            return "Bad line in tree data 1" ;
          }
          lev = strbuf[0] - '0' ;
          int vcnt = 0 ;
@@ -144,38 +180,37 @@ const char* ruletreealgo::setrule(const char* s) {
             int v = 0 ;
             while (*p > ' ') {
                if (*p < '0' || *p > '9') {
-                  return "Bad line in ruletree file 2" ;
+                  return "Bad line in tree data 2" ;
                }
                v = v * 10 + *p++ - '0' ;
             }
             if (lev == 1) {
                if (v < 0 || v >= mnum_states) {
-                  return "Bad state value in ruletree file" ;
+                  return "Bad state value in tree data" ;
                }
                datb.push_back((state)v) ;
             } else {
                if (v < 0 || ((unsigned int)v) >= noff.size()) {
-                  return "Bad node value in ruletree file" ;
+                  return "Bad node value in tree data" ;
                }
                dat.push_back(noff[v]) ;
             }
             vcnt++ ;
          }
          if (vcnt != mnum_states) {
-            return "Bad number of values on ruletree line" ;
+            return "Bad number of values on tree data line" ;
          }
       }
    }
-   // disabled to avoid crash on Linux
-   // lr.close() ;
+
    if (dat.size() + datb.size() != (unsigned int)(mnum_nodes * mnum_states))
-      return "Bad count of values in ruletree file" ;
+      return "Bad count of values in tree data" ;
    if (lev != mnum_neighbors + 1)
       return "Bad last node (wrong level)" ;
    int *na = (int*)calloc(sizeof(int), dat.size()) ;
    state *nb = (state*)calloc(sizeof(state), datb.size()) ;
    if (na == 0 || nb == 0)
-      return "Out of memory in ruletree allocation" ;
+      return "Out of memory in tree allocation" ;
    if (a)
       free(a) ;
    if (b)

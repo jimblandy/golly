@@ -41,6 +41,32 @@ const string ruletable_algo::neighborhood_value_keywords[N_SUPPORTED_NEIGHBORHOO
                     {"vonNeumann","Moore","hexagonal","oneDimensional"};
 // (keep in sync with TNeighborhood)
 
+bool ruletable_algo::IsDefaultRule(const char* rulename)
+{
+    return (strcmp(rulename, DefaultRule()) == 0);
+}
+
+static FILE* static_rulefile = NULL;
+static int static_lineno = 0;
+static char static_endchar = 0;
+
+const char* ruletable_algo::LoadTable(FILE* rulefile, int lineno, char endchar, const char* s)
+{
+    // set static vars so LoadRuleTable() will load table data from .rule file
+    static_rulefile = rulefile;
+    static_lineno = lineno;
+    static_endchar = endchar;
+    
+    const char* err = setrule(s);   // calls LoadRuleTable
+    
+    // reset static vars
+    static_rulefile = NULL;
+    static_lineno = 0;
+    static_endchar = 0;
+    
+    return err;
+}
+
 int ruletable_algo::NumCellStates()
 {
    return this->n_states;
@@ -206,7 +232,6 @@ string ruletable_algo::LoadRuleTable(string rule)
        available_symmetries["oneDimensional"].assign(oneDimensional_available_symmetries,oneDimensional_available_symmetries+3);
    }
    
-   int isDefaultRule = (strcmp(rule.c_str(), DefaultRule()) == 0);
    string line;
    const int MAX_LINE_LEN=1000;
    char line_buffer[MAX_LINE_LEN];
@@ -214,8 +239,17 @@ string ruletable_algo::LoadRuleTable(string rule)
    linereader line_reader(0);
    int lineno = 0;
    string full_filename;
-   if (!isDefaultRule) 
-   {
+   
+   bool isDefaultRule = IsDefaultRule(rule.c_str());
+   if (isDefaultRule) {
+      // no need to read table data from a file
+   } else if (static_rulefile) {
+      // read table data from currently open .rule file
+      line_reader.setfile(static_rulefile);
+      line_reader.setcloseonfree();
+      lineno = static_lineno;
+      full_filename = rule + ".rule";
+   } else {
       // look for rule.table in user's rules dir then in Golly's rules dir
       in = OpenTableFile(rule, lifegetuserrules(), full_filename);
       if (!in)
@@ -243,7 +277,9 @@ string ruletable_algo::LoadRuleTable(string rule)
             break;
          line = defaultRuleData[lineno];
       } else {
-         if(!line_reader.fgets(line_buffer,MAX_LINE_LEN))
+         if (!line_reader.fgets(line_buffer,MAX_LINE_LEN))
+            break;
+         if (static_rulefile && line_buffer[0] == static_endchar)
             break;
          line = line_buffer;
       }

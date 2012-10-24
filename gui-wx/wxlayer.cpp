@@ -1994,20 +1994,20 @@ void UpdateCurrentColors()
         }
     }
     
-    wxString rule = wxString(currlayer->algo->getrule(), wxConvLocal);
+    wxString rulename = wxString(currlayer->algo->getrule(), wxConvLocal);
     // replace any '\' and '/' chars with underscores;
-    // ie. given 12/34/6 we look for 12_34_6.{colors|icons}
-    rule.Replace(wxT("\\"), wxT("_"));
-    rule.Replace(wxT("/"), wxT("_"));
+    // ie. given 12/34/6 we look for 12_34_6.rule
+    rulename.Replace(wxT("\\"), wxT("_"));
+    rulename.Replace(wxT("/"), wxT("_"));
     
     // strip off any suffix like ":T100,200" used to specify a bounded grid
-    if (rule.Find(':') >= 0) rule = rule.BeforeFirst(':');
+    if (rulename.Find(':') >= 0) rulename = rulename.BeforeFirst(':');
     
-    // if rule.colors file exists then override default colors
-    bool loadedcolors = LoadRuleColors(rule, maxstate);
+    // if rulename.colors file exists then override default colors
+    bool loadedcolors = LoadRuleColors(rulename, maxstate);
     
-    // if rule.icons file exists then use those icons
-    if ( !LoadRuleIcons(rule, maxstate) ) {
+    // if rulename.icons file exists then use those icons
+    if ( !LoadRuleIcons(rulename, maxstate) ) {
         if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
             // use hexagonal icons
             currlayer->icons7x7 = CopyIcons(hexicons7x7, 7, maxstate);
@@ -2024,8 +2024,9 @@ void UpdateCurrentColors()
             currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
             currlayer->icons31x31 = CopyIcons(ad->icons31x31, 31, maxstate);
         }
-    }   
-    // if rule.colors file wasn't loaded and icons are multi-color then we
+    }
+    
+    // if rulename.colors file wasn't loaded and icons are multi-color then we
     // set non-icon colors to the average of the non-black pixels in each icon
     // (note that we use the 7x7 icons because they are faster to scan)
     wxBitmap** iconmaps = currlayer->icons7x7;

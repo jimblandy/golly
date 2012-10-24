@@ -38,6 +38,11 @@ public:
    virtual const char* DefaultRule() ;
    virtual int NumCellStates() ;
    static void doInitializeAlgoInfo(staticAlgoInfo &) ;
+
+   // these two methods are needed for RuleLoader algo
+   bool IsDefaultRule(const char* rulename);
+   const char* LoadTree(FILE* rulefile, int lineno, char endchar, const char* s);
+
 private:
    int *a, base ;
    state *b ;

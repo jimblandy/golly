@@ -44,6 +44,10 @@ public:
    virtual int NumCellStates() ;
    static void doInitializeAlgoInfo(staticAlgoInfo &) ;
 
+   // these two methods are needed for RuleLoader algo
+   bool IsDefaultRule(const char* rulename);
+   const char* LoadTable(FILE* rulefile, int lineno, char endchar, const char* s);
+
 protected:
 
    std::string LoadRuleTable(std::string filename);
