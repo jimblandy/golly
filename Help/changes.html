@@ -7,9 +7,13 @@
 
 <p>
 <ul>
-<li> The RuleTable and RuleTree algorithms have been replaced by RuleLoader.
-     If asked to load a rule called "Foo", the RuleLoader algorithm will look for
-     Foo.table first, then Foo.tree.
+<li> This version introduces a new rule format.  A file in the new format has a .rule
+     extension and contains all the information about the rule: its name, description,
+     table/tree data, and any color/icon information.  More details
+     <a href="formats.html#rule">here</a>.
+<li> The RuleTable and RuleTree algorithms have been replaced by a new algorithm
+     called RuleLoader.  If asked to load a rule called "Foo", RuleLoader will look
+     for Foo.rule first, then Foo.table, then Foo.tree.
 <li> Patterns can now be displayed at scale 1:32.  If you want to use that scale when
      creating a new pattern then choose the appropriate pop-up menu option in
      <a href="prefs:file">Preferences > File</a>.

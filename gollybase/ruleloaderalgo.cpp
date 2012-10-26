@@ -98,7 +98,7 @@ const char* ruleloaderalgo::LoadTableOrTree(FILE* rulefile, const char* rule)
     // find line starting with @TABLE or @TREE
     while (lr.fgets(line_buffer,MAX_LINE_LEN) != 0) {
         lineno++;
-        if (strncmp(line_buffer, "@TABLE", 6) == 0) {
+        if (strcmp(line_buffer, "@TABLE") == 0) {
             err = LocalRuleTable->LoadTable(rulefile, lineno, '@', rule);
             // err is the result of setrule(rule)
             if (err == NULL) {
@@ -107,7 +107,7 @@ const char* ruleloaderalgo::LoadTableOrTree(FILE* rulefile, const char* rule)
             // LoadTable has closed rulefile so don't do lr.close()
             return err;
         }
-        if (strncmp(line_buffer, "@TREE", 5) == 0) {
+        if (strcmp(line_buffer, "@TREE") == 0) {
             err = LocalRuleTree->LoadTree(rulefile, lineno, '@', rule);
             // err is the result of setrule(rule)
             if (err == NULL) {

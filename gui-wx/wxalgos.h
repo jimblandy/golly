@@ -114,4 +114,13 @@ bool LoadIconFile(const wxString& path, int maxstate,
                   wxBitmap*** out7x7, wxBitmap*** out15x15, wxBitmap*** out31x31);
 // Return true if we can successfully load icon bitmaps from given file.
 
+wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates);
+// Create icon bitmaps using the given XPM data.
+
+wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size);
+// Create scaled versions of the given icon bitmaps.
+
+void FreeIconBitmaps(wxBitmap** icons);
+// Delete the given icon bitmaps.
+
 #endif

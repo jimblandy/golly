@@ -1769,6 +1769,307 @@ void UpdateCloneColors()
 
 // -----------------------------------------------------------------------------
 
+static FILE* FindRuleFile(const wxString& rulename)
+{
+    const wxString extn = wxT(".rule");
+    wxString path;
+    
+    // first look for rulename.rule in userrules
+    path = userrules + rulename;
+    path += extn;
+    FILE* f = fopen(path.mb_str(wxConvLocal), "r");
+    if (f) return f;
+    
+    // now look for rulename.rule in rulesdir
+    path = rulesdir + rulename;
+    path += extn;
+    return fopen(path.mb_str(wxConvLocal), "r");
+}
+
+// -----------------------------------------------------------------------------
+
+static void CheckRuleHeader(char* linebuf, const wxString& rulename)
+{
+    // check that 1st line of rulename.rule file contains "@RULE rulename"
+    // where rulename must match the file name exactly (to avoid problems on
+    // case-sensitive file systems)
+    if (strncmp(linebuf, "@RULE ", 6) != 0) {
+        wxString msg = _("The first line in ");
+        msg += rulename;
+        msg += _(".rule does not start with @RULE.");
+        Warning(msg);
+    } else if (strcmp(linebuf+6, rulename.c_str()) != 0) {
+        wxString msg = _("The rule name on the first line in ");
+        msg += rulename;
+        msg += _(".rule does not match the file name.");
+        msg += _("  Please change the file name or the rule name.");
+        Warning(msg);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void ParseColors(linereader& reader, char* linebuf, int MAXLINELEN,
+                        int* linenum, bool* eof)
+{
+    // parse @COLORS section in currently open .rule file
+    int state, r, g, b, r1, g1, b1, r2, g2, b2;
+    int maxstate = currlayer->algo->NumCellStates() - 1;
+    
+    while (reader.fgets(linebuf, MAXLINELEN) != 0) {
+        *linenum = *linenum + 1;
+        if (linebuf[0] == '#' || linebuf[0] == 0) {
+            // skip comment or empty line
+        } else if (sscanf(linebuf, "%d%d%d%d%d%d", &r1, &g1, &b1, &r2, &g2, &b2) == 6) {
+            // assume line is like this:
+            // 255 0 0 0 0 255    use a gradient from red to blue
+            currlayer->fromrgb.Set(r1, g1, b1);
+            currlayer->torgb.Set(r2, g2, b2);
+            CreateColorGradient();
+        } else if (sscanf(linebuf, "%d%d%d%d", &state, &r, &g, &b) == 4) {
+            // assume line is like this:
+            // 1 0 128 255        state 1 is light blue
+            if (state >= 0 && state <= maxstate) {
+                currlayer->cellr[state] = r;
+                currlayer->cellg[state] = g;
+                currlayer->cellb[state] = b;
+            }
+        } else if (linebuf[0] == '@') {
+            // found next section, so stop parsing
+            *eof = false;
+            return;
+        }
+        // ignore unexpected syntax (better for upward compatibility)
+    }
+    *eof = true;
+}
+
+// -----------------------------------------------------------------------------
+
+static void DeleteXPMData(char** xpmdata, int numstrings)
+{
+    if (xpmdata) {
+        for (int i = 0; i < numstrings; i++)
+            if (xpmdata[i]) free(xpmdata[i]);
+        free(xpmdata);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void CreateIcons(const char** xpmdata, int size)
+{
+    int maxstates = currlayer->algo->NumCellStates();
+    
+    // we only need to call FreeIconBitmaps if .rule file has duplicate XPM data
+    // (unlikely but best to play it safe)
+    if (size == 7) {
+        if (currlayer->icons7x7) FreeIconBitmaps(currlayer->icons7x7);
+        currlayer->icons7x7 = CreateIconBitmaps(xpmdata, maxstates);
+
+    } else if (size == 15) {
+        if (currlayer->icons15x15) FreeIconBitmaps(currlayer->icons15x15);
+        currlayer->icons15x15 = CreateIconBitmaps(xpmdata, maxstates);
+
+    } else if (size == 31) {
+        if (currlayer->icons31x31) FreeIconBitmaps(currlayer->icons31x31);
+        currlayer->icons31x31 = CreateIconBitmaps(xpmdata, maxstates);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void ParseIcons(const wxString& rulename, linereader& reader, char* linebuf, int MAXLINELEN,
+                       int* linenum, bool* eof)
+{
+    // parse @ICONS section in currently open .rule file
+    char** xpmdata = NULL;
+    int xpmstarted = 0;
+    int xpmstrings, maxstrings;
+    int wd, ht, numcolors, chars_per_pixel;
+
+    while (true) {
+        if (reader.fgets(linebuf, MAXLINELEN) == 0) {
+            *eof = true;
+            break;
+        }
+        *linenum = *linenum + 1;
+        if (linebuf[0] == '#' || linebuf[0] == '/' || linebuf[0] == 0) {
+            // skip comment or empty line
+        } else if (linebuf[0] == '"') {
+            if (xpmstarted) {
+                // we have a "..." string containing XPM data
+                if (xpmstrings == 0) {
+                    if (sscanf(linebuf, "\"%d%d%d%d\"", &wd, &ht, &numcolors, &chars_per_pixel) == 4 &&
+                        wd > 0 && ht > 0 && numcolors > 0 && chars_per_pixel > 0 && ht % wd == 0) {
+                        if (wd != 7 && wd != 15 && wd != 31) {
+                            // this version of Golly doesn't support the supplied icon size
+                            // so silently ignore the rest of this XPM data
+                            xpmstarted = 0;
+                            continue;
+                        }
+                        maxstrings = 1 + numcolors + ht;
+                        // create and initialize xpmdata
+                        xpmdata = (char**) malloc(maxstrings * sizeof(char*));
+                        if (xpmdata) {
+                            for (int i = 0; i < maxstrings; i++) xpmdata[i] = NULL;
+                        } else {
+                            Warning(_("Failed to allocate memory for XPM icon data!"));
+                            *eof = true;
+                            return;
+                        }
+                    } else {
+                        wxString msg;
+                        msg.Printf(_("The XPM header string on line %d in "), *linenum);
+                        msg += rulename;
+                        msg += _(".rule is incorrect");
+                        if (wd > 0 && ht > 0 && ht % wd != 0)
+                            msg += _(" (height must be a multiple of width).");
+                        else
+                            msg += _(" (4 positive integers are required).");
+                        Warning(msg);
+                        *eof = true;
+                        return;
+                    }
+                }
+                // copy data inside "..." to next string in xpmdata
+                int len = strlen(linebuf);
+                while (linebuf[len] != '"') len--;
+                len--;
+                if (xpmstrings > numcolors && len != wd * chars_per_pixel) {
+                    DeleteXPMData(xpmdata, maxstrings);
+                    wxString msg;
+                    msg.Printf(_("The XPM data string on line %d in "), *linenum);
+                    msg += rulename;
+                    msg += _(".rule has the wrong length.");
+                    Warning(msg);
+                    *eof = true;
+                    return;
+                }
+                char* str = (char*) malloc(len+1);
+                if (str) {
+                    strncpy(str, linebuf+1, len);
+                    str[len] = 0;
+                    xpmdata[xpmstrings] = str;
+                } else {
+                    DeleteXPMData(xpmdata, maxstrings);
+                    Warning(_("Failed to allocate memory for XPM string!"));
+                    *eof = true;
+                    return;
+                }
+                xpmstrings++;
+                if (xpmstrings == maxstrings) {
+                    // we've got all the data for this icon size
+                    CreateIcons((const char**)xpmdata, wd);
+                    DeleteXPMData(xpmdata, maxstrings);
+                    xpmdata = NULL;
+                    xpmstarted = 0;
+                }
+            }
+        } else if (strcmp(linebuf, "XPM") == 0) {
+            // start parsing XPM data on following lines
+            if (xpmstarted) break;  // handle error below
+            xpmstarted = *linenum;
+            xpmstrings = 0;
+        } else if (linebuf[0] == '@') {
+            // found next section, so stop parsing
+            *eof = false;
+            break;
+        }
+        // ignore unexpected syntax (better for upward compatibility)
+    }
+    
+    if (xpmstarted) {
+        // XPM data was incomplete
+        DeleteXPMData(xpmdata, maxstrings);
+        wxString msg;
+        msg.Printf(_("The XPM icon data starting on line %d in "), xpmstarted);
+        msg += rulename;
+        msg += _(".rule does not have enough strings.");
+        Warning(msg);
+        *eof = true;
+        return;
+    }
+    
+    // create scaled bitmaps if size(s) not supplied
+    if (!currlayer->icons7x7) {
+        if (currlayer->icons15x15) {
+            // scale down 15x15 bitmaps
+            currlayer->icons7x7 = ScaleIconBitmaps(currlayer->icons15x15, 7);
+        } else if (currlayer->icons31x31) {
+            // scale down 31x31 bitmaps
+            currlayer->icons7x7 = ScaleIconBitmaps(currlayer->icons31x31, 7);
+        }
+    }
+    if (!currlayer->icons15x15) {
+        if (currlayer->icons31x31) {
+            // scale down 31x31 bitmaps
+            currlayer->icons15x15 = ScaleIconBitmaps(currlayer->icons31x31, 15);
+        } else if (currlayer->icons7x7) {
+            // scale up 7x7 bitmaps
+            currlayer->icons15x15 = ScaleIconBitmaps(currlayer->icons7x7, 15);
+        }
+    }
+    if (!currlayer->icons31x31) {
+        if (currlayer->icons15x15) {
+            // scale up 15x15 bitmaps
+            currlayer->icons31x31 = ScaleIconBitmaps(currlayer->icons15x15, 31);
+        } else if (currlayer->icons7x7) {
+            // scale up 7x7 bitmaps
+            currlayer->icons31x31 = ScaleIconBitmaps(currlayer->icons7x7, 31);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void LoadRuleInfo(FILE* rulefile, const wxString& rulename,
+                         bool* loadedcolors, bool* loadedicons)
+{
+    // load any color and/or icon info from currently open .rule file
+    const int MAXLINELEN = 4095;
+    char linebuf[MAXLINELEN + 1];
+    int linenum = 0;
+    bool eof = false;
+    bool skipget = false;
+    
+    *loadedcolors = false;
+    *loadedicons = false;
+
+    // the linereader class handles all line endings (CR, CR+LF, LF)
+    linereader reader(rulefile);
+    
+    while (true) {
+        if (skipget) {
+            // ParseColors/ParseIcons has stopped at next section
+            // (ie. linebuf contains @...) so skip fgets call
+            skipget = false;
+        } else {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            linenum++;
+            if (linenum == 1) CheckRuleHeader(linebuf, rulename);
+        }
+        // look for @COLORS or @ICONS section
+        if (strcmp(linebuf, "@COLORS") == 0) {
+            *loadedcolors = true;
+            ParseColors(reader, linebuf, MAXLINELEN, &linenum, &eof);
+            if (eof) break;
+            // otherwise linebuf contains @... so skip next fgets call
+            skipget = true;
+        } else if (strcmp(linebuf, "@ICONS") == 0) {
+            *loadedicons = true;
+            ParseIcons(rulename, reader, linebuf, MAXLINELEN, &linenum, &eof);
+            if (eof) break;
+            // otherwise linebuf contains @... so skip next fgets call
+            skipget = true;
+        }
+    }
+    
+    reader.close();     // closes rulefile
+}
+
+// -----------------------------------------------------------------------------
+
 static FILE* FindColorFile(const wxString& rule, const wxString& dir)
 {
     const wxString extn = wxT(".colors");
@@ -1893,22 +2194,43 @@ static bool FindIconFile(const wxString& rule, const wxString& dir, wxString& pa
 
 static bool LoadRuleIcons(const wxString& rule, int maxstate)
 {
-    // deallocate current layer's old icons if they exist
-    DeleteIcons(currlayer);
-    
     // if rule.icons file exists in userrules or rulesdir then
     // load icons for current layer
     wxString path;
     return (FindIconFile(rule, userrules, path) ||
             FindIconFile(rule, rulesdir, path)) &&
-    LoadIconFile(path, maxstate, &currlayer->icons7x7,
-                                 &currlayer->icons15x15,
-                                 &currlayer->icons31x31);
+            LoadIconFile(path, maxstate, &currlayer->icons7x7,
+                                         &currlayer->icons15x15,
+                                         &currlayer->icons31x31);
 }
 
 // -----------------------------------------------------------------------------
 
-void SetAverageColor(int state, wxBitmap* icon)
+static void UseDefaultIcons(int maxstate)
+{
+    // icons weren't specified so use default icons
+    if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
+        // use hexagonal icons
+        currlayer->icons7x7 = CopyIcons(hexicons7x7, 7, maxstate);
+        currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
+        currlayer->icons31x31 = CopyIcons(hexicons31x31, 31, maxstate);
+    } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
+        // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
+        currlayer->icons7x7 = CopyIcons(vnicons7x7, 7, maxstate);
+        currlayer->icons15x15 = CopyIcons(vnicons15x15, 15, maxstate);
+        currlayer->icons31x31 = CopyIcons(vnicons31x31, 31, maxstate);
+    } else {
+        // otherwise use default icons from current algo
+        AlgoData* ad = algoinfo[currlayer->algtype];
+        currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
+        currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
+        currlayer->icons31x31 = CopyIcons(ad->icons31x31, 31, maxstate);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void SetAverageColor(int state, wxBitmap* icon)
 {
     // set non-icon color to average color of non-black pixels in given icon
     if (icon) {
@@ -1974,6 +2296,8 @@ void SetAverageColor(int state, wxBitmap* icon)
 void UpdateCurrentColors()
 {
     // set current layer's colors and icons according to current algo and rule
+    bool loadedcolors = false;
+    bool loadedicons = false;
     AlgoData* ad = algoinfo[currlayer->algtype];
     int maxstate = currlayer->algo->NumCellStates() - 1;
     
@@ -2002,60 +2326,57 @@ void UpdateCurrentColors()
     
     // strip off any suffix like ":T100,200" used to specify a bounded grid
     if (rulename.Find(':') >= 0) rulename = rulename.BeforeFirst(':');
+
+    // deallocate current layer's old icons
+    DeleteIcons(currlayer);
     
-    // if rulename.colors file exists then override default colors
-    bool loadedcolors = LoadRuleColors(rulename, maxstate);
-    
-    // if rulename.icons file exists then use those icons
-    if ( !LoadRuleIcons(rulename, maxstate) ) {
-        if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
-            // use hexagonal icons
-            currlayer->icons7x7 = CopyIcons(hexicons7x7, 7, maxstate);
-            currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
-            currlayer->icons31x31 = CopyIcons(hexicons31x31, 31, maxstate);
-        } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
-            // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
-            currlayer->icons7x7 = CopyIcons(vnicons7x7, 7, maxstate);
-            currlayer->icons15x15 = CopyIcons(vnicons15x15, 15, maxstate);
-            currlayer->icons31x31 = CopyIcons(vnicons31x31, 31, maxstate);
-        } else {
-            // otherwise copy default icons from current algo
-            currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
-            currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
-            currlayer->icons31x31 = CopyIcons(ad->icons31x31, 31, maxstate);
-        }
-    }
-    
-    // if rulename.colors file wasn't loaded and icons are multi-color then we
-    // set non-icon colors to the average of the non-black pixels in each icon
-    // (note that we use the 7x7 icons because they are faster to scan)
-    wxBitmap** iconmaps = currlayer->icons7x7;
-    if (!loadedcolors && iconmaps && iconmaps[1] && iconmaps[1]->GetDepth() > 1) {
-        for (int n = 1; n <= maxstate; n++) {
-            SetAverageColor(n, iconmaps[n]);
-        }
-        // if extra 15x15 icon was supplied then use it to set state 0 color
-        iconmaps = currlayer->icons15x15;
-        if (iconmaps && iconmaps[0]) {
-#ifdef __WXMSW__
-            // must use wxNativePixelData for bitmaps with no alpha channel
-            wxNativePixelData icondata(*iconmaps[0]);
-#else
-            wxAlphaPixelData icondata(*iconmaps[0]);
-#endif
-            if (icondata) {
-#ifdef __WXMSW__
-                wxNativePixelData::Iterator iconpxl(icondata);
-#else
-                wxAlphaPixelData::Iterator iconpxl(icondata);
-#endif
-                // iconpxl is the top left pixel
-                currlayer->cellr[0] = iconpxl.Red();
-                currlayer->cellg[0] = iconpxl.Green();
-                currlayer->cellb[0] = iconpxl.Blue();
+    // look for rulename.rule first
+    FILE* rulefile = FindRuleFile(rulename);
+    if (rulefile) {
+        LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
+        // we don't use loadedcolors at the moment, but leave it in for now
+        if (!loadedicons) UseDefaultIcons(maxstate);
+        
+        // note that we don't check if icons are multi-color as we do below
+        // (better if the .rule file sets the appropriate non-icon colors)
+        
+    } else {
+        // no rulename.rule so look for deprecated rulename.colors and/or rulename.icons
+        loadedcolors = LoadRuleColors(rulename, maxstate);
+        loadedicons = LoadRuleIcons(rulename, maxstate);
+        if (!loadedicons) UseDefaultIcons(maxstate);
+            
+        // if rulename.colors wasn't supplied and icons are multi-color then we set
+        // non-icon colors to the average of the non-black pixels in each icon
+        // (note that we use the 7x7 icons because they are faster to scan)
+        wxBitmap** iconmaps = currlayer->icons7x7;
+        if (!loadedcolors && iconmaps && iconmaps[1] && iconmaps[1]->GetDepth() > 1) {
+            for (int n = 1; n <= maxstate; n++) {
+                SetAverageColor(n, iconmaps[n]);
+            }
+            // if extra 15x15 icon was supplied then use it to set state 0 color
+            iconmaps = currlayer->icons15x15;
+            if (iconmaps && iconmaps[0]) {
+                #ifdef __WXMSW__
+                    // must use wxNativePixelData for bitmaps with no alpha channel
+                    wxNativePixelData icondata(*iconmaps[0]);
+                #else
+                    wxAlphaPixelData icondata(*iconmaps[0]);
+                #endif
+                if (icondata) {
+                    #ifdef __WXMSW__
+                        wxNativePixelData::Iterator iconpxl(icondata);
+                    #else
+                        wxAlphaPixelData::Iterator iconpxl(icondata);
+                    #endif
+                    // iconpxl is the top left pixel
+                    currlayer->cellr[0] = iconpxl.Red();
+                    currlayer->cellg[0] = iconpxl.Green();
+                    currlayer->cellb[0] = iconpxl.Blue();
+                }
             }
         }
-    }
+    }    
     
     if (swapcolors) {
         // invert cell colors in current layer
@@ -2388,7 +2709,7 @@ Layer::~Layer()
         // delete tempstart file if it exists
         if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
         
-        // delete any icons
+        // deallocate any icons
         DeleteIcons(this);
     }
 }
