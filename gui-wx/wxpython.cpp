@@ -86,6 +86,7 @@
     #ifdef __UNIX__
         // avoid warning on Linux
         #undef _POSIX_C_SOURCE
+        #undef _XOPEN_SOURCE
     #endif
 
     #ifdef __WXMSW__

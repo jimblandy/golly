@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ruleloaderalgo.h"
 
 #include "util.h"       // for lifegetuserrules, lifegetrulesdir, lifefatal
+
+#include <string.h>     // for strcmp, strchr
 #include <string>       // for std::string
 
 int ruleloaderalgo::NumCellStates()
