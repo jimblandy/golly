@@ -3578,8 +3578,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     hrbox->Add(rulesbutt, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, 0);
     hrbox->Add(rulesbox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LRGAP);
     
-    wxString note = _("Note that Golly looks for .colors/icons/table/tree files\n");
-    note +=         _("in the above folder before looking in the Rules folder.");
+    wxString note = _("Golly looks for .rule files in the above folder before looking in the Rules folder.");
     wxBoxSizer* notebox = new wxBoxSizer(wxHORIZONTAL);
     notebox->Add(new wxStaticText(panel, wxID_STATIC, note));
     
@@ -3601,7 +3600,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     vbox->AddSpacer(GROUPGAP);
     vbox->Add(hrbox, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(15);
-    vbox->Add(notebox, 0, wxALIGN_CENTER, LRGAP);
+    vbox->Add(notebox, 0, wxLEFT, LRGAP);
     
     // init control values;
     // to avoid a wxGTK bug we use SetRange and SetValue rather than specifying

@@ -1798,7 +1798,7 @@ static void CheckRuleHeader(char* linebuf, const wxString& rulename)
         msg += rulename;
         msg += _(".rule does not start with @RULE.");
         Warning(msg);
-    } else if (strcmp(linebuf+6, rulename.c_str()) != 0) {
+    } else if (strcmp(linebuf+6, (const char*)rulename.mb_str(wxConvLocal)) != 0) {
         wxString msg = _("The rule name on the first line in ");
         msg += rulename;
         msg += _(".rule does not match the file name.");
@@ -1884,9 +1884,8 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
 {
     // parse @ICONS section in currently open .rule file
     char** xpmdata = NULL;
-    int xpmstarted = 0;
-    int xpmstrings, maxstrings;
-    int wd, ht, numcolors, chars_per_pixel;
+    int xpmstarted = 0, xpmstrings = 0, maxstrings = 0;
+    int wd = 0, ht = 0, numcolors = 0, chars_per_pixel = 0;
 
     while (true) {
         if (reader.fgets(linebuf, MAXLINELEN) == 0) {
