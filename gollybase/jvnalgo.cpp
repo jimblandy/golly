@@ -270,8 +270,8 @@ static const char* jvn7x7[] = {
 // width height ncolors chars_per_pixel
 "7 217 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "..WWW..",
 ".WWWWW.",
@@ -526,8 +526,8 @@ static const char* jvn15x15[] = {
 // width height ncolors chars_per_pixel
 "15 465 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...............",
 "......WWW......",
@@ -1030,8 +1030,8 @@ static const char* jvn31x31[] = {
 // width height ncolors chars_per_pixel
 "31 961 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...............................",
 "...............................",

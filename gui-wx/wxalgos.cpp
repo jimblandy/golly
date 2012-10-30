@@ -125,44 +125,44 @@ static unsigned char default_colors[] = {
 
 // XPM data for default 7x7 icon
 static const char* default7x7[] = {
-    // width height ncolors chars_per_pixel
-    "7 7 2 1",
-    // colors
-    ". c #000000000000",    // black will be transparent
-    "W c #FFFFFFFFFFFF",    // white
-    // pixels
-    "..WWW..",
-    ".WWWWW.",
-    "WWWWWWW",
-    "WWWWWWW",
-    "WWWWWWW",
-    ".WWWWW.",
-    "..WWW.."
+// width height ncolors chars_per_pixel
+"7 7 2 1",
+// colors
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
+// pixels
+"..WWW..",
+".WWWWW.",
+"WWWWWWW",
+"WWWWWWW",
+"WWWWWWW",
+".WWWWW.",
+"..WWW.."
 };
 
 // XPM data for default 15x15 icon
 static const char* default15x15[] = {
-    // width height ncolors chars_per_pixel
-    "15 15 2 1",
-    // colors
-    ". c #000000000000",    // black will be transparent
-    "W c #FFFFFFFFFFFF",    // white
-    // pixels
-    "...............",
-    "......WWW......",
-    "....WWWWWWW....",
-    "...WWWWWWWWW...",
-    "..WWWWWWWWWWW..",
-    "..WWWWWWWWWWW..",
-    ".WWWWWWWWWWWWW.",
-    ".WWWWWWWWWWWWW.",
-    ".WWWWWWWWWWWWW.",
-    "..WWWWWWWWWWW..",
-    "..WWWWWWWWWWW..",
-    "...WWWWWWWWW...",
-    "....WWWWWWW....",
-    "......WWW......",
-    "..............."
+// width height ncolors chars_per_pixel
+"15 15 2 1",
+// colors
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
+// pixels
+"...............",
+"......WWW......",
+"....WWWWWWW....",
+"...WWWWWWWWW...",
+"..WWWWWWWWWWW..",
+"..WWWWWWWWWWW..",
+".WWWWWWWWWWWWW.",
+".WWWWWWWWWWWWW.",
+".WWWWWWWWWWWWW.",
+"..WWWWWWWWWWW..",
+"..WWWWWWWWWWW..",
+"...WWWWWWWWW...",
+"....WWWWWWW....",
+"......WWW......",
+"..............."
 };
 
 // XPM data for default 31x31 icon
@@ -170,8 +170,8 @@ static const char* default31x31[] = {
 // width height ncolors chars_per_pixel
 "31 31 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...............................",
 "...............................",
@@ -208,51 +208,51 @@ static const char* default31x31[] = {
 
 // XPM data for the 7x7 icon used for hexagonal CA
 static const char* hex7x7[] = {
-    // width height ncolors chars_per_pixel
-    "7 7 2 1",
-    // colors
-    ". c #000000000000",    // black will be transparent
-    "W c #FFFFFFFFFFFF",    // white
-    // pixels
-    ".WW....",
-    "WWWWW..",
-    "WWWWWW.",
-    ".WWWWW.",
-    ".WWWWWW",
-    "..WWWWW",
-    "....WW."};
+// width height ncolors chars_per_pixel
+"7 7 2 1",
+// colors
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
+// pixels
+".WW....",
+"WWWWW..",
+"WWWWWW.",
+".WWWWW.",
+".WWWWWW",
+"..WWWWW",
+"....WW."};
 
 // XPM data for the 15x15 icon used for hexagonal CA
 static const char* hex15x15[] = {
-    // width height ncolors chars_per_pixel
-    "15 15 2 1",
-    // colors
-    "W c #FFFFFFFFFFFF",
-    ". c #000000000000",    // black will be transparent
-    // pixels
-    "...WW..........",
-    "..WWWWW........",
-    ".WWWWWWWW......",
-    "WWWWWWWWWWW....",
-    "WWWWWWWWWWWW...",
-    ".WWWWWWWWWWW...",
-    ".WWWWWWWWWWWW..",
-    "..WWWWWWWWWWW..",
-    "..WWWWWWWWWWWW.",
-    "...WWWWWWWWWWW.",
-    "...WWWWWWWWWWWW",
-    "....WWWWWWWWWWW",
-    "......WWWWWWWW.",
-    "........WWWWW..",
-    "..........WW..."};
+// width height ncolors chars_per_pixel
+"15 15 2 1",
+// colors
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
+// pixels
+"...WW..........",
+"..WWWWW........",
+".WWWWWWWW......",
+"WWWWWWWWWWW....",
+"WWWWWWWWWWWW...",
+".WWWWWWWWWWW...",
+".WWWWWWWWWWWW..",
+"..WWWWWWWWWWW..",
+"..WWWWWWWWWWWW.",
+"...WWWWWWWWWWW.",
+"...WWWWWWWWWWWW",
+"....WWWWWWWWWWW",
+"......WWWWWWWW.",
+"........WWWWW..",
+"..........WW..."};
 
 // XPM data for 31x31 icon used for hexagonal CA
 static const char* hex31x31[] = {
 // width height ncolors chars_per_pixel
 "31 31 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 ".....WW........................",
 "....WWWWW......................",
@@ -289,44 +289,44 @@ static const char* hex31x31[] = {
 
 // XPM data for the 7x7 icon used for von Neumann CA
 static const char* vn7x7[] = {
-    // width height ncolors chars_per_pixel
-    "7 7 2 1",
-    // colors
-    ". c #000000000000",    // black will be transparent
-    "W c #FFFFFFFFFFFF",    // white
-    // pixels
-    "...W...",
-    "..WWW..",
-    ".WWWWW.",
-    "WWWWWWW",
-    ".WWWWW.",
-    "..WWW..",
-    "...W..."
+// width height ncolors chars_per_pixel
+"7 7 2 1",
+// colors
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
+// pixels
+"...W...",
+"..WWW..",
+".WWWWW.",
+"WWWWWWW",
+".WWWWW.",
+"..WWW..",
+"...W..."
 };
 
 // XPM data for the 15x15 icon used for von Neumann CA
 static const char* vn15x15[] = {
-    // width height ncolors chars_per_pixel
-    "15 15 2 1",
-    // colors
-    ". c #000000000000",    // black will be transparent
-    "W c #FFFFFFFFFFFF",    // white
-    // pixels
-    "...............",
-    ".......W.......",
-    "......WWW......",
-    ".....WWWWW.....",
-    "....WWWWWWW....",
-    "...WWWWWWWWW...",
-    "..WWWWWWWWWWW..",
-    ".WWWWWWWWWWWWW.",
-    "..WWWWWWWWWWW..",
-    "...WWWWWWWWW...",
-    "....WWWWWWW....",
-    ".....WWWWW.....",
-    "......WWW......",
-    ".......W.......",
-    "..............."
+// width height ncolors chars_per_pixel
+"15 15 2 1",
+// colors
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
+// pixels
+"...............",
+".......W.......",
+"......WWW......",
+".....WWWWW.....",
+"....WWWWWWW....",
+"...WWWWWWWWW...",
+"..WWWWWWWWWWW..",
+".WWWWWWWWWWWWW.",
+"..WWWWWWWWWWW..",
+"...WWWWWWWWW...",
+"....WWWWWWW....",
+".....WWWWW.....",
+"......WWW......",
+".......W.......",
+"..............."
 };
 
 // XPM data for 31x31 icon used for von Neumann CA
@@ -334,8 +334,8 @@ static const char* vn31x31[] = {
 // width height ncolors chars_per_pixel
 "31 31 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...............................",
 "...............................",

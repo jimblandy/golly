@@ -41,8 +41,6 @@ var n={0,2,3}
 3,i,j,k,l,1,m,n,1,1
 3,i,j,k,1,l,m,n,1,1
 
-# following sections are optional and can be in any order:
-
 @NAMES
 
 # these state names are not yet used by Golly
@@ -55,22 +53,21 @@ var n={0,2,3}
 
 # same colors used at http://www.quinapalus.com/wi-index.html
 
-0  48  48  48     dark gray
-1   0 128 255     light blue
-2 255 255 255     white
-3 255 128   0     orange
+0  48  48  48   dark gray
+1   0 128 255   light blue
+2 255 255 255   white
+3 255 128   0   orange
 
 @ICONS
 
-# icon info is in XPM format (order is not important and any missing sizes
-# will be created by scaling a supplied size)
+# icon info is in XPM format (order is not important)
 
 XPM
-/* width height ncolors chars_per_pixel */
+/* width height num_colors chars_per_pixel */
 "7 7 2 1"
 /* colors */
-". c #000000000000"
-"A c #FFFFFFFFFFFF"
+". c #000000"
+"A c #FFFFFF"
 /* pixels */
 "......."
 "..AAA.."
@@ -81,11 +78,11 @@ XPM
 "......."
 
 XPM
-/* width height ncolors chars_per_pixel */
+/* width height num_colors chars_per_pixel */
 "15 15 2 1"
 /* colors */
-". c #000000000000"
-"A c #FFFFFFFFFFFF"
+". c #000000"
+"A c #FFFFFF"
 /* pixels */
 "..............."
 "......AAA......"
@@ -104,12 +101,12 @@ XPM
 "..............."
 
 XPM
-# width height ncolors chars_per_pixel
+/* width height num_colors chars_per_pixel */
 "31 31 2 1"
-# colors
-". c #000000000000"
-"A c #FFFFFFFFFFFF"
-# pixels
+/* colors */
+". c #000000"
+"A c #FFFFFF"
+/* pixels */
 "..............................."
 "..............................."
 "............AAAAAAA............"
