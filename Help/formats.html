@@ -43,10 +43,9 @@ Golly uses this format for internal cuts and pastes, which makes it
 very convenient to move cell configurations to and from text files.
 For instance, the r-pentomino is represented as
 
-<p>
-<dd><tt>x = 3, y = 3, rule = B3/S23</tt></dd>
-<dd><tt>b2o$2o$bo!</tt></dd>
-</p>
+<dd><table border=0><pre>
+x = 3, y = 3, rule = B3/S23
+b2o$2o$bo!</pre></table></dd>
 
 <p>
 I just drew this pattern in Golly, selected the whole thing,
@@ -111,9 +110,8 @@ The keywords currently supported are "Pos", which denotes the absolute
 position of the upper left cell (which may be on or off),
 and "Gen", which denotes the generation count.  For instance,
 
-<p>
-<dd><tt>#CXRLE Pos=0,-1377 Gen=3480106827776</tt></dd>
-</p>
+<dd><table border=0><pre>
+#CXRLE Pos=0,-1377 Gen=3480106827776</pre></table></dd>
 
 <p>
 indicates that the upper left corner of the enclosing rectange is at
@@ -151,8 +149,8 @@ comments associated with this file.  The format identifier is a
 line that starts with "[M2]" and contains the name and version of
 the program used to write it:
 
-<p>
-<dd><tt>[M2] (golly 2.0)</tt></dd>
+<dd><table border=0><pre>
+[M2] (golly 2.0)</pre></table></dd>
 
 <p>
 Following this is any comment lines, which are lines that begin with
@@ -174,8 +172,8 @@ representing leaf nodes for two-state algorithms are recognized
 because they start with ".", "*", or "$".  A sample leaf node
 containing a glider is:
 
-<p>
-<dd><tt>$$..*$...*$.***$$$$</tt></dd>
+<dd><table border=0><pre>
+$$..*$...*$.***$$$$</pre></table></dd>
 
 <p>
 For algorithms with more than two states, leaf nodes represent a
@@ -290,16 +288,15 @@ A detailed specification of the table format is available
 <a href="http://code.google.com/p/ruletablerepository/wiki/TheFormat">here</a>.
 Here's a simple example:
 
-<p>
-<dd><tt># Signals (2/3) pass alongside a wire (1):</tt></dd>
-<dd><tt>n_states:4</tt></dd>
-<dd><tt>neighborhood:vonNeumann</tt></dd>
-<dd><tt>symmetries:rotate4</tt></dd>
-<dd><tt>var a={2,3}</tt></dd>
-<dd><tt>var b={2,3}</tt></dd>
-<dd><tt>var c={2,3}</tt></dd>
-<dd><tt>a,0,b,1,c,b</tt></dd>
-</p>
+<dd><table border=0><pre>
+# Signals (2/3) pass alongside a wire (1):
+n_states:4
+neighborhood:vonNeumann
+symmetries:rotate4
+var a={2,3}
+var b={2,3}
+var c={2,3}
+a,0,b,1,c,b</pre></table></dd>
 
 <p>
 Empty lines and anything following the hash symbol "#" are ignored.
