@@ -11,6 +11,13 @@
      extension and contains all the information about the rule: its name, description,
      table/tree data, and any color/icon information.  More details
      <a href="formats.html#rule">here</a>.
+<li> A new script called
+     <a href="open:Scripts/Python/Rule-Generators/rule-converter.py">rule-converter.py</a>
+     can create .rule files using the .table/tree/colors/icons files in your rules folder.
+     The latter files can be deleted after the script has finished, but create a backup
+     copy of your rules folder first, just to be safe!  Note that the script requires the
+     <a href="http://www.pythonware.com/products/pil/">Python Imaging Library</a>
+     to convert a .icons file into the XPM format used inside a .rule file.
 <li> The RuleTable and RuleTree algorithms have been replaced by a new algorithm
      called RuleLoader.  If asked to load a rule called "Foo", RuleLoader will look
      for Foo.rule first, then Foo.table, then Foo.tree.
@@ -66,7 +73,7 @@
      <a href="open:Patterns/Margolus/TripATron.rle">TripATron.rle</a>,
      <a href="open:Patterns/Margolus/TripATron_BlockAligned.rle">TripATron_BlockAligned.rle</a>.
 <li> Scripts that create table/tree files have been moved into Scripts/Python/Rule-Generators.
-<li> <a href="open:Scripts/Python/Rule-Generators/Langtons-Ant-gen.py">Langtons-Ant-gen.py</a> 
+<li> <a href="open:Scripts/Python/Rule-Generators/Langtons-Ant-gen.py">Langtons-Ant-gen.py</a>
      now accepts turns 'U' and 'N' (U-turn and no-turn) as well as 'L' and 'R'.
 <li> The hash() command uses a better hash function in a two-state universe.
 <li> Pattern rendering is faster at scales 1:16 and 1:8, especially in the Linux app.
