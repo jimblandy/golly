@@ -1,0 +1,282 @@
+@RULE Evoloop-finite
+
+@TABLE
+
+# a mod of Evoloop, using state 9 as the background
+# rules: 132
+n_states:10
+neighborhood:vonNeumann
+symmetries:rotate4
+var a={9,2,5}
+var b={9,1,2,3,4,5,6,7}
+var c={9,1,2,3,4,5,6,7}
+var d={1,4,6,7}
+var e={1,4}
+var f={9,1}
+var g={9,1,2,3,4,5,6,7,8}
+var h={9,1,2,3,4,5,6,7,8}
+var i={2,3,4,5,6,7}
+var j={9,2,3,5}
+var k={9,2,3,4,5,6,7}
+var l={4,6,7}
+var m={2,5}
+var n={9,1,8}
+var o={9,3,5}
+var p={2,3,5}
+var q={3,5}
+var r={2,4,6,7}
+var s={9,1}
+var t={9,1}
+var u={9,1,2,3,4,7}
+var v={5,6}
+var w={1,6,7}
+var x={9,3,5}
+var y={9,3,5}
+var z={1,3,5}
+var A={9,1,3,5}
+var B={9,1,3,5}
+var C={1,3,5}
+var D={1,3,5}
+var E={9,1,2,3,4,5}
+var F={9,1,2,4,5}
+var G={1,2,4}
+var H={9,1,3,4,5,6}
+var I={9,1,2,3,4,5,6}
+var J={1,2,4,6}
+var K={9,1,2,4,5,6,7}
+var L={9,1,2,3,4,5,7}
+var M={1,2,4,6,7}
+var N={9,3}
+var O={9,1,2,3,5}
+var P={9,1,2,3,4}
+var Q={9,2,3,5,6}
+var R={9,1,3,4,5,6,7}
+var S={1,3}
+var T={1,2,3,5}
+var U={9,1,3,4,5}
+var V={9,1,4,5,6}
+var W={1,4,6}
+var X={2,3,5}
+var Y={9,5}
+var Z={1,2}
+var aa={9,1,5}
+var ab={9,2}
+var ac={2,3,4,5}
+var ad={2,3,4,5,6}
+var ae={9,3}
+var af={9,3}
+var ag={3,7}
+var ah={2,8}
+var ai={9,2,8}
+var aj={9,8}
+var ak={9,2,8}
+var al={6,8}
+var am={9,1,4,5,6,7}
+var an={9,1,4,5,6,7}
+var ao={1,4,6,7}
+var ap={1,3,4,5,6,7}
+var aq={2,3,5,8}
+var ar={9,1,2,3,4,5,6,7,8}
+var as={9,1,4,6,7}
+var at={1,5,6}
+var au={4,7}
+var av={1,3,4,5,7}
+var aw={9,4,5,7}
+var ax={1,4,5,6,7}
+var ay={9,4,5,7}
+var az={1,4,5,6,7}
+var aA={9,1,3,5,6,7}
+var aB={1,2,3,4,5,7}
+var aC={9,1,4,7}
+var aD={2,4,6,7,8}
+var aE={3,5,6}
+var aF={2,3,5,6}
+var aG={2,3,5,6}
+var aH={2,3}
+var aI={9,1,3,4,7}
+var aJ={2,5,6,7}
+var aK={1,2,3,4,6,7}
+var aL={1,3,4,7}
+var aM={9,2,3}
+var aN={1,2,4,7}
+var aO={3,6}
+var aP={1,2,3,4,7}
+var aQ={3,4,7}
+var aR={1,2,3,4,5,6,7}
+var aS={3,4,6,7,8}
+var aT={9,3,6}
+var aU={3,4,5,7}
+var aV={2,3,6}
+var aW={1,2,3,4,5,6,7}
+var aX={9,8}
+var aY={9,8}
+var aZ={4,5,6,7}
+var ba={4,6,7,8}
+var bb={1,2,4,6,7}
+var bc={4,5}
+var bd={4,7,8}
+var be={9,1,4,5,7}
+var bf={4,5,7}
+var bg={1,2,4,5,7}
+var bh={1,2,4,5,7}
+var bi={9,1,2,3,4,6,7}
+var bj={2,5,6}
+var bk={1,3,4,6,7}
+var bl={9,4,6,7}
+var bm={6,7,8}
+var bn={1,3,4,5,6,7}
+var bo={1,4,7}
+var bp={2,3,5,6}
+var bq={2,3,5,6}
+var br={9,1,2,3,4,5,6,7}
+var bs={9,1,2,3,4,5,6,7}
+9,a,9,9,1,2
+9,9,9,9,4,3
+9,b,c,1,d,1
+9,9,9,2,e,2
+f,g,h,i,8,8
+9,j,k,l,1,1
+9,9,9,4,m,2
+9,9,9,7,5,2
+f,b,n,8,i,8
+9,o,1,j,d,1
+9,9,1,9,2,2
+9,o,1,2,p,1
+9,j,1,q,r,1
+f,s,i,t,8,8
+9,u,2,1,p,1
+9,9,r,p,1,1
+9,9,2,3,2,2
+9,9,q,1,2,1
+9,o,q,2,1,1
+9,1,2,v,2,6
+w,o,x,y,k,8
+z,A,B,C,D,8
+1,E,F,G,4,4
+1,H,I,J,6,6
+1,K,L,M,7,7
+1,N,A,j,p,8
+1,O,P,4,G,4
+1,Q,I,6,J,6
+1,b,R,7,M,7
+1,N,S,f,T,8
+1,O,e,o,4,4
+1,U,J,o,6,6
+1,V,M,I,7,7
+1,I,W,7,3,7
+1,o,2,N,4,4
+S,j,p,O,5,8
+C,j,p,2,X,8
+1,9,2,3,2,4
+1,f,2,5,2,7
+1,f,2,5,4,3
+1,f,2,7,3,5
+1,Y,3,Z,4,4
+C,aa,q,ab,D,8
+1,o,5,4,Z,4
+1,f,6,2,4,4
+1,o,7,3,M,7
+C,f,2,X,q,8
+1,e,ac,6,2,6
+C,f,A,5,ab,8
+1,1,4,3,3,4
+1,X,2,5,4,4
+1,ad,2,7,3,7
+1,2,4,3,3,3
+1,2,6,2,7,6
+X,9,9,9,9,8
+2,N,ae,af,ag,1
+ah,ai,aj,ak,al,9
+X,am,an,d,ao,8
+2,b,R,ap,3,1
+aq,g,h,ar,8,9
+2,as,ab,3,ap,1
+2,9,9,3,2,4
+2,9,9,4,2,3
+X,am,an,v,at,8
+2,ab,9,5,au,5
+2,9,9,8,av,9
+X,aw,ax,ay,az,8
+2,aA,ap,ab,3,1
+2,9,aB,9,8,9
+2,aC,2,9,6,5
+2,9,2,9,7,3
+2,am,2,ax,3,1
+2,aC,2,3,2,3
+2,9,2,5,2,5
+aD,9,2,6,Y,9
+2,9,3,2,ax,1
+2,ab,3,aE,2,1
+2,2,aF,aG,3,1
+2,2,3,4,5,1
+3,9,9,9,aH,2
+3,R,k,b,v,8
+3,9,9,9,7,4
+3,aI,R,aJ,aK,8
+3,9,9,3,2,2
+3,u,U,aL,ao,8
+3,9,9,4,2,1
+3,aM,b,aN,aO,8
+3,9,1,9,2,1
+3,f,aP,s,aQ,8
+q,R,ax,aR,aK,8
+aS,9,1,2,5,9
+3,9,2,aT,2,8
+3,aC,2,5,2,1
+3,9,3,3,2,1
+aU,ap,aR,aV,aW,8
+4,aj,aX,aY,ai,1
+aZ,o,x,y,ap,8
+ba,9,am,M,bb,9
+l,ar,g,h,8,1
+4,o,x,2,q,8
+bc,9,o,q,2,8
+4,9,9,8,ap,1
+ba,9,ao,o,M,9
+4,9,ap,9,8,1
+ba,9,M,bb,ap,9
+bd,9,2,be,M,9
+4,9,2,9,q,8
+ba,9,2,C,ao,9
+4,9,2,aH,2,1
+au,9,2,6,2,6
+ba,9,3,ao,M,9
+ba,9,3,2,ao,9
+4,9,3,2,2,1
+bf,bg,bh,aR,aW,8
+5,b,bi,aF,bj,8
+5,9,9,2,3,2
+5,aI,bk,bl,bi,8
+5,9,1,2,1,8
+5,9,2,9,m,2
+5,9,2,1,5,2
+5,9,2,au,5,8
+5,9,3,1,2,9
+6,9,2,aC,2,2
+al,9,2,aF,2,9
+bm,9,3,2,2,9
+6,ap,bn,aR,aW,8
+6,ap,2,bn,2,8
+al,bo,2,2,2,9
+6,aF,aG,bp,bq,8
+7,9,2,2,2,1
+7,9,2,3,2,9
+8,b,c,br,bs,9
+
+@COLORS
+
+# colors from
+# http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+# Color.black,Color.blue,Color.red,Color.green,
+# Color.yellow,Color.magenta,Color.white,Color.cyan,Color.orange
+1    0    0  255
+2  255    0    0
+3    0  255    0
+4  255  255    0
+5  255    0  255
+6  255  255  255
+7    0  255  255
+8  255  128    0
+
+# this is the background state for Evoloop-finite
+9    0    0    0

@@ -1,0 +1,270 @@
+@RULE Langtons-Ant
+
+@TREE
+
+num_states=10
+num_neighbors=4
+num_nodes=17
+1 0 1 1 1 1 1 0 0 0 0
+1 2 6 6 6 6 6 2 2 2 2
+2 0 0 0 0 0 1 0 1 0 0
+1 5 9 9 9 9 9 5 5 5 5
+2 3 3 3 3 3 0 3 0 3 3
+3 2 2 2 2 4 2 4 2 2 2
+1 3 7 7 7 7 7 3 3 3 3
+2 6 6 6 6 6 0 6 0 6 6
+2 0 0 0 0 0 0 0 0 0 0
+3 7 7 7 7 8 7 8 7 7 7
+4 5 5 9 5 5 5 5 5 9 5
+1 4 8 8 8 8 8 4 4 4 4
+2 11 11 11 11 11 0 11 0 11 11
+3 12 12 12 12 8 12 8 12 12 12
+3 8 8 8 8 8 8 8 8 8 8
+4 13 13 14 13 13 13 13 13 14 13
+5 10 10 10 15 10 10 10 10 10 15
+
+@COLORS
+
+0 255 255 255
+1 0 0 0
+2 0 0 0
+3 0 0 0
+4 0 0 0
+5 0 0 0
+6 0 0 0
+7 0 0 0
+8 0 0 0
+9 0 0 0
+
+
+@ICONS
+
+XPM
+/* width height num_colors chars_per_pixel */
+"15 135 2 1"
+/* colors */
+"A c #FFFFFF"
+". c #000000"
+/* icon for state 1 */
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+/* icon for state 2 */
+"....A.....A...."
+".....A...A....."
+"......AAA......"
+"...A..AAA..A..."
+"....A..A..A...."
+".....AAAAA....."
+".......A......."
+"....AAAAAAA...."
+"...A...A...A..."
+".....AAAAA....."
+"....A..A..A...."
+"...A..AAA..A..."
+"......AAA......"
+"......AAA......"
+"..............."
+/* icon for state 3 */
+"..............."
+"..............."
+"..............."
+"...A..A....A..."
+"....A..A..A...A"
+".....A.A.A...A."
+".AAA.A.A.A.AA.."
+".AAAAAAAAAAAA.."
+".AAA.A.A.A.AA.."
+".....A.A.A...A."
+"....A..A..A...A"
+"...A..A....A..."
+"..............."
+"..............."
+"..............."
+/* icon for state 4 */
+"..............."
+"......AAA......"
+"......AAA......"
+"...A..AAA..A..."
+"....A..A..A...."
+".....AAAAA....."
+"...A...A...A..."
+"....AAAAAAA...."
+".......A......."
+".....AAAAA....."
+"....A..A..A...."
+"...A..AAA..A..."
+"......AAA......"
+".....A...A....."
+"....A.....A...."
+/* icon for state 5 */
+"..............."
+"..............."
+"..............."
+"...A....A..A..."
+"A...A..A..A...."
+".A...A.A.A....."
+"..AA.A.A.A.AAA."
+"..AAAAAAAAAAAA."
+"..AA.A.A.A.AAA."
+".A...A.A.A....."
+"A...A..A..A...."
+"...A....A..A..."
+"..............."
+"..............."
+"..............."
+/* icon for state 6 */
+"AAAA.AAAAA.AAAA"
+"AAAAA.AAA.AAAAA"
+"AAAAAA...AAAAAA"
+"AAA.AA...AA.AAA"
+"AAAA.AA.AA.AAAA"
+"AAAAA.....AAAAA"
+"AAAAAAA.AAAAAAA"
+"AAAA.......AAAA"
+"AAA.AAA.AAA.AAA"
+"AAAAA.....AAAAA"
+"AAAA.AA.AA.AAAA"
+"AAA.AA...AA.AAA"
+"AAAAAA...AAAAAA"
+"AAAAAA...AAAAAA"
+"AAAAAAAAAAAAAAA"
+/* icon for state 7 */
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAA.AA.AAAA.AAA"
+"AAAA.AA.AA.AAA."
+"AAAAA.A.A.AAA.A"
+"A...A.A.A.A..AA"
+"A............AA"
+"A...A.A.A.A..AA"
+"AAAAA.A.A.AAA.A"
+"AAAA.AA.AA.AAA."
+"AAA.AA.AAAA.AAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+/* icon for state 8 */
+"AAAAAAAAAAAAAAA"
+"AAAAAA...AAAAAA"
+"AAAAAA...AAAAAA"
+"AAA.AA...AA.AAA"
+"AAAA.AA.AA.AAAA"
+"AAAAA.....AAAAA"
+"AAA.AAA.AAA.AAA"
+"AAAA.......AAAA"
+"AAAAAAA.AAAAAAA"
+"AAAAA.....AAAAA"
+"AAAA.AA.AA.AAAA"
+"AAA.AA...AA.AAA"
+"AAAAAA...AAAAAA"
+"AAAAA.AAA.AAAAA"
+"AAAA.AAAAA.AAAA"
+/* icon for state 9 */
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAA.AAAA.AA.AAA"
+".AAA.AA.AA.AAAA"
+"A.AAA.A.A.AAAAA"
+"AA..A.A.A.A...A"
+"AA............A"
+"AA..A.A.A.A...A"
+"A.AAA.A.A.AAAAA"
+".AAA.AA.AA.AAAA"
+"AAA.AAAA.AA.AAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAA"
+
+XPM
+/* width height num_colors chars_per_pixel */
+"7 63 2 1"
+/* colors */
+"A c #FFFFFF"
+". c #000000"
+/* icon for state 1 */
+"AAAAAAA"
+"AAAAAAA"
+"AAAAAAA"
+"AAAAAAA"
+"AAAAAAA"
+"AAAAAAA"
+"AAAAAAA"
+/* icon for state 2 */
+".A...A."
+"..AAA.."
+"...A..."
+".AAAAA."
+"...A..."
+".AAAAA."
+"...A..."
+/* icon for state 3 */
+"......."
+".A.A..A"
+".A.A.A."
+"AAAAAA."
+".A.A.A."
+".A.A..A"
+"......."
+/* icon for state 4 */
+"...A..."
+".AAAAA."
+"...A..."
+".AAAAA."
+"...A..."
+"..AAA.."
+".A...A."
+/* icon for state 5 */
+"......."
+"A..A.A."
+".A.A.A."
+".AAAAAA"
+".A.A.A."
+"A..A.A."
+"......."
+/* icon for state 6 */
+"A.AAA.A"
+"AA...AA"
+"AAA.AAA"
+"A.....A"
+"AAA.AAA"
+"A.....A"
+"AAA.AAA"
+/* icon for state 7 */
+"AAAAAAA"
+"A.A.AA."
+"A.A.A.A"
+"......A"
+"A.A.A.A"
+"A.A.AA."
+"AAAAAAA"
+/* icon for state 8 */
+"AAA.AAA"
+"A.....A"
+"AAA.AAA"
+"A.....A"
+"AAA.AAA"
+"AA...AA"
+"A.AAA.A"
+/* icon for state 9 */
+"AAAAAAA"
+".AA.A.A"
+"A.A.A.A"
+"A......"
+"A.A.A.A"
+".AA.A.A"
+"AAAAAAA"

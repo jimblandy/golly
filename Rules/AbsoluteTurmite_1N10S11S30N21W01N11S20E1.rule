@@ -1,0 +1,323 @@
+@RULE AbsoluteTurmite_1N10S11S30N21W01N11S20E1
+
+@TREE
+
+num_states=10
+num_neighbors=4
+num_nodes=21
+1 0 1 1 1 1 1 0 0 1 0
+1 3 7 7 7 7 7 3 3 7 3
+1 4 8 8 8 8 8 4 4 8 4
+2 0 0 1 0 0 0 0 2 1 0
+1 2 6 6 6 6 6 2 2 6 2
+2 4 4 0 4 4 4 4 0 0 4
+3 3 3 3 3 5 3 3 3 3 3
+2 1 1 0 1 1 1 1 0 0 1
+2 0 0 0 0 0 0 0 0 0 0
+3 7 7 7 7 8 7 7 7 7 7
+4 6 6 6 6 6 6 6 6 6 9
+1 5 9 9 9 9 9 5 5 9 5
+2 11 11 0 11 11 11 11 0 0 11
+3 12 12 12 12 8 12 12 12 12 12
+3 8 8 8 8 8 8 8 8 8 8
+4 13 13 13 13 13 13 13 13 13 14
+2 2 2 0 2 2 2 2 0 0 2
+3 16 16 16 16 8 16 16 16 16 16
+4 17 17 17 17 17 17 17 17 17 14
+4 9 9 9 9 9 9 9 9 9 14
+5 10 10 10 15 10 18 19 10 10 10
+
+@COLORS
+
+0 0 0 0
+1 0 155 67
+2 117 6 229
+3 118 118 118
+4 168 167 90
+5 6 93 229
+6 63 83 158
+7 63 143 98
+8 90 169 83
+9 3 130 158
+
+@ICONS
+
+XPM
+/* width height num_colors chars_per_pixel */
+"15 150 15 1"
+/* colors */
+"A c #FFFFFF"
+"B c #00327F"
+"C c #0064FF"
+"D c #5CA951"
+"E c #408D61"
+"F c #3F4DA1"
+"G c #009B43"
+"H c #B9B860"
+"I c #808080"
+"J c #7F00FF"
+"K c #5C5C30"
+"L c #404040"
+"M c #3F007F"
+"N c #007FA1"
+". c #000000"
+/* icon for state 1 */
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+"GGGGGGGGGGGGGGG"
+/* icon for state 2 */
+"..............."
+"......MMM......"
+"....MJJJJJM...."
+"...MJJJJJJJM..."
+"..MJJAJJJJJJM.."
+"..JJAJJJJJJJJ.."
+".MJJAJJJJJJJJM."
+".MJJJJJJJJJJJM."
+".MJJJJJJJJJJJM."
+"..JJJJJJJJJJJ.."
+"..MJJJJJJJJJM.."
+"...MJJJJJJJM..."
+"....MJJJJJM...."
+"......MMM......"
+"..............."
+/* icon for state 3 */
+"..............."
+"......LLL......"
+"....LIIIIIL...."
+"...LIIIIIIIL..."
+"..LIIAIIIIIIL.."
+"..IIAIIIIIIII.."
+".LIIAIIIIIIIIL."
+".LIIIIIIIIIIIL."
+".LIIIIIIIIIIIL."
+"..IIIIIIIIIII.."
+"..LIIIIIIIIIL.."
+"...LIIIIIIIL..."
+"....LIIIIIL...."
+"......LLL......"
+"..............."
+/* icon for state 4 */
+"..............."
+"......KKK......"
+"....KHHHHHK...."
+"...KHHHHHHHK..."
+"..KHHAHHHHHHK.."
+"..HHAHHHHHHHH.."
+".KHHAHHHHHHHHK."
+".KHHHHHHHHHHHK."
+".KHHHHHHHHHHHK."
+"..HHHHHHHHHHH.."
+"..KHHHHHHHHHK.."
+"...KHHHHHHHK..."
+"....KHHHHHK...."
+"......KKK......"
+"..............."
+/* icon for state 5 */
+"..............."
+"......BBB......"
+"....BCCCCCB...."
+"...BCCCCCCCB..."
+"..BCCACCCCCCB.."
+"..CCACCCCCCCC.."
+".BCCACCCCCCCCB."
+".BCCCCCCCCCCCB."
+".BCCCCCCCCCCCB."
+"..CCCCCCCCCCC.."
+"..BCCCCCCCCCB.."
+"...BCCCCCCCB..."
+"....BCCCCCB...."
+"......BBB......"
+"..............."
+/* icon for state 6 */
+"GGGGGGGGGGGGGGG"
+"GGGGGGFFFGGGGGG"
+"GGGGFJJJJJFGGGG"
+"GGGFJJJJJJJFGGG"
+"GGFJJAJJJJJJFGG"
+"GGJJAJJJJJJJJGG"
+"GFJJAJJJJJJJJFG"
+"GFJJJJJJJJJJJFG"
+"GFJJJJJJJJJJJFG"
+"GGJJJJJJJJJJJGG"
+"GGFJJJJJJJJJFGG"
+"GGGFJJJJJJJFGGG"
+"GGGGFJJJJJFGGGG"
+"GGGGGGFFFGGGGGG"
+"GGGGGGGGGGGGGGG"
+/* icon for state 7 */
+"GGGGGGGGGGGGGGG"
+"GGGGGGEEEGGGGGG"
+"GGGGEIIIIIEGGGG"
+"GGGEIIIIIIIEGGG"
+"GGEIIAIIIIIIEGG"
+"GGIIAIIIIIIIIGG"
+"GEIIAIIIIIIIIEG"
+"GEIIIIIIIIIIIEG"
+"GEIIIIIIIIIIIEG"
+"GGIIIIIIIIIIIGG"
+"GGEIIIIIIIIIEGG"
+"GGGEIIIIIIIEGGG"
+"GGGGEIIIIIEGGGG"
+"GGGGGGEEEGGGGGG"
+"GGGGGGGGGGGGGGG"
+/* icon for state 8 */
+"GGGGGGGGGGGGGGG"
+"GGGGGGDDDGGGGGG"
+"GGGGDHHHHHDGGGG"
+"GGGDHHHHHHHDGGG"
+"GGDHHAHHHHHHDGG"
+"GGHHAHHHHHHHHGG"
+"GDHHAHHHHHHHHDG"
+"GDHHHHHHHHHHHDG"
+"GDHHHHHHHHHHHDG"
+"GGHHHHHHHHHHHGG"
+"GGDHHHHHHHHHDGG"
+"GGGDHHHHHHHDGGG"
+"GGGGDHHHHHDGGGG"
+"GGGGGGDDDGGGGGG"
+"GGGGGGGGGGGGGGG"
+/* icon for state 9 */
+"GGGGGGGGGGGGGGG"
+"GGGGGGNNNGGGGGG"
+"GGGGNCCCCCNGGGG"
+"GGGNCCCCCCCNGGG"
+"GGNCCACCCCCCNGG"
+"GGCCACCCCCCCCGG"
+"GNCCACCCCCCCCNG"
+"GNCCCCCCCCCCCNG"
+"GNCCCCCCCCCCCNG"
+"GGCCCCCCCCCCCGG"
+"GGNCCCCCCCCCNGG"
+"GGGNCCCCCCCNGGG"
+"GGGGNCCCCCNGGGG"
+"GGGGGGNNNGGGGGG"
+"GGGGGGGGGGGGGGG"
+/* icon for state 10 */
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+"..............."
+
+XPM
+/* width height num_colors chars_per_pixel */
+"7 70 15 1"
+/* colors */
+"A c #FFFFFF"
+"B c #00327F"
+"C c #0064FF"
+"D c #5CA951"
+"E c #408D61"
+"F c #3F4DA1"
+"G c #009B43"
+"H c #B9B860"
+"I c #808080"
+"J c #7F00FF"
+"K c #5C5C30"
+"L c #404040"
+"M c #3F007F"
+"N c #007FA1"
+". c #000000"
+/* icon for state 1 */
+"GGGGGGG"
+"GGGGGGG"
+"GGGGGGG"
+"GGGGGGG"
+"GGGGGGG"
+"GGGGGGG"
+"GGGGGGG"
+/* icon for state 2 */
+"..MMM.."
+".MJJJM."
+"MJAJJJM"
+"MJJJJJM"
+"MJJJJJM"
+".MJJJM."
+"..MMM.."
+/* icon for state 3 */
+"..LLL.."
+".LIIIL."
+"LIAIIIL"
+"LIIIIIL"
+"LIIIIIL"
+".LIIIL."
+"..LLL.."
+/* icon for state 4 */
+"..KKK.."
+".KHHHK."
+"KHAHHHK"
+"KHHHHHK"
+"KHHHHHK"
+".KHHHK."
+"..KKK.."
+/* icon for state 5 */
+"..BBB.."
+".BCCCB."
+"BCACCCB"
+"BCCCCCB"
+"BCCCCCB"
+".BCCCB."
+"..BBB.."
+/* icon for state 6 */
+"GGFFFGG"
+"GFJJJFG"
+"FJAJJJF"
+"FJJJJJF"
+"FJJJJJF"
+"GFJJJFG"
+"GGFFFGG"
+/* icon for state 7 */
+"GGEEEGG"
+"GEIIIEG"
+"EIAIIIE"
+"EIIIIIE"
+"EIIIIIE"
+"GEIIIEG"
+"GGEEEGG"
+/* icon for state 8 */
+"GGDDDGG"
+"GDHHHDG"
+"DHAHHHD"
+"DHHHHHD"
+"DHHHHHD"
+"GDHHHDG"
+"GGDDDGG"
+/* icon for state 9 */
+"GGNNNGG"
+"GNCCCNG"
+"NCACCCN"
+"NCCCCCN"
+"NCCCCCN"
+"GNCCCNG"
+"GGNNNGG"
+/* icon for state 10 */
+"......."
+"......."
+"......."
+"......."
+"......."
+"......."
+"......."
