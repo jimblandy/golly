@@ -553,8 +553,8 @@ bool MainFrame::ExtractZipEntry(const wxString& zippath,
 void MainFrame::OpenZipFile(const wxString& zippath)
 {
     // Process given zip file in the following manner:
-    // - If it contains any rule files (.table/tree/colors/icons) then extract and
-    //   install those files into userrules (the user's rules directory).
+    // - If it contains any rule files (.rule/table/tree/colors/icons) then extract
+    //   and install those files into userrules (the user's rules directory).
     // - If the zip file is "complex" (contains any folders, rule files, text files,
     //   or more than one pattern, or more than one script), build a temporary html
     //   file with clickable links to each file entry and show it in the help window.
@@ -592,7 +592,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
     wxZipInputStream zip(instream);
     
     // examine each entry in zip file and build contents string;
-    // also install any .table/tree/colors/icons files
+    // also install any .rule/table/tree/colors/icons files
     wxZipEntry* entry;
     while ((entry = zip.GetNextEntry()) != NULL) {
         wxString name = entry->GetName();      
@@ -642,7 +642,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
                 contents += wxT("</a>");
                 
                 if ( IsRuleFile(filename) ) {
-                    // extract and install .table/tree/colors/icons file into userrules
+                    // extract and install .rule/table/tree/colors/icons file into userrules
                     wxString outfile = userrules + filename;
                     wxFileOutputStream outstream(outfile);
                     bool ok = outstream.Ok();

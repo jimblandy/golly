@@ -652,7 +652,7 @@ void GetURL(const wxString& url)
         htmlwin->LoadPage(filepath);
         
     } else if (IsRuleFile(filename)) {
-        // load corresponding rule table/tree
+        // load corresponding rule
         LoadRule(filename.BeforeLast('.'));
         
     } else if (IsTextFile(filename)) {
@@ -698,7 +698,7 @@ void UnzipFile(const wxString& zippath, const wxString& entry)
                     mainptr->EditFile(rulefile);
                 }
             } else {         
-                // load corresponding rule table/tree
+                // load corresponding rule
                 LoadRule(filename.BeforeLast('.'));
             }
         } else {

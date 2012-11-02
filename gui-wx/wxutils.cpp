@@ -716,7 +716,8 @@ bool IsRuleFile(const wxString& filename)
     wxString ext = filename.AfterLast('.');
     // if filename has no extension then ext == filename
     if (ext == filename) return false;
-    return ( ext.IsSameAs(wxT("table"),false) ||
+    return ( ext.IsSameAs(wxT("rule"),false) ||
+             ext.IsSameAs(wxT("table"),false) ||
              ext.IsSameAs(wxT("tree"),false) ||
              ext.IsSameAs(wxT("colors"),false) ||
              ext.IsSameAs(wxT("icons"),false) );

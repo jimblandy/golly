@@ -320,7 +320,7 @@ bool GetTextFromClipboard(std::string& text)
 
 void LoadRule(const std::string& rulestring)
 {
-    // load recently installed rule.table/tree/colors/icons file
+    // load recently installed rule.rule/table/tree/colors/icons file
     std::string oldrule = currlayer->algo->getrule();
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
     
@@ -349,7 +349,7 @@ void LoadRule(const std::string& rulestring)
                 }
             }
         }
-        // should only get here if table/tree file contains some sort of error
+        // should only get here if rule/table/tree file contains some sort of error
         RestoreRule(oldrule.c_str());
         std::string msg = "Rule is not valid in any algorithm: " + rulestring;
         Warning(msg.c_str());
@@ -364,14 +364,14 @@ void LoadRule(const std::string& rulestring)
         }
     }
     
-    // new table/tree might have changed the number of cell states;
+    // new rule might have changed the number of cell states;
     // if there are fewer states then pattern might change
     int newmaxstate = currlayer->algo->NumCellStates() - 1;
     if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
         ReduceCellStates(newmaxstate);
     }
     
-    // set colors for new rule (loads any .color and/or .icons file)
+    // set colors for new rule (loads any .rule/colors/icons file)
     UpdateLayerColors();
     
     if (oldrule != newrule) {
@@ -463,7 +463,7 @@ void UnzipFile(const std::string& zippath, const std::string& entry)
         // into userrules, so check that file exists and load rule
         std::string rulefile = userrules + filename;
         if (FileExists(rulefile)) {
-            // load corresponding rule table/tree
+            // load corresponding rule
             SwitchToPatternTab();
             LoadRule(filename.substr(0, filename.rfind('.')));
         } else {
@@ -498,8 +498,8 @@ void UnzipFile(const std::string& zippath, const std::string& entry)
 void OpenZipFile(const char* zippath)
 {
     // Process given zip file in the following manner:
-    // - If it contains any rule files (.table/tree/colors/icons) then extract and
-    //   install those files into userrules (the user's rules directory).
+    // - If it contains any rule files (.rule/table/tree/colors/icons) then extract
+    //   and install those files into userrules (the user's rules directory).
     // - Build a temporary html file with clickable links to each file entry
     //   and show it in the Help tab.
     
@@ -540,7 +540,7 @@ void OpenZipFile(const char* zippath)
             // NSLog(@"- %@ %@ %d len=%d (%d)", info.name, info.date, info.size, info.length, info.level);
             
             // examine each entry in zip file and build contents string;
-            // also install any .table/tree/colors/icons files
+            // also install any .rule/table/tree/colors/icons files
             std::string name = [info.name cStringUsingEncoding:NSUTF8StringEncoding];
             if (name.find("__MACOSX") == 0 || name.rfind(".DS_Store") != std::string::npos) {
                 // ignore meta-data stuff in zip file created on Mac
@@ -588,7 +588,7 @@ void OpenZipFile(const char* zippath)
                     contents += "</a>";
                     
                     if ( IsRuleFile(filename) ) {
-                        // extract and install .table/tree/colors/icons file into userrules
+                        // extract and install .rule/table/tree/colors/icons file into userrules
                         ZipReadStream *zipstream = [zfile readCurrentFileInZip];
                         NSMutableData *zipdata = [[NSMutableData alloc] initWithLength:info.length];
                         int bytesRead = [zipstream readDataWithBuffer:zipdata];
@@ -952,7 +952,7 @@ void GetURL(const std::string& url, const std::string& pageurl)
         ShowHelp(filepath.c_str());
         
     } else if (IsRuleFile(filename)) {
-        // load corresponding rule table/tree
+        // load corresponding rule
         SwitchToPatternTab();
         LoadRule(filename.substr(0, filename.rfind('.')));
         
@@ -997,7 +997,7 @@ void LoadLexiconPattern(const std::string& lexpattern)
     // switching to B3/S23 or Life; if that fails then switch to QuickLife
     const char* err = currlayer->algo->setrule("B3/S23");
     if (err) {
-        // try "Life" in case current algo is RuleLoader and Life.table/tree exists
+        // try "Life" in case current algo is RuleLoader and Life.rule/table/tree exists
         err = currlayer->algo->setrule("Life");
     }
     if (err) {

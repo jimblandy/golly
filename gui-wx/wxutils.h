@@ -96,7 +96,7 @@ bool IsZipFile(const wxString& filename);
 
 bool IsRuleFile(const wxString& filename);
 // Return true if the given file is a rule-related file with
-// an extension of .table or .tree or .colors or .icons
+// an extension of .rule or .table or .tree or .colors or .icons
 // (ignoring case).
 
 #endif
