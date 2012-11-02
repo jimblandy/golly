@@ -29,6 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>     // for strcmp, strchr
 #include <string>       // for std::string
 
+const char* noTABLEorTREE = "No @TABLE or @TREE section found in .rule file.";
+
 int ruleloaderalgo::NumCellStates()
 {
     if (rule_type == TABLE)
@@ -51,8 +53,8 @@ static FILE* OpenRuleFile(std::string& rulename, const char* dir, std::string& p
 
 void ruleloaderalgo::SetAlgoVariables(RuleTypes ruletype)
 {
-    // yuk!!! too error prone, so rethink???
-    // (wouldn't neeed this stuff if we merged the RuleTable and RuleTree code into one algo)
+    // yuk -- we wouldn't need to copy all these variables if we merged
+    // the RuleTable and RuleTree code into one algo
     rule_type = ruletype;
     if (rule_type == TABLE) {
         maxCellStates = LocalRuleTable->NumCellStates();
@@ -121,7 +123,7 @@ const char* ruleloaderalgo::LoadTableOrTree(FILE* rulefile, const char* rule)
     }
     
     lr.close();
-    return "No @TABLE or @TREE section found in .rule file.";
+    return noTABLEorTREE;
 }
 
 const char* ruleloaderalgo::setrule(const char* s)
@@ -146,11 +148,23 @@ const char* ruleloaderalgo::setrule(const char* s)
     
     // look for .rule file in user's rules dir then in Golly's rules dir
     std::string fullpath;
+    bool inuser = true;
     FILE* rulefile = OpenRuleFile(rulename, lifegetuserrules(), fullpath);
-    if (!rulefile)
+    if (!rulefile) {
+        inuser = false;
         rulefile = OpenRuleFile(rulename, lifegetrulesdir(), fullpath);
+    }
     if (rulefile) {
-        return LoadTableOrTree(rulefile, s);
+        err = LoadTableOrTree(rulefile, s);
+        if (inuser && strcmp(err, noTABLEorTREE) == 0) {
+            // if .rule file was found in user's rules dir but had no
+            // @TABLE or @TREE section then we look in Golly's rules dir
+            // (this lets user override the colors/icons in a supplied .rule
+            // file without having to copy the entire file)
+            rulefile = OpenRuleFile(rulename, lifegetrulesdir(), fullpath);
+            if (rulefile) err = LoadTableOrTree(rulefile, s);
+        }
+        return err;
     }
 
     // no .rule file so try to load .table file
