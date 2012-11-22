@@ -156,7 +156,7 @@ const char* ruleloaderalgo::setrule(const char* s)
     }
     if (rulefile) {
         err = LoadTableOrTree(rulefile, s);
-        if (inuser && strcmp(err, noTABLEorTREE) == 0) {
+        if (inuser && err && (strcmp(err, noTABLEorTREE) == 0)) {
             // if .rule file was found in user's rules dir but had no
             // @TABLE or @TREE section then we look in Golly's rules dir
             // (this lets user override the colors/icons in a supplied .rule

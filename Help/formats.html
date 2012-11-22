@@ -743,13 +743,14 @@ XPM
 "AAAAAAAAAAAAAAAAAAAAAAAADAKAGBJBJBHBABEABAAAAAAAAAAAAAAAAAAAAA"
 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"</pre></table></dd>
 
-<!-- remove "Load Icons" button from Prefs > Color!!!???
-     if we want to let users override an algo's default icons (and/or colors???) then
-     maybe look for a special .rule file; eg. Default-JvN.rule ???
 <p>
-If the .rule file has no @ICONS section, Golly will use the default
-icons associated with each algorithm.  You can change these icons by using
-the "Load Icons" button in <a href="prefs:color">Preferences > Color</a>
+If a .rule file has no @ICONS section, Golly will use the default
+icons associated with each algorithm.
+<!-- remove "Load Icons" button from Prefs > Color!!!???
+     if we want to let users override an algo's default icons (and/or colors) then
+     look for a special .rule file on start-up; eg. Default-QuickLife.rule ???
+You can change these default icons by
+using the "Load Icons" button in <a href="prefs:color">Preferences > Color</a>
 to load files with the same format described above.  The only difference
 is that these files don't require a .icons extension.
 -->
@@ -773,8 +774,8 @@ and shows the result in the help window.  A complex zip file is one that contain
 <li> Any rule files (.rule extension).
      Such files are automatically extracted and installed into
      <a href="prefs:control">your rules folder</a>.
-     Files with a .colors or .icons or .table or .tree extension are deprecated
-     and will only be installed if there is no .rule file present.
+     Note that files with a .colors or .icons or .table or .tree extension are
+     deprecated and are no longer installed automatically.
 <li> Any HTML files (.htm or .html extension).
 <li> Any text files (.txt or .doc extension, or a name containing "readme").
 <li> Multiple scripts (.pl or .py extension).

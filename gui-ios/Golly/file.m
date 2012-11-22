@@ -320,7 +320,7 @@ bool GetTextFromClipboard(std::string& text)
 
 void LoadRule(const std::string& rulestring)
 {
-    // load recently installed rule.rule/table/tree/colors/icons file
+    // load recently installed .rule file
     std::string oldrule = currlayer->algo->getrule();
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
     
@@ -498,8 +498,8 @@ void UnzipFile(const std::string& zippath, const std::string& entry)
 void OpenZipFile(const char* zippath)
 {
     // Process given zip file in the following manner:
-    // - If it contains any rule files (.rule/table/tree/colors/icons) then extract
-    //   and install those files into userrules (the user's rules directory).
+    // - If it contains any .rule files then extract and install those files
+    //   into userrules (the user's rules directory).
     // - Build a temporary html file with clickable links to each file entry
     //   and show it in the Help tab.
     
@@ -509,12 +509,13 @@ void OpenZipFile(const char* zippath)
     std::string firstdir = "";
     std::string lastpattern = "";
     std::string lastscript = "";
-    int patternseps = 0;                   // # of separators in lastpattern
-    int scriptseps = 0;                    // # of separators in lastscript
+    int patternseps = 0;                // # of separators in lastpattern
+    int scriptseps = 0;                 // # of separators in lastscript
     int patternfiles = 0;
     int scriptfiles = 0;
     int rulefiles = 0;
-    int textfiles = 0;                     // includes html files
+    int deprecated = 0;                 // # of .table/tree/colors/icons files
+    int textfiles = 0;                  // includes html files
     
     // strip off patternsdir or gollydir
     std::string relpath = zippath;
@@ -540,7 +541,7 @@ void OpenZipFile(const char* zippath)
             // NSLog(@"- %@ %@ %d len=%d (%d)", info.name, info.date, info.size, info.length, info.level);
             
             // examine each entry in zip file and build contents string;
-            // also install any .rule/table/tree/colors/icons files
+            // also install any .rule files
             std::string name = [info.name cStringUsingEncoding:NSUTF8StringEncoding];
             if (name.find("__MACOSX") == 0 || name.rfind(".DS_Store") != std::string::npos) {
                 // ignore meta-data stuff in zip file created on Mac
@@ -576,77 +577,86 @@ void OpenZipFile(const char* zippath)
                 } else {
                     // entry is for some sort of file
                     std::string filename = GetBaseName(name.c_str());
-                    
-                    // user can extract file via special "unzip:" link
                     if (dirseen) contents += indent;
-                    contents += "<a href=\"unzip:";
-                    contents += zippath;
-                    contents += ":";
-                    contents += name;
-                    contents += "\">";
-                    contents += filename;
-                    contents += "</a>";
-                    
-                    if ( IsRuleFile(filename) ) {
-                        // extract and install .rule/table/tree/colors/icons file into userrules
-                        ZipReadStream *zipstream = [zfile readCurrentFileInZip];
-                        NSMutableData *zipdata = [[NSMutableData alloc] initWithLength:info.length];
-                        int bytesRead = [zipstream readDataWithBuffer:zipdata];
-                        [zipstream finishedReading];
-                        if (info.length == 0) {
-                            Warning("Zip entry is empty!");
-                        } else if (bytesRead == info.length) {
-                            // write zipdata to file in userrules
-                            std::string outfile = userrules + filename;
-                            FILE* f = fopen(outfile.c_str(), "wb");
-                            bool ok = true;
-                            if (f) {
-                                if (fwrite([zipdata mutableBytes], 1, bytesRead, f) != bytesRead) {
-                                    Warning("Could not write data for zip entry!");
-                                    ok = false;
-                                }
-                                fclose(f);
-                            } else {
-                                Warning("Could not create file for zip entry!");
-                                ok = false;
-                            }
-                            if (ok) {
-                                // file successfully installed
-                                contents += indent;
-                                contents += "[installed]";
-                                if (diffdirs) {
-                                    // check if this file overrides similarly named file in rulesdir
-                                    std::string clashfile = rulesdir + filename;
-                                    if (FileExists(clashfile)) {
-                                        contents += indent;
-                                        contents += "(overrides file in Rules folder)";
-                                    }
-                                }
-                            } else {
-                                // file could not be installed
-                                contents += indent;
-                                contents += "[NOT installed]";
-                                // file is probably incomplete so best to delete it
-                                if (FileExists(outfile)) RemoveFile(outfile);
-                            }
-                        } else {
-                            Warning("Failed to read all bytes of zip entry!");
-                        }
-                        zipdata = nil;
-                        rulefiles++;
-                        
-                    } else if ( IsHTMLFile(filename) || IsTextFile(filename) ) {
-                        textfiles++;
-                        
-                    } else if ( IsScriptFile(filename) ) {
-                        scriptfiles++;
-                        lastscript = name;
-                        scriptseps = sepcount;
+                
+                    if ( IsRuleFile(filename) && filename.rfind(".rule") == std::string::npos ) {
+                        // don't install deprecated .table/tree/colors/icons file
+                        contents += filename;
+                        contents += indent;
+                        contents += "[deprecated]";
+                        deprecated++;
                     
                     } else {
-                        patternfiles++;
-                        lastpattern = name;
-                        patternseps = sepcount;
+                        // user can extract file via special "unzip:" link
+                        contents += "<a href=\"unzip:";
+                        contents += zippath;
+                        contents += ":";
+                        contents += name;
+                        contents += "\">";
+                        contents += filename;
+                        contents += "</a>";
+                        
+                        if ( IsRuleFile(filename) ) {
+                            // extract and install .rule file into userrules
+                            ZipReadStream *zipstream = [zfile readCurrentFileInZip];
+                            NSMutableData *zipdata = [[NSMutableData alloc] initWithLength:info.length];
+                            int bytesRead = [zipstream readDataWithBuffer:zipdata];
+                            [zipstream finishedReading];
+                            if (info.length == 0) {
+                                Warning("Zip entry is empty!");
+                            } else if (bytesRead == info.length) {
+                                // write zipdata to file in userrules
+                                std::string outfile = userrules + filename;
+                                FILE* f = fopen(outfile.c_str(), "wb");
+                                bool ok = true;
+                                if (f) {
+                                    if (fwrite([zipdata mutableBytes], 1, bytesRead, f) != bytesRead) {
+                                        Warning("Could not write data for zip entry!");
+                                        ok = false;
+                                    }
+                                    fclose(f);
+                                } else {
+                                    Warning("Could not create file for zip entry!");
+                                    ok = false;
+                                }
+                                if (ok) {
+                                    // file successfully installed
+                                    contents += indent;
+                                    contents += "[installed]";
+                                    if (diffdirs) {
+                                        // check if this file overrides similarly named file in rulesdir
+                                        std::string clashfile = rulesdir + filename;
+                                        if (FileExists(clashfile)) {
+                                            contents += indent;
+                                            contents += "(overrides file in Rules folder)";
+                                        }
+                                    }
+                                } else {
+                                    // file could not be installed
+                                    contents += indent;
+                                    contents += "[NOT installed]";
+                                    // file is probably incomplete so best to delete it
+                                    if (FileExists(outfile)) RemoveFile(outfile);
+                                }
+                            } else {
+                                Warning("Failed to read all bytes of zip entry!");
+                            }
+                            zipdata = nil;
+                            rulefiles++;
+                            
+                        } else if ( IsHTMLFile(filename) || IsTextFile(filename) ) {
+                            textfiles++;
+                            
+                        } else if ( IsScriptFile(filename) ) {
+                            scriptfiles++;
+                            lastscript = name;
+                            scriptseps = sepcount;
+                        
+                        } else {
+                            patternfiles++;
+                            lastpattern = name;
+                            patternseps = sepcount;
+                        }
                     }
                     contents += "<br>\n";
                 }
@@ -673,6 +683,9 @@ void OpenZipFile(const char* zippath)
         contents += "<p>Files marked as \"[installed]\" have been stored in ";
         contents += relpath;
         contents += ".";
+    }
+    if (deprecated > 0) {
+        contents += "<p>Files marked as \"[deprecated]\" are not installed.\n";
     }
     contents += "\n</b></font></body></html>";
     
