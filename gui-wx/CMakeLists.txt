@@ -154,18 +154,9 @@ add_executable( RuleTableToTree
    ../cmdline/RuleTableToTree.cpp
 )
 
-if(APPLE OR WIN32)
-   target_link_libraries( ${APP_NAME} gollybase ${wxWidgets_LIBRARIES} ${ZLIB_LIBRARIES} )
-   target_link_libraries( bgolly gollybase ${ZLIB_LIBRARIES} )
-   target_link_libraries( RuleTableToTree gollybase ${ZLIB_LIBRARIES} )
-else()
-   # on Linux we statically link zlib because some systems (eg. Ubuntu) have a non-standard zlib that contains gzopen64
-   add_library( static_zlib STATIC IMPORTED )
-   set_property( TARGET static_zlib PROPERTY IMPORTED_LOCATION /usr/lib/libz.a )
-   target_link_libraries( ${APP_NAME} gollybase ${wxWidgets_LIBRARIES} static_zlib )
-   target_link_libraries( bgolly gollybase static_zlib )
-   target_link_libraries( RuleTableToTree gollybase static_zlib )
-endif()
+target_link_libraries( ${APP_NAME} gollybase ${wxWidgets_LIBRARIES} ${ZLIB_LIBRARIES} )
+target_link_libraries( bgolly gollybase ${ZLIB_LIBRARIES} )
+target_link_libraries( RuleTableToTree gollybase ${ZLIB_LIBRARIES} )
 
 if(APPLE)
    # create Info.plist (using Info.plist.in) and PkgInfo files inside .app bundle

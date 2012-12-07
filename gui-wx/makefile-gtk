@@ -56,10 +56,7 @@ PYTHON_PREFS = -DPYTHON_SHLIB="$(PYTHON_SHLIB)"
 
 # default settings for zlib support, so clear these to build without zlib
 ZLIB_CXXFLAGS = -DZLIB
-### ZLIB_LDFLAGS = -lz
-### we statically link zlib because some Linux systems (eg. Ubuntu) have
-### a non-standard zlib shared library that contains gzopen64
-ZLIB_LDFLAGS = /usr/lib/libz.a
+ZLIB_LDFLAGS = -lz
 
 # for wxGTK support (required for GUI)
 WX_CXXFLAGS = `wx-config --cxxflags`
