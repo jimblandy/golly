@@ -1507,9 +1507,6 @@ void SavePrefs()
             }
         }
         fputs("\n", f);
-        if (algoinfo[i]->iconfile.length() > 0) {
-            SaveRelPath(f, "icon_file", algoinfo[i]->iconfile);
-        }
     }
     
     fputs("\n", f);
@@ -2023,14 +2020,6 @@ void GetPrefs()
                     while (*value != ',') value++; value++;
                     while (*value != ',') value++; value++;
                 }
-            }
-            
-        } else if (strcmp(keyword, "icon_file") == 0) {
-            if (algoindex >= 0 && algoindex < NumAlgos()) {
-                GetRelPath(value, algoinfo[algoindex]->iconfile,
-                           // this is a file path, not a directory path
-                           wxEmptyString, false);
-                LoadIcons(algoindex);
             }
             
         } else if (strcmp(keyword, "min_delay") == 0) {
@@ -2704,7 +2693,6 @@ enum {
     PREF_STATUS_BUTT,
     PREF_FROM_BUTT,
     PREF_TO_BUTT,
-    PREF_ICON_BUTT,
     PREF_SELECT_BUTT,
     PREF_PASTE_BUTT,
     PREF_BORDER_BUTT,
@@ -4033,9 +4021,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     
     iconcheck = new wxCheckBox(panel, PREF_ICON_CHECK, _("Show icons"));
     iconcheck->SetValue(showicons);
-    
-    wxButton* iconbutt = new wxButton(panel, PREF_ICON_BUTT, _("Load Icons..."));
-    
+        
     wxStaticText* statebox = new wxStaticText(panel, PREF_STATE_BOX, _("999"));
     cellboxes->statebox = statebox;
     wxBoxSizer* hbox1 = new wxBoxSizer(wxHORIZONTAL);
@@ -4059,7 +4045,6 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     botbox->Add(hbox2, 0, wxALIGN_CENTER_VERTICAL, 0);
     botbox->AddStretchSpacer();
     botbox->Add(iconcheck, 0, wxALIGN_CENTER_VERTICAL, 0);
-    botbox->Add(iconbutt, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
     
     //!!! avoid wxMac bug -- can't click on bitmap buttons inside wxStaticBoxSizer
     //!!! wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Cell colors:"));
@@ -4405,10 +4390,6 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
                 }
             }
         }
-        
-    } else if ( id == PREF_ICON_BUTT ) {
-        ChangeIcons(coloralgo);
-        cellboxes->Refresh(false);
     }
     
     event.Skip();  // need this so other buttons work correctly
@@ -4818,7 +4799,6 @@ public:
             algog[i] = ad->algog[i];
             algob[i] = ad->algob[i];
         }
-        iconfile = ad->iconfile;
     }
     
     void RestoreColorInfo(int algo) {
@@ -4831,10 +4811,6 @@ public:
             ad->algor[i] = algor[i];
             ad->algog[i] = algog[i];
             ad->algob[i] = algob[i];
-        }
-        if (ad->iconfile != iconfile) {
-            ad->iconfile = iconfile;
-            LoadIcons(algo);
         }
     }
     
@@ -4849,7 +4825,6 @@ public:
             if (ad->algog[i] != algog[i]) return true;
             if (ad->algob[i] != algob[i]) return true;
         }
-        if (ad->iconfile != iconfile) return true;
         // get here if there was no change
         return false;
     }
@@ -4862,7 +4837,6 @@ public:
     unsigned char algor[256];
     unsigned char algog[256];
     unsigned char algob[256];
-    wxString iconfile;
 };
 
 // -----------------------------------------------------------------------------

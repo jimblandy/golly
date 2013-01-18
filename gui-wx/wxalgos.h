@@ -61,7 +61,6 @@ public:
     wxBitmap** icons7x7;          // icon bitmaps for scale 1:8
     wxBitmap** icons15x15;        // icon bitmaps for scale 1:16
     wxBitmap** icons31x31;        // icon bitmaps for scale 1:32
-    wxString iconfile;            // path to file containing icons
     
     // default color scheme
     bool gradient;                // use color gradient?
@@ -102,13 +101,6 @@ const char* GetAlgoName(algo_type algotype);
 
 int NumAlgos();
 // Return current number of algorithms.
-
-void ChangeIcons(algo_type algotype);
-// Let user change icons for the given algorithm by loading bitmap images
-// from a BMP/GIF/PNG/TIFF file.
-
-void LoadIcons(algo_type algotype);
-// Load icons for given algorithm using iconfile.
 
 bool LoadIconFile(const wxString& path, int maxstate,
                   wxBitmap*** out7x7, wxBitmap*** out15x15, wxBitmap*** out31x31);
