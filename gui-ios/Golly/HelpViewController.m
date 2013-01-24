@@ -227,7 +227,17 @@ static std::string pageurl;
         }
         if ([link hasPrefix:@"edit:"]) {
             std::string path = [[link substringFromIndex:5] cStringUsingEncoding:NSUTF8StringEncoding];
-            ShowTextFile(path.c_str());
+            // convert path to a full path if necessary
+            std::string fullpath = path;
+            if (path[0] != '/') {
+                if (fullpath.find("Patterns/") == 0 || fullpath.find("Rules/") == 0) {
+                    // Patterns and Rules directories are inside app bundle so prepend gollydir/Golly.app/
+                    fullpath = gollydir + "Golly.app/" + fullpath;
+                } else {
+                    fullpath = gollydir + fullpath;
+                }
+            }
+            ShowTextFile(fullpath.c_str());
             return NO;
         }
         if ([link hasPrefix:@"get:"]) {

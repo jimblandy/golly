@@ -27,17 +27,19 @@
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "viewport.h"
-#include "util.h"          // for linereader
+#include "util.h"           // for linereader
 
-#include "utils.h"         // for gRect, Warning, etc
-#include "prefs.h"         // for initrule, swapcolors, userrules, rulesdir, etc
-#include "algos.h"         // for algo_type, initalgo, algoinfo, CreateNewUniverse, etc
-#include "control.h"       // for generating
-#include "select.h"        // for Selection
-#include "file.h"          // for SetPatternTitle
-#include "view.h"          // for OutsideLimits, CopyRect
-#include "undo.h"          // for UndoRedo
+#include "utils.h"          // for gRect, Warning, etc
+#include "prefs.h"          // for initrule, swapcolors, userrules, rulesdir, etc
+#include "algos.h"          // for algo_type, initalgo, algoinfo, CreateNewUniverse, etc
+#include "control.h"        // for generating
+#include "select.h"         // for Selection
+#include "file.h"           // for SetPatternTitle
+#include "view.h"           // for OutsideLimits, CopyRect
+#include "undo.h"           // for UndoRedo
 #include "layer.h"
+
+#include <map>              // for std::map
 
 // -----------------------------------------------------------------------------
 
@@ -1020,6 +1022,434 @@ void UpdateCloneColors()
 
 // -----------------------------------------------------------------------------
 
+static FILE* FindRuleFile(const std::string& rulename)
+{
+    const std::string extn = ".rule";
+    std::string path;
+    
+    // first look for rulename.rule in userrules
+    path = userrules + rulename;
+    path += extn;
+    FILE* f = fopen(path.c_str(), "r");
+    if (f) return f;
+    
+    // now look for rulename.rule in rulesdir
+    path = rulesdir + rulename;
+    path += extn;
+    return fopen(path.c_str(), "r");
+}
+
+// -----------------------------------------------------------------------------
+
+static void CheckRuleHeader(char* linebuf, const std::string& rulename)
+{
+    // check that 1st line of rulename.rule file contains "@RULE rulename"
+    // where rulename must match the file name exactly (to avoid problems on
+    // case-sensitive file systems)
+    if (strncmp(linebuf, "@RULE ", 6) != 0) {
+        std::string msg = "The first line in ";
+        msg += rulename;
+        msg += ".rule does not start with @RULE.";
+        Warning(msg.c_str());
+    } else if (strcmp(linebuf+6, rulename.c_str()) != 0) {
+        std::string msg = "The rule name on the first line in ";
+        msg += rulename;
+        msg += ".rule does not match the file name.";
+        msg += "  Please change the file name or the rule name.";
+        Warning(msg.c_str());
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void ParseColors(linereader& reader, char* linebuf, int MAXLINELEN,
+                        int* linenum, bool* eof)
+{
+    // parse @COLORS section in currently open .rule file
+    int state, r, g, b, r1, g1, b1, r2, g2, b2;
+    int maxstate = currlayer->algo->NumCellStates() - 1;
+    
+    while (reader.fgets(linebuf, MAXLINELEN) != 0) {
+        *linenum = *linenum + 1;
+        if (linebuf[0] == '#' || linebuf[0] == 0) {
+            // skip comment or empty line
+        } else if (sscanf(linebuf, "%d%d%d%d%d%d", &r1, &g1, &b1, &r2, &g2, &b2) == 6) {
+            // assume line is like this:
+            // 255 0 0 0 0 255    use a gradient from red to blue
+            SetColor(currlayer->fromrgb, r1, g1, b1);
+            SetColor(currlayer->torgb, r2, g2, b2);
+            CreateColorGradient();
+        } else if (sscanf(linebuf, "%d%d%d%d", &state, &r, &g, &b) == 4) {
+            // assume line is like this:
+            // 1 0 128 255        state 1 is light blue
+            if (state >= 0 && state <= maxstate) {
+                currlayer->cellr[state] = r;
+                currlayer->cellg[state] = g;
+                currlayer->cellb[state] = b;
+            }
+        } else if (linebuf[0] == '@') {
+            // found next section, so stop parsing
+            *eof = false;
+            return;
+        }
+        // ignore unexpected syntax (better for upward compatibility)
+    }
+    *eof = true;
+}
+
+// -----------------------------------------------------------------------------
+
+static void DeleteXPMData(char** xpmdata, int numstrings)
+{
+    if (xpmdata) {
+        for (int i = 0; i < numstrings; i++)
+            if (xpmdata[i]) free(xpmdata[i]);
+        free(xpmdata);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void FreeIconBitmaps(CGImageRef* icons)
+{
+    if (icons) {
+        for (int i = 0; i < 256; i++) CGImageRelease(icons[i]);
+        free(icons);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
+{
+    if (xpmdata == NULL) return NULL;
+    
+    int wd, ht, numcolors, charsperpixel;
+    sscanf(xpmdata[0], "%d %d %d %d", &wd, &ht, &numcolors, &charsperpixel);
+
+    // this code is similar to CreateMonochromeBitmaps in algos.m but
+    // we need to handle monochrome or multi-colored icons
+    
+    if (charsperpixel < 1 || charsperpixel > 2) {
+        Warning("Error in XPM header data: chars_per_pixel must be 1 or 2");
+        return NULL;
+    };
+    
+    std::map<std::string,int> colormap;
+    std::map<std::string,int>::iterator iterator;
+    
+    for (int i = 0; i < numcolors; i++) {
+        std::string pixel;
+        char ch1, ch2;
+        int skip;
+        if (charsperpixel == 1) {
+            sscanf(xpmdata[i+1], "%c ", &ch1);
+            pixel += ch1;
+            skip = 2;
+        } else {
+            sscanf(xpmdata[i+1], "%c%c ", &ch1, &ch2);
+            pixel += ch1;
+            pixel += ch2;
+            skip = 3;
+        }
+        if (strlen(xpmdata[i+1]) == skip+9) {
+            int rgb;
+            sscanf(xpmdata[i+1]+skip, "c #%6x", &rgb);
+            colormap[pixel] = rgb;
+        } else {
+            int r, g, b;
+            sscanf(xpmdata[i+1]+skip, "c #%4x%4x%4x", &r, &g, &b);
+            // only use 8 top bits of r,g,b
+            colormap[pixel] = ((r>>8) << 16) | ((g>>8) << 8) | (b>>8);
+        }
+    }
+    
+    // allocate and clear memory for all icon bitmaps in BGRA format
+    // (using calloc means black pixels will be transparent)
+    unsigned char* bgra = (unsigned char*) calloc(wd * ht * 4, 1);
+    if (bgra == NULL) return NULL;
+    int pos = 0;
+    for (int i = 0; i < ht; i++) {
+        const char* rowstring = xpmdata[i+1+numcolors];
+        for (int j = 0; j < wd * charsperpixel; j = j + charsperpixel) {
+            std::string pixel;
+            pixel += rowstring[j];
+            if (charsperpixel == 2) pixel += rowstring[j+1];
+            // find the RGB color for this pixel
+            iterator = colormap.find(pixel);
+            int rgb = (iterator == colormap.end()) ? 0 : iterator->second;
+            if (rgb == 0) {
+                // pixel is black and alpha is 0
+                pos += 4;
+            } else {
+                bgra[pos] = (rgb & 0x0000FF);       pos++;  // blue
+                bgra[pos] = (rgb & 0x00FF00) >> 8;  pos++;  // green
+                bgra[pos] = (rgb & 0xFF0000) >> 16; pos++;  // red
+                bgra[pos] = 255;                    pos++;  // alpha
+            }
+        }
+    }
+    
+    int numicons = ht / wd;
+    if (numicons > 255) numicons = 255;     // play safe
+    
+    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+    if (iconptr) {
+        // only need to test < maxstates here, but play safe
+        for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+        
+        // convert each icon bitmap to a CGImage
+        unsigned char* nexticon = bgra;
+        CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
+        for (int i = 0; i < numicons; i++) {
+            CGContextRef context = CGBitmapContextCreate(nexticon, wd, wd, 8, wd * 4, colorspace,
+                // following gives us the optimal BGRA format:
+                kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+            // add 1 to skip iconptr[0] (ie. dead state)
+            iconptr[i+1] = CGBitmapContextCreateImage(context);
+            CGContextRelease(context);
+            nexticon += wd * wd * 4;
+        }
+        
+        if (numicons < maxstates-1 && iconptr[numicons]) {
+            // duplicate last icon
+            nexticon -= wd * wd * 4;
+            for (int i = numicons; i < maxstates-1; i++) {
+                CGContextRef context = CGBitmapContextCreate(nexticon, wd, wd, 8, wd * 4, colorspace,
+                    // following gives us the optimal BGRA format:
+                    kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+                iconptr[i+1] = CGBitmapContextCreateImage(context);
+                CGContextRelease(context);
+            }
+        }
+        CGColorSpaceRelease(colorspace);
+    }
+    
+    if (bgra) free(bgra);
+    return iconptr;
+}
+
+// -----------------------------------------------------------------------------
+
+static void CreateIcons(const char** xpmdata, int size)
+{
+    int maxstates = currlayer->algo->NumCellStates();
+    
+    // we only need to call FreeIconBitmaps if .rule file has duplicate XPM data
+    // (unlikely but best to play it safe)
+    if (size == 7) {
+        if (currlayer->icons7x7) FreeIconBitmaps(currlayer->icons7x7);
+        currlayer->icons7x7 = CreateIconBitmaps(xpmdata, maxstates);
+
+    } else if (size == 15) {
+        if (currlayer->icons15x15) FreeIconBitmaps(currlayer->icons15x15);
+        currlayer->icons15x15 = CreateIconBitmaps(xpmdata, maxstates);
+
+    } else if (size == 31) {
+        if (currlayer->icons31x31) FreeIconBitmaps(currlayer->icons31x31);
+        currlayer->icons31x31 = CreateIconBitmaps(xpmdata, maxstates);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void ParseIcons(const std::string& rulename, linereader& reader, char* linebuf, int MAXLINELEN,
+                       int* linenum, bool* eof)
+{
+    // parse @ICONS section in currently open .rule file
+    char** xpmdata = NULL;
+    int xpmstarted = 0, xpmstrings = 0, maxstrings = 0;
+    int wd = 0, ht = 0, numcolors = 0, chars_per_pixel = 0;
+
+    while (true) {
+        if (reader.fgets(linebuf, MAXLINELEN) == 0) {
+            *eof = true;
+            break;
+        }
+        *linenum = *linenum + 1;
+        if (linebuf[0] == '#' || linebuf[0] == '/' || linebuf[0] == 0) {
+            // skip comment or empty line
+        } else if (linebuf[0] == '"') {
+            if (xpmstarted) {
+                // we have a "..." string containing XPM data
+                if (xpmstrings == 0) {
+                    if (sscanf(linebuf, "\"%d%d%d%d\"", &wd, &ht, &numcolors, &chars_per_pixel) == 4 &&
+                        wd > 0 && ht > 0 && numcolors > 0 && ht % wd == 0 &&
+                        chars_per_pixel > 0 && chars_per_pixel < 3) {
+                        if (wd != 7 && wd != 15 && wd != 31) {
+                            // this version of Golly doesn't support the supplied icon size
+                            // so silently ignore the rest of this XPM data
+                            xpmstarted = 0;
+                            continue;
+                        }
+                        maxstrings = 1 + numcolors + ht;
+                        // create and initialize xpmdata
+                        xpmdata = (char**) malloc(maxstrings * sizeof(char*));
+                        if (xpmdata) {
+                            for (int i = 0; i < maxstrings; i++) xpmdata[i] = NULL;
+                        } else {
+                            Warning("Failed to allocate memory for XPM icon data!");
+                            *eof = true;
+                            return;
+                        }
+                    } else {
+                        char s[128];
+                        sprintf(s, "The XPM header string on line %d in ", *linenum);
+                        std::string msg(s);
+                        msg += rulename;
+                        msg += ".rule is incorrect";
+                        if (wd > 0 && ht > 0 && ht % wd != 0)
+                            msg += " (height must be a multiple of width).";
+                        else if (chars_per_pixel < 1 || chars_per_pixel > 2)
+                            msg += " (chars_per_pixel must be 1 or 2).";
+                        else
+                            msg += " (4 positive integers are required).";
+                        Warning(msg.c_str());
+                        *eof = true;
+                        return;
+                    }
+                    if (numcolors > 2) currlayer->multicoloricons = true;
+                }
+                // copy data inside "..." to next string in xpmdata
+                int len = strlen(linebuf);
+                while (linebuf[len] != '"') len--;
+                len--;
+                if (xpmstrings > numcolors && len != wd * chars_per_pixel) {
+                    DeleteXPMData(xpmdata, maxstrings);
+                    char s[128];
+                    sprintf(s, "The XPM data string on line %d in ", *linenum);
+                    std::string msg(s);
+                    msg += rulename;
+                    msg += ".rule has the wrong length.";
+                    Warning(msg.c_str());
+                    *eof = true;
+                    return;
+                }
+                char* str = (char*) malloc(len+1);
+                if (str) {
+                    strncpy(str, linebuf+1, len);
+                    str[len] = 0;
+                    xpmdata[xpmstrings] = str;
+                } else {
+                    DeleteXPMData(xpmdata, maxstrings);
+                    Warning("Failed to allocate memory for XPM string!");
+                    *eof = true;
+                    return;
+                }
+                xpmstrings++;
+                if (xpmstrings == maxstrings) {
+                    // we've got all the data for this icon size
+                    CreateIcons((const char**)xpmdata, wd);
+                    DeleteXPMData(xpmdata, maxstrings);
+                    xpmdata = NULL;
+                    xpmstarted = 0;
+                }
+            }
+        } else if (strcmp(linebuf, "XPM") == 0) {
+            // start parsing XPM data on following lines
+            if (xpmstarted) break;  // handle error below
+            xpmstarted = *linenum;
+            xpmstrings = 0;
+        } else if (linebuf[0] == '@') {
+            // found next section, so stop parsing
+            *eof = false;
+            break;
+        }
+        // ignore unexpected syntax (better for upward compatibility)
+    }
+    
+    if (xpmstarted) {
+        // XPM data was incomplete
+        DeleteXPMData(xpmdata, maxstrings);
+        char s[128];
+        sprintf(s, "The XPM icon data starting on line %d in ", xpmstarted);
+        std::string msg(s);
+        msg += rulename;
+        msg += ".rule does not have enough strings.";
+        Warning(msg.c_str());
+        *eof = true;
+        return;
+    }
+    
+    // create scaled bitmaps if size(s) not supplied
+    if (!currlayer->icons7x7) {
+        if (currlayer->icons15x15) {
+            // scale down 15x15 bitmaps
+            currlayer->icons7x7 = ScaleIconBitmaps(currlayer->icons15x15, 7);
+        } else if (currlayer->icons31x31) {
+            // scale down 31x31 bitmaps
+            currlayer->icons7x7 = ScaleIconBitmaps(currlayer->icons31x31, 7);
+        }
+    }
+    if (!currlayer->icons15x15) {
+        if (currlayer->icons31x31) {
+            // scale down 31x31 bitmaps
+            currlayer->icons15x15 = ScaleIconBitmaps(currlayer->icons31x31, 15);
+        } else if (currlayer->icons7x7) {
+            // scale up 7x7 bitmaps
+            currlayer->icons15x15 = ScaleIconBitmaps(currlayer->icons7x7, 15);
+        }
+    }
+    if (!currlayer->icons31x31) {
+        if (currlayer->icons15x15) {
+            // scale up 15x15 bitmaps
+            currlayer->icons31x31 = ScaleIconBitmaps(currlayer->icons15x15, 31);
+        } else if (currlayer->icons7x7) {
+            // scale up 7x7 bitmaps
+            currlayer->icons31x31 = ScaleIconBitmaps(currlayer->icons7x7, 31);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void LoadRuleInfo(FILE* rulefile, const std::string& rulename,
+                         bool* loadedcolors, bool* loadedicons)
+{
+    // load any color/icon info from currently open .rule file
+    const int MAXLINELEN = 4095;
+    char linebuf[MAXLINELEN + 1];
+    int linenum = 0;
+    bool eof = false;
+    bool skipget = false;
+    
+    *loadedcolors = false;
+    *loadedicons = false;
+
+    // the linereader class handles all line endings (CR, CR+LF, LF)
+    linereader reader(rulefile);
+    
+    while (true) {
+        if (skipget) {
+            // ParseColors/ParseIcons has stopped at next section
+            // (ie. linebuf contains @...) so skip fgets call
+            skipget = false;
+        } else {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            linenum++;
+            if (linenum == 1) CheckRuleHeader(linebuf, rulename);
+        }
+        // look for @COLORS or @ICONS section
+        if (strcmp(linebuf, "@COLORS") == 0) {
+            *loadedcolors = true;
+            ParseColors(reader, linebuf, MAXLINELEN, &linenum, &eof);
+            if (eof) break;
+            // otherwise linebuf contains @... so skip next fgets call
+            skipget = true;
+        } else if (strcmp(linebuf, "@ICONS") == 0) {
+            *loadedicons = true;
+            ParseIcons(rulename, reader, linebuf, MAXLINELEN, &linenum, &eof);
+            if (eof) break;
+            // otherwise linebuf contains @... so skip next fgets call
+            skipget = true;
+        }
+    }
+    
+    reader.close();     // closes rulefile
+}
+
+// -----------------------------------------------------------------------------
+
 static void DeleteIcons(Layer* layer)
 {
     // delete given layer's existing icons
@@ -1083,13 +1513,6 @@ static bool FindIconFile(const std::string& rule, const std::string& dir, std::s
 
 static bool LoadRuleIcons(const std::string& rule, int maxstate)
 {
-    // delete current layer's existing icons
-    DeleteIcons(currlayer);
-    
-    // all of Golly's default icons are monochrome, but LoadIconFile might load
-    // a multi-colored icon and set this flag to true
-    currlayer->multicoloricons = false;
-    
     // if rule.icons file exists in userrules or rulesdir then load icons for current layer
     std::string path;
     return (FindIconFile(rule, userrules, path) ||
@@ -1097,6 +1520,30 @@ static bool LoadRuleIcons(const std::string& rule, int maxstate)
                 LoadIconFile(path, maxstate, &currlayer->icons7x7,
                                              &currlayer->icons15x15,
                                              &currlayer->icons31x31);
+}
+
+// -----------------------------------------------------------------------------
+
+static void UseDefaultIcons(int maxstate)
+{
+    // icons weren't specified so use default icons
+    if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
+        // use hexagonal icons
+        currlayer->icons7x7 = CopyIcons(hexicons7x7, maxstate);
+        currlayer->icons15x15 = CopyIcons(hexicons15x15, maxstate);
+        currlayer->icons31x31 = CopyIcons(hexicons31x31, maxstate);
+    } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
+        // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
+        currlayer->icons7x7 = CopyIcons(vnicons7x7, maxstate);
+        currlayer->icons15x15 = CopyIcons(vnicons15x15, maxstate);
+        currlayer->icons31x31 = CopyIcons(vnicons31x31, maxstate);
+    } else {
+        // otherwise use default icons from current algo
+        AlgoData* ad = algoinfo[currlayer->algtype];
+        currlayer->icons7x7 = CopyIcons(ad->icons7x7, maxstate);
+        currlayer->icons15x15 = CopyIcons(ad->icons15x15, maxstate);
+        currlayer->icons31x31 = CopyIcons(ad->icons31x31, maxstate);
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1253,6 +1700,8 @@ void CreateColorGradient()
 void UpdateCurrentColors()
 {
     // set current layer's colors and icons according to current algo and rule
+    bool loadedcolors = false;
+    bool loadedicons = false;
     AlgoData* ad = algoinfo[currlayer->algtype];
     int maxstate = currlayer->algo->NumCellStates() - 1;
     
@@ -1273,61 +1722,66 @@ void UpdateCurrentColors()
         }
     }
     
-    std::string rule = currlayer->algo->getrule();
+    std::string rulename = currlayer->algo->getrule();
     // replace any '\' and '/' chars with underscores;
     // ie. given 12/34/6 we look for 12_34_6.{colors|icons}
-    std::replace(rule.begin(), rule.end(), '\\', '_');
-    std::replace(rule.begin(), rule.end(), '/', '_');
+    std::replace(rulename.begin(), rulename.end(), '\\', '_');
+    std::replace(rulename.begin(), rulename.end(), '/', '_');
     
     // strip off any suffix like ":T100,200" used to specify a bounded grid
-    size_t colonpos = rule.find(':');
-    if (colonpos != std::string::npos) rule = rule.substr(0, colonpos);
-    
-    // if rule.colors file exists then override default colors
-    bool loadedcolors = LoadRuleColors(rule, maxstate);
-    
-    // if rule.icons file exists then use those icons
-    if ( !LoadRuleIcons(rule, maxstate) ) {
-        if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
-            // use hexagonal icons
-            currlayer->icons7x7 = CopyIcons(hexicons7x7, maxstate);
-            currlayer->icons15x15 = CopyIcons(hexicons15x15, maxstate);
-            currlayer->icons31x31 = CopyIcons(hexicons31x31, maxstate);
-        } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
-            // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
-            currlayer->icons7x7 = CopyIcons(vnicons7x7, maxstate);
-            currlayer->icons15x15 = CopyIcons(vnicons15x15, maxstate);
-            currlayer->icons31x31 = CopyIcons(vnicons31x31, maxstate);
-        } else {
-            // otherwise copy default icons from current algo
-            currlayer->icons7x7 = CopyIcons(ad->icons7x7, maxstate);
-            currlayer->icons15x15 = CopyIcons(ad->icons15x15, maxstate);
-            currlayer->icons31x31 = CopyIcons(ad->icons31x31, maxstate);
-        }
-    }
+    size_t colonpos = rulename.find(':');
+    if (colonpos != std::string::npos) rulename = rulename.substr(0, colonpos);
 
-    // get icon pixel data (mainly used for rendering, but also useful below)
-    currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
-    currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
-    currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
-    
-    // if rule.colors file wasn't loaded and icons are multi-color then we
-    // set non-icon colors to the average of the non-black pixels in each icon
-    // (note that we use the 7x7 icons because they are faster to scan)
-    unsigned char** iconpixels = currlayer->iconpixels7x7;
-    if (!loadedcolors && iconpixels && currlayer->multicoloricons) {
-        for (int n = 1; n <= maxstate; n++) {
-            if (iconpixels[n]) SetAverageColor(n, 7*7, iconpixels[n]);
-        }
-        // if a 15x15 icon is supplied in the 0th position then use
-        // its top left pixel to set the state 0 color
-        iconpixels = currlayer->iconpixels15x15;
-        if (iconpixels && iconpixels[0]) {
-            unsigned char* pxldata = iconpixels[0];
-            // pxldata contains the icon bitmap in RGBA pixel format
-            currlayer->cellr[0] = pxldata[0];
-            currlayer->cellg[0] = pxldata[1];
-            currlayer->cellb[0] = pxldata[2];
+    // deallocate current layer's old icons
+    DeleteIcons(currlayer);
+
+    // this flag will change if any icon uses more than 2 colors
+    currlayer->multicoloricons = false;
+        
+    // look for rulename.rule first
+    FILE* rulefile = FindRuleFile(rulename);
+    if (rulefile) {
+        LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
+        // we don't use loadedcolors at the moment, but leave it in for now
+        if (!loadedicons) UseDefaultIcons(maxstate);
+
+        // get icon pixel data (used for rendering)
+        currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
+        currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
+        currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
+        
+        // note that we don't check if icons are multi-color as we do below
+        // (better if the .rule file sets the appropriate non-icon colors)
+        
+    } else {
+        // no rulename.rule so look for deprecated rulename.colors and/or rulename.icons
+        loadedcolors = LoadRuleColors(rulename, maxstate);
+        loadedicons = LoadRuleIcons(rulename, maxstate);
+        if (!loadedicons) UseDefaultIcons(maxstate);
+
+        // get icon pixel data (mainly used for rendering, but also useful below)
+        currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
+        currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
+        currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
+        
+        // if rulename.colors file wasn't loaded and icons are multi-color then we
+        // set non-icon colors to the average of the non-black pixels in each icon
+        // (note that we use the 7x7 icons because they are faster to scan)
+        unsigned char** iconpixels = currlayer->iconpixels7x7;
+        if (!loadedcolors && iconpixels && currlayer->multicoloricons) {
+            for (int n = 1; n <= maxstate; n++) {
+                if (iconpixels[n]) SetAverageColor(n, 7*7, iconpixels[n]);
+            }
+            // if a 15x15 icon is supplied in the 0th position then use
+            // its top left pixel to set the state 0 color
+            iconpixels = currlayer->iconpixels15x15;
+            if (iconpixels && iconpixels[0]) {
+                unsigned char* pxldata = iconpixels[0];
+                // pxldata contains the icon bitmap in RGBA pixel format
+                currlayer->cellr[0] = pxldata[0];
+                currlayer->cellg[0] = pxldata[1];
+                currlayer->cellb[0] = pxldata[2];
+            }
         }
     }
     

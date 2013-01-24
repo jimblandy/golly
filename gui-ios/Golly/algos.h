@@ -62,8 +62,6 @@ public:
     CGImageRef* icons7x7;         // icon bitmaps for scale 1:8
     CGImageRef* icons15x15;       // icon bitmaps for scale 1:16
     CGImageRef* icons31x31;       // icon bitmaps for scale 1:32
-
-    std::string iconfile;         // path to file containing icons
     
     // default color scheme
     bool gradient;                // use color gradient?
@@ -104,5 +102,8 @@ int NumAlgos();
 bool LoadIconFile(const std::string& path, int maxstate,
                   CGImageRef** out7x7, CGImageRef** out15x15, CGImageRef** out31x31);
 // Return true if we can successfully load icon bitmaps from given file.
+
+CGImageRef* ScaleIconBitmaps(CGImageRef* srcicons, int size);
+// Return icon bitmaps scaled to given size.
 
 #endif

@@ -761,7 +761,7 @@ void OpenFile(const char* path, bool remember)
     }
     
     if (IsTextFile(path)) {
-        // show text file using InfoViewController???
+        // show text file using InfoViewController
         ShowTextFile(fullpath.c_str());
         return;
     }

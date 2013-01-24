@@ -3,13 +3,17 @@
 
 <h2>Changes</h2>
 
-<h3>Changes in version 1.1 (released October 2012)</h3>
+<h3>Changes in version 1.1 (released !!! 2013)</h3>
 
 <p>
 <ul>
-<li> The RuleTable and RuleTree algorithms have been replaced by RuleLoader.
-     If asked to load a rule called "Foo", the RuleLoader algorithm will look for
-     Foo.table first, then Foo.tree.
+<li> This version introduces a new rule format.  A file in the new format has a .rule
+     extension and contains all the information about the rule: its name, description,
+     table/tree data, and any color/icon information.  More details can be found
+     <a href="formats.html#rule">here</a>.
+<li> The RuleTable and RuleTree algorithms have been replaced by a new algorithm
+     called RuleLoader.  If asked to load a rule called "Foo", RuleLoader will look
+     for Foo.rule first, then Foo.table, then Foo.tree.
 <li> Icons can be displayed at scales 1:8, 1:16 and 1:32 by turning on the
      "Show icons" option in the Settings tab.
 <li> Fixed a bug that could cause Undo/Redo buttons to be incorrectly enabled/disabled

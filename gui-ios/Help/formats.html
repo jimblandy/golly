@@ -9,11 +9,12 @@ Here are the important file formats used by Golly:
 <p>
 <dd><a href="#rle"><b>Extended RLE format (.rle)</b></a></dd>
 <dd><a href="#mc"><b>Macrocell format (.mc)</b></a></dd>
-<dd><a href="#colors"><b>Rule colors (.colors)</b></a></dd>
-<dd><a href="#icons"><b>Rule icons (.icons)</b></a></dd>
-<dd><a href="#table"><b>Rule tables (.table)</b></a></dd>
-<dd><a href="#tree"><b>Rule trees (.tree)</b></a></dd>
-<dd><a href="#naming"><b>Rule naming conventions</b></a></dd>
+<dd><a href="#rule"><b>Rule format (.rule)</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#rulename"><b>@RULE</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#table"><b>@TABLE</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#tree"><b>@TREE</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#colors"><b>@COLORS</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#icons"><b>@ICONS</b></a></dd>
 <dd><a href="#zip"><b>Zip files (.zip)</b></a></dd>
 </p>
 
@@ -208,168 +209,98 @@ Macrocell files saved from two-state algorithms and from multi-state
 algorithms are not compatible.
 
 
-<a name="colors"></a>
-<h3>Rule colors</h3>
+<p><a name="rule"></a>
+<font size=+1><b>Rule format</b></font>
 
 <p>
 Whenever Golly switches to a new rule it searches for a matching
-<i>rule</i>.colors file and, if found, loads the color information
-stored in the file.
-Golly looks for the file in Documents/Rules/
-first, then it looks in the supplied Rules folder.
-If <i>rule</i>.colors is not found but <i>rule</i> contains one or more
-hyphens then Golly searches for <i>prefix</i>.colors, where <i>prefix</i>
-consists of all the characters before the final hyphen.  This allows
-related rules to share a single .colors file.
+<i>rulename</i>.rule file and, if found, loads the information stored in the file.
+Golly looks for the file in Documents/Rules/ first, then it looks in the supplied
+Rules folder.
 
 <p>
-Note that a rule string can contain characters not allowed in file names
+Note that a rule name can contain characters not allowed in file names
 ("/" and "\"), so Golly will substitute those characters with underscores.
-For example, if you wanted to change the colors associated with the rule
-12/34/6 then you'd need to create a file called 12_34_6.colors.
+For example, if you wanted to change the colors and/or icons for the
+rule 12/34/6 then you'd need to create a file called 12_34_6.rule.
 
 <p>
-A .colors file is an ordinary text file.
-Any blank lines or lines starting with "#" are ignored.
-You can specify the RGB colors for one or more states using lines like these:
+A .rule file contains all the information about the rule: its name, documentation,
+table/tree data (used by the RuleLoader algorithm), and any color/icon information.
+The .rule format is textual and consists of one or more sections.
+Each section starts with a line of the form @XXX... where X is an uppercase letter.
+If Golly sees a section it doesn't recognize it silently ignores it (this will
+allow us to add new sections in the future without breaking old versions of Golly).
 
 <p>
-<dd><tt>color = 0      &nbsp;48 &nbsp;48      &nbsp;48 &nbsp; (dark gray)</tt></dd>
-<dd><tt>color = 1 &nbsp;&nbsp;0      128           255 &nbsp; (light blue)</tt></dd>
-<dd><tt>color = 2           255      255           255 &nbsp; (white)</tt></dd>
-<dd><tt>color = 3           255      128 &nbsp;&nbsp;0 &nbsp; (orange)</tt></dd>
+The currently recognized sections are described below.  You might like to refer to
+<a href="edit:Rules/WireWorld.rule">WireWorld.rule</a> while reading about
+each section.
+
+
+<p><a name="rulename"></a>
+<font size=+1><b>@RULE</b></font>
+
+<p>
+This is the only mandatory section.  The first line of a .rule must start with
+@RULE followed by a space and then the rule name.  For example:
+
+<p>
+<dd><tt>@RULE WireWorld</tt></dd>
 </p>
 
 <p>
-Golly silently ignores any states that are invalid for the matching rule.
-Any text after the final number on each line is ignored.
-To specify a color gradient for all live states (all states except 0)
-you can use a line like this:
+The supplied rule name must match exactly the name of the .rule file.
+This helps Golly to avoid problems that can occur on case-sensitive file systems.
+When naming a new rule it's best to stick to the following conventions,
+especially if you'd like to share the .rule file with other Golly users:
 
 <p>
-<dd><tt>gradient = 0 0 255 &nbsp;255 0 0 &nbsp; (blue to red)</tt></dd>
-</p>
+<ul>
+<li>
+Please capitalize all rule names and create files like Foo.rule rather
+than foo.rule.  This helps to emphasize that rule names are important,
+especially on case-sensitive file systems.  If the rule "foo" is
+specified inside a .rle or .mc file then Golly won't be able to find
+Foo.rule on a case-sensitive system like Linux.
+<li>
+To allow for possible future extensions in the way Golly handles rule names,
+it's best to use only letters and digits.  Hyphens and underscores are also
+okay if you need some sort of separator.  Note in particular that spaces
+and colons must not be used.
+</ul>
 
 <p>
-Note that a .colors file is loaded <i>after</i> switching to the current
-algorithm's default color scheme, so you have the choice of completely
-changing all the default colors, or only changing some of them.
-<!-- we currently don't let the user change the default colors
-Use <a href="prefs:color">Preferences > Color</a> to change the default
-colors for each algorithm.
--->
+After the @RULE line and before the next section (or end of file) you can
+include any amount of arbitrary text, so this is the place to include a
+description of the rule or any other documentation.
+If the .rule file has a @TREE section then this is a good place to put
+the Python transition function that was used to create the tree data.
 
 
-<a name="icons"></a>
-<h3>Rule icons</h3>
+<p><a name="table"></a>
+<font size=+1><b>@TABLE</b></font>
 
 <p>
-Whenever Golly switches to a new rule it searches for a matching
-<i>rule</i>.icons file and, if found, loads the icon bitmaps
-stored in the file.
-Golly looks for the file in Documents/Rules/
-first, then it looks in the supplied Rules folder.
-If <i>rule</i>.icons is not found but <i>rule</i> contains one or more
-hyphens then Golly will look for <i>prefix</i>.icons, where <i>prefix</i>
-consists of all the characters before the final hyphen.  This allows
-related rules to share a single .icons file.
-
-<p>
-Note that a rule string can contain characters not allowed in file names
-("/" and "\"), so Golly will substitute those characters with underscores.
-For example, if you wanted to change the icons associated with the rule
-12/34/6 then you'd need to create a file called 12_34_6.icons.
-
-<p>
-Golly can load the bitmaps from BMP, GIF, PNG or TIFF files.
-The following picture shows how the bitmaps must be arranged:
-
-<p><center><img src="icon_format.bmp"></center></p>
-
-<p>
-The top row contains one or more icons of size 15x15, so the total width
-must be a multiple of 15.
-The bottom row contains icons of size 7x7, where each icon is under the
-bottom left corner of its corresponding 15x15 icon.
-The 7x7 icons are optional; if not supplied (i.e., the total height is 15
-rather than 22) then Golly will create them by scaling down the 15x15 icons.
-Scaled icons can look rather ugly, so this isn't recommended.
-Pure black (0,0,0) must be used for the areas you want to be transparent.
-The non-black areas will be replaced with the current cell's state color.
-If the number of icons supplied is fewer than the number of live states
-then the last icon is automatically duplicated.  If there are more icons
-than required then the extra icons are simply ignored.
-
-<p>
-Multi-colored icons are also supported.
-If the entire image uses more than two colors then Golly will display the
-icons using the given colors and without doing any substitutions (except for
-black areas of course &mdash; they are still converted to the state 0 color).
-Even better, if there is no corresponding .colors file then Golly will use
-the icon colors to automatically create the colors used in non-icon displays.
-It does this by averaging the non-black pixels in each icon.
-This means you can store both icon and color information in the one file.
-Consider this example:
-
-<p><center><img src="multicolor.bmp"></center></p>
-
-<p>
-This set of icons could be used for a 7-state rule.  The first 6 icons
-are for states 1 to 6 (as in a black-and-white .icons file).
-The 7th icon is optional and is used to specify the color for state 0.
-If no .colors file exists for this rule then Golly will set the non-icon
-colors for each state like so:
-
-<p><center>
-1 = blue, 2 = red, 3 = blue, 4 = red, 5 = purple, 6 = purple, 0 = gray.
-</center></p>
-
-<p>
-If the 7th icon was not supplied then Golly would use the current
-algorithm's default color for state 0 (this is equivalent to having
-a .colors file that doesn't set the color of state 0).
-
-<p>
-If Golly can't find any rule-specific icons it will use the default
-icons associated with each algorithm.
-<!--
-You can change these icons by using
-the "Load Icons" button in <a href="prefs:color">Preferences > Color</a>
-to load files with the same format described above.  The only difference
-is that these files don't require a .icons extension.
--->
-
-
-<a name="table"></a>
-<h3>Rule tables</h3>
-
-<p>
-Golly allows you to add new rules by creating transition tables stored in
-external files.  Given the rule string "Foo", the RuleLoader algorithm will
-search for a file called Foo.table.
-It looks for the file in Documents/Rules/
-first, then it looks in the supplied Rules folder.
-Here's a simple example file:
-
-<p>
-<dd><tt># Signals (2/3) pass alongside a wire (1):</tt></dd>
-<dd><tt>n_states:4</tt></dd>
-<dd><tt>neighborhood:vonNeumann</tt></dd>
-<dd><tt>symmetries:rotate4</tt></dd>
-<dd><tt>var a={2,3}</tt></dd>
-<dd><tt>var b={2,3}</tt></dd>
-<dd><tt>var c={2,3}</tt></dd>
-<dd><tt>a,0,b,1,c,b</tt></dd>
-</p>
-
-<p>
-See the .table files in the Rules folder for more examples.
-A detailed specification is available
+This section is optional.  If present, it contains a transition table
+that can be loaded by the RuleLoader algorithm.
+A detailed specification of the table format is available
 <a href="http://code.google.com/p/ruletablerepository/wiki/TheFormat">here</a>.
+Here's a simple example:
+
+<dd><table border=0><pre>
+# Signals (2/3) pass alongside a wire (1):
+n_states:4
+neighborhood:vonNeumann
+symmetries:rotate4
+var a={2,3}
+var b={2,3}
+var c={2,3}
+a,0,b,1,c,b</pre></table></dd>
 
 <p>
 Empty lines and anything following the hash symbol "#" are ignored.
-These descriptors must appear before other content:
+The following descriptors must appear before other content:
 
 <p>
 <ul>
@@ -390,10 +321,10 @@ supported for the neighborhood you have chosen. For a full list, see the
 </ul>
 
 <p>
-The rest of the file contains variables and transitions. Each variable line
-should follow the form above to list the states. Variables should appear
-before the first transition that uses them. Variables can be used inside later
-variables.
+After the descriptors comes the variables and transitions.  Each variable line
+should follow the form given in the above example to list the states.
+Variables should appear before the first transition that uses them.
+Variables can be used inside later variables.
 
 <p>
 Transition lines should have states or variables separated by commas.
@@ -420,46 +351,39 @@ Rule tables usually don't specify every possible set of inputs. For those
 not listed, the central cell remains unchanged.
 
 <p>
-Rules are checked in the order given in the file - the first rule that
+Transition rules are checked in the order given &mdash; the first rule that
 matches is applied. If you want, you can write rules in the form of general
-cases and exceptions, as long as the exceptions appear first in the file.
+cases and exceptions, as long as the exceptions appear first.
 
 <p>
 (This form of CA rule table representation was inspired by that in Gianluca Tempesti's
 PhD thesis:
 <a href="http://lslwww.epfl.ch/pages/embryonics/thesis/AppendixA.html">http://lslwww.epfl.ch/pages/embryonics/thesis/AppendixA.html</a>.)
 
-<!--
-<p>
-If you have a C/C++ implementation of a transition function, there is a
-way to automatically produce a rule table file.
-See <a href="edit:Rules/TableGenerators/make-ruletable.cpp">Rules/TableGenerators/make-ruletable.cpp</a> for instructions.
--->
-
 <p>
 To share your rule tables with others, you can archive them at the public
 <a href="http://code.google.com/p/ruletablerepository/">Rule Table Repository</a>.
 
 
-<a name="tree"></a>
-<h3>Rule trees</h3>
+<p><a name="tree"></a>
+<font size=+1><b>@TREE</b></font>
 
 <p>
-Another way to specify a rule is to create a .tree file.
-If the RuleLoader algorithm is given a rule named "Foo" and it can't
-find Foo.table then it will search for Foo.tree.
-It looks for the file in Documents/Rules/ first,
-then it looks in the supplied Rules folder.
+This section is optional.  If present, it contains a rule tree
+that can be loaded by the RuleLoader algorithm.
+(If the .rule file also contains a @TABLE section, RuleLoader will
+use the first one it finds.)
 
 <p>
-<!--
 Golly includes programs that permit you to transform a
 given transition function in C++, Perl, or Java into a .tree file
 (see Rules/TreeGenerators) if the number of states is sufficiently
 small (approximately 10 states for eight-neighbor rules, and 32 states
-for four-neighbor rules).
--->
-Essentially, the .tree format allows you
+for four-neighbor rules).  The contents of the .tree file can then
+be copied into the @TREE section of your .rule file.
+
+<p>
+Essentially, the tree format allows you
 to add your own rules to Golly without needing to know how to
 recompile Golly and without dealing with the intricacies of external
 libraries; it generates relatively compact files, and the data
@@ -478,7 +402,7 @@ the value of the final variable in the last node, the result value is
 the actual next state value, rather than another node.
 
 <p>
-The .tree format has fixed the order of variables used for these
+The tree format has fixed the order of variables used for these
 lookups.  For a four-neighbor rule, the order is always north, west,
 east, south, center; for an eight-neighbor rule, the order is always
 northwest, northeast, southwest, southeast, north, west, east, south,
@@ -492,12 +416,13 @@ rules show significant redundancy, with identical rows in the
 transition table, and identical nodes in the rule tree.  To compress
 this tree, all we do is merge identical nodes, from the bottom up.
 This can be done explicitly as we construct the tree from a transition
-function or symbolically as we evaluate a more expressive format.
+function (see Rules/TreeGenerators/RuleTreeGen.java) or symbolically
+as we evaluate a more expressive format.
 
 <p>
-The .tree format itself is simple, and has similarities to the
+The tree format itself is simple, and has similarities to the
 macrocell format.  It is not intended for human authorship or
-consumption.  The .tree format has two parts: a header, and the
+consumption.  The tree format has two parts: a header, and the
 rule tree itself.  The header consists of comments (lines starting
 with a "#") that are ignored, and three required parameter values
 that must be defined before the first tree node.  These values are
@@ -505,7 +430,7 @@ defined, one per line, starting with the parameter name, then an
 equals sign, and finally an integer value.  The three parameters
 are num_states, which must be in the range 2..256 inclusive,
 num_neighbors, which must be 4 or 8, and num_nodes, which must
-match the number of node lines in the file.
+match the number of node lines.
 
 <p>
 The tree is represented by a sequence of node lines.  Each node line
@@ -519,55 +444,281 @@ defined before its node number is used.  The root node, which must
 be the single node at depth num_neighbors+1, must be the last node
 defined in the file.
 
-<!--
-<p>
-For comparison purposes, the program "RuleTableToTree" is supplied
-with Golly; this executable will convert a rule table file into a rule
-tree file.  It operates symbolically (it does not enumerate all the
-possibilities) so it should be fast on any rule table.  To use it,
-change to the main golly directory (the directory that contains the
-Rules directory); this is probably where the executable is installed.
-Type
+
+<p><a name="colors"></a>
+<font size=+1><b>@COLORS</b></font>
 
 <p>
-<dd><tt>RuleTableToTree Codd &gt;Rules/Codd.tree</tt></dd>
+This section is optional and can be used to specify the RGB colors for
+one or more states using lines with 4 numbers, like these:
+
+<dd><table border=0><pre>
+0  48  48  48   dark gray
+1   0 128 255   light blue
+2 255 255 255   white
+3 255 128   0   orange</pre></table></dd>
 
 <p>
-to convert the Codd rule table file (as an example) to a rule
-tree file.  Now you can load a Codd universe into the RuleLoader
-algorithm.
--->
-
-
-<a name="naming"></a>
-<h3>Rule naming conventions</h3>
+Golly silently ignores any states that are invalid for the rule.
+Any text after the final number on each line is ignored.
+Any blank lines or lines starting with "#" are ignored.
 
 <p>
-When naming a .table or .tree file it's best to stick to the following
-conventions, especially if you'd like to share the file with other Golly users:
+To specify a color gradient for all live states (all states except 0)
+you can use a line with 6 numbers, like this:
+
+<dd><table border=0><pre>
+0 0 255  255 0 0   blue to red</pre></table></dd>
+
+<p>
+Note that a .rule file is loaded <i>after</i> switching to the current
+algorithm's default color scheme, so you have the choice of completely
+changing all the default colors, or only changing some of them.
+
+
+<p><a name="icons"></a>
+<font size=+1><b>@ICONS</b></font>
+
+<p>
+This section is optional and can be used to override the default icons
+displayed for this rule (when Golly is in icon mode).
+The icon bitmaps are specified using the
+<a href="http://en.wikipedia.org/wiki/X_PixMap">XPM</a> format.
+Here's a simple example that describes two 7x7 icons suitable for a
+3-state rule (icons are never used for state 0):
+
+<dd><table border=0><pre>
+XPM
+/* width height num_colors chars_per_pixel */
+"7 14 2 1"
+/* colors */
+". c #000000"
+"A c #FFFFFF"
+/* icon for state 1 */
+"A......"
+".A....."
+"..A...."
+"...A..."
+"....A.."
+".....A."
+"......A"
+/* icon for state 2 */
+"......A"
+".....A."
+"....A.."
+"...A..."
+"..A...."
+".A....."
+"A......"</pre></table></dd>
+
+<p>
+Any blank lines or lines starting with "#" or "/" are ignored.
+A line with XPM by itself indicates the start of a set of icon bitmaps at
+a particular size.  The @ICONS section can contain any number of XPM
+subsections, and their order is not important.
+Three different icon sizes are currently supported: 7x7, 15x15 and 31x31
+(for displaying at scales 1:8, 1:16 and 1:32 respectively).
+Any missing icon sizes will be created automatically by scaling a
+supplied size.  Scaled icons can look rather ugly, so if you want
+good looking icons it's best to supply all three sizes.
+
+<p>
+After seeing an XPM line, Golly then looks for lines containing strings
+delimited by double quotes.  The first double quote must be at the start
+of the line (any text after the second double quote is ignored).
+The first string contains crucial header information in the form of
+4 positive integers:
 
 <p>
 <ul>
 <li>
-Please capitalize all rule names and create files like Foo.table rather
-than foo.table.  This helps to emphasize that rule names are important,
-especially on case-sensitive file systems.  If the rule "foo" is
-specified inside a .rle or .mc file then Golly won't be able to find
-Foo.table on a case-sensitive system like Linux.
-
+The 1st number is the bitmap's width which also defines the icon size.
+If it is not 7, 15 or 31 then Golly simply ignores the rest of the XPM data.
+(This provides upward compatibility if we ever decide to support more sizes.)
 <li>
-To allow for possible future extensions in the way Golly handles rule names,
-it's best to use only letters and digits (and possibly hyphens &mdash; see
-the next item).  Note in particular that spaces and colons must not be used.
-
+The 2nd number is the bitmap's height.  This must be an integer multiple
+of the width &mdash; the number of icons is the height divided by the width.
 <li>
-If you have a number of closely related rules then you might want to start
-each name with the same prefix followed by a hyphen and a unique suffix.
-All such rules can then share a single .colors and/or .icons file that
-uses the same prefix.  For example, Foo-1.table and Foo-2.table can
-share Foo.colors and Foo.icons (but if Foo-1.colors also exists then that
-file takes precedence for the Foo-1 rule).
+The 3rd number is the total number of different colors used in the bitmap.
+After the first string comes the strings that specify each color.
+<li>
+The 4th number is the number of characters used to specify each pixel
+(typically 1 or 2).  After the color strings comes the strings with the
+pixel data for each row of the bitmap.  Each such string should contain
+width &times; chars_per_pixel characters.
 </ul>
+
+<p>
+The total number of strings after the XPM line should be 1 + num_colors + height.
+You'll get an error message if there aren't enough strings.
+Any extra strings are ignored.
+
+<p>
+The 1st icon specified is for state 1, the 2nd is for state 2, etc.
+If the number of icons supplied is fewer than the number of live states
+then the last icon is automatically duplicated.  If there are more icons
+than required then the extra icons are simply ignored.
+
+<p>
+Golly recognizes two types of icons: monochrome or multi-color.
+Monochrome icons have only 2 colors, normally black and white, as in
+the above example.  Any black areas will be transparent (ie. those pixels
+will be replaced by the color for state 0), while non-black areas will be
+replaced with the color for the cell's current state.
+Using monochrome icons minimizes the amount of XPM data needed to describe
+a set of icons, especially if the icons use the same shape for each state
+(as in <a href="edit:Rules/WireWorld.rule">WireWorld.rule</a>).
+
+<p>
+Multi-colored icons have more than 2 colors.  These are useful if you need more
+complicated icons, or if you wish to use anti-aliasing to improve their look.
+Any black pixels are still converted to the state 0 color, but non-black
+pixels are displayed without doing any substitutions.
+
+<p>
+If you want to use multi-colored icons then you'll probably want a @COLORS
+section as well so that the non-icon colors match the icon colors as closely
+as possible.  For example, if the icon for state 1 consists of red and blue
+triangles then it would be best to set the color of state 1 to purple in
+the @COLORS section.  This minimizes "color shock" when switching between
+icon and non-icon display mode.
+
+<p>
+The following .rule file uses a multi-colored icon to show a blue sphere
+on a white background:
+
+<dd><table border=0><pre>
+@RULE B3_S23
+
+Override the default colors and icons for Life (B3/S23).
+
+@COLORS
+
+0 255 255 255     white (matches icon background below)
+1   0   0 206     dark blue (matches main color of icon below)
+
+@ICONS
+
+# 7x7 and 15x15 icons will be created by scaling down the 31x31 icon:
+
+XPM
+/* width height num_colors chars_per_pixel */
+"31 31 78 2"
+/* colors */
+"AA c #FFFFFFFFFFFF"   white background
+"BA c #F7F7FFFFEFEF"
+"CA c #EFEFF7F7FFFF"
+"DA c #EFEFEFEFFFFF"
+"EA c #EFEFEFEFEFEF"
+"FA c #DEDEE7E7F7F7"
+"GA c #DEDEDEDEEFEF"
+"HA c #D6D6D6D6F7F7"
+"IA c #CECECECEF7F7"
+"JA c #CECECECEE7E7"
+"KA c #CECECECEDEDE"
+"LA c #C6C6CECECECE"
+"MA c #BDBDC6C6E7E7"
+"NA c #BDBDC6C6D6D6"
+"OA c #BDBDBDBDF7F7"
+"PA c #BDBDBDBDEFEF"
+"AB c #BDBDBDBDDEDE"
+"BB c #B5B5B5B5CECE"
+"CB c #ADADB5B5DEDE"
+"DB c #ADADB5B5CECE"
+"EB c #ADADADADE7E7"
+"FB c #ADADADADDEDE"
+"GB c #ADADADADC6C6"
+"HB c #A5A5A5A5BDBD"
+"IB c #9C9C9C9CC6C6"
+"JB c #9C9C9C9CBDBD"
+"KB c #94949494DEDE"
+"LB c #94949494ADAD"
+"MB c #8C8C8C8CE7E7"
+"NB c #8C8C8C8CD6D6"
+"OB c #84847B7BCECE"
+"PB c #7B7B84849C9C"
+"AC c #7B7B7B7BDEDE"
+"BC c #7B7B7B7BCECE"
+"CC c #7B7B7B7BB5B5"
+"DC c #7B7B7B7BADAD"
+"EC c #6B6B6B6BD6D6"
+"FC c #6B6B6B6BCECE"
+"GC c #6B6B6B6BADAD"
+"HC c #5A5A5A5AC6C6"
+"IC c #52525A5ABDBD"
+"JC c #52525A5A9C9C"
+"KC c #4A4A4A4A9C9C"
+"LC c #4A4A4A4A8484"
+"MC c #4A4A4242B5B5"
+"NC c #42424242C6C6"
+"OC c #424242427B7B"
+"PC c #39394242BDBD"
+"AD c #39393939CECE"
+"BD c #39393939BDBD"
+"CD c #393939398C8C"
+"DD c #39393131DEDE"
+"ED c #31312929B5B5"
+"FD c #29292929CECE"
+"GD c #29292929BDBD"
+"HD c #292929298484"
+"ID c #292929297B7B"
+"JD c #21212121ADAD"
+"KD c #212121219C9C"
+"LD c #18181818C6C6"
+"MD c #18181818B5B5"
+"ND c #18181818ADAD"
+"OD c #181818188C8C"
+"PD c #181818187B7B"
+"AE c #181818186B6B"
+"BE c #181810109494"
+"CE c #101008087B7B"
+"DE c #101008086B6B"
+"EE c #08080808ADAD"
+"FE c #080808088C8C"
+"GE c #080808087B7B"
+"HE c #080800006B6B"
+"IE c #00000000F7F7"
+"JE c #00000000EFEF"
+"KE c #00000000DEDE"
+"LE c #00000000CECE"
+"ME c #00000000BDBD"
+"NE c #000000009C9C"
+/* pixels */
+"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAAABABAAAKADCLCPDHEAEIDGCFBAAAAAAAAAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAAACAGBCDHEBDBCFBCBFBNBKCODPDGCEABAAAAAAAAAAAAAAA"
+"AAAAAAAAAAAABADAJCFEBDEBGAEAHACAFADAHAPAICKDHDJAAAAAAAAAAAAAAA"
+"AAAAAAAAAAAADBIDGDACMAIAGAJAHAJAGAJAHAGAIAMBNCODDCCAAAAAAAAAAA"
+"AAAAAABAAAHBGEADHCPAOAPAABPAPAPAPAABPAPAABOAECADODDCCAAAAAAAAA"
+"BAAAAAAAEAHDGDADACFBFBFBFBFBFBFBFBFBFBFBFBFBKBADDDGEDBAAAAAAAA"
+"AAAAAACALCNDFDGDNBNBKBNBKBKBKBKBNBKBNBKBNBIBMBADFDGDCEKAAAAAAA"
+"AAAAAAJBFEMDLDNDACNBBCBCBCBCBCBCBCBCOBBCOBACACBDNDLDBECDAAAAAA"
+"AAAACAIDNDMDMDNDFCICBCFCFCFCFCFCCCFCFCFCFCFCFCJDMDMDMDGEKAAAAA"
+"AAAANAHEEEEEEENDMCICICICICICICICHCHCICICICICMCNDEEEEEEFEGCAAAA"
+"AABADCFEEENEEENENDNCMCMCMCMCMCMCBDMCMCNCMCPCGDNEEENEEENEAEAAAA"
+"AAAAHDNENEEENEEEEENDGDEDGDEDGDGDEDGDGDGDBDNDNEEEEENENEEEGEJAAA"
+"AAAAGEEEEENEEEEEEENEEENDNDNDNDNDNDNDNDNDEEEEEEEEEEEEEENEFEBBAA"
+"AACAHEEEEEMEEEEEEEMEEEMEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEFEGBAA"
+"AAAAHEEEMEEEMEMEEEMEMEEEMEEEMEMEMEMEMEMEMEMEMEMEMEEEMEMEFEJBAA"
+"AAAAAEEELEMEMEMEMEMEMEMEMEMEMEMEEEMEEEMEMEMEMEMEMEMEMEMEFEGBAA"
+"AAAAKCNELEMELEMELEMELEMELEMEMEMELEMELEMEMEMEMEMELEMELEMEHEKAAA"
+"AAAAJBFEMELEMELELELEMELEMELELELELELELELELELELELELEMELEEEAEEAAA"
+"AAAAFAGEMELELELELELELELELELELELELELELELELELELELELELELEFELCAAAA"
+"AAAAAAJCEEKEKELELELELEKELELEKELELELELELELELELELELEKEMEGEHBAAAA"
+"AABAAAGAPDMEKEKELEKEKEKEKEKELEKEKEKEKEKEKEKEKEKEKEMEFEOCEAAAAA"
+"AAAABAAAGBFEKEKEKEKEKEKEKEKEKEKEKEKEKEKEKEKEKEKEKEEEAELAAAAAAA"
+"AAAAAAAAAAJCEEKEKEJEKEKEJEJEJEKEJEKEKEJEKEKEKEKELECELBBAAAAAAA"
+"AAAAAAAAAADAJCBELEJEJEJEKEKEKEJEKEJEJEJEJEJEJEEEDEPBBAAAAAAAAA"
+"AAAAAAAAAABAAAIBFEMEJEJEIEIEJEJEJEJEJEJEJELDNEAELBBABAAAAAAAAA"
+"AAAAAAAAAAAAAAAAKAHDFENDKEJEIEJEIEJEJELEEEHEOCBBBAAAAAAABAAAAA"
+"AAAAAAAAAAAAAAAADAAAIBKCCENEBEEENDNEGEPDOCLBEAAAAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAAAAAAAAAAADAKAGBJBJBHBABEABAAAAAAAAAAAAAAAAAAAAA"
+"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"</pre></table></dd>
+
+<p>
+If a .rule file has no @ICONS section, Golly will use the default
+icons associated with each algorithm.
 
 
 <a name="zip"></a>

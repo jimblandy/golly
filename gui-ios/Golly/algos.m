@@ -110,8 +110,8 @@ static const char* default7x7[] = {
 // width height ncolors chars_per_pixel
 "7 7 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "..WWW..",
 ".WWWWW.",
@@ -127,8 +127,8 @@ static const char* default15x15[] = {
 // width height ncolors chars_per_pixel
 "15 15 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...............",
 "......WWW......",
@@ -152,8 +152,8 @@ static const char* default31x31[] = {
 // width height ncolors chars_per_pixel
 "31 31 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...............................",
 "...............................",
@@ -193,8 +193,8 @@ static const char* hex7x7[] = {
 // width height ncolors chars_per_pixel
 "7 7 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 ".WW....",
 "WWWWW..",
@@ -209,8 +209,8 @@ static const char* hex15x15[] = {
 // width height ncolors chars_per_pixel
 "15 15 2 1",
 // colors
-"W c #FFFFFFFFFFFF",
-". c #000000000000",    // black will be transparent
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...WW..........",
 "..WWWWW........",
@@ -233,8 +233,8 @@ static const char* hex31x31[] = {
 // width height ncolors chars_per_pixel
 "31 31 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 ".....WW........................",
 "....WWWWW......................",
@@ -274,8 +274,8 @@ static const char* vn7x7[] = {
 // width height ncolors chars_per_pixel
 "7 7 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...W...",
 "..WWW..",
@@ -291,8 +291,8 @@ static const char* vn15x15[] = {
 // width height ncolors chars_per_pixel
 "15 15 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...............",
 ".......W.......",
@@ -316,8 +316,8 @@ static const char* vn31x31[] = {
 // width height ncolors chars_per_pixel
 "31 31 2 1",
 // colors
-". c #000000000000",    // black will be transparent
-"W c #FFFFFFFFFFFF",    // white
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
 // pixels
 "...............................",
 "...............................",
@@ -354,7 +354,7 @@ static const char* vn31x31[] = {
 
 // -----------------------------------------------------------------------------
 
-static CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
+static CGImageRef* CreateMonochromeBitmaps(const char** xpmdata, int maxstates)
 {
     if (xpmdata == NULL) return NULL;
     
@@ -368,7 +368,7 @@ static CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
     // cell's state color to avoid "color shock" when switching
     // between icon and non-icon view.
     if (numcolors != 2 || charsperpixel != 1) {
-        Warning("Bug in CreateIconBitmaps: numcolors is not 2");
+        Warning("Bug in CreateMonochromeBitmaps: numcolors is not 2");
         return NULL;
     };
     
@@ -376,7 +376,7 @@ static CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
     for (int i = 0; i < numcolors; i++) {
         char ch;
         int rgb;
-        sscanf(xpmdata[i+1], "%c c #%8x", &ch, &rgb);
+        sscanf(xpmdata[i+1], "%c c #%6x", &ch, &rgb);
         if (rgb == 0) {
             blackch = ch;
         } else {
@@ -445,7 +445,7 @@ static CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
 
 // -----------------------------------------------------------------------------
 
-static CGImageRef* ScaleIconBitmaps(CGImageRef* srcicons, int size)
+CGImageRef* ScaleIconBitmaps(CGImageRef* srcicons, int size)
 {
     if (srcicons == NULL) return NULL;
 
@@ -480,9 +480,9 @@ static void CreateDefaultIcons(AlgoData* ad)
 {
     if (ad->defxpm7x7 || ad->defxpm15x15 || ad->defxpm31x31) {
         // create icons using given algo's default XPM data
-        ad->icons7x7 = CreateIconBitmaps(ad->defxpm7x7, ad->maxstates);
-        ad->icons15x15 = CreateIconBitmaps(ad->defxpm15x15, ad->maxstates);
-        ad->icons31x31 = CreateIconBitmaps(ad->defxpm31x31, ad->maxstates);
+        ad->icons7x7 = CreateMonochromeBitmaps(ad->defxpm7x7, ad->maxstates);
+        ad->icons15x15 = CreateMonochromeBitmaps(ad->defxpm15x15, ad->maxstates);
+        ad->icons31x31 = CreateMonochromeBitmaps(ad->defxpm31x31, ad->maxstates);
         
         // create scaled bitmaps if size(s) not supplied
         if (!ad->icons7x7) {
@@ -511,9 +511,9 @@ static void CreateDefaultIcons(AlgoData* ad)
         }
     } else {
         // algo didn't supply any icons so use static XPM data defined above
-        ad->icons7x7 = CreateIconBitmaps(default7x7, ad->maxstates);
-        ad->icons15x15 = CreateIconBitmaps(default15x15, ad->maxstates);
-        ad->icons31x31 = CreateIconBitmaps(default31x31, ad->maxstates);
+        ad->icons7x7 = CreateMonochromeBitmaps(default7x7, ad->maxstates);
+        ad->icons15x15 = CreateMonochromeBitmaps(default15x15, ad->maxstates);
+        ad->icons31x31 = CreateMonochromeBitmaps(default31x31, ad->maxstates);
     }
 }
 
@@ -524,7 +524,6 @@ AlgoData::AlgoData() {
     icons7x7 = NULL;
     icons15x15 = NULL;
     icons31x31 = NULL;
-    iconfile = "";
 }
 
 // -----------------------------------------------------------------------------
@@ -594,13 +593,13 @@ void InitAlgorithms()
         CreateDefaultIcons(ad);
     }
     
-    hexicons7x7 = CreateIconBitmaps(hex7x7,256);
-    hexicons15x15 = CreateIconBitmaps(hex15x15,256);
-    hexicons31x31 = CreateIconBitmaps(hex31x31,256);
+    hexicons7x7 = CreateMonochromeBitmaps(hex7x7,256);
+    hexicons15x15 = CreateMonochromeBitmaps(hex15x15,256);
+    hexicons31x31 = CreateMonochromeBitmaps(hex31x31,256);
      
-    vnicons7x7 = CreateIconBitmaps(vn7x7,256);
-    vnicons15x15 = CreateIconBitmaps(vn15x15,256);
-    vnicons31x31 = CreateIconBitmaps(vn31x31,256);
+    vnicons7x7 = CreateMonochromeBitmaps(vn7x7,256);
+    vnicons15x15 = CreateMonochromeBitmaps(vn15x15,256);
+    vnicons31x31 = CreateMonochromeBitmaps(vn31x31,256);
 }
 
 // -----------------------------------------------------------------------------
@@ -700,129 +699,71 @@ bool LoadIconFile(const std::string& path, int maxstate,
         return false;
     }
     
+    // check dimensions of .icons format
     int wd = CGImageGetWidth(allicons);
     int ht = CGImageGetHeight(allicons);
+    if (ht != 15 && ht != 22) {
+        Warning("Wrong bitmap height in .icons file (must be 15 or 22).");
+        return false;
+    }
+    if (wd % 15 != 0) {
+        Warning("Wrong bitmap width in .icons file (must be multiple of 15).");
+        return false;
+    }
     
-    // extension should be .bmp or .icons (might not be in wxGolly if user changed an algo's default icons!!!)
-    // std::string ext = path.substr(path.rfind('.')+1);
+    currlayer->multicoloricons = MultiColorImage(allicons);
     
-    // forget this bmp approach -- scaled down icons are still too ugly!!! remove code eventually!!!
-    if (false /* strcasecmp(ext.c_str(),"bmp") == 0 */) {
-        // check dimensions of .bmp format
-        if (ht < 31) {
-            Warning("Bitmap height in .bmp file must be at least 31.");
-            return false;
+    // first extract 15x15 icons
+    int numicons = wd / 15;
+    if (numicons > 255) numicons = 255;     // play safe
+    
+    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+    if (iconptr) {
+        for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+        for (int i = 0; i < numicons; i++) {
+            // add 1 to skip iconptr[0] (ie. dead state)
+            iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 0, 15, 15));
         }
-        if (wd % ht != 0) {
-            Warning("Bitmap width in .bmp file must be multiple of height.");
-            return false;
-        }
-        
-        currlayer->multicoloricons = MultiColorImage(allicons);
-        
-        // first extract the big icons (each is ht x ht pixels)
-        int numicons = wd / ht;
-        if (numicons > 255) numicons = 255;     // play safe
-        
-        CGImageRef* bigicons = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
-        if (bigicons) {
-            for (int i = 0; i < 256; i++) bigicons[i] = NULL;
-            for (int i = 0; i < numicons; i++) {
-                // add 1 to skip bigicons[0] (ie. dead state)
-                bigicons[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*ht, 0, ht, ht));
+        if (numicons < maxstate && iconptr[numicons]) {
+            // duplicate last icon
+            for (int i = numicons; i < maxstate; i++) {
+                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 0, 15, 15));
             }
-            if (numicons < maxstate && bigicons[numicons]) {
-                // duplicate last icon
-                for (int i = numicons; i < maxstate; i++) {
-                    bigicons[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*ht, 0, ht, ht));
-                }
-            }
-            
-            // if there is an extra icon at the right end of the multi-color icons then
-            // store it in bigicons[0] -- it will be used later in UpdateCurrentColors()
-            // to set the color of state 0
-            if (currlayer->multicoloricons && (wd / ht) > maxstate) {
-                bigicons[0] = CGImageCreateWithImageInRect(allicons, CGRectMake(maxstate*ht, 0, ht, ht));
-            }
-            
-            // create required icons by scaling down the big versions
-            *out31x31 = ScaleIconBitmaps(bigicons, 31);
-            *out15x15 = ScaleIconBitmaps(bigicons, 15);
-            *out7x7 = ScaleIconBitmaps(bigicons, 7);
-            
-            for (int i = 0; i < 256; i++) CGImageRelease(bigicons[i]);
-            free(bigicons);
-        } else {
-            *out31x31 = NULL;
-            *out15x15 = NULL;
-            *out7x7 = NULL;
-        }
-
-    } else {
-        // check dimensions of .icons format
-        if (ht != 15 && ht != 22) {
-            Warning("Wrong bitmap height in .icons file (must be 15 or 22).");
-            return false;
-        }
-        if (wd % 15 != 0) {
-            Warning("Wrong bitmap width in .icons file (must be multiple of 15).");
-            return false;
         }
         
-        currlayer->multicoloricons = MultiColorImage(allicons);
-        
-        // first extract 15x15 icons
-        int numicons = wd / 15;
-        if (numicons > 255) numicons = 255;     // play safe
-        
-        CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+        // if there is an extra icon at the right end of the multi-color icons then
+        // store it in iconptr[0] -- it will be used later in UpdateCurrentColors()
+        // to set the color of state 0
+        if (currlayer->multicoloricons && (wd / 15) > maxstate) {
+            iconptr[0] = CGImageCreateWithImageInRect(allicons, CGRectMake(maxstate*15, 0, 15, 15));
+        }
+    }
+    *out15x15 = iconptr;
+    
+    if (ht == 22) {
+        // extract 7x7 icons (at bottom left corner of each 15x15 icon)
+        iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
         if (iconptr) {
             for (int i = 0; i < 256; i++) iconptr[i] = NULL;
             for (int i = 0; i < numicons; i++) {
                 // add 1 to skip iconptr[0] (ie. dead state)
-                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 0, 15, 15));
+                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 15, 7, 7));
             }
             if (numicons < maxstate && iconptr[numicons]) {
                 // duplicate last icon
                 for (int i = numicons; i < maxstate; i++) {
-                    iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 0, 15, 15));
+                    iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 15, 7, 7));
                 }
-            }
-            
-            // if there is an extra icon at the right end of the multi-color icons then
-            // store it in iconptr[0] -- it will be used later in UpdateCurrentColors()
-            // to set the color of state 0
-            if (currlayer->multicoloricons && (wd / 15) > maxstate) {
-                iconptr[0] = CGImageCreateWithImageInRect(allicons, CGRectMake(maxstate*15, 0, 15, 15));
             }
         }
-        *out15x15 = iconptr;
-        
-        if (ht == 22) {
-            // extract 7x7 icons (at bottom left corner of each 15x15 icon)
-            iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
-            if (iconptr) {
-                for (int i = 0; i < 256; i++) iconptr[i] = NULL;
-                for (int i = 0; i < numicons; i++) {
-                    // add 1 to skip iconptr[0] (ie. dead state)
-                    iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 15, 7, 7));
-                }
-                if (numicons < maxstate && iconptr[numicons]) {
-                    // duplicate last icon
-                    for (int i = numicons; i < maxstate; i++) {
-                        iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 15, 7, 7));
-                    }
-                }
-            }
-            *out7x7 = iconptr;
-        } else {
-            // create 7x7 icons by scaling down 15x15 icons
-            *out7x7 = ScaleIconBitmaps(*out15x15, 7);
-        }
-
-        // create 31x31 icons by scaling up 15x15 icons
-        *out31x31 = ScaleIconBitmaps(*out15x15, 31);
+        *out7x7 = iconptr;
+    } else {
+        // create 7x7 icons by scaling down 15x15 icons
+        *out7x7 = ScaleIconBitmaps(*out15x15, 7);
     }
+
+    // create 31x31 icons by scaling up 15x15 icons
+    *out31x31 = ScaleIconBitmaps(*out15x15, 31);
     
     return true;
 }
