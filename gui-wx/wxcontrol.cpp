@@ -2610,7 +2610,8 @@ void MainFrame::ConvertOldRules()
     
     if (!aborted && depcount > 0) {
         // ask user if it's ok to delete all the deprecated files
-        int answer = wxMessageBox(wxEmptyString, _("Do you want to delete all the .table/tree/colors/icons files?"),
+        int answer = wxMessageBox(_("Do you want to delete all the old .table/tree/colors/icons files?"),
+                                  _("Delete deprecated files?"),
                                   wxICON_QUESTION | wxYES_NO, wxGetActiveWindow());
         if (answer == wxYES) {
             DeleteOldRules(rulesdir);
