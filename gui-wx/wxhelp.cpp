@@ -922,7 +922,11 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
                 mainptr->EditFile(path);
             } else {
                 mainptr->Raise();
-                mainptr->OpenFile(path);
+                if (path.EndsWith(wxT(".rule"))) {
+                    LoadRule( path.AfterLast(wxFILE_SEP_PATH).BeforeLast('.') );
+                } else {
+                    mainptr->OpenFile(path);
+                }
             }
         }
         

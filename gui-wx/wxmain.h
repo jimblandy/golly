@@ -122,6 +122,7 @@ public:
     void ClearOutsideGrid();
     void ReduceCellStates(int newmaxstate);
     void ShowRuleDialog();
+    void ConvertOldRules();
     void ChangeAlgorithm(algo_type newalgotype,
                          const wxString& newrule = wxEmptyString,
                          bool inundoredo = false);
@@ -313,6 +314,7 @@ enum {
     ID_DELTIME,
     ID_SETALGO,
     ID_SETRULE,
+    ID_CONVERT,
     
     // Set Algorithm submenu
     ID_ALGO0,

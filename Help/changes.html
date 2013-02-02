@@ -11,16 +11,12 @@
      extension and contains all the information about the rule: its name, description,
      table/tree data, and any color/icon information.  More details
      <a href="formats.html#rule">here</a>.
-<li> A new script called
-     <a href="open:Scripts/Python/Rule-Generators/rule-converter.py">rule-converter.py</a>
-     can create .rule files using the .table/tree/colors/icons files in your rules folder.
-     The latter files can be deleted after the script has finished, but create a backup
-     copy of your rules folder first, just to be safe!  Note that the script requires the
-     <a href="http://www.pythonware.com/products/pil/">Python Imaging Library</a>
-     to convert a .icons file into the XPM format used inside a .rule file.
 <li> The RuleTable and RuleTree algorithms have been replaced by a new algorithm
      called RuleLoader.  If asked to load a rule called "Foo", RuleLoader will look
      for Foo.rule first, then Foo.table, then Foo.tree.
+<li> The Control menu has a new command called
+     <a href="control.html#convert">Convert Old Rules</a> that can be used to
+     convert all your old .table/tree/colors/icons files into new .rule files.
 <li> Patterns can now be displayed at scale 1:32.  If you want to use that scale when
      creating a new pattern then choose the appropriate pop-up menu option in
      <a href="prefs:file">Preferences > File</a>.

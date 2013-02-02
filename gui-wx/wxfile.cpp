@@ -239,15 +239,15 @@ static bool IsImageFile(const wxString& path)
     if (ext == path) return false;
     
     // supported extensions match image handlers added in GollyApp::OnInit()
-    return   ext.IsSameAs(wxT("bmp"),false) ||
-    ext.IsSameAs(wxT("gif"),false) ||
-    ext.IsSameAs(wxT("png"),false) ||
-    ext.IsSameAs(wxT("tif"),false) ||
-    ext.IsSameAs(wxT("tiff"),false) ||
-    ext.IsSameAs(wxT("icons"),false) ||
-    // we don't actually support JPEG files but let LoadImage handle them
-    ext.IsSameAs(wxT("jpg"),false) ||
-    ext.IsSameAs(wxT("jpeg"),false);
+    return  ext.IsSameAs(wxT("bmp"),false) ||
+            ext.IsSameAs(wxT("gif"),false) ||
+            ext.IsSameAs(wxT("png"),false) ||
+            ext.IsSameAs(wxT("tif"),false) ||
+            ext.IsSameAs(wxT("tiff"),false) ||
+            ext.IsSameAs(wxT("icons"),false) ||
+            // we don't actually support JPEG files but let LoadImage handle them
+            ext.IsSameAs(wxT("jpg"),false) ||
+            ext.IsSameAs(wxT("jpeg"),false);
 }
 
 // -----------------------------------------------------------------------------

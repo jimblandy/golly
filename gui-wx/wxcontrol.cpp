@@ -27,26 +27,33 @@
     #include "wx/wx.h"      // for all others include the necessary headers
 #endif
 
+#include "wx/dir.h"         // for wxDir
+#include "wx/file.h"        // for wxFile
+
 #include "bigint.h"
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "util.h"           // for linereader
 
-#include "wxgolly.h"       // for wxGetApp, statusptr, viewptr, bigview
-#include "wxutils.h"       // for BeginProgress, GetString, etc
-#include "wxprefs.h"       // for allowundo, etc
-#include "wxrule.h"        // for ChangeRule
-#include "wxhelp.h"        // for LoadLexiconPattern
-#include "wxstatus.h"      // for statusptr->...
-#include "wxselect.h"      // for Selection
-#include "wxview.h"        // for viewptr->...
-#include "wxscript.h"      // for inscript, PassKeyToScript
-#include "wxmain.h"        // for MainFrame
-#include "wxundo.h"        // for undoredo->...
-#include "wxalgos.h"       // for *_ALGO, algo_type, CreateNewUniverse, etc
-#include "wxlayer.h"       // for currlayer, etc
-#include "wxrender.h"      // for DrawView
-#include "wxtimeline.h"    // for TimelineExists, UpdateTimelineBar, etc
+#include "wxgolly.h"        // for wxGetApp, statusptr, viewptr, bigview
+#include "wxutils.h"        // for BeginProgress, GetString, etc
+#include "wxprefs.h"        // for allowundo, etc
+#include "wxrule.h"         // for ChangeRule
+#include "wxhelp.h"         // for LoadLexiconPattern
+#include "wxstatus.h"       // for statusptr->...
+#include "wxselect.h"       // for Selection
+#include "wxview.h"         // for viewptr->...
+#include "wxscript.h"       // for inscript, PassKeyToScript
+#include "wxmain.h"         // for MainFrame
+#include "wxundo.h"         // for undoredo->...
+#include "wxalgos.h"        // for *_ALGO, algo_type, CreateNewUniverse, etc
+#include "wxlayer.h"        // for currlayer, etc
+#include "wxrender.h"       // for DrawView
+#include "wxtimeline.h"     // for TimelineExists, UpdateTimelineBar, etc
+
+#include <stdexcept>        // for std::runtime_error and std::exception
+#include <sstream>          // for std::ostringstream
 
 // This module implements Control menu functions.
 
@@ -2092,5 +2099,522 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
     
     if (savechanges) {
         currlayer->undoredo->RememberAlgoChange(oldalgo, oldrule);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static wxString CreateTABLE(const wxString& tablepath)
+{
+    wxString contents = wxT("\n@TABLE\n\n");
+    // append contents of .table file
+    FILE* f = fopen(tablepath.mb_str(wxConvLocal), "r");
+    if (f) {
+        const int MAXLINELEN = 4095;
+        char linebuf[MAXLINELEN + 1];
+        linereader reader(f);
+        while (true) {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            contents += wxString(linebuf, wxConvLocal);
+            contents += wxT("\n");
+        }
+        reader.close();
+    } else {
+        std::ostringstream oss;
+        oss << "Could not read .table file:\n" << tablepath.mb_str(wxConvLocal);
+        throw std::runtime_error(oss.str().c_str());
+    }
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static wxString CreateTREE(const wxString& treepath)
+{
+    wxString contents = wxT("\n@TREE\n\n");
+    // append contents of .tree file
+    FILE* f = fopen(treepath.mb_str(wxConvLocal), "r");
+    if (f) {
+        const int MAXLINELEN = 4095;
+        char linebuf[MAXLINELEN + 1];
+        linereader reader(f);
+        while (true) {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            contents += wxString(linebuf, wxConvLocal);
+            contents += wxT("\n");
+        }
+        reader.close();
+    } else {
+        std::ostringstream oss;
+        oss << "Could not read .tree file:\n" << treepath.mb_str(wxConvLocal);
+        throw std::runtime_error(oss.str().c_str());
+    }
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static wxString CreateCOLORS(const wxString& colorspath)
+{
+    wxString contents = wxT("\n@COLORS\n\n");
+    FILE* f = fopen(colorspath.mb_str(wxConvLocal), "r");
+    if (f) {
+        const int MAXLINELEN = 4095;
+        char linebuf[MAXLINELEN + 1];
+        linereader reader(f);
+        while (true) {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            int skip = 0;
+            if (strncmp(linebuf, "color", 5) == 0 ||
+                strncmp(linebuf, "gradient", 8) == 0) {
+                // strip off everything before 1st digit
+                while (linebuf[skip] && (linebuf[skip] < '0' || linebuf[skip] > '9')) {
+                    skip++;
+                }
+            }
+            contents += wxString(linebuf + skip, wxConvLocal);
+            contents += wxT("\n");
+        }
+        reader.close();
+    } else {
+        std::ostringstream oss;
+        oss << "Could not read .colors file:\n" << colorspath.mb_str(wxConvLocal);
+        throw std::runtime_error(oss.str().c_str());
+    }
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static wxString CreateStateColors(wxImage image, int numicons)
+{
+    wxString contents = wxT("\n@COLORS\n\n");
+    
+    // if the last icon has only 1 color then assume it is the extra 15x15 icon
+    // supplied to set the color of state 0
+    if (numicons > 1) {
+        wxImage icon = image.GetSubImage(wxRect((numicons-1)*15, 0, 15, 15));
+        if (icon.CountColours(1) == 1) {
+            unsigned char* idata = icon.GetData();
+            unsigned char R = idata[0];
+            unsigned char G = idata[1];
+            unsigned char B = idata[2];
+            contents += wxString::Format(wxT("0 %d %d %d\n"), R, G, B);
+            numicons--;
+        }
+    }
+    
+    // set non-icon colors for each live state to the average of the non-black pixels
+    // in each 15x15 icon (note we've skipped the extra icon detected above)
+    for (int i = 0; i < numicons; i++) {
+        wxImage icon = image.GetSubImage(wxRect(i*15, 0, 15, 15));
+        int nbcount = 0;   // non-black pixels
+        int totalR = 0;
+        int totalG = 0;
+        int totalB = 0;
+        unsigned char* idata = icon.GetData();
+        for (int y = 0; y < 15; y++) {
+            for (int x = 0; x < 15; x++) {
+                long pos = (y * 15 + x) * 3;
+                unsigned char R = idata[pos];
+                unsigned char G = idata[pos+1];
+                unsigned char B = idata[pos+2];
+                if (R > 0 || G > 0 || B > 0) {
+                    // non-black pixel
+                    nbcount++;
+                    totalR += R;
+                    totalG += G;
+                    totalB += B;
+                }
+            }
+        }
+        if (nbcount > 0) {
+            contents += wxString::Format(wxT("%d %d %d %d\n"), i+1, totalR/nbcount, totalG/nbcount, totalB/nbcount);
+        } else {
+            // unlikely, but avoid div by zero
+            contents += wxString::Format(wxT("%d 0 0 0\n"), i+1);
+        }
+    }
+    
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static wxString hex2(int i)
+{
+    // convert given number from 0..255 into 2 hex digits
+    wxString result = wxT("xx");
+    const char* hexdigit = "0123456789ABCDEF";
+    result[0] = hexdigit[i / 16];
+    result[1] = hexdigit[i % 16];
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static wxString CreateXPM(const wxString& iconspath, wxImage image, int size, int numicons)
+{
+    // create XPM data for given set of icons
+    wxString contents = wxT("\nXPM\n");
+    
+    int charsperpixel = 1;
+    const char* cindex = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    wxImageHistogram histogram;
+    int numcolors = image.ComputeHistogram(histogram);
+    if (numcolors > 256) {
+        std::ostringstream oss;
+        oss << "Image in " << iconspath.mb_str(wxConvLocal) << " has more than 256 colors.";
+        throw std::runtime_error(oss.str().c_str());
+    }
+    if (numcolors > 26) charsperpixel = 2;   // AABA..PA, ABBB..PB, ... , APBP..PP
+    
+    contents += wxT("/* width height num_colors chars_per_pixel */\n");
+    contents += wxString::Format(wxT("\"%d %d %d %d\"\n"), size, size*numicons, numcolors, charsperpixel);
+    
+    contents += wxT("/* colors */\n");
+    int n = 0;
+    for (wxImageHistogram::iterator entry = histogram.begin(); entry != histogram.end(); ++entry) {
+        unsigned long key = entry->first;
+        unsigned char R = (key & 0xFF0000) >> 16;
+        unsigned char G = (key & 0x00FF00) >> 8;
+        unsigned char B = (key & 0x0000FF);
+        if (R == 0 && G == 0 && B == 0) {
+            // nicer to show . or .. for black pixels
+            contents += wxT("\".");
+            if (charsperpixel == 2) contents += wxT(".");
+            contents += wxT(" c #000000\"\n");
+        } else {
+            wxString hexcolor = wxT("#");
+            hexcolor += hex2(R);
+            hexcolor += hex2(G);
+            hexcolor += hex2(B);
+            contents += wxT("\"");
+            if (charsperpixel == 1) {
+                contents += cindex[n];
+            } else {
+                contents += cindex[n % 16];
+                contents += cindex[n / 16];
+            }
+            contents += wxT(" c ");
+            contents += hexcolor;
+            contents += wxT("\"\n");
+        }
+        n++;
+    }
+    
+    for (int i = 0; i < numicons; i++) {
+        contents += wxString::Format(wxT("/* icon for state %d */\n"), i+1);
+        wxImage icon = image.GetSubImage(wxRect(i*15, 0, size, size));
+        unsigned char* idata = icon.GetData();
+        for (int y = 0; y < size; y++) {
+            contents += wxT("\"");
+            for (int x = 0; x < size; x++) {
+                long pos = (y * size + x) * 3;
+                unsigned char R = idata[pos];
+                unsigned char G = idata[pos+1];
+                unsigned char B = idata[pos+2];
+                if (R == 0 && G == 0 && B == 0) {
+                    // nicer to show . or .. for black pixels
+                    contents += wxT(".");
+                    if (charsperpixel == 2) contents += wxT(".");
+                } else {
+                    n = 0;
+                    unsigned long thisRGB = wxImageHistogram::MakeKey(R,G,B);
+                    for (wxImageHistogram::iterator entry = histogram.begin(); entry != histogram.end(); ++entry) {
+                        if (thisRGB == entry->first) break;
+                        n++;
+                    }
+                    if (charsperpixel == 1) {
+                        contents += cindex[n];
+                    } else {
+                        contents += cindex[n % 16];
+                        contents += cindex[n / 16];
+                    }
+                }
+            }
+            contents += wxT("\"\n");
+        }
+    }
+    
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static wxString CreateICONS(const wxString& iconspath, bool nocolors)
+{
+    wxString contents = wxT("\n@ICONS\n");
+    wxImage image;
+    if (image.LoadFile(iconspath)) {
+        int wd = image.GetWidth();
+        int ht = image.GetHeight();
+        if (ht != 15 && ht != 22) {
+            std::ostringstream oss;
+            oss << "Image in " << iconspath.mb_str(wxConvLocal) <<
+                " has incorrect height (should be 15 or 22).";
+            throw std::runtime_error(oss.str().c_str());
+        }
+        if (wd % 15 > 0) {
+            std::ostringstream oss;
+            oss << "Image in " << iconspath.mb_str(wxConvLocal) <<
+                " has incorrect width (should be multiple of 15).";
+            throw std::runtime_error(oss.str().c_str());
+        }
+        int numicons = wd / 15;
+        
+        if (nocolors && image.CountColours(2) > 2) {
+            // there was no .colors file and .icons file is multi-color,
+            // so prepend a @COLORS section that sets non-icon colors
+            contents = CreateStateColors(image.GetSubImage(wxRect(0,0,wd,15)), numicons) + contents;
+        }
+        
+        if (ht == 15) {
+            contents += CreateXPM(iconspath, image, 15, numicons);
+        } else {
+            contents += CreateXPM(iconspath, image.GetSubImage(wxRect(0,0,wd,15)), 15, numicons);
+            contents += CreateXPM(iconspath, image.GetSubImage(wxRect(0,15,wd,7)), 7, numicons);
+        }
+    } else {
+        std::ostringstream oss;
+        oss << "Could not load image from .icons file:\n" << iconspath.mb_str(wxConvLocal);
+        throw std::runtime_error(oss.str().c_str());
+    }
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static int ConvertRules(const wxString& folder, bool supplied, wxString& htmlinfo)
+{
+    int oldcount = 0;
+    wxDir dir(folder);
+    if (!dir.IsOpened()) {
+        std::ostringstream oss;
+        oss << "Failed to open directory:\n" << folder.mb_str(wxConvLocal);
+        throw std::runtime_error(oss.str().c_str());
+    }
+
+    htmlinfo += wxT("<p>\n");
+    if (supplied) {
+        htmlinfo += _("New .rule files created in the supplied Rules folder:<br>\n(");
+    } else {
+        htmlinfo += _("New .rule files created in your rules folder:<br>\n(");
+    }
+    htmlinfo += folder;
+    htmlinfo += _(")<p>\n");
+    
+    // build an array of all files in the given folder
+    // (using a sorted array speeds up Index calls)
+    wxSortedArrayString allfiles;
+    wxString filename, rulefile;
+    bool found = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES | wxDIR_HIDDEN);
+    while (found) {
+        allfiles.Add(filename);
+        found = dir.GetNext(&filename);
+    }
+
+    // create an array of candidate .rule files
+    wxSortedArrayString candidates;
+    for (size_t n = 0; n < allfiles.GetCount(); n++) {
+        filename = allfiles[n];
+        if ( filename.EndsWith(wxT(".colors")) || filename.EndsWith(wxT(".icons")) ||
+             filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree")) ) {
+            // add .rule file to candidates if it hasn't been added yet
+            rulefile = filename.BeforeLast('.') + wxT(".rule");
+            if (candidates.Index(rulefile) == wxNOT_FOUND) {
+                candidates.Add(rulefile);
+            }
+            oldcount++;
+        }
+    }
+    
+    // look for .rule files of the form foo-*.rule and ignore any foo.rule
+    // entries in candidates if foo.table and foo.tree don't exist
+    // (ie. foo.colors and/or foo.icons is shared by foo-*.table/tree)
+    wxSortedArrayString ignore;
+    for (size_t n = 0; n < candidates.GetCount(); n++) {
+        rulefile = candidates[n];
+        wxString prefix = rulefile.BeforeLast('-');
+        if (prefix.length() > 0) {
+            wxString tablefile = prefix + wxT(".table");
+            wxString treefile = prefix + wxT(".tree");
+            if ( (allfiles.Index(tablefile) == wxNOT_FOUND) &&
+                 (allfiles.Index(treefile) == wxNOT_FOUND) ) {
+                wxString sharedfile = prefix + wxT(".rule");
+                if (candidates.Index(sharedfile) != wxNOT_FOUND) {
+                    ignore.Add(sharedfile);
+                }
+            }
+        }
+        // also ignore any existing .rule files
+        if (allfiles.Index(rulefile) != wxNOT_FOUND) {
+            ignore.Add(rulefile);
+        }
+    }
+    
+    // non-ignored candidates are the .rule files that need to be created
+    int rulecount = 0;
+    for (size_t n = 0; n < candidates.GetCount(); n++) {
+        rulefile = candidates[n];
+        if (ignore.Index(rulefile) == wxNOT_FOUND) {
+            // create rulefile
+            wxString rulename = rulefile.BeforeLast('.');
+            wxString prefix = rulename.BeforeLast('-');
+            wxString tablefile = rulename + wxT(".table");
+            wxString treefile = rulename + wxT(".tree");
+            wxString colorsfile = rulename + wxT(".colors");
+            wxString iconsfile = rulename + wxT(".icons");
+            wxString tabledata, treedata, colordata, icondata;
+            
+            if (allfiles.Index(tablefile) != wxNOT_FOUND)
+                tabledata = CreateTABLE(folder + tablefile);
+            
+            if (allfiles.Index(treefile) != wxNOT_FOUND)
+                treedata = CreateTREE(folder + treefile);
+            
+            if (allfiles.Index(colorsfile) != wxNOT_FOUND) {
+                colordata = CreateCOLORS(folder + colorsfile);
+            } else if (prefix.length() > 0) {
+                // check for shared .colors file
+                wxString sharedcolors = prefix + wxT(".colors");
+                if (allfiles.Index(sharedcolors) != wxNOT_FOUND)
+                    colordata = CreateCOLORS(folder + sharedcolors);
+            }
+            
+            if (allfiles.Index(iconsfile) != wxNOT_FOUND) {
+                icondata = CreateICONS(folder + iconsfile, colordata.length() == 0);
+            } else if (prefix.length() > 0) {
+                // check for shared .icons file
+                wxString sharedicons = prefix + wxT(".icons");
+                if (allfiles.Index(sharedicons) != wxNOT_FOUND)
+                    icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);
+            }
+            
+            wxString contents = wxT("@RULE ") + rulename + wxT("\n");
+            contents += tabledata;
+            contents += treedata;
+            contents += colordata;
+            contents += icondata;
+            
+            // write contents to .rule file
+            wxString rulepath = folder + rulefile;
+            wxFile outfile(rulepath, wxFile::write);
+            if (outfile.IsOpened()) {
+                outfile.Write(contents);
+                outfile.Close();
+            } else {
+                std::ostringstream oss;
+                oss << "Could not create rule file:\n" << rulepath.mb_str(wxConvLocal);
+                throw std::runtime_error(oss.str().c_str());
+            }
+            
+            // append created file to htmlinfo
+            htmlinfo += _("<a href=\"open:");
+            htmlinfo += folder;
+            htmlinfo += rulefile;
+            htmlinfo += _("\">");
+            htmlinfo += rulefile;
+            htmlinfo += _("</a><br>\n");
+            rulecount++;
+        }
+    }
+    
+    if (rulecount == 0) {
+        htmlinfo += _("None.\n");
+    }
+    
+    return oldcount;
+}
+
+// -----------------------------------------------------------------------------
+
+static void ShowCreatedRules(wxString& htmlinfo)
+{
+    wxString header = _("<html><title>Converted Rules</title>\n");
+    header += _("<body bgcolor=\"#FFFFCE\">\n");
+    htmlinfo = header + htmlinfo;
+    htmlinfo += _("\n</body></html>");
+
+    wxString htmlfile = tempdir + _("converted-rules.html");
+    wxFile outfile(htmlfile, wxFile::write);
+    if (outfile.IsOpened()) {
+        outfile.Write(htmlinfo);
+        outfile.Close();
+        ShowHelp(htmlfile);
+    } else {
+        Warning(_("Could not create html file:\n") + htmlfile);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void DeleteOldRules(const wxString& folder)
+{
+    wxDir dir(folder);
+    if (dir.IsOpened()) {
+        // build an array of all files in the given folder
+        wxArrayString allfiles;
+        wxString filename;
+        bool found = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES | wxDIR_HIDDEN);
+        while (found) {
+            allfiles.Add(filename);
+            found = dir.GetNext(&filename);
+        }
+        // delete all the .table/tree/colors/icons files
+        for (size_t n = 0; n < allfiles.GetCount(); n++) {
+            filename = allfiles[n];
+            if ( filename.EndsWith(wxT(".colors")) || filename.EndsWith(wxT(".icons")) ||
+                 filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree")) ) {
+                wxRemoveFile(folder + filename);
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::ConvertOldRules()
+{
+    if (inscript || viewptr->waitingforclick) return;
+    
+    if (generating) {
+        // terminate generating loop and set command_pending flag
+        Stop();
+        command_pending = true;
+        cmdevent.SetId(ID_CONVERT);
+        return;
+    }
+    
+    // look for deprecated .table/tree/colors/icons files and create corresponding .rule files
+    
+    wxString htmlinfo;
+    bool aborted = false;
+    int depcount = 0;       // number of deprecated files
+    try {
+        // look in the supplied Rules folder first, then in the user's rules folder
+        depcount += ConvertRules(rulesdir, true, htmlinfo);
+        depcount += ConvertRules(userrules, false, htmlinfo);
+    }
+    catch(const std::exception& e) {
+        // display message set by throw std::runtime_error(...)
+        Warning(wxString(e.what(),wxConvLocal));
+        aborted = true;
+        // nice to also show error message in help window
+        htmlinfo += _("\n<p>*** CONVERSION ABORTED DUE TO ERROR ***\n<p>");
+        htmlinfo += wxString(e.what(),wxConvLocal);
+    }
+    
+    // display the results in the help window
+    ShowCreatedRules(htmlinfo);
+    
+    if (!aborted && depcount > 0) {
+        // ask user if it's ok to delete all the deprecated files
+        int answer = wxMessageBox(wxEmptyString, _("Do you want to delete all the .table/tree/colors/icons files?"),
+                                  wxICON_QUESTION | wxYES_NO, wxGetActiveWindow());
+        if (answer == wxYES) {
+            DeleteOldRules(rulesdir);
+            DeleteOldRules(userrules);
+        }
     }
 }

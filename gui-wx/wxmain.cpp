@@ -729,8 +729,9 @@ void MainFrame::UpdateMenuItems(bool active)
         mbar->Enable(ID_HINFO,        active);
         mbar->Enable(ID_RECORD,       active && !inscript && currlayer->algo->hyperCapable());
         mbar->Enable(ID_DELTIME,      active && !inscript && timeline && !currlayer->algo->isrecording());
-        mbar->Enable(ID_SETRULE,      active && !timeline && !inscript);
         mbar->Enable(ID_SETALGO,      active && !timeline && !inscript);
+        mbar->Enable(ID_SETRULE,      active && !timeline && !inscript);
+        mbar->Enable(ID_CONVERT,      active && !timeline && !inscript);
         
         mbar->Enable(ID_FULL,         active);
         mbar->Enable(ID_FIT,          active);
@@ -1404,6 +1405,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_RECORD:         StartStopRecording(); break;
         case ID_DELTIME:        DeleteTimeline(); break;
         case ID_SETRULE:        ShowRuleDialog(); break;
+        case ID_CONVERT:        ConvertOldRules(); break;
             
             // View menu
         case ID_FULL:           ToggleFullScreen(); break;
@@ -2328,6 +2330,8 @@ void MainFrame::CreateMenus()
     controlMenu->AppendSeparator();
     controlMenu->Append(ID_SETALGO,              _("Set Algorithm"), algomenu);
     controlMenu->Append(ID_SETRULE,              _("Set Rule...") + GetAccelerator(DO_SETRULE));
+    controlMenu->AppendSeparator();
+    controlMenu->Append(ID_CONVERT,              _("Convert Old Rules"));   // rarely used, so no accelerator
     
     viewMenu->Append(ID_FULL,                    _("Full Screen") + GetAccelerator(DO_FULLSCREEN));
     viewMenu->AppendSeparator();
