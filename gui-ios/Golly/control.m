@@ -1308,15 +1308,13 @@ void ReduceCellStates(int newmaxstate)
 
 void ChangeRule(const std::string& rulestring)
 {
-    // load recently installed rule.table/tree/colors/icons file
+    // load recently installed .rule/table/tree/colors/icons file
     std::string oldrule = currlayer->algo->getrule();
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
     
     // selection might change if grid becomes smaller,
     // so save current selection for RememberRuleChange/RememberAlgoChange
     SaveCurrentSelection();
-    
-    if (rulestring == oldrule) return;
     
     const char* err = currlayer->algo->setrule( rulestring.c_str() );
     if (err) {
@@ -1340,7 +1338,7 @@ void ChangeRule(const std::string& rulestring)
                 }
             }
         }
-        // should only get here if table/tree file contains some sort of error
+        // should only get here if .rule/table/tree file contains some sort of error
         RestoreRule(oldrule.c_str());
         Warning("New rule is not valid in any algorithm!");
         return;
@@ -1363,10 +1361,10 @@ void ChangeRule(const std::string& rulestring)
         ReduceCellStates(newmaxstate);
     }
     
-    // set colors for new rule (loads any .color and/or .icons file)
+    // set colors/icons for new rule
     UpdateLayerColors();
     
-    // pattern might have changed or colors might have changed
+    // pattern might have changed or colors/icons might have changed
     UpdateEverything();
     
     if (oldrule != newrule) {

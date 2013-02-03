@@ -14,6 +14,8 @@
 <li> The RuleTable and RuleTree algorithms have been replaced by a new algorithm
      called RuleLoader.  If asked to load a rule called "Foo", RuleLoader will look
      for Foo.rule first, then Foo.table, then Foo.tree.
+<li> If the Paste button sees pasteboard text starting with "@RULE rulename" then it will
+     save the text as Documents/Rules/rulename.rule and switch to that rule.
 <li> Icons can be displayed at scales 1:8, 1:16 and 1:32 by turning on the
      "Show icons" option in the Settings tab.
 <li> Fixed a bug that could cause Undo/Redo buttons to be incorrectly enabled/disabled

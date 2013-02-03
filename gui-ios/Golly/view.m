@@ -36,7 +36,7 @@
 #include "select.h"         // for Selection
 #include "algos.h"          // for algo_type, *_ALGO, CreateNewUniverse, etc
 #include "layer.h"          // for currlayer, ResizeLayers, etc
-#include "control.h"        // for generating
+#include "control.h"        // for generating, ChangeRule
 #include "file.h"           // for GetTextFromClipboard
 #include "view.h"
 
@@ -988,8 +988,53 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
 
 // -----------------------------------------------------------------------------
 
+bool ClipboardContainsRule()
+{
+    std::string data;
+    if (!GetTextFromClipboard(data)) return false;
+    if (strncmp(data.c_str(), "@RULE ", 6) != 0) return false;
+    
+    // extract rule name
+    std::string rulename;
+    int i = 6;
+    while (data[i] > ' ') {
+        rulename += data[i];
+        i++;
+    }
+    
+    // create Documents/Rules/rulename.rule
+    std::string rulepath = userrules + rulename;
+    rulepath += ".rule";
+    FILE* rulefile = fopen(rulepath.c_str(), "w");
+    if (rulefile) {
+        if (fputs(data.c_str(), rulefile) == EOF) {
+            fclose(rulefile);
+            Warning("Could not write pasteboard text to .rule file!");
+            return true;
+        }
+    } else {
+        Warning("Could not open .rule file for writing!");
+        return true;
+    }
+    fclose(rulefile);
+    
+    // now switch to the newly created rule
+    ChangeRule(rulename);
+
+    std::string msg = "Created Documents/Rules/" + rulename + ".rule";
+    DisplayMessage(msg.c_str());
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+
 void PasteClipboard()
 {
+    // if clipboard text starts with "@RULE rulename" then install rulename.rule
+    // and switch to that rule
+    if (ClipboardContainsRule()) return;
+    
     // create a temporary universe for storing the clipboard pattern
     if (pastealgo) Warning("Bug detected in PasteClipboard!");
     pastealgo = CreateNewUniverse(currlayer->algtype);
