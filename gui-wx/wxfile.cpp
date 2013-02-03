@@ -55,7 +55,7 @@
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxalgos.h"       // for CreateNewUniverse, algo_type, algoinfo, etc
 #include "wxlayer.h"       // for currlayer, etc
-#include "wxhelp.h"        // for ShowHelp
+#include "wxhelp.h"        // for ShowHelp, LoadRule
 #include "wxtimeline.h"    // for InitTimelineFrame, ToggleTimelineBar, etc
 
 #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
@@ -792,6 +792,10 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
         // process zip file
         if (remember) AddRecentPattern(path);     // treat it like a pattern
         OpenZipFile(path);
+    
+    } else if (IsRuleFile(path)) {
+        // switch to rule
+        LoadRule(path.AfterLast(wxFILE_SEP_PATH).BeforeLast('.'));
         
     } else {
         // load pattern

@@ -414,7 +414,7 @@ void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 
 void LoadRule(const wxString& rulestring)
 {
-    // load recently installed rule.table/tree/colors/icons file
+    // load recently installed .rule/table/tree/colors/icons file
     wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
     
@@ -423,8 +423,6 @@ void LoadRule(const wxString& rulestring)
     viewptr->SaveCurrentSelection();
     
     mainptr->Raise();
-    
-    if (rulestring == oldrule) return;
     
     if (mainptr->generating) {
         Warning(_("Cannot change rule while generating a pattern."));
@@ -458,7 +456,7 @@ void LoadRule(const wxString& rulestring)
                 }
             }
         }
-        // should only get here if table/tree file contains some sort of error
+        // should only get here if .rule/table/tree file contains some sort of error
         RestoreRule(oldrule);
         Warning(_("Rule is not valid in any algorithm: ") + rulestring);
         return;
@@ -475,17 +473,17 @@ void LoadRule(const wxString& rulestring)
         }
     }
     
-    // new table/tree might have changed the number of cell states;
+    // new rule might have changed the number of cell states;
     // if there are fewer states then pattern might change
     int newmaxstate = currlayer->algo->NumCellStates() - 1;
     if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
         mainptr->ReduceCellStates(newmaxstate);
     }
     
-    // set colors for new rule (loads any .color and/or .icons file)
+    // update colors and/or icons for the new rule
     UpdateLayerColors();
     
-    // pattern might have changed or colors might have changed
+    // pattern might have changed or colors/icons might have changed
     mainptr->UpdateEverything();
     
     if (oldrule != newrule) {
@@ -922,11 +920,7 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
                 mainptr->EditFile(path);
             } else {
                 mainptr->Raise();
-                if (path.EndsWith(wxT(".rule"))) {
-                    LoadRule( path.AfterLast(wxFILE_SEP_PATH).BeforeLast('.') );
-                } else {
-                    mainptr->OpenFile(path);
-                }
+                mainptr->OpenFile(path);
             }
         }
         
