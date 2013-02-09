@@ -18,6 +18,8 @@
 import golly
 import os
 
+# ------------------------------------------------------------------------------
+
 class RuleTree:
     '''
     Usage example:
@@ -144,6 +146,8 @@ class RuleTree:
         out.flush()
         out.close()
 
+# ------------------------------------------------------------------------------
+
 class MakeRuleTreeFromTransitionFunction:
     '''
     Usage example:
@@ -195,6 +199,8 @@ class MakeRuleTreeFromTransitionFunction:
         out.flush()
         out.close()
 
+# ------------------------------------------------------------------------------
+
 def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename):
     '''Convert a set of vonNeumann or Moore transitions directly to a rule tree.'''
     rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]
@@ -209,3 +215,177 @@ def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,inpu
         tree.add_rule([ t[j] for j in remap[neighborhood] ],t[-1][0])
     tree.write(golly.getdir('rules')+rule_name+".tree" )
     return rule_name
+
+# ------------------------------------------------------------------------------
+
+def GetColors(icon_pixels, wd, ht):
+    result = []
+    for row in xrange(ht):
+        for col in xrange(wd):
+            R,G,B = icon_pixels[row][col]
+            found = False
+            index = 0
+            for count, RGB in result:
+                if (R,G,B) == RGB:
+                    found = True
+                    break
+                index += 1
+            if found:
+                result[index][0] += 1
+            else:
+                result.append([1, (R,G,B)])
+    return result
+
+# ------------------------------------------------------------------------------
+
+def hex2(i):
+    # convert number from 0..255 into 2 hex digits
+    hexdigit = "0123456789ABCDEF"
+    result = hexdigit[i / 16]
+    result += hexdigit[i % 16]
+    return result
+
+# ------------------------------------------------------------------------------
+
+def CreateXPMIcons(colors, icon_pixels, iconsize, yoffset, xoffset, numicons, rulefile):
+    # write out the XPM data for given icon size
+    rulefile.write("\nXPM\n")
+    cindex = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    numcolors = len(colors)
+    charsperpixel = 1
+    if numcolors > 26:
+        charsperpixel = 2   # AABA..PA, ABBB..PB, ... , APBP..PP
+    
+    rulefile.write("/* width height num_colors chars_per_pixel */\n")
+    rulefile.write("\"" + str(iconsize) + " " + str(iconsize*numicons) + " " + \
+                   str(numcolors) + " " + str(charsperpixel) + "\"\n")
+    
+    rulefile.write("/* colors */\n")
+    n = 0
+    for count, RGB in colors:
+        R,G,B = RGB
+        if R == 0 and G == 0 and B == 0:
+            # nicer to show . or .. for black pixels
+            rulefile.write("\".")
+            if charsperpixel == 2: rulefile.write(".")
+            rulefile.write(" c #000000\"\n")
+        else:
+            hexcolor = "#" + hex2(R) + hex2(G) + hex2(B)
+            rulefile.write("\"")
+            if charsperpixel == 1:
+                rulefile.write(cindex[n])
+            else:
+                rulefile.write(cindex[n % 16] + cindex[n / 16])
+            rulefile.write(" c " + hexcolor + "\"\n")
+        n += 1
+    
+    for i in xrange(numicons):
+        rulefile.write("/* icon for state " + str(i+1) + " */\n")
+        for row in xrange(iconsize):
+            rulefile.write("\"")
+            for col in xrange(iconsize):
+                R,G,B = icon_pixels[row + yoffset][col + xoffset*i]
+                if R == 0 and G == 0 and B == 0:
+                    # nicer to show . or .. for black pixels
+                    rulefile.write(".")
+                    if charsperpixel == 2: rulefile.write(".")
+                else:
+                    n = 0
+                    thisRGB = (R,G,B)
+                    for count, RGB in colors:
+                        if thisRGB == RGB: break
+                        n += 1
+                    if charsperpixel == 1:
+                        rulefile.write(cindex[n])
+                    else:
+                        rulefile.write(cindex[n % 16] + cindex[n / 16])
+            rulefile.write("\"\n")
+
+# ------------------------------------------------------------------------------
+
+def ConvertTreeToRule(rule_name, total_states, icon_pixels):
+    '''
+    Format of icon_pixels (for 4 icons at each size):
+    ---------------------------------------------------------
+    |             |             |             |             |
+    |             |             |             |             |
+    |    31x31    |    31x31    |    31x31    |    31x31    |
+    |             |             |             |             |
+    |             |             |             |             |
+    ---------------------------------------------------------
+    |       |.....|       |.....|       |.....|       |.....|
+    | 15x15 |.....| 15x15 |.....| 15x15 |.....| 15x15 |.....|
+    |       |.....|       |.....|       |.....|       |.....|
+    ---------------------------------------------------------
+    |7x7|.........|7x7|.........|7x7|.........|7x7|.........|
+    ---------------------------------------------------------
+    '''
+    rulefile = open(golly.getdir('rules')+rule_name+'.rule','w')
+    rulefile.write('@RULE '+rule_name+'\n\n')
+    rulefile.write('@TREE\n\n')
+    # append contents of .tree file, then delete that file
+    treepath = golly.getdir('rules')+rule_name+'.tree'
+    treefile = open(treepath,'r')
+    rulefile.write( treefile.read() )
+    treefile.close()
+    os.remove(treepath)
+    
+    if len(icon_pixels) > 0:
+        wd = len(icon_pixels[0])
+        ht = len(icon_pixels)
+        iconsize = 15                   # size of icons in top row
+        if ht > 22: iconsize = 31       # 31x31 icons are present
+        numicons = wd / iconsize
+        
+        # get colors used in all icons (we assume each icon size uses the same set of colors)
+        colors = GetColors(icon_pixels, wd, ht)
+        if len(colors) > 256:
+            golly.warn('Icons use more than 256 colors!')
+            rulefile.flush()
+            rulefile.close()
+            return
+        if len(colors) > 2:
+            # create @COLORS section using color info in icon_pixels (not monochrome)
+            rulefile.write('\n@COLORS\n\n')
+            if numicons == total_states:
+                # extra icon is present so use top right pixel to set the color of state 0
+                R,G,B = icon_pixels[0][wd-1]
+                rulefile.write('0 ' + str(R) + ' ' + str(G) + ' ' + str(B) + '\n')
+                numicons -= 1
+            # set colors for each live state to the average of the non-black pixels
+            # in each icon on top row (note we've skipped the extra icon detected above)
+            for i in xrange(numicons):
+                nbcount = 0
+                totalR = 0
+                totalG = 0
+                totalB = 0
+                for row in xrange(iconsize):
+                    for col in xrange(iconsize):
+                        R,G,B = icon_pixels[row][col + i*iconsize]
+                        if R > 0 or G > 0 or B > 0:
+                            nbcount += 1
+                            totalR += R
+                            totalG += G
+                            totalB += B
+                if nbcount > 0:
+                    rulefile.write(str(i+1) + ' ' + str(totalR / nbcount) + ' ' \
+                                                  + str(totalG / nbcount) + ' ' \
+                                                  + str(totalB / nbcount) + '\n')
+                else:
+                    # unlikely, but avoid div by zero
+                    rulefile.write(str(i+1) + ' 0 0 0\n')
+        
+        # create @ICONS section using (r,g,b) triples in icon_pixels[row][col]
+        rulefile.write('\n@ICONS\n')
+        if ht > 22:
+            # top row of icons is 31x31
+            CreateXPMIcons(colors, icon_pixels, 31,  0, 31, numicons, rulefile)
+            CreateXPMIcons(colors, icon_pixels, 15, 31, 31, numicons, rulefile)
+            CreateXPMIcons(colors, icon_pixels,  7, 46, 31, numicons, rulefile)
+        else:
+            # top row of icons is 15x15
+            CreateXPMIcons(colors, icon_pixels, 15,  0, 15, numicons, rulefile)
+            CreateXPMIcons(colors, icon_pixels,  7, 15, 15, numicons, rulefile)
+    
+    rulefile.flush()
+    rulefile.close()
