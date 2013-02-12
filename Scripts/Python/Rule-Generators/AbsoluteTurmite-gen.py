@@ -5,7 +5,6 @@
 import golly
 import random
 from glife.RuleTree import *
-from glife.WriteBMP import *
 
 dirs=['N','E','S','W']
 opposite_dirs = [ 2, 3, 0, 1 ]
@@ -216,6 +215,37 @@ tree.write(golly.getdir('rules')+rule_name+'.tree')
 
 # Write some colour icons so we can see what the turmite is doing
 # A simple ball drawing, with specular highlights (2) and anti-aliasing (3):
+icon31x31 = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0,0],
+             [0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0],
+             [0,0,0,0,3,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0],
+             [0,0,0,0,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
+             [0,0,0,3,1,1,1,1,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0],
+             [0,0,0,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+             [0,0,0,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+             [0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0],
+             [0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0],
+             [0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0],
+             [0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0],
+             [0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0],
+             [0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+             [0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+             [0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0],
+             [0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
+             [0,0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0],
+             [0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0],
+             [0,0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,3,1,1,1,1,1,1,1,1,1,3,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
 icon15x15 = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,3,3,3,0,0,0,0,0,0],
              [0,0,0,0,3,1,1,1,1,1,3,0,0,0,0],
@@ -246,34 +276,40 @@ palette=[[0,0,0],[0,155,67],[127,0,255],[128,128,128],[185,184,96],[0,100,255],[
     [255,175,250],[199,134,213],[115,100,95],[188,163,0],[0,188,163],[163,0,188],[203,73,0],
     [0,203,73],[73,0,203],[94,189,0],[189,0,94]]
 highlight=(255,255,255)
-pixels = [[palette[0] for column in range(total_states)*15] for row in range(22)]
+pixels = [[palette[0] for column in range(total_states)*31] for row in range(53)]
 for state in range(n_states):
     for color in range(n_colors):
         bg_col = palette[color]
         fg_col = palette[state+n_colors]
         mid = [(f+b)/2 for f,b in zip(fg_col,bg_col)]
+        for row in range(31):
+            for column in range(31):
+                pixels[row][(encode(color,state)-1)*31+column] = [bg_col,fg_col,highlight,mid][icon31x31[row][column]]
         for row in range(15):
             for column in range(15):
-                pixels[row][(encode(color,state)-1)*15+column] = [bg_col,fg_col,highlight,mid][icon15x15[row][column]]
+                pixels[31+row][(encode(color,state)-1)*31+column] = [bg_col,fg_col,highlight,mid][icon15x15[row][column]]
         for row in range(7):
             for column in range(7):
-                pixels[15+row][(encode(color,state)-1)*15+column] = [bg_col,fg_col,highlight,mid][icon7x7[row][column]]
+                pixels[46+row][(encode(color,state)-1)*31+column] = [bg_col,fg_col,highlight,mid][icon7x7[row][column]]
 for color in range(n_colors):
     bg_col = palette[color]
+    for row in range(31):
+        for column in range(31):
+            pixels[row][(color-1)*31+column] = bg_col
     for row in range(15):
         for column in range(15):
-            pixels[row][(color-1)*15+column] = bg_col
+            pixels[31+row][(color-1)*31+column] = bg_col
     for row in range(7):
         for column in range(7):
-            pixels[15+row][(color-1)*15+column] = bg_col
-WriteBMP(pixels,golly.getdir('rules')+rule_name+'.icons')
+            pixels[46+row][(color-1)*31+column] = bg_col
+
+# use rule_name.tree and icon info to create rule_name.rule
+ConvertTreeToRule(rule_name, total_states, pixels)
 
 # now we can switch to the new rule
-golly.setalgo('RuleTree')
-golly.setrule(rule_name)
-
 golly.new(rule_name+'-demo.rle')
+golly.setalgo('RuleLoader')
+golly.setrule(rule_name)
 golly.setcell(0,0,encode(0,0)) # start with a single turmite
 golly.fit()
-
-golly.show('Created '+rule_name+'.tree and '+rule_name+'.icons, and selected this rule.')
+golly.show('Created '+rule_name+'.rule, and selected this rule.')

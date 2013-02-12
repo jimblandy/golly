@@ -305,7 +305,7 @@ def CreateXPMIcons(colors, icon_pixels, iconsize, yoffset, xoffset, numicons, ru
 
 def ConvertTreeToRule(rule_name, total_states, icon_pixels):
     '''
-    Format of icon_pixels (for 4 icons at each size):
+    Format of icon_pixels (in this example there are 4 icons at each size):
     ---------------------------------------------------------
     |             |             |             |             |
     |             |             |             |             |
@@ -325,10 +325,32 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
     rulefile.write('@TREE\n\n')
     # append contents of .tree file, then delete that file
     treepath = golly.getdir('rules')+rule_name+'.tree'
-    treefile = open(treepath,'r')
-    rulefile.write( treefile.read() )
-    treefile.close()
-    os.remove(treepath)
+    try:
+        treefile = open(treepath,'r')
+        rulefile.write( treefile.read() )
+        treefile.close()
+        os.remove(treepath)
+    except:
+        g.warn('Failed to open .tree file:\n'+treepath)
+        # continue
+    
+    # if .colors file exists then append @COLORS section and delete file
+    colorspath = golly.getdir('rules')+rule_name+'.colors'
+    try:
+        colorsfile = open(colorspath,'r')
+        rulefile.write('\n@COLORS\n\n')
+        while True:
+            line = colorsfile.readline()
+            if len(line) == 0: break
+            if line.startswith('color') or line.startswith('gradient'):
+                # strip off everything before 1st digit
+                line = line.lstrip('colorgadient= \t')
+            rulefile.write(line)
+        colorsfile.close()
+        os.remove(colorspath)
+    except:
+        # assume there was no .colors file
+        pass
     
     if len(icon_pixels) > 0:
         wd = len(icon_pixels[0])
@@ -347,7 +369,7 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
         if len(colors) > 2:
             # create @COLORS section using color info in icon_pixels (not monochrome)
             rulefile.write('\n@COLORS\n\n')
-            if numicons == total_states:
+            if numicons >= total_states:
                 # extra icon is present so use top right pixel to set the color of state 0
                 R,G,B = icon_pixels[0][wd-1]
                 rulefile.write('0 ' + str(R) + ' ' + str(G) + ' ' + str(B) + '\n')
@@ -372,7 +394,7 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
                                                   + str(totalG / nbcount) + ' ' \
                                                   + str(totalB / nbcount) + '\n')
                 else:
-                    # unlikely, but avoid div by zero
+                    # avoid div by zero
                     rulefile.write(str(i+1) + ' 0 0 0\n')
         
         # create @ICONS section using (r,g,b) triples in icon_pixels[row][col]

@@ -9,7 +9,6 @@
 import golly
 import random
 from glife.RuleTree import *
-from glife.WriteBMP import *
 
 dirs=['N','E','S','W']
 opposite_dirs=[2,3,0,1] # index of opposite direction
