@@ -5,7 +5,6 @@
 import golly
 import random
 from glife.RuleTree import *
-from glife.WriteBMP import *
 
 opposite_dirs=[2,3,0,1] # index of opposite direction
 
@@ -119,8 +118,39 @@ for output_color,inputs in leaving_color_behind.items():
 
 tree.write(golly.getdir('rules')+rule_name+'.tree')
 
-# Write some colour icons so we can see what the turmite is doing
+# Create some multi-colour icons so we can see what the ant is doing
 # Andrew's ant drawing: (with added eyes (2) and anti-aliasing (3))
+ant31x31 = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,1,1,1,2,2,1,1,1,2,2,1,1,1,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,2,2,1,1,1,2,2,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,1,1,0,0,0,3,1,1,1,3,0,0,0,1,1,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,3,1,1,1,3,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
 ant15x15 = [[0,0,0,0,1,0,0,0,0,0,1,0,0,0,0],
             [0,0,0,0,0,1,0,0,0,1,0,0,0,0,0],
             [0,0,0,0,0,0,2,1,2,0,0,0,0,0,0],
@@ -153,37 +183,49 @@ palette=[[0,0,0],[0,155,67],[127,0,255],[128,128,128],[185,184,96],[0,100,255],[
 eyes = (255,255,255)
 rotate4 = [ [[1,0],[0,1]], [[0,-1],[1,0]], [[-1,0],[0,-1]], [[0,1],[-1,0]] ]
 offset4 = [ [0,0], [1,0], [1,1], [0,1] ]
-pixels = [[palette[0] for column in range(total_states)*15] for row in range(22)]
+pixels = [[palette[0] for column in range(total_states)*31] for row in range(53)]
 for state in range(n_states):
     for color in range(n_colors):
         for dir in range(n_dirs):
             bg_col = palette[color]
             fg_col = palette[state+n_colors]
             mid = [(f+b)/2 for f,b in zip(fg_col,bg_col)]
+            for x in range(31):
+                for y in range(31):
+                    column = (encode(color,state,dir)-1)*31 + rotate4[dir][0][0]*x + \
+                        rotate4[dir][0][1]*y + offset4[dir][0]*30
+                    row = rotate4[dir][1][0]*x + rotate4[dir][1][1]*y + offset4[dir][1]*30
+                    pixels[row][column] = [bg_col,fg_col,eyes,mid][ant31x31[y][x]]
             for x in range(15):
                 for y in range(15):
-                    column = (encode(color,state,dir)-1)*15 + rotate4[dir][0][0]*x + \
+                    column = (encode(color,state,dir)-1)*31 + rotate4[dir][0][0]*x + \
                         rotate4[dir][0][1]*y + offset4[dir][0]*14
-                    row = rotate4[dir][1][0]*x + rotate4[dir][1][1]*y + offset4[dir][1]*14
+                    row = 31 + rotate4[dir][1][0]*x + rotate4[dir][1][1]*y + offset4[dir][1]*14
                     pixels[row][column] = [bg_col,fg_col,eyes,mid][ant15x15[y][x]]
             for x in range(7):
                 for y in range(7):
-                    column = (encode(color,state,dir)-1)*15 + rotate4[dir][0][0]*x + \
+                    column = (encode(color,state,dir)-1)*31 + rotate4[dir][0][0]*x + \
                         rotate4[dir][0][1]*y + offset4[dir][0]*6
-                    row = 15 + rotate4[dir][1][0]*x + rotate4[dir][1][1]*y + offset4[dir][1]*6
+                    row = 46 + rotate4[dir][1][0]*x + rotate4[dir][1][1]*y + offset4[dir][1]*6
                     pixels[row][column] = [bg_col,fg_col,eyes,mid][ant7x7[y][x]]
 for color in range(n_colors):
     bg_col = palette[color]
+    for row in range(31):
+        for column in range(31):
+            pixels[row][(color-1)*31+column] = bg_col
     for row in range(15):
         for column in range(15):
-            pixels[row][(color-1)*15+column] = bg_col
+            pixels[31+row][(color-1)*31+column] = bg_col
     for row in range(7):
         for column in range(7):
-            pixels[15+row][(color-1)*15+column] = bg_col
-WriteBMP(pixels,golly.getdir('rules')+rule_name+'.icons')
+            pixels[46+row][(color-1)*31+column] = bg_col
+
+# use rule_name.tree and icon info to create rule_name.rule
+ConvertTreeToRule(rule_name, total_states, pixels)
 
 # now we can switch to the new rule
-golly.setrule(rule_name)
 golly.new(rule_name+' demo')
+golly.setalgo('RuleLoader')
+golly.setrule(rule_name)
 golly.setcell(0,0,n_colors+3) # start with an ant facing west
-golly.show('Created '+rule_name+'.tree, and selected this rule.')
+golly.show('Created '+rule_name+'.rule and selected this rule.')

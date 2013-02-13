@@ -505,10 +505,12 @@ for color in range(n_colors):
 # use rule_name.tree and icon info to create rule_name.rule
 ConvertTreeToRule(rule_name, total_states, pixels)
 
+# switch to the new rule
 golly.new(rule_name+'-demo.rle')
 golly.setalgo('RuleLoader')
 golly.setrule(rule_name)
 golly.setcell(0,0,encode(0,0,0)) # start with a single turmite
+golly.show('Created '+rule_name+'.rule and selected this rule.')
 
 '''
 # we make a turmite testbed so we don't miss interesting behaviour
@@ -547,7 +549,5 @@ for color in range(n_colors):
                 golly.setcell(x,y,encode(color,0,0)) # start with a turmite facing N
             else:
                 golly.setcell(x,y,color)
-'''
-
 golly.fit()
-golly.show('Created '+rule_name+'.rule, and selected this rule.')
+'''
