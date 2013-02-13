@@ -42,6 +42,6 @@ rule_name = Converters[neighborhood]( neighborhood,
                                       transitions,
                                       filename )
 
-golly.setalgo('RuleTree')
+golly.setalgo('RuleLoader')
 golly.setrule(rule_name)
 golly.show('Created '+rule_name+'.tree and selected that rule.')

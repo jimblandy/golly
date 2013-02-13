@@ -411,7 +411,7 @@ if total_states<=16:
                                         fg_col = palette[n_colors+us]
                                         pixels[15+row][(golly_state-1)*15+column] = [palette[0],bg_col,fg_col][turmite_small[ud][row][column]]
 
-    WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+    ConvertTreeToRule(rule_name, total_states, pixels)
 
 elif total_states<=128:
 
@@ -532,7 +532,7 @@ elif total_states<=128:
                         pixels[15+row][(encode(color,state,dir)+total_states-2)*15+column] = \
                             [palette[0],bg_color,fg_color][lower7x7[2-dir][6-row][column]]
 
-    WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+    ConvertTreeToRule(rule_name, total_states, pixels)
 
 else:
 
@@ -541,10 +541,8 @@ else:
 
 # -- select the rule --
 
-golly.setalgo('RuleTree')
-golly.setrule(rule_name)
-
 golly.new(rule_name+'-demo.rle')
+golly.setalgo('RuleLoader')
+golly.setrule(rule_name)
 golly.setcell(0,0,encode(0,0,0)) # start with a single turmite
-
-golly.show('Created '+rule_name+'.tree and '+rule_name+'.icons and selected that rule.')
+golly.show('Created '+rule_name+'.rule and selected that rule.')
