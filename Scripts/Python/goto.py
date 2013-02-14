@@ -73,6 +73,7 @@ def goto(gen):
     currgen += 1
 
     # use fast stepping (thanks to PM 2Ring)
+    oldstep = g.getstep()
     for i, d in enumerate(intbase(newgen - currgen, g.getbase())):
         if d > 0:
             g.setstep(i)
@@ -85,6 +86,7 @@ def goto(gen):
                 if newsecs - oldsecs >= 1.0:  # do an update every sec
                     oldsecs = newsecs
                     g.update()
+    g.setstep(oldstep)
     g.show("")
 
 # --------------------------------------------------------------------
