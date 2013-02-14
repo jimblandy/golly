@@ -201,23 +201,6 @@ class MakeRuleTreeFromTransitionFunction:
 
 # ------------------------------------------------------------------------------
 
-def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename):
-    '''Convert a set of vonNeumann or Moore transitions directly to a rule tree.'''
-    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]
-    remap = {
-        "vonNeumann":[0,3,2,4,1], # CNESW->CSEWN
-        "Moore":[0,5,3,7,1,4,6,2,8] # C,N,NE,E,SE,S,SW,W,NW -> C,S,E,W,N,SE,SW,NE,NW
-    }
-    numNeighbors = len(remap[neighborhood])-1
-    tree = RuleTree(n_states,numNeighbors)
-    for i,t in enumerate(transitions):
-        golly.show("Building rule tree... ("+str(100*i/len(transitions))+"%)")
-        tree.add_rule([ t[j] for j in remap[neighborhood] ],t[-1][0])
-    tree.write(golly.getdir('rules')+rule_name+".tree" )
-    return rule_name
-
-# ------------------------------------------------------------------------------
-
 def GetColors(icon_pixels, wd, ht):
     result = []
     for row in xrange(ht):
@@ -411,3 +394,22 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
     
     rulefile.flush()
     rulefile.close()
+
+# ------------------------------------------------------------------------------
+
+def ConvertRuleTableTransitionsToRuleTree(neighborhood,n_states,transitions,input_filename):
+    '''Convert a set of vonNeumann or Moore transitions directly to a rule tree.'''
+    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]
+    remap = {
+        "vonNeumann":[0,3,2,4,1], # CNESW->CSEWN
+        "Moore":[0,5,3,7,1,4,6,2,8] # C,N,NE,E,SE,S,SW,W,NW -> C,S,E,W,N,SE,SW,NE,NW
+    }
+    numNeighbors = len(remap[neighborhood])-1
+    tree = RuleTree(n_states,numNeighbors)
+    for i,t in enumerate(transitions):
+        golly.show("Building rule tree... ("+str(100*i/len(transitions))+"%)")
+        tree.add_rule([ t[j] for j in remap[neighborhood] ],t[-1][0])
+    tree.write(golly.getdir('rules')+rule_name+".tree" )
+    # use rule_name.tree to create rule_name.rule (no icons)
+    ConvertTreeToRule(rule_name, n_states, [])
+    return rule_name

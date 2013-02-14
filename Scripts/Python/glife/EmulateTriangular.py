@@ -9,7 +9,6 @@ except NameError:
 import golly
 import os
 from glife.RuleTree import *
-from glife.WriteBMP import *
 
 # We support two emulation methods:
 # 1) square-splitting: each square holds two triangles: one up, one down
@@ -200,34 +199,42 @@ def TriangularTransitionsToRuleTree_CheckerboardMethod(neighborhood,n_states,tra
     tree.write(golly.getdir('rules') + rule_name + '.tree')
 
 def MakeTriangularIcons_SplittingMethod(n_states,colors,force_background,rule_name):
-
-    width = 15*(n_states*n_states-1)
+    
+    width = 31*(n_states*n_states-1)
     if force_background and n_states>2:
-        width+=15
-    height = 22
+        width+=31
+    height = 53
     pixels = [[(0,0,0) for x in range(width)] for y in range(height)]
-
+    
     for row in range(height):
         for column in range(width):
-            if force_background and n_states>2 and column>=width-15:
+            if force_background and n_states>2 and column>=width-31:
                 # add extra 'icon' filled with the intended background color
                 pixels[row][column] = background_color
             else:
                 # decide if this pixel is a lower or upper triangle
-                iState = int(column/15)
+                iState = int(column/31)
                 upper = int((iState+1) / n_states)
                 lower = (iState+1) - upper*n_states
                 is_upper = False
                 is_lower = False
-                if row<15: # big icon
-                    if (column-iState*15) > row:
+                if row<31:
+                    # 31x31 icon
+                    if (column-iState*31) > row:
                         is_upper = True
-                    elif (column-iState*15) < row:
+                    elif (column-iState*31) < row:
                         is_lower = True
-                elif (column-iState*15)<7: # little icon
-                    if (column-iState*15) > row-15:
+                elif row<46 and (column-iState*31)<15:
+                    # 15x15 icon
+                    if (column-iState*31) > row-31:
                         is_upper = True
-                    elif (column-iState*15) < row-15:
+                    elif (column-iState*31) < row-31:
+                        is_lower = True
+                elif (column-iState*31)<7:
+                    # 7x7 icon
+                    if (column-iState*31) > row-46:
+                        is_upper = True
+                    elif (column-iState*31) < row-46:
                         is_lower = True
                 if is_upper:
                     pixels[row][column] = colors[upper]
@@ -235,62 +242,100 @@ def MakeTriangularIcons_SplittingMethod(n_states,colors,force_background,rule_na
                     pixels[row][column] = colors[lower]
                 else:
                     pixels[row][column] = 0,0,0
-
-    WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+    
+    return pixels
 
 def MakeTriangularIcons_CheckerboardMethod(n_states,colors,force_background,rule_name):
-
-    width = 15*(n_states*2-1)
+    
+    width = 31*(n_states*2-1)
     if force_background and n_states>2:
-        width+=15
-    height = 22
+        width+=31
+    height = 53
     pixels = [[(0,0,0) for x in range(width)] for y in range(height)]
-
-    lower =  [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
-              [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
-              [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
-              [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
-              [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0],
-              [0,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-              [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-              [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
-    lower7x7 = [[0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0],
-                [0,0,0,1,0,0,0],
-                [0,0,1,1,1,0,0],
-                [0,1,1,1,1,1,0],
-                [1,1,1,1,1,1,1],
-                [0,0,0,0,0,0,0]]
-
+    
+    lower31x31 =  [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0],
+                   [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
+                   [0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
+                   [0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+                   [0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+                   [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+                   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+    lower15x15 =  [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+                   [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
+                   [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
+                   [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
+                   [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0],
+                   [0,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+                   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+    lower7x7 =    [[0,0,0,0,0,0,0],
+                   [0,0,0,0,0,0,0],
+                   [0,0,0,1,0,0,0],
+                   [0,0,1,1,1,0,0],
+                   [0,1,1,1,1,1,0],
+                   [1,1,1,1,1,1,1],
+                   [0,0,0,0,0,0,0]]
+    
     if force_background:
         bg_color = colors[0]
     else:
         bg_color = (0,0,0)
     for i in range(1,n_states):
         fg_color = colors[i]
+        # draw 31x31 icons
+        for row in range(31):
+            for column in range(31):
+                # draw lower triangle icons
+                pixels[row][31*(i-1) + column] = [bg_color,fg_color][lower31x31[row][column]]
+                # draw upper triangle icons
+                pixels[row][31*(n_states+i-2) + column] = [bg_color,fg_color][lower31x31[28-row][column]]
         # draw 15x15 icons
         for row in range(15):
             for column in range(15):
                 # draw lower triangle icons
-                pixels[row][15*(i-1) + column] = [bg_color,fg_color][lower[row][column]]
+                pixels[31+row][31*(i-1) + column] = [bg_color,fg_color][lower15x15[row][column]]
                 # draw upper triangle icons
-                pixels[row][15*(n_states+i-2) + column] = [bg_color,fg_color][lower[13-row][column]]
+                pixels[31+row][31*(n_states+i-2) + column] = [bg_color,fg_color][lower15x15[13-row][column]]
         # draw 7x7 icons
         for row in range(7):
             for column in range(7):
                 # draw lower triangle icons
-                pixels[15+row][15*(i-1) + column] = [bg_color,fg_color][lower7x7[row][column]]
+                pixels[46+row][31*(i-1) + column] = [bg_color,fg_color][lower7x7[row][column]]
                 # draw upper triangle icons
-                pixels[15+row][15*(n_states+i-2) + column] = [bg_color,fg_color][lower7x7[6-row][column]]
-
-    WriteBMP( pixels, golly.getdir('rules') + rule_name + ".icons" )
+                pixels[46+row][31*(n_states+i-2) + column] = [bg_color,fg_color][lower7x7[6-row][column]]
+    
+    return pixels
 
 def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
     '''Emulate a triangularVonNeumann or triangularMoore neighborhood rule table with a rule tree.'''
@@ -334,11 +379,11 @@ def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
     # make a rule tree and some icons
     if n_states <= 16:
         TriangularTransitionsToRuleTree_SplittingMethod(neighborhood,n_states,transitions_list,rule_name)
-        MakeTriangularIcons_SplittingMethod(n_states,colors,force_background,rule_name)
+        pixels = MakeTriangularIcons_SplittingMethod(n_states,colors,force_background,rule_name)
         total_states = n_states * n_states
     elif neighborhood=='triangularVonNeumann' and n_states <= 128:
         TriangularTransitionsToRuleTree_CheckerboardMethod(neighborhood,n_states,transitions_list,rule_name)
-        MakeTriangularIcons_CheckerboardMethod(n_states,colors,force_background,rule_name)
+        pixels = MakeTriangularIcons_CheckerboardMethod(n_states,colors,force_background,rule_name)
         total_states = n_states * 2 - 1
     else:
         golly.warn('Only support triangularMoore with 16 states or fewer, and triangularVonNeumann\n'+\
@@ -355,5 +400,7 @@ def EmulateTriangular(neighborhood,n_states,transitions_list,input_filename):
             c.write('color = '+str(i)+' '+' '.join(map(str,colors[1]))+'\n')
         c.flush()
         c.close()
-
+    
+    # use rule_name.tree and rule_name.colors and icon info to create rule_name.rule
+    ConvertTreeToRule(rule_name, total_states, pixels)
     return rule_name
