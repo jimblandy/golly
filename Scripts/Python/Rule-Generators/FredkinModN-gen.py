@@ -63,11 +63,10 @@ Converters = {
     "hexagonal":EmulateHexagonal,
 }
 
-golly.show("Building rule tree...")
+golly.show("Building rule...")
 rule_name = Converters[nhood]( nhood,
                                n,
                                transitions,
                                rule_name+'.tree' )
-
 golly.setrule(rule_name)
-golly.show('Created '+rule_name+'.tree and .colors, and selected this rule.')
+golly.show('Created '+rule_name+'.rule and selected this rule.')
