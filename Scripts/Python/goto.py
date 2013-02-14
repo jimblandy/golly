@@ -6,6 +6,7 @@
 # Authors: Andrew Trevorrow and Dave Greene, April 2006.
 # Updated Sept-Oct 2006 -- XRLE support and reusable default value.
 # Updated April 2010 -- much faster, thanks to PM 2Ring.
+# Save and restore step setting after PM 2Ring algorithm (Munafo)
 
 from glife import validint
 from time import time

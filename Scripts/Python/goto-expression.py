@@ -27,6 +27,19 @@
 #  20120624 Remove whitespace before evaluating
 #  20130213 Move expr_2 code to "goto-expression.py" for Golly.
 #  20130214 Fix precedednce bugs, add expr_3
+#
+# TODO:
+#   Allow decimal point in EE notation, so "6.02e23" would work (right
+#     now you have to do "602e21")
+#   Make - and / associate left-to-right, so 100-10+1 gives 91 instead of 89
+#   Remove use of deprecated string.find and string.replace functions
+#   Why is it much faster when you start from gen 0? For example, start
+#     with puffer-train.rle, use this script to goto 10^100 then goto 2*10^100
+#     it's much faster if you start from gen 0 and go directly to 2*10^100
+#   Given that gofast saves and restores the base, should we use it always?
+#     Note that patterns with a lot of period-P oscillators run more
+#     efficiently when the base is set to P or a factor of P, so this
+#     is not a simple decision.
 
 from glife import validint
 from time import time
