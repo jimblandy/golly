@@ -636,6 +636,66 @@ double bigint::todouble() const {
    return r ;
 }
 /**
+ * Turn this bigint into a double in a way that preserves huge exponents.
+ * Here are some examples:
+ *
+ * To represent
+ * the quantity     We return the value
+ *  27               1.27
+ * -6.02e23         -23.602
+ *  6.02e23          23.602
+ *  9.99e299         299.999
+ *  1.0e300          300.1
+ *  1.0e1000         1000.1       This would normally overflow
+ *  6.7e12345        12345.67
+ */
+double bigint::toscinot() const
+{
+  double mant, exponent;
+  double k_1_10 = 0.1;
+  double k_1_10000 = 0.0001;
+  double k_base = 65536.0 * 32768.0;
+
+  exponent = 0;
+  if (v.i & 1) {
+    /* small integer */
+    mant = (double)(v.i >> 1) ;
+  } else {
+    /* big integer: a string of 31-bit chunks */
+    mant = 0 ;
+    double m = 1 ;
+    for (int i=1; i<=v.p[0]; i++) {
+      mant = mant + m * v.p[i] ;
+      m *= k_base ;
+      while (m >= 100000.0) {
+        m *= k_1_10000;
+        mant *= k_1_10000;
+        exponent += 4.0;
+      }
+    }
+  }
+
+  /* Add the last few powers of 10 back into the mantissa */
+  while(((mant < 0.5) && (mant > -0.5)) && (exponent > 0.0)) {
+    mant *= 10.0;
+    exponent -= 1.0;
+  }
+
+  /* Mantissa might be greater than 1 at this point */
+  while((mant >= 1.0) || (mant <= -1.0)) {
+    mant *= k_1_10;
+    exponent += 1.0;
+  }
+
+  if (mant >= 0) {
+    // Normal case: 6.02e23 -> 23.602
+    return(exponent + mant);
+  }
+  // Negative case: -6.02e23 -> -23.602
+  // In this example mant will be -0.602 and exponent will be 23.0
+  return(mant - exponent);
+}
+/**
  *   Return an int.
  */
 int bigint::toint() const {

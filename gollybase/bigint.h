@@ -145,6 +145,7 @@ public:
    // note:  may only be called on arrayed bigints
    void add_smallint(int a) ;
    double todouble() const ;
+   double toscinot() const ;
    int toint() const ;
    // static values predefined
    static const bigint zero, one, two, three ;

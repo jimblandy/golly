@@ -215,12 +215,10 @@ wxString StatusBar::Stringify(const bigint& b)
 {
     static char buf[32];
     char* p = buf;
-    double d = b.todouble();
-    if ( fabs(d) > 1000000000.0 ) {
-        // use e notation for abs value > 10^9 (agrees with min & max_coord)
-        sprintf(p, "%g", d);
-    } else {
+    double d = b.toscinot();
+    if ( fabs(d) < 10.0 ) {
         // show exact value with commas inserted for readability
+        d = b.todouble();
         if ( d < 0 ) {
             d = - d;
             *p++ = '-';
@@ -239,7 +237,35 @@ wxString StatusBar::Stringify(const bigint& b)
             commas--;
         }
         if ( p[-1] == '-' ) p--;
+    } else {
+      // use e notation for abs value > 10^9 (agrees with min & max_coord)
+      const char * sign = "";
+      if (d < 0) {
+        sign = "-";
+        d = 0.0 - d;
+      }
+      double exp = floor(d);
+      d = (d - exp) * 10.0;
+      exp = exp - 1.0;
+      // UI has been set up to accomodate "9.999999e+999"
+      //       which is the same width as "9.9999999e+99", etc.
+      if (exp < 100.0) {
+        // two-digit exponent
+        sprintf(p, "%s%9.7fe+%.0f", sign, d, exp); // 9.9999999e+99
+      } else if (exp < 1000.0) {
+        sprintf(p, "%s%8.6fe+%.0f", sign, d, exp); // 9.999999e+999
+      } else if (exp < 10000.0) {
+        sprintf(p, "%s%7.5fe+%.0f", sign, d, exp); // 9.99999e+9999
+      } else if (exp < 100000.0) {
+        sprintf(p, "%s%6.4fe+%.0f", sign, d, exp); // 9.9999e+99999
+      } else {
+        // for 6-digit exponent or larger we'll just always show a "d.ddd"
+        // mantissa. 7-digit exponent appears unattainable at the present
+        // time (late 2011)
+        sprintf(p, "%s%5.3fe+%.0f", sign, d, exp);
+      }
     }
+
     return wxString(p, wxConvLocal);
 }
 
