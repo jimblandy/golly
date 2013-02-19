@@ -754,6 +754,31 @@ void MainFrame::OpenZipFile(const wxString& zippath)
 
 // -----------------------------------------------------------------------------
 
+static bool RuleCanBeFound(const wxString& path)
+{
+    // ensure given path to .rule file is a full path
+    wxString fullpath = path;
+    wxFileName fname(fullpath);
+    if (!fname.IsAbsolute()) fullpath = gollydir + path;
+    
+    // check that .rule file is in userrules or rulesdir
+    wxString dir = fullpath.BeforeLast(wxFILE_SEP_PATH);
+    dir += wxFILE_SEP_PATH;
+    if (dir == userrules || dir == rulesdir) {
+        return true;
+    } else {
+        wxString msg = _("You need to move ");
+        msg += fullpath.AfterLast(wxFILE_SEP_PATH);
+        msg += _(" into your rules folder (");
+        msg += userrules;
+        msg += _(") so the RuleLoader algorithm can find it.");
+        Warning(msg);
+        return false;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::OpenFile(const wxString& path, bool remember)
 {
     if (IsHTMLFile(path)) {
@@ -794,8 +819,9 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
         OpenZipFile(path);
     
     } else if (IsRuleFile(path)) {
-        // switch to rule
-        LoadRule(path.AfterLast(wxFILE_SEP_PATH).BeforeLast('.'));
+        // switch to rule, but only if it's in rulesdir or userrules
+        if (RuleCanBeFound(path))
+            LoadRule(path.AfterLast(wxFILE_SEP_PATH).BeforeLast('.'));
         
     } else {
         // load pattern
