@@ -86,7 +86,7 @@ ForegroundInputs = [
 
 def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
     '''Emulate a Margolus or square4_* neighborhood rule table with a Moore neighborhood rule tree.'''
-    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]+'_emulated'
+    rule_name = os.path.splitext(os.path.split(input_filename)[1])[0]
     total_states = 1+2*n_states
     tree = RuleTree(total_states,8)
     # now work through the transitions
@@ -152,4 +152,6 @@ def EmulateMargolus(neighborhood,n_states,transitions,input_filename):
     c.flush()
     c.close()
 
+    # use rule_name.tree and rule_name.colors to create rule_name.rule (no icon info)
+    ConvertTreeToRule(rule_name, total_states, [])
     return rule_name

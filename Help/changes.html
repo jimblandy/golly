@@ -7,16 +7,6 @@
 
 <p>
 <ul>
-<li> The status bar now displays quantities larger than 10<sup>308</sup> in scientific
-     notation. Golly can easily exceed this in both the Generation and Population
-     statistics. For example, open the pattern
-     <a href="open:Patterns/Life/Puffers/puffer-train.rle">puffer-train.rle</a>, then
-     run the script <a href="open:Scripts/Python/goto-expression.py">goto-expression.py</a>
-     and enter &quot;f10^2000&quot;.
-<li> A script has been added:
-     <a href="open:Scripts/Python/goto-expression.py">goto-expression.py</a>. It works
-     like <a href="open:Scripts/Python/goto.py">goto.py</a>, except that it also
-     accepts expressions. An example of an "expression" is "17*(2^(3*143)+2^(2*3*27))".
 <li> This version introduces a new rule format.  A file in the new format has a .rule
      extension and contains all the information about the rule: its name, description,
      table/tree data, and any color/icon information.  More details
@@ -29,6 +19,18 @@
      convert all your old .table/tree/colors/icons files into new .rule files.
 <li> If the Paste command sees clipboard text starting with "@RULE rulename" then it will
      save the text as rulename.rule in your rules folder and switch to that rule.
+<li> All Python scripts that created a .tree file (and possibly .colors/icons files)
+     now create a .rule file containing the same tree data (and any color/icon info).
+<li> A script has been added:
+     <a href="open:Scripts/Python/goto-expression.py">goto-expression.py</a>. It works
+     like <a href="open:Scripts/Python/goto.py">goto.py</a>, except that it also
+     accepts expressions. An example of an "expression" is "17*(2^(3*143)+2^(2*3*27))".
+<li> The status bar now displays quantities larger than 10<sup>308</sup> in scientific
+     notation. Golly can easily exceed this in both the Generation and Population
+     statistics. For example, open the pattern
+     <a href="open:Patterns/Life/Puffers/puffer-train.rle">puffer-train.rle</a>, then
+     run the script <a href="open:Scripts/Python/goto-expression.py">goto-expression.py</a>
+     and enter &quot;f10^2000&quot;.
 <li> Patterns can now be displayed at scale 1:32.  If you want to use that scale when
      creating a new pattern then choose the appropriate pop-up menu option in
      <a href="prefs:file">Preferences > File</a>.

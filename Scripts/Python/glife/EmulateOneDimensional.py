@@ -8,4 +8,6 @@ def EmulateOneDimensional(neighborhood,n_states,transitions,input_filename):
     for t in transitions:
         tree.add_rule([t[0],range(n_states),t[2],t[1],range(n_states)],t[3][0]) # C,S,E,W,N,C'
     tree.write( golly.getdir('rules')+rule_name+".tree" )
+    # use rule_name.tree to create rule_name.rule (no icon info)
+    ConvertTreeToRule(rule_name, n_states, [])
     return rule_name

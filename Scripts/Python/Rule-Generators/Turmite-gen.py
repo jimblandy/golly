@@ -510,7 +510,7 @@ golly.new(rule_name+'-demo.rle')
 golly.setalgo('RuleLoader')
 golly.setrule(rule_name)
 golly.setcell(0,0,encode(0,0,0)) # start with a single turmite
-golly.show('Created '+rule_name+'.rule and selected this rule.')
+golly.show('Created '+rule_name+'.rule and selected that rule.')
 
 '''
 # we make a turmite testbed so we don't miss interesting behaviour

@@ -228,4 +228,4 @@ golly.new(rule_name+' demo')
 golly.setalgo('RuleLoader')
 golly.setrule(rule_name)
 golly.setcell(0,0,n_colors+3) # start with an ant facing west
-golly.show('Created '+rule_name+'.rule and selected this rule.')
+golly.show('Created '+rule_name+'.rule and selected that rule.')

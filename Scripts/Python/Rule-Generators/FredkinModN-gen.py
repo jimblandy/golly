@@ -69,4 +69,4 @@ rule_name = Converters[nhood]( nhood,
                                transitions,
                                rule_name+'.tree' )
 golly.setrule(rule_name)
-golly.show('Created '+rule_name+'.rule and selected this rule.')
+golly.show('Created '+rule_name+'.rule and selected that rule.')

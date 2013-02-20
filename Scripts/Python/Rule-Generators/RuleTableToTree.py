@@ -36,12 +36,14 @@ if not neighborhood in Converters:
     golly.show('')
     golly.exit()
 
-golly.show("Building rule tree...")
+# all converters now create a .rule file
+golly.show("Building rule...")
 rule_name = Converters[neighborhood]( neighborhood,
                                       n_states,
                                       transitions,
                                       filename )
 
+golly.new(rule_name+'-demo.rle')
 golly.setalgo('RuleLoader')
 golly.setrule(rule_name)
-golly.show('Created '+rule_name+'.tree and selected that rule.')
+golly.show('Created '+rule_name+'.rule and selected that rule.')
