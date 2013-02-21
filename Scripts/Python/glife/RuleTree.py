@@ -17,6 +17,8 @@
 
 import golly
 import os
+from tempfile import mkstemp
+from shutil import move
 
 # ------------------------------------------------------------------------------
 
@@ -201,6 +203,41 @@ class MakeRuleTreeFromTransitionFunction:
 
 # ------------------------------------------------------------------------------
 
+def ReplaceTreeSection(rulepath, newtree):
+    # replace @TREE section in existing .rule file with new tree data
+    try:
+        rulefile = open(rulepath,'r')
+    except:
+        golly.exit('Failed to open existing .rule file: '+rulepath)
+    
+    # create a temporary file for writing new rule info
+    temphdl, temppath = mkstemp()
+    tempfile = open(temppath,'w')
+    
+    skiplines = False
+    for line in rulefile:
+        if line.startswith('@TREE'):
+            tempfile.write('@TREE\n\n')
+            tempfile.write(newtree)
+            skiplines = True
+        elif skiplines and line.startswith('@'):
+            tempfile.write('\n')
+            skiplines = False
+        if not skiplines:
+            tempfile.write(line)
+    
+    # close files
+    rulefile.close()
+    tempfile.flush()
+    tempfile.close()
+    os.close(temphdl)
+    
+    # remove original .rule file and rename temporary file
+    os.remove(rulepath)
+    move(temppath, rulepath)
+
+# ------------------------------------------------------------------------------
+
 def GetColors(icon_pixels, wd, ht):
     result = []
     for row in xrange(ht):
@@ -288,7 +325,14 @@ def CreateXPMIcons(colors, icon_pixels, iconsize, yoffset, xoffset, numicons, ru
 
 def ConvertTreeToRule(rule_name, total_states, icon_pixels):
     '''
+    Convert rule_name.tree to rule_name.rule and delete the .tree file.
+    
+    If rule_name.colors exists then use it to create an @COLORS section
+    and delete the .colors file.
+    
+    If icon_pixels is supplied then add an @ICONS section.
     Format of icon_pixels (in this example there are 4 icons at each size):
+    
     ---------------------------------------------------------
     |             |             |             |             |
     |             |             |             |             |
@@ -302,24 +346,41 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
     ---------------------------------------------------------
     |7x7|.........|7x7|.........|7x7|.........|7x7|.........|
     ---------------------------------------------------------
+    
+    The top layer of 31x31 icons is optional -- if not supplied (ie. the
+    height is 22) then there are no gaps between the 15x15 icons.
     '''
-    rulefile = open(golly.getdir('rules')+rule_name+'.rule','w')
-    rulefile.write('@RULE '+rule_name+'\n\n')
-    rulefile.write('@TREE\n\n')
-    # append contents of .tree file, then delete that file
+    rulepath = golly.getdir('rules')+rule_name+'.rule'
     treepath = golly.getdir('rules')+rule_name+'.tree'
+    colorspath = golly.getdir('rules')+rule_name+'.colors'
+
+    # get contents of .tree file
     try:
         treefile = open(treepath,'r')
-        rulefile.write( treefile.read() )
+        treedata = treefile.read()
         treefile.close()
-        os.remove(treepath)
     except:
-        g.warn('Failed to open .tree file:\n'+treepath)
-        # continue
+        golly.exit('Failed to open .tree file: '+treepath)
+    
+    # if the .rule file already exists then only replace the @TREE section
+    # so we don't clobber any other info added by the user
+    if os.path.isfile(rulepath):
+        ReplaceTreeSection(rulepath, treedata)
+        os.remove(treepath)
+        if os.path.isfile(colorspath): os.remove(colorspath)
+        return
+    
+    # create a new .rule file
+    rulefile = open(rulepath,'w')
+    rulefile.write('@RULE '+rule_name+'\n\n')
+    rulefile.write('@TREE\n\n')
+    
+    # append contents of .tree file, then delete that file
+    rulefile.write(treedata)
+    os.remove(treepath)
     
     # if .colors file exists then append @COLORS section and delete file
-    colorspath = golly.getdir('rules')+rule_name+'.colors'
-    try:
+    if os.path.isfile(colorspath):
         colorsfile = open(colorspath,'r')
         rulefile.write('\n@COLORS\n\n')
         while True:
@@ -331,10 +392,8 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
             rulefile.write(line)
         colorsfile.close()
         os.remove(colorspath)
-    except:
-        # assume there was no .colors file
-        pass
     
+    # if icon pixels are supplied then append @ICONS section
     if len(icon_pixels) > 0:
         wd = len(icon_pixels[0])
         ht = len(icon_pixels)

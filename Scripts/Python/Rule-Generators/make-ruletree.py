@@ -41,15 +41,9 @@ try:
     MakeRuleTreeFromTransitionFunction( n_states, n_neighbors, transition_function,
                                         golly.getdir("rules")+name+".tree" )
     
-    # use name.tree to create name.rule (with no icons)
-    # DANGER!!! if name.rule already exists then this will clobber any info
-    # that the user might have added (such as icons or documentation),
-    # so maybe ConvertTreeToRule should:
-    # - warn user that the existing name.rule file will be overwritten???
-    # - create a backup copy called name.rule-original and tell user???
-    # - only replace the info in the @TREE section??? (potential probs if file open in editor)
-    # - simply do nothing; ie. don't overwrite existing file???
-    # - don't overwrite existing file but put contents of new rule in clipboard and tell user???
+    # use name.tree to create name.rule (with no icons);
+    # note that if name.rule already exists then we only replace the info in
+    # the @TREE section to avoid clobbering any other info added by the user
     ConvertTreeToRule(name, n_states, [])
     
     golly.setalgo("RuleLoader")
