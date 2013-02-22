@@ -550,6 +550,19 @@ bool MainFrame::ExtractZipEntry(const wxString& zippath,
 
 // -----------------------------------------------------------------------------
 
+static bool RuleInstalled(wxZipInputStream& zip, const wxString& rulepath)
+{
+    wxFileOutputStream outstream(rulepath);
+    bool ok = outstream.Ok();
+    if (ok) {
+        zip.Read(outstream);
+        ok = (outstream.GetLastError() == wxSTREAM_NO_ERROR);
+    }
+    return ok;
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::OpenZipFile(const wxString& zippath)
 {
     // Process given zip file in the following manner:
@@ -572,9 +585,10 @@ void MainFrame::OpenZipFile(const wxString& zippath)
     int scriptseps = 0;                     // # of separators in lastscript
     int patternfiles = 0;
     int scriptfiles = 0;
+    int textfiles = 0;                      // includes html files
     int rulefiles = 0;
     int deprecated = 0;                     // # of .table/tree/colors/icons files
-    int textfiles = 0;                      // includes html files
+    wxSortedArrayString deplist;            // list of such files
     
     wxString contents = wxT("<html><title>") + GetBaseName(zippath);
     contents += wxT("</title>\n");
@@ -634,11 +648,19 @@ void MainFrame::OpenZipFile(const wxString& zippath)
                 if (dirseen) contents += indent;
                 
                 if ( IsRuleFile(filename) && !filename.EndsWith(wxT(".rule")) ) {
-                    // don't install deprecated .table/tree/colors/icons file
+                    // this is a deprecated .table/tree/colors/icons file
                     contents += filename;
                     contents += indent;
                     contents += wxT("[deprecated]");
                     deprecated++;
+                    // install it into userrules so it can be used below to create a .rule file
+                    wxString outfile = userrules + filename;
+                    if (RuleInstalled(zip, outfile)) {
+                        deplist.Add(filename);
+                    } else {
+                        contents += indent;
+                        contents += wxT("INSTALL FAILED!");
+                    }
                 
                 } else {
                     // user can extract file via special "unzip:" link
@@ -653,13 +675,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
                     if ( IsRuleFile(filename) ) {
                         // extract and install .rule file into userrules
                         wxString outfile = userrules + filename;
-                        wxFileOutputStream outstream(outfile);
-                        bool ok = outstream.Ok();
-                        if (ok) {
-                            zip.Read(outstream);
-                            ok = (outstream.GetLastError() == wxSTREAM_NO_ERROR);
-                        }
-                        if (ok) {
+                        if (RuleInstalled(zip, outfile)) {
                             // file successfully installed
                             contents += indent;
                             contents += wxT("[installed]");
@@ -706,7 +722,8 @@ void MainFrame::OpenZipFile(const wxString& zippath)
         contents += wxT("\n");
     }
     if (deprecated > 0) {
-        contents += wxT("<p>Files marked as \"[deprecated]\" are not installed.\n");
+        contents += wxT("<p>Files marked as \"[deprecated]\" have been used to create new .rule files:<br>\n");
+        CreateRuleFiles(deplist, contents);
     }
     contents += wxT("\n</body></html>");
     

@@ -123,6 +123,7 @@ public:
     void ReduceCellStates(int newmaxstate);
     void ShowRuleDialog();
     void ConvertOldRules();
+    void CreateRuleFiles(const wxSortedArrayString& deprecated, wxString& htmlinfo);
     void ChangeAlgorithm(algo_type newalgotype,
                          const wxString& newrule = wxEmptyString,
                          bool inundoredo = false);
