@@ -27,16 +27,20 @@
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "writepattern.h"
+#include "util.h"           // for linereader
 
-#include "utils.h"       // for Warning, TimeInSeconds, Poller, event_checker, etc
-#include "prefs.h"       // for allowundo, etc
-#include "status.h"      // for ErrorMessage, etc
-#include "file.h"        // for WritePattern, LoadPattern, etc
-#include "algos.h"       // for *_ALGO, algo_type, CreateNewUniverse, etc
-#include "layer.h"       // for currlayer, RestoreRule, etc
-#include "view.h"        // for UpdatePatternAndStatus, draw_pending, etc
-#include "undo.h"        // for UndoRedo
+#include "utils.h"          // for Warning, TimeInSeconds, Poller, event_checker, etc
+#include "prefs.h"          // for allowundo, etc
+#include "status.h"         // for ErrorMessage, etc
+#include "file.h"           // for WritePattern, LoadPattern, etc
+#include "algos.h"          // for *_ALGO, algo_type, CreateNewUniverse, etc
+#include "layer.h"          // for currlayer, RestoreRule, etc
+#include "view.h"           // for UpdatePatternAndStatus, draw_pending, etc
+#include "undo.h"           // for UndoRedo
 #include "control.h"
+
+#include <stdexcept>        // for std::runtime_error and std::exception
+#include <sstream>          // for std::ostringstream
 
 #import "PatternViewController.h"   // for UpdateStatus, BeginProgress, etc
 
@@ -48,6 +52,12 @@ double begintime, endtime;      // for timing info
 double begingen, endgen;        // ditto
 
 const char* empty_pattern = "All cells are dead.";
+
+// -----------------------------------------------------------------------------
+
+// macros for checking if a certain string exists in a list of strings
+#define FOUND(l,s) (std::find(l.begin(),l.end(),s) != l.end())
+#define NOT_FOUND(l,s) (std::find(l.begin(),l.end(),s) == l.end())
 
 // -----------------------------------------------------------------------------
 
@@ -1583,4 +1593,525 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
         // do this AFTER RememberAlgoChange so Undo button becomes enabled
         UpdateEverything();
     }
+}
+
+// -----------------------------------------------------------------------------
+
+static std::string CreateTABLE(const std::string& tablepath)
+{
+    std::string contents = "\n@TABLE\n\n";
+    // append contents of .table file
+    FILE* f = fopen(tablepath.c_str(), "r");
+    if (f) {
+        const int MAXLINELEN = 4095;
+        char linebuf[MAXLINELEN + 1];
+        linereader reader(f);
+        while (true) {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            contents += linebuf;
+            contents += "\n";
+        }
+        reader.close();
+    } else {
+        std::ostringstream oss;
+        oss << "Could not read .table file:\n" << tablepath.c_str();
+        throw std::runtime_error(oss.str().c_str());
+    }
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static std::string CreateTREE(const std::string& treepath)
+{
+    std::string contents = "\n@TREE\n\n";
+    // append contents of .tree file
+    FILE* f = fopen(treepath.c_str(), "r");
+    if (f) {
+        const int MAXLINELEN = 4095;
+        char linebuf[MAXLINELEN + 1];
+        linereader reader(f);
+        while (true) {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            contents += linebuf;
+            contents += "\n";
+        }
+        reader.close();
+    } else {
+        std::ostringstream oss;
+        oss << "Could not read .tree file:\n" << treepath.c_str();
+        throw std::runtime_error(oss.str().c_str());
+    }
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static std::string CreateCOLORS(const std::string& colorspath)
+{
+    std::string contents = "\n@COLORS\n\n";
+    FILE* f = fopen(colorspath.c_str(), "r");
+    if (f) {
+        const int MAXLINELEN = 4095;
+        char linebuf[MAXLINELEN + 1];
+        linereader reader(f);
+        while (true) {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            int skip = 0;
+            if (strncmp(linebuf, "color", 5) == 0 ||
+                strncmp(linebuf, "gradient", 8) == 0) {
+                // strip off everything before 1st digit
+                while (linebuf[skip] && (linebuf[skip] < '0' || linebuf[skip] > '9')) {
+                    skip++;
+                }
+            }
+            contents += linebuf + skip;
+            contents += "\n";
+        }
+        reader.close();
+    } else {
+        std::ostringstream oss;
+        oss << "Could not read .colors file:\n" << colorspath.c_str();
+        throw std::runtime_error(oss.str().c_str());
+    }
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static unsigned char* GetRGBAPixels(CGImageRef image)
+{
+    int wd = CGImageGetWidth(image);
+    int ht = CGImageGetHeight(image);
+    int bytesPerPixel = 4;
+    int bytesPerRow = bytesPerPixel * wd;
+    int bitsPerComponent = 8;
+
+    // allocate memory to store image's RGBA bitmap data
+    unsigned char* pxldata = (unsigned char*) calloc(wd * ht * 4, 1);
+    if (pxldata == NULL) return NULL;
+
+    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef ctx = CGBitmapContextCreate(pxldata, wd, ht,
+        bitsPerComponent, bytesPerRow, colorspace,
+        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), image);
+    CGContextRelease(ctx);
+    CGColorSpaceRelease(colorspace);
+
+    // pxldata now contains the image bitmap in RGBA pixel format
+    return pxldata;
+}
+
+// -----------------------------------------------------------------------------
+
+static bool OneColor(CGImageRef image, unsigned char* R, unsigned char* G, unsigned char* B)
+{
+    unsigned char* pxldata = GetRGBAPixels(image);
+    if (pxldata == NULL) return false;
+
+    // pxldata contains the image bitmap in RGBA pixel format
+    int color = (pxldata[0] << 16) + (pxldata[1] << 8) + pxldata[2];
+    int byte = 0;
+    int wd = CGImageGetWidth(image);
+    int ht = CGImageGetHeight(image);
+    for (int i = 0; i < wd*ht; i++) {
+        if (color != (pxldata[byte] << 16) + (pxldata[byte+1] << 8) + pxldata[byte+2]) {
+            // there is more than one color
+            free(pxldata);
+            return false;
+        }
+        byte += 4;
+    }
+
+    // return the single color
+    *R = pxldata[0];
+    *G = pxldata[1];
+    *B = pxldata[2];
+    
+    free(pxldata);
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+
+static std::string CreateStateColors(CGImageRef image, int numicons)
+{
+    std::string contents = "\n@COLORS\n\n";
+    
+    // if the last icon has only 1 color then assume it is the extra 15x15 icon
+    // supplied to set the color of state 0
+    char s[128];
+    if (numicons > 1) {
+        CGImageRef icon = CGImageCreateWithImageInRect(image,CGRectMake((numicons-1)*15, 0, 15, 15));
+        unsigned char R, G, B;
+        if (OneColor(icon, &R, &G, &B)) {
+            sprintf(s, "0 %d %d %d\n", R, G, B);
+            contents += s;
+            numicons--;
+        }
+    }
+    
+    // set non-icon colors for each live state to the average of the non-black pixels
+    // in each 15x15 icon (note we've skipped the extra icon detected above)
+    for (int i = 0; i < numicons; i++) {
+        CGImageRef icon = CGImageCreateWithImageInRect(image,CGRectMake(i*15, 0, 15, 15));
+        int nbcount = 0;   // non-black pixels
+        int totalR = 0;
+        int totalG = 0;
+        int totalB = 0;
+        unsigned char* idata = GetRGBAPixels(icon);
+        if (idata) {
+            for (int y = 0; y < 15; y++) {
+                for (int x = 0; x < 15; x++) {
+                    int pos = (y * 15 + x) * 4;
+                    unsigned char R = idata[pos];
+                    unsigned char G = idata[pos+1];
+                    unsigned char B = idata[pos+2];
+                    if (R > 0 || G > 0 || B > 0) {
+                        // non-black pixel
+                        nbcount++;
+                        totalR += R;
+                        totalG += G;
+                        totalB += B;
+                    }
+                }
+            }
+            free(idata);
+        }
+        if (nbcount > 0) {
+            sprintf(s, "%d %d %d %d\n", i+1, totalR/nbcount, totalG/nbcount, totalB/nbcount);
+            contents += s;
+        } else {
+            // unlikely, but avoid div by zero
+            sprintf(s, "%d 0 0 0\n", i+1);
+            contents += s;
+        }
+    }
+    
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static std::string hex2(int i)
+{
+    // convert given number from 0..255 into 2 hex digits
+    std::string result = "xx";
+    const char* hexdigit = "0123456789ABCDEF";
+    result[0] = hexdigit[i / 16];
+    result[1] = hexdigit[i % 16];
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static std::list<int> GetColors(CGImageRef image)
+{
+    // return the list of colors used in the given image
+    std::list<int> result;
+    unsigned char* pxldata = GetRGBAPixels(image);
+    if (pxldata) {
+        // pxldata contains the image bitmap in RGBA pixel format
+        int byte = 0;
+        int wd = CGImageGetWidth(image);
+        int ht = CGImageGetHeight(image);
+        for (int i = 0; i < wd*ht; i++) {
+            int color = (pxldata[byte] << 16) + (pxldata[byte+1] << 8) + pxldata[byte+2];
+            if (std::find(result.begin(),result.end(),color) == result.end()) {
+                // first time we've seen this color
+                result.push_back(color);
+            }
+            byte += 4;
+        }
+        free(pxldata);
+    }
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+static std::string CreateXPM(const std::string& iconspath, CGImageRef image, int size, int numicons)
+{
+    // create XPM data for given set of icons
+    std::string contents = "\nXPM\n";
+    
+    char s[128];
+    int charsperpixel = 1;
+    const char* cindex = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    
+    std::list<int> colors = GetColors(image);
+    
+    int numcolors = colors.size();
+    if (numcolors > 256) {
+        std::ostringstream oss;
+        oss << "Image in " << iconspath.c_str() << " has more than 256 colors.";
+        throw std::runtime_error(oss.str().c_str());
+    }
+    if (numcolors > 26) charsperpixel = 2;   // AABA..PA, ABBB..PB, ... , APBP..PP
+    
+    contents += "/* width height num_colors chars_per_pixel */\n";
+    sprintf(s, "\"%d %d %d %d\"\n", size, size*numicons, numcolors, charsperpixel);
+    contents += s;
+    
+    contents += "/* colors */\n";
+    int n = 0;
+    for (std::list<int>::iterator it = colors.begin(); it != colors.end(); ++it) {
+        int RGB = *it;
+        unsigned char R = (RGB & 0xFF0000) >> 16;
+        unsigned char G = (RGB & 0x00FF00) >> 8;
+        unsigned char B = (RGB & 0x0000FF);
+        if (R == 0 && G == 0 && B == 0) {
+            // nicer to show . or .. for black pixels
+            contents += "\".";
+            if (charsperpixel == 2) contents += ".";
+            contents += " c #000000\"\n";
+        } else {
+            std::string hexcolor = "#";
+            hexcolor += hex2(R);
+            hexcolor += hex2(G);
+            hexcolor += hex2(B);
+            contents += "\"";
+            if (charsperpixel == 1) {
+                contents += cindex[n];
+            } else {
+                contents += cindex[n % 16];
+                contents += cindex[n / 16];
+            }
+            contents += " c ";
+            contents += hexcolor;
+            contents += "\"\n";
+        }
+        n++;
+    }
+    
+    for (int i = 0; i < numicons; i++) {
+        sprintf(s, "/* icon for state %d */\n", i+1);
+        contents += s;
+        CGImageRef icon = CGImageCreateWithImageInRect(image,CGRectMake(i*15, 0, size, size));
+        unsigned char* idata = GetRGBAPixels(icon);
+        if (idata) {
+            for (int y = 0; y < size; y++) {
+                contents += "\"";
+                for (int x = 0; x < size; x++) {
+                    long pos = (y * size + x) * 4;
+                    unsigned char R = idata[pos];
+                    unsigned char G = idata[pos+1];
+                    unsigned char B = idata[pos+2];
+                    if (R == 0 && G == 0 && B == 0) {
+                        // nicer to show . or .. for black pixels
+                        contents += ".";
+                        if (charsperpixel == 2) contents += ".";
+                    } else {
+                        n = 0;
+                        int thisRGB = (R << 16) + (G << 8) + B;
+                        for (std::list<int>::iterator it = colors.begin(); it != colors.end(); ++it) {
+                            if (thisRGB == *it) break;
+                            n++;
+                        }
+                        if (charsperpixel == 1) {
+                            contents += cindex[n];
+                        } else {
+                            contents += cindex[n % 16];
+                            contents += cindex[n / 16];
+                        }
+                    }
+                }
+                contents += "\"\n";
+            }
+            free(idata);
+        }
+    }
+    
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static std::string CreateICONS(const std::string& iconspath, bool nocolors)
+{
+    std::string contents = "\n@ICONS\n";
+    CGImageRef image = [UIImage imageWithContentsOfFile:
+        [NSString stringWithCString:iconspath.c_str() encoding:NSUTF8StringEncoding]].CGImage;
+    if (image == NULL) {
+        std::ostringstream oss;
+        oss << "Could not load image from .icons file:\n" << iconspath.c_str();
+        throw std::runtime_error(oss.str().c_str());
+    } else {
+        int wd = CGImageGetWidth(image);
+        int ht = CGImageGetHeight(image);
+         if (ht != 15 && ht != 22) {
+            std::ostringstream oss;
+            oss << "Image in " << iconspath.c_str() << " has incorrect height (should be 15 or 22).";
+            throw std::runtime_error(oss.str().c_str());
+        }
+        if (wd % 15 > 0) {
+            std::ostringstream oss;
+            oss << "Image in " << iconspath.c_str() << " has incorrect width (should be multiple of 15).";
+            throw std::runtime_error(oss.str().c_str());
+        }
+        int numicons = wd / 15;
+        
+        if (nocolors && MultiColorImage(image)) {
+            // there was no .colors file and .icons file is multi-color,
+            // so prepend a @COLORS section that sets non-icon colors
+            contents = CreateStateColors(CGImageCreateWithImageInRect(image,CGRectMake(0,0,wd,15)), numicons) + contents;
+        }
+        
+        if (ht == 15) {
+            contents += CreateXPM(iconspath, image, 15, numicons);
+        } else {
+            contents += CreateXPM(iconspath, CGImageCreateWithImageInRect(image,CGRectMake(0,0,wd,15)), 15, numicons);
+            contents += CreateXPM(iconspath, CGImageCreateWithImageInRect(image,CGRectMake(0,15,wd,7)), 7, numicons);
+        }
+    }
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
+static void CreateOneRule(const std::string& rulefile, const std::string& folder,
+                          std::list<std::string>& deprecated, std::string& htmlinfo)
+{
+    std::string rulename = rulefile.substr(0,rulefile.rfind('.'));
+    std::string tablefile = rulename + ".table";
+    std::string treefile = rulename + ".tree";
+    std::string colorsfile = rulename + ".colors";
+    std::string iconsfile = rulename + ".icons";
+    std::string tabledata, treedata, colordata, icondata;
+    
+    std::string prefix = "";
+    size_t hyphenpos = rulename.rfind('-');
+    if (hyphenpos != std::string::npos)
+        prefix = rulename.substr(0,hyphenpos);
+    
+    if (FOUND(deprecated,tablefile))
+        tabledata = CreateTABLE(folder + tablefile);
+    
+    if (FOUND(deprecated,treefile))
+        treedata = CreateTREE(folder + treefile);
+    
+    if (FOUND(deprecated,colorsfile)) {
+        colordata = CreateCOLORS(folder + colorsfile);
+    } else if (prefix.length() > 0) {
+        // check for shared .colors file
+        std::string sharedcolors = prefix + ".colors";
+        if (FOUND(deprecated,sharedcolors))
+            colordata = CreateCOLORS(folder + sharedcolors);
+    }
+    
+    if (FOUND(deprecated,iconsfile)) {
+        icondata = CreateICONS(folder + iconsfile, colordata.length() == 0);
+    } else if (prefix.length() > 0) {
+        // check for shared .icons file
+        std::string sharedicons = prefix + ".icons";
+        if (FOUND(deprecated,sharedicons))
+            icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);
+    }
+    
+    std::string contents = "@RULE " + rulename + "\n";
+    contents += tabledata;
+    contents += treedata;
+    contents += colordata;
+    contents += icondata;
+    
+    // write contents to .rule file
+    std::string rulepath = folder + rulefile;
+    FILE* outfile = fopen(rulepath.c_str(), "w");
+    if (outfile) {
+        if (fputs(contents.c_str(), outfile) == EOF) {
+            fclose(outfile);
+            std::ostringstream oss;
+            oss << "Could not write data to rule file:\n" << rulepath.c_str();
+            throw std::runtime_error(oss.str().c_str());
+        }
+        fclose(outfile);
+    } else {
+        std::ostringstream oss;
+        oss << "Could not create rule file:\n" << rulepath.c_str();
+        throw std::runtime_error(oss.str().c_str());
+    }
+    
+    // append created file to htmlinfo
+    htmlinfo += "<a href=\"open:";
+    htmlinfo += folder;
+    htmlinfo += rulefile;
+    htmlinfo += "\">";
+    htmlinfo += rulefile;
+    htmlinfo += "</a><br>\n";
+}
+
+// -----------------------------------------------------------------------------
+
+std::string CreateRuleFiles(std::list<std::string>& deprecated,
+                            std::list<std::string>& ziprules)
+{
+    // use the given list of deprecated .table/tree/colors/icons files
+    // (recently extracted from a .zip file and installed in userrules)
+    // to create new .rule files, except those in ziprules (they were in
+    // .zip file and have already been installed)
+    std::string htmlinfo;
+    bool aborted = false;
+    try {
+        // create a list of candidate .rule files
+        std::string rulefile;
+        std::list<std::string> candidates;
+        std::list<std::string>::iterator it;
+        for (it=deprecated.begin(); it!=deprecated.end(); ++it) {
+            // add .rule file to candidates if it hasn't been added yet
+            // and isn't in ziprules
+            rulefile = *it;
+            rulefile = rulefile.substr(0,rulefile.rfind('.')) + ".rule";
+            if (NOT_FOUND(candidates,rulefile) && NOT_FOUND(ziprules,rulefile)) {
+                candidates.push_back(rulefile);
+            }
+        }
+        
+        // look for .rule files of the form foo-*.rule and ignore any foo.rule
+        // entries in candidates if foo.table and foo.tree don't exist
+        // (ie. foo.colors and/or foo.icons is shared by foo-*.table/tree)
+        std::list<std::string> ignore;
+        for (it=candidates.begin(); it!=candidates.end(); ++it) {
+            rulefile = *it;
+            size_t hyphenpos = rulefile.rfind('-');
+            if (hyphenpos != std::string::npos && hyphenpos > 0) {
+                std::string prefix = rulefile.substr(0,hyphenpos);
+                std::string tablefile = prefix + ".table";
+                std::string treefile = prefix + ".tree";
+                if ( NOT_FOUND(deprecated,tablefile) && NOT_FOUND(deprecated,treefile) ) {
+                    std::string sharedfile = prefix + ".rule";
+                    if (FOUND(candidates,sharedfile)) {
+                        ignore.push_back(sharedfile);
+                    }
+                }
+            }
+            // note that we will overwrite any existing .rule files
+            // (not in ziprules) in case the zip file's contents have changed
+        }
+        
+        // non-ignored candidates are the .rule files that need to be created
+        for (it=candidates.begin(); it!=candidates.end(); ++it) {
+            rulefile = *it;
+            if (NOT_FOUND(ignore,rulefile)) {
+                CreateOneRule(rulefile, userrules, deprecated, htmlinfo);
+            }
+        }
+    }
+    catch(const std::exception& e) {
+        // display message set by throw std::runtime_error(...)
+        Warning(e.what());
+        aborted = true;
+        // nice to also show error message in help window
+        htmlinfo += "\n<p>*** CONVERSION ABORTED DUE TO ERROR ***\n<p>";
+        htmlinfo += std::string(e.what());
+    }
+    
+    if (!aborted) {
+        // delete all the deprecated files
+        std::list<std::string>::iterator it;
+        for (it=deprecated.begin(); it!=deprecated.end(); ++it) {
+            RemoveFile(userrules + *it);
+        }
+    }
+    return htmlinfo;
 }

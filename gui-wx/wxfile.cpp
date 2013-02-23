@@ -588,7 +588,8 @@ void MainFrame::OpenZipFile(const wxString& zippath)
     int textfiles = 0;                      // includes html files
     int rulefiles = 0;
     int deprecated = 0;                     // # of .table/tree/colors/icons files
-    wxSortedArrayString deplist;            // list of such files
+    wxSortedArrayString deplist;            // list of installed deprecated files
+    wxSortedArrayString rulelist;           // list of installed .rule files
     
     wxString contents = wxT("<html><title>") + GetBaseName(zippath);
     contents += wxT("</title>\n");
@@ -677,6 +678,7 @@ void MainFrame::OpenZipFile(const wxString& zippath)
                         wxString outfile = userrules + filename;
                         if (RuleInstalled(zip, outfile)) {
                             // file successfully installed
+                            rulelist.Add(filename);
                             contents += indent;
                             contents += wxT("[installed]");
                             if (diffdirs) {
@@ -722,8 +724,11 @@ void MainFrame::OpenZipFile(const wxString& zippath)
         contents += wxT("\n");
     }
     if (deprecated > 0) {
-        contents += wxT("<p>Files marked as \"[deprecated]\" have been used to create new .rule files:<br>\n");
-        CreateRuleFiles(deplist, contents);
+        wxString newrules = CreateRuleFiles(deplist, rulelist);
+        if (newrules.length() > 0) {
+            contents += wxT("<p>Files marked as \"[deprecated]\" have been used to create new .rule files:<br>\n");
+            contents += newrules;
+        }
     }
     contents += wxT("\n</body></html>");
     

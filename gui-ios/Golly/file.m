@@ -324,8 +324,6 @@ void LoadRule(const std::string& rulestring)
     std::string oldrule = currlayer->algo->getrule();
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
     
-    if (rulestring == oldrule) return;
-    
     // selection might change if grid becomes smaller,
     // so save current selection for RememberRuleChange/RememberAlgoChange
     SaveCurrentSelection();
@@ -495,6 +493,39 @@ void UnzipFile(const std::string& zippath, const std::string& entry)
 
 // -----------------------------------------------------------------------------
 
+static bool RuleInstalled(ZipFile* zipfile, FileInZipInfo* info, const std::string& outfile)
+{
+    bool ok = true;
+    ZipReadStream *zipstream = [zipfile readCurrentFileInZip];
+    NSMutableData *zipdata = [[NSMutableData alloc] initWithLength:info.length];
+    int bytesRead = [zipstream readDataWithBuffer:zipdata];
+    [zipstream finishedReading];
+    if (info.length == 0) {
+        Warning("Zip entry is empty!");
+        ok = false;
+    } else if (bytesRead == info.length) {
+        // write zipdata to outfile
+        FILE* f = fopen(outfile.c_str(), "wb");
+        if (f) {
+            if (fwrite([zipdata mutableBytes], 1, bytesRead, f) != bytesRead) {
+                Warning("Could not write data for zip entry!");
+                ok = false;
+            }
+            fclose(f);
+        } else {
+            Warning("Could not create file for zip entry!");
+            ok = false;
+        }
+    } else {
+        Warning("Failed to read all bytes of zip entry!");
+        ok = false;
+    }
+    zipdata = nil;
+    return ok;
+}
+
+// -----------------------------------------------------------------------------
+
 void OpenZipFile(const char* zippath)
 {
     // Process given zip file in the following manner:
@@ -513,9 +544,11 @@ void OpenZipFile(const char* zippath)
     int scriptseps = 0;                 // # of separators in lastscript
     int patternfiles = 0;
     int scriptfiles = 0;
+    int textfiles = 0;                  // includes html files
     int rulefiles = 0;
     int deprecated = 0;                 // # of .table/tree/colors/icons files
-    int textfiles = 0;                  // includes html files
+    std::list<std::string> deplist;     // list of installed deprecated files
+    std::list<std::string> rulelist;    // list of installed .rule files
     
     // strip off patternsdir or gollydir
     std::string relpath = zippath;
@@ -580,11 +613,19 @@ void OpenZipFile(const char* zippath)
                     if (dirseen) contents += indent;
                 
                     if ( IsRuleFile(filename) && filename.rfind(".rule") == std::string::npos ) {
-                        // don't install deprecated .table/tree/colors/icons file
+                        // this is a deprecated .table/tree/colors/icons file
                         contents += filename;
                         contents += indent;
                         contents += "[deprecated]";
                         deprecated++;
+                        // install it into userrules so it can be used below to create a .rule file
+                        std::string outfile = userrules + filename;
+                        if (RuleInstalled(zfile, info, outfile)) {
+                            deplist.push_back(filename);
+                        } else {
+                            contents += indent;
+                            contents += "INSTALL FAILED!";
+                        }
                     
                     } else {
                         // user can extract file via special "unzip:" link
@@ -598,50 +639,27 @@ void OpenZipFile(const char* zippath)
                         
                         if ( IsRuleFile(filename) ) {
                             // extract and install .rule file into userrules
-                            ZipReadStream *zipstream = [zfile readCurrentFileInZip];
-                            NSMutableData *zipdata = [[NSMutableData alloc] initWithLength:info.length];
-                            int bytesRead = [zipstream readDataWithBuffer:zipdata];
-                            [zipstream finishedReading];
-                            if (info.length == 0) {
-                                Warning("Zip entry is empty!");
-                            } else if (bytesRead == info.length) {
-                                // write zipdata to file in userrules
-                                std::string outfile = userrules + filename;
-                                FILE* f = fopen(outfile.c_str(), "wb");
-                                bool ok = true;
-                                if (f) {
-                                    if (fwrite([zipdata mutableBytes], 1, bytesRead, f) != bytesRead) {
-                                        Warning("Could not write data for zip entry!");
-                                        ok = false;
+                            std::string outfile = userrules + filename;
+                            if (RuleInstalled(zfile, info, outfile)) {
+                                // file successfully installed
+                                rulelist.push_back(filename);
+                                contents += indent;
+                                contents += "[installed]";
+                                if (diffdirs) {
+                                    // check if this file overrides similarly named file in rulesdir
+                                    std::string clashfile = rulesdir + filename;
+                                    if (FileExists(clashfile)) {
+                                        contents += indent;
+                                        contents += "(overrides file in Rules folder)";
                                     }
-                                    fclose(f);
-                                } else {
-                                    Warning("Could not create file for zip entry!");
-                                    ok = false;
-                                }
-                                if (ok) {
-                                    // file successfully installed
-                                    contents += indent;
-                                    contents += "[installed]";
-                                    if (diffdirs) {
-                                        // check if this file overrides similarly named file in rulesdir
-                                        std::string clashfile = rulesdir + filename;
-                                        if (FileExists(clashfile)) {
-                                            contents += indent;
-                                            contents += "(overrides file in Rules folder)";
-                                        }
-                                    }
-                                } else {
-                                    // file could not be installed
-                                    contents += indent;
-                                    contents += "[NOT installed]";
-                                    // file is probably incomplete so best to delete it
-                                    if (FileExists(outfile)) RemoveFile(outfile);
                                 }
                             } else {
-                                Warning("Failed to read all bytes of zip entry!");
+                                // file could not be installed
+                                contents += indent;
+                                contents += "[NOT installed]";
+                                // file is probably incomplete so best to delete it
+                                if (FileExists(outfile)) RemoveFile(outfile);
                             }
-                            zipdata = nil;
                             rulefiles++;
                             
                         } else if ( IsHTMLFile(filename) || IsTextFile(filename) ) {
@@ -685,7 +703,11 @@ void OpenZipFile(const char* zippath)
         contents += ".";
     }
     if (deprecated > 0) {
-        contents += "<p>Files marked as \"[deprecated]\" are not installed.\n";
+        std::string newrules = CreateRuleFiles(deplist, rulelist);
+        if (newrules.length() > 0) {
+            contents += "<p>Files marked as \"[deprecated]\" have been used to create new .rule files:<br>\n";
+            contents += newrules;
+        }
     }
     contents += "\n</b></font></body></html>";
     
@@ -780,6 +802,15 @@ void OpenFile(const char* path, bool remember)
         // process zip file
         if (remember) AddRecentPattern(path);   // treat zip file like a pattern file
         OpenZipFile(fullpath.c_str());          // must use full path
+        return;
+    }
+
+    
+    if (IsRuleFile(path)) {
+        // switch to rule (.rule file must be in rulesdir or userrules)
+        SwitchToPatternTab();
+        std::string basename = GetBaseName(path);
+        LoadRule(basename.substr(0, basename.rfind('.')));
         return;
     }
     

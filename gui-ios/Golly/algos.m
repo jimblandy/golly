@@ -636,7 +636,7 @@ int NumAlgos()
 
 // -----------------------------------------------------------------------------
 
-static bool MultiColorImage(CGImageRef image)
+bool MultiColorImage(CGImageRef image)
 {
     // return true if given image contains more than 2 different colors
     int wd = CGImageGetWidth(image);

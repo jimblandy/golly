@@ -99,6 +99,9 @@ const char* GetAlgoName(algo_type algotype);
 int NumAlgos();
 // Return current number of algorithms.
 
+bool MultiColorImage(CGImageRef image);
+// Return true if given image contains more than 2 different colors.
+
 bool LoadIconFile(const std::string& path, int maxstate,
                   CGImageRef** out7x7, CGImageRef** out15x15, CGImageRef** out31x31);
 // Return true if we can successfully load icon bitmaps from given file.

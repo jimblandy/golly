@@ -207,6 +207,7 @@ static std::string pageurl;
         if ([link hasPrefix:@"open:"]) {
             // open specified file
             std::string path = [[link substringFromIndex:5] cStringUsingEncoding:NSUTF8StringEncoding];
+            FixURLPath(path);
             OpenFile(path.c_str());
             // OpenFile will switch to the appropriate tab
             return NO;

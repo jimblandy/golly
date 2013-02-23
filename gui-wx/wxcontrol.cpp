@@ -2629,20 +2629,25 @@ void MainFrame::ConvertOldRules()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::CreateRuleFiles(const wxSortedArrayString& deprecated, wxString& htmlinfo)
+wxString MainFrame::CreateRuleFiles(const wxSortedArrayString& deprecated,
+                                    const wxSortedArrayString& ziprules)
 {
     // use the given list of deprecated .table/tree/colors/icons files
     // (recently extracted from a .zip file and installed in userrules)
-    // to create corresponding .rule files
+    // to create new .rule files, except those in ziprules (they were in
+    // .zip file and have already been installed)
+    wxString htmlinfo;
     bool aborted = false;
     try {
-        // create an array of candidate .rule files
+        // create an array of candidate .rule files to be created
         wxString rulefile;
         wxSortedArrayString candidates;
         for (size_t n = 0; n < deprecated.GetCount(); n++) {
             // add .rule file to candidates if it hasn't been added yet
+            // and isn't in ziprules
             rulefile = deprecated[n].BeforeLast('.') + wxT(".rule");
-            if (candidates.Index(rulefile) == wxNOT_FOUND) {
+            if ( (candidates.Index(rulefile) == wxNOT_FOUND) &&
+                 (ziprules.Index(rulefile) == wxNOT_FOUND) ) {
                 candidates.Add(rulefile);
             }
         }
@@ -2665,9 +2670,8 @@ void MainFrame::CreateRuleFiles(const wxSortedArrayString& deprecated, wxString&
                     }
                 }
             }
-            // unlike ConvertRules, here we will overwrite any existing .rule files
-            // in case the zip file's contents have changed
-            // if (deprecated.Index(rulefile) != wxNOT_FOUND) ignore.Add(rulefile);
+            // unlike ConvertRules, we will overwrite any existing .rule files
+            // (not in ziprules) in case the zip file's contents have changed
         }
         
         // non-ignored candidates are the .rule files that need to be created
@@ -2693,4 +2697,6 @@ void MainFrame::CreateRuleFiles(const wxSortedArrayString& deprecated, wxString&
             wxRemoveFile(userrules + deprecated[n]);
         }
     }
+    
+    return htmlinfo;
 }
