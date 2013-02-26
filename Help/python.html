@@ -25,15 +25,14 @@ Mac OS X users don't need to do anything because Python is already installed
 version of Python).
 Windows and Linux users can download a Python installer from
 <a href="http://www.python.org/download/">www.python.org/download</a>.
-Note that the current binary distributions of Golly are 32-bit builds,
-so they require a 32-bit version of Python.  If you've built a 64-bit Golly
-from source then it will require a 64-bit version of Python.
+Note that a 32-bit version of Golly requires a 32-bit version of Python,
+and a 64-bit Golly requires a 64-bit Python.
 
 <p>
 On Windows and Linux, the Python library is loaded at runtime (the first time
 you try to run a script).  Golly initially attempts to load a particular
-version of the Python library: python25.dll on Windows or libpython2.5.so
-on Linux.  The numbers correspond to Python version 2.5.
+version of the Python library: python27.dll on Windows or libpython2.7.so
+on Linux.  The numbers correspond to Python version 2.7.
 If that library can't be found then you'll be
 prompted to enter a different library name matching the version of Python
 installed on your system.  A successfully loaded library is remembered
