@@ -383,9 +383,7 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
     if os.path.isfile(colorspath):
         colorsfile = open(colorspath,'r')
         rulefile.write('\n@COLORS\n\n')
-        while True:
-            line = colorsfile.readline()
-            if len(line) == 0: break
+        for line in colorsfile:
             if line.startswith('color') or line.startswith('gradient'):
                 # strip off everything before 1st digit
                 line = line.lstrip('colorgadient= \t')
