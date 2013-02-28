@@ -16,11 +16,20 @@
      for Foo.rule first, then Foo.table, then Foo.tree.
 <li> The Control menu has a new command called
      <a href="control.html#convert">Convert Old Rules</a> that can be used to
-     convert all your old .table/tree/colors/icons files into new .rule files.
+     convert all your old .table/tree/colors/icons files into new .rule files
+     (it won't overwrite any existing .rule files).
+     After the conversion finishes you're given the option of deleting all the old files.
 <li> If the Paste command sees clipboard text starting with "@RULE rulename" then it will
      save the text as rulename.rule in your rules folder and switch to that rule.
 <li> All Python scripts that created a .tree file (and possibly .colors/icons files)
      now create a .rule file containing the same tree data (and any color/icon info).
+<li> Two new scripts allow Golly to be used as an icon editor.  First, run
+     <a href="open:Scripts/Python/Rule-Generators/icon-importer.py">icon-importer.py</a>
+     to import any icons for the current rule and display their bitmaps in a new layer
+     for you to edit.  When you've finished, run
+     <a href="open:Scripts/Python/Rule-Generators/icon-exporter.py">icon-exporter.py</a>
+     to extract the icon images and create or update the @ICONS section in the
+     appropriate .rule file, then display the icons in a separate test layer.
 <li> A script has been added:
      <a href="open:Scripts/Python/goto-expression.py">goto-expression.py</a>. It works
      like <a href="open:Scripts/Python/goto.py">goto.py</a>, except that it also

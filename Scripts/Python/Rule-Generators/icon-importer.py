@@ -1,18 +1,18 @@
-# Import any icons for the current rule so user can edit them.
+# Import any icons for the current rule so the user can edit them
+# and when finished run icon-exporter.py.
 # Author: Andrew Trevorrow (andrew@trevorrow.com), Feb 2013.
 
 import golly as g
-from glife import getminbox, rect, pattern
+from glife import getminbox, pattern
 from glife.text import make_text
-from time import time
 from colorsys import hsv_to_rgb
 import os
 
-iconinfo31x31 = []
-iconinfo15x15 = []
-iconinfo7x7 = []
+iconinfo31 = []     # info for 31x31 icons
+iconinfo15 = []     # info for 15x15 icons
+iconinfo7 = []      # info for 7x7 icons
 iconcolors = []     # list of (r,g,b) colors used in ALL icon sizes
-colorstate = {}     # dictionary mapping (r,g,b) colors to cell states
+colorstate = {}     # dictionary for mapping (r,g,b) colors to cell states
 
 # --------------------------------------------------------------------
 
@@ -29,13 +29,13 @@ def parse_hex(hexstr):
         G = int(hexstr[4:6],16)
         B = int(hexstr[8:10],16)
     else:
-        g.warn("Bad hex string: " + hexstr)
+        g.warn("Unexpected hex string: " + hexstr)
     return (R,G,B)
 
 # --------------------------------------------------------------------
 
 def import_icons(rulename):
-    global iconinfo31x31, iconinfo15x15, iconinfo7x7, iconcolors
+    global iconinfo31, iconinfo15, iconinfo7, iconcolors
     
     # replace any illegal filename chars with underscores
     rulename = rulename.replace("/","_").replace("\\","_")
@@ -44,7 +44,7 @@ def import_icons(rulename):
     if not os.path.isfile(rulepath):
         rulepath = g.getdir("app") + "Rules/" + rulename + ".rule"
         if not os.path.isfile(rulepath):
-            g.warn("There is no .rule file for this rule: " + rulename)
+            g.note(rulename + ".rule does not exist, so the icon images will be blank.")
             return []
     
     try:
@@ -98,9 +98,9 @@ def import_icons(rulename):
                 iconinfo.append(line)
             
             if xpmcount == 1 + num_colors + height:
-                if width == 31: iconinfo31x31 = iconinfo
-                if width == 15: iconinfo15x15 = iconinfo
-                if width == 7: iconinfo7x7 = iconinfo
+                if width == 31: iconinfo31 = iconinfo
+                if width == 15: iconinfo15 = iconinfo
+                if width == 7: iconinfo7 = iconinfo
                 xpmcount = 0    # skip any extra lines
             else:
                 xpmcount += 1
@@ -277,9 +277,14 @@ def draw_icons(iconinfo, deadrgb):
 if g.numlayers() == g.maxlayers():
     g.exit("You need to delete a layer.")
 
-iconlayer = g.addlayer()
+# WARNING: changing this prefix will require same change in icon-exporter.py
+layerprefix = "imported icons for "
+if g.getname().startswith(layerprefix):
+    g.exit("You probably meant to run icon-exporter.py.")
+
+g.addlayer()
 rulename, sep, suffix = g.getrule().partition(":")
-g.new("imported icons for " + rulename)
+g.new(layerprefix + rulename)
 livestates = g.numstates() - 1
 deadcolor = g.getcolors(0)
 deadrgb = (deadcolor[1], deadcolor[2], deadcolor[3])
@@ -287,16 +292,23 @@ deadrgb = (deadcolor[1], deadcolor[2], deadcolor[3])
 # search for rulename.rule and import any icon data
 import_icons(rulename)
 
+# above has created iconcolors, so check for monochrome icons
+if len(iconcolors) <= 2:
+    deadrgb = (0,0,0)
+
 # switch to a Generations rule so we can have lots of colors
 g.setrule("//256")
 g.setcolors(deadcolor)
 graystate = init_colors()
 
 draw_icon_boxes(livestates, graystate)
-draw_icons(iconinfo31x31, deadrgb)
-draw_icons(iconinfo15x15, deadrgb)
-draw_icons(iconinfo7x7, deadrgb)
+draw_icons(iconinfo31, deadrgb)
+draw_icons(iconinfo15, deadrgb)
+draw_icons(iconinfo7, deadrgb)
 
-g.fit()
+g.setoption("showlayerbar",True)
+g.setoption("showallstates",True)
 g.setoption("showicons",False)
-g.show("Edit the icons and then run icon-exporter.py.")
+g.fit()
+g.update()
+g.note("Edit the icons and then run icon-exporter.py.")
