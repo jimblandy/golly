@@ -44,8 +44,8 @@ def import_icons(rulename):
     if not os.path.isfile(rulepath):
         rulepath = g.getdir("app") + "Rules/" + rulename + ".rule"
         if not os.path.isfile(rulepath):
-            g.note(rulename + ".rule does not exist, so the icon images will be blank.")
-            return []
+            # there is no .rule file
+            return
     
     try:
         rulefile = open(rulepath,"r")
@@ -273,6 +273,69 @@ def draw_icons(iconinfo, deadrgb):
 
 # --------------------------------------------------------------------
 
+def create31x31icons():
+    # scale up the 15x15 bitmaps into 31x31 bitmaps using a simple
+    # algorithm that conserves any vertical or horizontal symmetry
+    global iconinfo15
+    width = 15
+    middle = 7                  # middle row or column in 15x15 icon
+    height = iconinfo15[1]
+    numicons = height/width
+    for i in xrange(numicons):
+        x = i*32
+        y = 32
+        for row in xrange(width):
+            for col in xrange(width):
+                state = g.getcell(x+col, y+row)
+                if state > 0:
+                    if row == middle and col == middle:
+                        # expand middle cell into 9 cells
+                        xx = i*32+15
+                        yy = 15
+                        g.setcell(xx, yy, state)
+                        g.setcell(xx, yy+1, state)
+                        g.setcell(xx, yy-1, state)
+                        g.setcell(xx+1, yy, state)
+                        g.setcell(xx-1, yy, state)
+                        g.setcell(xx+1, yy+1, state)
+                        g.setcell(xx+1, yy-1, state)
+                        g.setcell(xx-1, yy+1, state)
+                        g.setcell(xx-1, yy-1, state)
+                    elif row == middle:
+                        # expand cell in middle row into 6 cells
+                        xx = i*32+col*2
+                        yy = row*2
+                        if col > middle: xx += 1
+                        g.setcell(xx, yy, state)
+                        g.setcell(xx, yy+1, state)
+                        g.setcell(xx+1, yy, state)
+                        g.setcell(xx+1, yy+1, state)
+                        g.setcell(xx, yy+2, state)
+                        g.setcell(xx+1, yy+2, state)
+                    elif col == middle:
+                        # expand cell in middle column into 6 cells
+                        xx = i*32+col*2
+                        yy = row*2
+                        if row > middle: yy += 1
+                        g.setcell(xx, yy, state)
+                        g.setcell(xx, yy+1, state)
+                        g.setcell(xx+1, yy, state)
+                        g.setcell(xx+1, yy+1, state)
+                        g.setcell(xx+2, yy, state)
+                        g.setcell(xx+2, yy+1, state)
+                    else:
+                        # expand all other cells into 4 cells
+                        xx = i*32+col*2
+                        yy = row*2
+                        if col > middle: xx += 1
+                        if row > middle: yy += 1
+                        g.setcell(xx, yy, state)
+                        g.setcell(xx, yy+1, state)
+                        g.setcell(xx+1, yy, state)
+                        g.setcell(xx+1, yy+1, state)
+
+# --------------------------------------------------------------------
+
 # check that a layer is available
 if g.numlayers() == g.maxlayers():
     g.exit("You need to delete a layer.")
@@ -289,10 +352,14 @@ livestates = g.numstates() - 1
 deadcolor = g.getcolors(0)
 deadrgb = (deadcolor[1], deadcolor[2], deadcolor[3])
 
-# search for rulename.rule and import any icon data
+# search for rulename.rule and import any icon data (also builds iconcolors)
 import_icons(rulename)
 
-# above has created iconcolors, so check for monochrome icons
+iconnote = ""
+if len(iconcolors) == 0:
+    iconnote = "There are currently no icons for this rule.\n\n"
+
+# if icons are monochrome change deadrgb to black
 if len(iconcolors) <= 2:
     deadrgb = (0,0,0)
 
@@ -306,9 +373,14 @@ draw_icons(iconinfo31, deadrgb)
 draw_icons(iconinfo15, deadrgb)
 draw_icons(iconinfo7, deadrgb)
 
+# create missing 31x31 icons by scaling up the 15x15 icons
+if len(iconinfo31) == 0 and len(iconinfo15) > 0:
+    create31x31icons()
+    iconnote = "The 31x31 icons were created by scaling up the 15x15 icons.\n\n"
+
 g.setoption("showlayerbar",True)
 g.setoption("showallstates",True)
 g.setoption("showicons",False)
 g.fit()
 g.update()
-g.note("Edit the icons and then run icon-exporter.py.")
+g.note(iconnote + "Edit the icons and then run icon-exporter.py.")
