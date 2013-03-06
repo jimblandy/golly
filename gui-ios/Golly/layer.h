@@ -124,7 +124,7 @@ public:
     unsigned char** iconpixels15x15;    // pixel data for 15x15 icons
     unsigned char** iconpixels31x31;    // pixel data for 31x31 icons
     
-    bool multicoloricons;         // are icons multi-colored? (ie. more than 2 colors)
+    bool multicoloricons;         // are icons multi-colored? (ie. not grayscale)
     
     // used if the layer has a timeline (see wxtimeline.cpp)
     int currframe;                // current frame in timeline

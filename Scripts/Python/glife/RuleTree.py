@@ -239,22 +239,25 @@ def ReplaceTreeSection(rulepath, newtree):
 # ------------------------------------------------------------------------------
 
 def GetColors(icon_pixels, wd, ht):
-    result = []
+    colors = []
+    multi_colored = False
     for row in xrange(ht):
         for col in xrange(wd):
             R,G,B = icon_pixels[row][col]
+            if R != G or G != B:
+                multi_colored = True    # not grayscale
             found = False
             index = 0
-            for count, RGB in result:
+            for count, RGB in colors:
                 if (R,G,B) == RGB:
                     found = True
                     break
                 index += 1
             if found:
-                result[index][0] += 1
+                colors[index][0] += 1
             else:
-                result.append([1, (R,G,B)])
-    return result
+                colors.append([1, (R,G,B)])
+    return colors, multi_colored
 
 # ------------------------------------------------------------------------------
 
@@ -400,14 +403,14 @@ def ConvertTreeToRule(rule_name, total_states, icon_pixels):
         numicons = wd / iconsize
         
         # get colors used in all icons (we assume each icon size uses the same set of colors)
-        colors = GetColors(icon_pixels, wd, ht)
+        colors, multi_colored = GetColors(icon_pixels, wd, ht)
         if len(colors) > 256:
             golly.warn('Icons use more than 256 colors!')
             rulefile.flush()
             rulefile.close()
             return
-        if len(colors) > 2:
-            # create @COLORS section using color info in icon_pixels (not monochrome)
+        if multi_colored:
+            # create @COLORS section using color info in icon_pixels (not grayscale)
             rulefile.write('\n@COLORS\n\n')
             if numicons >= total_states:
                 # extra icon is present so use top right pixel to set the color of state 0

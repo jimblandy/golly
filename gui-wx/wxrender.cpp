@@ -469,9 +469,9 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
 #else
     (pmscale >= (1 << mingridmag) && !showgridlines);
 #endif
-    unsigned char deadred   = currlayer->cellr[0];
-    unsigned char deadgreen = currlayer->cellg[0];
-    unsigned char deadblue  = currlayer->cellb[0];
+    unsigned char deadr = currlayer->cellr[0];
+    unsigned char deadg = currlayer->cellg[0];
+    unsigned char deadb = currlayer->cellb[0];
     
     // might be faster to draw rectangles above certain scales???
     wxAlphaPixelData pxldata(*pixmap);
@@ -503,9 +503,9 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
                     }
                     if (drawgap) {
                         // draw dead pixels at right edge of cell
-                        p.Red()   = deadred;
-                        p.Green() = deadgreen;
-                        p.Blue()  = deadblue;
+                        p.Red()   = deadr;
+                        p.Green() = deadg;
+                        p.Blue()  = deadb;
 #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                         p.Alpha() = 255;
 #endif
@@ -516,9 +516,9 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
                 if (drawgap) {
                     // draw dead pixels at bottom edge of cell
                     for (int j = 0; j <= cellsize; j++) {
-                        p.Red()   = deadred;
-                        p.Green() = deadgreen;
-                        p.Blue()  = deadblue;
+                        p.Red()   = deadr;
+                        p.Green() = deadg;
+                        p.Blue()  = deadb;
 #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                         p.Alpha() = 255;
 #endif
@@ -551,9 +551,10 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, 
 #else
     (pmscale >= (1 << mingridmag) && !showgridlines);
 #endif
-    unsigned char deadred   = currlayer->cellr[0];
-    unsigned char deadgreen = currlayer->cellg[0];
-    unsigned char deadblue  = currlayer->cellb[0];
+    unsigned char deadr = currlayer->cellr[0];
+    unsigned char deadg = currlayer->cellg[0];
+    unsigned char deadb = currlayer->cellb[0];
+    bool multicolor = currlayer->multicoloricons;
     
     wxAlphaPixelData pxldata(*pixmap);
     if (pxldata) {
@@ -565,31 +566,18 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, 
             wxAlphaPixelData::Iterator rowstart = p;
             for ( int col = 0; col < w; col++ ) {
                 unsigned char state = byteptr[row*stride + col];
+                unsigned char liver = currlayer->cellr[state];
+                unsigned char liveg = currlayer->cellg[state];
+                unsigned char liveb = currlayer->cellb[state];
                 
                 wxAlphaPixelData::Iterator topleft = p;
                 if (state && iconmaps[state]) {
-                    // copy cellsize*cellsize pixels from iconmaps[state]
-                    // but convert black pixels to dead cell color
-                    bool multicolor = iconmaps[1]->GetDepth() > 1;
-#ifdef __WXMSW__
-                    // must use wxNativePixelData for bitmaps with no alpha channel
-                    wxNativePixelData icondata(*iconmaps[state]);
-#else
                     wxAlphaPixelData icondata(*iconmaps[state]);
-#endif
                     if (icondata) {
-#ifdef __WXMSW__
-                        wxNativePixelData::Iterator iconpxl(icondata);
-#else
                         wxAlphaPixelData::Iterator iconpxl(icondata);
-#endif
                         for (int i = 0; i < cellsize; i++) {
                             wxAlphaPixelData::Iterator colstart = p;
-#ifdef __WXMSW__
-                            wxNativePixelData::Iterator iconrow = iconpxl;
-#else
                             wxAlphaPixelData::Iterator iconrow = iconpxl;
-#endif
                             for (int j = 0; j < cellsize; j++) {
                                 if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
                                     if (multicolor) {
@@ -604,16 +592,26 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, 
                                             p.Blue()  = iconpxl.Blue();
                                         }
                                     } else {
-                                        // replace non-black pixel with current cell color
-                                        p.Red()   = currlayer->cellr[state];
-                                        p.Green() = currlayer->cellg[state];
-                                        p.Blue()  = currlayer->cellb[state];
-                                    }
+                                        // grayscale icon
+                                        if (iconpxl.Red() == 255) {
+                                            // replace white pixel with live cell color
+                                            p.Red()   = liver;
+                                            p.Green() = liveg;
+                                            p.Blue()  = liveb;
+                                        } else {
+                                            // replace gray pixel with appropriate shade between 
+                                            // live and dead cell colors
+                                            float frac = (float)(iconpxl.Red()) / 255.0;
+                                            p.Red()   = (int)(deadr + frac * (liver - deadr) + 0.5);
+                                            p.Green() = (int)(deadg + frac * (liveg - deadg) + 0.5);
+                                            p.Blue()  = (int)(deadb + frac * (liveb - deadb) + 0.5);
+                                        }
+                                     }
                                 } else {
                                     // replace black pixel with dead cell color
-                                    p.Red()   = deadred;
-                                    p.Green() = deadgreen;
-                                    p.Blue()  = deadblue;
+                                    p.Red()   = deadr;
+                                    p.Green() = deadg;
+                                    p.Blue()  = deadb;
                                 }
 #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                                 p.Alpha() = 255;
@@ -623,9 +621,9 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, 
                             }
                             if (drawgap) {
                                 // draw dead pixels at right edge of cell
-                                p.Red()   = deadred;
-                                p.Green() = deadgreen;
-                                p.Blue()  = deadblue;
+                                p.Red()   = deadr;
+                                p.Green() = deadg;
+                                p.Blue()  = deadb;
 #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                                 p.Alpha() = 255;
 #endif
@@ -639,9 +637,9 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, 
                         if (drawgap) {
                             // draw dead pixels at bottom edge of cell
                             for (int j = 0; j <= cellsize; j++) {
-                                p.Red()   = deadred;
-                                p.Green() = deadgreen;
-                                p.Blue()  = deadblue;
+                                p.Red()   = deadr;
+                                p.Green() = deadg;
+                                p.Blue()  = deadb;
 #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                                 p.Alpha() = 255;
 #endif
@@ -654,9 +652,9 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, 
                     for (int i = 0; i < cellsize; i++) {
                         wxAlphaPixelData::Iterator colstart = p;
                         for (int j = 0; j < cellsize; j++) {
-                            p.Red()   = deadred;
-                            p.Green() = deadgreen;
-                            p.Blue()  = deadblue;
+                            p.Red()   = deadr;
+                            p.Green() = deadg;
+                            p.Blue()  = deadb;
 #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                             p.Alpha() = 255;
 #endif
@@ -664,9 +662,9 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, 
                         }
                         if (drawgap) {
                             // draw dead pixels at right edge of cell
-                            p.Red()   = deadred;
-                            p.Green() = deadgreen;
-                            p.Blue()  = deadblue;
+                            p.Red()   = deadr;
+                            p.Green() = deadg;
+                            p.Blue()  = deadb;
 #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                             p.Alpha() = 255;
 #endif
@@ -677,9 +675,9 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, 
                     if (drawgap) {
                         // draw dead pixels at bottom edge of cell
                         for (int j = 0; j <= cellsize; j++) {
-                            p.Red()   = deadred;
-                            p.Green() = deadgreen;
-                            p.Blue()  = deadblue;
+                            p.Red()   = deadr;
+                            p.Green() = deadg;
+                            p.Blue()  = deadb;
 #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                             p.Alpha() = 255;
 #endif
@@ -703,11 +701,10 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
                  unsigned char deadr, unsigned char deadg, unsigned char deadb,
                  unsigned char liver, unsigned char liveg, unsigned char liveb)
 {
-    // copy pixels from icon but convert black pixels to given dead cell color
-    // and convert non-black pixels to given live cell color
+    // draw a single icon (either multi-color or grayscale)
     int wd = icon->GetWidth();
     int ht = icon->GetHeight();
-    bool multicolor = icon->GetDepth() > 1;
+    bool multicolor = currlayer->multicoloricons;
     wxBitmap pixmap(wd, ht, 32);
     
     wxAlphaPixelData pxldata(pixmap);
@@ -716,28 +713,12 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
         pxldata.UseAlpha();
 #endif
         wxAlphaPixelData::Iterator p(pxldata);
-        
-#ifdef __WXMSW__
-        // must use wxNativePixelData for bitmaps with no alpha channel
-        wxNativePixelData icondata(*icon);
-#else
         wxAlphaPixelData icondata(*icon);
-#endif
-        
         if (icondata) {
-#ifdef __WXMSW__
-            wxNativePixelData::Iterator iconpxl(icondata);
-#else
             wxAlphaPixelData::Iterator iconpxl(icondata);
-#endif
-            
             for (int i = 0; i < ht; i++) {
                 wxAlphaPixelData::Iterator pixmaprow = p;
-#ifdef __WXMSW__
-                wxNativePixelData::Iterator iconrow = iconpxl;
-#else
                 wxAlphaPixelData::Iterator iconrow = iconpxl;
-#endif
                 for (int j = 0; j < wd; j++) {
                     if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
                         if (multicolor) {
@@ -752,10 +733,20 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
                                 p.Blue()  = iconpxl.Blue();
                             }
                         } else {
-                            // replace non-black pixel with live cell color
-                            p.Red()   = liver;
-                            p.Green() = liveg;
-                            p.Blue()  = liveb;
+                            // grayscale icon
+                            if (iconpxl.Red() == 255) {
+                                // replace white pixel with live cell color
+                                p.Red()   = liver;
+                                p.Green() = liveg;
+                                p.Blue()  = liveb;
+                            } else {
+                                // replace gray pixel with appropriate shade between 
+                                // live and dead cell colors
+                                float frac = (float)(iconpxl.Red()) / 255.0;
+                                p.Red()   = (int)(deadr + frac * (liver - deadr) + 0.5);
+                                p.Green() = (int)(deadg + frac * (liveg - deadg) + 0.5);
+                                p.Blue()  = (int)(deadb + frac * (liveb - deadb) + 0.5);
+                            }
                         }
                     } else {
                         // replace black pixel with dead cell color

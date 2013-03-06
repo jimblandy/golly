@@ -115,6 +115,8 @@ public:
     wxBitmap** icons15x15;        // icons for scale 1:16
     wxBitmap** icons31x31;        // icons for scale 1:32
     
+    bool multicoloricons;         // are icons multi-colored? (ie. not grayscale)
+    
     // used if the layer has a timeline (see wxtimeline.cpp)
     int currframe;                // current frame in timeline
     int autoplay;                 // +ve = play forwards, -ve = play backwards, 0 = stop

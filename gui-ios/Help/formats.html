@@ -560,18 +560,19 @@ then the last icon is automatically duplicated.  If there are more icons
 than required then the extra icons are simply ignored.
 
 <p>
-Golly recognizes two types of icons: monochrome or multi-color.
-Monochrome icons have only 2 colors, normally black and white, as in
-the above example.  Any black areas will be transparent (ie. those pixels
-will be replaced by the color for state 0), while non-black areas will be
-replaced with the color for the cell's current state.
-Using monochrome icons minimizes the amount of XPM data needed to describe
+Golly recognizes two types of icons: grayscale or multi-color.
+Grayscale icons only use shades of gray (including black and white), as in
+the above example.  Any black areas will be transparent; ie. those pixels
+will be replaced by the color for state 0.  White pixels will be replaced
+by the color for the cell's current state.  Gray pixels are used to do
+anti-aliasing; ie. the darker the gray the greater the transparency.
+Using grayscale icons minimizes the amount of XPM data needed to describe
 a set of icons, especially if the icons use the same shape for each state
 (as in <a href="edit:Rules/WireWorld.rule">WireWorld.rule</a>).
 
 <p>
-Multi-colored icons have more than 2 colors.  These are useful if you need more
-complicated icons, or if you wish to use anti-aliasing to improve their look.
+If a set of icons contains at least one color that isn't a shade of gray
+(including black or white) then the icons are said to be multi-colored.
 Any black pixels are still converted to the state 0 color, but non-black
 pixels are displayed without doing any substitutions.
 

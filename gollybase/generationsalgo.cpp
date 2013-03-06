@@ -112,32 +112,6 @@ const char* generationsalgo::DefaultRule() {
    return DEFAULTRULE ;
 }
 
-/*
- *   These colors are not presently used; we'll go back to them
- *   when we permit colors to change with rules.
- */
-static unsigned char defcolors[256*3] ;
-static int lastcolorset = -1 ;
-unsigned char *generationsalgo::GetColorData(int &numcolors) {
-   numcolors = maxCellStates ;
-   if (lastcolorset != numcolors) {
-      /* use Yellow (255,255,0) -> Red (255,0,0) */
-      if (numcolors <= 2) {
-         defcolors[3] = 255 ;
-         defcolors[4] = 255 ;
-         defcolors[5] = 0 ;
-      } else {
-         for (int i=1; i<numcolors; i++) {
-            defcolors[i*3] = 255 ;
-            defcolors[i*3+1] = (unsigned char)
-                                 (255 * (numcolors-i-1) / (numcolors-2)) ;
-            defcolors[i*3+2] = 0 ;
-         }
-      }
-   }
-   return defcolors ;
-}
-
 generationsalgo::generationsalgo() {
    // we may need this to be >2 here so it's recognized as multistate
    maxCellStates = 3 ;
@@ -156,7 +130,9 @@ state generationsalgo::slowcalc(state nw, state n, state ne, state w, state c,
       return c + 1 ;
    return 0 ;
 }
+
 static lifealgo *creator() { return new generationsalgo() ; }
+
 void generationsalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ghashbase::doInitializeAlgoInfo(ai) ;
    ai.setAlgorithmName("Generations") ;

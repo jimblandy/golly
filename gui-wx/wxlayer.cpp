@@ -2229,6 +2229,38 @@ static void UseDefaultIcons(int maxstate)
 
 // -----------------------------------------------------------------------------
 
+static bool MultiColorBitmaps(wxBitmap** iconmaps, int maxstate)
+{
+    // return true if any icon contains at least one color that isn't a shade of gray
+    for (int n = 1; n <= maxstate; n++) {
+        wxBitmap* icon = iconmaps[n];
+        if (icon) {
+            int wd = icon->GetWidth();
+            int ht = icon->GetHeight();
+            wxAlphaPixelData icondata(*icon);
+            if (icondata) {
+                wxAlphaPixelData::Iterator iconpxl(icondata);
+                for (int i = 0; i < ht; i++) {
+                    wxAlphaPixelData::Iterator iconrow = iconpxl;
+                    for (int j = 0; j < wd; j++) {
+                        unsigned char r = iconpxl.Red();
+                        unsigned char g = iconpxl.Green();
+                        unsigned char b = iconpxl.Blue();
+                        if (r != g || g != b) return true;
+                        iconpxl++;
+                    }
+                    // move to next row
+                    iconpxl = iconrow;
+                    iconpxl.OffsetY(icondata, 1);
+                }
+            }
+        }
+    }
+    return false;   // all icons are grayscale
+}
+
+// -----------------------------------------------------------------------------
+
 static void SetAverageColor(int state, wxBitmap* icon)
 {
     // set non-icon color to average color of non-black pixels in given icon
@@ -2236,19 +2268,9 @@ static void SetAverageColor(int state, wxBitmap* icon)
         int wd = icon->GetWidth();
         int ht = icon->GetHeight();
         
-#ifdef __WXMSW__
-        // must use wxNativePixelData for bitmaps with no alpha channel
-        wxNativePixelData icondata(*icon);
-#else
         wxAlphaPixelData icondata(*icon);
-#endif
-        
         if (icondata) {
-#ifdef __WXMSW__
-            wxNativePixelData::Iterator iconpxl(icondata);
-#else
             wxAlphaPixelData::Iterator iconpxl(icondata);
-#endif
             
             int nbcount = 0;  // # of non-black pixels
             int totalr = 0;
@@ -2256,11 +2278,7 @@ static void SetAverageColor(int state, wxBitmap* icon)
             int totalb = 0;
             
             for (int i = 0; i < ht; i++) {
-#ifdef __WXMSW__
-                wxNativePixelData::Iterator iconrow = iconpxl;
-#else
                 wxAlphaPixelData::Iterator iconrow = iconpxl;
-#endif
                 for (int j = 0; j < wd; j++) {
                     if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
                         // non-black pixel
@@ -2328,6 +2346,9 @@ void UpdateCurrentColors()
 
     // deallocate current layer's old icons
     DeleteIcons(currlayer);
+
+    // this flag will change if any icon uses a non-grayscale color
+    currlayer->multicoloricons = false;
     
     // look for rulename.rule first
     FILE* rulefile = FindRuleFile(rulename);
@@ -2336,7 +2357,11 @@ void UpdateCurrentColors()
         // we don't use loadedcolors at the moment, but leave it in for now
         if (!loadedicons) UseDefaultIcons(maxstate);
         
-        // note that we don't check if icons are multi-color as we do below
+        // use the smallest icons to check if they are multi-color
+        if (currlayer->icons7x7 && MultiColorBitmaps(currlayer->icons7x7, maxstate))
+            currlayer->multicoloricons = true;
+        
+        // if the icons are multi-color then we don't call SetAverageColor as we do below
         // (better if the .rule file sets the appropriate non-icon colors)
         
     } else {
@@ -2349,25 +2374,16 @@ void UpdateCurrentColors()
         // non-icon colors to the average of the non-black pixels in each icon
         // (note that we use the 7x7 icons because they are faster to scan)
         wxBitmap** iconmaps = currlayer->icons7x7;
-        if (!loadedcolors && iconmaps && iconmaps[1] && iconmaps[1]->GetDepth() > 1) {
+        if (!loadedcolors && iconmaps && currlayer->multicoloricons) {
             for (int n = 1; n <= maxstate; n++) {
                 SetAverageColor(n, iconmaps[n]);
             }
             // if extra 15x15 icon was supplied then use it to set state 0 color
             iconmaps = currlayer->icons15x15;
             if (iconmaps && iconmaps[0]) {
-                #ifdef __WXMSW__
-                    // must use wxNativePixelData for bitmaps with no alpha channel
-                    wxNativePixelData icondata(*iconmaps[0]);
-                #else
-                    wxAlphaPixelData icondata(*iconmaps[0]);
-                #endif
+                wxAlphaPixelData icondata(*iconmaps[0]);
                 if (icondata) {
-                    #ifdef __WXMSW__
-                        wxNativePixelData::Iterator iconpxl(icondata);
-                    #else
-                        wxAlphaPixelData::Iterator iconpxl(icondata);
-                    #endif
+                    wxAlphaPixelData::Iterator iconpxl(icondata);
                     // iconpxl is the top left pixel
                     currlayer->cellr[0] = iconpxl.Red();
                     currlayer->cellg[0] = iconpxl.Green();

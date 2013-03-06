@@ -13,6 +13,9 @@ iconcolors = []     # list of (r,g,b) colors used in all icons
 allcolors = g.getcolors()
 deadrgb = (allcolors[1], allcolors[2], allcolors[3])
 
+# this flag becomes True only if an icon uses a non-gray color (ignoring deadrgb)
+multi_color_icons = False   # grayscale
+
 # ------------------------------------------------------------------------------
 
 def hex2(i):
@@ -25,7 +28,7 @@ def hex2(i):
 # --------------------------------------------------------------------
 
 def extract_icons(iconsize):
-    global iconcolors, allcolors, deadrgb
+    global iconcolors, allcolors, deadrgb, multi_color_icons
     
     # do 1st pass to determine the colors used and the number of icons
     numicons = 0
@@ -41,6 +44,9 @@ def extract_icons(iconsize):
                 rgb = (allcolors[state*4+1], allcolors[state*4+2], allcolors[state*4+3])
                 if not rgb in iconcolors:
                     iconcolors.append(rgb)
+                    if rgb != deadrgb:
+                        R,G,B = rgb
+                        if R != G or G != B: multi_color_icons = True
                 if state > 0:
                     blank = False
         if blank: break
@@ -68,8 +74,8 @@ def extract_icons(iconsize):
             # use . or .. for background color
             icondata += "\"."
             if charsperpixel == 2: icondata += "."
-            if numcolors <= 2:
-                # monochrome icons so specify black as the background color
+            if not multi_color_icons:
+                # grayscale icons so specify black as the background color
                 hexcolor = "#000000"
         else:
             icondata += "\""
@@ -223,12 +229,10 @@ def get_color_section(rulepath):
 # --------------------------------------------------------------------
 
 def export_icons(iconsection, rulename):
-    global iconcolors
-    monochrome = len(iconcolors) <= 2
-
-    if not monochrome:
-        # multi-color icons, so best to prepend a new @COLORS section
-        # with the average colors in each icon
+    global multi_color_icons
+    
+    if multi_color_icons:
+        # prepend a new @COLORS section with the average colors in each icon
         iconsection = create_average_colors(iconsection) + iconsection
         
     # replace any illegal filename chars with underscores
@@ -254,8 +258,8 @@ def export_icons(iconsection, rulename):
                 tempfile.write(iconsection)
                 wroteicons = True
                 skiplines = True
-            elif line.startswith("@COLORS") and not monochrome:
-                # ignore the existing @COLORS section
+            elif line.startswith("@COLORS") and multi_color_icons:
+                # skip the existing @COLORS section
                 # (iconsection contains a new @COLORS section)
                 skiplines = True
             elif skiplines and line.startswith("@"):
@@ -284,8 +288,9 @@ def export_icons(iconsection, rulename):
         rulefile = open(rulepath,"w")
         rulefile.write("@RULE " + filename + "\n\n")
         
-        if monochrome:
-            # check if Rules/filename.rule exists and copy any existing @COLORS section
+        if not multi_color_icons:
+            # grayscale icons, so check if Rules/filename.rule exists
+            # and if so copy any existing @COLORS section
             suppliedrule = g.getdir("app") + "Rules/" + filename + ".rule"
             if os.path.isfile(suppliedrule):
                 colordata = get_color_section(suppliedrule)

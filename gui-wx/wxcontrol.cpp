@@ -2363,7 +2363,7 @@ static wxString CreateICONS(const wxString& iconspath, bool nocolors)
         }
         int numicons = wd / 15;
         
-        if (nocolors && image.CountColours(2) > 2) {
+        if (nocolors && MultiColorImage(image)) {
             // there was no .colors file and .icons file is multi-color,
             // so prepend a @COLORS section that sets non-icon colors
             contents = CreateStateColors(image.GetSubImage(wxRect(0,0,wd,15)), numicons) + contents;

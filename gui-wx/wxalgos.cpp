@@ -42,6 +42,7 @@
 #include "wxutils.h"       // for Fatal, Warning
 #include "wxrender.h"      // for DrawOneIcon
 #include "wxprefs.h"       // for gollydir
+#include "wxlayer.h"       // for currlayer
 #include "wxalgos.h"
 
 // -----------------------------------------------------------------------------
@@ -116,92 +117,99 @@ static unsigned char default_colors[] = {
 
 // -----------------------------------------------------------------------------
 
-// Note that all the default icons are monochrome (depth 1).
-// This is done because these icons are used for lots of different
-// rules with different numbers of states, and at rendering time
-// we want to replace the non-black color in each icon with the
-// cell's state color to avoid "color shock" when switching
-// between icon and non-icon view.
+// Note that all the default icons are grayscale bitmaps.
+// These icons are used for lots of different rules with different numbers
+// of states, and at rendering time we will replace the white pixels in each
+// icon with the cell's state color to avoid "color shock" when switching
+// between icon and non-icon view.  Gray pixels are used to do anti-aliasing.
 
 // XPM data for default 7x7 icon
 static const char* default7x7[] = {
 // width height ncolors chars_per_pixel
-"7 7 2 1",
+"7 7 4 1",
 // colors
 ". c #000000",    // black will be transparent
+"D c #404040",
+"E c #E0E0E0",
 "W c #FFFFFF",    // white
 // pixels
-"..WWW..",
-".WWWWW.",
+".DEWED.",
+"DWWWWWD",
+"EWWWWWE",
 "WWWWWWW",
-"WWWWWWW",
-"WWWWWWW",
-".WWWWW.",
-"..WWW.."
+"EWWWWWE",
+"DWWWWWD",
+".DEWED."
 };
 
 // XPM data for default 15x15 icon
 static const char* default15x15[] = {
 // width height ncolors chars_per_pixel
-"15 15 2 1",
+"15 15 5 1",
 // colors
 ". c #000000",    // black will be transparent
+"D c #404040",
+"C c #808080",
+"B c #C0C0C0",
 "W c #FFFFFF",    // white
 // pixels
 "...............",
-"......WWW......",
-"....WWWWWWW....",
-"...WWWWWWWWW...",
-"..WWWWWWWWWWW..",
-"..WWWWWWWWWWW..",
+"....DBWWWBD....",
+"...BWWWWWWWB...",
+"..BWWWWWWWWWB..",
+".DWWWWWWWWWWWD.",
+".BWWWWWWWWWWWB.",
 ".WWWWWWWWWWWWW.",
 ".WWWWWWWWWWWWW.",
 ".WWWWWWWWWWWWW.",
-"..WWWWWWWWWWW..",
-"..WWWWWWWWWWW..",
-"...WWWWWWWWW...",
-"....WWWWWWW....",
-"......WWW......",
+".BWWWWWWWWWWWB.",
+".DWWWWWWWWWWWD.",
+"..BWWWWWWWWWB..",
+"...BWWWWWWWB...",
+"....DBWWWBD....",
 "..............."
 };
 
 // XPM data for default 31x31 icon
 static const char* default31x31[] = {
 // width height ncolors chars_per_pixel
-"31 31 2 1",
+"31 31 5 1",
 // colors
 ". c #000000",    // black will be transparent
+"D c #404040",
+"C c #808080",
+"B c #C0C0C0",
 "W c #FFFFFF",    // white
 // pixels
 "...............................",
 "...............................",
-"............WWWWWWW............",
-"..........WWWWWWWWWWW..........",
-"........WWWWWWWWWWWWWWW........",
-".......WWWWWWWWWWWWWWWWW.......",
-"......WWWWWWWWWWWWWWWWWWW......",
-".....WWWWWWWWWWWWWWWWWWWWW.....",
+"..........DCBWWWWWBCD..........",
+".........CWWWWWWWWWWWC.........",
+".......DWWWWWWWWWWWWWWWD.......",
+"......BWWWWWWWWWWWWWWWWWB......",
+".....BWWWWWWWWWWWWWWWWWWWB.....",
+"....DWWWWWWWWWWWWWWWWWWWWWD....",
 "....WWWWWWWWWWWWWWWWWWWWWWW....",
+"...CWWWWWWWWWWWWWWWWWWWWWWWC...",
+"..DWWWWWWWWWWWWWWWWWWWWWWWWWD..",
+"..CWWWWWWWWWWWWWWWWWWWWWWWWWC..",
+"..BWWWWWWWWWWWWWWWWWWWWWWWWWB..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..BWWWWWWWWWWWWWWWWWWWWWWWWWB..",
+"..CWWWWWWWWWWWWWWWWWWWWWWWWWC..",
+"..DWWWWWWWWWWWWWWWWWWWWWWWWWD..",
+"...CWWWWWWWWWWWWWWWWWWWWWWWC...",
 "....WWWWWWWWWWWWWWWWWWWWWWW....",
-"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
-"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
-"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
-"....WWWWWWWWWWWWWWWWWWWWWWW....",
-"....WWWWWWWWWWWWWWWWWWWWWWW....",
-".....WWWWWWWWWWWWWWWWWWWWW.....",
-"......WWWWWWWWWWWWWWWWWWW......",
-".......WWWWWWWWWWWWWWWWW.......",
-"........WWWWWWWWWWWWWWW........",
-"..........WWWWWWWWWWW..........",
-"............WWWWWWW............",
+"....DWWWWWWWWWWWWWWWWWWWWWD....",
+".....BWWWWWWWWWWWWWWWWWWWB.....",
+"......BWWWWWWWWWWWWWWWWWB......",
+".......DWWWWWWWWWWWWWWWD.......",
+".........CWWWWWWWWWWWC.........",
+"..........DCBWWWWWBCD..........",
 "...............................",
 "..............................."
 };
@@ -209,82 +217,85 @@ static const char* default31x31[] = {
 // XPM data for the 7x7 icon used for hexagonal CA
 static const char* hex7x7[] = {
 // width height ncolors chars_per_pixel
-"7 7 2 1",
+"7 7 3 1",
 // colors
 ". c #000000",    // black will be transparent
+"C c #808080",
 "W c #FFFFFF",    // white
 // pixels
-".WW....",
+".WWC...",
 "WWWWW..",
 "WWWWWW.",
-".WWWWW.",
+"CWWWWWC",
 ".WWWWWW",
 "..WWWWW",
-"....WW."};
+"...CWW."};
 
 // XPM data for the 15x15 icon used for hexagonal CA
 static const char* hex15x15[] = {
 // width height ncolors chars_per_pixel
-"15 15 2 1",
+"15 15 3 1",
 // colors
 ". c #000000",    // black will be transparent
+"C c #808080",
 "W c #FFFFFF",    // white
 // pixels
-"...WW..........",
-"..WWWWW........",
-".WWWWWWWW......",
+"...WWC.........",
+"..WWWWWC.......",
+".WWWWWWWWC.....",
 "WWWWWWWWWWW....",
 "WWWWWWWWWWWW...",
-".WWWWWWWWWWW...",
+"CWWWWWWWWWWWC..",
 ".WWWWWWWWWWWW..",
-"..WWWWWWWWWWW..",
+".CWWWWWWWWWWWC.",
 "..WWWWWWWWWWWW.",
-"...WWWWWWWWWWW.",
+"..CWWWWWWWWWWWC",
 "...WWWWWWWWWWWW",
 "....WWWWWWWWWWW",
-"......WWWWWWWW.",
-"........WWWWW..",
-"..........WW..."};
+".....CWWWWWWWW.",
+".......CWWWWW..",
+".........CWW..."};
 
 // XPM data for 31x31 icon used for hexagonal CA
 static const char* hex31x31[] = {
 // width height ncolors chars_per_pixel
-"31 31 2 1",
+"31 31 3 1",
 // colors
 ". c #000000",    // black will be transparent
+"C c #808080",
 "W c #FFFFFF",    // white
 // pixels
-".....WW........................",
-"....WWWWW......................",
-"...WWWWWWWW....................",
-"..WWWWWWWWWWW..................",
-".WWWWWWWWWWWWWW................",
-"WWWWWWWWWWWWWWWWW..............",
-"WWWWWWWWWWWWWWWWWWW............",
-".WWWWWWWWWWWWWWWWWWWW..........",
+".....WWC.......................",
+"....WWWWWC.....................",
+"...WWWWWWWWC...................",
+"..WWWWWWWWWWWC.................",
+".WWWWWWWWWWWWWWC...............",
+"WWWWWWWWWWWWWWWWWC.............",
+"WWWWWWWWWWWWWWWWWWWC...........",
+"CWWWWWWWWWWWWWWWWWWWWC.........",
 ".WWWWWWWWWWWWWWWWWWWWWW........",
-"..WWWWWWWWWWWWWWWWWWWWW........",
+".CWWWWWWWWWWWWWWWWWWWWWC.......",
 "..WWWWWWWWWWWWWWWWWWWWWW.......",
-"...WWWWWWWWWWWWWWWWWWWWW.......",
+"..CWWWWWWWWWWWWWWWWWWWWWC......",
 "...WWWWWWWWWWWWWWWWWWWWWW......",
-"....WWWWWWWWWWWWWWWWWWWWW......",
+"...CWWWWWWWWWWWWWWWWWWWWWC.....",
 "....WWWWWWWWWWWWWWWWWWWWWW.....",
-".....WWWWWWWWWWWWWWWWWWWWW.....",
+"....CWWWWWWWWWWWWWWWWWWWWWC....",
 ".....WWWWWWWWWWWWWWWWWWWWWW....",
-"......WWWWWWWWWWWWWWWWWWWWW....",
+".....CWWWWWWWWWWWWWWWWWWWWWC...",
 "......WWWWWWWWWWWWWWWWWWWWWW...",
-".......WWWWWWWWWWWWWWWWWWWWW...",
+"......CWWWWWWWWWWWWWWWWWWWWWC..",
 ".......WWWWWWWWWWWWWWWWWWWWWW..",
-"........WWWWWWWWWWWWWWWWWWWWW..",
+".......CWWWWWWWWWWWWWWWWWWWWWC.",
 "........WWWWWWWWWWWWWWWWWWWWWW.",
-"..........WWWWWWWWWWWWWWWWWWWW.",
-"............WWWWWWWWWWWWWWWWWWW",
-"..............WWWWWWWWWWWWWWWWW",
-"................WWWWWWWWWWWWWW.",
-"..................WWWWWWWWWWW..",
-"....................WWWWWWWW...",
-"......................WWWWW....",
-"........................WW....."
+".........CWWWWWWWWWWWWWWWWWWWWC",
+"...........CWWWWWWWWWWWWWWWWWWW",
+".............CWWWWWWWWWWWWWWWWW",
+"...............CWWWWWWWWWWWWWW.",
+".................CWWWWWWWWWWW..",
+"...................CWWWWWWWW...",
+".....................CWWWWW....",
+".......................CWW....."
 };
 
 // XPM data for the 7x7 icon used for von Neumann CA
@@ -372,42 +383,6 @@ static const char* vn31x31[] = {
 
 // -----------------------------------------------------------------------------
 
-#if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
-// this routine is used to fix a wxGTK bug (pre 2.9) which reverses colors when
-// converting a monochrome wxImage to a wxBitmap with depth 1
-static void ReverseImageColors(wxImage& image)
-{
-    // get image data as an array of 3 bytes per pixel (RGBRGBRGB...)
-    int numpixels = image.GetWidth() * image.GetHeight();
-    unsigned char* newdata = (unsigned char*) malloc(numpixels * 3);
-    if (newdata) {
-        unsigned char* p = image.GetData();
-        unsigned char* n = newdata;
-        for (int i = 0; i < numpixels; i++) {
-            unsigned char r = *p++;
-            unsigned char g = *p++;
-            unsigned char b = *p++;
-            if (r == 0 && g == 0 && b == 0) {
-                // change black to white
-                *n++ = 255;
-                *n++ = 255;
-                *n++ = 255;
-            } else {
-                // change non-black to black
-                *n++ = 0;
-                *n++ = 0;
-                *n++ = 0;
-            }
-        }
-        image.SetData(newdata);    // image now owns pointer
-    } else {
-        Fatal(_("Malloc failed in ReverseImageColors!"));
-    }
-}
-#endif
-
-// -----------------------------------------------------------------------------
-
 wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
 {
     if (xpmdata == NULL) return NULL;
@@ -419,18 +394,9 @@ wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
     image.SetMaskColour(0, 0, 0);    // make black transparent
 #endif
     
-    int wd, ht, numcolors, chars_per_pixel, depth;
-    sscanf(xpmdata[0], "%d%d%d%d", &wd, &ht, &numcolors, &chars_per_pixel);
-    depth = numcolors > 2 ? -1 : 1;
+    wxBitmap allicons(image, 32);   // RGBA
     
-#if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
-    // fix wxGTK bug
-    if (depth == 1) ReverseImageColors(image);
-#endif
-    
-    wxBitmap allicons(image, depth);
-    
-    wd = allicons.GetWidth();
+    int wd = allicons.GetWidth();
     int numicons = allicons.GetHeight() / wd;
     if (numicons > 255) numicons = 255;          // play safe
     
@@ -481,24 +447,7 @@ wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
                 wxImage image = srcicons[i]->ConvertToImage();
                 // do NOT scale using wxIMAGE_QUALITY_HIGH (thin lines can disappear)
                 image.Rescale(size, size, wxIMAGE_QUALITY_NORMAL);
-                int depth = srcicons[i]->GetDepth();
-                #if defined(__WXGTK__)
-                    if (depth == 1)
-                        iconptr[i] = new wxBitmap(image, depth);
-                    else
-                        iconptr[i] = new wxBitmap(image);
-                #elif defined(__WXMSW__)
-                    if (depth == 1) {
-                        // this stupidity avoids a wxMSW bug
-                        wxBitmap monoicon(image, 1);
-                        wxRect rect(0, 0, size, size);
-                        iconptr[i] = new wxBitmap(monoicon.GetSubBitmap(rect));
-                    } else {
-                        iconptr[i] = new wxBitmap(image, depth);
-                    }
-                #else
-                    iconptr[i] = new wxBitmap(image, depth);
-                #endif
+                iconptr[i] = new wxBitmap(image);
             }
         }
     }
@@ -702,6 +651,24 @@ int NumAlgos()
 
 // -----------------------------------------------------------------------------
 
+bool MultiColorImage(wxImage& image)
+{
+    // return true if image contains at least one color that isn't a shade of gray
+    int numpixels = image.GetWidth() * image.GetHeight();
+    bool skipalpha = image.HasAlpha();
+    unsigned char* p = image.GetData();
+    for (int i = 0; i < numpixels; i++) {
+        unsigned char r = *p++;
+        unsigned char g = *p++;
+        unsigned char b = *p++;
+        if (r != g || g != b) return true;
+        if (skipalpha) p++;
+    }
+    return false;   // grayscale image
+}
+
+// -----------------------------------------------------------------------------
+
 bool LoadIconFile(const wxString& path, int maxstate,
                   wxBitmap*** out7x7, wxBitmap*** out15x15, wxBitmap*** out31x31)
 {
@@ -717,15 +684,9 @@ bool LoadIconFile(const wxString& path, int maxstate,
 #endif
     
     // check for multi-color icons
-    int depth = -1;
-    if (image.CountColours(2) <= 2) depth = 1;   // monochrome
+    currlayer->multicoloricons = MultiColorImage(image);
     
-#if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
-    // fix wxGTK bug
-    if (depth == 1) ReverseImageColors(image);
-#endif
-    
-    wxBitmap allicons(image, depth);
+    wxBitmap allicons(image, 32);   // RGBA
     int wd = allicons.GetWidth();
     int ht = allicons.GetHeight();
     
@@ -762,7 +723,7 @@ bool LoadIconFile(const wxString& path, int maxstate,
         // if there is an extra icon at the right end of the multi-color icons then
         // store it in iconptr[0] -- it will be used later in UpdateCurrentColors()
         // to set the color of state 0
-        if (depth != 1 && (wd / 15) > maxstate) {
+        if (currlayer->multicoloricons && (wd / 15) > maxstate) {
             wxRect rect(maxstate*15, 0, 15, 15);
             iconptr[0] = new wxBitmap(allicons.GetSubBitmap(rect));
         }

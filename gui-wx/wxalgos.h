@@ -102,6 +102,9 @@ const char* GetAlgoName(algo_type algotype);
 int NumAlgos();
 // Return current number of algorithms.
 
+bool MultiColorImage(wxImage& image);
+// Return true if image contains at least one color that isn't a shade of gray.
+
 bool LoadIconFile(const wxString& path, int maxstate,
                   wxBitmap*** out7x7, wxBitmap*** out15x15, wxBitmap*** out31x31);
 // Return true if we can successfully load icon bitmaps from given file.

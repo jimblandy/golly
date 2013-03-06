@@ -180,19 +180,27 @@ def init_colors():
             colorstate[rgb] = s
             s += 1
     
-    # add white to black
-    g.setcolors([s, 255,255,255])    # white
-    colorstate[(255,255,255)] = s
+    # add gradient from white to black
+    g.setcolors([s, 255,255,255])       # white
+    colorstate[(255,255,255)] = s       # remember white state
     s += 1
-    g.setcolors([s, 191,191,191])    # light gray
+    g.setcolors([s, 224,224,224])
     s += 1
-    g.setcolors([s, 127,127,127])    # gray
-    gray = s
+    g.setcolors([s, 192,192,192])
     s += 1
-    g.setcolors([s,  63, 63, 63])    # dark gray
+    g.setcolors([s, 160,160,160])
     s += 1
-    g.setcolors([s,   0,  0,  0])    # black
-    colorstate[(0,0,0)] = s
+    g.setcolors([s, 128,128,128])       # 50% gray
+    gray = s                            # save this gray's state (see below)
+    s += 1
+    g.setcolors([s,  96, 96, 96])
+    s += 1
+    g.setcolors([s,  64, 64, 64])
+    s += 1
+    g.setcolors([s,  32, 32, 32])
+    s += 1
+    g.setcolors([s,   0,  0,  0])       # black
+    colorstate[(0,0,0)] = s             # remember black state
     s += 1
     
     # add rainbow colors in various shades (bright, pale, dark)
@@ -336,6 +344,15 @@ def create31x31icons():
 
 # --------------------------------------------------------------------
 
+def multi_color_icons(iconcolors):
+    # return True if at least one icon color isn't a shade of gray
+    for R,G,B in iconcolors:
+        if R != G or G != B: return True
+
+    return False    # grayscale
+
+# --------------------------------------------------------------------
+
 # check that a layer is available
 if g.numlayers() == g.maxlayers():
     g.exit("You need to delete a layer.")
@@ -359,8 +376,8 @@ iconnote = ""
 if len(iconcolors) == 0:
     iconnote = "There are currently no icons for this rule.\n\n"
 
-# if icons are monochrome change deadrgb to black
-if len(iconcolors) <= 2:
+# if icons are grayscale then change deadrgb to black
+if not multi_color_icons(iconcolors):
     deadrgb = (0,0,0)
 
 # switch to a Generations rule so we can have lots of colors
