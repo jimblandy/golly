@@ -389,17 +389,19 @@ wxBitmap** CreateIconBitmaps(const char** xpmdata, int maxstates)
     
     wxImage image(xpmdata);
     
+#ifdef __WXMSW__
     if (!image.HasAlpha()) {
         // add alpha channel and set to opaque
         image.InitAlpha();
     }
+#endif
 
 #ifdef __WXGTK__
     // need alpha channel on Linux
-    //???!!! image.SetMaskColour(0, 0, 0);    // make black transparent
+    image.SetMaskColour(0, 0, 0);    // make black transparent
 #endif
     
-    wxBitmap allicons(image, 32);    // RGBA
+    wxBitmap allicons(image, -1);    // RGBA
     
     int wd = allicons.GetWidth();
     int numicons = allicons.GetHeight() / wd;
@@ -452,11 +454,13 @@ wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
                 wxImage image = srcicons[i]->ConvertToImage();
                 // do NOT scale using wxIMAGE_QUALITY_HIGH (thin lines can disappear)
                 image.Rescale(size, size, wxIMAGE_QUALITY_NORMAL);
+#ifdef __WXMSW__
                 if (!image.HasAlpha()) {
                     // add alpha channel and set to opaque
                     image.InitAlpha();
                 }
-                iconptr[i] = new wxBitmap(image, 32);
+#endif
+                iconptr[i] = new wxBitmap(image, -1);
             }
         }
     }
@@ -687,20 +691,22 @@ bool LoadIconFile(const wxString& path, int maxstate,
         return false;
     }
 
+#ifdef __WXMSW__
     if (!image.HasAlpha()) {
         // add alpha channel and set to opaque
         image.InitAlpha();
     }
-    
+#endif
+ 
 #ifdef __WXGTK__
     // need alpha channel on Linux
-    //!!!??? image.SetMaskColour(0, 0, 0);    // make black transparent
+    image.SetMaskColour(0, 0, 0);    // make black transparent
 #endif
     
     // check for multi-color icons
     currlayer->multicoloricons = MultiColorImage(image);
     
-    wxBitmap allicons(image, 32);   // RGBA
+    wxBitmap allicons(image, -1);    // RGBA
     int wd = allicons.GetWidth();
     int ht = allicons.GetHeight();
     
