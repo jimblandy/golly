@@ -100,11 +100,14 @@ int NumAlgos();
 // Return current number of algorithms.
 
 bool MultiColorImage(CGImageRef image);
-// Return true if given image contains more than 2 different colors.
+// Return true if image contains at least one color that isn't a shade of gray.
 
 bool LoadIconFile(const std::string& path, int maxstate,
                   CGImageRef** out7x7, CGImageRef** out15x15, CGImageRef** out31x31);
 // Return true if we can successfully load icon bitmaps from given file.
+
+CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates);
+// Create icon bitmaps using the given XPM data.
 
 CGImageRef* ScaleIconBitmaps(CGImageRef* srcicons, int size);
 // Return icon bitmaps scaled to given size.

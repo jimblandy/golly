@@ -36,6 +36,8 @@
 #include "layer.h"      // for currlayer
 #include "algos.h"
 
+#include <map>          // for std::map
+
 // -----------------------------------------------------------------------------
 
 // exported data:
@@ -105,85 +107,99 @@ static unsigned char default_colors[] = {
 
 // -----------------------------------------------------------------------------
 
+// Note that all the default icons are grayscale bitmaps.
+// These icons are used for lots of different rules with different numbers
+// of states, and at rendering time we will replace the white pixels in each
+// icon with the cell's state color to avoid "color shock" when switching
+// between icon and non-icon view.  Gray pixels are used to do anti-aliasing.
+
 // XPM data for default 7x7 icon
 static const char* default7x7[] = {
 // width height ncolors chars_per_pixel
-"7 7 2 1",
+"7 7 4 1",
 // colors
 ". c #000000",    // black will be transparent
+"D c #404040",
+"E c #E0E0E0",
 "W c #FFFFFF",    // white
 // pixels
-"..WWW..",
-".WWWWW.",
+".DEWED.",
+"DWWWWWD",
+"EWWWWWE",
 "WWWWWWW",
-"WWWWWWW",
-"WWWWWWW",
-".WWWWW.",
-"..WWW.."
+"EWWWWWE",
+"DWWWWWD",
+".DEWED."
 };
 
 // XPM data for default 15x15 icon
 static const char* default15x15[] = {
 // width height ncolors chars_per_pixel
-"15 15 2 1",
+"15 15 5 1",
 // colors
 ". c #000000",    // black will be transparent
+"D c #404040",
+"C c #808080",
+"B c #C0C0C0",
 "W c #FFFFFF",    // white
 // pixels
 "...............",
-"......WWW......",
-"....WWWWWWW....",
-"...WWWWWWWWW...",
-"..WWWWWWWWWWW..",
-"..WWWWWWWWWWW..",
+"....DBWWWBD....",
+"...BWWWWWWWB...",
+"..BWWWWWWWWWB..",
+".DWWWWWWWWWWWD.",
+".BWWWWWWWWWWWB.",
 ".WWWWWWWWWWWWW.",
 ".WWWWWWWWWWWWW.",
 ".WWWWWWWWWWWWW.",
-"..WWWWWWWWWWW..",
-"..WWWWWWWWWWW..",
-"...WWWWWWWWW...",
-"....WWWWWWW....",
-"......WWW......",
+".BWWWWWWWWWWWB.",
+".DWWWWWWWWWWWD.",
+"..BWWWWWWWWWB..",
+"...BWWWWWWWB...",
+"....DBWWWBD....",
 "..............."
 };
 
 // XPM data for default 31x31 icon
 static const char* default31x31[] = {
 // width height ncolors chars_per_pixel
-"31 31 2 1",
+"31 31 5 1",
 // colors
 ". c #000000",    // black will be transparent
+"D c #404040",
+"C c #808080",
+"B c #C0C0C0",
 "W c #FFFFFF",    // white
 // pixels
 "...............................",
 "...............................",
-"............WWWWWWW............",
-"..........WWWWWWWWWWW..........",
-"........WWWWWWWWWWWWWWW........",
-".......WWWWWWWWWWWWWWWWW.......",
-"......WWWWWWWWWWWWWWWWWWW......",
-".....WWWWWWWWWWWWWWWWWWWWW.....",
+"..........DCBWWWWWBCD..........",
+".........CWWWWWWWWWWWC.........",
+".......DWWWWWWWWWWWWWWWD.......",
+"......BWWWWWWWWWWWWWWWWWB......",
+".....BWWWWWWWWWWWWWWWWWWWB.....",
+"....DWWWWWWWWWWWWWWWWWWWWWD....",
 "....WWWWWWWWWWWWWWWWWWWWWWW....",
+"...CWWWWWWWWWWWWWWWWWWWWWWWC...",
+"..DWWWWWWWWWWWWWWWWWWWWWWWWWD..",
+"..CWWWWWWWWWWWWWWWWWWWWWWWWWC..",
+"..BWWWWWWWWWWWWWWWWWWWWWWWWWB..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"..BWWWWWWWWWWWWWWWWWWWWWWWWWB..",
+"..CWWWWWWWWWWWWWWWWWWWWWWWWWC..",
+"..DWWWWWWWWWWWWWWWWWWWWWWWWWD..",
+"...CWWWWWWWWWWWWWWWWWWWWWWWC...",
 "....WWWWWWWWWWWWWWWWWWWWWWW....",
-"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
-"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"..WWWWWWWWWWWWWWWWWWWWWWWWWWW..",
-"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
-"...WWWWWWWWWWWWWWWWWWWWWWWWW...",
-"....WWWWWWWWWWWWWWWWWWWWWWW....",
-"....WWWWWWWWWWWWWWWWWWWWWWW....",
-".....WWWWWWWWWWWWWWWWWWWWW.....",
-"......WWWWWWWWWWWWWWWWWWW......",
-".......WWWWWWWWWWWWWWWWW.......",
-"........WWWWWWWWWWWWWWW........",
-"..........WWWWWWWWWWW..........",
-"............WWWWWWW............",
+"....DWWWWWWWWWWWWWWWWWWWWWD....",
+".....BWWWWWWWWWWWWWWWWWWWB.....",
+"......BWWWWWWWWWWWWWWWWWB......",
+".......DWWWWWWWWWWWWWWWD.......",
+".........CWWWWWWWWWWWC.........",
+"..........DCBWWWWWBCD..........",
 "...............................",
 "..............................."
 };
@@ -191,82 +207,85 @@ static const char* default31x31[] = {
 // XPM data for the 7x7 icon used for hexagonal CA
 static const char* hex7x7[] = {
 // width height ncolors chars_per_pixel
-"7 7 2 1",
+"7 7 3 1",
 // colors
 ". c #000000",    // black will be transparent
+"C c #808080",
 "W c #FFFFFF",    // white
 // pixels
-".WW....",
+".WWC...",
 "WWWWW..",
 "WWWWWW.",
-".WWWWW.",
+"CWWWWWC",
 ".WWWWWW",
 "..WWWWW",
-"....WW."};
+"...CWW."};
 
 // XPM data for the 15x15 icon used for hexagonal CA
 static const char* hex15x15[] = {
 // width height ncolors chars_per_pixel
-"15 15 2 1",
+"15 15 3 1",
 // colors
 ". c #000000",    // black will be transparent
+"C c #808080",
 "W c #FFFFFF",    // white
 // pixels
-"...WW..........",
-"..WWWWW........",
-".WWWWWWWW......",
+"...WWC.........",
+"..WWWWWC.......",
+".WWWWWWWWC.....",
 "WWWWWWWWWWW....",
 "WWWWWWWWWWWW...",
-".WWWWWWWWWWW...",
+"CWWWWWWWWWWWC..",
 ".WWWWWWWWWWWW..",
-"..WWWWWWWWWWW..",
+".CWWWWWWWWWWWC.",
 "..WWWWWWWWWWWW.",
-"...WWWWWWWWWWW.",
+"..CWWWWWWWWWWWC",
 "...WWWWWWWWWWWW",
 "....WWWWWWWWWWW",
-"......WWWWWWWW.",
-"........WWWWW..",
-"..........WW..."};
+".....CWWWWWWWW.",
+".......CWWWWW..",
+".........CWW..."};
 
 // XPM data for 31x31 icon used for hexagonal CA
 static const char* hex31x31[] = {
 // width height ncolors chars_per_pixel
-"31 31 2 1",
+"31 31 3 1",
 // colors
 ". c #000000",    // black will be transparent
+"C c #808080",
 "W c #FFFFFF",    // white
 // pixels
-".....WW........................",
-"....WWWWW......................",
-"...WWWWWWWW....................",
-"..WWWWWWWWWWW..................",
-".WWWWWWWWWWWWWW................",
-"WWWWWWWWWWWWWWWWW..............",
-"WWWWWWWWWWWWWWWWWWW............",
-".WWWWWWWWWWWWWWWWWWWW..........",
+".....WWC.......................",
+"....WWWWWC.....................",
+"...WWWWWWWWC...................",
+"..WWWWWWWWWWWC.................",
+".WWWWWWWWWWWWWWC...............",
+"WWWWWWWWWWWWWWWWWC.............",
+"WWWWWWWWWWWWWWWWWWWC...........",
+"CWWWWWWWWWWWWWWWWWWWWC.........",
 ".WWWWWWWWWWWWWWWWWWWWWW........",
-"..WWWWWWWWWWWWWWWWWWWWW........",
+".CWWWWWWWWWWWWWWWWWWWWWC.......",
 "..WWWWWWWWWWWWWWWWWWWWWW.......",
-"...WWWWWWWWWWWWWWWWWWWWW.......",
+"..CWWWWWWWWWWWWWWWWWWWWWC......",
 "...WWWWWWWWWWWWWWWWWWWWWW......",
-"....WWWWWWWWWWWWWWWWWWWWW......",
+"...CWWWWWWWWWWWWWWWWWWWWWC.....",
 "....WWWWWWWWWWWWWWWWWWWWWW.....",
-".....WWWWWWWWWWWWWWWWWWWWW.....",
+"....CWWWWWWWWWWWWWWWWWWWWWC....",
 ".....WWWWWWWWWWWWWWWWWWWWWW....",
-"......WWWWWWWWWWWWWWWWWWWWW....",
+".....CWWWWWWWWWWWWWWWWWWWWWC...",
 "......WWWWWWWWWWWWWWWWWWWWWW...",
-".......WWWWWWWWWWWWWWWWWWWWW...",
+"......CWWWWWWWWWWWWWWWWWWWWWC..",
 ".......WWWWWWWWWWWWWWWWWWWWWW..",
-"........WWWWWWWWWWWWWWWWWWWWW..",
+".......CWWWWWWWWWWWWWWWWWWWWWC.",
 "........WWWWWWWWWWWWWWWWWWWWWW.",
-"..........WWWWWWWWWWWWWWWWWWWW.",
-"............WWWWWWWWWWWWWWWWWWW",
-"..............WWWWWWWWWWWWWWWWW",
-"................WWWWWWWWWWWWWW.",
-"..................WWWWWWWWWWW..",
-"....................WWWWWWWW...",
-"......................WWWWW....",
-"........................WW....."
+".........CWWWWWWWWWWWWWWWWWWWWC",
+"...........CWWWWWWWWWWWWWWWWWWW",
+".............CWWWWWWWWWWWWWWWWW",
+"...............CWWWWWWWWWWWWWW.",
+".................CWWWWWWWWWWW..",
+"...................CWWWWWWWW...",
+".....................CWWWWW....",
+".......................CWW....."
 };
 
 // XPM data for the 7x7 icon used for von Neumann CA
@@ -354,33 +373,44 @@ static const char* vn31x31[] = {
 
 // -----------------------------------------------------------------------------
 
-static CGImageRef* CreateMonochromeBitmaps(const char** xpmdata, int maxstates)
+CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
 {
     if (xpmdata == NULL) return NULL;
     
     int wd, ht, numcolors, charsperpixel;
     sscanf(xpmdata[0], "%d %d %d %d", &wd, &ht, &numcolors, &charsperpixel);
-
-    // Note that all the default icons must be monochrome.
-    // This is done because these icons are used for lots of different
-    // rules with different numbers of states, and at rendering time
-    // we want to replace the non-black color in each icon with the
-    // cell's state color to avoid "color shock" when switching
-    // between icon and non-icon view.
-    if (numcolors != 2 || charsperpixel != 1) {
-        Warning("Bug in CreateMonochromeBitmaps: numcolors is not 2");
+    
+    if (charsperpixel < 1 || charsperpixel > 2) {
+        Warning("Error in XPM header data: chars_per_pixel must be 1 or 2");
         return NULL;
     };
     
-    char whitech, blackch;
+    std::map<std::string,int> colormap;
+    std::map<std::string,int>::iterator iterator;
+    
     for (int i = 0; i < numcolors; i++) {
-        char ch;
-        int rgb;
-        sscanf(xpmdata[i+1], "%c c #%6x", &ch, &rgb);
-        if (rgb == 0) {
-            blackch = ch;
+        std::string pixel;
+        char ch1, ch2;
+        int skip;
+        if (charsperpixel == 1) {
+            sscanf(xpmdata[i+1], "%c ", &ch1);
+            pixel += ch1;
+            skip = 2;
         } else {
-            whitech = ch;
+            sscanf(xpmdata[i+1], "%c%c ", &ch1, &ch2);
+            pixel += ch1;
+            pixel += ch2;
+            skip = 3;
+        }
+        if (strlen(xpmdata[i+1]) == skip+9) {
+            int rgb;
+            sscanf(xpmdata[i+1]+skip, "c #%6x", &rgb);
+            colormap[pixel] = rgb;
+        } else {
+            int r, g, b;
+            sscanf(xpmdata[i+1]+skip, "c #%4x%4x%4x", &r, &g, &b);
+            // only use top 8 bits of r,g,b
+            colormap[pixel] = ((r>>8) << 16) | ((g>>8) << 8) | (b>>8);
         }
     }
     
@@ -391,15 +421,21 @@ static CGImageRef* CreateMonochromeBitmaps(const char** xpmdata, int maxstates)
     int pos = 0;
     for (int i = 0; i < ht; i++) {
         const char* rowstring = xpmdata[i+1+numcolors];
-        for (int j = 0; j < wd; j++) {
-            if (rowstring[j] == whitech) {
-                bgra[pos] = 255; pos++;
-                bgra[pos] = 255; pos++;
-                bgra[pos] = 255; pos++;
-                bgra[pos] = 255; pos++;     // alpha
-            } else {
+        for (int j = 0; j < wd * charsperpixel; j = j + charsperpixel) {
+            std::string pixel;
+            pixel += rowstring[j];
+            if (charsperpixel == 2) pixel += rowstring[j+1];
+            // find the RGB color for this pixel
+            iterator = colormap.find(pixel);
+            int rgb = (iterator == colormap.end()) ? 0 : iterator->second;
+            if (rgb == 0) {
                 // pixel is black and alpha is 0
                 pos += 4;
+            } else {
+                bgra[pos] = (rgb & 0x0000FF);       pos++;  // blue
+                bgra[pos] = (rgb & 0x00FF00) >> 8;  pos++;  // green
+                bgra[pos] = (rgb & 0xFF0000) >> 16; pos++;  // red
+                bgra[pos] = 255;                    pos++;  // alpha
             }
         }
     }
@@ -480,9 +516,9 @@ static void CreateDefaultIcons(AlgoData* ad)
 {
     if (ad->defxpm7x7 || ad->defxpm15x15 || ad->defxpm31x31) {
         // create icons using given algo's default XPM data
-        ad->icons7x7 = CreateMonochromeBitmaps(ad->defxpm7x7, ad->maxstates);
-        ad->icons15x15 = CreateMonochromeBitmaps(ad->defxpm15x15, ad->maxstates);
-        ad->icons31x31 = CreateMonochromeBitmaps(ad->defxpm31x31, ad->maxstates);
+        ad->icons7x7 = CreateIconBitmaps(ad->defxpm7x7, ad->maxstates);
+        ad->icons15x15 = CreateIconBitmaps(ad->defxpm15x15, ad->maxstates);
+        ad->icons31x31 = CreateIconBitmaps(ad->defxpm31x31, ad->maxstates);
         
         // create scaled bitmaps if size(s) not supplied
         if (!ad->icons7x7) {
@@ -511,9 +547,9 @@ static void CreateDefaultIcons(AlgoData* ad)
         }
     } else {
         // algo didn't supply any icons so use static XPM data defined above
-        ad->icons7x7 = CreateMonochromeBitmaps(default7x7, ad->maxstates);
-        ad->icons15x15 = CreateMonochromeBitmaps(default15x15, ad->maxstates);
-        ad->icons31x31 = CreateMonochromeBitmaps(default31x31, ad->maxstates);
+        ad->icons7x7 = CreateIconBitmaps(default7x7, ad->maxstates);
+        ad->icons15x15 = CreateIconBitmaps(default15x15, ad->maxstates);
+        ad->icons31x31 = CreateIconBitmaps(default31x31, ad->maxstates);
     }
 }
 
@@ -593,13 +629,13 @@ void InitAlgorithms()
         CreateDefaultIcons(ad);
     }
     
-    hexicons7x7 = CreateMonochromeBitmaps(hex7x7,256);
-    hexicons15x15 = CreateMonochromeBitmaps(hex15x15,256);
-    hexicons31x31 = CreateMonochromeBitmaps(hex31x31,256);
+    hexicons7x7 = CreateIconBitmaps(hex7x7,256);
+    hexicons15x15 = CreateIconBitmaps(hex15x15,256);
+    hexicons31x31 = CreateIconBitmaps(hex31x31,256);
      
-    vnicons7x7 = CreateMonochromeBitmaps(vn7x7,256);
-    vnicons15x15 = CreateMonochromeBitmaps(vn15x15,256);
-    vnicons31x31 = CreateMonochromeBitmaps(vn31x31,256);
+    vnicons7x7 = CreateIconBitmaps(vn7x7,256);
+    vnicons15x15 = CreateIconBitmaps(vn15x15,256);
+    vnicons31x31 = CreateIconBitmaps(vn31x31,256);
 }
 
 // -----------------------------------------------------------------------------
@@ -638,7 +674,7 @@ int NumAlgos()
 
 bool MultiColorImage(CGImageRef image)
 {
-    // return true if given image contains more than 2 different colors
+    // return true if image contains at least one color that isn't a shade of gray
     int wd = CGImageGetWidth(image);
     int ht = CGImageGetHeight(image);
     int bytesPerPixel = 4;
@@ -657,31 +693,21 @@ bool MultiColorImage(CGImageRef image)
     CGContextRelease(ctx);
     CGColorSpaceRelease(colorspace);
 
-    // pxldata now contains the image bitmap in RGBA pixel format
-    int color1 = -1;
-    int color2 = -1;
+    // pxldata now contains the image bitmap in RGBA format
     int byte = 0;
     for (int i = 0; i < wd*ht; i++) {
-        int color = (pxldata[byte] << 16) + (pxldata[byte+1] << 8) + pxldata[byte+2];
-        if (color == color1 || color == color2) {
-            // continue
-        } else {
-            // 1st time we've seen this color
-            if (color1 == -1) {
-                color1 = color;
-            } else if (color2 == -1) {
-                color2 = color;
-            } else {
-                // this is the 3rd different color
-                free(pxldata);
-                return true;
-            }
+        unsigned char r = pxldata[byte];
+        unsigned char g = pxldata[byte+1];
+        unsigned char b = pxldata[byte+2];
+        if (r != g || g != b) {
+            free(pxldata);
+            return true;    // multi-color
         }
         byte += 4;
     }
 
     free(pxldata);
-    return false;
+    return false;   // grayscale
 }
 
 // -----------------------------------------------------------------------------

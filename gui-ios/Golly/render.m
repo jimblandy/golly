@@ -207,7 +207,6 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     // called from ios_render::pixblit to draw icons for each live cell;
     // assume pmscale > 2 (should be 8 or 16 or 32)
     int cellsize = pmscale - 1;
-    bool multicolor = currlayer->multicoloricons;
     
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
@@ -216,11 +215,15 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     glDisable(GL_TEXTURE_2D);
     glPointSize(1);
 
-    unsigned char prevr = currlayer->cellr[0];
-    unsigned char prevg = currlayer->cellg[0];
-    unsigned char prevb = currlayer->cellb[0];
-    bool changecolor;
+    unsigned char deadr = currlayer->cellr[0];
+    unsigned char deadg = currlayer->cellg[0];
+    unsigned char deadb = currlayer->cellb[0];
+    unsigned char prevr = deadr;
+    unsigned char prevg = deadg;
+    unsigned char prevb = deadb;
 
+    bool multicolor = currlayer->multicoloricons;
+    bool changecolor;
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
             unsigned char state = statedata[row*stride + col];
@@ -246,10 +249,20 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                                     b = 255 - b;
                                 }
                             } else {
-                                // replace non-black pixel with current cell color
-                                r = liver;
-                                g = liveg;
-                                b = liveb;
+                                // grayscale icon
+                                if (r == 255) {
+                                    // replace white pixel with current cell color
+                                    r = liver;
+                                    g = liveg;
+                                    b = liveb;
+                                } else {
+                                    // replace gray pixel with appropriate shade between
+                                    // live and dead cell colors
+                                    float frac = (float)r / 255.0;
+                                    r = (int)(deadr + frac * (liver - deadr) + 0.5);
+                                    g = (int)(deadg + frac * (liveg - deadg) + 0.5);
+                                    b = (int)(deadb + frac * (liveb - deadb) + 0.5);
+                                }
                             }
                             // draw r,g,b pixel
                             changecolor = (r != prevr || g != prevg || b != prevb);

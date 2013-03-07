@@ -94,10 +94,20 @@ void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
                     pxldata[byte+2] = 255 - pxldata[byte+2];
                 }
             } else {
-                // replace non-black pixel with live cell color
-                pxldata[byte]   = liver;
-                pxldata[byte+1] = liveg;
-                pxldata[byte+2] = liveb;
+                // grayscale icon
+                if (r == 255) {
+                    // replace white pixel with live cell color
+                    pxldata[byte]   = liver;
+                    pxldata[byte+1] = liveg;
+                    pxldata[byte+2] = liveb;
+                } else {
+                    // replace gray pixel with appropriate shade between
+                    // live and dead cell colors
+                    float frac = (float)r / 255.0;
+                    pxldata[byte]   = (int)(deadr + frac * (liver - deadr) + 0.5);
+                    pxldata[byte+1] = (int)(deadg + frac * (liveg - deadg) + 0.5);
+                    pxldata[byte+2] = (int)(deadb + frac * (liveb - deadb) + 0.5);
+                }
             }
         } else {
             // replace black pixel with dead cell color
@@ -105,7 +115,7 @@ void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
             pxldata[byte+1] = deadg;
             pxldata[byte+2] = deadb;
         }
-        pxldata[byte + 3] = 255;    // ensure alpha channel is opaque
+        pxldata[byte+3] = 255;      // ensure alpha channel is opaque
         byte += 4;
     }
     

@@ -39,8 +39,6 @@
 #include "undo.h"           // for UndoRedo
 #include "layer.h"
 
-#include <map>              // for std::map
-
 // -----------------------------------------------------------------------------
 
 bool inscript = false;          // move to script.m if we ever support scripting!!!
@@ -1120,117 +1118,6 @@ static void FreeIconBitmaps(CGImageRef* icons)
 
 // -----------------------------------------------------------------------------
 
-static CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
-{
-    if (xpmdata == NULL) return NULL;
-    
-    int wd, ht, numcolors, charsperpixel;
-    sscanf(xpmdata[0], "%d %d %d %d", &wd, &ht, &numcolors, &charsperpixel);
-
-    // this code is similar to CreateMonochromeBitmaps in algos.m but
-    // we need to handle monochrome or multi-colored icons
-    
-    if (charsperpixel < 1 || charsperpixel > 2) {
-        Warning("Error in XPM header data: chars_per_pixel must be 1 or 2");
-        return NULL;
-    };
-    
-    std::map<std::string,int> colormap;
-    std::map<std::string,int>::iterator iterator;
-    
-    for (int i = 0; i < numcolors; i++) {
-        std::string pixel;
-        char ch1, ch2;
-        int skip;
-        if (charsperpixel == 1) {
-            sscanf(xpmdata[i+1], "%c ", &ch1);
-            pixel += ch1;
-            skip = 2;
-        } else {
-            sscanf(xpmdata[i+1], "%c%c ", &ch1, &ch2);
-            pixel += ch1;
-            pixel += ch2;
-            skip = 3;
-        }
-        if (strlen(xpmdata[i+1]) == skip+9) {
-            int rgb;
-            sscanf(xpmdata[i+1]+skip, "c #%6x", &rgb);
-            colormap[pixel] = rgb;
-        } else {
-            int r, g, b;
-            sscanf(xpmdata[i+1]+skip, "c #%4x%4x%4x", &r, &g, &b);
-            // only use 8 top bits of r,g,b
-            colormap[pixel] = ((r>>8) << 16) | ((g>>8) << 8) | (b>>8);
-        }
-    }
-    
-    // allocate and clear memory for all icon bitmaps in BGRA format
-    // (using calloc means black pixels will be transparent)
-    unsigned char* bgra = (unsigned char*) calloc(wd * ht * 4, 1);
-    if (bgra == NULL) return NULL;
-    int pos = 0;
-    for (int i = 0; i < ht; i++) {
-        const char* rowstring = xpmdata[i+1+numcolors];
-        for (int j = 0; j < wd * charsperpixel; j = j + charsperpixel) {
-            std::string pixel;
-            pixel += rowstring[j];
-            if (charsperpixel == 2) pixel += rowstring[j+1];
-            // find the RGB color for this pixel
-            iterator = colormap.find(pixel);
-            int rgb = (iterator == colormap.end()) ? 0 : iterator->second;
-            if (rgb == 0) {
-                // pixel is black and alpha is 0
-                pos += 4;
-            } else {
-                bgra[pos] = (rgb & 0x0000FF);       pos++;  // blue
-                bgra[pos] = (rgb & 0x00FF00) >> 8;  pos++;  // green
-                bgra[pos] = (rgb & 0xFF0000) >> 16; pos++;  // red
-                bgra[pos] = 255;                    pos++;  // alpha
-            }
-        }
-    }
-    
-    int numicons = ht / wd;
-    if (numicons > 255) numicons = 255;     // play safe
-    
-    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
-    if (iconptr) {
-        // only need to test < maxstates here, but play safe
-        for (int i = 0; i < 256; i++) iconptr[i] = NULL;
-        
-        // convert each icon bitmap to a CGImage
-        unsigned char* nexticon = bgra;
-        CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
-        for (int i = 0; i < numicons; i++) {
-            CGContextRef context = CGBitmapContextCreate(nexticon, wd, wd, 8, wd * 4, colorspace,
-                // following gives us the optimal BGRA format:
-                kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
-            // add 1 to skip iconptr[0] (ie. dead state)
-            iconptr[i+1] = CGBitmapContextCreateImage(context);
-            CGContextRelease(context);
-            nexticon += wd * wd * 4;
-        }
-        
-        if (numicons < maxstates-1 && iconptr[numicons]) {
-            // duplicate last icon
-            nexticon -= wd * wd * 4;
-            for (int i = numicons; i < maxstates-1; i++) {
-                CGContextRef context = CGBitmapContextCreate(nexticon, wd, wd, 8, wd * 4, colorspace,
-                    // following gives us the optimal BGRA format:
-                    kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
-                iconptr[i+1] = CGBitmapContextCreateImage(context);
-                CGContextRelease(context);
-            }
-        }
-        CGColorSpaceRelease(colorspace);
-    }
-    
-    if (bgra) free(bgra);
-    return iconptr;
-}
-
-// -----------------------------------------------------------------------------
-
 static void CreateIcons(const char** xpmdata, int size)
 {
     int maxstates = currlayer->algo->NumCellStates();
@@ -1308,7 +1195,6 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                         *eof = true;
                         return;
                     }
-                    if (numcolors > 2) currlayer->multicoloricons = true;
                 }
                 // copy data inside "..." to next string in xpmdata
                 int len = strlen(linebuf);
@@ -1750,7 +1636,17 @@ void UpdateCurrentColors()
         currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
         currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
         
-        // note that we don't check if icons are multi-color as we do below
+        // use the smallest icons to check if they are multi-color
+        if (currlayer->icons7x7) {
+            for (int n = 1; n <= maxstate; n++) {
+                if (MultiColorImage(currlayer->icons7x7[n])) {
+                    currlayer->multicoloricons = true;
+                    break;
+                }
+            }
+        }
+        
+        // if the icons are multi-color then we don't call SetAverageColor as we do below
         // (better if the .rule file sets the appropriate non-icon colors)
         
     } else {
@@ -1777,7 +1673,7 @@ void UpdateCurrentColors()
             iconpixels = currlayer->iconpixels15x15;
             if (iconpixels && iconpixels[0]) {
                 unsigned char* pxldata = iconpixels[0];
-                // pxldata contains the icon bitmap in RGBA pixel format
+                // pxldata contains the icon bitmap in RGBA format
                 currlayer->cellr[0] = pxldata[0];
                 currlayer->cellg[0] = pxldata[1];
                 currlayer->cellb[0] = pxldata[2];

@@ -124,7 +124,7 @@ public:
     unsigned char** iconpixels15x15;    // pixel data for 15x15 icons
     unsigned char** iconpixels31x31;    // pixel data for 31x31 icons
     
-    bool multicoloricons;         // are icons multi-colored? (ie. not grayscale)
+    bool multicoloricons;         // are icons multi-colored? (grayscale if not)
     
     // used if the layer has a timeline (see wxtimeline.cpp)
     int currframe;                // current frame in timeline
@@ -241,8 +241,8 @@ void UpdateCloneColors();
 // If current layer has clones then update their colors.
 
 void UpdateLayerColors();
-// Update the cell colors for the current layer (and its clones)
-// aaccording to the current algo and rule.  Must be called very soon
+// Update the cell colors and icons for the current layer (and its clones)
+// according to the current algo and rule.  Must be called very soon
 // after any algo/rule change, and before the viewport is updated.
 
 void InvertCellColors();
