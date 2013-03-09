@@ -252,7 +252,7 @@ def draw_icon_boxes(numicons, linestate):
 
 # --------------------------------------------------------------------
 
-def draw_icons(iconinfo, deadrgb):
+def draw_icons(iconinfo, transparent):
     global colorstate
     if len(iconinfo) == 0: return
     width = iconinfo[0]
@@ -276,7 +276,7 @@ def draw_icons(iconinfo, deadrgb):
                 if not key in colordict:
                     g.exit("Unexpected key in icon data: " + key)
                 rgb = colordict[key]
-                if rgb != deadrgb:
+                if rgb != transparent:
                     g.setcell(x+col, y+row, colorstate[rgb])
 
 # --------------------------------------------------------------------
@@ -376,14 +376,23 @@ iconnote = ""
 if len(iconcolors) == 0:
     iconnote = "There are currently no icons for this rule.\n\n"
 
-# if icons are grayscale then change deadrgb to black
-if not multi_color_icons(iconcolors):
-    deadrgb = (0,0,0)
+# check if icons are grayscale
+grayscale_icons = not multi_color_icons(iconcolors)
 
 # switch to a Generations rule so we can have lots of colors
 g.setrule("//256")
-g.setcolors(deadcolor)
+if grayscale_icons and deadrgb == (255,255,255):
+    # if icons are grayscale and state 0 color was white then switch
+    # to black background to avoid confusion (ie. we want black pixels
+    # to be transparent)
+    g.setcolors([0,0,0,0])
+else:
+    g.setcolors(deadcolor)
 graystate = init_colors()
+
+# if icons are grayscale then change deadrgb to black so that draw_icons
+# will treat black pixels as transparent
+if grayscale_icons: deadrgb = (0,0,0)
 
 draw_icon_boxes(livestates, graystate)
 draw_icons(iconinfo31, deadrgb)
