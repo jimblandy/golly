@@ -166,44 +166,31 @@ def color_text(string, extrastate):
 # --------------------------------------------------------------------
 
 def init_colors():
-    # start with all colors used in the imported icons
     global iconcolors, colorstate
     if len(iconcolors) > 240: g.exit("The imported icons use too many colors!")
+    
+    # start with gradient from white to black (this makes it easier to
+    # copy grayscale icons from one rule to another rule)
     s = 1
+    g.setcolors([s,255,255,255])
+    colorstate[(255,255,255)] = s
+    s += 1
+    graylevel = 256
+    while graylevel > 0:
+        graylevel -= 32
+        g.setcolors([s, graylevel, graylevel, graylevel])
+        colorstate[(graylevel, graylevel, graylevel)] = s
+        s += 1
+
+    # now add all the colors used in the imported icons (unless added above)
     for rgb in iconcolors:
-        if rgb == (255,255,255) or rgb == (0,0,0):
-            # white and black will be added below
-            pass
-        else:
+        if not rgb in colorstate:
             R,G,B = rgb
             g.setcolors([s,R,G,B])
             colorstate[rgb] = s
             s += 1
     
-    # add gradient from white to black
-    g.setcolors([s, 255,255,255])       # white
-    colorstate[(255,255,255)] = s       # remember white state
-    s += 1
-    g.setcolors([s, 224,224,224])
-    s += 1
-    g.setcolors([s, 192,192,192])
-    s += 1
-    g.setcolors([s, 160,160,160])
-    s += 1
-    g.setcolors([s, 128,128,128])       # 50% gray
-    gray = s                            # save this gray's state (see below)
-    s += 1
-    g.setcolors([s,  96, 96, 96])
-    s += 1
-    g.setcolors([s,  64, 64, 64])
-    s += 1
-    g.setcolors([s,  32, 32, 32])
-    s += 1
-    g.setcolors([s,   0,  0,  0])       # black
-    colorstate[(0,0,0)] = s             # remember black state
-    s += 1
-    
-    # add rainbow colors in various shades (bright, pale, dark)
+    # finally add rainbow colors in various shades (bright, pale, dark)
     for hue in xrange(12):
         if s > 255: break
         R,G,B = hsv_to_rgb(hue/12.0, 1.0, 1.0)
@@ -221,7 +208,7 @@ def init_colors():
         s += 1
     
     # return the 50% gray state (used for drawing boxes and text)
-    return gray
+    return colorstate[(128,128,128)]
 
 # --------------------------------------------------------------------
 

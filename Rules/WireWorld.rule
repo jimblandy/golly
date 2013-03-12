@@ -64,48 +64,6 @@ var n={0,2,3}
 
 XPM
 /* width height num_colors chars_per_pixel */
-"7 7 4 1"
-/* colors */
-". c #000000"
-"D c #404040"
-"E c #E0E0E0"
-"W c #FFFFFF"
-/* pixels */
-".DEWED."
-"DWWWWWD"
-"EWWWWWE"
-"WWWWWWW"
-"EWWWWWE"
-"DWWWWWD"
-".DEWED."
-
-XPM
-/* width height num_colors chars_per_pixel */
-"15 15 4 1"
-/* colors */
-". c #000000"
-"D c #404040"
-"B c #C0C0C0"
-"W c #FFFFFF"
-/* pixels */
-"..............."
-"....DBWWWBD...."
-"...BWWWWWWWB..."
-"..BWWWWWWWWWB.."
-".DWWWWWWWWWWWD."
-".BWWWWWWWWWWWB."
-".WWWWWWWWWWWWW."
-".WWWWWWWWWWWWW."
-".WWWWWWWWWWWWW."
-".BWWWWWWWWWWWB."
-".DWWWWWWWWWWWD."
-"..BWWWWWWWWWB.."
-"...BWWWWWWWB..."
-"....DBWWWBD...."
-"..............."
-
-XPM
-/* width height num_colors chars_per_pixel */
 "31 31 5 1"
 /* colors */
 ". c #000000"
@@ -145,3 +103,45 @@ XPM
 "..........DCBWWWWWBCD.........."
 "..............................."
 "..............................."
+
+XPM
+/* width height num_colors chars_per_pixel */
+"15 15 4 1"
+/* colors */
+". c #000000"
+"D c #404040"
+"B c #C0C0C0"
+"W c #FFFFFF"
+/* pixels */
+"..............."
+"....DBWWWBD...."
+"...BWWWWWWWB..."
+"..BWWWWWWWWWB.."
+".DWWWWWWWWWWWD."
+".BWWWWWWWWWWWB."
+".WWWWWWWWWWWWW."
+".WWWWWWWWWWWWW."
+".WWWWWWWWWWWWW."
+".BWWWWWWWWWWWB."
+".DWWWWWWWWWWWD."
+"..BWWWWWWWWWB.."
+"...BWWWWWWWB..."
+"....DBWWWBD...."
+"..............."
+
+XPM
+/* width height num_colors chars_per_pixel */
+"7 7 4 1"
+/* colors */
+". c #000000"
+"D c #404040"
+"E c #E0E0E0"
+"W c #FFFFFF"
+/* pixels */
+".DEWED."
+"DWWWWWD"
+"EWWWWWE"
+"WWWWWWW"
+"EWWWWWE"
+"DWWWWWD"
+".DEWED."
