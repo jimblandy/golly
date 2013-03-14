@@ -1052,8 +1052,8 @@ static void CheckRuleHeader(char* linebuf, const std::string& rulename)
     } else if (strcmp(linebuf+6, rulename.c_str()) != 0) {
         std::string msg = "The rule name on the first line in ";
         msg += rulename;
-        msg += ".rule does not match the file name.";
-        msg += "  Please change the file name or the rule name.";
+        msg += ".rule does not match the specified rule: ";
+        msg += rulename;
         Warning(msg.c_str());
     }
 }

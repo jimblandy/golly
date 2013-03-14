@@ -2059,10 +2059,9 @@ std::string CreateRuleFiles(std::list<std::string>& deprecated,
         std::list<std::string>::iterator it;
         for (it=deprecated.begin(); it!=deprecated.end(); ++it) {
             // add .rule file to candidates if it hasn't been added yet
-            // and isn't in ziprules
             rulefile = *it;
             rulefile = rulefile.substr(0,rulefile.rfind('.')) + ".rule";
-            if (NOT_FOUND(candidates,rulefile) && NOT_FOUND(ziprules,rulefile)) {
+            if (NOT_FOUND(candidates,rulefile)) {
                 candidates.push_back(rulefile);
             }
         }
@@ -2085,11 +2084,15 @@ std::string CreateRuleFiles(std::list<std::string>& deprecated,
                     }
                 }
             }
+            // also ignore any .rule files included in zip file (and thus installed)
+            if (FOUND(ziprules,rulefile)) {
+                ignore.push_back(rulefile);
+            }
             // note that we will overwrite any existing .rule files
             // (not in ziprules) in case the zip file's contents have changed
         }
         
-        // non-ignored candidates are the .rule files that need to be created
+        // candidates not in ignore list are the .rule files that need to be created
         for (it=candidates.begin(); it!=candidates.end(); ++it) {
             rulefile = *it;
             if (NOT_FOUND(ignore,rulefile)) {

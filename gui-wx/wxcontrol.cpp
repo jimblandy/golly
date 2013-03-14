@@ -2644,10 +2644,8 @@ wxString MainFrame::CreateRuleFiles(const wxSortedArrayString& deprecated,
         wxSortedArrayString candidates;
         for (size_t n = 0; n < deprecated.GetCount(); n++) {
             // add .rule file to candidates if it hasn't been added yet
-            // and isn't in ziprules
             rulefile = deprecated[n].BeforeLast('.') + wxT(".rule");
-            if ( (candidates.Index(rulefile) == wxNOT_FOUND) &&
-                 (ziprules.Index(rulefile) == wxNOT_FOUND) ) {
+            if (candidates.Index(rulefile) == wxNOT_FOUND) {
                 candidates.Add(rulefile);
             }
         }
@@ -2670,11 +2668,15 @@ wxString MainFrame::CreateRuleFiles(const wxSortedArrayString& deprecated,
                     }
                 }
             }
+            // also ignore any .rule files included in zip file (and thus installed)
+            if (ziprules.Index(rulefile) != wxNOT_FOUND) {
+                ignore.Add(rulefile);
+            }
             // unlike ConvertRules, we will overwrite any existing .rule files
-            // (not in ziprules) in case the zip file's contents have changed
+            // (not in zip file) in case the zip file's contents have changed
         }
         
-        // non-ignored candidates are the .rule files that need to be created
+        // candidates not in ignore list are the .rule files that need to be created
         for (size_t n = 0; n < candidates.GetCount(); n++) {
             rulefile = candidates[n];
             if (ignore.Index(rulefile) == wxNOT_FOUND) {

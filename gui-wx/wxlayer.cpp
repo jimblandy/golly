@@ -1802,8 +1802,8 @@ static void CheckRuleHeader(char* linebuf, const wxString& rulename)
     } else if (strcmp(linebuf+6, (const char*)rulename.mb_str(wxConvLocal)) != 0) {
         wxString msg = _("The rule name on the first line in ");
         msg += rulename;
-        msg += _(".rule does not match the file name.");
-        msg += _("  Please change the file name or the rule name.");
+        msg += _(".rule does not match the specified rule: ");
+        msg += rulename;
         Warning(msg);
     }
 }
