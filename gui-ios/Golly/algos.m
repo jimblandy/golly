@@ -42,16 +42,24 @@
 
 // exported data:
 
-algo_type initalgo = QLIFE_ALGO;    // initial algorithm
-AlgoData* algoinfo[MAX_ALGOS];      // static info for each algorithm
+algo_type initalgo = QLIFE_ALGO;     // initial algorithm
+AlgoData* algoinfo[MAX_ALGOS];       // static info for each algorithm
 
-CGImageRef* hexicons7x7;            // hexagonal icon bitmaps for scale 1:8
-CGImageRef* hexicons15x15;          // hexagonal icon bitmaps for scale 1:16
-CGImageRef* hexicons31x31;          // hexagonal icon bitmaps for scale 1:32
+CGImageRef* circles7x7;              // circular icons for scale 1:8
+CGImageRef* circles15x15;            // circular icons for scale 1:16
+CGImageRef* circles31x31;            // circular icons for scale 1:32
 
-CGImageRef* vnicons7x7;             // diamond-shaped icon bitmaps for scale 1:8
-CGImageRef* vnicons15x15;           // diamond-shaped icon bitmaps for scale 1:16
-CGImageRef* vnicons31x31;           // diamond-shaped icon bitmaps for scale 1:32
+CGImageRef* diamonds7x7;             // diamond-shaped icons for scale 1:8
+CGImageRef* diamonds15x15;           // diamond-shaped icons for scale 1:16
+CGImageRef* diamonds31x31;           // diamond-shaped icons for scale 1:32
+
+CGImageRef* hexagons7x7;             // hexagonal icons for scale 1:8
+CGImageRef* hexagons15x15;           // hexagonal icons for scale 1:16
+CGImageRef* hexagons31x31;           // hexagonal icons for scale 1:32
+
+CGImageRef* triangles7x7;            // triangular icons for scale 1:8
+CGImageRef* triangles15x15;          // triangular icons for scale 1:16
+CGImageRef* triangles31x31;          // triangular icons for scale 1:32
 
 // -----------------------------------------------------------------------------
 
@@ -371,6 +379,201 @@ static const char* vn31x31[] = {
 "..............................."
 };
 
+// XPM data for the 7x7 icons used by 4-state rules emulating a triangular neighborhood
+static const char* tri7x7[] = {
+// width height ncolors chars_per_pixel
+"7 21 2 1",
+// colors
+". c #000000",    // black will be transparent
+"W c #FFFFFF",    // white
+// pixels for state 1
+".......",
+"W......",
+"WW.....",
+"WWW....",
+"WWWW...",
+"WWWWW..",
+"WWWWWW.",
+// pixels for state 2
+".WWWWWW",
+"..WWWWW",
+"...WWWW",
+"....WWW",
+".....WW",
+"......W",
+".......",
+// pixels for state 3
+".WWWWWW",
+"W.WWWWW",
+"WW.WWWW",
+"WWW.WWW",
+"WWWW.WW",
+"WWWWW.W",
+"WWWWWW."
+};
+
+// XPM data for the 15x15 icons used by 4-state rules emulating a triangular neighborhood
+static const char* tri15x15[] = {
+// width height ncolors chars_per_pixel
+"15 45 2 1",
+// colors
+". c #000000",
+"W c #FFFFFF",
+// pixels for state 1
+"...............",
+"W..............",
+"WW.............",
+"WWW............",
+"WWWW...........",
+"WWWWW..........",
+"WWWWWW.........",
+"WWWWWWW........",
+"WWWWWWWW.......",
+"WWWWWWWWW......",
+"WWWWWWWWWW.....",
+"WWWWWWWWWWW....",
+"WWWWWWWWWWWW...",
+"WWWWWWWWWWWWW..",
+"WWWWWWWWWWWWWW.",
+// pixels for state 2
+".WWWWWWWWWWWWWW",
+"..WWWWWWWWWWWWW",
+"...WWWWWWWWWWWW",
+"....WWWWWWWWWWW",
+".....WWWWWWWWWW",
+"......WWWWWWWWW",
+".......WWWWWWWW",
+"........WWWWWWW",
+".........WWWWWW",
+"..........WWWWW",
+"...........WWWW",
+"............WWW",
+".............WW",
+"..............W",
+"...............",
+// pixels for state 3
+".WWWWWWWWWWWWWW",
+"W.WWWWWWWWWWWWW",
+"WW.WWWWWWWWWWWW",
+"WWW.WWWWWWWWWWW",
+"WWWW.WWWWWWWWWW",
+"WWWWW.WWWWWWWWW",
+"WWWWWW.WWWWWWWW",
+"WWWWWWW.WWWWWWW",
+"WWWWWWWW.WWWWWW",
+"WWWWWWWWW.WWWWW",
+"WWWWWWWWWW.WWWW",
+"WWWWWWWWWWW.WWW",
+"WWWWWWWWWWWW.WW",
+"WWWWWWWWWWWWW.W",
+"WWWWWWWWWWWWWW."
+};
+
+// XPM data for the 31x31 icons used by 4-state rules emulating a triangular neighborhood
+static const char* tri31x31[] = {
+// width height ncolors chars_per_pixel
+"31 93 2 1",
+// colors
+". c #000000",
+"W c #FFFFFF",
+// pixels for state 1
+"...............................",
+"W..............................",
+"WW.............................",
+"WWW............................",
+"WWWW...........................",
+"WWWWW..........................",
+"WWWWWW.........................",
+"WWWWWWW........................",
+"WWWWWWWW.......................",
+"WWWWWWWWW......................",
+"WWWWWWWWWW.....................",
+"WWWWWWWWWWW....................",
+"WWWWWWWWWWWW...................",
+"WWWWWWWWWWWWW..................",
+"WWWWWWWWWWWWWW.................",
+"WWWWWWWWWWWWWWW................",
+"WWWWWWWWWWWWWWWW...............",
+"WWWWWWWWWWWWWWWWW..............",
+"WWWWWWWWWWWWWWWWWW.............",
+"WWWWWWWWWWWWWWWWWWW............",
+"WWWWWWWWWWWWWWWWWWWW...........",
+"WWWWWWWWWWWWWWWWWWWWW..........",
+"WWWWWWWWWWWWWWWWWWWWWW.........",
+"WWWWWWWWWWWWWWWWWWWWWWW........",
+"WWWWWWWWWWWWWWWWWWWWWWWW.......",
+"WWWWWWWWWWWWWWWWWWWWWWWWW......",
+"WWWWWWWWWWWWWWWWWWWWWWWWWW.....",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWW....",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWWW...",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWW..",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW.",
+// pixels for state 2
+".WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+"..WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+"...WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+"....WWWWWWWWWWWWWWWWWWWWWWWWWWW",
+".....WWWWWWWWWWWWWWWWWWWWWWWWWW",
+"......WWWWWWWWWWWWWWWWWWWWWWWWW",
+".......WWWWWWWWWWWWWWWWWWWWWWWW",
+"........WWWWWWWWWWWWWWWWWWWWWWW",
+".........WWWWWWWWWWWWWWWWWWWWWW",
+"..........WWWWWWWWWWWWWWWWWWWWW",
+"...........WWWWWWWWWWWWWWWWWWWW",
+"............WWWWWWWWWWWWWWWWWWW",
+".............WWWWWWWWWWWWWWWWWW",
+"..............WWWWWWWWWWWWWWWWW",
+"...............WWWWWWWWWWWWWWWW",
+"................WWWWWWWWWWWWWWW",
+".................WWWWWWWWWWWWWW",
+"..................WWWWWWWWWWWWW",
+"...................WWWWWWWWWWWW",
+"....................WWWWWWWWWWW",
+".....................WWWWWWWWWW",
+"......................WWWWWWWWW",
+".......................WWWWWWWW",
+"........................WWWWWWW",
+".........................WWWWWW",
+"..........................WWWWW",
+"...........................WWWW",
+"............................WWW",
+".............................WW",
+"..............................W",
+"...............................",
+// pixels for state 3
+".WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+"W.WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+"WW.WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+"WWW.WWWWWWWWWWWWWWWWWWWWWWWWWWW",
+"WWWW.WWWWWWWWWWWWWWWWWWWWWWWWWW",
+"WWWWW.WWWWWWWWWWWWWWWWWWWWWWWWW",
+"WWWWWW.WWWWWWWWWWWWWWWWWWWWWWWW",
+"WWWWWWW.WWWWWWWWWWWWWWWWWWWWWWW",
+"WWWWWWWW.WWWWWWWWWWWWWWWWWWWWWW",
+"WWWWWWWWW.WWWWWWWWWWWWWWWWWWWWW",
+"WWWWWWWWWW.WWWWWWWWWWWWWWWWWWWW",
+"WWWWWWWWWWW.WWWWWWWWWWWWWWWWWWW",
+"WWWWWWWWWWWW.WWWWWWWWWWWWWWWWWW",
+"WWWWWWWWWWWWW.WWWWWWWWWWWWWWWWW",
+"WWWWWWWWWWWWWW.WWWWWWWWWWWWWWWW",
+"WWWWWWWWWWWWWWW.WWWWWWWWWWWWWWW",
+"WWWWWWWWWWWWWWWW.WWWWWWWWWWWWWW",
+"WWWWWWWWWWWWWWWWW.WWWWWWWWWWWWW",
+"WWWWWWWWWWWWWWWWWW.WWWWWWWWWWWW",
+"WWWWWWWWWWWWWWWWWWW.WWWWWWWWWWW",
+"WWWWWWWWWWWWWWWWWWWW.WWWWWWWWWW",
+"WWWWWWWWWWWWWWWWWWWWW.WWWWWWWWW",
+"WWWWWWWWWWWWWWWWWWWWWW.WWWWWWWW",
+"WWWWWWWWWWWWWWWWWWWWWWW.WWWWWWW",
+"WWWWWWWWWWWWWWWWWWWWWWWW.WWWWWW",
+"WWWWWWWWWWWWWWWWWWWWWWWWW.WWWWW",
+"WWWWWWWWWWWWWWWWWWWWWWWWWW.WWWW",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWW.WWW",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWWW.WW",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWW.W",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW."
+};
+
 // -----------------------------------------------------------------------------
 
 CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
@@ -629,13 +832,22 @@ void InitAlgorithms()
         CreateDefaultIcons(ad);
     }
     
-    hexicons7x7 = CreateIconBitmaps(hex7x7,256);
-    hexicons15x15 = CreateIconBitmaps(hex15x15,256);
-    hexicons31x31 = CreateIconBitmaps(hex31x31,256);
-     
-    vnicons7x7 = CreateIconBitmaps(vn7x7,256);
-    vnicons15x15 = CreateIconBitmaps(vn15x15,256);
-    vnicons31x31 = CreateIconBitmaps(vn31x31,256);
+    circles7x7 = CreateIconBitmaps(default7x7,256);
+    circles15x15 = CreateIconBitmaps(default15x15,256);
+    circles31x31 = CreateIconBitmaps(default31x31,256);
+    
+    diamonds7x7 = CreateIconBitmaps(vn7x7,256);
+    diamonds15x15 = CreateIconBitmaps(vn15x15,256);
+    diamonds31x31 = CreateIconBitmaps(vn31x31,256);
+    
+    hexagons7x7 = CreateIconBitmaps(hex7x7,256);
+    hexagons15x15 = CreateIconBitmaps(hex15x15,256);
+    hexagons31x31 = CreateIconBitmaps(hex31x31,256);
+    
+    // these icons can only be used with 4-state rules
+    triangles7x7 = CreateIconBitmaps(tri7x7,4);
+    triangles15x15 = CreateIconBitmaps(tri15x15,4);
+    triangles31x31 = CreateIconBitmaps(tri31x31,4);
 }
 
 // -----------------------------------------------------------------------------

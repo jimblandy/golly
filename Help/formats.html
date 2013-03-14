@@ -509,7 +509,7 @@ colors for each algorithm.
 <p>
 This section is optional and can be used to override the default icons
 displayed for this rule (when Golly is in icon mode).
-The icon bitmaps are specified using the
+The icon bitmaps can be specified using the
 <a href="http://en.wikipedia.org/wiki/X_PixMap">XPM</a> format.
 Here's a simple example that describes two 7x7 icons suitable for a
 3-state rule (icons are never used for state 0):
@@ -745,6 +745,23 @@ XPM
 ".............................................................."</pre></table></dd>
 
 <p>
+Instead of specifying icon bitmaps using XPM data, you might prefer to use
+Golly's built-in grayscale icons by supplying one of the following words
+on a line by itself:
+
+<p>
+<ul>
+<li> <b>circles</b> &mdash; circular icons
+     (normally used for Moore neighborhood rules).
+<li> <b>diamonds</b> &mdash; diamond-shaped icons
+     (normally used for von Neumann neighborhood rules).
+<li> <b>hexagons</b> &mdash; hexagonal icons
+     (normally used for hexagonal neighborhood rules).
+<li> <b>triangles</b> &mdash; triangular icons
+     (only suitable for a 4-state rule that is emulating a triangular neighborhood).
+</ul>
+
+<p>
 If a .rule file has no @ICONS section, Golly will use the default
 icons associated with each algorithm.
 <!--
@@ -772,7 +789,8 @@ and shows the result in the help window.  A complex zip file is one that contain
      Such files are automatically extracted and installed into
      <a href="prefs:control">your rules folder</a>.
      Note that files with a .colors or .icons or .table or .tree extension
-     are automatically converted into corresponding .rule files.
+     are automatically converted into corresponding .rule files, but only
+     if those .rule files aren't present in the zip file.
 <li> Any HTML files (.htm or .html extension).
 <li> Any text files (.txt or .doc extension, or a name containing "readme").
 <li> Multiple scripts (.pl or .py extension).

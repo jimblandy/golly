@@ -77,13 +77,27 @@ public:
 extern AlgoData* algoinfo[MAX_ALGOS];     // static info for each algorithm
 extern algo_type initalgo;                // initial algorithm
 
-extern CGImageRef* hexicons7x7;           // hexagonal icon bitmaps for scale 1:8
-extern CGImageRef* hexicons15x15;         // hexagonal icon bitmaps for scale 1:16
-extern CGImageRef* hexicons31x31;         // hexagonal icon bitmaps for scale 1:32
+// the following bitmaps are grayscale icons that can be used with any rules
+// with any number of states
 
-extern CGImageRef* vnicons7x7;            // diamond icon bitmaps for scale 1:8
-extern CGImageRef* vnicons15x15;          // diamond icon bitmaps for scale 1:16
-extern CGImageRef* vnicons31x31;          // diamond icon bitmaps for scale 1:32
+extern CGImageRef* circles7x7;           // circular icons for scale 1:8
+extern CGImageRef* circles15x15;         // circular icons for scale 1:16
+extern CGImageRef* circles31x31;         // circular icons for scale 1:32
+
+extern CGImageRef* diamonds7x7;          // diamond icons for scale 1:8
+extern CGImageRef* diamonds15x15;        // diamond icons for scale 1:16
+extern CGImageRef* diamonds31x31;        // diamond icons for scale 1:32
+
+extern CGImageRef* hexagons7x7;          // hexagonal icons for scale 1:8
+extern CGImageRef* hexagons15x15;        // hexagonal icons for scale 1:16
+extern CGImageRef* hexagons31x31;        // hexagonal icons for scale 1:32
+
+// NOTE: the triangular icons are only suitable for a 4-state rule that
+// is emulating a triangular neighborhood with 2 triangles per cell
+
+extern CGImageRef* triangles7x7;         // triangular icons for scale 1:8
+extern CGImageRef* triangles15x15;       // triangular icons for scale 1:16
+extern CGImageRef* triangles31x31;       // triangular icons for scale 1:32
 
 void InitAlgorithms();
 // Initialize above data.  Must be called before reading the prefs file.

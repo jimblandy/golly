@@ -1099,15 +1099,16 @@ void UpdateLayerNames()
 
 // -----------------------------------------------------------------------------
 
-static wxBitmap** CopyIcons(wxBitmap** srcicons, int size, int maxstate)
+static wxBitmap** CopyIcons(wxBitmap** srcicons, int maxstate)
 {
     wxBitmap** iconptr = (wxBitmap**) malloc(256 * sizeof(wxBitmap*));
     if (iconptr) {
-        wxRect rect(0, 0, size, size);
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
         for (int i = 0; i <= maxstate; i++) {
-            if (srcicons && srcicons[i])
+            if (srcicons && srcicons[i]) {
+                wxRect rect(0, 0, srcicons[i]->GetWidth(), srcicons[i]->GetHeight());
                 iconptr[i] = new wxBitmap(srcicons[i]->GetSubBitmap(rect));
+            }
         }
     }
     return iconptr;
@@ -1172,9 +1173,9 @@ void AddLayer()
         } else {
             // duplicate icons from old layer
             int maxstate = currlayer->algo->NumCellStates() - 1;
-            currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, 7, maxstate);
-            currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, 15, maxstate);
-            currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, 31, maxstate);
+            currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, maxstate);
         }
     } else {
         // set new layer's colors+icons to default colors+icons for current algo+rule
@@ -1970,6 +1971,39 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
             if (xpmstarted) break;  // handle error below
             xpmstarted = *linenum;
             xpmstrings = 0;
+        } else if (strcmp(linebuf, "circles") == 0) {
+            // use circular icons
+            int maxstate = currlayer->algo->NumCellStates() - 1;
+            currlayer->icons7x7 = CopyIcons(circles7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(circles15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(circles31x31, maxstate);
+        } else if (strcmp(linebuf, "diamonds") == 0) {
+            // use diamond-shaped icons
+            int maxstate = currlayer->algo->NumCellStates() - 1;
+            currlayer->icons7x7 = CopyIcons(diamonds7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(diamonds15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(diamonds31x31, maxstate);
+        } else if (strcmp(linebuf, "hexagons") == 0) {
+            // use hexagonal icons
+            int maxstate = currlayer->algo->NumCellStates() - 1;
+            currlayer->icons7x7 = CopyIcons(hexagons7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(hexagons15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(hexagons31x31, maxstate);
+        } else if (strcmp(linebuf, "triangles") == 0) {
+            // use triangular icons
+            int maxstate = currlayer->algo->NumCellStates() - 1;
+            if (maxstate != 3) {
+                wxString msg;
+                msg.Printf(_("The triangular icons specified on line %d in "), *linenum);
+                msg += rulename;
+                msg += _(".rule can only be used with a 4-state rule.");
+                Warning(msg);
+                // don't return 
+            } else {
+                currlayer->icons7x7 = CopyIcons(triangles7x7, maxstate);
+                currlayer->icons15x15 = CopyIcons(triangles15x15, maxstate);
+                currlayer->icons31x31 = CopyIcons(triangles31x31, maxstate);
+            }
         } else if (linebuf[0] == '@') {
             // found next section, so stop parsing
             *eof = false;
@@ -2025,7 +2059,7 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
 static void LoadRuleInfo(FILE* rulefile, const wxString& rulename,
                          bool* loadedcolors, bool* loadedicons)
 {
-    // load any color and/or icon info from currently open .rule file
+    // load any color and/or icon info from the currently open .rule file
     const int MAXLINELEN = 4095;
     char linebuf[MAXLINELEN + 1];
     int linenum = 0;
@@ -2210,20 +2244,20 @@ static void UseDefaultIcons(int maxstate)
     // icons weren't specified so use default icons
     if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
         // use hexagonal icons
-        currlayer->icons7x7 = CopyIcons(hexicons7x7, 7, maxstate);
-        currlayer->icons15x15 = CopyIcons(hexicons15x15, 15, maxstate);
-        currlayer->icons31x31 = CopyIcons(hexicons31x31, 31, maxstate);
+        currlayer->icons7x7 = CopyIcons(hexagons7x7, maxstate);
+        currlayer->icons15x15 = CopyIcons(hexagons15x15, maxstate);
+        currlayer->icons31x31 = CopyIcons(hexagons31x31, maxstate);
     } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
         // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
-        currlayer->icons7x7 = CopyIcons(vnicons7x7, 7, maxstate);
-        currlayer->icons15x15 = CopyIcons(vnicons15x15, 15, maxstate);
-        currlayer->icons31x31 = CopyIcons(vnicons31x31, 31, maxstate);
+        currlayer->icons7x7 = CopyIcons(diamonds7x7, maxstate);
+        currlayer->icons15x15 = CopyIcons(diamonds15x15, maxstate);
+        currlayer->icons31x31 = CopyIcons(diamonds31x31, maxstate);
     } else {
         // otherwise use default icons from current algo
         AlgoData* ad = algoinfo[currlayer->algtype];
-        currlayer->icons7x7 = CopyIcons(ad->icons7x7, 7, maxstate);
-        currlayer->icons15x15 = CopyIcons(ad->icons15x15, 15, maxstate);
-        currlayer->icons31x31 = CopyIcons(ad->icons31x31, 31, maxstate);
+        currlayer->icons7x7 = CopyIcons(ad->icons7x7, maxstate);
+        currlayer->icons15x15 = CopyIcons(ad->icons15x15, maxstate);
+        currlayer->icons31x31 = CopyIcons(ad->icons31x31, maxstate);
     }
 }
 

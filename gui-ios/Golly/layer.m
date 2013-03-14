@@ -1236,6 +1236,40 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
             if (xpmstarted) break;  // handle error below
             xpmstarted = *linenum;
             xpmstrings = 0;
+        } else if (strcmp(linebuf, "circles") == 0) {
+            // use circular icons
+            int maxstate = currlayer->algo->NumCellStates() - 1;
+            currlayer->icons7x7 = CopyIcons(circles7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(circles15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(circles31x31, maxstate);
+        } else if (strcmp(linebuf, "diamonds") == 0) {
+            // use diamond-shaped icons
+            int maxstate = currlayer->algo->NumCellStates() - 1;
+            currlayer->icons7x7 = CopyIcons(diamonds7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(diamonds15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(diamonds31x31, maxstate);
+        } else if (strcmp(linebuf, "hexagons") == 0) {
+            // use hexagonal icons
+            int maxstate = currlayer->algo->NumCellStates() - 1;
+            currlayer->icons7x7 = CopyIcons(hexagons7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(hexagons15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(hexagons31x31, maxstate);
+        } else if (strcmp(linebuf, "triangles") == 0) {
+            // use triangular icons
+            int maxstate = currlayer->algo->NumCellStates() - 1;
+            if (maxstate != 3) {
+                char s[128];
+                sprintf(s, "The triangular icons specified on line %d in ", *linenum);
+                std::string msg(s);
+                msg += rulename;
+                msg += ".rule can only be used with a 4-state rule.";
+                Warning(msg.c_str());
+                // don't return 
+            } else {
+                currlayer->icons7x7 = CopyIcons(triangles7x7, maxstate);
+                currlayer->icons15x15 = CopyIcons(triangles15x15, maxstate);
+                currlayer->icons31x31 = CopyIcons(triangles31x31, maxstate);
+            }
         } else if (linebuf[0] == '@') {
             // found next section, so stop parsing
             *eof = false;
@@ -1415,14 +1449,14 @@ static void UseDefaultIcons(int maxstate)
     // icons weren't specified so use default icons
     if (currlayer->algo->getgridtype() == lifealgo::HEX_GRID) {
         // use hexagonal icons
-        currlayer->icons7x7 = CopyIcons(hexicons7x7, maxstate);
-        currlayer->icons15x15 = CopyIcons(hexicons15x15, maxstate);
-        currlayer->icons31x31 = CopyIcons(hexicons31x31, maxstate);
+        currlayer->icons7x7 = CopyIcons(hexagons7x7, maxstate);
+        currlayer->icons15x15 = CopyIcons(hexagons15x15, maxstate);
+        currlayer->icons31x31 = CopyIcons(hexagons31x31, maxstate);
     } else if (currlayer->algo->getgridtype() == lifealgo::VN_GRID) {
         // use diamond-shaped icons for 4-neighbor von Neumann neighborhood
-        currlayer->icons7x7 = CopyIcons(vnicons7x7, maxstate);
-        currlayer->icons15x15 = CopyIcons(vnicons15x15, maxstate);
-        currlayer->icons31x31 = CopyIcons(vnicons31x31, maxstate);
+        currlayer->icons7x7 = CopyIcons(diamonds7x7, maxstate);
+        currlayer->icons15x15 = CopyIcons(diamonds15x15, maxstate);
+        currlayer->icons31x31 = CopyIcons(diamonds31x31, maxstate);
     } else {
         // otherwise use default icons from current algo
         AlgoData* ad = algoinfo[currlayer->algtype];

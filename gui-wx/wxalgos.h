@@ -77,13 +77,27 @@ extern wxMenu* algomenu;                // menu of algorithm names
 extern wxMenu* algomenupop;             // copy of algomenu for PopupMenu calls
 extern algo_type initalgo;              // initial algorithm
 
-extern wxBitmap** hexicons7x7;          // hexagonal icon bitmaps for scale 1:8
-extern wxBitmap** hexicons15x15;        // hexagonal icon bitmaps for scale 1:16
-extern wxBitmap** hexicons31x31;        // hexagonal icon bitmaps for scale 1:32
+// the following bitmaps are grayscale icons that can be used with any rules
+// with any number of states
 
-extern wxBitmap** vnicons7x7;           // diamond icon bitmaps for scale 1:8
-extern wxBitmap** vnicons15x15;         // diamond icon bitmaps for scale 1:16
-extern wxBitmap** vnicons31x31;         // diamond icon bitmaps for scale 1:32
+extern wxBitmap** circles7x7;           // circular icons for scale 1:8
+extern wxBitmap** circles15x15;         // circular icons for scale 1:16
+extern wxBitmap** circles31x31;         // circular icons for scale 1:32
+
+extern wxBitmap** diamonds7x7;          // diamond icons for scale 1:8
+extern wxBitmap** diamonds15x15;        // diamond icons for scale 1:16
+extern wxBitmap** diamonds31x31;        // diamond icons for scale 1:32
+
+extern wxBitmap** hexagons7x7;          // hexagonal icons for scale 1:8
+extern wxBitmap** hexagons15x15;        // hexagonal icons for scale 1:16
+extern wxBitmap** hexagons31x31;        // hexagonal icons for scale 1:32
+
+// NOTE: the triangular icons are only suitable for a 4-state rule that
+// is emulating a triangular neighborhood with 2 triangles per cell
+
+extern wxBitmap** triangles7x7;         // triangular icons for scale 1:8
+extern wxBitmap** triangles15x15;       // triangular icons for scale 1:16
+extern wxBitmap** triangles31x31;       // triangular icons for scale 1:32
 
 void InitAlgorithms();
 // Initialize above data.  Must be called before reading the prefs file.
