@@ -68,6 +68,7 @@ public:
       {  poller = &default_poller ;
          gridwd = gridht = 0 ;         // default is an unbounded universe
       }
+   virtual ~lifealgo() ;
    virtual void clearall() = 0 ;
    // returns <0 if error
    virtual int setcell(int x, int y, int newstate) = 0 ;
@@ -89,7 +90,6 @@ public:
    virtual const char *setrule(const char *) = 0 ; // new rules; returns err msg
    virtual const char *getrule() = 0 ;             // get current rule set
    virtual void step() = 0 ;                       // do inc gens
-   virtual ~lifealgo() = 0 ;
    virtual void draw(viewport &view, liferender &renderer) = 0 ;
    virtual void fit(viewport &view, int force) = 0 ;
    virtual void findedges(bigint *t, bigint *l, bigint *b, bigint *r) = 0 ;
@@ -166,6 +166,7 @@ protected:
 class staticAlgoInfo {
 public:
    staticAlgoInfo() ;
+   virtual ~staticAlgoInfo() { } ;
 
    // mandatory
    void setAlgorithmName(const char *s) { algoName = s ; }
