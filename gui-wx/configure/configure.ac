@@ -2,7 +2,7 @@ AC_PREREQ(2.61)
 AC_INIT([golly], [2.5])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([-Wall -Werror foreign no-define])
-AC_CONFIG_SRCDIR([bgolly.cpp])
+AC_CONFIG_SRCDIR([../../cmdline/bgolly.cpp])
 
 # Custom configure arguments:
 AC_ARG_WITH([zlib], [AS_HELP_STRING([--with-zlib],
@@ -19,6 +19,7 @@ AC_ARG_VAR([PERL], [Perl 5 interpreter])
 AC_ARG_VAR([PYTHON], [Python 2 interpreter])
 
 # Check for build tools:
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_GREP
 AC_PROG_EGREP
 AC_PROG_SED

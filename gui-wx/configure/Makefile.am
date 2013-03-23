@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
-AM_CXXFLAGS = -O2 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing \
-	-DGOLLYDIR="$(GOLLYDIR)"
+AM_CPPFLAGS = -I gollybase/
+AM_CXXFLAGS = -DGOLLYDIR="$(GOLLYDIR)" -Wall -fno-strict-aliasing
 
 bin_PROGRAMS = golly bgolly RuleTableToTree
 noinst_LIBRARIES = libgolly.a
@@ -16,10 +16,10 @@ golly_LDADD += gollyres.o
 gollyres.o: golly.rc; $(WX_RESCOMP) $< $@
 endif
 
-bgolly_SOURCES = bgolly.cpp
+bgolly_SOURCES = cmdline/bgolly.cpp
 bgolly_LDADD = libgolly.a
 
-RuleTableToTree_SOURCES = RuleTableToTree.cpp
+RuleTableToTree_SOURCES = cmdline/RuleTableToTree.cpp
 RuleTableToTree_LDADD = libgolly.a
 
 srcdistdir=$(PACKAGE)-$(VERSION)$(SRCDISTSUFFIX)
@@ -35,8 +35,3 @@ bindist:
 	tardir=$(bindistdir) && $(am__tar) \
 		| GZIP=$(GZIP_ENV) gzip -c >$(bindistdir).tar.gz
 	rm -rf "$(bindistdir)"
-
-reallyclean: distclean
-	rm -rf aclocal.m4 autom4te.cache config.guess config.log config.status \
-		config.sub configure depcomp install-sh Makefile.in missing \
-		sources.am $(srcdistdir) $(srcdistdir).tar.gz $(bindistdir) $(bindistdir).tar.gz
