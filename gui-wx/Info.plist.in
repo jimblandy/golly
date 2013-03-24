@@ -23,7 +23,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>VERSION</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Golly version VERSION, Copyright 2012 The Golly Gang</string>
+	<string>Golly version VERSION, Copyright 2013 The Golly Gang</string>
 	<key>LSRequiresCarbon</key>
 	<true/>
 	<key>CFBundleDocumentTypes</key>

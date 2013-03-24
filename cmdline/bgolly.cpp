@@ -1,7 +1,7 @@
                         /*** /
 
 This file is part of Golly, a Game of Life Simulator.
-Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
+Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -489,9 +489,8 @@ void runtestscript(const char *testscript) {
    exit(0) ;
 }
 int main(int argc, char *argv[]) {
-   cout << 
-    "This is bgolly " STRINGIFY(VERSION) " Copyright 2012 The Golly Gang." 
-                                                            << endl << flush ;
+   cout << "This is bgolly " STRINGIFY(VERSION) " Copyright 2013 The Golly Gang."
+        << endl << flush ;
    qlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    hlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    generationsalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;

@@ -1,7 +1,7 @@
 /*** /
  
  This file is part of Golly, a Game of Life Simulator.
- Copyright (C) 2012 Andrew Trevorrow and Tomas Rokicki.
+ Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
  
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
@@ -171,7 +171,7 @@ void DrawStatusBar(CGContextRef context, int wd, int ht, CGRect dirtyrect)
         // set initial message
         statusmsg = "This is Golly version ";
         statusmsg += GOLLY_VERSION;
-        statusmsg += " for iOS.  Copyright 2012 The Golly Gang.";
+        statusmsg += " for iOS.  Copyright 2013 The Golly Gang.";
     }
 
     if (statusmsg.length() > 0) {
