@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I gollybase/
+AM_CPPFLAGS = -I$(top_srcdir)/../../gollybase/
 AM_CXXFLAGS = -DGOLLYDIR="$(GOLLYDIR)" -Wall -fno-strict-aliasing
 
 bin_PROGRAMS = golly bgolly RuleTableToTree
@@ -16,22 +16,25 @@ golly_LDADD += gollyres.o
 gollyres.o: golly.rc; $(WX_RESCOMP) $< $@
 endif
 
-bgolly_SOURCES = cmdline/bgolly.cpp
+bgolly_SOURCES = ../../cmdline/bgolly.cpp
 bgolly_LDADD = libgolly.a
 
-RuleTableToTree_SOURCES = cmdline/RuleTableToTree.cpp
+RuleTableToTree_SOURCES = ../../cmdline/RuleTableToTree.cpp
 RuleTableToTree_LDADD = libgolly.a
 
 srcdistdir=$(PACKAGE)-$(VERSION)$(SRCDISTSUFFIX)
 bindistdir=$(PACKAGE)-$(VERSION)$(BINDISTSUFFIX)
 
 srcdist:
-	make distdir=$(srcdistdir) dist
+	mkdir -p $(srcdistdir)/gui-wx/configure
+	make distdir=$(srcdistdir)/gui-wx/configure distdir
+	tardir=$(srcdistdir) && $(am__tar) \
+		| GZIP=$(GZIP_ENV) gzip -c >$(srcdistdir).tar.gz
+	rm -r $(srcdistdir)
 
 bindist:
-	rm -rf "$(bindistdir)"
-	make bindir=/ pkgdatadir=/ docdir=/ GOLLYDIR= clean all \
-		DESTDIR="$(abs_builddir)/$(bindistdir)" install
+	make bindir=/ pkgdatadir=/ docdir=/ GOLLYDIR= \
+		DESTDIR=$(builddir)/$(bindistdir) clean all install
 	tardir=$(bindistdir) && $(am__tar) \
 		| GZIP=$(GZIP_ENV) gzip -c >$(bindistdir).tar.gz
-	rm -rf "$(bindistdir)"
+	rm -r $(bindistdir)
