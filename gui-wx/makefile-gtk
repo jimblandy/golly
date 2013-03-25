@@ -22,7 +22,7 @@ CMDDIR = ../cmdline
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
 SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
-BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree \
+BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly \
    $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
@@ -84,7 +84,7 @@ WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wx
    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
    $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
-all: $(OBJDIR) golly bgolly RuleTableToTree
+all: $(OBJDIR) golly bgolly
 
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) icons/appicon.xpm bitmaps/*.xpm

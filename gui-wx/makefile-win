@@ -51,7 +51,7 @@ RELEASENAME = $(EXEDIR)\golly-$(APP_VERSION)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp
 GUIDIRS = configure bitmaps icons
-BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(EXEDIR)\RuleTableToTree.exe \
+BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe \
    $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html
 
 !if "$(TARGET_CPU)" == "AMD64"
@@ -332,7 +332,7 @@ __LIB_PNG_p = wxpng$(WXDEBUGFLAG).lib
 
 ### Targets: ###
 
-all: $(OBJDIR) $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(EXEDIR)\RuleTableToTree.exe
+all: $(OBJDIR) $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe
 
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) icons/*.ico bitmaps/*.xpm

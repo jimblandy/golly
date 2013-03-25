@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -I$(top_srcdir)/../../gollybase/
 AM_CXXFLAGS = -DGOLLYDIR="$(GOLLYDIR)" -Wall -fno-strict-aliasing
 
-bin_PROGRAMS = golly bgolly RuleTableToTree
+bin_PROGRAMS = golly bgolly
 noinst_LIBRARIES = libgolly.a
 
 include sources.am
@@ -18,9 +18,6 @@ endif
 
 bgolly_SOURCES = ../../cmdline/bgolly.cpp
 bgolly_LDADD = libgolly.a
-
-RuleTableToTree_SOURCES = ../../cmdline/RuleTableToTree.cpp
-RuleTableToTree_LDADD = libgolly.a
 
 srcdistdir=$(PACKAGE)-$(VERSION)$(SRCDISTSUFFIX)
 bindistdir=$(PACKAGE)-$(VERSION)$(BINDISTSUFFIX)

@@ -21,7 +21,7 @@ This document contains instructions for how to build Golly.
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#glin"><b>On Linux</b></a><br>
 <a href="#configure"><b>Building Golly using configure</b></a><br>
 <a href="#cmake"><b>Building Golly using CMake</b></a><br>
-<a href="#bgolly"><b>How to build bgolly and RuleTableToTree</b></a><br>
+<a href="#bgolly"><b>How to build bgolly</b></a><br>
 <a href="#source"><b>Source code road map</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#dir"><b>Directory structure</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gui"><b>High-level GUI code</b></a><br>
@@ -282,23 +282,19 @@ Perl 5.10 so you might need to change the version numbers.
 
 
 <a name="bgolly"></a>
-<h2>How to build bgolly and RuleTableToTree</h2>
+<h2>How to build bgolly</h2>
 
 <p>
-The above make/nmake commands will also create a couple of command-line programs:
-bgolly is a simple "batch mode" version of Golly without any GUI,
-and RuleTableToTree can be used to convert a .table file into a .tree file.
-
-<p>
-To build these programs separately, just specify bgolly or RuleTableToTree
-as the target of the make/nmake command.  For example, on Linux:
+The above make/nmake commands will also create bgolly, a simple "batch mode"
+version of Golly without any GUI.  To build bgolly separately, just specify
+bgolly as the target of the make/nmake command.  For example, on Linux:
 
 <pre>
    make -f makefile-gtk bgolly
 </pre>
 
 <p>
-You don't need to install wxWidgets, Perl or Python to build these programs.
+You don't need to install wxWidgets, Perl or Python to build bgolly.
 
 
 <a name="source"></a>
@@ -315,7 +311,8 @@ a .tar.gz file.  You should see the following directories:
 
 <p><b>cmdline</b><p>
 <dd>
-   Contains the source files for bgolly and RuleTableToTree.
+   Contains the source files for bgolly and RuleTableToTree
+   (the latter program is no longer included in the binary distribution).
 </dd>
 
 <p><b>docs</b><p>
@@ -366,10 +363,10 @@ a .tar.gz file.  You should see the following directories:
 </dd>
 
 <p>
-Note that all the executables (Golly, bgolly, RuleTableToTree) are created in the same
-location as the above directories.  This means you can test a new Golly build without
-having to copy it somewhere else because the required directories (Help, Patterns,
-Rules and Scripts) are in the correct location.
+Note that the executables (Golly and bgolly) are created in the same location
+as the above directories.  This means you can test a new Golly build without
+having to copy it somewhere else because the required directories
+(Help, Patterns, Rules and Scripts) are in the correct location.
 
 
 <a name="gui"></a>
@@ -530,7 +527,7 @@ Each module is described in (roughly) top-down order, and some key routines are 
 
 <p>
 The <b>gollybase</b> directory contains low-level code used by all the
-various clients (Golly, bgolly, RuleTableToTree, and the iPad version of Golly):
+various clients (Golly, bgolly, and the iPad version of Golly):
 
 <p><b>platform.h</b><p>
 <dd>

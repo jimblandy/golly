@@ -150,13 +150,8 @@ add_executable( bgolly
    ../cmdline/bgolly.cpp
 )
 
-add_executable( RuleTableToTree
-   ../cmdline/RuleTableToTree.cpp
-)
-
 target_link_libraries( ${APP_NAME} gollybase ${wxWidgets_LIBRARIES} ${ZLIB_LIBRARIES} )
 target_link_libraries( bgolly gollybase ${ZLIB_LIBRARIES} )
-target_link_libraries( RuleTableToTree gollybase ${ZLIB_LIBRARIES} )
 
 if(APPLE)
    # create Info.plist (using Info.plist.in) and PkgInfo files inside .app bundle
@@ -182,12 +177,11 @@ endif()
 # hack to get around the "Debug" and "Release" folders Visual Studio adds on Windows
 # http://stackoverflow.com/questions/543203/cmake-runtime-output-directory-on-windows
 if(MSVC_IDE)
-   set_target_properties( ${APP_NAME} bgolly RuleTableToTree PROPERTIES PREFIX "../" )
+   set_target_properties( ${APP_NAME} bgolly PROPERTIES PREFIX "../" )
 endif()
 
 if(USING_VISUAL_LEAK_DETECTOR)
    include_directories( ${VLD_INCLUDE_DIR} )
    target_link_libraries( ${APP_NAME} ${VLD_LIBRARIES} )
    target_link_libraries( bgolly ${VLD_LIBRARIES} )
-   target_link_libraries( RuleTableToTree ${VLD_LIBRARIES} )
 endif()

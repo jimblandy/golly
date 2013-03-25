@@ -30,7 +30,7 @@ CMDDIR = ../cmdline
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
 SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
-BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree \
+BINFILES = $(EXEDIR)/$(APP_NAME).app $(EXEDIR)/bgolly \
    $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
@@ -69,7 +69,7 @@ LDFLAGS = -arch x86_64 \
    -Wl,-dead_strip -Wl,-S \
    -framework IOKit -framework Carbon -framework Cocoa -framework System 
 
-# for bgolly and RuleTableToTree:
+# for bgolly:
 CXXBASE = -arch x86_64 \
    -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
    -fno-strict-aliasing -fno-common -I$(BASEDIR)
@@ -114,7 +114,7 @@ __LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
 
 # Targets:
 
-all: $(OBJDIR) app.bin app_bundle bgolly RuleTableToTree
+all: $(OBJDIR) app.bin app_bundle bgolly
 
 $(BASEOBJ): $(BASEH)
 $(WXOBJ): $(BASEH) $(WXH) icons/appicon.xpm bitmaps/*.xpm
