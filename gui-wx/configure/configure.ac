@@ -27,6 +27,7 @@ AC_PROG_RANLIB
 AC_PROG_CXX
 AC_CHECK_TOOL([OBJDUMP], [objdump])
 AS_IF([test "x$OBJDUMP" = x], [AC_MSG_ERROR([missing objdump])])
+AC_CHECK_TOOL([STRIP], [strip])
 
 # Check for standard header files:
 AC_CHECK_HEADERS([inttypes.h limits.h stdint.h stdlib.h string.h sys/time.h])
