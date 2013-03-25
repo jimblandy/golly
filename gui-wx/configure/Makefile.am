@@ -13,7 +13,7 @@ golly_LDADD = $(WX_LIBS) libgolly.a
 
 if WINDOWS
 golly_LDADD += gollyres.o
-gollyres.o: golly.rc; $(WX_RESCOMP) $< $@
+gollyres.o: ../golly.rc; $(WX_RESCOMP) $< $@
 endif
 
 bgolly_SOURCES = ../../cmdline/bgolly.cpp
