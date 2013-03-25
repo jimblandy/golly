@@ -13,7 +13,7 @@ golly_LDADD = $(WX_LIBS) libgolly.a
 
 if WINDOWS
 golly_LDADD += gollyres.o
-gollyres.o: golly.rc; $(WX_RESCOMP) $< $@
+gollyres.o: ../golly.rc; $(WX_RESCOMP) $< $@
 endif
 
 bgolly_SOURCES = ../../cmdline/bgolly.cpp
@@ -31,7 +31,7 @@ srcdist:
 
 bindist:
 	make bindir=/ pkgdatadir=/ docdir=/ GOLLYDIR= \
-		DESTDIR=$(builddir)/$(bindistdir) clean all install
+		DESTDIR=$(builddir)/$(bindistdir) clean all install-strip
 	tardir=$(bindistdir) && $(am__tar) \
 		| GZIP=$(GZIP_ENV) gzip -c >$(bindistdir).tar.gz
 	rm -r $(bindistdir)
