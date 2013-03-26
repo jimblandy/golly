@@ -93,9 +93,13 @@ case $target_os in
 cygwin* | mingw* | pw32* | cegcc*) id=win ;;
 darwin* | rhapsody*) id=mac ;;
 linux*) id=gtk ;;
-*) tmp= ;;
+*) id= ;;
 esac
-AC_SUBST([BINDISTSUFFIX], [${id:+-$id}])
+case $target_cpu in
+*64) bits=64 ;;
+*) bits= ;;
+esac
+AC_SUBST([BINDISTSUFFIX], [${id:+-$id$bits}])
 AC_SUBST([SRCDISTSUFFIX], [-src])
 AM_CONDITIONAL([WINDOWS], [test x$id = xwin ])
 AM_CONDITIONAL([MAC], [test x$id = xmac ])
