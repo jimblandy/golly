@@ -328,7 +328,7 @@ if not layername.startswith(layerprefix):
     g.exit("The current layer wasn't created by icon-importer.py.")
 
 # get the original rule
-prefix, sep, rulename = layername.partition(" for ")
+rulename = layername.split(" for ")[1]
 
 icondata = extract_icons(31)
 icondata += extract_icons(15)
