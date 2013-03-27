@@ -1,16 +1,16 @@
 @RULE Banks-II
 
+Edwin Roger Banks, PhD Thesis 1971
+
+Three-state, five-neighbor CA for a universal computer
+(Appendix II)
+
+http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
+
 @TABLE
 
-# Edwin Roger Banks, PhD Thesis 1971
-#
-# Three-state, five-neighbor CA for a universal computer
-# (Appendix II)
-#
-# http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
-# 
 # Format: C,N,E,S,W,C'
-#
+
 n_states:3
 neighborhood:vonNeumann
 symmetries:rotate4reflect

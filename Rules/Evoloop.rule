@@ -1,23 +1,19 @@
 @RULE Evoloop
 
+Hiroki Sayama "Toward the Realization of an Evolving Ecosystem on Cellular Automata",
+Proceedings of the Fourth International Symposium on Artificial Life and Robotics
+(AROB 4th '99), M. Sugisaka and H. Tanaka, eds., pp.254-257, Beppu, Oita, Japan, 1999.
+
+Transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+Credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
+
+Note that the transition table given in the above link is incomplete, and is patched
+by the function set_undefined_rule(). The table below has these changes incorporated,
+and was produced automatically by a bottom-up merging procedure from the full 9^5
+rule table. See Rules/TableGenerators/make_ruletable.cpp
+
 @TABLE
 
-# Evoloop
-#
-# Hiroki Sayama "Toward the Realization of an Evolving Ecosystem on 
-# Cellular Automata", Proceedings of the Fourth International 
-# Symposium on Artificial Life and Robotics (AROB 4th '99), 
-# M. Sugisaka and H. Tanaka, eds., pp.254-257, Beppu, Oita, Japan, 1999.
-#
-# transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
-# credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
-#
-# Note that the transition table given in the above link is incomplete, and is patched
-# by the function set_undefined_rule(). The table below has these changes incorporated,
-# and was produced automatically by a bottom-up merging procedure from the full 9^5
-# rule table. See Rules/TableGenerators/make_ruletable.cpp
-#
-# states: 9
 # rules: 132
 # variables: 123
 # format: C,N,E,S,W,C'
@@ -25,7 +21,7 @@
 # Variables are bound within each transition. 
 # For example, if a={1,2} then 4,a,0->a represents
 # two transitions: 4,1,0->1 and 4,2,0->2
-#
+
 n_states:9
 neighborhood:vonNeumann
 symmetries:rotate4

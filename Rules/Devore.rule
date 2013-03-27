@@ -1,22 +1,21 @@
 @RULE Devore
 
+Devore's cellular automaton (a variation on Codd's CA).
+
+See patterns in Patterns/Devore/.
+
+Devore,J. and Hightower,R. (1992)
+The Devore variation of the Codd self-replicating computer,
+Third Workshop on Artificial Life, Santa Fe, New Mexico,
+Original work carried out in the 1970s though apparently never published.
+Reported by John R. Koza, "Artificial life: spontaneous emergence of 
+self-replicating and evolutionary self-improving computer programs," 
+in Christopher G. Langton, Artificial Life III, Proc. Volume XVII 
+Santa Fe Institute Studies in the Sciences of Complexity, 
+Addison-Wesley Publishing Company, New York, 1994, p. 260.
+
 @TABLE
 
-# Rules file for Devore's cellular automaton
-# (a variation on Codd's CA)
-#
-# See patterns in Patterns/Codd/Devore/
-#
-# Devore,J. and Hightower,R. (1992)
-# The Devore variation of the Codd self-replicating computer,
-# Third Workshop on Artificial Life, Santa Fe, New Mexico,
-# Original work carried out in the 1970s though apparently never published.
-# Reported by John R. Koza, "Artificial life: spontaneous emergence of 
-# self-replicating and evolutionary self-improving computer programs," 
-# in Christopher G. Langton, Artificial Life III, Proc. Volume XVII 
-# Santa Fe Institute Studies in the Sciences of Complexity, 
-# Addison-Wesley Publishing Company, New York, 1994, p. 260.
-#
 n_states:8
 neighborhood:vonNeumann
 symmetries:rotate4

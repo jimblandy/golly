@@ -1,23 +1,21 @@
 @RULE Codd2
 
+Codd, E.F., _Cellular_Automata_, Academic Press 1968 (ACM Monograph #3).
+
+Originally distributed with XLife as codd.r.
+
+Several corrections have been made from the XLife version, to match Codd's 
+printed transition table. Stasis transitions have been taken out. More 
+importantly, some extra transitions have been added, to deal with sheathing-
+signal collision cases that Codd hadn't considered. These additions are at the
+bottom of the file and clearly marked. Hopefully these changes can be
+considered to be the intent of Codd's work, if not his exact specification. 
+Just to be clear, these changes change nothing about the way the examples in 
+Codd's book work, and only affect rarely-encountered situations.
+Contact: Tim Hutton <tim.hutton@gmail.com>
+
 @TABLE
 
-
-#
-# Codd, E.F., _Cellular_Automata_, Academic Press 1968 (ACM Monograph #3).
-#
-# Originally distributed with XLife as codd.r
-#
-# Several corrections have been made from the XLife version, to match Codd's 
-# printed transition table. Stasis transitions have been taken out. More 
-# importantly, some extra transitions have been added, to deal with sheathing-
-# signal collision cases that Codd hadn't considered. These additions are at the
-# bottom of the file and clearly marked. Hopefully these changes can be
-# considered to be the intent of Codd's work, if not his exact specification. 
-# Just to be clear, these changes change nothing about the way the examples in 
-# Codd's book work, and only affect rarely-encountered situations.
-# Contact: Tim Hutton <tim.hutton@gmail.com>
-#
 n_states:8
 neighborhood:vonNeumann
 symmetries:rotate4
@@ -345,7 +343,6 @@ var p={0,2,3}
 0,6,6,0,2,2         # sh (reflected form of above)
 # for 3-way collisions:
 1,6,6,6,0,6         # sh
-
 
 @COLORS
 

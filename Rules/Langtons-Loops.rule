@@ -1,19 +1,16 @@
 @RULE Langtons-Loops
 
+C.G.Langton. "Self-reproduction in cellular automata."
+Physica D, Vol. 10, pages 135-144, 1984. 
+
+Transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+Credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
+
 @TABLE
 
-# Langton's Loops
-#
-# C.G.Langton. "Self-reproduction in cellular automata."
-# Physica D, Vol. 10, pages 135-144, 1984. 
-#
-# transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
-# credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
-#
-# states: 8
 # rules: 219
 # format: CNESWC'
-#
+
 n_states:8
 neighborhood:vonNeumann
 symmetries:rotate4

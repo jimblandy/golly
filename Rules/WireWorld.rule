@@ -16,7 +16,7 @@ and other digital circuits.
 # two transitions: 4,1,0->1 and 4,2,0->2
 # (This is why we need to repeat the variables below.
 #  In this case the method isn't really helping.)
-#
+
 n_states:4
 neighborhood:Moore
 symmetries:rotate8
@@ -52,7 +52,6 @@ var n={0,2,3}
 @COLORS
 
 # same colors used at http://www.quinapalus.com/wi-index.html
-
 0  48  48  48   dark gray
 1   0 128 255   light blue
 2 255 255 255   white

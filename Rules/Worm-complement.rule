@@ -1,20 +1,22 @@
 @RULE Worm-complement
 
-@TABLE
+Paterson's worms - Erase solid regions, leaving only points with at least
+one uneaten edge, and the single point or line with an arrow.  Use this
+with rules like 1252121 and 1525115, which fill regions with density
+near 100%, to see the uneaten paths within the regions:  After running
+such a rule for a while, switch to this rule and run for 1 generation.
+(by Dean Hickerson, 11/20/2008)
 
-# Paterson's worms - Erase solid regions, leaving only points with at least
-# one uneaten edge, and the single point or line with an arrow.  Use this
-# with rules like 1252121 and 1525115, which fill regions with density
-# near 100%, to see the uneaten paths within the regions:  After running
-# such a rule for a while, switch to this rule and run for 1 generation.
-# (by Dean Hickerson, 11/20/2008)
-# 0            empty (unvisited point or line)
-# 1-6          'point with arrow', showing direction of next movement
-#              (1=E; 2=SE; 3=SW; 4=W; 5=NW; 6=NE)
-# 7            point that's been visited
-# 8,9,10       edge -  (8=line; 9=E arrow; 10=W arrow)
-# 11,12,13     edge /  (11=line; 12=NE arrow; 13=SW arrow)
-# 14,15,16     edge \  (14=line; 15=SE arrow; 16=NW arrow)
+States:
+0            empty (unvisited point or line)
+1-6          'point with arrow', showing direction of next movement
+             (1=E; 2=SE; 3=SW; 4=W; 5=NW; 6=NE)
+7            point that's been visited
+8,9,10       edge -  (8=line; 9=E arrow; 10=W arrow)
+11,12,13     edge /  (11=line; 12=NE arrow; 13=SW arrow)
+14,15,16     edge \  (14=line; 15=SE arrow; 16=NW arrow)
+
+@TABLE
 
 n_states:17
 neighborhood:Moore

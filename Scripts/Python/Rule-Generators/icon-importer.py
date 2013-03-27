@@ -70,7 +70,7 @@ def import_icons(rulename):
             colordict = {}
         elif xpmcount > 0 and line[0] == "\"":
             # extract the stuff inside double quotes, ignoring anything after 2nd one
-            line, sep, extra = line.lstrip("\"").partition("\"")
+            line = line.lstrip("\"").split("\"")[0]
             if xpmcount == 1:
                 # parse "width height num_colors chars_per_pixel"
                 header = line.split()
@@ -350,7 +350,7 @@ if g.getname().startswith(layerprefix):
     g.exit("You probably meant to run icon-exporter.py.")
 
 g.addlayer()
-rulename, sep, suffix = g.getrule().partition(":")
+rulename = g.getrule().split(":")[0]
 g.new(layerprefix + rulename)
 livestates = g.numstates() - 1
 deadcolor = g.getcolors(0)

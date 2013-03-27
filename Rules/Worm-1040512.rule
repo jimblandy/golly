@@ -1,47 +1,46 @@
 @RULE Worm-1040512
 
-@TABLE
+Paterson's worms (by Dean Hickerson, 11/19/2008)
+    Pattern #055
+    Sven Kahrkling's notation 1040512
+    Gardner's notation 1a2c3cbaa4b
+    Finishes after 569804 steps, almost filling a regular hexagon.
+Points and lines of hexagonal grid are mapped to points of square grid as
+below.  "*" is a point of the hex grid, "-", "/", and "\" are lines
+of the hex grid.
 
-# Paterson's worms
-# (by Dean Hickerson, 11/19/2008)
-#     Pattern #055
-#     Sven Kahrkling's notation 1040512
-#     Gardner's notation 1a2c3cbaa4b
-#     Finishes after 569804 steps, almost filling a regular hexagon.
-# Points and lines of hexagonal grid are mapped to points of square grid as
-# below.  "*" is a point of the hex grid, "-", "/", and # "\" are lines
-# of the hex grid.
-#
-# +--+--+--+--+
-# |- |* |- |* |
-# +--+--+--+--+
-# | /| \| /| \|
-# +--+--+--+--+
-# |* |- |* |- |
-# +--+--+--+--+
-#
-# Each step of the worm is simulated by 2 gens in the rule.  In even gens,
-# there's an arrow at one point of the hex grid showing which way the worm
-# will move next.  In odd gens, there's an arrow on one line of the hex
-# grid.  The transitions from even to odd gens are the same for all worms.
-# Those from odd to even depend on the specific type of worm: If a point
-# (state 0 or 1) has a line with an arrow pointing at it, it becomes a
-# 'point with arrow'; the direction depends on the 6 neighboring lines,
-# which are the NW, N, E, S, SW, and W neighbors in the square grid.
-#
-# Gen 0 consists of a single point in state 1, a 'point with arrow'
-# pointing east.  (Starting with a point in state 2, 3, 4, 5, or 6
-# would also work, rotating the whole pattern.)
-#
-# States are:
-#
-# 0            empty (unvisited point or line)
-# 1-6          'point with arrow', showing direction of next movement
-#              (1=E; 2=SE; 3=SW; 4=W; 5=NW; 6=NE)
-# 7            point that's been visited
-# 8,9,10       edge -  (8=line; 9=E arrow; 10=W arrow)
-# 11,12,13     edge /  (11=line; 12=NE arrow; 13=SW arrow)
-# 14,15,16     edge \  (14=line; 15=SE arrow; 16=NW arrow)
++--+--+--+--+
+|- |* |- |* |
++--+--+--+--+
+| /| \| /| \|
++--+--+--+--+
+|* |- |* |- |
++--+--+--+--+
+
+Each step of the worm is simulated by 2 gens in the rule.  In even gens,
+there's an arrow at one point of the hex grid showing which way the worm
+will move next.  In odd gens, there's an arrow on one line of the hex
+grid.  The transitions from even to odd gens are the same for all worms.
+Those from odd to even depend on the specific type of worm: If a point
+(state 0 or 1) has a line with an arrow pointing at it, it becomes a
+'point with arrow'; the direction depends on the 6 neighboring lines,
+which are the NW, N, E, S, SW, and W neighbors in the square grid.
+
+Gen 0 consists of a single point in state 1, a 'point with arrow'
+pointing east.  (Starting with a point in state 2, 3, 4, 5, or 6
+would also work, rotating the whole pattern.)
+
+States are:
+
+0            empty (unvisited point or line)
+1-6          'point with arrow', showing direction of next movement
+             (1=E; 2=SE; 3=SW; 4=W; 5=NW; 6=NE)
+7            point that's been visited
+8,9,10       edge -  (8=line; 9=E arrow; 10=W arrow)
+11,12,13     edge /  (11=line; 12=NE arrow; 13=SW arrow)
+14,15,16     edge \  (14=line; 15=SE arrow; 16=NW arrow)
+
+@TABLE
 
 n_states:17
 neighborhood:Moore

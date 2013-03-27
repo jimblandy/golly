@@ -1,20 +1,17 @@
 @RULE Chou-Reggia-2
 
+J. A. Reggia, S.L.Armentrout, H.-H. Chou, and Y. Peng. 
+``Simple systems that exhibit self-directed replication.'' 
+Science, Vol. 259, pages 1282-1287, February 1993. 
+
+Transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+Credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
+
 @TABLE
 
-# Chou-Reggia Loop 2
-#
-# J. A. Reggia, S.L.Armentrout, H.-H. Chou, and Y. Peng. 
-# ``Simple systems that exhibit self-directed replication.'' 
-# Science, Vol. 259, pages 1282-1287, February 1993. 
-#
-# transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
-# credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
-#
 # rules: 65
-# states: 8
 # format: CNESWC'
-#
+
 n_states:8
 neighborhood:vonNeumann
 symmetries:rotate4
@@ -83,7 +80,6 @@ symmetries:rotate4
 730007
 770070
 770711
-
 
 @TREE
 

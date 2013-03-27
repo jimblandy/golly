@@ -1,16 +1,16 @@
 @RULE Banks-IV
 
+Edwin Roger Banks, PhD Thesis 1971
+
+Four-state, five-neighbor universal constructor
+(Appendix IV)
+
+http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
+
 @TABLE
 
-# Edwin Roger Banks, PhD Thesis 1971
-#
-# Four-state, five-neighbor universal constructor
-# (Appendix IV)
-#
-# http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
-# 
 # Format: C,N,E,S,W,C'
-#
+
 n_states:4
 neighborhood:vonNeumann
 symmetries:rotate4reflect
