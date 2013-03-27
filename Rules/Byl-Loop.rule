@@ -1,19 +1,16 @@
 @RULE Byl-Loop
 
+J. Byl. "Self-Reproduction in small cellular automata." 
+Physica D, Vol. 34, pages 295-299, 1989.
+
+Transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
+Credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
+
 @TABLE
 
-# Byl Loop
-#
-# J. Byl. "Self-Reproduction in small cellular automata." 
-# Physica D, Vol. 34, pages 295-299, 1989.
-#
-# transition rules from: http://necsi.org/postdocs/sayama/sdsr/java/loops.java
-# credits: "Self-Replicating Loops & Ant, Programmed by Eli Bachmutsky, Copyleft Feb.1999"
-#
-# states: 6
 # rules: 145
 # format: CNESWC'
-#
+
 n_states:6
 neighborhood:vonNeumann
 symmetries:rotate4

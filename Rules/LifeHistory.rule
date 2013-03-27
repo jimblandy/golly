@@ -1,18 +1,19 @@
 @RULE LifeHistory
 
+A variant of HistoricalLife with two extra ON states
+and two extra OFF states, for annotation purposes:
+
+state 0:  OFF
+state 1:  ON
+state 2:  history/envelope (state=2 if cell was ever ON)
+state 3:  marked ON (may change to OFF but will always remain marked)
+state 4:  marked OFF (may change to ON but will always remain marked)
+state 5:  start ON (becomes a normal marked OFF cell when it dies)
+state 6:  boundary OFF (can never turn on -- can keep subpatterns in a
+          stamp collection from interfering with each other)
+
 @TABLE
 
-# LifeHistory
-# a variant of HistoricalLife with two extra ON states
-# and two extra OFF states, for annotation purposes:
-# state 0:  OFF
-# state 1:  ON
-# state 2:  history/envelope (state=2 if cell was ever ON)
-# state 3:  marked ON (may change to OFF but will always remain marked)
-# state 4:  marked OFF (may change to ON but will always remain marked)
-# state 5:  start ON (becomes a normal marked OFF cell when it dies)
-# state 6:  boundary OFF (can never turn on -- can keep subpatterns in a
-#                    stamp collection from interfering with each other)
 n_states:7
 neighborhood:Moore
 symmetries:rotate8

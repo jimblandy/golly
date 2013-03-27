@@ -1,32 +1,32 @@
 @RULE Tempesti
 
+Transitions rules for Tempesti's self-replicating loops.
+
+Converted from rules given in Tempesti's thesis:
+http://lslwww.epfl.ch/pages/embryonics/thesis/
+
+Note that there's an error in the text, where it says
+that states are given as clockwise from north: 
+PS,N,NE,E,... but actually they start at NW: PS,NW,N,NE,...
+
+Note also that Table A-3 in his thesis has rules that
+are rotationally symmetric, but Table A-4's rules are 
+not, despite what footnote 39 says. To make a single rule
+file we've had to expand A-3, giving 175*4+326=1026 rules.
+Hopefully this can be compressed further.
+
+As in Tempesti's thesis, variables are bound within each 
+transition. For example, if a={1,2} then 4,a,0->a represents
+two transitions: 4,1,0->1 and 4,2,0->2
+
 @TABLE
 
-# Transitions rules for Tempesti's self-replicating loops.
-#
-# Converted from rules given in Tempesti's thesis:
-# http://lslwww.epfl.ch/pages/embryonics/thesis/
-#
-# Note that there's an error in the text, where it says
-# that states are given as clockwise from north: 
-# PS,N,NE,E,... but actually they start at NW: PS,NW,N,NE,...
-#
-# Note also that Table A-3 in his thesis has rules that
-# are rotationally symmetric, but Table A-4's rules are 
-# not, despite what footnote 39 says. To make a single rule
-# file we've had to expand A-3, giving 175*4+326=1026 rules.
-# Hopefully this can be compressed further.
-#
-# As in Tempesti's thesis, variables are bound within each 
-# transition. For example, if a={1,2} then 4,a,0->a represents
-# two transitions: 4,1,0->1 and 4,2,0->2
-#
 # rules: 1026
 # variables: 4
 # format: C,N,NE,E,SE,S,SW,W,NW,C'
 # remaining cases default: state doesn't change
 # symmetry: none (no rotation/reflection)
-#
+
 n_states:10
 neighborhood:Moore
 symmetries:none

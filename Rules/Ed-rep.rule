@@ -1,17 +1,16 @@
 @RULE Ed-rep
 
+Rule tree written automatically by
+Scripts/Python/Rule-Generators/FredkinModN-gen.py.
+
+Winograd's generalization of Fredkin's parity rule (B1357/S1357) to modulo-n:
+  c,{s} -> sum(s)%n, where n=2 for original rule.
+
+Winograd, T. (1970) A simple algorithm for self-replication
+A. I. Memo 197, Project MAC. MIT. http://hdl.handle.net/1721.1/5843
+
 @TREE
 
-# Rule table written automatically by Scripts/Python/FredkinModN-gen.py, and 
-# converted to a rule tree (for speed and compactness) by the RuleTableToTree 
-# utility.
-#
-# Winograd's generalization of Fredkin's parity rule (B1357/S1357) to modulo-n:
-#   c,{s} -> sum(s)%n, where n=2 for original rule.
-#
-# Winograd, T. (1970) A simple algorithm for self-replication
-# A. I. Memo 197, Project MAC. MIT. http://hdl.handle.net/1721.1/5843
-#
 num_states=7
 num_neighbors=4
 num_nodes=29

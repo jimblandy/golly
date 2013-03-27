@@ -1,21 +1,21 @@
 @RULE Perrier
 
+J.-Y. Perrier, M. Sipper, and J. Zahnd 
+"Toward a viable, self-reproducing universal computer"
+Physica D, vol. 97, pp. 335-352, 1996
+
+Thanks to Gianluca Tempesti for the transition table and the pattern.
+
+Two small changes have been made. Firstly a conflicting rule has been removed. 
+This only causes a problem in some packages, where the first applicable rule 
+is used - other packages used the last applicable rule. Secondly a rule has 
+been added to correct what appears to be a rare bug that shows up when trying 
+to write to the first entry on the data tape. Other such cases might exist.
+Contact: tim.hutton@gmail.com
+
 @TABLE
 
-# J.-Y. Perrier, M. Sipper, and J. Zahnd 
-# "Toward a viable, self-reproducing universal computer"
-# Physica D, vol. 97, pp. 335-352, 1996
-#
-# Thanks to Gianluca Tempesti for the transition table and the pattern.
-#
 # rules: 637
-#
-# Two small changes have been made. Firstly a conflicting rule has been removed. 
-# This only causes a problem in some packages, where the first applicable rule 
-# is used - other packages used the last applicable rule. Secondly a rule has 
-# been added to correct what appears to be a rare bug that shows up when trying 
-# to write to the first entry on the data tape. Other such cases might exist.
-# Contact: tim.hutton@gmail.com
 
 n_states:64
 neighborhood:vonNeumann

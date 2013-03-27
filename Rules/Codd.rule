@@ -1,16 +1,16 @@
 @RULE Codd
 
+Codd's cellular automaton.
+
+Codd, E.F., _Cellular_Automata_, Academic Press 1968 (ACM Monograph #3).
+
+Originally distributed with XLife as codd.r.
+
+Several corrections have been made. Stasis transitions have been taken out. 
+Tim Hutton <tim.hutton@gmail.com>
+
 @TABLE
 
-# Rules file for Codd's cellular automaton
-#
-# Codd, E.F., _Cellular_Automata_, Academic Press 1968 (ACM Monograph #3).
-#
-# Originally distributed with XLife as codd.r
-#
-# Several corrections have been made. Stasis transitions have been taken out. 
-# Tim Hutton <tim.hutton@gmail.com>
-#
 n_states:8
 neighborhood:vonNeumann
 symmetries:rotate4
@@ -330,7 +330,6 @@ var p={0,2,3}
 7,0,2,0,2,1        # pe
 7,0,2,2,2,1        # x
 # End of ruleset
-
 
 @COLORS
 
