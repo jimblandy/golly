@@ -891,14 +891,13 @@ bool MultiColorImage(wxImage& image)
 {
     // return true if image contains at least one color that isn't a shade of gray
     int numpixels = image.GetWidth() * image.GetHeight();
-    bool skipalpha = image.HasAlpha();
     unsigned char* p = image.GetData();
+    // p points to RGBRGB... (ie. no alpha data)
     for (int i = 0; i < numpixels; i++) {
         unsigned char r = *p++;
         unsigned char g = *p++;
         unsigned char b = *p++;
         if (r != g || g != b) return true;
-        if (skipalpha) p++;
     }
     return false;   // grayscale image
 }
