@@ -1196,6 +1196,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                         return;
                     }
                 }
+                
                 // copy data inside "..." to next string in xpmdata
                 int len = strlen(linebuf);
                 while (linebuf[len] != '"') len--;
@@ -1222,6 +1223,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                     *eof = true;
                     return;
                 }
+                
                 xpmstrings++;
                 if (xpmstrings == maxstrings) {
                     // we've got all the data for this icon size

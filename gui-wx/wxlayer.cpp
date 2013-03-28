@@ -56,6 +56,8 @@
 #include "wxalgos.h"       // for algo_type, initalgo, algoinfo, CreateNewUniverse, etc
 #include "wxlayer.h"
 
+#include <map>             // for std::map
+
 // -----------------------------------------------------------------------------
 
 const int layerbarht = 32;       // height of layer bar
@@ -1887,6 +1889,8 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
     char** xpmdata = NULL;
     int xpmstarted = 0, xpmstrings = 0, maxstrings = 0;
     int wd = 0, ht = 0, numcolors = 0, chars_per_pixel = 0;
+    
+    std::map<std::string,int> colormap;
 
     while (true) {
         if (reader.fgets(linebuf, MAXLINELEN) == 0) {
@@ -1925,6 +1929,8 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
                         msg += _(".rule is incorrect");
                         if (wd > 0 && ht > 0 && ht % wd != 0)
                             msg += _(" (height must be a multiple of width).");
+                        else if (chars_per_pixel < 1 || chars_per_pixel > 2)
+                            msg += " (chars_per_pixel must be 1 or 2).";
                         else
                             msg += _(" (4 positive integers are required).");
                         Warning(msg);
@@ -1932,19 +1938,54 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
                         return;
                     }
                 }
+                
                 // copy data inside "..." to next string in xpmdata
                 int len = strlen(linebuf);
                 while (linebuf[len] != '"') len--;
                 len--;
-                if (xpmstrings > numcolors && len != wd * chars_per_pixel) {
-                    DeleteXPMData(xpmdata, maxstrings);
-                    wxString msg;
-                    msg.Printf(_("The XPM data string on line %d in "), *linenum);
-                    msg += rulename;
-                    msg += _(".rule has the wrong length.");
-                    Warning(msg);
-                    *eof = true;
-                    return;
+                if (xpmstrings > 0 && xpmstrings <= numcolors) {
+                    // build colormap so we can validate chars in pixel data
+                    std::string pixel;
+                    char ch1, ch2;
+                    if (chars_per_pixel == 1) {
+                        sscanf(linebuf+1, "%c ", &ch1);
+                        pixel += ch1;
+                    } else {
+                        sscanf(linebuf+1, "%c%c ", &ch1, &ch2);
+                        pixel += ch1;
+                        pixel += ch2;
+                    }
+                    colormap[pixel] = xpmstrings;
+                } else if (xpmstrings > numcolors) {
+                    // check length of string containing pixel data
+                    if (len != wd * chars_per_pixel) {
+                        DeleteXPMData(xpmdata, maxstrings);
+                        wxString msg;
+                        msg.Printf(_("The XPM data string on line %d in "), *linenum);
+                        msg += rulename;
+                        msg += _(".rule has the wrong length.");
+                        Warning(msg);
+                        *eof = true;
+                        return;
+                    }
+                    // now check that chars in pixel data are valid (ie. in colormap)
+                    for (int i = 1; i <= len; i += chars_per_pixel) {
+                        std::string pixel;
+                        pixel += linebuf[i];
+                        if (chars_per_pixel > 1)
+                            pixel += linebuf[i+1];
+                        if (colormap.find(pixel) == colormap.end()) {
+                            DeleteXPMData(xpmdata, maxstrings);
+                            wxString msg;
+                            msg.Printf(_("The XPM data string on line %d in "), *linenum);
+                            msg += rulename;
+                            msg += _(".rule has an unknown pixel: ");
+                            msg += pixel.c_str();
+                            Warning(msg);
+                            *eof = true;
+                            return;
+                        }
+                    }
                 }
                 char* str = (char*) malloc(len+1);
                 if (str) {
@@ -1957,6 +1998,7 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
                     *eof = true;
                     return;
                 }
+                
                 xpmstrings++;
                 if (xpmstrings == maxstrings) {
                     // we've got all the data for this icon size
@@ -1964,6 +2006,7 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
                     DeleteXPMData(xpmdata, maxstrings);
                     xpmdata = NULL;
                     xpmstarted = 0;
+                    colormap.clear();
                 }
             }
         } else if (strcmp(linebuf, "XPM") == 0) {
