@@ -1930,7 +1930,7 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
                         if (wd > 0 && ht > 0 && ht % wd != 0)
                             msg += _(" (height must be a multiple of width).");
                         else if (chars_per_pixel < 1 || chars_per_pixel > 2)
-                            msg += " (chars_per_pixel must be 1 or 2).";
+                            msg += _(" (chars_per_pixel must be 1 or 2).");
                         else
                             msg += _(" (4 positive integers are required).");
                         Warning(msg);
@@ -1980,7 +1980,7 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
                             msg.Printf(_("The XPM data string on line %d in "), *linenum);
                             msg += rulename;
                             msg += _(".rule has an unknown pixel: ");
-                            msg += pixel.c_str();
+                            msg += wxString(pixel.c_str(), wxConvLocal);
                             Warning(msg);
                             *eof = true;
                             return;
