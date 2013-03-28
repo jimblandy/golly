@@ -29,6 +29,7 @@
 
 #include "wx/dir.h"         // for wxDir
 #include "wx/file.h"        // for wxFile
+#include "wx/filename.h"    // for wxFileName
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -2452,6 +2453,14 @@ static void CreateOneRule(const wxString& rulefile, const wxString& folder,
 static int ConvertRules(const wxString& folder, bool supplied, wxString& htmlinfo)
 {
     int oldcount = 0;
+
+    if (!wxFileName::DirExists(folder)) {
+        // this might happen if user deleted/renamed folder while Golly is running
+        std::ostringstream oss;
+        oss << "Directory does not exist:\n" << folder.mb_str(wxConvLocal);
+        throw std::runtime_error(oss.str().c_str());
+    }
+    
     wxDir dir(folder);
     if (!dir.IsOpened()) {
         std::ostringstream oss;
@@ -2558,22 +2567,24 @@ static void ShowCreatedRules(wxString& htmlinfo)
 
 static void DeleteOldRules(const wxString& folder)
 {
-    wxDir dir(folder);
-    if (dir.IsOpened()) {
-        // build an array of all files in the given folder
-        wxArrayString allfiles;
-        wxString filename;
-        bool found = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES | wxDIR_HIDDEN);
-        while (found) {
-            allfiles.Add(filename);
-            found = dir.GetNext(&filename);
-        }
-        // delete all the .table/tree/colors/icons files
-        for (size_t n = 0; n < allfiles.GetCount(); n++) {
-            filename = allfiles[n];
-            if ( filename.EndsWith(wxT(".colors")) || filename.EndsWith(wxT(".icons")) ||
-                 filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree")) ) {
-                wxRemoveFile(folder + filename);
+    if (wxFileName::DirExists(folder)) {
+        wxDir dir(folder);
+        if (dir.IsOpened()) {
+            // build an array of all files in the given folder
+            wxArrayString allfiles;
+            wxString filename;
+            bool found = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES | wxDIR_HIDDEN);
+            while (found) {
+                allfiles.Add(filename);
+                found = dir.GetNext(&filename);
+            }
+            // delete all the .table/tree/colors/icons files
+            for (size_t n = 0; n < allfiles.GetCount(); n++) {
+                filename = allfiles[n];
+                if ( filename.EndsWith(wxT(".colors")) || filename.EndsWith(wxT(".icons")) ||
+                     filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree")) ) {
+                    wxRemoveFile(folder + filename);
+                }
             }
         }
     }

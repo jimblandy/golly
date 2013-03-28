@@ -1770,6 +1770,23 @@ void InitPaths()
 
 // -----------------------------------------------------------------------------
 
+void CreateMissingFolders()
+{
+    // create userrules and downloaddir if they don't exist
+    if ( !wxFileName::DirExists(userrules) ) {
+        if ( !wxFileName::Mkdir(userrules, 0777, wxPATH_MKDIR_FULL) ) {
+            Warning(_("Could not create your rules directory:\n") + userrules);
+        }
+    }
+    if ( !wxFileName::DirExists(downloaddir) ) {
+        if ( !wxFileName::Mkdir(downloaddir, 0777, wxPATH_MKDIR_FULL) ) {
+            Warning(_("Could not create your download directory:\n") + downloaddir);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void GetPrefs()
 {
     int algoindex = -1;                 // unknown algorithm
@@ -1844,6 +1861,7 @@ void GetPrefs()
         AddDefaultRules();
         AddDefaultKeyActions();
         UpdateAcceleratorStrings();
+        CreateMissingFolders();
         return;
     }
     
@@ -2301,17 +2319,7 @@ void GetPrefs()
     UpdateAcceleratorStrings();
     
     // create some important directories if they don't exist
-    // (these are the directories into which files are downloaded)
-    if ( !wxFileName::DirExists(userrules) ) {
-        if ( !wxFileName::Mkdir(userrules, 0777, wxPATH_MKDIR_FULL) ) {
-            Warning(_("Could not create your rules directory:\n") + userrules);
-        }
-    }
-    if ( !wxFileName::DirExists(downloaddir) ) {
-        if ( !wxFileName::Mkdir(downloaddir, 0777, wxPATH_MKDIR_FULL) ) {
-            Warning(_("Could not create your download directory:\n") + downloaddir);
-        }
-    }
+    CreateMissingFolders();
 }
 
 // -----------------------------------------------------------------------------

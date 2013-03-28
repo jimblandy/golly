@@ -2031,23 +2031,25 @@ void MainFrame::OnClose(wxCloseEvent& event)
         layer->undoredo->ClearUndoRedo();
     }
     
-    // delete all files in tempdir (we assume it has no subdirs)
-    wxDir* dir = new wxDir(tempdir);
-    wxArrayString files;
-    wxString filename;
-    bool more = dir->GetFirst(&filename);
-    while (more) {
-        files.Add(tempdir + filename);
-        more = dir->GetNext(&filename);
-    }
-    // delete wxDir object now otherwise Rmdir below will fail on Windows
-    delete dir;
-    for (size_t n = 0; n < files.GetCount(); n++) {
-        wxRemoveFile(files[n]);
-    }
-    // delete the (hopefully) empty tempdir
-    if (!wxFileName::Rmdir(tempdir)) {
-        Warning(_("Could not delete temporary directory:\n") + tempdir);
+    if (wxFileName::DirExists(tempdir)) {
+        // delete all files in tempdir (we assume it has no subdirs)
+        wxDir* dir = new wxDir(tempdir);
+        wxArrayString files;
+        wxString filename;
+        bool more = dir->GetFirst(&filename);
+        while (more) {
+            files.Add(tempdir + filename);
+            more = dir->GetNext(&filename);
+        }
+        // delete wxDir object now otherwise Rmdir below will fail on Windows
+        delete dir;
+        for (size_t n = 0; n < files.GetCount(); n++) {
+            wxRemoveFile(files[n]);
+        }
+        // delete the (hopefully) empty tempdir
+        if (!wxFileName::Rmdir(tempdir)) {
+            Warning(_("Could not delete temporary directory:\n") + tempdir);
+        }
     }
     
     // allow clipboard data to persist after app exits
