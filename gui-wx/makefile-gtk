@@ -22,8 +22,8 @@ CMDDIR = ../cmdline
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
 SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
-BINFILES = $(EXEDIR)/golly $(EXEDIR)/bgolly \
-   $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
+EXEFILES = $(EXEDIR)/golly $(EXEDIR)/bgolly
+DOCFILES = $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
@@ -247,7 +247,8 @@ srcdist:
 bindist: all
 	-rm -rf $(RELEASENAME)-gtk
 	mkdir $(RELEASENAME)-gtk
-	cp -rp $(BINFILES) $(SHAREDFILES) $(RELEASENAME)-gtk
+	install -s $(EXEFILES) $(RELEASENAME)-gtk
+	cp -rp $(DOCFILES) $(SHAREDFILES) $(RELEASENAME)-gtk
 	find $(RELEASENAME)-gtk -name '.[^.]*' -delete
 	find $(RELEASENAME)-gtk/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-gtk | gzip > $(RELEASENAME)-gtk.tar.gz
