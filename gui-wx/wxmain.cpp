@@ -981,8 +981,8 @@ void MainFrame::DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
 class RightWindow : public wxWindow
 {
 public:
-    RightWindow(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
-    : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
+    RightWindow(wxWindow* parent)
+    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                wxNO_BORDER |
                // need this to avoid layer/edit/timeline bar buttons flashing on Windows
                wxNO_FULL_REPAINT_ON_RESIZE)
@@ -1000,9 +1000,16 @@ public:
 };
 
 BEGIN_EVENT_TABLE(RightWindow, wxWindow)
-EVT_SIZE             (RightWindow::OnSize)
 EVT_ERASE_BACKGROUND (RightWindow::OnEraseBackground)
+EVT_SIZE             (RightWindow::OnSize)
 END_EVENT_TABLE()
+
+// -----------------------------------------------------------------------------
+
+void RightWindow::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
+{
+    // do nothing because layer/edit/timeline bars and viewport cover all of right pane
+}
 
 // -----------------------------------------------------------------------------
 
@@ -1035,13 +1042,6 @@ void RightWindow::OnSize(wxSizeEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void RightWindow::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
-{
-    // do nothing because layer/edit/timeline bars and viewport cover all of right pane
-}
-
-// -----------------------------------------------------------------------------
-
 RightWindow* rightpane;
 
 wxWindow* MainFrame::RightPane()
@@ -1058,14 +1058,8 @@ void MainFrame::ResizeSplitWindow(int wd, int ht)
     int w = showtool ? wd - toolbarwd : wd;
     int h = ht > statusptr->statusht ? ht - statusptr->statusht : 0;
     splitwin->SetSize(x, y, w, h);
-    
-#ifdef __WXOSX__
-    // need this call to resize left and right panes
-    splitwin->UpdateSize();
-#else
-    // wxSplitterWindow automatically resizes left and right panes;
-    // note that RightWindow::OnSize has now been called
-#endif
+    // RightWindow::OnSize has now been called;
+    // wxSplitterWindow automatically resizes left and right panes
 }
 
 // -----------------------------------------------------------------------------
@@ -2703,7 +2697,7 @@ MainFrame::MainFrame()
     
     // create a window for right pane which contains layer/edit/timeline bars
     // and pattern viewport
-    rightpane = new RightWindow(splitwin, 0, 0, wd - toolwd, ht - statht);
+    rightpane = new RightWindow(splitwin);
     if (rightpane == NULL) Fatal(_("Failed to create right pane!"));
     
     // create layer bar and initial layer
@@ -2747,13 +2741,13 @@ MainFrame::MainFrame()
     // these seemingly redundant steps are needed to avoid problems on Windows
     splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
     splitwin->SetSashPosition(dirwinwd);
-    splitwin->SetMinimumPaneSize(50);
+    splitwin->SetMinimumPaneSize(MIN_DIRWD);
     splitwin->Unsplit(patternctrl);
     splitwin->UpdateSize();
     
     splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
     splitwin->SetSashPosition(dirwinwd);
-    splitwin->SetMinimumPaneSize(50);
+    splitwin->SetMinimumPaneSize(MIN_DIRWD);
     splitwin->Unsplit(scriptctrl);
     splitwin->UpdateSize();
     
