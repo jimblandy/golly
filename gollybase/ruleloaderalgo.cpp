@@ -88,6 +88,9 @@ void ruleloaderalgo::SetAlgoVariables(RuleTypes ruletype)
         hshift = LocalRuleTree->hshift;
         vshift = LocalRuleTree->vshift;
     }
+    
+    // need to clear cache
+    ghashbase::setrule("not used");
 }
 
 const char* ruleloaderalgo::LoadTableOrTree(FILE* rulefile, const char* rule)
@@ -204,7 +207,7 @@ ruleloaderalgo::ruleloaderalgo()
     if (LocalRuleTable == NULL) lifefatal("RuleLoader failed to create local RuleTable!");
     if (LocalRuleTree == NULL) lifefatal("RuleLoader failed to create local RuleTree!");
 
-    // probably don't need to do anything else, but play safe
+    // initialize rule_type
     LocalRuleTree->setrule( LocalRuleTree->DefaultRule() );
     SetAlgoVariables(TREE);
 }
