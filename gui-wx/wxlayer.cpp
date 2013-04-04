@@ -56,7 +56,13 @@
 #include "wxalgos.h"       // for algo_type, initalgo, algoinfo, CreateNewUniverse, etc
 #include "wxlayer.h"
 
-#include <map>             // for std::map
+#ifdef _MSC_VER
+   #pragma warning(disable:4702)   // disable "unreachable code" warnings from MSVC
+#endif
+#include <map>                     // for std::map
+#ifdef _MSC_VER
+   #pragma warning(default:4702)   // enable "unreachable code" warnings
+#endif
 
 // -----------------------------------------------------------------------------
 
