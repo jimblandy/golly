@@ -22,6 +22,9 @@
  
  / ***/
 
+#include "prefs.h"      // for showicons
+
+#import "PatternViewController.h"   // for UpdateEditBar, UpdatePattern
 #import "StatePickerController.h"
 
 // -----------------------------------------------------------------------------
@@ -68,6 +71,25 @@
     
     // release all outlets
     spView = nil;
+    iconsSwitch = nil;
+}
+
+// -----------------------------------------------------------------------------
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [iconsSwitch setOn:showicons animated:NO];
+}
+
+// -----------------------------------------------------------------------------
+
+- (IBAction)toggleIcons:(id)sender
+{
+    showicons = !showicons;
+    [spView setNeedsDisplay];
+    UpdateEditBar();
+    UpdatePattern();
 }
 
 // -----------------------------------------------------------------------------

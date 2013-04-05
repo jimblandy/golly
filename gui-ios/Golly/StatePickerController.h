@@ -28,6 +28,9 @@
 @interface StatePickerController : UIViewController
 {
     IBOutlet StatePickerView *spView;
+    IBOutlet UISwitch *iconsSwitch;
 }
+
+- (IBAction)toggleIcons:(id)sender;
 
 @end

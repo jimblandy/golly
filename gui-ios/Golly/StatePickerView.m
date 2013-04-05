@@ -123,19 +123,6 @@
             x += 32;
         }
     }
-
-    /* no need to do this as current drawing state is shown in edit bar:
-    // indicate the current drawing state with a black box
-    [[UIColor blackColor] setStroke];
-    x = dx;
-    y = dy;
-    CGContextMoveToPoint(context, x, y+1);
-    CGContextAddLineToPoint(context, x+32, y+1);
-    CGContextAddLineToPoint(context, x+32, y+33);
-    CGContextAddLineToPoint(context, x, y+33);
-    CGContextAddLineToPoint(context, x, y+1);
-    CGContextStrokePath(context);
-    */
 }
 
 // -----------------------------------------------------------------------------

@@ -172,12 +172,7 @@ void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
         ClearMessage();
 
         int numstates = currlayer->algo->NumCellStates();
-        if (numstates == 2) {
-            // no need for popover; just toggle drawing state
-            currlayer->drawingstate = 1 - currlayer->drawingstate;
-            UpdateEditBar();
-            
-        } else if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+        if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
             // create a popover controller for picking the new drawing state
             
             StatePickerController *statePicker = [[StatePickerController alloc] initWithNibName:nil bundle:nil];
@@ -193,6 +188,9 @@ void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
             // and add 1 extra pixel because we draw boxes around each cell
             wd += 21;
             ht += 21;
+            // allow for switch button and label
+            if (wd < 196) wd = 196;
+            ht += 40;
             statePopover.popoverContentSize = CGSizeMake(wd, ht);
             
             [statePopover presentPopoverFromRect:self.bounds
