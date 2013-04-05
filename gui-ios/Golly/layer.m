@@ -39,6 +39,8 @@
 #include "undo.h"           // for UndoRedo
 #include "layer.h"
 
+#include <map>              // for std::map
+
 // -----------------------------------------------------------------------------
 
 bool inscript = false;          // move to script.m if we ever support scripting!!!
@@ -1147,6 +1149,8 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
     char** xpmdata = NULL;
     int xpmstarted = 0, xpmstrings = 0, maxstrings = 0;
     int wd = 0, ht = 0, numcolors = 0, chars_per_pixel = 0;
+    
+    std::map<std::string,int> colormap;
 
     while (true) {
         if (reader.fgets(linebuf, MAXLINELEN) == 0) {
@@ -1201,16 +1205,51 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                 int len = strlen(linebuf);
                 while (linebuf[len] != '"') len--;
                 len--;
-                if (xpmstrings > numcolors && len != wd * chars_per_pixel) {
-                    DeleteXPMData(xpmdata, maxstrings);
-                    char s[128];
-                    sprintf(s, "The XPM data string on line %d in ", *linenum);
-                    std::string msg(s);
-                    msg += rulename;
-                    msg += ".rule has the wrong length.";
-                    Warning(msg.c_str());
-                    *eof = true;
-                    return;
+                if (xpmstrings > 0 && xpmstrings <= numcolors) {
+                    // build colormap so we can validate chars in pixel data
+                    std::string pixel;
+                    char ch1, ch2;
+                    if (chars_per_pixel == 1) {
+                        sscanf(linebuf+1, "%c ", &ch1);
+                        pixel += ch1;
+                    } else {
+                        sscanf(linebuf+1, "%c%c ", &ch1, &ch2);
+                        pixel += ch1;
+                        pixel += ch2;
+                    }
+                    colormap[pixel] = xpmstrings;
+                } else if (xpmstrings > numcolors) {
+                    // check length of string containing pixel data
+                    if (len != wd * chars_per_pixel) {
+                        DeleteXPMData(xpmdata, maxstrings);
+                        char s[128];
+                        sprintf(s, "The XPM data string on line %d in ", *linenum);
+                        std::string msg(s);
+                        msg += rulename;
+                        msg += ".rule has the wrong length.";
+                        Warning(msg.c_str());
+                        *eof = true;
+                        return;
+                    }
+                    // now check that chars in pixel data are valid (ie. in colormap)
+                    for (int i = 1; i <= len; i += chars_per_pixel) {
+                        std::string pixel;
+                        pixel += linebuf[i];
+                        if (chars_per_pixel > 1)
+                            pixel += linebuf[i+1];
+                        if (colormap.find(pixel) == colormap.end()) {
+                            DeleteXPMData(xpmdata, maxstrings);
+                            char s[128];
+                            sprintf(s, "The XPM data string on line %d in ", *linenum);
+                            std::string msg(s);
+                            msg += rulename;
+                            msg += ".rule has an unknown pixel: ";
+                            msg += pixel;
+                            Warning(msg.c_str());
+                            *eof = true;
+                            return;
+                        }
+                    }
                 }
                 char* str = (char*) malloc(len+1);
                 if (str) {
