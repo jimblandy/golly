@@ -160,7 +160,7 @@ $(OBJDIR)/readpattern.o: $(BASEDIR)/readpattern.cpp
 	$(CXXC) $(CXXFLAGS) $(ZLIB_CXXFLAGS) -c -o $@ $(BASEDIR)/readpattern.cpp
 
 $(OBJDIR)/writepattern.o: $(BASEDIR)/writepattern.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/writepattern.cpp
+	$(CXXC) $(CXXFLAGS) $(ZLIB_CXXFLAGS) -c -o $@ $(BASEDIR)/writepattern.cpp
 
 $(OBJDIR)/util.o: $(BASEDIR)/util.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/util.cpp
