@@ -377,8 +377,11 @@ const char *writepattern(const char *filename, lifealgo &imp,
          errmsg = "Unsupported pattern format!";
    }
 
-   if (errmsg == NULL && !os.flush())
-      errmsg = "Error occurred writing file; maybe disk is full?";
+   if (errmsg == NULL) {
+      os.flush() ;
+      if (os.bad())
+         errmsg = "Error occurred writing file; maybe disk is full?";
+   }
 
    lifeendprogress();
 
