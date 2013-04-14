@@ -1560,7 +1560,7 @@ default:       return "Illegal character in readmacrocell." ;
 	       while (*p && *p <= ' ')
 		 p++ ;
 	       pp = p ;
-	       while (*pp >= '0' && *pp <= '9') pp++ ;
+	       while ((*pp >= '0' && *pp <= '9') || *pp == ',') pp++ ;
 	       if (*pp == 0)
 		  return "Bad FRAMES line" ;
 	       *pp = 0 ;
