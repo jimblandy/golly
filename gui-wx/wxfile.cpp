@@ -1154,6 +1154,46 @@ bool MainFrame::GetTextFromClipboard(wxTextDataObject* textdata)
 
 // -----------------------------------------------------------------------------
 
+bool MainFrame::ClipboardContainsRule()
+{
+    wxTextDataObject data;
+    if (!GetTextFromClipboard(&data)) return false;
+    
+    wxString cliptext = data.GetText();
+    if (!cliptext.StartsWith(wxT("@RULE "))) return false;
+    
+    // extract rule name
+    wxString rulename;
+    int i = 6;
+    while (cliptext[i] > ' ') {
+        rulename += cliptext[i];
+        i++;
+    }
+    
+    // create rulename.rule in user-specific rules folder
+    wxString rulepath = userrules + rulename;
+    rulepath += wxT(".rule");
+    wxFile rulefile(rulepath, wxFile::write);
+    if (!rulefile.IsOpened()) {
+        Warning(_("Could not open .rule file for writing:\n") + rulepath);
+        return true;
+    }
+    if (!rulefile.Write(data.GetText())) {
+        Warning(_("Could not write clipboard data to .rule file!"));
+        rulefile.Close();
+        return true;
+    }
+    rulefile.Close();
+    statusptr->DisplayMessage(_("Created ") + rulepath);
+    
+    // now switch to the newly created rule
+    LoadRule(rulename);
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::OpenClipboard()
 {
     if (generating) {
@@ -1163,6 +1203,10 @@ void MainFrame::OpenClipboard()
         cmdevent.SetId(ID_OPEN_CLIP);
         return;
     }
+    
+    // if clipboard text starts with "@RULE rulename" then install rulename.rule
+    // and switch to that rule
+    if (ClipboardContainsRule()) return;
     
     // load and view pattern data stored in clipboard
     wxTextDataObject data;
