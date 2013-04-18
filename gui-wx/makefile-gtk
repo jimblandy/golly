@@ -11,7 +11,7 @@
 # make install
 # ldconfig
 
-APP_VERSION = 2.5b2
+APP_VERSION = 2.5b3
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..

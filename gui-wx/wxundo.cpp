@@ -443,8 +443,7 @@ void UndoRedo::SaveCellChange(int x, int y, int oldstate, int newstate)
             // ~ChangeNode or ForgetCellChanges will free cellarray
         } else {
             // double size of cellarray
-            cell_change* newptr =
-            (cell_change*) realloc(cellarray, maxchanges * 2 * sizeof(cell_change));
+            cell_change* newptr = (cell_change*) realloc(cellarray, maxchanges * 2 * sizeof(cell_change));
             if (newptr == NULL) {
                 badalloc = true;
                 return;
@@ -485,8 +484,7 @@ bool UndoRedo::RememberCellChanges(const wxString& action, bool olddirty)
     if (numchanges > 0) {
         if (numchanges < maxchanges) {
             // reduce size of cellarray
-            cell_change* newptr =
-            (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
+            cell_change* newptr = (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
             if (newptr != NULL) cellarray = newptr;
             // in the unlikely event that newptr is NULL, cellarray should
             // still point to valid data
@@ -590,8 +588,7 @@ void UndoRedo::RememberRotation(bool clockwise, Selection& oldsel, Selection& ne
     if (numchanges > 0) {
         if (numchanges < maxchanges) {
             // reduce size of cellarray
-            cell_change* newptr =
-            (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
+            cell_change* newptr = (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
             if (newptr != NULL) cellarray = newptr;
         }
         
@@ -1095,8 +1092,7 @@ void UndoRedo::RememberRuleChange(const wxString& oldrule)
     if (numchanges > 0) {
         if (numchanges < maxchanges) {
             // reduce size of cellarray
-            cell_change* newptr =
-            (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
+            cell_change* newptr = (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
             if (newptr != NULL) cellarray = newptr;
         }
         
@@ -1143,8 +1139,7 @@ void UndoRedo::RememberAlgoChange(algo_type oldalgo, const wxString& oldrule)
     if (numchanges > 0) {
         if (numchanges < maxchanges) {
             // reduce size of cellarray
-            cell_change* newptr =
-            (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
+            cell_change* newptr = (cell_change*) realloc(cellarray, numchanges * sizeof(cell_change));
             if (newptr != NULL) cellarray = newptr;
         }
         
