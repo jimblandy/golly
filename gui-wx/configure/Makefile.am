@@ -1,6 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -I$(top_srcdir)/../../gollybase/
 AM_CXXFLAGS = -DGOLLYDIR="$(GOLLYDIR)" -Wall -fno-strict-aliasing
+AM_LDFLAGS = -Wl,--as-needed
 
 bin_PROGRAMS = golly bgolly
 noinst_PROGRAMS = RuleTableToTree

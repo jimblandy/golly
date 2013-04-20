@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
 rm -f sources.am
 echo libgolly_a_SOURCES = ../../gollybase/*.{h,cpp} >>sources.am
