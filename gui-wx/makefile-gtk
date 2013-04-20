@@ -32,7 +32,7 @@ CXXC = g++
 CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
    -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$(BASEDIR) \
    -O5 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
-LDFLAGS := $(LDFLAGS)
+LDFLAGS := -Wl,--as-needed $(LDFLAGS)
 
 # for Perl script support
 PERL_INCLUDE = `perl -MExtUtils::Embed -e ccopts`
