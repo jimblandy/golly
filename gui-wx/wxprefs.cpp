@@ -2451,7 +2451,8 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                                         algoinfo[coloralgo]->algor[0],
                                         algoinfo[coloralgo]->algog[0],
                                         algoinfo[coloralgo]->algob[0],
-                                        red, green, blue);
+                                        red, green, blue,
+                                        false);     // default icons are grayscale
                         } else {
                             dc.SetBrush(bgbrush);
                             dc.DrawRectangle(r);
@@ -2464,7 +2465,8 @@ void CellBoxes::OnPaint(wxPaintEvent& WXUNUSED(event))
                                     algoinfo[coloralgo]->algob[0],
                                     algoinfo[coloralgo]->algor[state],
                                     algoinfo[coloralgo]->algog[state],
-                                    algoinfo[coloralgo]->algob[state]);
+                                    algoinfo[coloralgo]->algob[state],
+                                    false);     // default icons are grayscale
                     }
                 } else {
                     dc.SetBrush(bgbrush);

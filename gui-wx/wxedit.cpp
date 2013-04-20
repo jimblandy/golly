@@ -429,7 +429,8 @@ void EditBar::DrawAllStates(wxDC& dc, int wd)
             dc.SetBrush(wxNullBrush);
             DrawOneIcon(dc, x + 1, BASELINE3 - BOXWD + 1, iconmaps[i],
                         currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0],
-                        currlayer->cellr[i], currlayer->cellg[i], currlayer->cellb[i]);
+                        currlayer->cellr[i], currlayer->cellg[i], currlayer->cellb[i],
+                        currlayer->multicoloricons);
         } else {
             dc.SetBrush(wxBrush(color));
             dc.DrawRectangle(r);
@@ -523,7 +524,8 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
         dc.SetBrush(wxNullBrush);
         DrawOneIcon(dc, x + 1, y - BOXSIZE + 1, iconmaps[state],
                     currlayer->cellr[0],     currlayer->cellg[0],     currlayer->cellb[0],
-                    currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);
+                    currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state],
+                    currlayer->multicoloricons);
     } else {
         dc.SetBrush(wxBrush(cellcolor));
         dc.DrawRectangle(iconbox);

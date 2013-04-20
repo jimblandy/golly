@@ -40,7 +40,8 @@ void DrawView(wxDC& dc, int tileindex);
 
 void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
                  unsigned char deadr, unsigned char deadg, unsigned char deadb,
-                 unsigned char liver, unsigned char liveg, unsigned char liveb);
+                 unsigned char liver, unsigned char liveg, unsigned char liveb,
+                 bool multicolor);
 // Draw the given icon using the given dead cell and live cell colors.
 
 void DrawSelection(wxDC &dc, wxRect& rect);

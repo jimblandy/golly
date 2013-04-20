@@ -40,7 +40,6 @@
 #include "wxgolly.h"       // for wxGetApp
 #include "wxmain.h"        // for ID_ALGO0
 #include "wxutils.h"       // for Fatal, Warning
-#include "wxrender.h"      // for DrawOneIcon
 #include "wxprefs.h"       // for gollydir
 #include "wxlayer.h"       // for currlayer
 #include "wxalgos.h"

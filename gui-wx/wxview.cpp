@@ -1814,7 +1814,8 @@ void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newsta
                     currlayer->cellb[0],
                     currlayer->cellr[drawstate],
                     currlayer->cellg[drawstate],
-                    currlayer->cellb[drawstate]);
+                    currlayer->cellb[drawstate],
+                    currlayer->multicoloricons);
     } else {
         dc.DrawRectangle(x, y, cellsize, cellsize);
     }

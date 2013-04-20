@@ -2888,7 +2888,8 @@ void CellPanel::OnPaint(wxPaintEvent& WXUNUSED(event))
                             currlayer->cellb[0],
                             currlayer->cellr[state],
                             currlayer->cellg[state],
-                            currlayer->cellb[state]);
+                            currlayer->cellb[state],
+                            currlayer->multicoloricons);
             } else {
                 wxColor color(currlayer->cellr[state],
                               currlayer->cellg[state],

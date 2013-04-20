@@ -699,12 +699,12 @@ void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, 
 
 void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
                  unsigned char deadr, unsigned char deadg, unsigned char deadb,
-                 unsigned char liver, unsigned char liveg, unsigned char liveb)
+                 unsigned char liver, unsigned char liveg, unsigned char liveb,
+                 bool multicolor)
 {
     // draw a single icon (either multi-color or grayscale)
     int wd = icon->GetWidth();
     int ht = icon->GetHeight();
-    bool multicolor = currlayer->multicoloricons;
     wxBitmap pixmap(wd, ht, 32);
     
     wxAlphaPixelData pxldata(pixmap);
