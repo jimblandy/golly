@@ -896,7 +896,16 @@ bool MultiColorImage(wxImage& image)
         unsigned char r = *p++;
         unsigned char g = *p++;
         unsigned char b = *p++;
-        if (r != g || g != b) return true;
+        if (r != g || g != b) {
+            if (image.CountColours(2) <= 2) {
+                // Golly 2.4 and older treated two-color icons as monochrome
+                // so we need to convert the image to black-and-white
+                image = image.ConvertToMono(r, g, b);
+                return false;   // grayscale image
+            } else {
+                return true;    // multi-color image
+            }
+        }
     }
     return false;   // grayscale image
 }
@@ -911,6 +920,9 @@ bool LoadIconFile(const wxString& path, int maxstate,
         Warning(_("Could not load icon bitmaps from file:\n") + path);
         return false;
     }
+    
+    // check for multi-color icons
+    currlayer->multicoloricons = MultiColorImage(image);
 
 #ifdef __WXMSW__
     if (!image.HasAlpha()) {
@@ -923,9 +935,6 @@ bool LoadIconFile(const wxString& path, int maxstate,
     // need alpha channel on Linux
     image.SetMaskColour(0, 0, 0);    // make black transparent
 #endif
-    
-    // check for multi-color icons
-    currlayer->multicoloricons = MultiColorImage(image);
     
     wxBitmap allicons(image, -1);    // RGBA
     int wd = allicons.GetWidth();

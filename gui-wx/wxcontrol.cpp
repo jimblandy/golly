@@ -2364,8 +2364,11 @@ static wxString CreateICONS(const wxString& iconspath, bool nocolors)
         }
         int numicons = wd / 15;
         
-        if (nocolors && MultiColorImage(image)) {
-            // there was no .colors file and .icons file is multi-color,
+        // WARNING: MultiColorImage must be called 1st in the next test because
+        // we want image to be converted to black-and-white if it only uses 2 colors
+        // (for compatibility with Golly 2.4 and older)
+        if (MultiColorImage(image) && nocolors) {
+            // the .icons file is multi-color and there was no .colors file,
             // so prepend a @COLORS section that sets non-icon colors
             contents = CreateStateColors(image.GetSubImage(wxRect(0,0,wd,15)), numicons) + contents;
         }

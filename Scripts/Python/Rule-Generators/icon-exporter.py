@@ -214,7 +214,7 @@ def create_average_colors(iconsection):
 
 def get_color_section(rulepath):
     colordata = ""
-    rulefile = open(rulepath,"r")
+    rulefile = open(rulepath,"rU")
     copylines = False
     for line in rulefile:
         if line.startswith("@COLORS"):
@@ -244,7 +244,7 @@ def export_icons(iconsection, rulename):
     fileexists = os.path.isfile(rulepath)
     if fileexists:
         # .rule file already exists so replace or add @ICONS section
-        rulefile = open(rulepath,"r")
+        rulefile = open(rulepath,"rU")
     
         # create a temporary file for writing new rule info
         temphdl, temppath = mkstemp()

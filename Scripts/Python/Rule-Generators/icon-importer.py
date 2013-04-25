@@ -48,7 +48,8 @@ def import_icons(rulename):
             return
     
     try:
-        rulefile = open(rulepath,"r")
+        # open in universal newline mode to handle LF, CR, or CR+LF
+        rulefile = open(rulepath,"rU")
     except:
         g.exit("Failed to open .rule file: " + rulepath)
     
