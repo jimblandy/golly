@@ -654,6 +654,36 @@ wxBitmap** ScaleIconBitmaps(wxBitmap** srcicons, int size)
                 iconptr[i] = NULL;
             } else {
                 wxImage image = srcicons[i]->ConvertToImage();
+
+#ifdef __WXGTK__
+                // fix wxGTK bug when converting black-and-white bitmap (black pixels are 1,2,3 not 0,0,0)
+                if (image.CountColours(2) <= 2) {
+                    int numpixels = image.GetWidth() * image.GetHeight();
+                    unsigned char* newdata = (unsigned char*) malloc(numpixels * 3);
+                    if (newdata) {
+                        unsigned char* p = image.GetData();
+                        unsigned char* n = newdata;
+                        for (int j = 0; j < numpixels; j++) {
+                            unsigned char r = *p++;
+                            unsigned char g = *p++;
+                            unsigned char b = *p++;
+                            if (r == 1 && g == 2 && b == 3) {
+                                // change to black
+                                *n++ = 0;
+                                *n++ = 0;
+                                *n++ = 0;
+                            } else {
+                                // probably white
+                                *n++ = r;
+                                *n++ = g;
+                                *n++ = b;
+                            }
+                        }
+                        image.SetData(newdata);    // image now owns pointer
+                    }
+                }
+#endif
+                
                 // do NOT scale using wxIMAGE_QUALITY_HIGH (thin lines can disappear)
                 image.Rescale(size, size, wxIMAGE_QUALITY_NORMAL);
 #ifdef __WXMSW__
