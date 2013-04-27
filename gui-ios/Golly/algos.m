@@ -884,6 +884,83 @@ int NumAlgos()
 
 // -----------------------------------------------------------------------------
 
+CGImageRef ConvertOldMonochromeIcons(CGImageRef oldimage)
+{
+    // if oldimage uses <= 2 colors and is non-grayscale then return new black-and-white image
+    // for compatibility with monochrome .icons files in Golly 2.4 and older
+    int wd = CGImageGetWidth(oldimage);
+    int ht = CGImageGetHeight(oldimage);
+    int bytesPerPixel = 4;
+    int bytesPerRow = bytesPerPixel * wd;
+    int bitsPerComponent = 8;
+
+    // allocate memory to store oldimage's RGBA bitmap data
+    unsigned char* pxldata = (unsigned char*) calloc(wd * ht * 4, 1);
+    if (pxldata == NULL) return oldimage;
+
+    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef ctx = CGBitmapContextCreate(pxldata, wd, ht,
+        bitsPerComponent, bytesPerRow, colorspace,
+        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), oldimage);
+    CGContextRelease(ctx);
+    CGColorSpaceRelease(colorspace);
+
+    // pxldata now contains the oldimage bitmap in RGBA format so see if it uses <= 2 colors
+    std::list<int> colors;
+    int numcolors = 0;
+    bool grayscale = true;
+    int byte = 0;
+    for (int i = 0; i < wd*ht; i++) {
+        unsigned char r = pxldata[byte];
+        unsigned char g = pxldata[byte+1];
+        unsigned char b = pxldata[byte+2];
+        int color = (r << 16) + (g << 8) + b;
+        if (std::find(colors.begin(),colors.end(),color) == colors.end()) {
+            // first time we've seen this color
+            colors.push_back(color);
+            if (r != g || g != b) grayscale = false;
+            numcolors++;
+            if (numcolors > 2) {
+                free(pxldata);
+                return oldimage;    // more than 2 colors (multi-color icons)
+            }
+        }
+        byte += 4;
+    }
+    
+    // numcolors <= 2; if colors are shades of gray then no need to convert
+    if (grayscale) {
+         free(pxldata);
+         return oldimage;
+    }
+    
+    // change non-black pixels to white
+    byte = 0;
+    for (int i = 0; i < wd*ht; i++) {
+        if (pxldata[byte] || pxldata[byte+1] || pxldata[byte+2]) {
+           pxldata[byte]   = 255;
+           pxldata[byte+1] = 255;
+           pxldata[byte+2] = 255;
+        }
+        byte += 4;
+    }
+    
+    // create new image using modified pixel data
+    colorspace = CGColorSpaceCreateDeviceRGB();
+    ctx = CGBitmapContextCreate(pxldata, wd, ht,
+        bitsPerComponent, bytesPerRow, colorspace,
+        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGImageRef newimage = CGBitmapContextCreateImage(ctx);
+    CGContextRelease(ctx);
+    CGColorSpaceRelease(colorspace);
+    
+    free(pxldata);
+    return newimage;
+}
+
+// -----------------------------------------------------------------------------
+
 bool MultiColorImage(CGImageRef image)
 {
     // return true if image contains at least one color that isn't a shade of gray
@@ -936,6 +1013,8 @@ bool LoadIconFile(const std::string& path, int maxstate,
         Warning(msg.c_str());
         return false;
     }
+    
+    allicons = ConvertOldMonochromeIcons(allicons);
     
     // check dimensions of .icons format
     int wd = CGImageGetWidth(allicons);

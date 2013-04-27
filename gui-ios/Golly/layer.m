@@ -1696,7 +1696,7 @@ void UpdateCurrentColors()
     // deallocate current layer's old icons
     DeleteIcons(currlayer);
 
-    // this flag will change if any icon uses more than 2 colors
+    // this flag will change if any icon uses a non-grayscale color
     currlayer->multicoloricons = false;
         
     // look for rulename.rule first

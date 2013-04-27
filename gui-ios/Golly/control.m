@@ -1938,9 +1938,12 @@ static std::string CreateICONS(const std::string& iconspath, bool nocolors)
         oss << "Could not load image from .icons file:\n" << iconspath.c_str();
         throw std::runtime_error(oss.str().c_str());
     } else {
+        // might need to convert 2-color .icons image to black-and-white
+        image = ConvertOldMonochromeIcons(image);
+
         int wd = CGImageGetWidth(image);
         int ht = CGImageGetHeight(image);
-         if (ht != 15 && ht != 22) {
+        if (ht != 15 && ht != 22) {
             std::ostringstream oss;
             oss << "Image in " << iconspath.c_str() << " has incorrect height (should be 15 or 22).";
             throw std::runtime_error(oss.str().c_str());

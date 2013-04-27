@@ -113,6 +113,10 @@ const char* GetAlgoName(algo_type algotype);
 int NumAlgos();
 // Return current number of algorithms.
 
+CGImageRef ConvertOldMonochromeIcons(CGImageRef oldimage);
+// If given image uses <= 2 colors then return new black-and-white image
+// for compatibility with monochrome .icons files in Golly 2.4 and older.
+
 bool MultiColorImage(CGImageRef image);
 // Return true if image contains at least one color that isn't a shade of gray.
 
