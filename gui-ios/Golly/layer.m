@@ -1373,9 +1373,6 @@ static void LoadRuleInfo(FILE* rulefile, const std::string& rulename,
     int linenum = 0;
     bool eof = false;
     bool skipget = false;
-    
-    *loadedcolors = false;
-    *loadedicons = false;
 
     // the linereader class handles all line endings (CR, CR+LF, LF)
     linereader reader(rulefile);
@@ -1391,13 +1388,13 @@ static void LoadRuleInfo(FILE* rulefile, const std::string& rulename,
             if (linenum == 1) CheckRuleHeader(linebuf, rulename);
         }
         // look for @COLORS or @ICONS section
-        if (strcmp(linebuf, "@COLORS") == 0) {
+        if (strcmp(linebuf, "@COLORS") == 0 && !*loadedcolors) {
             *loadedcolors = true;
             ParseColors(reader, linebuf, MAXLINELEN, &linenum, &eof);
             if (eof) break;
             // otherwise linebuf contains @... so skip next fgets call
             skipget = true;
-        } else if (strcmp(linebuf, "@ICONS") == 0) {
+        } else if (strcmp(linebuf, "@ICONS") == 0 && !*loadedicons) {
             *loadedicons = true;
             ParseIcons(rulename, reader, linebuf, MAXLINELEN, &linenum, &eof);
             if (eof) break;
@@ -1661,8 +1658,6 @@ void CreateColorGradient()
 void UpdateCurrentColors()
 {
     // set current layer's colors and icons according to current algo and rule
-    bool loadedcolors = false;
-    bool loadedicons = false;
     AlgoData* ad = algoinfo[currlayer->algtype];
     int maxstate = currlayer->algo->NumCellStates() - 1;
     
@@ -1698,12 +1693,26 @@ void UpdateCurrentColors()
 
     // this flag will change if any icon uses a non-grayscale color
     currlayer->multicoloricons = false;
+
+    bool loadedcolors = false;
+    bool loadedicons = false;
         
     // look for rulename.rule first
     FILE* rulefile = FindRuleFile(rulename);
     if (rulefile) {
         LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
-        // we don't use loadedcolors at the moment, but leave it in for now
+        
+        if (!loadedcolors || !loadedicons) {
+            // if rulename has the form foo-* then look for foo-shared.rule
+            // and load its colors and/or icons
+            size_t hyphenpos = rulename.rfind('-');
+            if (hyphenpos != std::string::npos && rulename.rfind("-shared") == std::string::npos) {
+                rulename = rulename.substr(0, hyphenpos) + "-shared";
+                rulefile = FindRuleFile(rulename);
+                if (rulefile) LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
+            }
+        }
+        
         if (!loadedicons) UseDefaultIcons(maxstate);
 
         // get icon pixel data (used for rendering)

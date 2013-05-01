@@ -2130,6 +2130,68 @@ static wxString CreateTABLE(const wxString& tablepath)
 
 // -----------------------------------------------------------------------------
 
+static wxString CreateEmptyTABLE(const wxString& folder, const wxString& prefix,
+                                 const wxSortedArrayString& allfiles)
+{
+    // create a valid table that does nothing
+    wxString contents = wxT("\nThis file contains colors and/or icons shared by ");
+    contents += prefix;
+    contents += wxT("-* rules.\n");
+    contents += wxT("\n@TABLE\n\n");
+
+    // search allfiles for 1st prefix-*.table/tree file and extract numstates
+    wxString numstates;
+    for (size_t n = 0; n < allfiles.GetCount(); n++) {
+        wxString filename = allfiles[n];
+        if (filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree"))) {
+            if (prefix == filename.BeforeLast('-')) {
+                wxString filepath = folder + filename;
+                FILE* f = fopen(filepath.mb_str(wxConvLocal), "r");
+                if (f) {
+                    const int MAXLINELEN = 4095;
+                    char linebuf[MAXLINELEN + 1];
+                    linereader reader(f);
+                    while (true) {
+                        if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+                        if (strncmp(linebuf, "n_states:", 9) == 0) {
+                            numstates = wxString(linebuf,wxConvLocal) + wxT("\n");
+                            break;
+                        } else if (strncmp(linebuf, "num_states=", 11) == 0) {
+                            // convert to table syntax
+                            numstates = wxT("n_states:") + wxString(linebuf+11,wxConvLocal);
+                            numstates += wxT("\n");
+                            break;
+                        }
+                    }
+                    reader.close();
+                } else {
+                    std::ostringstream oss;
+                    oss << "Could not read .table/tree file:\n" << filepath.mb_str(wxConvLocal);
+                    throw std::runtime_error(oss.str().c_str());
+                }
+            }
+        }
+    }
+    
+    if (numstates.length() == 0) {
+        numstates = wxT("n_states:256\n");
+        wxString msg = _("Could not find ") + prefix;
+        msg += _("-*.table/tree to set n_states in ");
+        msg += prefix;
+        msg += _("-shared.rule.");
+        Warning(msg);
+    }
+    
+    contents += numstates;
+    contents += wxT("neighborhood:Moore\n");    // anything valid would do
+    contents += wxT("symmetries:none\n");       // ditto
+    contents += wxT("# do nothing\n");          // no transitions
+
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
 static wxString CreateTREE(const wxString& treepath)
 {
     wxString contents = wxT("\n@TREE\n\n");
@@ -2392,36 +2454,40 @@ static wxString CreateICONS(const wxString& iconspath, bool nocolors)
 static void CreateOneRule(const wxString& rulefile, const wxString& folder,
                           const wxSortedArrayString& allfiles, wxString& htmlinfo)
 {
-    wxString rulename = rulefile.BeforeLast('.');
-    wxString prefix = rulename.BeforeLast('-');
-    wxString tablefile = rulename + wxT(".table");
-    wxString treefile = rulename + wxT(".tree");
-    wxString colorsfile = rulename + wxT(".colors");
-    wxString iconsfile = rulename + wxT(".icons");
     wxString tabledata, treedata, colordata, icondata;
+    wxString rulename = rulefile.BeforeLast('.');
     
-    if (allfiles.Index(tablefile) != wxNOT_FOUND)
-        tabledata = CreateTABLE(folder + tablefile);
-    
-    if (allfiles.Index(treefile) != wxNOT_FOUND)
-        treedata = CreateTREE(folder + treefile);
-    
-    if (allfiles.Index(colorsfile) != wxNOT_FOUND) {
-        colordata = CreateCOLORS(folder + colorsfile);
-    } else if (prefix.length() > 0) {
-        // check for shared .colors file
+    if (rulename.EndsWith(wxT("-shared"))) {
+        // create a .rule file with colors and/or icons shared by other .rule files
+        wxString prefix = rulename.BeforeLast('-');
+        
+        tabledata = CreateEmptyTABLE(folder, prefix, allfiles);
+        
         wxString sharedcolors = prefix + wxT(".colors");
         if (allfiles.Index(sharedcolors) != wxNOT_FOUND)
             colordata = CreateCOLORS(folder + sharedcolors);
-    }
-    
-    if (allfiles.Index(iconsfile) != wxNOT_FOUND) {
-        icondata = CreateICONS(folder + iconsfile, colordata.length() == 0);
-    } else if (prefix.length() > 0) {
-        // check for shared .icons file
+
         wxString sharedicons = prefix + wxT(".icons");
         if (allfiles.Index(sharedicons) != wxNOT_FOUND)
-            icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);
+            icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);        
+    
+    } else {
+        wxString tablefile = rulename + wxT(".table");
+        wxString treefile = rulename + wxT(".tree");
+        wxString colorsfile = rulename + wxT(".colors");
+        wxString iconsfile = rulename + wxT(".icons");
+        
+        if (allfiles.Index(tablefile) != wxNOT_FOUND)
+            tabledata = CreateTABLE(folder + tablefile);
+        
+        if (allfiles.Index(treefile) != wxNOT_FOUND)
+            treedata = CreateTREE(folder + treefile);
+        
+        if (allfiles.Index(colorsfile) != wxNOT_FOUND)
+            colordata = CreateCOLORS(folder + colorsfile);
+        
+        if (allfiles.Index(iconsfile) != wxNOT_FOUND)
+            icondata = CreateICONS(folder + iconsfile, colordata.length() == 0);
     }
     
     wxString contents = wxT("@RULE ") + rulename + wxT("\n");
@@ -2453,9 +2519,29 @@ static void CreateOneRule(const wxString& rulefile, const wxString& folder,
 
 // -----------------------------------------------------------------------------
 
+static bool SharedColorsIcons(const wxString& prefix, const wxSortedArrayString& allfiles)
+{
+    // return true if prefix.colors/icons is shared by at least one prefix-*.table/tree file
+
+    for (size_t n = 0; n < allfiles.GetCount(); n++) {
+        wxString filename = allfiles[n];
+        if (filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree"))) {
+            if (prefix == filename.BeforeLast('-')) {
+                return true;
+            }
+        }
+    }
+    
+    // prefix-*.table/tree does not exist in allfiles
+    return false;
+}
+
+// -----------------------------------------------------------------------------
+
 static int ConvertRules(const wxString& folder, bool supplied, wxString& htmlinfo)
 {
-    int oldcount = 0;
+    wxString filename, rulefile, rulename;
+    int depcount = 0;
 
     if (!wxFileName::DirExists(folder)) {
         // this might happen if user deleted/renamed folder while Golly is running
@@ -2480,70 +2566,53 @@ static int ConvertRules(const wxString& folder, bool supplied, wxString& htmlinf
     htmlinfo += folder;
     htmlinfo += _(")<p>\n");
     
-    // build an array of all files in the given folder
-    // (using a sorted array speeds up Index calls)
+    // build an array of all files in the given folder (using a sorted array speeds up Index calls)
     wxSortedArrayString allfiles;
-    wxString filename, rulefile;
     bool found = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES | wxDIR_HIDDEN);
     while (found) {
         allfiles.Add(filename);
         found = dir.GetNext(&filename);
     }
 
-    // create an array of candidate .rule files
+    // create an array of candidate .rule files to be created
     wxSortedArrayString candidates;
     for (size_t n = 0; n < allfiles.GetCount(); n++) {
         filename = allfiles[n];
-        if ( filename.EndsWith(wxT(".colors")) || filename.EndsWith(wxT(".icons")) ||
-             filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree")) ) {
+        rulename = filename.BeforeLast('.');
+        bool colorsicons = filename.EndsWith(wxT(".colors")) || filename.EndsWith(wxT(".icons"));
+        bool tabletree = filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree"));
+        if (colorsicons || tabletree) {
+            depcount++;
+            if (colorsicons) {
+                if (SharedColorsIcons(rulename, allfiles)) {
+                    // colors and/or icons will be shared by one or more rulename-*.rule files
+                    rulefile = rulename + wxT("-shared.rule");
+                } else {
+                    rulefile = rulename + wxT(".rule");
+                }
+            } else {
+                // .table/tree file
+                rulefile = rulename + wxT(".rule");
+            }
             // add .rule file to candidates if it hasn't been added yet
-            rulefile = filename.BeforeLast('.') + wxT(".rule");
-            if (candidates.Index(rulefile) == wxNOT_FOUND) {
+            // and if it doesn't already exist
+            if (candidates.Index(rulefile) == wxNOT_FOUND &&
+                allfiles.Index(rulefile) == wxNOT_FOUND) {
                 candidates.Add(rulefile);
             }
-            oldcount++;
         }
     }
     
-    // look for .rule files of the form foo-*.rule and ignore any foo.rule
-    // entries in candidates if foo.table and foo.tree don't exist
-    // (ie. foo.colors and/or foo.icons is shared by foo-*.table/tree)
-    wxSortedArrayString ignore;
+    // create the new .rule files
     for (size_t n = 0; n < candidates.GetCount(); n++) {
-        rulefile = candidates[n];
-        wxString prefix = rulefile.BeforeLast('-');
-        if (prefix.length() > 0) {
-            wxString tablefile = prefix + wxT(".table");
-            wxString treefile = prefix + wxT(".tree");
-            if ( (allfiles.Index(tablefile) == wxNOT_FOUND) &&
-                 (allfiles.Index(treefile) == wxNOT_FOUND) ) {
-                wxString sharedfile = prefix + wxT(".rule");
-                if (candidates.Index(sharedfile) != wxNOT_FOUND) {
-                    ignore.Add(sharedfile);
-                }
-            }
-        }
-        // also ignore any existing .rule files
-        if (allfiles.Index(rulefile) != wxNOT_FOUND) {
-            ignore.Add(rulefile);
-        }
+        CreateOneRule(candidates[n], folder, allfiles, htmlinfo);
     }
     
-    // non-ignored candidates are the .rule files that need to be created
-    int rulecount = 0;
-    for (size_t n = 0; n < candidates.GetCount(); n++) {
-        rulefile = candidates[n];
-        if (ignore.Index(rulefile) == wxNOT_FOUND) {
-            CreateOneRule(rulefile, folder, allfiles, htmlinfo);
-            rulecount++;
-        }
-    }
-    
-    if (rulecount == 0) {
+    if (candidates.GetCount() == 0) {
         htmlinfo += _("None.\n");
     }
     
-    return oldcount;
+    return depcount;
 }
 
 // -----------------------------------------------------------------------------
@@ -2649,53 +2718,39 @@ wxString MainFrame::CreateRuleFiles(const wxSortedArrayString& deprecated,
     // use the given list of deprecated .table/tree/colors/icons files
     // (recently extracted from a .zip file and installed in userrules)
     // to create new .rule files, except those in ziprules (they were in
-    // .zip file and have already been installed)
+    // the .zip file and have already been installed)
     wxString htmlinfo;
     bool aborted = false;
     try {
         // create an array of candidate .rule files to be created
-        wxString rulefile;
+        wxString rulefile, filename, rulename;
         wxSortedArrayString candidates;
         for (size_t n = 0; n < deprecated.GetCount(); n++) {
+            filename = deprecated[n];
+            rulename = filename.BeforeLast('.');
+            if (filename.EndsWith(wxT(".colors")) || filename.EndsWith(wxT(".icons"))) {
+                if (SharedColorsIcons(rulename, deprecated)) {
+                    // colors and/or icons will be shared by one or more rulename-*.rule files
+                    rulefile = rulename + wxT("-shared.rule");
+                } else {
+                    rulefile = rulename + wxT(".rule");
+                }
+            } else {
+                // .table/tree file
+                rulefile = rulename + wxT(".rule");
+            }
             // add .rule file to candidates if it hasn't been added yet
-            rulefile = deprecated[n].BeforeLast('.') + wxT(".rule");
-            if (candidates.Index(rulefile) == wxNOT_FOUND) {
+            // and if it isn't in the zip file (ie. already installed)
+            if (candidates.Index(rulefile) == wxNOT_FOUND &&
+                ziprules.Index(rulefile) == wxNOT_FOUND) {
                 candidates.Add(rulefile);
             }
         }
         
-        // look for .rule files of the form foo-*.rule and ignore any foo.rule
-        // entries in candidates if foo.table and foo.tree don't exist
-        // (ie. foo.colors and/or foo.icons is shared by foo-*.table/tree)
-        wxSortedArrayString ignore;
+        // create the new .rule files (unlike ConvertRules, here we overwrite any
+        // existing .rule files in case the zip file's contents have changed)
         for (size_t n = 0; n < candidates.GetCount(); n++) {
-            rulefile = candidates[n];
-            wxString prefix = rulefile.BeforeLast('-');
-            if (prefix.length() > 0) {
-                wxString tablefile = prefix + wxT(".table");
-                wxString treefile = prefix + wxT(".tree");
-                if ( (deprecated.Index(tablefile) == wxNOT_FOUND) &&
-                     (deprecated.Index(treefile) == wxNOT_FOUND) ) {
-                    wxString sharedfile = prefix + wxT(".rule");
-                    if (candidates.Index(sharedfile) != wxNOT_FOUND) {
-                        ignore.Add(sharedfile);
-                    }
-                }
-            }
-            // also ignore any .rule files included in zip file (and thus installed)
-            if (ziprules.Index(rulefile) != wxNOT_FOUND) {
-                ignore.Add(rulefile);
-            }
-            // unlike ConvertRules, we will overwrite any existing .rule files
-            // (not in zip file) in case the zip file's contents have changed
-        }
-        
-        // candidates not in ignore list are the .rule files that need to be created
-        for (size_t n = 0; n < candidates.GetCount(); n++) {
-            rulefile = candidates[n];
-            if (ignore.Index(rulefile) == wxNOT_FOUND) {
-                CreateOneRule(rulefile, userrules, deprecated, htmlinfo);
-            }
+            CreateOneRule(candidates[n], userrules, deprecated, htmlinfo);
         }
     }
     catch(const std::exception& e) {

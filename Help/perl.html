@@ -4,6 +4,7 @@
 
 <p>
 <dd><a href="#install"><b>Installing Perl</b></a></dd>
+<dd><a href="#incompatibility"><b>Incompatibility with Perl 5.14</b></a></dd>
 <dd><a href="#examples"><b>Example scripts</b></a></dd>
 <dd><a href="#commands"><b>Golly's scripting commands</b></a></dd>
 <dd><a href="#cellarrays"><b>Cell arrays</b></a></dd>
@@ -19,8 +20,9 @@
 <p>
 Before you can run a .pl script, Perl needs to be installed on your system.
 Mac OS X users don't need to do anything because Perl is already installed.
-Windows and Linux users need to have Perl 5.10 or later.
-If you are using Linux then you might already have Perl 5.10 installed;
+Windows and Linux users need to have Perl 5.10 or 5.12 (note that 5.14 or later
+won't work &mdash; see <a href="#incompatibility">below</a>).
+If you're using Linux then you might already have Perl 5.10 installed;
 if not, visit <a href="http://www.perl.org/">www.perl.org</a> and download
 a suitable installer.  Windows users are advised to download the
 <a href="http://www.activestate.com/Products/ActivePerl/">ActivePerl</a> installer.
@@ -38,6 +40,33 @@ installed on your system.  A successfully loaded library is remembered
 (in your GollyPrefs file) so you won't get the prompt again unless you
 remove Perl or install a new version.  If Perl isn't installed then
 you'll have to hit Cancel and you won't be able to run any .pl scripts.
+
+
+<p><a name="incompatibility"></a>&nbsp;<br>
+<font size=+1><b>Incompatibility with Perl 5.14</b></font>
+
+<p>
+The Linux and Windows versions of Golly are built with the Perl 5.10 headers.
+Unfortunately, Perl 5.14 and later is not compatible with these headers and
+you'll get an error message if you try to use a Perl 5.14 library with Golly.
+If your Linux system doesn't have Perl 5.10 (or 5.12) then you can
+build and install a local version for Golly using these commands:
+
+<dd><table border=0><pre>
+sudo apt-get install perlbrew
+perlbrew init
+perlbrew install -Duseshrplib -Dusethreads perl-5.10.1</pre></table></dd>
+
+<p>
+This creates perl5/perlbrew/build/perl-5.10.1/libperl.so in your home
+directory.  Quit Golly, edit GollyPrefs (in ~/.golly/), find the line that
+sets perl_lib and change it to use the appropriate path:
+
+<dd><table border=0><pre>
+perl_lib=/home/username/perl5/perlbrew/build/perl-5.10.1/libperl.so</pre></table></dd>
+
+<p>
+Restart Golly and now all the Perl scripts should run okay.
 
 
 <p><a name="examples"></a>&nbsp;<br>
