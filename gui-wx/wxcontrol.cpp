@@ -2522,7 +2522,6 @@ static void CreateOneRule(const wxString& rulefile, const wxString& folder,
 static bool SharedColorsIcons(const wxString& prefix, const wxSortedArrayString& allfiles)
 {
     // return true if prefix.colors/icons is shared by at least one prefix-*.table/tree file
-
     for (size_t n = 0; n < allfiles.GetCount(); n++) {
         wxString filename = allfiles[n];
         if (filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree"))) {

@@ -1622,6 +1622,81 @@ static std::string CreateTABLE(const std::string& tablepath)
 
 // -----------------------------------------------------------------------------
 
+static bool EndsWith(const std::string& str, const std::string& suffix)
+{
+    // return true if str ends with suffix
+    size_t strlen = str.length();
+    size_t sufflen = suffix.length();
+    return (strlen >= sufflen) && (str.rfind(suffix) == strlen - sufflen);
+}
+
+// -----------------------------------------------------------------------------
+
+static std::string CreateEmptyTABLE(const std::string& folder, const std::string& prefix,
+                                    std::list<std::string>& allfiles)
+{
+    // create a valid table that does nothing
+    std::string contents = "\nThis file contains colors and/or icons shared by ";
+    contents += prefix;
+    contents += "-* rules.\n";
+    contents += "\n@TABLE\n\n";
+
+    // search allfiles for 1st prefix-*.table/tree file and extract numstates
+    std::string numstates;
+    std::list<std::string>::iterator it;
+    for (it=allfiles.begin(); it!=allfiles.end(); ++it) {
+        std::string filename = *it;
+        if (EndsWith(filename,".table") || EndsWith(filename,".tree")) {
+            size_t hyphenpos = filename.rfind('-');
+            if (hyphenpos != std::string::npos && prefix == filename.substr(0,hyphenpos)) {
+                std::string filepath = folder + filename;
+                FILE* f = fopen(filepath.c_str(), "r");
+                if (f) {
+                    const int MAXLINELEN = 4095;
+                    char linebuf[MAXLINELEN + 1];
+                    linereader reader(f);
+                    while (true) {
+                        if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+                        if (strncmp(linebuf, "n_states:", 9) == 0) {
+                            numstates = linebuf;
+                            numstates += "\n";
+                            break;
+                        } else if (strncmp(linebuf, "num_states=", 11) == 0) {
+                            // convert to table syntax
+                            numstates = "n_states:" + std::string(linebuf+11);
+                            numstates += "\n";
+                            break;
+                        }
+                    }
+                    reader.close();
+                } else {
+                    std::ostringstream oss;
+                    oss << "Could not read .table/tree file:\n" << filepath.c_str();
+                    throw std::runtime_error(oss.str().c_str());
+                }
+            }
+        }
+    }
+    
+    if (numstates.length() == 0) {
+        numstates = "n_states:256\n";
+        std::string msg = "Could not find " + prefix;
+        msg += "-*.table/tree to set n_states in ";
+        msg += prefix;
+        msg += "-shared.rule.";
+        Warning(msg.c_str());
+    }
+    
+    contents += numstates;
+    contents += "neighborhood:Moore\n";    // anything valid would do
+    contents += "symmetries:none\n";       // ditto
+    contents += "# do nothing\n";          // no transitions
+
+    return contents;
+}
+
+// -----------------------------------------------------------------------------
+
 static std::string CreateTREE(const std::string& treepath)
 {
     std::string contents = "\n@TREE\n\n";
@@ -1974,42 +2049,42 @@ static std::string CreateICONS(const std::string& iconspath, bool nocolors)
 // -----------------------------------------------------------------------------
 
 static void CreateOneRule(const std::string& rulefile, const std::string& folder,
-                          std::list<std::string>& deprecated, std::string& htmlinfo)
+                          std::list<std::string>& allfiles, std::string& htmlinfo)
 {
-    std::string rulename = rulefile.substr(0,rulefile.rfind('.'));
-    std::string tablefile = rulename + ".table";
-    std::string treefile = rulename + ".tree";
-    std::string colorsfile = rulename + ".colors";
-    std::string iconsfile = rulename + ".icons";
     std::string tabledata, treedata, colordata, icondata;
-    
-    std::string prefix = "";
-    size_t hyphenpos = rulename.rfind('-');
-    if (hyphenpos != std::string::npos)
-        prefix = rulename.substr(0,hyphenpos);
-    
-    if (FOUND(deprecated,tablefile))
-        tabledata = CreateTABLE(folder + tablefile);
-    
-    if (FOUND(deprecated,treefile))
-        treedata = CreateTREE(folder + treefile);
-    
-    if (FOUND(deprecated,colorsfile)) {
-        colordata = CreateCOLORS(folder + colorsfile);
-    } else if (prefix.length() > 0) {
-        // check for shared .colors file
+    std::string rulename = rulefile.substr(0,rulefile.rfind('.'));
+
+    if (EndsWith(rulename,"-shared")) {
+        // create a .rule file with colors and/or icons shared by other .rule files
+        std::string prefix = rulename.substr(0,rulename.rfind('-'));
+        
+        tabledata = CreateEmptyTABLE(folder, prefix, allfiles);
+        
         std::string sharedcolors = prefix + ".colors";
-        if (FOUND(deprecated,sharedcolors))
+        if (FOUND(allfiles,sharedcolors))
             colordata = CreateCOLORS(folder + sharedcolors);
-    }
-    
-    if (FOUND(deprecated,iconsfile)) {
-        icondata = CreateICONS(folder + iconsfile, colordata.length() == 0);
-    } else if (prefix.length() > 0) {
-        // check for shared .icons file
+
         std::string sharedicons = prefix + ".icons";
-        if (FOUND(deprecated,sharedicons))
-            icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);
+        if (FOUND(allfiles,sharedicons))
+            icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);        
+    
+    } else {
+        std::string tablefile = rulename + ".table";
+        std::string treefile = rulename + ".tree";
+        std::string colorsfile = rulename + ".colors";
+        std::string iconsfile = rulename + ".icons";
+        
+        if (FOUND(allfiles,tablefile))
+            tabledata = CreateTABLE(folder + tablefile);
+        
+        if (FOUND(allfiles,treefile))
+            treedata = CreateTREE(folder + treefile);
+        
+        if (FOUND(allfiles,colorsfile))
+            colordata = CreateCOLORS(folder + colorsfile);
+        
+        if (FOUND(allfiles,iconsfile))
+            icondata = CreateICONS(folder + iconsfile, colordata.length() == 0);
     }
     
     std::string contents = "@RULE " + rulename + "\n";
@@ -2046,6 +2121,26 @@ static void CreateOneRule(const std::string& rulefile, const std::string& folder
 
 // -----------------------------------------------------------------------------
 
+static bool SharedColorsIcons(const std::string& prefix, std::list<std::string>& allfiles)
+{
+    // return true if prefix.colors/icons is shared by at least one prefix-*.table/tree file
+    std::list<std::string>::iterator it;
+    for (it=allfiles.begin(); it!=allfiles.end(); ++it) {
+        std::string filename = *it;
+        if (EndsWith(filename,".table") || EndsWith(filename,".tree")) {
+            size_t hyphenpos = filename.rfind('-');
+            if (hyphenpos != std::string::npos && prefix == filename.substr(0,hyphenpos)) {
+                return true;
+            }
+        }
+    }
+    
+    // prefix-*.table/tree does not exist in allfiles
+    return false;
+}
+
+// -----------------------------------------------------------------------------
+
 std::string CreateRuleFiles(std::list<std::string>& deprecated,
                             std::list<std::string>& ziprules)
 {
@@ -2056,51 +2151,36 @@ std::string CreateRuleFiles(std::list<std::string>& deprecated,
     std::string htmlinfo;
     bool aborted = false;
     try {
-        // create a list of candidate .rule files
-        std::string rulefile;
+        // create a list of candidate .rule files to be created
+        std::string rulefile, filename, rulename;
         std::list<std::string> candidates;
         std::list<std::string>::iterator it;
         for (it=deprecated.begin(); it!=deprecated.end(); ++it) {
+            filename = *it;
+            rulename = filename.substr(0,filename.rfind('.'));
+            if (EndsWith(filename,".colors") || EndsWith(filename,".icons")) {
+                if (SharedColorsIcons(rulename, deprecated)) {
+                    // colors and/or icons will be shared by one or more rulename-*.rule files
+                    rulefile = rulename + "-shared.rule";
+                } else {
+                    rulefile = rulename + ".rule";
+                }
+            } else {
+                // .table/tree file
+                rulefile = rulename + ".rule";
+            }
             // add .rule file to candidates if it hasn't been added yet
-            rulefile = *it;
-            rulefile = rulefile.substr(0,rulefile.rfind('.')) + ".rule";
-            if (NOT_FOUND(candidates,rulefile)) {
+            // and if it isn't in the zip file (ie. already installed)
+            if (NOT_FOUND(candidates,rulefile) &&
+                NOT_FOUND(ziprules,rulefile)) {
                 candidates.push_back(rulefile);
             }
         }
         
-        // look for .rule files of the form foo-*.rule and ignore any foo.rule
-        // entries in candidates if foo.table and foo.tree don't exist
-        // (ie. foo.colors and/or foo.icons is shared by foo-*.table/tree)
-        std::list<std::string> ignore;
+        // create the new .rule files (note that we overwrite any existing .rule files
+        // in case the zip file's contents have changed)
         for (it=candidates.begin(); it!=candidates.end(); ++it) {
-            rulefile = *it;
-            size_t hyphenpos = rulefile.rfind('-');
-            if (hyphenpos != std::string::npos && hyphenpos > 0) {
-                std::string prefix = rulefile.substr(0,hyphenpos);
-                std::string tablefile = prefix + ".table";
-                std::string treefile = prefix + ".tree";
-                if ( NOT_FOUND(deprecated,tablefile) && NOT_FOUND(deprecated,treefile) ) {
-                    std::string sharedfile = prefix + ".rule";
-                    if (FOUND(candidates,sharedfile)) {
-                        ignore.push_back(sharedfile);
-                    }
-                }
-            }
-            // also ignore any .rule files included in zip file (and thus installed)
-            if (FOUND(ziprules,rulefile)) {
-                ignore.push_back(rulefile);
-            }
-            // note that we will overwrite any existing .rule files
-            // (not in ziprules) in case the zip file's contents have changed
-        }
-        
-        // candidates not in ignore list are the .rule files that need to be created
-        for (it=candidates.begin(); it!=candidates.end(); ++it) {
-            rulefile = *it;
-            if (NOT_FOUND(ignore,rulefile)) {
-                CreateOneRule(rulefile, userrules, deprecated, htmlinfo);
-            }
+            CreateOneRule(*it, userrules, deprecated, htmlinfo);
         }
     }
     catch(const std::exception& e) {
