@@ -113,6 +113,36 @@ def import_icons(rulename):
 
 # --------------------------------------------------------------------
 
+def check_for_shared_rule(rulename):
+    # rulename has at least one hyphen so get all chars before the last hyphen
+    prefix = rulename.rsplit('-',1)[0]
+    
+    # replace any illegal filename chars with underscores
+    filename = prefix.replace("/","_").replace("\\","_") + "-shared.rule"
+    
+    rulepath = g.getdir("rules") + filename
+    if not os.path.isfile(rulepath):
+        rulepath = g.getdir("app") + "Rules/" + filename
+        if not os.path.isfile(rulepath):
+            # there is no prefix-shared.rule file
+            return ""
+    
+    # ask user if they would prefer to edit icons in shared file
+    sharedname = prefix + "-shared"
+    try:
+        answer = g.getstring("There are no icons in " + rulename + ".rule.\n" +
+                             "Would you prefer to edit the icons in " + sharedname + ".rule?",
+                             "Yes", "Edit icons in shared rule?")
+    except:
+        # user hit Cancel (which would normally abort script)
+        return ""
+    if len(answer) == 0 or (answer[0] != "Y" and answer[0] != "y"):
+        return ""
+    
+    return sharedname   # user said Yes
+
+# --------------------------------------------------------------------
+
 def draw_line(x1, y1, x2, y2, state = 1):
     # draw a line of cells in given state from x1,y1 to x2,y2
     g.setcell(x1, y1, state)
@@ -352,13 +382,18 @@ if g.getname().startswith(layerprefix):
 
 g.addlayer()
 rulename = g.getrule().split(":")[0]
-g.new(layerprefix + rulename)
-livestates = g.numstates() - 1
-deadcolor = g.getcolors(0)
-deadrgb = (deadcolor[1], deadcolor[2], deadcolor[3])
 
 # search for rulename.rule and import any icon data (also builds iconcolors)
 import_icons(rulename)
+
+if len(iconcolors) == 0 and ("-" in rulename) and not (rulename.endswith("-shared")):
+    # rulename.rule has no icons and rulename contains a hyphen, so
+    # check if prefix-shared.rule exists and ask user if they want to edit
+    # the icons in that file
+    sharedname = check_for_shared_rule(rulename)
+    if len(sharedname) > 0:
+        rulename = sharedname
+        import_icons(rulename)
 
 iconnote = ""
 if len(iconcolors) == 0:
@@ -366,6 +401,11 @@ if len(iconcolors) == 0:
 
 # check if icons are grayscale
 grayscale_icons = not multi_color_icons(iconcolors)
+
+g.new(layerprefix + rulename)
+livestates = g.numstates() - 1
+deadcolor = g.getcolors(0)
+deadrgb = (deadcolor[1], deadcolor[2], deadcolor[3])
 
 # switch to a Generations rule so we can have lots of colors
 g.setrule("//256")
