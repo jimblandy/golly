@@ -2139,8 +2139,8 @@ static wxString CreateEmptyTABLE(const wxString& folder, const wxString& prefix,
     contents += wxT("-* rules.\n");
     contents += wxT("\n@TABLE\n\n");
 
-    // search allfiles for 1st prefix-*.table/tree file and extract numstates
-    wxString numstates;
+    // search allfiles for 1st prefix-*.table/tree file and extract numstates and neighborhood
+    wxString numstates, neighborhood;
     for (size_t n = 0; n < allfiles.GetCount(); n++) {
         wxString filename = allfiles[n];
         if (filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree"))) {
@@ -2155,11 +2155,20 @@ static wxString CreateEmptyTABLE(const wxString& folder, const wxString& prefix,
                         if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
                         if (strncmp(linebuf, "n_states:", 9) == 0) {
                             numstates = wxString(linebuf,wxConvLocal) + wxT("\n");
-                            break;
                         } else if (strncmp(linebuf, "num_states=", 11) == 0) {
                             // convert to table syntax
                             numstates = wxT("n_states:") + wxString(linebuf+11,wxConvLocal);
                             numstates += wxT("\n");
+                        } else if (strncmp(linebuf, "neighborhood:", 13) == 0) {
+                            neighborhood = wxString(linebuf,wxConvLocal) + wxT("\n");
+                            break;
+                        } else if (strncmp(linebuf, "num_neighbors=", 14) == 0) {
+                            // convert to table syntax
+                            neighborhood = wxT("neighborhood:");
+                            if (linebuf[14] == '4')
+                                neighborhood += wxT("vonNeumann\n");
+                            else
+                                neighborhood += wxT("Moore\n");
                             break;
                         }
                     }
@@ -2183,9 +2192,9 @@ static wxString CreateEmptyTABLE(const wxString& folder, const wxString& prefix,
     }
     
     contents += numstates;
-    contents += wxT("neighborhood:Moore\n");    // anything valid would do
-    contents += wxT("symmetries:none\n");       // ditto
-    contents += wxT("# do nothing\n");          // no transitions
+    contents += neighborhood;
+    contents += wxT("symmetries:none\n");   // anything valid would do
+    contents += wxT("# do nothing\n");      // no transitions
 
     return contents;
 }

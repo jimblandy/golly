@@ -1641,8 +1641,8 @@ static std::string CreateEmptyTABLE(const std::string& folder, const std::string
     contents += "-* rules.\n";
     contents += "\n@TABLE\n\n";
 
-    // search allfiles for 1st prefix-*.table/tree file and extract numstates
-    std::string numstates;
+    // search allfiles for 1st prefix-*.table/tree file and extract numstates and neighborhood
+    std::string numstates, neighborhood;
     std::list<std::string>::iterator it;
     for (it=allfiles.begin(); it!=allfiles.end(); ++it) {
         std::string filename = *it;
@@ -1660,11 +1660,21 @@ static std::string CreateEmptyTABLE(const std::string& folder, const std::string
                         if (strncmp(linebuf, "n_states:", 9) == 0) {
                             numstates = linebuf;
                             numstates += "\n";
-                            break;
                         } else if (strncmp(linebuf, "num_states=", 11) == 0) {
                             // convert to table syntax
                             numstates = "n_states:" + std::string(linebuf+11);
                             numstates += "\n";
+                        } else if (strncmp(linebuf, "neighborhood:", 13) == 0) {
+                            neighborhood = linebuf;
+                            numstates += "\n";
+                            break;
+                        } else if (strncmp(linebuf, "num_neighbors=", 14) == 0) {
+                            // convert to table syntax
+                            neighborhood = "neighborhood:";
+                            if (linebuf[14] == '4')
+                                neighborhood += "vonNeumann\n";
+                            else
+                                neighborhood += "Moore\n";
                             break;
                         }
                     }
@@ -1688,9 +1698,9 @@ static std::string CreateEmptyTABLE(const std::string& folder, const std::string
     }
     
     contents += numstates;
-    contents += "neighborhood:Moore\n";    // anything valid would do
-    contents += "symmetries:none\n";       // ditto
-    contents += "# do nothing\n";          // no transitions
+    contents += neighborhood;
+    contents += "symmetries:none\n";    // anything valid would do
+    contents += "# do nothing\n";       // no transitions
 
     return contents;
 }
