@@ -362,12 +362,40 @@ def create31x31icons():
 
 # --------------------------------------------------------------------
 
+def create_smaller_icons(big, small):
+    # scale down the big x big bitmaps into small x small bitmaps
+    # using a simple sampling algorithm
+    global iconinfo15, iconinfo31
+    if big == 15:
+        numicons = iconinfo15[1] / 15
+        ybig = 32
+    else:
+        # big = 31
+        numicons = iconinfo31[1] / 31
+        ybig = 0
+    if small == 7:
+        y = 48
+    else:
+        # small = 15
+        y = 32
+    sample = big / small
+    offset = sample / 2
+    for i in xrange(numicons):
+        x = i*32
+        for row in xrange(small):
+            for col in xrange(small):
+                state = g.getcell(x + offset + col*sample, ybig + offset + row*sample)
+                if state > 0:
+                    g.setcell(x+col, y+row, state)
+
+# --------------------------------------------------------------------
+
 def multi_color_icons(iconcolors):
     # return True if at least one icon color isn't a shade of gray
     for R,G,B in iconcolors:
         if R != G or G != B: return True
-
-    return False    # grayscale
+    # grayscale
+    return False
 
 # --------------------------------------------------------------------
 
@@ -427,10 +455,22 @@ draw_icons(iconinfo31, deadrgb)
 draw_icons(iconinfo15, deadrgb)
 draw_icons(iconinfo7, deadrgb)
 
-# create missing 31x31 icons by scaling up the 15x15 icons
+# create missing icons by scaling up/down the existing icons
 if len(iconinfo31) == 0 and len(iconinfo15) > 0:
     create31x31icons()
-    iconnote = "The 31x31 icons were created by scaling up the 15x15 icons.\n\n"
+    iconnote += "The 31x31 icons were created by scaling up the 15x15 icons.\n\n"
+
+if len(iconinfo15) == 0 and len(iconinfo31) > 0:
+    create_smaller_icons(31, 15)
+    iconnote += "The 15x15 icons were created by scaling down the 31x31 icons.\n\n"
+
+if len(iconinfo7) == 0:
+    if len(iconinfo15) > 0:
+        create_smaller_icons(15, 7)
+        iconnote += "The 7x7 icons were created by scaling down the 15x15 icons.\n\n"
+    elif len(iconinfo31) > 0:
+        create_smaller_icons(31, 7)
+        iconnote += "The 7x7 icons were created by scaling down the 31x31 icons.\n\n"
 
 g.setoption("showlayerbar",True)
 g.setoption("showallstates",True)
