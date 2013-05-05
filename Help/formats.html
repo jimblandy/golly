@@ -657,8 +657,11 @@ The script searches for <i>rulename</i>.rule in
 then in the supplied Rules folder.  If found, it extracts any @ICONS data
 and displays the icon bitmaps in gray boxes.  The location of these
 boxes will be used by icon-exporter.py, so don't move them.
-If the icon data has no 31x31 icons then the script creates
-31x31 bitmaps by scaling up the 15x15 icons.
+
+<p>
+If the @ICONS data is missing icons at a particular size then the script
+creates them by scaling up or down an existing set of icons.
+For example, missing 31x31 icons will be created by scaling up the 15x15 icons.
 
 <p>
 The new layer uses a Generations rule with the maximum number of
