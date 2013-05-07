@@ -1582,20 +1582,22 @@ void PatternView::ProcessKey(int key, int modifiers)
     
     action_info action = FindAction(key, modifiers);
     switch (action.id) {
-        case DO_NOTHING:     // any unassigned key turns off full screen mode
+        case DO_NOTHING:
+            // any unassigned key turns off full screen mode
             if (mainptr->fullscreen) mainptr->ToggleFullScreen();
             break;
             
-        case DO_OPENFILE:    if (IsHTMLFile(action.file)) {
-            // show HTML file in help window
-            if (!busy) ShowHelp(action.file);
-        } else {
-            // load pattern or run script
-            if (!inscript && !busy) mainptr->OpenFile(action.file, true);
-        }
+        case DO_OPENFILE:
+            if (IsHTMLFile(action.file)) {
+                // show HTML file in help window
+                if (!busy) ShowHelp(action.file);
+            } else {
+                // load pattern or run script
+                if (!inscript && !busy) mainptr->OpenFile(action.file, true);
+            }
             break;
             
-            // File menu actions
+        // File menu actions
         case DO_NEWPATT:     if (!inscript && !busy) mainptr->NewPattern(); break;
         case DO_OPENPATT:    if (!inscript && !busy) mainptr->OpenPattern(); break;
         case DO_OPENCLIP:    if (!inscript && !busy) mainptr->OpenClipboard(); break;
@@ -1610,7 +1612,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_SCRIPTS:     mainptr->ToggleShowScripts(); break;
         case DO_QUIT:        mainptr->QuitApp(); break;
             
-            // Edit menu actions
+        // Edit menu actions
         case DO_UNDO:        if (!inscript && !timeline && !busy) currlayer->undoredo->UndoChange(); break;
         case DO_REDO:        if (!inscript && !timeline && !busy) currlayer->undoredo->RedoChange(); break;
         case DO_DISABLE:     if (!inscript) mainptr->ToggleAllowUndo(); break;
@@ -1618,7 +1620,17 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_COPY:        if (!inscript) CopySelection(); break;
         case DO_CLEAR:       if (!inscript && !timeline) ClearSelection(); break;
         case DO_CLEAROUT:    if (!inscript && !timeline) ClearOutsideSelection(); break;
-        case DO_PASTE:       if (!inscript && !timeline && !busy) PasteClipboard(false); break;
+        case DO_PASTE:
+            if (!inscript && !timeline && !busy) {
+                // PasteClipboard(false) has a Yield loop so we do the following to avoid
+                // calling ProcessKey re-entrantly as it causes problems on Mac OS X
+                // and possibly the other platforms
+                wxCommandEvent evt(wxEVT_COMMAND_MENU_SELECTED, ID_PASTE);
+                wxPostEvent(mainptr->GetEventHandler(), evt);
+                return;
+            }
+            break;
+        // case DO_PASTE:    if (!inscript && !timeline && !busy) PasteClipboard(false); break;
         case DO_PASTESEL:    if (!inscript && !timeline && !busy) PasteClipboard(true); break;
         case DO_SELALL:      if (!inscript) SelectAll(); break;
         case DO_REMOVESEL:   if (!inscript) RemoveSelection(); break;
@@ -1643,20 +1655,21 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_NEXTHIGHER:  CycleDrawingState(true); break;
         case DO_NEXTLOWER:   CycleDrawingState(false); break;
             
-            // Control menu actions
-        case DO_STARTSTOP:   if (!inscript) {
-            if (timeline) {
-                if (currlayer->algo->isrecording()) {
-                    StartStopRecording();   // stop recording
+        // Control menu actions
+        case DO_STARTSTOP:
+            if (!inscript) {
+                if (timeline) {
+                    if (currlayer->algo->isrecording()) {
+                        StartStopRecording();   // stop recording
+                    } else {
+                        PlayTimeline(1);        // play forwards or stop if already playing
+                    }
+                } else if (mainptr->generating) {
+                    mainptr->Stop();
                 } else {
-                    PlayTimeline(1);        // play forwards or stop if already playing
+                    mainptr->GeneratePattern();
                 }
-            } else if (mainptr->generating) {
-                mainptr->Stop();
-            } else {
-                mainptr->GeneratePattern();
             }
-        }
             break;
         case DO_NEXTGEN:     if (!inscript && !timeline) mainptr->NextGeneration(false); break;
         case DO_NEXTSTEP:    if (!inscript && !timeline) mainptr->NextGeneration(true); break;
@@ -1673,15 +1686,16 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_PLAYBACK:    if (!inscript && timeline) PlayTimeline(-1); break;
         case DO_SETRULE:     if (!inscript && !timeline && !busy) mainptr->ShowRuleDialog(); break;
         case DO_TIMING:      if (!inscript && !timeline) mainptr->DisplayTimingInfo(); break;
-        case DO_HASHING:     if (!inscript && !timeline && !busy) {
-            if (currlayer->algtype != HLIFE_ALGO)
-                mainptr->ChangeAlgorithm(HLIFE_ALGO);
-            else
-                mainptr->ChangeAlgorithm(QLIFE_ALGO);
-        }
+        case DO_HASHING:
+            if (!inscript && !timeline && !busy) {
+                if (currlayer->algtype != HLIFE_ALGO)
+                    mainptr->ChangeAlgorithm(HLIFE_ALGO);
+                else
+                    mainptr->ChangeAlgorithm(QLIFE_ALGO);
+            }
             break;
             
-            // View menu actions
+        // View menu actions
         case DO_LEFT:        PanLeft( SmallScroll(currlayer->view->getwidth()) ); break;
         case DO_RIGHT:       PanRight( SmallScroll(currlayer->view->getwidth()) ); break;
         case DO_UP:          PanUp( SmallScroll(currlayer->view->getheight()) ); break;
@@ -1717,7 +1731,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_SHOWTIME:    ToggleTimelineBar(); break;
         case DO_INFO:        if (!busy) mainptr->ShowPatternInfo(); break;
             
-            // Layer menu actions
+        // Layer menu actions
         case DO_ADD:         if (!inscript) AddLayer(); break;
         case DO_CLONE:       if (!inscript) CloneLayer(); break;
         case DO_DUPLICATE:   if (!inscript) DuplicateLayer(); break;
@@ -1731,12 +1745,13 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_STACK:       if (!inscript) ToggleStackLayers(); break;
         case DO_TILE:        if (!inscript) ToggleTileLayers(); break;
             
-            // Help menu actions
-        case DO_HELP:        if (!busy) {
-            // if help window is open then bring it to the front,
-            // otherwise open it and display most recent help file
-            ShowHelp(wxEmptyString);
-        }
+        // Help menu actions
+        case DO_HELP:
+            if (!busy) {
+                // if help window is open then bring it to the front,
+                // otherwise open it and display most recent help file
+                ShowHelp(wxEmptyString);
+            }
             break;
         case DO_ABOUT:       if (!inscript && !busy) ShowAboutBox(); break;
             
@@ -2484,7 +2499,7 @@ void PatternView::OnKeyUp(wxKeyEvent& event)
         }
     }
     
-    event.Skip();
+    // no need to call event.Skip() here
 }
 
 // -----------------------------------------------------------------------------
