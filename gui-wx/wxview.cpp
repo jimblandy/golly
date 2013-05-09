@@ -2856,6 +2856,50 @@ void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
+void PatternView::OnMouseMotion(wxMouseEvent& event)
+{
+    statusptr->CheckMouseLocation(mainptr->IsActive());
+    
+    // check if translucent controls need to be shown/hidden
+    if (mainptr->IsActive()) {
+        wxPoint pt( event.GetX(), event.GetY() );
+        bool show = (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) &&
+                    !(drawingcells || selectingcells || movingview || waitingforclick) &&
+                    !(numlayers > 1 && tilelayers && tileindex != currindex);
+        if (showcontrols != show) {
+            // let CheckCursor set showcontrols and call RefreshRect
+            CheckCursor(true);
+        }
+    }
+
+    // we do the following test to ensure ReleaseMouse() gets called
+    // (in case OnMouseUp doesn't get called when it should)
+    if (drawingcells || selectingcells || movingview || clickedcontrol > NO_CONTROL) {
+        // check if no mouse buttons are being pressed
+        if (!event.Dragging()) StopDraggingMouse();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::OnMouseEnter(wxMouseEvent& WXUNUSED(event))
+{
+    // Win bug??? we don't get this event if CaptureMouse has been called
+    CheckCursor(mainptr->IsActive());
+    // no need to call CheckMouseLocation here (OnMouseMotion will be called)
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::OnMouseExit(wxMouseEvent& WXUNUSED(event))
+{
+    // Win bug??? we don't get this event if CaptureMouse has been called
+    CheckCursor(mainptr->IsActive());
+    statusptr->CheckMouseLocation(mainptr->IsActive());
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::OnMouseWheel(wxMouseEvent& event)
 {
     // wheelpos should be persistent, because in theory we should keep track of
@@ -2905,43 +2949,6 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
     inscript = saveinscript;
     // do following after restoring inscript so we don't change stop button if inscript
     mainptr->UpdateUserInterface(mainptr->IsActive());
-}
-
-// -----------------------------------------------------------------------------
-
-void PatternView::OnMouseMotion(wxMouseEvent& event)
-{
-    statusptr->CheckMouseLocation(mainptr->IsActive());
-    
-    // check if translucent controls need to be shown/hidden
-    if (mainptr->IsActive()) {
-        wxPoint pt( event.GetX(), event.GetY() );
-        bool show = (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) &&
-        !(drawingcells || selectingcells || movingview || waitingforclick) &&
-        !(numlayers > 1 && tilelayers && tileindex != currindex);
-        if (showcontrols != show) {
-            // let CheckCursor set showcontrols and call RefreshRect
-            CheckCursor(true);
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void PatternView::OnMouseEnter(wxMouseEvent& WXUNUSED(event))
-{
-    // Win bug??? we don't get this event if CaptureMouse has been called
-    CheckCursor(mainptr->IsActive());
-    // no need to call CheckMouseLocation here (OnMouseMotion will be called)
-}
-
-// -----------------------------------------------------------------------------
-
-void PatternView::OnMouseExit(wxMouseEvent& WXUNUSED(event))
-{
-    // Win bug??? we don't get this event if CaptureMouse has been called
-    CheckCursor(mainptr->IsActive());
-    statusptr->CheckMouseLocation(mainptr->IsActive());
 }
 
 // -----------------------------------------------------------------------------
