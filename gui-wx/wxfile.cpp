@@ -1170,9 +1170,21 @@ bool MainFrame::ClipboardContainsRule()
         i++;
     }
     
-    // create rulename.rule in user-specific rules folder
+    // check if rulename.rule already exists
     wxString rulepath = userrules + rulename;
     rulepath += wxT(".rule");
+    if (wxFileExists(rulepath)) {
+        wxString question = _("Do you want to replace the existing ") + rulename;
+        question += _(".rule with the version in the clipboard?");
+        int answer = wxMessageBox(question, _("Replace existing .rule file?"),
+                                  wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT, wxGetActiveWindow());
+        if (answer == wxNO) {
+            // don't overwrite existing .rule file
+            return true;
+        }
+    }
+    
+    // create rulename.rule in user-specific rules folder
     wxFile rulefile(rulepath, wxFile::write);
     if (!rulefile.IsOpened()) {
         Warning(_("Could not open .rule file for writing:\n") + rulepath);

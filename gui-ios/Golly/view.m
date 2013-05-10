@@ -28,7 +28,7 @@
 #include "hlifealgo.h"
 #include "viewport.h"
 
-#include "utils.h"          // for Warning, Fatal, Beep, etc
+#include "utils.h"          // for Warning, Fatal, YesNo, Beep, etc
 #include "prefs.h"          // for showgridlines, etc
 #include "status.h"         // for DisplayMessage, etc
 #include "render.h"         // for CreatePasteImage, DestroyPasteImage
@@ -1002,9 +1002,19 @@ bool ClipboardContainsRule()
         i++;
     }
     
-    // create Documents/Rules/rulename.rule
+    // check if Documents/Rules/rulename.rule already exists
     std::string rulepath = userrules + rulename;
     rulepath += ".rule";
+    if (FileExists(rulepath)) {
+        std::string question = "Do you want to replace the existing " + rulename;
+        question += ".rule with the version in the pasteboard?";
+        if (!YesNo(question.c_str())) {
+            // don't overwrite existing .rule file
+            return true;
+        }
+    }
+    
+    // create Documents/Rules/rulename.rule
     FILE* rulefile = fopen(rulepath.c_str(), "w");
     if (rulefile) {
         if (fputs(data.c_str(), rulefile) == EOF) {
