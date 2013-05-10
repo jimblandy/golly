@@ -715,8 +715,8 @@ void MainFrame::UpdateMenuItems(bool active)
         }
         
         mbar->Enable(ID_START,        active && !currlayer->algo->isrecording());
-        mbar->Enable(ID_NEXT,         active && !timeline && !generating && !inscript);
-        mbar->Enable(ID_STEP,         active && !timeline && !generating && !inscript);
+        mbar->Enable(ID_NEXT,         active && !timeline && !inscript);
+        mbar->Enable(ID_STEP,         active && !timeline && !inscript);
         mbar->Enable(ID_RESET,        active && !timeline && !inscript &&
                                       (generating || currlayer->algo->getGeneration() > currlayer->startgen));
         mbar->Enable(ID_SETGEN,       active && !timeline && !inscript);

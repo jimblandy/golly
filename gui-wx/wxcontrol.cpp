@@ -1211,18 +1211,6 @@ void MainFrame::GeneratePattern()
     
     generating = true;               // avoid re-entry
     wxGetApp().PollerReset();
-    
-#ifdef __WXMSW__
-    wxMenuBar* mbar = GetMenuBar();
-    if (mbar) {
-        // remove any accelerators from the Next Gen and Next Step menu items
-        // so their keyboard shortcuts can be used to stop generating;
-        // this is necessary on Windows because Golly won't see any
-        // key events for a disabled menu item
-        RemoveAccelerator(mbar, ID_NEXT, DO_NEXTGEN);
-        RemoveAccelerator(mbar, ID_STEP, DO_NEXTSTEP);
-    }
-#endif
     UpdateUserInterface(IsActive());
     
     // only show hashing info while generating, otherwise Mac app can crash
@@ -1269,20 +1257,11 @@ void MainFrame::GeneratePattern()
     }
     
     generating = false;
-    
     lifealgo::setVerbose(0);
     
     // for DisplayTimingInfo
     endtime = stopwatch->Time();
     endgen = currlayer->algo->getGeneration().todouble();
-    
-#ifdef __WXMSW__
-    if (mbar) {
-        // restore accelerators removed above
-        SetAccelerator(mbar, ID_NEXT, DO_NEXTGEN);
-        SetAccelerator(mbar, ID_STEP, DO_NEXTSTEP);
-    }
-#endif
     
     // display the final pattern
     if (currlayer->autofit) viewptr->FitInView(0);
