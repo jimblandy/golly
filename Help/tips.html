@@ -50,6 +50,45 @@ full screen mode.
 While dragging the mouse to make (or modify) a selection, the escape key
 can be used to cancel the operation and restore the original selection.
 </li>
+<li>
+Avoid the temptation to put your own patterns, scripts or rules inside Golly's
+supplied folders &mdash; it will make it difficult to upgrade to a future version.
+A much better idea is to create separate folders for your own files and put those folders
+alongside the supplied folders, so your Golly folder looks something like this:
+
+<p><table cellspacing=0 cellpadding=0>
+<tr><td>Golly</td><td width=20> </td> <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Golly.exe</td><td width=20> </td>
+    <td>(Golly.app on Mac, golly on Linux)</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Help</td><td width=20> </td>
+    <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Patterns</td><td width=20> </td>
+    <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Rules</td><td width=20> </td>
+    <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Scripts</td><td width=20> </td>
+    <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-downloads</td><td width=20> </td>
+    <td>(contains all your downloaded files; select in
+         <a href="prefs:file">Preferences > File</a>)</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-patterns</td><td width=20> </td>
+    <td>(contains all your pattern files)</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-rules</td><td width=20> </td>
+    <td>(contains all your .rule files; select in
+         <a href="prefs:control">Preferences > Control</a>)</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-scripts</td><td width=20> </td>
+    <td>(contains all your .pl/.py files)</td></tr>
+</table>
+
+<p>
+Use File > Set Patterns Folder and select the Golly folder.  Now all your folders
+(and the supplied folders) are visible in the patterns panel, so with just a
+few clicks you can load any pattern, run any script, or switch to any .rule file.
+Or you can right-click (or control-click) on any of those files to open them
+in your <a href="prefs:file">preferred text editor</a>.
+When upgrading to a new version of Golly, simply drag all the distributed files
+and folders into your Golly folder and replace the old versions.
+</li>
 </ul>
 
 </body>
