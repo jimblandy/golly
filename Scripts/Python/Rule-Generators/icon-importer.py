@@ -5,6 +5,7 @@
 import golly as g
 from glife import getminbox, pattern
 from glife.text import make_text
+from glife.BuiltinIcons import circles, diamonds, hexagons, triangles
 from colorsys import hsv_to_rgb
 import os
 
@@ -34,26 +35,14 @@ def parse_hex(hexstr):
 
 # --------------------------------------------------------------------
 
-def import_icons(rulename):
+def use_builtin_icons(shape):
     global iconinfo31, iconinfo15, iconinfo7, iconcolors
     
-    # replace any illegal filename chars with underscores
-    rulename = rulename.replace("/","_").replace("\\","_")
+    if shape == "circles": lines = circles.split('\n')
+    if shape == "diamonds": lines = diamonds.split('\n')
+    if shape == "hexagons": lines = hexagons.split('\n')
+    if shape == "triangles": lines = triangles.split('\n')
     
-    rulepath = g.getdir("rules") + rulename + ".rule"
-    if not os.path.isfile(rulepath):
-        rulepath = g.getdir("app") + "Rules/" + rulename + ".rule"
-        if not os.path.isfile(rulepath):
-            # there is no .rule file
-            return
-    
-    try:
-        # open in universal newline mode to handle LF, CR, or CR+LF
-        rulefile = open(rulepath,"rU")
-    except:
-        g.exit("Failed to open .rule file: " + rulepath)
-    
-    foundicons = False
     xpmcount = 0
     width = 0
     height = 0
@@ -61,11 +50,10 @@ def import_icons(rulename):
     chars_per_pixel = 0
     iconinfo = []
     colordict = {}
+    iconcolors = []
     
-    for line in rulefile:
-        if line.startswith("@ICONS"):
-            foundicons = True
-        elif foundicons and line.startswith("XPM"):
+    for line in lines:
+        if line == "XPM":
             xpmcount = 1
             iconinfo = []
             colordict = {}
@@ -105,10 +93,93 @@ def import_icons(rulename):
                 xpmcount = 0    # skip any extra lines
             else:
                 xpmcount += 1
-        elif foundicons and line.startswith("@"):
-            # start of another section
-            break
 
+# --------------------------------------------------------------------
+
+def import_icons(rulename):
+    global iconinfo31, iconinfo15, iconinfo7, iconcolors
+    
+    # replace any illegal filename chars with underscores
+    rulename = rulename.replace("/","_").replace("\\","_")
+    
+    rulepath = g.getdir("rules") + rulename + ".rule"
+    if not os.path.isfile(rulepath):
+        rulepath = g.getdir("app") + "Rules/" + rulename + ".rule"
+        if not os.path.isfile(rulepath):
+            # there is no .rule file
+            return
+    
+    try:
+        # open in universal newline mode to handle LF, CR, or CR+LF
+        rulefile = open(rulepath,"rU")
+    except:
+        g.exit("Failed to open .rule file: " + rulepath)
+    
+    foundicons = False
+    xpmcount = 0
+    width = 0
+    height = 0
+    num_colors = 0
+    chars_per_pixel = 0
+    iconinfo = []
+    colordict = {}
+    iconcolors = []
+    
+    # WARNING: The code below must agree with how Golly looks for icon info
+    # (see LoadRuleInfo and ParseIcons in wxlayer.cpp).  In particular, if
+    # there are multiple @ICONS sections then only the 1st one is used.
+    
+    for line in rulefile:
+        if foundicons and line.startswith("@"):
+            # start of another section (possibly another @ICONS section)
+            break
+        line = line.rstrip("\n")
+        if line == "@ICONS":
+            foundicons = True
+        elif foundicons and line == "XPM":
+            xpmcount = 1
+            iconinfo = []
+            colordict = {}
+        elif foundicons and line in ("circles","diamonds","hexagons","triangles"):
+            use_builtin_icons(line)
+            # don't break (agrees with Golly)
+        elif xpmcount > 0 and line[0] == "\"":
+            # extract the stuff inside double quotes, ignoring anything after 2nd one
+            line = line.lstrip("\"").split("\"")[0]
+            if xpmcount == 1:
+                # parse "width height num_colors chars_per_pixel"
+                header = line.split()
+                width = int(header[0])
+                height = int(header[1])
+                num_colors = int(header[2])
+                chars_per_pixel = int(header[3])
+                iconinfo.append(width)
+                iconinfo.append(height)
+                iconinfo.append(num_colors)
+                iconinfo.append(chars_per_pixel)
+            
+            elif xpmcount > 1 and xpmcount <= 1 + num_colors:
+                # parse color index line like "A c #FFFFFF" or "AB c #FF009900BB00"
+                key, c, hexrgb = line.split()
+                rgb = parse_hex(hexrgb.lstrip("#"))
+                if not rgb in iconcolors:
+                    iconcolors.append(rgb)
+                colordict[key] = rgb
+                if xpmcount == 1 + num_colors:
+                    iconinfo.append(colordict)
+            
+            elif xpmcount <= 1 + num_colors + height:
+                # simply append pixel data in line like "......AAA......"
+                iconinfo.append(line)
+            
+            if xpmcount == 1 + num_colors + height:
+                if width == 31: iconinfo31 = iconinfo
+                if width == 15: iconinfo15 = iconinfo
+                if width == 7: iconinfo7 = iconinfo
+                xpmcount = 0    # skip any extra lines
+            else:
+                xpmcount += 1
+    
     rulefile.close()
 
 # --------------------------------------------------------------------

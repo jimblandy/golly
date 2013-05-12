@@ -4,6 +4,7 @@
 
 import golly as g
 from glife import getminbox, pattern
+from glife.BuiltinIcons import circles, diamonds, hexagons, triangles
 import os
 from tempfile import mkstemp
 from shutil import move
@@ -336,5 +337,16 @@ icondata += extract_icons(7)
 
 if len(icondata) == 0:
     g.exit("There are no icon images to export.")
+
+if not multi_color_icons:
+    # check if the icon data matches Golly's built-in grayscale icons
+    if icondata == circles:
+        icondata = "\ncircles\n"
+    elif icondata == diamonds:
+        icondata = "\ndiamonds\n"
+    elif icondata == hexagons:
+        icondata = "\nhexagons\n"
+    elif icondata == triangles:
+        icondata = "\ntriangles\n"
 
 export_icons("@ICONS\n" + icondata, rulename)

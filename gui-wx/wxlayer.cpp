@@ -1124,6 +1124,21 @@ static wxBitmap** CopyIcons(wxBitmap** srcicons, int maxstate)
 
 // -----------------------------------------------------------------------------
 
+static void CopyBuiltinIcons(wxBitmap** i7x7, wxBitmap** i15x15, wxBitmap** i31x31)
+{
+    int maxstate = currlayer->algo->NumCellStates() - 1;
+
+    if (currlayer->icons7x7) FreeIconBitmaps(currlayer->icons7x7);
+    if (currlayer->icons15x15) FreeIconBitmaps(currlayer->icons15x15);
+    if (currlayer->icons31x31) FreeIconBitmaps(currlayer->icons31x31);
+
+    currlayer->icons7x7 = CopyIcons(i7x7, maxstate);
+    currlayer->icons15x15 = CopyIcons(i15x15, maxstate);
+    currlayer->icons31x31 = CopyIcons(i31x31, maxstate);
+}
+
+// -----------------------------------------------------------------------------
+
 void AddLayer()
 {
     if (numlayers >= MAX_LAYERS) return;
@@ -2022,26 +2037,16 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
             xpmstrings = 0;
         } else if (strcmp(linebuf, "circles") == 0) {
             // use circular icons
-            int maxstate = currlayer->algo->NumCellStates() - 1;
-            currlayer->icons7x7 = CopyIcons(circles7x7, maxstate);
-            currlayer->icons15x15 = CopyIcons(circles15x15, maxstate);
-            currlayer->icons31x31 = CopyIcons(circles31x31, maxstate);
+            CopyBuiltinIcons(circles7x7, circles15x15, circles31x31);
         } else if (strcmp(linebuf, "diamonds") == 0) {
             // use diamond-shaped icons
-            int maxstate = currlayer->algo->NumCellStates() - 1;
-            currlayer->icons7x7 = CopyIcons(diamonds7x7, maxstate);
-            currlayer->icons15x15 = CopyIcons(diamonds15x15, maxstate);
-            currlayer->icons31x31 = CopyIcons(diamonds31x31, maxstate);
+            CopyBuiltinIcons(diamonds7x7, diamonds15x15, diamonds31x31);
         } else if (strcmp(linebuf, "hexagons") == 0) {
             // use hexagonal icons
-            int maxstate = currlayer->algo->NumCellStates() - 1;
-            currlayer->icons7x7 = CopyIcons(hexagons7x7, maxstate);
-            currlayer->icons15x15 = CopyIcons(hexagons15x15, maxstate);
-            currlayer->icons31x31 = CopyIcons(hexagons31x31, maxstate);
+            CopyBuiltinIcons(hexagons7x7, hexagons15x15, hexagons31x31);
         } else if (strcmp(linebuf, "triangles") == 0) {
             // use triangular icons
-            int maxstate = currlayer->algo->NumCellStates() - 1;
-            if (maxstate != 3) {
+            if (currlayer->algo->NumCellStates() != 4) {
                 wxString msg;
                 msg.Printf(_("The triangular icons specified on line %d in "), *linenum);
                 msg += rulename;
@@ -2049,9 +2054,7 @@ static void ParseIcons(const wxString& rulename, linereader& reader, char* lineb
                 Warning(msg);
                 // don't return 
             } else {
-                currlayer->icons7x7 = CopyIcons(triangles7x7, maxstate);
-                currlayer->icons15x15 = CopyIcons(triangles15x15, maxstate);
-                currlayer->icons31x31 = CopyIcons(triangles31x31, maxstate);
+                CopyBuiltinIcons(triangles7x7, triangles15x15, triangles31x31);
             }
         } else if (linebuf[0] == '@') {
             // found next section, so stop parsing
