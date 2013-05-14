@@ -73,12 +73,10 @@
 
 static int currwd, currht;              // current width and height of viewport
 static unsigned char** iconpixels;      // pointers to pixel data for each icon
-static GLuint imageTexture = 0;         // texture name
 
 // for drawing paste pattern
 static lifealgo* pastealgo;             // universe containing paste pattern
 static gRect pastebbox;                 // bounding box in cell coords (not necessarily minimal)
-static bool drawing_paste = false;      // in DrawPasteImage?
 
 /*!!!
 // for drawing multiple layers
@@ -103,49 +101,6 @@ void FillRect(int x, int y, int wd, int ht)
 
 // -----------------------------------------------------------------------------
 
-// fixed texture coordinates used by glTexCoordPointer
-static const GLshort texture_coordinates[] = {
-    0, 0,
-    1, 0,
-    0, 1,
-    1, 1,
-};
-
-void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
-{
-    // called from ios_render::pixblit to draw a bitmap at 1:1 scale
-
-    // restore texture color
-    glColor4ub(255, 255, 255, 255);
-    glEnable(GL_TEXTURE_2D);
-    
-    // create texture after deleting old one
-	if (imageTexture) {
-		glDeleteTextures(1, &imageTexture);
-		imageTexture = 0;
-    }
-    glGenTextures(1, &imageTexture);
-    glBindTexture(GL_TEXTURE_2D, imageTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    
-    // update the texture with the new bitmap data (in RGB format)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
-
-    // we assume w and h are powers of 2
-    GLfloat vertices[] = {
-        x,   y,
-        x+w, y,
-        x,   y+h,
-        x+w, y+h,
-    };
-
-    glVertexPointer(2, GL_FLOAT, 0, vertices);
-    glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
-
-// -----------------------------------------------------------------------------
-
 void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 {
     // called from ios_render::pixblit to draw pattern at 1:1 scale
@@ -163,9 +118,9 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
     unsigned char prevr = deadr;
     unsigned char prevg = deadg;
     unsigned char prevb = deadb;
+    glColor4ub(deadr, deadg, deadb, 255);
 
     unsigned char r, g, b;
-    bool changecolor;
     int i = 0;
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
@@ -174,7 +129,7 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
             b = rgbdata[i++];
             if (r != deadr || g != deadg || b != deadb) {
                 // we've got a live pixel
-                changecolor = (r != prevr || g != prevg || b != prevb);
+                bool changecolor = (r != prevr || g != prevg || b != prevb);
                 if (changecolor || numcoords == maxcoords) {
                     if (numcoords > 0) {
                         glVertexPointer(2, GL_FLOAT, 0, points);
@@ -211,6 +166,7 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
     int numcoords = 0;
+    bool multicolor = currlayer->multicoloricons;
     
     glDisable(GL_TEXTURE_2D);
     glPointSize(1);
@@ -221,9 +177,8 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     unsigned char prevr = deadr;
     unsigned char prevg = deadg;
     unsigned char prevb = deadb;
+    glColor4ub(deadr, deadg, deadb, 255);
 
-    bool multicolor = currlayer->multicoloricons;
-    bool changecolor;
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
             unsigned char state = statedata[row*stride + col];
@@ -265,7 +220,7 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                                 }
                             }
                             // draw r,g,b pixel
-                            changecolor = (r != prevr || g != prevg || b != prevb);
+                            bool changecolor = (r != prevr || g != prevg || b != prevb);
                             if (changecolor || numcoords == maxcoords) {
                                 if (numcoords > 0) {
                                     glVertexPointer(2, GL_FLOAT, 0, points);
@@ -444,18 +399,8 @@ void ios_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
     }
     
     if (pmscale == 1) {
-        // draw rgb pixel data
-        if (drawing_paste) {
-            // we can't use DrawTexture to draw paste pattern because glTexImage2D clobbers
-            // any background pattern, so we use a different routine
-            DrawPoints((unsigned char*) pmdata, x, y, w, h);
-        } else {
-            //!!! DrawTexture((unsigned char*) pmdata, x, y, w, h);
-            // DrawPoints is actually faster than DrawTexture for CA patterns that have a mostly
-            // dead background, especially if there are only 2 states (like Life), so maybe we
-            // should forget DrawTexture or make it optional via a "texture rendering" option???
-            DrawPoints((unsigned char*) pmdata, x, y, w, h);
-        }
+        // draw rgb pixel data at scale 1:1
+        DrawPoints((unsigned char*) pmdata, x, y, w, h);
     } else if (showicons && pmscale > 4 && iconpixels) {
         // draw icons at scales 1:8 or 1:16 or 1:32
         DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
@@ -719,9 +664,7 @@ void DrawPasteImage()
     glTranslatef(ileft, itop, 0);
     
     // draw paste pattern
-    drawing_paste = true;
     pastealgo->draw(tempview, renderer);
-    drawing_paste = false;
     
     glTranslatef(-ileft, -itop, 0);
 
