@@ -27,6 +27,8 @@
 		0D105F0F159EABDF006350CA /* InfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D105F0D159EABDF006350CA /* InfoViewController.m */; };
 		0D105F10159EABDF006350CA /* InfoViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D105F0E159EABDF006350CA /* InfoViewController.xib */; };
 		0D10CE96156A3CF2001DC67F /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D10CE95156A3CF2001DC67F /* Icon.png */; };
+		0D1E9E6D17420EE2002C1270 /* triangle-right.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D1E9E6B17420EE2002C1270 /* triangle-right.png */; };
+		0D1E9E6E17420EE2002C1270 /* triangle-down.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D1E9E6C17420EE2002C1270 /* triangle-down.png */; };
 		0D2D9AAF156A00F3005B8D19 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D2D9AAE156A00F3005B8D19 /* libz.dylib */; };
 		0D2D9AB5156A2413005B8D19 /* algos.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D2D9AB4156A2413005B8D19 /* algos.m */; };
 		0D32774C156C9B0A00D3F800 /* prefs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D32774A156C9B0A00D3F800 /* prefs.m */; };
@@ -127,6 +129,8 @@
 		0D105F0D159EABDF006350CA /* InfoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InfoViewController.m; sourceTree = "<group>"; };
 		0D105F0E159EABDF006350CA /* InfoViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InfoViewController.xib; sourceTree = "<group>"; };
 		0D10CE95156A3CF2001DC67F /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
+		0D1E9E6B17420EE2002C1270 /* triangle-right.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "triangle-right.png"; sourceTree = "<group>"; };
+		0D1E9E6C17420EE2002C1270 /* triangle-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "triangle-down.png"; sourceTree = "<group>"; };
 		0D2D9AAE156A00F3005B8D19 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		0D2D9AB3156A2413005B8D19 /* algos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = algos.h; sourceTree = "<group>"; };
 		0D2D9AB4156A2413005B8D19 /* algos.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = algos.m; sourceTree = "<group>"; };
@@ -384,6 +388,8 @@
 				0DD5D56615A3083700CF2627 /* open@2x.png */,
 				0D96C63F1575C651006C8EBC /* settings.png */,
 				0D96C6401575C651006C8EBC /* settings@2x.png */,
+				0D1E9E6B17420EE2002C1270 /* triangle-right.png */,
+				0D1E9E6C17420EE2002C1270 /* triangle-down.png */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -545,6 +551,8 @@
 				0D068EC215D9DD3A00A4EAB3 /* Default-Landscape~ipad.png in Resources */,
 				0DA5B31D15F03332005EBBE8 /* Patterns in Resources */,
 				0DA5B31F15F0336C005EBBE8 /* Rules in Resources */,
+				0D1E9E6D17420EE2002C1270 /* triangle-right.png in Resources */,
+				0D1E9E6E17420EE2002C1270 /* triangle-down.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

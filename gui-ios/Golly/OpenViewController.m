@@ -111,15 +111,20 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
             BOOL isDir;
             if ([fm fileExistsAtPath:fullpath isDirectory:&isDir] && isDir) {
                 // path is to a directory
+                std::string imgname;
                 if (opendirs.find(pstr) == opendirs.end()) {
                     closedlevel = indents;
+                    imgname = "triangle-right.png";
                 } else {
                     closedlevel = indents+1;
+                    imgname = "triangle-down.png";
                 }
                 for (int i = 0; i < indents; i++) htmldata += HTML_INDENT;
                 htmldata += "<a href=\"toggledir:";
                 htmldata += pstr;
-                htmldata += "\"><font size=+2 color='green'>";
+                htmldata += "\"><img src='";
+                htmldata += imgname;
+                htmldata += "' border=0/><font size=+2 color='gray'>";
                 size_t lastsep = pstr.rfind('/');
                 if (lastsep == std::string::npos) {
                     htmldata += pstr;
@@ -160,7 +165,9 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
 {
     std::string htmldata;
     AppendHtmlData(htmldata, patternsdir, "Patterns/", "Supplied patterns:", false);
-    [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding] baseURL:nil];
+    [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding]
+                             // the following base URL is needed for img links to work
+                     baseURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]];
 }
 
 // -----------------------------------------------------------------------------
@@ -169,7 +176,8 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
 {
     std::string htmldata;
     AppendHtmlData(htmldata, datadir, "Documents/Saved/", "Saved patterns:", true);
-    [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding] baseURL:nil];
+    [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding]
+                     baseURL:nil];
 }
 
 // -----------------------------------------------------------------------------
@@ -178,7 +186,8 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
 {
     std::string htmldata;
     AppendHtmlData(htmldata, downloaddir, "Documents/Downloads/", "Downloaded patterns:", true);
-    [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding] baseURL:nil];
+    [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding]
+                     baseURL:nil];
 }
 
 // -----------------------------------------------------------------------------
@@ -209,7 +218,8 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
         }
     }
     htmldata += HTML_FOOTER;
-    [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding] baseURL:nil];
+    [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding]
+                     baseURL:nil];
 }
 
 // -----------------------------------------------------------------------------
