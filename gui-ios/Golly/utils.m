@@ -336,6 +336,16 @@ bool IsScriptFile(const std::string& filename)
 
 // -----------------------------------------------------------------------------
 
+bool EndsWith(const std::string& str, const std::string& suffix)
+{
+    // return true if str ends with suffix
+    size_t strlen = str.length();
+    size_t sufflen = suffix.length();
+    return (strlen >= sufflen) && (str.rfind(suffix) == strlen - sufflen);
+}
+
+// -----------------------------------------------------------------------------
+
 // let gollybase modules process events
 
 class ios_poll : public lifepoll

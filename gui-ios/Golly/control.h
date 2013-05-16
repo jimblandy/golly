@@ -51,6 +51,6 @@ void ReduceCellStates(int newmaxstate);
 void ChangeRule(const std::string& rulestring);
 void ChangeAlgorithm(algo_type newalgotype, const char* newrule = "", bool inundoredo = false);
 std::string CreateRuleFiles(std::list<std::string>& deprecated,
-                            std::list<std::string>& ziprules);
+                            std::list<std::string>& keeprules);
 
 #endif

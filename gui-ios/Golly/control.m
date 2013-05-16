@@ -1622,16 +1622,6 @@ static std::string CreateTABLE(const std::string& tablepath)
 
 // -----------------------------------------------------------------------------
 
-static bool EndsWith(const std::string& str, const std::string& suffix)
-{
-    // return true if str ends with suffix
-    size_t strlen = str.length();
-    size_t sufflen = suffix.length();
-    return (strlen >= sufflen) && (str.rfind(suffix) == strlen - sufflen);
-}
-
-// -----------------------------------------------------------------------------
-
 static std::string CreateEmptyTABLE(const std::string& folder, const std::string& prefix,
                                     std::list<std::string>& allfiles)
 {
@@ -2152,12 +2142,10 @@ static bool SharedColorsIcons(const std::string& prefix, std::list<std::string>&
 // -----------------------------------------------------------------------------
 
 std::string CreateRuleFiles(std::list<std::string>& deprecated,
-                            std::list<std::string>& ziprules)
+                            std::list<std::string>& keeprules)
 {
     // use the given list of deprecated .table/tree/colors/icons files
-    // (recently extracted from a .zip file and installed in userrules)
-    // to create new .rule files, except those in ziprules (they were in
-    // .zip file and have already been installed)
+    // to create new .rule files, except for those .rule files in keeprules
     std::string htmlinfo;
     bool aborted = false;
     try {
@@ -2180,15 +2168,15 @@ std::string CreateRuleFiles(std::list<std::string>& deprecated,
                 rulefile = rulename + ".rule";
             }
             // add .rule file to candidates if it hasn't been added yet
-            // and if it isn't in the zip file (ie. already installed)
+            // and if it isn't in the keeprules list
             if (NOT_FOUND(candidates,rulefile) &&
-                NOT_FOUND(ziprules,rulefile)) {
+                NOT_FOUND(keeprules,rulefile)) {
                 candidates.push_back(rulefile);
             }
         }
         
-        // create the new .rule files (note that we overwrite any existing .rule files
-        // in case the zip file's contents have changed)
+        // create the new .rule files (we overwrite any existing .rule files
+        // that aren't in keeprules)
         for (it=candidates.begin(); it!=candidates.end(); ++it) {
             CreateOneRule(*it, userrules, deprecated, htmlinfo);
         }

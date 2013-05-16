@@ -165,20 +165,25 @@ static void ConvertOldRules()
     NSString *rdir = [NSString stringWithCString:userrules.c_str() encoding:NSUTF8StringEncoding];
     NSDirectoryEnumerator *dirEnum = [fm enumeratorAtPath:rdir];
     NSString *path;
-    std::list<std::string> deprecated, rulelist;
+    std::list<std::string> deprecated, keeprules;
     
     while (path = [dirEnum nextObject]) {
         std::string filename = [path cStringUsingEncoding:NSUTF8StringEncoding];
-        if (IsRuleFile(filename) && filename.rfind(".rule") == std::string::npos) {
-            // this is a deprecated .table/tree/colors/icons file
-            deprecated.push_back(filename);
+        if (IsRuleFile(filename)) {
+            if (EndsWith(filename,".rule")) {
+                // .rule file exists, so tell CreateRuleFiles not to change it
+                keeprules.push_back(filename);
+            } else {
+                // this is a deprecated .table/tree/colors/icons file
+                deprecated.push_back(filename);
+            }
         }
     }
 
     if (deprecated.size() > 0) {
-        // convert deprecated files into new .rule files (rulelist is empty)
+        // convert deprecated files into new .rule files (if not in keeprules)
         // and then delete all the deprecated files
-        CreateRuleFiles(deprecated, rulelist);
+        CreateRuleFiles(deprecated, keeprules);
     }
 }
 
@@ -208,8 +213,10 @@ static void CreateRuleLinks(std::string& htmldata, const std::string& dir,
                 htmldata += pstr;
                 htmldata += "\"><font size=+2 color='red'>Delete</font></a>&nbsp;&nbsp;&nbsp;";
             }
-            htmldata += "<a href=\"rule:";
-            htmldata += rulename;
+            // use "open:" link rather than "rule:" link so dialog closes immediately
+            htmldata += "<a href=\"open:";
+            htmldata += prefix;
+            htmldata += pstr;
             htmldata += "\">";
             htmldata += rulename;
             htmldata += "</a><br>";

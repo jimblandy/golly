@@ -104,6 +104,9 @@ bool IsScriptFile(const std::string& filename);
 // It simply checks if the file's extension is .pl or .py
 // (ignoring case).
 
+bool EndsWith(const std::string& str, const std::string& suffix);
+// Return true if given string ends with given suffix.
+
 lifepoll* Poller();
 void PollerReset();
 void PollerInterrupt();
