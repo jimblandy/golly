@@ -27,7 +27,7 @@
 #include "layer.h"      // for currlayer, etc
 #include "undo.h"       // for currlayer->undoredo
 #include "view.h"       // for SaveCurrentSelection
-#include "control.h"    // for ChangeAlgorithm
+#include "control.h"    // for ChangeAlgorithm, CreateRuleFiles
 #include "file.h"       // for OpenFile
 
 #import "RuleViewController.h"
@@ -41,6 +41,8 @@ const char* RULE_IF_EMPTY = "B3/S23";   // use Life if ruleText is empty
 static algo_type algoindex;             // index of currently displayed algorithm
 static std::string oldrule;             // original rule on entering Rule screen
 static int oldmaxstate;                 // maximum cell state in original rule
+
+static CGPoint curroffset[MAX_ALGOS];   // current offset in scroll view for each algoindex
 
 static NSString *namedRules[] =         // data for rulePicker
 {
@@ -119,6 +121,13 @@ const int UNNAMED_ROW = NUM_ROWS - 1;
     [super viewDidLoad];
     
     htmlView.delegate = self;
+    
+    // init all offsets to top left
+    for (int i=0; i<MAX_ALGOS; i++) {
+        curroffset[i].x = 0.0;
+        curroffset[i].y = 0.0;
+    }
+    algoindex = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -150,19 +159,98 @@ const int UNNAMED_ROW = NUM_ROWS - 1;
 
 // -----------------------------------------------------------------------------
 
+static void ConvertOldRules()
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *rdir = [NSString stringWithCString:userrules.c_str() encoding:NSUTF8StringEncoding];
+    NSDirectoryEnumerator *dirEnum = [fm enumeratorAtPath:rdir];
+    NSString *path;
+    std::list<std::string> deprecated, rulelist;
+    
+    while (path = [dirEnum nextObject]) {
+        std::string filename = [path cStringUsingEncoding:NSUTF8StringEncoding];
+        if (IsRuleFile(filename) && filename.rfind(".rule") == std::string::npos) {
+            // this is a deprecated .table/tree/colors/icons file
+            deprecated.push_back(filename);
+        }
+    }
+
+    if (deprecated.size() > 0) {
+        // convert deprecated files into new .rule files (rulelist is empty)
+        // and then delete all the deprecated files
+        CreateRuleFiles(deprecated, rulelist);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void CreateRuleLinks(std::string& htmldata, const std::string& dir,
+                            const std::string& prefix, const std::string& title, bool candelete)
+{
+    htmldata += "<p>";
+    htmldata += title;
+    htmldata += "</p><p>";
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *rdir = [NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding];
+    NSDirectoryEnumerator *dirEnum = [fm enumeratorAtPath:rdir];
+    NSString *path;
+    
+    while (path = [dirEnum nextObject]) {
+        std::string pstr = [path cStringUsingEncoding:NSUTF8StringEncoding];
+        size_t extn = pstr.rfind(".rule");
+        if (extn != std::string::npos) {
+            // path is to a .rule file
+            std::string rulename = pstr.substr(0,extn);
+            if (candelete) {
+                htmldata += "<a href=\"delete:";
+                htmldata += prefix;
+                htmldata += pstr;
+                htmldata += "\"><font size=+2 color='red'>Delete</font></a>&nbsp;&nbsp;&nbsp;";
+            }
+            htmldata += "<a href=\"rule:";
+            htmldata += rulename;
+            htmldata += "\">";
+            htmldata += rulename;
+            htmldata += "</a><br>";
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 - (void)showAlgoHelp
 {
-    NSBundle *bundle=[NSBundle mainBundle];
-    NSString *filePath = [bundle pathForResource:[NSString stringWithCString:GetAlgoName(algoindex) encoding:NSUTF8StringEncoding]
-                                          ofType:@"html"
-                                     inDirectory:@"Help/Algorithms"];
-    if (filePath) {
-        NSURL *fileUrl = [NSURL fileURLWithPath:filePath];
-        NSURLRequest *request = [NSURLRequest requestWithURL:fileUrl];
-        [htmlView loadRequest:request];
+    NSString *algoname = [NSString stringWithCString:GetAlgoName(algoindex) encoding:NSUTF8StringEncoding];
+    if ([algoname isEqualToString:@"RuleLoader"]) {
+        // first convert any .tree/table/colors/icons files to .rule files
+        ConvertOldRules();
+        // create html data with links to the user's .rule files and Golly's supplied .rule files
+        std::string htmldata;
+        htmldata += "<html><body bgcolor=\"#FFFFCE\"><a name=\"top\"></a>";
+        htmldata += "<p>The RuleLoader algorithm allows CA rules to be specified in .rule files.";
+        htmldata += " Given the rule string \"Foo\", RuleLoader will search for a file called Foo.rule";
+        htmldata += " in your rules folder (Documents/Rules/), then in the rules folder supplied with Golly.";
+        htmldata += "</p><font size=+2 color='black'><b>";
+        CreateRuleLinks(htmldata, userrules, "Documents/Rules/", "Your .rule files:", true);
+        CreateRuleLinks(htmldata, rulesdir, "Rules/", "Supplied .rule files:", false);
+        htmldata += "</b></font><p><center><a href=\"#top\"><b>TOP</b></a></center></body></html>";
+        [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding]
+                         baseURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]];
+                                 // the above base URL is needed for links like <img src='foo.png'> to work
     } else {
-        [htmlView loadHTMLString:@"<html><center><font size=+4 color='red'>Failed to find html file!</font></center></html>"
-                         baseURL:nil];
+        NSBundle *bundle=[NSBundle mainBundle];
+        NSString *filePath = [bundle pathForResource:algoname
+                                              ofType:@"html"
+                                         inDirectory:@"Help/Algorithms"];
+        if (filePath) {
+            NSURL *fileUrl = [NSURL fileURLWithPath:filePath];
+            NSURLRequest *request = [NSURLRequest requestWithURL:fileUrl];
+            [htmlView loadRequest:request];
+        } else {
+            [htmlView loadHTMLString:@"<html><center><font size=+4 color='red'>Failed to find html file!</font></center></html>"
+                             baseURL:nil];
+        }
     }
 }
 
@@ -171,6 +259,9 @@ const int UNNAMED_ROW = NUM_ROWS - 1;
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+
+    // save current location
+    curroffset[algoindex] = htmlView.scrollView.contentOffset;
     
     // show current algo and rule
     algoindex = currlayer->algtype;
@@ -198,6 +289,9 @@ const int UNNAMED_ROW = NUM_ROWS - 1;
 	[super viewWillDisappear:animated];
 
     [htmlView stopLoading];  // in case the web view is still loading its content
+
+    // save current location of htmlView
+    curroffset[algoindex] = htmlView.scrollView.contentOffset;
 }
 
 // -----------------------------------------------------------------------------
@@ -225,6 +319,9 @@ static int globalButton;
 - (void)doDelayedAction
 {
     if (globalButton >= 0 && globalButton < NumAlgos()) {
+
+        // save current location
+        curroffset[algoindex] = htmlView.scrollView.contentOffset;
         
         // save chosen algo for later use
         algoindex = globalButton;
@@ -303,6 +400,8 @@ static int globalButton;
                 tempalgo = CreateNewUniverse(newindex);
                 err = tempalgo->setrule(thisrule.c_str());
                 if (!err) {
+                    // save current location
+                    curroffset[algoindex] = htmlView.scrollView.contentOffset;
                     algoindex = newindex;
                     [algoButton setTitle:[NSString stringWithCString:GetAlgoName(algoindex) encoding:NSUTF8StringEncoding]
                                 forState:UIControlStateNormal];
@@ -469,6 +568,8 @@ static int globalButton;
 {
     // hide the activity indicator in the status bar
     [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+    // restore old offset here
+    htmlView.scrollView.contentOffset = curroffset[algoindex];
 }
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
@@ -499,6 +600,17 @@ static int globalButton;
             // copy specified rule into ruleText
             [ruleText setText:[link substringFromIndex:5]];
             [self checkRule];
+            return NO;
+        }
+        if ([link hasPrefix:@"delete:"]) {
+            // delete specified file
+            std::string path = [[link substringFromIndex:7] cStringUsingEncoding:NSUTF8StringEncoding];
+            FixURLPath(path);
+            path = gollydir + path;
+            RemoveFile(path);
+            // save current location
+            curroffset[algoindex] = htmlView.scrollView.contentOffset;
+            [self showAlgoHelp];
             return NO;
         }
     }
