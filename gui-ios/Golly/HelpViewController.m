@@ -79,6 +79,13 @@ static UIWebView *globalHtmlView = nil;     // for ShowHelp
 	
     globalHtmlView = htmlView;
     htmlView.delegate = self;
+    
+    // following line will enable zooming content using pinch gestures
+    // htmlView.scalesPageToFit=YES;
+    // along with a line like this in each .html file's header:
+    // <meta name='viewport' content='initial-scale=1.1,maximum-scale=5.0'/>
+    // BUT it's simpler to adjust font size using some JavaScript in webViewDidFinishLoad
+    
     backButton.enabled = NO;
     nextButton.enabled = NO;
     
@@ -177,6 +184,10 @@ static std::string pageurl;
     backButton.enabled = htmlView.canGoBack;
     nextButton.enabled = htmlView.canGoForward;
     
+    // increase font size
+    NSString *jsString = @"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '110%'";
+    [htmlView stringByEvaluatingJavaScriptFromString:jsString];
+
     // need URL of this page for relative "get:" links
     NSString *str = [htmlView stringByEvaluatingJavaScriptFromString:@"window.location.href"];
     // note that htmlView.request.mainDocumentURL.absoluteString returns the

@@ -560,7 +560,7 @@ void OpenZipFile(const char* zippath)
         if (pos == 0) relpath.erase(0, gollydir.length());
     }
     
-    std::string contents = "<html><body bgcolor=\"#FFFFCE\"><font size=+2><b><p>\nContents of ";
+    std::string contents = "<html><body bgcolor=\"#FFFFCE\"><font size=+1><b><p>\nContents of ";
     contents += relpath;
     contents += ":<p>\n";
     
