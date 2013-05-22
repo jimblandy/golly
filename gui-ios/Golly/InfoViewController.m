@@ -24,6 +24,7 @@
 
 #include "readpattern.h"    // for readcomments
 #include "layer.h"          // for currlayer, etc
+#include "prefs.h"          // for gollydir
 
 #import "GollyAppDelegate.h"        // for CurrentViewController
 #import "InfoViewController.h"
@@ -33,6 +34,7 @@
 // -----------------------------------------------------------------------------
 
 static std::string textfile = "";   // set in ShowTextFile
+static bool textchanged = false;    // true if user changed text
 
 // -----------------------------------------------------------------------------
 
@@ -66,8 +68,30 @@ static std::string textfile = "";   // set in ShowTextFile
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+
+    // pinch gestures will change text size
+    UIPinchGestureRecognizer *pinchGesture = [[UIPinchGestureRecognizer alloc]
+                                              initWithTarget:self action:@selector(scaleText:)];
+    pinchGesture.delegate = self;
+    [fileView addGestureRecognizer:pinchGesture];
     
-    fileView.editable = NO;     // read-only
+    textchanged = false;
+    
+    if (textfile.find(gollydir + "Documents/") == 0) {
+        // allow user to edit this file
+        fileView.editable = YES;
+        // show Save button
+        saveButton.style = UIBarButtonItemStyleBordered;
+        saveButton.enabled = YES;
+        saveButton.title = @"Save";
+    } else {
+        // file is read-only
+        fileView.editable = NO;
+        // hide Save button
+        saveButton.style = UIBarButtonItemStylePlain;
+        saveButton.enabled = NO;
+        saveButton.title = nil;
+    }
     
     // best to use a fixed-width font
     // fileView.font = [UIFont fontWithName:@"CourierNewPSMT" size:14];
@@ -116,27 +140,73 @@ static std::string textfile = "";   // set in ShowTextFile
     
     // release all outlets
     fileView = nil;
+    saveButton = nil;
 }
 
 // -----------------------------------------------------------------------------
 
 - (IBAction)doCancel:(id)sender
 {
+    if (textchanged && YesNo("Do you want to save your changes?")) {
+        [self doSave:sender];
+        return;
+    }
+    
     [self dismissModalViewControllerAnimated:YES];
+}
+
+// -----------------------------------------------------------------------------
+
+- (IBAction)doSave:(id)sender
+{
+    Beep();//!!!
+}
+
+// -----------------------------------------------------------------------------
+
+// UITextViewDelegate method:
+
+- (void)textViewDidChange:(UITextView *)textView
+{
+    textchanged = true;
+}
+
+// -----------------------------------------------------------------------------
+
+- (void)scaleText:(UIPinchGestureRecognizer *)pinchGesture
+{
+    // too slow for large files -- use A- and A+ buttons to dec/inc font size???!!!
+    UIGestureRecognizerState state = pinchGesture.state;
+    if (state == UIGestureRecognizerStateBegan || state == UIGestureRecognizerStateChanged) {
+        CGFloat ptsize = fileView.font.pointSize * pinchGesture.scale;
+        if (ptsize < 5.0) ptsize = 5.0;
+        if (ptsize > 50.0) ptsize = 50.0;
+        fileView.font = [UIFont fontWithName:fileView.font.fontName size:ptsize];
+    } else if (state == UIGestureRecognizerStateEnded) {
+        // do nothing
+    }
 }
 
 @end
 
 // =============================================================================
 
-void ShowTextFile(const char* filepath)
+void ShowTextFile(const char* filepath, UIViewController* currentView)
 {
+    // check if path ends with .gz or .zip
+    if (EndsWith(filepath,".gz") || EndsWith(filepath,".zip")) {
+        Warning("Editing a compressed file is not supported.");
+        return;
+    }        
+
     textfile = filepath;    // viewDidLoad will display this file
     
     InfoViewController *modalInfoController = [[InfoViewController alloc] initWithNibName:nil bundle:nil];
     
     [modalInfoController setModalPresentationStyle:UIModalPresentationFullScreen];
-    [CurrentViewController() presentModalViewController:modalInfoController animated:YES];
+    
+    if (currentView == nil) currentView = CurrentViewController();
+    [currentView presentViewController:modalInfoController animated:YES completion:NULL];
     
     modalInfoController = nil;
     

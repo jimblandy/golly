@@ -31,6 +31,7 @@
 #include "utils.h"      // for Warning, RemoveFile, FixURLPath, etc
 #include "file.h"       // for OpenFile
 
+#import "InfoViewController.h"      // for ShowTextFile
 #import "OpenViewController.h"
 
 @implementation OpenViewController
@@ -136,10 +137,22 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
                 // path is to a file
                 for (int i = 0; i < indents; i++) htmldata += HTML_INDENT;
                 if (candelete) {
+                    // allow user to delete file
                     htmldata += "<a href=\"delete:";
                     htmldata += prefix;
                     htmldata += pstr;
-                    htmldata += "\"><font size=+2 color='red'>Delete</font></a>&nbsp;&nbsp;&nbsp;";
+                    htmldata += "\"><font size=-1 color='red'>DELETE</font></a>&nbsp;&nbsp;&nbsp;";
+                    // allow user to edit file
+                    htmldata += "<a href=\"edit:";
+                    htmldata += prefix;
+                    htmldata += pstr;
+                    htmldata += "\"><font size=-1 color='green'>EDIT</font></a>&nbsp;&nbsp;&nbsp;";
+                } else {
+                    // allow user to read file (a supplied pattern)
+                    htmldata += "<a href=\"edit:";
+                    htmldata += prefix;
+                    htmldata += pstr;
+                    htmldata += "\"><font size=-1 color='green'>READ</font></a>&nbsp;&nbsp;&nbsp;";
                 }
                 htmldata += "<a href=\"open:";
                 htmldata += prefix;
@@ -406,19 +419,38 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
             return NO;
         }
         if ([link hasPrefix:@"delete:"]) {
-            // delete specified file
             std::string path = [[link substringFromIndex:7] cStringUsingEncoding:NSUTF8StringEncoding];
             FixURLPath(path);
-            path = gollydir + path;
-            RemoveFile(path);
-            // save current location
-            curroffset[curroption] = htmlView.scrollView.contentOffset;
-            switch (curroption) {
-                // can't delete supplied or recent patterns
-                case 2: [self showSavedPatterns]; break;
-                case 3: [self showDownloadedPatterns]; break;
-                default: Warning("Bug: can't delete these files!");
+            std::string question = "Do you really want to delete " + path + "?";
+            if (YesNo(question.c_str())) {
+                // delete specified file
+                path = gollydir + path;
+                RemoveFile(path);
+                // save current location
+                curroffset[curroption] = htmlView.scrollView.contentOffset;
+                switch (curroption) {
+                    // can't delete supplied or recent patterns
+                    case 2: [self showSavedPatterns]; break;
+                    case 3: [self showDownloadedPatterns]; break;
+                    default: Warning("Bug: can't delete these files!");
+                }
             }
+            return NO;
+        }
+        if ([link hasPrefix:@"edit:"]) {
+            std::string path = [[link substringFromIndex:5] cStringUsingEncoding:NSUTF8StringEncoding];
+            FixURLPath(path);
+            // convert path to a full path if necessary
+            std::string fullpath = path;
+            if (path[0] != '/') {
+                if (fullpath.find("Patterns/") == 0 || fullpath.find("Rules/") == 0) {
+                    // Patterns and Rules directories are inside app bundle so prepend gollydir/Golly.app/
+                    fullpath = gollydir + "Golly.app/" + fullpath;
+                } else {
+                    fullpath = gollydir + fullpath;
+                }
+            }
+            ShowTextFile(fullpath.c_str());
             return NO;
         }
     }

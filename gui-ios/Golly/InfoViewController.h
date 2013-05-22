@@ -24,14 +24,16 @@
 
 #import <UIKit/UIKit.h>
 
-@interface InfoViewController : UIViewController <UITextViewDelegate>
+@interface InfoViewController : UIViewController <UITextViewDelegate, UIGestureRecognizerDelegate>
 {
     IBOutlet UITextView *fileView;
+    IBOutlet UIBarButtonItem *saveButton;
 }
 
 - (IBAction)doCancel:(id)sender;
+- (IBAction)doSave:(id)sender;
 
 @end
 
 // display given text file
-void ShowTextFile(const char* filepath);
+void ShowTextFile(const char* filepath, UIViewController* currentView=nil);

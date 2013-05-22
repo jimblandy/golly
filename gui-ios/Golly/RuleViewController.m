@@ -30,6 +30,7 @@
 #include "control.h"    // for ChangeAlgorithm, CreateRuleFiles
 #include "file.h"       // for OpenFile
 
+#import "InfoViewController.h"      // for ShowTextFile
 #import "RuleViewController.h"
 
 @implementation RuleViewController
@@ -208,10 +209,22 @@ static void CreateRuleLinks(std::string& htmldata, const std::string& dir,
             // path is to a .rule file
             std::string rulename = pstr.substr(0,extn);
             if (candelete) {
+                // allow user to delete .rule file
                 htmldata += "<a href=\"delete:";
                 htmldata += prefix;
                 htmldata += pstr;
-                htmldata += "\"><font size=+2 color='red'>Delete</font></a>&nbsp;&nbsp;&nbsp;";
+                htmldata += "\"><font size=-1 color='red'>DELETE</font></a>&nbsp;&nbsp;&nbsp;";
+                // allow user to edit .rule file
+                htmldata += "<a href=\"edit:";
+                htmldata += prefix;
+                htmldata += pstr;
+                htmldata += "\"><font size=-1 color='green'>EDIT</font></a>&nbsp;&nbsp;&nbsp;";
+            } else {
+                // allow user to read supplied .rule file
+                htmldata += "<a href=\"edit:";
+                htmldata += prefix;
+                htmldata += pstr;
+                htmldata += "\"><font size=-1 color='green'>READ</font></a>&nbsp;&nbsp;&nbsp;";
             }
             // use "open:" link rather than "rule:" link so dialog closes immediately
             htmldata += "<a href=\"open:";
@@ -610,14 +623,34 @@ static int globalButton;
             return NO;
         }
         if ([link hasPrefix:@"delete:"]) {
-            // delete specified file
             std::string path = [[link substringFromIndex:7] cStringUsingEncoding:NSUTF8StringEncoding];
             FixURLPath(path);
-            path = gollydir + path;
-            RemoveFile(path);
-            // save current location
-            curroffset[algoindex] = htmlView.scrollView.contentOffset;
-            [self showAlgoHelp];
+            std::string question = "Do you really want to delete " + path + "?";
+            if (YesNo(question.c_str())) {
+                // delete specified file
+                path = gollydir + path;
+                RemoveFile(path);
+                // save current location
+                curroffset[algoindex] = htmlView.scrollView.contentOffset;
+                [self showAlgoHelp];
+            }
+            return NO;
+        }
+        if ([link hasPrefix:@"edit:"]) {
+            std::string path = [[link substringFromIndex:5] cStringUsingEncoding:NSUTF8StringEncoding];
+            FixURLPath(path);
+            // convert path to a full path if necessary
+            std::string fullpath = path;
+            if (path[0] != '/') {
+                if (fullpath.find("Patterns/") == 0 || fullpath.find("Rules/") == 0) {
+                    // Patterns and Rules directories are inside app bundle so prepend gollydir/Golly.app/
+                    fullpath = gollydir + "Golly.app/" + fullpath;
+                } else {
+                    fullpath = gollydir + fullpath;
+                }
+            }
+            // we pass self to ShowTextFile so it doesn't use current tab's view controller
+            ShowTextFile(fullpath.c_str(), self);
             return NO;
         }
     }

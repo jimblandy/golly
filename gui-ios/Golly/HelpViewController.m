@@ -81,7 +81,7 @@ static UIWebView *globalHtmlView = nil;     // for ShowHelp
     htmlView.delegate = self;
     
     // following line will enable zooming content using pinch gestures
-    // htmlView.scalesPageToFit=YES;
+    // htmlView.scalesPageToFit = YES;
     // along with a line like this in each .html file's header:
     // <meta name='viewport' content='initial-scale=1.1,maximum-scale=5.0'/>
     // BUT it's simpler to adjust font size using some JavaScript in webViewDidFinishLoad
