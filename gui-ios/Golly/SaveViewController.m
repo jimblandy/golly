@@ -27,7 +27,7 @@
 #include "utils.h"          // for FileExists
 #include "prefs.h"          // for datadir
 #include "layer.h"          // for currlayer, etc
-#include "file.h"           // for SavePattern
+#include "file.h"           // for SavePattern, GetBaseName
 
 #import "SaveViewController.h"
 
@@ -35,7 +35,7 @@
 
 // -----------------------------------------------------------------------------
 
-static NSString *filetypes[] =      // data for typeTable
+static NSString *filetypes[] =          // data for typeTable
 {
     // WARNING: code below assumes this ordering
 	@"Run Length Encoded (*.rle)",
@@ -45,7 +45,12 @@ static NSString *filetypes[] =      // data for typeTable
 };
 const int NUM_TYPES = sizeof(filetypes) / sizeof(filetypes[0]);
 
-static int currtype = 0;            // current index in typeTable
+static int currtype = 0;                // current index in typeTable
+
+static bool inSaveTextFile = false;     // SaveTextFile was called?
+static const char* initpath;            // path of file being edited
+static const char* filedata;            // text to be saved
+static InfoViewController* callingVC;   // the view controller that called SaveTextFile
 
 // -----------------------------------------------------------------------------
 
@@ -146,6 +151,8 @@ static int currtype = 0;            // current index in typeTable
     // release all outlets
     nameText = nil;
     typeTable = nil;
+    topLabel = nil;
+    botLabel = nil;
 }
 
 // -----------------------------------------------------------------------------
@@ -153,24 +160,47 @@ static int currtype = 0;            // current index in typeTable
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-
-    // [nameText setText:[NSString stringWithCString:currlayer->currname.c_str() encoding:NSUTF8StringEncoding]];
-    // probably nicer not to show current name
-    [nameText setText:@""];
-
-    // init file type
-    if (currlayer->algo->hyperCapable()) {
-        // RLE is allowed but macrocell format is better
-        if (currtype < 2) currtype = 2;
-    } else {
-        // algo doesn't support macrocell format
-        if (currtype > 1) currtype = 0;
-    }
-    [typeTable selectRowAtIndexPath:[NSIndexPath indexPathForRow:currtype inSection:0]
-                           animated:NO
-                     scrollPosition:UITableViewScrollPositionNone];
     
-    [self checkFileName];
+    if (inSaveTextFile) {
+        // user is saving a pattern (in Documents/Saved or Documents/Downloads)
+        // or a .rule file (in Documents/Rules)
+        
+        std::string filename = GetBaseName(initpath);
+        [nameText setText:[NSString stringWithCString:filename.c_str() encoding:NSUTF8StringEncoding]];
+        typeTable.hidden = YES;
+        
+        // change labels
+        [topLabel setText:@"Save file as:"];
+        std::string filepath = initpath;
+        if (filepath.find("Documents/Rules/") != std::string::npos) {
+            [botLabel setText:@"File location: Documents/Rules/"];
+        } else if (filepath.find("Documents/Downloads/") != std::string::npos) {
+            [botLabel setText:@"File location: Documents/Downloads/"];
+        } else {
+            [botLabel setText:@"File location: Documents/Saved/"];
+        }
+
+    } else {
+        // user is saving current pattern via Pattern tab's Save button
+
+        // [nameText setText:[NSString stringWithCString:currlayer->currname.c_str() encoding:NSUTF8StringEncoding]];
+        // probably nicer not to show current name
+        [nameText setText:@""];
+
+        // init file type
+        if (currlayer->algo->hyperCapable()) {
+            // RLE is allowed but macrocell format is better
+            if (currtype < 2) currtype = 2;
+        } else {
+            // algo doesn't support macrocell format
+            if (currtype > 1) currtype = 0;
+        }
+        [typeTable selectRowAtIndexPath:[NSIndexPath indexPathForRow:currtype inSection:0]
+                               animated:NO
+                         scrollPosition:UITableViewScrollPositionNone];
+        
+        [self checkFileName];
+    }
     
     // show keyboard immediately
     [nameText becomeFirstResponder];
@@ -181,6 +211,8 @@ static int currtype = 0;            // current index in typeTable
 - (void)viewWillDisappear:(BOOL)animated
 {
 	[super viewWillDisappear:animated];
+    
+    inSaveTextFile = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -199,27 +231,69 @@ static int currtype = 0;            // current index in typeTable
     
     std::string filename = [[nameText text] cStringUsingEncoding:NSUTF8StringEncoding];
     if (filename.empty()) {
-        // no need??? Warning("Please enter a file name.");
+        // Warning("Please enter a file name.");
         // better to beep and show keyboard
         Beep();
         [nameText becomeFirstResponder];
         return;
     }
     
-    std::string fullpath = datadir + filename;
-    if (FileExists(fullpath)) {
-        // ask user if it's ok to replace an existing file
-        if (!YesNo("A file with that name already exists.\nDo you want to replace that file?"))
+    const char* replace_query = "A file with that name already exists.\nDo you want to replace that file?";
+    
+    if (inSaveTextFile) {
+        // user is saving a text file (pattern or .rule file)
+        
+        std::string initname = GetBaseName(initpath);
+        std::string dir = initpath;
+        dir = dir.substr(0,dir.rfind('/')+1);
+        
+        // prevent Documents/Rules/* being saved as something other than a .rule file
+        if (EndsWith(dir,"Documents/Rules/") && !EndsWith(filename,".rule")) {
+            Warning("Files in Documents/Rules/ must have a .rule extension.");
+            [nameText becomeFirstResponder];
             return;
+        }
+        
+        std::string fullpath = dir + filename;
+        if (initname != filename && FileExists(fullpath)) {
+            // ask user if it's ok to replace an existing file that's not the same as the given file
+            if (!YesNo(replace_query)) return;
+        }
+        
+        FILE* f = fopen(fullpath.c_str(), "w");
+        if (f) {
+            if (fputs(filedata, f) == EOF) {
+                fclose(f);
+                Warning("Could not write to file!");
+                return;
+            }
+        } else {
+            Warning("Could not create file!");
+            return;
+        }
+        fclose(f);
+        
+        [self dismissModalViewControllerAnimated:YES];
+        
+        // tell caller that the save was a success
+        [callingVC saveSucceded:fullpath.c_str()];
+    
+    } else {
+        // user is saving current pattern in Documents/Saved/ via Pattern tab's Save button
+        
+        std::string fullpath = datadir + filename;
+        if (FileExists(fullpath)) {
+            // ask user if it's ok to replace an existing file
+            if (!YesNo(replace_query)) return;
+        }
+        
+        // dismiss modal view first in case SavePattern calls BeginProgress
+        [self dismissModalViewControllerAnimated:YES];
+
+        pattern_format format = currtype < 2 ? XRLE_format : MC_format;
+        output_compression compression = currtype % 2 == 0 ? no_compression : gzip_compression;
+        SavePattern(fullpath, format, compression);
     }
-    
-    // dismiss modal view first in case SavePattern calls BeginProgress
-    [self dismissModalViewControllerAnimated:YES];
-    
-    pattern_format format = currtype < 2 ? XRLE_format : MC_format;
-    output_compression compression = currtype % 2 == 0 ? no_compression : gzip_compression;
-    
-    SavePattern(fullpath, format, compression);
 }
 
 // -----------------------------------------------------------------------------
@@ -229,7 +303,7 @@ static int currtype = 0;            // current index in typeTable
 - (void)textFieldDidEndEditing:(UITextField *)tf
 {
     // called when rule editing has ended (ie. keyboard disappears)
-    [self checkFileType];
+    if (!inSaveTextFile) [self checkFileType];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)tf
@@ -290,6 +364,24 @@ static int currtype = 0;            // current index in typeTable
     }
 }
 
-// -----------------------------------------------------------------------------
-
 @end
+
+// =============================================================================
+
+void SaveTextFile(const char* filepath, const char* contents, InfoViewController* currentView)
+{
+    inSaveTextFile = true;      
+    initpath = filepath;
+    filedata = contents;
+    callingVC = currentView;
+    
+    SaveViewController *modalSaveController = [[SaveViewController alloc] initWithNibName:nil bundle:nil];
+    
+    [modalSaveController setModalPresentationStyle:UIModalPresentationFormSheet];
+    [currentView presentModalViewController:modalSaveController animated:YES];
+    
+    modalSaveController = nil;
+    
+    // cannot reset inSaveTextFile here (it must be done in viewWillDisappear)
+    // because doSave: is called AFTER SaveTextFile finishes
+}

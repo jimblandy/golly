@@ -27,6 +27,7 @@
 #include "prefs.h"          // for gollydir
 
 #import "GollyAppDelegate.h"        // for CurrentViewController
+#import "SaveViewController.h"      // for SaveTextFile
 #import "InfoViewController.h"
 
 @implementation InfoViewController
@@ -74,6 +75,24 @@ static bool textchanged = false;    // true if user changed text
                                               initWithTarget:self action:@selector(scaleText:)];
     pinchGesture.delegate = self;
     [fileView addGestureRecognizer:pinchGesture];
+}
+
+// -----------------------------------------------------------------------------
+
+- (void)viewDidUnload
+{
+    [super viewDidUnload];
+    
+    // release all outlets
+    fileView = nil;
+    saveButton = nil;
+}
+
+// -----------------------------------------------------------------------------
+
+- (void)viewWillAppear:(BOOL)animated
+{
+	[super viewWillAppear:animated];
     
     textchanged = false;
     
@@ -85,7 +104,7 @@ static bool textchanged = false;    // true if user changed text
         saveButton.enabled = YES;
         saveButton.title = @"Save";
     } else {
-        // file is read-only
+        // textfile is empty (ie. not in ShowTextFile) or file is read-only
         fileView.editable = NO;
         // hide Save button
         saveButton.style = UIBarButtonItemStylePlain;
@@ -134,13 +153,11 @@ static bool textchanged = false;    // true if user changed text
 
 // -----------------------------------------------------------------------------
 
-- (void)viewDidUnload
+- (void)viewWillDisappear:(BOOL)animated
 {
-    [super viewDidUnload];
-    
-    // release all outlets
-    fileView = nil;
-    saveButton = nil;
+	[super viewWillDisappear:animated];
+
+    textfile.clear();   // viewWillAppear will display comments in currlayer->currfile
 }
 
 // -----------------------------------------------------------------------------
@@ -157,9 +174,20 @@ static bool textchanged = false;    // true if user changed text
 
 // -----------------------------------------------------------------------------
 
+static std::string contents;
+
 - (IBAction)doSave:(id)sender
 {
-    Beep();//!!!
+    contents = [fileView.text cStringUsingEncoding:NSUTF8StringEncoding];
+    SaveTextFile(textfile.c_str(), contents.c_str(), self);
+}
+
+// -----------------------------------------------------------------------------
+
+- (void)saveSucceded:(const char*)savedpath
+{
+    textfile = savedpath;
+    textchanged = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -175,7 +203,7 @@ static bool textchanged = false;    // true if user changed text
 
 - (void)scaleText:(UIPinchGestureRecognizer *)pinchGesture
 {
-    // too slow for large files -- use A- and A+ buttons to dec/inc font size???!!!
+    // very slow for large files; better to use A- and A+ buttons to dec/inc font size???
     UIGestureRecognizerState state = pinchGesture.state;
     if (state == UIGestureRecognizerStateBegan || state == UIGestureRecognizerStateChanged) {
         CGFloat ptsize = fileView.font.pointSize * pinchGesture.scale;
@@ -199,16 +227,16 @@ void ShowTextFile(const char* filepath, UIViewController* currentView)
         return;
     }        
 
-    textfile = filepath;    // viewDidLoad will display this file
+    textfile = filepath;    // viewWillAppear will display this file
     
     InfoViewController *modalInfoController = [[InfoViewController alloc] initWithNibName:nil bundle:nil];
     
     [modalInfoController setModalPresentationStyle:UIModalPresentationFullScreen];
     
     if (currentView == nil) currentView = CurrentViewController();
-    [currentView presentViewController:modalInfoController animated:YES completion:NULL];
+    [currentView presentModalViewController:modalInfoController animated:YES];
     
     modalInfoController = nil;
     
-    textfile.clear();       // viewDidLoad will display comments in currlayer->currfile
+    // only reset textfile in viewWillDisappear
 }

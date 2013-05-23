@@ -24,6 +24,8 @@
 
 #import <UIKit/UIKit.h>
 
+// This is the view controller for the Settings tab.
+
 @interface SettingsViewController : UIViewController <UIActionSheetDelegate, UITextFieldDelegate>
 {
     IBOutlet UIButton *modeButton;

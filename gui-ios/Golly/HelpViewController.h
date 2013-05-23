@@ -24,6 +24,8 @@
 
 #import <UIKit/UIKit.h>
 
+// This is the view controller for the Help tab.
+
 @interface HelpViewController : UIViewController <UIWebViewDelegate>
 {
     IBOutlet UIWebView *htmlView;

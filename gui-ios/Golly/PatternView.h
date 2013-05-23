@@ -22,6 +22,8 @@
  
  / ***/
 
+// This is the view used to display a pattern (within the Pattern tab).
+
 @interface PatternView : UIView <UIGestureRecognizerDelegate, UIActionSheetDelegate>
 
 - (void)doPasteAction;

@@ -24,6 +24,8 @@
 
 #import <UIKit/UIKit.h>
 
+// This is the view controller for the Open tab.
+
 @interface OpenViewController : UIViewController <UITableViewDelegate, UITableViewDataSource, UIWebViewDelegate>
 {
     IBOutlet UITableView *optionTable;

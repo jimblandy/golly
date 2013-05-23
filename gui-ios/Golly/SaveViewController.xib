@@ -116,7 +116,7 @@
 							<object class="IBUILabel" id="891365657">
 								<reference key="NSNextResponder" ref="806780098"/>
 								<int key="NSvFlags">292</int>
-								<string key="NSFrame">{{236, 175}, {69, 21}}</string>
+								<string key="NSFrame">{{106, 175}, {328, 21}}</string>
 								<reference key="NSSuperview" ref="806780098"/>
 								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="680077968"/>
@@ -130,6 +130,7 @@
 								<nil key="IBUIHighlightedColor"/>
 								<int key="IBUIBaselineAdjustment">1</int>
 								<float key="IBUIMinimumFontSize">10</float>
+								<int key="IBUITextAlignment">1</int>
 								<reference key="IBUIFontDescription" ref="66443943"/>
 								<reference key="IBUIFont" ref="183244166"/>
 							</object>
@@ -161,7 +162,6 @@
 								<string key="NSFrameSize">{540, 44}</string>
 								<reference key="NSSuperview" ref="806780098"/>
 								<reference key="NSWindow"/>
-								<reference key="NSNextKeyView"/>
 								<bool key="IBUIOpaque">NO</bool>
 								<bool key="IBUIClearsContextBeforeDrawing">NO</bool>
 								<string key="targetRuntimeIdentifier">IBIPadFramework</string>
@@ -234,6 +234,22 @@
 						<reference key="destination" ref="680077968"/>
 					</object>
 					<int key="connectionID">16</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchOutletConnection" key="connection">
+						<string key="label">topLabel</string>
+						<reference key="source" ref="841351856"/>
+						<reference key="destination" ref="91662245"/>
+					</object>
+					<int key="connectionID">20</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchOutletConnection" key="connection">
+						<string key="label">botLabel</string>
+						<reference key="source" ref="841351856"/>
+						<reference key="destination" ref="891365657"/>
+					</object>
+					<int key="connectionID">21</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBCocoaTouchEventConnection" key="connection">
@@ -382,7 +398,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">19</int>
+			<int key="maxID">21</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -404,13 +420,23 @@
 						</object>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="outlets">
+						<string key="botLabel">UILabel</string>
 						<string key="nameText">UITextField</string>
+						<string key="topLabel">UILabel</string>
 						<string key="typeTable">UITableView</string>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
+						<object class="IBToOneOutletInfo" key="botLabel">
+							<string key="name">botLabel</string>
+							<string key="candidateClassName">UILabel</string>
+						</object>
 						<object class="IBToOneOutletInfo" key="nameText">
 							<string key="name">nameText</string>
 							<string key="candidateClassName">UITextField</string>
+						</object>
+						<object class="IBToOneOutletInfo" key="topLabel">
+							<string key="name">topLabel</string>
+							<string key="candidateClassName">UILabel</string>
 						</object>
 						<object class="IBToOneOutletInfo" key="typeTable">
 							<string key="name">typeTable</string>

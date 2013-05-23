@@ -22,6 +22,8 @@
  
  / ***/
 
+// This is the view for displaying Golly's status info.
+
 @interface StatusView : UIView
 
 @end

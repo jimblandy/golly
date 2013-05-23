@@ -27,6 +27,8 @@
 #import "StatusView.h"
 #import "StateView.h"
 
+// This is the view controller for the Pattern tab.
+
 @interface PatternViewController : UIViewController
 {
     IBOutlet PatternView *pattView;
