@@ -251,14 +251,24 @@ bool CopyFile(const std::string& inpath, const std::string& outpath)
 
 // -----------------------------------------------------------------------------
 
+bool MoveFile(const std::string& inpath, const std::string& outpath)
+{
+    if (FileExists(outpath)) {
+        RemoveFile(outpath);
+    }
+    return [[NSFileManager defaultManager] moveItemAtPath:[NSString stringWithCString:inpath.c_str() encoding:NSUTF8StringEncoding]
+                                                   toPath:[NSString stringWithCString:outpath.c_str() encoding:NSUTF8StringEncoding]
+                                                    error:NULL];
+}
+
+// -----------------------------------------------------------------------------
+
 void FixURLPath(std::string& path)
 {
-    // replace any "%20" with " "
-    size_t pos = path.find("%20");
-    while (pos != std::string::npos) {
-        path.replace(pos, 3, " ");
-        pos = path.find("%20");
-    }
+    // replace "%..." with suitable chars for a file path (eg. %20 is changed to space)
+    NSString* newpath = [[NSString stringWithCString:path.c_str() encoding:NSUTF8StringEncoding]
+                         stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    if (newpath) path = [newpath cStringUsingEncoding:NSUTF8StringEncoding];
 }
 
 // -----------------------------------------------------------------------------

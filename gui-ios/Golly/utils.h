@@ -77,6 +77,11 @@ void RemoveFile(const std::string& filepath);
 
 bool CopyFile(const std::string& inpath, const std::string& outpath);
 // Return true if input file is successfully copied to output file.
+// If the output file existed it is replaced.
+
+bool MoveFile(const std::string& inpath, const std::string& outpath);
+// Return true if input file is successfully moved to output file.
+// If the output file existed it is replaced.
 
 void FixURLPath(std::string& path);
 // Replace any "%20" with a space.

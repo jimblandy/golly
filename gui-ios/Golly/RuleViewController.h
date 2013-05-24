@@ -24,6 +24,8 @@
 
 #import <UIKit/UIKit.h>
 
+// This view controller is used when the Pattern tab's Rule button is tapped.
+
 @interface RuleViewController : UIViewController <UIActionSheetDelegate, UITextFieldDelegate,
                                                   UIPickerViewDelegate, UIPickerViewDataSource,
                                                   UIWebViewDelegate>

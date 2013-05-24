@@ -28,7 +28,7 @@
 #include <algorithm>    // for std::count
 
 #include "prefs.h"      // for gollydir, recentpatterns, SavePrefs, etc
-#include "utils.h"      // for Warning, RemoveFile, FixURLPath, etc
+#include "utils.h"      // for Warning, RemoveFile, FixURLPath, MoveFile, etc
 #include "file.h"       // for OpenFile
 
 #import "InfoViewController.h"      // for ShowTextFile
@@ -274,6 +274,8 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    
+    MoveSharedFiles();
 
     if (curroption > 0) {
         // recent/saved/downloaded patterns might have changed
@@ -457,6 +459,42 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
     return YES;
 }
 
-// -----------------------------------------------------------------------------
-
 @end
+
+// =============================================================================
+
+void MoveSharedFiles()
+{
+    // check for files in the Documents folder (created by iTunes file sharing)
+    // and move any .rule/tree/table/colors/icons files into Documents/Rules/,
+    // otherwise assume they are pattern files and move them into Documents/Saved/
+    
+    std::string docdir = gollydir + "Documents/";
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *dirpath = [NSString stringWithCString:docdir.c_str() encoding:NSUTF8StringEncoding];
+	NSArray* contents = [fm contentsOfDirectoryAtPath:dirpath error:nil];
+
+	for (NSString* item in contents) {
+        NSString *fullpath = [dirpath stringByAppendingPathComponent:item];
+        BOOL isDir;
+        if ([fm fileExistsAtPath:fullpath isDirectory:&isDir] && isDir) {
+            // ignore path to subdirectory
+        } else {
+            // path is to a file
+            std::string filename = [item cStringUsingEncoding:NSUTF8StringEncoding];
+            if (filename[0] == '.') {
+                // ignore hidden file
+            } else if (IsRuleFile(filename)) {
+                // move .rule/tree/table/colors/icons file into Documents/Rules/
+                std::string oldpath = docdir + filename;
+                std::string newpath = userrules + filename;
+                MoveFile(oldpath, newpath);
+            } else {
+                // assume this is a pattern file amd move it into Documents/Saved/
+                std::string oldpath = docdir + filename;
+                std::string newpath = datadir + filename;
+                MoveFile(oldpath, newpath);
+            }
+        }
+	}
+}
