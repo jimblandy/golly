@@ -728,6 +728,7 @@ static int pausecount = 0;              // if > 0 then genTimer needs to be rest
     fullscreen = !fullscreen;
     restoreButton.hidden = !fullscreen;
     [pattView refreshPattern];
+    UpdateEditBar();
 }
 
 // -----------------------------------------------------------------------------
