@@ -715,8 +715,15 @@ void MainFrame::UpdateMenuItems(bool active)
         }
         
         mbar->Enable(ID_START,        active && !currlayer->algo->isrecording());
+#ifdef __WXMAC__
+        // for some unknown reason we need to disable these menu items when generating
+        // otherwise auto-repeating space/tab key doesn't work all the time
+        mbar->Enable(ID_NEXT,         active && !timeline && !inscript && !generating);
+        mbar->Enable(ID_STEP,         active && !timeline && !inscript && !generating);
+#else
         mbar->Enable(ID_NEXT,         active && !timeline && !inscript);
         mbar->Enable(ID_STEP,         active && !timeline && !inscript);
+#endif
         mbar->Enable(ID_RESET,        active && !timeline && !inscript &&
                                       (generating || currlayer->algo->getGeneration() > currlayer->startgen));
         mbar->Enable(ID_SETGEN,       active && !timeline && !inscript);
