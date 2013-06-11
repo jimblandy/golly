@@ -84,7 +84,7 @@ bool MoveFile(const std::string& inpath, const std::string& outpath);
 // If the output file existed it is replaced.
 
 void FixURLPath(std::string& path);
-// Replace any "%20" with a space.
+// Replace "%..." with suitable chars for a file path (eg. %20 is changed to space).
 
 bool IsHTMLFile(const std::string& filename);
 // Return true if the given file's extension is .htm or .html

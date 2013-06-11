@@ -27,7 +27,7 @@
 #include "utils.h"       // for Warning, event_checker
 #include "status.h"      // for DisplayMessage
 #include "algos.h"       // for InitAlgorithms, algoinfo
-#include "prefs.h"       // for GetPrefs, SavePrefs, maxhashmem
+#include "prefs.h"       // for GetPrefs, SavePrefs
 #include "layer.h"       // for AddLayer, currlayer
 #include "file.h"        // for NewPattern
 #include "control.h"     // for generating, StartGenerating, etc

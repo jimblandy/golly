@@ -32,7 +32,6 @@
 
 #include "utils.h"      // for Fatal, Warning, SetColor, Poller
 #include "prefs.h"      // for maxhashmem
-#include "file.h"       // for GetBaseName
 #include "layer.h"      // for currlayer
 #include "algos.h"
 
