@@ -109,7 +109,6 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
     GLfloat points[maxcoords];
     int numcoords = 0;
     
-    glDisable(GL_TEXTURE_2D);
     glPointSize(1);
 
     unsigned char deadr = currlayer->cellr[0];
@@ -168,7 +167,6 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     int numcoords = 0;
     bool multicolor = currlayer->multicoloricons;
     
-    glDisable(GL_TEXTURE_2D);
     glPointSize(1);
 
     unsigned char deadr = currlayer->cellr[0];
@@ -261,7 +259,6 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     GLfloat points[maxcoords];
     int numcoords = 0;
     
-    glDisable(GL_TEXTURE_2D);
     glPointSize(cellsize);
 
     if (numstates == 2) {
@@ -360,7 +357,6 @@ void ios_render::killrect(int x, int y, int w, int h)
     
     // use a different pale color each time to see any probs
     glColor4ub((rand()&127)+128, (rand()&127)+128, (rand()&127)+128, 255);
-    glDisable(GL_TEXTURE_2D);
     FillRect(clipx, clipy, clipwd, clipht);
 #else
     // no need to do anything because background has already been filled by DrawPattern
@@ -465,7 +461,6 @@ void DrawGridBorder(int wd, int ht)
     }
 
     glColor4ub(borderrgb.r, borderrgb.g, borderrgb.b, 255);
-    glDisable(GL_TEXTURE_2D);
 
     if (left >= wd || right < 0 || top >= ht || bottom < 0) {
         // no part of grid is visible so fill viewport with border
@@ -516,7 +511,6 @@ void DrawSelection(gRect& rect, bool active)
         // use light gray to indicate an inactive selection
         glColor4f(0.7, 0.7, 0.7, 0.5);
     }
-    glDisable(GL_TEXTURE_2D);
     FillRect(rect.x, rect.y, rect.width, rect.height);
 }
 
@@ -674,7 +668,6 @@ void DrawPasteImage()
     
     // overlay translucent rect to show paste area
     glColor4ub(pastergb.r, pastergb.g, pastergb.b, 64);
-    glDisable(GL_TEXTURE_2D);
     FillRect(ileft, itop, pastewd, pasteht);
 }
 
@@ -720,7 +713,6 @@ void DrawGridLines(int wd, int ht)
                    b + 32 < 256 ? b + 32 : 255, 255);
     }
     
-    glDisable(GL_TEXTURE_2D);
     glLineWidth(1.0);
 
     // draw all plain lines first

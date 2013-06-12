@@ -88,11 +88,9 @@ static GLuint viewFramebuffer = 0;
         
         // we only do 2D drawing
         glDisable(GL_DEPTH_TEST);
-        
         glDisable(GL_DITHER);
-        glEnable(GL_TEXTURE_2D);
+        glDisable(GL_TEXTURE_2D);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         
         glEnable(GL_BLEND);
         // this blending function seems similar to the one used in desktop Golly
