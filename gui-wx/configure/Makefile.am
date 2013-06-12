@@ -7,7 +7,6 @@ bin_PROGRAMS = golly bgolly
 noinst_PROGRAMS = RuleTableToTree
 noinst_LIBRARIES = libgolly.a
 doc_DATA = ../../docs/License.html ../../docs/ReadMe.html
-noinst_DATA = ../../docs/Build.html ../../docs/ToDo.html
 
 include sources.am
 
