@@ -103,7 +103,7 @@ void InitAlgorithms();
 // Initialize above data.  Must be called before reading the prefs file.
 
 void DeleteAlgorithms();
-// Deallocate memory allocated in InitAlgorithms()
+// Deallocate memory allocated in InitAlgorithms().
 
 lifealgo* CreateNewUniverse(algo_type algotype, bool allowcheck = true);
 // Create a new universe of given type.  If allowcheck is true then
