@@ -37,8 +37,13 @@
 #include "file.h"           // for CreateUniverse
 #include "select.h"
 
-// if Android we get *Progress calls from utils.h???!!!
-//!!! #import "PatternViewController.h"   // for BeginProgress, etc
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"   // for BeginProgress, etc
+#endif
+
+#ifdef IOS_GUI
+    #import "PatternViewController.h"   // for BeginProgress, etc
+#endif
 
 // -----------------------------------------------------------------------------
 

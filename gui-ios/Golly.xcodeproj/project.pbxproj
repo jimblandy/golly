@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0D029D291571D670005166AE /* control.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D029D281571D670005166AE /* control.m */; };
+		0D029D291571D670005166AE /* control.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D029D281571D670005166AE /* control.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
 		0D02E13E1568A14800581DCC /* PatternView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D02E13D1568A14800581DCC /* PatternView.m */; };
 		0D068EB715D93F4300A4EAB3 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D068EB415D93F4300A4EAB3 /* Icon@2x.png */; };
 		0D068EB815D93F4300A4EAB3 /* iTunesArtwork in Resources */ = {isa = PBXBuildFile; fileRef = 0D068EB515D93F4300A4EAB3 /* iTunesArtwork */; };
@@ -30,11 +30,11 @@
 		0D1E9E6D17420EE2002C1270 /* triangle-right.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D1E9E6B17420EE2002C1270 /* triangle-right.png */; };
 		0D1E9E6E17420EE2002C1270 /* triangle-down.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D1E9E6C17420EE2002C1270 /* triangle-down.png */; };
 		0D2D9AAF156A00F3005B8D19 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D2D9AAE156A00F3005B8D19 /* libz.dylib */; };
-		0D2D9AB5156A2413005B8D19 /* algos.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D2D9AB4156A2413005B8D19 /* algos.m */; };
+		0D2D9AB5156A2413005B8D19 /* algos.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D2D9AB4156A2413005B8D19 /* algos.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
 		0D32774C156C9B0A00D3F800 /* prefs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D32774A156C9B0A00D3F800 /* prefs.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
-		0D327750156CC8B300D3F800 /* layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D32774F156CC8B300D3F800 /* layer.m */; };
+		0D327750156CC8B300D3F800 /* layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D32774F156CC8B300D3F800 /* layer.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
 		0D41CD35157C225F0032B05A /* StateView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D41CD34157C225F0032B05A /* StateView.m */; };
-		0D602F361572E25C00F51C02 /* status.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D602F351572E25C00F51C02 /* status.m */; };
+		0D602F361572E25C00F51C02 /* status.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D602F351572E25C00F51C02 /* status.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
 		0D602F38157320D200F51C02 /* beep.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 0D602F37157320D200F51C02 /* beep.aiff */; };
 		0D602F3A1573210000F51C02 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D602F391573210000F51C02 /* AudioToolbox.framework */; };
 		0D62F87115B8343B002E3EF8 /* StatePickerView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D62F87015B8343A002E3EF8 /* StatePickerView.m */; };
@@ -61,7 +61,7 @@
 		0D9AA82B15D099F2003BEBD5 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D9AA82A15D099F2003BEBD5 /* OpenGLES.framework */; };
 		0D9D15B915B67E340081C8AB /* help.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D9D15B715B67E340081C8AB /* help.png */; };
 		0D9D15BA15B67E340081C8AB /* help@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D9D15B815B67E340081C8AB /* help@2x.png */; };
-		0D9D4DC1156DEF22005DD91D /* file.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D9D4DC0156DEF22005DD91D /* file.m */; };
+		0D9D4DC1156DEF22005DD91D /* file.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D9D4DC0156DEF22005DD91D /* file.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
 		0D9D4DC4156E1F97005DD91D /* StatusView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D9D4DC3156E1F97005DD91D /* StatusView.m */; };
 		0DA5B31D15F03332005EBBE8 /* Patterns in Resources */ = {isa = PBXBuildFile; fileRef = 0DA5B31C15F03332005EBBE8 /* Patterns */; };
 		0DA5B31F15F0336C005EBBE8 /* Rules in Resources */ = {isa = PBXBuildFile; fileRef = 0DA5B31E15F0336C005EBBE8 /* Rules */; };
@@ -93,10 +93,10 @@
 		0DD5D56715A3083700CF2627 /* open.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DD5D56515A3083700CF2627 /* open.png */; };
 		0DD5D56815A3083700CF2627 /* open@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DD5D56615A3083700CF2627 /* open@2x.png */; };
 		0DD820DA1632A321008DF0FD /* ruleloaderalgo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD820D91632A321008DF0FD /* ruleloaderalgo.cpp */; };
-		0DDC702E157EC50400B7F1C4 /* undo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DDC702D157EC50300B7F1C4 /* undo.m */; };
-		0DDC80FB156B005C004C5B29 /* utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DDC80F9156B005C004C5B29 /* utils.m */; };
-		0DE7EB0F157D93BD005967ED /* select.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7EB0E157D93BD005967ED /* select.m */; };
-		0DE7EB13157D9A51005967ED /* view.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7EB12157D9A51005967ED /* view.m */; };
+		0DDC702E157EC50400B7F1C4 /* undo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DDC702D157EC50300B7F1C4 /* undo.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
+		0DDC80FB156B005C004C5B29 /* utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DDC80F9156B005C004C5B29 /* utils.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
+		0DE7EB0F157D93BD005967ED /* select.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7EB0E157D93BD005967ED /* select.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
+		0DE7EB13157D9A51005967ED /* view.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DE7EB12157D9A51005967ED /* view.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
