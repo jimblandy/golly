@@ -27,20 +27,30 @@
 #include "util.h"           // for linereader, lifeerrors
 
 #include "utils.h"          // for gColor, SetColor, Warning, Fatal, Beep
-#include "algos.h"          // for NumAlgos, algoinfo, etc
 #include "status.h"         // for DisplayMessage
+#include "algos.h"          // for NumAlgos, algoinfo, etc
 #include "layer.h"          // for currlayer
 #include "prefs.h"
 
-//!!! #import "PatternViewController.h"   // for BeginProgress, etc
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"   // for BeginProgress, etc
+#endif
+
+#ifdef IOS_GUI
+    #import "PatternViewController.h"   // for BeginProgress, etc
+#endif
 
 // -----------------------------------------------------------------------------
 
 // Golly's preferences file is a simple text file.
-// On iOS devices it's created in Library/Preferences/ in the application directory (gollydir).
-// On Android devices it's created in DUNNO???!!!
 
-const char* GOLLY_VERSION = "1.0";
+#ifdef ANDROID_GUI
+    const char* GOLLY_VERSION = "1.0";
+#endif
+
+#ifdef IOS_GUI
+    const char* GOLLY_VERSION = "1.1";
+#endif
 
 std::string prefspath;              // full path to prefs file
 const int PREFS_VERSION = 1;        // increment if necessary due to changes in syntax/semantics
@@ -368,7 +378,13 @@ void GetPrefs()
 {
     int algoindex = -1;     // unknown algorithm
 
+#ifdef ANDROID_GUI
     prefspath = gollydir + "GollyPrefs";
+#endif
+
+#ifdef IOS_GUI
+    prefspath = gollydir + "Library/Preferences/GollyPrefs";
+#endif
 
     // let gollybase code call Fatal, Warning, BeginProgress, etc
     lifeerrors::seterrorhandler(&myerrhandler);

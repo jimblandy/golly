@@ -31,7 +31,7 @@
 		0D1E9E6E17420EE2002C1270 /* triangle-down.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D1E9E6C17420EE2002C1270 /* triangle-down.png */; };
 		0D2D9AAF156A00F3005B8D19 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D2D9AAE156A00F3005B8D19 /* libz.dylib */; };
 		0D2D9AB5156A2413005B8D19 /* algos.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D2D9AB4156A2413005B8D19 /* algos.m */; };
-		0D32774C156C9B0A00D3F800 /* prefs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D32774A156C9B0A00D3F800 /* prefs.m */; };
+		0D32774C156C9B0A00D3F800 /* prefs.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D32774A156C9B0A00D3F800 /* prefs.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
 		0D327750156CC8B300D3F800 /* layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D32774F156CC8B300D3F800 /* layer.m */; };
 		0D41CD35157C225F0032B05A /* StateView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D41CD34157C225F0032B05A /* StateView.m */; };
 		0D602F361572E25C00F51C02 /* status.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D602F351572E25C00F51C02 /* status.m */; };

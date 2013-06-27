@@ -1,25 +1,25 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
 #include "lifealgo.h"
@@ -32,14 +32,25 @@
 #include "layer.h"          // for currlayer
 #include "prefs.h"
 
-#import "PatternViewController.h"   // for BeginProgress, etc
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"   // for BeginProgress, etc
+#endif
+
+#ifdef IOS_GUI
+    #import "PatternViewController.h"   // for BeginProgress, etc
+#endif
 
 // -----------------------------------------------------------------------------
 
-// Golly's preferences file is a simple text file.  On iOS devices it's created
-// in Library/Preferences/ in the application directory (gollydir).
+// Golly's preferences file is a simple text file.
 
-const char* GOLLY_VERSION = "1.1";
+#ifdef ANDROID_GUI
+    const char* GOLLY_VERSION = "1.0";
+#endif
+
+#ifdef IOS_GUI
+    const char* GOLLY_VERSION = "1.1";
+#endif
 
 std::string prefspath;              // full path to prefs file
 const int PREFS_VERSION = 1;        // increment if necessary due to changes in syntax/semantics
@@ -174,13 +185,13 @@ void SavePrefs()
         Warning("Bug: currlayer is NULL!");
         return;
     }
-    
+
     FILE* f = fopen(prefspath.c_str(), "w");
     if (f == NULL) {
         Warning("Could not save preferences file!");
         return;
     }
-    
+
     fprintf(f, "golly_version=%s\n", GOLLY_VERSION);
     fprintf(f, "prefs_version=%d\n", PREFS_VERSION);
     fprintf(f, "debug_level=%d\n", debuglevel);
@@ -197,9 +208,9 @@ void SavePrefs()
     fprintf(f, "hyperspeed=%d\n", currlayer->hyperspeed ? 1 : 0);
     fprintf(f, "hash_info=%d\n", currlayer->showhashinfo ? 1 : 0);
     fprintf(f, "max_hash_mem=%d\n", maxhashmem);
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "init_algo=%s\n", GetAlgoName(currlayer->algtype));
     for (int i = 0; i < NumAlgos(); i++) {
         fputs("\n", f);
@@ -222,9 +233,9 @@ void SavePrefs()
         }
         fputs("\n", f);
     }
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "rule=%s\n", currlayer->algo->getrule());
     fprintf(f, "show_tool=%d\n", showtool ? 1 : 0);
     fprintf(f, "show_layer=%d\n", showlayer ? 1 : 0);
@@ -239,9 +250,9 @@ void SavePrefs()
     fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
     fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
     fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "sync_views=%d\n", syncviews ? 1 : 0);
     fprintf(f, "sync_modes=%d\n", syncmodes ? 1 : 0);
     fprintf(f, "stack_layers=%d\n", stacklayers ? 1 : 0);
@@ -251,24 +262,24 @@ void SavePrefs()
     fprintf(f, "ask_on_load=%d\n", askonload ? 1 : 0);
     fprintf(f, "ask_on_delete=%d\n", askondelete ? 1 : 0);
     fprintf(f, "ask_on_quit=%d\n", askonquit ? 1 : 0);
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "show_icons=%d\n", showicons ? 1 : 0);
     fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
     fprintf(f, "opacity=%d (1..100)\n", opacity);
     SaveColor(f, "border_rgb", borderrgb);
     SaveColor(f, "select_rgb", selectrgb);
     SaveColor(f, "paste_rgb", pastergb);
-    
+
     fputs("\n", f);
-    
+
     fprintf(f, "new_mag=%d (0..%d)\n", newmag, MAX_MAG);
     fprintf(f, "new_remove_sel=%d\n", newremovesel ? 1 : 0);
     fprintf(f, "open_remove_sel=%d\n", openremovesel ? 1 : 0);
     fprintf(f, "save_xrle=%d\n", savexrle ? 1 : 0);
     fprintf(f, "max_patterns=%d (1..%d)\n", maxpatterns, MAX_RECENT);
-    
+
     if (!recentpatterns.empty()) {
         fputs("\n", f);
         std::list<std::string>::iterator next = recentpatterns.begin();
@@ -278,7 +289,7 @@ void SavePrefs()
             next++;
         }
     }
-    
+
     fclose(f);
 }
 
@@ -319,77 +330,6 @@ char* ReplaceDeprecatedAlgo(char* algoname)
 
 // -----------------------------------------------------------------------------
 
-void CreateDocSubdir(NSString *subdirname)
-{
-    // create given subdirectory inside Documents
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *path = [[paths objectAtIndex:0] stringByAppendingPathComponent:subdirname];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        // do nothing if subdir already exists
-    } else {
-        NSError *error;
-        if (![[NSFileManager defaultManager] createDirectoryAtPath:path
-                                       withIntermediateDirectories:NO
-                                                        attributes:nil
-                                                             error:&error]) {
-            NSLog(@"Error creating %@ subdirectory: %@", subdirname, error);
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void InitPaths()
-{
-    // init path to location of app
-    gollydir = [NSHomeDirectory() cStringUsingEncoding:NSUTF8StringEncoding];
-    gollydir += "/";
-    
-    // init prefspath to gollydir/Library/Preferences/GollyPrefs
-    prefspath = gollydir + "Library/Preferences/GollyPrefs";
-    
-    // init datadir to gollydir/Documents/Saved/
-    datadir = gollydir + "Documents/Saved/";
-    CreateDocSubdir(@"Saved");
-    
-    // init downloaddir to gollydir/Documents/Downloads/
-    downloaddir = gollydir + "Documents/Downloads/";
-    CreateDocSubdir(@"Downloads");
-    
-    // init userrules to gollydir/Documents/Rules/
-    userrules = gollydir + "Documents/Rules/";
-    CreateDocSubdir(@"Rules");
-    
-    // init path to supplied help
-    helpdir = gollydir + "Golly.app/Help/";
-    
-    // init path to supplied rules
-    rulesdir = gollydir + "Golly.app/Rules/";
-    
-    // init path to supplied patterns
-    patternsdir = gollydir + "Golly.app/Patterns/";
-    
-    // init tempdir to gollydir/tmp/
-    tempdir = gollydir + "tmp/";
-
-    clipfile = tempdir + "golly_clipboard";
-    
-    /* DEBUG
-    NSLog(@"gollydir = %s", gollydir.c_str());
-    NSLog(@"datadir = %s", datadir.c_str());
-    NSLog(@"tempdir = %s", tempdir.c_str());
-    NSLog(@"prefspath = %s", prefspath.c_str());
-    NSLog(@"downloaddir = %s", downloaddir.c_str());
-    NSLog(@"userrules = %s", userrules.c_str());
-    NSLog(@"rulesdir = %s", rulesdir.c_str());
-    NSLog(@"helpdir = %s", helpdir.c_str());
-    NSLog(@"patternsdir = %s", patternsdir.c_str());
-    NSLog(@"clipfile = %s", clipfile.c_str());
-    */
-}
-
-// -----------------------------------------------------------------------------
-
 // let gollybase code call Fatal, Warning, BeginProgress, etc
 
 class my_errors : public lifeerrors
@@ -398,33 +338,33 @@ public:
     virtual void fatal(const char* s) {
         Fatal(s);
     }
-    
+
     virtual void warning(const char* s) {
         Warning(s);
     }
-    
+
     virtual void status(const char* s) {
         DisplayMessage(s);
     }
-    
+
     virtual void beginprogress(const char* s) {
         BeginProgress(s);
         // init flag for isaborted() calls
         aborted = false;
     }
-    
+
     virtual bool abortprogress(double f, const char* s) {
         return AbortProgress(f, s);
     }
-    
+
     virtual void endprogress() {
         EndProgress();
     }
-    
+
     virtual const char* getuserrules() {
         return (const char*) userrules.c_str();
     }
-    
+
     virtual const char* getrulesdir() {
         return (const char*) rulesdir.c_str();
     }
@@ -437,32 +377,38 @@ static my_errors myerrhandler;    // create instance
 void GetPrefs()
 {
     int algoindex = -1;     // unknown algorithm
-    
-    InitPaths();            // init gollydir, prefspath, etc
-    
+
+#ifdef ANDROID_GUI
+    prefspath = gollydir + "GollyPrefs";
+#endif
+
+#ifdef IOS_GUI
+    prefspath = gollydir + "Library/Preferences/GollyPrefs";
+#endif
+
     // let gollybase code call Fatal, Warning, BeginProgress, etc
     lifeerrors::seterrorhandler(&myerrhandler);
-    
+
     CreateDefaultColors();
-    
+
     FILE* f = fopen(prefspath.c_str(), "r");
     if (f == NULL) {
         // should only happen 1st time app is run
         return;
     }
-    
+
     linereader reader(f);
     char line[PREF_LINE_SIZE];
     char* keyword;
     char* value;
     while ( GetKeywordAndValue(reader, line, &keyword, &value) ) {
-        
+
         if (strcmp(keyword, "prefs_version") == 0) {
             sscanf(value, "%d", &currversion);
-            
+
         } else if (strcmp(keyword, "debug_level") == 0) {
             sscanf(value, "%d", &debuglevel);
-            
+
         } else if (strcmp(keyword, "help_font_size") == 0) {
             sscanf(value, "%d", &helpfontsize);
             if (helpfontsize < minfontsize) helpfontsize = minfontsize;
@@ -470,26 +416,26 @@ void GetPrefs()
 
         } else if (strcmp(keyword, "allow_undo") == 0) {
             allowundo = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "allow_beep") == 0) {
             allowbeep = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "restore_view") == 0) {
             restoreview = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "paste_mode") == 0) {
             SetPasteMode(value);
-            
+
         } else if (strcmp(keyword, "can_change_rule") == 0) {
             sscanf(value, "%d", &canchangerule);
             if (canchangerule < 0) canchangerule = 0;
             if (canchangerule > 2) canchangerule = 2;
-            
+
         } else if (strcmp(keyword, "random_fill") == 0) {
             sscanf(value, "%d", &randomfill);
             if (randomfill < 1) randomfill = 1;
             if (randomfill > 100) randomfill = 100;
-            
+
         } else if (strcmp(keyword, "algorithm") == 0) {
             if (strcmp(value, "RuleTable") == 0) {
                 // use deprecated RuleTable settings for RuleLoader
@@ -503,7 +449,7 @@ void GetPrefs()
                     break;
                 }
             }
-        
+
         } else if (strcmp(keyword, "base_step") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos()) {
                 int base;
@@ -512,23 +458,23 @@ void GetPrefs()
                 if (base > MAX_BASESTEP) base = MAX_BASESTEP;
                 algoinfo[algoindex]->defbase = base;
             }
-        
+
         } else if (strcmp(keyword, "status_rgb") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos())
                 GetColor(value, algoinfo[algoindex]->statusrgb);
-            
+
         } else if (strcmp(keyword, "from_rgb") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos())
                 GetColor(value, algoinfo[algoindex]->fromrgb);
-            
+
         } else if (strcmp(keyword, "to_rgb") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos())
                 GetColor(value, algoinfo[algoindex]->torgb);
-        
+
         } else if (strcmp(keyword, "use_gradient") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos())
                 algoinfo[algoindex]->gradient = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "colors") == 0) {
             if (algoindex >= 0 && algoindex < NumAlgos()) {
                 int state, r, g, b;
@@ -544,32 +490,32 @@ void GetPrefs()
                     while (*value != ',') value++; value++;
                 }
             }
-            
+
         } else if (strcmp(keyword, "min_delay") == 0) {
             sscanf(value, "%d", &mindelay);
             if (mindelay < 0) mindelay = 0;
             if (mindelay > MAX_DELAY) mindelay = MAX_DELAY;
-            
+
         } else if (strcmp(keyword, "max_delay") == 0) {
             sscanf(value, "%d", &maxdelay);
             if (maxdelay < 0) maxdelay = 0;
             if (maxdelay > MAX_DELAY) maxdelay = MAX_DELAY;
-            
+
         } else if (strcmp(keyword, "auto_fit") == 0) {
             initautofit = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "init_algo") == 0) {
             value = ReplaceDeprecatedAlgo(value);
             int i = staticAlgoInfo::nameToIndex(value);
             if (i >= 0 && i < NumAlgos())
                 initalgo = i;
-            
+
         } else if (strcmp(keyword, "hyperspeed") == 0) {
             inithyperspeed = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "hash_info") == 0) {
             initshowhashinfo = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "max_hash_mem") == 0) {
             sscanf(value, "%d", &maxhashmem);
             if (maxhashmem < MIN_MEM_MB) maxhashmem = MIN_MEM_MB;
@@ -577,106 +523,106 @@ void GetPrefs()
 
         } else if (strcmp(keyword, "rule") == 0) {
             strncpy(initrule, value, sizeof(initrule));
-            
+
         } else if (strcmp(keyword, "show_tool") == 0) {
             showtool = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_layer") == 0) {
             showlayer = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_edit") == 0) {
             showedit = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_states") == 0) {
             showallstates = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_status") == 0) {
             showstatus = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_exact") == 0) {
             showexact = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_timeline") == 0) {
             showtimeline = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_timing") == 0) {
             showtiming = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "grid_lines") == 0) {
             showgridlines = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "min_grid_mag") == 0) {
             sscanf(value, "%d", &mingridmag);
             if (mingridmag < 2) mingridmag = 2;
             if (mingridmag > MAX_MAG) mingridmag = MAX_MAG;
-            
+
         } else if (strcmp(keyword, "bold_spacing") == 0) {
             sscanf(value, "%d", &boldspacing);
             if (boldspacing < 2) boldspacing = 2;
             if (boldspacing > MAX_SPACING) boldspacing = MAX_SPACING;
-            
+
         } else if (strcmp(keyword, "show_bold_lines") == 0) {
             showboldlines = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "math_coords") == 0) {
             mathcoords = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "sync_views") == 0) {
             syncviews = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "sync_modes") == 0) {
             syncmodes = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "stack_layers") == 0) {
             stacklayers = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "tile_layers") == 0) {
             tilelayers = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "tile_border") == 0) {
             sscanf(value, "%d", &tileborder);
             if (tileborder < 1) tileborder = 1;
             if (tileborder > 10) tileborder = 10;
-            
+
         } else if (strcmp(keyword, "ask_on_new") == 0)    { askonnew = value[0] == '1';
         } else if (strcmp(keyword, "ask_on_load") == 0)   { askonload = value[0] == '1';
         } else if (strcmp(keyword, "ask_on_delete") == 0) { askondelete = value[0] == '1';
         } else if (strcmp(keyword, "ask_on_quit") == 0)   { askonquit = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "show_icons") == 0) {
             showicons = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "swap_colors") == 0) {
             swapcolors = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "opacity") == 0) {
             sscanf(value, "%d", &opacity);
             if (opacity < 1) opacity = 1;
             if (opacity > 100) opacity = 100;
-            
+
         } else if (strcmp(keyword, "border_rgb") == 0) { GetColor(value, borderrgb);
         } else if (strcmp(keyword, "select_rgb") == 0) { GetColor(value, selectrgb);
         } else if (strcmp(keyword, "paste_rgb") == 0)  { GetColor(value, pastergb);
-            
+
         } else if (strcmp(keyword, "new_mag") == 0) {
             sscanf(value, "%d", &newmag);
             if (newmag < 0) newmag = 0;
             if (newmag > MAX_MAG) newmag = MAX_MAG;
-            
+
         } else if (strcmp(keyword, "new_remove_sel") == 0) {
             newremovesel = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "open_remove_sel") == 0) {
             openremovesel = value[0] == '1';
-            
+
         } else if (strcmp(keyword, "save_xrle") == 0) {
             savexrle = value[0] == '1';
-        
+
         } else if (strcmp(keyword, "max_patterns") == 0) {
             sscanf(value, "%d", &maxpatterns);
             if (maxpatterns < 1) maxpatterns = 1;
             if (maxpatterns > MAX_RECENT) maxpatterns = MAX_RECENT;
-            
+
         } else if (strcmp(keyword, "recent_pattern") == 0) {
             if (numpatterns < maxpatterns && value[0]) {
                 // append path to recentpatterns if file exists
@@ -689,7 +635,7 @@ void GetPrefs()
         }
     }
     reader.close();
-    
+
     // stacklayers and tilelayers must not both be true
     if (stacklayers && tilelayers) tilelayers = false;
 }

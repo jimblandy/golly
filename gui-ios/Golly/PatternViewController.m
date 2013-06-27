@@ -27,7 +27,7 @@
 #include "utils.h"       // for Warning, event_checker
 #include "status.h"      // for DisplayMessage
 #include "algos.h"       // for InitAlgorithms, algoinfo
-#include "prefs.h"       // for GetPrefs, SavePrefs
+#include "prefs.h"       // for GetPrefs, SavePrefs, gollydir, etc
 #include "layer.h"       // for AddLayer, currlayer
 #include "file.h"        // for NewPattern
 #include "control.h"     // for generating, StartGenerating, etc
@@ -89,6 +89,73 @@ static int pausecount = 0;              // if > 0 then genTimer needs to be rest
 
 // -----------------------------------------------------------------------------
 
+static void CreateDocSubdir(NSString *subdirname)
+{
+    // create given subdirectory inside Documents
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *path = [[paths objectAtIndex:0] stringByAppendingPathComponent:subdirname];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        // do nothing if subdir already exists
+    } else {
+        NSError *error;
+        if (![[NSFileManager defaultManager] createDirectoryAtPath:path
+                                       withIntermediateDirectories:NO
+                                                        attributes:nil
+                                                             error:&error]) {
+            NSLog(@"Error creating %@ subdirectory: %@", subdirname, error);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void InitPaths()
+{
+    // init path to location of app
+    gollydir = [NSHomeDirectory() cStringUsingEncoding:NSUTF8StringEncoding];
+    gollydir += "/";
+
+    // init datadir to gollydir/Documents/Saved/
+    datadir = gollydir + "Documents/Saved/";
+    CreateDocSubdir(@"Saved");
+
+    // init downloaddir to gollydir/Documents/Downloads/
+    downloaddir = gollydir + "Documents/Downloads/";
+    CreateDocSubdir(@"Downloads");
+
+    // init userrules to gollydir/Documents/Rules/
+    userrules = gollydir + "Documents/Rules/";
+    CreateDocSubdir(@"Rules");
+
+    // init path to supplied help
+    helpdir = gollydir + "Golly.app/Help/";
+
+    // init path to supplied rules
+    rulesdir = gollydir + "Golly.app/Rules/";
+
+    // init path to supplied patterns
+    patternsdir = gollydir + "Golly.app/Patterns/";
+
+    // init tempdir to gollydir/tmp/
+    tempdir = gollydir + "tmp/";
+
+    clipfile = tempdir + "golly_clipboard";
+
+    /* DEBUG
+    NSLog(@"gollydir = %s", gollydir.c_str());
+    NSLog(@"datadir = %s", datadir.c_str());
+    NSLog(@"tempdir = %s", tempdir.c_str());
+    NSLog(@"downloaddir = %s", downloaddir.c_str());
+    NSLog(@"userrules = %s", userrules.c_str());
+    NSLog(@"rulesdir = %s", rulesdir.c_str());
+    NSLog(@"helpdir = %s", helpdir.c_str());
+    NSLog(@"patternsdir = %s", patternsdir.c_str());
+    NSLog(@"clipfile = %s", clipfile.c_str());
+    */
+}
+
+// -----------------------------------------------------------------------------
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -108,6 +175,7 @@ static int pausecount = 0;              // if > 0 then genTimer needs to be rest
         firstload = false;          // only do the following once
         MAX_MAG = 5;                // maximum cell size = 32x32
         InitAlgorithms();           // must initialize algoinfo first
+        InitPaths();                // init gollydir, etc
         GetPrefs();                 // load user's preferences
         SetMinimumStepExponent();   // for slowest speed
         AddLayer();                 // create initial layer (sets currlayer)
