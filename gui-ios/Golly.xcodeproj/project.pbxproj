@@ -84,7 +84,7 @@
 		0DA5B35715F03654005EBBE8 /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34115F03654005EBBE8 /* util.cpp */; };
 		0DA5B35815F03654005EBBE8 /* viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34315F03654005EBBE8 /* viewport.cpp */; };
 		0DA5B35915F03654005EBBE8 /* writepattern.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34515F03654005EBBE8 /* writepattern.cpp */; settings = {COMPILER_FLAGS = "-DZLIB"; }; };
-		0DC0A633156F36B60058B067 /* render.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC0A632156F36B60058B067 /* render.m */; };
+		0DC0A633156F36B60058B067 /* render.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC0A632156F36B60058B067 /* render.m */; settings = {COMPILER_FLAGS = "-DIOS_GUI"; }; };
 		0DC0F14D15A1511000BC058D /* FileInZipInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC0F14415A1511000BC058D /* FileInZipInfo.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		0DC0F14E15A1511000BC058D /* ZipException.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC0F14615A1511000BC058D /* ZipException.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		0DC0F14F15A1511000BC058D /* ZipFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 0DC0F14815A1511000BC058D /* ZipFile.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };

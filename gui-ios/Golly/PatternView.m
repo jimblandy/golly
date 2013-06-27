@@ -239,7 +239,7 @@ static GLuint viewFramebuffer = 0;
 
     [EAGLContext setCurrentContext:context];
 
-    DrawPattern(context, tileindex);
+    DrawPattern(tileindex);
     
     // display the buffer
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);

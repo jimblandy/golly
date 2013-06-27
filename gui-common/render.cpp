@@ -63,13 +63,14 @@
 #include "view.h"        // nopattupdate, waitingforpaste, pasterect, pastex, pastey, etc
 #include "render.h"
 
-//!!! #ifdef IOS_GUI
-//!!! #import <OpenGLES/ES1/gl.h>
-//!!! #import <OpenGLES/ES1/glext.h>
+#ifdef ANDROID_GUI
+    #include <GLES/gl.h>
+#endif
 
-//!!! #ifdef ANDROID_GUI
-#include <GLES/gl.h>
-
+#ifdef IOS_GUI
+    #import <OpenGLES/ES1/gl.h>
+    #import <OpenGLES/ES1/glext.h>
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -329,7 +330,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
 class golly_render : public liferender
 {
 public:
-	golly_render() {}
+    golly_render() {}
     virtual ~golly_render() {}
     virtual void killrect(int x, int y, int w, int h);
     virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
@@ -924,9 +925,7 @@ void DrawTileBorders(EAGLContext* dc)
 
 // -----------------------------------------------------------------------------
 
-// we don't use context but might need it for drawing stacked/tiled layers!!!???
-
-void DrawPattern(/*!!! EAGLContext* context,*/ int tileindex)
+void DrawPattern(int tileindex)
 {
     gRect r;
     int colorindex = currindex;

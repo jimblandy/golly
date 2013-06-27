@@ -1,56 +1,56 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
 /* -------------------- Some notes on Golly's display code ---------------------
- 
+
  The rectangular area used to display patterns is called the viewport.
  All drawing in the viewport is done in this module using OpenGL ES.
- 
+
  The main rendering routine is DrawPattern() -- see the end of this module.
  DrawPattern() does the following tasks:
- 
+
  - Calls currlayer->algo->draw() to draw the current pattern.  It passes
-   in renderer, an instance of ios_render (derived from liferender) which
+   in renderer, an instance of golly_render (derived from liferender) which
    has these methods:
    - pixblit() draws a pixmap containing at least one live cell.
    - getcolors() provides access to the current layer's color arrays.
- 
+
    Note that currlayer->algo->draw() does all the hard work of figuring
    out which parts of the viewport are dead and building all the pixmaps
    for the live parts.  The pixmaps contain suitably shrunken images
    when the scale is < 1:1 (ie. mag < 0).
- 
+
  - Calls DrawGridLines() to overlay grid lines if they are visible.
- 
+
  - Calls DrawGridBorder() to draw border around a bounded universe.
- 
+
  - Calls DrawSelection() to overlay a translucent selection rectangle
    if a selection exists and any part of it is visible.
- 
+
  - If the user is doing a paste, DrawPasteImage() draws the paste pattern
    stored in pastealgo.
- 
+
  ----------------------------------------------------------------------------- */
 
 #include "bigint.h"
@@ -58,18 +58,23 @@
 #include "viewport.h"
 
 #include "utils.h"       // for Warning, Fatal, etc
-#include "status.h"      // for DisplayMessage
 #include "prefs.h"       // for showgridlines, mingridmag, swapcolors, etc
 #include "layer.h"       // currlayer, GetLayer, etc
 #include "view.h"        // nopattupdate, waitingforpaste, pasterect, pastex, pastey, etc
 #include "render.h"
 
-#import <OpenGLES/ES1/gl.h>
-#import <OpenGLES/ES1/glext.h>
+#ifdef ANDROID_GUI
+    #include <GLES/gl.h>
+#endif
+
+#ifdef IOS_GUI
+    #import <OpenGLES/ES1/gl.h>
+    #import <OpenGLES/ES1/glext.h>
+#endif
 
 // -----------------------------------------------------------------------------
 
-// local data used in ios_render routines:
+// local data used in golly_render routines:
 
 static int currwd, currht;              // current width and height of viewport
 static unsigned char** iconpixels;      // pointers to pixel data for each icon
@@ -103,12 +108,12 @@ void FillRect(int x, int y, int wd, int ht)
 
 void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 {
-    // called from ios_render::pixblit to draw pattern at 1:1 scale
-    
+    // called from golly_render::pixblit to draw pattern at 1:1 scale
+
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
     int numcoords = 0;
-    
+
     glPointSize(1);
 
     unsigned char deadr = currlayer->cellr[0];
@@ -147,7 +152,7 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
             }
         }
     }
-    
+
     if (numcoords > 0) {
         glVertexPointer(2, GL_FLOAT, 0, points);
         glDrawArrays(GL_POINTS, 0, numcoords/2);
@@ -158,15 +163,15 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 
 void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
-    // called from ios_render::pixblit to draw icons for each live cell;
+    // called from golly_render::pixblit to draw icons for each live cell;
     // assume pmscale > 2 (should be 8 or 16 or 32)
     int cellsize = pmscale - 1;
-    
+
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
     int numcoords = 0;
     bool multicolor = currlayer->multicoloricons;
-    
+
     glPointSize(1);
 
     unsigned char deadr = currlayer->cellr[0];
@@ -240,7 +245,7 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
             }
         }
     }
-    
+
     if (numcoords > 0) {
         glVertexPointer(2, GL_FLOAT, 0, points);
         glDrawArrays(GL_POINTS, 0, numcoords/2);
@@ -251,14 +256,14 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
 
 void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
-    // called from ios_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
+    // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
     int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
     int numstates = currlayer->algo->NumCellStates();
-    
+
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
     int numcoords = 0;
-    
+
     glPointSize(cellsize);
 
     if (numstates == 2) {
@@ -313,7 +318,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
             }
         }
     }
-    
+
     if (numcoords > 0) {
         glVertexPointer(2, GL_FLOAT, 0, points);
         glDrawArrays(GL_POINTS, 0, numcoords/2);
@@ -322,29 +327,29 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
 
 // -----------------------------------------------------------------------------
 
-class ios_render : public liferender
+class golly_render : public liferender
 {
 public:
-    ios_render() {}
-    virtual ~ios_render() {}
+    golly_render() {}
+    virtual ~golly_render() {}
     virtual void killrect(int x, int y, int w, int h);
     virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
     virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b);
 };
 
-ios_render renderer;     // create instance
+golly_render renderer;     // create instance
 
 // -----------------------------------------------------------------------------
 
-void ios_render::killrect(int x, int y, int w, int h)
+void golly_render::killrect(int x, int y, int w, int h)
 {
 #if 0
     // is Tom's hashdraw code doing unnecessary work???
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
-    
+
     if (w <= 0 || h <= 0) return;
-    
+
     // clip given rect so it's within viewport
     int clipx = x < 0 ? 0 : x;
     int clipy = y < 0 ? 0 : y;
@@ -354,7 +359,7 @@ void ios_render::killrect(int x, int y, int w, int h)
     if (clipb > currht) clipb = currht;
     int clipwd = clipr - clipx;
     int clipht = clipb - clipy;
-    
+
     // use a different pale color each time to see any probs
     glColor4ub((rand()&127)+128, (rand()&127)+128, (rand()&127)+128, 255);
     FillRect(clipx, clipy, clipwd, clipht);
@@ -365,15 +370,15 @@ void ios_render::killrect(int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
-void ios_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
+void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 {
     // is Tom's hashdraw code doing unnecessary work???
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
-    
+
     // stride is the horizontal pixel width of the image data
     int stride = w/pmscale;
-    
+
     // clip data outside viewport
     if (pmscale > 1) {
         // pmdata contains 1 byte per `pmscale' pixels, so we must be careful
@@ -393,7 +398,7 @@ void ios_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
         if (x + w >= currwd + pmscale) w = (currwd - x + pmscale - 1)/pmscale*pmscale;
         if (y + h >= currht + pmscale) h = (currht - y + pmscale - 1)/pmscale*pmscale;
     }
-    
+
     if (pmscale == 1) {
         // draw rgb pixel data at scale 1:1
         DrawPoints((unsigned char*) pmdata, x, y, w, h);
@@ -409,7 +414,7 @@ void ios_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 
 // -----------------------------------------------------------------------------
 
-void ios_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b)
+void golly_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b)
 {
     *r = currlayer->cellr;
     *g = currlayer->cellg;
@@ -439,7 +444,7 @@ void DrawGridBorder(int wd, int ht)
         top = 0;
         bottom = ht-1;
     }
-    
+
     // note that right and/or bottom might be INT_MAX so avoid adding to cause overflow
     if (currlayer->view->getmag() > 0) {
         // move to bottom right pixel of cell at gridright,gridbottom
@@ -454,7 +459,7 @@ void DrawGridBorder(int wd, int ht)
         if (right < wd) right++;
         if (bottom < ht) bottom++;
     }
-    
+
     if (left < 0 && right >= wd && top < 0 && bottom >= ht) {
         // border isn't visible (ie. grid fills viewport)
         return;
@@ -467,11 +472,11 @@ void DrawGridBorder(int wd, int ht)
         FillRect(0, 0, wd, ht);
         return;
     }
-    
+
     // avoid drawing overlapping rects below
     int rtop = 0;
     int rheight = ht;
-    
+
     if (currlayer->algo->gridht > 0) {
         if (top > 0) {
             // top border is visible
@@ -487,7 +492,7 @@ void DrawGridBorder(int wd, int ht)
             rheight -= ht - bottom;
         }
     }
-    
+
     if (currlayer->algo->gridwd > 0) {
         if (left > 0) {
             // left border is visible
@@ -549,18 +554,18 @@ void SetPasteRect(int wd, int ht)
 {
     int x, y, pastewd, pasteht;
     int mag = currlayer->view->getmag();
-    
+
     // find cell coord of current paste position
     pair<bigint, bigint> pcell = currlayer->view->at(pastex, pastey);
-    
+
     // determine bottom right cell
     bigint right = pcell.first;     right += wd;    right -= 1;
     bigint bottom = pcell.second;   bottom += ht;   bottom -= 1;
-    
+
     // best to use same method as in Selection::Visible
     pair<int,int> lt = currlayer->view->screenPosOf(pcell.first, pcell.second, currlayer->algo);
     pair<int,int> rb = currlayer->view->screenPosOf(right, bottom, currlayer->algo);
-    
+
     if (mag > 0) {
         // move rb to pixel at bottom right corner of cell
         rb.first += (1 << mag) - 1;
@@ -571,16 +576,16 @@ void SetPasteRect(int wd, int ht)
             rb.second--;
         }
     }
-    
+
     x = lt.first;
     y = lt.second;
     pastewd = rb.first - lt.first + 1;
     pasteht = rb.second - lt.second + 1;
-    
+
     // this should never happen but play safe
     if (pastewd <= 0) pastewd = 1;
     if (pasteht <= 0) pasteht = 1;
-    
+
     // don't let pasterect get too far beyond left/top edge of viewport
     if (x + pastewd < 64) {
         if (pastewd >= 64)
@@ -596,7 +601,7 @@ void SetPasteRect(int wd, int ht)
             y = 0;
         pastey = y;
     }
-    
+
     SetRect(pasterect, x, y, pastewd, pasteht);
 }
 
@@ -608,10 +613,10 @@ void DrawPasteImage()
     SetPasteRect(pastebbox.width, pastebbox.height);
 
     // NSLog(@"pasterect: x=%d y=%d wd=%d ht=%d", pasterect.x, pasterect.y, pasterect.width, pasterect.height);
-    
+
     int pastemag = currlayer->view->getmag();
     gRect cellbox = pastebbox;
-    
+
     // calculate intersection of pasterect and current viewport for use
     // as a temporary viewport
     int itop = pasterect.y;
@@ -632,7 +637,7 @@ void DrawPasteImage()
     int pasteht = ibottom - itop + 1;
     cellbox.width = PixelsToCells(pastewd, pastemag);
     cellbox.height = PixelsToCells(pasteht, pastemag);
-    
+
     // create temporary viewport
     viewport tempview(pastewd, pasteht);
     int midx, midy;
@@ -644,28 +649,28 @@ void DrawPasteImage()
         midy = cellbox.y + (cellbox.height - 1) / 2;
     }
     tempview.setpositionmag(midx, midy, pastemag);
-    
+
     // temporarily turn off grid lines (for DrawIcons)
     bool saveshow = showgridlines;
     showgridlines = false;
-    
+
     // temporarily change currwd and currht
     int savewd = currwd;
     int saveht = currht;
     currwd = tempview.getwidth();
     currht = tempview.getheight();
-    
+
     glTranslatef(ileft, itop, 0);
-    
+
     // draw paste pattern
     pastealgo->draw(tempview, renderer);
-    
+
     glTranslatef(-ileft, -itop, 0);
 
     showgridlines = saveshow;
     currwd = savewd;
     currht = saveht;
-    
+
     // overlay translucent rect to show paste area
     glColor4ub(pastergb.r, pastergb.g, pastergb.b, 64);
     FillRect(ileft, itop, pastewd, pasteht);
@@ -677,7 +682,7 @@ void DrawGridLines(int wd, int ht)
 {
     int cellsize = 1 << currlayer->view->getmag();
     int h, v, i, topbold, leftbold;
-    
+
     if (showboldlines) {
         // ensure that origin cell stays next to bold lines;
         // ie. bold lines scroll when pattern is scrolled
@@ -695,7 +700,7 @@ void DrawGridLines(int wd, int ht)
         // avoid gcc warning
         topbold = leftbold = 0;
     }
-    
+
     // set the stroke color depending on current bg color
     int r = currlayer->cellr[0];
     int g = currlayer->cellg[0];
@@ -712,14 +717,14 @@ void DrawGridLines(int wd, int ht)
                    g + 32 < 256 ? g + 32 : 255,
                    b + 32 < 256 ? b + 32 : 255, 255);
     }
-    
+
     glLineWidth(1.0);
 
     // draw all plain lines first
-    
+
     // note that we need to subtract 0.5 from each coordinate to avoid uneven spacing
     // and get same result on iOS Simulator (non Retina) and iPad with Retina
-    
+
     i = showboldlines ? topbold : 1;
     v = 0;
     while (true) {
@@ -744,7 +749,7 @@ void DrawGridLines(int wd, int ht)
             glDrawArrays(GL_LINES, 0, 2);
         }
     }
-    
+
     if (showboldlines) {
         // draw bold lines in slightly darker/lighter color
         if (gray > 127) {
@@ -793,7 +798,7 @@ void DrawOneLayer(EAGLContext* dc)
 {
     wxMemoryDC layerdc;
     layerdc.SelectObject(*layerbitmap);
-    
+
     if (showicons && currlayer->view->getmag() > 2) {
         // only show icons at scales 1:8, 1:16 and 1:32
         if (currlayer->view->getmag() == 3) {
@@ -804,13 +809,13 @@ void DrawOneLayer(EAGLContext* dc)
             iconpixels = currlayer->iconpixels31x31;
         }
     }
-    
+
     currlayer->algo->draw(*currlayer->view, renderer);
     layerdc.SelectObject(wxNullBitmap);
-    
+
     // make dead pixels 100% transparent; live pixels use opacity setting
     MaskDeadPixels(layerbitmap, layerwd, layerht, int(2.55 * opacity));
-    
+
     // draw result
     dc.DrawBitmap(*layerbitmap, 0, 0, true);
 }
@@ -832,37 +837,37 @@ void DrawStackedLayers(EAGLContext* dc)
             return;
         }
     }
-    
+
     // temporarily turn off grid lines
     bool saveshow = showgridlines;
     showgridlines = false;
-    
+
     // draw patterns in layers 1..numlayers-1
     for ( int i = 1; i < numlayers; i++ ) {
         Layer* savelayer = currlayer;
         currlayer = GetLayer(i);
-        
+
         // use real current layer's viewport
         viewport* saveview = currlayer->view;
         currlayer->view = savelayer->view;
-        
+
         // avoid drawing a cloned layer more than once??? draw first or last clone???
-        
+
         if ( !currlayer->algo->isEmpty() ) {
             DrawOneLayer(dc);
         }
-        
+
         // draw this layer's selection if necessary
         wxRect r;
         if ( currlayer->currsel.Visible(&r) ) {
             DrawSelection(dc, r, i == currindex);
         }
-        
+
         // restore viewport and currlayer
         currlayer->view = saveview;
         currlayer = savelayer;
     }
-    
+
     showgridlines = saveshow;
 }
 
@@ -872,17 +877,17 @@ void DrawTileFrame(EAGLContext* dc, wxRect& trect, wxBrush& brush, int wd)
 {
     trect.Inflate(wd);
     wxRect r = trect;
-    
+
     r.height = wd;
     FillRect(dc, r, brush);       // top edge
-    
+
     r.y += trect.height - wd;
     FillRect(dc, r, brush);       // bottom edge
-    
+
     r = trect;
     r.width = wd;
     FillRect(dc, r, brush);       // left edge
-    
+
     r.x += trect.width - wd;
     FillRect(dc, r, brush);       // right edge
 }
@@ -892,12 +897,12 @@ void DrawTileFrame(EAGLContext* dc, wxRect& trect, wxBrush& brush, int wd)
 void DrawTileBorders(EAGLContext* dc)
 {
     if (tileborder <= 0) return;    // no borders
-    
+
     // draw tile borders in bigview window
     int wd, ht;
     bigview->GetClientSize(&wd, &ht);
     if (wd < 1 || ht < 1) return;
-    
+
     wxBrush brush;
     // most people will choose either a very light or very dark color for dead cells,
     // so draw mid gray border around non-current tiles
@@ -909,20 +914,18 @@ void DrawTileBorders(EAGLContext* dc)
             DrawTileFrame(dc, trect, brush, tileborder);
         }
     }
-    
+
     // draw green border around current tile
     trect = GetLayer(currindex)->tilerect;
     brush.SetColour(0, 255, 0);
     DrawTileFrame(dc, trect, brush, tileborder);
 }
- 
+
 !!!*/
 
 // -----------------------------------------------------------------------------
 
-// we don't use context but might need it for drawing stacked/tiled layers!!!???
-
-void DrawPattern(EAGLContext* context, int tileindex)
+void DrawPattern(int tileindex)
 {
     gRect r;
     int colorindex = currindex;
@@ -930,14 +933,14 @@ void DrawPattern(EAGLContext* context, int tileindex)
     Layer* savelayer = NULL;
     viewport* saveview0 = NULL;
     */
-    
+
     // fill the background with state 0 color
     glClearColor(currlayer->cellr[0]/255.0,
                  currlayer->cellg[0]/255.0,
                  currlayer->cellb[0]/255.0,
                  0.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    
+
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
     if ( currlayer->algo->gridwd > 0) {
         if ( currlayer->view->x < currlayer->algo->gridleft )
@@ -959,7 +962,7 @@ void DrawPattern(EAGLContext* context, int tileindex)
                                             currlayer->algo->gridbottom,
                                             currlayer->view->getmag());
     }
-    
+
     if (nopattupdate) {
         // don't draw incomplete pattern, just draw grid lines and border
         currwd = currlayer->view->getwidth();
@@ -972,7 +975,7 @@ void DrawPattern(EAGLContext* context, int tileindex)
         }
         return;
     }
-    
+
     /*!!!
     if ( numlayers > 1 && tilelayers ) {
         if ( tileindex < 0 ) {
@@ -1002,7 +1005,7 @@ void DrawPattern(EAGLContext* context, int tileindex)
         colorindex = 0;
     }
     */
-    
+
     if (showicons && currlayer->view->getmag() > 2) {
         // only show icons at scales 1:8, 1:16 and 1:32
         if (currlayer->view->getmag() == 3) {
@@ -1013,26 +1016,26 @@ void DrawPattern(EAGLContext* context, int tileindex)
             iconpixels = currlayer->iconpixels31x31;
         }
     }
-    
+
     currwd = currlayer->view->getwidth();
     currht = currlayer->view->getheight();
 
     // draw pattern using a sequence of pixblit calls
     currlayer->algo->draw(*currlayer->view, renderer);
-    
+
     if ( showgridlines && currlayer->view->getmag() >= mingridmag ) {
         DrawGridLines(currwd, currht);
     }
-    
+
     // if universe is bounded then draw border regions (if visible)
     if ( currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0 ) {
         DrawGridBorder(currwd, currht);
     }
-    
+
     if ( currlayer->currsel.Visible(&r) ) {
         DrawSelection(r, colorindex == currindex);
     }
-    
+
     /*!!!
     if ( numlayers > 1 && stacklayers ) {
         // must restore currlayer before we call DrawStackedLayers
@@ -1045,11 +1048,11 @@ void DrawPattern(EAGLContext* context, int tileindex)
         DrawStackedLayers(dc);
     }
     */
-    
+
     if (waitingforpaste) {
         DrawPasteImage();
     }
-    
+
     /*!!!
     if ( numlayers > 1 && tilelayers ) {
         // restore globals changed above

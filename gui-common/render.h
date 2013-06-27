@@ -31,7 +31,7 @@ class lifealgo;
 
 // Routines for rendering the pattern view:
 
-void DrawPattern(/*!!! EAGLContext* context, */ int tileindex);
+void DrawPattern(int tileindex);
 // Draw the current pattern, grid lines, selection, etc.
 // The given tile index is only used when drawing tiled layers.
 
