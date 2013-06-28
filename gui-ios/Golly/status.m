@@ -1,106 +1,105 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
 #include "bigint.h"
 #include "lifealgo.h"
 
-#include "utils.h"       // for Fatal, Beep
-#include "prefs.h"       // for mindelay, maxdelay, etc
-#include "algos.h"       // for algoinfo
-#include "layer.h"       // for currlayer
-#include "view.h"        // for nopattupdate
+#include "utils.h"      // for Fatal, Beep
+#include "prefs.h"      // for mindelay, maxdelay, etc
+#include "algos.h"      // for algoinfo
+#include "layer.h"      // for currlayer
+#include "view.h"       // for nopattupdate
 #include "status.h"
 
-#import "PatternViewController.h"   // for UpdateStatus
-#import "RuleViewController.h"      // for GetRuleName
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"   // for UpdateStatus
+#endif
+#ifdef IOS_GUI
+    #import "PatternViewController.h"   // for UpdateStatus
+    #import "RuleViewController.h"      // for GetRuleName
+#endif
 
 // -----------------------------------------------------------------------------
 
-std::string statusmsg;        // for messages on bottom line
+std::string status1;    // top line
+std::string status2;    // middle line
+std::string status3;    // bottom line
 
-/* show info on 2nd line in fixed positions!!!???
-int h_gen;                    // horizontal position of "Generation"
-int h_pop;                    // horizontal position of "Population"
-int h_scale;                  // horizontal position of "Scale"
-int h_step;                   // horizontal position of "Step"
-int h_xy;                     // horizontal position of "XY"
-*/
+//!!! eventually we'll make the following prefixes dynamic strings
+// that depend on whether the device's screen size is large or small
+// (and whether it is in portrait mode or landscape mode???)
+#ifdef ANDROID_GUI
+    const char* algo_prefix =  "   Algo=";
+    const char* rule_prefix =  "   Rule=";
+    const char* gen_prefix =   "Gen=";
+    const char* pop_prefix =   "   Pop=";
+    const char* scale_prefix = "   Scale=";
+    const char* step_prefix =  "   ";
+    const char* xy_prefix =    "   XY=";
+#endif
+#ifdef IOS_GUI
+    const char* algo_prefix =  "    Algorithm=";
+    const char* rule_prefix =  "    Rule=";
+    const char* gen_prefix =   "Generation=";
+    const char* pop_prefix =   "    Population=";
+    const char* scale_prefix = "    Scale=";
+    const char* step_prefix =  "    ";
+    const char* xy_prefix =    "    XY=";
+#endif
 
 // -----------------------------------------------------------------------------
 
-void DrawStatusBar(CGContextRef context, int wd, int ht, CGRect dirtyrect)
+void UpdateStatusLines()
 {
-    // bg color of status area depends on current algorithm
-    [[UIColor colorWithRed:algoinfo[currlayer->algtype]->statusrgb.r / 255.0
-                     green:algoinfo[currlayer->algtype]->statusrgb.g / 255.0
-                      blue:algoinfo[currlayer->algtype]->statusrgb.b / 255.0
-                     alpha:1.0] setFill];
-    CGContextFillRect(context, dirtyrect);
-    
-    // draw thin gray line along bottom
-    /* only if edit toolbar is ever hidden!!!
-    [[UIColor grayColor] setStroke];
-    CGContextSetLineWidth(context, 1.0);
-    CGContextMoveToPoint(context, 0, ht);
-    CGContextAddLineToPoint(context, wd, ht);
-    CGContextStrokePath(context);
-    */
-    
-    // use black for drawing text
-    [[UIColor blackColor] setFill];
-    
-    // add code if showexact???!!!
-    
-    // add code to limit amount of drawing if dirtyrect's height is smaller than given ht???!!!
-    
-    // create strings for each line
-    std::string strbuf;
     std::string rule = currlayer->algo->getrule();
-    
-    strbuf = "Pattern=";
+
+    status1 = "Pattern=";
     if (currlayer->dirty) {
         // display asterisk to indicate pattern has been modified
-        strbuf += "*";
+        status1 += "*";
     }
-    strbuf += currlayer->currname;
-    strbuf += "    Algorithm=";
-    strbuf += GetAlgoName(currlayer->algtype);
-    strbuf += "    Rule=";
-    strbuf += rule;
+    status1 += currlayer->currname;
+    status1 += algo_prefix;
+    status1 += GetAlgoName(currlayer->algtype);
+    status1 += rule_prefix;
+    status1 += rule;
 
     // show rule name if one exists and is not same as rule
     // (best NOT to remove any suffix like ":T100,200" in case we allow
     // users to name "B3/S23:T100,200" as "Life on torus")
+#ifdef ANDROID_GUI
+    std::string rulename = "";  //!!! GetRuleName is not yet implemented
+#endif
+#ifdef IOS_GUI
     std::string rulename = GetRuleName(rule);
+#endif
     if (!rulename.empty() && rulename != rule) {
-        strbuf += " [";
-        strbuf += rulename;
-        strbuf += "]";
+        status1 += " [";
+        status1 += rulename;
+        status1 += "]";
     }
-    
-    NSString *line1 = [NSString stringWithCString:strbuf.c_str() encoding:NSUTF8StringEncoding];
-    
+
     char scalestr[32];
     int mag = currlayer->view->getmag();
     if (mag < 0) {
@@ -108,7 +107,7 @@ void DrawStatusBar(CGContextRef context, int wd, int ht, CGRect dirtyrect)
     } else {
         sprintf(scalestr, "1:%d", 1 << mag);
     }
-    
+
     char stepstr[32];
     if (currlayer->currexpo < 0) {
         // show delay in secs
@@ -116,82 +115,42 @@ void DrawStatusBar(CGContextRef context, int wd, int ht, CGRect dirtyrect)
     } else {
         sprintf(stepstr, "Step=%d^%d", currlayer->currbase, currlayer->currexpo);
     }
-    
-    strbuf = "Generation=";
+
+    status2 = gen_prefix;
     if (nopattupdate) {
-        strbuf += "0";
+        status2 += "0";
     } else {
-        strbuf += Stringify(currlayer->algo->getGeneration());
+        status2 += Stringify(currlayer->algo->getGeneration());
     }
-    strbuf += "    Population=";
+    status2 += pop_prefix;
     if (nopattupdate) {
-        strbuf += "0";
+        status2 += "0";
     } else {
         bigint popcount = currlayer->algo->getPopulation();
         if (popcount.sign() < 0) {
             // getPopulation returns -1 if it can't be calculated
-            strbuf += "?";
+            status2 += "?";
         } else {
-            strbuf += Stringify(popcount);
+            status2 += Stringify(popcount);
         }
     }
-    strbuf += "    Scale=";
-    strbuf += scalestr;
-    strbuf += "    ";
-    strbuf += stepstr;      // starts with Delay or Step
-    strbuf += "    XY=";
-    strbuf += Stringify(currlayer->view->x);
-    strbuf += " ";
-    strbuf += Stringify(currlayer->view->y);
-    //!!! fix above if we support origin shifting
-    
-    NSString *line2 = [NSString stringWithCString:strbuf.c_str() encoding:NSUTF8StringEncoding];
-    
-    // get font to draw lines (do only once)
-    static UIFont *font = nil;
-    if (font == nil) font = [UIFont systemFontOfSize:13];
-    
-    // set position of text in each line
-    float lineht = ht / 3.0;
-    CGRect rect1, rect2;
-    rect1.size = [line1 sizeWithFont:font];
-    rect2.size = [line2 sizeWithFont:font];
-    rect1.origin.x = 5.0;
-    rect2.origin.x = 5.0;
-    rect1.origin.y = (lineht / 2.0) - (rect1.size.height / 2.0);
-    rect2.origin.y = rect1.origin.y + lineht;
-    
-    // draw the top 2 lines
-    [line1 drawInRect:rect1 withFont:font];
-    [line2 drawInRect:rect2 withFont:font];
-    
-    static bool firstcall = true;
-    if (firstcall) {
-        firstcall = false;
-        // set initial message
-        statusmsg = "This is Golly version ";
-        statusmsg += GOLLY_VERSION;
-        statusmsg += " for iOS.  Copyright 2013 The Golly Gang.";
-    }
-
-    if (statusmsg.length() > 0) {
-        // display status message on bottom line
-        NSString *line3 = [NSString stringWithCString:statusmsg.c_str() encoding:NSUTF8StringEncoding];
-        CGRect rect3;
-        rect3.size = [line3 sizeWithFont:font];
-        rect3.origin.x = 5.0;
-        rect3.origin.y = rect2.origin.y + lineht;
-        [line3 drawInRect:rect3 withFont:font];
-    }
+    status2 += scale_prefix;
+    status2 += scalestr;
+    status2 += step_prefix;
+    status2 += stepstr;      // starts with Delay or Step
+    status2 += xy_prefix;
+    status2 += Stringify(currlayer->view->x);
+    status2 += " ";
+    status2 += Stringify(currlayer->view->y);
 }
 
 // -----------------------------------------------------------------------------
 
 void ClearMessage()
 {
-    if (statusmsg.length() == 0) return;    // no need to clear message
-    
-    statusmsg.clear();
+    if (status3.length() == 0) return;    // no need to clear message
+
+    status3.clear();
     UpdateStatus();
 }
 
@@ -199,7 +158,7 @@ void ClearMessage()
 
 void DisplayMessage(const char* s)
 {
-    statusmsg = s;
+    status3 = s;
     UpdateStatus();
 }
 
@@ -216,7 +175,7 @@ void ErrorMessage(const char* s)
 void SetMessage(const char* s)
 {
     // set message string without displaying it
-    statusmsg = s;
+    status3 = s;
 }
 
 // -----------------------------------------------------------------------------

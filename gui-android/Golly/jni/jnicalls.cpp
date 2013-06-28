@@ -171,6 +171,10 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, 
     static bool firstcall = true;
     if (firstcall) {
     	firstcall = false;
+    	std::string msg = "This is Golly version ";
+    	msg += GOLLY_VERSION;
+    	msg += " for Android.  Copyright 2013 The Golly Gang.";
+    	SetMessage(msg.c_str());
     	MAX_MAG = 5;                // maximum cell size = 32x32
     	InitAlgorithms();           // must initialize algoinfo first
     	GetPrefs();                 // load user's preferences

@@ -25,7 +25,7 @@
 #include "viewport.h"    // for MAX_MAG
 
 #include "utils.h"       // for Warning, event_checker
-#include "status.h"      // for DisplayMessage
+#include "status.h"      // for SetMessage, DisplayMessage
 #include "algos.h"       // for InitAlgorithms, algoinfo
 #include "prefs.h"       // for GetPrefs, SavePrefs, gollydir, etc
 #include "layer.h"       // for AddLayer, currlayer
@@ -173,6 +173,11 @@ static void InitPaths()
     static bool firstload = true;
     if (firstload) {
         firstload = false;          // only do the following once
+        // set initial message
+        std::string msg = "This is Golly version ";
+        msg += GOLLY_VERSION;
+        msg += " for iOS.  Copyright 2013 The Golly Gang.";
+        SetMessage(msg.c_str());
         MAX_MAG = 5;                // maximum cell size = 32x32
         InitAlgorithms();           // must initialize algoinfo first
         InitPaths();                // init gollydir, etc

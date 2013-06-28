@@ -29,14 +29,14 @@
 
 #include <string>       // for std::string
 
-// The status bar area consists of 3 lines of text.
+// The status bar area consists of 3 lines of text:
 
 extern std::string status1;		// top line
 extern std::string status2;		// middle line
 extern std::string status3;		// bottom line
 
 void UpdateStatusLines();
-// set status1, status2, status3
+// set status1 and status2 (SetMessage sets status3)
 
 void ClearMessage();
 // erase bottom line of status bar
@@ -48,7 +48,7 @@ void ErrorMessage(const char* s);
 // beep and display given message on bottom line of status bar
 
 void SetMessage(const char* s);
-// set message string without displaying it (until next update)
+// set status3 without displaying it (until next update)
 
 void UpdateXYLocation();
 // XY location needs to be updated

@@ -25,23 +25,48 @@
 #include "bigint.h"
 #include "lifealgo.h"
 
-#include "utils.h"       	// for Fatal, Beep
-#include "prefs.h"       	// for mindelay, maxdelay, etc
-#include "algos.h"       	// for algoinfo
-#include "layer.h"       	// for currlayer
-#include "view.h"        	// for nopattupdate
+#include "utils.h"      // for Fatal, Beep
+#include "prefs.h"      // for mindelay, maxdelay, etc
+#include "algos.h"      // for algoinfo
+#include "layer.h"      // for currlayer
+#include "view.h"       // for nopattupdate
 #include "status.h"
 
-//!!! #ifdef ANDROID_GUI
-#include "jnicalls.h"		// for UpdateStatus
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"   // for UpdateStatus
+#endif
+#ifdef IOS_GUI
+    #import "PatternViewController.h"   // for UpdateStatus
+    #import "RuleViewController.h"      // for GetRuleName
+#endif
 
-//!!! #ifdef IOS_GUI
-//!!! #import "PatternViewController.h"   // for UpdateStatus
-//!!! #import "RuleViewController.h"      // for GetRuleName
+// -----------------------------------------------------------------------------
 
-std::string status1;		// top line
-std::string status2;		// middle line
-std::string status3;		// bottom line
+std::string status1;    // top line
+std::string status2;    // middle line
+std::string status3;    // bottom line
+
+//!!! eventually we'll make the following prefixes dynamic strings
+// that depend on whether the device's screen size is large or small
+// (and whether it is in portrait mode or landscape mode???)
+#ifdef ANDROID_GUI
+    const char* algo_prefix =  "   Algo=";
+    const char* rule_prefix =  "   Rule=";
+    const char* gen_prefix =   "Gen=";
+    const char* pop_prefix =   "   Pop=";
+    const char* scale_prefix = "   Scale=";
+    const char* step_prefix =  "   ";
+    const char* xy_prefix =    "   XY=";
+#endif
+#ifdef IOS_GUI
+    const char* algo_prefix =  "    Algorithm=";
+    const char* rule_prefix =  "    Rule=";
+    const char* gen_prefix =   "Generation=";
+    const char* pop_prefix =   "    Population=";
+    const char* scale_prefix = "    Scale=";
+    const char* step_prefix =  "    ";
+    const char* xy_prefix =    "    XY=";
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -52,25 +77,28 @@ void UpdateStatusLines()
     status1 = "Pattern=";
     if (currlayer->dirty) {
         // display asterisk to indicate pattern has been modified
-    	status1 += "*";
+        status1 += "*";
     }
     status1 += currlayer->currname;
-    status1 += "   Algo=";
+    status1 += algo_prefix;
     status1 += GetAlgoName(currlayer->algtype);
-    status1 += "   Rule=";
+    status1 += rule_prefix;
     status1 += rule;
 
     // show rule name if one exists and is not same as rule
     // (best NOT to remove any suffix like ":T100,200" in case we allow
     // users to name "B3/S23:T100,200" as "Life on torus")
-    /* !!! GetRuleName is not yet implemented
+#ifdef ANDROID_GUI
+    std::string rulename = "";  //!!! GetRuleName is not yet implemented
+#endif
+#ifdef IOS_GUI
     std::string rulename = GetRuleName(rule);
+#endif
     if (!rulename.empty() && rulename != rule) {
-    	status1 += " [";
-    	status1 += rulename;
-    	status1 += "]";
+        status1 += " [";
+        status1 += rulename;
+        status1 += "]";
     }
-    */
 
     char scalestr[32];
     int mag = currlayer->view->getmag();
@@ -88,42 +116,32 @@ void UpdateStatusLines()
         sprintf(stepstr, "Step=%d^%d", currlayer->currbase, currlayer->currexpo);
     }
 
-    status2 = "Gen=";
+    status2 = gen_prefix;
     if (nopattupdate) {
-    	status2 += "0";
+        status2 += "0";
     } else {
-    	status2 += Stringify(currlayer->algo->getGeneration());
+        status2 += Stringify(currlayer->algo->getGeneration());
     }
-    status2 += "   Pop=";
+    status2 += pop_prefix;
     if (nopattupdate) {
-    	status2 += "0";
+        status2 += "0";
     } else {
         bigint popcount = currlayer->algo->getPopulation();
         if (popcount.sign() < 0) {
             // getPopulation returns -1 if it can't be calculated
-        	status2 += "?";
+            status2 += "?";
         } else {
-        	status2 += Stringify(popcount);
+            status2 += Stringify(popcount);
         }
     }
-    status2 += "   Scale=";
+    status2 += scale_prefix;
     status2 += scalestr;
-    status2 += "   ";
+    status2 += step_prefix;
     status2 += stepstr;      // starts with Delay or Step
-    status2 += "   XY=";
+    status2 += xy_prefix;
     status2 += Stringify(currlayer->view->x);
     status2 += " ";
     status2 += Stringify(currlayer->view->y);
-    //!!! fix above if we support origin shifting
-
-    static bool firstcall = true;
-    if (firstcall) {
-        firstcall = false;
-        // set initial message
-        status3 = "This is Golly version ";
-        status3 += GOLLY_VERSION;
-        status3 += " for Android.  Copyright 2013 The Golly Gang.";
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -140,7 +158,7 @@ void ClearMessage()
 
 void DisplayMessage(const char* s)
 {
-	status3 = s;
+    status3 = s;
     UpdateStatus();
 }
 
@@ -157,7 +175,7 @@ void ErrorMessage(const char* s)
 void SetMessage(const char* s)
 {
     // set message string without displaying it
-	status3 = s;
+    status3 = s;
 }
 
 // -----------------------------------------------------------------------------
