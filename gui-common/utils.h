@@ -125,9 +125,4 @@ extern int event_checker;
 // Poller is used by gollybase modules to process events.
 // If event_checker > 0 then we've been called from the event checking code.
 
-// only if Android???!!!
-void BeginProgress(const char* title);
-bool AbortProgress(double fraction_done, const char* message);
-void EndProgress();
-
 #endif

@@ -33,7 +33,7 @@
 #include "status.h"
 
 #ifdef ANDROID_GUI
-    #include "jnicalls.h"   // for UpdateStatus
+    #include "jnicalls.h"   // for UpdateStatus, GetRuleName
 #endif
 #ifdef IOS_GUI
     #import "PatternViewController.h"   // for UpdateStatus
@@ -88,12 +88,7 @@ void UpdateStatusLines()
     // show rule name if one exists and is not same as rule
     // (best NOT to remove any suffix like ":T100,200" in case we allow
     // users to name "B3/S23:T100,200" as "Life on torus")
-#ifdef ANDROID_GUI
-    std::string rulename = "";  //!!! GetRuleName is not yet implemented
-#endif
-#ifdef IOS_GUI
     std::string rulename = GetRuleName(rule);
-#endif
     if (!rulename.empty() && rulename != rule) {
         status1 += " [";
         status1 += rulename;

@@ -1,25 +1,25 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
 #include "bigint.h"
@@ -40,7 +40,12 @@
 #include "file.h"           // for GetTextFromClipboard
 #include "view.h"
 
-#import "PatternViewController.h"   // for UpdatePattern, BeginProgress, etc
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"   // for UpdatePattern, BeginProgress, etc
+#endif
+#ifdef IOS_GUI
+    #import "PatternViewController.h"   // for UpdatePattern, BeginProgress, etc
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -92,7 +97,7 @@ static bool movingpaste = false;        // moving paste image by dragging finger
 void UpdatePatternAndStatus()
 {
     if (inscript || currlayer->undoredo->doingscriptchanges) return;
-    
+
     UpdatePattern();
     UpdateStatus();
 }
@@ -171,11 +176,11 @@ bool CellInGrid(const bigint& x, const bigint& y)
     if (currlayer->algo->gridwd > 0 &&
         (x < currlayer->algo->gridleft ||
          x > currlayer->algo->gridright)) return false;
-    
+
     if (currlayer->algo->gridht > 0 &&
         (y < currlayer->algo->gridtop ||
          y > currlayer->algo->gridbottom)) return false;
-    
+
     return true;
 }
 
@@ -211,7 +216,7 @@ void DrawCells(int x, int y)
     if (y < 0) y = 0;
     if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
     if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
-    
+
     // make sure x,y is within bounded grid
     pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
     if (currlayer->algo->gridwd > 0) {
@@ -222,18 +227,18 @@ void DrawCells(int x, int y)
         if (cellpos.second < currlayer->algo->gridtop) cellpos.second = currlayer->algo->gridtop;
         if (cellpos.second > currlayer->algo->gridbottom) cellpos.second = currlayer->algo->gridbottom;
     }
-    
+
     if ( currlayer->view->getmag() < 0 ||
         OutsideLimits(cellpos.second, cellpos.first, cellpos.second, cellpos.first) ) {
         return;
     }
-    
-    int currstate;        
+
+    int currstate;
     int numchanged = 0;
     int newx = cellpos.first.toint();
     int newy = cellpos.second.toint();
     if ( newx != cellx || newy != celly ) {
-        
+
         // draw a line of cells using Bresenham's algorithm
         int d, ii, jj, di, ai, si, dj, aj, sj;
         di = newx - cellx;
@@ -242,10 +247,10 @@ void DrawCells(int x, int y)
         dj = newy - celly;
         aj = abs(dj) << 1;
         sj = (dj < 0)? -1 : 1;
-        
+
         ii = cellx;
         jj = celly;
-        
+
         lifealgo* curralgo = currlayer->algo;
         if (ai > aj) {
             d = aj - (ai >> 1);
@@ -280,19 +285,19 @@ void DrawCells(int x, int y)
                 d  += ai;
             }
         }
-        
+
         cellx = newx;
         celly = newy;
-        
+
         currstate = curralgo->getcell(cellx, celly);
         if (currstate != drawstate) {
             curralgo->setcell(cellx, celly, drawstate);
             RememberOneCellChange(cellx, celly, currstate, drawstate);
             numchanged++;
         }
-        
+
     }
-    
+
     if (numchanged > 0) {
         currlayer->algo->endofpattern();
         MarkLayerDirty();
@@ -322,33 +327,33 @@ void StartDrawingCells(int x, int y)
         ErrorMessage("Drawing is not allowed outside grid.");
         return;
     }
-    
+
     if (currlayer->view->getmag() < 0) {
         ErrorMessage("Drawing is not allowed at scales greater than 1 cell per pixel.");
         return;
     }
-    
+
     // check that x,y is within getcell/setcell limits
     pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
     if ( OutsideLimits(cellpos.second, cellpos.first, cellpos.second, cellpos.first) ) {
         ErrorMessage("Drawing is not allowed outside +/- 10^9 boundary.");
         return;
     }
-    
+
     drawingcells = true;
-    
+
     // save dirty state now for later use by RememberCellChanges
     if (allowundo) currlayer->savedirty = currlayer->dirty;
-    
+
     cellx = cellpos.first.toint();
     celly = cellpos.second.toint();
     int currstate = currlayer->algo->getcell(cellx, celly);
-    
+
     // reset drawing state in case it's no longer valid (due to algo/rule change)
     if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
         currlayer->drawingstate = 1;
     }
-    
+
     if (currstate == currlayer->drawingstate) {
         drawstate = 0;
     } else {
@@ -357,11 +362,11 @@ void StartDrawingCells(int x, int y)
     if (currstate != drawstate) {
         currlayer->algo->setcell(cellx, celly, drawstate);
         currlayer->algo->endofpattern();
-        
+
         // remember this cell change for later undo/redo
         RememberOneCellChange(cellx, celly, currstate, drawstate);
         MarkLayerDirty();
-        
+
         UpdatePattern();
         UpdateStatus();     // update population count
     }
@@ -372,13 +377,13 @@ void StartDrawingCells(int x, int y)
 void PickCell(int x, int y)
 {
     if (!PointInGrid(x, y)) return;
-    
+
     pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
     if ( currlayer->view->getmag() < 0 ||
         OutsideLimits(cellpos.second, cellpos.first, cellpos.second, cellpos.first) ) {
         return;
     }
-    
+
     int newx = cellpos.first.toint();
     int newy = cellpos.second.toint();
     if ( newx != cellx || newy != celly ) {
@@ -397,15 +402,15 @@ void StartPickingCells(int x, int y)
         ErrorMessage("Picking is not allowed outside grid.");
         return;
     }
-    
+
     if (currlayer->view->getmag() < 0) {
         ErrorMessage("Picking is not allowed at scales greater than 1 cell per pixel.");
         return;
     }
-    
+
     cellx = INT_MAX;
     celly = INT_MAX;
-    
+
     PickCell(x, y);
     pickingcells = true;
 }
@@ -419,12 +424,12 @@ void SelectCells(int x, int y)
     if (y < 0) y = 0;
     if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
     if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
-    
+
     if ( abs(initselx - x) < 2 && abs(initsely - y) < 2 && !SelectionExists() ) {
         // avoid 1x1 selection if finger hasn't moved much
         return;
     }
-    
+
     // make sure x,y is within bounded grid
     pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
     if (currlayer->algo->gridwd > 0) {
@@ -435,7 +440,7 @@ void SelectCells(int x, int y)
         if (cellpos.second < currlayer->algo->gridtop) cellpos.second = currlayer->algo->gridtop;
         if (cellpos.second > currlayer->algo->gridbottom) cellpos.second = currlayer->algo->gridbottom;
     }
-    
+
     if (forceh && forcev) {
         // move selection
         bigint xdelta = cellpos.first;
@@ -452,7 +457,7 @@ void SelectCells(int x, int y)
         if (!forcev) currlayer->currsel.SetLeftRight(cellpos.first, anchorx);
         if (!forceh) currlayer->currsel.SetTopBottom(cellpos.second, anchory);
     }
-    
+
     if (currlayer->currsel != prevsel) {
         // selection has changed
         DisplaySelectionSize();
@@ -481,21 +486,21 @@ void StartSelectingCells(int x, int y)
     anchory = cellpos.second;
     bigcellx = anchorx;
     bigcelly = anchory;
-    
+
     // save original selection for RememberNewSelection
     currlayer->savesel = currlayer->currsel;
-    
+
     // reset previous selection
     prevsel.Deselect();
-    
+
     // for avoiding 1x1 selection if finger doesn't move much
     initselx = x;
     initsely = y;
-    
+
     // allow changing size in any direction
     forceh = false;
     forcev = false;
-    
+
     if (SelectionExists()) {
         if (PointInSelection(x, y)) {
             // modify current selection
@@ -507,7 +512,7 @@ void StartSelectingCells(int x, int y)
         }
         UpdatePatternAndStatus();
     }
-    
+
     selectingcells = true;
 }
 
@@ -520,7 +525,7 @@ void MoveView(int x, int y)
     bigint ydelta = bigcelly;
     xdelta -= cellpos.first;
     ydelta -= cellpos.second;
-    
+
     int xamount, yamount;
     int mag = currlayer->view->getmag();
     if (mag >= 0) {
@@ -534,7 +539,7 @@ void MoveView(int x, int y)
         xamount = xdelta.toint();
         yamount = ydelta.toint();
     }
-    
+
     if ( xamount != 0 || yamount != 0 ) {
         currlayer->view->move(xamount, yamount);
         cellpos = currlayer->view->at(x, y);
@@ -565,7 +570,7 @@ void MovePaste(int x, int y)
     bigint ydelta = bigcelly;
     xdelta -= cellpos.first;
     ydelta -= cellpos.second;
-    
+
     int xamount, yamount;
     int mag = currlayer->view->getmag();
     if (mag >= 0) {
@@ -579,7 +584,7 @@ void MovePaste(int x, int y)
         xamount = xdelta.toint();
         yamount = ydelta.toint();
     }
-    
+
     if ( xamount != 0 || yamount != 0 ) {
         // shift location of pasterect
         pastex -= xamount;
@@ -610,16 +615,16 @@ void TouchBegan(int x, int y)
 
     } else if (currlayer->touchmode == drawmode) {
         StartDrawingCells(x, y);
-        
+
     } else if (currlayer->touchmode == pickmode) {
         StartPickingCells(x, y);
-        
+
     } else if (currlayer->touchmode == selectmode) {
         StartSelectingCells(x, y);
-        
+
     } else if (currlayer->touchmode == movemode) {
         StartMovingView(x, y);
-        
+
     }
 }
 
@@ -632,19 +637,19 @@ void TouchMoved(int x, int y)
     if (y < 0) y = 0;
     if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
     if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
-    
+
     if ( drawingcells ) {
         DrawCells(x, y);
-    
+
     } else if ( pickingcells ) {
         PickCell(x, y);
-    
+
     } else if ( selectingcells ) {
         SelectCells(x, y);
-    
+
     } else if ( movingview ) {
         MoveView(x, y);
-    
+
     } else if ( movingpaste ) {
         MovePaste(x, y);
     }
@@ -660,12 +665,12 @@ void TouchEnded()
         currlayer->undoredo->RememberCellChanges("Drawing", currlayer->savedirty);
         UpdateEditBar();    // update various buttons
     }
-    
+
     if (selectingcells) {
         if (allowundo) RememberNewSelection("Selection");
         UpdateEditBar();    // update various buttons
     }
-    
+
     drawingcells = false;
     pickingcells = false;
     selectingcells = false;
@@ -712,7 +717,7 @@ bool CopyRect(int itop, int ileft, int ibottom, int iright,
     int cntr = 0;
     int v = 0;
     bool abort = false;
-    
+
     // copy (and erase if requested) live cells from given rect
     // in source universe to same rect in destination universe
     BeginProgress(progmsg);
@@ -742,7 +747,7 @@ bool CopyRect(int itop, int ileft, int ibottom, int iright,
     if (erasesrc) srcalgo->endofpattern();
     destalgo->endofpattern();
     EndProgress();
-    
+
     return !abort;
 }
 
@@ -758,7 +763,7 @@ void CopyAllRect(int itop, int ileft, int ibottom, int iright,
     double maxcount = (double)wd * (double)ht;
     int cntr = 0;
     bool abort = false;
-    
+
     // copy all cells from given rect in srcalgo to same rect in destalgo
     BeginProgress(progmsg);
     for ( cy=itop; cy<=ibottom; cy++ ) {
@@ -792,17 +797,17 @@ void SelectAll()
         currlayer->currsel.Deselect();
         UpdatePatternAndStatus();
     }
-    
+
     if (currlayer->algo->isEmpty()) {
         ErrorMessage("All cells are dead.");
         RememberNewSelection("Deselection");
         return;
     }
-    
+
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
     currlayer->currsel.SetEdges(top, left, bottom, right);
-    
+
     RememberNewSelection("Select All");
     DisplaySelectionSize();
     UpdateEverything();
@@ -825,9 +830,9 @@ void RemoveSelection()
 void FitSelection()
 {
     if (!SelectionExists()) return;
-    
+
     currlayer->currsel.Fit();
-    
+
     TestAutoFit();
     UpdateEverything();
 }
@@ -919,7 +924,7 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
 {
     std::string data;
     if ( !GetTextFromClipboard(data) ) return false;
-    
+
     // copy clipboard data to temporary file so we can handle all formats supported by readclipboard
     FILE* tmpfile = fopen(clipfile.c_str(), "w");
     if (tmpfile) {
@@ -933,17 +938,17 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
         return false;
     }
     fclose(tmpfile);
-    
+
     // remember current rule
     oldrule = currlayer->algo->getrule();
-    
+
     //!!! avoid crash in hlifealgo::endpattern if pattern copied in an algo after hlife (eg. JvN)
     // is pasted into qlife (but only with bounded grid for some unknown reason);
     // discuss better solutions with Tom:
     // 1. in loadpattern() only call imp.endofpattern() if !errmsg
     // 2. in hlifealgo::setrule() call clearcache() 1st thing
     pastealgo->setrule(pastealgo->DefaultRule());
-    
+
     const char* err = readclipboard(clipfile.c_str(), *pastealgo, t, l, b, r);
     if (err) {
         // cycle thru all other algos until readclipboard succeeds
@@ -951,10 +956,10 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
             if (i != currlayer->algtype) {
                 delete pastealgo;
                 pastealgo = CreateNewUniverse(i);
-                
+
                 //!!! avoid possible crash (see above)
                 pastealgo->setrule(pastealgo->DefaultRule());
-                
+
                 err = readclipboard(clipfile.c_str(), *pastealgo, t, l, b, r);
                 if (!err) {
                     newalgotype = i;   // remember new algo for later use in PasteTemporaryToCurrent
@@ -963,7 +968,7 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
             }
         }
     }
-    
+
     if (!err && canchangerule > 0) {
         // set newrule for later use in PasteTemporaryToCurrent
         if (canchangerule == 1 && !currlayer->algo->isEmpty()) {
@@ -974,15 +979,15 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
             newrule = pastealgo->getrule();
         }
     }
-    
+
     RemoveFile(clipfile);
-    
+
     if (err) {
         // error probably due to bad rule string in clipboard data
         Warning("Could not load pasteboard pattern\n(probably due to unknown rule).");
         return false;
     }
-    
+
     return true;
 }
 
@@ -993,7 +998,7 @@ bool ClipboardContainsRule()
     std::string data;
     if (!GetTextFromClipboard(data)) return false;
     if (strncmp(data.c_str(), "@RULE ", 6) != 0) return false;
-    
+
     // extract rule name
     std::string rulename;
     int i = 6;
@@ -1001,7 +1006,7 @@ bool ClipboardContainsRule()
         rulename += data[i];
         i++;
     }
-    
+
     // check if Documents/Rules/rulename.rule already exists
     std::string rulepath = userrules + rulename;
     rulepath += ".rule";
@@ -1013,7 +1018,7 @@ bool ClipboardContainsRule()
             return true;
         }
     }
-    
+
     // create Documents/Rules/rulename.rule
     FILE* rulefile = fopen(rulepath.c_str(), "w");
     if (rulefile) {
@@ -1027,7 +1032,7 @@ bool ClipboardContainsRule()
         return true;
     }
     fclose(rulefile);
-    
+
     // now switch to the newly created rule
     ChangeRule(rulename);
 
@@ -1044,11 +1049,11 @@ void PasteClipboard()
     // if clipboard text starts with "@RULE rulename" then install rulename.rule
     // and switch to that rule
     if (ClipboardContainsRule()) return;
-    
+
     // create a temporary universe for storing the clipboard pattern
     if (pastealgo) Warning("Bug detected in PasteClipboard!");
     pastealgo = CreateNewUniverse(currlayer->algtype);
-    
+
     // read clipboard pattern into temporary universe
     bigint top, left, bottom, right;
     if ( GetClipboardPattern(&top, &left, &bottom, &right) ) {
@@ -1064,7 +1069,7 @@ void PasteClipboard()
             // to move finger from Paste button
             pastex = 128;
             pastey = 64;
-            
+
             // create image for drawing the pattern to be pasted; note that pastebox
             // is not necessarily the minimal bounding box because clipboard pattern
             // might have blank borders (in fact it could be empty)
@@ -1078,7 +1083,7 @@ void PasteClipboard()
             CreatePasteImage(pastealgo, pastebox);
         }
     }
-    
+
     // waitingforpaste will only be false if an error occurred
     if (!waitingforpaste) {
         delete pastealgo;
@@ -1092,10 +1097,10 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
 {
     // reset waitingforpaste now to avoid paste image being displayed prematurely
     waitingforpaste = false;
-    
+
     bigint bottom = top;   bottom += ht;   bottom -= 1;
     bigint right = left;   right += wd;    right -= 1;
-    
+
     // check that paste rectangle is within edit limits
     if ( OutsideLimits(top, left, bottom, right) ) {
         ErrorMessage("Pasting is not allowed outside +/- 10^9 boundary.");
@@ -1107,15 +1112,15 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
     int ileft = pastebox.x;
     int ibottom = pastebox.y + pastebox.height - 1;
     int iright = pastebox.x + pastebox.width - 1;
-    
+
     // set pastex,pastey to top left cell of paste rectangle
     pastex = left.toint();
     pastey = top.toint();
-    
+
     // selection might change if grid becomes smaller,
     // so save current selection for RememberRuleChange/RememberAlgoChange
     SaveCurrentSelection();
-    
+
     // pasting clipboard pattern can cause a rule change
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
     if (canchangerule > 0 && oldrule != newrule) {
@@ -1142,11 +1147,11 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
                 currlayer->undoredo->RememberRuleChange(oldrule.c_str());
         }
     }
-    
+
     // save cell changes if undo/redo is enabled and script isn't constructing a pattern
     bool savecells = allowundo && !currlayer->stayclean;
     //!!! if (savecells && inscript) SavePendingChanges();
-    
+
     // don't paste cells outside bounded grid
     int gtop = currlayer->algo->gridtop.toint();
     int gleft = currlayer->algo->gridleft.toint();
@@ -1162,7 +1167,7 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
         gtop = INT_MIN;
         gbottom = INT_MAX;
     }
-    
+
     // copy pattern from temporary universe to current universe
     int tx, ty, cx, cy;
     double maxcount = wd.todouble() * ht.todouble();
@@ -1172,9 +1177,9 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
     bool reduced = false;
     lifealgo* curralgo = currlayer->algo;
     int maxstate = curralgo->NumCellStates() - 1;
-    
+
     BeginProgress("Pasting pattern");
-    
+
     // we can speed up pasting sparse patterns by using nextcell in these cases:
     // - if using Or mode
     // - if current universe is empty
@@ -1187,7 +1192,7 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
         curralgo->findedges(&ctop, &cleft, &cbottom, &cright);
         usenextcell = top > cbottom || bottom < ctop || left > cright || right < cleft;
     }
-    
+
     if ( usenextcell && pmode == And ) {
         // current universe is empty or paste rect is outside current pattern edges
         // so don't change any cells
@@ -1297,10 +1302,10 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
             cy++;
         }
     }
-    
+
     if (pattchanged) curralgo->endofpattern();
     EndProgress();
-    
+
     // tidy up and display result
     ClearMessage();
     if (pattchanged) {
@@ -1308,7 +1313,7 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
         MarkLayerDirty();
         UpdatePatternAndStatus();
     }
-    
+
     if (reduced) ErrorMessage("Some cell states were reduced.");
 }
 
@@ -1332,7 +1337,7 @@ void DoPaste(bool toselection)
         }
         // top and left have been set to the selection's top left corner
         PasteTemporaryToCurrent(top, left, wd, ht);
-    
+
     } else {
         // paste pattern into pasterect, if possible
         if ( // allow paste if any corner of pasterect is within grid
@@ -1349,7 +1354,7 @@ void DoPaste(bool toselection)
         left = cellpos.first;
         PasteTemporaryToCurrent(top, left, wd, ht);
     }
-    
+
     AbortPaste();
 }
 
@@ -1373,7 +1378,7 @@ bool FlipPastePattern(bool topbottom)
 {
     bool result;
     Selection pastesel(pastebox.y, pastebox.x, pastebox.y + pastebox.height - 1, pastebox.x + pastebox.width - 1);
-    
+
     // flip the pattern in pastealgo
     lifealgo* savealgo = currlayer->algo;
     currlayer->algo = pastealgo;
@@ -1386,12 +1391,12 @@ bool FlipPastePattern(bool topbottom)
     pastealgo = currlayer->algo;
     currlayer->algo = savealgo;
     inscript = false;
-    
+
     if (result) {
         DestroyPasteImage();
         CreatePasteImage(pastealgo, pastebox);
     }
-    
+
     return result;
 }
 
@@ -1401,7 +1406,7 @@ bool RotatePastePattern(bool clockwise)
 {
     bool result;
     Selection pastesel(pastebox.y, pastebox.x, pastebox.y + pastebox.height - 1, pastebox.x + pastebox.width - 1);
-    
+
     // rotate the pattern in pastealgo
     lifealgo* savealgo = currlayer->algo;
     currlayer->algo = pastealgo;
@@ -1414,7 +1419,7 @@ bool RotatePastePattern(bool clockwise)
     pastealgo = currlayer->algo;
     currlayer->algo = savealgo;
     inscript = false;
-    
+
     if (result) {
         // get rotated selection and update pastebox
         int x, y, wd, ht;
@@ -1423,7 +1428,7 @@ bool RotatePastePattern(bool clockwise)
         DestroyPasteImage();
         CreatePasteImage(pastealgo, pastebox);
     }
-    
+
     return result;
 }
 

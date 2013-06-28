@@ -25,6 +25,8 @@
 #ifndef _JNICALLS_H_
 #define _JNICALLS_H_
 
+#include <string>       // for std::string
+
 // Routines for calling C++ from Java and vice versa.
 
 void UpdatePattern();
@@ -38,5 +40,16 @@ void PauseGenerating();
 
 void ResumeGenerating();
 // resume generating pattern if it was paused
+
+std::string GetRuleName(const std::string& rule);
+// return name of given rule (empty string if rule is unnamed)
+
+void UpdateEditBar();
+// update Undo and Redo buttons, show current drawing state and touch mode
+
+void BeginProgress(const char* title);
+bool AbortProgress(double fraction_done, const char* message);
+void EndProgress();
+// these calls display a progress bar while a lengthy task is carried out
 
 #endif

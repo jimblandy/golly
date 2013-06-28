@@ -40,11 +40,12 @@
 #include "file.h"           // for GetTextFromClipboard
 #include "view.h"
 
-//!!! #ifdef ANDROID_GUI
-#include "jnicalls.h"		// for UpdateStatus, UpdatePattern, PauseGenerating, ResumeGenerating
-
-//!!! #ifdef IOS_GUI
-//!!! #import "PatternViewController.h"   // for UpdatePattern, BeginProgress, etc
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"   // for UpdatePattern, BeginProgress, etc
+#endif
+#ifdef IOS_GUI
+    #import "PatternViewController.h"   // for UpdatePattern, BeginProgress, etc
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -107,7 +108,7 @@ void UpdateEverything()
 {
     UpdatePattern();
     UpdateStatus();
-    //!!! UpdateEditBar();
+    UpdateEditBar();
 }
 
 // -----------------------------------------------------------------------------
@@ -389,7 +390,7 @@ void PickCell(int x, int y)
         cellx = newx;
         celly = newy;
         currlayer->drawingstate = currlayer->algo->getcell(cellx, celly);
-        //!!! UpdateEditBar();
+        UpdateEditBar();
     }
 }
 
@@ -662,12 +663,12 @@ void TouchEnded()
         // MarkLayerDirty has set dirty flag, so we need to
         // pass in the flag state saved before drawing started
         currlayer->undoredo->RememberCellChanges("Drawing", currlayer->savedirty);
-        //!!! UpdateEditBar();    // update various buttons
+        UpdateEditBar();    // update various buttons
     }
 
     if (selectingcells) {
         if (allowundo) RememberNewSelection("Selection");
-        //!!! UpdateEditBar();    // update various buttons
+        UpdateEditBar();    // update various buttons
     }
 
     drawingcells = false;
