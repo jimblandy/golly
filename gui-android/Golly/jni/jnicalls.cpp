@@ -26,7 +26,7 @@
 #include <GLES/gl.h>
 #include <unistd.h>		// for usleep
 
-#include "utils.h"		// for LOGI, Warning, etc
+#include "utils.h"		// for Warning, etc
 #include "algos.h"		// for InitAlgorithms
 #include "prefs.h"      // for GetPrefs, SavePrefs
 #include "layer.h"      // for AddLayer, ResizeLayers, currlayer

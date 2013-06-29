@@ -1,41 +1,48 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
-#import <AudioToolbox/AudioToolbox.h>
-
 #include <sys/time.h>   // for gettimeofday
+#include <algorithm>    // for std::transform
+#include <ctype.h>      // for tolower
 
 #include "lifepoll.h"   // for lifepoll
+#include "util.h"       // for linereader
 
 #include "prefs.h"      // for allowbeep, tempdir
 #include "utils.h"
 
-#import "PatternViewController.h"   // for UpdateStatus
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"    // for UpdateStatus, etc
+#endif
+#ifdef IOS_GUI
+    #import <AudioToolbox/AudioToolbox.h>   // for AudioServicesPlaySystemSound, etc
+    #import "PatternViewController.h"       // for UpdateStatus, etc
+#endif
 
 // -----------------------------------------------------------------------------
 
-int event_checker = 0;      // if > 0 then we're checking for events in currentRunLoop
+int event_checker = 0;      // if > 0 then we're in gollypoller.checkevents()
 
 // -----------------------------------------------------------------------------
 
@@ -57,6 +64,8 @@ void SetRect(gRect& rect, int x, int y, int width, int height)
 }
 
 // -----------------------------------------------------------------------------
+
+#ifdef IOS_GUI
 
 // need the following to make YesNo/Warning/Fatal dialogs modal:
 
@@ -82,30 +91,39 @@ void SetRect(gRect& rect, int x, int y, int width, int height)
 
 @end
 
+#endif // IOS_GUI
+
 // -----------------------------------------------------------------------------
 
 bool YesNo(const char* msg)
 {
     Beep();
-    
+
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    return true; //!!!
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     ModalAlertDelegate *md = [[ModalAlertDelegate alloc] init];
     md.returnButt = -1;
-    
+
     UIAlertView *a = [[UIAlertView alloc] initWithTitle:@"Warning"
                                                 message:[NSString stringWithCString:msg encoding:NSUTF8StringEncoding]
                                                delegate:md
                                       cancelButtonTitle:@"No"
                                       otherButtonTitles:@"Yes", nil];
     [a show];
-    
+
     // wait for user to hit button
     while (md.returnButt == -1) {
         event_checker++;
         [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
         event_checker--;
     }
-    
+
     return md.returnButt != 0;
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
@@ -113,23 +131,30 @@ bool YesNo(const char* msg)
 void Warning(const char* msg)
 {
     Beep();
-    
+
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGE("WARNING: %s", msg);
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     ModalAlertDelegate *md = [[ModalAlertDelegate alloc] init];
     md.returnButt = -1;
-    
+
     UIAlertView *a = [[UIAlertView alloc] initWithTitle:@"Warning"
                                                 message:[NSString stringWithCString:msg encoding:NSUTF8StringEncoding]
                                                delegate:md
                                       cancelButtonTitle:@"OK"
                                       otherButtonTitles:nil];
     [a show];
-    
+
     // wait for user to hit button
     while (md.returnButt == -1) {
         event_checker++;
         [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
         event_checker--;
     }
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
@@ -138,49 +163,65 @@ void Fatal(const char* msg)
 {
     Beep();
 
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGE("FATAL ERROR: %s", msg);
+
+    //!!!??? System.exit(1);
+    exit(1);
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     ModalAlertDelegate *md = [[ModalAlertDelegate alloc] init];
     md.returnButt = -1;
-    
+
     UIAlertView *a = [[UIAlertView alloc] initWithTitle:@"Fatal Error"
                                                 message:[NSString stringWithCString:msg encoding:NSUTF8StringEncoding]
                                                delegate:md
                                       cancelButtonTitle:@"Quit"
                                       otherButtonTitles:nil];
     [a show];
-    
+
     // wait for user to hit button
     while (md.returnButt == -1) {
         event_checker++;
         [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
         event_checker--;
     }
-    
+
     exit(1);
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
 
-static SystemSoundID beepID = 0;
-
 void Beep()
 {
-    if (allowbeep) {
-        if (beepID == 0) {
-            // get the path to the sound file
-            NSString* path = [[NSBundle mainBundle] pathForResource:@"beep" ofType:@"aiff"];
-            if (path) {
-                NSURL* url = [NSURL fileURLWithPath:path];
-                OSStatus err = AudioServicesCreateSystemSoundID((__bridge CFURLRef)url, &beepID);
-                if (err == kAudioServicesNoError && beepID > 0) {
-                    // play the sound
-                    AudioServicesPlaySystemSound(beepID);
-                }
+    if (!allowbeep) return;
+
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGI("BEEP");//!!!
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
+    static SystemSoundID beepID = 0;
+    if (beepID == 0) {
+        // get the path to the sound file
+        NSString* path = [[NSBundle mainBundle] pathForResource:@"beep" ofType:@"aiff"];
+        if (path) {
+            NSURL* url = [NSURL fileURLWithPath:path];
+            OSStatus err = AudioServicesCreateSystemSoundID((__bridge CFURLRef)url, &beepID);
+            if (err == kAudioServicesNoError && beepID > 0) {
+                // play the sound
+                AudioServicesPlaySystemSound(beepID);
             }
-        } else {
-            // assume we got the sound
-            AudioServicesPlaySystemSound(beepID);
         }
+    } else {
+        // assume we got the sound
+        AudioServicesPlaySystemSound(beepID);
     }
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
@@ -194,8 +235,6 @@ double TimeInSeconds()
 
 // -----------------------------------------------------------------------------
 
-static int nextname = 0;
-
 std::string CreateTempFileName(const char* prefix)
 {
     /*
@@ -204,12 +243,13 @@ std::string CreateTempFileName(const char* prefix)
     tmplate += ".XXXXXX";
     std::string path = mktemp((char*)tmplate.c_str());
     */
-    
+
     // simpler to ignore prefix and create /tmp/0, /tmp/1, /tmp/2, etc
     char n[32];
+    static int nextname = 0;
     sprintf(n, "%d", nextname++);
     std::string path = tempdir + n;
-    
+
     return path;
 }
 
@@ -230,35 +270,89 @@ bool FileExists(const std::string& filepath)
 
 void RemoveFile(const std::string& filepath)
 {
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGE("RemoveFile: %s", filepath.c_str());
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     if ([[NSFileManager defaultManager] removeItemAtPath:[NSString stringWithCString:filepath.c_str() encoding:NSUTF8StringEncoding]
                                                    error:NULL] == NO) {
         // should never happen
         Warning("RemoveFile failed!");
     };
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
 
 bool CopyFile(const std::string& inpath, const std::string& outpath)
 {
+#ifdef ANDROID_GUI
+    FILE* infile = fopen(inpath.c_str(), "r");
+    if (infile) {
+        // read entire file into contents
+        std::string contents;
+        const int MAXLINELEN = 4095;
+        char linebuf[MAXLINELEN + 1];
+        linereader reader(infile);
+        while (true) {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            contents += linebuf;
+            contents += "\n";
+        }
+        reader.close();
+        // fclose(infile) has been called
+
+        // write contents to outpath
+        FILE* outfile = fopen(outpath.c_str(), "w");
+        if (outfile) {
+            if (fputs(contents.c_str(), outfile) == EOF) {
+                fclose(outfile);
+                Warning("CopyFile failed to copy contents to output file!");
+                return false;
+            }
+            fclose(outfile);
+        } else {
+            Warning("CopyFile failed to open output file!");
+            return false;
+        }
+
+        return true;
+    } else {
+        Warning("CopyFile failed to open input file!");
+        return false;
+    }
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     if (FileExists(outpath)) {
         RemoveFile(outpath);
     }
     return [[NSFileManager defaultManager] copyItemAtPath:[NSString stringWithCString:inpath.c_str() encoding:NSUTF8StringEncoding]
                                                    toPath:[NSString stringWithCString:outpath.c_str() encoding:NSUTF8StringEncoding]
                                                     error:NULL];
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
 
 bool MoveFile(const std::string& inpath, const std::string& outpath)
 {
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGE("MoveFile: %s to %s", inpath.c_str(), outpath.c_str());
+    return false;//!!!
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     if (FileExists(outpath)) {
         RemoveFile(outpath);
     }
     return [[NSFileManager defaultManager] moveItemAtPath:[NSString stringWithCString:inpath.c_str() encoding:NSUTF8StringEncoding]
                                                    toPath:[NSString stringWithCString:outpath.c_str() encoding:NSUTF8StringEncoding]
                                                     error:NULL];
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
@@ -266,9 +360,16 @@ bool MoveFile(const std::string& inpath, const std::string& outpath)
 void FixURLPath(std::string& path)
 {
     // replace "%..." with suitable chars for a file path (eg. %20 is changed to space)
+
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     NSString* newpath = [[NSString stringWithCString:path.c_str() encoding:NSUTF8StringEncoding]
                          stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     if (newpath) path = [newpath cStringUsingEncoding:NSUTF8StringEncoding];
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
@@ -277,7 +378,7 @@ bool IsHTMLFile(const std::string& filename)
 {
     size_t dotpos = filename.rfind('.');
     if (dotpos == std::string::npos) return false;
-    
+
     std::string ext = filename.substr(dotpos+1);
     return ( strcasecmp(ext.c_str(),"htm") == 0 ||
              strcasecmp(ext.c_str(),"html") == 0 );
@@ -294,12 +395,12 @@ bool IsTextFile(const std::string& filename)
         if (lastsep != std::string::npos) {
             basename = basename.substr(lastsep+1);
         }
-        std::transform(basename.begin(), basename.end(), basename.begin(), std::tolower);
+        std::transform(basename.begin(), basename.end(), basename.begin(), tolower);
         if (basename.find("readme") != std::string::npos) return true;
     }
     size_t dotpos = filename.rfind('.');
     if (dotpos == std::string::npos) return false;
-    
+
     std::string ext = filename.substr(dotpos+1);
     return ( strcasecmp(ext.c_str(),"txt") == 0 ||
              strcasecmp(ext.c_str(),"doc") == 0 );
@@ -311,7 +412,7 @@ bool IsZipFile(const std::string& filename)
 {
     size_t dotpos = filename.rfind('.');
     if (dotpos == std::string::npos) return false;
-    
+
     std::string ext = filename.substr(dotpos+1);
     return ( strcasecmp(ext.c_str(),"zip") == 0 ||
              strcasecmp(ext.c_str(),"gar") == 0 );
@@ -323,7 +424,7 @@ bool IsRuleFile(const std::string& filename)
 {
     size_t dotpos = filename.rfind('.');
     if (dotpos == std::string::npos) return false;
-    
+
     std::string ext = filename.substr(dotpos+1);
     return ( strcasecmp(ext.c_str(),"rule") == 0 ||
              strcasecmp(ext.c_str(),"table") == 0 ||
@@ -358,40 +459,48 @@ bool EndsWith(const std::string& str, const std::string& suffix)
 
 // let gollybase modules process events
 
-class ios_poll : public lifepoll
+class golly_poll : public lifepoll
 {
 public:
     virtual int checkevents();
     virtual void updatePop();
 };
 
-int ios_poll::checkevents()
+int golly_poll::checkevents()
 {
     if (event_checker > 0) return isInterrupted();
     event_checker++;
+#ifdef ANDROID_GUI
+    //!!! use Looper on main UI thread???
+    //!!! see http://developer.android.com/reference/android/os/Looper.html
+#endif
+#ifdef IOS_GUI
     [[NSRunLoop currentRunLoop] runUntilDate:[NSDate date]];
+#endif
     event_checker--;
     return isInterrupted();
 }
 
-void ios_poll::updatePop()
+void golly_poll::updatePop()
 {
     UpdateStatus();
 }
 
-ios_poll iospoller;    // create instance
+// -----------------------------------------------------------------------------
+
+golly_poll gollypoller;    // create instance
 
 lifepoll* Poller()
 {
-    return &iospoller;
+    return &gollypoller;
 }
 
 void PollerReset()
 {
-    iospoller.resetInterrupted();
+    gollypoller.resetInterrupted();
 }
 
 void PollerInterrupt()
 {
-    iospoller.setInterrupted();
+    gollypoller.setInterrupted();
 }

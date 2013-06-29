@@ -25,13 +25,7 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_
 
-#include <string>		// for std::string
-
-// for displaying info/error messages in LogCat
-#include <android/log.h>
-#define LOG_TAG "Golly"
-#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
-#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#include <string>       // for std::string
 
 class lifepoll;
 
