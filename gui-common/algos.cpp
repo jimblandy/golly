@@ -41,26 +41,24 @@
 
 // exported data:
 
-algo_type initalgo = QLIFE_ALGO;     // initial algorithm
-AlgoData* algoinfo[MAX_ALGOS];       // static info for each algorithm
+algo_type initalgo = QLIFE_ALGO;    // initial algorithm
+AlgoData* algoinfo[MAX_ALGOS];      // static info for each algorithm
 
-/*!!!
-CGImageRef* circles7x7;              // circular icons for scale 1:8
-CGImageRef* circles15x15;            // circular icons for scale 1:16
-CGImageRef* circles31x31;            // circular icons for scale 1:32
+gBitmapPtr* circles7x7;             // circular icons for scale 1:8
+gBitmapPtr* circles15x15;           // circular icons for scale 1:16
+gBitmapPtr* circles31x31;           // circular icons for scale 1:32
 
-CGImageRef* diamonds7x7;             // diamond-shaped icons for scale 1:8
-CGImageRef* diamonds15x15;           // diamond-shaped icons for scale 1:16
-CGImageRef* diamonds31x31;           // diamond-shaped icons for scale 1:32
+gBitmapPtr* diamonds7x7;            // diamond-shaped icons for scale 1:8
+gBitmapPtr* diamonds15x15;          // diamond-shaped icons for scale 1:16
+gBitmapPtr* diamonds31x31;          // diamond-shaped icons for scale 1:32
 
-CGImageRef* hexagons7x7;             // hexagonal icons for scale 1:8
-CGImageRef* hexagons15x15;           // hexagonal icons for scale 1:16
-CGImageRef* hexagons31x31;           // hexagonal icons for scale 1:32
+gBitmapPtr* hexagons7x7;            // hexagonal icons for scale 1:8
+gBitmapPtr* hexagons15x15;          // hexagonal icons for scale 1:16
+gBitmapPtr* hexagons31x31;          // hexagonal icons for scale 1:32
 
-CGImageRef* triangles7x7;            // triangular icons for scale 1:8
-CGImageRef* triangles15x15;          // triangular icons for scale 1:16
-CGImageRef* triangles31x31;          // triangular icons for scale 1:32
-*/
+gBitmapPtr* triangles7x7;           // triangular icons for scale 1:8
+gBitmapPtr* triangles15x15;         // triangular icons for scale 1:16
+gBitmapPtr* triangles31x31;         // triangular icons for scale 1:32
 
 // -----------------------------------------------------------------------------
 
@@ -575,10 +573,9 @@ static const char* tri31x31[] = {
 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW."
 };
 
-/*!!!
 // -----------------------------------------------------------------------------
 
-CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
+gBitmapPtr* CreateIconBitmaps(const char** xpmdata, int maxstates)
 {
     if (xpmdata == NULL) return NULL;
 
@@ -619,10 +616,10 @@ CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
         }
     }
 
-    // allocate and clear memory for all icon bitmaps in BGRA format
+    // allocate and clear memory for all icon bitmaps
     // (using calloc means black pixels will be transparent)
-    unsigned char* bgra = (unsigned char*) calloc(wd * ht * 4, 1);
-    if (bgra == NULL) return NULL;
+    unsigned char* rgba = (unsigned char*) calloc(wd * ht * 4, 1);
+    if (rgba == NULL) return NULL;
     int pos = 0;
     for (int i = 0; i < ht; i++) {
         const char* rowstring = xpmdata[i+1+numcolors];
@@ -637,10 +634,10 @@ CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
                 // pixel is black and alpha is 0
                 pos += 4;
             } else {
-                bgra[pos] = (rgb & 0x0000FF);       pos++;  // blue
-                bgra[pos] = (rgb & 0x00FF00) >> 8;  pos++;  // green
-                bgra[pos] = (rgb & 0xFF0000) >> 16; pos++;  // red
-                bgra[pos] = 255;                    pos++;  // alpha
+                rgba[pos] = (rgb & 0xFF0000) >> 16; pos++;  // red
+                rgba[pos] = (rgb & 0x00FF00) >> 8;  pos++;  // green
+                rgba[pos] = (rgb & 0x0000FF);       pos++;  // blue
+                rgba[pos] = 255;                    pos++;  // alpha
             }
         }
     }
@@ -648,54 +645,95 @@ CGImageRef* CreateIconBitmaps(const char** xpmdata, int maxstates)
     int numicons = ht / wd;
     if (numicons > 255) numicons = 255;     // play safe
 
-    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+    gBitmapPtr* iconptr = (gBitmapPtr*) malloc(256 * sizeof(gBitmapPtr));
     if (iconptr) {
-        // only need to test < maxstates here, but play safe
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
+        unsigned char* nexticon = rgba;
 
-        // convert each icon bitmap to a CGImage
-        unsigned char* nexticon = bgra;
+#ifdef ANDROID_GUI
+        int iconbytes = wd * wd * 4;
+        for (int i = 0; i < numicons; i++) {
+            gBitmapPtr icon = (gBitmapPtr) malloc(sizeof(gBitmap));
+            if (icon) {
+                icon->wd = wd;
+                icon->ht = wd;
+                icon->pxldata = (unsigned char*) malloc(iconbytes);
+                if (icon->pxldata) {
+                    memcpy(icon->pxldata, nexticon, iconbytes);
+                }
+            }
+            // add 1 to skip iconptr[0] (ie. dead state)
+            iconptr[i+1] = icon;
+            nexticon += iconbytes;
+        }
+        if (numicons < maxstates-1 && iconptr[numicons]) {
+            // duplicate last icon
+            nexticon -= iconbytes;
+            for (int i = numicons; i < maxstates-1; i++) {
+                gBitmapPtr icon = (gBitmapPtr) malloc(sizeof(gBitmap));
+                if (icon) {
+                    icon->wd = wd;
+                    icon->ht = wd;
+                    icon->pxldata = (unsigned char*) malloc(iconbytes);
+                    if (icon->pxldata) {
+                        memcpy(icon->pxldata, nexticon, iconbytes);
+                    }
+                }
+                iconptr[i+1] = icon;
+            }
+        }
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
+        // convert each icon bitmap into a CGImage
         CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
         for (int i = 0; i < numicons; i++) {
             CGContextRef context = CGBitmapContextCreate(nexticon, wd, wd, 8, wd * 4, colorspace,
-                // following gives us the optimal BGRA format:
-                kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+                // following specifies RGBA format:
+                kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
             // add 1 to skip iconptr[0] (ie. dead state)
             iconptr[i+1] = CGBitmapContextCreateImage(context);
             CGContextRelease(context);
             nexticon += wd * wd * 4;
         }
-
         if (numicons < maxstates-1 && iconptr[numicons]) {
             // duplicate last icon
             nexticon -= wd * wd * 4;
             for (int i = numicons; i < maxstates-1; i++) {
                 CGContextRef context = CGBitmapContextCreate(nexticon, wd, wd, 8, wd * 4, colorspace,
-                    // following gives us the optimal BGRA format:
-                    kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+                    // following specifies RGBA format:
+                    kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
                 iconptr[i+1] = CGBitmapContextCreateImage(context);
                 CGContextRelease(context);
             }
         }
         CGColorSpaceRelease(colorspace);
+#endif // IOS_GUI
     }
 
-    if (bgra) free(bgra);
+    free(rgba);
     return iconptr;
 }
 
 // -----------------------------------------------------------------------------
 
-CGImageRef* ScaleIconBitmaps(CGImageRef* srcicons, int size)
+gBitmapPtr* ScaleIconBitmaps(gBitmapPtr* srcicons, int size)
 {
     if (srcicons == NULL) return NULL;
 
-    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+    gBitmapPtr* iconptr = (gBitmapPtr*) malloc(256 * sizeof(gBitmapPtr));
     if (iconptr) {
         for (int i = 0; i < 256; i++) {
             if (srcicons[i] == NULL) {
                 iconptr[i] = NULL;
             } else {
+#ifdef ANDROID_GUI
+                // scaling gBitmap icons is not yet implemented!!!
+                // (use scaling algorithms in icon-importer.py???!!!)
+                iconptr[i] = NULL;//!!!
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
                 CGImageRef srcimage = srcicons[i];
                 size_t bytesPerRow = CGImageGetBitsPerPixel(srcimage) / CGImageGetBitsPerComponent(srcimage) * size;
 
@@ -709,6 +747,7 @@ CGImageRef* ScaleIconBitmaps(CGImageRef* srcicons, int size)
                 CGContextDrawImage(context, CGRectMake(0, 0, size, size), srcimage);
                 iconptr[i] = CGBitmapContextCreateImage(context);
                 CGContextRelease(context);
+#endif // IOS_GUI
             }
         }
     }
@@ -757,17 +796,14 @@ static void CreateDefaultIcons(AlgoData* ad)
         ad->icons31x31 = CreateIconBitmaps(default31x31, ad->maxstates);
     }
 }
-!!!*/
 
 // -----------------------------------------------------------------------------
 
 AlgoData::AlgoData() {
     defbase = 0;
-    /*!!!
     icons7x7 = NULL;
     icons15x15 = NULL;
     icons31x31 = NULL;
-    */
 }
 
 // -----------------------------------------------------------------------------
@@ -782,7 +818,7 @@ AlgoData& AlgoData::tick() {
 
 void InitAlgorithms()
 {
-	// qlife must be 1st and hlife must be 2nd
+    // qlife must be 1st and hlife must be 2nd
     qlifealgo::doInitializeAlgoInfo(AlgoData::tick());
     hlifealgo::doInitializeAlgoInfo(AlgoData::tick());
 
@@ -834,10 +870,9 @@ void InitAlgorithms()
             ad->algob[c] = ad->defb[c];
         }
 
-        //!!! CreateDefaultIcons(ad);
+        CreateDefaultIcons(ad);
     }
 
-    /*!!!
     circles7x7 = CreateIconBitmaps(default7x7,256);
     circles15x15 = CreateIconBitmaps(default15x15,256);
     circles31x31 = CreateIconBitmaps(default31x31,256);
@@ -854,7 +889,6 @@ void InitAlgorithms()
     triangles7x7 = CreateIconBitmaps(tri7x7,4);
     triangles15x15 = CreateIconBitmaps(tri15x15,4);
     triangles31x31 = CreateIconBitmaps(tri31x31,4);
-    */
 }
 
 // -----------------------------------------------------------------------------
@@ -918,19 +952,28 @@ int NumAlgos()
 
 // -----------------------------------------------------------------------------
 
-/*!!!
-
-CGImageRef ConvertOldMonochromeIcons(CGImageRef oldimage)
+gBitmapPtr ConvertOldMonochromeIcons(gBitmapPtr oldimage)
 {
     // if oldimage uses <= 2 colors and is non-grayscale then return new black-and-white image
     // for compatibility with monochrome .icons files in Golly 2.4 and older
+#ifdef ANDROID_GUI
+    // allocate memory to store oldimage's RGBA data
+    int wd = oldimage->wd;
+    int ht = oldimage->ht;
+    int numbytes = wd * ht * 4;
+    unsigned char* pxldata = (unsigned char*) calloc(numbytes, 1);
+    if (pxldata == NULL) return oldimage;
+    memcpy(pxldata, oldimage->pxldata, numbytes);
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     int wd = CGImageGetWidth(oldimage);
     int ht = CGImageGetHeight(oldimage);
     int bytesPerPixel = 4;
     int bytesPerRow = bytesPerPixel * wd;
     int bitsPerComponent = 8;
 
-    // allocate memory to store oldimage's RGBA bitmap data
+    // allocate memory to store oldimage's RGBA data
     unsigned char* pxldata = (unsigned char*) calloc(wd * ht * 4, 1);
     if (pxldata == NULL) return oldimage;
 
@@ -941,6 +984,7 @@ CGImageRef ConvertOldMonochromeIcons(CGImageRef oldimage)
     CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), oldimage);
     CGContextRelease(ctx);
     CGColorSpaceRelease(colorspace);
+#endif // IOS_GUI
 
     // pxldata now contains the oldimage bitmap in RGBA format so see if it uses <= 2 colors
     std::list<int> colors;
@@ -982,6 +1026,16 @@ CGImageRef ConvertOldMonochromeIcons(CGImageRef oldimage)
         byte += 4;
     }
 
+#ifdef ANDROID_GUI
+    // create new image using modified pixel data
+    gBitmapPtr newimage = (gBitmapPtr) malloc(sizeof(gBitmap));
+    if (newimage == NULL) return oldimage;
+    newimage->wd = oldimage->wd;
+    newimage->ht = oldimage->ht;
+    newimage->pxldata = pxldata;
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     // create new image using modified pixel data
     colorspace = CGColorSpaceCreateDeviceRGB();
     ctx = CGBitmapContextCreate(pxldata, wd, ht,
@@ -990,16 +1044,33 @@ CGImageRef ConvertOldMonochromeIcons(CGImageRef oldimage)
     CGImageRef newimage = CGBitmapContextCreateImage(ctx);
     CGContextRelease(ctx);
     CGColorSpaceRelease(colorspace);
-
     free(pxldata);
+#endif // IOS_GUI
+
     return newimage;
 }
 
 // -----------------------------------------------------------------------------
 
-bool MultiColorImage(CGImageRef image)
+bool MultiColorImage(gBitmapPtr image)
 {
     // return true if image contains at least one color that isn't a shade of gray
+#ifdef ANDROID_GUI
+    unsigned char* pxldata = image->pxldata;
+    if (pxldata == NULL) return false;          // play safe
+    int numpixels = image->wd * image->ht;
+    int byte = 0;
+    for (int i = 0; i < numpixels; i++) {
+        unsigned char r = pxldata[byte];
+        unsigned char g = pxldata[byte+1];
+        unsigned char b = pxldata[byte+2];
+        if (r != g || g != b) return true;      // multi-color
+        byte += 4;
+    }
+    return false;       // grayscale
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     int wd = CGImageGetWidth(image);
     int ht = CGImageGetHeight(image);
     int bytesPerPixel = 4;
@@ -1033,19 +1104,27 @@ bool MultiColorImage(CGImageRef image)
 
     free(pxldata);
     return false;   // grayscale
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
 
 bool LoadIconFile(const std::string& path, int maxstate,
-                  CGImageRef** out7x7, CGImageRef** out15x15, CGImageRef** out31x31)
+                  gBitmapPtr** out7x7, gBitmapPtr** out15x15, gBitmapPtr** out31x31)
 {
+#ifdef ANDROID_GUI
+    //!!!???
+    Warning("Sorry, but this version of Golly does not support .icons files.");
+    return false;
+#endif // ANDROID_GUI
+
+#ifdef IOS_GUI
     CGImageRef allicons = [UIImage imageWithContentsOfFile:
         [NSString stringWithCString:path.c_str() encoding:NSUTF8StringEncoding]].CGImage;
     if (allicons == NULL) {
         std::string msg = "Could not load icon bitmaps from file:\n";
         msg += path;
-        NSLog(@"%s", msg.c_str());
+        // NSLog(@"%s", msg.c_str());
         Warning(msg.c_str());
         return false;
     }
@@ -1119,6 +1198,5 @@ bool LoadIconFile(const std::string& path, int maxstate,
     *out31x31 = ScaleIconBitmaps(*out15x15, 31);
 
     return true;
+#endif // IOS_GUI
 }
-
-!!!*/
