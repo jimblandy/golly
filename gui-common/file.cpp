@@ -22,18 +22,22 @@
 
  / ***/
 
-/*!!!
-// for opening zip files and extracting files within them
-// (much thanks to the http://code.google.com/p/objective-zip/ project)
-#import "Objective-Zip/ZipFile.h"
-#import "Objective-Zip/ZipException.h"
-#import "Objective-Zip/FileInZipInfo.h"
-#import "Objective-Zip/ZipReadStream.h"
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"   // for SwitchToPatternTab, ShowTextFile, ShowHelp
+#endif
 
-#import "GollyAppDelegate.h"        // for SwitchToPatternTab
-#import "HelpViewController.h"      // for ShowHelp
-#import "InfoViewController.h"      // for ShowTextFile
-*/
+#ifdef IOS_GUI
+    // for opening zip files and extracting files within them
+    // (much thanks to the http://code.google.com/p/objective-zip/ project)
+    #import "Objective-Zip/ZipFile.h"
+    #import "Objective-Zip/ZipException.h"
+    #import "Objective-Zip/FileInZipInfo.h"
+    #import "Objective-Zip/ZipReadStream.h"
+
+    #import "GollyAppDelegate.h"        // for SwitchToPatternTab
+    #import "HelpViewController.h"      // for ShowHelp
+    #import "InfoViewController.h"      // for ShowTextFile
+#endif
 
 #include <string>           // for std::string
 #include <list>             // for std::list
@@ -298,18 +302,30 @@ void AddRecentPattern(const char* inpath)
 
 bool CopyTextToClipboard(const char* text)
 {
-	/*!!!
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGI("CopyTextToClipboard: %s", text);
+    return false;//!!!
+#endif
+
+#ifdef IOS_GUI
     UIPasteboard *pboard = [UIPasteboard generalPasteboard];
     pboard.string = [NSString stringWithCString:text encoding:NSUTF8StringEncoding];
-    */
     return true;
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
 bool GetTextFromClipboard(std::string& text)
 {
-	/*!!!
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGI("GetTextFromClipboard");
+    return false;//!!!
+#endif
+
+#ifdef IOS_GUI
     UIPasteboard *pboard = [UIPasteboard generalPasteboard];
     NSString *str = pboard.string;
     if (str == nil) {
@@ -319,8 +335,7 @@ bool GetTextFromClipboard(std::string& text)
         text = [str cStringUsingEncoding:NSUTF8StringEncoding];
         return true;
     }
-    */
-	return false;//!!!remove
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -388,8 +403,7 @@ void LoadRule(const std::string& rulestring)
 
 // -----------------------------------------------------------------------------
 
-//!!!
-#if 0
+#ifdef IOS_GUI
 
 bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, const std::string& outfile)
 {
@@ -437,14 +451,14 @@ bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, c
         [zfile close];
         zfile = nil;
 
-	} @catch (ZipException *ze) {
+    } @catch (ZipException *ze) {
         NSString *msg = [NSString stringWithFormat:@"Zip file error: %d - %@", ze.error, [ze reason]];
-		Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
 
-	} @catch (id e) {
+    } @catch (id e) {
         NSString *msg = [NSString stringWithFormat:@"Exception caught: %@ - %@", [[e class] description], [e description]];
-		Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
-	}
+        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
 
     if (found && ok) return true;
 
@@ -574,7 +588,7 @@ void OpenZipFile(const char* zippath)
     contents += relpath;
     contents += ":<p>\n";
 
-	@try {
+    @try {
         NSString *nspath = [NSString stringWithCString:zippath encoding:NSUTF8StringEncoding];
         ZipFile *zfile= [[ZipFile alloc] initWithFileName:nspath mode:ZipFileModeUnzip];
 
@@ -695,14 +709,14 @@ void OpenZipFile(const char* zippath)
         [zfile close];
         zfile = nil;
 
-	} @catch (ZipException *ze) {
+    } @catch (ZipException *ze) {
         NSString *msg = [NSString stringWithFormat:@"Zip file error: %d - %@", ze.error, [ze reason]];
-		Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
 
-	} @catch (id e) {
+    } @catch (id e) {
         NSString *msg = [NSString stringWithFormat:@"Exception caught: %@ - %@", [[e class] description], [e description]];
-		Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
-	}
+        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
 
     if (rulefiles > 0) {
         relpath = userrules;
@@ -745,33 +759,7 @@ void OpenZipFile(const char* zippath)
     ShowHelp(htmlfile.c_str());
 }
 
-#endif //!!!
-
-// -----------------------------------------------------------------------------
-
-/*!!!
-
-void OpenClipboard()
-{
-    // load and view pattern data stored in clipboard
-    wxTextDataObject data;
-    if (GetTextFromClipboard(&data)) {
-        // copy clipboard data to tempstart so we can handle all formats
-        // supported by readpattern
-        wxFile outfile(currlayer->tempstart, wxFile::write);
-        if ( outfile.IsOpened() ) {
-            outfile.Write( data.GetText() );
-            outfile.Close();
-            LoadPattern(currlayer->tempstart, "clipboard");
-            // do NOT delete tempstart -- it can be reloaded by ResetPattern
-            // or used by ShowPatternInfo
-        } else {
-            statusptr->ErrorMessage("Could not create tempstart file!");
-        }
-    }
-}
-
-!!!*/
+#endif // IOS_GUI
 
 // -----------------------------------------------------------------------------
 
@@ -790,13 +778,13 @@ void OpenFile(const char* path, bool remember)
 
     if (IsHTMLFile(path)) {
         // show HTML file in Help tab
-        //!!! ShowHelp(fullpath.c_str());
+        ShowHelp(fullpath.c_str());
         return;
     }
 
     if (IsTextFile(path)) {
         // show text file using InfoViewController
-        //!!! ShowTextFile(fullpath.c_str());
+        ShowTextFile(fullpath.c_str());
         return;
     }
 
@@ -813,14 +801,20 @@ void OpenFile(const char* path, bool remember)
     if (IsZipFile(path)) {
         // process zip file
         if (remember) AddRecentPattern(path);   // treat zip file like a pattern file
-        //!!! OpenZipFile(fullpath.c_str());          // must use full path
+#ifdef ANDROID_GUI
+        // not yet implemented!!!
+        LOGI("OpenZipFile: %s", fullpath.c_str());
+#endif
+#ifdef IOS_GUI
+        OpenZipFile(fullpath.c_str());          // must use full path
+#endif
         return;
     }
 
 
     if (IsRuleFile(path)) {
         // switch to rule (.rule file must be in rulesdir or userrules)
-        //!!! SwitchToPatternTab();
+        SwitchToPatternTab();
         std::string basename = GetBaseName(path);
         LoadRule(basename.substr(0, basename.rfind('.')));
         return;
@@ -830,7 +824,7 @@ void OpenFile(const char* path, bool remember)
     if (remember) AddRecentPattern(path);
     std::string basename = GetBaseName(path);
     // best to switch to Pattern tab first in case progress view appears
-    //!!! SwitchToPatternTab();
+    SwitchToPatternTab();
     LoadPattern(fullpath.c_str(), basename.c_str());
 }
 
@@ -931,7 +925,13 @@ bool SavePattern(const std::string& path, pattern_format format, output_compress
 
 bool DownloadFile(const std::string& url, const std::string& filepath)
 {
-	/*!!!
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGI("DownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
+    return false;//!!!
+#endif
+
+#ifdef IOS_GUI
     NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url.c_str() encoding:NSUTF8StringEncoding]];
     if (nsurl == nil) {
         std::string msg = "Bad URL: " + url;
@@ -946,8 +946,7 @@ bool DownloadFile(const std::string& url, const std::string& filepath)
         Warning("Failed to download file!");
         return false;
     }
-    */
-	return false;//!!! remove
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1008,16 +1007,16 @@ void GetURL(const std::string& url, const std::string& pageurl)
 
     if (IsHTMLFile(filename)) {
         // display html file in Help tab
-        //!!! ShowHelp(filepath.c_str());
+        ShowHelp(filepath.c_str());
 
     } else if (IsRuleFile(filename)) {
         // load corresponding rule
-        //!!! SwitchToPatternTab();
+        SwitchToPatternTab();
         LoadRule(filename.substr(0, filename.rfind('.')));
 
     } else if (IsTextFile(filename)) {
         // open text file in modal view
-        //!!! ShowTextFile(filepath.c_str());
+        ShowTextFile(filepath.c_str());
 
     } else if (IsScriptFile(filename)) {
         // run script depending on safety check; if it is allowed to run
@@ -1064,6 +1063,6 @@ void LoadLexiconPattern(const std::string& lexpattern)
     }
 
     // load lexicon pattern
-    //!!! SwitchToPatternTab();
+    SwitchToPatternTab();
     LoadPattern(currlayer->tempstart.c_str(), "lexicon");
 }

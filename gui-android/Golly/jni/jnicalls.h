@@ -58,4 +58,13 @@ bool AbortProgress(double fraction_done, const char* message);
 void EndProgress();
 // these calls display a progress bar while a lengthy task is carried out
 
+void SwitchToPatternTab();
+// switch to pattern view (MainActivity)
+
+void ShowTextFile(const char* filepath);
+// display contents of text file in modal view (TextFileActivity!!!)
+
+void ShowHelp(const char* filepath);
+// display html file in help view (HelpActivity!!!)
+
 #endif

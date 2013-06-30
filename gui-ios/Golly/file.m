@@ -1,37 +1,43 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
-// for opening zip files and extracting files within them
-// (much thanks to the http://code.google.com/p/objective-zip/ project)
-#import "Objective-Zip/ZipFile.h"
-#import "Objective-Zip/ZipException.h"
-#import "Objective-Zip/FileInZipInfo.h"
-#import "Objective-Zip/ZipReadStream.h"
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"   // for SwitchToPatternTab, ShowTextFile, ShowHelp
+#endif
 
-#import "GollyAppDelegate.h"        // for SwitchToPatternTab
-#import "HelpViewController.h"      // for ShowHelp
-#import "InfoViewController.h"      // for ShowTextFile
+#ifdef IOS_GUI
+    // for opening zip files and extracting files within them
+    // (much thanks to the http://code.google.com/p/objective-zip/ project)
+    #import "Objective-Zip/ZipFile.h"
+    #import "Objective-Zip/ZipException.h"
+    #import "Objective-Zip/FileInZipInfo.h"
+    #import "Objective-Zip/ZipReadStream.h"
+
+    #import "GollyAppDelegate.h"        // for SwitchToPatternTab
+    #import "HelpViewController.h"      // for ShowHelp
+    #import "InfoViewController.h"      // for ShowTextFile
+#endif
 
 #include <string>           // for std::string
 #include <list>             // for std::list
@@ -76,20 +82,20 @@ void SetPatternTitle(const char* filename)
         // show currname in current layer's menu item
         //!!! UpdateLayerItem(currindex);
     }
-    
+
     /*!!!??? move this logic into StatusView's drawRect
     std::string prefix = "";
-    
+
     // display asterisk if pattern has been modified
     if (currlayer->dirty) prefix += "*";
-    
+
     int cid = currlayer->cloneid;
     while (cid > 0) {
         // display one or more "=" chars to indicate this is a cloned layer
         prefix += "=";
         cid--;
     }
-    
+
     std::string rule = GetRuleName(currlayer->algo->getrule());
     std::string wtitle;
     wtitle.Printf("%s%s [%s]", prefix.c_str(), currlayer->currname.c_str(), rule.c_str());
@@ -102,14 +108,14 @@ void CreateUniverse()
 {
     // save current rule
     std::string oldrule = currlayer->algo->getrule();
-    
+
     // delete old universe and create new one of same type
     delete currlayer->algo;
     currlayer->algo = CreateNewUniverse(currlayer->algtype);
-    
+
     // ensure new universe uses same rule (and thus same # of cell states)
     RestoreRule(oldrule.c_str());
-    
+
     // increment has been reset to 1 but that's probably not always desirable
     // so set increment using current step size
     SetGenIncrement();
@@ -120,29 +126,29 @@ void CreateUniverse()
 void NewPattern(const char* title)
 {
     if (generating) Warning("Bug detected in NewPattern!");
-    
+
     //!!! if (askonnew && currlayer->dirty && !SaveCurrentLayer()) return;
-    
+
     currlayer->savestart = false;
     currlayer->currfile.clear();
     currlayer->startgen = 0;
-    
+
     // reset step size before CreateUniverse calls SetGenIncrement
     currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
     currlayer->currexpo = 0;
-    
+
     // create new, empty universe of same type and using same rule
     CreateUniverse();
-    
+
     // clear all undo/redo history
     currlayer->undoredo->ClearUndoRedo();
-    
+
     // possibly clear selection
     currlayer->currsel.Deselect();
-    
+
     // initially in drawing mode
     currlayer->touchmode = drawmode;
-    
+
     // reset location and scale
     currlayer->view->setpositionmag(bigint::zero, bigint::zero, newmag);
 
@@ -152,10 +158,10 @@ void NewPattern(const char* title)
         currlayer->originy = 0;
         SetMessage(origin_restored);
     }
-    
+
     // restore default colors for current algo/rule
     UpdateLayerColors();
-    
+
     MarkLayerClean(title);     // calls SetPatternTitle
 }
 
@@ -169,18 +175,18 @@ bool LoadPattern(const char* path, const char* newtitle)
         Warning(msg.c_str());
         return false;
     }
-    
+
     // newtitle is only empty if called from ResetPattern/RestorePattern
     if (newtitle[0] != 0) {
         //!!! if (askonload && currlayer->dirty && !SaveCurrentLayer()) return false;
-        
+
         currlayer->savestart = false;
         currlayer->currfile = path;
-        
+
         // reset step size
         currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
         currlayer->currexpo = 0;
-        
+
         // clear all undo/redo history
         currlayer->undoredo->ClearUndoRedo();
     }
@@ -188,15 +194,15 @@ bool LoadPattern(const char* path, const char* newtitle)
     // disable pattern update so we see gen=0 and pop=0;
     // in particular, it avoids getPopulation being called which would slow down macrocell loading
     nopattupdate = true;
-    
+
     // save current algo and rule
     algo_type oldalgo = currlayer->algtype;
     std::string oldrule = currlayer->algo->getrule();
-    
+
     // delete old universe and create new one of same type
     delete currlayer->algo;
     currlayer->algo = CreateNewUniverse(currlayer->algtype);
-    
+
     const char* err = readpattern(path, *currlayer->algo);
     if (err) {
         // cycle thru all other algos until readpattern succeeds
@@ -222,22 +228,22 @@ bool LoadPattern(const char* path, const char* newtitle)
             Warning("File could not be loaded by any algorithm\n(probably due to an unknown rule).");
         }
     }
-    
+
     // enable pattern update
     nopattupdate = false;
-    
+
     if (newtitle[0] != 0) {
         MarkLayerClean(newtitle);     // calls SetPatternTitle
-        
+
         // restore default base step for current algo
         // (currlayer->currexpo was set to 0 above)
         currlayer->currbase = algoinfo[currlayer->algtype]->defbase;
 
         SetGenIncrement();
-        
+
         // restore default colors for current algo/rule
         UpdateLayerColors();
-        
+
         currlayer->currsel.Deselect();
 
         // initially in moving mode
@@ -245,10 +251,10 @@ bool LoadPattern(const char* path, const char* newtitle)
 
         currlayer->algo->fit(*currlayer->view, 1);
         currlayer->startgen = currlayer->algo->getGeneration();     // might be > 0
-        
+
         UpdateEverything();
     }
-    
+
     return err == NULL;
 }
 
@@ -257,12 +263,12 @@ bool LoadPattern(const char* path, const char* newtitle)
 void AddRecentPattern(const char* inpath)
 {
     std::string path = inpath;
-    
+
     if (path.find(gollydir) == 0) {
         // remove gollydir from start of path
         path.erase(0, gollydir.length());
     }
-    
+
     // check if path is already in recentpatterns
     if (!recentpatterns.empty()) {
         std::list<std::string>::iterator next = recentpatterns.begin();
@@ -281,7 +287,7 @@ void AddRecentPattern(const char* inpath)
             next++;
         }
     }
-    
+
     // put given path at start of recentpatterns
     recentpatterns.push_front(path);
     if (numpatterns < maxpatterns) {
@@ -296,15 +302,30 @@ void AddRecentPattern(const char* inpath)
 
 bool CopyTextToClipboard(const char* text)
 {
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGI("CopyTextToClipboard: %s", text);
+    return false;//!!!
+#endif
+
+#ifdef IOS_GUI
     UIPasteboard *pboard = [UIPasteboard generalPasteboard];
     pboard.string = [NSString stringWithCString:text encoding:NSUTF8StringEncoding];
     return true;
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
 bool GetTextFromClipboard(std::string& text)
 {
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGI("GetTextFromClipboard");
+    return false;//!!!
+#endif
+
+#ifdef IOS_GUI
     UIPasteboard *pboard = [UIPasteboard generalPasteboard];
     NSString *str = pboard.string;
     if (str == nil) {
@@ -314,6 +335,7 @@ bool GetTextFromClipboard(std::string& text)
         text = [str cStringUsingEncoding:NSUTF8StringEncoding];
         return true;
     }
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -323,11 +345,11 @@ void LoadRule(const std::string& rulestring)
     // load recently installed .rule file
     std::string oldrule = currlayer->algo->getrule();
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
-    
+
     // selection might change if grid becomes smaller,
     // so save current selection for RememberRuleChange/RememberAlgoChange
     SaveCurrentSelection();
-    
+
     const char* err = currlayer->algo->setrule(rulestring.c_str());
     if (err) {
         // try to find another algorithm that supports the given rule
@@ -353,7 +375,7 @@ void LoadRule(const std::string& rulestring)
         Warning(msg.c_str());
         return;
     }
-    
+
     std::string newrule = currlayer->algo->getrule();
     if (oldrule != newrule) {
         // if grid is bounded then remove any live cells outside grid edges
@@ -361,17 +383,17 @@ void LoadRule(const std::string& rulestring)
             ClearOutsideGrid();
         }
     }
-    
+
     // new rule might have changed the number of cell states;
     // if there are fewer states then pattern might change
     int newmaxstate = currlayer->algo->NumCellStates() - 1;
     if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
         ReduceCellStates(newmaxstate);
     }
-    
+
     // set colors for new rule (loads any .rule/colors/icons file)
     UpdateLayerColors();
-    
+
     if (oldrule != newrule) {
         if (allowundo && !currlayer->stayclean) {
             currlayer->undoredo->RememberRuleChange(oldrule.c_str());
@@ -381,15 +403,17 @@ void LoadRule(const std::string& rulestring)
 
 // -----------------------------------------------------------------------------
 
+#ifdef IOS_GUI
+
 bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, const std::string& outfile)
 {
     bool found = false;
     bool ok = false;
-	
+
     @try {
         NSString *nspath = [NSString stringWithCString:zippath.c_str() encoding:NSUTF8StringEncoding];
         ZipFile *zfile= [[ZipFile alloc] initWithFileName:nspath mode:ZipFileModeUnzip];
-        
+
         [zfile goToFirstFileInZip];
         do {
             FileInZipInfo *info = [zfile getCurrentFileInZipInfo];
@@ -423,19 +447,19 @@ bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, c
                 break;
             }
         } while ([zfile goToNextFileInZip]);
-        
+
         [zfile close];
         zfile = nil;
-        
-	} @catch (ZipException *ze) {
-        NSString *msg = [NSString stringWithFormat:@"Zip file error: %d - %@", ze.error, [ze reason]]; 
-		Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
-        
-	} @catch (id e) {
-        NSString *msg = [NSString stringWithFormat:@"Exception caught: %@ - %@", [[e class] description], [e description]]; 
-		Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
-	}
-    
+
+    } @catch (ZipException *ze) {
+        NSString *msg = [NSString stringWithFormat:@"Zip file error: %d - %@", ze.error, [ze reason]];
+        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+
+    } @catch (id e) {
+        NSString *msg = [NSString stringWithFormat:@"Exception caught: %@ - %@", [[e class] description], [e description]];
+        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+
     if (found && ok) return true;
 
     if (!found) {
@@ -445,7 +469,7 @@ bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, c
         // file is probably incomplete so best to delete it
         if (FileExists(outfile)) RemoveFile(outfile);
     }
-    
+
     return false;
 }
 
@@ -455,7 +479,7 @@ void UnzipFile(const std::string& zippath, const std::string& entry)
 {
     std::string filename = GetBaseName(entry.c_str());
     std::string tempfile = tempdir + filename;
-    
+
     if ( IsRuleFile(filename) ) {
         // rule-related file should have already been extracted and installed
         // into userrules, so check that file exists and load rule
@@ -468,22 +492,22 @@ void UnzipFile(const std::string& zippath, const std::string& entry)
             std::string msg = "Rule-related file was not installed:\n" + rulefile;
             Warning(msg.c_str());
         }
-        
+
     } else if ( ExtractZipEntry(zippath, entry, tempfile) ) {
         if ( IsHTMLFile(filename) ) {
             // display html file
             ShowHelp(tempfile.c_str());
-            
+
         } else if ( IsTextFile(filename) ) {
             // display text file
             ShowTextFile(tempfile.c_str());
-        
+
         } else if ( IsScriptFile(filename) ) {
             // run script depending on safety check; note that because the script is
             // included in a zip file we don't remember it in the Run Recent submenu
             //!!! CheckBeforeRunning(tempfile, false, zippath);
             Warning("This version of Golly cannot run scripts.");
-        
+
         } else {
             // open pattern but don't remember in recentpatterns
             OpenFile(tempfile.c_str(), false);
@@ -533,7 +557,7 @@ void OpenZipFile(const char* zippath)
     //   into userrules (the user's rules directory).
     // - Build a temporary html file with clickable links to each file entry
     //   and show it in the Help tab.
-    
+
     const std::string indent = "&nbsp;&nbsp;&nbsp;&nbsp;";
     bool dirseen = false;
     bool diffdirs = (userrules != rulesdir);
@@ -549,7 +573,7 @@ void OpenZipFile(const char* zippath)
     int deprecated = 0;                 // # of .table/tree/colors/icons files
     std::list<std::string> deplist;     // list of installed deprecated files
     std::list<std::string> rulelist;    // list of installed .rule files
-    
+
     // strip off patternsdir or gollydir
     std::string relpath = zippath;
     size_t pos = relpath.find(patternsdir);
@@ -559,20 +583,20 @@ void OpenZipFile(const char* zippath)
         pos = relpath.find(gollydir);
         if (pos == 0) relpath.erase(0, gollydir.length());
     }
-    
+
     std::string contents = "<html><body bgcolor=\"#FFFFCE\"><font size=+1><b><p>\nContents of ";
     contents += relpath;
     contents += ":<p>\n";
-    
-	@try {
+
+    @try {
         NSString *nspath = [NSString stringWithCString:zippath encoding:NSUTF8StringEncoding];
         ZipFile *zfile= [[ZipFile alloc] initWithFileName:nspath mode:ZipFileModeUnzip];
-        
+
         [zfile goToFirstFileInZip];
         do {
             FileInZipInfo *info = [zfile getCurrentFileInZipInfo];
             // NSLog(@"- %@ %@ %d len=%d (%d)", info.name, info.date, info.size, info.length, info.level);
-            
+
             // examine each entry in zip file and build contents string;
             // also install any .rule files
             std::string name = [info.name cStringUsingEncoding:NSUTF8StringEncoding];
@@ -594,7 +618,7 @@ void OpenZipFile(const char* zippath)
                     contents += "<br>\n";
                 }
                 for (i = 1; i < sepcount; i++) contents += indent;
-                
+
                 if (name[len-1] == '/') {
                     // remove terminating separator from directory name
                     name = name.substr(0, name.rfind('/'));
@@ -606,12 +630,12 @@ void OpenZipFile(const char* zippath)
                         contents += "<br>\n";
                     }
                     dirseen = true;
-                    
+
                 } else {
                     // entry is for some sort of file
                     std::string filename = GetBaseName(name.c_str());
                     if (dirseen) contents += indent;
-                
+
                     if ( IsRuleFile(filename) && filename.rfind(".rule") == std::string::npos ) {
                         // this is a deprecated .table/tree/colors/icons file
                         contents += filename;
@@ -626,7 +650,7 @@ void OpenZipFile(const char* zippath)
                             contents += indent;
                             contents += "INSTALL FAILED!";
                         }
-                    
+
                     } else {
                         // user can extract file via special "unzip:" link
                         contents += "<a href=\"unzip:";
@@ -636,7 +660,7 @@ void OpenZipFile(const char* zippath)
                         contents += "\">";
                         contents += filename;
                         contents += "</a>";
-                        
+
                         if ( IsRuleFile(filename) ) {
                             // extract and install .rule file into userrules
                             std::string outfile = userrules + filename;
@@ -661,15 +685,15 @@ void OpenZipFile(const char* zippath)
                                 if (FileExists(outfile)) RemoveFile(outfile);
                             }
                             rulefiles++;
-                            
+
                         } else if ( IsHTMLFile(filename) || IsTextFile(filename) ) {
                             textfiles++;
-                            
+
                         } else if ( IsScriptFile(filename) ) {
                             scriptfiles++;
                             lastscript = name;
                             scriptseps = sepcount;
-                        
+
                         } else {
                             patternfiles++;
                             lastpattern = name;
@@ -679,21 +703,21 @@ void OpenZipFile(const char* zippath)
                     contents += "<br>\n";
                 }
             }
-            
+
         } while ([zfile goToNextFileInZip]);
-        
+
         [zfile close];
         zfile = nil;
 
-	} @catch (ZipException *ze) {
-        NSString *msg = [NSString stringWithFormat:@"Zip file error: %d - %@", ze.error, [ze reason]]; 
-		Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
-        
-	} @catch (id e) {
-        NSString *msg = [NSString stringWithFormat:@"Exception caught: %@ - %@", [[e class] description], [e description]]; 
-		Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
-	}
-    
+    } @catch (ZipException *ze) {
+        NSString *msg = [NSString stringWithFormat:@"Zip file error: %d - %@", ze.error, [ze reason]];
+        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+
+    } @catch (id e) {
+        NSString *msg = [NSString stringWithFormat:@"Exception caught: %@ - %@", [[e class] description], [e description]];
+        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+
     if (rulefiles > 0) {
         relpath = userrules;
         pos = relpath.find(gollydir);
@@ -710,11 +734,11 @@ void OpenZipFile(const char* zippath)
         }
     }
     contents += "\n</b></font></body></html>";
-    
+
     // NOTE: The desktop version of Golly will load a pattern if it's in a "simple" zip file
     // but for the iPad version it's probably less confusing if the zip file's contents are
     // *always* displayed in the Help tab.  We might change this if script support is added.
-    
+
     // write contents to a unique temporary html file
     std::string htmlfile = CreateTempFileName("zip_contents");
     htmlfile += ".html";
@@ -735,31 +759,7 @@ void OpenZipFile(const char* zippath)
     ShowHelp(htmlfile.c_str());
 }
 
-// -----------------------------------------------------------------------------
-
-/*!!!
-
-void OpenClipboard()
-{
-    // load and view pattern data stored in clipboard
-    wxTextDataObject data;
-    if (GetTextFromClipboard(&data)) {
-        // copy clipboard data to tempstart so we can handle all formats
-        // supported by readpattern
-        wxFile outfile(currlayer->tempstart, wxFile::write);
-        if ( outfile.IsOpened() ) {
-            outfile.Write( data.GetText() );
-            outfile.Close();
-            LoadPattern(currlayer->tempstart, "clipboard");
-            // do NOT delete tempstart -- it can be reloaded by ResetPattern
-            // or used by ShowPatternInfo
-        } else {
-            statusptr->ErrorMessage("Could not create tempstart file!");
-        }
-    }
-}
-
-!!!*/
+#endif // IOS_GUI
 
 // -----------------------------------------------------------------------------
 
@@ -775,19 +775,19 @@ void OpenFile(const char* path, bool remember)
             fullpath = gollydir + fullpath;
         }
     }
-    
+
     if (IsHTMLFile(path)) {
         // show HTML file in Help tab
         ShowHelp(fullpath.c_str());
         return;
     }
-    
+
     if (IsTextFile(path)) {
         // show text file using InfoViewController
         ShowTextFile(fullpath.c_str());
         return;
     }
-    
+
     if (IsScriptFile(path)) {
         // execute script
         /*!!!
@@ -797,15 +797,21 @@ void OpenFile(const char* path, bool remember)
         Warning("This version of Golly cannot run scripts.");
         return;
     }
-    
+
     if (IsZipFile(path)) {
         // process zip file
         if (remember) AddRecentPattern(path);   // treat zip file like a pattern file
+#ifdef ANDROID_GUI
+        // not yet implemented!!!
+        LOGI("OpenZipFile: %s", fullpath.c_str());
+#endif
+#ifdef IOS_GUI
         OpenZipFile(fullpath.c_str());          // must use full path
+#endif
         return;
     }
 
-    
+
     if (IsRuleFile(path)) {
         // switch to rule (.rule file must be in rulesdir or userrules)
         SwitchToPatternTab();
@@ -813,7 +819,7 @@ void OpenFile(const char* path, bool remember)
         LoadRule(basename.substr(0, basename.rfind('.')));
         return;
     }
-    
+
     // anything else is a pattern file
     if (remember) AddRecentPattern(path);
     std::string basename = GetBaseName(path);
@@ -847,19 +853,19 @@ void SaveSucceeded(const std::string& path)
     std::string oldfile = currlayer->currfile;
     bool oldsave = currlayer->savestart;
     bool olddirty = currlayer->dirty;
-    
+
     //!!! if (allowundo && !currlayer->stayclean) SavePendingChanges();
-    
+
     if ( currlayer->algo->getGeneration() == currlayer->startgen ) {
         // no need to save starting pattern (ResetPattern can load currfile)
         currlayer->currfile = path;
         currlayer->savestart = false;
     }
-    
+
     // set dirty flag false and update currlayer->currname
     std::string basename = GetBaseName(path.c_str());
     MarkLayerClean(basename.c_str());
-    
+
     if (allowundo && !currlayer->stayclean) {
         currlayer->undoredo->RememberNameChange(oldname.c_str(), oldfile.c_str(), oldsave, olddirty);
     }
@@ -872,7 +878,7 @@ bool SavePattern(const std::string& path, pattern_format format, output_compress
     bigint top, left, bottom, right;
     int itop, ileft, ibottom, iright;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
-    
+
     if (currlayer->algo->hyperCapable()) {
         // algorithm uses hashlife
         if ( OutsideLimits(top, left, bottom, right) ) {
@@ -900,7 +906,7 @@ bool SavePattern(const std::string& path, pattern_format format, output_compress
         ibottom = bottom.toint();
         iright = right.toint();
     }
-    
+
     const char* err = WritePattern(path.c_str(), format, compression, itop, ileft, ibottom, iright);
     if (err) {
         Warning(err);
@@ -919,6 +925,13 @@ bool SavePattern(const std::string& path, pattern_format format, output_compress
 
 bool DownloadFile(const std::string& url, const std::string& filepath)
 {
+#ifdef ANDROID_GUI
+    // not yet implemented!!!
+    LOGI("DownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
+    return false;//!!!
+#endif
+
+#ifdef IOS_GUI
     NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url.c_str() encoding:NSUTF8StringEncoding]];
     if (nsurl == nil) {
         std::string msg = "Bad URL: " + url;
@@ -933,6 +946,7 @@ bool DownloadFile(const std::string& url, const std::string& filepath)
         Warning("Failed to download file!");
         return false;
     }
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -940,7 +954,7 @@ bool DownloadFile(const std::string& url, const std::string& filepath)
 void GetURL(const std::string& url, const std::string& pageurl)
 {
     const char* HTML_PREFIX = "GET-";   // prepended to html filename
-    
+
     std::string fullurl;
     if (url.find("http:") == 0) {
         fullurl = url;
@@ -955,7 +969,7 @@ void GetURL(const std::string& url, const std::string& pageurl)
         urlprefix = urlprefix.substr(0, urlprefix.rfind('/')+1);
         fullurl = urlprefix + url;
     }
-    
+
     std::string filename = GetBaseName(fullurl.c_str());
     // remove ugly stuff at start of file names downloaded from ConwayLife.com
     if (filename.find("download.php?f=") == 0 ||
@@ -963,7 +977,7 @@ void GetURL(const std::string& url, const std::string& pageurl)
         filename.find("script.asp?s=") == 0) {
         filename = filename.substr( filename.find('=')+1 );
     }
-    
+
     // create full path for downloaded file based on given url;
     // first remove initial "http://"
     std::string filepath = fullurl.substr( fullurl.find('/')+1 );
@@ -976,7 +990,7 @@ void GetURL(const std::string& url, const std::string& pageurl)
         // no need for url info in file name
         filepath = filename;
     }
-    
+
     if (IsRuleFile(filename)) {
         // create file in user's rules directory
         filepath = userrules + filename;
@@ -987,29 +1001,29 @@ void GetURL(const std::string& url, const std::string& pageurl)
         // all other files are stored in user's download directory
         filepath = downloaddir + filepath;
     }
-    
+
     // download the file and store it in filepath
     if (!DownloadFile(fullurl, filepath)) return;
-    
+
     if (IsHTMLFile(filename)) {
         // display html file in Help tab
         ShowHelp(filepath.c_str());
-        
+
     } else if (IsRuleFile(filename)) {
         // load corresponding rule
         SwitchToPatternTab();
         LoadRule(filename.substr(0, filename.rfind('.')));
-        
+
     } else if (IsTextFile(filename)) {
         // open text file in modal view
         ShowTextFile(filepath.c_str());
-    
+
     } else if (IsScriptFile(filename)) {
         // run script depending on safety check; if it is allowed to run
         // then we remember script in the Run Recent submenu
         //!!! CheckBeforeRunning(filepath, true, wxEmptyString);
         Warning("This version of Golly cannot run scripts.");
-    
+
     } else {
         // assume it's a pattern/zip file, so open it
         OpenFile(filepath.c_str());
@@ -1033,10 +1047,10 @@ void LoadLexiconPattern(const std::string& lexpattern)
         return;
     }
     fclose(f);
-    
+
     // avoid any pattern conversion (possibly causing ChangeAlgorithm to beep with a message)
     NewPattern();
-        
+
     // all Life Lexicon patterns assume we're using Conway's Life so try
     // switching to B3/S23 or Life; if that fails then switch to QuickLife
     const char* err = currlayer->algo->setrule("B3/S23");
@@ -1047,7 +1061,7 @@ void LoadLexiconPattern(const std::string& lexpattern)
     if (err) {
         ChangeAlgorithm(QLIFE_ALGO, "B3/S23");
     }
-    
+
     // load lexicon pattern
     SwitchToPatternTab();
     LoadPattern(currlayer->tempstart.c_str(), "lexicon");

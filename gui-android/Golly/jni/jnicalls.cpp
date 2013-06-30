@@ -183,6 +183,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, 
     	NewPattern();               // create new, empty universe
     	UpdateStatus();				// show initial message
     	showtiming = true; //!!! test
+    	showicons = true; //!!! test
     }
 }
 
@@ -530,4 +531,31 @@ void EndProgress()
         [globalController enableInteraction:YES];
     }
     */
+}
+
+// -----------------------------------------------------------------------------
+
+void SwitchToPatternTab()
+{
+	// switch to pattern view (ie. MainActivity)
+	// not yet implemented!!!
+	LOGI("SwitchToPatternTab");
+}
+
+// -----------------------------------------------------------------------------
+
+void ShowTextFile(const char* filepath)
+{
+	// display contents of text file in modal view (TextFileActivity!!!)
+	// not yet implemented!!!
+	LOGI("ShowTextFile: %s", filepath);
+}
+
+// -----------------------------------------------------------------------------
+
+void ShowHelp(const char* filepath)
+{
+	// display html file in help view (HelpActivity!!!)
+	// not yet implemented!!!
+	LOGI("ShowHelp: %s", filepath);
 }
