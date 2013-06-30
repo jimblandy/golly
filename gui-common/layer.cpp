@@ -419,16 +419,33 @@ void CurrentLayerChanged()
 
 // -----------------------------------------------------------------------------
 
-/*!!!
-
-static CGImageRef* CopyIcons(CGImageRef* srcicons, int maxstate)
+static gBitmapPtr* CopyIcons(gBitmapPtr* srcicons, int maxstate)
 {
-    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+    gBitmapPtr* iconptr = (gBitmapPtr*) malloc(256 * sizeof(gBitmapPtr));
     if (iconptr) {
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
         for (int i = 0; i <= maxstate; i++) {
             if (srcicons && srcicons[i]) {
+#ifdef ANDROID_GUI
+                gBitmapPtr icon = (gBitmapPtr) malloc(sizeof(gBitmap));
+                if (icon) {
+                    icon->wd = srcicons[i]->wd;
+                    icon->ht = srcicons[i]->ht;
+                    if (srcicons[i]->pxldata == NULL) {
+                        icon->pxldata = NULL;
+                    } else {
+                        int iconbytes = icon->wd * icon->ht * 4;
+                        icon->pxldata = (unsigned char*) malloc(iconbytes);
+                        if (icon->pxldata) {
+                            memcpy(icon->pxldata, srcicons[i]->pxldata, iconbytes);
+                        }
+                    }
+                }
+                iconptr[i] = icon;
+#endif
+#ifdef IOS_GUI
                 iconptr[i] = CGImageCreateCopy(srcicons[i]);
+#endif
             }
         }
     }
@@ -437,13 +454,26 @@ static CGImageRef* CopyIcons(CGImageRef* srcicons, int maxstate)
 
 // -----------------------------------------------------------------------------
 
-static unsigned char** GetIconPixels(CGImageRef* srcicons, int maxstate)
+// eventually won't need this routine if we remove CG stuff!!!???
+
+static unsigned char** GetIconPixels(gBitmapPtr* srcicons, int maxstate)
 {
     unsigned char** iconpixelsptr = (unsigned char**) malloc(256 * sizeof(unsigned char*));
     if (iconpixelsptr) {
         for (int i = 0; i < 256; i++) iconpixelsptr[i] = NULL;
         for (int i = 0; i <= maxstate; i++) {
             if (srcicons && srcicons[i]) {
+#ifdef ANDROID_GUI
+                // allocate enough memory to store icon's RGBA pixel data
+                int wd = srcicons[i]->wd;
+                int ht = srcicons[i]->ht;
+                int iconbytes = wd * ht * 4;
+                iconpixelsptr[i] = (unsigned char*) calloc(iconbytes, 1);
+                if (iconpixelsptr[i] && srcicons[i]->pxldata) {
+                    memcpy(iconpixelsptr[i], srcicons[i]->pxldata, iconbytes);
+                }
+#endif // ANDROID_GUI
+#ifdef IOS_GUI
                 int wd = CGImageGetWidth(srcicons[i]);
                 int ht = CGImageGetHeight(srcicons[i]);
                 int bytesPerPixel = 4;
@@ -462,6 +492,7 @@ static unsigned char** GetIconPixels(CGImageRef* srcicons, int maxstate)
                     CGColorSpaceRelease(colorspace);
                     // iconpixelsptr[i] now points to the icon's pixels in RGBA format
                 }
+#endif // IOS_GUI
             }
         }
     }
@@ -472,6 +503,7 @@ static unsigned char** GetIconPixels(CGImageRef* srcicons, int maxstate)
 
 static void UpdateColorReferences(Layer* layerptr, int numstates)
 {
+#ifdef IOS_GUI
     // release any old color refs
     for (int n = 0; n < 256; n++) {
         CGColorRelease(layerptr->colorref[n]);
@@ -491,9 +523,8 @@ static void UpdateColorReferences(Layer* layerptr, int numstates)
     }
 
     CGColorSpaceRelease(colorspace);
+#endif // IOS_GUI
 }
-
-!!!*/
 
 // -----------------------------------------------------------------------------
 
@@ -536,12 +567,12 @@ void AddLayer()
             currlayer->cellg[n] = oldlayer->cellg[n];
             currlayer->cellb[n] = oldlayer->cellb[n];
         }
-        //!!! UpdateColorReferences(currlayer, currlayer->algo->NumCellStates());
+        UpdateColorReferences(currlayer, currlayer->algo->NumCellStates());
         if (cloning) {
             // use same icon pointers
-        	//!!! currlayer->icons7x7 = oldlayer->icons7x7;
-        	//!!! currlayer->icons15x15 = oldlayer->icons15x15;
-        	//!!! currlayer->icons31x31 = oldlayer->icons31x31;
+            currlayer->icons7x7 = oldlayer->icons7x7;
+            currlayer->icons15x15 = oldlayer->icons15x15;
+            currlayer->icons31x31 = oldlayer->icons31x31;
             // use same pixel data
             currlayer->iconpixels7x7 = oldlayer->iconpixels7x7;
             currlayer->iconpixels15x15 = oldlayer->iconpixels15x15;
@@ -549,13 +580,13 @@ void AddLayer()
         } else {
             // duplicate icons from old layer
             int maxstate = currlayer->algo->NumCellStates() - 1;
-            //!!! currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, maxstate);
-            //!!! currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, maxstate);
-            //!!! currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, maxstate);
+            currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, maxstate);
+            currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, maxstate);
+            currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, maxstate);
             // get icon pixel data
-            //!!! currlayer->iconpixels7x7 = GetIconPixels(oldlayer->icons7x7, maxstate);
-            //!!! currlayer->iconpixels15x15 = GetIconPixels(oldlayer->icons15x15, maxstate);
-            //!!! currlayer->iconpixels31x31 = GetIconPixels(oldlayer->icons31x31, maxstate);
+            currlayer->iconpixels7x7 = GetIconPixels(oldlayer->icons7x7, maxstate);
+            currlayer->iconpixels15x15 = GetIconPixels(oldlayer->icons15x15, maxstate);
+            currlayer->iconpixels31x31 = GetIconPixels(oldlayer->icons31x31, maxstate);
         }
     } else {
         // set new layer's colors+icons to default colors+icons for current algo+rule
@@ -895,10 +926,10 @@ void MarkLayerClean(const char* title)
 
     if (title[0] == 0) {
         // pass in currname so UpdateLayerItem(currindex) gets called
-    	SetPatternTitle(currlayer->currname.c_str());
+        SetPatternTitle(currlayer->currname.c_str());
     } else {
         // set currlayer->currname to title and call UpdateLayerItem(currindex)
-    	SetPatternTitle(title);
+        SetPatternTitle(title);
     }
 
     if (currlayer->cloneid > 0) {
@@ -1115,19 +1146,29 @@ static void DeleteXPMData(char** xpmdata, int numstrings)
 
 // -----------------------------------------------------------------------------
 
-/*!!!
+// export from algos.h eventually!!!???
 
-static void FreeIconBitmaps(CGImageRef* icons)
+static void FreeIconBitmaps(gBitmapPtr* icons)
 {
     if (icons) {
-        for (int i = 0; i < 256; i++) CGImageRelease(icons[i]);
+        for (int i = 0; i < 256; i++) {
+#ifdef ANDROID_GUI
+            if (icons[i]) {
+                if (icons[i]->pxldata) free(icons[i]->pxldata);
+                free(icons[i]);
+            }
+#endif
+#ifdef IOS_GUI
+            CGImageRelease(icons[i]);
+#endif
+        }
         free(icons);
     }
 }
 
 // -----------------------------------------------------------------------------
 
-static void CopyBuiltinIcons(CGImageRef* i7x7, CGImageRef* i15x15, CGImageRef* i31x31)
+static void CopyBuiltinIcons(gBitmapPtr* i7x7, gBitmapPtr* i15x15, gBitmapPtr* i31x31)
 {
     int maxstate = currlayer->algo->NumCellStates() - 1;
 
@@ -1161,8 +1202,6 @@ static void CreateIcons(const char** xpmdata, int size)
         currlayer->icons31x31 = CreateIconBitmaps(xpmdata, maxstates);
     }
 }
-
-!!!*/
 
 // -----------------------------------------------------------------------------
 
@@ -1290,7 +1329,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                 xpmstrings++;
                 if (xpmstrings == maxstrings) {
                     // we've got all the data for this icon size
-                    //!!! CreateIcons((const char**)xpmdata, wd);
+                    CreateIcons((const char**)xpmdata, wd);
                     DeleteXPMData(xpmdata, maxstrings);
                     xpmdata = NULL;
                     xpmstarted = 0;
@@ -1303,13 +1342,13 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
             xpmstrings = 0;
         } else if (strcmp(linebuf, "circles") == 0) {
             // use circular icons
-        	//!!! CopyBuiltinIcons(circles7x7, circles15x15, circles31x31);
+            CopyBuiltinIcons(circles7x7, circles15x15, circles31x31);
         } else if (strcmp(linebuf, "diamonds") == 0) {
             // use diamond-shaped icons
-        	//!!! CopyBuiltinIcons(diamonds7x7, diamonds15x15, diamonds31x31);
+            CopyBuiltinIcons(diamonds7x7, diamonds15x15, diamonds31x31);
         } else if (strcmp(linebuf, "hexagons") == 0) {
             // use hexagonal icons
-        	//!!! CopyBuiltinIcons(hexagons7x7, hexagons15x15, hexagons31x31);
+            CopyBuiltinIcons(hexagons7x7, hexagons15x15, hexagons31x31);
         } else if (strcmp(linebuf, "triangles") == 0) {
             // use triangular icons
             if (currlayer->algo->NumCellStates() != 4) {
@@ -1321,7 +1360,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                 Warning(msg.c_str());
                 // don't return
             } else {
-            	//!!! CopyBuiltinIcons(triangles7x7, triangles15x15, triangles31x31);
+                CopyBuiltinIcons(triangles7x7, triangles15x15, triangles31x31);
             }
         } else if (linebuf[0] == '@') {
             // found next section, so stop parsing
@@ -1345,7 +1384,6 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
     }
 
     // create scaled bitmaps if size(s) not supplied
-    /* !!!
     if (!currlayer->icons7x7) {
         if (currlayer->icons15x15) {
             // scale down 15x15 bitmaps
@@ -1373,7 +1411,6 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
             currlayer->icons31x31 = ScaleIconBitmaps(currlayer->icons7x7, 31);
         }
     }
-    !!!*/
 }
 
 // -----------------------------------------------------------------------------
@@ -1425,23 +1462,18 @@ static void LoadRuleInfo(FILE* rulefile, const std::string& rulename,
 static void DeleteIcons(Layer* layer)
 {
     // delete given layer's existing icons
-	/*!!!
     if (layer->icons7x7) {
-        for (int i = 0; i < 256; i++) CGImageRelease(layer->icons7x7[i]);
-        free(layer->icons7x7);
+        FreeIconBitmaps(layer->icons7x7);
         layer->icons7x7 = NULL;
     }
     if (layer->icons15x15) {
-        for (int i = 0; i < 256; i++) CGImageRelease(layer->icons15x15[i]);
-        free(layer->icons15x15);
+        FreeIconBitmaps(layer->icons15x15);
         layer->icons15x15 = NULL;
     }
     if (layer->icons31x31) {
-        for (int i = 0; i < 256; i++) CGImageRelease(layer->icons31x31[i]);
-        free(layer->icons31x31);
+        FreeIconBitmaps(layer->icons31x31);
         layer->icons31x31 = NULL;
     }
-    !!!*/
 
     // also delete icon pixel data
     if (layer->iconpixels7x7) {
@@ -1485,8 +1517,6 @@ static bool FindIconFile(const std::string& rule, const std::string& dir, std::s
 
 // -----------------------------------------------------------------------------
 
-/*!!!
-
 static bool LoadRuleIcons(const std::string& rule, int maxstate)
 {
     // if rule.icons file exists in userrules or rulesdir then load icons for current layer
@@ -1521,8 +1551,6 @@ static void UseDefaultIcons(int maxstate)
         currlayer->icons31x31 = CopyIcons(ad->icons31x31, maxstate);
     }
 }
-
-!!!*/
 
 // -----------------------------------------------------------------------------
 
@@ -1733,7 +1761,6 @@ void UpdateCurrentColors()
             }
         }
 
-        /*!!!
         if (!loadedicons) UseDefaultIcons(maxstate);
 
         // get icon pixel data (used for rendering)
@@ -1750,7 +1777,6 @@ void UpdateCurrentColors()
                 }
             }
         }
-        !!!*/
 
         // if the icons are multi-color then we don't call SetAverageColor as we do below
         // (better if the .rule file sets the appropriate non-icon colors)
@@ -1758,7 +1784,6 @@ void UpdateCurrentColors()
     } else {
         // no rulename.rule so look for deprecated rulename.colors and/or rulename.icons
         loadedcolors = LoadRuleColors(rulename, maxstate);
-        /*!!!
         loadedicons = LoadRuleIcons(rulename, maxstate);
         if (!loadedicons) UseDefaultIcons(maxstate);
 
@@ -1766,7 +1791,6 @@ void UpdateCurrentColors()
         currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
         currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
         currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
-		!!!*/
 
         // if rulename.colors file wasn't loaded and icons are multi-color then we
         // set non-icon colors to the average of the non-black pixels in each icon
@@ -1798,7 +1822,7 @@ void UpdateCurrentColors()
         }
     }
 
-    //!!! UpdateColorReferences(currlayer, currlayer->algo->NumCellStates());
+    UpdateColorReferences(currlayer, currlayer->algo->NumCellStates());
 }
 
 // -----------------------------------------------------------------------------
@@ -1825,7 +1849,7 @@ void InvertCellColors()
             layerptr->cellg[n] = 255 - layerptr->cellg[n];
             layerptr->cellb[n] = 255 - layerptr->cellb[n];
         }
-        //!!! UpdateColorReferences(layerptr, algoinfo[layerptr->algtype]->maxstates);
+        UpdateColorReferences(layerptr, algoinfo[layerptr->algtype]->maxstates);
     }
 }
 
@@ -1878,18 +1902,20 @@ Layer::Layer()
     originx = 0;                  // no X origin offset
     originy = 0;                  // no Y origin offset
 
-    //!!! icons7x7 = NULL;              // no 7x7 icons
-    //!!! icons15x15 = NULL;            // no 15x15 icons
-    //!!! icons31x31 = NULL;            // no 31x31 icons
+    icons7x7 = NULL;              // no 7x7 icons
+    icons15x15 = NULL;            // no 15x15 icons
+    icons31x31 = NULL;            // no 31x31 icons
 
     iconpixels7x7 = NULL;         // no pixel data for 7x7 icons
     iconpixels15x15 = NULL;       // no pixel data for 15x15 icons
     iconpixels31x31 = NULL;       // no pixel data for 31x31 icons
 
+#ifdef IOS_GUI
     // init color references
     for (int n = 0; n < 256; n++) {
-    	//!!! colorref[n] = NULL;
+        colorref[n] = NULL;
     }
+#endif
 
     currframe = 0;                // first frame in timeline
     autoplay = 0;                 // not playing
@@ -2050,14 +2076,12 @@ Layer::Layer()
             if ( !currlayer->algo->isEmpty() ) {
                 bigint top, left, bottom, right;
                 currlayer->algo->findedges(&top, &left, &bottom, &right);
-                /*!!!
                 if ( OutsideLimits(top, left, bottom, right) ) {
                     Warning("Pattern is too big to duplicate.");
                 } else {
                     CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                              currlayer->algo, algo, false, "Duplicating layer");
                 }
-                !!!*/
             }
 
             // tempstart file must remain unique in duplicate layer
@@ -2077,7 +2101,7 @@ Layer::Layer()
 
             if (allowundo) {
                 // duplicate current undo/redo history in new layer
-            	undoredo->DuplicateHistory(currlayer, this);
+                undoredo->DuplicateHistory(currlayer, this);
             }
         }
     }
@@ -2122,8 +2146,10 @@ Layer::~Layer()
         // delete tempstart file if it exists
         if (FileExists(tempstart)) RemoveFile(tempstart);
 
+#ifdef IOS_GUI
         // release color references
-        //!!! for (int i = 0; i < 256; i++) CGColorRelease(colorref[i]);
+        for (int i = 0; i < 256; i++) CGColorRelease(colorref[i]);
+#endif
 
         // delete any icons
         DeleteIcons(this);

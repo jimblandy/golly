@@ -1,25 +1,25 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
 #include "bigint.h"
@@ -43,7 +43,7 @@
 
 // -----------------------------------------------------------------------------
 
-bool inscript = false;          // move to script.m if we ever support scripting!!!
+bool inscript = false;          // move to script.cpp if we ever support scripting!!!
 
 int numlayers = 0;              // number of existing layers
 int numclones = 0;              // number of cloned layers
@@ -71,28 +71,29 @@ void CalculateTileRects(int bigwd, int bight)
     gRect r;
     bool portrait = (bigwd <= bight);
     int rows, cols;
-    
+
     // try to avoid the aspect ratio of each tile becoming too large
     switch (numlayers) {
         case 4: rows = 2; cols = 2; break;
         case 9: rows = 3; cols = 3; break;
-            
+
         case 3: case 5: case 7:
             rows = portrait ? numlayers / 2 + 1 : 2;
             cols = portrait ? 2 : numlayers / 2 + 1;
             break;
-            
+
         case 6: case 8: case 10:
             rows = portrait ? numlayers / 2 : 2;
             cols = portrait ? 2 : numlayers / 2;
             break;
-            
+
         default:
             // numlayers == 2 or > 10
             rows = portrait ? numlayers : 1;
             cols = portrait ? 1 : numlayers;
+            break;
     }
-    
+
     int tilewd = bigwd / cols;
     int tileht = bight / rows;
     if ( float(tilewd) > float(tileht) * 2.5 ) {
@@ -106,7 +107,7 @@ void CalculateTileRects(int bigwd, int bight)
         tilewd = bigwd;
         tileht = bight / numlayers;
     }
-    
+
     for ( int i = 0; i < rows; i++ ) {
         for ( int j = 0; j < cols; j++ ) {
             r.x = j * tilewd;
@@ -130,7 +131,7 @@ void CalculateTileRects(int bigwd, int bight)
             }
         }
     }
-    
+
     if (tileborder > 0) {
         // make tilerects smaller to allow for equal-width tile borders
         for ( int i = 0; i < rows; i++ ) {
@@ -158,12 +159,12 @@ void ResizeTiles(int bigwd, int bight)
 {
     // set tilerect for each layer so they tile bigview's client area
     CalculateTileRects(bigwd, bight);
-    
+
     /*!!!
     // set size of each tile window
     for ( int i = 0; i < numlayers; i++ )
         layer[i]->tilewin->SetSize( layer[i]->tilerect );
-    
+
     // set viewport size for each tile; this is currently the same as the
     // tilerect size because tile windows are created with wxNO_BORDER
     for ( int i = 0; i < numlayers; i++ ) {
@@ -209,17 +210,17 @@ void CreateTiles()
                                             wxFULL_REPAINT_ON_RESIZE |
                                             wxWANTS_CHARS);
         if (layer[i]->tilewin == NULL) Fatal(_("Failed to create tile window!"));
-        
+
         // set tileindex >= 0; this must always match the layer index, so we'll need to
         // destroy and recreate all tiles whenever a tile is added, deleted or moved
         layer[i]->tilewin->tileindex = i;
-        
+
 #if wxUSE_DRAG_AND_DROP
         // let user drop file onto any tile (but file will be loaded into current tile)
         layer[i]->tilewin->SetDropTarget(mainptr->NewDropTarget());
 #endif
     }
-    
+
     // init tilerects, tile window sizes and their viewport sizes
     int wd, ht;
     bigview->GetClientSize(&wd, &ht);
@@ -227,7 +228,7 @@ void CreateTiles()
     if (wd < 1) wd = 1;
     if (ht < 1) ht = 1;
     ResizeTiles(wd, ht);
-    
+
     // change viewptr to tile window for current layer
     viewptr = currlayer->tilewin;
     if (mainptr->IsActive()) viewptr->SetFocus();
@@ -240,11 +241,11 @@ void DestroyTiles()
     // reset viewptr to main viewport window
     viewptr = bigview;
     if (mainptr->IsActive()) viewptr->SetFocus();
-    
+
     // destroy all tile windows
     for ( int i = 0; i < numlayers; i++ )
         delete layer[i]->tilewin;
-    
+
     // resize viewport in each layer to bigview's client area
     int wd, ht;
     bigview->GetClientSize(&wd, &ht);
@@ -261,7 +262,7 @@ void DestroyTiles()
 void SyncClones()
 {
     if (numclones == 0) return;
-    
+
     if (currlayer->cloneid > 0) {
         // make sure clone algo and most other settings are synchronized
         for ( int i = 0; i < numlayers; i++ ) {
@@ -271,10 +272,10 @@ void SyncClones()
                 cloneptr->algo = currlayer->algo;
                 cloneptr->algtype = currlayer->algtype;
                 cloneptr->rule = currlayer->rule;
-                
+
                 // no need to sync undo/redo history
                 // cloneptr->undoredo = currlayer->undoredo;
-                
+
                 // along with view, don't sync these settings
                 // cloneptr->autofit = currlayer->autofit;
                 // cloneptr->hyperspeed = currlayer->hyperspeed;
@@ -284,20 +285,20 @@ void SyncClones()
                 // cloneptr->originx = currlayer->originx;
                 // cloneptr->originy = currlayer->originy;
                 // cloneptr->currname = currlayer->currname;
-                
+
                 // sync various flags
                 cloneptr->dirty = currlayer->dirty;
                 cloneptr->savedirty = currlayer->savedirty;
                 cloneptr->stayclean = currlayer->stayclean;
-                
+
                 // sync step size
                 cloneptr->currbase = currlayer->currbase;
                 cloneptr->currexpo = currlayer->currexpo;
-                
+
                 // sync selection info
                 cloneptr->currsel = currlayer->currsel;
                 cloneptr->savesel = currlayer->savesel;
-                
+
                 // sync the stuff needed to reset pattern
                 cloneptr->startalgo = currlayer->startalgo;
                 cloneptr->savestart = currlayer->savestart;
@@ -314,7 +315,7 @@ void SyncClones()
                 // cloneptr->startmag = currlayer->startmag;
                 // cloneptr->startbase = currlayer->startbase;
                 // cloneptr->startexpo = currlayer->startexpo;
-                
+
                 // sync timeline settings
                 cloneptr->currframe = currlayer->currframe;
                 cloneptr->autoplay = currlayer->autoplay;
@@ -332,21 +333,21 @@ void SaveLayerSettings()
     // set oldalgo and oldrule for use in CurrentLayerChanged
     oldalgo = currlayer->algtype;
     oldrule = currlayer->algo->getrule();
-    
+
     // we're about to change layer so remember current rule
     // in case we switch back to this layer
     currlayer->rule = oldrule;
-    
+
     // synchronize clone info (do AFTER setting currlayer->rule)
     SyncClones();
-    
+
     if (syncviews) {
         // save scale and location for use in CurrentLayerChanged
         oldmag = currlayer->view->getmag();
         oldx = currlayer->view->x;
         oldy = currlayer->view->y;
     }
-    
+
     if (syncmodes) {
         // save touch mode for use in CurrentLayerChanged
         oldmode = currlayer->touchmode;
@@ -383,19 +384,19 @@ void CurrentLayerChanged()
     if ( currlayer->algtype != oldalgo || !currlayer->rule.IsSameAs(oldrule,false) ) {
         RestoreRule(currlayer->rule);
     }
-    
+
     if (syncviews) currlayer->view->setpositionmag(oldx, oldy, oldmag);
     if (syncmodes) currlayer->touchmode = oldmode;
-    
+
     // select current layer button (also deselects old button)
     layerbarptr->SelectButton(currindex, true);
-    
+
     if (tilelayers && numlayers > 1) {
         // switch to new tile
         viewptr = currlayer->tilewin;
         if (mainptr->IsActive()) viewptr->SetFocus();
     }
-    
+
     if (allowundo) {
         // update Undo/Redo items so they show the correct action
         currlayer->undoredo->UpdateUndoRedoItems();
@@ -404,11 +405,11 @@ void CurrentLayerChanged()
         // this also removes action from Undo/Redo items
         currlayer->undoredo->ClearUndoRedo();
     }
-    
+
     mainptr->SetStepExponent(currlayer->currexpo);
     // SetStepExponent calls SetGenIncrement
     mainptr->SetPatternTitle(currlayer->currname);
-    
+
     mainptr->UpdateUserInterface(mainptr->IsActive());
     mainptr->UpdatePatternAndStatus();
     bigview->UpdateScrollBars();
@@ -418,14 +419,33 @@ void CurrentLayerChanged()
 
 // -----------------------------------------------------------------------------
 
-static CGImageRef* CopyIcons(CGImageRef* srcicons, int maxstate)
+static gBitmapPtr* CopyIcons(gBitmapPtr* srcicons, int maxstate)
 {
-    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
+    gBitmapPtr* iconptr = (gBitmapPtr*) malloc(256 * sizeof(gBitmapPtr));
     if (iconptr) {
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
         for (int i = 0; i <= maxstate; i++) {
             if (srcicons && srcicons[i]) {
+#ifdef ANDROID_GUI
+                gBitmapPtr icon = (gBitmapPtr) malloc(sizeof(gBitmap));
+                if (icon) {
+                    icon->wd = srcicons[i]->wd;
+                    icon->ht = srcicons[i]->ht;
+                    if (srcicons[i]->pxldata == NULL) {
+                        icon->pxldata = NULL;
+                    } else {
+                        int iconbytes = icon->wd * icon->ht * 4;
+                        icon->pxldata = (unsigned char*) malloc(iconbytes);
+                        if (icon->pxldata) {
+                            memcpy(icon->pxldata, srcicons[i]->pxldata, iconbytes);
+                        }
+                    }
+                }
+                iconptr[i] = icon;
+#endif
+#ifdef IOS_GUI
                 iconptr[i] = CGImageCreateCopy(srcicons[i]);
+#endif
             }
         }
     }
@@ -434,13 +454,26 @@ static CGImageRef* CopyIcons(CGImageRef* srcicons, int maxstate)
 
 // -----------------------------------------------------------------------------
 
-static unsigned char** GetIconPixels(CGImageRef* srcicons, int maxstate)
+// eventually won't need this routine if we remove CG stuff!!!???
+
+static unsigned char** GetIconPixels(gBitmapPtr* srcicons, int maxstate)
 {
     unsigned char** iconpixelsptr = (unsigned char**) malloc(256 * sizeof(unsigned char*));
     if (iconpixelsptr) {
         for (int i = 0; i < 256; i++) iconpixelsptr[i] = NULL;
         for (int i = 0; i <= maxstate; i++) {
             if (srcicons && srcicons[i]) {
+#ifdef ANDROID_GUI
+                // allocate enough memory to store icon's RGBA pixel data
+                int wd = srcicons[i]->wd;
+                int ht = srcicons[i]->ht;
+                int iconbytes = wd * ht * 4;
+                iconpixelsptr[i] = (unsigned char*) calloc(iconbytes, 1);
+                if (iconpixelsptr[i] && srcicons[i]->pxldata) {
+                    memcpy(iconpixelsptr[i], srcicons[i]->pxldata, iconbytes);
+                }
+#endif // ANDROID_GUI
+#ifdef IOS_GUI
                 int wd = CGImageGetWidth(srcicons[i]);
                 int ht = CGImageGetHeight(srcicons[i]);
                 int bytesPerPixel = 4;
@@ -459,6 +492,7 @@ static unsigned char** GetIconPixels(CGImageRef* srcicons, int maxstate)
                     CGColorSpaceRelease(colorspace);
                     // iconpixelsptr[i] now points to the icon's pixels in RGBA format
                 }
+#endif // IOS_GUI
             }
         }
     }
@@ -469,12 +503,13 @@ static unsigned char** GetIconPixels(CGImageRef* srcicons, int maxstate)
 
 static void UpdateColorReferences(Layer* layerptr, int numstates)
 {
+#ifdef IOS_GUI
     // release any old color refs
     for (int n = 0; n < 256; n++) {
         CGColorRelease(layerptr->colorref[n]);
         layerptr->colorref[n] = NULL;
     }
-    
+
     CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
     CGFloat components[4];
     components[3] = 1.0;    // alpha
@@ -486,8 +521,9 @@ static void UpdateColorReferences(Layer* layerptr, int numstates)
         components[2] = layerptr->cellb[n] / 255.0;
         layerptr->colorref[n] = CGColorCreate(colorspace, components);
     }
-    
+
     CGColorSpaceRelease(colorspace);
+#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
@@ -495,17 +531,17 @@ static void UpdateColorReferences(Layer* layerptr, int numstates)
 void AddLayer()
 {
     if (numlayers >= MAX_LAYERS) return;
-    
+
     if (generating) Warning("Bug detected in AddLayer!");
-    
+
     if (numlayers == 0) {
         // creating the very first layer
         currindex = 0;
     } else {
         //!!! if (tilelayers && numlayers > 1) DestroyTiles();
-        
+
         SaveLayerSettings();
-        
+
         // insert new layer after currindex
         currindex++;
         if (currindex < numlayers) {
@@ -514,14 +550,14 @@ void AddLayer()
                 layer[i] = layer[i-1];
         }
     }
-    
+
     Layer* oldlayer = NULL;
     if (cloning || duplicating) oldlayer = currlayer;
-    
+
     currlayer = new Layer();
     if (currlayer == NULL) Fatal("Failed to create new layer!");
     layer[currindex] = currlayer;
-    
+
     if (cloning || duplicating) {
         // copy old layer's colors to new layer
         currlayer->fromrgb = oldlayer->fromrgb;
@@ -556,9 +592,9 @@ void AddLayer()
         // set new layer's colors+icons to default colors+icons for current algo+rule
         UpdateLayerColors();
     }
-    
+
     numlayers++;
-    
+
     if (numlayers > 1) {
         //!!! if (tilelayers && numlayers > 1) CreateTiles();
         //!!! CurrentLayerChanged();
@@ -570,9 +606,9 @@ void AddLayer()
 void CloneLayer()
 {
     if (numlayers >= MAX_LAYERS) return;
-    
+
     if (generating) Warning("Bug detected in CloneLayer!");
-    
+
     cloning = true;
     AddLayer();
     cloning = false;
@@ -583,9 +619,9 @@ void CloneLayer()
 void DuplicateLayer()
 {
     if (numlayers >= MAX_LAYERS) return;
-    
+
     if (generating) Warning("Bug detected in DuplicateLayer!");
-    
+
     duplicating = true;
     AddLayer();
     duplicating = false;
@@ -598,21 +634,21 @@ void DuplicateLayer()
 void DeleteLayer()
 {
     if (numlayers <= 1) return;
-    
+
     if (generating) Warning("Bug detected in DeleteLayer!");
-    
+
     // note that we don't need to ask to delete a clone
     if (currlayer->dirty && currlayer->cloneid == 0 &&
         askondelete && !SaveCurrentLayer()) return;
-    
+
     // numlayers > 1
     if (tilelayers) DestroyTiles();
-    
+
     SaveLayerSettings();
-    
+
     delete currlayer;
     numlayers--;
-    
+
     if (currindex < numlayers) {
         // shift left one or more layers
         for (int i = currindex; i < numlayers; i++)
@@ -620,16 +656,16 @@ void DeleteLayer()
     }
     if (currindex > 0) currindex--;
     currlayer = layer[currindex];
-    
+
     // remove toggle button at end of layer bar
     togglebutt[numlayers]->Show(false);
     layerbarptr->ResizeLayerButtons();
-    
+
     // remove item from end of Layer menu
     mainptr->RemoveLayerItem();
-    
+
     if (tilelayers && numlayers > 1) CreateTiles();
-    
+
     CurrentLayerChanged();
 }
 
@@ -639,7 +675,7 @@ void SetLayer(int index)
 {
     if (currindex == index) return;
     if (index < 0 || index >= numlayers) return;
-    
+
     SaveLayerSettings();
     currindex = index;
     currlayer = layer[currindex];
@@ -667,10 +703,10 @@ void SwitchToClickedTile(int index)
         Warning("You cannot switch to another layer while this script is running.");
         return;
     }
-    
+
     // switch current layer to clicked tile
     SetLayer(index);
-    
+
     if (inscript) {
         // update window title, viewport and status bar
         inscript = false;
@@ -687,9 +723,9 @@ void MoveLayer(int fromindex, int toindex)
     if (fromindex == toindex) return;
     if (fromindex < 0 || fromindex >= numlayers) return;
     if (toindex < 0 || toindex >= numlayers) return;
-    
+
     SaveLayerSettings();
-    
+
     if (fromindex > toindex) {
         Layer* savelayer = layer[fromindex];
         for (int i = fromindex; i > toindex; i--) layer[i] = layer[i - 1];
@@ -700,15 +736,15 @@ void MoveLayer(int fromindex, int toindex)
         for (int i = fromindex; i < toindex; i++) layer[i] = layer[i + 1];
         layer[toindex] = savelayer;
     }
-    
+
     currindex = toindex;
     currlayer = layer[currindex];
-    
+
     if (tilelayers && numlayers > 1) {
         DestroyTiles();
         CreateTiles();
     }
-    
+
     CurrentLayerChanged();
 }
 
@@ -717,12 +753,12 @@ void MoveLayer(int fromindex, int toindex)
 void MoveLayerDialog()
 {
     if (numlayers <= 1) return;
-    
+
     wxString msg = _("Move the current layer to a new position:");
     if (currindex > 0) {
         msg += _("\n(enter 0 to make it the first layer)");
     }
-    
+
     int newindex;
     if ( GetInteger(_("Move Layer"), msg,
                     currindex, 0, numlayers - 1, &newindex) ) {
@@ -733,20 +769,20 @@ void MoveLayerDialog()
 // -----------------------------------------------------------------------------
 
 void NameLayerDialog()
-{    
+{
     wxString oldname = currlayer->currname;
     wxString newname;
     if ( GetString(_("Name Layer"), _("Enter a new name for the current layer:"),
                    oldname, newname) &&
         !newname.IsEmpty() && oldname != newname ) {
-        
+
         // inscript is false so no need to call SavePendingChanges
         // if (allowundo) SavePendingChanges();
-        
+
         // show new name in main window's title bar;
         // also sets currlayer->currname and updates menu item
         mainptr->SetPatternTitle(newname);
-        
+
         if (allowundo) {
             // note that currfile and savestart/dirty flags don't change here
             currlayer->undoredo->RememberNameChange(oldname, currlayer->currfile,
@@ -762,7 +798,7 @@ void NameLayerDialog()
 void DeleteOtherLayers()
 {
     if (inscript || numlayers <= 1) return;
-    
+
     /*!!!
     if (askondelete) {
         // keep track of which unique clones have been seen;
@@ -770,7 +806,7 @@ void DeleteOtherLayers()
         const int maxseen = MAX_LAYERS/2 + 1;
         bool cloneseen[maxseen];
         for (int i = 0; i < maxseen; i++) cloneseen[i] = false;
-        
+
         // for each dirty layer, except current layer and all of its clones,
         // ask user if they want to save changes
         int cid = layer[currindex]->cloneid;
@@ -799,12 +835,12 @@ void DeleteOtherLayers()
             }
         }
     }
-    
+
     // numlayers > 1
     if (tilelayers) DestroyTiles();
-    
+
     SyncClones();
-    
+
     // delete all layers except current layer;
     // we need to do this carefully because ~Layer() requires numlayers
     // and the layer array to be correct when deleting a cloned layer
@@ -814,32 +850,32 @@ void DeleteOtherLayers()
         if (i != currindex) {
             delete layer[i];     // ~Layer() is called
             numlayers--;
-            
+
             // may need to shift the current layer left one place
             if (i < numlayers) layer[i] = layer[i+1];
-            
+
             // remove toggle button at end of layer bar
             togglebutt[numlayers]->Show(false);
-            
+
             // remove item from end of Layer menu
             mainptr->RemoveLayerItem();
         }
     }
-    
+
     layerbarptr->ResizeLayerButtons();
-    
+
     currindex = 0;
     // currlayer doesn't change
-    
+
     // update the only layer item
     mainptr->UpdateLayerItem(0);
-    
+
     // update window title (may need to remove "=" prefix)
     mainptr->SetPatternTitle(wxEmptyString);
-    
+
     // select LAYER_0 button (also deselects old button)
     layerbarptr->SelectButton(LAYER_0, true);
-    
+
     mainptr->UpdateMenuItems(mainptr->IsActive());
     mainptr->UpdatePatternAndStatus();
     */
@@ -851,17 +887,17 @@ void MarkLayerDirty()
 {
     // need to save starting pattern
     currlayer->savestart = true;
-    
+
     // if script has reset dirty flag then don't change it; this makes sense
     // for scripts that call new() and then construct a pattern
     if (currlayer->stayclean) return;
-    
+
     if (!currlayer->dirty) {
         currlayer->dirty = true;
-        
+
         // pass in currname so UpdateLayerItem(currindex) gets called
         SetPatternTitle(currlayer->currname.c_str());
-        
+
         if (currlayer->cloneid > 0) {
             // synchronize other clones
             for ( int i = 0; i < numlayers; i++ ) {
@@ -881,13 +917,13 @@ void MarkLayerDirty()
 void MarkLayerClean(const char* title)
 {
     currlayer->dirty = false;
-    
+
     // if script is resetting dirty flag -- eg. via new() -- then don't allow
     // dirty flag to be set true for the remainder of the script; this is
     // nicer for scripts that construct a pattern (ie. running such a script
     // is equivalent to loading a pattern file)
     if (inscript) currlayer->stayclean = true;
-    
+
     if (title[0] == 0) {
         // pass in currname so UpdateLayerItem(currindex) gets called
         SetPatternTitle(currlayer->currname.c_str());
@@ -895,7 +931,7 @@ void MarkLayerClean(const char* title)
         // set currlayer->currname to title and call UpdateLayerItem(currindex)
         SetPatternTitle(title);
     }
-    
+
     if (currlayer->cloneid > 0) {
         // synchronize other clones
         for ( int i = 0; i < numlayers; i++ ) {
@@ -904,10 +940,10 @@ void MarkLayerClean(const char* title)
                 // reset dirty flag
                 cloneptr->dirty = false;
                 if (inscript) cloneptr->stayclean = true;
-                
+
                 // always allow clones to have different names
                 // cloneptr->currname = currlayer->currname;
-                
+
                 // remove asterisk from layer name
                 //!!! UpdateLayerItem(i);
             }
@@ -922,17 +958,17 @@ void MarkLayerClean(const char* title)
 void ToggleSyncViews()
 {
     syncviews = !syncviews;
-    
+
     mainptr->UpdateUserInterface(mainptr->IsActive());
     mainptr->UpdatePatternAndStatus();
 }
- 
+
 // -----------------------------------------------------------------------------
- 
+
 void ToggleSyncModes()
 {
     syncmodes = !syncmodes;
- 
+
     mainptr->UpdateUserInterface(mainptr->IsActive());
     mainptr->UpdatePatternAndStatus();
 }
@@ -948,7 +984,7 @@ void ToggleStackLayers()
         if (numlayers > 1) DestroyTiles();
     }
     layerbarptr->SelectButton(STACK_LAYERS, stacklayers);
-    
+
     mainptr->UpdateUserInterface(mainptr->IsActive());
     if (inscript) {
         // always update viewport and status bar
@@ -970,13 +1006,13 @@ void ToggleTileLayers()
         layerbarptr->SelectButton(STACK_LAYERS, false);
     }
     layerbarptr->SelectButton(TILE_LAYERS, tilelayers);
-    
+
     if (tilelayers) {
         if (numlayers > 1) CreateTiles();
     } else {
         if (numlayers > 1) DestroyTiles();
     }
-    
+
     mainptr->UpdateUserInterface(mainptr->IsActive());
     if (inscript) {
         // always update viewport and status bar
@@ -1026,13 +1062,13 @@ static FILE* FindRuleFile(const std::string& rulename)
 {
     const std::string extn = ".rule";
     std::string path;
-    
+
     // first look for rulename.rule in userrules
     path = userrules + rulename;
     path += extn;
     FILE* f = fopen(path.c_str(), "r");
     if (f) return f;
-    
+
     // now look for rulename.rule in rulesdir
     path = rulesdir + rulename;
     path += extn;
@@ -1068,7 +1104,7 @@ static void ParseColors(linereader& reader, char* linebuf, int MAXLINELEN,
     // parse @COLORS section in currently open .rule file
     int state, r, g, b, r1, g1, b1, r2, g2, b2;
     int maxstate = currlayer->algo->NumCellStates() - 1;
-    
+
     while (reader.fgets(linebuf, MAXLINELEN) != 0) {
         *linenum = *linenum + 1;
         if (linebuf[0] == '#' || linebuf[0] == 0) {
@@ -1110,17 +1146,29 @@ static void DeleteXPMData(char** xpmdata, int numstrings)
 
 // -----------------------------------------------------------------------------
 
-static void FreeIconBitmaps(CGImageRef* icons)
+// export from algos.h eventually!!!???
+
+static void FreeIconBitmaps(gBitmapPtr* icons)
 {
     if (icons) {
-        for (int i = 0; i < 256; i++) CGImageRelease(icons[i]);
+        for (int i = 0; i < 256; i++) {
+#ifdef ANDROID_GUI
+            if (icons[i]) {
+                if (icons[i]->pxldata) free(icons[i]->pxldata);
+                free(icons[i]);
+            }
+#endif
+#ifdef IOS_GUI
+            CGImageRelease(icons[i]);
+#endif
+        }
         free(icons);
     }
 }
 
 // -----------------------------------------------------------------------------
 
-static void CopyBuiltinIcons(CGImageRef* i7x7, CGImageRef* i15x15, CGImageRef* i31x31)
+static void CopyBuiltinIcons(gBitmapPtr* i7x7, gBitmapPtr* i15x15, gBitmapPtr* i31x31)
 {
     int maxstate = currlayer->algo->NumCellStates() - 1;
 
@@ -1138,7 +1186,7 @@ static void CopyBuiltinIcons(CGImageRef* i7x7, CGImageRef* i15x15, CGImageRef* i
 static void CreateIcons(const char** xpmdata, int size)
 {
     int maxstates = currlayer->algo->NumCellStates();
-    
+
     // we only need to call FreeIconBitmaps if .rule file has duplicate XPM data
     // (unlikely but best to play it safe)
     if (size == 7) {
@@ -1164,7 +1212,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
     char** xpmdata = NULL;
     int xpmstarted = 0, xpmstrings = 0, maxstrings = 0;
     int wd = 0, ht = 0, numcolors = 0, chars_per_pixel = 0;
-    
+
     std::map<std::string,int> colormap;
 
     while (true) {
@@ -1215,7 +1263,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                         return;
                     }
                 }
-                
+
                 // copy data inside "..." to next string in xpmdata
                 int len = strlen(linebuf);
                 while (linebuf[len] != '"') len--;
@@ -1277,7 +1325,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                     *eof = true;
                     return;
                 }
-                
+
                 xpmstrings++;
                 if (xpmstrings == maxstrings) {
                     // we've got all the data for this icon size
@@ -1310,7 +1358,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                 msg += rulename;
                 msg += ".rule can only be used with a 4-state rule.";
                 Warning(msg.c_str());
-                // don't return 
+                // don't return
             } else {
                 CopyBuiltinIcons(triangles7x7, triangles15x15, triangles31x31);
             }
@@ -1321,7 +1369,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
         }
         // ignore unexpected syntax (better for upward compatibility)
     }
-    
+
     if (xpmstarted) {
         // XPM data was incomplete
         DeleteXPMData(xpmdata, maxstrings);
@@ -1334,7 +1382,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
         *eof = true;
         return;
     }
-    
+
     // create scaled bitmaps if size(s) not supplied
     if (!currlayer->icons7x7) {
         if (currlayer->icons15x15) {
@@ -1379,7 +1427,7 @@ static void LoadRuleInfo(FILE* rulefile, const std::string& rulename,
 
     // the linereader class handles all line endings (CR, CR+LF, LF)
     linereader reader(rulefile);
-    
+
     while (true) {
         if (skipget) {
             // ParseColors/ParseIcons has stopped at next section
@@ -1405,7 +1453,7 @@ static void LoadRuleInfo(FILE* rulefile, const std::string& rulename,
             skipget = true;
         }
     }
-    
+
     reader.close();     // closes rulefile
 }
 
@@ -1415,21 +1463,18 @@ static void DeleteIcons(Layer* layer)
 {
     // delete given layer's existing icons
     if (layer->icons7x7) {
-        for (int i = 0; i < 256; i++) CGImageRelease(layer->icons7x7[i]);
-        free(layer->icons7x7);
+        FreeIconBitmaps(layer->icons7x7);
         layer->icons7x7 = NULL;
     }
     if (layer->icons15x15) {
-        for (int i = 0; i < 256; i++) CGImageRelease(layer->icons15x15[i]);
-        free(layer->icons15x15);
+        FreeIconBitmaps(layer->icons15x15);
         layer->icons15x15 = NULL;
     }
     if (layer->icons31x31) {
-        for (int i = 0; i < 256; i++) CGImageRelease(layer->icons31x31[i]);
-        free(layer->icons31x31);
+        FreeIconBitmaps(layer->icons31x31);
         layer->icons31x31 = NULL;
     }
-    
+
     // also delete icon pixel data
     if (layer->iconpixels7x7) {
         for (int i = 0; i < 256; i++) if (layer->iconpixels7x7[i]) free(layer->iconpixels7x7[i]);
@@ -1457,7 +1502,7 @@ static bool FindIconFile(const std::string& rule, const std::string& dir, std::s
     path = dir + rule;
     path += extn;
     if (FileExists(path)) return true;
-    
+
     // if rule has the form foo-* then look for foo.icons in dir;
     // this allows related rules to share a single .icons file
     size_t hyphenpos = rule.rfind('-');
@@ -1466,7 +1511,7 @@ static bool FindIconFile(const std::string& rule, const std::string& dir, std::s
         path += extn;
         if (FileExists(path)) return true;
     }
-    
+
     return false;
 }
 
@@ -1531,7 +1576,7 @@ static void SetAverageColor(int state, int numpixels, unsigned char* pxldata)
         }
         byte += 4;
     }
-    
+
     if (nbcount > 0) {
         currlayer->cellr[state] = int(totalr / nbcount);
         currlayer->cellg[state] = int(totalg / nbcount);
@@ -1550,13 +1595,13 @@ static FILE* FindColorFile(const std::string& rule, const std::string& dir)
 {
     const std::string extn = ".colors";
     std::string path;
-    
+
     // first look for rule.colors in given directory
     path = dir + rule;
     path += extn;
     FILE* f = fopen(path.c_str(), "r");
     if (f) return f;
-    
+
     // if rule has the form foo-* then look for foo.colors in dir;
     // this allows related rules to share a single .colors file
     size_t hyphenpos = rule.rfind('-');
@@ -1566,7 +1611,7 @@ static FILE* FindColorFile(const std::string& rule, const std::string& dir)
         f = fopen(path.c_str(), "r");
         if (f) return f;
     }
-    
+
     return NULL;
 }
 
@@ -1632,7 +1677,7 @@ void CreateColorGradient()
     unsigned char r2 = currlayer->torgb.r;
     unsigned char g2 = currlayer->torgb.g;
     unsigned char b2 = currlayer->torgb.b;
-    
+
     // set cell colors for states 1..maxstate using a color gradient
     // starting with r1,g1,b1 and ending with r2,g2,b2
     currlayer->cellr[1] = r1;
@@ -1663,7 +1708,7 @@ void UpdateCurrentColors()
     // set current layer's colors and icons according to current algo and rule
     AlgoData* ad = algoinfo[currlayer->algtype];
     int maxstate = currlayer->algo->NumCellStates() - 1;
-    
+
     // copy default colors from current algo
     currlayer->fromrgb = ad->fromrgb;
     currlayer->torgb = ad->torgb;
@@ -1680,13 +1725,13 @@ void UpdateCurrentColors()
             currlayer->cellb[n] = ad->algob[n];
         }
     }
-    
+
     std::string rulename = currlayer->algo->getrule();
     // replace any '\' and '/' chars with underscores;
     // ie. given 12/34/6 we look for 12_34_6.{colors|icons}
     std::replace(rulename.begin(), rulename.end(), '\\', '_');
     std::replace(rulename.begin(), rulename.end(), '/', '_');
-    
+
     // strip off any suffix like ":T100,200" used to specify a bounded grid
     size_t colonpos = rulename.find(':');
     if (colonpos != std::string::npos) rulename = rulename.substr(0, colonpos);
@@ -1699,12 +1744,12 @@ void UpdateCurrentColors()
 
     bool loadedcolors = false;
     bool loadedicons = false;
-        
+
     // look for rulename.rule first
     FILE* rulefile = FindRuleFile(rulename);
     if (rulefile) {
         LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
-        
+
         if (!loadedcolors || !loadedicons) {
             // if rulename has the form foo-* then look for foo-shared.rule
             // and load its colors and/or icons
@@ -1715,14 +1760,14 @@ void UpdateCurrentColors()
                 if (rulefile) LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
             }
         }
-        
+
         if (!loadedicons) UseDefaultIcons(maxstate);
 
         // get icon pixel data (used for rendering)
         currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
         currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
         currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
-        
+
         // use the smallest icons to check if they are multi-color
         if (currlayer->icons7x7) {
             for (int n = 1; n <= maxstate; n++) {
@@ -1732,10 +1777,10 @@ void UpdateCurrentColors()
                 }
             }
         }
-        
+
         // if the icons are multi-color then we don't call SetAverageColor as we do below
         // (better if the .rule file sets the appropriate non-icon colors)
-        
+
     } else {
         // no rulename.rule so look for deprecated rulename.colors and/or rulename.icons
         loadedcolors = LoadRuleColors(rulename, maxstate);
@@ -1746,7 +1791,7 @@ void UpdateCurrentColors()
         currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
         currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
         currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
-        
+
         // if rulename.colors file wasn't loaded and icons are multi-color then we
         // set non-icon colors to the average of the non-black pixels in each icon
         // (note that we use the 7x7 icons because they are faster to scan)
@@ -1767,7 +1812,7 @@ void UpdateCurrentColors()
             }
         }
     }
-    
+
     if (swapcolors) {
         // invert cell colors in current layer
         for (int n = 0; n <= maxstate; n++) {
@@ -1776,7 +1821,7 @@ void UpdateCurrentColors()
             currlayer->cellb[n] = 255 - currlayer->cellb[n];
         }
     }
-    
+
     UpdateColorReferences(currlayer, currlayer->algo->NumCellStates());
 }
 
@@ -1785,7 +1830,7 @@ void UpdateCurrentColors()
 void UpdateLayerColors()
 {
     UpdateCurrentColors();
-    
+
     // if current layer has clones then update their colors
     //!!! UpdateCloneColors();
 }
@@ -1844,7 +1889,7 @@ Layer::Layer()
         // use a unique temporary file for saving starting patterns
         tempstart = CreateTempFileName("golly_start_");
     }
-    
+
     dirty = false;                // user has not modified pattern
     savedirty = false;            // in case script created layer
     stayclean = inscript;         // if true then keep the dirty flag false
@@ -1856,7 +1901,7 @@ Layer::Layer()
     currfile.clear();             // no pattern file has been loaded
     originx = 0;                  // no X origin offset
     originy = 0;                  // no Y origin offset
-    
+
     icons7x7 = NULL;              // no 7x7 icons
     icons15x15 = NULL;            // no 15x15 icons
     icons31x31 = NULL;            // no 31x31 icons
@@ -1864,72 +1909,74 @@ Layer::Layer()
     iconpixels7x7 = NULL;         // no pixel data for 7x7 icons
     iconpixels15x15 = NULL;       // no pixel data for 15x15 icons
     iconpixels31x31 = NULL;       // no pixel data for 31x31 icons
-    
+
+#ifdef IOS_GUI
     // init color references
     for (int n = 0; n < 256; n++) {
         colorref[n] = NULL;
     }
-    
+#endif
+
     currframe = 0;                // first frame in timeline
     autoplay = 0;                 // not playing
     tlspeed = 0;                  // default speed for autoplay
     lastframe = 0;                // no frame displayed
-        
+
     // create viewport; the initial size is not important because it will soon change
     view = new viewport(100,100);
     if (view == NULL) Fatal("Failed to create viewport!");
-    
+
     if (numlayers == 0) {
         // creating very first layer (can't be a clone)
         cloneid = 0;
-        
+
         // initialize cloneavail array (cloneavail[0] is never used)
         cloneavail[0] = false;
         for (int i = 1; i < MAX_LAYERS; i++) cloneavail[i] = true;
-        
+
         // set some options using initial values stored in prefs file
         algtype = initalgo;
         hyperspeed = inithyperspeed;
         showhashinfo = initshowhashinfo;
         autofit = initautofit;
-        
+
         // initial base step and exponent
         currbase = algoinfo[algtype]->defbase;
         currexpo = 0;
-        
+
         // create empty universe
         algo = CreateNewUniverse(algtype);
-        
+
         // set rule using initrule stored in prefs file
         const char* err = algo->setrule(initrule);
         if (err) {
             // user might have edited rule in prefs file, or deleted table/tree file
             algo->setrule( algo->DefaultRule() );
         }
-        
+
         // don't need to remember rule here (SaveLayerSettings will do it)
         rule.clear();
-        
+
         // initialize undo/redo history
         undoredo = new UndoRedo();
         if (undoredo == NULL) Fatal("Failed to create new undo/redo object!");
-        
+
         touchmode = drawmode;
         drawingstate = 1;
-        
+
     } else {
         // adding a new layer after currlayer (see AddLayer)
-        
+
         // inherit current universe type and other settings
         algtype = currlayer->algtype;
         hyperspeed = currlayer->hyperspeed;
         showhashinfo = currlayer->showhashinfo;
         autofit = currlayer->autofit;
-        
+
         // initial base step and exponent
         currbase = algoinfo[algtype]->defbase;
         currexpo = 0;
-        
+
         if (cloning) {
             if (currlayer->cloneid == 0) {
                 // first time this universe is being cloned so need a unique cloneid
@@ -1941,51 +1988,51 @@ Layer::Layer()
                 cloneid = currlayer->cloneid;
                 numclones++;
             }
-            
+
             // clones share the same universe and undo/redo history
             algo = currlayer->algo;
             undoredo = currlayer->undoredo;
-            
+
             // clones also share the same timeline
             currframe = currlayer->currframe;
             autoplay = currlayer->autoplay;
             tlspeed = currlayer->tlspeed;
             lastframe = currlayer->lastframe;
-            
+
             // clones use same name for starting file
             tempstart = currlayer->tempstart;
-            
+
         } else {
             // this layer isn't a clone
             cloneid = 0;
-            
+
             // create empty universe
             algo = CreateNewUniverse(algtype);
-            
+
             // use current rule
             const char* err = algo->setrule(currlayer->algo->getrule());
             if (err) {
                 // table/tree file might have been deleted
                 algo->setrule( algo->DefaultRule() );
             }
-            
+
             // initialize undo/redo history
             undoredo = new UndoRedo();
             if (undoredo == NULL) Fatal("Failed to create new undo/redo object!");
         }
-        
+
         // inherit current rule
         rule = currlayer->algo->getrule();
-        
+
         // inherit current viewport's size, scale and location
         view->resize( currlayer->view->getwidth(), currlayer->view->getheight() );
         view->setpositionmag( currlayer->view->x, currlayer->view->y,
                              currlayer->view->getmag() );
-        
+
         // inherit current touch mode and drawing state
         touchmode = currlayer->touchmode;
         drawingstate = currlayer->drawingstate;
-        
+
         if (cloning || duplicating) {
             // duplicate all the other current settings
             currname = currlayer->currname;
@@ -1999,11 +2046,11 @@ Layer::Layer()
             showhashinfo = currlayer->showhashinfo;
             originx = currlayer->originx;
             originy = currlayer->originy;
-            
+
             // duplicate selection info
             currsel = currlayer->currsel;
             savesel = currlayer->savesel;
-            
+
             // duplicate the stuff needed to reset pattern
             savestart = currlayer->savestart;
             startalgo = currlayer->startalgo;
@@ -2020,11 +2067,11 @@ Layer::Layer()
             currfile = currlayer->currfile;
             startsel = currlayer->startsel;
         }
-        
+
         if (duplicating) {
             // first set same gen count
             algo->setGeneration( currlayer->algo->getGeneration() );
-            
+
             // duplicate pattern
             if ( !currlayer->algo->isEmpty() ) {
                 bigint top, left, bottom, right;
@@ -2036,14 +2083,14 @@ Layer::Layer()
                              currlayer->algo, algo, false, "Duplicating layer");
                 }
             }
-            
+
             // tempstart file must remain unique in duplicate layer
             if ( FileExists(currlayer->tempstart) ) {
                 if ( !CopyFile(currlayer->tempstart, tempstart) ) {
                     Warning("Could not copy tempstart file!");
                 }
             }
-            
+
             if (currlayer->startfile == currlayer->tempstart) {
                 startfile = tempstart;
             }
@@ -2051,7 +2098,7 @@ Layer::Layer()
                 // starting pattern came from clipboard or lexicon pattern
                 currfile = tempstart;
             }
-            
+
             if (allowundo) {
                 // duplicate current undo/redo history in new layer
                 undoredo->DuplicateHistory(currlayer, this);
@@ -2066,16 +2113,16 @@ Layer::~Layer()
 {
     // delete stuff allocated in ctor
     delete view;
-    
+
     if (cloneid > 0) {
         // this layer is a clone, so count how many layers have the same cloneid
         int clonecount = 0;
         for (int i = 0; i < numlayers; i++) {
             if (layer[i]->cloneid == cloneid) clonecount++;
-            
+
             // tell undo/redo which clone is being deleted
             if (this == layer[i]) undoredo->DeletingClone(i);
-        }     
+        }
         if (clonecount > 2) {
             // only delete this clone
             numclones--;
@@ -2090,17 +2137,19 @@ Layer::~Layer()
             }
             numclones -= 2;
         }
-        
+
     } else {
         // this layer is not a clone, so delete universe and undo/redo history
         delete algo;
         delete undoredo;
-        
+
         // delete tempstart file if it exists
         if (FileExists(tempstart)) RemoveFile(tempstart);
 
+#ifdef IOS_GUI
         // release color references
         for (int i = 0; i < 256; i++) CGColorRelease(colorref[i]);
+#endif
 
         // delete any icons
         DeleteIcons(this);
