@@ -29,10 +29,10 @@
 #ifdef IOS_GUI
     // for opening zip files and extracting files within them
     // (much thanks to the http://code.google.com/p/objective-zip/ project)
-    #import "Objective-Zip/ZipFile.h"
-    #import "Objective-Zip/ZipException.h"
-    #import "Objective-Zip/FileInZipInfo.h"
-    #import "Objective-Zip/ZipReadStream.h"
+    #import "ZipFile.h"
+    #import "ZipException.h"
+    #import "FileInZipInfo.h"
+    #import "ZipReadStream.h"
 
     #import "GollyAppDelegate.h"        // for SwitchToPatternTab
     #import "HelpViewController.h"      // for ShowHelp
