@@ -1,25 +1,25 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
 #include "bigint.h"
@@ -42,7 +42,13 @@
 #include <stdexcept>        // for std::runtime_error and std::exception
 #include <sstream>          // for std::ostringstream
 
-#import "PatternViewController.h"   // for UpdateStatus, BeginProgress, etc
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"		// for UpdateStatus, BeginProgress, etc
+#endif
+
+#ifdef IOS_GUI
+    #import "PatternViewController.h"   // for UpdateStatus, BeginProgress, etc
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -67,7 +73,7 @@ bool SaveStartingPattern()
         // don't do anything if current gen count > starting gen
         return true;
     }
-    
+
     // save current rule, dirty flag, scale, location, etc
     currlayer->startname = currlayer->currname;
     currlayer->startrule = currlayer->algo->getrule();
@@ -78,7 +84,7 @@ bool SaveStartingPattern()
     currlayer->startbase = currlayer->currbase;
     currlayer->startexpo = currlayer->currexpo;
     currlayer->startalgo = currlayer->algtype;
-    
+
     // if this layer is a clone then save some settings in other clones
     if (currlayer->cloneid > 0) {
         for ( int i = 0; i < numlayers; i++ ) {
@@ -93,16 +99,16 @@ bool SaveStartingPattern()
             }
         }
     }
-    
+
     // save current selection
     currlayer->startsel = currlayer->currsel;
-    
+
     if ( !currlayer->savestart ) {
         // no need to save pattern; ResetPattern will load currfile
         currlayer->startfile.clear();
         return true;
     }
-    
+
     // save starting pattern in tempstart file
     if ( currlayer->algo->hyperCapable() ) {
         // much faster to save pattern in a macrocell file
@@ -125,7 +131,7 @@ bool SaveStartingPattern()
         int itop = top.toint();
         int ileft = left.toint();
         int ibottom = bottom.toint();
-        int iright = right.toint();      
+        int iright = right.toint();
         // use XRLE format so the pattern's top left location and the current
         // generation count are stored in the file
         const char* err = WritePattern(currlayer->tempstart.c_str(), XRLE_format, no_compression,
@@ -136,7 +142,7 @@ bool SaveStartingPattern()
             return false;
         }
     }
-    
+
     currlayer->startfile = currlayer->tempstart;   // ResetPattern will load tempstart
     return true;
 }
@@ -189,27 +195,27 @@ void SetMinimumStepExponent()
 void ResetPattern(bool resetundo)
 {
     if (currlayer->algo->getGeneration() == currlayer->startgen) return;
-    
+
     if (currlayer->algo->getGeneration() < currlayer->startgen) {
         // if this happens then startgen logic is wrong
         Warning("Current gen < starting gen!");
         return;
     }
-    
+
     if (currlayer->startfile.length() == 0 && currlayer->currfile.length() == 0) {
         // if this happens then savestart logic is wrong
         Warning("Starting pattern cannot be restored!");
         return;
     }
-    
+
     // save current algo and rule
     algo_type oldalgo = currlayer->algtype;
     std::string oldrule = currlayer->algo->getrule();
-    
+
     // restore pattern and settings saved by SaveStartingPattern;
     // first restore algorithm
     currlayer->algtype = currlayer->startalgo;
-    
+
     // restore starting pattern
     if ( currlayer->startfile.length() == 0 ) {
         // restore pattern from currfile
@@ -218,7 +224,7 @@ void ResetPattern(bool resetundo)
         // restore pattern from startfile
         LoadPattern(currlayer->startfile.c_str(), "");
     }
-    
+
     if (currlayer->algo->getGeneration() != currlayer->startgen) {
         // LoadPattern failed to reset the gen count to startgen
         // (probably because the user deleted the starting pattern)
@@ -226,10 +232,10 @@ void ResetPattern(bool resetundo)
         CreateUniverse();
         currlayer->algo->setGeneration(currlayer->startgen);
     }
-    
+
     // ensure savestart flag is correct
     currlayer->savestart = currlayer->startfile.length() != 0;
-    
+
     // restore settings saved by SaveStartingPattern
     RestoreRule(currlayer->startrule.c_str());
     currlayer->currname = currlayer->startname;
@@ -237,12 +243,12 @@ void ResetPattern(bool resetundo)
     if (restoreview) {
         currlayer->view->setpositionmag(currlayer->startx, currlayer->starty, currlayer->startmag);
     }
-    
+
     // restore step size and set increment
     currlayer->currbase = currlayer->startbase;
     currlayer->currexpo = currlayer->startexpo;
     SetGenIncrement();
-    
+
     // if this layer is a clone then restore some settings in other clones
     if (currlayer->cloneid > 0) {
         for ( int i = 0; i < numlayers; i++ ) {
@@ -261,19 +267,19 @@ void ResetPattern(bool resetundo)
             }
         }
     }
-    
+
     // restore selection
     currlayer->currsel = currlayer->startsel;
-    
+
     // switch to default colors if algo/rule changed
     std::string newrule = currlayer->algo->getrule();
     if (oldalgo != currlayer->algtype || oldrule != newrule) {
         UpdateLayerColors();
     }
-    
+
     // update window title in case currname, rule or dirty flag changed
     //!!! SetWindowTitle(currlayer->currname);
-    
+
     if (allowundo) {
         if (resetundo) {
             // wind back the undo history to the starting pattern
@@ -294,22 +300,22 @@ void RestorePattern(bigint& gen, const char* filename,
     } else {
         // restore pattern in given filename
         LoadPattern(filename, "");
-        
+
         if (currlayer->algo->getGeneration() != gen) {
             // filename could not be loaded for some reason,
             // so best to clear the pattern and set the expected gen count
             CreateUniverse();
             currlayer->algo->setGeneration(gen);
         }
-        
+
         // restore step size and set increment
         currlayer->currbase = base;
         currlayer->currexpo = expo;
         SetGenIncrement();
-        
+
         // restore position and scale, if allowed
         if (restoreview) currlayer->view->setpositionmag(x, y, mag);
-        
+
         UpdatePatternAndStatus();
     }
 }
@@ -323,10 +329,10 @@ const char* ChangeGenCount(const char* genstring, bool inundoredo)
         if ( (genstring[i] >= 'a' && genstring[i] <= 'z') ||
              (genstring[i] >= 'A' && genstring[i] <= 'Z') )
             return "Alphabetic character is not allowed in generation string.";
-    
+
     bigint oldgen = currlayer->algo->getGeneration();
     bigint newgen(genstring);
-    
+
     if (genstring[0] == '+' || genstring[0] == '-') {
         // leading +/- sign so make newgen relative to oldgen
         bigint relgen = newgen;
@@ -334,18 +340,18 @@ const char* ChangeGenCount(const char* genstring, bool inundoredo)
         newgen += relgen;
         if (newgen < bigint::zero) newgen = bigint::zero;
     }
-    
+
     // set stop_after_script BEFORE testing newgen == oldgen so scripts
     // can call setgen("+0") to prevent further generating
     //!!! if (inscript) stop_after_script = true;
-    
+
     if (newgen == oldgen) return NULL;
-    
+
     if (!inundoredo && allowundo && !currlayer->stayclean && inscript) {
         // script called setgen()
         //!!! SavePendingChanges();
     }
-    
+
     // need IsParityShifted() method???
     if (currlayer->algtype == QLIFE_ALGO && newgen.odd() != oldgen.odd()) {
         // qlife stores pattern in different bits depending on gen parity,
@@ -377,23 +383,23 @@ const char* ChangeGenCount(const char* genstring, bool inundoredo)
     } else {
         currlayer->algo->setGeneration(newgen);
     }
-    
+
     if (!inundoredo) {
         // save some settings for RememberSetGen below
         bigint oldstartgen = currlayer->startgen;
         bool oldsave = currlayer->savestart;
-        
+
         // may need to change startgen and savestart
         if (oldgen == currlayer->startgen || newgen <= currlayer->startgen) {
             currlayer->startgen = newgen;
             currlayer->savestart = true;
         }
-        
+
         if (allowundo && !currlayer->stayclean) {
             currlayer->undoredo->RememberSetGen(oldgen, newgen, oldstartgen, oldsave);
         }
     }
-    
+
     UpdateStatus();
     return NULL;
 }
@@ -407,13 +413,13 @@ static void JoinTwistedEdges(lifealgo* curralgo)
     int gt = curralgo->gridtop.toint();
     int gr = curralgo->gridright.toint();
     int gb = curralgo->gridbottom.toint();
-    
+
     // border edges are 1 cell outside grid edges
     int bl = gl - 1;
     int bt = gt - 1;
     int br = gr + 1;
     int bb = gb + 1;
-    
+
     if (curralgo->htwist && curralgo->vtwist) {
         // cross-surface
         //  eg. :C4,3
@@ -422,7 +428,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
         //  h E F G H e
         //  d I J K L a
         //  i d c b a l
-        
+
         for (int x = gl; x <= gr; x++) {
             int twistedx = gr - x + gl;
             int state = curralgo->getcell(twistedx, gt);
@@ -430,7 +436,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
             state = curralgo->getcell(twistedx, gb);
             if (state > 0) curralgo->setcell(x, bt, state);
         }
-        
+
         for (int y = gt; y <= gb; y++) {
             int twistedy = gb - y + gt;
             int state = curralgo->getcell(gl, twistedy);
@@ -438,14 +444,14 @@ static void JoinTwistedEdges(lifealgo* curralgo)
             state = curralgo->getcell(gr, twistedy);
             if (state > 0) curralgo->setcell(bl, y, state);
         }
-        
+
         // copy grid's corner cells to SAME corners in border
         // (these cells are topologically different to non-corner cells)
         curralgo->setcell(bl, bt, curralgo->getcell(gl, gt));
         curralgo->setcell(br, bt, curralgo->getcell(gr, gt));
         curralgo->setcell(br, bb, curralgo->getcell(gr, gb));
         curralgo->setcell(bl, bb, curralgo->getcell(gl, gb));
-        
+
     } else if (curralgo->htwist) {
         // Klein bottle with top and bottom edges twisted 180 degrees
         //  eg. :K4*,3
@@ -454,7 +460,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
         //  h E F G H e
         //  l I J K L i
         //  a d c b a d
-        
+
         for (int x = gl; x <= gr; x++) {
             int twistedx = gr - x + gl;
             int state = curralgo->getcell(twistedx, gt);
@@ -462,7 +468,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
             state = curralgo->getcell(twistedx, gb);
             if (state > 0) curralgo->setcell(x, bt, state);
         }
-        
+
         for (int y = gt; y <= gb; y++) {
             // join left and right edges with no twist
             int state = curralgo->getcell(gl, y);
@@ -470,13 +476,13 @@ static void JoinTwistedEdges(lifealgo* curralgo)
             state = curralgo->getcell(gr, y);
             if (state > 0) curralgo->setcell(bl, y, state);
         }
-        
+
         // do corner cells
         curralgo->setcell(bl, bt, curralgo->getcell(gl, gb));
         curralgo->setcell(br, bt, curralgo->getcell(gr, gb));
         curralgo->setcell(bl, bb, curralgo->getcell(gl, gt));
         curralgo->setcell(br, bb, curralgo->getcell(gr, gt));
-        
+
     } else { // curralgo->vtwist
         // Klein bottle with left and right edges twisted 180 degrees
         //  eg. :K4,3*
@@ -485,7 +491,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
         //  h E F G H e
         //  d I J K L a
         //  l a b c d i
-        
+
         for (int x = gl; x <= gr; x++) {
             // join top and bottom edges with no twist
             int state = curralgo->getcell(x, gt);
@@ -493,7 +499,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
             state = curralgo->getcell(x, gb);
             if (state > 0) curralgo->setcell(x, bt, state);
         }
-        
+
         for (int y = gt; y <= gb; y++) {
             int twistedy = gb - y + gt;
             int state = curralgo->getcell(gl, twistedy);
@@ -501,7 +507,7 @@ static void JoinTwistedEdges(lifealgo* curralgo)
             state = curralgo->getcell(gr, twistedy);
             if (state > 0) curralgo->setcell(bl, y, state);
         }
-        
+
         // do corner cells
         curralgo->setcell(bl, bt, curralgo->getcell(gr, gt));
         curralgo->setcell(br, bt, curralgo->getcell(gl, gt));
@@ -519,13 +525,13 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo)
     int gt = curralgo->gridtop.toint();
     int gr = curralgo->gridright.toint();
     int gb = curralgo->gridbottom.toint();
-    
+
     // border edges are 1 cell outside grid edges
     int bl = gl - 1;
     int bt = gt - 1;
     int br = gr + 1;
     int bb = gb + 1;
-    
+
     if (curralgo->hshift != 0) {
         // Klein bottle with shift by 1 on twisted horizontal edge (with even number of cells)
         //  eg. :K4*+1,3
@@ -534,20 +540,20 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo)
         //  h E F G H e
         //  l I J K L i
         //  b a d c b a
-        
+
         int state, twistedx, shiftedx;
-        
+
         for (int x = gl; x <= gr; x++) {
             // join top and bottom edges with a twist and then shift by 1
             twistedx = gr - x + gl;
             shiftedx = twistedx - 1; if (shiftedx < gl) shiftedx = gr;
             state = curralgo->getcell(shiftedx, gb);
             if (state > 0) curralgo->setcell(x, bt, state);
-            
+
             state = curralgo->getcell(shiftedx, gt);
             if (state > 0) curralgo->setcell(x, bb, state);
         }
-        
+
         for (int y = gt; y <= gb; y++) {
             // join left and right edges with no twist or shift
             state = curralgo->getcell(gl, y);
@@ -555,7 +561,7 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo)
             state = curralgo->getcell(gr, y);
             if (state > 0) curralgo->setcell(bl, y, state);
         }
-        
+
         // do corner cells
         shiftedx = gl - 1; if (shiftedx < gl) shiftedx = gr;
         curralgo->setcell(bl, bt, curralgo->getcell(shiftedx, gb));
@@ -563,7 +569,7 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo)
         shiftedx = gr - 1; if (shiftedx < gl) shiftedx = gr;
         curralgo->setcell(br, bt, curralgo->getcell(shiftedx, gb));
         curralgo->setcell(br, bb, curralgo->getcell(shiftedx, gt));
-        
+
     } else { // curralgo->vshift != 0
         // Klein bottle with shift by 1 on twisted vertical edge (with even number of cells)
         //  eg. :K3,4*+1
@@ -573,9 +579,9 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo)
         //  i G H I g
         //  f J K L d
         //  c a b c a
-        
+
         int state, twistedy, shiftedy;
-        
+
         for (int x = gl; x <= gr; x++) {
             // join top and bottom edges with no twist or shift
             state = curralgo->getcell(x, gt);
@@ -583,18 +589,18 @@ static void JoinTwistedAndShiftedEdges(lifealgo* curralgo)
             state = curralgo->getcell(x, gb);
             if (state > 0) curralgo->setcell(x, bt, state);
         }
-        
+
         for (int y = gt; y <= gb; y++) {
             // join left and right edges with a twist and then shift by 1
             twistedy = gb - y + gt;
             shiftedy = twistedy - 1; if (shiftedy < gt) shiftedy = gb;
             state = curralgo->getcell(gr, shiftedy);
             if (state > 0) curralgo->setcell(bl, y, state);
-            
+
             state = curralgo->getcell(gl, shiftedy);
             if (state > 0) curralgo->setcell(br, y, state);
         }
-        
+
         // do corner cells
         shiftedy = gt - 1; if (shiftedy < gt) shiftedy = gb;
         curralgo->setcell(bl, bt, curralgo->getcell(gr, shiftedy));
@@ -616,13 +622,13 @@ static void JoinShiftedEdges(lifealgo* curralgo,
     int gt = curralgo->gridtop.toint();
     int gr = curralgo->gridright.toint();
     int gb = curralgo->gridbottom.toint();
-    
+
     // border edges are 1 cell outside grid edges
     int bl = gl - 1;
     int bt = gt - 1;
     int br = gr + 1;
     int bb = gb + 1;
-    
+
     if (hshift != 0) {
         // torus with horizontal shift
         //  eg. :T4+1,3
@@ -631,31 +637,31 @@ static void JoinShiftedEdges(lifealgo* curralgo,
         //  h E F G H e
         //  l I J K L i
         //  a b c d a b
-        
+
         int state, shiftedx;
-        
+
         for (int x = gl; x <= gr; x++) {
             // join top and bottom edges with a horizontal shift
             shiftedx = x - hshift;
             if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
             state = curralgo->getcell(shiftedx, gb);
             if (state > 0) curralgo->setcell(x, bt, state);
-            
+
             shiftedx = x + hshift;
             if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
             state = curralgo->getcell(shiftedx, gt);
             if (state > 0) curralgo->setcell(x, bb, state);
         }
-        
+
         for (int y = gt; y <= gb; y++) {
             // join left and right edges with no shift
             state = curralgo->getcell(gl, y);
             if (state > 0) curralgo->setcell(br, y, state);
-            
+
             state = curralgo->getcell(gr, y);
             if (state > 0) curralgo->setcell(bl, y, state);
         }
-        
+
         // do corner cells
         shiftedx = gr - hshift;
         if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
@@ -669,7 +675,7 @@ static void JoinShiftedEdges(lifealgo* curralgo,
         shiftedx = gl + hshift;
         if (shiftedx < gl) shiftedx += gwd; else if (shiftedx > gr) shiftedx -= gwd;
         curralgo->setcell(br, bb, curralgo->getcell(shiftedx, gt));
-        
+
     } else { // vshift != 0
         // torus with vertical shift
         //  eg. :T4,3+1
@@ -678,31 +684,31 @@ static void JoinShiftedEdges(lifealgo* curralgo,
         //  d E F G H i
         //  h I J K L a
         //  l a b c d e
-        
+
         int state, shiftedy;
-        
+
         for (int x = gl; x <= gr; x++) {
             // join top and bottom edges with no shift
             state = curralgo->getcell(x, gt);
             if (state > 0) curralgo->setcell(x, bb, state);
-            
+
             state = curralgo->getcell(x, gb);
             if (state > 0) curralgo->setcell(x, bt, state);
         }
-        
+
         for (int y = gt; y <= gb; y++) {
             // join left and right edges with a vertical shift
             shiftedy = y - vshift;
             if (shiftedy < gt) shiftedy += ght; else if (shiftedy > gb) shiftedy -= ght;
             state = curralgo->getcell(gr, shiftedy);
             if (state > 0) curralgo->setcell(bl, y, state);
-            
+
             shiftedy = y + vshift;
             if (shiftedy < gt) shiftedy += ght; else if (shiftedy > gb) shiftedy -= ght;
             state = curralgo->getcell(gl, shiftedy);
             if (state > 0) curralgo->setcell(br, y, state);
         }
-        
+
         // do corner cells
         shiftedy = gb - vshift;
         if (shiftedy < gt) shiftedy += ght; else if (shiftedy > gb) shiftedy -= ght;
@@ -729,13 +735,13 @@ static void JoinAdjacentEdges(lifealgo* curralgo,
     int gt = curralgo->gridtop.toint();
     int gr = curralgo->gridright.toint();
     int gb = curralgo->gridbottom.toint();
-    
+
     // border edges are 1 cell outside grid edges
     int bl = gl - 1;
     int bt = gt - 1;
     int br = gr + 1;
     int bb = gb + 1;
-    
+
     // sphere
     //  eg. :S3
     //  a a d g c
@@ -743,7 +749,7 @@ static void JoinAdjacentEdges(lifealgo* curralgo,
     //  b D E F h
     //  c G H I i
     //  g c f i i
-    
+
     // copy live cells in top edge to left border
     for (int x = pl; x <= pr; x++) {
         int state;
@@ -752,14 +758,14 @@ static void JoinAdjacentEdges(lifealgo* curralgo,
         x += skip;
         if (state > 0) curralgo->setcell(bl, gt + (x - gl), state);
     }
-    
+
     // copy live cells in left edge to top border
     for (int y = pt; y <= pb; y++) {
         // no point using nextcell() here -- edge is only 1 cell wide
         int state = curralgo->getcell(gl, y);
         if (state > 0) curralgo->setcell(gl + (y - gt), bt, state);
     }
-    
+
     // copy live cells in bottom edge to right border
     for (int x = pl; x <= pr; x++) {
         int state;
@@ -768,14 +774,14 @@ static void JoinAdjacentEdges(lifealgo* curralgo,
         x += skip;
         if (state > 0) curralgo->setcell(br, gt + (x - gl), state);
     }
-    
+
     // copy live cells in right edge to bottom border
     for (int y = pt; y <= pb; y++) {
         // no point using nextcell() here -- edge is only 1 cell wide
         int state = curralgo->getcell(gr, y);
         if (state > 0) curralgo->setcell(gl + (y - gt), bb, state);
     }
-    
+
     // copy grid's corner cells to SAME corners in border
     curralgo->setcell(bl, bt, curralgo->getcell(gl, gt));
     curralgo->setcell(br, bt, curralgo->getcell(gr, gt));
@@ -794,13 +800,13 @@ static void JoinEdges(lifealgo* curralgo,
     int gt = curralgo->gridtop.toint();
     int gr = curralgo->gridright.toint();
     int gb = curralgo->gridbottom.toint();
-    
+
     // border edges are 1 cell outside grid edges
     int bl = gl - 1;
     int bt = gt - 1;
     int br = gr + 1;
     int bb = gb + 1;
-    
+
     if (ght > 0) {
         // copy live cells in top edge to bottom border
         for (int x = pl; x <= pr; x++) {
@@ -819,7 +825,7 @@ static void JoinEdges(lifealgo* curralgo,
             if (state > 0) curralgo->setcell(x, bt, state);
         }
     }
-    
+
     if (gwd > 0) {
         // copy live cells in left edge to right border
         for (int y = pt; y <= pb; y++) {
@@ -834,7 +840,7 @@ static void JoinEdges(lifealgo* curralgo,
             if (state > 0) curralgo->setcell(bl, y, state);
         }
     }
-    
+
     if (gwd > 0 && ght > 0) {
         // copy grid's corner cells to opposite corners in border
         curralgo->setcell(bl, bt, curralgo->getcell(gr, gb));
@@ -850,35 +856,35 @@ bool CreateBorderCells(lifealgo* curralgo)
 {
     // no need to do anything if there is no pattern or if the grid is a bounded plane
     if (curralgo->isEmpty() || curralgo->boundedplane) return true;
-    
+
     int gwd = curralgo->gridwd;
     int ght = curralgo->gridht;
-    
+
     bigint top, left, bottom, right;
     curralgo->findedges(&top, &left, &bottom, &right);
-    
+
     // no need to do anything if pattern is completely inside grid edges
     if ( (gwd == 0 || (curralgo->gridleft < left && curralgo->gridright > right)) &&
         (ght == 0 || (curralgo->gridtop < top && curralgo->gridbottom > bottom)) ) {
         return true;
     }
-    
+
     // if grid has infinite width or height then pattern might be too big to use setcell/getcell
     if ( (gwd == 0 || ght == 0) && OutsideLimits(top, left, bottom, right) ) {
         ErrorMessage("Pattern is too big!");
         // return false so caller can exit step() loop
         return false;
     }
-    
+
     if (curralgo->sphere) {
         // to get a sphere we join top edge with left edge, and right edge with bottom edge;
         // note that grid must be square (gwd == ght)
         int pl = left.toint();
         int pt = top.toint();
-        int pr = right.toint();      
+        int pr = right.toint();
         int pb = bottom.toint();
         JoinAdjacentEdges(curralgo, pt, pl, pb, pr);
-        
+
     } else if (curralgo->htwist || curralgo->vtwist) {
         // Klein bottle or cross-surface
         if ( (curralgo->htwist && curralgo->hshift != 0 && (gwd & 1) == 0) ||
@@ -889,20 +895,20 @@ bool CreateBorderCells(lifealgo* curralgo)
         } else {
             JoinTwistedEdges(curralgo);
         }
-        
+
     } else if (curralgo->hshift != 0 || curralgo->vshift != 0) {
         // torus with horizontal or vertical shift
         JoinShiftedEdges(curralgo, gwd, ght, curralgo->hshift, curralgo->vshift);
-        
+
     } else {
         // unshifted torus or infinite tube
         int pl = left.toint();
         int pt = top.toint();
-        int pr = right.toint();      
+        int pr = right.toint();
         int pb = bottom.toint();
         JoinEdges(curralgo, gwd, ght, pt, pl, pb, pr);
     }
-    
+
     curralgo->endofpattern();
     return true;
 }
@@ -934,61 +940,61 @@ bool DeleteBorderCells(lifealgo* curralgo)
 {
     // no need to do anything if there is no pattern
     if (curralgo->isEmpty()) return true;
-    
+
     int gwd = curralgo->gridwd;
     int ght = curralgo->gridht;
-    
+
     // need to find pattern edges because pattern may have expanded beyond grid
     // (typically by 2 cells, but could be more if rule allows births in empty space)
     bigint top, left, bottom, right;
     curralgo->findedges(&top, &left, &bottom, &right);
-    
+
     // no need to do anything if grid encloses entire pattern
     if ( (gwd == 0 || (curralgo->gridleft <= left && curralgo->gridright >= right)) &&
         (ght == 0 || (curralgo->gridtop <= top && curralgo->gridbottom >= bottom)) ) {
         return true;
     }
-    
+
     if ( OutsideLimits(top, left, bottom, right) ) {
         ErrorMessage("Pattern is too big!");
         // return false so caller can exit step() loop
         return false;
     }
-    
+
     // set pattern edges
     int pl = left.toint();
     int pt = top.toint();
-    int pr = right.toint();      
+    int pr = right.toint();
     int pb = bottom.toint();
-    
+
     // set grid edges
     int gl = curralgo->gridleft.toint();
     int gt = curralgo->gridtop.toint();
     int gr = curralgo->gridright.toint();
     int gb = curralgo->gridbottom.toint();
-    
+
     if (ght > 0 && pt < gt) {
         // delete live cells above grid
         ClearRect(curralgo, pt, pl, gt-1, pr);
         pt = gt; // reduce size of rect below
     }
-    
+
     if (ght > 0 && pb > gb) {
         // delete live cells below grid
         ClearRect(curralgo, gb+1, pl, pb, pr);
         pb = gb; // reduce size of rect below
     }
-    
+
     if (gwd > 0 && pl < gl) {
         // delete live cells left of grid
         ClearRect(curralgo, pt, pl, pb, gl-1);
     }
-    
+
     if (gwd > 0 && pr > gr) {
         // delete live cells right of grid
         ClearRect(curralgo, pt, gr+1, pb, pr);
     }
-    
+
     curralgo->endofpattern();
     return true;
 }
@@ -1000,7 +1006,7 @@ void DisplayTimingInfo()
     endtime = TimeInSeconds();
     if (endtime <= begintime) endtime = begintime + 0.000001;
     endgen = currlayer->algo->getGeneration().todouble();
-    
+
     double secs = endtime - begintime;
     double gens = endgen - begingen;
     char s[128];
@@ -1013,30 +1019,30 @@ void DisplayTimingInfo()
 bool StartGenerating()
 {
     if (generating) Warning("Bug detected in StartGenerating!");
-    
+
     lifealgo* curralgo = currlayer->algo;
     if (curralgo->isEmpty()) {
         ErrorMessage(empty_pattern);
         return false;
     }
-    
+
     if (!SaveStartingPattern()) {
         return false;
     }
-    
+
     if (allowundo) currlayer->undoredo->RememberGenStart();
-    
+
     // only show hashing info while generating
     lifealgo::setVerbose(currlayer->showhashinfo);
-    
+
     // for DisplayTimingInfo
     begintime = TimeInSeconds();
     begingen = curralgo->getGeneration().todouble();
-    
+
     generating = true;
-    
+
     PollerReset();
-    
+
     // caller will start a repeating timer
     return true;
 }
@@ -1046,21 +1052,21 @@ bool StartGenerating()
 void StopGenerating()
 {
     if (!generating) Warning("Bug detected in StopGenerating!");
-    
+
     generating = false;
-    
+
     PollerInterrupt();
-    
+
     if (showtiming) DisplayTimingInfo();
     lifealgo::setVerbose(0);
-    
+
     if (event_checker > 0) {
         // we're currently in the event poller somewhere inside step(), so we must let
         // step() complete and only call RememberGenFinish at the end of NextGeneration
     } else {
         if (allowundo) currlayer->undoredo->RememberGenFinish();
     }
-    
+
     // caller will stop the timer
 }
 
@@ -1070,7 +1076,7 @@ void NextGeneration(bool useinc)
 {
     lifealgo* curralgo = currlayer->algo;
     bool boundedgrid = (curralgo->gridwd > 0 || curralgo->gridht > 0);
-    
+
     if (generating) {
         // we were called via timer so StartGenerating has already checked
         // if the pattern is empty, etc (note that useinc is also true)
@@ -1085,21 +1091,21 @@ void NextGeneration(bool useinc)
         if (!SaveStartingPattern()) {
             return;
         }
-        
+
         if (allowundo) currlayer->undoredo->RememberGenStart();
-        
+
         // only show hashing info while generating
         lifealgo::setVerbose(currlayer->showhashinfo);
-        
+
         if (useinc && curralgo->getIncrement() > bigint::one) {
             // for DisplayTimingInfo
             begintime = TimeInSeconds();
             begingen = curralgo->getGeneration().todouble();
         }
-        
+
         PollerReset();
     }
-    
+
     if (useinc) {
         // step by current increment
         if (boundedgrid) {
@@ -1135,13 +1141,13 @@ void NextGeneration(bool useinc)
         if (boundedgrid) DeleteBorderCells(curralgo);
         curralgo->setIncrement(saveinc);
     }
-    
+
     if (!generating) {
         if (showtiming && useinc && curralgo->getIncrement() > bigint::one) DisplayTimingInfo();
         lifealgo::setVerbose(0);
         if (allowundo) currlayer->undoredo->RememberGenFinish();
     }
-    
+
     // autofit is only used when doing many gens
     if (currlayer->autofit && (generating || useinc)) {
         //!!! FitInView(0);
@@ -1160,12 +1166,12 @@ void ClearOutsideGrid()
     // check current pattern and clear any live cells outside bounded grid
     bool patternchanged = false;
     bool savechanges = allowundo && !currlayer->stayclean;
-    
+
     // might also need to truncate selection
     currlayer->currsel.CheckGridEdges();
-    
+
     if (currlayer->algo->isEmpty()) return;
-    
+
     // check if current pattern is too big to use nextcell/setcell
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
@@ -1173,12 +1179,12 @@ void ClearOutsideGrid()
         ErrorMessage("Pattern too big to check (outside +/- 10^9 boundary).");
         return;
     }
-    
+
     int itop = top.toint();
     int ileft = left.toint();
     int ibottom = bottom.toint();
     int iright = right.toint();
-    
+
     // no need to do anything if pattern is entirely within grid
     int gtop = currlayer->algo->gridtop.toint();
     int gleft = currlayer->algo->gridleft.toint();
@@ -1197,10 +1203,10 @@ void ClearOutsideGrid()
     if (itop >= gtop && ileft >= gleft && ibottom <= gbottom && iright <= gright) {
         return;
     }
-    
+
     int ht = ibottom - itop + 1;
     int cx, cy;
-    
+
     // for showing accurate progress we need to add pattern height to pop count
     // in case this is a huge pattern with many blank rows
     double maxcount = currlayer->algo->getPopulation().todouble() + ht;
@@ -1209,7 +1215,7 @@ void ClearOutsideGrid()
     bool abort = false;
     int v = 0;
     BeginProgress("Checking cells outside grid");
-    
+
     lifealgo* curralgo = currlayer->algo;
     for ( cy=itop; cy<=ibottom; cy++ ) {
         currcount++;
@@ -1237,10 +1243,10 @@ void ClearOutsideGrid()
         }
         if (abort) break;
     }
-    
+
     curralgo->endofpattern();
     EndProgress();
-    
+
     if (patternchanged) {
         ErrorMessage("Pattern was truncated (live cells were outside grid).");
     }
@@ -1253,7 +1259,7 @@ void ReduceCellStates(int newmaxstate)
     // check current pattern and reduce any cell states > newmaxstate
     bool patternchanged = false;
     bool savechanges = allowundo && !currlayer->stayclean;
-    
+
     // check if current pattern is too big to use nextcell/setcell
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
@@ -1261,14 +1267,14 @@ void ReduceCellStates(int newmaxstate)
         ErrorMessage("Pattern too big to check (outside +/- 10^9 boundary).");
         return;
     }
-    
+
     int itop = top.toint();
     int ileft = left.toint();
     int ibottom = bottom.toint();
     int iright = right.toint();
     int ht = ibottom - itop + 1;
     int cx, cy;
-    
+
     // for showing accurate progress we need to add pattern height to pop count
     // in case this is a huge pattern with many blank rows
     double maxcount = currlayer->algo->getPopulation().todouble() + ht;
@@ -1277,7 +1283,7 @@ void ReduceCellStates(int newmaxstate)
     bool abort = false;
     int v = 0;
     BeginProgress("Checking cell states");
-    
+
     lifealgo* curralgo = currlayer->algo;
     for ( cy=itop; cy<=ibottom; cy++ ) {
         currcount++;
@@ -1305,10 +1311,10 @@ void ReduceCellStates(int newmaxstate)
         }
         if (abort) break;
     }
-    
+
     curralgo->endofpattern();
     EndProgress();
-    
+
     if (patternchanged) {
         ErrorMessage("Pattern has changed (new rule has fewer states).");
     }
@@ -1321,11 +1327,11 @@ void ChangeRule(const std::string& rulestring)
     // load recently installed .rule/table/tree/colors/icons file
     std::string oldrule = currlayer->algo->getrule();
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
-    
+
     // selection might change if grid becomes smaller,
     // so save current selection for RememberRuleChange/RememberAlgoChange
     SaveCurrentSelection();
-    
+
     const char* err = currlayer->algo->setrule( rulestring.c_str() );
     if (err) {
         // try to find another algorithm that supports the given rule
@@ -1353,30 +1359,30 @@ void ChangeRule(const std::string& rulestring)
         Warning("New rule is not valid in any algorithm!");
         return;
     }
-    
+
     std::string newrule = currlayer->algo->getrule();
     if (oldrule != newrule) {
         UpdateStatus();
-        
+
         // if grid is bounded then remove any live cells outside grid edges
         if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
             ClearOutsideGrid();
         }
     }
-    
+
     // new table/tree might have changed the number of cell states;
     // if there are fewer states then pattern might change
     int newmaxstate = currlayer->algo->NumCellStates() - 1;
     if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
         ReduceCellStates(newmaxstate);
     }
-    
+
     // set colors/icons for new rule
     UpdateLayerColors();
-    
+
     // pattern might have changed or colors/icons might have changed
     UpdateEverything();
-    
+
     if (oldrule != newrule) {
         if (allowundo && !currlayer->stayclean) {
             currlayer->undoredo->RememberRuleChange(oldrule.c_str());
@@ -1389,7 +1395,7 @@ void ChangeRule(const std::string& rulestring)
 void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo)
 {
     if (newalgotype == currlayer->algtype) return;
-    
+
     // check if current pattern is too big to use nextcell/setcell
     bigint top, left, bottom, right;
     if ( !currlayer->algo->isEmpty() ) {
@@ -1399,7 +1405,7 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
             return;
         }
     }
-    
+
     // save changes if undo/redo is enabled and script isn't constructing a pattern
     // and we're not undoing/redoing an earlier algo change
     bool savechanges = allowundo && !currlayer->stayclean && !inundoredo;
@@ -1408,24 +1414,24 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
         // otherwise temporary files won't be the correct type (mc or rle)
         //!!! SavePendingChanges();
     }
-    
+
     // selection might change if grid becomes smaller,
     // so save current selection for RememberAlgoChange
     if (savechanges) SaveCurrentSelection();
-    
+
     bool rulechanged = false;
     std::string oldrule = currlayer->algo->getrule();
-    
+
     // change algorithm type, reset step size, and update status bar
     algo_type oldalgo = currlayer->algtype;
     currlayer->algtype = newalgotype;
     currlayer->currbase = algoinfo[newalgotype]->defbase;
     currlayer->currexpo = 0;
     UpdateStatus();
-    
+
     // create a new universe of the requested flavor
     lifealgo* newalgo = CreateNewUniverse(newalgotype);
-    
+
     if (inundoredo) {
         // switch to given newrule
         const char* err = newalgo->setrule(newrule);
@@ -1461,10 +1467,10 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
             rulechanged = true;
         }
     }
-    
+
     // set same gen count
     newalgo->setGeneration( currlayer->algo->getGeneration() );
-    
+
     bool patternchanged = false;
     if ( !currlayer->algo->isEmpty() ) {
         // copy pattern in current universe to new universe
@@ -1474,7 +1480,7 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
         int iright = right.toint();
         int ht = ibottom - itop + 1;
         int cx, cy;
-        
+
         // for showing accurate progress we need to add pattern height to pop count
         // in case this is a huge pattern with many blank rows
         double maxcount = currlayer->algo->getPopulation().todouble() + ht;
@@ -1483,7 +1489,7 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
         bool abort = false;
         int v = 0;
         BeginProgress("Converting pattern");
-        
+
         // set newalgo's grid edges so we can save cells that are outside grid
         int gtop = newalgo->gridtop.toint();
         int gleft = newalgo->gridleft.toint();
@@ -1499,10 +1505,10 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
             gtop = INT_MIN;
             gbottom = INT_MAX;
         }
-        
+
         // need to check for state change if new algo has fewer states than old algo
         int newmaxstate = newalgo->NumCellStates() - 1;
-        
+
         lifealgo* curralgo = currlayer->algo;
         for ( cy=itop; cy<=ibottom; cy++ ) {
             currcount++;
@@ -1538,21 +1544,21 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
             }
             if (abort) break;
         }
-        
+
         newalgo->endofpattern();
         EndProgress();
     }
-    
+
     // delete old universe and point current universe to new universe
     delete currlayer->algo;
-    currlayer->algo = newalgo;   
+    currlayer->algo = newalgo;
     SetGenIncrement();
-    
+
     // if new grid is bounded then we might need to truncate the selection
     if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
         currlayer->currsel.CheckGridEdges();
     }
-    
+
     // switch to default colors for new algo+rule
     UpdateLayerColors();
 
@@ -1564,7 +1570,7 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
             if ( currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty() ) {
                 currlayer->savestart = true;
             }
-            
+
             if (newrule[0] == 0) {
                 if (patternchanged) {
                     ErrorMessage("Rule has changed and pattern has changed.");
@@ -1584,11 +1590,11 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
             ErrorMessage("Pattern has changed.");
         }
     }
-    
+
     if (savechanges) {
         currlayer->undoredo->RememberAlgoChange(oldalgo, oldrule.c_str());
     }
-    
+
     if (!inundoredo && !inscript) {
         // do this AFTER RememberAlgoChange so Undo button becomes enabled
         UpdateEverything();
@@ -1677,7 +1683,7 @@ static std::string CreateEmptyTABLE(const std::string& folder, const std::string
             }
         }
     }
-    
+
     if (numstates.length() == 0) {
         numstates = "n_states:256\n";
         std::string msg = "Could not find " + prefix;
@@ -1686,7 +1692,7 @@ static std::string CreateEmptyTABLE(const std::string& folder, const std::string
         msg += "-shared.rule.";
         Warning(msg.c_str());
     }
-    
+
     contents += numstates;
     contents += neighborhood;
     contents += "symmetries:none\n";    // anything valid would do
@@ -1754,6 +1760,10 @@ static std::string CreateCOLORS(const std::string& colorspath)
 
 // -----------------------------------------------------------------------------
 
+// remove these routines when we drop support for .icons files!!!
+
+#ifdef IOS_GUI
+
 static unsigned char* GetRGBAPixels(CGImageRef image)
 {
     int wd = CGImageGetWidth(image);
@@ -1803,7 +1813,7 @@ static bool OneColor(CGImageRef image, unsigned char* R, unsigned char* G, unsig
     *R = pxldata[0];
     *G = pxldata[1];
     *B = pxldata[2];
-    
+
     free(pxldata);
     return true;
 }
@@ -1813,7 +1823,7 @@ static bool OneColor(CGImageRef image, unsigned char* R, unsigned char* G, unsig
 static std::string CreateStateColors(CGImageRef image, int numicons)
 {
     std::string contents = "\n@COLORS\n\n";
-    
+
     // if the last icon has only 1 color then assume it is the extra 15x15 icon
     // supplied to set the color of state 0
     char s[128];
@@ -1826,7 +1836,7 @@ static std::string CreateStateColors(CGImageRef image, int numicons)
             numicons--;
         }
     }
-    
+
     // set non-icon colors for each live state to the average of the non-black pixels
     // in each 15x15 icon (note we've skipped the extra icon detected above)
     for (int i = 0; i < numicons; i++) {
@@ -1863,7 +1873,7 @@ static std::string CreateStateColors(CGImageRef image, int numicons)
             contents += s;
         }
     }
-    
+
     return contents;
 }
 
@@ -1910,13 +1920,13 @@ static std::string CreateXPM(const std::string& iconspath, CGImageRef image, int
 {
     // create XPM data for given set of icons
     std::string contents = "\nXPM\n";
-    
+
     char s[128];
     int charsperpixel = 1;
     const char* cindex = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    
+
     std::list<int> colors = GetColors(image);
-    
+
     int numcolors = colors.size();
     if (numcolors > 256) {
         std::ostringstream oss;
@@ -1924,11 +1934,11 @@ static std::string CreateXPM(const std::string& iconspath, CGImageRef image, int
         throw std::runtime_error(oss.str().c_str());
     }
     if (numcolors > 26) charsperpixel = 2;   // AABA..PA, ABBB..PB, ... , APBP..PP
-    
+
     contents += "/* width height num_colors chars_per_pixel */\n";
     sprintf(s, "\"%d %d %d %d\"\n", size, size*numicons, numcolors, charsperpixel);
     contents += s;
-    
+
     contents += "/* colors */\n";
     int n = 0;
     for (std::list<int>::iterator it = colors.begin(); it != colors.end(); ++it) {
@@ -1959,7 +1969,7 @@ static std::string CreateXPM(const std::string& iconspath, CGImageRef image, int
         }
         n++;
     }
-    
+
     for (int i = 0; i < numicons; i++) {
         sprintf(s, "/* icon for state %d */\n", i+1);
         contents += s;
@@ -1997,7 +2007,7 @@ static std::string CreateXPM(const std::string& iconspath, CGImageRef image, int
             free(idata);
         }
     }
-    
+
     return contents;
 }
 
@@ -2029,13 +2039,13 @@ static std::string CreateICONS(const std::string& iconspath, bool nocolors)
             throw std::runtime_error(oss.str().c_str());
         }
         int numicons = wd / 15;
-        
+
         if (nocolors && MultiColorImage(image)) {
             // there was no .colors file and .icons file is multi-color,
             // so prepend a @COLORS section that sets non-icon colors
             contents = CreateStateColors(CGImageCreateWithImageInRect(image,CGRectMake(0,0,wd,15)), numicons) + contents;
         }
-        
+
         if (ht == 15) {
             contents += CreateXPM(iconspath, image, 15, numicons);
         } else {
@@ -2045,6 +2055,8 @@ static std::string CreateICONS(const std::string& iconspath, bool nocolors)
     }
     return contents;
 }
+
+#endif // IOS_GUI
 
 // -----------------------------------------------------------------------------
 
@@ -2057,42 +2069,53 @@ static void CreateOneRule(const std::string& rulefile, const std::string& folder
     if (EndsWith(rulename,"-shared")) {
         // create a .rule file with colors and/or icons shared by other .rule files
         std::string prefix = rulename.substr(0,rulename.rfind('-'));
-        
+
         tabledata = CreateEmptyTABLE(folder, prefix, allfiles);
-        
+
         std::string sharedcolors = prefix + ".colors";
         if (FOUND(allfiles,sharedcolors))
             colordata = CreateCOLORS(folder + sharedcolors);
 
         std::string sharedicons = prefix + ".icons";
         if (FOUND(allfiles,sharedicons))
-            icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);        
-    
+#ifdef ANDROID_GUI
+            // don't bother implementing support for .icons files
+            icondata = "";
+#endif
+#ifdef IOS_GUI
+            icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);
+#endif
     } else {
         std::string tablefile = rulename + ".table";
         std::string treefile = rulename + ".tree";
         std::string colorsfile = rulename + ".colors";
         std::string iconsfile = rulename + ".icons";
-        
+
         if (FOUND(allfiles,tablefile))
             tabledata = CreateTABLE(folder + tablefile);
-        
+
         if (FOUND(allfiles,treefile))
             treedata = CreateTREE(folder + treefile);
-        
+
         if (FOUND(allfiles,colorsfile))
             colordata = CreateCOLORS(folder + colorsfile);
-        
+
         if (FOUND(allfiles,iconsfile))
+#ifdef ANDROID_GUI
+            // don't bother implementing support for .icons files
+            icondata = "";
+#endif
+#ifdef IOS_GUI
             icondata = CreateICONS(folder + iconsfile, colordata.length() == 0);
+#endif
     }
-    
+
     std::string contents = "@RULE " + rulename + "\n";
     contents += tabledata;
     contents += treedata;
     contents += colordata;
     contents += icondata;
-    
+
     // write contents to .rule file
     std::string rulepath = folder + rulefile;
     FILE* outfile = fopen(rulepath.c_str(), "w");
@@ -2109,7 +2132,7 @@ static void CreateOneRule(const std::string& rulefile, const std::string& folder
         oss << "Could not create rule file:\n" << rulepath.c_str();
         throw std::runtime_error(oss.str().c_str());
     }
-    
+
     // append created file to htmlinfo
     htmlinfo += "<a href=\"open:";
     htmlinfo += folder;
@@ -2134,7 +2157,7 @@ static bool SharedColorsIcons(const std::string& prefix, std::list<std::string>&
             }
         }
     }
-    
+
     // prefix-*.table/tree does not exist in allfiles
     return false;
 }
@@ -2174,7 +2197,7 @@ std::string CreateRuleFiles(std::list<std::string>& deprecated,
                 candidates.push_back(rulefile);
             }
         }
-        
+
         // create the new .rule files (we overwrite any existing .rule files
         // that aren't in keeprules)
         for (it=candidates.begin(); it!=candidates.end(); ++it) {
@@ -2189,7 +2212,7 @@ std::string CreateRuleFiles(std::list<std::string>& deprecated,
         htmlinfo += "\n<p>*** CONVERSION ABORTED DUE TO ERROR ***\n<p>";
         htmlinfo += std::string(e.what());
     }
-    
+
     if (!aborted) {
         // delete all the deprecated files
         std::list<std::string>::iterator it;

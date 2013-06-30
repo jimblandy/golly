@@ -42,11 +42,13 @@
 #include <stdexcept>        // for std::runtime_error and std::exception
 #include <sstream>          // for std::ostringstream
 
-//!!! #ifdef ANDROID_GUI
-#include "jnicalls.h"		// for UpdateStatus
+#ifdef ANDROID_GUI
+    #include "jnicalls.h"		// for UpdateStatus, BeginProgress, etc
+#endif
 
-//!!! #ifdef IOS_GUI
-//!!! #import "PatternViewController.h"   // for UpdateStatus, BeginProgress, etc
+#ifdef IOS_GUI
+    #import "PatternViewController.h"   // for UpdateStatus, BeginProgress, etc
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -1758,8 +1760,9 @@ static std::string CreateCOLORS(const std::string& colorspath)
 
 // -----------------------------------------------------------------------------
 
-//!!!
-#if 0
+// remove these routines when we drop support for .icons files!!!
+
+#ifdef IOS_GUI
 
 static unsigned char* GetRGBAPixels(CGImageRef image)
 {
@@ -2053,7 +2056,7 @@ static std::string CreateICONS(const std::string& iconspath, bool nocolors)
     return contents;
 }
 
-#endif
+#endif // IOS_GUI
 
 // -----------------------------------------------------------------------------
 
@@ -2075,8 +2078,13 @@ static void CreateOneRule(const std::string& rulefile, const std::string& folder
 
         std::string sharedicons = prefix + ".icons";
         if (FOUND(allfiles,sharedicons))
-            icondata = "";//!!! CreateICONS(folder + sharedicons, colordata.length() == 0);
-
+#ifdef ANDROID_GUI
+            // don't bother implementing support for .icons files
+            icondata = "";
+#endif
+#ifdef IOS_GUI
+            icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);
+#endif
     } else {
         std::string tablefile = rulename + ".table";
         std::string treefile = rulename + ".tree";
@@ -2093,7 +2101,13 @@ static void CreateOneRule(const std::string& rulefile, const std::string& folder
             colordata = CreateCOLORS(folder + colorsfile);
 
         if (FOUND(allfiles,iconsfile))
-            icondata = "";//!!! CreateICONS(folder + iconsfile, colordata.length() == 0);
+#ifdef ANDROID_GUI
+            // don't bother implementing support for .icons files
+            icondata = "";
+#endif
+#ifdef IOS_GUI
+            icondata = CreateICONS(folder + iconsfile, colordata.length() == 0);
+#endif
     }
 
     std::string contents = "@RULE " + rulename + "\n";
