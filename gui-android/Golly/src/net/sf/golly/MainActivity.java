@@ -57,6 +57,7 @@ public class MainActivity extends Activity
     private native void nativeNewPattern();
     private native void nativeFitPattern();
     private native void nativeGenerate();
+    private native void nativeStep();
 
     // local fields
     private static boolean firstcall = true;
@@ -244,7 +245,9 @@ public class MainActivity extends Activity
     
     // called when the Step button is tapped
     public void doStep(View view) {
-    	// not yet implemented!!!
+    	genhandler.removeCallbacks(generate);
+    	nativeStep();
+    	updateButtons();
     }
 
     // -----------------------------------------------------------------------------

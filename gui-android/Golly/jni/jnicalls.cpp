@@ -396,6 +396,26 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env
 // -----------------------------------------------------------------------------
 
 extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
+{
+    if (generating) StopGenerating();
+
+    if (event_checker > 0) {
+        // try again after a short delay
+        //!!! CallAfterDelay("Step");
+        return;
+    }
+
+    ClearMessage();
+    CheckIfRendering();
+    NextGeneration(true);
+	UpdateStatus();
+	UpdatePattern();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* env)
 {
     // undo/redo history is about to be cleared so no point calling RememberGenFinish
@@ -406,7 +426,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* e
     allowundo = saveundo;
 
     if (event_checker > 0 /* || rendering ???!!! */ ) {
-        // try again after a short delay that gives time for NextGeneration() to terminate
+        // try again after a short delay that gives time for NextGeneration or DrawPattern to terminate
         //!!!??? call Java method that will call nativeNewPattern again after a short delay
         //!!! CallAfterDelay("NewPattern");
         return;
