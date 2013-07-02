@@ -35,8 +35,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class MainActivity extends Activity {
-    
+public class MainActivity extends Activity
+{    
 	// see jnicalls.cpp for these routines:
     private static native void nativeClassInit();	// must be static
     private native void nativeCreate();				// must NOT be static
@@ -45,6 +45,8 @@ public class MainActivity extends Activity {
     private native void nativeSetTempDir(String path);
     private native void nativeSetSuppliedDirs(String prefix);
     private native void nativeStartStop();
+    private native void nativeResetPattern();
+    private native boolean nativeCanReset();
     private native boolean nativeIsGenerating();
     private native String nativeGetStatusLine(int line);
     private native void nativeNewPattern();
@@ -54,10 +56,13 @@ public class MainActivity extends Activity {
     // local fields
     private static boolean firstcall = true;
 	private Button ssbutton;						// Start/Stop button
+	private Button resetbutton;						// Reset button
     private TextView status1, status2, status3;		// status bar has 3 lines
     private PatternGLSurfaceView pattView;			// OpenGL ES is used to draw patterns
     private Handler genhandler;						// for generating patterns
     private Runnable generate;						// code started/stopped by genhandler
+
+	// -----------------------------------------------------------------------------
     
     static {
     	System.loadLibrary("stlport_shared");	// must agree with Application.mk
@@ -65,11 +70,14 @@ public class MainActivity extends Activity {
         nativeClassInit();						// caches Java method IDs
     }
 
+    // -----------------------------------------------------------------------------
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_layout);
         ssbutton = (Button) findViewById(R.id.startstop);
+        resetbutton = (Button) findViewById(R.id.reset);
         status1 = (TextView) findViewById(R.id.status1);
         status2 = (TextView) findViewById(R.id.status2);
         status3 = (TextView) findViewById(R.id.status3);
@@ -99,6 +107,8 @@ public class MainActivity extends Activity {
         
     }
 
+    // -----------------------------------------------------------------------------
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // this adds items to the action bar if it is present
@@ -106,12 +116,16 @@ public class MainActivity extends Activity {
         return true;
     }
 
+    // -----------------------------------------------------------------------------
+
     @Override
     protected void onPause() {
         super.onPause();
         pattView.onPause();
         genhandler.removeCallbacks(generate);
     }
+
+    // -----------------------------------------------------------------------------
 
     @Override
     protected void onResume() {
@@ -123,12 +137,16 @@ public class MainActivity extends Activity {
     	}
     }
 
+    // -----------------------------------------------------------------------------
+
     @Override
     protected void onDestroy() {
     	genhandler.removeCallbacks(generate);		// already done in OnPause???
         nativeDestroy();
         super.onDestroy();
     }
+
+    // -----------------------------------------------------------------------------
 
     public void InitPaths() {
     	// first create subdirs if they don't exist
@@ -161,6 +179,8 @@ public class MainActivity extends Activity {
 		nativeSetSuppliedDirs(prefix);
     }
 
+    // -----------------------------------------------------------------------------
+
     public void DeleteTempFiles() {
     	File dir = getCacheDir();
     	File[] files = dir.listFiles();
@@ -169,15 +189,30 @@ public class MainActivity extends Activity {
     	}
     }
 
+    // -----------------------------------------------------------------------------
+
     public void updateButtons() {
     	if (nativeIsGenerating()) {
     		ssbutton.setText("Stop");
     		ssbutton.setTextColor(Color.rgb(255,0,0));
+        	resetbutton.setEnabled(true);
     	} else {
     		ssbutton.setText("Start");
     		ssbutton.setTextColor(Color.rgb(0,255,0));
+        	resetbutton.setEnabled(nativeCanReset());
     	}
     }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Reset button is tapped
+    public void doReset(View view) {
+    	genhandler.removeCallbacks(generate);
+    	nativeResetPattern();
+    	updateButtons();
+    }
+
+    // -----------------------------------------------------------------------------
     
     // called when the Start/Stop button is tapped
     public void toggleStartStop(View view) {
@@ -191,6 +226,69 @@ public class MainActivity extends Activity {
     	}
     	updateButtons();
     }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Step button is tapped
+    public void doStep(View view) {
+    	// not yet implemented!!!
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Speed button is tapped
+    public void doSpeed(View view) {
+    	// display pop-up menu with options: Step=1, Faster, Slower
+    	//!!!
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Fit button is tapped
+    public void doFitPattern(View view) {
+    	nativeFitPattern();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Scale button is tapped
+    public void doScale(View view) {
+    	// display pop-up menu with options: Scale=1:1, Bigger, Smaller, Middle
+    	//!!!
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Undo button is tapped
+    public void doUndo(View view) {
+    	// not yet implemented!!!
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Redo button is tapped
+    public void doRedo(View view) {
+    	// not yet implemented!!!
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Edit button is tapped
+    public void doEdit(View view) {
+    	// display pop-up menu with options that depend on whether a selection
+    	// or paste image exists
+    	//!!!
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Draw/Pick/Select/Move button is tapped
+    public void doSetTouchMode(View view) {
+    	// display pop-up menu with options: Draw, Pick, Select, Move
+    	//!!!
+    }
+
+    // -----------------------------------------------------------------------------
     
     // called when the New button is tapped
     public void doNewPattern(View view) {
@@ -204,16 +302,44 @@ public class MainActivity extends Activity {
     	//!!! only if numlayers == 1???
     	DeleteTempFiles();
     }
+
+    // -----------------------------------------------------------------------------
     
-    // called when the Fit button is tapped
-    public void doFitPattern(View view) {
-    	nativeFitPattern();
+    // called when the Rule button is tapped
+    public void doRule(View view) {
+    	// not yet implemented!!!
     }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Info button is tapped
+    public void doInfo(View view) {
+    	// not yet implemented!!!
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Save button is tapped
+    public void doSave(View view) {
+    	// not yet implemented!!!
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Full Screen button is tapped
+    public void doFullScreen(View view) {
+    	// not yet implemented!!!
+    }
+
+    // -----------------------------------------------------------------------------
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void RefreshPattern() {
+    	// this can be called from any thread
     	pattView.requestRender();
     }
+
+    // -----------------------------------------------------------------------------
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void ShowStatusLines() {

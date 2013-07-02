@@ -50,6 +50,8 @@ public class PatternGLSurfaceView extends GLSurfaceView
     private static final int INVALID_POINTER_ID = -1;
     private int mActivePointerId = INVALID_POINTER_ID;
 
+    // -----------------------------------------------------------------------------
+
 	public PatternGLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         super.setEGLConfigChooser(8, 8, 8, 8, 0/*no depth*/, 0);
@@ -58,6 +60,8 @@ public class PatternGLSurfaceView extends GLSurfaceView
         setRenderer(mRenderer);
         setRenderMode(RENDERMODE_WHEN_DIRTY);
     }
+
+    // -----------------------------------------------------------------------------
 
     public boolean onTouchEvent(final MotionEvent ev) {
         final int action = ev.getAction();
@@ -105,11 +109,15 @@ public class PatternGLSurfaceView extends GLSurfaceView
         return true;
     }
 
+    // -----------------------------------------------------------------------------
+
     @Override
     public void onPause() {
         super.onPause();
         nativePause();
     }
+
+    // -----------------------------------------------------------------------------
 
     @Override
     public void onResume() {
@@ -118,7 +126,7 @@ public class PatternGLSurfaceView extends GLSurfaceView
     }
 }
 
-//-----------------------------------------------------------------------------
+// =================================================================================
 
 class PatternRenderer implements GLSurfaceView.Renderer
 {
@@ -127,13 +135,19 @@ class PatternRenderer implements GLSurfaceView.Renderer
     private native void nativeResize(int w, int h);
     private native void nativeRender();
 
+    // -----------------------------------------------------------------------------
+
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         nativeInit();
     }
 
+    // -----------------------------------------------------------------------------
+
     public void onSurfaceChanged(GL10 gl, int w, int h) {
         nativeResize(w, h);
     }
+
+    // -----------------------------------------------------------------------------
 
     public void onDrawFrame(GL10 gl) {
         nativeRender();

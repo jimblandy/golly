@@ -270,6 +270,32 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetSuppliedDirs(JNIE
 // -----------------------------------------------------------------------------
 
 extern "C"
+JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanReset(JNIEnv* env)
+{
+    return currlayer->algo->getGeneration() > currlayer->startgen;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResetPattern(JNIEnv* env)
+{
+	if (generating) StopGenerating();
+
+    if (event_checker > 0) {
+        // try again after a short delay
+        //!!! [self performSelector:@selector(doReset:) withObject:sender afterDelay:0.01];
+        return;
+    }
+
+    ClearMessage();
+    ResetPattern();
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStartStop(JNIEnv* env)
 {
     if (generating) {
@@ -288,7 +314,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
 {
 	if (paused) return;		// PauseGenerating has been called
 
-	NextGeneration(true);	// calls currlayer->algo->step()
+	NextGeneration(true);	// calls currlayer->algo->step() using current gen increment
 	UpdateStatus();
 	UpdatePattern();
 }
