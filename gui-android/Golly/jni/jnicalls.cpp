@@ -45,6 +45,7 @@ static JavaVM* javavm;
 static jobject mainobj;
 static jmethodID id_RefreshPattern;
 static jmethodID id_ShowStatusLines;
+static jmethodID id_UpdateEditBar;
 
 static bool rendering = false;	// in DrawPattern?
 static bool paused = false;		// generating has been paused?
@@ -76,6 +77,9 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* en
 
     id_ShowStatusLines = env->GetMethodID(klass, "ShowStatusLines", "()V");
     if (id_ShowStatusLines == 0) { LOGI("GetMethodID failed for ShowStatusLines"); }
+
+    id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
+    if (id_UpdateEditBar == 0) { LOGI("GetMethodID failed for UpdateEditBar"); }
 }
 
 // -----------------------------------------------------------------------------
@@ -143,7 +147,8 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusLine(JNI
 void PauseGenerating()
 {
 	if (generating) {
-		generating = false;
+		StopGenerating();
+		// generating is now false
 		paused = true;
 	}
 }
@@ -153,8 +158,9 @@ void PauseGenerating()
 void ResumeGenerating()
 {
 	if (paused) {
+		StartGenerating();
+		// generating is probably true (false if pattern is empty)
 		paused = false;
-		generating = true;
 	}
 }
 
@@ -270,6 +276,73 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetSuppliedDirs(JNIE
 // -----------------------------------------------------------------------------
 
 extern "C"
+JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeAllowUndo()
+{
+	return allowundo;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanUndo()
+{
+	return currlayer->undoredo->CanUndo();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanRedo()
+{
+	return currlayer->undoredo->CanRedo();
+}
+
+// -----------------------------------------------------------------------------
+
+static void CheckIfRendering()
+{
+    while (rendering) {
+    	// wait for DrawPattern to finish
+    	// LOGI("waiting for DrawPattern to finish");
+    	usleep(1000);	// 1 millisec
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeUndo(JNIEnv* env)
+{
+	if (generating) StopGenerating();
+
+    if (event_checker > 0) {
+        // try again after a short delay
+        //!!! CallAfterDelay("Undo");
+        return;
+    }
+
+    ClearMessage();
+    CheckIfRendering();
+    currlayer->undoredo->UndoChange();
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRedo(JNIEnv* env)
+{
+	if (generating) Warning("Bug: generating is true in nativeRedo!");
+    if (event_checker > 0) Warning("Bug: event_checker > 0 in nativeRedo!");
+
+    ClearMessage();
+    currlayer->undoredo->RedoChange();
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
 JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanReset(JNIEnv* env)
 {
     return currlayer->algo->getGeneration() > currlayer->startgen;
@@ -284,11 +357,12 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResetPattern(JNIEnv*
 
     if (event_checker > 0) {
         // try again after a short delay
-        //!!! [self performSelector:@selector(doReset:) withObject:sender afterDelay:0.01];
+        //!!! CallAfterDelay("ResetPattern");
         return;
     }
 
     ClearMessage();
+    CheckIfRendering();
     ResetPattern();
     UpdateEverything();
 }
@@ -310,7 +384,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStartStop(JNIEnv* en
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env)
 {
 	if (paused) return;		// PauseGenerating has been called
 
@@ -334,16 +408,12 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* e
     if (event_checker > 0 /* || rendering ???!!! */ ) {
         // try again after a short delay that gives time for NextGeneration() to terminate
         //!!!??? call Java method that will call nativeNewPattern again after a short delay
-        //!!! [self performSelector:@selector(doNew:) withObject:sender afterDelay:0.01];
+        //!!! CallAfterDelay("NewPattern");
         return;
     }
 
     ClearMessage();
-    while (rendering) {
-    	// wait for DrawPattern to finish
-    	// LOGI("waiting for DrawPattern to finish");
-    	usleep(1000);	// 1 millisec
-    }
+    CheckIfRendering();
     NewPattern();
     UpdateStatus();
     UpdatePattern();
@@ -486,7 +556,7 @@ std::string GetRuleName(const std::string& rule)
 {
 	std::string result = "";
 	// not yet implemented!!!
-	// maybe we should do this in rule.h and rule.cpp (in gui-common)???
+	// maybe we should do this in rule.h and rule.cpp in gui-common???
 	return result;
 }
 
@@ -494,8 +564,11 @@ std::string GetRuleName(const std::string& rule)
 
 void UpdateEditBar()
 {
-	// not yet implemented!!!
-	// update Undo and Redo buttons, show current drawing state and touch mode
+	// call Java method in MainActivity class to update the buttons in the edit bar
+	bool attached;
+	JNIEnv* env = getJNIenv(&attached);
+    if (env) env->CallVoidMethod(mainobj, id_UpdateEditBar);
+	if (attached) javavm->DetachCurrentThread();
 }
 
 // -----------------------------------------------------------------------------

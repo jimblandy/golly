@@ -28,7 +28,7 @@
         	android:layout_height="40sp"
         	android:layout_width="56sp"
     		android:textColor="#00FF00"
-    		android:onClick="toggleStartStop"
+    		android:onClick="doStartStop"
 			android:text="Start" />
     	<Button
     	    android:id="@+id/step"

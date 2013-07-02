@@ -46,17 +46,24 @@ public class MainActivity extends Activity
     private native void nativeSetSuppliedDirs(String prefix);
     private native void nativeStartStop();
     private native void nativeResetPattern();
+    private native void nativeUndo();
+    private native void nativeRedo();
     private native boolean nativeCanReset();
+    private native boolean nativeAllowUndo();
+    private native boolean nativeCanUndo();
+    private native boolean nativeCanRedo();
     private native boolean nativeIsGenerating();
     private native String nativeGetStatusLine(int line);
     private native void nativeNewPattern();
     private native void nativeFitPattern();
-    private native void nativeStep();
+    private native void nativeGenerate();
 
     // local fields
     private static boolean firstcall = true;
 	private Button ssbutton;						// Start/Stop button
 	private Button resetbutton;						// Reset button
+	private Button undobutton;						// Undo button
+	private Button redobutton;						// Redo button
     private TextView status1, status2, status3;		// status bar has 3 lines
     private PatternGLSurfaceView pattView;			// OpenGL ES is used to draw patterns
     private Handler genhandler;						// for generating patterns
@@ -78,6 +85,8 @@ public class MainActivity extends Activity
         setContentView(R.layout.main_layout);
         ssbutton = (Button) findViewById(R.id.startstop);
         resetbutton = (Button) findViewById(R.id.reset);
+        undobutton = (Button) findViewById(R.id.undo);
+        redobutton = (Button) findViewById(R.id.redo);
         status1 = (TextView) findViewById(R.id.status1);
         status2 = (TextView) findViewById(R.id.status2);
         status3 = (TextView) findViewById(R.id.status3);
@@ -91,7 +100,7 @@ public class MainActivity extends Activity
         generate = new Runnable() {
         	@Override
         	public void run() {
-        		nativeStep();
+        		nativeGenerate();
         		genhandler.postDelayed(this, 1000/60);		// max speed is 60 fps???
         	}
         };
@@ -141,7 +150,7 @@ public class MainActivity extends Activity
 
     @Override
     protected void onDestroy() {
-    	genhandler.removeCallbacks(generate);		// already done in OnPause???
+    	genhandler.removeCallbacks(generate);		// should have been done in OnPause, but play safe
         nativeDestroy();
         super.onDestroy();
     }
@@ -196,10 +205,14 @@ public class MainActivity extends Activity
     		ssbutton.setText("Stop");
     		ssbutton.setTextColor(Color.rgb(255,0,0));
         	resetbutton.setEnabled(true);
+        	undobutton.setEnabled(nativeAllowUndo());
+        	redobutton.setEnabled(false);
     	} else {
     		ssbutton.setText("Start");
     		ssbutton.setTextColor(Color.rgb(0,255,0));
         	resetbutton.setEnabled(nativeCanReset());
+        	undobutton.setEnabled(nativeAllowUndo() && (nativeCanReset() || nativeCanUndo()));
+        	redobutton.setEnabled(nativeCanRedo());
     	}
     }
 
@@ -215,7 +228,7 @@ public class MainActivity extends Activity
     // -----------------------------------------------------------------------------
     
     // called when the Start/Stop button is tapped
-    public void toggleStartStop(View view) {
+    public void doStartStop(View view) {
     	nativeStartStop();
     	if (nativeIsGenerating()) {
     		// start generating immediately
@@ -261,14 +274,19 @@ public class MainActivity extends Activity
     
     // called when the Undo button is tapped
     public void doUndo(View view) {
-    	// not yet implemented!!!
+    	genhandler.removeCallbacks(generate);
+    	nativeUndo();
+    	updateButtons();
+    	
     }
 
     // -----------------------------------------------------------------------------
     
     // called when the Redo button is tapped
     public void doRedo(View view) {
-    	// not yet implemented!!!
+    	// nativeIsGenerating() should never be true here
+    	nativeRedo();
+    	updateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -295,11 +313,11 @@ public class MainActivity extends Activity
     	genhandler.removeCallbacks(generate);
     	nativeNewPattern();
     	updateButtons();
-        // show current touch mode!!!???
+        // show current touch mode!!!
         // updateDrawingState();
     	
     	// deletes all files in tempdir
-    	//!!! only if numlayers == 1???
+    	//!!! only if numlayers == 1
     	DeleteTempFiles();
     }
 
@@ -349,6 +367,20 @@ public class MainActivity extends Activity
                 status1.setText(nativeGetStatusLine(1));
                 status2.setText(nativeGetStatusLine(2));
                 status3.setText(nativeGetStatusLine(3));
+        	}
+        });
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void UpdateEditBar() {
+    	// this might be called from a non-UI thread
+        runOnUiThread (new Runnable() {
+            public void run() {
+                undobutton.setEnabled(nativeCanUndo());
+                redobutton.setEnabled(nativeCanRedo());
+                //!!! also show current drawing state and touch mode
         	}
         });
     }
