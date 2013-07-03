@@ -94,4 +94,13 @@ void AndroidCheckEvents();
 // Run main UI thread for a short time so app remains responsive while doing a
 // lengthy computation.  Note that event_checker is > 0 while in this routine.
 
+bool AndroidCopyTextToClipboard(const char* text);
+// Copy given text to the clipboard.
+
+bool AndroidGetTextFromClipboard(std::string& text);
+// Get text from the clipboard.
+
+bool AndroidDownloadFile(const std::string& url, const std::string& filepath);
+// Download given url and create given file.
+
 #endif

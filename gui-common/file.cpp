@@ -23,11 +23,11 @@
  / ***/
 
 #ifdef ANDROID_GUI
-    #include "jnicalls.h"   // for SwitchToPatternTab, ShowTextFile, ShowHelp
+    #include "jnicalls.h"   // for SwitchToPatternTab, ShowTextFile, ShowHelp, etc
 #endif
 
 #ifdef IOS_GUI
-    // for opening zip files and extracting files within them
+    // for opening zip files and extracting files stored within them
     // (much thanks to the http://code.google.com/p/objective-zip/ project)
     #import "ZipFile.h"
     #import "ZipException.h"
@@ -303,9 +303,7 @@ void AddRecentPattern(const char* inpath)
 bool CopyTextToClipboard(const char* text)
 {
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
-    LOGI("CopyTextToClipboard: %s", text);
-    return false;//!!!
+    return AndroidCopyTextToClipboard(text);
 #endif
 
 #ifdef IOS_GUI
@@ -320,9 +318,7 @@ bool CopyTextToClipboard(const char* text)
 bool GetTextFromClipboard(std::string& text)
 {
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
-    LOGI("GetTextFromClipboard");
-    return false;//!!!
+    return AndroidGetTextFromClipboard(text);
 #endif
 
 #ifdef IOS_GUI
@@ -926,9 +922,7 @@ bool SavePattern(const std::string& path, pattern_format format, output_compress
 bool DownloadFile(const std::string& url, const std::string& filepath)
 {
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
-    LOGI("DownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
-    return false;//!!!
+    return AndroidDownloadFile(url, filepath);
 #endif
 
 #ifdef IOS_GUI

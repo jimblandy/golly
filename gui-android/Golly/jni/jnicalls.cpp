@@ -46,6 +46,7 @@ static jobject mainobj;
 static jmethodID id_RefreshPattern;
 static jmethodID id_ShowStatusLines;
 static jmethodID id_UpdateEditBar;
+static jmethodID id_CheckMessageQueue;
 
 static bool rendering = false;	// in DrawPattern?
 static bool paused = false;		// generating has been paused?
@@ -73,13 +74,9 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* en
 {
     // save IDs for Java methods in MainActivity
 	id_RefreshPattern = env->GetMethodID(klass, "RefreshPattern", "()V");
-    if (id_RefreshPattern == 0) { LOGI("GetMethodID failed for RefreshPattern"); }
-
     id_ShowStatusLines = env->GetMethodID(klass, "ShowStatusLines", "()V");
-    if (id_ShowStatusLines == 0) { LOGI("GetMethodID failed for ShowStatusLines"); }
-
     id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
-    if (id_UpdateEditBar == 0) { LOGI("GetMethodID failed for UpdateEditBar"); }
+    id_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
 }
 
 // -----------------------------------------------------------------------------
@@ -744,7 +741,36 @@ void AndroidFixURLPath(std::string& path)
 
 void AndroidCheckEvents()
 {
-	// not yet implemented!!!
-    // use Looper on main UI thread???!!!
-    // see http://developer.android.com/reference/android/os/Looper.html
+	bool attached;
+	JNIEnv* env = getJNIenv(&attached);
+    if (env) env->CallVoidMethod(mainobj, id_CheckMessageQueue);
+	if (attached) javavm->DetachCurrentThread();
+}
+
+// -----------------------------------------------------------------------------
+
+bool AndroidCopyTextToClipboard(const char* text)
+{
+	// see http://developer.android.com/guide/topics/text/copy-paste.html
+    // not yet implemented!!!
+    LOGI("AndroidCopyTextToClipboard: %s", text);
+    return false;//!!!
+}
+
+// -----------------------------------------------------------------------------
+
+bool AndroidGetTextFromClipboard(std::string& text)
+{
+    // not yet implemented!!!
+    LOGI("AndroidGetTextFromClipboard");
+    return false;//!!!
+}
+
+// -----------------------------------------------------------------------------
+
+bool AndroidDownloadFile(const std::string& url, const std::string& filepath)
+{
+    // not yet implemented!!!
+    LOGI("AndroidDownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
+    return false;//!!!
 }

@@ -365,7 +365,7 @@ public class MainActivity extends Activity
     // this method is called from C++ code (see jnicalls.cpp)
     private void ShowStatusLines() {
     	// this might be called from a non-UI thread
-        runOnUiThread (new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 status1.setText(nativeGetStatusLine(1));
                 status2.setText(nativeGetStatusLine(2));
@@ -379,12 +379,22 @@ public class MainActivity extends Activity
     // this method is called from C++ code (see jnicalls.cpp)
     private void UpdateEditBar() {
     	// this might be called from a non-UI thread
-        runOnUiThread (new Runnable() {
+        runOnUiThread(new Runnable() {
             public void run() {
                 undobutton.setEnabled(nativeCanUndo());
                 redobutton.setEnabled(nativeCanRedo());
                 //!!! also show current drawing state and touch mode
         	}
         });
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void CheckMessageQueue() {
+    	// not yet implemented!!!
+        // use Looper on main UI thread???!!!
+        // see http://developer.android.com/reference/android/os/Looper.html
+    	//??? see http://stackoverflow.com/questions/4994263/how-can-i-do-non-blocking-events-processing-on-android?rq=1
     }
 }
