@@ -678,3 +678,73 @@ void ShowHelp(const char* filepath)
 	// not yet implemented!!!
 	LOGI("ShowHelp: %s", filepath);
 }
+
+// -----------------------------------------------------------------------------
+
+void AndroidWarning(const char* msg)
+{
+    // not yet implemented!!!
+    LOGE("WARNING: %s", msg);
+}
+
+// -----------------------------------------------------------------------------
+
+bool AndroidYesNo(const char* msg)
+{
+    // not yet implemented!!!
+    LOGE("AndroidYesNo: %s", msg);
+    return true; //!!!
+}
+
+// -----------------------------------------------------------------------------
+
+void AndroidFatal(const char* msg)
+{
+    // not yet implemented!!!
+    LOGE("FATAL ERROR: %s", msg);
+    //!!!??? System.exit(1);
+    exit(1);
+}
+
+// -----------------------------------------------------------------------------
+
+void AndroidBeep()
+{
+    // not yet implemented!!!
+    LOGI("BEEP");//!!!
+}
+
+// -----------------------------------------------------------------------------
+
+void AndroidRemoveFile(const std::string& filepath)
+{
+    // not yet implemented!!!
+    LOGE("AndroidRemoveFile: %s", filepath.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+bool AndroidMoveFile(const std::string& inpath, const std::string& outpath)
+{
+    // not yet implemented!!!
+    LOGE("AndroidMoveFile: %s to %s", inpath.c_str(), outpath.c_str());
+    return false;//!!!
+}
+
+// -----------------------------------------------------------------------------
+
+void AndroidFixURLPath(std::string& path)
+{
+    // replace "%..." with suitable chars for a file path (eg. %20 is changed to space)
+    // not yet implemented!!!
+    LOGE("AndroidFixURLPath: %s", path.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+void AndroidCheckEvents()
+{
+	// not yet implemented!!!
+    // use Looper on main UI thread???!!!
+    // see http://developer.android.com/reference/android/os/Looper.html
+}

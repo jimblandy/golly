@@ -33,38 +33,65 @@
 #define LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
-// Routines for calling C++ from Java and vice versa.
+// Routines for calling C++ from Java and vice versa:
 
 void UpdatePattern();
-// redraw the current pattern
+// Redraw the current pattern.
 
 void UpdateStatus();
-// redraw the status bar info
+// Redraw the status bar info.
 
 void PauseGenerating();
-// if pattern is generating then temporarily pause
+// If pattern is generating then temporarily pause.
 
 void ResumeGenerating();
-// resume generating pattern if it was paused
+// Resume generating pattern if it was paused.
 
 std::string GetRuleName(const std::string& rule);
-// return name of given rule (empty string if rule is unnamed)
+// Return name of given rule (empty string if rule is unnamed).
 
 void UpdateEditBar();
-// update Undo and Redo buttons, show current drawing state and touch mode
+// Update Undo and Redo buttons, show current drawing state and touch mode.
 
 void BeginProgress(const char* title);
 bool AbortProgress(double fraction_done, const char* message);
 void EndProgress();
-// these calls display a progress bar while a lengthy task is carried out
+// These calls display a progress bar while a lengthy task is carried out.
 
 void SwitchToPatternTab();
-// switch to pattern view (MainActivity)
+// Switch to pattern view (MainActivity).
 
 void ShowTextFile(const char* filepath);
-// display contents of text file in modal view (TextFileActivity!!!)
+// Display contents of text file in modal view (TextFileActivity!!!).
 
 void ShowHelp(const char* filepath);
-// display html file in help view (HelpActivity!!!)
+// Display html file in help view (HelpActivity!!!).
+
+void AndroidWarning(const char* msg);
+// Beep and display message in a modal dialog.
+
+bool AndroidYesNo(const char* msg);
+// Similar to Warning, but there are 2 buttons: Yes and No.
+// Returns true if Yes button is hit.
+
+void AndroidFatal(const char* msg);
+// Beep, display message in a modal dialog, then exit app.
+
+void AndroidBeep();
+// Play beep sound, depending on user setting.
+
+void AndroidRemoveFile(const std::string& filepath);
+// Delete given file.
+
+bool AndroidMoveFile(const std::string& inpath, const std::string& outpath);
+// Return true if input file is successfully moved to output file.
+// If the output file existed it is replaced.
+
+void AndroidFixURLPath(std::string& path);
+// Replace "%..." with suitable chars for a file path (eg. %20 is changed to space).
+
+void AndroidCheckEvents();
+// Run main UI thread for a short time so app remains responsive while doing a
+// lengthy computation.  Note that event_checker is > 0 while in this routine.
 
 #endif

@@ -33,8 +33,9 @@
 #include "utils.h"
 
 #ifdef ANDROID_GUI
-    #include "jnicalls.h"    // for UpdateStatus, etc
+    #include "jnicalls.h"    // for AndroidWarning, AndroidBeep, UpdateStatus, etc
 #endif
+
 #ifdef IOS_GUI
     #import <AudioToolbox/AudioToolbox.h>   // for AudioServicesPlaySystemSound, etc
     #import "PatternViewController.h"       // for UpdateStatus, etc
@@ -100,8 +101,7 @@ bool YesNo(const char* msg)
     Beep();
 
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
-    return true; //!!!
+    return AndroidYesNo(msg);
 #endif // ANDROID_GUI
 
 #ifdef IOS_GUI
@@ -133,8 +133,7 @@ void Warning(const char* msg)
     Beep();
 
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
-    LOGE("WARNING: %s", msg);
+    AndroidWarning(msg);
 #endif // ANDROID_GUI
 
 #ifdef IOS_GUI
@@ -164,11 +163,7 @@ void Fatal(const char* msg)
     Beep();
 
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
-    LOGE("FATAL ERROR: %s", msg);
-
-    //!!!??? System.exit(1);
-    exit(1);
+    AndroidFatal(msg);
 #endif // ANDROID_GUI
 
 #ifdef IOS_GUI
@@ -200,8 +195,7 @@ void Beep()
     if (!allowbeep) return;
 
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
-    LOGI("BEEP");//!!!
+    AndroidBeep();
 #endif // ANDROID_GUI
 
 #ifdef IOS_GUI
@@ -271,8 +265,7 @@ bool FileExists(const std::string& filepath)
 void RemoveFile(const std::string& filepath)
 {
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
-    LOGE("RemoveFile: %s", filepath.c_str());
+    AndroidRemoveFile(filepath);
 #endif // ANDROID_GUI
 
 #ifdef IOS_GUI
@@ -340,9 +333,7 @@ bool CopyFile(const std::string& inpath, const std::string& outpath)
 bool MoveFile(const std::string& inpath, const std::string& outpath)
 {
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
-    LOGE("MoveFile: %s to %s", inpath.c_str(), outpath.c_str());
-    return false;//!!!
+    return AndroidMoveFile(inpath, outpath);
 #endif // ANDROID_GUI
 
 #ifdef IOS_GUI
@@ -362,7 +353,7 @@ void FixURLPath(std::string& path)
     // replace "%..." with suitable chars for a file path (eg. %20 is changed to space)
 
 #ifdef ANDROID_GUI
-    // not yet implemented!!!
+    AndroidFixURLPath(path);
 #endif // ANDROID_GUI
 
 #ifdef IOS_GUI
@@ -470,13 +461,15 @@ int golly_poll::checkevents()
 {
     if (event_checker > 0) return isInterrupted();
     event_checker++;
+
 #ifdef ANDROID_GUI
-    //!!! use Looper on main UI thread???
-    //!!! see http://developer.android.com/reference/android/os/Looper.html
+    AndroidCheckEvents();
 #endif
+
 #ifdef IOS_GUI
     [[NSRunLoop currentRunLoop] runUntilDate:[NSDate date]];
 #endif
+
     event_checker--;
     return isInterrupted();
 }
