@@ -417,9 +417,9 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         waitingforclick = true;
         mainptr->UpdateMenuAccelerators();  // remove all accelerators so keyboard shortcuts can be used
         mainptr->EnableAllMenus(false);     // disable all menu items
-        mainptr->UpdateToolBar(false);      // disable all tool bar buttons
-        UpdateLayerBar(false);              // disable all layer bar buttons
-        UpdateEditBar(false);               // disable all edit bar buttons
+        mainptr->UpdateToolBar();           // disable all tool bar buttons
+        UpdateLayerBar();                   // disable all layer bar buttons
+        UpdateEditBar();                    // disable all edit bar buttons
         CaptureMouse();                     // get mouse down event even if outside view
         pasterect = wxRect(-1,-1,0,0);
         
@@ -480,7 +480,7 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         
         // restore cursor
         currlayer->curs = savecurs;
-        CheckCursor(mainptr->IsActive());
+        CheckCursor(mainptr->infront);
         
         if ( pasterect.width > 0 ) {
             // erase old pasterect
@@ -1769,7 +1769,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         inscript = true;
     }
     
-    mainptr->UpdateUserInterface(mainptr->IsActive());
+    mainptr->UpdateUserInterface();
 }
 
 // -----------------------------------------------------------------------------
@@ -2018,7 +2018,7 @@ void PatternView::PickCell(int x, int y)
     int cellx = cellpos.first.toint();
     int celly = cellpos.second.toint();
     currlayer->drawingstate = currlayer->algo->getcell(cellx, celly);
-    UpdateEditBar(true);
+    UpdateEditBar();
 }
 
 // -----------------------------------------------------------------------------
@@ -2185,8 +2185,8 @@ void PatternView::StopDraggingMouse()
     if (selectingcells) {
         if (allowundo) RememberNewSelection(_("Selection"));
         selectingcells = false;                // tested by CanUndo
-        mainptr->UpdateMenuItems(true);        // enable various Edit menu items
-        if (allowundo) UpdateEditBar(true);    // update Undo/Redo buttons
+        mainptr->UpdateMenuItems();            // enable various Edit menu items
+        if (allowundo) UpdateEditBar();        // update Undo/Redo buttons
     }
     
     if (drawingcells && allowundo) {
@@ -2194,8 +2194,8 @@ void PatternView::StopDraggingMouse()
         // pass in the flag state saved before drawing started
         currlayer->undoredo->RememberCellChanges(_("Drawing"), currlayer->savedirty);
         drawingcells = false;                  // tested by CanUndo
-        mainptr->UpdateMenuItems(true);        // enable Undo item
-        UpdateEditBar(true);                   // update Undo/Redo buttons
+        mainptr->UpdateMenuItems();            // enable Undo item
+        UpdateEditBar();                       // update Undo/Redo buttons
     }
     
     if (clickedcontrol > NO_CONTROL) {
@@ -2409,19 +2409,19 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
         if (currlayer->curs == curs_pencil && oldcursor == NULL) {
             oldcursor = curs_pencil;
             SetCursorMode(curs_pick);
-            mainptr->UpdateUserInterface(mainptr->IsActive());
+            mainptr->UpdateUserInterface();
         } else if (currlayer->curs == curs_pick && oldcursor == NULL) {
             oldcursor = curs_pick;
             SetCursorMode(curs_pencil);
-            mainptr->UpdateUserInterface(mainptr->IsActive());
+            mainptr->UpdateUserInterface();
         } else if (currlayer->curs == curs_zoomin && oldcursor == NULL) {
             oldcursor = curs_zoomin;
             SetCursorMode(curs_zoomout);
-            mainptr->UpdateUserInterface(mainptr->IsActive());
+            mainptr->UpdateUserInterface();
         } else if (currlayer->curs == curs_zoomout && oldcursor == NULL) {
             oldcursor = curs_zoomout;
             SetCursorMode(curs_zoomin);
-            mainptr->UpdateUserInterface(mainptr->IsActive());
+            mainptr->UpdateUserInterface();
         }
     } else if (oldcursor) {
         // for any other key combo we restore the cursor immediately rather than
@@ -2430,7 +2430,7 @@ void PatternView::OnKeyDown(wxKeyEvent& event)
         // adds a new layer or opens another window
         SetCursorMode(oldcursor);
         oldcursor = NULL;
-        mainptr->UpdateUserInterface(mainptr->IsActive());
+        mainptr->UpdateUserInterface();
     }
     
     if (debuglevel == 1) {
@@ -2495,7 +2495,7 @@ void PatternView::OnKeyUp(wxKeyEvent& event)
         if (oldcursor) {
             SetCursorMode(oldcursor);
             oldcursor = NULL;
-            mainptr->UpdateUserInterface(mainptr->IsActive());
+            mainptr->UpdateUserInterface();
         }
     }
     
@@ -2750,7 +2750,7 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
         // do nothing -- Golly currently doesn't use the middle button
     }
     
-    mainptr->UpdateUserInterface(mainptr->IsActive());
+    mainptr->UpdateUserInterface();
 }
 
 // -----------------------------------------------------------------------------
@@ -2858,10 +2858,10 @@ void PatternView::OnMouseCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event))
 
 void PatternView::OnMouseMotion(wxMouseEvent& event)
 {
-    statusptr->CheckMouseLocation(mainptr->IsActive());
+    statusptr->CheckMouseLocation(mainptr->infront);
     
     // check if translucent controls need to be shown/hidden
-    if (mainptr->IsActive()) {
+    if (mainptr->infront) {
         wxPoint pt( event.GetX(), event.GetY() );
         bool show = (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) &&
                     !(drawingcells || selectingcells || movingview || waitingforclick) &&
@@ -2885,7 +2885,7 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
 void PatternView::OnMouseEnter(wxMouseEvent& WXUNUSED(event))
 {
     // Win bug??? we don't get this event if CaptureMouse has been called
-    CheckCursor(mainptr->IsActive());
+    CheckCursor(mainptr->infront);
     // no need to call CheckMouseLocation here (OnMouseMotion will be called)
 }
 
@@ -2894,8 +2894,8 @@ void PatternView::OnMouseEnter(wxMouseEvent& WXUNUSED(event))
 void PatternView::OnMouseExit(wxMouseEvent& WXUNUSED(event))
 {
     // Win bug??? we don't get this event if CaptureMouse has been called
-    CheckCursor(mainptr->IsActive());
-    statusptr->CheckMouseLocation(mainptr->IsActive());
+    CheckCursor(mainptr->infront);
+    statusptr->CheckMouseLocation(mainptr->infront);
 }
 
 // -----------------------------------------------------------------------------
@@ -2948,7 +2948,7 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
     bigview->UpdateScrollBars();
     inscript = saveinscript;
     // do following after restoring inscript so we don't change stop button if inscript
-    mainptr->UpdateUserInterface(mainptr->IsActive());
+    mainptr->UpdateUserInterface();
 }
 
 // -----------------------------------------------------------------------------

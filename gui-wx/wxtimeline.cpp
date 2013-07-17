@@ -520,7 +520,7 @@ void TimelineBar::OnScroll(wxScrollEvent& event)
     // best to stop autoplay if scroll bar is used
     if (currlayer->autoplay != 0) {
         currlayer->autoplay = 0;
-        mainptr->UpdateUserInterface(true);
+        mainptr->UpdateUserInterface();
     }
     
     if (type == wxEVT_SCROLL_LINEUP) {
@@ -751,10 +751,10 @@ int TimelineBarHeight() {
 
 // -----------------------------------------------------------------------------
 
-void UpdateTimelineBar(bool active)
+void UpdateTimelineBar()
 {
     if (tbarptr && showtimeline && !mainptr->IsIconized()) {
-        if (inscript) active = false;
+        bool active = !inscript;
         
         // may need to change bitmaps in some buttons
         tbarptr->UpdateButtons();
@@ -899,7 +899,7 @@ void DeleteTimeline()
         }
         
         currlayer->algo->destroytimeline();
-        mainptr->UpdateUserInterface(true);
+        mainptr->UpdateUserInterface();
     }
 }
 
@@ -994,7 +994,7 @@ void PlayTimeline(int direction)
     } else {
         currlayer->autoplay = direction;
     }
-    mainptr->UpdateUserInterface(true);
+    mainptr->UpdateUserInterface();
 }
 
 // -----------------------------------------------------------------------------

@@ -234,7 +234,7 @@ int LayerBarHeight();
 void ResizeLayerBar(int wd);
 // Change width of layer bar.
 
-void UpdateLayerBar(bool active);
+void UpdateLayerBar();
 // Update state of buttons in layer bar.
 
 void UpdateLayerButton(int index, const wxString& name);

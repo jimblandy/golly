@@ -1721,7 +1721,7 @@ static PyObject* py_setcursor(PyObject* self, PyObject* args)
     if (cursptr) {
         viewptr->SetCursorMode(cursptr);
         // see the cursor change, including button in edit bar
-        mainptr->UpdateUserInterface(mainptr->IsActive());
+        mainptr->UpdateUserInterface();
     } else {
         PYTHON_ERROR("setcursor error: unknown cursor string.");
     }
@@ -2666,7 +2666,7 @@ static PyObject* py_getxy(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    statusptr->CheckMouseLocation(mainptr->IsActive());   // sets mousepos
+    statusptr->CheckMouseLocation(mainptr->infront);   // sets mousepos
     if (viewptr->showcontrols) mousepos = wxEmptyString;
     
     return Py_BuildValue((char*)"s", (const char*)mousepos.mb_str(wxConvLocal));

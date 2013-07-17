@@ -326,7 +326,7 @@ bool ChangeNode::DoChange(bool undo)
                 }
             }
             // Reset item may become enabled/disabled
-            mainptr->UpdateMenuItems(mainptr->IsActive());
+            mainptr->UpdateMenuItems();
             break;
             
         case namechange:

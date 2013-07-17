@@ -46,10 +46,10 @@ public:
     
     // update functions
     void UpdateEverything();
-    void UpdateUserInterface(bool active);
-    void UpdateToolBar(bool active);
+    void UpdateUserInterface();
+    void UpdateToolBar();
     void EnableAllMenus(bool enable);
-    void UpdateMenuItems(bool active);
+    void UpdateMenuItems();
     void UpdatePatternAndStatus();
     void UpdateStatus();
     void UpdateMenuAccelerators();
@@ -169,6 +169,8 @@ public:
     
     // store files passed via command line (processed in first OnIdle)
     wxArrayString pendingfiles;
+
+    bool infront;              // main window is active?
     
 private:
     // any class wishing to process wxWidgets events must use this macro

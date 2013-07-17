@@ -36,7 +36,7 @@ int TimelineBarHeight();
 void ResizeTimelineBar(int y, int wd);
 // Move and/or resize timeline bar.
 
-void UpdateTimelineBar(bool active);
+void UpdateTimelineBar();
 // Update state of buttons in timeline bar.
 
 void ToggleTimelineBar();

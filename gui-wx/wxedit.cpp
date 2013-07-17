@@ -874,10 +874,10 @@ void ResizeEditBar(int wd)
 
 // -----------------------------------------------------------------------------
 
-void UpdateEditBar(bool active)
+void UpdateEditBar()
 {
     if (editbarptr && showedit) {
-        if (viewptr->waitingforclick) active = false;
+        bool active = !viewptr->waitingforclick;
         bool timeline = TimelineExists();
         
         // set state of toggle buttons
@@ -893,10 +893,10 @@ void UpdateEditBar(bool active)
         // while in those modes (by pressing a key), but we want the Undo button to
         // appear to be active
         bool canundo = (allowundo && (viewptr->drawingcells || viewptr->selectingcells))
-        || currlayer->undoredo->CanUndo();
+                       || currlayer->undoredo->CanUndo();
         editbarptr->EnableButton(UNDO_BUTT,       active && !timeline && canundo);
         editbarptr->EnableButton(REDO_BUTT,       active && !timeline &&
-                                 currlayer->undoredo->CanRedo());
+                                                  currlayer->undoredo->CanRedo());
         editbarptr->EnableButton(DRAW_BUTT,       active);
         editbarptr->EnableButton(PICK_BUTT,       active);
         editbarptr->EnableButton(SELECT_BUTT,     active);
@@ -959,7 +959,7 @@ void ToggleAllStates()
         // show the edit bar using new height
         ToggleEditBar();
     } else {
-        mainptr->UpdateMenuItems(mainptr->IsActive());
+        mainptr->UpdateMenuItems();
     }
 }
 

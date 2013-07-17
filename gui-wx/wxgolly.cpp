@@ -140,7 +140,7 @@ public:
 
 void CallYield()
 {
-    if (mainptr->IsActive()) {
+    if (mainptr->infront) {
         // make sure viewport window keeps keyboard focus
         viewptr->SetFocus();
     }

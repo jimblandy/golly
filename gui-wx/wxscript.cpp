@@ -607,7 +607,7 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
         if (*oldval != newval) {
             currlayer->drawingstate = newval;
             if (autoupdate) {
-                UpdateEditBar(mainptr->IsActive());
+                UpdateEditBar();
                 updateedit = false;
             } else {
                 // update edit bar in next GSF_update call
@@ -819,7 +819,7 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
     }
     
     if (*oldval != newval) {
-        mainptr->UpdateMenuItems(mainptr->IsActive());
+        mainptr->UpdateMenuItems();
     }
     
     return true;
@@ -1218,7 +1218,7 @@ void GSF_update()
     }
     
     if (updateedit) {
-        UpdateEditBar(mainptr->IsActive());
+        UpdateEditBar();
         updateedit = false;
     }
     
@@ -1385,7 +1385,7 @@ void RunScript(const wxString& filename)
         
         inscript = true;
         
-        mainptr->UpdateUserInterface(mainptr->IsActive());
+        mainptr->UpdateUserInterface();
         
         // temporarily remove accelerators from all menu items
         // so keyboard shortcuts can be passed to script

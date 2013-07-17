@@ -28,7 +28,7 @@
 
 #ifdef IOS_GUI
     // for opening zip files and extracting files stored within them
-    // (much thanks to the http://code.google.com/p/objective-zip/ project)
+    // (much thanks to https://github.com/flyingdolphinstudio/Objective-Zip)
     #import "ZipFile.h"
     #import "ZipException.h"
     #import "FileInZipInfo.h"

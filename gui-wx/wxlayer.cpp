@@ -694,10 +694,10 @@ void ResizeLayerBar(int wd)
 
 // -----------------------------------------------------------------------------
 
-void UpdateLayerBar(bool active)
+void UpdateLayerBar()
 {
     if (layerbarptr && showlayer) {
-        if (viewptr->waitingforclick) active = false;
+        bool active = !viewptr->waitingforclick;
         
         layerbarptr->EnableButton(ADD_LAYER,         active && !inscript && numlayers < MAX_LAYERS);
         layerbarptr->EnableButton(CLONE_LAYER,       active && !inscript && numlayers < MAX_LAYERS);
@@ -750,7 +750,7 @@ void ToggleLayerBar()
     bigview->SetSize(r);
     layerbarptr->Show(showlayer);    // needed on Windows
     
-    mainptr->UpdateMenuItems(mainptr->IsActive());
+    mainptr->UpdateMenuItems();
 }
 
 // -----------------------------------------------------------------------------
@@ -916,7 +916,7 @@ void CreateTiles()
     
     // change viewptr to tile window for current layer
     viewptr = currlayer->tilewin;
-    if (mainptr->IsActive()) viewptr->SetFocus();
+    if (mainptr->infront) viewptr->SetFocus();
 }
 
 // -----------------------------------------------------------------------------
@@ -925,7 +925,7 @@ void DestroyTiles()
 {
     // reset viewptr to main viewport window
     viewptr = bigview;
-    if (mainptr->IsActive()) viewptr->SetFocus();
+    if (mainptr->infront) viewptr->SetFocus();
     
     // destroy all tile windows
     for ( int i = 0; i < numlayers; i++ )
@@ -1075,7 +1075,7 @@ void CurrentLayerChanged()
     if (tilelayers && numlayers > 1) {
         // switch to new tile
         viewptr = currlayer->tilewin;
-        if (mainptr->IsActive()) viewptr->SetFocus();
+        if (mainptr->infront) viewptr->SetFocus();
     }
     
     if (allowundo) {
@@ -1091,7 +1091,7 @@ void CurrentLayerChanged()
     // SetStepExponent calls SetGenIncrement
     mainptr->SetWindowTitle(currlayer->currname);
     
-    mainptr->UpdateUserInterface(mainptr->IsActive());
+    mainptr->UpdateUserInterface();
     mainptr->UpdatePatternAndStatus();
     bigview->UpdateScrollBars();
 }
@@ -1341,7 +1341,7 @@ void DeleteOtherLayers()
                         // user hit Cancel so restore current layer and generating flag
                         SetLayer(oldindex);
                         mainptr->generating = oldgen;
-                        mainptr->UpdateUserInterface(mainptr->IsActive());
+                        mainptr->UpdateUserInterface();
                         return;
                     }
                     SetLayer(oldindex);
@@ -1391,7 +1391,7 @@ void DeleteOtherLayers()
     // select LAYER_0 button (also deselects old button)
     layerbarptr->SelectButton(LAYER_0, true);
     
-    mainptr->UpdateMenuItems(mainptr->IsActive());
+    mainptr->UpdateMenuItems();
     mainptr->UpdatePatternAndStatus();
 }
 
@@ -1625,7 +1625,7 @@ void ToggleSyncViews()
 {
     syncviews = !syncviews;
     
-    mainptr->UpdateUserInterface(mainptr->IsActive());
+    mainptr->UpdateUserInterface();
     mainptr->UpdatePatternAndStatus();
 }
 
@@ -1635,7 +1635,7 @@ void ToggleSyncCursors()
 {
     synccursors = !synccursors;
     
-    mainptr->UpdateUserInterface(mainptr->IsActive());
+    mainptr->UpdateUserInterface();
     mainptr->UpdatePatternAndStatus();
 }
 
@@ -1651,7 +1651,7 @@ void ToggleStackLayers()
     }
     layerbarptr->SelectButton(STACK_LAYERS, stacklayers);
     
-    mainptr->UpdateUserInterface(mainptr->IsActive());
+    mainptr->UpdateUserInterface();
     if (inscript) {
         // always update viewport and status bar
         inscript = false;
@@ -1679,7 +1679,7 @@ void ToggleTileLayers()
         if (numlayers > 1) DestroyTiles();
     }
     
-    mainptr->UpdateUserInterface(mainptr->IsActive());
+    mainptr->UpdateUserInterface();
     if (inscript) {
         // always update viewport and status bar
         inscript = false;

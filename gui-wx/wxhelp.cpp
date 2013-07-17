@@ -336,7 +336,7 @@ void ShowHelp(const wxString& filepath)
 
 void HelpFrame::OnActivate(wxActivateEvent& event)
 {
-    // note that helpptr->IsActive() is not always reliable so we set infront flag
+    // IsActive() is not always reliable so we set infront flag
     infront = event.GetActive();
     if (infront) {
         // help window is being activated
@@ -344,7 +344,7 @@ void HelpFrame::OnActivate(wxActivateEvent& event)
         
         // ensure correct menu items, esp after help window
         // is clicked while app is in background
-        mainptr->UpdateMenuItems(false);
+        mainptr->UpdateMenuItems();
     }
     event.Skip();
 }

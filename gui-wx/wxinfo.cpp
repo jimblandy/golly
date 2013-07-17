@@ -192,7 +192,7 @@ void InfoFrame::OnActivate(wxActivateEvent& event)
     if ( event.GetActive() ) {
         // ensure correct menu items, esp after info window
         // is clicked while app is in background
-        mainptr->UpdateMenuItems(false);
+        mainptr->UpdateMenuItems();
     }
     event.Skip();
 }

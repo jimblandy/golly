@@ -37,7 +37,7 @@ int EditBarHeight();
 void ResizeEditBar(int wd);
 // Change width of edit bar.
 
-void UpdateEditBar(bool active);
+void UpdateEditBar();
 // Update state of buttons in edit bar.
 
 void ToggleEditBar();

@@ -1884,7 +1884,7 @@ XS(pl_setcursor)
     if (cursptr) {
         viewptr->SetCursorMode(cursptr);
         // see the cursor change, including button in edit bar
-        mainptr->UpdateUserInterface(mainptr->IsActive());
+        mainptr->UpdateUserInterface();
     } else {
         PERL_ERROR("g_setcursor error: unknown cursor string.");
     }
@@ -2887,7 +2887,7 @@ XS(pl_getxy)
     dXSARGS;
     if (items != 0) PERL_ERROR("Usage: $string = g_getxy().");
     
-    statusptr->CheckMouseLocation(mainptr->IsActive());   // sets mousepos
+    statusptr->CheckMouseLocation(mainptr->infront);   // sets mousepos
     if (viewptr->showcontrols) mousepos = wxEmptyString;
     
     XSRETURN_PV((const char*)mousepos.mb_str(wxConvLocal));

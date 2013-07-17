@@ -548,11 +548,11 @@ void MainFrame::CreateToolbar()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::UpdateToolBar(bool active)
+void MainFrame::UpdateToolBar()
 {
     // update tool bar buttons according to the current state
     if (toolbarptr && showtool) {
-        if (viewptr->waitingforclick) active = false;
+        bool active = !viewptr->waitingforclick;
         bool timeline = TimelineExists();
         
         // set state of start/stop button
@@ -630,16 +630,18 @@ void MainFrame::EnableAllMenus(bool enable)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::UpdateMenuItems(bool active)
+void MainFrame::UpdateMenuItems()
 {
     // update menu bar items according to the given state
     wxMenuBar* mbar = GetMenuBar();
     if (mbar) {
-        bool textinclip = ClipboardHasText();
+        // we need to disable most menu items if main window is not in front so user can
+        // hit return key to close help/info window rather than start/stop generating
+        bool active = infront && !viewptr->waitingforclick;
+        
         bool selexists = viewptr->SelectionExists();
         bool timeline = TimelineExists();
-        
-        if (viewptr->waitingforclick) active = false;
+        bool textinclip = ClipboardHasText();
         
         mbar->Enable(wxID_NEW,           active && !inscript);
         mbar->Enable(wxID_OPEN,          active && !inscript);
@@ -841,19 +843,19 @@ void MainFrame::UpdateMenuItems(bool active)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::UpdateUserInterface(bool active)
+void MainFrame::UpdateUserInterface()
 {
-    UpdateToolBar(active);
-    UpdateLayerBar(active);
-    UpdateEditBar(active);
-    UpdateTimelineBar(active);
-    UpdateMenuItems(active);
-    viewptr->CheckCursor(active);
-    statusptr->CheckMouseLocation(active);
+    UpdateToolBar();
+    UpdateLayerBar();
+    UpdateEditBar();
+    UpdateTimelineBar();
+    UpdateMenuItems();
+    viewptr->CheckCursor(infront);
+    statusptr->CheckMouseLocation(infront);
     
 #ifdef __WXMSW__
     // ensure viewport window has keyboard focus if main window is active
-    if (active) viewptr->SetFocus();
+    if (infront) viewptr->SetFocus();
 #endif
 }
 
@@ -864,12 +866,12 @@ void MainFrame::UpdateEverything()
 {
     if (IsIconized()) {
         // main window has been minimized, so only update menu bar items
-        UpdateMenuItems(false);
+        UpdateMenuItems();
         return;
     }
     
     // update all tool bars, menus and cursor
-    UpdateUserInterface(IsActive());
+    UpdateUserInterface();
     
     if (inscript) {
         // make sure scroll bars are accurate while running script
@@ -900,7 +902,7 @@ void MainFrame::UpdatePatternAndStatus()
     if (!IsIconized()) {
         bigview->Refresh(false);
         if (showstatus) {
-            statusptr->CheckMouseLocation(IsActive());
+            statusptr->CheckMouseLocation(infront);
             statusptr->Refresh(false);
         }
     }
@@ -915,7 +917,7 @@ void MainFrame::UpdateStatus()
     
     if (!IsIconized()) {
         if (showstatus) {
-            statusptr->CheckMouseLocation(IsActive());
+            statusptr->CheckMouseLocation(infront);
             statusptr->Refresh(false);
         }
     }
@@ -1112,7 +1114,7 @@ void MainFrame::ToggleExactNumbers()
         // show the status bar using new size
         ToggleStatusBar();
     } else {
-        UpdateMenuItems(IsActive());
+        UpdateMenuItems();
     }
 }
 
@@ -1501,7 +1503,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
             }
     }
     
-    UpdateUserInterface(IsActive());
+    UpdateUserInterface();
     
     if (inscript) {
         // update viewport, status bar, scroll bars, window title
@@ -1530,27 +1532,25 @@ void MainFrame::OnSetFocus(wxFocusEvent& WXUNUSED(event))
 
 void MainFrame::OnActivate(wxActivateEvent& event)
 {
-    // note that IsActive() doesn't always match event.GetActive()
+    // IsActive() is not always reliable so we set infront flag
+    infront = event.GetActive();
     
-    if (viewptr->waitingforclick && !event.GetActive()) {
+    if (viewptr->waitingforclick && !infront) {
         // cancel paste if main window is no longer in front
         viewptr->AbortPaste();
     }
     
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-    // to avoid disabled menu items after a modal dialog closes
-    // don't call UpdateMenuItems on deactivation
-    if (event.GetActive()) {
-        UpdateUserInterface(true);
-        // need to set focus to avoid next IsActive() call returning false
-        // (presumably due to a wxMac bug)
-        viewptr->SetFocus();
+    if (infront) {
+        // we must only call UpdateMenuItems when main window is being activated
+        // (otherwise menu problems will occur on Ubuntu when using Unity)
+        UpdateUserInterface();
+        viewptr->SetFocus();    // play safe
     } else {
+#ifdef __WXMAC__
+        // avoid problems with incorrect cursor in help window
         wxSetCursor(*wxSTANDARD_CURSOR);
-    }
-#else
-    UpdateUserInterface(event.GetActive());
 #endif
+    }
     
 #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
     /* wxGTK 2.8 requires this hack to re-enable menu items after a modal
@@ -1559,7 +1559,7 @@ void MainFrame::OnActivate(wxActivateEvent& event)
        non-reentrant).  Maybe caused by timer events not being dispatched
        from the GUI thread?
     */
-    if (event.GetActive()) onetimer->Start(20, wxTIMER_ONE_SHOT);
+    if (infront) onetimer->Start(20, wxTIMER_ONE_SHOT);
     // OnOneTimer will be called after delay of 0.02 secs
 #endif
     
@@ -1625,7 +1625,7 @@ void MainFrame::OnIdle(wxIdleEvent& event)
         call_unselect = false;
         
         // calling SetFocus once doesn't stuff up layer bar buttons
-        if ( IsActive() && viewptr ) viewptr->SetFocus();
+        if (infront && viewptr) viewptr->SetFocus();
     }
     
     if (!editpath.IsEmpty()) {
@@ -1636,7 +1636,7 @@ void MainFrame::OnIdle(wxIdleEvent& event)
     // ensure viewport window has keyboard focus if main window is active;
     // note that we can't do this on Windows because it stuffs up clicks
     // in layer bar buttons
-    if ( IsActive() && viewptr ) viewptr->SetFocus();
+    if (infront && viewptr) viewptr->SetFocus();
 #endif
     
     // process any pending script/pattern files
@@ -1897,8 +1897,8 @@ void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
     // splitwin's sash was double-clicked
     if (showpatterns) ToggleShowPatterns();
     if (showscripts) ToggleShowScripts();
-    UpdateMenuItems(IsActive());
-    UpdateToolBar(IsActive());
+    UpdateMenuItems();
+    UpdateToolBar();
 }
 
 // -----------------------------------------------------------------------------
@@ -1913,7 +1913,7 @@ void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
     
     // fix menu item problem on Linux after modal dialog has closed
 #ifdef __WXGTK__
-    UpdateMenuItems(true);
+    UpdateMenuItems();
 #endif
 }
 
@@ -1995,7 +1995,7 @@ void MainFrame::OnClose(wxCloseEvent& event)
                         if (!SaveCurrentLayer()) {
                             // user cancelled "save changes" dialog so restore layer
                             SetLayer(oldindex);
-                            UpdateUserInterface(IsActive());
+                            UpdateUserInterface();
                             event.Veto();
                             return;
                         }

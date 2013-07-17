@@ -409,7 +409,7 @@ void MainFrame::SetGeneration()
         } else {
             // Reset/Undo/Redo items might become enabled or disabled
             // (we need to do this if user clicked "Generation=..." text)
-            UpdateMenuItems(IsActive());
+            UpdateMenuItems();
         }
     }
 }
@@ -511,7 +511,7 @@ void MainFrame::DisplayPattern()
     }
     
     if (showstatus) {
-        statusptr->CheckMouseLocation(IsActive());
+        statusptr->CheckMouseLocation(infront);
         statusptr->Refresh(false);
         statusptr->Update();
     }
@@ -1211,7 +1211,7 @@ void MainFrame::GeneratePattern()
     
     generating = true;               // avoid re-entry
     wxGetApp().PollerReset();
-    UpdateUserInterface(IsActive());
+    UpdateUserInterface();
     
     // only show hashing info while generating, otherwise Mac app can crash
     // after a paste due to hlifealgo::resize() calling lifestatus() which
@@ -1239,7 +1239,7 @@ void MainFrame::GeneratePattern()
             // currexpo >= 0 so advance pattern by currlayer->algo->getIncrement() gens
             if (!StepPattern()) break;
             if (currlayer->algo->isrecording()) {
-                if (showtimeline) UpdateTimelineBar(IsActive());
+                if (showtimeline) UpdateTimelineBar();
                 if (currlayer->algo->getframecount() == MAX_FRAME_COUNT) {
                     wxString msg;
                     msg.Printf(_("No more frames can be recorded (maximum = %d)."), MAX_FRAME_COUNT);
@@ -1288,7 +1288,7 @@ void MainFrame::GeneratePattern()
             if (currlayer->autofit) viewptr->FitInView(1);
         }
         if (!showtimeline) ToggleTimelineBar();
-        UpdateUserInterface(true);
+        UpdateUserInterface();
     }
     
     DoPendingAction(true);     // true means we can restart generating loop
@@ -1533,7 +1533,7 @@ void MainFrame::NextGeneration(bool useinc)
             begingen = curralgo->getGeneration().todouble();
         }
         wxGetApp().PollerReset();
-        viewptr->CheckCursor(IsActive());
+        viewptr->CheckCursor(infront);
     }
     
     bool boundedgrid = (curralgo->gridwd > 0 || curralgo->gridht > 0);
@@ -1541,8 +1541,8 @@ void MainFrame::NextGeneration(bool useinc)
     if (useinc) {
         // step by current increment
         if (curralgo->getIncrement() > bigint::one && !inscript) {
-            UpdateToolBar(IsActive());
-            UpdateMenuItems(IsActive());
+            UpdateToolBar();
+            UpdateMenuItems();
         }
         if (boundedgrid) {
             // temporarily set the increment to 1 so we can call CreateBorderCells()
