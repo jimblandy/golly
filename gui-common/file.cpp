@@ -27,20 +27,19 @@
 #endif
 
 #ifdef IOS_GUI
-    // for opening zip files and extracting files stored within them
-    // (much thanks to https://github.com/flyingdolphinstudio/Objective-Zip)
-    #import "ZipFile.h"
-    #import "ZipException.h"
-    #import "FileInZipInfo.h"
-    #import "ZipReadStream.h"
-
     #import "GollyAppDelegate.h"        // for SwitchToPatternTab
     #import "HelpViewController.h"      // for ShowHelp
     #import "InfoViewController.h"      // for ShowTextFile
 #endif
 
+// we use MiniZip code for opening zip files and extracting files stored within them
+#include "zip.h"
+#include "unzip.h"
+
 #include <string>           // for std::string
 #include <list>             // for std::list
+#include <stdexcept>        // for std::runtime_error and std::exception
+#include <sstream>          // for std::ostringstream
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -399,34 +398,64 @@ void LoadRule(const std::string& rulestring)
 
 // -----------------------------------------------------------------------------
 
-#ifdef IOS_GUI
-
 bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, const std::string& outfile)
 {
     bool found = false;
     bool ok = false;
+    std::ostringstream oss;
+    int err;
+    char* zipdata = NULL;
 
-    @try {
-        NSString *nspath = [NSString stringWithCString:zippath.c_str() encoding:NSUTF8StringEncoding];
-        ZipFile *zfile= [[ZipFile alloc] initWithFileName:nspath mode:ZipFileModeUnzip];
+    unzFile zfile = unzOpen(zippath.c_str());
+    if (zfile == NULL) {
+        std::string msg = "Could not open zip file:\n" + zippath;
+        Warning(msg.c_str());
+        return false;
+    }
 
-        [zfile goToFirstFileInZip];
+    try {
+        err = unzGoToFirstFile(zfile);
+        if (err != UNZ_OK) {
+            oss << "Error going to first file in zip file:\n" << zippath.c_str();
+            throw std::runtime_error(oss.str().c_str());
+        }
         do {
-            FileInZipInfo *info = [zfile getCurrentFileInZipInfo];
-            std::string thisname = [info.name cStringUsingEncoding:NSUTF8StringEncoding];
+            char filename[256];
+            unz_file_info file_info;
+            err = unzGetCurrentFileInfo(zfile, &file_info, filename, sizeof(filename), NULL, 0, NULL, 0);
+            if (err != UNZ_OK) {
+                oss << "Error getting current file info in zip file:\n" << zippath.c_str();
+                throw std::runtime_error(oss.str().c_str());
+            }
+            std::string thisname = filename;
             if (thisname == entryname) {
+                found = true;
                 // we've found the desired entry so copy entry data to given outfile
-                ZipReadStream *zipstream = [zfile readCurrentFileInZip];
-                NSMutableData *zipdata = [[NSMutableData alloc] initWithLength:info.length];
-                int bytesRead = [zipstream readDataWithBuffer:zipdata];
-                [zipstream finishedReading];
-                if (info.length == 0) {
+                zipdata = (char*) malloc(file_info.uncompressed_size);
+                if (zipdata == NULL) {
+                    throw std::runtime_error("Failed to allocate memory for zip file entry!");
+                }
+                err = unzOpenCurrentFilePassword(zfile, NULL);
+                if (err != UNZ_OK) {
+                    oss << "Error opening current zip entry:\n" << entryname.c_str();
+                    throw std::runtime_error(oss.str().c_str());
+                }
+                int bytesRead = unzReadCurrentFile(zfile, zipdata, file_info.uncompressed_size);
+                if (bytesRead < 0) {
+                    throw std::runtime_error("Error reading the zip entry data!");
+                }
+                err = unzCloseCurrentFile(zfile);
+                if (err != UNZ_OK) {
+                    oss << "Error closing current zip entry:\n" << entryname.c_str();
+                    throw std::runtime_error(oss.str().c_str());
+                }
+                if (file_info.uncompressed_size == 0) {
                     Warning("Zip entry is empty!");
-                } else if (bytesRead == info.length) {
+                } else if (bytesRead == file_info.uncompressed_size) {
                     // write zipdata to outfile
                     FILE* f = fopen(outfile.c_str(), "wb");
                     if (f) {
-                        if (fwrite([zipdata mutableBytes], 1, bytesRead, f) != bytesRead) {
+                        if (fwrite(zipdata, 1, bytesRead, f) != bytesRead) {
                             Warning("Could not write data for zip entry!");
                         } else {
                             ok = true;
@@ -438,22 +467,20 @@ bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, c
                 } else {
                     Warning("Failed to read all bytes of zip entry!");
                 }
-                zipdata = nil;
-                found = true;
                 break;
             }
-        } while ([zfile goToNextFileInZip]);
+        } while (unzGoToNextFile(zfile) == UNZ_OK);
+    }
+    catch(const std::exception& e) {
+        // display message set by throw std::runtime_error(...)
+        Warning(e.what());
+    }
+    
+    if (zipdata) free(zipdata);
 
-        [zfile close];
-        zfile = nil;
-
-    } @catch (ZipException *ze) {
-        NSString *msg = [NSString stringWithFormat:@"Zip file error: %d - %@", ze.error, [ze reason]];
-        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
-
-    } @catch (id e) {
-        NSString *msg = [NSString stringWithFormat:@"Exception caught: %@ - %@", [[e class] description], [e description]];
-        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+    err = unzClose(zfile);
+    if (err != UNZ_OK) {
+        Warning("Error closing zip file!");
     }
 
     if (found && ok) return true;
@@ -462,7 +489,7 @@ bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, c
         std::string msg = "Could not find zip file entry:\n" + entryname;
         Warning(msg.c_str());
     } else {
-        // file is probably incomplete so best to delete it
+        // outfile is probably incomplete so best to delete it
         if (FileExists(outfile)) RemoveFile(outfile);
     }
 
@@ -513,21 +540,42 @@ void UnzipFile(const std::string& zippath, const std::string& entry)
 
 // -----------------------------------------------------------------------------
 
-static bool RuleInstalled(ZipFile* zipfile, FileInZipInfo* info, const std::string& outfile)
+static bool RuleInstalled(unzFile zfile, unz_file_info& info, const std::string& outfile)
 {
-    bool ok = true;
-    ZipReadStream *zipstream = [zipfile readCurrentFileInZip];
-    NSMutableData *zipdata = [[NSMutableData alloc] initWithLength:info.length];
-    int bytesRead = [zipstream readDataWithBuffer:zipdata];
-    [zipstream finishedReading];
-    if (info.length == 0) {
+    if (info.uncompressed_size == 0) {
         Warning("Zip entry is empty!");
-        ok = false;
-    } else if (bytesRead == info.length) {
+        return false;
+    }
+
+    char* zipdata = (char*) malloc(info.uncompressed_size);
+    if (zipdata == NULL) {
+        Warning("Failed to allocate memory for rule file!");
+        return false;
+    }
+
+    int err = unzOpenCurrentFilePassword(zfile, NULL);
+    if (err != UNZ_OK) {
+        Warning("Error opening current zip entry!");
+        free(zipdata);
+        return false;
+    }
+    
+    int bytesRead = unzReadCurrentFile(zfile, zipdata, info.uncompressed_size);
+    if (bytesRead < 0) {
+        // error is detected below
+    }
+    err = unzCloseCurrentFile(zfile);
+    if (err != UNZ_OK) {
+        Warning("Error closing current zip entry!");
+        // but keep going
+    }
+    
+    bool ok = true;
+    if (bytesRead == info.uncompressed_size) {
         // write zipdata to outfile
         FILE* f = fopen(outfile.c_str(), "wb");
         if (f) {
-            if (fwrite([zipdata mutableBytes], 1, bytesRead, f) != bytesRead) {
+            if (fwrite(zipdata, 1, bytesRead, f) != bytesRead) {
                 Warning("Could not write data for zip entry!");
                 ok = false;
             }
@@ -540,7 +588,7 @@ static bool RuleInstalled(ZipFile* zipfile, FileInZipInfo* info, const std::stri
         Warning("Failed to read all bytes of zip entry!");
         ok = false;
     }
-    zipdata = nil;
+    free(zipdata);
     return ok;
 }
 
@@ -569,6 +617,7 @@ void OpenZipFile(const char* zippath)
     int deprecated = 0;                 // # of .table/tree/colors/icons files
     std::list<std::string> deplist;     // list of installed deprecated files
     std::list<std::string> rulelist;    // list of installed .rule files
+    int err;
 
     // strip off patternsdir or gollydir
     std::string relpath = zippath;
@@ -584,18 +633,29 @@ void OpenZipFile(const char* zippath)
     contents += relpath;
     contents += ":<p>\n";
 
-    @try {
-        NSString *nspath = [NSString stringWithCString:zippath encoding:NSUTF8StringEncoding];
-        ZipFile *zfile= [[ZipFile alloc] initWithFileName:nspath mode:ZipFileModeUnzip];
+    unzFile zfile = unzOpen(zippath);
+    if (zfile == NULL) {
+        std::string msg = "Could not open zip file:\n";
+        msg += zippath;
+        Warning(msg.c_str());
+        return;
+    }
 
-        [zfile goToFirstFileInZip];
+    try {
+        err = unzGoToFirstFile(zfile);
+        if (err != UNZ_OK) {
+            throw std::runtime_error("Error going to first file in zip file!");
+        }
         do {
-            FileInZipInfo *info = [zfile getCurrentFileInZipInfo];
-            // NSLog(@"- %@ %@ %d len=%d (%d)", info.name, info.date, info.size, info.length, info.level);
-
             // examine each entry in zip file and build contents string;
             // also install any .rule files
-            std::string name = [info.name cStringUsingEncoding:NSUTF8StringEncoding];
+            char entryname[256];
+            unz_file_info file_info;
+            err = unzGetCurrentFileInfo(zfile, &file_info, entryname, sizeof(entryname), NULL, 0, NULL, 0);
+            if (err != UNZ_OK) {
+                throw std::runtime_error("Error getting current file info in zip file!");
+            }
+            std::string name = entryname;
             if (name.find("__MACOSX") == 0 || name.rfind(".DS_Store") != std::string::npos) {
                 // ignore meta-data stuff in zip file created on Mac
             } else {
@@ -640,7 +700,7 @@ void OpenZipFile(const char* zippath)
                         deprecated++;
                         // install it into userrules so it can be used below to create a .rule file
                         std::string outfile = userrules + filename;
-                        if (RuleInstalled(zfile, info, outfile)) {
+                        if (RuleInstalled(zfile, file_info, outfile)) {
                             deplist.push_back(filename);
                         } else {
                             contents += indent;
@@ -660,7 +720,7 @@ void OpenZipFile(const char* zippath)
                         if ( IsRuleFile(filename) ) {
                             // extract and install .rule file into userrules
                             std::string outfile = userrules + filename;
-                            if (RuleInstalled(zfile, info, outfile)) {
+                            if (RuleInstalled(zfile, file_info, outfile)) {
                                 // file successfully installed
                                 rulelist.push_back(filename);
                                 contents += indent;
@@ -700,18 +760,16 @@ void OpenZipFile(const char* zippath)
                 }
             }
 
-        } while ([zfile goToNextFileInZip]);
+        } while (unzGoToNextFile(zfile) == UNZ_OK);
+    }
+    catch(const std::exception& e) {
+        // display message set by throw std::runtime_error(...)
+        Warning(e.what());
+    }
 
-        [zfile close];
-        zfile = nil;
-
-    } @catch (ZipException *ze) {
-        NSString *msg = [NSString stringWithFormat:@"Zip file error: %d - %@", ze.error, [ze reason]];
-        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
-
-    } @catch (id e) {
-        NSString *msg = [NSString stringWithFormat:@"Exception caught: %@ - %@", [[e class] description], [e description]];
-        Warning([msg cStringUsingEncoding:NSUTF8StringEncoding]);
+    err = unzClose(zfile);
+    if (err != UNZ_OK) {
+        Warning("Error closing zip file!");
     }
 
     if (rulefiles > 0) {
@@ -755,8 +813,6 @@ void OpenZipFile(const char* zippath)
     ShowHelp(htmlfile.c_str());
 }
 
-#endif // IOS_GUI
-
 // -----------------------------------------------------------------------------
 
 void OpenFile(const char* path, bool remember)
@@ -797,13 +853,7 @@ void OpenFile(const char* path, bool remember)
     if (IsZipFile(path)) {
         // process zip file
         if (remember) AddRecentPattern(path);   // treat zip file like a pattern file
-#ifdef ANDROID_GUI
-        // not yet implemented!!!
-        LOGI("OpenZipFile: %s", fullpath.c_str());
-#endif
-#ifdef IOS_GUI
         OpenZipFile(fullpath.c_str());          // must use full path
-#endif
         return;
     }
 

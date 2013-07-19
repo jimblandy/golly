@@ -10,12 +10,19 @@ LOCAL_SRC_FILES := jnicalls.cpp
 GUI_COMMON := $(wildcard $(LOCAL_PATH)/../../../gui-common/*.cpp)
 LOCAL_SRC_FILES += $(GUI_COMMON:$(LOCAL_PATH)/%=%)
 
-# include .h files in gui-common
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../gui-common
+# add .c files in gui-common/MiniZip
+MINIZIP := $(wildcard $(LOCAL_PATH)/../../../gui-common/MiniZip/*.c)
+LOCAL_SRC_FILES += $(MINIZIP:$(LOCAL_PATH)/%=%)
 
 # add .cpp files in gollybase
 GOLLYBASE := $(wildcard $(LOCAL_PATH)/../../../gollybase/*.cpp)
 LOCAL_SRC_FILES += $(GOLLYBASE:$(LOCAL_PATH)/%=%)
+
+# include .h files in gui-common
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../gui-common
+
+# include .h files in gui-common/MiniZip
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../gui-common/MiniZip
 
 # include .h files in gollybase
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../gollybase
