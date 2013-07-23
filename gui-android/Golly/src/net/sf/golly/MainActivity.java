@@ -30,6 +30,7 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -130,9 +131,41 @@ public class MainActivity extends Activity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // this adds items to the action bar if it is present
+        // this adds items to the action bar
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // called when PATTERN item in action bar is tapped
+    public void doPattern(MenuItem item) {
+    	// not yet implemented!!!
+    	Log.i("Golly", "switch to Pattern screen");
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // called when OPEN item in action bar is tapped
+    public void doOpen(MenuItem item) {
+    	// not yet implemented!!!
+    	Log.i("Golly", "switch to Open screen");
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // called when SETTINGS item in action bar is tapped
+    public void doSettings(MenuItem item) {
+    	// not yet implemented!!!
+    	Log.i("Golly", "switch to Settings screen");
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // called when HELP item in action bar is tapped
+    public void doHelp(MenuItem item) {
+    	// not yet implemented!!!
+    	Log.i("Golly", "switch to Help screen");
     }
 
     // -----------------------------------------------------------------------------
@@ -150,7 +183,7 @@ public class MainActivity extends Activity
     protected void onResume() {
         super.onResume();
         pattView.onResume();
-        updateButtons();
+        UpdateButtons();
         if (nativeIsGenerating()) {
     		genhandler.post(generate);
     	}
@@ -210,7 +243,7 @@ public class MainActivity extends Activity
 
     // -----------------------------------------------------------------------------
 
-    public void updateButtons() {
+    public void UpdateButtons() {
     	if (nativeIsGenerating()) {
     		ssbutton.setText("Stop");
     		ssbutton.setTextColor(Color.rgb(255,0,0));
@@ -222,13 +255,6 @@ public class MainActivity extends Activity
         	undobutton.setEnabled(nativeAllowUndo() && (nativeCanReset() || nativeCanUndo()));
         	redobutton.setEnabled(nativeCanRedo());
     	}
-        switch (nativeGetMode()) {
-    		case 0: modebutton.setText("Draw"); break;
-    		case 1: modebutton.setText("Pick"); break;
-    		case 2: modebutton.setText("Select"); break;
-    		case 3: modebutton.setText("Move"); break;
-    		default: // should never happen
-        }
     }
 
     // -----------------------------------------------------------------------------
@@ -243,7 +269,7 @@ public class MainActivity extends Activity
     		// stop generating
     		genhandler.removeCallbacks(generate);
     	}
-    	updateButtons();
+    	UpdateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -252,7 +278,7 @@ public class MainActivity extends Activity
     public void doStep(View view) {
     	genhandler.removeCallbacks(generate);
     	nativeStep();
-    	updateButtons();
+    	UpdateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -302,7 +328,7 @@ public class MainActivity extends Activity
     public void doReset(MenuItem item) {
     	genhandler.removeCallbacks(generate);
     	nativeResetPattern();
-    	updateButtons();
+    	UpdateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -357,7 +383,7 @@ public class MainActivity extends Activity
     public void doUndo(View view) {
     	genhandler.removeCallbacks(generate);
     	nativeUndo();
-    	updateButtons();
+    	UpdateButtons();
     	
     }
 
@@ -367,7 +393,7 @@ public class MainActivity extends Activity
     public void doRedo(View view) {
     	// nativeIsGenerating() should never be true here
     	nativeRedo();
-    	updateButtons();
+    	UpdateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -392,7 +418,7 @@ public class MainActivity extends Activity
 
     // -----------------------------------------------------------------------------
     
-    // called when a Draw/Pick/Select/Move item is selected
+    // called when Draw/Pick/Select/Move item is selected
     public void doMode(MenuItem item) {
         switch (item.getItemId()) {
         	case R.id.draw:   nativeSetMode(0); break;
@@ -401,7 +427,7 @@ public class MainActivity extends Activity
         	case R.id.move:   nativeSetMode(3); break;
         	default:          // should never happen
         }
-        updateButtons();
+        UpdateEditBar();
     }
 
     // -----------------------------------------------------------------------------
@@ -410,7 +436,8 @@ public class MainActivity extends Activity
     public void doNewPattern(View view) {
     	genhandler.removeCallbacks(generate);
     	nativeNewPattern();
-    	updateButtons();
+    	UpdateButtons();
+    	UpdateEditBar();
     	
     	// delete all files in tempdir
     	//!!! only if nativeNumLayers() == 1
@@ -476,7 +503,14 @@ public class MainActivity extends Activity
             public void run() {
                 undobutton.setEnabled(nativeCanUndo());
                 redobutton.setEnabled(nativeCanRedo());
-                //!!! also show current drawing state and touch mode
+                switch (nativeGetMode()) {
+        			case 0: modebutton.setText("Draw"); break;
+        			case 1: modebutton.setText("Pick"); break;
+        			case 2: modebutton.setText("Select"); break;
+        			case 3: modebutton.setText("Move"); break;
+        			default: // should never happen
+                }
+                //!!! also show current drawing state
         	}
         });
     }
