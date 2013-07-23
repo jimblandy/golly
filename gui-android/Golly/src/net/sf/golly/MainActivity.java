@@ -31,8 +31,11 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 public class MainActivity extends Activity
@@ -58,17 +61,25 @@ public class MainActivity extends Activity
     private native void nativeFitPattern();
     private native void nativeGenerate();
     private native void nativeStep();
+    private native void nativeStep1();
+    private native void nativeFaster();
+    private native void nativeSlower();
+    private native void nativeScale1to1();
+    private native void nativeBigger();
+    private native void nativeSmaller();
+    private native void nativeMiddle();
+    private native int nativeCalculateSpeed();
 
     // local fields
     private static boolean firstcall = true;
 	private Button ssbutton;						// Start/Stop button
-	private Button resetbutton;						// Reset button
 	private Button undobutton;						// Undo button
 	private Button redobutton;						// Redo button
     private TextView status1, status2, status3;		// status bar has 3 lines
     private PatternGLSurfaceView pattView;			// OpenGL ES is used to draw patterns
     private Handler genhandler;						// for generating patterns
     private Runnable generate;						// code started/stopped by genhandler
+    private int geninterval;						// interval between generate calls (in millisecs)
 
 	// -----------------------------------------------------------------------------
     
@@ -85,26 +96,11 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_layout);
         ssbutton = (Button) findViewById(R.id.startstop);
-        resetbutton = (Button) findViewById(R.id.reset);
         undobutton = (Button) findViewById(R.id.undo);
         redobutton = (Button) findViewById(R.id.redo);
         status1 = (TextView) findViewById(R.id.status1);
         status2 = (TextView) findViewById(R.id.status2);
         status3 = (TextView) findViewById(R.id.status3);
-        /* this reduces font width, but a bit ugly:
-        status1.setTextScaleX(0.9f);
-        status2.setTextScaleX(0.9f);
-        status3.setTextScaleX(0.9f);
-        */
-        
-        genhandler = new Handler();
-        generate = new Runnable() {
-        	@Override
-        	public void run() {
-        		nativeGenerate();
-        		genhandler.postDelayed(this, 1000/60);		// max speed is 60 fps???
-        	}
-        };
 
         if (firstcall) {
         	firstcall = false;
@@ -112,9 +108,18 @@ public class MainActivity extends Activity
         }
         nativeCreate();			// must be called every time (to cache jobject)
         
-        // following will call the PatternGLSurfaceView constructor
+        // this will call the PatternGLSurfaceView constructor
         pattView = (PatternGLSurfaceView) findViewById(R.id.patternview);
         
+        geninterval = nativeCalculateSpeed();
+        genhandler = new Handler();
+        generate = new Runnable() {
+        	@Override
+        	public void run() {
+        		nativeGenerate();
+        		genhandler.postDelayed(this, geninterval);
+        	}
+        };
     }
 
     // -----------------------------------------------------------------------------
@@ -205,25 +210,14 @@ public class MainActivity extends Activity
     	if (nativeIsGenerating()) {
     		ssbutton.setText("Stop");
     		ssbutton.setTextColor(Color.rgb(255,0,0));
-        	resetbutton.setEnabled(true);
         	undobutton.setEnabled(nativeAllowUndo());
         	redobutton.setEnabled(false);
     	} else {
     		ssbutton.setText("Start");
     		ssbutton.setTextColor(Color.rgb(0,255,0));
-        	resetbutton.setEnabled(nativeCanReset());
         	undobutton.setEnabled(nativeAllowUndo() && (nativeCanReset() || nativeCanUndo()));
         	redobutton.setEnabled(nativeCanRedo());
     	}
-    }
-
-    // -----------------------------------------------------------------------------
-    
-    // called when the Reset button is tapped
-    public void doReset(View view) {
-    	genhandler.removeCallbacks(generate);
-    	nativeResetPattern();
-    	updateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -252,10 +246,52 @@ public class MainActivity extends Activity
 
     // -----------------------------------------------------------------------------
     
-    // called when the Speed button is tapped
-    public void doSpeed(View view) {
-    	// display pop-up menu with options: Step=1, Faster, Slower
-    	//!!!
+    // called when the Control button is tapped
+    public void doControl(View view) {
+    	// display pop-up menu with these items: Step=1, Faster, Slower, Reset
+        PopupMenu popup = new PopupMenu(this, view);
+        MenuInflater inflater = popup.getMenuInflater();
+        inflater.inflate(R.menu.control_menu, popup.getMenu());
+        popup.show();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Control menu's Step=1 item is selected
+    public void doStep1(MenuItem item) {
+    	genhandler.removeCallbacks(generate);
+    	nativeStep1();
+    	geninterval = nativeCalculateSpeed();
+        if (nativeIsGenerating()) genhandler.post(generate);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Control menu's Faster item is selected
+    public void doFaster(MenuItem item) {
+    	genhandler.removeCallbacks(generate);
+    	nativeFaster();
+    	geninterval = nativeCalculateSpeed();
+    	if (nativeIsGenerating()) genhandler.post(generate);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Control menu's Slower item is selected
+    public void doSlower(MenuItem item) {
+    	genhandler.removeCallbacks(generate);
+    	nativeSlower();
+    	geninterval = nativeCalculateSpeed();
+    	if (nativeIsGenerating()) genhandler.post(generate);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Control menu's Reset item is selected
+    public void doReset(MenuItem item) {
+    	genhandler.removeCallbacks(generate);
+    	nativeResetPattern();
+    	updateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -267,10 +303,41 @@ public class MainActivity extends Activity
 
     // -----------------------------------------------------------------------------
     
-    // called when the Scale button is tapped
-    public void doScale(View view) {
-    	// display pop-up menu with options: Scale=1:1, Bigger, Smaller, Middle
-    	//!!!
+    // called when the View button is tapped
+    public void doView(View view) {
+    	// display pop-up menu with these items: Scale=1:1, Bigger, Smaller, Middle
+        PopupMenu popup = new PopupMenu(this, view);
+        MenuInflater inflater = popup.getMenuInflater();
+        inflater.inflate(R.menu.view_menu, popup.getMenu());
+        popup.show();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the View menu's Scale=1:1 item is selected
+    public void doScale1to1(MenuItem item) {
+    	nativeScale1to1();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the View menu's Bigger item is selected
+    public void doBigger(MenuItem item) {
+    	nativeBigger();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the View menu's Smaller item is selected
+    public void doSmaller(MenuItem item) {
+    	nativeSmaller();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the View menu's Middle item is selected
+    public void doMiddle(MenuItem item) {
+    	nativeMiddle();
     }
 
     // -----------------------------------------------------------------------------
@@ -296,7 +363,7 @@ public class MainActivity extends Activity
     
     // called when the Edit button is tapped
     public void doEdit(View view) {
-    	// display pop-up menu with options that depend on whether a selection
+    	// display pop-up menu with items that depend on whether a selection
     	// or paste image exists
     	//!!!
     }
@@ -305,7 +372,7 @@ public class MainActivity extends Activity
     
     // called when the Draw/Pick/Select/Move button is tapped
     public void doSetTouchMode(View view) {
-    	// display pop-up menu with options: Draw, Pick, Select, Move
+    	// display pop-up menu with these items: Draw, Pick, Select, Move
     	//!!!
     }
 
@@ -319,8 +386,8 @@ public class MainActivity extends Activity
         // show current touch mode!!!
         // updateDrawingState();
     	
-    	// deletes all files in tempdir
-    	//!!! only if numlayers == 1
+    	// delete all files in tempdir
+    	//!!! only if nativeNumLayers() == 1
     	DeleteTempFiles();
     }
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+		android:id="@+id/step1"
+		android:title="Step = 1"
+		android:onClick="doStep1"
+	/>
+    <item
+		android:id="@+id/faster"
+		android:title="Faster"
+		android:onClick="doFaster"
+	/>
+    <item
+		android:id="@+id/slower"
+		android:title="Slower"
+		android:onClick="doSlower"
+	/>
+    <item
+		android:id="@+id/reset"
+		android:title="Reset"
+		android:onClick="doReset"
+	/>
+</menu>

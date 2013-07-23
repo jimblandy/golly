@@ -381,6 +381,14 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStartStop(JNIEnv* en
 // -----------------------------------------------------------------------------
 
 extern "C"
+JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeIsGenerating(JNIEnv* env)
+{
+    return generating;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env)
 {
 	if (paused) return;		// PauseGenerating has been called
@@ -408,6 +416,63 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
     NextGeneration(true);
 	UpdateStatus();
 	UpdatePattern();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeCalculateSpeed()
+{
+	// calculate the interval (in millisecs) between nativeGenerate calls
+
+	int interval = 1000/60;		// max speed is 60 fps
+
+    // increase interval if user wants a delay
+    if (currlayer->currexpo < 0) {
+        interval = GetCurrentDelay();
+    }
+
+	return interval;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep1()
+{
+    ClearMessage();
+    // reset step exponent to 0
+    currlayer->currexpo = 0;
+    SetGenIncrement();
+    UpdateStatus();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFaster()
+{
+    ClearMessage();
+    // go faster by incrementing step exponent
+    currlayer->currexpo++;
+    SetGenIncrement();
+    UpdateStatus();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSlower()
+{
+    ClearMessage();
+    // go slower by decrementing step exponent
+    if (currlayer->currexpo > minexpo) {
+        currlayer->currexpo--;
+        SetGenIncrement();
+    } else {
+        Beep();
+    }
+    UpdateStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -450,9 +515,59 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitPattern(JNIEnv* e
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeIsGenerating(JNIEnv* env)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1()
 {
-    return generating;
+    ClearMessage();
+    // set scale to 1:1
+    if (currlayer->view->getmag() != 0) {
+        currlayer->view->setmag(0);
+        UpdateStatus();
+        UpdatePattern();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger()
+{
+    ClearMessage();
+    // zoom in
+    if (currlayer->view->getmag() < MAX_MAG) {
+        currlayer->view->zoom();
+        UpdateStatus();
+        UpdatePattern();
+    } else {
+        Beep();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller()
+{
+    ClearMessage();
+    // zoom out
+    currlayer->view->unzoom();
+    UpdateStatus();
+    UpdatePattern();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle()
+{
+    ClearMessage();
+    if (currlayer->originx == bigint::zero && currlayer->originy == bigint::zero) {
+        currlayer->view->center();
+    } else {
+        // put cell saved by ChangeOrigin (not yet implemented!!!) in middle
+        currlayer->view->setpositionmag(currlayer->originx, currlayer->originy, currlayer->view->getmag());
+    }
+    UpdateStatus();
+    UpdatePattern();
 }
 
 // -----------------------------------------------------------------------------

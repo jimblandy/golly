@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+		android:id="@+id/scale1to1"
+		android:title="Scale = 1:1"
+		android:onClick="doScale1to1"
+	/>
+    <item
+		android:id="@+id/bigger"
+		android:title="Bigger"
+		android:onClick="doBigger"
+	/>
+    <item
+		android:id="@+id/smaller"
+		android:title="Smaller"
+		android:onClick="doSmaller"
+	/>
+    <item
+		android:id="@+id/middle"
+		android:title="Middle"
+		android:onClick="doMiddle"
+	/>
+</menu>

@@ -11,18 +11,9 @@
     	android:layout_height="wrap_content"
         android:background="#DDDDDD"
     	android:orientation="horizontal" >
-    	<Button
-    	    android:id="@+id/reset"
-    	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="40sp"
-    	    android:minHeight="0dp"
-    	    android:onClick="doReset"
-    	    android:text="Reset" />
        	<Button
         	android:id="@+id/startstop"
         	style="?android:attr/buttonStyleSmall"
-    	    android:layout_toRightOf="@id/reset"
         	android:minHeight="0dp"
         	android:minWidth="0dp"
         	android:layout_height="40sp"
@@ -40,27 +31,27 @@
     	    android:onClick="doStep"
     	    android:text="Step" />
     	<Button
-    	    android:id="@+id/speed"
+    	    android:id="@+id/control"
     	    style="?android:attr/buttonStyleSmall"
     	    android:layout_toRightOf="@id/step"
     	    android:layout_width="wrap_content"
     	    android:layout_height="40sp"
     	    android:minHeight="0dp"
-    	    android:onClick="doSpeed"
-    	    android:text="Speed" />
+    	    android:onClick="doControl"
+    	    android:text="Control" />
     	<Button
-    	    android:id="@+id/scale"
+    	    android:id="@+id/view"
     	    style="?android:attr/buttonStyleSmall"
     	    android:layout_alignParentRight="true"
     	    android:layout_width="wrap_content"
     	    android:layout_height="40sp"
     	    android:minHeight="0dp"
-    	    android:onClick="doScale"
-    	    android:text="Scale" />
+    	    android:onClick="doView"
+    	    android:text="View" />
     	<Button
     	    android:id="@+id/fitpattern"
     	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_toLeftOf="@id/scale"
+    	    android:layout_toLeftOf="@id/view"
     	    android:layout_width="wrap_content"
     	    android:layout_height="40sp"
     	    android:minHeight="0dp"
@@ -195,7 +186,7 @@
     	    android:layout_height="40sp"
     	    android:minHeight="0dp"
     	    android:onClick="doFullScreen"
-    	    android:text="Full Screen" />
+    	    android:text="Full" />
     </RelativeLayout>
     
 </LinearLayout>
