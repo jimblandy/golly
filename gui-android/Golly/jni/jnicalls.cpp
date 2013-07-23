@@ -132,9 +132,9 @@ extern "C"
 JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusLine(JNIEnv* env, jobject obj, jint line)
 {
     switch (line) {
-    	case 1: return env->NewStringUTF(status1.c_str()); break;
-    	case 2: return env->NewStringUTF(status2.c_str()); break;
-    	case 3: return env->NewStringUTF(status3.c_str()); break;
+    	case 1: return env->NewStringUTF(status1.c_str());
+    	case 2: return env->NewStringUTF(status2.c_str());
+    	case 3: return env->NewStringUTF(status3.c_str());
     }
     return env->NewStringUTF("Fix bug in nativeGetStatusLine!");
 }
@@ -421,7 +421,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeCalculateSpeed()
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeCalculateSpeed(JNIEnv* env)
 {
 	// calculate the interval (in millisecs) between nativeGenerate calls
 
@@ -438,7 +438,7 @@ JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeCalculateSpeed()
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep1()
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep1(JNIEnv* env)
 {
     ClearMessage();
     // reset step exponent to 0
@@ -450,7 +450,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep1()
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFaster()
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFaster(JNIEnv* env)
 {
     ClearMessage();
     // go faster by incrementing step exponent
@@ -462,7 +462,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFaster()
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSlower()
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSlower(JNIEnv* env)
 {
     ClearMessage();
     // go slower by decrementing step exponent
@@ -515,7 +515,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitPattern(JNIEnv* e
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1()
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1(JNIEnv* env)
 {
     ClearMessage();
     // set scale to 1:1
@@ -529,7 +529,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1()
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger()
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger(JNIEnv* env)
 {
     ClearMessage();
     // zoom in
@@ -545,7 +545,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger()
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller()
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller(JNIEnv* env)
 {
     ClearMessage();
     // zoom out
@@ -557,7 +557,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller()
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle()
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle(JNIEnv* env)
 {
     ClearMessage();
     if (currlayer->originx == bigint::zero && currlayer->originy == bigint::zero) {
@@ -568,6 +568,36 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle()
     }
     UpdateStatus();
     UpdatePattern();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetMode(JNIEnv* env)
+{
+    switch (currlayer->touchmode) {
+    	case drawmode:   return 0;
+    	case pickmode:   return 1;
+    	case selectmode: return 2;
+    	case movemode:   return 3;
+    }
+    Warning("Bug detected in nativeGetMode!");
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetMode(JNIEnv* env, jobject obj, jint mode)
+{
+	ClearMessage();
+    switch (mode) {
+    	case 0: currlayer->touchmode = drawmode;   return;
+    	case 1: currlayer->touchmode = pickmode;   return;
+    	case 2: currlayer->touchmode = selectmode; return;
+    	case 3: currlayer->touchmode = movemode;   return;
+    }
+    Warning("Bug detected in nativeSetMode!");
 }
 
 // -----------------------------------------------------------------------------

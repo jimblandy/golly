@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+		android:id="@+id/draw"
+		android:title="Draw"
+		android:onClick="doMode"
+	/>
+    <item
+		android:id="@+id/pick"
+		android:title="Pick"
+		android:onClick="doMode"
+	/>
+    <item
+		android:id="@+id/select"
+		android:title="Select"
+		android:onClick="doMode"
+	/>
+    <item
+		android:id="@+id/move"
+		android:title="Move"
+		android:onClick="doMode"
+	/>
+</menu>

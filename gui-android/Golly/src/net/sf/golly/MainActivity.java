@@ -40,7 +40,7 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity
 {    
-	// see jnicalls.cpp for these routines:
+	// see jnicalls.cpp for the native routines:
     private static native void nativeClassInit();	// must be static
     private native void nativeCreate();				// must NOT be static
     private native void nativeDestroy();
@@ -69,12 +69,15 @@ public class MainActivity extends Activity
     private native void nativeSmaller();
     private native void nativeMiddle();
     private native int nativeCalculateSpeed();
+    private native int nativeGetMode();
+    private native void nativeSetMode(int mode);
 
     // local fields
     private static boolean firstcall = true;
 	private Button ssbutton;						// Start/Stop button
 	private Button undobutton;						// Undo button
 	private Button redobutton;						// Redo button
+	private Button modebutton;						// Draw/Pick/Select/Move button
     private TextView status1, status2, status3;		// status bar has 3 lines
     private PatternGLSurfaceView pattView;			// OpenGL ES is used to draw patterns
     private Handler genhandler;						// for generating patterns
@@ -98,6 +101,7 @@ public class MainActivity extends Activity
         ssbutton = (Button) findViewById(R.id.startstop);
         undobutton = (Button) findViewById(R.id.undo);
         redobutton = (Button) findViewById(R.id.redo);
+        modebutton = (Button) findViewById(R.id.touchmode);
         status1 = (TextView) findViewById(R.id.status1);
         status2 = (TextView) findViewById(R.id.status2);
         status3 = (TextView) findViewById(R.id.status3);
@@ -218,6 +222,13 @@ public class MainActivity extends Activity
         	undobutton.setEnabled(nativeAllowUndo() && (nativeCanReset() || nativeCanUndo()));
         	redobutton.setEnabled(nativeCanRedo());
     	}
+        switch (nativeGetMode()) {
+    		case 0: modebutton.setText("Draw"); break;
+    		case 1: modebutton.setText("Pick"); break;
+    		case 2: modebutton.setText("Select"); break;
+    		case 3: modebutton.setText("Move"); break;
+    		default: // should never happen
+        }
     }
 
     // -----------------------------------------------------------------------------
@@ -373,7 +384,24 @@ public class MainActivity extends Activity
     // called when the Draw/Pick/Select/Move button is tapped
     public void doSetTouchMode(View view) {
     	// display pop-up menu with these items: Draw, Pick, Select, Move
-    	//!!!
+        PopupMenu popup = new PopupMenu(this, view);
+        MenuInflater inflater = popup.getMenuInflater();
+        inflater.inflate(R.menu.mode_menu, popup.getMenu());
+        popup.show();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when a Draw/Pick/Select/Move item is selected
+    public void doMode(MenuItem item) {
+        switch (item.getItemId()) {
+        	case R.id.draw:   nativeSetMode(0); break;
+        	case R.id.pick:   nativeSetMode(1); break;
+        	case R.id.select: nativeSetMode(2); break;
+        	case R.id.move:   nativeSetMode(3); break;
+        	default:          // should never happen
+        }
+        updateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -383,8 +411,6 @@ public class MainActivity extends Activity
     	genhandler.removeCallbacks(generate);
     	nativeNewPattern();
     	updateButtons();
-        // show current touch mode!!!
-        // updateDrawingState();
     	
     	// delete all files in tempdir
     	//!!! only if nativeNumLayers() == 1
