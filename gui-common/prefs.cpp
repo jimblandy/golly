@@ -49,7 +49,7 @@
 #endif
 
 #ifdef IOS_GUI
-    const char* GOLLY_VERSION = "1.1";
+    const char* GOLLY_VERSION = "1.2";
 #endif
 
 std::string prefspath;              // full path to prefs file

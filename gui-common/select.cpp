@@ -122,6 +122,8 @@ bool Selection::TooBig()
 
 void Selection::DisplaySize()
 {
+    if (inscript) return;
+    
     bigint wd = selright;    wd -= selleft;   wd += bigint::one;
     bigint ht = selbottom;   ht -= seltop;    ht += bigint::one;
     std::string msg = "Selection width x height = ";
@@ -1850,13 +1852,13 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
 
     if (!inundoredo) {
         // check if rotated selection edges are outside bounded grid
-        if ( (currlayer->algo->gridwd > 0 &&
-              (newleft < currlayer->algo->gridleft || newright > currlayer->algo->gridright)) ||
+        if ((currlayer->algo->gridwd > 0 &&
+                (newleft < currlayer->algo->gridleft || newright > currlayer->algo->gridright)) ||
             (currlayer->algo->gridht > 0 &&
-             (newtop < currlayer->algo->gridtop || newbottom > currlayer->algo->gridbottom)) ) {
-                ErrorMessage("New selection would be outside grid boundary.");
-                return false;
-            }
+                (newtop < currlayer->algo->gridtop || newbottom > currlayer->algo->gridbottom))) {
+            ErrorMessage("New selection would be outside grid boundary.");
+            return false;
+        }
     }
 
     // if there is no pattern then just rotate the selection edges
@@ -1933,9 +1935,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
         if (oleft > nleft) oleft = nleft;
         if (obottom < nbottom) obottom = nbottom;
         if (oright < nright) oright = nright;
-        oldalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ?
-                                    currlayer->algtype :
-                                    QLIFE_ALGO);
+        oldalgo = CreateNewUniverse(currlayer->algo->NumCellStates() > 2 ? currlayer->algtype : QLIFE_ALGO);
         // make sure universe has same # of cell states
         if (currlayer->algo->NumCellStates() > 2)
             if (oldalgo->setrule(currlayer->algo->getrule()))

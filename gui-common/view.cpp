@@ -1412,7 +1412,7 @@ bool RotatePastePattern(bool clockwise)
     currlayer->algo = pastealgo;
     // pass in true for inundoredo parameter so rotate won't be remembered
     // and layer won't be marked as dirty; also set inscript temporarily
-    // so that viewport won't be updated
+    // so that viewport won't be updated and selection size won't be displayed
     inscript = true;
     result = pastesel.Rotate(clockwise, true);
     // currlayer->algo might point to a *different* universe
