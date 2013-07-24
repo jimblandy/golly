@@ -27,6 +27,9 @@ package net.sf.golly;
 import java.io.File;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -96,6 +99,7 @@ public class MainActivity extends Activity
 	private Button ssbutton;						// Start/Stop button
 	private Button undobutton;						// Undo button
 	private Button redobutton;						// Redo button
+	private Button editbutton;						// Edit/Paste button
 	private Button modebutton;						// Draw/Pick/Select/Move button
     private TextView status1, status2, status3;		// status bar has 3 lines
     private PatternGLSurfaceView pattView;			// OpenGL ES is used to draw patterns
@@ -120,6 +124,7 @@ public class MainActivity extends Activity
         ssbutton = (Button) findViewById(R.id.startstop);
         undobutton = (Button) findViewById(R.id.undo);
         redobutton = (Button) findViewById(R.id.redo);
+        editbutton = (Button) findViewById(R.id.edit);
         modebutton = (Button) findViewById(R.id.touchmode);
         status1 = (TextView) findViewById(R.id.status1);
         status2 = (TextView) findViewById(R.id.status2);
@@ -383,7 +388,7 @@ public class MainActivity extends Activity
 
     // -----------------------------------------------------------------------------
     
-    // called when the Edit button is tapped
+    // called when the Edit/Paste button is tapped
     public void doEdit(View view) {
     	// display pop-up menu with items that depend on whether a selection or paste image exists
         PopupMenu popup = new PopupMenu(this, view);
@@ -407,6 +412,8 @@ public class MainActivity extends Activity
     		case R.id.all:   nativeSelectAll(); break;
     		default:         // should never happen
         }
+        // check if nativePaste() created a paste image
+        if (nativePasteExists()) editbutton.setText("Paste");
     }
 
     // -----------------------------------------------------------------------------
@@ -414,8 +421,9 @@ public class MainActivity extends Activity
     // called when item from selection_menu is selected
     public void doSelectionItem(MenuItem item) {
         switch (item.getItemId()) {
-			case R.id.paste:    nativePaste(); break;
-			case R.id.all:      nativeSelectAll(); break;
+            // let doEditItem handle the top 2 items:
+			// case R.id.paste: nativePaste(); break;
+			// case R.id.all:   nativeSelectAll(); break;
 			case R.id.remove:   nativeRemoveSelection(); break;
             case R.id.cut:      nativeCutSelection(); break;
             case R.id.copy:     nativeCopySelection(); break;
@@ -447,6 +455,8 @@ public class MainActivity extends Activity
         	case R.id.protatea:  nativeRotatePaste(0); break;
     		default:             // should never happen
         }
+        // if paste image no longer exists then change Paste button back to Edit
+        if (!nativePasteExists()) editbutton.setText("Edit");
     }
     
     // -----------------------------------------------------------------------------
@@ -569,4 +579,31 @@ public class MainActivity extends Activity
         // see http://developer.android.com/reference/android/os/Looper.html
     	//??? see http://stackoverflow.com/questions/4994263/how-can-i-do-non-blocking-events-processing-on-android?rq=1
     }
-}
+
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void CopyTextToClipboard(String text) {
+    	// see http://developer.android.com/guide/topics/text/copy-paste.html
+    	ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+    	ClipData clip = ClipData.newPlainText("RLE data", text);
+    	clipboard.setPrimaryClip(clip);
+    	// Log.i("CopyTextToClipboard", text);
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private String GetTextFromClipboard() {
+    	// see http://developer.android.com/guide/topics/text/copy-paste.html
+    	ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+    	String text = "";
+    	if (clipboard.hasPrimaryClip()) {
+    		ClipData.Item item = clipboard.getPrimaryClip().getItemAt(0);
+    		text = (String) item.getText();
+    	}
+    	// Log.i("GetTextFromClipboard", text);
+    	return text;
+    }
+
+} // MainActivity class

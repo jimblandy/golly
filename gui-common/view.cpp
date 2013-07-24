@@ -1061,7 +1061,7 @@ void PasteClipboard()
         if ( OutsideLimits(top, left, bottom, right) ) {
             ErrorMessage("Pasteboard pattern is too big.");
         } else {
-            DisplayMessage("Drag paste image to desired location then double-tap image to paste/flip/rotate/etc...");
+            DisplayMessage("Drag paste image to desired location then tap Paste button.");
             waitingforpaste = true;
 
             // set initial position of pasterect's top left corner to near top left corner

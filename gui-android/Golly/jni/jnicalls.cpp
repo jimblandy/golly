@@ -47,6 +47,8 @@ static jmethodID id_RefreshPattern;
 static jmethodID id_ShowStatusLines;
 static jmethodID id_UpdateEditBar;
 static jmethodID id_CheckMessageQueue;
+static jmethodID id_CopyTextToClipboard;
+static jmethodID id_GetTextFromClipboard;
 
 static bool rendering = false;	// in DrawPattern?
 static bool paused = false;		// generating has been paused?
@@ -77,6 +79,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* en
     id_ShowStatusLines = env->GetMethodID(klass, "ShowStatusLines", "()V");
     id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
     id_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
+    id_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
+    id_GetTextFromClipboard = env->GetMethodID(klass, "GetTextFromClipboard", "()Ljava/lang/String;");
 }
 
 // -----------------------------------------------------------------------------
@@ -1144,19 +1148,33 @@ void AndroidCheckEvents()
 
 bool AndroidCopyTextToClipboard(const char* text)
 {
-	// see http://developer.android.com/guide/topics/text/copy-paste.html
-    // not yet implemented!!!
-    LOGI("AndroidCopyTextToClipboard: %s", text);
-    return false;//!!!
+	bool attached;
+	JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+    	jstring jtext = env->NewStringUTF(text);
+    	env->CallVoidMethod(mainobj, id_CopyTextToClipboard, jtext);
+    	env->DeleteLocalRef(jtext);
+    }
+	if (attached) javavm->DetachCurrentThread();
+
+    return env != NULL;
 }
 
 // -----------------------------------------------------------------------------
 
 bool AndroidGetTextFromClipboard(std::string& text)
 {
-    // not yet implemented!!!
-    LOGI("AndroidGetTextFromClipboard");
-    return false;//!!!
+	text = "";
+	bool attached;
+	JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+    	jstring jtext = (jstring) env->CallObjectMethod(mainobj, id_GetTextFromClipboard);
+    	text = ConvertJString(env, jtext);
+    	env->DeleteLocalRef(jtext);
+    }
+	if (attached) javavm->DetachCurrentThread();
+
+    return text.length() > 0;
 }
 
 // -----------------------------------------------------------------------------

@@ -3,13 +3,13 @@
     <item
 		android:id="@+id/paste"
 		android:title="Paste"
-		android:onClick="doSelectionItem"
-	/>
+		android:onClick="doEditItem"
+	/>  <!-- above item is also in edit_menu.xml -->
     <item
 		android:id="@+id/all"
 		android:title="Select All"
-		android:onClick="doSelectionItem"
-	/>
+		android:onClick="doEditItem"
+	/>  <!-- above item is also in edit_menu.xml -->
     <item
 		android:id="@+id/remove"
 		android:title="Remove Selection"
