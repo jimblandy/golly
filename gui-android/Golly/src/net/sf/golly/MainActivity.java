@@ -41,7 +41,7 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity
 {    
-	// see jnicalls.cpp for the native routines:
+	// see jnicalls.cpp for these native routines:
     private static native void nativeClassInit();	// must be static
     private native void nativeCreate();				// must NOT be static
     private native void nativeDestroy();
@@ -69,11 +69,29 @@ public class MainActivity extends Activity
     private native void nativeBigger();
     private native void nativeSmaller();
     private native void nativeMiddle();
-    private native int nativeCalculateSpeed();
-    private native int nativeGetMode();
     private native void nativeSetMode(int mode);
+    private native int nativeGetMode();
+    private native int nativeCalculateSpeed();
+    private native int nativeNumLayers();
+    private native boolean nativePasteExists();
+    private native boolean nativeSelectionExists();
+    private native void nativePaste();
+    private native void nativeSelectAll();
+    private native void nativeRemoveSelection();
+    private native void nativeCutSelection();
+    private native void nativeCopySelection();
+    private native void nativeClearSelection(int inside);
+    private native void nativeShrinkSelection();
+    private native void nativeRandomFill();
+    private native void nativeFlipSelection(int y);
+    private native void nativeRotateSelection(int clockwise);
+    private native void nativeAdvanceSelection(int inside);
+    private native void nativeAbortPaste();
+    private native void nativeDoPaste(int toselection);
+    private native void nativeFlipPaste(int y);
+    private native void nativeRotatePaste(int clockwise);
 
-    // local fields
+    // local fields:
     private static boolean firstcall = true;
 	private Button ssbutton;						// Start/Stop button
 	private Button undobutton;						// Undo button
@@ -83,7 +101,7 @@ public class MainActivity extends Activity
     private PatternGLSurfaceView pattView;			// OpenGL ES is used to draw patterns
     private Handler genhandler;						// for generating patterns
     private Runnable generate;						// code started/stopped by genhandler
-    private int geninterval;						// interval between generate calls (in millisecs)
+    private int geninterval;						// interval between nativeGenerate calls (in millisecs)
 
 	// -----------------------------------------------------------------------------
     
@@ -264,6 +282,7 @@ public class MainActivity extends Activity
     	nativeStartStop();
     	if (nativeIsGenerating()) {
     		// start generating immediately
+    		geninterval = nativeCalculateSpeed();
     		genhandler.post(generate);
     	} else {
     		// stop generating
@@ -294,41 +313,22 @@ public class MainActivity extends Activity
 
     // -----------------------------------------------------------------------------
     
-    // called when the Control menu's Step=1 item is selected
-    public void doStep1(MenuItem item) {
+    // called when item from control_menu is selected
+    public void doControlItem(MenuItem item) {
     	genhandler.removeCallbacks(generate);
-    	nativeStep1();
-    	geninterval = nativeCalculateSpeed();
-        if (nativeIsGenerating()) genhandler.post(generate);
-    }
-
-    // -----------------------------------------------------------------------------
-    
-    // called when the Control menu's Faster item is selected
-    public void doFaster(MenuItem item) {
-    	genhandler.removeCallbacks(generate);
-    	nativeFaster();
-    	geninterval = nativeCalculateSpeed();
-    	if (nativeIsGenerating()) genhandler.post(generate);
-    }
-
-    // -----------------------------------------------------------------------------
-    
-    // called when the Control menu's Slower item is selected
-    public void doSlower(MenuItem item) {
-    	genhandler.removeCallbacks(generate);
-    	nativeSlower();
-    	geninterval = nativeCalculateSpeed();
-    	if (nativeIsGenerating()) genhandler.post(generate);
-    }
-
-    // -----------------------------------------------------------------------------
-    
-    // called when the Control menu's Reset item is selected
-    public void doReset(MenuItem item) {
-    	genhandler.removeCallbacks(generate);
-    	nativeResetPattern();
-    	UpdateButtons();
+        switch (item.getItemId()) {
+    		case R.id.step1:  nativeStep1(); break;
+    		case R.id.faster: nativeFaster(); break;
+    		case R.id.slower: nativeSlower(); break;
+    		case R.id.reset:  nativeResetPattern(); break;
+    		default:          // should never happen
+        }
+    	if (item.getItemId() == R.id.reset) {
+    		UpdateButtons();
+    	} else {
+        	geninterval = nativeCalculateSpeed();
+            if (nativeIsGenerating()) genhandler.post(generate);
+    	}
     }
 
     // -----------------------------------------------------------------------------
@@ -351,30 +351,15 @@ public class MainActivity extends Activity
 
     // -----------------------------------------------------------------------------
     
-    // called when the View menu's Scale=1:1 item is selected
-    public void doScale1to1(MenuItem item) {
-    	nativeScale1to1();
-    }
-
-    // -----------------------------------------------------------------------------
-    
-    // called when the View menu's Bigger item is selected
-    public void doBigger(MenuItem item) {
-    	nativeBigger();
-    }
-
-    // -----------------------------------------------------------------------------
-    
-    // called when the View menu's Smaller item is selected
-    public void doSmaller(MenuItem item) {
-    	nativeSmaller();
-    }
-
-    // -----------------------------------------------------------------------------
-    
-    // called when the View menu's Middle item is selected
-    public void doMiddle(MenuItem item) {
-    	nativeMiddle();
+    // called when item from view_menu is selected
+    public void doViewItem(MenuItem item) {
+        switch (item.getItemId()) {
+    		case R.id.scale1to1: nativeScale1to1(); break;
+    		case R.id.bigger:    nativeBigger(); break;
+    		case R.id.smaller:   nativeSmaller(); break;
+    		case R.id.middle:    nativeMiddle(); break;
+    		default:             // should never happen
+        }
     }
 
     // -----------------------------------------------------------------------------
@@ -400,11 +385,70 @@ public class MainActivity extends Activity
     
     // called when the Edit button is tapped
     public void doEdit(View view) {
-    	// display pop-up menu with items that depend on whether a selection
-    	// or paste image exists
-    	//!!!
+    	// display pop-up menu with items that depend on whether a selection or paste image exists
+        PopupMenu popup = new PopupMenu(this, view);
+        MenuInflater inflater = popup.getMenuInflater();
+        if (nativePasteExists()) {
+        	inflater.inflate(R.menu.paste_menu, popup.getMenu());
+        } else if (nativeSelectionExists()) {
+        	inflater.inflate(R.menu.selection_menu, popup.getMenu());
+        } else {
+        	inflater.inflate(R.menu.edit_menu, popup.getMenu());
+        }
+        popup.show();
     }
 
+    // -----------------------------------------------------------------------------
+    
+    // called when item from edit_menu is selected
+    public void doEditItem(MenuItem item) {
+        switch (item.getItemId()) {
+    		case R.id.paste: nativePaste(); break;
+    		case R.id.all:   nativeSelectAll(); break;
+    		default:         // should never happen
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when item from selection_menu is selected
+    public void doSelectionItem(MenuItem item) {
+        switch (item.getItemId()) {
+			case R.id.paste:    nativePaste(); break;
+			case R.id.all:      nativeSelectAll(); break;
+			case R.id.remove:   nativeRemoveSelection(); break;
+            case R.id.cut:      nativeCutSelection(); break;
+            case R.id.copy:     nativeCopySelection(); break;
+            case R.id.clear:    nativeClearSelection(1); break;
+            case R.id.clearo:   nativeClearSelection(0); break;
+            case R.id.shrink:   nativeShrinkSelection(); break;
+            case R.id.random:   nativeRandomFill(); break;
+            case R.id.flipy:    nativeFlipSelection(1); break;
+            case R.id.flipx:    nativeFlipSelection(0); break;
+            case R.id.rotatec:  nativeRotateSelection(1); break;
+            case R.id.rotatea:  nativeRotateSelection(0); break;
+            case R.id.advance:  nativeAdvanceSelection(1); break;
+            case R.id.advanceo: nativeAdvanceSelection(0); break;
+    		default:            // should never happen
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when item from paste_menu is selected
+    public void doPasteItem(MenuItem item) {
+        switch (item.getItemId()) {
+        	case R.id.abort:     nativeAbortPaste(); break;
+        	case R.id.pastemode: nativeDoPaste(0); break;
+        	case R.id.pastesel:  nativeDoPaste(1); break;
+        	case R.id.pflipy:    nativeFlipPaste(1); break;
+        	case R.id.pflipx:    nativeFlipPaste(0); break;
+        	case R.id.protatec:  nativeRotatePaste(1); break;
+        	case R.id.protatea:  nativeRotatePaste(0); break;
+    		default:             // should never happen
+        }
+    }
+    
     // -----------------------------------------------------------------------------
     
     // called when the Draw/Pick/Select/Move button is tapped
@@ -418,16 +462,16 @@ public class MainActivity extends Activity
 
     // -----------------------------------------------------------------------------
     
-    // called when Draw/Pick/Select/Move item is selected
-    public void doMode(MenuItem item) {
+    // called when item from mode_menu is selected
+    public void doModeItem(MenuItem item) {
         switch (item.getItemId()) {
         	case R.id.draw:   nativeSetMode(0); break;
         	case R.id.pick:   nativeSetMode(1); break;
         	case R.id.select: nativeSetMode(2); break;
         	case R.id.move:   nativeSetMode(3); break;
-        	default:          // should never happen
+        	default:		  // should never happen
         }
-        UpdateEditBar();
+        UpdateEditBar();	  // update modebutton text
     }
 
     // -----------------------------------------------------------------------------
@@ -439,9 +483,10 @@ public class MainActivity extends Activity
     	UpdateButtons();
     	UpdateEditBar();
     	
-    	// delete all files in tempdir
-    	//!!! only if nativeNumLayers() == 1
-    	DeleteTempFiles();
+    	if (nativeNumLayers() == 1) {
+    		// delete all files in tempdir
+        	DeleteTempFiles();
+    	}
     }
 
     // -----------------------------------------------------------------------------
@@ -467,7 +512,7 @@ public class MainActivity extends Activity
 
     // -----------------------------------------------------------------------------
     
-    // called when the Full Screen button is tapped
+    // called when the Full button is tapped
     public void doFullScreen(View view) {
     	// not yet implemented!!!
     }

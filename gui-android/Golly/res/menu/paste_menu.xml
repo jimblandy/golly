@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+		android:id="@+id/abort"
+		android:title="Abort Paste"
+		android:onClick="doPasteItem"
+	/>
+    <item
+		android:id="@+id/pastemode"
+		android:title="Paste Now"
+		android:onClick="doPasteItem"
+	/>
+    <item
+		android:id="@+id/pastesel"
+		android:title="Paste to Selection"
+		android:onClick="doPasteItem"
+	/>
+    <item
+		android:id="@+id/pflipy"
+		android:title="Flip Top-Bottom"
+		android:onClick="doPasteItem"
+	/>
+    <item
+		android:id="@+id/pflipx"
+		android:title="Flip Left-Right"
+		android:onClick="doPasteItem"
+	/>
+    <item
+		android:id="@+id/protatec"
+		android:title="Rotate Clockwise"
+		android:onClick="doPasteItem"
+	/>
+    <item
+		android:id="@+id/protatea"
+		android:title="Rotate Anticlockwise"
+		android:onClick="doPasteItem"
+	/>
+</menu>

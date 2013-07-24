@@ -725,6 +725,7 @@ static void InitPaths()
 
 - (IBAction)doAction:(id)sender
 {
+    ClearMessage();
     [pattView doSelectionAction];
 }
 

@@ -3,21 +3,21 @@
     <item
 		android:id="@+id/scale1to1"
 		android:title="Scale = 1:1"
-		android:onClick="doScale1to1"
+		android:onClick="doViewItem"
 	/>
     <item
 		android:id="@+id/bigger"
 		android:title="Bigger"
-		android:onClick="doBigger"
+		android:onClick="doViewItem"
 	/>
     <item
 		android:id="@+id/smaller"
 		android:title="Smaller"
-		android:onClick="doSmaller"
+		android:onClick="doViewItem"
 	/>
     <item
 		android:id="@+id/middle"
 		android:title="Middle"
-		android:onClick="doMiddle"
+		android:onClick="doViewItem"
 	/>
 </menu>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+		android:id="@+id/paste"
+		android:title="Paste"
+		android:onClick="doEditItem"
+	/>
+    <item
+		android:id="@+id/all"
+		android:title="Select All"
+		android:onClick="doEditItem"
+	/>
+</menu>

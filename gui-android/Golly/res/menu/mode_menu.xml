@@ -3,21 +3,21 @@
     <item
 		android:id="@+id/draw"
 		android:title="Draw"
-		android:onClick="doMode"
+		android:onClick="doModeItem"
 	/>
     <item
 		android:id="@+id/pick"
 		android:title="Pick"
-		android:onClick="doMode"
+		android:onClick="doModeItem"
 	/>
     <item
 		android:id="@+id/select"
 		android:title="Select"
-		android:onClick="doMode"
+		android:onClick="doModeItem"
 	/>
     <item
 		android:id="@+id/move"
 		android:title="Move"
-		android:onClick="doMode"
+		android:onClick="doModeItem"
 	/>
 </menu>

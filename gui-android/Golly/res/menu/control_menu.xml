@@ -3,21 +3,21 @@
     <item
 		android:id="@+id/step1"
 		android:title="Step = 1"
-		android:onClick="doStep1"
+		android:onClick="doControlItem"
 	/>
     <item
 		android:id="@+id/faster"
 		android:title="Faster"
-		android:onClick="doFaster"
+		android:onClick="doControlItem"
 	/>
     <item
 		android:id="@+id/slower"
 		android:title="Slower"
-		android:onClick="doSlower"
+		android:onClick="doControlItem"
 	/>
     <item
 		android:id="@+id/reset"
 		android:title="Reset"
-		android:onClick="doReset"
+		android:onClick="doControlItem"
 	/>
 </menu>

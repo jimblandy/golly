@@ -39,7 +39,7 @@ import android.view.MotionEvent;
 
 public class PatternGLSurfaceView extends GLSurfaceView
 {
-    // these C++ routines are implemented in jnicalls.cpp
+	// see jnicalls.cpp for these native routines:
     private native void nativeTouchBegan(int x, int y);
     private native void nativeTouchMoved(int x, int y);
     private native void nativeTouchEnded();
@@ -130,7 +130,7 @@ public class PatternGLSurfaceView extends GLSurfaceView
 
 class PatternRenderer implements GLSurfaceView.Renderer
 {
-    // these C++ routines are implemented in jnicalls.cpp
+	// see jnicalls.cpp for these native routines:
     private native void nativeInit();
     private native void nativeResize(int w, int h);
     private native void nativeRender();
