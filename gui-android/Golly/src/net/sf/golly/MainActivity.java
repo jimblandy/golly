@@ -61,6 +61,8 @@ public class MainActivity extends Activity
     private native boolean nativeCanRedo();
     private native boolean nativeIsGenerating();
     private native String nativeGetStatusLine(int line);
+    private native String nativeGetPasteMode();
+    private native String nativeGetRandomFill();
     private native void nativeNewPattern();
     private native void nativeFitPattern();
     private native void nativeGenerate();
@@ -389,14 +391,29 @@ public class MainActivity extends Activity
     // -----------------------------------------------------------------------------
     
     // called when the Edit/Paste button is tapped
-    public void doEdit(View view) {
+    public void doEditPaste(View view) {
     	// display pop-up menu with items that depend on whether a selection or paste image exists
         PopupMenu popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
         if (nativePasteExists()) {
-        	inflater.inflate(R.menu.paste_menu, popup.getMenu());
+        	Menu menu = popup.getMenu();
+        	inflater.inflate(R.menu.paste_menu, menu);
+        	MenuItem item = menu.findItem(R.id.pastesel);
+        	item.setEnabled(nativeSelectionExists());
+        	item = menu.findItem(R.id.pastemode);
+        	item.setTitle("Paste (" + nativeGetPasteMode() + ")");
+        	if (nativeIsGenerating()) {
+        		// probably best to stop generating when Paste button is tapped
+        		// (consistent with iOS Golly)
+        		genhandler.removeCallbacks(generate);
+        		nativeStartStop();	// calls StopGenerating
+        		UpdateButtons();
+        	}
         } else if (nativeSelectionExists()) {
-        	inflater.inflate(R.menu.selection_menu, popup.getMenu());
+        	Menu menu = popup.getMenu();
+        	inflater.inflate(R.menu.selection_menu, menu);
+        	MenuItem item = menu.findItem(R.id.random);
+        	item.setTitle("Random Fill (" + nativeGetRandomFill() + "%)");
         } else {
         	inflater.inflate(R.menu.edit_menu, popup.getMenu());
         }
@@ -407,13 +424,18 @@ public class MainActivity extends Activity
     
     // called when item from edit_menu is selected
     public void doEditItem(MenuItem item) {
+    	if (item.getItemId() == R.id.paste && nativeIsGenerating()) {
+    		genhandler.removeCallbacks(generate);
+    		// nativePaste will call StopGenerating
+    	}
         switch (item.getItemId()) {
     		case R.id.paste: nativePaste(); break;
     		case R.id.all:   nativeSelectAll(); break;
     		default:         // should never happen
         }
-        // check if nativePaste() created a paste image
+        // check if nativePaste created a paste image
         if (nativePasteExists()) editbutton.setText("Paste");
+        UpdateButtons();
     }
 
     // -----------------------------------------------------------------------------

@@ -97,6 +97,7 @@ void PauseGenTimer();
 void RestartGenTimer();
 void PauseGenerating();
 void ResumeGenerating();
+void StopIfGenerating();
 void BeginProgress(const char* title);
 bool AbortProgress(double fraction_done, const char* message);
 void EndProgress();

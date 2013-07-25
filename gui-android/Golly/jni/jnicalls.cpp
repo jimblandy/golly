@@ -119,6 +119,25 @@ static std::string ConvertJString(JNIEnv* env, jstring str)
 
 // -----------------------------------------------------------------------------
 
+static void CheckIfRendering()
+{
+    while (rendering) {
+    	// wait for DrawPattern to finish
+    	// LOGI("waiting for DrawPattern to finish");
+    	usleep(1000);	// 1 millisec
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void CallAgainAfterDelay(const char* callname)
+{
+	// tell MainActivity to call given native routine after a short delay
+	//!!!
+}
+
+// -----------------------------------------------------------------------------
+
 void UpdateStatus()
 {
 	UpdateStatusLines();	// sets status1, status2, status3
@@ -145,24 +164,20 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusLine(JNI
 
 // -----------------------------------------------------------------------------
 
-void PauseGenerating()
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetPasteMode(JNIEnv* env)
 {
-	if (generating) {
-		StopGenerating();
-		// generating is now false
-		paused = true;
-	}
+	return env->NewStringUTF(GetPasteMode());
 }
 
 // -----------------------------------------------------------------------------
 
-void ResumeGenerating()
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetRandomFill(JNIEnv* env)
 {
-	if (paused) {
-		StartGenerating();
-		// generating is probably true (false if pattern is empty)
-		paused = false;
-	}
+	char s[4];	// room for 0..100
+	sprintf(s, "%d", randomfill);
+	return env->NewStringUTF(s);
 }
 
 // -----------------------------------------------------------------------------
@@ -303,24 +318,12 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanRedo(JNIEnv* env)
 
 // -----------------------------------------------------------------------------
 
-static void CheckIfRendering()
-{
-    while (rendering) {
-    	// wait for DrawPattern to finish
-    	// LOGI("waiting for DrawPattern to finish");
-    	usleep(1000);	// 1 millisec
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeUndo(JNIEnv* env)
 {
 	if (generating) StopGenerating();
     if (event_checker > 0) {
-        // try again after a short delay
-        //!!! CallAfterDelay("Undo");
+        CallAgainAfterDelay("Undo");
         return;
     }
 
@@ -358,8 +361,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResetPattern(JNIEnv*
 {
 	if (generating) StopGenerating();
     if (event_checker > 0) {
-        // try again after a short delay
-        //!!! CallAfterDelay("ResetPattern");
+        CallAgainAfterDelay("Reset");
         return;
     }
 
@@ -367,6 +369,28 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResetPattern(JNIEnv*
     CheckIfRendering();
     ResetPattern();
     UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PauseGenerating()
+{
+	if (generating) {
+		StopGenerating();
+		// generating is now false
+		paused = true;
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+void ResumeGenerating()
+{
+	if (paused) {
+		StartGenerating();
+		// generating is probably true (false if pattern is empty)
+		paused = false;
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -380,15 +404,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStartStop(JNIEnv* en
     } else {
     	StartGenerating();
     	// generating might still be false (eg. if pattern is empty)
+
+    	// best to reset paused flag in case a PauseGenerating call
+    	// wasn't followed by a matching ResumeGenerating call
+    	paused = false;
     }
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
-JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeIsGenerating(JNIEnv* env)
-{
-    return generating;
 }
 
 // -----------------------------------------------------------------------------
@@ -406,12 +426,19 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env
 // -----------------------------------------------------------------------------
 
 extern "C"
+JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeIsGenerating(JNIEnv* env)
+{
+    return generating;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
 {
     if (generating) StopGenerating();
     if (event_checker > 0) {
-        // try again after a short delay
-        //!!! CallAfterDelay("Step");
+        CallAgainAfterDelay("Step");
         return;
     }
 
@@ -492,9 +519,9 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* e
     allowundo = saveundo;
 
     if (event_checker > 0 /* || rendering ???!!! */ ) {
-        // try again after a short delay that gives time for NextGeneration or DrawPattern to terminate
-        //!!!??? call Java method that will call nativeNewPattern again after a short delay
-        //!!! CallAfterDelay("NewPattern");
+        // try again after a short delay that gives time for
+        // NextGeneration or DrawPattern to terminate
+    	CallAgainAfterDelay("New");
         return;
     }
 
@@ -635,8 +662,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativePaste(JNIEnv* env)
 {
 	if (generating) StopGenerating();
     if (event_checker > 0) {
-        // try again after a short delay
-        //!!! CallAfterDelay("Paste");
+    	CallAgainAfterDelay("Paste");
         return;
     }
     ClearMessage();
@@ -668,14 +694,10 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRemoveSelection(JNIE
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCutSelection(JNIEnv* env)
 {
-    if (generating) {
-        // temporarily stop generating
-        PauseGenerating();
-        if (event_checker > 0) {
-            // try again after a short delay
-        	//!!! CallAfterDelay("Cut");
-            return;
-        }
+    if (generating) PauseGenerating();	// temporarily stop generating
+    if (event_checker > 0) {
+        CallAgainAfterDelay("Cut");
+        return;
     }
     ClearMessage();
 	CutSelection();
@@ -697,14 +719,10 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCopySelection(JNIEnv
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClearSelection(JNIEnv* env, jobject obj, jint inside)
 {
-    if (generating) {
-        // temporarily stop generating
-        PauseGenerating();
-        if (event_checker > 0) {
-            // try again after a short delay
-        	//!!! CallAfterDelay(inside ? "Clear" : "ClearOutside");
-            return;
-        }
+    if (generating) PauseGenerating();	// temporarily stop generating
+    if (event_checker > 0) {
+        CallAgainAfterDelay(inside ? "Clear" : "ClearOutside");
+        return;
     }
     ClearMessage();
 	if (inside) {
@@ -730,14 +748,10 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeShrinkSelection(JNIE
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRandomFill(JNIEnv* env)
 {
-    if (generating) {
-        // temporarily stop generating
-        PauseGenerating();
-        if (event_checker > 0) {
-            // try again after a short delay
-        	//!!! CallAfterDelay("Random");
-            return;
-        }
+    if (generating) PauseGenerating();	// temporarily stop generating
+    if (event_checker > 0) {
+        CallAgainAfterDelay("Random");
+        return;
     }
     ClearMessage();
 	RandomFill();
@@ -749,14 +763,10 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRandomFill(JNIEnv* e
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFlipSelection(JNIEnv* env, jobject obj, jint y)
 {
-    if (generating) {
-        // temporarily stop generating
-        PauseGenerating();
-        if (event_checker > 0) {
-            // try again after a short delay
-        	//!!! CallAfterDelay(y ? "FlipY" : "FlipX");
-            return;
-        }
+    if (generating) PauseGenerating();	// temporarily stop generating
+    if (event_checker > 0) {
+        CallAgainAfterDelay(y ? "FlipY" : "FlipX");
+        return;
     }
     ClearMessage();
 	FlipSelection(y);
@@ -768,14 +778,10 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFlipSelection(JNIEnv
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRotateSelection(JNIEnv* env, jobject obj, jint clockwise)
 {
-    if (generating) {
-        // temporarily stop generating
-        PauseGenerating();
-        if (event_checker > 0) {
-            // try again after a short delay
-        	//!!! CallAfterDelay(clockwise ? "RotateC" : "RotateA");
-            return;
-        }
+    if (generating) PauseGenerating();	// temporarily stop generating
+    if (event_checker > 0) {
+        CallAgainAfterDelay(clockwise ? "RotateC" : "RotateA");
+        return;
     }
     ClearMessage();
 	RotateSelection(clockwise);
@@ -787,14 +793,10 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRotateSelection(JNIE
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeAdvanceSelection(JNIEnv* env, jobject obj, jint inside)
 {
-    if (generating) {
-        // temporarily stop generating
-        PauseGenerating();
-        if (event_checker > 0) {
-            // try again after a short delay
-        	//!!! CallAfterDelay(inside ? "Advance" : "AdvanceOutside");
-            return;
-        }
+    if (generating) PauseGenerating();	// temporarily stop generating
+    if (event_checker > 0) {
+        CallAgainAfterDelay(inside ? "Advance" : "AdvanceOutside");
+        return;
     }
     ClearMessage();
 	if (inside) {
@@ -820,13 +822,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeAbortPaste(JNIEnv* e
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeDoPaste(JNIEnv* env, jobject obj, jint toselection)
 {
-	if (generating) StopGenerating();
-    if (event_checker > 0) {
-        // try again after a short delay
-        //!!! CallAfterDelay(toselection ? "DoPasteSel" : "DoPaste");
-        return;
-    }
-
+	// assume caller has stopped generating
 	ClearMessage();
 	DoPaste(toselection);
 	UpdateEverything();

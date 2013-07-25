@@ -41,7 +41,7 @@
 #import <OpenGLES/ES1/gl.h>
 #import <OpenGLES/ES1/glext.h>
 
-#import "PatternViewController.h"   // for PauseGenerating, ResumeGenerating
+#import "PatternViewController.h"   // for PauseGenerating, ResumeGenerating, StopIfGenerating
 #import "PatternView.h"
 
 @implementation PatternView
@@ -516,7 +516,10 @@ static double prevtime = 0.0;   // used to detect a double tap
         if (TimeInSeconds() - prevtime < 0.3) {
             // double tap
             if (waitingforpaste && PointInPasteImage(pt.x, pt.y)) {
-                // display action sheet that lets user abort/paste/flip/rotate/etc
+                // if generating then stop (consistent with doPaste in PatternViewController.m)
+                StopIfGenerating();
+                ClearMessage();
+                // now display action sheet that lets user abort/paste/flip/rotate/etc
                 [self doPasteAction];
             
             } else if (currlayer->touchmode == selectmode && SelectionExists() && PointInSelection(pt.x, pt.y)) {
@@ -538,32 +541,6 @@ static double prevtime = 0.0;   // used to detect a double tap
         }
     }
 }
-
-// -----------------------------------------------------------------------------
-
-/* too many problems:
-
-- (void)doubleTap:(UITapGestureRecognizer *)gestureRecognizer
-{
-    if ([gestureRecognizer state] == UIGestureRecognizerStateEnded) {
-        CGPoint pt = [gestureRecognizer locationInView:self];
-        ClearMessage();
-        if (waitingforpaste && PointInPasteImage(pt.x, pt.y)) {
-            // display action sheet that lets user abort/paste/flip/rotate/etc
-            [self doPasteAction];
-        } else if (SelectionExists() && PointInSelection(pt.x, pt.y)) {
-            // display action sheet that lets user remove/cut/copy/clear/etc
-            [self doSelectionAction];
-        } else if (currlayer->touchmode == drawmode) {
-            // best to do the drawing, but there's a nasty problem: we only get
-            // location of 1st tap, even if 2nd tap was in a different location
-            TouchBegan(pt.x, pt.y);
-            TouchEnded();
-        }
-    }
-}
-
-*/
 
 // -----------------------------------------------------------------------------
 

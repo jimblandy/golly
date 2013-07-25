@@ -270,11 +270,6 @@ static void InitPaths()
 {
 	[super viewDidAppear:animated];
     
-    // not sure why, but we need to update pattView here rather than in viewWillAppear
-    // if viewWillDisappear called stopIfGenerating and event_chacker  was > 0
-    // (presumably something to do with the switch to OpenGL ES; ie. we now call
-    // [pattView refreshPattern] rather than [pattView setNeedsDisplay])
-    
     UpdateEverything();     // calls [pattView refreshPattern]
     
     // restart genTimer if PauseGenTimer() was called earlier
@@ -932,6 +927,13 @@ void ResumeGenerating()
         }
         wasgenerating = false;
     }
+}
+
+// -----------------------------------------------------------------------------
+
+void StopIfGenerating()
+{
+    [globalController stopIfGenerating];
 }
 
 // -----------------------------------------------------------------------------
