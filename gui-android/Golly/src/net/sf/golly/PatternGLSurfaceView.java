@@ -66,44 +66,44 @@ public class PatternGLSurfaceView extends GLSurfaceView
     public boolean onTouchEvent(final MotionEvent ev) {
         final int action = ev.getAction();
         switch (action & MotionEvent.ACTION_MASK) {
-        case MotionEvent.ACTION_DOWN: {
-            final float x = ev.getX();
-            final float y = ev.getY();
-            mActivePointerId = ev.getPointerId(0);
-            nativeTouchBegan((int)x, (int)y);
-            break;
-        }
-            
-        case MotionEvent.ACTION_MOVE: {
-            final int pointerIndex = ev.findPointerIndex(mActivePointerId);
-            final float x = ev.getX(pointerIndex);
-            final float y = ev.getY(pointerIndex);
-            nativeTouchMoved((int)x, (int)y);
-            break;
-        }
-            
-        case MotionEvent.ACTION_UP: {
-            mActivePointerId = INVALID_POINTER_ID;
-            nativeTouchEnded();
-            break;
-        }
-            
-        case MotionEvent.ACTION_CANCEL: {
-            mActivePointerId = INVALID_POINTER_ID;
-            nativeTouchEnded();
-            break;
-        }
-        
-        case MotionEvent.ACTION_POINTER_UP: {
-            final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK)
-                    					               >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
-            final int pointerId = ev.getPointerId(pointerIndex);
-            if (pointerId == mActivePointerId) {
-                // this was our active pointer going up
-            	nativeTouchEnded();
-            }
-            break;
-        }
+	        case MotionEvent.ACTION_DOWN: {
+	            final float x = ev.getX();
+	            final float y = ev.getY();
+	            mActivePointerId = ev.getPointerId(0);
+	            nativeTouchBegan((int)x, (int)y);
+	            break;
+	        }
+	            
+	        case MotionEvent.ACTION_MOVE: {
+	            final int pointerIndex = ev.findPointerIndex(mActivePointerId);
+	            final float x = ev.getX(pointerIndex);
+	            final float y = ev.getY(pointerIndex);
+	            nativeTouchMoved((int)x, (int)y);
+	            break;
+	        }
+	            
+	        case MotionEvent.ACTION_UP: {
+	            mActivePointerId = INVALID_POINTER_ID;
+	            nativeTouchEnded();
+	            break;
+	        }
+	            
+	        case MotionEvent.ACTION_CANCEL: {
+	            mActivePointerId = INVALID_POINTER_ID;
+	            nativeTouchEnded();
+	            break;
+	        }
+	        
+	        case MotionEvent.ACTION_POINTER_UP: {
+	            final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK)
+	                    					               >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+	            final int pointerId = ev.getPointerId(pointerIndex);
+	            if (pointerId == mActivePointerId) {
+	                // this was our active pointer going up
+	            	nativeTouchEnded();
+	            }
+	            break;
+	        }
         }
         
         return true;

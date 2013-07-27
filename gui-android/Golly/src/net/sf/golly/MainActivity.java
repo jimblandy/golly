@@ -33,6 +33,8 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.MessageQueue;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -51,7 +53,11 @@ public class MainActivity extends Activity
     private native void nativeSetGollyDir(String path);
     private native void nativeSetTempDir(String path);
     private native void nativeSetSuppliedDirs(String prefix);
-    private native void nativeStartStop();
+    private native void nativeStartGenerating();
+    private native void nativeStopGenerating();
+    private native void nativeStopBeforeNew();
+    private native void nativePauseGenerating();
+    private native void nativeResumeGenerating();
     private native void nativeResetPattern();
     private native void nativeUndo();
     private native void nativeRedo();
@@ -108,7 +114,58 @@ public class MainActivity extends Activity
     private Handler genhandler;						// for generating patterns
     private Runnable generate;						// code started/stopped by genhandler
     private int geninterval;						// interval between nativeGenerate calls (in millisecs)
+    private Handler callhandler;					// for calling a method again
+    private Runnable callagain;						// code that calls method
+    private String methodname;						// name of method to call
+    private View currview;							// current view parameter
+    private MenuItem curritem;						// current menu item parameter
+    private boolean stopped = true;				    // generating is stopped?
+    
+	// -----------------------------------------------------------------------------
 
+    // the following stuff allows time consuming code (like nativeGenerate) to periodically
+    // check if any user events need to be processed without blocking the UI thread
+    // (thanks to http://stackoverflow.com/questions/4994263/how-can-i-do-non-blocking-events-processing-on-android)
+    
+    private boolean processingevents = false;
+    private Handler evthandler = null;
+
+    private Runnable doevents = new Runnable() {
+        public void run() {
+        	Looper looper = Looper.myLooper();
+        	looper.quit();
+        	evthandler.removeCallbacks(this);    
+        	evthandler = null;
+        }
+	};
+
+    private class IdleHandler implements MessageQueue.IdleHandler {
+        private Looper idlelooper;
+        protected IdleHandler(Looper looper) {
+        	idlelooper = looper;
+        }
+        public boolean queueIdle() {
+        	evthandler = new Handler(idlelooper);
+        	evthandler.post(doevents);
+        	return(false);
+        }
+	};
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void CheckMessageQueue() {
+    	// process any pending UI events in message queue
+        if (!processingevents) {
+            Looper.myQueue().addIdleHandler(new IdleHandler(Looper.myLooper()));
+            processingevents = true;
+            try {
+            	Looper.loop();
+            } catch (RuntimeException re) { 
+            	// looper.quit() in doevents causes an exception
+            }
+            processingevents = false;
+        }
+    }
+    
 	// -----------------------------------------------------------------------------
     
     static {
@@ -141,13 +198,34 @@ public class MainActivity extends Activity
         // this will call the PatternGLSurfaceView constructor
         pattView = (PatternGLSurfaceView) findViewById(R.id.patternview);
         
+        // create handler and runnable for generating patterns
         geninterval = nativeCalculateSpeed();
         genhandler = new Handler();
         generate = new Runnable() {
-        	@Override
         	public void run() {
-        		nativeGenerate();
-        		genhandler.postDelayed(this, geninterval);
+        		if (!stopped) {
+        		    nativeGenerate();
+        		    genhandler.postDelayed(this, geninterval);
+        		    // nativeGenerate will be called again after given interval
+        		}
+        	}
+        };
+        
+        // create handler and runnable for calling a method again when the user
+        // invokes certain events while the next generation is being calculated
+        callhandler = new Handler();
+        callagain = new Runnable() {
+        	public void run() {
+                if (methodname.equals("doStartStop")) doStartStop(currview); else
+                if (methodname.equals("doStep"))      doStep(currview); else
+                if (methodname.equals("doNew"))       doNewPattern(currview); else
+                if (methodname.equals("doUndo"))      doUndo(currview); else
+                if (methodname.equals("doRedo"))      doRedo(currview); else
+            	if (methodname.equals("doReset"))     doControlItem(curritem); else
+                if (methodname.equals("doPaste"))     doEditItem(curritem); else
+                if (methodname.equals("doSelItem"))   doSelectionItem(curritem); else
+                // string mismatch
+        		Log.e("Fix callagain", methodname);
         	}
         };
     }
@@ -199,7 +277,7 @@ public class MainActivity extends Activity
     protected void onPause() {
         super.onPause();
         pattView.onPause();
-        genhandler.removeCallbacks(generate);
+        stopped = true;
     }
 
     // -----------------------------------------------------------------------------
@@ -210,6 +288,7 @@ public class MainActivity extends Activity
         pattView.onResume();
         UpdateButtons();
         if (nativeIsGenerating()) {
+        	stopped = false;
     		genhandler.post(generate);
     	}
     }
@@ -218,7 +297,7 @@ public class MainActivity extends Activity
 
     @Override
     protected void onDestroy() {
-    	genhandler.removeCallbacks(generate);		// should have been done in OnPause, but play safe
+    	stopped = true;				// should have been done in OnPause, but play safe
         nativeDestroy();
         super.onDestroy();
     }
@@ -283,26 +362,61 @@ public class MainActivity extends Activity
     }
 
     // -----------------------------------------------------------------------------
+
+    public boolean CallAgainAfterDelay(String callname, View view, MenuItem item) {
+    	if (processingevents) {
+    		// CheckMessageQueue has been called inside a (possibly) lengthy task
+        	// so call the given method again after a short delay
+    		methodname = callname;
+        	if (view != null) currview = view;
+        	if (item != null) curritem = item;
+            callhandler.postDelayed(callagain, 5);	// call after 5 millisecs
+        	return true;
+    	} else {
+    		return false;
+    	}
+    }
+
+    // -----------------------------------------------------------------------------
     
     // called when the Start/Stop button is tapped
     public void doStartStop(View view) {
-    	nativeStartStop();
+    	if (CallAgainAfterDelay("doStartStop", view, null)) return;
     	if (nativeIsGenerating()) {
-    		// start generating immediately
-    		geninterval = nativeCalculateSpeed();
-    		genhandler.post(generate);
+    		// stop calling nativeGenerate
+    		stopped = true;
+    		nativeStopGenerating();
     	} else {
-    		// stop generating
-    		genhandler.removeCallbacks(generate);
+    		nativeStartGenerating();
+    		// nativeIsGenerating() might still be false (eg. if pattern is empty)
+    	    if (nativeIsGenerating()) {
+    		    // start calling nativeGenerate
+    		    geninterval = nativeCalculateSpeed();
+    		    stopped = false;
+    		    genhandler.post(generate);
+    	    }
     	}
     	UpdateButtons();
+    }
+
+    // -----------------------------------------------------------------------------
+
+    public void StopIfGenerating() {
+    	if (nativeIsGenerating()) {
+    		// note that genhandler.removeCallbacks(generate) doesn't work if
+    		// processingevents is true, so we use a global flag to start/stop
+    		// making calls to nativeGenerate
+    		stopped = true;
+    		nativeStopGenerating();
+    	}
     }
 
     // -----------------------------------------------------------------------------
     
     // called when the Step button is tapped
     public void doStep(View view) {
-    	genhandler.removeCallbacks(generate);
+    	StopIfGenerating();
+    	if (CallAgainAfterDelay("doStep", view, null)) return;
     	nativeStep();
     	UpdateButtons();
     }
@@ -322,18 +436,22 @@ public class MainActivity extends Activity
     
     // called when item from control_menu is selected
     public void doControlItem(MenuItem item) {
-    	genhandler.removeCallbacks(generate);
+    	if (item.getItemId() == R.id.reset) {
+    		StopIfGenerating();
+    		if (CallAgainAfterDelay("doReset", null, item)) return;
+    	}
         switch (item.getItemId()) {
     		case R.id.step1:  nativeStep1(); break;
     		case R.id.faster: nativeFaster(); break;
     		case R.id.slower: nativeSlower(); break;
     		case R.id.reset:  nativeResetPattern(); break;
-    		default:          // should never happen
+    		default:          Log.e("Golly","Fix bug in doControlItem!");
         }
     	if (item.getItemId() == R.id.reset) {
     		UpdateButtons();
     	} else {
         	geninterval = nativeCalculateSpeed();
+        	stopped = false;
             if (nativeIsGenerating()) genhandler.post(generate);
     	}
     }
@@ -365,7 +483,7 @@ public class MainActivity extends Activity
     		case R.id.bigger:    nativeBigger(); break;
     		case R.id.smaller:   nativeSmaller(); break;
     		case R.id.middle:    nativeMiddle(); break;
-    		default:             // should never happen
+    		default:             Log.e("Golly","Fix bug in doViewItem!");
         }
     }
 
@@ -373,7 +491,8 @@ public class MainActivity extends Activity
     
     // called when the Undo button is tapped
     public void doUndo(View view) {
-    	genhandler.removeCallbacks(generate);
+    	StopIfGenerating();
+    	if (CallAgainAfterDelay("doUndo", view, null)) return;
     	nativeUndo();
     	UpdateButtons();
     	
@@ -384,6 +503,7 @@ public class MainActivity extends Activity
     // called when the Redo button is tapped
     public void doRedo(View view) {
     	// nativeIsGenerating() should never be true here
+    	if (CallAgainAfterDelay("doRedo", view, null)) return;
     	nativeRedo();
     	UpdateButtons();
     }
@@ -405,8 +525,8 @@ public class MainActivity extends Activity
         	if (nativeIsGenerating()) {
         		// probably best to stop generating when Paste button is tapped
         		// (consistent with iOS Golly)
-        		genhandler.removeCallbacks(generate);
-        		nativeStartStop();	// calls StopGenerating
+        		stopped = true;
+        		nativeStopGenerating();
         		UpdateButtons();
         	}
         } else if (nativeSelectionExists()) {
@@ -424,14 +544,14 @@ public class MainActivity extends Activity
     
     // called when item from edit_menu is selected
     public void doEditItem(MenuItem item) {
-    	if (item.getItemId() == R.id.paste && nativeIsGenerating()) {
-    		genhandler.removeCallbacks(generate);
-    		// nativePaste will call StopGenerating
+    	if (item.getItemId() == R.id.paste) {
+    		StopIfGenerating();
+    		if (CallAgainAfterDelay("doPaste", null, item)) return;
     	}
         switch (item.getItemId()) {
     		case R.id.paste: nativePaste(); break;
     		case R.id.all:   nativeSelectAll(); break;
-    		default:         // should never happen
+    		default:         Log.e("Golly","Fix bug in doEditItem!");
         }
         // check if nativePaste created a paste image
         if (nativePasteExists()) editbutton.setText("Paste");
@@ -442,6 +562,17 @@ public class MainActivity extends Activity
     
     // called when item from selection_menu is selected
     public void doSelectionItem(MenuItem item) {
+    	if (item.getItemId() != R.id.remove &&
+    		item.getItemId() != R.id.copy &&
+    		item.getItemId() != R.id.shrink) {
+    		// item can modify the current pattern so we must stop generating,
+    		// but nicer if we only stop temporarily and resume when done
+        	if (nativeIsGenerating()) {
+        		// no need to set stopped = true
+        		nativePauseGenerating();
+        	}
+    		if (CallAgainAfterDelay("doSelItem", null, item)) return;
+    	}
         switch (item.getItemId()) {
             // let doEditItem handle the top 2 items:
 			// case R.id.paste: nativePaste(); break;
@@ -459,8 +590,10 @@ public class MainActivity extends Activity
             case R.id.rotatea:  nativeRotateSelection(0); break;
             case R.id.advance:  nativeAdvanceSelection(1); break;
             case R.id.advanceo: nativeAdvanceSelection(0); break;
-    		default:            // should never happen
+    		default:            Log.e("Golly","Fix bug in doSelectionItem!");
         }
+        // resume generating (only if nativePauseGenerating was called)
+        nativeResumeGenerating();
     }
 
     // -----------------------------------------------------------------------------
@@ -475,7 +608,7 @@ public class MainActivity extends Activity
         	case R.id.pflipx:    nativeFlipPaste(0); break;
         	case R.id.protatec:  nativeRotatePaste(1); break;
         	case R.id.protatea:  nativeRotatePaste(0); break;
-    		default:             // should never happen
+    		default:             Log.e("Golly","Fix bug in doPasteItem!");
         }
         // if paste image no longer exists then change Paste button back to Edit
         if (!nativePasteExists()) editbutton.setText("Edit");
@@ -501,7 +634,7 @@ public class MainActivity extends Activity
         	case R.id.pick:   nativeSetMode(1); break;
         	case R.id.select: nativeSetMode(2); break;
         	case R.id.move:   nativeSetMode(3); break;
-        	default:		  // should never happen
+        	default:		  Log.e("Golly","Fix bug in doModeItem!");
         }
         UpdateEditBar();	  // update modebutton text
     }
@@ -510,7 +643,13 @@ public class MainActivity extends Activity
     
     // called when the New button is tapped
     public void doNewPattern(View view) {
-    	genhandler.removeCallbacks(generate);
+    	// StopIfGenerating() would work here but we use smarter code that
+        // avoids trying to save the current pattern (potentially very large)
+    	if (nativeIsGenerating()) {
+    		stopped = true;
+    		nativeStopBeforeNew();
+    	}
+    	if (CallAgainAfterDelay("doNew", view, null)) return;
     	nativeNewPattern();
     	UpdateButtons();
     	UpdateEditBar();
@@ -581,32 +720,21 @@ public class MainActivity extends Activity
                 undobutton.setEnabled(nativeCanUndo());
                 redobutton.setEnabled(nativeCanRedo());
                 switch (nativeGetMode()) {
-        			case 0: modebutton.setText("Draw"); break;
-        			case 1: modebutton.setText("Pick"); break;
-        			case 2: modebutton.setText("Select"); break;
-        			case 3: modebutton.setText("Move"); break;
-        			default: // should never happen
+        			case 0:  modebutton.setText("Draw"); break;
+        			case 1:  modebutton.setText("Pick"); break;
+        			case 2:  modebutton.setText("Select"); break;
+        			case 3:  modebutton.setText("Move"); break;
+        			default: Log.e("Golly","Fix bug in UpdateEditBar!");
                 }
                 //!!! also show current drawing state
         	}
         });
     }
-
-    // -----------------------------------------------------------------------------
-
-    // this method is called from C++ code (see jnicalls.cpp)
-    private void CheckMessageQueue() {
-    	// not yet implemented!!!
-        // use Looper on main UI thread???!!!
-        // see http://developer.android.com/reference/android/os/Looper.html
-    	//??? see http://stackoverflow.com/questions/4994263/how-can-i-do-non-blocking-events-processing-on-android?rq=1
-    }
-
+    
     // -----------------------------------------------------------------------------
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void CopyTextToClipboard(String text) {
-    	// see http://developer.android.com/guide/topics/text/copy-paste.html
     	ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
     	ClipData clip = ClipData.newPlainText("RLE data", text);
     	clipboard.setPrimaryClip(clip);
@@ -617,7 +745,6 @@ public class MainActivity extends Activity
 
     // this method is called from C++ code (see jnicalls.cpp)
     private String GetTextFromClipboard() {
-    	// see http://developer.android.com/guide/topics/text/copy-paste.html
     	ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
     	String text = "";
     	if (clipboard.hasPrimaryClip()) {
