@@ -221,6 +221,7 @@ public class MainActivity extends Activity
                 if (methodname.equals("doNew"))       doNewPattern(currview); else
                 if (methodname.equals("doUndo"))      doUndo(currview); else
                 if (methodname.equals("doRedo"))      doRedo(currview); else
+                if (methodname.equals("doFit"))       doFitPattern(currview); else
             	if (methodname.equals("doReset"))     doControlItem(curritem); else
                 if (methodname.equals("doPaste"))     doEditItem(curritem); else
                 if (methodname.equals("doSelItem"))   doSelectionItem(curritem); else
@@ -460,6 +461,7 @@ public class MainActivity extends Activity
     
     // called when the Fit button is tapped
     public void doFitPattern(View view) {
+    	//!!!??? if (CallAgainAfterDelay("doFit", view, null)) return;
     	nativeFitPattern();
     }
 

@@ -50,8 +50,8 @@ static jmethodID id_CheckMessageQueue;
 static jmethodID id_CopyTextToClipboard;
 static jmethodID id_GetTextFromClipboard;
 
-static bool rendering = false;	// in DrawPattern?
-static bool paused = false;		// generating has been paused?
+static bool rendering = false;		// in DrawPattern?
+static bool paused = false;			// generating has been paused?
 
 // -----------------------------------------------------------------------------
 
@@ -131,6 +131,17 @@ static void CheckIfRendering()
 
 // -----------------------------------------------------------------------------
 
+void UpdatePattern()
+{
+	// call a Java method that calls GLSurfaceView.requestRender() which calls nativeRender
+	bool attached;
+	JNIEnv* env = getJNIenv(&attached);
+    if (env) env->CallVoidMethod(mainobj, id_RefreshPattern);
+	if (attached) javavm->DetachCurrentThread();
+}
+
+// -----------------------------------------------------------------------------
+
 void UpdateStatus()
 {
 	UpdateStatusLines();	// sets status1, status2, status3
@@ -186,7 +197,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, 
     static bool firstcall = true;
     if (firstcall) {
     	firstcall = false;
-    	std::string msg = "This is Golly version ";
+    	std::string msg = "This is Golly ";
     	msg += GOLLY_VERSION;
     	msg += " for Android.  Copyright 2013 The Golly Gang.";
     	SetMessage(msg.c_str());
@@ -396,6 +407,7 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStartGenerating(JNIEnv* env)
 {
     if (!generating) {
+    	ClearMessage();
     	StartGenerating();
     	// generating might still be false (eg. if pattern is empty)
 
@@ -431,12 +443,15 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env
 {
 	if (paused) return;		// PauseGenerating has been called
 
-	// avoid re-entering currlayer->algo->step()
+	// play safe and avoid re-entering currlayer->algo->step()
 	if (event_checker > 0) return;
 
+	// avoid calling NextGeneration while DrawPattern is executing on different thread
+	if (rendering) return;
+
 	NextGeneration(true);	// calls currlayer->algo->step() using current gen increment
-	UpdateStatus();
 	UpdatePattern();
+	UpdateStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -446,8 +461,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
 {
     ClearMessage();
     NextGeneration(true);
-	UpdateStatus();
 	UpdatePattern();
+	UpdateStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -528,8 +543,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* e
     ClearMessage();
     CheckIfRendering();
     NewPattern();
-    UpdateStatus();
     UpdatePattern();
+    UpdateStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -538,9 +553,10 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitPattern(JNIEnv* env)
 {
     ClearMessage();
+    CheckIfRendering();
     currlayer->algo->fit(*currlayer->view, 1);
-    UpdateStatus();
     UpdatePattern();
+    UpdateStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -549,11 +565,12 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1(JNIEnv* env)
 {
     ClearMessage();
+    CheckIfRendering();
     // set scale to 1:1
     if (currlayer->view->getmag() != 0) {
         currlayer->view->setmag(0);
-        UpdateStatus();
         UpdatePattern();
+        UpdateStatus();
     }
 }
 
@@ -563,11 +580,12 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger(JNIEnv* env)
 {
     ClearMessage();
+    CheckIfRendering();
     // zoom in
     if (currlayer->view->getmag() < MAX_MAG) {
         currlayer->view->zoom();
-        UpdateStatus();
         UpdatePattern();
+        UpdateStatus();
     } else {
         Beep();
     }
@@ -579,10 +597,11 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller(JNIEnv* env)
 {
     ClearMessage();
+    CheckIfRendering();
     // zoom out
     currlayer->view->unzoom();
-    UpdateStatus();
     UpdatePattern();
+    UpdateStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -597,8 +616,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle(JNIEnv* env)
         // put cell saved by ChangeOrigin (not yet implemented!!!) in middle
         currlayer->view->setpositionmag(currlayer->originx, currlayer->originy, currlayer->view->getmag());
     }
-    UpdateStatus();
     UpdatePattern();
+    UpdateStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -787,6 +806,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeDoPaste(JNIEnv* env,
 {
 	// assume caller has stopped generating
 	ClearMessage();
+    CheckIfRendering();
 	DoPaste(toselection);
 	UpdateEverything();
 }
@@ -825,8 +845,8 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeResume(JNIEnv* env)
 {
 	ResumeGenerating();
-	UpdateStatus();
 	UpdatePattern();
+	UpdateStatus();
 }
 
 // -----------------------------------------------------------------------------
@@ -902,8 +922,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeResize(JNIEnv* en
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeRender(JNIEnv* env)
 {
+	// if NextGeneration is executing (on different thread) then don't call DrawPattern
+	if (event_checker > 0) return;
+
 	// render the current pattern; note that this occurs on a different thread
-    // so we use a global flag to prevent calls like NewPattern being called
+    // so we use rendering flag to prevent calls like NewPattern being called
     // before DrawPattern has finished
 	rendering = true;
 	DrawPattern(currindex);
@@ -912,22 +935,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeRender(JNIEnv* en
 
 // -----------------------------------------------------------------------------
 
-void UpdatePattern()
-{
-	// call a Java method that calls GLSurfaceView.requestRender() which calls nativeRender
-	bool attached;
-	JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, id_RefreshPattern);
-	if (attached) javavm->DetachCurrentThread();
-}
-
-// -----------------------------------------------------------------------------
-
 std::string GetRuleName(const std::string& rule)
 {
 	std::string result = "";
 	// not yet implemented!!!
-	// maybe we should do this in rule.h and rule.cpp in gui-common???
+	// maybe we should create rule.h and rule.cpp in gui-common???
 	return result;
 }
 
@@ -1093,17 +1105,6 @@ void AndroidFixURLPath(std::string& path)
 
 // -----------------------------------------------------------------------------
 
-void AndroidCheckEvents()
-{
-	// event_checker is > 0 in here (see gui-common/utils.cpp)
-	bool attached;
-	JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, id_CheckMessageQueue);
-	if (attached) javavm->DetachCurrentThread();
-}
-
-// -----------------------------------------------------------------------------
-
 bool AndroidCopyTextToClipboard(const char* text)
 {
 	bool attached;
@@ -1132,7 +1133,12 @@ bool AndroidGetTextFromClipboard(std::string& text)
     }
 	if (attached) javavm->DetachCurrentThread();
 
-    return text.length() > 0;
+    if (text.length() == 0) {
+        ErrorMessage("No text in clipboard.");
+        return false;
+    } else {
+        return true;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1142,4 +1148,20 @@ bool AndroidDownloadFile(const std::string& url, const std::string& filepath)
     // not yet implemented!!!
     LOGI("AndroidDownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
     return false;//!!!
+}
+
+// -----------------------------------------------------------------------------
+
+void AndroidCheckEvents()
+{
+	// event_checker is > 0 in here (see gui-common/utils.cpp)
+	if (rendering) {
+		// best not to call CheckMessageQueue while DrawPattern is executing
+		// (speeds up generating loop and might help avoid fatal SIGSEGV error)
+		return;
+	}
+	bool attached;
+	JNIEnv* env = getJNIenv(&attached);
+    if (env) env->CallVoidMethod(mainobj, id_CheckMessageQueue);
+	if (attached) javavm->DetachCurrentThread();
 }
