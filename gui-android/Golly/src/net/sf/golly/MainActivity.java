@@ -31,6 +31,8 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.graphics.Color;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -729,6 +731,17 @@ public class MainActivity extends Activity
                 //!!! also show current drawing state
             }
         });
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void PlayBeepSound() {
+        ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
+        if (tg != null) {
+            tg.startTone(ToneGenerator.TONE_PROP_BEEP);
+            tg.release();
+        }
     }
     
     // -----------------------------------------------------------------------------

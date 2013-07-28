@@ -47,6 +47,7 @@ static jmethodID id_RefreshPattern;
 static jmethodID id_ShowStatusLines;
 static jmethodID id_UpdateEditBar;
 static jmethodID id_CheckMessageQueue;
+static jmethodID id_PlayBeepSound;
 static jmethodID id_CopyTextToClipboard;
 static jmethodID id_GetTextFromClipboard;
 
@@ -78,6 +79,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* en
     id_ShowStatusLines = env->GetMethodID(klass, "ShowStatusLines", "()V");
     id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
     id_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
+    id_PlayBeepSound = env->GetMethodID(klass, "PlayBeepSound", "()V");
     id_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
     id_GetTextFromClipboard = env->GetMethodID(klass, "GetTextFromClipboard", "()Ljava/lang/String;");
 }
@@ -1073,8 +1075,10 @@ void AndroidFatal(const char* msg)
 
 void AndroidBeep()
 {
-    // not yet implemented!!!
-    LOGI("BEEP");//!!!
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) env->CallVoidMethod(mainobj, id_PlayBeepSound);
+    if (attached) javavm->DetachCurrentThread();
 }
 
 // -----------------------------------------------------------------------------
