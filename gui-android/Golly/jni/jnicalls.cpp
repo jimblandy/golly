@@ -48,6 +48,8 @@ static jmethodID id_ShowStatusLines;
 static jmethodID id_UpdateEditBar;
 static jmethodID id_CheckMessageQueue;
 static jmethodID id_PlayBeepSound;
+static jmethodID id_RemoveFile;
+static jmethodID id_MoveFile;
 static jmethodID id_CopyTextToClipboard;
 static jmethodID id_GetTextFromClipboard;
 
@@ -80,6 +82,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* en
     id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
     id_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
     id_PlayBeepSound = env->GetMethodID(klass, "PlayBeepSound", "()V");
+    id_RemoveFile = env->GetMethodID(klass, "RemoveFile", "(Ljava/lang/String;)V");
+    id_MoveFile = env->GetMethodID(klass, "MoveFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     id_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
     id_GetTextFromClipboard = env->GetMethodID(klass, "GetTextFromClipboard", "()Ljava/lang/String;");
 }
@@ -1085,17 +1089,38 @@ void AndroidBeep()
 
 void AndroidRemoveFile(const std::string& filepath)
 {
-    // not yet implemented!!!
-    LOGE("AndroidRemoveFile: %s", filepath.c_str());
+    // LOGI("AndroidRemoveFile: %s", filepath.c_str());
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring jpath = env->NewStringUTF(filepath.c_str());
+        env->CallVoidMethod(mainobj, id_RemoveFile, jpath);
+        env->DeleteLocalRef(jpath);
+    }
+    if (attached) javavm->DetachCurrentThread();
 }
 
 // -----------------------------------------------------------------------------
 
 bool AndroidMoveFile(const std::string& inpath, const std::string& outpath)
 {
-    // not yet implemented!!!
-    LOGE("AndroidMoveFile: %s to %s", inpath.c_str(), outpath.c_str());
-    return false;//!!!
+    // LOGE("AndroidMoveFile: %s to %s", inpath.c_str(), outpath.c_str());
+    std::string error = "env is null";
+
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring joldpath = env->NewStringUTF(inpath.c_str());
+        jstring jnewpath = env->NewStringUTF(outpath.c_str());
+        jstring jmsg = (jstring) env->CallObjectMethod(mainobj, id_MoveFile, joldpath, jnewpath);
+        error = ConvertJString(env, jmsg);
+        env->DeleteLocalRef(jmsg);
+        env->DeleteLocalRef(joldpath);
+        env->DeleteLocalRef(jnewpath);
+    }
+    if (attached) javavm->DetachCurrentThread();
+
+    return error.length() == 0;
 }
 
 // -----------------------------------------------------------------------------

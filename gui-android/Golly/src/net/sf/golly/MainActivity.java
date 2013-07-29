@@ -747,6 +747,31 @@ public class MainActivity extends Activity
     // -----------------------------------------------------------------------------
 
     // this method is called from C++ code (see jnicalls.cpp)
+    private void RemoveFile(String filepath) {
+        File file = new File(filepath);
+        if (!file.delete()) {
+            Log.e("RemoveFile failed", filepath);
+        }
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private String MoveFile(String oldpath, String newpath) {
+        String result = "";
+        File oldfile = new File(oldpath);
+        File newfile = new File(newpath);
+        if (!oldfile.renameTo(newfile)) {
+            Log.e("MoveFile failed: old", oldpath);
+            Log.e("MoveFile failed: new", newpath);
+            result = "MoveFile failed";
+        }
+        return result;
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
     private void CopyTextToClipboard(String text) {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("RLE data", text);
