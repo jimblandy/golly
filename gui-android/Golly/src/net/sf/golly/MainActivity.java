@@ -32,6 +32,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -239,7 +240,7 @@ public class MainActivity extends Activity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // this adds items to the action bar
+        // add main.xml items to the action bar
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
@@ -248,32 +249,31 @@ public class MainActivity extends Activity
 
     // called when PATTERN item in action bar is tapped
     public void doPattern(MenuItem item) {
-        // not yet implemented!!!
-        Log.i("Golly", "switch to Pattern screen");
+        // do nothing -- we're in MainActivity
     }
 
     // -----------------------------------------------------------------------------
 
     // called when OPEN item in action bar is tapped
     public void doOpen(MenuItem item) {
-        // not yet implemented!!!
-        Log.i("Golly", "switch to Open screen");
+        Intent intent = new Intent(this, OpenActivity.class);
+        startActivity(intent);
     }
 
     // -----------------------------------------------------------------------------
 
     // called when SETTINGS item in action bar is tapped
     public void doSettings(MenuItem item) {
-        // not yet implemented!!!
-        Log.i("Golly", "switch to Settings screen");
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
     }
 
     // -----------------------------------------------------------------------------
 
     // called when HELP item in action bar is tapped
     public void doHelp(MenuItem item) {
-        // not yet implemented!!!
-        Log.i("Golly", "switch to Help screen");
+        Intent intent = new Intent(this, HelpActivity.class);
+        startActivity(intent);
     }
 
     // -----------------------------------------------------------------------------
