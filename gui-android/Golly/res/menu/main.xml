@@ -4,25 +4,21 @@
         android:id="@+id/pattern"
         android:showAsAction="always"
         android:title="PATTERN"
-        android:onClick="doPattern"
     />
     <item
         android:id="@+id/open"
         android:showAsAction="always"
         android:title="OPEN"
-        android:onClick="doOpen"
     />
     <item
         android:id="@+id/settings"
         android:showAsAction="always"
         android:title="SETTINGS"
-        android:onClick="doSettings"
     />
     <item
         android:id="@+id/help"
         android:showAsAction="always"
         android:title="HELP"
-        android:onClick="doHelp"
     />
     
 </menu>

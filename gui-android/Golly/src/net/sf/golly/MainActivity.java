@@ -50,8 +50,8 @@ import android.widget.Button;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
-public class MainActivity extends Activity
-{    
+public class MainActivity extends Activity {
+
     // see jnicalls.cpp for these native routines:
     private static native void nativeClassInit();   // must be static
     private native void nativeCreate();             // must NOT be static
@@ -242,38 +242,38 @@ public class MainActivity extends Activity
     public boolean onCreateOptionsMenu(Menu menu) {
         // add main.xml items to the action bar
         getMenuInflater().inflate(R.menu.main, menu);
+        
+        // disable the item for this activity
+        MenuItem item = menu.findItem(R.id.pattern);
+        item.setEnabled(false);
+        
         return true;
     }
 
     // -----------------------------------------------------------------------------
 
-    // called when PATTERN item in action bar is tapped
-    public void doPattern(MenuItem item) {
-        // do nothing -- we're in MainActivity
-    }
-
-    // -----------------------------------------------------------------------------
-
-    // called when OPEN item in action bar is tapped
-    public void doOpen(MenuItem item) {
-        Intent intent = new Intent(this, OpenActivity.class);
-        startActivity(intent);
-    }
-
-    // -----------------------------------------------------------------------------
-
-    // called when SETTINGS item in action bar is tapped
-    public void doSettings(MenuItem item) {
-        Intent intent = new Intent(this, SettingsActivity.class);
-        startActivity(intent);
-    }
-
-    // -----------------------------------------------------------------------------
-
-    // called when HELP item in action bar is tapped
-    public void doHelp(MenuItem item) {
-        Intent intent = new Intent(this, HelpActivity.class);
-        startActivity(intent);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // action bar item has been tapped
+        Intent intent;
+        switch (item.getItemId()) {
+            case R.id.pattern:
+                // do nothing
+                break;
+            case R.id.open:
+                intent = new Intent(this, OpenActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.settings:
+                intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.help:
+                intent = new Intent(this, HelpActivity.class);
+                startActivity(intent);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     // -----------------------------------------------------------------------------

@@ -27,7 +27,6 @@ package net.sf.golly;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.app.NavUtils;
@@ -48,6 +47,11 @@ public class SettingsActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // add main.xml items to the action bar
         getMenuInflater().inflate(R.menu.main, menu);
+        
+        // disable the item for this activity
+        MenuItem item = menu.findItem(R.id.settings);
+        item.setEnabled(false);
+        
         return true;
     }
 
@@ -55,44 +59,30 @@ public class SettingsActivity extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        // action bar item has been tapped
+        Intent intent;
         switch (item.getItemId()) {
             case android.R.id.home:
                 // this ID represents the Home or Up button
                 NavUtils.navigateUpFromSameTask(this);
                 return true;
+            case R.id.pattern:
+                intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.open:
+                intent = new Intent(this, OpenActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.settings:
+                // do nothing
+                break;
+            case R.id.help:
+                intent = new Intent(this, HelpActivity.class);
+                startActivity(intent);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    // -----------------------------------------------------------------------------
-
-    // called when PATTERN item in action bar is tapped
-    public void doPattern(MenuItem item) {
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
-    }
-
-    // -----------------------------------------------------------------------------
-
-    // called when OPEN item in action bar is tapped
-    public void doOpen(MenuItem item) {
-        Intent intent = new Intent(this, OpenActivity.class);
-        startActivity(intent);
-    }
-
-    // -----------------------------------------------------------------------------
-
-    // called when SETTINGS item in action bar is tapped
-    public void doSettings(MenuItem item) {
-        // do nothing -- we're in SettingsActivity
-    }
-
-    // -----------------------------------------------------------------------------
-
-    // called when HELP item in action bar is tapped
-    public void doHelp(MenuItem item) {
-        Intent intent = new Intent(this, HelpActivity.class);
-        startActivity(intent);
-    }
-
-}
+} // SettingsActivity class
