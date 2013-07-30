@@ -27,15 +27,18 @@ package net.sf.golly;
 import java.io.File;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.os.MessageQueue;
 import android.util.Log;
 import android.view.Menu;
@@ -742,6 +745,108 @@ public class MainActivity extends Activity
             tg.startTone(ToneGenerator.TONE_PROP_BEEP);
             tg.release();
         }
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void Warning(String msg) {
+        // use a handler to get a modal dialog
+        final Handler handler = new Handler() {
+            public void handleMessage(Message mesg) {
+                throw new RuntimeException();
+            } 
+        };
+        
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("Warning");
+        alert.setMessage(msg);
+        alert.setCancelable(false);
+        alert.setNegativeButton("CANCEL",
+            new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                    handler.sendMessage(handler.obtainMessage());
+                }
+            });
+        alert.show();
+        
+        // loop until runtime exception is triggered
+        try { Looper.loop(); }
+        catch(RuntimeException re) {}
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void Fatal(String msg) {
+        // use a handler to get a modal dialog
+        final Handler handler = new Handler() {
+            public void handleMessage(Message mesg) {
+                throw new RuntimeException();
+            } 
+        };
+        
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("Fatal error!");
+        alert.setMessage(msg);
+        alert.setCancelable(false);
+        alert.setNegativeButton("QUIT",
+            new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                    handler.sendMessage(handler.obtainMessage());
+                }
+            });
+        alert.show();
+        
+        // loop until runtime exception is triggered
+        try { Looper.loop(); }
+        catch(RuntimeException re) {}
+        
+        System.exit(1);
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    private String answer;
+    
+    // this method is called from C++ code (see jnicalls.cpp)
+    private String YesNo(String query) {
+        // use a handler to get a modal dialog
+        final Handler handler = new Handler() {
+            public void handleMessage(Message mesg) {
+                throw new RuntimeException();
+            } 
+        };
+        
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("A question...");
+        alert.setMessage(query);
+        alert.setCancelable(false);
+        alert.setPositiveButton("YES",
+            new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    answer = "yes";
+                    dialog.cancel();
+                    handler.sendMessage(handler.obtainMessage());
+                }
+            });
+        alert.setNegativeButton("NO",
+            new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    answer = "no";
+                    dialog.cancel();
+                    handler.sendMessage(handler.obtainMessage());
+                }
+            });
+        alert.show();
+        
+        // loop until runtime exception is triggered
+        try { Looper.loop(); }
+        catch(RuntimeException re) {}
+
+        return answer;
     }
     
     // -----------------------------------------------------------------------------

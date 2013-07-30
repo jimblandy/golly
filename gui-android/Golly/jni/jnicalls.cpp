@@ -48,6 +48,9 @@ static jmethodID id_ShowStatusLines;
 static jmethodID id_UpdateEditBar;
 static jmethodID id_CheckMessageQueue;
 static jmethodID id_PlayBeepSound;
+static jmethodID id_Warning;
+static jmethodID id_Fatal;
+static jmethodID id_YesNo;
 static jmethodID id_RemoveFile;
 static jmethodID id_MoveFile;
 static jmethodID id_CopyTextToClipboard;
@@ -82,6 +85,9 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* en
     id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
     id_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
     id_PlayBeepSound = env->GetMethodID(klass, "PlayBeepSound", "()V");
+    id_Warning = env->GetMethodID(klass, "Warning", "(Ljava/lang/String;)V");
+    id_Fatal = env->GetMethodID(klass, "Fatal", "(Ljava/lang/String;)V");
+    id_YesNo = env->GetMethodID(klass, "YesNo", "(Ljava/lang/String;)Ljava/lang/String;");
     id_RemoveFile = env->GetMethodID(klass, "RemoveFile", "(Ljava/lang/String;)V");
     id_MoveFile = env->GetMethodID(klass, "MoveFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     id_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
@@ -1052,27 +1058,59 @@ void ShowHelp(const char* filepath)
 
 void AndroidWarning(const char* msg)
 {
-    // not yet implemented!!!
-    LOGE("WARNING: %s", msg);
-}
+    if (generating) paused = true;
 
-// -----------------------------------------------------------------------------
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring jmsg = env->NewStringUTF(msg);
+        env->CallVoidMethod(mainobj, id_Warning, jmsg);
+        env->DeleteLocalRef(jmsg);
+    }
+    if (attached) javavm->DetachCurrentThread();
 
-bool AndroidYesNo(const char* msg)
-{
-    // not yet implemented!!!
-    LOGE("AndroidYesNo: %s", msg);
-    return true; //!!!
+    if (generating) paused = false;
 }
 
 // -----------------------------------------------------------------------------
 
 void AndroidFatal(const char* msg)
 {
-    // not yet implemented!!!
-    LOGE("FATAL ERROR: %s", msg);
-    //!!!??? System.exit(1);
-    exit(1);
+    paused = true;
+
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring jmsg = env->NewStringUTF(msg);
+        env->CallVoidMethod(mainobj, id_Fatal, jmsg);
+        env->DeleteLocalRef(jmsg);
+    }
+    if (attached) javavm->DetachCurrentThread();
+
+    // id_Fatal calls System.exit(1)
+    // exit(1);
+}
+
+// -----------------------------------------------------------------------------
+
+bool AndroidYesNo(const char* query)
+{
+    std::string answer;
+    if (generating) paused = true;
+
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring jquery = env->NewStringUTF(query);
+        jstring jresult = (jstring) env->CallObjectMethod(mainobj, id_YesNo, jquery);
+        answer = ConvertJString(env, jresult);
+        env->DeleteLocalRef(jquery);
+        env->DeleteLocalRef(jresult);
+    }
+    if (attached) javavm->DetachCurrentThread();
+
+    if (generating) paused = false;
+    return answer == "yes";
 }
 
 // -----------------------------------------------------------------------------
@@ -1112,9 +1150,9 @@ bool AndroidMoveFile(const std::string& inpath, const std::string& outpath)
     if (env) {
         jstring joldpath = env->NewStringUTF(inpath.c_str());
         jstring jnewpath = env->NewStringUTF(outpath.c_str());
-        jstring jmsg = (jstring) env->CallObjectMethod(mainobj, id_MoveFile, joldpath, jnewpath);
-        error = ConvertJString(env, jmsg);
-        env->DeleteLocalRef(jmsg);
+        jstring jresult = (jstring) env->CallObjectMethod(mainobj, id_MoveFile, joldpath, jnewpath);
+        error = ConvertJString(env, jresult);
+        env->DeleteLocalRef(jresult);
         env->DeleteLocalRef(joldpath);
         env->DeleteLocalRef(jnewpath);
     }
