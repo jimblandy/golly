@@ -1,11 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <item
-        android:id="@+id/pattern"
-        android:showAsAction="always"
-        android:title="PATTERN"
-    />
-    <item
         android:id="@+id/open"
         android:showAsAction="always"
         android:title="OPEN"

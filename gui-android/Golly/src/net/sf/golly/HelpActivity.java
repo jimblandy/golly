@@ -63,12 +63,8 @@ public class HelpActivity extends Activity {
         Intent intent;
         switch (item.getItemId()) {
             case android.R.id.home:
-                // this ID represents the Home or Up button
+                // the Home or Up button will start MainActivity
                 NavUtils.navigateUpFromSameTask(this);
-                return true;
-            case R.id.pattern:
-                intent = new Intent(this, MainActivity.class);
-                startActivity(intent);
                 return true;
             case R.id.open:
                 intent = new Intent(this, OpenActivity.class);

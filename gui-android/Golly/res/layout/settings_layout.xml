@@ -1,17 +1,61 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:gravity="center"
+    android:background="#CCCCCC"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".SettingsActivity" >
-
-    <TextView
+    android:orientation="vertical" >
+    
+    <LinearLayout
+        android:layout_gravity="center"
+        android:background="#CCCCCC"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Settings screen"
-    />
+        android:orientation="vertical" >
+	    <CheckBox android:id="@+id/checkbox_hash"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Show hashing messages"
+	        android:onClick="onCheckboxClicked"
+	    />
+	    <CheckBox android:id="@+id/checkbox_time"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Show timing messages"
+	        android:onClick="onCheckboxClicked"
+	    />
+	    <CheckBox android:id="@+id/checkbox_beep"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Play beep sound"
+	        android:onClick="onCheckboxClicked"
+	    />
+	    <CheckBox android:id="@+id/checkbox_swap"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Invert cell colors"
+	        android:onClick="onCheckboxClicked"
+	    />
+	    <CheckBox android:id="@+id/checkbox_icon"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Show icons"
+	        android:onClick="onCheckboxClicked"
+	    />
+	    <CheckBox android:id="@+id/checkbox_undo"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Can undo/redo"
+	        android:onClick="onCheckboxClicked"
+	    />
+	    <CheckBox android:id="@+id/checkbox_grid"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="Show grid lines"
+	        android:onClick="onCheckboxClicked"
+	    />
+    </LinearLayout>
 
-</RelativeLayout>
+</LinearLayout>

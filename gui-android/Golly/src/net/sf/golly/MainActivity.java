@@ -130,7 +130,7 @@ public class MainActivity extends Activity {
     // -----------------------------------------------------------------------------
 
     // the following stuff allows time consuming code (like nativeGenerate) to periodically
-    // check if any user events need to be processed without blocking the UI thread
+    // check if any user events need to be processed, but without blocking the UI thread
     // (thanks to http://stackoverflow.com/questions/4994263/how-can-i-do-non-blocking-events-processing-on-android)
     
     private boolean processingevents = false;
@@ -242,11 +242,6 @@ public class MainActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // add main.xml items to the action bar
         getMenuInflater().inflate(R.menu.main, menu);
-        
-        // disable the item for this activity
-        MenuItem item = menu.findItem(R.id.pattern);
-        item.setEnabled(false);
-        
         return true;
     }
 
@@ -257,9 +252,6 @@ public class MainActivity extends Activity {
         // action bar item has been tapped
         Intent intent;
         switch (item.getItemId()) {
-            case R.id.pattern:
-                // do nothing
-                break;
             case R.id.open:
                 intent = new Intent(this, OpenActivity.class);
                 startActivity(intent);

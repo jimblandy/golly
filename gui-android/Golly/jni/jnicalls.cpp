@@ -76,26 +76,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
 // -----------------------------------------------------------------------------
 
-extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* env, jclass klass)
-{
-    // save IDs for Java methods in MainActivity
-    id_RefreshPattern = env->GetMethodID(klass, "RefreshPattern", "()V");
-    id_ShowStatusLines = env->GetMethodID(klass, "ShowStatusLines", "()V");
-    id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
-    id_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
-    id_PlayBeepSound = env->GetMethodID(klass, "PlayBeepSound", "()V");
-    id_Warning = env->GetMethodID(klass, "Warning", "(Ljava/lang/String;)V");
-    id_Fatal = env->GetMethodID(klass, "Fatal", "(Ljava/lang/String;)V");
-    id_YesNo = env->GetMethodID(klass, "YesNo", "(Ljava/lang/String;)Ljava/lang/String;");
-    id_RemoveFile = env->GetMethodID(klass, "RemoveFile", "(Ljava/lang/String;)V");
-    id_MoveFile = env->GetMethodID(klass, "MoveFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    id_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
-    id_GetTextFromClipboard = env->GetMethodID(klass, "GetTextFromClipboard", "()Ljava/lang/String;");
-}
-
-// -----------------------------------------------------------------------------
-
 static JNIEnv* getJNIenv(bool* attached)
 {
     // get the JNI environment for the current thread
@@ -167,6 +147,84 @@ void UpdateStatus()
 
 // -----------------------------------------------------------------------------
 
+void PauseGenerating()
+{
+    if (generating) {
+        StopGenerating();
+        // generating is now false
+        paused = true;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ResumeGenerating()
+{
+    if (paused) {
+        StartGenerating();
+        // generating is probably true (false if pattern is empty)
+        paused = false;
+    }
+}
+
+// =============================================================================
+
+// these native routines are used in MainActivity.java:
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* env, jclass klass)
+{
+    // save IDs for Java methods in MainActivity
+    id_RefreshPattern = env->GetMethodID(klass, "RefreshPattern", "()V");
+    id_ShowStatusLines = env->GetMethodID(klass, "ShowStatusLines", "()V");
+    id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
+    id_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
+    id_PlayBeepSound = env->GetMethodID(klass, "PlayBeepSound", "()V");
+    id_Warning = env->GetMethodID(klass, "Warning", "(Ljava/lang/String;)V");
+    id_Fatal = env->GetMethodID(klass, "Fatal", "(Ljava/lang/String;)V");
+    id_YesNo = env->GetMethodID(klass, "YesNo", "(Ljava/lang/String;)Ljava/lang/String;");
+    id_RemoveFile = env->GetMethodID(klass, "RemoveFile", "(Ljava/lang/String;)V");
+    id_MoveFile = env->GetMethodID(klass, "MoveFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    id_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
+    id_GetTextFromClipboard = env->GetMethodID(klass, "GetTextFromClipboard", "()Ljava/lang/String;");
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, jobject obj)
+{
+    // save obj for calling Java methods in this instance of MainActivity
+    mainobj = env->NewGlobalRef(obj);
+
+    static bool firstcall = true;
+    if (firstcall) {
+        firstcall = false;
+        std::string msg = "This is Golly ";
+        msg += GOLLY_VERSION;
+        msg += " for Android.  Copyright 2013 The Golly Gang.";
+        SetMessage(msg.c_str());
+        MAX_MAG = 5;                // maximum cell size = 32x32
+        InitAlgorithms();           // must initialize algoinfo first
+        GetPrefs();                 // load user's preferences
+        SetMinimumStepExponent();   // for slowest speed
+        AddLayer();                 // create initial layer (sets currlayer)
+        NewPattern();               // create new, empty universe
+        UpdateStatus();             // show initial message
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeDestroy(JNIEnv* env)
+{
+    // the current instance of MainActivity is being destroyed
+    env->DeleteGlobalRef(mainobj);
+}
+
+// -----------------------------------------------------------------------------
+
 extern "C"
 JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusLine(JNIEnv* env, jobject obj, jint line)
 {
@@ -194,79 +252,6 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetRandomFill(JNI
     char s[4];    // room for 0..100
     sprintf(s, "%d", randomfill);
     return env->NewStringUTF(s);
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, jobject obj)
-{
-    // LOGI("nativeCreate");
-
-    // save obj for calling Java methods in this instance of MainActivity
-    mainobj = env->NewGlobalRef(obj);
-
-    static bool firstcall = true;
-    if (firstcall) {
-        firstcall = false;
-        std::string msg = "This is Golly ";
-        msg += GOLLY_VERSION;
-        msg += " for Android.  Copyright 2013 The Golly Gang.";
-        SetMessage(msg.c_str());
-        MAX_MAG = 5;                // maximum cell size = 32x32
-        InitAlgorithms();           // must initialize algoinfo first
-        GetPrefs();                 // load user's preferences
-        SetMinimumStepExponent();   // for slowest speed
-        AddLayer();                 // create initial layer (sets currlayer)
-        NewPattern();               // create new, empty universe
-        UpdateStatus();             // show initial message
-        showtiming = true; //!!! test
-        showicons = true; //!!! test
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeDestroy(JNIEnv* env)
-{
-    // LOGI("nativeDestroy");
-
-/* Android apps aren't really meant to quit so best not to do this stuff:
-
-    // avoid nativeResume restarting pattern generation
-    paused = false;
-    generating = false;
-
-    if (currlayer->dirty) {
-        // ask if changes should be saved
-        //!!!
-    }
-
-    SavePrefs();
-
-    // clear all undo/redo history for this layer
-    currlayer->undoredo->ClearUndoRedo();
-
-    if (numlayers > 1) DeleteOtherLayers();
-    delete currlayer;
-
-    // reset some globals so we can call AddLayer again in nativeCreate
-    numlayers = 0;
-    numclones = 0;
-    currlayer = NULL;
-
-    // delete stuff created by InitAlgorithms()
-    DeleteAlgorithms();
-
-    // reset some static info so we can call InitAlgorithms again
-    staticAlgoInfo::nextAlgoId = 0;
-    staticAlgoInfo::head = NULL;
-
-*/
-
-    // the current instance of MainActivity is being destroyed
-    env->DeleteGlobalRef(mainobj);
 }
 
 // -----------------------------------------------------------------------------
@@ -373,28 +358,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResetPattern(JNIEnv*
     CheckIfRendering();
     ResetPattern();
     UpdateEverything();
-}
-
-// -----------------------------------------------------------------------------
-
-void PauseGenerating()
-{
-    if (generating) {
-        StopGenerating();
-        // generating is now false
-        paused = true;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void ResumeGenerating()
-{
-    if (paused) {
-        StartGenerating();
-        // generating is probably true (false if pattern is empty)
-        paused = false;
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -843,7 +806,9 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRotatePaste(JNIEnv* 
     UpdateEverything();
 }
 
-// -----------------------------------------------------------------------------
+// =============================================================================
+
+// these native routines are used in PatternGLSurfaceView.java:
 
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativePause(JNIEnv* env)
@@ -945,7 +910,99 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeRender(JNIEnv* en
     rendering = false;
 }
 
+// =============================================================================
+
+// these native routines are used in SettingsActivity.java:
+
+static bool oldcolors;      // detect if user changed swapcolors
+static bool oldundo;        // detect if user changed allowundo
+static bool oldhashinfo;    // detect if user changed currlayer->showhashinfo
+static int oldhashmem;      // detect if user changed maxhashmem
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeOpenSettings(JNIEnv* env)
+{
+    // SettingsActivity is about to appear
+    oldcolors = swapcolors;
+    oldundo = allowundo;
+    oldhashmem = maxhashmem;
+    oldhashinfo = currlayer->showhashinfo;
+}
+
 // -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeCloseSettings(JNIEnv* env)
+{
+    // SettingsActivity is about to disappear
+    if (swapcolors != oldcolors) InvertCellColors();
+
+    if (allowundo != oldundo) {
+        if (allowundo) {
+            if (currlayer->algo->getGeneration() > currlayer->startgen) {
+                // undo list is empty but user can Reset, so add a generating change
+                // to undo list so user can Undo or Reset (and then Redo if they wish)
+                currlayer->undoredo->AddGenChange();
+            }
+        } else {
+            currlayer->undoredo->ClearUndoRedo();
+        }
+    }
+
+    if (currlayer->showhashinfo != oldhashinfo) {
+        // we only show hashing info while generating
+        if (generating) lifealgo::setVerbose(currlayer->showhashinfo);
+    }
+
+    // need to call setMaxMemory if maxhashmem changed
+    if (maxhashmem != oldhashmem) {
+        for (int i = 0; i < numlayers; i++) {
+            Layer* layer = GetLayer(i);
+            if (algoinfo[layer->algtype]->canhash) {
+                layer->algo->setMaxMemory(maxhashmem);
+            }
+            // non-hashing algos (QuickLife) use their default memory setting
+        }
+    }
+
+    // this is a good place to save the current settings
+    SavePrefs();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT int JNICALL Java_net_sf_golly_SettingsActivity_nativeGetPref(JNIEnv* env, jobject obj, jstring pref)
+{
+    std::string name = ConvertJString(env, pref);
+    if (name == "hash") return currlayer->showhashinfo ? 1 : 0;
+    if (name == "time") return showtiming ? 1 : 0;
+    if (name == "beep") return allowbeep ? 1 : 0;
+    if (name == "swap") return swapcolors ? 1 : 0;
+    if (name == "icon") return showicons ? 1 : 0;
+    if (name == "undo") return allowundo ? 1 : 0;
+    if (name == "grid") return showgridlines ? 1 : 0;
+    LOGE("Fix bug in nativeGetPref! name = %s", name.c_str());
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeSetPref(JNIEnv* env, jobject obj, jstring pref, int val)
+{
+    std::string name = ConvertJString(env, pref);
+    if (name == "hash") currlayer->showhashinfo = val == 1; else
+    if (name == "time") showtiming = val == 1; else
+    if (name == "beep") allowbeep = val == 1; else
+    if (name == "swap") swapcolors = val == 1; else
+    if (name == "icon") showicons = val == 1; else
+    if (name == "undo") allowundo = val == 1; else
+    if (name == "grid") showgridlines = val == 1; else
+    LOGE("Fix bug in nativeSetPref! name = %s", name.c_str());
+}
+
+// =============================================================================
 
 std::string GetRuleName(const std::string& rule)
 {

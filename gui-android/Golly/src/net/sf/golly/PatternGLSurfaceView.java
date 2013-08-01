@@ -37,8 +37,8 @@ import android.view.MotionEvent;
 
 // this class must be public so it can be used in .xml layout
 
-public class PatternGLSurfaceView extends GLSurfaceView
-{
+public class PatternGLSurfaceView extends GLSurfaceView {
+
 	// see jnicalls.cpp for these native routines:
     private native void nativeTouchBegan(int x, int y);
     private native void nativeTouchMoved(int x, int y);
@@ -124,12 +124,13 @@ public class PatternGLSurfaceView extends GLSurfaceView
         super.onResume();
         nativeResume();
     }
-}
+
+} // PatternGLSurfaceView class
 
 // =================================================================================
 
-class PatternRenderer implements GLSurfaceView.Renderer
-{
+class PatternRenderer implements GLSurfaceView.Renderer {
+
 	// see jnicalls.cpp for these native routines:
     private native void nativeInit();
     private native void nativeResize(int w, int h);
@@ -152,4 +153,5 @@ class PatternRenderer implements GLSurfaceView.Renderer
     public void onDrawFrame(GL10 gl) {
         nativeRender();
     }
-}
+
+} // PatternRenderer class

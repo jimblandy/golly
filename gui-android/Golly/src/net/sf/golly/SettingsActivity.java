@@ -24,21 +24,45 @@
 
 package net.sf.golly;
 
-import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.support.v4.app.NavUtils;
+import android.view.View;
+import android.widget.CheckBox;
 
 public class SettingsActivity extends Activity {
+
+    // see jnicalls.cpp for these native routines:
+    private native void nativeOpenSettings();
+    private native void nativeCloseSettings();
+    private native int nativeGetPref(String pref);
+    private native void nativeSetPref(String pref, int val);
+
+    // -----------------------------------------------------------------------------
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings_layout);
+        
         // show the Up button in the action bar
         getActionBar().setDisplayHomeAsUpEnabled(true);
+        
+        // initialize check boxes, etc
+        initSettings();
+        
+        nativeOpenSettings();
+    }
+
+    // -----------------------------------------------------------------------------
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        nativeCloseSettings();
     }
 
     // -----------------------------------------------------------------------------
@@ -63,12 +87,8 @@ public class SettingsActivity extends Activity {
         Intent intent;
         switch (item.getItemId()) {
             case android.R.id.home:
-                // this ID represents the Home or Up button
+                // the Home or Up button will start MainActivity
                 NavUtils.navigateUpFromSameTask(this);
-                return true;
-            case R.id.pattern:
-                intent = new Intent(this, MainActivity.class);
-                startActivity(intent);
                 return true;
             case R.id.open:
                 intent = new Intent(this, OpenActivity.class);
@@ -83,6 +103,33 @@ public class SettingsActivity extends Activity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    private void initSettings() {
+        ((CheckBox) findViewById(R.id.checkbox_hash)).setChecked( nativeGetPref("hash") == 1 );
+        ((CheckBox) findViewById(R.id.checkbox_time)).setChecked( nativeGetPref("time") == 1 );
+        ((CheckBox) findViewById(R.id.checkbox_beep)).setChecked( nativeGetPref("beep") == 1 );
+        ((CheckBox) findViewById(R.id.checkbox_swap)).setChecked( nativeGetPref("swap") == 1 );
+        ((CheckBox) findViewById(R.id.checkbox_icon)).setChecked( nativeGetPref("icon") == 1 );
+        ((CheckBox) findViewById(R.id.checkbox_undo)).setChecked( nativeGetPref("undo") == 1 );
+        ((CheckBox) findViewById(R.id.checkbox_grid)).setChecked( nativeGetPref("grid") == 1 );
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    public void onCheckboxClicked(View view) {
+        boolean checked = ((CheckBox) view).isChecked();
+        switch(view.getId()) {
+            case R.id.checkbox_hash: nativeSetPref("hash", checked ? 1 : 0); break;
+            case R.id.checkbox_time: nativeSetPref("time", checked ? 1 : 0); break;
+            case R.id.checkbox_beep: nativeSetPref("beep", checked ? 1 : 0); break;
+            case R.id.checkbox_swap: nativeSetPref("swap", checked ? 1 : 0); break;
+            case R.id.checkbox_icon: nativeSetPref("icon", checked ? 1 : 0); break;
+            case R.id.checkbox_undo: nativeSetPref("undo", checked ? 1 : 0); break;
+            case R.id.checkbox_grid: nativeSetPref("grid", checked ? 1 : 0); break;
+        }
     }
 
 } // SettingsActivity class
