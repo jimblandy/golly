@@ -982,6 +982,8 @@ JNIEXPORT int JNICALL Java_net_sf_golly_SettingsActivity_nativeGetPref(JNIEnv* e
     if (name == "icon") return showicons ? 1 : 0;
     if (name == "undo") return allowundo ? 1 : 0;
     if (name == "grid") return showgridlines ? 1 : 0;
+    if (name == "rand") return randomfill;
+    if (name == "maxm") return maxhashmem;
     LOGE("Fix bug in nativeGetPref! name = %s", name.c_str());
     return 0;
 }
@@ -999,7 +1001,31 @@ JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeSetPref(JNIEnv* 
     if (name == "icon") showicons = val == 1; else
     if (name == "undo") allowundo = val == 1; else
     if (name == "grid") showgridlines = val == 1; else
-    LOGE("Fix bug in nativeSetPref! name = %s", name.c_str());
+    if (name == "rand") {
+        randomfill = val;
+        if (randomfill < 1) randomfill = 1;
+        if (randomfill > 100) randomfill = 100;
+    } else
+    if (name == "maxm") {
+        maxhashmem = val;
+        if (maxhashmem < MIN_MEM_MB) maxhashmem = MIN_MEM_MB;
+        if (maxhashmem > MAX_MEM_MB) maxhashmem = MAX_MEM_MB;
+    } else
+    if (name == "pmode") {
+        if (val == 0) SetPasteMode("AND");
+        if (val == 1) SetPasteMode("COPY");
+        if (val == 2) SetPasteMode("OR");
+        if (val == 3) SetPasteMode("XOR");
+    } else
+        LOGE("Fix bug in nativeSetPref! name = %s", name.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_SettingsActivity_nativeGetPasteMode(JNIEnv* env)
+{
+    return env->NewStringUTF(GetPasteMode());
 }
 
 // =============================================================================
@@ -1088,7 +1114,7 @@ void EndProgress()
 
 void SwitchToPatternTab()
 {
-    // switch to pattern view (ie. MainActivity)
+    // switch from current activity to MainActivity
     // not yet implemented!!!
     LOGI("SwitchToPatternTab");
 }
@@ -1106,7 +1132,7 @@ void ShowTextFile(const char* filepath)
 
 void ShowHelp(const char* filepath)
 {
-    // display html file in help view (HelpActivity!!!)
+    // switch to HelpActivity and display html file
     // not yet implemented!!!
     LOGI("ShowHelp: %s", filepath);
 }

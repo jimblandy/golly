@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/AND"
+        android:title="AND"
+        android:onClick="doPasteModeItem"
+    />
+    <item
+        android:id="@+id/COPY"
+        android:title="COPY"
+        android:onClick="doPasteModeItem"
+    />
+    <item
+        android:id="@+id/OR"
+        android:title="OR"
+        android:onClick="doPasteModeItem"
+    />
+    <item
+        android:id="@+id/XOR"
+        android:title="XOR"
+        android:onClick="doPasteModeItem"
+    />
+</menu>

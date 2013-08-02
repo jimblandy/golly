@@ -68,7 +68,8 @@
         android:background="#FFFFD5"
         android:typeface="monospace"
         android:paddingLeft="4dp"
-        android:text=" Line 1" />
+        android:singleLine="true"
+        android:text="Line 1" />
     <TextView
         android:id="@+id/status2"
         android:layout_width="match_parent"
@@ -78,7 +79,8 @@
         android:background="#FFFFD5"
         android:typeface="monospace"
         android:paddingLeft="4dp"
-        android:text=" Line 2" />
+        android:singleLine="true"
+        android:text="Line 2" />
     <TextView
         android:id="@+id/status3"
         android:layout_width="match_parent"
@@ -88,7 +90,8 @@
         android:background="#FFFFD5"
         android:typeface="monospace"
         android:paddingLeft="4dp"
-        android:text=" Line 3 abcdefghijklmnopqrstuvwxyz" />
+        android:singleLine="true"
+        android:text="Line 3" />
 
     <RelativeLayout
         android:layout_width="match_parent"

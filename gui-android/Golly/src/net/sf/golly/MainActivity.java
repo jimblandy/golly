@@ -283,7 +283,8 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         pattView.onResume();
-        UpdateButtons();
+        UpdateStartStopButtons();
+        UpdateEditBar();
         if (nativeIsGenerating()) {
             stopped = false;
             genhandler.post(generate);
@@ -344,7 +345,7 @@ public class MainActivity extends Activity {
 
     // -----------------------------------------------------------------------------
 
-    public void UpdateButtons() {
+    public void UpdateStartStopButtons() {
         if (nativeIsGenerating()) {
             ssbutton.setText("Stop");
             ssbutton.setTextColor(Color.rgb(255,0,0));
@@ -393,7 +394,7 @@ public class MainActivity extends Activity {
                 genhandler.post(generate);
             }
         }
-        UpdateButtons();
+        UpdateStartStopButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -415,7 +416,7 @@ public class MainActivity extends Activity {
         StopIfGenerating();
         if (CallAgainAfterDelay("doStep", view, null)) return;
         nativeStep();
-        UpdateButtons();
+        UpdateStartStopButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -445,7 +446,7 @@ public class MainActivity extends Activity {
             default:          Log.e("Golly","Fix bug in doControlItem!");
         }
         if (item.getItemId() == R.id.reset) {
-            UpdateButtons();
+            UpdateStartStopButtons();
         } else {
             geninterval = nativeCalculateSpeed();
             stopped = false;
@@ -491,7 +492,7 @@ public class MainActivity extends Activity {
         StopIfGenerating();
         if (CallAgainAfterDelay("doUndo", view, null)) return;
         nativeUndo();
-        UpdateButtons();
+        UpdateStartStopButtons();
         
     }
 
@@ -502,7 +503,7 @@ public class MainActivity extends Activity {
         // nativeIsGenerating() should never be true here
         if (CallAgainAfterDelay("doRedo", view, null)) return;
         nativeRedo();
-        UpdateButtons();
+        UpdateStartStopButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -524,7 +525,7 @@ public class MainActivity extends Activity {
                 // (consistent with iOS Golly)
                 stopped = true;
                 nativeStopGenerating();
-                UpdateButtons();
+                UpdateStartStopButtons();
             }
         } else if (nativeSelectionExists()) {
             Menu menu = popup.getMenu();
@@ -550,9 +551,8 @@ public class MainActivity extends Activity {
             case R.id.all:   nativeSelectAll(); break;
             default:         Log.e("Golly","Fix bug in doEditItem!");
         }
-        // check if nativePaste created a paste image
-        if (nativePasteExists()) editbutton.setText("Paste");
-        UpdateButtons();
+        UpdateStartStopButtons();
+        UpdateEditBar();
     }
 
     // -----------------------------------------------------------------------------
@@ -608,7 +608,7 @@ public class MainActivity extends Activity {
             default:             Log.e("Golly","Fix bug in doPasteItem!");
         }
         // if paste image no longer exists then change Paste button back to Edit
-        if (!nativePasteExists()) editbutton.setText("Edit");
+        UpdateEditBar();
     }
     
     // -----------------------------------------------------------------------------
@@ -648,7 +648,7 @@ public class MainActivity extends Activity {
         }
         if (CallAgainAfterDelay("doNew", view, null)) return;
         nativeNewPattern();
-        UpdateButtons();
+        UpdateStartStopButtons();
         UpdateEditBar();
         
         if (nativeNumLayers() == 1) {
@@ -716,6 +716,12 @@ public class MainActivity extends Activity {
             public void run() {
                 undobutton.setEnabled(nativeCanUndo());
                 redobutton.setEnabled(nativeCanRedo());
+                
+                if (nativePasteExists())
+                    editbutton.setText("Paste");
+                else
+                    editbutton.setText("Edit");
+                
                 switch (nativeGetMode()) {
                     case 0:  modebutton.setText("Draw"); break;
                     case 1:  modebutton.setText("Pick"); break;
@@ -723,7 +729,8 @@ public class MainActivity extends Activity {
                     case 3:  modebutton.setText("Move"); break;
                     default: Log.e("Golly","Fix bug in UpdateEditBar!");
                 }
-                //!!! also show current drawing state
+                
+                //!!! also show current drawing state in another button
             }
         });
     }
