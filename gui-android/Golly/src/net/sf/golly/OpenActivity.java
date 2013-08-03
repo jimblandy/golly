@@ -30,15 +30,33 @@ import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.webkit.WebView;
 
 public class OpenActivity extends Activity {
+
+    private enum PATTERNS {
+        SUPPLIED, RECENT, SAVED, DOWNLOADED;
+    }
+    
+    private static PATTERNS currpatterns = PATTERNS.SUPPLIED;
+
+    // -----------------------------------------------------------------------------
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.open_layout);
+        
         // show the Up button in the action bar
         getActionBar().setDisplayHomeAsUpEnabled(true);
+        
+        switch (currpatterns) {
+            case SUPPLIED:   showSuppliedPatterns(); break;
+            case RECENT:     showRecentPatterns(); break;
+            case SAVED:      showSavedPatterns(); break;
+            case DOWNLOADED: showDownloadedPatterns(); break;
+        }
     }
 
     // -----------------------------------------------------------------------------
@@ -79,6 +97,90 @@ public class OpenActivity extends Activity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Supplied button is tapped
+    public void doSupplied(View view) {
+        if (currpatterns != PATTERNS.SUPPLIED) {
+            currpatterns = PATTERNS.SUPPLIED;
+            showSuppliedPatterns();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Recent button is tapped
+    public void doRecent(View view) {
+        if (currpatterns != PATTERNS.RECENT) {
+            currpatterns = PATTERNS.RECENT;
+            showRecentPatterns();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Saved button is tapped
+    public void doSaved(View view) {
+        if (currpatterns != PATTERNS.SAVED) {
+            currpatterns = PATTERNS.SAVED;
+            showSavedPatterns();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Downloaded button is tapped
+    public void doDownloaded(View view) {
+        if (currpatterns != PATTERNS.DOWNLOADED) {
+            currpatterns = PATTERNS.DOWNLOADED;
+            showDownloadedPatterns();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    private void showSuppliedPatterns() {
+        String html = "<html><body>Supplied patterns:</body></html>";
+        //!!!
+
+        WebView webview = (WebView) findViewById(R.id.webview);
+        //!!!??? webview.getSettings().setJavaScriptEnabled(true);
+        webview.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    private void showRecentPatterns() {
+        String html = "<html><body>Recent patterns:</body></html>";
+        //!!!
+
+        WebView webview = (WebView) findViewById(R.id.webview);
+        //!!!??? webview.getSettings().setJavaScriptEnabled(true);
+        webview.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    private void showSavedPatterns() {
+        String html = "<html><body>Saved patterns:</body></html>";
+        //!!!
+
+        WebView webview = (WebView) findViewById(R.id.webview);
+        //!!!??? webview.getSettings().setJavaScriptEnabled(true);
+        webview.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    private void showDownloadedPatterns() {
+        String html = "<html><body>Downloaded patterns:</body></html>";
+        //!!!
+
+        WebView webview = (WebView) findViewById(R.id.webview);
+        //!!!??? webview.getSettings().setJavaScriptEnabled(true);
+        webview.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
     }
 
 } // OpenActivity class
