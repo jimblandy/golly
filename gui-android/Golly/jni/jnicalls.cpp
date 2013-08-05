@@ -806,6 +806,97 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRotatePaste(JNIEnv* 
     UpdateEverything();
 }
 
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClearMessage(JNIEnv* env)
+{
+    ClearMessage();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetValidExtensions(JNIEnv* env)
+{
+    if (currlayer->algo->hyperCapable()) {
+        // .rle format is allowed but .mc format is better
+        return env->NewStringUTF(".mc (the default) or .mc.gz or .rle or .rle.gz");
+    } else {
+        // only .rle format is allowed
+        return env->NewStringUTF(".rle (the default) or .rle.gz");
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeValidExtension(JNIEnv* env, jobject obj, jstring filename)
+{
+    std::string fname = ConvertJString(env, filename);
+
+    size_t dotpos = fname.find('.');
+    if (dotpos == std::string::npos) return true;   // no extension given (default will be added later)
+
+    if (EndsWith(fname,".rle")) return true;
+    if (EndsWith(fname,".rle.gz")) return true;
+    if (currlayer->algo->hyperCapable()) {
+        if (EndsWith(fname,".mc")) return true;
+        if (EndsWith(fname,".mc.gz")) return true;
+    }
+
+    return false;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeFileExists(JNIEnv* env, jobject obj, jstring filename)
+{
+    std::string fname = ConvertJString(env, filename);
+
+    // append default extension if not supplied
+    size_t dotpos = fname.find('.');
+    if (dotpos == std::string::npos) {
+        if (currlayer->algo->hyperCapable()) {
+            fname += ".mc";
+        } else {
+            fname += ".rle";
+        }
+    }
+
+    std::string fullpath;
+    fullpath = datadir + fname;
+    return FileExists(fullpath);
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSavePattern(JNIEnv* env, jobject obj, jstring filename)
+{
+    std::string fname = ConvertJString(env, filename);
+
+    // append default extension if not supplied
+    size_t dotpos = fname.find('.');
+    if (dotpos == std::string::npos) {
+        if (currlayer->algo->hyperCapable()) {
+            fname += ".mc";
+        } else {
+            fname += ".rle";
+        }
+    }
+
+    pattern_format format = XRLE_format;
+    if (EndsWith(fname,".mc") || EndsWith(fname,".mc.gz")) format = MC_format;
+
+    output_compression compression = no_compression;
+    if (EndsWith(fname,".gz")) compression = gzip_compression;
+
+    std::string fullpath = datadir + fname;
+    SavePattern(fullpath, format, compression);
+}
+
 // =============================================================================
 
 // these native routines are used in PatternGLSurfaceView.java:

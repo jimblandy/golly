@@ -47,6 +47,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
@@ -107,6 +108,11 @@ public class MainActivity extends Activity {
     private native void nativeDoPaste(int toselection);
     private native void nativeFlipPaste(int y);
     private native void nativeRotatePaste(int clockwise);
+    private native void nativeClearMessage();
+    private native String nativeGetValidExtensions();
+    private native boolean nativeValidExtension(String filename);
+    private native boolean nativeFileExists(String filename);
+    private native void nativeSavePattern(String filename);
 
     // local fields:
     private static boolean firstcall = true;
@@ -227,6 +233,7 @@ public class MainActivity extends Activity {
                 if (methodname.equals("doNew"))       doNewPattern(currview); else
                 if (methodname.equals("doUndo"))      doUndo(currview); else
                 if (methodname.equals("doRedo"))      doRedo(currview); else
+                if (methodname.equals("doSave"))      doSave(currview); else
                 if (methodname.equals("doReset"))     doControlItem(curritem); else
                 if (methodname.equals("doPaste"))     doEditItem(curritem); else
                 if (methodname.equals("doSelItem"))   doSelectionItem(curritem); else
@@ -675,7 +682,68 @@ public class MainActivity extends Activity {
     
     // called when the Save button is tapped
     public void doSave(View view) {
-        // not yet implemented!!!
+        nativeClearMessage();
+        StopIfGenerating();
+        if (CallAgainAfterDelay("doSave", view, null)) return;
+        
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        alert.setTitle("Save current pattern");
+        alert.setMessage("Valid file name extensions are\n" + nativeGetValidExtensions());
+        
+        // or use radio buttons as in iPad Golly???!!!
+        // might be better to create a new SaveActivity and make it appear in a dialog
+        // by setting its theme to Theme.Holo.Dialog in the <activity> manifest element:
+        // <activity android:theme="@android:style/Theme.Holo.Dialog">
+
+        // use an EditText view to get filename
+        final EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setHint("enter a file name");
+        alert.setView(input);
+
+        alert.setPositiveButton("SAVE",
+            new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // do nothing here (see below)
+                }
+            });
+        alert.setNegativeButton("CANCEL",
+            new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                }
+            });
+
+        // don't call alert.show() here -- instead we use the following stuff
+        // which allows us to prevent the alert dialog from closing if the
+        // given file name is invalid
+        
+        final AlertDialog dialog = alert.create();
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(
+            new View.OnClickListener() {
+                public void onClick(View v) {
+                    String filename = input.getText().toString();
+                    if (filename.length() == 0) {
+                        PlayBeepSound();
+                        return;
+                    }
+                    // check for valid extension
+                    if (!nativeValidExtension(filename)) {
+                        Warning("Invalid file extension.");
+                        return;
+                    }
+                    // check if given file already exists
+                    if (nativeFileExists(filename)) {
+                        String answer = YesNo("A file with that name already exists.  Do you want to replace that file?");
+                        if (answer.equals("no")) return;
+                    }
+                     // dismiss dialog first in case SavePattern calls BeginProgress
+                    dialog.dismiss();
+                    nativeSavePattern(filename);
+                }
+            });
     }
 
     // -----------------------------------------------------------------------------
@@ -760,7 +828,6 @@ public class MainActivity extends Activity {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("Warning");
         alert.setMessage(msg);
-        alert.setCancelable(false);
         alert.setNegativeButton("CANCEL",
             new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
@@ -789,7 +856,6 @@ public class MainActivity extends Activity {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("Fatal error!");
         alert.setMessage(msg);
-        alert.setCancelable(false);
         alert.setNegativeButton("QUIT",
             new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
@@ -822,7 +888,6 @@ public class MainActivity extends Activity {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("A question...");
         alert.setMessage(query);
-        alert.setCancelable(false);
         alert.setPositiveButton("YES",
             new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
