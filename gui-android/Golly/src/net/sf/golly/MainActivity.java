@@ -113,6 +113,7 @@ public class MainActivity extends Activity {
     private native boolean nativeValidExtension(String filename);
     private native boolean nativeFileExists(String filename);
     private native void nativeSavePattern(String filename);
+    private native void nativeOpenFile(String filepath);
 
     // local fields:
     private static boolean firstcall = true;
@@ -210,6 +211,13 @@ public class MainActivity extends Activity {
         // this will call the PatternGLSurfaceView constructor
         pattView = (PatternGLSurfaceView) findViewById(R.id.patternview);
         
+        // check for messages sent by other activities
+        Intent intent = getIntent();
+        String filepath = intent.getStringExtra(OpenActivity.OPENFILE_MESSAGE);
+        if (filepath != null) {
+            nativeOpenFile(filepath);
+        }
+        
         // create handler and runnable for generating patterns
         geninterval = nativeCalculateSpeed();
         genhandler = new Handler();
@@ -257,6 +265,7 @@ public class MainActivity extends Activity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // action bar item has been tapped
+        nativeClearMessage();
         Intent intent;
         switch (item.getItemId()) {
             case R.id.open:

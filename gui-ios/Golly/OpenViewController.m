@@ -101,7 +101,7 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
     htmldata += "<br><br>";
     
     while (path = [dirEnum nextObject]) {
-        // path is relative; eg. "Life/Bounded-Grids/agar-p3.rle"
+        // path is relative to given dir (eg. "Life/Bounded-Grids/agar-p3.rle" if patternsdir)
         std::string pstr = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
         // indent level is number of separators in path

@@ -22,9 +22,13 @@
 
  / ***/
 
-#include <jni.h>
-#include <GLES/gl.h>
+#include <jni.h>        // for calling Java from C++ and vice versa
+#include <GLES/gl.h>    // for OpenGL ES 1.x calls
 #include <unistd.h>     // for usleep
+#include <string>       // for std::string
+#include <list>         // for std::list
+#include <set>          // for std::set
+#include <algorithm>    // for std::count
 
 #include "utils.h"      // for Warning, etc
 #include "algos.h"      // for InitAlgorithms
@@ -261,7 +265,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetGollyDir(JNIEnv* 
 {
     gollydir = ConvertJString(env, path) + "/";
     // LOGI("gollydir = %s", gollydir.c_str());
-    // gollydir = /data/data/pkg.name/files/
+    // gollydir = /data/data/net.sf.golly/files/
 
     // set paths to various subdirs (created by caller)
     userrules = gollydir + "Rules/";
@@ -276,7 +280,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetTempDir(JNIEnv* e
 {
     tempdir = ConvertJString(env, path) + "/";
     // LOGI("tempdir = %s", tempdir.c_str());
-    // tempdir = /data/data/pkg.name/cache/
+    // tempdir = /data/data/net.sf.golly/cache/
     clipfile = tempdir + "golly_clipboard";
 }
 
@@ -287,7 +291,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetSuppliedDirs(JNIE
 {
     std::string prefix = ConvertJString(env, path);
     // LOGI("prefix = %s", prefix.c_str());
-    // prefix = /data/data/pkg.name/app_
+    // prefix = /data/data/net.sf.golly/app_
     helpdir = prefix + "Help/";
     rulesdir = prefix + "Rules/";
     patternsdir = prefix + "Patterns/";
@@ -865,8 +869,7 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeFileExists(JNIEnv* e
         }
     }
 
-    std::string fullpath;
-    fullpath = datadir + fname;
+    std::string fullpath = datadir + fname;
     return FileExists(fullpath);
 }
 
@@ -895,6 +898,17 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSavePattern(JNIEnv* 
 
     std::string fullpath = datadir + fname;
     SavePattern(fullpath, format, compression);
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeOpenFile(JNIEnv* env, jobject obj, jstring filepath)
+{
+    std::string fpath = ConvertJString(env, filepath);
+    FixURLPath(fpath);
+    OpenFile(fpath.c_str());
+    SavePrefs();                // save recentpatterns
 }
 
 // =============================================================================
@@ -999,6 +1013,178 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeRender(JNIEnv* en
     rendering = true;
     DrawPattern(currindex);
     rendering = false;
+}
+
+// =============================================================================
+
+// these native routines are used in OpenActivity.java:
+
+const char* HTML_HEADER = "<html><font color='black'><b>";
+const char* HTML_FOOTER = "</b></font></html>";
+const char* HTML_INDENT = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+
+static std::set<std::string> opendirs;      // set of open directories in Supplied patterns
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetRecentPatterns(JNIEnv* env)
+{
+    std::string htmldata = HTML_HEADER;
+    if (recentpatterns.empty()) {
+        htmldata += "There are no recent patterns.";
+    } else {
+        htmldata += "Recently opened/saved patterns:<br><br>";
+        std::list<std::string>::iterator next = recentpatterns.begin();
+        while (next != recentpatterns.end()) {
+            std::string path = *next;
+            if (path.find("Patterns/") == 0 || FileExists(gollydir + path)) {
+                htmldata += "<a href=\"open:";
+                htmldata += path;
+                htmldata += "\">";
+                /* nicer not to show Patterns/ prefix???!!!
+                size_t firstsep = path.find('/');
+                if (firstsep != std::string::npos) {
+                    path.erase(0, firstsep+1);
+                }
+                */
+                htmldata += path;
+                htmldata += "</a><br>";
+            }
+            next++;
+        }
+    }
+    htmldata += HTML_FOOTER;
+    return env->NewStringUTF(htmldata.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+static void AppendHtmlData(std::string& htmldata, const std::string& paths, const std::string& dir,
+                           const std::string& prefix, bool candelete)
+{
+    int closedlevel = 0;
+    size_t pathstart = 0;
+    size_t pathend = paths.find('\n');
+
+    while (pathend != std::string::npos) {
+        std::string path = paths.substr(pathstart, pathend - pathstart);
+        // path is relative to given dir (eg. "Life/Bounded-Grids/agar-p3.rle" if patternsdir)
+
+        // set indent level to number of separators in path
+        int indents = std::count(path.begin(), path.end(), '/');
+
+        if (indents <= closedlevel) {
+            if (path[pathend-1] == '/') {
+                // path is to a directory
+                std::string imgname;
+                if (opendirs.find(path) == opendirs.end()) {
+                    closedlevel = indents;
+                    imgname = "triangle-right.png";
+                } else {
+                    closedlevel = indents+1;
+                    imgname = "triangle-down.png";
+                }
+                for (int i = 0; i < indents; i++) htmldata += HTML_INDENT;
+                htmldata += "<a href=\"toggledir:";
+                htmldata += path;
+                htmldata += "\"><img src='";
+                htmldata += imgname;
+                htmldata += "' border=0/><font color='gray'>";
+                size_t lastsep = path.rfind('/');
+                if (lastsep == std::string::npos) {
+                    htmldata += path;
+                } else {
+                    htmldata += path.substr(lastsep+1);
+                }
+                htmldata += "</font></a><br>";
+            } else {
+                // path is to a file
+                for (int i = 0; i < indents; i++) htmldata += HTML_INDENT;
+                if (candelete) {
+                    // allow user to delete file
+                    htmldata += "<a href=\"delete:";
+                    htmldata += prefix;
+                    htmldata += path;
+                    htmldata += "\"><font size=-2 color='red'>DELETE</font></a>&nbsp;&nbsp;&nbsp;";
+                    // allow user to edit file
+                    htmldata += "<a href=\"edit:";
+                    htmldata += prefix;
+                    htmldata += path;
+                    htmldata += "\"><font size=-2 color='green'>EDIT</font></a>&nbsp;&nbsp;&nbsp;";
+                } else {
+                    // allow user to read file (a supplied pattern)
+                    htmldata += "<a href=\"edit:";
+                    htmldata += prefix;
+                    htmldata += path;
+                    htmldata += "\"><font size=-2 color='green'>READ</font></a>&nbsp;&nbsp;&nbsp;";
+                }
+                htmldata += "<a href=\"open:";
+                htmldata += prefix;
+                htmldata += path;
+                htmldata += "\">";
+                size_t lastsep = path.rfind('/');
+                if (lastsep == std::string::npos) {
+                    htmldata += path;
+                } else {
+                    htmldata += path.substr(lastsep+1);
+                }
+                htmldata += "</a><br>";
+            }
+        }
+
+        pathstart = pathend + 1;
+        pathend = paths.find('\n', pathstart);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetSavedPatterns(JNIEnv* env, jobject obj, jstring jpaths)
+{
+    std::string paths = ConvertJString(env, jpaths);
+    std::string htmldata = HTML_HEADER;
+    if (paths.length() == 0) {
+        htmldata += "There are no saved patterns.";
+    } else {
+        htmldata += "Saved patterns:<br><br>";
+        AppendHtmlData(htmldata, paths, datadir, "Saved/", true);   // can delete files
+    }
+    htmldata += HTML_FOOTER;
+    return env->NewStringUTF(htmldata.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetDownloadedPatterns(JNIEnv* env, jobject obj, jstring jpaths)
+{
+    std::string paths = ConvertJString(env, jpaths);
+    std::string htmldata = HTML_HEADER;
+    if (paths.length() == 0) {
+        htmldata += "There are no downloaded patterns.";
+    } else {
+        htmldata += "Downloaded patterns:<br><br>";
+        AppendHtmlData(htmldata, paths, downloaddir, "Downloads/", true);  // can delete files
+    }
+    htmldata += HTML_FOOTER;
+    return env->NewStringUTF(htmldata.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetSuppliedPatterns(JNIEnv* env, jobject obj, jstring jpaths)
+{
+    std::string paths = ConvertJString(env, jpaths);
+    std::string htmldata = HTML_HEADER;
+    if (paths.length() == 0) {
+        htmldata += "There are no supplied patterns.";
+    } else {
+        htmldata += "Supplied patterns:<br><br>";
+        AppendHtmlData(htmldata, paths, patternsdir, "Patterns/", false);   // can't delete files
+    }
+    htmldata += HTML_FOOTER;
+    return env->NewStringUTF(htmldata.c_str());
 }
 
 // =============================================================================
@@ -1206,8 +1392,8 @@ void EndProgress()
 void SwitchToPatternTab()
 {
     // switch from current activity to MainActivity
-    // not yet implemented!!!
-    LOGI("SwitchToPatternTab");
+    // no need to do anything here???!!!
+    // LOGI("SwitchToPatternTab");
 }
 
 // -----------------------------------------------------------------------------

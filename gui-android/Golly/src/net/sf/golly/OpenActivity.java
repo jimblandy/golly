@@ -24,6 +24,9 @@
 
 package net.sf.golly;
 
+import java.io.File;
+import java.util.Arrays;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -32,15 +35,57 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class OpenActivity extends Activity {
 
+    // see jnicalls.cpp for these native routines:
+    private native String nativeGetRecentPatterns();
+    private native String nativeGetSavedPatterns(String paths);
+    private native String nativeGetDownloadedPatterns(String paths);
+    private native String nativeGetSuppliedPatterns(String paths);
+    
     private enum PATTERNS {
         SUPPLIED, RECENT, SAVED, DOWNLOADED;
     }
     
     private static PATTERNS currpatterns = PATTERNS.SUPPLIED;
-
+    
+    // -----------------------------------------------------------------------------
+    
+    public final static String OPENFILE_MESSAGE = "net.sf.golly.OPENFILE";
+    
+    // this class lets us intercept link taps
+    private class MyWebViewClient extends WebViewClient {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if (url.startsWith("open:")) {
+                openFile(url.substring(5));
+                return true;
+            }
+            if (url.startsWith("toggledir:")) {
+                //!!! nativeToggleDir(url.substring(10));
+                return true;
+            }
+            if (url.startsWith("delete:")) {
+                //!!! nativeDeleteFile(url.substring(7));
+                return true;
+            }
+            if (url.startsWith("edit:")) {
+                //!!! nativeEditFile(url.substring(5));
+                return true;
+            }
+            return false;
+        }
+    }
+    
+    private void openFile(String filepath) {
+        // switch to main screen and open specified file
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra(OPENFILE_MESSAGE, filepath);
+        startActivity(intent);
+    }
+    
     // -----------------------------------------------------------------------------
 
     @Override
@@ -141,46 +186,74 @@ public class OpenActivity extends Activity {
 
     // -----------------------------------------------------------------------------
     
+    private String enumerateDirectory(File dir, String prefix) {
+        // return the files and/or sub-directories in the given directory
+        // as a string of paths where:
+        // - paths are relative to to the initial directory
+        // - directory paths end with '/'
+        // - each path is terminated by \n
+        String result = "";
+        File[] files = dir.listFiles();
+        Arrays.sort(files);             // sort into alphabetical order
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    String dirname = prefix + file.getName() + "/";
+                    result += dirname + "\n";
+                    result += enumerateDirectory(file, dirname);
+                } else {
+                    result += prefix + file.getName() + "\n";
+                }
+            }
+        }
+        return result;
+    }
+
+    // -----------------------------------------------------------------------------
+    
     private void showSuppliedPatterns() {
-        String html = "<html><body>Supplied patterns:</body></html>";
-        //!!!
+        String paths = enumerateDirectory(getDir("Patterns",MODE_PRIVATE), "");    // replace getDir???!!!
+        String htmldata = nativeGetSuppliedPatterns(paths);
 
         WebView webview = (WebView) findViewById(R.id.webview);
         //!!!??? webview.getSettings().setJavaScriptEnabled(true);
-        webview.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+        webview.setWebViewClient(new MyWebViewClient());
+        webview.loadDataWithBaseURL(null, htmldata, "text/html", "UTF-8", null);
     }
 
     // -----------------------------------------------------------------------------
     
     private void showRecentPatterns() {
-        String html = "<html><body>Recent patterns:</body></html>";
-        //!!!
+        String htmldata = nativeGetRecentPatterns();
 
         WebView webview = (WebView) findViewById(R.id.webview);
         //!!!??? webview.getSettings().setJavaScriptEnabled(true);
-        webview.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+        webview.setWebViewClient(new MyWebViewClient());
+        webview.loadDataWithBaseURL(null, htmldata, "text/html", "UTF-8", null);
     }
 
     // -----------------------------------------------------------------------------
     
     private void showSavedPatterns() {
-        String html = "<html><body>Saved patterns:</body></html>";
-        //!!!
+        String paths = enumerateDirectory(new File(getFilesDir(), "Saved"), "");
+        String htmldata = nativeGetSavedPatterns(paths);
 
         WebView webview = (WebView) findViewById(R.id.webview);
         //!!!??? webview.getSettings().setJavaScriptEnabled(true);
-        webview.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+        webview.setWebViewClient(new MyWebViewClient());
+        webview.loadDataWithBaseURL(null, htmldata, "text/html", "UTF-8", null);
     }
 
     // -----------------------------------------------------------------------------
     
     private void showDownloadedPatterns() {
-        String html = "<html><body>Downloaded patterns:</body></html>";
-        //!!!
+        String paths = enumerateDirectory(new File(getFilesDir(), "Downloads"), "");
+        String htmldata = nativeGetDownloadedPatterns(paths);
 
         WebView webview = (WebView) findViewById(R.id.webview);
         //!!!??? webview.getSettings().setJavaScriptEnabled(true);
-        webview.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+        webview.setWebViewClient(new MyWebViewClient());
+        webview.loadDataWithBaseURL(null, htmldata, "text/html", "UTF-8", null);
     }
 
 } // OpenActivity class
