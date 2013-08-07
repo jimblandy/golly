@@ -289,9 +289,9 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetTempDir(JNIEnv* e
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetSuppliedDirs(JNIEnv* env, jobject obj, jstring path)
 {
-    std::string prefix = ConvertJString(env, path);
+    std::string prefix = ConvertJString(env, path) + "/";
     // LOGI("prefix = %s", prefix.c_str());
-    // prefix = /data/data/net.sf.golly/app_
+    // prefix = /data/data/net.sf.golly/files/Supplied/
     helpdir = prefix + "Help/";
     rulesdir = prefix + "Rules/";
     patternsdir = prefix + "Patterns/";
@@ -1040,12 +1040,13 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetRecentPatterns
                 htmldata += "<a href=\"open:";
                 htmldata += path;
                 htmldata += "\">";
-                /* nicer not to show Patterns/ prefix???!!!
-                size_t firstsep = path.find('/');
-                if (firstsep != std::string::npos) {
-                    path.erase(0, firstsep+1);
+                if (path.find("Patterns/") == 0) {
+                    // nicer not to show Patterns/ prefix
+                    size_t firstsep = path.find('/');
+                    if (firstsep != std::string::npos) {
+                        path.erase(0, firstsep+1);
+                    }
                 }
-                */
                 htmldata += path;
                 htmldata += "</a><br>";
             }
@@ -1069,16 +1070,22 @@ static void AppendHtmlData(std::string& htmldata, const std::string& paths, cons
         std::string path = paths.substr(pathstart, pathend - pathstart);
         // path is relative to given dir (eg. "Life/Bounded-Grids/agar-p3.rle" if patternsdir)
 
+        bool isdir = (paths[pathend-1] == '/');
+        if (isdir) {
+            // strip off terminating '/'
+            path = paths.substr(pathstart, pathend - pathstart - 1);
+        }
+
         // set indent level to number of separators in path
         int indents = std::count(path.begin(), path.end(), '/');
 
         if (indents <= closedlevel) {
-            if (path[pathend-1] == '/') {
+            if (isdir) {
                 // path is to a directory
                 std::string imgname;
                 if (opendirs.find(path) == opendirs.end()) {
                     closedlevel = indents;
-                    imgname = "triangle-right.png";
+                    imgname = "triangle-right.png";     // fix!!! (add to assets and extract somewhere???)
                 } else {
                     closedlevel = indents+1;
                     imgname = "triangle-down.png";
@@ -1185,6 +1192,21 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetSuppliedPatter
     }
     htmldata += HTML_FOOTER;
     return env->NewStringUTF(htmldata.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_OpenActivity_nativeToggleDir(JNIEnv* env, jobject obj, jstring jpath)
+{
+    std::string path = ConvertJString(env, jpath);
+    if (opendirs.find(path) == opendirs.end()) {
+        // add directory path to opendirs
+        opendirs.insert(path);
+    } else {
+        // remove directory path from opendirs
+        opendirs.erase(path);
+    }
 }
 
 // =============================================================================

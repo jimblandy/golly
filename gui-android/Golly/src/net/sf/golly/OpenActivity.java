@@ -44,6 +44,7 @@ public class OpenActivity extends Activity {
     private native String nativeGetSavedPatterns(String paths);
     private native String nativeGetDownloadedPatterns(String paths);
     private native String nativeGetSuppliedPatterns(String paths);
+    private native void nativeToggleDir(String path);
     
     private enum PATTERNS {
         SUPPLIED, RECENT, SAVED, DOWNLOADED;
@@ -64,28 +65,52 @@ public class OpenActivity extends Activity {
                 return true;
             }
             if (url.startsWith("toggledir:")) {
-                //!!! nativeToggleDir(url.substring(10));
+                nativeToggleDir(url.substring(10));
+                showSuppliedPatterns();
                 return true;
             }
             if (url.startsWith("delete:")) {
-                //!!! nativeDeleteFile(url.substring(7));
+                removeFile(url.substring(7));
                 return true;
             }
             if (url.startsWith("edit:")) {
-                //!!! nativeEditFile(url.substring(5));
+                editFile(url.substring(5));
                 return true;
             }
             return false;
         }
     }
     
+    // -----------------------------------------------------------------------------
+    
     private void openFile(String filepath) {
-        // switch to main screen and open specified file
+        // switch to main screen and open given file
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra(OPENFILE_MESSAGE, filepath);
         startActivity(intent);
     }
     
+    // -----------------------------------------------------------------------------
+    
+    private void removeFile(String filepath) {
+        // delete given file
+        //!!!
+        // refresh view
+        switch (currpatterns) {
+            case SUPPLIED:   break;     // should never happen
+            case RECENT:     break;     // should never happen
+            case SAVED:      showSavedPatterns(); break;
+            case DOWNLOADED: showDownloadedPatterns(); break;
+        }
+    }
+    
+    // -----------------------------------------------------------------------------
+    
+    private void editFile(String filepath) {
+        // let user read/edit given file
+        //!!!
+    }
+   
     // -----------------------------------------------------------------------------
 
     @Override
@@ -194,8 +219,8 @@ public class OpenActivity extends Activity {
         // - each path is terminated by \n
         String result = "";
         File[] files = dir.listFiles();
-        Arrays.sort(files);             // sort into alphabetical order
         if (files != null) {
+            Arrays.sort(files);         // sort into alphabetical order
             for (File file : files) {
                 if (file.isDirectory()) {
                     String dirname = prefix + file.getName() + "/";
@@ -212,7 +237,7 @@ public class OpenActivity extends Activity {
     // -----------------------------------------------------------------------------
     
     private void showSuppliedPatterns() {
-        String paths = enumerateDirectory(getDir("Patterns",MODE_PRIVATE), "");    // replace getDir???!!!
+        String paths = enumerateDirectory(new File(getFilesDir(), "Supplied/Patterns"), "");
         String htmldata = nativeGetSuppliedPatterns(paths);
 
         WebView webview = (WebView) findViewById(R.id.webview);

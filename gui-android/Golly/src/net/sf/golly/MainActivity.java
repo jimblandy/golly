@@ -24,7 +24,11 @@
 
 package net.sf.golly;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -33,6 +37,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -204,7 +209,7 @@ public class MainActivity extends Activity {
 
         if (firstcall) {
             firstcall = false;
-            InitPaths();        // sets tempdir, etc
+            initPaths();        // sets tempdir, etc
         }
         nativeCreate();         // must be called every time (to cache jobject)
         
@@ -318,35 +323,78 @@ public class MainActivity extends Activity {
 
     // -----------------------------------------------------------------------------
 
-    public void InitPaths() {
+    public void unzipAsset(String zipname, File destdir) {
+        // Log.i("unzipping", zipname);
+        AssetManager am = getAssets();
+        try {
+            ZipInputStream zipstream = new ZipInputStream(am.open(zipname));
+            for (ZipEntry entry = zipstream.getNextEntry(); entry != null; entry = zipstream.getNextEntry()) {
+                // Log.i("entry", entry.getName());
+                File destfile = new File(destdir, entry.getName());
+                if (entry.isDirectory()) {
+                    // create any missing sub-directories
+                    destfile.mkdirs();
+                } else {
+                    // create a file
+                    final int BUFFSIZE = 8192;
+                    BufferedOutputStream buffstream = new BufferedOutputStream(new FileOutputStream(destfile), BUFFSIZE);
+                    int count = 0;
+                    byte[] data = new byte[BUFFSIZE];
+                    while ((count = zipstream.read(data, 0, BUFFSIZE)) != -1) {
+                        buffstream.write(data, 0, count);
+                    }
+                    buffstream.flush();
+                    buffstream.close();
+                }
+                zipstream.closeEntry();
+            }
+            zipstream.close();
+        } catch (Exception e) {
+            Log.e("Golly", "unzipAsset failed!", e);
+        }
+        // Log.i("finished", zipname);
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    public void initPaths() {
         // first create subdirs if they don't exist
         File filesdir = getFilesDir();
         File subdir;
-        subdir = new File(filesdir, "Rules");        // for user's .rule files
+        subdir = new File(filesdir, "Rules");           // for user's .rule files
         subdir.mkdir();
-        subdir = new File(filesdir, "Saved");        // for saved pattern files
+        subdir = new File(filesdir, "Saved");           // for saved pattern files
         subdir.mkdir();
-        subdir = new File(filesdir, "Downloads");    // for downloaded pattern files
+        subdir = new File(filesdir, "Downloads");       // for downloaded pattern files
         subdir.mkdir();
+
+        // or use this location (normally on SD card) instead of getFilesDir()???!!!
+        // see http://developer.android.com/training/basics/data-storage/files.html
+        // for how to check if external storage device is mounted
+        // filesdir = getExternalFilesDir(null);
+        // if (filesdir != null) Log.i("getExternalFilesDir", filesdir.getAbsolutePath());
+        // on emulator filesdir = /mnt/sdcard/Android/data/net.sf.golly/files
         
         // now set gollydir (parent of above subdirs)
-        String gollydir = filesdir.getAbsolutePath();
+        String gollydir = filesdir.getAbsolutePath();   // /data/data/net.sf.golly/files
         nativeSetGollyDir(gollydir);
         
         // set tempdir
         File dir = getCacheDir();
-        String tempdir = dir.getAbsolutePath();
+        String tempdir = dir.getAbsolutePath();         // /data/data/net.sf.golly/cache
         nativeSetTempDir(tempdir);
         
-        // create subdirs for files supplied with app here!!!???
-        // (need to extract from assets??? use OBB???)
-        subdir = getDir("Patterns", MODE_PRIVATE);
-        subdir = getDir("Rules", MODE_PRIVATE);
-        subdir = getDir("Help", MODE_PRIVATE);
-        // subdir = /data/data/net.sf.golly/app_Help
-        String prefix = subdir.getAbsolutePath();
-        prefix = prefix.substring(0, prefix.length() - 4); // remove "Help"
-        nativeSetSuppliedDirs(prefix);
+        
+        // create a directory for storing supplied Patterns/Rules/Help then
+        // create subdirs for each by unzipping .zip files stored in assets
+        subdir = new File(filesdir, "Supplied");
+        subdir.mkdir();
+        unzipAsset("Patterns.zip", subdir);
+        unzipAsset("Rules.zip", subdir);
+        // unzipAsset("Help.zip", subdir);
+        
+        // subdir = /data/data/net.sf.golly/files/Supplied
+        nativeSetSuppliedDirs(subdir.getAbsolutePath());
     }
 
     // -----------------------------------------------------------------------------
