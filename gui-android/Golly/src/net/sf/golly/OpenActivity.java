@@ -30,7 +30,9 @@ import java.util.Arrays;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.NavUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -52,24 +54,32 @@ public class OpenActivity extends Activity {
     
     private static PATTERNS currpatterns = PATTERNS.SUPPLIED;
     
+    // remember scroll positions for each type of patterns
+    private static int supplied_pos = 0;
+    private static int recent_pos = 0;
+    private static int saved_pos = 0;
+    private static int downloaded_pos = 0;
+    
+    private WebView gwebview;   // for displaying html data
+    
     // -----------------------------------------------------------------------------
     
-    public final static String OPENFILE_MESSAGE = "net.sf.golly.OPENFILE";
-    
-    // this class lets us intercept link taps
+    // this class lets us intercept link taps and restore the scroll position
     private class MyWebViewClient extends WebViewClient {
         @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        public boolean shouldOverrideUrlLoading(WebView webview, String url) {
             if (url.startsWith("open:")) {
                 openFile(url.substring(5));
                 return true;
             }
             if (url.startsWith("toggledir:")) {
                 nativeToggleDir(url.substring(10));
+                saveScrollPosition();
                 showSuppliedPatterns();
                 return true;
             }
             if (url.startsWith("delete:")) {
+                saveScrollPosition();
                 removeFile(url.substring(7));
                 return true;
             }
@@ -79,9 +89,63 @@ public class OpenActivity extends Activity {
             }
             return false;
         }
+        
+        @Override  
+        public void onPageFinished(WebView webview, String url) {
+            super.onPageFinished(webview, url);
+            // webview.scrollTo doesn't always work here;
+            // we need to delay until webview.getContentHeight() > 0
+            final int scrollpos = restoreScrollPosition();
+            final Handler handler = new Handler();
+            Runnable runnable = new Runnable() {
+                public void run() {
+                    if (gwebview.getContentHeight() > 0) {
+                        gwebview.scrollTo(0, scrollpos);
+                        // Log.i("onPageFinished", Integer.toString(scrollpos));
+                    } else {
+                        // try again a bit later
+                        handler.postDelayed(this, 100);
+                    }
+                }
+            };
+            handler.postDelayed(runnable, 100);
+        }  
+    }
+
+    // -----------------------------------------------------------------------------
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveScrollPosition();
     }
     
     // -----------------------------------------------------------------------------
+    
+    private void saveScrollPosition() {
+        switch (currpatterns) {
+            case SUPPLIED:   supplied_pos = gwebview.getScrollY(); break;
+            case RECENT:     recent_pos = gwebview.getScrollY(); break;
+            case SAVED:      saved_pos = gwebview.getScrollY(); break;
+            case DOWNLOADED: downloaded_pos = gwebview.getScrollY(); break;
+        }
+    }
+    
+    // -----------------------------------------------------------------------------
+    
+    private int restoreScrollPosition() {
+        switch (currpatterns) {
+            case SUPPLIED:   return supplied_pos;
+            case RECENT:     return recent_pos;
+            case SAVED:      return saved_pos;
+            case DOWNLOADED: return downloaded_pos;
+        }
+        return 0;   // should never get here
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    public final static String OPENFILE_MESSAGE = "net.sf.golly.OPENFILE";
     
     private void openFile(String filepath) {
         // switch to main screen and open given file
@@ -118,6 +182,10 @@ public class OpenActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.open_layout);
         
+        gwebview = (WebView) findViewById(R.id.webview);
+        //!!!??? gwebview.getSettings().setJavaScriptEnabled(true);
+        gwebview.setWebViewClient(new MyWebViewClient());
+
         // show the Up button in the action bar
         getActionBar().setDisplayHomeAsUpEnabled(true);
         
@@ -168,12 +236,13 @@ public class OpenActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
-
+    
     // -----------------------------------------------------------------------------
     
     // called when the Supplied button is tapped
     public void doSupplied(View view) {
         if (currpatterns != PATTERNS.SUPPLIED) {
+            saveScrollPosition();
             currpatterns = PATTERNS.SUPPLIED;
             showSuppliedPatterns();
         }
@@ -184,6 +253,7 @@ public class OpenActivity extends Activity {
     // called when the Recent button is tapped
     public void doRecent(View view) {
         if (currpatterns != PATTERNS.RECENT) {
+            saveScrollPosition();
             currpatterns = PATTERNS.RECENT;
             showRecentPatterns();
         }
@@ -194,6 +264,7 @@ public class OpenActivity extends Activity {
     // called when the Saved button is tapped
     public void doSaved(View view) {
         if (currpatterns != PATTERNS.SAVED) {
+            saveScrollPosition();
             currpatterns = PATTERNS.SAVED;
             showSavedPatterns();
         }
@@ -204,6 +275,7 @@ public class OpenActivity extends Activity {
     // called when the Downloaded button is tapped
     public void doDownloaded(View view) {
         if (currpatterns != PATTERNS.DOWNLOADED) {
+            saveScrollPosition();
             currpatterns = PATTERNS.DOWNLOADED;
             showDownloadedPatterns();
         }
@@ -239,22 +311,16 @@ public class OpenActivity extends Activity {
     private void showSuppliedPatterns() {
         String paths = enumerateDirectory(new File(getFilesDir(), "Supplied/Patterns"), "");
         String htmldata = nativeGetSuppliedPatterns(paths);
-
-        WebView webview = (WebView) findViewById(R.id.webview);
-        //!!!??? webview.getSettings().setJavaScriptEnabled(true);
-        webview.setWebViewClient(new MyWebViewClient());
-        webview.loadDataWithBaseURL(null, htmldata, "text/html", "UTF-8", null);
+        // here we use a special base URL that allows <img src="foo.png"/> to find
+        // foo.png stored in the assets folder
+        gwebview.loadDataWithBaseURL("file:///android_asset/", htmldata, "text/html", "utf-8", null);
     }
 
     // -----------------------------------------------------------------------------
     
     private void showRecentPatterns() {
         String htmldata = nativeGetRecentPatterns();
-
-        WebView webview = (WebView) findViewById(R.id.webview);
-        //!!!??? webview.getSettings().setJavaScriptEnabled(true);
-        webview.setWebViewClient(new MyWebViewClient());
-        webview.loadDataWithBaseURL(null, htmldata, "text/html", "UTF-8", null);
+        gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);
     }
 
     // -----------------------------------------------------------------------------
@@ -262,11 +328,7 @@ public class OpenActivity extends Activity {
     private void showSavedPatterns() {
         String paths = enumerateDirectory(new File(getFilesDir(), "Saved"), "");
         String htmldata = nativeGetSavedPatterns(paths);
-
-        WebView webview = (WebView) findViewById(R.id.webview);
-        //!!!??? webview.getSettings().setJavaScriptEnabled(true);
-        webview.setWebViewClient(new MyWebViewClient());
-        webview.loadDataWithBaseURL(null, htmldata, "text/html", "UTF-8", null);
+        gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);
     }
 
     // -----------------------------------------------------------------------------
@@ -274,11 +336,7 @@ public class OpenActivity extends Activity {
     private void showDownloadedPatterns() {
         String paths = enumerateDirectory(new File(getFilesDir(), "Downloads"), "");
         String htmldata = nativeGetDownloadedPatterns(paths);
-
-        WebView webview = (WebView) findViewById(R.id.webview);
-        //!!!??? webview.getSettings().setJavaScriptEnabled(true);
-        webview.setWebViewClient(new MyWebViewClient());
-        webview.loadDataWithBaseURL(null, htmldata, "text/html", "UTF-8", null);
+        gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);
     }
 
 } // OpenActivity class

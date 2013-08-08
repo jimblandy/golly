@@ -1097,7 +1097,7 @@ static void AppendHtmlData(std::string& htmldata, const std::string& paths, cons
                 std::string imgname;
                 if (opendirs.find(path) == opendirs.end()) {
                     closedlevel = indents;
-                    imgname = "triangle-right.png";     // fix!!! (add to assets and extract somewhere???)
+                    imgname = "triangle-right.png";
                 } else {
                     closedlevel = indents+1;
                     imgname = "triangle-down.png";
@@ -1105,9 +1105,9 @@ static void AppendHtmlData(std::string& htmldata, const std::string& paths, cons
                 for (int i = 0; i < indents; i++) htmldata += HTML_INDENT;
                 htmldata += "<a href=\"toggledir:";
                 htmldata += path;
-                htmldata += "\"><img src='";
+                htmldata += "\"><img src=\"";
                 htmldata += imgname;
-                htmldata += "' border=0/><font color='gray'>";
+                htmldata += "\" border=0/><font color=\"gray\">";
                 size_t lastsep = path.rfind('/');
                 if (lastsep == std::string::npos) {
                     htmldata += path;
