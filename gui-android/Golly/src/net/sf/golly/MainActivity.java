@@ -905,8 +905,7 @@ public class MainActivity extends Activity {
         alert.show();
         
         // loop until runtime exception is triggered
-        try { Looper.loop(); }
-        catch(RuntimeException re) {}
+        try { Looper.loop(); } catch(RuntimeException re) {}
     }
     
     // -----------------------------------------------------------------------------
@@ -933,8 +932,7 @@ public class MainActivity extends Activity {
         alert.show();
         
         // loop until runtime exception is triggered
-        try { Looper.loop(); }
-        catch(RuntimeException re) {}
+        try { Looper.loop(); } catch(RuntimeException re) {}
         
         System.exit(1);
     }
@@ -974,8 +972,7 @@ public class MainActivity extends Activity {
         alert.show();
         
         // loop until runtime exception is triggered
-        try { Looper.loop(); }
-        catch(RuntimeException re) {}
+        try { Looper.loop(); } catch(RuntimeException re) {}
 
         return answer;
     }

@@ -28,6 +28,8 @@ import java.io.File;
 import java.util.Arrays;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -79,7 +81,6 @@ public class OpenActivity extends Activity {
                 return true;
             }
             if (url.startsWith("delete:")) {
-                saveScrollPosition();
                 removeFile(url.substring(7));
                 return true;
             }
@@ -101,7 +102,6 @@ public class OpenActivity extends Activity {
                 public void run() {
                     if (gwebview.getContentHeight() > 0) {
                         gwebview.scrollTo(0, scrollpos);
-                        // Log.i("onPageFinished", Integer.toString(scrollpos));
                     } else {
                         // try again a bit later
                         handler.postDelayed(this, 100);
@@ -157,22 +157,40 @@ public class OpenActivity extends Activity {
     // -----------------------------------------------------------------------------
     
     private void removeFile(String filepath) {
-        // delete given file
-        //!!!
-        // refresh view
-        switch (currpatterns) {
-            case SUPPLIED:   break;     // should never happen
-            case RECENT:     break;     // should never happen
-            case SAVED:      showSavedPatterns(); break;
-            case DOWNLOADED: showDownloadedPatterns(); break;
-        }
+        final String fullpath = getFilesDir().getAbsolutePath() + "/" + filepath;
+        final File file = new File(fullpath);
+        
+        // ask user if it's okay to delete given file
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("Delete file?");
+        alert.setMessage("Do you really want to delete " + file.getName() + "?");
+        alert.setPositiveButton("DELETE",
+            new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    if (file.delete()) {
+                        // file has been deleted so refresh gwebview
+                        saveScrollPosition();
+                        switch (currpatterns) {
+                            case SUPPLIED:   break; // should never happen
+                            case RECENT:     break; // should never happen
+                            case SAVED:      showSavedPatterns(); break;
+                            case DOWNLOADED: showDownloadedPatterns(); break;
+                        }
+                    } else {
+                        // should never happen
+                        Log.e("removeFile", "Failed to delete file: " + fullpath);
+                    }
+                }
+            });
+        alert.setNegativeButton("CANCEL", null);
+        alert.show();
     }
     
     // -----------------------------------------------------------------------------
     
     private void editFile(String filepath) {
         // let user read/edit given file
-        //!!!
+        //!!! start a TextActivity, passing filepath and read/edit mode???
     }
    
     // -----------------------------------------------------------------------------
@@ -183,7 +201,8 @@ public class OpenActivity extends Activity {
         setContentView(R.layout.open_layout);
         
         gwebview = (WebView) findViewById(R.id.webview);
-        //!!!??? gwebview.getSettings().setJavaScriptEnabled(true);
+        // no need for JavaScript???
+        // gwebview.getSettings().setJavaScriptEnabled(true);
         gwebview.setWebViewClient(new MyWebViewClient());
 
         // show the Up button in the action bar
@@ -311,7 +330,7 @@ public class OpenActivity extends Activity {
     private void showSuppliedPatterns() {
         String paths = enumerateDirectory(new File(getFilesDir(), "Supplied/Patterns"), "");
         String htmldata = nativeGetSuppliedPatterns(paths);
-        // here we use a special base URL that allows <img src="foo.png"/> to find
+        // we use a special base URL here so that <img src="foo.png"/> can find
         // foo.png stored in the assets folder
         gwebview.loadDataWithBaseURL("file:///android_asset/", htmldata, "text/html", "utf-8", null);
     }
