@@ -58,13 +58,14 @@ int currversion = PREFS_VERSION;    // might be changed by prefs_version
 const int PREF_LINE_SIZE = 5000;    // must be quite long for storing file paths
 
 std::string gollydir;               // path of directory containing app
-std::string datadir;                // path of directory for user-specific data
 std::string tempdir;                // path of directory for temporary data
-std::string helpdir;                // path of directory for app's supplied help info
-std::string patternsdir;            // path of directory for app's supplied patterns
-std::string rulesdir;               // path of directory for app's supplied rule data
-std::string userrules;              // path of directory for user's rule data
-std::string downloaddir;            // path of directory for downloaded data
+std::string supplieddir;            // parent directory for supplied patterns/rules/help
+std::string helpdir;                // path of directory for supplied help
+std::string patternsdir;            // path of directory for supplied patterns
+std::string rulesdir;               // path of directory for supplied rules
+std::string datadir;                // path of directory for user's saved patterns
+std::string userrules;              // path of directory for user's rules
+std::string downloaddir;            // path of directory for user's downloaded files
 std::string clipfile;               // path of temporary file for storing clipboard data
 
 // initialize exported preferences:

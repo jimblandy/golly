@@ -289,12 +289,12 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetTempDir(JNIEnv* e
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetSuppliedDirs(JNIEnv* env, jobject obj, jstring path)
 {
-    std::string prefix = ConvertJString(env, path) + "/";
+    supplieddir = ConvertJString(env, path) + "/";
     // LOGI("prefix = %s", prefix.c_str());
-    // prefix = /data/data/net.sf.golly/files/Supplied/
-    helpdir = prefix + "Help/";
-    rulesdir = prefix + "Rules/";
-    patternsdir = prefix + "Patterns/";
+    // supplieddir = /data/data/net.sf.golly/files/Supplied/
+    helpdir = supplieddir + "Help/";
+    rulesdir = supplieddir + "Rules/";
+    patternsdir = supplieddir + "Patterns/";
 }
 
 // -----------------------------------------------------------------------------

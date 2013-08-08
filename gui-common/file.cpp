@@ -821,14 +821,8 @@ void OpenFile(const char* path, bool remember)
     std::string fullpath = path;
     if (path[0] != '/') {
         if (fullpath.find("Patterns/") == 0) {
-            #ifdef ANDROID_GUI
-                // Patterns directory is inside gollydir/Supplied/
-                fullpath = gollydir + "Supplied/" + fullpath;
-            #endif
-            #ifdef IOS_GUI
-                // Patterns directory is inside app bundle so prepend gollydir/Golly.app/
-                fullpath = gollydir + "Golly.app/" + fullpath;
-            #endif
+            // Patterns directory is inside supplieddir
+            fullpath = supplieddir + fullpath;
         } else {
             fullpath = gollydir + fullpath;
         }

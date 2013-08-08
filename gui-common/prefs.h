@@ -55,13 +55,14 @@ const int MAX_MEM_MB = 300;             // maximum value of maxhashmem
 // Global paths:
 
 extern std::string gollydir;        // path of directory containing app
-extern std::string datadir;         // path of directory for user-specific data
 extern std::string tempdir;         // path of directory for temporary data
-extern std::string helpdir;         // path of directory for app's supplied help info
-extern std::string patternsdir;     // path of directory for app's supplied patterns
-extern std::string rulesdir;        // path of directory for app's supplied rule data
-extern std::string userrules;       // path of directory for user's rule data
-extern std::string downloaddir;     // path of directory for downloaded data
+extern std::string supplieddir;     // parent directory for supplied patterns/rules/help
+extern std::string helpdir;         // path of directory for supplied help
+extern std::string patternsdir;     // path of directory for supplied patterns
+extern std::string rulesdir;        // path of directory for supplied rules
+extern std::string datadir;         // path of directory for user's saved patterns
+extern std::string userrules;       // path of directory for user's rules
+extern std::string downloaddir;     // path of directory for user's downloaded files
 extern std::string clipfile;        // path of temporary file for storing clipboard data
 
 // Global preference data:

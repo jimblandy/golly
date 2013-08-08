@@ -243,8 +243,8 @@ static std::string pageurl;
             std::string fullpath = path;
             if (path[0] != '/') {
                 if (fullpath.find("Patterns/") == 0 || fullpath.find("Rules/") == 0) {
-                    // Patterns and Rules directories are inside app bundle so prepend gollydir/Golly.app/
-                    fullpath = gollydir + "Golly.app/" + fullpath;
+                    // Patterns and Rules directories are inside supplieddir
+                    fullpath = supplieddir + fullpath;
                 } else {
                     fullpath = gollydir + fullpath;
                 }

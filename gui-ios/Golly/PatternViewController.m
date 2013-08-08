@@ -127,14 +127,11 @@ static void InitPaths()
     userrules = gollydir + "Documents/Rules/";
     CreateDocSubdir(@"Rules");
 
-    // init path to supplied help
-    helpdir = gollydir + "Golly.app/Help/";
-
-    // init path to supplied rules
-    rulesdir = gollydir + "Golly.app/Rules/";
-
-    // init path to supplied patterns
-    patternsdir = gollydir + "Golly.app/Patterns/";
+    // supplied patterns, rules, help are bundled inside Golly.app
+    supplieddir = gollydir + "Golly.app/";
+    patternsdir = supplieddir + "Patterns/";
+    rulesdir = supplieddir + "Rules/";
+    helpdir = supplieddir + "Help/";
 
     // init tempdir to gollydir/tmp/
     tempdir = gollydir + "tmp/";
@@ -144,12 +141,13 @@ static void InitPaths()
     /* DEBUG
     NSLog(@"gollydir = %s", gollydir.c_str());
     NSLog(@"datadir = %s", datadir.c_str());
-    NSLog(@"tempdir = %s", tempdir.c_str());
     NSLog(@"downloaddir = %s", downloaddir.c_str());
     NSLog(@"userrules = %s", userrules.c_str());
+    NSLog(@"supplieddir = %s", supplieddir.c_str());
+    NSLog(@"patternsdir = %s", patternsdir.c_str());
     NSLog(@"rulesdir = %s", rulesdir.c_str());
     NSLog(@"helpdir = %s", helpdir.c_str());
-    NSLog(@"patternsdir = %s", patternsdir.c_str());
+    NSLog(@"tempdir = %s", tempdir.c_str());
     NSLog(@"clipfile = %s", clipfile.c_str());
     */
 }
