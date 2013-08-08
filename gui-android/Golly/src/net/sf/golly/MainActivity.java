@@ -78,6 +78,7 @@ public class MainActivity extends Activity {
     private native boolean nativeCanUndo();
     private native boolean nativeCanRedo();
     private native boolean nativeIsGenerating();
+    private native int nativeGetStatusColor();
     private native String nativeGetStatusLine(int line);
     private native String nativeGetPasteMode();
     private native String nativeGetRandomFill();
@@ -128,6 +129,7 @@ public class MainActivity extends Activity {
     private Button editbutton;                      // Edit/Paste button
     private Button modebutton;                      // Draw/Pick/Select/Move button
     private TextView status1, status2, status3;     // status bar has 3 lines
+    private int statuscolor = 0xFF000000;           // background color of status bar
     private PatternGLSurfaceView pattView;          // OpenGL ES is used to draw patterns
     private Handler genhandler;                     // for generating patterns
     private Runnable generate;                      // code started/stopped by genhandler
@@ -825,6 +827,14 @@ public class MainActivity extends Activity {
         // this might be called from a non-UI thread
         runOnUiThread(new Runnable() {
             public void run() {
+                int bgcolor = nativeGetStatusColor();
+                if (statuscolor != bgcolor) {
+                    // change background color of status lines
+                    statuscolor = bgcolor;
+                    status1.setBackgroundColor(statuscolor);
+                    status2.setBackgroundColor(statuscolor);
+                    status3.setBackgroundColor(statuscolor);
+                }
                 status1.setText(nativeGetStatusLine(1));
                 status2.setText(nativeGetStatusLine(2));
                 status3.setText(nativeGetStatusLine(3));

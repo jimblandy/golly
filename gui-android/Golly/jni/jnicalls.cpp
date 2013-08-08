@@ -243,6 +243,18 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusLine(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusColor()
+{
+    unsigned char r = algoinfo[currlayer->algtype]->statusrgb.r;
+    unsigned char g = algoinfo[currlayer->algtype]->statusrgb.g;
+    unsigned char b = algoinfo[currlayer->algtype]->statusrgb.b;
+    // return status bar color as int in format 0xAARRGGBB
+    return (0xFF000000 | (r << 16) | (g << 8) | b);
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
 JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetPasteMode(JNIEnv* env)
 {
     return env->NewStringUTF(GetPasteMode());
