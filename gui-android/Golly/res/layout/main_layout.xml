@@ -7,6 +7,7 @@
     android:orientation="vertical" >
 
     <RelativeLayout
+        android:id="@+id/top_bar"
     	android:layout_width="match_parent"
     	android:layout_height="wrap_content"
         android:background="#DDDDDD"
@@ -91,6 +92,7 @@
         android:text="Line 3" />
 
     <RelativeLayout
+        android:id="@+id/edit_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#DDDDDD"
@@ -132,13 +134,29 @@
     	    android:text="Draw" />
     </RelativeLayout>
     
-    <net.sf.golly.PatternGLSurfaceView
-        android:id="@+id/patternview"
-        android:layout_weight="1.0"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp" />
+        android:layout_height="0dp"
+        android:layout_weight="1.0"
+        android:orientation="horizontal" >
+        <net.sf.golly.PatternGLSurfaceView
+            android:id="@+id/patternview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <Button
+	        android:id="@+id/restore"
+	        style="?android:attr/buttonStyleSmall"
+	        android:layout_alignParentBottom="true"
+	        android:layout_alignParentRight="true"
+	        android:layout_width="wrap_content"
+	        android:layout_height="40sp"
+	        android:minHeight="0dp"
+	        android:onClick="toggleFullScreen"
+	        android:text="Restore" />
+    </RelativeLayout>
 
     <RelativeLayout
+        android:id="@+id/bottom_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#DDDDDD"
@@ -185,7 +203,7 @@
     	    android:layout_width="wrap_content"
     	    android:layout_height="40sp"
     	    android:minHeight="0dp"
-    	    android:onClick="doFullScreen"
+    	    android:onClick="toggleFullScreen"
     	    android:text="Full" />
     </RelativeLayout>
     

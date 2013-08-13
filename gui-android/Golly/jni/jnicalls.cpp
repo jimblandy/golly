@@ -140,6 +140,8 @@ void UpdatePattern()
 
 void UpdateStatus()
 {
+    if (fullscreen) return;
+
     UpdateStatusLines();    // sets status1, status2, status3
 
     // call Java method in MainActivity class to update the status bar info
@@ -955,6 +957,14 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeOpenFile(JNIEnv* env
     FixURLPath(fpath);
     OpenFile(fpath.c_str());
     SavePrefs();                // save recentpatterns
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetFullScreen(JNIEnv* env, jobject obj, jboolean isfull)
+{
+    fullscreen = isfull;
 }
 
 // =============================================================================

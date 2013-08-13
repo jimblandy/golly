@@ -54,6 +54,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
@@ -122,6 +123,7 @@ public class MainActivity extends Activity {
     private native boolean nativeFileExists(String filename);
     private native void nativeSavePattern(String filename);
     private native void nativeOpenFile(String filepath);
+    private native void nativeSetFullScreen(boolean fullscreen);
 
     // local fields:
     private static boolean firstcall = true;
@@ -131,6 +133,7 @@ public class MainActivity extends Activity {
     private Button editbutton;                      // Edit/Paste button
     private Button modebutton;                      // Draw/Pick/Select/Move button
     private Button infobutton;                      // Info button
+    private Button restorebutton;                   // Restore button
     private TextView status1, status2, status3;     // status bar has 3 lines
     private int statuscolor = 0xFF000000;           // background color of status bar
     private PatternGLSurfaceView pattView;          // OpenGL ES is used to draw patterns
@@ -143,6 +146,7 @@ public class MainActivity extends Activity {
     private View currview;                          // current view parameter
     private MenuItem curritem;                      // current menu item parameter
     private boolean stopped = true;                 // generating is stopped?
+    private boolean fullscreen = false;             // in full screen mode?
     
     // -----------------------------------------------------------------------------
 
@@ -209,6 +213,7 @@ public class MainActivity extends Activity {
         editbutton = (Button) findViewById(R.id.edit);
         modebutton = (Button) findViewById(R.id.touchmode);
         infobutton = (Button) findViewById(R.id.info);
+        restorebutton = (Button) findViewById(R.id.restore);
         status1 = (TextView) findViewById(R.id.status1);
         status2 = (TextView) findViewById(R.id.status2);
         status3 = (TextView) findViewById(R.id.status3);
@@ -221,6 +226,9 @@ public class MainActivity extends Activity {
         
         // this will call the PatternGLSurfaceView constructor
         pattView = (PatternGLSurfaceView) findViewById(R.id.patternview);
+        
+        restorebutton.setVisibility(View.INVISIBLE);
+        fullscreen = false;
         
         // check for messages sent by other activities
         Intent intent = getIntent();
@@ -418,6 +426,8 @@ public class MainActivity extends Activity {
     // -----------------------------------------------------------------------------
 
     public void updateButtons() {
+        if (fullscreen) return;
+        
         if (nativeIsGenerating()) {
             ssbutton.setText("Stop");
             ssbutton.setTextColor(Color.rgb(255,0,0));
@@ -830,9 +840,47 @@ public class MainActivity extends Activity {
 
     // -----------------------------------------------------------------------------
     
-    // called when the Full button is tapped
-    public void doFullScreen(View view) {
-        // not yet implemented!!!
+    // called when the Full/Restore button is tapped
+    public void toggleFullScreen(View view) {
+        RelativeLayout topbar = (RelativeLayout) findViewById(R.id.top_bar);
+        RelativeLayout editbar = (RelativeLayout) findViewById(R.id.edit_bar);
+        RelativeLayout bottombar = (RelativeLayout) findViewById(R.id.bottom_bar);
+        
+        if (fullscreen) {
+            fullscreen = false;
+            restorebutton.setVisibility(View.INVISIBLE);
+            
+            status1.setVisibility(View.VISIBLE);
+            status2.setVisibility(View.VISIBLE);
+            status3.setVisibility(View.VISIBLE);
+
+            topbar.setVisibility(RelativeLayout.VISIBLE);
+            editbar.setVisibility(RelativeLayout.VISIBLE);
+            bottombar.setVisibility(RelativeLayout.VISIBLE);
+            
+            getActionBar().show();
+        } else {
+            fullscreen = true;
+            restorebutton.setVisibility(View.VISIBLE);
+            
+            status1.setVisibility(View.GONE);
+            status2.setVisibility(View.GONE);
+            status3.setVisibility(View.GONE);
+            
+            topbar.setVisibility(RelativeLayout.GONE);
+            editbar.setVisibility(RelativeLayout.GONE);
+            bottombar.setVisibility(RelativeLayout.GONE);
+            
+            getActionBar().hide();
+        }
+        
+        // need to let native code know
+        nativeSetFullScreen(fullscreen);
+        
+        if (!fullscreen) {
+            updateButtons();
+            UpdateEditBar();
+        }
     }
 
     // -----------------------------------------------------------------------------
@@ -847,6 +895,8 @@ public class MainActivity extends Activity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void ShowStatusLines() {
+        // no need to check fullscreen flag here (caller checks it)
+        
         // this might be called from a non-UI thread
         runOnUiThread(new Runnable() {
             public void run() {
@@ -869,6 +919,8 @@ public class MainActivity extends Activity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void UpdateEditBar() {
+        if (fullscreen) return;
+        
         // this might be called from a non-UI thread
         runOnUiThread(new Runnable() {
             public void run() {
