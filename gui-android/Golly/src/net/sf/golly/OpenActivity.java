@@ -38,6 +38,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebSettings.LayoutAlgorithm;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -97,18 +98,33 @@ public class OpenActivity extends Activity {
             // webview.scrollTo doesn't always work here;
             // we need to delay until webview.getContentHeight() > 0
             final int scrollpos = restoreScrollPosition();
-            final Handler handler = new Handler();
-            Runnable runnable = new Runnable() {
-                public void run() {
-                    if (gwebview.getContentHeight() > 0) {
-                        gwebview.scrollTo(0, scrollpos);
-                    } else {
-                        // try again a bit later
-                        handler.postDelayed(this, 100);
+            if (scrollpos > 0) {
+                final Handler handler = new Handler();
+                Runnable runnable = new Runnable() {
+                    public void run() {
+                        if (gwebview.getContentHeight() > 0) {
+                            gwebview.scrollTo(0, scrollpos);
+                        } else {
+                            // try again a bit later
+                            handler.postDelayed(this, 100);
+                        }
                     }
-                }
-            };
-            handler.postDelayed(runnable, 100);
+                };
+                handler.postDelayed(runnable, 100);
+            }
+            
+            /* following also works if we setJavaScriptEnabled(true), but is not quite as nice
+               when a folder is closed because the scroll position can change to force the
+               last line to appear at the bottom of the webview
+            int scrollpos = restoreScrollPosition();
+            if (scrollpos > 0) {
+                final StringBuilder sb = new StringBuilder("javascript:window.scrollTo(0, ");
+                sb.append(scrollpos);
+                sb.append("/ window.devicePixelRatio);");
+                webview.loadUrl(sb.toString());
+            }
+            super.onPageFinished(webview, url);
+            */
         }  
     }
 
@@ -190,7 +206,17 @@ public class OpenActivity extends Activity {
     
     private void editFile(String filepath) {
         // let user read/edit given file
-        //!!! start a TextActivity, passing filepath and read/edit mode???
+        if (currpatterns == PATTERNS.SUPPLIED) {
+            // let user read a supplied file
+            /* !!! start InfoActivity, passing contents of filepath
+            Intent intent = new Intent(this, InfoActivity.class);
+            intent.putExtra(MainActivity.INFO_MESSAGE, filecontents);
+            startActivity(intent);
+            */
+        } else {
+            // let user read or edit a saved/downloaded file
+            //!!! start EditActivity, passing filepath (or contents???)
+        }
     }
    
     // -----------------------------------------------------------------------------
@@ -204,6 +230,14 @@ public class OpenActivity extends Activity {
         // no need for JavaScript???
         // gwebview.getSettings().setJavaScriptEnabled(true);
         gwebview.setWebViewClient(new MyWebViewClient());
+        
+        // avoid wrapping long lines -- doesn't work
+        // gwebview.getSettings().setUseWideViewPort(true);
+        // this is better
+        gwebview.getSettings().setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN);
+        
+        // allow zooming???
+        // gwebview.getSettings().setBuiltInZoomControls(true);
 
         // show the Up button in the action bar
         getActionBar().setDisplayHomeAsUpEnabled(true);

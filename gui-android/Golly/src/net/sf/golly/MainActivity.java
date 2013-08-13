@@ -77,11 +77,13 @@ public class MainActivity extends Activity {
     private native boolean nativeAllowUndo();
     private native boolean nativeCanUndo();
     private native boolean nativeCanRedo();
+    private native boolean nativeInfoAvailable();
     private native boolean nativeIsGenerating();
     private native int nativeGetStatusColor();
     private native String nativeGetStatusLine(int line);
     private native String nativeGetPasteMode();
     private native String nativeGetRandomFill();
+    private native String nativeGetInfo();
     private native void nativeNewPattern();
     private native void nativeFitPattern();
     private native void nativeGenerate();
@@ -128,6 +130,7 @@ public class MainActivity extends Activity {
     private Button redobutton;                      // Redo button
     private Button editbutton;                      // Edit/Paste button
     private Button modebutton;                      // Draw/Pick/Select/Move button
+    private Button infobutton;                      // Info button
     private TextView status1, status2, status3;     // status bar has 3 lines
     private int statuscolor = 0xFF000000;           // background color of status bar
     private PatternGLSurfaceView pattView;          // OpenGL ES is used to draw patterns
@@ -205,6 +208,7 @@ public class MainActivity extends Activity {
         redobutton = (Button) findViewById(R.id.redo);
         editbutton = (Button) findViewById(R.id.edit);
         modebutton = (Button) findViewById(R.id.touchmode);
+        infobutton = (Button) findViewById(R.id.info);
         status1 = (TextView) findViewById(R.id.status1);
         status2 = (TextView) findViewById(R.id.status2);
         status3 = (TextView) findViewById(R.id.status3);
@@ -248,6 +252,8 @@ public class MainActivity extends Activity {
                 if (methodname.equals("doNew"))       doNewPattern(currview); else
                 if (methodname.equals("doUndo"))      doUndo(currview); else
                 if (methodname.equals("doRedo"))      doRedo(currview); else
+                if (methodname.equals("doRule"))      doRule(currview); else
+                if (methodname.equals("doInfo"))      doInfo(currview); else
                 if (methodname.equals("doSave"))      doSave(currview); else
                 if (methodname.equals("doReset"))     doControlItem(curritem); else
                 if (methodname.equals("doPaste"))     doEditItem(curritem); else
@@ -306,7 +312,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         pattView.onResume();
-        UpdateStartStopButtons();
+        updateButtons();
         UpdateEditBar();
         if (nativeIsGenerating()) {
             stopped = false;
@@ -411,7 +417,7 @@ public class MainActivity extends Activity {
 
     // -----------------------------------------------------------------------------
 
-    public void UpdateStartStopButtons() {
+    public void updateButtons() {
         if (nativeIsGenerating()) {
             ssbutton.setText("Stop");
             ssbutton.setTextColor(Color.rgb(255,0,0));
@@ -423,6 +429,7 @@ public class MainActivity extends Activity {
             undobutton.setEnabled(nativeAllowUndo() && (nativeCanReset() || nativeCanUndo()));
             redobutton.setEnabled(nativeCanRedo());
         }
+        infobutton.setEnabled(nativeInfoAvailable());
     }
 
     // -----------------------------------------------------------------------------
@@ -460,7 +467,7 @@ public class MainActivity extends Activity {
                 genhandler.post(generate);
             }
         }
-        UpdateStartStopButtons();
+        updateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -482,7 +489,7 @@ public class MainActivity extends Activity {
         StopIfGenerating();
         if (CallAgainAfterDelay("doStep", view, null)) return;
         nativeStep();
-        UpdateStartStopButtons();
+        updateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -512,7 +519,7 @@ public class MainActivity extends Activity {
             default:          Log.e("Golly","Fix bug in doControlItem!");
         }
         if (item.getItemId() == R.id.reset) {
-            UpdateStartStopButtons();
+            updateButtons();
         } else {
             geninterval = nativeCalculateSpeed();
             stopped = false;
@@ -558,7 +565,7 @@ public class MainActivity extends Activity {
         StopIfGenerating();
         if (CallAgainAfterDelay("doUndo", view, null)) return;
         nativeUndo();
-        UpdateStartStopButtons();
+        updateButtons();
         
     }
 
@@ -569,7 +576,7 @@ public class MainActivity extends Activity {
         // nativeIsGenerating() should never be true here
         if (CallAgainAfterDelay("doRedo", view, null)) return;
         nativeRedo();
-        UpdateStartStopButtons();
+        updateButtons();
     }
 
     // -----------------------------------------------------------------------------
@@ -591,7 +598,7 @@ public class MainActivity extends Activity {
                 // (consistent with iOS Golly)
                 stopped = true;
                 nativeStopGenerating();
-                UpdateStartStopButtons();
+                updateButtons();
             }
         } else if (nativeSelectionExists()) {
             Menu menu = popup.getMenu();
@@ -617,7 +624,7 @@ public class MainActivity extends Activity {
             case R.id.all:   nativeSelectAll(); break;
             default:         Log.e("Golly","Fix bug in doEditItem!");
         }
-        UpdateStartStopButtons();
+        updateButtons();
         UpdateEditBar();
     }
 
@@ -714,7 +721,7 @@ public class MainActivity extends Activity {
         }
         if (CallAgainAfterDelay("doNew", view, null)) return;
         nativeNewPattern();
-        UpdateStartStopButtons();
+        updateButtons();
         UpdateEditBar();
         
         if (nativeNumLayers() == 1) {
@@ -727,14 +734,30 @@ public class MainActivity extends Activity {
     
     // called when the Rule button is tapped
     public void doRule(View view) {
-        // not yet implemented!!!
+        nativeClearMessage();
+        StopIfGenerating();
+        if (CallAgainAfterDelay("doRule", view, null)) return;
+        
+        /* !!! let user change the current rule and/or algorithm
+        Intent intent = new Intent(this, RuleActivity.class);
+        startActivity(intent);
+        */
     }
 
     // -----------------------------------------------------------------------------
     
+    public final static String INFO_MESSAGE = "net.sf.golly.INFO";
+    
     // called when the Info button is tapped
     public void doInfo(View view) {
-        // not yet implemented!!!
+        nativeClearMessage();
+        StopIfGenerating();
+        if (CallAgainAfterDelay("doInfo", view, null)) return;
+        
+        // display any comments in current pattern file
+        Intent intent = new Intent(this, InfoActivity.class);
+        intent.putExtra(INFO_MESSAGE, nativeGetInfo());
+        startActivity(intent);
     }
 
     // -----------------------------------------------------------------------------
@@ -1019,8 +1042,11 @@ public class MainActivity extends Activity {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         String text = "";
         if (clipboard.hasPrimaryClip()) {
-            ClipData.Item item = clipboard.getPrimaryClip().getItemAt(0);
-            text = (String) item.getText();
+            ClipData clipData = clipboard.getPrimaryClip();
+            text = clipData.getItemAt(0).coerceToText(this).toString();
+            if (text.length() == 0) {
+                Warning("Failed to get text from clipboard!");
+            }
         }
         // Log.i("GetTextFromClipboard", text);
         return text;
