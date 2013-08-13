@@ -222,13 +222,15 @@ public class MainActivity extends Activity {
             firstcall = false;
             initPaths();        // sets tempdir, etc
         }
-        nativeCreate();         // must be called every time (to cache jobject)
+        nativeCreate();         // must be called every time (to cache this instance)
         
         // this will call the PatternGLSurfaceView constructor
         pattView = (PatternGLSurfaceView) findViewById(R.id.patternview);
         
+        // might be better to make fullscreen static and only do following if firstcall??? test device rotation!!!
         restorebutton.setVisibility(View.INVISIBLE);
         fullscreen = false;
+        nativeSetFullScreen(fullscreen);
         
         // check for messages sent by other activities
         Intent intent = getIntent();
