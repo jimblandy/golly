@@ -132,6 +132,15 @@
     	    android:minHeight="0dp"
     	    android:onClick="doSetTouchMode"
     	    android:text="Draw" />
+        <Button
+            android:id="@+id/state"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_toLeftOf="@id/touchmode"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doChangeState"
+            android:text="1" />
     </RelativeLayout>
     
     <RelativeLayout

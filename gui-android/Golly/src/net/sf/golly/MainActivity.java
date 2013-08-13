@@ -723,6 +723,15 @@ public class MainActivity extends Activity {
 
     // -----------------------------------------------------------------------------
     
+    // called when the state button is tapped
+    public void doChangeState(View view) {
+        // let user change the current drawing state
+        Intent intent = new Intent(this, StateActivity.class);
+        startActivity(intent);
+    }
+
+    // -----------------------------------------------------------------------------
+    
     // called when the New button is tapped
     public void doNewPattern(View view) {
         // StopIfGenerating() would work here but we use smarter code that
@@ -732,6 +741,7 @@ public class MainActivity extends Activity {
             nativeStopBeforeNew();
         }
         if (CallAgainAfterDelay("doNew", view, null)) return;
+        
         nativeNewPattern();
         updateButtons();
         UpdateEditBar();
@@ -750,10 +760,9 @@ public class MainActivity extends Activity {
         StopIfGenerating();
         if (CallAgainAfterDelay("doRule", view, null)) return;
         
-        /* !!! let user change the current rule and/or algorithm
+        // let user change the current rule and/or algorithm
         Intent intent = new Intent(this, RuleActivity.class);
         startActivity(intent);
-        */
     }
 
     // -----------------------------------------------------------------------------
@@ -787,8 +796,7 @@ public class MainActivity extends Activity {
         
         // or use radio buttons as in iPad Golly???!!!
         // might be better to create a new SaveActivity and make it appear in a dialog
-        // by setting its theme to Theme.Holo.Dialog in the <activity> manifest element:
-        // <activity android:theme="@android:style/Theme.Holo.Dialog">
+        // by setting its theme to Theme.Holo.Dialog in the <activity> manifest element
 
         // use an EditText view to get filename
         final EditText input = new EditText(this);
