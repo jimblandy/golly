@@ -581,7 +581,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitPattern(JNIEnv* e
 {
     ClearMessage();
     CheckIfRendering();
-    currlayer->algo->fit(*currlayer->view, 1);
+    FitInView(1);
     UpdatePattern();
     UpdateStatus();
 }
@@ -770,6 +770,15 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeShrinkSelection(JNIE
 {
     ClearMessage();
     ShrinkSelection(false);
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitSelection(JNIEnv* env)
+{
+    ClearMessage();
+    FitSelection();
 }
 
 // -----------------------------------------------------------------------------

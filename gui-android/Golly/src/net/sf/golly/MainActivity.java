@@ -109,6 +109,7 @@ public class MainActivity extends Activity {
     private native void nativeCopySelection();
     private native void nativeClearSelection(int inside);
     private native void nativeShrinkSelection();
+    private native void nativeFitSelection();
     private native void nativeRandomFill();
     private native void nativeFlipSelection(int y);
     private native void nativeRotateSelection(int clockwise);
@@ -648,7 +649,8 @@ public class MainActivity extends Activity {
     public void doSelectionItem(MenuItem item) {
         if (item.getItemId() != R.id.remove &&
             item.getItemId() != R.id.copy &&
-            item.getItemId() != R.id.shrink) {
+            item.getItemId() != R.id.shrink &&
+            item.getItemId() != R.id.fitsel) {
             // item can modify the current pattern so we must stop generating,
             // but nicer if we only stop temporarily and resume when done
             if (nativeIsGenerating()) {
@@ -667,6 +669,7 @@ public class MainActivity extends Activity {
             case R.id.clear:    nativeClearSelection(1); break;
             case R.id.clearo:   nativeClearSelection(0); break;
             case R.id.shrink:   nativeShrinkSelection(); break;
+            case R.id.fitsel:   nativeFitSelection(); break;
             case R.id.random:   nativeRandomFill(); break;
             case R.id.flipy:    nativeFlipSelection(1); break;
             case R.id.flipx:    nativeFlipSelection(0); break;

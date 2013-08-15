@@ -579,7 +579,7 @@ static void InitPaths()
 - (IBAction)doFit:(id)sender
 {
     ClearMessage();
-    currlayer->algo->fit(*currlayer->view, 1);
+    FitInView(1);
 
     [statView setNeedsDisplay];
     [pattView refreshPattern];

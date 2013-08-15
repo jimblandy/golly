@@ -41,6 +41,11 @@
 		android:onClick="doSelectionItem"
 	/>
     <item
+        android:id="@+id/fitsel"
+        android:title="Fit"
+        android:onClick="doSelectionItem"
+    />
+    <item
 		android:id="@+id/random"
 		android:title="Random Fill"
 		android:onClick="doSelectionItem"

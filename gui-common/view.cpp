@@ -81,7 +81,7 @@ static Selection prevsel;               // previous selection
 static int drawstate;                   // new cell state (0..255)
 
 static lifealgo* pastealgo = NULL;      // temporary universe with pattern to be pasted
-static gRect pastebox;                  // bounding box for paste pattern
+static gRect pastebox;                  // bounding box (in cells) for paste pattern
 static std::string oldrule;             // rule before readclipboard is called
 static std::string newrule;             // rule after readclipboard is called
 static int newalgotype;                 // new algo type created by readclipboard
@@ -139,7 +139,41 @@ void TestAutoFit()
 
 void FitInView(int force)
 {
-    currlayer->algo->fit(*currlayer->view, force);
+    if (waitingforpaste && currlayer->algo->isEmpty()) {
+        // fit paste image in viewport if there is no pattern
+        // (note that pastealgo->fit() won't work because paste image
+        // might be bigger than paste pattern)
+
+        int vwd = currlayer->view->getxmax();
+        int vht = currlayer->view->getymax();
+        int pwd, pht;
+        int mag = MAX_MAG;
+        while (true) {
+            pwd = mag >= 0 ? (pastebox.width << mag) : (pastebox.width >> -mag);
+            pht = mag >= 0 ? (pastebox.height << mag) : (pastebox.height >> -mag);
+            if (vwd >= pwd && vht >= pht) {
+                // all of paste image can fit within viewport at this mag
+                break;
+            }
+            mag--;
+        }
+        
+        // set mag and move viewport to origin
+        currlayer->view->setpositionmag(bigint::zero, bigint::zero, mag);
+        
+        // move paste image to middle of viewport
+        if (mag >= 0) {
+            pastex = (vwd - pwd) / 2 + (1 << mag);
+            pastey = (vht - pht) / 2 + (1 << mag);
+        } else {
+            pastex = (vwd - pwd) / 2;
+            pastey = (vht - pht) / 2;
+        }
+    } else {
+        // fit current pattern in viewport
+        // (if no pattern this will set mag to MAX_MAG and move to origin)
+        currlayer->algo->fit(*currlayer->view, force);
+    }
 }
 
 // -----------------------------------------------------------------------------

@@ -751,8 +751,8 @@ void Selection::Fit()
     int mag = MAX_MAG;
     while (true) {
         currlayer->view->setpositionmag(newx, newy, mag);
-        if ( currlayer->view->contains(selleft, seltop) &&
-            currlayer->view->contains(selright, selbottom) )
+        if (currlayer->view->contains(selleft, seltop) &&
+            currlayer->view->contains(selright, selbottom))
             break;
         mag--;
     }

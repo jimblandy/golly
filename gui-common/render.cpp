@@ -603,6 +603,7 @@ void SetPasteRect(int wd, int ht)
     }
 
     SetRect(pasterect, x, y, pastewd, pasteht);
+    // NSLog(@"pasterect: x=%d y=%d wd=%d ht=%d", pasterect.x, pasterect.y, pasterect.width, pasterect.height);
 }
 
 // -----------------------------------------------------------------------------
@@ -611,8 +612,6 @@ void DrawPasteImage()
 {
     // calculate pasterect
     SetPasteRect(pastebbox.width, pastebbox.height);
-
-    // NSLog(@"pasterect: x=%d y=%d wd=%d ht=%d", pasterect.x, pasterect.y, pasterect.width, pasterect.height);
 
     int pastemag = currlayer->view->getmag();
     gRect cellbox = pastebbox;

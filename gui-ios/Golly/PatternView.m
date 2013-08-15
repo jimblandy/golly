@@ -402,6 +402,7 @@ static UIActionSheet *selsheet;
         @"Clear",
         @"Clear Outside",
         @"Shrink",
+        @"Fit",
         [NSString stringWithFormat:@"Random Fill (%d%%)", randomfill],
         @"Flip Top-Bottom",
         @"Flip Left-Right",
@@ -447,9 +448,9 @@ static int globalButton;
 - (void)doDelayedAction
 {
     if (globalSheet == selsheet) {
-        if (generating && globalButton >= 1 && globalButton <= 12 &&
-            globalButton != 2 && globalButton != 5) {
-            // temporarily stop generating for all actions except Remove, Copy and Shrink
+        if (generating && globalButton >= 1 && globalButton <= 13 &&
+            globalButton != 2 && globalButton != 5 && globalButton != 6) {
+            // temporarily stop generating for all actions except Remove, Copy, Shrink, Fit
             PauseGenerating();
             if (event_checker > 0) {
                 // try again after a short delay that gives time for NextGeneration() to terminate
@@ -464,13 +465,14 @@ static int globalButton;
             case 3:  ClearSelection(); break;
             case 4:  ClearOutsideSelection(); break;
             case 5:  ShrinkSelection(false); break;                 // WARNING: above test assumes Shrink is index 5
-            case 6:  RandomFill(); break;
-            case 7:  FlipSelection(true); break;
-            case 8:  FlipSelection(false); break;
-            case 9:  RotateSelection(true); break;
-            case 10: RotateSelection(false); break;
-            case 11: currlayer->currsel.Advance(); break;
-            case 12: currlayer->currsel.AdvanceOutside(); break;    // WARNING: above test assumes 12 is last index
+            case 6:  FitSelection(); break;                         // WARNING: above test assumes Fit is index 6
+            case 7:  RandomFill(); break;
+            case 8:  FlipSelection(true); break;
+            case 9:  FlipSelection(false); break;
+            case 10: RotateSelection(true); break;
+            case 11: RotateSelection(false); break;
+            case 12: currlayer->currsel.Advance(); break;
+            case 13: currlayer->currsel.AdvanceOutside(); break;    // WARNING: above test assumes 13 is last index
             default: break;
         }
         ResumeGenerating();
