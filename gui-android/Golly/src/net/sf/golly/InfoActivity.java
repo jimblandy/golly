@@ -32,6 +32,10 @@ import android.view.View;
 import android.widget.TextView;
 
 public class InfoActivity extends Activity {
+    
+    public final static String INFO_MESSAGE = "net.sf.golly.INFO";
+    
+    // -----------------------------------------------------------------------------
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +46,7 @@ public class InfoActivity extends Activity {
         
         // get info sent by other activity
         Intent intent = getIntent();
-        String info = intent.getStringExtra(MainActivity.INFO_MESSAGE);
+        String info = intent.getStringExtra(INFO_MESSAGE);
         if (info != null) {
             TextView tv = (TextView) findViewById(R.id.info_text);
             tv.setMovementMethod(new ScrollingMovementMethod());

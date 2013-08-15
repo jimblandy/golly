@@ -148,6 +148,8 @@ public class MainActivity extends Activity {
     private boolean stopped = true;                 // generating is stopped?
     private boolean fullscreen = false;             // in full screen mode?
     
+    public final static String OPENFILE_MESSAGE = "net.sf.golly.OPENFILE";
+
     // -----------------------------------------------------------------------------
 
     // the following stuff allows time consuming code (like nativeGenerate) to periodically
@@ -234,7 +236,7 @@ public class MainActivity extends Activity {
         
         // check for messages sent by other activities
         Intent intent = getIntent();
-        String filepath = intent.getStringExtra(OpenActivity.OPENFILE_MESSAGE);
+        String filepath = intent.getStringExtra(OPENFILE_MESSAGE);
         if (filepath != null) {
             nativeOpenFile(filepath);
         }
@@ -766,9 +768,7 @@ public class MainActivity extends Activity {
     }
 
     // -----------------------------------------------------------------------------
-    
-    public final static String INFO_MESSAGE = "net.sf.golly.INFO";
-    
+        
     // called when the Info button is tapped
     public void doInfo(View view) {
         nativeClearMessage();
@@ -777,7 +777,7 @@ public class MainActivity extends Activity {
         
         // display any comments in current pattern file
         Intent intent = new Intent(this, InfoActivity.class);
-        intent.putExtra(INFO_MESSAGE, nativeGetInfo());
+        intent.putExtra(InfoActivity.INFO_MESSAGE, nativeGetInfo());
         startActivity(intent);
     }
 
@@ -794,7 +794,7 @@ public class MainActivity extends Activity {
         alert.setTitle("Save current pattern");
         alert.setMessage("Valid file name extensions are\n" + nativeGetValidExtensions());
         
-        // or use radio buttons as in iPad Golly???!!!
+        // or use radio buttons as in iPad Golly???
         // might be better to create a new SaveActivity and make it appear in a dialog
         // by setting its theme to Theme.Holo.Dialog in the <activity> manifest element
 
@@ -972,7 +972,7 @@ public class MainActivity extends Activity {
     private void Warning(String msg) {
         // use a handler to get a modal dialog
         final Handler handler = new Handler() {
-            public void handleMessage(Message mesg) {
+            public void handleMessage(Message msg) {
                 throw new RuntimeException();
             } 
         };
@@ -999,7 +999,7 @@ public class MainActivity extends Activity {
     private void Fatal(String msg) {
         // use a handler to get a modal dialog
         final Handler handler = new Handler() {
-            public void handleMessage(Message mesg) {
+            public void handleMessage(Message msg) {
                 throw new RuntimeException();
             } 
         };
@@ -1030,7 +1030,7 @@ public class MainActivity extends Activity {
     private String YesNo(String query) {
         // use a handler to get a modal dialog
         final Handler handler = new Handler() {
-            public void handleMessage(Message mesg) {
+            public void handleMessage(Message msg) {
                 throw new RuntimeException();
             } 
         };

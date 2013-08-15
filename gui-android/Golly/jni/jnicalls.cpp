@@ -946,6 +946,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSavePattern(JNIEnv* 
 
     std::string fullpath = datadir + fname;
     SavePattern(fullpath, format, compression);
+    UpdateStatus();
 }
 
 // -----------------------------------------------------------------------------

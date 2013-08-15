@@ -24,7 +24,10 @@
 
 package net.sf.golly;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 
 import android.app.Activity;
@@ -41,6 +44,7 @@ import android.view.View;
 import android.webkit.WebSettings.LayoutAlgorithm;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 public class OpenActivity extends Activity {
 
@@ -129,14 +133,6 @@ public class OpenActivity extends Activity {
     }
 
     // -----------------------------------------------------------------------------
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        saveScrollPosition();
-    }
-    
-    // -----------------------------------------------------------------------------
     
     private void saveScrollPosition() {
         switch (currpatterns) {
@@ -161,12 +157,10 @@ public class OpenActivity extends Activity {
 
     // -----------------------------------------------------------------------------
     
-    public final static String OPENFILE_MESSAGE = "net.sf.golly.OPENFILE";
-    
     private void openFile(String filepath) {
         // switch to main screen and open given file
         Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra(OPENFILE_MESSAGE, filepath);
+        intent.putExtra(MainActivity.OPENFILE_MESSAGE, filepath);
         startActivity(intent);
     }
     
@@ -205,17 +199,46 @@ public class OpenActivity extends Activity {
     // -----------------------------------------------------------------------------
     
     private void editFile(String filepath) {
+        // check if filepath is compressed
+        if (filepath.endsWith(".gz") || filepath.endsWith(".zip")) {
+            if (currpatterns == PATTERNS.SUPPLIED) {
+                Toast.makeText(this, "Reading a compressed file is not supported.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Editing a compressed file is not supported.", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }        
+
         // let user read/edit given file
         if (currpatterns == PATTERNS.SUPPLIED) {
-            // let user read a supplied file
-            /* !!! start InfoActivity, passing contents of filepath
+            // read contents of supplied file into a string
+            String fullpath = getFilesDir().getAbsolutePath() + "/Supplied/" + filepath;
+            File file = new File(fullpath);
+            String filecontents;
+            try {
+                FileInputStream instream = new FileInputStream(file);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(instream));
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                    sb.append("\n");
+                }
+                filecontents = sb.toString();
+                instream.close();        
+            } catch (Exception e) {
+                filecontents = "Error reading file:\n" + e.toString();
+            }
+            // display filecontents
             Intent intent = new Intent(this, InfoActivity.class);
-            intent.putExtra(MainActivity.INFO_MESSAGE, filecontents);
+            intent.putExtra(InfoActivity.INFO_MESSAGE, filecontents);
             startActivity(intent);
-            */
         } else {
-            // let user read or edit a saved/downloaded file
-            //!!! start EditActivity, passing filepath (or contents???)
+            // let user read or edit a saved or downloaded file
+            String fullpath = getFilesDir().getAbsolutePath() + "/" + filepath;
+            Intent intent = new Intent(this, EditActivity.class);
+            intent.putExtra(EditActivity.EDITFILE_MESSAGE, fullpath);
+            startActivity(intent);
         }
     }
    
@@ -231,9 +254,9 @@ public class OpenActivity extends Activity {
         // gwebview.getSettings().setJavaScriptEnabled(true);
         gwebview.setWebViewClient(new MyWebViewClient());
         
-        // avoid wrapping long lines -- doesn't work
+        // avoid wrapping long lines -- this doesn't work:
         // gwebview.getSettings().setUseWideViewPort(true);
-        // this is better
+        // this is better:
         gwebview.getSettings().setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN);
         
         // allow zooming???
@@ -242,6 +265,24 @@ public class OpenActivity extends Activity {
         // show the Up button in the action bar
         getActionBar().setDisplayHomeAsUpEnabled(true);
         
+        // note that onResume will do the initial display
+    }
+
+    // -----------------------------------------------------------------------------
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveScrollPosition();
+    }
+
+    // -----------------------------------------------------------------------------
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // update gwebview
+        restoreScrollPosition();
         switch (currpatterns) {
             case SUPPLIED:   showSuppliedPatterns(); break;
             case RECENT:     showRecentPatterns(); break;

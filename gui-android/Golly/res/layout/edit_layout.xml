@@ -1,11 +1,50 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
 
     <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:id="@+id/edit_text"
+        android:inputType="textMultiLine"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.0"
+        android:gravity="top"
+        android:text="Line 1\nLine 2"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:typeface="monospace"
+        android:paddingLeft="4dp"
+        android:scrollbars = "horizontal|vertical"
     />
 
-</RelativeLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+	    <Button
+            android:id="@+id/cancel"
+	        style="?android:attr/buttonStyleSmall"
+	        android:layout_centerInParent="true"
+	        android:layout_width="wrap_content"
+	        android:layout_height="40sp"
+	        android:minHeight="0dp"
+	        android:text="Cancel"
+	        android:onClick="doCancel"
+        />
+        <Button
+            android:id="@+id/save"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doSave"
+            android:text="Save"
+        />
+    </RelativeLayout>
+
+</LinearLayout>
