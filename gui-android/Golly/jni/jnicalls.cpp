@@ -375,7 +375,6 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeUndo(JNIEnv* env)
 {
     if (generating) Warning("Bug: generating is true in nativeUndo!");
-    ClearMessage();
     CheckIfRendering();
     currlayer->undoredo->UndoChange();
     UpdateEverything();
@@ -387,7 +386,6 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRedo(JNIEnv* env)
 {
     if (generating) Warning("Bug: generating is true in nativeRedo!");
-    ClearMessage();
     CheckIfRendering();
     currlayer->undoredo->RedoChange();
     UpdateEverything();
@@ -406,7 +404,6 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeCanReset(JNIEnv* env
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeResetPattern(JNIEnv* env)
 {
-    ClearMessage();
     CheckIfRendering();
     ResetPattern();
     UpdateEverything();
@@ -434,7 +431,6 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStartGenerating(JNIEnv* env)
 {
     if (!generating) {
-        ClearMessage();
         StartGenerating();
         // generating might still be false (eg. if pattern is empty)
 
@@ -486,7 +482,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep(JNIEnv* env)
 {
-    ClearMessage();
     NextGeneration(true);
     UpdatePattern();
     UpdateStatus();
@@ -514,7 +509,6 @@ JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeCalculateSpeed(JNIEnv
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep1(JNIEnv* env)
 {
-    ClearMessage();
     // reset step exponent to 0
     currlayer->currexpo = 0;
     SetGenIncrement();
@@ -526,7 +520,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStep1(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFaster(JNIEnv* env)
 {
-    ClearMessage();
     // go faster by incrementing step exponent
     currlayer->currexpo++;
     SetGenIncrement();
@@ -538,7 +531,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFaster(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSlower(JNIEnv* env)
 {
-    ClearMessage();
     // go slower by decrementing step exponent
     if (currlayer->currexpo > minexpo) {
         currlayer->currexpo--;
@@ -567,7 +559,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeStopBeforeNew(JNIEnv
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* env)
 {
-    ClearMessage();
     CheckIfRendering();
     NewPattern();
     UpdatePattern();
@@ -579,7 +570,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeNewPattern(JNIEnv* e
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitPattern(JNIEnv* env)
 {
-    ClearMessage();
     CheckIfRendering();
     FitInView(1);
     UpdatePattern();
@@ -591,7 +581,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitPattern(JNIEnv* e
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1(JNIEnv* env)
 {
-    ClearMessage();
     CheckIfRendering();
     // set scale to 1:1
     if (currlayer->view->getmag() != 0) {
@@ -606,7 +595,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeScale1to1(JNIEnv* en
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger(JNIEnv* env)
 {
-    ClearMessage();
     CheckIfRendering();
     // zoom in
     if (currlayer->view->getmag() < MAX_MAG) {
@@ -623,7 +611,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeBigger(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller(JNIEnv* env)
 {
-    ClearMessage();
     CheckIfRendering();
     // zoom out
     currlayer->view->unzoom();
@@ -636,7 +623,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSmaller(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle(JNIEnv* env)
 {
-    ClearMessage();
     if (currlayer->originx == bigint::zero && currlayer->originy == bigint::zero) {
         currlayer->view->center();
     } else {
@@ -667,7 +653,6 @@ JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetMode(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetMode(JNIEnv* env, jobject obj, jint mode)
 {
-    ClearMessage();
     switch (mode) {
         case 0: currlayer->touchmode = drawmode;   return;
         case 1: currlayer->touchmode = pickmode;   return;
@@ -706,7 +691,6 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeSelectionExists(JNIE
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativePaste(JNIEnv* env)
 {
-    ClearMessage();
     CheckIfRendering();
     PasteClipboard();
     UpdatePattern();
@@ -717,7 +701,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativePaste(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSelectAll(JNIEnv* env)
 {
-    ClearMessage();
     SelectAll();
 }
 
@@ -726,7 +709,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSelectAll(JNIEnv* en
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRemoveSelection(JNIEnv* env)
 {
-    ClearMessage();
     RemoveSelection();
 }
 
@@ -735,7 +717,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRemoveSelection(JNIE
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCutSelection(JNIEnv* env)
 {
-    ClearMessage();
     CheckIfRendering();
     CutSelection();
 }
@@ -745,7 +726,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCutSelection(JNIEnv*
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCopySelection(JNIEnv* env)
 {
-    ClearMessage();
     CopySelection();
 }
 
@@ -754,7 +734,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCopySelection(JNIEnv
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClearSelection(JNIEnv* env, jobject obj, jint inside)
 {
-    ClearMessage();
     CheckIfRendering();
     if (inside) {
         ClearSelection();
@@ -768,7 +747,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClearSelection(JNIEn
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeShrinkSelection(JNIEnv* env)
 {
-    ClearMessage();
     ShrinkSelection(false);
 }
 
@@ -777,7 +755,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeShrinkSelection(JNIE
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitSelection(JNIEnv* env)
 {
-    ClearMessage();
     FitSelection();
 }
 
@@ -786,7 +763,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFitSelection(JNIEnv*
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRandomFill(JNIEnv* env)
 {
-    ClearMessage();
     CheckIfRendering();
     RandomFill();
 }
@@ -796,7 +772,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRandomFill(JNIEnv* e
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFlipSelection(JNIEnv* env, jobject obj, jint y)
 {
-    ClearMessage();
     CheckIfRendering();
     FlipSelection(y);
 }
@@ -806,7 +781,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFlipSelection(JNIEnv
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRotateSelection(JNIEnv* env, jobject obj, jint clockwise)
 {
-    ClearMessage();
     CheckIfRendering();
     RotateSelection(clockwise);
 }
@@ -816,7 +790,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRotateSelection(JNIE
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeAdvanceSelection(JNIEnv* env, jobject obj, jint inside)
 {
-    ClearMessage();
     CheckIfRendering();
     if (inside) {
         currlayer->currsel.Advance();
@@ -830,7 +803,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeAdvanceSelection(JNI
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeAbortPaste(JNIEnv* env)
 {
-    ClearMessage();
     AbortPaste();
     UpdateEverything();
 }
@@ -841,7 +813,6 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeDoPaste(JNIEnv* env, jobject obj, jint toselection)
 {
     // assume caller has stopped generating
-    ClearMessage();
     CheckIfRendering();
     DoPaste(toselection);
     UpdateEverything();
@@ -852,7 +823,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeDoPaste(JNIEnv* env,
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFlipPaste(JNIEnv* env, jobject obj, jint y)
 {
-    ClearMessage();
     FlipPastePattern(y);
     UpdateEverything();
 }
@@ -862,7 +832,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeFlipPaste(JNIEnv* en
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeRotatePaste(JNIEnv* env, jobject obj, jint clockwise)
 {
-    ClearMessage();
     RotatePastePattern(clockwise);
     UpdateEverything();
 }

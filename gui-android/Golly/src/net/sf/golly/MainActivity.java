@@ -467,6 +467,7 @@ public class MainActivity extends Activity {
     
     // called when the Start/Stop button is tapped
     public void doStartStop(View view) {
+        nativeClearMessage();
         if (CallAgainAfterDelay("doStartStop", view, null)) return;
         if (nativeIsGenerating()) {
             // stop calling nativeGenerate
@@ -501,6 +502,7 @@ public class MainActivity extends Activity {
     
     // called when the Step button is tapped
     public void doStep(View view) {
+        nativeClearMessage();
         StopIfGenerating();
         if (CallAgainAfterDelay("doStep", view, null)) return;
         nativeStep();
@@ -511,6 +513,7 @@ public class MainActivity extends Activity {
     
     // called when the Control button is tapped
     public void doControl(View view) {
+        nativeClearMessage();
         // display pop-up menu with these items: Step=1, Faster, Slower, Reset
         PopupMenu popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
@@ -546,6 +549,7 @@ public class MainActivity extends Activity {
     
     // called when the Fit button is tapped
     public void doFitPattern(View view) {
+        nativeClearMessage();
         nativeFitPattern();
     }
 
@@ -553,6 +557,7 @@ public class MainActivity extends Activity {
     
     // called when the View button is tapped
     public void doView(View view) {
+        nativeClearMessage();
         // display pop-up menu with these items: Scale=1:1, Bigger, Smaller, Middle
         PopupMenu popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
@@ -577,6 +582,7 @@ public class MainActivity extends Activity {
     
     // called when the Undo button is tapped
     public void doUndo(View view) {
+        nativeClearMessage();
         StopIfGenerating();
         if (CallAgainAfterDelay("doUndo", view, null)) return;
         nativeUndo();
@@ -588,6 +594,7 @@ public class MainActivity extends Activity {
     
     // called when the Redo button is tapped
     public void doRedo(View view) {
+        nativeClearMessage();
         // nativeIsGenerating() should never be true here
         if (CallAgainAfterDelay("doRedo", view, null)) return;
         nativeRedo();
@@ -598,6 +605,7 @@ public class MainActivity extends Activity {
     
     // called when the Edit/Paste button is tapped
     public void doEditPaste(View view) {
+        nativeClearMessage();
         // display pop-up menu with items that depend on whether a selection or paste image exists
         PopupMenu popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
@@ -705,6 +713,7 @@ public class MainActivity extends Activity {
     
     // called when the Draw/Pick/Select/Move button is tapped
     public void doSetTouchMode(View view) {
+        nativeClearMessage();
         // display pop-up menu with these items: Draw, Pick, Select, Move
         PopupMenu popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
@@ -730,6 +739,7 @@ public class MainActivity extends Activity {
     
     // called when the state button is tapped
     public void doChangeState(View view) {
+        nativeClearMessage();
         // let user change the current drawing state
         Intent intent = new Intent(this, StateActivity.class);
         startActivity(intent);
@@ -739,6 +749,7 @@ public class MainActivity extends Activity {
     
     // called when the New button is tapped
     public void doNewPattern(View view) {
+        nativeClearMessage();
         // StopIfGenerating() would work here but we use smarter code that
         // avoids trying to save the current pattern (potentially very large)
         if (nativeIsGenerating()) {
@@ -855,6 +866,7 @@ public class MainActivity extends Activity {
     
     // called when the Full/Restore button is tapped
     public void toggleFullScreen(View view) {
+        // no need to call nativeClearMessage()
         RelativeLayout topbar = (RelativeLayout) findViewById(R.id.top_bar);
         RelativeLayout editbar = (RelativeLayout) findViewById(R.id.edit_bar);
         RelativeLayout bottombar = (RelativeLayout) findViewById(R.id.bottom_bar);
