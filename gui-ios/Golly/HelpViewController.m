@@ -23,7 +23,7 @@
  / ***/
 
 #include "utils.h"      // for Beep, Warning, FixURLPath
-#include "prefs.h"      // for gollydir, downloaddir
+#include "prefs.h"      // for userdir, supplieddir, downloaddir
 #include "file.h"       // for OpenFile, UnzipFile, GetURL, DownloadFile, LoadLexiconPattern
 #include "control.h"    // for ChangeRule
 
@@ -246,7 +246,7 @@ static std::string pageurl;
                     // Patterns and Rules directories are inside supplieddir
                     fullpath = supplieddir + fullpath;
                 } else {
-                    fullpath = gollydir + fullpath;
+                    fullpath = userdir + fullpath;
                 }
             }
             ShowTextFile(fullpath.c_str());

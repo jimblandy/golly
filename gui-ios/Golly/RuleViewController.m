@@ -634,7 +634,7 @@ static int globalButton;
             std::string question = "Do you really want to delete " + path + "?";
             if (YesNo(question.c_str())) {
                 // delete specified file
-                path = gollydir + path;
+                path = userdir + path;
                 RemoveFile(path);
                 // save current location
                 curroffset[algoindex] = htmlView.scrollView.contentOffset;
@@ -652,7 +652,7 @@ static int globalButton;
                     // Patterns and Rules directories are inside supplieddir
                     fullpath = supplieddir + fullpath;
                 } else {
-                    fullpath = gollydir + fullpath;
+                    fullpath = userdir + fullpath;
                 }
             }
             // we pass self to ShowTextFile so it doesn't use current tab's view controller

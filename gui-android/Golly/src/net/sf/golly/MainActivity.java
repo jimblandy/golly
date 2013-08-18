@@ -63,9 +63,9 @@ public class MainActivity extends Activity {
     private static native void nativeClassInit();   // must be static
     private native void nativeCreate();             // must NOT be static
     private native void nativeDestroy();
-    private native void nativeSetGollyDir(String path);
-    private native void nativeSetTempDir(String path);
+    private native void nativeSetUserDirs(String path);
     private native void nativeSetSuppliedDirs(String prefix);
+    private native void nativeSetTempDir(String path);
     private native void nativeStartGenerating();
     private native void nativeStopGenerating();
     private native void nativeStopBeforeNew();
@@ -344,7 +344,7 @@ public class MainActivity extends Activity {
 
     // -----------------------------------------------------------------------------
 
-    public void unzipAsset(String zipname, File destdir) {
+    private void unzipAsset(String zipname, File destdir) {
         // Log.i("unzipping", zipname);
         AssetManager am = getAssets();
         try {
@@ -378,7 +378,7 @@ public class MainActivity extends Activity {
     
     // -----------------------------------------------------------------------------
 
-    public void initPaths() {
+    private void initPaths() {
         // first create subdirs if they don't exist
         File filesdir = getFilesDir();
         File subdir;
@@ -389,22 +389,16 @@ public class MainActivity extends Activity {
         subdir = new File(filesdir, "Downloads");       // for downloaded pattern files
         subdir.mkdir();
 
-        // or use this location (normally on SD card) instead of getFilesDir()???!!!
+        // or use external storage location (normally on SD card) instead of getFilesDir()???!!!
         // see http://developer.android.com/training/basics/data-storage/files.html
         // for how to check if external storage device is mounted
         // filesdir = getExternalFilesDir(null);
         // if (filesdir != null) Log.i("getExternalFilesDir", filesdir.getAbsolutePath());
         // on emulator filesdir = /mnt/sdcard/Android/data/net.sf.golly/files
         
-        // now set gollydir (parent of above subdirs)
-        String gollydir = filesdir.getAbsolutePath();   // /data/data/net.sf.golly/files
-        nativeSetGollyDir(gollydir);
-        
-        // set tempdir
-        File dir = getCacheDir();
-        String tempdir = dir.getAbsolutePath();         // /data/data/net.sf.golly/cache
-        nativeSetTempDir(tempdir);
-        
+        // now set userdir (parent of above subdirs)
+        String userdir = filesdir.getAbsolutePath();   // /data/data/net.sf.golly/files
+        nativeSetUserDirs(userdir);
         
         // create a directory for storing supplied Patterns/Rules/Help then
         // create subdirs for each by unzipping .zip files stored in assets
@@ -412,15 +406,19 @@ public class MainActivity extends Activity {
         subdir.mkdir();
         unzipAsset("Patterns.zip", subdir);
         unzipAsset("Rules.zip", subdir);
-        // unzipAsset("Help.zip", subdir);
+        //!!! unzipAsset("Help.zip", subdir);
         
         // subdir = /data/data/net.sf.golly/files/Supplied
         nativeSetSuppliedDirs(subdir.getAbsolutePath());
+        
+        // set tempdir
+        File tempdir = getCacheDir();
+        nativeSetTempDir(tempdir.getAbsolutePath());    // /data/data/net.sf.golly/cache
     }
 
     // -----------------------------------------------------------------------------
 
-    public void DeleteTempFiles() {
+    private void deleteTempFiles() {
         File dir = getCacheDir();
         File[] files = dir.listFiles();
         if (files != null) {
@@ -430,7 +428,7 @@ public class MainActivity extends Activity {
 
     // -----------------------------------------------------------------------------
 
-    public void updateButtons() {
+    private void updateButtons() {
         if (fullscreen) return;
         
         if (nativeIsGenerating()) {
@@ -449,7 +447,7 @@ public class MainActivity extends Activity {
 
     // -----------------------------------------------------------------------------
 
-    public boolean CallAgainAfterDelay(String callname, View view, MenuItem item) {
+    private boolean callAgainAfterDelay(String callname, View view, MenuItem item) {
         if (processingevents) {
             // CheckMessageQueue has been called inside a (possibly) lengthy task
             // so call the given method again after a short delay
@@ -468,7 +466,7 @@ public class MainActivity extends Activity {
     // called when the Start/Stop button is tapped
     public void doStartStop(View view) {
         nativeClearMessage();
-        if (CallAgainAfterDelay("doStartStop", view, null)) return;
+        if (callAgainAfterDelay("doStartStop", view, null)) return;
         if (nativeIsGenerating()) {
             // stop calling nativeGenerate
             stopped = true;
@@ -488,7 +486,7 @@ public class MainActivity extends Activity {
 
     // -----------------------------------------------------------------------------
 
-    public void StopIfGenerating() {
+    private void stopIfGenerating() {
         if (nativeIsGenerating()) {
             // note that genhandler.removeCallbacks(generate) doesn't work if
             // processingevents is true, so we use a global flag to start/stop
@@ -503,8 +501,8 @@ public class MainActivity extends Activity {
     // called when the Step button is tapped
     public void doStep(View view) {
         nativeClearMessage();
-        StopIfGenerating();
-        if (CallAgainAfterDelay("doStep", view, null)) return;
+        stopIfGenerating();
+        if (callAgainAfterDelay("doStep", view, null)) return;
         nativeStep();
         updateButtons();
     }
@@ -526,8 +524,8 @@ public class MainActivity extends Activity {
     // called when item from control_menu is selected
     public void doControlItem(MenuItem item) {
         if (item.getItemId() == R.id.reset) {
-            StopIfGenerating();
-            if (CallAgainAfterDelay("doReset", null, item)) return;
+            stopIfGenerating();
+            if (callAgainAfterDelay("doReset", null, item)) return;
         }
         switch (item.getItemId()) {
             case R.id.step1:  nativeStep1(); break;
@@ -583,8 +581,8 @@ public class MainActivity extends Activity {
     // called when the Undo button is tapped
     public void doUndo(View view) {
         nativeClearMessage();
-        StopIfGenerating();
-        if (CallAgainAfterDelay("doUndo", view, null)) return;
+        stopIfGenerating();
+        if (callAgainAfterDelay("doUndo", view, null)) return;
         nativeUndo();
         updateButtons();
         
@@ -596,7 +594,7 @@ public class MainActivity extends Activity {
     public void doRedo(View view) {
         nativeClearMessage();
         // nativeIsGenerating() should never be true here
-        if (CallAgainAfterDelay("doRedo", view, null)) return;
+        if (callAgainAfterDelay("doRedo", view, null)) return;
         nativeRedo();
         updateButtons();
     }
@@ -639,8 +637,8 @@ public class MainActivity extends Activity {
     // called when item from edit_menu is selected
     public void doEditItem(MenuItem item) {
         if (item.getItemId() == R.id.paste) {
-            StopIfGenerating();
-            if (CallAgainAfterDelay("doPaste", null, item)) return;
+            stopIfGenerating();
+            if (callAgainAfterDelay("doPaste", null, item)) return;
         }
         switch (item.getItemId()) {
             case R.id.paste: nativePaste(); break;
@@ -665,7 +663,7 @@ public class MainActivity extends Activity {
                 // no need to set stopped = true
                 nativePauseGenerating();
             }
-            if (CallAgainAfterDelay("doSelItem", null, item)) return;
+            if (callAgainAfterDelay("doSelItem", null, item)) return;
         }
         switch (item.getItemId()) {
             // let doEditItem handle the top 2 items:
@@ -750,13 +748,13 @@ public class MainActivity extends Activity {
     // called when the New button is tapped
     public void doNewPattern(View view) {
         nativeClearMessage();
-        // StopIfGenerating() would work here but we use smarter code that
+        // stopIfGenerating() would work here but we use smarter code that
         // avoids trying to save the current pattern (potentially very large)
         if (nativeIsGenerating()) {
             stopped = true;
             nativeStopBeforeNew();
         }
-        if (CallAgainAfterDelay("doNew", view, null)) return;
+        if (callAgainAfterDelay("doNew", view, null)) return;
         
         nativeNewPattern();
         updateButtons();
@@ -764,7 +762,7 @@ public class MainActivity extends Activity {
         
         if (nativeNumLayers() == 1) {
             // delete all files in tempdir
-            DeleteTempFiles();
+            deleteTempFiles();
         }
     }
 
@@ -773,8 +771,8 @@ public class MainActivity extends Activity {
     // called when the Rule button is tapped
     public void doRule(View view) {
         nativeClearMessage();
-        StopIfGenerating();
-        if (CallAgainAfterDelay("doRule", view, null)) return;
+        stopIfGenerating();
+        if (callAgainAfterDelay("doRule", view, null)) return;
         
         // let user change the current rule and/or algorithm
         Intent intent = new Intent(this, RuleActivity.class);
@@ -786,8 +784,8 @@ public class MainActivity extends Activity {
     // called when the Info button is tapped
     public void doInfo(View view) {
         nativeClearMessage();
-        StopIfGenerating();
-        if (CallAgainAfterDelay("doInfo", view, null)) return;
+        stopIfGenerating();
+        if (callAgainAfterDelay("doInfo", view, null)) return;
         
         // display any comments in current pattern file
         Intent intent = new Intent(this, InfoActivity.class);
@@ -800,8 +798,8 @@ public class MainActivity extends Activity {
     // called when the Save button is tapped
     public void doSave(View view) {
         nativeClearMessage();
-        StopIfGenerating();
-        if (CallAgainAfterDelay("doSave", view, null)) return;
+        stopIfGenerating();
+        if (callAgainAfterDelay("doSave", view, null)) return;
         
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
 

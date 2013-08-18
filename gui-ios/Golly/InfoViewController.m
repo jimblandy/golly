@@ -24,7 +24,7 @@
 
 #include "readpattern.h"    // for readcomments
 #include "layer.h"          // for currlayer, etc
-#include "prefs.h"          // for gollydir
+#include "prefs.h"          // for userdir
 
 #import "GollyAppDelegate.h"        // for CurrentViewController
 #import "SaveViewController.h"      // for SaveTextFile
@@ -96,7 +96,7 @@ static bool textchanged = false;    // true if user changed text
     
     textchanged = false;
     
-    if (textfile.find(gollydir + "Documents/") == 0) {
+    if (textfile.find(userdir + "Documents/") == 0) {
         // allow user to edit this file
         fileView.editable = YES;
         // show Save button

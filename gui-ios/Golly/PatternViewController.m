@@ -27,7 +27,7 @@
 #include "utils.h"       // for Warning, event_checker
 #include "status.h"      // for SetMessage, DisplayMessage
 #include "algos.h"       // for InitAlgorithms, algoinfo
-#include "prefs.h"       // for GetPrefs, SavePrefs, gollydir, etc
+#include "prefs.h"       // for GetPrefs, SavePrefs, userdir, etc
 #include "layer.h"       // for AddLayer, currlayer
 #include "file.h"        // for NewPattern
 #include "control.h"     // for generating, StartGenerating, etc
@@ -111,44 +111,49 @@ static void CreateDocSubdir(NSString *subdirname)
 
 static void InitPaths()
 {
-    // init path to location of app
-    gollydir = [NSHomeDirectory() cStringUsingEncoding:NSUTF8StringEncoding];
-    gollydir += "/";
+    // init userdir to directory containing Golly.app
+    userdir = [NSHomeDirectory() cStringUsingEncoding:NSUTF8StringEncoding];
+    userdir += "/";
 
-    // init datadir to gollydir/Documents/Saved/
-    datadir = gollydir + "Documents/Saved/";
+    // init savedir to userdir/Documents/Saved/
+    savedir = userdir + "Documents/Saved/";
     CreateDocSubdir(@"Saved");
 
-    // init downloaddir to gollydir/Documents/Downloads/
-    downloaddir = gollydir + "Documents/Downloads/";
+    // init downloaddir to userdir/Documents/Downloads/
+    downloaddir = userdir + "Documents/Downloads/";
     CreateDocSubdir(@"Downloads");
 
-    // init userrules to gollydir/Documents/Rules/
-    userrules = gollydir + "Documents/Rules/";
+    // init userrules to userdir/Documents/Rules/
+    userrules = userdir + "Documents/Rules/";
     CreateDocSubdir(@"Rules");
 
     // supplied patterns, rules, help are bundled inside Golly.app
-    supplieddir = gollydir + "Golly.app/";
+    supplieddir = userdir + "Golly.app/";
     patternsdir = supplieddir + "Patterns/";
     rulesdir = supplieddir + "Rules/";
     helpdir = supplieddir + "Help/";
 
-    // init tempdir to gollydir/tmp/
-    tempdir = gollydir + "tmp/";
+    // init tempdir to userdir/tmp/
+    tempdir = userdir + "tmp/";
 
+    // init path to file that stores clipboard data
     clipfile = tempdir + "golly_clipboard";
+    
+    // init path to file that stores user preferences
+    prefsfile = userdir + "Library/Preferences/GollyPrefs";
 
-    /* DEBUG
-    NSLog(@"gollydir = %s", gollydir.c_str());
-    NSLog(@"datadir = %s", datadir.c_str());
+    /*
+    NSLog(@"userdir =     %s", userdir.c_str());
+    NSLog(@"savedir =     %s", savedir.c_str());
     NSLog(@"downloaddir = %s", downloaddir.c_str());
-    NSLog(@"userrules = %s", userrules.c_str());
+    NSLog(@"userrules =   %s", userrules.c_str());
     NSLog(@"supplieddir = %s", supplieddir.c_str());
     NSLog(@"patternsdir = %s", patternsdir.c_str());
-    NSLog(@"rulesdir = %s", rulesdir.c_str());
-    NSLog(@"helpdir = %s", helpdir.c_str());
-    NSLog(@"tempdir = %s", tempdir.c_str());
-    NSLog(@"clipfile = %s", clipfile.c_str());
+    NSLog(@"rulesdir =    %s", rulesdir.c_str());
+    NSLog(@"helpdir =     %s", helpdir.c_str());
+    NSLog(@"tempdir =     %s", tempdir.c_str());
+    NSLog(@"clipfile =    %s", clipfile.c_str());
+    NSLog(@"prefsfile =   %s", prefsfile.c_str());
     */
 }
 
@@ -171,14 +176,10 @@ static void InitPaths()
     static bool firstload = true;
     if (firstload) {
         firstload = false;          // only do the following once
-        // set initial message
-        std::string msg = "This is Golly version ";
-        msg += GOLLY_VERSION;
-        msg += " for iOS.  Copyright 2013 The Golly Gang.";
-        SetMessage(msg.c_str());
+        SetMessage("This is Golly 1.2 for iOS.  Copyright 2013 The Golly Gang.");
         MAX_MAG = 5;                // maximum cell size = 32x32
         InitAlgorithms();           // must initialize algoinfo first
-        InitPaths();                // init gollydir, etc
+        InitPaths();                // init userdir, etc (must be before GetPrefs)
         GetPrefs();                 // load user's preferences
         SetMinimumStepExponent();   // for slowest speed
         AddLayer();                 // create initial layer (sets currlayer)

@@ -263,9 +263,9 @@ void AddRecentPattern(const char* inpath)
 {
     std::string path = inpath;
 
-    if (path.find(gollydir) == 0) {
-        // remove gollydir from start of path
-        path.erase(0, gollydir.length());
+    if (path.find(userdir) == 0) {
+        // remove userdir from start of path
+        path.erase(0, userdir.length());
     }
 
     // check if path is already in recentpatterns
@@ -324,7 +324,7 @@ bool GetTextFromClipboard(std::string& text)
     UIPasteboard *pboard = [UIPasteboard generalPasteboard];
     NSString *str = pboard.string;
     if (str == nil) {
-        ErrorMessage("No text in pasteboard.");
+        ErrorMessage("No text in clipboard.");
         return false;
     } else {
         text = [str cStringUsingEncoding:NSUTF8StringEncoding];
@@ -619,14 +619,14 @@ void OpenZipFile(const char* zippath)
     std::list<std::string> rulelist;    // list of installed .rule files
     int err;
 
-    // strip off patternsdir or gollydir
+    // strip off patternsdir or userdir
     std::string relpath = zippath;
     size_t pos = relpath.find(patternsdir);
     if (pos == 0) {
         relpath.erase(0, patternsdir.length());
     } else {
-        pos = relpath.find(gollydir);
-        if (pos == 0) relpath.erase(0, gollydir.length());
+        pos = relpath.find(userdir);
+        if (pos == 0) relpath.erase(0, userdir.length());
     }
 
     std::string contents = "<html><body bgcolor=\"#FFFFCE\"><font size=+1><b><p>\nContents of ";
@@ -774,8 +774,8 @@ void OpenZipFile(const char* zippath)
 
     if (rulefiles > 0) {
         relpath = userrules;
-        pos = relpath.find(gollydir);
-        if (pos == 0) relpath.erase(0, gollydir.length());
+        pos = relpath.find(userdir);
+        if (pos == 0) relpath.erase(0, userdir.length());
         contents += "<p>Files marked as \"[installed]\" have been stored in ";
         contents += relpath;
         contents += ".";
@@ -824,7 +824,7 @@ void OpenFile(const char* path, bool remember)
             // Patterns directory is inside supplieddir
             fullpath = supplieddir + fullpath;
         } else {
-            fullpath = gollydir + fullpath;
+            fullpath = userdir + fullpath;
         }
     }
 

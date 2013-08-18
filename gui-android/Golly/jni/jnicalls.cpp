@@ -32,7 +32,7 @@
 
 #include "utils.h"      // for Warning, etc
 #include "algos.h"      // for InitAlgorithms
-#include "prefs.h"      // for GetPrefs, SavePrefs
+#include "prefs.h"      // for GetPrefs, SavePrefs, userdir, etc
 #include "layer.h"      // for AddLayer, ResizeLayers, currlayer
 #include "control.h"    // for SetMinimumStepExponent
 #include "file.h"       // for NewPattern
@@ -205,11 +205,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, 
 
     static bool firstcall = true;
     if (firstcall) {
-        firstcall = false;
-        std::string msg = "This is Golly ";
-        msg += GOLLY_VERSION;
-        msg += " for Android.  Copyright 2013 The Golly Gang.";
-        SetMessage(msg.c_str());
+        firstcall = false;          // only do the following once
+        SetMessage("This is Golly 1.0b1 for Android.  Copyright 2013 The Golly Gang.");
         MAX_MAG = 5;                // maximum cell size = 32x32
         InitAlgorithms();           // must initialize algoinfo first
         GetPrefs();                 // load user's preferences
@@ -301,27 +298,15 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetInfo(JNIEnv* e
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetGollyDir(JNIEnv* env, jobject obj, jstring path)
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetUserDirs(JNIEnv* env, jobject obj, jstring path)
 {
-    gollydir = ConvertJString(env, path) + "/";
-    // LOGI("gollydir = %s", gollydir.c_str());
-    // gollydir = /data/data/net.sf.golly/files/
+    userdir = ConvertJString(env, path) + "/";
+    // userdir = /data/data/net.sf.golly/files/
 
     // set paths to various subdirs (created by caller)
-    userrules = gollydir + "Rules/";
-    datadir = gollydir + "Saved/";
-    downloaddir = gollydir + "Downloads/";
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetTempDir(JNIEnv* env, jobject obj, jstring path)
-{
-    tempdir = ConvertJString(env, path) + "/";
-    // LOGI("tempdir = %s", tempdir.c_str());
-    // tempdir = /data/data/net.sf.golly/cache/
-    clipfile = tempdir + "golly_clipboard";
+    userrules = userdir + "Rules/";
+    savedir = userdir + "Saved/";
+    downloaddir = userdir + "Downloads/";
 }
 
 // -----------------------------------------------------------------------------
@@ -330,11 +315,39 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetSuppliedDirs(JNIEnv* env, jobject obj, jstring path)
 {
     supplieddir = ConvertJString(env, path) + "/";
-    // LOGI("prefix = %s", prefix.c_str());
     // supplieddir = /data/data/net.sf.golly/files/Supplied/
+    
+    // set paths to various subdirs (created by caller)
     helpdir = supplieddir + "Help/";
     rulesdir = supplieddir + "Rules/";
     patternsdir = supplieddir + "Patterns/";
+    
+    // also set prefsfile here by replacing "Supplied/" with "GollyPrefs"
+    prefsfile = supplieddir.substr(0, supplieddir.length() - 9) + "GollyPrefs";
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetTempDir(JNIEnv* env, jobject obj, jstring path)
+{
+    tempdir = ConvertJString(env, path) + "/";
+    // tempdir = /data/data/net.sf.golly/cache/
+    clipfile = tempdir + "golly_clipboard";
+
+    /* assume nativeSetTempDir is called last
+    LOGI("userdir =     %s", userdir.c_str());
+    LOGI("savedir =     %s", savedir.c_str());
+    LOGI("downloaddir = %s", downloaddir.c_str());
+    LOGI("userrules =   %s", userrules.c_str());
+    LOGI("supplieddir = %s", supplieddir.c_str());
+    LOGI("patternsdir = %s", patternsdir.c_str());
+    LOGI("rulesdir =    %s", rulesdir.c_str());
+    LOGI("helpdir =     %s", helpdir.c_str());
+    LOGI("tempdir =     %s", tempdir.c_str());
+    LOGI("clipfile =    %s", clipfile.c_str());
+    LOGI("prefsfile =   %s", prefsfile.c_str());
+    */
 }
 
 // -----------------------------------------------------------------------------
@@ -895,7 +908,7 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeFileExists(JNIEnv* e
         }
     }
 
-    std::string fullpath = datadir + fname;
+    std::string fullpath = savedir + fname;
     return FileExists(fullpath);
 }
 
@@ -922,7 +935,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSavePattern(JNIEnv* 
     output_compression compression = no_compression;
     if (EndsWith(fname,".gz")) compression = gzip_compression;
 
-    std::string fullpath = datadir + fname;
+    std::string fullpath = savedir + fname;
     SavePattern(fullpath, format, compression);
     UpdateStatus();
 }
@@ -1071,7 +1084,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetRecentPatterns
         std::list<std::string>::iterator next = recentpatterns.begin();
         while (next != recentpatterns.end()) {
             std::string path = *next;
-            if (path.find("Patterns/") == 0 || FileExists(gollydir + path)) {
+            if (path.find("Patterns/") == 0 || FileExists(userdir + path)) {
                 htmldata += "<a href=\"open:";
                 htmldata += path;
                 htmldata += "\">";
@@ -1189,7 +1202,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_OpenActivity_nativeGetSavedPatterns(
         htmldata += "There are no saved patterns.";
     } else {
         htmldata += "Saved patterns:<br><br>";
-        AppendHtmlData(htmldata, paths, datadir, "Saved/", true);   // can delete files
+        AppendHtmlData(htmldata, paths, savedir, "Saved/", true);   // can delete files
     }
     htmldata += HTML_FOOTER;
     return env->NewStringUTF(htmldata.c_str());

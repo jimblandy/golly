@@ -27,7 +27,7 @@
 #include <set>          // for std::set
 #include <algorithm>    // for std::count
 
-#include "prefs.h"      // for gollydir, recentpatterns, SavePrefs, etc
+#include "prefs.h"      // for userdir, recentpatterns, SavePrefs, etc
 #include "utils.h"      // for Warning, RemoveFile, FixURLPath, MoveFile, etc
 #include "file.h"       // for OpenFile
 
@@ -188,7 +188,7 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
 - (void)showSavedPatterns
 {
     std::string htmldata;
-    AppendHtmlData(htmldata, datadir, "Documents/Saved/", "Saved patterns:", true);
+    AppendHtmlData(htmldata, savedir, "Documents/Saved/", "Saved patterns:", true);
     [htmlView loadHTMLString:[NSString stringWithCString:htmldata.c_str() encoding:NSUTF8StringEncoding]
                      baseURL:nil];
 }
@@ -215,7 +215,7 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
         std::list<std::string>::iterator next = recentpatterns.begin();
         while (next != recentpatterns.end()) {
             std::string path = *next;
-            if (path.find("Patterns/") == 0 || FileExists(gollydir + path)) {
+            if (path.find("Patterns/") == 0 || FileExists(userdir + path)) {
                 htmldata += "<a href=\"open:";
                 htmldata += path;
                 htmldata += "\">";
@@ -426,7 +426,7 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
             std::string question = "Do you really want to delete " + path + "?";
             if (YesNo(question.c_str())) {
                 // delete specified file
-                path = gollydir + path;
+                path = userdir + path;
                 RemoveFile(path);
                 // save current location
                 curroffset[curroption] = htmlView.scrollView.contentOffset;
@@ -449,7 +449,7 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
                     // Patterns and Rules directories are inside supplieddir
                     fullpath = supplieddir + fullpath;
                 } else {
-                    fullpath = gollydir + fullpath;
+                    fullpath = userdir + fullpath;
                 }
             }
             ShowTextFile(fullpath.c_str());
@@ -469,7 +469,7 @@ void MoveSharedFiles()
     // and move any .rule/tree/table/colors/icons files into Documents/Rules/,
     // otherwise assume they are pattern files and move them into Documents/Saved/
     
-    std::string docdir = gollydir + "Documents/";
+    std::string docdir = userdir + "Documents/";
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *dirpath = [NSString stringWithCString:docdir.c_str() encoding:NSUTF8StringEncoding];
 	NSArray* contents = [fm contentsOfDirectoryAtPath:dirpath error:nil];
@@ -492,7 +492,7 @@ void MoveSharedFiles()
             } else {
                 // assume this is a pattern file amd move it into Documents/Saved/
                 std::string oldpath = docdir + filename;
-                std::string newpath = datadir + filename;
+                std::string newpath = savedir + filename;
                 MoveFile(oldpath, newpath);
             }
         }

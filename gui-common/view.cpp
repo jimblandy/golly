@@ -964,11 +964,11 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
     if (tmpfile) {
         if (fputs(data.c_str(), tmpfile) == EOF) {
             fclose(tmpfile);
-            Warning("Could not write pasteboard text to temporary file!");
+            Warning("Could not write clipboard text to temporary file!");
             return false;
         }
     } else {
-        Warning("Could not create temporary file for pasteboard data!");
+        Warning("Could not create temporary file for clipboard data!");
         return false;
     }
     fclose(tmpfile);
@@ -1018,7 +1018,7 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
 
     if (err) {
         // error probably due to bad rule string in clipboard data
-        Warning("Could not load pasteboard pattern\n(probably due to unknown rule).");
+        Warning("Could not load clipboard pattern\n(probably due to unknown rule).");
         return false;
     }
 
@@ -1041,24 +1041,24 @@ bool ClipboardContainsRule()
         i++;
     }
 
-    // check if Documents/Rules/rulename.rule already exists
+    // check if rulename.rule already exists in userrules
     std::string rulepath = userrules + rulename;
     rulepath += ".rule";
     if (FileExists(rulepath)) {
         std::string question = "Do you want to replace the existing " + rulename;
-        question += ".rule with the version in the pasteboard?";
+        question += ".rule with the version in the clipboard?";
         if (!YesNo(question.c_str())) {
             // don't overwrite existing .rule file
             return true;
         }
     }
 
-    // create Documents/Rules/rulename.rule
+    // create rulename.rule in userrules
     FILE* rulefile = fopen(rulepath.c_str(), "w");
     if (rulefile) {
         if (fputs(data.c_str(), rulefile) == EOF) {
             fclose(rulefile);
-            Warning("Could not write pasteboard text to .rule file!");
+            Warning("Could not write clipboard text to .rule file!");
             return true;
         }
     } else {
@@ -1070,7 +1070,7 @@ bool ClipboardContainsRule()
     // now switch to the newly created rule
     ChangeRule(rulename);
 
-    std::string msg = "Created Documents/Rules/" + rulename + ".rule";
+    std::string msg = "Created " + rulename + ".rule";
     DisplayMessage(msg.c_str());
 
     return true;
@@ -1093,7 +1093,7 @@ void PasteClipboard()
     if ( GetClipboardPattern(&top, &left, &bottom, &right) ) {
         // make sure given edges are within getcell/setcell limits
         if ( OutsideLimits(top, left, bottom, right) ) {
-            ErrorMessage("Pasteboard pattern is too big.");
+            ErrorMessage("Clipboard pattern is too big.");
         } else {
             DisplayMessage("Drag paste image to desired location then tap Paste button.");
             waitingforpaste = true;
@@ -1366,7 +1366,7 @@ void DoPaste(bool toselection)
             return;
         }
         if (!currlayer->currsel.CanPaste(wd, ht, top, left)) {
-            ErrorMessage("Pasteboard pattern is bigger than selection.");
+            ErrorMessage("Clipboard pattern is bigger than selection.");
             return;
         }
         // top and left have been set to the selection's top left corner

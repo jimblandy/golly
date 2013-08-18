@@ -32,15 +32,10 @@
 
 // Routines for loading and saving user preferences:
 
-void GetPrefs();
-// Read preferences from the GollyPrefs file.
-
-void SavePrefs();
-// Write preferences to the GollyPrefs file.
+void GetPrefs();        // Read preferences from prefsfile.
+void SavePrefs();       // Write preferences to prefsfile.
 
 // Various constants:
-
-extern const char* GOLLY_VERSION;       // app version
 
 const int minfontsize = 6;              // minimum value of helpfontsize
 const int maxfontsize = 30;             // maximum value of helpfontsize
@@ -52,18 +47,19 @@ const int MAX_RECENT = 100;             // maximum value of maxpatterns
 const int MIN_MEM_MB = 10;              // minimum value of maxhashmem
 const int MAX_MEM_MB = 300;             // maximum value of maxhashmem
 
-// Global paths:
+// These global paths must be set in platform-specific code before GetPrefs is called:
 
-extern std::string gollydir;        // path of directory containing app
-extern std::string tempdir;         // path of directory for temporary data
-extern std::string supplieddir;     // parent directory for supplied patterns/rules/help
+extern std::string supplieddir;     // path of parent directory for supplied help/patterns/rules
 extern std::string helpdir;         // path of directory for supplied help
 extern std::string patternsdir;     // path of directory for supplied patterns
 extern std::string rulesdir;        // path of directory for supplied rules
-extern std::string datadir;         // path of directory for user's saved patterns
+extern std::string userdir;         // path of parent directory for user's rules/patterns/downloads
 extern std::string userrules;       // path of directory for user's rules
+extern std::string savedir;         // path of directory for user's saved patterns
 extern std::string downloaddir;     // path of directory for user's downloaded files
+extern std::string tempdir;         // path of directory for temporary data
 extern std::string clipfile;        // path of temporary file for storing clipboard data
+extern std::string prefsfile;       // path of file for storing user's preferences
 
 // Global preference data:
 

@@ -44,29 +44,21 @@
 
 // Golly's preferences file is a simple text file.
 
-#ifdef ANDROID_GUI
-    const char* GOLLY_VERSION = "1.0";
-#endif
-
-#ifdef IOS_GUI
-    const char* GOLLY_VERSION = "1.2";
-#endif
-
-std::string prefspath;              // full path to prefs file
 const int PREFS_VERSION = 1;        // increment if necessary due to changes in syntax/semantics
 int currversion = PREFS_VERSION;    // might be changed by prefs_version
 const int PREF_LINE_SIZE = 5000;    // must be quite long for storing file paths
 
-std::string gollydir;               // path of directory containing app
-std::string tempdir;                // path of directory for temporary data
-std::string supplieddir;            // parent directory for supplied patterns/rules/help
+std::string supplieddir;            // path of parent directory for supplied help/patterns/rules
 std::string helpdir;                // path of directory for supplied help
 std::string patternsdir;            // path of directory for supplied patterns
 std::string rulesdir;               // path of directory for supplied rules
-std::string datadir;                // path of directory for user's saved patterns
+std::string userdir;                // path of parent directory for user's rules/patterns/downloads
 std::string userrules;              // path of directory for user's rules
+std::string savedir;                // path of directory for user's saved patterns
 std::string downloaddir;            // path of directory for user's downloaded files
+std::string tempdir;                // path of directory for temporary data
 std::string clipfile;               // path of temporary file for storing clipboard data
+std::string prefsfile;              // path of file for storing user's preferences
 
 // initialize exported preferences:
 
@@ -187,13 +179,12 @@ void SavePrefs()
         return;
     }
 
-    FILE* f = fopen(prefspath.c_str(), "w");
+    FILE* f = fopen(prefsfile.c_str(), "w");
     if (f == NULL) {
         Warning("Could not save preferences file!");
         return;
     }
 
-    fprintf(f, "golly_version=%s\n", GOLLY_VERSION);
     fprintf(f, "prefs_version=%d\n", PREFS_VERSION);
     fprintf(f, "debug_level=%d\n", debuglevel);
     fprintf(f, "help_font_size=%d (%d..%d)\n", helpfontsize, minfontsize, maxfontsize);
@@ -379,20 +370,12 @@ void GetPrefs()
 {
     int algoindex = -1;     // unknown algorithm
 
-#ifdef ANDROID_GUI
-    prefspath = gollydir + "GollyPrefs";
-#endif
-
-#ifdef IOS_GUI
-    prefspath = gollydir + "Library/Preferences/GollyPrefs";
-#endif
-
     // let gollybase code call Fatal, Warning, BeginProgress, etc
     lifeerrors::seterrorhandler(&myerrhandler);
 
     CreateDefaultColors();
 
-    FILE* f = fopen(prefspath.c_str(), "r");
+    FILE* f = fopen(prefsfile.c_str(), "r");
     if (f == NULL) {
         // should only happen 1st time app is run
         return;
@@ -628,7 +611,7 @@ void GetPrefs()
             if (numpatterns < maxpatterns && value[0]) {
                 // append path to recentpatterns if file exists
                 std::string path = value;
-                if (path.find("Patterns/") == 0 || FileExists(gollydir + path)) {
+                if (path.find("Patterns/") == 0 || FileExists(userdir + path)) {
                     recentpatterns.push_back(path);
                     numpatterns++;
                 }

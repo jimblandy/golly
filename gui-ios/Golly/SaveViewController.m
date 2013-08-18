@@ -25,7 +25,7 @@
 #include "writepattern.h"   // for pattern_format, output_compression
 
 #include "utils.h"          // for FileExists
-#include "prefs.h"          // for datadir
+#include "prefs.h"          // for savedir
 #include "layer.h"          // for currlayer, etc
 #include "file.h"           // for SavePattern, GetBaseName
 
@@ -280,8 +280,7 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
     
     } else {
         // user is saving current pattern in Documents/Saved/ via Pattern tab's Save button
-        
-        std::string fullpath = datadir + filename;
+        std::string fullpath = savedir + filename;
         if (FileExists(fullpath)) {
             // ask user if it's ok to replace an existing file
             if (!YesNo(replace_query)) return;
