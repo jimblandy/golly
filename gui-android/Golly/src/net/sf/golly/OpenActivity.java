@@ -167,7 +167,7 @@ public class OpenActivity extends Activity {
     // -----------------------------------------------------------------------------
     
     private void removeFile(String filepath) {
-        final String fullpath = getFilesDir().getAbsolutePath() + "/" + filepath;
+        final String fullpath = MainActivity.userdir.getAbsolutePath() + "/" + filepath;
         final File file = new File(fullpath);
         
         // ask user if it's okay to delete given file
@@ -212,7 +212,7 @@ public class OpenActivity extends Activity {
         // let user read/edit given file
         if (currpatterns == PATTERNS.SUPPLIED) {
             // read contents of supplied file into a string
-            String fullpath = getFilesDir().getAbsolutePath() + "/Supplied/" + filepath;
+            String fullpath = MainActivity.supplieddir.getAbsolutePath() + "/" + filepath;
             File file = new File(fullpath);
             String filecontents;
             try {
@@ -235,7 +235,7 @@ public class OpenActivity extends Activity {
             startActivity(intent);
         } else {
             // let user read or edit a saved or downloaded file
-            String fullpath = getFilesDir().getAbsolutePath() + "/" + filepath;
+            String fullpath = MainActivity.userdir.getAbsolutePath() + "/" + filepath;
             Intent intent = new Intent(this, EditActivity.class);
             intent.putExtra(EditActivity.EDITFILE_MESSAGE, fullpath);
             startActivity(intent);
@@ -403,10 +403,9 @@ public class OpenActivity extends Activity {
     // -----------------------------------------------------------------------------
     
     private void showSuppliedPatterns() {
-        String paths = enumerateDirectory(new File(getFilesDir(), "Supplied/Patterns"), "");
+        String paths = enumerateDirectory(new File(MainActivity.supplieddir, "Patterns"), "");
         String htmldata = nativeGetSuppliedPatterns(paths);
-        // we use a special base URL here so that <img src="foo.png"/> can find
-        // foo.png stored in the assets folder
+        // use a special base URL so that <img src="foo.png"/> will extract foo.png from the assets folder
         gwebview.loadDataWithBaseURL("file:///android_asset/", htmldata, "text/html", "utf-8", null);
     }
 
@@ -420,7 +419,7 @@ public class OpenActivity extends Activity {
     // -----------------------------------------------------------------------------
     
     private void showSavedPatterns() {
-        String paths = enumerateDirectory(new File(getFilesDir(), "Saved"), "");
+        String paths = enumerateDirectory(new File(MainActivity.userdir, "Saved"), "");
         String htmldata = nativeGetSavedPatterns(paths);
         gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);
     }
@@ -428,7 +427,7 @@ public class OpenActivity extends Activity {
     // -----------------------------------------------------------------------------
     
     private void showDownloadedPatterns() {
-        String paths = enumerateDirectory(new File(getFilesDir(), "Downloads"), "");
+        String paths = enumerateDirectory(new File(MainActivity.userdir, "Downloads"), "");
         String htmldata = nativeGetDownloadedPatterns(paths);
         gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);
     }

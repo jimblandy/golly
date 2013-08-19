@@ -42,6 +42,7 @@ import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -149,8 +150,15 @@ public class MainActivity extends Activity {
     private boolean stopped = true;                 // generating is stopped?
     private boolean fullscreen = false;             // in full screen mode?
     
+    // -----------------------------------------------------------------------------
+    
+    // this stuff is used in OpenActivity.java:
+    
     public final static String OPENFILE_MESSAGE = "net.sf.golly.OPENFILE";
 
+    public static File userdir;        // directory for user-created data
+    public static File supplieddir;    // directory for supplied data
+    
     // -----------------------------------------------------------------------------
 
     // the following stuff allows time consuming code (like nativeGenerate) to periodically
@@ -223,7 +231,7 @@ public class MainActivity extends Activity {
 
         if (firstcall) {
             firstcall = false;
-            initPaths();        // sets tempdir, etc
+            initPaths();        // sets userdir, supplieddir, etc
         }
         nativeCreate();         // must be called every time (to cache this instance)
         
@@ -345,12 +353,10 @@ public class MainActivity extends Activity {
     // -----------------------------------------------------------------------------
 
     private void unzipAsset(String zipname, File destdir) {
-        // Log.i("unzipping", zipname);
         AssetManager am = getAssets();
         try {
             ZipInputStream zipstream = new ZipInputStream(am.open(zipname));
             for (ZipEntry entry = zipstream.getNextEntry(); entry != null; entry = zipstream.getNextEntry()) {
-                // Log.i("entry", entry.getName());
                 File destfile = new File(destdir, entry.getName());
                 if (entry.isDirectory()) {
                     // create any missing sub-directories
@@ -371,47 +377,49 @@ public class MainActivity extends Activity {
             }
             zipstream.close();
         } catch (Exception e) {
-            Log.e("Golly", "unzipAsset failed!", e);
+            Log.e("Golly", "Failed to unzip asset: " + zipname + "\nException: ", e);
+            Warning("You probably forgot to put " + zipname + " in the assets folder!");
         }
-        // Log.i("finished", zipname);
     }
     
     // -----------------------------------------------------------------------------
 
     private void initPaths() {
-        // first create subdirs if they don't exist
-        File filesdir = getFilesDir();
+        // check if external storage is available
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            // use external storage for user's files
+            userdir = getExternalFilesDir(null);        // /mnt/sdcard/Android/data/net.sf.golly/files
+        } else {
+            // use internal storage for user's files
+            userdir = getFilesDir();                    // /data/data/net.sf.golly/files
+            Warning("External storage is not available, so internal storage will be used for your files.");
+        }
+        
+        // create subdirs in userdir (if they don't exist)
         File subdir;
-        subdir = new File(filesdir, "Rules");           // for user's .rule files
+        subdir = new File(userdir, "Rules");            // for user's .rule files
         subdir.mkdir();
-        subdir = new File(filesdir, "Saved");           // for saved pattern files
+        subdir = new File(userdir, "Saved");            // for saved pattern files
         subdir.mkdir();
-        subdir = new File(filesdir, "Downloads");       // for downloaded pattern files
+        subdir = new File(userdir, "Downloads");        // for downloaded files
         subdir.mkdir();
-
-        // or use external storage location (normally on SD card) instead of getFilesDir()???!!!
-        // see http://developer.android.com/training/basics/data-storage/files.html
-        // for how to check if external storage device is mounted
-        // filesdir = getExternalFilesDir(null);
-        // if (filesdir != null) Log.i("getExternalFilesDir", filesdir.getAbsolutePath());
-        // on emulator filesdir = /mnt/sdcard/Android/data/net.sf.golly/files
         
-        // now set userdir (parent of above subdirs)
-        String userdir = filesdir.getAbsolutePath();   // /data/data/net.sf.golly/files
-        nativeSetUserDirs(userdir);
+        // set appropriate paths used by C++ code
+        nativeSetUserDirs(userdir.getAbsolutePath());
         
-        // create a directory for storing supplied Patterns/Rules/Help then
-        // create subdirs for each by unzipping .zip files stored in assets
-        subdir = new File(filesdir, "Supplied");
-        subdir.mkdir();
-        unzipAsset("Patterns.zip", subdir);
-        unzipAsset("Rules.zip", subdir);
-        //!!! unzipAsset("Help.zip", subdir);
+        // create a directory in internal storage for supplied Patterns/Rules/Help then
+        // create sub-directories for each by unzipping .zip files stored in assets
+        supplieddir = new File(getFilesDir(), "Supplied");
+        supplieddir.mkdir();
+        unzipAsset("Patterns.zip", supplieddir);
+        unzipAsset("Rules.zip", supplieddir);
+        //!!! unzipAsset("Help.zip", supplieddir);
         
-        // subdir = /data/data/net.sf.golly/files/Supplied
-        nativeSetSuppliedDirs(subdir.getAbsolutePath());
+        // supplieddir = /data/data/net.sf.golly/files/Supplied
+        nativeSetSuppliedDirs(supplieddir.getAbsolutePath());
         
-        // set tempdir
+        // set directory path for temporary files
         File tempdir = getCacheDir();
         nativeSetTempDir(tempdir.getAbsolutePath());    // /data/data/net.sf.golly/cache
     }

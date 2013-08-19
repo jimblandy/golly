@@ -301,7 +301,8 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetUserDirs(JNIEnv* env, jobject obj, jstring path)
 {
     userdir = ConvertJString(env, path) + "/";
-    // userdir = /data/data/net.sf.golly/files/
+    // userdir = /mnt/sdcard/Android/data/net.sf.golly/files if external storage
+    // is available, otherwise /data/data/net.sf.golly/files/ on internal storage
 
     // set paths to various subdirs (created by caller)
     userrules = userdir + "Rules/";
@@ -1596,8 +1597,10 @@ bool AndroidMoveFile(const std::string& inpath, const std::string& outpath)
 void AndroidFixURLPath(std::string& path)
 {
     // replace "%..." with suitable chars for a file path (eg. %20 is changed to space)
-    // not yet implemented!!!
-    LOGE("AndroidFixURLPath: %s", path.c_str());
+
+    // not yet implemented!!! no need to do anything???
+
+    // LOGI("AndroidFixURLPath: %s", path.c_str());
 }
 
 // -----------------------------------------------------------------------------
