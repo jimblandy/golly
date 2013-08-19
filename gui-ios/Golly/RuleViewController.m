@@ -282,9 +282,18 @@ static void CreateRuleLinks(std::string& htmldata, const std::string& dir,
 
 // -----------------------------------------------------------------------------
 
+static bool keepalgoindex = false;
+
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+
+    if (keepalgoindex) {
+        // ShowTextFile has finished displaying a modal dialog so we don't want to change algoindex
+        keepalgoindex = false;
+        [self showAlgoHelp];        // user might have created a new .rule file
+        return;
+    }
 
     // save current location
     curroffset[algoindex] = htmlView.scrollView.contentOffset;
@@ -657,6 +666,8 @@ static int globalButton;
             }
             // we pass self to ShowTextFile so it doesn't use current tab's view controller
             ShowTextFile(fullpath.c_str(), self);
+            // tell viewWillAppear not to reset algoindex to currlayer->algtype
+            keepalgoindex = true;
             return NO;
         }
     }
