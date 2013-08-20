@@ -414,7 +414,7 @@ public class MainActivity extends Activity {
         supplieddir.mkdir();
         unzipAsset("Patterns.zip", supplieddir);
         unzipAsset("Rules.zip", supplieddir);
-        //!!! unzipAsset("Help.zip", supplieddir);
+        unzipAsset("Help.zip", supplieddir);
         
         // supplieddir = /data/data/net.sf.golly/files/Supplied
         nativeSetSuppliedDirs(supplieddir.getAbsolutePath());

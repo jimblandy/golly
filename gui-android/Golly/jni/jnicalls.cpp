@@ -242,7 +242,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusLine(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusColor()
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetStatusColor(JNIEnv* env)
 {
     unsigned char r = algoinfo[currlayer->algtype]->statusrgb.r;
     unsigned char g = algoinfo[currlayer->algtype]->statusrgb.g;
@@ -1374,6 +1374,161 @@ extern "C"
 JNIEXPORT jstring JNICALL Java_net_sf_golly_SettingsActivity_nativeGetPasteMode(JNIEnv* env)
 {
     return env->NewStringUTF(GetPasteMode());
+}
+
+// =============================================================================
+
+// these native routines are used in RuleActivity.java:
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_RuleActivity_nativeSaveCurrentSelection(JNIEnv* env)
+{
+    SaveCurrentSelection();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT int JNICALL Java_net_sf_golly_RuleActivity_nativeGetAlgoIndex(JNIEnv* env)
+{
+    return currlayer->algtype;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_RuleActivity_nativeGetAlgoName(JNIEnv* env, jobject obj, int algoindex)
+{
+    if (algoindex < 0 || algoindex >= NumAlgos()) {
+        // caller will check for empty string
+        return env->NewStringUTF("");
+    } else {
+        return env->NewStringUTF(GetAlgoName(algoindex));
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_RuleActivity_nativeGetRule(JNIEnv* env)
+{
+    return env->NewStringUTF(currlayer->algo->getrule());
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_RuleActivity_nativeCheckRule(JNIEnv* env, jobject obj, jstring rule, int algoindex)
+{
+    // if given rule is valid in the given algo then return same rule,
+    // otherwise return the algo's default rule
+    std::string thisrule = ConvertJString(env, rule);
+    if (thisrule.empty()) thisrule = "B3/S23";
+
+    lifealgo* tempalgo = CreateNewUniverse(algoindex);
+    const char* err = tempalgo->setrule(thisrule.c_str());
+    if (err) {
+        // switch to tempalgo's default rule
+        std::string defrule = tempalgo->DefaultRule();
+        size_t thispos = thisrule.find(':');
+        if (thispos != std::string::npos) {
+            // preserve valid topology so we can do things like switch from
+            // "LifeHistory:T30,20" in RuleLoader to "B3/S23:T30,20" in QuickLife
+            size_t defpos = defrule.find(':');
+            if (defpos != std::string::npos) {
+                // default rule shouldn't have a suffix but play safe and remove it
+                defrule = defrule.substr(0, defpos);
+            }
+            defrule += ":";
+            defrule += thisrule.substr(thispos+1);
+        }
+        thisrule = defrule;
+    }
+    delete tempalgo;
+
+    return env->NewStringUTF(thisrule.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT int JNICALL Java_net_sf_golly_RuleActivity_nativeCheckAlgo(JNIEnv* env, jobject obj, jstring rule, int algoindex)
+{
+    std::string thisrule = ConvertJString(env, rule);
+    if (thisrule.empty()) thisrule = "B3/S23";
+
+    // 1st check if rule is valid in displayed algo
+    lifealgo* tempalgo = CreateNewUniverse(algoindex);
+    const char* err = tempalgo->setrule(thisrule.c_str());
+    if (err) {
+        // check rule in other algos
+        for (int newindex = 0; newindex < NumAlgos(); newindex++) {
+            if (newindex != algoindex) {
+                delete tempalgo;
+                tempalgo = CreateNewUniverse(newindex);
+                err = tempalgo->setrule(thisrule.c_str());
+                if (!err) {
+                    delete tempalgo;
+                    return newindex;    // tell caller to change algorithm
+                }
+            }
+        }
+    }
+    delete tempalgo;
+
+    if (err) {
+        return -1;          // rule is not valid in any algo
+    } else {
+        return algoindex;   // no need to change algo
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_RuleActivity_nativeSetRule(JNIEnv* env, jobject obj, jstring rule, int algoindex)
+{
+    std::string oldrule = currlayer->algo->getrule();
+    int oldmaxstate = currlayer->algo->NumCellStates() - 1;
+
+    std::string newrule = ConvertJString(env, rule);
+    if (newrule.empty()) newrule = "B3/S23";
+
+    if (algoindex == currlayer->algtype) {
+        // check if new rule is valid in current algorithm (if not then revert to oldrule)
+        const char* err = currlayer->algo->setrule(newrule.c_str());
+        if (err) RestoreRule(oldrule.c_str());
+
+        // convert newrule to canonical form for comparison with oldrule, then
+        // check if the rule string changed or if the number of states changed
+        newrule = currlayer->algo->getrule();
+        int newmaxstate = currlayer->algo->NumCellStates() - 1;
+        if (oldrule != newrule || oldmaxstate != newmaxstate) {
+            // if grid is bounded then remove any live cells outside grid edges
+            if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
+                ClearOutsideGrid();
+            }
+
+            // rule change might have changed the number of cell states;
+            // if there are fewer states then pattern might change
+            if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
+                ReduceCellStates(newmaxstate);
+            }
+
+            if (allowundo) {
+                currlayer->undoredo->RememberRuleChange(oldrule.c_str());
+            }
+        }
+        UpdateLayerColors();
+        UpdateEverything();
+    } else {
+        // change the current algorithm and switch to the new rule
+        // (if the new rule is invalid then the algo's default rule will be used);
+        // this also calls UpdateLayerColors, UpdateEverything and RememberAlgoChange
+        ChangeAlgorithm(algoindex, newrule.c_str());
+    }
+
+    SavePrefs();
 }
 
 // =============================================================================

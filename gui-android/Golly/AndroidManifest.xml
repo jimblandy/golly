@@ -58,6 +58,7 @@
         </activity>
         <activity
             android:name="net.sf.golly.RuleActivity"
+            android:windowSoftInputMode="stateHidden"
             android:label="@string/app_name" >
         </activity>
         <activity

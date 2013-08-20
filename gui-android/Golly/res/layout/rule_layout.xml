@@ -1,11 +1,82 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
-
+    android:layout_height="match_parent"
+    android:background="#EEEEEE"
+    android:orientation="vertical" >
+    
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#EEEEEE"
+        android:orientation="horizontal" >
+        <Button
+            android:id="@+id/cancel"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_alignParentLeft="true"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:text="Cancel"
+            android:onClick="doCancel"
+        />
+        <Button
+            android:id="@+id/done"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doDone"
+            android:text="Done"
+        />
+    </RelativeLayout>
+    
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:textSize="12sp"
+        android:text="Type in a rule:"
+        android:layout_gravity="center"
     />
 
-</RelativeLayout>
+    <EditText
+        android:id="@+id/rule"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:inputType="textUri"
+        android:imeOptions="actionDone"
+        android:text="B3/S23"
+        android:gravity="center"
+    />
+
+    <TextView
+        android:layout_marginTop="10sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:textSize="12sp"
+        android:text="Choose an algorithm:"
+        android:layout_gravity="center"
+    />
+
+    <Button android:id="@+id/algo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="doAlgo"
+        android:text="QuickLife"
+        android:layout_gravity="center"
+        android:layout_marginBottom="10sp"
+    />
+
+    <WebView android:id="@+id/webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1.0"
+    />
+
+</LinearLayout>
