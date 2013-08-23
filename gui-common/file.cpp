@@ -999,6 +999,15 @@ void GetURL(const std::string& url, const std::string& pageurl)
 {
     const char* HTML_PREFIX = "GET-";   // prepended to html filename
 
+#ifdef ANDROID_GUI
+    // LOGI("GetURL url=%s\n", url.c_str());
+    // LOGI("GetURL pageurl=%s\n", pageurl.c_str());
+#endif
+#ifdef IOS_GUI
+    // NSLog(@"GetURL url = %s", url.c_str());
+    // NSLog(@"GetURL pageurl = %s", pageurl.c_str());
+#endif
+
     std::string fullurl;
     if (url.find("http:") == 0) {
         fullurl = url;
@@ -1029,6 +1038,10 @@ void GetURL(const std::string& url, const std::string& pageurl)
     if (IsHTMLFile(filename)) {
         // create special name for html file so above code can extract it and set urlprefix
         std::replace(filepath.begin(), filepath.end(), '/', ' ');
+        #ifdef ANDROID_GUI
+            // replace "?" with something else to avoid problem in Android's WebView.loadUrl
+            std::replace(filepath.begin(), filepath.end(), '?', '$');
+        #endif
         filepath = HTML_PREFIX + filepath;
     } else {
         // no need for url info in file name

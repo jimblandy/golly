@@ -300,5 +300,9 @@ void ShowHelp(const char* filepath)
     SwitchToHelpTab();
     NSURL *fileUrl = [NSURL fileURLWithPath:[NSString stringWithCString:filepath encoding:NSUTF8StringEncoding]];
     NSURLRequest *request = [NSURLRequest requestWithURL:fileUrl];
+    
+    // NSLog(@"filepath = %s", filepath);
+    // NSLog(@"fileUrl = %@", fileUrl);
+    
     [globalHtmlView loadRequest:request];
 }

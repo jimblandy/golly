@@ -25,8 +25,17 @@
 package net.sf.golly;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -57,6 +66,7 @@ import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -126,6 +136,8 @@ public class MainActivity extends Activity {
     private native void nativeSavePattern(String filename);
     private native void nativeOpenFile(String filepath);
     private native void nativeSetFullScreen(boolean fullscreen);
+    private native void nativeChangeRule(String rule);
+    private native void nativeLexiconPattern(String pattern);
 
     // local fields:
     private static boolean firstcall = true;
@@ -152,9 +164,11 @@ public class MainActivity extends Activity {
     
     // -----------------------------------------------------------------------------
     
-    // this stuff is used in OpenActivity.java:
+    // this stuff is used in other activities:
     
     public final static String OPENFILE_MESSAGE = "net.sf.golly.OPENFILE";
+    public final static String RULE_MESSAGE = "net.sf.golly.RULE";
+    public final static String LEXICON_MESSAGE = "net.sf.golly.LEXICON";
 
     public static File userdir;        // directory for user-created data
     public static File supplieddir;    // directory for supplied data
@@ -248,6 +262,14 @@ public class MainActivity extends Activity {
         String filepath = intent.getStringExtra(OPENFILE_MESSAGE);
         if (filepath != null) {
             nativeOpenFile(filepath);
+        }
+        String rule = intent.getStringExtra(RULE_MESSAGE);
+        if (rule != null) {
+            nativeChangeRule(rule);
+        }
+        String pattern = intent.getStringExtra(LEXICON_MESSAGE);
+        if (pattern != null) {
+            nativeLexiconPattern(pattern);
         }
         
         // create handler and runnable for generating patterns
@@ -917,6 +939,14 @@ public class MainActivity extends Activity {
     // -----------------------------------------------------------------------------
 
     // this method is called from C++ code (see jnicalls.cpp)
+    private void StartMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
     private void RefreshPattern() {
         // this can be called from any thread
         pattView.requestRender();
@@ -1110,6 +1140,90 @@ public class MainActivity extends Activity {
     
     // -----------------------------------------------------------------------------
 
+    private String downloadURL(String urlstring, String filepath) {
+        // download given url and save data in given file
+        try {
+            File outfile = new File(filepath);
+            final int BUFFSIZE = 8192;
+            FileOutputStream outstream = null;
+            try {
+                outstream = new FileOutputStream(outfile);
+            } catch (FileNotFoundException e) {
+                return "File not found: " + filepath;
+            }
+            
+            // Log.i("downloadURL: ", urlstring);
+            URL url = new URL(urlstring);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setAllowUserInteraction(false);
+            connection.setInstanceFollowRedirects(true);
+            connection.setRequestMethod("GET");
+            connection.connect();
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                outstream.close();
+                return "No HTTP_OK response.";
+            }
+            
+            // stream the data to given file
+            InputStream instream = connection.getInputStream();
+            byte[] buffer = new byte[BUFFSIZE];
+            int bufflen = 0;
+            while ((bufflen = instream.read(buffer, 0, BUFFSIZE)) > 0) {
+                outstream.write(buffer, 0, bufflen);
+            }
+            outstream.close();
+            connection.disconnect();
+            
+        } catch (MalformedURLException e) {
+            return "Bad URL string: " + urlstring;
+        } catch (IOException e) {
+            return "Could not connect to URL: " + urlstring;
+        }
+        return "";  // success
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    private static String dresult;
+    
+    // this method is called from C++ code (see jnicalls.cpp)
+    private String DownloadFile(String urlstring, String filepath) {
+        // we cannot do network connections on main thread, so we do the
+        // download on a new thread, but we have to wait for it to finish
+
+        final Handler handler = new Handler() {
+            public void handleMessage(Message msg) {
+                throw new RuntimeException();
+            } 
+        };
+        
+        // add a ProgressDialog???!!!
+        
+        dresult = "";
+        final String durl = urlstring;
+        final String dfile = filepath;
+        Thread download_thread = new Thread(new Runnable() {
+            public void run() {
+                dresult = downloadURL(durl, dfile);
+                handler.sendMessage(handler.obtainMessage());
+            }
+        });
+        
+        download_thread.setPriority(Thread.MAX_PRIORITY);
+        download_thread.start();
+        
+        // wait for thread to finish
+        try { Looper.loop(); } catch(RuntimeException re) {}
+        
+        if (dresult.length() > 0) {
+            // can't call Warning here for some reason
+            Toast.makeText(this, "Download failed! " + dresult, Toast.LENGTH_SHORT).show();
+        }
+        return dresult;
+    }
+    
+    // -----------------------------------------------------------------------------
+
     // this method is called from C++ code (see jnicalls.cpp)
     private void CopyTextToClipboard(String text) {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -1133,6 +1247,42 @@ public class MainActivity extends Activity {
         }
         // Log.i("GetTextFromClipboard", text);
         return text;
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void ShowTextFile(String filepath) {
+        // read contents of supplied file into a string
+        File file = new File(filepath);
+        String filecontents;
+        try {
+            FileInputStream instream = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(instream));
+            StringBuilder sb = new StringBuilder();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
+            }
+            filecontents = sb.toString();
+            instream.close();        
+        } catch (Exception e) {
+            filecontents = "Error reading file:\n" + e.toString();
+        }
+        // display file contents
+        Intent intent = new Intent(this, InfoActivity.class);
+        intent.putExtra(InfoActivity.INFO_MESSAGE, filecontents);
+        startActivity(intent);
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void ShowHelp(String filepath) {
+        Intent intent = new Intent(this, HelpActivity.class);
+        intent.putExtra(HelpActivity.SHOWHELP_MESSAGE, filepath);
+        startActivity(intent);
     }
 
 } // MainActivity class

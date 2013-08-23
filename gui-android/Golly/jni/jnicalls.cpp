@@ -47,6 +47,7 @@
 // these globals cache info that doesn't change during execution
 static JavaVM* javavm;
 static jobject mainobj;
+static jmethodID id_StartMainActivity;
 static jmethodID id_RefreshPattern;
 static jmethodID id_ShowStatusLines;
 static jmethodID id_UpdateEditBar;
@@ -57,8 +58,11 @@ static jmethodID id_Fatal;
 static jmethodID id_YesNo;
 static jmethodID id_RemoveFile;
 static jmethodID id_MoveFile;
+static jmethodID id_DownloadFile;
 static jmethodID id_CopyTextToClipboard;
 static jmethodID id_GetTextFromClipboard;
+static jmethodID id_ShowHelp;
+static jmethodID id_ShowTextFile;
 
 static bool rendering = false;        // in DrawPattern?
 static bool paused = false;           // generating has been paused?
@@ -180,7 +184,8 @@ void ResumeGenerating()
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* env, jclass klass)
 {
-    // save IDs for Java methods in MainActivity
+    // get IDs for Java methods in MainActivity
+    id_StartMainActivity = env->GetMethodID(klass, "StartMainActivity", "()V");
     id_RefreshPattern = env->GetMethodID(klass, "RefreshPattern", "()V");
     id_ShowStatusLines = env->GetMethodID(klass, "ShowStatusLines", "()V");
     id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
@@ -191,8 +196,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* en
     id_YesNo = env->GetMethodID(klass, "YesNo", "(Ljava/lang/String;)Ljava/lang/String;");
     id_RemoveFile = env->GetMethodID(klass, "RemoveFile", "(Ljava/lang/String;)V");
     id_MoveFile = env->GetMethodID(klass, "MoveFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    id_DownloadFile = env->GetMethodID(klass, "DownloadFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     id_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
     id_GetTextFromClipboard = env->GetMethodID(klass, "GetTextFromClipboard", "()Ljava/lang/String;");
+    id_ShowHelp = env->GetMethodID(klass, "ShowHelp", "(Ljava/lang/String;)V");
+    id_ShowTextFile = env->GetMethodID(klass, "ShowTextFile", "(Ljava/lang/String;)V");
 }
 
 // -----------------------------------------------------------------------------
@@ -960,6 +968,25 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetFullScreen(JNIEnv
     fullscreen = isfull;
 }
 
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeChangeRule(JNIEnv* env, jobject obj, jstring rule)
+{
+    std::string newrule = ConvertJString(env, rule);
+    ChangeRule(newrule);
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeLexiconPattern(JNIEnv* env, jobject obj, jstring jpattern)
+{
+    std::string pattern = ConvertJString(env, jpattern);
+    std::replace(pattern.begin(), pattern.end(), '$', '\n');
+    LoadLexiconPattern(pattern);
+}
+
 // =============================================================================
 
 // these native routines are used in PatternGLSurfaceView.java:
@@ -1378,6 +1405,66 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_SettingsActivity_nativeGetPasteMode(
 
 // =============================================================================
 
+// these native routines are used in HelpActivity.java:
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeGetURL(JNIEnv* env, jobject obj, jstring jurl, jstring jpageurl)
+{
+    std::string url = ConvertJString(env, jurl);
+    std::string pageurl = ConvertJString(env, jpageurl);
+
+    // for GetURL to work we need to convert any "%20" in pageurl to " "
+    size_t start_pos = 0;
+    while ((start_pos = pageurl.find("%20", start_pos)) != std::string::npos) {
+        pageurl.replace(start_pos, 3, " ");
+        start_pos += 1; // skip inserted space
+    }
+
+    GetURL(url, pageurl);
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeUnzipFile(JNIEnv* env, jobject obj, jstring jzippath)
+{
+    std::string zippath = ConvertJString(env, jzippath);
+    FixURLPath(zippath);
+    std::string entry = zippath.substr(zippath.rfind(':') + 1);
+    zippath = zippath.substr(0, zippath.rfind(':'));
+    UnzipFile(zippath, entry);
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT bool JNICALL Java_net_sf_golly_HelpActivity_nativeDownloadedFile(JNIEnv* env, jobject obj, jstring jurl)
+{
+    std::string path = ConvertJString(env, jurl);
+    path = path.substr(path.rfind('/')+1);
+    size_t dotpos = path.rfind('.');
+    std::string ext = "";
+    if (dotpos != std::string::npos) ext = path.substr(dotpos+1);
+    if ( (IsZipFile(path) ||
+            strcasecmp(ext.c_str(),"rle") == 0 ||
+            strcasecmp(ext.c_str(),"life") == 0 ||
+            strcasecmp(ext.c_str(),"mc") == 0)
+            // also check for '?' to avoid opening links like ".../detail?name=foo.zip"
+            && path.find('?') == std::string::npos) {
+        // download file to downloaddir and open it
+        path = downloaddir + path;
+        std::string url = ConvertJString(env, jurl);
+        if (DownloadFile(url, path)) {
+            OpenFile(path.c_str());
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// =============================================================================
+
 // these native routines are used in RuleActivity.java:
 
 extern "C"
@@ -1617,18 +1704,26 @@ void EndProgress()
 
 void SwitchToPatternTab()
 {
-    // switch from current activity to MainActivity
-    // no need to do anything here???!!!
-    // LOGI("SwitchToPatternTab");
+    // switch to MainActivity
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) env->CallVoidMethod(mainobj, id_StartMainActivity);
+    if (attached) javavm->DetachCurrentThread();
 }
 
 // -----------------------------------------------------------------------------
 
 void ShowTextFile(const char* filepath)
 {
-    // display contents of text file in modal view (TextFileActivity!!!)
-    // not yet implemented!!!
-    LOGI("ShowTextFile: %s", filepath);
+    // switch to InfoActivity and display contents of text file
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring jpath = env->NewStringUTF(filepath);
+        env->CallVoidMethod(mainobj, id_ShowTextFile, jpath);
+        env->DeleteLocalRef(jpath);
+    }
+    if (attached) javavm->DetachCurrentThread();
 }
 
 // -----------------------------------------------------------------------------
@@ -1636,8 +1731,15 @@ void ShowTextFile(const char* filepath)
 void ShowHelp(const char* filepath)
 {
     // switch to HelpActivity and display html file
-    // not yet implemented!!!
-    LOGI("ShowHelp: %s", filepath);
+    // LOGI("ShowHelp: %s", filepath);
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring jpath = env->NewStringUTF(filepath);
+        env->CallVoidMethod(mainobj, id_ShowHelp, jpath);
+        env->DeleteLocalRef(jpath);
+    }
+    if (attached) javavm->DetachCurrentThread();
 }
 
 // -----------------------------------------------------------------------------
@@ -1738,9 +1840,9 @@ bool AndroidMoveFile(const std::string& inpath, const std::string& outpath)
         jstring jnewpath = env->NewStringUTF(outpath.c_str());
         jstring jresult = (jstring) env->CallObjectMethod(mainobj, id_MoveFile, joldpath, jnewpath);
         error = ConvertJString(env, jresult);
-        env->DeleteLocalRef(jresult);
         env->DeleteLocalRef(joldpath);
         env->DeleteLocalRef(jnewpath);
+        env->DeleteLocalRef(jresult);
     }
     if (attached) javavm->DetachCurrentThread();
 
@@ -1752,10 +1854,9 @@ bool AndroidMoveFile(const std::string& inpath, const std::string& outpath)
 void AndroidFixURLPath(std::string& path)
 {
     // replace "%..." with suitable chars for a file path (eg. %20 is changed to space)
+    LOGE("AndroidFixURLPath: %s", path.c_str());
 
-    // not yet implemented!!! no need to do anything???
-
-    // LOGI("AndroidFixURLPath: %s", path.c_str());
+    // no need to do anything???!!!
 }
 
 // -----------------------------------------------------------------------------
@@ -1800,9 +1901,23 @@ bool AndroidGetTextFromClipboard(std::string& text)
 
 bool AndroidDownloadFile(const std::string& url, const std::string& filepath)
 {
-    // not yet implemented!!!
-    LOGI("AndroidDownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
-    return false;//!!!
+    // LOGI("AndroidDownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
+    std::string error = "env is null";
+
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring jurl = env->NewStringUTF(url.c_str());
+        jstring jfilepath = env->NewStringUTF(filepath.c_str());
+        jstring jresult = (jstring) env->CallObjectMethod(mainobj, id_DownloadFile, jurl, jfilepath);
+        error = ConvertJString(env, jresult);
+        env->DeleteLocalRef(jurl);
+        env->DeleteLocalRef(jfilepath);
+        env->DeleteLocalRef(jresult);
+    }
+    if (attached) javavm->DetachCurrentThread();
+
+    return error.length() == 0;
 }
 
 // -----------------------------------------------------------------------------
