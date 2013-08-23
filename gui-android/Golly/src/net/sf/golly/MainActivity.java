@@ -452,7 +452,13 @@ public class MainActivity extends Activity {
         File dir = getCacheDir();
         File[] files = dir.listFiles();
         if (files != null) {
-            for (File file : files) file.delete();
+            for (File file : files) {
+                if (file.getName().startsWith("GET-")) {
+                    // don't delete files created by special "get:" links
+                } else {
+                    file.delete();
+                }
+            }
         }
     }
 

@@ -32,7 +32,6 @@ import java.io.InputStreamReader;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -54,7 +53,6 @@ public class HelpActivity extends Activity {
     private Button backbutton;                  // go to previous page
     private Button nextbutton;                  // go to next page
     private static String pageurl;              // URL for last displayed page
-    private static int scroll_pos = 0;          // remember scroll position
 
     public final static String SHOWHELP_MESSAGE = "net.sf.golly.SHOWHELP";
     
@@ -108,24 +106,6 @@ public class HelpActivity extends Activity {
             // need URL of this page for relative "get:" links
             pageurl = gwebview.getUrl();
             // Log.i("URL", pageurl);
-
-            // webview.scrollTo doesn't always work here;
-            // we need to delay until webview.getContentHeight() > 0
-            final int scrollpos = scroll_pos;
-            if (scrollpos > 0) {
-                final Handler handler = new Handler();
-                Runnable runnable = new Runnable() {
-                    public void run() {
-                        if (gwebview.getContentHeight() > 0) {
-                            gwebview.scrollTo(0, scrollpos);
-                        } else {
-                            // try again a bit later
-                            handler.postDelayed(this, 100);
-                        }
-                    }
-                };
-                handler.postDelayed(runnable, 100);
-            }
         }  
     }
 
@@ -226,18 +206,15 @@ public class HelpActivity extends Activity {
     
     // -----------------------------------------------------------------------------
 
-    private static Bundle pagehistory = null;
+    private static Bundle webbundle = null;
     
     @Override
     protected void onPause() {
         super.onPause();
 
-        // save scroll position
-        scroll_pos = gwebview.getScrollY();
-
-        // save back/forward history
-        if (pagehistory == null) pagehistory = new Bundle();
-        gwebview.saveState(pagehistory);
+        // save scroll position and back/forward history
+        if (webbundle == null) webbundle = new Bundle();
+        gwebview.saveState(webbundle);
 
         gwebview.onPause();
     }
@@ -249,16 +226,15 @@ public class HelpActivity extends Activity {
         super.onResume();
         gwebview.onResume();
         
-        // restore back/forward history
-        if (pagehistory != null) {
-            gwebview.restoreState(pagehistory);
+        // restore scroll position and back/forward history
+        if (webbundle != null) {
+            gwebview.restoreState(webbundle);
         }
         
         // check for messages sent by other activities
         Intent intent = getIntent();
         String filepath = intent.getStringExtra(SHOWHELP_MESSAGE);
         if (filepath != null) {
-            scroll_pos = 0;
             gwebview.loadUrl("file://" + filepath);
         } else {
             gwebview.reload();
@@ -309,7 +285,6 @@ public class HelpActivity extends Activity {
     
     private void showContentsPage() {
         // display html data in supplieddir/Help/index.html
-        scroll_pos = 0;
         String fullpath = MainActivity.supplieddir.getAbsolutePath() + "/Help/index.html";
         File htmlfile = new File(fullpath);
         if (htmlfile.exists()) {
@@ -326,7 +301,7 @@ public class HelpActivity extends Activity {
     // called when the Contents button is tapped
     public void doContents(View view) {
         showContentsPage();
-        if (pagehistory != null) pagehistory.clear();
+        if (webbundle != null) webbundle.clear();
         gwebview.clearHistory();
         backbutton.setEnabled(gwebview.canGoBack());
         nextbutton.setEnabled(gwebview.canGoForward());
@@ -336,7 +311,6 @@ public class HelpActivity extends Activity {
     
     // called when backbutton is tapped
     public void doBack(View view) {
-        scroll_pos = -1;    // WebView will restore position
         gwebview.goBack();
     }
     
@@ -344,7 +318,6 @@ public class HelpActivity extends Activity {
     
     // called when nextbutton is tapped
     public void doForwards(View view) {
-        scroll_pos = -1;    // WebView will restore position
         gwebview.goForward();
     }
 
