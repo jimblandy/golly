@@ -44,28 +44,30 @@
 
 // -----------------------------------------------------------------------------
 
-// these globals cache info that doesn't change during execution
+// these globals cache info for calling methods in .java files
 static JavaVM* javavm;
-static jobject mainobj;
-static jmethodID id_StartMainActivity;
-static jmethodID id_RefreshPattern;
-static jmethodID id_ShowStatusLines;
-static jmethodID id_UpdateEditBar;
-static jmethodID id_CheckMessageQueue;
-static jmethodID id_PlayBeepSound;
-static jmethodID id_Warning;
-static jmethodID id_Fatal;
-static jmethodID id_YesNo;
-static jmethodID id_RemoveFile;
-static jmethodID id_MoveFile;
-static jmethodID id_DownloadFile;
-static jmethodID id_CopyTextToClipboard;
-static jmethodID id_GetTextFromClipboard;
-static jmethodID id_ShowHelp;
-static jmethodID id_ShowTextFile;
+static jobject mainobj;                 // current instance of MainActivity
+static jmethodID main_StartMainActivity;
+static jmethodID main_RefreshPattern;
+static jmethodID main_ShowStatusLines;
+static jmethodID main_UpdateEditBar;
+static jmethodID main_CheckMessageQueue;
+static jmethodID main_PlayBeepSound;
+static jmethodID main_Warning;
+static jmethodID main_Fatal;
+static jmethodID main_YesNo;
+static jmethodID main_RemoveFile;
+static jmethodID main_MoveFile;
+static jmethodID main_CopyTextToClipboard;
+static jmethodID main_GetTextFromClipboard;
+static jmethodID main_ShowHelp;
+static jmethodID main_ShowTextFile;
 
-static bool rendering = false;        // in DrawPattern?
-static bool paused = false;           // generating has been paused?
+static jobject helpobj;                 // current instance of HelpActivity
+static jmethodID help_DownloadFile;
+
+static bool rendering = false;          // in DrawPattern?
+static bool paused = false;             // generating has been paused?
 
 // -----------------------------------------------------------------------------
 
@@ -136,7 +138,7 @@ void UpdatePattern()
     // call a Java method that calls GLSurfaceView.requestRender() which calls nativeRender
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, id_RefreshPattern);
+    if (env) env->CallVoidMethod(mainobj, main_RefreshPattern);
     if (attached) javavm->DetachCurrentThread();
 }
 
@@ -151,7 +153,7 @@ void UpdateStatus()
     // call Java method in MainActivity class to update the status bar info
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, id_ShowStatusLines);
+    if (env) env->CallVoidMethod(mainobj, main_ShowStatusLines);
     if (attached) javavm->DetachCurrentThread();
 }
 
@@ -185,22 +187,21 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* env, jclass klass)
 {
     // get IDs for Java methods in MainActivity
-    id_StartMainActivity = env->GetMethodID(klass, "StartMainActivity", "()V");
-    id_RefreshPattern = env->GetMethodID(klass, "RefreshPattern", "()V");
-    id_ShowStatusLines = env->GetMethodID(klass, "ShowStatusLines", "()V");
-    id_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
-    id_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
-    id_PlayBeepSound = env->GetMethodID(klass, "PlayBeepSound", "()V");
-    id_Warning = env->GetMethodID(klass, "Warning", "(Ljava/lang/String;)V");
-    id_Fatal = env->GetMethodID(klass, "Fatal", "(Ljava/lang/String;)V");
-    id_YesNo = env->GetMethodID(klass, "YesNo", "(Ljava/lang/String;)Ljava/lang/String;");
-    id_RemoveFile = env->GetMethodID(klass, "RemoveFile", "(Ljava/lang/String;)V");
-    id_MoveFile = env->GetMethodID(klass, "MoveFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    id_DownloadFile = env->GetMethodID(klass, "DownloadFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    id_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
-    id_GetTextFromClipboard = env->GetMethodID(klass, "GetTextFromClipboard", "()Ljava/lang/String;");
-    id_ShowHelp = env->GetMethodID(klass, "ShowHelp", "(Ljava/lang/String;)V");
-    id_ShowTextFile = env->GetMethodID(klass, "ShowTextFile", "(Ljava/lang/String;)V");
+    main_StartMainActivity = env->GetMethodID(klass, "StartMainActivity", "()V");
+    main_RefreshPattern = env->GetMethodID(klass, "RefreshPattern", "()V");
+    main_ShowStatusLines = env->GetMethodID(klass, "ShowStatusLines", "()V");
+    main_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
+    main_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
+    main_PlayBeepSound = env->GetMethodID(klass, "PlayBeepSound", "()V");
+    main_Warning = env->GetMethodID(klass, "Warning", "(Ljava/lang/String;)V");
+    main_Fatal = env->GetMethodID(klass, "Fatal", "(Ljava/lang/String;)V");
+    main_YesNo = env->GetMethodID(klass, "YesNo", "(Ljava/lang/String;)Ljava/lang/String;");
+    main_RemoveFile = env->GetMethodID(klass, "RemoveFile", "(Ljava/lang/String;)V");
+    main_MoveFile = env->GetMethodID(klass, "MoveFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    main_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
+    main_GetTextFromClipboard = env->GetMethodID(klass, "GetTextFromClipboard", "()Ljava/lang/String;");
+    main_ShowHelp = env->GetMethodID(klass, "ShowHelp", "(Ljava/lang/String;)V");
+    main_ShowTextFile = env->GetMethodID(klass, "ShowTextFile", "(Ljava/lang/String;)V");
 }
 
 // -----------------------------------------------------------------------------
@@ -231,7 +232,10 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeDestroy(JNIEnv* env)
 {
     // the current instance of MainActivity is being destroyed
-    env->DeleteGlobalRef(mainobj);
+    if (mainobj != NULL) {
+        env->DeleteGlobalRef(mainobj);
+        mainobj = NULL;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1408,6 +1412,36 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_SettingsActivity_nativeGetPasteMode(
 // these native routines are used in HelpActivity.java:
 
 extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeClassInit(JNIEnv* env, jclass klass)
+{
+    // get IDs for Java methods in HelpActivity
+    help_DownloadFile = env->GetMethodID(klass, "DownloadFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeCreate(JNIEnv* env, jobject obj)
+{
+    // save obj for calling Java methods in this instance of HelpActivity
+    helpobj = env->NewGlobalRef(obj);
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeDestroy(JNIEnv* env)
+{
+    // the current instance of HelpActivity is being destroyed
+    if (helpobj != NULL) {
+        env->DeleteGlobalRef(helpobj);
+        helpobj = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeGetURL(JNIEnv* env, jobject obj, jstring jurl, jstring jpageurl)
 {
     std::string url = ConvertJString(env, jurl);
@@ -1635,7 +1669,7 @@ void UpdateEditBar()
     // call Java method in MainActivity class to update the buttons in the edit bar
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, id_UpdateEditBar);
+    if (env) env->CallVoidMethod(mainobj, main_UpdateEditBar);
     if (attached) javavm->DetachCurrentThread();
 }
 
@@ -1707,7 +1741,7 @@ void SwitchToPatternTab()
     // switch to MainActivity
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, id_StartMainActivity);
+    if (env) env->CallVoidMethod(mainobj, main_StartMainActivity);
     if (attached) javavm->DetachCurrentThread();
 }
 
@@ -1720,7 +1754,7 @@ void ShowTextFile(const char* filepath)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jpath = env->NewStringUTF(filepath);
-        env->CallVoidMethod(mainobj, id_ShowTextFile, jpath);
+        env->CallVoidMethod(mainobj, main_ShowTextFile, jpath);
         env->DeleteLocalRef(jpath);
     }
     if (attached) javavm->DetachCurrentThread();
@@ -1736,7 +1770,7 @@ void ShowHelp(const char* filepath)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jpath = env->NewStringUTF(filepath);
-        env->CallVoidMethod(mainobj, id_ShowHelp, jpath);
+        env->CallVoidMethod(mainobj, main_ShowHelp, jpath);
         env->DeleteLocalRef(jpath);
     }
     if (attached) javavm->DetachCurrentThread();
@@ -1752,7 +1786,7 @@ void AndroidWarning(const char* msg)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jmsg = env->NewStringUTF(msg);
-        env->CallVoidMethod(mainobj, id_Warning, jmsg);
+        env->CallVoidMethod(mainobj, main_Warning, jmsg);
         env->DeleteLocalRef(jmsg);
     }
     if (attached) javavm->DetachCurrentThread();
@@ -1770,12 +1804,12 @@ void AndroidFatal(const char* msg)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jmsg = env->NewStringUTF(msg);
-        env->CallVoidMethod(mainobj, id_Fatal, jmsg);
+        env->CallVoidMethod(mainobj, main_Fatal, jmsg);
         env->DeleteLocalRef(jmsg);
     }
     if (attached) javavm->DetachCurrentThread();
 
-    // id_Fatal calls System.exit(1)
+    // main_Fatal calls System.exit(1)
     // exit(1);
 }
 
@@ -1790,7 +1824,7 @@ bool AndroidYesNo(const char* query)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jquery = env->NewStringUTF(query);
-        jstring jresult = (jstring) env->CallObjectMethod(mainobj, id_YesNo, jquery);
+        jstring jresult = (jstring) env->CallObjectMethod(mainobj, main_YesNo, jquery);
         answer = ConvertJString(env, jresult);
         env->DeleteLocalRef(jquery);
         env->DeleteLocalRef(jresult);
@@ -1807,7 +1841,7 @@ void AndroidBeep()
 {
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, id_PlayBeepSound);
+    if (env) env->CallVoidMethod(mainobj, main_PlayBeepSound);
     if (attached) javavm->DetachCurrentThread();
 }
 
@@ -1820,7 +1854,7 @@ void AndroidRemoveFile(const std::string& filepath)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jpath = env->NewStringUTF(filepath.c_str());
-        env->CallVoidMethod(mainobj, id_RemoveFile, jpath);
+        env->CallVoidMethod(mainobj, main_RemoveFile, jpath);
         env->DeleteLocalRef(jpath);
     }
     if (attached) javavm->DetachCurrentThread();
@@ -1838,7 +1872,7 @@ bool AndroidMoveFile(const std::string& inpath, const std::string& outpath)
     if (env) {
         jstring joldpath = env->NewStringUTF(inpath.c_str());
         jstring jnewpath = env->NewStringUTF(outpath.c_str());
-        jstring jresult = (jstring) env->CallObjectMethod(mainobj, id_MoveFile, joldpath, jnewpath);
+        jstring jresult = (jstring) env->CallObjectMethod(mainobj, main_MoveFile, joldpath, jnewpath);
         error = ConvertJString(env, jresult);
         env->DeleteLocalRef(joldpath);
         env->DeleteLocalRef(jnewpath);
@@ -1867,7 +1901,7 @@ bool AndroidCopyTextToClipboard(const char* text)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jtext = env->NewStringUTF(text);
-        env->CallVoidMethod(mainobj, id_CopyTextToClipboard, jtext);
+        env->CallVoidMethod(mainobj, main_CopyTextToClipboard, jtext);
         env->DeleteLocalRef(jtext);
     }
     if (attached) javavm->DetachCurrentThread();
@@ -1883,7 +1917,7 @@ bool AndroidGetTextFromClipboard(std::string& text)
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
-        jstring jtext = (jstring) env->CallObjectMethod(mainobj, id_GetTextFromClipboard);
+        jstring jtext = (jstring) env->CallObjectMethod(mainobj, main_GetTextFromClipboard);
         text = ConvertJString(env, jtext);
         env->DeleteLocalRef(jtext);
     }
@@ -1899,29 +1933,6 @@ bool AndroidGetTextFromClipboard(std::string& text)
 
 // -----------------------------------------------------------------------------
 
-bool AndroidDownloadFile(const std::string& url, const std::string& filepath)
-{
-    // LOGI("AndroidDownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
-    std::string error = "env is null";
-
-    bool attached;
-    JNIEnv* env = getJNIenv(&attached);
-    if (env) {
-        jstring jurl = env->NewStringUTF(url.c_str());
-        jstring jfilepath = env->NewStringUTF(filepath.c_str());
-        jstring jresult = (jstring) env->CallObjectMethod(mainobj, id_DownloadFile, jurl, jfilepath);
-        error = ConvertJString(env, jresult);
-        env->DeleteLocalRef(jurl);
-        env->DeleteLocalRef(jfilepath);
-        env->DeleteLocalRef(jresult);
-    }
-    if (attached) javavm->DetachCurrentThread();
-
-    return error.length() == 0;
-}
-
-// -----------------------------------------------------------------------------
-
 void AndroidCheckEvents()
 {
     // event_checker is > 0 in here (see gui-common/utils.cpp)
@@ -1932,6 +1943,30 @@ void AndroidCheckEvents()
     }
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, id_CheckMessageQueue);
+    if (env) env->CallVoidMethod(mainobj, main_CheckMessageQueue);
     if (attached) javavm->DetachCurrentThread();
+}
+
+// -----------------------------------------------------------------------------
+
+bool AndroidDownloadFile(const std::string& url, const std::string& filepath)
+{
+    // LOGI("AndroidDownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
+    std::string error = "env is null";
+
+    // call DownloadFile method in HelpActivity
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring jurl = env->NewStringUTF(url.c_str());
+        jstring jfilepath = env->NewStringUTF(filepath.c_str());
+        jstring jresult = (jstring) env->CallObjectMethod(helpobj, help_DownloadFile, jurl, jfilepath);
+        error = ConvertJString(env, jresult);
+        env->DeleteLocalRef(jurl);
+        env->DeleteLocalRef(jfilepath);
+        env->DeleteLocalRef(jresult);
+    }
+    if (attached) javavm->DetachCurrentThread();
+
+    return error.length() == 0;
 }

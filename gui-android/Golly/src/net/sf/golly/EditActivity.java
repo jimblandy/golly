@@ -39,6 +39,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
@@ -194,6 +195,7 @@ public class EditActivity extends Activity {
         final EditText input = new EditText(this);
         input.setSingleLine(true);
         input.setText(filename);
+        input.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         alert.setView(input);
 
         alert.setPositiveButton("SAVE",
@@ -220,13 +222,13 @@ public class EditActivity extends Activity {
                 public void onClick(View v) {
                     String newname = input.getText().toString();
                     if (newname.length() == 0) {
-                        Toast.makeText(getApplicationContext(), "Enter a file name.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditActivity.this, "Enter a file name.", Toast.LENGTH_SHORT).show();
                         input.setText(filename);
                         return;
                     }
                     // check for valid extension
                     if (fileextn.length() > 0 && !newname.endsWith(fileextn)) {
-                        Toast.makeText(getApplicationContext(), "File extension must be " + fileextn, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditActivity.this, "File extension must be " + fileextn, Toast.LENGTH_SHORT).show();
                         return;
                     }
                     // check if given file already exists

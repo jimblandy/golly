@@ -28,14 +28,8 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -56,6 +50,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.MessageQueue;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -66,13 +61,12 @@ import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
     // see jnicalls.cpp for these native routines:
-    private static native void nativeClassInit();   // must be static
-    private native void nativeCreate();             // must NOT be static
+    private static native void nativeClassInit();   // this MUST be static
+    private native void nativeCreate();             // the rest must NOT be static
     private native void nativeDestroy();
     private native void nativeSetUserDirs(String path);
     private native void nativeSetSuppliedDirs(String prefix);
@@ -453,8 +447,8 @@ public class MainActivity extends Activity {
         File[] files = dir.listFiles();
         if (files != null) {
             for (File file : files) {
-                if (file.getName().startsWith("GET-")) {
-                    // don't delete files created by special "get:" links
+                if (file.getName().startsWith("GET-") || file.getName().endsWith(".html")) {
+                    // don't delete files created via "get:" links in HelpActivity
                 } else {
                     file.delete();
                 }
@@ -850,6 +844,7 @@ public class MainActivity extends Activity {
         final EditText input = new EditText(this);
         input.setSingleLine(true);
         input.setHint("enter a file name");
+        input.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         alert.setView(input);
 
         alert.setPositiveButton("SAVE",
@@ -1142,90 +1137,6 @@ public class MainActivity extends Activity {
             result = "MoveFile failed";
         }
         return result;
-    }
-    
-    // -----------------------------------------------------------------------------
-
-    private String downloadURL(String urlstring, String filepath) {
-        // download given url and save data in given file
-        try {
-            File outfile = new File(filepath);
-            final int BUFFSIZE = 8192;
-            FileOutputStream outstream = null;
-            try {
-                outstream = new FileOutputStream(outfile);
-            } catch (FileNotFoundException e) {
-                return "File not found: " + filepath;
-            }
-            
-            // Log.i("downloadURL: ", urlstring);
-            URL url = new URL(urlstring);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setAllowUserInteraction(false);
-            connection.setInstanceFollowRedirects(true);
-            connection.setRequestMethod("GET");
-            connection.connect();
-            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                outstream.close();
-                return "No HTTP_OK response.";
-            }
-            
-            // stream the data to given file
-            InputStream instream = connection.getInputStream();
-            byte[] buffer = new byte[BUFFSIZE];
-            int bufflen = 0;
-            while ((bufflen = instream.read(buffer, 0, BUFFSIZE)) > 0) {
-                outstream.write(buffer, 0, bufflen);
-            }
-            outstream.close();
-            connection.disconnect();
-            
-        } catch (MalformedURLException e) {
-            return "Bad URL string: " + urlstring;
-        } catch (IOException e) {
-            return "Could not connect to URL: " + urlstring;
-        }
-        return "";  // success
-    }
-    
-    // -----------------------------------------------------------------------------
-
-    private static String dresult;
-    
-    // this method is called from C++ code (see jnicalls.cpp)
-    private String DownloadFile(String urlstring, String filepath) {
-        // we cannot do network connections on main thread, so we do the
-        // download on a new thread, but we have to wait for it to finish
-
-        final Handler handler = new Handler() {
-            public void handleMessage(Message msg) {
-                throw new RuntimeException();
-            } 
-        };
-        
-        // add a ProgressDialog???!!!
-        
-        dresult = "";
-        final String durl = urlstring;
-        final String dfile = filepath;
-        Thread download_thread = new Thread(new Runnable() {
-            public void run() {
-                dresult = downloadURL(durl, dfile);
-                handler.sendMessage(handler.obtainMessage());
-            }
-        });
-        
-        download_thread.setPriority(Thread.MAX_PRIORITY);
-        download_thread.start();
-        
-        // wait for thread to finish
-        try { Looper.loop(); } catch(RuntimeException re) {}
-        
-        if (dresult.length() > 0) {
-            // can't call Warning here for some reason
-            Toast.makeText(this, "Download failed! " + dresult, Toast.LENGTH_SHORT).show();
-        }
-        return dresult;
     }
     
     // -----------------------------------------------------------------------------

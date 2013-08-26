@@ -27,11 +27,21 @@ package net.sf.golly;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,23 +49,38 @@ import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 public class HelpActivity extends Activity {
 
     // see jnicalls.cpp for these native routines:
+    private static native void nativeClassInit();   // this MUST be static
+    private native void nativeCreate();             // the rest must NOT be static
+    private native void nativeDestroy();
     private native void nativeGetURL(String url, String pageurl);
     private native void nativeUnzipFile(String zippath);
     private native boolean nativeDownloadedFile(String url);
 
     // local fields:
     private static boolean firstcall = true;
-    private WebView gwebview;                   // for displaying html data
-    private Button backbutton;                  // go to previous page
-    private Button nextbutton;                  // go to next page
-    private static String pageurl;              // URL for last displayed page
+    private WebView gwebview;                       // for displaying html data
+    private Button backbutton;                      // go to previous page
+    private Button nextbutton;                      // go to next page
+    private static String pageurl;                  // URL for last displayed page
+    ProgressBar progbar;                            // progress bar for downloads
+    LinearLayout proglayout;                        // view containing progress bar and text
+    boolean cancelled;                              // download was cancelled?
 
     public final static String SHOWHELP_MESSAGE = "net.sf.golly.SHOWHELP";
     
+    // -----------------------------------------------------------------------------
+    
+    static {
+        nativeClassInit();      // caches Java method IDs
+    }
+        
     // -----------------------------------------------------------------------------
     
     // this class lets us intercept link taps
@@ -182,6 +207,10 @@ public class HelpActivity extends Activity {
         setContentView(R.layout.help_layout);
         backbutton = (Button) findViewById(R.id.back);
         nextbutton = (Button) findViewById(R.id.forwards);
+        progbar = (ProgressBar) findViewById(R.id.progress_bar);
+        proglayout = (LinearLayout) findViewById(R.id.progress_layout);
+        
+        proglayout.setVisibility(LinearLayout.INVISIBLE);
         
         // xml wouldn't let us use these characters
         backbutton.setText("<");
@@ -189,6 +218,8 @@ public class HelpActivity extends Activity {
         
         // show the Up button in the action bar
         getActionBar().setDisplayHomeAsUpEnabled(true);
+        
+        nativeCreate();     // cache this instance
         
         gwebview = (WebView) findViewById(R.id.webview);
         // no need for JavaScript???
@@ -223,7 +254,7 @@ public class HelpActivity extends Activity {
 
     @Override
     protected void onResume() {
-        super.onResume();
+        super.onResume();        
         gwebview.onResume();
         
         // restore scroll position and back/forward history
@@ -239,6 +270,14 @@ public class HelpActivity extends Activity {
         } else {
             gwebview.reload();
         }
+    }
+
+    // -----------------------------------------------------------------------------
+
+    @Override
+    protected void onDestroy() {
+        nativeDestroy();
+        super.onDestroy();
     }
 
     // -----------------------------------------------------------------------------
@@ -319,6 +358,125 @@ public class HelpActivity extends Activity {
     // called when nextbutton is tapped
     public void doForwards(View view) {
         gwebview.goForward();
+    }
+    
+    // -----------------------------------------------------------------------------
+    
+    // called when Cancel is tapped
+    public void doCancel(View view) {
+        cancelled = true;
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    private String downloadURL(String urlstring, String filepath) {
+        // download given url and save data in given file
+        try {
+            File outfile = new File(filepath);
+            final int BUFFSIZE = 8192;
+            FileOutputStream outstream = null;
+            try {
+                outstream = new FileOutputStream(outfile);
+            } catch (FileNotFoundException e) {
+                return "File not found: " + filepath;
+            }
+            
+            long starttime = System.nanoTime();
+            
+            // Log.i("downloadURL: ", urlstring);
+            URL url = new URL(urlstring);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setAllowUserInteraction(false);
+            connection.setInstanceFollowRedirects(true);
+            connection.setRequestMethod("GET");
+            connection.connect();
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                outstream.close();
+                return "No HTTP_OK response.";
+            }
+            
+            // init info for progress bar
+            int filesize = connection.getContentLength();
+            int downloaded = 0;
+            int percent;
+            int lastpercent = 0;
+            
+            // stream the data to given file
+            InputStream instream = connection.getInputStream();
+            byte[] buffer = new byte[BUFFSIZE];
+            int bufflen = 0;
+            while ((bufflen = instream.read(buffer, 0, BUFFSIZE)) > 0) {
+                outstream.write(buffer, 0, bufflen);
+                downloaded += bufflen;
+                percent = (int) ((downloaded / (float)filesize) * 100);
+                if (percent > lastpercent) {
+                    progbar.setProgress(percent);
+                    lastpercent = percent;
+                }
+                // show proglayout only if download takes more than 1 second
+                if (System.nanoTime() - starttime > 1000000000L) {
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            proglayout.setVisibility(LinearLayout.VISIBLE);
+                        }
+                    });
+                    starttime = Long.MAX_VALUE; // only show it once
+                }
+                if (cancelled) break;
+            }
+            outstream.close();
+            connection.disconnect();
+            if (cancelled) return "Cancelled.";
+            
+        } catch (MalformedURLException e) {
+            return "Bad URL string: " + urlstring;
+        } catch (IOException e) {
+            return "Could not connect to URL: " + urlstring;
+        }
+        return "";  // success
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    private static String dresult;
+    
+    // this method is called from C++ code (see jnicalls.cpp)
+    private String DownloadFile(String urlstring, String filepath) {
+        // we cannot do network connections on main thread, so we do the
+        // download on a new thread, but we have to wait for it to finish
+        final Handler handler = new Handler() {
+            public void handleMessage(Message msg) {
+                throw new RuntimeException();
+            } 
+        };
+        
+        cancelled = false;
+        progbar.setProgress(0);
+        // don't show proglayout immediately
+        // proglayout.setVisibility(LinearLayout.VISIBLE);
+        
+        dresult = "";
+        final String durl = urlstring;
+        final String dfile = filepath;
+        Thread download_thread = new Thread(new Runnable() {
+            public void run() {
+                dresult = downloadURL(durl, dfile);
+                handler.sendMessage(handler.obtainMessage());
+            }
+        });
+        
+        download_thread.setPriority(Thread.MAX_PRIORITY);
+        download_thread.start();
+        
+        // wait for thread to finish
+        try { Looper.loop(); } catch(RuntimeException re) {}
+        
+        proglayout.setVisibility(LinearLayout.INVISIBLE);
+        
+        if (dresult.length() > 0 && !cancelled) {
+            Toast.makeText(this, "Download failed! " + dresult, Toast.LENGTH_SHORT).show();
+        }
+        return dresult;
     }
 
 } // HelpActivity class
