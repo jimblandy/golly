@@ -69,9 +69,9 @@ public class HelpActivity extends Activity {
     private Button backbutton;                      // go to previous page
     private Button nextbutton;                      // go to next page
     private static String pageurl;                  // URL for last displayed page
-    ProgressBar progbar;                            // progress bar for downloads
-    LinearLayout proglayout;                        // view containing progress bar and text
-    boolean cancelled;                              // download was cancelled?
+    private ProgressBar progbar;                    // progress bar for downloads
+    private LinearLayout proglayout;                // view containing progress bar
+    private boolean cancelled;                      // download was cancelled?
 
     public final static String SHOWHELP_MESSAGE = "net.sf.golly.SHOWHELP";
     
@@ -111,6 +111,11 @@ public class HelpActivity extends Activity {
                 return true;
             }
             if (url.startsWith("unzip:")) {
+                // we switch back to MainActivity to avoid weird crash in OnResume if user
+                // tapped link to text file (resulting in InfoActivity starting up)
+                Intent intent = new Intent(HelpActivity.this, MainActivity.class);
+                startActivity(intent);
+
                 nativeUnzipFile(url.substring(6));
                 return true;
             }
@@ -242,12 +247,11 @@ public class HelpActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        gwebview.onPause();
 
         // save scroll position and back/forward history
         if (webbundle == null) webbundle = new Bundle();
         gwebview.saveState(webbundle);
-
-        gwebview.onPause();
     }
 
     // -----------------------------------------------------------------------------

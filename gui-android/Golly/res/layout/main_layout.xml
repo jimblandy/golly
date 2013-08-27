@@ -152,16 +152,47 @@
             android:id="@+id/patternview"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+        <LinearLayout
+            android:id="@+id/progress_layout"
+            android:background="#EEEEEE"
+            android:padding="10sp"
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true" >
+            <TextView
+                android:id="@+id/progress_title"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Title" />
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                android:paddingTop="5sp"
+                android:paddingBottom="10sp"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                style="@android:style/Widget.ProgressBar.Horizontal" />
+            <Button
+                android:id="@+id/cancel"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="40sp"
+                android:minHeight="0dp"
+                android:text="Cancel"
+                android:onClick="doCancel" />
+        </LinearLayout>
         <Button
-	        android:id="@+id/restore"
-	        style="?android:attr/buttonStyleSmall"
-	        android:layout_alignParentBottom="true"
-	        android:layout_alignParentRight="true"
-	        android:layout_width="wrap_content"
-	        android:layout_height="40sp"
-	        android:minHeight="0dp"
-	        android:onClick="toggleFullScreen"
-	        android:text="Restore" />
+            android:id="@+id/restore"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="toggleFullScreen"
+            android:text="Restore" />
     </RelativeLayout>
 
     <RelativeLayout

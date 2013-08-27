@@ -46,7 +46,7 @@
 
 // these globals cache info for calling methods in .java files
 static JavaVM* javavm;
-static jobject mainobj;                 // current instance of MainActivity
+static jobject mainobj = NULL;          // current instance of MainActivity
 static jmethodID main_StartMainActivity;
 static jmethodID main_RefreshPattern;
 static jmethodID main_ShowStatusLines;
@@ -62,8 +62,11 @@ static jmethodID main_CopyTextToClipboard;
 static jmethodID main_GetTextFromClipboard;
 static jmethodID main_ShowHelp;
 static jmethodID main_ShowTextFile;
+static jmethodID main_BeginProgress;
+static jmethodID main_AbortProgress;
+static jmethodID main_EndProgress;
 
-static jobject helpobj;                 // current instance of HelpActivity
+static jobject helpobj = NULL;          // current instance of HelpActivity
 static jmethodID help_DownloadFile;
 
 static bool rendering = false;          // in DrawPattern?
@@ -202,6 +205,9 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* en
     main_GetTextFromClipboard = env->GetMethodID(klass, "GetTextFromClipboard", "()Ljava/lang/String;");
     main_ShowHelp = env->GetMethodID(klass, "ShowHelp", "(Ljava/lang/String;)V");
     main_ShowTextFile = env->GetMethodID(klass, "ShowTextFile", "(Ljava/lang/String;)V");
+    main_BeginProgress = env->GetMethodID(klass, "BeginProgress", "(Ljava/lang/String;)V");
+    main_AbortProgress = env->GetMethodID(klass, "AbortProgress", "(ILjava/lang/String;)Z");
+    main_EndProgress = env->GetMethodID(klass, "EndProgress", "()V");
 }
 
 // -----------------------------------------------------------------------------
@@ -210,6 +216,7 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, jobject obj)
 {
     // save obj for calling Java methods in this instance of MainActivity
+    if (mainobj != NULL) env->DeleteGlobalRef(mainobj);
     mainobj = env->NewGlobalRef(obj);
 
     static bool firstcall = true;
@@ -1424,6 +1431,7 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeCreate(JNIEnv* env, jobject obj)
 {
     // save obj for calling Java methods in this instance of HelpActivity
+    if (helpobj != NULL) env->DeleteGlobalRef(helpobj);
     helpobj = env->NewGlobalRef(obj);
 }
 
@@ -1677,61 +1685,43 @@ void UpdateEditBar()
 
 void BeginProgress(const char* title)
 {
-    /* not yet implemented!!!
-    if (progresscount == 0) {
-        // disable interaction with all views but don't show progress view just yet
-        [globalController enableInteraction:NO];
-        [globalTitle setText:[NSString stringWithCString:title encoding:NSUTF8StringEncoding]];
-        cancelProgress = false;
-        progstart = TimeInSeconds();
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jstring jtitle = env->NewStringUTF(title);
+        env->CallVoidMethod(mainobj, main_BeginProgress, jtitle);
+        env->DeleteLocalRef(jtitle);
     }
-    progresscount++;    // handles nested calls
-    */
+    if (attached) javavm->DetachCurrentThread();
 }
 
 // -----------------------------------------------------------------------------
 
 bool AbortProgress(double fraction_done, const char* message)
 {
-    /* not yet implemented!!!
-    if (progresscount <= 0) Fatal("Bug detected in AbortProgress!");
-    double secs = TimeInSeconds() - progstart;
-    if (!globalProgress.hidden) {
-        if (secs < prognext) return false;
-        prognext = secs + 0.1;     // update progress bar about 10 times per sec
-        if (fraction_done < 0.0) {
-            // show indeterminate progress gauge???
-        } else {
-            [globalController updateProgressBar:fraction_done];
-        }
-        return cancelProgress;
-    } else {
-        // note that fraction_done is not always an accurate estimator for how long
-        // the task will take, especially when we use nextcell for cut/copy
-        if ( (secs > 1.0 && fraction_done < 0.3) || secs > 2.0 ) {
-            // task is probably going to take a while so show progress view
-            globalProgress.hidden = NO;
-            [globalController updateProgressBar:fraction_done];
-        }
-        prognext = secs + 0.01;     // short delay until 1st progress update
+    bool result = true;     // abort if getJNIenv fails
+
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) {
+        jint percentage = int(fraction_done * 100);
+        jstring jmsg = env->NewStringUTF(message);
+        result = env->CallBooleanMethod(mainobj, main_AbortProgress, percentage, jmsg);
+        env->DeleteLocalRef(jmsg);
     }
-    */
-    return false;
+    if (attached) javavm->DetachCurrentThread();
+
+    return result;
 }
 
 // -----------------------------------------------------------------------------
 
 void EndProgress()
 {
-    /* not yet implemented!!!
-    if (progresscount <= 0) Fatal("Bug detected in EndProgress!");
-    progresscount--;
-    if (progresscount == 0) {
-        // hide the progress view and enable interaction with other views
-        globalProgress.hidden = YES;
-        [globalController enableInteraction:YES];
-    }
-    */
+    bool attached;
+    JNIEnv* env = getJNIenv(&attached);
+    if (env) env->CallVoidMethod(mainobj, main_EndProgress);
+    if (attached) javavm->DetachCurrentThread();
 }
 
 // -----------------------------------------------------------------------------
@@ -1765,7 +1755,6 @@ void ShowTextFile(const char* filepath)
 void ShowHelp(const char* filepath)
 {
     // switch to HelpActivity and display html file
-    // LOGI("ShowHelp: %s", filepath);
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
@@ -1781,6 +1770,10 @@ void ShowHelp(const char* filepath)
 void AndroidWarning(const char* msg)
 {
     if (generating) paused = true;
+
+    // need to figure out what to do if current activity isn't MainActivity!!!
+    // (eg. if .py zip entry is tapped while in HelpActivity)
+    // ditto for AndroidFatal and AndroidYesNo
 
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
@@ -1888,7 +1881,7 @@ bool AndroidMoveFile(const std::string& inpath, const std::string& outpath)
 void AndroidFixURLPath(std::string& path)
 {
     // replace "%..." with suitable chars for a file path (eg. %20 is changed to space)
-    LOGE("AndroidFixURLPath: %s", path.c_str());
+    // LOGI("AndroidFixURLPath: %s", path.c_str());
 
     // no need to do anything???!!!
 }

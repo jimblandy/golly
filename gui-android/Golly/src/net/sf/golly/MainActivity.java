@@ -58,7 +58,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -155,7 +157,19 @@ public class MainActivity extends Activity {
     private MenuItem curritem;                      // current menu item parameter
     private boolean stopped = true;                 // generating is stopped?
     private boolean fullscreen = false;             // in full screen mode?
+    private PopupMenu popup;                        // used for all pop-up menus
+
+    // -----------------------------------------------------------------------------
     
+    // this stuff is used to display a progress bar:
+    
+    private static boolean cancelProgress = false;  // cancel progress dialog?
+    private static long progstart, prognext;        // for progress timing
+    private static int progresscount = 0;           // if > 0 then BeginProgress has been called
+    private TextView progtitle;                     // title above progress bar
+    private ProgressBar progbar;                    // progress bar
+    private LinearLayout proglayout;                // view containing progress bar
+
     // -----------------------------------------------------------------------------
     
     // this stuff is used in other activities:
@@ -236,6 +250,9 @@ public class MainActivity extends Activity {
         status1 = (TextView) findViewById(R.id.status1);
         status2 = (TextView) findViewById(R.id.status2);
         status3 = (TextView) findViewById(R.id.status3);
+        progbar = (ProgressBar) findViewById(R.id.progress_bar);
+        proglayout = (LinearLayout) findViewById(R.id.progress_layout);
+        progtitle = (TextView) findViewById(R.id.progress_title);
 
         if (firstcall) {
             firstcall = false;
@@ -250,6 +267,8 @@ public class MainActivity extends Activity {
         restorebutton.setVisibility(View.INVISIBLE);
         fullscreen = false;
         nativeSetFullScreen(fullscreen);
+        
+        proglayout.setVisibility(LinearLayout.INVISIBLE);
         
         // check for messages sent by other activities
         Intent intent = getIntent();
@@ -543,7 +562,7 @@ public class MainActivity extends Activity {
     public void doControl(View view) {
         nativeClearMessage();
         // display pop-up menu with these items: Step=1, Faster, Slower, Reset
-        PopupMenu popup = new PopupMenu(this, view);
+        popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
         inflater.inflate(R.menu.control_menu, popup.getMenu());
         popup.show();
@@ -557,6 +576,7 @@ public class MainActivity extends Activity {
             stopIfGenerating();
             if (callAgainAfterDelay("doReset", null, item)) return;
         }
+        popup.dismiss();
         switch (item.getItemId()) {
             case R.id.step1:  nativeStep1(); break;
             case R.id.faster: nativeFaster(); break;
@@ -587,7 +607,7 @@ public class MainActivity extends Activity {
     public void doView(View view) {
         nativeClearMessage();
         // display pop-up menu with these items: Scale=1:1, Bigger, Smaller, Middle
-        PopupMenu popup = new PopupMenu(this, view);
+        popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
         inflater.inflate(R.menu.view_menu, popup.getMenu());
         popup.show();
@@ -597,6 +617,7 @@ public class MainActivity extends Activity {
     
     // called when item from view_menu is selected
     public void doViewItem(MenuItem item) {
+        popup.dismiss();
         switch (item.getItemId()) {
             case R.id.scale1to1: nativeScale1to1(); break;
             case R.id.bigger:    nativeBigger(); break;
@@ -635,7 +656,7 @@ public class MainActivity extends Activity {
     public void doEditPaste(View view) {
         nativeClearMessage();
         // display pop-up menu with items that depend on whether a selection or paste image exists
-        PopupMenu popup = new PopupMenu(this, view);
+        popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
         if (nativePasteExists()) {
             Menu menu = popup.getMenu();
@@ -670,6 +691,7 @@ public class MainActivity extends Activity {
             stopIfGenerating();
             if (callAgainAfterDelay("doPaste", null, item)) return;
         }
+        popup.dismiss();
         switch (item.getItemId()) {
             case R.id.paste: nativePaste(); break;
             case R.id.all:   nativeSelectAll(); break;
@@ -695,6 +717,7 @@ public class MainActivity extends Activity {
             }
             if (callAgainAfterDelay("doSelItem", null, item)) return;
         }
+        popup.dismiss();
         switch (item.getItemId()) {
             // let doEditItem handle the top 2 items:
             // case R.id.paste: nativePaste(); break;
@@ -723,6 +746,7 @@ public class MainActivity extends Activity {
     
     // called when item from paste_menu is selected
     public void doPasteItem(MenuItem item) {
+        popup.dismiss();
         switch (item.getItemId()) {
             case R.id.abort:     nativeAbortPaste(); break;
             case R.id.pastemode: nativeDoPaste(0); break;
@@ -743,7 +767,7 @@ public class MainActivity extends Activity {
     public void doSetTouchMode(View view) {
         nativeClearMessage();
         // display pop-up menu with these items: Draw, Pick, Select, Move
-        PopupMenu popup = new PopupMenu(this, view);
+        popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
         inflater.inflate(R.menu.mode_menu, popup.getMenu());
         popup.show();
@@ -753,6 +777,7 @@ public class MainActivity extends Activity {
     
     // called when item from mode_menu is selected
     public void doModeItem(MenuItem item) {
+        popup.dismiss();
         switch (item.getItemId()) {
             case R.id.draw:   nativeSetMode(0); break;
             case R.id.pick:   nativeSetMode(1); break;
@@ -1200,6 +1225,71 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, HelpActivity.class);
         intent.putExtra(HelpActivity.SHOWHELP_MESSAGE, filepath);
         startActivity(intent);
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void BeginProgress(String title) {
+        if (progresscount == 0) {
+            // can we disable interaction with all views outside proglayout!!!???
+            progtitle.setText(title);
+            progbar.setProgress(0);
+            // proglayout.setVisibility(LinearLayout.VISIBLE);
+            cancelProgress = false;
+            progstart = System.nanoTime();
+        }
+        progresscount++;    // handles nested calls
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private boolean AbortProgress(int percentage, String message) {
+        if (progresscount <= 0) Fatal("Bug detected in AbortProgress!");
+        long nanosecs = System.nanoTime() - progstart;
+        if (proglayout.getVisibility() == LinearLayout.VISIBLE) {
+            if (nanosecs < prognext) return false;
+            prognext = nanosecs + 100000000L;     // update progress bar about 10 times per sec
+            updateProgressBar(percentage);
+            return cancelProgress;
+        } else {
+            // note that percentage is not always an accurate estimator for how long
+            // the task will take, especially when we use nextcell for cut/copy
+            if ( (nanosecs > 1000000000L && percentage < 30) || nanosecs > 2000000000L ) {
+                // task is probably going to take a while so show progress bar
+                proglayout.setVisibility(LinearLayout.VISIBLE);
+                updateProgressBar(percentage);
+            }
+            prognext = nanosecs + 10000000L;     // 0.01 sec delay until 1st progress update
+        }
+        return false;
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    private void updateProgressBar(int percentage) {
+        if (percentage < 0 || percentage > 100) return;
+        progbar.setProgress(percentage);
+        CheckMessageQueue();
+    }
+    
+    // -----------------------------------------------------------------------------
+
+    // this method is called from C++ code (see jnicalls.cpp)
+    private void EndProgress() {
+        if (progresscount <= 0) Fatal("Bug detected in EndProgress!");
+        progresscount--;
+        if (progresscount == 0) {
+            proglayout.setVisibility(LinearLayout.INVISIBLE);
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+
+    // called when the Cancel button is tapped
+    public void doCancel(View view) {
+        cancelProgress = true;
     }
 
 } // MainActivity class

@@ -85,7 +85,7 @@
                 android:text="Cancel"
                 android:onClick="doCancel"
             />
-            </LinearLayout>
+        </LinearLayout>
     </RelativeLayout>
 
 </LinearLayout>
