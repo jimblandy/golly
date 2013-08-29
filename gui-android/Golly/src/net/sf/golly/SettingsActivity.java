@@ -24,7 +24,6 @@
 
 package net.sf.golly;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
@@ -38,7 +37,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends BaseActivity {
 
     // see jnicalls.cpp for these native routines:
     private native void nativeOpenSettings();

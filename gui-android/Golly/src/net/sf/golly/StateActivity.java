@@ -25,9 +25,8 @@
 package net.sf.golly;
 
 import android.os.Bundle;
-import android.app.Activity;
 
-public class StateActivity extends Activity {
+public class StateActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

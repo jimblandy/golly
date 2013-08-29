@@ -30,7 +30,6 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -46,7 +45,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-public class OpenActivity extends Activity {
+public class OpenActivity extends BaseActivity {
 
     // see jnicalls.cpp for these native routines:
     private native String nativeGetRecentPatterns();

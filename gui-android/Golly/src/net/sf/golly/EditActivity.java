@@ -46,7 +46,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-public class EditActivity extends Activity {
+public class EditActivity extends BaseActivity {
     
     public final static String EDITFILE_MESSAGE = "net.sf.golly.EDITFILE";
     

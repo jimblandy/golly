@@ -36,7 +36,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -53,7 +52,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-public class HelpActivity extends Activity {
+public class HelpActivity extends BaseActivity {
 
     // see jnicalls.cpp for these native routines:
     private static native void nativeClassInit();   // this MUST be static
@@ -111,11 +110,6 @@ public class HelpActivity extends Activity {
                 return true;
             }
             if (url.startsWith("unzip:")) {
-                // we switch back to MainActivity to avoid weird crash in OnResume if user
-                // tapped link to text file (resulting in InfoActivity starting up)
-                Intent intent = new Intent(HelpActivity.this, MainActivity.class);
-                startActivity(intent);
-
                 nativeUnzipFile(url.substring(6));
                 return true;
             }
@@ -239,22 +233,10 @@ public class HelpActivity extends Activity {
             // pageurl has now been initialized
         }
     }
-    
+
     // -----------------------------------------------------------------------------
 
     private static Bundle webbundle = null;
-    
-    @Override
-    protected void onPause() {
-        super.onPause();
-        gwebview.onPause();
-
-        // save scroll position and back/forward history
-        if (webbundle == null) webbundle = new Bundle();
-        gwebview.saveState(webbundle);
-    }
-
-    // -----------------------------------------------------------------------------
 
     @Override
     protected void onResume() {
@@ -274,6 +256,18 @@ public class HelpActivity extends Activity {
         } else {
             gwebview.reload();
         }
+    }
+    
+    // -----------------------------------------------------------------------------
+    
+    @Override
+    protected void onPause() {
+        // save scroll position and back/forward history
+        if (webbundle == null) webbundle = new Bundle();
+        gwebview.saveState(webbundle);
+
+        gwebview.onPause();
+        super.onPause();
     }
 
     // -----------------------------------------------------------------------------
@@ -442,7 +436,7 @@ public class HelpActivity extends Activity {
     
     // -----------------------------------------------------------------------------
 
-    private static String dresult;
+    private String dresult;
     
     // this method is called from C++ code (see jnicalls.cpp)
     private String DownloadFile(String urlstring, String filepath) {

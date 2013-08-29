@@ -30,7 +30,6 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -51,7 +50,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.TextView.OnEditorActionListener;
 
-public class RuleActivity extends Activity {
+public class RuleActivity extends BaseActivity {
 
     // see jnicalls.cpp for these native routines:
     private native void nativeSaveCurrentSelection();

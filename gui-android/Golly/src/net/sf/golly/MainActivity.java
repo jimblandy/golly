@@ -33,7 +33,6 @@ import java.io.InputStreamReader;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -64,7 +63,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-public class MainActivity extends Activity {
+public class MainActivity extends BaseActivity {
 
     // see jnicalls.cpp for these native routines:
     private static native void nativeClassInit();   // this MUST be static
@@ -857,7 +856,6 @@ public class MainActivity extends Activity {
         if (callAgainAfterDelay("doSave", view, null)) return;
         
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
         alert.setTitle("Save current pattern");
         alert.setMessage("Valid file name extensions are\n" + nativeGetValidExtensions());
         
@@ -1054,7 +1052,8 @@ public class MainActivity extends Activity {
             } 
         };
         
-        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        // note that MainActivity might not be the current foreground activity
+        AlertDialog.Builder alert = new AlertDialog.Builder(getForegroundActivity());
         alert.setTitle("Warning");
         alert.setMessage(msg);
         alert.setNegativeButton("CANCEL",
@@ -1081,7 +1080,8 @@ public class MainActivity extends Activity {
             } 
         };
         
-        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        // note that MainActivity might not be the current foreground activity
+        AlertDialog.Builder alert = new AlertDialog.Builder(getForegroundActivity());
         alert.setTitle("Fatal error!");
         alert.setMessage(msg);
         alert.setNegativeButton("QUIT",
@@ -1112,7 +1112,8 @@ public class MainActivity extends Activity {
             } 
         };
         
-        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        // note that MainActivity might not be the current foreground activity
+        AlertDialog.Builder alert = new AlertDialog.Builder(getForegroundActivity());
         alert.setTitle("A question...");
         alert.setMessage(query);
         alert.setPositiveButton("YES",
@@ -1212,8 +1213,16 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             filecontents = "Error reading file:\n" + e.toString();
         }
+        
+        // fix crash (after InfoActivity finishes) if current activity is HelpActivity
+        if (this != getForegroundActivity()) {
+            // force HelpActivity's OnCreate method to be called before starting InfoActivity
+            Intent intent = new Intent(getForegroundActivity(), HelpActivity.class);
+            startActivity(intent);
+        }
+        
         // display file contents
-        Intent intent = new Intent(this, InfoActivity.class);
+        Intent intent = new Intent(getForegroundActivity(), InfoActivity.class);
         intent.putExtra(InfoActivity.INFO_MESSAGE, filecontents);
         startActivity(intent);
     }
