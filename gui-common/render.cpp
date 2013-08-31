@@ -92,7 +92,7 @@ static wxBitmap* layerbitmap = NULL;    // layer bitmap
 
 // -----------------------------------------------------------------------------
 
-void FillRect(int x, int y, int wd, int ht)
+static void FillRect(int x, int y, int wd, int ht)
 {
     GLfloat rect[] = {
         x,    y+ht,  // left, bottom

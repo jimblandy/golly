@@ -74,6 +74,135 @@ static bool paused = false;             // generating has been paused?
 
 // -----------------------------------------------------------------------------
 
+// XPM data for digits 0 to 9 where each digit is a 10x10 icon
+// so we can use CreateIconBitmaps
+
+static const char* digits[] = {
+/* width height ncolors chars_per_pixel */
+"10 100 16 1",
+/* colors */
+"A c #FFFFFF",
+"B c #EEEEEE",
+"C c #DDDDDD",
+"D c #CCCCCC",
+"E c #BBBBBB",
+"F c #AAAAAA",
+"G c #999999",
+"H c #888888",
+"I c #777777",
+"J c #666666",
+"K c #555555",
+"L c #444444",
+"M c #333333",
+"N c #222222",
+"O c #111111",
+". c #000000",    // black will be transparent
+/* pixels */
+"AAAAAA....",
+"AGMMBA....",
+"CMBFKA....",
+"HIAAOA....",
+"JFAANB....",
+"IFAANA....",
+"FJACLA....",
+"ALLODA....",
+"AACAAA....",
+"AAAAAA....",
+"AAAAAA....",
+"AAFIAA....",
+"AIOIAA....",
+"AGKIAA....",
+"AAGIAA....",
+"AAGIAA....",
+"AAGIAA....",
+"AAGIAA....",
+"AAAAAA....",
+"AAAAAA....",
+"AAAAAA....",
+"AINLFA....",
+"EMADNA....",
+"FGAAOB....",
+"AABIJA....",
+"AEMGAA....",
+"ELAAAA....",
+"IONMNB....",
+"AAAAAA....",
+"AAAAAA....",
+"AAAAAA....",
+"AKNLDA....",
+"FKAGJA....",
+"FDAELA....",
+"AAJOFA....",
+"BAAEOA....",
+"IFABNA....",
+"CMLLFA....",
+"AABBAA....",
+"AAAAAA....",
+"AAAAAA....",
+"AABNDA....",
+"AAJODA....",
+"AEKLDA....",
+"BMBKDA....",
+"KIFMHB....",
+"EFGMHB....",
+"AAAKDA....",
+"AAAAAA....",
+"AAAAAA....",
+"AAAAAA....",
+"ANNNKA....",
+"BLBBBA....",
+"DJCBAA....",
+"FNJLHA....",
+"ABABNB....",
+"FFABMA....",
+"CMKLFA....",
+"AABAAA....",
+"AAAAAA....",
+"AAAAAA....",
+"AFLMFA....",
+"BMBCMA....",
+"GICBCA....",
+"IMKMHA....",
+"IJAANB....",
+"GJAANA....",
+"AJLLFA....",
+"AABAAA....",
+"AAAAAA....",
+"AAAAAA....",
+"JNNNND....",
+"BCCEMB....",
+"AAAKEA....",
+"AAEKAA....",
+"AAMCAA....",
+"ADLAAA....",
+"AHHAAA....",
+"AAAAAA....",
+"AAAAAA....",
+"AAAAAA....",
+"AINLDA....",
+"DMAGKA....",
+"EKADLA....",
+"BMNOFA....",
+"HJADNA....",
+"HHAANB....",
+"BMLLGA....",
+"AACAAA....",
+"AAAAAA....",
+"AAAAAA....",
+"AINLBA....",
+"FKBGKA....",
+"IGABNA....",
+"FJBFOB....",
+"AGKIMA....",
+"EFADKA....",
+"CLKMCA....",
+"AABAAA....",
+"AAAAAA...."};
+
+static gBitmapPtr* digits10x10;    // digit bitmaps for displaying state numbers
+
+// -----------------------------------------------------------------------------
+
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     JNIEnv* env;
@@ -230,6 +359,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, 
         AddLayer();                 // create initial layer (sets currlayer)
         NewPattern();               // create new, empty universe
         UpdateStatus();             // show initial message
+
+        digits10x10 = CreateIconBitmaps(digits,11);     // 1st "digit" is not used
     }
 }
 
@@ -1048,7 +1179,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeTouchEnded(J
 
 // -----------------------------------------------------------------------------
 
-// called to initialize the graphics state
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
 {
@@ -1072,7 +1202,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeResize(JNIEnv* env, jobject obj, jint w, jint h)
 {
-    // LOGI("resize w=%d h=%d", w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrthof(0, w, h, 0, -1, 1);     // origin is top left and y increases down
@@ -1502,6 +1631,339 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_HelpActivity_nativeDownloadedFile(JNIEn
         return true;
     } else {
         return false;
+    }
+}
+
+// =============================================================================
+
+// these native routines are used in StateActivity.java:
+
+extern "C"
+JNIEXPORT int JNICALL Java_net_sf_golly_StateActivity_nativeNumStates(JNIEnv* env)
+{
+    return currlayer->algo->NumCellStates();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateActivity_nativeShowIcons()
+{
+    return showicons;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_StateActivity_nativeToggleIcons()
+{
+    showicons = !showicons;
+    UpdatePattern();
+    UpdateEditBar();
+}
+
+// =============================================================================
+
+// these native routines are used in StateGLSurfaceView.java:
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchBegan(JNIEnv* env, jobject obj, jint x, jint y)
+{
+    //!!!???
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchMoved(JNIEnv* env, jobject obj, jint x, jint y)
+{
+    //!!!???
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchEnded(JNIEnv* env)
+{
+    //!!!???
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env)
+{
+    // we only do 2D drawing
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DITHER);
+    glDisable(GL_TEXTURE_2D);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glDisable(GL_BLEND);
+}
+
+// -----------------------------------------------------------------------------
+
+static int statewd, stateht;
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeResize(JNIEnv* env, jobject obj, jint w, jint h)
+{
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrthof(0, w, h, 0, -1, 1);     // origin is top left and y increases down
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_MODELVIEW);
+
+    statewd = w;
+    stateht = h;
+}
+
+// -----------------------------------------------------------------------------
+
+static void DrawGrid(int wd, int ht)
+{
+    int cellsize = 32;
+    int h, v;
+
+    // set the stroke color to white
+    glColor4ub(255, 255, 255, 255);
+    glLineWidth(1.0);
+
+    v = 1;
+    while (v <= ht) {
+        GLfloat points[] = {-0.5, v-0.5, wd-0.5, v-0.5};
+        glVertexPointer(2, GL_FLOAT, 0, points);
+        glDrawArrays(GL_LINES, 0, 2);
+        v += cellsize;
+    }
+
+    h = 1;
+    while (h <= wd) {
+        GLfloat points[] = {h-0.5, -0.5, h-0.5, ht-0.5};
+        glVertexPointer(2, GL_FLOAT, 0, points);
+        glDrawArrays(GL_LINES, 0, 2);
+        h += cellsize;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void DrawRect(int state, int x, int y, int wd, int ht)
+{
+    GLfloat rect[] = {
+        x,    y+ht,  // left, bottom
+        x+wd, y+ht,  // right, bottom
+        x+wd, y,     // right, top
+        x,    y,     // left, top
+    };
+
+    glColor4ub(currlayer->cellr[state],
+               currlayer->cellg[state],
+               currlayer->cellb[state], 255);
+
+    glVertexPointer(2, GL_FLOAT, 0, rect);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+// -----------------------------------------------------------------------------
+
+static void DrawIcon(int state, int x, int y)
+{
+    unsigned char** iconpixels = currlayer->iconpixels31x31;
+    if (iconpixels[state] == NULL) return;
+
+    int cellsize = 31;
+    const int maxcoords = 1024;     // must be multiple of 2
+    GLfloat points[maxcoords];
+    int numcoords = 0;
+    bool multicolor = currlayer->multicoloricons;
+
+    glPointSize(1);
+
+    unsigned char deadr = currlayer->cellr[0];
+    unsigned char deadg = currlayer->cellg[0];
+    unsigned char deadb = currlayer->cellb[0];
+    unsigned char prevr = deadr;
+    unsigned char prevg = deadg;
+    unsigned char prevb = deadb;
+    glColor4ub(deadr, deadg, deadb, 255);
+
+    // draw non-black pixels in this icon
+    unsigned char liver = currlayer->cellr[state];
+    unsigned char liveg = currlayer->cellg[state];
+    unsigned char liveb = currlayer->cellb[state];
+    unsigned char* pxldata = iconpixels[state];
+    int byte = 0;
+    for (int i = 0; i < cellsize; i++) {
+        for (int j = 0; j < cellsize; j++) {
+            unsigned char r = pxldata[byte++];
+            unsigned char g = pxldata[byte++];
+            unsigned char b = pxldata[byte++];
+            byte++; // skip alpha
+            if (r || g || b) {
+                if (multicolor) {
+                    // draw non-black pixel from multi-colored icon
+                    if (swapcolors) {
+                        r = 255 - r;
+                        g = 255 - g;
+                        b = 255 - b;
+                    }
+                } else {
+                    // grayscale icon
+                    if (r == 255) {
+                        // replace white pixel with current cell color
+                        r = liver;
+                        g = liveg;
+                        b = liveb;
+                    } else {
+                        // replace gray pixel with appropriate shade between
+                        // live and dead cell colors
+                        float frac = (float)r / 255.0;
+                        r = (int)(deadr + frac * (liver - deadr) + 0.5);
+                        g = (int)(deadg + frac * (liveg - deadg) + 0.5);
+                        b = (int)(deadb + frac * (liveb - deadb) + 0.5);
+                    }
+                }
+                // draw r,g,b pixel
+                bool changecolor = (r != prevr || g != prevg || b != prevb);
+                if (changecolor || numcoords == maxcoords) {
+                    if (numcoords > 0) {
+                        glVertexPointer(2, GL_FLOAT, 0, points);
+                        glDrawArrays(GL_POINTS, 0, numcoords/2);
+                        numcoords = 0;
+                    }
+                    if (changecolor) {
+                        prevr = r;
+                        prevg = g;
+                        prevb = b;
+                        glColor4ub(r, g, b, 255);
+                    }
+                }
+                points[numcoords++] = x + j + 0.5;
+                points[numcoords++] = y + i + 0.5;
+            }
+        }
+    }
+
+    if (numcoords > 0) {
+        glVertexPointer(2, GL_FLOAT, 0, points);
+        glDrawArrays(GL_POINTS, 0, numcoords/2);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void DrawDigit(int digit, int x, int y)
+{
+    unsigned char* pxldata = digits10x10[digit+1]->pxldata;
+    int cellsize = 10;
+    const int maxcoords = 128;     // must be multiple of 2
+    GLfloat points[maxcoords];
+    int numcoords = 0;
+
+    glPointSize(1);
+
+    unsigned char deadr = currlayer->cellr[0];
+    unsigned char deadg = currlayer->cellg[0];
+    unsigned char deadb = currlayer->cellb[0];
+    unsigned char prevr = deadr;
+    unsigned char prevg = deadg;
+    unsigned char prevb = deadb;
+    glColor4ub(deadr, deadg, deadb, 255);
+
+    // draw non-black pixels in this icon
+    int byte = 0;
+    for (int i = 0; i < cellsize; i++) {
+        for (int j = 0; j < cellsize; j++) {
+            unsigned char r = pxldata[byte++];
+            unsigned char g = pxldata[byte++];
+            unsigned char b = pxldata[byte++];
+            byte++; // skip alpha
+            if (r || g || b) {
+                // draw non-black pixel
+                bool changecolor = (r != prevr || g != prevg || b != prevb);
+                if (changecolor || numcoords == maxcoords) {
+                    if (numcoords > 0) {
+                        glVertexPointer(2, GL_FLOAT, 0, points);
+                        glDrawArrays(GL_POINTS, 0, numcoords/2);
+                        numcoords = 0;
+                    }
+                    if (changecolor) {
+                        prevr = r;
+                        prevg = g;
+                        prevb = b;
+                        glColor4ub(r, g, b, 255);
+                    }
+                }
+                points[numcoords++] = x + j + 0.5;
+                points[numcoords++] = y + i + 0.5;
+            }
+        }
+    }
+
+    if (numcoords > 0) {
+        glVertexPointer(2, GL_FLOAT, 0, points);
+        glDrawArrays(GL_POINTS, 0, numcoords/2);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void DrawStateNumber(int state, int x, int y)
+{
+    // overlay state number in top left corner of each cell
+    if (state < 10) {
+        // state = 1..9
+        DrawDigit(state, x, y);
+    } else if (state < 100) {
+        // state = 10..99
+        DrawDigit(state / 10, x, y);
+        DrawDigit(state % 10, x + 6, y);
+    } else {
+        // state = 100..255
+        DrawDigit(state / 100, x, y);
+        DrawDigit((state / 10) % 10, x + 6, y);
+        DrawDigit(state % 100, x + 12, y);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeRender(JNIEnv* env)
+{
+    // fill the background with state 0 color
+    glClearColor(currlayer->cellr[0]/255.0,
+                 currlayer->cellg[0]/255.0,
+                 currlayer->cellb[0]/255.0,
+                 255.0);                        // fix 0.0 in render.c???!!! (if so, test iGolly also!!!)
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    DrawGrid(statewd, stateht);
+
+    // display state colors or icons
+    int numstates = currlayer->algo->NumCellStates();
+    int x = 33; // start with state 1
+    int y = 1;
+
+    // allow for row offset if numstates > 100
+    //!!!
+
+    DrawStateNumber(0, 1, 1);
+
+    for (int state = 1; state < numstates; state++) {
+        if (showicons) {
+            DrawIcon(state, x, y);
+        } else {
+            DrawRect(state, x, y, 31, 31);
+        }
+        DrawStateNumber(state, x, y);
+        x += 32;
+        if (x > 320) {
+            x = 1;
+            y += 32;
+            if (y > 320) break;
+        }
     }
 }
 

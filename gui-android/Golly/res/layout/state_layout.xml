@@ -1,11 +1,25 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:paddingTop="10sp"
+    android:paddingLeft="10sp"
+    android:paddingRight="10sp"
+    android:background="#808080"
+    android:orientation="vertical" >
 
-    <TextView
+    <net.sf.golly.StateGLSurfaceView
+        android:id="@+id/stateview"
+        android:layout_width="321px"
+        android:layout_height="321px"
+    />
+    <CheckBox android:id="@+id/icons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Show icons"
+        android:onClick="doToggleIcons"
     />
-
-</RelativeLayout>
+    
+</LinearLayout>

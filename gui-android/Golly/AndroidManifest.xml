@@ -68,8 +68,7 @@
         </activity>
         <activity
             android:theme="@android:style/Theme.Holo.Dialog"
-            android:name="net.sf.golly.StateActivity"
-            android:label="Change State" >
+            android:name="net.sf.golly.StateActivity" >
         </activity>
     </application>
 

@@ -33,28 +33,26 @@ import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
-// this class must be public so it can be used in main_layout.xml
+//this class must be public so it can be used in state_layout.xml
 
-public class PatternGLSurfaceView extends GLSurfaceView {
+public class StateGLSurfaceView extends GLSurfaceView {
 
-	// see jnicalls.cpp for these native routines:
+    // see jnicalls.cpp for these native routines:
     private native void nativeTouchBegan(int x, int y);
     private native void nativeTouchMoved(int x, int y);
     private native void nativeTouchEnded();
-    private native void nativePause();
-    private native void nativeResume();
 
-	private PatternRenderer mRenderer;
+    private StateRenderer mRenderer;
     private static final int INVALID_POINTER_ID = -1;
     private int mActivePointerId = INVALID_POINTER_ID;
 
     // -----------------------------------------------------------------------------
 
-	public PatternGLSurfaceView(Context context, AttributeSet attrs) {
+    public StateGLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         super.setEGLConfigChooser(8, 8, 8, 8, 0/*no depth*/, 0);
-        getHolder().setFormat(PixelFormat.RGBA_8888);	// avoid crash on some devices
-        mRenderer = new PatternRenderer();
+        getHolder().setFormat(PixelFormat.RGBA_8888);   // avoid crash on some devices
+        mRenderer = new StateRenderer();
         setRenderer(mRenderer);
         setRenderMode(RENDERMODE_WHEN_DIRTY);
     }
@@ -64,72 +62,56 @@ public class PatternGLSurfaceView extends GLSurfaceView {
     public boolean onTouchEvent(final MotionEvent ev) {
         final int action = ev.getAction();
         switch (action & MotionEvent.ACTION_MASK) {
-	        case MotionEvent.ACTION_DOWN: {
-	            final float x = ev.getX();
-	            final float y = ev.getY();
-	            mActivePointerId = ev.getPointerId(0);
-	            nativeTouchBegan((int)x, (int)y);
-	            break;
-	        }
-	            
-	        case MotionEvent.ACTION_MOVE: {
-	            final int pointerIndex = ev.findPointerIndex(mActivePointerId);
-	            final float x = ev.getX(pointerIndex);
-	            final float y = ev.getY(pointerIndex);
-	            nativeTouchMoved((int)x, (int)y);
-	            break;
-	        }
-	            
-	        case MotionEvent.ACTION_UP: {
-	            mActivePointerId = INVALID_POINTER_ID;
-	            nativeTouchEnded();
-	            break;
-	        }
-	            
-	        case MotionEvent.ACTION_CANCEL: {
-	            mActivePointerId = INVALID_POINTER_ID;
-	            nativeTouchEnded();
-	            break;
-	        }
-	        
-	        case MotionEvent.ACTION_POINTER_UP: {
-	            final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK)
-	                    					               >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
-	            final int pointerId = ev.getPointerId(pointerIndex);
-	            if (pointerId == mActivePointerId) {
-	                // this was our active pointer going up
-	            	nativeTouchEnded();
-	            }
-	            break;
-	        }
+            case MotionEvent.ACTION_DOWN: {
+                final float x = ev.getX();
+                final float y = ev.getY();
+                mActivePointerId = ev.getPointerId(0);
+                nativeTouchBegan((int)x, (int)y);
+                break;
+            }
+
+            case MotionEvent.ACTION_MOVE: {
+                final int pointerIndex = ev.findPointerIndex(mActivePointerId);
+                final float x = ev.getX(pointerIndex);
+                final float y = ev.getY(pointerIndex);
+                nativeTouchMoved((int)x, (int)y);
+                break;
+            }
+                 
+            case MotionEvent.ACTION_UP: {
+                mActivePointerId = INVALID_POINTER_ID;
+                nativeTouchEnded();
+                break;
+            }
+
+            case MotionEvent.ACTION_CANCEL: {
+                mActivePointerId = INVALID_POINTER_ID;
+                nativeTouchEnded();
+                break;
+            }
+
+            case MotionEvent.ACTION_POINTER_UP: {
+                final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK)
+                                                           >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+                final int pointerId = ev.getPointerId(pointerIndex);
+                if (pointerId == mActivePointerId) {
+                    // this was our active pointer going up
+                    nativeTouchEnded();
+                }
+                break;
+            }
         }
-        
+
         return true;
     }
 
-    // -----------------------------------------------------------------------------
+} // StateGLSurfaceView class
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        nativePause();
-    }
+//=================================================================================
 
-    // -----------------------------------------------------------------------------
+class StateRenderer implements GLSurfaceView.Renderer {
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        nativeResume();
-    }
-
-} // PatternGLSurfaceView class
-
-// =================================================================================
-
-class PatternRenderer implements GLSurfaceView.Renderer {
-
-	// see jnicalls.cpp for these native routines:
+    // see jnicalls.cpp for these native routines:
     private native void nativeInit();
     private native void nativeResize(int w, int h);
     private native void nativeRender();
@@ -152,4 +134,4 @@ class PatternRenderer implements GLSurfaceView.Renderer {
         nativeRender();
     }
 
-} // PatternRenderer class
+} // StateRenderer class
