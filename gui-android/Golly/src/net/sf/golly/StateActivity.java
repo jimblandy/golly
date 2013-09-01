@@ -51,6 +51,7 @@ public class StateActivity extends BaseActivity {
         
         // this will call the PatternGLSurfaceView constructor
         stateView = (StateGLSurfaceView) findViewById(R.id.stateview);
+        stateView.setCallerActivity(this);
         
         stateView.setZOrderOnTop(true);     // avoids this GL surface being darkened like PatternGLSurfaceView
         

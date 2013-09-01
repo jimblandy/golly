@@ -27,10 +27,12 @@ package net.sf.golly;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 
 //this class must be public so it can be used in state_layout.xml
@@ -40,11 +42,13 @@ public class StateGLSurfaceView extends GLSurfaceView {
     // see jnicalls.cpp for these native routines:
     private native void nativeTouchBegan(int x, int y);
     private native void nativeTouchMoved(int x, int y);
-    private native void nativeTouchEnded();
+    private native boolean nativeTouchEnded();
 
     private StateRenderer mRenderer;
     private static final int INVALID_POINTER_ID = -1;
     private int mActivePointerId = INVALID_POINTER_ID;
+    
+    private Activity caller;
 
     // -----------------------------------------------------------------------------
 
@@ -55,6 +59,13 @@ public class StateGLSurfaceView extends GLSurfaceView {
         mRenderer = new StateRenderer();
         setRenderer(mRenderer);
         setRenderMode(RENDERMODE_WHEN_DIRTY);
+    }
+
+    // -----------------------------------------------------------------------------
+
+    public void setCallerActivity(Activity activity) {
+        // set caller so we can finish StateActivity
+        caller = activity;
     }
 
     // -----------------------------------------------------------------------------
@@ -71,16 +82,22 @@ public class StateGLSurfaceView extends GLSurfaceView {
             }
 
             case MotionEvent.ACTION_MOVE: {
-                final int pointerIndex = ev.findPointerIndex(mActivePointerId);
-                final float x = ev.getX(pointerIndex);
-                final float y = ev.getY(pointerIndex);
-                nativeTouchMoved((int)x, (int)y);
+                if (mActivePointerId != INVALID_POINTER_ID) {
+                    final int pointerIndex = ev.findPointerIndex(mActivePointerId);
+                    final float x = ev.getX(pointerIndex);
+                    final float y = ev.getY(pointerIndex);
+                    nativeTouchMoved((int)x, (int)y);
+                    // states might have scrolled
+                    requestRender();
+                }
                 break;
             }
                  
             case MotionEvent.ACTION_UP: {
                 mActivePointerId = INVALID_POINTER_ID;
-                nativeTouchEnded();
+                if (nativeTouchEnded()) {
+                    caller.finish();        // user touched a state box
+                }
                 break;
             }
 
@@ -91,17 +108,13 @@ public class StateGLSurfaceView extends GLSurfaceView {
             }
 
             case MotionEvent.ACTION_POINTER_UP: {
-                final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK)
-                                                           >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
-                final int pointerId = ev.getPointerId(pointerIndex);
-                if (pointerId == mActivePointerId) {
-                    // this was our active pointer going up
-                    nativeTouchEnded();
-                }
+                // this never gets called???!!!
+                Log.i("onTouchEvent", "ACTION_POINTER_UP");
+                mActivePointerId = INVALID_POINTER_ID;
+                nativeTouchEnded();
                 break;
             }
         }
-
         return true;
     }
 

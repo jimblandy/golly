@@ -73,10 +73,12 @@ public class PatternGLSurfaceView extends GLSurfaceView {
 	        }
 	            
 	        case MotionEvent.ACTION_MOVE: {
-	            final int pointerIndex = ev.findPointerIndex(mActivePointerId);
-	            final float x = ev.getX(pointerIndex);
-	            final float y = ev.getY(pointerIndex);
-	            nativeTouchMoved((int)x, (int)y);
+	            if (mActivePointerId != INVALID_POINTER_ID) {
+	                final int pointerIndex = ev.findPointerIndex(mActivePointerId);
+	                final float x = ev.getX(pointerIndex);
+	                final float y = ev.getY(pointerIndex);
+	                nativeTouchMoved((int)x, (int)y);
+	            }
 	            break;
 	        }
 	            
@@ -93,6 +95,7 @@ public class PatternGLSurfaceView extends GLSurfaceView {
 	        }
 	        
 	        case MotionEvent.ACTION_POINTER_UP: {
+	            // this never gets called???!!!
 	            final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK)
 	                    					               >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
 	            final int pointerId = ev.getPointerId(pointerIndex);

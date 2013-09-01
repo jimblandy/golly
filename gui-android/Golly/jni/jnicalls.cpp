@@ -1129,6 +1129,14 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeLexiconPattern(JNIEn
     LoadLexiconPattern(pattern);
 }
 
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeDrawingState(JNIEnv* env)
+{
+    return currlayer->drawingstate;
+}
+
 // =============================================================================
 
 // these native routines are used in PatternGLSurfaceView.java:
@@ -1660,15 +1668,24 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateActivity_nativeToggleIcons()
     showicons = !showicons;
     UpdatePattern();
     UpdateEditBar();
+    SavePrefs();
 }
 
 // =============================================================================
 
 // these native routines are used in StateGLSurfaceView.java:
 
+static int statewd, stateht;
+static int lastx, lasty;
+static int state_offset = 0;
+static int max_offset;
+
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchBegan(JNIEnv* env, jobject obj, jint x, jint y)
 {
+    // LOGI("TouchBegan x=%d y=%d", x, y);
+    lastx = x;
+    lasty = y;
     //!!!???
 }
 
@@ -1677,15 +1694,31 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchBegan(JNI
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchMoved(JNIEnv* env, jobject obj, jint x, jint y)
 {
-    //!!!???
+    // LOGI("TouchMoved x=%d y=%d", x, y);
+    lastx = x;
+    lasty = y;
+    if (max_offset > 0) {
+        // may need to scroll states
+        //!!!
+    }
 }
 
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchEnded(JNIEnv* env)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchEnded(JNIEnv* env)
 {
-    //!!!???
+    // return true if user touched a valid state box
+    if (lastx >= 0 && lastx < statewd && lasty >= 0 && lasty < stateht) {
+        int col = lastx / 32;
+        int row = lasty / 32;
+        int newstate = row * 10 + col;
+        if (newstate >= 0 && newstate < currlayer->algo->NumCellStates()) {
+            currlayer->drawingstate = newstate;
+            return true;
+        }
+    }
+    return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -1703,8 +1736,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env)
 
 // -----------------------------------------------------------------------------
 
-static int statewd, stateht;
-
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeResize(JNIEnv* env, jobject obj, jint w, jint h)
 {
@@ -1716,6 +1747,13 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeResize(JNIEnv* env,
 
     statewd = w;
     stateht = h;
+
+    max_offset = 0;
+    int numstates = currlayer->algo->NumCellStates();
+    if (numstates > 100) {
+        max_offset = (((numstates - 100) + 9) / 10) * 10;   // 10 if 101 states, 160 if 256 states
+    }
+    if (state_offset > max_offset) state_offset = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -1911,14 +1949,14 @@ static void DrawDigit(int digit, int x, int y)
 
 static void DrawStateNumber(int state, int x, int y)
 {
-    // overlay state number in top left corner of each cell
+    // draw state number in top left corner of each cell
     if (state < 10) {
         // state = 1..9
         DrawDigit(state, x, y);
     } else if (state < 100) {
         // state = 10..99
         DrawDigit(state / 10, x, y);
-        DrawDigit(state % 10, x + 6, y);
+        DrawDigit(state % 10, x + 6, y);    // actual digit width is 6 pixels
     } else {
         // state = 100..255
         DrawDigit(state / 100, x, y);
@@ -1943,15 +1981,18 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeRender(JNIEnv* env)
 
     // display state colors or icons
     int numstates = currlayer->algo->NumCellStates();
-    int x = 33; // start with state 1
+    int x = 1;
     int y = 1;
+    int first = state_offset;   // might be > 0 if numstates > 100
 
-    // allow for row offset if numstates > 100
-    //!!!
+    if (state_offset == 0) {
+        DrawStateNumber(0, 1, 1);
+        // start from state 1
+        first = 1;
+        x = 33;
+    }
 
-    DrawStateNumber(0, 1, 1);
-
-    for (int state = 1; state < numstates; state++) {
+    for (int state = first; state < numstates; state++) {
         if (showicons) {
             DrawIcon(state, x, y);
         } else {

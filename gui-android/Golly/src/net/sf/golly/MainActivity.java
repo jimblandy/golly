@@ -133,6 +133,7 @@ public class MainActivity extends BaseActivity {
     private native void nativeSetFullScreen(boolean fullscreen);
     private native void nativeChangeRule(String rule);
     private native void nativeLexiconPattern(String pattern);
+    private native int nativeDrawingState();
 
     // local fields:
     private static boolean firstcall = true;
@@ -140,6 +141,7 @@ public class MainActivity extends BaseActivity {
     private Button undobutton;                      // Undo button
     private Button redobutton;                      // Redo button
     private Button editbutton;                      // Edit/Paste button
+    private Button statebutton;                     // button to change drawing state
     private Button modebutton;                      // Draw/Pick/Select/Move button
     private Button infobutton;                      // Info button
     private Button restorebutton;                   // Restore button
@@ -243,6 +245,7 @@ public class MainActivity extends BaseActivity {
         undobutton = (Button) findViewById(R.id.undo);
         redobutton = (Button) findViewById(R.id.redo);
         editbutton = (Button) findViewById(R.id.edit);
+        statebutton = (Button) findViewById(R.id.state);
         modebutton = (Button) findViewById(R.id.touchmode);
         infobutton = (Button) findViewById(R.id.info);
         restorebutton = (Button) findViewById(R.id.restore);
@@ -1017,6 +1020,9 @@ public class MainActivity extends BaseActivity {
                 else
                     editbutton.setText("Edit");
                 
+                // show current drawing state
+                statebutton.setText(Integer.toString(nativeDrawingState()));
+                
                 switch (nativeGetMode()) {
                     case 0:  modebutton.setText("Draw"); break;
                     case 1:  modebutton.setText("Pick"); break;
@@ -1024,8 +1030,6 @@ public class MainActivity extends BaseActivity {
                     case 3:  modebutton.setText("Move"); break;
                     default: Log.e("Golly","Fix bug in UpdateEditBar!");
                 }
-                
-                //!!! also show current drawing state in another button
             }
         });
     }
