@@ -1201,7 +1201,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
     // (ie. selected patterns look much the same)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -1676,9 +1676,10 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateActivity_nativeToggleIcons()
 // these native routines are used in StateGLSurfaceView.java:
 
 static int statewd, stateht;
-static int lastx, lasty;
 static int state_offset = 0;
 static int max_offset;
+static int lastx, lasty;
+static bool touch_moved;
 
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchBegan(JNIEnv* env, jobject obj, jint x, jint y)
@@ -1686,21 +1687,37 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchBegan(JNI
     // LOGI("TouchBegan x=%d y=%d", x, y);
     lastx = x;
     lasty = y;
-    //!!!???
+    touch_moved = false;
 }
 
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchMoved(JNIEnv* env, jobject obj, jint x, jint y)
+JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchMoved(JNIEnv* env, jobject obj, jint x, jint y)
 {
     // LOGI("TouchMoved x=%d y=%d", x, y);
+    int oldcol = lastx / 32;
+    int oldrow = lasty / 32;
+    int col = x / 32;
+    int row = y / 32;
     lastx = x;
     lasty = y;
-    if (max_offset > 0) {
-        // may need to scroll states
-        //!!!
+    if (col != oldcol || row != oldrow) {
+        // user moved finger to a different state box
+        touch_moved = true;
     }
+    if (max_offset > 0 && row != oldrow) {
+        // may need to scroll states by changing state_offset
+        int new_offset = state_offset + 10 * (oldrow - row);
+        if (new_offset < 0) new_offset = 0;
+        if (new_offset > max_offset) new_offset = max_offset;
+        if (new_offset != state_offset) {
+            // scroll up/down
+            state_offset = new_offset;
+            return true;
+        }
+    }
+    return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -1708,11 +1725,12 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchMoved(JNI
 extern "C"
 JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchEnded(JNIEnv* env)
 {
-    // return true if user touched a valid state box
+    if (touch_moved) return false;
     if (lastx >= 0 && lastx < statewd && lasty >= 0 && lasty < stateht) {
+        // return true if user touched a valid state box
         int col = lastx / 32;
         int row = lasty / 32;
-        int newstate = row * 10 + col;
+        int newstate = row * 10 + col + state_offset;
         if (newstate >= 0 && newstate < currlayer->algo->NumCellStates()) {
             currlayer->drawingstate = newstate;
             return true;
@@ -1951,7 +1969,7 @@ static void DrawStateNumber(int state, int x, int y)
 {
     // draw state number in top left corner of each cell
     if (state < 10) {
-        // state = 1..9
+        // state = 0..9
         DrawDigit(state, x, y);
     } else if (state < 100) {
         // state = 10..99
@@ -1960,8 +1978,8 @@ static void DrawStateNumber(int state, int x, int y)
     } else {
         // state = 100..255
         DrawDigit(state / 100, x, y);
-        DrawDigit((state / 10) % 10, x + 6, y);
-        DrawDigit(state % 100, x + 12, y);
+        DrawDigit((state % 100) / 10, x + 6, y);
+        DrawDigit((state % 100) % 10, x + 12, y);
     }
 }
 
@@ -1974,7 +1992,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeRender(JNIEnv* env)
     glClearColor(currlayer->cellr[0]/255.0,
                  currlayer->cellg[0]/255.0,
                  currlayer->cellb[0]/255.0,
-                 255.0);                        // fix 0.0 in render.c???!!! (if so, test iGolly also!!!)
+                 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     DrawGrid(statewd, stateht);
@@ -2177,6 +2195,11 @@ std::string GetRuleName(const std::string& rule)
 
 void UpdateEditBar()
 {
+    if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
+        // this can happen after an algo/rule change
+        currlayer->drawingstate = 1;
+    }
+
     // call Java method in MainActivity class to update the buttons in the edit bar
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
@@ -2273,10 +2296,6 @@ void ShowHelp(const char* filepath)
 void AndroidWarning(const char* msg)
 {
     if (generating) paused = true;
-
-    // need to figure out what to do if current activity isn't MainActivity!!!
-    // (eg. if .py zip entry is tapped while in HelpActivity)
-    // ditto for AndroidFatal and AndroidYesNo
 
     bool attached;
     JNIEnv* env = getJNIenv(&attached);

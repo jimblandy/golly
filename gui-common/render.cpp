@@ -937,7 +937,7 @@ void DrawPattern(int tileindex)
     glClearColor(currlayer->cellr[0]/255.0,
                  currlayer->cellg[0]/255.0,
                  currlayer->cellb[0]/255.0,
-                 0.0);
+                 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     // if grid is bounded then ensure viewport's central cell is not outside grid edges

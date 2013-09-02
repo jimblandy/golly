@@ -41,7 +41,7 @@ public class StateGLSurfaceView extends GLSurfaceView {
 
     // see jnicalls.cpp for these native routines:
     private native void nativeTouchBegan(int x, int y);
-    private native void nativeTouchMoved(int x, int y);
+    private native boolean nativeTouchMoved(int x, int y);
     private native boolean nativeTouchEnded();
 
     private StateRenderer mRenderer;
@@ -86,9 +86,10 @@ public class StateGLSurfaceView extends GLSurfaceView {
                     final int pointerIndex = ev.findPointerIndex(mActivePointerId);
                     final float x = ev.getX(pointerIndex);
                     final float y = ev.getY(pointerIndex);
-                    nativeTouchMoved((int)x, (int)y);
-                    // states might have scrolled
-                    requestRender();
+                    if (nativeTouchMoved((int)x, (int)y)) {
+                        // states have scrolled
+                        requestRender();
+                    }
                 }
                 break;
             }
@@ -96,7 +97,8 @@ public class StateGLSurfaceView extends GLSurfaceView {
             case MotionEvent.ACTION_UP: {
                 mActivePointerId = INVALID_POINTER_ID;
                 if (nativeTouchEnded()) {
-                    caller.finish();        // user touched a state box
+                    // user touched a state box so close dialog
+                    caller.finish();
                 }
                 break;
             }
