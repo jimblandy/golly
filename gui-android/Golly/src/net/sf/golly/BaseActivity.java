@@ -38,6 +38,7 @@ public class BaseActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         baseapp = (BaseApp) this.getApplicationContext();
+        baseapp.setCurrentActivity(this);
     }
 
     @Override

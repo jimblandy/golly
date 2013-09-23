@@ -430,7 +430,7 @@ public class MainActivity extends BaseActivity {
         } else {
             // use internal storage for user's files
             userdir = getFilesDir();                    // /data/data/net.sf.golly/files
-            Warning("External storage is not available, so internal storage will be used for your files.");
+            Log.i("Golly", "External storage is not available, so internal storage will be used.");
         }
         
         // create subdirs in userdir (if they don't exist)

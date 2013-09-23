@@ -32,7 +32,6 @@ import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 
 //this class must be public so it can be used in state_layout.xml
@@ -74,9 +73,9 @@ public class StateGLSurfaceView extends GLSurfaceView {
         final int action = ev.getAction();
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN: {
+                mActivePointerId = ev.getPointerId(0);
                 final float x = ev.getX();
                 final float y = ev.getY();
-                mActivePointerId = ev.getPointerId(0);
                 nativeTouchBegan((int)x, (int)y);
                 break;
             }
@@ -110,10 +109,21 @@ public class StateGLSurfaceView extends GLSurfaceView {
             }
 
             case MotionEvent.ACTION_POINTER_UP: {
-                // this never gets called???!!!
-                Log.i("onTouchEvent", "ACTION_POINTER_UP");
-                mActivePointerId = INVALID_POINTER_ID;
-                nativeTouchEnded();
+                // secondary pointer has gone up
+                final int pointerIndex = (action & MotionEvent.ACTION_POINTER_INDEX_MASK)
+                                             >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+                final int pointerId = ev.getPointerId(pointerIndex);
+                if (pointerId == mActivePointerId) {
+                    // this was our active pointer going up so choose a new active pointer
+                    final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
+                    mActivePointerId = ev.getPointerId(newPointerIndex);
+                    final float x = ev.getX(newPointerIndex);
+                    final float y = ev.getY(newPointerIndex);
+                    if (nativeTouchMoved((int)x, (int)y)) {
+                        // states have scrolled
+                        requestRender();
+                    }
+                }
                 break;
             }
         }

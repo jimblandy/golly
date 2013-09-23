@@ -44,7 +44,7 @@ public class BaseApp extends Application {
     }
 
     public void setCurrentActivity(Activity a) {
-        this.currentActivity = a;
+        currentActivity = a;
     }
 
 } // BaseApp class

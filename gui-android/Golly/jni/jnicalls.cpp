@@ -1187,6 +1187,43 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeTouchEnded(J
 
 // -----------------------------------------------------------------------------
 
+static TouchModes oldmode;
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeMoveMode(JNIEnv* env)
+{
+    // temporarily switch touch mode to movemode
+    oldmode = currlayer->touchmode;
+    currlayer->touchmode = movemode;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeRestoreMode(JNIEnv* env)
+{
+    // restore touch mode saved in nativeMoveMode
+    currlayer->touchmode = oldmode;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeZoomIn(JNIEnv* env, jobject obj, jint x, jint y)
+{
+    ZoomInPos(x, y);
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeZoomOut(JNIEnv* env, jobject obj, jint x, jint y)
+{
+    ZoomOutPos(x, y);
+}
+
+// -----------------------------------------------------------------------------
+
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
 {
