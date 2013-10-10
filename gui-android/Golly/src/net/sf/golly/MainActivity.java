@@ -40,6 +40,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -240,6 +241,18 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        Configuration config = getResources().getConfiguration();
+        if ((config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) == Configuration.SCREENLAYOUT_SIZE_LARGE) {
+            // screen is at least 720x960dp if SCREENLAYOUT_SIZE_XLARGE (don't get this for Nexus 7!!!)
+            // screen is at least 480x640dp if SCREENLAYOUT_SIZE_LARGE (get this for Nexus 7)
+            Log.i("Golly","big screen: width in dp = " + Integer.toString(config.screenWidthDp));
+            // get 600 in portrait, 960 in landscape, for Nexus 7
+        } else {
+            Log.i("Golly","small screen: width in dp = " + Integer.toString(config.screenWidthDp));
+            // get 320 in portrait, 960 in landscape, for emulator
+        }
+        
         setContentView(R.layout.main_layout);
         ssbutton = (Button) findViewById(R.id.startstop);
         undobutton = (Button) findViewById(R.id.undo);

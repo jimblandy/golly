@@ -50,18 +50,18 @@ std::string status3;    // bottom line
 // that depend on whether the device's screen size is large or small
 // (and whether it is in portrait mode or landscape mode???)
 #ifdef ANDROID_GUI
+    const char* gen_prefix =   "Gen=";
     const char* algo_prefix =  "   Algo=";
     const char* rule_prefix =  "   Rule=";
-    const char* gen_prefix =   "Gen=";
     const char* pop_prefix =   "   Pop=";
     const char* scale_prefix = "   Scale=";
     const char* step_prefix =  "   ";
     const char* xy_prefix =    "   XY=";
 #endif
 #ifdef IOS_GUI
+    const char* gen_prefix =   "Generation=";
     const char* algo_prefix =  "    Algorithm=";
     const char* rule_prefix =  "    Rule=";
-    const char* gen_prefix =   "Generation=";
     const char* pop_prefix =   "    Population=";
     const char* scale_prefix = "    Scale=";
     const char* step_prefix =  "    ";
