@@ -1085,7 +1085,11 @@ void PasteClipboard()
     if (ClipboardContainsRule()) return;
 
     // create a temporary universe for storing the clipboard pattern
-    if (pastealgo) Warning("Bug detected in PasteClipboard!");
+    if (pastealgo) {
+        Warning("Bug detected in PasteClipboard!");
+        delete pastealgo;
+        // might as well continue
+    }
     pastealgo = CreateNewUniverse(currlayer->algtype);
 
     // read clipboard pattern into temporary universe

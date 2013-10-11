@@ -467,8 +467,8 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
                 pt = ScreenToClient( wxGetMousePosition() );
                 pastex = pt.x;
                 pastey = pt.y;
-                waitingforclick = false;
-                FlushEvents(mDownMask + mUpMask, 0);   // avoid wx seeing click
+                waitingforclick = false;                // terminate while loop
+                FlushEvents(mDownMask + mUpMask, 0);    // avoid wx seeing click
             }
 #endif
         }
@@ -775,7 +775,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
         }
     }
     
-    if (canchangerule > 0) {
+    if (!err && canchangerule > 0) {
         // set newrule for later use in PasteTemporaryToCurrent
         if (canchangerule == 1 && !currlayer->algo->isEmpty()) {
             // don't change rule if universe isn't empty
@@ -785,9 +785,6 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
             newrule = wxString((*tempalgo)->getrule(), wxConvLocal);
         }
     }
-    
-    // restore rule now in case error occurred
-    RestoreRule(oldrule);
     
     wxRemoveFile(mainptr->clipfile);
     
@@ -802,8 +799,13 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
 
 // -----------------------------------------------------------------------------
 
+static bool doing_paste = false;    // inside PasteTemporaryToCurrent?
+
 void PatternView::PasteClipboard(bool toselection)
 {
+    // prevent re-entrancy in PasteTemporaryToCurrent due to rapid pasting of large clipboard pattern
+    if (doing_paste) return;
+
     if (waitingforclick || !mainptr->ClipboardHasText()) return;
     if (toselection && !SelectionExists()) return;
     
@@ -828,7 +830,9 @@ void PatternView::PasteClipboard(bool toselection)
     bigint top, left, bottom, right;
     if ( GetClipboardPattern(&pastealgo, &top, &left, &bottom, &right) ) {
         // pastealgo might have been deleted and re-created as a different type of universe
+        doing_paste = true;
         PasteTemporaryToCurrent(toselection, top, left, bottom, right);
+        doing_paste = false;
     }
     
     delete pastealgo;
@@ -840,7 +844,7 @@ void PatternView::AbortPaste()
 {
     pastex = -1;
     pastey = -1;
-    waitingforclick = false;
+    waitingforclick = false;    // terminate while (waitingforclick) loop
 }
 
 // -----------------------------------------------------------------------------
@@ -2779,7 +2783,7 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
         // save paste location
         pastex = x;
         pastey = y;
-        waitingforclick = false;
+        waitingforclick = false;    // terminate while (waitingforclick) loop
         return;
     }
     
