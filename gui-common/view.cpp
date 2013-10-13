@@ -976,13 +976,6 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
     // remember current rule
     oldrule = currlayer->algo->getrule();
 
-    //!!! avoid crash in hlifealgo::endpattern if pattern copied in an algo after hlife (eg. JvN)
-    // is pasted into qlife (but only with bounded grid for some unknown reason);
-    // discuss better solutions with Tom:
-    // 1. in loadpattern() only call imp.endofpattern() if !errmsg
-    // 2. in hlifealgo::setrule() call clearcache() 1st thing
-    pastealgo->setrule(pastealgo->DefaultRule());
-
     const char* err = readclipboard(clipfile.c_str(), *pastealgo, t, l, b, r);
     if (err) {
         // cycle thru all other algos until readclipboard succeeds
@@ -990,10 +983,6 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
             if (i != currlayer->algtype) {
                 delete pastealgo;
                 pastealgo = CreateNewUniverse(i);
-
-                //!!! avoid possible crash (see above)
-                pastealgo->setrule(pastealgo->DefaultRule());
-
                 err = readclipboard(clipfile.c_str(), *pastealgo, t, l, b, r);
                 if (!err) {
                     newalgotype = i;   // remember new algo for later use in PasteTemporaryToCurrent

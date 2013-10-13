@@ -637,70 +637,86 @@ const char *loadpattern(lifealgo &imp) {
    // test for 'i' to cater for #LLAB comment in LifeLab file
    if (line[0] == '#' && line[1] == 'L' && line[2] == 'i') {
       errmsg = readpclife(imp, line) ;
-      imp.endofpattern() ;
-      if (getedges && !imp.isEmpty()) {
-         imp.findedges(&top, &left, &bottom, &right) ;
+      if (errmsg == 0) {
+         imp.endofpattern() ;
+         if (getedges && !imp.isEmpty()) {
+            imp.findedges(&top, &left, &bottom, &right) ;
+         }
       }
 
    } else if (line[0] == '#' && line[1] == 'P' && line[2] == ' ') {
       // WinLifeSearch creates clipboard patterns similar to
       // Life 1.05 format but without the header line
       errmsg = readpclife(imp, line) ;
-      imp.endofpattern() ;
-      if (getedges && !imp.isEmpty()) {
-         imp.findedges(&top, &left, &bottom, &right) ;
+      if (errmsg == 0) {
+         imp.endofpattern() ;
+         if (getedges && !imp.isEmpty()) {
+            imp.findedges(&top, &left, &bottom, &right) ;
+         }
       }
 
    } else if (line[0] == '#' && line[1] == 'M' && line[2] == 'C' &&
               line[3] == 'e' && line[4] == 'l' && line[5] == 'l' ) {
       errmsg = readmcell(imp, line) ;
-      imp.endofpattern() ;
-      if (getedges && !imp.isEmpty()) {
-         imp.findedges(&top, &left, &bottom, &right) ;
+      if (errmsg == 0) {
+         imp.endofpattern() ;
+         if (getedges && !imp.isEmpty()) {
+            imp.findedges(&top, &left, &bottom, &right) ;
+         }
       }
 
    } else if (line[0] == '#' || line[0] == 'x') {
       errmsg = readrle(imp, line) ;
-      imp.endofpattern() ;
-      if (getedges && !imp.isEmpty()) {
-         // readrle has set top,left,bottom,right based on the info given in
-         // the header line and possibly a "#CXRLE Pos=..." line, but in case
-         // that info is incorrect we find the true pattern edges and expand
-         // top/left/bottom/right if necessary to avoid truncating the pattern
-         bigint t, l, b, r ;
-         imp.findedges(&t, &l, &b, &r) ;
-         if (t < top) top = t ;
-         if (l < left) left = l ;
-         if (b > bottom) bottom = b ;
-         if (r > right) right = r ;
+      if (errmsg == 0) {
+         imp.endofpattern() ;
+         if (getedges && !imp.isEmpty()) {
+            // readrle has set top,left,bottom,right based on the info given in
+            // the header line and possibly a "#CXRLE Pos=..." line, but in case
+            // that info is incorrect we find the true pattern edges and expand
+            // top/left/bottom/right if necessary to avoid truncating the pattern
+            bigint t, l, b, r ;
+            imp.findedges(&t, &l, &b, &r) ;
+            if (t < top) top = t ;
+            if (l < left) left = l ;
+            if (b > bottom) bottom = b ;
+            if (r > right) right = r ;
+         }
       }
 
    } else if (line[0] == '!') {
       errmsg = readdblife(imp, line) ;
-      imp.endofpattern() ;
-      if (getedges && !imp.isEmpty()) {
-         imp.findedges(&top, &left, &bottom, &right) ;
+      if (errmsg == 0) {
+         imp.endofpattern() ;
+         if (getedges && !imp.isEmpty()) {
+            imp.findedges(&top, &left, &bottom, &right) ;
+         }
       }
 
    } else if (line[0] == '[') {
       errmsg = imp.readmacrocell(line) ;
-      imp.endofpattern() ;
-      if (getedges && !imp.isEmpty()) {
-         imp.findedges(&top, &left, &bottom, &right) ;
+      if (errmsg == 0) {
+         imp.endofpattern() ;
+         if (getedges && !imp.isEmpty()) {
+            imp.findedges(&top, &left, &bottom, &right) ;
+         }
       }
 
    } else if (isplainrle(line)) {
       errmsg = readrle(imp, line) ;
-      imp.endofpattern() ;
-      if (getedges && !imp.isEmpty()) {
-         imp.findedges(&top, &left, &bottom, &right) ;
+      if (errmsg == 0) {
+         imp.endofpattern() ;
+         if (getedges && !imp.isEmpty()) {
+            imp.findedges(&top, &left, &bottom, &right) ;
+         }
       }
 
    } else {
       // read a text pattern like "...ooo$$$ooo"
       errmsg = readtextpattern(imp, line) ;
-      imp.endofpattern() ;
-      // if getedges is true then readtextpattern has set top,left,bottom,right
+      if (errmsg == 0) {
+         imp.endofpattern() ;
+         // if getedges is true then readtextpattern has set top,left,bottom,right
+      }
    }
 
    lifeendprogress();
