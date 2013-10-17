@@ -1238,8 +1238,8 @@ bool UndoRedo::CanUndo()
     if (allowundo && mainptr->generating) return true;
     
     return !undolist.IsEmpty() && !inscript &&
-    !viewptr->waitingforclick && !viewptr->drawingcells &&
-    !viewptr->selectingcells;
+           !viewptr->waitingforclick && !viewptr->drawingcells &&
+           !viewptr->selectingcells;
 }
 
 // -----------------------------------------------------------------------------
@@ -1247,8 +1247,8 @@ bool UndoRedo::CanUndo()
 bool UndoRedo::CanRedo()
 {
     return !redolist.IsEmpty() && !inscript && !mainptr->generating &&
-    !viewptr->waitingforclick && !viewptr->drawingcells &&
-    !viewptr->selectingcells;
+           !viewptr->waitingforclick && !viewptr->drawingcells &&
+           !viewptr->selectingcells;
 }
 
 // -----------------------------------------------------------------------------
@@ -1264,6 +1264,9 @@ void UndoRedo::UndoChange()
         mainptr->cmdevent.SetId(ID_UNDO);
         return;
     }
+    
+    // prevent re-entrancy if DoChange calls checkevents
+    if (insideYield) return;
     
     // get change info from head of undo list and do the change
     wxList::compatibility_iterator node = undolist.GetFirst();
@@ -1331,6 +1334,9 @@ void UndoRedo::RedoChange()
         return;
     }
     */
+    
+    // prevent re-entrancy if DoChange calls checkevents
+    if (insideYield) return;
     
     // get change info from head of redo list and do the change
     wxList::compatibility_iterator node = redolist.GetFirst();

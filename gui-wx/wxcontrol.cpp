@@ -1303,7 +1303,7 @@ void MainFrame::DoPendingAction(bool restart)
         
         int id = cmdevent.GetId();
         switch (id) {
-                // don't restart the generating loop after some commands
+            // don't restart the generating loop after some commands
             case wxID_NEW:          NewPattern(); break;
             case wxID_OPEN:         OpenPattern(); break;
             case ID_OPEN_CLIP:      OpenClipboard(); break;
