@@ -70,9 +70,9 @@ static bool slowdraw = false;       // do slow cell drawing via UpdateView?
 
 static wxString oldrule;            // rule before readclipboard is called
 static wxString newrule;            // rule after readclipboard is called
-static int newalgotype;             // new algo type created by readclipboard
 static lifealgo* pastealgo;         // temporary universe with pattern to be pasted
 static wxRect pastebox;             // bounding box for paste pattern
+static int pastetype;               // algo type for pastealgo
 
 // remember which translucent button was clicked, and when
 static control_id clickedcontrol = NO_CONTROL;
@@ -537,10 +537,10 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
     if (canchangerule > 0 && oldrule != newrule) {
         const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
         // setrule can fail if readclipboard loaded clipboard pattern into
-        // a different type of algo (newalgotype)
+        // a different type of algo (pastetype)
         if (err) {
             // allow rule change to cause algo change
-            mainptr->ChangeAlgorithm(newalgotype, newrule);
+            mainptr->ChangeAlgorithm(pastetype, newrule);
         } else {
             // show new rule in title bar
             mainptr->SetWindowTitle(wxEmptyString);
@@ -742,8 +742,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
     wxTextDataObject data;
     if ( !mainptr->GetTextFromClipboard(&data) ) return false;
     
-    // copy clipboard data to temporary file so we can handle all formats
-    // supported by readclipboard
+    // copy clipboard data to temporary file so we can handle all formats supported by readclipboard
     wxFile tmpfile(mainptr->clipfile, wxFile::write);
     if ( !tmpfile.IsOpened() ) {
         Warning(_("Could not create temporary file for clipboard data!"));
@@ -768,7 +767,7 @@ bool PatternView::GetClipboardPattern(lifealgo** tempalgo,
                 *tempalgo = CreateNewUniverse(i);
                 err = readclipboard(mainptr->clipfile.mb_str(wxConvLocal), **tempalgo, t, l, b, r);
                 if (!err) {
-                    newalgotype = i;   // remember new algo for later use in PasteTemporaryToCurrent
+                    pastetype = i;   // remember algo type for later use in PasteTemporaryToCurrent
                     break;
                 }
             }
@@ -824,7 +823,7 @@ void PatternView::PasteClipboard(bool toselection)
     // create a temporary universe for storing the clipboard pattern;
     // GetClipboardPattern assumes it is same type as current universe
     pastealgo = CreateNewUniverse(currlayer->algtype);
-    // no need to call setrule here -- readclipboard will do it
+    pastetype = currlayer->algtype;
     
     // read clipboard pattern into temporary universe
     bigint top, left, bottom, right;
@@ -991,7 +990,9 @@ bool PatternView::FlipPastePattern(bool topbottom)
     
     // flip the pattern in pastealgo
     lifealgo* savealgo = currlayer->algo;
+    int savetype = currlayer->algtype;
     currlayer->algo = pastealgo;
+    currlayer->algtype = pastetype;
     // pass in true for inundoredo parameter so flip won't be remembered
     // and layer won't be marked as dirty; also set inscript temporarily
     // so that viewport won't be updated
@@ -1000,6 +1001,7 @@ bool PatternView::FlipPastePattern(bool topbottom)
     // currlayer->algo might point to a *different* universe
     pastealgo = currlayer->algo;
     currlayer->algo = savealgo;
+    currlayer->algtype = savetype;
     inscript = false;
     
     if (result) {
@@ -1020,7 +1022,9 @@ bool PatternView::RotatePastePattern(bool clockwise)
     
     // rotate the pattern in pastealgo
     lifealgo* savealgo = currlayer->algo;
+    int savetype = currlayer->algtype;
     currlayer->algo = pastealgo;
+    currlayer->algtype = pastetype;
     // pass in true for inundoredo parameter so rotate won't be remembered
     // and layer won't be marked as dirty; also set inscript temporarily
     // so that viewport won't be updated
@@ -1029,6 +1033,7 @@ bool PatternView::RotatePastePattern(bool clockwise)
     // currlayer->algo might point to a *different* universe
     pastealgo = currlayer->algo;
     currlayer->algo = savealgo;
+    currlayer->algtype = savetype;
     inscript = false;
     
     if (result) {

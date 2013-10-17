@@ -84,7 +84,7 @@ static lifealgo* pastealgo = NULL;      // temporary universe with pattern to be
 static gRect pastebox;                  // bounding box (in cells) for paste pattern
 static std::string oldrule;             // rule before readclipboard is called
 static std::string newrule;             // rule after readclipboard is called
-static int newalgotype;                 // new algo type created by readclipboard
+static int pastetype;                   // algo type for pastealgo
 
 static bool drawingcells = false;       // drawing cells by dragging finger?
 static bool pickingcells = false;       // picking cell states by dragging finger?
@@ -985,7 +985,7 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
                 pastealgo = CreateNewUniverse(i);
                 err = readclipboard(clipfile.c_str(), *pastealgo, t, l, b, r);
                 if (!err) {
-                    newalgotype = i;   // remember new algo for later use in PasteTemporaryToCurrent
+                    pastetype = i;   // remember algo type for later use in PasteTemporaryToCurrent
                     break;
                 }
             }
@@ -1080,6 +1080,7 @@ void PasteClipboard()
         // might as well continue
     }
     pastealgo = CreateNewUniverse(currlayer->algtype);
+    pastetype = currlayer->algtype;
 
     // read clipboard pattern into temporary universe
     bigint top, left, bottom, right;
@@ -1153,10 +1154,10 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
     if (canchangerule > 0 && oldrule != newrule) {
         const char* err = currlayer->algo->setrule( newrule.c_str() );
         // setrule can fail if readclipboard loaded clipboard pattern into
-        // a different type of algo (newalgotype)
+        // a different type of algo (pastetype)
         if (err) {
             // allow rule change to cause algo change
-            ChangeAlgorithm(newalgotype, newrule.c_str());
+            ChangeAlgorithm(pastetype, newrule.c_str());
         } else {
             // if grid is bounded then remove any live cells outside grid edges
             if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
@@ -1408,7 +1409,9 @@ bool FlipPastePattern(bool topbottom)
 
     // flip the pattern in pastealgo
     lifealgo* savealgo = currlayer->algo;
+    int savetype = currlayer->algtype;
     currlayer->algo = pastealgo;
+    currlayer->algtype = pastetype;
     // pass in true for inundoredo parameter so flip won't be remembered
     // and layer won't be marked as dirty; also set inscript temporarily
     // so that viewport won't be updated
@@ -1417,6 +1420,7 @@ bool FlipPastePattern(bool topbottom)
     // currlayer->algo might point to a *different* universe
     pastealgo = currlayer->algo;
     currlayer->algo = savealgo;
+    currlayer->algtype = savetype;
     inscript = false;
 
     if (result) {
@@ -1436,7 +1440,9 @@ bool RotatePastePattern(bool clockwise)
 
     // rotate the pattern in pastealgo
     lifealgo* savealgo = currlayer->algo;
+    int savetype = currlayer->algtype;
     currlayer->algo = pastealgo;
+    currlayer->algtype = pastetype;
     // pass in true for inundoredo parameter so rotate won't be remembered
     // and layer won't be marked as dirty; also set inscript temporarily
     // so that viewport won't be updated and selection size won't be displayed
@@ -1445,6 +1451,7 @@ bool RotatePastePattern(bool clockwise)
     // currlayer->algo might point to a *different* universe
     pastealgo = currlayer->algo;
     currlayer->algo = savealgo;
+    currlayer->algtype = savetype;
     inscript = false;
 
     if (result) {

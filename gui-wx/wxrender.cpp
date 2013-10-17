@@ -1077,13 +1077,13 @@ void CheckPasteImage()
     // paste image needs to be updated if any of these changed:
     // pasterect size, viewport size, plocation, showicons, swapcolors
     if ( prectwd != viewptr->pasterect.width ||
-        prectht != viewptr->pasterect.height ||
-        cvwd != currlayer->view->getwidth() ||
-        cvht != currlayer->view->getheight() ||
-        pasteloc != plocation ||
-        pasteicons != showicons ||
-        pastecolors != swapcolors
-        ) {
+         prectht != viewptr->pasterect.height ||
+         cvwd != currlayer->view->getwidth() ||
+         cvht != currlayer->view->getheight() ||
+         pasteloc != plocation ||
+         pasteicons != showicons ||
+         pastecolors != swapcolors ) {
+        
         prectwd = viewptr->pasterect.width;
         prectht = viewptr->pasterect.height;
         pastemag = currlayer->view->getmag();
