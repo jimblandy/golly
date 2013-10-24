@@ -33,8 +33,16 @@ Golly can download patterns and rules from these online archives:
 -->
 
 <p>
-Note that Golly stores downloaded files in Documents/Downloads/ so you
-can open them again quickly from the Open tab.
+Note that downloaded files can be opened again quickly from the Open
+<script type="text/javascript">
+    if ( navigator.userAgent.match(/iPad|iPhone|iPod/i) ) {
+        document.write("tab.");
+    } else if ( navigator.userAgent.match(/Android/i) ) {
+        document.write("screen.");
+    } else {
+        document.write("FIX ME!!!");
+    }
+</script>
 
 </body>
 </html>

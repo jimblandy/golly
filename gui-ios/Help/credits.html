@@ -23,9 +23,9 @@ David Eppstein provided the idea on how to emulate B0 rules.
 Andrew Trevorrow wrote the cross-platform GUI code for the desktop version
 of Golly using <a href="http://www.wxwidgets.org/">wxWidgets</a>.
 Much thanks to Julian Smart and all the other wxWidgets developers.
-Andrew also wrote the GUI code for the iOS version of Golly.
+Andrew also wrote the GUI code for the iOS and Android versions of Golly.
 
-<!---
+<!--
 <p>
 Golly's scripting capabilities were inspired by the generosity and efforts of
 Eugene Langvagen (author of <a href="http://plife.sourceforge.net/">PLife</a>),
@@ -72,9 +72,12 @@ Thanks to Nathaniel Johnston for creating the brilliant
 and for making its patterns available to Golly users via an
 <a href="get:http://www.conwaylife.com/golly.html">online archive</a>.
 
-<p>
-Some of the tab bar icons are from the free set created by
-<a href="http://www.theworkinggroup.ca/">The Working Group</a>.
+<script type="text/javascript">
+    if ( navigator.userAgent.match(/iPad|iPhone|iPod/i) ) {
+        document.write("<p>Some of the tab bar icons are from the free set created by ");
+        document.write("<a href=\"http://www.theworkinggroup.ca/\">The Working Group</a>.");
+    }
+</script>
 
 </body>
 </html>

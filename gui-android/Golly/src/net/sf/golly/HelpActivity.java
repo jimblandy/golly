@@ -221,8 +221,8 @@ public class HelpActivity extends BaseActivity {
         nativeCreate();     // cache this instance
         
         gwebview = (WebView) findViewById(R.id.webview);
-        // no need for JavaScript???
-        // gwebview.getSettings().setJavaScriptEnabled(true);
+        // JavaScript is used to detect device type
+        gwebview.getSettings().setJavaScriptEnabled(true);
         gwebview.setWebViewClient(new MyWebViewClient());
         
         if (firstcall) {
