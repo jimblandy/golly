@@ -39,7 +39,7 @@
 		0D62FCF4159BCDCC005506CA /* SaveViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D62FCF2159BCDCC005506CA /* SaveViewController.xib */; };
 		0D64693E1599D04A00433025 /* OpenViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D64693C1599D04A00433025 /* OpenViewController.m */; };
 		0D64693F1599D04A00433025 /* OpenViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D64693D1599D04A00433025 /* OpenViewController.xib */; };
-		0D6E5391159587D300E5AAD1 /* Help in Resources */ = {isa = PBXBuildFile; fileRef = 0D6E5390159587D300E5AAD1 /* Help */; };
+		0D71520A181A0C9D00840795 /* Help in Resources */ = {isa = PBXBuildFile; fileRef = 0D715209181A0C9D00840795 /* Help */; };
 		0D8A223F1798EA17006044E7 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D8A22371798EA17006044E7 /* ioapi.c */; };
 		0D8A22411798EA17006044E7 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D8A223B1798EA17006044E7 /* unzip.c */; };
 		0D8A22421798EA17006044E7 /* zip.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D8A223D1798EA17006044E7 /* zip.c */; };
@@ -139,7 +139,7 @@
 		0D64693B1599D04A00433025 /* OpenViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenViewController.h; sourceTree = "<group>"; };
 		0D64693C1599D04A00433025 /* OpenViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OpenViewController.m; sourceTree = "<group>"; };
 		0D64693D1599D04A00433025 /* OpenViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = OpenViewController.xib; sourceTree = "<group>"; };
-		0D6E5390159587D300E5AAD1 /* Help */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Help; sourceTree = SOURCE_ROOT; };
+		0D715209181A0C9D00840795 /* Help */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Help; path = "../../gui-common/Help"; sourceTree = "<group>"; };
 		0D8A22361798EA17006044E7 /* crypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypt.h; sourceTree = "<group>"; };
 		0D8A22371798EA17006044E7 /* ioapi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ioapi.c; sourceTree = "<group>"; };
 		0D8A22381798EA17006044E7 /* ioapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ioapi.h; sourceTree = "<group>"; };
@@ -325,9 +325,9 @@
 		0D07872E156881080051973C /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				0D715209181A0C9D00840795 /* Help */,
 				0DA5B31E15F0336C005EBBE8 /* Rules */,
 				0DA5B31C15F03332005EBBE8 /* Patterns */,
-				0D6E5390159587D300E5AAD1 /* Help */,
 				0D10CE95156A3CF2001DC67F /* Icon.png */,
 				0D068EB415D93F4300A4EAB3 /* Icon@2x.png */,
 				0D068EB515D93F4300A4EAB3 /* iTunesArtwork */,
@@ -504,7 +504,6 @@
 				0D96C6421575C652006C8EBC /* settings@2x.png in Resources */,
 				0D96C6471575C824006C8EBC /* RuleViewController.xib in Resources */,
 				0D96C64C1575CBF8006C8EBC /* SettingsViewController.xib in Resources */,
-				0D6E5391159587D300E5AAD1 /* Help in Resources */,
 				0D64693F1599D04A00433025 /* OpenViewController.xib in Resources */,
 				0D62FCF4159BCDCC005506CA /* SaveViewController.xib in Resources */,
 				0D105F10159EABDF006350CA /* InfoViewController.xib in Resources */,
@@ -524,6 +523,7 @@
 				0DA5B31F15F0336C005EBBE8 /* Rules in Resources */,
 				0D1E9E6D17420EE2002C1270 /* triangle-right.png in Resources */,
 				0D1E9E6E17420EE2002C1270 /* triangle-down.png in Resources */,
+				0D71520A181A0C9D00840795 /* Help in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
