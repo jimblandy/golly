@@ -17,10 +17,19 @@
 
 <p>
 <ul>
-<li> <b><a href="pattern.html">Pattern Tab</a></b>
-<li> <b><a href="open.html">Open Tab</a></b>
-<li> <b><a href="settings.html">Settings Tab</a></b>
-<li> <b><a href="help.html">Help Tab</a></b>
+<script type="text/javascript">
+    if ( navigator.userAgent.match(/iPad|iPhone|iPod/i) ) {
+        document.write("<li> <b><a href=\"pattern-ios.html\">Pattern Tab</a></b>\n");
+        document.write("<li> <b><a href=\"open-ios.html\">Open Tab</a></b>\n");
+        document.write("<li> <b><a href=\"settings-ios.html\">Settings Tab</a></b>\n");
+        document.write("<li> <b><a href=\"help-ios.html\">Help Tab</a></b>\n");
+    } else if ( navigator.userAgent.match(/Android/i) ) {
+        document.write("<li> <b><a href=\"pattern-android.html\">Golly Screen</a></b>\n");
+        document.write("<li> <b><a href=\"open-android.html\">Open Screen</a></b>\n");
+        document.write("<li> <b><a href=\"settings-android.html\">Settings Screen</a></b>\n");
+        document.write("<li> <b><a href=\"help-android.html\">Help Screen</a></b>\n");
+    }
+</script>
 </ul>
 
 <p>
@@ -29,7 +38,13 @@
 <li> <b><a href="formats.html">File Formats</a></b>
 <li> <b><a href="bounded.html">Bounded Grids</a></b>
 <li> <b><a href="problems.html">Known Problems</a></b>
-<li> <b><a href="changes.html">Changes</a></b>
+<script type="text/javascript">
+    if ( navigator.userAgent.match(/iPad|iPhone|iPod/i) ) {
+        document.write("<li> <b><a href=\"changes-ios.html\">Changes</a></b>\n");
+    } else if ( navigator.userAgent.match(/Android/i) ) {
+        document.write("<li> <b><a href=\"changes-android.html\">Changes</a></b>\n");
+    }
+</script>
 <li> <b><a href="credits.html">Credits</a></b>
 </ul>
 
