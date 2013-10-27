@@ -10,12 +10,16 @@
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:orientation="horizontal" >
-	    <Button android:id="@+id/supplied"
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+        />
+        <Button android:id="@+id/supplied"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:layout_weight="1.0"
 	        android:text="Supplied"
 	        android:onClick="doSupplied"
 	    />
@@ -24,7 +28,6 @@
             android:layout_width="wrap_content"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:layout_weight="1.0"
 	        android:text="Recent"
 	        android:onClick="doRecent"
 	    />
@@ -33,7 +36,6 @@
             android:layout_width="wrap_content"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:layout_weight="1.0"
             android:text="Saved"
             android:onClick="doSaved"
         />
@@ -42,15 +44,19 @@
             android:layout_width="wrap_content"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:layout_weight="1.0"
             android:text="Downloaded"
             android:onClick="doDownloaded"
         />
-	</LinearLayout>
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+        />
+   	</LinearLayout>
 
     <WebView android:id="@+id/webview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1.0"
     />
 

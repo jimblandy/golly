@@ -42,6 +42,7 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
@@ -138,12 +139,18 @@ public class MainActivity extends BaseActivity {
 
     // local fields:
     private static boolean firstcall = true;
+    private boolean widescreen;                     // use different layout for wide screens?
     private Button ssbutton;                        // Start/Stop button
+    private Button resetbutton;                     // Reset button (used if wide screen)
     private Button undobutton;                      // Undo button
     private Button redobutton;                      // Redo button
     private Button editbutton;                      // Edit/Paste button
     private Button statebutton;                     // button to change drawing state
     private Button modebutton;                      // Draw/Pick/Select/Move button
+    private Button drawbutton;                      // Draw button (used if wide screen)
+    private Button pickbutton;                      // Pick button (used if wide screen)
+    private Button selectbutton;                    // Select button (used if wide screen)
+    private Button movebutton;                      // Move button (used if wide screen)
     private Button infobutton;                      // Info button
     private Button restorebutton;                   // Restore button
     private TextView status1, status2, status3;     // status bar has 3 lines
@@ -157,9 +164,9 @@ public class MainActivity extends BaseActivity {
     private String methodname;                      // name of method to call
     private View currview;                          // current view parameter
     private MenuItem curritem;                      // current menu item parameter
+    private PopupMenu popup;                        // used for all pop-up menus
     private boolean stopped = true;                 // generating is stopped?
     private boolean fullscreen = false;             // in full screen mode?
-    private PopupMenu popup;                        // used for all pop-up menus
 
     // -----------------------------------------------------------------------------
     
@@ -244,20 +251,27 @@ public class MainActivity extends BaseActivity {
         
         Configuration config = getResources().getConfiguration();
         // Log.i("Golly","screen width in dp = " + Integer.toString(config.screenWidthDp));
-        // on a Nexus 7 config.screenWidthDp returns 600 in portrait, 960 in landscape
-        if (config.screenWidthDp >= 600) {
-            //!!! setContentView(R.layout.main_layout_wide);
+        // eg. on a Nexus 7 config.screenWidthDp returns 600 in portrait, 960 in landscape
+        widescreen = config.screenWidthDp >= 600;
+        if (widescreen) {
+            // use a layout that has more buttons
+            setContentView(R.layout.main_layout_wide);
+            resetbutton = (Button) findViewById(R.id.reset);
+            drawbutton = (Button) findViewById(R.id.drawmode);
+            pickbutton = (Button) findViewById(R.id.pickmode);
+            selectbutton = (Button) findViewById(R.id.selectmode);
+            movebutton = (Button) findViewById(R.id.movemode);
         } else {
-            //!!! setContentView(R.layout.main_layout);
+            setContentView(R.layout.main_layout);
+            modebutton = (Button) findViewById(R.id.touchmode);
         }
-        setContentView(R.layout.main_layout);
         
+        // following stuff is used in both layouts
         ssbutton = (Button) findViewById(R.id.startstop);
         undobutton = (Button) findViewById(R.id.undo);
         redobutton = (Button) findViewById(R.id.redo);
         editbutton = (Button) findViewById(R.id.edit);
         statebutton = (Button) findViewById(R.id.state);
-        modebutton = (Button) findViewById(R.id.touchmode);
         infobutton = (Button) findViewById(R.id.info);
         restorebutton = (Button) findViewById(R.id.restore);
         status1 = (TextView) findViewById(R.id.status1);
@@ -324,7 +338,7 @@ public class MainActivity extends BaseActivity {
                 if (methodname.equals("doRule"))      doRule(currview); else
                 if (methodname.equals("doInfo"))      doInfo(currview); else
                 if (methodname.equals("doSave"))      doSave(currview); else
-                if (methodname.equals("doReset"))     doControlItem(curritem); else
+                if (methodname.equals("doReset"))     doReset(currview); else
                 if (methodname.equals("doPaste"))     doEditItem(curritem); else
                 if (methodname.equals("doSelItem"))   doSelectionItem(curritem); else
                 // string mismatch
@@ -496,11 +510,13 @@ public class MainActivity extends BaseActivity {
         if (nativeIsGenerating()) {
             ssbutton.setText("Stop");
             ssbutton.setTextColor(Color.rgb(255,0,0));
+            if (widescreen) resetbutton.setEnabled(true);
             undobutton.setEnabled(nativeAllowUndo());
             redobutton.setEnabled(false);
         } else {
             ssbutton.setText("Start");
             ssbutton.setTextColor(Color.rgb(0,255,0));
+            if (widescreen) resetbutton.setEnabled(nativeCanReset());
             undobutton.setEnabled(nativeAllowUndo() && (nativeCanReset() || nativeCanUndo()));
             redobutton.setEnabled(nativeCanRedo());
         }
@@ -571,6 +587,50 @@ public class MainActivity extends BaseActivity {
 
     // -----------------------------------------------------------------------------
     
+    // called when the Slower button is tapped
+    public void doSlower(View view) {
+        nativeClearMessage();
+        nativeSlower();
+        geninterval = nativeCalculateSpeed();
+        stopped = false;
+        if (nativeIsGenerating()) genhandler.post(generate);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Step=1 button is tapped
+    public void doStep1(View view) {
+        nativeClearMessage();
+        nativeStep1();
+        geninterval = nativeCalculateSpeed();
+        stopped = false;
+        if (nativeIsGenerating()) genhandler.post(generate);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Faster button is tapped
+    public void doFaster(View view) {
+        nativeClearMessage();
+        nativeFaster();
+        geninterval = nativeCalculateSpeed();
+        stopped = false;
+        if (nativeIsGenerating()) genhandler.post(generate);
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Reset button is tapped
+    public void doReset(View view) {
+        nativeClearMessage();
+        stopIfGenerating();
+        if (callAgainAfterDelay("doReset", view, null)) return;
+        nativeResetPattern();
+        updateButtons();
+    }
+
+    // -----------------------------------------------------------------------------
+    
     // called when the Control button is tapped
     public void doControl(View view) {
         nativeClearMessage();
@@ -612,6 +672,38 @@ public class MainActivity extends BaseActivity {
     public void doFitPattern(View view) {
         nativeClearMessage();
         nativeFitPattern();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Smaller button is tapped
+    public void doSmaller(View view) {
+        nativeClearMessage();
+        nativeSmaller();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Scale=1:1 button is tapped
+    public void doScale1to1(View view) {
+        nativeClearMessage();
+        nativeScale1to1();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Bigger button is tapped
+    public void doBigger(View view) {
+        nativeClearMessage();
+        nativeBigger();
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Middle button is tapped
+    public void doMiddle(View view) {
+        nativeClearMessage();
+        nativeMiddle();
     }
 
     // -----------------------------------------------------------------------------
@@ -803,6 +895,50 @@ public class MainActivity extends BaseActivity {
 
     // -----------------------------------------------------------------------------
     
+    // called when the Draw button is tapped
+    public void doDrawMode(View view) {
+        nativeClearMessage();
+        if (nativeGetMode() != 0) {
+            nativeSetMode(0);
+            UpdateEditBar();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Pick button is tapped
+    public void doPickMode(View view) {
+        nativeClearMessage();
+        if (nativeGetMode() != 1) {
+            nativeSetMode(1);
+            UpdateEditBar();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Select button is tapped
+    public void doSelectMode(View view) {
+        nativeClearMessage();
+        if (nativeGetMode() != 2) {
+            nativeSetMode(2);
+            UpdateEditBar();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Move button is tapped
+    public void doMoveMode(View view) {
+        nativeClearMessage();
+        if (nativeGetMode() != 3) {
+            nativeSetMode(3);
+            UpdateEditBar();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
     // called when the state button is tapped
     public void doChangeState(View view) {
         nativeClearMessage();
@@ -933,8 +1069,8 @@ public class MainActivity extends BaseActivity {
     // called when the Full/Restore button is tapped
     public void toggleFullScreen(View view) {
         // no need to call nativeClearMessage()
-        RelativeLayout topbar = (RelativeLayout) findViewById(R.id.top_bar);
-        RelativeLayout editbar = (RelativeLayout) findViewById(R.id.edit_bar);
+        LinearLayout topbar = (LinearLayout) findViewById(R.id.top_bar);
+        LinearLayout editbar = (LinearLayout) findViewById(R.id.edit_bar);
         RelativeLayout bottombar = (RelativeLayout) findViewById(R.id.bottom_bar);
         
         if (fullscreen) {
@@ -945,8 +1081,8 @@ public class MainActivity extends BaseActivity {
             status2.setVisibility(View.VISIBLE);
             status3.setVisibility(View.VISIBLE);
 
-            topbar.setVisibility(RelativeLayout.VISIBLE);
-            editbar.setVisibility(RelativeLayout.VISIBLE);
+            topbar.setVisibility(LinearLayout.VISIBLE);
+            editbar.setVisibility(LinearLayout.VISIBLE);
             bottombar.setVisibility(RelativeLayout.VISIBLE);
             
             getActionBar().show();
@@ -958,8 +1094,8 @@ public class MainActivity extends BaseActivity {
             status2.setVisibility(View.GONE);
             status3.setVisibility(View.GONE);
             
-            topbar.setVisibility(RelativeLayout.GONE);
-            editbar.setVisibility(RelativeLayout.GONE);
+            topbar.setVisibility(LinearLayout.GONE);
+            editbar.setVisibility(LinearLayout.GONE);
             bottombar.setVisibility(RelativeLayout.GONE);
             
             getActionBar().hide();
@@ -1032,14 +1168,41 @@ public class MainActivity extends BaseActivity {
                     editbutton.setText("Edit");
                 
                 // show current drawing state
-                statebutton.setText(Integer.toString(nativeDrawingState()));
+                statebutton.setText("State=" + Integer.toString(nativeDrawingState()));
                 
-                switch (nativeGetMode()) {
-                    case 0:  modebutton.setText("Draw"); break;
-                    case 1:  modebutton.setText("Pick"); break;
-                    case 2:  modebutton.setText("Select"); break;
-                    case 3:  modebutton.setText("Move"); break;
-                    default: Log.e("Golly","Fix bug in UpdateEditBar!");
+                // show current touch mode
+                if (widescreen) {
+                    drawbutton.setTypeface(Typeface.DEFAULT);
+                    pickbutton.setTypeface(Typeface.DEFAULT);
+                    selectbutton.setTypeface(Typeface.DEFAULT);
+                    movebutton.setTypeface(Typeface.DEFAULT);
+                    drawbutton.setTextColor(Color.rgb(0,0,0));
+                    pickbutton.setTextColor(Color.rgb(0,0,0));
+                    selectbutton.setTextColor(Color.rgb(0,0,0));
+                    movebutton.setTextColor(Color.rgb(0,0,0));
+                    switch (nativeGetMode()) {
+                        case 0:  drawbutton.setTypeface(Typeface.DEFAULT_BOLD);
+                                 drawbutton.setTextColor(Color.rgb(0,0,255));
+                                 break;
+                        case 1:  pickbutton.setTypeface(Typeface.DEFAULT_BOLD);
+                                 pickbutton.setTextColor(Color.rgb(0,0,255));
+                                 break;
+                        case 2:  selectbutton.setTypeface(Typeface.DEFAULT_BOLD);
+                                 selectbutton.setTextColor(Color.rgb(0,0,255));
+                                 break;
+                        case 3:  movebutton.setTypeface(Typeface.DEFAULT_BOLD);
+                                 movebutton.setTextColor(Color.rgb(0,0,255));
+                                 break;
+                        default: Log.e("Golly","Fix bug in UpdateEditBar!");
+                    }
+                } else {
+                    switch (nativeGetMode()) {
+                        case 0:  modebutton.setText("Draw"); break;
+                        case 1:  modebutton.setText("Pick"); break;
+                        case 2:  modebutton.setText("Select"); break;
+                        case 3:  modebutton.setText("Move"); break;
+                        default: Log.e("Golly","Fix bug in UpdateEditBar!");
+                    }
                 }
             }
         });

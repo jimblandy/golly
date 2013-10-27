@@ -31,13 +31,37 @@
             android:onClick="doStep"
             android:text="Step" />
         <Button
-            android:id="@+id/control"
+            android:id="@+id/slower"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:onClick="doControl"
-            android:text="Control" />
+            android:onClick="doSlower"
+            android:text="&lt;&lt;" />
+        <Button
+            android:id="@+id/step1"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doStep1"
+            android:text="Step=1" />
+        <Button
+            android:id="@+id/faster"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doFaster"
+            android:text=">>" />
+        <Button
+            android:id="@+id/reset"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doReset"
+            android:text="Reset" />
         <View
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -51,13 +75,37 @@
             android:onClick="doFitPattern"
             android:text="Fit" />
         <Button
-            android:id="@+id/view"
+            android:id="@+id/smaller"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:onClick="doView"
-            android:text="View" />
+            android:onClick="doSmaller"
+            android:text="&#8211;" />
+        <Button
+            android:id="@+id/scale1to1"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doScale1to1"
+            android:text="1:1" />
+        <Button
+            android:id="@+id/bigger"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doBigger"
+            android:text="+" />
+        <Button
+            android:id="@+id/middle"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doMiddle"
+            android:text="Mid" />
     </LinearLayout>
     
     <TextView
@@ -97,55 +145,82 @@
         android:layout_height="wrap_content"
         android:background="#EEEEEE"
         android:orientation="horizontal" >
-    	<Button
-    	    android:id="@+id/undo"
-    	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="40sp"
-    	    android:minHeight="0dp"
-    	    android:onClick="doUndo"
-    	    android:text="Undo" />
-    	<Button
-    	    android:id="@+id/redo"
-    	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="40sp"
-    	    android:minHeight="0dp"
-    	    android:onClick="doRedo"
-    	    android:text="Redo" />	
+        <Button
+            android:id="@+id/undo"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doUndo"
+            android:text="Undo" />
+        <Button
+            android:id="@+id/redo"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doRedo"
+            android:text="Redo" />  
         <View
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
-    	<Button
-    	    android:id="@+id/edit"
-    	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="40sp"
-    	    android:minHeight="0dp"
-    	    android:onClick="doEditPaste"
-    	    android:text="Edit" />
+        <Button
+            android:id="@+id/edit"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doEditPaste"
+            android:text="Edit" />
         <View
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
-    	<Button
+        <Button
             android:id="@+id/state"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="40sp"
             android:minHeight="0dp"
             android:onClick="doChangeState"
-            android:text="1" />
+            android:text="State=1" />
+        <View
+            android:layout_width="20sp"
+            android:layout_height="match_parent" />
         <Button
-            android:id="@+id/touchmode"
+            android:id="@+id/drawmode"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:onClick="doSetTouchMode"
+            android:onClick="doDrawMode"
             android:text="Draw" />
-        </LinearLayout>
+        <Button
+            android:id="@+id/pickmode"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doPickMode"
+            android:text="Pick" />
+        <Button
+            android:id="@+id/selectmode"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doSelectMode"
+            android:text="Select" />
+        <Button
+            android:id="@+id/movemode"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doMoveMode"
+            android:text="Move" />
+    </LinearLayout>
     
     <RelativeLayout
         android:layout_width="match_parent"
@@ -205,50 +280,50 @@
         android:layout_height="wrap_content"
         android:background="#EEEEEE"
         android:orientation="horizontal" >
-    	<Button
-    	    android:id="@+id/newpattern"
-    	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="40sp"
-    	    android:minHeight="0dp"
-    	    android:onClick="doNewPattern"
-    	    android:text="New" />
-    	<Button
-    	    android:id="@+id/info"
-    	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_centerInParent="true"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="40sp"
-    	    android:minHeight="0dp"
-    	    android:onClick="doInfo"
-    	    android:text="Info" />
-    	<Button
-    	    android:id="@+id/rule"
-    	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_toLeftOf="@id/info"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="40sp"
-    	    android:minHeight="0dp"
-    	    android:onClick="doRule"
-    	    android:text="Rule" />
-    	<Button
-    	    android:id="@+id/save"
-    	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_toRightOf="@id/info"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="40sp"
-    	    android:minHeight="0dp"
-    	    android:onClick="doSave"
-    	    android:text="Save" />	
-    	<Button
-    	    android:id="@+id/fullscreen"
-    	    style="?android:attr/buttonStyleSmall"
-    	    android:layout_alignParentRight="true"
-    	    android:layout_width="wrap_content"
-    	    android:layout_height="40sp"
-    	    android:minHeight="0dp"
-    	    android:onClick="toggleFullScreen"
-    	    android:text="Full" />
+        <Button
+            android:id="@+id/newpattern"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doNewPattern"
+            android:text="New" />
+        <Button
+            android:id="@+id/info"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doInfo"
+            android:text="Info" />
+        <Button
+            android:id="@+id/rule"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_toLeftOf="@id/info"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doRule"
+            android:text="Rule" />
+        <Button
+            android:id="@+id/save"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_toRightOf="@id/info"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doSave"
+            android:text="Save" />  
+        <Button
+            android:id="@+id/fullscreen"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="toggleFullScreen"
+            android:text="Full Screen" />
     </RelativeLayout>
     
 </LinearLayout>
