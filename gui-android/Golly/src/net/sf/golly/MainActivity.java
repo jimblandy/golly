@@ -525,6 +525,15 @@ public class MainActivity extends BaseActivity {
 
     // -----------------------------------------------------------------------------
 
+    private void updateGeneratingSpeed() {
+        geninterval = nativeCalculateSpeed();
+        genhandler.removeCallbacks(generate);
+        stopped = false;
+        if (nativeIsGenerating()) genhandler.post(generate);
+    }
+
+    // -----------------------------------------------------------------------------
+
     private boolean callAgainAfterDelay(String callname, View view, MenuItem item) {
         if (processingevents) {
             // CheckMessageQueue has been called inside a (possibly) lengthy task
@@ -555,6 +564,7 @@ public class MainActivity extends BaseActivity {
             if (nativeIsGenerating()) {
                 // start calling nativeGenerate
                 geninterval = nativeCalculateSpeed();
+                genhandler.removeCallbacks(generate);   // probably unnecessary here but play safe
                 stopped = false;
                 genhandler.post(generate);
             }
@@ -566,7 +576,7 @@ public class MainActivity extends BaseActivity {
 
     private void stopIfGenerating() {
         if (nativeIsGenerating()) {
-            // note that genhandler.removeCallbacks(generate) doesn't work if
+            // note that genhandler.removeCallbacks(generate) doesn't always work if
             // processingevents is true, so we use a global flag to start/stop
             // making calls to nativeGenerate
             stopped = true;
@@ -591,9 +601,7 @@ public class MainActivity extends BaseActivity {
     public void doSlower(View view) {
         nativeClearMessage();
         nativeSlower();
-        geninterval = nativeCalculateSpeed();
-        stopped = false;
-        if (nativeIsGenerating()) genhandler.post(generate);
+        updateGeneratingSpeed();
     }
 
     // -----------------------------------------------------------------------------
@@ -602,9 +610,7 @@ public class MainActivity extends BaseActivity {
     public void doStep1(View view) {
         nativeClearMessage();
         nativeStep1();
-        geninterval = nativeCalculateSpeed();
-        stopped = false;
-        if (nativeIsGenerating()) genhandler.post(generate);
+        updateGeneratingSpeed();
     }
 
     // -----------------------------------------------------------------------------
@@ -613,9 +619,7 @@ public class MainActivity extends BaseActivity {
     public void doFaster(View view) {
         nativeClearMessage();
         nativeFaster();
-        geninterval = nativeCalculateSpeed();
-        stopped = false;
-        if (nativeIsGenerating()) genhandler.post(generate);
+        updateGeneratingSpeed();
     }
 
     // -----------------------------------------------------------------------------
@@ -660,9 +664,7 @@ public class MainActivity extends BaseActivity {
         if (item.getItemId() == R.id.reset) {
             updateButtons();
         } else {
-            geninterval = nativeCalculateSpeed();
-            stopped = false;
-            if (nativeIsGenerating()) genhandler.post(generate);
+            updateGeneratingSpeed();
         }
     }
 
