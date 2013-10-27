@@ -166,13 +166,29 @@
             android:layout_height="match_parent"
             android:layout_weight="1" />
         <Button
+            android:id="@+id/selectall"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doSelectAll"
+            android:text="All" />
+        <Button
             android:id="@+id/edit"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:onClick="doEditPaste"
+            android:onClick="doEdit"
             android:text="Edit" />
+        <Button
+            android:id="@+id/paste"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doPaste"
+            android:text="Paste" />
         <View
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -185,9 +201,6 @@
             android:minHeight="0dp"
             android:onClick="doChangeState"
             android:text="State=1" />
-        <View
-            android:layout_width="20sp"
-            android:layout_height="match_parent" />
         <Button
             android:id="@+id/drawmode"
             style="?android:attr/buttonStyleSmall"
@@ -227,10 +240,6 @@
         android:layout_height="0dp"
         android:layout_weight="1.0"
         android:orientation="horizontal" >
-        <net.sf.golly.PatternGLSurfaceView
-            android:id="@+id/patternview"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
         <LinearLayout
             android:id="@+id/progress_layout"
             android:background="#EEEEEE"
@@ -272,6 +281,14 @@
             android:minHeight="0dp"
             android:onClick="toggleFullScreen"
             android:text="Restore" />
+
+        <net.sf.golly.PatternGLSurfaceView
+            android:id="@+id/patternview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true" />
+
     </RelativeLayout>
 
     <RelativeLayout

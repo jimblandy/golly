@@ -339,7 +339,7 @@ public class MainActivity extends BaseActivity {
                 if (methodname.equals("doInfo"))      doInfo(currview); else
                 if (methodname.equals("doSave"))      doSave(currview); else
                 if (methodname.equals("doReset"))     doReset(currview); else
-                if (methodname.equals("doPaste"))     doEditItem(curritem); else
+                if (methodname.equals("doPaste"))     doPaste(currview); else
                 if (methodname.equals("doSelItem"))   doSelectionItem(curritem); else
                 // string mismatch
                 Log.e("Fix callagain", methodname);
@@ -759,31 +759,93 @@ public class MainActivity extends BaseActivity {
 
     // -----------------------------------------------------------------------------
     
-    // called when the Edit/Paste button is tapped
+    // called when the All button is tapped
+    public void doSelectAll(View view) {
+        nativeClearMessage();
+        nativeSelectAll();
+        UpdateEditBar();
+    }
+
+    // -----------------------------------------------------------------------------
+
+    private void createSelectionMenu(MenuInflater inflater) {
+        Menu menu = popup.getMenu();
+        inflater.inflate(R.menu.selection_menu, menu);
+        MenuItem item = menu.findItem(R.id.random);
+        item.setTitle("Random Fill (" + nativeGetRandomFill() + "%)");
+        if (widescreen) {
+            // delete the top 2 items
+            menu.removeItem(R.id.paste);
+            menu.removeItem(R.id.all);
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Edit button is tapped (widescreen is true)
+    public void doEdit(View view) {
+        nativeClearMessage();
+        if (nativeSelectionExists()) {
+            popup = new PopupMenu(this, view);
+            MenuInflater inflater = popup.getMenuInflater();
+            createSelectionMenu(inflater);
+            popup.show();
+        } else {
+            // editbutton should be disabled if there's no selection
+            Log.e("Golly","Bug detected in doEdit!");
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+
+    private void createPasteMenu(MenuInflater inflater) {
+        Menu menu = popup.getMenu();
+        inflater.inflate(R.menu.paste_menu, menu);
+        MenuItem item = menu.findItem(R.id.pastesel);
+        item.setEnabled(nativeSelectionExists());
+        item = menu.findItem(R.id.pastemode);
+        item.setTitle("Paste (" + nativeGetPasteMode() + ")");
+        if (nativeIsGenerating()) {
+            // probably best to stop generating when Paste button is tapped
+            // (consistent with iOS Golly)
+            stopped = true;
+            nativeStopGenerating();
+            updateButtons();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Paste button is tapped (widescreen is true)
+    public void doPaste(View view) {
+        nativeClearMessage();
+        if (nativePasteExists()) {
+            // show pop-up menu with various paste options
+            popup = new PopupMenu(this, view);
+            MenuInflater inflater = popup.getMenuInflater();
+            createPasteMenu(inflater);
+            popup.show();
+        } else {
+            // create the paste image
+            stopIfGenerating();
+            if (callAgainAfterDelay("doPaste", view, null)) return;
+            nativePaste();
+            UpdateEditBar();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    
+    // called when the Edit/Paste button is tapped (widescreen is false)
     public void doEditPaste(View view) {
         nativeClearMessage();
         // display pop-up menu with items that depend on whether a selection or paste image exists
         popup = new PopupMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
         if (nativePasteExists()) {
-            Menu menu = popup.getMenu();
-            inflater.inflate(R.menu.paste_menu, menu);
-            MenuItem item = menu.findItem(R.id.pastesel);
-            item.setEnabled(nativeSelectionExists());
-            item = menu.findItem(R.id.pastemode);
-            item.setTitle("Paste (" + nativeGetPasteMode() + ")");
-            if (nativeIsGenerating()) {
-                // probably best to stop generating when Paste button is tapped
-                // (consistent with iOS Golly)
-                stopped = true;
-                nativeStopGenerating();
-                updateButtons();
-            }
+            createPasteMenu(inflater);
         } else if (nativeSelectionExists()) {
-            Menu menu = popup.getMenu();
-            inflater.inflate(R.menu.selection_menu, menu);
-            MenuItem item = menu.findItem(R.id.random);
-            item.setTitle("Random Fill (" + nativeGetRandomFill() + "%)");
+            createSelectionMenu(inflater);
         } else {
             inflater.inflate(R.menu.edit_menu, popup.getMenu());
         }
@@ -804,7 +866,6 @@ public class MainActivity extends BaseActivity {
             case R.id.all:   nativeSelectAll(); break;
             default:         Log.e("Golly","Fix bug in doEditItem!");
         }
-        updateButtons();
         UpdateEditBar();
     }
 
@@ -826,7 +887,7 @@ public class MainActivity extends BaseActivity {
         }
         popup.dismiss();
         switch (item.getItemId()) {
-            // let doEditItem handle the top 2 items:
+            // doEditItem handles the top 2 items (if widescreen is false)
             // case R.id.paste: nativePaste(); break;
             // case R.id.all:   nativeSelectAll(); break;
             case R.id.remove:   nativeRemoveSelection(); break;
@@ -864,7 +925,6 @@ public class MainActivity extends BaseActivity {
             case R.id.protatea:  nativeRotatePaste(0); break;
             default:             Log.e("Golly","Fix bug in doPasteItem!");
         }
-        // if paste image no longer exists then change Paste button back to Edit
         UpdateEditBar();
     }
     
@@ -1164,10 +1224,16 @@ public class MainActivity extends BaseActivity {
                 undobutton.setEnabled(nativeCanUndo());
                 redobutton.setEnabled(nativeCanRedo());
                 
-                if (nativePasteExists())
-                    editbutton.setText("Paste");
-                else
-                    editbutton.setText("Edit");
+                // update Edit button
+                if (widescreen) {
+                    editbutton.setEnabled(nativeSelectionExists());
+                } else {
+                    if (nativePasteExists()) {
+                        editbutton.setText("Paste");
+                    } else {
+                        editbutton.setText("Edit");
+                    }
+                }
                 
                 // show current drawing state
                 statebutton.setText("State=" + Integer.toString(nativeDrawingState()));
