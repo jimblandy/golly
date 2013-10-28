@@ -132,6 +132,7 @@ public class MainActivity extends BaseActivity {
     private native boolean nativeFileExists(String filename);
     private native void nativeSavePattern(String filename);
     private native void nativeOpenFile(String filepath);
+    private native void nativeSetWideScreen(boolean widescreen);
     private native void nativeSetFullScreen(boolean fullscreen);
     private native void nativeChangeRule(String rule);
     private native void nativeLexiconPattern(String pattern);
@@ -253,6 +254,7 @@ public class MainActivity extends BaseActivity {
         // Log.i("Golly","screen width in dp = " + Integer.toString(config.screenWidthDp));
         // eg. on a Nexus 7 config.screenWidthDp returns 600 in portrait, 960 in landscape
         widescreen = config.screenWidthDp >= 600;
+        nativeSetWideScreen(false);
         if (widescreen) {
             // use a layout that has more buttons
             setContentView(R.layout.main_layout_wide);

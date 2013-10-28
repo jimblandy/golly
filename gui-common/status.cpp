@@ -29,7 +29,7 @@
 #include "prefs.h"      // for mindelay, maxdelay, etc
 #include "algos.h"      // for algoinfo
 #include "layer.h"      // for currlayer
-#include "view.h"       // for nopattupdate
+#include "view.h"       // for nopattupdate, widescreen
 #include "status.h"
 
 #ifdef ANDROID_GUI
@@ -46,27 +46,23 @@ std::string status1;    // top line
 std::string status2;    // middle line
 std::string status3;    // bottom line
 
-//!!! eventually we'll make the following prefixes dynamic strings
-// that depend on whether the device's screen size is large or small
-// (and whether it is in portrait mode or landscape mode???)
-#ifdef ANDROID_GUI
-    const char* gen_prefix =   "Gen=";
-    const char* algo_prefix =  "   Algo=";
-    const char* rule_prefix =  "   Rule=";
-    const char* pop_prefix =   "   Pop=";
-    const char* scale_prefix = "   Scale=";
-    const char* step_prefix =  "   ";
-    const char* xy_prefix =    "   XY=";
-#endif
-#ifdef IOS_GUI
-    const char* gen_prefix =   "Generation=";
-    const char* algo_prefix =  "    Algorithm=";
-    const char* rule_prefix =  "    Rule=";
-    const char* pop_prefix =   "    Population=";
-    const char* scale_prefix = "    Scale=";
-    const char* step_prefix =  "    ";
-    const char* xy_prefix =    "    XY=";
-#endif
+// prefixes used when widescreen is true:
+const char* large_gen_prefix =   "Generation=";
+const char* large_algo_prefix =  "    Algorithm=";
+const char* large_rule_prefix =  "    Rule=";
+const char* large_pop_prefix =   "    Population=";
+const char* large_scale_prefix = "    Scale=";
+const char* large_step_prefix =  "    ";
+const char* large_xy_prefix =    "    XY=";
+
+// prefixes used when widescreen is false:
+const char* small_gen_prefix =   "Gen=";
+const char* small_algo_prefix =  "   Algo=";
+const char* small_rule_prefix =  "   Rule=";
+const char* small_pop_prefix =   "   Pop=";
+const char* small_scale_prefix = "   Scale=";
+const char* small_step_prefix =  "   ";
+const char* small_xy_prefix =    "   XY=";
 
 // -----------------------------------------------------------------------------
 
@@ -80,9 +76,9 @@ void UpdateStatusLines()
         status1 += "*";
     }
     status1 += currlayer->currname;
-    status1 += algo_prefix;
+    status1 += widescreen ? large_algo_prefix : small_algo_prefix;
     status1 += GetAlgoName(currlayer->algtype);
-    status1 += rule_prefix;
+    status1 += widescreen ? large_rule_prefix : small_rule_prefix;
     status1 += rule;
 
     // show rule name if one exists and is not same as rule
@@ -111,13 +107,13 @@ void UpdateStatusLines()
         sprintf(stepstr, "Step=%d^%d", currlayer->currbase, currlayer->currexpo);
     }
 
-    status2 = gen_prefix;
+    status2 = widescreen ? large_gen_prefix : small_gen_prefix;
     if (nopattupdate) {
         status2 += "0";
     } else {
         status2 += Stringify(currlayer->algo->getGeneration());
     }
-    status2 += pop_prefix;
+    status2 += widescreen ? large_pop_prefix : small_pop_prefix;
     if (nopattupdate) {
         status2 += "0";
     } else {
@@ -129,11 +125,11 @@ void UpdateStatusLines()
             status2 += Stringify(popcount);
         }
     }
-    status2 += scale_prefix;
+    status2 += widescreen ? large_scale_prefix : small_scale_prefix;
     status2 += scalestr;
-    status2 += step_prefix;
-    status2 += stepstr;      // starts with Delay or Step
-    status2 += xy_prefix;
+    status2 += widescreen ? large_step_prefix : small_step_prefix;
+    status2 += stepstr;
+    status2 += widescreen ? large_xy_prefix : small_xy_prefix;
     status2 += Stringify(currlayer->view->x);
     status2 += " ";
     status2 += Stringify(currlayer->view->y);

@@ -39,6 +39,7 @@ extern const char* selection_too_big;
 extern const char* pattern_too_big;
 extern const char* origin_restored;
 
+extern bool widescreen;         // is screen wide enough to show all info?
 extern bool fullscreen;         // in full screen mode?
 extern bool nopattupdate;       // disable pattern updates?
 extern bool waitingforpaste;    // waiting for user to decide what to do with paste image?

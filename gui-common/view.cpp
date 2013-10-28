@@ -58,6 +58,7 @@ const char* selection_too_big   = "Selection is outside +/- 10^9 boundary.";
 const char* pattern_too_big     = "Pattern is outside +/- 10^9 boundary.";
 const char* origin_restored     = "Origin restored.";
 
+bool widescreen = true;         // is screen wide enough to show all info? (assume a tablet device; eg. iPad)
 bool fullscreen = false;        // in full screen mode?
 bool nopattupdate = false;      // disable pattern updates?
 bool waitingforpaste = false;   // waiting for user to decide what to do with paste image?

@@ -37,7 +37,7 @@
 #include "control.h"    // for SetMinimumStepExponent
 #include "file.h"       // for NewPattern
 #include "render.h"     // for DrawPattern
-#include "view.h"       // for TouchBegan, etc
+#include "view.h"       // for widescreen, fullscreen, TouchBegan, etc
 #include "status.h"     // for UpdateStatusLines, ClearMessage, etc
 #include "undo.h"       // for ClearUndoRedo
 #include "jnicalls.h"
@@ -1100,6 +1100,14 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeOpenFile(JNIEnv* env
     FixURLPath(fpath);
     OpenFile(fpath.c_str());
     SavePrefs();                // save recentpatterns
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetWideScreen(JNIEnv* env, jobject obj, jboolean iswide)
+{
+    widescreen = iswide;
 }
 
 // -----------------------------------------------------------------------------
