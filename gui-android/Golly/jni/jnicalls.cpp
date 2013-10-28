@@ -1116,6 +1116,10 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetFullScreen(JNIEnv* env, jobject obj, jboolean isfull)
 {
     fullscreen = isfull;
+    if (!fullscreen) {
+        // user might have changed scale or position while in fullscreen mode
+        UpdateStatus();
+    }
 }
 
 // -----------------------------------------------------------------------------

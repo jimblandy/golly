@@ -140,6 +140,7 @@ public class MainActivity extends BaseActivity {
 
     // local fields:
     private static boolean firstcall = true;
+    private static boolean fullscreen = false;      // in full screen mode?
     private boolean widescreen;                     // use different layout for wide screens?
     private Button ssbutton;                        // Start/Stop button
     private Button resetbutton;                     // Reset button (used if wide screen)
@@ -167,7 +168,6 @@ public class MainActivity extends BaseActivity {
     private MenuItem curritem;                      // current menu item parameter
     private PopupMenu popup;                        // used for all pop-up menus
     private boolean stopped = true;                 // generating is stopped?
-    private boolean fullscreen = false;             // in full screen mode?
 
     // -----------------------------------------------------------------------------
     
@@ -292,11 +292,7 @@ public class MainActivity extends BaseActivity {
         // this will call the PatternGLSurfaceView constructor
         pattView = (PatternGLSurfaceView) findViewById(R.id.patternview);
         
-        // might be better to make fullscreen static and only do following if firstcall??? test device rotation!!!
         restorebutton.setVisibility(View.INVISIBLE);
-        fullscreen = false;
-        nativeSetFullScreen(fullscreen);
-        
         proglayout.setVisibility(LinearLayout.INVISIBLE);
         
         // check for messages sent by other activities
@@ -397,8 +393,15 @@ public class MainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         pattView.onResume();
-        updateButtons();
-        UpdateEditBar();
+        
+        if (fullscreen) {
+            fullscreen = false;         // following will set it true
+            toggleFullScreen(null);
+        } else {
+            updateButtons();
+            UpdateEditBar();
+        }
+        
         if (nativeIsGenerating()) {
             stopped = false;
             genhandler.post(generate);
@@ -1165,7 +1168,7 @@ public class MainActivity extends BaseActivity {
             getActionBar().hide();
         }
         
-        // need to let native code know
+        // need to let native code know (this will update status bar if not fullscreen)
         nativeSetFullScreen(fullscreen);
         
         if (!fullscreen) {
