@@ -240,6 +240,10 @@
         android:layout_height="0dp"
         android:layout_weight="1.0"
         android:orientation="horizontal" >
+        <net.sf.golly.PatternGLSurfaceView
+            android:id="@+id/patternview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
         <LinearLayout
             android:id="@+id/progress_layout"
             android:background="#EEEEEE"
@@ -281,14 +285,6 @@
             android:minHeight="0dp"
             android:onClick="toggleFullScreen"
             android:text="Restore" />
-
-        <net.sf.golly.PatternGLSurfaceView
-            android:id="@+id/patternview"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true" />
-
     </RelativeLayout>
 
     <RelativeLayout

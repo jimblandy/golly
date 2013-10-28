@@ -145,7 +145,7 @@
             android:minHeight="0dp"
             android:onClick="doSetTouchMode"
             android:text="Draw" />
-        </LinearLayout>
+    </LinearLayout>
     
     <RelativeLayout
         android:layout_width="match_parent"
