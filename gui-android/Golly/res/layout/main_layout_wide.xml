@@ -13,6 +13,14 @@
         android:background="#EEEEEE"
         android:orientation="horizontal" >
         <Button
+            android:id="@+id/reset"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="40sp"
+            android:minHeight="0dp"
+            android:onClick="doReset"
+            android:text="Reset" />
+        <Button
             android:id="@+id/startstop"
             style="?android:attr/buttonStyleSmall"
             android:minHeight="0dp"
@@ -54,14 +62,6 @@
             android:minHeight="0dp"
             android:onClick="doFaster"
             android:text=">>" />
-        <Button
-            android:id="@+id/reset"
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="40sp"
-            android:minHeight="0dp"
-            android:onClick="doReset"
-            android:text="Reset" />
         <View
             android:layout_width="0dp"
             android:layout_height="match_parent"

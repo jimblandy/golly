@@ -263,6 +263,15 @@ public class MainActivity extends BaseActivity {
             pickbutton = (Button) findViewById(R.id.pickmode);
             selectbutton = (Button) findViewById(R.id.selectmode);
             movebutton = (Button) findViewById(R.id.movemode);
+            if (config.screenWidthDp >= 800) {
+                // show nicer text in some buttons
+                ((Button) findViewById(R.id.slower)).setText("Slower");
+                ((Button) findViewById(R.id.faster)).setText("Faster");
+                ((Button) findViewById(R.id.smaller)).setText("Smaller");
+                ((Button) findViewById(R.id.scale1to1)).setText("Scale=1:1");
+                ((Button) findViewById(R.id.bigger)).setText("Bigger");
+                ((Button) findViewById(R.id.middle)).setText("Middle");
+            }
         } else {
             setContentView(R.layout.main_layout);
             modebutton = (Button) findViewById(R.id.touchmode);
