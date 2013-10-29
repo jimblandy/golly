@@ -1812,6 +1812,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeResize(JNIEnv* env,
     glViewport(0, 0, w, h);
     glMatrixMode(GL_MODELVIEW);
 
+    //!!! glScalef(2.0, 2.0, 0.0);        //!!!??? if screendensity >= 300 (pass in to nativeInit and set global flag???)
+
     statewd = w;
     stateht = h;
 

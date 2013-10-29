@@ -33,6 +33,7 @@ import java.util.Arrays;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -219,9 +220,17 @@ public class RuleActivity extends BaseActivity {
         ruletext = (EditText) findViewById(R.id.rule);
 
         gwebview = (WebView) findViewById(R.id.webview);
+        gwebview.setWebViewClient(new MyWebViewClient());
+
         // no need for JavaScript???
         // gwebview.getSettings().setJavaScriptEnabled(true);
-        gwebview.setWebViewClient(new MyWebViewClient());
+        
+        Configuration config = getResources().getConfiguration();
+        // my Nexus 7 has a density of 320
+        if (config.densityDpi > 300) {
+            // use bigger font size for high density screens (default size is 16)
+            gwebview.getSettings().setDefaultFontSize(24);
+        }
 
         getActionBar().hide();
 
@@ -306,18 +315,18 @@ public class RuleActivity extends BaseActivity {
                             htmldata += "<a href=\"delete:";
                             htmldata += prefix;
                             htmldata += filename;
-                            htmldata += "\"><font size=-1 color='red'>DELETE</font></a>&nbsp;&nbsp;&nbsp;";
+                            htmldata += "\"><font size=-2 color='red'>DELETE</font></a>&nbsp;&nbsp;&nbsp;";
                             // allow user to edit .rule file
                             htmldata += "<a href=\"edit:";
                             htmldata += prefix;
                             htmldata += filename;
-                            htmldata += "\"><font size=-1 color='green'>EDIT</font></a>&nbsp;&nbsp;&nbsp;";
+                            htmldata += "\"><font size=-2 color='green'>EDIT</font></a>&nbsp;&nbsp;&nbsp;";
                         } else {
                             // allow user to read supplied .rule file
                             htmldata += "<a href=\"edit:";
                             htmldata += prefix;
                             htmldata += filename;
-                            htmldata += "\"><font size=-1 color='green'>READ</font></a>&nbsp;&nbsp;&nbsp;";
+                            htmldata += "\"><font size=-2 color='green'>READ</font></a>&nbsp;&nbsp;&nbsp;";
                         }
                         // use "open:" link rather than "rule:" link
                         htmldata += "<a href=\"open:";
@@ -348,7 +357,7 @@ public class RuleActivity extends BaseActivity {
             htmldata += "<p>The RuleLoader algorithm allows CA rules to be specified in .rule files.";
             htmldata += " Given the rule string \"Foo\", RuleLoader will search for a file called Foo.rule";
             htmldata += " in your rules folder, then in the rules folder supplied with Golly.";
-            htmldata += "</p><font size=+1 color=\"black\"><b>";
+            htmldata += "</p><font color=\"black\"><b>";
             
             htmldata += createRuleLinks(userrules, "Rules/", "Your .rule files:", true);
             htmldata += createRuleLinks(rulesdir, "Supplied/Rules/", "Supplied .rule files:", false);
@@ -365,7 +374,7 @@ public class RuleActivity extends BaseActivity {
                 gwebview.loadUrl("file://" + fullpath);     // fullpath starts with "/"
             } else {
                 // should never happen
-                String htmldata = "<html><center><font size=+1 color=\"red\">Failed to find html file!</font></center></html>";
+                String htmldata = "<html><center><font color=\"red\">Failed to find html file!</font></center></html>";
                 gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);
             }
         }

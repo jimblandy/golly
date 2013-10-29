@@ -33,6 +33,7 @@ import java.util.Arrays;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.NavUtils;
@@ -249,14 +250,22 @@ public class OpenActivity extends BaseActivity {
         setContentView(R.layout.open_layout);
         
         gwebview = (WebView) findViewById(R.id.webview);
-        // no need for JavaScript???
-        // gwebview.getSettings().setJavaScriptEnabled(true);
         gwebview.setWebViewClient(new MyWebViewClient());
         
         // avoid wrapping long lines -- this doesn't work:
         // gwebview.getSettings().setUseWideViewPort(true);
         // this is better:
         gwebview.getSettings().setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN);
+        
+        Configuration config = getResources().getConfiguration();
+        // my Nexus 7 has a density of 320
+        if (config.densityDpi > 300) {
+            // use bigger font size for high density screens (default size is 16)
+            gwebview.getSettings().setDefaultFontSize(24);
+        }
+        
+        // no need for JavaScript???
+        // gwebview.getSettings().setJavaScriptEnabled(true);
         
         // allow zooming???
         // gwebview.getSettings().setBuiltInZoomControls(true);

@@ -252,7 +252,9 @@ public class MainActivity extends BaseActivity {
         
         Configuration config = getResources().getConfiguration();
         // Log.i("Golly","screen width in dp = " + Integer.toString(config.screenWidthDp));
-        // eg. on a Nexus 7 config.screenWidthDp returns 600 in portrait, 960 in landscape
+        // Log.i("Golly","screen density in dpi = " + Integer.toString(config.densityDpi));
+        // eg. on a Nexus 7 config.screenWidthDp = 600 in portrait, 960 in landscape
+        // and config.densityDpi = 320
         widescreen = config.screenWidthDp >= 600;
         nativeSetWideScreen(widescreen);
         if (widescreen) {
@@ -273,6 +275,7 @@ public class MainActivity extends BaseActivity {
                 ((Button) findViewById(R.id.middle)).setText("Middle");
             }
         } else {
+            // screen isn't wide enough to have all the buttons we'd like
             setContentView(R.layout.main_layout);
             modebutton = (Button) findViewById(R.id.touchmode);
         }
