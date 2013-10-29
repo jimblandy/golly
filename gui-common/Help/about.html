@@ -1,15 +1,15 @@
 <html>
 <body bgcolor="#FFFFCE">
 
-<table cellspacing=3 cellpadding=4 width="100%">
+<table cellspacing=3 cellpadding=4 width="100%" height="100%">
 <tr>
 <td>
 <center>
 <script type="text/javascript">
     if (window.innerWidth < 600) {
-        document.write("<font size=+0><br><br><b>");
+        document.write("<font size=+0><b>");
     } else {
-        document.write("<font size=+2><br><br><b>");
+        document.write("<font size=+2><b>");
     }
     if ( navigator.userAgent.match(/iPad|iPhone|iPod/i) ) {
         document.write("This is Golly version 1.2 for iOS");
@@ -45,15 +45,10 @@ exploring the Game of Life and other cellular automata.<br>
 <b><a href="http://golly.sourceforge.net/">http://golly.sourceforge.net/</a></b><br>
 </font>
 </center>
-</td>
-</tr>
-</table>
-
 <!--
 on iPad (gen 2):        devicePixelRatio = 1        innerWidth = 768    screen.availWidth = 768
 on Android emulator:    devicePixelRatio = 1.5      innerWidth = 320    screen.availWidth = 480
 on Nexus 7:             devicePixelRatio = 2        innerWidth = 600    screen.availWidth = 1200
-
 <script type="text/javascript">
     document.write("innerWidth = " + window.innerWidth + "<br>");
     document.write("innerHeight = " + window.innerHeight + "<br>");
@@ -62,6 +57,9 @@ on Nexus 7:             devicePixelRatio = 2        innerWidth = 600    screen.a
     document.write("devicePixelRatio = " + window.devicePixelRatio + "<br>");
 </script>
 -->
+</td>
+</tr>
+</table>
 
 </body>
 </html>
