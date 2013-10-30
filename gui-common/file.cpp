@@ -149,7 +149,7 @@ void NewPattern(const char* title)
     currlayer->touchmode = drawmode;
 
     // reset location and scale
-    currlayer->view->setpositionmag(bigint::zero, bigint::zero, newmag);
+    currlayer->view->setpositionmag(bigint::zero, bigint::zero, MAX_MAG);   // no longer use newmag
 
     // best to restore true origin
     if (currlayer->originx != bigint::zero || currlayer->originy != bigint::zero) {

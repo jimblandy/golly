@@ -164,7 +164,7 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
     // called from golly_render::pixblit to draw icons for each live cell;
-    // assume pmscale > 2 (should be 8 or 16 or 32)
+    // assume pmscale > 2 (should be 8 or 16 or 32 or 64)
     int cellsize = pmscale - 1;
 
     const int maxcoords = 1024;     // must be multiple of 2
@@ -172,7 +172,15 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     int numcoords = 0;
     bool multicolor = currlayer->multicoloricons;
 
-    glPointSize(1);
+    // on high density screens the max scale is 1:64, but instead of
+    // supporting 63x63 icons we simply scale up the 31x31 icons
+    // (leaving a barely noticeable 1px gap at the right and bottom edges)
+    if (pmscale == 64) {
+        cellsize = 31;              // we're using 31x31 icon data
+        glPointSize(2);
+    } else {
+        glPointSize(1);
+    }
 
     unsigned char deadr = currlayer->cellr[0];
     unsigned char deadg = currlayer->cellg[0];
@@ -237,8 +245,14 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                                     glColor4ub(r, g, b, 255);
                                 }
                             }
-                            points[numcoords++] = x + col*pmscale + j + 0.5;
-                            points[numcoords++] = y + row*pmscale + i + 0.5;
+                            if (pmscale == 64) {
+                                // we're scaling up 31x31 icons
+                                points[numcoords++] = x + col*pmscale + j*2 + 0.5;
+                                points[numcoords++] = y + row*pmscale + i*2 + 0.5;
+                            } else {
+                                points[numcoords++] = x + col*pmscale + j + 0.5;
+                                points[numcoords++] = y + row*pmscale + i + 0.5;
+                            }
                         }
                     }
                 }
@@ -1006,7 +1020,7 @@ void DrawPattern(int tileindex)
     */
 
     if (showicons && currlayer->view->getmag() > 2) {
-        // only show icons at scales 1:8, 1:16 and 1:32
+        // only show icons at scales 1:8 and above
         if (currlayer->view->getmag() == 3) {
             iconpixels = currlayer->iconpixels7x7;
         } else if (currlayer->view->getmag() == 4) {

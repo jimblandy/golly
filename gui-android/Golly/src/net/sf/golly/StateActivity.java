@@ -24,6 +24,7 @@
 
 package net.sf.golly;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,11 +54,23 @@ public class StateActivity extends BaseActivity {
         stateView = (StateGLSurfaceView) findViewById(R.id.stateview);
         stateView.setCallerActivity(this);
         
-        stateView.setZOrderOnTop(true);     // avoids this GL surface being darkened like PatternGLSurfaceView
+        // avoid this GL surface being darkened like PatternGLSurfaceView (underneath dialog box)
+        stateView.setZOrderOnTop(true);
         
-        // reduce height of stateView (initially 321x321) depending on number of states
+        // change dimensions of stateView (initially 321x321) depending on screen density
+        // and number of states in current rule
+        Configuration config = getResources().getConfiguration();
         int numstates = nativeNumStates();
-        if (numstates <= 90) {
+        if (config.densityDpi > 300) {
+            ViewGroup.LayoutParams params = stateView.getLayoutParams();
+            params.width = 642;
+            if (numstates <= 90) {
+                params.height = ((numstates + 9) / 10) * 64 + 2;
+            } else {
+                params.height = 642;
+            }
+            stateView.setLayoutParams(params);
+        } else if (numstates <= 90) {
             ViewGroup.LayoutParams params = stateView.getLayoutParams();
             params.height = ((numstates + 9) / 10) * 32 + 1;
             stateView.setLayoutParams(params);

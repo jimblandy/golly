@@ -15,11 +15,20 @@
         android:layout_width="321px"
         android:layout_height="321px"
     />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="5sp"
+    />
     <CheckBox android:id="@+id/icons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:text="Show icons"
         android:onClick="doToggleIcons"
+    />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="5sp"
     />
     
 </LinearLayout>

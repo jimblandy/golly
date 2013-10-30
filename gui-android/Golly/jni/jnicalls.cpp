@@ -71,6 +71,7 @@ static jmethodID help_DownloadFile;
 
 static bool rendering = false;          // in DrawPattern?
 static bool paused = false;             // generating has been paused?
+static bool highdensity = false;        // screen density is > 300dpi?
 
 // -----------------------------------------------------------------------------
 
@@ -352,7 +353,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, 
     if (firstcall) {
         firstcall = false;          // only do the following once
         SetMessage("This is Golly 1.0b1 for Android.  Copyright 2013 The Golly Gang.");
-        MAX_MAG = 5;                // maximum cell size = 32x32
+        if (highdensity) {
+            MAX_MAG = 6;            // maximum cell size = 64x64
+        } else {
+            MAX_MAG = 5;            // maximum cell size = 32x32
+        }
         InitAlgorithms();           // must initialize algoinfo first
         GetPrefs();                 // load user's preferences
         SetMinimumStepExponent();   // for slowest speed
@@ -1105,6 +1110,14 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeOpenFile(JNIEnv* env
 // -----------------------------------------------------------------------------
 
 extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetScreenDensity(JNIEnv* env, jobject obj, jint dpi)
+{
+    highdensity = dpi > 300;    // my Nexus 7 has a density of 320
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetWideScreen(JNIEnv* env, jobject obj, jboolean iswide)
 {
     widescreen = iswide;
@@ -1745,10 +1758,11 @@ extern "C"
 JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchMoved(JNIEnv* env, jobject obj, jint x, jint y)
 {
     // LOGI("TouchMoved x=%d y=%d", x, y);
-    int oldcol = lastx / 32;
-    int oldrow = lasty / 32;
-    int col = x / 32;
-    int row = y / 32;
+    int boxsize = highdensity ? 64 : 32;
+    int oldcol = lastx / boxsize;
+    int oldrow = lasty / boxsize;
+    int col = x / boxsize;
+    int row = y / boxsize;
     lastx = x;
     lasty = y;
     if (col != oldcol || row != oldrow) {
@@ -1777,8 +1791,9 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchEnded
     if (touch_moved) return false;
     if (lastx >= 0 && lastx < statewd && lasty >= 0 && lasty < stateht) {
         // return true if user touched a valid state box
-        int col = lastx / 32;
-        int row = lasty / 32;
+        int boxsize = highdensity ? 64 : 32;
+        int col = lastx / boxsize;
+        int row = lasty / boxsize;
         int newstate = row * 10 + col + state_offset;
         if (newstate >= 0 && newstate < currlayer->algo->NumCellStates()) {
             currlayer->drawingstate = newstate;
@@ -1812,8 +1827,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeResize(JNIEnv* env,
     glViewport(0, 0, w, h);
     glMatrixMode(GL_MODELVIEW);
 
-    //!!! glScalef(2.0, 2.0, 0.0);        //!!!??? if screendensity >= 300 (pass in to nativeInit and set global flag???)
-
     statewd = w;
     stateht = h;
 
@@ -1829,12 +1842,12 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeResize(JNIEnv* env,
 
 static void DrawGrid(int wd, int ht)
 {
-    int cellsize = 32;
+    int cellsize = highdensity ? 64 : 32;
     int h, v;
 
     // set the stroke color to white
     glColor4ub(255, 255, 255, 255);
-    glLineWidth(1.0);
+    glLineWidth(highdensity ? 2.0 : 1.0);
 
     v = 1;
     while (v <= ht) {
@@ -1885,7 +1898,7 @@ static void DrawIcon(int state, int x, int y)
     int numcoords = 0;
     bool multicolor = currlayer->multicoloricons;
 
-    glPointSize(1);
+    glPointSize(highdensity ? 2 : 1);
 
     unsigned char deadr = currlayer->cellr[0];
     unsigned char deadg = currlayer->cellg[0];
@@ -1946,8 +1959,13 @@ static void DrawIcon(int state, int x, int y)
                         glColor4ub(r, g, b, 255);
                     }
                 }
-                points[numcoords++] = x + j + 0.5;
-                points[numcoords++] = y + i + 0.5;
+                if (highdensity) {
+                    points[numcoords++] = x + j*2 + 0.5;
+                    points[numcoords++] = y + i*2 + 0.5;
+                } else {
+                    points[numcoords++] = x + j + 0.5;
+                    points[numcoords++] = y + i + 0.5;
+                }
             }
         }
     }
@@ -1968,7 +1986,7 @@ static void DrawDigit(int digit, int x, int y)
     GLfloat points[maxcoords];
     int numcoords = 0;
 
-    glPointSize(1);
+    glPointSize(highdensity ? 2 : 1);
 
     unsigned char deadr = currlayer->cellr[0];
     unsigned char deadg = currlayer->cellg[0];
@@ -2002,8 +2020,13 @@ static void DrawDigit(int digit, int x, int y)
                         glColor4ub(r, g, b, 255);
                     }
                 }
-                points[numcoords++] = x + j + 0.5;
-                points[numcoords++] = y + i + 0.5;
+                if (highdensity) {
+                    points[numcoords++] = x + j*2 + 0.5;
+                    points[numcoords++] = y + i*2 + 0.5;
+                } else {
+                    points[numcoords++] = x + j + 0.5;
+                    points[numcoords++] = y + i + 0.5;
+                }
             }
         }
     }
@@ -2019,18 +2042,19 @@ static void DrawDigit(int digit, int x, int y)
 static void DrawStateNumber(int state, int x, int y)
 {
     // draw state number in top left corner of each cell
+    int digitwd = highdensity ? 12 : 6;
     if (state < 10) {
         // state = 0..9
         DrawDigit(state, x, y);
     } else if (state < 100) {
         // state = 10..99
         DrawDigit(state / 10, x, y);
-        DrawDigit(state % 10, x + 6, y);    // actual digit width is 6 pixels
+        DrawDigit(state % 10, x + digitwd, y);
     } else {
         // state = 100..255
         DrawDigit(state / 100, x, y);
-        DrawDigit((state % 100) / 10, x + 6, y);
-        DrawDigit((state % 100) % 10, x + 12, y);
+        DrawDigit((state % 100) / 10, x + digitwd, y);
+        DrawDigit((state % 100) % 10, x + digitwd*2, y);
     }
 }
 
@@ -2058,21 +2082,21 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeRender(JNIEnv* env)
         DrawStateNumber(0, 1, 1);
         // start from state 1
         first = 1;
-        x = 33;
+        x = highdensity ? 65 : 33;
     }
 
     for (int state = first; state < numstates; state++) {
         if (showicons) {
             DrawIcon(state, x, y);
         } else {
-            DrawRect(state, x, y, 31, 31);
+            DrawRect(state, x, y, highdensity ? 63 : 31, highdensity ? 63 : 31);
         }
         DrawStateNumber(state, x, y);
-        x += 32;
-        if (x > 320) {
+        x += highdensity ? 64 : 32;
+        if (x > (highdensity ? 640 : 320)) {
             x = 1;
-            y += 32;
-            if (y > 320) break;
+            y += highdensity ? 64 : 32;
+            if (y > (highdensity ? 640 : 320)) break;
         }
     }
 }

@@ -132,6 +132,7 @@ public class MainActivity extends BaseActivity {
     private native boolean nativeFileExists(String filename);
     private native void nativeSavePattern(String filename);
     private native void nativeOpenFile(String filepath);
+    private native void nativeSetScreenDensity(int dpi);
     private native void nativeSetWideScreen(boolean widescreen);
     private native void nativeSetFullScreen(boolean fullscreen);
     private native void nativeChangeRule(String rule);
@@ -257,6 +258,7 @@ public class MainActivity extends BaseActivity {
         // and config.densityDpi = 320
         widescreen = config.screenWidthDp >= 600;
         nativeSetWideScreen(widescreen);
+        nativeSetScreenDensity(config.densityDpi);
         if (widescreen) {
             // use a layout that has more buttons
             setContentView(R.layout.main_layout_wide);

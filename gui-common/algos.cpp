@@ -1113,8 +1113,7 @@ bool LoadIconFile(const std::string& path, int maxstate,
                   gBitmapPtr** out7x7, gBitmapPtr** out15x15, gBitmapPtr** out31x31)
 {
 #ifdef ANDROID_GUI
-    //!!!???
-    Warning("Sorry, but this version of Golly does not support .icons files.");
+    // the Android version of Golly does not support .icons files
     return false;
 #endif // ANDROID_GUI
 
