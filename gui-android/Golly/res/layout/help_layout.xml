@@ -28,7 +28,7 @@
             android:layout_width="50sp"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:text="x"
+            android:text="&gt;"
             android:onClick="doForwards"
         />
         <Button
@@ -38,7 +38,7 @@
             android:layout_width="50sp"
             android:layout_height="40sp"
             android:minHeight="0dp"
-            android:text="x"
+            android:text="&lt;"
             android:onClick="doBack"
         />
     </RelativeLayout>

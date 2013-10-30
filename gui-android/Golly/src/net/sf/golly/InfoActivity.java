@@ -25,6 +25,7 @@
 package net.sf.golly;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
@@ -54,6 +55,12 @@ public class InfoActivity extends BaseActivity {
             tv.setHorizontallyScrolling(true);
             tv.setTextIsSelectable(true);
             tv.setText(info);
+            
+            Configuration config = getResources().getConfiguration();
+            if (config.screenWidthDp >= 600) {
+                // use bigger font size for wide screens (layout size is 10sp)
+                tv.setTextSize(12);
+            }
         }
     }
     

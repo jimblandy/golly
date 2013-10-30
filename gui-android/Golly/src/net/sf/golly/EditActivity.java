@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -63,8 +64,16 @@ public class EditActivity extends BaseActivity {
         setContentView(R.layout.edit_layout);
 
         etext = (EditText) findViewById(R.id.edit_text);
+        
         // next call prevents long lines wrapping and enables horizontal scrolling
         etext.setHorizontallyScrolling(true);
+        
+        Configuration config = getResources().getConfiguration();
+        if (config.screenWidthDp >= 600) {
+            // use bigger font size for wide screens (layout size is 10sp)
+            etext.setTextSize(12);
+        }
+
         textchanged = false;
 
         getActionBar().hide();

@@ -258,7 +258,6 @@ public class OpenActivity extends BaseActivity {
         gwebview.getSettings().setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN);
         
         Configuration config = getResources().getConfiguration();
-        // my Nexus 7 has a density of 320
         if (config.densityDpi > 300) {
             // use bigger font size for high density screens (default size is 16)
             gwebview.getSettings().setDefaultFontSize(24);

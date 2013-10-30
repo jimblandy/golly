@@ -37,6 +37,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -211,10 +212,6 @@ public class HelpActivity extends BaseActivity {
         
         proglayout.setVisibility(LinearLayout.INVISIBLE);
         
-        // xml wouldn't let us use these characters
-        backbutton.setText("<");
-        nextbutton.setText(">");
-        
         // show the Up button in the action bar
         getActionBar().setDisplayHomeAsUpEnabled(true);
         
@@ -225,6 +222,13 @@ public class HelpActivity extends BaseActivity {
         
         // JavaScript is used to detect device type
         gwebview.getSettings().setJavaScriptEnabled(true);
+        
+        Configuration config = getResources().getConfiguration();
+        // my Nexus 7 has a density of 320
+        if (config.densityDpi > 300) {
+            // use bigger font size for high density screens (default size is 16)
+            gwebview.getSettings().setDefaultFontSize(24);
+        }
         
         if (firstcall) {
             firstcall = false;
