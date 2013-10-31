@@ -717,6 +717,134 @@ gBitmapPtr* CreateIconBitmaps(const char** xpmdata, int maxstates)
 
 // -----------------------------------------------------------------------------
 
+#ifdef ANDROID_GUI
+
+static gBitmapPtr CreateSmallerIcon(unsigned char* indata, int insize, int outsize)
+{
+    gBitmapPtr icon = (gBitmapPtr) malloc(sizeof(gBitmap));
+    if (icon) {
+        icon->wd = outsize;
+        icon->ht = outsize;
+        icon->pxldata = (unsigned char*) malloc(outsize * outsize * 4);
+        if (icon->pxldata) {
+            // use same algorithm as in create_smaller_icons in icon-importer.py
+            int sample = insize / outsize;
+            int offset = sample / 2;
+            int outpos = 0;
+            for (int row = 0; row < outsize; row++) {
+                for (int col = 0; col < outsize; col++) {
+                    int x = offset + col * sample;
+                    int y = offset + row * sample;
+                    int inpos = (y * insize * 4) + (x * 4);
+                    icon->pxldata[outpos++] = indata[inpos++];
+                    icon->pxldata[outpos++] = indata[inpos++];
+                    icon->pxldata[outpos++] = indata[inpos++];
+                    icon->pxldata[outpos++] = indata[inpos++];
+                }
+            }
+        }
+    }
+    return icon;
+}
+
+#endif // ANDROID_GUI
+
+// -----------------------------------------------------------------------------
+
+#ifdef ANDROID_GUI
+
+#define SETPIXEL(x, y) \
+    outpos = (y) * outsize * 4 + (x) * 4; \
+    icon->pxldata[outpos++] = r; \
+    icon->pxldata[outpos++] = g; \
+    icon->pxldata[outpos++] = b; \
+    icon->pxldata[outpos++] = a;
+
+static gBitmapPtr CreateBiggerIcon(unsigned char* indata, int insize, int outsize)
+{
+    if (insize != 15 || outsize != 31) {
+        // we currently don't support scaling up 7x7 icons as it's highly unlikely
+        // that a .rule file won't have 15x15 icons
+        return NULL;
+    }
+
+    gBitmapPtr icon = (gBitmapPtr) malloc(sizeof(gBitmap));
+    if (icon) {
+        icon->wd = outsize;
+        icon->ht = outsize;
+        icon->pxldata = (unsigned char*) calloc(outsize * outsize * 4, 1);
+        if (icon->pxldata) {
+            // use same algorithm as in create31x31icons in icon-importer.py
+            // to scale up a 15x15 bitmap into a 31x31 bitmap using a simple
+            // method that conserves any vertical or horizontal symmetry
+            int inpos = 0;
+            for (int row = 0; row < insize; row++) {
+                for (int col = 0; col < insize; col++) {
+                    unsigned char r = indata[inpos++];
+                    unsigned char g = indata[inpos++];
+                    unsigned char b = indata[inpos++];
+                    unsigned char a = indata[inpos++];
+                    if (r || g || b) {
+                        // non-black pixel
+                        int outpos;
+                        if (row == 7 && col == 7) {
+                            // expand middle pixel into 9 pixels
+                            int x = 15;
+                            int y = 15;
+                            SETPIXEL(x, y);
+                            SETPIXEL(x, y+1);
+                            SETPIXEL(x, y-1);
+                            SETPIXEL(x+1, y);
+                            SETPIXEL(x-1, y);
+                            SETPIXEL(x+1, y+1);
+                            SETPIXEL(x+1, y-1);
+                            SETPIXEL(x-1, y+1);
+                            SETPIXEL(x-1, y-1);
+                        } else if (row == 7) {
+                            // expand pixel in middle row into 6 pixels
+                            int x = col * 2;
+                            int y = row * 2;
+                            if (col > 7) x++;
+                            SETPIXEL(x, y);
+                            SETPIXEL(x, y+1);
+                            SETPIXEL(x+1, y);
+                            SETPIXEL(x+1, y+1);
+                            SETPIXEL(x, y+2);
+                            SETPIXEL(x+1, y+2);
+                        } else if (col == 7) {
+                            // expand pixel in middle column into 6 pixels
+                            int x = col * 2;
+                            int y = row * 2;
+                            if (row > 7) y++;
+                            SETPIXEL(x, y);
+                            SETPIXEL(x, y+1);
+                            SETPIXEL(x+1, y);
+                            SETPIXEL(x+1, y+1);
+                            SETPIXEL(x+2, y);
+                            SETPIXEL(x+2, y+1);
+                        } else {
+                            // expand all other pixels into 4 pixels
+                            int x = col * 2;
+                            int y = row * 2;
+                            if (col > 7) x++;
+                            if (row > 7) y++;
+                            SETPIXEL(x, y);
+                            SETPIXEL(x, y+1);
+                            SETPIXEL(x+1, y);
+                            SETPIXEL(x+1, y+1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return icon;
+}
+
+#endif // ANDROID_GUI
+
+// -----------------------------------------------------------------------------
+
 gBitmapPtr* ScaleIconBitmaps(gBitmapPtr* srcicons, int size)
 {
     if (srcicons == NULL) return NULL;
@@ -727,10 +855,15 @@ gBitmapPtr* ScaleIconBitmaps(gBitmapPtr* srcicons, int size)
             if (srcicons[i] == NULL) {
                 iconptr[i] = NULL;
             } else {
+
 #ifdef ANDROID_GUI
-                // scaling gBitmap icons is not yet implemented!!!
-                // (use scaling algorithms in icon-importer.py???!!!)
-                iconptr[i] = NULL;//!!!
+                int insize = srcicons[i]->wd;
+                if (insize > size) {
+                    iconptr[i] = CreateSmallerIcon(srcicons[i]->pxldata, insize, size);
+                } else {
+                    // assume insize < size
+                    iconptr[i] = CreateBiggerIcon(srcicons[i]->pxldata, insize, size);
+                }
 #endif // ANDROID_GUI
 
 #ifdef IOS_GUI
@@ -748,6 +881,7 @@ gBitmapPtr* ScaleIconBitmaps(gBitmapPtr* srcicons, int size)
                 iconptr[i] = CGBitmapContextCreateImage(context);
                 CGContextRelease(context);
 #endif // IOS_GUI
+
             }
         }
     }
@@ -1029,7 +1163,10 @@ gBitmapPtr ConvertOldMonochromeIcons(gBitmapPtr oldimage)
 #ifdef ANDROID_GUI
     // create new image using modified pixel data
     gBitmapPtr newimage = (gBitmapPtr) malloc(sizeof(gBitmap));
-    if (newimage == NULL) return oldimage;
+    if (newimage == NULL) {
+        free(pxldata);
+        return oldimage;
+    }
     newimage->wd = oldimage->wd;
     newimage->ht = oldimage->ht;
     newimage->pxldata = pxldata;
@@ -1055,6 +1192,8 @@ gBitmapPtr ConvertOldMonochromeIcons(gBitmapPtr oldimage)
 bool MultiColorImage(gBitmapPtr image)
 {
     // return true if image contains at least one color that isn't a shade of gray
+    if (image == NULL) return false;
+    
 #ifdef ANDROID_GUI
     unsigned char* pxldata = image->pxldata;
     if (pxldata == NULL) return false;          // play safe
