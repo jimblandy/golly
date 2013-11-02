@@ -1146,28 +1146,6 @@ static void DeleteXPMData(char** xpmdata, int numstrings)
 
 // -----------------------------------------------------------------------------
 
-// export from algos.h eventually!!!???
-
-static void FreeIconBitmaps(gBitmapPtr* icons)
-{
-    if (icons) {
-        for (int i = 0; i < 256; i++) {
-#ifdef ANDROID_GUI
-            if (icons[i]) {
-                if (icons[i]->pxldata) free(icons[i]->pxldata);
-                free(icons[i]);
-            }
-#endif
-#ifdef IOS_GUI
-            CGImageRelease(icons[i]);
-#endif
-        }
-        free(icons);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 static void CopyBuiltinIcons(gBitmapPtr* i7x7, gBitmapPtr* i15x15, gBitmapPtr* i31x31)
 {
     int maxstate = currlayer->algo->NumCellStates() - 1;

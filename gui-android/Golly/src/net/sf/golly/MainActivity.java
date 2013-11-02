@@ -1506,7 +1506,7 @@ public class MainActivity extends BaseActivity {
     // this method is called from C++ code (see jnicalls.cpp)
     private void BeginProgress(String title) {
         if (progresscount == 0) {
-            // can we disable interaction with all views outside proglayout!!!???
+            // can we disable interaction with all views outside proglayout???
             progtitle.setText(title);
             progbar.setProgress(0);
             // proglayout.setVisibility(LinearLayout.VISIBLE);

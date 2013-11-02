@@ -81,24 +81,6 @@ void SetPatternTitle(const char* filename)
         // show currname in current layer's menu item
         //!!! UpdateLayerItem(currindex);
     }
-
-    /*!!!??? move this logic into StatusView's drawRect
-    std::string prefix = "";
-
-    // display asterisk if pattern has been modified
-    if (currlayer->dirty) prefix += "*";
-
-    int cid = currlayer->cloneid;
-    while (cid > 0) {
-        // display one or more "=" chars to indicate this is a cloned layer
-        prefix += "=";
-        cid--;
-    }
-
-    std::string rule = GetRuleName(currlayer->algo->getrule());
-    std::string wtitle;
-    wtitle.Printf("%s%s [%s]", prefix.c_str(), currlayer->currname.c_str(), rule.c_str());
-    */
 }
 
 // -----------------------------------------------------------------------------

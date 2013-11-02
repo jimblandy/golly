@@ -59,13 +59,13 @@ void EndProgress();
 // These calls display a progress bar while a lengthy task is carried out.
 
 void SwitchToPatternTab();
-// Switch to pattern view (MainActivity).
+// Switch to main screen for displaying/editing/generating patterns.
 
 void ShowTextFile(const char* filepath);
-// Display contents of text file in modal view (TextFileActivity!!!).
+// Display contents of given text file in a modal view.
 
 void ShowHelp(const char* filepath);
-// Display html file in help view (HelpActivity!!!).
+// Display given HTML file in Help screen.
 
 void AndroidWarning(const char* msg);
 // Beep and display message in a modal dialog.

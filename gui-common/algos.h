@@ -148,4 +148,7 @@ gBitmapPtr* CreateIconBitmaps(const char** xpmdata, int maxstates);
 gBitmapPtr* ScaleIconBitmaps(gBitmapPtr* srcicons, int size);
 // Return icon bitmaps scaled to given size.
 
+void FreeIconBitmaps(gBitmapPtr* icons);
+// Free all the memory used by the given set of icons.
+
 #endif

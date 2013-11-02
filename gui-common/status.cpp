@@ -171,24 +171,6 @@ void SetMessage(const char* s)
 
 // -----------------------------------------------------------------------------
 
-void UpdateXYLocation()
-{
-    /* no need???!!!
-    int wd, ht;
-    GetClientSize(&wd, &ht);
-    if (wd > h_xy && ht > 0) {
-        wxRect r;
-        if (showexact)
-            r = wxRect( wxPoint(0, XLINE+DESCHT-LINEHT), wxPoint(wd-1, YLINE+DESCHT) );
-        else
-            r = wxRect( wxPoint(h_xy, 0), wxPoint(wd-1, BASELINE1+DESCHT) );
-        Refresh(false, &r);
-    }
-    */
-}
-
-// -----------------------------------------------------------------------------
-
 int GetCurrentDelay()
 {
     int gendelay = mindelay * (1 << (-currlayer->currexpo - 1));

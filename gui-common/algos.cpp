@@ -1027,13 +1027,32 @@ void InitAlgorithms()
 
 // -----------------------------------------------------------------------------
 
+void FreeIconBitmaps(gBitmapPtr* icons)
+{
+    if (icons) {
+        for (int i = 0; i < 256; i++) {
+#ifdef ANDROID_GUI
+            if (icons[i]) {
+                if (icons[i]->pxldata) free(icons[i]->pxldata);
+                free(icons[i]);
+            }
+#endif
+#ifdef IOS_GUI
+            CGImageRelease(icons[i]);
+#endif
+        }
+        free(icons);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void DeleteAlgorithms()
 {
     for (int i = 0; i < NumAlgos(); i++) {
         delete algoinfo[i];
     }
 
-    /*!!!
     FreeIconBitmaps(circles7x7);
     FreeIconBitmaps(circles15x15);
     FreeIconBitmaps(circles31x31);
@@ -1049,7 +1068,6 @@ void DeleteAlgorithms()
     FreeIconBitmaps(triangles7x7);
     FreeIconBitmaps(triangles15x15);
     FreeIconBitmaps(triangles31x31);
-    */
 }
 
 // -----------------------------------------------------------------------------

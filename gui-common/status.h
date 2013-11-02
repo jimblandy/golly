@@ -50,9 +50,6 @@ void ErrorMessage(const char* s);
 void SetMessage(const char* s);
 // set status3 without displaying it (until next update)
 
-void UpdateXYLocation();
-// XY location needs to be updated
-
 int GetCurrentDelay();
 // return current delay (in millisecs)
 
