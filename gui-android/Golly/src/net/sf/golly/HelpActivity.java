@@ -65,7 +65,10 @@ public class HelpActivity extends BaseActivity {
 
     // local fields:
     private static boolean firstcall = true;
-    private WebView gwebview;                       // for displaying html data
+    private static Bundle webbundle = null;         // for saving/restoring scroll position and page history
+    private boolean restarted = false;              // onRestart was called before OnResume?
+    private boolean clearhistory = false;           // tell onPageFinished to clear page history?
+    private WebView gwebview;                       // for displaying html pages
     private Button backbutton;                      // go to previous page
     private Button nextbutton;                      // go to next page
     private static String pageurl;                  // URL for last displayed page
@@ -125,6 +128,11 @@ public class HelpActivity extends BaseActivity {
         public void onPageFinished(WebView webview, String url) {
             super.onPageFinished(webview, url);
             
+            if (clearhistory) {
+                // this only works after page is loaded
+                gwebview.clearHistory();
+                clearhistory = false;
+            }
             backbutton.setEnabled(gwebview.canGoBack());
             nextbutton.setEnabled(gwebview.canGoForward());
 
@@ -164,7 +172,7 @@ public class HelpActivity extends BaseActivity {
                     sb.append("\n");
                 }
                 filecontents = sb.toString();
-                instream.close();        
+                instream.close();
             } catch (Exception e) {
                 filecontents = "Error reading file:\n" + e.toString();
             }
@@ -238,20 +246,31 @@ public class HelpActivity extends BaseActivity {
             // pageurl has now been initialized
         }
     }
+    
+    // -----------------------------------------------------------------------------
+    
+    @Override
+    protected void onPause() {
+        super.onPause();
+        gwebview.onPause();
+        
+        // save scroll position and back/forward history
+        if (webbundle == null) webbundle = new Bundle();
+        gwebview.saveState(webbundle);
+    }
 
     // -----------------------------------------------------------------------------
-
-    private static Bundle webbundle = null;
-
+    
     @Override
     protected void onResume() {
-        super.onResume();        
+        super.onResume();
         gwebview.onResume();
         
         // restore scroll position and back/forward history
-        if (webbundle != null) {
+        if (webbundle != null && !restarted) {
             gwebview.restoreState(webbundle);
         }
+        restarted = false;
         
         // check for messages sent by other activities
         Intent intent = getIntent();
@@ -262,17 +281,15 @@ public class HelpActivity extends BaseActivity {
             gwebview.reload();
         }
     }
-    
-    // -----------------------------------------------------------------------------
-    
-    @Override
-    protected void onPause() {
-        // save scroll position and back/forward history
-        if (webbundle == null) webbundle = new Bundle();
-        gwebview.saveState(webbundle);
 
-        gwebview.onPause();
-        super.onPause();
+    // -----------------------------------------------------------------------------
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        // set flag to prevent onResume calling gwebview.restoreState
+        // causing app to crash for some unknown reason
+        restarted = true;
     }
 
     // -----------------------------------------------------------------------------
@@ -342,11 +359,12 @@ public class HelpActivity extends BaseActivity {
     
     // called when the Contents button is tapped
     public void doContents(View view) {
+        clearhistory = true;    // tell onPageFinished to clear page history
         showContentsPage();
-        if (webbundle != null) webbundle.clear();
-        gwebview.clearHistory();
-        backbutton.setEnabled(gwebview.canGoBack());
-        nextbutton.setEnabled(gwebview.canGoForward());
+        if (webbundle != null) {
+            webbundle.clear();
+            webbundle = null;
+        }
     }
     
     // -----------------------------------------------------------------------------
