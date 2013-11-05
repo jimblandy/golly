@@ -76,12 +76,14 @@
 
 // local data used in golly_render routines:
 
+static GLuint imageTexture = 0;         // texture for drawing bitmaps at 1:1 scale
 static int currwd, currht;              // current width and height of viewport
 static unsigned char** iconpixels;      // pointers to pixel data for each icon
 
 // for drawing paste pattern
 static lifealgo* pastealgo;             // universe containing paste pattern
 static gRect pastebbox;                 // bounding box in cell coords (not necessarily minimal)
+static bool drawing_paste = false;      // in DrawPasteImage?
 
 /*!!!
 // for drawing multiple layers
@@ -89,6 +91,20 @@ static int layerwd = -1;                // width of layer bitmap
 static int layerht = -1;                // height of layer bitmap
 static wxBitmap* layerbitmap = NULL;    // layer bitmap
 */
+
+// -----------------------------------------------------------------------------
+
+static void DisableTextures()
+{
+    if (glIsEnabled(GL_TEXTURE_2D)) {
+        // need to delete texture so it is recreated if textures are enabled later
+        if (imageTexture) {
+            glDeleteTextures(1, &imageTexture);
+            imageTexture = 0;
+        }
+        glDisable(GL_TEXTURE_2D);
+    };
+}
 
 // -----------------------------------------------------------------------------
 
@@ -106,6 +122,48 @@ static void FillRect(int x, int y, int wd, int ht)
 
 // -----------------------------------------------------------------------------
 
+// fixed texture coordinates used by glTexCoordPointer
+static const GLshort texture_coordinates[] = {
+    0, 0,
+    1, 0,
+    0, 1,
+    1, 1,
+};
+
+void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
+{
+    // called from ios_render::pixblit to draw a bitmap at 1:1 scale
+
+    if (!glIsEnabled(GL_TEXTURE_2D)) {
+        // restore texture color and enable textures
+        glColor4ub(255, 255, 255, 255);
+        glEnable(GL_TEXTURE_2D);
+    }
+    
+	if (imageTexture == 0) {
+        glGenTextures(1, &imageTexture);
+        glBindTexture(GL_TEXTURE_2D, imageTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    }
+    
+    // update the texture with the new bitmap data (in RGB format)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
+
+    // we assume w and h are powers of 2
+    GLfloat vertices[] = {
+        x,   y,
+        x+w, y,
+        x,   y+h,
+        x+w, y+h,
+    };
+
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
+// -----------------------------------------------------------------------------
+
 void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 {
     // called from golly_render::pixblit to draw pattern at 1:1 scale
@@ -114,6 +172,7 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
     GLfloat points[maxcoords];
     int numcoords = 0;
 
+    DisableTextures();
     glPointSize(1);
 
     unsigned char deadr = currlayer->cellr[0];
@@ -171,6 +230,8 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     GLfloat points[maxcoords];
     int numcoords = 0;
     bool multicolor = currlayer->multicoloricons;
+
+    DisableTextures();
 
     // on high density screens the max scale is 1:64, but instead of
     // supporting 63x63 icons we simply scale up the 31x31 icons
@@ -278,6 +339,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     GLfloat points[maxcoords];
     int numcoords = 0;
 
+    DisableTextures();
     glPointSize(cellsize);
 
     if (numstates == 2) {
@@ -376,9 +438,10 @@ void golly_render::killrect(int x, int y, int w, int h)
 
     // use a different pale color each time to see any probs
     glColor4ub((rand()&127)+128, (rand()&127)+128, (rand()&127)+128, 255);
+    DisableTextures();
     FillRect(clipx, clipy, clipwd, clipht);
 #else
-    // no need to do anything because background has already been filled by DrawPattern
+    // no need to do anything because background has already been filled by glClear in DrawPattern
 #endif
 }
 
@@ -415,7 +478,14 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
 
     if (pmscale == 1) {
         // draw rgb pixel data at scale 1:1
-        DrawPoints((unsigned char*) pmdata, x, y, w, h);
+        if (drawing_paste || currlayer->algo->NumCellStates() == 2) {
+            // we can't use DrawTexture to draw paste image because glTexImage2D clobbers
+            // any background pattern, so we use DrawPoints which is usually faster than
+            // DrawTexture in a sparsely populated universe with only 2 states (eg. Life)
+            DrawPoints((unsigned char*) pmdata, x, y, w, h);
+        } else {
+            DrawTexture((unsigned char*) pmdata, x, y, w, h);
+        }
     } else if (showicons && pmscale > 4 && iconpixels) {
         // draw icons at scales 1:8 or 1:16 or 1:32
         DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
@@ -480,6 +550,7 @@ void DrawGridBorder(int wd, int ht)
     }
 
     glColor4ub(borderrgb.r, borderrgb.g, borderrgb.b, 255);
+    DisableTextures();
 
     if (left >= wd || right < 0 || top >= ht || bottom < 0) {
         // no part of grid is visible so fill viewport with border
@@ -530,6 +601,7 @@ void DrawSelection(gRect& rect, bool active)
         // use light gray to indicate an inactive selection
         glColor4f(0.7, 0.7, 0.7, 0.5);
     }
+    DisableTextures();
     FillRect(rect.x, rect.y, rect.width, rect.height);
 }
 
@@ -676,7 +748,9 @@ void DrawPasteImage()
     glTranslatef(ileft, itop, 0);
 
     // draw paste pattern
+    drawing_paste = true;
     pastealgo->draw(tempview, renderer);
+    drawing_paste = false;
 
     glTranslatef(-ileft, -itop, 0);
 
@@ -686,6 +760,7 @@ void DrawPasteImage()
 
     // overlay translucent rect to show paste area
     glColor4ub(pastergb.r, pastergb.g, pastergb.b, 64);
+    DisableTextures();
     FillRect(ileft, itop, pastewd, pasteht);
 }
 
@@ -731,6 +806,7 @@ void DrawGridLines(int wd, int ht)
                    b + 32 < 256 ? b + 32 : 255, 255);
     }
 
+    DisableTextures();
     glLineWidth(1.0);
 
     // draw all plain lines first

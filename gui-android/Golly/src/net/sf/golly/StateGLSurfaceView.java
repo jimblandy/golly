@@ -43,7 +43,6 @@ public class StateGLSurfaceView extends GLSurfaceView {
     private native boolean nativeTouchMoved(int x, int y);
     private native boolean nativeTouchEnded();
 
-    private StateRenderer mRenderer;
     private static final int INVALID_POINTER_ID = -1;
     private int mActivePointerId = INVALID_POINTER_ID;
     
@@ -55,8 +54,7 @@ public class StateGLSurfaceView extends GLSurfaceView {
         super(context, attrs);
         super.setEGLConfigChooser(8, 8, 8, 8, 0/*no depth*/, 0);
         getHolder().setFormat(PixelFormat.RGBA_8888);   // avoid crash on some devices
-        mRenderer = new StateRenderer();
-        setRenderer(mRenderer);
+        setRenderer(new StateRenderer());
         setRenderMode(RENDERMODE_WHEN_DIRTY);
     }
 

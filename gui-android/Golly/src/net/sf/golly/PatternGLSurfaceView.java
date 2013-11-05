@@ -50,7 +50,6 @@ public class PatternGLSurfaceView extends GLSurfaceView {
     private native void nativePause();
     private native void nativeResume();
 
-	private PatternRenderer mRenderer;
     private static final int INVALID_POINTER_ID = -1;
     private int mActivePointerId = INVALID_POINTER_ID;
     
@@ -114,8 +113,7 @@ public class PatternGLSurfaceView extends GLSurfaceView {
         super(context, attrs);
         super.setEGLConfigChooser(8, 8, 8, 8, 0/*no depth*/, 0);
         getHolder().setFormat(PixelFormat.RGBA_8888);	// avoid crash on some devices
-        mRenderer = new PatternRenderer();
-        setRenderer(mRenderer);
+        setRenderer(new PatternRenderer());
         setRenderMode(RENDERMODE_WHEN_DIRTY);
         
         zoomDetector = new ScaleGestureDetector(context, new ScaleListener());

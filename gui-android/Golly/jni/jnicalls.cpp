@@ -1112,7 +1112,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeOpenFile(JNIEnv* env
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetScreenDensity(JNIEnv* env, jobject obj, jint dpi)
 {
-    highdensity = dpi > 300;    // my Nexus 7 has a density of 320
+    highdensity = dpi > 300;    // my Nexus 7 has a density of 320dpi
 }
 
 // -----------------------------------------------------------------------------
@@ -1255,7 +1255,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
-    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_MULTISAMPLE);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_FOG);
+
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
 
     glEnable(GL_BLEND);
@@ -1812,8 +1816,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
     glDisable(GL_TEXTURE_2D);
-    glEnableClientState(GL_VERTEX_ARRAY);
     glDisable(GL_BLEND);
+    glEnableClientState(GL_VERTEX_ARRAY);
 }
 
 // -----------------------------------------------------------------------------

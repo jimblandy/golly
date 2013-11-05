@@ -89,7 +89,11 @@ static GLuint viewFramebuffer = 0;
         // we only do 2D drawing
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_DITHER);
-        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_MULTISAMPLE);
+        glDisable(GL_STENCIL_TEST);
+        glDisable(GL_FOG);
+        
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glEnableClientState(GL_VERTEX_ARRAY);
         
         glEnable(GL_BLEND);
