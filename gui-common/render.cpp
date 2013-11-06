@@ -94,20 +94,6 @@ static wxBitmap* layerbitmap = NULL;    // layer bitmap
 
 // -----------------------------------------------------------------------------
 
-static void DisableTextures()
-{
-    if (glIsEnabled(GL_TEXTURE_2D)) {
-        // need to delete texture so it is recreated if textures are enabled later
-        if (imageTexture) {
-            glDeleteTextures(1, &imageTexture);
-            imageTexture = 0;
-        }
-        glDisable(GL_TEXTURE_2D);
-    };
-}
-
-// -----------------------------------------------------------------------------
-
 static void FillRect(int x, int y, int wd, int ht)
 {
     GLfloat rect[] = {
@@ -118,6 +104,15 @@ static void FillRect(int x, int y, int wd, int ht)
     };
     glVertexPointer(2, GL_FLOAT, 0, rect);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+// -----------------------------------------------------------------------------
+
+static void DisableTextures()
+{
+    if (glIsEnabled(GL_TEXTURE_2D)) {
+        glDisable(GL_TEXTURE_2D);
+    };
 }
 
 // -----------------------------------------------------------------------------
@@ -134,16 +129,18 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 {
     // called from ios_render::pixblit to draw a bitmap at 1:1 scale
 
+	if (imageTexture == 0) {
+        // only need to create our texture name once
+        glGenTextures(1, &imageTexture);
+    }
+
     if (!glIsEnabled(GL_TEXTURE_2D)) {
         // restore texture color and enable textures
         glColor4ub(255, 255, 255, 255);
         glEnable(GL_TEXTURE_2D);
-    }
-    
-	if (imageTexture == 0) {
-        glGenTextures(1, &imageTexture);
+        // bind our texture
         glBindTexture(GL_TEXTURE_2D, imageTexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
     
     // update the texture with the new bitmap data (in RGB format)
@@ -223,7 +220,7 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
     // called from golly_render::pixblit to draw icons for each live cell;
-    // assume pmscale > 2 (should be 8 or 16 or 32 or 64)
+    // assume pmscale > 2 (should be 8, 16 or 32 or 64)
     int cellsize = pmscale - 1;
 
     const int maxcoords = 1024;     // must be multiple of 2
@@ -329,11 +326,11 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
 
 // -----------------------------------------------------------------------------
 
-void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
+void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
+    // when number of states is 2
     int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
-    int numstates = currlayer->algo->NumCellStates();
 
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
@@ -342,55 +339,25 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     DisableTextures();
     glPointSize(cellsize);
 
-    if (numstates == 2) {
-        // all live cells are in state 1 so only need to set color once
-        glColor4ub(currlayer->cellr[1],
-                   currlayer->cellg[1],
-                   currlayer->cellb[1], 255);
-        for (int row = 0; row < h; row++) {
-            for (int col = 0; col < w; col++) {
-                unsigned char state = statedata[row*stride + col];
-                if (state > 0) {
-                    // fill cellsize*cellsize pixels
-                    // FillRect(x + col * pmscale, y + row * pmscale, cellsize, cellsize);
-                    // optimize by calling glDrawArrays less often
-                    if (numcoords == maxcoords) {
-                        glVertexPointer(2, GL_FLOAT, 0, points);
-                        glDrawArrays(GL_POINTS, 0, maxcoords/2);
-                        numcoords = 0;
-                    }
-                    // store mid point of cell
-                    points[numcoords++] = x + col*pmscale + cellsize/2.0;
-                    points[numcoords++] = y + row*pmscale + cellsize/2.0;
+    // all live cells are in state 1 so only need to set color once
+    glColor4ub(currlayer->cellr[1],
+               currlayer->cellg[1],
+               currlayer->cellb[1], 255);
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
+            unsigned char state = statedata[row*stride + col];
+            if (state > 0) {
+                // fill cellsize*cellsize pixels
+                // FillRect(x + col * pmscale, y + row * pmscale, cellsize, cellsize);
+                // optimize by calling glDrawArrays less often
+                if (numcoords == maxcoords) {
+                    glVertexPointer(2, GL_FLOAT, 0, points);
+                    glDrawArrays(GL_POINTS, 0, maxcoords/2);
+                    numcoords = 0;
                 }
-            }
-        }
-    } else {
-        // numstates > 2 so we need to change color when state changes
-        unsigned char prevstate = 0;
-        for (int row = 0; row < h; row++) {
-            for (int col = 0; col < w; col++) {
-                unsigned char state = statedata[row*stride + col];
-                if (state > 0) {
-                    if (state != prevstate || numcoords == maxcoords) {
-                        if (numcoords > 0) {
-                            glVertexPointer(2, GL_FLOAT, 0, points);
-                            glDrawArrays(GL_POINTS, 0, numcoords/2);
-                            numcoords = 0;
-                        }
-                        if (state != prevstate) {
-                            prevstate = state;
-                            // change color
-                            glColor4ub(currlayer->cellr[state],
-                                       currlayer->cellg[state],
-                                       currlayer->cellb[state], 255);
-                       }
-                    }
-                    // fill cellsize*cellsize pixels
-                    // FillRect(x + col * pmscale, y + row * pmscale, cellsize, cellsize);
-                    points[numcoords++] = x + col*pmscale + cellsize/2.0;
-                    points[numcoords++] = y + row*pmscale + cellsize/2.0;
-                }
+                // store mid point of cell
+                points[numcoords++] = x + col*pmscale + cellsize/2.0;
+                points[numcoords++] = y + row*pmscale + cellsize/2.0;
             }
         }
     }
@@ -398,6 +365,54 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     if (numcoords > 0) {
         glVertexPointer(2, GL_FLOAT, 0, points);
         glDrawArrays(GL_POINTS, 0, numcoords/2);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates)
+{
+    // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
+    // when numstates is > 2
+    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
+
+    const int maxcoords = 256;      // must be multiple of 2
+    GLfloat points[256][maxcoords];
+    int numcoords[256] = {0};
+
+    DisableTextures();
+    glPointSize(cellsize);
+
+    // following code minimizes color changes due to state changes
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
+            unsigned char state = statedata[row*stride + col];
+            if (state > 0) {
+                if (numcoords[state] == maxcoords) {
+                    // this shouldn't happen too often
+                    glColor4ub(currlayer->cellr[state],
+                               currlayer->cellg[state],
+                               currlayer->cellb[state], 255);
+                    glVertexPointer(2, GL_FLOAT, 0, points[state]);
+                    glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
+                    numcoords[state] = 0;
+                }
+                // fill cellsize*cellsize pixels
+                // FillRect(x + col * pmscale, y + row * pmscale, cellsize, cellsize);
+                points[state][numcoords[state]++] = x + col*pmscale + cellsize/2.0;
+                points[state][numcoords[state]++] = y + row*pmscale + cellsize/2.0;
+            }
+        }
+    }
+
+    for (int state = 1; state < numstates; state++) {
+        if (numcoords[state] > 0) {
+            glColor4ub(currlayer->cellr[state],
+                       currlayer->cellg[state],
+                       currlayer->cellb[state], 255);
+            glVertexPointer(2, GL_FLOAT, 0, points[state]);
+            glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
+        }
     }
 }
 
@@ -476,9 +491,10 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
         if (y + h >= currht + pmscale) h = (currht - y + pmscale - 1)/pmscale*pmscale;
     }
 
+    int numstates = currlayer->algo->NumCellStates();
     if (pmscale == 1) {
         // draw rgb pixel data at scale 1:1
-        if (drawing_paste || currlayer->algo->NumCellStates() == 2) {
+        if (drawing_paste || numstates == 2) {
             // we can't use DrawTexture to draw paste image because glTexImage2D clobbers
             // any background pattern, so we use DrawPoints which is usually faster than
             // DrawTexture in a sparsely populated universe with only 2 states (eg. Life)
@@ -487,12 +503,16 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
             DrawTexture((unsigned char*) pmdata, x, y, w, h);
         }
     } else if (showicons && pmscale > 4 && iconpixels) {
-        // draw icons at scales 1:8 or 1:16 or 1:32
+        // draw icons at scales 1:8 or above
         DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
-        DrawMagnifiedCells((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+        if (numstates == 2) {
+            DrawMagnifiedTwoStateCells((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+        } else {
+            DrawMagnifiedCells((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, numstates);
+        }
     }
 }
 

@@ -41,7 +41,7 @@ GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-templ
 # PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
 # above commands generate unwanted stuff (-arch i386 and -arch ppc)
 PERL_INCLUDE = -arch x86_64 -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing -I/usr/local/include  -I/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE
-PERL_LINK = -arch x86_64 -L/usr/local/lib  -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc
+PERL_LINK = -arch x86_64 -L/usr/local/lib -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc
 
 # for Python script support:
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
