@@ -426,7 +426,6 @@ static gBitmapPtr* CopyIcons(gBitmapPtr* srcicons, int maxstate)
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
         for (int i = 0; i <= maxstate; i++) {
             if (srcicons && srcicons[i]) {
-#ifdef ANDROID_GUI
                 gBitmapPtr icon = (gBitmapPtr) malloc(sizeof(gBitmap));
                 if (icon) {
                     icon->wd = srcicons[i]->wd;
@@ -442,10 +441,6 @@ static gBitmapPtr* CopyIcons(gBitmapPtr* srcicons, int maxstate)
                     }
                 }
                 iconptr[i] = icon;
-#endif
-#ifdef IOS_GUI
-                iconptr[i] = CGImageCreateCopy(srcicons[i]);
-#endif
             }
         }
     }
@@ -454,8 +449,6 @@ static gBitmapPtr* CopyIcons(gBitmapPtr* srcicons, int maxstate)
 
 // -----------------------------------------------------------------------------
 
-// eventually won't need this routine if we remove CG stuff!!!???
-
 static unsigned char** GetIconPixels(gBitmapPtr* srcicons, int maxstate)
 {
     unsigned char** iconpixelsptr = (unsigned char**) malloc(256 * sizeof(unsigned char*));
@@ -463,7 +456,6 @@ static unsigned char** GetIconPixels(gBitmapPtr* srcicons, int maxstate)
         for (int i = 0; i < 256; i++) iconpixelsptr[i] = NULL;
         for (int i = 0; i <= maxstate; i++) {
             if (srcicons && srcicons[i]) {
-#ifdef ANDROID_GUI
                 // allocate enough memory to store icon's RGBA pixel data
                 int wd = srcicons[i]->wd;
                 int ht = srcicons[i]->ht;
@@ -472,58 +464,10 @@ static unsigned char** GetIconPixels(gBitmapPtr* srcicons, int maxstate)
                 if (iconpixelsptr[i] && srcicons[i]->pxldata) {
                     memcpy(iconpixelsptr[i], srcicons[i]->pxldata, iconbytes);
                 }
-#endif // ANDROID_GUI
-#ifdef IOS_GUI
-                int wd = CGImageGetWidth(srcicons[i]);
-                int ht = CGImageGetHeight(srcicons[i]);
-                int bytesPerPixel = 4;
-                int bytesPerRow = bytesPerPixel * wd;
-                int bitsPerComponent = 8;
-
-                // allocate enough memory to store icon's RGBA pixel data
-                iconpixelsptr[i] = (unsigned char*) calloc(wd * ht * 4, 1);
-                if (iconpixelsptr[i]) {
-                    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
-                    CGContextRef ctx = CGBitmapContextCreate(iconpixelsptr[i], wd, ht,
-                        bitsPerComponent, bytesPerRow, colorspace,
-                        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-                    CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), srcicons[i]);
-                    CGContextRelease(ctx);
-                    CGColorSpaceRelease(colorspace);
-                    // iconpixelsptr[i] now points to the icon's pixels in RGBA format
-                }
-#endif // IOS_GUI
             }
         }
     }
     return iconpixelsptr;
-}
-
-// -----------------------------------------------------------------------------
-
-static void UpdateColorReferences(Layer* layerptr, int numstates)
-{
-#ifdef IOS_GUI
-    // release any old color refs
-    for (int n = 0; n < 256; n++) {
-        CGColorRelease(layerptr->colorref[n]);
-        layerptr->colorref[n] = NULL;
-    }
-
-    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
-    CGFloat components[4];
-    components[3] = 1.0;    // alpha
-
-    // create new color refs
-    for (int n = 0; n < numstates; n++) {
-        components[0] = layerptr->cellr[n] / 255.0;
-        components[1] = layerptr->cellg[n] / 255.0;
-        components[2] = layerptr->cellb[n] / 255.0;
-        layerptr->colorref[n] = CGColorCreate(colorspace, components);
-    }
-
-    CGColorSpaceRelease(colorspace);
-#endif // IOS_GUI
 }
 
 // -----------------------------------------------------------------------------
@@ -567,7 +511,6 @@ void AddLayer()
             currlayer->cellg[n] = oldlayer->cellg[n];
             currlayer->cellb[n] = oldlayer->cellb[n];
         }
-        UpdateColorReferences(currlayer, currlayer->algo->NumCellStates());
         if (cloning) {
             // use same icon pointers
             currlayer->icons7x7 = oldlayer->icons7x7;
@@ -1039,7 +982,6 @@ void UpdateCloneColors()
                     cloneptr->cellr[n] = currlayer->cellr[n];
                     cloneptr->cellg[n] = currlayer->cellg[n];
                     cloneptr->cellb[n] = currlayer->cellb[n];
-                    cloneptr->colorref[n] = currlayer->colorref[n];
                 }
                 // use same icon pointers
                 cloneptr->icons7x7 = currlayer->icons7x7;
@@ -1473,41 +1415,6 @@ static void DeleteIcons(Layer* layer)
 
 // -----------------------------------------------------------------------------
 
-static bool FindIconFile(const std::string& rule, const std::string& dir, std::string& path)
-{
-    // first look for rule.icons in given directory
-    std::string extn = ".icons";
-    path = dir + rule;
-    path += extn;
-    if (FileExists(path)) return true;
-
-    // if rule has the form foo-* then look for foo.icons in dir;
-    // this allows related rules to share a single .icons file
-    size_t hyphenpos = rule.rfind('-');
-    if (hyphenpos != std::string::npos) {
-        path = dir + rule.substr(0, hyphenpos);
-        path += extn;
-        if (FileExists(path)) return true;
-    }
-
-    return false;
-}
-
-// -----------------------------------------------------------------------------
-
-static bool LoadRuleIcons(const std::string& rule, int maxstate)
-{
-    // if rule.icons file exists in userrules or rulesdir then load icons for current layer
-    std::string path;
-    return (FindIconFile(rule, userrules, path) ||
-            FindIconFile(rule, rulesdir, path)) &&
-                LoadIconFile(path, maxstate, &currlayer->icons7x7,
-                                             &currlayer->icons15x15,
-                                             &currlayer->icons31x31);
-}
-
-// -----------------------------------------------------------------------------
-
 static void UseDefaultIcons(int maxstate)
 {
     // icons weren't specified so use default icons
@@ -1528,120 +1435,6 @@ static void UseDefaultIcons(int maxstate)
         currlayer->icons15x15 = CopyIcons(ad->icons15x15, maxstate);
         currlayer->icons31x31 = CopyIcons(ad->icons31x31, maxstate);
     }
-}
-
-// -----------------------------------------------------------------------------
-
-static void SetAverageColor(int state, int numpixels, unsigned char* pxldata)
-{
-    // set non-icon color to average color of non-black pixels in given pixel data
-    // which contains the icon bitmap in RGBA pixel format
-    int byte = 0;
-    int nbcount = 0;  // # of non-black pixels
-    int totalr = 0;
-    int totalg = 0;
-    int totalb = 0;
-    for (int i = 0; i < numpixels; i++) {
-        unsigned char r = pxldata[byte];
-        unsigned char g = pxldata[byte+1];
-        unsigned char b = pxldata[byte+2];
-        if (r || g || b) {
-            // non-black pixel
-            totalr += r;
-            totalg += g;
-            totalb += b;
-            nbcount++;
-        }
-        byte += 4;
-    }
-
-    if (nbcount > 0) {
-        currlayer->cellr[state] = int(totalr / nbcount);
-        currlayer->cellg[state] = int(totalg / nbcount);
-        currlayer->cellb[state] = int(totalb / nbcount);
-    } else {
-        // avoid div0
-        currlayer->cellr[state] = 0;
-        currlayer->cellg[state] = 0;
-        currlayer->cellb[state] = 0;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-static FILE* FindColorFile(const std::string& rule, const std::string& dir)
-{
-    const std::string extn = ".colors";
-    std::string path;
-
-    // first look for rule.colors in given directory
-    path = dir + rule;
-    path += extn;
-    FILE* f = fopen(path.c_str(), "r");
-    if (f) return f;
-
-    // if rule has the form foo-* then look for foo.colors in dir;
-    // this allows related rules to share a single .colors file
-    size_t hyphenpos = rule.rfind('-');
-    if (hyphenpos != std::string::npos) {
-        path = dir + rule.substr(0, hyphenpos);
-        path += extn;
-        f = fopen(path.c_str(), "r");
-        if (f) return f;
-    }
-
-    return NULL;
-}
-
-// -----------------------------------------------------------------------------
-
-static bool LoadRuleColors(const std::string& rule, int maxstate)
-{
-    // if rule.colors file exists in userrules or rulesdir then
-    // change colors according to info in file
-    FILE* f = FindColorFile(rule, userrules);
-    if (!f) f = FindColorFile(rule, rulesdir);
-    if (f) {
-        // the linereader class handles all line endings (CR, CR+LF, LF)
-        linereader reader(f);
-        // not needed here, but useful if we ever return early due to error
-        // reader.setcloseonfree();
-        const int MAXLINELEN = 512;
-        char buf[MAXLINELEN + 1];
-        while (reader.fgets(buf, MAXLINELEN) != 0) {
-            if (buf[0] == '#' || buf[0] == 0) {
-                // skip comment or empty line
-            } else {
-                // look for "color" or "gradient" keyword at start of line
-                char* keyword = buf;
-                char* value;
-                while (*keyword == ' ') keyword++;
-                value = keyword;
-                while (*value >= 'a' && *value <= 'z') value++;
-                while (*value == ' ' || *value == '=') value++;
-                if (strncmp(keyword, "color", 5) == 0) {
-                    int state, r, g, b;
-                    if (sscanf(value, "%d%d%d%d", &state, &r, &g, &b) == 4) {
-                        if (state >= 0 && state <= maxstate) {
-                            currlayer->cellr[state] = r;
-                            currlayer->cellg[state] = g;
-                            currlayer->cellb[state] = b;
-                        }
-                    };
-                } else if (strncmp(keyword, "gradient", 8) == 0) {
-                    int r1, g1, b1, r2, g2, b2;
-                    if (sscanf(value, "%d%d%d%d%d%d", &r1, &g1, &b1, &r2, &g2, &b2) == 6) {
-                        SetColor(currlayer->fromrgb, r1, g1, b1);
-                        SetColor(currlayer->torgb, r2, g2, b2);
-                        CreateColorGradient();
-                    };
-                }
-            }
-        }
-        reader.close();
-        return true;
-    }
-    return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -1723,7 +1516,7 @@ void UpdateCurrentColors()
     bool loadedcolors = false;
     bool loadedicons = false;
 
-    // look for rulename.rule first
+    // look for rulename.rule
     FILE* rulefile = FindRuleFile(rulename);
     if (rulefile) {
         LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
@@ -1738,58 +1531,27 @@ void UpdateCurrentColors()
                 if (rulefile) LoadRuleInfo(rulefile, rulename, &loadedcolors, &loadedicons);
             }
         }
-
         if (!loadedicons) UseDefaultIcons(maxstate);
-
-        // get icon pixel data (used for rendering)
-        currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
-        currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
-        currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
-
-        // use the smallest icons to check if they are multi-color
-        if (currlayer->icons7x7) {
-            for (int n = 1; n <= maxstate; n++) {
-                if (MultiColorImage(currlayer->icons7x7[n])) {
-                    currlayer->multicoloricons = true;
-                    break;
-                }
-            }
-        }
-
-        // if the icons are multi-color then we don't call SetAverageColor as we do below
-        // (better if the .rule file sets the appropriate non-icon colors)
-
+        
     } else {
-        // no rulename.rule so look for deprecated rulename.colors and/or rulename.icons
-        loadedcolors = LoadRuleColors(rulename, maxstate);
-        loadedicons = LoadRuleIcons(rulename, maxstate);
-        if (!loadedicons) UseDefaultIcons(maxstate);
+        // rulename.rule wasn't found so use default icons
+        UseDefaultIcons(maxstate);
+    }
 
-        // get icon pixel data (mainly used for rendering, but also useful below)
-        currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
-        currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
-        currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
-
-        // if rulename.colors file wasn't loaded and icons are multi-color then we
-        // set non-icon colors to the average of the non-black pixels in each icon
-        // (note that we use the 7x7 icons because they are faster to scan)
-        unsigned char** iconpixels = currlayer->iconpixels7x7;
-        if (!loadedcolors && iconpixels && currlayer->multicoloricons) {
-            for (int n = 1; n <= maxstate; n++) {
-                if (iconpixels[n]) SetAverageColor(n, 7*7, iconpixels[n]);
-            }
-            // if a 15x15 icon is supplied in the 0th position then use
-            // its top left pixel to set the state 0 color
-            iconpixels = currlayer->iconpixels15x15;
-            if (iconpixels && iconpixels[0]) {
-                unsigned char* pxldata = iconpixels[0];
-                // pxldata contains the icon bitmap in RGBA format
-                currlayer->cellr[0] = pxldata[0];
-                currlayer->cellg[0] = pxldata[1];
-                currlayer->cellb[0] = pxldata[2];
+    // use the smallest icons to check if they are multi-color
+    if (currlayer->icons7x7) {
+        for (int n = 1; n <= maxstate; n++) {
+            if (MultiColorImage(currlayer->icons7x7[n])) {
+                currlayer->multicoloricons = true;
+                break;
             }
         }
     }
+
+    // get icon pixel data (used for rendering)
+    currlayer->iconpixels7x7 = GetIconPixels(currlayer->icons7x7, maxstate);
+    currlayer->iconpixels15x15 = GetIconPixels(currlayer->icons15x15, maxstate);
+    currlayer->iconpixels31x31 = GetIconPixels(currlayer->icons31x31, maxstate);
 
     if (swapcolors) {
         // invert cell colors in current layer
@@ -1799,8 +1561,6 @@ void UpdateCurrentColors()
             currlayer->cellb[n] = 255 - currlayer->cellb[n];
         }
     }
-
-    UpdateColorReferences(currlayer, currlayer->algo->NumCellStates());
 }
 
 // -----------------------------------------------------------------------------
@@ -1827,7 +1587,6 @@ void InvertCellColors()
             layerptr->cellg[n] = 255 - layerptr->cellg[n];
             layerptr->cellb[n] = 255 - layerptr->cellb[n];
         }
-        UpdateColorReferences(layerptr, algoinfo[layerptr->algtype]->maxstates);
     }
 }
 
@@ -1887,13 +1646,6 @@ Layer::Layer()
     iconpixels7x7 = NULL;         // no pixel data for 7x7 icons
     iconpixels15x15 = NULL;       // no pixel data for 15x15 icons
     iconpixels31x31 = NULL;       // no pixel data for 31x31 icons
-
-#ifdef IOS_GUI
-    // init color references
-    for (int n = 0; n < 256; n++) {
-        colorref[n] = NULL;
-    }
-#endif
 
     currframe = 0;                // first frame in timeline
     autoplay = 0;                 // not playing
@@ -2123,11 +1875,6 @@ Layer::~Layer()
 
         // delete tempstart file if it exists
         if (FileExists(tempstart)) RemoveFile(tempstart);
-
-#ifdef IOS_GUI
-        // release color references
-        for (int i = 0; i < 256; i++) CGColorRelease(colorref[i]);
-#endif
 
         // delete any icons
         DeleteIcons(this);

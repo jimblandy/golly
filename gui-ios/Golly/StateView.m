@@ -24,6 +24,7 @@
 
 #include "prefs.h"      // for showicons
 #include "layer.h"      // for currlayer
+#include "algos.h"      // for gBitmapPtr
 #include "status.h"     // for ClearMessage
 
 #import "PatternViewController.h"   // for UpdateEditBar
@@ -53,26 +54,17 @@
 
 // -----------------------------------------------------------------------------
 
-void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
+void DrawOneIcon(CGContextRef context, int x, int y, gBitmapPtr icon,
                  unsigned char deadr, unsigned char deadg, unsigned char deadb,
                  unsigned char liver, unsigned char liveg, unsigned char liveb)
 {
-    int wd = CGImageGetWidth(icon);
-    int ht = CGImageGetHeight(icon);
-    int bytesPerPixel = 4;
-    int bytesPerRow = bytesPerPixel * wd;
-    int bitsPerComponent = 8;
-
-    // allocate memory to store icon's RGBA bitmap data
-    unsigned char* pxldata = (unsigned char*) calloc(wd * ht * 4, 1);
+    // allocate memory to copy icon's RGBA data
+    int wd = icon->wd;
+    int ht = icon->ht;
+    int iconbytes = wd * ht * 4;
+    unsigned char* pxldata = (unsigned char*) malloc(iconbytes);
     if (pxldata == NULL) return;
-
-    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef ctx = CGBitmapContextCreate(pxldata, wd, ht,
-        bitsPerComponent, bytesPerRow, colorspace,
-        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-    CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), icon);
-    CGContextRelease(ctx);
+    memcpy(pxldata, icon->pxldata, iconbytes);
     
     bool multicolor = currlayer->multicoloricons;
 
@@ -120,11 +112,12 @@ void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
     }
     
     // create new icon image using modified pixel data and display it upside down
+    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
     CGContextSaveGState(context);
     CGContextTranslateCTM(context, x, y);
     CGContextScaleCTM(context, 1, -1);
 
-    ctx = CGBitmapContextCreate(pxldata, wd, ht, 8, wd * 4, colorspace,
+    CGContextRef ctx = CGBitmapContextCreate(pxldata, wd, ht, 8, wd * 4, colorspace,
         kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGImageRef newicon = CGBitmapContextCreateImage(ctx);
     CGContextRelease(ctx);
@@ -145,22 +138,41 @@ void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
 {
     CGContextRef context = UIGraphicsGetCurrentContext();
     int state = currlayer->drawingstate;
-    CGImageRef* iconmaps = currlayer->icons31x31;
+    
+    gBitmapPtr* iconmaps = currlayer->icons31x31;
 
     // leave a 1 pixel border (color is set in xib)
     CGRect box = CGRectMake(1, 1, self.bounds.size.width-2, self.bounds.size.height-2);
     
     if (showicons && iconmaps && iconmaps[state]) {
         // fill box with background color then draw icon
-        CGContextSetFillColorWithColor(context, currlayer->colorref[0]);
+        CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
+        CGFloat components[4];
+        components[0] = currlayer->cellr[0] / 255.0;
+        components[1] = currlayer->cellg[0] / 255.0;
+        components[2] = currlayer->cellb[0] / 255.0;
+        components[3] = 1.0;    // alpha
+        CGColorRef colorref = CGColorCreate(colorspace, components);
+        CGColorSpaceRelease(colorspace);
+        CGContextSetFillColorWithColor(context, colorref);
         CGContextFillRect(context, box);
+        CGColorRelease(colorref);
         DrawOneIcon(context, 1, 1, iconmaps[state],
                     currlayer->cellr[0],     currlayer->cellg[0],     currlayer->cellb[0],
                     currlayer->cellr[state], currlayer->cellg[state], currlayer->cellb[state]);
     } else {
         // fill box with color of current drawing state
-        CGContextSetFillColorWithColor(context, currlayer->colorref[state]);
+        CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
+        CGFloat components[4];
+        components[0] = currlayer->cellr[state] / 255.0;
+        components[1] = currlayer->cellg[state] / 255.0;
+        components[2] = currlayer->cellb[state] / 255.0;
+        components[3] = 1.0;    // alpha
+        CGColorRef colorref = CGColorCreate(colorspace, components);
+        CGColorSpaceRelease(colorspace);
+        CGContextSetFillColorWithColor(context, colorref);
         CGContextFillRect(context, box);
+        CGColorRelease(colorref);
     }
 }
 

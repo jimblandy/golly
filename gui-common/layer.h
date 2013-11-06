@@ -29,7 +29,7 @@
 #include "viewport.h"       // for viewport class
 
 #include "utils.h"          // for gColor, gRect
-#include "algos.h"          // for algo_type
+#include "algos.h"          // for algo_type, gBitmapPtr
 #include "select.h"         // for Selection class
 
 class UndoRedo;
@@ -114,15 +114,12 @@ public:
     unsigned char cellg[256];     // green components for states 0..255
     unsigned char cellb[256];     // blue components for states 0..255
 
-#ifdef IOS_GUI
-    CGColorRef colorref[256];     // color refs for states 0..255
-#endif
-
     // icons for this layer
     gBitmapPtr* icons7x7;         // icons for scale 1:8
     gBitmapPtr* icons15x15;       // icons for scale 1:16
     gBitmapPtr* icons31x31;       // icons for scale 1:32
 
+    // pixel data for rendering icons
     unsigned char** iconpixels7x7;      // pixel data for 7x7 icons
     unsigned char** iconpixels15x15;    // pixel data for 15x15 icons
     unsigned char** iconpixels31x31;    // pixel data for 31x31 icons

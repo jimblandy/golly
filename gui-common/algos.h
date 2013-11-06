@@ -29,28 +29,21 @@
 
 #include "utils.h"      // for gColor
 
-#ifdef ANDROID_GUI
-    // a bitmap for storing icon info:
-    typedef struct {
-        int wd;
-        int ht;
-        unsigned char* pxldata;     // RGBA data (size = wd * ht * 4)
-    } gBitmap;
-    typedef gBitmap* gBitmapPtr;
-#endif
-
-#ifdef IOS_GUI
-    // eventually use above struct???!!!
-    typedef CGImageRef gBitmapPtr;
-#endif
+// for storing icon info:
+typedef struct {
+    int wd;
+    int ht;
+    unsigned char* pxldata;     // RGBA data (size = wd * ht * 4)
+} gBitmap;
+typedef gBitmap* gBitmapPtr;
 
 // Golly supports multiple algorithms.  The first algorithm
 // registered must *always* be qlifealgo.  The second must
 // *always* be hlifealgo.  The order of the rest does not matter.
 
 enum {
-    QLIFE_ALGO,         // QuickLife
-    HLIFE_ALGO          // HashLife
+    QLIFE_ALGO,     // QuickLife
+    HLIFE_ALGO      // HashLife
 };
 
 const int MAX_ALGOS = 50;         // maximum number of algorithms
@@ -131,17 +124,6 @@ const char* GetAlgoName(algo_type algotype);
 int NumAlgos();
 // Return current number of algorithms.
 
-gBitmapPtr ConvertOldMonochromeIcons(gBitmapPtr oldimage);
-// If given image uses <= 2 colors then return new black-and-white image
-// for compatibility with monochrome .icons files in Golly 2.4 and older.
-
-bool MultiColorImage(gBitmapPtr image);
-// Return true if image contains at least one color that isn't a shade of gray.
-
-bool LoadIconFile(const std::string& path, int maxstate,
-                  gBitmapPtr** out7x7, gBitmapPtr** out15x15, gBitmapPtr** out31x31);
-// Return true if we can successfully load icon bitmaps from given file.
-
 gBitmapPtr* CreateIconBitmaps(const char** xpmdata, int maxstates);
 // Create icon bitmaps using the given XPM data.
 
@@ -150,5 +132,8 @@ gBitmapPtr* ScaleIconBitmaps(gBitmapPtr* srcicons, int size);
 
 void FreeIconBitmaps(gBitmapPtr* icons);
 // Free all the memory used by the given set of icons.
+
+bool MultiColorImage(gBitmapPtr image);
+// Return true if image contains at least one color that isn't a shade of gray.
 
 #endif

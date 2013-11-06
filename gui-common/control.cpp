@@ -1324,7 +1324,7 @@ void ReduceCellStates(int newmaxstate)
 
 void ChangeRule(const std::string& rulestring)
 {
-    // load recently installed .rule/table/tree/colors/icons file
+    // load recently installed .rule/table/tree file
     std::string oldrule = currlayer->algo->getrule();
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
 
@@ -1377,10 +1377,10 @@ void ChangeRule(const std::string& rulestring)
         ReduceCellStates(newmaxstate);
     }
 
-    // set colors/icons for new rule
+    // set colors and icons for new rule
     UpdateLayerColors();
 
-    // pattern might have changed or colors/icons might have changed
+    // pattern might have changed or colors and/or icons might have changed
     UpdateEverything();
 
     if (oldrule != newrule) {
@@ -1628,81 +1628,6 @@ static std::string CreateTABLE(const std::string& tablepath)
 
 // -----------------------------------------------------------------------------
 
-static std::string CreateEmptyTABLE(const std::string& folder, const std::string& prefix,
-                                    std::list<std::string>& allfiles)
-{
-    // create a valid table that does nothing
-    std::string contents = "\nThis file contains colors and/or icons shared by ";
-    contents += prefix;
-    contents += "-* rules.\n";
-    contents += "\n@TABLE\n\n";
-
-    // search allfiles for 1st prefix-*.table/tree file and extract numstates and neighborhood
-    std::string numstates, neighborhood;
-    std::list<std::string>::iterator it;
-    for (it=allfiles.begin(); it!=allfiles.end(); ++it) {
-        std::string filename = *it;
-        if (EndsWith(filename,".table") || EndsWith(filename,".tree")) {
-            size_t hyphenpos = filename.rfind('-');
-            if (hyphenpos != std::string::npos && prefix == filename.substr(0,hyphenpos)) {
-                std::string filepath = folder + filename;
-                FILE* f = fopen(filepath.c_str(), "r");
-                if (f) {
-                    const int MAXLINELEN = 4095;
-                    char linebuf[MAXLINELEN + 1];
-                    linereader reader(f);
-                    while (true) {
-                        if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
-                        if (strncmp(linebuf, "n_states:", 9) == 0) {
-                            numstates = linebuf;
-                            numstates += "\n";
-                        } else if (strncmp(linebuf, "num_states=", 11) == 0) {
-                            // convert to table syntax
-                            numstates = "n_states:" + std::string(linebuf+11);
-                            numstates += "\n";
-                        } else if (strncmp(linebuf, "neighborhood:", 13) == 0) {
-                            neighborhood = linebuf;
-                            numstates += "\n";
-                            break;
-                        } else if (strncmp(linebuf, "num_neighbors=", 14) == 0) {
-                            // convert to table syntax
-                            neighborhood = "neighborhood:";
-                            if (linebuf[14] == '4')
-                                neighborhood += "vonNeumann\n";
-                            else
-                                neighborhood += "Moore\n";
-                            break;
-                        }
-                    }
-                    reader.close();
-                } else {
-                    std::ostringstream oss;
-                    oss << "Could not read .table/tree file:\n" << filepath.c_str();
-                    throw std::runtime_error(oss.str().c_str());
-                }
-            }
-        }
-    }
-
-    if (numstates.length() == 0) {
-        numstates = "n_states:256\n";
-        std::string msg = "Could not find " + prefix;
-        msg += "-*.table/tree to set n_states in ";
-        msg += prefix;
-        msg += "-shared.rule.";
-        Warning(msg.c_str());
-    }
-
-    contents += numstates;
-    contents += neighborhood;
-    contents += "symmetries:none\n";    // anything valid would do
-    contents += "# do nothing\n";       // no transitions
-
-    return contents;
-}
-
-// -----------------------------------------------------------------------------
-
 static std::string CreateTREE(const std::string& treepath)
 {
     std::string contents = "\n@TREE\n\n";
@@ -1728,393 +1653,23 @@ static std::string CreateTREE(const std::string& treepath)
 
 // -----------------------------------------------------------------------------
 
-static std::string CreateCOLORS(const std::string& colorspath)
-{
-    std::string contents = "\n@COLORS\n\n";
-    FILE* f = fopen(colorspath.c_str(), "r");
-    if (f) {
-        const int MAXLINELEN = 4095;
-        char linebuf[MAXLINELEN + 1];
-        linereader reader(f);
-        while (true) {
-            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
-            int skip = 0;
-            if (strncmp(linebuf, "color", 5) == 0 ||
-                strncmp(linebuf, "gradient", 8) == 0) {
-                // strip off everything before 1st digit
-                while (linebuf[skip] && (linebuf[skip] < '0' || linebuf[skip] > '9')) {
-                    skip++;
-                }
-            }
-            contents += linebuf + skip;
-            contents += "\n";
-        }
-        reader.close();
-    } else {
-        std::ostringstream oss;
-        oss << "Could not read .colors file:\n" << colorspath.c_str();
-        throw std::runtime_error(oss.str().c_str());
-    }
-    return contents;
-}
-
-// -----------------------------------------------------------------------------
-
-// remove these routines when we drop support for .icons files!!!
-
-#ifdef IOS_GUI
-
-static unsigned char* GetRGBAPixels(CGImageRef image)
-{
-    int wd = CGImageGetWidth(image);
-    int ht = CGImageGetHeight(image);
-    int bytesPerPixel = 4;
-    int bytesPerRow = bytesPerPixel * wd;
-    int bitsPerComponent = 8;
-
-    // allocate memory to store image's RGBA bitmap data
-    unsigned char* pxldata = (unsigned char*) calloc(wd * ht * 4, 1);
-    if (pxldata == NULL) return NULL;
-
-    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef ctx = CGBitmapContextCreate(pxldata, wd, ht,
-        bitsPerComponent, bytesPerRow, colorspace,
-        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-    CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), image);
-    CGContextRelease(ctx);
-    CGColorSpaceRelease(colorspace);
-
-    // pxldata now contains the image bitmap in RGBA pixel format
-    return pxldata;
-}
-
-// -----------------------------------------------------------------------------
-
-static bool OneColor(CGImageRef image, unsigned char* R, unsigned char* G, unsigned char* B)
-{
-    unsigned char* pxldata = GetRGBAPixels(image);
-    if (pxldata == NULL) return false;
-
-    // pxldata contains the image bitmap in RGBA pixel format
-    int color = (pxldata[0] << 16) + (pxldata[1] << 8) + pxldata[2];
-    int byte = 0;
-    int wd = CGImageGetWidth(image);
-    int ht = CGImageGetHeight(image);
-    for (int i = 0; i < wd*ht; i++) {
-        if (color != (pxldata[byte] << 16) + (pxldata[byte+1] << 8) + pxldata[byte+2]) {
-            // there is more than one color
-            free(pxldata);
-            return false;
-        }
-        byte += 4;
-    }
-
-    // return the single color
-    *R = pxldata[0];
-    *G = pxldata[1];
-    *B = pxldata[2];
-
-    free(pxldata);
-    return true;
-}
-
-// -----------------------------------------------------------------------------
-
-static std::string CreateStateColors(CGImageRef image, int numicons)
-{
-    std::string contents = "\n@COLORS\n\n";
-
-    // if the last icon has only 1 color then assume it is the extra 15x15 icon
-    // supplied to set the color of state 0
-    char s[128];
-    if (numicons > 1) {
-        CGImageRef icon = CGImageCreateWithImageInRect(image,CGRectMake((numicons-1)*15, 0, 15, 15));
-        unsigned char R, G, B;
-        if (OneColor(icon, &R, &G, &B)) {
-            sprintf(s, "0 %d %d %d\n", R, G, B);
-            contents += s;
-            numicons--;
-        }
-    }
-
-    // set non-icon colors for each live state to the average of the non-black pixels
-    // in each 15x15 icon (note we've skipped the extra icon detected above)
-    for (int i = 0; i < numicons; i++) {
-        CGImageRef icon = CGImageCreateWithImageInRect(image,CGRectMake(i*15, 0, 15, 15));
-        int nbcount = 0;   // non-black pixels
-        int totalR = 0;
-        int totalG = 0;
-        int totalB = 0;
-        unsigned char* idata = GetRGBAPixels(icon);
-        if (idata) {
-            for (int y = 0; y < 15; y++) {
-                for (int x = 0; x < 15; x++) {
-                    int pos = (y * 15 + x) * 4;
-                    unsigned char R = idata[pos];
-                    unsigned char G = idata[pos+1];
-                    unsigned char B = idata[pos+2];
-                    if (R > 0 || G > 0 || B > 0) {
-                        // non-black pixel
-                        nbcount++;
-                        totalR += R;
-                        totalG += G;
-                        totalB += B;
-                    }
-                }
-            }
-            free(idata);
-        }
-        if (nbcount > 0) {
-            sprintf(s, "%d %d %d %d\n", i+1, totalR/nbcount, totalG/nbcount, totalB/nbcount);
-            contents += s;
-        } else {
-            // unlikely, but avoid div by zero
-            sprintf(s, "%d 0 0 0\n", i+1);
-            contents += s;
-        }
-    }
-
-    return contents;
-}
-
-// -----------------------------------------------------------------------------
-
-static std::string hex2(int i)
-{
-    // convert given number from 0..255 into 2 hex digits
-    std::string result = "xx";
-    const char* hexdigit = "0123456789ABCDEF";
-    result[0] = hexdigit[i / 16];
-    result[1] = hexdigit[i % 16];
-    return result;
-}
-
-// -----------------------------------------------------------------------------
-
-static std::list<int> GetColors(CGImageRef image)
-{
-    // return the list of colors used in the given image
-    std::list<int> result;
-    unsigned char* pxldata = GetRGBAPixels(image);
-    if (pxldata) {
-        // pxldata contains the image bitmap in RGBA pixel format
-        int byte = 0;
-        int wd = CGImageGetWidth(image);
-        int ht = CGImageGetHeight(image);
-        for (int i = 0; i < wd*ht; i++) {
-            int color = (pxldata[byte] << 16) + (pxldata[byte+1] << 8) + pxldata[byte+2];
-            if (std::find(result.begin(),result.end(),color) == result.end()) {
-                // first time we've seen this color
-                result.push_back(color);
-            }
-            byte += 4;
-        }
-        free(pxldata);
-    }
-    return result;
-}
-
-// -----------------------------------------------------------------------------
-
-static std::string CreateXPM(const std::string& iconspath, CGImageRef image, int size, int numicons)
-{
-    // create XPM data for given set of icons
-    std::string contents = "\nXPM\n";
-
-    char s[128];
-    int charsperpixel = 1;
-    const char* cindex = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    std::list<int> colors = GetColors(image);
-
-    int numcolors = colors.size();
-    if (numcolors > 256) {
-        std::ostringstream oss;
-        oss << "Image in " << iconspath.c_str() << " has more than 256 colors.";
-        throw std::runtime_error(oss.str().c_str());
-    }
-    if (numcolors > 26) charsperpixel = 2;   // AABA..PA, ABBB..PB, ... , APBP..PP
-
-    contents += "/* width height num_colors chars_per_pixel */\n";
-    sprintf(s, "\"%d %d %d %d\"\n", size, size*numicons, numcolors, charsperpixel);
-    contents += s;
-
-    contents += "/* colors */\n";
-    int n = 0;
-    for (std::list<int>::iterator it = colors.begin(); it != colors.end(); ++it) {
-        int RGB = *it;
-        unsigned char R = (RGB & 0xFF0000) >> 16;
-        unsigned char G = (RGB & 0x00FF00) >> 8;
-        unsigned char B = (RGB & 0x0000FF);
-        if (R == 0 && G == 0 && B == 0) {
-            // nicer to show . or .. for black pixels
-            contents += "\".";
-            if (charsperpixel == 2) contents += ".";
-            contents += " c #000000\"\n";
-        } else {
-            std::string hexcolor = "#";
-            hexcolor += hex2(R);
-            hexcolor += hex2(G);
-            hexcolor += hex2(B);
-            contents += "\"";
-            if (charsperpixel == 1) {
-                contents += cindex[n];
-            } else {
-                contents += cindex[n % 16];
-                contents += cindex[n / 16];
-            }
-            contents += " c ";
-            contents += hexcolor;
-            contents += "\"\n";
-        }
-        n++;
-    }
-
-    for (int i = 0; i < numicons; i++) {
-        sprintf(s, "/* icon for state %d */\n", i+1);
-        contents += s;
-        CGImageRef icon = CGImageCreateWithImageInRect(image,CGRectMake(i*15, 0, size, size));
-        unsigned char* idata = GetRGBAPixels(icon);
-        if (idata) {
-            for (int y = 0; y < size; y++) {
-                contents += "\"";
-                for (int x = 0; x < size; x++) {
-                    long pos = (y * size + x) * 4;
-                    unsigned char R = idata[pos];
-                    unsigned char G = idata[pos+1];
-                    unsigned char B = idata[pos+2];
-                    if (R == 0 && G == 0 && B == 0) {
-                        // nicer to show . or .. for black pixels
-                        contents += ".";
-                        if (charsperpixel == 2) contents += ".";
-                    } else {
-                        n = 0;
-                        int thisRGB = (R << 16) + (G << 8) + B;
-                        for (std::list<int>::iterator it = colors.begin(); it != colors.end(); ++it) {
-                            if (thisRGB == *it) break;
-                            n++;
-                        }
-                        if (charsperpixel == 1) {
-                            contents += cindex[n];
-                        } else {
-                            contents += cindex[n % 16];
-                            contents += cindex[n / 16];
-                        }
-                    }
-                }
-                contents += "\"\n";
-            }
-            free(idata);
-        }
-    }
-
-    return contents;
-}
-
-// -----------------------------------------------------------------------------
-
-static std::string CreateICONS(const std::string& iconspath, bool nocolors)
-{
-    std::string contents = "\n@ICONS\n";
-    CGImageRef image = [UIImage imageWithContentsOfFile:
-        [NSString stringWithCString:iconspath.c_str() encoding:NSUTF8StringEncoding]].CGImage;
-    if (image == NULL) {
-        std::ostringstream oss;
-        oss << "Could not load image from .icons file:\n" << iconspath.c_str();
-        throw std::runtime_error(oss.str().c_str());
-    } else {
-        // might need to convert 2-color .icons image to black-and-white
-        image = ConvertOldMonochromeIcons(image);
-
-        int wd = CGImageGetWidth(image);
-        int ht = CGImageGetHeight(image);
-        if (ht != 15 && ht != 22) {
-            std::ostringstream oss;
-            oss << "Image in " << iconspath.c_str() << " has incorrect height (should be 15 or 22).";
-            throw std::runtime_error(oss.str().c_str());
-        }
-        if (wd % 15 > 0) {
-            std::ostringstream oss;
-            oss << "Image in " << iconspath.c_str() << " has incorrect width (should be multiple of 15).";
-            throw std::runtime_error(oss.str().c_str());
-        }
-        int numicons = wd / 15;
-
-        if (nocolors && MultiColorImage(image)) {
-            // there was no .colors file and .icons file is multi-color,
-            // so prepend a @COLORS section that sets non-icon colors
-            contents = CreateStateColors(CGImageCreateWithImageInRect(image,CGRectMake(0,0,wd,15)), numicons) + contents;
-        }
-
-        if (ht == 15) {
-            contents += CreateXPM(iconspath, image, 15, numicons);
-        } else {
-            contents += CreateXPM(iconspath, CGImageCreateWithImageInRect(image,CGRectMake(0,0,wd,15)), 15, numicons);
-            contents += CreateXPM(iconspath, CGImageCreateWithImageInRect(image,CGRectMake(0,15,wd,7)), 7, numicons);
-        }
-    }
-    return contents;
-}
-
-#endif // IOS_GUI
-
-// -----------------------------------------------------------------------------
-
 static void CreateOneRule(const std::string& rulefile, const std::string& folder,
                           std::list<std::string>& allfiles, std::string& htmlinfo)
 {
-    std::string tabledata, treedata, colordata, icondata;
     std::string rulename = rulefile.substr(0,rulefile.rfind('.'));
+    std::string tablefile = rulename + ".table";
+    std::string treefile = rulename + ".tree";
+    std::string tabledata, treedata;
 
-    if (EndsWith(rulename,"-shared")) {
-        // create a .rule file with colors and/or icons shared by other .rule files
-        std::string prefix = rulename.substr(0,rulename.rfind('-'));
+    if (FOUND(allfiles,tablefile))
+        tabledata = CreateTABLE(folder + tablefile);
 
-        tabledata = CreateEmptyTABLE(folder, prefix, allfiles);
-
-        std::string sharedcolors = prefix + ".colors";
-        if (FOUND(allfiles,sharedcolors))
-            colordata = CreateCOLORS(folder + sharedcolors);
-
-        std::string sharedicons = prefix + ".icons";
-        if (FOUND(allfiles,sharedicons))
-#ifdef ANDROID_GUI
-            // don't bother implementing support for .icons files
-            icondata = "";
-#endif
-#ifdef IOS_GUI
-            icondata = CreateICONS(folder + sharedicons, colordata.length() == 0);
-#endif
-    } else {
-        std::string tablefile = rulename + ".table";
-        std::string treefile = rulename + ".tree";
-        std::string colorsfile = rulename + ".colors";
-        std::string iconsfile = rulename + ".icons";
-
-        if (FOUND(allfiles,tablefile))
-            tabledata = CreateTABLE(folder + tablefile);
-
-        if (FOUND(allfiles,treefile))
-            treedata = CreateTREE(folder + treefile);
-
-        if (FOUND(allfiles,colorsfile))
-            colordata = CreateCOLORS(folder + colorsfile);
-
-        if (FOUND(allfiles,iconsfile))
-#ifdef ANDROID_GUI
-            // don't bother implementing support for .icons files
-            icondata = "";
-#endif
-#ifdef IOS_GUI
-            icondata = CreateICONS(folder + iconsfile, colordata.length() == 0);
-#endif
-    }
+    if (FOUND(allfiles,treefile))
+        treedata = CreateTREE(folder + treefile);
 
     std::string contents = "@RULE " + rulename + "\n";
     contents += tabledata;
     contents += treedata;
-    contents += colordata;
-    contents += icondata;
 
     // write contents to .rule file
     std::string rulepath = folder + rulefile;
@@ -2144,31 +1699,11 @@ static void CreateOneRule(const std::string& rulefile, const std::string& folder
 
 // -----------------------------------------------------------------------------
 
-static bool SharedColorsIcons(const std::string& prefix, std::list<std::string>& allfiles)
-{
-    // return true if prefix.colors/icons is shared by at least one prefix-*.table/tree file
-    std::list<std::string>::iterator it;
-    for (it=allfiles.begin(); it!=allfiles.end(); ++it) {
-        std::string filename = *it;
-        if (EndsWith(filename,".table") || EndsWith(filename,".tree")) {
-            size_t hyphenpos = filename.rfind('-');
-            if (hyphenpos != std::string::npos && prefix == filename.substr(0,hyphenpos)) {
-                return true;
-            }
-        }
-    }
-
-    // prefix-*.table/tree does not exist in allfiles
-    return false;
-}
-
-// -----------------------------------------------------------------------------
-
 std::string CreateRuleFiles(std::list<std::string>& deprecated,
                             std::list<std::string>& keeprules)
 {
-    // use the given list of deprecated .table/tree/colors/icons files
-    // to create new .rule files, except for those .rule files in keeprules
+    // use the given list of deprecated .table/tree files to create new .rule files,
+    // except for those .rule files in keeprules
     std::string htmlinfo;
     bool aborted = false;
     try {
@@ -2179,22 +1714,15 @@ std::string CreateRuleFiles(std::list<std::string>& deprecated,
         for (it=deprecated.begin(); it!=deprecated.end(); ++it) {
             filename = *it;
             rulename = filename.substr(0,filename.rfind('.'));
-            if (EndsWith(filename,".colors") || EndsWith(filename,".icons")) {
-                if (SharedColorsIcons(rulename, deprecated)) {
-                    // colors and/or icons will be shared by one or more rulename-*.rule files
-                    rulefile = rulename + "-shared.rule";
-                } else {
-                    rulefile = rulename + ".rule";
-                }
-            } else {
+            if (EndsWith(filename,".table") || EndsWith(filename,".tree")) {
                 // .table/tree file
                 rulefile = rulename + ".rule";
-            }
-            // add .rule file to candidates if it hasn't been added yet
-            // and if it isn't in the keeprules list
-            if (NOT_FOUND(candidates,rulefile) &&
-                NOT_FOUND(keeprules,rulefile)) {
-                candidates.push_back(rulefile);
+                // add .rule file to candidates if it hasn't been added yet
+                // and if it isn't in the keeprules list
+                if (NOT_FOUND(candidates,rulefile) &&
+                    NOT_FOUND(keeprules,rulefile)) {
+                    candidates.push_back(rulefile);
+                }
             }
         }
 

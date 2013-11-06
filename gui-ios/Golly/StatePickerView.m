@@ -24,6 +24,7 @@
 
 #include "prefs.h"      // for showicons
 #include "layer.h"      // for currlayer
+#include "algos.h"      // for gBitmapPtr
 
 #import "PatternViewController.h"   // for UpdateEditBar, CloseStatePicker
 #import "StateView.h"               // for DrawOneIcon
@@ -55,7 +56,8 @@
 - (void)drawRect:(CGRect)rect
 {
     CGContextRef context = UIGraphicsGetCurrentContext();
-    CGImageRef* iconmaps = currlayer->icons31x31;
+    
+    gBitmapPtr* iconmaps = currlayer->icons31x31;
 
     // use white lines
     [[UIColor whiteColor] setStroke];
@@ -71,15 +73,33 @@
         CGRect box = CGRectMake(x+1, y+1, 31, 31);
         if (showicons && iconmaps && iconmaps[i]) {
             // fill box with background color then draw icon
-            CGContextSetFillColorWithColor(context, currlayer->colorref[0]);
+            CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
+            CGFloat components[4];
+            components[0] = currlayer->cellr[0] / 255.0;
+            components[1] = currlayer->cellg[0] / 255.0;
+            components[2] = currlayer->cellb[0] / 255.0;
+            components[3] = 1.0;    // alpha
+            CGColorRef colorref = CGColorCreate(colorspace, components);
+            CGColorSpaceRelease(colorspace);
+            CGContextSetFillColorWithColor(context, colorref);
             CGContextFillRect(context, box);
+            CGColorRelease(colorref);
             DrawOneIcon(context, x+1, y+1, iconmaps[i],
                         currlayer->cellr[0], currlayer->cellg[0], currlayer->cellb[0],
                         currlayer->cellr[i], currlayer->cellg[i], currlayer->cellb[i]);
         } else {
             // fill box with color of current drawing state
-            CGContextSetFillColorWithColor(context, currlayer->colorref[i]);
+            CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
+            CGFloat components[4];
+            components[0] = currlayer->cellr[i] / 255.0;
+            components[1] = currlayer->cellg[i] / 255.0;
+            components[2] = currlayer->cellb[i] / 255.0;
+            components[3] = 1.0;    // alpha
+            CGColorRef colorref = CGColorCreate(colorspace, components);
+            CGColorSpaceRelease(colorspace);
+            CGContextSetFillColorWithColor(context, colorref);
             CGContextFillRect(context, box);
+            CGColorRelease(colorref);
         }
 
         // anti-aliased text is much nicer

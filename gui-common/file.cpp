@@ -368,7 +368,7 @@ void LoadRule(const std::string& rulestring)
         ReduceCellStates(newmaxstate);
     }
 
-    // set colors for new rule (loads any .rule/colors/icons file)
+    // set colors for new rule (loads any .rule file)
     UpdateLayerColors();
 
     if (oldrule != newrule) {
@@ -596,7 +596,7 @@ void OpenZipFile(const char* zippath)
     int scriptfiles = 0;
     int textfiles = 0;                  // includes html files
     int rulefiles = 0;
-    int deprecated = 0;                 // # of .table/tree/colors/icons files
+    int deprecated = 0;                 // # of .table/tree files
     std::list<std::string> deplist;     // list of installed deprecated files
     std::list<std::string> rulelist;    // list of installed .rule files
     int err;
@@ -674,19 +674,28 @@ void OpenZipFile(const char* zippath)
                     std::string filename = GetBaseName(name.c_str());
                     if (dirseen) contents += indent;
 
-                    if ( IsRuleFile(filename) && filename.rfind(".rule") == std::string::npos ) {
+                    if ( IsRuleFile(filename) && !EndsWith(filename,".rule") ) {
                         // this is a deprecated .table/tree/colors/icons file
-                        contents += filename;
-                        contents += indent;
-                        contents += "[deprecated]";
-                        deprecated++;
-                        // install it into userrules so it can be used below to create a .rule file
-                        std::string outfile = userrules + filename;
-                        if (RuleInstalled(zfile, file_info, outfile)) {
-                            deplist.push_back(filename);
-                        } else {
+                        if (EndsWith(filename,".colors") || EndsWith(filename,".icons")) {
+                            // these files are no longer supported and are simply ignored
+                            contents += filename;
                             contents += indent;
-                            contents += "INSTALL FAILED!";
+                            contents += "[ignored]";
+                            // don't add to deprecated list
+                        } else {
+                            // .table/.tree file
+                            contents += filename;
+                            contents += indent;
+                            contents += "[deprecated]";
+                            deprecated++;
+                            // install it into userrules so it can be used below to create a .rule file
+                            std::string outfile = userrules + filename;
+                            if (RuleInstalled(zfile, file_info, outfile)) {
+                                deplist.push_back(filename);
+                            } else {
+                                contents += indent;
+                                contents += "INSTALL FAILED!";
+                            }
                         }
 
                     } else {

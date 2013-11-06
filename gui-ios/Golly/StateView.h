@@ -22,6 +22,8 @@
  
  / ***/
 
+#include "algos.h"      // for gBitmapPtr
+
 @interface StateView : UIView <UIGestureRecognizerDelegate, UIPopoverControllerDelegate>
 {
     UIPopoverController *statePopover;
@@ -32,6 +34,6 @@
 
 @end
 
-void DrawOneIcon(CGContextRef context, int x, int y, CGImageRef icon,
+void DrawOneIcon(CGContextRef context, int x, int y, gBitmapPtr icon,
                  unsigned char deadr, unsigned char deadg, unsigned char deadb,
                  unsigned char liver, unsigned char liveg, unsigned char liveb);

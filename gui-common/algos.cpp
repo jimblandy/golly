@@ -649,8 +649,6 @@ gBitmapPtr* CreateIconBitmaps(const char** xpmdata, int maxstates)
     if (iconptr) {
         for (int i = 0; i < 256; i++) iconptr[i] = NULL;
         unsigned char* nexticon = rgba;
-
-#ifdef ANDROID_GUI
         int iconbytes = wd * wd * 4;
         for (int i = 0; i < numicons; i++) {
             gBitmapPtr icon = (gBitmapPtr) malloc(sizeof(gBitmap));
@@ -682,33 +680,6 @@ gBitmapPtr* CreateIconBitmaps(const char** xpmdata, int maxstates)
                 iconptr[i+1] = icon;
             }
         }
-#endif // ANDROID_GUI
-
-#ifdef IOS_GUI
-        // convert each icon bitmap into a CGImage
-        CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
-        for (int i = 0; i < numicons; i++) {
-            CGContextRef context = CGBitmapContextCreate(nexticon, wd, wd, 8, wd * 4, colorspace,
-                // following specifies RGBA format:
-                kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-            // add 1 to skip iconptr[0] (ie. dead state)
-            iconptr[i+1] = CGBitmapContextCreateImage(context);
-            CGContextRelease(context);
-            nexticon += wd * wd * 4;
-        }
-        if (numicons < maxstates-1 && iconptr[numicons]) {
-            // duplicate last icon
-            nexticon -= wd * wd * 4;
-            for (int i = numicons; i < maxstates-1; i++) {
-                CGContextRef context = CGBitmapContextCreate(nexticon, wd, wd, 8, wd * 4, colorspace,
-                    // following specifies RGBA format:
-                    kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-                iconptr[i+1] = CGBitmapContextCreateImage(context);
-                CGContextRelease(context);
-            }
-        }
-        CGColorSpaceRelease(colorspace);
-#endif // IOS_GUI
     }
 
     free(rgba);
@@ -716,8 +687,6 @@ gBitmapPtr* CreateIconBitmaps(const char** xpmdata, int maxstates)
 }
 
 // -----------------------------------------------------------------------------
-
-#ifdef ANDROID_GUI
 
 static gBitmapPtr CreateSmallerIcon(unsigned char* indata, int insize, int outsize)
 {
@@ -747,11 +716,7 @@ static gBitmapPtr CreateSmallerIcon(unsigned char* indata, int insize, int outsi
     return icon;
 }
 
-#endif // ANDROID_GUI
-
 // -----------------------------------------------------------------------------
-
-#ifdef ANDROID_GUI
 
 #define SETPIXEL(x, y) \
     outpos = (y) * outsize * 4 + (x) * 4; \
@@ -841,8 +806,6 @@ static gBitmapPtr CreateBiggerIcon(unsigned char* indata, int insize, int outsiz
     return icon;
 }
 
-#endif // ANDROID_GUI
-
 // -----------------------------------------------------------------------------
 
 gBitmapPtr* ScaleIconBitmaps(gBitmapPtr* srcicons, int size)
@@ -855,8 +818,6 @@ gBitmapPtr* ScaleIconBitmaps(gBitmapPtr* srcicons, int size)
             if (srcicons[i] == NULL) {
                 iconptr[i] = NULL;
             } else {
-
-#ifdef ANDROID_GUI
                 int insize = srcicons[i]->wd;
                 if (insize > size) {
                     iconptr[i] = CreateSmallerIcon(srcicons[i]->pxldata, insize, size);
@@ -864,24 +825,6 @@ gBitmapPtr* ScaleIconBitmaps(gBitmapPtr* srcicons, int size)
                     // assume insize < size
                     iconptr[i] = CreateBiggerIcon(srcicons[i]->pxldata, insize, size);
                 }
-#endif // ANDROID_GUI
-
-#ifdef IOS_GUI
-                CGImageRef srcimage = srcicons[i];
-                size_t bytesPerRow = CGImageGetBitsPerPixel(srcimage) / CGImageGetBitsPerComponent(srcimage) * size;
-
-                CGContextRef context = CGBitmapContextCreate(NULL, size, size,
-                    CGImageGetBitsPerComponent(srcimage),
-                    bytesPerRow,
-                    CGImageGetColorSpace(srcimage),
-                    CGImageGetBitmapInfo(srcimage));
-
-                CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-                CGContextDrawImage(context, CGRectMake(0, 0, size, size), srcimage);
-                iconptr[i] = CGBitmapContextCreateImage(context);
-                CGContextRelease(context);
-#endif // IOS_GUI
-
             }
         }
     }
@@ -1031,15 +974,10 @@ void FreeIconBitmaps(gBitmapPtr* icons)
 {
     if (icons) {
         for (int i = 0; i < 256; i++) {
-#ifdef ANDROID_GUI
             if (icons[i]) {
                 if (icons[i]->pxldata) free(icons[i]->pxldata);
                 free(icons[i]);
             }
-#endif
-#ifdef IOS_GUI
-            CGImageRelease(icons[i]);
-#endif
         }
         free(icons);
     }
@@ -1104,115 +1042,11 @@ int NumAlgos()
 
 // -----------------------------------------------------------------------------
 
-gBitmapPtr ConvertOldMonochromeIcons(gBitmapPtr oldimage)
-{
-    // if oldimage uses <= 2 colors and is non-grayscale then return new black-and-white image
-    // for compatibility with monochrome .icons files in Golly 2.4 and older
-#ifdef ANDROID_GUI
-    // allocate memory to store oldimage's RGBA data
-    int wd = oldimage->wd;
-    int ht = oldimage->ht;
-    int numbytes = wd * ht * 4;
-    unsigned char* pxldata = (unsigned char*) calloc(numbytes, 1);
-    if (pxldata == NULL) return oldimage;
-    memcpy(pxldata, oldimage->pxldata, numbytes);
-#endif // ANDROID_GUI
-
-#ifdef IOS_GUI
-    int wd = CGImageGetWidth(oldimage);
-    int ht = CGImageGetHeight(oldimage);
-    int bytesPerPixel = 4;
-    int bytesPerRow = bytesPerPixel * wd;
-    int bitsPerComponent = 8;
-
-    // allocate memory to store oldimage's RGBA data
-    unsigned char* pxldata = (unsigned char*) calloc(wd * ht * 4, 1);
-    if (pxldata == NULL) return oldimage;
-
-    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef ctx = CGBitmapContextCreate(pxldata, wd, ht,
-        bitsPerComponent, bytesPerRow, colorspace,
-        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-    CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), oldimage);
-    CGContextRelease(ctx);
-    CGColorSpaceRelease(colorspace);
-#endif // IOS_GUI
-
-    // pxldata now contains the oldimage bitmap in RGBA format so see if it uses <= 2 colors
-    std::list<int> colors;
-    int numcolors = 0;
-    bool grayscale = true;
-    int byte = 0;
-    for (int i = 0; i < wd*ht; i++) {
-        unsigned char r = pxldata[byte];
-        unsigned char g = pxldata[byte+1];
-        unsigned char b = pxldata[byte+2];
-        int color = (r << 16) + (g << 8) + b;
-        if (std::find(colors.begin(),colors.end(),color) == colors.end()) {
-            // first time we've seen this color
-            colors.push_back(color);
-            if (r != g || g != b) grayscale = false;
-            numcolors++;
-            if (numcolors > 2) {
-                free(pxldata);
-                return oldimage;    // more than 2 colors (multi-color icons)
-            }
-        }
-        byte += 4;
-    }
-
-    // numcolors <= 2; if colors are shades of gray then no need to convert
-    if (grayscale) {
-         free(pxldata);
-         return oldimage;
-    }
-
-    // change non-black pixels to white
-    byte = 0;
-    for (int i = 0; i < wd*ht; i++) {
-        if (pxldata[byte] || pxldata[byte+1] || pxldata[byte+2]) {
-           pxldata[byte]   = 255;
-           pxldata[byte+1] = 255;
-           pxldata[byte+2] = 255;
-        }
-        byte += 4;
-    }
-
-#ifdef ANDROID_GUI
-    // create new image using modified pixel data
-    gBitmapPtr newimage = (gBitmapPtr) malloc(sizeof(gBitmap));
-    if (newimage == NULL) {
-        free(pxldata);
-        return oldimage;
-    }
-    newimage->wd = oldimage->wd;
-    newimage->ht = oldimage->ht;
-    newimage->pxldata = pxldata;
-#endif // ANDROID_GUI
-
-#ifdef IOS_GUI
-    // create new image using modified pixel data
-    colorspace = CGColorSpaceCreateDeviceRGB();
-    ctx = CGBitmapContextCreate(pxldata, wd, ht,
-        bitsPerComponent, bytesPerRow, colorspace,
-        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-    CGImageRef newimage = CGBitmapContextCreateImage(ctx);
-    CGContextRelease(ctx);
-    CGColorSpaceRelease(colorspace);
-    free(pxldata);
-#endif // IOS_GUI
-
-    return newimage;
-}
-
-// -----------------------------------------------------------------------------
-
 bool MultiColorImage(gBitmapPtr image)
 {
     // return true if image contains at least one color that isn't a shade of gray
     if (image == NULL) return false;
     
-#ifdef ANDROID_GUI
     unsigned char* pxldata = image->pxldata;
     if (pxldata == NULL) return false;          // play safe
     int numpixels = image->wd * image->ht;
@@ -1225,134 +1059,4 @@ bool MultiColorImage(gBitmapPtr image)
         byte += 4;
     }
     return false;       // grayscale
-#endif // ANDROID_GUI
-
-#ifdef IOS_GUI
-    int wd = CGImageGetWidth(image);
-    int ht = CGImageGetHeight(image);
-    int bytesPerPixel = 4;
-    int bytesPerRow = bytesPerPixel * wd;
-    int bitsPerComponent = 8;
-
-    // allocate memory to store image's RGBA bitmap data
-    unsigned char* pxldata = (unsigned char*) calloc(wd * ht * 4, 1);
-    if (pxldata == NULL) return false;
-
-    CGColorSpaceRef colorspace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef ctx = CGBitmapContextCreate(pxldata, wd, ht,
-        bitsPerComponent, bytesPerRow, colorspace,
-        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-    CGContextDrawImage(ctx, CGRectMake(0, 0, wd, ht), image);
-    CGContextRelease(ctx);
-    CGColorSpaceRelease(colorspace);
-
-    // pxldata now contains the image bitmap in RGBA format
-    int byte = 0;
-    for (int i = 0; i < wd*ht; i++) {
-        unsigned char r = pxldata[byte];
-        unsigned char g = pxldata[byte+1];
-        unsigned char b = pxldata[byte+2];
-        if (r != g || g != b) {
-            free(pxldata);
-            return true;    // multi-color
-        }
-        byte += 4;
-    }
-
-    free(pxldata);
-    return false;   // grayscale
-#endif // IOS_GUI
-}
-
-// -----------------------------------------------------------------------------
-
-bool LoadIconFile(const std::string& path, int maxstate,
-                  gBitmapPtr** out7x7, gBitmapPtr** out15x15, gBitmapPtr** out31x31)
-{
-#ifdef ANDROID_GUI
-    // the Android version of Golly does not support .icons files
-    return false;
-#endif // ANDROID_GUI
-
-#ifdef IOS_GUI
-    CGImageRef allicons = [UIImage imageWithContentsOfFile:
-        [NSString stringWithCString:path.c_str() encoding:NSUTF8StringEncoding]].CGImage;
-    if (allicons == NULL) {
-        std::string msg = "Could not load icon bitmaps from file:\n";
-        msg += path;
-        // NSLog(@"%s", msg.c_str());
-        Warning(msg.c_str());
-        return false;
-    }
-
-    allicons = ConvertOldMonochromeIcons(allicons);
-
-    // check dimensions of .icons format
-    int wd = CGImageGetWidth(allicons);
-    int ht = CGImageGetHeight(allicons);
-    if (ht != 15 && ht != 22) {
-        Warning("Wrong bitmap height in .icons file (must be 15 or 22).");
-        return false;
-    }
-    if (wd % 15 != 0) {
-        Warning("Wrong bitmap width in .icons file (must be multiple of 15).");
-        return false;
-    }
-
-    currlayer->multicoloricons = MultiColorImage(allicons);
-
-    // first extract 15x15 icons
-    int numicons = wd / 15;
-    if (numicons > 255) numicons = 255;     // play safe
-
-    CGImageRef* iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
-    if (iconptr) {
-        for (int i = 0; i < 256; i++) iconptr[i] = NULL;
-        for (int i = 0; i < numicons; i++) {
-            // add 1 to skip iconptr[0] (ie. dead state)
-            iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 0, 15, 15));
-        }
-        if (numicons < maxstate && iconptr[numicons]) {
-            // duplicate last icon
-            for (int i = numicons; i < maxstate; i++) {
-                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 0, 15, 15));
-            }
-        }
-
-        // if there is an extra icon at the right end of the multi-color icons then
-        // store it in iconptr[0] -- it will be used later in UpdateCurrentColors()
-        // to set the color of state 0
-        if (currlayer->multicoloricons && (wd / 15) > maxstate) {
-            iconptr[0] = CGImageCreateWithImageInRect(allicons, CGRectMake(maxstate*15, 0, 15, 15));
-        }
-    }
-    *out15x15 = iconptr;
-
-    if (ht == 22) {
-        // extract 7x7 icons (at bottom left corner of each 15x15 icon)
-        iconptr = (CGImageRef*) malloc(256 * sizeof(CGImageRef));
-        if (iconptr) {
-            for (int i = 0; i < 256; i++) iconptr[i] = NULL;
-            for (int i = 0; i < numicons; i++) {
-                // add 1 to skip iconptr[0] (ie. dead state)
-                iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake(i*15, 15, 7, 7));
-            }
-            if (numicons < maxstate && iconptr[numicons]) {
-                // duplicate last icon
-                for (int i = numicons; i < maxstate; i++) {
-                    iconptr[i+1] = CGImageCreateWithImageInRect(allicons, CGRectMake((numicons-1)*15, 15, 7, 7));
-                }
-            }
-        }
-        *out7x7 = iconptr;
-    } else {
-        // create 7x7 icons by scaling down 15x15 icons
-        *out7x7 = ScaleIconBitmaps(*out15x15, 7);
-    }
-
-    // create 31x31 icons by scaling up 15x15 icons
-    *out31x31 = ScaleIconBitmaps(*out15x15, 31);
-
-    return true;
-#endif // IOS_GUI
 }
