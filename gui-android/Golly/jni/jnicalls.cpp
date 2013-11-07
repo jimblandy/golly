@@ -71,6 +71,7 @@ static jmethodID help_DownloadFile;
 
 static bool rendering = false;          // in DrawPattern?
 static bool paused = false;             // generating has been paused?
+static bool touching_pattern = false;   // is pattern being touched?
 static bool highdensity = false;        // screen density is > 300dpi?
 
 // -----------------------------------------------------------------------------
@@ -635,6 +636,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeGenerate(JNIEnv* env
 {
     if (paused) return;     // PauseGenerating has been called
 
+    if (touching_pattern) return;     // avoid jerky pattern updates
+
     // play safe and avoid re-entering currlayer->algo->step()
     if (event_checker > 0) return;
 
@@ -1190,6 +1193,9 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeTouchBegan(J
     // LOGI("touch began: x=%d y=%d", x, y);
     ClearMessage();
     TouchBegan(x, y);
+
+    // set flag so we can avoid jerky updates if pattern is generating
+    touching_pattern = true;
 }
 
 // -----------------------------------------------------------------------------
@@ -1208,6 +1214,8 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeTouchEnded(J
 {
     // LOGI("touch ended");
     TouchEnded();
+
+    touching_pattern = false;   // allow pattern generation
 }
 
 // -----------------------------------------------------------------------------

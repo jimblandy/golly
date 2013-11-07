@@ -143,7 +143,7 @@ public class PatternGLSurfaceView extends GLSurfaceView {
 	            // we need to test zooming flag because it's possible to get
 	            // ACTION_MOVE after ACTION_POINTER_UP (and after onScaleEnd)
 	            if (mActivePointerId != INVALID_POINTER_ID && !zooming) {
-	                final int pointerIndex = ev.findPointerIndex(mActivePointerId);
+	                int pointerIndex = ev.findPointerIndex(mActivePointerId);
 	                int x = (int)ev.getX(pointerIndex);
 	                int y = (int)ev.getY(pointerIndex);
 	                if (callTouchBegan) {
