@@ -59,6 +59,7 @@
 
 #include "utils.h"       // for Warning, Fatal, etc
 #include "prefs.h"       // for showgridlines, mingridmag, swapcolors, etc
+#include "algos.h"       // for gBitmapPtr
 #include "layer.h"       // currlayer, GetLayer, etc
 #include "view.h"        // nopattupdate, waitingforpaste, pasterect, pastex, pastey, etc
 #include "render.h"
@@ -76,9 +77,15 @@
 
 // local data used in golly_render routines:
 
-static GLuint imageTexture = 0;         // texture for drawing bitmaps at 1:1 scale
 static int currwd, currht;              // current width and height of viewport
-static unsigned char** iconpixels;      // pointers to pixel data for each icon
+static unsigned char** icontextures;    // pointers to texture data for each icon
+static GLuint texture8 = 0;             // texture for drawing 7x7 icons
+static GLuint texture16 = 0;            // texture for drawing 15x15 icons
+static GLuint texture32 = 0;            // texture for drawing 31x31 icons
+static GLuint patternTexture = 0;       // texture for drawing pattern bitmaps at 1:1 scale
+
+// fixed texture coordinates used by glTexCoordPointer
+static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
 
 // for drawing paste pattern
 static lifealgo* pastealgo;             // universe containing paste pattern
@@ -117,21 +124,13 @@ static void DisableTextures()
 
 // -----------------------------------------------------------------------------
 
-// fixed texture coordinates used by glTexCoordPointer
-static const GLshort texture_coordinates[] = {
-    0, 0,
-    1, 0,
-    0, 1,
-    1, 1,
-};
-
 void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 {
-    // called from ios_render::pixblit to draw a bitmap at 1:1 scale
+    // called from ios_render::pixblit to draw a pattern bitmap at 1:1 scale
 
-	if (imageTexture == 0) {
-        // only need to create our texture name once
-        glGenTextures(1, &imageTexture);
+	if (patternTexture == 0) {
+        // only need to create texture name once
+        glGenTextures(1, &patternTexture);
     }
 
     if (!glIsEnabled(GL_TEXTURE_2D)) {
@@ -139,8 +138,9 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
         glColor4ub(255, 255, 255, 255);
         glEnable(GL_TEXTURE_2D);
         // bind our texture
-        glBindTexture(GL_TEXTURE_2D, imageTexture);
+        glBindTexture(GL_TEXTURE_2D, patternTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
     }
     
     // update the texture with the new bitmap data (in RGB format)
@@ -155,7 +155,6 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
     };
 
     glVertexPointer(2, GL_FLOAT, 0, vertices);
-    glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
@@ -164,6 +163,7 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 {
     // called from golly_render::pixblit to draw pattern at 1:1 scale
+    // if numstates is 2 or we're drawing the paste image
 
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
@@ -217,110 +217,69 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
+static int prevsize = 0;
+
 void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
     // called from golly_render::pixblit to draw icons for each live cell;
     // assume pmscale > 2 (should be 8, 16 or 32 or 64)
-    int cellsize = pmscale - 1;
-
-    const int maxcoords = 1024;     // must be multiple of 2
-    GLfloat points[maxcoords];
-    int numcoords = 0;
-    bool multicolor = currlayer->multicoloricons;
-
-    DisableTextures();
+    int iconsize = pmscale;
 
     // on high density screens the max scale is 1:64, but instead of
     // supporting 63x63 icons we simply scale up the 31x31 icons
     // (leaving a barely noticeable 1px gap at the right and bottom edges)
     if (pmscale == 64) {
-        cellsize = 31;              // we're using 31x31 icon data
-        glPointSize(2);
-    } else {
-        glPointSize(1);
+        iconsize = 32;
     }
 
-    unsigned char deadr = currlayer->cellr[0];
-    unsigned char deadg = currlayer->cellg[0];
-    unsigned char deadb = currlayer->cellb[0];
-    unsigned char prevr = deadr;
-    unsigned char prevg = deadg;
-    unsigned char prevb = deadb;
-    glColor4ub(deadr, deadg, deadb, 255);
+    // create icon textures once
+	if (texture8 == 0) glGenTextures(1, &texture8);
+	if (texture16 == 0) glGenTextures(1, &texture16);
+	if (texture32 == 0) glGenTextures(1, &texture32);
 
+    if (!glIsEnabled(GL_TEXTURE_2D)) {
+        // restore texture color and enable textures
+        glColor4ub(255, 255, 255, 255);
+        glEnable(GL_TEXTURE_2D);
+        prevsize = 0;               // force rebinding
+    }
+    
+    if (iconsize != prevsize) {
+        prevsize = iconsize;
+        // bind appropriate icon texture
+        if (iconsize == 8) glBindTexture(GL_TEXTURE_2D, texture8);
+        if (iconsize == 16) glBindTexture(GL_TEXTURE_2D, texture16);
+        if (iconsize == 32) glBindTexture(GL_TEXTURE_2D, texture32);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+    }
+
+    int prevstate = 0;
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
             unsigned char state = statedata[row*stride + col];
-            if (state && iconpixels[state]) {
-                // draw non-black pixels in this icon
-                unsigned char liver = currlayer->cellr[state];
-                unsigned char liveg = currlayer->cellg[state];
-                unsigned char liveb = currlayer->cellb[state];
-                unsigned char* pxldata = iconpixels[state];
-                int byte = 0;
-                for (int i = 0; i < cellsize; i++) {
-                    for (int j = 0; j < cellsize; j++) {
-                        unsigned char r = pxldata[byte++];
-                        unsigned char g = pxldata[byte++];
-                        unsigned char b = pxldata[byte++];
-                        byte++; // skip alpha
-                        if (r || g || b) {
-                            if (multicolor) {
-                                // draw non-black pixel from multi-colored icon
-                                if (swapcolors) {
-                                    r = 255 - r;
-                                    g = 255 - g;
-                                    b = 255 - b;
-                                }
-                            } else {
-                                // grayscale icon
-                                if (r == 255) {
-                                    // replace white pixel with current cell color
-                                    r = liver;
-                                    g = liveg;
-                                    b = liveb;
-                                } else {
-                                    // replace gray pixel with appropriate shade between
-                                    // live and dead cell colors
-                                    float frac = (float)r / 255.0;
-                                    r = (int)(deadr + frac * (liver - deadr) + 0.5);
-                                    g = (int)(deadg + frac * (liveg - deadg) + 0.5);
-                                    b = (int)(deadb + frac * (liveb - deadb) + 0.5);
-                                }
-                            }
-                            // draw r,g,b pixel
-                            bool changecolor = (r != prevr || g != prevg || b != prevb);
-                            if (changecolor || numcoords == maxcoords) {
-                                if (numcoords > 0) {
-                                    glVertexPointer(2, GL_FLOAT, 0, points);
-                                    glDrawArrays(GL_POINTS, 0, numcoords/2);
-                                    numcoords = 0;
-                                }
-                                if (changecolor) {
-                                    prevr = r;
-                                    prevg = g;
-                                    prevb = b;
-                                    glColor4ub(r, g, b, 255);
-                                }
-                            }
-                            if (pmscale == 64) {
-                                // we're scaling up 31x31 icons
-                                points[numcoords++] = x + col*pmscale + j*2 + 0.5;
-                                points[numcoords++] = y + row*pmscale + i*2 + 0.5;
-                            } else {
-                                points[numcoords++] = x + col*pmscale + j + 0.5;
-                                points[numcoords++] = y + row*pmscale + i + 0.5;
-                            }
-                        }
-                    }
+            if (state > 0 && icontextures[state]) {
+                
+                if (state != prevstate) {
+                    prevstate = state;
+                    // update the texture with the new icon data (in RGBA format)
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, iconsize, iconsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, icontextures[state]);
                 }
+                
+                int xpos = x + col * pmscale;
+                int ypos = y + row * pmscale;
+                GLfloat vertices[] = {
+                    xpos,           ypos,
+                    xpos + pmscale, ypos,
+                    xpos,           ypos + pmscale,
+                    xpos + pmscale, ypos + pmscale,
+                };
+
+                glVertexPointer(2, GL_FLOAT, 0, vertices);
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             }
         }
-    }
-
-    if (numcoords > 0) {
-        glVertexPointer(2, GL_FLOAT, 0, points);
-        glDrawArrays(GL_POINTS, 0, numcoords/2);
     }
 }
 
@@ -343,6 +302,7 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
     glColor4ub(currlayer->cellr[1],
                currlayer->cellg[1],
                currlayer->cellb[1], 255);
+    
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
             unsigned char state = statedata[row*stride + col];
@@ -502,7 +462,7 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
         } else {
             DrawTexture((unsigned char*) pmdata, x, y, w, h);
         }
-    } else if (showicons && pmscale > 4 && iconpixels) {
+    } else if (showicons && pmscale > 4 && icontextures) {
         // draw icons at scales 1:8 or above
         DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
     } else {
@@ -755,7 +715,7 @@ void DrawPasteImage()
     }
     tempview.setpositionmag(midx, midy, pastemag);
 
-    // temporarily turn off grid lines (for DrawIcons)
+    // temporarily turn off grid lines
     bool saveshow = showgridlines;
     showgridlines = false;
 
@@ -909,13 +869,13 @@ void DrawOneLayer(EAGLContext* dc)
     layerdc.SelectObject(*layerbitmap);
 
     if (showicons && currlayer->view->getmag() > 2) {
-        // only show icons at scales 1:8, 1:16 and 1:32
+        // only show icons at scales 1:8 and above
         if (currlayer->view->getmag() == 3) {
-            iconpixels = currlayer->iconpixels7x7;
+            icontextures = currlayer->textures7x7;
         } else if (currlayer->view->getmag() == 4) {
-            iconpixels = currlayer->iconpixels15x15;
+            icontextures = currlayer->textures15x15;
         } else {
-            iconpixels = currlayer->iconpixels31x31;
+            icontextures = currlayer->textures31x31;
         }
     }
 
@@ -1118,11 +1078,11 @@ void DrawPattern(int tileindex)
     if (showicons && currlayer->view->getmag() > 2) {
         // only show icons at scales 1:8 and above
         if (currlayer->view->getmag() == 3) {
-            iconpixels = currlayer->iconpixels7x7;
+            icontextures = currlayer->textures7x7;
         } else if (currlayer->view->getmag() == 4) {
-            iconpixels = currlayer->iconpixels15x15;
+            icontextures = currlayer->textures15x15;
         } else {
-            iconpixels = currlayer->iconpixels31x31;
+            icontextures = currlayer->textures31x31;
         }
     }
 

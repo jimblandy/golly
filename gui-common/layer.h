@@ -119,10 +119,10 @@ public:
     gBitmapPtr* icons15x15;       // icons for scale 1:16
     gBitmapPtr* icons31x31;       // icons for scale 1:32
 
-    // pixel data for rendering icons
-    unsigned char** iconpixels7x7;      // pixel data for 7x7 icons
-    unsigned char** iconpixels15x15;    // pixel data for 15x15 icons
-    unsigned char** iconpixels31x31;    // pixel data for 31x31 icons
+    // texture data for rendering icons
+    unsigned char** textures7x7;        // texture data for 7x7 icons
+    unsigned char** textures15x15;      // texture data for 15x15 icons
+    unsigned char** textures31x31;      // texture data for 31x31 icons
 
     bool multicoloricons;         // are icons multi-colored? (grayscale if not)
 

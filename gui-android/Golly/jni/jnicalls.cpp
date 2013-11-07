@@ -1893,8 +1893,10 @@ static void DrawRect(int state, int x, int y, int wd, int ht)
 
 static void DrawIcon(int state, int x, int y)
 {
-    unsigned char** iconpixels = currlayer->iconpixels31x31;
-    if (iconpixels[state] == NULL) return;
+    gBitmapPtr* icons = currlayer->icons31x31;
+    if (icons == NULL || icons[state] == NULL) return;
+    unsigned char* pxldata = icons[state]->pxldata;
+    if (pxldata == NULL) return;
 
     int cellsize = 31;
     const int maxcoords = 1024;     // must be multiple of 2
@@ -1916,7 +1918,6 @@ static void DrawIcon(int state, int x, int y)
     unsigned char liver = currlayer->cellr[state];
     unsigned char liveg = currlayer->cellg[state];
     unsigned char liveb = currlayer->cellb[state];
-    unsigned char* pxldata = iconpixels[state];
     int byte = 0;
     for (int i = 0; i < cellsize; i++) {
         for (int j = 0; j < cellsize; j++) {

@@ -81,9 +81,9 @@ void DrawOneIcon(CGContextRef context, int x, int y, gBitmapPtr icon,
             if (multicolor) {
                 // use non-black pixel in multi-colored icon
                 if (swapcolors) {
-                    pxldata[byte]   = 255 - pxldata[byte];
-                    pxldata[byte+1] = 255 - pxldata[byte+1];
-                    pxldata[byte+2] = 255 - pxldata[byte+2];
+                    pxldata[byte]   = 255 - r;
+                    pxldata[byte+1] = 255 - g;
+                    pxldata[byte+2] = 255 - b;
                 }
             } else {
                 // grayscale icon
