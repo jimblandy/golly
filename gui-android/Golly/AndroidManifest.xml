@@ -3,7 +3,7 @@
     package="net.sf.golly"
     android:installLocation="auto"
     android:versionCode="1"
-    android:versionName="1.0b1" >
+    android:versionName="1.0" >
 
     <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="17" />
 

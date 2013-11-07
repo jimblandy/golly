@@ -353,7 +353,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, 
     static bool firstcall = true;
     if (firstcall) {
         firstcall = false;          // only do the following once
-        SetMessage("This is Golly 1.0b1 for Android.  Copyright 2013 The Golly Gang.");
+        SetMessage("This is Golly 1.0 for Android.  Copyright 2013 The Golly Gang.");
         if (highdensity) {
             MAX_MAG = 6;            // maximum cell size = 64x64
         } else {
