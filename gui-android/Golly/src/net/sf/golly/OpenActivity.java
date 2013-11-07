@@ -33,10 +33,10 @@ import java.util.Arrays;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.NavUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -257,8 +257,8 @@ public class OpenActivity extends BaseActivity {
         // this is better:
         gwebview.getSettings().setLayoutAlgorithm(LayoutAlgorithm.SINGLE_COLUMN);
         
-        Configuration config = getResources().getConfiguration();
-        if (config.densityDpi > 300) {
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        if (metrics.densityDpi > 300) {
             // use bigger font size for high density screens (default size is 16)
             gwebview.getSettings().setDefaultFontSize(24);
         }

@@ -33,9 +33,9 @@ import java.util.Arrays;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -225,9 +225,9 @@ public class RuleActivity extends BaseActivity {
         // no need for JavaScript???
         // gwebview.getSettings().setJavaScriptEnabled(true);
         
-        Configuration config = getResources().getConfiguration();
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
         // my Nexus 7 has a density of 320
-        if (config.densityDpi > 300) {
+        if (metrics.densityDpi > 300) {
             // use bigger font size for high density screens (default size is 16)
             gwebview.getSettings().setDefaultFontSize(24);
         }

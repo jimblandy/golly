@@ -24,8 +24,8 @@
 
 package net.sf.golly;
 
-import android.content.res.Configuration;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -59,9 +59,9 @@ public class StateActivity extends BaseActivity {
         
         // change dimensions of stateView (initially 321x321) depending on screen density
         // and number of states in current rule
-        Configuration config = getResources().getConfiguration();
         int numstates = nativeNumStates();
-        if (config.densityDpi > 300) {
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        if (metrics.densityDpi > 300) {
             ViewGroup.LayoutParams params = stateView.getLayoutParams();
             params.width = 642;
             if (numstates <= 90) {

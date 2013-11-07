@@ -52,6 +52,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.MessageQueue;
 import android.text.InputType;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -251,14 +252,16 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        nativeSetScreenDensity(metrics.densityDpi);
+        // Log.i("Golly","screen density in dpi = " + Integer.toString(metrics.densityDpi));
+        // eg. densityDpi = 320 on Nexus 7
+        
         Configuration config = getResources().getConfiguration();
         // Log.i("Golly","screen width in dp = " + Integer.toString(config.screenWidthDp));
-        // Log.i("Golly","screen density in dpi = " + Integer.toString(config.densityDpi));
-        // eg. on a Nexus 7 config.screenWidthDp = 600 in portrait, 960 in landscape
-        // and config.densityDpi = 320
+        // eg. on Nexus 7 screenWidthDp = 600 in portrait, 960 in landscape
         widescreen = config.screenWidthDp >= 600;
         nativeSetWideScreen(widescreen);
-        nativeSetScreenDensity(config.densityDpi);
         if (widescreen) {
             // use a layout that has more buttons
             setContentView(R.layout.main_layout_wide);

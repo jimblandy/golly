@@ -37,12 +37,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.NavUtils;
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -231,9 +231,9 @@ public class HelpActivity extends BaseActivity {
         // JavaScript is used to detect device type
         gwebview.getSettings().setJavaScriptEnabled(true);
         
-        Configuration config = getResources().getConfiguration();
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
         // my Nexus 7 has a density of 320
-        if (config.densityDpi > 300) {
+        if (metrics.densityDpi > 300) {
             // use bigger font size for high density screens (default size is 16)
             gwebview.getSettings().setDefaultFontSize(24);
         }
