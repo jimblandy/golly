@@ -22,7 +22,7 @@ Here are the important file formats used by Golly:
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#share"><b>Related rules can share colors and/or icons</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#override"><b>How to override a supplied or built-in rule</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#install"><b>The easy way to install a new .rule file</b></a></dd>
-<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#deprecated"><b>Deprecated files (.table, .tree, .colors, .icons)</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#deprecated"><b>Deprecated files (.table, .tree)</b></a></dd>
 <dd><a href="#zip"><b>Zip files (.zip)</b></a></dd>
 </p>
 
@@ -841,14 +841,18 @@ save the text as Documents/Rules/<i>rulename</i>.rule and switch to that rule.
 
 
 <p><a name="deprecated"></a>
-<font size=+1><b>Deprecated files (.table, .tree, .colors, .icons)</b></font>
+<font size=+1><b>Deprecated files (.table, .tree)</b></font>
 
 <p>
-Golly still supports the old rule-related files with extensions
-of .table, .tree, .colors and .icons, but their use is discouraged.
-When Golly opens a .zip file containing .table/tree/colors/icons files it will automatically
+Golly still supports files with extensions of .table or .tree, but their use is discouraged.
+When Golly opens a .zip file containing .table/tree files it will automatically
 convert them into .rule files, but only if the zip file has no .rule files.
 Any existing .rule files are overwritten (in case the zip file contents have changed).
+
+<p>
+Note that files with extensions of .colors or .icons are no longer supported and are simply
+ignored.  The .rule format can be used to specify color and/or icon information
+via the @COLORS and @ICONS sections, as described above.
 
 
 <a name="zip"></a>
