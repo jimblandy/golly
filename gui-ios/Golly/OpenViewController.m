@@ -466,7 +466,7 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
 void MoveSharedFiles()
 {
     // check for files in the Documents folder (created by iTunes file sharing)
-    // and move any .rule/tree/table/colors/icons files into Documents/Rules/,
+    // and move any .rule/tree/table files into Documents/Rules/,
     // otherwise assume they are pattern files and move them into Documents/Saved/
     
     std::string docdir = userdir + "Documents/";
@@ -482,10 +482,10 @@ void MoveSharedFiles()
         } else {
             // path is to a file
             std::string filename = [item cStringUsingEncoding:NSUTF8StringEncoding];
-            if (filename[0] == '.') {
-                // ignore hidden file
+            if (filename[0] == '.' || EndsWith(filename,".colors") || EndsWith(filename,".icons")) {
+                // ignore hidden file or .colors/icons file
             } else if (IsRuleFile(filename)) {
-                // move .rule/tree/table/colors/icons file into Documents/Rules/
+                // move .rule/tree/table file into Documents/Rules/
                 std::string oldpath = docdir + filename;
                 std::string newpath = userrules + filename;
                 MoveFile(oldpath, newpath);

@@ -244,11 +244,11 @@ static void CreateRuleLinks(std::string& htmldata, const std::string& dir,
 {
     NSString *algoname = [NSString stringWithCString:GetAlgoName(algoindex) encoding:NSUTF8StringEncoding];
     if ([algoname isEqualToString:@"RuleLoader"]) {
-        // first check for any .rule/tree/table/colors/icons files in Documents
+        // first check for any .rule/tree/table files in Documents
         // (created by iTunes file sharing) and move them into Documents/Rules/
         MoveSharedFiles();
         
-        // now convert any .tree/table/colors/icons files to .rule files
+        // now convert any .tree/table files to .rule files
         ConvertOldRules();
         
         // create html data with links to the user's .rule files and Golly's supplied .rule files

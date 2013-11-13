@@ -36,6 +36,6 @@
 
 // if any files exist in the Documents folder (created by iTunes file sharing)
 // then move them into Documents/Rules/ if their names end with
-// .rule/tree/table/colors/icons, otherwise assume they are patterns
+// .rule/tree/table, otherwise assume they are patterns
 // and move them into Documents/Saved/
 void MoveSharedFiles();
