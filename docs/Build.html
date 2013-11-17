@@ -4,7 +4,7 @@
 <center><table border=0 width=600><tr><td>
 
 <p>
-This document contains instructions for how to build Golly.
+This document contains instructions for how to build the desktop version of Golly.
 
 
 <h2>Contents</h2>
@@ -24,7 +24,7 @@ This document contains instructions for how to build Golly.
 <a href="#bgolly"><b>How to build bgolly</b></a><br>
 <a href="#source"><b>Source code road map</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#dir"><b>Directory structure</b></a><br>
-   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gui"><b>High-level GUI code</b></a><br>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#guiwx"><b>High-level GUI code</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#base"><b>Low-level base code</b></a>
 
 
@@ -311,7 +311,7 @@ a .tar.gz file.  You should see the following directories:
 
 <p><b>cmdline</b><p>
 <dd>
-   Contains the source files for bgolly and RuleTableToTree
+   Contains source code for bgolly and RuleTableToTree
    (the latter program is no longer included in the binary distribution).
 </dd>
 
@@ -322,21 +322,31 @@ a .tar.gz file.  You should see the following directories:
 
 <p><b>gollybase</b><p>
 <dd>
-   Contains the low-level source code used by the client code in <b>cmdline</b>,
-   <b>gui-wx</b> and <b>gui-ios</b>.  See <a href="#base">below</a> for a
+   Contains the low-level source code used by the client code in <b>cmdline</b>
+   and the various <b>gui-*</b> directories.  See <a href="#base">below</a> for a
    description of the various files.
+</dd>
+
+<p><b>gui-android</b><p>
+<dd>
+   Contains source code and resources for the Android version of Golly.
+</dd>
+
+<p><b>gui-common</b><p>
+<dd>
+   Contains the GUI code and help files shared by the Android and iPad versions
+   of Golly.
 </dd>
 
 <p><b>gui-ios</b><p>
 <dd>
-   Contains all the files for the iPad version of Golly.
-   You'll only see this directory if you cloned the Git repository.
+   Contains source code and resources for the iPad version of Golly.
 </dd>
 
 <p><b>gui-wx</b><p>
 <dd>
-   Contains the high-level source code for the wxWidgets version of Golly
-   (see <a href="#gui">below</a> for more details).
+   Contains the high-level wxWidgets code for the desktop version of Golly
+   (see <a href="#guiwx">below</a> for more details).
    Also contains other files and resources needed to build Golly
    (make files, bitmap files, icon files, etc).
 </dd>
@@ -353,8 +363,9 @@ a .tar.gz file.  You should see the following directories:
 
 <p><b>Rules</b><p>
 <dd>
-   Contains sample rules loaded by the RuleTable and RuleTree algorithms,
-   along with matching icon and color files.
+   Contains various .rule files.  These files contain table/tree data
+   (loaded by the RuleLoader algorithm) and optional color/icon data
+   (used by the GUI code to render patterns).
 </dd>
 
 <p><b>Scripts</b><p>
@@ -369,7 +380,7 @@ having to copy it somewhere else because the required directories
 (Help, Patterns, Rules and Scripts) are in the correct location.
 
 
-<a name="gui"></a>
+<a name="guiwx"></a>
 <h3>High-level GUI code</h3>
 
 <p>
@@ -527,7 +538,7 @@ Each module is described in (roughly) top-down order, and some key routines are 
 
 <p>
 The <b>gollybase</b> directory contains low-level code used by all the
-various clients (Golly, bgolly, and the iPad version of Golly):
+various clients (desktop Golly, bgolly, and the Android/iPad versions):
 
 <p><b>platform.h</b><p>
 <dd>
@@ -604,17 +615,17 @@ various clients (Golly, bgolly, and the iPad version of Golly):
 <p><b>ruleloaderalgo.*</b><p>
 <dd>
    Implements the RuleLoader algorithm which loads externally
-   specified rules stored in .table or .tree files.
+   specified rules stored in .rule/table/tree files.
 </dd>
 
 <p><b>ruletable_algo.*</b><p>
 <dd>
-   Used by the RuleLoader algorithm to load .table files.
+   Used by the RuleLoader algorithm to load table data.
 </dd>
 
 <p><b>ruletreealgo.*</b><p>
 <dd>
-   Used by the RuleLoader algorithm to load .tree files.
+   Used by the RuleLoader algorithm to load tree data.
 </dd>
 
 <p><b>qlifedraw.cpp</b><p>
