@@ -56,6 +56,13 @@
 #include <stdexcept>        // for std::runtime_error and std::exception
 #include <sstream>          // for std::ostringstream
 
+#ifdef __WXMAC__
+    // we need to convert filepath to decomposed UTF8 so fopen will work
+    #define OPENFILE(filepath) fopen(filepath.fn_str(),"r")
+#else
+    #define OPENFILE(filepath) fopen(filepath.mb_str(wxConvLocal),"r")
+#endif
+
 // This module implements Control menu functions.
 
 // -----------------------------------------------------------------------------
@@ -2088,7 +2095,7 @@ static wxString CreateTABLE(const wxString& tablepath)
 {
     wxString contents = wxT("\n@TABLE\n\n");
     // append contents of .table file
-    FILE* f = fopen(tablepath.mb_str(wxConvLocal), "r");
+    FILE* f = OPENFILE(tablepath);
     if (f) {
         const int MAXLINELEN = 4095;
         char linebuf[MAXLINELEN + 1];
@@ -2125,7 +2132,7 @@ static wxString CreateEmptyTABLE(const wxString& folder, const wxString& prefix,
         if (filename.EndsWith(wxT(".table")) || filename.EndsWith(wxT(".tree"))) {
             if (prefix == filename.BeforeLast('-')) {
                 wxString filepath = folder + filename;
-                FILE* f = fopen(filepath.mb_str(wxConvLocal), "r");
+                FILE* f = OPENFILE(filepath);
                 if (f) {
                     const int MAXLINELEN = 4095;
                     char linebuf[MAXLINELEN + 1];
@@ -2184,7 +2191,7 @@ static wxString CreateTREE(const wxString& treepath)
 {
     wxString contents = wxT("\n@TREE\n\n");
     // append contents of .tree file
-    FILE* f = fopen(treepath.mb_str(wxConvLocal), "r");
+    FILE* f = OPENFILE(treepath);
     if (f) {
         const int MAXLINELEN = 4095;
         char linebuf[MAXLINELEN + 1];
@@ -2208,7 +2215,7 @@ static wxString CreateTREE(const wxString& treepath)
 static wxString CreateCOLORS(const wxString& colorspath)
 {
     wxString contents = wxT("\n@COLORS\n\n");
-    FILE* f = fopen(colorspath.mb_str(wxConvLocal), "r");
+    FILE* f = OPENFILE(colorspath);
     if (f) {
         const int MAXLINELEN = 4095;
         char linebuf[MAXLINELEN + 1];

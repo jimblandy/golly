@@ -213,7 +213,12 @@ const char* GSF_getdir(char* dirname)
     
     // need to be careful converting Unicode wxString to char*
     static wxCharBuffer dirbuff;
-    dirbuff = dirpath.mb_str(wxConvLocal);
+    #ifdef __WXMAC__
+        // we need to convert dirpath to decomposed UTF8 so fopen will work
+        dirbuff = dirpath.fn_str();
+    #else
+        dirbuff = dirpath.mb_str(wxConvLocal);
+    #endif
     return (const char*) dirbuff;
 }
 

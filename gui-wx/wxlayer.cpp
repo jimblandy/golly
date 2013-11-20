@@ -64,6 +64,13 @@
    #pragma warning(default:4702)   // enable "unreachable code" warnings
 #endif
 
+#ifdef __WXMAC__
+    // we need to convert filepath to decomposed UTF8 so fopen will work
+    #define OPENFILE(filepath) fopen(filepath.fn_str(),"r")
+#else
+    #define OPENFILE(filepath) fopen(filepath.mb_str(wxConvLocal),"r")
+#endif
+
 // -----------------------------------------------------------------------------
 
 const int layerbarht = 32;       // height of layer bar
@@ -1801,13 +1808,13 @@ static FILE* FindRuleFile(const wxString& rulename)
     // first look for rulename.rule in userrules
     path = userrules + rulename;
     path += extn;
-    FILE* f = fopen(path.mb_str(wxConvLocal), "r");
+    FILE* f = OPENFILE(path);
     if (f) return f;
     
     // now look for rulename.rule in rulesdir
     path = rulesdir + rulename;
     path += extn;
-    return fopen(path.mb_str(wxConvLocal), "r");
+    return OPENFILE(path);
 }
 
 // -----------------------------------------------------------------------------
@@ -2160,7 +2167,7 @@ static FILE* FindColorFile(const wxString& rule, const wxString& dir)
     // first look for rule.colors in given directory
     path = dir + rule;
     path += extn;
-    FILE* f = fopen(path.mb_str(wxConvLocal), "r");
+    FILE* f = OPENFILE(path);
     if (f) return f;
     
     // if rule has the form foo-* then look for foo.colors in dir;
@@ -2169,7 +2176,7 @@ static FILE* FindColorFile(const wxString& rule, const wxString& dir)
     if (!prefix.IsEmpty()) {
         path = dir + prefix;
         path += extn;
-        f = fopen(path.mb_str(wxConvLocal), "r");
+        f = OPENFILE(path);
         if (f) return f;
     }
     

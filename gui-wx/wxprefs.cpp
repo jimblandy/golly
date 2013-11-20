@@ -1388,7 +1388,12 @@ void SavePrefs()
         return;
     }
     
-    FILE* f = fopen((const char*)prefspath.mb_str(wxConvLocal), "w");
+#ifdef __WXMAC__
+    // we need to convert prefspath to decomposed UTF8 so fopen will work
+    FILE* f = fopen(prefspath.fn_str(), "w");
+#else
+    FILE* f = fopen(prefspath.mb_str(wxConvLocal), "w");
+#endif
     if (f == NULL) {
         Warning(_("Could not save preferences file!"));
         return;
@@ -1865,7 +1870,12 @@ void GetPrefs()
         return;
     }
     
-    FILE* f = fopen((const char*)prefspath.mb_str(wxConvLocal), "r");
+#ifdef __WXMAC__
+    // we need to convert prefspath to decomposed UTF8 so fopen will work
+    FILE* f = fopen(prefspath.fn_str(), "r");
+#else
+    FILE* f = fopen(prefspath.mb_str(wxConvLocal), "r");
+#endif
     if (f == NULL) {
         Warning(_("Could not read preferences file!"));
         return;

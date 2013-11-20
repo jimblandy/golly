@@ -110,13 +110,23 @@ public:
     
     virtual const char* getuserrules() {
         // need to be careful converting Unicode wxString to char*
-        dirbuff = userrules.mb_str(wxConvLocal);
+        #ifdef __WXMAC__
+            // we need to convert path to decomposed UTF8 so fopen will work
+            dirbuff = userrules.fn_str();
+        #else
+            dirbuff = userrules.mb_str(wxConvLocal);
+        #endif
         return (const char*) dirbuff;
     }
     
     virtual const char* getrulesdir() {
         // need to be careful converting Unicode wxString to char*
-        dirbuff = rulesdir.mb_str(wxConvLocal);
+        #ifdef __WXMAC__
+            // we need to convert path to decomposed UTF8 so fopen will work
+            dirbuff = rulesdir.fn_str();
+        #else
+            dirbuff = rulesdir.mb_str(wxConvLocal);
+        #endif
         return (const char*) dirbuff;
     }
     

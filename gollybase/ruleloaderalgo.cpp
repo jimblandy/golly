@@ -39,10 +39,10 @@ int ruleloaderalgo::NumCellStates()
         return LocalRuleTree->NumCellStates();
 }
 
-static FILE* OpenRuleFile(std::string& rulename, const char* dir, std::string& path)
+static FILE* OpenRuleFile(std::string& rulename, const char* dir)
 {
-    // look for rulename.rule in given dir and set path
-    path = dir;
+    // try to open rulename.rule in given dir
+    std::string path = dir;
     int istart = (int)path.size();
     path += rulename + ".rule";
     // change "dangerous" characters to underscores
@@ -150,12 +150,11 @@ const char* ruleloaderalgo::setrule(const char* s)
     }
     
     // look for .rule file in user's rules dir then in Golly's rules dir
-    std::string fullpath;
     bool inuser = true;
-    FILE* rulefile = OpenRuleFile(rulename, lifegetuserrules(), fullpath);
+    FILE* rulefile = OpenRuleFile(rulename, lifegetuserrules());
     if (!rulefile) {
         inuser = false;
-        rulefile = OpenRuleFile(rulename, lifegetrulesdir(), fullpath);
+        rulefile = OpenRuleFile(rulename, lifegetrulesdir());
     }
     if (rulefile) {
         err = LoadTableOrTree(rulefile, s);
@@ -164,7 +163,7 @@ const char* ruleloaderalgo::setrule(const char* s)
             // @TABLE or @TREE section then we look in Golly's rules dir
             // (this lets user override the colors/icons in a supplied .rule
             // file without having to copy the entire file)
-            rulefile = OpenRuleFile(rulename, lifegetrulesdir(), fullpath);
+            rulefile = OpenRuleFile(rulename, lifegetrulesdir());
             if (rulefile) err = LoadTableOrTree(rulefile, s);
         }
         return err;
