@@ -49,7 +49,7 @@
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for InitDrawingData, DestroyDrawingData, etc
 #include "wxedit.h"        // for CreateEditBar, EditBarHeight, etc
-#include "wxscript.h"      // for inscript
+#include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxalgos.h"       // for algo_type, algomenu, algomenupop
 #include "wxlayer.h"       // for AddLayer, MAX_LAYERS, currlayer
 #include "wxundo.h"        // for currlayer->undoredo->...
@@ -1932,9 +1932,24 @@ bool MainFrame::SaveCurrentLayer()
     }
     int answer = SaveChanges(query, _("If you don't save, your changes will be lost."));
     switch (answer) {
-        case 2:  return SavePattern();   // true only if pattern was saved
-        case 1:  return true;            // don't save changes
-        default: return false;           // answer == 0 (ie. user selected Cancel)
+        case 2: {
+            bool result = SavePattern();        // true only if pattern was saved
+            if (inscript && !result) {
+                PassKeyToScript(WXK_ESCAPE);    // abort script
+            }
+            return result;
+        }
+        case 1: {
+            // don't save changes (but continue)
+            return true;
+        }
+        default: {
+            // answer == 0 (ie. user selected Cancel)
+            if (inscript) {
+                PassKeyToScript(WXK_ESCAPE);    // abort script
+            }
+            return false;
+        }
     }
 }
 

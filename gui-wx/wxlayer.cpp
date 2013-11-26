@@ -1283,8 +1283,7 @@ void DeleteLayer()
     }
     
     // note that we don't need to ask to delete a clone
-    if (!inscript && currlayer->dirty && currlayer->cloneid == 0 &&
-        askondelete && !mainptr->SaveCurrentLayer()) return;
+    if (askondelete && currlayer->dirty && currlayer->cloneid == 0 && !mainptr->SaveCurrentLayer()) return;
     
     // numlayers > 1
     if (tilelayers) DestroyTiles();

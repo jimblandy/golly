@@ -192,7 +192,7 @@ void MainFrame::NewPattern(const wxString& title)
         return;
     }
     
-    if (askonnew && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
+    if (askonnew && currlayer->dirty && !SaveCurrentLayer()) return;
     
     if (inscript) stop_after_script = true;
     currlayer->savestart = false;
@@ -307,7 +307,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
     
     // newtitle is only empty if called from ResetPattern/RestorePattern
     if (!newtitle.IsEmpty()) {
-        if (askonload && !inscript && currlayer->dirty && !SaveCurrentLayer()) return;
+        if (askonload && currlayer->dirty && !SaveCurrentLayer()) return;
         
         if (inscript) stop_after_script = true;
         currlayer->savestart = false;

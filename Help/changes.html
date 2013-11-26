@@ -7,12 +7,18 @@
 
 <p>
 <ul>
-<li> Tool bar buttons are no longer disabled when the main window is inactive.
 <li> Fixed menu problems on Ubuntu when using Unity.
 <li> Fixed a nasty bug that could cause Golly to crash when doing a paste.
 <li> Fixed a bug that could cause the paste image to disappear after a flip/rotate.
 <li> Fixed bugs in Mac app caused by non-ASCII characters in some file paths.
 <li> Fixed a problem that prevented Golly starting up on Mac OS 10.9.
+<li> Tool bar buttons are no longer disabled when the main window is inactive.
+<li> The save settings in <a href="prefs:layer">Preferences > Layer</a> are now
+     obeyed by scripts.  For example, let's assume you've ticked the option to
+     be asked to save changes on creating a new pattern.  If the current layer
+     has changes and you run a script that calls new() then you'll get the
+     standard dialog asking if you want to save those changes.
+     If you cancel the dialog then the script is aborted.
 </ul>
 
 <p>
