@@ -1592,6 +1592,13 @@ bool MainFrame::SavePattern()
         return false;
     }
     
+    if (warn_on_save && currlayer->dirty && currlayer->algo->getGeneration() > currlayer->startgen) {
+        wxString msg = _("Saving this generation will not save the changes you made earlier, ");
+        msg +=         _("so you might want to select Reset or Undo and save those changes.");
+        msg +=         _("\n\n(This warning can be disabled in Preferences > Layer.)");
+        Warning(msg);
+    }
+
     wxString filetypes;
     int MCindex, RLEindex;
     

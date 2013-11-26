@@ -163,6 +163,7 @@ bool askonnew = true;            // ask to save changes before creating new patt
 bool askonload = true;           // ask to save changes before loading pattern file?
 bool askondelete = true;         // ask to save changes before deleting layer?
 bool askonquit = true;           // ask to save changes before quitting app?
+bool warn_on_save = true;        // warn if saving non-starting generation?
 int newmag = MAX_MAG;            // mag setting for new pattern
 bool newremovesel = true;        // new pattern removes selection?
 bool openremovesel = true;       // opening pattern removes selection?
@@ -1550,6 +1551,7 @@ void SavePrefs()
     fprintf(f, "ask_on_load=%d\n", askonload ? 1 : 0);
     fprintf(f, "ask_on_delete=%d\n", askondelete ? 1 : 0);
     fprintf(f, "ask_on_quit=%d\n", askonquit ? 1 : 0);
+    fprintf(f, "warn_on_save=%d\n", warn_on_save ? 1 : 0);
     
     fputs("\n", f);
     
@@ -2174,6 +2176,7 @@ void GetPrefs()
         } else if (strcmp(keyword, "ask_on_load") == 0)   { askonload = value[0] == '1';
         } else if (strcmp(keyword, "ask_on_delete") == 0) { askondelete = value[0] == '1';
         } else if (strcmp(keyword, "ask_on_quit") == 0)   { askonquit = value[0] == '1';
+        } else if (strcmp(keyword, "warn_on_save") == 0)  { warn_on_save = value[0] == '1';
             
         } else if (strcmp(keyword, "show_icons") == 0) {
             showicons = value[0] == '1';
@@ -2702,6 +2705,7 @@ enum {
     PREF_ASK_LOAD,
     PREF_ASK_DELETE,
     PREF_ASK_QUIT,
+    PREF_WARN_SAVE,
     // Color prefs
     PREF_ALGO_MENU2,
     PREF_GRADIENT_CHECK,
@@ -3857,7 +3861,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
                                        wxDefaultPosition, wxSize(70, wxDefaultCoord));
     borderbox->Add(spin2, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
     
-    // ask_on_new, ask_on_load, ask_on_delete, ask_on_quit
+    // ask_on_new, ask_on_load, ask_on_delete, ask_on_quit, warn_on_save
     
     wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Ask to save changes to layer before:"));
     wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
@@ -3866,6 +3870,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     wxCheckBox* check2 = new wxCheckBox(panel, PREF_ASK_LOAD, _("Opening a pattern file"));
     wxCheckBox* check3 = new wxCheckBox(panel, PREF_ASK_DELETE, _("Deleting layer"));
     wxCheckBox* check4 = new wxCheckBox(panel, PREF_ASK_QUIT, _("Quitting application"));
+    wxCheckBox* check5 = new wxCheckBox(panel, PREF_WARN_SAVE, _("Warn if saving non-starting generation"));
     
     wxBoxSizer* b1 = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* b2 = new wxBoxSizer(wxHORIZONTAL);
@@ -3913,6 +3918,8 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     vbox->Add(borderbox, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(GROUPGAP);
     vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
+    vbox->AddSpacer(GROUPGAP);
+    vbox->Add(check5, 0, wxLEFT | wxRIGHT, LRGAP);
     
     // init control values
     spin1->SetRange(1, 100);
@@ -3928,6 +3935,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     check2->SetValue(askonload);
     check3->SetValue(askondelete);
     check4->SetValue(askonquit);
+    check5->SetValue(warn_on_save);
     
     topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
     panel->SetSizer(topSizer);
@@ -4776,12 +4784,13 @@ bool PrefsDialog::TransferDataFromWindow()
     controlspos    = GetRadioVal(PREF_NO_CONTROLS, 5);
     
     // LAYER_PAGE
-    opacity     = GetSpinVal(PREF_OPACITY);
-    tileborder  = GetSpinVal(PREF_TILE_BORDER);
-    askonnew    = GetCheckVal(PREF_ASK_NEW);
-    askonload   = GetCheckVal(PREF_ASK_LOAD);
-    askondelete = GetCheckVal(PREF_ASK_DELETE);
-    askonquit   = GetCheckVal(PREF_ASK_QUIT);
+    opacity         = GetSpinVal(PREF_OPACITY);
+    tileborder      = GetSpinVal(PREF_TILE_BORDER);
+    askonnew        = GetCheckVal(PREF_ASK_NEW);
+    askonload       = GetCheckVal(PREF_ASK_LOAD);
+    askondelete     = GetCheckVal(PREF_ASK_DELETE);
+    askonquit       = GetCheckVal(PREF_ASK_QUIT);
+    warn_on_save    = GetCheckVal(PREF_WARN_SAVE);
     
     // COLOR_PAGE
     // no need to validate anything

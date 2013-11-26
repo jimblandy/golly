@@ -119,6 +119,7 @@ extern bool askonnew;            // ask to save changes before creating new patt
 extern bool askonload;           // ask to save changes before loading pattern file?
 extern bool askondelete;         // ask to save changes before deleting layer?
 extern bool askonquit;           // ask to save changes before quitting app?
+extern bool warn_on_save;        // warn if saving non-starting generation?
 extern int newmag;               // mag setting for new pattern
 extern bool newremovesel;        // new pattern removes selection?
 extern bool openremovesel;       // opening pattern removes selection?
