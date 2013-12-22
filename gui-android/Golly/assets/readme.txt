@@ -1,7 +1,7 @@
-Files added to the assets folder are included in the .apk file.
+Files added to the assets folder are automatically included in Golly.apk.
 Note that the following zip archives must be added:
 
-Help.zip      -- compressed copy of golly/gui-android/Help
+Help.zip      -- compressed copy of golly/gui-common/Help
 Patterns.zip  -- compressed copy of golly/Patterns
 Rules.zip     -- compressed copy of golly/Rules
 
