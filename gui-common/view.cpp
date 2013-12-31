@@ -43,6 +43,11 @@
 #ifdef ANDROID_GUI
     #include "jnicalls.h"   // for UpdatePattern, BeginProgress, etc
 #endif
+
+#ifdef WEB_GUI
+    #include "webcalls.h"   // for UpdatePattern, BeginProgress, etc
+#endif
+
 #ifdef IOS_GUI
     #import "PatternViewController.h"   // for UpdatePattern, BeginProgress, etc
 #endif

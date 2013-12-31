@@ -50,6 +50,10 @@
     #import "PatternViewController.h"   // for UpdateStatus, BeginProgress, etc
 #endif
 
+#ifdef WEB_GUI
+    #include "webcalls.h"		// for UpdateStatus, BeginProgress, etc
+#endif
+
 // -----------------------------------------------------------------------------
 
 bool generating = false;        // currently generating pattern?

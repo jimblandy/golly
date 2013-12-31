@@ -31,6 +31,12 @@ class lifealgo;
 
 // Routines for rendering the pattern view:
 
+#ifdef WEB_GUI
+bool InitOGLES2();
+// Return true if we can create the shaders and program object
+// required by OpenGL ES 2.
+#endif
+
 void DrawPattern(int tileindex);
 // Draw the current pattern, grid lines, selection, etc.
 // The given tile index is only used when drawing tiled layers.

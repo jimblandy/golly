@@ -35,6 +35,12 @@
 #ifdef ANDROID_GUI
     #include "jnicalls.h"   // for UpdateStatus, GetRuleName
 #endif
+
+#ifdef WEB_GUI
+    #include "webcalls.h"   // for UpdateStatus, GetRuleName
+    #include <math.h>       // for fabs
+#endif
+
 #ifdef IOS_GUI
     #import "PatternViewController.h"   // for UpdateStatus
     #import "RuleViewController.h"      // for GetRuleName

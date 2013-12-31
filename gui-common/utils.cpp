@@ -36,6 +36,10 @@
     #include "jnicalls.h"    // for AndroidWarning, AndroidBeep, UpdateStatus, etc
 #endif
 
+#ifdef WEB_GUI
+    #include "webcalls.h"   // for WebWarning, WebBeep, UpdateStatus, etc
+#endif
+
 #ifdef IOS_GUI
     #import <AudioToolbox/AudioToolbox.h>   // for AudioServicesPlaySystemSound, etc
     #import "PatternViewController.h"       // for UpdateStatus, etc
@@ -102,7 +106,11 @@ bool YesNo(const char* msg)
 
 #ifdef ANDROID_GUI
     return AndroidYesNo(msg);
-#endif // ANDROID_GUI
+#endif
+
+#ifdef WEB_GUI
+    return WebYesNo(msg);
+#endif
 
 #ifdef IOS_GUI
     ModalAlertDelegate *md = [[ModalAlertDelegate alloc] init];
@@ -134,7 +142,11 @@ void Warning(const char* msg)
 
 #ifdef ANDROID_GUI
     AndroidWarning(msg);
-#endif // ANDROID_GUI
+#endif
+
+#ifdef WEB_GUI
+    WebWarning(msg);
+#endif
 
 #ifdef IOS_GUI
     ModalAlertDelegate *md = [[ModalAlertDelegate alloc] init];
@@ -164,7 +176,11 @@ void Fatal(const char* msg)
 
 #ifdef ANDROID_GUI
     AndroidFatal(msg);
-#endif // ANDROID_GUI
+#endif
+
+#ifdef WEB_GUI
+    WebFatal(msg);
+#endif
 
 #ifdef IOS_GUI
     ModalAlertDelegate *md = [[ModalAlertDelegate alloc] init];
@@ -196,7 +212,11 @@ void Beep()
 
 #ifdef ANDROID_GUI
     AndroidBeep();
-#endif // ANDROID_GUI
+#endif
+
+#ifdef WEB_GUI
+    WebBeep();
+#endif
 
 #ifdef IOS_GUI
     static SystemSoundID beepID = 0;
@@ -266,7 +286,11 @@ void RemoveFile(const std::string& filepath)
 {
 #ifdef ANDROID_GUI
     AndroidRemoveFile(filepath);
-#endif // ANDROID_GUI
+#endif
+
+#ifdef WEB_GUI
+    WebRemoveFile(filepath);
+#endif
 
 #ifdef IOS_GUI
     if ([[NSFileManager defaultManager] removeItemAtPath:[NSString stringWithCString:filepath.c_str() encoding:NSUTF8StringEncoding]
@@ -274,14 +298,14 @@ void RemoveFile(const std::string& filepath)
         // should never happen
         Warning("RemoveFile failed!");
     };
-#endif // IOS_GUI
+#endif
 }
 
 // -----------------------------------------------------------------------------
 
 bool CopyFile(const std::string& inpath, const std::string& outpath)
 {
-#ifdef ANDROID_GUI
+#if defined(ANDROID_GUI) || defined(WEB_GUI)
     FILE* infile = fopen(inpath.c_str(), "r");
     if (infile) {
         // read entire file into contents
@@ -316,7 +340,7 @@ bool CopyFile(const std::string& inpath, const std::string& outpath)
         Warning("CopyFile failed to open input file!");
         return false;
     }
-#endif // ANDROID_GUI
+#endif // ANDROID_GUI or WEB_GUI
 
 #ifdef IOS_GUI
     if (FileExists(outpath)) {
@@ -334,7 +358,11 @@ bool MoveFile(const std::string& inpath, const std::string& outpath)
 {
 #ifdef ANDROID_GUI
     return AndroidMoveFile(inpath, outpath);
-#endif // ANDROID_GUI
+#endif
+
+#ifdef WEB_GUI
+    return WebMoveFile(inpath, outpath);
+#endif
 
 #ifdef IOS_GUI
     if (FileExists(outpath)) {
@@ -343,7 +371,7 @@ bool MoveFile(const std::string& inpath, const std::string& outpath)
     return [[NSFileManager defaultManager] moveItemAtPath:[NSString stringWithCString:inpath.c_str() encoding:NSUTF8StringEncoding]
                                                    toPath:[NSString stringWithCString:outpath.c_str() encoding:NSUTF8StringEncoding]
                                                     error:NULL];
-#endif // IOS_GUI
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -354,13 +382,17 @@ void FixURLPath(std::string& path)
 
 #ifdef ANDROID_GUI
     AndroidFixURLPath(path);
-#endif // ANDROID_GUI
+#endif
+
+#ifdef WEB_GUI
+    WebFixURLPath(path);
+#endif
 
 #ifdef IOS_GUI
     NSString* newpath = [[NSString stringWithCString:path.c_str() encoding:NSUTF8StringEncoding]
                          stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     if (newpath) path = [newpath cStringUsingEncoding:NSUTF8StringEncoding];
-#endif // IOS_GUI
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -464,6 +496,10 @@ int golly_poll::checkevents()
 
 #ifdef ANDROID_GUI
     AndroidCheckEvents();
+#endif
+
+#ifdef WEB_GUI
+    WebCheckEvents();
 #endif
 
 #ifdef IOS_GUI

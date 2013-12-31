@@ -41,6 +41,10 @@
     #include "jnicalls.h"   // for BeginProgress, etc
 #endif
 
+#ifdef WEB_GUI
+    #include "webcalls.h"   // for BeginProgress, etc
+#endif
+
 #ifdef IOS_GUI
     #import "PatternViewController.h"   // for BeginProgress, etc
 #endif

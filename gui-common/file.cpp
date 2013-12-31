@@ -26,6 +26,10 @@
     #include "jnicalls.h"   // for SwitchToPatternTab, ShowTextFile, ShowHelp, etc
 #endif
 
+#ifdef WEB_GUI
+    #include "webcalls.h"   // for SwitchToPatternTab, ShowTextFile, ShowHelp, etc
+#endif
+
 #ifdef IOS_GUI
     #import "GollyAppDelegate.h"        // for SwitchToPatternTab
     #import "HelpViewController.h"      // for ShowHelp
@@ -287,6 +291,10 @@ bool CopyTextToClipboard(const char* text)
     return AndroidCopyTextToClipboard(text);
 #endif
 
+#ifdef WEB_GUI
+    return WebCopyTextToClipboard(text);
+#endif
+
 #ifdef IOS_GUI
     UIPasteboard *pboard = [UIPasteboard generalPasteboard];
     pboard.string = [NSString stringWithCString:text encoding:NSUTF8StringEncoding];
@@ -300,6 +308,10 @@ bool GetTextFromClipboard(std::string& text)
 {
 #ifdef ANDROID_GUI
     return AndroidGetTextFromClipboard(text);
+#endif
+
+#ifdef WEB_GUI
+    return WebGetTextFromClipboard(text);
 #endif
 
 #ifdef IOS_GUI
@@ -964,6 +976,10 @@ bool DownloadFile(const std::string& url, const std::string& filepath)
 {
 #ifdef ANDROID_GUI
     return AndroidDownloadFile(url, filepath);
+#endif
+
+#ifdef WEB_GUI
+    return WebDownloadFile(url, filepath);
 #endif
 
 #ifdef IOS_GUI
