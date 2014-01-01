@@ -32,7 +32,7 @@
 #include "ruleloaderalgo.h"
 
 // gui-common
-#include "algos.h"      // for InitAlgorithms
+#include "algos.h"      // for InitAlgorithms, NumAlgos, etc
 #include "prefs.h"      // for GetPrefs, MAX_MAG, etc
 #include "layer.h"      // for ResizeLayers, currlayer
 #include "control.h"    // for SetMinimumStepExponent, NextGeneration, etc
@@ -180,6 +180,19 @@ static void Scale1to1()
 
 // -----------------------------------------------------------------------------
 
+static void CycleAlgo()
+{
+    // cycle to next algorithm
+    int algoindex = currlayer->algtype + 1;
+    if (algoindex == NumAlgos()) {
+        algoindex = 0;  // go back to QuickLife
+    }
+    ChangeAlgorithm(algoindex, "xxx");
+    // unknown rule will be changed to new algo's default rule
+}
+
+// -----------------------------------------------------------------------------
+
 static void FitPattern()
 {
     FitInView(1);
@@ -200,9 +213,13 @@ static void Help()
               '] -- zoom in\n' +
               '1 -- set scale to 1:1\n' +
               'a -- select all\n' +
+              'A -- cycle to next algorithm\n' +
               'f -- fit\n' +
               'h -- help\n' +
               'i -- toggle icon mode\n' +
+              'n -- new (empty) universe\n' +
+              'r -- reset\n' +
+              'R -- random pattern\n' +
               'z -- undo\n' +
               'Z -- redo\n'
              );
@@ -215,6 +232,54 @@ static void ToggleIconMode()
 {
     showicons = !showicons;
     UpdatePattern();
+}
+
+// -----------------------------------------------------------------------------
+
+static void NewUniverse()
+{
+    // undo/redo history is about to be cleared so no point calling RememberGenFinish
+    // if we're generating a (possibly large) pattern
+    bool saveundo = allowundo;
+    allowundo = false;
+    StopIfGenerating();
+    allowundo = saveundo;
+    
+    if (event_checker > 0) {
+        // try again after a short delay!!!???
+        return;
+    }
+    
+    NewPattern();
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+static void Reset()
+{
+    if (currlayer->algo->getGeneration() == currlayer->startgen) return;
+
+    StopIfGenerating();
+    
+    if (event_checker > 0) {
+        // try again after a short delay!!!???
+        return;
+    }
+    
+    ResetPattern();
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+static void RandomPattern()
+{
+    NewUniverse();
+    currlayer->currsel.SetRect(-10, -10, 20, 20);
+    currlayer->currsel.RandomFill();
+    currlayer->currsel.Deselect();
+    UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------
@@ -251,7 +316,6 @@ static void Redo()
 
 static void OnCharPressed(int ch, int action)
 {
-    // DEBUG: printf("char=%c (%i) action=%i\n", ch, ch, action);
     if (action != GLFW_PRESS) return;
     ClearMessage();
     switch (ch) {
@@ -261,12 +325,18 @@ static void OnCharPressed(int ch, int action)
         case ']' : ZoomIn(); break;
         case '1' : Scale1to1(); break;
         case 'a' : SelectAll(); break;
+        case 'A' : CycleAlgo(); break;
         case 'f' : FitPattern(); break;
         case 'h' : Help(); break;
         case 'i' : ToggleIconMode(); break;
+        case 'n' : NewUniverse(); break;
+        case 'r' : Reset(); break;
+        case 'R' : RandomPattern(); break;
         case 'z' : Undo(); break;
         case 'Z' : Redo(); break;
     }
+    // note that arrow keys aren't detected here!!! may need to use OnKeyPressed???
+    // DEBUG: printf("char=%c (%i)\n", ch, ch);
 }
 
 // -----------------------------------------------------------------------------
@@ -346,7 +416,7 @@ static void DoFrame()
 
 int main() 
 {
-    SetMessage("This is Golly 0.1 for the web.  Copyright 2013 The Golly Gang.");
+    SetMessage("This is Golly 0.1 for the web.  Copyright 2014 The Golly Gang.");
     MAX_MAG = 5;                // maximum cell size = 32x32
     InitAlgorithms();           // must initialize algoinfo first
     GetPrefs();                 // load user's preferences
@@ -355,7 +425,7 @@ int main()
     NewPattern();               // create new, empty universe
     UpdateStatus();             // show initial message
 
-    // show timing messages when generating stops
+    // show timing messages when generating stops!!!
     showtiming = true;
 
     // test bounded grid!!!

@@ -75,7 +75,8 @@ OBJECTS = main.o webcalls.o \
 
 # note that using -O2 results in a much smaller golly.js and no .map file
 CXXFLAGS = -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip -DWEB_GUI \
-    -Wall -Wextra -Wno-unused-parameter -O2
+    -Wall -Wextra -Wno-unused-parameter -O2 -s TOTAL_MEMORY=134217728
+# better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???
 
 TARGET = golly.html
 
