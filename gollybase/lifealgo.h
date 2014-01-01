@@ -119,8 +119,8 @@ public:
    const bigint &gettimelinestart() { return timeline.start ; }
    const bigint &gettimelineend() { return timeline.end ; }
    const bigint &gettimelineinc() { return timeline.inc ; }
-   const int getframecount() { return timeline.framecount ; }
-   const int isrecording() { return timeline.recording ; }
+   int getframecount() { return timeline.framecount ; }
+   int isrecording() { return timeline.recording ; }
    int gotoframe(int i) ;
    void destroytimeline() ;
    void savetimelinewithframe(int yesno) { timeline.savetimeline = yesno ; }

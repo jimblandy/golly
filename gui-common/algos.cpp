@@ -604,7 +604,7 @@ gBitmapPtr* CreateIconBitmaps(const char** xpmdata, int maxstates)
             pixel += ch2;
             skip = 3;
         }
-        if (strlen(xpmdata[i+1]) == skip+9) {
+        if (strlen(xpmdata[i+1]) == (size_t)(skip+9)) {
             int rgb;
             sscanf(xpmdata[i+1]+skip, "c #%6x", &rgb);
             colormap[pixel] = rgb;

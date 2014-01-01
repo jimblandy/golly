@@ -75,7 +75,7 @@ OBJECTS = main.o webcalls.o \
 
 # note that using -O2 results in a much smaller golly.js and no .map file
 CXXFLAGS = -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip -DWEB_GUI \
-    -Wall -Wextra -Wno-ignored-qualifiers -Wno-unused-parameter -O2
+    -Wall -Wextra -Wno-unused-parameter -O2
 
 TARGET = golly.html
 

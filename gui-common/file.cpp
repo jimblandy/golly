@@ -445,11 +445,11 @@ bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, c
                 }
                 if (file_info.uncompressed_size == 0) {
                     Warning("Zip entry is empty!");
-                } else if (bytesRead == file_info.uncompressed_size) {
+                } else if (bytesRead == (long)(file_info.uncompressed_size)) {
                     // write zipdata to outfile
                     FILE* f = fopen(outfile.c_str(), "wb");
                     if (f) {
-                        if (fwrite(zipdata, 1, bytesRead, f) != bytesRead) {
+                        if (fwrite(zipdata, 1, bytesRead, f) != (size_t)bytesRead) {
                             Warning("Could not write data for zip entry!");
                         } else {
                             ok = true;
@@ -565,11 +565,11 @@ static bool RuleInstalled(unzFile zfile, unz_file_info& info, const std::string&
     }
     
     bool ok = true;
-    if (bytesRead == info.uncompressed_size) {
+    if (bytesRead == (long)(info.uncompressed_size)) {
         // write zipdata to outfile
         FILE* f = fopen(outfile.c_str(), "wb");
         if (f) {
-            if (fwrite(zipdata, 1, bytesRead, f) != bytesRead) {
+            if (fwrite(zipdata, 1, bytesRead, f) != (size_t)bytesRead) {
                 Warning("Could not write data for zip entry!");
                 ok = false;
             }
