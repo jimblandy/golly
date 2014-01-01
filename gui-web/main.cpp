@@ -344,7 +344,7 @@ static void DoFrame()
 
 // -----------------------------------------------------------------------------
 
-int main(void) 
+int main() 
 {
     SetMessage("This is Golly 0.1 for the web.  Copyright 2013 The Golly Gang.");
     MAX_MAG = 5;                // maximum cell size = 32x32
@@ -354,6 +354,9 @@ int main(void)
     AddLayer();                 // create initial layer (sets currlayer)
     NewPattern();               // create new, empty universe
     UpdateStatus();             // show initial message
+
+    // show timing messages when generating stops
+    showtiming = true;
 
     // test bounded grid!!!
     // currlayer->algo->setrule("B3/S23:T10,6");

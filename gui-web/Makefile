@@ -1,5 +1,5 @@
 # Makefile for creating web app version of Golly using Emscripten.
-# Type "emmake make" to build golly.html.
+# Type "emmake make" to build golly.html and golly.js.
 
 SOURCES = main.cpp webcalls.cpp \
     ../gollybase/bigint.cpp \
@@ -73,8 +73,9 @@ OBJECTS = main.o webcalls.o \
     ../gui-common/MiniZip/unzip.o \
     ../gui-common/MiniZip/zip.o
 
+# note that using -O2 results in a much smaller golly.js and no .map file
 CXXFLAGS = -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip -DWEB_GUI \
-    -Wall -Wextra -Wno-ignored-qualifiers -Wno-unused-parameter
+    -Wall -Wextra -Wno-ignored-qualifiers -Wno-unused-parameter -O2
 
 TARGET = golly.html
 
@@ -84,7 +85,7 @@ $(TARGET): $(OBJECTS) shell.html
 	$(CXX) $(CXXFLAGS) --shell-file shell.html -o $@ $(LDFLAGS) $(OBJECTS)
 
 clean:
-	$(RM) $(OBJECTS) $(TARGET) golly.html.map golly.js
+	$(RM) $(OBJECTS) $(TARGET) golly.js
 
 depend:
 	@$(CXX) $(CXXFLAGS) -MM $(SOURCES)
