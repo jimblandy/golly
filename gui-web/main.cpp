@@ -53,6 +53,7 @@
 // -----------------------------------------------------------------------------
 
 static int currwd = 960, currht = 960;      // initial size of viewport
+static double last_time;                    // when NextGeneration was last called
 
 // -----------------------------------------------------------------------------
 
@@ -74,6 +75,7 @@ static int InitGL()
         return GL_FALSE;
     }
 
+    last_time = glfwGetTime();
     return GL_TRUE;
 }
 
@@ -150,6 +152,38 @@ static void OneGeneration()
 
 // -----------------------------------------------------------------------------
 
+static void GoSlower()
+{
+    if (currlayer->currexpo > minexpo) {
+        currlayer->currexpo--;
+        SetGenIncrement();
+        UpdateStatus();
+    } else {
+        Beep();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void GoFaster()
+{
+    currlayer->currexpo++;
+    SetGenIncrement();
+    UpdateStatus();
+}
+
+// -----------------------------------------------------------------------------
+
+static void StepBy1()
+{
+    // reset step exponent to 0
+    currlayer->currexpo = 0;
+    SetGenIncrement();
+    UpdateStatus();
+}
+
+// -----------------------------------------------------------------------------
+
 static void ZoomOut()
 {
     currlayer->view->unzoom();
@@ -203,15 +237,17 @@ static void FitPattern()
 
 static void Help()
 {
-    // use inline JavaScript???!!!
-    // (see https://github.com/kripken/emscripten/wiki/Interacting-with-code)
+    // do something else eventually!!!
     EM_ASM(
-        alert('Use these keys:\n\n' +
+        alert('You can use these keyboard commands:\n\n' +
               'return -- start/stop generating\n' +
               'space -- do 1 generation\n' +
+              '- or _ -- go slower\n' +
+              '+ or = -- go faster\n' +
+              '0 -- set step exponent to 0\n' +
+              '1 -- set scale to 1:1\n' +
               '[ -- zoom out\n' +
               '] -- zoom in\n' +
-              '1 -- set scale to 1:1\n' +
               'a -- select all\n' +
               'A -- cycle to next algorithm\n' +
               'f -- fit\n' +
@@ -321,9 +357,14 @@ static void OnCharPressed(int ch, int action)
     switch (ch) {
         case 13  : StartStop(); break;
         case ' ' : OneGeneration(); break;
+        case '_' : GoSlower(); break;
+        case '-' : GoSlower(); break;
+        case '+' : GoFaster(); break;
+        case '=' : GoFaster(); break;
+        case '0' : StepBy1(); break;
+        case '1' : Scale1to1(); break;
         case '[' : ZoomOut(); break;
         case ']' : ZoomIn(); break;
-        case '1' : Scale1to1(); break;
         case 'a' : SelectAll(); break;
         case 'A' : CycleAlgo(); break;
         case 'f' : FitPattern(); break;
@@ -391,6 +432,9 @@ static void OnMouseMove(int x, int y)
         if (x < 0 || x >= currwd || y < 0 || y >= currht) return;
     
         TouchMoved(x, y);
+    } else {
+        // update XY position in status bar
+        //!!!
     }
 }
 
@@ -399,9 +443,20 @@ static void OnMouseMove(int x, int y)
 static void DoFrame()
 {
     if (generating && event_checker == 0) {
-        // advance by current step size
-        NextGeneration(true);
-        UpdatePatternAndStatus();
+        if (currlayer->currexpo < 0) {
+            // get current delay (in secs)
+            float delay = GetCurrentDelay() / 1000.0;
+            double current_time = glfwGetTime();
+            // check if it's time to call NextGeneration
+            if (current_time - last_time >= delay) {
+                NextGeneration(true);
+                UpdatePatternAndStatus();
+                last_time = current_time;
+            }
+        } else {
+            NextGeneration(true);
+            UpdatePatternAndStatus();
+        }
     }
     
     if (refresh_pattern) {
