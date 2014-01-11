@@ -1035,9 +1035,8 @@ void DrawPasteImage()
     currht = tempview.getheight();
 
     #ifdef WEB_GUI
-        //!!! just add an origin shift to the XCOORD and YCOORD macros???
-        // x0 = ileft;
-        // y0 = itop;
+        // temporarily change OpenGL viewport's origin and size to match tempview
+        glViewport(ileft, saveht-currht-itop, currwd, currht);
     #else
         glTranslatef(ileft, itop, 0);
     #endif
@@ -1048,9 +1047,8 @@ void DrawPasteImage()
     drawing_paste = false;
 
     #ifdef WEB_GUI
-        //!!! restore origin used in the XCOORD and YCOORD macros???
-        // x0 = 0;
-        // y0 = 0;
+        // restore OpenGL viewport's origin and size
+        glViewport(0, 0, savewd, saveht);
     #else
         glTranslatef(-ileft, -itop, 0);
     #endif

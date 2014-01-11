@@ -169,8 +169,8 @@ void WebWarning(const char* msg)
 {
     if (generating) paused = true;
 
-    printf("%s\n",msg);//!!!
-    //!!!???
+    // replace following with alert(msg)!!!
+    ErrorMessage(msg);
 
     if (generating) paused = false;
 }
@@ -181,7 +181,9 @@ void WebFatal(const char* msg)
 {
     paused = true;
 
-    printf("%s\n",msg);//!!!
+    // replace following with alert(msg)!!!
+    ErrorMessage(msg);
+    
     //!!!???
     exit(1);
 }
@@ -243,7 +245,20 @@ bool WebCopyTextToClipboard(const char* text)
 bool WebGetTextFromClipboard(std::string& text)
 {
     text = "";
-    //!!!???
+    
+    //!!! following is for testing purposes until we can figure out how to get clipboard data
+    text = "x = 9, y = 5, rule = B3/S23\n$bo3b3o$b3o2bo$2bo!";  // rabbits
+
+    /* need to call some JavaScript code here (???) to get clipboard data!!!
+    EM_ASM(
+        // following works only in IE:
+        // var ctext = window.clipboardData.getData('Text');
+        // following fails on Chrome:
+        // var ctext = window.clipboardData.getData('text/plain');
+        alert('clipboard text:\n' + ctext);//!!!
+    );
+    */
+    
     if (text.length() == 0) {
         ErrorMessage("No text in clipboard.");
         return false;

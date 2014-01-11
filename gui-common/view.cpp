@@ -1095,7 +1095,12 @@ void PasteClipboard()
         if ( OutsideLimits(top, left, bottom, right) ) {
             ErrorMessage("Clipboard pattern is too big.");
         } else {
-            DisplayMessage("Drag paste image to desired location then tap Paste button.");
+            #ifdef WEB_GUI
+                DisplayMessage("Drag paste image to desired location then NOT SURE WHAT!!!");
+            #else
+                // Android and iOS devices use a touch screen
+                DisplayMessage("Drag paste image to desired location then tap Paste button.");
+            #endif
             waitingforpaste = true;
 
             // set initial position of pasterect's top left corner to near top left corner

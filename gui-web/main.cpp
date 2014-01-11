@@ -33,7 +33,7 @@
 
 // gui-common
 #include "algos.h"      // for InitAlgorithms, NumAlgos, etc
-#include "prefs.h"      // for GetPrefs, MAX_MAG, etc
+#include "prefs.h"      // for GetPrefs, MAX_MAG, tempdir, etc
 #include "layer.h"      // for ResizeLayers, currlayer
 #include "control.h"    // for SetMinimumStepExponent, NextGeneration, etc
 #include "file.h"       // for NewPattern
@@ -54,6 +54,16 @@
 
 static int currwd = 960, currht = 960;      // initial size of viewport
 static double last_time;                    // when NextGeneration was last called
+
+// -----------------------------------------------------------------------------
+
+static void InitPaths()
+{
+    //!!! set tempdir, supplieddir, etc
+    
+    clipfile = tempdir + "golly_clipboard";
+    prefsfile = "GollyPrefs";                   // where will this be saved???
+}
 
 // -----------------------------------------------------------------------------
 
@@ -256,6 +266,8 @@ static void Help()
               'n -- new (empty) universe\n' +
               'r -- reset\n' +
               'R -- random pattern\n' +
+              'v -- paste\n' +
+              'V -- cancel paste\n' +
               'z -- undo\n' +
               'Z -- redo\n'
              );
@@ -320,6 +332,25 @@ static void RandomPattern()
 
 // -----------------------------------------------------------------------------
 
+static void Paste()
+{
+    StopIfGenerating();
+    
+    if (event_checker > 0) {
+        // try again after a short delay!!!???
+        return;
+    }
+    
+    if (waitingforpaste) {
+        //!!! SelectPasteAction();
+    } else {
+        PasteClipboard();
+        UpdatePatternAndStatus();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 static void Undo()
 {
     StopIfGenerating();
@@ -373,6 +404,8 @@ static void OnCharPressed(int ch, int action)
         case 'n' : NewUniverse(); break;
         case 'r' : Reset(); break;
         case 'R' : RandomPattern(); break;
+        case 'v' : Paste(); break;
+        case 'V' : AbortPaste(); UpdatePattern(); break;
         case 'z' : Undo(); break;
         case 'Z' : Redo(); break;
     }
@@ -472,6 +505,7 @@ static void DoFrame()
 int main() 
 {
     SetMessage("This is Golly 0.1 for the web.  Copyright 2014 The Golly Gang.");
+    InitPaths();                // init tempdir, prefsfile, etc
     MAX_MAG = 5;                // maximum cell size = 32x32
     InitAlgorithms();           // must initialize algoinfo first
     GetPrefs();                 // load user's preferences
