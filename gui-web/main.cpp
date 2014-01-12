@@ -128,8 +128,12 @@ static void StartStop()
     if (generating) {
         StopGenerating();
         // generating is now false
+        //!!! ToggleStartStopButton();
+        // ToggleStartStopButton will presumably need to call some JavaScript code
+        // to change the button label from "Stop" to "Start"
     } else if (StartGenerating()) {
         // generating is now true
+        //!!! ToggleStartStopButton();      // change label to "Stop"
     }
 }
 
@@ -140,7 +144,7 @@ static void StopIfGenerating()
     if (generating) {
         StopGenerating();
         // generating flag is now false
-        //!!! ToggleStartStopButton();
+        //!!! ToggleStartStopButton();      // change label to "Start"
     }
 }
 
@@ -304,6 +308,15 @@ static void NewUniverse()
 
 // -----------------------------------------------------------------------------
 
+static void ChangePrefs()
+{
+    //!!! show some sort of modal dialog box that lets user change various settings???
+    
+    SavePrefs();    // where will this write GollyPrefs file???!!!
+}
+
+// -----------------------------------------------------------------------------
+
 static void Reset()
 {
     if (currlayer->algo->getGeneration() == currlayer->startgen) return;
@@ -402,6 +415,7 @@ static void OnCharPressed(int ch, int action)
         case 'h' : Help(); break;
         case 'i' : ToggleIconMode(); break;
         case 'n' : NewUniverse(); break;
+        case 'p' : ChangePrefs(); break;
         case 'r' : Reset(); break;
         case 'R' : RandomPattern(); break;
         case 'v' : Paste(); break;
