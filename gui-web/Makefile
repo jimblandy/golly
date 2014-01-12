@@ -1,6 +1,8 @@
 # Makefile for creating web app version of Golly using Emscripten.
 # Type "emmake make" to build golly.html and golly.js.
 
+EXTERNAL_FUNCTIONS="['_StartStop']"
+
 SOURCES = main.cpp webcalls.cpp \
     ../gollybase/bigint.cpp \
     ../gollybase/generationsalgo.cpp \
@@ -75,6 +77,7 @@ OBJECTS = main.o webcalls.o \
 
 # note that using -O2 results in a much smaller golly.js and no .map file
 CXXFLAGS = -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip -DWEB_GUI \
+    -s EXTERNAL_FUNCTIONS=$(EXTERNAL_FUNCTIONS)
     -Wall -Wextra -Wno-unused-parameter -O2 -s TOTAL_MEMORY=134217728
 # better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???
 

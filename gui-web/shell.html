@@ -23,6 +23,10 @@
         <progress value="0" max="100" id="progress" hidden=1></progress>  
     </div>
     <textarea class="emscripten" id="output" rows="4"></textarea>
+    <div class="emscripten" id="buttons">
+       <button type="button" id="startStop" onClick="Module.buttonPress(this)">Start</button>
+       <button type="button" id="otherButton" onClick="Module.buttonPress(this)">otherButton</button>
+    </div>
     <div class="emscripten_border">
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>
@@ -68,6 +72,15 @@
             },
             
             canvas: document.getElementById('canvas'),
+
+            buttonPress: function(button) {
+                if (button.id == 'startStop')
+                   _StartStop() ;
+            },
+
+            setButtonLabel: function(id, label) {
+               document.getElementById(id).innerHTML = label ;
+            },
             
             setStatus: function(text) {
                 if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
