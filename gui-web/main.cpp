@@ -124,8 +124,7 @@ static void OnSurfaceChanged(int width, int height) {
 // -----------------------------------------------------------------------------
 
 extern "C" {
-extern void StartStop() ;
-}
+
 void StartStop()
 {
     if (generating) {
@@ -141,6 +140,8 @@ void StartStop()
         ) ;
     }
 }
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -523,7 +524,7 @@ static void DoFrame()
 
 // -----------------------------------------------------------------------------
 
-int main() 
+int EMSCRIPTEN_KEEPALIVE main()
 {
     SetMessage("This is Golly 0.1 for the web.  Copyright 2014 The Golly Gang.");
     InitPaths();                // init tempdir, prefsfile, etc
