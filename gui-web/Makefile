@@ -78,7 +78,7 @@ OBJECTS = main.o webcalls.o \
 
 CXXFLAGS = -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip -DWEB_GUI \
     -Wall -Wextra -Wno-unused-parameter -O2 -s TOTAL_MEMORY=134217728 \
-    -s EXPORTED_FUNCTIONS="['_StartStop']"
+    -s EXPORTED_FUNCTIONS="['_ClearStatus', '_StartStop', '_Undo', '_Redo']"
 
 TARGET = golly.html
 

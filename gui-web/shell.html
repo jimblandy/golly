@@ -24,8 +24,9 @@
     </div>
     <textarea class="emscripten" id="output" rows="4"></textarea>
     <div class="emscripten" id="buttons">
-       <button type="button" id="startStop" onClick="Module.buttonPress(this)">Start</button>
-       <button type="button" id="otherButton" onClick="Module.buttonPress(this)">otherButton</button>
+        <button type="button" id="startStop" onClick="Module.buttonPress(this)">Start</button>
+        <button type="button" id="undo" onClick="Module.buttonPress(this)">Undo</button>
+        <button type="button" id="redo" onClick="Module.buttonPress(this)">Redo</button>
     </div>
     <div class="emscripten_border">
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
@@ -74,12 +75,14 @@
             canvas: document.getElementById('canvas'),
 
             buttonPress: function(button) {
-                if (button.id == 'startStop')
-                   _StartStop() ;
+                _ClearStatus(); // clears any status bar message
+                if (button.id == 'startStop') _StartStop();
+                if (button.id == 'undo') _Undo();
+                if (button.id == 'redo') _Redo();
             },
 
             setButtonLabel: function(id, label) {
-               document.getElementById(id).innerHTML = label ;
+                document.getElementById(id).innerHTML = label;
             },
             
             setStatus: function(text) {

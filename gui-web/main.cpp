@@ -123,7 +123,7 @@ static void OnSurfaceChanged(int width, int height) {
 
 // -----------------------------------------------------------------------------
 
-// the following routine is a C function to avoid C++ name mangling
+// the following routine is declared a C function to avoid C++ name mangling
 // and make it easy to call the routine from JavaScript code
 // (see the -s EXPORTED_FUNCTIONS line in Makefile, and the buttonPress
 // code in shell.html)
@@ -134,15 +134,15 @@ void StartStop()
 {
     if (generating) {
         StopGenerating();
-        // generating is now false so change button label from "Stop" to "Start"
+        // generating flag is now false so change button label to "Start"
         EM_ASM (
-           Module.setButtonLabel('startStop', 'Start') ;
-        ) ;
+           Module.setButtonLabel('startStop', 'Start');
+        );
     } else if (StartGenerating()) {
-        // generating is now true so change button label to "Stop"
+        // generating flag is now true so change button label to "Stop"
         EM_ASM (
-           Module.setButtonLabel('startStop', 'Stop') ;
-        ) ;
+           Module.setButtonLabel('startStop', 'Stop');
+        );
     }
 }
 
@@ -157,7 +157,7 @@ static void StopIfGenerating()
         // generating flag is now false so change button label to "Start"
         EM_ASM (
            Module.setButtonLabel('startStop', 'Start') ;
-        ) ;
+        );
     }
 }
 
@@ -265,7 +265,7 @@ static void FitPattern()
 static void Help()
 {
     // do something else eventually!!!
-    EM_ASM(
+    EM_ASM (
         alert('You can use these keyboard commands:\n\n' +
               'return -- start/stop generating\n' +
               'space -- do 1 generation\n' +
@@ -377,7 +377,9 @@ static void Paste()
 
 // -----------------------------------------------------------------------------
 
-static void Undo()
+extern "C" {
+
+void Undo()
 {
     StopIfGenerating();
     
@@ -390,9 +392,13 @@ static void Undo()
     UpdateEverything();
 }
 
+} // extern "C"
+
 // -----------------------------------------------------------------------------
 
-static void Redo()
+extern "C" {
+
+void Redo()
 {
     StopIfGenerating();
     
@@ -404,6 +410,19 @@ static void Redo()
     currlayer->undoredo->RedoChange();
     UpdateEverything();
 }
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void ClearStatus()
+{
+    ClearMessage();
+}
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
