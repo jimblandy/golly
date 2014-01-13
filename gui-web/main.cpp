@@ -123,6 +123,11 @@ static void OnSurfaceChanged(int width, int height) {
 
 // -----------------------------------------------------------------------------
 
+// the following routine is a C function to avoid C++ name mangling
+// and make it easy to call the routine from JavaScript code
+// (see the -s EXPORTED_FUNCTIONS line in Makefile, and the buttonPress
+// code in shell.html)
+
 extern "C" {
 
 void StartStop()
@@ -523,6 +528,9 @@ static void DoFrame()
 }
 
 // -----------------------------------------------------------------------------
+
+// we need the EMSCRIPTEN_KEEPALIVE flag to avoid our main() routine disappearing
+// (a somewhat strange consequence of using -s EXPORTED_FUNCTIONS in Makefile)
 
 int EMSCRIPTEN_KEEPALIVE main()
 {
