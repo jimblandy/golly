@@ -130,16 +130,12 @@ void StartStop()
 {
     if (generating) {
         StopGenerating();
-        // generating is now false
-        //!!! ToggleStartStopButton();
-        // ToggleStartStopButton will presumably need to call some JavaScript code
-        // to change the button label from "Stop" to "Start"
+        // generating is now false so change button label from "Stop" to "Start"
         EM_ASM (
            Module.setButtonLabel('startStop', 'Start') ;
         ) ;
     } else if (StartGenerating()) {
-        // generating is now true
-        //!!! ToggleStartStopButton();      // change label to "Stop"
+        // generating is now true so change button label to "Stop"
         EM_ASM (
            Module.setButtonLabel('startStop', 'Stop') ;
         ) ;
@@ -152,8 +148,10 @@ static void StopIfGenerating()
 {
     if (generating) {
         StopGenerating();
-        // generating flag is now false
-        //!!! ToggleStartStopButton();      // change label to "Start"
+        // generating flag is now false so change button label to "Start"
+        EM_ASM (
+           Module.setButtonLabel('startStop', 'Start') ;
+        ) ;
     }
 }
 
