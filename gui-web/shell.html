@@ -18,6 +18,29 @@
     </style>
 </head>
 <body>
+    <script type='text/javascript'>
+        function check_browser() {
+            var N=navigator.appName, ua=navigator.userAgent, tem;
+            var M=ua.match(/(opera|chrome|safari|firefox|msie)\/?\s*(\.?\d+(\.\d+)*)/i);
+            if (M && (tem= ua.match(/version\/([\.\d]+)/i))!= null) M[2]= tem[1];
+            M=M? [M[1], M[2]]: [N, navigator.appVersion, '-?'];
+            var browser_name = M[0];
+            var browser_version = parseInt(M[1],10); // '5.9.1' -> 5
+            if (browser_name == 'Safari' && browser_version < 6) {
+                // there is a nasty bug in Safari 5's JS interpreter that causes the population count
+                // to become 0 after stepping a few gens (but only in QuickLife algo)
+                alert('Sorry, but Golly requires Safari 6.0 or later, ' +
+                      'or another WebGL-capable browser like Chrome or Firefox.');
+                window.stop();
+            }
+            if (browser_name == 'MSIE' && browser_version < 11) {
+                alert('Sorry, but Golly requires Internet Explorer 11.0 or later, ' +
+                      'or another WebGL-capable browser like Chrome or Firefox.');
+                window.stop();
+            }
+        }
+        check_browser();
+    </script>
     <div class="emscripten" id="status">Downloading...</div>
     <div class="emscripten">
         <progress value="0" max="100" id="progress" hidden=1></progress>  
@@ -32,28 +55,6 @@
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>
     <script type='text/javascript'>
-        function check_browser() {
-            var N=navigator.appName, ua=navigator.userAgent, tem;
-            var M=ua.match(/(opera|chrome|safari|firefox|msie)\/?\s*(\.?\d+(\.\d+)*)/i);
-            if (M && (tem= ua.match(/version\/([\.\d]+)/i))!= null) M[2]= tem[1];
-            M=M? [M[1], M[2]]: [N, navigator.appVersion, '-?'];
-            var browser_name = M[0];
-            var browser_version = parseInt(M[1],10); // '5.9.1' -> 5
-            if (browser_name == 'Safari' && browser_version < 6) {
-                // there is a nasty bug in Safari 5's JS interpreter that causes the population count
-                // to become 0 after stepping a few gens (but only in QuickLife algo)
-                alert('Sorry, but Golly requires Safari 6.0 or later.');
-                // following creates a blank page and exits script
-                var statusElement = document.getElementById('status');
-                statusElement.innerHTML = '';
-                var textElement = document.getElementById('output');
-                textElement.parentNode.removeChild(textElement);
-                window.stop();
-                throw '';
-            }
-        }
-        check_browser();
-        
         var Module = {
             preRun: [],
             postRun: [],
