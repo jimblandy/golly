@@ -29,7 +29,7 @@
 #include "prefs.h"      // for mindelay, maxdelay, etc
 #include "algos.h"      // for algoinfo
 #include "layer.h"      // for currlayer
-#include "view.h"       // for nopattupdate, widescreen
+#include "view.h"       // for nopattupdate, widescreen, PointInView, etc
 #include "status.h"
 
 #ifdef ANDROID_GUI
@@ -69,6 +69,9 @@ const char* small_pop_prefix =   "   Pop=";
 const char* small_scale_prefix = "   Scale=";
 const char* small_step_prefix =  "   ";
 const char* small_xy_prefix =    "   XY=";
+
+static bigint currx, curry;     // cursor location in cell coords
+static bool showxy = false;     // show cursor's XY location?
 
 // -----------------------------------------------------------------------------
 
@@ -136,9 +139,29 @@ void UpdateStatusLines()
     status2 += widescreen ? large_step_prefix : small_step_prefix;
     status2 += stepstr;
     status2 += widescreen ? large_xy_prefix : small_xy_prefix;
-    status2 += Stringify(currlayer->view->x);
-    status2 += " ";
-    status2 += Stringify(currlayer->view->y);
+    #ifdef WEB_GUI
+        // in web app we show the cursor's current cell location,
+        // or nothing if the cursor is outside the viewport (ie. showxy is false)
+        if (showxy) {
+            bigint xo, yo;
+            bigint xpos = currx;   xpos -= currlayer->originx;
+            bigint ypos = curry;   ypos -= currlayer->originy;
+            if (mathcoords) {
+                // Y values increase upwards
+                bigint temp = 0;
+                temp -= ypos;
+                ypos = temp;
+            }
+            status2 += Stringify(xpos);
+            status2 += " ";
+            status2 += Stringify(ypos);
+        }
+    #else
+        // in iOS and Android apps we show location of the cell in middle of viewport
+        status2 += Stringify(currlayer->view->x);
+        status2 += " ";
+        status2 += Stringify(currlayer->view->y);
+    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -216,4 +239,41 @@ char* Stringify(const bigint& b)
         if ( p[-1] == '-' ) p--;
     }
     return p;
+}
+
+// -----------------------------------------------------------------------------
+
+void CheckMouseLocation(int x, int y)
+{
+    // check if we need to update XY location in status bar
+    bool mouse_in_grid = false;
+    bigint xpos, ypos;
+    if (PointInView(x, y)) {
+        // get mouse location in cell coords
+        pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+        xpos = cellpos.first;
+        ypos = cellpos.second;
+        // check if xpos,ypos is inside grid (possibly bounded)
+        mouse_in_grid = CellInGrid(xpos, ypos);
+    }
+
+    if (mouse_in_grid) {
+        if ( xpos != currx || ypos != curry ) {
+            // show new XY location
+            currx = xpos;
+            curry = ypos;
+            showxy = true;
+            UpdateStatus();
+        } else if (!showxy) {
+            // mouse moved from outside grid and back over currx,curry
+            showxy = true;
+            UpdateStatus();
+        }
+    } else {
+        // mouse is outside grid so clear XY location if necessary
+        if (showxy) {
+            showxy = false;
+            UpdateStatus();
+        }
+    }
 }

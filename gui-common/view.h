@@ -85,7 +85,10 @@ void DoPaste(bool toselection);
 void AbortPaste();
 void ZoomInPos(int x, int y);
 void ZoomOutPos(int x, int y);
+bool PointInView(int x, int y);
 bool PointInPasteImage(int x, int y);
 bool PointInSelection(int x, int y);
+bool PointInGrid(int x, int y);
+bool CellInGrid(const bigint& x, const bigint& y);
 
 #endif

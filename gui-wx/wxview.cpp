@@ -1282,7 +1282,7 @@ bool PatternView::GetCellPos(bigint& xpos, bigint& ypos)
 bool PatternView::PointInView(int x, int y)
 {
     return ( x >= 0 && x <= currlayer->view->getxmax() &&
-            y >= 0 && y <= currlayer->view->getymax() );
+             y >= 0 && y <= currlayer->view->getymax() );
 }
 
 // -----------------------------------------------------------------------------

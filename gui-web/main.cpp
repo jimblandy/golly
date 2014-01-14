@@ -38,7 +38,7 @@
 #include "control.h"    // for SetMinimumStepExponent, NextGeneration, etc
 #include "file.h"       // for NewPattern
 #include "view.h"       // for fullscreen, TouchBegan, etc
-#include "status.h"     // for SetMessage, etc
+#include "status.h"     // for SetMessage, CheckMouseLocation, etc
 #include "utils.h"      // for Beep, etc
 #include "undo.h"       // for currlayer->undoredo->...
 #include "render.h"     // for InitOGLES2, DrawPattern
@@ -478,7 +478,7 @@ static void OnMouseClick(int button, int action)
         int x, y;
         glfwGetMousePos(&x, &y);
         // DEBUG: printf("click at x=%d y=%d\n", x, y);
-    
+        
         ClearMessage();
         
         // check for click outside viewport
@@ -503,17 +503,12 @@ static void OnMouseMove(int x, int y)
 {
     int mousestate = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT);
     if (mousestate == GLFW_PRESS) {
-        int x, y;
-        glfwGetMousePos(&x, &y);
         // DEBUG: printf("moved to x=%d y=%d\n", x, y);
         
         // ignore move outside viewport
         if (x < 0 || x >= currwd || y < 0 || y >= currht) return;
     
         TouchMoved(x, y);
-    } else {
-        // update XY position in status bar
-        //!!!
     }
 }
 
@@ -521,6 +516,11 @@ static void OnMouseMove(int x, int y)
 
 static void DoFrame()
 {
+    // check the current mouse location continuously
+    int x, y;
+    glfwGetMousePos(&x, &y);
+    CheckMouseLocation(x, y);
+
     if (generating && event_checker == 0) {
         if (currlayer->currexpo < 0) {
             // get current delay (in secs)

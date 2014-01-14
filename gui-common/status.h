@@ -56,4 +56,9 @@ int GetCurrentDelay();
 char* Stringify(const bigint& b);
 // convert given number to string suitable for display
 
+void CheckMouseLocation(int x, int y);
+// on devices with a mouse we might need to update the
+// cursor's current XY cell location, where the given x,y
+// values are the cursor's viewport coordinates (in pixels)
+
 #endif
