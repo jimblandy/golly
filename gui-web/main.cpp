@@ -461,7 +461,7 @@ static void OnCharPressed(int ch, int action)
 
 // -----------------------------------------------------------------------------
 
-/* forget this callback???!!! it returns strange results for keys like '[' and ']'
+/* use this callback???!!! it returns strange results for keys like '[' and ']'
 static void OnKeyPressed(int key, int action)
 {
     printf("key=%i action=%i\n", key, action);
@@ -470,10 +470,12 @@ static void OnKeyPressed(int key, int action)
 
 // -----------------------------------------------------------------------------
 
-static bool touching = false;
+static bool ok_to_check_mouse = false;
+static bool mouse_down = false;
 
 static void OnMouseClick(int button, int action)
 {
+    ok_to_check_mouse = true;
     if (action == GLFW_PRESS) {
         int x, y;
         glfwGetMousePos(&x, &y);
@@ -483,17 +485,17 @@ static void OnMouseClick(int button, int action)
         
         // check for click outside viewport
         if (x < 0 || x >= currwd || y < 0 || y >= currht) {
-            if (touching) TouchEnded();
-            touching = false;
+            if (mouse_down) TouchEnded();
+            mouse_down = false;
             return;
         }
         
         TouchBegan(x, y);
-        touching = true;
+        mouse_down = true;
     
     } else if (action == GLFW_RELEASE) {
-        if (touching) TouchEnded();
-        touching = false;
+        if (mouse_down) TouchEnded();
+        mouse_down = false;
     }
 }
 
@@ -501,6 +503,7 @@ static void OnMouseClick(int button, int action)
 
 static void OnMouseMove(int x, int y)
 {
+    ok_to_check_mouse = true;
     int mousestate = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT);
     if (mousestate == GLFW_PRESS) {
         // DEBUG: printf("moved to x=%d y=%d\n", x, y);
@@ -516,10 +519,13 @@ static void OnMouseMove(int x, int y)
 
 static void DoFrame()
 {
-    // check the current mouse location continuously
-    int x, y;
-    glfwGetMousePos(&x, &y);
-    CheckMouseLocation(x, y);
+    // check the current mouse location continuously, but only after the 1st mouse-click or
+    // mouse-move event, because until then glfwGetMousePos returns 0,0 (report bug???!!!)
+    if (ok_to_check_mouse) {
+        int x, y;
+        glfwGetMousePos(&x, &y);
+        CheckMouseLocation(x, y);
+    }
 
     if (generating && event_checker == 0) {
         if (currlayer->currexpo < 0) {
