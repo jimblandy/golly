@@ -141,7 +141,7 @@ static GLuint LoadShader(GLenum type, const char* shader_source)
     GLint compiled;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
     if (!compiled) {
-        printf("Error compiling shader!\n");            
+        Warning("Error compiling shader!");
         glDeleteShader(shader);
         return 0;
     }
@@ -232,7 +232,7 @@ bool InitOGLES2()
     GLint plinked;
     glGetProgramiv(pointProgram, GL_LINK_STATUS, &plinked);
     if (!plinked) {
-        printf("Error linking pointProgram!\n");            
+        Warning("Error linking pointProgram!");
         glDeleteProgram(pointProgram);
         return false;
     }
@@ -240,19 +240,32 @@ bool InitOGLES2()
     GLint tlinked;
     glGetProgramiv(textureProgram, GL_LINK_STATUS, &tlinked);
     if (!tlinked) {
-        printf("Error linking textureProgram!\n");            
+        Warning("Error linking textureProgram!");
         glDeleteProgram(textureProgram);
         return false;
     }
     
     // get the attribute and uniform locations
+    // (note that for IE 11 we must set the appropriate program???!!!)
+    glUseProgram(pointProgram);
     positionLoc = glGetAttribLocation(pointProgram, "v_Position");
     pointSizeLoc = glGetUniformLocation(pointProgram, "PointSize");
     lineColorLoc = glGetUniformLocation(pointProgram, "LineColor");
+    if (positionLoc == -1 || pointSizeLoc == -1 || lineColorLoc == -1) {
+        Warning("Failed to get a location in pointProgram!");
+        glDeleteProgram(pointProgram);
+        return false;
+    }
     
+    glUseProgram(textureProgram);
     texPosLoc = glGetAttribLocation(textureProgram, "a_Position");
     texCoordLoc = glGetAttribLocation(textureProgram, "a_texCoord");
     samplerLoc = glGetUniformLocation (textureProgram, "s_texture");
+    if (texPosLoc == -1 || texCoordLoc == -1 || samplerLoc == -1) {
+        Warning("Failed to get a location in textureProgram!");
+        glDeleteProgram(textureProgram);
+        return false;
+    }
     
     // create buffer for vertex data
     GLuint vertexPosObject;
