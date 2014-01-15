@@ -368,7 +368,7 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
         glBindTexture(GL_TEXTURE_2D, patternTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         #ifdef WEB_GUI
-            // no need to do anything here???
+            // no need to do anything here
         #else
             glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
         #endif
@@ -526,7 +526,7 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         #ifdef WEB_GUI
-            // no need to do anything here???
+            // no need to do anything here
         #else
             glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
         #endif

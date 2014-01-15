@@ -522,28 +522,29 @@ static unsigned char** CreateIconTextures(gBitmapPtr* srcicons, int maxstate)
                                         texdata[tpos+2] = (int)(deadb + frac * (liveb - deadb) + 0.5);
                                     }
                                 }
+                                texdata[tpos+3] = 255;      // alpha channel is opaque
                             } else {
-                                // replace black pixel with dead cell color
+                                // replace black pixel with transparent pixel
                                 texdata[tpos]   = deadr;
                                 texdata[tpos+1] = deadg;
                                 texdata[tpos+2] = deadb;
+                                texdata[tpos+3] = 0;        // alpha channel is transparent
                             }
-                            texdata[tpos+3] = 255;      // alpha channel is opaque
                             tpos += 4;
                             ipos += 4;
                         }
-                        // add dead cell at right edge of texture
+                        // add transparent pixel at right edge of texture
                         texdata[tpos++] = deadr;
                         texdata[tpos++] = deadg;
                         texdata[tpos++] = deadb;
-                        texdata[tpos++] = 255;
+                        texdata[tpos++] = 0;
                     }
-                    // add row of dead cells at bottom of texture
+                    // add row of transparent pixels at bottom of texture
                     for (int col = 0; col < wd+1; col++) {
                         texdata[tpos++] = deadr;
                         texdata[tpos++] = deadg;
                         texdata[tpos++] = deadb;
-                        texdata[tpos++] = 255;
+                        texdata[tpos++] = 0;
                     }
                 }
             }
