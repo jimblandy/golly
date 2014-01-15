@@ -574,6 +574,9 @@ int EMSCRIPTEN_KEEPALIVE main()
 
     // test bounded grid!!!
     // currlayer->algo->setrule("B3/S23:T10,6");
+    
+    // test code in webcalls.cpp and jslib.js!!!
+    // if (YesNo("Do you wish to continue?")) Warning("OK"); else Fatal("Bye bye!");
 
     if (InitGL() == GL_TRUE) {
         OnSurfaceCreated();

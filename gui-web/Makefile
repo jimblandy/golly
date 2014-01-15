@@ -85,7 +85,8 @@ TARGET = golly.html
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS) shell.html
-	$(CXX) $(CXXFLAGS) --shell-file shell.html -o $@ $(LDFLAGS) $(OBJECTS)
+	$(CXX) $(CXXFLAGS) --js-library jslib.js --shell-file shell.html \
+	-o $@ $(LDFLAGS) $(OBJECTS)
 
 clean:
 	$(RM) $(OBJECTS) $(TARGET) golly.js

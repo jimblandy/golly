@@ -42,6 +42,15 @@
 
 // -----------------------------------------------------------------------------
 
+// the following JavaScript routines are implemented in jslib.js:
+
+extern "C" {
+    extern void jsAlert(const char* msg);
+    extern bool jsConfirm(const char* query);
+}
+
+// -----------------------------------------------------------------------------
+
 bool refresh_pattern = false;
 
 void UpdatePattern()
@@ -146,7 +155,8 @@ void EndProgress()
 
 void SwitchToPatternTab()
 {
-    //!!!???
+    // no need to do anything???!!!
+    // or maybe just close/remove help dialog???
 }
 
 // -----------------------------------------------------------------------------
@@ -167,38 +177,22 @@ void ShowHelp(const char* filepath)
 
 void WebWarning(const char* msg)
 {
-    if (generating) paused = true;
-
-    // replace following with alert(msg)!!!
-    ErrorMessage(msg);
-
-    if (generating) paused = false;
+    jsAlert(msg);
 }
 
 // -----------------------------------------------------------------------------
 
 void WebFatal(const char* msg)
 {
-    paused = true;
-
-    // replace following with alert(msg)!!!
-    ErrorMessage(msg);
-    
-    //!!!???
-    exit(1);
+    jsAlert(msg);
+    exit(1);        // no need to do anything else???
 }
 
 // -----------------------------------------------------------------------------
 
 bool WebYesNo(const char* query)
 {
-    std::string answer;
-    if (generating) paused = true;
-
-    //!!!???
-
-    if (generating) paused = false;
-    return answer == "yes";
+    return jsConfirm(query);
 }
 
 // -----------------------------------------------------------------------------
