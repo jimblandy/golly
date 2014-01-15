@@ -519,14 +519,6 @@ static void OnMouseMove(int x, int y)
 
 static void DoFrame()
 {
-    // check the current mouse location continuously, but only after the 1st mouse-click or
-    // mouse-move event, because until then glfwGetMousePos returns 0,0 (report bug???!!!)
-    if (ok_to_check_mouse) {
-        int x, y;
-        glfwGetMousePos(&x, &y);
-        CheckMouseLocation(x, y);
-    }
-
     if (generating && event_checker == 0) {
         if (currlayer->currexpo < 0) {
             // get current delay (in secs)
@@ -550,6 +542,14 @@ static void DoFrame()
     }
     
     glfwSwapBuffers();
+
+    // check the current mouse location continuously, but only after the 1st mouse-click or
+    // mouse-move event, because until then glfwGetMousePos returns 0,0 (report bug???!!!)
+    if (ok_to_check_mouse) {
+        int x, y;
+        glfwGetMousePos(&x, &y);
+        CheckMouseLocation(x, y);
+    }
 }
 
 // -----------------------------------------------------------------------------
