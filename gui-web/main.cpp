@@ -95,9 +95,10 @@ static void OnSurfaceCreated() {
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
-    glDisable(GL_MULTISAMPLE);
     glDisable(GL_STENCIL_TEST);
-    glDisable(GL_FOG);
+    // following 2 cause WebGL warnings on Chrome and Firefox:
+    // glDisable(GL_FOG);
+    // glDisable(GL_MULTISAMPLE);
 
     glEnable(GL_BLEND);
     // this blending function seems similar to the one used in desktop Golly

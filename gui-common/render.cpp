@@ -280,7 +280,6 @@ bool InitOGLES2()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     
     // use the pointProgram initially
-    glDisable(GL_TEXTURE_2D);
     glUseProgram(pointProgram);
     
     return true;
@@ -339,9 +338,13 @@ static void FillRect(int x, int y, int wd, int ht)
 
 static void DisableTextures()
 {
-    if (glIsEnabled(GL_TEXTURE_2D)) {
-        glDisable(GL_TEXTURE_2D);
-    };
+    #ifdef WEB_GUI
+        // don't do anything (avoid WebGL warnings)
+    #else
+        if (glIsEnabled(GL_TEXTURE_2D)) {
+            glDisable(GL_TEXTURE_2D);
+        };
+    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -349,30 +352,29 @@ static void DisableTextures()
 void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 {
     // called from ios_render::pixblit to draw a pattern bitmap at 1:1 scale
-    
-    #ifdef WEB_GUI
-        glUseProgram(textureProgram);
-        glActiveTexture(GL_TEXTURE0);
-    #endif
 
 	if (patternTexture == 0) {
         // only need to create texture name once
         glGenTextures(1, &patternTexture);
     }
 
-    if (!glIsEnabled(GL_TEXTURE_2D)) {
-        // restore texture color and enable textures
-        SetColor(255, 255, 255, 255);
-        glEnable(GL_TEXTURE_2D);
+    #ifdef WEB_GUI
+        glUseProgram(textureProgram);
+        glActiveTexture(GL_TEXTURE0);
         // bind our texture
         glBindTexture(GL_TEXTURE_2D, patternTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        #ifdef WEB_GUI
-            // no need to do anything here
-        #else
+    #else
+        if (!glIsEnabled(GL_TEXTURE_2D)) {
+            // restore texture color and enable textures
+            SetColor(255, 255, 255, 255);
+            glEnable(GL_TEXTURE_2D);
+            // bind our texture
+            glBindTexture(GL_TEXTURE_2D, patternTexture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-        #endif
-    }
+        }
+    #endif
     
     // update the texture with the new bitmap data (in RGB format)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
@@ -397,6 +399,8 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
         
         glUniform1i(samplerLoc, 0);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+
+        glUseProgram(pointProgram);
     #else
         // we assume w and h are powers of 2
         GLfloat vertices[] = {
@@ -407,10 +411,6 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
         };
         glVertexPointer(2, GL_FLOAT, 0, vertices);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    #endif
-    
-    #ifdef WEB_GUI
-        glUseProgram(pointProgram);
     #endif
 }
 
@@ -499,23 +499,24 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     if (pmscale == 64) {
         iconsize = 32;
     }
-    
-    #ifdef WEB_GUI
-        glUseProgram(textureProgram);
-        glActiveTexture(GL_TEXTURE0);
-    #endif
 
     // create icon textures once
 	if (texture8 == 0) glGenTextures(1, &texture8);
 	if (texture16 == 0) glGenTextures(1, &texture16);
 	if (texture32 == 0) glGenTextures(1, &texture32);
 
-    if (!glIsEnabled(GL_TEXTURE_2D)) {
-        // restore texture color and enable textures
-        SetColor(255, 255, 255, 255);
-        glEnable(GL_TEXTURE_2D);
-        prevsize = 0;               // force rebinding
-    }
+    #ifdef WEB_GUI
+        glUseProgram(textureProgram);
+        glActiveTexture(GL_TEXTURE0);
+        prevsize = 0;                   // always rebind
+    #else
+        if (!glIsEnabled(GL_TEXTURE_2D)) {
+            // restore texture color and enable textures
+            SetColor(255, 255, 255, 255);
+            glEnable(GL_TEXTURE_2D);
+            prevsize = 0;               // force rebinding
+        }
+    #endif
     
     if (iconsize != prevsize) {
         prevsize = iconsize;
