@@ -71,12 +71,31 @@
         <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
     </div>
     <div class="vspace ht10"></div>
-    <div class="emscripten" id="checkboxes">
-        <input type="checkbox" id="grid" onClick="Module.checkboxPress(this)"><label for="grid">Grid</label>
+    <div class="emscripten" id="settings">
+        <label for="algo">Algorithm:</label>
+        <select id="algo" onchange="Module.selectionChanged(this)">
+            <option value="0">QuickLife</option>
+            <option value="1">HashLife</option>
+            <option value="2">Generations</option>
+            <option value="3">JvN</option>
+            <option value="4">RuleLoader</option>
+        </select>
         &nbsp;&nbsp;
-        <input type="checkbox" id="icons" onClick="Module.checkboxPress(this)"><label for="icons">Icons</label>
+        <label for="grid">Grid</label><input type="checkbox" id="grid" onClick="Module.checkboxPress(this)">
         &nbsp;&nbsp;
-        <input type="checkbox" id="time" onClick="Module.checkboxPress(this)"><label for="time">Timing</label>
+        <label for="icons">Icons</label><input type="checkbox" id="icons" onClick="Module.checkboxPress(this)">
+        &nbsp;&nbsp;
+        <label for="time">Timing</label><input type="checkbox" id="time" onClick="Module.checkboxPress(this)">
+        &nbsp;&nbsp;
+        <label for="mode">Mode:</label>
+        <select id="mode" onchange="Module.selectionChanged(this)">
+            <option value="0">Draw</option>
+            <option value="1">Pick</option>
+            <option value="2">Select</option>
+            <option value="3">Move</option>
+            <option value="4">Zoom In</option>
+            <option value="5">Zoom Out</option>
+        </select>
     </div>
     <div class="vspace ht10"></div>
     <div class="emscripten_border">
@@ -109,10 +128,17 @@
 
             checkboxPress: function(box) {
                 _ClearStatus(); // clear any status bar message
-                box.blur();     // prevent box getting focus
+                box.blur();     // prevent checkbox getting focus
                 if (box.id == 'grid') _ToggleGrid();
                 if (box.id == 'icons') _ToggleIcons();
                 if (box.id == 'time') _ToggleTiming();
+            },
+
+            selectionChanged: function(select) {
+                _ClearStatus(); // clear any status bar message
+                select.blur();  // prevent select getting focus
+                if (select.id == 'algo') _AlgoChanged(select.selectedIndex);
+                if (select.id == 'mode') _ModeChanged(select.selectedIndex);
             },
 
             setButtonLabel: function(id, label) {

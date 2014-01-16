@@ -48,6 +48,8 @@ extern "C" {
     extern void jsAlert(const char* msg);
     extern bool jsConfirm(const char* query);
     extern void jsSetStatusBarColor(const char* color);
+    extern void jsSetAlgo(int index);
+    extern void jsSetMode(int index);
 }
 
 // -----------------------------------------------------------------------------
@@ -71,11 +73,10 @@ void UpdateStatus()
     UpdateStatusLines();    // sets status1, status2, status3
 
     // use a nicer looking status bar eventually???!!!
+    
     // clear text area first
-    EM_ASM(
-        var statusbar = document.getElementById('statusbar');
-        statusbar.value = '\0';
-    );
+    EM_ASM( document.getElementById('statusbar').value = '\0'; );
+    
     if (curralgo != currlayer->algtype) {
         // algo has changed so change bg color of status bar
         curralgo = currlayer->algtype;
@@ -85,7 +86,10 @@ void UpdateStatus()
         char rgb[32];
         sprintf(rgb, "rgb(%d,%d,%d)", r, g, b);
         jsSetStatusBarColor(rgb);
+        // also change selected algo in dropdown list
+        jsSetAlgo(curralgo);
     }
+    
     printf("%s\n",status1.c_str());
     printf("%s\n",status2.c_str());
     printf("%s\n",status3.c_str());
@@ -133,8 +137,15 @@ void UpdateEditBar()
         // this can happen after an algo/rule change
         currlayer->drawingstate = 1;
     }
+    
+    if (fullscreen) return;
+    
+    // use JavaScript code to update the Undo/Redo buttons
+    //!!! undobutton.setEnabled(CanUndo());
+    //!!! redobutton.setEnabled(CanRedo());
 
-    // call JavaScript method to update the buttons in the edit bar!!!???
+    // show current mode
+    jsSetMode(currlayer->touchmode);
 }
 
 // -----------------------------------------------------------------------------

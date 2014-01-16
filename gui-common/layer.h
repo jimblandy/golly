@@ -37,7 +37,7 @@ class UndoRedo;
 // export from script.h if we ever support scripting!!!
 extern bool inscript;
 
-enum TouchModes { drawmode, pickmode, selectmode, movemode };
+enum TouchModes { drawmode, pickmode, selectmode, movemode, zoominmode, zoomoutmode };
 
 // Golly can support multiple layers.  Each layer is a separate universe
 // (unless cloned) with its own algorithm, rule, viewport, pattern title,

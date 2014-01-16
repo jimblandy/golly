@@ -15,4 +15,12 @@ mergeInto(LibraryManager.library, {
         document.getElementById('statusbar').style.backgroundColor = Pointer_stringify(color);
     },
 
+    jsSetAlgo: function(index) {  
+        document.getElementById('algo').selectedIndex = index;
+    },
+
+    jsSetMode: function(index) {  
+        document.getElementById('mode').selectedIndex = index;
+    },
+
 });

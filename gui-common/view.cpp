@@ -665,6 +665,12 @@ void TouchBegan(int x, int y)
     } else if (currlayer->touchmode == movemode) {
         StartMovingView(x, y);
 
+    } else if (currlayer->touchmode == zoominmode) {
+        ZoomInPos(x, y);
+
+    } else if (currlayer->touchmode == zoomoutmode) {
+        ZoomOutPos(x, y);
+
     }
 }
 

@@ -365,19 +365,6 @@ void Scale1to1()
 
 // -----------------------------------------------------------------------------
 
-static void CycleAlgo()
-{
-    // cycle to next algorithm
-    int algoindex = currlayer->algtype + 1;
-    if (algoindex == NumAlgos()) {
-        algoindex = 0;  // go back to QuickLife
-    }
-    ChangeAlgorithm(algoindex, "xxx");
-    // unknown rule will be changed to new algo's default rule
-}
-
-// -----------------------------------------------------------------------------
-
 extern "C" {
 
 void Help()
@@ -394,7 +381,6 @@ void Help()
               '[ -- zoom out\n' +
               '] -- zoom in\n' +
               'a -- select all\n' +
-              'A -- cycle to next algorithm\n' +
               'f -- fit\n' +
               'h -- help\n' +
               'i -- toggle icon mode\n' +
@@ -542,6 +528,40 @@ void ToggleTiming()
 
 extern "C" {
 
+void AlgoChanged(int index)
+{
+    if (index >= 0 && index < NumAlgos()) {
+        ChangeAlgorithm(index, currlayer->algo->getrule());
+    } else {
+        Warning("Bug detected in AlgoChanged!");
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void ModeChanged(int index)
+{
+    switch (index) {
+        case 0: currlayer->touchmode = drawmode;    return;
+        case 1: currlayer->touchmode = pickmode;    return;
+        case 2: currlayer->touchmode = selectmode;  return;
+        case 3: currlayer->touchmode = movemode;    return;
+        case 4: currlayer->touchmode = zoominmode;  return;
+        case 5: currlayer->touchmode = zoomoutmode; return;
+    }
+    Warning("Bug detected in ModeChanged!");
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
 void ClearStatus()
 {
     ClearMessage();
@@ -567,7 +587,6 @@ static void OnCharPressed(int ch, int action)
         case '[' : ZoomOut(); break;
         case ']' : ZoomIn(); break;
         case 'a' : SelectAll(); break;
-        case 'A' : CycleAlgo(); break;
         case 'f' : Fit(); break;
         case 'h' : Help(); break;
         case 'i' : ToggleIcons(); break;
