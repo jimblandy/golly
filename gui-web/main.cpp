@@ -123,10 +123,47 @@ static void OnSurfaceChanged(int width, int height) {
 
 // -----------------------------------------------------------------------------
 
-// the following routine is declared a C function to avoid C++ name mangling
-// and make it easy to call the routine from JavaScript code
+static void StopIfGenerating()
+{
+    if (generating) {
+        StopGenerating();
+        // generating flag is now false so change button label to "Start"
+        EM_ASM (
+           Module.setButtonLabel('startStop', 'Start') ;
+        );
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+// many of the following routines are declared as C functions to avoid
+// C++ name mangling and make it easy to call them from JavaScript code
 // (see the -s EXPORTED_FUNCTIONS line in Makefile, and the buttonPress
 // code in shell.html)
+
+extern "C" {
+
+void NewUniverse()
+{
+    // undo/redo history is about to be cleared so no point calling RememberGenFinish
+    // if we're generating a (possibly large) pattern
+    bool saveundo = allowundo;
+    allowundo = false;
+    StopIfGenerating();
+    allowundo = saveundo;
+    
+    if (event_checker > 0) {
+        // try again after a short delay!!!???
+        return;
+    }
+    
+    NewPattern();
+    UpdateEverything();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
 
 extern "C" {
 
@@ -150,20 +187,9 @@ void StartStop()
 
 // -----------------------------------------------------------------------------
 
-static void StopIfGenerating()
-{
-    if (generating) {
-        StopGenerating();
-        // generating flag is now false so change button label to "Start"
-        EM_ASM (
-           Module.setButtonLabel('startStop', 'Start') ;
-        );
-    }
-}
+extern "C" {
 
-// -----------------------------------------------------------------------------
-
-static void OneGeneration()
+void Next()
 {
     StopIfGenerating();
     
@@ -173,13 +199,37 @@ static void OneGeneration()
         return;
     }
 
-    NextGeneration(false);
+    NextGeneration(false);       // advance by 1
     UpdatePatternAndStatus();
 }
 
+} // extern "C"
+
 // -----------------------------------------------------------------------------
 
-static void GoSlower()
+extern "C" {
+
+void Step()
+{
+    StopIfGenerating();
+    
+    if (event_checker > 0) {
+        // previous NextGeneration() hasn't finished
+        // try again after a short delay!!!???
+        return;
+    }
+
+    NextGeneration(true);       // advance by current step size
+    UpdatePatternAndStatus();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void GoSlower()
 {
     if (currlayer->currexpo > minexpo) {
         currlayer->currexpo--;
@@ -190,18 +240,26 @@ static void GoSlower()
     }
 }
 
+} // extern "C"
+
 // -----------------------------------------------------------------------------
 
-static void GoFaster()
+extern "C" {
+
+void GoFaster()
 {
     currlayer->currexpo++;
     SetGenIncrement();
     UpdateStatus();
 }
 
+} // extern "C"
+
 // -----------------------------------------------------------------------------
 
-static void StepBy1()
+extern "C" {
+
+void StepBy1()
 {
     // reset step exponent to 0
     currlayer->currexpo = 0;
@@ -209,17 +267,58 @@ static void StepBy1()
     UpdateStatus();
 }
 
+} // extern "C"
+
 // -----------------------------------------------------------------------------
 
-static void ZoomOut()
+extern "C" {
+
+void Reset()
+{
+    if (currlayer->algo->getGeneration() == currlayer->startgen) return;
+
+    StopIfGenerating();
+    
+    if (event_checker > 0) {
+        // try again after a short delay!!!???
+        return;
+    }
+    
+    ResetPattern();
+    UpdateEverything();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void Fit()
+{
+    FitInView(1);
+    UpdatePatternAndStatus();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void ZoomOut()
 {
     currlayer->view->unzoom();
     UpdatePatternAndStatus();
 }
 
+} // extern "C"
+
 // -----------------------------------------------------------------------------
 
-static void ZoomIn()
+extern "C" {
+
+void ZoomIn()
 {
     if (currlayer->view->getmag() < MAX_MAG) {
         currlayer->view->zoom();
@@ -229,15 +328,21 @@ static void ZoomIn()
     }
 }
 
+} // extern "C"
+
 // -----------------------------------------------------------------------------
 
-static void Scale1to1()
+extern "C" {
+
+void Scale1to1()
 {
     if (currlayer->view->getmag() != 0) {
         currlayer->view->setmag(0);
         UpdatePatternAndStatus();
     }
 }
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -254,15 +359,9 @@ static void CycleAlgo()
 
 // -----------------------------------------------------------------------------
 
-static void FitPattern()
-{
-    FitInView(1);
-    UpdatePatternAndStatus();
-}
+extern "C" {
 
-// -----------------------------------------------------------------------------
-
-static void Help()
+void Help()
 {
     // do something else eventually!!!
     EM_ASM (
@@ -291,6 +390,8 @@ static void Help()
     );
 }
 
+} // extern "C"
+
 // -----------------------------------------------------------------------------
 
 static void ToggleIconMode()
@@ -301,48 +402,11 @@ static void ToggleIconMode()
 
 // -----------------------------------------------------------------------------
 
-static void NewUniverse()
-{
-    // undo/redo history is about to be cleared so no point calling RememberGenFinish
-    // if we're generating a (possibly large) pattern
-    bool saveundo = allowundo;
-    allowundo = false;
-    StopIfGenerating();
-    allowundo = saveundo;
-    
-    if (event_checker > 0) {
-        // try again after a short delay!!!???
-        return;
-    }
-    
-    NewPattern();
-    UpdateEverything();
-}
-
-// -----------------------------------------------------------------------------
-
 static void ChangePrefs()
 {
     //!!! show some sort of modal dialog box that lets user change various settings???
     
     SavePrefs();    // where will this write GollyPrefs file???!!!
-}
-
-// -----------------------------------------------------------------------------
-
-static void Reset()
-{
-    if (currlayer->algo->getGeneration() == currlayer->startgen) return;
-
-    StopIfGenerating();
-    
-    if (event_checker > 0) {
-        // try again after a short delay!!!???
-        return;
-    }
-    
-    ResetPattern();
-    UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------
@@ -432,7 +496,7 @@ static void OnCharPressed(int ch, int action)
     ClearMessage();
     switch (ch) {
         case 13  : StartStop(); break;
-        case ' ' : OneGeneration(); break;
+        case ' ' : Next(); break;
         case '_' : GoSlower(); break;
         case '-' : GoSlower(); break;
         case '+' : GoFaster(); break;
@@ -443,7 +507,7 @@ static void OnCharPressed(int ch, int action)
         case ']' : ZoomIn(); break;
         case 'a' : SelectAll(); break;
         case 'A' : CycleAlgo(); break;
-        case 'f' : FitPattern(); break;
+        case 'f' : Fit(); break;
         case 'h' : Help(); break;
         case 'i' : ToggleIconMode(); break;
         case 'n' : NewUniverse(); break;

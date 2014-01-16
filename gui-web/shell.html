@@ -47,9 +47,25 @@
     </div>
     <textarea class="emscripten" id="output" rows="4"></textarea>
     <div class="emscripten" id="buttons">
+        <button type="button" id="new" onClick="Module.buttonPress(this)">New</button>
+        &nbsp;&nbsp;
         <button type="button" id="startStop" onClick="Module.buttonPress(this)">Start</button>
+        <button type="button" id="next" onClick="Module.buttonPress(this)">Next</button>
+        <button type="button" id="step" onClick="Module.buttonPress(this)">Step</button>
+        <button type="button" id="slower" onClick="Module.buttonPress(this)">Slower</button>
+        <button type="button" id="faster" onClick="Module.buttonPress(this)">Faster</button>
+        <button type="button" id="step1" onClick="Module.buttonPress(this)">Step=1</button>
+        <button type="button" id="reset" onClick="Module.buttonPress(this)">Reset</button>
+        &nbsp;&nbsp;
         <button type="button" id="undo" onClick="Module.buttonPress(this)">Undo</button>
         <button type="button" id="redo" onClick="Module.buttonPress(this)">Redo</button>
+        &nbsp;&nbsp;
+        <button type="button" id="fit" onClick="Module.buttonPress(this)">Fit</button>
+        <button type="button" id="zoomOut" onClick="Module.buttonPress(this)">Zoom Out</button>
+        <button type="button" id="zoomIn" onClick="Module.buttonPress(this)">Zoom In</button>
+        <button type="button" id="noScale" onClick="Module.buttonPress(this)">Scale=1:1</button>
+        &nbsp;&nbsp;
+        <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
     </div>
     <div class="emscripten_border">
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
@@ -58,6 +74,30 @@
         var Module = {
             preRun: [],
             postRun: [],
+
+            buttonPress: function(button) {
+                _ClearStatus(); // clear any status bar message
+                button.blur();  // prevent button getting focus
+                if (button.id == 'new') _NewUniverse();
+                if (button.id == 'startStop') _StartStop();
+                if (button.id == 'next') _Next();
+                if (button.id == 'step') _Step();
+                if (button.id == 'slower') _GoSlower();
+                if (button.id == 'faster') _GoFaster();
+                if (button.id == 'step1') _StepBy1();
+                if (button.id == 'reset') _Reset();
+                if (button.id == 'undo') _Undo();
+                if (button.id == 'redo') _Redo();
+                if (button.id == 'fit') _Fit();
+                if (button.id == 'zoomOut') _ZoomOut();
+                if (button.id == 'zoomIn') _ZoomIn();
+                if (button.id == 'noScale') _Scale1to1();
+                if (button.id == 'help') _Help();
+            },
+
+            setButtonLabel: function(id, label) {
+                document.getElementById(id).innerHTML = label;
+            },
             
             print: (function() {
                 var element = document.getElementById('output');
@@ -74,17 +114,6 @@
             },
             
             canvas: document.getElementById('canvas'),
-
-            buttonPress: function(button) {
-                _ClearStatus(); // clears any status bar message
-                if (button.id == 'startStop') _StartStop();
-                if (button.id == 'undo') _Undo();
-                if (button.id == 'redo') _Redo();
-            },
-
-            setButtonLabel: function(id, label) {
-                document.getElementById(id).innerHTML = label;
-            },
             
             setStatus: function(text) {
                 if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
