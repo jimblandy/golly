@@ -47,6 +47,7 @@
 extern "C" {
     extern void jsAlert(const char* msg);
     extern bool jsConfirm(const char* query);
+    extern void jsSetStatusBarColor(const char* color);
 }
 
 // -----------------------------------------------------------------------------
@@ -61,20 +62,30 @@ void UpdatePattern()
 
 // -----------------------------------------------------------------------------
 
+static int curralgo = -1;
+
 void UpdateStatus()
 {
     if (fullscreen) return;
 
     UpdateStatusLines();    // sets status1, status2, status3
 
-    // call JavaScript code to update the status bar info!!!
-    
-    // remove following lines eventually!!!???
+    // use a nicer looking status bar eventually???!!!
     // clear text area first
     EM_ASM(
-        var element = document.getElementById('output');
-        element.value = '\0';
+        var statusbar = document.getElementById('statusbar');
+        statusbar.value = '\0';
     );
+    if (curralgo != currlayer->algtype) {
+        // algo has changed so change bg color of status bar
+        curralgo = currlayer->algtype;
+        int r = algoinfo[curralgo]->statusrgb.r;
+        int g = algoinfo[curralgo]->statusrgb.g;
+        int b = algoinfo[curralgo]->statusrgb.b;
+        char rgb[32];
+        sprintf(rgb, "rgb(%d,%d,%d)", r, g, b);
+        jsSetStatusBarColor(rgb);
+    }
     printf("%s\n",status1.c_str());
     printf("%s\n",status2.c_str());
     printf("%s\n",status3.c_str());

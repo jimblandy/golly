@@ -11,4 +11,8 @@ mergeInto(LibraryManager.library, {
         return confirm(Pointer_stringify(query));
     },
 
+    jsSetStatusBarColor: function(color) {  
+        document.getElementById('statusbar').style.backgroundColor = Pointer_stringify(color);
+    },
+
 });
