@@ -15,6 +15,8 @@
         div.emscripten_border { border: 0px none; }
         /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
         canvas.emscripten { border: 0px none; }
+        .vspace { clear:both; }
+        .ht10 { height: 10px; }
     </style>
 </head>
 <body>
@@ -46,6 +48,7 @@
         <progress value="0" max="100" id="progress" hidden=1></progress>  
     </div>
     <textarea class="emscripten" id="output" rows="4"></textarea>
+    <div class="vspace ht10"></div>
     <div class="emscripten" id="buttons">
         <button type="button" id="new" onClick="Module.buttonPress(this)">New</button>
         &nbsp;&nbsp;
@@ -67,6 +70,15 @@
         &nbsp;&nbsp;
         <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
     </div>
+    <div class="vspace ht10"></div>
+    <div class="emscripten" id="checkboxes">
+        <input type="checkbox" id="grid" onClick="Module.checkboxPress(this)"><label for="grid">Grid</label>
+        &nbsp;&nbsp;
+        <input type="checkbox" id="icons" onClick="Module.checkboxPress(this)"><label for="icons">Icons</label>
+        &nbsp;&nbsp;
+        <input type="checkbox" id="time" onClick="Module.checkboxPress(this)"><label for="time">Timing</label>
+    </div>
+    <div class="vspace ht10"></div>
     <div class="emscripten_border">
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>
@@ -93,6 +105,14 @@
                 if (button.id == 'zoomIn') _ZoomIn();
                 if (button.id == 'noScale') _Scale1to1();
                 if (button.id == 'help') _Help();
+            },
+
+            checkboxPress: function(box) {
+                _ClearStatus(); // clear any status bar message
+                box.blur();     // prevent box getting focus
+                if (box.id == 'grid') _ToggleGrid();
+                if (box.id == 'icons') _ToggleIcons();
+                if (box.id == 'time') _ToggleTiming();
             },
 
             setButtonLabel: function(id, label) {

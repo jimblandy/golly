@@ -80,7 +80,8 @@ CXXFLAGS = -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip -DWEB_GUI 
     -Wall -Wextra -Wno-unused-parameter -O2 -s TOTAL_MEMORY=134217728 \
     -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', \
     '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', '_Reset', \
-    '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Help' \
+    '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Help', \
+    '_ToggleGrid', '_ToggleIcons', '_ToggleTiming' \
     ]"
 
 TARGET = golly.html

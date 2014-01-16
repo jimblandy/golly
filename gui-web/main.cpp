@@ -123,14 +123,37 @@ static void OnSurfaceChanged(int width, int height) {
 
 // -----------------------------------------------------------------------------
 
+static void InitCheckBoxes()
+{
+    // note that checkbox ids must match those in shell.html
+    
+    if (showgridlines) {
+        EM_ASM( document.getElementById('grid').checked = true; );
+    } else {
+        EM_ASM( document.getElementById('grid').checked = false; );
+    }
+    
+    if (showicons) {
+        EM_ASM( document.getElementById('icons').checked = true; );
+    } else {
+        EM_ASM( document.getElementById('icons').checked = false; );
+    }
+    
+    if (showtiming) {
+        EM_ASM( document.getElementById('time').checked = true; );
+    } else {
+        EM_ASM( document.getElementById('time').checked = false; );
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 static void StopIfGenerating()
 {
     if (generating) {
         StopGenerating();
         // generating flag is now false so change button label to "Start"
-        EM_ASM (
-           Module.setButtonLabel('startStop', 'Start') ;
-        );
+        EM_ASM( Module.setButtonLabel('startStop', 'Start'); );
     }
 }
 
@@ -172,14 +195,10 @@ void StartStop()
     if (generating) {
         StopGenerating();
         // generating flag is now false so change button label to "Start"
-        EM_ASM (
-           Module.setButtonLabel('startStop', 'Start');
-        );
+        EM_ASM( Module.setButtonLabel('startStop', 'Start'); );
     } else if (StartGenerating()) {
         // generating flag is now true so change button label to "Stop"
-        EM_ASM (
-           Module.setButtonLabel('startStop', 'Stop');
-        );
+        EM_ASM( Module.setButtonLabel('startStop', 'Stop'); );
     }
 }
 
@@ -364,7 +383,7 @@ extern "C" {
 void Help()
 {
     // do something else eventually!!!
-    EM_ASM (
+    EM_ASM(
         alert('You can use these keyboard commands:\n\n' +
               'return -- start/stop generating\n' +
               'space -- do 1 generation\n' +
@@ -391,14 +410,6 @@ void Help()
 }
 
 } // extern "C"
-
-// -----------------------------------------------------------------------------
-
-static void ToggleIconMode()
-{
-    showicons = !showicons;
-    UpdatePattern();
-}
 
 // -----------------------------------------------------------------------------
 
@@ -481,6 +492,56 @@ void Redo()
 
 extern "C" {
 
+void ToggleGrid()
+{
+    showgridlines = !showgridlines;
+    if (showgridlines) {
+        EM_ASM( document.getElementById('grid').checked = true; );
+    } else {
+        EM_ASM( document.getElementById('grid').checked = false; );
+    }
+    UpdatePattern();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void ToggleIcons()
+{
+    showicons = !showicons;
+    if (showicons) {
+        EM_ASM( document.getElementById('icons').checked = true; );
+    } else {
+        EM_ASM( document.getElementById('icons').checked = false; );
+    }
+    UpdatePattern();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void ToggleTiming()
+{
+    showtiming = !showtiming;
+    if (showtiming) {
+        EM_ASM( document.getElementById('time').checked = true; );
+    } else {
+        EM_ASM( document.getElementById('time').checked = false; );
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
 void ClearStatus()
 {
     ClearMessage();
@@ -509,7 +570,7 @@ static void OnCharPressed(int ch, int action)
         case 'A' : CycleAlgo(); break;
         case 'f' : Fit(); break;
         case 'h' : Help(); break;
-        case 'i' : ToggleIconMode(); break;
+        case 'i' : ToggleIcons(); break;
         case 'n' : NewUniverse(); break;
         case 'p' : ChangePrefs(); break;
         case 'r' : Reset(); break;
@@ -633,8 +694,7 @@ int EMSCRIPTEN_KEEPALIVE main()
     NewPattern();               // create new, empty universe
     UpdateStatus();             // show initial message
 
-    // show timing messages when generating stops!!!
-    showtiming = true;
+    InitCheckBoxes();
 
     // test bounded grid!!!
     // currlayer->algo->setrule("B3/S23:T10,6");
