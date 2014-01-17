@@ -662,6 +662,24 @@ static void OnMouseMove(int x, int y)
 
 // -----------------------------------------------------------------------------
 
+static int prevpos = 0;
+
+static void OnMouseWheel(int pos)
+{
+    int x, y;
+    glfwGetMousePos(&x, &y);
+    
+    if (pos - 2 > prevpos) {
+        ZoomInPos(x, y);
+        prevpos = pos;
+    } else if (pos + 2 < prevpos) {
+        ZoomOutPos(x, y);
+        prevpos = pos;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 static void DoFrame()
 {
     if (generating && event_checker == 0) {
@@ -729,6 +747,7 @@ int EMSCRIPTEN_KEEPALIVE main()
         glfwSetCharCallback(OnCharPressed);
         glfwSetMouseButtonCallback(OnMouseClick);
         glfwSetMousePosCallback(OnMouseMove);
+        glfwSetMouseWheelCallback(OnMouseWheel);
         emscripten_set_main_loop(DoFrame, 0, 1);
     }
 
