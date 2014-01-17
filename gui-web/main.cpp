@@ -669,10 +669,10 @@ static void OnMouseWheel(int pos)
     int x, y;
     glfwGetMousePos(&x, &y);
     
-    if (pos - 2 > prevpos) {
+    if (pos + 2 < prevpos) {
         ZoomInPos(x, y);
         prevpos = pos;
-    } else if (pos + 2 < prevpos) {
+    } else if (pos - 2 > prevpos) {
         ZoomOutPos(x, y);
         prevpos = pos;
     }
