@@ -23,4 +23,8 @@ mergeInto(LibraryManager.library, {
         document.getElementById('mode').selectedIndex = index;
     },
 
+    jsSetState: function(state) {  
+        document.getElementById('state').innerHTML = state.toString();
+    },
+
 });

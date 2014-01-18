@@ -50,6 +50,7 @@ extern "C" {
     extern void jsSetStatusBarColor(const char* color);
     extern void jsSetAlgo(int index);
     extern void jsSetMode(int index);
+    extern void jsSetState(int state);
 }
 
 // -----------------------------------------------------------------------------
@@ -144,8 +145,11 @@ void UpdateEditBar()
     //!!! undobutton.setEnabled(CanUndo());
     //!!! redobutton.setEnabled(CanRedo());
 
-    // show current mode
+    // show current cursor mode
     jsSetMode(currlayer->touchmode);
+
+    // show current drawing state
+    jsSetState(currlayer->drawingstate);
 }
 
 // -----------------------------------------------------------------------------

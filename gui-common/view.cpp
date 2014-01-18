@@ -1078,7 +1078,7 @@ void PasteClipboard()
             ErrorMessage("Clipboard pattern is too big.");
         } else {
             #ifdef WEB_GUI
-                DisplayMessage("Drag paste image to desired location then NOT SURE WHAT!!!");
+                DisplayMessage("Drag paste image to desired location then right-click on it.");
             #else
                 // Android and iOS devices use a touch screen
                 DisplayMessage("Drag paste image to desired location then tap Paste button.");

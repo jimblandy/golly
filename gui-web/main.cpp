@@ -52,6 +52,15 @@
 
 // -----------------------------------------------------------------------------
 
+// the following JavaScript routines are implemented in jslib.js:
+
+extern "C" {
+    extern void jsSetMode(int index);
+    extern void jsSetState(int state);
+}
+
+// -----------------------------------------------------------------------------
+
 static int currwd = 960, currht = 960;      // initial size of viewport
 static double last_time;                    // when NextGeneration was last called
 
@@ -567,18 +576,46 @@ static void ToggleCursorMode()
     // state of shift key has changed so may need to toggle cursor mode
     if (currlayer->touchmode == drawmode) {
         currlayer->touchmode = pickmode;
-        UpdateEditBar();
+        jsSetMode(currlayer->touchmode);
     } else if (currlayer->touchmode == pickmode) {
         currlayer->touchmode = drawmode;
-        UpdateEditBar();
+        jsSetMode(currlayer->touchmode);
     } else if (currlayer->touchmode == zoominmode) {
         currlayer->touchmode = zoomoutmode;
-        UpdateEditBar();
+        jsSetMode(currlayer->touchmode);
     } else if (currlayer->touchmode == zoomoutmode) {
         currlayer->touchmode = zoominmode;
-        UpdateEditBar();
+        jsSetMode(currlayer->touchmode);
     }
 }
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void DecState()
+{
+    if (currlayer->drawingstate > 0) {
+        currlayer->drawingstate--;
+        jsSetState(currlayer->drawingstate);
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void IncState()
+{
+    if (currlayer->drawingstate < currlayer->algo->NumCellStates() - 1) {
+        currlayer->drawingstate++;
+        jsSetState(currlayer->drawingstate);
+    }
+}
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 

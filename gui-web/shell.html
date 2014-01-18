@@ -16,7 +16,8 @@
         /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
         canvas.emscripten { border: 0px none; }
         .vspace { clear:both; }
-        .ht10 { height: 10px; }
+        .ht10 { height:10px; }
+        .statespan { width:24px; display:inline-block; }
     </style>
 </head>
 <body>
@@ -87,7 +88,7 @@
         &nbsp;&nbsp;
         <label for="time">Timing</label><input type="checkbox" id="time" onClick="Module.checkboxPress(this)">
         &nbsp;&nbsp;
-        <label for="mode">Mode:</label>
+        <label for="mode">Cursor:</label>
         <select id="mode" onchange="Module.selectionChanged(this)">
             <option>Draw</option>
             <option>Pick</option>
@@ -96,6 +97,10 @@
             <option>Zoom In</option>
             <option>Zoom Out</option>
         </select>
+        &nbsp;&nbsp;
+        <span>State:</span> <span class="statespan" id="state">1</span>
+        <button type="button" id="decState" onClick="Module.buttonPress(this)"> &lt; </button>
+        <button type="button" id="incState" onClick="Module.buttonPress(this)"> &gt; </button>
     </div>
     <div class="vspace ht10"></div>
     <div class="emscripten_border">
@@ -124,6 +129,8 @@
                 if (button.id == 'zoomIn') _ZoomIn();
                 if (button.id == 'noScale') _Scale1to1();
                 if (button.id == 'help') _Help();
+                if (button.id == 'decState') _DecState();
+                if (button.id == 'incState') _IncState();
             },
 
             checkboxPress: function(box) {
