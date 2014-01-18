@@ -56,7 +56,6 @@ void FitInView(int force);
 void TouchBegan(int x, int y);
 void TouchMoved(int x, int y);
 void TouchEnded();
-int SmallScroll(int xysize);
 bool CopyRect(int top, int left, int bottom, int right,
               lifealgo* srcalgo, lifealgo* destalgo,
               bool erasesrc, const char* progmsg);
@@ -90,5 +89,15 @@ bool PointInPasteImage(int x, int y);
 bool PointInSelection(int x, int y);
 bool PointInGrid(int x, int y);
 bool CellInGrid(const bigint& x, const bigint& y);
+void PanUp(int amount);
+void PanDown(int amount);
+void PanLeft(int amount);
+void PanRight(int amount);
+void PanNE();
+void PanNW();
+void PanSE();
+void PanSW();
+int SmallScroll(int xysize);
+int BigScroll(int xysize);
 
 #endif

@@ -728,30 +728,6 @@ void TouchEnded()
 
 // -----------------------------------------------------------------------------
 
-int SmallScroll(int xysize)
-{
-    int amount;
-    int mag = currlayer->view->getmag();
-    if (mag > 0) {
-        // scroll an integral number of cells (1 cell = 2^mag pixels)
-        if (mag < 3) {
-            amount = ((xysize >> mag) / 20) << mag;
-            if (amount == 0) amount = 1 << mag;
-            return amount;
-        } else {
-            // grid lines are visible so scroll by only 1 cell
-            return 1 << mag;
-        }
-    } else {
-        // scroll by approx 5% of current wd/ht
-        amount = xysize / 20;
-        if (amount == 0) amount = 1;
-        return amount;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 bool CopyRect(int itop, int ileft, int ibottom, int iright,
               lifealgo* srcalgo, lifealgo* destalgo,
               bool erasesrc, const char* progmsg)
@@ -1505,4 +1481,131 @@ void ZoomOutPos(int x, int y)
     TestAutoFit();
     currlayer->view->unzoom(x, y);
     UpdatePatternAndStatus();
+}
+
+// -----------------------------------------------------------------------------
+
+void PanUp(int amount)
+{
+    TestAutoFit();
+    currlayer->view->move(0, -amount);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PanDown(int amount)
+{
+    TestAutoFit();
+    currlayer->view->move(0, amount);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PanLeft(int amount)
+{
+    TestAutoFit();
+    currlayer->view->move(-amount, 0);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PanRight(int amount)
+{
+    TestAutoFit();
+    currlayer->view->move(amount, 0);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PanNE()
+{
+    TestAutoFit();
+    int xamount = SmallScroll(currlayer->view->getwidth());
+    int yamount = SmallScroll(currlayer->view->getheight());
+    int amount = (xamount < yamount) ? xamount : yamount;
+    currlayer->view->move(amount, -amount);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PanNW()
+{
+    TestAutoFit();
+    int xamount = SmallScroll(currlayer->view->getwidth());
+    int yamount = SmallScroll(currlayer->view->getheight());
+    int amount = (xamount < yamount) ? xamount : yamount;
+    currlayer->view->move(-amount, -amount);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PanSE()
+{
+    TestAutoFit();
+    int xamount = SmallScroll(currlayer->view->getwidth());
+    int yamount = SmallScroll(currlayer->view->getheight());
+    int amount = (xamount < yamount) ? xamount : yamount;
+    currlayer->view->move(amount, amount);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PanSW()
+{
+    TestAutoFit();
+    int xamount = SmallScroll(currlayer->view->getwidth());
+    int yamount = SmallScroll(currlayer->view->getheight());
+    int amount = (xamount < yamount) ? xamount : yamount;
+    currlayer->view->move(-amount, amount);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+int SmallScroll(int xysize)
+{
+    int amount;
+    int mag = currlayer->view->getmag();
+    if (mag > 0) {
+        // scroll an integral number of cells (1 cell = 2^mag pixels)
+        if (mag < 3) {
+            amount = ((xysize >> mag) / 20) << mag;
+            if (amount == 0) amount = 1 << mag;
+            return amount;
+        } else {
+            // grid lines are visible so scroll by only 1 cell
+            return 1 << mag;
+        }
+    } else {
+        // scroll by approx 5% of current wd/ht
+        amount = xysize / 20;
+        if (amount == 0) amount = 1;
+        return amount;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+int BigScroll(int xysize)
+{
+    int amount;
+    int mag = currlayer->view->getmag();
+    if (mag > 0) {
+        // scroll an integral number of cells (1 cell = 2^mag pixels)
+        amount = ((xysize >> mag) * 9 / 10) << mag;
+        if (amount == 0) amount = 1 << mag;
+        return amount;
+    } else {
+        // scroll by approx 90% of current wd/ht
+        amount = xysize * 9 / 10;
+        if (amount == 0) amount = 1;
+        return amount;
+    }
 }

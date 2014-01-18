@@ -391,7 +391,8 @@ void Help()
               'v -- paste\n' +
               'V -- cancel paste\n' +
               'z -- undo\n' +
-              'Z -- redo\n'
+              'Z -- redo\n' +
+              'arrow keys -- scrolling'
              );
     );
 }
@@ -561,6 +562,26 @@ void ModeChanged(int index)
 
 // -----------------------------------------------------------------------------
 
+static void ToggleCursorMode()
+{
+    // state of shift key has changed so may need to toggle cursor mode
+    if (currlayer->touchmode == drawmode) {
+        currlayer->touchmode = pickmode;
+        UpdateEditBar();
+    } else if (currlayer->touchmode == pickmode) {
+        currlayer->touchmode = drawmode;
+        UpdateEditBar();
+    } else if (currlayer->touchmode == zoominmode) {
+        currlayer->touchmode = zoomoutmode;
+        UpdateEditBar();
+    } else if (currlayer->touchmode == zoomoutmode) {
+        currlayer->touchmode = zoominmode;
+        UpdateEditBar();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 extern "C" {
 
 void ClearStatus()
@@ -572,10 +593,72 @@ void ClearStatus()
 
 // -----------------------------------------------------------------------------
 
-static void OnCharPressed(int ch, int action)
+static bool alt_down = false;       // alt/option key is currently pressed?
+static bool ctrl_down = false;      // ctrl key is currently pressed?
+static bool shift_down = false;     // shift key is currently pressed?
+
+static void OnKeyPressed(int key, int action)
 {
+    if (action == GLFW_PRESS) ClearMessage();
+    // DEBUG: printf("key=%i action=%i\n", key, action); return;
+    
+    // first check for modifier keys (alt/ctrl/shift)
+    if (key == GLFW_KEY_LALT || key == GLFW_KEY_RALT) {
+        alt_down = action == GLFW_PRESS;
+        return;
+    } else if (key == GLFW_KEY_LCTRL || key == GLFW_KEY_RCTRL) {
+        ctrl_down = action == GLFW_PRESS;
+        return;
+    } else if (key == GLFW_KEY_LSHIFT || key == GLFW_KEY_RSHIFT) {
+        bool oldshift = shift_down;
+        shift_down = action == GLFW_PRESS;
+        if (oldshift != shift_down) ToggleCursorMode();
+        return;
+    }
+
     if (action != GLFW_PRESS) return;
-    ClearMessage();
+    // a non-modifer key was pressed
+    
+    // check for arrow keys and do panning
+    if (key == GLFW_KEY_UP) {
+        if (shift_down)
+            PanNE();
+        else
+            PanUp( SmallScroll(currlayer->view->getheight()) );
+        return;
+    } else if (key == GLFW_KEY_DOWN) {
+        if (shift_down)
+            PanSW();
+        else
+            PanDown( SmallScroll(currlayer->view->getheight()) );
+        return;
+    } else if (key == GLFW_KEY_LEFT) {
+        if (shift_down)
+            PanNW();
+        else
+            PanLeft( SmallScroll(currlayer->view->getwidth()) );
+        return;
+    } else if (key == GLFW_KEY_RIGHT) {
+        if (shift_down)
+            PanSE();
+        else
+            PanRight( SmallScroll(currlayer->view->getwidth()) );
+        return;
+    }
+    
+    int ch = key;
+    if (key >= 'A' && key <= 'Z' && !shift_down) {
+        // convert to lowercase
+        ch = ch + 32;
+    }
+    
+    // fix bugs???!!!
+    if (key == 219) ch = '[';   // on Firefox, Chrome and Safari
+    if (key == 221) ch = ']';   // on Firefox, Chrome and Safari
+    if (key == 189) ch = '-';   // on Chrome and Safari
+    if (key == 187) ch = '=';   // on Chrome and Safari
+    if (key == 173) ch = '-';   // on Firefox
+    
     switch (ch) {
         case 13  : StartStop(); break;
         case ' ' : Next(); break;
@@ -600,18 +683,7 @@ static void OnCharPressed(int ch, int action)
         case 'z' : Undo(); break;
         case 'Z' : Redo(); break;
     }
-    // note that arrow keys aren't detected here!!! may need to use OnKeyPressed???
-    // DEBUG: printf("char=%c (%i)\n", ch, ch);
 }
-
-// -----------------------------------------------------------------------------
-
-/* use this callback???!!! it returns strange results for keys like '[' and ']'
-static void OnKeyPressed(int key, int action)
-{
-    printf("key=%i action=%i\n", key, action);
-}
-*/
 
 // -----------------------------------------------------------------------------
 
@@ -624,9 +696,23 @@ static void OnMouseClick(int button, int action)
     if (action == GLFW_PRESS) {
         int x, y;
         glfwGetMousePos(&x, &y);
-        // DEBUG: printf("click at x=%d y=%d\n", x, y);
+        // DEBUG: printf("click at x=%d y=%d\n", x, y); return;
         
         ClearMessage();
+        
+        // test for ctrl/right click in paste image or selection;
+        // button test should be for GLFW_MOUSE_BUTTON_RIGHT which is defined to be 1 in glfw.h
+        // but I actually get 2 when right button is pressed in all my browsers (report bug!!!)
+        if (button == 2 || ctrl_down) {
+            if (waitingforpaste && PointInPasteImage(x, y)) {
+                Warning("Not yet implemented!!!\n\nShow pop-up menu with various paste actions.");
+                ctrl_down = false;
+            } else if (SelectionExists() && PointInSelection(x, y)) {
+                Warning("Not yet implemented!!!\n\nShow pop-up menu with various selection actions.");
+                ctrl_down = false;
+            }
+            return;
+        }
         
         // check for click outside viewport
         if (x < 0 || x >= currwd || y < 0 || y >= currht) {
@@ -743,8 +829,7 @@ int EMSCRIPTEN_KEEPALIVE main()
     if (InitGL() == GL_TRUE) {
         OnSurfaceCreated();
         OnSurfaceChanged(currwd, currht);
-        //!!!??? glfwSetKeyCallback(OnKeyPressed);
-        glfwSetCharCallback(OnCharPressed);
+        glfwSetKeyCallback(OnKeyPressed);
         glfwSetMouseButtonCallback(OnMouseClick);
         glfwSetMousePosCallback(OnMouseMove);
         glfwSetMouseWheelCallback(OnMouseWheel);
