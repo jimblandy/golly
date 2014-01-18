@@ -68,8 +68,24 @@ static double last_time;                    // when NextGeneration was last call
 
 static void InitPaths()
 {
-    //!!! set tempdir, supplieddir, etc
-    
+    userdir = "/UserData/";     // ???!!!
+
+    savedir = userdir + "Saved/";
+    //???!!! CreateSubdir(savedir);
+
+    downloaddir = userdir + "Downloads/";
+    //???!!! CreateSubdir(downloaddir);
+
+    userrules = userdir + "Rules/";
+    //???!!! CreateSubdir(userrules);
+
+    // assume supplied patterns, rules, help are embedded inside golly.js ???!!!
+    supplieddir = "/";
+    patternsdir = supplieddir + "Patterns/";
+    rulesdir = supplieddir + "Rules/";
+    helpdir = supplieddir + "Help/";
+
+    tempdir = "";
     clipfile = tempdir + "golly_clipboard";
     prefsfile = "GollyPrefs";                   // where will this be saved???
 }
@@ -395,6 +411,7 @@ void Help()
               'h -- help\n' +
               'i -- toggle icon mode\n' +
               'n -- new (empty) universe\n' +
+              'o -- open a supplied pattern\n' +
               'r -- reset\n' +
               'R -- random pattern\n' +
               'v -- paste\n' +
@@ -630,6 +647,17 @@ void ClearStatus()
 
 // -----------------------------------------------------------------------------
 
+static void OpenTest()
+{
+    // test opening supplied patterns:
+    // OpenFile("/Patterns/Life/Breeders/spacefiller.rle");     // .rle is ok
+    // OpenFile("/Patterns/HashLife/jagged.mc");                // .mc is ok
+    // OpenFile("/Patterns/HashLife/metapixel-galaxy.mc.gz");   // .gz is ok
+    OpenFile("/Patterns/Loops/Evoloop.rle");                 // loads /Rules/Evoloop.rule ok
+}
+
+// -----------------------------------------------------------------------------
+
 static bool alt_down = false;       // alt/option key is currently pressed?
 static bool ctrl_down = false;      // ctrl key is currently pressed?
 static bool shift_down = false;     // shift key is currently pressed?
@@ -712,6 +740,7 @@ static void OnKeyPressed(int key, int action)
         case 'h' : Help(); break;
         case 'i' : ToggleIcons(); break;
         case 'n' : NewUniverse(); break;
+        case 'o' : OpenTest(); break;
         case 'p' : ChangePrefs(); break;
         case 'r' : Reset(); break;
         case 'R' : RandomPattern(); break;

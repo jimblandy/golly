@@ -187,12 +187,13 @@ local void init_linkedlist(linkedlist_data* ll)
     ll->first_block = ll->last_block = NULL;
 }
 
+/* AKT: not used
 local void free_linkedlist(linkedlist_data* ll)
 {
     free_datablock(ll->first_block);
     ll->first_block = ll->last_block = NULL;
 }
-
+*/
 
 local int add_data_in_datablock(
     linkedlist_data* ll,
@@ -873,7 +874,7 @@ extern int ZEXPORT zipOpenNewFileInZip3 (
         unsigned char bufHead[RAND_HEAD_LEN];
         unsigned int sizeHead;
         zi->ci.encrypt = 1;
-        zi->ci.pcrc_32_tab = get_crc_table();
+        zi->ci.pcrc_32_tab = (const unsigned long *)get_crc_table();
         /*init_keys(password,zi->ci.keys,zi->ci.pcrc_32_tab);*/
 
         sizeHead=crypthead(password,bufHead,RAND_HEAD_LEN,zi->ci.keys,zi->ci.pcrc_32_tab,crcForCrypting);

@@ -35,7 +35,22 @@ SOURCES = main.cpp webcalls.cpp \
     ../gui-common/view.cpp \
     ../gui-common/MiniZip/ioapi.c \
     ../gui-common/MiniZip/unzip.c \
-    ../gui-common/MiniZip/zip.c
+    ../gui-common/MiniZip/zip.c \
+    zlib/adler32.c \
+    zlib/compress.c \
+    zlib/crc32.c \
+    zlib/deflate.c \
+    zlib/gzclose.c \
+    zlib/gzlib.c \
+    zlib/gzread.c \
+    zlib/gzwrite.c \
+    zlib/infback.c \
+    zlib/inffast.c \
+    zlib/inflate.c \
+    zlib/inftrees.c \
+    zlib/trees.c \
+    zlib/uncompr.c \
+    zlib/zutil.c
 
 OBJECTS = main.o webcalls.o \
     ../gollybase/bigint.o \
@@ -71,18 +86,29 @@ OBJECTS = main.o webcalls.o \
     ../gui-common/view.o \
     ../gui-common/MiniZip/ioapi.o \
     ../gui-common/MiniZip/unzip.o \
-    ../gui-common/MiniZip/zip.o
+    ../gui-common/MiniZip/zip.o \
+    zlib/adler32.o \
+    zlib/compress.o \
+    zlib/crc32.o \
+    zlib/deflate.o \
+    zlib/gzclose.o \
+    zlib/gzlib.o \
+    zlib/gzread.o \
+    zlib/gzwrite.o \
+    zlib/infback.o \
+    zlib/inffast.o \
+    zlib/inflate.o \
+    zlib/inftrees.o \
+    zlib/trees.o \
+    zlib/uncompr.o \
+    zlib/zutil.o
 
-# note that using -O2 results in a much smaller golly.js and no .map file;
-# better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???
+CFLAGS = -Izlib -Wall -Wextra -Wno-unused-parameter -Wno-implicit-function-declaration -O2
 
-CXXFLAGS = -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip -DWEB_GUI \
-    -Wall -Wextra -Wno-unused-parameter -O2 -s TOTAL_MEMORY=134217728 \
-    -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', \
-    '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', '_Reset', \
-    '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Help', \
-    '_ToggleGrid', '_ToggleIcons', '_ToggleTiming', '_AlgoChanged', '_ModeChanged', \
-    '_DecState', '_IncState' ]"
+CXXFLAGS = -Izlib -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip -DZLIB -DWEB_GUI \
+    -Wall -Wextra -Wno-unused-parameter -O2
+
+# note that using -O2 results in a much smaller golly.js and no .map file
 
 TARGET = golly.html
 
@@ -90,7 +116,16 @@ all: $(TARGET)
 
 $(TARGET): $(OBJECTS) shell.html
 	$(CXX) $(CXXFLAGS) --js-library jslib.js --shell-file shell.html \
-	-o $@ $(LDFLAGS) $(OBJECTS)
+    --embed-file ../Patterns@/Patterns --embed-file ../Rules@/Rules \
+    -s TOTAL_MEMORY=134217728 \
+    -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', \
+    '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', '_Reset', \
+    '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Help', \
+    '_ToggleGrid', '_ToggleIcons', '_ToggleTiming', '_AlgoChanged', '_ModeChanged', \
+    '_DecState', '_IncState' ]" \
+    -o $@ $(LDFLAGS) $(OBJECTS)
+
+# better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???
 
 clean:
 	$(RM) $(OBJECTS) $(TARGET) golly.js
@@ -111,7 +146,8 @@ main.o: main.cpp ../gollybase/bigint.h ../gollybase/lifealgo.h \
   ../gui-common/algos.h ../gui-common/utils.h ../gui-common/prefs.h \
   ../gui-common/layer.h ../gui-common/select.h ../gui-common/control.h \
   ../gui-common/file.h ../gollybase/writepattern.h ../gui-common/view.h \
-  ../gui-common/status.h ../gui-common/render.h webcalls.h
+  ../gui-common/status.h ../gui-common/undo.h ../gui-common/render.h \
+  webcalls.h
 webcalls.o: webcalls.cpp ../gui-common/utils.h ../gui-common/algos.h \
   ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
@@ -177,7 +213,8 @@ qlifedraw.o: ../gollybase/qlifedraw.cpp ../gollybase/qlifealgo.h \
 readpattern.o: ../gollybase/readpattern.cpp ../gollybase/readpattern.h \
   ../gollybase/bigint.h ../gollybase/lifealgo.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
-  ../gollybase/platform.h ../gollybase/liferules.h ../gollybase/util.h
+  ../gollybase/platform.h ../gollybase/liferules.h ../gollybase/util.h \
+  zlib/zlib.h zlib/zconf.h
 ruleloaderalgo.o: ../gollybase/ruleloaderalgo.cpp \
   ../gollybase/ruleloaderalgo.h ../gollybase/ghashbase.h \
   ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
@@ -204,7 +241,8 @@ viewport.o: ../gollybase/viewport.cpp ../gollybase/viewport.h \
 writepattern.o: ../gollybase/writepattern.cpp ../gollybase/writepattern.h \
   ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
-  ../gollybase/readpattern.h ../gollybase/platform.h ../gollybase/util.h
+  ../gollybase/readpattern.h ../gollybase/platform.h ../gollybase/util.h \
+  zlib/zlib.h zlib/zconf.h
 algos.o: ../gui-common/algos.cpp ../gollybase/bigint.h \
   ../gollybase/lifealgo.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
@@ -227,8 +265,9 @@ control.o: ../gui-common/control.cpp ../gollybase/bigint.h \
   ../gui-common/layer.h ../gui-common/select.h ../gui-common/view.h \
   ../gui-common/undo.h ../gui-common/control.h webcalls.h
 file.o: ../gui-common/file.cpp webcalls.h ../gui-common/MiniZip/zip.h \
-  ../gui-common/MiniZip/ioapi.h ../gui-common/MiniZip/unzip.h \
-  ../gollybase/bigint.h ../gollybase/lifealgo.h ../gollybase/viewport.h \
+  zlib/zlib.h zlib/zconf.h ../gui-common/MiniZip/ioapi.h \
+  ../gui-common/MiniZip/unzip.h ../gollybase/bigint.h \
+  ../gollybase/lifealgo.h ../gollybase/viewport.h \
   ../gollybase/liferender.h ../gollybase/lifepoll.h \
   ../gollybase/readpattern.h ../gollybase/platform.h \
   ../gollybase/qlifealgo.h ../gollybase/liferules.h \
@@ -297,8 +336,32 @@ view.o: ../gui-common/view.cpp ../gollybase/bigint.h \
   ../gui-common/select.h ../gui-common/algos.h ../gui-common/layer.h \
   ../gui-common/control.h ../gui-common/file.h \
   ../gollybase/writepattern.h ../gui-common/view.h webcalls.h
-ioapi.o: ../gui-common/MiniZip/ioapi.c ../gui-common/MiniZip/ioapi.h
-unzip.o: ../gui-common/MiniZip/unzip.c ../gui-common/MiniZip/unzip.h \
-  ../gui-common/MiniZip/ioapi.h ../gui-common/MiniZip/crypt.h
-zip.o: ../gui-common/MiniZip/zip.c ../gui-common/MiniZip/zip.h \
-  ../gui-common/MiniZip/ioapi.h ../gui-common/MiniZip/crypt.h
+ioapi.o: ../gui-common/MiniZip/ioapi.c zlib/zlib.h zlib/zconf.h \
+  ../gui-common/MiniZip/ioapi.h
+unzip.o: ../gui-common/MiniZip/unzip.c zlib/zlib.h zlib/zconf.h \
+  ../gui-common/MiniZip/unzip.h ../gui-common/MiniZip/ioapi.h \
+  ../gui-common/MiniZip/crypt.h
+zip.o: ../gui-common/MiniZip/zip.c zlib/zlib.h zlib/zconf.h \
+  ../gui-common/MiniZip/zip.h ../gui-common/MiniZip/ioapi.h \
+  ../gui-common/MiniZip/crypt.h
+adler32.o: zlib/adler32.c zlib/zutil.h zlib/zlib.h zlib/zconf.h
+compress.o: zlib/compress.c zlib/zlib.h zlib/zconf.h
+crc32.o: zlib/crc32.c zlib/zutil.h zlib/zlib.h zlib/zconf.h zlib/crc32.h
+deflate.o: zlib/deflate.c zlib/deflate.h zlib/zutil.h zlib/zlib.h \
+  zlib/zconf.h
+gzclose.o: zlib/gzclose.c zlib/gzguts.h zlib/zlib.h zlib/zconf.h
+gzlib.o: zlib/gzlib.c zlib/gzguts.h zlib/zlib.h zlib/zconf.h
+gzread.o: zlib/gzread.c zlib/gzguts.h zlib/zlib.h zlib/zconf.h
+gzwrite.o: zlib/gzwrite.c zlib/gzguts.h zlib/zlib.h zlib/zconf.h
+infback.o: zlib/infback.c zlib/zutil.h zlib/zlib.h zlib/zconf.h \
+  zlib/inftrees.h zlib/inflate.h zlib/inffast.h zlib/inffixed.h
+inffast.o: zlib/inffast.c zlib/zutil.h zlib/zlib.h zlib/zconf.h \
+  zlib/inftrees.h zlib/inflate.h zlib/inffast.h
+inflate.o: zlib/inflate.c zlib/zutil.h zlib/zlib.h zlib/zconf.h \
+  zlib/inftrees.h zlib/inflate.h zlib/inffast.h zlib/inffixed.h
+inftrees.o: zlib/inftrees.c zlib/zutil.h zlib/zlib.h zlib/zconf.h \
+  zlib/inftrees.h
+trees.o: zlib/trees.c zlib/deflate.h zlib/zutil.h zlib/zlib.h \
+  zlib/zconf.h zlib/trees.h
+uncompr.o: zlib/uncompr.c zlib/zlib.h zlib/zconf.h
+zutil.o: zlib/zutil.c zlib/zutil.h zlib/zlib.h zlib/zconf.h zlib/gzguts.h
