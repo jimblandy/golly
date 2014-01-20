@@ -116,7 +116,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJECTS) shell.html
 	$(CXX) $(CXXFLAGS) --js-library jslib.js --shell-file shell.html \
-    --embed-file ../Patterns@/Patterns --embed-file ../Rules@/Rules \
+    --preload-file ../Patterns@/Patterns --preload-file ../Rules@/Rules \
     -s TOTAL_MEMORY=134217728 \
     -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', \
     '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', '_Reset', \
@@ -128,7 +128,7 @@ $(TARGET): $(OBJECTS) shell.html
 # better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???
 
 clean:
-	$(RM) $(OBJECTS) $(TARGET) golly.js
+	$(RM) $(OBJECTS) $(TARGET) golly.js golly.data
 
 depend:
 	@$(CXX) $(CXXFLAGS) -MM $(SOURCES)

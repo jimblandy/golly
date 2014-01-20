@@ -61,8 +61,12 @@ extern "C" {
 
 // -----------------------------------------------------------------------------
 
-static int currwd = 960, currht = 960;      // initial size of viewport
-static double last_time;                    // when NextGeneration was last called
+static int currwd = 960, currht = 960;  // initial size of viewport
+static double last_time;                // when NextGeneration was last called
+
+static bool alt_down = false;           // alt/option key is currently pressed?
+static bool ctrl_down = false;          // ctrl key is currently pressed?
+static bool shift_down = false;         // shift key is currently pressed?
 
 // -----------------------------------------------------------------------------
 
@@ -439,6 +443,11 @@ static void ChangePrefs()
 static void RandomPattern()
 {
     NewUniverse();
+    
+    // following hack is needed because we use shift-R to call RandomPattern,
+    // so we want ToggleCursorMode to restore drawmode when shift key is released
+    if (shift_down) currlayer->touchmode = pickmode;
+    
     currlayer->currsel.SetRect(-10, -10, 20, 20);
     currlayer->currsel.RandomFill();
     currlayer->currsel.Deselect();
@@ -649,6 +658,8 @@ void ClearStatus()
 
 static void OpenTest()
 {
+    StopIfGenerating();
+    
     // test opening supplied patterns:
     // OpenFile("/Patterns/Life/Breeders/spacefiller.rle");     // .rle is ok
     // OpenFile("/Patterns/HashLife/jagged.mc");                // .mc is ok
@@ -657,10 +668,6 @@ static void OpenTest()
 }
 
 // -----------------------------------------------------------------------------
-
-static bool alt_down = false;       // alt/option key is currently pressed?
-static bool ctrl_down = false;      // ctrl key is currently pressed?
-static bool shift_down = false;     // shift key is currently pressed?
 
 static void OnKeyPressed(int key, int action)
 {

@@ -1,5 +1,5 @@
 // The following JavaScript routines can be called from C++ code (see webcalls.cpp).
-// Makefile adds this file via the --js-library option.
+// Makefile merges these routines into golly.js via the --js-library option.
 
 mergeInto(LibraryManager.library, {
 
