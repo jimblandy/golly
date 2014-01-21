@@ -57,6 +57,7 @@
 extern "C" {
     extern void jsSetMode(int index);
     extern void jsSetState(int state);
+    extern const char* jsSetRule(const char* oldrule);
 }
 
 // -----------------------------------------------------------------------------
@@ -639,6 +640,20 @@ void IncState()
         currlayer->drawingstate++;
         jsSetState(currlayer->drawingstate);
     }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void SetRule()
+{
+    StopIfGenerating();
+    std::string newrule = jsSetRule(currlayer->algo->getrule());
+    // newrule is empty if given rule was invalid
+    if (newrule.length() > 0) ChangeRule(newrule);
 }
 
 } // extern "C"

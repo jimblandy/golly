@@ -81,6 +81,7 @@
             <option>JvN</option>
             <option>RuleLoader</option>
         </select>
+        <button type="button" id="rule" onClick="Module.buttonPress(this)">Rule...</button>
         &nbsp;&nbsp;
         <label for="grid">Grid</label><input type="checkbox" id="grid" onClick="Module.checkboxPress(this)">
         &nbsp;&nbsp;
@@ -129,6 +130,7 @@
                 if (button.id == 'zoomIn') _ZoomIn();
                 if (button.id == 'noScale') _Scale1to1();
                 if (button.id == 'help') _Help();
+                if (button.id == 'rule') _SetRule();
                 if (button.id == 'decState') _DecState();
                 if (button.id == 'incState') _IncState();
             },

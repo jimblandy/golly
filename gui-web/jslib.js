@@ -3,28 +3,37 @@
 
 mergeInto(LibraryManager.library, {
 
-    jsAlert: function(msg) {  
+    jsAlert: function(msg) {
         alert(Pointer_stringify(msg));
     },
 
-    jsConfirm: function(query) {  
+    jsConfirm: function(query) {
         return confirm(Pointer_stringify(query));
     },
 
-    jsSetStatusBarColor: function(color) {  
+    jsSetStatusBarColor: function(color) {
         document.getElementById('statusbar').style.backgroundColor = Pointer_stringify(color);
     },
 
-    jsSetAlgo: function(index) {  
+    jsSetAlgo: function(index) {
         document.getElementById('algo').selectedIndex = index;
     },
 
-    jsSetMode: function(index) {  
+    jsSetMode: function(index) {
         document.getElementById('mode').selectedIndex = index;
     },
 
-    jsSetState: function(state) {  
+    jsSetState: function(state) {
         document.getElementById('state').innerHTML = state.toString();
+    },
+
+    jsSetRule: function(oldrule) {
+        var newrule = prompt("Type in a new rule:", Pointer_stringify(oldrule));
+        if (newrule == null) {
+            return allocate(intArrayFromString("\0"), 'i8', ALLOC_STACK);
+        } else {
+            return allocate(intArrayFromString(newrule), 'i8', ALLOC_STACK);
+        }
     },
 
 });

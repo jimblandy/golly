@@ -120,7 +120,7 @@ $(TARGET): $(OBJECTS) shell.html
     -s TOTAL_MEMORY=134217728 \
     -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', \
     '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', '_Reset', \
-    '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Help', \
+    '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Help', '_SetRule', \
     '_ToggleGrid', '_ToggleIcons', '_ToggleTiming', '_AlgoChanged', '_ModeChanged', \
     '_DecState', '_IncState' ]" \
     -o $@ $(LDFLAGS) $(OBJECTS)
