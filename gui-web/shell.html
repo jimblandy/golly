@@ -13,11 +13,42 @@
         textarea.emscripten { font-family: monospace; width: 960px; resize: none; }
         div.emscripten { text-align: center; }
         div.emscripten_border { border: 0px none; }
-        /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+        /* the canvas must not have any border or padding, or mouse coords will be wrong */
         canvas.emscripten { border: 0px none; }
-        .vspace { clear:both; }
-        .ht10 { height:10px; }
+        .vspace { clear:both; height:10px; }
         .statespan { width:24px; display:inline-block; }
+        #pastemenu {
+         	position: absolute;
+            visibility: hidden;
+            background: #FEE;       /* light red to match paste image */
+            border: 1px solid #000;
+        }
+        #pastemenu span {
+         	position: relative;
+            display: block;
+            padding: 5px 10px;
+            font: bold 12px arial;
+        }
+	    #pastemenu span:hover {
+	    	background: #000;
+		    color: #FFF;
+		}
+        #selectionmenu {
+         	position: absolute;
+            visibility: hidden;
+            background: #DFD;       /* light green to match selection */
+            border: 1px solid #000;
+        }
+        #selectionmenu span {
+         	position: relative;
+            display: block;
+            padding: 5px 10px;
+            font: bold 12px arial;
+        }
+	    #selectionmenu span:hover {
+	    	background: #000;
+		    color: #FFF;
+		}
     </style>
 </head>
 <body>
@@ -44,12 +75,37 @@
         }
         check_browser();
     </script>
+    <div id="pastemenu" oncontextmenu="event.preventDefault()">
+    <span onclick="_PasteAction(0);">Abort Paste</span>
+    <span onclick="_PasteAction(1);" id="pastemode">Paste Here</span>
+    <span onclick="_PasteAction(2);">Paste to Selection</span>
+    <span onclick="_PasteAction(3);">Flip Top-Bottom</span>
+    <span onclick="_PasteAction(4);">Flip Left-Right</span>
+    <span onclick="_PasteAction(5);">Rotate Clockwise</span>
+    <span onclick="_PasteAction(6);">Rotate Anticlockwise</span>
+    </div>
+    <div id="selectionmenu" oncontextmenu="event.preventDefault()">
+    <span onclick="_SelectionAction(0);">Remove Selection</span>
+    <span onclick="_SelectionAction(1);">Cut</span>
+    <span onclick="_SelectionAction(2);">Copy</span>
+    <span onclick="_SelectionAction(3);">Clear</span>
+    <span onclick="_SelectionAction(4);">Clear Outside</span>
+    <span onclick="_SelectionAction(5);">Shrink</span>
+    <span onclick="_SelectionAction(6);">Fit</span>
+    <span onclick="_SelectionAction(7);" id="randfill">Random Fill</span>
+    <span onclick="_SelectionAction(8);">Flip Top-Bottom</span>
+    <span onclick="_SelectionAction(9);">Flip Left-Right</span>
+    <span onclick="_SelectionAction(10);">Rotate Clockwise</span>
+    <span onclick="_SelectionAction(11);">Rotate Anticlockwise</span>
+    <span onclick="_SelectionAction(12);">Advance</span>
+    <span onclick="_SelectionAction(13);">Advance Outside</span>
+    </div>
     <div class="emscripten" id="status">Downloading...</div>
     <div class="emscripten">
         <progress value="0" max="100" id="progress" hidden=1></progress>  
     </div>
     <textarea class="emscripten" id="statusbar" rows="4"></textarea>
-    <div class="vspace ht10"></div>
+    <div class="vspace"></div>
     <div class="emscripten" id="buttons">
         <button type="button" id="new" onClick="Module.buttonPress(this)">New</button>
         &nbsp;&nbsp;
@@ -71,7 +127,7 @@
         &nbsp;&nbsp;
         <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
     </div>
-    <div class="vspace ht10"></div>
+    <div class="vspace"></div>
     <div class="emscripten" id="settings">
         <label for="algo">Algorithm:</label>
         <select id="algo" onchange="Module.selectionChanged(this)">
@@ -103,7 +159,7 @@
         <button type="button" id="decState" onClick="Module.buttonPress(this)"> &lt; </button>
         <button type="button" id="incState" onClick="Module.buttonPress(this)"> &gt; </button>
     </div>
-    <div class="vspace ht10"></div>
+    <div class="vspace"></div>
     <div class="emscripten_border">
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>

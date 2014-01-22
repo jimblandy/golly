@@ -28,12 +28,23 @@ mergeInto(LibraryManager.library, {
     },
 
     jsSetRule: function(oldrule) {
-        var newrule = prompt("Type in a new rule:", Pointer_stringify(oldrule));
+        var newrule = prompt('Type in a new rule:', Pointer_stringify(oldrule));
         if (newrule == null) {
             return allocate(intArrayFromString("\0"), 'i8', ALLOC_STACK);
         } else {
             return allocate(intArrayFromString(newrule), 'i8', ALLOC_STACK);
         }
+    },
+
+    jsShowMenu: function(id, x, y) {
+        var menu = document.getElementById(Pointer_stringify(id));
+        // x,y coords are relative to canvas, so convert to window coords
+        var rect = Module['canvas'].getBoundingClientRect();
+        x += window.scrollX + rect.left;
+        y += window.scrollY + rect.top;
+        menu.style.top = y.toString() + 'px';
+        menu.style.left = x.toString() + 'px';
+        menu.style.visibility = 'visible';
     },
 
 });

@@ -58,6 +58,7 @@ extern "C" {
     extern void jsSetMode(int index);
     extern void jsSetState(int state);
     extern const char* jsSetRule(const char* oldrule);
+    extern void jsShowMenu(const char* id, int x, int y);
 }
 
 // -----------------------------------------------------------------------------
@@ -68,6 +69,11 @@ static double last_time;                // when NextGeneration was last called
 static bool alt_down = false;           // alt/option key is currently pressed?
 static bool ctrl_down = false;          // ctrl key is currently pressed?
 static bool shift_down = false;         // shift key is currently pressed?
+
+static bool ok_to_check_mouse = false;
+static bool mouse_down = false;
+static bool paste_menu_visible = false;
+static bool selection_menu_visible = false;
 
 // -----------------------------------------------------------------------------
 
@@ -662,6 +668,68 @@ void SetRule()
 
 extern "C" {
 
+void PasteAction(int item)
+{
+    // remove menu first
+    EM_ASM( document.getElementById('pastemenu').style.visibility = 'hidden'; );
+    paste_menu_visible = false;
+
+    switch (item) {
+        case 0:  AbortPaste(); break;
+        case 1:  DoPaste(false); break;
+        case 2:  DoPaste(true); break;
+        case 3:  FlipPastePattern(true); break;
+        case 4:  FlipPastePattern(false); break;
+        case 5:  RotatePastePattern(true); break;
+        case 6:  RotatePastePattern(false); break;
+        default: Warning("Bug detected in PasteAction!");
+    }
+    UpdateEverything();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void SelectionAction(int item)
+{
+    // remove menu first
+    EM_ASM( document.getElementById('selectionmenu').style.visibility = 'hidden'; );
+    selection_menu_visible = false;
+
+    if (generating && item >= 1 && item <= 13 &&
+        item != 2 && item != 5 && item != 6) {
+        // temporarily stop generating for all actions except Remove, Copy, Shrink, Fit
+        PauseGenerating();
+    }
+    switch (item) {
+        case 0:  RemoveSelection(); break;                      // WARNING: above test assumes Remove is item 0
+        case 1:  CutSelection(); break;
+        case 2:  CopySelection(); break;                        // WARNING: above test assumes Copy is item 2
+        case 3:  ClearSelection(); break;
+        case 4:  ClearOutsideSelection(); break;
+        case 5:  ShrinkSelection(false); break;                 // WARNING: above test assumes Shrink is item 5
+        case 6:  FitSelection(); break;                         // WARNING: above test assumes Fit is item 6
+        case 7:  RandomFill(); break;
+        case 8:  FlipSelection(true); break;
+        case 9:  FlipSelection(false); break;
+        case 10: RotateSelection(true); break;
+        case 11: RotateSelection(false); break;
+        case 12: currlayer->currsel.Advance(); break;
+        case 13: currlayer->currsel.AdvanceOutside(); break;    // WARNING: above test assumes 13 is last item
+        default: Warning("Bug detected in SelectionAction!");
+    }
+    ResumeGenerating();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
 void ClearStatus()
 {
     ClearMessage();
@@ -775,9 +843,6 @@ static void OnKeyPressed(int key, int action)
 
 // -----------------------------------------------------------------------------
 
-static bool ok_to_check_mouse = false;
-static bool mouse_down = false;
-
 static void OnMouseClick(int button, int action)
 {
     ok_to_check_mouse = true;
@@ -788,15 +853,28 @@ static void OnMouseClick(int button, int action)
         
         ClearMessage();
         
+        if (paste_menu_visible) {
+            EM_ASM( document.getElementById('pastemenu').style.visibility = 'hidden'; );
+            paste_menu_visible = false;
+            return;
+        }
+        if (selection_menu_visible) {
+            EM_ASM( document.getElementById('selectionmenu').style.visibility = 'hidden'; );
+            selection_menu_visible = false;
+            return;
+        }
+        
         // test for ctrl/right click in paste image or selection;
         // button test should be for GLFW_MOUSE_BUTTON_RIGHT which is defined to be 1 in glfw.h
         // but I actually get 2 when right button is pressed in all my browsers (report bug!!!)
         if (button == 2 || ctrl_down) {
             if (waitingforpaste && PointInPasteImage(x, y)) {
-                Warning("Not yet implemented!!!\n\nShow pop-up menu with various paste actions.");
+                jsShowMenu("pastemenu", x, y);
+                paste_menu_visible = true;
                 ctrl_down = false;
             } else if (SelectionExists() && PointInSelection(x, y)) {
-                Warning("Not yet implemented!!!\n\nShow pop-up menu with various selection actions.");
+                jsShowMenu("selectionmenu", x, y);
+                selection_menu_visible = true;
                 ctrl_down = false;
             }
             return;

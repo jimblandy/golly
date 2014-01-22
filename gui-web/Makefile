@@ -114,7 +114,7 @@ TARGET = golly.html
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS) shell.html
+$(TARGET): $(OBJECTS) jslib.js shell.html
 	$(CXX) $(CXXFLAGS) --js-library jslib.js --shell-file shell.html \
     --preload-file ../Patterns@/Patterns --preload-file ../Rules@/Rules \
     -s TOTAL_MEMORY=134217728 \
@@ -122,7 +122,7 @@ $(TARGET): $(OBJECTS) shell.html
     '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', '_Reset', \
     '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Help', '_SetRule', \
     '_ToggleGrid', '_ToggleIcons', '_ToggleTiming', '_AlgoChanged', '_ModeChanged', \
-    '_DecState', '_IncState' ]" \
+    '_DecState', '_IncState', '_PasteAction', '_SelectionAction' ]" \
     -o $@ $(LDFLAGS) $(OBJECTS)
 
 # better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???
