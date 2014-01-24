@@ -38,10 +38,15 @@ mergeInto(LibraryManager.library, {
 
     jsShowMenu: function(id, x, y) {
         var menu = document.getElementById(Pointer_stringify(id));
+        var mrect = menu.getBoundingClientRect();
         // x,y coords are relative to canvas, so convert to window coords
-        var rect = Module['canvas'].getBoundingClientRect();
-        x += window.scrollX + rect.left;
-        y += window.scrollY + rect.top;
+        var crect = Module['canvas'].getBoundingClientRect();
+        // note that scriolling is disabled so window.scrollX and window.scrollY are 0
+        x += crect.left + 1;
+        y += crect.top + 1;
+        // if menu would be outside right/bottom window edge then move it
+        if (x + mrect.width > window.innerWidth) x -= mrect.width + 2;
+        if (y + mrect.height > window.innerHeight) y -= y + mrect.height - window.innerHeight;
         menu.style.top = y.toString() + 'px';
         menu.style.left = x.toString() + 'px';
         menu.style.visibility = 'visible';
