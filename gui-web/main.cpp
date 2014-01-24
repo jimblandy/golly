@@ -106,19 +106,37 @@ static void InitPaths()
 static int InitGL()
 {
     if (glfwInit() != GL_TRUE) {
-        printf("glfwInit failed!\n");
+        Warning("glfwInit failed!");
         return GL_FALSE;
     }
 
+    // following code fixes bug in emscripten/src/library_glfw.js
+    // (their onMouseWheel function fails to use wheelDelta)
+    EM_ASM(
+        var wheelpos = 0;
+        function on_mouse_wheel(event) {
+            // Firefox sets event.detail, other browsers set event.wheelDelta with opposite sign,
+            // so set delta to a value between -1 and 1
+            var delta = Math.max(-1, Math.min(1, (event.detail || -event.wheelDelta)));
+            wheelpos += delta;
+            _OnMouseWheel(wheelpos);
+            return false;
+        };
+        // for Firefox:
+        window.addEventListener('DOMMouseScroll', on_mouse_wheel, false);
+        // for Chrome, Safari, etc:
+        window.onmousewheel = on_mouse_wheel;
+    );
+
     // initial size doesn't matter -- ResizeCanvas will soon change it
     if (glfwOpenWindow(100, 100, 8, 8, 8, 8, 0, 0, GLFW_WINDOW) != GL_TRUE) {
-        printf("glfwOpenWindow failed!\n");
+        Warning("glfwOpenWindow failed!");
         return GL_FALSE;
     }
     glfwSetWindowTitle("Golly");
     
     if (!InitOGLES2()) {
-        printf("InitOGLES2 failed!\n");
+        Warning("InitOGLES2 failed!");
         return GL_FALSE;
     }
 
@@ -945,7 +963,9 @@ static void OnMouseMove(int x, int y)
 
 static int prevpos = 0;
 
-static void OnMouseWheel(int pos)
+extern "C" {
+
+void OnMouseWheel(int pos)
 {
     int x, y;
     glfwGetMousePos(&x, &y);
@@ -958,6 +978,8 @@ static void OnMouseWheel(int pos)
         prevpos = pos;
     }
 }
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -1015,18 +1037,13 @@ int EMSCRIPTEN_KEEPALIVE main()
 
     InitCheckBoxes();
 
-    // test bounded grid!!!
-    // currlayer->algo->setrule("B3/S23:T10,6");
-    
-    // test code in webcalls.cpp and jslib.js!!!
-    // if (YesNo("Do you wish to continue?")) Warning("OK"); else Fatal("Bye bye!");
-
     if (InitGL() == GL_TRUE) {
         ResizeCanvas();
         glfwSetKeyCallback(OnKeyPressed);
         glfwSetMouseButtonCallback(OnMouseClick);
         glfwSetMousePosCallback(OnMouseMove);
-        glfwSetMouseWheelCallback(OnMouseWheel);
+        // we do our own mouse wheel handling (see InitGL)
+        // glfwSetMouseWheelCallback(OnMouseWheel);
         emscripten_set_main_loop(DoFrame, 0, 1);
     }
 

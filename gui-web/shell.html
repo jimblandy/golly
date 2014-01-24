@@ -10,7 +10,10 @@
     <title>Golly</title>
     <style>
         .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
-        textarea.emscripten { font-family: monospace; width: 100%; resize: none; border: 0px none; margin: 0px; }
+        textarea.emscripten {
+            font-family: monospace; width: 100%; resize: none;
+            border: 0px none; margin: 0px; overflow: hidden;
+        }
         div.emscripten { text-align: center; }
         div.emscripten_border { border: 0px none; }
         /* the canvas must not have any border or padding, or mouse coords will be wrong */
@@ -62,11 +65,10 @@
 </head>
 <body>
     <script type='text/javascript'>
-        function resize_canvas() {
+        window.addEventListener('resize', function resize_canvas() {
             _ResizeCanvas();
-        };
-        window.addEventListener('resize', resize_canvas);
-            
+        });
+
         function check_browser() {
             var N=navigator.appName, ua=navigator.userAgent, tem;
             var M=ua.match(/(opera|chrome|safari|firefox|msie)\/?\s*(\.?\d+(\.\d+)*)/i);
