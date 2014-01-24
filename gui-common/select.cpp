@@ -135,7 +135,7 @@ void Selection::DisplaySize()
     msg += " x ";
     msg += Stringify(ht);
     #ifdef WEB_GUI
-        msg += " (right-click on it to perfom actions)";
+        msg += " (right-click on it to perform actions)";
     #endif
     SetMessage(msg.c_str());
 }

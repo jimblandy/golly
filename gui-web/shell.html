@@ -10,15 +10,23 @@
     <title>Golly</title>
     <style>
         .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
-        textarea.emscripten { font-family: monospace; width: 960px; resize: none; }
+        textarea.emscripten { font-family: monospace; width: 100%; resize: none; border: 0px none; margin: 0px; }
         div.emscripten { text-align: center; }
         div.emscripten_border { border: 0px none; }
         /* the canvas must not have any border or padding, or mouse coords will be wrong */
-        canvas.emscripten { border: 0px none; }
-        .vspace { clear:both; height:10px; }
-        .statespan { width:24px; display:inline-block; }
+        canvas.emscripten { position: absolute; border: 0px none; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            overflow: hidden;       /* prevents scroll bars */
+        }   
+        .toolbar { background: #CCC; }
+        .vspace { clear: both; height: 10px; }
+        .statespan { width: 24px; display: inline-block; }
         #pastemenu {
          	position: absolute;
+         	z-index: 1;
             visibility: hidden;
             background: #FEE;       /* light red to match paste image */
             border: 1px solid #000;
@@ -35,6 +43,7 @@
 		}
         #selectionmenu {
          	position: absolute;
+         	z-index: 1;
             visibility: hidden;
             background: #DFD;       /* light green to match selection */
             border: 1px solid #000;
@@ -53,6 +62,11 @@
 </head>
 <body>
     <script type='text/javascript'>
+        function resize_canvas() {
+            _ResizeCanvas();
+        };
+        window.addEventListener('resize', resize_canvas);
+            
         function check_browser() {
             var N=navigator.appName, ua=navigator.userAgent, tem;
             var M=ua.match(/(opera|chrome|safari|firefox|msie)\/?\s*(\.?\d+(\.\d+)*)/i);
@@ -72,7 +86,7 @@
                       'or another WebGL-capable browser like Chrome or Firefox.');
                 window.stop();
             }
-        }
+        };
         check_browser();
     </script>
     <div id="pastemenu" oncontextmenu="event.preventDefault()">
@@ -100,66 +114,64 @@
     <span onclick="_SelectionAction(12);">Advance</span>
     <span onclick="_SelectionAction(13);">Advance Outside</span>
     </div>
-    <div class="emscripten" id="status">Downloading...</div>
-    <div class="emscripten">
-        <progress value="0" max="100" id="progress" hidden=1></progress>  
+    <textarea class="emscripten" id="statusbar" rows="3">Loading Golly...</textarea>
+    <div class="toolbar">
+        <div class="vspace"></div>
+        <div class="emscripten" id="buttons">
+            <button type="button" id="new" onClick="Module.buttonPress(this)">New</button>
+            &nbsp;&nbsp;
+            <button type="button" id="startStop" onClick="Module.buttonPress(this)">Start</button>
+            <button type="button" id="next" onClick="Module.buttonPress(this)">Next</button>
+            <button type="button" id="step" onClick="Module.buttonPress(this)">Step</button>
+            <button type="button" id="slower" onClick="Module.buttonPress(this)">Slower</button>
+            <button type="button" id="faster" onClick="Module.buttonPress(this)">Faster</button>
+            <button type="button" id="step1" onClick="Module.buttonPress(this)">Step=1</button>
+            <button type="button" id="reset" onClick="Module.buttonPress(this)">Reset</button>
+            &nbsp;&nbsp;
+            <button type="button" id="undo" onClick="Module.buttonPress(this)">Undo</button>
+            <button type="button" id="redo" onClick="Module.buttonPress(this)">Redo</button>
+            &nbsp;&nbsp;
+            <button type="button" id="fit" onClick="Module.buttonPress(this)">Fit</button>
+            <button type="button" id="zoomOut" onClick="Module.buttonPress(this)">Zoom Out</button>
+            <button type="button" id="zoomIn" onClick="Module.buttonPress(this)">Zoom In</button>
+            <button type="button" id="noScale" onClick="Module.buttonPress(this)">Scale=1:1</button>
+            &nbsp;&nbsp;
+            <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
+        </div>
+        <div class="vspace"></div>
+        <div class="emscripten" id="settings">
+            <label for="algo">Algorithm:</label>
+            <select id="algo" onchange="Module.selectionChanged(this)">
+                <option>QuickLife</option>
+                <option>HashLife</option>
+                <option>Generations</option>
+                <option>JvN</option>
+                <option>RuleLoader</option>
+            </select>
+            <button type="button" id="rule" onClick="Module.buttonPress(this)">Rule...</button>
+            &nbsp;&nbsp;
+            <label for="grid">Grid</label><input type="checkbox" id="grid" onClick="Module.checkboxPress(this)">
+            &nbsp;&nbsp;
+            <label for="icons">Icons</label><input type="checkbox" id="icons" onClick="Module.checkboxPress(this)">
+            &nbsp;&nbsp;
+            <label for="time">Timing</label><input type="checkbox" id="time" onClick="Module.checkboxPress(this)">
+            &nbsp;&nbsp;
+            <label for="mode">Cursor:</label>
+            <select id="mode" onchange="Module.selectionChanged(this)">
+                <option>Draw</option>
+                <option>Pick</option>
+                <option>Select</option>
+                <option>Move</option>
+                <option>Zoom In</option>
+                <option>Zoom Out</option>
+            </select>
+            &nbsp;&nbsp;
+            <span>State:</span> <span class="statespan" id="state">1</span>
+            <button type="button" id="decState" onClick="Module.buttonPress(this)"> &lt; </button>
+            <button type="button" id="incState" onClick="Module.buttonPress(this)"> &gt; </button>
+        </div>
+        <div class="vspace"></div>
     </div>
-    <textarea class="emscripten" id="statusbar" rows="4"></textarea>
-    <div class="vspace"></div>
-    <div class="emscripten" id="buttons">
-        <button type="button" id="new" onClick="Module.buttonPress(this)">New</button>
-        &nbsp;&nbsp;
-        <button type="button" id="startStop" onClick="Module.buttonPress(this)">Start</button>
-        <button type="button" id="next" onClick="Module.buttonPress(this)">Next</button>
-        <button type="button" id="step" onClick="Module.buttonPress(this)">Step</button>
-        <button type="button" id="slower" onClick="Module.buttonPress(this)">Slower</button>
-        <button type="button" id="faster" onClick="Module.buttonPress(this)">Faster</button>
-        <button type="button" id="step1" onClick="Module.buttonPress(this)">Step=1</button>
-        <button type="button" id="reset" onClick="Module.buttonPress(this)">Reset</button>
-        &nbsp;&nbsp;
-        <button type="button" id="undo" onClick="Module.buttonPress(this)">Undo</button>
-        <button type="button" id="redo" onClick="Module.buttonPress(this)">Redo</button>
-        &nbsp;&nbsp;
-        <button type="button" id="fit" onClick="Module.buttonPress(this)">Fit</button>
-        <button type="button" id="zoomOut" onClick="Module.buttonPress(this)">Zoom Out</button>
-        <button type="button" id="zoomIn" onClick="Module.buttonPress(this)">Zoom In</button>
-        <button type="button" id="noScale" onClick="Module.buttonPress(this)">Scale=1:1</button>
-        &nbsp;&nbsp;
-        <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
-    </div>
-    <div class="vspace"></div>
-    <div class="emscripten" id="settings">
-        <label for="algo">Algorithm:</label>
-        <select id="algo" onchange="Module.selectionChanged(this)">
-            <option>QuickLife</option>
-            <option>HashLife</option>
-            <option>Generations</option>
-            <option>JvN</option>
-            <option>RuleLoader</option>
-        </select>
-        <button type="button" id="rule" onClick="Module.buttonPress(this)">Rule...</button>
-        &nbsp;&nbsp;
-        <label for="grid">Grid</label><input type="checkbox" id="grid" onClick="Module.checkboxPress(this)">
-        &nbsp;&nbsp;
-        <label for="icons">Icons</label><input type="checkbox" id="icons" onClick="Module.checkboxPress(this)">
-        &nbsp;&nbsp;
-        <label for="time">Timing</label><input type="checkbox" id="time" onClick="Module.checkboxPress(this)">
-        &nbsp;&nbsp;
-        <label for="mode">Cursor:</label>
-        <select id="mode" onchange="Module.selectionChanged(this)">
-            <option>Draw</option>
-            <option>Pick</option>
-            <option>Select</option>
-            <option>Move</option>
-            <option>Zoom In</option>
-            <option>Zoom Out</option>
-        </select>
-        &nbsp;&nbsp;
-        <span>State:</span> <span class="statespan" id="state">1</span>
-        <button type="button" id="decState" onClick="Module.buttonPress(this)"> &lt; </button>
-        <button type="button" id="incState" onClick="Module.buttonPress(this)"> &gt; </button>
-    </div>
-    <div class="vspace"></div>
     <div class="emscripten_border">
         <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>
@@ -225,39 +237,7 @@
             },
             
             canvas: document.getElementById('canvas'),
-            
-            setStatus: function(text) {
-                if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
-                //!!! next test is never true???
-                if (text === Module.setStatus.text) return;
-                var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
-                var now = Date.now();
-                //!!! no point doing progress stuff??? (never see it!)
-                if (m && now - Date.now() < 30) return; // if this is a progress update, skip it if too soon
-                var statusElement = document.getElementById('status');
-                var progressElement = document.getElementById('progress');
-                if (m) {
-                    text = m[1];
-                    progressElement.value = parseInt(m[2])*100;
-                    progressElement.max = parseInt(m[4])*100;
-                    progressElement.hidden = false;
-                } else {
-                    progressElement.value = null;
-                    progressElement.max = null;
-                    progressElement.hidden = true;
-                }
-                statusElement.innerHTML = text;
-            },
-            
-            totalDependencies: 0,
-            monitorRunDependencies: function(left) {
-                this.totalDependencies = Math.max(this.totalDependencies, left);
-                Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) +
-                                        '/' + this.totalDependencies + ')' : 'All downloads complete.');
-            }
         }; // Module
-        
-        Module.setStatus('Loading Golly...');
     </script>
     {{{ SCRIPT }}}
 </body>

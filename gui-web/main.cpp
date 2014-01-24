@@ -63,8 +63,8 @@ extern "C" {
 
 // -----------------------------------------------------------------------------
 
-static int currwd = 960, currht = 960;  // initial size of viewport
-static double last_time;                // when NextGeneration was last called
+static int currwd, currht;              // current size of viewport (in pixels)
+static double last_time;                // time when NextGeneration was last called
 
 static bool alt_down = false;           // alt/option key is currently pressed?
 static bool ctrl_down = false;          // ctrl key is currently pressed?
@@ -110,7 +110,8 @@ static int InitGL()
         return GL_FALSE;
     }
 
-    if (glfwOpenWindow(currwd, currht, 8, 8, 8, 8, 0, 0, GLFW_WINDOW) != GL_TRUE) {
+    // initial size doesn't matter -- ResizeCanvas will soon change it
+    if (glfwOpenWindow(100, 100, 8, 8, 8, 8, 0, 0, GLFW_WINDOW) != GL_TRUE) {
         printf("glfwOpenWindow failed!\n");
         return GL_FALSE;
     }
@@ -121,13 +122,6 @@ static int InitGL()
         return GL_FALSE;
     }
 
-    last_time = glfwGetTime();
-    return GL_TRUE;
-}
-
-// -----------------------------------------------------------------------------
-
-static void OnSurfaceCreated() {
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
@@ -140,23 +134,58 @@ static void OnSurfaceCreated() {
     // this blending function seems similar to the one used in desktop Golly
     // (ie. selected patterns look much the same)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glClearColor(1.0, 1.0, 1.0, 1.0);
+
+    last_time = glfwGetTime();
+    return GL_TRUE;
 }
 
 // -----------------------------------------------------------------------------
 
-static void OnSurfaceChanged(int width, int height) {
+extern "C" {
+
+void ResizeCanvas() {
+    // resize canvas based on current window dimensions
+    EM_ASM(
+        var canvas = Module['canvas'];
+        var rect = canvas.getBoundingClientRect();
+        var wd = window.innerWidth;
+        var ht = window.innerHeight - rect.top;
+        // ensure wd and ht are integer multiples of max cell size so rendering code
+        // will draw partially visible cells at the right and bottom edges
+        if (wd % 32 > 0) wd += 32 - (wd % 32);
+        if (ht % 32 > 0) ht += 32 - (ht % 32);
+        canvas.style.left = '0px';
+        canvas.style.top = rect.top.toString() + 'px';
+        canvas.style.width = wd.toString() + 'px';
+        canvas.style.height = ht.toString() + 'px';
+        _SetViewport(wd,  ht);
+    );
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void SetViewport(int width, int height)
+{
+    // ResizeCanvas has changed canvas size so we need to change OpenGL's viewport size
+    glfwSetWindowSize(width, height);
     glViewport(0, 0, width, height);
     currwd = width;
     currht = height;
     if (currwd != currlayer->view->getwidth() ||
         currht != currlayer->view->getheight()) {
-        // update size of viewport
+        // change size of Golly's viewport
         ResizeLayers(currwd, currht);
-        UpdatePattern();
+        // to avoid seeing lots of black, draw now rather than call UpdatePattern
+        DrawPattern(currindex);
     }
 }
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -993,8 +1022,7 @@ int EMSCRIPTEN_KEEPALIVE main()
     // if (YesNo("Do you wish to continue?")) Warning("OK"); else Fatal("Bye bye!");
 
     if (InitGL() == GL_TRUE) {
-        OnSurfaceCreated();
-        OnSurfaceChanged(currwd, currht);
+        ResizeCanvas();
         glfwSetKeyCallback(OnKeyPressed);
         glfwSetMouseButtonCallback(OnMouseClick);
         glfwSetMousePosCallback(OnMouseMove);
