@@ -79,7 +79,7 @@ static bool selection_menu_visible = false;
 
 static void InitPaths()
 {
-    userdir = "/UserData/";     // ???!!!
+    userdir = "/UserData/";     // can't save user data???!!!
 
     savedir = userdir + "Saved/";
     //???!!! CreateSubdir(savedir);
@@ -90,7 +90,7 @@ static void InitPaths()
     userrules = userdir + "Rules/";
     //???!!! CreateSubdir(userrules);
 
-    // assume supplied patterns, rules, help are embedded inside golly.js ???!!!
+    // supplied patterns, rules, help are stored in golly.data via --preload-file option in Makefile
     supplieddir = "/";
     patternsdir = supplieddir + "Patterns/";
     rulesdir = supplieddir + "Rules/";
@@ -165,16 +165,19 @@ extern "C" {
 void ResizeCanvas() {
     // resize canvas based on current window dimensions
     EM_ASM(
-        var canvas = Module['canvas'];
-        var rect = canvas.getBoundingClientRect();
-        var wd = window.innerWidth;
-        var ht = window.innerHeight - rect.top;
+        var trect = document.getElementById('toolbar').getBoundingClientRect();
+        // place canvas immediately under toolbar, extending to bottom edge of window
+        var top = trect.top + trect.height;
+        var left = trect.left;
+        var wd = window.innerWidth - left;
+        var ht = window.innerHeight - top;
         // ensure wd and ht are integer multiples of max cell size so rendering code
         // will draw partially visible cells at the right and bottom edges
         if (wd % 32 > 0) wd += 32 - (wd % 32);
         if (ht % 32 > 0) ht += 32 - (ht % 32);
-        canvas.style.left = '0px';
-        canvas.style.top = rect.top.toString() + 'px';
+        var canvas = Module['canvas'];
+        canvas.style.top = top.toString() + 'px';
+        canvas.style.left = left.toString() + 'px';
         canvas.style.width = wd.toString() + 'px';
         canvas.style.height = ht.toString() + 'px';
         _SetViewport(wd,  ht);
