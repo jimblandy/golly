@@ -111,7 +111,8 @@ static int InitGL()
     }
 
     // following code fixes bug in emscripten/src/library_glfw.js
-    // (their onMouseWheel function fails to use wheelDelta)
+    // (their onMouseWheel function fails to use wheelDelta, plus they assign
+    // the event handler to the entire window rather than just the canvas)
     EM_ASM(
         var wheelpos = 0;
         function on_mouse_wheel(event) {
@@ -123,9 +124,9 @@ static int InitGL()
             return false;
         };
         // for Firefox:
-        window.addEventListener('DOMMouseScroll', on_mouse_wheel, false);
+        Module['canvas'].addEventListener('DOMMouseScroll', on_mouse_wheel, false);
         // for Chrome, Safari, etc:
-        window.onmousewheel = on_mouse_wheel;
+        Module['canvas'].onmousewheel = on_mouse_wheel;
     );
 
     // initial size doesn't matter -- ResizeCanvas will soon change it
@@ -210,7 +211,7 @@ void SetViewport(int width, int height)
 
 // -----------------------------------------------------------------------------
 
-static void InitCheckBoxes()
+static void InitElements()
 {
     // note that checkbox ids must match those in shell.html
     
@@ -231,6 +232,11 @@ static void InitCheckBoxes()
     } else {
         EM_ASM( document.getElementById('time').checked = false; );
     }
+
+    // also initialize clipboard data to a simple RLE pattern
+    EM_ASM(
+        document.getElementById('cliptext').value = 'x = 9, y = 5, rule = B3/S23\n$bo3b3o$b3o2bo$2bo!';
+    );
 }
 
 // -----------------------------------------------------------------------------
@@ -513,7 +519,9 @@ static void RandomPattern()
 
 // -----------------------------------------------------------------------------
 
-static void Paste()
+extern "C" {
+
+void Paste()
 {
     StopIfGenerating();
     
@@ -522,13 +530,14 @@ static void Paste()
         return;
     }
     
-    if (waitingforpaste) {
-        //!!! SelectPasteAction();
-    } else {
-        PasteClipboard();
-        UpdatePatternAndStatus();
-    }
+    // remove any existing paste image
+    if (waitingforpaste) AbortPaste();
+
+    PasteClipboard();
+    UpdatePatternAndStatus();
 }
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -1028,7 +1037,7 @@ static void DoFrame()
 
 int EMSCRIPTEN_KEEPALIVE main()
 {
-    SetMessage("This is Golly 0.1 for the web.  Copyright 2014 The Golly Gang.");
+    SetMessage("This is Golly 0.3 for the web.  Copyright 2014 The Golly Gang.");
     InitPaths();                // init tempdir, prefsfile, etc
     MAX_MAG = 5;                // maximum cell size = 32x32
     InitAlgorithms();           // must initialize algoinfo first
@@ -1038,7 +1047,7 @@ int EMSCRIPTEN_KEEPALIVE main()
     NewPattern();               // create new, empty universe
     UpdateStatus();             // show initial message
 
-    InitCheckBoxes();
+    InitElements();             // initialize checkboxes and other document elements
 
     if (InitGL() == GL_TRUE) {
         ResizeCanvas();

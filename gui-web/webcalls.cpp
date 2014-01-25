@@ -51,6 +51,8 @@ extern "C" {
     extern void jsSetAlgo(int index);
     extern void jsSetMode(int index);
     extern void jsSetState(int state);
+    extern void jsSetClipboard(const char* text);
+    extern const char* jsGetClipboard();
 }
 
 // -----------------------------------------------------------------------------
@@ -256,7 +258,7 @@ void WebFixURLPath(std::string& path)
 
 bool WebCopyTextToClipboard(const char* text)
 {
-    //!!!???
+    jsSetClipboard(text);
     return true;
 }
 
@@ -264,23 +266,9 @@ bool WebCopyTextToClipboard(const char* text)
 
 bool WebGetTextFromClipboard(std::string& text)
 {
-    text = "";
-    
-    //!!! following is for testing purposes until we can figure out how to get clipboard data
-    text = "x = 9, y = 5, rule = B3/S23\n$bo3b3o$b3o2bo$2bo!";  // rabbits
-
-    /* need to call some JavaScript code here (???) to get clipboard data!!!
-    EM_ASM(
-        // following works only in IE:
-        // var ctext = window.clipboardData.getData('Text');
-        // following fails on Chrome:
-        // var ctext = window.clipboardData.getData('text/plain');
-        alert('clipboard text:\n' + ctext);//!!!
-    );
-    */
-    
+    text = jsGetClipboard();
     if (text.length() == 0) {
-        ErrorMessage("No text in clipboard.");
+        ErrorMessage("There is no text in the clipboard.");
         return false;
     } else {
         return true;

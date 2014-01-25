@@ -52,4 +52,17 @@ mergeInto(LibraryManager.library, {
         menu.style.visibility = 'visible';
     },
 
+    jsSetClipboard: function(text) {
+        document.getElementById('cliptext').value = Pointer_stringify(text);
+    },
+
+    jsGetClipboard: function() {
+        var text = document.getElementById('cliptext').value;
+        if (text == null) {
+            return allocate(intArrayFromString("\0"), 'i8', ALLOC_STACK);
+        } else {
+            return allocate(intArrayFromString(text), 'i8', ALLOC_STACK);
+        }
+    },
+
 });

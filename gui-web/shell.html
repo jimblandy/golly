@@ -11,8 +11,8 @@
     <style>
         .golly { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
         textarea.golly {
-            font-family: monospace; width: 100%; resize: none;
-            border: 0px none; margin: 0px; overflow: hidden;
+            font-family: monospace; resize: none; overflow: hidden; width: 100%;
+            border: 1px solid #000; margin-top: 10px; background: #DDD;
         }
         div.golly { text-align: center; }
         div.golly_border { border: 0px none; }
@@ -23,10 +23,15 @@
             height: 100%;
             margin: 0px;
             overflow: hidden;       /* prevents scroll bars */
-        }   
+            background: #DDD;
+        }
+        div.myclipboard { text-align: center; }
+        textarea.myclipboard {
+            font: 11px monospace; resize: none; width: 280px;
+            background: #FFF; border: 1px solid #000; margin-top: 10px;
+        }
         label { font: caption; }
-        .toolbar { background: #CCC; }
-        .vspace { clear: both; height: 10px; }
+        .vspace { height: 10px; }
         .statespan { width: 24px; display: inline-block; font: caption; }
         #pastemenu {
          	position: absolute;
@@ -117,66 +122,83 @@
     <span onclick="_SelectionAction(12);">Advance</span>
     <span onclick="_SelectionAction(13);">Advance Outside</span>
     </div>
-    <textarea class="golly" id="statusbar" wrap="off" rows="3">Loading Golly...</textarea>
-    <div class="toolbar" id="toolbar">
-        <div class="vspace"></div>
-        <div class="golly" id="buttons">
-            <button type="button" id="new" onClick="Module.buttonPress(this)">New</button>
-            &nbsp;&nbsp;
-            <button type="button" id="startStop" onClick="Module.buttonPress(this)">Start</button>
-            <button type="button" id="next" onClick="Module.buttonPress(this)">Next</button>
-            <button type="button" id="step" onClick="Module.buttonPress(this)">Step</button>
-            <button type="button" id="slower" onClick="Module.buttonPress(this)">Slower</button>
-            <button type="button" id="faster" onClick="Module.buttonPress(this)">Faster</button>
-            <button type="button" id="step1" onClick="Module.buttonPress(this)">Step=1</button>
-            <button type="button" id="reset" onClick="Module.buttonPress(this)">Reset</button>
-            &nbsp;&nbsp;
-            <button type="button" id="undo" onClick="Module.buttonPress(this)">Undo</button>
-            <button type="button" id="redo" onClick="Module.buttonPress(this)">Redo</button>
-            &nbsp;&nbsp;
-            <button type="button" id="fit" onClick="Module.buttonPress(this)">Fit</button>
-            <button type="button" id="zoomOut" onClick="Module.buttonPress(this)">Zoom Out</button>
-            <button type="button" id="zoomIn" onClick="Module.buttonPress(this)">Zoom In</button>
-            <button type="button" id="noScale" onClick="Module.buttonPress(this)">Scale=1:1</button>
-            &nbsp;&nbsp;
-            <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
+    <div style="width: 100%; overflow: hidden;">
+        <div style="width: 300px; float: left;">
+            <div class="myclipboard">
+                <textarea class="myclipboard" id="cliptext" wrap="off" rows="7">Loading Golly...</textarea>
+            </div>
+            <div class="myclipboard">
+                <span style="font: caption;">Pattern/rule data used by </span>
+                <button type="button" id="paste" onClick="Module.buttonPress(this)">Paste</button>
+            </div>
+            <div id="patterns" style="margin-left: 10px;">
+                <p><b>Supplied Patterns:</b></p>
+                <p>(not yet implemented!!!)</p>
+            </div>
         </div>
-        <div class="vspace"></div>
-        <div class="golly" id="settings">
-            <label for="algo">Algorithm:</label>
-            <select id="algo" onchange="Module.selectionChanged(this)">
-                <option>QuickLife</option>
-                <option>HashLife</option>
-                <option>Generations</option>
-                <option>JvN</option>
-                <option>RuleLoader</option>
-            </select>
-            <button type="button" id="rule" onClick="Module.buttonPress(this)">Rule...</button>
-            &nbsp;&nbsp;
-            <label for="grid">Grid</label><input type="checkbox" id="grid" onClick="Module.checkboxPress(this)">
-            &nbsp;&nbsp;
-            <label for="icons">Icons</label><input type="checkbox" id="icons" onClick="Module.checkboxPress(this)">
-            &nbsp;&nbsp;
-            <label for="time">Timing</label><input type="checkbox" id="time" onClick="Module.checkboxPress(this)">
-            &nbsp;&nbsp;
-            <label for="mode">Cursor:</label>
-            <select id="mode" onchange="Module.selectionChanged(this)">
-                <option>Draw</option>
-                <option>Pick</option>
-                <option>Select</option>
-                <option>Move</option>
-                <option>Zoom In</option>
-                <option>Zoom Out</option>
-            </select>
-            &nbsp;&nbsp;
-            <span style="font:caption">State:</span> <span class="statespan" id="state">1</span>
-            <button type="button" id="decState" onClick="Module.buttonPress(this)"> &lt; </button>
-            <button type="button" id="incState" onClick="Module.buttonPress(this)"> &gt; </button>
+        <div style="margin-left: 300px;">
+            <textarea class="golly" id="statusbar" wrap="off" rows="3">Loading Golly...</textarea>
+            <div class="toolbar" id="toolbar">
+                <div class="vspace"></div>
+                <div class="golly" id="buttons">
+                    <button type="button" id="new" onClick="Module.buttonPress(this)">New</button>
+                    &nbsp;&nbsp;
+                    <button type="button" id="startStop" onClick="Module.buttonPress(this)">Start</button>
+                    <button type="button" id="next" onClick="Module.buttonPress(this)">Next</button>
+                    <button type="button" id="step" onClick="Module.buttonPress(this)">Step</button>
+                    <button type="button" id="slower" onClick="Module.buttonPress(this)">Slower</button>
+                    <button type="button" id="faster" onClick="Module.buttonPress(this)">Faster</button>
+                    <button type="button" id="step1" onClick="Module.buttonPress(this)">Step=1</button>
+                    <button type="button" id="reset" onClick="Module.buttonPress(this)">Reset</button>
+                    &nbsp;&nbsp;
+                    <button type="button" id="undo" onClick="Module.buttonPress(this)">Undo</button>
+                    <button type="button" id="redo" onClick="Module.buttonPress(this)">Redo</button>
+                    &nbsp;&nbsp;
+                    <button type="button" id="fit" onClick="Module.buttonPress(this)">Fit</button>
+                    <button type="button" id="zoomOut" onClick="Module.buttonPress(this)">Zoom Out</button>
+                    <button type="button" id="zoomIn" onClick="Module.buttonPress(this)">Zoom In</button>
+                    <button type="button" id="noScale" onClick="Module.buttonPress(this)">Scale=1:1</button>
+                    &nbsp;&nbsp;
+                    <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
+                </div>
+                <div class="vspace"></div>
+                <div class="golly" id="settings">
+                    <label for="algo">Algorithm:</label>
+                    <select id="algo" onchange="Module.selectionChanged(this)">
+                        <option>QuickLife</option>
+                        <option>HashLife</option>
+                        <option>Generations</option>
+                        <option>JvN</option>
+                        <option>RuleLoader</option>
+                    </select>
+                    <button type="button" id="rule" onClick="Module.buttonPress(this)">Rule...</button>
+                    &nbsp;&nbsp;
+                    <label for="grid">Grid</label><input type="checkbox" id="grid" onClick="Module.checkboxPress(this)">
+                    &nbsp;&nbsp;
+                    <label for="icons">Icons</label><input type="checkbox" id="icons" onClick="Module.checkboxPress(this)">
+                    &nbsp;&nbsp;
+                    <label for="time">Timing</label><input type="checkbox" id="time" onClick="Module.checkboxPress(this)">
+                    &nbsp;&nbsp;
+                    <label for="mode">Cursor:</label>
+                    <select id="mode" onchange="Module.selectionChanged(this)">
+                        <option>Draw</option>
+                        <option>Pick</option>
+                        <option>Select</option>
+                        <option>Move</option>
+                        <option>Zoom In</option>
+                        <option>Zoom Out</option>
+                    </select>
+                    &nbsp;&nbsp;
+                    <span style="font: caption;">State:</span> <span class="statespan" id="state">1</span>
+                    <button type="button" id="decState" onClick="Module.buttonPress(this)"> &lt; </button>
+                    <button type="button" id="incState" onClick="Module.buttonPress(this)"> &gt; </button>
+                </div>
+                <div class="vspace"></div>
+            </div>
+            <div class="golly_border">
+                <canvas class="golly" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+            </div>
         </div>
-        <div class="vspace"></div>
-    </div>
-    <div class="golly_border">
-        <canvas class="golly" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>
     <script type='text/javascript'>
         var Module = {
@@ -204,6 +226,7 @@
                 if (button.id == 'rule') _SetRule();
                 if (button.id == 'decState') _DecState();
                 if (button.id == 'incState') _IncState();
+                if (button.id == 'paste') _Paste();
             },
 
             checkboxPress: function(box) {
