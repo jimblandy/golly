@@ -87,7 +87,7 @@ static void InitPaths()
     downloaddir = userdir + "Downloads/";
     //???!!! CreateSubdir(downloaddir);
 
-    userrules = userdir + "Rules/";
+    userrules = "";             // ???!!! userdir + "Rules/";
     //???!!! CreateSubdir(userrules);
 
     // supplied patterns, rules, help are stored in golly.data via --preload-file option in Makefile
@@ -172,16 +172,18 @@ void ResizeCanvas() {
         var left = trect.left;
         var wd = window.innerWidth - left;
         var ht = window.innerHeight - top;
+        if (wd < 0) wd = 0;
+        if (ht < 0) ht = 0;
         // ensure wd and ht are integer multiples of max cell size so rendering code
         // will draw partially visible cells at the right and bottom edges
         if (wd % 32 > 0) wd += 32 - (wd % 32);
         if (ht % 32 > 0) ht += 32 - (ht % 32);
         var canvas = Module['canvas'];
-        canvas.style.top = top.toString() + 'px';
-        canvas.style.left = left.toString() + 'px';
-        canvas.style.width = wd.toString() + 'px';
-        canvas.style.height = ht.toString() + 'px';
-        _SetViewport(wd,  ht);
+        canvas.style.top = top + 'px';
+        canvas.style.left = left + 'px';
+        canvas.style.width = wd + 'px';
+        canvas.style.height = ht + 'px';
+        _SetViewport(wd, ht);
     );
 }
 

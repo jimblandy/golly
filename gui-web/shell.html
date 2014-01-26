@@ -10,11 +10,11 @@
     <title>Golly</title>
     <style>
         .golly { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
-        textarea.golly {
+        div.statusbar { text-align: left; }
+        textarea.statusbar {
             font-family: monospace; resize: none; overflow: hidden; width: 100%;
-            border: 1px solid #000; margin-top: 10px; background: #DDD;
+            border: 1px solid #000; margin-top: 10px; background: #FFFFCE;
         }
-        div.golly { text-align: center; }
         div.golly_border { border: 0px none; }
         /* the canvas must not have any border or padding, or mouse coords will be wrong */
         canvas.golly { position: absolute; border: 0px none; }
@@ -25,6 +25,7 @@
             overflow: hidden;       /* prevents scroll bars */
             background: #DDD;
         }
+        /* div.toolbar { text-align: center; } */
         div.myclipboard { text-align: center; }
         textarea.myclipboard {
             font: 11px monospace; resize: none; width: 280px;
@@ -71,8 +72,17 @@
 </head>
 <body>
     <script type='text/javascript'>
+        function resize_statusbar() {
+            // there's probably a way to get this 10px margin via CSS but I can't figure it out!!!
+            var trect = document.getElementById('toolbar').getBoundingClientRect();
+            var wd = window.innerWidth - trect.left - 10;
+            if (wd < 0) wd = 0;     // avoid console warning
+            document.getElementById('statusbar').style.width = wd + 'px';
+        };
+        
         window.addEventListener('resize', function resize_canvas() {
             _ResizeCanvas();
+            resize_statusbar();
         });
 
         function check_browser() {
@@ -125,7 +135,7 @@
     <div style="width: 100%; overflow: hidden;">
         <div style="width: 300px; float: left;">
             <div class="myclipboard">
-                <textarea class="myclipboard" id="cliptext" wrap="off" rows="7">Loading Golly...</textarea>
+                <textarea class="myclipboard" id="cliptext" wrap="off" rows="6"></textarea>
             </div>
             <div class="myclipboard">
                 <span style="font: caption;">Pattern/rule data used by </span>
@@ -137,7 +147,9 @@
             </div>
         </div>
         <div style="margin-left: 300px;">
-            <textarea class="golly" id="statusbar" wrap="off" rows="3">Loading Golly...</textarea>
+            <div class="statusbar">
+                <textarea class="statusbar" id="statusbar" wrap="off" rows="3"></textarea>
+            </div>
             <div class="toolbar" id="toolbar">
                 <div class="vspace"></div>
                 <div class="golly" id="buttons">
@@ -264,6 +276,8 @@
             
             canvas: document.getElementById('canvas'),
         }; // Module
+        resize_statusbar();
+        Module.print('Loading Golly...');
     </script>
     {{{ SCRIPT }}}
 </body>
