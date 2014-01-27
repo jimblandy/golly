@@ -59,6 +59,7 @@ extern "C" {
     extern void jsSetState(int state);
     extern const char* jsSetRule(const char* oldrule);
     extern void jsShowMenu(const char* id, int x, int y);
+    extern int jsTextAreaIsActive();
 }
 
 // -----------------------------------------------------------------------------
@@ -69,6 +70,7 @@ static double last_time;                // time when NextGeneration was last cal
 static bool alt_down = false;           // alt/option key is currently pressed?
 static bool ctrl_down = false;          // ctrl key is currently pressed?
 static bool shift_down = false;         // shift key is currently pressed?
+static bool meta_down = false;          // cmd/start/menu key is currently pressed?
 
 static bool ok_to_check_mouse = false;
 static bool mouse_down = false;
@@ -103,16 +105,14 @@ static void InitPaths()
 
 // -----------------------------------------------------------------------------
 
-static int InitGL()
+static void InitEventHandlers()
 {
-    if (glfwInit() != GL_TRUE) {
-        Warning("glfwInit failed!");
-        return GL_FALSE;
-    }
-
-    // following code fixes bug in emscripten/src/library_glfw.js
-    // (their onMouseWheel function fails to use wheelDelta, plus they assign
-    // the event handler to the entire window rather than just the canvas)
+    // the following code fixes bugs in emscripten/src/library_glfw.js:
+    // - onMouseWheel fails to use wheelDelta
+    // - the onmousewheel handler is assigned to the entire window rather than just the canvas
+    // - onKeyChanged always calls event.preventDefault() so browser shortcuts like ctrl-Q/X/C/V
+    //   don't work and text can't be typed into clipboard textarea
+    
     EM_ASM(
         var wheelpos = 0;
         function on_mouse_wheel(event) {
@@ -128,6 +128,44 @@ static int InitGL()
         // for Chrome, Safari, etc:
         Module['canvas'].onmousewheel = on_mouse_wheel;
     );
+    
+    EM_ASM(
+        // also do our own keyboard event handling
+        function on_key_changed(event, status) {
+            var key = event.keyCode;
+            // DEBUG: Module.printErr('keycode='+key+' status='+status);
+            // DEBUG: Module.printErr('activeElement='+document.activeElement.tagName);
+            var prevent = _OnKeyChanged(key, status);
+            // we allow default handler in these 2 cases:
+            // 1. if ctrl/meta key is down (allows cmd/ctrl-Q/X/C/V/A/etc to work)
+            // 2. if a textarea is active (document.activeElement.tagName == 'TEXTAREA')
+            if (prevent) {
+                event.preventDefault();
+                // DEBUG: Module.printErr('preventDefault called');
+                return false;
+            }
+        };
+        function on_key_down(event) {
+            on_key_changed(event, 1);   // GLFW_PRESS
+        };
+        function on_key_up(event) {
+            on_key_changed(event, 0);   // GLFW_RELEASE
+        };
+        // can't seem to assign key event handlers to canvas, so use window
+        window.addEventListener("keydown", on_key_down, true);
+        window.addEventListener("keyup", on_key_up, true);
+    );
+}
+
+// -----------------------------------------------------------------------------
+
+static int InitGL()
+{
+    if (glfwInit() != GL_TRUE) {
+        Warning("glfwInit failed!");
+        return GL_FALSE;
+    }
+    InitEventHandlers();
 
     // initial size doesn't matter -- ResizeCanvas will soon change it
     if (glfwOpenWindow(100, 100, 8, 8, 8, 8, 0, 0, GLFW_WINDOW) != GL_TRUE) {
@@ -161,6 +199,11 @@ static int InitGL()
 
 // -----------------------------------------------------------------------------
 
+// many of the following routines are declared as C functions to avoid
+// C++ name mangling and make it easy to call them from JavaScript code
+// (the routine names, along with a leading underscore, must be listed in
+// -s EXPORTED_FUNCTIONS in Makefile)
+
 extern "C" {
 
 void ResizeCanvas() {
@@ -183,7 +226,7 @@ void ResizeCanvas() {
         canvas.style.left = left + 'px';
         canvas.style.width = wd + 'px';
         canvas.style.height = ht + 'px';
-        _SetViewport(wd, ht);
+        _SetViewport(wd, ht);               // call C routine (see below)
     );
 }
 
@@ -202,7 +245,7 @@ void SetViewport(int width, int height)
     currht = height;
     if (currwd != currlayer->view->getwidth() ||
         currht != currlayer->view->getheight()) {
-        // change size of Golly's viewport
+        // also change size of Golly's viewport
         ResizeLayers(currwd, currht);
         // to avoid seeing lots of black, draw now rather than call UpdatePattern
         DrawPattern(currindex);
@@ -259,11 +302,6 @@ static void StopIfGenerating()
 }
 
 // -----------------------------------------------------------------------------
-
-// many of the following routines are declared as C functions to avoid
-// C++ name mangling and make it easy to call them from JavaScript code
-// (see the -s EXPORTED_FUNCTIONS line in Makefile, and the buttonPress
-// code in shell.html)
 
 extern "C" {
 
@@ -817,27 +855,121 @@ void OpenClickedFile(const char* filepath)
 
 // -----------------------------------------------------------------------------
 
-static void OnKeyPressed(int key, int action)
+static const int META_KEY = 666;  // cmd key on Mac, start/menu key on Windows (latter untested!!!)
+
+static int TranslateKey(int keycode)
 {
+    // this is a modified version of DOMToGLFWKeyCode in emscripten/src/library_glfw.js
+    switch (keycode) {
+        // my changes (based on testing and info at http://unixpapa.com/js/key.html)
+        case 224 : return META_KEY;     // cmd key on Firefox (Mac)
+        case 91  : return META_KEY;     // left cmd key on Safari, Chrome (Mac)
+        case 93  : return META_KEY;     // right cmd key on Safari, Chrome (Mac)
+        case 92  : return META_KEY;     // right start key on Firefox, IE (Windows)
+        case 219 : return '[';          // Firefox, Chrome and Safari (Mac)
+        case 220 : return '\\';         // Firefox, Chrome and Safari (Mac)
+        case 221 : return ']';          // Firefox, Chrome and Safari (Mac)
+        case 173 : return '-';          // Firefox (Mac)
+        case 189 : return '-';          // Chrome and Safari (Mac)
+        case 187 : return '=';          // Chrome and Safari (Mac)
+        
+        case 0x09: return 295 ; //DOM_VK_TAB -> GLFW_KEY_TAB
+        case 0x1B: return 255 ; //DOM_VK_ESCAPE -> GLFW_KEY_ESC
+        case 0x6A: return 313 ; //DOM_VK_MULTIPLY -> GLFW_KEY_KP_MULTIPLY
+        case 0x6B: return 315 ; //DOM_VK_ADD -> GLFW_KEY_KP_ADD
+        case 0x6D: return 314 ; //DOM_VK_SUBTRACT -> GLFW_KEY_KP_SUBTRACT
+        case 0x6E: return 316 ; //DOM_VK_DECIMAL -> GLFW_KEY_KP_DECIMAL
+        case 0x6F: return 312 ; //DOM_VK_DIVIDE -> GLFW_KEY_KP_DIVIDE
+        case 0x70: return 258 ; //DOM_VK_F1 -> GLFW_KEY_F1
+        case 0x71: return 259 ; //DOM_VK_F2 -> GLFW_KEY_F2
+        case 0x72: return 260 ; //DOM_VK_F3 -> GLFW_KEY_F3
+        case 0x73: return 261 ; //DOM_VK_F4 -> GLFW_KEY_F4
+        case 0x74: return 262 ; //DOM_VK_F5 -> GLFW_KEY_F5
+        case 0x75: return 263 ; //DOM_VK_F6 -> GLFW_KEY_F6
+        case 0x76: return 264 ; //DOM_VK_F7 -> GLFW_KEY_F7
+        case 0x77: return 265 ; //DOM_VK_F8 -> GLFW_KEY_F8
+        case 0x78: return 266 ; //DOM_VK_F9 -> GLFW_KEY_F9
+        case 0x79: return 267 ; //DOM_VK_F10 -> GLFW_KEY_F10
+        case 0x7a: return 268 ; //DOM_VK_F11 -> GLFW_KEY_F11
+        case 0x7b: return 269 ; //DOM_VK_F12 -> GLFW_KEY_F12
+        case 0x25: return 285 ; //DOM_VK_LEFT -> GLFW_KEY_LEFT
+        case 0x26: return 283 ; //DOM_VK_UP -> GLFW_KEY_UP
+        case 0x27: return 286 ; //DOM_VK_RIGHT -> GLFW_KEY_RIGHT
+        case 0x28: return 284 ; //DOM_VK_DOWN -> GLFW_KEY_DOWN
+        case 0x21: return 298 ; //DOM_VK_PAGE_UP -> GLFW_KEY_PAGEUP
+        case 0x22: return 299 ; //DOM_VK_PAGE_DOWN -> GLFW_KEY_PAGEDOWN
+        case 0x24: return 300 ; //DOM_VK_HOME -> GLFW_KEY_HOME
+        case 0x23: return 301 ; //DOM_VK_END -> GLFW_KEY_END
+        case 0x2d: return 296 ; //DOM_VK_INSERT -> GLFW_KEY_INSERT
+        case 16  : return 287 ; //DOM_VK_SHIFT -> GLFW_KEY_LSHIFT
+        case 0x05: return 287 ; //DOM_VK_LEFT_SHIFT -> GLFW_KEY_LSHIFT
+        case 0x06: return 288 ; //DOM_VK_RIGHT_SHIFT -> GLFW_KEY_RSHIFT
+        case 17  : return 289 ; //DOM_VK_CONTROL -> GLFW_KEY_LCTRL
+        case 0x03: return 289 ; //DOM_VK_LEFT_CONTROL -> GLFW_KEY_LCTRL
+        case 0x04: return 290 ; //DOM_VK_RIGHT_CONTROL -> GLFW_KEY_RCTRL
+        case 18  : return 291 ; //DOM_VK_ALT -> GLFW_KEY_LALT
+        case 0x02: return 291 ; //DOM_VK_LEFT_ALT -> GLFW_KEY_LALT
+        case 0x01: return 292 ; //DOM_VK_RIGHT_ALT -> GLFW_KEY_RALT
+        case 96  : return 302 ; //GLFW_KEY_KP_0
+        case 97  : return 303 ; //GLFW_KEY_KP_1
+        case 98  : return 304 ; //GLFW_KEY_KP_2
+        case 99  : return 305 ; //GLFW_KEY_KP_3
+        case 100 : return 306 ; //GLFW_KEY_KP_4
+        case 101 : return 307 ; //GLFW_KEY_KP_5
+        case 102 : return 308 ; //GLFW_KEY_KP_6
+        case 103 : return 309 ; //GLFW_KEY_KP_7
+        case 104 : return 310 ; //GLFW_KEY_KP_8
+        case 105 : return 311 ; //GLFW_KEY_KP_9
+        default  : return keycode;
+    };
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+int OnKeyChanged(int keycode, int action)
+{
+    int key = TranslateKey(keycode);
+
     if (action == GLFW_PRESS) ClearMessage();
-    // DEBUG: printf("key=%i action=%i\n", key, action); return;
     
-    // first check for modifier keys (alt/ctrl/shift)
-    if (key == GLFW_KEY_LALT || key == GLFW_KEY_RALT) {
-        alt_down = action == GLFW_PRESS;
-        return;
+    // first check for modifier keys (meta/ctrl/alt/shift);
+    // note that we need to set flags for these keys BEFORE testing
+    // jsTextAreaIsActive so users can do things like ctrl-click in canvas while
+    // a textarea has focus and OnMouseClick will be able to test ctrl_down flag
+    
+    if (key == META_KEY) {
+        meta_down = action == GLFW_PRESS;
+        return 0;   // don't call preventDefault
     } else if (key == GLFW_KEY_LCTRL || key == GLFW_KEY_RCTRL) {
         ctrl_down = action == GLFW_PRESS;
-        return;
+        return 0;   // don't call preventDefault
+    } else if (key == GLFW_KEY_LALT || key == GLFW_KEY_RALT) {
+        alt_down = action == GLFW_PRESS;
+        return 1;
     } else if (key == GLFW_KEY_LSHIFT || key == GLFW_KEY_RSHIFT) {
         bool oldshift = shift_down;
         shift_down = action == GLFW_PRESS;
         if (oldshift != shift_down) ToggleCursorMode();
-        return;
+        return 1;
+    }
+    
+    if (jsTextAreaIsActive()) {
+        // a textarea is active (and probably has focus),
+        // so don't handle the key here and don't call preventDefault
+        return 0;
+    }
+    
+    if (meta_down || ctrl_down) {
+        // could be a browser shortcut like ctrl/cmd-Q/X/C/V,
+        // so don't handle the key here and don't call preventDefault
+        return 0;
     }
 
-    if (action != GLFW_PRESS) return;
-    // a non-modifer key was pressed
+    if (action == GLFW_RELEASE) return 1;   // non-modifier key was released
+    
+    // a non-modifer key is down (and meta/ctrl key is NOT currently down)
     
     // check for arrow keys and do panning
     if (key == GLFW_KEY_UP) {
@@ -845,25 +977,25 @@ static void OnKeyPressed(int key, int action)
             PanNE();
         else
             PanUp( SmallScroll(currlayer->view->getheight()) );
-        return;
+        return 1;
     } else if (key == GLFW_KEY_DOWN) {
         if (shift_down)
             PanSW();
         else
             PanDown( SmallScroll(currlayer->view->getheight()) );
-        return;
+        return 1;
     } else if (key == GLFW_KEY_LEFT) {
         if (shift_down)
             PanNW();
         else
             PanLeft( SmallScroll(currlayer->view->getwidth()) );
-        return;
+        return 1;
     } else if (key == GLFW_KEY_RIGHT) {
         if (shift_down)
             PanSE();
         else
             PanRight( SmallScroll(currlayer->view->getwidth()) );
-        return;
+        return 1;
     }
     
     int ch = key;
@@ -871,13 +1003,6 @@ static void OnKeyPressed(int key, int action)
         // convert to lowercase
         ch = ch + 32;
     }
-    
-    // fix bugs???!!!
-    if (key == 219) ch = '[';   // on Firefox, Chrome and Safari
-    if (key == 221) ch = ']';   // on Firefox, Chrome and Safari
-    if (key == 189) ch = '-';   // on Chrome and Safari
-    if (key == 187) ch = '=';   // on Chrome and Safari
-    if (key == 173) ch = '-';   // on Firefox
     
     switch (ch) {
         case 13  : StartStop(); break;
@@ -903,7 +1028,11 @@ static void OnKeyPressed(int key, int action)
         case 'z' : Undo(); break;
         case 'Z' : Redo(); break;
     }
+    
+    return 1;   // call preventDefault
 }
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -911,9 +1040,14 @@ static void OnMouseClick(int button, int action)
 {
     ok_to_check_mouse = true;
     if (action == GLFW_PRESS) {
+        // make sure a textarea element no longer has focus (for testing in on_key_changed);
+        // note that 'patterns' is a div with a tabindex, and an outline style that prevents
+        // a focus ring appearing
+        EM_ASM( document.getElementById('patterns').focus(); );
+        
         int x, y;
         glfwGetMousePos(&x, &y);
-        // DEBUG: printf("click at x=%d y=%d\n", x, y); return;
+        // DEBUG: EM_ASM( Module.printErr('click at x='+x+' y='+y); );
         
         ClearMessage();
         
@@ -935,11 +1069,9 @@ static void OnMouseClick(int button, int action)
             if (waitingforpaste && PointInPasteImage(x, y)) {
                 jsShowMenu("pastemenu", x, y);
                 paste_menu_visible = true;
-                ctrl_down = false;
             } else if (SelectionExists() && PointInSelection(x, y)) {
                 jsShowMenu("selectionmenu", x, y);
                 selection_menu_visible = true;
-                ctrl_down = false;
             }
             return;
         }
@@ -967,7 +1099,7 @@ static void OnMouseMove(int x, int y)
     ok_to_check_mouse = true;
     int mousestate = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT);
     if (mousestate == GLFW_PRESS) {
-        // DEBUG: printf("moved to x=%d y=%d\n", x, y);
+        // DEBUG: EM_ASM( Module.printErr('moved to x='+x+' y='+y); );
         
         // ignore move outside viewport
         if (x < 0 || x >= currwd || y < 0 || y >= currht) return;
@@ -987,6 +1119,7 @@ void OnMouseWheel(int pos)
     int x, y;
     glfwGetMousePos(&x, &y);
     
+    // we use a threshold of 2 in below tests to reduce sensitivity
     if (pos + 2 < prevpos) {
         ZoomInPos(x, y);
         prevpos = pos;
@@ -1042,7 +1175,7 @@ static void DoFrame()
 
 int EMSCRIPTEN_KEEPALIVE main()
 {
-    SetMessage("This is Golly 0.3 for the web.  Copyright 2014 The Golly Gang.");
+    SetMessage("This is Golly 0.5 for the web.  Copyright 2014 The Golly Gang.");
     InitPaths();                // init tempdir, prefsfile, etc
     MAX_MAG = 5;                // maximum cell size = 32x32
     InitAlgorithms();           // must initialize algoinfo first
@@ -1056,10 +1189,11 @@ int EMSCRIPTEN_KEEPALIVE main()
 
     if (InitGL() == GL_TRUE) {
         ResizeCanvas();
-        glfwSetKeyCallback(OnKeyPressed);
+        // we do our own keyboard event handling (see InitEventHandlers)
+        // glfwSetKeyCallback(OnKeyChanged);
         glfwSetMouseButtonCallback(OnMouseClick);
         glfwSetMousePosCallback(OnMouseMove);
-        // we do our own mouse wheel handling (see InitGL)
+        // we do our own mouse wheel handling (see InitEventHandlers)
         // glfwSetMouseWheelCallback(OnMouseWheel);
         emscripten_set_main_loop(DoFrame, 0, 1);
     }

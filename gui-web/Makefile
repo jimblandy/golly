@@ -117,13 +117,13 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS) jslib.js shell.html
 	$(CXX) $(CXXFLAGS) --js-library jslib.js --shell-file shell.html \
     --preload-file ../Patterns@/Patterns --preload-file ../Rules@/Rules \
-    -s TOTAL_MEMORY=134217728 \
+    -s TOTAL_MEMORY=300000000 \
     -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', '_ResizeCanvas', '_SetViewport', \
     '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', '_Reset', \
     '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Help', '_SetRule', \
     '_ToggleGrid', '_ToggleIcons', '_ToggleTiming', '_AlgoChanged', '_ModeChanged', \
     '_DecState', '_IncState', '_Paste', '_PasteAction', '_SelectionAction', \
-    '_OnMouseWheel', '_OpenClickedFile' ]" \
+    '_OnKeyChanged', '_OnMouseWheel', '_OpenClickedFile' ]" \
     -o $@ $(LDFLAGS) $(OBJECTS)
 
 # better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???

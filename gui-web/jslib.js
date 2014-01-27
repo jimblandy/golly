@@ -65,4 +65,12 @@ mergeInto(LibraryManager.library, {
         }
     },
 
+    jsTextAreaIsActive: function() {
+        if (document.activeElement.tagName == 'TEXTAREA') {
+            return 1;
+        } else {
+            return 0;
+        }
+    },
+
 });

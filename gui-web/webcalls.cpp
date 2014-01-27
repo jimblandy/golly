@@ -74,14 +74,12 @@ void UpdateStatus()
     if (fullscreen) return;
 
     UpdateStatusLines();    // sets status1, status2, status3
-
-    // use a nicer looking status bar eventually???!!!
     
     // clear text area first
     EM_ASM( document.getElementById('statusbar').value = '\0'; );
     
     if (curralgo != currlayer->algtype) {
-        // algo has changed so change bg color of status bar
+        // algo has changed so change background color of status bar
         curralgo = currlayer->algtype;
         int r = algoinfo[curralgo]->statusrgb.r;
         int g = algoinfo[curralgo]->statusrgb.g;
@@ -89,13 +87,14 @@ void UpdateStatus()
         char rgb[32];
         sprintf(rgb, "rgb(%d,%d,%d)", r, g, b);
         jsSetStatusBarColor(rgb);
+        
         // also change selected algo in dropdown list
         jsSetAlgo(curralgo);
     }
     
-    printf("%s\n",status1.c_str());
-    printf("%s\n",status2.c_str());
-    printf("%s\n",status3.c_str());
+    printf("%s\n", status1.c_str());
+    printf("%s\n", status2.c_str());
+    printf("%s\n", status3.c_str());
 }
 
 // -----------------------------------------------------------------------------
@@ -280,7 +279,10 @@ bool WebGetTextFromClipboard(std::string& text)
 void WebCheckEvents()
 {
     // event_checker is > 0 in here (see gui-common/utils.cpp)
-    //!!!??? glfwPollEvents();
+    
+    // can't do anything here???!!!
+    // note that glfwPollEvents() does nothing (see emscripten/src/library_glfw.js)
+    // glfwPollEvents();
 }
 
 // -----------------------------------------------------------------------------

@@ -15,9 +15,12 @@
             resize: none; overflow: hidden; width: 100%;
             background: #FFFFCE; border: 1px solid gray; margin-top: 10px; padding: 2px;
         }
-        div.golly_border { border: 0px none; }
+        div.canvas_border { border: 0px none; }
         /* the canvas must not have any border or padding, or mouse coords will be wrong */
-        canvas.golly { position: absolute; border: 0px none; }
+        canvas.golly {
+            position: absolute;
+            border: 0px none;
+        }
         html, body {
             width: 100%;
             height: 100%;
@@ -25,7 +28,7 @@
             overflow: hidden;       /* prevents scroll bars */
             background: #DDD;
         }
-        /* div.toolbar { text-align: center; } */
+        div.toolbar { text-align: center; }
         div.myclipboard { text-align: center; }
         textarea.myclipboard {
             font-family: monospace; font-size: 11px; resize: none; width: 280px;
@@ -180,7 +183,7 @@
                 <span style="font: caption;">Pattern/rule data used by </span>
                 <button type="button" id="paste" onClick="Module.buttonPress(this)">Paste</button>
             </div>
-            <div id="patterns" style="font: caption;">
+            <div id="patterns" style="font: caption; outline: #DDD none 0px" tabindex="1">
                 <div class="vspace"></div>
                 <div class="vspace"></div>
                 <center>Supplied Patterns</center>
@@ -671,7 +674,7 @@
                 </div>
                 <div class="vspace"></div>
             </div>
-            <div class="golly_border">
+            <div class="canvas_border">
                 <canvas class="golly" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
             </div>
         </div>
