@@ -9,11 +9,11 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Golly</title>
     <style>
-        .golly { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
         div.statusbar { text-align: left; }
         textarea.statusbar {
-            font-family: monospace; resize: none; overflow: hidden; width: 100%;
-            border: 1px solid #000; margin-top: 10px; background: #FFFFCE;
+            font-family: monospace; font-size: 12px; line-height: 16px;
+            resize: none; overflow: hidden; width: 100%;
+            background: #FFFFCE; border: 1px solid gray; margin-top: 10px; padding: 2px;
         }
         div.golly_border { border: 0px none; }
         /* the canvas must not have any border or padding, or mouse coords will be wrong */
@@ -28,9 +28,19 @@
         /* div.toolbar { text-align: center; } */
         div.myclipboard { text-align: center; }
         textarea.myclipboard {
-            font: 11px monospace; resize: none; width: 280px;
-            background: #FFF; border: 1px solid #000; margin-top: 10px;
+            font-family: monospace; font-size: 11px; resize: none; width: 280px;
+            background: #FFF; border: 1px solid gray; margin-top: 10px; padding: 1px;
         }
+		div.patterndir {
+			width: 280px;
+			padding: 1px;
+			margin-left: 8px;       /* better alignment with textarea.myclipboard */
+			height: 300px;
+			border: 1px solid gray;
+			background: #FFF;
+			white-space: nowrap;
+  			overflow: auto;
+		}
         label { font: caption; }
         .vspace { height: 10px; }
         .statespan { width: 24px; display: inline-block; font: caption; }
@@ -46,6 +56,7 @@
             display: block;
             padding: 5px 10px;
             font: bold 12px arial;
+            cursor: pointer;
         }
 	    #pastemenu span:hover {
 	    	background: #000;
@@ -63,8 +74,28 @@
             display: block;
             padding: 5px 10px;
             font: bold 12px arial;
+            cursor: pointer;
         }
 	    #selectionmenu span:hover {
+	    	background: #000;
+		    color: #FFF;
+		}
+		img {
+			margin: 0px;
+			vertical-align: bottom;
+		}
+		span.dir {
+			cursor: pointer;
+		}
+		span.dir:hover {
+	    	background: #888;
+		    color: #FFF;
+		}
+		span.file {
+		    display: inline-block;
+			cursor: pointer;
+		}
+		span.file:hover {
 	    	background: #000;
 		    color: #FFF;
 		}
@@ -72,19 +103,6 @@
 </head>
 <body>
     <script type='text/javascript'>
-        function resize_statusbar() {
-            // there's probably a way to get this 10px margin via CSS but I can't figure it out!!!
-            var trect = document.getElementById('toolbar').getBoundingClientRect();
-            var wd = window.innerWidth - trect.left - 10;
-            if (wd < 0) wd = 0;     // avoid console warning
-            document.getElementById('statusbar').style.width = wd + 'px';
-        };
-        
-        window.addEventListener('resize', function resize_canvas() {
-            _ResizeCanvas();
-            resize_statusbar();
-        });
-
         function check_browser() {
             var N=navigator.appName, ua=navigator.userAgent, tem;
             var M=ua.match(/(opera|chrome|safari|firefox|msie)\/?\s*(\.?\d+(\.\d+)*)/i);
@@ -106,6 +124,27 @@
             }
         };
         check_browser();
+
+        function resize_statusbar() {
+            // there's probably a way to get this 10px margin via CSS but I can't figure it out!!!
+            var trect = document.getElementById('toolbar').getBoundingClientRect();
+            var wd = window.innerWidth - trect.left - 14; // allow for 2px padding
+            if (wd < 0) wd = 0; // avoid console warning
+            document.getElementById('statusbar').style.width = wd + 'px';
+        };
+        
+        function resize_patterndir() {
+            var patterndir = document.getElementById('patterndir');
+            var ht = window.innerHeight - patterndir.getBoundingClientRect().top - 10;
+            if (ht < 0) ht = 0; // avoid console warning
+            patterndir.style.height = ht + 'px';
+        };
+        
+        window.addEventListener('resize', function resize_canvas() {
+            _ResizeCanvas();
+            resize_statusbar();
+            resize_patterndir();
+        });
     </script>
     <div id="pastemenu" oncontextmenu="event.preventDefault()">
     <span onclick="_PasteAction(0);">Abort Paste</span>
@@ -141,9 +180,434 @@
                 <span style="font: caption;">Pattern/rule data used by </span>
                 <button type="button" id="paste" onClick="Module.buttonPress(this)">Paste</button>
             </div>
-            <div id="patterns" style="margin-left: 10px;">
-                <p><b>Supplied Patterns:</b></p>
-                <p>(not yet implemented!!!)</p>
+            <div id="patterns" style="font: caption;">
+                <div class="vspace"></div>
+                <div class="vspace"></div>
+                <center>Supplied Patterns</center>
+                <div class="patterndir" id="patterndir">
+                    <script type="text/javascript">
+                        // following code is based on a tutorial by Jos de Jong
+                        // (http://www.speqmath.com/tutorials/javascript/js_directory/index.html)
+                        var currlevel = 0;
+                        var currid = 0;
+                        
+                        function dirClose(dirID) {
+                            document.getElementById(dirID).style.display = 'none';
+                            document.getElementById("img" + dirID).src = "images/triangle_right.png";
+                        }
+                        
+                        function dirOpen(dirID) {
+                            document.getElementById(dirID).style.display = 'block';
+                            document.getElementById("img" + dirID).src = "images/triangle_down.png";
+                        }
+                        
+                        function dirClick(dirID) {
+                            // toggle directory from opened to closed or closed to opened
+                            if (document.getElementById(dirID).style.display == 'none') {
+                                dirOpen(dirID);
+                            } else {
+                                dirClose(dirID);
+                            }
+                        }
+                        
+                        function fileClick(fileID) {
+                            // the file's full path is stored in the given span's title attribute
+                            openfile = Module.cwrap('OpenClickedFile', 'void', ['string']);
+                            openfile(document.getElementById(fileID).title);
+                        }
+                        
+                        function dirStart(dirname) {
+                            // add a directory at the current level
+                            currid++;
+                            var dirID = "dir" + currid;
+                            var imgID = "img" + dirID;      // above code assumes this same prefix
+                
+                            for (i=0; i<currlevel; i++) {
+                                document.write("<span style='display:inline-block; width:20px; height:16px;'></span>");
+                            }
+                            
+                            document.write("<span class='dir' onclick='dirClick(\""+dirID+"\");'>");
+                            document.write("<img id='"+imgID+"' src='images/triangle_down.png'>"+dirname+"</span><br>");
+                            document.write("<div id='"+dirID+"'>");
+                
+                            dirClose(dirID);    // close the directory
+                            currlevel++;        // the items inside the directory are a level higher
+                        }
+                        
+                        function addfile(fullpath) {
+                            // create the indentation for this item
+                            for (i=0; i<=currlevel; i++) {
+                                document.write("<span style='display:inline-block; width:20px; height:16px;'></span>");
+                            }
+                            currid++;
+                            var fileID = "file" + currid;
+                            document.write("<span class='file' id='"+fileID+"'");
+                            document.write(" title='"+fullpath+"'");
+                            document.write(" onclick='fileClick(\""+fileID+"\");'>");
+                            var filename = fullpath.substring(fullpath.lastIndexOf("/")+1);
+                            document.write(filename+"</span><br>");
+                        }
+                        
+                        function dirEnd() {
+                            document.write("</div>");
+                            currlevel--;
+                        }
+                        
+                        // can we dynamically enumerate /Patterns directory???!!!
+                        dirStart("Banks");
+                        addfile("/Patterns/Banks/Banks-I-demo.rle");
+                        addfile("/Patterns/Banks/Banks-II-demo.rle");
+                        addfile("/Patterns/Banks/Banks-III-demo.rle");
+                        addfile("/Patterns/Banks/Banks-IV-constructor.rle.gz");
+                        addfile("/Patterns/Banks/Banks-IV-demo.rle");
+                        dirEnd();
+                        dirStart("Codd");
+                        addfile("/Patterns/Codd/clocking-on-demo.rle");
+                        addfile("/Patterns/Codd/coders-demo.rle");
+                        addfile("/Patterns/Codd/construction-arm-demo.rle");
+                        addfile("/Patterns/Codd/crossover-unidir-demo.rle");
+                        addfile("/Patterns/Codd/decoder-4bit-demo.rle.gz");
+                        addfile("/Patterns/Codd/echo-discriminator.rle");
+                        addfile("/Patterns/Codd/echo-switch-demo.rle");
+                        addfile("/Patterns/Codd/extend-coder-demo.rle");
+                        addfile("/Patterns/Codd/gates-demo.rle");
+                        addfile("/Patterns/Codd/golly-constructor.rle.gz");
+                        addfile("/Patterns/Codd/Goucher-replicator.mc.gz");
+                        addfile("/Patterns/Codd/repeater-emitter-demo.rle");
+                        addfile("/Patterns/Codd/sensing-demo.rle");
+                        addfile("/Patterns/Codd/sheathing-demo.rle");
+                        addfile("/Patterns/Codd/sheathing-problems.rle");
+                        addfile("/Patterns/Codd/signals-demo.rle");
+                        addfile("/Patterns/Codd/tape-reader-demo.rle");
+                        dirEnd();
+                        dirStart("Devore");
+                        addfile("/Patterns/Devore/crossover.rle");
+                        addfile("/Patterns/Devore/Devore-body.rle");
+                        addfile("/Patterns/Devore/Devore-rep.rle");
+                        addfile("/Patterns/Devore/discriminator.rle");
+                        dirEnd();
+                        dirStart("Generations");
+                        addfile("/Patterns/Generations/Banner.mcl");
+                        addfile("/Patterns/Generations/Bloomerang.mcl");
+                        addfile("/Patterns/Generations/Burst.mcl");
+                        addfile("/Patterns/Generations/Caterpillars.mcl");
+                        addfile("/Patterns/Generations/Delta.rle");
+                        addfile("/Patterns/Generations/Ebb-and-Flow.mcl");
+                        addfile("/Patterns/Generations/Fireworks.mcl");
+                        addfile("/Patterns/Generations/Lava.mcl");
+                        addfile("/Patterns/Generations/Lines.mcl");
+                        addfile("/Patterns/Generations/MeteorGuns.mcl");
+                        addfile("/Patterns/Generations/Nova.mcl");
+                        addfile("/Patterns/Generations/Perfect-spiral.mcl");
+                        addfile("/Patterns/Generations/Sawfish.rle");
+                        addfile("/Patterns/Generations/SediMental.mcl");
+                        addfile("/Patterns/Generations/Steeplechase.mcl");
+                        addfile("/Patterns/Generations/Transers.mcl");
+                        addfile("/Patterns/Generations/What-a-mess.mcl");
+                        dirEnd();
+                        dirStart("HashLife");
+                        addfile("/Patterns/HashLife/broken-lines.mc");
+                        addfile("/Patterns/HashLife/catacryst.mc");
+                        addfile("/Patterns/HashLife/gotts-dots.mc");
+                        addfile("/Patterns/HashLife/hashlife-oddity1.mc");
+                        addfile("/Patterns/HashLife/hashlife-oddity2.mc");
+                        addfile("/Patterns/HashLife/hexadecimal.mc.gz");
+                        addfile("/Patterns/HashLife/jagged.mc");
+                        addfile("/Patterns/HashLife/jagged2.mc");
+                        addfile("/Patterns/HashLife/loafer-gun-p8388608-linear.mc.gz");
+                        addfile("/Patterns/HashLife/logarithmic-width.mc");
+                        addfile("/Patterns/HashLife/metacatacryst.mc");
+                        addfile("/Patterns/HashLife/metapixel-galaxy.mc.gz");
+                        addfile("/Patterns/HashLife/metapixel-p216-gun.mc.gz");
+                        addfile("/Patterns/HashLife/metapixel-parity64.mc.gz");
+                        addfile("/Patterns/HashLife/mosquito5.mc");
+                        addfile("/Patterns/HashLife/nick-gotts-1.mc");
+                        addfile("/Patterns/HashLife/nick-gotts-2.mc");
+                        addfile("/Patterns/HashLife/puzzle.mc");
+                        addfile("/Patterns/HashLife/Replicator-p237228340.mc.gz");
+                        addfile("/Patterns/HashLife/ruler.mc");
+                        addfile("/Patterns/HashLife/totalperiodic.mc");
+                        addfile("/Patterns/HashLife/unlimited-novelty.mc");
+                        addfile("/Patterns/HashLife/wedge-grow.mc");
+                        addfile("/Patterns/HashLife/wolfram22.mc");
+                        dirEnd();
+                        dirStart("JvN");
+                        addfile("/Patterns/JvN/Boustrophedon-replicator.rle");
+                        addfile("/Patterns/JvN/cell-coders-demo.rle");
+                        addfile("/Patterns/JvN/codon4-auto-retract.rle");
+                        addfile("/Patterns/JvN/codon5-auto-retract.rle");
+                        addfile("/Patterns/JvN/construction-arm-demo.rle");
+                        addfile("/Patterns/JvN/counter-demo.rle");
+                        addfile("/Patterns/JvN/golly-constructor.rle");
+                        addfile("/Patterns/JvN/Hutton-replicator.rle");
+                        addfile("/Patterns/JvN/JvN-loop-replicator.rle.gz");
+                        addfile("/Patterns/JvN/N-compressed-replicator.rle");
+                        addfile("/Patterns/JvN/NP-mutation.rle.gz");
+                        addfile("/Patterns/JvN/NP-replicator.rle.gz");
+                        addfile("/Patterns/JvN/partial-constructor.mc.gz");
+                        addfile("/Patterns/JvN/read-arm-demo.rle");
+                        addfile("/Patterns/JvN/sphinx-midpoint.mc.gz");
+                        addfile("/Patterns/JvN/sphinx-spark.mc.gz");
+                        addfile("/Patterns/JvN/sphinx.mc.gz");
+                        dirEnd();
+                        dirStart("Life");
+                        dirStart("Bounded-Grids");
+                        addfile("/Patterns/Life/Bounded-Grids/agar-p3.rle");
+                        addfile("/Patterns/Life/Bounded-Grids/cross-surface.rle");
+                        addfile("/Patterns/Life/Bounded-Grids/herringbone-agar-p14.rle");
+                        addfile("/Patterns/Life/Bounded-Grids/Klein-bottle.rle");
+                        addfile("/Patterns/Life/Bounded-Grids/lightspeed-bubble.rle");
+                        addfile("/Patterns/Life/Bounded-Grids/pulsars-in-tube.rle");
+                        addfile("/Patterns/Life/Bounded-Grids/sphere.rle");
+                        addfile("/Patterns/Life/Bounded-Grids/torus-with-shift.rle");
+                        addfile("/Patterns/Life/Bounded-Grids/torus.rle");
+                        dirEnd();
+                        dirStart("Breeders");
+                        addfile("/Patterns/Life/Breeders/breeder.lif");
+                        addfile("/Patterns/Life/Breeders/c4-diag-switch-engines.rle");
+                        addfile("/Patterns/Life/Breeders/LWSS-breeder.rle");
+                        addfile("/Patterns/Life/Breeders/p100-H-channel-breeder.rle");
+                        addfile("/Patterns/Life/Breeders/p90-rake-factory.rle");
+                        addfile("/Patterns/Life/Breeders/pi-blink-breeder1.rle");
+                        addfile("/Patterns/Life/Breeders/pi-blink-breeder2.rle");
+                        addfile("/Patterns/Life/Breeders/rake-breeder.rle");
+                        addfile("/Patterns/Life/Breeders/slide-breeder.rle");
+                        addfile("/Patterns/Life/Breeders/spacefiller.rle");
+                        addfile("/Patterns/Life/Breeders/switch-engine-breeder-MR.rle");
+                        addfile("/Patterns/Life/Breeders/switch-engine-breeder.rle");
+                        dirEnd();
+                        dirStart("Guns");
+                        addfile("/Patterns/Life/Guns/2c5-spaceship-gun-p416.rle");
+                        addfile("/Patterns/Life/Guns/2c5-spaceship-gun-p690.rle");
+                        addfile("/Patterns/Life/Guns/7-in-a-row-Cordership-V-gun.rle");
+                        addfile("/Patterns/Life/Guns/Cordership-gun-p784.rle");
+                        addfile("/Patterns/Life/Guns/golly-ticker.rle");
+                        addfile("/Patterns/Life/Guns/gun-p165mwss.rle");
+                        addfile("/Patterns/Life/Guns/loafer-gun-p210.rle");
+                        addfile("/Patterns/Life/Guns/p59-gun-with-Snark-reflectors.rle");
+                        addfile("/Patterns/Life/Guns/p690-PT-Cordership-gun.rle");
+                        addfile("/Patterns/Life/Guns/pseudo-p34-gun.rle");
+                        addfile("/Patterns/Life/Guns/vacuum-cleaner.rle");
+                        dirEnd();
+                        dirStart("Methuselahs");
+                        addfile("/Patterns/Life/Methuselahs/acorn.lif");
+                        addfile("/Patterns/Life/Methuselahs/ark1.rle");
+                        addfile("/Patterns/Life/Methuselahs/ark2.rle");
+                        addfile("/Patterns/Life/Methuselahs/blom.rle");
+                        addfile("/Patterns/Life/Methuselahs/iwona.rle");
+                        addfile("/Patterns/Life/Methuselahs/justyna.rle");
+                        addfile("/Patterns/Life/Methuselahs/lidka-predecessor.rle");
+                        addfile("/Patterns/Life/Methuselahs/natural-LWSS.rle");
+                        addfile("/Patterns/Life/Methuselahs/rabbits-relation-17423.rle");
+                        addfile("/Patterns/Life/Methuselahs/rabbits-relation-17465.rle");
+                        addfile("/Patterns/Life/Methuselahs/rabbits.lif");
+                        addfile("/Patterns/Life/Methuselahs/temp-pulsars-big-s.rle");
+                        dirEnd();
+                        dirStart("Miscellaneous");
+                        addfile("/Patterns/Life/Miscellaneous/blockstacker.rle");
+                        addfile("/Patterns/Life/Miscellaneous/Calcyman-primer.zip");
+                        addfile("/Patterns/Life/Miscellaneous/Cambrian-Explosion.rle");
+                        addfile("/Patterns/Life/Miscellaneous/diagfuse1.rle");
+                        addfile("/Patterns/Life/Miscellaneous/die658.rle");
+                        addfile("/Patterns/Life/Miscellaneous/elbow-ladders.rle");
+                        addfile("/Patterns/Life/Miscellaneous/fermat-primes.rle");
+                        addfile("/Patterns/Life/Miscellaneous/four-primers.rle.gz");
+                        addfile("/Patterns/Life/Miscellaneous/infinity-hotel0.rle");
+                        addfile("/Patterns/Life/Miscellaneous/infinity-hotel1.rle");
+                        addfile("/Patterns/Life/Miscellaneous/infinity-hotel2.rle");
+                        addfile("/Patterns/Life/Miscellaneous/infinity-hotel3.rle");
+                        addfile("/Patterns/Life/Miscellaneous/lightspeed.rle");
+                        addfile("/Patterns/Life/Miscellaneous/loggrow-corder.rle");
+                        addfile("/Patterns/Life/Miscellaneous/sawtooth6b.rle");
+                        addfile("/Patterns/Life/Miscellaneous/tubstretch-c124b.rle");
+                        addfile("/Patterns/Life/Miscellaneous/twinprimes.rle");
+                        addfile("/Patterns/Life/Miscellaneous/wicks-DRH-2002.rle");
+                        dirEnd();
+                        dirStart("Oscillators");
+                        addfile("/Patterns/Life/Oscillators/billiard-table.rle");
+                        addfile("/Patterns/Life/Oscillators/DRH-oscillators.rle");
+                        addfile("/Patterns/Life/Oscillators/extensible-low-period.rle");
+                        addfile("/Patterns/Life/Oscillators/glider-stream-crystal.rle");
+                        addfile("/Patterns/Life/Oscillators/low-period.rle");
+                        addfile("/Patterns/Life/Oscillators/p103079214841.rle");
+                        addfile("/Patterns/Life/Oscillators/p138.rle");
+                        addfile("/Patterns/Life/Oscillators/p59-glider-loop.py");
+                        addfile("/Patterns/Life/Oscillators/queen-bee-turn.rle");
+                        addfile("/Patterns/Life/Oscillators/traffic-light-hasslers.rle");
+                        addfile("/Patterns/Life/Oscillators/unique-high-period.rle");
+                        dirEnd();
+                        dirStart("Puffers");
+                        addfile("/Patterns/Life/Puffers/c4-diagonal-puffer.rle");
+                        addfile("/Patterns/Life/Puffers/line-puffer-superstable.rle");
+                        addfile("/Patterns/Life/Puffers/line-puffer-unstable.rle");
+                        addfile("/Patterns/Life/Puffers/p100-H-track-puffer.rle");
+                        addfile("/Patterns/Life/Puffers/pi-fuse-puffer.rle");
+                        addfile("/Patterns/Life/Puffers/puffer-2c5.rle");
+                        addfile("/Patterns/Life/Puffers/puffer-train.rle");
+                        addfile("/Patterns/Life/Puffers/zigzag-wickstretcher.rle");
+                        dirEnd();
+                        dirStart("Rakes");
+                        addfile("/Patterns/Life/Rakes/2c5-engineless-rake-p185.rle");
+                        addfile("/Patterns/Life/Rakes/2c5-spaceship-rake-p240.rle");
+                        addfile("/Patterns/Life/Rakes/basic-rakes.rle");
+                        addfile("/Patterns/Life/Rakes/c2-Cordership-rake.rle");
+                        addfile("/Patterns/Life/Rakes/c3-forward-rake-p333.rle");
+                        addfile("/Patterns/Life/Rakes/c4-sideways-rake.rle");
+                        addfile("/Patterns/Life/Rakes/c5-adjustable-rake.rle");
+                        addfile("/Patterns/Life/Rakes/forward-LWSS-rake-p90.rle");
+                        addfile("/Patterns/Life/Rakes/p270-frothing-puffer-rake.rle");
+                        addfile("/Patterns/Life/Rakes/spider-rake.rle");
+                        dirEnd();
+                        dirStart("Signal-Circuitry");
+                        addfile("/Patterns/Life/Signal-Circuitry/advancer.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/constructor-memory-loop.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/constructor-memory-tape.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/heisenblinker-30.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/heisenburp-30.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/heisenburp-46-natural.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/heisenburp-46.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/Herschel-conduit-stamp-collection.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/lightspeed-telegraph.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/p30-racetrack.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/p46racetrack.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/reflectors.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/reflectors2.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/signal-turn.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/stargate.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/traffic-lights-extruder.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/Turing-Machine-3-state.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/Unit-Life-Cell-512x512.rle");
+                        addfile("/Patterns/Life/Signal-Circuitry/Unit-Life-Deep-Cell.rle");
+                        dirEnd();
+                        dirStart("Spaceships");
+                        addfile("/Patterns/Life/Spaceships/2c5-orthogonal.rle");
+                        addfile("/Patterns/Life/Spaceships/adjustable-Corder-lineship.rle");
+                        addfile("/Patterns/Life/Spaceships/c3-orthogonal.rle");
+                        addfile("/Patterns/Life/Spaceships/c4-diagonal.rle");
+                        addfile("/Patterns/Life/Spaceships/c4-orthogonal.rle");
+                        addfile("/Patterns/Life/Spaceships/Corder-lineship.rle");
+                        addfile("/Patterns/Life/Spaceships/Cordership-boat-burner.rle");
+                        addfile("/Patterns/Life/Spaceships/Cordership-LWSS-freeze-tag.rle");
+                        addfile("/Patterns/Life/Spaceships/corderships.rle");
+                        addfile("/Patterns/Life/Spaceships/diagonal.rle");
+                        addfile("/Patterns/Life/Spaceships/orthogonal.rle");
+                        addfile("/Patterns/Life/Spaceships/short-thin-race.rle");
+                        addfile("/Patterns/Life/Spaceships/smallest-low-period.rle");
+                        addfile("/Patterns/Life/Spaceships/spaceship-types.rle");
+                        dirEnd();
+                        dirStart("Still-Lifes");
+                        addfile("/Patterns/Life/Still-Lifes/1998-eater-stamp-collection.rle");
+                        addfile("/Patterns/Life/Still-Lifes/eaters-misc.rle");
+                        addfile("/Patterns/Life/Still-Lifes/eaters.rle");
+                        addfile("/Patterns/Life/Still-Lifes/random.rle");
+                        addfile("/Patterns/Life/Still-Lifes/ss-eaters.rle");
+                        addfile("/Patterns/Life/Still-Lifes/stripey.rle");
+                        dirEnd();
+                        dirStart("Syntheses");
+                        addfile("/Patterns/Life/Syntheses/109-still-lifes.rle");
+                        addfile("/Patterns/Life/Syntheses/29-still-lifes.rle");
+                        addfile("/Patterns/Life/Syntheses/blockish-and-blockic-seeds.rle");
+                        addfile("/Patterns/Life/Syntheses/life-integer-constructions.rle");
+                        addfile("/Patterns/Life/Syntheses/make-harbor.rle");
+                        addfile("/Patterns/Life/Syntheses/make-lightbulb.rle");
+                        addfile("/Patterns/Life/Syntheses/make-osc-p3.rle");
+                        addfile("/Patterns/Life/Syntheses/make-osc-p4.rle");
+                        addfile("/Patterns/Life/Syntheses/make-osc-p5-plus.rle");
+                        addfile("/Patterns/Life/Syntheses/make-p11.rle");
+                        addfile("/Patterns/Life/Syntheses/make-p18.rle");
+                        addfile("/Patterns/Life/Syntheses/make-p33.rle");
+                        addfile("/Patterns/Life/Syntheses/oscillator-syntheses.rle");
+                        addfile("/Patterns/Life/Syntheses/slow-salvo-eater-recipes.rle");
+                        addfile("/Patterns/Life/Syntheses/two-glider-collisions.rle");
+                        dirEnd();
+                        dirEnd();
+                        dirStart("Life-Like");
+                        addfile("/Patterns/Life-Like/alt-wicks.py");
+                        addfile("/Patterns/Life-Like/coral.rle");
+                        addfile("/Patterns/Life-Like/Day-and-Night-gun-and-antigun.rle");
+                        addfile("/Patterns/Life-Like/ice-nine.rle");
+                        dirStart("Morley");
+                        addfile("/Patterns/Life-Like/Morley/breeder2.rle");
+                        addfile("/Patterns/Life-Like/Morley/enterprise-gun.rle");
+                        addfile("/Patterns/Life-Like/Morley/growing-ship.rle");
+                        dirEnd();
+                        addfile("/Patterns/Life-Like/p168-knightship.rle");
+                        addfile("/Patterns/Life-Like/persian-rugs.lif");
+                        addfile("/Patterns/Life-Like/replicator.rle");
+                        addfile("/Patterns/Life-Like/spiral-growth.rle");
+                        addfile("/Patterns/Life-Like/white-whale.rle");
+                        dirEnd();
+                        dirStart("Loops");
+                        addfile("/Patterns/Loops/Byl-Loop.rle");
+                        addfile("/Patterns/Loops/Chou-Reggia-Loop-1.rle");
+                        addfile("/Patterns/Loops/Chou-Reggia-Loop-2.rle");
+                        addfile("/Patterns/Loops/Evoloop-finite.rle");
+                        addfile("/Patterns/Loops/Evoloop.rle");
+                        addfile("/Patterns/Loops/Langtons-Loops.rle");
+                        addfile("/Patterns/Loops/Perrier-Loop.rle");
+                        addfile("/Patterns/Loops/Perrier-Parenthesis-Checker.rle");
+                        addfile("/Patterns/Loops/SDSR-Loop.rle");
+                        addfile("/Patterns/Loops/Tempesti-Loop.rle");
+                        dirEnd();
+                        dirStart("Margolus");
+                        addfile("/Patterns/Margolus/BBM.rle");
+                        addfile("/Patterns/Margolus/CrittersCircle.rle");
+                        addfile("/Patterns/Margolus/CrittersOscillators.rle");
+                        addfile("/Patterns/Margolus/DLA.rle");
+                        addfile("/Patterns/Margolus/HPP.rle");
+                        addfile("/Patterns/Margolus/HPP_large.rle");
+                        addfile("/Patterns/Margolus/Sand-Test.rle");
+                        addfile("/Patterns/Margolus/Sand.rle");
+                        addfile("/Patterns/Margolus/TMGas.rle");
+                        addfile("/Patterns/Margolus/TMGas_largeWithHole.rle");
+                        addfile("/Patterns/Margolus/TripATron.rle");
+                        addfile("/Patterns/Margolus/TripATron_BlockAligned.rle");
+                        dirEnd();
+                        dirStart("Other-Rules");
+                        addfile("/Patterns/Other-Rules/Ed-rep.rle");
+                        addfile("/Patterns/Other-Rules/golly-ants.rle");
+                        addfile("/Patterns/Other-Rules/HPP-demo-small.rle");
+                        addfile("/Patterns/Other-Rules/HPP-demo.rle");
+                        addfile("/Patterns/Other-Rules/Langtons-Ant.rle");
+                        addfile("/Patterns/Other-Rules/life-on-the-edge.rle");
+                        addfile("/Patterns/Other-Rules/life-on-the-slope.rle");
+                        dirEnd();
+                        dirStart("Patersons-Worms");
+                        addfile("/Patterns/Patersons-Worms/worm-1040512.rle");
+                        addfile("/Patterns/Patersons-Worms/worm-1042015.rle");
+                        addfile("/Patterns/Patersons-Worms/worm-1042020.rle");
+                        addfile("/Patterns/Patersons-Worms/worm-1252121.rle");
+                        addfile("/Patterns/Patersons-Worms/worm-1525115.rle");
+                        dirEnd();
+                        dirStart("Turmites");
+                        addfile("/Patterns/Turmites/AlienCounter.rle");
+                        addfile("/Patterns/Turmites/ComputerArt.rle");
+                        addfile("/Patterns/Turmites/Extinction.rle");
+                        addfile("/Patterns/Turmites/FibonacciSpiral.rle");
+                        addfile("/Patterns/Turmites/Highway2074575.rle");
+                        addfile("/Patterns/Turmites/LangtonsAnt_LLRR.rle");
+                        addfile("/Patterns/Turmites/Perfectionist.rle");
+                        addfile("/Patterns/Turmites/TriangularAnt_period92.rle");
+                        addfile("/Patterns/Turmites/TriangularLangtonsAnt.rle");
+                        addfile("/Patterns/Turmites/WormTrails.rle");
+                        dirEnd();
+                        dirStart("WireWorld");
+                        addfile("/Patterns/WireWorld/circuit.mcl");
+                        addfile("/Patterns/WireWorld/clocks.mcl");
+                        addfile("/Patterns/WireWorld/flip-flop.mcl");
+                        addfile("/Patterns/WireWorld/gate-AND.mcl");
+                        addfile("/Patterns/WireWorld/gate-NOT.mcl");
+                        addfile("/Patterns/WireWorld/gate-OR.mcl");
+                        addfile("/Patterns/WireWorld/gate-XOR.mcl");
+                        addfile("/Patterns/WireWorld/Langtons-ant.zip");
+                        addfile("/Patterns/WireWorld/memory-cell.mcl");
+                        addfile("/Patterns/WireWorld/NickGardner.mcl");
+                        addfile("/Patterns/WireWorld/NylesHeise.mcl");
+                        addfile("/Patterns/WireWorld/primes.mc");
+                        addfile("/Patterns/WireWorld/unary-multiplier.mcl");
+                        dirEnd();
+                    </script>
+                </div>
             </div>
         </div>
         <div style="margin-left: 300px;">
@@ -276,8 +740,11 @@
             
             canvas: document.getElementById('canvas'),
         }; // Module
+        
         resize_statusbar();
+        resize_patterndir();
         Module.print('Loading Golly...');
+        
     </script>
     {{{ SCRIPT }}}
 </body>

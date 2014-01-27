@@ -30,7 +30,7 @@ mergeInto(LibraryManager.library, {
     jsSetRule: function(oldrule) {
         var newrule = prompt('Type in a new rule:', Pointer_stringify(oldrule));
         if (newrule == null) {
-            return allocate(intArrayFromString("\0"), 'i8', ALLOC_STACK);
+            return allocate(intArrayFromString('\0'), 'i8', ALLOC_STACK);
         } else {
             return allocate(intArrayFromString(newrule), 'i8', ALLOC_STACK);
         }
@@ -59,7 +59,7 @@ mergeInto(LibraryManager.library, {
     jsGetClipboard: function() {
         var text = document.getElementById('cliptext').value;
         if (text == null) {
-            return allocate(intArrayFromString("\0"), 'i8', ALLOC_STACK);
+            return allocate(intArrayFromString('\0'), 'i8', ALLOC_STACK);
         } else {
             return allocate(intArrayFromString(text), 'i8', ALLOC_STACK);
         }

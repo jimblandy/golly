@@ -237,7 +237,13 @@ static void InitElements()
 
     // also initialize clipboard data to a simple RLE pattern
     EM_ASM(
-        document.getElementById('cliptext').value = 'x = 9, y = 5, rule = B3/S23\n$bo3b3o$b3o2bo$2bo!';
+        document.getElementById('cliptext').value =
+            '# To paste in this RLE pattern, hit\n'+
+            '# the Paste button, drag the floating\n' +
+            '# image to the desired location, then\n' +
+            '# right-click on it to see some options.\n' +
+            'x = 9, y = 5, rule = B3/S23\n' +
+            '$bo3b3o$b3o2bo$2bo!';
     );
 }
 
@@ -480,7 +486,6 @@ void Help()
               'h -- help\n' +
               'i -- toggle icon mode\n' +
               'n -- new (empty) universe\n' +
-              'o -- open a supplied pattern\n' +
               'r -- reset\n' +
               'R -- random pattern\n' +
               'v -- paste\n' +
@@ -800,16 +805,15 @@ void ClearStatus()
 
 // -----------------------------------------------------------------------------
 
-static void OpenTest()
+extern "C" {
+
+void OpenClickedFile(const char* filepath)
 {
     StopIfGenerating();
-    
-    // test opening supplied patterns:
-    // OpenFile("/Patterns/Life/Breeders/spacefiller.rle");     // .rle is ok
-    // OpenFile("/Patterns/HashLife/jagged.mc");                // .mc is ok
-    // OpenFile("/Patterns/HashLife/metapixel-galaxy.mc.gz");   // .gz is ok
-    OpenFile("/Patterns/Loops/Evoloop.rle");                 // loads /Rules/Evoloop.rule ok
+    OpenFile(filepath);
 }
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -891,7 +895,6 @@ static void OnKeyPressed(int key, int action)
         case 'h' : Help(); break;
         case 'i' : ToggleIcons(); break;
         case 'n' : NewUniverse(); break;
-        case 'o' : OpenTest(); break;
         case 'p' : ChangePrefs(); break;
         case 'r' : Reset(); break;
         case 'R' : RandomPattern(); break;
