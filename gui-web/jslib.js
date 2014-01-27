@@ -23,8 +23,20 @@ mergeInto(LibraryManager.library, {
         document.getElementById('mode').selectedIndex = index;
     },
 
-    jsSetState: function(state) {
-        document.getElementById('state').innerHTML = state.toString();
+    jsSetState: function(state, numstates) {
+        var list = document.getElementById('state');
+        // may need to update number of options in list
+        while (list.length < numstates) {
+            // append another option
+            var option = document.createElement('option');
+            option.text = list.length.toString();
+            list.add(option);
+        };
+        while (list.length > numstates) {
+            // remove last option
+            list.remove(list.length - 1);
+        }
+        list.selectedIndex = state;
     },
 
     jsSetRule: function(oldrule) {

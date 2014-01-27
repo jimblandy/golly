@@ -46,7 +46,6 @@
 		}
         label { font: caption; }
         .vspace { height: 10px; }
-        .statespan { width: 24px; display: inline-block; font: caption; }
         #pastemenu {
          	position: absolute;
          	z-index: 1;
@@ -668,9 +667,11 @@
                         <option>Zoom Out</option>
                     </select>
                     &nbsp;&nbsp;
-                    <span style="font: caption;">State:</span> <span class="statespan" id="state">1</span>
-                    <button type="button" id="decState" onClick="Module.buttonPress(this)"> &lt; </button>
-                    <button type="button" id="incState" onClick="Module.buttonPress(this)"> &gt; </button>
+                    <label for="state">State:</label>
+                    <select id="state" onchange="Module.selectionChanged(this)">
+                        <option>0</option>
+                        <option>1</option>
+                    </select>
                 </div>
                 <div class="vspace"></div>
             </div>
@@ -703,8 +704,6 @@
                 if (button.id == 'noScale') _Scale1to1();
                 if (button.id == 'help') _Help();
                 if (button.id == 'rule') _SetRule();
-                if (button.id == 'decState') _DecState();
-                if (button.id == 'incState') _IncState();
                 if (button.id == 'paste') _Paste();
             },
 
@@ -721,6 +720,7 @@
                 select.blur();  // prevent select getting focus
                 if (select.id == 'algo') _AlgoChanged(select.selectedIndex);
                 if (select.id == 'mode') _ModeChanged(select.selectedIndex);
+                if (select.id == 'state') _StateChanged(select.selectedIndex);
             },
 
             setButtonLabel: function(id, label) {

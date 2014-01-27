@@ -56,7 +56,6 @@
 
 extern "C" {
     extern void jsSetMode(int index);
-    extern void jsSetState(int state);
     extern const char* jsSetRule(const char* oldrule);
     extern void jsShowMenu(const char* id, int x, int y);
     extern int jsTextAreaIsActive();
@@ -258,7 +257,7 @@ void SetViewport(int width, int height)
 
 static void InitElements()
 {
-    // note that checkbox ids must match those in shell.html
+    // note that the following element ids must match those in shell.html
     
     if (showgridlines) {
         EM_ASM( document.getElementById('grid').checked = true; );
@@ -277,6 +276,8 @@ static void InitElements()
     } else {
         EM_ASM( document.getElementById('time').checked = false; );
     }
+
+    EM_ASM( document.getElementById('state').selectedIndex = 1; );
 
     // also initialize clipboard data to a simple RLE pattern
     EM_ASM(
@@ -708,6 +709,45 @@ void ModeChanged(int index)
 
 // -----------------------------------------------------------------------------
 
+extern "C" {
+
+void StateChanged(int index)
+{
+    if (index >= 0 && index < currlayer->algo->NumCellStates()) {
+        currlayer->drawingstate = index;
+    } else {
+        Warning("Bug detected in StateChanged!");
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+/* enable next 2 routines if we provide keyboard shortcuts for them!!!
+
+void DecState()
+{
+    if (currlayer->drawingstate > 0) {
+        currlayer->drawingstate--;
+        jsSetState(currlayer->drawingstate);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void IncState()
+{
+    if (currlayer->drawingstate < currlayer->algo->NumCellStates() - 1) {
+        currlayer->drawingstate++;
+        jsSetState(currlayer->drawingstate);
+    }
+}
+
+*/
+
+// -----------------------------------------------------------------------------
+
 static void ToggleCursorMode()
 {
     // state of shift key has changed so may need to toggle cursor mode
@@ -725,34 +765,6 @@ static void ToggleCursorMode()
         jsSetMode(currlayer->touchmode);
     }
 }
-
-// -----------------------------------------------------------------------------
-
-extern "C" {
-
-void DecState()
-{
-    if (currlayer->drawingstate > 0) {
-        currlayer->drawingstate--;
-        jsSetState(currlayer->drawingstate);
-    }
-}
-
-} // extern "C"
-
-// -----------------------------------------------------------------------------
-
-extern "C" {
-
-void IncState()
-{
-    if (currlayer->drawingstate < currlayer->algo->NumCellStates() - 1) {
-        currlayer->drawingstate++;
-        jsSetState(currlayer->drawingstate);
-    }
-}
-
-} // extern "C"
 
 // -----------------------------------------------------------------------------
 

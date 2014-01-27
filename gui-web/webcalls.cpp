@@ -50,7 +50,7 @@ extern "C" {
     extern void jsSetStatusBarColor(const char* color);
     extern void jsSetAlgo(int index);
     extern void jsSetMode(int index);
-    extern void jsSetState(int state);
+    extern void jsSetState(int state, int numstates);
     extern void jsSetClipboard(const char* text);
     extern const char* jsGetClipboard();
 }
@@ -149,8 +149,8 @@ void UpdateEditBar()
     // show current cursor mode
     jsSetMode(currlayer->touchmode);
 
-    // show current drawing state
-    jsSetState(currlayer->drawingstate);
+    // show current drawing state and update number of options if necessary
+    jsSetState(currlayer->drawingstate, currlayer->algo->NumCellStates());
 }
 
 // -----------------------------------------------------------------------------
