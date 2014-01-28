@@ -82,7 +82,16 @@
 	    	background: #000;
 		    color: #FFF;
 		}
-		img {
+		button.imgbutton {
+			width: 36px;        /* for better agreement with Firefox and Safari/Chrome */
+			height: 32px;
+			margin: 0px;
+			vertical-align: middle;
+		}
+		img.imgbutton {
+			vertical-align: middle;
+		}
+		img.dir {
 			margin: 0px;
 			vertical-align: bottom;
 		}
@@ -229,7 +238,7 @@
                             }
                             
                             document.write("<span class='dir' onclick='dirClick(\""+dirID+"\");'>");
-                            document.write("<img id='"+imgID+"' src='images/triangle_down.png'>"+dirname+"</span><br>");
+                            document.write("<img class='dir' id='"+imgID+"' src='images/triangle_down.png'>"+dirname+"</span><br>");
                             document.write("<div id='"+dirID+"'>");
                 
                             dirClose(dirID);    // close the directory
@@ -621,7 +630,8 @@
                 <div class="golly" id="buttons">
                     <button type="button" id="new" onClick="Module.buttonPress(this)">New</button>
                     &nbsp;&nbsp;
-                    <button type="button" id="startStop" onClick="Module.buttonPress(this)">Start</button>
+                    <button type="button" id="startStop" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Start/stop generating"><img class="imgbutton" id="imgstartStop" src="images/start.png"></button>
                     <button type="button" id="next" onClick="Module.buttonPress(this)">Next</button>
                     <button type="button" id="step" onClick="Module.buttonPress(this)">Step</button>
                     <button type="button" id="slower" onClick="Module.buttonPress(this)">Slower</button>
@@ -721,10 +731,6 @@
                 if (select.id == 'algo') _AlgoChanged(select.selectedIndex);
                 if (select.id == 'mode') _ModeChanged(select.selectedIndex);
                 if (select.id == 'state') _StateChanged(select.selectedIndex);
-            },
-
-            setButtonLabel: function(id, label) {
-                document.getElementById(id).innerHTML = label;
             },
             
             print: (function() {

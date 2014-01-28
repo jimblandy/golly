@@ -109,9 +109,6 @@ static void InitEventHandlers()
     // the following code fixes bugs in emscripten/src/library_glfw.js:
     // - onMouseWheel fails to use wheelDelta
     // - the onmousewheel handler is assigned to the entire window rather than just the canvas
-    // - onKeyChanged always calls event.preventDefault() so browser shortcuts like ctrl-Q/X/C/V
-    //   don't work and text can't be typed into clipboard textarea
-    
     EM_ASM(
         var wheelpos = 0;
         function on_mouse_wheel(event) {
@@ -128,12 +125,22 @@ static void InitEventHandlers()
         Module['canvas'].onmousewheel = on_mouse_wheel;
     );
     
+    // we do our own keyboard event handling because glfw's onKeyChanged always calls
+    // event.preventDefault() so browser shortcuts like ctrl-Q/X/C/V don't work and
+    // text can't be typed into our clipboard textarea
     EM_ASM(
-        // also do our own keyboard event handling
         function on_key_changed(event, status) {
             var key = event.keyCode;
             // DEBUG: Module.printErr('keycode='+key+' status='+status);
             // DEBUG: Module.printErr('activeElement='+document.activeElement.tagName);
+
+            // remove focus from select element to avoid problem if an arrow key is pressed
+            // (doesn't work!!! if selection is NOT changed and arrow key hit immediately after
+            // then it can cause the selection to change, as well as scroll the pattern)
+            if (document.activeElement.tagName == 'SELECT') {
+                document.activeElement.blur();
+            };
+
             var prevent = _OnKeyChanged(key, status);
             // we allow default handler in these 2 cases:
             // 1. if ctrl/meta key is down (allows cmd/ctrl-Q/X/C/V/A/etc to work)
@@ -297,8 +304,8 @@ static void StopIfGenerating()
 {
     if (generating) {
         StopGenerating();
-        // generating flag is now false so change button label to "Start"
-        EM_ASM( Module.setButtonLabel('startStop', 'Start'); );
+        // generating flag is now false so change button image
+        EM_ASM( document.getElementById('imgstartStop').src = 'images/start.png'; );
     }
 }
 
@@ -334,11 +341,11 @@ void StartStop()
 {
     if (generating) {
         StopGenerating();
-        // generating flag is now false so change button label to "Start"
-        EM_ASM( Module.setButtonLabel('startStop', 'Start'); );
+        // generating flag is now false so change button image
+        EM_ASM( document.getElementById('imgstartStop').src = 'images/start.png'; );
     } else if (StartGenerating()) {
-        // generating flag is now true so change button label to "Stop"
-        EM_ASM( Module.setButtonLabel('startStop', 'Stop'); );
+        // generating flag is now true so change button image
+        EM_ASM( document.getElementById('imgstartStop').src = 'images/stop.png'; );
     }
 }
 
