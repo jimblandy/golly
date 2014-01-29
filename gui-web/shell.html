@@ -628,23 +628,32 @@
             <div class="toolbar" id="toolbar">
                 <div class="vspace"></div>
                 <div class="golly" id="buttons">
-                    <button type="button" id="new" onClick="Module.buttonPress(this)">New</button>
+                    <button type="button" id="new" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Create a new, empty universe"><img class="imgbutton" src="images/new.png"></button>
                     &nbsp;&nbsp;
                     <button type="button" id="startStop" onClick="Module.buttonPress(this)" class="imgbutton"
                             title="Start/stop generating"><img class="imgbutton" id="imgstartStop" src="images/start.png"></button>
-                    <button type="button" id="next" onClick="Module.buttonPress(this)">Next</button>
-                    <button type="button" id="step" onClick="Module.buttonPress(this)">Step</button>
-                    <button type="button" id="slower" onClick="Module.buttonPress(this)">Slower</button>
-                    <button type="button" id="faster" onClick="Module.buttonPress(this)">Faster</button>
-                    <button type="button" id="step1" onClick="Module.buttonPress(this)">Step=1</button>
-                    <button type="button" id="reset" onClick="Module.buttonPress(this)">Reset</button>
+                    <button type="button" id="next" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Advance by 1 generation"><img class="imgbutton" src="images/next.png"></button>
+                    <button type="button" id="step" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Advance by step size"><img class="imgbutton" src="images/step.png"></button>
+                    <button type="button" id="step1" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Set step size to 1"><img class="imgbutton" src="images/step1.png"></button>
+                    <button type="button" id="slower" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Slower (decrease step size)"><img class="imgbutton" src="images/slower.png"></button>
+                    <button type="button" id="faster" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Faster (increase step size)"><img class="imgbutton" src="images/faster.png"></button>
+                    <button type="button" id="reset" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Go back to starting generation"><img class="imgbutton" src="images/reset.png"></button>
                     &nbsp;&nbsp;
-                    <button type="button" id="undo" onClick="Module.buttonPress(this)">Undo</button>
-                    <button type="button" id="redo" onClick="Module.buttonPress(this)">Redo</button>
+                    <button type="button" id="undo" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Undo"><img class="imgbutton" src="images/undo.png"></button>
+                    <button type="button" id="redo" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Redo"><img class="imgbutton" src="images/redo.png"></button>
                     &nbsp;&nbsp;
                     <button type="button" id="fit" onClick="Module.buttonPress(this)">Fit</button>
-                    <button type="button" id="zoomOut" onClick="Module.buttonPress(this)">Zoom Out</button>
                     <button type="button" id="zoomIn" onClick="Module.buttonPress(this)">Zoom In</button>
+                    <button type="button" id="zoomOut" onClick="Module.buttonPress(this)">Zoom Out</button>
                     <button type="button" id="noScale" onClick="Module.buttonPress(this)">Scale=1:1</button>
                     &nbsp;&nbsp;
                     <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
