@@ -470,6 +470,19 @@ void Fit()
 
 // -----------------------------------------------------------------------------
 
+void Middle()
+{
+    if (currlayer->originx == bigint::zero && currlayer->originy == bigint::zero) {
+        currlayer->view->center();
+    } else {
+        // put cell saved by ChangeOrigin (not yet implemented!!!) in middle
+        currlayer->view->setpositionmag(currlayer->originx, currlayer->originy, currlayer->view->getmag());
+    }
+    UpdatePatternAndStatus();
+}
+
+// -----------------------------------------------------------------------------
+
 extern "C" {
 
 void ZoomOut()
@@ -514,31 +527,45 @@ void Scale1to1()
 
 extern "C" {
 
+void Info()
+{
+    Warning("Not yet implemented!!!");
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
 void Help()
 {
     // do something else eventually!!!
     EM_ASM(
         alert('You can use these keyboard commands:\n\n' +
               'return -- start/stop generating\n' +
-              'space -- do 1 generation\n' +
+              'space -- advance 1 generation\n' +
               '- or _ -- go slower\n' +
               '+ or = -- go faster\n' +
               '0 -- set step exponent to 0\n' +
               '1 -- set scale to 1:1\n' +
+              '5 -- randomly fill selection\n' +
               '[ -- zoom out\n' +
               '] -- zoom in\n' +
               'a -- select all\n' +
-              'f -- fit\n' +
+              'A -- remove selection\n' +
+              'f -- fit entire pattern in view\n' +
+              'F -- fit entire selection in view\n' +
               'h -- help\n' +
               'i -- toggle icon mode\n' +
-              'n -- new (empty) universe\n' +
-              'r -- reset\n' +
-              'R -- random pattern\n' +
+              'l -- toggle grid lines\n' +
+              'm -- put cell at 0,0 in middle\n' +
               'v -- paste\n' +
               'V -- cancel paste\n' +
               'z -- undo\n' +
               'Z -- redo\n' +
-              'arrow keys -- scrolling'
+              'arrow keys -- scroll up/down/left/right\n' +
+              'shift-arrow -- scroll NE/SW/NW/SE'
              );
     );
 }
@@ -556,6 +583,8 @@ static void ChangePrefs()
 
 // -----------------------------------------------------------------------------
 
+/* too dangerous to provide a keyboard shortcut for this???!!!
+
 static void RandomPattern()
 {
     NewUniverse();
@@ -569,6 +598,8 @@ static void RandomPattern()
     currlayer->currsel.Deselect();
     UpdateEverything();
 }
+
+*/
 
 // -----------------------------------------------------------------------------
 
@@ -1032,16 +1063,18 @@ int OnKeyChanged(int keycode, int action)
         case '=' : GoFaster(); break;
         case '0' : StepBy1(); break;
         case '1' : Scale1to1(); break;
+        case '5' : RandomFill(); break;
         case '[' : ZoomOut(); break;
         case ']' : ZoomIn(); break;
         case 'a' : SelectAll(); break;
+        case 'A' : RemoveSelection(); break;
         case 'f' : Fit(); break;
+        case 'F' : FitSelection(); break;
         case 'h' : Help(); break;
         case 'i' : ToggleIcons(); break;
-        case 'n' : NewUniverse(); break;
+        case 'l' : ToggleGrid(); break;
+        case 'm' : Middle(); break;
         case 'p' : ChangePrefs(); break;
-        case 'r' : Reset(); break;
-        case 'R' : RandomPattern(); break;
         case 'v' : Paste(); break;
         case 'V' : AbortPaste(); UpdatePattern(); break;
         case 'z' : Undo(); break;

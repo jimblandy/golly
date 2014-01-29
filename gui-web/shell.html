@@ -651,12 +651,19 @@
                     <button type="button" id="redo" onClick="Module.buttonPress(this)" class="imgbutton"
                             title="Redo"><img class="imgbutton" src="images/redo.png"></button>
                     &nbsp;&nbsp;
-                    <button type="button" id="fit" onClick="Module.buttonPress(this)">Fit</button>
-                    <button type="button" id="zoomIn" onClick="Module.buttonPress(this)">Zoom In</button>
-                    <button type="button" id="zoomOut" onClick="Module.buttonPress(this)">Zoom Out</button>
-                    <button type="button" id="noScale" onClick="Module.buttonPress(this)">Scale=1:1</button>
+                    <button type="button" id="fit" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Fit entire pattern within view"><img class="imgbutton" src="images/fit.png"></button>
+                    <button type="button" id="zoomIn" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Zoom in"><img class="imgbutton" src="images/zoomin.png"></button>
+                    <button type="button" id="zoomOut" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Zoom out"><img class="imgbutton" src="images/zoomout.png"></button>
+                    <button type="button" id="scale1to1" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Set scale to 1 cell = 1 pixel"><img class="imgbutton" src="images/scale1to1.png"></button>
                     &nbsp;&nbsp;
-                    <button type="button" id="help" onClick="Module.buttonPress(this)">Help</button>
+                    <button type="button" id="info" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Show pattern information"><img class="imgbutton" src="images/info.png"></button>
+                    <button type="button" id="help" onClick="Module.buttonPress(this)" class="imgbutton"
+                            title="Show help dialog"><img class="imgbutton" src="images/help.png"></button>
                 </div>
                 <div class="vspace"></div>
                 <div class="golly" id="settings">
@@ -720,7 +727,8 @@
                 if (button.id == 'fit') _Fit();
                 if (button.id == 'zoomOut') _ZoomOut();
                 if (button.id == 'zoomIn') _ZoomIn();
-                if (button.id == 'noScale') _Scale1to1();
+                if (button.id == 'scale1to1') _Scale1to1();
+                if (button.id == 'info') _Info();
                 if (button.id == 'help') _Help();
                 if (button.id == 'rule') _SetRule();
                 if (button.id == 'paste') _Paste();
