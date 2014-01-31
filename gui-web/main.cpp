@@ -599,26 +599,6 @@ static void ChangePrefs()
 
 // -----------------------------------------------------------------------------
 
-/* too dangerous to provide a keyboard shortcut for this???!!!
-
-static void RandomPattern()
-{
-    NewUniverse();
-    
-    // following hack is needed because we use shift-R to call RandomPattern,
-    // so we want ToggleCursorMode to restore drawmode when shift key is released
-    if (shift_down) currlayer->touchmode = pickmode;
-    
-    currlayer->currsel.SetRect(-10, -10, 20, 20);
-    currlayer->currsel.RandomFill();
-    currlayer->currsel.Deselect();
-    UpdateEverything();
-}
-
-*/
-
-// -----------------------------------------------------------------------------
-
 extern "C" {
 
 void Paste()
@@ -744,19 +724,43 @@ void AlgoChanged(int index)
 
 // -----------------------------------------------------------------------------
 
+static void UpdateCursorImage()
+{
+    // note that the 2 numbers after the cursor url are the x and y offsets of the
+    // cursor's hotspot relative to the top left corner
+    if (currlayer->touchmode == drawmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_draw.png) 4 15, auto'; );
+    } else if (currlayer->touchmode == pickmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_pick.png) 0 15, auto'; );
+    } else if (currlayer->touchmode == selectmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'crosshair'; );     // all browsers support this???
+    } else if (currlayer->touchmode == movemode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_move.png) 7 7, auto'; );
+    } else if (currlayer->touchmode == zoominmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_zoomin.png) 6 6, auto'; );
+    } else if (currlayer->touchmode == zoomoutmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_zoomout.png) 6 6, auto'; );
+    } else {
+        Warning("Bug detected in UpdateCursorImage!");
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 extern "C" {
 
 void ModeChanged(int index)
 {
     switch (index) {
-        case 0: currlayer->touchmode = drawmode;    return;
-        case 1: currlayer->touchmode = pickmode;    return;
-        case 2: currlayer->touchmode = selectmode;  return;
-        case 3: currlayer->touchmode = movemode;    return;
-        case 4: currlayer->touchmode = zoominmode;  return;
-        case 5: currlayer->touchmode = zoomoutmode; return;
+        case 0:  currlayer->touchmode = drawmode;    break;
+        case 1:  currlayer->touchmode = pickmode;    break;
+        case 2:  currlayer->touchmode = selectmode;  break;
+        case 3:  currlayer->touchmode = movemode;    break;
+        case 4:  currlayer->touchmode = zoominmode;  break;
+        case 5:  currlayer->touchmode = zoomoutmode; break;
+        default: Warning("Bug detected in ModeChanged!"); return;
     }
-    Warning("Bug detected in ModeChanged!");
+    UpdateCursorImage();
 }
 
 } // extern "C"
@@ -808,15 +812,19 @@ static void ToggleCursorMode()
     if (currlayer->touchmode == drawmode) {
         currlayer->touchmode = pickmode;
         jsSetMode(currlayer->touchmode);
+        UpdateCursorImage();
     } else if (currlayer->touchmode == pickmode) {
         currlayer->touchmode = drawmode;
         jsSetMode(currlayer->touchmode);
+        UpdateCursorImage();
     } else if (currlayer->touchmode == zoominmode) {
         currlayer->touchmode = zoomoutmode;
         jsSetMode(currlayer->touchmode);
+        UpdateCursorImage();
     } else if (currlayer->touchmode == zoomoutmode) {
         currlayer->touchmode = zoominmode;
         jsSetMode(currlayer->touchmode);
+        UpdateCursorImage();
     }
 }
 
@@ -1201,6 +1209,36 @@ void OnMouseWheel(int pos)
 
 // -----------------------------------------------------------------------------
 
+static bool over_canvas = false;    // mouse is over canvas?
+
+extern "C" {
+
+void OverCanvas(int entered)
+{
+    if (entered) {
+        // mouse entered canvas so change cursor image depending on currlayer->touchmode
+        UpdateCursorImage();
+        
+        // call CheckMouseLocation in DoFrame
+        over_canvas = true;
+        
+    } else {
+        // mouse exited canvas; cursor is automatically restored to standard arrow
+        // so no need to do this:
+        // EM_ASM( Module['canvas'].style.cursor = 'auto'; );
+        
+        // force XY location to be cleared
+        CheckMouseLocation(-1, -1);
+        // we also need to prevent CheckMouseLocation being called in DoFrame because
+        // it might detect a valid XY location if right/bottom cells are clipped
+        over_canvas = false;
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
 static void DoFrame()
 {
     if (generating && event_checker == 0) {
@@ -1229,7 +1267,7 @@ static void DoFrame()
 
     // check the current mouse location continuously, but only after the 1st mouse-click or
     // mouse-move event, because until then glfwGetMousePos returns 0,0 (report bug???!!!)
-    if (ok_to_check_mouse) {
+    if (ok_to_check_mouse && over_canvas) {
         int x, y;
         glfwGetMousePos(&x, &y);
         CheckMouseLocation(x, y);

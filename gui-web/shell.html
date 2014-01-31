@@ -677,11 +677,11 @@
                     </select>
                     <button type="button" id="rule" onClick="Module.buttonPress(this)">Rule...</button>
                     &nbsp;&nbsp;
-                    <label for="grid">Grid</label><input type="checkbox" id="grid" onClick="Module.checkboxPress(this)">
+                    <label for="grid">Grid:</label><input type="checkbox" id="grid" onClick="Module.checkboxPress(this)">
                     &nbsp;&nbsp;
-                    <label for="icons">Icons</label><input type="checkbox" id="icons" onClick="Module.checkboxPress(this)">
+                    <label for="icons">Icons:</label><input type="checkbox" id="icons" onClick="Module.checkboxPress(this)">
                     &nbsp;&nbsp;
-                    <label for="time">Timing</label><input type="checkbox" id="time" onClick="Module.checkboxPress(this)">
+                    <label for="time">Timing:</label><input type="checkbox" id="time" onClick="Module.checkboxPress(this)">
                     &nbsp;&nbsp;
                     <label for="mode">Cursor:</label>
                     <select id="mode" onchange="Module.selectionChanged(this)">
@@ -702,7 +702,9 @@
                 <div class="vspace"></div>
             </div>
             <div class="canvas_border">
-                <canvas class="golly" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+                <canvas class="golly" id="canvas" onmouseover="_OverCanvas(true)" onmouseout="_OverCanvas(false)"
+                    oncontextmenu="event.preventDefault()">
+                </canvas>
             </div>
         </div>
     </div>
