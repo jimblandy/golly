@@ -42,7 +42,7 @@
 
 // -----------------------------------------------------------------------------
 
-// the following JavaScript routines are implemented in jslib.js:
+// the following JavaScript functions are implemented in jslib.js:
 
 extern "C" {
     extern void jsAlert(const char* msg);
@@ -53,6 +53,7 @@ extern "C" {
     extern void jsSetState(int state, int numstates);
     extern void jsSetClipboard(const char* text);
     extern const char* jsGetClipboard();
+    extern void jsEnableButton(const char* id, bool enable);
 }
 
 // -----------------------------------------------------------------------------
@@ -133,6 +134,17 @@ std::string GetRuleName(const std::string& rule)
 
 // -----------------------------------------------------------------------------
 
+void UpdateButtons()
+{
+    if (fullscreen) return;
+    jsEnableButton("reset", currlayer->algo->getGeneration() > currlayer->startgen);
+    jsEnableButton("undo", currlayer->undoredo->CanUndo());
+    jsEnableButton("redo", currlayer->undoredo->CanRedo());
+    jsEnableButton("info", currlayer->currname != "untitled");
+}
+
+// -----------------------------------------------------------------------------
+
 void UpdateEditBar()
 {
     if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
@@ -142,9 +154,7 @@ void UpdateEditBar()
     
     if (fullscreen) return;
     
-    // use JavaScript code to update the Undo/Redo buttons
-    //!!! undobutton.setEnabled(CanUndo());
-    //!!! redobutton.setEnabled(CanRedo());
+    UpdateButtons();
 
     // show current cursor mode
     jsSetMode(currlayer->touchmode);

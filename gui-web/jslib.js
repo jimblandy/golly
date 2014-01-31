@@ -85,4 +85,20 @@ mergeInto(LibraryManager.library, {
         }
     },
 
+    jsEnableButton: function(id, enable) {
+        var button = document.getElementById(Pointer_stringify(id));
+        var img = document.getElementById('img' + Pointer_stringify(id));
+        if (enable) {
+            button.disabled = false;
+            img.style.opacity = 1.0;
+            // following is needed on IE???!!!
+            // img.style.filter = 'alpha(opacity:100)';
+        } else {
+            button.disabled = true;
+            img.style.opacity = 0.25;
+            // following is needed on IE???!!!
+            // img.style.filter = 'alpha(opacity:25)';
+        }
+    },
+
 });

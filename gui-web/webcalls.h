@@ -46,8 +46,11 @@ void ResumeGenerating();
 std::string GetRuleName(const std::string& rule);
 // Return name of given rule (empty string if rule is unnamed).
 
+void UpdateButtons();
+// Some buttons might need to be enabled/disabled.
+
 void UpdateEditBar();
-// Update Undo and Redo buttons, show current drawing state and touch mode.
+// Update buttons, show current drawing state and cursor mode.
 
 void BeginProgress(const char* title);
 bool AbortProgress(double fraction_done, const char* message);

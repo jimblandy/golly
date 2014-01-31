@@ -52,13 +52,14 @@
 
 // -----------------------------------------------------------------------------
 
-// the following JavaScript routines are implemented in jslib.js:
+// the following JavaScript functions are implemented in jslib.js:
 
 extern "C" {
     extern void jsSetMode(int index);
     extern const char* jsSetRule(const char* oldrule);
     extern void jsShowMenu(const char* id, int x, int y);
     extern int jsTextAreaIsActive();
+    extern void jsEnableButton(const char* id, bool enable);
 }
 
 // -----------------------------------------------------------------------------
@@ -264,7 +265,7 @@ void SetViewport(int width, int height)
 
 static void InitElements()
 {
-    // note that the following element ids must match those in shell.html
+    // the following element ids must match those in shell.html
     
     if (showgridlines) {
         EM_ASM( document.getElementById('grid').checked = true; );
@@ -283,8 +284,6 @@ static void InitElements()
     } else {
         EM_ASM( document.getElementById('time').checked = false; );
     }
-
-    EM_ASM( document.getElementById('state').selectedIndex = 1; );
 
     // also initialize clipboard data to a simple RLE pattern
     EM_ASM(
@@ -323,7 +322,8 @@ void NewUniverse()
     allowundo = saveundo;
     
     if (event_checker > 0) {
-        // try again after a short delay!!!???
+        // try again after a short delay!!!??? something like this (10 millisec delay):
+        // EM_ASM( window.setTimeout('_NewUniverse()', 10); );
         return;
     }
     
@@ -341,11 +341,27 @@ void StartStop()
 {
     if (generating) {
         StopGenerating();
+        
         // generating flag is now false so change button image
         EM_ASM( document.getElementById('imgstartStop').src = 'images/start.png'; );
+        
+        // don't call UpdateButtons here because if event_checker is > 0
+        // then StopGenerating hasn't called RememberGenFinish, and so CanUndo/CanRedo
+        // might not return correct results
+        bool canreset = currlayer->algo->getGeneration() > currlayer->startgen;
+        jsEnableButton("reset", canreset);
+        jsEnableButton("undo", allowundo && (canreset || currlayer->undoredo->CanUndo()));
+        jsEnableButton("redo", false);
+
     } else if (StartGenerating()) {
         // generating flag is now true so change button image
         EM_ASM( document.getElementById('imgstartStop').src = 'images/stop.png'; );
+
+        // don't call UpdateButtons here because we want user to
+        // be able to stop generating by hitting reset/undo buttons
+        jsEnableButton("reset", true);
+        jsEnableButton("undo", allowundo);
+        jsEnableButton("redo", false);
     }
 }
 
@@ -366,7 +382,7 @@ void Next()
     }
 
     NextGeneration(false);       // advance by 1
-    UpdatePatternAndStatus();
+    UpdateEverything();
 }
 
 } // extern "C"
@@ -386,7 +402,7 @@ void Step()
     }
 
     NextGeneration(true);       // advance by current step size
-    UpdatePatternAndStatus();
+    UpdateEverything();
 }
 
 } // extern "C"
@@ -1238,6 +1254,7 @@ int EMSCRIPTEN_KEEPALIVE main()
     UpdateStatus();             // show initial message
 
     InitElements();             // initialize checkboxes and other document elements
+    UpdateEditBar();            // initialize drawing state and disable some buttons
 
     if (InitGL() == GL_TRUE) {
         ResizeCanvas();
