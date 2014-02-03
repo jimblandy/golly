@@ -72,8 +72,11 @@ static bool ctrl_down = false;          // ctrl key is currently pressed?
 static bool shift_down = false;         // shift key is currently pressed?
 static bool meta_down = false;          // cmd/start/menu key is currently pressed?
 
-static bool ok_to_check_mouse = false;
-static bool mouse_down = false;
+static bool ok_to_check_mouse = false;  // ok to call glfwGetMousePos?
+static bool mouse_down = false;         // is mouse button down?
+static bool over_canvas = false;        // is mouse over canvas?
+static bool over_paste = false;         // is mouse over paste image?
+
 static bool paste_menu_visible = false;
 static bool selection_menu_visible = false;
 
@@ -135,20 +138,17 @@ static void InitEventHandlers()
             // DEBUG: Module.printErr('keycode='+key+' status='+status);
             // DEBUG: Module.printErr('activeElement='+document.activeElement.tagName);
 
-            // remove focus from select element to avoid problem if an arrow key is pressed
-            // (doesn't work!!! if selection is NOT changed and arrow key hit immediately after
-            // then it can cause the selection to change, as well as scroll the pattern)
-            if (document.activeElement.tagName == 'SELECT') {
-                document.activeElement.blur();
-            };
-
             var prevent = _OnKeyChanged(key, status);
             // we allow default handler in these 2 cases:
             // 1. if ctrl/meta key is down (allows cmd/ctrl-Q/X/C/V/A/etc to work)
             // 2. if a textarea is active (document.activeElement.tagName == 'TEXTAREA')
+            
+            // on Firefox it seems we NEED to call preventDefault to stop cursor disappearing,
+            // but on Safari/Chrome if we call it then cursor disappears (and arrow keys ALWAYS
+            // cause disappearance regardless of whether we call it or not)... sheesh!!!
+            
             if (prevent) {
                 event.preventDefault();
-                // DEBUG: Module.printErr('preventDefault called');
                 return false;
             }
         };
@@ -158,9 +158,8 @@ static void InitEventHandlers()
         function on_key_up(event) {
             on_key_changed(event, 0);   // GLFW_RELEASE
         };
-        // can't seem to assign key event handlers to canvas, so use window
-        window.addEventListener("keydown", on_key_down, true);
-        window.addEventListener("keyup", on_key_up, true);
+        window.addEventListener("keydown", on_key_down, false);
+        window.addEventListener("keyup", on_key_up, false);
     );
 }
 
@@ -299,6 +298,55 @@ static void InitElements()
 
 // -----------------------------------------------------------------------------
 
+static void UpdateCursorImage()
+{
+    // note that the 2 numbers after the cursor url are the x and y offsets of the
+    // cursor's hotspot relative to the top left corner
+    
+    if (over_paste) {
+        // user can drag paste image so show hand cursor
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_move.png) 7 7, auto'; );
+        return;
+    }
+    
+    if (currlayer->touchmode == drawmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_draw.png) 4 15, auto'; );
+    } else if (currlayer->touchmode == pickmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_pick.png) 0 15, auto'; );
+    } else if (currlayer->touchmode == selectmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'crosshair'; );     // all browsers support this???
+    } else if (currlayer->touchmode == movemode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_move.png) 7 7, auto'; );
+    } else if (currlayer->touchmode == zoominmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_zoomin.png) 6 6, auto'; );
+    } else if (currlayer->touchmode == zoomoutmode) {
+        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_zoomout.png) 6 6, auto'; );
+    } else {
+        Warning("Bug detected in UpdateCursorImage!");
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void CheckCursor(int x, int y)
+{
+    if (mouse_down) {
+        // don't check for cursor change if mouse button is pressed
+        // (eg. we don't want cursor to change if user drags pencil/crosshair
+        // cursor over the paste image)
+    } else if (waitingforpaste && PointInPasteImage(x, y) && !over_paste) {
+        // change cursor to hand to indicate that paste image can be dragged
+        over_paste = true;
+        UpdateCursorImage();
+    } else if (over_paste && (!waitingforpaste || !PointInPasteImage(x, y))) {
+        // change cursor from hand to match currlayer->touchmode
+        over_paste = false;
+        UpdateCursorImage();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 static void StopIfGenerating()
 {
     if (generating) {
@@ -322,8 +370,8 @@ void NewUniverse()
     allowundo = saveundo;
     
     if (event_checker > 0) {
-        // try again after a short delay!!!??? something like this (10 millisec delay):
-        // EM_ASM( window.setTimeout('_NewUniverse()', 10); );
+        // try again after a short delay
+        EM_ASM( window.setTimeout('_NewUniverse()', 10); );
         return;
     }
     
@@ -376,8 +424,8 @@ void Next()
     StopIfGenerating();
     
     if (event_checker > 0) {
-        // previous NextGeneration() hasn't finished
-        // try again after a short delay!!!???
+        // previous NextGeneration() hasn't finished so try again after a short delay
+        EM_ASM( window.setTimeout('_Next()', 10); );
         return;
     }
 
@@ -396,8 +444,8 @@ void Step()
     StopIfGenerating();
     
     if (event_checker > 0) {
-        // previous NextGeneration() hasn't finished
-        // try again after a short delay!!!???
+        // previous NextGeneration() hasn't finished so try again after a short delay
+        EM_ASM( window.setTimeout('_Step()', 10); );
         return;
     }
 
@@ -462,7 +510,8 @@ void Reset()
     StopIfGenerating();
     
     if (event_checker > 0) {
-        // try again after a short delay!!!???
+        // try again after a short delay
+        EM_ASM( window.setTimeout('_Reset()', 10); );
         return;
     }
     
@@ -606,7 +655,8 @@ void Paste()
     StopIfGenerating();
     
     if (event_checker > 0) {
-        // try again after a short delay!!!???
+        // try again after a short delay
+        EM_ASM( window.setTimeout('_Paste()', 10); );
         return;
     }
     
@@ -621,6 +671,16 @@ void Paste()
 
 // -----------------------------------------------------------------------------
 
+static void CancelPaste()
+{
+    if (waitingforpaste) {
+        AbortPaste();
+        UpdatePattern();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 extern "C" {
 
 void Undo()
@@ -628,7 +688,8 @@ void Undo()
     StopIfGenerating();
     
     if (event_checker > 0) {
-        // try again after a short delay!!!???
+        // try again after a short delay
+        EM_ASM( window.setTimeout('_Undo()', 10); );
         return;
     }
     
@@ -647,7 +708,8 @@ void Redo()
     StopIfGenerating();
     
     if (event_checker > 0) {
-        // try again after a short delay!!!???
+        // try again after a short delay
+        EM_ASM( window.setTimeout('_Redo()', 10); );
         return;
     }
     
@@ -721,29 +783,6 @@ void AlgoChanged(int index)
 }
 
 } // extern "C"
-
-// -----------------------------------------------------------------------------
-
-static void UpdateCursorImage()
-{
-    // note that the 2 numbers after the cursor url are the x and y offsets of the
-    // cursor's hotspot relative to the top left corner
-    if (currlayer->touchmode == drawmode) {
-        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_draw.png) 4 15, auto'; );
-    } else if (currlayer->touchmode == pickmode) {
-        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_pick.png) 0 15, auto'; );
-    } else if (currlayer->touchmode == selectmode) {
-        EM_ASM( Module['canvas'].style.cursor = 'crosshair'; );     // all browsers support this???
-    } else if (currlayer->touchmode == movemode) {
-        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_move.png) 7 7, auto'; );
-    } else if (currlayer->touchmode == zoominmode) {
-        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_zoomin.png) 6 6, auto'; );
-    } else if (currlayer->touchmode == zoomoutmode) {
-        EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_zoomout.png) 6 6, auto'; );
-    } else {
-        Warning("Bug detected in UpdateCursorImage!");
-    }
-}
 
 // -----------------------------------------------------------------------------
 
@@ -1100,7 +1139,7 @@ int OnKeyChanged(int keycode, int action)
         case 'm' : Middle(); break;
         case 'p' : ChangePrefs(); break;
         case 'v' : Paste(); break;
-        case 'V' : AbortPaste(); UpdatePattern(); break;
+        case 'V' : CancelPaste(); break;
         case 'z' : Undo(); break;
         case 'Z' : Redo(); break;
     }
@@ -1120,10 +1159,9 @@ static void OnMouseClick(int button, int action)
         // note that 'patterns' is a div with a tabindex, and an outline style that prevents
         // a focus ring appearing
         EM_ASM( document.getElementById('patterns').focus(); );
-        
+
         int x, y;
         glfwGetMousePos(&x, &y);
-        // DEBUG: EM_ASM( Module.printErr('click at x='+x+' y='+y); );
         
         ClearMessage();
         
@@ -1175,9 +1213,8 @@ static void OnMouseMove(int x, int y)
     ok_to_check_mouse = true;
     int mousestate = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT);
     if (mousestate == GLFW_PRESS) {
-        // DEBUG: EM_ASM( Module.printErr('moved to x='+x+' y='+y); );
         
-        // ignore move outside viewport
+        // play safe and ignore move outside viewport
         if (x < 0 || x >= currwd || y < 0 || y >= currht) return;
     
         TouchMoved(x, y);
@@ -1186,7 +1223,7 @@ static void OnMouseMove(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-static int prevpos = 0;
+static int prevwheel = 0;
 
 extern "C" {
 
@@ -1196,20 +1233,18 @@ void OnMouseWheel(int pos)
     glfwGetMousePos(&x, &y);
     
     // we use a threshold of 2 in below tests to reduce sensitivity
-    if (pos + 2 < prevpos) {
+    if (pos + 2 < prevwheel) {
         ZoomInPos(x, y);
-        prevpos = pos;
-    } else if (pos - 2 > prevpos) {
+        prevwheel = pos;
+    } else if (pos - 2 > prevwheel) {
         ZoomOutPos(x, y);
-        prevpos = pos;
+        prevwheel = pos;
     }
 }
 
 } // extern "C"
 
 // -----------------------------------------------------------------------------
-
-static bool over_canvas = false;    // mouse is over canvas?
 
 extern "C" {
 
@@ -1221,6 +1256,15 @@ void OverCanvas(int entered)
         
         // call CheckMouseLocation in DoFrame
         over_canvas = true;
+
+        // remove focus from select element to avoid problem if an arrow key is pressed
+        // (doesn't quite work!!! if selection is NOT changed and arrow key is hit immediately
+        // then it can cause the selection to change, as well as scroll the pattern)
+        EM_ASM(
+            if (document.activeElement.tagName == 'SELECT') {
+                document.getElementById('patterns').focus();
+            };
+        );
         
     } else {
         // mouse exited canvas; cursor is automatically restored to standard arrow
@@ -1271,6 +1315,9 @@ static void DoFrame()
         int x, y;
         glfwGetMousePos(&x, &y);
         CheckMouseLocation(x, y);
+        // also check if cursor image needs to be changed (this can only be done AFTER
+        // DrawPattern has set pasterect, which is tested by PointInPasteImage)
+        CheckCursor(x, y);
     }
 }
 

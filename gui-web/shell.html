@@ -124,13 +124,13 @@
             if (browser_name == 'Safari' && browser_version < 6) {
                 // there is a nasty bug in Safari 5's JS interpreter that causes the population count
                 // to become 0 after stepping a few gens (but only in QuickLife algo)
-                alert('Sorry, but Golly requires Safari 6.0 or later, ' +
-                      'or another WebGL-capable browser like Chrome or Firefox.');
+                alert('Sorry, but Golly requires Safari 6.0 or later,' +
+                      ' or another WebGL-capable browser like Chrome or Firefox.');
                 window.stop();
             }
             if (browser_name == 'MSIE' && browser_version < 11) {
-                alert('Sorry, but Golly requires Internet Explorer 11.0 or later, ' +
-                      'or another WebGL-capable browser like Chrome or Firefox.');
+                alert('Sorry, but Golly requires Internet Explorer 11.0 or later,' +
+                      ' or another WebGL-capable browser like Chrome or Firefox.');
                 window.stop();
             }
         };
@@ -264,7 +264,8 @@
                             currlevel--;
                         }
                         
-                        // can we dynamically enumerate /Patterns directory???!!!
+                        // is there a way to enumerate the /Patterns directory in JS???!!!
+                        // (until then, run patterns.py to generate the following)
                         dirStart("Banks");
                         addfile("/Patterns/Banks/Banks-I-demo.rle");
                         addfile("/Patterns/Banks/Banks-II-demo.rle");
