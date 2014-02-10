@@ -1,14 +1,21 @@
+<!DOCTYPE html>
 <!--
     This file is used to create golly.html via the shell-file option in Makefile.
     Originally based on Emscripten's src/shell.html.
 -->
-<!doctype html>
 <html lang="en-us">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Golly</title>
     <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            overflow: hidden;       /* prevents scroll bars */
+            background: #DDD;
+        }
         div.statusbar { text-align: left; }
         textarea.statusbar {
             font-family: monospace; font-size: 12px; line-height: 16px;
@@ -21,19 +28,15 @@
             position: absolute;
             border: 0px none;
         }
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0px;
-            overflow: hidden;       /* prevents scroll bars */
-            background: #DDD;
-        }
+        div.menubar { text-align: center; }
+        div.menu_container { display: inline-block; margin-top: 6px; margin-bottom: 5px; }
         div.toolbar { text-align: center; }
         div.myclipboard { text-align: center; }
         textarea.myclipboard {
             font-family: monospace; font-size: 11px; resize: none; width: 280px;
             background: #FFF; border: 1px solid gray; margin-top: 10px; padding: 1px;
         }
+        
 		div.patterndir {
 			width: 280px;
 			padding: 1px;
@@ -44,46 +47,8 @@
 			white-space: nowrap;
   			overflow: auto;
 		}
-        label { font: caption; }
-        .vspace { height: 10px; }
-        #pastemenu {
-         	position: absolute;
-         	z-index: 1;
-            visibility: hidden;
-            background: #FEE;       /* light red to match paste image */
-            border: 1px solid #000;
-        }
-        #pastemenu span {
-         	position: relative;
-            display: block;
-            padding: 5px 10px;
-            font: bold 12px arial;
-            cursor: pointer;
-        }
-	    #pastemenu span:hover {
-	    	background: #000;
-		    color: #FFF;
-		}
-        #selectionmenu {
-         	position: absolute;
-         	z-index: 1;
-            visibility: hidden;
-            background: #DFD;       /* light green to match selection */
-            border: 1px solid #000;
-        }
-        #selectionmenu span {
-         	position: relative;
-            display: block;
-            padding: 5px 10px;
-            font: bold 12px arial;
-            cursor: pointer;
-        }
-	    #selectionmenu span:hover {
-	    	background: #000;
-		    color: #FFF;
-		}
 		button.imgbutton {
-			width: 36px;        /* for better agreement with Firefox and Safari/Chrome */
+			width: 36px;            /* for better agreement with Firefox and Safari/Chrome */
 			height: 32px;
 			margin: 0px;
 			vertical-align: middle;
@@ -110,10 +75,118 @@
 	    	background: #000;
 		    color: #FFF;
 		}
+        label { font: caption; }
+        .vspace { height: 10px; }
+        
+        #pastemenu {
+         	position: absolute;
+         	z-index: 1;
+            visibility: hidden;
+            background: #FEE;           /* light red to match paste image */
+            border: 1px solid #000;
+        }
+        #pastemenu span {
+         	position: relative;
+            display: block;
+            padding: 5px 10px;
+            font: bold 12px Arial, Helvetica, sans-serif;
+            cursor: pointer;
+        }
+	    #pastemenu span:hover {
+	    	background: #000;
+		    color: #FFF;
+		}
+		
+        #selectionmenu {
+         	position: absolute;
+         	z-index: 1;
+            visibility: hidden;
+            background: #DFD;           /* light green to match selection */
+            border: 1px solid #000;
+        }
+        #selectionmenu span {
+         	position: relative;
+            display: block;
+            padding: 5px 10px;
+            font: bold 12px Arial, Helvetica, sans-serif;
+            cursor: pointer;
+        }
+	    #selectionmenu span:hover {
+	    	background: #000;
+		    color: #FFF;
+		}
+
+        /* following is a heavily modified version of the code at http://www.lwis.net/free-css-drop-down-menu */
+        ul.dropdown,
+        ul.dropdown li,
+        ul.dropdown ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        ul.dropdown {
+            position: relative;
+            z-index: 500;
+            font: 14px Arial, Helvetica, sans-serif;
+            font-weight: bold;
+        }
+        ul.dropdown ul li {
+            float: none;
+            font: 14px Arial, Helvetica, sans-serif;
+            font-weight: normal;
+            text-align: left;
+        }
+        ul.dropdown li {
+            float: left;
+            padding: 8px 10px;
+            border-style: solid;
+            border-width: 1px 1px 1px 1px;
+            border-color: #69C3FF #5970B2 #5970B2 #69C3FF;
+            background-color: #49A3FF;
+            color: #FFF;
+        }
+        ul.dropdown li:hover {
+            position: relative;
+            z-index: 502;
+            cursor: default;
+        }
+        ul.dropdown ul {
+            visibility: hidden;
+            position: absolute;
+            top: 100%;
+            left: -1px;
+            z-index: 501;
+            width: 150px;
+            margin-top: 1px;
+        }
+        ul.dropdown ul ul {
+            top: 1px;
+            left: 100%;
+        }
+        ul.dropdown li:hover {
+            background-color: #5970B2;
+            color: #FFF;
+        }
+        ul.dropdown *.menu {
+            padding-right: 40px;
+            background-image: url(images/menu_down.png);
+            background-position: 100% 50%;
+            background-repeat: no-repeat;
+        }
+        ul.dropright ul *.menu {
+            padding-right: 15px;
+            background-image: url(images/menu_right.png);
+            background-position: 100% 50%;
+            background-repeat: no-repeat;
+        }
+        ul.dropdown ul *.item,
+        ul.dropright ul *.item {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <script type='text/javascript'>
+    <script type="text/javascript">
         function check_browser() {
             var N=navigator.appName, ua=navigator.userAgent, tem;
             var M=ua.match(/(opera|chrome|safari|firefox|msie)\/?\s*(\.?\d+(\.\d+)*)/i);
@@ -185,11 +258,11 @@
     <div style="width: 100%; overflow: hidden;">
         <div style="width: 300px; float: left;">
             <div class="myclipboard">
-                <textarea class="myclipboard" id="cliptext" wrap="off" rows="6"></textarea>
+                <textarea class="myclipboard" id="cliptext" wrap="off" rows="8"></textarea>
             </div>
             <div class="myclipboard">
                 <span style="font: caption;">Pattern/rule data used by </span>
-                <button type="button" id="paste" onClick="Module.buttonPress(this)">Paste</button>
+                <button type="button" id="paste" onclick="Module.buttonPress(this)">Paste</button>
             </div>
             <div id="patterns" style="font: caption; outline: #DDD none 0px" tabindex="1">
                 <div class="vspace"></div>
@@ -205,12 +278,12 @@
                         function dirClose(dirID) {
                             document.getElementById(dirID).style.display = 'none';
                             document.getElementById("img" + dirID).src = "images/triangle_right.png";
-                        }
+                        };
                         
                         function dirOpen(dirID) {
                             document.getElementById(dirID).style.display = 'block';
                             document.getElementById("img" + dirID).src = "images/triangle_down.png";
-                        }
+                        };
                         
                         function dirClick(dirID) {
                             // toggle directory from opened to closed or closed to opened
@@ -219,13 +292,13 @@
                             } else {
                                 dirClose(dirID);
                             }
-                        }
+                        };
                         
                         function fileClick(fileID) {
                             // the file's full path is stored in the given span's title attribute
                             openfile = Module.cwrap('OpenClickedFile', 'void', ['string']);
                             openfile(document.getElementById(fileID).title);
-                        }
+                        };
                         
                         function dirStart(dirname) {
                             // add a directory at the current level
@@ -243,7 +316,7 @@
                 
                             dirClose(dirID);    // close the directory
                             currlevel++;        // the items inside the directory are a level higher
-                        }
+                        };
                         
                         function addfile(fullpath) {
                             // create the indentation for this item
@@ -257,12 +330,12 @@
                             document.write(" onclick='fileClick(\""+fileID+"\");'>");
                             var filename = fullpath.substring(fullpath.lastIndexOf("/")+1);
                             document.write(filename+"</span><br>");
-                        }
+                        };
                         
                         function dirEnd() {
                             document.write("</div>");
                             currlevel--;
-                        }
+                        };
                         
                         // is there a way to enumerate the /Patterns directory in JS???!!!
                         // (until then, run patterns.py to generate the following)
@@ -626,44 +699,139 @@
             <div class="statusbar">
                 <textarea class="statusbar" id="statusbar" wrap="off" rows="3"></textarea>
             </div>
+            <div class="menubar">
+                <script type="text/javascript">
+                    var itemid = '';
+                    var viscount = 0;
+                    function itemClick(item) {
+                        if (viscount > 1) {
+                            var grandparent = item.parentNode.parentNode.parentNode;
+                            grandparent.parentNode.style.backgroundColor = '#49A3FF';         // need for Safari/Chrome
+                            grandparent.style.visibility = 'hidden';
+                            item.parentNode.style.visibility = 'hidden';
+                        } else {
+                            item.parentNode.parentNode.style.backgroundColor = '#49A3FF';     // need for Safari/Chrome
+                            item.parentNode.style.visibility = 'hidden';
+                        }
+                        viscount = 0;
+                        _ClearStatus(); // clear any status bar message
+                        itemid = item.id;
+                        // need to delay calling DoMenuItem so Safari/Chrome can hide the menu(s)
+                        window.setTimeout(function(){
+                            doitem = Module.cwrap('DoMenuItem', 'void', ['string']);
+                            doitem(itemid);
+                        },10);
+                    };
+                    function showMenu(item, show) {
+                        ulmenu = item.getElementsByTagName("ul")[0];
+                        if (show) {
+                            if (ulmenu.style.visibility != 'visible') {
+                                ulmenu.style.visibility = 'visible';
+                                viscount++;
+                            }
+                        } else {
+                            if (ulmenu.style.visibility != 'hidden') {
+                                ulmenu.style.visibility = 'hidden';
+                                viscount--;
+                            }
+                        }
+                    };
+                </script>
+                <div class="menu_container">
+                <ul class="dropdown dropright">
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">File
+                        <ul>
+                            <li class="item" onclick="itemClick(this)" id="file_new">New Pattern</li>
+                            <li class="item" onclick="itemClick(this)" id="file_prefs">Preferences...</li>
+                        </ul>
+                    </li>
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Edit
+                        <ul>
+                            <li class="item" onclick="itemClick(this)" id="edit_cut">Cut</li>
+                            <li class="item" onclick="itemClick(this)" id="edit_copy">Copy</li>
+                            <li class="item" onclick="itemClick(this)" id="edit_clear">Clear</li>
+                            <li class="item" onclick="itemClick(this)" id="edit_clearo">Clear Outside</li>
+                            <li class="item" onclick="itemClick(this)" id="edit_paste">Paste</li>
+                            <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Paste Mode
+                                <ul>
+                                    <li class="item" onclick="itemClick(this)" id="paste_mode_and">AND</li>
+                                    <li class="item" onclick="itemClick(this)" id="paste_mode_copy">COPY</li>
+                                    <li class="item" onclick="itemClick(this)" id="paste_mode_or">OR</li>
+                                    <li class="item" onclick="itemClick(this)" id="paste_mode_xor">XOR</li>
+                                </ul>
+                            </li>
+                            <li class="item" onclick="itemClick(this)" id="edit_all">Select All</li>
+                        </ul>
+                    </li>
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Control
+                        <ul>
+                            <li class="item" onclick="itemClick(this)" id="control_startstop">Start Generating</li>
+                            <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Set Algorithm
+                                <ul>
+                                    <li class="item" onclick="itemClick(this)" id="algo0">QuickLife</li>
+                                    <li class="item" onclick="itemClick(this)" id="algo1">HashLife</li>
+                                    <li class="item" onclick="itemClick(this)" id="algo2">Generations</li>
+                                    <li class="item" onclick="itemClick(this)" id="algo3">JvN</li>
+                                    <li class="item" onclick="itemClick(this)" id="algo4">RuleLoader</li>
+                                </ul>
+                            </li>
+                            <li class="item" onclick="itemClick(this)" id="control_setrule">Set Rule...</li>
+                        </ul>
+                    </li>
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">View
+                        <ul>
+                            <li class="item" onclick="itemClick(this)" id="view_fullscreen">Full Screen</li>
+                            <li class="item" onclick="itemClick(this)" id="view_fitp">Fit Pattern</li>
+                            <li class="item" onclick="itemClick(this)" id="view_fits">Fit Selection</li>
+                            <li class="item" onclick="itemClick(this)" id="view_middle">Middle</li>
+                        </ul>
+                    </li>
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Help
+                        <ul>
+                            <li class="item" onclick="itemClick(this)" id="help_contents">Contents</li>
+                            <li class="item" onclick="itemClick(this)" id="help_about">About Golly</li>
+                        </ul>
+                    </li>
+                </ul>
+                </div>
+            </div>
             <div class="toolbar" id="toolbar">
-                <div class="vspace"></div>
                 <div class="golly" id="buttons">
-                    <button type="button" id="new" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="new" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Create a new, empty universe"><img class="imgbutton" src="images/new.png"></button>
                     &nbsp;&nbsp;
-                    <button type="button" id="startStop" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="startStop" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Start/stop generating"><img class="imgbutton" id="imgstartStop" src="images/start.png"></button>
-                    <button type="button" id="next" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="next" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Advance by 1 generation"><img class="imgbutton" src="images/next.png"></button>
-                    <button type="button" id="step" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="step" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Advance by step size"><img class="imgbutton" src="images/step.png"></button>
-                    <button type="button" id="step1" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="step1" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Set step size to 1"><img class="imgbutton" src="images/step1.png"></button>
-                    <button type="button" id="slower" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="slower" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Slower (decrease step size)"><img class="imgbutton" src="images/slower.png"></button>
-                    <button type="button" id="faster" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="faster" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Faster (increase step size)"><img class="imgbutton" src="images/faster.png"></button>
-                    <button type="button" id="reset" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="reset" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Go back to starting generation"><img class="imgbutton" id="imgreset" src="images/reset.png"></button>
                     &nbsp;&nbsp;
-                    <button type="button" id="undo" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="undo" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Undo"><img class="imgbutton" id="imgundo" src="images/undo.png"></button>
-                    <button type="button" id="redo" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="redo" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Redo"><img class="imgbutton" id="imgredo" src="images/redo.png"></button>
                     &nbsp;&nbsp;
-                    <button type="button" id="fit" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="fit" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Fit entire pattern within view"><img class="imgbutton" src="images/fit.png"></button>
-                    <button type="button" id="zoomIn" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="zoomIn" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Zoom in"><img class="imgbutton" src="images/zoomin.png"></button>
-                    <button type="button" id="zoomOut" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="zoomOut" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Zoom out"><img class="imgbutton" src="images/zoomout.png"></button>
-                    <button type="button" id="scale1to1" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="scale1to1" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Set scale to 1 cell = 1 pixel"><img class="imgbutton" src="images/scale1to1.png"></button>
                     &nbsp;&nbsp;
-                    <button type="button" id="info" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="info" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Show pattern information"><img class="imgbutton" id="imginfo" src="images/info.png"></button>
-                    <button type="button" id="help" onClick="Module.buttonPress(this)" class="imgbutton"
+                    <button type="button" id="help" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Show help dialog"><img class="imgbutton" src="images/help.png"></button>
                 </div>
                 <div class="vspace"></div>
@@ -676,13 +844,13 @@
                         <option>JvN</option>
                         <option>RuleLoader</option>
                     </select>
-                    <button type="button" id="rule" onClick="Module.buttonPress(this)">Rule...</button>
+                    <button type="button" id="rule" onclick="Module.buttonPress(this)">Rule...</button>
                     &nbsp;&nbsp;
-                    <label for="grid">Grid:</label><input type="checkbox" id="grid" onClick="Module.checkboxPress(this)">
+                    <label for="grid">Grid:</label><input type="checkbox" id="grid" onclick="Module.checkboxPress(this)">
                     &nbsp;&nbsp;
-                    <label for="icons">Icons:</label><input type="checkbox" id="icons" onClick="Module.checkboxPress(this)">
+                    <label for="icons">Icons:</label><input type="checkbox" id="icons" onclick="Module.checkboxPress(this)">
                     &nbsp;&nbsp;
-                    <label for="time">Timing:</label><input type="checkbox" id="time" onClick="Module.checkboxPress(this)">
+                    <label for="time">Timing:</label><input type="checkbox" id="time" onclick="Module.checkboxPress(this)">
                     &nbsp;&nbsp;
                     <label for="mode">Cursor:</label>
                     <select id="mode" onchange="Module.selectionChanged(this)">
@@ -709,7 +877,7 @@
             </div>
         </div>
     </div>
-    <script type='text/javascript'>
+    <script type="text/javascript">
         var Module = {
             preRun: [],
             postRun: [],

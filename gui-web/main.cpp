@@ -968,6 +968,26 @@ void OpenClickedFile(const char* filepath)
 
 // -----------------------------------------------------------------------------
 
+extern "C" {
+
+void DoMenuItem(const char* id)
+{
+    std::string item = id;
+    if (item == "edit_all") SelectAll(); else
+    if (item == "edit_paste") Paste(); else
+    if (item == "algo0") AlgoChanged(0); else
+    if (item == "algo1") AlgoChanged(1); else
+    if (item == "algo2") AlgoChanged(2); else
+    if (item == "algo3") AlgoChanged(3); else
+    if (item == "algo4") AlgoChanged(4); else
+    if (item == "control_setrule") SetRule(); else
+    Warning("Not yet implemented!!!");
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
 static const int META_KEY = 666;  // cmd key on Mac, start/menu key on Windows (latter untested!!!)
 
 static int TranslateKey(int keycode)
