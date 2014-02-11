@@ -149,6 +149,8 @@
             position: relative;
             z-index: 502;
             cursor: default;
+            background-color: #5970B2;
+            color: #FFF;
         }
         ul.dropdown ul {
             visibility: hidden;
@@ -162,10 +164,6 @@
         ul.dropdown ul ul {
             top: 1px;
             left: 100%;
-        }
-        ul.dropdown li:hover {
-            background-color: #5970B2;
-            color: #FFF;
         }
         ul.dropdown *.menu {
             padding-right: 40px;
@@ -182,6 +180,9 @@
         ul.dropdown ul *.item,
         ul.dropright ul *.item {
             cursor: pointer;
+            background-image: url(images/item_blank.png);
+            background-position: 95% 50%;
+            background-repeat: no-repeat;
         }
     </style>
 </head>
@@ -725,11 +726,13 @@
                     function showMenu(item, show) {
                         ulmenu = item.getElementsByTagName("ul")[0];
                         if (show) {
+                            ulmenu.parentNode.style.backgroundColor = '#5970B2';
                             if (ulmenu.style.visibility != 'visible') {
                                 ulmenu.style.visibility = 'visible';
                                 viscount++;
                             }
                         } else {
+                            ulmenu.parentNode.style.backgroundColor = '#49A3FF';
                             if (ulmenu.style.visibility != 'hidden') {
                                 ulmenu.style.visibility = 'hidden';
                                 viscount--;
