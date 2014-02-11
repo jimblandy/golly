@@ -82,7 +82,7 @@
          	position: absolute;
          	z-index: 1;
             visibility: hidden;
-            background: #FEE;           /* light red to match paste image */
+            /*!!! background: #FEE;           light red to match paste image */
             border: 1px solid #000;
         }
         #pastemenu span {
@@ -92,9 +92,21 @@
             font: bold 12px Arial, Helvetica, sans-serif;
             cursor: pointer;
         }
-	    #pastemenu span:hover {
+	    #pastemenu span.normal {
+	    	background: #FEE;           /* light red to match paste image */
+		    color: #000;
+		}
+	    #pastemenu span.grayed {        /* grayed class is used to indicate an inactive item */
+	    	background: #FEE;
+		    color: #AAA;
+		}
+	    #pastemenu span.normal:hover {
 	    	background: #000;
 		    color: #FFF;
+		}
+	    #pastemenu span.grayed:hover {
+	    	background: #FEE;
+		    color: #AAA;
 		}
 		
         #selectionmenu {
@@ -158,7 +170,7 @@
             top: 100%;
             left: -1px;
             z-index: 501;
-            width: 150px;
+            width: 160px;
             margin-top: 1px;
         }
         ul.dropdown ul ul {
@@ -177,8 +189,7 @@
             background-position: 100% 50%;
             background-repeat: no-repeat;
         }
-        ul.dropdown ul *.item,
-        ul.dropright ul *.item {
+        ul.dropdown ul *.item {
             cursor: pointer;
             background-image: url(images/item_blank.png);
             background-position: 95% 50%;
@@ -232,13 +243,13 @@
         });
     </script>
     <div id="pastemenu" oncontextmenu="event.preventDefault()">
-    <span onclick="_PasteAction(0);">Abort Paste</span>
-    <span onclick="_PasteAction(1);" id="pastemode">Paste Here</span>
-    <span onclick="_PasteAction(2);">Paste to Selection</span>
-    <span onclick="_PasteAction(3);">Flip Top-Bottom</span>
-    <span onclick="_PasteAction(4);">Flip Left-Right</span>
-    <span onclick="_PasteAction(5);">Rotate Clockwise</span>
-    <span onclick="_PasteAction(6);">Rotate Anticlockwise</span>
+    <span class="normal" onclick="_PasteAction(0);">Abort Paste</span>
+    <span class="normal" onclick="_PasteAction(1);" id="pastehere">Paste Here</span>
+    <span class="normal" onclick="_PasteAction(2);" id="pastesel">Paste to Selection</span>
+    <span class="normal" onclick="_PasteAction(3);">Flip Top-Bottom</span>
+    <span class="normal" onclick="_PasteAction(4);">Flip Left-Right</span>
+    <span class="normal" onclick="_PasteAction(5);">Rotate Clockwise</span>
+    <span class="normal" onclick="_PasteAction(6);">Rotate Anticlockwise</span>
     </div>
     <div id="selectionmenu" oncontextmenu="event.preventDefault()">
     <span onclick="_SelectionAction(0);">Remove Selection</span>
@@ -704,6 +715,7 @@
                 <script type="text/javascript">
                     var itemid = '';
                     var viscount = 0;
+                    
                     function itemClick(item) {
                         if (viscount > 1) {
                             var grandparent = item.parentNode.parentNode.parentNode;
@@ -723,11 +735,15 @@
                             doitem(itemid);
                         },10);
                     };
+                    
                     function showMenu(item, show) {
                         ulmenu = item.getElementsByTagName("ul")[0];
                         if (show) {
                             ulmenu.parentNode.style.backgroundColor = '#5970B2';
                             if (ulmenu.style.visibility != 'visible') {
+                                // menu is about to become visible so this is a good place to update its items
+                                doupdate = Module.cwrap('UpdateMenuItems', 'void', ['string']);
+                                doupdate(item.id);
                                 ulmenu.style.visibility = 'visible';
                                 viscount++;
                             }
@@ -742,20 +758,25 @@
                 </script>
                 <div class="menu_container">
                 <ul class="dropdown dropright">
-                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">File
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="File_menu">File
                         <ul>
                             <li class="item" onclick="itemClick(this)" id="file_new">New Pattern</li>
+                            <li class="item" onclick="itemClick(this)" id="file_open">Open Pattern...</li>
+                            <li class="item" onclick="itemClick(this)" id="file_save">Save Pattern...</li>
                             <li class="item" onclick="itemClick(this)" id="file_prefs">Preferences...</li>
                         </ul>
                     </li>
-                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Edit
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Edit_menu">Edit
                         <ul>
+                            <li class="item" onclick="itemClick(this)" id="edit_undo">Undo</li>
+                            <li class="item" onclick="itemClick(this)" id="edit_redo">Redo</li>
+                            <li class="item" onclick="itemClick(this)" id="edit_disable">Disable Undo/Redo</li>
                             <li class="item" onclick="itemClick(this)" id="edit_cut">Cut</li>
                             <li class="item" onclick="itemClick(this)" id="edit_copy">Copy</li>
                             <li class="item" onclick="itemClick(this)" id="edit_clear">Clear</li>
                             <li class="item" onclick="itemClick(this)" id="edit_clearo">Clear Outside</li>
                             <li class="item" onclick="itemClick(this)" id="edit_paste">Paste</li>
-                            <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Paste Mode
+                            <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="PasteMode_menu">Paste Mode
                                 <ul>
                                     <li class="item" onclick="itemClick(this)" id="paste_mode_and">AND</li>
                                     <li class="item" onclick="itemClick(this)" id="paste_mode_copy">COPY</li>
@@ -764,12 +785,13 @@
                                 </ul>
                             </li>
                             <li class="item" onclick="itemClick(this)" id="edit_all">Select All</li>
+                            <li class="item" onclick="itemClick(this)" id="edit_remove">Remove Selection</li>
                         </ul>
                     </li>
-                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Control
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Control_menu">Control
                         <ul>
                             <li class="item" onclick="itemClick(this)" id="control_startstop">Start Generating</li>
-                            <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Set Algorithm
+                            <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Algo_menu">Set Algorithm
                                 <ul>
                                     <li class="item" onclick="itemClick(this)" id="algo0">QuickLife</li>
                                     <li class="item" onclick="itemClick(this)" id="algo1">HashLife</li>
@@ -781,7 +803,7 @@
                             <li class="item" onclick="itemClick(this)" id="control_setrule">Set Rule...</li>
                         </ul>
                     </li>
-                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">View
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="View_menu">View
                         <ul>
                             <li class="item" onclick="itemClick(this)" id="view_fullscreen">Full Screen</li>
                             <li class="item" onclick="itemClick(this)" id="view_fitp">Fit Pattern</li>
@@ -789,7 +811,7 @@
                             <li class="item" onclick="itemClick(this)" id="view_middle">Middle</li>
                         </ul>
                     </li>
-                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)">Help
+                    <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Help_menu">Help
                         <ul>
                             <li class="item" onclick="itemClick(this)" id="help_contents">Contents</li>
                             <li class="item" onclick="itemClick(this)" id="help_about">About Golly</li>

@@ -23,16 +23,8 @@ jsSetStatusBarColor: function(color) {
 
 // -----------------------------------------------------------------------------
 
-jsSetAlgo: function(index, numalgos) {
+jsSetAlgo: function(index) {
     document.getElementById('algo').selectedIndex = index;
-    // tick given algo and untick the rest
-    for (i = 0; i < numalgos; i++) {
-        if (i == index) {
-            document.getElementById('algo'+i).style.backgroundImage="url(images/item_tick.png)";
-        } else {
-            document.getElementById('algo'+i).style.backgroundImage="url(images/item_blank.png)";
-        }
-    }
 },
 
 // -----------------------------------------------------------------------------
@@ -131,6 +123,23 @@ jsEnableButton: function(id, enable) {
         // following is needed on IE???!!!
         // img.style.filter = 'alpha(opacity:25)';
     }
+},
+
+// -----------------------------------------------------------------------------
+
+jsTickMenuItem: function(id, tick) {
+    var menuitem = document.getElementById(Pointer_stringify(id));
+    if (tick) {
+        menuitem.style.backgroundImage = 'url(images/item_tick.png)';
+    } else {
+        menuitem.style.backgroundImage = 'url(images/item_blank.png)';
+    }
+},
+
+// -----------------------------------------------------------------------------
+
+jsSetInnerHTML: function(id, text) {
+    document.getElementById(Pointer_stringify(id)).innerHTML = Pointer_stringify(text);
 },
 
 // -----------------------------------------------------------------------------

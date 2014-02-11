@@ -60,6 +60,8 @@ extern "C" {
     extern void jsShowMenu(const char* id, int x, int y);
     extern int jsTextAreaIsActive();
     extern void jsEnableButton(const char* id, bool enable);
+    extern void jsTickMenuItem(const char* id, bool tick);
+    extern void jsSetInnerHTML(const char* id, const char* text);
 }
 
 // -----------------------------------------------------------------------------
@@ -284,7 +286,7 @@ static void InitElements()
         EM_ASM( document.getElementById('time').checked = false; );
     }
 
-    // also initialize clipboard data to a simple RLE pattern
+    // initialize clipboard data to a simple RLE pattern
     EM_ASM(
         document.getElementById('cliptext').value =
             '# To paste in this RLE pattern, hit\n'+
@@ -642,6 +644,7 @@ void Help()
 static void ChangePrefs()
 {
     //!!! show some sort of modal dialog box that lets user change various settings???
+    Warning("Preferences dialog is not yet implemented!!!");
     
     SavePrefs();    // where will this write GollyPrefs file???!!!
 }
@@ -887,7 +890,12 @@ extern "C" {
 
 void PasteAction(int item)
 {
-    // remove menu first
+    if (item == 2 && !SelectionExists()) {
+        // pastesel item is grayed, so ignore click
+        return;
+    }
+
+    // remove menu
     EM_ASM( document.getElementById('pastemenu').style.visibility = 'hidden'; );
     paste_menu_visible = false;
 
@@ -968,19 +976,135 @@ void OpenClickedFile(const char* filepath)
 
 // -----------------------------------------------------------------------------
 
+static void ChangePasteMode(paste_mode newmode)
+{
+    if (pmode != newmode) pmode = newmode;
+}
+
+// -----------------------------------------------------------------------------
+
+static void ToggleDisableUndoRedo()
+{
+    allowundo = !allowundo;
+    if (allowundo) {
+        if (currlayer->algo->getGeneration() > currlayer->startgen) {
+            // undo list is empty but user can Reset, so add a generating change
+            // to undo list so user can Undo or Reset (and then Redo if they wish)
+            currlayer->undoredo->AddGenChange();
+        }
+    } else {
+        currlayer->undoredo->ClearUndoRedo();
+    }
+    UpdateEditBar();
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void UpdateMenuItems(const char* id)
+{
+    // this routine is called just before the given menu is made visible
+    std::string menu = id;
+    
+    if (menu == "File_menu") {
+        // items in this menu don't change
+    
+    } else if (menu == "Edit_menu") {
+        if (allowundo) {
+            EM_ASM( document.getElementById('edit_disable').innerHTML = 'Disable Undo/Redo'; );
+        } else {
+            EM_ASM( document.getElementById('edit_disable').innerHTML = 'Enable Undo/Redo'; );
+        }
+    
+    } else if (menu == "PasteMode_menu") {
+        jsTickMenuItem("paste_mode_and", pmode == And);
+        jsTickMenuItem("paste_mode_copy", pmode == Copy);
+        jsTickMenuItem("paste_mode_or", pmode == Or);
+        jsTickMenuItem("paste_mode_xor", pmode == Xor);
+    
+    } else if (menu == "Control_menu") {
+        if (generating) {
+            EM_ASM( document.getElementById('control_startstop').innerHTML = 'Stop Generating'; );
+        } else {
+            EM_ASM( document.getElementById('control_startstop').innerHTML = 'Start Generating'; );
+        }
+    
+    } else if (menu == "Algo_menu") {
+        jsTickMenuItem("algo0", currlayer->algtype == 0);
+        jsTickMenuItem("algo1", currlayer->algtype == 1);
+        jsTickMenuItem("algo2", currlayer->algtype == 2);
+        jsTickMenuItem("algo3", currlayer->algtype == 3);
+        jsTickMenuItem("algo4", currlayer->algtype == 4);
+    
+    } else if (menu == "View_menu") {
+        //!!!???
+    
+    } else if (menu == "Help_menu") {
+        // items in this menu don't change
+    
+    } else if (menu == "pastemenu") {
+        char text[32];
+        sprintf(text, "Paste Here (%s)", GetPasteMode());
+        jsSetInnerHTML("pastehere", text);
+        if (SelectionExists()) {
+            EM_ASM( document.getElementById('pastesel').className = 'normal'; );
+        } else {
+            EM_ASM( document.getElementById('pastesel').className = 'grayed'; );
+        }
+    
+    } else if (menu == "selectionmenu") {
+        char text[32];
+        sprintf(text, "Random Fill (%d%%)", randomfill);
+        jsSetInnerHTML("randfill", text);
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
 extern "C" {
 
 void DoMenuItem(const char* id)
 {
     std::string item = id;
-    if (item == "edit_all") SelectAll(); else
+    
+    // items in File menu:
+    if (item == "file_new") NewUniverse(); else
+    if (item == "file_prefs") ChangePrefs(); else
+    
+    // items in Edit menu:
+    if (item == "edit_undo") Undo(); else
+    if (item == "edit_redo") Redo(); else
+    if (item == "edit_disable") ToggleDisableUndoRedo(); else
+    if (item == "edit_cut") CutSelection(); else
+    if (item == "edit_copy") CopySelection(); else
+    if (item == "edit_clear") ClearSelection(); else
+    if (item == "edit_clearo") ClearOutsideSelection(); else
     if (item == "edit_paste") Paste(); else
+    if (item == "paste_mode_and") ChangePasteMode(And); else
+    if (item == "paste_mode_copy") ChangePasteMode(Copy); else
+    if (item == "paste_mode_or") ChangePasteMode(Or); else
+    if (item == "paste_mode_xor") ChangePasteMode(Xor); else
+    if (item == "edit_all") SelectAll(); else
+    if (item == "edit_remove") RemoveSelection(); else
+    
+    // items in Control menu:
+    if (item == "control_startstop") StartStop(); else
     if (item == "algo0") AlgoChanged(0); else
     if (item == "algo1") AlgoChanged(1); else
     if (item == "algo2") AlgoChanged(2); else
     if (item == "algo3") AlgoChanged(3); else
     if (item == "algo4") AlgoChanged(4); else
     if (item == "control_setrule") SetRule(); else
+    
+    // items in View menu:
+    //!!!
+    
+    // items in Help menu:
+    //!!!
+    
     Warning("Not yet implemented!!!");
 }
 
@@ -1201,9 +1325,11 @@ static void OnMouseClick(int button, int action)
         // but I actually get 2 when right button is pressed in all my browsers (report bug!!!)
         if (button == 2 || ctrl_down) {
             if (waitingforpaste && PointInPasteImage(x, y)) {
+                UpdateMenuItems("pastemenu");
                 jsShowMenu("pastemenu", x, y);
                 paste_menu_visible = true;
             } else if (SelectionExists() && PointInSelection(x, y)) {
+                UpdateMenuItems("selectionmenu");
                 jsShowMenu("selectionmenu", x, y);
                 selection_menu_visible = true;
             }

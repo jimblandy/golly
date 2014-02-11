@@ -48,7 +48,7 @@ extern "C" {
     extern void jsAlert(const char* msg);
     extern bool jsConfirm(const char* query);
     extern void jsSetStatusBarColor(const char* color);
-    extern void jsSetAlgo(int index, int numalgos);
+    extern void jsSetAlgo(int index);
     extern void jsSetMode(int index);
     extern void jsSetState(int state, int numstates);
     extern void jsSetClipboard(const char* text);
@@ -90,7 +90,7 @@ void UpdateStatus()
         jsSetStatusBarColor(rgb);
         
         // also change selected algo
-        jsSetAlgo(curralgo, NumAlgos());
+        jsSetAlgo(curralgo);
     }
     
     printf("%s\n", status1.c_str());
