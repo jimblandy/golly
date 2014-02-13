@@ -48,7 +48,6 @@ extern "C" {
     extern void jsAlert(const char* msg);
     extern bool jsConfirm(const char* query);
     extern void jsSetStatusBarColor(const char* color);
-    extern void jsSetAlgo(int index);
     extern void jsSetMode(int index);
     extern void jsSetState(int state, int numstates);
     extern void jsSetClipboard(const char* text);
@@ -88,9 +87,6 @@ void UpdateStatus()
         char rgb[32];
         sprintf(rgb, "rgb(%d,%d,%d)", r, g, b);
         jsSetStatusBarColor(rgb);
-        
-        // also change selected algo
-        jsSetAlgo(curralgo);
     }
     
     printf("%s\n", status1.c_str());
@@ -193,7 +189,7 @@ void EndProgress()
 void SwitchToPatternTab()
 {
     // no need to do anything???!!!
-    // or maybe just close/remove help dialog???
+    // or maybe just close help dialog???
 }
 
 // -----------------------------------------------------------------------------
@@ -290,7 +286,7 @@ void WebCheckEvents()
 {
     // event_checker is > 0 in here (see gui-common/utils.cpp)
     
-    // can't do anything here???!!!
+    // can't do anything here???!!! will need to use a Web Worker???!!!
     // note that glfwPollEvents() does nothing (see emscripten/src/library_glfw.js)
     // glfwPollEvents();
 }

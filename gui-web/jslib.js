@@ -23,12 +23,6 @@ jsSetStatusBarColor: function(color) {
 
 // -----------------------------------------------------------------------------
 
-jsSetAlgo: function(index) {
-    document.getElementById('algo').selectedIndex = index;
-},
-
-// -----------------------------------------------------------------------------
-
 jsSetMode: function(index) {
     document.getElementById('mode').selectedIndex = index;
 },

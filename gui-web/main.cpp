@@ -268,31 +268,21 @@ static void InitElements()
 {
     // the following element ids must match those in shell.html
     
-    if (showgridlines) {
-        EM_ASM( document.getElementById('grid').checked = true; );
-    } else {
-        EM_ASM( document.getElementById('grid').checked = false; );
-    }
-    
     if (showicons) {
         EM_ASM( document.getElementById('icons').checked = true; );
     } else {
         EM_ASM( document.getElementById('icons').checked = false; );
     }
-    
-    if (showtiming) {
-        EM_ASM( document.getElementById('time').checked = true; );
-    } else {
-        EM_ASM( document.getElementById('time').checked = false; );
-    }
 
     // initialize clipboard data to a simple RLE pattern
     EM_ASM(
         document.getElementById('cliptext').value =
-            '# To paste in this RLE pattern, hit\n'+
+            '# To open the following RLE pattern,\n'+
+            '# select File > Open Clipboard.\n' +
+            '# Or to paste in the pattern, click on\n'+
             '# the Paste button, drag the floating\n' +
             '# image to the desired location, then\n' +
-            '# right-click on it to see some options.\n' +
+            '# right-click on the image.\n' +
             'x = 9, y = 5, rule = B3/S23\n' +
             '$bo3b3o$b3o2bo$2bo!';
     );
@@ -387,6 +377,46 @@ void NewUniverse()
 
 extern "C" {
 
+void OpenClipboard()
+{
+    StopIfGenerating();
+    if (event_checker > 0) {
+        // try again after a short delay
+        EM_ASM( window.setTimeout('_OpenClipboard()', 10); );
+        return;
+    }
+    
+    // if clipboard text starts with "@RULE rulename" then install rulename.rule and switch to that rule
+    if (ClipboardContainsRule()) return;
+    
+    // load and view pattern data stored in clipboard
+    std::string data;
+    if (GetTextFromClipboard(data)) {
+        // copy clipboard data to tempstart so we can handle all formats supported by readpattern
+        FILE* outfile = fopen(currlayer->tempstart.c_str(), "w");
+        if (outfile) {
+            if (fputs(data.c_str(), outfile) == EOF) {
+                fclose(outfile);
+                ErrorMessage("Could not write clipboard text to tempstart file!");
+                fclose(outfile);
+                return;
+            }
+        } else {
+            ErrorMessage("Could not open tempstart file for writing!");
+            fclose(outfile);
+            return;
+        }
+        fclose(outfile);
+        LoadPattern(currlayer->tempstart.c_str(), "clipboard");
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
 void StartStop()
 {
     if (generating) {
@@ -424,7 +454,6 @@ extern "C" {
 void Next()
 {
     StopIfGenerating();
-    
     if (event_checker > 0) {
         // previous NextGeneration() hasn't finished so try again after a short delay
         EM_ASM( window.setTimeout('_Next()', 10); );
@@ -444,7 +473,6 @@ extern "C" {
 void Step()
 {
     StopIfGenerating();
-    
     if (event_checker > 0) {
         // previous NextGeneration() hasn't finished so try again after a short delay
         EM_ASM( window.setTimeout('_Step()', 10); );
@@ -510,7 +538,6 @@ void Reset()
     if (currlayer->algo->getGeneration() == currlayer->startgen) return;
 
     StopIfGenerating();
-    
     if (event_checker > 0) {
         // try again after a short delay
         EM_ASM( window.setTimeout('_Reset()', 10); );
@@ -592,6 +619,16 @@ void Scale1to1()
 
 // -----------------------------------------------------------------------------
 
+static void SetScale(int mag)
+{
+    if (currlayer->view->getmag() != mag) {
+        currlayer->view->setmag(mag);
+        UpdatePatternAndStatus();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 extern "C" {
 
 void Info()
@@ -627,6 +664,7 @@ void Help()
               'i -- toggle icon mode\n' +
               'l -- toggle grid lines\n' +
               'm -- put cell at 0,0 in middle\n' +
+              'r -- change rule\n' +
               'v -- paste\n' +
               'V -- cancel paste\n' +
               'z -- undo\n' +
@@ -656,7 +694,6 @@ extern "C" {
 void Paste()
 {
     StopIfGenerating();
-    
     if (event_checker > 0) {
         // try again after a short delay
         EM_ASM( window.setTimeout('_Paste()', 10); );
@@ -689,7 +726,6 @@ extern "C" {
 void Undo()
 {
     StopIfGenerating();
-    
     if (event_checker > 0) {
         // try again after a short delay
         EM_ASM( window.setTimeout('_Undo()', 10); );
@@ -709,7 +745,6 @@ extern "C" {
 void Redo()
 {
     StopIfGenerating();
-    
     if (event_checker > 0) {
         // try again after a short delay
         EM_ASM( window.setTimeout('_Redo()', 10); );
@@ -718,23 +753,6 @@ void Redo()
     
     currlayer->undoredo->RedoChange();
     UpdateEverything();
-}
-
-} // extern "C"
-
-// -----------------------------------------------------------------------------
-
-extern "C" {
-
-void ToggleGrid()
-{
-    showgridlines = !showgridlines;
-    if (showgridlines) {
-        EM_ASM( document.getElementById('grid').checked = true; );
-    } else {
-        EM_ASM( document.getElementById('grid').checked = false; );
-    }
-    UpdatePattern();
 }
 
 } // extern "C"
@@ -758,34 +776,39 @@ void ToggleIcons()
 
 // -----------------------------------------------------------------------------
 
-extern "C" {
-
-void ToggleTiming()
+static void ToggleGrid()
 {
-    showtiming = !showtiming;
-    if (showtiming) {
-        EM_ASM( document.getElementById('time').checked = true; );
-    } else {
-        EM_ASM( document.getElementById('time').checked = false; );
-    }
+    showgridlines = !showgridlines;
+    UpdatePattern();
 }
-
-} // extern "C"
 
 // -----------------------------------------------------------------------------
 
-extern "C" {
-
-void AlgoChanged(int index)
+static void ToggleHashInfo()
 {
-    if (index >= 0 && index < NumAlgos()) {
-        ChangeAlgorithm(index, currlayer->algo->getrule());
-    } else {
-        Warning("Bug detected in AlgoChanged!");
-    }
+    currlayer->showhashinfo = !currlayer->showhashinfo;
+    
+    // only show hashing info while generating
+    if (generating) lifealgo::setVerbose( currlayer->showhashinfo );
 }
 
-} // extern "C"
+// -----------------------------------------------------------------------------
+
+static void ToggleTiming()
+{
+    showtiming = !showtiming;
+}
+
+// -----------------------------------------------------------------------------
+
+static void SetAlgo(int index)
+{
+    if (index >= 0 && index < NumAlgos()) {
+        if (index != currlayer->algtype) ChangeAlgorithm(index, currlayer->algo->getrule());
+    } else {
+        Warning("Bug detected in SetAlgo!");
+    }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -872,8 +895,6 @@ static void ToggleCursorMode()
 
 // -----------------------------------------------------------------------------
 
-extern "C" {
-
 void SetRule()
 {
     StopIfGenerating();
@@ -881,8 +902,6 @@ void SetRule()
     // newrule is empty if given rule was invalid
     if (newrule.length() > 0) ChangeRule(newrule);
 }
-
-} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -1024,6 +1043,8 @@ void UpdateMenuItems(const char* id)
         jsTickMenuItem("paste_mode_xor", pmode == Xor);
     
     } else if (menu == "Control_menu") {
+        jsTickMenuItem("control_hash", currlayer->showhashinfo);
+        jsTickMenuItem("control_timing", showtiming);
         if (generating) {
             EM_ASM( document.getElementById('control_startstop').innerHTML = 'Stop Generating'; );
         } else {
@@ -1038,7 +1059,16 @@ void UpdateMenuItems(const char* id)
         jsTickMenuItem("algo4", currlayer->algtype == 4);
     
     } else if (menu == "View_menu") {
-        //!!!???
+        jsTickMenuItem("view_grid", showgridlines);
+        jsTickMenuItem("view_icons", showicons);
+    
+    } else if (menu == "Scale_menu") {
+        jsTickMenuItem("scale0", currlayer->view->getmag() == 0);
+        jsTickMenuItem("scale1", currlayer->view->getmag() == 1);
+        jsTickMenuItem("scale2", currlayer->view->getmag() == 2);
+        jsTickMenuItem("scale3", currlayer->view->getmag() == 3);
+        jsTickMenuItem("scale4", currlayer->view->getmag() == 4);
+        jsTickMenuItem("scale5", currlayer->view->getmag() == 5);
     
     } else if (menu == "Help_menu") {
         // items in this menu don't change
@@ -1072,6 +1102,7 @@ void DoMenuItem(const char* id)
     
     // items in File menu:
     if (item == "file_new") NewUniverse(); else
+    if (item == "file_openclip") OpenClipboard(); else
     if (item == "file_prefs") ChangePrefs(); else
     
     // items in Edit menu:
@@ -1092,15 +1123,35 @@ void DoMenuItem(const char* id)
     
     // items in Control menu:
     if (item == "control_startstop") StartStop(); else
-    if (item == "algo0") AlgoChanged(0); else
-    if (item == "algo1") AlgoChanged(1); else
-    if (item == "algo2") AlgoChanged(2); else
-    if (item == "algo3") AlgoChanged(3); else
-    if (item == "algo4") AlgoChanged(4); else
+    if (item == "control_next") Next(); else
+    if (item == "control_step") Step(); else
+    if (item == "control_step1") StepBy1(); else
+    if (item == "control_slower") GoSlower(); else
+    if (item == "control_faster") GoFaster(); else
+    if (item == "control_reset") Reset(); else
+    if (item == "control_hash") ToggleHashInfo(); else
+    if (item == "control_timing") ToggleTiming(); else
+    if (item == "algo0") SetAlgo(0); else
+    if (item == "algo1") SetAlgo(1); else
+    if (item == "algo2") SetAlgo(2); else
+    if (item == "algo3") SetAlgo(3); else
+    if (item == "algo4") SetAlgo(4); else
     if (item == "control_setrule") SetRule(); else
     
     // items in View menu:
-    //!!!
+    if (item == "view_fitp") Fit(); else
+    if (item == "view_fits") FitSelection(); else
+    if (item == "view_middle") Middle(); else
+    if (item == "view_zoomin") ZoomIn(); else
+    if (item == "view_zoomout") ZoomOut(); else
+    if (item == "scale0") SetScale(0); else
+    if (item == "scale1") SetScale(1); else
+    if (item == "scale2") SetScale(2); else
+    if (item == "scale3") SetScale(3); else
+    if (item == "scale4") SetScale(4); else
+    if (item == "scale5") SetScale(5); else
+    if (item == "view_grid") ToggleGrid(); else
+    if (item == "view_icons") ToggleIcons(); else
     
     // items in Help menu:
     //!!!
@@ -1282,6 +1333,7 @@ int OnKeyChanged(int keycode, int action)
         case 'l' : ToggleGrid(); break;
         case 'm' : Middle(); break;
         case 'p' : ChangePrefs(); break;
+        case 'r' : SetRule(); break;
         case 'v' : Paste(); break;
         case 'V' : CancelPaste(); break;
         case 'z' : Undo(); break;

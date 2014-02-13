@@ -77,6 +77,7 @@ void ShrinkSelection(bool fit);
 void RandomFill();
 bool FlipSelection(bool topbottom, bool inundoredo = false);
 bool RotateSelection(bool clockwise, bool inundoredo = false);
+bool ClipboardContainsRule();
 void PasteClipboard();
 bool FlipPastePattern(bool topbottom);
 bool RotatePastePattern(bool clockwise);

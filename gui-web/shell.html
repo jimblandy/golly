@@ -273,7 +273,7 @@
                 <textarea class="myclipboard" id="cliptext" wrap="off" rows="8"></textarea>
             </div>
             <div class="myclipboard">
-                <span style="font: caption;">Pattern/rule data used by </span>
+                <span style="font: caption;">Clipboard data used by </span>
                 <button type="button" id="paste" onclick="Module.buttonPress(this)">Paste</button>
             </div>
             <div id="patterns" style="font: caption; outline: #DDD none 0px" tabindex="1">
@@ -762,6 +762,7 @@
                         <ul>
                             <li class="item" onclick="itemClick(this)" id="file_new">New Pattern</li>
                             <li class="item" onclick="itemClick(this)" id="file_open">Open Pattern...</li>
+                            <li class="item" onclick="itemClick(this)" id="file_openclip">Open Clipboard</li>
                             <li class="item" onclick="itemClick(this)" id="file_save">Save Pattern...</li>
                             <li class="item" onclick="itemClick(this)" id="file_prefs">Preferences...</li>
                         </ul>
@@ -791,6 +792,14 @@
                     <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Control_menu">Control
                         <ul>
                             <li class="item" onclick="itemClick(this)" id="control_startstop">Start Generating</li>
+                            <li class="item" onclick="itemClick(this)" id="control_next">Next</li>
+                            <li class="item" onclick="itemClick(this)" id="control_step">Step</li>
+                            <li class="item" onclick="itemClick(this)" id="control_step1">Set Step = 1</li>
+                            <li class="item" onclick="itemClick(this)" id="control_slower">Slower</li>
+                            <li class="item" onclick="itemClick(this)" id="control_faster">Faster</li>
+                            <li class="item" onclick="itemClick(this)" id="control_reset">Reset</li>
+                            <li class="item" onclick="itemClick(this)" id="control_hash">Show Hash Info</li>
+                            <li class="item" onclick="itemClick(this)" id="control_timing">Show Timing</li>
                             <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Algo_menu">Set Algorithm
                                 <ul>
                                     <li class="item" onclick="itemClick(this)" id="algo0">QuickLife</li>
@@ -809,11 +818,26 @@
                             <li class="item" onclick="itemClick(this)" id="view_fitp">Fit Pattern</li>
                             <li class="item" onclick="itemClick(this)" id="view_fits">Fit Selection</li>
                             <li class="item" onclick="itemClick(this)" id="view_middle">Middle</li>
+                            <li class="item" onclick="itemClick(this)" id="view_zoomin">Zoom In</li>
+                            <li class="item" onclick="itemClick(this)" id="view_zoomout">Zoom Out</li>
+                            <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Scale_menu">Set Scale
+                                <ul>
+                                    <li class="item" onclick="itemClick(this)" id="scale0">1:1</li>
+                                    <li class="item" onclick="itemClick(this)" id="scale1">1:2</li>
+                                    <li class="item" onclick="itemClick(this)" id="scale2">1:4</li>
+                                    <li class="item" onclick="itemClick(this)" id="scale3">1:8</li>
+                                    <li class="item" onclick="itemClick(this)" id="scale4">1:16</li>
+                                    <li class="item" onclick="itemClick(this)" id="scale5">1:32</li>
+                                </ul>
+                            </li>
+                            <li class="item" onclick="itemClick(this)" id="view_grid">Show Grid</li>
+                            <li class="item" onclick="itemClick(this)" id="view_icons">Show Icons</li>
                         </ul>
                     </li>
                     <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Help_menu">Help
                         <ul>
                             <li class="item" onclick="itemClick(this)" id="help_contents">Contents</li>
+                            <li class="item" onclick="itemClick(this)" id="help_lexicon">Life Lexicon</li>
                             <li class="item" onclick="itemClick(this)" id="help_about">About Golly</li>
                         </ul>
                     </li>
@@ -861,22 +885,6 @@
                 </div>
                 <div class="vspace"></div>
                 <div class="golly" id="settings">
-                    <label for="algo">Algorithm:</label>
-                    <select id="algo" onchange="Module.selectionChanged(this)">
-                        <option>QuickLife</option>
-                        <option>HashLife</option>
-                        <option>Generations</option>
-                        <option>JvN</option>
-                        <option>RuleLoader</option>
-                    </select>
-                    <button type="button" id="rule" onclick="Module.buttonPress(this)">Rule...</button>
-                    &nbsp;&nbsp;
-                    <label for="grid">Grid:</label><input type="checkbox" id="grid" onclick="Module.checkboxPress(this)">
-                    &nbsp;&nbsp;
-                    <label for="icons">Icons:</label><input type="checkbox" id="icons" onclick="Module.checkboxPress(this)">
-                    &nbsp;&nbsp;
-                    <label for="time">Timing:</label><input type="checkbox" id="time" onclick="Module.checkboxPress(this)">
-                    &nbsp;&nbsp;
                     <label for="mode">Cursor:</label>
                     <select id="mode" onchange="Module.selectionChanged(this)">
                         <option>Draw</option>
@@ -892,6 +900,8 @@
                         <option>0</option>
                         <option>1</option>
                     </select>
+                    &nbsp;&nbsp;
+                    <label for="icons">Icons:</label><input type="checkbox" id="icons" onclick="Module.checkboxPress(this)">
                 </div>
                 <div class="vspace"></div>
             </div>
@@ -926,22 +936,18 @@
                 if (button.id == 'scale1to1') _Scale1to1();
                 if (button.id == 'info') _Info();
                 if (button.id == 'help') _Help();
-                if (button.id == 'rule') _SetRule();
                 if (button.id == 'paste') _Paste();
             },
 
             checkboxPress: function(box) {
                 _ClearStatus(); // clear any status bar message
                 box.blur();     // prevent checkbox getting focus
-                if (box.id == 'grid') _ToggleGrid();
                 if (box.id == 'icons') _ToggleIcons();
-                if (box.id == 'time') _ToggleTiming();
             },
 
             selectionChanged: function(select) {
                 _ClearStatus(); // clear any status bar message
                 select.blur();  // prevent select getting focus
-                if (select.id == 'algo') _AlgoChanged(select.selectedIndex);
                 if (select.id == 'mode') _ModeChanged(select.selectedIndex);
                 if (select.id == 'state') _StateChanged(select.selectedIndex);
             },
