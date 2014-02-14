@@ -27,6 +27,8 @@
 #include <set>          // for std::set
 #include <algorithm>    // for std::count
 
+#include "util.h"       // for linereader
+
 #include "utils.h"      // for Warning, etc
 #include "algos.h"      // for InitAlgorithms
 #include "prefs.h"      // for GetPrefs, SavePrefs, userdir, etc
@@ -53,6 +55,8 @@ extern "C" {
     extern void jsSetClipboard(const char* text);
     extern const char* jsGetClipboard();
     extern void jsEnableButton(const char* id, bool enable);
+    extern void jsSetInnerHTML(const char* id, const char* text);
+    extern void jsMoveToAnchor(const char* anchor);
 }
 
 // -----------------------------------------------------------------------------
@@ -186,14 +190,6 @@ void EndProgress()
 
 // -----------------------------------------------------------------------------
 
-void SwitchToPatternTab()
-{
-    // no need to do anything???!!!
-    // or maybe just close help dialog???
-}
-
-// -----------------------------------------------------------------------------
-
 void ShowTextFile(const char* filepath)
 {
     // display contents of text file!!!???
@@ -201,9 +197,189 @@ void ShowTextFile(const char* filepath)
 
 // -----------------------------------------------------------------------------
 
+static std::string currpage = "/Help/index.html";
+
 void ShowHelp(const char* filepath)
 {
-    // display html file!!!???
+    if (filepath[0] == 0) {
+        // use currpage
+    } else {
+        currpage = filepath;
+    }
+    
+    // if anchor present then strip it off (and call jsMoveToAnchor below)
+    std::string anchor = "";
+    size_t hashpos = currpage.rfind('#');
+    if (hashpos != std::string::npos) {
+        anchor = currpage.substr(hashpos+1);
+        currpage = currpage.substr(0, hashpos);
+    }
+
+    // get contents of currpage
+    std::string contents;
+    FILE* helpfile = fopen(currpage.c_str(), "r");
+    if (helpfile) {
+        // read entire file into contents
+        const int MAXLINELEN = 4095;
+        char linebuf[MAXLINELEN + 1];
+        linereader reader(helpfile);
+        while (true) {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            contents += linebuf;
+            contents += "\n";
+        }
+        reader.close();
+        // fclose(helpfile) has been called
+    } else {
+        ErrorMessage(currpage.c_str());
+        Warning("Failed to open help file!");
+        return;
+    }
+    
+    // update the contents of the help dialog
+    jsSetInnerHTML("help_text", contents.c_str());
+    
+    // display the help dialog and start listening for clicks on links
+    EM_ASM(
+        var helpdlg = document.getElementById('help_overlay');
+        if (helpdlg.style.visibility != 'visible') {
+            helpdlg.style.visibility = 'visible';
+            
+            // this didn't work -- key handler needs to detect if help dlg is open!!!???
+            // document.getElementById('close_help').focus();
+            
+            // note that on_help_click is implemented in shell.html so CloseHelp can remove it
+            window.addEventListener('click', on_help_click, false);
+        }
+    );
+    
+    if (anchor.length() > 0) {
+        jsMoveToAnchor(anchor.c_str());
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void CloseHelp()
+{
+    // close the help dialog and remove the click event handler
+    EM_ASM(
+        var helpdlg = document.getElementById('help_overlay');
+        if (helpdlg.style.visibility == 'visible') {
+            helpdlg.style.visibility = 'hidden';
+            window.removeEventListener('click', on_help_click, false);
+        }
+    );
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+int DoHelpClick(const char* href)
+{
+    // look for special prefixes used by Golly and return 1 to prevent browser handling link
+    std::string link = href;
+    
+    if (link.find("open:") == 0) {
+        // open specified file
+        std::string path = link.substr(5);
+        FixURLPath(path);
+        OpenFile(path.c_str());
+        // OpenFile will close help dialog if necessary (might not if .zip file)
+        return 1;
+    }
+    
+    if (link.find("rule:") == 0) {
+        // switch to specified rule
+        std::string newrule = link.substr(5);
+        CloseHelp();
+        ChangeRule(newrule);
+        return 1;
+    }
+    
+    if (link.find("lexpatt:") == 0) {
+        // user clicked on pattern in Life Lexicon
+        std::string pattern = link.substr(8);
+        std::replace(pattern.begin(), pattern.end(), '$', '\n');
+        LoadLexiconPattern(pattern);
+        // SwitchToPatternTab will call CloseHelp
+        return 1;
+    }
+    
+    if (link.find("edit:") == 0) {
+        std::string path = link.substr(5);
+        // convert path to a full path if necessary
+        std::string fullpath = path;
+        if (path[0] != '/') {
+            fullpath = userdir + fullpath;  //!!!???
+        }
+        ShowTextFile(fullpath.c_str());
+        return 1;
+    }
+    
+    if (link.find("get:") == 0) {
+        std::string geturl = link.substr(4);
+        // download file specifed in link (possibly relative to a previous full url)
+        GetURL(geturl, currpage);  // or use window.location.href???!!!
+        return 1;
+    }
+    
+    if (link.find("unzip:") == 0) {
+        std::string zippath = link.substr(6);
+        FixURLPath(zippath);
+        std::string entry = zippath.substr(zippath.rfind(':') + 1);
+        zippath = zippath.substr(0, zippath.rfind(':'));
+        UnzipFile(zippath, entry);
+        return 1;
+    }
+        
+    // no special prefix, so look for file with .zip/rle/lif/mc extension
+    std::string path = link;
+    path = path.substr(path.rfind('/')+1);
+    size_t dotpos = path.rfind('.');
+    std::string ext = "";
+    if (dotpos != std::string::npos) ext = path.substr(dotpos+1);
+    if ( (IsZipFile(path) ||
+            strcasecmp(ext.c_str(),"rle") == 0 ||
+            strcasecmp(ext.c_str(),"life") == 0 ||
+            strcasecmp(ext.c_str(),"mc") == 0)
+            // also check for '?' to avoid opening links like ".../detail?name=foo.zip"
+            && path.find('?') == std::string::npos) {
+        // download file to downloaddir and open it
+        path = downloaddir + path;
+        if (DownloadFile(link, path)) {
+            OpenFile(path.c_str());
+        }
+        return 1;
+    }
+    
+    // if link doesn't contain ':' then assume it's relative to currpage
+    if (link.find(':') == std::string::npos) {
+        
+        // if link starts with '#' then let browser move to that anchor on current page
+        if (link[0] == '#') return 0;
+        
+        std::string newpage = currpage.substr(0, currpage.rfind('/')+1) + link;
+        ShowHelp(newpage.c_str());
+        return 1;
+    }
+    
+    // let browser handle this link
+    return 0;
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+void SwitchToPatternTab()
+{
+    CloseHelp();
 }
 
 // -----------------------------------------------------------------------------

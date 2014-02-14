@@ -644,7 +644,9 @@ extern "C" {
 
 void Help()
 {
-    // do something else eventually!!!
+    ShowHelp("");   // show most recently loaded help info
+    
+    /* show this info via Help > Keyboard Shortcuts!!!
     EM_ASM(
         alert('You can use these keyboard commands:\n\n' +
               'return -- start/stop generating\n' +
@@ -673,6 +675,7 @@ void Help()
               'shift-arrow -- scroll NE/SW/NW/SE'
              );
     );
+    */
 }
 
 } // extern "C"
@@ -1154,7 +1157,9 @@ void DoMenuItem(const char* id)
     if (item == "view_icons") ToggleIcons(); else
     
     // items in Help menu:
-    //!!!
+    if (item == "help_contents") ShowHelp("/Help/index.html"); else
+    if (item == "help_lexicon") ShowHelp("/Help/Lexicon/lex.htm"); else
+    if (item == "help_about") ShowHelp("/Help/about.html"); else
     
     Warning("Not yet implemented!!!");
 }

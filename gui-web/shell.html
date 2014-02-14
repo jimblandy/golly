@@ -128,6 +128,39 @@
 		    color: #FFF;
 		}
 
+        #help_overlay {
+            visibility: hidden;
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            z-index: 999;
+            background-color: rgba(0,0,0,0.5);
+        }
+        #help_dialog {
+            width: 700px;
+            height: 800px;
+            margin: 130px auto;
+            border: 1px solid #000;
+            padding: 0px;
+        }
+        #help_header {
+            width: 700px;
+            height: 24px;
+            background-color: #DDD;
+            text-align: right;
+        }
+        #help_text {
+            width: 680px;
+            padding: 10px;
+            height: 756px;      /* 800 - 24 - 2*10 (must be a smarter way to do this!!!) */
+            background-color: #FFF9D5;
+            text-align: left;
+            overflow: auto;
+        }
+
         /* following is a heavily modified version of the code at http://www.lwis.net/free-css-drop-down-menu */
         ul.dropdown,
         ul.dropdown li,
@@ -241,7 +274,24 @@
             resize_statusbar();
             resize_patterndir();
         });
+        
+        // this click event handler is active only while the help dialog is visible
+        function on_help_click(event) {
+            var t = event.target || event.srcElement;
+            var handled = false;
+            if (t.href) {
+                var rawhref = t.getAttribute("href");
+                // DEBUG: Module.printErr(rawhref);
+                doclick = Module.cwrap('DoHelpClick', 'int', ['string']);
+                handled = doclick(rawhref);
+            }
+            if (handled) {
+                event.preventDefault();     // prevent browser handling this link
+                return false;
+            }
+        };
     </script>
+
     <div id="pastemenu" oncontextmenu="event.preventDefault()">
     <span class="normal" onclick="_PasteAction(0);">Abort Paste</span>
     <span class="normal" onclick="_PasteAction(1);" id="pastehere">Paste Here</span>
@@ -251,6 +301,7 @@
     <span class="normal" onclick="_PasteAction(5);">Rotate Clockwise</span>
     <span class="normal" onclick="_PasteAction(6);">Rotate Anticlockwise</span>
     </div>
+
     <div id="selectionmenu" oncontextmenu="event.preventDefault()">
     <span onclick="_SelectionAction(0);">Remove Selection</span>
     <span onclick="_SelectionAction(1);">Cut</span>
@@ -267,6 +318,18 @@
     <span onclick="_SelectionAction(12);">Advance</span>
     <span onclick="_SelectionAction(13);">Advance Outside</span>
     </div>
+
+    <div id="help_overlay">
+        <div id="help_dialog">
+            <div id="help_header">
+                <button type="button" style="margin-top: 2px; margin-right: 5px;" onclick="_CloseHelp()">Close</button>
+            </div>
+            <div id="help_text">
+                contents
+            </div>
+        </div>
+    </div>
+
     <div style="width: 100%; overflow: hidden;">
         <div style="width: 300px; float: left;">
             <div class="myclipboard">

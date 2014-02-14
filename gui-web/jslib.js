@@ -138,4 +138,11 @@ jsSetInnerHTML: function(id, text) {
 
 // -----------------------------------------------------------------------------
 
+jsMoveToAnchor: function(anchor) {
+    window.location.hash = Pointer_stringify(anchor);
+},
+
+
+// -----------------------------------------------------------------------------
+
 });
