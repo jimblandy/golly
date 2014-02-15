@@ -640,13 +640,22 @@ void Info()
 
 // -----------------------------------------------------------------------------
 
+void StopAndHelp(const char* helpfile)
+{
+    StopIfGenerating();
+    ShowHelp(helpfile);
+}
+
+// -----------------------------------------------------------------------------
+
 extern "C" {
 
 void Help()
 {
-    ShowHelp("");   // show most recently loaded help info
+    // show most recently loaded help file (or contents page if no such file)
+    StopAndHelp("");
     
-    /* show this info via Help > Keyboard Shortcuts!!!
+    /* show this info via Help > Keyboard Commands!!!
     EM_ASM(
         alert('You can use these keyboard commands:\n\n' +
               'return -- start/stop generating\n' +
@@ -1157,9 +1166,9 @@ void DoMenuItem(const char* id)
     if (item == "view_icons") ToggleIcons(); else
     
     // items in Help menu:
-    if (item == "help_contents") ShowHelp("/Help/index.html"); else
-    if (item == "help_lexicon") ShowHelp("/Help/Lexicon/lex.htm"); else
-    if (item == "help_about") ShowHelp("/Help/about.html"); else
+    if (item == "help_contents") StopAndHelp("/Help/index.html"); else
+    if (item == "help_lexicon") StopAndHelp("/Help/Lexicon/lex.htm"); else
+    if (item == "help_about") StopAndHelp("/Help/about.html"); else
     
     Warning("Not yet implemented!!!");
 }
