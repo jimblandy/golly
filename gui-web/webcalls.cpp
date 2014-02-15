@@ -192,8 +192,62 @@ void EndProgress()
 
 void ShowTextFile(const char* filepath)
 {
-    // display contents of text file!!!???
+    // check if path ends with .gz or .zip
+    if (EndsWith(filepath,".gz") || EndsWith(filepath,".zip")) {
+        Warning("Compressed file cannot be displayed.");
+        return;
+    }
+    
+    // get contents of given text file and wrap in <pre>...</pre>
+    std::string contents = "<pre>";
+    FILE* textfile = fopen(filepath, "r");
+    if (textfile) {
+        // read entire file into contents
+        const int MAXLINELEN = 4095;
+        char linebuf[MAXLINELEN + 1];
+        linereader reader(textfile);
+        while (true) {
+            if (reader.fgets(linebuf, MAXLINELEN) == 0) break;
+            contents += linebuf;
+            contents += "\n";
+        }
+        reader.close();
+        // fclose(textfile) has been called
+    } else {
+        ErrorMessage(filepath);
+        Warning("Failed to open text file!");
+        return;
+    }
+    
+    // update the contents of the info dialog
+    contents += "</pre>";
+    jsSetInnerHTML("info_text", contents.c_str());
+    
+    // display the info dialog
+    EM_ASM(
+        var infodlg = document.getElementById('info_overlay');
+        if (infodlg.style.visibility != 'visible') {
+            infodlg.style.visibility = 'visible';
+        }
+    );
 }
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void CloseInfo()
+{
+    // close the info dialog
+    EM_ASM(
+        var infodlg = document.getElementById('info_overlay');
+        if (infodlg.style.visibility == 'visible') {
+            infodlg.style.visibility = 'hidden';
+        }
+    );
+}
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 

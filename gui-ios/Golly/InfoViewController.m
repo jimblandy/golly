@@ -225,7 +225,7 @@ void ShowTextFile(const char* filepath, UIViewController* currentView)
     if (EndsWith(filepath,".gz") || EndsWith(filepath,".zip")) {
         Warning("Editing a compressed file is not supported.");
         return;
-    }        
+    }
 
     textfile = filepath;    // viewWillAppear will display this file
     

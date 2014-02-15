@@ -396,7 +396,6 @@ void OpenClipboard()
         FILE* outfile = fopen(currlayer->tempstart.c_str(), "w");
         if (outfile) {
             if (fputs(data.c_str(), outfile) == EOF) {
-                fclose(outfile);
                 ErrorMessage("Could not write clipboard text to tempstart file!");
                 fclose(outfile);
                 return;
@@ -633,7 +632,41 @@ extern "C" {
 
 void Info()
 {
-    Warning("Not yet implemented!!!");
+    if (currlayer->currname != "untitled") {
+        // display comments in current pattern file
+        char *commptr = NULL;
+        // readcomments will allocate commptr
+        const char *err = readcomments(currlayer->currfile.c_str(), &commptr);
+        if (err) {
+            if (commptr) free(commptr);
+            ErrorMessage(err);
+            return;
+        }
+
+        const char* commfile = "comments";
+        FILE* outfile = fopen(commfile, "w");
+        if (outfile) {
+            int result;
+            if (commptr[0] == 0) {
+                result = fputs("No comments found.", outfile);
+            } else {
+                result = fputs(commptr, outfile);
+            }
+            if (result == EOF) {
+                ErrorMessage("Could not write comments to file!");
+                fclose(outfile);
+                return;
+            }
+        } else {
+            ErrorMessage("Could not open file for comments!");
+            fclose(outfile);
+            return;
+        }
+        fclose(outfile);
+        
+        if (commptr) free(commptr);
+        ShowTextFile(commfile);
+    }
 }
 
 } // extern "C"
@@ -1164,6 +1197,7 @@ void DoMenuItem(const char* id)
     if (item == "scale5") SetScale(5); else
     if (item == "view_grid") ToggleGrid(); else
     if (item == "view_icons") ToggleIcons(); else
+    if (item == "view_info") Info(); else
     
     // items in Help menu:
     if (item == "help_contents") StopAndHelp("/Help/index.html"); else
