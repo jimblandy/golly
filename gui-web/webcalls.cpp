@@ -55,6 +55,7 @@ extern "C" {
     extern void jsSetClipboard(const char* text);
     extern const char* jsGetClipboard();
     extern void jsEnableButton(const char* id, bool enable);
+    extern void jsEnableImgButton(const char* id, bool enable);
     extern void jsSetInnerHTML(const char* id, const char* text);
     extern void jsMoveToAnchor(const char* anchor);
 }
@@ -137,10 +138,10 @@ std::string GetRuleName(const std::string& rule)
 void UpdateButtons()
 {
     if (fullscreen) return;
-    jsEnableButton("reset", currlayer->algo->getGeneration() > currlayer->startgen);
-    jsEnableButton("undo", currlayer->undoredo->CanUndo());
-    jsEnableButton("redo", currlayer->undoredo->CanRedo());
-    jsEnableButton("info", currlayer->currname != "untitled");
+    jsEnableImgButton("reset", currlayer->algo->getGeneration() > currlayer->startgen);
+    jsEnableImgButton("undo", currlayer->undoredo->CanUndo());
+    jsEnableImgButton("redo", currlayer->undoredo->CanRedo());
+    jsEnableImgButton("info", currlayer->currname != "untitled");
 }
 
 // -----------------------------------------------------------------------------
@@ -214,9 +215,8 @@ void ShowTextFile(const char* filepath)
         reader.close();
         // fclose(textfile) has been called
     } else {
-        ErrorMessage(filepath);
-        Warning("Failed to open text file!");
-        return;
+        contents += "Failed to open text file!\n";
+        contents += filepath;
     }
     
     // update the contents of the info dialog
@@ -224,12 +224,7 @@ void ShowTextFile(const char* filepath)
     jsSetInnerHTML("info_text", contents.c_str());
     
     // display the info dialog
-    EM_ASM(
-        var infodlg = document.getElementById('info_overlay');
-        if (infodlg.style.visibility != 'visible') {
-            infodlg.style.visibility = 'visible';
-        }
-    );
+    EM_ASM( document.getElementById('info_overlay').style.visibility = 'visible'; );
 }
 
 // -----------------------------------------------------------------------------
@@ -239,12 +234,7 @@ extern "C" {
 void CloseInfo()
 {
     // close the info dialog
-    EM_ASM(
-        var infodlg = document.getElementById('info_overlay');
-        if (infodlg.style.visibility == 'visible') {
-            infodlg.style.visibility = 'hidden';
-        }
-    );
+    EM_ASM( document.getElementById('info_overlay').style.visibility = 'hidden'; );
 }
 
 } // extern "C"
@@ -252,6 +242,14 @@ void CloseInfo()
 // -----------------------------------------------------------------------------
 
 static std::string currpage = "/Help/index.html";
+
+static void UpdateHelpButtons()
+{
+    jsEnableButton("help_contents", currpage != "/Help/index.html");
+    //!!!
+}
+
+// -----------------------------------------------------------------------------
 
 void ShowHelp(const char* filepath)
 {
@@ -285,9 +283,8 @@ void ShowHelp(const char* filepath)
         reader.close();
         // fclose(helpfile) has been called
     } else {
-        ErrorMessage(currpage.c_str());
-        Warning("Failed to open help file!");
-        return;
+        contents += "<p>Failed to open help file!<br>";
+        contents += currpage;
     }
     
     // update the contents of the help dialog
@@ -298,10 +295,6 @@ void ShowHelp(const char* filepath)
         var helpdlg = document.getElementById('help_overlay');
         if (helpdlg.style.visibility != 'visible') {
             helpdlg.style.visibility = 'visible';
-            
-            // this didn't work -- key handler needs to detect if help dlg is open!!!???
-            // document.getElementById('close_help').focus();
-            
             // note that on_help_click is implemented in shell.html so CloseHelp can remove it
             window.addEventListener('click', on_help_click, false);
         }
@@ -309,26 +302,12 @@ void ShowHelp(const char* filepath)
     
     if (anchor.length() > 0) {
         jsMoveToAnchor(anchor.c_str());
+    } else {
+        EM_ASM( document.getElementById('help_text').scrollTop = 0; );
     }
+    
+    UpdateHelpButtons();
 }
-
-// -----------------------------------------------------------------------------
-
-extern "C" {
-
-void CloseHelp()
-{
-    // close the help dialog and remove the click event handler
-    EM_ASM(
-        var helpdlg = document.getElementById('help_overlay');
-        if (helpdlg.style.visibility == 'visible') {
-            helpdlg.style.visibility = 'hidden';
-            window.removeEventListener('click', on_help_click, false);
-        }
-    );
-}
-
-} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -351,7 +330,7 @@ int DoHelpClick(const char* href)
     if (link.find("rule:") == 0) {
         // switch to specified rule
         std::string newrule = link.substr(5);
-        CloseHelp();
+        SwitchToPatternTab();   // calls CloseHelp
         ChangeRule(newrule);
         return 1;
     }
@@ -425,6 +404,60 @@ int DoHelpClick(const char* href)
     
     // let browser handle this link
     return 0;
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void HelpBack()
+{
+    // go to previous page in history
+    //!!!
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void HelpNext()
+{
+    // go to next page in history
+    //!!!
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void HelpContents()
+{
+    // go to contents page (and clear history???!!!)
+    ShowHelp("/Help/index.html");
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void CloseHelp()
+{
+    // close the help dialog and remove the click event handler
+    EM_ASM(
+        var helpdlg = document.getElementById('help_overlay');
+        if (helpdlg.style.visibility == 'visible') {
+            helpdlg.style.visibility = 'hidden';
+            window.removeEventListener('click', on_help_click, false);
+        }
+    );
 }
 
 } // extern "C"

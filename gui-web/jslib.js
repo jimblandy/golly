@@ -103,7 +103,30 @@ jsTextAreaIsActive: function() {
 
 // -----------------------------------------------------------------------------
 
+jsElementIsVisible: function(id) {
+    if (document.getElementById(Pointer_stringify(id)).style.visibility == 'visible') {
+        return 1;
+    } else {
+        return 0;
+    }
+},
+
+// -----------------------------------------------------------------------------
+
 jsEnableButton: function(id, enable) {
+    var button = document.getElementById(Pointer_stringify(id));
+    if (enable) {
+        button.disabled = false;
+        button.style.color = '#000';
+    } else {
+        button.disabled = true;
+        button.style.color = '#888';
+    }
+},
+
+// -----------------------------------------------------------------------------
+
+jsEnableImgButton: function(id, enable) {
     var button = document.getElementById(Pointer_stringify(id));
     var img = document.getElementById('img' + Pointer_stringify(id));
     if (enable) {

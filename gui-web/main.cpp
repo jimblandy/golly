@@ -59,7 +59,8 @@ extern "C" {
     extern const char* jsSetRule(const char* oldrule);
     extern void jsShowMenu(const char* id, int x, int y);
     extern int jsTextAreaIsActive();
-    extern void jsEnableButton(const char* id, bool enable);
+    extern int jsElementIsVisible(const char* id);
+    extern void jsEnableImgButton(const char* id, bool enable);
     extern void jsTickMenuItem(const char* id, bool tick);
     extern void jsSetInnerHTML(const char* id, const char* text);
 }
@@ -86,15 +87,15 @@ static bool selection_menu_visible = false;
 
 static void InitPaths()
 {
-    userdir = "/UserData/";     // can't save user data???!!!
+    userdir = "";       // where should we save save user data???!!!
 
-    savedir = userdir + "Saved/";
+    savedir = "";       //???!!! userdir + "Saved/";
     //???!!! CreateSubdir(savedir);
 
-    downloaddir = userdir + "Downloads/";
+    downloaddir = "";   //???!!! userdir + "Downloads/";
     //???!!! CreateSubdir(downloaddir);
 
-    userrules = "";             // ???!!! userdir + "Rules/";
+    userrules = "";     // ???!!! userdir + "Rules/";
     //???!!! CreateSubdir(userrules);
 
     // supplied patterns, rules, help are stored in golly.data via --preload-file option in Makefile
@@ -105,7 +106,7 @@ static void InitPaths()
 
     tempdir = "";
     clipfile = tempdir + "golly_clipboard";
-    prefsfile = "GollyPrefs";                   // where will this be saved???
+    prefsfile = "GollyPrefs";                   // where will this be saved???!!!
 }
 
 // -----------------------------------------------------------------------------
@@ -218,17 +219,21 @@ void ResizeCanvas() {
     // resize canvas based on current window dimensions
     EM_ASM(
         var trect = document.getElementById('toolbar').getBoundingClientRect();
-        // place canvas immediately under toolbar, extending to bottom edge of window
+        // place canvas immediately under toolbar
         var top = trect.top + trect.height;
         var left = trect.left;
-        var wd = window.innerWidth - left;
-        var ht = window.innerHeight - top;
+        var wd = window.innerWidth - left - 10;
+        var ht = window.innerHeight - top - 10;
         if (wd < 0) wd = 0;
         if (ht < 0) ht = 0;
+        
+        /* this causes too many problems, so fix in render.cpp!!!
         // ensure wd and ht are integer multiples of max cell size so rendering code
         // will draw partially visible cells at the right and bottom edges
         if (wd % 32 > 0) wd += 32 - (wd % 32);
         if (ht % 32 > 0) ht += 32 - (ht % 32);
+        */
+        
         var canvas = Module['canvas'];
         canvas.style.top = top + 'px';
         canvas.style.left = left + 'px';
@@ -428,9 +433,9 @@ void StartStop()
         // then StopGenerating hasn't called RememberGenFinish, and so CanUndo/CanRedo
         // might not return correct results
         bool canreset = currlayer->algo->getGeneration() > currlayer->startgen;
-        jsEnableButton("reset", canreset);
-        jsEnableButton("undo", allowundo && (canreset || currlayer->undoredo->CanUndo()));
-        jsEnableButton("redo", false);
+        jsEnableImgButton("reset", canreset);
+        jsEnableImgButton("undo", allowundo && (canreset || currlayer->undoredo->CanUndo()));
+        jsEnableImgButton("redo", false);
 
     } else if (StartGenerating()) {
         // generating flag is now true so change button image
@@ -438,9 +443,9 @@ void StartStop()
 
         // don't call UpdateButtons here because we want user to
         // be able to stop generating by hitting reset/undo buttons
-        jsEnableButton("reset", true);
-        jsEnableButton("undo", allowundo);
-        jsEnableButton("redo", false);
+        jsEnableImgButton("reset", true);
+        jsEnableImgButton("undo", allowundo);
+        jsEnableImgButton("redo", false);
     }
 }
 
@@ -687,37 +692,6 @@ void Help()
 {
     // show most recently loaded help file (or contents page if no such file)
     StopAndHelp("");
-    
-    /* show this info via Help > Keyboard Commands!!!
-    EM_ASM(
-        alert('You can use these keyboard commands:\n\n' +
-              'return -- start/stop generating\n' +
-              'space -- advance 1 generation\n' +
-              '- or _ -- go slower\n' +
-              '+ or = -- go faster\n' +
-              '0 -- set step exponent to 0\n' +
-              '1 -- set scale to 1:1\n' +
-              '5 -- randomly fill selection\n' +
-              '[ -- zoom out\n' +
-              '] -- zoom in\n' +
-              'a -- select all\n' +
-              'A -- remove selection\n' +
-              'f -- fit entire pattern in view\n' +
-              'F -- fit entire selection in view\n' +
-              'h -- help\n' +
-              'i -- toggle icon mode\n' +
-              'l -- toggle grid lines\n' +
-              'm -- put cell at 0,0 in middle\n' +
-              'r -- change rule\n' +
-              'v -- paste\n' +
-              'V -- cancel paste\n' +
-              'z -- undo\n' +
-              'Z -- redo\n' +
-              'arrow keys -- scroll up/down/left/right\n' +
-              'shift-arrow -- scroll NE/SW/NW/SE'
-             );
-    );
-    */
 }
 
 } // extern "C"
@@ -726,7 +700,7 @@ void Help()
 
 static void ChangePrefs()
 {
-    //!!! show some sort of modal dialog box that lets user change various settings???
+    //!!! show a modal dialog that lets user change various settings???
     Warning("Preferences dialog is not yet implemented!!!");
     
     SavePrefs();    // where will this write GollyPrefs file???!!!
@@ -1032,6 +1006,7 @@ extern "C" {
 
 void OpenClickedFile(const char* filepath)
 {
+    ClearMessage();
     StopIfGenerating();
     OpenFile(filepath);
 }
@@ -1201,6 +1176,7 @@ void DoMenuItem(const char* id)
     
     // items in Help menu:
     if (item == "help_contents") StopAndHelp("/Help/index.html"); else
+    if (item == "help_keyboard") StopAndHelp("/Help/keyboard.html"); else
     if (item == "help_lexicon") StopAndHelp("/Help/Lexicon/lex.htm"); else
     if (item == "help_about") StopAndHelp("/Help/about.html"); else
     
@@ -1230,7 +1206,7 @@ static int TranslateKey(int keycode)
         case 187 : return '=';          // Chrome and Safari (Mac)
         
         case 0x09: return 295 ; //DOM_VK_TAB -> GLFW_KEY_TAB
-        case 0x1B: return 255 ; //DOM_VK_ESCAPE -> GLFW_KEY_ESC
+        // GLFW_KEY_ESC is not 255???!!! case 0x1B: return 255 ; //DOM_VK_ESCAPE -> GLFW_KEY_ESC
         case 0x6A: return 313 ; //DOM_VK_MULTIPLY -> GLFW_KEY_KP_MULTIPLY
         case 0x6B: return 315 ; //DOM_VK_ADD -> GLFW_KEY_KP_ADD
         case 0x6D: return 314 ; //DOM_VK_SUBTRACT -> GLFW_KEY_KP_SUBTRACT
@@ -1287,8 +1263,6 @@ extern "C" {
 int OnKeyChanged(int keycode, int action)
 {
     int key = TranslateKey(keycode);
-
-    if (action == GLFW_PRESS) ClearMessage();
     
     // first check for modifier keys (meta/ctrl/alt/shift);
     // note that we need to set flags for these keys BEFORE testing
@@ -1311,17 +1285,30 @@ int OnKeyChanged(int keycode, int action)
         return 1;
     }
     
-    if (jsTextAreaIsActive()) {
-        // a textarea is active (and probably has focus),
-        // so don't handle the key here and don't call preventDefault
-        return 0;
-    }
-    
     if (meta_down || ctrl_down) {
         // could be a browser shortcut like ctrl/cmd-Q/X/C/V,
         // so don't handle the key here and don't call preventDefault
         return 0;
     }
+    
+    // check if help dialog or info dialog is visible
+    if (jsElementIsVisible("help_overlay") || jsElementIsVisible("info_overlay")) {
+        if (key == 13 || key == 27) {
+            // return key or escape key closes dialog
+            if (jsElementIsVisible("help_overlay")) EM_ASM( _CloseHelp(); );
+            if (jsElementIsVisible("info_overlay")) EM_ASM( _CloseInfo(); );
+            return 1;   // call preventDefault
+        }
+        return 0;
+    }
+    
+    if (jsTextAreaIsActive()) {
+        // a textarea is active (and probably has focus),
+        // so don't handle the key here and don't call preventDefault
+        return 0;
+    }
+
+    if (action == GLFW_PRESS) ClearMessage();
 
     if (action == GLFW_RELEASE) return 1;   // non-modifier key was released
     
