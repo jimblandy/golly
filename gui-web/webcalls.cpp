@@ -22,6 +22,7 @@
 
  / ***/
 
+#include <vector>       // for std::vector
 #include <string>       // for std::string
 #include <list>         // for std::list
 #include <set>          // for std::set
@@ -58,6 +59,9 @@ extern "C" {
     extern void jsEnableImgButton(const char* id, bool enable);
     extern void jsSetInnerHTML(const char* id, const char* text);
     extern void jsMoveToAnchor(const char* anchor);
+    extern void jsSetScrollTop(const char* id, int pos);
+    extern int jsGetScrollTop(const char* id);
+    extern int jsElementIsVisible(const char* id);
 }
 
 // -----------------------------------------------------------------------------
@@ -241,12 +245,35 @@ void CloseInfo()
 
 // -----------------------------------------------------------------------------
 
-static std::string currpage = "/Help/index.html";
+static const char* contents_page = "/Help/index.html";
+static std::string currpage = contents_page;
+static int currscroll = 0;
+static std::vector<std::string> page_history;
+static std::vector<int> page_scroll;
+static unsigned int page_index = 0;
+static bool shifting_history = false;   // in HelpBack or HelpNext?
+
+// -----------------------------------------------------------------------------
+
+static bool CanGoBack()
+{
+    return page_index > 0;
+}
+
+// -----------------------------------------------------------------------------
+
+static bool CanGoNext()
+{
+    return page_history.size() > 1 && page_index < (page_history.size() - 1);
+}
+
+// -----------------------------------------------------------------------------
 
 static void UpdateHelpButtons()
 {
-    jsEnableButton("help_contents", currpage != "/Help/index.html");
-    //!!!
+    jsEnableButton("help_back", CanGoBack());
+    jsEnableButton("help_next", CanGoNext());
+    jsEnableButton("help_contents", currpage != contents_page);
 }
 
 // -----------------------------------------------------------------------------
@@ -254,7 +281,7 @@ static void UpdateHelpButtons()
 void ShowHelp(const char* filepath)
 {
     if (filepath[0] == 0) {
-        // use currpage
+        // use currpage and currscroll
     } else {
         currpage = filepath;
     }
@@ -265,6 +292,26 @@ void ShowHelp(const char* filepath)
     if (hashpos != std::string::npos) {
         anchor = currpage.substr(hashpos+1);
         currpage = currpage.substr(0, hashpos);
+    }
+    
+    if (!shifting_history) {
+        if (!jsElementIsVisible("help_overlay")) {
+            // help dialog is about to be opened so clear history
+            page_history.clear();
+            page_scroll.clear();
+            page_index = 0;
+        } else {
+            // remember scroll position of current page
+            page_scroll[page_index] = jsGetScrollTop("help_text");
+            // remove any following pages
+            while (CanGoNext()) {
+                page_history.pop_back();
+                page_scroll.pop_back();
+            }
+        }
+        page_history.push_back(currpage);
+        page_scroll.push_back(0);
+        page_index = page_history.size() - 1;
     }
 
     // get contents of currpage
@@ -300,14 +347,83 @@ void ShowHelp(const char* filepath)
         }
     );
     
-    if (anchor.length() > 0) {
+    if (filepath[0] == 0) {
+        jsSetScrollTop("help_text", currscroll);
+    } else if (anchor.length() > 0) {
         jsMoveToAnchor(anchor.c_str());
     } else {
-        EM_ASM( document.getElementById('help_text').scrollTop = 0; );
+        jsSetScrollTop("help_text", page_scroll[page_index]);
     }
     
     UpdateHelpButtons();
 }
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void HelpBack()
+{
+    if (CanGoBack()) {
+        // remember scroll position of current page and go to previous page
+        page_scroll[page_index] = jsGetScrollTop("help_text");
+        page_index--;
+        shifting_history = true;
+        ShowHelp(page_history[page_index].c_str());
+        shifting_history = false;
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void HelpNext()
+{
+    if (CanGoNext()) {
+        // remember scroll position of current page and go to next page
+        page_scroll[page_index] = jsGetScrollTop("help_text");
+        page_index++;
+        shifting_history = true;
+        ShowHelp(page_history[page_index].c_str());
+        shifting_history = false;
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void HelpContents()
+{
+    ShowHelp(contents_page);
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void CloseHelp()
+{
+    if (jsElementIsVisible("help_overlay")) {
+        // remember scroll position of current page for later use
+        currscroll = jsGetScrollTop("help_text");
+        
+        // close the help dialog and remove the click event handler
+        EM_ASM(
+            document.getElementById('help_overlay').style.visibility = 'hidden';
+            window.removeEventListener('click', on_help_click, false);
+        );
+    }
+}
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -349,7 +465,7 @@ int DoHelpClick(const char* href)
         // convert path to a full path if necessary
         std::string fullpath = path;
         if (path[0] != '/') {
-            fullpath = userdir + fullpath;  //!!!???
+            fullpath = userdir + fullpath;
         }
         ShowTextFile(fullpath.c_str());
         return 1;
@@ -394,8 +510,12 @@ int DoHelpClick(const char* href)
     // if link doesn't contain ':' then assume it's relative to currpage
     if (link.find(':') == std::string::npos) {
         
-        // if link starts with '#' then let browser move to that anchor on current page
-        if (link[0] == '#') return 0;
+        // if link starts with '#' then move to that anchor on current page
+        if (link[0] == '#') {
+            std::string newpage = currpage + link;
+            ShowHelp(newpage.c_str());
+            return 1;
+        }
         
         std::string newpage = currpage.substr(0, currpage.rfind('/')+1) + link;
         ShowHelp(newpage.c_str());
@@ -404,60 +524,6 @@ int DoHelpClick(const char* href)
     
     // let browser handle this link
     return 0;
-}
-
-} // extern "C"
-
-// -----------------------------------------------------------------------------
-
-extern "C" {
-
-void HelpBack()
-{
-    // go to previous page in history
-    //!!!
-}
-
-} // extern "C"
-
-// -----------------------------------------------------------------------------
-
-extern "C" {
-
-void HelpNext()
-{
-    // go to next page in history
-    //!!!
-}
-
-} // extern "C"
-
-// -----------------------------------------------------------------------------
-
-extern "C" {
-
-void HelpContents()
-{
-    // go to contents page (and clear history???!!!)
-    ShowHelp("/Help/index.html");
-}
-
-} // extern "C"
-
-// -----------------------------------------------------------------------------
-
-extern "C" {
-
-void CloseHelp()
-{
-    // close the help dialog and remove the click event handler
-    EM_ASM(
-        var helpdlg = document.getElementById('help_overlay');
-        if (helpdlg.style.visibility == 'visible') {
-            helpdlg.style.visibility = 'hidden';
-            window.removeEventListener('click', on_help_click, false);
-        }
-    );
 }
 
 } // extern "C"

@@ -165,6 +165,17 @@ jsMoveToAnchor: function(anchor) {
     window.location.hash = Pointer_stringify(anchor);
 },
 
+// -----------------------------------------------------------------------------
+
+jsSetScrollTop: function(id, pos) {
+    document.getElementById(Pointer_stringify(id)).scrollTop = pos;
+},
+
+// -----------------------------------------------------------------------------
+
+jsGetScrollTop: function(id) {
+    return document.getElementById(Pointer_stringify(id)).scrollTop;
+},
 
 // -----------------------------------------------------------------------------
 

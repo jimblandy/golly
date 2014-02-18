@@ -274,9 +274,9 @@ static void InitElements()
     // the following element ids must match those in shell.html
     
     if (showicons) {
-        EM_ASM( document.getElementById('icons').checked = true; );
+        EM_ASM( document.getElementById('toggle_icons').checked = true; );
     } else {
-        EM_ASM( document.getElementById('icons').checked = false; );
+        EM_ASM( document.getElementById('toggle_icons').checked = false; );
     }
 
     // initialize clipboard data to a simple RLE pattern
@@ -784,9 +784,9 @@ void ToggleIcons()
 {
     showicons = !showicons;
     if (showicons) {
-        EM_ASM( document.getElementById('icons').checked = true; );
+        EM_ASM( document.getElementById('toggle_icons').checked = true; );
     } else {
-        EM_ASM( document.getElementById('icons').checked = false; );
+        EM_ASM( document.getElementById('toggle_icons').checked = false; );
     }
     UpdatePattern();
 }
@@ -1175,10 +1175,20 @@ void DoMenuItem(const char* id)
     if (item == "view_info") Info(); else
     
     // items in Help menu:
-    if (item == "help_contents") StopAndHelp("/Help/index.html"); else
+    if (item == "help_index")    StopAndHelp("/Help/index.html"); else
+    if (item == "help_intro")    StopAndHelp("/Help/intro.html"); else
+    if (item == "help_tips")     StopAndHelp("/Help/tips.html"); else
+    if (item == "help_algos")    StopAndHelp("/Help/algos.html"); else
+    if (item == "help_lexicon")  StopAndHelp("/Help/Lexicon/lex.htm"); else
+    if (item == "help_archives") StopAndHelp("/Help/archives.html"); else
     if (item == "help_keyboard") StopAndHelp("/Help/keyboard.html"); else
-    if (item == "help_lexicon") StopAndHelp("/Help/Lexicon/lex.htm"); else
-    if (item == "help_about") StopAndHelp("/Help/about.html"); else
+    if (item == "help_refs")     StopAndHelp("/Help/refs.html"); else
+    if (item == "help_formats")  StopAndHelp("/Help/formats.html"); else
+    if (item == "help_bounded")  StopAndHelp("/Help/bounded.html"); else
+    if (item == "help_problems") StopAndHelp("/Help/problems.html"); else
+    if (item == "help_changes")  StopAndHelp("/Help/changes.html"); else
+    if (item == "help_credits")  StopAndHelp("/Help/credits.html"); else
+    if (item == "help_about")    StopAndHelp("/Help/about.html"); else
     
     Warning("Not yet implemented!!!");
 }
@@ -1293,10 +1303,14 @@ int OnKeyChanged(int keycode, int action)
     
     // check if help dialog or info dialog is visible
     if (jsElementIsVisible("help_overlay") || jsElementIsVisible("info_overlay")) {
-        if (key == 13 || key == 27) {
+        if (action == GLFW_PRESS && (key == 13 || key == 27)) {
             // return key or escape key closes dialog
-            if (jsElementIsVisible("help_overlay")) EM_ASM( _CloseHelp(); );
-            if (jsElementIsVisible("info_overlay")) EM_ASM( _CloseInfo(); );
+            // (note that info dialog can be on top of help dialog, so we test info dialog first)
+            if (jsElementIsVisible("info_overlay")) {
+                EM_ASM( _CloseInfo(); );
+            } else {
+                EM_ASM( _CloseHelp(); );
+            }
             return 1;   // call preventDefault
         }
         return 0;

@@ -314,6 +314,9 @@
         // this click event handler is active only while the help dialog is visible
         function on_help_click(event) {
             var t = event.target || event.srcElement;
+            if (!t.href) {
+                t = t.parentNode;   // handles cases like <a ...><b>link</b></a>
+            }
             var handled = false;
             if (t.href) {
                 var rawhref = t.getAttribute("href");
@@ -946,9 +949,19 @@
                     </li>
                     <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Help_menu">Help
                         <ul>
-                            <li class="item" onclick="itemClick(this)" id="help_contents">Contents</li>
-                            <li class="item" onclick="itemClick(this)" id="help_keyboard">Keyboard Commands</li>
+                            <li class="item" onclick="itemClick(this)" id="help_index">Contents</li>
+                            <li class="item" onclick="itemClick(this)" id="help_intro">Introduction</li>
+                            <li class="item" onclick="itemClick(this)" id="help_tips">Hints and Tips</li>
+                            <li class="item" onclick="itemClick(this)" id="help_algos">Algorithms</li>
                             <li class="item" onclick="itemClick(this)" id="help_lexicon">Life Lexicon</li>
+                            <li class="item" onclick="itemClick(this)" id="help_archives">Online Archives</li>
+                            <li class="item" onclick="itemClick(this)" id="help_keyboard">Keyboard Commands</li>
+                            <li class="item" onclick="itemClick(this)" id="help_refs">References</li>
+                            <li class="item" onclick="itemClick(this)" id="help_formats">File Formats</li>
+                            <li class="item" onclick="itemClick(this)" id="help_bounded">Bounded Grids</li>
+                            <li class="item" onclick="itemClick(this)" id="help_problems">Known Problems</li>
+                            <li class="item" onclick="itemClick(this)" id="help_changes">Changes</li>
+                            <li class="item" onclick="itemClick(this)" id="help_credits">Credits</li>
                             <li class="item" onclick="itemClick(this)" id="help_about">About Golly</li>
                         </ul>
                     </li>
@@ -1012,7 +1025,7 @@
                         <option>1</option>
                     </select>
                     &nbsp;&nbsp;
-                    <label for="icons">Icons:</label><input type="checkbox" id="icons" onclick="Module.checkboxPress(this)">
+                    <label for="toggle_icons">Icons:</label><input type="checkbox" id="toggle_icons" onclick="Module.checkboxPress(this)">
                 </div>
                 <div class="vspace"></div>
             </div>
@@ -1053,7 +1066,7 @@
             checkboxPress: function(box) {
                 _ClearStatus(); // clear any status bar message
                 box.blur();     // prevent checkbox getting focus
-                if (box.id == 'icons') _ToggleIcons();
+                if (box.id == 'toggle_icons') _ToggleIcons();
             },
 
             selectionChanged: function(select) {

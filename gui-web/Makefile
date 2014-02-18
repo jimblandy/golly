@@ -119,6 +119,7 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
     --preload-file ../Patterns@/Patterns \
     --preload-file ../Rules@/Rules \
     --preload-file ../gui-common/Help@/Help \
+    --preload-file Help/changes.html \
     --preload-file Help/keyboard.html \
     -s TOTAL_MEMORY=300000000 \
     -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', '_ResizeCanvas', \
