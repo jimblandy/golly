@@ -82,7 +82,6 @@
          	position: absolute;
          	z-index: 1;
             visibility: hidden;
-            /*!!! background: #FEE;           light red to match paste image */
             border: 1px solid #000;
         }
         #pastemenu span {
@@ -90,7 +89,6 @@
             display: block;
             padding: 5px 10px;
             font: bold 12px Arial, Helvetica, sans-serif;
-            cursor: pointer;
         }
 	    #pastemenu span.normal {
 	    	background: #FEE;           /* light red to match paste image */
@@ -103,10 +101,12 @@
 	    #pastemenu span.normal:hover {
 	    	background: #000;
 		    color: #FFF;
+            cursor: pointer;
 		}
 	    #pastemenu span.grayed:hover {
 	    	background: #FEE;
 		    color: #AAA;
+		    cursor: default;
 		}
 		
         #selectionmenu {
@@ -140,20 +140,20 @@
             background-color: rgba(0,0,0,0.5);
         }
         #help_dialog {
-            width: 650px;
+            width: 670px;
             height: 800px;
             margin: 130px auto;
             border: 1px solid #000;
             padding: 0px;
         }
         #help_header {
-            width: 650px;
+            width: 670px;
             height: 30px;
             background-color: #DDD;
             text-align: center;
         }
         #help_text {
-            width: 630px;
+            width: 650px;
             padding: 0px 10px;
             height: 770px;      /* 800 - 30 (must be a smarter way to do this!!!) */
             background-color: #FFF9D5;
@@ -173,20 +173,20 @@
             background-color: rgba(0,0,0,0.5);
         }
         #info_dialog {
-            width: 650px;
+            width: 670px;
             height: 800px;
             margin: 130px auto;
             border: 1px solid #000;
             padding: 0px;
         }
         #info_header {
-            width: 650px;
+            width: 670px;
             height: 30px;
             background-color: #DDD;
             text-align: right;
         }
         #info_text {
-            width: 630px;
+            width: 650px;
             padding: 0px 10px;
             height: 770px;      /* 800 - 30 (must be a smarter way to do this!!!) */
             background-color: #FFF;
@@ -258,11 +258,19 @@
             background-position: 100% 50%;
             background-repeat: no-repeat;
         }
-        ul.dropdown ul *.item {
+        ul.dropdown ul *.item_normal {
             cursor: pointer;
             background-image: url(images/item_blank.png);
             background-position: 95% 50%;
             background-repeat: no-repeat;
+        }
+        ul.dropdown ul *.item_disabled {    /* item_disabled class is set in UpdateMenuItems */
+            cursor: default;
+            background-image: url(images/item_blank.png);
+            background-position: 95% 50%;
+            background-repeat: no-repeat;
+            background-color: #49A3FF;
+            color: #70D0FF;
         }
     </style>
 </head>
@@ -829,6 +837,7 @@
                     var viscount = 0;
                     
                     function itemClick(item) {
+                        if (item.className == 'item_disabled') return false;
                         if (viscount > 1) {
                             var grandparent = item.parentNode.parentNode.parentNode;
                             grandparent.parentNode.style.backgroundColor = '#49A3FF';         // need for Safari/Chrome
@@ -872,97 +881,97 @@
                 <ul class="dropdown dropright">
                     <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="File_menu">File
                         <ul>
-                            <li class="item" onclick="itemClick(this)" id="file_new">New Pattern</li>
-                            <li class="item" onclick="itemClick(this)" id="file_open">Open Pattern...</li>
-                            <li class="item" onclick="itemClick(this)" id="file_openclip">Open Clipboard</li>
-                            <li class="item" onclick="itemClick(this)" id="file_save">Save Pattern...</li>
-                            <li class="item" onclick="itemClick(this)" id="file_prefs">Preferences...</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="file_new">New Pattern</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="file_open">Open Pattern...</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="file_openclip">Open Clipboard</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="file_save">Save Pattern...</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="file_prefs">Preferences...</li>
                         </ul>
                     </li>
                     <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Edit_menu">Edit
                         <ul>
-                            <li class="item" onclick="itemClick(this)" id="edit_undo">Undo</li>
-                            <li class="item" onclick="itemClick(this)" id="edit_redo">Redo</li>
-                            <li class="item" onclick="itemClick(this)" id="edit_disable">Disable Undo/Redo</li>
-                            <li class="item" onclick="itemClick(this)" id="edit_cut">Cut</li>
-                            <li class="item" onclick="itemClick(this)" id="edit_copy">Copy</li>
-                            <li class="item" onclick="itemClick(this)" id="edit_clear">Clear</li>
-                            <li class="item" onclick="itemClick(this)" id="edit_clearo">Clear Outside</li>
-                            <li class="item" onclick="itemClick(this)" id="edit_paste">Paste</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_undo">Undo</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_redo">Redo</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_disable">Disable Undo/Redo</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_cut">Cut</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_copy">Copy</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_clear">Clear</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_clearo">Clear Outside</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_paste">Paste</li>
                             <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="PasteMode_menu">Paste Mode
                                 <ul>
-                                    <li class="item" onclick="itemClick(this)" id="paste_mode_and">AND</li>
-                                    <li class="item" onclick="itemClick(this)" id="paste_mode_copy">COPY</li>
-                                    <li class="item" onclick="itemClick(this)" id="paste_mode_or">OR</li>
-                                    <li class="item" onclick="itemClick(this)" id="paste_mode_xor">XOR</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="paste_mode_and">AND</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="paste_mode_copy">COPY</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="paste_mode_or">OR</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="paste_mode_xor">XOR</li>
                                 </ul>
                             </li>
-                            <li class="item" onclick="itemClick(this)" id="edit_all">Select All</li>
-                            <li class="item" onclick="itemClick(this)" id="edit_remove">Remove Selection</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_all">Select All</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="edit_remove">Remove Selection</li>
                         </ul>
                     </li>
                     <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Control_menu">Control
                         <ul>
-                            <li class="item" onclick="itemClick(this)" id="control_startstop">Start Generating</li>
-                            <li class="item" onclick="itemClick(this)" id="control_next">Next</li>
-                            <li class="item" onclick="itemClick(this)" id="control_step">Step</li>
-                            <li class="item" onclick="itemClick(this)" id="control_step1">Set Step = 1</li>
-                            <li class="item" onclick="itemClick(this)" id="control_slower">Slower</li>
-                            <li class="item" onclick="itemClick(this)" id="control_faster">Faster</li>
-                            <li class="item" onclick="itemClick(this)" id="control_reset">Reset</li>
-                            <li class="item" onclick="itemClick(this)" id="control_hash">Show Hash Info</li>
-                            <li class="item" onclick="itemClick(this)" id="control_timing">Show Timing</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_startstop">Start Generating</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_next">Next</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_step">Step</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_step1">Set Step = 1</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_slower">Slower</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_faster">Faster</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_reset">Reset</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_hash">Show Hash Info</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_timing">Show Timing</li>
                             <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Algo_menu">Set Algorithm
                                 <ul>
-                                    <li class="item" onclick="itemClick(this)" id="algo0">QuickLife</li>
-                                    <li class="item" onclick="itemClick(this)" id="algo1">HashLife</li>
-                                    <li class="item" onclick="itemClick(this)" id="algo2">Generations</li>
-                                    <li class="item" onclick="itemClick(this)" id="algo3">JvN</li>
-                                    <li class="item" onclick="itemClick(this)" id="algo4">RuleLoader</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="algo0">QuickLife</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="algo1">HashLife</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="algo2">Generations</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="algo3">JvN</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="algo4">RuleLoader</li>
                                 </ul>
                             </li>
-                            <li class="item" onclick="itemClick(this)" id="control_setrule">Set Rule...</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_setrule">Set Rule...</li>
                         </ul>
                     </li>
                     <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="View_menu">View
                         <ul>
-                            <li class="item" onclick="itemClick(this)" id="view_fullscreen">Full Screen</li>
-                            <li class="item" onclick="itemClick(this)" id="view_fitp">Fit Pattern</li>
-                            <li class="item" onclick="itemClick(this)" id="view_fits">Fit Selection</li>
-                            <li class="item" onclick="itemClick(this)" id="view_middle">Middle</li>
-                            <li class="item" onclick="itemClick(this)" id="view_zoomin">Zoom In</li>
-                            <li class="item" onclick="itemClick(this)" id="view_zoomout">Zoom Out</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="view_fullscreen">Full Screen</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="view_fitp">Fit Pattern</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="view_fits">Fit Selection</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="view_middle">Middle</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="view_zoomin">Zoom In</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="view_zoomout">Zoom Out</li>
                             <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Scale_menu">Set Scale
                                 <ul>
-                                    <li class="item" onclick="itemClick(this)" id="scale0">1:1</li>
-                                    <li class="item" onclick="itemClick(this)" id="scale1">1:2</li>
-                                    <li class="item" onclick="itemClick(this)" id="scale2">1:4</li>
-                                    <li class="item" onclick="itemClick(this)" id="scale3">1:8</li>
-                                    <li class="item" onclick="itemClick(this)" id="scale4">1:16</li>
-                                    <li class="item" onclick="itemClick(this)" id="scale5">1:32</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="scale0">1:1</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="scale1">1:2</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="scale2">1:4</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="scale3">1:8</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="scale4">1:16</li>
+                                    <li class="item_normal" onclick="itemClick(this)" id="scale5">1:32</li>
                                 </ul>
                             </li>
-                            <li class="item" onclick="itemClick(this)" id="view_grid">Show Grid</li>
-                            <li class="item" onclick="itemClick(this)" id="view_icons">Show Icons</li>
-                            <li class="item" onclick="itemClick(this)" id="view_info">Pattern Info</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="view_grid">Show Grid</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="view_icons">Show Icons</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="view_info">Pattern Info</li>
                         </ul>
                     </li>
                     <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Help_menu">Help
                         <ul>
-                            <li class="item" onclick="itemClick(this)" id="help_index">Contents</li>
-                            <li class="item" onclick="itemClick(this)" id="help_intro">Introduction</li>
-                            <li class="item" onclick="itemClick(this)" id="help_tips">Hints and Tips</li>
-                            <li class="item" onclick="itemClick(this)" id="help_algos">Algorithms</li>
-                            <li class="item" onclick="itemClick(this)" id="help_lexicon">Life Lexicon</li>
-                            <li class="item" onclick="itemClick(this)" id="help_archives">Online Archives</li>
-                            <li class="item" onclick="itemClick(this)" id="help_keyboard">Keyboard Commands</li>
-                            <li class="item" onclick="itemClick(this)" id="help_refs">References</li>
-                            <li class="item" onclick="itemClick(this)" id="help_formats">File Formats</li>
-                            <li class="item" onclick="itemClick(this)" id="help_bounded">Bounded Grids</li>
-                            <li class="item" onclick="itemClick(this)" id="help_problems">Known Problems</li>
-                            <li class="item" onclick="itemClick(this)" id="help_changes">Changes</li>
-                            <li class="item" onclick="itemClick(this)" id="help_credits">Credits</li>
-                            <li class="item" onclick="itemClick(this)" id="help_about">About Golly</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_index">Contents</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_intro">Introduction</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_tips">Hints and Tips</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_algos">Algorithms</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_lexicon">Life Lexicon</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_archives">Online Archives</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_keyboard">Keyboard Commands</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_refs">References</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_formats">File Formats</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_bounded">Bounded Grids</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_problems">Known Problems</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_changes">Changes</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_credits">Credits</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="help_about">About Golly</li>
                         </ul>
                     </li>
                 </ul>

@@ -1050,10 +1050,33 @@ void UpdateMenuItems(const char* id)
         // items in this menu don't change
     
     } else if (menu == "Edit_menu") {
+        if (currlayer->undoredo->CanUndo()) {
+            EM_ASM( document.getElementById('edit_undo').className = 'item_normal'; );
+        } else {
+            EM_ASM( document.getElementById('edit_undo').className = 'item_disabled'; );
+        }
+        if (currlayer->undoredo->CanRedo()) {
+            EM_ASM( document.getElementById('edit_redo').className = 'item_normal'; );
+        } else {
+            EM_ASM( document.getElementById('edit_redo').className = 'item_disabled'; );
+        }
         if (allowundo) {
             EM_ASM( document.getElementById('edit_disable').innerHTML = 'Disable Undo/Redo'; );
         } else {
             EM_ASM( document.getElementById('edit_disable').innerHTML = 'Enable Undo/Redo'; );
+        }
+        if (SelectionExists()) {
+            EM_ASM( document.getElementById('edit_cut').className = 'item_normal'; );
+            EM_ASM( document.getElementById('edit_copy').className = 'item_normal'; );
+            EM_ASM( document.getElementById('edit_clear').className = 'item_normal'; );
+            EM_ASM( document.getElementById('edit_clearo').className = 'item_normal'; );
+            EM_ASM( document.getElementById('edit_remove').className = 'item_normal'; );
+        } else {
+            EM_ASM( document.getElementById('edit_cut').className = 'item_disabled'; );
+            EM_ASM( document.getElementById('edit_copy').className = 'item_disabled'; );
+            EM_ASM( document.getElementById('edit_clear').className = 'item_disabled'; );
+            EM_ASM( document.getElementById('edit_clearo').className = 'item_disabled'; );
+            EM_ASM( document.getElementById('edit_remove').className = 'item_disabled'; );
         }
     
     } else if (menu == "PasteMode_menu") {
@@ -1063,13 +1086,18 @@ void UpdateMenuItems(const char* id)
         jsTickMenuItem("paste_mode_xor", pmode == Xor);
     
     } else if (menu == "Control_menu") {
-        jsTickMenuItem("control_hash", currlayer->showhashinfo);
-        jsTickMenuItem("control_timing", showtiming);
         if (generating) {
             EM_ASM( document.getElementById('control_startstop').innerHTML = 'Stop Generating'; );
         } else {
             EM_ASM( document.getElementById('control_startstop').innerHTML = 'Start Generating'; );
         }
+        if (currlayer->algo->getGeneration() > currlayer->startgen) {
+            EM_ASM( document.getElementById('control_reset').className = 'item_normal'; );
+        } else {
+            EM_ASM( document.getElementById('control_reset').className = 'item_disabled'; );
+        }
+        jsTickMenuItem("control_hash", currlayer->showhashinfo);
+        jsTickMenuItem("control_timing", showtiming);
     
     } else if (menu == "Algo_menu") {
         jsTickMenuItem("algo0", currlayer->algtype == 0);
@@ -1079,8 +1107,18 @@ void UpdateMenuItems(const char* id)
         jsTickMenuItem("algo4", currlayer->algtype == 4);
     
     } else if (menu == "View_menu") {
+        if (SelectionExists()) {
+            EM_ASM( document.getElementById('view_fits').className = 'item_normal'; );
+        } else {
+            EM_ASM( document.getElementById('view_fits').className = 'item_disabled'; );
+        }
         jsTickMenuItem("view_grid", showgridlines);
         jsTickMenuItem("view_icons", showicons);
+        if (currlayer->currname != "untitled") {
+            EM_ASM( document.getElementById('view_info').className = 'item_normal'; );
+        } else {
+            EM_ASM( document.getElementById('view_info').className = 'item_disabled'; );
+        }
     
     } else if (menu == "Scale_menu") {
         jsTickMenuItem("scale0", currlayer->view->getmag() == 0);
