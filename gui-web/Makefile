@@ -118,9 +118,17 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
 	$(CXX) $(CXXFLAGS) --js-library jslib.js --shell-file shell.html \
     --preload-file ../Patterns@/Patterns \
     --preload-file ../Rules@/Rules \
-    --preload-file ../gui-common/Help@/Help \
-    --preload-file Help/changes.html \
-    --preload-file Help/keyboard.html \
+    --preload-file Help \
+    --preload-file ../gui-common/Help/intro.html@/Help/intro.html \
+    --preload-file ../gui-common/Help/tips.html@/Help/tips.html \
+    --preload-file ../gui-common/Help/archives.html@/Help/archives.html \
+    --preload-file ../gui-common/Help/refs.html@/Help/refs.html \
+    --preload-file ../gui-common/Help/formats.html@/Help/formats.html \
+    --preload-file ../gui-common/Help/bounded.html@/Help/bounded.html \
+    --preload-file ../gui-common/Help/credits.html@/Help/credits.html \
+    --preload-file ../gui-common/Help/algos.html@/Help/algos.html \
+    --preload-file ../gui-common/Help/Algorithms@/Help/Algorithms \
+    --preload-file ../gui-common/Help/Lexicon@/Help/Lexicon \
     -s TOTAL_MEMORY=300000000 \
     -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', '_ResizeCanvas', \
     '_SetViewport', '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', \
