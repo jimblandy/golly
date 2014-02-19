@@ -141,7 +141,6 @@
         }
         #help_dialog {
             width: 670px;
-            height: 800px;
             margin: 130px auto;
             border: 1px solid #000;
             padding: 0px;
@@ -155,7 +154,7 @@
         #help_text {
             width: 650px;
             padding: 0px 10px;
-            height: 770px;      /* 800 - 30 (must be a smarter way to do this!!!) */
+            height: 770px;
             background-color: #FFF9D5;
             text-align: left;
             overflow: auto;
@@ -174,7 +173,6 @@
         }
         #info_dialog {
             width: 670px;
-            height: 800px;
             margin: 130px auto;
             border: 1px solid #000;
             padding: 0px;
@@ -188,7 +186,7 @@
         #info_text {
             width: 650px;
             padding: 0px 10px;
-            height: 770px;      /* 800 - 30 (must be a smarter way to do this!!!) */
+            height: 770px;
             background-color: #FFF;
             text-align: left;
             font-family: monospace;
@@ -313,10 +311,19 @@
             patterndir.style.height = ht + 'px';
         };
         
+        function resize_dialog(id) {
+            var textdiv = document.getElementById(id);
+            var ht = window.innerHeight - 30 - 2*130 - 2; // allow for header height and top/bottom margins and border
+            if (ht < 20) ht = 20;
+            textdiv.style.height = ht + 'px';
+        };
+        
         window.addEventListener('resize', function resize_canvas() {
             _ResizeCanvas();
             resize_statusbar();
             resize_patterndir();
+            resize_dialog('help_text');
+            resize_dialog('info_text');
         });
         
         // this click event handler is active only while the help dialog is visible
@@ -1104,6 +1111,9 @@
         
         resize_statusbar();
         resize_patterndir();
+        resize_dialog('help_text');
+        resize_dialog('info_text');
+        
         Module.print('Loading Golly...');
         
     </script>
