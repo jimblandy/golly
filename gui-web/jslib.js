@@ -17,8 +17,8 @@ jsConfirm: function(query) {
 
 // -----------------------------------------------------------------------------
 
-jsSetStatusBarColor: function(color) {
-    document.getElementById('statusbar').style.backgroundColor = Pointer_stringify(color);
+jsSetBackgroundColor: function(id, color) {
+    document.getElementById(Pointer_stringify(id)).style.backgroundColor = Pointer_stringify(color);
 },
 
 // -----------------------------------------------------------------------------
@@ -63,7 +63,7 @@ jsShowMenu: function(id, x, y) {
     var mrect = menu.getBoundingClientRect();
     // x,y coords are relative to canvas, so convert to window coords
     var crect = Module['canvas'].getBoundingClientRect();
-    // note that scriolling is disabled so window.scrollX and window.scrollY are 0
+    // note that scrolling is disabled so window.scrollX and window.scrollY are 0
     x += crect.left + 1;
     y += crect.top + 1;
     // if menu would be outside right/bottom window edge then move it
@@ -175,6 +175,44 @@ jsSetScrollTop: function(id, pos) {
 
 jsGetScrollTop: function(id) {
     return document.getElementById(Pointer_stringify(id)).scrollTop;
+},
+
+// -----------------------------------------------------------------------------
+
+jsDownloadFile: function(urlptr, filepathptr) {
+    // download file from specified url and store its contents in filepath
+    var url = Pointer_stringify(urlptr);
+    var filepath = Pointer_stringify(filepathptr);
+    // DEBUG: Module.printErr('URL: '+url+' FILE: '+filepath);
+
+    var xhr = new XMLHttpRequest();
+    if (xhr) {
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    // success, so save binary data to filepath
+                    var uInt8Array = new Uint8Array(xhr.response);
+                    FS.writeFile(filepath, uInt8Array, { encoding: 'binary' });
+                    _FileDownloaded();
+                } else {
+                    // some sort of error occurred
+                    alert('XMLHttpRequest error: ' + xhr.status);
+                }
+            }
+        }
+        
+        // we need to show progress dlg (with Cancel button) for lengthy downloads!!!
+        
+        // prefix url with http://www.corsproxy.com/ so we can get file from another domain
+        xhr.open('GET', 'http://www.corsproxy.com/' + url.substring(7), true);
+        
+        // setting the following responseType will treat all files as binary
+        // (note that this is only allowed for async requests)
+        xhr.responseType = 'arraybuffer';
+        xhr.send(null);
+    } else {
+        alert('XMLHttpRequest failed!');
+    }
 },
 
 // -----------------------------------------------------------------------------

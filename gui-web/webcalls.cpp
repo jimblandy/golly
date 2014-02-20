@@ -34,8 +34,8 @@
 #include "algos.h"      // for InitAlgorithms
 #include "prefs.h"      // for GetPrefs, SavePrefs, userdir, etc
 #include "layer.h"      // for AddLayer, ResizeLayers, currlayer
-#include "control.h"    // for SetMinimumStepExponent
-#include "file.h"       // for NewPattern
+#include "control.h"    // for SetMinimumStepExponent, etc
+#include "file.h"       // for NewPattern, OpenFile, LoadRule, etc
 #include "view.h"       // for widescreen, fullscreen, TouchBegan, etc
 #include "status.h"     // for UpdateStatusLines, ClearMessage, etc
 #include "undo.h"       // for ClearUndoRedo
@@ -50,7 +50,7 @@
 extern "C" {
     extern void jsAlert(const char* msg);
     extern bool jsConfirm(const char* query);
-    extern void jsSetStatusBarColor(const char* color);
+    extern void jsSetBackgroundColor(const char* id, const char* color);
     extern void jsSetMode(int index);
     extern void jsSetState(int state, int numstates);
     extern void jsSetClipboard(const char* text);
@@ -62,6 +62,7 @@ extern "C" {
     extern void jsSetScrollTop(const char* id, int pos);
     extern int jsGetScrollTop(const char* id);
     extern int jsElementIsVisible(const char* id);
+    extern void jsDownloadFile(const char* url, const char* filepath);
 }
 
 // -----------------------------------------------------------------------------
@@ -95,7 +96,7 @@ void UpdateStatus()
         int b = algoinfo[curralgo]->statusrgb.b;
         char rgb[32];
         sprintf(rgb, "rgb(%d,%d,%d)", r, g, b);
-        jsSetStatusBarColor(rgb);
+        jsSetBackgroundColor("statusbar", rgb);
     }
     
     printf("%s\n", status1.c_str());
@@ -226,7 +227,7 @@ void ShowTextFile(const char* filepath)
     // update the contents of the info dialog
     contents += "</pre>";
     jsSetInnerHTML("info_text", contents.c_str());
-    
+
     // display the info dialog
     EM_ASM( document.getElementById('info_overlay').style.visibility = 'visible'; );
 }
@@ -247,7 +248,6 @@ void CloseInfo()
 
 static const char* contents_page = "/Help/index.html";
 static std::string currpage = contents_page;
-static int currscroll = 0;
 static std::vector<std::string> page_history;
 static std::vector<int> page_scroll;
 static unsigned int page_index = 0;
@@ -278,10 +278,31 @@ static void UpdateHelpButtons()
 
 // -----------------------------------------------------------------------------
 
+static void DisplayHelpDialog()
+{
+    // display the help dialog and start listening for clicks on links
+    EM_ASM(
+        var helpdlg = document.getElementById('help_overlay');
+        if (helpdlg.style.visibility != 'visible') {
+            helpdlg.style.visibility = 'visible';
+            // note that on_help_click is implemented in shell.html so CloseHelp can remove it
+            window.addEventListener('click', on_help_click, false);
+        }
+    );
+}
+
+// -----------------------------------------------------------------------------
+
 void ShowHelp(const char* filepath)
 {
     if (filepath[0] == 0) {
-        // use currpage and currscroll
+        // this only happens if user hits 'h' key or clicks '?' button
+        if (page_history.size() > 0) {
+            // just need to show the help dialog
+            DisplayHelpDialog();
+            return;
+        }
+        // else this is very 1st call and currpage = contents_page
     } else {
         currpage = filepath;
     }
@@ -295,12 +316,14 @@ void ShowHelp(const char* filepath)
     }
     
     if (!shifting_history) {
-        if (!jsElementIsVisible("help_overlay")) {
-            // help dialog is about to be opened so clear history
-            page_history.clear();
-            page_scroll.clear();
-            page_index = 0;
-        } else {
+        // user didn't hit back/next button
+        bool help_visible = jsElementIsVisible("help_overlay");
+        if (!help_visible && page_history.size() > 0 && currpage == page_history[page_index]) {
+            // same page requested so just need to show the help dialog
+            DisplayHelpDialog();
+            return;
+        }
+        if (help_visible) {
             // remember scroll position of current page
             page_scroll[page_index] = jsGetScrollTop("help_text");
             // remove any following pages
@@ -336,26 +359,26 @@ void ShowHelp(const char* filepath)
     
     // update the contents of the help dialog
     jsSetInnerHTML("help_text", contents.c_str());
-    
-    // display the help dialog and start listening for clicks on links
-    EM_ASM(
-        var helpdlg = document.getElementById('help_overlay');
-        if (helpdlg.style.visibility != 'visible') {
-            helpdlg.style.visibility = 'visible';
-            // note that on_help_click is implemented in shell.html so CloseHelp can remove it
-            window.addEventListener('click', on_help_click, false);
-        }
-    );
-    
-    if (filepath[0] == 0) {
-        jsSetScrollTop("help_text", currscroll);
-    } else if (anchor.length() > 0) {
+
+    // if contents has 'body bgcolor="..."' then use that color, otherwise use white
+    std::string bgcolor = "#FFF";
+    size_t startpos = contents.find("body bgcolor=\"");
+    if (startpos != std::string::npos) {
+        startpos += 14;
+        size_t len = 0;
+        while (contents[startpos+len] != '"' && len < 16) len++;  // allow for "rgb(255,255,255)"
+        bgcolor = contents.substr(startpos, len);
+    }
+    jsSetBackgroundColor("help_text", bgcolor.c_str());
+
+    UpdateHelpButtons();
+    DisplayHelpDialog();
+        
+    if (anchor.length() > 0) {
         jsMoveToAnchor(anchor.c_str());
     } else {
         jsSetScrollTop("help_text", page_scroll[page_index]);
     }
-    
-    UpdateHelpButtons();
 }
 
 // -----------------------------------------------------------------------------
@@ -400,6 +423,11 @@ extern "C" {
 
 void HelpContents()
 {
+    // probably best to clear history
+    page_history.clear();
+    page_scroll.clear();
+    page_index = 0;
+
     ShowHelp(contents_page);
 }
 
@@ -413,7 +441,7 @@ void CloseHelp()
 {
     if (jsElementIsVisible("help_overlay")) {
         // remember scroll position of current page for later use
-        currscroll = jsGetScrollTop("help_text");
+        page_scroll[page_index] = jsGetScrollTop("help_text");
         
         // close the help dialog and remove the click event handler
         EM_ASM(
@@ -474,7 +502,7 @@ int DoHelpClick(const char* href)
     if (link.find("get:") == 0) {
         std::string geturl = link.substr(4);
         // download file specifed in link (possibly relative to a previous full url)
-        GetURL(geturl, currpage);  // or use window.location.href???!!!
+        GetURL(geturl, currpage);
         return 1;
     }
     
@@ -484,26 +512,6 @@ int DoHelpClick(const char* href)
         std::string entry = zippath.substr(zippath.rfind(':') + 1);
         zippath = zippath.substr(0, zippath.rfind(':'));
         UnzipFile(zippath, entry);
-        return 1;
-    }
-        
-    // no special prefix, so look for file with .zip/rle/lif/mc extension
-    std::string path = link;
-    path = path.substr(path.rfind('/')+1);
-    size_t dotpos = path.rfind('.');
-    std::string ext = "";
-    if (dotpos != std::string::npos) ext = path.substr(dotpos+1);
-    if ( (IsZipFile(path) ||
-            strcasecmp(ext.c_str(),"rle") == 0 ||
-            strcasecmp(ext.c_str(),"life") == 0 ||
-            strcasecmp(ext.c_str(),"mc") == 0)
-            // also check for '?' to avoid opening links like ".../detail?name=foo.zip"
-            && path.find('?') == std::string::npos) {
-        // download file to downloaddir and open it
-        path = downloaddir + path;
-        if (DownloadFile(link, path)) {
-            OpenFile(path.c_str());
-        }
         return 1;
     }
     
@@ -611,6 +619,54 @@ bool WebGetTextFromClipboard(std::string& text)
 
 // -----------------------------------------------------------------------------
 
+static std::string global_file;
+
+bool WebDownloadFile(const std::string& url, const std::string& filepath)
+{
+    // jsDownloadFile does an asynchronous file transfer and will call FileDownloaded()
+    // only if filepath is successfully written
+    global_file = filepath;
+    jsDownloadFile(url.c_str(), filepath.c_str());
+    
+    // we must return false so GetURL won't proceed beyond the DownloadFile call
+    return false;
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void FileDownloaded()
+{
+    // following code matches that in gui-common/file.cpp after DownloadFile
+    // returns false in GetURL
+    
+    std::string filename = GetBaseName(global_file.c_str());
+    
+    if (IsHTMLFile(filename)) {
+        ShowHelp(global_file.c_str());
+
+    } else if (IsRuleFile(filename)) {
+        // load corresponding rule
+        SwitchToPatternTab();
+        LoadRule(filename.substr(0, filename.rfind('.')));
+
+    } else if (IsTextFile(filename)) {
+        ShowTextFile(global_file.c_str());
+
+    } else if (IsScriptFile(filename)) {
+        Warning("This version of Golly cannot run scripts.");
+
+    } else {
+        // assume it's a pattern/zip file, so open it
+        OpenFile(global_file.c_str());
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
 void WebCheckEvents()
 {
     // event_checker is > 0 in here (see gui-common/utils.cpp)
@@ -618,12 +674,4 @@ void WebCheckEvents()
     // can't do anything here???!!! will need to use a Web Worker???!!!
     // note that glfwPollEvents() does nothing (see emscripten/src/library_glfw.js)
     // glfwPollEvents();
-}
-
-// -----------------------------------------------------------------------------
-
-bool WebDownloadFile(const std::string& url, const std::string& filepath)
-{
-    //!!!???
-    return false;
 }
