@@ -206,6 +206,8 @@ jsMoveFile: function(inpath, outpath) {
 jsCancelProgress: function() {
     // user hit Cancel button in progress dialog
     GOLLY.cancel_progress = true;
+    // best to hide the progress dialog immediately
+    document.getElementById('progress_overlay').style.visibility = 'hidden';
 },
 
 // -----------------------------------------------------------------------------
