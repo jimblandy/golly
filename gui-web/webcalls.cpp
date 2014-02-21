@@ -61,8 +61,15 @@ extern "C" {
     extern void jsMoveToAnchor(const char* anchor);
     extern void jsSetScrollTop(const char* id, int pos);
     extern int jsGetScrollTop(const char* id);
-    extern int jsElementIsVisible(const char* id);
+    extern bool jsElementIsVisible(const char* id);
     extern void jsDownloadFile(const char* url, const char* filepath);
+    extern void jsBeep();
+    extern void jsDeleteFile(const char* filepath);
+    extern bool jsMoveFile(const char* inpath, const char* outpath);
+    extern void jsBeginProgress(const char* title);
+    extern bool jsAbortProgress(int percentage);
+    extern void jsEndProgress();
+    extern void jsCancelProgress();
 }
 
 // -----------------------------------------------------------------------------
@@ -134,7 +141,8 @@ std::string GetRuleName(const std::string& rule)
 {
     std::string result = "";
     // not yet implemented!!!
-    // maybe we should create rule.h and rule.cpp in gui-common???
+    // (Set Rule dialog would need to let users create/delete named rules
+    // and save them in GollyPrefs)
     return result;
 }
 
@@ -171,28 +179,47 @@ void UpdateEditBar()
 
 // -----------------------------------------------------------------------------
 
+static int progresscount = 0;   // if > 0 then BeginProgress has been called
+
 void BeginProgress(const char* title)
 {
-    //!!!???
+    if (progresscount == 0) {
+        jsBeginProgress(title);
+    }
+    progresscount++;    // handles nested calls
 }
 
 // -----------------------------------------------------------------------------
 
 bool AbortProgress(double fraction_done, const char* message)
 {
-    bool result = false;
-
-    //!!!???
-
-    return result;
+    if (progresscount <= 0) Fatal("Bug detected in AbortProgress!");
+    // don't use message (empty string)
+    return jsAbortProgress(int(fraction_done*100));
 }
 
 // -----------------------------------------------------------------------------
 
 void EndProgress()
 {
-    //!!!???
+    if (progresscount <= 0) Fatal("Bug detected in EndProgress!");
+    progresscount--;
+    if (progresscount == 0) {
+        jsEndProgress();
+    }
 }
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void CancelProgress()
+{
+    // called if user hits Cancel button in progress dialog
+    jsCancelProgress();
+}
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -569,22 +596,21 @@ bool WebYesNo(const char* query)
 
 void WebBeep()
 {
-    //!!!???
+    jsBeep();
 }
 
 // -----------------------------------------------------------------------------
 
 void WebRemoveFile(const std::string& filepath)
 {
-    //!!!???
+    jsDeleteFile(filepath.c_str());
 }
 
 // -----------------------------------------------------------------------------
 
 bool WebMoveFile(const std::string& inpath, const std::string& outpath)
 {
-    //!!!???
-    return false;
+    return jsMoveFile(inpath.c_str(), outpath.c_str());
 }
 
 // -----------------------------------------------------------------------------

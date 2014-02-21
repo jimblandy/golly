@@ -135,8 +135,9 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
     '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Reset', \
     '_ToggleIcons', '_ModeChanged', '_StateChanged', '_DoMenuItem', '_UpdateMenuItems', \
     '_Paste', '_PasteAction', '_SelectionAction', '_OpenClickedFile', '_OpenClipboard', \
-    '_FileDownloaded', '_OverCanvas', '_OnKeyChanged', '_OnMouseWheel', '_Info', '_CloseInfo', \
-    '_Help', '_DoHelpClick', '_HelpBack', '_HelpNext', '_HelpContents', '_CloseHelp' ]" \
+    '_OverCanvas', '_OnKeyChanged', '_OnMouseWheel', '_Info', '_CloseInfo', \
+    '_Help', '_DoHelpClick', '_HelpBack', '_HelpNext', '_HelpContents', '_CloseHelp', \
+    '_FileDownloaded', '_CancelProgress' ]" \
     -o $@ $(LDFLAGS) $(OBJECTS)
 
 # better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???

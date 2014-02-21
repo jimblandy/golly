@@ -1,7 +1,12 @@
 // The following JavaScript routines can be called from C++ code (eg. webcalls.cpp).
 // Makefile merges these routines into golly.js via the --js-library option.
 
-mergeInto(LibraryManager.library, {
+var LibraryGOLLY = {
+
+$GOLLY: {
+    cancel_progress: false,    // cancel progress dialog?
+    progstart: 0.0,            // time when jsBeginProgress is called
+},
 
 // -----------------------------------------------------------------------------
 
@@ -105,9 +110,9 @@ jsTextAreaIsActive: function() {
 
 jsElementIsVisible: function(id) {
     if (document.getElementById(Pointer_stringify(id)).style.visibility == 'visible') {
-        return 1;
+        return true;
     } else {
-        return 0;
+        return false;
     }
 },
 
@@ -179,36 +184,150 @@ jsGetScrollTop: function(id) {
 
 // -----------------------------------------------------------------------------
 
+jsBeep: function() {
+    //!!!
+},
+
+// -----------------------------------------------------------------------------
+
+jsDeleteFile: function(filepath) {
+    //!!!
+},
+
+// -----------------------------------------------------------------------------
+
+jsMoveFile: function(inpath, outpath) {
+    //!!!
+    return false;
+},
+
+// -----------------------------------------------------------------------------
+
+jsCancelProgress: function() {
+    // user hit Cancel button in progress dialog
+    GOLLY.cancel_progress = true;
+},
+
+// -----------------------------------------------------------------------------
+
+jsBeginProgress: function(title) {
+    // DEBUG: Module.printErr('jsBeginProgress');
+    document.getElementById('progress_title').innerHTML = Pointer_stringify(title);
+    document.getElementById('progress_percent').innerHTML = ' ';
+    // don't show the progress dialog immediately
+    // document.getElementById('progress_overlay').style.visibility = 'visible';
+    GOLLY.cancel_progress = false;
+    GOLLY.progstart = Date.now()/1000;
+},
+
+// -----------------------------------------------------------------------------
+
+jsAbortProgress: function(percentage) {
+    // DEBUG: Module.printErr('jsAbortProgress: ' + percentage);
+    var secs = Date.now()/1000 - GOLLY.progstart;
+    if (document.getElementById('progress_overlay').style.visibility == 'visible') {
+        if (percentage < 0) {
+            // -ve percentage is # of bytes downloaded so far (file size is unknown)
+            percentage *= -1;
+            document.getElementById('progress_percent').innerHTML = 'Bytes downloaded: '+percentage;
+        } else {
+            document.getElementById('progress_percent').innerHTML = 'Completed: '+percentage+'%';
+        }
+        return GOLLY.cancel_progress;
+    } else {
+        // note that percentage is not always an accurate estimator for how long
+        // the task will take, especially when we use nextcell for cut/copy
+        if ( (secs > 1.0 && percentage < 30) || secs > 2.0 ) {
+            // task is probably going to take a while so show progress dialog
+            document.getElementById('progress_overlay').style.visibility = 'visible';
+        }
+        return false;
+    }
+},
+
+// -----------------------------------------------------------------------------
+
+jsEndProgress: function() {
+    // DEBUG: Module.printErr('jsEndProgress');
+    // hide the progress dialog
+    document.getElementById('progress_overlay').style.visibility = 'hidden';
+},
+
+// -----------------------------------------------------------------------------
+
 jsDownloadFile: function(urlptr, filepathptr) {
-    // download file from specified url and store its contents in filepath
+    // download file from given url and store its contents in filepath
     var url = Pointer_stringify(urlptr);
     var filepath = Pointer_stringify(filepathptr);
     // DEBUG: Module.printErr('URL: '+url+' FILE: '+filepath);
 
+    // prefix url with http://www.corsproxy.com/ so we can get file from another domain
+    url = 'http://www.corsproxy.com/' + url.substring(7);
+
     var xhr = new XMLHttpRequest();
     if (xhr) {
+        // first send a request to get the file's size
+        /* doesn't work!!! -- get error 400 (bad request) probably because corsproxy.com
+           only supports GET requests
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    Module.printErr('response: '+xhr.getResponseHeader('Content-Length'));
+                } else {
+                    // some sort of error occurred
+                    Module.printErr('status error: ' + xhr.status + ' ' + xhr.statusText);
+                }
+            }
+        }
+        xhr.open('HEAD', url, true);    // get only the header info
+        xhr.send();
+        */
+        
+        // note that we need to prefix jsBeginProgress/jsAbortProgress/jsEndProgress calls
+        // with an underscore because webcalls.cpp declares them as extern C routines
+        _jsBeginProgress(allocate(intArrayFromString('Downloading file...'), 'i8', ALLOC_STACK));
+
+        xhr.onprogress = function updateProgress(evt) {
+            var percent_complete = 0;
+            if (evt.lengthComputable) {
+                percent_complete = Math.floor((evt.loaded / evt.total) * 100);
+                // DEBUG: Module.printErr('Percentage downloaded: ' + percent_complete);
+            } else {
+                // file size is unknown (this seems to happen for .mc/rle files)
+                // so we pass -ve bytes loaded to indicate it's not a percentage
+                percent_complete = -evt.loaded;
+                // DEBUG: Module.printErr('Bytes downloaded: ' + evt.loaded);
+            }
+            if (_jsAbortProgress(percent_complete)) {
+                // GOLLY.cancel_progress is true
+                _jsEndProgress();
+                xhr.abort();
+            }
+        }
+        
+        xhr.onreadystatechange = function() {
+            // DEBUG: Module.printErr('readyState=' + xhr.readyState);
+            if (xhr.readyState == 4) {
+                _jsEndProgress();
+                // DEBUG: Module.printErr('status=' + xhr.status);
                 if (xhr.status == 200) {
                     // success, so save binary data to filepath
                     var uInt8Array = new Uint8Array(xhr.response);
                     FS.writeFile(filepath, uInt8Array, { encoding: 'binary' });
                     _FileDownloaded();
-                } else {
+                } else if (!GOLLY.cancel_progress) {
                     // some sort of error occurred
                     alert('XMLHttpRequest error: ' + xhr.status);
                 }
             }
         }
         
-        // we need to show progress dlg (with Cancel button) for lengthy downloads!!!
-        
-        // prefix url with http://www.corsproxy.com/ so we can get file from another domain
-        xhr.open('GET', 'http://www.corsproxy.com/' + url.substring(7), true);
+        xhr.open('GET', url, true);
         
         // setting the following responseType will treat all files as binary
         // (note that this is only allowed for async requests)
         xhr.responseType = 'arraybuffer';
+        
         xhr.send(null);
     } else {
         alert('XMLHttpRequest failed!');
@@ -217,4 +336,7 @@ jsDownloadFile: function(urlptr, filepathptr) {
 
 // -----------------------------------------------------------------------------
 
-});
+}; // LibraryGOLLY
+
+autoAddDeps(LibraryGOLLY, '$GOLLY');
+mergeInto(LibraryManager.library, LibraryGOLLY);
