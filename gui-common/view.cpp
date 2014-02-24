@@ -1464,10 +1464,10 @@ bool RotatePastePattern(bool clockwise)
 void ZoomInPos(int x, int y)
 {
     // zoom in to given point
-    TestAutoFit();
     if (currlayer->view->getmag() < MAX_MAG) {
+        TestAutoFit();
         currlayer->view->zoom(x, y);
-        UpdatePatternAndStatus();
+        UpdateEverything();
     } else {
         Beep();   // can't zoom in any further
     }
@@ -1480,7 +1480,7 @@ void ZoomOutPos(int x, int y)
     // zoom out from given point
     TestAutoFit();
     currlayer->view->unzoom(x, y);
-    UpdatePatternAndStatus();
+    UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------

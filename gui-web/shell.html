@@ -954,6 +954,7 @@
                             <li class="item_normal" onclick="itemClick(this)" id="control_slower">Slower</li>
                             <li class="item_normal" onclick="itemClick(this)" id="control_faster">Faster</li>
                             <li class="item_normal" onclick="itemClick(this)" id="control_reset">Reset</li>
+                            <li class="item_normal" onclick="itemClick(this)" id="control_autofit">Auto Fit</li>
                             <li class="item_normal" onclick="itemClick(this)" id="control_hash">Show Hash Info</li>
                             <li class="item_normal" onclick="itemClick(this)" id="control_timing">Show Timing</li>
                             <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="Algo_menu">Set Algorithm
@@ -1070,6 +1071,8 @@
                     </select>
                     &nbsp;&nbsp;
                     <label for="toggle_icons">Icons:</label><input type="checkbox" id="toggle_icons" onclick="Module.checkboxPress(this)">
+                    &nbsp;&nbsp;
+                    <label for="toggle_autofit">Auto Fit:</label><input type="checkbox" id="toggle_autofit" onclick="Module.checkboxPress(this)">
                 </div>
                 <div class="vspace"></div>
             </div>
@@ -1111,6 +1114,7 @@
                 _ClearStatus(); // clear any status bar message
                 box.blur();     // prevent checkbox getting focus
                 if (box.id == 'toggle_icons') _ToggleIcons();
+                if (box.id == 'toggle_autofit') _ToggleAutoFit();
             },
 
             selectionChanged: function(select) {

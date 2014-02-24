@@ -135,7 +135,7 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
     '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Reset', \
     '_ToggleIcons', '_ModeChanged', '_StateChanged', '_DoMenuItem', '_UpdateMenuItems', \
     '_Paste', '_PasteAction', '_SelectionAction', '_OpenClickedFile', '_OpenClipboard', \
-    '_OverCanvas', '_OnKeyChanged', '_OnMouseWheel', '_Info', '_CloseInfo', \
+    '_ToggleAutoFit', '_OverCanvas', '_OnKeyChanged', '_OnMouseWheel', '_Info', '_CloseInfo', \
     '_Help', '_DoHelpClick', '_HelpBack', '_HelpNext', '_HelpContents', '_CloseHelp', \
     '_FileDownloaded', '_CancelProgress' ]" \
     -o $@ $(LDFLAGS) $(OBJECTS)

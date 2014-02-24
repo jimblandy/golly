@@ -159,6 +159,23 @@ void UpdateButtons()
 
 // -----------------------------------------------------------------------------
 
+static void UpdateCheckBoxes()
+{
+    if (showicons) {
+        EM_ASM( document.getElementById('toggle_icons').checked = true; );
+    } else {
+        EM_ASM( document.getElementById('toggle_icons').checked = false; );
+    }
+
+    if (currlayer->autofit) {
+        EM_ASM( document.getElementById('toggle_autofit').checked = true; );
+    } else {
+        EM_ASM( document.getElementById('toggle_autofit').checked = false; );
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void UpdateEditBar()
 {
     if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
@@ -175,6 +192,8 @@ void UpdateEditBar()
 
     // show current drawing state and update number of options if necessary
     jsSetState(currlayer->drawingstate, currlayer->algo->NumCellStates());
+
+    UpdateCheckBoxes();
 }
 
 // -----------------------------------------------------------------------------

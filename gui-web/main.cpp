@@ -278,6 +278,11 @@ static void InitElements()
     } else {
         EM_ASM( document.getElementById('toggle_icons').checked = false; );
     }
+    if (currlayer->autofit) {
+        EM_ASM( document.getElementById('toggle_autofit').checked = true; );
+    } else {
+        EM_ASM( document.getElementById('toggle_autofit').checked = false; );
+    }
 
     // initialize clipboard data to a simple RLE pattern
     EM_ASM(
@@ -560,6 +565,7 @@ extern "C" {
 
 void Fit()
 {
+    // no need to call TestAutoFit()
     FitInView(1);
     UpdatePatternAndStatus();
 }
@@ -570,13 +576,14 @@ void Fit()
 
 void Middle()
 {
+    TestAutoFit();
     if (currlayer->originx == bigint::zero && currlayer->originy == bigint::zero) {
         currlayer->view->center();
     } else {
         // put cell saved by ChangeOrigin (not yet implemented!!!) in middle
         currlayer->view->setpositionmag(currlayer->originx, currlayer->originy, currlayer->view->getmag());
     }
-    UpdatePatternAndStatus();
+    UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------
@@ -585,8 +592,9 @@ extern "C" {
 
 void ZoomOut()
 {
+    TestAutoFit();
     currlayer->view->unzoom();
-    UpdatePatternAndStatus();
+    UpdateEverything();
 }
 
 } // extern "C"
@@ -598,8 +606,9 @@ extern "C" {
 void ZoomIn()
 {
     if (currlayer->view->getmag() < MAX_MAG) {
+        TestAutoFit();
         currlayer->view->zoom();
-        UpdatePatternAndStatus();
+        UpdateEverything();
     } else {
         Beep();
     }
@@ -614,8 +623,9 @@ extern "C" {
 void Scale1to1()
 {
     if (currlayer->view->getmag() != 0) {
+        TestAutoFit();
         currlayer->view->setmag(0);
-        UpdatePatternAndStatus();
+        UpdateEverything();
     }
 }
 
@@ -626,8 +636,9 @@ void Scale1to1()
 static void SetScale(int mag)
 {
     if (currlayer->view->getmag() != mag) {
+        TestAutoFit();
         currlayer->view->setmag(mag);
-        UpdatePatternAndStatus();
+        UpdateEverything();
     }
 }
 
@@ -783,12 +794,26 @@ extern "C" {
 void ToggleIcons()
 {
     showicons = !showicons;
-    if (showicons) {
-        EM_ASM( document.getElementById('toggle_icons').checked = true; );
-    } else {
-        EM_ASM( document.getElementById('toggle_icons').checked = false; );
-    }
+    UpdateEditBar();    // updates check box
     UpdatePattern();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void ToggleAutoFit()
+{
+    currlayer->autofit = !currlayer->autofit;
+    UpdateEditBar();    // updates check box
+
+    // we only use autofit when generating
+    if (generating && currlayer->autofit) {
+        FitInView(0);
+        UpdateEverything();
+    }
 }
 
 } // extern "C"
@@ -1096,6 +1121,7 @@ void UpdateMenuItems(const char* id)
         } else {
             EM_ASM( document.getElementById('control_reset').className = 'item_disabled'; );
         }
+        jsTickMenuItem("control_autofit", currlayer->autofit);
         jsTickMenuItem("control_hash", currlayer->showhashinfo);
         jsTickMenuItem("control_timing", showtiming);
     
@@ -1187,6 +1213,7 @@ void DoMenuItem(const char* id)
     if (item == "control_slower") GoSlower(); else
     if (item == "control_faster") GoFaster(); else
     if (item == "control_reset") Reset(); else
+    if (item == "control_autofit") ToggleAutoFit(); else
     if (item == "control_hash") ToggleHashInfo(); else
     if (item == "control_timing") ToggleTiming(); else
     if (item == "algo0") SetAlgo(0); else
@@ -1421,6 +1448,7 @@ int OnKeyChanged(int keycode, int action)
         case 'm' : Middle(); break;
         case 'p' : ChangePrefs(); break;
         case 'r' : SetRule(); break;
+        case 't' : ToggleAutoFit(); break;
         case 'v' : Paste(); break;
         case 'V' : CancelPaste(); break;
         case 'z' : Undo(); break;

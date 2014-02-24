@@ -1154,7 +1154,7 @@ void NextGeneration(bool useinc)
 
     // autofit is only used when doing many gens
     if (currlayer->autofit && (generating || useinc)) {
-        //!!! FitInView(0);
+        FitInView(0);
     }
 
     if (draw_pending) {
