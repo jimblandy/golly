@@ -316,7 +316,8 @@ jsDownloadFile: function(urlptr, filepathptr) {
                     // success, so save binary data to filepath
                     var uInt8Array = new Uint8Array(xhr.response);
                     FS.writeFile(filepath, uInt8Array, { encoding: 'binary' });
-                    _FileDownloaded();
+                    filecreated = Module.cwrap('FileCreated', 'void', ['string']);
+                    filecreated(filepath);
                 } else if (!GOLLY.cancel_progress) {
                     // some sort of error occurred
                     alert('XMLHttpRequest error: ' + xhr.status);

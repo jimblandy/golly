@@ -636,9 +636,7 @@ bool WebMoveFile(const std::string& inpath, const std::string& outpath)
 
 void WebFixURLPath(std::string& path)
 {
-    // replace "%..." with suitable chars for a file path (eg. %20 is changed to space)
-
-    // no need to do anything!!!???
+    // no need to do anything
 }
 
 // -----------------------------------------------------------------------------
@@ -664,13 +662,10 @@ bool WebGetTextFromClipboard(std::string& text)
 
 // -----------------------------------------------------------------------------
 
-static std::string global_file;
-
 bool WebDownloadFile(const std::string& url, const std::string& filepath)
 {
-    // jsDownloadFile does an asynchronous file transfer and will call FileDownloaded()
-    // only if filepath is successfully written
-    global_file = filepath;
+    // jsDownloadFile does an asynchronous file transfer and will call FileCreated()
+    // only if filepath is successfully created
     jsDownloadFile(url.c_str(), filepath.c_str());
     
     // we must return false so GetURL won't proceed beyond the DownloadFile call
@@ -681,15 +676,15 @@ bool WebDownloadFile(const std::string& url, const std::string& filepath)
 
 extern "C" {
 
-void FileDownloaded()
+void FileCreated(const char* filepath)
 {
     // following code matches that in gui-common/file.cpp after DownloadFile
     // returns false in GetURL
     
-    std::string filename = GetBaseName(global_file.c_str());
+    std::string filename = GetBaseName(filepath);
     
     if (IsHTMLFile(filename)) {
-        ShowHelp(global_file.c_str());
+        ShowHelp(filepath);
 
     } else if (IsRuleFile(filename)) {
         // load corresponding rule
@@ -697,14 +692,14 @@ void FileDownloaded()
         LoadRule(filename.substr(0, filename.rfind('.')));
 
     } else if (IsTextFile(filename)) {
-        ShowTextFile(global_file.c_str());
+        ShowTextFile(filepath);
 
     } else if (IsScriptFile(filename)) {
         Warning("This version of Golly cannot run scripts.");
 
     } else {
         // assume it's a pattern/zip file, so open it
-        OpenFile(global_file.c_str());
+        OpenFile(filepath);
     }
 }
 

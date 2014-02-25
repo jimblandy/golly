@@ -161,8 +161,8 @@ static void InitEventHandlers()
         function on_key_up(event) {
             on_key_changed(event, 0);   // GLFW_RELEASE
         };
-        window.addEventListener("keydown", on_key_down, false);
-        window.addEventListener("keyup", on_key_up, false);
+        window.addEventListener('keydown', on_key_down, false);
+        window.addEventListener('keyup', on_key_up, false);
     );
 }
 
@@ -379,6 +379,34 @@ void NewUniverse()
     
     NewPattern();
     UpdateEverything();
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+static void OpenPattern()
+{
+    StopIfGenerating();
+
+    // display the open file dialog and start listening for change to selected file
+    EM_ASM( 
+        document.getElementById('open_overlay').style.visibility = 'visible';
+        document.getElementById('upload_file').addEventListener('change', on_file_change, false);
+    );
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void CancelOpen()
+{
+    // close the open file dialog and remove the change event handler
+    EM_ASM(
+        document.getElementById('open_overlay').style.visibility = 'hidden';
+        document.getElementById('upload_file').removeEventListener('change', on_file_change, false);
+    );
 }
 
 } // extern "C"
@@ -709,7 +737,7 @@ void Help()
 
 // -----------------------------------------------------------------------------
 
-static void ChangePrefs()
+static void OpenPrefs()
 {
     //!!! show a modal dialog that lets user change various settings???
     Warning("Preferences dialog is not yet implemented!!!");
@@ -1186,8 +1214,9 @@ void DoMenuItem(const char* id)
     
     // items in File menu:
     if (item == "file_new") NewUniverse(); else
+    if (item == "file_open") OpenPattern(); else
     if (item == "file_openclip") OpenClipboard(); else
-    if (item == "file_prefs") ChangePrefs(); else
+    if (item == "file_prefs") OpenPrefs(); else
     
     // items in Edit menu:
     if (item == "edit_undo") Undo(); else
@@ -1366,12 +1395,16 @@ int OnKeyChanged(int keycode, int action)
         return 0;
     }
     
-    // check if help dialog or info dialog is visible
-    if (jsElementIsVisible("help_overlay") || jsElementIsVisible("info_overlay")) {
+    // check if open/info/help dialog is visible
+    if (jsElementIsVisible("open_overlay") ||
+        jsElementIsVisible("info_overlay") ||
+        jsElementIsVisible("help_overlay") ) {
         if (action == GLFW_PRESS && (key == 13 || key == 27)) {
             // return key or escape key closes dialog
-            // (note that info dialog can be on top of help dialog, so we test info dialog first)
-            if (jsElementIsVisible("info_overlay")) {
+            if (jsElementIsVisible("open_overlay")) {
+                EM_ASM( _CancelOpen(); );
+            } else if (jsElementIsVisible("info_overlay")) {
+                // info dialog can be on top of help dialog, so we test this first
                 EM_ASM( _CloseInfo(); );
             } else {
                 EM_ASM( _CloseHelp(); );
@@ -1446,7 +1479,9 @@ int OnKeyChanged(int keycode, int action)
         case 'i' : ToggleIcons(); break;
         case 'l' : ToggleGrid(); break;
         case 'm' : Middle(); break;
-        case 'p' : ChangePrefs(); break;
+        case 'o' : OpenPattern(); break;
+        case 'O' : OpenClipboard(); break;
+        case 'p' : OpenPrefs(); break;
         case 'r' : SetRule(); break;
         case 't' : ToggleAutoFit(); break;
         case 'v' : Paste(); break;

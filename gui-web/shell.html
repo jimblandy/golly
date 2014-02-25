@@ -128,6 +128,26 @@
 		    color: #FFF;
 		}
 
+        #open_overlay {
+            visibility: hidden;
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            z-index: 999;
+            background-color: rgba(0,0,0,0.5);
+        }
+        #open_dialog {
+            width: 300px;
+            height: 100px;
+            margin: 140px auto;
+            border: 1px solid #000;
+            padding: 0px;
+            background-color: #FFF;
+        }
+
         #help_overlay {
             visibility: hidden;
             position: absolute;
@@ -346,7 +366,21 @@
             resize_dialog('info_text');
         });
         
-        // this click event handler is active only while the help dialog is visible
+        // this event handler is active only while the open dialog is visible
+        function on_file_change() {
+            var fileToLoad = document.getElementById('upload_file').files[0];
+            var fileReader = new FileReader();
+            fileReader.onload = function(event) {
+                var uInt8Array = new Uint8Array(fileReader.result);
+                FS.writeFile(fileToLoad.name, uInt8Array, { encoding: 'binary' });
+                _CancelOpen();
+                filecreated = Module.cwrap('FileCreated', 'void', ['string']);
+                filecreated(fileToLoad.name);
+            };
+            fileReader.readAsArrayBuffer(fileToLoad);
+        };
+        
+        // this event handler is active only while the help dialog is visible
         function on_help_click(event) {
             var t = event.target || event.srcElement;
             if (!t.href) {
@@ -393,6 +427,14 @@
     <span onclick="_SelectionAction(13);">Advance Outside</span>
     </div>
 
+    <div id="open_overlay">
+        <div id="open_dialog">
+            <div id="open_title" style="margin-top: 10px;">Open a file on your computer</div>
+            <div style="margin-top: 10px;"> <input type="file" id="upload_file"> </div>
+            <div> <button type="button" style="margin-top: 10px;" onclick="_CancelOpen()">Cancel</button> </div>
+        </div>
+    </div>
+
     <div id="help_overlay">
         <div id="help_dialog">
             <div id="help_header">
@@ -434,7 +476,7 @@
             <div id="patterns" style="font: caption; outline: #DDD none 0px" tabindex="1">
                 <div class="vspace"></div>
                 <div class="vspace"></div>
-                <center>Supplied Patterns</center>
+                <center>Patterns</center>
                 <div class="patterndir" id="patterndir">
                     <script type="text/javascript">
                         // following code is based on a tutorial by Jos de Jong
