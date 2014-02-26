@@ -203,6 +203,40 @@ jsMoveFile: function(inpath, outpath) {
 
 // -----------------------------------------------------------------------------
 
+jsShowSaveDialog: function(filename) {
+    document.getElementById('save_overlay').style.visibility = 'visible';
+    var namebox = document.getElementById('save_name');
+    namebox.value = Pointer_stringify(filename);
+    namebox.select();
+    namebox.focus();
+},
+
+// -----------------------------------------------------------------------------
+
+jsSaveFile: function(filenameptr) {
+    var filename = Pointer_stringify(filenameptr);
+    var contents = FS.readFile(filename, {encoding:'utf8'});
+    var textFileAsBlob = new Blob([contents], {type:'text/plain'});
+    var downloadLink = document.createElement('a');
+    downloadLink.download = filename;
+    downloadLink.innerHTML = 'Download File';
+    if (window.webkitURL != null) {
+        // Safari/Chrome allows the link to be clicked without actually adding it to the DOM
+        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+    } else {
+        // Firefox requires the link to be added to the DOM before it can be clicked
+        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+        downloadLink.onclick = function(event) {
+            document.body.removeChild(event.target);
+        };
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+    }
+    downloadLink.click();
+},
+
+// -----------------------------------------------------------------------------
+
 jsCancelProgress: function() {
     // user hit Cancel button in progress dialog
     GOLLY.cancel_progress = true;
@@ -315,7 +349,7 @@ jsDownloadFile: function(urlptr, filepathptr) {
                 if (xhr.status == 200) {
                     // success, so save binary data to filepath
                     var uInt8Array = new Uint8Array(xhr.response);
-                    FS.writeFile(filepath, uInt8Array, { encoding: 'binary' });
+                    FS.writeFile(filepath, uInt8Array, {encoding:'binary'});
                     filecreated = Module.cwrap('FileCreated', 'void', ['string']);
                     filecreated(filepath);
                 } else if (!GOLLY.cancel_progress) {

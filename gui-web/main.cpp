@@ -63,6 +63,8 @@ extern "C" {
     extern void jsEnableImgButton(const char* id, bool enable);
     extern void jsTickMenuItem(const char* id, bool tick);
     extern void jsSetInnerHTML(const char* id, const char* text);
+    extern void jsShowSaveDialog(const char* filename);
+    extern void jsSaveFile(const char* filename);
 }
 
 // -----------------------------------------------------------------------------
@@ -385,11 +387,12 @@ void NewUniverse()
 
 // -----------------------------------------------------------------------------
 
-static void OpenPattern()
+static void Open()
 {
     StopIfGenerating();
 
     // display the open file dialog and start listening for change to selected file
+    // (the on_file_change function is in shell.html)
     EM_ASM( 
         document.getElementById('open_overlay').style.visibility = 'visible';
         document.getElementById('upload_file').addEventListener('change', on_file_change, false);
@@ -445,6 +448,75 @@ void OpenClipboard()
         }
         fclose(outfile);
         LoadPattern(currlayer->tempstart.c_str(), "clipboard");
+    }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+static void Save()
+{
+    StopIfGenerating();
+
+    // display the save pattern dialog
+    jsShowSaveDialog(currlayer->currname.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void CancelSave()
+{
+    // close the save pattern dialog
+    EM_ASM( document.getElementById('save_overlay').style.visibility = 'hidden'; );
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void SaveFile(const char* filename)
+{
+    // append default extension if not supplied
+    std::string fname = filename;
+    size_t dotpos = fname.find('.');
+    if (dotpos == std::string::npos) {
+        if (currlayer->algo->hyperCapable()) {
+            fname += ".mc";
+        } else {
+            fname += ".rle";
+        }
+    } else {
+        // check for valid extension (.rle or .mc)
+        if (currlayer->algo->hyperCapable()) {
+            if (!EndsWith(fname,".mc") && !EndsWith(fname,".rle")) {
+                Warning("File extension must be .mc or .rle.");
+                return;
+            }
+        } else {
+            if (!EndsWith(fname,".rle")) {
+                Warning("File extension must be .rle.");
+                return;
+            }
+        }
+    }
+    
+    pattern_format format = XRLE_format;
+    if (EndsWith(fname,".mc") || EndsWith(fname,".mc.gz")) format = MC_format;
+    
+    output_compression compression = no_compression;
+    // currently no support for downloading binary file!!!
+    //!!! if (EndsWith(fname,".gz")) compression = gzip_compression;
+    
+    if (SavePattern(fname, format, compression)) {
+        CancelSave();
+        UpdateStatus();
+        // fname successfully created, so download it to user's computer
+        jsSaveFile(fname.c_str());
     }
 }
 
@@ -1214,8 +1286,9 @@ void DoMenuItem(const char* id)
     
     // items in File menu:
     if (item == "file_new") NewUniverse(); else
-    if (item == "file_open") OpenPattern(); else
+    if (item == "file_open") Open(); else
     if (item == "file_openclip") OpenClipboard(); else
+    if (item == "file_save") Save(); else
     if (item == "file_prefs") OpenPrefs(); else
     
     // items in Edit menu:
@@ -1395,16 +1468,21 @@ int OnKeyChanged(int keycode, int action)
         return 0;
     }
     
-    // check if open/info/help dialog is visible
-    if (jsElementIsVisible("open_overlay") ||
-        jsElementIsVisible("info_overlay") ||
-        jsElementIsVisible("help_overlay") ) {
+    // check if the open/save/info/help dialog is visible
+    if (jsElementIsVisible("open_overlay") || jsElementIsVisible("save_overlay") ||
+        jsElementIsVisible("info_overlay") || jsElementIsVisible("help_overlay") ) {
         if (action == GLFW_PRESS && (key == 13 || key == 27)) {
             // return key or escape key closes dialog
             if (jsElementIsVisible("open_overlay")) {
-                EM_ASM( _CancelOpen(); );
+                CancelOpen();
+            } else if (jsElementIsVisible("save_overlay")) {
+                if (key == 13) {
+                    EM_ASM( save_pattern(); );  // see shell.html for save_pattern()
+                } else {
+                    CancelSave();
+                }
             } else if (jsElementIsVisible("info_overlay")) {
-                // info dialog can be on top of help dialog, so we test this first
+                // info dialog can be on top of help dialog, so test this first
                 EM_ASM( _CloseInfo(); );
             } else {
                 EM_ASM( _CloseHelp(); );
@@ -1479,10 +1557,11 @@ int OnKeyChanged(int keycode, int action)
         case 'i' : ToggleIcons(); break;
         case 'l' : ToggleGrid(); break;
         case 'm' : Middle(); break;
-        case 'o' : OpenPattern(); break;
+        case 'o' : Open(); break;
         case 'O' : OpenClipboard(); break;
         case 'p' : OpenPrefs(); break;
         case 'r' : SetRule(); break;
+        case 's' : Save(); break;
         case 't' : ToggleAutoFit(); break;
         case 'v' : Paste(); break;
         case 'V' : CancelPaste(); break;
