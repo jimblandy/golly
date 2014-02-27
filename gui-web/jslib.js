@@ -191,20 +191,27 @@ jsBeep: function() {
 // -----------------------------------------------------------------------------
 
 jsDeleteFile: function(filepath) {
-    //!!!
+    FS.unlink(Pointer_stringify(filepath));
 },
 
 // -----------------------------------------------------------------------------
 
 jsMoveFile: function(inpath, outpath) {
-    //!!!
-    return false;
+    try {
+        FS.rename(Pointer_stringify(inpath), Pointer_stringify(outpath));
+        return true;
+    } catch (e) {
+        alert('FS.rename failed!');
+        return false;
+    }
 },
 
 // -----------------------------------------------------------------------------
 
-jsShowSaveDialog: function(filename) {
+jsShowSaveDialog: function(filename, extensions) {
     document.getElementById('save_overlay').style.visibility = 'visible';
+    document.getElementById('save_extensions').innerHTML =
+        'Valid extensions: ' + Pointer_stringify(extensions);
     var namebox = document.getElementById('save_name');
     namebox.value = Pointer_stringify(filename);
     namebox.select();
@@ -215,24 +222,33 @@ jsShowSaveDialog: function(filename) {
 
 jsSaveFile: function(filenameptr) {
     var filename = Pointer_stringify(filenameptr);
-    var contents = FS.readFile(filename, {encoding:'utf8'});
-    var textFileAsBlob = new Blob([contents], {type:'text/plain'});
-    var downloadLink = document.createElement('a');
-    downloadLink.download = filename;
-    downloadLink.innerHTML = 'Download File';
+    var contents, blob;
+    var gzext = '.gz';
+    if (filename.length >= gzext.length && filename.substr(filename.length - gzext.length) == gzext) {
+        // treat .gz file as uninterpreted binary data
+        contents = FS.readFile(filename, {encoding:'binary'});
+        blob = new Blob([contents], {type:'application/octet-stream'});
+    } else {
+        // assume it's a text file (.rle or .mc)
+        contents = FS.readFile(filename, {encoding:'utf8'});
+        blob = new Blob([contents], {type:'text/plain'});
+    }
+    var alink = document.createElement('a');
+    alink.download = filename;
+    alink.innerHTML = 'Download File';
     if (window.webkitURL != null) {
         // Safari/Chrome allows the link to be clicked without actually adding it to the DOM
-        downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+        alink.href = window.webkitURL.createObjectURL(blob);
     } else {
         // Firefox requires the link to be added to the DOM before it can be clicked
-        downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-        downloadLink.onclick = function(event) {
+        alink.href = window.URL.createObjectURL(blob);
+        alink.onclick = function(event) {
             document.body.removeChild(event.target);
         };
-        downloadLink.style.display = 'none';
-        document.body.appendChild(downloadLink);
+        alink.style.display = 'none';
+        document.body.appendChild(alink);
     }
-    downloadLink.click();
+    alink.click();
 },
 
 // -----------------------------------------------------------------------------

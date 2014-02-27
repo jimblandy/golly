@@ -63,7 +63,7 @@ extern "C" {
     extern void jsEnableImgButton(const char* id, bool enable);
     extern void jsTickMenuItem(const char* id, bool tick);
     extern void jsSetInnerHTML(const char* id, const char* text);
-    extern void jsShowSaveDialog(const char* filename);
+    extern void jsShowSaveDialog(const char* filename, const char* extensions);
     extern void jsSaveFile(const char* filename);
 }
 
@@ -460,7 +460,11 @@ static void Save()
     StopIfGenerating();
 
     // display the save pattern dialog
-    jsShowSaveDialog(currlayer->currname.c_str());
+    if (currlayer->algo->hyperCapable()) {
+        jsShowSaveDialog(currlayer->currname.c_str(), ".mc (default), .mc.gz, .rle, .rle.gz");
+    } else {
+        jsShowSaveDialog(currlayer->currname.c_str(), ".rle (default), .rle.gz");
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -486,20 +490,22 @@ void SaveFile(const char* filename)
     size_t dotpos = fname.find('.');
     if (dotpos == std::string::npos) {
         if (currlayer->algo->hyperCapable()) {
+            // macrocell format is best for hash-based algos
             fname += ".mc";
         } else {
             fname += ".rle";
         }
     } else {
-        // check for valid extension (.rle or .mc)
+        // check that the supplied extension is valid
         if (currlayer->algo->hyperCapable()) {
-            if (!EndsWith(fname,".mc") && !EndsWith(fname,".rle")) {
-                Warning("File extension must be .mc or .rle.");
+            if (!EndsWith(fname,".mc") && !EndsWith(fname,".mc.gz") &&
+                !EndsWith(fname,".rle") && !EndsWith(fname,".rle.gz")) {
+                Warning("File extension must be .mc or .mc.gz or .rle or .rle.gz.");
                 return;
             }
         } else {
-            if (!EndsWith(fname,".rle")) {
-                Warning("File extension must be .rle.");
+            if (!EndsWith(fname,".rle") && !EndsWith(fname,".rle.gz")) {
+                Warning("File extension must be .rle or .rle.gz.");
                 return;
             }
         }
@@ -509,8 +515,7 @@ void SaveFile(const char* filename)
     if (EndsWith(fname,".mc") || EndsWith(fname,".mc.gz")) format = MC_format;
     
     output_compression compression = no_compression;
-    // currently no support for downloading binary file!!!
-    //!!! if (EndsWith(fname,".gz")) compression = gzip_compression;
+    if (EndsWith(fname,".gz")) compression = gzip_compression;
     
     if (SavePattern(fname, format, compression)) {
         CancelSave();

@@ -161,7 +161,7 @@
         }
         #save_dialog {
             width: 300px;
-            height: 100px;
+            height: 130px;
             margin: 140px auto;
             border: 1px solid #000;
             padding: 0px;
@@ -392,7 +392,7 @@
             var fileReader = new FileReader();
             fileReader.onload = function(event) {
                 var uInt8Array = new Uint8Array(fileReader.result);
-                FS.writeFile(fileToLoad.name, uInt8Array, { encoding: 'binary' });
+                FS.writeFile(fileToLoad.name, uInt8Array, {encoding:'binary'});
                 _CancelOpen();
                 filecreated = Module.cwrap('FileCreated', 'void', ['string']);
                 filecreated(fileToLoad.name);
@@ -460,29 +460,30 @@
 
     <div id="open_overlay">
         <div id="open_dialog">
-            <div style="margin-top: 10px;">Open a file on your computer</div>
-            <div style="margin-top: 10px;"> <input type="file" id="upload_file"> </div>
-            <div> <button type="button" style="margin-top: 10px;" onclick="_CancelOpen()">Cancel</button> </div>
+            <div style="margin-top:10px;">Open a file on your computer</div>
+            <div style="margin-top:10px;"> <input type="file" id="upload_file"> </div>
+            <div> <button type="button" style="margin-top:10px;" onclick="_CancelOpen()">Cancel</button> </div>
         </div>
     </div>
 
     <div id="save_overlay">
         <div id="save_dialog">
-            <div style="margin-top: 10px;">Save current pattern</div>
-            <div style="margin-top: 10px;">File name: &nbsp;<input id="save_name"></input>&nbsp;
+            <div style="margin-top:10px;">Save current pattern</div>
+            <div style="margin-top:10px;">File name: &nbsp;<input id="save_name"></input>&nbsp;
                 <button type="button" onclick="save_pattern()">Save</button>
             </div>
-            <div> <button type="button" style="margin-top: 10px;" onclick="_CancelSave()">Cancel</button> </div>
+            <div id="save_extensions" style="margin-top:10px; font-size:12px;"> list of valid extensions </div>
+            <div> <button type="button" style="margin-top:10px;" onclick="_CancelSave()">Cancel</button> </div>
         </div>
     </div>
 
     <div id="help_overlay">
         <div id="help_dialog">
             <div id="help_header">
-                <button type="button" style="float: left; margin-top: 5px; margin-left: 5px;" id="help_back" onclick="_HelpBack()"> &lt; </button>
-                <button type="button" style="float: left; margin-top: 5px; margin-left: 5px;" id="help_next" onclick="_HelpNext()"> &gt; </button>
-                <button type="button" style="float: left; margin-top: 5px; margin-left: 5px;" id="help_contents" onclick="_HelpContents()">Contents</button>
-                <button type="button" style="float: right; margin-top: 5px; margin-right: 5px;" onclick="_CloseHelp()">Close</button>
+                <button type="button" style="float:left; margin-top:5px; margin-left:5px;" id="help_back" onclick="_HelpBack()"> &lt; </button>
+                <button type="button" style="float:left; margin-top:5px; margin-left:5px;" id="help_next" onclick="_HelpNext()"> &gt; </button>
+                <button type="button" style="float:left; margin-top:5px; margin-left:5px;" id="help_contents" onclick="_HelpContents()">Contents</button>
+                <button type="button" style="float:right; margin-top:5px; margin-right:5px;" onclick="_CloseHelp()">Close</button>
             </div>
             <div id="help_text"> contents </div>
         </div>
@@ -491,7 +492,7 @@
     <div id="info_overlay">
         <div id="info_dialog">
             <div id="info_header">
-                <button type="button" style="margin-top: 5px; margin-right: 5px;" onclick="_CloseInfo()">Close</button>
+                <button type="button" style="margin-top:5px; margin-right:5px;" onclick="_CloseInfo()">Close</button>
             </div>
             <div id="info_text"> contents </div>
         </div>
@@ -499,9 +500,9 @@
 
     <div id="progress_overlay">
         <div id="progress_dialog">
-            <div id="progress_title" style="margin-top: 10px;"> title </div>
-            <div id="progress_percent" style="margin-top: 10px;"> percent </div>
-            <div> <button type="button" style="margin-top: 10px;" onclick="_CancelProgress()">Cancel</button> </div>
+            <div id="progress_title" style="margin-top:10px;"> title </div>
+            <div id="progress_percent" style="margin-top:10px;"> percent </div>
+            <div> <button type="button" style="margin-top:10px;" onclick="_CancelProgress()">Cancel</button> </div>
         </div>
     </div>
 
