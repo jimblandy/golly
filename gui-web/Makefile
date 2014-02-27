@@ -105,8 +105,8 @@ OBJECTS = main.o webcalls.o \
 
 CFLAGS = -Izlib -Wall -Wextra -Wno-unused-parameter -Wno-implicit-function-declaration -O2
 
-CXXFLAGS = -Izlib -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip -DZLIB -DWEB_GUI \
-    -Wall -Wextra -Wno-unused-parameter -O2
+CXXFLAGS = -Izlib -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip \
+    -DVERSION=0.8 -DZLIB -DWEB_GUI -Wall -Wextra -Wno-unused-parameter -O2
 
 # note that using -O2 results in a much smaller golly.js and no .map file
 
@@ -163,12 +163,12 @@ main.o: main.cpp ../gollybase/bigint.h ../gollybase/lifealgo.h \
   ../gui-common/file.h ../gollybase/writepattern.h ../gui-common/view.h \
   ../gui-common/status.h ../gui-common/undo.h ../gui-common/render.h \
   webcalls.h
-webcalls.o: webcalls.cpp ../gui-common/utils.h ../gui-common/algos.h \
-  ../gollybase/lifealgo.h ../gollybase/bigint.h ../gollybase/viewport.h \
-  ../gollybase/liferender.h ../gollybase/lifepoll.h \
-  ../gollybase/readpattern.h ../gollybase/platform.h \
-  ../gui-common/prefs.h ../gui-common/layer.h ../gui-common/select.h \
-  ../gui-common/control.h ../gui-common/file.h \
+webcalls.o: webcalls.cpp ../gollybase/util.h ../gui-common/utils.h \
+  ../gui-common/algos.h ../gollybase/lifealgo.h ../gollybase/bigint.h \
+  ../gollybase/viewport.h ../gollybase/liferender.h \
+  ../gollybase/lifepoll.h ../gollybase/readpattern.h \
+  ../gollybase/platform.h ../gui-common/prefs.h ../gui-common/layer.h \
+  ../gui-common/select.h ../gui-common/control.h ../gui-common/file.h \
   ../gollybase/writepattern.h ../gui-common/view.h \
   ../gui-common/status.h ../gui-common/undo.h webcalls.h
 bigint.o: ../gollybase/bigint.cpp ../gollybase/bigint.h \
