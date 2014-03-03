@@ -711,7 +711,8 @@ void WebCheckEvents()
 {
     // event_checker is > 0 in here (see gui-common/utils.cpp)
     
-    // can't do anything here???!!! will need to use a Web Worker???!!!
+    // it looks like JavaScript doesn't have any access to the browser's event queue
+    // so we can't do anything here???!!! we'll need to use a Web Worker???!!!
     // note that glfwPollEvents() does nothing (see emscripten/src/library_glfw.js)
     // glfwPollEvents();
 }

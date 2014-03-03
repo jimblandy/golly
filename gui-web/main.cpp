@@ -89,27 +89,74 @@ static bool selection_menu_visible = false;
 
 static void InitPaths()
 {
-    userdir = "";       // where should we save save user data???!!!
+    userdir = "";       // webGolly doesn't use this
 
-    savedir = "";       //???!!! userdir + "Saved/";
-    //???!!! CreateSubdir(savedir);
+    // webGolly doesn't use savedir (jsSaveFile will download saved files to the user's computer
+    // in a directory specified by the browser)
+    savedir = "";
 
-    downloaddir = "";   //???!!! userdir + "Downloads/";
-    //???!!! CreateSubdir(downloaddir);
+    // webGolly doesn't need to set downloaddir (browser will cache downloaded files)
+    downloaddir = "";
 
-    userrules = "";     // ???!!! userdir + "Rules/";
-    //???!!! CreateSubdir(userrules);
+    // create a directory for user's rules
+    EM_ASM( FS.mkdir('/UserRules'); );
+    userrules = "/UserRules/";
+    // !!!
+    // TODO: we'll need to copy the .rule files in userrules to localStorage (at the time
+    // each file is installed??? or in SaveLocalPrefs???) and then recreate those files
+    // from localStorage (in GetLocalPrefs???)
+    // TODO: we'll also need to provide a way for users to delete these .rule files
+    // to avoid exceeding the localStorage disk quota (implement special "DELETE" links
+    // in Set Rule dialog, like we do in iGolly and aGolly???)
 
     // supplied patterns, rules, help are stored in golly.data via --preload-file option in Makefile
     supplieddir = "/";
     patternsdir = supplieddir + "Patterns/";
     rulesdir = supplieddir + "Rules/";
     helpdir = supplieddir + "Help/";
-
-    tempdir = "";
+    
+    // create a directory for all our temporary files (can't use /tmp as it already exists!)
+    EM_ASM( FS.mkdir('/gollytmp'); );
+    tempdir = "/gollytmp/";
     clipfile = tempdir + "golly_clipboard";
-    prefsfile = "GollyPrefs";                   // where will this be saved???!!!
+    
+    // GetLocalPrefs() and SaveLocalPrefs() assume the user's preferences are temporarily stored
+    // in a file with this name
+    prefsfile = "GollyPrefs";
 }
+
+// -----------------------------------------------------------------------------
+
+static void GetLocalPrefs()
+{
+    EM_ASM(
+        // get GollyPrefs string from local storage (key name must match setItem call)
+        var contents = localStorage.getItem('GollyPrefs');
+        if (contents) {
+            // write contents to virtual file system so GetPrefs() can read it
+            // and initialize various global settings
+            FS.writeFile('GollyPrefs', contents, {encoding:'utf8'});
+        }
+    );
+    GetPrefs();     // read prefsfile from virtual file system
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void SaveLocalPrefs()
+{
+    SavePrefs();    // write prefsfile to virtual file system
+    EM_ASM(
+        // read contents of prefsfile just written
+        var contents = FS.readFile('GollyPrefs', {encoding:'utf8'});
+        // save contents to local storage (key name must match getItem call)
+        localStorage.setItem('GollyPrefs', contents);
+    );
+}
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -165,6 +212,13 @@ static void InitEventHandlers()
         };
         window.addEventListener('keydown', on_key_down, false);
         window.addEventListener('keyup', on_key_up, false);
+    );
+    
+    // save current settings when window is unloaded
+    EM_ASM(
+        window.addEventListener('unload', function(event) {
+            _SaveLocalPrefs();
+        });
     );
 }
 
@@ -819,7 +873,8 @@ static void OpenPrefs()
     //!!! show a modal dialog that lets user change various settings???
     Warning("Preferences dialog is not yet implemented!!!");
     
-    SavePrefs();    // where will this write GollyPrefs file???!!!
+    // call this if user hits Save button???!!!
+    SaveLocalPrefs();
 }
 
 // -----------------------------------------------------------------------------
@@ -1765,7 +1820,7 @@ int EMSCRIPTEN_KEEPALIVE main()
     MAX_MAG = 5;                // maximum cell size = 32x32
     maxhashmem = 300;           // enough for caterpillar
     InitAlgorithms();           // must initialize algoinfo first
-    GetPrefs();                 // load user's preferences
+    GetLocalPrefs();            // load user's preferences from local storage
     SetMinimumStepExponent();   // for slowest speed
     AddLayer();                 // create initial layer (sets currlayer)
     NewPattern();               // create new, empty universe
