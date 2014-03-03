@@ -253,6 +253,19 @@ jsSaveFile: function(filenameptr) {
 
 // -----------------------------------------------------------------------------
 
+jsStoreRule: function(rulepath) {
+    // read contents of .rule file and save to local storage using rulepath as the key
+    var filepath = Pointer_stringify(rulepath);
+    try {
+        var contents = FS.readFile(filepath, {encoding:'utf8'});
+        localStorage.setItem(filepath, contents);
+    } catch(e) {
+        alert('Failed to store rule file:\n' + filepath);
+    }
+},
+
+// -----------------------------------------------------------------------------
+
 jsCancelProgress: function() {
     // user hit Cancel button in progress dialog
     GOLLY.cancel_progress = true;
@@ -314,6 +327,7 @@ jsDownloadFile: function(urlptr, filepathptr) {
     // DEBUG: Module.printErr('URL: '+url+' FILE: '+filepath);
 
     // prefix url with http://www.corsproxy.com/ so we can get file from another domain
+    // (note that we assume url starts with "http://")
     url = 'http://www.corsproxy.com/' + url.substring(7);
 
     var xhr = new XMLHttpRequest();

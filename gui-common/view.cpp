@@ -1043,6 +1043,11 @@ bool ClipboardContainsRule()
         return true;
     }
     fclose(rulefile);
+    
+    #ifdef WEB_GUI
+        // ensure the .rule file persists beyond the current session
+        CopyRuleToLocalStorage(rulepath.c_str());
+    #endif
 
     // now switch to the newly created rule
     ChangeRule(rulename);

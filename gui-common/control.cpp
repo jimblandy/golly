@@ -1691,6 +1691,11 @@ static void CreateOneRule(const std::string& rulefile, const std::string& folder
         oss << "Could not create rule file:\n" << rulepath.c_str();
         throw std::runtime_error(oss.str().c_str());
     }
+    
+    #ifdef WEB_GUI
+        // ensure the .rule file persists beyond the current session
+        CopyRuleToLocalStorage(rulepath.c_str());
+    #endif
 
     // append created file to htmlinfo
     htmlinfo += "<a href=\"open:";

@@ -70,6 +70,7 @@ extern "C" {
     extern bool jsAbortProgress(int percentage);
     extern void jsEndProgress();
     extern void jsCancelProgress();
+    extern void jsStoreRule(const char* rulepath);
 }
 
 // -----------------------------------------------------------------------------
@@ -690,6 +691,8 @@ void FileCreated(const char* filepath)
         // load corresponding rule
         SwitchToPatternTab();
         LoadRule(filename.substr(0, filename.rfind('.')));
+        // ensure the .rule file persists beyond the current session
+        CopyRuleToLocalStorage(filepath);
 
     } else if (IsTextFile(filename)) {
         ShowTextFile(filepath);
@@ -704,6 +707,13 @@ void FileCreated(const char* filepath)
 }
 
 } // extern "C"
+
+// -----------------------------------------------------------------------------
+
+void CopyRuleToLocalStorage(const char* rulepath)
+{
+    jsStoreRule(rulepath);
+}
 
 // -----------------------------------------------------------------------------
 

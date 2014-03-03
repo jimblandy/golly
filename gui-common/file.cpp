@@ -736,6 +736,10 @@ void OpenZipFile(const char* zippath)
                                         contents += "(overrides file in Rules folder)";
                                     }
                                 }
+                                #ifdef WEB_GUI
+                                    // ensure the .rule file persists beyond the current session
+                                    CopyRuleToLocalStorage(outfile.c_str());
+                                #endif
                             } else {
                                 // file could not be installed
                                 contents += indent;

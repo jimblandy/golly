@@ -99,13 +99,11 @@ static void InitPaths()
     downloaddir = "";
 
     // create a directory for user's rules
-    EM_ASM( FS.mkdir('/UserRules'); );
-    userrules = "/UserRules/";
+    EM_ASM( FS.mkdir('/LocalRules'); );
+    userrules = "/LocalRules/";              // WARNING: GetLocalPrefs() assumes this string
+    
     // !!!
-    // TODO: we'll need to copy the .rule files in userrules to localStorage (at the time
-    // each file is installed??? or in SaveLocalPrefs???) and then recreate those files
-    // from localStorage (in GetLocalPrefs???)
-    // TODO: we'll also need to provide a way for users to delete these .rule files
+    // TODO: we'll need to provide a way for users to delete .rule files in localStorage
     // to avoid exceeding the localStorage disk quota (implement special "DELETE" links
     // in Set Rule dialog, like we do in iGolly and aGolly???)
 
@@ -120,8 +118,8 @@ static void InitPaths()
     tempdir = "/gollytmp/";
     clipfile = tempdir + "golly_clipboard";
     
-    // GetLocalPrefs() and SaveLocalPrefs() assume the user's preferences are temporarily stored
-    // in a file with this name
+    // WARNING: GetLocalPrefs() and SaveLocalPrefs() assume the user's preferences are
+    // temporarily stored in a file with this name
     prefsfile = "GollyPrefs";
 }
 
@@ -139,6 +137,18 @@ static void GetLocalPrefs()
         }
     );
     GetPrefs();     // read prefsfile from virtual file system
+    
+    EM_ASM(
+        // re-create any .rule files that were saved in localStorage
+        for (var i=0; i<localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key.substr(0,12) == '/LocalRules/') {
+                // key is full path name (eg. /LocalRules/Foo.rule)
+                var contents = localStorage.getItem(key);
+                if (contents) FS.writeFile(key, contents, {encoding:'utf8'});
+            }
+        }
+    );
 }
 
 // -----------------------------------------------------------------------------

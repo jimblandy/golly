@@ -89,10 +89,6 @@ bool WebMoveFile(const std::string& inpath, const std::string& outpath);
 void WebFixURLPath(std::string& path);
 // Replace "%..." with suitable chars for a file path (eg. %20 is changed to space).
 
-void WebCheckEvents();
-// Run main UI thread for a short time so app remains responsive while doing a
-// lengthy computation.  Note that event_checker is > 0 while in this routine.
-
 bool WebCopyTextToClipboard(const char* text);
 // Copy given text to the clipboard.
 
@@ -101,5 +97,13 @@ bool WebGetTextFromClipboard(std::string& text);
 
 bool WebDownloadFile(const std::string& url, const std::string& filepath);
 // Download given url and create given file.
+
+void WebCheckEvents();
+// Run main UI thread for a short time so app remains responsive while doing a
+// lengthy computation.  Note that event_checker is > 0 while in this routine.
+
+void CopyRuleToLocalStorage(const char* rulepath);
+// Copy contents of given .rule file to HTML5's localStorage (using rulepath as
+// the key) so that the file can be re-created in the next webGolly session.
 
 #endif
