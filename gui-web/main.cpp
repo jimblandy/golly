@@ -102,10 +102,9 @@ static void InitPaths()
     EM_ASM( FS.mkdir('/LocalRules'); );
     userrules = "/LocalRules/";              // WARNING: GetLocalPrefs() assumes this string
     
-    // !!!
-    // TODO: we'll need to provide a way for users to delete .rule files in localStorage
+    // !!! we'll need to provide a way for users to delete .rule files in localStorage
     // to avoid exceeding the localStorage disk quota (implement special "DELETE" links
-    // in Set Rule dialog, like we do in iGolly and aGolly???)
+    // in Set Rule dialog, like we do in iGolly and aGolly)
 
     // supplied patterns, rules, help are stored in golly.data via --preload-file option in Makefile
     supplieddir = "/";
@@ -172,10 +171,10 @@ void SaveLocalPrefs()
 
 static void InitEventHandlers()
 {
-    // the following code fixes bugs in emscripten/src/library_glfw.js:
-    // - onMouseWheel fails to use wheelDelta
-    // - the onmousewheel handler is assigned to the entire window rather than just the canvas
     EM_ASM(
+        // the following code fixes bugs in emscripten/src/library_glfw.js:
+        // - onMouseWheel fails to use wheelDelta
+        // - the onmousewheel handler is assigned to the entire window rather than just the canvas
         var wheelpos = 0;
         function on_mouse_wheel(event) {
             // Firefox sets event.detail, other browsers set event.wheelDelta with opposite sign,
@@ -191,10 +190,10 @@ static void InitEventHandlers()
         Module['canvas'].onmousewheel = on_mouse_wheel;
     );
     
-    // we do our own keyboard event handling because glfw's onKeyChanged always calls
-    // event.preventDefault() so browser shortcuts like ctrl-Q/X/C/V don't work and
-    // text can't be typed into our clipboard textarea
     EM_ASM(
+        // we do our own keyboard event handling because glfw's onKeyChanged always calls
+        // event.preventDefault() so browser shortcuts like ctrl-Q/X/C/V don't work and
+        // text can't be typed into our clipboard textarea
         function on_key_changed(event, status) {
             var key = event.keyCode;
             // DEBUG: Module.printErr('keycode='+key+' status='+status);
@@ -224,8 +223,24 @@ static void InitEventHandlers()
         window.addEventListener('keyup', on_key_up, false);
     );
     
-    // save current settings when window is unloaded
     EM_ASM(
+        // detect exit from full screen mode
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement) _ExitFullScreen();
+        }, false);
+        document.addEventListener('msfullscreenchange', function() {
+            if (!document.msFullscreenElement) _ExitFullScreen();
+        }, false);
+        document.addEventListener('mozfullscreenchange', function() {
+            if (!document.mozFullScreen) _ExitFullScreen();
+        }, false);
+        document.addEventListener('webkitfullscreenchange', function() {
+            if (!document.webkitIsFullScreen) _ExitFullScreen();
+        }, false);
+    );
+    
+    EM_ASM(
+        // save current settings when window is unloaded
         window.addEventListener('unload', function(event) {
             _SaveLocalPrefs();
         });
@@ -282,31 +297,40 @@ static int InitGL()
 extern "C" {
 
 void ResizeCanvas() {
-    // resize canvas based on current window dimensions
-    EM_ASM(
-        var trect = document.getElementById('toolbar').getBoundingClientRect();
-        // place canvas immediately under toolbar
-        var top = trect.top + trect.height;
-        var left = trect.left;
-        var wd = window.innerWidth - left - 10;
-        var ht = window.innerHeight - top - 10;
-        if (wd < 0) wd = 0;
-        if (ht < 0) ht = 0;
-        
-        /* this causes too many problems, so fix in render.cpp!!!
-        // ensure wd and ht are integer multiples of max cell size so rendering code
-        // will draw partially visible cells at the right and bottom edges
-        if (wd % 32 > 0) wd += 32 - (wd % 32);
-        if (ht % 32 > 0) ht += 32 - (ht % 32);
-        */
-        
-        var canvas = Module['canvas'];
-        canvas.style.top = top + 'px';
-        canvas.style.left = left + 'px';
-        canvas.style.width = wd + 'px';
-        canvas.style.height = ht + 'px';
-        _SetViewport(wd, ht);               // call C routine (see below)
-    );
+    // resize canvas based on current window dimensions and fullscreen flag
+    if (fullscreen) {
+        EM_ASM(
+            var wd = window.innerWidth;
+            var ht = window.innerHeight;
+            var canvas = Module['canvas'];
+            canvas.style.top = '0px';
+            canvas.style.left = '0px';
+            canvas.style.width = wd + 'px';
+            canvas.style.height = ht + 'px';
+            canvas.width = wd;
+            canvas.height = ht;
+            _SetViewport(wd, ht);   // call C routine (see below)
+        );
+    } else {
+        EM_ASM(
+            var trect = document.getElementById('toolbar').getBoundingClientRect();
+            // place canvas immediately under toolbar
+            var top = trect.top + trect.height;
+            var left = trect.left;
+            var wd = window.innerWidth - left - 10;
+            var ht = window.innerHeight - top - 10;
+            if (wd < 0) wd = 0;
+            if (ht < 0) ht = 0;
+            var canvas = Module['canvas'];
+            canvas.style.top = top + 'px';
+            canvas.style.left = left + 'px';
+            canvas.style.width = wd + 'px';
+            canvas.style.height = ht + 'px';
+            canvas.width = wd;
+            canvas.height = ht;
+            _SetViewport(wd, ht);   // call C routine (see below)
+        );
+    }
 }
 
 } // extern "C"
@@ -317,8 +341,10 @@ extern "C" {
 
 void SetViewport(int width, int height)
 {
+    // do NOT call glfwSetWindowSize as it cancels full screen mode
+    // glfwSetWindowSize(width, height);
+    
     // ResizeCanvas has changed canvas size so we need to change OpenGL's viewport size
-    glfwSetWindowSize(width, height);
     glViewport(0, 0, width, height);
     currwd = width;
     currht = height;
@@ -796,6 +822,44 @@ void Scale1to1()
         currlayer->view->setmag(0);
         UpdateEverything();
     }
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void FullScreen()
+{
+    fullscreen = true;
+    EM_ASM( 
+        var canvas = Module['canvas'];
+        if (canvas.requestFullscreen) {
+            canvas.requestFullscreen();
+        } else if (canvas.msRequestFullscreen) {
+            canvas.msRequestFullscreen();
+        } else if (canvas.mozRequestFullScreen) {
+            canvas.mozRequestFullScreen();
+        } else if (canvas.webkitRequestFullScreen) {
+            canvas.webkitRequestFullScreen();
+            // following only works on Chrome??? (but prevents Safari going full screen!!!)
+            // canvas.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+    );
+    // no need to call ResizeCanvas here (the resize event handler calls it)
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void ExitFullScreen()
+{
+    fullscreen = false;
+    ResizeCanvas();
 }
 
 } // extern "C"
@@ -1756,7 +1820,7 @@ void OverCanvas(int entered)
 
         // remove focus from select element to avoid problem if an arrow key is pressed
         // (doesn't quite work!!! if selection is NOT changed and arrow key is hit immediately
-        // then it can cause the selection to change, as well as scroll the pattern)
+        // then it can cause the selection to change)
         EM_ASM(
             if (document.activeElement.tagName == 'SELECT') {
                 document.getElementById('patterns').focus();

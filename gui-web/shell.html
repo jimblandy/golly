@@ -378,7 +378,7 @@
             textdiv.style.height = ht + 'px';
         };
         
-        window.addEventListener('resize', function resize_canvas() {
+        window.addEventListener('resize', function() {
             _ResizeCanvas();
             resize_statusbar();
             resize_patterndir();
@@ -1055,7 +1055,6 @@
                     </li>
                     <li class="menu" onmouseover="showMenu(this,true)" onmouseout="showMenu(this,false)" id="View_menu">View
                         <ul>
-                            <li class="item_normal" onclick="itemClick(this)" id="view_fullscreen">Full Screen</li>
                             <li class="item_normal" onclick="itemClick(this)" id="view_fitp">Fit Pattern</li>
                             <li class="item_normal" onclick="itemClick(this)" id="view_fits">Fit Selection</li>
                             <li class="item_normal" onclick="itemClick(this)" id="view_middle">Middle</li>
@@ -1130,6 +1129,8 @@
                             title="Zoom out"><img class="imgbutton" src="images/zoomout.png"></button>
                     <button type="button" id="scale1to1" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Set scale to 1 cell = 1 pixel"><img class="imgbutton" src="images/scale1to1.png"></button>
+                    <button type="button" id="full" onclick="Module.buttonPress(this)" class="imgbutton"
+                            title="Full screen"><img class="imgbutton" src="images/full.png"></button>
                     &nbsp;&nbsp;
                     <button type="button" id="info" onclick="Module.buttonPress(this)" class="imgbutton"
                             title="Show pattern information"><img class="imgbutton" id="imginfo" src="images/info.png"></button>
@@ -1189,6 +1190,7 @@
                 if (button.id == 'zoomOut') _ZoomOut();
                 if (button.id == 'zoomIn') _ZoomIn();
                 if (button.id == 'scale1to1') _Scale1to1();
+                if (button.id == 'full') _FullScreen();
                 if (button.id == 'info') _Info();
                 if (button.id == 'help') _Help();
                 if (button.id == 'paste') _Paste();
