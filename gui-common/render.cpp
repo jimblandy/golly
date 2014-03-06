@@ -622,9 +622,21 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
                     glDrawArrays(GL_POINTS, 0, numcoords/2);
                     numcoords = 0;
                 }
-                // store mid point of cell
-                points[numcoords++] = XCOORD(x + col*pmscale + cellsize/2.0);
-                points[numcoords++] = YCOORD(y + row*pmscale + cellsize/2.0);
+                // get mid point of cell
+                GLfloat midx = XCOORD(x + col*pmscale + cellsize/2.0);
+                GLfloat midy = YCOORD(y + row*pmscale + cellsize/2.0);
+                #ifdef WEB_GUI
+                    if (midx > 1.0 || midy < -1.0)
+                #else
+                    if (midx > float(currwd) || midy > float(currht))
+                #endif
+                {   // midx,midy is outside viewport so we need to use FillRect to see partially
+                    // visible cell at right/bottom edge
+                    FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
+                } else {
+                    points[numcoords++] = midx;
+                    points[numcoords++] = midy;
+                }
             }
         }
     }
@@ -676,8 +688,24 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
                     numcoords[state] = 0;
                 }
-                points[state][numcoords[state]++] = XCOORD(x + col*pmscale + cellsize/2.0);
-                points[state][numcoords[state]++] = YCOORD(y + row*pmscale + cellsize/2.0);
+                // get mid point of cell
+                GLfloat midx = XCOORD(x + col*pmscale + cellsize/2.0);
+                GLfloat midy = YCOORD(y + row*pmscale + cellsize/2.0);
+                #ifdef WEB_GUI
+                    if (midx > 1.0 || midy < -1.0)
+                #else
+                    if (midx > float(currwd) || midy > float(currht))
+                #endif
+                {   // midx,midy is outside viewport so we need to use FillRect to see partially
+                    // visible cell at right/bottom edge
+                    SetColor(currlayer->cellr[state],
+                             currlayer->cellg[state],
+                             currlayer->cellb[state], 255);
+                    FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
+                } else {
+                    points[state][numcoords[state]++] = midx;
+                    points[state][numcoords[state]++] = midy;
+                }
             }
         }
     }
@@ -1122,10 +1150,8 @@ void DrawGridLines(int wd, int ht)
                  b + 32 < 256 ? b + 32 : 255, 255);
     }
 
-    // draw all plain lines first
-
+    // draw all plain lines first;
     // note that we need to subtract 0.5 from each coordinate to avoid uneven spacing
-    // and get same result on iOS Simulator (non Retina) and iPad with Retina
 
     i = showboldlines ? topbold : 1;
     v = 0;
@@ -1134,13 +1160,15 @@ void DrawGridLines(int wd, int ht)
         if (v >= ht) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0 && v >= 0 && v < ht) {
-            GLfloat points[] = { XCOORD(  -0.5), YCOORD(v-0.5),
-                                 XCOORD(wd-0.5), YCOORD(v-0.5) };
             #ifdef WEB_GUI
+                GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
+                                     XCOORD(wd),   YCOORD(v-0.5) };
                 glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
                 glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                 glEnableVertexAttribArray(positionLoc);
             #else
+                GLfloat points[] = {   -0.5, v-0.5,
+                                     wd-0.5, v-0.5 };
                 glVertexPointer(2, GL_FLOAT, 0, points);
             #endif
             glDrawArrays(GL_LINES, 0, 2);
@@ -1153,13 +1181,15 @@ void DrawGridLines(int wd, int ht)
         if (h >= wd) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0 && h >= 0 && h < wd) {
-            GLfloat points[] = { XCOORD(h-0.5), YCOORD(  -0.5),
-                                 XCOORD(h-0.5), YCOORD(ht-0.5) };
             #ifdef WEB_GUI
+                GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
+                                     XCOORD(h-0.5), YCOORD(ht) };
                 glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
                 glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                 glEnableVertexAttribArray(positionLoc);
             #else
+                GLfloat points[] = { h-0.5,   -0.5,
+                                     h-0.5, ht-0.5 };
                 glVertexPointer(2, GL_FLOAT, 0, points);
             #endif
             glDrawArrays(GL_LINES, 0, 2);
@@ -1187,13 +1217,15 @@ void DrawGridLines(int wd, int ht)
             if (v >= ht) break;
             i++;
             if (i % boldspacing == 0 && v >= 0 && v < ht) {
-                GLfloat points[] = { XCOORD(  -0.5), YCOORD(v-0.5),
-                                     XCOORD(wd-0.5), YCOORD(v-0.5) };
                 #ifdef WEB_GUI
+                    GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
+                                         XCOORD(wd),   YCOORD(v-0.5) };
                     glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
                     glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                     glEnableVertexAttribArray(positionLoc);
                 #else
+                    GLfloat points[] = {   -0.5, v-0.5,
+                                         wd-0.5, v-0.5 };
                     glVertexPointer(2, GL_FLOAT, 0, points);
                 #endif
                 glDrawArrays(GL_LINES, 0, 2);
@@ -1206,13 +1238,15 @@ void DrawGridLines(int wd, int ht)
             if (h >= wd) break;
             i++;
             if (i % boldspacing == 0 && h >= 0 && h < wd) {
-                GLfloat points[] = { XCOORD(h-0.5), YCOORD(  -0.5),
-                                     XCOORD(h-0.5), YCOORD(ht-0.5) };
                 #ifdef WEB_GUI
+                    GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
+                                         XCOORD(h-0.5), YCOORD(ht) };
                     glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
                     glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                     glEnableVertexAttribArray(positionLoc);
                 #else
+                    GLfloat points[] = { h-0.5,   -0.5,
+                                         h-0.5, ht-0.5 };
                     glVertexPointer(2, GL_FLOAT, 0, points);
                 #endif
                 glDrawArrays(GL_LINES, 0, 2);
