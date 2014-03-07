@@ -361,21 +361,8 @@ void SetViewport(int width, int height)
 
 // -----------------------------------------------------------------------------
 
-static void InitElements()
+static void InitClipboard()
 {
-    // the following element ids must match those in shell.html
-    
-    if (showicons) {
-        EM_ASM( document.getElementById('toggle_icons').checked = true; );
-    } else {
-        EM_ASM( document.getElementById('toggle_icons').checked = false; );
-    }
-    if (currlayer->autofit) {
-        EM_ASM( document.getElementById('toggle_autofit').checked = true; );
-    } else {
-        EM_ASM( document.getElementById('toggle_autofit').checked = false; );
-    }
-
     // initialize clipboard data to a simple RLE pattern
     EM_ASM(
         document.getElementById('cliptext').value =
@@ -1758,8 +1745,15 @@ static void OnMouseClick(int button, int action)
             return;
         }
         
+        bool was_auto_fit = currlayer->autofit;
+        
         TouchBegan(x, y);
         mouse_down = true;
+        
+        // TouchBegan might have called TestAutoFit and turned off currlayer->autofit,
+        // in which case we need to update the check box
+        if (was_auto_fit && !currlayer->autofit) UpdateEditBar();
+        
     
     } else if (action == GLFW_RELEASE) {
         if (mouse_down) TouchEnded();
@@ -1900,8 +1894,8 @@ int EMSCRIPTEN_KEEPALIVE main()
     NewPattern();               // create new, empty universe
     UpdateStatus();             // show initial message
 
-    InitElements();             // initialize checkboxes and other document elements
-    UpdateEditBar();            // initialize drawing state and disable some buttons
+    InitClipboard();            // initialize clipboard data
+    UpdateEditBar();            // initialize buttons, drawing state, and check boxes
 
     if (InitGL() == GL_TRUE) {
         ResizeCanvas();
