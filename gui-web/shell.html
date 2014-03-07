@@ -417,15 +417,14 @@
             if (!t.href) {
                 t = t.parentNode;   // handles cases like <a ...><b>link</b></a>
             }
-            var handled = 0;
             if (t.href) {
                 var rawhref = t.getAttribute('href');
-                // DEBUG: Module.printErr(rawhref);
                 doclick = Module.cwrap('DoHelpClick', 'int', ['string']);
-                handled = doclick(rawhref);
-            }
-            if (handled == 1) {
-                event.preventDefault();     // prevent browser handling this link
+                if (doclick(rawhref) == 0) {
+                    // not a special Golly link so open link in new tab/window
+                    window.open(t.href);
+                }
+                event.preventDefault();     // prevent browser doing anything more
                 return false;
             }
         };
