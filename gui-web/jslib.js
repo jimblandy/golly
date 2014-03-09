@@ -160,6 +160,32 @@ jsTickMenuItem: function(id, tick) {
 
 // -----------------------------------------------------------------------------
 
+jsSetInputValue: function(id, num) {
+    document.getElementById(Pointer_stringify(id)).value = num.toString();
+},
+
+// -----------------------------------------------------------------------------
+
+jsGetInputValue: function(id) {
+    var num = parseInt(document.getElementById(Pointer_stringify(id)).value, 10);
+    if (isNaN(num)) return -1;
+    return num;
+},
+
+// -----------------------------------------------------------------------------
+
+jsSetCheckBox: function(id, flag) {
+    document.getElementById(Pointer_stringify(id)).checked = flag;
+},
+
+// -----------------------------------------------------------------------------
+
+jsGetCheckBox: function(id) {
+    return document.getElementById(Pointer_stringify(id)).checked;
+},
+
+// -----------------------------------------------------------------------------
+
 jsSetInnerHTML: function(id, text) {
     document.getElementById(Pointer_stringify(id)).innerHTML = Pointer_stringify(text);
 },

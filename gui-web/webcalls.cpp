@@ -58,6 +58,7 @@ extern "C" {
     extern void jsEnableButton(const char* id, bool enable);
     extern void jsEnableImgButton(const char* id, bool enable);
     extern void jsSetInnerHTML(const char* id, const char* text);
+    extern void jsSetCheckBox(const char* id, bool flag);
     extern void jsMoveToAnchor(const char* anchor);
     extern void jsSetScrollTop(const char* id, int pos);
     extern int jsGetScrollTop(const char* id);
@@ -160,23 +161,6 @@ void UpdateButtons()
 
 // -----------------------------------------------------------------------------
 
-static void UpdateCheckBoxes()
-{
-    if (showicons) {
-        EM_ASM( document.getElementById('toggle_icons').checked = true; );
-    } else {
-        EM_ASM( document.getElementById('toggle_icons').checked = false; );
-    }
-
-    if (currlayer->autofit) {
-        EM_ASM( document.getElementById('toggle_autofit').checked = true; );
-    } else {
-        EM_ASM( document.getElementById('toggle_autofit').checked = false; );
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void UpdateEditBar()
 {
     if (currlayer->drawingstate >= currlayer->algo->NumCellStates()) {
@@ -194,7 +178,9 @@ void UpdateEditBar()
     // show current drawing state and update number of options if necessary
     jsSetState(currlayer->drawingstate, currlayer->algo->NumCellStates());
 
-    UpdateCheckBoxes();
+    // update check boxes
+    jsSetCheckBox("toggle_icons", showicons);
+    jsSetCheckBox("toggle_autofit", currlayer->autofit);
 }
 
 // -----------------------------------------------------------------------------

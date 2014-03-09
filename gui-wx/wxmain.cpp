@@ -1336,7 +1336,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
     
     int id = event.GetId();
     switch (id) {
-            // File menu
+        // File menu
         case wxID_NEW:          NewPattern(); break;
         case wxID_OPEN:         OpenPattern(); break;
         case ID_OPEN_CLIP:      OpenClipboard(); break;
@@ -1351,7 +1351,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case wxID_PREFERENCES:  ShowPrefsDialog(); break;
         case wxID_EXIT:         QuitApp(); break;
             
-            // Edit menu
+        // Edit menu
         case ID_UNDO:           currlayer->undoredo->UndoChange(); break;
         case ID_REDO:           currlayer->undoredo->RedoChange(); break;
         case ID_NO_UNDO:        ToggleAllowUndo(); break;
@@ -1386,15 +1386,15 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_ZOOMIN:         viewptr->SetCursorMode(curs_zoomin); break;
         case ID_ZOOMOUT:        viewptr->SetCursorMode(curs_zoomout); break;
             
-            // Control menu
+        // Control menu
         case ID_START:          if (inscript || generating) {
-            Stop();
-        } else if (TimelineExists()) {
-            PlayTimeline(1);
-        } else {
-            GeneratePattern();
-        }
-            break;
+                                    Stop();
+                                } else if (TimelineExists()) {
+                                    PlayTimeline(1);
+                                } else {
+                                    GeneratePattern();
+                                }
+                                break;
         case ID_NEXT:           NextGeneration(false); break;
         case ID_STEP:           NextGeneration(true); break;
         case ID_RESET:          ResetPattern(); break;
@@ -1410,7 +1410,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_CONVERT:        ConvertOldRules(); break;
         case ID_SETRULE:        ShowRuleDialog(); break;
             
-            // View menu
+        // View menu
         case ID_FULL:           ToggleFullScreen(); break;
         case ID_FIT:            viewptr->FitPattern(); break;
         case ID_FIT_SEL:        viewptr->FitSelection(); break;
@@ -1437,7 +1437,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_TIMELINE:       ToggleTimelineBar(); break;
         case ID_INFO:           ShowPatternInfo(); break;
             
-            // Layer menu
+        // Layer menu
         case ID_ADD_LAYER:      AddLayer(); break;
         case ID_CLONE:          CloneLayer(); break;
         case ID_DUPLICATE:      DuplicateLayer(); break;
@@ -1451,7 +1451,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_STACK:          ToggleStackLayers(); break;
         case ID_TILE:           ToggleTileLayers(); break;
             
-            // Help menu
+        // Help menu
         case ID_HELP_INDEX:     ShowHelp(_("Help/index.html")); break;
         case ID_HELP_INTRO:     ShowHelp(_("Help/intro.html")); break;
         case ID_HELP_TIPS:      ShowHelp(_("Help/tips.html")); break;
@@ -1477,7 +1477,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_HELP_BUTT:      ShowHelp(wxEmptyString); break;
         case wxID_ABOUT:        ShowAboutBox(); break;
             
-            // Open/Run Recent submenus
+        // Open/Run Recent submenus
         case ID_CLEAR_MISSING_PATTERNS:  ClearMissingPatterns(); break;
         case ID_CLEAR_ALL_PATTERNS:      ClearAllPatterns(); break;
         case ID_CLEAR_MISSING_SCRIPTS:   ClearMissingScripts(); break;

@@ -62,6 +62,10 @@ extern "C" {
     extern int jsElementIsVisible(const char* id);
     extern void jsEnableImgButton(const char* id, bool enable);
     extern void jsTickMenuItem(const char* id, bool tick);
+    extern void jsSetInputValue(const char* id, int num);
+    extern int jsGetInputValue(const char* id);
+    extern void jsSetCheckBox(const char* id, bool flag);
+    extern bool jsGetCheckBox(const char* id);
     extern void jsSetInnerHTML(const char* id, const char* text);
     extern void jsShowSaveDialog(const char* filename, const char* extensions);
     extern void jsSaveFile(const char* filename);
@@ -931,12 +935,76 @@ void Help()
 
 static void OpenPrefs()
 {
-    //!!! show a modal dialog that lets user change various settings???
-    Warning("Preferences dialog is not yet implemented!!!");
+    // show a modal dialog that lets user change various settings
+    EM_ASM( document.getElementById('prefs_overlay').style.visibility = 'visible'; );
     
-    // call this if user hits Save button???!!!
-    SaveLocalPrefs();
+    // show current settings
+    jsSetInputValue("random_fill", randomfill);
+    jsSetInputValue("max_hash", maxhashmem);
+    jsSetCheckBox("toggle_beep", allowbeep);
+    
+    // select random fill percentage (the most likely setting to change)
+    EM_ASM(
+        var randfill = document.getElementById('random_fill');
+        randfill.select();
+        randfill.focus();
+    );
 }
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void CancelPrefs()
+{
+    // ignore any changes to the current settings and close the prefs dialog
+    EM_ASM( document.getElementById('prefs_overlay').style.visibility = 'hidden'; );
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
+extern "C" {
+
+void StorePrefs()
+{
+    // get and validate settings
+    int newrandfill = jsGetInputValue("random_fill");
+    if (newrandfill < 1 || newrandfill > 100) {
+        Warning("Random fill percentage must be an integer from 1 to 100.");
+        return;
+    }
+    
+    int newmaxhash = jsGetInputValue("max_hash");
+    if (newmaxhash < MIN_MEM_MB || newmaxhash > MAX_MEM_MB) {
+        char msg[128];
+        sprintf(msg, "Maximum hash memory must be an integer from %d to %d.", MIN_MEM_MB, MAX_MEM_MB);
+        Warning(msg);
+        return;
+    }
+
+    allowbeep = jsGetCheckBox("toggle_beep");
+    
+    // all settings are valid
+    randomfill = newrandfill;
+    if (maxhashmem != newmaxhash) {
+        // need to call setMaxMemory if maxhashmem changed
+        maxhashmem = newmaxhash;
+        for (int i = 0; i < numlayers; i++) {
+            Layer* layer = GetLayer(i);
+            if (algoinfo[layer->algtype]->canhash) {
+                layer->algo->setMaxMemory(maxhashmem);
+            }
+            // non-hashing algos (QuickLife) use their default memory setting
+        }
+    }
+    
+    CancelPrefs();      // close the prefs dialog
+    SaveLocalPrefs();   // remember settings in local storage
+}
+
+} // extern "C"
 
 // -----------------------------------------------------------------------------
 
@@ -1589,9 +1657,12 @@ int OnKeyChanged(int keycode, int action)
         return 0;
     }
     
-    // check if the open/save/info/help dialog is visible
-    if (jsElementIsVisible("open_overlay") || jsElementIsVisible("save_overlay") ||
-        jsElementIsVisible("info_overlay") || jsElementIsVisible("help_overlay") ) {
+    // check if a modal dialog is visible
+    if (jsElementIsVisible("open_overlay") ||
+        jsElementIsVisible("save_overlay") ||
+        jsElementIsVisible("prefs_overlay") ||
+        jsElementIsVisible("info_overlay") ||
+        jsElementIsVisible("help_overlay") ) {
         if (action == GLFW_PRESS && (key == 13 || key == 27)) {
             // return key or escape key closes dialog
             if (jsElementIsVisible("open_overlay")) {
@@ -1602,10 +1673,16 @@ int OnKeyChanged(int keycode, int action)
                 } else {
                     CancelSave();
                 }
+            } else if (jsElementIsVisible("prefs_overlay")) {
+                if (key == 13) {
+                    StorePrefs();
+                } else {
+                    CancelPrefs();
+                }
             } else if (jsElementIsVisible("info_overlay")) {
-                // info dialog can be on top of help dialog, so test this first
                 EM_ASM( _CloseInfo(); );
-            } else {
+            } else if (jsElementIsVisible("help_overlay")) {
+                // some of the above dialogs can be on top of help dialog, so test this last
                 EM_ASM( _CloseHelp(); );
             }
             return 1;   // call preventDefault
