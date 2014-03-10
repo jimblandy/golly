@@ -496,9 +496,12 @@
 
     <div id="prefs_overlay">
         <div id="prefs_dialog">
-            <div style="margin-top:10px;">Random fill percentage: <input id="random_fill" style="width:30px;"></input> </div>
-            <div style="margin-top:10px;">Maximum hash memory (MB): <input id="max_hash" style="width:30px;"></input> </div>
-            <div style="margin-top:10px;">Play beep sound: <input type="checkbox" id="toggle_beep"> </div>
+            <div class="vspace"></div>
+            <center><table cellspacing=10 cellpadding=0>
+            <tr><td align="right">Random fill percentage:</td><td align="left"><input id="random_fill" style="width:30px;"></input></td></tr>
+            <tr><td align="right">Maximum hash memory:</td><td align="left"><input id="max_hash" style="width:30px;"></input> MB</td></tr>
+            <tr><td align="right">Play beep sound:</td><td align="left"><input type="checkbox" id="toggle_beep"></td></tr>
+            </table></center>
             <div style="height:40px;">
                 <button type="button" style="float:left; margin-left:10px; margin-top:10px;" onclick="_CancelPrefs()">Cancel</button>
                 <button type="button" style="float:right; margin-right:10px; margin-top:10px;" onclick="_StorePrefs()">Save</button>

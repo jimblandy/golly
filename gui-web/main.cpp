@@ -1182,7 +1182,7 @@ void StateChanged(int index)
 
 /* enable next 2 routines if we provide keyboard shortcuts for them!!!
 
-void DecState()
+static void DecState()
 {
     if (currlayer->drawingstate > 0) {
         currlayer->drawingstate--;
@@ -1192,7 +1192,7 @@ void DecState()
 
 // -----------------------------------------------------------------------------
 
-void IncState()
+static void IncState()
 {
     if (currlayer->drawingstate < currlayer->algo->NumCellStates() - 1) {
         currlayer->drawingstate++;
@@ -1228,12 +1228,34 @@ static void ToggleCursorMode()
 
 // -----------------------------------------------------------------------------
 
-void SetRule()
+static void SetRule()
 {
     StopIfGenerating();
     std::string newrule = jsSetRule(currlayer->algo->getrule());
     // newrule is empty if given rule was invalid
     if (newrule.length() > 0) ChangeRule(newrule);
+}
+
+// -----------------------------------------------------------------------------
+
+static void FlipPasteOrSelection(bool direction)
+{
+    if (waitingforpaste) {
+        FlipPastePattern(direction);
+    } else if (SelectionExists()) {
+        FlipSelection(direction);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static void RotatePasteOrSelection(bool direction)
+{
+    if (waitingforpaste) {
+        RotatePastePattern(direction);
+    } else if (SelectionExists()) {
+        RotateSelection(direction);
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1276,8 +1298,7 @@ void SelectionAction(int item)
     EM_ASM( document.getElementById('selectionmenu').style.visibility = 'hidden'; );
     selection_menu_visible = false;
 
-    if (generating && item >= 1 && item <= 13 &&
-        item != 2 && item != 5 && item != 6) {
+    if (generating && item >= 1 && item <= 13 && item != 2 && item != 5 && item != 6) {
         // temporarily stop generating for all actions except Remove, Copy, Shrink, Fit
         PauseGenerating();
     }
@@ -1570,6 +1591,8 @@ static int TranslateKey(int keycode)
         case 173 : return '-';          // Firefox (Mac)
         case 189 : return '-';          // Chrome and Safari (Mac)
         case 187 : return '=';          // Chrome and Safari (Mac)
+        case 188 : return '<';          // Firefox, Chrome and Safari (Mac)
+        case 190 : return '>';          // Firefox, Chrome and Safari (Mac)
         
         case 0x09: return 295 ; //DOM_VK_TAB -> GLFW_KEY_TAB
         // GLFW_KEY_ESC is not 255???!!! case 0x1B: return 255 ; //DOM_VK_ESCAPE -> GLFW_KEY_ESC
@@ -1763,6 +1786,10 @@ int OnKeyChanged(int keycode, int action)
         case 't' : ToggleAutoFit(); break;
         case 'v' : Paste(); break;
         case 'V' : CancelPaste(); break;
+        case 'x' : FlipPasteOrSelection(false); break;
+        case 'y' : FlipPasteOrSelection(true); break;
+        case '<' : RotatePasteOrSelection(false); break;
+        case '>' : RotatePasteOrSelection(true); break;
         case 'z' : Undo(); break;
         case 'Z' : Redo(); break;
     }
