@@ -342,7 +342,10 @@ bool GollyApp::OnInit()
     
     wxString banner = _("This is Golly version ");
     banner +=         _(STRINGIFY(VERSION)); 
-    banner +=         _(".  Copyright 2013 The Golly Gang.");
+    banner +=         _(".  Copyright 2014 The Golly Gang.");
+    if (debuglevel == 99) {
+        banner += _("  *** debuglevel is 99 ***");
+    }
     statusptr->SetMessage(banner);
     
     mainptr->NewPattern();

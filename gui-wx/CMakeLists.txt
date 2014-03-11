@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 project( golly )
 
-set( APP_VERSION 2.6 )
+set( APP_VERSION 2.7b1 )
 
 if(APPLE OR WIN32)
    # app names are usually capitalized on Mac OS X and Windows

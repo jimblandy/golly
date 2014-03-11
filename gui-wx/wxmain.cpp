@@ -1326,6 +1326,16 @@ END_EVENT_TABLE()
 
 void MainFrame::OnMenu(wxCommandEvent& event)
 {
+    if (debuglevel == 99 && insideYield) {
+        if (generating || viewptr->waitingforclick) {
+            // ignore this case (frequent and expected because Yield() is called in
+            // a tight loop while generating a pattern or doing a paste)
+        } else {
+            // this is *possibly* an unwanted re-entrancy
+            wxBell();   // ignore allowbeep
+        }
+    }
+
     showbanner = false;
     if (keepmessage) {
         // don't clear message created by script while generating a pattern

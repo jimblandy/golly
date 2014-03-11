@@ -2518,6 +2518,16 @@ void PatternView::OnChar(wxKeyEvent& event)
     // get translated keyboard event
     int key = event.GetKeyCode();
     int mods = event.GetModifiers();
+
+    if (debuglevel == 99 && insideYield) {
+        if (mainptr->generating || waitingforclick) {
+            // ignore this case (frequent and expected because Yield() is called in
+            // a tight loop while generating a pattern or doing a paste)
+        } else {
+            // this is *possibly* an unwanted re-entrancy
+            wxBell();   // ignore allowbeep
+        }
+    }
     
     if (debuglevel == 1) {
         debugkey += wxString::Format(_("\nOnChar: key=%d (%c) mods=%d"),
