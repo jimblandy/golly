@@ -43,7 +43,7 @@
 #include "undo.h"       // for currlayer->undoredo->...
 #include "render.h"     // for InitOGLES2, DrawPattern
 
-#include "webcalls.h"   // for UpdateStatus, refresh_pattern, etc
+#include "webcalls.h"   // for refresh_pattern, UpdateStatus, PatternSaved, etc
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -173,6 +173,17 @@ void SaveLocalPrefs()
 
 // -----------------------------------------------------------------------------
 
+extern "C" {
+
+bool UnsavedChanges()
+{
+    return (currlayer && currlayer->dirty && asktosave);
+}
+
+} // extern "C"
+
+// -----------------------------------------------------------------------------
+
 static void InitEventHandlers()
 {
     EM_ASM(
@@ -242,10 +253,15 @@ static void InitEventHandlers()
             if (!document.webkitIsFullScreen) _ExitFullScreen();
         }, false);
     );
-    
+
     EM_ASM(
+        // give user the option to save any changes
+        window.onbeforeunload = function() {
+            if (_UnsavedChanges()) return 'You have unsaved changes.';
+        };
+        
         // save current settings when window is unloaded
-        window.addEventListener('unload', function(event) {
+        window.addEventListener('unload', function() {
             _SaveLocalPrefs();
         });
     );
@@ -393,6 +409,8 @@ static void UpdateCursorImage()
         EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_move.png) 7 7, auto'; );
         return;
     }
+    
+    if (!currlayer) return;     // in case this routine is called very early
     
     if (currlayer->touchmode == drawmode) {
         EM_ASM( Module['canvas'].style.cursor = 'url(images/cursor_draw.png) 4 15, auto'; );
@@ -566,40 +584,10 @@ extern "C" {
 
 void SaveFile(const char* filename)
 {
-    // append default extension if not supplied
     std::string fname = filename;
-    size_t dotpos = fname.find('.');
-    if (dotpos == std::string::npos) {
-        if (currlayer->algo->hyperCapable()) {
-            // macrocell format is best for hash-based algos
-            fname += ".mc";
-        } else {
-            fname += ".rle";
-        }
-    } else {
-        // check that the supplied extension is valid
-        if (currlayer->algo->hyperCapable()) {
-            if (!EndsWith(fname,".mc") && !EndsWith(fname,".mc.gz") &&
-                !EndsWith(fname,".rle") && !EndsWith(fname,".rle.gz")) {
-                Warning("File extension must be .mc or .mc.gz or .rle or .rle.gz.");
-                return;
-            }
-        } else {
-            if (!EndsWith(fname,".rle") && !EndsWith(fname,".rle.gz")) {
-                Warning("File extension must be .rle or .rle.gz.");
-                return;
-            }
-        }
-    }
-    
-    pattern_format format = XRLE_format;
-    if (EndsWith(fname,".mc") || EndsWith(fname,".mc.gz")) format = MC_format;
-    
-    output_compression compression = no_compression;
-    if (EndsWith(fname,".gz")) compression = gzip_compression;
-    
-    if (SavePattern(fname, format, compression)) {
-        CancelSave();
+    // PatternSaved will append default extension if not supplied
+    if (PatternSaved(fname)) {
+        CancelSave();           // close dialog
         UpdateStatus();
         // fname successfully created, so download it to user's computer
         jsSaveFile(fname.c_str());
@@ -941,6 +929,7 @@ static void OpenPrefs()
     // show current settings
     jsSetInputValue("random_fill", randomfill);
     jsSetInputValue("max_hash", maxhashmem);
+    jsSetCheckBox("ask_to_save", asktosave);
     jsSetCheckBox("toggle_beep", allowbeep);
     
     // select random fill percentage (the most likely setting to change)
@@ -983,8 +972,6 @@ void StorePrefs()
         Warning(msg);
         return;
     }
-
-    allowbeep = jsGetCheckBox("toggle_beep");
     
     // all settings are valid
     randomfill = newrandfill;
@@ -999,6 +986,9 @@ void StorePrefs()
             // non-hashing algos (QuickLife) use their default memory setting
         }
     }
+
+    asktosave = jsGetCheckBox("ask_to_save");
+    allowbeep = jsGetCheckBox("toggle_beep");
     
     CancelPrefs();      // close the prefs dialog
     SaveLocalPrefs();   // remember settings in local storage
@@ -1232,7 +1222,7 @@ static void SetRule()
 {
     StopIfGenerating();
     std::string newrule = jsSetRule(currlayer->algo->getrule());
-    // newrule is empty if given rule was invalid
+    // newrule is empty if user hit Cancel
     if (newrule.length() > 0) ChangeRule(newrule);
 }
 

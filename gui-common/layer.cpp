@@ -664,8 +664,7 @@ void DeleteLayer()
     if (generating) Warning("Bug detected in DeleteLayer!");
 
     // note that we don't need to ask to delete a clone
-    if (currlayer->dirty && currlayer->cloneid == 0 &&
-        askondelete && !SaveCurrentLayer()) return;
+    if (currlayer->dirty && currlayer->cloneid == 0 && asktosave && !SaveCurrentLayer()) return;
 
     // numlayers > 1
     if (tilelayers) DestroyTiles();
@@ -826,7 +825,7 @@ void DeleteOtherLayers()
     if (inscript || numlayers <= 1) return;
 
     /*!!!
-    if (askondelete) {
+    if (asktosave) {
         // keep track of which unique clones have been seen;
         // we add 1 below to allow for cloneseen[0] (always false)
         const int maxseen = MAX_LAYERS/2 + 1;
@@ -848,7 +847,7 @@ void DeleteOtherLayers()
                     bool oldgen = mainptr->generating;
                     mainptr->generating = false;
                     SetLayer(i);
-                    if (!mainptr->SaveCurrentLayer()) {
+                    if (!SaveCurrentLayer()) {
                         // user hit Cancel so restore current layer and generating flag
                         SetLayer(oldindex);
                         mainptr->generating = oldgen;

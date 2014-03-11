@@ -89,6 +89,21 @@ void SetPatternTitle(const char* filename)
 
 // -----------------------------------------------------------------------------
 
+bool SaveCurrentLayer()
+{
+    if (currlayer->algo->isEmpty()) return true;    // no need to save empty universe
+
+#ifdef WEB_GUI
+    // show a modal dialog that lets user save their changes
+    return WebSaveChanges();
+#else
+    // currently ignored in Android and iOS versions
+    return true;    
+#endif
+}
+
+// -----------------------------------------------------------------------------
+
 void CreateUniverse()
 {
     // save current rule
@@ -112,7 +127,7 @@ void NewPattern(const char* title)
 {
     if (generating) Warning("Bug detected in NewPattern!");
 
-    //!!! if (askonnew && currlayer->dirty && !SaveCurrentLayer()) return;
+    if (currlayer->dirty && asktosave && !SaveCurrentLayer()) return;
 
     currlayer->savestart = false;
     currlayer->currfile.clear();
@@ -163,7 +178,7 @@ bool LoadPattern(const char* path, const char* newtitle)
 
     // newtitle is only empty if called from ResetPattern/RestorePattern
     if (newtitle[0] != 0) {
-        //!!! if (askonload && currlayer->dirty && !SaveCurrentLayer()) return false;
+        if (currlayer->dirty && asktosave && !SaveCurrentLayer()) return false;
 
         currlayer->savestart = false;
         currlayer->currfile = path;

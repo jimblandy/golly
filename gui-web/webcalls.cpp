@@ -72,6 +72,8 @@ extern "C" {
     extern void jsEndProgress();
     extern void jsCancelProgress();
     extern void jsStoreRule(const char* rulepath);
+    extern const char* jsGetSaveName(const char* currname);
+    extern void jsSaveFile(const char* filename);
 }
 
 // -----------------------------------------------------------------------------
@@ -643,6 +645,78 @@ bool WebGetTextFromClipboard(std::string& text)
         ErrorMessage("There is no text in the clipboard.");
         return false;
     } else {
+        return true;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+bool PatternSaved(std::string& filename)
+{
+    // append default extension if not supplied
+    size_t dotpos = filename.find('.');
+    if (dotpos == std::string::npos) {
+        if (currlayer->algo->hyperCapable()) {
+            // macrocell format is best for hash-based algos
+            filename += ".mc";
+        } else {
+            filename += ".rle";
+        }
+    } else {
+        // check that the supplied extension is valid
+        if (currlayer->algo->hyperCapable()) {
+            if (!EndsWith(filename,".mc") && !EndsWith(filename,".mc.gz") &&
+                !EndsWith(filename,".rle") && !EndsWith(filename,".rle.gz")) {
+                Warning("File extension must be .mc or .mc.gz or .rle or .rle.gz.");
+                return false;
+            }
+        } else {
+            if (!EndsWith(filename,".rle") && !EndsWith(filename,".rle.gz")) {
+                Warning("File extension must be .rle or .rle.gz.");
+                return false;
+            }
+        }
+    }
+    
+    pattern_format format = XRLE_format;
+    if (EndsWith(filename,".mc") || EndsWith(filename,".mc.gz")) format = MC_format;
+    
+    output_compression compression = no_compression;
+    if (EndsWith(filename,".gz")) compression = gzip_compression;
+
+    return SavePattern(filename, format, compression);
+}
+
+// -----------------------------------------------------------------------------
+
+bool WebSaveChanges()
+{
+    std::string query = "Save your changes?";
+    if (numlayers > 1) {
+        // make it clear which layer we're asking about
+        query = "Save your changes to this layer: \"",
+        query += currlayer->currname;
+        query += "\"?";
+    }
+    if (jsConfirm(query.c_str())) {
+        // prompt user for name of file in which to save pattern
+        // (must be a blocking dialog so we can't use our custom save dialog)
+        std::string filename = jsGetSaveName(currlayer->currname.c_str());
+        
+        // filename is empty if user hit Cancel, so don't continue
+        if (filename.length() == 0) return false;
+        
+        if (PatternSaved(filename)) {
+            ClearMessage();
+            // filename successfully created (in virtual file system),
+            // so download it to user's computer and continue
+            jsSaveFile(filename.c_str());
+            return true;
+        } else {
+            return false;   // don't continue
+        }
+    } else {
+        // user hit Cancel so don't save changes (but continue)
         return true;
     }
 }

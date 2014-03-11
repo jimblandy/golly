@@ -32,9 +32,10 @@
 // Routines for opening, saving, unzipping, downloading files:
 
 void NewPattern(const char* title = "untitled");
-void SetPatternTitle(const char* filename);
-void CreateUniverse();
 bool LoadPattern(const char* path, const char* newtitle);
+void SetPatternTitle(const char* filename);
+bool SaveCurrentLayer();
+void CreateUniverse();
 void OpenFile(const char* path, bool remember = true);
 bool CopyTextToClipboard(const char* text);
 bool GetTextFromClipboard(std::string& text);

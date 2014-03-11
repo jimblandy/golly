@@ -99,10 +99,7 @@ bool syncviews = false;             // synchronize viewports?
 bool syncmodes = true;              // synchronize touch modes?
 bool stacklayers = false;           // stack all layers?
 bool tilelayers = false;            // tile all layers?
-bool askonnew = true;               // ask to save changes before creating new pattern?
-bool askonload = true;              // ask to save changes before loading pattern file?
-bool askondelete = true;            // ask to save changes before deleting layer?
-bool askonquit = true;              // ask to save changes before quitting app?
+bool asktosave = true;              // ask to save changes?
 int newmag = 5;                     // mag setting for new pattern
 bool newremovesel = true;           // new pattern removes selection?
 bool openremovesel = true;          // opening pattern removes selection?
@@ -254,10 +251,7 @@ void SavePrefs()
     fprintf(f, "stack_layers=%d\n", stacklayers ? 1 : 0);
     fprintf(f, "tile_layers=%d\n", tilelayers ? 1 : 0);
     fprintf(f, "tile_border=%d (1..10)\n", tileborder);
-    fprintf(f, "ask_on_new=%d\n", askonnew ? 1 : 0);
-    fprintf(f, "ask_on_load=%d\n", askonload ? 1 : 0);
-    fprintf(f, "ask_on_delete=%d\n", askondelete ? 1 : 0);
-    fprintf(f, "ask_on_quit=%d\n", askonquit ? 1 : 0);
+    fprintf(f, "ask_to_save=%d\n", asktosave ? 1 : 0);
 
     fputs("\n", f);
 
@@ -572,10 +566,8 @@ void GetPrefs()
             if (tileborder < 1) tileborder = 1;
             if (tileborder > 10) tileborder = 10;
 
-        } else if (strcmp(keyword, "ask_on_new") == 0)    { askonnew = value[0] == '1';
-        } else if (strcmp(keyword, "ask_on_load") == 0)   { askonload = value[0] == '1';
-        } else if (strcmp(keyword, "ask_on_delete") == 0) { askondelete = value[0] == '1';
-        } else if (strcmp(keyword, "ask_on_quit") == 0)   { askonquit = value[0] == '1';
+        } else if (strcmp(keyword, "ask_to_save") == 0) {
+            asktosave = value[0] == '1';
 
         } else if (strcmp(keyword, "show_icons") == 0) {
             showicons = value[0] == '1';

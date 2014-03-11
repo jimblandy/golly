@@ -77,7 +77,7 @@ void WebFatal(const char* msg);
 // Beep, display message in a modal dialog, then exit app.
 
 void WebBeep();
-// Play beep sound, depending on user setting.
+// Play beep sound, depending on allowbeep setting.
 
 void WebRemoveFile(const std::string& filepath);
 // Delete given file.
@@ -94,6 +94,14 @@ bool WebCopyTextToClipboard(const char* text);
 
 bool WebGetTextFromClipboard(std::string& text);
 // Get text from the clipboard.
+
+bool PatternSaved(std::string& filename);
+// Return true if current pattern is saved in virtual file system using given
+// filename (which will have default extension appended if none supplied).
+
+bool WebSaveChanges();
+// Show a modal dialog that lets user save their changes.
+// Return true if it's ok to continue.
 
 bool WebDownloadFile(const std::string& url, const std::string& filepath);
 // Download given url and create given file.

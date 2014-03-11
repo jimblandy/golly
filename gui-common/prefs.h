@@ -96,10 +96,7 @@ extern bool syncviews;              // synchronize viewports?
 extern bool syncmodes;              // synchronize touch modes?
 extern bool stacklayers;            // stack all layers?
 extern bool tilelayers;             // tile all layers?
-extern bool askonnew;               // ask to save changes before creating new pattern?
-extern bool askonload;              // ask to save changes before loading pattern file?
-extern bool askondelete;            // ask to save changes before deleting layer?
-extern bool askonquit;              // ask to save changes before quitting app?
+extern bool asktosave;              // ask to save changes?
 extern int newmag;                  // mag setting for new pattern
 extern bool newremovesel;           // new pattern removes selection?
 extern bool openremovesel;          // opening pattern removes selection?

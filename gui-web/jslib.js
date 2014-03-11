@@ -63,6 +63,17 @@ jsSetRule: function(oldrule) {
 
 // -----------------------------------------------------------------------------
 
+jsGetSaveName: function(currname) {
+    var newname = prompt('Save current pattern in given file:', Pointer_stringify(currname));
+    if (newname == null) {
+        return allocate(intArrayFromString('\0'), 'i8', ALLOC_STACK);
+    } else {
+        return allocate(intArrayFromString(newname), 'i8', ALLOC_STACK);
+    }
+},
+
+// -----------------------------------------------------------------------------
+
 jsShowMenu: function(id, x, y) {
     var menu = document.getElementById(Pointer_stringify(id));
     var mrect = menu.getBoundingClientRect();
