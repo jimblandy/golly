@@ -115,7 +115,11 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
             colonpos = i ;
             break ;
          } else {
-            return "Bad character in rule string." ;
+            // nicer to show given rulestring in error msg
+            static std::string badrule;
+            badrule = "Unknown rule: ";
+            badrule += rulestring;
+            return badrule.c_str();
          }
       }
    }

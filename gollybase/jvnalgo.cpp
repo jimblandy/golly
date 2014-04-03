@@ -58,7 +58,7 @@ const char* jvnalgo::setrule(const char *s)
         stricmp(rule_name.c_str(), "modJvN-32") == 0)
       current_rule = Hutton32;
    else {
-      return "This algorithm only supports these rules: JvN29, Nobili32, Hutton32.";
+      return "This algorithm only supports these rules:\nJvN29, Nobili32, Hutton32.";
    }
    
    // check for rule suffix like ":T200,100" to specify a bounded universe

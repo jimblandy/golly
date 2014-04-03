@@ -182,8 +182,13 @@ const char* ruleloaderalgo::setrule(const char* s)
         SetAlgoVariables(TREE);
         return NULL;
     }
-        
-    return err;
+    
+    // make sure we show given rule string in final error msg (probably "File not found")
+    static std::string badrule;
+    badrule = err;
+    badrule += "\nGiven rule: ";
+    badrule += s;
+    return badrule.c_str();
 }
 
 const char* ruleloaderalgo::getrule() {
