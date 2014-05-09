@@ -1836,7 +1836,7 @@ const char *hlifealgo::writeNativeFormat(std::ostream &os, char *comments) {
       // write non-zero gen count
       os << "#G " << generation.tostring('\0') << '\n' ;
    }
-   if (comments && comments[0]) {
+   if (comments && comments[0] == '#') {
       // write given comment line(s)
       os << comments;
    }

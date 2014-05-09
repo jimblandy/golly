@@ -318,7 +318,9 @@ const char *writepattern(const char *filename, lifealgo &imp,
 {
    // extract any comments if file exists so we can copy them to new file
    char *commptr = NULL;
-   if (std::ifstream(filename)) {
+   FILE *f = fopen(filename, "r");
+   if (f) {
+      fclose(f);
       const char *err = readcomments(filename, &commptr);
       if (err) {
          if (commptr) free(commptr);
@@ -353,12 +355,12 @@ const char *writepattern(const char *filename, lifealgo &imp,
       streambuf = gzbuf.open(filename);
       break;
 #else
-      free(commptr);
+      if (commptr) free(commptr);
       return "GZIP compression not supported";
 #endif
    }
    if (!streambuf) {
-      free(commptr);
+      if (commptr) free(commptr);
       return "Can't create pattern file!";
    }
    std::ostream os(streambuf);

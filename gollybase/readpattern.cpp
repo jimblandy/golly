@@ -799,6 +799,7 @@ const char *readcomments(const char *filename, char **commptr)
       return "Not enough memory for comments!";
    }
    char *cptr = *commptr;
+   cptr[0] = 0;                              // safer to init to empty string
 
    filesize = getfilesize(filename);
 #ifdef ZLIB
