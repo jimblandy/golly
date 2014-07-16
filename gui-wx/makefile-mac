@@ -1,7 +1,7 @@
-# Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 2.9.x on Mac OS 10.6+.
+# Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 3.x on Mac OS 10.6+.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /HD/wxWidgets/wxWidgets-2.9.4
+# cd /HD/wxWidgets/wxWidgets-3.0.1
 # mkdir build-osx
 # cd build-osx
 # ../configure --enable-unicode --disable-shared --with-osx_cocoa
@@ -11,8 +11,8 @@
 # change WXLIB_DIR to where you built the wx libraries, and change
 # WX_RELEASE to match your wxWidgets version (first two digits).
 
-WX_RELEASE = 2.9
-WX_DIR = /HD/wxWidgets/wxWidgets-trunk
+WX_RELEASE = 3.0
+WX_DIR = /HD/wxWidgets/wxWidgets-3.0.1
 WXLIB_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
@@ -37,11 +37,13 @@ GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-templ
    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
 
 # for Perl script support:
-# PERL_INCLUDE = `/usr/bin/perl -MExtUtils::Embed -e ccopts`
-# PERL_LINK = `/usr/bin/perl -MExtUtils::Embed -e ldopts`
-# above commands generate unwanted stuff (-arch i386 and -arch ppc)
-PERL_INCLUDE = -arch x86_64 -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing -I/usr/local/include  -I/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE
-PERL_LINK = -arch x86_64 -L/usr/local/lib -L/System/Library/Perl/5.10.0/darwin-thread-multi-2level/CORE -lperl -ldl -lm -lutil -lc
+PERL_INCLUDE = $(shell /usr/bin/perl -MExtUtils::Embed -e ccopts)
+PERL_LINK = $(shell /usr/bin/perl -MExtUtils::Embed -e ldopts)
+# remove unwanted stuff (-arch i386 and -arch ppc):
+PERL_INCLUDE := $(subst -arch i386,,$(PERL_INCLUDE))
+PERL_INCLUDE := $(subst -arch ppc,,$(PERL_INCLUDE))
+PERL_LINK := $(subst -arch i386,,$(PERL_LINK))
+PERL_LINK := $(subst -arch ppc,,$(PERL_LINK))
 
 # for Python script support:
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
@@ -62,7 +64,7 @@ CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
 
 CXXFLAGS = -arch x86_64 \
    -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
-   -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+   -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
    -fno-strict-aliasing -fno-common
 
 LDFLAGS = -arch x86_64 \
@@ -71,7 +73,7 @@ LDFLAGS = -arch x86_64 \
 
 # for bgolly:
 CXXBASE = -arch x86_64 \
-   -DVERSION=$(APP_VERSION) -DZLIB -O5 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+   -DVERSION=$(APP_VERSION) -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
    -fno-strict-aliasing -fno-common -I$(BASEDIR)
 LDBASE = -arch x86_64 -lz
 
