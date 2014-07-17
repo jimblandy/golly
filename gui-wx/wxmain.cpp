@@ -99,29 +99,25 @@ enum {
     NUM_BUTTONS    // must be last
 };
 
-#ifdef __WXMSW__
-    // bitmaps are loaded via .rc file
-#else
-    // bitmaps for tool bar buttons
-    #include "bitmaps/play.xpm"
-    #include "bitmaps/stop.xpm"
-    #include "bitmaps/reset.xpm"
-    #include "bitmaps/algo.xpm"
-    #include "bitmaps/autofit.xpm"
-    #include "bitmaps/hyper.xpm"
-    #include "bitmaps/new.xpm"
-    #include "bitmaps/open.xpm"
-    #include "bitmaps/save.xpm"
-    #include "bitmaps/patterns.xpm"
-    #include "bitmaps/scripts.xpm"
-    #include "bitmaps/info.xpm"
-    #include "bitmaps/help.xpm"
-    // bitmaps for down state of toggle buttons
-    #include "bitmaps/autofit_down.xpm"
-    #include "bitmaps/hyper_down.xpm"
-    #include "bitmaps/patterns_down.xpm"
-    #include "bitmaps/scripts_down.xpm"
-#endif
+// bitmaps for tool bar buttons
+#include "bitmaps/play.xpm"
+#include "bitmaps/stop.xpm"
+#include "bitmaps/reset.xpm"
+#include "bitmaps/algo.xpm"
+#include "bitmaps/autofit.xpm"
+#include "bitmaps/hyper.xpm"
+#include "bitmaps/new.xpm"
+#include "bitmaps/open.xpm"
+#include "bitmaps/save.xpm"
+#include "bitmaps/patterns.xpm"
+#include "bitmaps/scripts.xpm"
+#include "bitmaps/info.xpm"
+#include "bitmaps/help.xpm"
+// bitmaps for down state of toggle buttons
+#include "bitmaps/autofit_down.xpm"
+#include "bitmaps/hyper_down.xpm"
+#include "bitmaps/patterns_down.xpm"
+#include "bitmaps/scripts_down.xpm"
 
 // -----------------------------------------------------------------------------
 
@@ -214,25 +210,25 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 #endif
     
     // init bitmaps for normal state
-    normtool[START_TOOL] =     wxBITMAP(play);
-    normtool[STOP_TOOL] =      wxBITMAP(stop);
-    normtool[RESET_TOOL] =     wxBITMAP(reset);
-    normtool[ALGO_TOOL] =      wxBITMAP(algo);
-    normtool[AUTOFIT_TOOL] =   wxBITMAP(autofit);
-    normtool[HYPER_TOOL] =     wxBITMAP(hyper);
-    normtool[NEW_TOOL] =       wxBITMAP(new);
-    normtool[OPEN_TOOL] =      wxBITMAP(open);
-    normtool[SAVE_TOOL] =      wxBITMAP(save);
-    normtool[PATTERNS_TOOL] =  wxBITMAP(patterns);
-    normtool[SCRIPTS_TOOL] =   wxBITMAP(scripts);
-    normtool[INFO_TOOL] =      wxBITMAP(info);
-    normtool[HELP_TOOL] =      wxBITMAP(help);
+    normtool[START_TOOL] =     wxBitmap(play_xpm, wxBITMAP_TYPE_XPM);
+    normtool[STOP_TOOL] =      wxBitmap(stop_xpm, wxBITMAP_TYPE_XPM);
+    normtool[RESET_TOOL] =     wxBitmap(reset_xpm, wxBITMAP_TYPE_XPM);
+    normtool[ALGO_TOOL] =      wxBitmap(algo_xpm, wxBITMAP_TYPE_XPM);
+    normtool[AUTOFIT_TOOL] =   wxBitmap(autofit_xpm, wxBITMAP_TYPE_XPM);
+    normtool[HYPER_TOOL] =     wxBitmap(hyper_xpm, wxBITMAP_TYPE_XPM);
+    normtool[NEW_TOOL] =       wxBitmap(new_xpm, wxBITMAP_TYPE_XPM);
+    normtool[OPEN_TOOL] =      wxBitmap(open_xpm, wxBITMAP_TYPE_XPM);
+    normtool[SAVE_TOOL] =      wxBitmap(save_xpm, wxBITMAP_TYPE_XPM);
+    normtool[PATTERNS_TOOL] =  wxBitmap(patterns_xpm, wxBITMAP_TYPE_XPM);
+    normtool[SCRIPTS_TOOL] =   wxBitmap(scripts_xpm, wxBITMAP_TYPE_XPM);
+    normtool[INFO_TOOL] =      wxBitmap(info_xpm, wxBITMAP_TYPE_XPM);
+    normtool[HELP_TOOL] =      wxBitmap(help_xpm, wxBITMAP_TYPE_XPM);
     
     // toggle buttons also have a down state
-    downtool[AUTOFIT_TOOL] =   wxBITMAP(autofit_down);
-    downtool[HYPER_TOOL] =     wxBITMAP(hyper_down);
-    downtool[PATTERNS_TOOL] =  wxBITMAP(patterns_down);
-    downtool[SCRIPTS_TOOL] =   wxBITMAP(scripts_down);
+    downtool[AUTOFIT_TOOL] =   wxBitmap(autofit_down_xpm, wxBITMAP_TYPE_XPM);
+    downtool[HYPER_TOOL] =     wxBitmap(hyper_down_xpm, wxBITMAP_TYPE_XPM);
+    downtool[PATTERNS_TOOL] =  wxBitmap(patterns_down_xpm, wxBITMAP_TYPE_XPM);
+    downtool[SCRIPTS_TOOL] =   wxBitmap(scripts_down_xpm, wxBITMAP_TYPE_XPM);
     
 #ifdef __WXMSW__
     for (int i = 0; i < NUM_BUTTONS; i++) {

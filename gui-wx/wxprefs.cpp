@@ -55,13 +55,13 @@
 #include "wxscript.h"       // for inscript
 #include "wxprefs.h"
 
+// cursor bitmaps
+#include "bitmaps/pick_curs.xpm"
+#include "bitmaps/hand_curs.xpm"
+#include "bitmaps/zoomin_curs.xpm"
+#include "bitmaps/zoomout_curs.xpm"
 #ifdef __WXMSW__
-    // cursor bitmaps are loaded via .rc file
-#else
-    #include "bitmaps/pick_curs.xpm"
-    #include "bitmaps/hand_curs.xpm"
-    #include "bitmaps/zoomin_curs.xpm"
-    #include "bitmaps/zoomout_curs.xpm"
+    #include "bitmaps/cross_curs.xpm"
 #endif
 
 // -----------------------------------------------------------------------------
@@ -238,7 +238,6 @@ const int MAX_MODS   = 8;
 // WXK_* key codes like WXK_F1 have values > 300, so to minimize the
 // size of the keyaction table (see below) we use our own internal
 // key codes for function keys and other special keys
-const int IK_NULL       = 0;     // probably best never to use this
 const int IK_HOME       = 1;
 const int IK_END        = 2;
 const int IK_PAGEUP     = 3;
@@ -1107,7 +1106,7 @@ void CreateCursors()
     curs_pencil = new wxCursor(wxCURSOR_PENCIL);
     if (curs_pencil == NULL) Fatal(_("Failed to create pencil cursor!"));
     
-    wxBitmap bitmap_pick = wxBITMAP(pick_curs);
+    wxBitmap bitmap_pick = wxBitmap(pick_curs_xpm, wxBITMAP_TYPE_XPM);
     wxImage image_pick = bitmap_pick.ConvertToImage();
     image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 0);
     image_pick.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 15);
@@ -1116,7 +1115,7 @@ void CreateCursors()
     
 #ifdef __WXMSW__
     // don't use wxCURSOR_CROSS because it disappears on black background
-    wxBitmap bitmap_cross = wxBITMAP(cross_curs);
+    wxBitmap bitmap_cross = wxBitmap(cross_curs_xpm, wxBITMAP_TYPE_XPM);
     wxImage image_cross = bitmap_cross.ConvertToImage();
     image_cross.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 8);
     image_cross.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 8);
@@ -1126,21 +1125,21 @@ void CreateCursors()
 #endif
     if (curs_cross == NULL) Fatal(_("Failed to create cross cursor!"));
     
-    wxBitmap bitmap_hand = wxBITMAP(hand_curs);
+    wxBitmap bitmap_hand = wxBitmap(hand_curs_xpm, wxBITMAP_TYPE_XPM);
     wxImage image_hand = bitmap_hand.ConvertToImage();
     image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 8);
     image_hand.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 8);
     curs_hand = new wxCursor(image_hand);
     if (curs_hand == NULL) Fatal(_("Failed to create hand cursor!"));
     
-    wxBitmap bitmap_zoomin = wxBITMAP(zoomin_curs);
+    wxBitmap bitmap_zoomin = wxBitmap(zoomin_curs_xpm, wxBITMAP_TYPE_XPM);
     wxImage image_zoomin = bitmap_zoomin.ConvertToImage();
     image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
     image_zoomin.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
     curs_zoomin = new wxCursor(image_zoomin);
     if (curs_zoomin == NULL) Fatal(_("Failed to create zoomin cursor!"));
     
-    wxBitmap bitmap_zoomout = wxBITMAP(zoomout_curs);
+    wxBitmap bitmap_zoomout = wxBitmap(zoomout_curs_xpm, wxBITMAP_TYPE_XPM);
     wxImage image_zoomout = bitmap_zoomout.ConvertToImage();
     image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, 6);
     image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);

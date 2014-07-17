@@ -65,9 +65,6 @@ enum {
     STATE_BAR
 };
 
-#ifdef __WXMSW__
-// bitmaps are loaded via .rc file
-#else
 // bitmaps for edit bar buttons
 #include "bitmaps/undo.xpm"
 #include "bitmaps/redo.xpm"
@@ -86,7 +83,6 @@ enum {
 #include "bitmaps/zoomin_down.xpm"
 #include "bitmaps/zoomout_down.xpm"
 #include "bitmaps/allstates_down.xpm"
-#endif
 
 // width and height of bitmap buttons
 #if defined(__WXOSX_COCOA__) || defined(__WXGTK__)
@@ -218,24 +214,24 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 #endif
     
     // init bitmaps for normal state
-    normbutt[UNDO_BUTT] =      wxBITMAP(undo);
-    normbutt[REDO_BUTT] =      wxBITMAP(redo);
-    normbutt[DRAW_BUTT] =      wxBITMAP(draw);
-    normbutt[PICK_BUTT] =      wxBITMAP(pick);
-    normbutt[SELECT_BUTT] =    wxBITMAP(select);
-    normbutt[MOVE_BUTT] =      wxBITMAP(move);
-    normbutt[ZOOMIN_BUTT] =    wxBITMAP(zoomin);
-    normbutt[ZOOMOUT_BUTT] =   wxBITMAP(zoomout);
-    normbutt[ALLSTATES_BUTT] = wxBITMAP(allstates);
+    normbutt[UNDO_BUTT] =      wxBitmap(undo_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[REDO_BUTT] =      wxBitmap(redo_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[DRAW_BUTT] =      wxBitmap(draw_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[PICK_BUTT] =      wxBitmap(pick_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[SELECT_BUTT] =    wxBitmap(select_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[MOVE_BUTT] =      wxBitmap(move_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[ZOOMIN_BUTT] =    wxBitmap(zoomin_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[ZOOMOUT_BUTT] =   wxBitmap(zoomout_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[ALLSTATES_BUTT] = wxBitmap(allstates_xpm, wxBITMAP_TYPE_XPM);
     
     // toggle buttons also have a down state
-    downbutt[DRAW_BUTT] =      wxBITMAP(draw_down);
-    downbutt[PICK_BUTT] =      wxBITMAP(pick_down);
-    downbutt[SELECT_BUTT] =    wxBITMAP(select_down);
-    downbutt[MOVE_BUTT] =      wxBITMAP(move_down);
-    downbutt[ZOOMIN_BUTT] =    wxBITMAP(zoomin_down);
-    downbutt[ZOOMOUT_BUTT] =   wxBITMAP(zoomout_down);
-    downbutt[ALLSTATES_BUTT] = wxBITMAP(allstates_down);
+    downbutt[DRAW_BUTT] =      wxBitmap(draw_down_xpm, wxBITMAP_TYPE_XPM);
+    downbutt[PICK_BUTT] =      wxBitmap(pick_down_xpm, wxBITMAP_TYPE_XPM);
+    downbutt[SELECT_BUTT] =    wxBitmap(select_down_xpm, wxBITMAP_TYPE_XPM);
+    downbutt[MOVE_BUTT] =      wxBitmap(move_down_xpm, wxBITMAP_TYPE_XPM);
+    downbutt[ZOOMIN_BUTT] =    wxBitmap(zoomin_down_xpm, wxBITMAP_TYPE_XPM);
+    downbutt[ZOOMOUT_BUTT] =   wxBitmap(zoomout_down_xpm, wxBITMAP_TYPE_XPM);
+    downbutt[ALLSTATES_BUTT] = wxBitmap(allstates_down_xpm, wxBITMAP_TYPE_XPM);
     
 #ifdef __WXMSW__
     for (int i = 0; i < NUM_BUTTONS; i++) {

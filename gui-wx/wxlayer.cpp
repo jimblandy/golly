@@ -106,19 +106,15 @@ enum {
     NUM_BUTTONS                   // must be last
 };
 
-#ifdef __WXMSW__
-    // bitmaps are loaded via .rc file
-#else
-    // bitmaps for some layer bar buttons
-    #include "bitmaps/add.xpm"
-    #include "bitmaps/clone.xpm"
-    #include "bitmaps/duplicate.xpm"
-    #include "bitmaps/delete.xpm"
-    #include "bitmaps/stack.xpm"
-    #include "bitmaps/stack_down.xpm"
-    #include "bitmaps/tile.xpm"
-    #include "bitmaps/tile_down.xpm"
-#endif
+// bitmaps for layer bar buttons
+#include "bitmaps/add.xpm"
+#include "bitmaps/clone.xpm"
+#include "bitmaps/duplicate.xpm"
+#include "bitmaps/delete.xpm"
+#include "bitmaps/stack.xpm"
+#include "bitmaps/stack_down.xpm"
+#include "bitmaps/tile.xpm"
+#include "bitmaps/tile_down.xpm"
 
 // -----------------------------------------------------------------------------
 
@@ -231,16 +227,17 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 #endif
     
     // init bitmaps for normal state
-    normbutt[ADD_LAYER] =         wxBITMAP(add);
-    normbutt[CLONE_LAYER] =       wxBITMAP(clone);
-    normbutt[DUPLICATE_LAYER] =   wxBITMAP(duplicate);
-    normbutt[DELETE_LAYER] =      wxBITMAP(delete);
-    normbutt[STACK_LAYERS] =      wxBITMAP(stack);
-    normbutt[TILE_LAYERS] =       wxBITMAP(tile);
+    normbutt[ADD_LAYER] =         wxBitmap(add_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[ADD_LAYER] =         wxBitmap(add_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[CLONE_LAYER] =       wxBitmap(clone_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[DUPLICATE_LAYER] =   wxBitmap(duplicate_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[DELETE_LAYER] =      wxBitmap(delete_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[STACK_LAYERS] =      wxBitmap(stack_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[TILE_LAYERS] =       wxBitmap(tile_xpm, wxBITMAP_TYPE_XPM);
     
     // some bitmap buttons also have a down state
-    downbutt[STACK_LAYERS] = wxBITMAP(stack_down);
-    downbutt[TILE_LAYERS] =  wxBITMAP(tile_down);
+    downbutt[STACK_LAYERS] = wxBitmap(stack_down_xpm, wxBITMAP_TYPE_XPM);
+    downbutt[TILE_LAYERS] =  wxBitmap(tile_down_xpm, wxBITMAP_TYPE_XPM);
     
 #ifdef __WXMSW__
     // create bitmaps for disabled buttons

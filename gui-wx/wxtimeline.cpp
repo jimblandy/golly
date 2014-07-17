@@ -45,17 +45,13 @@
 #include "wxlayer.h"       // for currlayer
 #include "wxtimeline.h"
 
-#ifdef __WXMSW__
-    // bitmaps are loaded via .rc file
-#else
-    // bitmaps for timeline bar buttons
-    #include "bitmaps/record.xpm"
-    #include "bitmaps/stop.xpm"
-    #include "bitmaps/backwards.xpm"
-    #include "bitmaps/forwards.xpm"
-    #include "bitmaps/stopplay.xpm"
-    #include "bitmaps/deltime.xpm"
-#endif
+// bitmaps for timeline bar buttons
+#include "bitmaps/record.xpm"
+#include "bitmaps/stop.xpm"
+#include "bitmaps/backwards.xpm"
+#include "bitmaps/forwards.xpm"
+#include "bitmaps/stopplay.xpm"
+#include "bitmaps/deltime.xpm"
 
 // -----------------------------------------------------------------------------
 
@@ -180,12 +176,12 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
 #endif
     
     // init bitmaps for normal state
-    normbutt[RECORD_BUTT] =    wxBITMAP(record);
-    normbutt[STOPREC_BUTT] =   wxBITMAP(stop);
-    normbutt[BACKWARDS_BUTT] = wxBITMAP(backwards);
-    normbutt[FORWARDS_BUTT] =  wxBITMAP(forwards);
-    normbutt[STOPPLAY_BUTT] =  wxBITMAP(stopplay);
-    normbutt[DELETE_BUTT] =    wxBITMAP(deltime);
+    normbutt[RECORD_BUTT] =    wxBitmap(record_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[STOPREC_BUTT] =   wxBitmap(stop_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[BACKWARDS_BUTT] = wxBitmap(backwards_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[FORWARDS_BUTT] =  wxBitmap(forwards_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[STOPPLAY_BUTT] =  wxBitmap(stopplay_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[DELETE_BUTT] =    wxBitmap(deltime_xpm, wxBITMAP_TYPE_XPM);
     
 #ifdef __WXMSW__
     for (int i = 0; i < NUM_BUTTONS; i++) {
