@@ -198,7 +198,7 @@ const int MIN_TOGGLE_WD = 48;
     const int TOGGLE_HT = 22;
 #elif defined(__WXGTK__)
     const int TOGGLE_HT = 24;
-#elif defined(__WXOSX_COCOA__)
+#elif defined(__WXOSX_COCOA__) && !wxCHECK_VERSION(3,0,0)
     const int TOGGLE_HT = 24;
 #else
     const int TOGGLE_HT = 20;
@@ -528,7 +528,12 @@ void LayerBar::AddButton(int id, const wxString& tip)
         int y = (layerbarht - TOGGLE_HT) / 2;
         togglebutt[id] = new wxToggleButton(this, id, wxT("?"),
                                             wxPoint(xpos, y),
-                                            wxSize(MIN_TOGGLE_WD, TOGGLE_HT));
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+                                            wxSize(MIN_TOGGLE_WD, TOGGLE_HT), wxBORDER_SIMPLE
+#else
+                                            wxSize(MIN_TOGGLE_WD, TOGGLE_HT)
+#endif
+                                            );
         if (togglebutt[id] == NULL) {
             Fatal(_("Failed to create layer bar bitmap button!"));
         } else {
