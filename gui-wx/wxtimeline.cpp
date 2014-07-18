@@ -176,12 +176,12 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
 #endif
     
     // init bitmaps for normal state
-    normbutt[RECORD_BUTT] =    wxBitmap(record_xpm, wxBITMAP_TYPE_XPM);
-    normbutt[STOPREC_BUTT] =   wxBitmap(stop_xpm, wxBITMAP_TYPE_XPM);
-    normbutt[BACKWARDS_BUTT] = wxBitmap(backwards_xpm, wxBITMAP_TYPE_XPM);
-    normbutt[FORWARDS_BUTT] =  wxBitmap(forwards_xpm, wxBITMAP_TYPE_XPM);
-    normbutt[STOPPLAY_BUTT] =  wxBitmap(stopplay_xpm, wxBITMAP_TYPE_XPM);
-    normbutt[DELETE_BUTT] =    wxBitmap(deltime_xpm, wxBITMAP_TYPE_XPM);
+    normbutt[RECORD_BUTT] =    XPM_BITMAP(record);
+    normbutt[STOPREC_BUTT] =   XPM_BITMAP(stop);
+    normbutt[BACKWARDS_BUTT] = XPM_BITMAP(backwards);
+    normbutt[FORWARDS_BUTT] =  XPM_BITMAP(forwards);
+    normbutt[STOPPLAY_BUTT] =  XPM_BITMAP(stopplay);
+    normbutt[DELETE_BUTT] =    XPM_BITMAP(deltime);
     
 #ifdef __WXMSW__
     for (int i = 0; i < NUM_BUTTONS; i++) {

@@ -210,25 +210,25 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 #endif
     
     // init bitmaps for normal state
-    normtool[START_TOOL] =     wxBitmap(play_xpm, wxBITMAP_TYPE_XPM);
-    normtool[STOP_TOOL] =      wxBitmap(stop_xpm, wxBITMAP_TYPE_XPM);
-    normtool[RESET_TOOL] =     wxBitmap(reset_xpm, wxBITMAP_TYPE_XPM);
-    normtool[ALGO_TOOL] =      wxBitmap(algo_xpm, wxBITMAP_TYPE_XPM);
-    normtool[AUTOFIT_TOOL] =   wxBitmap(autofit_xpm, wxBITMAP_TYPE_XPM);
-    normtool[HYPER_TOOL] =     wxBitmap(hyper_xpm, wxBITMAP_TYPE_XPM);
-    normtool[NEW_TOOL] =       wxBitmap(new_xpm, wxBITMAP_TYPE_XPM);
-    normtool[OPEN_TOOL] =      wxBitmap(open_xpm, wxBITMAP_TYPE_XPM);
-    normtool[SAVE_TOOL] =      wxBitmap(save_xpm, wxBITMAP_TYPE_XPM);
-    normtool[PATTERNS_TOOL] =  wxBitmap(patterns_xpm, wxBITMAP_TYPE_XPM);
-    normtool[SCRIPTS_TOOL] =   wxBitmap(scripts_xpm, wxBITMAP_TYPE_XPM);
-    normtool[INFO_TOOL] =      wxBitmap(info_xpm, wxBITMAP_TYPE_XPM);
-    normtool[HELP_TOOL] =      wxBitmap(help_xpm, wxBITMAP_TYPE_XPM);
+    normtool[START_TOOL] =     XPM_BITMAP(play);
+    normtool[STOP_TOOL] =      XPM_BITMAP(stop);
+    normtool[RESET_TOOL] =     XPM_BITMAP(reset);
+    normtool[ALGO_TOOL] =      XPM_BITMAP(algo);
+    normtool[AUTOFIT_TOOL] =   XPM_BITMAP(autofit);
+    normtool[HYPER_TOOL] =     XPM_BITMAP(hyper);
+    normtool[NEW_TOOL] =       XPM_BITMAP(new);
+    normtool[OPEN_TOOL] =      XPM_BITMAP(open);
+    normtool[SAVE_TOOL] =      XPM_BITMAP(save);
+    normtool[PATTERNS_TOOL] =  XPM_BITMAP(patterns);
+    normtool[SCRIPTS_TOOL] =   XPM_BITMAP(scripts);
+    normtool[INFO_TOOL] =      XPM_BITMAP(info);
+    normtool[HELP_TOOL] =      XPM_BITMAP(help);
     
     // toggle buttons also have a down state
-    downtool[AUTOFIT_TOOL] =   wxBitmap(autofit_down_xpm, wxBITMAP_TYPE_XPM);
-    downtool[HYPER_TOOL] =     wxBitmap(hyper_down_xpm, wxBITMAP_TYPE_XPM);
-    downtool[PATTERNS_TOOL] =  wxBitmap(patterns_down_xpm, wxBITMAP_TYPE_XPM);
-    downtool[SCRIPTS_TOOL] =   wxBitmap(scripts_down_xpm, wxBITMAP_TYPE_XPM);
+    downtool[AUTOFIT_TOOL] =   XPM_BITMAP(autofit_down);
+    downtool[HYPER_TOOL] =     XPM_BITMAP(hyper_down);
+    downtool[PATTERNS_TOOL] =  XPM_BITMAP(patterns_down);
+    downtool[SCRIPTS_TOOL] =   XPM_BITMAP(scripts_down);
     
 #ifdef __WXMSW__
     for (int i = 0; i < NUM_BUTTONS; i++) {
