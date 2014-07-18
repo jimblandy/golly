@@ -153,7 +153,10 @@ const int MINSPEED = -10;              // minimum autoplay speed
 const int MAXSPEED = 10;               // maximum autoplay speed
 
 // width and height of bitmap buttons
-#if defined(__WXOSX_COCOA__) || defined(__WXGTK__)
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+    const int BUTTON_WD = 24;
+    const int BUTTON_HT = 24;
+#elif defined(__WXOSX_COCOA__) || defined(__WXGTK__)
     const int BUTTON_WD = 28;
     const int BUTTON_HT = 28;
 #else
@@ -609,7 +612,12 @@ void TimelineBar::OnButtonUp(wxMouseEvent& event)
 void TimelineBar::AddButton(int id, const wxString& tip)
 {
     tlbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos),
-                                    wxSize(BUTTON_WD, BUTTON_HT));
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+                                    wxSize(BUTTON_WD, BUTTON_HT), wxBORDER_SIMPLE
+#else
+                                    wxSize(BUTTON_WD, BUTTON_HT)
+#endif
+                                    );
     if (tlbutt[id] == NULL) {
         Fatal(_("Failed to create timeline bar button!"));
     } else {

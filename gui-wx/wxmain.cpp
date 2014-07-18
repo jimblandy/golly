@@ -190,7 +190,13 @@ const int toolbarwd = 32;        // width of (vertical) tool bar
 wxBitmapButton* tbbutt[NUM_BUTTONS];
 
 // width and height of bitmap buttons
-#if defined(__WXOSX_COCOA__) || defined(__WXGTK__)
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+    // note that BUTTON_WD will have to be at least 26 to avoid clipping bitmaps
+    // if we decide to use wxBORDER_SUNKEN rather than wxBORDER_SIMPLE
+    // (and toolbarwd will probably need to be increased to 48)
+    const int BUTTON_WD = 24;
+    const int BUTTON_HT = 24;
+#elif defined(__WXOSX_COCOA__) || defined(__WXGTK__)
     const int BUTTON_WD = 28;
     const int BUTTON_HT = 28;
 #else
@@ -415,7 +421,13 @@ void ToolBar::OnButtonUp(wxMouseEvent& event)
 
 void ToolBar::AddButton(int id, const wxString& tip)
 {
-    tbbutt[id] = new wxBitmapButton(this, id, normtool[id], wxPoint(xpos,ypos), wxSize(BUTTON_WD, BUTTON_HT));
+    tbbutt[id] = new wxBitmapButton(this, id, normtool[id], wxPoint(xpos,ypos),
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+                                    wxSize(BUTTON_WD, BUTTON_HT), wxBORDER_SIMPLE
+#else
+                                    wxSize(BUTTON_WD, BUTTON_HT)
+#endif
+                                    );
     if (tbbutt[id] == NULL) {
         Fatal(_("Failed to create tool bar button!"));
     } else {

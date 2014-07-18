@@ -85,12 +85,15 @@ enum {
 #include "bitmaps/allstates_down.xpm"
 
 // width and height of bitmap buttons
-#if defined(__WXOSX_COCOA__) || defined(__WXGTK__)
-const int BUTTON_WD = 28;
-const int BUTTON_HT = 28;
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+    const int BUTTON_WD = 24;
+    const int BUTTON_HT = 24;
+#elif defined(__WXOSX_COCOA__) || defined(__WXGTK__)
+    const int BUTTON_WD = 28;
+    const int BUTTON_HT = 28;
 #else
-const int BUTTON_WD = 24;
-const int BUTTON_HT = 24;
+    const int BUTTON_WD = 24;
+    const int BUTTON_HT = 24;
 #endif
 
 // -----------------------------------------------------------------------------
@@ -755,7 +758,12 @@ void EditBar::OnButtonUp(wxMouseEvent& event)
 void EditBar::AddButton(int id, const wxString& tip)
 {
     ebbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos),
-                                    wxSize(BUTTON_WD, BUTTON_HT));
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+                                    wxSize(BUTTON_WD, BUTTON_HT), wxBORDER_SIMPLE
+#else
+                                    wxSize(BUTTON_WD, BUTTON_HT)
+#endif
+                                    );
     if (ebbutt[id] == NULL) {
         Fatal(_("Failed to create edit bar button!"));
     } else {

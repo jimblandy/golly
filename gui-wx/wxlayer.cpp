@@ -205,7 +205,10 @@ const int MIN_TOGGLE_WD = 48;
 #endif
 
 // width and height of bitmap buttons
-#if defined(__WXOSX_COCOA__) || defined(__WXGTK__)
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+    const int BUTTON_WD = 24;
+    const int BUTTON_HT = 24;
+#elif defined(__WXOSX_COCOA__) || defined(__WXGTK__)
     const int BUTTON_WD = 28;
     const int BUTTON_HT = 28;
 #else
@@ -554,7 +557,12 @@ void LayerBar::AddButton(int id, const wxString& tip)
     } else {
         // create bitmap button
         bitmapbutt[id] = new wxBitmapButton(this, id, normbutt[id], wxPoint(xpos,ypos),
-                                            wxSize(BUTTON_WD, BUTTON_HT));
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+                                            wxSize(BUTTON_WD, BUTTON_HT), wxBORDER_SIMPLE
+#else
+                                            wxSize(BUTTON_WD, BUTTON_HT)
+#endif
+                                            );
         if (bitmapbutt[id] == NULL) {
             Fatal(_("Failed to create layer bar bitmap button!"));
         } else {
@@ -3179,7 +3187,7 @@ void ColorDialog::AddColorButton(wxWindow* parent, wxBoxSizer* hbox, int id, wxC
 #if defined(__WXOSX_COCOA__)
                                             wxSize(BITMAP_WD + 12, BITMAP_HT + 12));
 #else
-    wxDefaultSize);
+                                            wxDefaultSize);
 #endif
     if (bb) hbox->Add(bb, 0, wxALIGN_CENTER_VERTICAL, 0);
 }
