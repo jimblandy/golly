@@ -350,6 +350,12 @@ void LayerBar::ResizeLayerButtons()
         if (currbuttwd != oldbuttwd) {
             for (int i = 0; i < MAX_LAYERS; i++) {
                 togglebutt[i]->SetSize(x, y, currbuttwd, TOGGLE_HT);
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+                // ensure there is a gap between buttons
+                togglebutt[i]->SetSize(x, y, currbuttwd-4, TOGGLE_HT);
+#else
+                togglebutt[i]->SetSize(x, y, currbuttwd, TOGGLE_HT);
+#endif
                 x += currbuttwd;
             }
         }
@@ -534,7 +540,12 @@ void LayerBar::AddButton(int id, const wxString& tip)
             // we need to create size using MIN_TOGGLE_WD above and resize now
             // using MAX_TOGGLE_WD, otherwise we can't shrink size later
             // (possibly only needed by wxMac)
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+            // ensure there is a gap between buttons
+            togglebutt[id]->SetSize(xpos, y, MAX_TOGGLE_WD-4, TOGGLE_HT);
+#else
             togglebutt[id]->SetSize(xpos, y, MAX_TOGGLE_WD, TOGGLE_HT);
+#endif
             
             xpos += MAX_TOGGLE_WD;
             
