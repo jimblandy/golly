@@ -3204,12 +3204,18 @@ void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
     #define GROUPGAP (12)      // vertical gap between a group of controls
     #define SBTOPGAP (2)       // vertical gap before first item in wxStaticBoxSizer
     #define SBBOTGAP (2)       // vertical gap after last item in wxStaticBoxSizer
+#if wxCHECK_VERSION(3,0,0)
+    #define SVGAP (8)          // vertical gap above wxSpinCtrl box
+    #define S2VGAP (6)         // vertical gap between 2 wxSpinCtrl boxes
+    #define SPINGAP (6)        // horizontal gap around each wxSpinCtrl box
+#else
     #define SVGAP (4)          // vertical gap above wxSpinCtrl box
     #define S2VGAP (0)         // vertical gap between 2 wxSpinCtrl boxes
+    #define SPINGAP (3)        // horizontal gap around each wxSpinCtrl box
+#endif
     #define CH2VGAP (6)        // vertical gap between 2 check/radio boxes
     #define CVGAP (9)          // vertical gap above wxChoice box
     #define LRGAP (5)          // space left and right of vertically stacked boxes
-    #define SPINGAP (3)        // horizontal gap around each wxSpinCtrl box
     #define CHOICEGAP (6)      // horizontal gap to left of wxChoice box
 #elif defined(__WXMSW__)
     #define GROUPGAP (10)
