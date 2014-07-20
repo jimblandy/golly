@@ -1093,8 +1093,8 @@ void HtmlView::OnKeyDown(wxKeyEvent& event)
     } else {
         // this handler is also called from ShowAboutBox
         if ( helpptr == NULL || !helpptr->infront ) {
-            if ( key == WXK_NUMPAD_ENTER ) {
-                // fix wxMac problem: allow enter key to close about box
+            if ( key == WXK_NUMPAD_ENTER || key == WXK_RETURN ) {
+                // allow enter key or return key to close about box
                 GetParent()->Close(true);
                 return;
             }

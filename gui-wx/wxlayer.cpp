@@ -3056,13 +3056,19 @@ private:
     // event handlers
     void OnCheckBoxClicked(wxCommandEvent& event);
     void OnButton(wxCommandEvent& event);
-    
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+    void OnCharHook(wxKeyEvent& event);
+#endif
+
     DECLARE_EVENT_TABLE()
 };
 
 BEGIN_EVENT_TABLE(ColorDialog, wxDialog)
 EVT_CHECKBOX   (wxID_ANY,  ColorDialog::OnCheckBoxClicked)
 EVT_BUTTON     (wxID_ANY,  ColorDialog::OnButton)
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+EVT_CHAR_HOOK  (ColorDialog::OnCharHook)
+#endif
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -3250,6 +3256,25 @@ void ColorDialog::ChangeButtonColor(int id, wxColor* rgb)
         }
     }
 }
+
+// -----------------------------------------------------------------------------
+
+#if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
+
+void ColorDialog::OnCharHook(wxKeyEvent& event)
+{
+    int key = event.GetKeyCode();
+    if (key == WXK_RETURN) {
+        // fix wxOSX 3.x bug: allow return key to select OK button
+        wxCommandEvent okevent(wxEVT_COMMAND_BUTTON_CLICKED, wxID_OK);
+        okevent.SetEventObject(this);
+        GetEventHandler()->ProcessEvent(okevent);
+        return;
+    }
+    event.Skip();   // process other keys, like escape
+}
+
+#endif
 
 // -----------------------------------------------------------------------------
 
