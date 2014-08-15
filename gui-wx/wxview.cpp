@@ -461,8 +461,7 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
             // waitingforclick becomes false if OnMouseDown is called
 #if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
             // need to check for click here because OnMouseDown does not
-            // get called if click is in menu bar or in another window;
-            // is this a CaptureMouse bug in wxMac???
+            // get called if click is in menu bar or in another window
             if ( waitingforclick && Button() ) {
                 pt = ScreenToClient( wxGetMousePosition() );
                 pastex = pt.x;
@@ -2134,7 +2133,11 @@ void PatternView::StartMovingView(int x, int y)
     bigcellx = cellpos.first;
     bigcelly = cellpos.second;
     movingview = true;
-    CaptureMouse();                  // get mouse up event even if outside view
+    if (waitingforclick) {
+        // avoid calling CaptureMouse again (middle button was pressed)
+    } else {
+        CaptureMouse();              // get mouse up event even if outside view
+    }
     dragtimer->Start(DRAG_RATE);     // see OnDragTimer
 }
 
@@ -2188,7 +2191,14 @@ void PatternView::MoveView(int x, int y)
 
 void PatternView::StopDraggingMouse()
 {
-    if ( HasCapture() ) ReleaseMouse();
+    if ( HasCapture() ) {
+        if (movingview && waitingforclick) {
+            // don't release mouse capture here (paste loop won't detect click outside view)
+        } else {
+            ReleaseMouse();
+        }
+    }
+    
     if ( dragtimer->IsRunning() ) dragtimer->Stop();
     
     if (selectingcells) {
@@ -2216,6 +2226,14 @@ void PatternView::StopDraggingMouse()
         currcontrol = NO_CONTROL;
         RefreshRect(controlsrect, false);
         Update();
+    }
+    
+    if (movingview && restorecursor != NULL) {
+        // restore cursor temporarily changed to curs_hand due to middle button click
+        SetCursorMode(restorecursor);
+        restorecursor = NULL;
+        mainptr->UpdateMenuItems();            // enable Edit > Cursor Mode
+        UpdateEditBar();                       // update cursor mode buttons
     }
     
     drawingcells = false;
@@ -2766,7 +2784,13 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
         }
         
     } else if (button == wxMOUSE_BTN_MIDDLE) {
-        // do nothing -- Golly currently doesn't use the middle button
+        // start panning, regardless of current cursor mode
+        if (currlayer->curs != curs_hand) {
+            restorecursor = currlayer->curs;
+            SetCursorMode(curs_hand);
+        }
+        TestAutoFit();
+        StartMovingView(x, y);
     }
     
     mainptr->UpdateUserInterface();
@@ -2903,7 +2927,7 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
 
 void PatternView::OnMouseEnter(wxMouseEvent& WXUNUSED(event))
 {
-    // Win bug??? we don't get this event if CaptureMouse has been called
+    // wx bug???!!! we don't get this event if CaptureMouse has been called
     CheckCursor(mainptr->infront);
     // no need to call CheckMouseLocation here (OnMouseMotion will be called)
 }
@@ -2912,7 +2936,7 @@ void PatternView::OnMouseEnter(wxMouseEvent& WXUNUSED(event))
 
 void PatternView::OnMouseExit(wxMouseEvent& WXUNUSED(event))
 {
-    // Win bug??? we don't get this event if CaptureMouse has been called
+    // Win only bug??? we don't get this event if CaptureMouse has been called
     CheckCursor(mainptr->infront);
     statusptr->CheckMouseLocation(mainptr->infront);
 }
@@ -3199,7 +3223,8 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
     waitingforclick = false;   // not waiting for user to click
     nopattupdate = false;      // enable pattern updates
     showcontrols = false;      // not showing translucent controls
-    oldcursor = NULL;          // for toggling cursor via shift key 
+    oldcursor = NULL;          // for toggling cursor via shift key
+    restorecursor = NULL;      // for restoring cursor changed by middle button click
 }
 
 // -----------------------------------------------------------------------------

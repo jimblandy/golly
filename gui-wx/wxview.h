@@ -117,6 +117,7 @@ public:
     wxRect controlsrect;          // location of translucent controls
     wxRect pasterect;             // area to be pasted
     wxCursor* oldcursor;          // non-NULL if shift key has toggled cursor
+    wxCursor* restorecursor;      // non-NULL if cursor changed due to middle button click
     
     int tileindex;
     // if the tileindex is >= 0 then this is a tiled window (such windows
