@@ -79,9 +79,9 @@ wxString GetRuleName(const wxString& rulestring)
     // first look for given rulestring in namedrules; if user has created a name like
     // "Life on torus" for "B3/S23:T100,200" then this will find that name
     for (size_t i = 0; i < namedrules.GetCount(); i++) {
-        wxString thisrule = namedrules[i].AfterFirst('|');       // rule is after '|'
+        wxString thisrule = namedrules[i].AfterFirst('|');          // rule is after '|'
         if ( rulestring.IsSameAs(thisrule,false) ) {
-            rulename = namedrules[i].BeforeFirst('|');            // name is before '|'
+            rulename = namedrules[i].BeforeFirst('|');              // name is before '|'
             if ( rulesuffix.Length() > 0 ) {
                 // still append suffix so user sees "Life on torus:T100,200"
                 rulename += rulesuffix;
@@ -94,9 +94,9 @@ wxString GetRuleName(const wxString& rulestring)
         // look for ruleprefix in namedrules; if there is no explicit name for
         // "B3/S23:T100,200" then this will find "Life" and user will see "Life:T100,200"
         for (size_t i = 0; i < namedrules.GetCount(); i++) {
-            wxString thisrule = namedrules[i].AfterFirst('|');    // rule is after '|'
+            wxString thisrule = namedrules[i].AfterFirst('|');      // rule is after '|'
             if ( ruleprefix.IsSameAs(thisrule,false) ) {
-                rulename = namedrules[i].BeforeFirst('|');         // name is before '|'
+                rulename = namedrules[i].BeforeFirst('|');          // name is before '|'
                 rulename += rulesuffix;
                 return rulename;
             }
@@ -483,10 +483,10 @@ END_EVENT_TABLE()
 RuleDialog::RuleDialog(wxWindow* parent) 
     :  htmlwin( NULL )
 {
+    expanded = false;    // tested in RuleDialog::OnSize (called by Create)
+    
     Create(parent, wxID_ANY, _("Set Rule"), wxPoint(rulex,ruley), wxDefaultSize,
            wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
-    
-    expanded = false;    // tested in RuleDialog::OnSize
     
     htmlwin = new AlgoHelp(this, wxID_ANY,
                            // specify small size to avoid clipping scroll bar on resize
