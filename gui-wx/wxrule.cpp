@@ -112,8 +112,8 @@ wxString GetRuleName(const wxString& rulestring)
 
 // globals used in AlgoHelp and RuleDialog classes:
 
-static wxTextCtrl* ruletext;        // text box for user to type in rule
-static wxStaticText* statusline;    // status line at bottom of dialog
+static wxTextCtrl* ruletext = NULL;        // text box for user to type in rule
+static wxStaticText* statusline = NULL;    // status line at bottom of dialog
 
 // -----------------------------------------------------------------------------
 
@@ -480,7 +480,8 @@ END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
-RuleDialog::RuleDialog(wxWindow* parent)
+RuleDialog::RuleDialog(wxWindow* parent) 
+    :  htmlwin( NULL )
 {
     Create(parent, wxID_ANY, _("Set Rule"), wxPoint(rulex,ruley), wxDefaultSize,
            wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
@@ -990,9 +991,13 @@ void RuleDialog::OnSize(wxSizeEvent& event)
         ruleexwd = r.width - minrect.width;
         ruleexht = r.height - minrect.height;
         wxRect htmlrect(minrect.width, 10, wd - minrect.width - 10, ht - 30);
-        htmlwin->SetSize(htmlrect);
+        if( htmlwin ) { 
+            htmlwin->SetSize(htmlrect); 
+        }
         // position status line under bottom left corner
-        statusline->Move(htmlrect.GetLeft(), htmlrect.GetBottom() + 4);
+        if( statusline ) {
+            statusline->Move(htmlrect.GetLeft(), htmlrect.GetBottom() + 4);
+        }
     }
     event.Skip();
 }
