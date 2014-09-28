@@ -4919,7 +4919,7 @@ bool ChangePrefs(const wxString& page)
                     mainptr->UpdateMenuAccelerators();
                     goto done;
                 }
-    done:
+        done:
         
         // if the default base step for the current layer's algo changed
         // then reset the current base step (this should result in less confusion)

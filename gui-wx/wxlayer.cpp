@@ -1850,10 +1850,13 @@ static void CheckRuleHeader(char* linebuf, const wxString& rulename)
         msg += _(".rule does not start with @RULE.");
         Warning(msg);
     } else if (strcmp(linebuf+6, (const char*)rulename.mb_str(wxConvLocal)) != 0) {
-        wxString msg = _("The rule name on the first line in ");
+        wxString ruleinfile = wxString(linebuf+6, wxConvLocal);
+        wxString msg = _("The specified rule (");
         msg += rulename;
-        msg += _(".rule does not match the specified rule: ");
-        msg += rulename;
+        msg += _(") does not match the rule name in the .rule file (");
+        msg += ruleinfile;
+        msg += _(").\n\nThis will cause problems if you save or copy patterns");
+        msg += _(" and try to use them on a case-sensitive file system.");
         Warning(msg);
     }
 }
