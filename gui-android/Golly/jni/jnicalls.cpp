@@ -272,7 +272,7 @@ void UpdatePattern()
     // call a Java method that calls GLSurfaceView.requestRender() which calls nativeRender
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, main_RefreshPattern);
+    if (env && mainobj) env->CallVoidMethod(mainobj, main_RefreshPattern);
     if (attached) javavm->DetachCurrentThread();
 }
 
@@ -287,7 +287,7 @@ void UpdateStatus()
     // call Java method in MainActivity class to update the status bar info
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
-    if (env) env->CallVoidMethod(mainobj, main_ShowStatusLines);
+    if (env && mainobj) env->CallVoidMethod(mainobj, main_ShowStatusLines);
     if (attached) javavm->DetachCurrentThread();
 }
 
