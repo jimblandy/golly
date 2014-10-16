@@ -40,7 +40,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.AssetManager;
-import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.media.AudioManager;
@@ -257,10 +256,12 @@ public class MainActivity extends BaseActivity {
         // Log.i("Golly","screen density in dpi = " + Integer.toString(metrics.densityDpi));
         // eg. densityDpi = 320 on Nexus 7
         
-        Configuration config = getResources().getConfiguration();
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
+
         // Log.i("Golly","screen width in dp = " + Integer.toString(config.screenWidthDp));
         // eg. on Nexus 7 screenWidthDp = 600 in portrait, 960 in landscape
-        widescreen = config.screenWidthDp >= 600;
+        widescreen = dpWidth >= 600;
         nativeSetWideScreen(widescreen);
         if (widescreen) {
             // use a layout that has more buttons
@@ -270,7 +271,7 @@ public class MainActivity extends BaseActivity {
             pickbutton = (Button) findViewById(R.id.pickmode);
             selectbutton = (Button) findViewById(R.id.selectmode);
             movebutton = (Button) findViewById(R.id.movemode);
-            if (config.screenWidthDp >= 800) {
+            if (dpWidth >= 800) {
                 // show nicer text in some buttons
                 ((Button) findViewById(R.id.slower)).setText("Slower");
                 ((Button) findViewById(R.id.faster)).setText("Faster");

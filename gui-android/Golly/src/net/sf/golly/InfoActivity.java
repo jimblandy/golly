@@ -25,9 +25,9 @@
 package net.sf.golly;
 
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.TextView;
 
@@ -56,8 +56,10 @@ public class InfoActivity extends BaseActivity {
             tv.setTextIsSelectable(true);
             tv.setText(info);
             
-            Configuration config = getResources().getConfiguration();
-            if (config.screenWidthDp >= 600) {
+            DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+            float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
+            
+            if (dpWidth >= 600) {
                 // use bigger font size for wide screens (layout size is 10sp)
                 tv.setTextSize(12);
             }
