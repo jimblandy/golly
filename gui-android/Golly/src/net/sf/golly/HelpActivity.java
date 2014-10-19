@@ -461,15 +461,17 @@ public class HelpActivity extends BaseActivity {
 
     private String dresult;
     
+    static class LooperInterrupter extends Handler {
+    	public void handleMessage(Message msg) {
+            throw new RuntimeException();
+        }
+    }
+    
     // this method is called from C++ code (see jnicalls.cpp)
     private String DownloadFile(String urlstring, String filepath) {
         // we cannot do network connections on main thread, so we do the
         // download on a new thread, but we have to wait for it to finish
-        final Handler handler = new Handler() {
-            public void handleMessage(Message msg) {
-                throw new RuntimeException();
-            } 
-        };
+        final Handler handler = new LooperInterrupter();
         
         cancelled = false;
         progbar.setProgress(0);

@@ -155,13 +155,16 @@ public class EditActivity extends BaseActivity {
 
     private int answer;
     
+    static class LooperInterrupter extends Handler {
+    	public void handleMessage(Message msg) {
+            throw new RuntimeException();
+        }
+    }
+    
     private boolean ask(String title, String msg) {
+    	    	
         // use a handler to get a modal dialog
-        final Handler handler = new Handler() {
-            public void handleMessage(Message msg) {
-                throw new RuntimeException();
-            } 
-        };
+        final Handler handler = new LooperInterrupter();
         
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle(title);

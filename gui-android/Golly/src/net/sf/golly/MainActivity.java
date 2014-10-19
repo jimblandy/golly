@@ -1312,14 +1312,17 @@ public class MainActivity extends BaseActivity {
     
     // -----------------------------------------------------------------------------
 
+    static class LooperInterrupter extends Handler {
+		public void handleMessage(Message msg) {
+            throw new RuntimeException();
+        }
+	}
+    
     // this method is called from C++ code (see jnicalls.cpp)
     private void Warning(String msg) {
+    	
         // use a handler to get a modal dialog
-        final Handler handler = new Handler() {
-            public void handleMessage(Message msg) {
-                throw new RuntimeException();
-            } 
-        };
+        final Handler handler = new LooperInterrupter();
         
         // note that MainActivity might not be the current foreground activity
         AlertDialog.Builder alert = new AlertDialog.Builder(getForegroundActivity());
@@ -1343,11 +1346,7 @@ public class MainActivity extends BaseActivity {
     // this method is called from C++ code (see jnicalls.cpp)
     private void Fatal(String msg) {
         // use a handler to get a modal dialog
-        final Handler handler = new Handler() {
-            public void handleMessage(Message msg) {
-                throw new RuntimeException();
-            } 
-        };
+        final Handler handler = new LooperInterrupter();
         
         // note that MainActivity might not be the current foreground activity
         AlertDialog.Builder alert = new AlertDialog.Builder(getForegroundActivity());
@@ -1375,11 +1374,7 @@ public class MainActivity extends BaseActivity {
     // this method is called from C++ code (see jnicalls.cpp)
     private String YesNo(String query) {
         // use a handler to get a modal dialog
-        final Handler handler = new Handler() {
-            public void handleMessage(Message msg) {
-                throw new RuntimeException();
-            } 
-        };
+        final Handler handler = new LooperInterrupter();
         
         // note that MainActivity might not be the current foreground activity
         AlertDialog.Builder alert = new AlertDialog.Builder(getForegroundActivity());
