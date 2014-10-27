@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE xml>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.sf.golly"
     android:installLocation="auto"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.0"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="17" />
 
@@ -17,12 +19,9 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="net.sf.golly.BaseActivity"
-            android:label="Base" >
-        </activity>
-        <activity
             android:name="net.sf.golly.MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -32,7 +31,8 @@
             android:name="net.sf.golly.SettingsActivity"
             android:windowSoftInputMode="stateHidden"
             android:label="@string/app_name"
-            android:parentActivityName="net.sf.golly.MainActivity" >
+            android:parentActivityName="net.sf.golly.MainActivity"
+            tools:ignore="UnusedAttribute">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="net.sf.golly.MainActivity" />
@@ -40,7 +40,8 @@
         <activity
             android:name="net.sf.golly.OpenActivity"
             android:label="@string/app_name"
-            android:parentActivityName="net.sf.golly.MainActivity" >
+            android:parentActivityName="net.sf.golly.MainActivity"
+            tools:ignore="UnusedAttribute">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="net.sf.golly.MainActivity" />
@@ -48,7 +49,9 @@
         <activity
             android:name="net.sf.golly.HelpActivity"
             android:label="@string/app_name"
-            android:parentActivityName="net.sf.golly.MainActivity" >
+            android:parentActivityName="net.sf.golly.MainActivity"
+            tools:ignore="UnusedAttribute"
+            android:launchMode="singleTop">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="net.sf.golly.MainActivity" />

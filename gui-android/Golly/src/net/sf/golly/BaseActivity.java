@@ -30,7 +30,7 @@ import android.os.Bundle;
 //this class (along with BaseApp) allows our app to keep track of the current foreground activity
 //(thanks to http://stackoverflow.com/questions/11411395/how-to-get-current-foreground-activity-context-in-android)
 
-public class BaseActivity extends Activity {
+public abstract class BaseActivity extends Activity {
 
     protected BaseApp baseapp;
 

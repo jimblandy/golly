@@ -108,10 +108,11 @@ public class SettingsActivity extends BaseActivity {
         Intent intent;
         switch (item.getItemId()) {
             case android.R.id.home:
-                // the Home or Up button will start MainActivity
+                // the Home or Up button will go back to MainActivity
                 NavUtils.navigateUpFromSameTask(this);
                 return true;
             case R.id.open:
+            	finish();
                 intent = new Intent(this, OpenActivity.class);
                 startActivity(intent);
                 return true;
@@ -119,6 +120,7 @@ public class SettingsActivity extends BaseActivity {
                 // do nothing
                 break;
             case R.id.help:
+            	finish();
                 intent = new Intent(this, HelpActivity.class);
                 startActivity(intent);
                 return true;

@@ -313,21 +313,6 @@ public class MainActivity extends BaseActivity {
         restorebutton.setVisibility(View.INVISIBLE);
         proglayout.setVisibility(LinearLayout.INVISIBLE);
         
-        // check for messages sent by other activities
-        Intent intent = getIntent();
-        String filepath = intent.getStringExtra(OPENFILE_MESSAGE);
-        if (filepath != null) {
-            nativeOpenFile(filepath);
-        }
-        String rule = intent.getStringExtra(RULE_MESSAGE);
-        if (rule != null) {
-            nativeChangeRule(rule);
-        }
-        String pattern = intent.getStringExtra(LEXICON_MESSAGE);
-        if (pattern != null) {
-            nativeLexiconPattern(pattern);
-        }
-        
         // create handler and runnable for generating patterns
         geninterval = nativeCalculateSpeed();
         genhandler = new Handler();
@@ -362,7 +347,26 @@ public class MainActivity extends BaseActivity {
             }
         };
     }
-
+    
+    // -----------------------------------------------------------------------------
+    
+    @Override
+    protected void onNewIntent(Intent intent) {
+    	// check for messages sent by other activities
+    	String filepath = intent.getStringExtra(OPENFILE_MESSAGE);
+    	if (filepath != null) {
+    	    nativeOpenFile(filepath);
+    	}
+    	String rule = intent.getStringExtra(RULE_MESSAGE);
+    	if (rule != null) {
+    	    nativeChangeRule(rule);
+    	}
+    	String pattern = intent.getStringExtra(LEXICON_MESSAGE);
+    	if (pattern != null) {
+    	    nativeLexiconPattern(pattern);
+    	}
+    }
+    
     // -----------------------------------------------------------------------------
 
     @Override
@@ -395,9 +399,9 @@ public class MainActivity extends BaseActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
+    
     // -----------------------------------------------------------------------------
-
+    
     @Override
     protected void onPause() {
         super.onPause();
@@ -1476,13 +1480,6 @@ public class MainActivity extends BaseActivity {
             instream.close();        
         } catch (Exception e) {
             filecontents = "Error reading file:\n" + e.toString();
-        }
-        
-        // fix crash (after InfoActivity finishes) if current activity is HelpActivity
-        if (this != getForegroundActivity()) {
-            // force HelpActivity's OnCreate method to be called before starting InfoActivity
-            Intent intent = new Intent(getForegroundActivity(), HelpActivity.class);
-            startActivity(intent);
         }
         
         // display file contents

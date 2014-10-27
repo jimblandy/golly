@@ -250,6 +250,14 @@ public class HelpActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     @Override
+    protected void onNewIntent(Intent intent) {
+    	setIntent(intent);
+    	restarted = true;
+    }
+    
+    // -----------------------------------------------------------------------------
+    
+    @Override
     protected void onPause() {
         super.onPause();
         gwebview.onPause();
@@ -322,14 +330,16 @@ public class HelpActivity extends BaseActivity {
         Intent intent;
         switch (item.getItemId()) {
             case android.R.id.home:
-                // the Home or Up button will start MainActivity
+                // the Home or Up button will go back to MainActivity
                 NavUtils.navigateUpFromSameTask(this);
                 return true;
             case R.id.open:
+            	finish();
                 intent = new Intent(this, OpenActivity.class);
                 startActivity(intent);
                 return true;
             case R.id.settings:
+            	finish();
                 intent = new Intent(this, SettingsActivity.class);
                 startActivity(intent);
                 return true;
