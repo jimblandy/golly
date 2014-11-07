@@ -24,10 +24,7 @@
 
 package net.sf.golly;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 
 import android.app.AlertDialog;
@@ -213,25 +210,9 @@ public class OpenActivity extends BaseActivity {
         if (currpatterns == PATTERNS.SUPPLIED) {
             // read contents of supplied file into a string
             String fullpath = baseapp.supplieddir.getAbsolutePath() + "/" + filepath;
-            File file = new File(fullpath);
-            String filecontents;
-            try {
-                FileInputStream instream = new FileInputStream(file);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(instream));
-                StringBuilder sb = new StringBuilder();
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                    sb.append("\n");
-                }
-                filecontents = sb.toString();
-                instream.close();        
-            } catch (Exception e) {
-                filecontents = "Error reading file:\n" + e.toString();
-            }
             // display filecontents
             Intent intent = new Intent(this, InfoActivity.class);
-            intent.putExtra(InfoActivity.INFO_MESSAGE, filecontents);
+            intent.putExtra(InfoActivity.INFO_MESSAGE, fullpath);
             startActivity(intent);
         } else {
             // let user read or edit a saved or downloaded file

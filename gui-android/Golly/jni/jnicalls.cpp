@@ -520,32 +520,6 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetRandomFill(JNI
 // -----------------------------------------------------------------------------
 
 extern "C"
-JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetInfo(JNIEnv* env)
-{
-    std::string info;
-    if (currlayer->currfile.empty()) {
-        // should never happen
-        info = "There is no current pattern file!";
-    } else {
-        // get comments in current pattern file
-        char *commptr = NULL;
-        // readcomments will allocate commptr
-        const char *err = readcomments(currlayer->currfile.c_str(), &commptr);
-        if (err) {
-            info = err;
-        } else if (commptr[0] == 0) {
-            info = "No comments found.";
-        } else {
-            info = commptr;
-        }
-        if (commptr) free(commptr);
-    }
-    return env->NewStringUTF(info.c_str());
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
 JNIEXPORT bool JNICALL Java_net_sf_golly_MainActivity_nativeAllowUndo(JNIEnv* env)
 {
     return allowundo;
@@ -2287,6 +2261,34 @@ JNIEXPORT void JNICALL Java_net_sf_golly_RuleActivity_nativeSetRule(JNIEnv* env,
     }
 
     SavePrefs();
+}
+
+// -----------------------------------------------------------------------------
+
+// these native routines are used in InfoApp.java:
+
+extern "C"
+JNIEXPORT jstring JNICALL Java_net_sf_golly_InfoActivity_nativeGetInfo(JNIEnv* env)
+{
+    std::string info;
+    if (currlayer->currfile.empty()) {
+        // should never happen
+        info = "There is no current pattern file!";
+    } else {
+        // get comments in current pattern file
+        char *commptr = NULL;
+        // readcomments will allocate commptr
+        const char *err = readcomments(currlayer->currfile.c_str(), &commptr);
+        if (err) {
+            info = err;
+        } else if (commptr[0] == 0) {
+            info = "No comments found.";
+        } else {
+            info = commptr;
+        }
+        if (commptr) free(commptr);
+    }
+    return env->NewStringUTF(info.c_str());
 }
 
 // =============================================================================

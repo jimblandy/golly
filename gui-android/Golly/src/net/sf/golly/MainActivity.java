@@ -24,10 +24,7 @@
 
 package net.sf.golly;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 
 import android.app.AlertDialog;
 import android.content.ClipData;
@@ -82,7 +79,6 @@ public class MainActivity extends BaseActivity {
     private native String nativeGetStatusLine(int line);
     private native String nativeGetPasteMode();
     private native String nativeGetRandomFill();
-    private native String nativeGetInfo();
     private native void nativeNewPattern();
     private native void nativeFitPattern();
     private native void nativeGenerate();
@@ -982,7 +978,7 @@ public class MainActivity extends BaseActivity {
         
         // display any comments in current pattern file
         Intent intent = new Intent(this, InfoActivity.class);
-        intent.putExtra(InfoActivity.INFO_MESSAGE, nativeGetInfo());
+        intent.putExtra(InfoActivity.INFO_MESSAGE, "native");
         startActivity(intent);
     }
 
@@ -1270,27 +1266,9 @@ public class MainActivity extends BaseActivity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void ShowTextFile(String filepath) {
-        // read contents of supplied file into a string
-        File file = new File(filepath);
-        String filecontents;
-        try {
-            FileInputStream instream = new FileInputStream(file);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(instream));
-            StringBuilder sb = new StringBuilder();
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-                sb.append("\n");
-            }
-            filecontents = sb.toString();
-            instream.close();        
-        } catch (Exception e) {
-            filecontents = "Error reading file:\n" + e.toString();
-        }
-        
         // display file contents
         Intent intent = new Intent(baseapp.getCurrentActivity(), InfoActivity.class);
-        intent.putExtra(InfoActivity.INFO_MESSAGE, filecontents);
+        intent.putExtra(InfoActivity.INFO_MESSAGE, filepath);
         startActivity(intent);
     }
     

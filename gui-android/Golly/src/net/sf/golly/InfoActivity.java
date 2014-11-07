@@ -24,6 +24,11 @@
 
 package net.sf.golly;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
@@ -33,6 +38,8 @@ import android.widget.TextView;
 
 public class InfoActivity extends BaseActivity {
     
+	private native String nativeGetInfo();             // the rest must NOT be static
+	
     public final static String INFO_MESSAGE = "net.sf.golly.INFO";
     
     // -----------------------------------------------------------------------------
@@ -44,17 +51,42 @@ public class InfoActivity extends BaseActivity {
         
         getActionBar().hide();
         
+        String text = null;
+        
         // get info sent by other activity
         Intent intent = getIntent();
-        String info = intent.getStringExtra(INFO_MESSAGE);
-        if (info != null) {
+        String infoMsg = intent.getStringExtra(INFO_MESSAGE);
+        if (infoMsg != null) {
+        	if (infoMsg.equals("native")) {
+        		text = nativeGetInfo();
+        	} else {
+        		// read contents of supplied file into a string
+                File file = new File(infoMsg);
+                try {
+                    FileInputStream instream = new FileInputStream(file);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(instream));
+                    StringBuilder sb = new StringBuilder();
+                    String line = null;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                        sb.append("\n");
+                    }
+                    text = sb.toString();
+                    instream.close();        
+                } catch (Exception e) {
+                    text = "Error reading file:\n" + e.toString();
+                }
+        	}
+        }
+        
+        if (text != null) {
             TextView tv = (TextView) findViewById(R.id.info_text);
             tv.setMovementMethod(new ScrollingMovementMethod());
             // above call enables vertical scrolling;
             // next call prevents long lines wrapping and enables horizontal scrolling
             tv.setHorizontallyScrolling(true);
             tv.setTextIsSelectable(true);
-            tv.setText(info);
+            tv.setText(text);
             
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
             float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
