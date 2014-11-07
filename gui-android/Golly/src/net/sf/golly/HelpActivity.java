@@ -77,14 +77,12 @@ public class HelpActivity extends BaseActivity {
     private boolean cancelled;                      // download was cancelled?
 
     public final static String SHOWHELP_MESSAGE = "net.sf.golly.SHOWHELP";
-    
+        
     // -----------------------------------------------------------------------------
     
     static {
-        nativeClassInit();      // caches Java method IDs
+    	nativeClassInit();      // caches Java method IDs
     }
-        
-    // -----------------------------------------------------------------------------
     
     // this class lets us intercept link taps
     private class MyWebViewClient extends WebViewClient {
@@ -157,7 +155,7 @@ public class HelpActivity extends BaseActivity {
         // let user read/edit given file
         if (filepath.startsWith("Supplied/")) {
             // read contents of supplied .rule file into a string
-            String prefix = MainActivity.supplieddir.getAbsolutePath();
+            String prefix = baseapp.supplieddir.getAbsolutePath();
             prefix = prefix.substring(0, prefix.length() - 8);  // strip off "Supplied"
             String fullpath = prefix + filepath;
             File file = new File(fullpath);
@@ -182,7 +180,7 @@ public class HelpActivity extends BaseActivity {
             startActivity(intent);
         } else {
             // let user read or edit user's .rule file
-            String fullpath = MainActivity.userdir.getAbsolutePath() + "/" + filepath;
+            String fullpath = baseapp.userdir.getAbsolutePath() + "/" + filepath;
             Intent intent = new Intent(this, EditActivity.class);
             intent.putExtra(EditActivity.EDITFILE_MESSAGE, fullpath);
             startActivity(intent);
@@ -208,10 +206,11 @@ public class HelpActivity extends BaseActivity {
     }
     
     // -----------------------------------------------------------------------------
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
         setContentView(R.layout.help_layout);
         backbutton = (Button) findViewById(R.id.back);
         nextbutton = (Button) findViewById(R.id.forwards);
@@ -354,7 +353,7 @@ public class HelpActivity extends BaseActivity {
     
     private void showContentsPage() {
         // display html data in supplieddir/Help/index.html
-        String fullpath = MainActivity.supplieddir.getAbsolutePath() + "/Help/index.html";
+        String fullpath = baseapp.supplieddir.getAbsolutePath() + "/Help/index.html";
         File htmlfile = new File(fullpath);
         if (htmlfile.exists()) {
             gwebview.loadUrl("file://" + fullpath);     // fullpath starts with "/"

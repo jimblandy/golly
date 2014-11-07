@@ -24,14 +24,10 @@
 
 package net.sf.golly;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStreamReader;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import android.app.AlertDialog;
 import android.content.ClipData;
@@ -39,16 +35,13 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.os.MessageQueue;
 import android.text.InputType;
 import android.util.DisplayMetrics;
@@ -71,9 +64,6 @@ public class MainActivity extends BaseActivity {
     private static native void nativeClassInit();   // this MUST be static
     private native void nativeCreate();             // the rest must NOT be static
     private native void nativeDestroy();
-    private native void nativeSetUserDirs(String path);
-    private native void nativeSetSuppliedDirs(String prefix);
-    private native void nativeSetTempDir(String path);
     private native void nativeStartGenerating();
     private native void nativeStopGenerating();
     private native void nativeStopBeforeNew();
@@ -132,15 +122,12 @@ public class MainActivity extends BaseActivity {
     private native boolean nativeFileExists(String filename);
     private native void nativeSavePattern(String filename);
     private native void nativeOpenFile(String filepath);
-    private native void nativeSetScreenDensity(int dpi);
-    private native void nativeSetWideScreen(boolean widescreen);
     private native void nativeSetFullScreen(boolean fullscreen);
     private native void nativeChangeRule(String rule);
     private native void nativeLexiconPattern(String pattern);
     private native int nativeDrawingState();
 
     // local fields:
-    private static boolean firstcall = true;
     private static boolean fullscreen = false;      // in full screen mode?
     private boolean widescreen;                     // use different layout for wide screens?
     private Button ssbutton;                        // Start/Stop button
@@ -188,9 +175,6 @@ public class MainActivity extends BaseActivity {
     public final static String OPENFILE_MESSAGE = "net.sf.golly.OPENFILE";
     public final static String RULE_MESSAGE = "net.sf.golly.RULE";
     public final static String LEXICON_MESSAGE = "net.sf.golly.LEXICON";
-
-    public static File userdir;        // directory for user-created data
-    public static File supplieddir;    // directory for supplied data
     
     // -----------------------------------------------------------------------------
 
@@ -236,23 +220,17 @@ public class MainActivity extends BaseActivity {
             processingevents = false;
         }
     }
-    
+
     // -----------------------------------------------------------------------------
     
     static {
-        System.loadLibrary("stlport_shared");   // must agree with Application.mk
-        System.loadLibrary("golly");            // loads libgolly.so
         nativeClassInit();                      // caches Java method IDs
     }
-
-    // -----------------------------------------------------------------------------
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-        nativeSetScreenDensity(metrics.densityDpi);
         // Log.i("Golly","screen density in dpi = " + Integer.toString(metrics.densityDpi));
         // eg. densityDpi = 320 on Nexus 7
         
@@ -262,7 +240,7 @@ public class MainActivity extends BaseActivity {
         // Log.i("Golly","screen width in dp = " + Integer.toString(config.screenWidthDp));
         // eg. on Nexus 7 screenWidthDp = 600 in portrait, 960 in landscape
         widescreen = dpWidth >= 600;
-        nativeSetWideScreen(widescreen);
+        
         if (widescreen) {
             // use a layout that has more buttons
             setContentView(R.layout.main_layout_wide);
@@ -300,11 +278,7 @@ public class MainActivity extends BaseActivity {
         progbar = (ProgressBar) findViewById(R.id.progress_bar);
         proglayout = (LinearLayout) findViewById(R.id.progress_layout);
         progtitle = (TextView) findViewById(R.id.progress_title);
-
-        if (firstcall) {
-            firstcall = false;
-            initPaths();        // sets userdir, supplieddir, etc
-        }
+        
         nativeCreate();         // must be called every time (to cache this instance)
         
         // this will call the PatternGLSurfaceView constructor
@@ -437,80 +411,6 @@ public class MainActivity extends BaseActivity {
         stopped = true;             // should have been done in OnPause, but play safe
         nativeDestroy();
         super.onDestroy();
-    }
-
-    // -----------------------------------------------------------------------------
-
-    private void unzipAsset(String zipname, File destdir) {
-        AssetManager am = getAssets();
-        try {
-            ZipInputStream zipstream = new ZipInputStream(am.open(zipname));
-            for (ZipEntry entry = zipstream.getNextEntry(); entry != null; entry = zipstream.getNextEntry()) {
-                File destfile = new File(destdir, entry.getName());
-                if (entry.isDirectory()) {
-                    // create any missing sub-directories
-                    destfile.mkdirs();
-                } else {
-                    // create a file
-                    final int BUFFSIZE = 8192;
-                    BufferedOutputStream buffstream = new BufferedOutputStream(new FileOutputStream(destfile), BUFFSIZE);
-                    int count = 0;
-                    byte[] data = new byte[BUFFSIZE];
-                    while ((count = zipstream.read(data, 0, BUFFSIZE)) != -1) {
-                        buffstream.write(data, 0, count);
-                    }
-                    buffstream.flush();
-                    buffstream.close();
-                }
-                zipstream.closeEntry();
-            }
-            zipstream.close();
-        } catch (Exception e) {
-            Log.e("Golly", "Failed to unzip asset: " + zipname + "\nException: ", e);
-            Warning("You probably forgot to put " + zipname + " in the assets folder!");
-        }
-    }
-    
-    // -----------------------------------------------------------------------------
-
-    private void initPaths() {
-        // check if external storage is available
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            // use external storage for user's files
-            userdir = getExternalFilesDir(null);        // /mnt/sdcard/Android/data/net.sf.golly/files
-        } else {
-            // use internal storage for user's files
-            userdir = getFilesDir();                    // /data/data/net.sf.golly/files
-            Log.i("Golly", "External storage is not available, so internal storage will be used.");
-        }
-        
-        // create subdirs in userdir (if they don't exist)
-        File subdir;
-        subdir = new File(userdir, "Rules");            // for user's .rule files
-        subdir.mkdir();
-        subdir = new File(userdir, "Saved");            // for saved pattern files
-        subdir.mkdir();
-        subdir = new File(userdir, "Downloads");        // for downloaded files
-        subdir.mkdir();
-        
-        // set appropriate paths used by C++ code
-        nativeSetUserDirs(userdir.getAbsolutePath());
-        
-        // create a directory in internal storage for supplied Patterns/Rules/Help then
-        // create sub-directories for each by unzipping .zip files stored in assets
-        supplieddir = new File(getFilesDir(), "Supplied");
-        supplieddir.mkdir();
-        unzipAsset("Patterns.zip", supplieddir);
-        unzipAsset("Rules.zip", supplieddir);
-        unzipAsset("Help.zip", supplieddir);
-        
-        // supplieddir = /data/data/net.sf.golly/files/Supplied
-        nativeSetSuppliedDirs(supplieddir.getAbsolutePath());
-        
-        // set directory path for temporary files
-        File tempdir = getCacheDir();
-        nativeSetTempDir(tempdir.getAbsolutePath());    // /data/data/net.sf.golly/cache
     }
 
     // -----------------------------------------------------------------------------
@@ -1138,12 +1038,12 @@ public class MainActivity extends BaseActivity {
                     }
                     // check for valid extension
                     if (!nativeValidExtension(filename)) {
-                        Warning("Invalid file extension.");
+                        baseapp.Warning("Invalid file extension.");
                         return;
                     }
                     // check if given file already exists
                     if (nativeFileExists(filename)) {
-                        String answer = YesNo("A file with that name already exists.  Do you want to replace that file?");
+                        String answer = baseapp.YesNo("A file with that name already exists.  Do you want to replace that file?");
                         if (answer.equals("no")) return;
                     }
                      // dismiss dialog first in case SavePattern calls BeginProgress
@@ -1316,100 +1216,6 @@ public class MainActivity extends BaseActivity {
     
     // -----------------------------------------------------------------------------
 
-    static class LooperInterrupter extends Handler {
-		public void handleMessage(Message msg) {
-            throw new RuntimeException();
-        }
-	}
-    
-    // this method is called from C++ code (see jnicalls.cpp)
-    private void Warning(String msg) {
-    	
-        // use a handler to get a modal dialog
-        final Handler handler = new LooperInterrupter();
-        
-        // note that MainActivity might not be the current foreground activity
-        AlertDialog.Builder alert = new AlertDialog.Builder(getForegroundActivity());
-        alert.setTitle("Warning");
-        alert.setMessage(msg);
-        alert.setNegativeButton("CANCEL",
-            new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    dialog.cancel();
-                    handler.sendMessage(handler.obtainMessage());
-                }
-            });
-        alert.show();
-        
-        // loop until runtime exception is triggered
-        try { Looper.loop(); } catch(RuntimeException re) {}
-    }
-    
-    // -----------------------------------------------------------------------------
-
-    // this method is called from C++ code (see jnicalls.cpp)
-    private void Fatal(String msg) {
-        // use a handler to get a modal dialog
-        final Handler handler = new LooperInterrupter();
-        
-        // note that MainActivity might not be the current foreground activity
-        AlertDialog.Builder alert = new AlertDialog.Builder(getForegroundActivity());
-        alert.setTitle("Fatal error!");
-        alert.setMessage(msg);
-        alert.setNegativeButton("QUIT",
-            new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    dialog.cancel();
-                    handler.sendMessage(handler.obtainMessage());
-                }
-            });
-        alert.show();
-        
-        // loop until runtime exception is triggered
-        try { Looper.loop(); } catch(RuntimeException re) {}
-        
-        System.exit(1);
-    }
-    
-    // -----------------------------------------------------------------------------
-
-    private String answer;
-    
-    // this method is called from C++ code (see jnicalls.cpp)
-    private String YesNo(String query) {
-        // use a handler to get a modal dialog
-        final Handler handler = new LooperInterrupter();
-        
-        // note that MainActivity might not be the current foreground activity
-        AlertDialog.Builder alert = new AlertDialog.Builder(getForegroundActivity());
-        alert.setTitle("A question...");
-        alert.setMessage(query);
-        alert.setPositiveButton("YES",
-            new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    answer = "yes";
-                    dialog.cancel();
-                    handler.sendMessage(handler.obtainMessage());
-                }
-            });
-        alert.setNegativeButton("NO",
-            new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    answer = "no";
-                    dialog.cancel();
-                    handler.sendMessage(handler.obtainMessage());
-                }
-            });
-        alert.show();
-        
-        // loop until runtime exception is triggered
-        try { Looper.loop(); } catch(RuntimeException re) {}
-
-        return answer;
-    }
-    
-    // -----------------------------------------------------------------------------
-
     // this method is called from C++ code (see jnicalls.cpp)
     private void RemoveFile(String filepath) {
         File file = new File(filepath);
@@ -1453,7 +1259,7 @@ public class MainActivity extends BaseActivity {
             ClipData clipData = clipboard.getPrimaryClip();
             text = clipData.getItemAt(0).coerceToText(this).toString();
             if (text.length() == 0) {
-                Warning("Failed to get text from clipboard!");
+            	baseapp.Warning("Failed to get text from clipboard!");
             }
         }
         // Log.i("GetTextFromClipboard", text);
@@ -1483,7 +1289,7 @@ public class MainActivity extends BaseActivity {
         }
         
         // display file contents
-        Intent intent = new Intent(getForegroundActivity(), InfoActivity.class);
+        Intent intent = new Intent(baseapp.getCurrentActivity(), InfoActivity.class);
         intent.putExtra(InfoActivity.INFO_MESSAGE, filecontents);
         startActivity(intent);
     }
@@ -1516,7 +1322,7 @@ public class MainActivity extends BaseActivity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private boolean AbortProgress(int percentage, String message) {
-        if (progresscount <= 0) Fatal("Bug detected in AbortProgress!");
+        if (progresscount <= 0) baseapp.Fatal("Bug detected in AbortProgress!");
         long nanosecs = System.nanoTime() - progstart;
         if (proglayout.getVisibility() == LinearLayout.VISIBLE) {
             if (nanosecs < prognext) return false;
@@ -1548,7 +1354,7 @@ public class MainActivity extends BaseActivity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void EndProgress() {
-        if (progresscount <= 0) Fatal("Bug detected in EndProgress!");
+        if (progresscount <= 0) baseapp.Fatal("Bug detected in EndProgress!");
         progresscount--;
         if (progresscount == 0) {
             proglayout.setVisibility(LinearLayout.INVISIBLE);

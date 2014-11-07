@@ -46,6 +46,12 @@
 
 // these globals cache info for calling methods in .java files
 static JavaVM* javavm;
+
+static jobject baseapp = NULL;          // instance of BaseApp
+static jmethodID baseapp_Warning;
+static jmethodID baseapp_Fatal;
+static jmethodID baseapp_YesNo;
+
 static jobject mainobj = NULL;          // current instance of MainActivity
 static jmethodID main_StartMainActivity;
 static jmethodID main_RefreshPattern;
@@ -53,9 +59,6 @@ static jmethodID main_ShowStatusLines;
 static jmethodID main_UpdateEditBar;
 static jmethodID main_CheckMessageQueue;
 static jmethodID main_PlayBeepSound;
-static jmethodID main_Warning;
-static jmethodID main_Fatal;
-static jmethodID main_YesNo;
 static jmethodID main_RemoveFile;
 static jmethodID main_MoveFile;
 static jmethodID main_CopyTextToClipboard;
@@ -315,6 +318,115 @@ void ResumeGenerating()
 
 // =============================================================================
 
+// these native routines are used in BaseApp.java:
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeClassInit(JNIEnv* env, jclass klass)
+{
+    // get IDs for Java methods in MainActivity
+    baseapp_Warning = env->GetMethodID(klass, "Warning", "(Ljava/lang/String;)V");
+    baseapp_Fatal = env->GetMethodID(klass, "Fatal", "(Ljava/lang/String;)V");
+    baseapp_YesNo = env->GetMethodID(klass, "YesNo", "(Ljava/lang/String;)Ljava/lang/String;");
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeCreate(JNIEnv* env, jobject obj)
+{
+    // save obj for calling Java methods in instance of BaseApp
+    if (baseapp != NULL) env->DeleteGlobalRef(baseapp);
+    baseapp = env->NewGlobalRef(obj);
+
+    SetMessage("This is Golly 1.1 for Android.  Copyright 2014 The Golly Gang.");
+    if (highdensity) {
+        MAX_MAG = 6;            // maximum cell size = 64x64
+    } else {
+        MAX_MAG = 5;            // maximum cell size = 32x32
+    }
+    InitAlgorithms();           // must initialize algoinfo first
+    GetPrefs();                 // load user's preferences
+    SetMinimumStepExponent();   // for slowest speed
+    AddLayer();                 // create initial layer (sets currlayer)
+    NewPattern();               // create new, empty universe
+
+    digits10x10 = CreateIconBitmaps(digits,11);     // 1st "digit" is not used
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeSetUserDirs(JNIEnv* env, jobject obj, jstring path)
+{
+    userdir = ConvertJString(env, path) + "/";
+    // userdir = /mnt/sdcard/Android/data/net.sf.golly/files if external storage
+    // is available, otherwise /data/data/net.sf.golly/files/ on internal storage
+
+    // set paths to various subdirs (created by caller)
+    userrules = userdir + "Rules/";
+    savedir = userdir + "Saved/";
+    downloaddir = userdir + "Downloads/";
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeSetSuppliedDirs(JNIEnv* env, jobject obj, jstring path)
+{
+    supplieddir = ConvertJString(env, path) + "/";
+    // supplieddir = /data/data/net.sf.golly/files/Supplied/
+
+    // set paths to various subdirs (created by caller)
+    helpdir = supplieddir + "Help/";
+    rulesdir = supplieddir + "Rules/";
+    patternsdir = supplieddir + "Patterns/";
+
+    // also set prefsfile here by replacing "Supplied/" with "GollyPrefs"
+    prefsfile = supplieddir.substr(0, supplieddir.length() - 9) + "GollyPrefs";
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeSetTempDir(JNIEnv* env, jobject obj, jstring path)
+{
+    tempdir = ConvertJString(env, path) + "/";
+    // tempdir = /data/data/net.sf.golly/cache/
+    clipfile = tempdir + "golly_clipboard";
+
+    /* assume nativeSetTempDir is called last
+    LOGI("userdir =     %s", userdir.c_str());
+    LOGI("savedir =     %s", savedir.c_str());
+    LOGI("downloaddir = %s", downloaddir.c_str());
+    LOGI("userrules =   %s", userrules.c_str());
+    LOGI("supplieddir = %s", supplieddir.c_str());
+    LOGI("patternsdir = %s", patternsdir.c_str());
+    LOGI("rulesdir =    %s", rulesdir.c_str());
+    LOGI("helpdir =     %s", helpdir.c_str());
+    LOGI("tempdir =     %s", tempdir.c_str());
+    LOGI("clipfile =    %s", clipfile.c_str());
+    LOGI("prefsfile =   %s", prefsfile.c_str());
+    */
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeSetScreenDensity(JNIEnv* env, jobject obj, jint dpi)
+{
+    highdensity = dpi > 300;    // my Nexus 7 has a density of 320dpi
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeSetWideScreen(JNIEnv* env, jobject obj, jboolean iswide)
+{
+    widescreen = iswide;
+}
+
+// =============================================================================
+
 // these native routines are used in MainActivity.java:
 
 extern "C"
@@ -327,9 +439,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeClassInit(JNIEnv* en
     main_UpdateEditBar = env->GetMethodID(klass, "UpdateEditBar", "()V");
     main_CheckMessageQueue = env->GetMethodID(klass, "CheckMessageQueue", "()V");
     main_PlayBeepSound = env->GetMethodID(klass, "PlayBeepSound", "()V");
-    main_Warning = env->GetMethodID(klass, "Warning", "(Ljava/lang/String;)V");
-    main_Fatal = env->GetMethodID(klass, "Fatal", "(Ljava/lang/String;)V");
-    main_YesNo = env->GetMethodID(klass, "YesNo", "(Ljava/lang/String;)Ljava/lang/String;");
     main_RemoveFile = env->GetMethodID(klass, "RemoveFile", "(Ljava/lang/String;)V");
     main_MoveFile = env->GetMethodID(klass, "MoveFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     main_CopyTextToClipboard = env->GetMethodID(klass, "CopyTextToClipboard", "(Ljava/lang/String;)V");
@@ -350,24 +459,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeCreate(JNIEnv* env, 
     if (mainobj != NULL) env->DeleteGlobalRef(mainobj);
     mainobj = env->NewGlobalRef(obj);
 
-    static bool firstcall = true;
-    if (firstcall) {
-        firstcall = false;          // only do the following once
-        SetMessage("This is Golly 1.1 for Android.  Copyright 2014 The Golly Gang.");
-        if (highdensity) {
-            MAX_MAG = 6;            // maximum cell size = 64x64
-        } else {
-            MAX_MAG = 5;            // maximum cell size = 32x32
-        }
-        InitAlgorithms();           // must initialize algoinfo first
-        GetPrefs();                 // load user's preferences
-        SetMinimumStepExponent();   // for slowest speed
-        AddLayer();                 // create initial layer (sets currlayer)
-        NewPattern();               // create new, empty universe
-        UpdateStatus();             // show initial message
-
-        digits10x10 = CreateIconBitmaps(digits,11);     // 1st "digit" is not used
-    }
+    UpdateStatus();             // show initial message
 }
 
 // -----------------------------------------------------------------------------
@@ -449,62 +541,6 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_MainActivity_nativeGetInfo(JNIEnv* e
         if (commptr) free(commptr);
     }
     return env->NewStringUTF(info.c_str());
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetUserDirs(JNIEnv* env, jobject obj, jstring path)
-{
-    userdir = ConvertJString(env, path) + "/";
-    // userdir = /mnt/sdcard/Android/data/net.sf.golly/files if external storage
-    // is available, otherwise /data/data/net.sf.golly/files/ on internal storage
-
-    // set paths to various subdirs (created by caller)
-    userrules = userdir + "Rules/";
-    savedir = userdir + "Saved/";
-    downloaddir = userdir + "Downloads/";
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetSuppliedDirs(JNIEnv* env, jobject obj, jstring path)
-{
-    supplieddir = ConvertJString(env, path) + "/";
-    // supplieddir = /data/data/net.sf.golly/files/Supplied/
-    
-    // set paths to various subdirs (created by caller)
-    helpdir = supplieddir + "Help/";
-    rulesdir = supplieddir + "Rules/";
-    patternsdir = supplieddir + "Patterns/";
-    
-    // also set prefsfile here by replacing "Supplied/" with "GollyPrefs"
-    prefsfile = supplieddir.substr(0, supplieddir.length() - 9) + "GollyPrefs";
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetTempDir(JNIEnv* env, jobject obj, jstring path)
-{
-    tempdir = ConvertJString(env, path) + "/";
-    // tempdir = /data/data/net.sf.golly/cache/
-    clipfile = tempdir + "golly_clipboard";
-
-    /* assume nativeSetTempDir is called last
-    LOGI("userdir =     %s", userdir.c_str());
-    LOGI("savedir =     %s", savedir.c_str());
-    LOGI("downloaddir = %s", downloaddir.c_str());
-    LOGI("userrules =   %s", userrules.c_str());
-    LOGI("supplieddir = %s", supplieddir.c_str());
-    LOGI("patternsdir = %s", patternsdir.c_str());
-    LOGI("rulesdir =    %s", rulesdir.c_str());
-    LOGI("helpdir =     %s", helpdir.c_str());
-    LOGI("tempdir =     %s", tempdir.c_str());
-    LOGI("clipfile =    %s", clipfile.c_str());
-    LOGI("prefsfile =   %s", prefsfile.c_str());
-    */
 }
 
 // -----------------------------------------------------------------------------
@@ -1108,22 +1144,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeOpenFile(JNIEnv* env
     FixURLPath(fpath);
     OpenFile(fpath.c_str());
     SavePrefs();                // save recentpatterns
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetScreenDensity(JNIEnv* env, jobject obj, jint dpi)
-{
-    highdensity = dpi > 300;    // my Nexus 7 has a density of 320dpi
-}
-
-// -----------------------------------------------------------------------------
-
-extern "C"
-JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetWideScreen(JNIEnv* env, jobject obj, jboolean iswide)
-{
-    widescreen = iswide;
 }
 
 // -----------------------------------------------------------------------------
@@ -2389,7 +2409,7 @@ void AndroidWarning(const char* msg)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jmsg = env->NewStringUTF(msg);
-        env->CallVoidMethod(mainobj, main_Warning, jmsg);
+        env->CallVoidMethod(baseapp, baseapp_Warning, jmsg);
         env->DeleteLocalRef(jmsg);
     }
     if (attached) javavm->DetachCurrentThread();
@@ -2407,7 +2427,7 @@ void AndroidFatal(const char* msg)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jmsg = env->NewStringUTF(msg);
-        env->CallVoidMethod(mainobj, main_Fatal, jmsg);
+        env->CallVoidMethod(baseapp, baseapp_Fatal, jmsg);
         env->DeleteLocalRef(jmsg);
     }
     if (attached) javavm->DetachCurrentThread();
@@ -2427,7 +2447,7 @@ bool AndroidYesNo(const char* query)
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
         jstring jquery = env->NewStringUTF(query);
-        jstring jresult = (jstring) env->CallObjectMethod(mainobj, main_YesNo, jquery);
+        jstring jresult = (jstring) env->CallObjectMethod(baseapp, baseapp_YesNo, jquery);
         answer = ConvertJString(env, jresult);
         env->DeleteLocalRef(jquery);
         env->DeleteLocalRef(jresult);

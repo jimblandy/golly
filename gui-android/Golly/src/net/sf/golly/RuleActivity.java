@@ -148,7 +148,7 @@ public class RuleActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void removeFile(String filepath) {
-        final String fullpath = MainActivity.userdir.getAbsolutePath() + "/" + filepath;
+        final String fullpath = baseapp.userdir.getAbsolutePath() + "/" + filepath;
         final File file = new File(fullpath);
         
         // ask user if it's okay to delete given file
@@ -178,7 +178,7 @@ public class RuleActivity extends BaseActivity {
         // let user read/edit given file
         if (filepath.startsWith("Supplied/")) {
             // read contents of supplied .rule file into a string
-            String prefix = MainActivity.supplieddir.getAbsolutePath();
+            String prefix = baseapp.supplieddir.getAbsolutePath();
             prefix = prefix.substring(0, prefix.length() - 8);  // strip off "Supplied"
             String fullpath = prefix + filepath;
             File file = new File(fullpath);
@@ -203,7 +203,7 @@ public class RuleActivity extends BaseActivity {
             startActivity(intent);
         } else {
             // let user read or edit user's .rule file
-            String fullpath = MainActivity.userdir.getAbsolutePath() + "/" + filepath;
+            String fullpath = baseapp.userdir.getAbsolutePath() + "/" + filepath;
             Intent intent = new Intent(this, EditActivity.class);
             intent.putExtra(EditActivity.EDITFILE_MESSAGE, fullpath);
             startActivity(intent);
@@ -350,8 +350,8 @@ public class RuleActivity extends BaseActivity {
         String algoname = nativeGetAlgoName(algoindex);
         if (algoname.equals("RuleLoader")) {
             // create html data with links to the user's .rule files and the supplied .rule files
-            File userrules = new File(MainActivity.userdir, "Rules");
-            File rulesdir = new File(MainActivity.supplieddir, "Rules");
+            File userrules = new File(baseapp.userdir, "Rules");
+            File rulesdir = new File(baseapp.supplieddir, "Rules");
             String htmldata = "";
             htmldata += "<html><body bgcolor=\"#FFFFCE\"><a name=\"top\"></a>";
             htmldata += "<p>The RuleLoader algorithm allows CA rules to be specified in .rule files.";
@@ -368,7 +368,7 @@ public class RuleActivity extends BaseActivity {
             gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);
         } else {
             // display html data in supplieddir/Help/Algorithms/algoname.html
-            String fullpath = MainActivity.supplieddir.getAbsolutePath() + "/Help/Algorithms/" + algoname + ".html";
+            String fullpath = baseapp.supplieddir.getAbsolutePath() + "/Help/Algorithms/" + algoname + ".html";
             File htmlfile = new File(fullpath);
             if (htmlfile.exists()) {
                 gwebview.loadUrl("file://" + fullpath);     // fullpath starts with "/"

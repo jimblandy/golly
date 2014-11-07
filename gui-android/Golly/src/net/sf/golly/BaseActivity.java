@@ -65,8 +65,4 @@ public abstract class BaseActivity extends Activity {
             baseapp.setCurrentActivity(null);
     }
 
-    public Activity getForegroundActivity() {
-        return baseapp.getCurrentActivity();
-    }
-
 } // BaseActivity class
