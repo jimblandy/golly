@@ -81,6 +81,8 @@ public class HelpActivity extends BaseActivity {
     	nativeClassInit();      // caches Java method IDs
     }
     
+    // -----------------------------------------------------------------------------
+    
     // this class lets us intercept link taps
     private class MyWebViewClient extends WebViewClient {
         @Override

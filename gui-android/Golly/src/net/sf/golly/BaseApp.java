@@ -47,23 +47,29 @@ import android.util.Log;
 
 public class BaseApp extends Application {
 	
-	private static native void nativeClassInit();   // this MUST be static
-	private native void nativeCreate();             // the rest must NOT be static
-	
-    public File userdir;        // directory for user-created data
-    public File supplieddir;    // directory for supplied data
-	
+    // see jnicalls.cpp for these native routines:
+	private static native void nativeClassInit();          // this MUST be static
+	private native void nativeCreate();                    // the rest must NOT be static
     private native void nativeSetUserDirs(String path);
     private native void nativeSetSuppliedDirs(String prefix);
     private native void nativeSetTempDir(String path);
     private native void nativeSetScreenDensity(int dpi);
     private native void nativeSetWideScreen(boolean widescreen);
+	
+    public File userdir;        // directory for user-created data
+    public File supplieddir;    // directory for supplied data
+	
+    private Activity currentActivity = null;
+    
+    // -----------------------------------------------------------------------------
     
     static {
     	System.loadLibrary("stlport_shared");   // must agree with Application.mk
         System.loadLibrary("golly");            // loads libgolly.so
         nativeClassInit();                      // caches Java method IDs
     }
+    
+    // -----------------------------------------------------------------------------
     
     @Override
     public void onCreate() {
@@ -82,16 +88,18 @@ public class BaseApp extends Application {
         boolean widescreen = dpWidth >= 600;
         nativeSetWideScreen(widescreen);
         
-        nativeCreate();     // cache this instance
+        initPaths();        // sets userdir, supplieddir, etc (must be BEFORE nativeCreate)
         
-        initPaths();        // sets userdir, supplieddir, etc
+        nativeCreate();     // cache this instance and initialize lots of Golly stuff
     }
-
-    private Activity currentActivity = null;
+    
+    // -----------------------------------------------------------------------------
 
     public Activity getCurrentActivity() {
         return currentActivity;
     }
+    
+    // -----------------------------------------------------------------------------
 
     public void setCurrentActivity(Activity a) {
         currentActivity = a;
@@ -173,11 +181,15 @@ public class BaseApp extends Application {
     
     // -----------------------------------------------------------------------------
 
+    // handler for implementing modal dialogs
+    
     static class LooperInterrupter extends Handler {
 		public void handleMessage(Message msg) {
             throw new RuntimeException();
         }
 	}
+    
+    // -----------------------------------------------------------------------------
     
     // this method is called from C++ code (see jnicalls.cpp)
     void Warning(String msg) {

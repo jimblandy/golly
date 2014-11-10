@@ -323,7 +323,7 @@ void ResumeGenerating()
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeClassInit(JNIEnv* env, jclass klass)
 {
-    // get IDs for Java methods in MainActivity
+    // get IDs for Java methods in BaseApp
     baseapp_Warning = env->GetMethodID(klass, "Warning", "(Ljava/lang/String;)V");
     baseapp_Fatal = env->GetMethodID(klass, "Fatal", "(Ljava/lang/String;)V");
     baseapp_YesNo = env->GetMethodID(klass, "YesNo", "(Ljava/lang/String;)Ljava/lang/String;");

@@ -220,8 +220,10 @@ public class MainActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     static {
-        nativeClassInit();                      // caches Java method IDs
+        nativeClassInit();      // caches Java method IDs
     }
+
+    // -----------------------------------------------------------------------------
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
