@@ -89,7 +89,6 @@ public class BaseApp extends Application {
         nativeSetWideScreen(widescreen);
         
         initPaths();        // sets userdir, supplieddir, etc (must be BEFORE nativeCreate)
-        
         nativeCreate();     // cache this instance and initialize lots of Golly stuff
     }
     
@@ -182,7 +181,6 @@ public class BaseApp extends Application {
     // -----------------------------------------------------------------------------
 
     // handler for implementing modal dialogs
-    
     static class LooperInterrupter extends Handler {
 		public void handleMessage(Message msg) {
             throw new RuntimeException();

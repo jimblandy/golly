@@ -9,4 +9,4 @@ APP_CFLAGS += -DANDROID_GUI -DZLIB -fexceptions
 
 # needed for std::string etc
 APP_STL := stlport_shared
-# also need System.loadLibrary("stlport_shared") in MainActivity.java
+# also need System.loadLibrary("stlport_shared") in BaseApp.java
