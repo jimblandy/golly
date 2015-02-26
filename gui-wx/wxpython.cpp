@@ -1098,6 +1098,10 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"O!i", &PyList_Type, &inlist, &ngens)) return NULL;
     
+    if (ngens < 0) {
+        PYTHON_ERROR("evolve error: number of generations is negative.");
+    }
+    
     // create a temporary universe of same type as current universe
     lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
     const char* err = tempalgo->setrule(currlayer->algo->getrule());

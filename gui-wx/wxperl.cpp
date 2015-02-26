@@ -1250,6 +1250,10 @@ XS(pl_evolve)
     
     int ngens = SvIV(ST(1));
     
+    if (ngens < 0) {
+        PERL_ERROR("g_evolve error: number of generations is negative.");
+    }
+    
     // create a temporary universe of same type as current universe
     lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
     const char* err = tempalgo->setrule(currlayer->algo->getrule());
