@@ -607,21 +607,17 @@ const char *loadpattern(lifealgo &imp) {
    char line[LINESIZE + 1] ;
    const char *errmsg = 0;
 
-   if (getedges) {
-      // called from readclipboard so don't reset rule;
-      // ie. only change rule if an explicit rule is supplied
-   } else {
-      // reset rule to Conway's Life (default if explicit rule isn't supplied)
-      const char *err = imp.setrule("B3/S23") ;
+   // set rule to Conway's Life (default if explicit rule isn't supplied,
+   // such as a text pattern like "...ooo$$$ooo")
+   const char *err = imp.setrule("B3/S23") ;
+   if (err) {
+      // try "Life" in case given algo is RuleLoader and a
+      // Life.table/tree file exists (nicer for loading lexicon patterns)
+      err = imp.setrule("Life");
       if (err) {
-         // try "Life" in case given algo is RuleLoader and a
-         // Life.table/tree file exists (nicer for loading lexicon patterns)
-         err = imp.setrule("Life");
-         if (err) {
-            // if given algo doesn't support B3/S23 or Life then the only sensible
-            // choice left is to use the algo's default rule
-            imp.setrule( imp.DefaultRule() ) ;
-         }
+         // if given algo doesn't support B3/S23 or Life then the only sensible
+         // choice left is to use the algo's default rule
+         imp.setrule( imp.DefaultRule() ) ;
       }
    }
 
