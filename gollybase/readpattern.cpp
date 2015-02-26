@@ -620,7 +620,7 @@ const char *loadpattern(lifealgo &imp) {
          if (err) {
             // if given algo doesn't support B3/S23 or Life then the only sensible
             // choice left is to use the algo's default rule
-            err = imp.setrule( imp.DefaultRule() ) ;
+            imp.setrule( imp.DefaultRule() ) ;
          }
       }
    }

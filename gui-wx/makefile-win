@@ -38,7 +38,7 @@
 
 ### Golly-related variables: ###
 
-APP_VERSION = 2.7b2
+APP_VERSION = 2.7b3
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
