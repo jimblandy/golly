@@ -1,6 +1,11 @@
 [M2] (golly 2.0)
 #C 'Gotts Dots': sprouts its nth switchengine at t ~ 2^(24n-6) --
 #C 41 ON cells, growth rate O(t ln t): Bill Gosper, 11 March 2006
+#C More precisely, at t = 215643, 3662092278363, 61439713210231265883,
+#C ..., = 3 (4281 4096^(2 n - 1) - 211655)/241 whereat the
+#C populations go 316387, 5742718768151, 103173468009186875005, ...,
+#C = (9280232545511 2^(24 n) - 888556308770717696)/529964572999680
+#C + (614 + 1427 2^(24 n - 12)/241) n.  25 Jan 2015
 $$$$$$$*$
 4 0 0 1 0
 5 0 0 2 0
