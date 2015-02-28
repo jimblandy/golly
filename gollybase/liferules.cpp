@@ -29,6 +29,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 liferules::liferules() {
    canonrule[0] = 0 ;
+   alternate_rules = 0 ;
+   neighbormask = MOORE ;
+   rulebits = 0 ;
+   wolfram = 0 ;
+   memset(rule0, 0, sizeof(rule0)) ;
+   memset(rule1, 0, sizeof(rule1)) ;
 }
 
 liferules::~liferules() {
