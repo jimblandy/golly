@@ -451,6 +451,10 @@ void qlifealgo::fill_ll(int d) {
    coor.second.mul_smallint(-1) ;
    coor.first -= bmin ;
    coor.second -= bmin ;
+   if (oddgen) {
+      coor.first -= 1 ;
+      coor.second -= 1 ;
+   }
    int bitsreq = coor.first.bitsreq() ;
    int bitsreq2 = coor.second.bitsreq() ;
    if (bitsreq2 > bitsreq)
@@ -598,10 +602,6 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
    */
    xoff = -llx ;
    yoff = -lly ;
-   if (mag == 0) {
-      xoff += oddgen ;
-      yoff += oddgen ;
-   }
    int wd = 2 ;
    if (d >= mag)
       wd = 2 << (d-mag) ;
