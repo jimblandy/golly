@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 const int logbmsize = 8 ;                 // *must* be 8 in this code
 const int bmsize = (1<<logbmsize) ;
-const int byteoff = (bmsize/8) ;
 const int ibufsize = (bmsize*bmsize/32) ;
 static unsigned int ibigbuf[ibufsize] ;   // shared buffer for 256x256 pixels
 static unsigned char *bigbuf = (unsigned char *)ibigbuf ;
@@ -58,7 +57,7 @@ void qlifealgo::renderbm(int x, int y, int xsize, int ysize) {
    }
    ry = uviewh - ry - rh ;
 
-   // AKT: eventually we'll draw directly into pixbuf rather than bigbuf!!!
+   // AKT: eventually we might draw directly into pixbuf rather than bigbuf
    if (pmag > 1) {
       // convert each bigbuf byte into 8 bytes of state data
       int j = 0;
