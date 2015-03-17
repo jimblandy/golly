@@ -1044,15 +1044,15 @@ void qlifealgo::fit(viewport &view, int force) {
    view.setpositionmag(xmin, ymin, mag) ;
 }
 /**
- *   This is not fixed for qlife yet.  FIXME
+ *   Fixed for qlife.
  */
 void qlifealgo::lowerRightPixel(bigint &x, bigint &y, int mag) {
    if (mag >= 0)
      return ;
-   x += bmin ;
+   x -= bmin ;
    x >>= -mag ;
    x <<= -mag ;
-   x -= bmin ;   
+   x += bmin ;   
    y -= 1 ;
    y += bmin ;
    y >>= -mag ;
