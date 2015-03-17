@@ -1048,14 +1048,18 @@ void qlifealgo::fit(viewport &view, int force) {
 void qlifealgo::lowerRightPixel(bigint &x, bigint &y, int mag) {
    if (mag >= 0)
      return ;
+   x -= oddgen ;
    x -= bmin ;
    x >>= -mag ;
    x <<= -mag ;
    x += bmin ;   
+   x += oddgen ;
    y -= 1 ;
    y += bmin ;
+   y += oddgen ;
    y >>= -mag ;
    y <<= -mag ;
    y -= bmin ;
    y += 1 ;
+   y -= oddgen ;
 }
