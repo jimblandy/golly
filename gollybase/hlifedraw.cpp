@@ -811,12 +811,8 @@ void hlifealgo::fit(viewport &view, int force) {
          return ;
    }
    xmin += xmax ;
-   if (xmin.odd())
-      xmin += 1 ;
    xmin >>= 1 ;
    ymin += ymax ;
-   if (ymin.odd())
-      ymin += 1 ;
    ymin >>= 1 ;
    int mag = - currdepth - 1 ;
    while (xsize <= xgoal && ysize <= ygoal && mag < MAX_MAG) {
