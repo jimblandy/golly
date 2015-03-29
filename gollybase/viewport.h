@@ -60,6 +60,8 @@ public:
    int getmag() const { return mag ; }
    void setmag(int magarg) { mag = magarg ; reposition() ; }
    void setpositionmag(const bigint &xarg, const bigint &yarg, int magarg) ;
+   void setpositionmag(const bigint &xlo, const bigint &xhi,
+                       const bigint &ylo, const bigint &yhi, int magarg) ;
    int getwidth() const { return width ; }
    int getheight() const { return height ; }
    int getxmax() const { return width-1 ; }

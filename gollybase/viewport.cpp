@@ -24,8 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "viewport.h"
 #include "lifealgo.h"
 #include <cmath>
-#include <iostream>
-#include <cstdio>
 
 int MAX_MAG = 4 ;   // default maximum cell size is 2^4
 
@@ -204,16 +202,18 @@ void viewport::center() {
 }
 void viewport::reposition() {
    xymf = pow(2.0, -mag) ;
-   x0 = - getxmax() ;
-   y0 = - getymax() ;
-   x0.mulpow2(-mag) ;
-   y0.mulpow2(-mag) ;
-   x0 += 1 ;
-   y0 += 1 ;
-   x0 >>= 1 ;
-   y0 >>= 1 ;
-   x0 += x ;
-   y0 += y ;
+   bigint w = 1 + getxmax() ;
+   w.mulpow2(-mag) ;
+   w -= 1 ;
+   w >>= 1 ;
+   x0 = x ;
+   x0 -= w ;
+   w = 1 + getymax() ;
+   w.mulpow2(-mag) ;
+   w -= 1 ;
+   w >>= 1 ;
+   y0 = y ;
+   y0 -= w ;
    y0f = y0.todouble() ;
    x0f = x0.todouble() ;
 }
@@ -222,6 +222,22 @@ void viewport::setpositionmag(const bigint &xarg, const bigint &yarg,
    x = xarg ;
    y = yarg ;
    mag = magarg ;
+   reposition() ;
+}
+/*
+ *   This is only called by fit.  We find an x/y location that
+ *   centers things optimally.
+ */
+void viewport::setpositionmag(const bigint &xmin, const bigint &xmax,
+                              const bigint &ymin, const bigint &ymax,
+                              int magarg) {
+   mag = magarg ;
+   x = xmax ;
+   x += xmin ;
+   x >>= 1 ;
+   y = ymax ;
+   y += ymin ;
+   y >>= 1 ;
    reposition() ;
 }
 int viewport::contains(const bigint &xarg, const bigint &yarg) {

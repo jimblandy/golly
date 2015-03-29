@@ -810,17 +810,13 @@ void hlifealgo::fit(viewport &view, int force) {
       if (view.contains(xmin, ymin) && view.contains(xmax, ymax))
          return ;
    }
-   xmin += xmax ;
-   xmin >>= 1 ;
-   ymin += ymax ;
-   ymin >>= 1 ;
    int mag = - currdepth - 1 ;
    while (xsize <= xgoal && ysize <= ygoal && mag < MAX_MAG) {
       mag++ ;
       xsize *= 2 ;
       ysize *= 2 ;
    }
-   view.setpositionmag(xmin, ymin, mag) ;
+   view.setpositionmag(xmin, xmax, ymin, ymax, mag) ;
 }
 void hlifealgo::lowerRightPixel(bigint &x, bigint &y, int mag) {
    if (mag >= 0)

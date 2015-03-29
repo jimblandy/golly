@@ -1025,10 +1025,6 @@ void qlifealgo::fit(viewport &view, int force) {
       if (view.contains(xmin, ymin) && view.contains(xmax, ymax))
          return ;
    }
-   xmin += xmax ;
-   xmin >>= 1 ;
-   ymin += ymax ;
-   ymin >>= 1 ;
    int mag = - bitval ;
    while (2 * xsize <= xgoal && 2 * ysize <= ygoal && mag < MAX_MAG) {
       mag++ ;
@@ -1040,7 +1036,7 @@ void qlifealgo::fit(viewport &view, int force) {
       xsize /= 2 ;
       ysize /= 2 ;
    }
-   view.setpositionmag(xmin, ymin, mag) ;
+   view.setpositionmag(xmin, xmax, ymin, ymax, mag) ;
 }
 /**
  *   Fixed for qlife.
