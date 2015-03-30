@@ -2183,7 +2183,7 @@ static PyObject* py_visrect(PyObject* self, PyObject* args)
     bigint right = x + wd - 1;
     bigint bottom = y + ht - 1;
     int visible = viewptr->CellVisible(left, top) &&
-    viewptr->CellVisible(right, bottom);
+                  viewptr->CellVisible(right, bottom);
     
     return Py_BuildValue((char*)"i", visible);
 }

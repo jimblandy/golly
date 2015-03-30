@@ -139,7 +139,7 @@ void StatusBar::UpdateXYLocation()
 {
     int wd, ht;
     GetClientSize(&wd, &ht);
-    if (wd > h_xy && ht > 0) {
+    if (ht > 0 && (wd > h_xy || showexact)) {
         wxRect r;
         if (showexact)
             r = wxRect( wxPoint(0, XLINE+DESCHT-LINEHT), wxPoint(wd-1, YLINE+DESCHT) );
