@@ -771,3 +771,5 @@ const bigint bigint::zero(0) ;
 const bigint bigint::one(1) ;
 const bigint bigint::two(2) ;
 const bigint bigint::three(3) ;
+const bigint bigint::maxint(INT_MAX) ;
+const bigint bigint::minint(INT_MIN) ;

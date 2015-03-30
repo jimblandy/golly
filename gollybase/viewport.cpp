@@ -154,20 +154,16 @@ pair<int,int> viewport::screenPosOf(bigint x, bigint y, lifealgo *algo) {
      yy = y.toint() ;
 */
    
-   // AKT: better to do this in bigint::toint() and make these static consts???
-   bigint bigmaxint(INT_MAX) ;
-   bigint bigminint(INT_MIN) ;
-
-   if (x > bigmaxint)
+   if (x > bigint::maxint)
       xx = INT_MAX ;
-   else if (x < bigminint)
+   else if (x < bigint::minint)
       xx = INT_MIN ;
    else
       xx = x.toint() ;
    
-   if (y > bigmaxint)
+   if (y > bigint::maxint)
       yy = INT_MAX ;
-   else if (y < bigminint)
+   else if (y < bigint::minint)
       yy = INT_MIN ;
    else
       yy = y.toint() ;
