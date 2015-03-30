@@ -909,8 +909,8 @@ void qlifealgo::fit(viewport &view, int force) {
    oddgen = getGeneration().odd() ;
    kadd = oddgen ? 8 : 0 ;
    quickb = 0xfff << (8 + oddgen * 12) ;
-   int xgoal = view.getwidth() - 2 ;
-   int ygoal = view.getheight() - 2 ;
+   int xgoal = view.getwidth() ;
+   int ygoal = view.getheight() ;
    if (xgoal < 8)
       xgoal = 8 ;
    if (ygoal < 8)

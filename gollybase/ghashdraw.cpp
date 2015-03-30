@@ -625,8 +625,8 @@ void ghashbase::fit(viewport &view, int force) {
    bigint xmax = 1 ;
    bigint ymin = -1 ;
    bigint ymax = 1 ;
-   int xgoal = view.getwidth() - 2 ;
-   int ygoal = view.getheight() - 2 ;
+   int xgoal = view.getwidth() ;
+   int ygoal = view.getheight() ;
    if (xgoal < 8)
       xgoal = 8 ;
    if (ygoal < 8)

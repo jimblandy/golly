@@ -237,17 +237,19 @@ void viewport::setpositionmag(const bigint &xmin, const bigint &xmax,
    reposition() ;
 }
 int viewport::contains(const bigint &xarg, const bigint &yarg) {
-   bigint t = x ;
-   t -= xarg ;
-   t.mulpow2(mag+1) ;
-   if (t <= -getxmax() || t >= getxmax()) {
-     return 0 ;
-   }
-   t = y ;
-   t -= yarg ;
-   t.mulpow2(mag+1) ;
-   if (t <= -getymax() || t >= getymax()) {
-     return 0 ;
-   }
+   if (xarg < x0 || yarg < y0)
+      return 0 ;
+   bigint t = getxmax() ;
+   t += 1 ;
+   t.mulpow2(-mag) ;
+   t += x0 ;
+   if (xarg > t)
+      return 0 ;
+   t = getymax() ;
+   t += 1 ;
+   t.mulpow2(-mag) ;
+   t += y0 ;
+   if (yarg > t)
+      return 0 ;
    return 1 ;
 }
