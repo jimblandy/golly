@@ -200,13 +200,11 @@ void viewport::reposition() {
    xymf = pow(2.0, -mag) ;
    bigint w = 1 + getxmax() ;
    w.mulpow2(-mag) ;
-   w -= 1 ;
    w >>= 1 ;
    x0 = x ;
    x0 -= w ;
    w = 1 + getymax() ;
    w.mulpow2(-mag) ;
-   w -= 1 ;
    w >>= 1 ;
    y0 = y ;
    y0 -= w ;
@@ -230,9 +228,11 @@ void viewport::setpositionmag(const bigint &xmin, const bigint &xmax,
    mag = magarg ;
    x = xmax ;
    x += xmin ;
+   x += 1 ;
    x >>= 1 ;
    y = ymax ;
    y += ymin ;
+   y += 1 ;
    y >>= 1 ;
    reposition() ;
 }
