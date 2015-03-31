@@ -242,12 +242,14 @@ int viewport::contains(const bigint &xarg, const bigint &yarg) {
    bigint t = getxmax() ;
    t += 1 ;
    t.mulpow2(-mag) ;
+   t -= 1 ;
    t += x0 ;
    if (xarg > t)
       return 0 ;
    t = getymax() ;
    t += 1 ;
    t.mulpow2(-mag) ;
+   t -= 1 ;
    t += y0 ;
    if (yarg > t)
       return 0 ;
