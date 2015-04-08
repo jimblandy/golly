@@ -1051,18 +1051,35 @@ void DrawPasteImage()
     if (iright > currwd - 1) iright = currwd - 1;
     int pastewd = iright - ileft + 1;
     int pasteht = ibottom - itop + 1;
+
+    // set size of translucent rect before following adjustment
+    int rectwd = pastewd;
+    int rectht = pasteht;
+
+    if (pastemag > 0) {
+        // make sure pastewd/ht don't have partial cells
+        int cellsize = 1 << pastemag;
+        int gap = 1;                        // gap between cells
+        if (pastemag == 1) gap = 0;         // no gap at scale 1:2
+        if ((pastewd + gap) % cellsize > 0)
+            pastewd += cellsize - ((pastewd + gap) % cellsize);
+        if ((pasteht + gap) % cellsize != 0)
+            pasteht += cellsize - ((pasteht + gap) % cellsize);
+    }
+
     cellbox.width = PixelsToCells(pastewd, pastemag);
     cellbox.height = PixelsToCells(pasteht, pastemag);
 
     // create temporary viewport
     viewport tempview(pastewd, pasteht);
     int midx, midy;
-    if (pastemag > 0) {
-        midx = cellbox.x + cellbox.width / 2;
-        midy = cellbox.y + cellbox.height / 2;
-    } else {
+    if (pastemag > 1) {
+        // allow for gap between cells
         midx = cellbox.x + (cellbox.width - 1) / 2;
         midy = cellbox.y + (cellbox.height - 1) / 2;
+    } else {
+        midx = cellbox.x + cellbox.width / 2;
+        midy = cellbox.y + cellbox.height / 2;
     }
     tempview.setpositionmag(midx, midy, pastemag);
 
@@ -1102,7 +1119,7 @@ void DrawPasteImage()
     // overlay translucent rect to show paste area
     DisableTextures();
     SetColor(pastergb.r, pastergb.g, pastergb.b, 64);
-    FillRect(ileft, itop, pastewd, pasteht);
+    FillRect(ileft, itop, rectwd, rectht);
 }
 
 // -----------------------------------------------------------------------------

@@ -155,8 +155,8 @@ void FitInView(int force)
         int pwd, pht;
         int mag = MAX_MAG;
         while (true) {
-            pwd = mag >= 0 ? (pastebox.width << mag) : (pastebox.width >> -mag);
-            pht = mag >= 0 ? (pastebox.height << mag) : (pastebox.height >> -mag);
+            pwd = mag >= 0 ? (pastebox.width << mag) - 1 : (pastebox.width >> -mag);
+            pht = mag >= 0 ? (pastebox.height << mag) - 1 : (pastebox.height >> -mag);
             if (vwd >= pwd && vht >= pht) {
                 // all of paste image can fit within viewport at this mag
                 break;
@@ -168,13 +168,8 @@ void FitInView(int force)
         currlayer->view->setpositionmag(bigint::zero, bigint::zero, mag);
         
         // move paste image to middle of viewport
-        if (mag >= 0) {
-            pastex = (vwd - pwd) / 2 + (1 << mag);
-            pastey = (vht - pht) / 2 + (1 << mag);
-        } else {
-            pastex = (vwd - pwd) / 2;
-            pastey = (vht - pht) / 2;
-        }
+        pastex = (vwd - pwd) / 2;
+        pastey = (vht - pht) / 2;
     } else {
         // fit current pattern in viewport
         // (if no pattern this will set mag to MAX_MAG and move to origin)

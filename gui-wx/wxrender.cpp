@@ -1199,12 +1199,13 @@ void CheckPasteImage()
             // for later use in DrawPasteImage
             viewport tempview(pimagewd, pimageht);
             int midx, midy;
-            if (pastemag > 0) {
+            if (pastemag > 1) {
+                // allow for gap between cells
                 midx = cellbox.x + (cellbox.width - 1) / 2;
                 midy = cellbox.y + (cellbox.height - 1) / 2;
             } else {
-                midx = cellbox.x + (cellbox.width - 1) / 2;
-                midy = cellbox.y + (cellbox.height - 1) / 2;
+                midx = cellbox.x + cellbox.width / 2;
+                midy = cellbox.y + cellbox.height / 2;
             }
             tempview.setpositionmag(midx, midy, pastemag);
             
