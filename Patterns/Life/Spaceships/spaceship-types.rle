@@ -23,7 +23,7 @@
 #C  (2,0)/6  72 cells                Jason Summers        22 Oct 2000
 #C  (2,1)/6  (no known example)
 #C  (3,0)/6  97 cells                Hartmut Holzwart            1995
-#C  (1,0)/7  (no known example)
+#C  (1,0)/7  20 cells                Josh Ball            17 Feb 2013
 #C  (1,1)/7  (no known example)
 #C  (2,0)/7  36 cells                David Eppstein       12 Jan 2000
 #C  (2,1)/7  (no known example)
@@ -69,23 +69,24 @@ o4bobo3bobo5bo6bobo$57bo3bo30bob3o34b2obobobo2bo33bo2bo24bo2bo16b5o2bo
 o$o2bo55b3o28b4obo38bo$o2bo53b2o3bo30bob2o37b2o14bo$bo28bo24bo34b3o39b
 ob2o5bobo4b2o$2b4obo21bobo21b2o3bo3bo28bo35bo3bo3b3o2bo4bo$3bo3bo21bob
 o23bo2bo3bo27b2o30b2o3bo2bo6bobo5b3o2bo$4bo24bo27b2o30bo32b2o3bob2o6bo
-3bobobo$4bobo51bo3bo27bo31b2o3bo10bobo7b2o$28b2o28bo3bo27bo36b2o14bo6b
-o$3b3o23bobo26b3o31b3o34bo12bobo$3b2o23bobo98bo12bobo$3b3o22b3o27b3o
-31b3o32b2o14bo6bo$58bo3bo27bo31b2o3bo10bobo7b2o$4bobo22bobo26bo3bo27bo
-31b2o3bob2o6bo3bobobo$4bo24b2o26b2o30bo32b2o3bo2bo6bobo5b3o2bo$3bo3bo
-22bo24bo2bo3bo27b2o35bo3bo3b3o2bo4bo$2b4obo22bobo20b2o3bo3bo28bo40bob
-2o5bobo4b2o$bo28bobo22bo34b3o41b2o14bo$o2bo27bo25b2o3bo30bob2o37bo$o2b
-o55b3o28b4obo$o4bo84bo$b4o86bo2b2o$2bo88bo2b2o$3b2o86b2o$4bo2bo$5bobo
-24$143bobo$143bobo$142bo2bo$143bo$143b2o$145bo97bo$243b2o$103b2o38b2o$
-102bo36bo3b2ob2o96b3o$103bo34b2o2bo101b3o$103b3o33bo2b5o4b2o108bo$108b
-o28bob2ob2o3bo3b2o107bo$96bo2bo2bo5bo27b2ob2o5bo4b2ob3o88b3o14bo$97b5o
-5bo28b2obo4bo3bo5b2o90b2o8b3o3bo$96bo3bobo2bo28b2o2bo7bo2bo91bob3o2bo
-5bo6bo$96bob2o2bob2o30bo5b3o3bo92bo3bob2o9b2o$59bo33bo2b3o2b2o34b2o2bo
-b4o94b2ob2ob2o7bo$57b2o33b5o33b2o3bobobo3bob2o99b3o5bo3bo$58b2o31bo37b
-o2bo2bo7bo2bo100b2o6bo2bo$90b2ob2o39b2obobo3bo104bo6b3o$90b2o2bo33bo4b
-2o2bo2b3o104b2o$87b2o2bo6bo26b5o3bo2bo108bobo$88bob2o4b2o28bo3b3o3b2o
-105bo$89bo5bo29b2ob3o3bob2o104bo2bo$90b2o3bo30b2o2bo3b3o2bo101bo2bo$
-91bo3b2o27bo11b2obo104bo8b7o$92b3o28b5o2bobo2bobo103bo10b2ob4ob2o$123b
-o3b2obo4b2o104b3o12bo3b2o2b2o$123bo4bobo119bobo4b3obo2b2o$125bo4bobo3b
-o111b2o7bobo4b2obo$122b4o4bo5bo109bo4bo7bo7b2o$122b2o8b2obo110bo3bo6bo
-$123bobo3bob2o113b2obo7b3o$125b2ob3o!
+3bobobo24b2o2bob2o$4bobo51bo3bo27bo31b2o3bo10bobo7b2o19bo2bo2b2o$28b2o
+28bo3bo27bo36b2o14bo6bo19bobo$3b3o23bobo26b3o31b3o34bo12bobo26bo$3b2o
+23bobo98bo12bobo32bo$3b3o22b3o27b3o31b3o32b2o14bo6bo24b3o$58bo3bo27bo
+31b2o3bo10bobo7b2o24bo$4bobo22bobo26bo3bo27bo31b2o3bob2o6bo3bobobo29bo
+$4bo24b2o26b2o30bo32b2o3bo2bo6bobo5b3o2bo25b2o$3bo3bo22bo24bo2bo3bo27b
+2o35bo3bo3b3o2bo4bo$2b4obo22bobo20b2o3bo3bo28bo40bob2o5bobo4b2o$bo28bo
+bo22bo34b3o41b2o14bo$o2bo27bo25b2o3bo30bob2o37bo$o2bo55b3o28b4obo$o4bo
+84bo$b4o86bo2b2o$2bo88bo2b2o$3b2o86b2o$4bo2bo$5bobo24$143bobo$143bobo$
+142bo2bo$143bo$143b2o$145bo97bo$243b2o$103b2o38b2o$102bo36bo3b2ob2o96b
+3o$103bo34b2o2bo101b3o$103b3o33bo2b5o4b2o108bo$108bo28bob2ob2o3bo3b2o
+107bo$96bo2bo2bo5bo27b2ob2o5bo4b2ob3o88b3o14bo$97b5o5bo28b2obo4bo3bo5b
+2o90b2o8b3o3bo$96bo3bobo2bo28b2o2bo7bo2bo91bob3o2bo5bo6bo$96bob2o2bob
+2o30bo5b3o3bo92bo3bob2o9b2o$59bo33bo2b3o2b2o34b2o2bob4o94b2ob2ob2o7bo$
+57b2o33b5o33b2o3bobobo3bob2o99b3o5bo3bo$58b2o31bo37bo2bo2bo7bo2bo100b
+2o6bo2bo$90b2ob2o39b2obobo3bo104bo6b3o$90b2o2bo33bo4b2o2bo2b3o104b2o$
+87b2o2bo6bo26b5o3bo2bo108bobo$88bob2o4b2o28bo3b3o3b2o105bo$89bo5bo29b
+2ob3o3bob2o104bo2bo$90b2o3bo30b2o2bo3b3o2bo101bo2bo$91bo3b2o27bo11b2ob
+o104bo8b7o$92b3o28b5o2bobo2bobo103bo10b2ob4ob2o$123bo3b2obo4b2o104b3o
+12bo3b2o2b2o$123bo4bobo119bobo4b3obo2b2o$125bo4bobo3bo111b2o7bobo4b2ob
+o$122b4o4bo5bo109bo4bo7bo7b2o$122b2o8b2obo110bo3bo6bo$123bobo3bob2o
+113b2obo7b3o$125b2ob3o!
