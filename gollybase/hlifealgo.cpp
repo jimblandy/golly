@@ -1836,10 +1836,29 @@ const char *hlifealgo::writeNativeFormat(std::ostream &os, char *comments) {
       // write non-zero gen count
       os << "#G " << generation.tostring('\0') << '\n' ;
    }
-   if (comments && comments[0] == '#') {
-      // write given comment line(s)
-      os << comments;
-   }
+   
+    if (comments) {
+        // write given comment line(s), but we can't just do "os << comments" because the
+        // lines might not start with #C (eg. if they came from the end of a .rle file),
+        // so we must ensure that each comment line in the .mc file starts with #C
+        char *p = comments;
+        while (*p != '\0') {
+            char *line = p;
+            // note that readcomments() in readpattern.cpp ensures each line ends with \n
+            while (*p != '\n') p++;
+            if (line[0] != '#' || line[1] != 'C') {
+                os << "#C ";
+            }
+            if (line != p) {
+                *p = '\0';
+                os << line;
+                *p = '\n';
+            }
+            os << '\n';
+            p++;
+        }
+    }
+   
    inGC = 1 ;
    /* this is the old way:
    cellcounter = 0 ;

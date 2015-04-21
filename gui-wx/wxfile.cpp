@@ -393,6 +393,8 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
                 delete currlayer->algo;
                 currlayer->algo = CreateNewUniverse(currlayer->algtype);
                 RestoreRule(oldrule);
+                // also show full path to file (useful when debugging!)
+                bigerr += wxString::Format(_("\n\nFile path:\n%s"), FILEPATH);
                 Warning(bigerr);
             }
         }
