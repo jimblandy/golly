@@ -74,7 +74,7 @@ For a 32-bit build, open a x32 Visual Studio command prompt (e.g. Developer Comm
 
 <p>
 Unpack the wxWidgets source archive wherever you like, start up Terminal
-and type these commands (using the correct version number):
+and type these commands (using the correct path and version number):
 
 <pre>
    cd /path/to/wxWidgets-2.9.4
@@ -87,6 +87,23 @@ and type these commands (using the correct version number):
 <p>
 If you plan to build Golly using CMake (see <a href="#cmake">below</a>) then also
 do "<tt>sudo make install</tt>".
+
+<p>
+WARNING: If your version of wxWidgets is later than 2.9.4 then you'll need to make
+the following patch before running make.  Open <tt>src/osx/nonownedwnd_osx.cpp</tt>
+and edit the <tt>wxNonOwnedWindow::Update()</tt> routine so that it looks like this:
+
+<pre>
+   void wxNonOwnedWindow::Update()
+   {
+       m_nowpeer->Update();
+   }
+</pre>
+
+<p>
+This routine is called whenever Golly wants to update the viewport.
+Without this change, Golly will appear to run way too fast at step size 1
+because any update requests faster than about 30Hz will simply be ignored!
 
 
 <a name="wxlin"></a>
