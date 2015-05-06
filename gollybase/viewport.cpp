@@ -88,15 +88,17 @@ void viewport::unzoom(int xx, int yy) {
    o.mulpow2(-mag-2) ;
    y -= o ;
    reposition() ;
-   // adjust cell position if necessary to avoid any drift
-   pair<bigint, bigint> newpos = at(xx, yy);
-   bigint xdrift = newpos.first;
-   bigint ydrift = newpos.second;
-   xdrift -= oldpos.first;
-   ydrift -= oldpos.second;
-   // drifts will be -1, 0 or 1
-   if (xdrift != 0) move(-xdrift.toint() << mag, 0);
-   if (ydrift != 0) move(0, -ydrift.toint() << mag);
+   if (mag >= 0) {
+      // adjust cell position if necessary to avoid any drift
+      pair<bigint, bigint> newpos = at(xx, yy);
+      bigint xdrift = newpos.first;
+      bigint ydrift = newpos.second;
+      xdrift -= oldpos.first;
+      ydrift -= oldpos.second;
+      // drifts will be -1, 0 or 1
+      if (xdrift != 0) move(-xdrift.toint() << mag, 0);
+      if (ydrift != 0) move(0, -ydrift.toint() << mag);
+   }
 }
 pair<bigint, bigint> viewport::at(int x, int y) {
    bigint rx = x ;
