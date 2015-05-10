@@ -10,10 +10,20 @@ import golly as g
 selrect = g.getselrect()
 if len(selrect) == 0: g.exit("There is no selection.")
 
+# use same file name as in shift.pl
+INIFileName = g.getdir("data") + "shift.ini"
+oldparams = "0 0 or"
+try:
+    f = open(INIFileName, 'r')
+    oldparams = f.readline()
+    f.close()
+except:
+    # should only happen 1st time (INIFileName doesn't exist)
+    pass
+
 answer = g.getstring("Enter x y shift amounts and an optional mode\n" +
                      "(valid modes are copy/or/xor, default is or):",
-                     "0 0 or",
-                     "Shift selection")
+                     oldparams, "Shift selection")
 xym = answer.split()
 
 # extract x and y amounts
@@ -34,6 +44,14 @@ if len(xym) > 2:
         g.exit("Unknown mode: " + xym[2] + " (must be copy/or/xor)")
 else:
     mode = "or"
+
+# given parameters are valid so save them for next run
+try:
+    f = open(INIFileName, 'w')
+    f.write(answer)
+    f.close()
+except:
+    g.warn("Unable to save given parameters in file:\n" + INIFileName)
 
 # abort shift if the new selection would be outside a bounded grid
 if g.getwidth() > 0:

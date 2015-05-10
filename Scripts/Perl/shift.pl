@@ -7,10 +7,17 @@ use strict;
 my @selrect = g_getselrect();
 g_exit("There is no selection.") if @selrect == 0;
 
+# use same file name as in shift.py
+my $INIFileName = g_getdir("data")."shift.ini";
+my $oldparams = "0 0 or";
+if (open(INFILE, $INIFileName)) {
+    $oldparams = <INFILE>;
+    close INFILE;
+}
+
 my $s = g_getstring("Enter x y shift amounts and an optional mode\n".
                     "(valid modes are copy/or/xor, default is or):",
-                    "0 0 or",
-                    "Shift selection");
+                    $oldparams, "Shift selection");
 my ($x, $y, $mode) = split(' ', $s, 3);
 
 # check x and y
@@ -30,6 +37,14 @@ if ($mode eq "") {
     if (not ($mode eq "copy" or $mode eq "or" or $mode eq "xor")) {
         g_exit("Unknown mode: $mode (must be copy/or/xor)");
     }
+}
+
+# given parameters are valid so save them for next run
+if (not open(OUTFILE, ">".$INIFileName)) {
+    g_warn("Can't save given parameters in $INIFileName:\n$!");
+} else {
+    print OUTFILE $s;
+    close OUTFILE;
 }
 
 # abort shift if the new selection would be outside a bounded grid
