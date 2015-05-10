@@ -1,4 +1,4 @@
-[M2] (golly 2.7b4)
+[M2] (golly 2.7)
 #R B3/S23
 #C Total periodic, by Bill Gosper.
 #C
