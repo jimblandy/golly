@@ -342,9 +342,14 @@ bool GollyApp::OnInit()
     
     wxString banner = _("This is Golly version ");
     banner +=         _(STRINGIFY(VERSION)); 
+#ifdef GOLLY64BIT
+    banner +=         _(" (64-bit)");
+#else
+    banner +=         _(" (32-bit)");
+#endif
     banner +=         _(".  Copyright 2015 The Golly Gang.");
     if (debuglevel == 99) {
-        banner += _("  *** debuglevel is 99 ***");
+        banner +=     _("  *** debuglevel is 99 ***");
     }
     statusptr->SetMessage(banner);
     
