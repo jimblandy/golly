@@ -6,7 +6,15 @@
 Andrew's list:
 ==============
 
-- Optimize rendering by using OpenGL (see iGolly code).
+- Only have one panel for showing Patterns, Scripts, Rules, etc,
+  and set initial location to directory containing those sub-folders.
+
+- Add a new check box to Prefs > Layer: "Automatically show/hide layer bar".
+  If ticked then layer bar is automatically shown whenever the number of
+  layers becomes > 1, and automatically hidden when the number drops to 1.
+  Only need to check in a few places (esp. after a script ends).
+
+- Optimize rendering by using OpenGL (see gui-common/render.cpp).
 
 - Auto stop script if it creates too many temp files (for undo).
   This can happen if a long-running script doesn't call new/open
@@ -140,7 +148,7 @@ tod222:
   Maybe just use special exit() string like exit("QUIT GOLLY")?
   [No need -- can now call doevent("key q cmd").]
 - Allow a command line argument (-minimize?) to start up with the
-  main window in minimized state.  Shoule be possible in OnInit.
+  main window in minimized state.  Should be possible in OnInit.
 </pre>
 </td></tr></table></center>
 </body>
