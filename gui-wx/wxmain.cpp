@@ -71,9 +71,8 @@
 static wxTimer* onetimer;
 
 #ifdef __WXMSW__
-    static bool call_unselect = false;        // OnIdle needs to call Unselect?
-    static wxString editpath = wxEmptyString; // OnIdle calls EditFile if this isn't empty
-    static bool ignore_selection = false;     // ignore spurious selection?
+    static bool set_focus = false;              // OnIdle needs to call SetFocus?
+    static wxString editpath = wxEmptyString;   // OnIdle calls EditFile if this isn't empty
 #endif
 
 static bool call_close = false;           // OnIdle needs to call Close?
@@ -963,32 +962,16 @@ void MainFrame::SimplifyTree(wxString& indir, wxTreeCtrl* treectrl, wxTreeItemId
                 child = treectrl->GetNextChild(id, cookie);
             }
         }
+        #ifndef __WXMSW__
+            // can cause crash on Windows
+            treectrl->ScrollTo(root);
+        #endif
+    }
         
-#ifndef __WXMSW__
-        // causes crash on Windows
-        treectrl->ScrollTo(root);
-#endif
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root)
-{
-    // recursively traverse tree and reset each file item background to white
+    // select top folder so hitting left arrow can collapse it and won't cause an assert
     wxTreeItemIdValue cookie;
-    wxTreeItemId id = treectrl->GetFirstChild(root, cookie);
-    while ( id.IsOk() ) {
-        if ( treectrl->ItemHasChildren(id) ) {
-            DeselectTree(treectrl, id);
-        } else {
-            wxColor currcolor = treectrl->GetItemBackgroundColour(id);
-            if ( currcolor != *wxWHITE ) {
-                treectrl->SetItemBackgroundColour(id, *wxWHITE);
-            }
-        }
-        id = treectrl->GetNextChild(root, cookie);
-    }
+    id = treectrl->GetFirstChild(root, cookie);
+    if (id.IsOk()) treectrl->SelectItem(id);
 }
 
 // -----------------------------------------------------------------------------
@@ -1312,21 +1295,9 @@ EVT_SET_FOCUS           (                 MainFrame::OnSetFocus)
 EVT_ACTIVATE            (                 MainFrame::OnActivate)
 EVT_IDLE                (                 MainFrame::OnIdle)
 EVT_SIZE                (                 MainFrame::OnSize)
-#if defined(__WXMAC__) || defined(__WXMSW__)
-EVT_TREE_ITEM_EXPANDED   (wxID_TREECTRL,  MainFrame::OnDirTreeExpand)
-EVT_TREE_ITEM_COLLAPSING (wxID_TREECTRL,  MainFrame::OnDirTreeCollapse)
-// wxMac bug??? EVT_TREE_ITEM_COLLAPSED doesn't get called
-#endif
 EVT_TREE_SEL_CHANGED    (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
 EVT_SPLITTER_DCLICK     (wxID_ANY,        MainFrame::OnSashDblClick)
 EVT_TIMER               (wxID_ANY,        MainFrame::OnOneTimer)
-#if defined(__WXMAC__) || defined(__WXGTK__)
-//!!! these handlers avoid the viewport window being erased on Mac and Linux
-/* but unfortunately the split-window sash won't be drawn correctly
-EVT_ERASE_BACKGROUND    (                 MainFrame::OnErase)
-EVT_PAINT               (                 MainFrame::OnPaint)
-*/
-#endif
 EVT_CLOSE               (                 MainFrame::OnClose)
 END_EVENT_TABLE()
 
@@ -1636,12 +1607,8 @@ void MainFrame::OnIdle(wxIdleEvent& event)
     if (inidle) return;
     
 #ifdef __WXMSW__
-    if ( call_unselect ) {
-        // deselect file/folder so user can click the same item
-        if (showpatterns) patternctrl->GetTreeCtrl()->Unselect();
-        if (showscripts) scriptctrl->GetTreeCtrl()->Unselect();
-        call_unselect = false;
-        
+    if (set_focus) {
+        set_focus = false;
         // calling SetFocus once doesn't stuff up layer bar buttons
         if (infront && viewptr) viewptr->SetFocus();
     }
@@ -1683,98 +1650,6 @@ void MainFrame::OnIdle(wxIdleEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::OnDirTreeExpand(wxTreeEvent& WXUNUSED(event))
-{
-#ifdef __WXMAC__
-    if ((generating || inscript) && (showpatterns || showscripts)) {
-        // send idle event so directory tree gets updated
-    #if wxCHECK_VERSION(2,9,2)
-        // SendIdleEvents is no longer a member of wxApp -- need to fix???!!!
-    #else
-        wxIdleEvent idleevent;
-        wxGetApp().SendIdleEvents(this, idleevent);
-    #endif
-    }
-#endif
-#ifdef __WXMSW__
-    // avoid bug -- expanding/collapsing a folder can cause top visible item
-    // to become selected and thus OnDirTreeSelection gets called
-    ignore_selection = true;
-#endif
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::OnDirTreeCollapse(wxTreeEvent& WXUNUSED(event))
-{
-#ifdef __WXMAC__
-    if ((generating || inscript) && (showpatterns || showscripts)) {
-        // send idle event so directory tree gets updated
-    #if wxCHECK_VERSION(2,9,2)
-        // SendIdleEvents is no lnger a member of wxApp -- need to fix???!!!
-    #else
-        wxIdleEvent idleevent;
-        wxGetApp().SendIdleEvents(this, idleevent);
-    #endif
-    }
-#endif
-#ifdef __WXMSW__
-    // avoid bug -- expanding/collapsing a folder can cause top visible item
-    // to become selected and thus OnDirTreeSelection gets called
-    ignore_selection = true;
-#endif
-}
-
-// -----------------------------------------------------------------------------
-
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,9,0)
-    // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
-    #define wxMOD_CONTROL wxMOD_RAW_CONTROL
-    #define ControlDown RawControlDown
-#endif
-
-void MainFrame::OnTreeClick(wxMouseEvent& event)
-{
-    // set global flag for testing in OnDirTreeSelection
-    edit_file = event.ControlDown() || event.RightDown();
-    
-#ifdef __WXMSW__
-    // this handler gets called even if user clicks outside an item,
-    // and in some cases can result in the top visible item becoming
-    // selected, so we need to avoid that
-    ignore_selection = false;
-    wxGenericDirCtrl* dirctrl = NULL;
-    // for some reason we need to use mainptr to access next 2 members
-    // (it's something to do with using Connect)
-    if (showpatterns) dirctrl = mainptr->patternctrl;
-    if (showscripts) dirctrl = mainptr->scriptctrl;
-    if (dirctrl) {
-        wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
-        if (treectrl) {
-            wxPoint pt = event.GetPosition();
-            int flags;
-            wxTreeItemId id = treectrl->HitTest(pt, flags);
-            if (id.IsOk() && (flags & wxTREE_HITTEST_ONITEMLABEL ||
-                              flags & wxTREE_HITTEST_ONITEMICON)) {
-                // fix problem with right-click
-                if (event.RightDown()) {
-                    treectrl->SelectItem(id, true);
-                    // OnDirTreeSelection gets called a few times for some reason
-                }
-                // fix problem with double-click
-                if (event.LeftDClick()) ignore_selection = true;
-            } else {
-                ignore_selection = true;
-            }
-        }
-    }
-#endif
-    
-    event.Skip();
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::EditFile(const wxString& filepath)
 {
     // prompt user if text editor hasn't been set yet
@@ -1807,105 +1682,129 @@ void MainFrame::EditFile(const wxString& filepath)
 
 // -----------------------------------------------------------------------------
 
+#if defined(__WXMAC__) && wxCHECK_VERSION(2,9,0)
+    // wxMOD_CONTROL has been changed to mean Command key down (sheesh!)
+    #define wxMOD_CONTROL wxMOD_RAW_CONTROL
+    #define ControlDown RawControlDown
+#endif
+
+void MainFrame::OnTreeClick(wxMouseEvent& event)
+{
+    // set global flag for testing in OnDirTreeSelection
+    edit_file = event.ControlDown() || event.RightDown();
+    
+    wxGenericDirCtrl* dirctrl = NULL;
+    // we need to use mainptr to access next 2 members (it's something to do with Connect)
+    if (showpatterns) dirctrl = mainptr->patternctrl;
+    if (showscripts) dirctrl = mainptr->scriptctrl;
+    if (dirctrl) {
+        wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
+        if (treectrl) {
+            // determine if an item was clicked
+            wxPoint pt = event.GetPosition();
+            int flags;
+            wxTreeItemId id = treectrl->HitTest(pt, flags);
+            if (!id.IsOk()) {
+                // click wasn't in any item
+                event.Skip();
+                return;
+            }
+
+            if (treectrl->ItemHasChildren(id)) {
+                // click was in a folder item
+                event.Skip();
+                return;
+            }
+    
+            // check for click in an already selected item
+            if (id == treectrl->GetSelection()) {
+                // force a selection change so OnDirTreeSelection gets called
+                treectrl->Unselect();
+            }
+    
+            treectrl->SelectItem(id);
+            // OnDirTreeSelection will be called -- don't call event.Skip()
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 {
-    // note that viewptr will be NULL if called from MainFrame::MainFrame
-    if ( viewptr ) {
-        wxTreeItemId id = event.GetItem();
-        if ( !id.IsOk() ) return;
+    if (viewptr == NULL) return;   // ignore 1st call from MainFrame::MainFrame
+    
+    wxTreeItemId id = event.GetItem();
+    if ( !id.IsOk() ) return;
+    
+    wxGenericDirCtrl* dirctrl = NULL;
+    if (showpatterns) dirctrl = patternctrl;
+    if (showscripts) dirctrl = scriptctrl;
+    if (dirctrl == NULL) return;
+    
+    wxString filepath = dirctrl->GetFilePath();
         
-        wxGenericDirCtrl* dirctrl = NULL;
-        if (showpatterns) dirctrl = patternctrl;
-        if (showscripts) dirctrl = scriptctrl;
-        if (dirctrl == NULL) return;
+    if ( filepath.IsEmpty() ) {
+        // user clicked on a folder name
         
-        wxString filepath = dirctrl->GetFilePath();
-        
-        // deselect file/folder so this handler will be called if user clicks same item
-        wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
+    } else if (edit_file) {
+        // open file in text editor
 #ifdef __WXMSW__
-        // calling UnselectAll() or Unselect() here causes a crash
-        if (ignore_selection) {
-            // ignore spurious selection
-            ignore_selection = false;
-            call_unselect = true;
-            return;
-        }
+        // call EditFile in later OnIdle to avoid right-click problem
+        editpath = filepath;
 #else
-        treectrl->UnselectAll();
+        EditFile(filepath);
 #endif
         
-        if ( filepath.IsEmpty() ) {
-            // user clicked on a folder name
-            
-        } else if (edit_file) {
-            // open file in text editor
-#ifdef __WXMSW__
-            // call EditFile in later OnIdle to avoid right-click problem
-            editpath = filepath;
-#else
-            EditFile(filepath);
-#endif
-            
+    } else {
+        // user clicked on a file name
+        if ( inscript ) {
+            // use Warning because statusptr->ErrorMessage does nothing if inscript
+            if ( IsScriptFile(filepath) )
+                Warning(_("Cannot run script while another script is running."));
+            else
+                Warning(_("Cannot open file while a script is running."));
         } else {
-            // user clicked on a file name
-            if ( inscript ) {
-                // use Warning because statusptr->ErrorMessage does nothing if inscript
-                if ( IsScriptFile(filepath) )
-                    Warning(_("Cannot run script while another script is running."));
-                else
-                    Warning(_("Cannot open file while a script is running."));
-            } else {
-                // reset background of previously selected file by traversing entire tree;
-                // we can't just remember previously selected id because ids don't persist
-                // after a folder has been collapsed and expanded
-                DeselectTree(treectrl, treectrl->GetRootItem());
-                
-                // indicate the selected file
-                treectrl->SetItemBackgroundColour(id, *wxLIGHT_GREY);
-                
+            
 #ifdef __WXMAC__
-                if ( !wxFileName::FileExists(filepath) ) {
-                    // avoid wxMac bug in wxGenericDirCtrl::GetFilePath; ie. file name
-                    // can contain "/" rather than ":" (but directory path is okay)
-                    wxFileName fullpath(filepath);
-                    wxString dir = fullpath.GetPath();
-                    wxString name = fullpath.GetFullName();
-                    wxString newpath = dir + wxT(":") + name;
-                    if ( wxFileName::FileExists(newpath) ) filepath = newpath;
-                }
+            if ( !wxFileName::FileExists(filepath) ) {
+                // avoid wxMac bug in wxGenericDirCtrl::GetFilePath; ie. file name
+                // can contain "/" rather than ":" (but directory path is okay)
+                wxFileName fullpath(filepath);
+                wxString dir = fullpath.GetPath();
+                wxString name = fullpath.GetFullName();
+                wxString newpath = dir + wxT(":") + name;
+                if ( wxFileName::FileExists(newpath) ) filepath = newpath;
+            }
 #endif
-                
-                if (generating) {
-                    // terminate generating loop and set command_pending flag
-                    Stop();
-                    command_pending = true;
-                    if ( IsScriptFile(filepath) ) {
-                        AddRecentScript(filepath);
-                        cmdevent.SetId(ID_RUN_RECENT + 1);
-                    } else {
-                        AddRecentPattern(filepath);
-                        cmdevent.SetId(ID_OPEN_RECENT + 1);
-                    }
+            
+            if (generating) {
+                // terminate generating loop and set command_pending flag
+                Stop();
+                command_pending = true;
+                if ( IsScriptFile(filepath) ) {
+                    AddRecentScript(filepath);
+                    cmdevent.SetId(ID_RUN_RECENT + 1);
                 } else {
-                    // load pattern or run script
-                    // OpenFile(filepath);
-                    // call OpenFile in later OnIdle -- this prevents the main window
-                    // moving in front of the help window if a script calls help(...)
-                    pendingfiles.Add(filepath);
+                    AddRecentPattern(filepath);
+                    cmdevent.SetId(ID_OPEN_RECENT + 1);
                 }
+            } else {
+                // load pattern or run script
+                // OpenFile(filepath);
+                // call OpenFile in later OnIdle -- this prevents the main window
+                // moving in front of the help window if a script calls help(...)
+                pendingfiles.Add(filepath);
             }
         }
-        
-#ifdef __WXMSW__
-        // calling Unselect() here causes a crash so do later in OnIdle
-        call_unselect = true;
-#endif
-        
-        // changing focus here doesn't work in Mac or Win apps
-        // (presumably because they set focus to treectrl after this call)
-        viewptr->SetFocus();
     }
+    
+#ifdef __WXMSW__
+    // call SetFocus in next OnIdle
+    set_focus = true;
+#else
+    viewptr->SetFocus();
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1969,21 +1868,6 @@ bool MainFrame::SaveCurrentLayer()
             return false;
         }
     }
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::OnErase(wxEraseEvent& WXUNUSED(event))
-{
-    // do nothing
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::OnPaint(wxPaintEvent& WXUNUSED(event))
-{
-    wxPaintDC dc(this);
-    // paint nothing (on Mac this avoids drawing the gray horizontal stripes)
 }
 
 // -----------------------------------------------------------------------------
@@ -2612,11 +2496,6 @@ void MainFrame::CreateDirControls()
                                       );
     if (scriptctrl == NULL) Fatal(_("Failed to create script directory control!"));
     
-    // AKT: above check for 2.9 should make the following unnecessary!!!???
-    // With wxGTK 2.9, setting the filter in the wxGenericDirCtrl constructor
-    // causes a crash, but setting it afterwards seems to work fine.
-    // scriptctrl->SetFilter(_T("Perl/Python scripts|*.pl;*.py"));
-    
 #ifdef __WXMSW__
     // now remove wxDIRCTRL_DIR_ONLY so we see files
     patternctrl->SetWindowStyle(wxNO_BORDER);
@@ -2665,22 +2544,14 @@ void MainFrame::CreateDirControls()
         SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
     }
     
-    // install event handler to detect control/right-click on a file
-    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN,
-                                        wxMouseEventHandler(MainFrame::OnTreeClick));
-    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN,
-                                        wxMouseEventHandler(MainFrame::OnTreeClick));
-    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN,
-                                       wxMouseEventHandler(MainFrame::OnTreeClick));
-    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN,
-                                       wxMouseEventHandler(MainFrame::OnTreeClick));
-#ifdef __WXMSW__
-    // fix double-click problem
-    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DCLICK,
-                                        wxMouseEventHandler(MainFrame::OnTreeClick));
-    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DCLICK,
-                                       wxMouseEventHandler(MainFrame::OnTreeClick));
-#endif
+    // install event handler to detect clicking on a file
+    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
+    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
+    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DCLICK, wxMouseEventHandler(MainFrame::OnTreeClick));
+    
+    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
+    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
+    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DCLICK, wxMouseEventHandler(MainFrame::OnTreeClick));
 }
 
 // -----------------------------------------------------------------------------

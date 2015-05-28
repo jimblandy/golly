@@ -182,13 +182,9 @@ private:
     void OnActivate(wxActivateEvent& event);
     void OnSize(wxSizeEvent& event);
     void OnIdle(wxIdleEvent& event);
-    void OnDirTreeExpand(wxTreeEvent& event);
-    void OnDirTreeCollapse(wxTreeEvent& event);
     void OnDirTreeSelection(wxTreeEvent& event);
     void OnSashDblClick(wxSplitterEvent& event);
     void OnOneTimer(wxTimerEvent& event);
-    void OnErase(wxEraseEvent& event);
-    void OnPaint(wxPaintEvent& event);
     void OnClose(wxCloseEvent& event);
     
     // file functions
@@ -216,7 +212,6 @@ private:
     void CreateToolbar();
     void CreateDirControls();
     void SimplifyTree(wxString& dir, wxTreeCtrl* treectrl, wxTreeItemId root);
-    void DeselectTree(wxTreeCtrl* treectrl, wxTreeItemId root);
     void DoPendingAction(bool restart);
     
     // splittable window contains pattern/script directory in left pane
