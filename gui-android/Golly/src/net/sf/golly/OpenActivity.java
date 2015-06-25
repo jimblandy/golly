@@ -241,7 +241,7 @@ public class OpenActivity extends BaseActivity {
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         if (metrics.densityDpi > 300) {
             // use bigger font size for high density screens (default size is 16)
-            gwebview.getSettings().setDefaultFontSize(24);
+            gwebview.getSettings().setDefaultFontSize(32);
         }
         
         // no need for JavaScript???

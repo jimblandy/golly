@@ -1,6 +1,6 @@
 APP_PLATFORM := android-17
 
-#??? APP_ABI = all
+APP_ABI = all
 
 # define ANDROID_GUI used in the shared C++ code in gui-common;
 # define ZLIB so Golly can read/write .gz files;
