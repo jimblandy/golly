@@ -1,0 +1,18 @@
+
+local.properties
+
+build/
+app/build/
+
+.idea/
+.gradle/
+
+# It is better not to add iml files to source control.
+# https://code.google.com/p/android/issues/detail?id=77983#c7
+Golly.iml
+app/app.iml
+
+# prevent these from being added accidentally
+app/src/main/assets/Help.zip
+app/src/main/assets/Patterns.zip
+app/src/main/assets/Rules.zip
