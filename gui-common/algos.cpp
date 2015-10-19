@@ -895,13 +895,16 @@ AlgoData& AlgoData::tick() {
 
 void InitAlgorithms()
 {
-    // qlife must be 1st and hlife must be 2nd
+    // QuickLife must be 1st and HashLife must be 2nd
     qlifealgo::doInitializeAlgoInfo(AlgoData::tick());
     hlifealgo::doInitializeAlgoInfo(AlgoData::tick());
-
-    // nicer if the rest are in alphabetical order
+    
+    // these algos can be in any order (but nicer if alphabetic)
     generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
     jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
+    
+    // RuleLoader must be last so we can display detailed error messages
+    // (see LoadRule in file.cpp)
     ruleloaderalgo::doInitializeAlgoInfo(AlgoData::tick());
 
     // init algoinfo array

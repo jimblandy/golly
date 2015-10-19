@@ -414,7 +414,7 @@ void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 
 void LoadRule(const wxString& rulestring)
 {
-    // load recently installed .rule/table/tree/colors/icons file
+    // load recently installed .rule file
     wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
     
@@ -426,39 +426,43 @@ void LoadRule(const wxString& rulestring)
     
     if (mainptr->generating) {
         Warning(_("Cannot change rule while generating a pattern."));
-        // or stop and create pending event??? see ID_LOAD_LEXICON
         return;
     } else if (inscript) {
         Warning(_("Cannot change rule while a script is running."));
         return;
     }
     
-    const char* err = currlayer->algo->setrule( rulestring.mb_str(wxConvLocal) );
-    if (err) {
-        // try to find another algorithm that supports the given rule
-        for (int i = 0; i < NumAlgos(); i++) {
-            if (i != currlayer->algtype) {
-                lifealgo* tempalgo = CreateNewUniverse(i);
-                err = tempalgo->setrule( rulestring.mb_str(wxConvLocal) );
-                delete tempalgo;
-                if (!err) {
-                    // change the current algorithm and switch to the new rule
-                    mainptr->ChangeAlgorithm(i, rulestring);
-                    if (i != currlayer->algtype) {
-                        RestoreRule(oldrule);
-                        Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
-                        return;
-                    } else {
-                        mainptr->SetWindowTitle(wxEmptyString);
-                        mainptr->UpdateEverything();
-                        return;
-                    }
-                }
+    // InitAlgorithms ensures the RuleLoader algo is the last algo
+    int rule_loader_algo = NumAlgos() - 1;
+    
+    const char* err;
+    if (currlayer->algtype == rule_loader_algo) {
+        // RuleLoader is current algo so no need to switch
+        err = currlayer->algo->setrule( rulestring.mb_str(wxConvLocal) );
+    } else {
+        // switch to RuleLoader algo
+        lifealgo* tempalgo = CreateNewUniverse(rule_loader_algo);
+        err = tempalgo->setrule( rulestring.mb_str(wxConvLocal) );
+        delete tempalgo;
+        if (!err) {
+            // change the current algorithm and switch to the new rule
+            mainptr->ChangeAlgorithm(rule_loader_algo, rulestring);
+            if (rule_loader_algo != currlayer->algtype) {
+                RestoreRule(oldrule);
+                Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
+            } else {
+                mainptr->SetWindowTitle(wxEmptyString);
+                mainptr->UpdateEverything();
             }
+            return;
         }
-        // should only get here if .rule/table/tree file contains some sort of error
+    }
+    if (err) {
+        // only get here if .rule file contains some sort of error
         RestoreRule(oldrule);
-        Warning(_("Rule is not valid in any algorithm: ") + rulestring);
+        wxString msg = _("The rule file is not valid:\n") + rulestring;
+        msg += _("\n\nThe error message:\n") + wxString(err,wxConvLocal);
+        Warning(msg.mb_str(wxConvLocal));
         return;
     }
     
@@ -818,7 +822,7 @@ void LoadLexiconPattern()
         // switching to B3/S23 or Life; if that fails then switch to QuickLife
         const char* err = currlayer->algo->setrule("B3/S23");
         if (err) {
-            // try "Life" in case current algo is RuleLoader and Life.table/tree exists
+            // try "Life" in case current algo is RuleLoader and Life.rule exists
             // (also had to make a similar change to the loadpattern code in readpattern.cpp)
             err = currlayer->algo->setrule("Life");
         }
@@ -858,7 +862,6 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
     } else if ( url.StartsWith(wxT("get:")) ) {
         if (mainptr->generating) {
             Warning(_("Cannot download file while generating a pattern."));
-            // or stop and create pending event??? see ID_LOAD_LEXICON
         } else if (inscript) {
             Warning(_("Cannot download file while a script is running."));
         } else if (editlink && IsZipFile(url)) {

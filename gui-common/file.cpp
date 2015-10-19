@@ -353,29 +353,36 @@ void LoadRule(const std::string& rulestring)
     // selection might change if grid becomes smaller,
     // so save current selection for RememberRuleChange/RememberAlgoChange
     SaveCurrentSelection();
-
-    const char* err = currlayer->algo->setrule(rulestring.c_str());
-    if (err) {
-        // try to find another algorithm that supports the given rule
-        for (int i = 0; i < NumAlgos(); i++) {
-            if (i != currlayer->algtype) {
-                lifealgo* tempalgo = CreateNewUniverse(i);
-                err = tempalgo->setrule(rulestring.c_str());
-                delete tempalgo;
-                if (!err) {
-                    // change the current algorithm and switch to the new rule
-                    ChangeAlgorithm(i, rulestring.c_str());
-                    if (i != currlayer->algtype) {
-                        RestoreRule(oldrule.c_str());
-                        Warning("Algorithm could not be changed (pattern is too big to convert).");
-                    }
-                    return;
-                }
+    
+    // InitAlgorithms ensures the RuleLoader algo is the last algo
+    int rule_loader_algo = NumAlgos() - 1;
+    
+    const char* err;
+    if (currlayer->algtype == rule_loader_algo) {
+        // RuleLoader is current algo so no need to switch
+        err = currlayer->algo->setrule(rulestring.c_str());
+    } else {
+        // switch to RuleLoader algo
+        lifealgo* tempalgo = CreateNewUniverse(rule_loader_algo);
+        err = tempalgo->setrule(rulestring.c_str());
+        delete tempalgo;
+        if (!err) {
+            // change the current algorithm and switch to the new rule
+            ChangeAlgorithm(rule_loader_algo, rulestring.c_str());
+            if (rule_loader_algo != currlayer->algtype) {
+                RestoreRule(oldrule.c_str());
+                Warning("Algorithm could not be changed (pattern is too big to convert).");
             }
+            return;
         }
-        // should only get here if rule/table/tree file contains some sort of error
+    }
+    if (err) {
+        // only get here if .rule file contains some sort of error
         RestoreRule(oldrule.c_str());
-        std::string msg = "Rule is not valid in any algorithm: " + rulestring;
+        std::string msg = "The rule file is not valid:\n";
+        msg += rulestring;
+        msg += "\n\nThe error message:\n";
+        msg += err;
         Warning(msg.c_str());
         return;
     }
