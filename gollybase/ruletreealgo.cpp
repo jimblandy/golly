@@ -142,6 +142,7 @@ const char* ruletreealgo::setrule(const char* s) {
    vector<int> dat ;
    vector<state> datb ;
    vector<int> noff ;
+   vector<int> nodelev ;
    int lev = 1000 ;
    for (;;) {
       if (isDefaultRule) {
@@ -174,6 +175,7 @@ const char* ruletreealgo::setrule(const char* s) {
             noff.push_back((int)(datb.size())) ;
          else
             noff.push_back((int)(dat.size())) ;
+         nodelev.push_back(lev) ;
          while (*p) {
             while (*p && *p <= ' ')
                p++ ;
@@ -192,6 +194,9 @@ const char* ruletreealgo::setrule(const char* s) {
             } else {
                if (v < 0 || ((unsigned int)v) >= noff.size()) {
                   return "Bad node value in tree data" ;
+               }
+               if (nodelev[v] != lev - 1) {
+                  return "Bad node pointer does not point to one level down" ;
                }
                dat.push_back(noff[v]) ;
             }
