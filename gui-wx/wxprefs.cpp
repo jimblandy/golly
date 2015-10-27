@@ -138,6 +138,7 @@ bool showexact = false;          // show exact numbers in status bar?
 bool showtimeline = false;       // show timeline bar?
 bool showgridlines = true;       // display grid lines?
 bool showicons = false;          // display icons for cell states?
+bool scalepatterns = false;      // scale patterns when zoomed out?
 bool swapcolors = false;         // swap colors used for cell states?
 bool buffered = true;            // use wxWdgets buffering to avoid flicker?
 bool scrollpencil = true;        // scroll if pencil cursor is dragged outside view?
@@ -608,6 +609,7 @@ const char* GetActionName(action_id action)
         case DO_SCALE8:         return "Set Scale 1:8";
         case DO_SCALE16:        return "Set Scale 1:16";
         case DO_SCALE32:        return "Set Scale 1:32";
+        case DO_SCALEPATTERNS:  return "Scale Patterns";
         case DO_SHOWTOOL:       return "Show Tool Bar";
         case DO_SHOWLAYER:      return "Show Layer Bar";
         case DO_SHOWEDIT:       return "Show Edit Bar";
@@ -1555,6 +1557,7 @@ void SavePrefs()
     fputs("\n", f);
     
     fprintf(f, "show_icons=%d\n", showicons ? 1 : 0);
+    fprintf(f, "scale_patterns=%d\n", scalepatterns ? 1 : 0);
     fprintf(f, "swap_colors=%d\n", swapcolors ? 1 : 0);
     fprintf(f, "opacity=%d (1..100)\n", opacity);
     SaveColor(f, "border_rgb", borderrgb);
@@ -2179,6 +2182,9 @@ void GetPrefs()
             
         } else if (strcmp(keyword, "show_icons") == 0) {
             showicons = value[0] == '1';
+            
+        } else if (strcmp(keyword, "scale_patterns") == 0) {
+            scalepatterns = value[0] == '1';
             
         } else if (strcmp(keyword, "swap_colors") == 0) {
             swapcolors = value[0] == '1';

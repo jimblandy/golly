@@ -1223,11 +1223,7 @@ bool PatternView::GridVisible()
 void PatternView::ToggleGridLines()
 {
     showgridlines = !showgridlines;
-    if ( (currlayer->view->getmag() >= mingridmag) ||
-        // also update everything if drawing all layers
-        (numlayers > 1 && (stacklayers || tilelayers))
-        )
-        mainptr->UpdateEverything();
+    mainptr->UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------
@@ -1244,6 +1240,14 @@ void PatternView::ToggleCellColors()
 {
     swapcolors = !swapcolors;
     InvertCellColors();
+    mainptr->UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::ToggleScalePatterns()
+{
+    scalepatterns = !scalepatterns;
     mainptr->UpdateEverything();
 }
 
@@ -1734,6 +1738,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
         case DO_SHOWICONS:   ToggleCellIcons(); break;
         case DO_INVERT:      ToggleCellColors(); break;
+        case DO_SCALEPATTERNS:  ToggleScalePatterns(); break;
         case DO_SHOWGRID:    ToggleGridLines(); break;
         case DO_BUFFERED:    ToggleBuffering(); break;
         case DO_SHOWTIME:    ToggleTimelineBar(); break;

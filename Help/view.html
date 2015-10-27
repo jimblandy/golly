@@ -143,6 +143,22 @@ description of the format.
 If ticked then the colors of all cell states in all layers are inverted;
 i.e., each RGB value is changed to 255-R, 255-G, 255-B.
 
+<a name="scale"></a>
+<p>
+<font size=+1><b>Scale Patterns</b></font>
+
+<p>
+If not ticked then Golly displays patterns at zoomed out scales by drawing
+all live cells using the state 1 color, regardless of the cell states.
+If this option is ticked then patterns will be scaled in a way that shows
+the correct colors, but only at scales from 2:1 to 16:1.
+
+<p>
+Note that pattern rendering is significantly slower using this scaling option,
+so it's probably best to only turn it on when you need to see fine details.
+Define a <a href="prefs:keyboard">keyboard shortcut</a> for this menu item
+so you can easily turn the option on or off.
+
 <p>
 <font size=+1><b>Buffered</b></font>
 

@@ -89,6 +89,7 @@ public:
     void ToggleGridLines();
     void ToggleCellIcons();
     void ToggleCellColors();
+    void ToggleScalePatterns();
     void ToggleBuffering();
     void UpdateScrollBars();         // update thumb positions
     void CheckCursor(bool active);   // make sure cursor is up to date

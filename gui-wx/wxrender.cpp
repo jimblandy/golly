@@ -119,6 +119,7 @@ Other points of interest:
 // globals used in wx_render routines
 wxDC* currdc;                    // current device context for viewport
 int currwd, currht;              // current width and height of viewport
+int scalefactor;                 // current scale factor (1, 2, 4, 8 or 16)
 wxBitmap* pixmap = NULL;         // 32-bit deep bitmap used in pixblit calls
 int pixmapwd = -1;               // width of pixmap
 int pixmapht = -1;               // height of pixmap
@@ -141,6 +142,7 @@ int cvwd, cvht;                  // must match current viewport's width and heig
 paste_location pasteloc;         // must match plocation
 bool pasteicons;                 // must match showicons
 bool pastecolors;                // must match swapcolors
+bool pastescale;                 // must match scalepatterns
 lifealgo* pastealgo;             // universe containing paste pattern
 wxRect pastebbox;                // bounding box in cell coords (not necessarily minimal)
 
@@ -451,7 +453,25 @@ void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h, int stride)
             p.OffsetY(pxldata, 1);
         }
     }
-    currdc->DrawBitmap(*pixmap, x, y);
+    
+    if (scalefactor > 1) {
+        // shrink pixmap by scalefactor
+#if wxCHECK_VERSION(2,9,0)
+        // StretchBlit is only available in wx 2.9.0 or later
+        wxMemoryDC memdc;
+        memdc.SelectObject(*pixmap);
+        currdc->StretchBlit(x/scalefactor, y/scalefactor, w/scalefactor, h/scalefactor, &memdc, 0, 0, w, h);
+        memdc.SelectObject(wxNullBitmap);
+#else
+        wxMemoryDC memdc;
+        memdc.SetUserScale(scalefactor, scalefactor);
+        memdc.SelectObject(*pixmap);
+        currdc->Blit(x/scalefactor, y/scalefactor, w/scalefactor, h/scalefactor, &memdc, 0, 0);
+        memdc.SelectObject(wxNullBitmap);
+#endif
+    } else {
+        currdc->DrawBitmap(*pixmap, x, y);
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -473,7 +493,6 @@ void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int
     unsigned char deadg = currlayer->cellg[0];
     unsigned char deadb = currlayer->cellb[0];
     
-    // might be faster to draw rectangles above certain scales???
     wxAlphaPixelData pxldata(*pixmap);
     if (pxldata) {
 #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
@@ -790,10 +809,8 @@ wx_render renderer;     // create instance
 
 void wx_render::killrect(int x, int y, int w, int h)
 {
-    // is Tom's hashdraw code doing unnecessary work???
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
-    
     if (w <= 0 || h <= 0) return;
     
     // clip given rect so it's within viewport
@@ -805,6 +822,17 @@ void wx_render::killrect(int x, int y, int w, int h)
     if (clipb > currht) clipb = currht;
     int clipwd = clipr - clipx;
     int clipht = clipb - clipy;
+    
+    if (scalefactor > 1) {
+        // shrink rect by scalefactor
+        clipx = clipx / scalefactor;
+        clipy = clipy / scalefactor;
+        if (clipwd % scalefactor > 0) clipwd += scalefactor;
+        if (clipht % scalefactor > 0) clipht += scalefactor;
+        clipwd = clipwd / scalefactor;
+        clipht = clipht / scalefactor;
+    }
+    
     wxRect rect(clipx, clipy, clipwd, clipht);
     
 #if 0
@@ -822,32 +850,14 @@ void wx_render::killrect(int x, int y, int w, int h)
 
 void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 {
-    // is Tom's hashdraw code doing unnecessary work???
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
     
     // stride is the horizontal pixel width of the image data
-    int stride = (pmscale == 1) ? w : w/pmscale;
+    int stride = w/pmscale;
     
     // clip pixmap to be drawn against viewport:
-    if (pmscale == 1)
-    {
-        // pmdata contains 3 bytes per pixel
-        if (x < 0) {
-            pmdata -= 3*x;
-            w += x;
-            x = 0;
-        }
-        if (y < 0) {
-            pmdata -= 3*y*stride;
-            h += y;
-            y = 0;
-        }
-        if (w > currwd) w = currwd;
-        if (h > currht) h = currht;
-    }
-    else
-    {
+    if (pmscale > 1) {
         // pmdata contains 1 byte per `pmscale' pixels, so we must be careful
         // and adjust x, y, w and h by multiples of `pmscale' only.
         if (x < 0) {
@@ -990,6 +1000,7 @@ void CreatePasteImage(lifealgo* palgo, wxRect& bbox)
     pastemag = currlayer->view->getmag();
     pasteicons = showicons;
     pastecolors = swapcolors;
+    pastescale = scalepatterns;
 }
 
 // -----------------------------------------------------------------------------
@@ -1075,14 +1086,15 @@ int PixelsToCells(int pixels) {
 void CheckPasteImage()
 {
     // paste image needs to be updated if any of these changed:
-    // pasterect size, viewport size, plocation, showicons, swapcolors
+    // pasterect size, viewport size, plocation, showicons, swapcolors, scalepatterns
     if ( prectwd != viewptr->pasterect.width ||
          prectht != viewptr->pasterect.height ||
          cvwd != currlayer->view->getwidth() ||
          cvht != currlayer->view->getheight() ||
          pasteloc != plocation ||
          pasteicons != showicons ||
-         pastecolors != swapcolors ) {
+         pastecolors != swapcolors ||
+         pastescale != scalepatterns ) {
         
         prectwd = viewptr->pasterect.width;
         prectht = viewptr->pasterect.height;
@@ -1092,6 +1104,7 @@ void CheckPasteImage()
         pasteloc = plocation;
         pasteicons = showicons;
         pastecolors = swapcolors;
+        pastescale = scalepatterns;
         
         // calculate size of paste image; we could just set it to pasterect size
         // but that would be slow and wasteful for large pasterects, so we use
@@ -1218,7 +1231,20 @@ void CheckPasteImage()
             currdc = &pattdc;
             currwd = tempview.getwidth();
             currht = tempview.getheight();
-            pastealgo->draw(tempview, renderer);
+            
+            if (scalefactor > 1) {
+                // change tempview scale to 1:1 and increase its size by scalefactor
+                tempview.setmag(0);
+                currwd = currwd * scalefactor;
+                currht = currht * scalefactor;
+                tempview.resize(currwd, currht);
+                pastealgo->draw(tempview, renderer);
+                // no need to restore tempview settings
+            } else {
+                // no scaling
+                pastealgo->draw(tempview, renderer);
+            }
+            
             pattdc.SelectObject(wxNullBitmap);
             
             showgridlines = saveshow;
@@ -1486,7 +1512,27 @@ void DrawOneLayer(wxDC& dc)
     }
     
     currdc = &layerdc;
-    currlayer->algo->draw(*currlayer->view, renderer);
+    
+    if (scalefactor > 1) {
+        // temporarily change viewport scale to 1:1 and increase its size by scalefactor
+        // (DrawPixmap will then shrink pixmaps by scalefactor)
+        int currmag = currlayer->view->getmag();
+        currlayer->view->setmag(0);
+        currwd = currwd * scalefactor;
+        currht = currht * scalefactor;
+        currlayer->view->resize(currwd, currht);
+        
+        currlayer->algo->draw(*currlayer->view, renderer);
+        
+        // restore viewport settings
+        currwd = currwd / scalefactor;
+        currht = currht / scalefactor;
+        currlayer->view->resize(currwd, currht);
+        currlayer->view->setmag(currmag);
+    } else {
+        currlayer->algo->draw(*currlayer->view, renderer);
+    }
+    
     layerdc.SelectObject(wxNullBitmap);
     
     // make dead pixels 100% transparent; live pixels use opacity setting
@@ -1526,8 +1572,6 @@ void DrawStackedLayers(wxDC& dc)
         // use real current layer's viewport
         viewport* saveview = currlayer->view;
         currlayer->view = savelayer->view;
-        
-        // avoid drawing a cloned layer more than once??? draw first or last clone???
         
         if ( !currlayer->algo->isEmpty() ) {
             DrawOneLayer(dc);
@@ -1609,27 +1653,28 @@ void DrawView(wxDC& dc, int tileindex)
     Layer* savelayer = NULL;
     viewport* saveview0 = NULL;
     int colorindex;
+    int currmag = currlayer->view->getmag();
     
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
     if ( currlayer->algo->gridwd > 0) {
         if ( currlayer->view->x < currlayer->algo->gridleft )
             currlayer->view->setpositionmag(currlayer->algo->gridleft,
                                             currlayer->view->y,
-                                            currlayer->view->getmag());
+                                            currmag);
         else if ( currlayer->view->x > currlayer->algo->gridright )
             currlayer->view->setpositionmag(currlayer->algo->gridright,
                                             currlayer->view->y,
-                                            currlayer->view->getmag());
+                                            currmag);
     }
     if ( currlayer->algo->gridht > 0) {
         if ( currlayer->view->y < currlayer->algo->gridtop )
             currlayer->view->setpositionmag(currlayer->view->x,
                                             currlayer->algo->gridtop,
-                                            currlayer->view->getmag());
+                                            currmag);
         else if ( currlayer->view->y > currlayer->algo->gridbottom )
             currlayer->view->setpositionmag(currlayer->view->x,
                                             currlayer->algo->gridbottom,
-                                            currlayer->view->getmag());
+                                            currmag);
     }
     
     if ( viewptr->nopattupdate ) {
@@ -1656,10 +1701,11 @@ void DrawView(wxDC& dc, int tileindex)
             // make sure this layer uses same location and scale as current layer
             GetLayer(tileindex)->view->setpositionmag(currlayer->view->x,
                                                       currlayer->view->y,
-                                                      currlayer->view->getmag());
+                                                      currmag);
         }
         savelayer = currlayer;
         currlayer = GetLayer(tileindex);
+        currmag = currlayer->view->getmag();    // possibly changed if not syncviews
         viewptr = currlayer->tilewin;
         colorindex = tileindex;
     } else if ( numlayers > 1 && stacklayers ) {
@@ -1678,10 +1724,10 @@ void DrawView(wxDC& dc, int tileindex)
     }
     
     // only show icons at scales 1:8 or 1:16 or 1:32
-    if (showicons && currlayer->view->getmag() > 2) {
-        if (currlayer->view->getmag() == 3) {
+    if (showicons && currmag > 2) {
+        if (currmag == 3) {
             iconmaps = currlayer->icons7x7;
-        } else if (currlayer->view->getmag() == 4) {
+        } else if (currmag == 4) {
             iconmaps = currlayer->icons15x15;
         } else {
             iconmaps = currlayer->icons31x31;
@@ -1692,7 +1738,29 @@ void DrawView(wxDC& dc, int tileindex)
     currdc = &dc;
     currwd = currlayer->view->getwidth();
     currht = currlayer->view->getheight();
-    currlayer->algo->draw(*currlayer->view, renderer);
+    if (scalepatterns && currmag <= -1 && currmag >= -4) {
+        // current scale is from 2^1:1 to 2^4:1
+        scalefactor = 1 << (-currmag);
+        
+        // temporarily change viewport scale to 1:1 and increase its size by scalefactor
+        // (DrawPixmap will then shrink pixmaps by scalefactor)
+        currlayer->view->setmag(0);
+        currwd = currwd * scalefactor;
+        currht = currht * scalefactor;
+        currlayer->view->resize(currwd, currht);
+        
+        currlayer->algo->draw(*currlayer->view, renderer);
+        
+        // restore viewport settings
+        currwd = currwd / scalefactor;
+        currht = currht / scalefactor;
+        currlayer->view->resize(currwd, currht);
+        currlayer->view->setmag(currmag);
+    } else {
+        // no scaling
+        scalefactor = 1;
+        currlayer->algo->draw(*currlayer->view, renderer);
+    }
     
     if ( viewptr->GridVisible() ) {
         DrawGridLines(dc);      // uses currwd and currht
@@ -1725,9 +1793,9 @@ void DrawView(wxDC& dc, int tileindex)
     if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {
         // this test is not really necessary, but it avoids unnecessary
         // drawing of the paste image when user changes scale
-        if ( pastemag != currlayer->view->getmag() &&
+        if (pastemag != currmag &&
             prectwd == viewptr->pasterect.width && prectwd > 1 &&
-            prectht == viewptr->pasterect.height && prectht > 1 ) {
+            prectht == viewptr->pasterect.height && prectht > 1) {
             // don't draw old paste image, a new one is coming very soon
         } else {
             CheckPasteImage();

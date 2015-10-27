@@ -94,6 +94,7 @@ extern bool showexact;           // show exact numbers in status bar?
 extern bool showtimeline;        // show timeline bar?
 extern bool showgridlines;       // display grid lines?
 extern bool showicons;           // display icons for cell states?
+extern bool scalepatterns;       // scale patterns when zoomed out?
 extern bool swapcolors;          // swap colors used for cell states?
 extern bool buffered;            // use wxWdgets buffering to avoid flicker?
 extern bool scrollpencil;        // scroll if pencil cursor is dragged outside view?
@@ -220,6 +221,7 @@ typedef enum {
     DO_RUNSCRIPT,                 // run script...
     DO_SAVEXRLE,                  // save extended rle
     DO_SAVE,                      // save pattern...
+    DO_SCALEPATTERNS,             // scale patterns when zoomed out
     DO_DOWN,                      // scroll down
     DO_LEFT,                      // scroll left
     DO_RIGHT,                     // scroll right
