@@ -457,7 +457,7 @@ void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h, int stride)
     if (scalefactor > 1) {
         // shrink pixmap by scalefactor
         wxImage img = pixmap->ConvertToImage();
-        img.Rescale(w/scalefactor, h/scalefactor, wxIMAGE_QUALITY_BOX_AVERAGE);    // best for downsizing
+        img.Rescale(w/scalefactor, h/scalefactor, wxIMAGE_QUALITY_HIGH);
         wxBitmap bmap = img;
         currdc->DrawBitmap(bmap, x/scalefactor, y/scalefactor);
     } else {
