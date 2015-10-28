@@ -456,19 +456,10 @@ void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h, int stride)
     
     if (scalefactor > 1) {
         // shrink pixmap by scalefactor
-#if wxCHECK_VERSION(2,9,0)
-        // StretchBlit is only available in wx 2.9.0 or later
-        wxMemoryDC memdc;
-        memdc.SelectObject(*pixmap);
-        currdc->StretchBlit(x/scalefactor, y/scalefactor, w/scalefactor, h/scalefactor, &memdc, 0, 0, w, h);
-        memdc.SelectObject(wxNullBitmap);
-#else
-        wxMemoryDC memdc;
-        memdc.SetUserScale(scalefactor, scalefactor);
-        memdc.SelectObject(*pixmap);
-        currdc->Blit(x/scalefactor, y/scalefactor, w/scalefactor, h/scalefactor, &memdc, 0, 0);
-        memdc.SelectObject(wxNullBitmap);
-#endif
+        wxImage img = pixmap->ConvertToImage();
+        img.Rescale(w/scalefactor, h/scalefactor, wxIMAGE_QUALITY_BOX_AVERAGE);    // best for downsizing
+        wxBitmap bmap = img;
+        currdc->DrawBitmap(bmap, x/scalefactor, y/scalefactor);
     } else {
         currdc->DrawBitmap(*pixmap, x, y);
     }
