@@ -462,7 +462,7 @@ void LoadRule(const wxString& rulestring)
         RestoreRule(oldrule);
         wxString msg = _("The rule file is not valid:\n") + rulestring;
         msg += _("\n\nThe error message:\n") + wxString(err,wxConvLocal);
-        Warning(msg.mb_str(wxConvLocal));
+        Warning(msg);
         return;
     }
     
