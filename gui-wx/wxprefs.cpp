@@ -2919,17 +2919,13 @@ void KeyComboCtrl::OnKeyDown(wxKeyEvent& event)
 
 // -----------------------------------------------------------------------------
 
-#ifdef __WXOSX__
-    static bool inonchar = false;
-#endif
+static bool inonchar = false;
 
 void KeyComboCtrl::OnChar(wxKeyEvent& event)
 {
-#ifdef __WXOSX__
-    // avoid infinite recursion in wxOSX due to ChangeValue call below
+    // avoid infinite recursion due to ChangeValue call below
     if (inonchar) { event.Skip(); return; }
     inonchar = true;
-#endif
     
     int key = event.GetKeyCode();
     int mods = event.GetModifiers();
@@ -2993,9 +2989,7 @@ void KeyComboCtrl::OnChar(wxKeyEvent& event)
     // do NOT pass event on to next handler
     // event.Skip();
     
-#ifdef __WXOSX__
     inonchar = false;
-#endif
 }
 
 // -----------------------------------------------------------------------------
