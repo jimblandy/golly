@@ -779,6 +779,7 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
     }
 
     int numstates = currlayer->algo->NumCellStates();
+    
     if (pmscale == 1) {
         // draw rgb pixel data at scale 1:1
         if (drawing_paste || numstates == 2) {
@@ -789,9 +790,11 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
         } else {
             DrawTexture((unsigned char*) pmdata, x, y, w, h);
         }
+        
     } else if (showicons && pmscale > 4 && icontextures) {
         // draw icons at scales 1:8 or above
         DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+        
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state

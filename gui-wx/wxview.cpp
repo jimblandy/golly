@@ -2297,8 +2297,8 @@ void PatternView::OnSize(wxSizeEvent& event)
     int wd, ht;
     GetClientSize(&wd, &ht);
     
-    // hmm, it looks like we might have to subtract the scroll bar thickness
-    // from wd and ht!!!???
+    // we might have to subtract the scroll bar thickness from wd and ht!!!???
+    // but only for bigview (tileindex == -1)
     
     // resize this viewport
     SetViewSize(wd, ht);
@@ -3119,7 +3119,7 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
     SetCurrent(*glcontext);
     
     glDisable(GL_DEPTH_TEST);           // we only do 2D drawing
-    glDisable(GL_DITHER);               // or better to enable for scaling pixmaps???!!!
+    glDisable(GL_DITHER);               // makes no diff???!!!
     glDisable(GL_MULTISAMPLE);          // ditto???!!!
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_FOG);

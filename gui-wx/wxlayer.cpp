@@ -1167,6 +1167,118 @@ static void CopyBuiltinIcons(wxBitmap** i7x7, wxBitmap** i15x15, wxBitmap** i31x
 
 // -----------------------------------------------------------------------------
 
+static unsigned char** CreateIconTextures(wxBitmap** srcicons, int maxstate)
+{
+    bool multicolor = currlayer->multicoloricons;
+    unsigned char deadr = currlayer->cellr[0];
+    unsigned char deadg = currlayer->cellg[0];
+    unsigned char deadb = currlayer->cellb[0];
+    if (swapcolors) {
+        deadr = 255 - deadr;
+        deadg = 255 - deadg;
+        deadb = 255 - deadb;
+    }
+
+    unsigned char** texturesptr = (unsigned char**) malloc(256 * sizeof(unsigned char*));
+    if (texturesptr) {
+        for (int state = 0; state < 256; state++) texturesptr[state] = NULL;
+        for (int state = 0; state <= maxstate; state++) {
+            if (srcicons && srcicons[state]) {
+                int wd = srcicons[state]->GetWidth();
+                int ht = srcicons[state]->GetHeight();
+                
+                wxAlphaPixelData icondata(*srcicons[state]);
+                
+                // allocate enough memory to store texture data for this icon;
+                // wd = ht = 7, 15 or 31, but OpenGL requires texture sizes to be powers of 2
+                int texbytes = (wd+1) * (ht+1) * 4;
+                texturesptr[state] = (unsigned char*) calloc(texbytes, 1);
+                
+                if (texturesptr[state] && icondata) {
+                    wxAlphaPixelData::Iterator iconpxl(icondata);
+                    
+                    unsigned char liver = currlayer->cellr[state];
+                    unsigned char liveg = currlayer->cellg[state];
+                    unsigned char liveb = currlayer->cellb[state];
+                    if (swapcolors) {
+                        liver = 255 - liver;
+                        liveg = 255 - liveg;
+                        liveb = 255 - liveb;
+                    }
+                    
+                    unsigned char* texdata = texturesptr[state];
+                    int tpos = 0;
+                    for (int row = 0; row < ht; row++) {
+                        wxAlphaPixelData::Iterator iconrow = iconpxl;
+                        for (int col = 0; col < wd; col++) {
+                            unsigned char r = iconpxl.Red();
+                            unsigned char g = iconpxl.Green();
+                            unsigned char b = iconpxl.Blue();
+                            if (r || g || b) {
+                                // non-black pixel
+                                if (multicolor) {
+                                    // use non-black pixel in multi-colored icon
+                                    if (swapcolors) {
+                                        texdata[tpos]   = 255 - r;
+                                        texdata[tpos+1] = 255 - g;
+                                        texdata[tpos+2] = 255 - b;
+                                    } else {
+                                        texdata[tpos]   = r;
+                                        texdata[tpos+1] = g;
+                                        texdata[tpos+2] = b;
+                                    }
+                                } else {
+                                    // grayscale icon (r = g = b)
+                                    if (r == 255) {
+                                        // replace white pixel with live cell color
+                                        texdata[tpos]   = liver;
+                                        texdata[tpos+1] = liveg;
+                                        texdata[tpos+2] = liveb;
+                                    } else {
+                                        // replace gray pixel with appropriate shade between
+                                        // live and dead cell colors
+                                        float frac = (float)r / 255.0;
+                                        texdata[tpos]   = (int)(deadr + frac * (liver - deadr) + 0.5);
+                                        texdata[tpos+1] = (int)(deadg + frac * (liveg - deadg) + 0.5);
+                                        texdata[tpos+2] = (int)(deadb + frac * (liveb - deadb) + 0.5);
+                                    }
+                                }
+                                texdata[tpos+3] = 255;      // alpha channel is opaque
+                            } else {
+                                // replace black pixel with transparent pixel
+                                texdata[tpos]   = deadr;
+                                texdata[tpos+1] = deadg;
+                                texdata[tpos+2] = deadb;
+                                texdata[tpos+3] = 0;        // alpha channel is transparent
+                            }
+                            tpos += 4;
+                            iconpxl++;
+                        }
+                        // add transparent pixel at right edge of texture
+                        texdata[tpos++] = deadr;
+                        texdata[tpos++] = deadg;
+                        texdata[tpos++] = deadb;
+                        texdata[tpos++] = 0;
+                        // move to next row
+                        iconpxl = iconrow;
+                        iconpxl.OffsetY(icondata, 1);
+                    }
+                    // add row of transparent pixels at bottom of texture
+                    for (int col = 0; col < wd+1; col++) {
+                        texdata[tpos++] = deadr;
+                        texdata[tpos++] = deadg;
+                        texdata[tpos++] = deadb;
+                        texdata[tpos++] = 0;
+                    }
+                }
+            }
+        }
+    }
+    return texturesptr;
+}
+
+// -----------------------------------------------------------------------------
+
 void AddLayer()
 {
     if (numlayers >= MAX_LAYERS) return;
@@ -1213,20 +1325,25 @@ void AddLayer()
             currlayer->cellg[n] = oldlayer->cellg[n];
             currlayer->cellb[n] = oldlayer->cellb[n];
         }
-        currlayer->deadbrush->SetColour( oldlayer->deadbrush->GetColour() );
-        currlayer->gridpen->SetColour( oldlayer->gridpen->GetColour() );
-        currlayer->boldpen->SetColour( oldlayer->boldpen->GetColour() );
         if (cloning) {
             // use same icon pointers
             currlayer->icons7x7 = oldlayer->icons7x7;
             currlayer->icons15x15 = oldlayer->icons15x15;
             currlayer->icons31x31 = oldlayer->icons31x31;
+            // use same texture data
+            currlayer->textures7x7 = oldlayer->textures7x7;
+            currlayer->textures15x15 = oldlayer->textures15x15;
+            currlayer->textures31x31 = oldlayer->textures31x31;
         } else {
             // duplicate icons from old layer
             int maxstate = currlayer->algo->NumCellStates() - 1;
             currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, maxstate);
             currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, maxstate);
             currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, maxstate);
+            // create icon texture data
+            currlayer->textures7x7 = CreateIconTextures(oldlayer->icons7x7, maxstate);
+            currlayer->textures15x15 = CreateIconTextures(oldlayer->icons15x15, maxstate);
+            currlayer->textures31x31 = CreateIconTextures(oldlayer->icons31x31, maxstate);
         }
     } else {
         // set new layer's colors+icons to default colors+icons for current algo+rule
@@ -1754,43 +1871,8 @@ void CreateColorGradient()
 
 // -----------------------------------------------------------------------------
 
-void UpdateBrushAndPens(Layer* layerptr)
-{
-    // update deadbrush, gridpen, boldpen in given layer
-    int r = layerptr->cellr[0];
-    int g = layerptr->cellg[0];
-    int b = layerptr->cellb[0];
-    layerptr->deadbrush->SetColour(r, g, b);
-    
-    // no need to use this standard grayscale conversion???
-    // gray = (int) (0.299*r + 0.587*g + 0.114*b);
-    int gray = (int) ((r + g + b) / 3.0);
-    if (gray > 127) {
-        // use darker grid
-        layerptr->gridpen->SetColour(r > 32 ? r - 32 : 0,
-                                     g > 32 ? g - 32 : 0,
-                                     b > 32 ? b - 32 : 0);
-        layerptr->boldpen->SetColour(r > 64 ? r - 64 : 0,
-                                     g > 64 ? g - 64 : 0,
-                                     b > 64 ? b - 64 : 0);
-    } else {
-        // use lighter grid
-        layerptr->gridpen->SetColour(r + 32 < 256 ? r + 32 : 255,
-                                     g + 32 < 256 ? g + 32 : 255,
-                                     b + 32 < 256 ? b + 32 : 255);
-        layerptr->boldpen->SetColour(r + 64 < 256 ? r + 64 : 255,
-                                     g + 64 < 256 ? g + 64 : 255,
-                                     b + 64 < 256 ? b + 64 : 255);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void UpdateCloneColors()
 {
-    // first update deadbrush, gridpen, boldpen
-    UpdateBrushAndPens(currlayer);
-    
     if (currlayer->cloneid > 0) {
         int maxstate = currlayer->algo->NumCellStates() - 1;
         for (int i = 0; i < numlayers; i++) {
@@ -1809,10 +1891,10 @@ void UpdateCloneColors()
                 cloneptr->icons15x15 = currlayer->icons15x15;
                 cloneptr->icons31x31 = currlayer->icons31x31;
                 
-                // use same colors in deadbrush, gridpen and boldpen
-                cloneptr->deadbrush->SetColour( currlayer->deadbrush->GetColour() );
-                cloneptr->gridpen->SetColour( currlayer->gridpen->GetColour() );
-                cloneptr->boldpen->SetColour( currlayer->boldpen->GetColour() );
+                // use same texture data
+                cloneptr->textures7x7 = currlayer->textures7x7;
+                cloneptr->textures15x15 = currlayer->textures15x15;
+                cloneptr->textures31x31 = currlayer->textures31x31;
             }
         }
     }
@@ -2277,6 +2359,23 @@ static void DeleteIcons(Layer* layer)
         free(layer->icons31x31);
         layer->icons31x31 = NULL;
     }
+
+    // also delete icon texture data
+    if (layer->textures7x7) {
+        for (int i = 0; i < 256; i++) if (layer->textures7x7[i]) free(layer->textures7x7[i]);
+        free(layer->textures7x7);
+        layer->textures7x7 = NULL;
+    }
+    if (layer->textures15x15) {
+        for (int i = 0; i < 256; i++) if (layer->textures15x15[i]) free(layer->textures15x15[i]);
+        free(layer->textures15x15);
+        layer->textures15x15 = NULL;
+    }
+    if (layer->textures31x31) {
+        for (int i = 0; i < 256; i++) if (layer->textures31x31[i]) free(layer->textures31x31[i]);
+        free(layer->textures31x31);
+        layer->textures31x31 = NULL;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -2517,6 +2616,11 @@ void UpdateCurrentColors()
             }
         }
     }    
+
+    // create icon texture data (used for rendering)
+    currlayer->textures7x7 = CreateIconTextures(currlayer->icons7x7, maxstate);
+    currlayer->textures15x15 = CreateIconTextures(currlayer->icons15x15, maxstate);
+    currlayer->textures31x31 = CreateIconTextures(currlayer->icons31x31, maxstate);
     
     if (swapcolors) {
         // invert cell colors in current layer
@@ -2552,7 +2656,6 @@ void InvertCellColors()
             layerptr->cellg[n] = 255 - layerptr->cellg[n];
             layerptr->cellb[n] = 255 - layerptr->cellb[n];
         }
-        UpdateBrushAndPens(layerptr);
     }
 }
 
@@ -2596,7 +2699,7 @@ Layer::Layer()
     dirty = false;                // user has not modified pattern
     savedirty = false;            // in case script created layer
     stayclean = inscript;         // if true then keep the dirty flag false
-    // for the duration of the script
+                                  // for the duration of the script
     savestart = false;            // no need to save starting pattern
     startfile.Clear();            // no starting pattern
     startgen = 0;                 // initial starting generation
@@ -2608,18 +2711,15 @@ Layer::Layer()
     icons7x7 = NULL;              // no 7x7 icons
     icons15x15 = NULL;            // no 15x15 icons
     icons31x31 = NULL;            // no 31x31 icons
+
+    textures7x7 = NULL;           // no texture data for 7x7 icons
+    textures15x15 = NULL;         // no texture data for 15x15 icons
+    textures31x31 = NULL;         // no texture data for 31x31 icons
     
     currframe = 0;                // first frame in timeline
     autoplay = 0;                 // not playing
     tlspeed = 0;                  // default speed for autoplay
     lastframe = 0;                // no frame displayed
-    
-    deadbrush = new wxBrush(*wxBLACK);
-    gridpen = new wxPen(*wxBLACK);
-    boldpen = new wxPen(*wxBLACK);
-    if (deadbrush == NULL) Fatal(_("Failed to create deadbrush!"));
-    if (gridpen == NULL) Fatal(_("Failed to create gridpen!"));
-    if (boldpen == NULL) Fatal(_("Failed to create boldpen!"));
     
     // create viewport; the initial size is not important because it will soon change
     view = new viewport(100,100);
@@ -2813,9 +2913,6 @@ Layer::~Layer()
 {
     // delete stuff allocated in ctor
     delete view;
-    delete deadbrush;
-    delete gridpen;
-    delete boldpen;
     
     if (cloneid > 0) {
         // this layer is a clone, so count how many layers have the same cloneid
@@ -2849,7 +2946,7 @@ Layer::~Layer()
         // delete tempstart file if it exists
         if (wxFileExists(tempstart)) wxRemoveFile(tempstart);
         
-        // deallocate any icons
+        // delete any icons
         DeleteIcons(this);
     }
 }
@@ -3334,9 +3431,6 @@ public:
             cellg[i] = currlayer->cellg[i];
             cellb[i] = currlayer->cellb[i];
         }
-        deadbrushrgb = currlayer->deadbrush->GetColour();
-        gridpenrgb = currlayer->gridpen->GetColour();
-        boldpenrgb = currlayer->boldpen->GetColour();
         saveshowicons = showicons;
     }
     
@@ -3348,9 +3442,6 @@ public:
             currlayer->cellg[i] = cellg[i];
             currlayer->cellb[i] = cellb[i];
         }
-        currlayer->deadbrush->SetColour(deadbrushrgb);
-        currlayer->gridpen->SetColour(gridpenrgb);
-        currlayer->boldpen->SetColour(boldpenrgb);
         showicons = saveshowicons;
     }
     
@@ -3360,9 +3451,6 @@ public:
     unsigned char cellr[256];
     unsigned char cellg[256];
     unsigned char cellb[256];
-    wxColor deadbrushrgb;
-    wxColor gridpenrgb;
-    wxColor boldpenrgb;
     
     // we also save/restore showicons option
     bool saveshowicons;

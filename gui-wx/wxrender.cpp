@@ -73,13 +73,6 @@ hlifealgo::draw() in hlifedraw.cpp.
 
 - Calls DrawControls() if the translucent controls need to be drawn.
 
-Other points of interest:
-
-- The viewport window is actually the right-hand pane of a wxSplitWindow.
-  The left-hand pane is a directory control (wxGenericDirCtrl) that
-  displays the user's preferred pattern or script folder.  This is all
-  handled in wxmain.cpp.
-
 ----------------------------------------------------------------------------- */
 
 #include "wx/wxprec.h"     // for compilers that support precompilation
@@ -104,68 +97,57 @@ Other points of interest:
 // -----------------------------------------------------------------------------
 
 // globals used in golly_render routines
-wxDC* currdc;                    // current device context for viewport
-int currwd, currht;              // current width and height of viewport
-int scalefactor;                 // current scale factor (1, 2, 4, 8 or 16)
-wxBitmap* pixmap = NULL;         // 32-bit deep bitmap used in pixblit calls
-int pixmapwd = -1;               // width of pixmap
-int pixmapht = -1;               // height of pixmap
-wxBitmap** iconmaps;             // array of icon bitmaps
+wxDC* currdc;                           // current device context for viewport
+int currwd, currht;                     // current width and height of viewport, in pixels
+int scalefactor;                        // current scale factor (1, 2, 4, 8 or 16)
+static unsigned char** icontextures;    // pointers to texture data for each icon
+static GLuint texture8 = 0;             // texture for drawing 7x7 icons
+static GLuint texture16 = 0;            // texture for drawing 15x15 icons
+static GLuint texture32 = 0;            // texture for drawing 31x31 icons
+static GLuint patternTexture = 0;       // texture for drawing pattern bitmaps at 1:1 scale
+
+// fixed texture coordinates used by glTexCoordPointer
+static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
 
 // for drawing paste pattern (initialized in CreatePasteImage)
-wxBitmap* pastebitmap;           // paste bitmap
-int pimagewd;                    // width of paste image
-int pimageht;                    // height of paste image
-int prectwd;                     // must match viewptr->pasterect.width
-int prectht;                     // must match viewptr->pasterect.height
-int pastemag;                    // must match current viewport's scale
-int cvwd, cvht;                  // must match current viewport's width and height
-paste_location pasteloc;         // must match plocation
-bool pasteicons;                 // must match showicons
-bool pastecolors;                // must match swapcolors
-bool pastescale;                 // must match scalepatterns
-lifealgo* pastealgo;             // universe containing paste pattern
-wxRect pastebbox;                // bounding box in cell coords (not necessarily minimal)
+wxBitmap* pastebitmap;                  // paste bitmap
+int pimagewd;                           // width of paste image
+int pimageht;                           // height of paste image
+int prectwd;                            // must match viewptr->pasterect.width
+int prectht;                            // must match viewptr->pasterect.height
+int pastemag;                           // must match current viewport's scale
+int cvwd, cvht;                         // must match current viewport's width and height
+paste_location pasteloc;                // must match plocation
+bool pasteicons;                        // must match showicons
+bool pastecolors;                       // must match swapcolors
+bool pastescale;                        // must match scalepatterns
+lifealgo* pastealgo;                    // universe containing paste pattern
+wxRect pastebbox;                       // bounding box in cell coords (not necessarily minimal)
+static bool drawing_paste = false;      // drawing paste image?
 
 // for drawing multiple layers
-int layerwd = -1;                // width of layer bitmap
-int layerht = -1;                // height of layer bitmap
-wxBitmap* layerbitmap = NULL;    // layer bitmap
+int layerwd = -1;                       // width of layer bitmap
+int layerht = -1;                       // height of layer bitmap
+wxBitmap* layerbitmap = NULL;           // layer bitmap
 
 // for drawing translucent controls
-wxBitmap* ctrlsbitmap = NULL;    // controls bitmap
-wxBitmap* darkctrls = NULL;      // for showing clicked control
-int controlswd;                  // width of ctrlsbitmap
-int controlsht;                  // height of ctrlsbitmap
+wxBitmap* ctrlsbitmap = NULL;           // controls bitmap
+wxBitmap* darkctrls = NULL;             // for showing clicked control
+int controlswd;                         // width of ctrlsbitmap
+int controlsht;                         // height of ctrlsbitmap
 
 // include controls_xpm (XPM data for controls bitmap)
 #include "bitmaps/controls.xpm"
 
 // these constants must match image dimensions in bitmaps/controls.xpm
-const int buttborder = 6;        // size of outer border
-const int buttsize = 22;         // size of each button
-const int buttsperrow = 3;       // # of buttons in each row
-const int numbutts = 15;         // # of buttons
-const int rowgap = 4;            // vertical gap after first 2 rows
+const int buttborder = 6;               // size of outer border
+const int buttsize = 22;                // size of each button
+const int buttsperrow = 3;              // # of buttons in each row
+const int numbutts = 15;                // # of buttons
+const int rowgap = 4;                   // vertical gap after first 2 rows
 
 // currently clicked control
 control_id currcontrol = NO_CONTROL;
-
-// -----------------------------------------------------------------------------
-
-#if 0 // not needed!!!???
-    // the following 2 macros convert x,y positions in Golly's preferred coordinate
-    // system (where 0,0 is top left corner of viewport and bottom right corner is
-    // currwd,currht) into OpenGL's normalized coordinates (where 0.0,0.0 is in middle
-    // of viewport, top right corner is 1.0,1.0 and bottom left corner is -1.0,-1.0)
-    #define XCOORD(x)  (2.0 * (x) / float(currwd) - 1.0)
-    #define YCOORD(y) -(2.0 * (y) / float(currht) - 1.0)
-#else
-    // the following 2 macros don't need to do anything because PatternView::OnSize
-    // has already changed the viewport coordinate system to what Golly wants
-    #define XCOORD(x) x
-    #define YCOORD(y) y
-#endif
 
 // -----------------------------------------------------------------------------
 
@@ -186,10 +168,10 @@ static void SetPointSize(int ptsize)
 static void FillRect(int x, int y, int wd, int ht)
 {
     GLfloat rect[] = {
-        XCOORD(x),    YCOORD(y+ht),  // left, bottom
-        XCOORD(x+wd), YCOORD(y+ht),  // right, bottom
-        XCOORD(x+wd), YCOORD(y),     // right, top
-        XCOORD(x),    YCOORD(y),     // left, top
+        x,    y+ht,     // left, bottom
+        x+wd, y+ht,     // right, bottom
+        x+wd, y,        // right, top
+        x,    y,        // left, top
     };
     glVertexPointer(2, GL_FLOAT, 0, rect);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -397,205 +379,168 @@ void DestroyDrawingData()
     delete layerbitmap;
     delete ctrlsbitmap;
     delete darkctrls;
-    delete pixmap;
 }
 
 // -----------------------------------------------------------------------------
 
-// called from golly_render::pixblit to draw a bitmap at 1:1 scale
-void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h)
+void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 {
-    wxAlphaPixelData pxldata(*pixmap);
-    if (pxldata) {
-#if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
-        pxldata.UseAlpha();
-#endif
-        wxAlphaPixelData::Iterator p(pxldata);
-        for ( int row = 0; row < h; row++ ) {
-            wxAlphaPixelData::Iterator rowstart = p;
-            for ( int col = 0; col < w; col++ ) {
-                p.Red()   = byteptr[(row*w + col)*3 + 0];
-                p.Green() = byteptr[(row*w + col)*3 + 1];
-                p.Blue()  = byteptr[(row*w + col)*3 + 2];
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                p.Alpha() = 255;
-#endif
-                p++;
-            }
-            p = rowstart;
-            p.OffsetY(pxldata, 1);
-        }
+    // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale
+
+	if (patternTexture == 0) {
+        // only need to create texture name once
+        glGenTextures(1, &patternTexture);
+    }
+
+    if (!glIsEnabled(GL_TEXTURE_2D)) {
+        // restore texture color and enable textures
+        SetColor(255, 255, 255, 255);
+        glEnable(GL_TEXTURE_2D);
+        // bind our texture
+        glBindTexture(GL_TEXTURE_2D, patternTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
     }
     
-    if (scalefactor > 1) {
-        // shrink pixmap by scalefactor
-        wxImage img = pixmap->ConvertToImage();
-        img.Rescale(w/scalefactor, h/scalefactor, wxIMAGE_QUALITY_HIGH);
-        wxBitmap bmap = img;
-        currdc->DrawBitmap(bmap, x/scalefactor, y/scalefactor);
-    } else {
-        currdc->DrawBitmap(*pixmap, x, y);
-    }
+    // update the texture with the new bitmap data (in RGB format)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
+    
+    GLfloat vertices[] = {
+        x,      y,
+        x+w,    y,
+        x,      y+h,
+        x+w,    y+h,
+    };
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 // -----------------------------------------------------------------------------
 
-void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, int stride)
+void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
 {
-    // called from golly_render::pixblit to draw icons for each live cell;
-    // assume pmscale > 2 (should be 8 or 16 or 32)
-    int cellsize = pmscale - 1;
-    bool drawgap = (pmscale < (1 << mingridmag)) ||
-#ifdef __WXMAC__
-    // wxMac seems to draw lines with semi-transparent pixels at the
-    // top/left ends, so we have to draw gaps even if showing grid lines
-    // otherwise we see annoying dots at the top/left edge of the viewport
-    (pmscale >= (1 << mingridmag));
-#else
-    (pmscale >= (1 << mingridmag) && !showgridlines);
-#endif
+    // called from golly_render::pixblit to draw pattern at 1:1 scale
+    // when we're drawing the paste image
+
+    const int maxcoords = 1024;     // must be multiple of 2
+    GLfloat points[maxcoords];
+    int numcoords = 0;
+
+    DisableTextures();
+    SetPointSize(1);
+
     unsigned char deadr = currlayer->cellr[0];
     unsigned char deadg = currlayer->cellg[0];
     unsigned char deadb = currlayer->cellb[0];
-    bool multicolor = currlayer->multicoloricons;
-    
-    wxAlphaPixelData pxldata(*pixmap);
-    if (pxldata) {
-#if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
-        pxldata.UseAlpha();
-#endif
-        wxAlphaPixelData::Iterator p(pxldata);
-        for ( int row = 0; row < h; row++ ) {
-            wxAlphaPixelData::Iterator rowstart = p;
-            for ( int col = 0; col < w; col++ ) {
-                unsigned char state = byteptr[row*stride + col];
-                unsigned char liver = currlayer->cellr[state];
-                unsigned char liveg = currlayer->cellg[state];
-                unsigned char liveb = currlayer->cellb[state];
-                
-                wxAlphaPixelData::Iterator topleft = p;
-                if (state && iconmaps[state]) {
-                    wxAlphaPixelData icondata(*iconmaps[state]);
-                    if (icondata) {
-                        wxAlphaPixelData::Iterator iconpxl(icondata);
-                        for (int i = 0; i < cellsize; i++) {
-                            wxAlphaPixelData::Iterator colstart = p;
-                            wxAlphaPixelData::Iterator iconrow = iconpxl;
-                            for (int j = 0; j < cellsize; j++) {
-                                if (iconpxl.Red() || iconpxl.Green() || iconpxl.Blue()) {
-                                    if (multicolor) {
-                                        // use non-black pixel in multi-colored icon
-                                        if (swapcolors) {
-                                            p.Red()   = 255 - iconpxl.Red();
-                                            p.Green() = 255 - iconpxl.Green();
-                                            p.Blue()  = 255 - iconpxl.Blue();
-                                        } else {
-                                            p.Red()   = iconpxl.Red();
-                                            p.Green() = iconpxl.Green();
-                                            p.Blue()  = iconpxl.Blue();
-                                        }
-                                    } else {
-                                        // grayscale icon
-                                        if (iconpxl.Red() == 255) {
-                                            // replace white pixel with live cell color
-                                            p.Red()   = liver;
-                                            p.Green() = liveg;
-                                            p.Blue()  = liveb;
-                                        } else {
-                                            // replace gray pixel with appropriate shade between 
-                                            // live and dead cell colors
-                                            float frac = (float)(iconpxl.Red()) / 255.0;
-                                            p.Red()   = (int)(deadr + frac * (liver - deadr) + 0.5);
-                                            p.Green() = (int)(deadg + frac * (liveg - deadg) + 0.5);
-                                            p.Blue()  = (int)(deadb + frac * (liveb - deadb) + 0.5);
-                                        }
-                                     }
-                                } else {
-                                    // replace black pixel with dead cell color
-                                    p.Red()   = deadr;
-                                    p.Green() = deadg;
-                                    p.Blue()  = deadb;
-                                }
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                                p.Alpha() = 255;
-#endif
-                                p++;
-                                iconpxl++;
-                            }
-                            if (drawgap) {
-                                // draw dead pixels at right edge of cell
-                                p.Red()   = deadr;
-                                p.Green() = deadg;
-                                p.Blue()  = deadb;
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                                p.Alpha() = 255;
-#endif
-                            }
-                            p = colstart;
-                            p.OffsetY(pxldata, 1);
-                            // move to next row of icon bitmap
-                            iconpxl = iconrow;
-                            iconpxl.OffsetY(icondata, 1);
-                        }
-                        if (drawgap) {
-                            // draw dead pixels at bottom edge of cell
-                            for (int j = 0; j <= cellsize; j++) {
-                                p.Red()   = deadr;
-                                p.Green() = deadg;
-                                p.Blue()  = deadb;
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                                p.Alpha() = 255;
-#endif
-                                p++;
-                            }
-                        }
+    unsigned char prevr = deadr;
+    unsigned char prevg = deadg;
+    unsigned char prevb = deadb;
+    SetColor(deadr, deadg, deadb, 255);
+
+    unsigned char r, g, b;
+    int i = 0;
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
+            r = rgbdata[i++];
+            g = rgbdata[i++];
+            b = rgbdata[i++];
+            if (r != deadr || g != deadg || b != deadb) {
+                // we've got a live pixel
+                bool changecolor = (r != prevr || g != prevg || b != prevb);
+                if (changecolor || numcoords == maxcoords) {
+                    if (numcoords > 0) {
+                        glVertexPointer(2, GL_FLOAT, 0, points);
+                        glDrawArrays(GL_POINTS, 0, numcoords/2);
+                        numcoords = 0;
                     }
-                } else {
-                    // draw dead cell
-                    for (int i = 0; i < cellsize; i++) {
-                        wxAlphaPixelData::Iterator colstart = p;
-                        for (int j = 0; j < cellsize; j++) {
-                            p.Red()   = deadr;
-                            p.Green() = deadg;
-                            p.Blue()  = deadb;
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                            p.Alpha() = 255;
-#endif
-                            p++;
-                        }
-                        if (drawgap) {
-                            // draw dead pixels at right edge of cell
-                            p.Red()   = deadr;
-                            p.Green() = deadg;
-                            p.Blue()  = deadb;
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                            p.Alpha() = 255;
-#endif
-                        }
-                        p = colstart;
-                        p.OffsetY(pxldata, 1);
-                    }
-                    if (drawgap) {
-                        // draw dead pixels at bottom edge of cell
-                        for (int j = 0; j <= cellsize; j++) {
-                            p.Red()   = deadr;
-                            p.Green() = deadg;
-                            p.Blue()  = deadb;
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                            p.Alpha() = 255;
-#endif
-                            p++;
-                        }
+                    if (changecolor) {
+                        prevr = r;
+                        prevg = g;
+                        prevb = b;
+                        SetColor(r, g, b, 255);
                     }
                 }
-                p = topleft;
-                p.OffsetX(pxldata, pmscale);
+                points[numcoords++] = x + col + 0.5;
+                points[numcoords++] = y + row + 0.5;
             }
-            p = rowstart;
-            p.OffsetY(pxldata, pmscale);
         }
     }
-    currdc->DrawBitmap(*pixmap, x, y);   
+
+    if (numcoords > 0) {
+        glVertexPointer(2, GL_FLOAT, 0, points);
+        glDrawArrays(GL_POINTS, 0, numcoords/2);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+static int prevsize = 0;
+
+void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
+{
+    // called from golly_render::pixblit to draw icons for each live cell;
+    // assume pmscale > 2 (should be 8, 16 or 32 or 64)
+    int iconsize = pmscale;
+
+    // on high density screens the max scale is 1:64, but instead of
+    // supporting 63x63 icons we simply scale up the 31x31 icons
+    // (leaving a barely noticeable 1px gap at the right and bottom edges)
+    if (pmscale == 64) {
+        iconsize = 32;
+    }
+
+    // create icon textures once
+	if (texture8 == 0) glGenTextures(1, &texture8);
+	if (texture16 == 0) glGenTextures(1, &texture16);
+	if (texture32 == 0) glGenTextures(1, &texture32);
+
+    if (!glIsEnabled(GL_TEXTURE_2D)) {
+        // restore texture color and enable textures
+        SetColor(255, 255, 255, 255);
+        glEnable(GL_TEXTURE_2D);
+        prevsize = 0;               // force rebinding
+    }
+    
+    if (iconsize != prevsize) {
+        prevsize = iconsize;
+        // bind appropriate icon texture
+        if (iconsize == 8) glBindTexture(GL_TEXTURE_2D, texture8);
+        if (iconsize == 16) glBindTexture(GL_TEXTURE_2D, texture16);
+        if (iconsize == 32) glBindTexture(GL_TEXTURE_2D, texture32);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+    }
+
+    int prevstate = 0;
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
+            unsigned char state = statedata[row*stride + col];
+            if (state > 0 && icontextures[state]) {
+                
+                if (state != prevstate) {
+                    prevstate = state;
+                    // update the texture with the new icon data (in RGBA format)
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, iconsize, iconsize, 0,
+                                 GL_RGBA, GL_UNSIGNED_BYTE, icontextures[state]);
+                }
+                
+                int xpos = x + col * pmscale;
+                int ypos = y + row * pmscale;
+                
+                GLfloat vertices[] = {
+                    xpos,           ypos,
+                    xpos + pmscale, ypos,
+                    xpos,           ypos + pmscale,
+                    xpos + pmscale, ypos + pmscale,
+                };
+                glVertexPointer(2, GL_FLOAT, 0, vertices);
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            }
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -705,8 +650,8 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
                     numcoords = 0;
                 }
                 // get mid point of cell
-                GLfloat midx = XCOORD(x + col*pmscale + cellsize/2.0);
-                GLfloat midy = YCOORD(y + row*pmscale + cellsize/2.0);
+                GLfloat midx = x + col*pmscale + cellsize/2.0;
+                GLfloat midy = y + row*pmscale + cellsize/2.0;
                 if (midx > float(currwd) || midy > float(currht)) {
                     // midx,midy is outside viewport so we need to use FillRect to see partially
                     // visible cell at right/bottom edge
@@ -755,8 +700,8 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     numcoords[state] = 0;
                 }
                 // get mid point of cell
-                GLfloat midx = XCOORD(x + col*pmscale + cellsize/2.0);
-                GLfloat midy = YCOORD(y + row*pmscale + cellsize/2.0);
+                GLfloat midx = x + col*pmscale + cellsize/2.0;
+                GLfloat midy = y + row*pmscale + cellsize/2.0;
                 if (midx > float(currwd) || midy > float(currht)) {
                     // midx,midy is outside viewport so we need to use FillRect to see partially
                     // visible cell at right/bottom edge
@@ -834,23 +779,21 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
         if (y + h >= currht + pmscale) h = (currht - y + pmscale - 1)/pmscale*pmscale;
     }
     
-    // remove global pixmap stuff!!!
-    // faster to create new pixmap only when size changes
-    if (pixmapwd != w || pixmapht != h) {
-        delete pixmap;
-        pixmap = new wxBitmap(w, h, 32);
-        pixmapwd = w;
-        pixmapht = h;
-    }
-    
     int numstates = currlayer->algo->NumCellStates();
+    
     if (pmscale == 1) {
-        // draw rgb pixel data
-        //!!! DrawPixmap((unsigned char*) pmdata, x, y, w, h);
+        // draw rgb pixel data at scale 1:1
+        if (drawing_paste) {
+            // we can't use DrawTexture to draw paste image because glTexImage2D clobbers
+            // any background pattern, so we use DrawPoints
+            DrawPoints((unsigned char*) pmdata, x, y, w, h);
+        } else {
+            DrawTexture((unsigned char*) pmdata, x, y, w, h);
+        }
         
-    } else if (showicons && pmscale > 4 && iconmaps) {
-        // draw icons at scales 1:8 or above
-        //!!! DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+    } else if (showicons && pmscale > 4 && icontextures) {
+        // draw icons at scales 1:8 and above
+        DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
         
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
@@ -1126,6 +1069,7 @@ void CheckPasteImage()
             // temporarily turn off grid lines
             bool saveshow = showgridlines;
             showgridlines = false;
+            drawing_paste = true;
             
             wxMemoryDC pattdc;
             pattdc.SelectObject(*pastebitmap);
@@ -1148,6 +1092,7 @@ void CheckPasteImage()
             
             pattdc.SelectObject(wxNullBitmap);
             
+            drawing_paste = false;
             showgridlines = saveshow;
             
             // make dead pixels 100% transparent and live pixels 100% opaque
@@ -1444,14 +1389,14 @@ void DrawOneLayer(wxDC& dc)
     wxMemoryDC layerdc;
     layerdc.SelectObject(*layerbitmap);
     
-    // only show icons at scales 1:8 or 1:16 or 1:32
     if (showicons && currlayer->view->getmag() > 2) {
+        // only show icons at scales 1:8 and above
         if (currlayer->view->getmag() == 3) {
-            iconmaps = currlayer->icons7x7;
+            icontextures = currlayer->textures7x7;
         } else if (currlayer->view->getmag() == 4) {
-            iconmaps = currlayer->icons15x15;
+            icontextures = currlayer->textures15x15;
         } else {
-            iconmaps = currlayer->icons31x31;
+            icontextures = currlayer->textures31x31;
         }
     }
     
@@ -1459,7 +1404,6 @@ void DrawOneLayer(wxDC& dc)
     
     if (scalefactor > 1) {
         // temporarily change viewport scale to 1:1 and increase its size by scalefactor
-        // (DrawPixmap will then shrink pixmaps by scalefactor)
         int currmag = currlayer->view->getmag();
         currlayer->view->setmag(0);
         currwd = currwd * scalefactor;
@@ -1670,14 +1614,14 @@ void DrawView(int tileindex)
         colorindex = currindex;
     }
     
-    // only show icons at scales 1:8 or above
     if (showicons && currmag > 2) {
+        // only show icons at scales 1:8 and above
         if (currmag == 3) {
-            iconmaps = currlayer->icons7x7;
+            icontextures = currlayer->textures7x7;
         } else if (currmag == 4) {
-            iconmaps = currlayer->icons15x15;
+            icontextures = currlayer->textures15x15;
         } else {
-            iconmaps = currlayer->icons31x31;
+            icontextures = currlayer->textures31x31;
         }
     }
     
@@ -1689,11 +1633,13 @@ void DrawView(int tileindex)
         scalefactor = 1 << (-currmag);
         
         // temporarily change viewport scale to 1:1 and increase its size by scalefactor
-        // (DrawPixmap will then shrink pixmaps by scalefactor)
         currlayer->view->setmag(0);
         currwd = currwd * scalefactor;
         currht = currht * scalefactor;
         currlayer->view->resize(currwd, currht);
+        
+        glPushMatrix();
+        glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
         
         currlayer->algo->draw(*currlayer->view, renderer);
         
@@ -1702,6 +1648,10 @@ void DrawView(int tileindex)
         currht = currht / scalefactor;
         currlayer->view->resize(currwd, currht);
         currlayer->view->setmag(currmag);
+        
+        // restore OpenGL scale
+        glPopMatrix();
+        
     } else {
         // no scaling
         scalefactor = 1;

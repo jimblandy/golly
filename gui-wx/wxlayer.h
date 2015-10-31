@@ -106,14 +106,15 @@ public:
     unsigned char cellg[256];     // green components for states 0..255
     unsigned char cellb[256];     // blue components for states 0..255
     
-    wxBrush* deadbrush;           // brush for drawing dead cells
-    wxPen* gridpen;               // pen for drawing plain grid
-    wxPen* boldpen;               // pen for drawing bold grid
-    
     // icons for this layer
     wxBitmap** icons7x7;          // icons for scale 1:8
     wxBitmap** icons15x15;        // icons for scale 1:16
     wxBitmap** icons31x31;        // icons for scale 1:32
+
+    // texture data for rendering icons
+    unsigned char** textures7x7;        // texture data for 7x7 icons
+    unsigned char** textures15x15;      // texture data for 15x15 icons
+    unsigned char** textures31x31;      // texture data for 31x31 icons
     
     bool multicoloricons;         // are icons multi-colored? (grayscale if not)
     
