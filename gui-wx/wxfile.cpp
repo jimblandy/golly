@@ -49,7 +49,6 @@
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
-#include "wxrender.h"      // for SetSelectionColor
 #include "wxscript.h"      // for RunScript, inscript
 #include "wxmain.h"        // for MainFrame, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
@@ -1949,9 +1948,6 @@ void MainFrame::ShowPrefsDialog(const wxString& page)
     
     if (ChangePrefs(page)) {
         // user hit OK button
-        
-        // selection color may have changed
-        SetSelectionColor();
         
         // if maxpatterns was reduced then we may need to remove some paths
         while (numpatterns > maxpatterns) {

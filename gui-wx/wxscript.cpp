@@ -35,7 +35,6 @@
 #include "wxselect.h"      // for Selection
 #include "wxedit.h"        // for ToggleEditBar, ToggleAllStates, UpdateEditBar
 #include "wxview.h"        // for viewptr->...
-#include "wxrender.h"      // for SetSelectionColor
 #include "wxstatus.h"      // for statusptr->...
 #include "wxutils.h"       // for Warning, Beep, IsScriptFile
 #include "wxprefs.h"       // for gollydir, allowundo, etc
@@ -919,7 +918,6 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
         if (oldcol != newcol) {
             *selectrgb = newcol;
             SetBrushesAndPens();
-            SetSelectionColor();    // see wxrender.cpp
             DoAutoUpdate();
         }
         

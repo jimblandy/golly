@@ -330,7 +330,6 @@ void DrawCells(int x, int y)
             RememberOneCellChange(cellx, celly, currstate, drawstate);
             numchanged++;
         }
-
     }
 
     if (numchanged > 0) {

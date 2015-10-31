@@ -42,10 +42,10 @@ Refresh() and Update().
 
 DrawView() does the following tasks:
 
+- Fills the entire viewport with the state 0 color.
 - Calls currlayer->algo->draw() to draw the current pattern.  It passes
-  in renderer, an instance of wx_render (derived from liferender) which
+  in renderer, an instance of golly_render (derived from liferender) which
   has these methods:
-- killrect() draws a rectangular area of dead cells.
 - pixblit() draws a pixmap containing at least one live cell.
 - getcolors() provides access to the current layer's color arrays.
 
@@ -75,19 +75,6 @@ hlifealgo::draw() in hlifedraw.cpp.
 
 Other points of interest:
 
-- The decision to use buffered drawing is made in PatternView::OnPaint().
-  It's never used on Mac OS X or GTK+ 2.0 because windows on those systems
-  are automatically buffered.  To avoid flicker on Windows, buffering is
-  always used if any of these conditions are true:
-- the user is doing a paste;
-- the grid lines are visible;
-- the selection is visible;
-- the translucent controls are visible;
-- multiple layers are being displayed.
-
-- Change the "#if 0" to "#if 1" in wx_render::killrect() to see randomly
-  colored rects.  This gives an insight into how lifealgo::draw() works.
-
 - The viewport window is actually the right-hand pane of a wxSplitWindow.
   The left-hand pane is a directory control (wxGenericDirCtrl) that
   displays the user's preferred pattern or script folder.  This is all
@@ -116,7 +103,7 @@ Other points of interest:
 
 // -----------------------------------------------------------------------------
 
-// globals used in wx_render routines
+// globals used in golly_render routines
 wxDC* currdc;                    // current device context for viewport
 int currwd, currht;              // current width and height of viewport
 int scalefactor;                 // current scale factor (1, 2, 4, 8 or 16)
@@ -124,12 +111,6 @@ wxBitmap* pixmap = NULL;         // 32-bit deep bitmap used in pixblit calls
 int pixmapwd = -1;               // width of pixmap
 int pixmapht = -1;               // height of pixmap
 wxBitmap** iconmaps;             // array of icon bitmaps
-
-// for drawing translucent selection (initialized in InitDrawingData)
-int selwd;                       // width of selection bitmap
-int selht;                       // height of selection bitmap
-wxBitmap* selbitmap = NULL;      // selection bitmap (if NULL then inversion is used)
-wxBitmap* graybitmap = NULL;     // for inactive selections when drawing multiple layers
 
 // for drawing paste pattern (initialized in CreatePasteImage)
 wxBitmap* pastebitmap;           // paste bitmap
@@ -169,6 +150,59 @@ const int rowgap = 4;            // vertical gap after first 2 rows
 
 // currently clicked control
 control_id currcontrol = NO_CONTROL;
+
+// -----------------------------------------------------------------------------
+
+#if 0 // not needed!!!???
+    // the following 2 macros convert x,y positions in Golly's preferred coordinate
+    // system (where 0,0 is top left corner of viewport and bottom right corner is
+    // currwd,currht) into OpenGL's normalized coordinates (where 0.0,0.0 is in middle
+    // of viewport, top right corner is 1.0,1.0 and bottom left corner is -1.0,-1.0)
+    #define XCOORD(x)  (2.0 * (x) / float(currwd) - 1.0)
+    #define YCOORD(y) -(2.0 * (y) / float(currht) - 1.0)
+#else
+    // the following 2 macros don't need to do anything because PatternView::OnSize
+    // has already changed the viewport coordinate system to what Golly wants
+    #define XCOORD(x) x
+    #define YCOORD(y) y
+#endif
+
+// -----------------------------------------------------------------------------
+
+static void SetColor(int r, int g, int b, int a)
+{
+    glColor4ub(r, g, b, a);
+}
+
+// -----------------------------------------------------------------------------
+
+static void SetPointSize(int ptsize)
+{
+    glPointSize(ptsize);
+}
+
+// -----------------------------------------------------------------------------
+
+static void FillRect(int x, int y, int wd, int ht)
+{
+    GLfloat rect[] = {
+        XCOORD(x),    YCOORD(y+ht),  // left, bottom
+        XCOORD(x+wd), YCOORD(y+ht),  // right, bottom
+        XCOORD(x+wd), YCOORD(y),     // right, top
+        XCOORD(x),    YCOORD(y),     // left, top
+    };
+    glVertexPointer(2, GL_FLOAT, 0, rect);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+// -----------------------------------------------------------------------------
+
+static void DisableTextures()
+{
+    if (glIsEnabled(GL_TEXTURE_2D)) {
+        glDisable(GL_TEXTURE_2D);
+    };
+}
 
 // -----------------------------------------------------------------------------
 
@@ -351,68 +385,9 @@ void DrawControls(wxDC& dc, wxRect& rect)
 
 // -----------------------------------------------------------------------------
 
-void SetSelectionPixels(wxBitmap* bitmap, const wxColor* color)
-{
-    // set color and alpha of pixels in given bitmap
-    wxAlphaPixelData data(*bitmap, wxPoint(0,0), wxSize(selwd,selht));
-    if (data) {
-        int alpha = 128;     // 50% opaque
-        
-#if defined(__WXMSW__) || (defined(__WXMAC__) && wxCHECK_VERSION(2,8,8))
-        // premultiply the RGB values
-        int r = color->Red() * alpha / 255;
-        int g = color->Green() * alpha / 255;
-        int b = color->Blue() * alpha / 255;
-#else
-        int r = color->Red();
-        int g = color->Green();
-        int b = color->Blue();
-#endif
-        
-#if !wxCHECK_VERSION(2,9,0)
-        data.UseAlpha();
-#endif
-        wxAlphaPixelData::Iterator p(data);
-        for ( int y = 0; y < selht; y++ ) {
-            wxAlphaPixelData::Iterator rowstart = p;
-            for ( int x = 0; x < selwd; x++ ) {
-                p.Red()   = r;
-                p.Green() = g;
-                p.Blue()  = b;
-                p.Alpha() = alpha;
-                p++;
-            }
-            p = rowstart;
-            p.OffsetY(data, 1);
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void InitDrawingData()
 {
-    // create translucent selection bitmap
-    viewptr->GetClientSize(&selwd, &selht);
-    // selwd or selht might be < 1 on Windows
-    if (selwd < 1) selwd = 1;
-    if (selht < 1) selht = 1;
-    
-    // use depth 32 so bitmap has an alpha channel
-    selbitmap = new wxBitmap(selwd, selht, 32);
-    if (selbitmap == NULL) {
-        Warning(_("Not enough memory for selection bitmap!"));
-    } else {
-        SetSelectionPixels(selbitmap, selectrgb);
-    }
-    
-    // create translucent gray bitmap for inactive selections
-    graybitmap = new wxBitmap(selwd, selht, 32);
-    if (graybitmap == NULL) {
-        Warning(_("Not enough memory for gray bitmap!"));
-    } else {
-        SetSelectionPixels(graybitmap, wxLIGHT_GREY);
-    }
+    // no longer needed -- remove???!!!
 }
 
 // -----------------------------------------------------------------------------
@@ -420,8 +395,6 @@ void InitDrawingData()
 void DestroyDrawingData()
 {
     delete layerbitmap;
-    delete selbitmap;
-    delete graybitmap;
     delete ctrlsbitmap;
     delete darkctrls;
     delete pixmap;
@@ -429,8 +402,8 @@ void DestroyDrawingData()
 
 // -----------------------------------------------------------------------------
 
-// called from wx_render::pixblit to draw a bitmap at 1:1 scale
-void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h, int stride)
+// called from golly_render::pixblit to draw a bitmap at 1:1 scale
+void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h)
 {
     wxAlphaPixelData pxldata(*pixmap);
     if (pxldata) {
@@ -441,9 +414,9 @@ void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h, int stride)
         for ( int row = 0; row < h; row++ ) {
             wxAlphaPixelData::Iterator rowstart = p;
             for ( int col = 0; col < w; col++ ) {
-                p.Red()   = byteptr[(row*stride + col)*3 + 0];
-                p.Green() = byteptr[(row*stride + col)*3 + 1];
-                p.Blue()  = byteptr[(row*stride + col)*3 + 2];
+                p.Red()   = byteptr[(row*w + col)*3 + 0];
+                p.Green() = byteptr[(row*w + col)*3 + 1];
+                p.Blue()  = byteptr[(row*w + col)*3 + 2];
 #if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
                 p.Alpha() = 255;
 #endif
@@ -467,89 +440,9 @@ void DrawPixmap(unsigned char* byteptr, int x, int y, int w, int h, int stride)
 
 // -----------------------------------------------------------------------------
 
-// called from wx_render::pixblit to magnify given pixmap by pmscale (2, 4, ... 2^MAX_MAG)
-void DrawStretchedPixmap(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, int stride)
-{
-    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
-    bool drawgap = (pmscale > 2 && pmscale < (1 << mingridmag)) ||
-#ifdef __WXMAC__
-    // wxMac seems to draw lines with semi-transparent pixels at the
-    // top/left ends, so we have to draw gaps even if showing grid lines
-    // otherwise we see annoying dots at the top/left edge of the viewport
-    (pmscale >= (1 << mingridmag));
-#else
-    (pmscale >= (1 << mingridmag) && !showgridlines);
-#endif
-    unsigned char deadr = currlayer->cellr[0];
-    unsigned char deadg = currlayer->cellg[0];
-    unsigned char deadb = currlayer->cellb[0];
-    
-    wxAlphaPixelData pxldata(*pixmap);
-    if (pxldata) {
-#if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
-        pxldata.UseAlpha();
-#endif
-        wxAlphaPixelData::Iterator p(pxldata);
-        for ( int row = 0; row < h; row++ ) {
-            wxAlphaPixelData::Iterator rowstart = p;
-            for ( int col = 0; col < w; col++ ) {
-                unsigned char state = byteptr[row*stride + col];
-                unsigned char r = currlayer->cellr[state];
-                unsigned char g = currlayer->cellg[state];
-                unsigned char b = currlayer->cellb[state];
-                
-                // expand byte into cellsize*cellsize pixels
-                wxAlphaPixelData::Iterator topleft = p;
-                for (int i = 0; i < cellsize; i++) {
-                    wxAlphaPixelData::Iterator colstart = p;
-                    for (int j = 0; j < cellsize; j++) {
-                        p.Red()   = r;
-                        p.Green() = g;
-                        p.Blue()  = b;
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                        p.Alpha() = 255;
-#endif
-                        p++;
-                    }
-                    if (drawgap) {
-                        // draw dead pixels at right edge of cell
-                        p.Red()   = deadr;
-                        p.Green() = deadg;
-                        p.Blue()  = deadb;
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                        p.Alpha() = 255;
-#endif
-                    }
-                    p = colstart;
-                    p.OffsetY(pxldata, 1);
-                }
-                if (drawgap) {
-                    // draw dead pixels at bottom edge of cell
-                    for (int j = 0; j <= cellsize; j++) {
-                        p.Red()   = deadr;
-                        p.Green() = deadg;
-                        p.Blue()  = deadb;
-#if defined(__WXGTK__) || wxCHECK_VERSION(2,9,0)
-                        p.Alpha() = 255;
-#endif
-                        p++;
-                    }
-                }
-                p = topleft;
-                p.OffsetX(pxldata, pmscale);
-            }
-            p = rowstart;
-            p.OffsetY(pxldata, pmscale);
-        }
-    }
-    currdc->DrawBitmap(*pixmap, x, y);
-}
-
-// -----------------------------------------------------------------------------
-
 void DrawIcons(unsigned char* byteptr, int x, int y, int w, int h, int pmscale, int stride)
 {
-    // called from wx_render::pixblit to draw icons for each live cell;
+    // called from golly_render::pixblit to draw icons for each live cell;
     // assume pmscale > 2 (should be 8 or 16 or 32)
     int cellsize = pmscale - 1;
     bool drawgap = (pmscale < (1 << mingridmag)) ||
@@ -784,62 +677,136 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
 
 // -----------------------------------------------------------------------------
 
-class wx_render : public liferender
+void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
+{
+    // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
+    // when number of states is 2
+    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
+
+    const int maxcoords = 1024;     // must be multiple of 2
+    GLfloat points[maxcoords];
+    int numcoords = 0;
+
+    DisableTextures();
+    SetPointSize(cellsize);
+
+    // all live cells are in state 1 so only need to set color once
+    SetColor(currlayer->cellr[1],
+             currlayer->cellg[1],
+             currlayer->cellb[1], 255);
+    
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
+            unsigned char state = statedata[row*stride + col];
+            if (state > 0) {
+                if (numcoords == maxcoords) {
+                    glVertexPointer(2, GL_FLOAT, 0, points);
+                    glDrawArrays(GL_POINTS, 0, numcoords/2);
+                    numcoords = 0;
+                }
+                // get mid point of cell
+                GLfloat midx = XCOORD(x + col*pmscale + cellsize/2.0);
+                GLfloat midy = YCOORD(y + row*pmscale + cellsize/2.0);
+                if (midx > float(currwd) || midy > float(currht)) {
+                    // midx,midy is outside viewport so we need to use FillRect to see partially
+                    // visible cell at right/bottom edge
+                    FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
+                } else {
+                    points[numcoords++] = midx;
+                    points[numcoords++] = midy;
+                }
+            }
+        }
+    }
+
+    if (numcoords > 0) {
+        glVertexPointer(2, GL_FLOAT, 0, points);
+        glDrawArrays(GL_POINTS, 0, numcoords/2);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates)
+{
+    // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
+    // when numstates is > 2
+    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
+
+    const int maxcoords = 256;      // must be multiple of 2
+    GLfloat points[256][maxcoords];
+    int numcoords[256] = {0};
+
+    DisableTextures();
+    SetPointSize(cellsize);
+
+    // following code minimizes color changes due to state changes
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
+            unsigned char state = statedata[row*stride + col];
+            if (state > 0) {
+                if (numcoords[state] == maxcoords) {
+                    // this shouldn't happen too often
+                    SetColor(currlayer->cellr[state],
+                             currlayer->cellg[state],
+                             currlayer->cellb[state], 255);
+                    glVertexPointer(2, GL_FLOAT, 0, points[state]);
+                    glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
+                    numcoords[state] = 0;
+                }
+                // get mid point of cell
+                GLfloat midx = XCOORD(x + col*pmscale + cellsize/2.0);
+                GLfloat midy = YCOORD(y + row*pmscale + cellsize/2.0);
+                if (midx > float(currwd) || midy > float(currht)) {
+                    // midx,midy is outside viewport so we need to use FillRect to see partially
+                    // visible cell at right/bottom edge
+                    SetColor(currlayer->cellr[state],
+                             currlayer->cellg[state],
+                             currlayer->cellb[state], 255);
+                    FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
+                } else {
+                    points[state][numcoords[state]++] = midx;
+                    points[state][numcoords[state]++] = midy;
+                }
+            }
+        }
+    }
+
+    for (int state = 1; state < numstates; state++) {
+        if (numcoords[state] > 0) {
+            SetColor(currlayer->cellr[state],
+                     currlayer->cellg[state],
+                     currlayer->cellb[state], 255);
+            glVertexPointer(2, GL_FLOAT, 0, points[state]);
+            glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+class golly_render : public liferender
 {
 public:
-    wx_render() {}
-    virtual ~wx_render() {}
+    golly_render() {}
+    virtual ~golly_render() {}
     virtual void killrect(int x, int y, int w, int h);
     virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
     virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b);
 };
 
-wx_render renderer;     // create instance
+golly_render renderer;     // create instance
 
 // -----------------------------------------------------------------------------
 
-void wx_render::killrect(int x, int y, int w, int h)
+void golly_render::killrect(int x, int y, int w, int h)
 {
-    if (x >= currwd || y >= currht) return;
-    if (x + w <= 0 || y + h <= 0) return;
-    if (w <= 0 || h <= 0) return;
-    
-    // clip given rect so it's within viewport
-    int clipx = x < 0 ? 0 : x;
-    int clipy = y < 0 ? 0 : y;
-    int clipr = x + w;
-    int clipb = y + h;
-    if (clipr > currwd) clipr = currwd;
-    if (clipb > currht) clipb = currht;
-    int clipwd = clipr - clipx;
-    int clipht = clipb - clipy;
-    
-    if (scalefactor > 1) {
-        // shrink rect by scalefactor
-        clipx = clipx / scalefactor;
-        clipy = clipy / scalefactor;
-        if (clipwd % scalefactor > 0) clipwd += scalefactor;
-        if (clipht % scalefactor > 0) clipht += scalefactor;
-        clipwd = clipwd / scalefactor;
-        clipht = clipht / scalefactor;
-    }
-    
-    wxRect rect(clipx, clipy, clipwd, clipht);
-    
-#if 0
-    // use a different pale color each time to see any probs
-    wxBrush randbrush(wxColor((rand()&127)+128,
-                              (rand()&127)+128,
-                              (rand()&127)+128));
-    FillRect(*currdc, rect, randbrush);
-#else
-    FillRect(*currdc, rect, *currlayer->deadbrush);
-#endif
+    // no need to do anything because background has already been filled by glClear in DrawView
 }
 
 // -----------------------------------------------------------------------------
 
-void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
+void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 {
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
@@ -847,7 +814,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
     // stride is the horizontal pixel width of the image data
     int stride = w/pmscale;
     
-    // clip pixmap to be drawn against viewport:
+    // clip data outside viewport
     if (pmscale > 1) {
         // pmdata contains 1 byte per `pmscale' pixels, so we must be careful
         // and adjust x, y, w and h by multiples of `pmscale' only.
@@ -867,6 +834,7 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
         if (y + h >= currht + pmscale) h = (currht - y + pmscale - 1)/pmscale*pmscale;
     }
     
+    // remove global pixmap stuff!!!
     // faster to create new pixmap only when size changes
     if (pixmapwd != w || pixmapht != h) {
         delete pixmap;
@@ -875,24 +843,29 @@ void wx_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
         pixmapht = h;
     }
     
+    int numstates = currlayer->algo->NumCellStates();
     if (pmscale == 1) {
         // draw rgb pixel data
-        DrawPixmap((unsigned char*) pmdata, x, y, w, h, stride);
+        //!!! DrawPixmap((unsigned char*) pmdata, x, y, w, h);
         
     } else if (showicons && pmscale > 4 && iconmaps) {
-        // draw icons only at scales 1:8 or 1:16 or 1:32
-        DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+        // draw icons at scales 1:8 or above
+        //!!! DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
         
     } else {
-        // stretch pixmap by pmscale, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
+        // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
-        DrawStretchedPixmap((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+        if (numstates == 2) {
+            DrawMagnifiedTwoStateCells((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+        } else {
+            DrawMagnifiedCells((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, numstates);
+        }
     }
 }
 
 // -----------------------------------------------------------------------------
 
-void wx_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b)
+void golly_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b)
 {
     *r = currlayer->cellr;
     *g = currlayer->cellg;
@@ -901,80 +874,17 @@ void wx_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** 
 
 // -----------------------------------------------------------------------------
 
-void CheckSelectionSize(int viewwd, int viewht)
+void DrawSelection(wxRect& rect, bool active)
 {
-    if (viewwd != selwd || viewht != selht) {
-        // resize selbitmap and graybitmap
-        selwd = viewwd;
-        selht = viewht;
-        delete selbitmap;
-        delete graybitmap;
-        // use depth 32 so bitmaps have an alpha channel
-        selbitmap = new wxBitmap(selwd, selht, 32);
-        graybitmap = new wxBitmap(selwd, selht, 32);
-        if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
-        if (graybitmap) SetSelectionPixels(graybitmap, wxLIGHT_GREY);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void SetSelectionColor()
-{
-    // selectrgb has changed
-    if (selbitmap) SetSelectionPixels(selbitmap, selectrgb);
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawSelection(wxDC& dc, wxRect& rect)
-{
-    if (selbitmap) {
-#ifdef __WXGTK__
-        // wxGTK Blit doesn't support alpha channel
-        if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
-            // use inversion for speed
-            dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
-        } else {
-            dc.DrawBitmap(selbitmap->GetSubBitmap(rect), rect.x, rect.y, true);
-        }
-#else
-        // Blit seems to be about 10% faster (on Mac at least)
-        wxMemoryDC memdc;
-        memdc.SelectObject(*selbitmap);
-        dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
-        memdc.SelectObject(wxNullBitmap);
-#endif
+    // draw semi-transparent rectangle
+    DisableTextures();
+    if (active) {
+        SetColor(selectrgb->Red(), selectrgb->Green(), selectrgb->Blue(), 128);
     } else {
-        // no alpha channel so just invert rect
-        dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
+        // use light gray to indicate an inactive selection
+        SetColor(160, 160, 160, 128);
     }
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawInactiveSelection(wxDC& dc, wxRect& rect)
-{
-    if (graybitmap) {
-#ifdef __WXGTK__
-        // wxGTK Blit doesn't support alpha channel
-        if (selectrgb->Red() == 255 && selectrgb->Green() == 255 && selectrgb->Blue() == 255) {
-            // use inversion for speed
-            dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
-        } else {
-            dc.DrawBitmap(graybitmap->GetSubBitmap(rect), rect.x, rect.y, true);
-        }
-#else
-        // Blit seems to be about 10% faster (on Mac at least)
-        wxMemoryDC memdc;
-        memdc.SelectObject(*graybitmap);
-        dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
-        memdc.SelectObject(wxNullBitmap);
-#endif
-    } else {
-        // no alpha channel so just invert rect
-        dc.Blit(rect.x, rect.y, rect.width, rect.height, &dc, rect.x, rect.y, wxINVERT);
-    }
+    FillRect(rect.x, rect.y, rect.width, rect.height);
 }
 
 // -----------------------------------------------------------------------------
@@ -1326,11 +1236,11 @@ void DrawPasteImage(wxDC& dc)
 
 // -----------------------------------------------------------------------------
 
-void DrawGridLines(wxDC& dc)
+void DrawGridLines(int wd, int ht)
 {
     int cellsize = 1 << currlayer->view->getmag();
     int h, v, i, topbold, leftbold;
-    
+
     if (showboldlines) {
         // ensure that origin cell stays next to bold lines;
         // ie. bold lines scroll when pattern is scrolled
@@ -1348,58 +1258,103 @@ void DrawGridLines(wxDC& dc)
         // avoid gcc warning
         topbold = leftbold = 0;
     }
-    
-    // draw all plain lines first
-    dc.SetPen(*currlayer->gridpen);
-    
+
+    DisableTextures();
+    glLineWidth(1.0);
+
+    // set the stroke color depending on current bg color
+    int r = currlayer->cellr[0];
+    int g = currlayer->cellg[0];
+    int b = currlayer->cellb[0];
+    int gray = (int) ((r + g + b) / 3.0);
+    if (gray > 127) {
+        // darker lines
+        SetColor(r > 32 ? r - 32 : 0,
+                 g > 32 ? g - 32 : 0,
+                 b > 32 ? b - 32 : 0, 255);
+    } else {
+        // lighter lines
+        SetColor(r + 32 < 256 ? r + 32 : 255,
+                 g + 32 < 256 ? g + 32 : 255,
+                 b + 32 < 256 ? b + 32 : 255, 255);
+    }
+
+    // draw all plain lines first;
+    // note that we need to subtract 0.5 from each coordinate to avoid uneven spacing
+
     i = showboldlines ? topbold : 1;
-    v = -1;
+    v = 0;
     while (true) {
         v += cellsize;
-        if (v >= currht) break;
+        if (v >= ht) break;
         if (showboldlines) i++;
-        if (i % boldspacing != 0 && v >= 0 && v < currht)
-            dc.DrawLine(0, v, currwd, v);
+        if (i % boldspacing != 0 && v >= 0 && v < ht) {
+            GLfloat points[] = {   -0.5, v-0.5,
+                                 wd-0.5, v-0.5 };
+            glVertexPointer(2, GL_FLOAT, 0, points);
+            glDrawArrays(GL_LINES, 0, 2);
+        }
     }
     i = showboldlines ? leftbold : 1;
-    h = -1;
+    h = 0;
     while (true) {
         h += cellsize;
-        if (h >= currwd) break;
+        if (h >= wd) break;
         if (showboldlines) i++;
-        if (i % boldspacing != 0 && h >= 0 && h < currwd)
-            dc.DrawLine(h, 0, h, currht);
+        if (i % boldspacing != 0 && h >= 0 && h < wd) {
+            GLfloat points[] = { h-0.5,   -0.5,
+                                 h-0.5, ht-0.5 };
+            glVertexPointer(2, GL_FLOAT, 0, points);
+            glDrawArrays(GL_LINES, 0, 2);
+        }
     }
-    
+
     if (showboldlines) {
-        // overlay bold lines
-        dc.SetPen(*currlayer->boldpen);
+        // draw bold lines in slightly darker/lighter color
+        if (gray > 127) {
+            // darker lines
+            SetColor(r > 64 ? r - 64 : 0,
+                     g > 64 ? g - 64 : 0,
+                     b > 64 ? b - 64 : 0, 255);
+        } else {
+            // lighter lines
+            SetColor(r + 64 < 256 ? r + 64 : 255,
+                     g + 64 < 256 ? g + 64 : 255,
+                     b + 64 < 256 ? b + 64 : 255, 255);
+        }
+        
         i = topbold;
-        v = -1;
+        v = 0;
         while (true) {
             v += cellsize;
-            if (v >= currht) break;
+            if (v >= ht) break;
             i++;
-            if (i % boldspacing == 0 && v >= 0 && v < currht)
-                dc.DrawLine(0, v, currwd, v);
+            if (i % boldspacing == 0 && v >= 0 && v < ht) {
+                GLfloat points[] = {   -0.5, v-0.5,
+                                     wd-0.5, v-0.5 };
+                glVertexPointer(2, GL_FLOAT, 0, points);
+                glDrawArrays(GL_LINES, 0, 2);
+            }
         }
         i = leftbold;
-        h = -1;
+        h = 0;
         while (true) {
             h += cellsize;
-            if (h >= currwd) break;
+            if (h >= wd) break;
             i++;
-            if (i % boldspacing == 0 && h >= 0 && h < currwd)
-                dc.DrawLine(h, 0, h, currht);
+            if (i % boldspacing == 0 && h >= 0 && h < wd) {
+                GLfloat points[] = { h-0.5,   -0.5,
+                                     h-0.5, ht-0.5 };
+                glVertexPointer(2, GL_FLOAT, 0, points);
+                glDrawArrays(GL_LINES, 0, 2);
+            }
         }
     }
-    
-    dc.SetPen(wxNullPen);
 }
 
 // -----------------------------------------------------------------------------
 
-void DrawGridBorder(wxDC& dc)
+void DrawGridBorder(int wd, int ht)
 {
     // universe is bounded so draw any visible border regions
     pair<int,int> ltpxl = currlayer->view->screenPosOf(currlayer->algo->gridleft,
@@ -1414,72 +1369,70 @@ void DrawGridBorder(wxDC& dc)
     int bottom = rbpxl.second;
     if (currlayer->algo->gridwd == 0) {
         left = 0;
-        right = currwd-1;
+        right = wd-1;
     }
     if (currlayer->algo->gridht == 0) {
         top = 0;
-        bottom = currht-1;
+        bottom = ht-1;
     }
-    
+
     // note that right and/or bottom might be INT_MAX so avoid adding to cause overflow
     if (currlayer->view->getmag() > 0) {
         // move to bottom right pixel of cell at gridright,gridbottom
-        if (right < currwd) right += (1 << currlayer->view->getmag()) - 1;
-        if (bottom < currht) bottom += (1 << currlayer->view->getmag()) - 1;
+        if (right < wd) right += (1 << currlayer->view->getmag()) - 1;
+        if (bottom < ht) bottom += (1 << currlayer->view->getmag()) - 1;
         if (currlayer->view->getmag() == 1) {
             // there are no gaps at scale 1:2
-            if (right < currwd) right++;
-            if (bottom < currht) bottom++;
+            if (right < wd) right++;
+            if (bottom < ht) bottom++;
         }
     } else {
-        if (right < currwd) right++;
-        if (bottom < currht) bottom++;
+        if (right < wd) right++;
+        if (bottom < ht) bottom++;
     }
-    
-    if (left < 0 && right >= currwd && top < 0 && bottom >= currht) {
+
+    if (left < 0 && right >= wd && top < 0 && bottom >= ht) {
         // border isn't visible (ie. grid fills viewport)
         return;
     }
-    
-    if (left >= currwd || right < 0 || top >= currht || bottom < 0) {
+
+    DisableTextures();
+    SetColor(borderrgb->Red(), borderrgb->Green(), borderrgb->Blue(), 255);
+
+    if (left >= wd || right < 0 || top >= ht || bottom < 0) {
         // no part of grid is visible so fill viewport with border
-        wxRect r(0, 0, currwd, currht);
-        FillRect(dc, r, *borderbrush);
+        FillRect(0, 0, wd, ht);
         return;
     }
-    
+
     // avoid drawing overlapping rects below
     int rtop = 0;
-    int rheight = currht;
-    
+    int rheight = ht;
+
     if (currlayer->algo->gridht > 0) {
         if (top > 0) {
             // top border is visible
-            wxRect r(0, 0, currwd, top);
-            FillRect(dc, r, *borderbrush);
+            FillRect(0, 0, wd, top);
             // reduce size of rect below
             rtop = top;
             rheight -= top;
         }
-        if (bottom < currht) {
+        if (bottom < ht) {
             // bottom border is visible
-            wxRect r(0, bottom, currwd, currht - bottom);
-            FillRect(dc, r, *borderbrush);
+            FillRect(0, bottom, wd, ht - bottom);
             // reduce size of rect below
-            rheight -= currht - bottom;
+            rheight -= ht - bottom;
         }
     }
-    
+
     if (currlayer->algo->gridwd > 0) {
         if (left > 0) {
             // left border is visible
-            wxRect r(0, rtop, left, rheight);
-            FillRect(dc, r, *borderbrush);
+            FillRect(0, rtop, left, rheight);
         }
-        if (right < currwd) {
+        if (right < wd) {
             // right border is visible
-            wxRect r(right, rtop, currwd - right, rheight);
-            FillRect(dc, r, *borderbrush);
+            FillRect(right, rtop, wd - right, rheight);
         }
     }
 }
@@ -1571,11 +1524,7 @@ void DrawStackedLayers(wxDC& dc)
         // draw this layer's selection if necessary
         wxRect r;
         if ( currlayer->currsel.Visible(&r) ) {
-            CheckSelectionSize(layerwd, layerht);
-            if (i == currindex)
-                DrawSelection(dc, r);
-            else
-                DrawInactiveSelection(dc, r);
+            DrawSelection(r, i == currindex);
         }
         
         // restore viewport and currlayer
@@ -1588,28 +1537,28 @@ void DrawStackedLayers(wxDC& dc)
 
 // -----------------------------------------------------------------------------
 
-void DrawTileFrame(wxDC& dc, wxRect& trect, wxBrush& brush, int wd)
+void DrawTileFrame(wxRect& trect, int wd)
 {
     trect.Inflate(wd);
     wxRect r = trect;
     
     r.height = wd;
-    FillRect(dc, r, brush);       // top edge
+    FillRect(r.x, r.y, r.width, r.height);       // top edge
     
     r.y += trect.height - wd;
-    FillRect(dc, r, brush);       // bottom edge
+    FillRect(r.x, r.y, r.width, r.height);       // bottom edge
     
     r = trect;
     r.width = wd;
-    FillRect(dc, r, brush);       // left edge
+    FillRect(r.x, r.y, r.width, r.height);       // left edge
     
     r.x += trect.width - wd;
-    FillRect(dc, r, brush);       // right edge
+    FillRect(r.x, r.y, r.width, r.height);       // right edge
 }
 
 // -----------------------------------------------------------------------------
 
-void DrawTileBorders(wxDC& dc)
+void DrawTileBorders()
 {
     if (tileborder <= 0) return;    // no borders
     
@@ -1620,31 +1569,38 @@ void DrawTileBorders(wxDC& dc)
     
     // most people will choose either a very light or very dark color for dead cells,
     // so draw mid gray border around non-current tiles
-    wxBrush brush;
-    brush.SetColour(144, 144, 144);
+    DisableTextures();
+    SetColor(144, 144, 144, 255);
     wxRect trect;
     for ( int i = 0; i < numlayers; i++ ) {
         if (i != currindex) {
             trect = GetLayer(i)->tilerect;
-            DrawTileFrame(dc, trect, brush, tileborder);
+            DrawTileFrame(trect, tileborder);
         }
     }
     
     // draw green border around current tile
     trect = GetLayer(currindex)->tilerect;
-    brush.SetColour(0, 255, 0);
-    DrawTileFrame(dc, trect, brush, tileborder);
+    SetColor(0, 255, 0, 255);
+    DrawTileFrame(trect, tileborder);
 }
 
 // -----------------------------------------------------------------------------
 
-void DrawView(wxDC& dc, int tileindex)
+void DrawView(int tileindex)
 {
     wxRect r;
     Layer* savelayer = NULL;
     viewport* saveview0 = NULL;
     int colorindex;
     int currmag = currlayer->view->getmag();
+
+    // fill the background with state 0 color
+    glClearColor(currlayer->cellr[0]/255.0,
+                 currlayer->cellg[0]/255.0,
+                 currlayer->cellb[0]/255.0,
+                 1.0);
+    glClear(GL_COLOR_BUFFER_BIT /* | GL_DEPTH_BUFFER_BIT  no need???!!! */);
     
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
     if ( currlayer->algo->gridwd > 0) {
@@ -1669,22 +1625,22 @@ void DrawView(wxDC& dc, int tileindex)
     }
     
     if ( viewptr->nopattupdate ) {
-        // don't draw incomplete pattern, just fill background
+        // don't draw incomplete pattern, just draw grid lines and border
         currwd = currlayer->view->getwidth();
         currht = currlayer->view->getheight();
-        r = wxRect(0, 0, currwd, currht);
-        FillRect(dc, r, *currlayer->deadbrush);
         // might as well draw grid lines and border
-        if ( viewptr->GridVisible() )
-            DrawGridLines(dc);         // uses currwd and currht
-        if ( currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0 )
-            DrawGridBorder(dc);        // uses currwd and currht
+        if ( viewptr->GridVisible() ) {
+            DrawGridLines(currwd, currht);
+        }
+        if ( currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0 ) {
+            DrawGridBorder(currwd, currht);
+        }
         return;
     }
     
     if ( numlayers > 1 && tilelayers ) {
         if ( tileindex < 0 ) {
-            DrawTileBorders(dc);
+            DrawTileBorders();
             return;
         }
         // tileindex >= 0 so temporarily change some globals to draw this tile
@@ -1714,7 +1670,7 @@ void DrawView(wxDC& dc, int tileindex)
         colorindex = currindex;
     }
     
-    // only show icons at scales 1:8 or 1:16 or 1:32
+    // only show icons at scales 1:8 or above
     if (showicons && currmag > 2) {
         if (currmag == 3) {
             iconmaps = currlayer->icons7x7;
@@ -1725,8 +1681,7 @@ void DrawView(wxDC& dc, int tileindex)
         }
     }
     
-    // draw pattern using a sequence of pixblit and killrect calls
-    currdc = &dc;
+    // draw pattern using a sequence of pixblit calls
     currwd = currlayer->view->getwidth();
     currht = currlayer->view->getheight();
     if (scalepatterns && currmag <= -1 && currmag >= -4) {
@@ -1754,20 +1709,16 @@ void DrawView(wxDC& dc, int tileindex)
     }
     
     if ( viewptr->GridVisible() ) {
-        DrawGridLines(dc);      // uses currwd and currht
+        DrawGridLines(currwd, currht);
     }
     
     // if universe is bounded then draw border regions (if visible)
     if ( currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0 ) {
-        DrawGridBorder(dc);     // uses currwd and currht
+        DrawGridBorder(currwd, currht);
     }
     
     if ( currlayer->currsel.Visible(&r) ) {
-        CheckSelectionSize(currwd, currht);
-        if (colorindex == currindex)
-            DrawSelection(dc, r);
-        else
-            DrawInactiveSelection(dc, r);
+        DrawSelection(r, colorindex == currindex);
     }
     
     if ( numlayers > 1 && stacklayers ) {
@@ -1778,7 +1729,7 @@ void DrawView(wxDC& dc, int tileindex)
             GetLayer(0)->view = saveview0;
         }
         // draw layers 1, 2, ... numlayers-1
-        DrawStackedLayers(dc);
+        //!!! DrawStackedLayers();
     }
     
     if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {
@@ -1790,12 +1741,13 @@ void DrawView(wxDC& dc, int tileindex)
             // don't draw old paste image, a new one is coming very soon
         } else {
             CheckPasteImage();
-            DrawPasteImage(dc);
+            //!!! DrawPasteImage();
         }
     }
     
-    if (viewptr->showcontrols)
-        DrawControls(dc, viewptr->controlsrect);
+    if (viewptr->showcontrols) {
+        //!!! DrawControls(dc, viewptr->controlsrect);
+    }
     
     if ( numlayers > 1 && tilelayers ) {
         // restore globals changed above

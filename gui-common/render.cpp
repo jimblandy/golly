@@ -351,7 +351,7 @@ static void DisableTextures()
 
 void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 {
-    // called from ios_render::pixblit to draw a pattern bitmap at 1:1 scale
+    // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale
 
 	if (patternTexture == 0) {
         // only need to create texture name once
@@ -745,37 +745,13 @@ golly_render renderer;     // create instance
 
 void golly_render::killrect(int x, int y, int w, int h)
 {
-#if 0
-    // is Tom's hashdraw code doing unnecessary work???
-    if (x >= currwd || y >= currht) return;
-    if (x + w <= 0 || y + h <= 0) return;
-
-    if (w <= 0 || h <= 0) return;
-
-    // clip given rect so it's within viewport
-    int clipx = x < 0 ? 0 : x;
-    int clipy = y < 0 ? 0 : y;
-    int clipr = x + w;
-    int clipb = y + h;
-    if (clipr > currwd) clipr = currwd;
-    if (clipb > currht) clipb = currht;
-    int clipwd = clipr - clipx;
-    int clipht = clipb - clipy;
-
-    // use a different pale color each time to see any probs
-    DisableTextures();
-    SetColor((rand()&127)+128, (rand()&127)+128, (rand()&127)+128, 255);
-    FillRect(clipx, clipy, clipwd, clipht);
-#else
     // no need to do anything because background has already been filled by glClear in DrawPattern
-#endif
 }
 
 // -----------------------------------------------------------------------------
 
 void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
 {
-    // is Tom's hashdraw code doing unnecessary work???
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
 

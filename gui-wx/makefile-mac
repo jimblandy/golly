@@ -78,7 +78,7 @@ CXXBASE = -arch x86_64 \
 LDBASE = -arch x86_64 -lz
 
 EXTRALIBS = -lz -lpthread -liconv
-EXTRALIBS_GUI = -framework WebKit -framework OpenGL -framework AudioToolbox
+EXTRALIBS_GUI = -framework WebKit -framework AudioToolbox -framework OpenGL -framework AGL
 
 OBJDIR = ObjOSX
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
@@ -110,6 +110,7 @@ __WXLIB_ADV_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_adv-
 __WXLIB_CORE_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_core-$(WX_RELEASE)
 __WXLIB_BASE_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)-$(WX_RELEASE)
 __WXLIB_NET_p = -lwx_base$(WXBASEPORT)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_net-$(WX_RELEASE)
+__WXLIB_GL_p = -lwx_$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)_gl-$(WX_RELEASE)
 __LIB_TIFF_p = -lwxtiff$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_PNG_p = -lwxpng$(WXDEBUGFLAG)-$(WX_RELEASE)
 __LIB_JPEG_p = -lwxjpeg$(WXDEBUGFLAG)-$(WX_RELEASE)
@@ -142,7 +143,8 @@ $(OBJDIR)/RuleTableToTree.o: $(CMDDIR)/RuleTableToTree.cpp
 
 app.bin: $(BASEOBJ) $(WXOBJ)
 	$(CXXC) -o $@ $(BASEOBJ) $(WXOBJ) $(LDFLAGS) -L$(LIBDIRNAME) $(__WXLIB_HTML_p) $(__WXLIB_ADV_p) \
-   $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) \
+   $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) $(__WXLIB_GL_p) \
+   $(__LIB_TIFF_p) $(__LIB_PNG_p) $(__LIB_JPEG_p) \
    $(EXTRALIBS) $(EXTRALIBS_GUI) $(PERL_LINK) $(PYTHON_LINK)
 
 $(EXEDIR)/$(APP_NAME).app/Contents/PkgInfo: app.bin Info.plist.in \

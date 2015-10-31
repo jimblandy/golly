@@ -31,7 +31,6 @@
     #include "wx/tooltip.h" // for wxToolTip
 #endif
 #include "wx/file.h"        // for wxFile
-#include "wx/dcbuffer.h"    // for wxBufferedPaintDC
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -45,7 +44,7 @@
 #include "wxhelp.h"        // for ShowHelp, LoadRule
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
-#include "wxrender.h"      // for CreatePasteImage, DrawView, DrawSelection, etc
+#include "wxrender.h"      // for CreatePasteImage, DrawView
 #include "wxscript.h"      // for inscript, PassKeyToScript, PassClickToScript
 #include "wxselect.h"      // for Selection
 #include "wxedit.h"        // for UpdateEditBar, ToggleEditBar, etc
@@ -55,18 +54,11 @@
 #include "wxtimeline.h"    // for StartStopRecording, DeleteTimeline, etc
 #include "wxview.h"
 
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-    #include <Carbon/Carbon.h>       // for Button
-#endif
-
-// This module implements a viewport window for editing and viewing patterns.
-
 // -----------------------------------------------------------------------------
 
 const int DRAG_RATE = 20;           // call OnDragTimer 50 times per sec
 
 static bool stopdrawing = false;    // terminate a draw done while generating?
-static bool slowdraw = false;       // do slow cell drawing via UpdateView?
 
 static wxString oldrule;            // rule before readclipboard is called
 static wxString newrule;            // rule after readclipboard is called
@@ -87,7 +79,7 @@ static long clicktime;
 
 // event table and handlers:
 
-BEGIN_EVENT_TABLE(PatternView, wxWindow)
+BEGIN_EVENT_TABLE(PatternView, wxGLCanvas)
 EVT_PAINT            (           PatternView::OnPaint)
 EVT_SIZE             (           PatternView::OnSize)
 EVT_KEY_DOWN         (           PatternView::OnKeyDown)
@@ -144,7 +136,7 @@ static bigint max_coord = +1000000000;
 bool PatternView::OutsideLimits(bigint& t, bigint& l, bigint& b, bigint& r)
 {
     return ( t < min_coord || l < min_coord ||
-            b > max_coord || r > max_coord );
+             b > max_coord || r > max_coord );
 }
 
 // -----------------------------------------------------------------------------
@@ -459,17 +451,6 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
             // make sure viewport retains focus so we can use keyboard shortcuts
             SetFocus();
             // waitingforclick becomes false if OnMouseDown is called
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-            // need to check for click here because OnMouseDown does not
-            // get called if click is in menu bar or in another window
-            if ( waitingforclick && Button() ) {
-                pt = ScreenToClient( wxGetMousePosition() );
-                pastex = pt.x;
-                pastey = pt.y;
-                waitingforclick = false;                // terminate while loop
-                FlushEvents(mDownMask + mUpMask, 0);    // avoid wx seeing click
-            }
-#endif
         }
         
         if ( HasCapture() ) ReleaseMouse();
@@ -1787,71 +1768,11 @@ void PatternView::ProcessKey(int key, int modifiers)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::ShowDrawing()
+void PatternView::RememberOneCellChange(int cx, int cy, int oldstate, int newstate)
 {
-    currlayer->algo->endofpattern();
-    
-    // update status bar
-    if (showstatus) statusptr->Refresh(false);
-    
-    if (slowdraw) {
-        // we have to draw by updating entire view
-        slowdraw = false;
-        UpdateView();
-    }
-    
-    MarkLayerDirty();
-}
-
-// -----------------------------------------------------------------------------
-
-void PatternView::DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newstate)
-{
-    // remember this cell change for later undo/redo
-    if (allowundo) currlayer->undoredo->SaveCellChange(cx, cy, oldstate, newstate);
-    
-    if (numlayers > 1 && (stacklayers || (numclones > 0 && tilelayers))) {
-        // drawing must be done via UpdateView in ShowDrawing
-        slowdraw = true;
-        return;
-    }
-    
-    int cellsize = 1 << currlayer->view->getmag();
-    
-    // convert given cell coords to view coords
-    pair<bigint, bigint> lefttop = currlayer->view->at(0, 0);
-    wxCoord x = (cx - lefttop.first.toint()) * cellsize;
-    wxCoord y = (cy - lefttop.second.toint()) * cellsize;
-    
-    if (cellsize > 2) cellsize--;    // allow for gap between cells
-    
-    wxBitmap** iconmaps = NULL;
-    if (currlayer->view->getmag() == 3) {
-        iconmaps = currlayer->icons7x7;
-    } else if (currlayer->view->getmag() == 4) {
-        iconmaps = currlayer->icons15x15;
-    } else if (currlayer->view->getmag() == 5) {
-        iconmaps = currlayer->icons31x31;
-    }
-    
-    if (showicons && drawstate > 0 && currlayer->view->getmag() > 2 &&
-        iconmaps && iconmaps[drawstate]) {
-        DrawOneIcon(dc, x, y, iconmaps[drawstate],
-                    currlayer->cellr[0],
-                    currlayer->cellg[0],
-                    currlayer->cellb[0],
-                    currlayer->cellr[drawstate],
-                    currlayer->cellg[drawstate],
-                    currlayer->cellb[drawstate],
-                    currlayer->multicoloricons);
-    } else {
-        dc.DrawRectangle(x, y, cellsize, cellsize);
-    }
-    
-    // overlay selection image if cell is within selection
-    if (SelectionExists() && currlayer->currsel.ContainsCell(cx, cy)) {
-        wxRect r = wxRect(x, y, cellsize, cellsize);
-        DrawSelection(dc, r);
+    if (allowundo) {
+        // remember this cell change for later undo/redo
+        currlayer->undoredo->SaveCellChange(cx, cy, oldstate, newstate);
     }
 }
 
@@ -1865,9 +1786,10 @@ void PatternView::StartDrawingCells(int x, int y)
         statusptr->ErrorMessage(_("Drawing is not allowed outside +/- 10^9 boundary."));
         return;
     }
+
+    drawingcells = true;
     
-    // ShowDrawing will call MarkLayerDirty so we need to save dirty state now
-    // for later use by RememberCellChanges
+    // save dirty state now for later use by RememberCellChanges
     if (allowundo) currlayer->savedirty = currlayer->dirty;
     
     cellx = cellpos.first.toint();
@@ -1886,23 +1808,16 @@ void PatternView::StartDrawingCells(int x, int y)
     }
     if (currstate != drawstate) {
         currlayer->algo->setcell(cellx, celly, drawstate);
-        
-        wxClientDC dc(this);
-        dc.SetPen(*wxTRANSPARENT_PEN);
-        
-        cellbrush->SetColour(currlayer->cellr[drawstate],
-                             currlayer->cellg[drawstate],
-                             currlayer->cellb[drawstate]);
-        dc.SetBrush(*cellbrush);
-        
-        DrawOneCell(dc, cellx, celly, currstate, drawstate);
-        dc.SetBrush(wxNullBrush);
-        dc.SetPen(wxNullPen);
-        
-        ShowDrawing();
+        currlayer->algo->endofpattern();
+
+        // remember this cell change for later undo/redo
+        RememberOneCellChange(cellx, celly, currstate, drawstate);
+
+        MarkLayerDirty();
+        if (showstatus) statusptr->Refresh(false);
+        UpdateView();
     }
     
-    drawingcells = true;
     CaptureMouse();                     // get mouse up event even if outside view
     dragtimer->Start(DRAG_RATE);        // see OnDragTimer
     
@@ -1939,22 +1854,13 @@ void PatternView::DrawCells(int x, int y)
         return;
     }
     
+    int currstate;
+    int numchanged = 0;
     int newx = cellpos.first.toint();
     int newy = cellpos.second.toint();
     if ( newx != cellx || newy != celly ) {
-        int currstate;
-        wxClientDC dc(this);
-        dc.SetPen(*wxTRANSPARENT_PEN);
         
-        cellbrush->SetColour(currlayer->cellr[drawstate],
-                             currlayer->cellg[drawstate],
-                             currlayer->cellb[drawstate]);
-        dc.SetBrush(*cellbrush);
-        
-        int numchanged = 0;
-        
-        // draw a line of cells using Bresenham's algorithm;
-        // this code comes from Guillermo Garcia's Life demo supplied with wx
+        // draw a line of cells using Bresenham's algorithm
         int d, ii, jj, di, ai, si, dj, aj, sj;
         di = newx - cellx;
         ai = abs(di) << 1;
@@ -1973,7 +1879,7 @@ void PatternView::DrawCells(int x, int y)
                 currstate = curralgo->getcell(ii, jj);
                 if (currstate != drawstate) {
                     curralgo->setcell(ii, jj, drawstate);
-                    DrawOneCell(dc, ii, jj, currstate, drawstate);
+                    RememberOneCellChange(ii, jj, currstate, drawstate);
                     numchanged++;
                 }
                 if (d >= 0) {
@@ -1989,7 +1895,7 @@ void PatternView::DrawCells(int x, int y)
                 currstate = curralgo->getcell(ii, jj);
                 if (currstate != drawstate) {
                     curralgo->setcell(ii, jj, drawstate);
-                    DrawOneCell(dc, ii, jj, currstate, drawstate);
+                    RememberOneCellChange(ii, jj, currstate, drawstate);
                     numchanged++;
                 }
                 if (d >= 0) {
@@ -2007,14 +1913,16 @@ void PatternView::DrawCells(int x, int y)
         currstate = curralgo->getcell(cellx, celly);
         if (currstate != drawstate) {
             curralgo->setcell(cellx, celly, drawstate);
-            DrawOneCell(dc, cellx, celly, currstate, drawstate);
+            RememberOneCellChange(cellx, celly, currstate, drawstate);
             numchanged++;
         }
+    }
         
-        dc.SetBrush(wxNullBrush);     // restore brush
-        dc.SetPen(wxNullPen);         // restore pen
-        
-        if (numchanged > 0) ShowDrawing();
+    if (numchanged > 0) {
+        currlayer->algo->endofpattern();
+        MarkLayerDirty();
+        if (showstatus) statusptr->Refresh(false);
+        UpdateView();
     }
 }
 
@@ -2214,7 +2122,7 @@ void PatternView::StopDraggingMouse()
     }
     
     if (drawingcells && allowundo) {
-        // MarkLayerDirty (in ShowDrawing) has set dirty flag, so we need to
+        // MarkLayerDirty has set dirty flag, so we need to
         // pass in the flag state saved before drawing started
         currlayer->undoredo->RememberCellChanges(_("Drawing"), currlayer->savedirty);
         drawingcells = false;                  // tested by CanUndo
@@ -2364,7 +2272,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
     
     if ( numlayers > 1 && tilelayers ) {
         if ( tileindex >= 0 && ( wd != GetLayer(tileindex)->view->getwidth() ||
-                                ht != GetLayer(tileindex)->view->getheight() ) ) {
+                                 ht != GetLayer(tileindex)->view->getheight() ) ) {
             // might happen on Win/GTK???
             GetLayer(tileindex)->view->resize(wd, ht);
         }
@@ -2374,29 +2282,12 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
         SetViewSize(wd, ht);
     }
     
-#if defined(__WXMAC__) || defined(__WXGTK__)
-    // windows on Mac OS X and GTK+ 2.0 are automatically buffered
+    // OnPaint handlers must always create a wxPaintDC
     wxPaintDC dc(this);
-    DrawView(dc, tileindex);
-#else
-    if ( buffered || waitingforclick || GridVisible() || currlayer->currsel.Visible(NULL) ||
-        showcontrols || (numlayers > 1 && (stacklayers || tilelayers)) ) {
-        // use wxWidgets buffering to avoid flicker
-        if (wd != viewbitmapwd || ht != viewbitmapht) {
-            // need to create a new bitmap for current viewport
-            delete viewbitmap;
-            viewbitmap = new wxBitmap(wd, ht);
-            if (viewbitmap == NULL) Fatal(_("Not enough memory to do buffering!"));
-            viewbitmapwd = wd;
-            viewbitmapht = ht;
-        }
-        wxBufferedPaintDC dc(this, *viewbitmap);
-        DrawView(dc, tileindex);
-    } else {
-        wxPaintDC dc(this);
-        DrawView(dc, tileindex);
-    }
-#endif
+    
+    SetCurrent(*glcontext);
+    DrawView(tileindex);
+    SwapBuffers();
 }
 
 // -----------------------------------------------------------------------------
@@ -2406,8 +2297,19 @@ void PatternView::OnSize(wxSizeEvent& event)
     int wd, ht;
     GetClientSize(&wd, &ht);
     
+    // hmm, it looks like we might have to subtract the scroll bar thickness
+    // from wd and ht!!!???
+    
     // resize this viewport
     SetViewSize(wd, ht);
+    
+    SetCurrent(*glcontext);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, wd, ht, 0, -1, 1);       // origin is top left and y increases down
+    glViewport(0, 0, wd, ht);
+    glMatrixMode(GL_MODELVIEW);
     
     event.Skip();
 }
@@ -3204,23 +3106,36 @@ void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-// create the viewport window
+// create the viewport canvas
+
 PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht, long style)
-: wxWindow(parent, wxID_ANY, wxPoint(x,y), wxSize(wd,ht), style)
+: wxGLCanvas(parent, wxID_ANY, NULL, wxPoint(x,y), wxSize(wd,ht), style)
 {
+    // create a new rendering context instance for this canvas
+    glcontext = new wxGLContext(this);
+    if (glcontext == NULL) Fatal(_("Failed to create OpenGL context!"));
+    
+    // might have to do these gl calls after the window has been created???!!!
+    SetCurrent(*glcontext);
+    
+    glDisable(GL_DEPTH_TEST);           // we only do 2D drawing
+    glDisable(GL_DITHER);               // or better to enable for scaling pixmaps???!!!
+    glDisable(GL_MULTISAMPLE);          // ditto???!!!
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_FOG);
+
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+
     dragtimer = new wxTimer(this, wxID_ANY);
     if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));
     
-    cellbrush = new wxBrush(*wxBLACK_BRUSH);
-    if (cellbrush == NULL) Fatal(_("Failed to create cell brush!"));
-    
     // avoid erasing background on GTK+ -- doesn't work!!!
     SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-    
-    // force viewbitmap to be created in first OnPaint call
-    viewbitmap = NULL;
-    viewbitmapwd = -1;
-    viewbitmapht = -1;
     
     drawingcells = false;      // not drawing cells
     selectingcells = false;    // not selecting cells
@@ -3234,10 +3149,8 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
 
 // -----------------------------------------------------------------------------
 
-// destroy the viewport window
 PatternView::~PatternView()
 {
+    delete glcontext;
     delete dragtimer;
-    delete viewbitmap;
-    delete cellbrush;
 }

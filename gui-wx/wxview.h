@@ -25,13 +25,15 @@
 #ifndef _WXVIEW_H_
 #define _WXVIEW_H_
 
-#include "bigint.h"     // for bigint
-#include "lifealgo.h"   // for lifealgo
-#include "wxselect.h"   // for Selection
+#include "wx/glcanvas.h"    // for wxGLCanvas, wxGLContext
 
-// Define a child window for viewing and editing patterns:
+#include "bigint.h"         // for bigint
+#include "lifealgo.h"       // for lifealgo
+#include "wxselect.h"       // for Selection
 
-class PatternView : public wxWindow
+// OpenGL is used for viewing and editing patterns:
+
+class PatternView : public wxGLCanvas
 {
 public:
     PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht, long style);
@@ -149,8 +151,7 @@ private:
     void OnEraseBackground(wxEraseEvent& event);
     
     // edit functions
-    void ShowDrawing();
-    void DrawOneCell(wxDC& dc, int cx, int cy, int oldstate, int newstate);
+    void RememberOneCellChange(int cx, int cy, int oldstate, int newstate);
     void StartDrawingCells(int x, int y);
     void DrawCells(int x, int y);
     void PickCell(int x, int y);
@@ -181,9 +182,7 @@ private:
     int BigScroll(int xysize);
     
     // data
-    wxBitmap* viewbitmap;         // viewport bitmap used in OnPaint
-    int viewbitmapwd;             // width of viewport bitmap
-    int viewbitmapht;             // height of viewport bitmap
+    wxGLContext* glcontext;       // OpenGL context for this canvas
     wxTimer* dragtimer;           // timer used while dragging mouse
     int cellx, celly;             // current cell's 32-bit position
     bigint bigcellx, bigcelly;    // current cell's position
@@ -193,7 +192,6 @@ private:
     bigint anchorx, anchory;      // anchor cell of current selection
     Selection prevsel;            // previous selection
     int drawstate;                // new cell state (0..255)
-    wxBrush* cellbrush;           // brush used to draw live cells
     int pastex, pastey;           // where user wants to paste clipboard pattern
     int hthumb, vthumb;           // current thumb box positions
     int realkey;                  // key code set by OnKeyDown

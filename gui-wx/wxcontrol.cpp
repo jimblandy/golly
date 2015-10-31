@@ -50,7 +50,7 @@
 #include "wxundo.h"         // for undoredo->...
 #include "wxalgos.h"        // for *_ALGO, algo_type, CreateNewUniverse, etc
 #include "wxlayer.h"        // for currlayer, etc
-#include "wxrender.h"       // for DrawView
+//???!!! #include "wxrender.h"       // for DrawView
 #include "wxtimeline.h"     // for TimelineExists, UpdateTimelineBar, etc
 
 #include <stdexcept>        // for std::runtime_error and std::exception
