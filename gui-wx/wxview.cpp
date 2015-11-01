@@ -2304,7 +2304,26 @@ void PatternView::OnSize(wxSizeEvent& event)
     SetViewSize(wd, ht);
     
     SetCurrent(*glcontext);
+    
+    static bool firstcall = true;
+    if (firstcall) {
+        // do these gl calls once (and only after the window has been created)
+        firstcall = false;
+    
+        glDisable(GL_DEPTH_TEST);       // we only do 2D drawing
+        glDisable(GL_DITHER);           // makes no diff???!!!
+        glDisable(GL_MULTISAMPLE);      // ditto???!!!
+        glDisable(GL_STENCIL_TEST);
+        glDisable(GL_FOG);
+    
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glEnableClientState(GL_VERTEX_ARRAY);
+    
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
 
+    // update GL matrix to match our preferred coordinate system
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, wd, ht, 0, -1, 1);       // origin is top left and y increases down
@@ -3114,22 +3133,6 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
     // create a new rendering context instance for this canvas
     glcontext = new wxGLContext(this);
     if (glcontext == NULL) Fatal(_("Failed to create OpenGL context!"));
-    
-    // might have to do these gl calls after the window has been created???!!!
-    SetCurrent(*glcontext);
-    
-    glDisable(GL_DEPTH_TEST);           // we only do 2D drawing
-    glDisable(GL_DITHER);               // makes no diff???!!!
-    glDisable(GL_MULTISAMPLE);          // ditto???!!!
-    glDisable(GL_STENCIL_TEST);
-    glDisable(GL_FOG);
-
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
 
     dragtimer = new wxTimer(this, wxID_ANY);
     if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));
