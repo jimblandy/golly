@@ -4,7 +4,7 @@
 # cd <wx-install-dir>
 # mkdir buildgtk
 # cd buildgtk
-# ../configure --with-gtk --disable-shared --enable-unicode
+# ../configure --with-gtk --disable-shared --enable-unicode --with-opengl
 # (depending on your g++ version you might also need --disable-precomp-headers)
 # make
 # su
@@ -58,6 +58,9 @@ PYTHON_PREFS = -DPYTHON_SHLIB="$(PYTHON_SHLIB)"
 ZLIB_CXXFLAGS = -DZLIB
 ZLIB_LDFLAGS = -lz
 
+# libs for OpenGL
+EXTRALIBS_OPENGL = -lwx_gtk2u_gl-3.0 -lGL -lGLU
+
 # for wxGTK support (required for GUI)
 WX_CXXFLAGS = `wx-config --cxxflags`
 WX_LDFLAGS = `wx-config --libs`
@@ -97,7 +100,7 @@ clean:
 	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree
 
 golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ)
-	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(ZLIB_LDFLAGS) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
+	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
 
 bgolly: $(OBJDIR) $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)
