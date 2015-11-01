@@ -2294,6 +2294,8 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 
 void PatternView::OnSize(wxSizeEvent& event)
 {
+    if (!IsShownOnScreen()) return;     // must not call SetCurrent
+
     int wd, ht;
     GetClientSize(&wd, &ht);
     
