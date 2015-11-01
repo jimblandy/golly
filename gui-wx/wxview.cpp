@@ -2294,23 +2294,36 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 
 void PatternView::OnSize(wxSizeEvent& event)
 {
-    if (!IsShownOnScreen()) return;     // must not call SetCurrent
+#ifdef __WXMAC__
+    // on Mac we must handle the 1st size event even though the window is not yet shown
+#else
+    if (!IsShownOnScreen()) return;     // must not call SetCurrent (on Linux at least)
+#endif
 
     int wd, ht;
     GetClientSize(&wd, &ht);
     
+#ifdef __WXMAC__
     // we might have to subtract the scroll bar thickness from wd and ht!!!???
     // but only for bigview (tileindex == -1)
+    /*  did not work!!! test adding scroll bars in isosurf sample
+    if (tileindex == -1) {
+        wd -= 16;
+        ht -= 16;
+        if (wd < 1) wd = 1;
+        if (ht < 1) ht = 1;
+    }
+    */
+#endif
     
     // resize this viewport
     SetViewSize(wd, ht);
     
     SetCurrent(*glcontext);
     
-    static bool firstcall = true;
-    if (firstcall) {
+    if (initgl) {
         // do these gl calls once (and only after the window has been created)
-        firstcall = false;
+        initgl = false;
     
         glDisable(GL_DEPTH_TEST);       // we only do 2D drawing
         glDisable(GL_DITHER);           // makes no diff???!!!
@@ -3142,6 +3155,7 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
     // avoid erasing background on GTK+ -- doesn't work!!!
     SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     
+    initgl = true;             // need to initialize GL state
     drawingcells = false;      // not drawing cells
     selectingcells = false;    // not selecting cells
     movingview = false;        // not moving view

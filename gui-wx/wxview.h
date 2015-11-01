@@ -183,6 +183,7 @@ private:
     
     // data
     wxGLContext* glcontext;       // OpenGL context for this canvas
+    bool initgl;                  // need to initialize GL state?
     wxTimer* dragtimer;           // timer used while dragging mouse
     int cellx, celly;             // current cell's 32-bit position
     bigint bigcellx, bigcelly;    // current cell's position

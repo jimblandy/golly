@@ -97,17 +97,23 @@ hlifealgo::draw() in hlifedraw.cpp.
 // -----------------------------------------------------------------------------
 
 // globals used in golly_render routines
-wxDC* currdc;                           // current device context for viewport
 int currwd, currht;                     // current width and height of viewport, in pixels
 int scalefactor;                        // current scale factor (1, 2, 4, 8 or 16)
 static unsigned char** icontextures;    // pointers to texture data for each icon
 static GLuint texture8 = 0;             // texture for drawing 7x7 icons
 static GLuint texture16 = 0;            // texture for drawing 15x15 icons
 static GLuint texture32 = 0;            // texture for drawing 31x31 icons
-static GLuint patternTexture = 0;       // texture for drawing pattern bitmaps at 1:1 scale
+static GLuint rgbtexture = 0;           // texture for drawing RGB bitmaps
+static GLuint rgbatexture = 0;          // texture for drawing RGBA bitmaps
 
 // fixed texture coordinates used by glTexCoordPointer
 static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
+
+// for drawing stacked layers
+bool mask_dead_pixels = false;          // make dead pixels 100% transparent?
+unsigned char live_alpha = 255;         // alpha level for live pixels
+unsigned char* rgbadata = NULL;         // RGBA data for drawing masked bitmaps
+int rgbalen = 0;                        // length of rgbadata
 
 // for drawing paste pattern (initialized in CreatePasteImage)
 wxBitmap* pastebitmap;                  // paste bitmap
@@ -124,11 +130,6 @@ bool pastescale;                        // must match scalepatterns
 lifealgo* pastealgo;                    // universe containing paste pattern
 wxRect pastebbox;                       // bounding box in cell coords (not necessarily minimal)
 static bool drawing_paste = false;      // drawing paste image?
-
-// for drawing multiple layers
-int layerwd = -1;                       // width of layer bitmap
-int layerht = -1;                       // height of layer bitmap
-wxBitmap* layerbitmap = NULL;           // layer bitmap
 
 // for drawing translucent controls
 wxBitmap* ctrlsbitmap = NULL;           // controls bitmap
@@ -376,9 +377,9 @@ void InitDrawingData()
 
 void DestroyDrawingData()
 {
-    delete layerbitmap;
     delete ctrlsbitmap;
     delete darkctrls;
+    if (rgbadata) free(rgbadata);
 }
 
 // -----------------------------------------------------------------------------
@@ -387,9 +388,9 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 {
     // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale
 
-	if (patternTexture == 0) {
+	if (rgbtexture == 0) {
         // only need to create texture name once
-        glGenTextures(1, &patternTexture);
+        glGenTextures(1, &rgbtexture);
     }
 
     if (!glIsEnabled(GL_TEXTURE_2D)) {
@@ -397,15 +398,85 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
         SetColor(255, 255, 255, 255);
         glEnable(GL_TEXTURE_2D);
         // bind our texture
-        glBindTexture(GL_TEXTURE_2D, patternTexture);
+        glBindTexture(GL_TEXTURE_2D, rgbtexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
     }
     
-    // update the texture with the new bitmap data (in RGB format)
+    // update the texture with the new RGB data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
+    
+    GLfloat vertices[] = {
+        x,      y,
+        x+w,    y,
+        x,      y+h,
+        x+w,    y+h,
+    };
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawMaskedTexture(unsigned char* rgbdata, int x, int y, int w, int h)
+{
+    // called from golly_render::pixblit to draw a masked pattern bitmap at 1:1 scale
+
+    // first we have to convert the given RGB data to RGBA data,
+    // where dead pixels have alpha set to 0 and live pixels are set to live_alpha
+    // maybe it's time to change pixblit() to return RGBA data???!!!
+    // and maybe draw() could pass in dead_alpha and live_alpha???!!!
+    if (rgbalen != w*h*4) {
+        rgbalen = w*h*4;
+        if (rgbadata) free(rgbadata);
+        rgbadata = (unsigned char*) malloc(rgbalen);
+        if (!rgbadata) return;
+    }
+    unsigned char deadr = currlayer->cellr[0];
+    unsigned char deadg = currlayer->cellg[0];
+    unsigned char deadb = currlayer->cellb[0];
+    int i = 0;
+    int j = 0;
+    while (i < w*h*3) {
+        unsigned char r = rgbdata[i++];
+        unsigned char g = rgbdata[i++];
+        unsigned char b = rgbdata[i++];
+        if (r == deadr && g == deadg && b == deadb) {
+            // dead pixel
+            rgbadata[j++] = 0;
+            rgbadata[j++] = 0;
+            rgbadata[j++] = 0;
+            rgbadata[j++] = 0;  // 100% transparent
+        } else {
+            // live pixel
+            rgbadata[j++] = r;
+            rgbadata[j++] = g;
+            rgbadata[j++] = b;
+            rgbadata[j++] = live_alpha;
+        }
+    }
+    
+	if (rgbatexture == 0) {
+        // only need to create texture name once
+        glGenTextures(1, &rgbatexture);
+    }
+
+    if (!glIsEnabled(GL_TEXTURE_2D)) {
+        // restore texture color and enable textures
+        SetColor(255, 255, 255, 255);
+        glEnable(GL_TEXTURE_2D);
+        // bind our texture
+        glBindTexture(GL_TEXTURE_2D, rgbatexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+    }
+    
+    // update the texture with the new RGBA data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
     
     GLfloat vertices[] = {
         x,      y,
@@ -550,7 +621,7 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
                  unsigned char liver, unsigned char liveg, unsigned char liveb,
                  bool multicolor)
 {
-    // draw a single icon (either multi-color or grayscale)
+    // draw a single icon (either multi-color or grayscale) outside the viewport
     int wd = icon->GetWidth();
     int ht = icon->GetHeight();
     wxBitmap pixmap(wd, ht, 32);
@@ -635,10 +706,12 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
     DisableTextures();
     SetPointSize(cellsize);
 
+    unsigned char alpha = mask_dead_pixels ? live_alpha : 255;
+
     // all live cells are in state 1 so only need to set color once
     SetColor(currlayer->cellr[1],
              currlayer->cellg[1],
-             currlayer->cellb[1], 255);
+             currlayer->cellb[1], alpha);
     
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
@@ -682,6 +755,8 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     GLfloat points[256][maxcoords];
     int numcoords[256] = {0};
 
+    unsigned char alpha = mask_dead_pixels ? live_alpha : 255;
+
     DisableTextures();
     SetPointSize(cellsize);
 
@@ -694,7 +769,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     // this shouldn't happen too often
                     SetColor(currlayer->cellr[state],
                              currlayer->cellg[state],
-                             currlayer->cellb[state], 255);
+                             currlayer->cellb[state], alpha);
                     glVertexPointer(2, GL_FLOAT, 0, points[state]);
                     glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
                     numcoords[state] = 0;
@@ -707,7 +782,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     // visible cell at right/bottom edge
                     SetColor(currlayer->cellr[state],
                              currlayer->cellg[state],
-                             currlayer->cellb[state], 255);
+                             currlayer->cellb[state], alpha);
                     FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
                 } else {
                     points[state][numcoords[state]++] = midx;
@@ -721,7 +796,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
         if (numcoords[state] > 0) {
             SetColor(currlayer->cellr[state],
                      currlayer->cellg[state],
-                     currlayer->cellb[state], 255);
+                     currlayer->cellb[state], alpha);
             glVertexPointer(2, GL_FLOAT, 0, points[state]);
             glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
         }
@@ -782,11 +857,15 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
     int numstates = currlayer->algo->NumCellStates();
     
     if (pmscale == 1) {
-        // draw rgb pixel data at scale 1:1
+        // draw RGB pixel data at scale 1:1
         if (drawing_paste) {
             // we can't use DrawTexture to draw paste image because glTexImage2D clobbers
             // any background pattern, so we use DrawPoints
             DrawPoints((unsigned char*) pmdata, x, y, w, h);
+        } else if (mask_dead_pixels) {
+            // convert RGB data to RGBA data where dead pixels are 100% transparent
+            // and the transparency of live pixels depends on live_alpha
+            DrawMaskedTexture((unsigned char*) pmdata, x, y, w, h);
         } else {
             DrawTexture((unsigned char*) pmdata, x, y, w, h);
         }
@@ -858,6 +937,8 @@ void DestroyPasteImage()
 }
 
 // -----------------------------------------------------------------------------
+
+// remove eventually!!!
 
 void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
 {
@@ -1073,7 +1154,7 @@ void CheckPasteImage()
             
             wxMemoryDC pattdc;
             pattdc.SelectObject(*pastebitmap);
-            currdc = &pattdc;
+            // remove!!! currdc = &pattdc;
             currwd = tempview.getwidth();
             currht = tempview.getheight();
             
@@ -1384,23 +1465,46 @@ void DrawGridBorder(int wd, int ht)
 
 // -----------------------------------------------------------------------------
 
-void DrawOneLayer(wxDC& dc)
+void DrawOneLayer()
 {
-    wxMemoryDC layerdc;
-    layerdc.SelectObject(*layerbitmap);
+    // dead pixels will be 100% transparent, and live pixels will use opacity setting
+    mask_dead_pixels = true;
+    live_alpha = int(2.55 * opacity);
+    int texbytes;
+    int numstates = currlayer->algo->NumCellStates();
     
     if (showicons && currlayer->view->getmag() > 2) {
         // only show icons at scales 1:8 and above
         if (currlayer->view->getmag() == 3) {
             icontextures = currlayer->textures7x7;
+            texbytes = 8*8*4;
         } else if (currlayer->view->getmag() == 4) {
             icontextures = currlayer->textures15x15;
+            texbytes = 16*16*4;
         } else {
             icontextures = currlayer->textures31x31;
+            texbytes = 32*32*4;
+        }
+        
+        // DANGER: we're making assumptions about what CreateIconTextures does
+        // (see wxlayer.cpp)
+        
+        if (live_alpha < 255) {
+            // this is ugly, but we need to replace the alpha 255 values in
+            // icontextures[1..numstates-1] with live_alpha (2..249)
+            // so that DrawIcons displays translucent icons
+            for (int state = 1; state < numstates; state++) {
+                if (icontextures[state]) {
+                    unsigned char* b = icontextures[state];
+                    int i = 3;
+                    while (i < texbytes) {
+                        if (b[i] == 255) b[i] = live_alpha;
+                        i += 4;
+                    }
+                }
+            }
         }
     }
-    
-    currdc = &layerdc;
     
     if (scalefactor > 1) {
         // temporarily change viewport scale to 1:1 and increase its size by scalefactor
@@ -1410,6 +1514,9 @@ void DrawOneLayer(wxDC& dc)
         currht = currht * scalefactor;
         currlayer->view->resize(currwd, currht);
         
+        glPushMatrix();
+        glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
+        
         currlayer->algo->draw(*currlayer->view, renderer);
         
         // restore viewport settings
@@ -1417,42 +1524,40 @@ void DrawOneLayer(wxDC& dc)
         currht = currht / scalefactor;
         currlayer->view->resize(currwd, currht);
         currlayer->view->setmag(currmag);
+        
+        // restore OpenGL scale
+        glPopMatrix();
+        
     } else {
         currlayer->algo->draw(*currlayer->view, renderer);
     }
     
-    layerdc.SelectObject(wxNullBitmap);
-    
-    // make dead pixels 100% transparent; live pixels use opacity setting
-    MaskDeadPixels(layerbitmap, layerwd, layerht, int(2.55 * opacity));
-    
-    // draw result
-    dc.DrawBitmap(*layerbitmap, 0, 0, true);
+    mask_dead_pixels = false;
+
+    if (showicons && currlayer->view->getmag() > 2 && live_alpha < 255) {
+        // restore alpha values that were changed above
+        for (int state = 1; state < numstates; state++) {
+            if (icontextures[state]) {
+                unsigned char* b = icontextures[state];
+                int i = 3;
+                while (i < texbytes) {
+                    if (b[i] == live_alpha) b[i] = 255;
+                    i += 4;
+                }
+            }
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------
 
-void DrawStackedLayers(wxDC& dc)
+void DrawStackedLayers()
 {
-    // check if layerbitmap needs to be created or resized
-    if ( layerwd != currlayer->view->getwidth() ||
-        layerht != currlayer->view->getheight() ) {
-        layerwd = currlayer->view->getwidth();
-        layerht = currlayer->view->getheight();
-        delete layerbitmap;
-        // create a bitmap with depth 32 so it has an alpha channel
-        layerbitmap = new wxBitmap(layerwd, layerht, 32);
-        if (!layerbitmap) {
-            Fatal(_("Not enough memory for layer bitmap!"));
-            return;
-        }
-    }
-    
     // temporarily turn off grid lines
     bool saveshow = showgridlines;
     showgridlines = false;
     
-    // draw patterns in layers 1..numlayers-1
+    // overlay patterns in layers 1..numlayers-1
     for ( int i = 1; i < numlayers; i++ ) {
         Layer* savelayer = currlayer;
         currlayer = GetLayer(i);
@@ -1462,7 +1567,7 @@ void DrawStackedLayers(wxDC& dc)
         currlayer->view = savelayer->view;
         
         if ( !currlayer->algo->isEmpty() ) {
-            DrawOneLayer(dc);
+            DrawOneLayer();
         }
         
         // draw this layer's selection if necessary
@@ -1679,7 +1784,7 @@ void DrawView(int tileindex)
             GetLayer(0)->view = saveview0;
         }
         // draw layers 1, 2, ... numlayers-1
-        //!!! DrawStackedLayers();
+        DrawStackedLayers();
     }
     
     if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {
