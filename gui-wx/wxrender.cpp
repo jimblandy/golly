@@ -150,6 +150,11 @@ const int rowgap = 4;                   // vertical gap after first 2 rows
 // currently clicked control
 control_id currcontrol = NO_CONTROL;
 
+#ifdef __WXMSW__
+    // for some reason this constant isn't defined in the OpenGL headers on WinXP
+    #define GL_CLAMP_TO_EDGE 0x812F
+#endif
+
 // -----------------------------------------------------------------------------
 
 static void SetColor(int r, int g, int b, int a)
