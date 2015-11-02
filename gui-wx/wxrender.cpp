@@ -1470,7 +1470,7 @@ void DrawOneLayer()
     // dead pixels will be 100% transparent, and live pixels will use opacity setting
     mask_dead_pixels = true;
     live_alpha = int(2.55 * opacity);
-    int texbytes;
+    int texbytes = 0;
     int numstates = currlayer->algo->NumCellStates();
     
     if (showicons && currlayer->view->getmag() > 2) {

@@ -2261,6 +2261,9 @@ void PatternView::SetViewSize(int wd, int ht)
 
 void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
+    // OnPaint handlers must always create a wxPaintDC
+    wxPaintDC dc(this);
+    
     int wd, ht;
     GetClientSize(&wd, &ht);
     // wd or ht might be < 1 on Windows
@@ -2282,43 +2285,6 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
         SetViewSize(wd, ht);
     }
     
-    // OnPaint handlers must always create a wxPaintDC
-    wxPaintDC dc(this);
-    
-    SetCurrent(*glcontext);
-    DrawView(tileindex);
-    SwapBuffers();
-}
-
-// -----------------------------------------------------------------------------
-
-void PatternView::OnSize(wxSizeEvent& event)
-{
-#ifdef __WXMAC__
-    // on Mac we must handle the 1st size event even though the window is not yet shown
-#else
-    if (!IsShownOnScreen()) return;     // must not call SetCurrent (on Linux at least)
-#endif
-
-    int wd, ht;
-    GetClientSize(&wd, &ht);
-    
-#ifdef __WXMAC__
-    // we might have to subtract the scroll bar thickness from wd and ht!!!???
-    // but only for bigview (tileindex == -1)
-    /*  did not work!!! test adding scroll bars in isosurf sample
-    if (tileindex == -1) {
-        wd -= 16;
-        ht -= 16;
-        if (wd < 1) wd = 1;
-        if (ht < 1) ht = 1;
-    }
-    */
-#endif
-    
-    // resize this viewport
-    SetViewSize(wd, ht);
-    
     SetCurrent(*glcontext);
     
     if (initgl) {
@@ -2327,7 +2293,7 @@ void PatternView::OnSize(wxSizeEvent& event)
     
         glDisable(GL_DEPTH_TEST);       // we only do 2D drawing
         glDisable(GL_DITHER);           // makes no diff???!!!
-        glDisable(GL_MULTISAMPLE);      // ditto???!!!
+        // glDisable(GL_MULTISAMPLE);   not known on Windows???
         glDisable(GL_STENCIL_TEST);
         glDisable(GL_FOG);
     
@@ -2336,9 +2302,35 @@ void PatternView::OnSize(wxSizeEvent& event)
     
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
 
-    // update GL matrix to match our preferred coordinate system
+        // initialize GL matrix to match our preferred coordinate system
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, wd, ht, 0, -1, 1);   // origin is top left and y increases down
+        glViewport(0, 0, wd, ht);
+        glMatrixMode(GL_MODELVIEW);
+    }
+    
+    DrawView(tileindex);
+    
+    SwapBuffers();
+}
+
+// -----------------------------------------------------------------------------
+
+void PatternView::OnSize(wxSizeEvent& event)
+{
+    if (!IsShownOnScreen()) return;     // must not call SetCurrent (on Linux at least)
+
+    int wd, ht;
+    GetClientSize(&wd, &ht);
+        
+    // resize this viewport
+    SetViewSize(wd, ht);
+    
+    SetCurrent(*glcontext);
+
+    // update GL matrix
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, wd, ht, 0, -1, 1);       // origin is top left and y increases down
