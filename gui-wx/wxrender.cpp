@@ -105,6 +105,7 @@ static GLuint texture16 = 0;            // texture for drawing 15x15 icons
 static GLuint texture32 = 0;            // texture for drawing 31x31 icons
 static GLuint rgbtexture = 0;           // texture for drawing RGB bitmaps
 static GLuint rgbatexture = 0;          // texture for drawing RGBA bitmaps
+static GLuint ctrltexture = 0;          // texture for drawing translucent controls
 
 // fixed texture coordinates used by glTexCoordPointer
 static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
@@ -112,8 +113,8 @@ static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
 // for drawing stacked layers
 bool mask_dead_pixels = false;          // make dead pixels 100% transparent?
 unsigned char live_alpha = 255;         // alpha level for live pixels
-unsigned char* rgbadata = NULL;         // RGBA data for drawing masked bitmaps
-int rgbalen = 0;                        // length of rgbadata
+unsigned char* maskdata = NULL;         // RGBA data for drawing masked bitmaps
+int masklen = 0;                        // length of maskdata
 
 // for drawing paste pattern (initialized in CreatePasteImage)
 wxBitmap* pastebitmap;                  // paste bitmap
@@ -132,8 +133,8 @@ wxRect pastebbox;                       // bounding box in cell coords (not nece
 static bool drawing_paste = false;      // drawing paste image?
 
 // for drawing translucent controls
-wxBitmap* ctrlsbitmap = NULL;           // controls bitmap
-wxBitmap* darkctrls = NULL;             // for showing clicked control
+unsigned char* ctrlsbitmap = NULL;      // RGBA data for controls bitmap
+unsigned char* darkbutt = NULL;         // RGBA data for darkening one button  
 int controlswd;                         // width of ctrlsbitmap
 int controlsht;                         // height of ctrlsbitmap
 
@@ -151,7 +152,7 @@ const int rowgap = 4;                   // vertical gap after first 2 rows
 control_id currcontrol = NO_CONTROL;
 
 #ifdef __WXMSW__
-    // for some reason this constant isn't defined in the OpenGL headers on WinXP
+    // this constant isn't defined in the OpenGL headers on Windows (XP at least)
     #define GL_CLAMP_TO_EDGE 0x812F
 #endif
 
@@ -200,99 +201,38 @@ void CreateTranslucentControls()
     controlswd = image.GetWidth();
     controlsht = image.GetHeight();
     
-    // use depth 32 so bitmap has an alpha channel
-    ctrlsbitmap = new wxBitmap(controlswd, controlsht, 32);
-    if (ctrlsbitmap == NULL) {
+    // create ctrlsbitmap and initialize its RGBA data based on pixels in image
+    ctrlsbitmap = (unsigned char*) malloc(controlswd * controlsht * 4);
+    if (!ctrlsbitmap) {
         Warning(_("Not enough memory for controls bitmap!"));
     } else {
-        // set ctrlsbitmap pixels and their alpha values based on pixels in image
-        wxAlphaPixelData data(*ctrlsbitmap, wxPoint(0,0), wxSize(controlswd,controlsht));
-        if (data) {
-            int alpha = 192;     // 75% opaque
-#if !wxCHECK_VERSION(2,9,0)
-            data.UseAlpha();
-#endif
-            wxAlphaPixelData::Iterator p(data);
-            for ( int y = 0; y < controlsht; y++ ) {
-                wxAlphaPixelData::Iterator rowstart = p;
-                for ( int x = 0; x < controlswd; x++ ) {
-                    int r = image.GetRed(x,y);
-                    int g = image.GetGreen(x,y);
-                    int b = image.GetBlue(x,y);
-                    if (r == 0 && g == 0 && b == 0) {
-                        // make black pixel fully transparent
-                        p.Red()   = 0;
-                        p.Green() = 0;
-                        p.Blue()  = 0;
-                        p.Alpha() = 0;
-                    } else {
-                        // make all non-black pixels translucent
-#if defined(__WXMSW__) || (defined(__WXMAC__) && wxCHECK_VERSION(2,8,8))
-                        // premultiply the RGB values
-                        p.Red()   = r * alpha / 255;
-                        p.Green() = g * alpha / 255;
-                        p.Blue()  = b * alpha / 255;
-#else
-                        p.Red()   = r;
-                        p.Green() = g;
-                        p.Blue()  = b;
-#endif
-                        p.Alpha() = alpha;
-                    }
-                    p++;
+        int p = 0;
+        for ( int y = 0; y < controlsht; y++ ) {
+            for ( int x = 0; x < controlswd; x++ ) {
+                unsigned char r = image.GetRed(x,y);
+                unsigned char g = image.GetGreen(x,y);
+                unsigned char b = image.GetBlue(x,y);
+                if (r == 0 && g == 0 && b == 0) {
+                    // make black pixel 100% transparent
+                    ctrlsbitmap[p++] = 0;
+                    ctrlsbitmap[p++] = 0;
+                    ctrlsbitmap[p++] = 0;
+                    ctrlsbitmap[p++] = 0;
+                } else {
+                    // make all non-black pixels translucent
+                    ctrlsbitmap[p++] = r;
+                    ctrlsbitmap[p++] = g;
+                    ctrlsbitmap[p++] = b;
+                    ctrlsbitmap[p++] = 192;     // 75% opaque
                 }
-                p = rowstart;
-                p.OffsetY(data, 1);
             }
         }
     }
     
-    // create bitmap for showing clicked control
-    darkctrls = new wxBitmap(controlswd, controlsht, 32);
-    if (darkctrls == NULL) {
-        Warning(_("Not enough memory for dark controls bitmap!"));
-    } else {
-        // set darkctrls pixels and their alpha values based on pixels in image
-        wxAlphaPixelData data(*darkctrls, wxPoint(0,0), wxSize(controlswd,controlsht));
-        if (data) {
-            int alpha = 128;     // 50% opaque
-            int gray = 20;       // very dark gray
-#if !wxCHECK_VERSION(2,9,0)
-            data.UseAlpha();
-#endif
-            wxAlphaPixelData::Iterator p(data);
-            for ( int y = 0; y < controlsht; y++ ) {
-                wxAlphaPixelData::Iterator rowstart = p;
-                for ( int x = 0; x < controlswd; x++ ) {
-                    int r = image.GetRed(x,y);
-                    int g = image.GetGreen(x,y);
-                    int b = image.GetBlue(x,y);
-                    if (r == 0 && g == 0 && b == 0) {
-                        // make black pixel fully transparent
-                        p.Red()   = 0;
-                        p.Green() = 0;
-                        p.Blue()  = 0;
-                        p.Alpha() = 0;
-                    } else {
-                        // make all non-black pixels translucent gray
-#if defined(__WXMSW__) || (defined(__WXMAC__) && wxCHECK_VERSION(2,8,8))
-                        // premultiply the RGB values
-                        p.Red()   = gray * alpha / 255;
-                        p.Green() = gray * alpha / 255;
-                        p.Blue()  = gray * alpha / 255;
-#else
-                        p.Red()   = gray;
-                        p.Green() = gray;
-                        p.Blue()  = gray;
-#endif
-                        p.Alpha() = alpha;
-                    }
-                    p++;
-                }
-                p = rowstart;
-                p.OffsetY(data, 1);
-            }
-        }
+    // create bitmap for darkening a clicked button
+    darkbutt = (unsigned char*) malloc(buttsize * buttsize * 4);
+    if (!darkbutt) {
+        Warning(_("Not enough memory for dark button!"));
     }
 }
 
@@ -328,21 +268,46 @@ control_id WhichControl(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-void DrawControls(wxDC& dc, wxRect& rect)
+void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
+{
+	if (ctrltexture == 0) {
+        // only need to create texture name once
+        glGenTextures(1, &ctrltexture);
+    }
+
+    if (!glIsEnabled(GL_TEXTURE_2D)) {
+        // restore texture color and enable textures
+        SetColor(255, 255, 255, 255);
+        glEnable(GL_TEXTURE_2D);
+        // bind our texture
+        glBindTexture(GL_TEXTURE_2D, ctrltexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+    }
+    
+    // update the texture with the new RGBA data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
+    
+    GLfloat vertices[] = {
+        x,      y,
+        x+w,    y,
+        x,      y+h,
+        x+w,    y+h,
+    };
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawControls(wxRect& rect)
 {
     if (ctrlsbitmap) {
-#ifdef __WXGTK__
-        // wxGTK Blit doesn't support alpha channel
-        dc.DrawBitmap(*ctrlsbitmap, rect.x, rect.y, true);
-#else
-        // Blit is about 10% faster than DrawBitmap (on Mac at least)
-        wxMemoryDC memdc;
-        memdc.SelectObject(*ctrlsbitmap);
-        dc.Blit(rect.x, rect.y, rect.width, rect.height, &memdc, 0, 0, wxCOPY, true);
-        memdc.SelectObject(wxNullBitmap);
-#endif
+        DrawRGBAData(ctrlsbitmap, rect.x, rect.y, controlswd, controlsht);
         
-        if (currcontrol > NO_CONTROL && darkctrls) {
+        if (currcontrol > NO_CONTROL && darkbutt) {
             // show clicked control
             int i = (int)currcontrol - 1;
             int x = buttborder + (i % buttsperrow) * buttsize;
@@ -357,16 +322,27 @@ void DrawControls(wxDC& dc, wxRect& rect)
                 y += 2*rowgap;
             }
             
-#ifdef __WXGTK__
-            // wxGTK Blit doesn't support alpha channel
-            wxRect r(x, y, buttsize, buttsize);
-            dc.DrawBitmap(darkctrls->GetSubBitmap(r), rect.x + x, rect.y + y, true);
-#else
-            wxMemoryDC memdc;
-            memdc.SelectObject(*darkctrls);
-            dc.Blit(rect.x + x, rect.y + y, buttsize, buttsize, &memdc, x, y, wxCOPY, true);
-            memdc.SelectObject(wxNullBitmap);
-#endif
+            // draw one darkened button
+            int p = 0;
+            for ( int row = 0; row < buttsize; row++ ) {
+                for ( int col = 0; col < buttsize; col++ ) {
+                    unsigned char alpha = ctrlsbitmap[((row + y) * controlswd + col + x) * 4 + 3];
+                    if (alpha == 0) {
+                        // pixel is transparent
+                        darkbutt[p++] = 0;
+                        darkbutt[p++] = 0;
+                        darkbutt[p++] = 0;
+                        darkbutt[p++] = 0;
+                    } else {
+                        // pixel is part of button so use a very dark gray
+                        darkbutt[p++] = 20;
+                        darkbutt[p++] = 20;
+                        darkbutt[p++] = 20;
+                        darkbutt[p++] = 128;    // 50% opaque
+                    }
+                }
+            }
+            DrawRGBAData(darkbutt, rect.x + x, rect.y + y, buttsize, buttsize);
         }
     }
 }
@@ -382,9 +358,9 @@ void InitDrawingData()
 
 void DestroyDrawingData()
 {
-    delete ctrlsbitmap;
-    delete darkctrls;
-    if (rgbadata) free(rgbadata);
+    if (ctrlsbitmap) free(ctrlsbitmap);
+    if (darkbutt) free(darkbutt);
+    if (maskdata) free(maskdata);
 }
 
 // -----------------------------------------------------------------------------
@@ -427,17 +403,18 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 
 void DrawMaskedTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 {
-    // called from golly_render::pixblit to draw a masked pattern bitmap at 1:1 scale
+    // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale,
+    // but we want all dead pixels to be 100% transparent
 
     // first we have to convert the given RGB data to RGBA data,
     // where dead pixels have alpha set to 0 and live pixels are set to live_alpha
     // maybe it's time to change pixblit() to return RGBA data???!!!
     // and maybe draw() could pass in dead_alpha and live_alpha???!!!
-    if (rgbalen != w*h*4) {
-        rgbalen = w*h*4;
-        if (rgbadata) free(rgbadata);
-        rgbadata = (unsigned char*) malloc(rgbalen);
-        if (!rgbadata) return;
+    if (masklen != w*h*4) {
+        masklen = w*h*4;
+        if (maskdata) free(maskdata);
+        maskdata = (unsigned char*) malloc(masklen);
+        if (!maskdata) return;
     }
     unsigned char deadr = currlayer->cellr[0];
     unsigned char deadg = currlayer->cellg[0];
@@ -450,16 +427,16 @@ void DrawMaskedTexture(unsigned char* rgbdata, int x, int y, int w, int h)
         unsigned char b = rgbdata[i++];
         if (r == deadr && g == deadg && b == deadb) {
             // dead pixel
-            rgbadata[j++] = 0;
-            rgbadata[j++] = 0;
-            rgbadata[j++] = 0;
-            rgbadata[j++] = 0;  // 100% transparent
+            maskdata[j++] = 0;
+            maskdata[j++] = 0;
+            maskdata[j++] = 0;
+            maskdata[j++] = 0;  // 100% transparent
         } else {
             // live pixel
-            rgbadata[j++] = r;
-            rgbadata[j++] = g;
-            rgbadata[j++] = b;
-            rgbadata[j++] = live_alpha;
+            maskdata[j++] = r;
+            maskdata[j++] = g;
+            maskdata[j++] = b;
+            maskdata[j++] = live_alpha;
         }
     }
     
@@ -481,7 +458,7 @@ void DrawMaskedTexture(unsigned char* rgbdata, int x, int y, int w, int h)
     }
     
     // update the texture with the new RGBA data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, maskdata);
     
     GLfloat vertices[] = {
         x,      y,
@@ -585,7 +562,7 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
         if (iconsize == 8) glBindTexture(GL_TEXTURE_2D, texture8);
         if (iconsize == 16) glBindTexture(GL_TEXTURE_2D, texture16);
         if (iconsize == 32) glBindTexture(GL_TEXTURE_2D, texture32);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
     }
@@ -1654,7 +1631,7 @@ void DrawView(int tileindex)
                  currlayer->cellg[0]/255.0,
                  currlayer->cellb[0]/255.0,
                  1.0);
-    glClear(GL_COLOR_BUFFER_BIT /* | GL_DEPTH_BUFFER_BIT  no need???!!! */);
+    glClear(GL_COLOR_BUFFER_BIT);
     
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
     if ( currlayer->algo->gridwd > 0) {
@@ -1806,7 +1783,7 @@ void DrawView(int tileindex)
     }
     
     if (viewptr->showcontrols) {
-        //!!! DrawControls(dc, viewptr->controlsrect);
+        DrawControls(viewptr->controlsrect);
     }
     
     if ( numlayers > 1 && tilelayers ) {
