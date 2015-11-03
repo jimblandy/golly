@@ -96,7 +96,6 @@ extern bool showgridlines;       // display grid lines?
 extern bool showicons;           // display icons for cell states?
 extern bool scalepatterns;       // scale patterns when zoomed out?
 extern bool swapcolors;          // swap colors used for cell states?
-extern bool buffered;            // use wxWdgets buffering to avoid flicker?
 extern bool scrollpencil;        // scroll if pencil cursor is dragged outside view?
 extern bool scrollcross;         // scroll if cross cursor is dragged outside view?
 extern bool scrollhand;          // scroll if hand cursor is dragged outside view?
@@ -165,7 +164,6 @@ typedef enum {
     DO_ADVANCEOUT,                // advance outside
     DO_ADVANCE,                   // advance selection
     DO_AUTOFIT,                   // auto fit
-    DO_BUFFERED,                  // buffered
     DO_CHANGE00,                  // change origin
     DO_CLEAROUT,                  // clear outside
     DO_CLEAR,                     // clear selection

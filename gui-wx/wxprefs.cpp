@@ -140,7 +140,6 @@ bool showgridlines = true;       // display grid lines?
 bool showicons = false;          // display icons for cell states?
 bool scalepatterns = false;      // scale patterns when zoomed out?
 bool swapcolors = false;         // swap colors used for cell states?
-bool buffered = true;            // use wxWdgets buffering to avoid flicker?
 bool scrollpencil = true;        // scroll if pencil cursor is dragged outside view?
 bool scrollcross = true;         // scroll if cross cursor is dragged outside view?
 bool scrollhand = true;          // scroll if hand cursor is dragged outside view?
@@ -620,7 +619,6 @@ const char* GetActionName(action_id action)
         case DO_SHOWICONS:      return "Show Cell Icons";
         case DO_INVERT:         return "Invert Colors";
         case DO_SHOWGRID:       return "Show Grid Lines";
-        case DO_BUFFERED:       return "Buffered";
         case DO_SHOWTIME:       return "Show Timeline";
         case DO_INFO:           return "Pattern Info";
         // Layer menu
@@ -1566,7 +1564,6 @@ void SavePrefs()
     
     fputs("\n", f);
     
-    fprintf(f, "buffered=%d\n", buffered ? 1 : 0);
     fprintf(f, "mouse_wheel_mode=%d\n", mousewheelmode);
     fprintf(f, "thumb_range=%d (2..%d)\n", thumbrange, MAX_THUMBRANGE);
     fprintf(f, "new_mag=%d (0..%d)\n", newmag, MAX_MAG);
@@ -2214,9 +2211,6 @@ void GetPrefs()
             
         } else if (strcmp(keyword, "hlife_rgb") == 0) {       // deprecated
             GetColor(value, &algoinfo[HLIFE_ALGO]->statusrgb);
-            
-        } else if (strcmp(keyword, "buffered") == 0) {
-            buffered = value[0] == '1';
             
         } else if (strcmp(keyword, "mouse_wheel_mode") == 0) {
             sscanf(value, "%d", &mousewheelmode);

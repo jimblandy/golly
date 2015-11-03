@@ -1234,14 +1234,6 @@ void PatternView::ToggleScalePatterns()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::ToggleBuffering()
-{
-    buffered = !buffered;
-    mainptr->UpdateEverything();
-}
-
-// -----------------------------------------------------------------------------
-
 bool PatternView::GetCellPos(bigint& xpos, bigint& ypos)
 {
     wxPoint pt = ScreenToClient( wxGetMousePosition() );
@@ -1721,7 +1713,6 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_INVERT:      ToggleCellColors(); break;
         case DO_SCALEPATTERNS:  ToggleScalePatterns(); break;
         case DO_SHOWGRID:    ToggleGridLines(); break;
-        case DO_BUFFERED:    ToggleBuffering(); break;
         case DO_SHOWTIME:    ToggleTimelineBar(); break;
         case DO_INFO:        if (!busy) mainptr->ShowPatternInfo(); break;
             
@@ -2293,7 +2284,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
     
         glDisable(GL_DEPTH_TEST);       // we only do 2D drawing
         glDisable(GL_DITHER);           // makes no diff???!!!
-        // glDisable(GL_MULTISAMPLE);   not known on Windows???
+        // glDisable(GL_MULTISAMPLE);   // unknown on Windows
         glDisable(GL_STENCIL_TEST);
         glDisable(GL_FOG);
     

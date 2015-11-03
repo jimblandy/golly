@@ -769,14 +769,6 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_ICONS,        active);
         mbar->Enable(ID_INVERT,       active);
         mbar->Enable(ID_SCALEPATTERNS, active);
-#if defined(__WXMAC__) || defined(__WXGTK__)
-        // windows on Mac OS X and GTK+ 2.0 are automatically buffered
-        mbar->Enable(ID_BUFF,         false);
-        mbar->Check(ID_BUFF,          true);
-#else
-        mbar->Enable(ID_BUFF,         active);
-        mbar->Check(ID_BUFF,          buffered);
-#endif
         mbar->Enable(ID_TIMELINE,     active);
         mbar->Enable(ID_INFO,         !currlayer->currfile.IsEmpty());
         
@@ -1425,7 +1417,6 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_ICONS:          viewptr->ToggleCellIcons(); break;
         case ID_INVERT:         viewptr->ToggleCellColors(); break;
         case ID_SCALEPATTERNS:  viewptr->ToggleScalePatterns(); break;
-        case ID_BUFF:           viewptr->ToggleBuffering(); break;
         case ID_TIMELINE:       ToggleTimelineBar(); break;
         case ID_INFO:           ShowPatternInfo(); break;
             
@@ -2277,7 +2268,6 @@ void MainFrame::CreateMenus()
     viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") + GetAccelerator(DO_SHOWICONS));
     viewMenu->AppendCheckItem(ID_INVERT,         _("Invert Colors") + GetAccelerator(DO_INVERT));
     viewMenu->AppendCheckItem(ID_SCALEPATTERNS,  _("Scale Patterns") + GetAccelerator(DO_SCALEPATTERNS));
-    viewMenu->AppendCheckItem(ID_BUFF,           _("Buffered") + GetAccelerator(DO_BUFFERED));
     viewMenu->AppendCheckItem(ID_TIMELINE,       _("Show Timeline") + GetAccelerator(DO_SHOWTIME));
     viewMenu->AppendSeparator();
     viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
@@ -2449,7 +2439,6 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_ICONS,           DO_SHOWICONS);
         SetAccelerator(mbar, ID_INVERT,          DO_INVERT);
         SetAccelerator(mbar, ID_SCALEPATTERNS,   DO_SCALEPATTERNS);
-        SetAccelerator(mbar, ID_BUFF,            DO_BUFFERED);
         SetAccelerator(mbar, ID_TIMELINE,        DO_SHOWTIME);
         SetAccelerator(mbar, ID_INFO,            DO_INFO);
         
