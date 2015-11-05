@@ -44,7 +44,7 @@
 #include "wxhelp.h"        // for ShowHelp, LoadRule
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
-#include "wxrender.h"      // for CreatePasteImage, DrawView
+#include "wxrender.h"      // for InitPaste, DrawView
 #include "wxscript.h"      // for inscript, PassKeyToScript, PassClickToScript
 #include "wxselect.h"      // for Selection
 #include "wxedit.h"        // for UpdateEditBar, ToggleEditBar, etc
@@ -400,11 +400,11 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         currlayer->curs = curs_cross;
         CheckCursor(true);
         
-        // create image for drawing pattern to be pasted; note that pastebox
+        // pastealgo contains the pattern to be pasted; note that pastebox
         // is not necessarily the minimal bounding box because clipboard pattern
         // might have blank borders (in fact it could be empty)
         pastebox = wxRect(ileft, itop, wd.toint(), ht.toint());
-        CreatePasteImage(pastealgo, pastebox);
+        InitPaste(pastealgo, pastebox);
         
         waitingforclick = true;
         mainptr->UpdateMenuAccelerators();  // remove all accelerators so keyboard shortcuts can be used
@@ -456,7 +456,6 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         if ( HasCapture() ) ReleaseMouse();
         mainptr->EnableAllMenus(true);
         mainptr->UpdateMenuAccelerators();  // restore accelerators
-        DestroyPasteImage();
         
         // restore cursor
         currlayer->curs = savecurs;
@@ -985,7 +984,7 @@ bool PatternView::FlipPastePattern(bool topbottom)
     inscript = false;
     
     if (result) {
-        CreatePasteImage(pastealgo, pastebox);
+        InitPaste(pastealgo, pastebox);
         UpdateView();
     }
     
@@ -1021,7 +1020,7 @@ bool PatternView::RotatePastePattern(bool clockwise)
         int x, y, wd, ht;
         pastesel.GetRect(&x, &y, &wd, &ht);
         pastebox = wxRect(x, y, wd, ht);
-        CreatePasteImage(pastealgo, pastebox);
+        InitPaste(pastealgo, pastebox);
         UpdateView();
     }
     

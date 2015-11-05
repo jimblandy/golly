@@ -47,7 +47,7 @@
 #include "wxhelp.h"        // for ShowHelp, GetHelpFrame
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
-#include "wxrender.h"      // for InitDrawingData, DestroyDrawingData, etc
+#include "wxrender.h"      // for DestroyDrawingData, etc
 #include "wxedit.h"        // for CreateEditBar, EditBarHeight, etc
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxalgos.h"       // for algo_type, algomenu, algomenupop
@@ -2658,8 +2658,6 @@ MainFrame::MainFrame()
     
     if (showpatterns) splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
     if (showscripts) splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
-    
-    InitDrawingData();         // do this after viewptr has been set
     
     pendingfiles.Clear();      // no pending script/pattern files
     command_pending = false;   // no pending command

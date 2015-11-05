@@ -67,9 +67,8 @@ hlifealgo::draw() in hlifedraw.cpp.
 - Calls DrawStackedLayers() to overlay multiple layers using the current
   layer's scale and location.
 
-- If the user is doing a paste, CheckPasteImage() creates a temporary
-  viewport (tempview) and draws the paste pattern (stored in pastealgo)
-  into a masked pixmap which is then used by DrawPasteImage().
+- If the user is doing a paste, DrawPasteImage() creates a temporary
+  viewport (tempview) and draws the paste pattern (stored in pastealgo).
 
 - Calls DrawControls() if the translucent controls need to be drawn.
 
@@ -116,21 +115,12 @@ unsigned char live_alpha = 255;         // alpha level for live pixels
 unsigned char* maskdata = NULL;         // RGBA data for drawing masked bitmaps
 int masklen = 0;                        // length of maskdata
 
-// for drawing paste pattern (initialized in CreatePasteImage)
-wxBitmap* pastebitmap;                  // paste bitmap
-int pimagewd;                           // width of paste image
-int pimageht;                           // height of paste image
-int prectwd;                            // must match viewptr->pasterect.width
-int prectht;                            // must match viewptr->pasterect.height
-int pastemag;                           // must match current viewport's scale
-int cvwd, cvht;                         // must match current viewport's width and height
-paste_location pasteloc;                // must match plocation
-bool pasteicons;                        // must match showicons
-bool pastecolors;                       // must match swapcolors
-bool pastescale;                        // must match scalepatterns
+// for drawing paste pattern
 lifealgo* pastealgo;                    // universe containing paste pattern
 wxRect pastebbox;                       // bounding box in cell coords (not necessarily minimal)
-static bool drawing_paste = false;      // drawing paste image?
+unsigned char* modedata[4] = {NULL};    // RGBA data for drawing current paste mode (And, Copy, Or, Xor)
+const int modewd = 32;                  // width of each modedata
+const int modeht = 16;                  // height of each modedata
 
 // for drawing translucent controls
 unsigned char* ctrlsbitmap = NULL;      // RGBA data for controls bitmap
@@ -349,18 +339,14 @@ void DrawControls(wxRect& rect)
 
 // -----------------------------------------------------------------------------
 
-void InitDrawingData()
-{
-    // no longer needed -- remove???!!!
-}
-
-// -----------------------------------------------------------------------------
-
 void DestroyDrawingData()
 {
     if (ctrlsbitmap) free(ctrlsbitmap);
     if (darkbutt) free(darkbutt);
     if (maskdata) free(maskdata);
+    for (int i = 0; i < 4; i++) {
+        if (modedata[i]) free(modedata[i]);
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -468,63 +454,6 @@ void DrawMaskedTexture(unsigned char* rgbdata, int x, int y, int w, int h)
     };
     glVertexPointer(2, GL_FLOAT, 0, vertices);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
-{
-    // called from golly_render::pixblit to draw pattern at 1:1 scale
-    // when we're drawing the paste image
-
-    const int maxcoords = 1024;     // must be multiple of 2
-    GLfloat points[maxcoords];
-    int numcoords = 0;
-
-    DisableTextures();
-    SetPointSize(1);
-
-    unsigned char deadr = currlayer->cellr[0];
-    unsigned char deadg = currlayer->cellg[0];
-    unsigned char deadb = currlayer->cellb[0];
-    unsigned char prevr = deadr;
-    unsigned char prevg = deadg;
-    unsigned char prevb = deadb;
-    SetColor(deadr, deadg, deadb, 255);
-
-    unsigned char r, g, b;
-    int i = 0;
-    for (int row = 0; row < h; row++) {
-        for (int col = 0; col < w; col++) {
-            r = rgbdata[i++];
-            g = rgbdata[i++];
-            b = rgbdata[i++];
-            if (r != deadr || g != deadg || b != deadb) {
-                // we've got a live pixel
-                bool changecolor = (r != prevr || g != prevg || b != prevb);
-                if (changecolor || numcoords == maxcoords) {
-                    if (numcoords > 0) {
-                        glVertexPointer(2, GL_FLOAT, 0, points);
-                        glDrawArrays(GL_POINTS, 0, numcoords/2);
-                        numcoords = 0;
-                    }
-                    if (changecolor) {
-                        prevr = r;
-                        prevg = g;
-                        prevb = b;
-                        SetColor(r, g, b, 255);
-                    }
-                }
-                points[numcoords++] = x + col + 0.5;
-                points[numcoords++] = y + row + 0.5;
-            }
-        }
-    }
-
-    if (numcoords > 0) {
-        glVertexPointer(2, GL_FLOAT, 0, points);
-        glDrawArrays(GL_POINTS, 0, numcoords/2);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -840,13 +769,8 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
     
     if (pmscale == 1) {
         // draw RGB pixel data at scale 1:1
-        if (drawing_paste) {
-            // we can't use DrawTexture to draw paste image because glTexImage2D clobbers
-            // any background pattern, so we use DrawPoints
-            DrawPoints((unsigned char*) pmdata, x, y, w, h);
-        } else if (mask_dead_pixels) {
-            // convert RGB data to RGBA data where dead pixels are 100% transparent
-            // and the transparency of live pixels depends on live_alpha
+        if (mask_dead_pixels) {
+            // dead pixels will be 100% transparent and opacity of live pixels will be live_alpha
             DrawMaskedTexture((unsigned char*) pmdata, x, y, w, h);
         } else {
             DrawTexture((unsigned char*) pmdata, x, y, w, h);
@@ -893,353 +817,278 @@ void DrawSelection(wxRect& rect, bool active)
 
 // -----------------------------------------------------------------------------
 
-void CreatePasteImage(lifealgo* palgo, wxRect& bbox)
+void InitPaste(lifealgo* palgo, wxRect& bbox)
 {
-    pastealgo = palgo;      // save for use in CheckPasteImage
-    pastebbox = bbox;       // ditto
-    pastebitmap = NULL;
-    prectwd = -1;           // force CheckPasteImage to update paste image
-    prectht = -1;
-    pimagewd = -1;          // force CheckPasteImage to rescale paste image
-    pimageht = -1;
-    pastemag = currlayer->view->getmag();
-    pasteicons = showicons;
-    pastecolors = swapcolors;
-    pastescale = scalepatterns;
-}
+    // set globals used in DrawPasteImage
+    pastealgo = palgo;
+    pastebbox = bbox;
+    
+    // create bitmaps for drawing each paste mode
+    paste_mode savemode = pmode;
+    for (int i = 0; i < 4; i++) {
+        pmode = (paste_mode) i;     // GetPasteMode() uses pmode
 
-// -----------------------------------------------------------------------------
-
-void DestroyPasteImage()
-{
-    if (pastebitmap) {
-        delete pastebitmap;
-        pastebitmap = NULL;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-// remove eventually!!!
-
-void MaskDeadPixels(wxBitmap* bitmap, int wd, int ht, int livealpha)
-{
-    // access pixels in given bitmap and make all dead pixels 100% transparent
-    // and use given alpha value for all live pixels
-    wxAlphaPixelData data(*bitmap, wxPoint(0,0), wxSize(wd,ht));
-    if (data) {
-        int deadr = currlayer->cellr[0];
-        int deadg = currlayer->cellg[0];
-        int deadb = currlayer->cellb[0];
+        wxBitmap modemap(modewd, modeht, 32);
+        wxMemoryDC dc;
+        dc.SelectObject(modemap);
         
-#if !wxCHECK_VERSION(2,9,0)
-        data.UseAlpha();
-#endif
-        wxAlphaPixelData::Iterator p(data);
-        for ( int y = 0; y < ht; y++ ) {
-            wxAlphaPixelData::Iterator rowstart = p;
-            for ( int x = 0; x < wd; x++ ) {
-                // get pixel color
-                int r = p.Red();
-                int g = p.Green();
-                int b = p.Blue();
-                
-                // set alpha value depending on whether pixel is live or dead
-                if (r == deadr && g == deadg && b == deadb) {
-                    // make dead pixel 100% transparent
-                    p.Red()   = 0;
-                    p.Green() = 0;
-                    p.Blue()  = 0;
-                    p.Alpha() = 0;
-                } else {
-                    // live pixel
-#if defined(__WXMSW__) || (defined(__WXMAC__) && wxCHECK_VERSION(2,8,8))
-                    // premultiply the RGB values
-                    p.Red()   = r * livealpha / 255;
-                    p.Green() = g * livealpha / 255;
-                    p.Blue()  = b * livealpha / 255;
-#else
-                    // no change needed
-                    // p.Red()   = r;
-                    // p.Green() = g;
-                    // p.Blue()  = b;
-#endif
-                    p.Alpha() = livealpha;
+        // still minor probs with this approach!!! draw black text on white rect and remove pastepen???
+        unsigned char deadr = currlayer->cellr[0];
+        unsigned char deadg = currlayer->cellg[0];
+        unsigned char deadb = currlayer->cellb[0];
+        wxRect r(0, 0, modewd, modeht);
+        wxBrush brush(wxColor(deadr,deadg,deadb));
+        FillRect(dc, r, brush);
+        
+        dc.SetFont(*statusptr->GetStatusFont());
+        dc.SetBackgroundMode(wxTRANSPARENT);
+        dc.SetTextForeground(*pastergb);
+        dc.SetPen(*pastepen);
+        wxString pmodestr = wxString(GetPasteMode(),wxConvLocal);
+        dc.DrawText(pmodestr, 2, modeht - statusptr->GetTextAscent() - 4);
+        
+        dc.SelectObject(wxNullBitmap);
+        
+        // now convert modemap data into RGBA data suitable for passing into DrawRGBAData
+        if (!modedata[i]) {
+            modedata[i] = (unsigned char*) malloc(modewd * modeht * 4);
+        }
+        if (modedata[i]) {
+            int j = 0;
+            unsigned char* m = modedata[i];
+            wxAlphaPixelData data(modemap);
+            if (data) {
+                wxAlphaPixelData::Iterator p(data);
+                for (int y = 0; y < modeht; y++) {
+                    wxAlphaPixelData::Iterator rowstart = p;
+                    for (int x = 0; x < modewd; x++) {
+                        unsigned char r = p.Red();
+                        unsigned char g = p.Green();
+                        unsigned char b = p.Blue();
+                        unsigned char a = p.Alpha();
+                        if (r == deadr && g == deadg && b == deadb) {
+                            // make background transparent
+                            m[j++] = 0;
+                            m[j++] = 0;
+                            m[j++] = 0;
+                            m[j++] = 0;
+                        } else {
+                            m[j++] = r;
+                            m[j++] = g;
+                            m[j++] = b;
+                            m[j++] = a;
+                        }
+                        p++;
+                    }
+                    p = rowstart;
+                    p.OffsetY(data, 1);
                 }
-                
-                p++;
             }
-            p = rowstart;
-            p.OffsetY(data, 1);
         }
     }
+    pmode = savemode;
 }
 
 // -----------------------------------------------------------------------------
 
-int PixelsToCells(int pixels) {
+int PixelsToCells(int pixels, int mag) {
     // convert given # of screen pixels to corresponding # of cells
-    if (pastemag >= 0) {
-        int cellsize = 1 << pastemag;
+    if (mag >= 0) {
+        int cellsize = 1 << mag;
         return (pixels + cellsize - 1) / cellsize;
     } else {
-        // pastemag < 0; no need to worry about overflow
-        return pixels << -pastemag;
+        // mag < 0; no need to worry about overflow
+        return pixels << -mag;
     }
 }
 
 // -----------------------------------------------------------------------------
 
-void CheckPasteImage()
+void DrawPasteImage()
 {
-    // paste image needs to be updated if any of these changed:
-    // pasterect size, viewport size, plocation, showicons, swapcolors, scalepatterns
-    if ( prectwd != viewptr->pasterect.width ||
-         prectht != viewptr->pasterect.height ||
-         cvwd != currlayer->view->getwidth() ||
-         cvht != currlayer->view->getheight() ||
-         pasteloc != plocation ||
-         pasteicons != showicons ||
-         pastecolors != swapcolors ||
-         pastescale != scalepatterns ) {
-        
-        prectwd = viewptr->pasterect.width;
-        prectht = viewptr->pasterect.height;
-        pastemag = currlayer->view->getmag();
-        cvwd = currlayer->view->getwidth();
-        cvht = currlayer->view->getheight();
-        pasteloc = plocation;
-        pasteicons = showicons;
-        pastecolors = swapcolors;
-        pastescale = scalepatterns;
-        
-        // calculate size of paste image; we could just set it to pasterect size
-        // but that would be slow and wasteful for large pasterects, so we use
-        // the following code (the only tricky bit is when plocation = Middle)
-        int pastewd = prectwd;
-        int pasteht = prectht;
-        
-        if (pastewd <= 2 || pasteht <= 2) {
-            // no need to draw paste image because border lines will cover it
-            delete pastebitmap;
-            pastebitmap = NULL;
-            if (pimagewd != 1 || pimageht != 1) {
-                pimagewd = 1;
-                pimageht = 1;
+    int pastemag = currlayer->view->getmag();
+    
+    // note that viewptr->pasterect.width > 0
+    int prectwd = viewptr->pasterect.width;
+    int prectht = viewptr->pasterect.height;
+    
+    // calculate size of paste image; we could just set it to pasterect size
+    // but that would be slow and wasteful for large pasterects, so we use
+    // the following code (the only tricky bit is when plocation = Middle)
+    int pastewd = prectwd;
+    int pasteht = prectht;
+    
+    wxRect cellbox = pastebbox;
+    if (pastewd > currlayer->view->getwidth() || pasteht > currlayer->view->getheight()) {
+        if (plocation == Middle) {
+            // temporary viewport may need to be TWICE size of current viewport
+            if (pastewd > 2 * currlayer->view->getwidth())
+                pastewd = 2 * currlayer->view->getwidth();
+            if (pasteht > 2 * currlayer->view->getheight())
+                pasteht = 2 * currlayer->view->getheight();
+            if (pastemag > 0) {
+                // make sure pastewd/ht don't have partial cells
+                int cellsize = 1 << pastemag;
+                if ((pastewd + 1) % cellsize > 0)
+                    pastewd += cellsize - ((pastewd + 1) % cellsize);
+                if ((pasteht + 1) % cellsize != 0)
+                    pasteht += cellsize - ((pasteht + 1) % cellsize);
             }
-            return;
-        }
-        
-        wxRect cellbox = pastebbox;
-        if (pastewd > currlayer->view->getwidth() || pasteht > currlayer->view->getheight()) {
-            if (plocation == Middle) {
-                // temporary viewport may need to be TWICE size of current viewport
-                if (pastewd > 2 * currlayer->view->getwidth())
-                    pastewd = 2 * currlayer->view->getwidth();
-                if (pasteht > 2 * currlayer->view->getheight())
-                    pasteht = 2 * currlayer->view->getheight();
+            if (prectwd > pastewd) {
+                // make sure prectwd - pastewd is an even number of *cells*
                 if (pastemag > 0) {
-                    // make sure pastewd/ht don't have partial cells
                     int cellsize = 1 << pastemag;
-                    if ((pastewd + 1) % cellsize > 0)
-                        pastewd += cellsize - ((pastewd + 1) % cellsize);
-                    if ((pasteht + 1) % cellsize != 0)
-                        pasteht += cellsize - ((pasteht + 1) % cellsize);
+                    int celldiff = (prectwd - pastewd) / cellsize;
+                    if (celldiff & 1) pastewd += cellsize;
+                } else {
+                    if ((prectwd - pastewd) & 1) pastewd++;
                 }
-                if (prectwd > pastewd) {
-                    // make sure prectwd - pastewd is an even number of *cells*
-                    // to simplify shifting in DrawPasteImage
-                    if (pastemag > 0) {
-                        int cellsize = 1 << pastemag;
-                        int celldiff = (prectwd - pastewd) / cellsize;
-                        if (celldiff & 1) pastewd += cellsize;
-                    } else {
-                        if ((prectwd - pastewd) & 1) pastewd++;
-                    }
-                }
-                if (prectht > pasteht) {
-                    // make sure prectht - pasteht is an even number of *cells*
-                    // to simplify shifting in DrawPasteImage
-                    if (pastemag > 0) {
-                        int cellsize = 1 << pastemag;
-                        int celldiff = (prectht - pasteht) / cellsize;
-                        if (celldiff & 1) pasteht += cellsize;
-                    } else {
-                        if ((prectht - pasteht) & 1) pasteht++;
-                    }
-                }
-            } else {
-                // plocation is at a corner of pasterect so temporary viewport
-                // may need to be size of current viewport
-                if (pastewd > currlayer->view->getwidth())
-                    pastewd = currlayer->view->getwidth();
-                if (pasteht > currlayer->view->getheight())
-                    pasteht = currlayer->view->getheight();
+            }
+            if (prectht > pasteht) {
+                // make sure prectht - pasteht is an even number of *cells*
                 if (pastemag > 0) {
-                    // make sure pastewd/ht don't have partial cells
                     int cellsize = 1 << pastemag;
-                    int gap = 1;                        // gap between cells
-                    if (pastemag == 1) gap = 0;         // no gap at scale 1:2
-                    if ((pastewd + gap) % cellsize > 0)
-                        pastewd += cellsize - ((pastewd + gap) % cellsize);
-                    if ((pasteht + gap) % cellsize != 0)
-                        pasteht += cellsize - ((pasteht + gap) % cellsize);
-                }
-                cellbox.width = PixelsToCells(pastewd);
-                cellbox.height = PixelsToCells(pasteht);
-                if (plocation == TopLeft) {
-                    // show top left corner of pasterect
-                    cellbox.x = pastebbox.x;
-                    cellbox.y = pastebbox.y;
-                } else if (plocation == TopRight) {
-                    // show top right corner of pasterect
-                    cellbox.x = pastebbox.x + pastebbox.width - cellbox.width;
-                    cellbox.y = pastebbox.y;
-                } else if (plocation == BottomRight) {
-                    // show bottom right corner of pasterect
-                    cellbox.x = pastebbox.x + pastebbox.width - cellbox.width;
-                    cellbox.y = pastebbox.y + pastebbox.height - cellbox.height;
-                } else { // plocation == BottomLeft
-                    // show bottom left corner of pasterect
-                    cellbox.x = pastebbox.x;
-                    cellbox.y = pastebbox.y + pastebbox.height - cellbox.height;
+                    int celldiff = (prectht - pasteht) / cellsize;
+                    if (celldiff & 1) pasteht += cellsize;
+                } else {
+                    if ((prectht - pasteht) & 1) pasteht++;
                 }
             }
-        }
-        
-        // delete old bitmap even if size hasn't changed
-        delete pastebitmap;
-        pimagewd = pastewd;
-        pimageht = pasteht;
-        // create a bitmap with depth 32 so it has an alpha channel
-        pastebitmap = new wxBitmap(pimagewd, pimageht, 32);
-        
-        if (pastebitmap) {
-            // create temporary viewport and draw pattern into pastebitmap
-            // for later use in DrawPasteImage
-            viewport tempview(pimagewd, pimageht);
-            int midx, midy;
-            if (pastemag > 1) {
-                // allow for gap between cells
-                midx = cellbox.x + (cellbox.width - 1) / 2;
-                midy = cellbox.y + (cellbox.height - 1) / 2;
-            } else {
-                midx = cellbox.x + cellbox.width / 2;
-                midy = cellbox.y + cellbox.height / 2;
+        } else {
+            // plocation is at a corner of pasterect so temporary viewport
+            // may need to be size of current viewport
+            if (pastewd > currlayer->view->getwidth())
+                pastewd = currlayer->view->getwidth();
+            if (pasteht > currlayer->view->getheight())
+                pasteht = currlayer->view->getheight();
+            if (pastemag > 0) {
+                // make sure pastewd/ht don't have partial cells
+                int cellsize = 1 << pastemag;
+                int gap = 1;                        // gap between cells
+                if (pastemag == 1) gap = 0;         // no gap at scale 1:2
+                if ((pastewd + gap) % cellsize > 0)
+                    pastewd += cellsize - ((pastewd + gap) % cellsize);
+                if ((pasteht + gap) % cellsize != 0)
+                    pasteht += cellsize - ((pasteht + gap) % cellsize);
             }
-            tempview.setpositionmag(midx, midy, pastemag);
-            
-            // temporarily turn off grid lines
-            bool saveshow = showgridlines;
-            showgridlines = false;
-            drawing_paste = true;
-            
-            wxMemoryDC pattdc;
-            pattdc.SelectObject(*pastebitmap);
-            // remove!!! currdc = &pattdc;
-            currwd = tempview.getwidth();
-            currht = tempview.getheight();
-            
-            if (scalefactor > 1) {
-                // change tempview scale to 1:1 and increase its size by scalefactor
-                tempview.setmag(0);
-                currwd = currwd * scalefactor;
-                currht = currht * scalefactor;
-                tempview.resize(currwd, currht);
-                pastealgo->draw(tempview, renderer);
-                // no need to restore tempview settings
-            } else {
-                // no scaling
-                pastealgo->draw(tempview, renderer);
+            cellbox.width = PixelsToCells(pastewd, pastemag);
+            cellbox.height = PixelsToCells(pasteht, pastemag);
+            if (plocation == TopLeft) {
+                // show top left corner of pasterect
+                cellbox.x = pastebbox.x;
+                cellbox.y = pastebbox.y;
+            } else if (plocation == TopRight) {
+                // show top right corner of pasterect
+                cellbox.x = pastebbox.x + pastebbox.width - cellbox.width;
+                cellbox.y = pastebbox.y;
+            } else if (plocation == BottomRight) {
+                // show bottom right corner of pasterect
+                cellbox.x = pastebbox.x + pastebbox.width - cellbox.width;
+                cellbox.y = pastebbox.y + pastebbox.height - cellbox.height;
+            } else { // plocation == BottomLeft
+                // show bottom left corner of pasterect
+                cellbox.x = pastebbox.x;
+                cellbox.y = pastebbox.y + pastebbox.height - cellbox.height;
             }
-            
-            pattdc.SelectObject(wxNullBitmap);
-            
-            drawing_paste = false;
-            showgridlines = saveshow;
-            
-            // make dead pixels 100% transparent and live pixels 100% opaque
-            MaskDeadPixels(pastebitmap, pimagewd, pimageht, 255);
         }
     }
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawPasteImage(wxDC& dc)
-{
-    if (pastebitmap) {
-        // draw paste image
-        wxRect r = viewptr->pasterect;
-        if (r.width > pimagewd || r.height > pimageht) {
-            // paste image is smaller than pasterect (which can't fit in viewport)
-            // so shift image depending on plocation
-            switch (plocation) {
-                case TopLeft:
-                    // no need to do any shifting
-                    break;
-                case TopRight:
-                    // shift image to top right corner of pasterect
-                    r.x += r.width - pimagewd;
-                    break;
-                case BottomRight:
-                    // shift image to bottom right corner of pasterect
-                    r.x += r.width - pimagewd;
-                    r.y += r.height - pimageht;
-                    break;
-                case BottomLeft:
-                    // shift image to bottom left corner of pasterect
-                    r.y += r.height - pimageht;
-                    break;
-                case Middle:
-                    // shift image to middle of pasterect; note that CheckPasteImage
-                    // has ensured (r.width - pimagewd) and (r.height - pimageht)
-                    // are an even number of *cells* if pastemag > 0
-                    r.x += (r.width - pimagewd) / 2;
-                    r.y += (r.height - pimageht) / 2;
-                    break;
-            }
-        }
-#ifdef __WXGTK__
-        // wxGTK Blit doesn't support alpha channel
-        dc.DrawBitmap(*pastebitmap, r.x, r.y, true);
-#else
-        wxMemoryDC memdc;
-        memdc.SelectObject(*pastebitmap);
-        dc.Blit(r.x, r.y, pimagewd, pimageht, &memdc, 0, 0, wxCOPY, true);
-        memdc.SelectObject(wxNullBitmap);
-#endif
-    }
     
-    // now overlay border rectangle
-    dc.SetPen(*pastepen);
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    
-    // if large rect then we need to avoid overflow because DrawRectangle
-    // has problems on Mac if given a size that exceeds 32K
     wxRect r = viewptr->pasterect;
-    if (r.x < 0) { int diff = -1 - r.x;  r.x = -1;  r.width -= diff; }
-    if (r.y < 0) { int diff = -1 - r.y;  r.y = -1;  r.height -= diff; }
-    if (r.width > currlayer->view->getwidth())
-        r.width = currlayer->view->getwidth() + 2;
-    if (r.height > currlayer->view->getheight())
-        r.height = currlayer->view->getheight() + 2;
-    dc.DrawRectangle(r);
-    
-    if (r.y > 0) {
-        dc.SetFont(*statusptr->GetStatusFont());
-        //dc.SetBackgroundMode(wxSOLID);
-        //dc.SetTextBackground(*wxWHITE);
-        dc.SetBackgroundMode(wxTRANSPARENT);   // better in case pastergb is white
-        dc.SetTextForeground(*pastergb);
-        wxString pmodestr = wxString(GetPasteMode(),wxConvLocal);
-        int pmodex = r.x + 2;
-        int pmodey = r.y - 4;
-        dc.DrawText(pmodestr, pmodex, pmodey - statusptr->GetTextAscent());
+    if (r.width > pastewd || r.height > pasteht) {
+        // paste image is smaller than pasterect (which can't fit in viewport)
+        // so shift image depending on plocation
+        switch (plocation) {
+            case TopLeft:
+                // no need to do any shifting
+                break;
+            case TopRight:
+                // shift image to top right corner of pasterect
+                r.x += r.width - pastewd;
+                break;
+            case BottomRight:
+                // shift image to bottom right corner of pasterect
+                r.x += r.width - pastewd;
+                r.y += r.height - pasteht;
+                break;
+            case BottomLeft:
+                // shift image to bottom left corner of pasterect
+                r.y += r.height - pasteht;
+                break;
+            case Middle:
+                // shift image to middle of pasterect; note that above code
+                // has ensured (r.width - pastewd) and (r.height - pasteht)
+                // are an even number of *cells* if pastemag > 0
+                r.x += (r.width - pastewd) / 2;
+                r.y += (r.height - pasteht) / 2;
+                break;
+        }
     }
     
-    dc.SetBrush(wxNullBrush);
-    dc.SetPen(wxNullPen);
+    // create temporary viewport for drawing pattern into pastealgo
+    viewport tempview(pastewd, pasteht);
+    int midx, midy;
+    if (pastemag > 1) {
+        // allow for gap between cells
+        midx = cellbox.x + (cellbox.width - 1) / 2;
+        midy = cellbox.y + (cellbox.height - 1) / 2;
+    } else {
+        midx = cellbox.x + cellbox.width / 2;
+        midy = cellbox.y + cellbox.height / 2;
+    }
+    tempview.setpositionmag(midx, midy, pastemag);
+    
+    // temporarily turn off grid lines
+    bool saveshow = showgridlines;
+    showgridlines = false;
+    
+    // make dead pixels 100% transparent and live pixels 100% opaque
+    mask_dead_pixels = true;
+    live_alpha = 255;
+
+    currwd = tempview.getwidth();
+    currht = tempview.getheight();
+    
+    glTranslatef(r.x, r.y, 0);
+    
+    if (scalefactor > 1) {
+        // change tempview scale to 1:1 and increase its size by scalefactor
+        tempview.setmag(0);
+        currwd = currwd * scalefactor;
+        currht = currht * scalefactor;
+        tempview.resize(currwd, currht);
+        
+        glPushMatrix();
+        glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
+        
+        pastealgo->draw(tempview, renderer);
+        
+        // restore viewport settings
+        currwd = currwd / scalefactor;
+        currht = currht / scalefactor;
+                
+        // restore OpenGL scale
+        glPopMatrix();
+        
+    } else {
+        // no scaling
+        pastealgo->draw(tempview, renderer);
+    }
+    
+    glTranslatef(-r.x, -r.y, 0);
+    
+    showgridlines = saveshow;
+    mask_dead_pixels = false;
+    
+    // overlay translucent rect to show paste area
+    DisableTextures();
+    SetColor(pastergb->Red(), pastergb->Green(), pastergb->Blue(), 64);
+    r = viewptr->pasterect;
+    FillRect(r.x, r.y, r.width, r.height);
+    
+    // show current paste mode
+    if (r.y > 0 && modedata[(int)pmode]) {
+        DrawRGBAData(modedata[(int)pmode], r.x, r.y - modeht, modewd, modeht);
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1770,16 +1619,7 @@ void DrawView(int tileindex)
     }
     
     if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {
-        // this test is not really necessary, but it avoids unnecessary
-        // drawing of the paste image when user changes scale
-        if (pastemag != currmag &&
-            prectwd == viewptr->pasterect.width && prectwd > 1 &&
-            prectht == viewptr->pasterect.height && prectht > 1) {
-            // don't draw old paste image, a new one is coming very soon
-        } else {
-            CheckPasteImage();
-            //!!! DrawPasteImage();
-        }
+        DrawPasteImage();
     }
     
     if (viewptr->showcontrols) {

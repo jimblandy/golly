@@ -27,10 +27,6 @@
 
 // Routines and data for rendering the viewport window:
 
-void InitDrawingData();
-// Initialize drawing data (such as the image used to draw selections).
-// Must be called AFTER the viewport window has been created.
-
 void DestroyDrawingData();
 // Call this when the main window is destroyed.
 
@@ -48,13 +44,10 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
 
 class lifealgo;
 
-void CreatePasteImage(lifealgo* pastealgo, wxRect& bbox);
-// Create an image used to draw the given paste pattern.
+void InitPaste(lifealgo* pastealgo, wxRect& bbox);
+// Initialize some globals used to draw the pattern stored in pastealgo.
 // The given bounding box is not necessarily the *minimal* bounding box because
 // the paste pattern might have blank borders (in fact it could be empty).
-
-void DestroyPasteImage();
-// Destroy the image created above (call when user clicks to end paste).
 
 void CreateTranslucentControls();
 // Create the bitmap for translucent controls and set controlswd and

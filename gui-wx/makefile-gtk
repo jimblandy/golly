@@ -7,9 +7,8 @@
 # ../configure --with-gtk --disable-shared --enable-unicode --with-opengl
 # (depending on your g++ version you might also need --disable-precomp-headers)
 # make
-# su
-# make install
-# ldconfig
+# sudo make install
+# sudo ldconfig
 
 APP_VERSION = 2.8b1
 
