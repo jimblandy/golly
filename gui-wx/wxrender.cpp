@@ -121,6 +121,8 @@ wxRect pastebbox;                       // bounding box in cell coords (not nece
 unsigned char* modedata[4] = {NULL};    // RGBA data for drawing current paste mode (And, Copy, Or, Xor)
 const int modewd = 32;                  // width of each modedata
 const int modeht = 16;                  // height of each modedata
+GLfloat rightedge;                      // right edge of viewport
+GLfloat bottomedge;                     // bottomedge edge of viewport
 
 // for drawing translucent controls
 unsigned char* ctrlsbitmap = NULL;      // RGBA data for controls bitmap
@@ -609,6 +611,7 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
     // when number of states is 2
     int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
+    GLfloat halfcell = cellsize / 2.0;
 
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
@@ -634,9 +637,9 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
                     numcoords = 0;
                 }
                 // get mid point of cell
-                GLfloat midx = x + col*pmscale + cellsize/2.0;
-                GLfloat midy = y + row*pmscale + cellsize/2.0;
-                if (midx > float(currwd) || midy > float(currht)) {
+                GLfloat midx = x + col*pmscale + halfcell;
+                GLfloat midy = y + row*pmscale + halfcell;
+                if (midx > rightedge || midy > bottomedge) {
                     // midx,midy is outside viewport so we need to use FillRect to see partially
                     // visible cell at right/bottom edge
                     FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
@@ -661,6 +664,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
     // when numstates is > 2
     int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
+    GLfloat halfcell = cellsize / 2.0;
 
     const int maxcoords = 256;      // must be multiple of 2
     GLfloat points[256][maxcoords];
@@ -686,9 +690,9 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     numcoords[state] = 0;
                 }
                 // get mid point of cell
-                GLfloat midx = x + col*pmscale + cellsize/2.0;
-                GLfloat midy = y + row*pmscale + cellsize/2.0;
-                if (midx > float(currwd) || midy > float(currht)) {
+                GLfloat midx = x + col*pmscale + halfcell;
+                GLfloat midy = y + row*pmscale + halfcell;
+                if (midx > rightedge || midy > bottomedge) {
                     // midx,midy is outside viewport so we need to use FillRect to see partially
                     // visible cell at right/bottom edge
                     SetColor(currlayer->cellr[state],
@@ -1047,6 +1051,11 @@ void DrawPasteImage()
 
     currwd = tempview.getwidth();
     currht = tempview.getheight();
+
+    // adjust viewport edges used in DrawMagnifiedCells and DrawMagnifiedTwoStateCells
+    // (ie. only when scale is 1:2 or above)
+    rightedge = float(currwd - r.x);
+    bottomedge = float(currht - r.y);
     
     glTranslatef(r.x, r.y, 0);
     
@@ -1561,9 +1570,15 @@ void DrawView(int tileindex)
         }
     }
     
-    // draw pattern using a sequence of pixblit calls
     currwd = currlayer->view->getwidth();
     currht = currlayer->view->getheight();
+    
+    // these edges are only used in DrawMagnifiedCells and DrawMagnifiedTwoStateCells
+    // (ie. only when scale is 1:2 or above)
+    rightedge = float(currwd);
+    bottomedge = float(currht);
+    
+    // draw pattern using a sequence of pixblit calls
     if (scalepatterns && currmag <= -1 && currmag >= -4) {
         // current scale is from 2^1:1 to 2^4:1
         scalefactor = 1 << (-currmag);

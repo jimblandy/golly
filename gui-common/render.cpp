@@ -98,13 +98,8 @@ static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
 static lifealgo* pastealgo;             // universe containing paste pattern
 static gRect pastebbox;                 // bounding box in cell coords (not necessarily minimal)
 static bool drawing_paste = false;      // in DrawPasteImage?
-
-/*!!!
-// for drawing multiple layers
-static int layerwd = -1;                // width of layer bitmap
-static int layerht = -1;                // height of layer bitmap
-static wxBitmap* layerbitmap = NULL;    // layer bitmap
-*/
+GLfloat rightedge;                      // right edge of viewport
+GLfloat bottomedge;                     // bottomedge edge of viewport
 
 // -----------------------------------------------------------------------------
 
@@ -246,7 +241,7 @@ bool InitOGLES2()
     }
     
     // get the attribute and uniform locations
-    // (note that for IE 11 we must set the appropriate program???!!!)
+    // (note that for IE 11 we must set the appropriate program???)
     glUseProgram(pointProgram);
     positionLoc = glGetAttribLocation(pointProgram, "v_Position");
     pointSizeLoc = glGetUniformLocation(pointProgram, "PointSize");
@@ -594,6 +589,7 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
     // when number of states is 2
     int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
+    GLfloat halfcell = cellsize / 2.0;
 
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
@@ -623,12 +619,12 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
                     numcoords = 0;
                 }
                 // get mid point of cell
-                GLfloat midx = XCOORD(x + col*pmscale + cellsize/2.0);
-                GLfloat midy = YCOORD(y + row*pmscale + cellsize/2.0);
+                GLfloat midx = XCOORD(x + col*pmscale + halfcell);
+                GLfloat midy = YCOORD(y + row*pmscale + halfcell);
                 #ifdef WEB_GUI
                     if (midx > 1.0 || midy < -1.0)
                 #else
-                    if (midx > float(currwd) || midy > float(currht))
+                    if (midx > rightedge || midy > bottomedge)
                 #endif
                 {   // midx,midy is outside viewport so we need to use FillRect to see partially
                     // visible cell at right/bottom edge
@@ -660,6 +656,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
     // when numstates is > 2
     int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
+    GLfloat halfcell = cellsize / 2.0;
 
     const int maxcoords = 256;      // must be multiple of 2
     GLfloat points[256][maxcoords];
@@ -689,12 +686,12 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     numcoords[state] = 0;
                 }
                 // get mid point of cell
-                GLfloat midx = XCOORD(x + col*pmscale + cellsize/2.0);
-                GLfloat midy = YCOORD(y + row*pmscale + cellsize/2.0);
+                GLfloat midx = XCOORD(x + col*pmscale + halfcell);
+                GLfloat midy = YCOORD(y + row*pmscale + halfcell);
                 #ifdef WEB_GUI
                     if (midx > 1.0 || midy < -1.0)
                 #else
-                    if (midx > float(currwd) || midy > float(currht))
+                    if (midx > rightedge || midy > bottomedge)
                 #endif
                 {   // midx,midy is outside viewport so we need to use FillRect to see partially
                     // visible cell at right/bottom edge
@@ -1077,6 +1074,11 @@ void DrawPasteImage()
         glViewport(ileft, saveht-currht-itop, currwd, currht);
     #else
         glTranslatef(ileft, itop, 0);
+
+        // adjust viewport edges used in DrawMagnifiedCells and DrawMagnifiedTwoStateCells
+        // (ie. only when scale is 1:2 or above)
+        rightedge = float(currwd - ileft);
+        bottomedge = float(currht - itop);
     #endif
 
     // draw paste pattern
@@ -1253,147 +1255,10 @@ void DrawGridLines(int wd, int ht)
 
 // -----------------------------------------------------------------------------
 
-/*!!!
-
-void DrawOneLayer(EAGLContext* dc)
-{
-    wxMemoryDC layerdc;
-    layerdc.SelectObject(*layerbitmap);
-
-    if (showicons && currlayer->view->getmag() > 2) {
-        // only show icons at scales 1:8 and above
-        if (currlayer->view->getmag() == 3) {
-            icontextures = currlayer->textures7x7;
-        } else if (currlayer->view->getmag() == 4) {
-            icontextures = currlayer->textures15x15;
-        } else {
-            icontextures = currlayer->textures31x31;
-        }
-    }
-
-    currlayer->algo->draw(*currlayer->view, renderer);
-    layerdc.SelectObject(wxNullBitmap);
-
-    // make dead pixels 100% transparent; live pixels use opacity setting
-    MaskDeadPixels(layerbitmap, layerwd, layerht, int(2.55 * opacity));
-
-    // draw result
-    dc.DrawBitmap(*layerbitmap, 0, 0, true);
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawStackedLayers(EAGLContext* dc)
-{
-    // check if layerbitmap needs to be created or resized
-    if ( layerwd != currlayer->view->getwidth() ||
-        layerht != currlayer->view->getheight() ) {
-        layerwd = currlayer->view->getwidth();
-        layerht = currlayer->view->getheight();
-        delete layerbitmap;
-        // create a bitmap with depth 32 so it has an alpha channel
-        layerbitmap = new wxBitmap(layerwd, layerht, 32);
-        if (!layerbitmap) {
-            Fatal(_("Not enough memory for layer bitmap!"));
-            return;
-        }
-    }
-
-    // temporarily turn off grid lines
-    bool saveshow = showgridlines;
-    showgridlines = false;
-
-    // draw patterns in layers 1..numlayers-1
-    for ( int i = 1; i < numlayers; i++ ) {
-        Layer* savelayer = currlayer;
-        currlayer = GetLayer(i);
-
-        // use real current layer's viewport
-        viewport* saveview = currlayer->view;
-        currlayer->view = savelayer->view;
-
-        // avoid drawing a cloned layer more than once??? draw first or last clone???
-
-        if ( !currlayer->algo->isEmpty() ) {
-            DrawOneLayer(dc);
-        }
-
-        // draw this layer's selection if necessary
-        wxRect r;
-        if ( currlayer->currsel.Visible(&r) ) {
-            DrawSelection(dc, r, i == currindex);
-        }
-
-        // restore viewport and currlayer
-        currlayer->view = saveview;
-        currlayer = savelayer;
-    }
-
-    showgridlines = saveshow;
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawTileFrame(EAGLContext* dc, wxRect& trect, wxBrush& brush, int wd)
-{
-    trect.Inflate(wd);
-    wxRect r = trect;
-
-    r.height = wd;
-    FillRect(dc, r, brush);       // top edge
-
-    r.y += trect.height - wd;
-    FillRect(dc, r, brush);       // bottom edge
-
-    r = trect;
-    r.width = wd;
-    FillRect(dc, r, brush);       // left edge
-
-    r.x += trect.width - wd;
-    FillRect(dc, r, brush);       // right edge
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawTileBorders(EAGLContext* dc)
-{
-    if (tileborder <= 0) return;    // no borders
-
-    // draw tile borders in bigview window
-    int wd, ht;
-    bigview->GetClientSize(&wd, &ht);
-    if (wd < 1 || ht < 1) return;
-
-    wxBrush brush;
-    // most people will choose either a very light or very dark color for dead cells,
-    // so draw mid gray border around non-current tiles
-    brush.SetColour(144, 144, 144);
-    wxRect trect;
-    for ( int i = 0; i < numlayers; i++ ) {
-        if (i != currindex) {
-            trect = GetLayer(i)->tilerect;
-            DrawTileFrame(dc, trect, brush, tileborder);
-        }
-    }
-
-    // draw green border around current tile
-    trect = GetLayer(currindex)->tilerect;
-    brush.SetColour(0, 255, 0);
-    DrawTileFrame(dc, trect, brush, tileborder);
-}
-
-!!!*/
-
-// -----------------------------------------------------------------------------
-
 void DrawPattern(int tileindex)
 {
     gRect r;
     int colorindex = currindex;
-    /*!!!
-    Layer* savelayer = NULL;
-    viewport* saveview0 = NULL;
-    */
 
     // fill the background with state 0 color
     glClearColor(currlayer->cellr[0]/255.0,
@@ -1437,36 +1302,6 @@ void DrawPattern(int tileindex)
         return;
     }
 
-    /*!!!
-    if ( numlayers > 1 && tilelayers ) {
-        if ( tileindex < 0 ) {
-            DrawTileBorders(dc);
-            return;
-        }
-        // tileindex >= 0 so temporarily change some globals to draw this tile
-        if ( syncviews && tileindex != currindex ) {
-            // make sure this layer uses same location and scale as current layer
-            GetLayer(tileindex)->view->setpositionmag(currlayer->view->x,
-                                                      currlayer->view->y,
-                                                      currlayer->view->getmag());
-        }
-        savelayer = currlayer;
-        currlayer = GetLayer(tileindex);
-        viewptr = currlayer->tilewin;
-        colorindex = tileindex;
-    } else if ( numlayers > 1 && stacklayers ) {
-        // draw all layers starting with layer 0 but using current layer's viewport
-        savelayer = currlayer;
-        if ( currindex != 0 ) {
-            // change currlayer to layer 0
-            currlayer = GetLayer(0);
-            saveview0 = currlayer->view;
-            currlayer->view = savelayer->view;
-        }
-        colorindex = 0;
-    }
-    */
-
     if (showicons && currlayer->view->getmag() > 2) {
         // only show icons at scales 1:8 and above
         if (currlayer->view->getmag() == 3) {
@@ -1480,6 +1315,11 @@ void DrawPattern(int tileindex)
 
     currwd = currlayer->view->getwidth();
     currht = currlayer->view->getheight();
+    
+    // these edges are only used in DrawMagnifiedCells and DrawMagnifiedTwoStateCells
+    // (ie. only when scale is 1:2 or above)
+    rightedge = float(currwd);
+    bottomedge = float(currht);
 
     // draw pattern using a sequence of pixblit calls
     currlayer->algo->draw(*currlayer->view, renderer);
@@ -1497,28 +1337,7 @@ void DrawPattern(int tileindex)
         DrawSelection(r, colorindex == currindex);
     }
 
-    /*!!!
-    if ( numlayers > 1 && stacklayers ) {
-        // must restore currlayer before we call DrawStackedLayers
-        currlayer = savelayer;
-        if ( saveview0 ) {
-            // restore layer 0's viewport
-            GetLayer(0)->view = saveview0;
-        }
-        // draw layers 1, 2, ... numlayers-1
-        DrawStackedLayers(dc);
-    }
-    */
-
     if (waitingforpaste) {
         DrawPasteImage();
     }
-
-    /*!!!
-    if ( numlayers > 1 && tilelayers ) {
-        // restore globals changed above
-        currlayer = savelayer;
-        viewptr = currlayer->tilewin;
-    }
-    */
 }
