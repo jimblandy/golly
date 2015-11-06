@@ -901,7 +901,6 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
         oldcol = *borderrgb;
         if (oldcol != newcol) {
             *borderrgb = newcol;
-            SetBrushesAndPens();
             DoAutoUpdate();
         }
         
@@ -909,7 +908,6 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
         oldcol = *pastergb;
         if (oldcol != newcol) {
             *pastergb = newcol;
-            SetBrushesAndPens();
             DoAutoUpdate();
         }
         
@@ -917,7 +915,6 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
         oldcol = *selectrgb;
         if (oldcol != newcol) {
             *selectrgb = newcol;
-            SetBrushesAndPens();
             DoAutoUpdate();
         }
         
@@ -925,7 +922,7 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
         oldcol = algoinfo[HLIFE_ALGO]->statusrgb;
         if (oldcol != newcol) {
             algoinfo[HLIFE_ALGO]->statusrgb = newcol;
-            SetBrushesAndPens();
+            UpdateStatusBrushes();
             DoAutoUpdate();
         }
         
@@ -933,7 +930,7 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
         oldcol = algoinfo[QLIFE_ALGO]->statusrgb;
         if (oldcol != newcol) {
             algoinfo[QLIFE_ALGO]->statusrgb = newcol;
-            SetBrushesAndPens();
+            UpdateStatusBrushes();
             DoAutoUpdate();
         }
         
@@ -945,7 +942,7 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
                 oldcol = algoinfo[i]->statusrgb;
                 if (oldcol != newcol) {
                     algoinfo[i]->statusrgb = newcol;
-                    SetBrushesAndPens();
+                    UpdateStatusBrushes();
                     DoAutoUpdate();
                 }
                 return true;

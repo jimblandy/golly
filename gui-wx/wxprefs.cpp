@@ -196,8 +196,6 @@ wxArrayString namedrules;        // initialized in GetPrefs
 wxColor* borderrgb;              // color for border around bounded grid
 wxColor* selectrgb;              // color for selected cells
 wxColor* pastergb;               // color for pasted pattern
-wxBrush* borderbrush;            // brush for filling grid border
-wxPen* pastepen;                 // for drawing paste rect
 
 // these settings must be global -- they are changed by GetPrefs *before* the
 // view window is created
@@ -1279,13 +1277,11 @@ void SetPasteMode(const char* s)
 
 // -----------------------------------------------------------------------------
 
-void SetBrushesAndPens()
+void UpdateStatusBrushes()
 {
     for (int i = 0; i < NumAlgos(); i++) {
         algoinfo[i]->statusbrush->SetColour(algoinfo[i]->statusrgb);
     }
-    borderbrush->SetColour(*borderrgb);
-    pastepen->SetColour(*pastergb);
 }
 
 // -----------------------------------------------------------------------------
@@ -1296,11 +1292,8 @@ void CreateDefaultColors()
     selectrgb  = new wxColor( 75, 175,   0);  // dark green (will be 50% transparent)
     pastergb   = new wxColor(255,   0,   0);  // red
     
-    borderbrush = new wxBrush(*wxBLACK);
-    pastepen = new wxPen(*wxBLACK);
-    
-    // set their default colors (in case prefs file doesn't exist)
-    SetBrushesAndPens();
+    // set default status brushes (in case prefs file doesn't exist)
+    UpdateStatusBrushes();
 }
 
 // -----------------------------------------------------------------------------
@@ -1310,8 +1303,6 @@ void FreeDefaultColors()
     delete borderrgb;
     delete selectrgb;
     delete pastergb;
-    delete borderbrush;
-    delete pastepen;
 }
 
 // -----------------------------------------------------------------------------
@@ -2312,8 +2303,8 @@ void GetPrefs()
     
     reader.close();
     
-    // colors for brushes and pens may have changed
-    SetBrushesAndPens();
+    // colors for status brushes may have changed
+    UpdateStatusBrushes();
     
     // showpatterns and showscripts must not both be true
     if (showpatterns && showscripts) showscripts = false;
@@ -4949,8 +4940,7 @@ bool ChangePrefs(const wxString& page)
         result = false;
     }
     
-    // update colors for global brushes and pens
-    SetBrushesAndPens();
+    UpdateStatusBrushes();
     
     for (int i = 0; i < NumAlgos(); i++) {
         delete save_info[i];

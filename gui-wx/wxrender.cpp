@@ -86,7 +86,7 @@ hlifealgo::draw() in hlifedraw.cpp.
 #include "viewport.h"
 
 #include "wxgolly.h"       // for viewptr, bigview, statusptr
-#include "wxutils.h"       // for Warning, Fatal, FillRect
+#include "wxutils.h"       // for Warning
 #include "wxprefs.h"       // for showgridlines, mingridmag, swapcolors, etc
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
@@ -396,7 +396,7 @@ void DrawMaskedTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 
     // first we have to convert the given RGB data to RGBA data,
     // where dead pixels have alpha set to 0 and live pixels are set to live_alpha
-    // maybe it's time to change pixblit() to return RGBA data???!!!
+    // maybe it's time to change pixblit() to return RGBA data???!!! and remove killrect()
     // and maybe draw() could pass in dead_alpha and live_alpha???!!!
     if (masklen != w*h*4) {
         masklen = w*h*4;
@@ -830,25 +830,26 @@ void InitPaste(lifealgo* palgo, wxRect& bbox)
     // create bitmaps for drawing each paste mode
     paste_mode savemode = pmode;
     for (int i = 0; i < 4; i++) {
-        pmode = (paste_mode) i;     // GetPasteMode() uses pmode
+        pmode = (paste_mode) i;
+        wxString pmodestr = wxString(GetPasteMode(),wxConvLocal);   // uses pmode
 
         wxBitmap modemap(modewd, modeht, 32);
         wxMemoryDC dc;
         dc.SelectObject(modemap);
-        
-        // still minor probs with this approach!!! draw black text on white rect and remove pastepen???
-        unsigned char deadr = currlayer->cellr[0];
-        unsigned char deadg = currlayer->cellg[0];
-        unsigned char deadb = currlayer->cellb[0];
+
         wxRect r(0, 0, modewd, modeht);
-        wxBrush brush(wxColor(deadr,deadg,deadb));
+        wxBrush brush(*wxWHITE);
         FillRect(dc, r, brush);
         
         dc.SetFont(*statusptr->GetStatusFont());
-        dc.SetBackgroundMode(wxTRANSPARENT);
-        dc.SetTextForeground(*pastergb);
-        dc.SetPen(*pastepen);
-        wxString pmodestr = wxString(GetPasteMode(),wxConvLocal);
+        dc.SetBackgroundMode(wxSOLID);
+        dc.SetTextBackground(*wxWHITE);
+        dc.SetTextForeground(*wxBLACK);
+        dc.SetPen(*wxBLACK);
+        
+        int textwd, textht;
+        dc.GetTextExtent(pmodestr, &textwd, &textht);
+        textwd += 4;
         dc.DrawText(pmodestr, 2, modeht - statusptr->GetTextAscent() - 4);
         
         dc.SelectObject(wxNullBitmap);
@@ -866,21 +867,16 @@ void InitPaste(lifealgo* palgo, wxRect& bbox)
                 for (int y = 0; y < modeht; y++) {
                     wxAlphaPixelData::Iterator rowstart = p;
                     for (int x = 0; x < modewd; x++) {
-                        unsigned char r = p.Red();
-                        unsigned char g = p.Green();
-                        unsigned char b = p.Blue();
-                        unsigned char a = p.Alpha();
-                        if (r == deadr && g == deadg && b == deadb) {
-                            // make background transparent
+                        if (x > textwd) {
                             m[j++] = 0;
                             m[j++] = 0;
                             m[j++] = 0;
                             m[j++] = 0;
                         } else {
-                            m[j++] = r;
-                            m[j++] = g;
-                            m[j++] = b;
-                            m[j++] = a;
+                            m[j++] = p.Red();
+                            m[j++] = p.Green();
+                            m[j++] = p.Blue();
+                            m[j++] = p.Alpha();
                         }
                         p++;
                     }
@@ -1096,7 +1092,7 @@ void DrawPasteImage()
     
     // show current paste mode
     if (r.y > 0 && modedata[(int)pmode]) {
-        DrawRGBAData(modedata[(int)pmode], r.x, r.y - modeht, modewd, modeht);
+        DrawRGBAData(modedata[(int)pmode], r.x, r.y - modeht - 1, modewd, modeht);
     }
 }
 
