@@ -195,9 +195,7 @@ void CreateTranslucentControls()
     
     // create ctrlsbitmap and initialize its RGBA data based on pixels in image
     ctrlsbitmap = (unsigned char*) malloc(controlswd * controlsht * 4);
-    if (!ctrlsbitmap) {
-        Warning(_("Not enough memory for controls bitmap!"));
-    } else {
+    if (ctrlsbitmap) {
         int p = 0;
         for ( int y = 0; y < controlsht; y++ ) {
             for ( int x = 0; x < controlswd; x++ ) {
@@ -221,11 +219,67 @@ void CreateTranslucentControls()
         }
     }
     
-    // create bitmap for darkening a clicked button
+    // allocate bitmap for darkening a clicked button
     darkbutt = (unsigned char*) malloc(buttsize * buttsize * 4);
-    if (!darkbutt) {
-        Warning(_("Not enough memory for dark button!"));
+    
+    // create bitmaps for drawing each paste mode
+    paste_mode savemode = pmode;
+    for (int i = 0; i < 4; i++) {
+        pmode = (paste_mode) i;
+        wxString pmodestr = wxString(GetPasteMode(),wxConvLocal);   // uses pmode
+
+        wxBitmap modemap(modewd, modeht, 32);
+        wxMemoryDC dc;
+        dc.SelectObject(modemap);
+
+        wxRect r(0, 0, modewd, modeht);
+        wxBrush brush(*wxWHITE);
+        FillRect(dc, r, brush);
+        
+        dc.SetFont(*statusptr->GetStatusFont());
+        dc.SetBackgroundMode(wxSOLID);
+        dc.SetTextBackground(*wxWHITE);
+        dc.SetTextForeground(*wxBLACK);
+        dc.SetPen(*wxBLACK);
+        
+        int textwd, textht;
+        dc.GetTextExtent(pmodestr, &textwd, &textht);
+        textwd += 4;
+        dc.DrawText(pmodestr, 2, modeht - statusptr->GetTextAscent() - 4);
+        
+        dc.SelectObject(wxNullBitmap);
+        
+        // now convert modemap data into RGBA data suitable for passing into DrawRGBAData
+        modedata[i] = (unsigned char*) malloc(modewd * modeht * 4);
+        if (modedata[i]) {
+            int j = 0;
+            unsigned char* m = modedata[i];
+            wxAlphaPixelData data(modemap);
+            if (data) {
+                wxAlphaPixelData::Iterator p(data);
+                for (int y = 0; y < modeht; y++) {
+                    wxAlphaPixelData::Iterator rowstart = p;
+                    for (int x = 0; x < modewd; x++) {
+                        if (x > textwd) {
+                            m[j++] = 0;
+                            m[j++] = 0;
+                            m[j++] = 0;
+                            m[j++] = 0;
+                        } else {
+                            m[j++] = p.Red();
+                            m[j++] = p.Green();
+                            m[j++] = p.Blue();
+                            m[j++] = 255;
+                        }
+                        p++;
+                    }
+                    p = rowstart;
+                    p.OffsetY(data, 1);
+                }
+            }
+        }
     }
+    pmode = savemode;
 }
 
 // -----------------------------------------------------------------------------
@@ -826,67 +880,6 @@ void InitPaste(lifealgo* palgo, wxRect& bbox)
     // set globals used in DrawPasteImage
     pastealgo = palgo;
     pastebbox = bbox;
-    
-    // create bitmaps for drawing each paste mode
-    paste_mode savemode = pmode;
-    for (int i = 0; i < 4; i++) {
-        pmode = (paste_mode) i;
-        wxString pmodestr = wxString(GetPasteMode(),wxConvLocal);   // uses pmode
-
-        wxBitmap modemap(modewd, modeht, 32);
-        wxMemoryDC dc;
-        dc.SelectObject(modemap);
-
-        wxRect r(0, 0, modewd, modeht);
-        wxBrush brush(*wxWHITE);
-        FillRect(dc, r, brush);
-        
-        dc.SetFont(*statusptr->GetStatusFont());
-        dc.SetBackgroundMode(wxSOLID);
-        dc.SetTextBackground(*wxWHITE);
-        dc.SetTextForeground(*wxBLACK);
-        dc.SetPen(*wxBLACK);
-        
-        int textwd, textht;
-        dc.GetTextExtent(pmodestr, &textwd, &textht);
-        textwd += 4;
-        dc.DrawText(pmodestr, 2, modeht - statusptr->GetTextAscent() - 4);
-        
-        dc.SelectObject(wxNullBitmap);
-        
-        // now convert modemap data into RGBA data suitable for passing into DrawRGBAData
-        if (!modedata[i]) {
-            modedata[i] = (unsigned char*) malloc(modewd * modeht * 4);
-        }
-        if (modedata[i]) {
-            int j = 0;
-            unsigned char* m = modedata[i];
-            wxAlphaPixelData data(modemap);
-            if (data) {
-                wxAlphaPixelData::Iterator p(data);
-                for (int y = 0; y < modeht; y++) {
-                    wxAlphaPixelData::Iterator rowstart = p;
-                    for (int x = 0; x < modewd; x++) {
-                        if (x > textwd) {
-                            m[j++] = 0;
-                            m[j++] = 0;
-                            m[j++] = 0;
-                            m[j++] = 0;
-                        } else {
-                            m[j++] = p.Red();
-                            m[j++] = p.Green();
-                            m[j++] = p.Blue();
-                            m[j++] = p.Alpha();
-                        }
-                        p++;
-                    }
-                    p = rowstart;
-                    p.OffsetY(data, 1);
-                }
-            }
-        }
-    }
-    pmode = savemode;
 }
 
 // -----------------------------------------------------------------------------
