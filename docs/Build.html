@@ -37,35 +37,66 @@ Visit <a href="http://www.wxwidgets.org/downloads">http://www.wxwidgets.org/down
 and grab the appropriate source archive for your platform:
 
 <ul>
-<li> On Windows (XP+), get the wxMSW source installer.
-<li> On Mac OS X (10.6+), get the 2.9.x source archive with Unix line endings.
-<li> On Linux, get the wxGTK source archive.
+<li> On Windows, get the wxMSW source installer.
+<li> On Mac OS X or Linux, get the source archive for the latest stable release.
 </ul>
 
 <p>
 Golly should compile with wxWidgets 2.8.0 or later, but it's best to
-use the latest version.  Mac users should get 2.9 or later (this is necessary
-for a 64-bit Cocoa build).
+use the latest stable version (3.0.2 at time of writing).
+Mac users should definitely get 3.0 or later.
 
 <a name="wxwin"></a>
 <h3>On Windows</h3>
 
 <p>
-For a 64-bit build, open a x64 Visual Studio command prompt (e.g. VS2012 x64 Cross Tools Command Prompt) and type:
+If your wxWidgets version is earlier than 3.0 then you need to enable OpenGL.
+Open <tt>\wxWidgets\include\wx\msw\setup.h</tt> in your text editor, find the line
+"<tt>#define wxUSE_GLCANVAS 0</tt>" and change the value to 1.
+
+<p>
+If you only want to build one wxWidgets configuration (e.g. a 32-bit release) then
+it's a good idea to edit <tt>\wxWidgets\build\msw\config.vc</tt> and set all these options:
 
 <pre>
-   cd \wxWidgets\build\msw
-   nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=AMD64
-   nmake -f makefile.vc BUILD=debug RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=1 DEBUG_FLAG=1 TARGET_CPU=AMD64
+   BUILD=release
+   DEBUG_INFO=0
+   DEBUG_FLAG=0
+   UNICODE=1             (already 1 in wxWidgets 3.0+)
+   USE_OPENGL=1          (already 1 in wxWidgets 3.0+)
+   TARGET_CPU=X64        (only if you want a 64-bit build)
+   RUNTIME_LIBS=static
 </pre>
 
 <p>
-For a 32-bit build, open a x32 Visual Studio command prompt (e.g. Developer Command Prompt for VS2012) and type:
+Then you can build wxWidgets very simply:
 
 <pre>
    cd \wxWidgets\build\msw
-   nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
-   nmake -f makefile.vc BUILD=debug RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=1 DEBUG_FLAG=1
+   nmake -f makefile.vc
+</pre>
+
+<p>
+If you don't edit config.vc then you'll need to pass all the options to nmake, like so:
+
+<p>
+For a 64-bit release build, open a x64 Visual Studio command prompt
+(e.g. VS2012 x64 Cross Tools Command Prompt) and type:
+
+<pre>
+   cd \wxWidgets\build\msw
+   nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=X64
+                        UNICODE=1 USE_OPENGL=1
+</pre>
+
+<p>
+For a 32-bit release build, open a x32 Visual Studio command prompt
+(e.g. Developer Command Prompt for VS2012) and type:
+
+<pre>
+   cd \wxWidgets\build\msw
+   nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0
+                        UNICODE=1 USE_OPENGL=1
 </pre>
 
 
@@ -77,7 +108,7 @@ Unpack the wxWidgets source archive wherever you like, start up Terminal
 and type these commands (using the correct path and version number):
 
 <pre>
-   cd /path/to/wxWidgets-2.9.4
+   cd /path/to/wxWidgets-3.0.2
    mkdir build-osx
    cd build-osx
    ../configure --with-osx_cocoa --disable-shared --enable-unicode
@@ -110,14 +141,23 @@ because any update requests faster than about 30Hz will simply be ignored!
 <h3>On Linux</h3>
 
 <p>
-Unpack the wxGTK source archive wherever you like, start up a terminal
+Before building the wxWidgets libraries you might need to install some packages
+for OpenGL development.  For example, on Ubuntu:
+
+<pre>
+   sudo apt-get install mesa-common-dev
+   sudo apt-get install freeglut3-dev
+</pre>
+
+<p>
+Unpack the wxWidgets source archive wherever you like, start up a terminal
 session and type these commands (using the correct version number):
 
 <pre>
-   cd /path/to/wxGTK-2.8.12
+   cd /path/to/wxWidgets-3.0.2
    mkdir build-gtk
    cd build-gtk
-   ../configure --with-gtk --disable-shared --enable-unicode
+   ../configure --with-gtk --disable-shared --enable-unicode --with-opengl
    make
    sudo make install
    sudo ldconfig
@@ -171,19 +211,30 @@ The headers for Perl and Python must also be included, so change the paths for
 PERL_INCLUDE and PYTHON_INCLUDE if necessary.  Now you're ready to build Golly.
 
 <p>
-For a 64-bit build, open a x64 Visual Studio command prompt (e.g. VS2012 x64 Cross Tools Command Prompt) and type:
+If you edited config.vc to set all the options then it's simple:
 
 <pre>
    cd \path\to\golly\gui-wx
-   nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=AMD64
+   nmake -f makefile-win
 </pre>
 
 <p>
-For a 32-bit build, open a x32 Visual Studio command prompt (e.g. Developer Command Prompt for VS2012) and type:
+Otherwise you'll need to specify all the same options that were used to build wxWidgets:
+
+<p>
+For a 64-bit build:
 
 <pre>
-   cd \path\to\golly\gui-wx
-   nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
+   nmake -f makefile-win BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=X64
+                         UNICODE=1 USE_OPENGL=1
+</pre>
+
+<p>
+For a 32-bit build:
+
+<pre>
+   nmake -f makefile-win BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0
+                         UNICODE=1 USE_OPENGL=1
 </pre>
 
 <a name="gmac"></a>
@@ -317,7 +368,8 @@ wxWidgets_ROOT_DIR to the correct folder and re-configure.
 If running CMake on the command-line, the location of wxWidgets can be specified like this:
 <pre>
 cmake -G"NMake Makefiles" -DwxWidgets_ROOT_DIR=C:/wxWidgets/wxWidgets-3.0.1_vs2012_x64_staticCRT 
--DwxWidgets_LIB_DIR=C:\wxWidgets\wxWidgets-3.0.1_vs2012_x64_staticCRT\lib\vc_x64_lib c:\golly-git\golly-code\gui-wx
+-DwxWidgets_LIB_DIR=C:\wxWidgets\wxWidgets-3.0.1_vs2012_x64_staticCRT\lib\vc_x64_lib 
+c:\golly-git\golly-code\gui-wx
 </pre>
 (this example is for a x64 build using NMake).
 </ul>
@@ -383,6 +435,11 @@ a .tar.gz file.  You should see the following directories:
 <p><b>gui-ios</b><p>
 <dd>
    Contains source code and resources for the iPad version of Golly.
+</dd>
+
+<p><b>gui-web</b><p>
+<dd>
+   Contains source code and resources for a web version of Golly.
 </dd>
 
 <p><b>gui-wx</b><p>
@@ -496,7 +553,7 @@ Each module is described in (roughly) top-down order, and some key routines are 
 
 <p><b>wxrender.*</b><p>
 <dd>
-   Implements rendering routines for updating the viewport.<br>
+   Implements routines for rendering the viewport using OpenGL.<br>
    DrawView() draws the pattern, grid lines, selection, etc.
 </dd>
 
@@ -580,7 +637,7 @@ Each module is described in (roughly) top-down order, and some key routines are 
 
 <p>
 The <b>gollybase</b> directory contains low-level code used by all the
-various clients (desktop Golly, bgolly, and the Android/iPad versions):
+various clients (desktop Golly, bgolly, and the Android/iPad/web versions):
 
 <p><b>platform.h</b><p>
 <dd>
@@ -623,7 +680,6 @@ various clients (desktop Golly, bgolly, and the Android/iPad versions):
 <p><b>liferender.*</b><p>
 <dd>
    Defines abstract routines for rendering a pattern:<br>
-   liferender::killrect() fills an area with the dead cell color.<br>
    liferender::pixblit() draws an area with at least one live cell.
 </dd>
 

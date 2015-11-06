@@ -8,29 +8,29 @@
 #
 #   Build wxWidgets:
 #    cd \wxWidgets\build\msw
-#    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
+#    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0 UNICODE=1 USE_OPENGL=1
 #   Build Golly:
-#    cd \golly\src
-#    nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0
+#    cd \golly\gui-wx
+#    nmake -f makefile-win BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0 UNICODE=1 USE_OPENGL=1
 #
 # On 64-bit Windows: (from a Visual Studio 64-bit command prompt)
 #
 #   Build wxWidgets:
 #    cd \wxWidgets\build\msw
-#    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=AMD64
+#    nmake -f makefile.vc BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0 UNICODE=1 USE_OPENGL=1 TARGET_CPU=X64
 #   Build Golly:
-#    cd \golly\src
-#    nmake -f makefile-win BUILD=release RUNTIME_LIBS=static UNICODE=1 DEBUG_INFO=0 DEBUG_FLAG=0 TARGET_CPU=AMD64
+#    cd \golly\gui-wx
+#    nmake -f makefile-win BUILD=release RUNTIME_LIBS=static DEBUG_INFO=0 DEBUG_FLAG=0 UNICODE=1 USE_OPENGL=1 TARGET_CPU=X64
 # 
-# If you only build one wxWidgets configuration (e.g. 32-bit release) then you can edit
-# \wxWidgets\build\msw\config.vc with those options. Then you can build wxWidgets and Golly
+# If you only build one wxWidgets configuration (e.g. a 32-bit release) then you can edit
+# \wxWidgets\build\msw\config.vc and set all those options. Then you can build wxWidgets and Golly
 # simply with:
 #
 #   Build wxWidgets:
 #    cd \wxWidgets\build\msw
 #    nmake -f makefile.vc
 #   Build Golly:
-#    cd \golly\src
+#    cd \golly\gui-wx
 #    nmake -f makefile-win
 
 #   All system-dependent changes belong in local-win.mk
@@ -54,9 +54,9 @@ GUIDIRS = configure bitmaps icons
 BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe \
    $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html
 
-!if "$(TARGET_CPU)" == "AMD64"
-LIBDIRNAME = $(WX_DIR)\lib\vc_amd64_$(LIBTYPE_SUFFIX)$(CFG)
-WX_CPU_DEF = WX_CPU_AMD64
+!if "$(TARGET_CPU)" == "X64"
+LIBDIRNAME = $(WX_DIR)\lib\vc_x64_$(LIBTYPE_SUFFIX)$(CFG)
+WX_CPU_DEF = WX_CPU_X64
 !else
 LIBDIRNAME = $(WX_DIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
 WX_CPU_DEF = WX_CPU_X86
