@@ -94,7 +94,7 @@ extern bool showexact;           // show exact numbers in status bar?
 extern bool showtimeline;        // show timeline bar?
 extern bool showgridlines;       // display grid lines?
 extern bool showicons;           // display icons for cell states?
-extern bool scalepatterns;       // scale patterns when zoomed out?
+extern bool smartscale;          // smarter scaling when zoomed out?
 extern bool swapcolors;          // swap colors used for cell states?
 extern bool scrollpencil;        // scroll if pencil cursor is dragged outside view?
 extern bool scrollcross;         // scroll if cross cursor is dragged outside view?
@@ -219,7 +219,6 @@ typedef enum {
     DO_RUNSCRIPT,                 // run script...
     DO_SAVEXRLE,                  // save extended rle
     DO_SAVE,                      // save pattern...
-    DO_SCALEPATTERNS,             // scale patterns when zoomed out
     DO_DOWN,                      // scroll down
     DO_LEFT,                      // scroll left
     DO_RIGHT,                     // scroll right
@@ -258,6 +257,7 @@ typedef enum {
     DO_SHRINKFIT,                 // shrink and fit
     DO_SHRINK,                    // shrink selection
     DO_SLOWER,                    // slower
+    DO_SMARTSCALE,                // smarter scaling
     DO_STACK,                     // stack layers
     DO_STARTSTOP,                 // start/stop generating
     DO_RECORD,                    // start/stop recording

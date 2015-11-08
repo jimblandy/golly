@@ -1568,7 +1568,7 @@ void DrawView(int tileindex)
     bottomedge = float(currht);
     
     // draw pattern using a sequence of pixblit calls
-    if (scalepatterns && currmag <= -1 && currmag >= -4) {
+    if (smartscale && currmag <= -1 && currmag >= -4) {
         // current scale is from 2^1:1 to 2^4:1
         scalefactor = 1 << (-currmag);
         

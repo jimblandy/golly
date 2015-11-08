@@ -338,7 +338,7 @@ enum {
     ID_GRID,
     ID_ICONS,
     ID_INVERT,
-    ID_SCALEPATTERNS,
+    ID_SMARTSCALE,
     ID_TIMELINE,
     ID_INFO,
     

@@ -1225,9 +1225,9 @@ void PatternView::ToggleCellColors()
 
 // -----------------------------------------------------------------------------
 
-void PatternView::ToggleScalePatterns()
+void PatternView::ToggleSmarterScaling()
 {
-    scalepatterns = !scalepatterns;
+    smartscale = !smartscale;
     mainptr->UpdateEverything();
 }
 
@@ -1710,7 +1710,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
         case DO_SHOWICONS:   ToggleCellIcons(); break;
         case DO_INVERT:      ToggleCellColors(); break;
-        case DO_SCALEPATTERNS:  ToggleScalePatterns(); break;
+        case DO_SMARTSCALE:  ToggleSmarterScaling(); break;
         case DO_SHOWGRID:    ToggleGridLines(); break;
         case DO_SHOWTIME:    ToggleTimelineBar(); break;
         case DO_INFO:        if (!busy) mainptr->ShowPatternInfo(); break;

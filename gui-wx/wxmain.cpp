@@ -768,7 +768,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_GRID,         active);
         mbar->Enable(ID_ICONS,        active);
         mbar->Enable(ID_INVERT,       active);
-        mbar->Enable(ID_SCALEPATTERNS, active);
+        mbar->Enable(ID_SMARTSCALE,   active);
         mbar->Enable(ID_TIMELINE,     active);
         mbar->Enable(ID_INFO,         !currlayer->currfile.IsEmpty());
         
@@ -804,7 +804,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Check(ID_GRID,          showgridlines);
         mbar->Check(ID_ICONS,         showicons);
         mbar->Check(ID_INVERT,        swapcolors);
-        mbar->Check(ID_SCALEPATTERNS, scalepatterns);
+        mbar->Check(ID_SMARTSCALE,    smartscale);
         mbar->Check(ID_TIMELINE,      showtimeline);
         mbar->Check(ID_PL_TL,         plocation == TopLeft);
         mbar->Check(ID_PL_TR,         plocation == TopRight);
@@ -1416,7 +1416,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_GRID:           viewptr->ToggleGridLines(); break;
         case ID_ICONS:          viewptr->ToggleCellIcons(); break;
         case ID_INVERT:         viewptr->ToggleCellColors(); break;
-        case ID_SCALEPATTERNS:  viewptr->ToggleScalePatterns(); break;
+        case ID_SMARTSCALE:     viewptr->ToggleSmarterScaling(); break;
         case ID_TIMELINE:       ToggleTimelineBar(); break;
         case ID_INFO:           ShowPatternInfo(); break;
             
@@ -1635,7 +1635,6 @@ void MainFrame::OnIdle(wxIdleEvent& event)
     
     if (TimelineExists() && AutoPlay()) {
         // in autoplay mode so we need another idle event
-        // (this works much better than calling wxWakeUpIdle)
         event.RequestMore();
     }
     
@@ -2267,7 +2266,7 @@ void MainFrame::CreateMenus()
     viewMenu->AppendCheckItem(ID_GRID,           _("Show Grid Lines") + GetAccelerator(DO_SHOWGRID));
     viewMenu->AppendCheckItem(ID_ICONS,          _("Show Cell Icons") + GetAccelerator(DO_SHOWICONS));
     viewMenu->AppendCheckItem(ID_INVERT,         _("Invert Colors") + GetAccelerator(DO_INVERT));
-    viewMenu->AppendCheckItem(ID_SCALEPATTERNS,  _("Scale Patterns") + GetAccelerator(DO_SCALEPATTERNS));
+    viewMenu->AppendCheckItem(ID_SMARTSCALE,     _("Smarter Scaling") + GetAccelerator(DO_SMARTSCALE));
     viewMenu->AppendCheckItem(ID_TIMELINE,       _("Show Timeline") + GetAccelerator(DO_SHOWTIME));
     viewMenu->AppendSeparator();
     viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
@@ -2438,7 +2437,7 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_GRID,            DO_SHOWGRID);
         SetAccelerator(mbar, ID_ICONS,           DO_SHOWICONS);
         SetAccelerator(mbar, ID_INVERT,          DO_INVERT);
-        SetAccelerator(mbar, ID_SCALEPATTERNS,   DO_SCALEPATTERNS);
+        SetAccelerator(mbar, ID_SMARTSCALE,      DO_SMARTSCALE);
         SetAccelerator(mbar, ID_TIMELINE,        DO_SHOWTIME);
         SetAccelerator(mbar, ID_INFO,            DO_INFO);
         
