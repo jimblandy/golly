@@ -26,18 +26,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <cstdlib>
 #include "util.h"
 
-const int logbmsize = 8 ;                 // *must* be 8 in this code
+const int logbmsize = 8 ;                   // *must* be 8 in this code
 const int bmsize = (1<<logbmsize) ;
 const int ibufsize = (bmsize*bmsize/32) ;
-static unsigned int ibigbuf[ibufsize] ;   // shared buffer for 256x256 pixels
+static unsigned int ibigbuf[ibufsize] ;     // shared buffer for 256x256 pixels
 static unsigned char *bigbuf = (unsigned char *)ibigbuf ;
 
-// AKT: 256x256 pixmap where each pixel is 3 rgb bytes
-static unsigned char pixbuf[bmsize*bmsize*3];
+// AKT: 256x256 pixmap where each pixel is 4 RGBA bytes
+static unsigned char pixbuf[bmsize*bmsize*4];
 
-// AKT: rgb colors for cell states (see getcolors call)
-static unsigned char deadr, deadg, deadb;
-static unsigned char liver, liveg, liveb;
+// AKT: RGBA values for cell states (see getcolors call)
+static unsigned char deadr, deadg, deadb, deada;
+static unsigned char liver, liveg, liveb, livea;
 
 void qlifealgo::renderbm(int x, int y) {
    renderbm(x, y, bmsize, bmsize) ;
@@ -57,7 +57,6 @@ void qlifealgo::renderbm(int x, int y, int xsize, int ysize) {
    }
    ry = uviewh - ry - rh ;
 
-   // AKT: eventually we might draw directly into pixbuf rather than bigbuf
    if (pmag > 1) {
       // convert each bigbuf byte into 8 bytes of state data
       int j = 0;
@@ -68,7 +67,7 @@ void qlifealgo::renderbm(int x, int y, int xsize, int ysize) {
          }
       }
    } else {
-      // convert each bigbuf byte into 24 bytes of pixel data (8 * rgb)
+      // convert each bigbuf byte into 32 bytes of pixel data (8 * RGBA)
       int j = 0;
       for (int i = 0; i < ibufsize * 4; i++) {
          int byte = bigbuf[i];
@@ -77,31 +76,19 @@ void qlifealgo::renderbm(int x, int y, int xsize, int ysize) {
                pixbuf[j++] = liver;
                pixbuf[j++] = liveg;
                pixbuf[j++] = liveb;
+               pixbuf[j++] = livea;
             } else {
                pixbuf[j++] = deadr;
                pixbuf[j++] = deadg;
                pixbuf[j++] = deadb;
+               pixbuf[j++] = deada;
             }
          }
       }
    }
-   renderer->pixblit(rx, ry, rw, rh, (char *)pixbuf, pmag);
+   renderer->pixblit(rx, ry, rw, rh, pixbuf, pmag);
 
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
-}
-
-void qlifealgo::clearrect(int minx, int miny, int w, int h) {
-   // minx,miny is lower left corner
-   if (w <= 0 || h <= 0)
-      return ;
-   if (pmag > 1) {
-      minx *= pmag ;
-      miny *= pmag ;
-      w *= pmag ;
-      h *= pmag ;
-   }
-   miny = uviewh - miny - h ;
-   renderer->killrect(minx, miny, w, h) ;
 }
 
 static int minlevel;
@@ -119,7 +106,6 @@ void qlifealgo::BlitCells(supertile *p,
       return;
 
    if (p == nullroots[lev]) {
-      clearrect(xoff, yoff, wd, ht) ;
       return;
    }
 
@@ -194,7 +180,6 @@ void qlifealgo::BlitCells(supertile *p,
    }
 
    if (liveseen == 0) {
-      clearrect(xoff, yoff, wd, ht) ;
       return;                  // no live cells seen
    }
 
@@ -223,7 +208,6 @@ void qlifealgo::ShrinkCells(supertile *p,
          // no part of this supertile/tile is visible
          return ;
       if (p == nullroots[lev]) {
-         clearrect(xoff, yoff, wd, ht) ;
          return ;
       }
       if (lev == bmlev) {
@@ -477,9 +461,9 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
    renderer = &renderarg ;
 
-   // AKT: get cell colors
+   // AKT: get cell colors and alpha values for dead and live pixels
    unsigned char *r, *g, *b;
-   renderer->getcolors(&r, &g, &b);
+   renderer->getcolors(&r, &g, &b, &deada, &livea);
    deadr = r[0];
    deadg = g[0];
    deadb = b[0];
@@ -507,7 +491,6 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
       vieww = uvieww ;
    }
    if (root == nullroots[rootlev]) {
-      clearrect(0, 0, view->getwidth(), view->getheight()) ;
       renderer = 0 ;
       view = 0 ;
       return ;
@@ -526,7 +509,6 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
       llx = (llx << 1) + llxb[i] ;
       lly = (lly << 1) + llyb[i] ;
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
-         clearrect(0, 0, vieww, viewh) ;
          renderer = 0 ;
          view = 0 ;
          return ;
@@ -577,7 +559,6 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
       llx -= xp ;
       lly -= yp ;
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
-         clearrect(0, 0, vieww, viewh) ;
          renderer = 0 ;
          view = 0 ;
          return ;
@@ -607,19 +588,10 @@ void qlifealgo::draw(viewport &viewarg, liferender &renderarg) {
    int yoffuht = yoff + wd ;
    int xoffuwd = xoff + wd ;
    if (yoff >= viewh || xoff >= vieww || yoffuht < 0 || xoffuwd < 0) {
-      clearrect(0, 0, view->getwidth(), view->getheight()) ;
       renderer = 0 ;
       view = 0 ;
       return ;
    }
-   if (yoff > 0)
-      clearrect(0, 0, vieww, yoff) ;
-   if (xoff > 0)
-      clearrect(0, yoff, xoff, wd) ;
-   if (yoffuht < viewh)
-      clearrect(0, yoffuht, vieww, viewh-yoffuht) ;
-   if (xoffuwd < vieww)
-      clearrect(xoffuwd, yoff, vieww-xoffuwd, wd) ;
    int levsize = wd / 2 ;
    // do recursive drawing
    quickb = 0xfff << (8 + oddgen * 12) ;

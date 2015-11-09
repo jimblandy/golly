@@ -48,11 +48,12 @@ class nullrender : public liferender {
 public:
    nullrender() {}
    virtual ~nullrender() {}
-   virtual void killrect(int, int, int, int) {}
-   virtual void pixblit(int, int, int, int, char*, int) {}
-   virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b) {
+   virtual void pixblit(int, int, int, int, unsigned char*, int) {}
+   virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
+                          unsigned char* dead_alpha, unsigned char* live_alpha) {
       static unsigned char dummy[256];
       *r = *g = *b = dummy;
+      *dead_alpha = *live_alpha = 255;
    }
 } ;
 

@@ -37,24 +37,29 @@ using namespace std ;
 // and much faster on Linux/GTK (5 to 40%)
 const int logpmsize = 6 ;                    // 6=64x64  7=128x128  8=256x256
 const int pmsize = (1<<logpmsize) ;          // pixmap wd and ht, in pixels
-const int bpp = 3 ;                          // bytes per pixel (rgb)
+const int bpp = 4 ;                          // bytes per pixel (RGBA)
 const int rowoff = (pmsize*bpp) ;            // row offset, in bytes
 const int ibufsize = (pmsize*pmsize*bpp) ;   // buffer size, in bytes
 static unsigned char ipixbuf[ibufsize] ;     // shared buffer for pixels
 static unsigned char *pixbuf = ipixbuf ;
 
-// AKT: arrays of rgb colors for each cell state (set by getcolors call)
+// AKT: arrays of RGB colors for each cell state (set by getcolors call)
 static unsigned char* cellred;
 static unsigned char* cellgreen;
 static unsigned char* cellblue;
 
+// AKT: alpha values for dead pixels and live pixels (also set by getcolors call)
+static unsigned char deada;
+static unsigned char livea;
+
 void ghashbase::drawpixel(int x, int y) {
-   // AKT: draw all live cells using state 1 color -- nicer to use an average color???
-   // pmag == 1, so store rgb info
+   // AKT: draw all live cells using state 1 color
+   // pmag == 1, so store RGBA info
    int i = (pmsize-1-y) * rowoff + x*bpp;
    pixbuf[i]   = cellred[1];
    pixbuf[i+1] = cellgreen[1];
    pixbuf[i+2] = cellblue[1];
+   pixbuf[i+3] = livea;
 }
 
 /*
@@ -72,60 +77,68 @@ void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
       if (nw) pixbuf[i] = nw;
       if (ne) pixbuf[i+1] = ne;
    } else {
-      // store rgb info
+      // store RGBA info
       int i = (pmsize-1+lly) * rowoff - (llx*bpp);
       if (sw) {
          pixbuf[i]   = cellred[sw] ;
          pixbuf[i+1] = cellgreen[sw] ;
          pixbuf[i+2] = cellblue[sw] ;
+         pixbuf[i+3] = livea;
       }
       i += bpp ;
       if (se) {
          pixbuf[i]   = cellred[se] ;
          pixbuf[i+1] = cellgreen[se] ;
          pixbuf[i+2] = cellblue[se] ;
+         pixbuf[i+3] = livea;
       }
       i -= rowoff ;
       if (ne) {
          pixbuf[i]   = cellred[ne] ;
          pixbuf[i+1] = cellgreen[ne] ;
          pixbuf[i+2] = cellblue[ne] ;
+         pixbuf[i+3] = livea;
       }
       i -= bpp ;
       if (nw) {
          pixbuf[i]   = cellred[nw] ;
          pixbuf[i+1] = cellgreen[nw] ;
          pixbuf[i+2] = cellblue[nw] ;
+         pixbuf[i+3] = livea;
       }
    }
 }
 
 void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
-   // AKT: draw all live cells using state 1 color -- nicer to use an average color???
-   // pmag == 1, so store rgb info
+   // AKT: draw all live cells using state 1 color
+   // pmag == 1, so store RGBA info
    int i = (pmsize-1+lly) * rowoff - (llx*bpp);
    if (n->sw != z) {
       pixbuf[i]   = cellred[1];
       pixbuf[i+1] = cellgreen[1];
       pixbuf[i+2] = cellblue[1];
+      pixbuf[i+3] = livea;
    }
    i += bpp;
    if (n->se != z) {
       pixbuf[i]   = cellred[1];
       pixbuf[i+1] = cellgreen[1];
       pixbuf[i+2] = cellblue[1];
+      pixbuf[i+3] = livea;
    }
    i -= rowoff;
    if (n->ne != z) {
       pixbuf[i]   = cellred[1] ;
       pixbuf[i+1] = cellgreen[1] ;
       pixbuf[i+2] = cellblue[1] ;
+      pixbuf[i+3] = livea;
    }
    i -= bpp;
    if (n->nw != z) {
       pixbuf[i]   = cellred[1] ;
       pixbuf[i+1] = cellgreen[1] ;
       pixbuf[i+2] = cellblue[1] ;
+      pixbuf[i+3] = livea;
    }
 }
 
@@ -136,33 +149,27 @@ void ghashbase::killpixels() {
       // is a cell state, so it's easy to kill all cells
       memset(pixbuf, 0, pmsize*pmsize);
    } else {
-      // pixblit assumes pixbuf contains 3 bytes (r,g,b) for each pixel
-      if (cellred[0] == cellgreen[0] && cellgreen[0] == cellblue[0]) {
-         // use fast method
-         memset(pixbuf, cellred[0], sizeof(ipixbuf));
+      // pixblit assumes pixbuf contains 4 bytes (RGBA) for each pixel
+      if (deada == 0) {
+         // dead cells are 100% transparent so we can use fast method
+         // (RGB values are irrelevant if alpha is 0)
+         memset(pixbuf, 0, sizeof(ipixbuf));
       } else {
-         // use slow method (or kill the 1st row and memcpy into the other rows???)
-         for (int i = 0; i < ibufsize; i += bpp) {
-            pixbuf[i]   = cellred[0];
-            pixbuf[i+1] = cellgreen[0];
-            pixbuf[i+2] = cellblue[0];
+         // use slower method
+         pixbuf[0] = cellred[0];
+         pixbuf[1] = cellgreen[0];
+         pixbuf[2] = cellblue[0];
+         pixbuf[3] = deada;
+         // copy 1st pixel to remaining pixels in 1st row
+         for (int i = bpp; i < rowoff; i += bpp) {
+            memcpy(&pixbuf[i], pixbuf, bpp);
+         }
+         // copy 1st row to remaining rows
+         for (int i = rowoff; i < ibufsize; i += rowoff) {
+            memcpy(&pixbuf[i], pixbuf, rowoff);
          }
       }
    }
-}
-
-void ghashbase::clearrect(int minx, int miny, int w, int h) {
-   // minx,miny is lower left corner
-   if (w <= 0 || h <= 0)
-      return ;
-   if (pmag > 1) {
-      minx *= pmag ;
-      miny *= pmag ;
-      w *= pmag ;
-      h *= pmag ;
-   }
-   miny = uviewh - miny - h ;
-   renderer->killrect(minx, miny, w, h) ;
 }
 
 void ghashbase::renderbm(int x, int y) {
@@ -178,7 +185,7 @@ void ghashbase::renderbm(int x, int y) {
       rh *= pmag ;
    }
    ry = uviewh - ry - rh ;
-   renderer->pixblit(rx, ry, rw, rh, (char *)pixbuf, pmag);
+   renderer->pixblit(rx, ry, rw, rh, pixbuf, pmag);
    killpixels();
 }
 
@@ -193,8 +200,7 @@ void ghashbase::drawghnode(ghnode *n, int llx, int lly, int depth, ghnode *z) {
        (llx + vieww <= 0 || lly + viewh <= 0 || llx >= sw || lly >= sw))
       return ;
    if (n == z) {
-      if (sw >= pmsize)
-         clearrect(-llx, -lly, sw, sw) ;
+      // don't do anything
    } else if (depth > 0 && sw > 2) {
       z = z->nw ;
       sw >>= 1 ;
@@ -272,8 +278,8 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
    ensure_hashed() ;
    renderer = &rendererarg ;
    
-   // AKT: set cellred/green/blue ptrs
-   renderer->getcolors(&cellred, &cellgreen, &cellblue);
+   // AKT: get cell colors and alpha values for dead and live pixels
+   renderer->getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea);
 
    view = &viewarg ;
    uvieww = view->getwidth() ;
@@ -308,7 +314,6 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
       llx = (llx << 1) + llxb[i] ;
       lly = (lly << 1) + llyb[i] ;
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
-         clearrect(0, 0, vieww, viewh) ;
          goto bail ;
       }
    }
@@ -346,7 +351,6 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
          }
       }
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
-         clearrect(0, 0, vieww, viewh) ;
          goto bail ;
       }
       d-- ;
@@ -361,22 +365,14 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
       ghnode *z = zeroghnode(d) ;
       if (llx > 0 || lly > 0 || llx + vieww <= 0 || lly + viewh <= 0 ||
           (sw == z && se == z && nw == z && ne == z)) {
-         clearrect(0, 0, vieww, viewh) ;
+         // no live cells
       } else {
-         clearrect(0, 1-lly, vieww, viewh-1+lly) ;
-         clearrect(0, 0, vieww, -lly) ;
-         clearrect(0, -lly, -llx, 1) ;
-         clearrect(1-llx, -lly, vieww-1+llx, 1) ;
          drawpixel(0, 0) ;
          renderbm(-llx, -lly) ;
       }
    } else {
       z = zeroghnode(d) ;
       maxd = 1 << (d - mag + 2) ;
-      clearrect(0, maxd-lly, vieww, viewh-maxd+lly) ;
-      clearrect(0, 0, vieww, -lly) ;
-      clearrect(0, -lly, -llx, maxd) ;
-      clearrect(maxd-llx, -lly, vieww-maxd+llx, maxd) ;
       if (maxd <= pmsize) {
          maxd >>= 1 ;
          drawghnode(sw, 0, 0, d, z) ;

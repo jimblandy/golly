@@ -85,11 +85,13 @@
 // local data used in golly_render routines:
 
 static int currwd, currht;              // current width and height of viewport, in pixels
+unsigned char dead_alpha = 255;         // alpha value for dead pixels
+unsigned char live_alpha = 255;         // alpha value for live pixels
 static unsigned char** icontextures;    // pointers to texture data for each icon
 static GLuint texture8 = 0;             // texture for drawing 7x7 icons
 static GLuint texture16 = 0;            // texture for drawing 15x15 icons
 static GLuint texture32 = 0;            // texture for drawing 31x31 icons
-static GLuint patternTexture = 0;       // texture for drawing pattern bitmaps at 1:1 scale
+static GLuint rgbatexture = 0;          // texture for drawing RGBA bitmaps
 
 // fixed texture coordinates used by glTexCoordPointer
 static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
@@ -97,7 +99,6 @@ static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
 // for drawing paste pattern
 static lifealgo* pastealgo;             // universe containing paste pattern
 static gRect pastebbox;                 // bounding box in cell coords (not necessarily minimal)
-static bool drawing_paste = false;      // in DrawPasteImage?
 GLfloat rightedge;                      // right edge of viewport
 GLfloat bottomedge;                     // bottomedge edge of viewport
 
@@ -344,20 +345,20 @@ static void DisableTextures()
 
 // -----------------------------------------------------------------------------
 
-void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
+void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 {
     // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale
 
-	if (patternTexture == 0) {
+	if (rgbatexture == 0) {
         // only need to create texture name once
-        glGenTextures(1, &patternTexture);
+        glGenTextures(1, &rgbatexture);
     }
 
     #ifdef WEB_GUI
         glUseProgram(textureProgram);
         glActiveTexture(GL_TEXTURE0);
         // bind our texture
-        glBindTexture(GL_TEXTURE_2D, patternTexture);
+        glBindTexture(GL_TEXTURE_2D, rgbatexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     #else
         if (!glIsEnabled(GL_TEXTURE_2D)) {
@@ -365,14 +366,14 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
             SetColor(255, 255, 255, 255);
             glEnable(GL_TEXTURE_2D);
             // bind our texture
-            glBindTexture(GL_TEXTURE_2D, patternTexture);
+            glBindTexture(GL_TEXTURE_2D, rgbatexture);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
         }
     #endif
     
-    // update the texture with the new bitmap data (in RGB format)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
+    // update the texture with the new RGBA data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
 
     #ifdef WEB_GUI
         GLfloat vertices[] = {
@@ -411,10 +412,9 @@ void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
-void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
+void DrawPoints(unsigned char* rgbadata, int x, int y, int w, int h)
 {
-    // called from golly_render::pixblit to draw pattern at 1:1 scale
-    // if numstates is 2 or we're drawing the paste image
+    // called from golly_render::pixblit to draw pattern at 1:1 scale when numstates is 2
 
     const int maxcoords = 1024;     // must be multiple of 2
     GLfloat points[maxcoords];
@@ -435,9 +435,10 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
     int i = 0;
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
-            r = rgbdata[i++];
-            g = rgbdata[i++];
-            b = rgbdata[i++];
+            r = rgbadata[i++];
+            g = rgbadata[i++];
+            b = rgbadata[i++];
+            i++;    // skip alpha
             if (r != deadr || g != deadg || b != deadb) {
                 // we've got a live pixel
                 bool changecolor = (r != prevr || g != prevg || b != prevb);
@@ -457,7 +458,7 @@ void DrawPoints(unsigned char* rgbdata, int x, int y, int w, int h)
                         prevr = r;
                         prevg = g;
                         prevb = b;
-                        SetColor(r, g, b, 255);
+                        SetColor(r, g, b, live_alpha);
                     }
                 }
                 points[numcoords++] = XCOORD(x + col + 0.5);
@@ -601,7 +602,7 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
     // all live cells are in state 1 so only need to set color once
     SetColor(currlayer->cellr[1],
              currlayer->cellg[1],
-             currlayer->cellb[1], 255);
+             currlayer->cellb[1], live_alpha);
     
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
@@ -674,7 +675,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     // this shouldn't happen too often
                     SetColor(currlayer->cellr[state],
                              currlayer->cellg[state],
-                             currlayer->cellb[state], 255);
+                             currlayer->cellb[state], live_alpha);
                     #ifdef WEB_GUI
                         glBufferData(GL_ARRAY_BUFFER, numcoords[state] * sizeof(GLfloat), points[state], GL_STATIC_DRAW);
                         glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -697,7 +698,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     // visible cell at right/bottom edge
                     SetColor(currlayer->cellr[state],
                              currlayer->cellg[state],
-                             currlayer->cellb[state], 255);
+                             currlayer->cellb[state], live_alpha);
                     FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
                 } else {
                     points[state][numcoords[state]++] = midx;
@@ -711,7 +712,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
         if (numcoords[state] > 0) {
             SetColor(currlayer->cellr[state],
                      currlayer->cellg[state],
-                     currlayer->cellb[state], 255);
+                     currlayer->cellb[state], live_alpha);
             #ifdef WEB_GUI
                 glBufferData(GL_ARRAY_BUFFER, numcoords[state] * sizeof(GLfloat), points[state], GL_STATIC_DRAW);
                 glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -731,23 +732,16 @@ class golly_render : public liferender
 public:
     golly_render() {}
     virtual ~golly_render() {}
-    virtual void killrect(int x, int y, int w, int h);
-    virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
-    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b);
+    virtual void pixblit(int x, int y, int w, int h, unsigned char* pm, int pmscale);
+    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
+                           unsigned char* deada, unsigned char* livea);
 };
 
 golly_render renderer;     // create instance
 
 // -----------------------------------------------------------------------------
 
-void golly_render::killrect(int x, int y, int w, int h)
-{
-    // no need to do anything because background has already been filled by glClear in DrawPattern
-}
-
-// -----------------------------------------------------------------------------
-
-void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
+void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, int pmscale)
 {
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
@@ -778,38 +772,40 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
     int numstates = currlayer->algo->NumCellStates();
     
     if (pmscale == 1) {
-        // draw rgb pixel data at scale 1:1
-        if (drawing_paste || numstates == 2) {
-            // we can't use DrawTexture to draw paste image because glTexImage2D clobbers
-            // any background pattern, so we use DrawPoints which is usually faster than
-            // DrawTexture in a sparsely populated universe with only 2 states (eg. Life)
-            DrawPoints((unsigned char*) pmdata, x, y, w, h);
+        // draw RGBA pixel data at scale 1:1
+        if (numstates == 2) {
+            // DrawPoints which is usually faster than DrawRGBAData in a
+            // sparsely populated universe with only 2 states (eg. Life)
+            DrawPoints(pmdata, x, y, w, h);
         } else {
-            DrawTexture((unsigned char*) pmdata, x, y, w, h);
+            DrawRGBAData(pmdata, x, y, w, h);
         }
         
     } else if (showicons && pmscale > 4 && icontextures) {
         // draw icons at scales 1:8 or above
-        DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+        DrawIcons(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
         
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
         if (numstates == 2) {
-            DrawMagnifiedTwoStateCells((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+            DrawMagnifiedTwoStateCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
         } else {
-            DrawMagnifiedCells((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, numstates);
+            DrawMagnifiedCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, numstates);
         }
     }
 }
 
 // -----------------------------------------------------------------------------
 
-void golly_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b)
+void golly_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
+                             unsigned char* deada, unsigned char* livea)
 {
     *r = currlayer->cellr;
     *g = currlayer->cellg;
     *b = currlayer->cellb;
+    *deada = dead_alpha;
+    *livea = live_alpha;
 }
 
 // -----------------------------------------------------------------------------
@@ -1080,11 +1076,13 @@ void DrawPasteImage()
         rightedge = float(currwd - ileft);
         bottomedge = float(currht - itop);
     #endif
+    
+    // make dead pixels 100% transparent and live pixels 100% opaque
+    dead_alpha = 0;
+    live_alpha = 255;
 
     // draw paste pattern
-    drawing_paste = true;
     pastealgo->draw(tempview, renderer);
-    drawing_paste = false;
 
     #ifdef WEB_GUI
         // restore OpenGL viewport's origin and size
@@ -1320,6 +1318,10 @@ void DrawPattern(int tileindex)
     // (ie. only when scale is 1:2 or above)
     rightedge = float(currwd);
     bottomedge = float(currht);
+    
+    // all pixels are initially opaque
+    dead_alpha = 255;
+    live_alpha = 255;
 
     // draw pattern using a sequence of pixblit calls
     currlayer->algo->draw(*currlayer->view, renderer);

@@ -39,12 +39,12 @@ const int ibufsize = (bmsize*bmsize/32) ;
 static unsigned int ibigbuf[ibufsize] ;   // a shared buffer for 128x128 pixels
 static unsigned char *bigbuf = (unsigned char *)ibigbuf ;
 
-// AKT: 128x128 pixmap where each pixel is 3 rgb bytes
-static unsigned char pixbuf[bmsize*bmsize*3];
+// AKT: 128x128 pixmap where each pixel is 4 RGBA bytes
+static unsigned char pixbuf[bmsize*bmsize*4];
 
-// AKT: rgb colors for cell states (see getcolors call)
-static unsigned char deadr, deadg, deadb;
-static unsigned char liver, liveg, liveb;
+// AKT: RGBA values for cell states (see getcolors call)
+static unsigned char deadr, deadg, deadb, deada;
+static unsigned char liver, liveg, liveb, livea;
 
 static void drawpixel(int x, int y) {
   bigbuf[(((bmsize-1)-y) << (logbmsize-3)) + (x >> 3)] |= (128 >> (x & 7)) ;
@@ -94,20 +94,6 @@ void draw4x4_4(unsigned short bits1, unsigned short bits2, int llx, int lly) {
    p[-3*byteoff] = (unsigned char)(((bits1 >> 8) & 0xf0) + ((bits2 >> 12) & 0xf)) ;
 }
 
-void hlifealgo::clearrect(int minx, int miny, int w, int h) {
-   // minx,miny is lower left corner
-   if (w <= 0 || h <= 0)
-      return ;
-   if (pmag > 1) {
-      minx *= pmag ;
-      miny *= pmag ;
-      w *= pmag ;
-      h *= pmag ;
-   }
-   miny = uviewh - miny - h ;
-   renderer->killrect(minx, miny, w, h) ;
-}
-
 void hlifealgo::renderbm(int x, int y) {
    // x,y is lower left corner
    int rx = x ;
@@ -122,7 +108,6 @@ void hlifealgo::renderbm(int x, int y) {
    }
    ry = uviewh - ry - rh ;
    
-   // AKT: eventually we'll draw directly into pixbuf rather than bigbuf!!!
    if (pmag > 1) {
       // convert each bigbuf byte into 8 bytes of state data
       int j = 0;
@@ -133,7 +118,7 @@ void hlifealgo::renderbm(int x, int y) {
          }
       }
    } else {
-      // convert each bigbuf byte into 24 bytes of pixel data (8 * rgb)
+      // convert each bigbuf byte into 32 bytes of pixel data (8 * RGBA)
       int j = 0;
       for (int i = 0; i < ibufsize * 4; i++) {
          int byte = bigbuf[i];
@@ -142,15 +127,17 @@ void hlifealgo::renderbm(int x, int y) {
                pixbuf[j++] = liver;
                pixbuf[j++] = liveg;
                pixbuf[j++] = liveb;
+               pixbuf[j++] = livea;
             } else {
                pixbuf[j++] = deadr;
                pixbuf[j++] = deadg;
                pixbuf[j++] = deadb;
+               pixbuf[j++] = deada;
             }
          }
       }
    }
-   renderer->pixblit(rx, ry, rw, rh, (char *)pixbuf, pmag);
+   renderer->pixblit(rx, ry, rw, rh, pixbuf, pmag);
    
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
 }
@@ -166,8 +153,7 @@ void hlifealgo::drawnode(node *n, int llx, int lly, int depth, node *z) {
        (llx + vieww <= 0 || lly + viewh <= 0 || llx >= sw || lly >= sw))
       return ;
    if (n == z) {
-      if (sw >= bmsize)
-         clearrect(-llx, -lly, sw, sw) ;
+      // don't do anything
    } else if (depth > 2 && sw > 2) {
       z = z->nw ;
       sw >>= 1 ;
@@ -261,9 +247,9 @@ void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
    ensure_hashed() ;
    renderer = &rendererarg ;
 
-   // AKT: get cell colors
+   // AKT: get cell colors and alpha values for dead and live pixels
    unsigned char *r, *g, *b;
-   renderer->getcolors(&r, &g, &b);
+   renderer->getcolors(&r, &g, &b, &deada, &livea);
    deadr = r[0];
    deadg = g[0];
    deadb = b[0];
@@ -300,7 +286,6 @@ void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
       llx = (llx << 1) + llxb[i] ;
       lly = (lly << 1) + llyb[i] ;
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
-         clearrect(0, 0, vieww, viewh) ;
          goto bail ;
       }
    }
@@ -338,7 +323,6 @@ void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
          }
       }
       if (llx > 2*maxd || lly > 2*maxd || llx < -2*maxd || lly < -2*maxd) {
-         clearrect(0, 0, vieww, viewh) ;
          goto bail ;
       }
       d-- ;
@@ -353,22 +337,14 @@ void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
       node *z = zeronode(d) ;
       if (llx > 0 || lly > 0 || llx + vieww <= 0 || lly + viewh <= 0 ||
           (sw == z && se == z && nw == z && ne == z)) {
-         clearrect(0, 0, vieww, viewh) ;
+         // no live cells
       } else {
-         clearrect(0, 1-lly, vieww, viewh-1+lly) ;
-         clearrect(0, 0, vieww, -lly) ;
-         clearrect(0, -lly, -llx, 1) ;
-         clearrect(1-llx, -lly, vieww-1+llx, 1) ;
          drawpixel(0, 0) ;
          renderbm(-llx, -lly) ;
       }
    } else {
       z = zeronode(d) ;
       maxd = 1 << (d - mag + 2) ;
-      clearrect(0, maxd-lly, vieww, viewh-maxd+lly) ;
-      clearrect(0, 0, vieww, -lly) ;
-      clearrect(0, -lly, -llx, maxd) ;
-      clearrect(maxd-llx, -lly, vieww-maxd+llx, maxd) ;
       if (maxd <= bmsize) {
          maxd >>= 1 ;
          drawnode(sw, 0, 0, d, z) ;

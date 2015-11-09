@@ -98,22 +98,16 @@ hlifealgo::draw() in hlifedraw.cpp.
 // globals used in golly_render routines
 int currwd, currht;                     // current width and height of viewport, in pixels
 int scalefactor;                        // current scale factor (1, 2, 4, 8 or 16)
+unsigned char dead_alpha = 255;         // alpha value for dead pixels
+unsigned char live_alpha = 255;         // alpha value for live pixels
 static unsigned char** icontextures;    // pointers to texture data for each icon
 static GLuint texture8 = 0;             // texture for drawing 7x7 icons
 static GLuint texture16 = 0;            // texture for drawing 15x15 icons
 static GLuint texture32 = 0;            // texture for drawing 31x31 icons
-static GLuint rgbtexture = 0;           // texture for drawing RGB bitmaps
 static GLuint rgbatexture = 0;          // texture for drawing RGBA bitmaps
-static GLuint ctrltexture = 0;          // texture for drawing translucent controls
 
 // fixed texture coordinates used by glTexCoordPointer
 static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
-
-// for drawing stacked layers
-bool mask_dead_pixels = false;          // make dead pixels 100% transparent?
-unsigned char live_alpha = 255;         // alpha level for live pixels
-unsigned char* maskdata = NULL;         // RGBA data for drawing masked bitmaps
-int masklen = 0;                        // length of maskdata
 
 // for drawing paste pattern
 lifealgo* pastealgo;                    // universe containing paste pattern
@@ -284,122 +278,10 @@ void CreateTranslucentControls()
 
 // -----------------------------------------------------------------------------
 
-control_id WhichControl(int x, int y)
-{
-    // determine which button is at x,y in controls bitmap
-    int col, row;
-    
-    x -= buttborder;
-    y -= buttborder;
-    if (x < 0 || y < 0) return NO_CONTROL;
-    
-    // allow for vertical gap after first 2 rows
-    if (y < (buttsize + rowgap)) {
-        if (y > buttsize) return NO_CONTROL;               // in 1st gap
-        row = 1;
-    } else if (y < 2*(buttsize + rowgap)) {
-        if (y > 2*buttsize + rowgap) return NO_CONTROL;    // in 2nd gap
-        row = 2;
-    } else {
-        row = 3 + (y - 2*(buttsize + rowgap)) / buttsize;
-    }
-    
-    col = 1 + x / buttsize;
-    if (col < 1 || col > buttsperrow) return NO_CONTROL;
-    if (row < 1 || row > numbutts/buttsperrow) return NO_CONTROL;
-    
-    int control = (row - 1) * buttsperrow + col;
-    return (control_id) control;
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
-{
-	if (ctrltexture == 0) {
-        // only need to create texture name once
-        glGenTextures(1, &ctrltexture);
-    }
-
-    if (!glIsEnabled(GL_TEXTURE_2D)) {
-        // restore texture color and enable textures
-        SetColor(255, 255, 255, 255);
-        glEnable(GL_TEXTURE_2D);
-        // bind our texture
-        glBindTexture(GL_TEXTURE_2D, ctrltexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-    }
-    
-    // update the texture with the new RGBA data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
-    
-    GLfloat vertices[] = {
-        x,      y,
-        x+w,    y,
-        x,      y+h,
-        x+w,    y+h,
-    };
-    glVertexPointer(2, GL_FLOAT, 0, vertices);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawControls(wxRect& rect)
-{
-    if (ctrlsbitmap) {
-        DrawRGBAData(ctrlsbitmap, rect.x, rect.y, controlswd, controlsht);
-        
-        if (currcontrol > NO_CONTROL && darkbutt) {
-            // show clicked control
-            int i = (int)currcontrol - 1;
-            int x = buttborder + (i % buttsperrow) * buttsize;
-            int y = buttborder + (i / buttsperrow) * buttsize;
-            
-            // allow for vertical gap after first 2 rows
-            if (i < buttsperrow) {
-                // y is correct
-            } else if (i < 2*buttsperrow) {
-                y += rowgap;
-            } else {
-                y += 2*rowgap;
-            }
-            
-            // draw one darkened button
-            int p = 0;
-            for ( int row = 0; row < buttsize; row++ ) {
-                for ( int col = 0; col < buttsize; col++ ) {
-                    unsigned char alpha = ctrlsbitmap[((row + y) * controlswd + col + x) * 4 + 3];
-                    if (alpha == 0) {
-                        // pixel is transparent
-                        darkbutt[p++] = 0;
-                        darkbutt[p++] = 0;
-                        darkbutt[p++] = 0;
-                        darkbutt[p++] = 0;
-                    } else {
-                        // pixel is part of button so use a very dark gray
-                        darkbutt[p++] = 20;
-                        darkbutt[p++] = 20;
-                        darkbutt[p++] = 20;
-                        darkbutt[p++] = 128;    // 50% opaque
-                    }
-                }
-            }
-            DrawRGBAData(darkbutt, rect.x + x, rect.y + y, buttsize, buttsize);
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void DestroyDrawingData()
 {
     if (ctrlsbitmap) free(ctrlsbitmap);
     if (darkbutt) free(darkbutt);
-    if (maskdata) free(maskdata);
     for (int i = 0; i < 4; i++) {
         if (modedata[i]) free(modedata[i]);
     }
@@ -407,81 +289,8 @@ void DestroyDrawingData()
 
 // -----------------------------------------------------------------------------
 
-void DrawTexture(unsigned char* rgbdata, int x, int y, int w, int h)
+void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 {
-    // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale
-
-	if (rgbtexture == 0) {
-        // only need to create texture name once
-        glGenTextures(1, &rgbtexture);
-    }
-
-    if (!glIsEnabled(GL_TEXTURE_2D)) {
-        // restore texture color and enable textures
-        SetColor(255, 255, 255, 255);
-        glEnable(GL_TEXTURE_2D);
-        // bind our texture
-        glBindTexture(GL_TEXTURE_2D, rgbtexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-    }
-    
-    // update the texture with the new RGB data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbdata);
-    
-    GLfloat vertices[] = {
-        x,      y,
-        x+w,    y,
-        x,      y+h,
-        x+w,    y+h,
-    };
-    glVertexPointer(2, GL_FLOAT, 0, vertices);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawMaskedTexture(unsigned char* rgbdata, int x, int y, int w, int h)
-{
-    // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale,
-    // but we want all dead pixels to be 100% transparent
-
-    // first we have to convert the given RGB data to RGBA data,
-    // where dead pixels have alpha set to 0 and live pixels are set to live_alpha
-    // maybe it's time to change pixblit() to return RGBA data???!!! and remove killrect()
-    // and maybe draw() could pass in dead_alpha and live_alpha???!!!
-    if (masklen != w*h*4) {
-        masklen = w*h*4;
-        if (maskdata) free(maskdata);
-        maskdata = (unsigned char*) malloc(masklen);
-        if (!maskdata) return;
-    }
-    unsigned char deadr = currlayer->cellr[0];
-    unsigned char deadg = currlayer->cellg[0];
-    unsigned char deadb = currlayer->cellb[0];
-    int i = 0;
-    int j = 0;
-    while (i < w*h*3) {
-        unsigned char r = rgbdata[i++];
-        unsigned char g = rgbdata[i++];
-        unsigned char b = rgbdata[i++];
-        if (r == deadr && g == deadg && b == deadb) {
-            // dead pixel
-            maskdata[j++] = 0;
-            maskdata[j++] = 0;
-            maskdata[j++] = 0;
-            maskdata[j++] = 0;  // 100% transparent
-        } else {
-            // live pixel
-            maskdata[j++] = r;
-            maskdata[j++] = g;
-            maskdata[j++] = b;
-            maskdata[j++] = live_alpha;
-        }
-    }
-    
 	if (rgbatexture == 0) {
         // only need to create texture name once
         glGenTextures(1, &rgbatexture);
@@ -500,7 +309,7 @@ void DrawMaskedTexture(unsigned char* rgbdata, int x, int y, int w, int h)
     }
     
     // update the texture with the new RGBA data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, maskdata);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
     
     GLfloat vertices[] = {
         x,      y,
@@ -674,12 +483,10 @@ void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, i
     DisableTextures();
     SetPointSize(cellsize);
 
-    unsigned char alpha = mask_dead_pixels ? live_alpha : 255;
-
     // all live cells are in state 1 so only need to set color once
     SetColor(currlayer->cellr[1],
              currlayer->cellg[1],
-             currlayer->cellb[1], alpha);
+             currlayer->cellb[1], live_alpha);
     
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
@@ -724,8 +531,6 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     GLfloat points[256][maxcoords];
     int numcoords[256] = {0};
 
-    unsigned char alpha = mask_dead_pixels ? live_alpha : 255;
-
     DisableTextures();
     SetPointSize(cellsize);
 
@@ -738,7 +543,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     // this shouldn't happen too often
                     SetColor(currlayer->cellr[state],
                              currlayer->cellg[state],
-                             currlayer->cellb[state], alpha);
+                             currlayer->cellb[state], live_alpha);
                     glVertexPointer(2, GL_FLOAT, 0, points[state]);
                     glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
                     numcoords[state] = 0;
@@ -751,7 +556,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
                     // visible cell at right/bottom edge
                     SetColor(currlayer->cellr[state],
                              currlayer->cellg[state],
-                             currlayer->cellb[state], alpha);
+                             currlayer->cellb[state], live_alpha);
                     FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
                 } else {
                     points[state][numcoords[state]++] = midx;
@@ -765,7 +570,7 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
         if (numcoords[state] > 0) {
             SetColor(currlayer->cellr[state],
                      currlayer->cellg[state],
-                     currlayer->cellb[state], alpha);
+                     currlayer->cellb[state], live_alpha);
             glVertexPointer(2, GL_FLOAT, 0, points[state]);
             glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
         }
@@ -779,23 +584,16 @@ class golly_render : public liferender
 public:
     golly_render() {}
     virtual ~golly_render() {}
-    virtual void killrect(int x, int y, int w, int h);
-    virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale);
-    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b);
+    virtual void pixblit(int x, int y, int w, int h, unsigned char* pm, int pmscale);
+    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
+                           unsigned char* deada, unsigned char* livea);
 };
 
 golly_render renderer;     // create instance
 
 // -----------------------------------------------------------------------------
 
-void golly_render::killrect(int x, int y, int w, int h)
-{
-    // no need to do anything because background has already been filled by glClear in DrawView
-}
-
-// -----------------------------------------------------------------------------
-
-void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale)
+void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, int pmscale)
 {
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
@@ -823,39 +621,36 @@ void golly_render::pixblit(int x, int y, int w, int h, char* pmdata, int pmscale
         if (y + h >= currht + pmscale) h = (currht - y + pmscale - 1)/pmscale*pmscale;
     }
     
-    int numstates = currlayer->algo->NumCellStates();
-    
     if (pmscale == 1) {
-        // draw RGB pixel data at scale 1:1
-        if (mask_dead_pixels) {
-            // dead pixels will be 100% transparent and opacity of live pixels will be live_alpha
-            DrawMaskedTexture((unsigned char*) pmdata, x, y, w, h);
-        } else {
-            DrawTexture((unsigned char*) pmdata, x, y, w, h);
-        }
+        // draw RGBA pixel data at scale 1:1
+        DrawRGBAData(pmdata, x, y, w, h);
         
     } else if (showicons && pmscale > 4 && icontextures) {
         // draw icons at scales 1:8 and above
-        DrawIcons((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+        DrawIcons(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
         
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
+        int numstates = currlayer->algo->NumCellStates();
         if (numstates == 2) {
-            DrawMagnifiedTwoStateCells((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+            DrawMagnifiedTwoStateCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
         } else {
-            DrawMagnifiedCells((unsigned char*) pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, numstates);
+            DrawMagnifiedCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, numstates);
         }
     }
 }
 
 // -----------------------------------------------------------------------------
 
-void golly_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b)
+void golly_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
+                             unsigned char* deada, unsigned char* livea)
 {
     *r = currlayer->cellr;
     *g = currlayer->cellg;
     *b = currlayer->cellb;
+    *deada = dead_alpha;
+    *livea = live_alpha;
 }
 
 // -----------------------------------------------------------------------------
@@ -1035,7 +830,7 @@ void DrawPasteImage()
     showgridlines = false;
     
     // make dead pixels 100% transparent and live pixels 100% opaque
-    mask_dead_pixels = true;
+    dead_alpha = 0;
     live_alpha = 255;
 
     currwd = tempview.getwidth();
@@ -1075,7 +870,6 @@ void DrawPasteImage()
     glTranslatef(-r.x, -r.y, 0);
     
     showgridlines = saveshow;
-    mask_dead_pixels = false;
     
     // overlay translucent rect to show paste area
     DisableTextures();
@@ -1086,6 +880,83 @@ void DrawPasteImage()
     // show current paste mode
     if (r.y > 0 && modedata[(int)pmode]) {
         DrawRGBAData(modedata[(int)pmode], r.x, r.y - modeht - 1, modewd, modeht);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+control_id WhichControl(int x, int y)
+{
+    // determine which button is at x,y in controls bitmap
+    int col, row;
+    
+    x -= buttborder;
+    y -= buttborder;
+    if (x < 0 || y < 0) return NO_CONTROL;
+    
+    // allow for vertical gap after first 2 rows
+    if (y < (buttsize + rowgap)) {
+        if (y > buttsize) return NO_CONTROL;               // in 1st gap
+        row = 1;
+    } else if (y < 2*(buttsize + rowgap)) {
+        if (y > 2*buttsize + rowgap) return NO_CONTROL;    // in 2nd gap
+        row = 2;
+    } else {
+        row = 3 + (y - 2*(buttsize + rowgap)) / buttsize;
+    }
+    
+    col = 1 + x / buttsize;
+    if (col < 1 || col > buttsperrow) return NO_CONTROL;
+    if (row < 1 || row > numbutts/buttsperrow) return NO_CONTROL;
+    
+    int control = (row - 1) * buttsperrow + col;
+    return (control_id) control;
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawControls(wxRect& rect)
+{
+    if (ctrlsbitmap) {
+        DrawRGBAData(ctrlsbitmap, rect.x, rect.y, controlswd, controlsht);
+        
+        if (currcontrol > NO_CONTROL && darkbutt) {
+            // show clicked control
+            int i = (int)currcontrol - 1;
+            int x = buttborder + (i % buttsperrow) * buttsize;
+            int y = buttborder + (i / buttsperrow) * buttsize;
+            
+            // allow for vertical gap after first 2 rows
+            if (i < buttsperrow) {
+                // y is correct
+            } else if (i < 2*buttsperrow) {
+                y += rowgap;
+            } else {
+                y += 2*rowgap;
+            }
+            
+            // draw one darkened button
+            int p = 0;
+            for ( int row = 0; row < buttsize; row++ ) {
+                for ( int col = 0; col < buttsize; col++ ) {
+                    unsigned char alpha = ctrlsbitmap[((row + y) * controlswd + col + x) * 4 + 3];
+                    if (alpha == 0) {
+                        // pixel is transparent
+                        darkbutt[p++] = 0;
+                        darkbutt[p++] = 0;
+                        darkbutt[p++] = 0;
+                        darkbutt[p++] = 0;
+                    } else {
+                        // pixel is part of button so use a very dark gray
+                        darkbutt[p++] = 20;
+                        darkbutt[p++] = 20;
+                        darkbutt[p++] = 20;
+                        darkbutt[p++] = 128;    // 50% opaque
+                    }
+                }
+            }
+            DrawRGBAData(darkbutt, rect.x + x, rect.y + y, buttsize, buttsize);
+        }
     }
 }
 
@@ -1297,8 +1168,9 @@ void DrawGridBorder(int wd, int ht)
 void DrawOneLayer()
 {
     // dead pixels will be 100% transparent, and live pixels will use opacity setting
-    mask_dead_pixels = true;
+    dead_alpha = 0;
     live_alpha = int(2.55 * opacity);
+    
     int texbytes = 0;
     int numstates = currlayer->algo->NumCellStates();
     
@@ -1319,9 +1191,8 @@ void DrawOneLayer()
         // (see wxlayer.cpp)
         
         if (live_alpha < 255) {
-            // this is ugly, but we need to replace the alpha 255 values in
-            // icontextures[1..numstates-1] with live_alpha (2..249)
-            // so that DrawIcons displays translucent icons
+            // this is ugly, but we need to replace the alpha 255 values in icontextures[1..numstates-1]
+            // with live_alpha so that DrawIcons displays translucent icons
             for (int state = 1; state < numstates; state++) {
                 if (icontextures[state]) {
                     unsigned char* b = icontextures[state];
@@ -1360,8 +1231,6 @@ void DrawOneLayer()
     } else {
         currlayer->algo->draw(*currlayer->view, renderer);
     }
-    
-    mask_dead_pixels = false;
 
     if (showicons && currlayer->view->getmag() > 2 && live_alpha < 255) {
         // restore alpha values that were changed above
@@ -1566,6 +1435,10 @@ void DrawView(int tileindex)
     // (ie. only when scale is 1:2 or above)
     rightedge = float(currwd);
     bottomedge = float(currht);
+    
+    // all pixels are initially opaque
+    dead_alpha = 255;
+    live_alpha = 255;
     
     // draw pattern using a sequence of pixblit calls
     if (smartscale && currmag <= -1 && currmag >= -4) {

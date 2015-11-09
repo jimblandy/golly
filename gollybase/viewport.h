@@ -36,10 +36,6 @@ class lifealgo ;
  *   The reason we need a whole class is because doing this in a universe
  *   that may be billions of billions of cells on a side, but we still
  *   want single cell precision, is a bit tricky.
- *
- *   This class is not finished yet; I still need to be more precise about
- *   cases where mag>0 and precisely what will be displayed in this case
- *   and precisely how the coordinate transformations will occur.
  */
 class viewport {
 public:
@@ -79,7 +75,7 @@ private:
 } ;
 
 extern int MAX_MAG;
-// maximum cell size is 2^MAX_MAG (default is 2^4, but mobile devices
-// will probably want a bigger cell size)
+// maximum cell size is 2^MAX_MAG (default is 2^4, but devices with
+// high-resolution screens will probably want a bigger cell size)
 
 #endif

@@ -23,9 +23,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 /**
  *   Encapsulate a class capable of rendering a life universe.
- *   Note that we only use fill rectangle calls and blitbit calls
- *   (no setpixel).  Coordinates are in the same coordinate
- *   system as the viewport min/max values.
+ *   Note that we only use blitbit calls (no setpixel).
+ *   Coordinates are in the same coordinate system as the
+ *   viewport min/max values.
  *
  *   Also note that the render is responsible for deciding how
  *   to scale bits up as necessary, whether using the graphics
@@ -47,18 +47,17 @@ public:
    liferender() {}
    virtual ~liferender() ;
 
-   // killrect is used to draw background (ie. dead cells)
-   virtual void killrect(int x, int y, int w, int h) = 0 ;
-
    // pixblit is used to draw a pixel map by passing data in two formats:
-   // If pmscale == 1 then pm data contains 3*w*h bytes where each
-   // byte triplet contains the rgb values for the corresponding pixel.
+   // If pmscale == 1 then pm data contains 4*w*h bytes where each
+   // byte quadruplet contains the RGBA values for the corresponding pixel.
    // If pmscale > 1 then pm data contains (w/pmscale)*(h/pmscale) bytes
    // where each byte is a cell state (0..255).  This allows the rendering
    // code to display either icons or colors.
-   virtual void pixblit(int x, int y, int w, int h, char* pm, int pmscale) = 0 ;
+   virtual void pixblit(int x, int y, int w, int h, unsigned char* pm, int pmscale) = 0;
 
-   // drawing code needs access to current layer's colors
-   virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b) = 0;
+   // the drawing code needs access to the current layer's colors,
+   // and to the transparency values for dead pixels and live pixels
+   virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
+                          unsigned char* dead_alpha, unsigned char* live_alpha) = 0;
 } ;
 #endif
