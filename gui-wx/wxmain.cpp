@@ -66,10 +66,6 @@
 
 // -----------------------------------------------------------------------------
 
-// one-shot timer to fix problems in wxMac and wxGTK -- see OnOneTimer;
-// must be static global because it's used in DnDFile::OnDropFiles
-static wxTimer* onetimer;
-
 #ifdef __WXMSW__
     static bool set_focus = false;              // OnIdle needs to call SetFocus?
     static wxString editpath = wxEmptyString;   // OnIdle calls EditFile if this isn't empty
@@ -736,9 +732,8 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_RESET,        active && !timeline && !inscript &&
                                       (generating || currlayer->algo->getGeneration() > currlayer->startgen));
         mbar->Enable(ID_SETGEN,       active && !timeline && !inscript);
-        mbar->Enable(ID_FASTER,       active);
-        mbar->Enable(ID_SLOWER,       active /* && currlayer->currexpo > minexpo */);
-                                             // don't do this test because Win users won't hear beep
+        mbar->Enable(ID_FASTER,       active && !inscript && !(timeline && currlayer->algo->isrecording()));
+        mbar->Enable(ID_SLOWER,       active && !inscript && !(timeline && currlayer->algo->isrecording()));
         mbar->Enable(ID_SETBASE,      active && !timeline && !inscript);
         mbar->Enable(ID_AUTO,         active);
         mbar->Enable(ID_HYPER,        active && !timeline);
@@ -1250,10 +1245,9 @@ void MainFrame::ToggleFullScreen()
 void MainFrame::ToggleAllowUndo()
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(ID_NO_UNDO);
+        Stop();
         return;
     }
     
@@ -1291,7 +1285,7 @@ EVT_IDLE                (                 MainFrame::OnIdle)
 EVT_SIZE                (                 MainFrame::OnSize)
 EVT_TREE_SEL_CHANGED    (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
 EVT_SPLITTER_DCLICK     (wxID_ANY,        MainFrame::OnSashDblClick)
-EVT_TIMER               (wxID_ANY,        MainFrame::OnOneTimer)
+EVT_TIMER               (ID_GENTIMER,     MainFrame::OnGenTimer)
 EVT_CLOSE               (                 MainFrame::OnClose)
 END_EVENT_TABLE()
 
@@ -1299,16 +1293,6 @@ END_EVENT_TABLE()
 
 void MainFrame::OnMenu(wxCommandEvent& event)
 {
-    if (debuglevel == 99 && insideYield) {
-        if (generating || viewptr->waitingforclick) {
-            // ignore this case (frequent and expected because Yield() is called in
-            // a tight loop while generating a pattern or doing a paste)
-        } else {
-            // this is *possibly* an unwanted re-entrancy
-            wxBell();   // ignore allowbeep
-        }
-    }
-
     showbanner = false;
     if (keepmessage) {
         // don't clear message created by script while generating a pattern
@@ -1370,14 +1354,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_ZOOMOUT:        viewptr->SetCursorMode(curs_zoomout); break;
             
         // Control menu
-        case ID_START:          if (inscript || generating) {
-                                    Stop();
-                                } else if (TimelineExists()) {
-                                    PlayTimeline(1);
-                                } else {
-                                    GeneratePattern();
-                                }
-                                break;
+        case ID_START:          StartOrStop(); break;
         case ID_NEXT:           NextGeneration(false); break;
         case ID_STEP:           NextGeneration(true); break;
         case ID_RESET:          ResetPattern(); break;
@@ -1535,17 +1512,6 @@ void MainFrame::OnActivate(wxActivateEvent& event)
 #endif
     }
     
-#if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
-    /* wxGTK 2.8 requires this hack to re-enable menu items after a modal
-       dialog closes.  With wxGTK 2.9 it causes deadlocks due to concurrent
-       calls to UpdateMenuItems() (which calls ClipboardHasText() which is
-       non-reentrant).  Maybe caused by timer events not being dispatched
-       from the GUI thread?
-    */
-    if (infront) onetimer->Start(20, wxTIMER_ONE_SHOT);
-    // OnOneTimer will be called after delay of 0.02 secs
-#endif
-    
     event.Skip();
 }
 
@@ -1631,11 +1597,6 @@ void MainFrame::OnIdle(wxIdleEvent& event)
     if (call_close) {
         call_close = false;
         Close(false);        // false allows OnClose handler to veto close
-    }
-    
-    if (TimelineExists() && AutoPlay()) {
-        // in autoplay mode so we need another idle event
-        event.RequestMore();
     }
     
     event.Skip();
@@ -1772,8 +1733,6 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 #endif
             
             if (generating) {
-                // terminate generating loop and set command_pending flag
-                Stop();
                 command_pending = true;
                 if ( IsScriptFile(filepath) ) {
                     AddRecentScript(filepath);
@@ -1782,6 +1741,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
                     AddRecentPattern(filepath);
                     cmdevent.SetId(ID_OPEN_RECENT + 1);
                 }
+                Stop();
             } else {
                 // load pattern or run script
                 // OpenFile(filepath);
@@ -1809,22 +1769,6 @@ void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
     if (showscripts) ToggleShowScripts();
     UpdateMenuItems();
     UpdateToolBar();
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::OnOneTimer(wxTimerEvent& WXUNUSED(event))
-{
-    // fix drag and drop problem on Mac -- see DnDFile::OnDropFiles
-#ifdef __WXMAC__
-    // remove colored frame
-    if (bigview) bigview->Refresh(false);
-#endif
-    
-    // fix menu item problem on Linux after modal dialog has closed
-#ifdef __WXGTK__
-    UpdateMenuItems();
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -2028,12 +1972,6 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& filenames)
     for ( size_t n = 0; n < numfiles; n++ ) {
         mainptr->OpenFile(filenames[n]);
     }
-    
-#ifdef __WXMAC__
-    // need to call Refresh a bit later to remove colored frame on Mac
-    onetimer->Start(10, wxTIMER_ONE_SHOT);
-    // OnOneTimer will be called once after a delay of 0.01 secs
-#endif
     
     return true;
 }
@@ -2562,8 +2500,8 @@ MainFrame::MainFrame()
     perlfile = datadir + wxT("golly_clip.pl");
     pythonfile = datadir + wxT("golly_clip.py");
     
-    // create one-shot timer (see OnOneTimer)
-    onetimer = new wxTimer(this, wxID_ANY);
+    // create timer for generating patterns (see OnGenTimer in wxcontrol.cpp)
+    gentimer = new wxTimer(this, ID_GENTIMER);
     
     CreateMenus();
     CreateToolbar();
@@ -2671,6 +2609,6 @@ MainFrame::MainFrame()
 
 MainFrame::~MainFrame()
 {
-    delete onetimer;
+    delete gentimer;
     DestroyDrawingData();
 }

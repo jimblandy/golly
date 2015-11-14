@@ -148,30 +148,20 @@ public:
     long nextcheck;
 };
 
-void CallYield()
-{
-    if (mainptr->infront) {
-        // make sure viewport window keeps keyboard focus
-        viewptr->SetFocus();
-    }
-    insideYield = true;
-    wxGetApp().Yield(true);
-    insideYield = false;
-}
-
 int wx_poll::checkevents()
 {
-#ifdef __WXMSW__
-    // on Windows it seems that Time has a higher overhead than Yield
-    CallYield();
-#else
-    // on Mac/Linux it is faster to avoid calling Yield too often
+    // avoid calling Yield too often
     long t = stopwatch->Time();
     if (t > nextcheck) {
         nextcheck = t + 100;        // call 10 times per sec
-        CallYield();
+        if (mainptr->infront) {
+            // make sure viewport window keeps keyboard focus
+            viewptr->SetFocus();
+        }
+        insideYield = true;
+        wxGetApp().Yield(true);
+        insideYield = false;
     }
-#endif
     return isInterrupted();
 }
 
@@ -348,8 +338,8 @@ bool GollyApp::OnInit()
     banner +=         _(" (32-bit)");
 #endif
     banner +=         _(".  Copyright 2015 The Golly Gang.");
-    if (debuglevel == 99) {
-        banner +=     _("  *** debuglevel is 99 ***");
+    if (debuglevel > 0) {
+        banner += wxString::Format(_("  *** debuglevel = %d ***"), debuglevel);
     }
     statusptr->SetMessage(banner);
     

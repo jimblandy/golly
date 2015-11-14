@@ -1032,7 +1032,6 @@ void SyncClones()
                 cloneptr->currframe = currlayer->currframe;
                 cloneptr->autoplay = currlayer->autoplay;
                 cloneptr->tlspeed = currlayer->tlspeed;
-                cloneptr->lastframe = currlayer->lastframe;
             }
         }
     }
@@ -1285,10 +1284,9 @@ void AddLayer()
     
     // we need to test mainptr here because AddLayer is called from main window's ctor
     if (mainptr && mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_ADD_LAYER);
+        mainptr->Stop();
         return;
     }
     
@@ -1375,10 +1373,9 @@ void CloneLayer()
     if (numlayers >= MAX_LAYERS) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_CLONE);
+        mainptr->Stop();
         return;
     }
     
@@ -1394,10 +1391,9 @@ void DuplicateLayer()
     if (numlayers >= MAX_LAYERS) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_DUPLICATE);
+        mainptr->Stop();
         return;
     }
     
@@ -1413,10 +1409,9 @@ void DeleteLayer()
     if (numlayers <= 1) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_DEL_LAYER);
+        mainptr->Stop();
         return;
     }
     
@@ -1549,10 +1544,9 @@ void SetLayer(int index)
     if (inscript) {
         // always allow a script to switch layers
     } else if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_LAYER0 + index);
+        mainptr->Stop();
         return;
     }
     
@@ -1639,10 +1633,9 @@ void MoveLayerDialog()
     if (inscript || numlayers <= 1) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_MOVE_LAYER);
+        mainptr->Stop();
         return;
     }
     
@@ -1665,10 +1658,9 @@ void NameLayerDialog()
     if (inscript) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_NAME_LAYER);
+        mainptr->Stop();
         return;
     }
     
@@ -2719,7 +2711,6 @@ Layer::Layer()
     currframe = 0;                // first frame in timeline
     autoplay = 0;                 // not playing
     tlspeed = 0;                  // default speed for autoplay
-    lastframe = 0;                // no frame displayed
     
     // create viewport; the initial size is not important because it will soon change
     view = new viewport(100,100);
@@ -2797,7 +2788,6 @@ Layer::Layer()
             currframe = currlayer->currframe;
             autoplay = currlayer->autoplay;
             tlspeed = currlayer->tlspeed;
-            lastframe = currlayer->lastframe;
             
             // clones use same name for starting file
             tempstart = currlayer->tempstart;
@@ -3463,10 +3453,9 @@ void SetLayerColors()
     if (inscript || viewptr->waitingforclick) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_SET_COLORS);
+        mainptr->Stop();
         return;
     }
     

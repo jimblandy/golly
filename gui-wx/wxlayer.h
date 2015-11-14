@@ -122,7 +122,6 @@ public:
     int currframe;                // current frame in timeline
     int autoplay;                 // +ve = play forwards, -ve = play backwards, 0 = stop
     int tlspeed;                  // controls speed at which frames are played
-    long lastframe;               // time (in msecs) when last frame was displayed
 };
 
 const int MAX_LAYERS = 10;  // maximum number of layers

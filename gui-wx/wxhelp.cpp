@@ -785,10 +785,9 @@ void ClickLexiconPattern(const wxHtmlCell* htmlcell)
                     }
                     
                     if (mainptr->generating) {
-                        // terminate generating loop and set command_pending flag
-                        mainptr->Stop();
                         mainptr->command_pending = true;
                         mainptr->cmdevent.SetId(ID_LOAD_LEXICON);
+                        mainptr->Stop();
                         return;
                     }
                     

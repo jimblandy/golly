@@ -1258,10 +1258,9 @@ void UndoRedo::UndoChange()
     if (!CanUndo()) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_UNDO);
+        mainptr->Stop();
         return;
     }
     
@@ -1327,10 +1326,9 @@ void UndoRedo::RedoChange()
     
     /* can't redo while generating -- redo list will be empty
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_REDO);
+        mainptr->Stop();
         return;
     }
     */

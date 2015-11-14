@@ -50,7 +50,6 @@
 #include "wxundo.h"         // for undoredo->...
 #include "wxalgos.h"        // for *_ALGO, algo_type, CreateNewUniverse, etc
 #include "wxlayer.h"        // for currlayer, etc
-//???!!! #include "wxrender.h"       // for DrawView
 #include "wxtimeline.h"     // for TimelineExists, UpdateTimelineBar, etc
 
 #include <stdexcept>        // for std::runtime_error and std::exception
@@ -155,15 +154,9 @@ void MainFrame::ResetPattern(bool resetundo)
     if (currlayer->algo->getGeneration() == currlayer->startgen) return;
     
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(ID_RESET);
-        /* can't use wxPostEvent here because Yield processes all pending events:
-        // send Reset command to event queue
-        wxCommandEvent resetevt(wxEVT_COMMAND_MENU_SELECTED, ID_RESET);
-        wxPostEvent(this->GetEventHandler(), resetevt);
-        */
+        Stop();
         return;
     }
     
@@ -395,10 +388,9 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
 void MainFrame::SetGeneration()
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(ID_SETGEN);
+        Stop();
         return;
     }
     
@@ -423,6 +415,40 @@ void MainFrame::SetGeneration()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::SetGenIncrement()
+{
+    if (currlayer->currexpo > 0) {
+        bigint inc = 1;
+        // set increment to currbase^currexpo
+        int i = currlayer->currexpo;
+        while (i > 0) {
+            inc.mul_smallint(currlayer->currbase);
+            i--;
+        }
+        currlayer->algo->setIncrement(inc);
+    } else {
+        currlayer->algo->setIncrement(1);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::StartGenTimer()
+{
+    int interval = 16;      // do ~60 calls of OnGenTimer per sec
+    
+    // increase interval if user wants a delay
+    if (currlayer->currexpo < 0) {
+        interval = statusptr->GetCurrentDelay();
+        if (interval < 16) interval += 16;
+    }
+    
+    if (gentimer->IsRunning()) gentimer->Stop();
+    gentimer->Start(interval, wxTIMER_CONTINUOUS);
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::GoFaster()
 {
     if (TimelineExists()) {
@@ -432,8 +458,9 @@ void MainFrame::GoFaster()
         SetGenIncrement();
         // only need to refresh status bar
         UpdateStatus();
-        if (generating && currlayer->currexpo < 0) {
-            whentosee -= statusptr->GetCurrentDelay();
+        if (generating && currlayer->currexpo <= 0) {
+            // decrease gentimer interval
+            StartGenTimer();
         }
     }
 }
@@ -451,16 +478,56 @@ void MainFrame::GoSlower()
             // only need to refresh status bar
             UpdateStatus();
             if (generating && currlayer->currexpo < 0) {
-                if (currlayer->currexpo == -1) {
-                    // need to initialize whentosee rather than increment it
-                    whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
-                } else {
-                    whentosee += statusptr->GetCurrentDelay();
-                }
+                // increase gentimer interval
+                StartGenTimer();
             }
         } else {
             Beep();
         }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SetMinimumStepExponent()
+{
+    // set minexpo depending on mindelay and maxdelay
+    minexpo = 0;
+    if (mindelay > 0) {
+        int d = mindelay;
+        minexpo--;
+        while (d < maxdelay) {
+            d *= 2;
+            minexpo--;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::UpdateStepExponent()
+{
+    SetMinimumStepExponent();
+    if (currlayer->currexpo < minexpo) currlayer->currexpo = minexpo;
+    SetGenIncrement();
+
+    if (generating && currlayer->currexpo <= 0) {
+        // update gentimer interval
+        StartGenTimer();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::SetStepExponent(int newexpo)
+{
+    currlayer->currexpo = newexpo;
+    if (currlayer->currexpo < minexpo) currlayer->currexpo = minexpo;
+    SetGenIncrement();
+
+    if (generating && currlayer->currexpo <= 0) {
+        // update gentimer interval
+        StartGenTimer();
     }
 }
 
@@ -489,38 +556,23 @@ void MainFrame::DisplayPattern()
     if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
         // only update the current tile
         viewptr->Refresh(false);
-#ifdef __WXMAC__
-        if (!showstatus) viewptr->Update();
-        // else let statusptr->Update() update viewport
-#else
-        viewptr->Update();
-#endif
+        //UUU!!! viewptr->Update();
     } else {
         // update main viewport window, possibly including all tile windows
         // (tile windows are children of bigview)
         if (numlayers > 1 && (stacklayers || tilelayers)) {
             bigview->Refresh(false);
-#ifdef __WXMAC__
-            if (!showstatus) bigview->Update();
-            // else let statusptr->Update() update viewport
-#else
-            bigview->Update();
-#endif
+            //UUU!!! bigview->Update();
         } else {
             viewptr->Refresh(false);
-#ifdef __WXMAC__
-            if (!showstatus) viewptr->Update();
-            // else let statusptr->Update() update viewport
-#else
-            viewptr->Update();
-#endif
+            //UUU!!! viewptr->Update();
         }
     }
     
     if (showstatus) {
         statusptr->CheckMouseLocation(infront);
         statusptr->Refresh(false);
-        statusptr->Update();
+        //UUU!!! statusptr->Update();
     }
 }
 
@@ -1187,122 +1239,6 @@ bool MainFrame::StepPattern()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::GeneratePattern()
-{
-    if (generating || viewptr->drawingcells || viewptr->waitingforclick) {
-        Beep();
-        return;
-    }
-    
-    if (currlayer->algo->isEmpty()) {
-        statusptr->ErrorMessage(empty_pattern);
-        return;
-    }
-    
-    if (currlayer->algo->isrecording()) {
-        // don't attempt to save starting pattern here (let DeleteTimeline do it)
-    } else if (!SaveStartingPattern()) {
-        return;
-    }
-    
-    // GeneratePattern is never called while running a script so no need
-    // to test inscript or currlayer->stayclean
-    if (allowundo) currlayer->undoredo->RememberGenStart();
-    
-    // for DisplayTimingInfo
-    begintime = stopwatch->Time();
-    begingen = currlayer->algo->getGeneration().todouble();
-    
-    // for hyperspeed
-    int hypdown = 64;
-    
-    generating = true;               // avoid re-entry
-    wxGetApp().PollerReset();
-    UpdateUserInterface();
-    
-    // only show hashing info while generating, otherwise Mac app can crash
-    // after a paste due to hlifealgo::resize() calling lifestatus() which
-    // then causes the viewport to be repainted for some inexplicable reason
-    lifealgo::setVerbose( currlayer->showhashinfo );
-    
-    if (currlayer->currexpo < 0)
-        whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
-    
-    while (true) {
-        if (currlayer->currexpo < 0) {
-            // slow down by only doing one gen every GetCurrentDelay() millisecs
-            long currmsec = stopwatch->Time();
-            if (currmsec >= whentosee) {
-                if (!StepPattern()) break;
-                // add delay to current time rather than currmsec
-                whentosee = stopwatch->Time() + statusptr->GetCurrentDelay();
-            } else {
-                // process events while we wait
-                if (wxGetApp().Poller()->checkevents()) break;
-                // don't hog CPU but keep sleep duration short (ie. <= mindelay)
-                wxMilliSleep(1);
-            }
-        } else {
-            // currexpo >= 0 so advance pattern by currlayer->algo->getIncrement() gens
-            if (!StepPattern()) break;
-            if (currlayer->algo->isrecording()) {
-                if (showtimeline) UpdateTimelineBar();
-                if (currlayer->algo->getframecount() == MAX_FRAME_COUNT) {
-                    wxString msg;
-                    msg.Printf(_("No more frames can be recorded (maximum = %d)."), MAX_FRAME_COUNT);
-                    Warning(msg);
-                    break;
-                }
-            } else if (currlayer->hyperspeed && currlayer->algo->hyperCapable()) {
-                hypdown--;
-                if (hypdown == 0) {
-                    hypdown = 64;
-                    GoFaster();
-                }
-            }
-        }
-    }
-    
-    generating = false;
-    lifealgo::setVerbose(0);
-    
-    // for DisplayTimingInfo
-    endtime = stopwatch->Time();
-    endgen = currlayer->algo->getGeneration().todouble();
-    
-    // display the final pattern
-    if (currlayer->autofit) viewptr->FitInView(0);
-    if (command_pending || draw_pending) {
-        // let the pending command/draw do the update below
-    } else {
-        UpdateEverything();
-    }
-    
-    // GeneratePattern is never called while running a script so no need
-    // to test inscript or currlayer->stayclean; note that we must call
-    // RememberGenFinish BEFORE processing any pending command
-    if (allowundo) currlayer->undoredo->RememberGenFinish();
-    
-    // stop recording any timeline before processing any pending command
-    if (currlayer->algo->isrecording()) {
-        currlayer->algo->stoprecording();
-        if (currlayer->algo->getframecount() > 0) {
-            // probably best to go to last frame
-            currlayer->currframe = currlayer->algo->getframecount() - 1;
-            currlayer->autoplay = 0;
-            currlayer->tlspeed = 0;
-            currlayer->algo->gotoframe(currlayer->currframe);
-            if (currlayer->autofit) viewptr->FitInView(1);
-        }
-        if (!showtimeline) ToggleTimelineBar();
-        UpdateUserInterface();
-    }
-    
-    DoPendingAction(true);     // true means we can restart generating loop
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::DoPendingAction(bool restart)
 {
     if (command_pending) {
@@ -1389,7 +1325,7 @@ void MainFrame::DoPendingAction(bool restart)
                     showedit = saveshowedit;
                     
                     if (restart) {
-                        // call GeneratePattern again
+                        // call StartGenerating again
                         wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
                         wxPostEvent(this->GetEventHandler(), goevt);
                     }
@@ -1423,7 +1359,7 @@ void MainFrame::DoPendingAction(bool restart)
         showedit = saveshowedit;
         
         if (restart) {
-            // call GeneratePattern again
+            // call StartGenerating again
             wxCommandEvent goevt(wxEVT_COMMAND_MENU_SELECTED, ID_START);
             wxPostEvent(this->GetEventHandler(), goevt);
         }
@@ -1450,12 +1386,174 @@ void MainFrame::DisplayTimingInfo()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::StartGenerating()
+{
+    if (viewptr->drawingcells || viewptr->waitingforclick) {
+        return;
+    }
+    
+    if (currlayer->algo->isEmpty()) {
+        statusptr->ErrorMessage(empty_pattern);
+        return;
+    }
+    
+    if (currlayer->algo->isrecording()) {
+        // don't attempt to save starting pattern here (let DeleteTimeline do it)
+    } else if (!SaveStartingPattern()) {
+        return;
+    }
+    
+    // no need to test inscript or currlayer->stayclean
+    if (allowundo && !currlayer->algo->isrecording()) currlayer->undoredo->RememberGenStart();
+
+    // for DisplayTimingInfo
+    begintime = stopwatch->Time();
+    begingen = currlayer->algo->getGeneration().todouble();
+
+    // for hyperspeed
+    hypdown = 64;
+
+    generating = true;
+    wxGetApp().PollerReset();
+    UpdateUserInterface();
+
+    // only show hashing info while generating
+    lifealgo::setVerbose(currlayer->showhashinfo);
+
+    StartGenTimer();
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::FinishUp()
+{
+    // display the final pattern
+    if (currlayer->autofit) viewptr->FitInView(0);
+    if (command_pending || draw_pending) {
+        // let the pending command/draw do the update below
+    } else {
+        UpdateEverything();
+    }
+    
+    // note that we must call RememberGenFinish BEFORE processing any pending command
+    if (allowundo && !currlayer->algo->isrecording()) currlayer->undoredo->RememberGenFinish();
+    
+    // stop recording any timeline before processing any pending command
+    if (currlayer->algo->isrecording()) {
+        currlayer->algo->stoprecording();
+        if (currlayer->algo->getframecount() > 0) {
+            // probably best to go to last frame
+            currlayer->currframe = currlayer->algo->getframecount() - 1;
+            currlayer->autoplay = 0;
+            currlayer->tlspeed = 0;
+            currlayer->algo->gotoframe(currlayer->currframe);
+            if (currlayer->autofit) viewptr->FitInView(1);
+        }
+        if (!showtimeline) ToggleTimelineBar();
+        UpdateUserInterface();
+    }
+    
+    // do we still need this???!!! maybe just DoPendingDraw???
+    DoPendingAction(true);     // true means we can restart generating
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::StopGenerating()
+{
+    if (gentimer->IsRunning()) gentimer->Stop();
+    generating = false;
+    wxGetApp().PollerInterrupt();
+    lifealgo::setVerbose(0);
+    
+    // for DisplayTimingInfo
+    endtime = stopwatch->Time();
+    endgen = currlayer->algo->getGeneration().todouble();
+
+    if (insideYield) {
+        // we're currently in the event poller somewhere inside step(), so we must let
+        // step() complete and only call FinishUp after StepPattern has finished
+        //!!! wxBell();
+    } else {
+        FinishUp();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::OnGenTimer(wxTimerEvent& WXUNUSED(event))
+{
+    // called when gentimer fires a timer event
+    
+    // play safe and avoid re-entrancy if timer fires while insideYield
+    if (insideYield) return;
+    
+    if (!StepPattern()) {
+        if (generating) {
+            // call StopGenerating() to stop gentimer
+            Stop();
+        } else {
+            // StopGenerating() was called while insideYield
+            FinishUp();
+        }
+        return;
+    }
+    
+    if (currlayer->algo->isrecording()) {
+        if (showtimeline) UpdateTimelineBar();
+        if (currlayer->algo->getframecount() == MAX_FRAME_COUNT) {
+            if (generating) {
+                // call StopGenerating() to stop gentimer
+                Stop();
+            } else {
+                // StopGenerating() was called while insideYield
+                FinishUp();
+            }
+            wxString msg;
+            msg.Printf(_("No more frames can be recorded (maximum = %d)."), MAX_FRAME_COUNT);
+            Warning(msg);
+            return;
+        }
+    } else if (currlayer->hyperspeed && currlayer->algo->hyperCapable()) {
+        hypdown--;
+        if (hypdown == 0) {
+            hypdown = 64;
+            GoFaster();
+        }
+    }
+    
+    if (!generating) {
+        // StopGenerating() was called while insideYield
+        FinishUp();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::Stop()
 {
     if (inscript) {
         PassKeyToScript(WXK_ESCAPE);
     } else if (generating) {
-        wxGetApp().PollerInterrupt();
+        StopGenerating();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::StartOrStop()
+{
+    if (inscript || generating) {
+        Stop();
+    } else if (TimelineExists()) {
+        if (currlayer->algo->isrecording()) {
+            // should never happen if generating is false
+            Warning(_("Bug: recording but not generating!"));
+        } else {
+            PlayTimeline(1);        // play forwards or stop if already playing
+        }
+    } else {
+        StartGenerating();
     }
 }
 
@@ -1471,7 +1569,7 @@ void MainFrame::NextGeneration(bool useinc)
     inNextGen = true;
     
     if (!inscript && generating) {
-        // we must be in GeneratePattern() loop, so abort it
+        // can this happen???!!!
         Stop();
         inNextGen = false;
         return;
@@ -1811,10 +1909,9 @@ void MainFrame::ShowRuleDialog()
     if (inscript || viewptr->waitingforclick) return;
     
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(ID_SETRULE);
+        Stop();
         return;
     }
     
@@ -1886,10 +1983,9 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
     }
     
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(ID_ALGO0 + newalgotype);
+        Stop();
         return;
     }
     
@@ -2663,10 +2759,9 @@ void MainFrame::ConvertOldRules()
     if (inscript || viewptr->waitingforclick) return;
     
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(ID_CONVERT);
+        Stop();
         return;
     }
     

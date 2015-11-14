@@ -490,7 +490,7 @@ void runtestscript(const char *testscript) {
    exit(0) ;
 }
 int main(int argc, char *argv[]) {
-   cout << "This is bgolly " STRINGIFY(VERSION) " Copyright 2013 The Golly Gang."
+   cout << "This is bgolly " STRINGIFY(VERSION) " Copyright 2015 The Golly Gang."
         << endl << flush ;
    qlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    hlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;

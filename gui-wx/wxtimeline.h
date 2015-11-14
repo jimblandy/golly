@@ -55,11 +55,6 @@ void InitTimelineFrame();
 bool TimelineExists();
 // Does a timeline exist in the current algorithm?
 
-bool AutoPlay();
-// Called in MainFrame::OnIdle so we can check if the next
-// timeline frame needs to be displayed.  Returns true if we are
-// in autoplay mode and so another idle event needs to be sent.
-
 void PlayTimeline(int direction);
 // Play timeline forwards if given direction is +ve, or backwards
 // if direction is -ve, or stop if direction is 0.

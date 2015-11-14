@@ -56,7 +56,7 @@
 
 // -----------------------------------------------------------------------------
 
-const int DRAG_RATE = 20;           // call OnDragTimer 50 times per sec
+const int DRAG_RATE = 16;           // call OnDragTimer ~60 times per sec
 
 static bool stopdrawing = false;    // terminate a draw done while generating?
 
@@ -113,7 +113,7 @@ static void UpdateView()
     // update main viewport window, including all tile windows if they exist
     // (tile windows are children of bigview)
     bigview->Refresh(false);
-    bigview->Update();
+    //UUU!!!??? bigview->Update();
 }
 
 // -----------------------------------------------------------------------------
@@ -244,10 +244,9 @@ void PatternView::CutSelection()
     if (!SelectionExists()) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_CUT);
+        mainptr->Stop();
         return;
     }
     
@@ -261,10 +260,9 @@ void PatternView::CopySelection()
     if (!SelectionExists()) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_COPY);
+        mainptr->Stop();
         return;
     }
     
@@ -788,10 +786,9 @@ void PatternView::PasteClipboard(bool toselection)
     if (toselection && !SelectionExists()) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(toselection ? ID_PASTE_SEL : ID_PASTE);
+        mainptr->Stop();
         return;
     }
     
@@ -1640,21 +1637,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_NEXTLOWER:   CycleDrawingState(false); break;
             
         // Control menu actions
-        case DO_STARTSTOP:
-            if (!inscript) {
-                if (timeline) {
-                    if (currlayer->algo->isrecording()) {
-                        StartStopRecording();   // stop recording
-                    } else {
-                        PlayTimeline(1);        // play forwards or stop if already playing
-                    }
-                } else if (mainptr->generating) {
-                    mainptr->Stop();
-                } else {
-                    mainptr->GeneratePattern();
-                }
-            }
-            break;
+        case DO_STARTSTOP:   if (!inscript) mainptr->StartOrStop(); break;
         case DO_NEXTGEN:     if (!inscript && !timeline) mainptr->NextGeneration(false); break;
         case DO_NEXTSTEP:    if (!inscript && !timeline) mainptr->NextGeneration(true); break;
         case DO_RESET:       if (!inscript && !timeline && !busy) mainptr->ResetPattern(); break;
@@ -2459,16 +2442,6 @@ void PatternView::OnChar(wxKeyEvent& event)
     // get translated keyboard event
     int key = event.GetKeyCode();
     int mods = event.GetModifiers();
-
-    if (debuglevel == 99 && insideYield) {
-        if (mainptr->generating || waitingforclick) {
-            // ignore this case (frequent and expected because Yield() is called in
-            // a tight loop while generating a pattern or doing a paste)
-        } else {
-            // this is *possibly* an unwanted re-entrancy
-            wxBell();   // ignore allowbeep
-        }
-    }
     
     if (debuglevel == 1) {
         debugkey += wxString::Format(_("\nOnChar: key=%d (%c) mods=%d"),
@@ -2658,10 +2631,10 @@ void PatternView::ProcessClick(int x, int y, int button, int modifiers)
             }
             if (mainptr->generating) {
                 // we allow drawing while generating
-                mainptr->Stop();
                 mainptr->draw_pending = true;
                 mainptr->mouseevent.m_x = x;
                 mainptr->mouseevent.m_y = y;
+                mainptr->Stop();
                 return;
             }
             StartDrawingCells(x, y);
@@ -2947,7 +2920,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
     // don't test "!PointInView(x, y)" here -- we want to allow scrolling
     // in full screen mode when mouse is at outer edge of view
     if ( x <= 0 || x >= currlayer->view->getxmax() ||
-        y <= 0 || y >= currlayer->view->getymax() ) {
+         y <= 0 || y >= currlayer->view->getymax() ) {
         
         // user can disable scrolling
         if ( drawingcells && !scrollpencil ) {

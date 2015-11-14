@@ -804,10 +804,9 @@ void Selection::Shrink(bool fit)
     if (!exists) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(fit ? ID_SHRINKFIT : ID_SHRINK);
+        mainptr->Stop();
         return;
     }
     
@@ -981,10 +980,9 @@ void Selection::Clear()
     if (currlayer->algo->isEmpty()) return;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_CLEAR);
+        mainptr->Stop();
         return;
     }
     
@@ -1154,10 +1152,9 @@ void Selection::ClearOutside()
     }
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_OUTSIDE);
+        mainptr->Stop();
         return;
     }
     
@@ -1484,10 +1481,9 @@ void Selection::RandomFill()
     }
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(ID_RANDOM);
+        mainptr->Stop();
         return;
     }
     
@@ -1642,10 +1638,9 @@ bool Selection::Flip(bool topbottom, bool inundoredo)
     if (!exists) return false;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(topbottom ? ID_FLIPTB : ID_FLIPLR);
+        mainptr->Stop();
         return true;
     }
     
@@ -1942,10 +1937,9 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
     if (!exists) return false;
     
     if (mainptr->generating) {
-        // terminate generating loop and set command_pending flag
-        mainptr->Stop();
         mainptr->command_pending = true;
         mainptr->cmdevent.SetId(clockwise ? ID_ROTATEC : ID_ROTATEA);
+        mainptr->Stop();
         return true;
     }
     

@@ -320,7 +320,6 @@ void SyncClones()
                 cloneptr->currframe = currlayer->currframe;
                 cloneptr->autoplay = currlayer->autoplay;
                 cloneptr->tlspeed = currlayer->tlspeed;
-                cloneptr->lastframe = currlayer->lastframe;
             }
         }
     }
@@ -1732,7 +1731,6 @@ Layer::Layer()
     currframe = 0;              // first frame in timeline
     autoplay = 0;               // not playing
     tlspeed = 0;                // default speed for autoplay
-    lastframe = 0;              // no frame displayed
 
     // create viewport; the initial size is not important because it will soon change
     view = new viewport(100,100);
@@ -1809,7 +1807,6 @@ Layer::Layer()
             currframe = currlayer->currframe;
             autoplay = currlayer->autoplay;
             tlspeed = currlayer->tlspeed;
-            lastframe = currlayer->lastframe;
 
             // clones use same name for starting file
             tempstart = currlayer->tempstart;

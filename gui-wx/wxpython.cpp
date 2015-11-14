@@ -3038,8 +3038,9 @@ bool InitPython()
         scriptsdir.Replace(wxT("\\"), wxT("\\\\"));
         scriptsdir.Replace(wxT("'"), wxT("\\'"));
         wxString command = wxT("import sys ; sys.path.append('") + scriptsdir + wxT("')");
+        
         // also insert script's current directory at start of sys.path
-        // since that's what most Python interpreter's do (thanks to Joel Snyder)
+        // since that's what most Python interpreters do (thanks to Joel Snyder)
         command += wxT(" ; sys.path.insert(0,'')");
         if ( PyRun_SimpleString(command.mb_str(wxConvLocal)) < 0 )
             Warning(_("Failed to append Scripts path!"));

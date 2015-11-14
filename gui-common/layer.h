@@ -68,7 +68,6 @@ public:
 
     // each layer (cloned or not) has its own viewport for displaying patterns;
     // note that we use a pointer to the viewport to allow temporary switching
-    // in wxrender.cpp (eg. in DrawStackedLayers)
     viewport* view;
 
     // WARNING: this string is used to remember the current rule when
@@ -126,11 +125,10 @@ public:
 
     bool multicoloricons;         // are icons multi-colored? (grayscale if not)
 
-    // used if the layer has a timeline (see wxtimeline.cpp)
+    // used if the layer has a timeline
     int currframe;                // current frame in timeline
     int autoplay;                 // +ve = play forwards, -ve = play backwards, 0 = stop
     int tlspeed;                  // controls speed at which frames are played
-    long lastframe;               // time (in msecs) when last frame was displayed
 };
 
 const int MAX_LAYERS = 10;      // maximum number of layers

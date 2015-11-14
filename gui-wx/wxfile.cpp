@@ -144,24 +144,6 @@ void MainFrame::SetWindowTitle(const wxString& filename)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::SetGenIncrement()
-{
-    if (currlayer->currexpo > 0) {
-        bigint inc = 1;
-        // set increment to currbase^currexpo
-        int i = currlayer->currexpo;
-        while (i > 0) {
-            inc.mul_smallint(currlayer->currbase);
-            i--;
-        }
-        currlayer->algo->setIncrement(inc);
-    } else {
-        currlayer->algo->setIncrement(1);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::CreateUniverse()
 {
     // save current rule
@@ -184,10 +166,9 @@ void MainFrame::CreateUniverse()
 void MainFrame::NewPattern(const wxString& title)
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(wxID_NEW);
+        Stop();
         return;
     }
     
@@ -817,8 +798,6 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
     }
     
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         // assume remember is true (should only be false if called from a script)
         if ( IsScriptFile(path) ) {
@@ -828,6 +807,7 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
             AddRecentPattern(path);
             cmdevent.SetId(ID_OPEN_RECENT + 1);
         }
+        Stop();
         return;
     }
     
@@ -995,10 +975,9 @@ void MainFrame::AddRecentScript(const wxString& inpath)
 void MainFrame::OpenPattern()
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(wxID_OPEN);
+        Stop();
         return;
     }
     
@@ -1036,10 +1015,9 @@ void MainFrame::OpenPattern()
 void MainFrame::OpenScript()
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(ID_RUN_SCRIPT);
+        Stop();
         return;
     }
     
@@ -1210,10 +1188,9 @@ bool MainFrame::ClipboardContainsRule()
 void MainFrame::OpenClipboard()
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(ID_OPEN_CLIP);
+        Stop();
         return;
     }
     
@@ -1322,10 +1299,9 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
 void MainFrame::RunClipboard()
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(ID_RUN_CLIP);
+        Stop();
         return;
     }
     
@@ -1369,10 +1345,9 @@ void MainFrame::RunClipboard()
 void MainFrame::OpenRecentPattern(int id)
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(id);
+        Stop();
         return;
     }
     
@@ -1400,10 +1375,9 @@ void MainFrame::OpenRecentPattern(int id)
 void MainFrame::OpenRecentScript(int id)
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(id);
+        Stop();
         return;
     }
     
@@ -1586,10 +1560,9 @@ const char* MainFrame::WritePattern(const wxString& path,
 bool MainFrame::SavePattern()
 {
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(wxID_SAVE);
+        Stop();
         return false;
     }
     
@@ -1891,49 +1864,14 @@ void MainFrame::SetScriptDir(const wxString& newdir)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::SetStepExponent(int newexpo)
-{
-    currlayer->currexpo = newexpo;
-    if (currlayer->currexpo < minexpo) currlayer->currexpo = minexpo;
-    SetGenIncrement();
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::SetMinimumStepExponent()
-{
-    // set minexpo depending on mindelay and maxdelay
-    minexpo = 0;
-    if (mindelay > 0) {
-        int d = mindelay;
-        minexpo--;
-        while (d < maxdelay) {
-            d *= 2;
-            minexpo--;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::UpdateStepExponent()
-{
-    SetMinimumStepExponent();
-    if (currlayer->currexpo < minexpo) currlayer->currexpo = minexpo;
-    SetGenIncrement();
-}
-
-// -----------------------------------------------------------------------------
-
 void MainFrame::ShowPrefsDialog(const wxString& page)
 {
     if (viewptr->waitingforclick) return;
     
     if (generating) {
-        // terminate generating loop and set command_pending flag
-        Stop();
         command_pending = true;
         cmdevent.SetId(wxID_PREFERENCES);
+        Stop();
         return;
     }
     

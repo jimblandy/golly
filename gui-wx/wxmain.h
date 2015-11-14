@@ -104,10 +104,14 @@ public:
     void ShowPrefsDialog(const wxString& page = wxEmptyString);
     
     // control functions
-    void GeneratePattern();
+    void StartGenTimer();
+    void StartGenerating();
+    void StopGenerating();
+    void StartOrStop();
+    void Stop();
+    void FinishUp();
     void GoFaster();
     void GoSlower();
-    void Stop();
     void DisplayTimingInfo();
     void NextGeneration(bool useinc);
     void ToggleAutoFit();
@@ -153,24 +157,25 @@ public:
     void EditFile(const wxString& filepath);
     void QuitApp();
     
-    bool generating;           // currently generating pattern?
-    bool fullscreen;           // in full screen mode?
-    bool showbanner;           // showing banner message?
-    bool keepmessage;          // don't clear message created by script?
-    bool command_pending;      // user selected a command while generating?
-    bool draw_pending;         // user wants to draw while generating?
-    wxCommandEvent cmdevent;   // the pending command
-    wxMouseEvent mouseevent;   // the pending draw
+    wxTimer* gentimer;          // timer for generating patterns
+    bool generating;            // currently generating a pattern?
+    bool fullscreen;            // in full screen mode?
+    bool showbanner;            // showing banner message?
+    bool keepmessage;           // don't clear message created by script?
+    bool command_pending;       // user selected a command while generating?
+    bool draw_pending;          // user wants to draw while generating?
+    wxCommandEvent cmdevent;    // the pending command
+    wxMouseEvent mouseevent;    // the pending draw
     
     // temporary files
-    wxString clipfile;         // name of temporary file for storing clipboard data
-    wxString perlfile;         // name of temporary Perl script
-    wxString pythonfile;       // name of temporary Python script
+    wxString clipfile;          // name of temporary file for storing clipboard data
+    wxString perlfile;          // name of temporary Perl script
+    wxString pythonfile;        // name of temporary Python script
     
     // store files passed via command line (processed in first OnIdle)
     wxArrayString pendingfiles;
 
-    bool infront;              // main window is active?
+    bool infront;               // main window is active?
     
 private:
     // any class wishing to process wxWidgets events must use this macro
@@ -184,7 +189,7 @@ private:
     void OnIdle(wxIdleEvent& event);
     void OnDirTreeSelection(wxTreeEvent& event);
     void OnSashDblClick(wxSplitterEvent& event);
-    void OnOneTimer(wxTimerEvent& event);
+    void OnGenTimer(wxTimerEvent& event);
     void OnClose(wxCloseEvent& event);
     
     // file functions
@@ -219,14 +224,14 @@ private:
     wxSplitterWindow* splitwin;
     wxGenericDirCtrl* patternctrl;
     wxGenericDirCtrl* scriptctrl;
-    
-    int minexpo;                  // currexpo at maximum delay (must be <= 0)
-    long whentosee;               // when to do next gen (if currexpo < 0)
-    long begintime, endtime;      // for timing info
-    double begingen, endgen;      // ditto
+
+    int hypdown;                    // for hyperspeed
+    int minexpo;                    // currexpo at maximum delay (must be <= 0)
+    long begintime, endtime;        // for timing info
+    double begingen, endgen;        // ditto
 };
 
-// ids for menu commands
+// ids for menu commands, etc
 enum {
     // File menu
     // wxID_NEW,
@@ -391,8 +396,9 @@ enum {
     ID_HELP_CREDITS,
     
     // these ids aren't associated with any menu item
-    ID_LOAD_LEXICON,     // load lexicon pattern
-    ID_HELP_BUTT         // help button in tool bar
+    ID_LOAD_LEXICON,    // for loading a lexicon pattern
+    ID_HELP_BUTT,       // for help button in tool bar
+    ID_GENTIMER         // for gentimer
 };
 
 #endif
