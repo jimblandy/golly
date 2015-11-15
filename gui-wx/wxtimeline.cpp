@@ -280,7 +280,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
     xpos = x + sliderwd;
     
     // add scroll bar
-    int scrollbarwd = 60;      // minimum width (ResizeTimelineBar will alter it)
+    int scrollbarwd = 60;   // minimum width (ResizeTimelineBar will alter it)
 #ifdef __WXMAC__
     int scrollbarht = 15;   // must be this height on Mac
 #else
@@ -888,19 +888,8 @@ void ResizeTimelineBar(int y, int wd)
 void ToggleTimelineBar()
 {
     showtimeline = !showtimeline;
-    wxRect r = bigview->GetRect();
-    
-    if (showtimeline) {
-        // show timeline bar underneath viewport window
-        r.height -= TBARHT;
-        ResizeTimelineBar(r.y + r.height, r.width);
-    } else {
-        // hide timeline bar
-        r.height += TBARHT;
-    }
-    bigview->SetSize(r);
+    mainptr->ResizeBigView();
     tbarptr->Show(showtimeline);    // needed on Windows
-    
     mainptr->UpdateEverything();
 }
 

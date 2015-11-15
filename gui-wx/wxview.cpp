@@ -108,16 +108,6 @@ END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
 
-static void UpdateView()
-{
-    // update main viewport window, including all tile windows if they exist
-    // (tile windows are children of bigview)
-    bigview->Refresh(false);
-    //UUU!!!??? bigview->Update();
-}
-
-// -----------------------------------------------------------------------------
-
 static void RefreshView()
 {
     // refresh main viewport window, including all tile windows if they exist
@@ -462,8 +452,6 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         if ( pasterect.width > 0 ) {
             // erase old pasterect
             Refresh(false);
-            // no need to update immediately
-            // Update();
         }
         
         if ( !PointInView(pastex, pastey) ||
@@ -982,7 +970,7 @@ bool PatternView::FlipPastePattern(bool topbottom)
     
     if (result) {
         InitPaste(pastealgo, pastebox);
-        UpdateView();
+        RefreshView();
     }
     
     return result;
@@ -1018,7 +1006,7 @@ bool PatternView::RotatePastePattern(bool clockwise)
         pastesel.GetRect(&x, &y, &wd, &ht);
         pastebox = wxRect(x, y, wd, ht);
         InitPaste(pastealgo, pastebox);
-        UpdateView();
+        RefreshView();
     }
     
     return result;
@@ -1528,11 +1516,19 @@ void PatternView::UpdateScrollBars()
         // avoid scroll bar disappearing
         if (range < 3) range = 3;
         hthumb = currlayer->view->x.toint() + range / 2;
+#ifdef __WXMAC__
+        mainptr->hbar->SetScrollbar(hthumb, 1, range, 1, true);
+#else
         bigview->SetScrollbar(wxHORIZONTAL, hthumb, 1, range, true);
+#endif
     } else {
         // keep thumb box in middle of scroll bar if grid width is infinite
         hthumb = (thumbrange - 1) * viewwd / 2;
+#ifdef __WXMAC__
+        mainptr->hbar->SetScrollbar(hthumb, viewwd, thumbrange * viewwd, viewwd, true);
+#else
         bigview->SetScrollbar(wxHORIZONTAL, hthumb, viewwd, thumbrange * viewwd, true);
+#endif
     }
     
     if (currlayer->algo->gridht > 0) {
@@ -1541,11 +1537,19 @@ void PatternView::UpdateScrollBars()
         // avoid scroll bar disappearing
         if (range < 3) range = 3;
         vthumb = currlayer->view->y.toint() + range / 2;
+#ifdef __WXMAC__
+        mainptr->vbar->SetScrollbar(vthumb, 1, range, 1, true);
+#else
         bigview->SetScrollbar(wxVERTICAL, vthumb, 1, range, true);
+#endif
     } else {
         // keep thumb box in middle of scroll bar if grid height is infinite
         vthumb = (thumbrange - 1) * viewht / 2;
+#ifdef __WXMAC__
+        mainptr->vbar->SetScrollbar(vthumb, viewht, thumbrange * viewht, viewht, true);
+#else
         bigview->SetScrollbar(wxVERTICAL, vthumb, viewht, thumbrange * viewht, true);
+#endif
     }
 }
 
@@ -1788,7 +1792,7 @@ void PatternView::StartDrawingCells(int x, int y)
 
         MarkLayerDirty();
         if (showstatus) statusptr->Refresh(false);
-        UpdateView();
+        RefreshView();
     }
     
     CaptureMouse();                     // get mouse up event even if outside view
@@ -1895,7 +1899,7 @@ void PatternView::DrawCells(int x, int y)
         currlayer->algo->endofpattern();
         MarkLayerDirty();
         if (showstatus) statusptr->Refresh(false);
-        UpdateView();
+        RefreshView();
     }
 }
 
@@ -3058,13 +3062,11 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
                 currlayer->view->move(amount, 0);
                 // don't call UpdateEverything here because it calls UpdateScrollBars
                 RefreshView();
-                // don't Update() immediately -- more responsive
             } else {
                 vthumb = newpos;
                 currlayer->view->move(0, amount);
                 // don't call UpdateEverything here because it calls UpdateScrollBars
                 RefreshView();
-                // don't Update() immediately -- more responsive
             }
         }
         
@@ -3108,7 +3110,10 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
     if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));
     
     // avoid erasing background on GTK+ -- doesn't work!!!
-    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+    // SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+    
+    // avoid resizing problems on Linux???!!!
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
     
     initgl = true;             // need to initialize GL state
     drawingcells = false;      // not drawing cells

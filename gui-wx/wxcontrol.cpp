@@ -556,23 +556,19 @@ void MainFrame::DisplayPattern()
     if (tilelayers && numlayers > 1 && !syncviews && currlayer->cloneid == 0) {
         // only update the current tile
         viewptr->Refresh(false);
-        //UUU!!! viewptr->Update();
     } else {
         // update main viewport window, possibly including all tile windows
         // (tile windows are children of bigview)
         if (numlayers > 1 && (stacklayers || tilelayers)) {
             bigview->Refresh(false);
-            //UUU!!! bigview->Update();
         } else {
             viewptr->Refresh(false);
-            //UUU!!! viewptr->Update();
         }
     }
     
     if (showstatus) {
         statusptr->CheckMouseLocation(infront);
         statusptr->Refresh(false);
-        //UUU!!! statusptr->Update();
     }
 }
 

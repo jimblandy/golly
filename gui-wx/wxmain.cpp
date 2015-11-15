@@ -363,7 +363,6 @@ void ToolBar::OnButtonDown(wxMouseEvent& event)
 #endif
     
     // we want pop-up menu to appear as soon as ALGO_TOOL button is pressed
-    //!!! doesn't work 100% correctly on Windows
     if (id == ALGO_TOOL) {
         // we use algomenupop here rather than algomenu to avoid assert messages in wx 2.9+
 #ifdef __WXMSW__
@@ -526,7 +525,6 @@ void MainFrame::CreateToolbar()
     GetClientSize(&wd, &ht);
     
     toolbarptr = new ToolBar(this, 0, 0, toolbarwd, ht);
-    if (toolbarptr == NULL) Fatal(_("Failed to create tool bar!"));
     
     // add buttons to tool bar
     toolbarptr->AddButton(START_TOOL,      _("Start generating"));
@@ -1002,29 +1000,13 @@ void RightWindow::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
+static bool ok_to_resize = true;
+
 void RightWindow::OnSize(wxSizeEvent& event)
 {
-    int wd, ht;
-    GetClientSize(&wd, &ht);
-    if (wd > 0 && ht > 0 && bigview) {
-        // resize layer/edit/timeline bars and main viewport window
-        ResizeLayerBar(wd);
-        ResizeEditBar(wd);
-        int y = 0;
-        if (showlayer) {
-            y += LayerBarHeight();
-            ht -= LayerBarHeight();
-        }
-        if (showedit) {
-            y += EditBarHeight();
-            ht -= EditBarHeight();
-        }
-        if (showtimeline) {
-            ht -= TimelineBarHeight();
-        }
-        // timeline bar goes underneath viewport
-        ResizeTimelineBar(y + ht, wd);
-        bigview->SetSize(0, y, wd, ht);
+    // we need this to update right pane when dragging sash, or when toggling left pane
+    if (mainptr && ok_to_resize) {
+        mainptr->ResizeBigView();
     }
     event.Skip();
 }
@@ -1046,9 +1028,56 @@ void MainFrame::ResizeSplitWindow(int wd, int ht)
     int y = statusptr->statusht;
     int w = showtool ? wd - toolbarwd : wd;
     int h = ht > statusptr->statusht ? ht - statusptr->statusht : 0;
+    
+    // following will call RightWindow::OnSize so avoid ResizeBigView being called twice
+    ok_to_resize = false;
     splitwin->SetSize(x, y, w, h);
-    // RightWindow::OnSize has now been called;
-    // wxSplitterWindow automatically resizes left and right panes
+    ok_to_resize = true;
+    
+    ResizeBigView();
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::ResizeBigView()
+{
+    int wd, ht;
+    rightpane->GetClientSize(&wd, &ht);
+
+    if (wd > 0 && ht > 0) {
+        // resize layer/edit/timeline bars and main viewport window
+        ResizeLayerBar(wd);
+        ResizeEditBar(wd);
+        int y = 0;
+        if (showlayer) {
+            y += LayerBarHeight();
+            ht -= LayerBarHeight();
+        }
+        if (showedit) {
+            y += EditBarHeight();
+            ht -= EditBarHeight();
+        }
+        if (showtimeline) {
+            ht -= TimelineBarHeight();
+        }
+        // timeline bar goes underneath viewport
+        ResizeTimelineBar(y + ht, wd);
+
+#ifdef __WXMAC__
+        if (!fullscreen) {
+            // make room for hbar and vbar
+            wd -= 15;
+            ht -= 15;
+            if (wd < 0) wd = 0;
+            if (ht < 0) ht = 0;
+            // resize hbar and vbar
+            hbar->SetSize(0, y + ht, wd, 15);
+            vbar->SetSize(wd, y, 15, ht);
+        }
+#endif
+
+        bigview->SetSize(0, y, wd, ht);
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1142,9 +1171,14 @@ void MainFrame::ToggleFullScreen()
     
     if (fullscreen) {
         // hide scroll bars
+#ifdef __WXMAC__
+        hbar->Show(false);
+        vbar->Show(false);
+#else
         bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
         bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-        
+#endif
+
         // hide status bar if necessary
         restorestatusbar = showstatus;
         if (restorestatusbar) {
@@ -1230,7 +1264,12 @@ void MainFrame::ToggleFullScreen()
     
     if (!fullscreen) {
         // restore scroll bars BEFORE setting viewport size
+#ifdef __WXMAC__
+        hbar->Show(true);
+        vbar->Show(true);
+#else
         bigview->UpdateScrollBars();
+#endif
     }
     
     // adjust size of viewport (and pattern/script directory if visible)
@@ -1278,15 +1317,18 @@ void MainFrame::ShowPatternInfo()
 // event table and handlers for main window:
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
-EVT_MENU                (wxID_ANY,        MainFrame::OnMenu)
-EVT_SET_FOCUS           (                 MainFrame::OnSetFocus)
-EVT_ACTIVATE            (                 MainFrame::OnActivate)
-EVT_IDLE                (                 MainFrame::OnIdle)
-EVT_SIZE                (                 MainFrame::OnSize)
-EVT_TREE_SEL_CHANGED    (wxID_TREECTRL,   MainFrame::OnDirTreeSelection)
-EVT_SPLITTER_DCLICK     (wxID_ANY,        MainFrame::OnSashDblClick)
-EVT_TIMER               (ID_GENTIMER,     MainFrame::OnGenTimer)
-EVT_CLOSE               (                 MainFrame::OnClose)
+EVT_MENU                (wxID_ANY,      MainFrame::OnMenu)
+EVT_SET_FOCUS           (               MainFrame::OnSetFocus)
+EVT_ACTIVATE            (               MainFrame::OnActivate)
+EVT_IDLE                (               MainFrame::OnIdle)
+EVT_SIZE                (               MainFrame::OnSize)
+EVT_TREE_SEL_CHANGED    (wxID_TREECTRL, MainFrame::OnDirTreeSelection)
+EVT_SPLITTER_DCLICK     (wxID_ANY,      MainFrame::OnSashDblClick)
+EVT_TIMER               (ID_GENTIMER,   MainFrame::OnGenTimer)
+EVT_CLOSE               (               MainFrame::OnClose)
+#ifdef __WXMAC__
+EVT_COMMAND_SCROLL      (wxID_ANY,      MainFrame::OnScroll)
+#endif
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -1770,6 +1812,31 @@ void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
     UpdateMenuItems();
     UpdateToolBar();
 }
+
+// -----------------------------------------------------------------------------
+
+#ifdef __WXMAC__
+
+void MainFrame::OnScroll(wxScrollEvent& event)
+{
+    WXTYPE type = event.GetEventType();
+    WXTYPE newtype = type;
+    
+    // build equivalent wxScrollWinEvent and post it to bigview so that
+    // PatternView::OnScroll gets called
+    
+    if (type == wxEVT_SCROLL_LINEUP)        newtype = wxEVT_SCROLLWIN_LINEUP;
+    if (type == wxEVT_SCROLL_LINEDOWN)      newtype = wxEVT_SCROLLWIN_LINEDOWN;
+    if (type == wxEVT_SCROLL_PAGEUP)        newtype = wxEVT_SCROLLWIN_PAGEUP;
+    if (type == wxEVT_SCROLL_PAGEDOWN)      newtype = wxEVT_SCROLLWIN_PAGEDOWN;
+    if (type == wxEVT_SCROLL_THUMBTRACK)    newtype = wxEVT_SCROLLWIN_THUMBTRACK;
+    if (type == wxEVT_SCROLL_THUMBRELEASE)  newtype = wxEVT_SCROLLWIN_THUMBRELEASE;
+    
+    wxScrollWinEvent newevt(newtype, event.GetPosition(), event.GetOrientation());
+    wxPostEvent(bigview->GetEventHandler(), newevt);
+}
+
+#endif // __WXMAC__
 
 // -----------------------------------------------------------------------------
 
@@ -2265,7 +2332,6 @@ void MainFrame::CreateMenus()
     // avoid using "&" in menu names because it prevents using keyboard shortcuts
     // like Alt+L on Linux
     wxMenuBar* menuBar = new wxMenuBar();
-    if (menuBar == NULL) Fatal(_("Failed to create menu bar!"));
     menuBar->Append(fileMenu,     _("File"));
     menuBar->Append(editMenu,     _("Edit"));
     menuBar->Append(controlMenu,  _("Control"));
@@ -2408,7 +2474,6 @@ void MainFrame::CreateDirControls()
 #endif
                                        wxEmptyString   // see all file types
                                        );
-    if (patternctrl == NULL) Fatal(_("Failed to create pattern directory control!"));
     
     scriptctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
                                       wxDefaultPosition, wxDefaultSize,
@@ -2425,7 +2490,6 @@ void MainFrame::CreateDirControls()
                                       _T("Perl/Python scripts|*.pl;*.py")
 #endif
                                       );
-    if (scriptctrl == NULL) Fatal(_("Failed to create script directory control!"));
     
 #ifdef __WXMSW__
     // now remove wxDIRCTRL_DIR_ONLY so we see files
@@ -2493,6 +2557,14 @@ MainFrame::MainFrame()
 {
     wxGetApp().SetFrameIcon(this);
     
+    pendingfiles.Clear();      // no pending script/pattern files
+    command_pending = false;   // no pending command
+    draw_pending = false;      // no pending draw
+    keepmessage = false;       // clear status message
+    generating = false;        // not generating pattern
+    fullscreen = false;        // not in full screen mode
+    showbanner = true;         // avoid first file clearing banner message
+    
     // initialize paths to some temporary files (in datadir so no need to be hidden);
     // they must be absolute paths in case they are used from a script command when the
     // current directory has been changed to the location of the script file
@@ -2521,7 +2593,6 @@ MainFrame::MainFrame()
     int statht = showexact ? STATUS_EXHT : STATUS_HT;
     if (!showstatus) statht = 0;
     statusptr = new StatusBar(this, toolwd, 0, wd - toolwd, statht);
-    if (statusptr == NULL) Fatal(_("Failed to create status bar!"));
     
     // create a split window with pattern/script directory in left pane
     // and layer/edit/timeline bars and pattern viewport in right pane
@@ -2532,7 +2603,6 @@ MainFrame::MainFrame()
                                     wxSP_BORDER |
 #endif
                                     wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
-    if (splitwin == NULL) Fatal(_("Failed to create split window!"));
     
     // create patternctrl and scriptctrl in left pane
     CreateDirControls();
@@ -2540,7 +2610,6 @@ MainFrame::MainFrame()
     // create a window for right pane which contains layer/edit/timeline bars
     // and pattern viewport
     rightpane = new RightWindow(splitwin);
-    if (rightpane == NULL) Fatal(_("Failed to create right pane!"));
     
     // create layer bar and initial layer
     CreateLayerBar(rightpane);
@@ -2555,10 +2624,10 @@ MainFrame::MainFrame()
     // enable/disable tool tips after creating bars with buttons
 #if wxUSE_TOOLTIPS
     wxToolTip::Enable(showtips);
-    wxToolTip::SetDelay(1500);    // 1.5 secs
+    wxToolTip::SetDelay(1500);          // 1.5 secs
 #endif
     
-    CreateTranslucentControls();     // must be done BEFORE creating viewport
+    CreateTranslucentControls();        // must be done BEFORE creating viewport
     
     // create viewport at minimum size to avoid scroll bars being clipped on Mac
     int y = 0;
@@ -2567,14 +2636,24 @@ MainFrame::MainFrame()
     viewptr = new PatternView(rightpane, 0, y, 40, 40,
                               wxNO_BORDER |
                               wxWANTS_CHARS |              // receive all keyboard events
-                              wxFULL_REPAINT_ON_RESIZE |
-                              wxVSCROLL | wxHSCROLL);
-    if (viewptr == NULL) Fatal(_("Failed to create viewport window!"));
+#ifndef __WXMAC__
+// avoid Mac bug if wxGLCanvas has built-in scroll bars
+                              wxVSCROLL | wxHSCROLL |
+#endif
+                              wxFULL_REPAINT_ON_RESIZE);
     
     // this is the main viewport window (tile windows have a tileindex >= 0)
     viewptr->tileindex = -1;
     bigview = viewptr;
-    
+
+#ifdef __WXMAC__
+    // manually create scroll bars to avoid wxGLCanvas bug on Mac
+    hbar = new wxScrollBar(rightpane, wxID_ANY, wxPoint(0,0), wxSize(-1, 15), wxSB_HORIZONTAL);
+    vbar = new wxScrollBar(rightpane, wxID_ANY, wxPoint(0,0), wxSize(15, -1), wxSB_VERTICAL);
+    hbar->SetMinSize(wxDefaultSize);
+    vbar->SetMinSize(wxDefaultSize);
+#endif
+
 #if wxUSE_DRAG_AND_DROP
     // let users drop files onto viewport
     viewptr->SetDropTarget(new DnDFile());
@@ -2595,20 +2674,16 @@ MainFrame::MainFrame()
     
     if (showpatterns) splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
     if (showscripts) splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
-    
-    pendingfiles.Clear();      // no pending script/pattern files
-    command_pending = false;   // no pending command
-    draw_pending = false;      // no pending draw
-    keepmessage = false;       // clear status message
-    generating = false;        // not generating pattern
-    fullscreen = false;        // not in full screen mode
-    showbanner = true;         // avoid first file clearing banner message
 }
 
 // -----------------------------------------------------------------------------
 
 MainFrame::~MainFrame()
 {
+#ifdef __WXMAC__
+    delete hbar;
+    delete vbar;
+#endif
     delete gentimer;
     DestroyDrawingData();
 }

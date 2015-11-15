@@ -324,7 +324,7 @@ void ShowHelp(const wxString& filepath)
         htmlwin->canreload = false;
         
         helpptr->Show(true);
-        UpdateHelpButtons();    // must be after Show to avoid hbar appearing on Mac
+        UpdateHelpButtons();    // must be after Show to avoid scroll bar appearing on Mac
         
         // allow HtmlView::OnSize to call CheckAndLoad if window is resized
         htmlwin->canreload = true;

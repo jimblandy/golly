@@ -38,7 +38,7 @@ The main rendering routine is DrawView() -- see the end of this module.
 DrawView() is called from PatternView::OnPaint(), the update event handler
 for the viewport window.  Update events are created automatically by the
 wxWidgets event dispatcher, or they can be created manually by calling
-Refresh() and Update().
+Refresh().
 
 DrawView() does the following tasks:
 

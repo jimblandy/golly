@@ -921,26 +921,12 @@ void UpdateEditBar()
 void ToggleEditBar()
 {
     showedit = !showedit;
-    wxRect r = bigview->GetRect();
-    
-    if (showedit) {
-        // show edit bar at top of viewport window or underneath layer bar
-        r.y += editbarht;
-        r.height -= editbarht;
-        ResizeEditBar(r.width);
-    } else {
-        // hide edit bar
-        r.y -= editbarht;
-        r.height += editbarht;
-    }
-    bigview->SetSize(r);
+    mainptr->ResizeBigView();
     editbarptr->Show(showedit);    // needed on Windows
-    
     if (showlayer) {
         // line at bottom of layer bar may need to be added/removed
         RedrawLayerBar();
     }
-    
     mainptr->UpdateEverything();
 }
 
@@ -951,13 +937,7 @@ void ToggleAllStates()
     showallstates = !showallstates;
     editbarht = showallstates ? BIGHT : SMALLHT;
     if (showedit) {
-        int diff = BIGHT - SMALLHT;
-        if (!showallstates) diff *= -1;
-        wxRect r = bigview->GetRect();
-        ResizeEditBar(r.width);
-        r.y += diff;
-        r.height -= diff;
-        bigview->SetSize(r);
+        mainptr->ResizeBigView();
         mainptr->UpdateEverything();
     } else if (showallstates) {
         // show the edit bar using new height

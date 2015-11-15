@@ -761,23 +761,16 @@ void RedrawLayerBar()
 void ToggleLayerBar()
 {
     showlayer = !showlayer;
-    wxRect r = bigview->GetRect();
     
     if (showlayer) {
-        // show layer bar at top of viewport window
-        r.y += layerbarht;
-        r.height -= layerbarht;
         ShiftEditBar(layerbarht);     // move edit bar down
     } else {
         // hide layer bar
-        r.y -= layerbarht;
-        r.height += layerbarht;
         ShiftEditBar(-layerbarht);    // move edit bar up
     }
     
-    bigview->SetSize(r);
+    mainptr->ResizeBigView();
     layerbarptr->Show(showlayer);    // needed on Windows
-    
     mainptr->UpdateMenuItems();
 }
 

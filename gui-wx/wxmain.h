@@ -145,6 +145,7 @@ public:
     void ShowPatternInfo();
     void ResizeSplitWindow(int wd, int ht);
     void ResizeStatusBar(int wd, int ht);
+    void ResizeBigView();
     wxWindow* RightPane();
     
     // layer functions
@@ -176,6 +177,12 @@ public:
     wxArrayString pendingfiles;
 
     bool infront;               // main window is active?
+
+#ifdef __WXMAC__
+    // these scroll bars are needed to avoid bug in wxGLCanvas on Mac
+    wxScrollBar* hbar;
+    wxScrollBar* vbar;
+#endif
     
 private:
     // any class wishing to process wxWidgets events must use this macro
@@ -191,6 +198,9 @@ private:
     void OnSashDblClick(wxSplitterEvent& event);
     void OnGenTimer(wxTimerEvent& event);
     void OnClose(wxCloseEvent& event);
+#ifdef __WXMAC__
+    void OnScroll(wxScrollEvent& event);
+#endif
     
     // file functions
     bool LoadImage(const wxString& path);

@@ -108,8 +108,8 @@ void StatusBar::DisplayMessage(const wxString& s)
             wxRect r = wxRect( wxPoint(0,statusht-BOTGAP+DESCHT-LINEHT),
                               wxPoint(wd-1,ht-1) );
             Refresh(false, &r);
-            // show message immediately
-            Update();
+            // no need to show message immediately???
+            // Update();
         }
     }
 }
@@ -146,7 +146,6 @@ void StatusBar::UpdateXYLocation()
         else
             r = wxRect( wxPoint(h_xy, 0), wxPoint(wd-1, BASELINE1+DESCHT) );
         Refresh(false, &r);
-        // no need to Update() immediately
     }
 }
 
@@ -543,7 +542,6 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
             mainptr->SetStepExponent(0);
             // update status bar
             Refresh(false);
-            Update();
         }
     }
 }
