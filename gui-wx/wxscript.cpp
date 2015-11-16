@@ -623,8 +623,7 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
         *oldval = mainptr->fullscreen ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleFullScreen();
-            // above always does an update (due to resizing viewport window)
-            // DoAutoUpdate();
+            DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "hyperspeed") == 0) {
@@ -679,8 +678,7 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
         *oldval = showallstates ? 1 : 0;
         if (*oldval != newval) {
             ToggleAllStates();
-            // above always does an update (due to resizing viewport window)
-            // DoAutoUpdate();
+            DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "showboldlines") == 0) {
@@ -694,16 +692,14 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
         *oldval = showedit ? 1 : 0;
         if (*oldval != newval) {
             ToggleEditBar();
-            // above always does an update (due to resizing viewport window)
-            // DoAutoUpdate();
+            DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "showexact") == 0) {
         *oldval = showexact ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleExactNumbers();
-            // above always does an update (due to resizing viewport window)
-            // DoAutoUpdate();
+            DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "showgrid") == 0) {
@@ -729,40 +725,42 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
         *oldval = showlayer ? 1 : 0;
         if (*oldval != newval) {
             ToggleLayerBar();
-            // above always does an update (due to resizing viewport window)
-            // DoAutoUpdate();
+            DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "showpatterns") == 0) {
         *oldval = showpatterns ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleShowPatterns();
-            // above always does an update (due to resizing viewport window)
-            // DoAutoUpdate();
+            DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "showscripts") == 0) {
         *oldval = showscripts ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleShowScripts();
-            // above always does an update (due to resizing viewport window)
-            // DoAutoUpdate();
-        }
-        
-    } else if (strcmp(optname, "showtoolbar") == 0) {
-        *oldval = showtool ? 1 : 0;
-        if (*oldval != newval) {
-            mainptr->ToggleToolBar();
-            // above always does an update (due to resizing viewport window)
-            // DoAutoUpdate();
+            DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "showstatusbar") == 0) {
         *oldval = showstatus ? 1 : 0;
         if (*oldval != newval) {
             mainptr->ToggleStatusBar();
-            // above always does an update (due to resizing viewport window)
-            // DoAutoUpdate();
+            DoAutoUpdate();
+        }
+        
+    } else if (strcmp(optname, "showtoolbar") == 0) {
+        *oldval = showtool ? 1 : 0;
+        if (*oldval != newval) {
+            mainptr->ToggleToolBar();
+            DoAutoUpdate();
+        }
+        
+    } else if (strcmp(optname, "smartscale") == 0) {
+        *oldval = smartscale ? 1 : 0;
+        if (*oldval != newval) {
+            viewptr->ToggleSmarterScaling();
+            DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "swapcolors") == 0) {
@@ -797,16 +795,14 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
         *oldval = stacklayers ? 1 : 0;
         if (*oldval != newval) {
             ToggleStackLayers();
-            // above always does an update
-            // DoAutoUpdate();
+            DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "tilelayers") == 0) {
         *oldval = tilelayers ? 1 : 0;
         if (*oldval != newval) {
             ToggleTileLayers();
-            // above always does an update
-            // DoAutoUpdate();
+            DoAutoUpdate();
         }
         
         // this option is deprecated (use setalgo command)
@@ -855,6 +851,7 @@ bool GSF_getoption(char* optname, int* optval)
     else if (strcmp(optname, "showscripts") == 0)   *optval = showscripts ? 1 : 0;
     else if (strcmp(optname, "showstatusbar") == 0) *optval = showstatus ? 1 : 0;
     else if (strcmp(optname, "showtoolbar") == 0)   *optval = showtool ? 1 : 0;
+    else if (strcmp(optname, "smartscale") == 0)    *optval = smartscale ? 1 : 0;
     else if (strcmp(optname, "stacklayers") == 0)   *optval = stacklayers ? 1 : 0;
     else if (strcmp(optname, "swapcolors") == 0)    *optval = swapcolors ? 1 : 0;
     else if (strcmp(optname, "switchlayers") == 0)  *optval = canswitch ? 1 : 0;
