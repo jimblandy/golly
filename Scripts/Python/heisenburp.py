@@ -9,12 +9,10 @@
 # - added rule() to be sure to run in the right universe (B3/S23)
 # - removed "x = ..." lines from pattern strings
 
-from glife import getstring, validint
-from time import sleep
-import os
 import golly as g
 from glife import *
-from string import *
+from time import sleep
+import os
 import sys
 
 def burp():

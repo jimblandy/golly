@@ -1,5 +1,5 @@
 from glife import *
-from string import *
+from string import lower
 
 # each symbol is a pattern with an additional field .width
 

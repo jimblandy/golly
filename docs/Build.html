@@ -132,9 +132,9 @@ and edit the <tt>wxNonOwnedWindow::Update()</tt> routine so that it looks like t
 </pre>
 
 <p>
-This routine is called whenever Golly wants to update the viewport.
-Without this change, Golly will appear to run way too fast at step size 1
-because any update requests faster than about 30Hz will simply be ignored!
+This routine is called whenever a Golly script wants to update the viewport via
+an update() or autoupdate(True) command.  Without this change, scripts like
+heisenburp.py will run way too fast.
 
 
 <a name="wxlin"></a>
