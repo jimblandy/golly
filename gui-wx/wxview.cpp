@@ -3097,10 +3097,19 @@ void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
+/* using this doesn't seem to change anything!!!
+static int attributes[5] = {
+    WX_GL_DOUBLEBUFFER,
+    WX_GL_RGBA,
+    WX_GL_DEPTH_SIZE, 0,    // Golly only does 2D drawing
+    0
+};
+*/
+
 // create the viewport canvas
 
 PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht, long style)
-: wxGLCanvas(parent, wxID_ANY, NULL, wxPoint(x,y), wxSize(wd,ht), style)
+: wxGLCanvas(parent, wxID_ANY, NULL /* attributes */, wxPoint(x,y), wxSize(wd,ht), style)
 {
     // create a new rendering context instance for this canvas
     glcontext = new wxGLContext(this);
@@ -3109,11 +3118,11 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
     dragtimer = new wxTimer(this, wxID_ANY);
     if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));
     
-    // avoid erasing background on GTK+ -- doesn't work!!!
+    // avoid erasing background on Linux -- doesn't work!!!
     // SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     
-    // avoid resizing problems on Linux???!!!
-    SetBackgroundStyle(wxBG_STYLE_PAINT);
+    // avoid resizing problems on Mac/Linux -- doesn't work!!!
+    // SetBackgroundStyle(wxBG_STYLE_PAINT);
     
     initgl = true;             // need to initialize GL state
     drawingcells = false;      // not drawing cells

@@ -50,7 +50,7 @@ public:
     void UpdateToolBar();
     void EnableAllMenus(bool enable);
     void UpdateMenuItems();
-    void UpdatePatternAndStatus();
+    void UpdatePatternAndStatus(bool update_now = false);
     void UpdateStatus();
     void UpdateMenuAccelerators();
     

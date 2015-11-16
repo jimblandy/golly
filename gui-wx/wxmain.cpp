@@ -889,15 +889,17 @@ void MainFrame::UpdateEverything()
 // -----------------------------------------------------------------------------
 
 // only update viewport and status bar
-void MainFrame::UpdatePatternAndStatus()
+void MainFrame::UpdatePatternAndStatus(bool update_now)
 {
     if (inscript || currlayer->undoredo->doingscriptchanges) return;
     
     if (!IsIconized()) {
         bigview->Refresh(false);
+        if (update_now) bigview->Update();
         if (showstatus) {
             statusptr->CheckMouseLocation(infront);
             statusptr->Refresh(false);
+            if (update_now) statusptr->Update();
         }
     }
 }

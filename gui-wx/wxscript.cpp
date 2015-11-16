@@ -75,7 +75,7 @@ void DoAutoUpdate()
 {
     if (autoupdate) {
         inscript = false;
-        mainptr->UpdatePatternAndStatus();
+        mainptr->UpdatePatternAndStatus(true);  // call Update()
         if (showtitle) {
             mainptr->SetWindowTitle(wxEmptyString);
             showtitle = false;
@@ -1210,7 +1210,8 @@ void GSF_update()
     // update viewport, status bar, and possibly other bars
     inscript = false;
     
-    mainptr->UpdatePatternAndStatus();
+    // pass in true so that Update() is called
+    mainptr->UpdatePatternAndStatus(true);
     
     if (showtitle) {
         mainptr->SetWindowTitle(wxEmptyString);
