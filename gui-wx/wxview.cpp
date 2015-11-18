@@ -1591,10 +1591,8 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_RUNSCRIPT:   if (!inscript && !timeline && !busy) mainptr->OpenScript(); break;
         case DO_RUNCLIP:     if (!inscript && !timeline && !busy) mainptr->RunClipboard(); break;
         case DO_PREFS:       if (!busy) mainptr->ShowPrefsDialog(); break;
-        case DO_PATTDIR:     if (!busy) mainptr->ChangePatternDir(); break;
-        case DO_SCRIPTDIR:   if (!busy) mainptr->ChangeScriptDir(); break;
-        case DO_PATTERNS:    mainptr->ToggleShowPatterns(); break;
-        case DO_SCRIPTS:     mainptr->ToggleShowScripts(); break;
+        case DO_FILEDIR:     if (!busy) mainptr->ChangeFileDir(); break;
+        case DO_SHOWFILES:   mainptr->ToggleShowFiles(); break;
         case DO_QUIT:        mainptr->QuitApp(); break;
             
         // Edit menu actions

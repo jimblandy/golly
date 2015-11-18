@@ -131,16 +131,13 @@ extern int mindelay;             // minimum millisec delay
 extern int maxdelay;             // maximum millisec delay
 extern wxString opensavedir;     // directory for Open and Save dialogs
 extern wxString rundir;          // directory for Run Script dialog
-extern wxString icondir;         // directory used by Load Icon File button
 extern wxString choosedir;       // directory used by Choose File button
-extern wxString patterndir;      // directory used by Show Patterns
-extern wxString scriptdir;       // directory used by Show Scripts
+extern wxString filedir;         // directory used by Show Files
 extern wxString texteditor;      // path of user's preferred text editor
 extern wxString perllib;         // name of Perl library (loaded at runtime)
 extern wxString pythonlib;       // name of Python library (loaded at runtime)
-extern int dirwinwd;             // width of pattern/script directory window
-extern bool showpatterns;        // show pattern directory?
-extern bool showscripts;         // show script directory?
+extern int dirwinwd;             // width of file directory window
+extern bool showfiles;           // show file directory?
 extern wxMenu* patternSubMenu;   // submenu of recent pattern files
 extern wxMenu* scriptSubMenu;    // submenu of recent script files
 extern int numpatterns;          // current number of recent pattern files
@@ -229,9 +226,9 @@ typedef enum {
     DO_SW,                        // scroll SW
     DO_SELALL,                    // select all
     DO_SETBASE,                   // set base step...
+    DO_FILEDIR,                   // set file folder...
     DO_SETGEN,                    // set generation...
     DO_SETCOLORS,                 // set layer colors...
-    DO_PATTDIR,                   // set pattern folder...
     DO_SETRULE,                   // set rule...
     DO_SCALE1,                    // set scale 1:1
     DO_SCALE2,                    // set scale 1:2
@@ -239,17 +236,15 @@ typedef enum {
     DO_SCALE8,                    // set scale 1:8
     DO_SCALE16,                   // set scale 1:16
     DO_SCALE32,                   // set scale 1:32
-    DO_SCRIPTDIR,                 // set script folder...
     DO_SHOWSTATES,                // show all states
     DO_SHOWICONS,                 // show cell icons
     DO_SHOWEDIT,                  // show edit bar
     DO_SHOWEXACT,                 // show exact numbers
+    DO_SHOWFILES,                 // show files
     DO_SHOWGRID,                  // show grid lines
     DO_HASHINFO,                  // show hash info
     DO_HELP,                      // show help
     DO_SHOWLAYER,                 // show layer bar
-    DO_PATTERNS,                  // show patterns
-    DO_SCRIPTS,                   // show scripts
     DO_SHOWSTATUS,                // show status bar
     DO_SHOWTIME,                  // show timeline
     DO_TIMING,                    // show timing

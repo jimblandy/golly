@@ -1757,7 +1757,7 @@ void MainFrame::SaveSucceeded(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ToggleShowPatterns()
+void MainFrame::ToggleShowFiles()
 {
     if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
 #ifndef __WXMAC__
@@ -1766,21 +1766,15 @@ void MainFrame::ToggleShowPatterns()
     bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
 #endif
     
-    showpatterns = !showpatterns;
-    if (showpatterns && showscripts) {
-        showscripts = false;
-        splitwin->Unsplit(scriptctrl);
-        splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
+    showfiles = !showfiles;
+    if (splitwin->IsSplit()) {
+        // hide left pane
+        splitwin->Unsplit(filectrl);
     } else {
-        if (splitwin->IsSplit()) {
-            // hide left pane
-            splitwin->Unsplit(patternctrl);
-        } else {
-            splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
-        }
-        viewptr->SetFocus();
+        splitwin->SplitVertically(filectrl, RightPane(), dirwinwd);
     }
-    
+    viewptr->SetFocus();
+
 #ifndef __WXMAC__
     // restore scroll bars
     bigview->UpdateScrollBars();
@@ -1789,76 +1783,22 @@ void MainFrame::ToggleShowPatterns()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ToggleShowScripts()
+void MainFrame::ChangeFileDir()
 {
-    if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
-#ifndef __WXMAC__
-    // hide scroll bars
-    bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-    bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-#endif
-    
-    showscripts = !showscripts;
-    if (showscripts && showpatterns) {
-        showpatterns = false;
-        splitwin->Unsplit(patternctrl);
-        splitwin->SplitVertically(scriptctrl, RightPane(), dirwinwd);
-    } else {
-        if (splitwin->IsSplit()) {
-            // hide left pane
-            splitwin->Unsplit(scriptctrl);
-        } else {
-            splitwin->SplitVertically(scriptctrl, RightPane(), dirwinwd);
-        }
-        viewptr->SetFocus();
-    }
-    
-#ifndef __WXMAC__
-    // restore scroll bars
-    bigview->UpdateScrollBars();
-#endif
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::ChangePatternDir()
-{
-    wxDirDialog dirdlg(this, _("Choose a new pattern folder"), patterndir, wxDD_NEW_DIR_BUTTON);
+    wxDirDialog dirdlg(this, _("Choose a new file folder"), filedir, wxDD_NEW_DIR_BUTTON);
     if (dirdlg.ShowModal() == wxID_OK)
-        SetPatternDir(dirdlg.GetPath());
+        SetFileDir(dirdlg.GetPath());
 }
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::ChangeScriptDir()
+void MainFrame::SetFileDir(const wxString& newdir)
 {
-    wxDirDialog dirdlg(this, _("Choose a new script folder"), scriptdir, wxDD_NEW_DIR_BUTTON);
-    if (dirdlg.ShowModal() == wxID_OK)
-        SetScriptDir(dirdlg.GetPath());
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::SetPatternDir(const wxString& newdir)
-{
-    if (patterndir != newdir) {
-        patterndir = newdir;
-        if (showpatterns) {
-            // show new pattern directory
-            SimplifyTree(patterndir, patternctrl->GetTreeCtrl(), patternctrl->GetRootId());
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::SetScriptDir(const wxString& newdir)
-{
-    if (scriptdir != newdir) {
-        scriptdir = newdir;
-        if (showscripts) {
-            // show new script directory
-            SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
+    if (filedir != newdir) {
+        filedir = newdir;
+        if (showfiles) {
+            // show new file directory
+            SimplifyTree(filedir, filectrl->GetTreeCtrl(), filectrl->GetRootId());
         }
     }
 }

@@ -75,9 +75,6 @@ const wxString PREFS_NAME = wxT("GollyPrefs");
 
 wxString prefspath;              // full path to prefs file
 
-// location of supplied pattern collection (relative to app)
-const wxString PATT_DIR = wxT("Patterns");
-
 // location of supplied scripts (relative to app)
 const wxString SCRIPT_DIR = wxT("Scripts");
 
@@ -175,16 +172,13 @@ int mindelay = 250;              // minimum millisec delay
 int maxdelay = 2000;             // maximum millisec delay
 wxString opensavedir;            // directory for Open and Save dialogs
 wxString rundir;                 // directory for Run Script dialog
-wxString icondir;                // directory used by Load Icon File button
 wxString choosedir;              // directory used by Choose File button
-wxString patterndir;             // directory used by Show Patterns
-wxString scriptdir;              // directory used by Show Scripts
+wxString filedir;                // directory used by Show Files
 wxString texteditor;             // path of user's preferred text editor
 wxString perllib;                // name of Perl library (loaded at runtime)
 wxString pythonlib;              // name of Python library (loaded at runtime)
 int dirwinwd = 180;              // width of directory window
-bool showpatterns = true;        // show pattern directory?
-bool showscripts = false;        // show script directory?
+bool showfiles = true;           // show file directory?
 wxMenu* patternSubMenu = NULL;   // submenu of recent pattern files
 wxMenu* scriptSubMenu = NULL;    // submenu of recent script files
 int numpatterns = 0;             // current number of recent pattern files
@@ -376,10 +370,6 @@ void AddDefaultKeyActions()
     keyaction[(int)'o'][mk_CMD].id =    DO_OPENPATT;
     keyaction[(int)'o'][mk_SHIFT+mk_CMD].id = DO_OPENCLIP;
     keyaction[(int)'s'][mk_CMD].id =    DO_SAVE;
-    keyaction[(int)'p'][0].id =         DO_PATTERNS;
-    keyaction[(int)'p'][mk_CMD].id =    DO_PATTERNS;
-    keyaction[(int)'p'][mk_SHIFT].id =  DO_SCRIPTS;
-    keyaction[(int)'p'][mk_SHIFT+mk_CMD].id = DO_SCRIPTS;
 #ifdef __WXMSW__
     // Windows does not support ctrl+non-alphanumeric
 #else
@@ -523,14 +513,12 @@ const char* GetActionName(action_id action)
         case DO_NEWPATT:        return "New Pattern";
         case DO_OPENPATT:       return "Open Pattern...";
         case DO_OPENCLIP:       return "Open Clipboard";
-        case DO_PATTERNS:       return "Show Patterns";
-        case DO_PATTDIR:        return "Set Pattern Folder...";
+        case DO_SHOWFILES:      return "Show Files";
+        case DO_FILEDIR:        return "Set File Folder...";
         case DO_SAVE:           return "Save Pattern...";
         case DO_SAVEXRLE:       return "Save Extended RLE";
         case DO_RUNSCRIPT:      return "Run Script...";
         case DO_RUNCLIP:        return "Run Clipboard";
-        case DO_SCRIPTS:        return "Show Scripts";
-        case DO_SCRIPTDIR:      return "Set Script Folder...";
         case DO_PREFS:          return "Preferences...";
         case DO_QUIT:           return "Quit Golly";
         // Edit menu
@@ -1345,10 +1333,8 @@ void GetRelPath(const char* value, wxString& path,
     // if path isn't absolute then prepend Golly directory
     if (!fname.IsAbsolute()) path = gollydir + path;
     
-    if (defdir.length() > 0) {
-        // if path doesn't exist then reset to default directory
-        if (!wxFileName::DirExists(path)) path = gollydir + defdir;
-    }
+    // if path doesn't exist then reset to default directory
+    if (!wxFileName::DirExists(path)) path = gollydir + defdir;
     
     // nicer if directory path ends with separator
     if (isdir && path.Last() != wxFILE_SEP_PATH) path += wxFILE_SEP_PATH;
@@ -1568,10 +1554,8 @@ void SavePrefs()
     
     SaveRelPath(f, "open_save_dir", opensavedir);
     SaveRelPath(f, "run_dir", rundir);
-    SaveRelPath(f, "icon_dir", icondir);
     SaveRelPath(f, "choose_dir", choosedir);
-    SaveRelPath(f, "pattern_dir", patterndir);
-    SaveRelPath(f, "script_dir", scriptdir);
+    SaveRelPath(f, "file_dir", filedir);
     SaveRelPath(f, "user_rules", userrules);
     SaveRelPath(f, "download_dir", downloaddir);
     
@@ -1581,8 +1565,7 @@ void SavePrefs()
     fprintf(f, "perl_lib=%s\n", (const char*)perllib.mb_str(wxConvLocal));
     fprintf(f, "python_lib=%s\n", (const char*)pythonlib.mb_str(wxConvLocal));
     fprintf(f, "dir_width=%d\n", dirwinwd);
-    fprintf(f, "show_patterns=%d\n", showpatterns ? 1 : 0);
-    fprintf(f, "show_scripts=%d\n", showscripts ? 1 : 0);
+    fprintf(f, "show_files=%d\n", showfiles ? 1 : 0);
     fprintf(f, "max_patterns=%d (1..%d)\n", maxpatterns, MAX_RECENT);
     fprintf(f, "max_scripts=%d (1..%d)\n", maxscripts, MAX_RECENT);
     
@@ -1803,12 +1786,10 @@ void GetPrefs()
     downloaddir = datadir + wxT("Downloads");
     downloaddir += wxFILE_SEP_PATH;
     
-    opensavedir = gollydir + PATT_DIR;
     rundir = gollydir + SCRIPT_DIR;
-    icondir = gollydir;
+    opensavedir = gollydir;
     choosedir = gollydir;
-    patterndir = gollydir + PATT_DIR;
-    scriptdir = gollydir + SCRIPT_DIR;
+    filedir = gollydir;
     
     // init the text editor to something reasonable
 #ifdef __WXMSW__
@@ -2233,12 +2214,11 @@ void GetPrefs()
         } else if (strcmp(keyword, "save_xrle") == 0) {
             savexrle = value[0] == '1';
             
-        } else if (strcmp(keyword, "open_save_dir") == 0) { GetRelPath(value, opensavedir, PATT_DIR);
+        } else if (strcmp(keyword, "open_save_dir") == 0) { GetRelPath(value, opensavedir);
         } else if (strcmp(keyword, "run_dir") == 0)       { GetRelPath(value, rundir, SCRIPT_DIR);
-        } else if (strcmp(keyword, "icon_dir") == 0)      { GetRelPath(value, icondir);
         } else if (strcmp(keyword, "choose_dir") == 0)    { GetRelPath(value, choosedir);
-        } else if (strcmp(keyword, "pattern_dir") == 0)   { GetRelPath(value, patterndir, PATT_DIR);
-        } else if (strcmp(keyword, "script_dir") == 0)    { GetRelPath(value, scriptdir, SCRIPT_DIR);
+        } else if (strcmp(keyword, "file_dir") == 0)      { GetRelPath(value, filedir);
+        } else if (strcmp(keyword, "pattern_dir") == 0)   { GetRelPath(value, filedir);     // deprecated
         } else if (strcmp(keyword, "user_rules") == 0)    { GetRelPath(value, userrules);
         } else if (strcmp(keyword, "download_dir") == 0)  { GetRelPath(value, downloaddir);
             
@@ -2255,11 +2235,12 @@ void GetPrefs()
             sscanf(value, "%d", &dirwinwd);
             if (dirwinwd < MIN_DIRWD) dirwinwd = MIN_DIRWD;
             
-        } else if (strcmp(keyword, "show_patterns") == 0) {
-            showpatterns = value[0] == '1';
+        } else if (strcmp(keyword, "show_files") == 0 ||
+                   strcmp(keyword, "show_patterns") == 0) {     // deprecated
+            showfiles = value[0] == '1';
             
         } else if (strcmp(keyword, "show_scripts") == 0) {
-            showscripts = value[0] == '1';
+            // deprecated
             
         } else if (strcmp(keyword, "max_patterns") == 0) {
             sscanf(value, "%d", &maxpatterns);
@@ -2305,9 +2286,6 @@ void GetPrefs()
     
     // colors for status brushes may have changed
     UpdateStatusBrushes();
-    
-    // showpatterns and showscripts must not both be true
-    if (showpatterns && showscripts) showscripts = false;
     
     // stacklayers and tilelayers must not both be true
     if (stacklayers && tilelayers) tilelayers = false;

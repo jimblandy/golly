@@ -172,13 +172,10 @@ const char* GSF_setdir(char* dirname, char* newdir)
     } else if (strcmp(dirname, "rules") == 0) {
         userrules = dirpath;
         
-    } else if (strcmp(dirname, "patterns") == 0) {
-        // change patterndir and update panel if currently shown
-        mainptr->SetPatternDir(dirpath);
-        
-    } else if (strcmp(dirname, "scripts") == 0) {
-        // change scriptdir and update panel if currently shown
-        mainptr->SetScriptDir(dirpath);
+    } else if (strcmp(dirname, "files") == 0 ||
+               strcmp(dirname, "patterns") == 0) {  // deprecated
+        // change filedir and update panel if currently shown
+        mainptr->SetFileDir(dirpath);
         
     } else if (strcmp(dirname, "download") == 0) {
         downloaddir = dirpath;
@@ -200,8 +197,9 @@ const char* GSF_getdir(char* dirname)
     else if (strcmp(dirname, "data") == 0)       dirpath = datadir;
     else if (strcmp(dirname, "temp") == 0)       dirpath = tempdir;
     else if (strcmp(dirname, "rules") == 0)      dirpath = userrules;
-    else if (strcmp(dirname, "patterns") == 0)   dirpath = patterndir;
-    else if (strcmp(dirname, "scripts") == 0)    dirpath = scriptdir;
+    else if (strcmp(dirname, "files") == 0)      dirpath = filedir;
+    else if (strcmp(dirname, "patterns") == 0)   dirpath = filedir;         // deprecated
+    else if (strcmp(dirname, "scripts") == 0)    dirpath = filedir;         // ditto
     else if (strcmp(dirname, "download") == 0)   dirpath = downloaddir;
     else {
         return NULL;   // unknown directory name
@@ -728,17 +726,18 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
             DoAutoUpdate();
         }
         
-    } else if (strcmp(optname, "showpatterns") == 0) {
-        *oldval = showpatterns ? 1 : 0;
+    } else if (strcmp(optname, "showfiles") == 0 ||
+               strcmp(optname, "showpatterns") == 0) {      // deprecated
+        *oldval = showfiles ? 1 : 0;
         if (*oldval != newval) {
-            mainptr->ToggleShowPatterns();
+            mainptr->ToggleShowFiles();
             DoAutoUpdate();
         }
         
     } else if (strcmp(optname, "showscripts") == 0) {
-        *oldval = showscripts ? 1 : 0;
+        *oldval = 0;
         if (*oldval != newval) {
-            mainptr->ToggleShowScripts();
+            // deprecated so do nothing
             DoAutoUpdate();
         }
         
@@ -847,8 +846,9 @@ bool GSF_getoption(char* optname, int* optval)
     else if (strcmp(optname, "showhashinfo") == 0)  *optval = currlayer->showhashinfo ? 1 : 0;
     else if (strcmp(optname, "showicons") == 0)     *optval = showicons ? 1 : 0;
     else if (strcmp(optname, "showlayerbar") == 0)  *optval = showlayer ? 1 : 0;
-    else if (strcmp(optname, "showpatterns") == 0)  *optval = showpatterns ? 1 : 0;
-    else if (strcmp(optname, "showscripts") == 0)   *optval = showscripts ? 1 : 0;
+    else if (strcmp(optname, "showfiles") == 0)     *optval = showfiles ? 1 : 0;
+    else if (strcmp(optname, "showpatterns") == 0)  *optval = showfiles ? 1 : 0;    // deprecated
+    else if (strcmp(optname, "showscripts") == 0)   *optval = 0;                    // ditto
     else if (strcmp(optname, "showstatusbar") == 0) *optval = showstatus ? 1 : 0;
     else if (strcmp(optname, "showtoolbar") == 0)   *optval = showtool ? 1 : 0;
     else if (strcmp(optname, "smartscale") == 0)    *optval = smartscale ? 1 : 0;

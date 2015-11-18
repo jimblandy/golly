@@ -46,8 +46,7 @@ oldstatus = g.setoption("showstatusbar", True)
 oldtoolbar = g.setoption("showtoolbar", False)
 oldlayerbar = g.setoption("showlayerbar", False)
 oldeditbar = g.setoption("showeditbar", False)
-oldscripts = g.setoption("showscripts", False)
-oldpatterns = g.setoption("showpatterns", False)
+oldfiles = g.setoption("showfiles", False)
 
 try:
     slideshow()
@@ -60,5 +59,4 @@ finally:
     g.setoption("showtoolbar", oldtoolbar)
     g.setoption("showlayerbar", oldlayerbar)
     g.setoption("showeditbar", oldeditbar)
-    g.setoption("showscripts", oldscripts)
-    g.setoption("showpatterns", oldpatterns)
+    g.setoption("showfiles", oldfiles)

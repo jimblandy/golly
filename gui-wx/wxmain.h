@@ -71,12 +71,9 @@ public:
     void SetWindowTitle(const wxString& filename);
     void OpenPattern();
     void OpenScript();
-    void ToggleShowPatterns();
-    void ToggleShowScripts();
-    void ChangePatternDir();
-    void ChangeScriptDir();
-    void SetPatternDir(const wxString& newdir);
-    void SetScriptDir(const wxString& newdir);
+    void ToggleShowFiles();
+    void ChangeFileDir();
+    void SetFileDir(const wxString& newdir);
     bool SavePattern();
     bool SaveCurrentLayer();
     const char* SaveFile(const wxString& path, const wxString& format, bool remember);
@@ -225,15 +222,14 @@ private:
     // miscellaneous functions
     void CreateMenus();
     void CreateToolbar();
-    void CreateDirControls();
+    void CreateDirControl();
     void SimplifyTree(wxString& dir, wxTreeCtrl* treectrl, wxTreeItemId root);
     void DoPendingAction(bool restart);
     
-    // splittable window contains pattern/script directory in left pane
-    // and layer bar plus viewport window in right pane
+    // splittable window contains file directory in left pane
+    // and layer/edit/timeline bars plus viewport window in right pane
     wxSplitterWindow* splitwin;
-    wxGenericDirCtrl* patternctrl;
-    wxGenericDirCtrl* scriptctrl;
+    wxGenericDirCtrl* filectrl;
 
     int hypdown;                    // for hyperspeed
     int minexpo;                    // currexpo at maximum delay (must be <= 0)
@@ -251,8 +247,6 @@ enum {
     // last 2 items in Open Recent submenu
     ID_CLEAR_MISSING_PATTERNS = ID_OPEN_RECENT + MAX_RECENT + 1,
     ID_CLEAR_ALL_PATTERNS,
-    ID_SHOW_PATTERNS,
-    ID_PATTERN_DIR,
     // wxID_SAVE,
     ID_SAVE_XRLE,
     ID_RUN_SCRIPT,
@@ -261,8 +255,8 @@ enum {
     // last 2 items in Run Recent submenu
     ID_CLEAR_MISSING_SCRIPTS = ID_RUN_RECENT + MAX_RECENT + 1,
     ID_CLEAR_ALL_SCRIPTS,
-    ID_SHOW_SCRIPTS,
-    ID_SCRIPT_DIR,
+    ID_SHOW_FILES,
+    ID_FILE_DIR,
     // wxID_PREFERENCES,
     // wxID_EXIT,
     

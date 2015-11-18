@@ -8,7 +8,46 @@
 <p>
 <ul>
 <li>
-To view a pattern file just drop it onto the Golly app or onto the
+Avoid the temptation to put your own patterns, scripts or rules inside Golly's
+supplied folders &mdash; it will make it difficult to upgrade to a future version.
+A much better idea is to create separate folders for your own files and put those folders
+alongside the supplied folders, so your Golly folder looks something like this:
+
+<p><table cellspacing=0 cellpadding=0>
+<tr><td>Golly</td><td width=20> </td> <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Golly.exe</td><td width=20> </td>
+    <td>(Golly.app on Mac, golly on Linux)</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Help</td><td width=20> </td>
+    <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Patterns</td><td width=20> </td>
+    <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Rules</td><td width=20> </td>
+    <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Scripts</td><td width=20> </td>
+    <td> </td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-downloads</td><td width=20> </td>
+    <td>(contains all your downloaded files; select in
+         <a href="prefs:file">Preferences > File</a>)</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-patterns</td><td width=20> </td>
+    <td>(contains all your pattern files)</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-rules</td><td width=20> </td>
+    <td>(contains all your .rule files; select in
+         <a href="prefs:control">Preferences > Control</a>)</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-scripts</td><td width=20> </td>
+    <td>(contains all your .pl/.py files)</td></tr>
+</table>
+
+<p>
+If necessary, use File > Set File Folder and select the Golly folder.
+Now all your folders (and the supplied folders) are visible in the file panel,
+so with just a few clicks you can load any pattern, run any script, or switch
+to any .rule file.  You can also right-click (or control-click) on any of those
+files to open them in your <a href="prefs:file">preferred text editor</a>.
+When upgrading to a new version of Golly, simply drag all the distributed files
+and folders into your Golly folder and replace the old versions.
+</li>
+<li>
+To view a pattern file you can drop it onto the Golly app or onto the
 Golly window if the app is already running.
 </li>
 <li>
@@ -40,8 +79,6 @@ If you drag the cursor outside any view edge then scrolling will occur
 continuously; ie. you don't have to move the cursor.
 If the cursor is outside any corner (ie. outside two edges) then the
 scrolling direction will be diagonal.
-</li>
-<li>
 Actually, continuous scrolling also occurs if the hand cursor is dragged
 onto any view edge or corner.  This allows such scrolling to occur in
 full screen mode.
@@ -49,45 +86,6 @@ full screen mode.
 <li>
 While dragging the mouse to make (or modify) a selection, the escape key
 can be used to cancel the operation and restore the original selection.
-</li>
-<li>
-Avoid the temptation to put your own patterns, scripts or rules inside Golly's
-supplied folders &mdash; it will make it difficult to upgrade to a future version.
-A much better idea is to create separate folders for your own files and put those folders
-alongside the supplied folders, so your Golly folder looks something like this:
-
-<p><table cellspacing=0 cellpadding=0>
-<tr><td>Golly</td><td width=20> </td> <td> </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Golly.exe</td><td width=20> </td>
-    <td>(Golly.app on Mac, golly on Linux)</td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Help</td><td width=20> </td>
-    <td> </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Patterns</td><td width=20> </td>
-    <td> </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Rules</td><td width=20> </td>
-    <td> </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;Scripts</td><td width=20> </td>
-    <td> </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-downloads</td><td width=20> </td>
-    <td>(contains all your downloaded files; select in
-         <a href="prefs:file">Preferences > File</a>)</td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-patterns</td><td width=20> </td>
-    <td>(contains all your pattern files)</td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-rules</td><td width=20> </td>
-    <td>(contains all your .rule files; select in
-         <a href="prefs:control">Preferences > Control</a>)</td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;My-scripts</td><td width=20> </td>
-    <td>(contains all your .pl/.py files)</td></tr>
-</table>
-
-<p>
-Use File > Set Patterns Folder and select the Golly folder.  Now all your folders
-(and the supplied folders) are visible in the patterns panel, so with just a
-few clicks you can load any pattern, run any script, or switch to any .rule file.
-Or you can right-click (or control-click) on any of those files to open them
-in your <a href="prefs:file">preferred text editor</a>.
-When upgrading to a new version of Golly, simply drag all the distributed files
-and folders into your Golly folder and replace the old versions.
 </li>
 </ul>
 

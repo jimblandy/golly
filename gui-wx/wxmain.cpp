@@ -87,8 +87,7 @@ enum {
     NEW_TOOL,
     OPEN_TOOL,
     SAVE_TOOL,
-    PATTERNS_TOOL,
-    SCRIPTS_TOOL,
+    FILES_TOOL,
     INFO_TOOL,
     HELP_TOOL,
     NUM_BUTTONS    // must be last
@@ -104,15 +103,13 @@ enum {
 #include "bitmaps/new.xpm"
 #include "bitmaps/open.xpm"
 #include "bitmaps/save.xpm"
-#include "bitmaps/patterns.xpm"
-#include "bitmaps/scripts.xpm"
+#include "bitmaps/files.xpm"
 #include "bitmaps/info.xpm"
 #include "bitmaps/help.xpm"
 // bitmaps for down state of toggle buttons
 #include "bitmaps/autofit_down.xpm"
 #include "bitmaps/hyper_down.xpm"
-#include "bitmaps/patterns_down.xpm"
-#include "bitmaps/scripts_down.xpm"
+#include "bitmaps/files_down.xpm"
 
 // -----------------------------------------------------------------------------
 
@@ -220,16 +217,14 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
     normtool[NEW_TOOL] =       XPM_BITMAP(new);
     normtool[OPEN_TOOL] =      XPM_BITMAP(open);
     normtool[SAVE_TOOL] =      XPM_BITMAP(save);
-    normtool[PATTERNS_TOOL] =  XPM_BITMAP(patterns);
-    normtool[SCRIPTS_TOOL] =   XPM_BITMAP(scripts);
+    normtool[FILES_TOOL] =     XPM_BITMAP(files);
     normtool[INFO_TOOL] =      XPM_BITMAP(info);
     normtool[HELP_TOOL] =      XPM_BITMAP(help);
     
     // toggle buttons also have a down state
     downtool[AUTOFIT_TOOL] =   XPM_BITMAP(autofit_down);
     downtool[HYPER_TOOL] =     XPM_BITMAP(hyper_down);
-    downtool[PATTERNS_TOOL] =  XPM_BITMAP(patterns_down);
-    downtool[SCRIPTS_TOOL] =   XPM_BITMAP(scripts_down);
+    downtool[FILES_TOOL] =     XPM_BITMAP(files_down);
     
 #ifdef __WXMSW__
     for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -237,8 +232,7 @@ ToolBar::ToolBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
     }
     CreatePaleBitmap(downtool[AUTOFIT_TOOL],  disdowntool[AUTOFIT_TOOL]);
     CreatePaleBitmap(downtool[HYPER_TOOL],    disdowntool[HYPER_TOOL]);
-    CreatePaleBitmap(downtool[PATTERNS_TOOL], disdowntool[PATTERNS_TOOL]);
-    CreatePaleBitmap(downtool[SCRIPTS_TOOL],  disdowntool[SCRIPTS_TOOL]);
+    CreatePaleBitmap(downtool[FILES_TOOL],    disdowntool[FILES_TOOL]);
 #endif
     
     for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -316,8 +310,7 @@ void ToolBar::OnButton(wxCommandEvent& event)
         case NEW_TOOL:       cmdid = wxID_NEW; break;
         case OPEN_TOOL:      cmdid = wxID_OPEN; break;
         case SAVE_TOOL:      cmdid = wxID_SAVE; break;
-        case PATTERNS_TOOL:  cmdid = ID_SHOW_PATTERNS; break;
-        case SCRIPTS_TOOL:   cmdid = ID_SHOW_SCRIPTS; break;
+        case FILES_TOOL:     cmdid = ID_SHOW_FILES; break;
         case INFO_TOOL:      cmdid = ID_INFO; break;
         case HELP_TOOL:      cmdid = ID_HELP_BUTT; break;
         default:             Warning(_("Unexpected button id!")); return;
@@ -462,10 +455,7 @@ void ToolBar::EnableButton(int id, bool enable)
     } else if (id == HYPER_TOOL && currlayer->hyperspeed) {
         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
         
-    } else if (id == PATTERNS_TOOL && showpatterns) {
-        tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
-        
-    } else if (id == SCRIPTS_TOOL && showscripts) {
+    } else if (id == FILES_TOOL && showfiles) {
         tbbutt[id]->SetBitmapDisabled(disdowntool[id]);
         
     } else {
@@ -538,8 +528,7 @@ void MainFrame::CreateToolbar()
     toolbarptr->AddButton(OPEN_TOOL,       _("Open pattern"));
     toolbarptr->AddButton(SAVE_TOOL,       _("Save pattern"));
     toolbarptr->AddSeparator();
-    toolbarptr->AddButton(PATTERNS_TOOL,   _("Show/hide patterns"));
-    toolbarptr->AddButton(SCRIPTS_TOOL,    _("Show/hide scripts"));
+    toolbarptr->AddButton(FILES_TOOL,      _("Show/hide files"));
     toolbarptr->AddSeparator();
     toolbarptr->AddButton(INFO_TOOL,       _("Show pattern information"));
     toolbarptr->AddButton(HELP_TOOL,       _("Show help window"));
@@ -562,8 +551,7 @@ void MainFrame::UpdateToolBar()
         // set state of toggle buttons
         toolbarptr->SelectButton(AUTOFIT_TOOL,    currlayer->autofit);
         toolbarptr->SelectButton(HYPER_TOOL,      currlayer->hyperspeed);
-        toolbarptr->SelectButton(PATTERNS_TOOL,   showpatterns);
-        toolbarptr->SelectButton(SCRIPTS_TOOL,    showscripts);
+        toolbarptr->SelectButton(FILES_TOOL,      showfiles);
         
         toolbarptr->EnableButton(START_TOOL,      active && !timeline);
         toolbarptr->EnableButton(RESET_TOOL,      active && !timeline && !inscript &&
@@ -574,8 +562,7 @@ void MainFrame::UpdateToolBar()
         toolbarptr->EnableButton(NEW_TOOL,        active && !inscript);
         toolbarptr->EnableButton(OPEN_TOOL,       active && !inscript);
         toolbarptr->EnableButton(SAVE_TOOL,       active && !inscript);
-        toolbarptr->EnableButton(PATTERNS_TOOL,   active);
-        toolbarptr->EnableButton(SCRIPTS_TOOL,    active);
+        toolbarptr->EnableButton(FILES_TOOL,      active);
         toolbarptr->EnableButton(INFO_TOOL,       active && !currlayer->currfile.IsEmpty());
         toolbarptr->EnableButton(HELP_TOOL,       active);
     }
@@ -648,15 +635,13 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(wxID_OPEN,          active && !inscript);
         mbar->Enable(ID_OPEN_CLIP,       active && !inscript && textinclip);
         mbar->Enable(ID_OPEN_RECENT,     active && !inscript && numpatterns > 0);
-        mbar->Enable(ID_SHOW_PATTERNS,   active);
-        mbar->Enable(ID_PATTERN_DIR,     active);
         mbar->Enable(wxID_SAVE,          active && !inscript);
         mbar->Enable(ID_SAVE_XRLE,       active);
         mbar->Enable(ID_RUN_SCRIPT,      active && !timeline && !inscript);
         mbar->Enable(ID_RUN_CLIP,        active && !timeline && !inscript && textinclip);
         mbar->Enable(ID_RUN_RECENT,      active && !timeline && !inscript && numscripts > 0);
-        mbar->Enable(ID_SHOW_SCRIPTS,    active);
-        mbar->Enable(ID_SCRIPT_DIR,      active);
+        mbar->Enable(ID_SHOW_FILES,      active);
+        mbar->Enable(ID_FILE_DIR,        active);
         // safer not to allow prefs dialog while script is running???
         // mbar->Enable(wxID_PREFERENCES,   !inscript);
         
@@ -782,8 +767,7 @@ void MainFrame::UpdateMenuItems()
         
         // tick/untick menu items created using AppendCheckItem
         mbar->Check(ID_SAVE_XRLE,     savexrle);
-        mbar->Check(ID_SHOW_PATTERNS, showpatterns);
-        mbar->Check(ID_SHOW_SCRIPTS,  showscripts);
+        mbar->Check(ID_SHOW_FILES,    showfiles);
         mbar->Check(ID_NO_UNDO,       !allowundo);
         mbar->Check(ID_AUTO,          currlayer->autofit);
         mbar->Check(ID_HYPER,         currlayer->hyperspeed);
@@ -937,20 +921,6 @@ void MainFrame::SimplifyTree(wxString& indir, wxTreeCtrl* treectrl, wxTreeItemId
     if ( diritem->HasFiles() || diritem->HasSubDirs() ) {
         treectrl->SetItemHasChildren(id);
         treectrl->Expand(id);
-        
-        // nicer to expand Perl & Python subdirs inside Scripts
-        if ( dir == gollydir + _("Scripts") ) {
-            wxTreeItemId child;
-            wxTreeItemIdValue cookie;
-            child = treectrl->GetFirstChild(id, cookie);
-            while ( child.IsOk() ) {
-                wxString name = treectrl->GetItemText(child);
-                if ( name == _("Perl") || name == _("Python") ) {
-                    treectrl->Expand(child);
-                }
-                child = treectrl->GetNextChild(id, cookie);
-            }
-        }
         #ifndef __WXMSW__
             // can cause crash on Windows
             treectrl->ScrollTo(root);
@@ -1156,8 +1126,7 @@ void MainFrame::ToggleFullScreen()
     static bool restoreeditbar;      // restore edit bar?
     static bool restoretimelinebar;  // restore timeline bar?
     static bool restoretoolbar;      // restore tool bar?
-    static bool restorepattdir;      // restore pattern directory?
-    static bool restorescrdir;       // restore script directory?
+    static bool restorefiledir;      // restore file directory?
     
     if (!fullscreen) {
         // save current location and size for use in SavePrefs
@@ -1213,17 +1182,12 @@ void MainFrame::ToggleFullScreen()
             ToggleToolBar();
         }
         
-        // hide pattern/script directory if necessary
-        restorepattdir = showpatterns;
-        restorescrdir = showscripts;
-        if (restorepattdir) {
+        // hide file directory if necessary
+        restorefiledir = showfiles;
+        if (restorefiledir) {
             dirwinwd = splitwin->GetSashPosition();
-            splitwin->Unsplit(patternctrl);
-            showpatterns = false;
-        } else if (restorescrdir) {
-            dirwinwd = splitwin->GetSashPosition();
-            splitwin->Unsplit(scriptctrl);
-            showscripts = false;
+            splitwin->Unsplit(filectrl);
+            showfiles = false;
         }
         
     } else {
@@ -1254,13 +1218,10 @@ void MainFrame::ToggleFullScreen()
         // show timeline bar if necessary
         if (restoretimelinebar && !showtimeline) ToggleTimelineBar();
         
-        // restore pattern/script directory if necessary
-        if ( restorepattdir && !splitwin->IsSplit() ) {
-            splitwin->SplitVertically(patternctrl, RightPane(), dirwinwd);
-            showpatterns = true;
-        } else if ( restorescrdir && !splitwin->IsSplit() ) {
-            splitwin->SplitVertically(scriptctrl, RightPane(), dirwinwd);
-            showscripts = true;
+        // restore file directory if necessary
+        if ( restorefiledir && !splitwin->IsSplit() ) {
+            splitwin->SplitVertically(filectrl, RightPane(), dirwinwd);
+            showfiles = true;
         }
     }
     
@@ -1274,7 +1235,7 @@ void MainFrame::ToggleFullScreen()
 #endif
     }
     
-    // adjust size of viewport (and pattern/script directory if visible)
+    // adjust size of viewport (and file directory if visible)
     int wd, ht;
     GetClientSize(&wd, &ht);
     ResizeSplitWindow(wd, ht);
@@ -1351,14 +1312,12 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case wxID_NEW:          NewPattern(); break;
         case wxID_OPEN:         OpenPattern(); break;
         case ID_OPEN_CLIP:      OpenClipboard(); break;
-        case ID_SHOW_PATTERNS:  ToggleShowPatterns(); break;
-        case ID_PATTERN_DIR:    ChangePatternDir(); break;
         case wxID_SAVE:         SavePattern(); break;
         case ID_SAVE_XRLE:      savexrle = !savexrle; break;
         case ID_RUN_SCRIPT:     OpenScript(); break;
         case ID_RUN_CLIP:       RunClipboard(); break;
-        case ID_SHOW_SCRIPTS:   ToggleShowScripts(); break;
-        case ID_SCRIPT_DIR:     ChangeScriptDir(); break;
+        case ID_SHOW_FILES:     ToggleShowFiles(); break;
+        case ID_FILE_DIR:       ChangeFileDir(); break;
         case wxID_PREFERENCES:  ShowPrefsDialog(); break;
         case wxID_EXIT:         QuitApp(); break;
             
@@ -1692,9 +1651,7 @@ void MainFrame::OnTreeClick(wxMouseEvent& event)
     edit_file = event.ControlDown() || event.RightDown();
     
     wxGenericDirCtrl* dirctrl = NULL;
-    // we need to use mainptr to access next 2 members (it's something to do with Connect)
-    if (showpatterns) dirctrl = mainptr->patternctrl;
-    if (showscripts) dirctrl = mainptr->scriptctrl;
+    if (showfiles) dirctrl = mainptr->filectrl;
     if (dirctrl) {
         wxTreeCtrl* treectrl = dirctrl->GetTreeCtrl();
         if (treectrl) {
@@ -1736,8 +1693,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
     if ( !id.IsOk() ) return;
     
     wxGenericDirCtrl* dirctrl = NULL;
-    if (showpatterns) dirctrl = patternctrl;
-    if (showscripts) dirctrl = scriptctrl;
+    if (showfiles) dirctrl = filectrl;
     if (dirctrl == NULL) return;
     
     wxString filepath = dirctrl->GetFilePath();
@@ -1809,8 +1765,7 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
 void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
 {
     // splitwin's sash was double-clicked
-    if (showpatterns) ToggleShowPatterns();
-    if (showscripts) ToggleShowScripts();
+    ToggleShowFiles();
     UpdateMenuItems();
     UpdateToolBar();
 }
@@ -2181,9 +2136,6 @@ void MainFrame::CreateMenus()
     fileMenu->Append(ID_OPEN_CLIP,               _("Open Clipboard") + GetAccelerator(DO_OPENCLIP));
     fileMenu->Append(ID_OPEN_RECENT,             _("Open Recent"), patternSubMenu);
     fileMenu->AppendSeparator();
-    fileMenu->AppendCheckItem(ID_SHOW_PATTERNS,  _("Show Patterns") + GetAccelerator(DO_PATTERNS));
-    fileMenu->Append(ID_PATTERN_DIR,             _("Set Pattern Folder...") + GetAccelerator(DO_PATTDIR));
-    fileMenu->AppendSeparator();
     fileMenu->Append(wxID_SAVE,                  _("Save Pattern...") + GetAccelerator(DO_SAVE));
     fileMenu->AppendCheckItem(ID_SAVE_XRLE,      _("Save Extended RLE") + GetAccelerator(DO_SAVEXRLE));
     fileMenu->AppendSeparator();
@@ -2191,8 +2143,8 @@ void MainFrame::CreateMenus()
     fileMenu->Append(ID_RUN_CLIP,                _("Run Clipboard") + GetAccelerator(DO_RUNCLIP));
     fileMenu->Append(ID_RUN_RECENT,              _("Run Recent"), scriptSubMenu);
     fileMenu->AppendSeparator();
-    fileMenu->AppendCheckItem(ID_SHOW_SCRIPTS,   _("Show Scripts") + GetAccelerator(DO_SCRIPTS));
-    fileMenu->Append(ID_SCRIPT_DIR,              _("Set Script Folder...") + GetAccelerator(DO_SCRIPTDIR));
+    fileMenu->AppendCheckItem(ID_SHOW_FILES,     _("Show Files") + GetAccelerator(DO_SHOWFILES));
+    fileMenu->Append(ID_FILE_DIR,                _("Set File Folder...") + GetAccelerator(DO_FILEDIR));
 #if !defined(__WXOSX_COCOA__)
     fileMenu->AppendSeparator();
 #endif
@@ -2385,14 +2337,12 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, wxID_NEW,           DO_NEWPATT);
         SetAccelerator(mbar, wxID_OPEN,          DO_OPENPATT);
         SetAccelerator(mbar, ID_OPEN_CLIP,       DO_OPENCLIP);
-        SetAccelerator(mbar, ID_SHOW_PATTERNS,   DO_PATTERNS);
-        SetAccelerator(mbar, ID_PATTERN_DIR,     DO_PATTDIR);
         SetAccelerator(mbar, wxID_SAVE,          DO_SAVE);
         SetAccelerator(mbar, ID_SAVE_XRLE,       DO_SAVEXRLE);
         SetAccelerator(mbar, ID_RUN_SCRIPT,      DO_RUNSCRIPT);
         SetAccelerator(mbar, ID_RUN_CLIP,        DO_RUNCLIP);
-        SetAccelerator(mbar, ID_SHOW_SCRIPTS,    DO_SCRIPTS);
-        SetAccelerator(mbar, ID_SCRIPT_DIR,      DO_SCRIPTDIR);
+        SetAccelerator(mbar, ID_SHOW_FILES,      DO_SHOWFILES);
+        SetAccelerator(mbar, ID_FILE_DIR,        DO_FILEDIR);
         
         SetAccelerator(mbar, ID_UNDO,            DO_UNDO);
         SetAccelerator(mbar, ID_REDO,            DO_REDO);
@@ -2464,63 +2414,40 @@ void MainFrame::UpdateMenuAccelerators()
 
 // -----------------------------------------------------------------------------
 
-void MainFrame::CreateDirControls()
+void MainFrame::CreateDirControl()
 {
-    patternctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
-                                       wxDefaultPosition, wxDefaultSize,
+    filectrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
+                                    wxDefaultPosition, wxDefaultSize,
 #ifdef __WXMSW__
-                                       // speed up a bit
-                                       wxDIRCTRL_DIR_ONLY | wxNO_BORDER,
+                                    // speed up a bit
+                                    wxDIRCTRL_DIR_ONLY | wxNO_BORDER,
 #else
-                                       wxNO_BORDER,
+                                    wxNO_BORDER,
 #endif
-                                       wxEmptyString   // see all file types
-                                       );
-    
-    scriptctrl = new wxGenericDirCtrl(splitwin, wxID_ANY, wxEmptyString,
-                                      wxDefaultPosition, wxDefaultSize,
-#ifdef __WXMSW__
-                                      // speed up a bit
-                                      wxDIRCTRL_DIR_ONLY | wxNO_BORDER,
-#else
-                                      wxNO_BORDER,
-#endif
-#if wxCHECK_VERSION(2,9,0)
-                                      // avoid seeing the wxChoice control (ugly and buggy)
-                                      wxEmptyString
-#else
-                                      _T("Perl/Python scripts|*.pl;*.py")
-#endif
-                                      );
+                                    wxEmptyString   // see all file types
+                                    );
     
 #ifdef __WXMSW__
     // now remove wxDIRCTRL_DIR_ONLY so we see files
-    patternctrl->SetWindowStyle(wxNO_BORDER);
-    scriptctrl->SetWindowStyle(wxNO_BORDER);
+    filectrl->SetWindowStyle(wxNO_BORDER);
 #endif
     
 #if defined(__WXGTK__)
     // make sure background is white when using KDE's GTK theme
 #if wxCHECK_VERSION(2,9,0)
-    patternctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_ERASE);
-    scriptctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_ERASE);
+    filectrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_ERASE);
 #else
-    patternctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
-    scriptctrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
+    filectrl->GetTreeCtrl()->SetBackgroundStyle(wxBG_STYLE_COLOUR);
 #endif
-    patternctrl->GetTreeCtrl()->SetBackgroundColour(*wxWHITE);
-    scriptctrl->GetTreeCtrl()->SetBackgroundColour(*wxWHITE);
+    filectrl->GetTreeCtrl()->SetBackgroundColour(*wxWHITE);
     // reduce indent a bit
-    patternctrl->GetTreeCtrl()->SetIndent(8);
-    scriptctrl->GetTreeCtrl()->SetIndent(8);
+    filectrl->GetTreeCtrl()->SetIndent(8);
 #elif defined(__WXMAC__)
     // reduce indent a bit more
-    patternctrl->GetTreeCtrl()->SetIndent(6);
-    scriptctrl->GetTreeCtrl()->SetIndent(6);
+    filectrl->GetTreeCtrl()->SetIndent(6);
 #else
     // reduce indent a lot on Windows
-    patternctrl->GetTreeCtrl()->SetIndent(4);
-    scriptctrl->GetTreeCtrl()->SetIndent(4);
+    filectrl->GetTreeCtrl()->SetIndent(4);
 #endif
     
 #ifdef __WXMAC__
@@ -2528,27 +2455,18 @@ void MainFrame::CreateDirControls()
     // make a few changes to wxMac/src/generic/treectlg.cpp)
     wxFont font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
     font.SetPointSize(12);
-    patternctrl->GetTreeCtrl()->SetFont(font);
-    scriptctrl->GetTreeCtrl()->SetFont(font);
+    filectrl->GetTreeCtrl()->SetFont(font);
 #endif
     
-    if ( wxFileName::DirExists(patterndir) ) {
-        // only show patterndir and its contents
-        SimplifyTree(patterndir, patternctrl->GetTreeCtrl(), patternctrl->GetRootId());
-    }
-    if ( wxFileName::DirExists(scriptdir) ) {
-        // only show scriptdir and its contents
-        SimplifyTree(scriptdir, scriptctrl->GetTreeCtrl(), scriptctrl->GetRootId());
+    if ( wxFileName::DirExists(filedir) ) {
+        // only show filedir and its contents
+        SimplifyTree(filedir, filectrl->GetTreeCtrl(), filectrl->GetRootId());
     }
     
     // install event handler to detect clicking on a file
-    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
-    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
-    patternctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DCLICK, wxMouseEventHandler(MainFrame::OnTreeClick));
-    
-    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
-    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
-    scriptctrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DCLICK, wxMouseEventHandler(MainFrame::OnTreeClick));
+    filectrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
+    filectrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_RIGHT_DOWN, wxMouseEventHandler(MainFrame::OnTreeClick));
+    filectrl->GetTreeCtrl()->Connect(wxID_ANY, wxEVT_LEFT_DCLICK, wxMouseEventHandler(MainFrame::OnTreeClick));
 }
 
 // -----------------------------------------------------------------------------
@@ -2606,8 +2524,8 @@ MainFrame::MainFrame()
 #endif
                                     wxSP_3DSASH | wxSP_NO_XP_THEME | wxSP_LIVE_UPDATE);
     
-    // create patternctrl and scriptctrl in left pane
-    CreateDirControls();
+    // create filectrl in left pane
+    CreateDirControl();
     
     // create a window for right pane which contains layer/edit/timeline bars
     // and pattern viewport
@@ -2662,20 +2580,13 @@ MainFrame::MainFrame()
 #endif
     
     // these seemingly redundant steps are needed to avoid problems on Windows
-    splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
+    splitwin->SplitVertically(filectrl, rightpane, dirwinwd);
     splitwin->SetSashPosition(dirwinwd);
     splitwin->SetMinimumPaneSize(MIN_DIRWD);
-    splitwin->Unsplit(patternctrl);
+    splitwin->Unsplit(filectrl);
     splitwin->UpdateSize();
     
-    splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
-    splitwin->SetSashPosition(dirwinwd);
-    splitwin->SetMinimumPaneSize(MIN_DIRWD);
-    splitwin->Unsplit(scriptctrl);
-    splitwin->UpdateSize();
-    
-    if (showpatterns) splitwin->SplitVertically(patternctrl, rightpane, dirwinwd);
-    if (showscripts) splitwin->SplitVertically(scriptctrl, rightpane, dirwinwd);
+    if (showfiles) splitwin->SplitVertically(filectrl, rightpane, dirwinwd);
 }
 
 // -----------------------------------------------------------------------------
