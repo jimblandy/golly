@@ -561,8 +561,10 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
 : wxWindow(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
            wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
 {
+#ifdef __WXGTK__
     // avoid erasing background on GTK+
     SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+#endif
     
     // create font for text in status bar and set textascent for use in DisplayText
 #ifdef __WXMSW__

@@ -942,12 +942,20 @@ class RightWindow : public wxWindow
 public:
     RightWindow(wxWindow* parent)
     : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-               wxNO_BORDER |
-               // need this to avoid layer/edit/timeline bar buttons flashing on Windows
-               wxNO_FULL_REPAINT_ON_RESIZE)
+                wxNO_BORDER |
+#ifdef __WXMSW__
+                // need this to avoid layer/edit/timeline bar buttons flashing on Windows
+                wxNO_FULL_REPAINT_ON_RESIZE
+#else
+                // better for Mac and Linux???!!!
+                wxFULL_REPAINT_ON_RESIZE
+#endif
+               )
     {
+#ifdef __WXGTK__
         // avoid erasing background on GTK+
         SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+#endif
     }
     ~RightWindow() {}
     
@@ -1780,7 +1788,7 @@ void MainFrame::OnScroll(wxScrollEvent& event)
     WXTYPE newtype = type;
     
     // build equivalent wxScrollWinEvent and post it to bigview so that
-    // PatternView::OnScroll gets called
+    // PatternView::OnScroll gets called and hbar/vbar are updated
     
     if (type == wxEVT_SCROLL_LINEUP)        newtype = wxEVT_SCROLLWIN_LINEUP;
     if (type == wxEVT_SCROLL_LINEDOWN)      newtype = wxEVT_SCROLLWIN_LINEDOWN;

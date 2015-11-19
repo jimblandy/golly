@@ -209,7 +209,14 @@ wxBitmapButton* ebbutt[NUM_BUTTONS];
 
 EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
 : wxPanel(parent, wxID_ANY, wxPoint(xorg,yorg), wxSize(wd,ht),
-          wxNO_FULL_REPAINT_ON_RESIZE)
+#ifdef __WXMSW__
+            // need this to avoid buttons flashing on Windows
+            wxNO_FULL_REPAINT_ON_RESIZE
+#else
+            // better for Mac and Linux???!!!
+            wxFULL_REPAINT_ON_RESIZE
+#endif
+            )
 {
 #ifdef __WXGTK__
     // avoid erasing background on GTK+
