@@ -176,7 +176,7 @@ EVT_BUTTON           (wxID_ANY,  ToolBar::OnButton)
 END_EVENT_TABLE()
 
 ToolBar* toolbarptr = NULL;      // global pointer to tool bar
-const int toolbarwd = 32;        // width of (vertical) tool bar
+const int TOOLBARWD = 32;        // width of (vertical) tool bar
 
 // tool bar buttons (must be global to use Connect/Disconnect on Windows)
 wxBitmapButton* tbbutt[NUM_BUTTONS];
@@ -185,7 +185,7 @@ wxBitmapButton* tbbutt[NUM_BUTTONS];
 #if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
     // note that BUTTON_WD will have to be at least 26 to avoid clipping bitmaps
     // if we decide to use wxBORDER_SUNKEN rather than wxBORDER_SIMPLE
-    // (and toolbarwd will probably need to be increased to 48)
+    // (and TOOLBARWD will probably need to be increased to 48)
     const int BUTTON_WD = 24;
     const int BUTTON_HT = 24;
 #elif defined(__WXOSX_COCOA__) || defined(__WXGTK__)
@@ -514,7 +514,7 @@ void MainFrame::CreateToolbar()
     int wd, ht;
     GetClientSize(&wd, &ht);
     
-    toolbarptr = new ToolBar(this, 0, 0, toolbarwd, ht);
+    toolbarptr = new ToolBar(this, 0, 0, TOOLBARWD, ht);
     
     // add buttons to tool bar
     toolbarptr->AddButton(START_TOOL,      _("Start generating"));
@@ -1004,10 +1004,13 @@ wxWindow* MainFrame::RightPane()
 
 void MainFrame::ResizeSplitWindow(int wd, int ht)
 {
-    int x = showtool ? toolbarwd : 0;
+    int x = showtool ? TOOLBARWD : 0;
     int y = statusptr->statusht;
-    int w = showtool ? wd - toolbarwd : wd;
+    int w = showtool ? wd - TOOLBARWD : wd;
     int h = ht > statusptr->statusht ? ht - statusptr->statusht : 0;
+
+    if (w < 0) w = 0;
+    if (h < 0) h = 0;
     
     // following will call RightWindow::OnSize so avoid ResizeBigView being called twice
     ok_to_resize = false;
@@ -1056,6 +1059,8 @@ void MainFrame::ResizeBigView()
         }
 #endif
 
+        if (wd < 0) wd = 0;
+        if (ht < 0) ht = 0;
         bigview->SetSize(0, y, wd, ht);
     }
 }
@@ -1067,17 +1072,20 @@ void MainFrame::ResizeStatusBar(int wd, int ht)
     wxUnusedVar(ht);
     // assume showstatus is true
     statusptr->statusht = showexact ? STATUS_EXHT : STATUS_HT;
-    statusptr->SetSize(showtool ? toolbarwd : 0, 0,
-                       showtool ? wd - toolbarwd : wd, statusptr->statusht);
+    if (showtool) wd -= TOOLBARWD;
+    if (wd < 0) wd = 0;
+    statusptr->SetSize(showtool ? TOOLBARWD : 0, 0, wd, statusptr->statusht);
 }
 
 // -----------------------------------------------------------------------------
 
 void MainFrame::ToggleStatusBar()
 {
+    showstatus = !showstatus;
     int wd, ht;
     GetClientSize(&wd, &ht);
-    showstatus = !showstatus;
+    if (wd < 0) wd = 0;
+    if (ht < 0) ht = 0;
     if (showstatus) {
         ResizeStatusBar(wd, ht);
     } else {
@@ -1092,9 +1100,11 @@ void MainFrame::ToggleStatusBar()
 
 void MainFrame::ToggleExactNumbers()
 {
+    showexact = !showexact;
     int wd, ht;
     GetClientSize(&wd, &ht);
-    showexact = !showexact;
+    if (wd < 0) wd = 0;
+    if (ht < 0) ht = 0;
     if (showstatus) {
         ResizeStatusBar(wd, ht);
         ResizeSplitWindow(wd, ht);
@@ -1114,12 +1124,14 @@ void MainFrame::ToggleToolBar()
     showtool = !showtool;
     int wd, ht;
     GetClientSize(&wd, &ht);
+    if (wd < 0) wd = 0;
+    if (ht < 0) ht = 0;
     if (showstatus) {
         ResizeStatusBar(wd, ht);
     }
     if (showtool) {
         // resize tool bar in case window was made larger while tool bar hidden
-        toolbarptr->SetSize(0, 0, toolbarwd, ht);
+        toolbarptr->SetSize(0, 0, TOOLBARWD, ht);
     }
     ResizeSplitWindow(wd, ht);
     toolbarptr->Show(showtool);
@@ -1546,14 +1558,14 @@ void MainFrame::OnSize(wxSizeEvent& event)
         // toolbarptr/statusptr/viewptr might be NULL if OnSize is called from MainFrame ctor
         if (toolbarptr && showtool) {
             // adjust size of tool bar
-            toolbarptr->SetSize(0, 0, toolbarwd, ht);
+            toolbarptr->SetSize(0, 0, TOOLBARWD, ht);
         }
         if (statusptr && showstatus) {
             // adjust size of status bar
             ResizeStatusBar(wd, ht);
         }
         if (viewptr && statusptr && ht > statusptr->statusht) {
-            // adjust size of viewport (and pattern/script directory if visible)
+            // adjust size of viewport (and file directory if visible)
             ResizeSplitWindow(wd, ht);
         }
     }
@@ -2507,7 +2519,7 @@ MainFrame::MainFrame()
     CreateToolbar();
     
     // if tool bar is visible then adjust position of other child windows
-    int toolwd = showtool ? toolbarwd : 0;
+    int toolwd = showtool ? TOOLBARWD : 0;
     
     int wd, ht;
     GetClientSize(&wd, &ht);
@@ -2522,7 +2534,7 @@ MainFrame::MainFrame()
     if (!showstatus) statht = 0;
     statusptr = new StatusBar(this, toolwd, 0, wd - toolwd, statht);
     
-    // create a split window with pattern/script directory in left pane
+    // create a split window with file directory in left pane
     // and layer/edit/timeline bars and pattern viewport in right pane
     splitwin = new wxSplitterWindow(this, wxID_ANY,
                                     wxPoint(toolwd, statht),

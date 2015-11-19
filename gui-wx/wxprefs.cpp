@@ -4316,9 +4316,10 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
         wxString filetypes = _("All files (*)|*");
         filetypes +=         _("|Pattern (*.rle;*.mc;*.lif)|*.rle;*.mc;*.lif");
         filetypes +=         _("|Script (*.pl;*.py)|*.pl;*.py");
+        filetypes +=         _("|Rule (*.rule)|*.rule");
         filetypes +=         _("|HTML (*.html;*.htm)|*.html;*.htm");
         
-        wxFileDialog opendlg(this, _("Choose a pattern, script or HTML file"),
+        wxFileDialog opendlg(this, _("Choose a pattern/script/rule/HTML file"),
                              choosedir, wxEmptyString, filetypes,
                              wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 #ifdef __WXGTK__

@@ -187,7 +187,7 @@ void AlgoHelp::OnLinkClicked(const wxHtmlLinkInfo& link)
         ruletext->SetSelection(-1,-1);
         
     } else if ( url.StartsWith(wxT("open:")) ) {
-        // open clicked pattern/script
+        // open clicked file
         wxString clickedfile = url.AfterFirst(':');
 #ifdef __WXMSW__
         clickedfile.Replace(wxT("/"), wxT("\\"));
@@ -270,7 +270,7 @@ void AlgoHelp::ClearStatus()
 void AlgoHelp::OnMouseDown(wxMouseEvent& event)
 {
     // set flag so ctrl/right-clicked file can be opened in editor
-    // (this is consistent with how we handle clicks in pattern/script pane)
+    // (this is consistent with how we handle clicks in the file pane)
     editlink = event.ControlDown() || event.RightDown();
     event.Skip();
 }

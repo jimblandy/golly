@@ -154,7 +154,7 @@ extern wxArrayString namedrules;
 // define the actions that can be invoked by various key combinations
 typedef enum {
     DO_NOTHING = 0,               // null action must be zero
-    DO_OPENFILE,                  // open a chosen pattern/script/html file
+    DO_OPENFILE,                  // open a chosen pattern/script/rule/html file
     // rest are in alphabetical order (well, almost)
     DO_ABOUT,                     // about Golly
     DO_ADD,                       // add layer

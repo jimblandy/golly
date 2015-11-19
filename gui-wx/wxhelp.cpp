@@ -997,7 +997,7 @@ void HtmlView::ClearStatus()
 void HtmlView::OnMouseDown(wxMouseEvent& event)
 {
     // set flag so ctrl/right-clicked file can be opened in editor
-    // (this is consistent with how we handle clicks in pattern/script pane)
+    // (this is consistent with how we handle clicks in the file pane)
     editlink = event.ControlDown() || event.RightDown();
     event.Skip();
 }
