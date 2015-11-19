@@ -213,7 +213,7 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
             // need this to avoid buttons flashing on Windows
             wxNO_FULL_REPAINT_ON_RESIZE
 #else
-            // better for Mac and Linux???!!!
+            // better for Mac and Linux
             wxFULL_REPAINT_ON_RESIZE
 #endif
             )
@@ -878,7 +878,7 @@ int EditBarHeight() {
 
 void ResizeEditBar(int wd)
 {
-    if (editbarptr) {
+    if (editbarptr && showedit) {
         editbarptr->SetSize(wd, editbarht);
     }
 }

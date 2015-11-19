@@ -226,7 +226,7 @@ LayerBar::LayerBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
             // need this to avoid buttons flashing on Windows
             wxNO_FULL_REPAINT_ON_RESIZE
 #else
-            // better for Mac and Linux???!!!
+            // better for Mac and Linux
             wxFULL_REPAINT_ON_RESIZE
 #endif
             )
@@ -354,7 +354,7 @@ void LayerBar::ResizeLayerButtons()
             }
         }
         
-        if (currbuttwd != oldbuttwd) {
+        if (currbuttwd != oldbuttwd && currbuttwd >= 0) {
             for (int i = 0; i < MAX_LAYERS; i++) {
                 togglebutt[i]->SetSize(x, y, currbuttwd, TOGGLE_HT);
 #if defined(__WXOSX_COCOA__) && wxCHECK_VERSION(3,0,0)
@@ -722,7 +722,7 @@ int LayerBarHeight() {
 
 void ResizeLayerBar(int wd)
 {
-    if (layerbarptr) {
+    if (layerbarptr && showlayer) {
         layerbarptr->SetSize(wd, layerbarht);
     }
 }
@@ -878,8 +878,11 @@ void ResizeTiles(int bigwd, int bight)
     CalculateTileRects(bigwd, bight);
     
     // set size of each tile window
-    for ( int i = 0; i < numlayers; i++ )
+    for ( int i = 0; i < numlayers; i++ ) {
+        if (layer[i]->tilerect.width < 0) layer[i]->tilerect.width = 0;
+        if (layer[i]->tilerect.height < 0) layer[i]->tilerect.height = 0;
         layer[i]->tilewin->SetSize( layer[i]->tilerect );
+    }
     
     // set viewport size for each tile; this is currently the same as the
     // tilerect size because tile windows are created with wxNO_BORDER

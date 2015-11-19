@@ -947,7 +947,7 @@ public:
                 // need this to avoid layer/edit/timeline bar buttons flashing on Windows
                 wxNO_FULL_REPAINT_ON_RESIZE
 #else
-                // better for Mac and Linux???!!!
+                // better for Mac and Linux
                 wxFULL_REPAINT_ON_RESIZE
 #endif
                )
@@ -1026,22 +1026,22 @@ void MainFrame::ResizeBigView()
 
     if (wd > 0 && ht > 0) {
         // resize layer/edit/timeline bars and main viewport window
-        ResizeLayerBar(wd);
-        ResizeEditBar(wd);
         int y = 0;
         if (showlayer) {
+            ResizeLayerBar(wd);
             y += LayerBarHeight();
             ht -= LayerBarHeight();
         }
         if (showedit) {
+            ResizeEditBar(wd);
             y += EditBarHeight();
             ht -= EditBarHeight();
         }
         if (showtimeline) {
             ht -= TimelineBarHeight();
+            // timeline bar goes underneath viewport
+            ResizeTimelineBar(y + ht, wd);
         }
-        // timeline bar goes underneath viewport
-        ResizeTimelineBar(y + ht, wd);
 
 #ifdef __WXMAC__
         if (!fullscreen) {

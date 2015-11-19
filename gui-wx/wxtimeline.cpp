@@ -181,7 +181,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
             // need this to avoid buttons flashing on Windows
             wxNO_FULL_REPAINT_ON_RESIZE
 #else
-            // better for Mac and Linux???!!!
+            // better for Mac and Linux
             wxFULL_REPAINT_ON_RESIZE
 #endif
             )
@@ -875,11 +875,12 @@ void UpdateTimelineBar()
 
 void ResizeTimelineBar(int y, int wd)
 {
-    if (tbarptr) {
+    if (tbarptr && showtimeline) {
         tbarptr->SetSize(0, y, wd, TBARHT);
         // change width of scroll bar to nearly fill timeline bar
         wxRect r = tbarptr->framebar->GetRect();
         r.width = wd - r.x - 20 - BUTTON_WD - 20;
+        if (r.width < 0) r.width = 0;
         tbarptr->framebar->SetSize(r);
         
         // move DELETE_BUTT to right edge of timeline bar
