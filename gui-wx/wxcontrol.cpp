@@ -435,12 +435,12 @@ void MainFrame::SetGenIncrement()
 
 void MainFrame::StartGenTimer()
 {
-    int interval = 16;      // do ~60 calls of OnGenTimer per sec
+    int interval = SIXTY_HERTZ;     // do ~60 calls of OnGenTimer per sec
     
     // increase interval if user wants a delay
     if (currlayer->currexpo < 0) {
         interval = statusptr->GetCurrentDelay();
-        if (interval < 16) interval += 16;
+        if (interval < SIXTY_HERTZ) interval += SIXTY_HERTZ;
     }
     
     if (gentimer->IsRunning()) gentimer->Stop();

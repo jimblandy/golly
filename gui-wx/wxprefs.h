@@ -315,10 +315,30 @@ const int MAX_SPACING = 1000;    // maximum value of boldspacing
 const int MIN_MEM_MB = 0;        // minimum value of maximum memory
 const int MAX_MEM_MB =           // maximum value of maximum memory
           sizeof(char*) <= 4 ? 4000 : 100000000;
-const int MAX_BASESTEP = 2000000000;  // maximum base step
+const int MAX_BASESTEP = 2000000000;    // maximum base step
 const int MAX_DELAY = 5000;      // maximum mindelay or maxdelay
 const int MAX_THUMBRANGE = 500;  // maximum thumbrange
 const int MIN_DIRWD = 50;        // minimum dirwinwd
+
+// Golly uses wxTimers to control the speed of generating patterns, drawing cells,
+// playing timelines, etc.  The value defined below will cause the timers to fire
+// at approximately 60 times per sec (to match the refresh rate of most screens).
+#ifdef __WXMSW__
+    // It seems that wxTimers on Windows only have a resolution of about 15.6ms
+    // so we need to set SIXTY_HERTZ to a value below 16, based on Tim Hutton's
+    // test results (using a 64-bit build of Golly on Windows 10):
+    // interval=5  : 63.9gps = 15.6ms actual interval
+    // interval=10 : 63.9gps = 15.6ms actual interval
+    // interval=15 : 63.9gps = 15.6ms actual interval
+    // interval=16 : 40.0gps = 25.0ms actual interval
+    // interval=17 : 31.9gps = 31.3ms actual interval (= 2 times 15.6ms)
+    // interval=20 : 31.9gps = 31.3ms actual interval
+    // interval=25 : 31.9gps = 31.3ms actual interval
+    const int SIXTY_HERTZ = 15;
+#else
+    // Mac and Linux
+    const int SIXTY_HERTZ = 16;     // 1000/60
+#endif
 
 // Following are used by GetPrefs() before the view window is created:
 
@@ -330,8 +350,8 @@ typedef enum {
     And, Copy, Or, Xor
 } paste_mode;
 
-extern paste_location plocation; // location of cursor in paste rectangle
-extern paste_mode pmode;         // logical paste mode
+extern paste_location plocation;    // location of cursor in paste rectangle
+extern paste_mode pmode;            // logical paste mode
 
 // get/set plocation
 const char* GetPasteLocation();
@@ -343,12 +363,12 @@ void SetPasteMode(const char* s);
 
 // Cursor modes:
 
-extern wxCursor* curs_pencil;    // for drawing cells
-extern wxCursor* curs_pick;      // for picking cell states
-extern wxCursor* curs_cross;     // for selecting cells
-extern wxCursor* curs_hand;      // for moving view by dragging
-extern wxCursor* curs_zoomin;    // for zooming in to a clicked cell
-extern wxCursor* curs_zoomout;   // for zooming out from a clicked cell
+extern wxCursor* curs_pencil;       // for drawing cells
+extern wxCursor* curs_pick;         // for picking cell states
+extern wxCursor* curs_cross;        // for selecting cells
+extern wxCursor* curs_hand;         // for moving view by dragging
+extern wxCursor* curs_zoomin;       // for zooming in to a clicked cell
+extern wxCursor* curs_zoomout;      // for zooming out from a clicked cell
 
 void FreeCursors();
 // deallocate memory allocated by CreateCursors()

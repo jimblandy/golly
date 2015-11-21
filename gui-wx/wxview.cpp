@@ -56,8 +56,6 @@
 
 // -----------------------------------------------------------------------------
 
-const int DRAG_RATE = 16;           // call OnDragTimer ~60 times per sec
-
 static bool stopdrawing = false;    // terminate a draw done while generating?
 
 static wxString oldrule;            // rule before readclipboard is called
@@ -1794,7 +1792,7 @@ void PatternView::StartDrawingCells(int x, int y)
     }
     
     CaptureMouse();                     // get mouse up event even if outside view
-    dragtimer->Start(DRAG_RATE);        // see OnDragTimer
+    dragtimer->Start(SIXTY_HERTZ);      // call OnDragTimer ~60 times per sec
     
     if (stopdrawing) {
         // mouse up event has already been seen so terminate drawing immediately
@@ -1967,8 +1965,8 @@ void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
     }
     
     selectingcells = true;
-    CaptureMouse();                  // get mouse up event even if outside view
-    dragtimer->Start(DRAG_RATE);     // see OnDragTimer
+    CaptureMouse();                     // get mouse up event even if outside view
+    dragtimer->Start(SIXTY_HERTZ);      // call OnDragTimer ~60 times per sec
 }
 
 // -----------------------------------------------------------------------------
@@ -2024,9 +2022,9 @@ void PatternView::StartMovingView(int x, int y)
     if (waitingforclick) {
         // avoid calling CaptureMouse again (middle button was pressed)
     } else {
-        CaptureMouse();              // get mouse up event even if outside view
+        CaptureMouse();                 // get mouse up event even if outside view
     }
-    dragtimer->Start(DRAG_RATE);     // see OnDragTimer
+    dragtimer->Start(SIXTY_HERTZ);      // call OnDragTimer ~60 times per sec
 }
 
 // -----------------------------------------------------------------------------
@@ -2744,7 +2742,7 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
             clickedcontrol = currcontrol;       // remember which control was clicked
             clicktime = stopwatch->Time();      // remember when clicked (in millisecs)
             CaptureMouse();                     // get mouse up event even if outside view
-            dragtimer->Start(DRAG_RATE);        // see OnDragTimer
+            dragtimer->Start(SIXTY_HERTZ);      // call OnDragTimer ~60 times per sec
             RefreshRect(controlsrect, false);   // redraw clicked button
 #ifdef __WXGTK__
             // nicer to see change immediately on Linux

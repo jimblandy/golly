@@ -799,11 +799,12 @@ void TimelineBar::StartAutoTimer()
 {
     if (currlayer->autoplay == 0) return;
 
-    int interval = 16;      // do ~60 calls of OnAutoTimer per sec
+    int interval = SIXTY_HERTZ;     // do ~60 calls of OnAutoTimer per sec
     
     // increase interval if user wants a delay between each frame
     if (currlayer->tlspeed < 0) {
         interval = 100 * (-currlayer->tlspeed);
+        // if tlspeed is -1 then interval is 100; ie. call OnAutoTimer 10 times per sec
     }
     
     StopAutoTimer();
