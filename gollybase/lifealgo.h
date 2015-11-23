@@ -141,6 +141,11 @@ public:
    const char* canonicalsuffix() ;
    // use in setrule() to return the canonical version of suffix;
    // eg. ":t0020" would be converted to ":T20,0"
+   bool CreateBorderCells() ;
+   bool DeleteBorderCells() ;
+   // the above routines can be called around step() to create the
+   // illusion of a bounded universe (note that increment must be 1);
+   // they return false if the pattern exceeds the editing limits
    
    enum TGridType { SQUARE_GRID, TRI_GRID, HEX_GRID, VN_GRID } ;
    TGridType getgridtype() const { return grid_type ; }
@@ -153,6 +158,16 @@ protected:
    bigint increment ;
    timeline_t timeline ;
    TGridType grid_type ;
+
+private:
+   // following are called by CreateBorderCells() to join edges in various ways
+   void JoinTwistedEdges() ;
+   void JoinTwistedAndShiftedEdges() ;
+   void JoinShiftedEdges(int hshift, int vshift) ;
+   void JoinAdjacentEdges(int pt, int pl, int pb, int pr) ;
+   void JoinEdges(int pt, int pl, int pb, int pr) ;
+   // following is called by DeleteBorderCells()
+   void ClearRect(int top, int left, int bottom, int right) ;
 } ;
 
 /**

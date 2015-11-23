@@ -149,6 +149,8 @@ public:
    int toint() const ;
    // static values predefined
    static const bigint zero, one, two, three, minint, maxint ;
+   // editing limits
+   static const bigint min_coord, max_coord ;
    // how many bits required to represent this (approximately)?
    int bitsreq() const ;
    // fill in one bit per char, up to n.

@@ -773,3 +773,9 @@ const bigint bigint::two(2) ;
 const bigint bigint::three(3) ;
 const bigint bigint::maxint(INT_MAX) ;
 const bigint bigint::minint(INT_MIN) ;
+
+// most editing operations are limited to absolute coordinates <= 10^9,
+// partly because getcell and setcell only take int parameters, but mostly
+// to avoid ridiculously long cut/copy/paste/rotate/etc operations
+const bigint bigint::min_coord(-1000000000) ;
+const bigint bigint::max_coord(+1000000000) ;

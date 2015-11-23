@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
                         / ***/
 #include "lifealgo.h"
+#include "util.h"       // for lifestatus
 #include "string.h"
 using namespace std ;
 lifealgo::~lifealgo() {
@@ -118,7 +119,9 @@ void lifealgo::destroytimeline() {
   timeline.next = 0 ;
 }
 
-// AKT: the next 2 routines provide support for a bounded universe
+// -----------------------------------------------------------------------------
+
+// AKT: the following routines provide support for a bounded universe
 
 const char* lifealgo::setgridsize(const char* suffix) {
    // parse a rule suffix like ":T100,200" and set the various grid parameters;
@@ -319,6 +322,581 @@ const char* lifealgo::canonicalsuffix() {
       return 0;
    }
 }
+
+void lifealgo::JoinTwistedEdges()
+{
+    // set grid edges
+    int gl = gridleft.toint();
+    int gt = gridtop.toint();
+    int gr = gridright.toint();
+    int gb = gridbottom.toint();
+    
+    // border edges are 1 cell outside grid edges
+    int bl = gl - 1;
+    int bt = gt - 1;
+    int br = gr + 1;
+    int bb = gb + 1;
+    
+    if (htwist && vtwist) {
+        // cross-surface
+        //  eg. :C4,3
+        //  a l k j i d
+        //  l A B C D i
+        //  h E F G H e
+        //  d I J K L a
+        //  i d c b a l
+        
+        for (int x = gl; x <= gr; x++) {
+            int twistedx = gr - x + gl;
+            int state = getcell(twistedx, gt);
+            if (state > 0) setcell(x, bb, state);
+            state = getcell(twistedx, gb);
+            if (state > 0) setcell(x, bt, state);
+        }
+        
+        for (int y = gt; y <= gb; y++) {
+            int twistedy = gb - y + gt;
+            int state = getcell(gl, twistedy);
+            if (state > 0) setcell(br, y, state);
+            state = getcell(gr, twistedy);
+            if (state > 0) setcell(bl, y, state);
+        }
+        
+        // copy grid's corner cells to SAME corners in border
+        // (these cells are topologically different to non-corner cells)
+        setcell(bl, bt, getcell(gl, gt));
+        setcell(br, bt, getcell(gr, gt));
+        setcell(br, bb, getcell(gr, gb));
+        setcell(bl, bb, getcell(gl, gb));
+        
+    } else if (htwist) {
+        // Klein bottle with top and bottom edges twisted 180 degrees
+        //  eg. :K4*,3
+        //  i l k j i l
+        //  d A B C D a
+        //  h E F G H e
+        //  l I J K L i
+        //  a d c b a d
+        
+        for (int x = gl; x <= gr; x++) {
+            int twistedx = gr - x + gl;
+            int state = getcell(twistedx, gt);
+            if (state > 0) setcell(x, bb, state);
+            state = getcell(twistedx, gb);
+            if (state > 0) setcell(x, bt, state);
+        }
+        
+        for (int y = gt; y <= gb; y++) {
+            // join left and right edges with no twist
+            int state = getcell(gl, y);
+            if (state > 0) setcell(br, y, state);
+            state = getcell(gr, y);
+            if (state > 0) setcell(bl, y, state);
+        }
+        
+        // do corner cells
+        setcell(bl, bt, getcell(gl, gb));
+        setcell(br, bt, getcell(gr, gb));
+        setcell(bl, bb, getcell(gl, gt));
+        setcell(br, bb, getcell(gr, gt));
+        
+    } else { // vtwist
+        // Klein bottle with left and right edges twisted 180 degrees
+        //  eg. :K4,3*
+        //  d i j k l a
+        //  l A B C D i
+        //  h E F G H e
+        //  d I J K L a
+        //  l a b c d i
+        
+        for (int x = gl; x <= gr; x++) {
+            // join top and bottom edges with no twist
+            int state = getcell(x, gt);
+            if (state > 0) setcell(x, bb, state);
+            state = getcell(x, gb);
+            if (state > 0) setcell(x, bt, state);
+        }
+        
+        for (int y = gt; y <= gb; y++) {
+            int twistedy = gb - y + gt;
+            int state = getcell(gl, twistedy);
+            if (state > 0) setcell(br, y, state);
+            state = getcell(gr, twistedy);
+            if (state > 0) setcell(bl, y, state);
+        }
+        
+        // do corner cells
+        setcell(bl, bt, getcell(gr, gt));
+        setcell(br, bt, getcell(gl, gt));
+        setcell(bl, bb, getcell(gr, gb));
+        setcell(br, bb, getcell(gl, gb));
+    }
+}
+
+void lifealgo::JoinTwistedAndShiftedEdges()
+{
+    // set grid edges
+    int gl = gridleft.toint();
+    int gt = gridtop.toint();
+    int gr = gridright.toint();
+    int gb = gridbottom.toint();
+    
+    // border edges are 1 cell outside grid edges
+    int bl = gl - 1;
+    int bt = gt - 1;
+    int br = gr + 1;
+    int bb = gb + 1;
+    
+    if (hshift != 0) {
+        // Klein bottle with shift by 1 on twisted horizontal edge (with even number of cells)
+        //  eg. :K4*+1,3
+        //  j i l k j i
+        //  d A B C D a
+        //  h E F G H e
+        //  l I J K L i
+        //  b a d c b a
+        
+        int state, twistedx, shiftedx;
+        
+        for (int x = gl; x <= gr; x++) {
+            // join top and bottom edges with a twist and then shift by 1
+            twistedx = gr - x + gl;
+            shiftedx = twistedx - 1; if (shiftedx < gl) shiftedx = gr;
+            state = getcell(shiftedx, gb);
+            if (state > 0) setcell(x, bt, state);
+            
+            state = getcell(shiftedx, gt);
+            if (state > 0) setcell(x, bb, state);
+        }
+        
+        for (int y = gt; y <= gb; y++) {
+            // join left and right edges with no twist or shift
+            state = getcell(gl, y);
+            if (state > 0) setcell(br, y, state);
+            state = getcell(gr, y);
+            if (state > 0) setcell(bl, y, state);
+        }
+        
+        // do corner cells
+        shiftedx = gl - 1; if (shiftedx < gl) shiftedx = gr;
+        setcell(bl, bt, getcell(shiftedx, gb));
+        setcell(bl, bb, getcell(shiftedx, gt));
+        shiftedx = gr - 1; if (shiftedx < gl) shiftedx = gr;
+        setcell(br, bt, getcell(shiftedx, gb));
+        setcell(br, bb, getcell(shiftedx, gt));
+        
+    } else { // vshift != 0
+        // Klein bottle with shift by 1 on twisted vertical edge (with even number of cells)
+        //  eg. :K3,4*+1
+        //  f j k l d
+        //  c A B C a
+        //  l D E F j
+        //  i G H I g
+        //  f J K L d
+        //  c a b c a
+        
+        int state, twistedy, shiftedy;
+        
+        for (int x = gl; x <= gr; x++) {
+            // join top and bottom edges with no twist or shift
+            state = getcell(x, gt);
+            if (state > 0) setcell(x, bb, state);
+            state = getcell(x, gb);
+            if (state > 0) setcell(x, bt, state);
+        }
+        
+        for (int y = gt; y <= gb; y++) {
+            // join left and right edges with a twist and then shift by 1
+            twistedy = gb - y + gt;
+            shiftedy = twistedy - 1; if (shiftedy < gt) shiftedy = gb;
+            state = getcell(gr, shiftedy);
+            if (state > 0) setcell(bl, y, state);
+            
+            state = getcell(gl, shiftedy);
+            if (state > 0) setcell(br, y, state);
+        }
+        
+        // do corner cells
+        shiftedy = gt - 1; if (shiftedy < gt) shiftedy = gb;
+        setcell(bl, bt, getcell(gr, shiftedy));
+        setcell(br, bt, getcell(gl, shiftedy));
+        shiftedy = gb - 1; if (shiftedy < gt) shiftedy = gb;
+        setcell(bl, bb, getcell(gr, shiftedy));
+        setcell(br, bb, getcell(gl, shiftedy));
+    }
+}
+
+void lifealgo::JoinShiftedEdges(int hshift, int vshift)  // horizontal and vertical shifts
+{
+    // set grid edges
+    int gl = gridleft.toint();
+    int gt = gridtop.toint();
+    int gr = gridright.toint();
+    int gb = gridbottom.toint();
+    
+    // border edges are 1 cell outside grid edges
+    int bl = gl - 1;
+    int bt = gt - 1;
+    int br = gr + 1;
+    int bb = gb + 1;
+    
+    if (hshift != 0) {
+        // torus with horizontal shift
+        //  eg. :T4+1,3
+        //  k l i j k l
+        //  d A B C D a
+        //  h E F G H e
+        //  l I J K L i
+        //  a b c d a b
+        
+        int state, shiftedx;
+        
+        for (int x = gl; x <= gr; x++) {
+            // join top and bottom edges with a horizontal shift
+            shiftedx = x - hshift;
+            if (shiftedx < gl) shiftedx += gridwd; else if (shiftedx > gr) shiftedx -= gridwd;
+            state = getcell(shiftedx, gb);
+            if (state > 0) setcell(x, bt, state);
+            
+            shiftedx = x + hshift;
+            if (shiftedx < gl) shiftedx += gridwd; else if (shiftedx > gr) shiftedx -= gridwd;
+            state = getcell(shiftedx, gt);
+            if (state > 0) setcell(x, bb, state);
+        }
+        
+        for (int y = gt; y <= gb; y++) {
+            // join left and right edges with no shift
+            state = getcell(gl, y);
+            if (state > 0) setcell(br, y, state);
+            
+            state = getcell(gr, y);
+            if (state > 0) setcell(bl, y, state);
+        }
+        
+        // do corner cells
+        shiftedx = gr - hshift;
+        if (shiftedx < gl) shiftedx += gridwd; else if (shiftedx > gr) shiftedx -= gridwd;
+        setcell(bl, bt, getcell(shiftedx, gb));
+        shiftedx = gl - hshift;
+        if (shiftedx < gl) shiftedx += gridwd; else if (shiftedx > gr) shiftedx -= gridwd;
+        setcell(br, bt, getcell(shiftedx, gb));
+        shiftedx = gr + hshift;
+        if (shiftedx < gl) shiftedx += gridwd; else if (shiftedx > gr) shiftedx -= gridwd;
+        setcell(bl, bb, getcell(shiftedx, gt));
+        shiftedx = gl + hshift;
+        if (shiftedx < gl) shiftedx += gridwd; else if (shiftedx > gr) shiftedx -= gridwd;
+        setcell(br, bb, getcell(shiftedx, gt));
+        
+    } else { // vshift != 0
+        // torus with vertical shift
+        //  eg. :T4,3+1
+        //  h i j k l a
+        //  l A B C D e
+        //  d E F G H i
+        //  h I J K L a
+        //  l a b c d e
+        
+        int state, shiftedy;
+        
+        for (int x = gl; x <= gr; x++) {
+            // join top and bottom edges with no shift
+            state = getcell(x, gt);
+            if (state > 0) setcell(x, bb, state);
+            
+            state = getcell(x, gb);
+            if (state > 0) setcell(x, bt, state);
+        }
+        
+        for (int y = gt; y <= gb; y++) {
+            // join left and right edges with a vertical shift
+            shiftedy = y - vshift;
+            if (shiftedy < gt) shiftedy += gridht; else if (shiftedy > gb) shiftedy -= gridht;
+            state = getcell(gr, shiftedy);
+            if (state > 0) setcell(bl, y, state);
+            
+            shiftedy = y + vshift;
+            if (shiftedy < gt) shiftedy += gridht; else if (shiftedy > gb) shiftedy -= gridht;
+            state = getcell(gl, shiftedy);
+            if (state > 0) setcell(br, y, state);
+        }
+        
+        // do corner cells
+        shiftedy = gb - vshift;
+        if (shiftedy < gt) shiftedy += gridht; else if (shiftedy > gb) shiftedy -= gridht;
+        setcell(bl, bt, getcell(gr, shiftedy));
+        shiftedy = gb + vshift;
+        if (shiftedy < gt) shiftedy += gridht; else if (shiftedy > gb) shiftedy -= gridht;
+        setcell(br, bt, getcell(gl, shiftedy));
+        shiftedy = gt - vshift;
+        if (shiftedy < gt) shiftedy += gridht; else if (shiftedy > gb) shiftedy -= gridht;
+        setcell(bl, bb, getcell(gr, shiftedy));
+        shiftedy = gt + vshift;
+        if (shiftedy < gt) shiftedy += gridht; else if (shiftedy > gb) shiftedy -= gridht;
+        setcell(br, bb, getcell(gl, shiftedy));
+    }
+}
+
+void lifealgo::JoinAdjacentEdges(int pt, int pl, int pb, int pr)    // pattern edges
+{
+    // set grid edges
+    int gl = gridleft.toint();
+    int gt = gridtop.toint();
+    int gr = gridright.toint();
+    int gb = gridbottom.toint();
+    
+    // border edges are 1 cell outside grid edges
+    int bl = gl - 1;
+    int bt = gt - 1;
+    int br = gr + 1;
+    int bb = gb + 1;
+    
+    // sphere
+    //  eg. :S3
+    //  a a d g c
+    //  a A B C g
+    //  b D E F h
+    //  c G H I i
+    //  g c f i i
+    
+    // copy live cells in top edge to left border
+    for (int x = pl; x <= pr; x++) {
+        int state;
+        int skip = nextcell(x, gt, state);
+        if (skip < 0) break;
+        x += skip;
+        if (state > 0) setcell(bl, gt + (x - gl), state);
+    }
+    
+    // copy live cells in left edge to top border
+    for (int y = pt; y <= pb; y++) {
+        // no point using nextcell() here -- edge is only 1 cell wide
+        int state = getcell(gl, y);
+        if (state > 0) setcell(gl + (y - gt), bt, state);
+    }
+    
+    // copy live cells in bottom edge to right border
+    for (int x = pl; x <= pr; x++) {
+        int state;
+        int skip = nextcell(x, gb, state);
+        if (skip < 0) break;
+        x += skip;
+        if (state > 0) setcell(br, gt + (x - gl), state);
+    }
+    
+    // copy live cells in right edge to bottom border
+    for (int y = pt; y <= pb; y++) {
+        // no point using nextcell() here -- edge is only 1 cell wide
+        int state = getcell(gr, y);
+        if (state > 0) setcell(gl + (y - gt), bb, state);
+    }
+    
+    // copy grid's corner cells to SAME corners in border
+    setcell(bl, bt, getcell(gl, gt));
+    setcell(br, bt, getcell(gr, gt));
+    setcell(br, bb, getcell(gr, gb));
+    setcell(bl, bb, getcell(gl, gb));
+}
+
+void lifealgo::JoinEdges(int pt, int pl, int pb, int pr)    // pattern edges
+{
+    // set grid edges
+    int gl = gridleft.toint();
+    int gt = gridtop.toint();
+    int gr = gridright.toint();
+    int gb = gridbottom.toint();
+    
+    // border edges are 1 cell outside grid edges
+    int bl = gl - 1;
+    int bt = gt - 1;
+    int br = gr + 1;
+    int bb = gb + 1;
+    
+    if (gridht > 0) {
+        // copy live cells in top edge to bottom border
+        for (int x = pl; x <= pr; x++) {
+            int state;
+            int skip = nextcell(x, gt, state);
+            if (skip < 0) break;
+            x += skip;
+            if (state > 0) setcell(x, bb, state);
+        }
+        // copy live cells in bottom edge to top border
+        for (int x = pl; x <= pr; x++) {
+            int state;
+            int skip = nextcell(x, gb, state);
+            if (skip < 0) break;
+            x += skip;
+            if (state > 0) setcell(x, bt, state);
+        }
+    }
+    
+    if (gridwd > 0) {
+        // copy live cells in left edge to right border
+        for (int y = pt; y <= pb; y++) {
+            // no point using nextcell() here -- edge is only 1 cell wide
+            int state = getcell(gl, y);
+            if (state > 0) setcell(br, y, state);
+        }
+        // copy live cells in right edge to left border
+        for (int y = pt; y <= pb; y++) {
+            // no point using nextcell() here -- edge is only 1 cell wide
+            int state = getcell(gr, y);
+            if (state > 0) setcell(bl, y, state);
+        }
+    }
+    
+    if (gridwd > 0 && gridht > 0) {
+        // copy grid's corner cells to opposite corners in border
+        setcell(bl, bt, getcell(gr, gb));
+        setcell(br, bt, getcell(gl, gb));
+        setcell(br, bb, getcell(gl, gt));
+        setcell(bl, bb, getcell(gr, gt));
+    }
+}
+
+bool lifealgo::CreateBorderCells()
+{
+    // no need to do anything if there is no pattern or if the grid is a bounded plane
+    if (isEmpty() || boundedplane) return true;
+    
+    bigint top, left, bottom, right;
+    findedges(&top, &left, &bottom, &right);
+    
+    // no need to do anything if pattern is completely inside grid edges
+    if ( (gridwd == 0 || (gridleft < left && gridright > right)) &&
+         (gridht == 0 || (gridtop < top && gridbottom > bottom)) ) {
+        return true;
+    }
+    
+    // if grid has infinite width or height then pattern might be too big to use setcell/getcell
+    if ( (gridwd == 0 || gridht == 0) &&
+         (top < bigint::min_coord || left < bigint::min_coord ||
+          bottom > bigint::max_coord || right > bigint::max_coord) ) {
+        lifestatus("Pattern is beyond editing limit!");
+        // return false so caller can exit step() loop
+        return false;
+    }
+    
+    if (sphere) {
+        // to get a sphere we join top edge with left edge, and right edge with bottom edge;
+        // note that grid must be square (gridwd == gridht)
+        int pl = left.toint();
+        int pt = top.toint();
+        int pr = right.toint();      
+        int pb = bottom.toint();
+        JoinAdjacentEdges(pt, pl, pb, pr);
+        
+    } else if (htwist || vtwist) {
+        // Klein bottle or cross-surface
+        if ( (htwist && hshift != 0 && (gridwd & 1) == 0) ||
+             (vtwist && vshift != 0 && (gridht & 1) == 0) ) {
+            // Klein bottle with shift is only possible if the shift is on the
+            // twisted edge and that edge has an even number of cells
+            JoinTwistedAndShiftedEdges();
+        } else {
+            JoinTwistedEdges();
+        }
+        
+    } else if (hshift != 0 || vshift != 0) {
+        // torus with horizontal or vertical shift
+        JoinShiftedEdges(hshift, vshift);
+        
+    } else {
+        // unshifted torus or infinite tube
+        int pl = left.toint();
+        int pt = top.toint();
+        int pr = right.toint();      
+        int pb = bottom.toint();
+        JoinEdges(pt, pl, pb, pr);
+    }
+    
+    endofpattern();
+    return true;
+}
+
+void lifealgo::ClearRect(int top, int left, int bottom, int right)
+{
+    int cx, cy, v;
+    for ( cy = top; cy <= bottom; cy++ ) {
+        for ( cx = left; cx <= right; cx++ ) {
+            int skip = nextcell(cx, cy, v);
+            if (skip + cx > right)
+                skip = -1;           // pretend we found no more live cells
+            if (skip >= 0) {
+                // found next live cell so delete it
+                cx += skip;
+                setcell(cx, cy, 0);
+            } else {
+                cx = right + 1;     // done this row
+            }
+        }
+    }
+}
+
+bool lifealgo::DeleteBorderCells()
+{
+    // no need to do anything if there is no pattern
+    if (isEmpty()) return true;
+    
+    // need to find pattern edges because pattern may have expanded beyond grid
+    // (typically by 2 cells, but could be more if rule allows births in empty space)
+    bigint top, left, bottom, right;
+    findedges(&top, &left, &bottom, &right);
+    
+    // no need to do anything if grid encloses entire pattern
+    if ( (gridwd == 0 || (gridleft <= left && gridright >= right)) &&
+         (gridht == 0 || (gridtop <= top && gridbottom >= bottom)) ) {
+        return true;
+    }
+    
+    // set pattern edges
+    int pl = left.toint();
+    int pt = top.toint();
+    int pr = right.toint();      
+    int pb = bottom.toint();
+    
+    // set grid edges
+    int gl = gridleft.toint();
+    int gt = gridtop.toint();
+    int gr = gridright.toint();
+    int gb = gridbottom.toint();
+    
+    if (gridht > 0 && pt < gt) {
+        // delete live cells above grid
+        ClearRect(pt, pl, gt-1, pr);
+        pt = gt; // reduce size of rect below
+    }
+    
+    if (gridht > 0 && pb > gb) {
+        // delete live cells below grid
+        ClearRect(gb+1, pl, pb, pr);
+        pb = gb; // reduce size of rect below
+    }
+    
+    if (gridwd > 0 && pl < gl) {
+        // delete live cells left of grid
+        ClearRect(pt, pl, pb, gl-1);
+    }
+    
+    if (gridwd > 0 && pr > gr) {
+        // delete live cells right of grid
+        ClearRect(pt, gr+1, pb, pr);
+    }
+    
+    endofpattern();
+    
+    // do this test AFTER clearing border
+    if ( top < bigint::min_coord || left < bigint::min_coord ||
+         bottom > bigint::max_coord || right > bigint::max_coord ) {
+        lifestatus("Pattern exceeded editing limit!");
+        // return false so caller can exit step() loop
+        return false;
+    }
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
 
 int staticAlgoInfo::nextAlgoId = 0 ;
 staticAlgoInfo *staticAlgoInfo::head = 0 ;

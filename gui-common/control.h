@@ -45,9 +45,6 @@ void RestorePattern(bigint& gen, const char* filename,
 void SetMinimumStepExponent();
 void SetStepExponent(int newexpo);
 void SetGenIncrement();
-bool CreateBorderCells(lifealgo* curralgo);
-bool DeleteBorderCells(lifealgo* curralgo);
-void ClearRect(lifealgo* curralgo, int top, int left, int bottom, int right);
 const char* ChangeGenCount(const char* genstring, bool inundoredo = false);
 void ClearOutsideGrid();
 void ReduceCellStates(int newmaxstate);

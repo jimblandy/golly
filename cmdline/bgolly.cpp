@@ -313,8 +313,16 @@ struct loadcmd : public cmdbase {
 struct stepcmd : public cmdbase {
    stepcmd() : cmdbase("step", "b") {}
    virtual void doit() {
-      imp->setIncrement(barg) ;
-      imp->step() ;
+      if (imp->gridwd > 0 || imp->gridht > 0) {
+         // bounded grid, so must step by 1
+         imp->setIncrement(1) ;
+         if (!imp->CreateBorderCells()) exit(10) ;
+         imp->step() ;
+         if (!imp->DeleteBorderCells()) exit(10) ;
+      } else {
+         imp->setIncrement(barg) ;
+         imp->step() ;
+      }
       cout << imp->getGeneration().tostring() << ": " ;
       cout << imp->getPopulation().tostring() << endl ;
    }
@@ -587,6 +595,11 @@ case 's':
       lifefatal(err) ;
    if (liferule)
       imp->setrule(liferule) ;
+   bool boundedgrid = (imp->gridwd > 0 || imp->gridht > 0) ;
+   if (boundedgrid) {
+      hyper = 0 ;
+      inc = 1 ;     // only step by 1
+   }
    if (inc != 0)
       imp->setIncrement(inc) ;
    if (timeline) {
@@ -623,7 +636,9 @@ case 's':
          diff <<= bs ;
          imp->setIncrement(diff) ;
       }
+      if (boundedgrid && !imp->CreateBorderCells()) break ;
       imp->step() ;
+      if (boundedgrid && !imp->DeleteBorderCells()) break ;
       if (maxgen < 0 && outfilename != 0)
          writepat(fc++) ;
       if (timeline && imp->getframecount() + 2 > MAX_FRAME_COUNT)

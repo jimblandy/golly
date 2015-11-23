@@ -1148,9 +1148,9 @@ static PyObject* py_evolve(PyObject* self, PyObject* args)
                 delete tempalgo;
                 return NULL;
             }
-            if (!mainptr->CreateBorderCells(tempalgo)) break;
+            if (!tempalgo->CreateBorderCells()) break;
             tempalgo->step();
-            if (!mainptr->DeleteBorderCells(tempalgo)) break;
+            if (!tempalgo->DeleteBorderCells()) break;
             ngens--;
         }
     } else {

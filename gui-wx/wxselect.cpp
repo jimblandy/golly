@@ -295,9 +295,9 @@ void Selection::Advance()
         bigint savegen = currlayer->algo->getGeneration();
         bigint saveinc = currlayer->algo->getIncrement();
         currlayer->algo->setIncrement(1);
-        if (boundedgrid) mainptr->CreateBorderCells(currlayer->algo);
+        if (boundedgrid) currlayer->algo->CreateBorderCells();
         currlayer->algo->step();
-        if (boundedgrid) mainptr->DeleteBorderCells(currlayer->algo);
+        if (boundedgrid) currlayer->algo->DeleteBorderCells();
         currlayer->algo->setIncrement(saveinc);
         currlayer->algo->setGeneration(savegen);
         
@@ -344,9 +344,9 @@ void Selection::Advance()
     mainptr->generating = true;
     wxGetApp().PollerReset();
     tempalgo->setIncrement(1);
-    if (boundedgrid) mainptr->CreateBorderCells(tempalgo);
+    if (boundedgrid) tempalgo->CreateBorderCells();
     tempalgo->step();
-    if (boundedgrid) mainptr->DeleteBorderCells(tempalgo);
+    if (boundedgrid) tempalgo->DeleteBorderCells();
     mainptr->generating = false;
     
     if ( !tempalgo->isEmpty() ) {
@@ -433,9 +433,9 @@ void Selection::AdvanceOutside()
         bigint savegen = currlayer->algo->getGeneration();
         bigint saveinc = currlayer->algo->getIncrement();
         currlayer->algo->setIncrement(1);
-        if (boundedgrid) mainptr->CreateBorderCells(currlayer->algo);
+        if (boundedgrid) currlayer->algo->CreateBorderCells();
         currlayer->algo->step();
-        if (boundedgrid) mainptr->DeleteBorderCells(currlayer->algo);
+        if (boundedgrid) currlayer->algo->DeleteBorderCells();
         currlayer->algo->setIncrement(saveinc);
         currlayer->algo->setGeneration(savegen);
         
@@ -500,9 +500,9 @@ void Selection::AdvanceOutside()
     mainptr->generating = true;
     wxGetApp().PollerReset();
     currlayer->algo->setIncrement(1);
-    if (boundedgrid) mainptr->CreateBorderCells(currlayer->algo);
+    if (boundedgrid) currlayer->algo->CreateBorderCells();
     currlayer->algo->step();
-    if (boundedgrid) mainptr->DeleteBorderCells(currlayer->algo);
+    if (boundedgrid) currlayer->algo->DeleteBorderCells();
     mainptr->generating = false;
     
     if ( !currlayer->algo->isEmpty() ) {

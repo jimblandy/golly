@@ -119,16 +119,10 @@ void UpdateEverything()
 
 // -----------------------------------------------------------------------------
 
-// most editing operations are limited to absolute coordinates <= 10^9 because
-// getcell and setcell only take int parameters (the limits must be smaller
-// than INT_MIN and INT_MAX to avoid boundary conditions)
-static bigint min_coord = -1000000000;
-static bigint max_coord = +1000000000;
-
 bool OutsideLimits(bigint& t, bigint& l, bigint& b, bigint& r)
 {
-    return ( t < min_coord || l < min_coord ||
-             b > max_coord || r > max_coord );
+    return ( t < bigint::min_coord || l < bigint::min_coord ||
+             b > bigint::max_coord || r > bigint::max_coord );
 }
 
 // -----------------------------------------------------------------------------

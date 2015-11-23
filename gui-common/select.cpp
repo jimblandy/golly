@@ -304,9 +304,9 @@ void Selection::Advance()
         bigint savegen = currlayer->algo->getGeneration();
         bigint saveinc = currlayer->algo->getIncrement();
         currlayer->algo->setIncrement(1);
-        if (boundedgrid) CreateBorderCells(currlayer->algo);
+        if (boundedgrid) currlayer->algo->CreateBorderCells();
         currlayer->algo->step();
-        if (boundedgrid) DeleteBorderCells(currlayer->algo);
+        if (boundedgrid) currlayer->algo->DeleteBorderCells();
         currlayer->algo->setIncrement(saveinc);
         currlayer->algo->setGeneration(savegen);
 
@@ -353,9 +353,9 @@ void Selection::Advance()
     generating = true;
     PollerReset();
     tempalgo->setIncrement(1);
-    if (boundedgrid) CreateBorderCells(tempalgo);
+    if (boundedgrid) tempalgo->CreateBorderCells();
     tempalgo->step();
-    if (boundedgrid) DeleteBorderCells(tempalgo);
+    if (boundedgrid) tempalgo->DeleteBorderCells();
     generating = false;
 
     if ( !tempalgo->isEmpty() ) {
@@ -442,9 +442,9 @@ void Selection::AdvanceOutside()
         bigint savegen = currlayer->algo->getGeneration();
         bigint saveinc = currlayer->algo->getIncrement();
         currlayer->algo->setIncrement(1);
-        if (boundedgrid) CreateBorderCells(currlayer->algo);
+        if (boundedgrid) currlayer->algo->CreateBorderCells();
         currlayer->algo->step();
-        if (boundedgrid) DeleteBorderCells(currlayer->algo);
+        if (boundedgrid) currlayer->algo->DeleteBorderCells();
         currlayer->algo->setIncrement(saveinc);
         currlayer->algo->setGeneration(savegen);
 
@@ -507,9 +507,9 @@ void Selection::AdvanceOutside()
     generating = true;
     PollerReset();
     currlayer->algo->setIncrement(1);
-    if (boundedgrid) CreateBorderCells(currlayer->algo);
+    if (boundedgrid) currlayer->algo->CreateBorderCells();
     currlayer->algo->step();
-    if (boundedgrid) DeleteBorderCells(currlayer->algo);
+    if (boundedgrid) currlayer->algo->DeleteBorderCells();
     generating = false;
 
     if ( !currlayer->algo->isEmpty() ) {

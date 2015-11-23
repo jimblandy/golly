@@ -1300,9 +1300,9 @@ XS(pl_evolve)
                 delete tempalgo;
                 Perl_croak(aTHX_ NULL);
             }
-            if (!mainptr->CreateBorderCells(tempalgo)) break;
+            if (!tempalgo->CreateBorderCells()) break;
             tempalgo->step();
-            if (!mainptr->DeleteBorderCells(tempalgo)) break;
+            if (!tempalgo->DeleteBorderCells()) break;
             ngens--;
         }
     } else {

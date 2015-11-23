@@ -130,9 +130,6 @@ public:
     void ChangeAlgorithm(algo_type newalgotype,
                          const wxString& newrule = wxEmptyString,
                          bool inundoredo = false);
-    bool CreateBorderCells(lifealgo* curralgo);
-    bool DeleteBorderCells(lifealgo* curralgo);
-    void ClearRect(lifealgo* curralgo, int top, int left, int bottom, int right);
     
     // view functions
     void ToggleStatusBar();
