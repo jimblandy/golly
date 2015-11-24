@@ -18,17 +18,6 @@ or Tom Rokicki
 <li>
 All editing operations are restricted to cells whose coordinates
 are within +/- 1 billion.
-<li>
-Pattern rendering needs to be optimized, especially in the Mac and Linux apps.
-The solution will probably require using OpenGL rather than wxDC calls.
-</ul>
-
-<p>
-<font size=+1><b>Mac problems</b></font>
-
-<p>
-<ul>
-<li> None.
 </ul>
 
 <p>
@@ -40,11 +29,22 @@ The solution will probably require using OpenGL rather than wxDC calls.
 </ul>
 
 <p>
+<font size=+1><b>Mac problems</b></font>
+
+<p>
+<ul>
+<li> Dragging the sash (the thin vertical bar separating the file panel
+     and the viewport) can result in ugly flashing.
+</ul>
+
+<p>
 <font size=+1><b>Linux problems</b></font>
 
 <p>
 <ul>
-<li> None.
+<li> Scroll bars are not updated correctly while resizing the window.
+<li> Buttons in the edit/layer bar can become temporarily blank after
+     resizing the window.
 </ul>
 
 </body>
