@@ -39,8 +39,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifdef TIMING
 #include <sys/time.h>
 #endif
+
 using namespace std ;
+
+#ifdef TIMING
+double start ;
+double timestamp() {
+   struct timeval tv ;
+   gettimeofday(&tv, 0) ;
+   double now = tv.tv_sec + 0.000001 * tv.tv_usec ;
+   double r = now - start ;
+   start = now ;
+   return r ;
+}
+#endif
+
 viewport viewport(1000, 1000) ;
+lifealgo *imp = 0 ;
+
 /*
  *   This is a "renderer" that is just stubs, for performance testing.
  */
@@ -56,61 +72,59 @@ public:
       *dead_alpha = *live_alpha = 255;
    }
 } ;
-
 nullrender renderer ;
+
+// the RuleLoader algo looks for .rule files in the user_rules directory
+// then in the supplied_rules directory
+char* user_rules = (char *)"";              // can be changed by -s or --search
+char* supplied_rules = (char *)"Rules/";
+
 /*
- *   This is a "lifeerrors" that we can use to test some edge
- *   conditions.  In this case the only real thing we use
- *   it for is to check rendering during a progress dialog.
+ *   This lifeerrors is used to check rendering during a progress dialog.
  */
-class nullerrors : public lifeerrors {
+class progerrors : public lifeerrors {
 public:
-   nullerrors() {}
-   virtual void fatal(const char *) {}
-   virtual void warning(const char *) {}
-   virtual void status(const char *) {}
+   progerrors() {}
+   virtual void fatal(const char *s) { cout << "Fatal error: " << s << endl ; exit(10) ; }
+   virtual void warning(const char *s) { cout << "Warning: " << s << endl ; }
+   virtual void status(const char *s) { cout << s << endl ; }
    virtual void beginprogress(const char *s) { abortprogress(0, s) ; }
    virtual bool abortprogress(double, const char *) ;
    virtual void endprogress() { abortprogress(1, "") ; }
-   virtual const char* getuserrules() { return "" ; }
-   virtual const char* getrulesdir() { return "Rules/" ; }
+   virtual const char* getuserrules() { return user_rules ; }
+   virtual const char* getrulesdir() { return supplied_rules ; }
 } ;
-nullerrors nullerror ;
-#ifdef TIMING
-double start ;
-double timestamp() {
-   struct timeval tv ;
-   gettimeofday(&tv, 0) ;
-   double now = tv.tv_sec + 0.000001 * tv.tv_usec ;
-   double r = now - start ;
-   start = now ;
-   return r ;
+progerrors progerrors_instance ;
+
+bool progerrors::abortprogress(double, const char *) {
+   imp->draw(viewport, renderer) ;
+   return 0 ;
 }
-#endif
+
 /*
- *   This is a "lifeerrors" that we can use to test some edge
- *   conditions.  In this case the only real thing we use
- *   it for is to check rendering during a progress dialog.
+ *   This is our standard lifeerrors.
  */
-class verbosestatus : public lifeerrors {
+class stderrors : public lifeerrors {
 public:
-   verbosestatus() {}
-   virtual void fatal(const char *) {}
-   virtual void warning(const char *) {}
+   stderrors() {}
+   virtual void fatal(const char *s) { cout << "Fatal error: " << s << endl ; exit(10) ; }
+   virtual void warning(const char *s) { cout << "Warning: " << s << endl ; }
    virtual void status(const char *s) {
 #ifdef TIMING
       cout << timestamp() << " " << s << endl ;
+#else
+      cout << s << endl ;
 #endif
    }
    virtual void beginprogress(const char *) {}
    virtual bool abortprogress(double, const char *) { return 0 ; }
    virtual void endprogress() {}
-   virtual const char* getuserrules() { return "" ; }
-   virtual const char* getrulesdir() { return "Rules/" ; }
+   virtual const char* getuserrules() { return user_rules ; }
+   virtual const char* getrulesdir() { return supplied_rules ; }
 } ;
-verbosestatus verbosestatus_instance ;
+stderrors stderrors_instance ;
+
 char *filename ;
-lifealgo *imp = 0 ;
 struct options {
   const char *shortopt ;
   const char *longopt ;
@@ -139,6 +153,7 @@ options options[] = {
   { "-2", "--exponential", "Use exponentially increasing steps", 'b', &hyper },
   { "-q", "--quiet", "Don't show population; twice, don't show anything", 'b', &quiet },
   { "-r", "--rule", "Life rule to use", 's', &liferule },
+  { "-s", "--search", "Search directory for .rule files", 's', &user_rules },
   { "-h", "--hashlife", "Use Hashlife algorithm", 'b', &hashlife },
   { "-a", "--algorithm", "Select algorithm by name", 's', &algoName },
   { "-o", "--output", "Output file (*.rle, *.mc, *.rle.gz, *.mc.gz)", 's',
@@ -157,6 +172,7 @@ options options[] = {
   { "",   "--exec", "Run testing script", 's', &testscript },
   { 0, 0, 0, 0, 0 }
 } ;
+
 int endswith(const char *s, const char *suff) {
    int off = (int)(strlen(s) - strlen(suff)) ;
    if (off <= 0)
@@ -168,6 +184,7 @@ int endswith(const char *s, const char *suff) {
    numberoffset = off ;
    return 1 ;
 }
+
 void usage(const char *s) {
   fprintf(stderr, "Usage:  bgolly [options] patternfile\n") ;
   for (int i=0; options[i].shortopt; i++)
@@ -177,6 +194,7 @@ void usage(const char *s) {
     lifefatal(s) ;
   exit(0) ;
 }
+
 #define STRINGIFY(ARG) STR2(ARG)
 #define STR2(ARG) #ARG
 #define MAXRLE 1000000000
@@ -205,6 +223,7 @@ void writepat(int fc) {
       lifewarning(err) ;
    cerr << ")" << flush ;
 }
+
 const int MAXCMDLENGTH = 2048 ;
 struct cmdbase {
    cmdbase(const char *cmdarg, const char *argsarg) {
@@ -301,7 +320,9 @@ struct cmdbase {
    virtual ~cmdbase() {}
    static cmdbase *list ;
 } ;
+
 cmdbase *cmdbase::list = 0 ;
+
 struct loadcmd : public cmdbase {
    loadcmd() : cmdbase("load", "s") {}
    virtual void doit() {
@@ -415,6 +436,7 @@ struct showcutcmd : public cmdbase {
          cout << cutbuf[i].first << " " << cutbuf[i].second << endl ;
    }
 } showcut_inst ;
+
 lifealgo *createUniverse() {
    if (algoName == 0) {
      if (hashlife)
@@ -435,6 +457,7 @@ lifealgo *createUniverse() {
    imp->setMaxMemory(maxmem) ;
    return imp ;
 }
+
 struct newcmd : public cmdbase {
    newcmd() : cmdbase("new", "") {}
    virtual void doit() {
@@ -472,10 +495,7 @@ struct edgescmd : public cmdbase {
       cout << " " << b.tostring() << endl ;
    }
 } edges_inst ;
-bool nullerrors::abortprogress(double, const char *) {
-   imp->draw(viewport, renderer) ;
-   return 0 ;
-}
+
 void runtestscript(const char *testscript) {
    FILE *cmdfile = 0 ;
    if (strcmp(testscript, "-") != 0)
@@ -497,6 +517,7 @@ void runtestscript(const char *testscript) {
    }
    exit(0) ;
 }
+
 int main(int argc, char *argv[]) {
    cout << "This is bgolly " STRINGIFY(VERSION) " Copyright 2015 The Golly Gang."
         << endl << flush ;
@@ -544,12 +565,12 @@ case 's':
         }
       }
       if (!hit)
-        usage("Bad option given") ;
+         usage("Bad option given") ;
    }
    if (argc < 2 && !testscript)
-     usage("No pattern argument given") ;
+      usage("No pattern argument given") ;
    if (argc > 2)
-     usage("Extra stuff after pattern argument") ;
+      usage("Extra stuff after pattern argument") ;
    if (outfilename) {
       if (endswith(outfilename, ".rle")) {
       } else if (endswith(outfilename, ".mc")) {
@@ -568,33 +589,34 @@ case 's':
          lifefatal("Output filename too long") ;
    }
    if (timeline && hyper)
-      lifefatal("Cannot use both timeline and hyperthreading") ;
+      lifefatal("Cannot use both timeline and exponentially increasing steps") ;
    imp = createUniverse() ;
    if (progress)
-     lifeerrors::seterrorhandler(&nullerror) ;
-   else if (verbose) {
-     lifeerrors::seterrorhandler(&verbosestatus_instance) ;
-     hlifealgo::setVerbose(1) ;
+      lifeerrors::seterrorhandler(&progerrors_instance) ;
+   else
+      lifeerrors::seterrorhandler(&stderrors_instance) ;
+   if (verbose) {
+      hlifealgo::setVerbose(1) ;
    }
    imp->setMaxMemory(maxmem) ;
 #ifdef TIMING
    timestamp() ;
 #endif
    if (testscript) {
-     if (argc > 1) {
-       filename = argv[1] ;
-       const char *err = readpattern(argv[1], *imp) ;
-       if (err)
-         lifefatal(err) ;
-     }
-     runtestscript(testscript) ;
+      if (argc > 1) {
+         filename = argv[1] ;
+         const char *err = readpattern(argv[1], *imp) ;
+         if (err) lifefatal(err) ;
+      }
+      runtestscript(testscript) ;
    }
    filename = argv[1] ;
    const char *err = readpattern(argv[1], *imp) ;
-   if (err)
-      lifefatal(err) ;
-   if (liferule)
-      imp->setrule(liferule) ;
+   if (err) lifefatal(err) ;
+   if (liferule) {
+      err = imp->setrule(liferule) ;
+      if (err) lifefatal(err) ;
+   }
    bool boundedgrid = (imp->gridwd > 0 || imp->gridht > 0) ;
    if (boundedgrid) {
       hyper = 0 ;
@@ -616,9 +638,9 @@ case 's':
       if (quiet < 2) {
          cout << imp->getGeneration().tostring() ;
          if (!quiet)
-           cout << ": " << imp->getPopulation().tostring() << endl ;
+            cout << ": " << imp->getPopulation().tostring() << endl ;
          else
-           cout << endl ;
+            cout << endl ;
       }
       if (popcount)
          imp->getPopulation() ;

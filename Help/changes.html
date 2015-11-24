@@ -19,7 +19,13 @@
 <li> The Buffered item has been removed from the View menu.
 <li> Better reporting of errors in a .rule file.
 <li> Fixed crash on Linux when typing in the Keyboard preferences.
-<li> bgolly supports rules that specify <a href="bounded.html">bounded grids</a>.
+<li> bgolly now supports rules that specify <a href="bounded.html">bounded grids</a>.
+<li> Fixed a bug in bgolly that prevented use of the RuleLoader algorithm.
+<li> bgolly has a new -s option (or --search) for specifying the folder in which
+     the RuleLoader algorithm will look for .rule files before looking in the supplied
+     Rules folder.  For example, assuming SlowLife.rule is in a folder called My-rules,
+     you could type a command like this:<br><br>
+     <tt>bgolly -a RuleLoader -s My-rules/ -r SlowLife My-patterns/foo.rle</tt>
 </ul>
 
 <p>
