@@ -249,7 +249,7 @@ srcdist:
 bindist: all
 	-rm -rf $(RELEASENAME)-gtk
 	mkdir $(RELEASENAME)-gtk
-	install -s $(EXEFILES) $(RELEASENAME)-gtk
+	install $(EXEFILES) $(RELEASENAME)-gtk
 	cp -rp $(DOCFILES) $(SHAREDFILES) $(RELEASENAME)-gtk
 	find $(RELEASENAME)-gtk -name '.[^.]*' -delete
 	find $(RELEASENAME)-gtk/Scripts/Python -name '*.pyc' -delete

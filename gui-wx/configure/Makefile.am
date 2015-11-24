@@ -37,7 +37,7 @@ srcdist:
 
 bindist:
 	make bindir=/ pkgdatadir=/ docdir=/ GOLLYDIR= \
-		DESTDIR=$(builddir)/$(bindistdir) clean all install-strip
+		DESTDIR=$(builddir)/$(bindistdir) clean all install
 	tardir=$(bindistdir) && $(am__tar) \
 		| GZIP=$(GZIP_ENV) gzip -c >$(bindistdir).tar.gz
 	rm -r $(bindistdir)
