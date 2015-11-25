@@ -49,6 +49,7 @@
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
+#include "ruleloaderalgo.h" // for noTABLEorTREE
 #include "readpattern.h"    // for readpattern
 #include "writepattern.h"   // for writepattern, pattern_format
 
@@ -376,8 +377,30 @@ void LoadRule(const std::string& rulestring)
             return;
         }
     }
+    
     if (err) {
-        // only get here if .rule file contains some sort of error
+        // RuleLoader algo found some sort of error
+        if (strcmp(err, noTABLEorTREE) == 0) {
+            // .rule file has no TABLE or TREE section but it might be used
+            // to override a built-in rule, so try each algo
+            std::string temprule = rulestring;
+            std::replace(temprule.begin(), temprule.end(), '_', '/');   // eg. convert B3_S23 to B3/S23
+            for (int i = 0; i < NumAlgos(); i++) {
+                lifealgo* tempalgo = CreateNewUniverse(i);
+                err = tempalgo->setrule(temprule.c_str());
+                delete tempalgo;
+                if (!err) {
+                    // change the current algorithm and switch to the new rule
+                    ChangeAlgorithm(i, temprule.c_str());
+                    if (i != currlayer->algtype) {
+                        RestoreRule(oldrule.c_str());
+                        Warning("Algorithm could not be changed (pattern is too big to convert).");
+                    }
+                    return;
+                }
+            }
+        }
+        
         RestoreRule(oldrule.c_str());
         std::string msg = "The rule file is not valid:\n";
         msg += rulestring;

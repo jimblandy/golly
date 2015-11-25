@@ -53,4 +53,7 @@ protected:
     void SetAlgoVariables(RuleTypes ruletype);
     const char* LoadTableOrTree(FILE* rulefile, const char* rule);
 };
+
+extern const char* noTABLEorTREE;
+
 #endif

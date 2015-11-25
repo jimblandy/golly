@@ -33,7 +33,8 @@
 #include "wx/wfstream.h"        // for wxFileOutputStream, wxFileInputStream
 #include "wx/zipstrm.h"         // for wxZipInputStream
 
-#include "lifealgo.h"      // for lifealgo class
+#include "lifealgo.h"           // for lifealgo class
+#include "ruleloaderalgo.h"     // for noTABLEorTREE
 
 #include "wxgolly.h"       // for wxGetApp, mainptr, viewptr
 #include "wxmain.h"        // for mainptr->...
@@ -457,8 +458,33 @@ void LoadRule(const wxString& rulestring)
             return;
         }
     }
+    
     if (err) {
-        // only get here if .rule file contains some sort of error
+        // RuleLoader algo found some sort of error
+        if (strcmp(err, noTABLEorTREE) == 0) {
+            // .rule file has no TABLE or TREE section but it might be used
+            // to override a built-in rule, so try each algo
+            wxString temprule = rulestring;
+            temprule.Replace(wxT("_"), wxT("/"));   // eg. convert B3_S23 to B3/S23
+            for (int i = 0; i < NumAlgos(); i++) {
+                lifealgo* tempalgo = CreateNewUniverse(i);
+                err = tempalgo->setrule( temprule.mb_str(wxConvLocal) );
+                delete tempalgo;
+                if (!err) {
+                    // change the current algorithm and switch to the new rule
+                    mainptr->ChangeAlgorithm(i, temprule);
+                    if (i != currlayer->algtype) {
+                        RestoreRule(oldrule);
+                        Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
+                    } else {
+                        mainptr->SetWindowTitle(wxEmptyString);
+                        mainptr->UpdateEverything();
+                    }
+                    return;
+                }
+            }
+        }
+        
         RestoreRule(oldrule);
         wxString msg = _("The rule file is not valid:\n") + rulestring;
         msg += _("\n\nThe error message:\n") + wxString(err,wxConvLocal);
