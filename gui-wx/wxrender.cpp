@@ -1341,13 +1341,6 @@ void DrawView(int tileindex)
     viewport* saveview0 = NULL;
     int colorindex;
     int currmag = currlayer->view->getmag();
-
-    // fill the background with state 0 color
-    glClearColor(currlayer->cellr[0]/255.0,
-                 currlayer->cellg[0]/255.0,
-                 currlayer->cellb[0]/255.0,
-                 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
     
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
     if ( currlayer->algo->gridwd > 0) {
@@ -1372,10 +1365,15 @@ void DrawView(int tileindex)
     }
     
     if ( viewptr->nopattupdate ) {
-        // don't draw incomplete pattern, just draw grid lines and border
+        // don't draw incomplete pattern, just fill background
+        glClearColor(currlayer->cellr[0]/255.0,
+                     currlayer->cellg[0]/255.0,
+                     currlayer->cellb[0]/255.0,
+                     1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        // might as well draw grid lines and border
         currwd = currlayer->view->getwidth();
         currht = currlayer->view->getheight();
-        // might as well draw grid lines and border
         if ( viewptr->GridVisible() ) {
             DrawGridLines(currwd, currht);
         }
@@ -1388,6 +1386,7 @@ void DrawView(int tileindex)
     if ( numlayers > 1 && tilelayers ) {
         if ( tileindex < 0 ) {
             DrawTileBorders();
+            // there's no need to fill bigview's background
             return;
         }
         // tileindex >= 0 so temporarily change some globals to draw this tile
@@ -1416,6 +1415,14 @@ void DrawView(int tileindex)
         // just draw the current layer
         colorindex = currindex;
     }
+
+    // fill the background with the current state 0 color
+    // (note that currlayer might have changed)
+    glClearColor(currlayer->cellr[0]/255.0,
+                 currlayer->cellg[0]/255.0,
+                 currlayer->cellb[0]/255.0,
+                 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
     
     if (showicons && currmag > 2) {
         // only show icons at scales 1:8 and above
