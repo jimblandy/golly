@@ -1656,17 +1656,57 @@ void UpdateLayerColors()
 
 // -----------------------------------------------------------------------------
 
+static void InvertIconColors(unsigned char** texturesptr, int size, int maxstate)
+{
+    if (texturesptr) {
+        for (int state = 0; state <= maxstate; state++) {
+            unsigned char* texdata = texturesptr[state];
+            if (texdata) {
+                int tpos = 0;
+                for (int row = 0; row < size; row++) {
+                    for (int col = 0; col < size; col++) {
+                        if (texdata[tpos+3] == 0) {
+                            // ignore transparent pixel
+                        } else {
+                            // invert pixel color
+                            texdata[tpos]   = 255 - texdata[tpos];
+                            texdata[tpos+1] = 255 - texdata[tpos+1];
+                            texdata[tpos+2] = 255 - texdata[tpos+2];
+                        }
+                        tpos += 4;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void InvertCellColors()
 {
-    // invert cell colors in all layers
+    bool clone_inverted[MAX_LAYERS] = {false};
+
+    // swapcolors has changed so invert cell colors in all layers
     for (int i = 0; i < numlayers; i++) {
         Layer* layerptr = layer[i];
+        
         // do NOT use layerptr->algo->... here -- it might not be correct
         // for a non-current layer (but we can use layerptr->algtype)
-        for (int n = 0; n < algoinfo[layerptr->algtype]->maxstates; n++) {
+        int maxstate = algoinfo[layerptr->algtype]->maxstates - 1;
+        for (int n = 0; n <= maxstate; n++) {
             layerptr->cellr[n] = 255 - layerptr->cellr[n];
             layerptr->cellg[n] = 255 - layerptr->cellg[n];
             layerptr->cellb[n] = 255 - layerptr->cellb[n];
+        }
+        
+        // clones share icon texture data so we must be careful to only invert them once
+        if (layerptr->cloneid == 0 || !clone_inverted[layerptr->cloneid]) {
+            // invert colors in icon texture data
+            InvertIconColors(layerptr->textures7x7, 8, maxstate);
+            InvertIconColors(layerptr->textures15x15, 16, maxstate);
+            InvertIconColors(layerptr->textures31x31, 32, maxstate);
+            if (layerptr->cloneid > 0) clone_inverted[layerptr->cloneid] = true;
         }
     }
 }

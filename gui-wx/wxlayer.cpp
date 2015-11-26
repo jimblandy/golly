@@ -145,7 +145,6 @@ public:
     // detect press and release of button
     void OnButtonDown(wxMouseEvent& event);
     void OnButtonUp(wxMouseEvent& event);
-    void OnMouseMotion(wxMouseEvent& event);
     void OnKillFocus(wxFocusEvent& event);
     
 private:
@@ -452,14 +451,9 @@ void LayerBar::OnKillFocus(wxFocusEvent& event)
 
 // -----------------------------------------------------------------------------
 
-// global flag is not used at the moment (probably need later for dragging button)
-static bool buttdown = false;
-
 void LayerBar::OnButtonDown(wxMouseEvent& event)
 {
     // a layer bar button has been pressed
-    buttdown = true;
-    
     int id = event.GetId();
     
     // connect a handler that keeps focus with the pressed button
@@ -479,8 +473,6 @@ void LayerBar::OnButtonDown(wxMouseEvent& event)
 void LayerBar::OnButtonUp(wxMouseEvent& event)
 {
     // a layer bar button has been released
-    buttdown = false;
-    
     wxPoint pt;
     int wd, ht;
     int id = event.GetId();
@@ -513,17 +505,6 @@ void LayerBar::OnButtonUp(wxMouseEvent& event)
             bitmapbutt[id]->GetEventHandler()->ProcessEvent(buttevt);
         }
     }
-}
-
-// -----------------------------------------------------------------------------
-
-// not used at the moment (probably need later for button dragging)
-void LayerBar::OnMouseMotion(wxMouseEvent& event)
-{   
-    if (buttdown) {
-        //???
-    }
-    event.Skip();
 }
 
 // -----------------------------------------------------------------------------
@@ -570,10 +551,6 @@ void LayerBar::AddButton(int id, const wxString& tip)
                                     wxMouseEventHandler(LayerBar::OnButtonDown));
             togglebutt[id]->Connect(id, wxEVT_LEFT_UP,
                                     wxMouseEventHandler(LayerBar::OnButtonUp));
-            /* don't need this handler at the moment
-            togglebutt[id]->Connect(id, wxEVT_MOTION,
-            wxMouseEventHandler(LayerBar::OnMouseMotion));
-            */
 #endif
         }
         
@@ -600,10 +577,6 @@ void LayerBar::AddButton(int id, const wxString& tip)
                                     wxMouseEventHandler(LayerBar::OnButtonDown));
             bitmapbutt[id]->Connect(id, wxEVT_LEFT_UP,
                                     wxMouseEventHandler(LayerBar::OnButtonUp));
-            /* don't need this handler at the moment
-            bitmapbutt[id]->Connect(id, wxEVT_MOTION,
-            wxMouseEventHandler(LayerBar::OnMouseMotion));
-            */
 #endif
         }
     }
@@ -1630,7 +1603,6 @@ void MoveLayer(int fromindex, int toindex)
 
 // -----------------------------------------------------------------------------
 
-// remove this eventually if user can drag layer buttons???
 void MoveLayerDialog()
 {
     if (inscript || numlayers <= 1) return;
@@ -2639,17 +2611,57 @@ void UpdateLayerColors()
 
 // -----------------------------------------------------------------------------
 
+static void InvertIconColors(unsigned char** texturesptr, int size, int maxstate)
+{
+    if (texturesptr) {
+        for (int state = 0; state <= maxstate; state++) {
+            unsigned char* texdata = texturesptr[state];
+            if (texdata) {
+                int tpos = 0;
+                for (int row = 0; row < size; row++) {
+                    for (int col = 0; col < size; col++) {
+                        if (texdata[tpos+3] == 0) {
+                            // ignore transparent pixel
+                        } else {
+                            // invert pixel color
+                            texdata[tpos]   = 255 - texdata[tpos];
+                            texdata[tpos+1] = 255 - texdata[tpos+1];
+                            texdata[tpos+2] = 255 - texdata[tpos+2];
+                        }
+                        tpos += 4;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void InvertCellColors()
 {
-    // invert cell colors in all layers
+    bool clone_inverted[MAX_LAYERS] = {false};
+    
+    // swapcolors has changed so invert cell colors in all layers
     for (int i = 0; i < numlayers; i++) {
         Layer* layerptr = layer[i];
+        
         // do NOT use layerptr->algo->... here -- it might not be correct
         // for a non-current layer (but we can use layerptr->algtype)
-        for (int n = 0; n < algoinfo[layerptr->algtype]->maxstates; n++) {
+        int maxstate = algoinfo[layerptr->algtype]->maxstates - 1;
+        for (int n = 0; n <= maxstate; n++) {
             layerptr->cellr[n] = 255 - layerptr->cellr[n];
             layerptr->cellg[n] = 255 - layerptr->cellg[n];
             layerptr->cellb[n] = 255 - layerptr->cellb[n];
+        }
+        
+        // clones share icon texture data so we must be careful to only invert them once
+        if (layerptr->cloneid == 0 || !clone_inverted[layerptr->cloneid]) {
+            // invert colors in icon texture data
+            InvertIconColors(layerptr->textures7x7, 8, maxstate);
+            InvertIconColors(layerptr->textures15x15, 16, maxstate);
+            InvertIconColors(layerptr->textures31x31, 32, maxstate);
+            if (layerptr->cloneid > 0) clone_inverted[layerptr->cloneid] = true;
         }
     }
 }
