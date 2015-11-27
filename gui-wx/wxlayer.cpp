@@ -2605,8 +2605,35 @@ void UpdateLayerColors()
 {
     UpdateCurrentColors();
     
+    // above has created icon texture data so don't call UpdateIconColors here
+    
     // if current layer has clones then update their colors
     UpdateCloneColors();
+}
+
+// -----------------------------------------------------------------------------
+
+void UpdateIconColors()
+{
+    // delete current icon texture data
+    if (currlayer->textures7x7) {
+        for (int i = 0; i < 256; i++) if (currlayer->textures7x7[i]) free(currlayer->textures7x7[i]);
+        free(currlayer->textures7x7);
+    }
+    if (currlayer->textures15x15) {
+        for (int i = 0; i < 256; i++) if (currlayer->textures15x15[i]) free(currlayer->textures15x15[i]);
+        free(currlayer->textures15x15);
+    }
+    if (currlayer->textures31x31) {
+        for (int i = 0; i < 256; i++) if (currlayer->textures31x31[i]) free(currlayer->textures31x31[i]);
+        free(currlayer->textures31x31);
+    }
+    
+    // re-create icon texture data
+    int maxstate = currlayer->algo->NumCellStates() - 1;
+    currlayer->textures7x7 = CreateIconTextures(currlayer->icons7x7, maxstate);
+    currlayer->textures15x15 = CreateIconTextures(currlayer->icons15x15, maxstate);
+    currlayer->textures31x31 = CreateIconTextures(currlayer->icons31x31, maxstate);
 }
 
 // -----------------------------------------------------------------------------
@@ -3417,6 +3444,9 @@ void ColorDialog::OnButton(wxCommandEvent& event)
 
 bool ColorDialog::TransferDataFromWindow()
 {
+    // update icon texture data before calling UpdateCloneColors
+    UpdateIconColors();
+    
     // if current layer has clones then update their colors
     UpdateCloneColors();
     
@@ -3475,7 +3505,7 @@ void SetLayerColors()
     }
     
     bool wastoggled = swapcolors;
-    if (swapcolors) viewptr->ToggleCellColors();
+    if (swapcolors) viewptr->ToggleCellColors();    // swapcolors is now false
     
     // save current color info so we can restore it if user cancels changes
     SaveData* save_info = new SaveData();
@@ -3488,7 +3518,7 @@ void SetLayerColors()
     
     delete save_info;
     
-    if (wastoggled) viewptr->ToggleCellColors();
+    if (wastoggled) viewptr->ToggleCellColors();    // swapcolors is now true
     
     mainptr->UpdateEverything();
 }

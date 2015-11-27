@@ -248,11 +248,15 @@ void ToggleLayerBar();
 // Show/hide the layer bar.
 
 
-// move this color stuff into wxcolors.*???
+// Color handling routines:
 
 void CreateColorGradient();
 // Create a color gradient for the current layer using
 // currlayer->fromrgb and currlayer->torgb.
+
+void UpdateIconColors();
+// Update the icon texture data for the current layer.
+// Must be called BEFORE calling UpdateCloneColors.
 
 void UpdateCloneColors();
 // If current layer has clones then update their colors.

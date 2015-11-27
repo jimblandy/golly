@@ -2650,6 +2650,7 @@ XS(pl_setcolors)
         currlayer->fromrgb.Set(r1, g1, b1);
         currlayer->torgb.Set(r2, g2, b2);
         CreateColorGradient();
+        UpdateIconColors();
         UpdateCloneColors();
     } else if (len % 4 == 0) {
         int i = 0;
@@ -2678,6 +2679,7 @@ XS(pl_setcolors)
                 }
             }
         }
+        UpdateIconColors();
         UpdateCloneColors();
     } else {
         PERL_ERROR("g_setcolors error: array length is not a multiple of 4.");

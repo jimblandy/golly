@@ -879,6 +879,7 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
             currlayer->cellr[1] = newcol.Red();
             currlayer->cellg[1] = newcol.Green();
             currlayer->cellb[1] = newcol.Blue();
+            UpdateIconColors();
             UpdateCloneColors();
             DoAutoUpdate();
         }
@@ -890,6 +891,7 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
             currlayer->cellr[0] = newcol.Red();
             currlayer->cellg[0] = newcol.Green();
             currlayer->cellb[0] = newcol.Blue();
+            UpdateIconColors();
             UpdateCloneColors();
             DoAutoUpdate();
         }

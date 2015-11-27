@@ -2449,6 +2449,7 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
         currlayer->fromrgb.Set(r1, g1, b1);
         currlayer->torgb.Set(r2, g2, b2);
         CreateColorGradient();
+        UpdateIconColors();
         UpdateCloneColors();
     } else if (len % 4 == 0) {
         int i = 0;
@@ -2477,6 +2478,7 @@ static PyObject* py_setcolors(PyObject* self, PyObject* args)
                 }
             }
         }
+        UpdateIconColors();
         UpdateCloneColors();
     } else {
         PYTHON_ERROR("setcolors error: list length is not a multiple of 4.");
