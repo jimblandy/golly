@@ -323,66 +323,106 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
-static int prevsize = 0;
-
-void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
+static void CreateIconAtlas(int iconsize, int numicons)
 {
-    // called from golly_render::pixblit to draw icons for each live cell;
-    // assume pmscale > 2 (should be 8, 16 or 32 or 64)
-    int iconsize = pmscale;
-
-    // on high density screens the max scale is 1:64, but instead of
-    // supporting 63x63 icons we simply scale up the 31x31 icons
-    // (leaving a barely noticeable 1px gap at the right and bottom edges)
-    if (pmscale == 64) {
-        iconsize = 32;
-    }
-
+    // create a texture atlas containing all icons for later use in DrawIcons
+    
     // create icon textures once
-	if (texture8 == 0) glGenTextures(1, &texture8);
+	if (texture8 == 0)  glGenTextures(1, &texture8);
 	if (texture16 == 0) glGenTextures(1, &texture16);
 	if (texture32 == 0) glGenTextures(1, &texture32);
-
+    
     if (!glIsEnabled(GL_TEXTURE_2D)) {
         // restore texture color and enable textures
         SetColor(255, 255, 255, 255);
         glEnable(GL_TEXTURE_2D);
-        prevsize = 0;               // force rebinding
     }
     
-    if (iconsize != prevsize) {
-        prevsize = iconsize;
-        // bind appropriate icon texture
-        if (iconsize == 8) glBindTexture(GL_TEXTURE_2D, texture8);
-        if (iconsize == 16) glBindTexture(GL_TEXTURE_2D, texture16);
-        if (iconsize == 32) glBindTexture(GL_TEXTURE_2D, texture32);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-    }
+    if (iconsize == 8)  glBindTexture(GL_TEXTURE_2D, texture8);
+    if (iconsize == 16) glBindTexture(GL_TEXTURE_2D, texture16);
+    if (iconsize == 32) glBindTexture(GL_TEXTURE_2D, texture32);
+    
+    int atlaswd = iconsize * numicons;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlaswd, iconsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
-    int prevstate = 0;
+    // no need for 1 byte alignment when uploading texture data
+    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    // no need for these calls, probably because we have a gap between icons
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    // copy all icon pixmaps into the texture atlas
+    int xoffset = 0;
+    int yoffset = 0;
+    for (int state = 1; state <= numicons; state++) {
+        if (icontextures[state]) {
+            glTexSubImage2D(GL_TEXTURE_2D, 0, xoffset, yoffset, iconsize, iconsize,
+                            GL_RGBA, GL_UNSIGNED_BYTE, icontextures[state]);
+        }
+        xoffset += iconsize;
+    }
+    
+#if 0
+    // test above code by displaying the entire atlas
+    GLfloat wd = atlaswd;
+    GLfloat ht = iconsize;
+    glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+    int x = 0;
+    int y = 0;
+    GLfloat vertices[] = {
+        x,      y,
+        x + wd, y,
+        x,      y + ht,
+        x + wd, y + ht,
+    };
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+#endif
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
+{
+    // called from golly_render::pixblit to draw icons for each live cell;
+    // assume pmscale > 2 (should be 8, 16 or 32 -- if higher then the 31x31 icons
+    // will be scaled up)
+
+    // one icon = 2 triangles = 8 coordinates for GL_TRIANGLE_STRIP
+    GLfloat vertices[8];
+    GLfloat texcoords[8];
+    int numicons = currlayer->algo->NumCellStates() - 1;
+
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
             unsigned char state = statedata[row*stride + col];
             if (state > 0 && icontextures[state]) {
-                
-                if (state != prevstate) {
-                    prevstate = state;
-                    // update the texture with the new icon data (in RGBA format)
-                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, iconsize, iconsize, 0,
-                                 GL_RGBA, GL_UNSIGNED_BYTE, icontextures[state]);
-                }
-                
                 int xpos = x + col * pmscale;
                 int ypos = y + row * pmscale;
+
+                vertices[0] = xpos;
+                vertices[1] = ypos;
+                vertices[2] = xpos + pmscale;
+                vertices[3] = ypos;
+                vertices[4] = xpos;
+                vertices[5] = ypos + pmscale;
+                vertices[6] = xpos + pmscale;
+                vertices[7] = ypos + pmscale;
                 
-                GLfloat vertices[] = {
-                    xpos,           ypos,
-                    xpos + pmscale, ypos,
-                    xpos,           ypos + pmscale,
-                    xpos + pmscale, ypos + pmscale,
-                };
+                texcoords[0] = (state-1) * 1.0/numicons;
+                texcoords[1] = 0.0;
+                texcoords[2] = state * 1.0/numicons;
+                texcoords[3] = 0.0;
+                texcoords[4] = texcoords[0];
+                texcoords[5] = 1.0;
+                texcoords[6] = texcoords[2];
+                texcoords[7] = 1.0;
+
+                glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
                 glVertexPointer(2, GL_FLOAT, 0, vertices);
                 glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             }
@@ -397,7 +437,9 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
                  unsigned char liver, unsigned char liveg, unsigned char liveb,
                  bool multicolor)
 {
-    // draw a single icon (either multi-color or grayscale) outside the viewport
+    // draw a single icon (either multi-color or grayscale) outside the viewport,
+    // so we don't use OpenGL calls in here
+    
     int wd = icon->GetWidth();
     int ht = icon->GetHeight();
     wxBitmap pixmap(wd, ht, 32);
@@ -1171,28 +1213,28 @@ void DrawOneLayer()
     dead_alpha = 0;
     live_alpha = int(2.55 * opacity);
     
-    int texbytes = 0;
+    int iconsize = 0;
     int numstates = currlayer->algo->NumCellStates();
     
     if (showicons && currlayer->view->getmag() > 2) {
         // only show icons at scales 1:8 and above
         if (currlayer->view->getmag() == 3) {
             icontextures = currlayer->textures7x7;
-            texbytes = 8*8*4;
+            iconsize = 8;
         } else if (currlayer->view->getmag() == 4) {
             icontextures = currlayer->textures15x15;
-            texbytes = 16*16*4;
+            iconsize = 16;
         } else {
             icontextures = currlayer->textures31x31;
-            texbytes = 32*32*4;
+            iconsize = 32;
         }
         
-        // DANGER: we're making assumptions about what CreateIconTextures does
-        // (see wxlayer.cpp)
+        // DANGER: we're making assumptions about what CreateIconTextures does in wxlayer.cpp
         
         if (live_alpha < 255) {
             // this is ugly, but we need to replace the alpha 255 values in icontextures[1..numstates-1]
-            // with live_alpha so that DrawIcons displays translucent icons
+            // with live_alpha so that CreateIconAtlas creates translucent icons
+            int texbytes = iconsize*iconsize*4;
             for (int state = 1; state < numstates; state++) {
                 if (icontextures[state]) {
                     unsigned char* b = icontextures[state];
@@ -1204,6 +1246,9 @@ void DrawOneLayer()
                 }
             }
         }
+        
+        // use icontextures to create texture atlas for use in DrawIcons
+        CreateIconAtlas(iconsize, numstates-1);
     }
     
     if (scalefactor > 1) {
@@ -1234,6 +1279,7 @@ void DrawOneLayer()
 
     if (showicons && currlayer->view->getmag() > 2 && live_alpha < 255) {
         // restore alpha values that were changed above
+        int texbytes = iconsize*iconsize*4;
         for (int state = 1; state < numstates; state++) {
             if (icontextures[state]) {
                 unsigned char* b = icontextures[state];
@@ -1426,12 +1472,16 @@ void DrawView(int tileindex)
     
     if (showicons && currmag > 2) {
         // only show icons at scales 1:8 and above
+        int numicons = currlayer->algo->NumCellStates() - 1;
         if (currmag == 3) {
             icontextures = currlayer->textures7x7;
+            CreateIconAtlas(8, numicons);
         } else if (currmag == 4) {
             icontextures = currlayer->textures15x15;
+            CreateIconAtlas(16, numicons);
         } else {
             icontextures = currlayer->textures31x31;
+            CreateIconAtlas(32, numicons);
         }
     }
     

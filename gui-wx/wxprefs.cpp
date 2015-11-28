@@ -1773,6 +1773,8 @@ void GetPrefs()
     bool sawkeyaction = false;          // saw at least one key_action entry?
     
     MAX_MAG = 5;                        // maximum cell size = 32x32
+    // this might be better for high-res screens???!!!
+    // MAX_MAG = 6;                        // maximum cell size = 64x64
     
     InitPaths();                        // init datadir, tempdir and prefspath
     InitAlgorithms();                   // init algoinfo data
