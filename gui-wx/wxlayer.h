@@ -111,11 +111,12 @@ public:
     wxBitmap** icons15x15;        // icons for scale 1:16
     wxBitmap** icons31x31;        // icons for scale 1:32
 
-    // texture data for rendering icons
-    unsigned char** textures7x7;        // texture data for 7x7 icons
-    unsigned char** textures15x15;      // texture data for 15x15 icons
-    unsigned char** textures31x31;      // texture data for 31x31 icons
+    // texture atlases for rendering icons
+    unsigned char* atlas7x7;      // atlas for 7x7 icons
+    unsigned char* atlas15x15;    // atlas for 15x15 icons
+    unsigned char* atlas31x31;    // atlas for 31x31 icons
     
+    int numicons;                 // number of icons
     bool multicoloricons;         // are icons multi-colored? (grayscale if not)
     
     // used if the layer has a timeline (see wxtimeline.cpp)
@@ -255,7 +256,7 @@ void CreateColorGradient();
 // currlayer->fromrgb and currlayer->torgb.
 
 void UpdateIconColors();
-// Update the icon texture data for the current layer.
+// Update the icon texture atlases for the current layer.
 // Must be called BEFORE calling UpdateCloneColors.
 
 void UpdateCloneColors();
