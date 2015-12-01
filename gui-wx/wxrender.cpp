@@ -327,7 +327,7 @@ static void LoadIconAtlas(int iconsize, int numicons)
 {
     // load the texture atlas containing all icons for later use in DrawIcons
     
-    // create icon textures once
+    // create icon texture names once
 	if (texture8 == 0)  glGenTextures(1, &texture8);
 	if (texture16 == 0) glGenTextures(1, &texture16);
 	if (texture32 == 0) glGenTextures(1, &texture32);

@@ -31,22 +31,17 @@ class lifealgo;
 
 // Routines for rendering the pattern view:
 
-#ifdef WEB_GUI
 bool InitOGLES2();
-// Return true if we can create the shaders and program object
+// Return true if we can create the shaders and program objects
 // required by OpenGL ES 2.
-#endif
 
 void DrawPattern(int tileindex);
 // Draw the current pattern, grid lines, selection, etc.
 // The given tile index is only used when drawing tiled layers.
 
-void CreatePasteImage(lifealgo* pastealgo, gRect& bbox);
-// Create an image used to draw the given paste pattern.
+void InitPaste(lifealgo* pastealgo, gRect& bbox);
+// Initialize some globals used to draw the pattern stored in pastealgo.
 // The given bounding box is not necessarily the *minimal* bounding box because
 // the paste pattern might have blank borders (in fact it could be empty).
-
-void DestroyPasteImage();
-// Destroy the image created above (call when user ends paste).
 
 #endif

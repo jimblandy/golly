@@ -23,7 +23,7 @@
  / ***/
 
 #include <jni.h>        // for calling Java from C++ and vice versa
-#include <GLES/gl.h>    // for OpenGL ES 1.x calls
+#include <GLES2/gl2.h>  // for OpenGL ES 2 calls
 #include <unistd.h>     // for usleep
 #include <string>       // for std::string
 #include <list>         // for std::list
@@ -36,7 +36,7 @@
 #include "layer.h"      // for AddLayer, ResizeLayers, currlayer
 #include "control.h"    // for SetMinimumStepExponent
 #include "file.h"       // for NewPattern
-#include "render.h"     // for DrawPattern
+#include "render.h"     // for InitOGLES2, DrawPattern
 #include "view.h"       // for widescreen, fullscreen, TouchBegan, etc
 #include "status.h"     // for UpdateStatusLines, ClearMessage, etc
 #include "undo.h"       // for ClearUndoRedo
@@ -338,7 +338,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeCreate(JNIEnv* env, jobje
     if (baseapp != NULL) env->DeleteGlobalRef(baseapp);
     baseapp = env->NewGlobalRef(obj);
 
-    SetMessage("This is Golly 1.1 for Android.  Copyright 2015 The Golly Gang.");
+    SetMessage("This is Golly 1.2 for Android.  Copyright 2015 The Golly Gang.");
     if (highdensity) {
         MAX_MAG = 6;            // maximum cell size = 64x64
     } else {
@@ -808,7 +808,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle(JNIEnv* env)
     if (currlayer->originx == bigint::zero && currlayer->originy == bigint::zero) {
         currlayer->view->center();
     } else {
-        // put cell saved by ChangeOrigin (not yet implemented!!!) in middle
+        // put cell saved by ChangeOrigin (not yet implemented) in middle
         currlayer->view->setpositionmag(currlayer->originx, currlayer->originy, currlayer->view->getmag());
     }
     UpdatePattern();
@@ -1254,23 +1254,16 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeZoomOut(JNIE
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
 {
+    if (!InitOGLES2()) Warning("InitOGLES2 failed!");
+    
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
-    glDisable(GL_MULTISAMPLE);
     glDisable(GL_STENCIL_TEST);
-    glDisable(GL_FOG);
-
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-
     glEnable(GL_BLEND);
-    // this blending function seems similar to the one used in desktop Golly
-    // (ie. selected patterns look much the same)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(1.0, 1.0, 1.0, 1.0);
+    // no need???!!! glClear(GL_COLOR_BUFFER_BIT);
 }
 
 // -----------------------------------------------------------------------------
@@ -1278,11 +1271,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeResize(JNIEnv* env, jobject obj, jint w, jint h)
 {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrthof(0, w, h, 0, -1, 1);     // origin is top left and y increases down
     glViewport(0, 0, w, h);
-    glMatrixMode(GL_MODELVIEW);
 
     if (w != currlayer->view->getwidth() || h != currlayer->view->getheight()) {
         // update size of viewport
@@ -1749,6 +1738,20 @@ static int max_offset;
 static int lastx, lasty;
 static bool touch_moved;
 
+static GLuint pointProgram;         // program object for drawing points, lines, rects
+static GLint positionLoc;           // location of v_Position attribute
+static GLint pointSizeLoc;          // location of PointSize uniform
+static GLint lineColorLoc;          // location of LineColor uniform
+
+// the following 2 macros convert x,y positions in Golly's preferred coordinate
+// system (where 0,0 is top left corner of viewport and bottom right corner is
+// currwd,currht) into OpenGL ES 2's normalized coordinates (where 0.0,0.0 is in
+// middle of viewport, top right corner is 1.0,1.0 and bottom left corner is -1.0,-1.0)
+#define XCOORD(x)  (2.0 * (x) / float(statewd) - 1.0)
+#define YCOORD(y) -(2.0 * (y) / float(stateht) - 1.0)
+
+// -----------------------------------------------------------------------------
+
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchBegan(JNIEnv* env, jobject obj, jint x, jint y)
 {
@@ -1811,15 +1814,154 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchEnded
 
 // -----------------------------------------------------------------------------
 
+static GLuint LoadShader(GLenum type, const char* shader_source)
+{
+    // create a shader object, load the shader source, and compile the shader
+    
+    GLuint shader = glCreateShader(type);
+    if (shader == 0) return 0;
+    
+    glShaderSource(shader, 1, &shader_source, NULL);
+    
+    glCompileShader(shader);
+    
+    // check the compile status
+    GLint compiled;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+    if (!compiled) {
+        Warning("Error compiling shader!");
+        glDeleteShader(shader);
+        return 0;
+    }
+
+    return shader;
+}
+
+// -----------------------------------------------------------------------------
+
+static bool CreatePointProgram()
+{
+    // create the shaders and pointProgram object required by OpenGL ES 2
+    
+    // vertex shader used in pointProgram
+    GLbyte v1ShaderStr[] =
+        "attribute vec4 v_Position;   \n"
+        "uniform float PointSize;     \n"
+        "void main() {                \n"
+        "    gl_Position = v_Position;\n"
+        "    gl_PointSize = PointSize;\n"
+        "}                            \n";
+    
+    // fragment shader used in pointProgram
+    GLbyte f1ShaderStr[] =
+        "uniform lowp vec4 LineColor; \n"
+        "void main() {                \n"
+        "    gl_FragColor = LineColor;\n"
+        "}                            \n";
+    
+    GLuint vertex1Shader, fragment1Shader;
+    
+    // load the vertex/fragment shaders
+    vertex1Shader = LoadShader(GL_VERTEX_SHADER, (const char*) v1ShaderStr);
+    fragment1Shader = LoadShader(GL_FRAGMENT_SHADER, (const char*) f1ShaderStr);
+    
+    // create the program object
+    pointProgram = glCreateProgram();
+    if (pointProgram == 0) return false;
+
+    glAttachShader(pointProgram, vertex1Shader);
+    glAttachShader(pointProgram, fragment1Shader);
+    
+    // link the program object
+    glLinkProgram(pointProgram);
+    
+    // check the link status
+    GLint plinked;
+    glGetProgramiv(pointProgram, GL_LINK_STATUS, &plinked);
+    if (!plinked) {
+        Warning("Error linking pointProgram!");
+        glDeleteProgram(pointProgram);
+        return false;
+    }
+    
+    // get the attribute and uniform locations
+    glUseProgram(pointProgram);
+    positionLoc = glGetAttribLocation(pointProgram, "v_Position");
+    pointSizeLoc = glGetUniformLocation(pointProgram, "PointSize");
+    lineColorLoc = glGetUniformLocation(pointProgram, "LineColor");
+    if (positionLoc == -1 || pointSizeLoc == -1 || lineColorLoc == -1) {
+        Warning("Failed to get a location in pointProgram!");
+        glDeleteProgram(pointProgram);
+        return false;
+    }
+    
+    // create buffer for vertex data
+    GLuint vertexPosObject;
+    glGenBuffers(1, &vertexPosObject);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexPosObject);
+
+    // create buffer for index data
+    GLuint indexObject;
+    GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
+    glGenBuffers(1, &indexObject);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexObject);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    
+    // use the pointProgram
+    glUseProgram(pointProgram);
+    
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+
+static void SetColor(int r, int g, int b, int a)
+{
+    GLfloat color[4];
+    color[0] = r/255.0;
+    color[1] = g/255.0;
+    color[2] = b/255.0;
+    color[3] = a/255.0;
+    glUniform4fv(lineColorLoc, 1, color);
+}
+
+// -----------------------------------------------------------------------------
+
+static void SetPointSize(int ptsize)
+{
+    glUniform1f(pointSizeLoc, float(ptsize));
+}
+
+// -----------------------------------------------------------------------------
+
+static void FillRect(int x, int y, int wd, int ht)
+{
+    GLfloat rect[] = {
+        XCOORD(x),    YCOORD(y+ht),  // left, bottom
+        XCOORD(x+wd), YCOORD(y+ht),  // right, bottom
+        XCOORD(x+wd), YCOORD(y),     // right, top
+        XCOORD(x),    YCOORD(y),     // left, top
+    };
+    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), rect, GL_STATIC_DRAW);
+    glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(positionLoc);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+// -----------------------------------------------------------------------------
+
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env)
 {
+    if (!CreatePointProgram()) Warning("CreatePointProgram failed!");
+    
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    glDisable(GL_STENCIL_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glClearColor(1.0, 1.0, 1.0, 1.0);
 }
 
 // -----------------------------------------------------------------------------
@@ -1827,11 +1969,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeResize(JNIEnv* env, jobject obj, jint w, jint h)
 {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrthof(0, w, h, 0, -1, 1);     // origin is top left and y increases down
     glViewport(0, 0, w, h);
-    glMatrixMode(GL_MODELVIEW);
 
     statewd = w;
     stateht = h;
@@ -1852,21 +1990,27 @@ static void DrawGrid(int wd, int ht)
     int h, v;
 
     // set the stroke color to white
-    glColor4ub(255, 255, 255, 255);
+    SetColor(255, 255, 255, 255);
     glLineWidth(highdensity ? 2.0 : 1.0);
 
     v = 1;
     while (v <= ht) {
-        GLfloat points[] = {-0.5, v-0.5, wd-0.5, v-0.5};
-        glVertexPointer(2, GL_FLOAT, 0, points);
+        GLfloat points[] = { XCOORD(-0.5),   YCOORD(v-0.5),
+                             XCOORD(wd-0.5), YCOORD(v-0.5) };
+        glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(positionLoc);
         glDrawArrays(GL_LINES, 0, 2);
         v += cellsize;
     }
 
     h = 1;
     while (h <= wd) {
-        GLfloat points[] = {h-0.5, -0.5, h-0.5, ht-0.5};
-        glVertexPointer(2, GL_FLOAT, 0, points);
+        GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
+                             XCOORD(h-0.5), YCOORD(ht-0.5) };
+        glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(positionLoc);
         glDrawArrays(GL_LINES, 0, 2);
         h += cellsize;
     }
@@ -1876,19 +2020,12 @@ static void DrawGrid(int wd, int ht)
 
 static void DrawRect(int state, int x, int y, int wd, int ht)
 {
-    GLfloat rect[] = {
-        x,    y+ht,  // left, bottom
-        x+wd, y+ht,  // right, bottom
-        x+wd, y,     // right, top
-        x,    y,     // left, top
-    };
-
-    glColor4ub(currlayer->cellr[state],
-               currlayer->cellg[state],
-               currlayer->cellb[state], 255);
-
-    glVertexPointer(2, GL_FLOAT, 0, rect);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    SetColor(currlayer->cellr[state],
+             currlayer->cellg[state],
+             currlayer->cellb[state],
+             255);
+    
+    FillRect(x, y, wd, ht);
 }
 
 // -----------------------------------------------------------------------------
@@ -1906,7 +2043,7 @@ static void DrawIcon(int state, int x, int y)
     int numcoords = 0;
     bool multicolor = currlayer->multicoloricons;
 
-    glPointSize(highdensity ? 2 : 1);
+    SetPointSize(highdensity ? 2 : 1);
 
     unsigned char deadr = currlayer->cellr[0];
     unsigned char deadg = currlayer->cellg[0];
@@ -1914,7 +2051,7 @@ static void DrawIcon(int state, int x, int y)
     unsigned char prevr = deadr;
     unsigned char prevg = deadg;
     unsigned char prevb = deadb;
-    glColor4ub(deadr, deadg, deadb, 255);
+    SetColor(deadr, deadg, deadb, 255);
 
     // draw non-black pixels in this icon
     unsigned char liver = currlayer->cellr[state];
@@ -1955,7 +2092,9 @@ static void DrawIcon(int state, int x, int y)
                 bool changecolor = (r != prevr || g != prevg || b != prevb);
                 if (changecolor || numcoords == maxcoords) {
                     if (numcoords > 0) {
-                        glVertexPointer(2, GL_FLOAT, 0, points);
+                        glBufferData(GL_ARRAY_BUFFER, numcoords * sizeof(GLfloat), points, GL_STATIC_DRAW);
+                        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                        glEnableVertexAttribArray(positionLoc);
                         glDrawArrays(GL_POINTS, 0, numcoords/2);
                         numcoords = 0;
                     }
@@ -1963,22 +2102,24 @@ static void DrawIcon(int state, int x, int y)
                         prevr = r;
                         prevg = g;
                         prevb = b;
-                        glColor4ub(r, g, b, 255);
+                        SetColor(r, g, b, 255);
                     }
                 }
                 if (highdensity) {
-                    points[numcoords++] = x + j*2 + 0.5;
-                    points[numcoords++] = y + i*2 + 0.5;
+                    points[numcoords++] = XCOORD(x + j*2 + 0.5);
+                    points[numcoords++] = YCOORD(y + i*2 + 0.5);
                 } else {
-                    points[numcoords++] = x + j + 0.5;
-                    points[numcoords++] = y + i + 0.5;
+                    points[numcoords++] = XCOORD(x + j + 0.5);
+                    points[numcoords++] = YCOORD(y + i + 0.5);
                 }
             }
         }
     }
 
     if (numcoords > 0) {
-        glVertexPointer(2, GL_FLOAT, 0, points);
+        glBufferData(GL_ARRAY_BUFFER, numcoords * sizeof(GLfloat), points, GL_STATIC_DRAW);
+        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(positionLoc);
         glDrawArrays(GL_POINTS, 0, numcoords/2);
     }
 }
@@ -1993,7 +2134,7 @@ static void DrawDigit(int digit, int x, int y)
     GLfloat points[maxcoords];
     int numcoords = 0;
 
-    glPointSize(highdensity ? 2 : 1);
+    SetPointSize(highdensity ? 2 : 1);
 
     unsigned char deadr = currlayer->cellr[0];
     unsigned char deadg = currlayer->cellg[0];
@@ -2001,7 +2142,7 @@ static void DrawDigit(int digit, int x, int y)
     unsigned char prevr = deadr;
     unsigned char prevg = deadg;
     unsigned char prevb = deadb;
-    glColor4ub(deadr, deadg, deadb, 255);
+    SetColor(deadr, deadg, deadb, 255);
 
     // draw non-black pixels in this icon
     int byte = 0;
@@ -2016,7 +2157,9 @@ static void DrawDigit(int digit, int x, int y)
                 bool changecolor = (r != prevr || g != prevg || b != prevb);
                 if (changecolor || numcoords == maxcoords) {
                     if (numcoords > 0) {
-                        glVertexPointer(2, GL_FLOAT, 0, points);
+                        glBufferData(GL_ARRAY_BUFFER, numcoords * sizeof(GLfloat), points, GL_STATIC_DRAW);
+                        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                        glEnableVertexAttribArray(positionLoc);
                         glDrawArrays(GL_POINTS, 0, numcoords/2);
                         numcoords = 0;
                     }
@@ -2024,22 +2167,24 @@ static void DrawDigit(int digit, int x, int y)
                         prevr = r;
                         prevg = g;
                         prevb = b;
-                        glColor4ub(r, g, b, 255);
+                        SetColor(r, g, b, 255);
                     }
                 }
                 if (highdensity) {
-                    points[numcoords++] = x + j*2 + 0.5;
-                    points[numcoords++] = y + i*2 + 0.5;
+                    points[numcoords++] = XCOORD(x + j*2 + 0.5);
+                    points[numcoords++] = YCOORD(y + i*2 + 0.5);
                 } else {
-                    points[numcoords++] = x + j + 0.5;
-                    points[numcoords++] = y + i + 0.5;
+                    points[numcoords++] = XCOORD(x + j + 0.5);
+                    points[numcoords++] = YCOORD(y + i + 0.5);
                 }
             }
         }
     }
 
     if (numcoords > 0) {
-        glVertexPointer(2, GL_FLOAT, 0, points);
+        glBufferData(GL_ARRAY_BUFFER, numcoords * sizeof(GLfloat), points, GL_STATIC_DRAW);
+        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(positionLoc);
         glDrawArrays(GL_POINTS, 0, numcoords/2);
     }
 }
@@ -2296,8 +2441,7 @@ JNIEXPORT jstring JNICALL Java_net_sf_golly_InfoActivity_nativeGetInfo(JNIEnv* e
 std::string GetRuleName(const std::string& rule)
 {
     std::string result = "";
-    // not yet implemented!!!
-    // maybe we should create rule.h and rule.cpp in gui-common???
+    // not implemented
     return result;
 }
 
@@ -2515,7 +2659,7 @@ void AndroidFixURLPath(std::string& path)
     // replace "%..." with suitable chars for a file path (eg. %20 is changed to space)
     // LOGI("AndroidFixURLPath: %s", path.c_str());
 
-    // no need to do anything???!!!
+    // no need to do anything
 }
 
 // -----------------------------------------------------------------------------

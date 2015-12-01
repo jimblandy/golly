@@ -32,14 +32,14 @@
 #include "render.h"     // for stacklayers, tilelayers
 #include "layer.h"      // for currlayer, numlayers, etc
 #include "control.h"    // for generating
-#include "render.h"     // for DrawPattern
+#include "render.h"     // for InitOGLES2, DrawPattern
 #include "view.h"       // for TouchBegan, TouchMoved, TouchEnded, etc
 
 #import <QuartzCore/QuartzCore.h>
 #import <OpenGLES/EAGLDrawable.h>
 #import <OpenGLES/EAGL.h>
-#import <OpenGLES/ES1/gl.h>
-#import <OpenGLES/ES1/glext.h>
+#import <OpenGLES/ES2/gl.h>
+#import <OpenGLES/ES2/glext.h>
 
 #import "PatternViewController.h"   // for PauseGenerating, ResumeGenerating, StopIfGenerating
 #import "PatternView.h"
@@ -76,8 +76,8 @@ static GLuint viewFramebuffer = 0;
 		CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
 		eaglLayer.opaque = YES;
         
-        // note that we're using OpenGL ES version 1
-		context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
+        // note that we're using OpenGL ES 2.0
+		context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 		if (!context || ![EAGLContext setCurrentContext:context]) {
 			self = nil;
 			return self;
@@ -86,19 +86,13 @@ static GLuint viewFramebuffer = 0;
 		// set the view's scale factor
 		self.contentScaleFactor = 1.0;
         
+        if (!InitOGLES2()) Warning("InitOGLES2 failed!");
+        
         // we only do 2D drawing
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_DITHER);
-        glDisable(GL_MULTISAMPLE);
         glDisable(GL_STENCIL_TEST);
-        glDisable(GL_FOG);
-        
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        
         glEnable(GL_BLEND);
-        // this blending function seems similar to the one used in desktop Golly
-        // (ie. selected patterns look much the same)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         // add gesture recognizers to this view:
@@ -159,19 +153,19 @@ static GLuint viewFramebuffer = 0;
 - (void)createFramebuffer
 {
 	// generate IDs for a framebuffer object and a color renderbuffer
-	glGenFramebuffersOES(1, &viewFramebuffer);
-	glGenRenderbuffersOES(1, &viewRenderbuffer);
+	glGenFramebuffers(1, &viewFramebuffer);
+	glGenRenderbuffers(1, &viewRenderbuffer);
 	
-	glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
-	glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, viewFramebuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
     
 	// associate the storage for the current render buffer with our CAEAGLLayer
 	// so we can draw into a buffer that will later be rendered to screen
-	[context renderbufferStorage:GL_RENDERBUFFER_OES fromDrawable:(id<EAGLDrawable>)self.layer];
-	glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_RENDERBUFFER_OES, viewRenderbuffer);
+	[context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(id<EAGLDrawable>)self.layer];
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, viewRenderbuffer);
     
-	if (glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES) != GL_FRAMEBUFFER_COMPLETE_OES) {
-		NSLog(@"Error creating framebuffer object: %x", glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES));
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		NSLog(@"Error creating framebuffer object: %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		Fatal("Failed to create frame buffer!");
 	}
 }
@@ -181,9 +175,9 @@ static GLuint viewFramebuffer = 0;
 - (void)destroyFramebuffer
 {
     // clean up any buffers we have allocated
-	glDeleteFramebuffersOES(1, &viewFramebuffer);
+	glDeleteFramebuffers(1, &viewFramebuffer);
 	viewFramebuffer = 0;
-	glDeleteRenderbuffersOES(1, &viewRenderbuffer);
+	glDeleteRenderbuffers(1, &viewRenderbuffer);
 	viewRenderbuffer = 0;
 }
 
@@ -198,14 +192,8 @@ static GLuint viewFramebuffer = 0;
 
     [EAGLContext setCurrentContext:context];
     
-    // note that glLoadIdentity must be called after glMatrixMode but before glOrthof,
-    // otherwise the display is blank
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
     CGRect frame = self.bounds;
-    glOrthof(0, frame.size.width, frame.size.height, 0, -1, 1);     // origin is top left and y increases down
     glViewport(0, 0, frame.size.width, frame.size.height);
-    glMatrixMode(GL_MODELVIEW);
     
     if (viewFramebuffer != 0 || viewRenderbuffer != 0) {
         [self destroyFramebuffer];
@@ -246,8 +234,8 @@ static GLuint viewFramebuffer = 0;
     DrawPattern(tileindex);
     
     // display the buffer
-    glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
-    [context presentRenderbuffer:GL_RENDERBUFFER_OES];
+    glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
+    [context presentRenderbuffer:GL_RENDERBUFFER];
 }
 
 // -----------------------------------------------------------------------------

@@ -27,6 +27,7 @@ package net.sf.golly;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.opengl.GLES20;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.PixelFormat;
@@ -52,8 +53,14 @@ public class StateGLSurfaceView extends GLSurfaceView {
 
     public StateGLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        super.setEGLConfigChooser(8, 8, 8, 8, 0/*no depth*/, 0);
-        getHolder().setFormat(PixelFormat.RGBA_8888);   // avoid crash on some devices
+
+        // create an OpenGL ES 2.0 context
+        setEGLContextClientVersion(2);
+
+        // no longer needed???!!!
+        // super.setEGLConfigChooser(8, 8, 8, 8, 0/*no depth*/, 0);
+        // getHolder().setFormat(PixelFormat.RGBA_8888);	// avoid crash on some devices
+
         setRenderer(new StateRenderer());
         setRenderMode(RENDERMODE_WHEN_DIRTY);
     }
@@ -141,19 +148,19 @@ class StateRenderer implements GLSurfaceView.Renderer {
 
     // -----------------------------------------------------------------------------
 
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    public void onSurfaceCreated(GL10 unused, EGLConfig config) {
         nativeInit();
     }
 
     // -----------------------------------------------------------------------------
 
-    public void onSurfaceChanged(GL10 gl, int w, int h) {
+    public void onSurfaceChanged(GL10 unused, int w, int h) {
         nativeResize(w, h);
     }
 
     // -----------------------------------------------------------------------------
 
-    public void onDrawFrame(GL10 gl) {
+    public void onDrawFrame(GL10 unused) {
         nativeRender();
     }
 

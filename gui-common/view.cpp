@@ -31,7 +31,7 @@
 #include "utils.h"          // for Warning, Fatal, YesNo, Beep, etc
 #include "prefs.h"          // for showgridlines, etc
 #include "status.h"         // for DisplayMessage, etc
-#include "render.h"         // for CreatePasteImage, DestroyPasteImage
+#include "render.h"         // for InitPaste
 #include "undo.h"           // for currlayer->undoredo->...
 #include "select.h"         // for Selection
 #include "algos.h"          // for algo_type, *_ALGO, CreateNewUniverse, etc
@@ -1094,7 +1094,7 @@ void PasteClipboard()
             int wd = iright - ileft + 1;
             int ht = ibottom - itop + 1;
             SetRect(pastebox, ileft, itop, wd, ht);
-            CreatePasteImage(pastealgo, pastebox);
+            InitPaste(pastealgo, pastebox);
         }
     }
 
@@ -1383,7 +1383,6 @@ void AbortPaste()
         delete pastealgo;
         pastealgo = NULL;
     }
-    DestroyPasteImage();
 }
 
 // -----------------------------------------------------------------------------
@@ -1410,8 +1409,7 @@ bool FlipPastePattern(bool topbottom)
     inscript = false;
 
     if (result) {
-        DestroyPasteImage();
-        CreatePasteImage(pastealgo, pastebox);
+        InitPaste(pastealgo, pastebox);
     }
 
     return result;
@@ -1445,8 +1443,7 @@ bool RotatePastePattern(bool clockwise)
         int x, y, wd, ht;
         pastesel.GetRect(&x, &y, &wd, &ht);
         SetRect(pastebox, x, y, wd, ht);
-        DestroyPasteImage();
-        CreatePasteImage(pastealgo, pastebox);
+        InitPaste(pastealgo, pastebox);
     }
 
     return result;
