@@ -9,8 +9,8 @@ model {
             applicationId = "net.sf.golly"
             minSdkVersion.apiLevel = 11
             targetSdkVersion.apiLevel = 17
-            versionCode = 2
-            versionName = "1.1"
+            versionCode = 3
+            versionName = "1.2"
         }
     }
 
@@ -29,7 +29,7 @@ model {
         cppFlags += "-fexceptions"
         cppFlags += "-DANDROID_GUI"
         cppFlags += "-DZLIB"
-        ldLibs   += ["log", "z", "GLESv1_CM", "jnigraphics"]
+        ldLibs   += ["log", "z", "GLESv2", "jnigraphics"]
     }
 
     android.sources {
