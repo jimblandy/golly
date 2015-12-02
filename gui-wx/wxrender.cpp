@@ -96,15 +96,14 @@ hlifealgo::draw() in hlifedraw.cpp.
 // -----------------------------------------------------------------------------
 
 // globals used in golly_render routines
+
 int currwd, currht;                     // current width and height of viewport, in pixels
 int scalefactor;                        // current scale factor (1, 2, 4, 8 or 16)
 unsigned char dead_alpha = 255;         // alpha value for dead pixels
 unsigned char live_alpha = 255;         // alpha value for live pixels
-static unsigned char* iconatlas;        // pointer to texture atlas for current set of icons
-static GLuint texture8 = 0;             // texture for drawing 7x7 icons
-static GLuint texture16 = 0;            // texture for drawing 15x15 icons
-static GLuint texture32 = 0;            // texture for drawing 31x31 icons
-static GLuint rgbatexture = 0;          // texture for drawing RGBA bitmaps
+static unsigned char* iconatlas = NULL; // pointer to texture atlas for current set of icons
+static GLuint icontexture = 0;          // texture name for drawing icons
+static GLuint rgbatexture = 0;          // texture name for drawing RGBA bitmaps
 
 // fixed texture coordinates used by glTexCoordPointer
 static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
@@ -168,6 +167,17 @@ static void FillRect(int x, int y, int wd, int ht)
     };
     glVertexPointer(2, GL_FLOAT, 0, rect);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+// -----------------------------------------------------------------------------
+
+static void EnableTextures()
+{
+    if (!glIsEnabled(GL_TEXTURE_2D)) {
+        // restore texture color and enable textures
+        SetColor(255, 255, 255, 255);
+        glEnable(GL_TEXTURE_2D);
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -291,22 +301,16 @@ void DestroyDrawingData()
 
 void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 {
-	if (rgbatexture == 0) {
-        // only need to create texture name once
-        glGenTextures(1, &rgbatexture);
-    }
+    // only need to create texture name once
+	if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
 
-    if (!glIsEnabled(GL_TEXTURE_2D)) {
-        // restore texture color and enable textures
-        SetColor(255, 255, 255, 255);
-        glEnable(GL_TEXTURE_2D);
-        // bind our texture
-        glBindTexture(GL_TEXTURE_2D, rgbatexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-    }
+    EnableTextures();
+    glBindTexture(GL_TEXTURE_2D, rgbatexture);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
     
     // update the texture with the new RGBA data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
@@ -327,20 +331,11 @@ static void LoadIconAtlas(int iconsize, int numicons)
 {
     // load the texture atlas containing all icons for later use in DrawIcons
     
-    // create icon texture names once
-	if (texture8 == 0)  glGenTextures(1, &texture8);
-	if (texture16 == 0) glGenTextures(1, &texture16);
-	if (texture32 == 0) glGenTextures(1, &texture32);
+    // create icon texture name once
+	if (icontexture == 0) glGenTextures(1, &icontexture);
     
-    if (!glIsEnabled(GL_TEXTURE_2D)) {
-        // restore texture color and enable textures
-        SetColor(255, 255, 255, 255);
-        glEnable(GL_TEXTURE_2D);
-    }
-    
-    if (iconsize == 8)  glBindTexture(GL_TEXTURE_2D, texture8);
-    if (iconsize == 16) glBindTexture(GL_TEXTURE_2D, texture16);
-    if (iconsize == 32) glBindTexture(GL_TEXTURE_2D, texture32);
+    EnableTextures();
+    glBindTexture(GL_TEXTURE_2D, icontexture);
 
     // no need for 1 byte alignment when uploading texture data
     // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -375,16 +370,23 @@ static void LoadIconAtlas(int iconsize, int numicons)
 
 // -----------------------------------------------------------------------------
 
-void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
+void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numicons)
 {
     // called from golly_render::pixblit to draw icons for each live cell;
     // assume pmscale > 2 (should be 8, 16 or 32 -- if higher then the 31x31 icons
     // will be scaled up)
 
-    // one icon = 2 triangles = 8 coordinates for GL_TRIANGLE_STRIP
+    // one icon = 2 triangles = 4 vertices = 8 coordinates for GL_TRIANGLE_STRIP:
+    //
+    //   0,1 *---* 2,3
+    //       | / |
+    //   4,5 *---* 6,7
+    //
     GLfloat vertices[8];
     GLfloat texcoords[8];
-    int numicons = currlayer->algo->NumCellStates() - 1;
+
+    EnableTextures();
+    glBindTexture(GL_TEXTURE_2D, icontexture);
 
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
@@ -658,7 +660,7 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
         
     } else if (showicons && pmscale > 4 && iconatlas) {
         // draw icons at scales 1:8 and above
-        DrawIcons(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
+        DrawIcons(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons);
         
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
@@ -1217,7 +1219,6 @@ void DrawOneLayer()
     live_alpha = int(2.55 * opacity);
     
     int iconsize = 0;
-    int numicons = currlayer->algo->NumCellStates() - 1;
     
     if (showicons && currlayer->view->getmag() > 2) {
         // only show icons at scales 1:8 and above
@@ -1237,11 +1238,11 @@ void DrawOneLayer()
         if (live_alpha < 255) {
             // this is ugly, but we need to replace the alpha 255 values in iconatlas
             // with live_alpha so that LoadIconAtlas will load translucent icons
-            ReplaceAlpha(iconsize, numicons, 255, live_alpha);
+            ReplaceAlpha(iconsize, currlayer->numicons, 255, live_alpha);
         }
         
         // load iconatlas for use by DrawIcons
-        LoadIconAtlas(iconsize, numicons);
+        LoadIconAtlas(iconsize, currlayer->numicons);
     }
     
     if (scalefactor > 1) {
@@ -1272,7 +1273,7 @@ void DrawOneLayer()
 
     if (showicons && currlayer->view->getmag() > 2 && live_alpha < 255) {
         // restore alpha values that were changed above
-        ReplaceAlpha(iconsize, numicons, live_alpha, 255);
+        ReplaceAlpha(iconsize, currlayer->numicons, live_alpha, 255);
     }
 }
 
@@ -1455,16 +1456,15 @@ void DrawView(int tileindex)
     
     if (showicons && currmag > 2) {
         // only show icons at scales 1:8 and above
-        int numicons = currlayer->algo->NumCellStates() - 1;
         if (currmag == 3) {
             iconatlas = currlayer->atlas7x7;
-            LoadIconAtlas(8, numicons);
+            LoadIconAtlas(8, currlayer->numicons);
         } else if (currmag == 4) {
             iconatlas = currlayer->atlas15x15;
-            LoadIconAtlas(16, numicons);
+            LoadIconAtlas(16, currlayer->numicons);
         } else {
             iconatlas = currlayer->atlas31x31;
-            LoadIconAtlas(32, numicons);
+            LoadIconAtlas(32, currlayer->numicons);
         }
     }
     
