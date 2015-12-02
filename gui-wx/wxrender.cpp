@@ -29,10 +29,7 @@ It's represented by a window of class PatternView defined in wxview.h.
 The global viewptr points to a PatternView window which is created in
 MainFrame::MainFrame() in wxmain.cpp.
 
-Nearly all drawing in the viewport is done in this module.  The only other
-place is in wxview.cpp where PatternView::DrawOneCell() is used to draw
-cells with the pencil cursor.  This is done for performance reasons --
-using Refresh + Update to do the drawing is too slow.
+All drawing in the viewport is done in this module (using OpenGL).
 
 The main rendering routine is DrawView() -- see the end of this module.
 DrawView() is called from PatternView::OnPaint(), the update event handler
@@ -101,9 +98,19 @@ int currwd, currht;                     // current width and height of viewport,
 int scalefactor;                        // current scale factor (1, 2, 4, 8 or 16)
 unsigned char dead_alpha = 255;         // alpha value for dead pixels
 unsigned char live_alpha = 255;         // alpha value for live pixels
-static unsigned char* iconatlas = NULL; // pointer to texture atlas for current set of icons
-static GLuint icontexture = 0;          // texture name for drawing icons
-static GLuint rgbatexture = 0;          // texture name for drawing RGBA bitmaps
+GLuint rgbatexture = 0;                 // texture name for drawing RGBA bitmaps
+GLuint icontexture = 0;                 // texture name for drawing icons
+GLuint celltexture = 0;                 // texture name for drawing magnified cells
+unsigned char* iconatlas = NULL;        // pointer to texture atlas for current set of icons
+unsigned char* cellatlas = NULL;        // pointer to texture atlas for current set of magnified cells
+
+// cellatlas needs to be rebuilt if any of these parameters change
+int prevnum = 0;                        // previous number of live states
+int prevsize = 0;                       // previous cell size
+unsigned char prevalpha;                // previous alpha component
+unsigned char prevr[256];               // previous red component of each state
+unsigned char prevg[256];               // previous green component of each state
+unsigned char prevb[256];               // previous blue component of each state
 
 // fixed texture coordinates used by glTexCoordPointer
 static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
@@ -114,8 +121,6 @@ wxRect pastebbox;                       // bounding box in cell coords (not nece
 unsigned char* modedata[4] = {NULL};    // RGBA data for drawing current paste mode (And, Copy, Or, Xor)
 const int modewd = 32;                  // width of each modedata
 const int modeht = 16;                  // height of each modedata
-GLfloat rightedge;                      // right edge of viewport
-GLfloat bottomedge;                     // bottomedge edge of viewport
 
 // for drawing translucent controls
 unsigned char* ctrlsbitmap = NULL;      // RGBA data for controls bitmap
@@ -146,13 +151,6 @@ control_id currcontrol = NO_CONTROL;
 static void SetColor(int r, int g, int b, int a)
 {
     glColor4ub(r, g, b, a);
-}
-
-// -----------------------------------------------------------------------------
-
-static void SetPointSize(int ptsize)
-{
-    glPointSize(ptsize);
 }
 
 // -----------------------------------------------------------------------------
@@ -290,6 +288,7 @@ void CreateTranslucentControls()
 
 void DestroyDrawingData()
 {
+    if (cellatlas) free(cellatlas);
     if (ctrlsbitmap) free(ctrlsbitmap);
     if (darkbutt) free(darkbutt);
     for (int i = 0; i < 4; i++) {
@@ -336,13 +335,6 @@ static void LoadIconAtlas(int iconsize, int numicons)
     
     EnableTextures();
     glBindTexture(GL_TEXTURE_2D, icontexture);
-
-    // no need for 1 byte alignment when uploading texture data
-    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-    // no need for these calls, probably because we have a gap between icons
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -502,110 +494,147 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
 
 // -----------------------------------------------------------------------------
 
-void DrawMagnifiedTwoStateCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
+static bool ChangeCellAtlas(int cellsize, int numcells, unsigned char alpha)
 {
-    // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
-    // when number of states is 2
-    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
-    GLfloat halfcell = cellsize / 2.0;
-
-    const int maxcoords = 1024;     // must be multiple of 2
-    GLfloat points[maxcoords];
-    int numcoords = 0;
-
-    DisableTextures();
-    SetPointSize(cellsize);
-
-    // all live cells are in state 1 so only need to set color once
-    SetColor(currlayer->cellr[1],
-             currlayer->cellg[1],
-             currlayer->cellb[1], live_alpha);
+    if (numcells != prevnum) return true;
+    if (cellsize != prevsize) return true;
+    if (alpha != prevalpha) return true;
     
-    for (int row = 0; row < h; row++) {
-        for (int col = 0; col < w; col++) {
-            unsigned char state = statedata[row*stride + col];
-            if (state > 0) {
-                if (numcoords == maxcoords) {
-                    glVertexPointer(2, GL_FLOAT, 0, points);
-                    glDrawArrays(GL_POINTS, 0, numcoords/2);
-                    numcoords = 0;
-                }
-                // get mid point of cell
-                GLfloat midx = x + col*pmscale + halfcell;
-                GLfloat midy = y + row*pmscale + halfcell;
-                if (midx > rightedge || midy > bottomedge) {
-                    // midx,midy is outside viewport so we need to use FillRect to see partially
-                    // visible cell at right/bottom edge
-                    FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
-                } else {
-                    points[numcoords++] = midx;
-                    points[numcoords++] = midy;
-                }
-            }
-        }
+    for (int state = 1; state <= numcells; state++) {
+        if (currlayer->cellr[state] != prevr[state]) return true;
+        if (currlayer->cellg[state] != prevg[state]) return true;
+        if (currlayer->cellb[state] != prevb[state]) return true;
     }
-
-    if (numcoords > 0) {
-        glVertexPointer(2, GL_FLOAT, 0, points);
-        glDrawArrays(GL_POINTS, 0, numcoords/2);
-    }
+    
+    return false;   // no need to change cellatlas
 }
 
 // -----------------------------------------------------------------------------
 
-void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates)
+static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
+{
+    // cellatlas might need to be (re)created
+    if (ChangeCellAtlas(cellsize, numcells, alpha)) {
+        prevnum = numcells;
+        prevsize = cellsize;
+        prevalpha = alpha;
+        for (int state = 1; state <= numcells; state++) {
+            prevr[state] = currlayer->cellr[state];
+            prevg[state] = currlayer->cellg[state];
+            prevb[state] = currlayer->cellb[state];
+        }
+        
+        if (cellatlas) free(cellatlas);
+        
+        // allocate enough memory for texture atlas to store RGBA pixels for a row of cells
+        // (note that we use calloc so all alpha bytes are initially 0)
+        int rowbytes = numcells * cellsize * 4;
+        cellatlas = (unsigned char*) calloc(rowbytes * cellsize, 1);
+        
+        if (cellatlas) {
+            // set pixels in top row
+            int tpos = 0;
+            for (int state = 1; state <= numcells; state++) {
+                unsigned char r = currlayer->cellr[state];
+                unsigned char g = currlayer->cellg[state];
+                unsigned char b = currlayer->cellb[state];
+                
+                // if the cell size is > 2 then there is a 1 pixel gap at right and bottom edge of each cell
+                int cellwd = cellsize > 2 ? cellsize-1 : 2;
+                for (int i = 0; i < cellwd; i++) {
+                    cellatlas[tpos++] = r;
+                    cellatlas[tpos++] = g;
+                    cellatlas[tpos++] = b;
+                    cellatlas[tpos++] = alpha;
+                }
+                if (cellsize > 2) tpos += 4;    // skip transparent pixel at right edge of cell
+            }
+            // copy top row to remaining rows
+            int remrows = cellsize > 2 ? cellsize - 2 : 1;
+            for (int i = 1; i <= remrows; i++) {
+                memcpy(&cellatlas[i * rowbytes], cellatlas, rowbytes);
+            }
+        }
+    }
+    
+    // create cell texture name once
+	if (celltexture == 0) glGenTextures(1, &celltexture);
+    
+    EnableTextures();
+    glBindTexture(GL_TEXTURE_2D, celltexture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    // load the texture atlas containing all magnified cells for later use in DrawMagnifiedCells
+    int atlaswd = cellsize * numcells;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlaswd, cellsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, cellatlas);
+    
+#if 0
+    // test above code by displaying the entire atlas
+    GLfloat wd = atlaswd;
+    GLfloat ht = cellsize;
+    glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+    int x = 0;
+    int y = 0;
+    GLfloat vertices[] = {
+        x,      y,
+        x + wd, y,
+        x,      y + ht,
+        x + wd, y + ht,
+    };
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+#endif
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
 {
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
-    // when numstates is > 2
-    int cellsize = pmscale > 2 ? pmscale - 1 : pmscale;
-    GLfloat halfcell = cellsize / 2.0;
 
-    const int maxcoords = 256;      // must be multiple of 2
-    GLfloat points[256][maxcoords];
-    int numcoords[256] = {0};
+    // one cell = 2 triangles = 4 vertices = 8 coordinates for GL_TRIANGLE_STRIP:
+    //
+    //   0,1 *---* 2,3
+    //       | / |
+    //   4,5 *---* 6,7
+    //
+    GLfloat vertices[8];
+    GLfloat texcoords[8];
 
-    DisableTextures();
-    SetPointSize(cellsize);
+    EnableTextures();
+    glBindTexture(GL_TEXTURE_2D, celltexture);
 
-    // following code minimizes color changes due to state changes
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
             unsigned char state = statedata[row*stride + col];
             if (state > 0) {
-                if (numcoords[state] == maxcoords) {
-                    // this shouldn't happen too often
-                    SetColor(currlayer->cellr[state],
-                             currlayer->cellg[state],
-                             currlayer->cellb[state], live_alpha);
-                    glVertexPointer(2, GL_FLOAT, 0, points[state]);
-                    glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
-                    numcoords[state] = 0;
-                }
-                // get mid point of cell
-                GLfloat midx = x + col*pmscale + halfcell;
-                GLfloat midy = y + row*pmscale + halfcell;
-                if (midx > rightedge || midy > bottomedge) {
-                    // midx,midy is outside viewport so we need to use FillRect to see partially
-                    // visible cell at right/bottom edge
-                    SetColor(currlayer->cellr[state],
-                             currlayer->cellg[state],
-                             currlayer->cellb[state], live_alpha);
-                    FillRect(x + col*pmscale, y + row*pmscale, cellsize, cellsize);
-                } else {
-                    points[state][numcoords[state]++] = midx;
-                    points[state][numcoords[state]++] = midy;
-                }
-            }
-        }
-    }
+                int xpos = x + col * pmscale;
+                int ypos = y + row * pmscale;
 
-    for (int state = 1; state < numstates; state++) {
-        if (numcoords[state] > 0) {
-            SetColor(currlayer->cellr[state],
-                     currlayer->cellg[state],
-                     currlayer->cellb[state], live_alpha);
-            glVertexPointer(2, GL_FLOAT, 0, points[state]);
-            glDrawArrays(GL_POINTS, 0, numcoords[state]/2);
+                vertices[0] = xpos;
+                vertices[1] = ypos;
+                vertices[2] = xpos + pmscale;
+                vertices[3] = ypos;
+                vertices[4] = xpos;
+                vertices[5] = ypos + pmscale;
+                vertices[6] = xpos + pmscale;
+                vertices[7] = ypos + pmscale;
+                
+                texcoords[0] = (state-1) * 1.0/numcells;
+                texcoords[1] = 0.0;
+                texcoords[2] = state * 1.0/numcells;
+                texcoords[3] = 0.0;
+                texcoords[4] = texcoords[0];
+                texcoords[5] = 1.0;
+                texcoords[6] = texcoords[2];
+                texcoords[7] = 1.0;
+
+                glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+                glVertexPointer(2, GL_FLOAT, 0, vertices);
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            }
         }
     }
 }
@@ -665,12 +694,7 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
-        int numstates = currlayer->algo->NumCellStates();
-        if (numstates == 2) {
-            DrawMagnifiedTwoStateCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
-        } else {
-            DrawMagnifiedCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, numstates);
-        }
+        DrawMagnifiedCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons);
     }
 }
 
@@ -868,11 +892,6 @@ void DrawPasteImage()
 
     currwd = tempview.getwidth();
     currht = tempview.getheight();
-
-    // adjust viewport edges used in DrawMagnifiedCells and DrawMagnifiedTwoStateCells
-    // (ie. only when scale is 1:2 or above)
-    rightedge = float(currwd - r.x);
-    bottomedge = float(currht - r.y);
     
     glTranslatef(r.x, r.y, 0);
     
@@ -1219,13 +1238,14 @@ void DrawOneLayer()
     live_alpha = int(2.55 * opacity);
     
     int iconsize = 0;
+    int currmag = currlayer->view->getmag();
     
-    if (showicons && currlayer->view->getmag() > 2) {
+    if (showicons && currmag > 2) {
         // only show icons at scales 1:8 and above
-        if (currlayer->view->getmag() == 3) {
+        if (currmag == 3) {
             iconatlas = currlayer->atlas7x7;
             iconsize = 8;
-        } else if (currlayer->view->getmag() == 4) {
+        } else if (currmag == 4) {
             iconatlas = currlayer->atlas15x15;
             iconsize = 16;
         } else {
@@ -1243,11 +1263,12 @@ void DrawOneLayer()
         
         // load iconatlas for use by DrawIcons
         LoadIconAtlas(iconsize, currlayer->numicons);
+    } else if (currmag > 0) {
+        LoadCellAtlas(1 << currmag, currlayer->numicons, live_alpha);
     }
     
     if (scalefactor > 1) {
         // temporarily change viewport scale to 1:1 and increase its size by scalefactor
-        int currmag = currlayer->view->getmag();
         currlayer->view->setmag(0);
         currwd = currwd * scalefactor;
         currht = currht * scalefactor;
@@ -1271,8 +1292,8 @@ void DrawOneLayer()
         currlayer->algo->draw(*currlayer->view, renderer);
     }
 
-    if (showicons && currlayer->view->getmag() > 2 && live_alpha < 255) {
-        // restore alpha values that were changed above
+    if (showicons && currmag > 2 && live_alpha < 255) {
+        // restore alpha values in iconatlas
         ReplaceAlpha(iconsize, currlayer->numicons, live_alpha, 255);
     }
 }
@@ -1466,15 +1487,12 @@ void DrawView(int tileindex)
             iconatlas = currlayer->atlas31x31;
             LoadIconAtlas(32, currlayer->numicons);
         }
+    } else if (currmag > 0) {
+        LoadCellAtlas(1 << currmag, currlayer->numicons, 255);
     }
     
     currwd = currlayer->view->getwidth();
     currht = currlayer->view->getheight();
-    
-    // these edges are only used in DrawMagnifiedCells and DrawMagnifiedTwoStateCells
-    // (ie. only when scale is 1:2 or above)
-    rightedge = float(currwd);
-    bottomedge = float(currht);
     
     // all pixels are initially opaque
     dead_alpha = 255;
