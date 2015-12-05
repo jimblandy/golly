@@ -29,7 +29,7 @@ It's represented by a window of class PatternView defined in wxview.h.
 The global viewptr points to a PatternView window which is created in
 MainFrame::MainFrame() in wxmain.cpp.
 
-All drawing in the viewport is done in this module (using OpenGL).
+All drawing in the viewport is done in this module using OpenGL 1.
 
 The main rendering routine is DrawView() -- see the end of this module.
 DrawView() is called from PatternView::OnPaint(), the update event handler
@@ -92,7 +92,7 @@ hlifealgo::draw() in hlifedraw.cpp.
 
 // -----------------------------------------------------------------------------
 
-// globals used in golly_render routines
+// local data used in golly_render routines
 
 int currwd, currht;                     // current width and height of viewport, in pixels
 int scalefactor;                        // current scale factor (1, 2, 4, 8 or 16)

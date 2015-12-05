@@ -116,7 +116,7 @@ public:
     unsigned char* atlas15x15;    // atlas for 15x15 icons
     unsigned char* atlas31x31;    // atlas for 31x31 icons
     
-    int numicons;                 // number of icons
+    int numicons;                 // number of icons (= number of live states)
     bool multicoloricons;         // are icons multi-colored? (grayscale if not)
     
     // used if the layer has a timeline (see wxtimeline.cpp)
@@ -130,6 +130,9 @@ extern int numlayers;       // number of existing layers
 extern int numclones;       // number of cloned layers
 extern int currindex;       // index of current layer (0..numlayers-1)
 extern Layer* currlayer;    // pointer to current layer
+
+Layer* GetLayer(int index);
+// Return a pointer to the layer specified by the given index.
 
 void AddLayer();
 // Add a new layer (with an empty universe) and make it the current layer.
@@ -212,9 +215,6 @@ void SwitchToClickedTile(int index);
 
 void ResizeLayers(int wd, int ht);
 // Resize the viewport in all layers.
-
-Layer* GetLayer(int index);
-// Return a pointer to the layer specified by the given index.
 
 bool RestoreRule(const wxString& rule);
 // Try to set the current layer's rule to a previously known rule.

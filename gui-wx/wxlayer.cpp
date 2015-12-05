@@ -1219,6 +1219,7 @@ static unsigned char* CreateIconAtlas(wxBitmap** srcicons, int iconsize)
                                 }
                                 atlasptr[tpos+3] = 255;     // alpha channel is opaque
                             }
+                            // move to next pixel
                             tpos += 4;
                             iconpxl++;
                         }
@@ -1296,7 +1297,7 @@ void AddLayer()
             currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, currlayer->numicons);
             currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, currlayer->numicons);
             currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, currlayer->numicons);
-            // create icon texture atlas
+            // create icon texture atlases
             currlayer->atlas7x7 = CreateIconAtlas(oldlayer->icons7x7, 8);
             currlayer->atlas15x15 = CreateIconAtlas(oldlayer->icons15x15, 16);
             currlayer->atlas31x31 = CreateIconAtlas(oldlayer->icons31x31, 32);

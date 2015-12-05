@@ -118,11 +118,12 @@ public:
     gBitmapPtr* icons15x15;       // icons for scale 1:16
     gBitmapPtr* icons31x31;       // icons for scale 1:32
 
-    // texture data for rendering icons
-    unsigned char** textures7x7;        // texture data for 7x7 icons
-    unsigned char** textures15x15;      // texture data for 15x15 icons
-    unsigned char** textures31x31;      // texture data for 31x31 icons
-
+    // texture atlases for rendering icons
+    unsigned char* atlas7x7;      // atlas for 7x7 icons
+    unsigned char* atlas15x15;    // atlas for 15x15 icons
+    unsigned char* atlas31x31;    // atlas for 31x31 icons
+    
+    int numicons;                 // number of icons (= number of live states)
     bool multicoloricons;         // are icons multi-colored? (grayscale if not)
 
     // used if the layer has a timeline
@@ -229,11 +230,16 @@ bool RestoreRule(const char* rule);
 // The latter can happen if the given rule's table/tree file was
 // deleted or was edited and some sort of error introduced.
 
-//??? move following color stuff into colors.*
+
+// Color handling routines:
 
 void CreateColorGradient();
 // Create a color gradient for the current layer using
 // currlayer->fromrgb and currlayer->torgb.
+
+void UpdateIconColors();
+// Update the icon texture atlases for the current layer.
+// Must be called BEFORE calling UpdateCloneColors.
 
 void UpdateCloneColors();
 // If current layer has clones then update their colors.

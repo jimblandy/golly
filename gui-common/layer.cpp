@@ -448,9 +448,10 @@ static gBitmapPtr* CopyIcons(gBitmapPtr* srcicons, int maxstate)
 
 // -----------------------------------------------------------------------------
 
-static unsigned char** CreateIconTextures(gBitmapPtr* srcicons, int maxstate)
+static unsigned char* CreateIconAtlas(gBitmapPtr* srcicons, int iconsize)
 {
     bool multicolor = currlayer->multicoloricons;
+    
     unsigned char deadr = currlayer->cellr[0];
     unsigned char deadg = currlayer->cellg[0];
     unsigned char deadb = currlayer->cellb[0];
@@ -460,21 +461,19 @@ static unsigned char** CreateIconTextures(gBitmapPtr* srcicons, int maxstate)
         deadb = 255 - deadb;
     }
 
-    unsigned char** texturesptr = (unsigned char**) malloc(256 * sizeof(unsigned char*));
-    if (texturesptr) {
-        for (int state = 0; state < 256; state++) texturesptr[state] = NULL;
-        for (int state = 0; state <= maxstate; state++) {
+    // allocate enough memory for texture atlas to store RGBA pixels for a row of icons
+    // (note that we use calloc so all alpha bytes are initially 0)
+    int rowbytes = currlayer->numicons * iconsize * 4;
+    unsigned char* atlasptr = (unsigned char*) calloc(rowbytes * iconsize, 1);
+    
+    if (atlasptr) {
+        for (int state = 1; state <= currlayer->numicons; state++) {
             if (srcicons && srcicons[state]) {
-                int wd = srcicons[state]->wd;
-                int ht = srcicons[state]->ht;
+                int wd = srcicons[state]->wd;       // should be iconsize - 1
+                int ht = srcicons[state]->ht;       // ditto
+                
                 unsigned char* icondata = srcicons[state]->pxldata;
-                
-                // allocate enough memory to store texture data for this icon;
-                // wd = ht = 7, 15 or 31, but Open GL ES 1 requires texture sizes to be powers of 2
-                int texbytes = (wd+1) * (ht+1) * 4;
-                texturesptr[state] = (unsigned char*) calloc(texbytes, 1);
-                
-                if (texturesptr[state] && icondata) {
+                if (icondata) {
                     unsigned char liver = currlayer->cellr[state];
                     unsigned char liveg = currlayer->cellg[state];
                     unsigned char liveb = currlayer->cellb[state];
@@ -484,10 +483,11 @@ static unsigned char** CreateIconTextures(gBitmapPtr* srcicons, int maxstate)
                         liveb = 255 - liveb;
                     }
                     
-                    unsigned char* texdata = texturesptr[state];
-                    int tpos = 0;
+                    // start at top left byte of icon
+                    int tpos = (state-1) * iconsize * 4;
                     int ipos = 0;
                     for (int row = 0; row < ht; row++) {
+                        int rowstart = tpos;
                         for (int col = 0; col < wd; col++) {
                             unsigned char r = icondata[ipos];
                             unsigned char g = icondata[ipos+1];
@@ -497,59 +497,44 @@ static unsigned char** CreateIconTextures(gBitmapPtr* srcicons, int maxstate)
                                 if (multicolor) {
                                     // use non-black pixel in multi-colored icon
                                     if (swapcolors) {
-                                        texdata[tpos]   = 255 - r;
-                                        texdata[tpos+1] = 255 - g;
-                                        texdata[tpos+2] = 255 - b;
+                                        atlasptr[tpos]   = 255 - r;
+                                        atlasptr[tpos+1] = 255 - g;
+                                        atlasptr[tpos+2] = 255 - b;
                                     } else {
-                                        texdata[tpos]   = r;
-                                        texdata[tpos+1] = g;
-                                        texdata[tpos+2] = b;
+                                        atlasptr[tpos]   = r;
+                                        atlasptr[tpos+1] = g;
+                                        atlasptr[tpos+2] = b;
                                     }
                                 } else {
                                     // grayscale icon (r = g = b)
                                     if (r == 255) {
                                         // replace white pixel with live cell color
-                                        texdata[tpos]   = liver;
-                                        texdata[tpos+1] = liveg;
-                                        texdata[tpos+2] = liveb;
+                                        atlasptr[tpos]   = liver;
+                                        atlasptr[tpos+1] = liveg;
+                                        atlasptr[tpos+2] = liveb;
                                     } else {
                                         // replace gray pixel with appropriate shade between
                                         // live and dead cell colors
                                         float frac = (float)r / 255.0;
-                                        texdata[tpos]   = (int)(deadr + frac * (liver - deadr) + 0.5);
-                                        texdata[tpos+1] = (int)(deadg + frac * (liveg - deadg) + 0.5);
-                                        texdata[tpos+2] = (int)(deadb + frac * (liveb - deadb) + 0.5);
+                                        atlasptr[tpos]   = (int)(deadr + frac * (liver - deadr) + 0.5);
+                                        atlasptr[tpos+1] = (int)(deadg + frac * (liveg - deadg) + 0.5);
+                                        atlasptr[tpos+2] = (int)(deadb + frac * (liveb - deadb) + 0.5);
                                     }
                                 }
-                                texdata[tpos+3] = 255;      // alpha channel is opaque
-                            } else {
-                                // replace black pixel with transparent pixel
-                                texdata[tpos]   = deadr;
-                                texdata[tpos+1] = deadg;
-                                texdata[tpos+2] = deadb;
-                                texdata[tpos+3] = 0;        // alpha channel is transparent
+                                atlasptr[tpos+3] = 255;     // alpha channel is opaque
                             }
+                            // move to next pixel
                             tpos += 4;
                             ipos += 4;
                         }
-                        // add transparent pixel at right edge of texture
-                        texdata[tpos++] = deadr;
-                        texdata[tpos++] = deadg;
-                        texdata[tpos++] = deadb;
-                        texdata[tpos++] = 0;
-                    }
-                    // add row of transparent pixels at bottom of texture
-                    for (int col = 0; col < wd+1; col++) {
-                        texdata[tpos++] = deadr;
-                        texdata[tpos++] = deadg;
-                        texdata[tpos++] = deadb;
-                        texdata[tpos++] = 0;
+                        // move to next row
+                        tpos = rowstart + rowbytes;
                     }
                 }
             }
         }
     }
-    return texturesptr;
+    return atlasptr;
 }
 
 // -----------------------------------------------------------------------------
@@ -588,7 +573,8 @@ void AddLayer()
         // copy old layer's colors to new layer
         currlayer->fromrgb = oldlayer->fromrgb;
         currlayer->torgb = oldlayer->torgb;
-        for (int n = 0; n < currlayer->algo->NumCellStates(); n++) {
+        currlayer->numicons = oldlayer->algo->NumCellStates() - 1;
+        for (int n = 0; n <= currlayer->numicons; n++) {
             currlayer->cellr[n] = oldlayer->cellr[n];
             currlayer->cellg[n] = oldlayer->cellg[n];
             currlayer->cellb[n] = oldlayer->cellb[n];
@@ -598,20 +584,20 @@ void AddLayer()
             currlayer->icons7x7 = oldlayer->icons7x7;
             currlayer->icons15x15 = oldlayer->icons15x15;
             currlayer->icons31x31 = oldlayer->icons31x31;
-            // use same texture data
-            currlayer->textures7x7 = oldlayer->textures7x7;
-            currlayer->textures15x15 = oldlayer->textures15x15;
-            currlayer->textures31x31 = oldlayer->textures31x31;
+            // use same atlas
+            currlayer->atlas7x7 = oldlayer->atlas7x7;
+            currlayer->atlas15x15 = oldlayer->atlas15x15;
+            currlayer->atlas31x31 = oldlayer->atlas31x31;
         } else {
             // duplicate icons from old layer
             int maxstate = currlayer->algo->NumCellStates() - 1;
             currlayer->icons7x7 = CopyIcons(oldlayer->icons7x7, maxstate);
             currlayer->icons15x15 = CopyIcons(oldlayer->icons15x15, maxstate);
             currlayer->icons31x31 = CopyIcons(oldlayer->icons31x31, maxstate);
-            // create icon texture data
-            currlayer->textures7x7 = CreateIconTextures(oldlayer->icons7x7, maxstate);
-            currlayer->textures15x15 = CreateIconTextures(oldlayer->icons15x15, maxstate);
-            currlayer->textures31x31 = CreateIconTextures(oldlayer->icons31x31, maxstate);
+            // create icon texture atlases
+            currlayer->atlas7x7 = CreateIconAtlas(oldlayer->icons7x7, 8);
+            currlayer->atlas15x15 = CreateIconAtlas(oldlayer->icons15x15, 16);
+            currlayer->atlas31x31 = CreateIconAtlas(oldlayer->icons31x31, 32);
         }
     } else {
         // set new layer's colors+icons to default colors+icons for current algo+rule
@@ -1048,6 +1034,8 @@ void ToggleTileLayers()
     }
 }
 
+!!!*/
+
 // -----------------------------------------------------------------------------
 
 void UpdateCloneColors()
@@ -1064,20 +1052,20 @@ void UpdateCloneColors()
                     cloneptr->cellg[n] = currlayer->cellg[n];
                     cloneptr->cellb[n] = currlayer->cellb[n];
                 }
+                
                 // use same icon pointers
                 cloneptr->icons7x7 = currlayer->icons7x7;
                 cloneptr->icons15x15 = currlayer->icons15x15;
                 cloneptr->icons31x31 = currlayer->icons31x31;
-                // use same pixel data
-                cloneptr->textures7x7 = currlayer->textures7x7;
-                cloneptr->textures15x15 = currlayer->textures15x15;
-                cloneptr->textures31x31 = currlayer->textures31x31;
+                
+                // use same atlas
+                cloneptr->atlas7x7 = currlayer->atlas7x7;
+                cloneptr->atlas15x15 = currlayer->atlas15x15;
+                cloneptr->atlas31x31 = currlayer->atlas31x31;
             }
         }
     }
 }
-
-!!!*/
 
 // -----------------------------------------------------------------------------
 
@@ -1476,21 +1464,18 @@ static void DeleteIcons(Layer* layer)
         layer->icons31x31 = NULL;
     }
 
-    // also delete icon pixel data
-    if (layer->textures7x7) {
-        for (int i = 0; i < 256; i++) if (layer->textures7x7[i]) free(layer->textures7x7[i]);
-        free(layer->textures7x7);
-        layer->textures7x7 = NULL;
+    // also delete icon texture atlases
+    if (layer->atlas7x7) {
+        free(layer->atlas7x7);
+        layer->atlas7x7 = NULL;
     }
-    if (layer->textures15x15) {
-        for (int i = 0; i < 256; i++) if (layer->textures15x15[i]) free(layer->textures15x15[i]);
-        free(layer->textures15x15);
-        layer->textures15x15 = NULL;
+    if (layer->atlas15x15) {
+        free(layer->atlas15x15);
+        layer->atlas15x15 = NULL;
     }
-    if (layer->textures31x31) {
-        for (int i = 0; i < 256; i++) if (layer->textures31x31[i]) free(layer->textures31x31[i]);
-        free(layer->textures31x31);
-        layer->textures31x31 = NULL;
+    if (layer->atlas31x31) {
+        free(layer->atlas31x31);
+        layer->atlas31x31 = NULL;
     }
 }
 
@@ -1629,10 +1614,11 @@ void UpdateCurrentColors()
         }
     }
 
-    // create icon texture data (used for rendering)
-    currlayer->textures7x7 = CreateIconTextures(currlayer->icons7x7, maxstate);
-    currlayer->textures15x15 = CreateIconTextures(currlayer->icons15x15, maxstate);
-    currlayer->textures31x31 = CreateIconTextures(currlayer->icons31x31, maxstate);
+    // create icon texture atlases (used for rendering)
+    currlayer->numicons = maxstate;
+    currlayer->atlas7x7 = CreateIconAtlas(currlayer->icons7x7, 8);
+    currlayer->atlas15x15 = CreateIconAtlas(currlayer->icons15x15, 16);
+    currlayer->atlas31x31 = CreateIconAtlas(currlayer->icons31x31, 32);
 
     if (swapcolors) {
         // invert cell colors in current layer
@@ -1649,34 +1635,51 @@ void UpdateCurrentColors()
 void UpdateLayerColors()
 {
     UpdateCurrentColors();
+    
+    // above has created icon texture data so don't call UpdateIconColors here
 
     // if current layer has clones then update their colors
-    //!!! UpdateCloneColors();
+    UpdateCloneColors();
 }
 
 // -----------------------------------------------------------------------------
 
-static void InvertIconColors(unsigned char** texturesptr, int size, int maxstate)
+void UpdateIconColors()
 {
-    if (texturesptr) {
-        for (int state = 0; state <= maxstate; state++) {
-            unsigned char* texdata = texturesptr[state];
-            if (texdata) {
-                int tpos = 0;
-                for (int row = 0; row < size; row++) {
-                    for (int col = 0; col < size; col++) {
-                        if (texdata[tpos+3] == 0) {
-                            // ignore transparent pixel
-                        } else {
-                            // invert pixel color
-                            texdata[tpos]   = 255 - texdata[tpos];
-                            texdata[tpos+1] = 255 - texdata[tpos+1];
-                            texdata[tpos+2] = 255 - texdata[tpos+2];
-                        }
-                        tpos += 4;
-                    }
-                }
+    // delete current icon texture atlases
+    if (currlayer->atlas7x7) {
+        free(currlayer->atlas7x7);
+    }
+    if (currlayer->atlas15x15) {
+        free(currlayer->atlas15x15);
+    }
+    if (currlayer->atlas31x31) {
+        free(currlayer->atlas31x31);
+    }
+    
+    // re-create icon texture atlases
+    currlayer->atlas7x7 = CreateIconAtlas(currlayer->icons7x7, 8);
+    currlayer->atlas15x15 = CreateIconAtlas(currlayer->icons15x15, 16);
+    currlayer->atlas31x31 = CreateIconAtlas(currlayer->icons31x31, 32);
+}
+
+// -----------------------------------------------------------------------------
+
+static void InvertIconColors(unsigned char* atlasptr, int iconsize, int numicons)
+{
+    if (atlasptr) {
+        int numbytes = numicons * iconsize * iconsize * 4;
+        int i = 0;
+        while (i < numbytes) {
+            if (atlasptr[i+3] == 0) {
+                // ignore transparent pixel
+            } else {
+                // invert pixel color
+                atlasptr[i]   = 255 - atlasptr[i];
+                atlasptr[i+1] = 255 - atlasptr[i+1];
+                atlasptr[i+2] = 255 - atlasptr[i+2];
             }
+            i += 4;
         }
     }
 }
@@ -1702,10 +1705,11 @@ void InvertCellColors()
         
         // clones share icon texture data so we must be careful to only invert them once
         if (layerptr->cloneid == 0 || !clone_inverted[layerptr->cloneid]) {
-            // invert colors in icon texture data
-            InvertIconColors(layerptr->textures7x7, 8, maxstate);
-            InvertIconColors(layerptr->textures15x15, 16, maxstate);
-            InvertIconColors(layerptr->textures31x31, 32, maxstate);
+            // invert colors in icon texture atlases
+            // (do NOT use maxstate here -- might be > layerptr->numicons)
+            InvertIconColors(layerptr->atlas7x7, 8, layerptr->numicons);
+            InvertIconColors(layerptr->atlas15x15, 16, layerptr->numicons);
+            InvertIconColors(layerptr->atlas31x31, 32, layerptr->numicons);
             if (layerptr->cloneid > 0) clone_inverted[layerptr->cloneid] = true;
         }
     }
@@ -1764,9 +1768,9 @@ Layer::Layer()
     icons15x15 = NULL;          // no 15x15 icons
     icons31x31 = NULL;          // no 31x31 icons
 
-    textures7x7 = NULL;         // no texture data for 7x7 icons
-    textures15x15 = NULL;       // no texture data for 15x15 icons
-    textures31x31 = NULL;       // no texture data for 31x31 icons
+    atlas7x7 = NULL;            // no texture atlas for 7x7 icons
+    atlas15x15 = NULL;          // no texture atlas for 15x15 icons
+    atlas31x31 = NULL;          // no texture atlas for 31x31 icons
 
     currframe = 0;              // first frame in timeline
     autoplay = 0;               // not playing

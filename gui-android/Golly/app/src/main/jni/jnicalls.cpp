@@ -1738,10 +1738,15 @@ static int max_offset;
 static int lastx, lasty;
 static bool touch_moved;
 
-static GLuint pointProgram;         // program object for drawing points, lines, rects
+static GLuint pointProgram;         // program object for drawing lines and rects
 static GLint positionLoc;           // location of v_Position attribute
-static GLint pointSizeLoc;          // location of PointSize uniform
 static GLint lineColorLoc;          // location of LineColor uniform
+
+static GLuint textureProgram;       // program object for drawing 2D textures
+static GLint texPosLoc;             // location of a_Position attribute
+static GLint texCoordLoc;           // location of a_texCoord attribute
+static GLint samplerLoc;            // location of s_texture uniform
+static GLuint rgbatexture = 0;      // texture name for drawing RGBA bitmaps
 
 // the following 2 macros convert x,y positions in Golly's preferred coordinate
 // system (where 0,0 is top left corner of viewport and bottom right corner is
@@ -1839,17 +1844,15 @@ static GLuint LoadShader(GLenum type, const char* shader_source)
 
 // -----------------------------------------------------------------------------
 
-static bool CreatePointProgram()
+static bool CreateProgramObjects()
 {
-    // create the shaders and pointProgram object required by OpenGL ES 2
+    // create the shaders and program objects required by OpenGL ES 2
     
     // vertex shader used in pointProgram
     GLbyte v1ShaderStr[] =
         "attribute vec4 v_Position;   \n"
-        "uniform float PointSize;     \n"
         "void main() {                \n"
         "    gl_Position = v_Position;\n"
-        "    gl_PointSize = PointSize;\n"
         "}                            \n";
     
     // fragment shader used in pointProgram
@@ -1859,21 +1862,51 @@ static bool CreatePointProgram()
         "    gl_FragColor = LineColor;\n"
         "}                            \n";
     
+    // vertex shader used in textureProgram
+    GLbyte v2ShaderStr[] =
+        "attribute vec4 a_Position;   \n"
+        "attribute vec2 a_texCoord;   \n"
+        "varying vec2 v_texCoord;     \n"
+        "void main() {                \n"
+        "    gl_Position = a_Position;\n"
+        "    v_texCoord = a_texCoord; \n"
+        "}                            \n";
+   
+    // fragment shader used in textureProgram
+    GLbyte f2ShaderStr[] =
+        "precision mediump float;                            \n"
+        "varying vec2 v_texCoord;                            \n"
+        "uniform sampler2D s_texture;                        \n"
+        "void main()                                         \n"
+        "{                                                   \n"
+        "    gl_FragColor = texture2D(s_texture, v_texCoord);\n"
+        "}                                                   \n";
+    
     GLuint vertex1Shader, fragment1Shader;
+    GLuint vertex2Shader, fragment2Shader;
     
     // load the vertex/fragment shaders
     vertex1Shader = LoadShader(GL_VERTEX_SHADER, (const char*) v1ShaderStr);
+    vertex2Shader = LoadShader(GL_VERTEX_SHADER, (const char*) v2ShaderStr);
     fragment1Shader = LoadShader(GL_FRAGMENT_SHADER, (const char*) f1ShaderStr);
+    fragment2Shader = LoadShader(GL_FRAGMENT_SHADER, (const char*) f2ShaderStr);
     
     // create the program object
     pointProgram = glCreateProgram();
     if (pointProgram == 0) return false;
 
+    textureProgram = glCreateProgram();
+    if (textureProgram == 0) return false;
+
     glAttachShader(pointProgram, vertex1Shader);
     glAttachShader(pointProgram, fragment1Shader);
+
+    glAttachShader(textureProgram, vertex2Shader);
+    glAttachShader(textureProgram, fragment2Shader);
     
-    // link the program object
+    // link the program objects
     glLinkProgram(pointProgram);
+    glLinkProgram(textureProgram);
     
     // check the link status
     GLint plinked;
@@ -1884,30 +1917,48 @@ static bool CreatePointProgram()
         return false;
     }
     
+    GLint tlinked;
+    glGetProgramiv(textureProgram, GL_LINK_STATUS, &tlinked);
+    if (!tlinked) {
+        Warning("Error linking textureProgram!");
+        glDeleteProgram(textureProgram);
+        return false;
+    }
+    
     // get the attribute and uniform locations
     glUseProgram(pointProgram);
     positionLoc = glGetAttribLocation(pointProgram, "v_Position");
-    pointSizeLoc = glGetUniformLocation(pointProgram, "PointSize");
     lineColorLoc = glGetUniformLocation(pointProgram, "LineColor");
-    if (positionLoc == -1 || pointSizeLoc == -1 || lineColorLoc == -1) {
+    if (positionLoc == -1 || lineColorLoc == -1) {
         Warning("Failed to get a location in pointProgram!");
         glDeleteProgram(pointProgram);
         return false;
     }
     
-    // create buffer for vertex data
-    GLuint vertexPosObject;
-    glGenBuffers(1, &vertexPosObject);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexPosObject);
-
-    // create buffer for index data
-    GLuint indexObject;
+    glUseProgram(textureProgram);
+    texPosLoc = glGetAttribLocation(textureProgram, "a_Position");
+    texCoordLoc = glGetAttribLocation(textureProgram, "a_texCoord");
+    samplerLoc = glGetUniformLocation (textureProgram, "s_texture");
+    if (texPosLoc == -1 || texCoordLoc == -1 || samplerLoc == -1) {
+        Warning("Failed to get a location in textureProgram!");
+        glDeleteProgram(textureProgram);
+        return false;
+    }
+    
+    // create buffer for index data (used for drawing textures)
+    // where each cell = 2 triangles with 2 shared vertices (0 and 2)
+    //
+    //    0 *---* 3
+    //      | \ |
+    //    1 *---* 2
+    //
     GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
-    glGenBuffers(1, &indexObject);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexObject);
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     
-    // use the pointProgram
+    // use the pointProgram initially???!!!
     glUseProgram(pointProgram);
     
     return true;
@@ -1923,13 +1974,6 @@ static void SetColor(int r, int g, int b, int a)
     color[2] = b/255.0;
     color[3] = a/255.0;
     glUniform4fv(lineColorLoc, 1, color);
-}
-
-// -----------------------------------------------------------------------------
-
-static void SetPointSize(int ptsize)
-{
-    glUniform1f(pointSizeLoc, float(ptsize));
 }
 
 // -----------------------------------------------------------------------------
@@ -1953,7 +1997,7 @@ static void FillRect(int x, int y, int wd, int ht)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env)
 {
-    if (!CreatePointProgram()) Warning("CreatePointProgram failed!");
+    if (!CreateProgramObjects()) Warning("CreateProgramObjects failed!");
     
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
@@ -1988,6 +2032,8 @@ static void DrawGrid(int wd, int ht)
 {
     int cellsize = highdensity ? 64 : 32;
     int h, v;
+    
+    glUseProgram(pointProgram);
 
     // set the stroke color to white
     SetColor(255, 255, 255, 255);
@@ -2020,6 +2066,8 @@ static void DrawGrid(int wd, int ht)
 
 static void DrawRect(int state, int x, int y, int wd, int ht)
 {
+    glUseProgram(pointProgram);
+    
     SetColor(currlayer->cellr[state],
              currlayer->cellg[state],
              currlayer->cellb[state],
@@ -2030,98 +2078,127 @@ static void DrawRect(int state, int x, int y, int wd, int ht)
 
 // -----------------------------------------------------------------------------
 
+static void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
+{
+    // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale
+
+    // only need to create texture name once
+	if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
+
+    glUseProgram(textureProgram);
+    glActiveTexture(GL_TEXTURE0);
+    
+    glBindTexture(GL_TEXTURE_2D, rgbatexture);
+    glUniform1i(samplerLoc, 0);
+    
+    glVertexAttribPointer(texPosLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(0));
+    glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));
+    glEnableVertexAttribArray(texPosLoc);
+    glEnableVertexAttribArray(texCoordLoc);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    // update the texture with the new RGBA data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
+
+    GLfloat vertices[] = {
+        XCOORD(x),     YCOORD(y),      // Position 0 = left,top
+        0.0,  0.0,                     // TexCoord 0
+        XCOORD(x),     YCOORD(y + h),  // Position 1 = left,bottom
+        0.0,  1.0,                     // TexCoord 1
+        XCOORD(x + h), YCOORD(y + h),  // Position 2 = right,bottom
+        1.0,  1.0,                     // TexCoord 2
+        XCOORD(x + h), YCOORD(y),      // Position 3 = right,top
+        1.0,  0.0                      // TexCoord 3
+    };
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+}
+
+// -----------------------------------------------------------------------------
+
 static void DrawIcon(int state, int x, int y)
 {
     gBitmapPtr* icons = currlayer->icons31x31;
     if (icons == NULL || icons[state] == NULL) return;
     unsigned char* pxldata = icons[state]->pxldata;
     if (pxldata == NULL) return;
-
+    
     int cellsize = 31;
-    const int maxcoords = 1024;     // must be multiple of 2
-    GLfloat points[maxcoords];
-    int numcoords = 0;
+    int rowbytes = 32*4;
+    unsigned char rgbadata[32*4*32] = {0};      // all pixels are initially transparent
+    
     bool multicolor = currlayer->multicoloricons;
-
-    SetPointSize(highdensity ? 2 : 1);
 
     unsigned char deadr = currlayer->cellr[0];
     unsigned char deadg = currlayer->cellg[0];
     unsigned char deadb = currlayer->cellb[0];
-    unsigned char prevr = deadr;
-    unsigned char prevg = deadg;
-    unsigned char prevb = deadb;
-    SetColor(deadr, deadg, deadb, 255);
+    if (swapcolors) {
+        deadr = 255 - deadr;
+        deadg = 255 - deadg;
+        deadb = 255 - deadb;
+    }
 
-    // draw non-black pixels in this icon
     unsigned char liver = currlayer->cellr[state];
     unsigned char liveg = currlayer->cellg[state];
     unsigned char liveb = currlayer->cellb[state];
+    if (swapcolors) {
+        liver = 255 - liver;
+        liveg = 255 - liveg;
+        liveb = 255 - liveb;
+    }
+    
     int byte = 0;
+    int rpos = 0;
     for (int i = 0; i < cellsize; i++) {
+        int rowstart = rpos;
         for (int j = 0; j < cellsize; j++) {
             unsigned char r = pxldata[byte++];
             unsigned char g = pxldata[byte++];
             unsigned char b = pxldata[byte++];
             byte++; // skip alpha
             if (r || g || b) {
+                // non-black pixel
                 if (multicolor) {
-                    // draw non-black pixel from multi-colored icon
+                    // use non-black pixel in multi-colored icon
                     if (swapcolors) {
-                        r = 255 - r;
-                        g = 255 - g;
-                        b = 255 - b;
+                        rgbadata[rpos]   = 255 - r;
+                        rgbadata[rpos+1] = 255 - g;
+                        rgbadata[rpos+2] = 255 - b;
+                    } else {
+                        rgbadata[rpos]   = r;
+                        rgbadata[rpos+1] = g;
+                        rgbadata[rpos+2] = b;
                     }
                 } else {
-                    // grayscale icon
+                    // grayscale icon (r = g = b)
                     if (r == 255) {
-                        // replace white pixel with current cell color
-                        r = liver;
-                        g = liveg;
-                        b = liveb;
+                        // replace white pixel with live cell color
+                        rgbadata[rpos]   = liver;
+                        rgbadata[rpos+1] = liveg;
+                        rgbadata[rpos+2] = liveb;
                     } else {
                         // replace gray pixel with appropriate shade between
                         // live and dead cell colors
                         float frac = (float)r / 255.0;
-                        r = (int)(deadr + frac * (liver - deadr) + 0.5);
-                        g = (int)(deadg + frac * (liveg - deadg) + 0.5);
-                        b = (int)(deadb + frac * (liveb - deadb) + 0.5);
+                        rgbadata[rpos]   = (int)(deadr + frac * (liver - deadr) + 0.5);
+                        rgbadata[rpos+1] = (int)(deadg + frac * (liveg - deadg) + 0.5);
+                        rgbadata[rpos+2] = (int)(deadb + frac * (liveb - deadb) + 0.5);
                     }
                 }
-                // draw r,g,b pixel
-                bool changecolor = (r != prevr || g != prevg || b != prevb);
-                if (changecolor || numcoords == maxcoords) {
-                    if (numcoords > 0) {
-                        glBufferData(GL_ARRAY_BUFFER, numcoords * sizeof(GLfloat), points, GL_STATIC_DRAW);
-                        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-                        glEnableVertexAttribArray(positionLoc);
-                        glDrawArrays(GL_POINTS, 0, numcoords/2);
-                        numcoords = 0;
-                    }
-                    if (changecolor) {
-                        prevr = r;
-                        prevg = g;
-                        prevb = b;
-                        SetColor(r, g, b, 255);
-                    }
-                }
-                if (highdensity) {
-                    points[numcoords++] = XCOORD(x + j*2 + 0.5);
-                    points[numcoords++] = YCOORD(y + i*2 + 0.5);
-                } else {
-                    points[numcoords++] = XCOORD(x + j + 0.5);
-                    points[numcoords++] = YCOORD(y + i + 0.5);
-                }
+                rgbadata[rpos+3] = 255;     // pixel is opaque
             }
+            // move to next pixel in rgbadata
+            rpos += 4;
         }
+        // move to next row in rgbadata
+        rpos = rowstart + rowbytes;
     }
 
-    if (numcoords > 0) {
-        glBufferData(GL_ARRAY_BUFFER, numcoords * sizeof(GLfloat), points, GL_STATIC_DRAW);
-        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(positionLoc);
-        glDrawArrays(GL_POINTS, 0, numcoords/2);
-    }
+    // draw the icon data
+    // if highdensity then double wd and ht???!!!
+    DrawRGBAData(rgbadata, x, y, 32, 32);
 }
 
 // -----------------------------------------------------------------------------
@@ -2129,64 +2206,37 @@ static void DrawIcon(int state, int x, int y)
 static void DrawDigit(int digit, int x, int y)
 {
     unsigned char* pxldata = digits10x10[digit+1]->pxldata;
+
     int cellsize = 10;
-    const int maxcoords = 128;     // must be multiple of 2
-    GLfloat points[maxcoords];
-    int numcoords = 0;
+    int rowbytes = 16*4;
+    unsigned char rgbadata[16*4*16] = {0};  // all pixels are initially transparent
 
-    SetPointSize(highdensity ? 2 : 1);
-
-    unsigned char deadr = currlayer->cellr[0];
-    unsigned char deadg = currlayer->cellg[0];
-    unsigned char deadb = currlayer->cellb[0];
-    unsigned char prevr = deadr;
-    unsigned char prevg = deadg;
-    unsigned char prevb = deadb;
-    SetColor(deadr, deadg, deadb, 255);
-
-    // draw non-black pixels in this icon
     int byte = 0;
+    int rpos = 0;
     for (int i = 0; i < cellsize; i++) {
+        int rowstart = rpos;
         for (int j = 0; j < cellsize; j++) {
             unsigned char r = pxldata[byte++];
             unsigned char g = pxldata[byte++];
             unsigned char b = pxldata[byte++];
             byte++; // skip alpha
             if (r || g || b) {
-                // draw non-black pixel
-                bool changecolor = (r != prevr || g != prevg || b != prevb);
-                if (changecolor || numcoords == maxcoords) {
-                    if (numcoords > 0) {
-                        glBufferData(GL_ARRAY_BUFFER, numcoords * sizeof(GLfloat), points, GL_STATIC_DRAW);
-                        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-                        glEnableVertexAttribArray(positionLoc);
-                        glDrawArrays(GL_POINTS, 0, numcoords/2);
-                        numcoords = 0;
-                    }
-                    if (changecolor) {
-                        prevr = r;
-                        prevg = g;
-                        prevb = b;
-                        SetColor(r, g, b, 255);
-                    }
-                }
-                if (highdensity) {
-                    points[numcoords++] = XCOORD(x + j*2 + 0.5);
-                    points[numcoords++] = YCOORD(y + i*2 + 0.5);
-                } else {
-                    points[numcoords++] = XCOORD(x + j + 0.5);
-                    points[numcoords++] = YCOORD(y + i + 0.5);
-                }
+                // non-black pixel
+                rgbadata[rpos]   = r;
+                rgbadata[rpos+1] = g;
+                rgbadata[rpos+2] = b;
+                rgbadata[rpos+3] = 255;     // pixel is opaque
             }
+            // move to next pixel in rgbadata
+            rpos += 4;
         }
+        // move to next row in rgbadata
+        rpos = rowstart + rowbytes;
     }
 
-    if (numcoords > 0) {
-        glBufferData(GL_ARRAY_BUFFER, numcoords * sizeof(GLfloat), points, GL_STATIC_DRAW);
-        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(positionLoc);
-        glDrawArrays(GL_POINTS, 0, numcoords/2);
-    }
+    // draw the digit data
+    // if highdensity then double wd and ht???!!!
+    DrawRGBAData(rgbadata, x, y, 16, 16);
 }
 
 // -----------------------------------------------------------------------------
