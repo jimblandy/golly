@@ -66,6 +66,22 @@ static bool textchanged = false;    // true if user changed text
 
 // -----------------------------------------------------------------------------
 
+- (void)scaleText:(UIPinchGestureRecognizer *)pinchGesture
+{
+    // very slow for large files; better to use A- and A+ buttons to dec/inc font size???
+    UIGestureRecognizerState state = pinchGesture.state;
+    if (state == UIGestureRecognizerStateBegan || state == UIGestureRecognizerStateChanged) {
+        CGFloat ptsize = fileView.font.pointSize * pinchGesture.scale;
+        if (ptsize < 5.0) ptsize = 5.0;
+        if (ptsize > 50.0) ptsize = 50.0;
+        fileView.font = [UIFont fontWithName:fileView.font.fontName size:ptsize];
+    } else if (state == UIGestureRecognizerStateEnded) {
+        // do nothing
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -197,22 +213,6 @@ static std::string contents;
 - (void)textViewDidChange:(UITextView *)textView
 {
     textchanged = true;
-}
-
-// -----------------------------------------------------------------------------
-
-- (void)scaleText:(UIPinchGestureRecognizer *)pinchGesture
-{
-    // very slow for large files; better to use A- and A+ buttons to dec/inc font size???
-    UIGestureRecognizerState state = pinchGesture.state;
-    if (state == UIGestureRecognizerStateBegan || state == UIGestureRecognizerStateChanged) {
-        CGFloat ptsize = fileView.font.pointSize * pinchGesture.scale;
-        if (ptsize < 5.0) ptsize = 5.0;
-        if (ptsize > 50.0) ptsize = 50.0;
-        fileView.font = [UIFont fontWithName:fileView.font.fontName size:ptsize];
-    } else if (state == UIGestureRecognizerStateEnded) {
-        // do nothing
-    }
 }
 
 @end

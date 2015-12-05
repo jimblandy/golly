@@ -34,6 +34,23 @@
 
 // -----------------------------------------------------------------------------
 
+- (void)singleTap:(UITapGestureRecognizer *)gestureRecognizer
+{
+    if ([gestureRecognizer state] == UIGestureRecognizerStateEnded) {
+        CGPoint pt = [gestureRecognizer locationInView:self];
+        int col = pt.x / 32;
+        int row = pt.y / 32;
+        int newstate = row * 16 + col;
+        if (newstate >= 0 && newstate < currlayer->algo->NumCellStates()) {
+            currlayer->drawingstate = newstate;
+            UpdateEditBar();
+            CloseStatePicker();
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 - (id)initWithCoder:(NSCoder *)c
 {
     self = [super initWithCoder:c];
@@ -141,23 +158,6 @@
             y += 32;
         } else {
             x += 32;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-- (void)singleTap:(UITapGestureRecognizer *)gestureRecognizer
-{
-    if ([gestureRecognizer state] == UIGestureRecognizerStateEnded) {
-        CGPoint pt = [gestureRecognizer locationInView:self];
-        int col = pt.x / 32;
-        int row = pt.y / 32;
-        int newstate = row * 16 + col;
-        if (newstate >= 0 && newstate < currlayer->algo->NumCellStates()) {
-            currlayer->drawingstate = newstate;
-            UpdateEditBar();
-            CloseStatePicker();
         }
     }
 }

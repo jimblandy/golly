@@ -35,6 +35,45 @@
 
 // -----------------------------------------------------------------------------
 
+- (void)singleTap:(UITapGestureRecognizer *)gestureRecognizer
+{
+    if ([gestureRecognizer state] == UIGestureRecognizerStateEnded) {
+        ClearMessage();
+
+        int numstates = currlayer->algo->NumCellStates();
+        if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+            // create a popover controller for picking the new drawing state
+            
+            StatePickerController *statePicker = [[StatePickerController alloc] initWithNibName:nil bundle:nil];
+            
+            statePopover = [[UIPopoverController alloc] initWithContentViewController:statePicker];
+            
+            statePopover.delegate = self;
+            
+            // set popover size depending on number of states
+            int wd = numstates <= 16 ? numstates * 32 : 16 * 32;
+            int ht = (numstates + 15) / 16 * 32;
+            // add border of 10 pixels (must match border in xib),
+            // and add 1 extra pixel because we draw boxes around each cell
+            wd += 21;
+            ht += 21;
+            // allow for switch button and label
+            if (wd < 196) wd = 196;
+            ht += 40;
+            statePopover.popoverContentSize = CGSizeMake(wd, ht);
+            
+            [statePopover presentPopoverFromRect:self.bounds
+                                          inView:self
+                        permittedArrowDirections:UIPopoverArrowDirectionUp
+                                        animated:NO];
+        
+            statePicker = nil;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 - (id)initWithCoder:(NSCoder *)c
 {
     self = [super initWithCoder:c];
@@ -173,45 +212,6 @@ void DrawOneIcon(CGContextRef context, int x, int y, gBitmapPtr icon,
         CGContextSetFillColorWithColor(context, colorref);
         CGContextFillRect(context, box);
         CGColorRelease(colorref);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-- (void)singleTap:(UITapGestureRecognizer *)gestureRecognizer
-{
-    if ([gestureRecognizer state] == UIGestureRecognizerStateEnded) {
-        ClearMessage();
-
-        int numstates = currlayer->algo->NumCellStates();
-        if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-            // create a popover controller for picking the new drawing state
-            
-            StatePickerController *statePicker = [[StatePickerController alloc] initWithNibName:nil bundle:nil];
-            
-            statePopover = [[UIPopoverController alloc] initWithContentViewController:statePicker];
-            
-            statePopover.delegate = self;
-            
-            // set popover size depending on number of states
-            int wd = numstates <= 16 ? numstates * 32 : 16 * 32;
-            int ht = (numstates + 15) / 16 * 32;
-            // add border of 10 pixels (must match border in xib),
-            // and add 1 extra pixel because we draw boxes around each cell
-            wd += 21;
-            ht += 21;
-            // allow for switch button and label
-            if (wd < 196) wd = 196;
-            ht += 40;
-            statePopover.popoverContentSize = CGSizeMake(wd, ht);
-            
-            [statePopover presentPopoverFromRect:self.bounds
-                                          inView:self
-                        permittedArrowDirections:UIPopoverArrowDirectionUp
-                                        animated:NO];
-        
-            statePicker = nil;
-        }
     }
 }
 

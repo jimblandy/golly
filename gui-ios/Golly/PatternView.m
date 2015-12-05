@@ -66,90 +66,6 @@ static GLuint viewFramebuffer = 0;
 
 // -----------------------------------------------------------------------------
 
-- (id)initWithCoder:(NSCoder *)c
-{
-    self = [super initWithCoder:c];
-    if (self) {
-        
-        // init the OpenGL ES stuff (based on Apple's GLPaint sample code):
-        
-		CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
-		eaglLayer.opaque = YES;
-        
-        // note that we're using OpenGL ES 2.0
-		context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-		if (!context || ![EAGLContext setCurrentContext:context]) {
-			self = nil;
-			return self;
-		}
-		
-		// set the view's scale factor
-		self.contentScaleFactor = 1.0;
-        
-        if (!InitOGLES2()) Warning("InitOGLES2 failed!");
-        
-        // we only do 2D drawing
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_DITHER);
-        glDisable(GL_STENCIL_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        
-        // add gesture recognizers to this view:
-        
-        [self setMultipleTouchEnabled:YES];
-        
-        // pinch gestures will zoom in/out
-        UIPinchGestureRecognizer *pinchGesture = [[UIPinchGestureRecognizer alloc]
-                                                  initWithTarget:self action:@selector(zoomView:)];
-        pinchGesture.delegate = self;
-        [self addGestureRecognizer:pinchGesture];
-        
-        // one-finger pan gestures will be used to draw/pick/select/etc, depending on the current touch mode
-        UIPanGestureRecognizer *pan1Gesture = [[UIPanGestureRecognizer alloc]
-                                               initWithTarget:self action:@selector(singleDrag:)];
-        pan1Gesture.minimumNumberOfTouches = 1;
-        pan1Gesture.maximumNumberOfTouches = 1;
-        pan1Gesture.delegate = self;
-        [self addGestureRecognizer:pan1Gesture];
-        
-        // two-finger pan gestures will move the view
-        UIPanGestureRecognizer *pan2Gesture = [[UIPanGestureRecognizer alloc]
-                                               initWithTarget:self action:@selector(moveView:)];
-        pan2Gesture.minimumNumberOfTouches = 2;
-        pan2Gesture.maximumNumberOfTouches = 2;
-        pan2Gesture.delegate = self;
-        [self addGestureRecognizer:pan2Gesture];
-        
-        // single-taps will do various actions depending on the current touch mode
-        UITapGestureRecognizer *tap1Gesture = [[UITapGestureRecognizer alloc]
-                                               initWithTarget:self action:@selector(singleTap:)];
-        tap1Gesture.numberOfTapsRequired = 1;
-        tap1Gesture.numberOfTouchesRequired = 1;
-        tap1Gesture.delegate = self;
-        [self addGestureRecognizer:tap1Gesture];
-        
-        /* too many problems if we have gesture recognizers for single-taps and double-taps:
-        
-        // double-taps will do various actions depending on the location
-        UITapGestureRecognizer *tap2Gesture = [[UITapGestureRecognizer alloc]
-                                               initWithTarget:self action:@selector(doubleTap:)];
-        tap2Gesture.numberOfTapsRequired = 2;
-        tap2Gesture.numberOfTouchesRequired = 1;
-        tap2Gesture.delegate = self;
-        [self addGestureRecognizer:tap2Gesture];
-        
-        // only do a single-tap if double-tap is not detected
-        // (this works but the delay is way too long)
-        // [tap1Gesture requireGestureRecognizerToFail:tap2Gesture];
-        
-        */
-    }
-    return self;
-}
-
-// -----------------------------------------------------------------------------
-
 - (void)createFramebuffer
 {
 	// generate IDs for a framebuffer object and a color renderbuffer
@@ -534,6 +450,90 @@ static double prevtime = 0.0;   // used to detect a double tap
             prevtime = TimeInSeconds();
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+
+- (id)initWithCoder:(NSCoder *)c
+{
+    self = [super initWithCoder:c];
+    if (self) {
+        
+        // init the OpenGL ES stuff (based on Apple's GLPaint sample code):
+        
+		CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
+		eaglLayer.opaque = YES;
+        
+        // note that we're using OpenGL ES 2.0
+		context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+		if (!context || ![EAGLContext setCurrentContext:context]) {
+			self = nil;
+			return self;
+		}
+		
+		// set the view's scale factor
+		self.contentScaleFactor = 1.0;
+        
+        if (!InitOGLES2()) Warning("InitOGLES2 failed!");
+        
+        // we only do 2D drawing
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_DITHER);
+        glDisable(GL_STENCIL_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
+        // add gesture recognizers to this view:
+        
+        [self setMultipleTouchEnabled:YES];
+        
+        // pinch gestures will zoom in/out
+        UIPinchGestureRecognizer *pinchGesture = [[UIPinchGestureRecognizer alloc]
+                                                  initWithTarget:self action:@selector(zoomView:)];
+        pinchGesture.delegate = self;
+        [self addGestureRecognizer:pinchGesture];
+        
+        // one-finger pan gestures will be used to draw/pick/select/etc, depending on the current touch mode
+        UIPanGestureRecognizer *pan1Gesture = [[UIPanGestureRecognizer alloc]
+                                               initWithTarget:self action:@selector(singleDrag:)];
+        pan1Gesture.minimumNumberOfTouches = 1;
+        pan1Gesture.maximumNumberOfTouches = 1;
+        pan1Gesture.delegate = self;
+        [self addGestureRecognizer:pan1Gesture];
+        
+        // two-finger pan gestures will move the view
+        UIPanGestureRecognizer *pan2Gesture = [[UIPanGestureRecognizer alloc]
+                                               initWithTarget:self action:@selector(moveView:)];
+        pan2Gesture.minimumNumberOfTouches = 2;
+        pan2Gesture.maximumNumberOfTouches = 2;
+        pan2Gesture.delegate = self;
+        [self addGestureRecognizer:pan2Gesture];
+        
+        // single-taps will do various actions depending on the current touch mode
+        UITapGestureRecognizer *tap1Gesture = [[UITapGestureRecognizer alloc]
+                                               initWithTarget:self action:@selector(singleTap:)];
+        tap1Gesture.numberOfTapsRequired = 1;
+        tap1Gesture.numberOfTouchesRequired = 1;
+        tap1Gesture.delegate = self;
+        [self addGestureRecognizer:tap1Gesture];
+        
+        /* too many problems if we have gesture recognizers for single-taps and double-taps:
+        
+        // double-taps will do various actions depending on the location
+        UITapGestureRecognizer *tap2Gesture = [[UITapGestureRecognizer alloc]
+                                               initWithTarget:self action:@selector(doubleTap:)];
+        tap2Gesture.numberOfTapsRequired = 2;
+        tap2Gesture.numberOfTouchesRequired = 1;
+        tap2Gesture.delegate = self;
+        [self addGestureRecognizer:tap2Gesture];
+        
+        // only do a single-tap if double-tap is not detected
+        // (this works but the delay is way too long)
+        // [tap1Gesture requireGestureRecognizerToFail:tap2Gesture];
+        
+        */
+    }
+    return self;
 }
 
 // -----------------------------------------------------------------------------
