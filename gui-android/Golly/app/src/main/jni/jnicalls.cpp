@@ -1944,7 +1944,12 @@ static bool CreateProgramObjects()
         glDeleteProgram(textureProgram);
         return false;
     }
-    
+
+    // create buffer for vertex data (used for drawing lines and rects)
+    GLuint vertexPosObject;
+    glGenBuffers(1, &vertexPosObject);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexPosObject);
+
     // create buffer for index data (used for drawing textures)
     // where each cell = 2 triangles with 2 shared vertices (0 and 2)
     //
@@ -2080,8 +2085,6 @@ static void DrawRect(int state, int x, int y, int wd, int ht)
 
 static void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 {
-    // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale
-
     // only need to create texture name once
 	if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
 
@@ -2095,21 +2098,29 @@ static void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
     glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));
     glEnableVertexAttribArray(texPosLoc);
     glEnableVertexAttribArray(texCoordLoc);
-    
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
     // update the texture with the new RGBA data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
 
+    if (highdensity) {
+        w = w*2;
+        h = h*2;
+    }
+
     GLfloat vertices[] = {
         XCOORD(x),     YCOORD(y),      // Position 0 = left,top
         0.0,  0.0,                     // TexCoord 0
         XCOORD(x),     YCOORD(y + h),  // Position 1 = left,bottom
         0.0,  1.0,                     // TexCoord 1
-        XCOORD(x + h), YCOORD(y + h),  // Position 2 = right,bottom
+        XCOORD(x + w), YCOORD(y + h),  // Position 2 = right,bottom
         1.0,  1.0,                     // TexCoord 2
-        XCOORD(x + h), YCOORD(y),      // Position 3 = right,top
+        XCOORD(x + w), YCOORD(y),      // Position 3 = right,top
         1.0,  0.0                      // TexCoord 3
     };
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -2197,7 +2208,6 @@ static void DrawIcon(int state, int x, int y)
     }
 
     // draw the icon data
-    // if highdensity then double wd and ht???!!!
     DrawRGBAData(rgbadata, x, y, 32, 32);
 }
 
@@ -2235,7 +2245,6 @@ static void DrawDigit(int digit, int x, int y)
     }
 
     // draw the digit data
-    // if highdensity then double wd and ht???!!!
     DrawRGBAData(rgbadata, x, y, 16, 16);
 }
 

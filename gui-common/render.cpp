@@ -325,9 +325,9 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
         0.0,  0.0,                     // TexCoord 0
         XCOORD(x),     YCOORD(y + h),  // Position 1 = left,bottom
         0.0,  1.0,                     // TexCoord 1
-        XCOORD(x + h), YCOORD(y + h),  // Position 2 = right,bottom
+        XCOORD(x + w), YCOORD(y + h),  // Position 2 = right,bottom
         1.0,  1.0,                     // TexCoord 2
-        XCOORD(x + h), YCOORD(y),      // Position 3 = right,top
+        XCOORD(x + w), YCOORD(y),      // Position 3 = right,top
         1.0,  0.0                      // TexCoord 3
     };
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
