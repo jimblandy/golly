@@ -37,7 +37,7 @@
     UpdateStatusLines();    // sets status1 and status2
     
     CGContextRef context = UIGraphicsGetCurrentContext();
-    // int wd = self.bounds.size.width;
+    int wd = self.bounds.size.width;
     int ht = self.bounds.size.height;
     
     // background color of status area depends on current algorithm
@@ -47,14 +47,12 @@
                      alpha:1.0] setFill];
     CGContextFillRect(context, dirtyrect);
     
-    // draw thin gray line along bottom
-    /* only do this if edit toolbar is ever hidden
+    // draw thin gray line along top
     [[UIColor grayColor] setStroke];
     CGContextSetLineWidth(context, 1.0);
-    CGContextMoveToPoint(context, 0, ht);
-    CGContextAddLineToPoint(context, wd, ht);
+    CGContextMoveToPoint(context, 0, 0);
+    CGContextAddLineToPoint(context, wd, 0);
     CGContextStrokePath(context);
-    */
     
     // use black for drawing text
     [[UIColor blackColor] setFill];
