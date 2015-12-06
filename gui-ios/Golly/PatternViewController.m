@@ -176,7 +176,7 @@ static void InitPaths()
     static bool firstload = true;
     if (firstload) {
         firstload = false;          // only do the following once
-        SetMessage("This is Golly 1.2 for iOS.  Copyright 2013 The Golly Gang.");
+        SetMessage("This is Golly 1.2 for iOS.  Copyright 2015 The Golly Gang.");
         MAX_MAG = 5;                // maximum cell size = 32x32
         InitAlgorithms();           // must initialize algoinfo first
         InitPaths();                // init userdir, etc (must be before GetPrefs)
@@ -772,6 +772,7 @@ static void InitPaths()
 - (IBAction)toggleFullScreen:(id)sender
 {
     if (fullscreen) {
+        ShowTabBar(YES);
         topBar.hidden = NO;
         editBar.hidden = NO;
         bottomBar.hidden = NO;
@@ -786,6 +787,7 @@ static void InitPaths()
         pattView.frame = CGRectMake(x, y, wd, ht);
         [statView setNeedsDisplay];
     } else {
+        ShowTabBar(NO);
         topBar.hidden = YES;
         editBar.hidden = YES;
         bottomBar.hidden = YES;

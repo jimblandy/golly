@@ -41,3 +41,6 @@ UIViewController* CurrentViewController();
 
 // enable/disable tab bar
 void EnableTabBar(bool enable);
+
+// show/hide tab bar
+void ShowTabBar(bool show);

@@ -1,571 +1,105 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<archive type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="8.00">
-	<data>
-		<int key="IBDocument.SystemTarget">1280</int>
-		<string key="IBDocument.SystemVersion">10K549</string>
-		<string key="IBDocument.InterfaceBuilderVersion">1938</string>
-		<string key="IBDocument.AppKitVersion">1038.36</string>
-		<string key="IBDocument.HIToolboxVersion">461.00</string>
-		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
-			<string key="NS.key.0">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-			<string key="NS.object.0">933</string>
-		</object>
-		<array key="IBDocument.IntegratedClassDependencies">
-			<string>IBUIView</string>
-			<string>IBProxyObject</string>
-			<string>IBUILabel</string>
-			<string>IBUIToolbar</string>
-			<string>IBUIBarButtonItem</string>
-			<string>IBUITextField</string>
-			<string>IBUIWebView</string>
-			<string>IBUIPickerView</string>
-			<string>IBUIButton</string>
-		</array>
-		<array key="IBDocument.PluginDependencies">
-			<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-		</array>
-		<object class="NSMutableDictionary" key="IBDocument.Metadata">
-			<string key="NS.key.0">PluginDependencyRecalculationVersion</string>
-			<integer value="1" key="NS.object.0"/>
-		</object>
-		<array class="NSMutableArray" key="IBDocument.RootObjects" id="1000">
-			<object class="IBProxyObject" id="841351856">
-				<string key="IBProxiedObjectIdentifier">IBFilesOwner</string>
-				<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-			</object>
-			<object class="IBProxyObject" id="606714003">
-				<string key="IBProxiedObjectIdentifier">IBFirstResponder</string>
-				<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-			</object>
-			<object class="IBUIView" id="766685794">
-				<reference key="NSNextResponder"/>
-				<int key="NSvFlags">301</int>
-				<array class="NSMutableArray" key="NSSubviews">
-					<object class="IBUILabel" id="454132835">
-						<reference key="NSNextResponder" ref="766685794"/>
-						<int key="NSvFlags">293</int>
-						<string key="NSFrame">{{303, 389}, {163, 21}}</string>
-						<reference key="NSSuperview" ref="766685794"/>
-						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView" ref="169784062"/>
-						<bool key="IBUIOpaque">NO</bool>
-						<bool key="IBUIClipsSubviews">YES</bool>
-						<int key="IBUIContentMode">7</int>
-						<bool key="IBUIUserInteractionEnabled">NO</bool>
-						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<string key="IBUIText">Choose an algorithm:</string>
-						<object class="NSColor" key="IBUITextColor" id="1053561797">
-							<int key="NSColorSpace">1</int>
-							<bytes key="NSRGB">MCAwIDAAA</bytes>
-						</object>
-						<nil key="IBUIHighlightedColor"/>
-						<int key="IBUIBaselineAdjustment">1</int>
-						<float key="IBUIMinimumFontSize">10</float>
-						<int key="IBUITextAlignment">1</int>
-						<object class="IBUIFontDescription" key="IBUIFontDescription" id="811553">
-							<int key="type">1</int>
-							<double key="pointSize">17</double>
-						</object>
-						<object class="NSFont" key="IBUIFont" id="753877926">
-							<string key="NSName">Helvetica</string>
-							<double key="NSSize">17</double>
-							<int key="NSfFlags">16</int>
-						</object>
-					</object>
-					<object class="IBUIButton" id="169784062">
-						<reference key="NSNextResponder" ref="766685794"/>
-						<int key="NSvFlags">293</int>
-						<string key="NSFrame">{{303, 418}, {163, 31}}</string>
-						<reference key="NSSuperview" ref="766685794"/>
-						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView" ref="369218695"/>
-						<bool key="IBUIOpaque">NO</bool>
-						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<int key="IBUIContentHorizontalAlignment">0</int>
-						<int key="IBUIContentVerticalAlignment">0</int>
-						<int key="IBUIButtonType">1</int>
-						<string key="IBUINormalTitle">Generations</string>
-						<object class="NSColor" key="IBUIHighlightedTitleColor">
-							<int key="NSColorSpace">3</int>
-							<bytes key="NSWhite">MQA</bytes>
-						</object>
-						<object class="NSColor" key="IBUINormalTitleColor">
-							<int key="NSColorSpace">1</int>
-							<bytes key="NSRGB">MC4xOTYwNzg0MzQ2IDAuMzA5ODAzOTMyOSAwLjUyMTU2ODY1NgA</bytes>
-						</object>
-						<object class="NSColor" key="IBUINormalTitleShadowColor">
-							<int key="NSColorSpace">3</int>
-							<bytes key="NSWhite">MC41AA</bytes>
-						</object>
-						<object class="IBUIFontDescription" key="IBUIFontDescription">
-							<int key="type">2</int>
-							<double key="pointSize">15</double>
-						</object>
-						<object class="NSFont" key="IBUIFont">
-							<string key="NSName">Helvetica-Bold</string>
-							<double key="NSSize">15</double>
-							<int key="NSfFlags">16</int>
-						</object>
-					</object>
-					<object class="IBUILabel" id="369218695">
-						<reference key="NSNextResponder" ref="766685794"/>
-						<int key="NSvFlags">293</int>
-						<string key="NSFrame">{{330, 20}, {108, 21}}</string>
-						<reference key="NSSuperview" ref="766685794"/>
-						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView" ref="503186882"/>
-						<bool key="IBUIOpaque">NO</bool>
-						<bool key="IBUIClipsSubviews">YES</bool>
-						<int key="IBUIContentMode">7</int>
-						<bool key="IBUIUserInteractionEnabled">NO</bool>
-						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<string key="IBUIText">Type in a rule:</string>
-						<reference key="IBUITextColor" ref="1053561797"/>
-						<nil key="IBUIHighlightedColor"/>
-						<int key="IBUIBaselineAdjustment">1</int>
-						<float key="IBUIMinimumFontSize">10</float>
-						<int key="IBUITextAlignment">1</int>
-						<reference key="IBUIFontDescription" ref="811553"/>
-						<reference key="IBUIFont" ref="753877926"/>
-					</object>
-					<object class="IBUITextField" id="503186882">
-						<reference key="NSNextResponder" ref="766685794"/>
-						<int key="NSvFlags">293</int>
-						<string key="NSFrame">{{173, 49}, {422, 31}}</string>
-						<reference key="NSSuperview" ref="766685794"/>
-						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView" ref="20346280"/>
-						<bool key="IBUIOpaque">NO</bool>
-						<bool key="IBUIClipsSubviews">YES</bool>
-						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<int key="IBUIContentVerticalAlignment">0</int>
-						<string key="IBUIText">B012345678/S012345678</string>
-						<int key="IBUIBorderStyle">3</int>
-						<object class="NSColor" key="IBUITextColor">
-							<int key="NSColorSpace">3</int>
-							<bytes key="NSWhite">MAA</bytes>
-							<object class="NSColorSpace" key="NSCustomColorSpace">
-								<int key="NSID">2</int>
-							</object>
-						</object>
-						<int key="IBUITextAlignment">1</int>
-						<bool key="IBUIAdjustsFontSizeToFit">YES</bool>
-						<float key="IBUIMinimumFontSize">17</float>
-						<object class="IBUITextInputTraits" key="IBUITextInputTraits">
-							<int key="IBUIReturnKeyType">9</int>
-							<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
-						</object>
-						<int key="IBUIClearButtonMode">3</int>
-						<object class="IBUIFontDescription" key="IBUIFontDescription" id="570338149">
-							<int key="type">2</int>
-							<double key="pointSize">17</double>
-						</object>
-						<object class="NSFont" key="IBUIFont" id="263161293">
-							<string key="NSName">Helvetica-Bold</string>
-							<double key="NSSize">17</double>
-							<int key="NSfFlags">16</int>
-						</object>
-					</object>
-					<object class="IBUILabel" id="20346280">
-						<reference key="NSNextResponder" ref="766685794"/>
-						<int key="NSvFlags">293</int>
-						<string key="NSFrame">{{312, 88}, {145, 21}}</string>
-						<reference key="NSSuperview" ref="766685794"/>
-						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView" ref="479952570"/>
-						<bool key="IBUIOpaque">NO</bool>
-						<bool key="IBUIClipsSubviews">YES</bool>
-						<int key="IBUIContentMode">7</int>
-						<bool key="IBUIUserInteractionEnabled">NO</bool>
-						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<string key="IBUIText">UNKNOWN RULE!</string>
-						<object class="NSColor" key="IBUITextColor">
-							<int key="NSColorSpace">1</int>
-							<bytes key="NSRGB">MSAwLjA1OTcwMDA0ODE4IDAuMTE4Njg4NzQ0OQA</bytes>
-						</object>
-						<nil key="IBUIHighlightedColor"/>
-						<int key="IBUIBaselineAdjustment">1</int>
-						<float key="IBUIMinimumFontSize">10</float>
-						<int key="IBUITextAlignment">1</int>
-						<reference key="IBUIFontDescription" ref="570338149"/>
-						<reference key="IBUIFont" ref="263161293"/>
-					</object>
-					<object class="IBUILabel" id="479952570">
-						<reference key="NSNextResponder" ref="766685794"/>
-						<int key="NSvFlags">293</int>
-						<string key="NSFrame">{{306, 117}, {156, 21}}</string>
-						<reference key="NSSuperview" ref="766685794"/>
-						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView" ref="638906044"/>
-						<bool key="IBUIOpaque">NO</bool>
-						<bool key="IBUIClipsSubviews">YES</bool>
-						<int key="IBUIContentMode">7</int>
-						<bool key="IBUIUserInteractionEnabled">NO</bool>
-						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<string key="IBUIText">Pick a named rule:</string>
-						<reference key="IBUITextColor" ref="1053561797"/>
-						<nil key="IBUIHighlightedColor"/>
-						<int key="IBUIBaselineAdjustment">1</int>
-						<float key="IBUIMinimumFontSize">10</float>
-						<int key="IBUITextAlignment">1</int>
-						<reference key="IBUIFontDescription" ref="811553"/>
-						<reference key="IBUIFont" ref="753877926"/>
-					</object>
-					<object class="IBUIPickerView" id="638906044">
-						<reference key="NSNextResponder" ref="766685794"/>
-						<int key="NSvFlags">293</int>
-						<string key="NSFrame">{{173, 146}, {422, 216}}</string>
-						<reference key="NSSuperview" ref="766685794"/>
-						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView" ref="634333436"/>
-						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<bool key="IBUIShowsSelectionIndicator">YES</bool>
-					</object>
-					<object class="IBUIToolbar" id="634333436">
-						<reference key="NSNextResponder" ref="766685794"/>
-						<int key="NSvFlags">266</int>
-						<string key="NSFrame">{{0, 980}, {768, 44}}</string>
-						<reference key="NSSuperview" ref="766685794"/>
-						<reference key="NSWindow"/>
-						<bool key="IBUIOpaque">NO</bool>
-						<bool key="IBUIClearsContextBeforeDrawing">NO</bool>
-						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<array class="NSMutableArray" key="IBUIItems">
-							<object class="IBUIBarButtonItem" id="422253310">
-								<string key="IBUITitle">Cancel</string>
-								<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-								<int key="IBUIStyle">1</int>
-								<reference key="IBUIToolbar" ref="634333436"/>
-							</object>
-							<object class="IBUIBarButtonItem" id="477504768">
-								<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-								<reference key="IBUIToolbar" ref="634333436"/>
-								<int key="IBUISystemItemIdentifier">5</int>
-							</object>
-							<object class="IBUIBarButtonItem" id="970355341">
-								<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-								<int key="IBUIStyle">1</int>
-								<reference key="IBUIToolbar" ref="634333436"/>
-								<int key="IBUISystemItemIdentifier">0</int>
-							</object>
-						</array>
-					</object>
-					<object class="IBUIWebView" id="248679463">
-						<reference key="NSNextResponder" ref="766685794"/>
-						<int key="NSvFlags">279</int>
-						<string key="NSFrame">{{-2, 457}, {773, 523}}</string>
-						<reference key="NSSuperview" ref="766685794"/>
-						<reference key="NSWindow"/>
-						<object class="NSColor" key="IBUIBackgroundColor">
-							<int key="NSColorSpace">1</int>
-							<bytes key="NSRGB">MSAxIDEAA</bytes>
-						</object>
-						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-						<int key="IBUIDataDetectorTypes">2</int>
-					</object>
-				</array>
-				<string key="NSFrameSize">{768, 1024}</string>
-				<reference key="NSSuperview"/>
-				<reference key="NSWindow"/>
-				<reference key="NSNextKeyView" ref="454132835"/>
-				<object class="NSColor" key="IBUIBackgroundColor">
-					<int key="NSColorSpace">3</int>
-					<bytes key="NSWhite">MC42NjY2NjY2NjY3AA</bytes>
-				</object>
-				<string key="targetRuntimeIdentifier">IBIPadFramework</string>
-			</object>
-		</array>
-		<object class="IBObjectContainer" key="IBDocument.Objects">
-			<array class="NSMutableArray" key="connectionRecords">
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">ruleText</string>
-						<reference key="source" ref="841351856"/>
-						<reference key="destination" ref="503186882"/>
-					</object>
-					<int key="connectionID">15</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">unknownLabel</string>
-						<reference key="source" ref="841351856"/>
-						<reference key="destination" ref="20346280"/>
-					</object>
-					<int key="connectionID">16</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">rulePicker</string>
-						<reference key="source" ref="841351856"/>
-						<reference key="destination" ref="638906044"/>
-					</object>
-					<int key="connectionID">21</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">algoButton</string>
-						<reference key="source" ref="841351856"/>
-						<reference key="destination" ref="169784062"/>
-					</object>
-					<int key="connectionID">14</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">view</string>
-						<reference key="source" ref="841351856"/>
-						<reference key="destination" ref="766685794"/>
-					</object>
-					<int key="connectionID">28</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">htmlView</string>
-						<reference key="source" ref="841351856"/>
-						<reference key="destination" ref="248679463"/>
-					</object>
-					<int key="connectionID">36</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchEventConnection" key="connection">
-						<string key="label">changeAlgorithm:</string>
-						<reference key="source" ref="169784062"/>
-						<reference key="destination" ref="841351856"/>
-						<int key="IBEventType">7</int>
-					</object>
-					<int key="connectionID">17</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">delegate</string>
-						<reference key="source" ref="503186882"/>
-						<reference key="destination" ref="841351856"/>
-					</object>
-					<int key="connectionID">18</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">delegate</string>
-						<reference key="source" ref="638906044"/>
-						<reference key="destination" ref="841351856"/>
-					</object>
-					<int key="connectionID">20</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">dataSource</string>
-						<reference key="source" ref="638906044"/>
-						<reference key="destination" ref="841351856"/>
-					</object>
-					<int key="connectionID">19</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchEventConnection" key="connection">
-						<string key="label">cancelRuleChange:</string>
-						<reference key="source" ref="422253310"/>
-						<reference key="destination" ref="841351856"/>
-					</object>
-					<int key="connectionID">33</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchEventConnection" key="connection">
-						<string key="label">doRuleChange:</string>
-						<reference key="source" ref="970355341"/>
-						<reference key="destination" ref="841351856"/>
-					</object>
-					<int key="connectionID">34</int>
-				</object>
-			</array>
-			<object class="IBMutableOrderedSet" key="objectRecords">
-				<array key="orderedObjects">
-					<object class="IBObjectRecord">
-						<int key="objectID">0</int>
-						<array key="object" id="0"/>
-						<reference key="children" ref="1000"/>
-						<nil key="parent"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">-1</int>
-						<reference key="object" ref="841351856"/>
-						<reference key="parent" ref="0"/>
-						<string key="objectName">File's Owner</string>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">-2</int>
-						<reference key="object" ref="606714003"/>
-						<reference key="parent" ref="0"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">12</int>
-						<reference key="object" ref="766685794"/>
-						<array class="NSMutableArray" key="children">
-							<reference ref="634333436"/>
-							<reference ref="454132835"/>
-							<reference ref="169784062"/>
-							<reference ref="369218695"/>
-							<reference ref="503186882"/>
-							<reference ref="20346280"/>
-							<reference ref="248679463"/>
-							<reference ref="479952570"/>
-							<reference ref="638906044"/>
-						</array>
-						<reference key="parent" ref="0"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">9</int>
-						<reference key="object" ref="20346280"/>
-						<reference key="parent" ref="766685794"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">11</int>
-						<reference key="object" ref="638906044"/>
-						<reference key="parent" ref="766685794"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">8</int>
-						<reference key="object" ref="503186882"/>
-						<reference key="parent" ref="766685794"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">10</int>
-						<reference key="object" ref="479952570"/>
-						<reference key="parent" ref="766685794"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">7</int>
-						<reference key="object" ref="369218695"/>
-						<reference key="parent" ref="766685794"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">5</int>
-						<reference key="object" ref="454132835"/>
-						<reference key="parent" ref="766685794"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">6</int>
-						<reference key="object" ref="169784062"/>
-						<reference key="parent" ref="766685794"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">29</int>
-						<reference key="object" ref="634333436"/>
-						<array class="NSMutableArray" key="children">
-							<reference ref="422253310"/>
-							<reference ref="970355341"/>
-							<reference ref="477504768"/>
-						</array>
-						<reference key="parent" ref="766685794"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">30</int>
-						<reference key="object" ref="422253310"/>
-						<reference key="parent" ref="634333436"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">31</int>
-						<reference key="object" ref="970355341"/>
-						<reference key="parent" ref="634333436"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">32</int>
-						<reference key="object" ref="477504768"/>
-						<reference key="parent" ref="634333436"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">35</int>
-						<reference key="object" ref="248679463"/>
-						<reference key="parent" ref="766685794"/>
-					</object>
-				</array>
-			</object>
-			<dictionary class="NSMutableDictionary" key="flattenedProperties">
-				<string key="-1.CustomClassName">RuleViewController</string>
-				<string key="-1.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="-2.CustomClassName">UIResponder</string>
-				<string key="-2.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="10.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="11.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="12.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="29.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="30.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="31.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="32.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="35.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="5.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="6.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="7.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="8.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-				<string key="9.IBPluginDependency">com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
-			</dictionary>
-			<dictionary class="NSMutableDictionary" key="unlocalizedProperties"/>
-			<nil key="activeLocalization"/>
-			<dictionary class="NSMutableDictionary" key="localizations"/>
-			<nil key="sourceID"/>
-			<int key="maxID">36</int>
-		</object>
-		<object class="IBClassDescriber" key="IBDocument.Classes">
-			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
-				<object class="IBPartialClassDescription">
-					<string key="className">RuleViewController</string>
-					<string key="superclassName">UIViewController</string>
-					<dictionary class="NSMutableDictionary" key="actions">
-						<string key="cancelRuleChange:">id</string>
-						<string key="changeAlgorithm:">id</string>
-						<string key="doRuleChange:">id</string>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="actionInfosByName">
-						<object class="IBActionInfo" key="cancelRuleChange:">
-							<string key="name">cancelRuleChange:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="changeAlgorithm:">
-							<string key="name">changeAlgorithm:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="doRuleChange:">
-							<string key="name">doRuleChange:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="outlets">
-						<string key="algoButton">UIButton</string>
-						<string key="htmlView">UIWebView</string>
-						<string key="rulePicker">UIPickerView</string>
-						<string key="ruleText">UITextField</string>
-						<string key="unknownLabel">UILabel</string>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<object class="IBToOneOutletInfo" key="algoButton">
-							<string key="name">algoButton</string>
-							<string key="candidateClassName">UIButton</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="htmlView">
-							<string key="name">htmlView</string>
-							<string key="candidateClassName">UIWebView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="rulePicker">
-							<string key="name">rulePicker</string>
-							<string key="candidateClassName">UIPickerView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="ruleText">
-							<string key="name">ruleText</string>
-							<string key="candidateClassName">UITextField</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="unknownLabel">
-							<string key="name">unknownLabel</string>
-							<string key="candidateClassName">UILabel</string>
-						</object>
-					</dictionary>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/RuleViewController.h</string>
-					</object>
-				</object>
-			</array>
-		</object>
-		<int key="IBDocument.localizationMode">0</int>
-		<string key="IBDocument.TargetRuntimeIdentifier">IBIPadFramework</string>
-		<bool key="IBDocument.PluginDeclaredDependenciesTrackSystemTargetVersion">YES</bool>
-		<int key="IBDocument.defaultPropertyAccessControl">3</int>
-		<string key="IBCocoaTouchPluginVersion">933</string>
-	</data>
-</archive>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.iPad.XIB" version="3.0" toolsVersion="5056" systemVersion="13E28" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none">
+    <dependencies>
+        <deployment defaultVersion="1280" identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3733"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="RuleViewController">
+            <connections>
+                <outlet property="algoButton" destination="6" id="14"/>
+                <outlet property="htmlView" destination="35" id="36"/>
+                <outlet property="rulePicker" destination="11" id="21"/>
+                <outlet property="ruleText" destination="8" id="15"/>
+                <outlet property="unknownLabel" destination="9" id="16"/>
+                <outlet property="view" destination="12" id="28"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="12">
+            <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
+            <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+            <subviews>
+                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Choose an algorithm:" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="5">
+                    <rect key="frame" x="303" y="389" width="163" height="21"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="6">
+                    <rect key="frame" x="303" y="418" width="163" height="31"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <state key="normal" title="Generations">
+                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="changeAlgorithm:" destination="-1" eventType="touchUpInside" id="17"/>
+                    </connections>
+                </button>
+                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Type in a rule:" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="7">
+                    <rect key="frame" x="330" y="30" width="108" height="21"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="B012345678/S012345678" borderStyle="roundedRect" textAlignment="center" minimumFontSize="17" clearButtonMode="always" id="8">
+                    <rect key="frame" x="173" y="59" width="422" height="31"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                    <textInputTraits key="textInputTraits" returnKeyType="done"/>
+                    <connections>
+                        <outlet property="delegate" destination="-1" id="18"/>
+                    </connections>
+                </textField>
+                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="UNKNOWN RULE!" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="9">
+                    <rect key="frame" x="312" y="98" width="145" height="21"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                    <color key="textColor" red="1" green="0.05970004818" blue="0.1186887449" alpha="1" colorSpace="calibratedRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Pick a named rule:" textAlignment="center" lineBreakMode="tailTruncation" minimumFontSize="10" id="10">
+                    <rect key="frame" x="306" y="140" width="156" height="21"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <pickerView contentMode="scaleToFill" id="11">
+                    <rect key="frame" x="173" y="146" width="422" height="216"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <connections>
+                        <outlet property="dataSource" destination="-1" id="19"/>
+                        <outlet property="delegate" destination="-1" id="20"/>
+                    </connections>
+                </pickerView>
+                <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="29">
+                    <rect key="frame" x="0.0" y="980" width="768" height="44"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                    <items>
+                        <barButtonItem title="Cancel" id="30">
+                            <connections>
+                                <action selector="cancelRuleChange:" destination="-1" id="33"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem style="plain" systemItem="flexibleSpace" id="32"/>
+                        <barButtonItem systemItem="done" id="31">
+                            <connections>
+                                <action selector="doRuleChange:" destination="-1" id="34"/>
+                            </connections>
+                        </barButtonItem>
+                    </items>
+                </toolbar>
+                <webView contentMode="scaleToFill" id="35">
+                    <rect key="frame" x="-2" y="457" width="773" height="523"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
+                    <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <dataDetectorType key="dataDetectorTypes" link="YES"/>
+                </webView>
+            </subviews>
+            <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+        </view>
+    </objects>
+</document>

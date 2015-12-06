@@ -144,3 +144,10 @@ void EnableTabBar(bool enable)
 {
     tabBarController.tabBar.userInteractionEnabled = enable;
 }
+
+// -----------------------------------------------------------------------------
+
+void ShowTabBar(bool show)
+{
+    tabBarController.tabBar.hidden = !show;
+}
