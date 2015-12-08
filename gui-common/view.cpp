@@ -70,6 +70,7 @@ bool waitingforpaste = false;   // waiting for user to decide what to do with pa
 gRect pasterect;                // bounding box of paste image
 int pastex, pastey;             // where user wants to paste clipboard pattern
 
+bool drawingcells = false;      // currently drawing cells?
 bool draw_pending = false;      // delay drawing?
 int pendingx, pendingy;         // start of delayed drawing
 
@@ -92,7 +93,6 @@ static std::string oldrule;             // rule before readclipboard is called
 static std::string newrule;             // rule after readclipboard is called
 static int pastetype;                   // algo type for pastealgo
 
-static bool drawingcells = false;       // drawing cells by dragging finger?
 static bool pickingcells = false;       // picking cell states by dragging finger?
 static bool selectingcells = false;     // selecting cells by dragging finger?
 static bool movingview = false;         // moving view by dragging finger?

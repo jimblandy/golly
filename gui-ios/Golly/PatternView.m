@@ -425,7 +425,7 @@ static double prevtime = 0.0;   // used to detect a double tap
         ClearMessage();
         if (TimeInSeconds() - prevtime < 0.3) {
             // double tap
-            if (waitingforpaste && PointInPasteImage(pt.x, pt.y)) {
+            if (waitingforpaste && PointInPasteImage(pt.x, pt.y) && !drawingcells) {
                 // if generating then stop (consistent with doPaste in PatternViewController.m)
                 StopIfGenerating();
                 ClearMessage();

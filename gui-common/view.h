@@ -45,6 +45,7 @@ extern bool nopattupdate;       // disable pattern updates?
 extern bool waitingforpaste;    // waiting for user to decide what to do with paste image?
 extern gRect pasterect;         // bounding box of paste image
 extern int pastex, pastey;      // where user wants to paste clipboard pattern
+extern bool drawingcells;       // currently drawing cells?
 extern bool draw_pending;       // delay drawing?
 extern int pendingx, pendingy;  // start of delayed drawing
 

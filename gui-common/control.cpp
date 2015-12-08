@@ -461,7 +461,7 @@ bool StartGenerating()
 void StopGenerating()
 {
     if (!generating) Warning("Bug detected in StopGenerating!");
-
+    
     generating = false;
 
     PollerInterrupt();

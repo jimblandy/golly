@@ -31,7 +31,7 @@
 #include "layer.h"       // for AddLayer, currlayer
 #include "file.h"        // for NewPattern
 #include "control.h"     // for generating, StartGenerating, etc
-#include "view.h"        // for nopattupdate, SmallScroll
+#include "view.h"        // for nopattupdate, SmallScroll, drawingcells
 #include "undo.h"        // for currlayer->undoredo->...
 
 #import "GollyAppDelegate.h"        // for EnableTabBar
@@ -341,6 +341,8 @@ static void InitPaths()
 
 - (IBAction)doNew:(id)sender
 {
+    if (drawingcells) return;
+    
     // undo/redo history is about to be cleared so no point calling RememberGenFinish
     // if we're generating a (possibly large) pattern
     bool saveundo = allowundo;
@@ -370,6 +372,8 @@ static void InitPaths()
 
 - (IBAction)doInfo:(id)sender
 {
+    if (drawingcells) return;
+    
     // if generating then just pause the timer so doGeneration won't be called;
     // best not to call PauseGenerating() because it calls StopGenerating()
     // which might result in a lengthy file save for undo/redo
@@ -392,6 +396,8 @@ static void InitPaths()
 
 - (IBAction)doSave:(id)sender
 {
+    if (drawingcells) return;
+    
     [self stopIfGenerating];
     
     if (event_checker > 0) {
@@ -415,6 +421,8 @@ static void InitPaths()
 
 - (IBAction)doUndo:(id)sender
 {
+    if (drawingcells) return;
+    
     [self stopIfGenerating];
     
     if (event_checker > 0) {
@@ -432,6 +440,8 @@ static void InitPaths()
 
 - (IBAction)doRedo:(id)sender
 {
+    if (drawingcells) return;
+    
     [self stopIfGenerating];
     
     if (event_checker > 0) {
@@ -449,6 +459,8 @@ static void InitPaths()
 
 - (IBAction)doReset:(id)sender
 {
+    if (drawingcells) return;
+    
     [self stopIfGenerating];
     
     if (event_checker > 0) {
@@ -466,6 +478,10 @@ static void InitPaths()
 
 - (IBAction)doStartStop:(id)sender
 {
+    if (drawingcells) return;
+    // this can happen on iPad if user taps Start/Stop button while another finger
+    // is currently drawing cells
+    
     ClearMessage();
     if (generating) {
         [self stopGenTimer];
@@ -539,6 +555,8 @@ static void InitPaths()
 
 - (IBAction)doNext:(id)sender
 {
+    if (drawingcells) return;
+    
     [self stopIfGenerating];
     
     if (event_checker > 0) {
@@ -559,6 +577,8 @@ static void InitPaths()
 
 - (IBAction)doStep:(id)sender
 {
+    if (drawingcells) return;
+    
     [self stopIfGenerating];
     
     if (event_checker > 0) {
@@ -727,6 +747,8 @@ static void InitPaths()
 
 - (IBAction)doPaste:(id)sender
 {
+    if (drawingcells) return;
+    
     [self stopIfGenerating];
     
     if (event_checker > 0) {
@@ -748,6 +770,8 @@ static void InitPaths()
 
 - (IBAction)doRule:(id)sender
 {
+    if (drawingcells) return;
+    
     [self stopIfGenerating];
     
     if (event_checker > 0) {
