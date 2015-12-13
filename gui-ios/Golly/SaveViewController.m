@@ -219,7 +219,7 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
 
 - (IBAction)doCancel:(id)sender
 {
-    [self dismissModalViewControllerAnimated:YES];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 // -----------------------------------------------------------------------------
@@ -273,7 +273,7 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
         }
         fclose(f);
         
-        [self dismissModalViewControllerAnimated:YES];
+        [self dismissViewControllerAnimated:YES completion:nil];
         
         // tell caller that the save was a success
         [callingVC saveSucceded:fullpath.c_str()];
@@ -287,7 +287,7 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
         }
         
         // dismiss modal view first in case SavePattern calls BeginProgress
-        [self dismissModalViewControllerAnimated:YES];
+        [self dismissViewControllerAnimated:YES completion:nil];
 
         pattern_format format = currtype < 2 ? XRLE_format : MC_format;
         output_compression compression = currtype % 2 == 0 ? no_compression : gzip_compression;
@@ -377,7 +377,7 @@ void SaveTextFile(const char* filepath, const char* contents, InfoViewController
     SaveViewController *modalSaveController = [[SaveViewController alloc] initWithNibName:nil bundle:nil];
     
     [modalSaveController setModalPresentationStyle:UIModalPresentationFormSheet];
-    [currentView presentModalViewController:modalSaveController animated:YES];
+    [currentView presentViewController:modalSaveController animated:YES completion:nil];
     
     modalSaveController = nil;
     

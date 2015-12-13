@@ -387,7 +387,7 @@ static void InitPaths()
     InfoViewController *modalInfoController = [[InfoViewController alloc] initWithNibName:nil bundle:nil];
     
     [modalInfoController setModalPresentationStyle:UIModalPresentationFullScreen];
-    [self presentModalViewController:modalInfoController animated:YES];
+    [self presentViewController:modalInfoController animated:YES completion:nil];
     
     modalInfoController = nil;
     
@@ -414,7 +414,7 @@ static void InitPaths()
     SaveViewController *modalSaveController = [[SaveViewController alloc] initWithNibName:nil bundle:nil];
     
     [modalSaveController setModalPresentationStyle:UIModalPresentationFormSheet];
-    [self presentModalViewController:modalSaveController animated:YES];
+    [self presentViewController:modalSaveController animated:YES completion:nil];
     
     modalSaveController = nil;
 }
@@ -788,7 +788,7 @@ static void InitPaths()
     RuleViewController *modalRuleController = [[RuleViewController alloc] initWithNibName:nil bundle:nil];
 
     [modalRuleController setModalPresentationStyle:UIModalPresentationFullScreen];
-    [self presentModalViewController:modalRuleController animated:YES];
+    [self presentViewController:modalRuleController animated:YES completion:nil];
     
     modalRuleController = nil;
 }
