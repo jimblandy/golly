@@ -1351,11 +1351,9 @@ const char *ghashbase::readmacrocell(char *line) {
             ind[indlen++] = 0 ;
       }
       if (line[0] == '#') {
-         switch (line[1]) {
          char *p, *pp ;
-
-         // AKT: need to check for explicit rule
          const char *err ;
+         switch (line[1]) {
          case 'R':
             p = line + 2 ;
             while (*p && *p <= ' ') p++ ;

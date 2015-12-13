@@ -1516,9 +1516,9 @@ default:       return "Illegal character in readmacrocell." ;
          clearstack() ;
          ind[i++] = (node *)find_leaf(lnw, lne, lsw, lse) ;
       } else if (line[0] == '#') {
-         switch (line[1]) {
          char *p, *pp ;
          const char *err ;
+         switch (line[1]) {
          case 'R':
             p = line + 2 ;
             while (*p && *p <= ' ') p++ ;
