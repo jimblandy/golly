@@ -111,7 +111,7 @@ static void CreateDocSubdir(NSString *subdirname)
 
 static void InitPaths()
 {
-    // init userdir to directory containing Golly.app
+    // init userdir to directory containing user's data
     userdir = [NSHomeDirectory() cStringUsingEncoding:NSUTF8StringEncoding];
     userdir += "/";
 
@@ -128,7 +128,9 @@ static void InitPaths()
     CreateDocSubdir(@"Rules");
 
     // supplied patterns, rules, help are bundled inside Golly.app
-    supplieddir = userdir + "Golly.app/";
+    NSString *appdir = [[NSBundle mainBundle] resourcePath];
+    supplieddir = [appdir cStringUsingEncoding:NSUTF8StringEncoding];
+    supplieddir += "/";
     patternsdir = supplieddir + "Patterns/";
     rulesdir = supplieddir + "Rules/";
     helpdir = supplieddir + "Help/";
@@ -142,7 +144,7 @@ static void InitPaths()
     // init path to file that stores user preferences
     prefsfile = userdir + "Library/Preferences/GollyPrefs";
 
-    /*
+#if 0
     NSLog(@"userdir =     %s", userdir.c_str());
     NSLog(@"savedir =     %s", savedir.c_str());
     NSLog(@"downloaddir = %s", downloaddir.c_str());
@@ -154,7 +156,7 @@ static void InitPaths()
     NSLog(@"tempdir =     %s", tempdir.c_str());
     NSLog(@"clipfile =    %s", clipfile.c_str());
     NSLog(@"prefsfile =   %s", prefsfile.c_str());
-    */
+#endif
 }
 
 // -----------------------------------------------------------------------------

@@ -28,6 +28,8 @@
 		0D10CE96156A3CF2001DC67F /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D10CE95156A3CF2001DC67F /* Icon.png */; };
 		0D1E9E6D17420EE2002C1270 /* triangle-right.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D1E9E6B17420EE2002C1270 /* triangle-right.png */; };
 		0D1E9E6E17420EE2002C1270 /* triangle-down.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D1E9E6C17420EE2002C1270 /* triangle-down.png */; };
+		0D2AA2F21C1C4B0B00484BB6 /* Patterns in Resources */ = {isa = PBXBuildFile; fileRef = 0D2AA2F11C1C4B0B00484BB6 /* Patterns */; };
+		0D2AA2F41C1C4B2400484BB6 /* Rules in Resources */ = {isa = PBXBuildFile; fileRef = 0D2AA2F31C1C4B2400484BB6 /* Rules */; };
 		0D2D9AAF156A00F3005B8D19 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D2D9AAE156A00F3005B8D19 /* libz.dylib */; };
 		0D41CD35157C225F0032B05A /* StateView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D41CD34157C225F0032B05A /* StateView.m */; };
 		0D602F38157320D200F51C02 /* beep.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 0D602F37157320D200F51C02 /* beep.aiff */; };
@@ -39,7 +41,6 @@
 		0D62FCF4159BCDCC005506CA /* SaveViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D62FCF2159BCDCC005506CA /* SaveViewController.xib */; };
 		0D64693E1599D04A00433025 /* OpenViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D64693C1599D04A00433025 /* OpenViewController.m */; };
 		0D64693F1599D04A00433025 /* OpenViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D64693D1599D04A00433025 /* OpenViewController.xib */; };
-		0D71520A181A0C9D00840795 /* Help in Resources */ = {isa = PBXBuildFile; fileRef = 0D715209181A0C9D00840795 /* Help */; };
 		0D8A223F1798EA17006044E7 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D8A22371798EA17006044E7 /* ioapi.c */; };
 		0D8A22411798EA17006044E7 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D8A223B1798EA17006044E7 /* unzip.c */; };
 		0D8A22421798EA17006044E7 /* zip.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D8A223D1798EA17006044E7 /* zip.c */; };
@@ -55,8 +56,6 @@
 		0D9D15B915B67E340081C8AB /* help.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D9D15B715B67E340081C8AB /* help.png */; };
 		0D9D15BA15B67E340081C8AB /* help@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D9D15B815B67E340081C8AB /* help@2x.png */; };
 		0D9D4DC4156E1F97005DD91D /* StatusView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D9D4DC3156E1F97005DD91D /* StatusView.m */; };
-		0DA5B31D15F03332005EBBE8 /* Patterns in Resources */ = {isa = PBXBuildFile; fileRef = 0DA5B31C15F03332005EBBE8 /* Patterns */; };
-		0DA5B31F15F0336C005EBBE8 /* Rules in Resources */ = {isa = PBXBuildFile; fileRef = 0DA5B31E15F0336C005EBBE8 /* Rules */; };
 		0DA5B34715F03654005EBBE8 /* bigint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B32315F03654005EBBE8 /* bigint.cpp */; };
 		0DA5B34815F03654005EBBE8 /* generationsalgo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B32515F03654005EBBE8 /* generationsalgo.cpp */; };
 		0DA5B34915F03654005EBBE8 /* ghashbase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B32715F03654005EBBE8 /* ghashbase.cpp */; };
@@ -76,6 +75,7 @@
 		0DA5B35715F03654005EBBE8 /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34115F03654005EBBE8 /* util.cpp */; };
 		0DA5B35815F03654005EBBE8 /* viewport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34315F03654005EBBE8 /* viewport.cpp */; };
 		0DA5B35915F03654005EBBE8 /* writepattern.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34515F03654005EBBE8 /* writepattern.cpp */; settings = {COMPILER_FLAGS = "-DZLIB"; }; };
+		0DB7062E1C1C163D008A57C8 /* Help in Resources */ = {isa = PBXBuildFile; fileRef = 0DB7062D1C1C163D008A57C8 /* Help */; };
 		0DBD205B1C131D9E007A70EF /* PatternViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0DBD205A1C131D9E007A70EF /* PatternViewController.xib */; };
 		0DD0EF97178017020061E9A1 /* algos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF81178017020061E9A1 /* algos.cpp */; };
 		0DD0EF98178017020061E9A1 /* control.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF83178017020061E9A1 /* control.cpp */; };
@@ -123,6 +123,8 @@
 		0D10CE95156A3CF2001DC67F /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		0D1E9E6B17420EE2002C1270 /* triangle-right.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "triangle-right.png"; sourceTree = "<group>"; };
 		0D1E9E6C17420EE2002C1270 /* triangle-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "triangle-down.png"; sourceTree = "<group>"; };
+		0D2AA2F11C1C4B0B00484BB6 /* Patterns */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Patterns; path = ../Patterns; sourceTree = "<group>"; };
+		0D2AA2F31C1C4B2400484BB6 /* Rules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Rules; path = ../Rules; sourceTree = "<group>"; };
 		0D2D9AAE156A00F3005B8D19 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		0D41CD33157C225F0032B05A /* StateView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StateView.h; sourceTree = "<group>"; };
 		0D41CD34157C225F0032B05A /* StateView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StateView.m; sourceTree = "<group>"; };
@@ -139,7 +141,6 @@
 		0D64693B1599D04A00433025 /* OpenViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenViewController.h; sourceTree = "<group>"; };
 		0D64693C1599D04A00433025 /* OpenViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OpenViewController.m; sourceTree = "<group>"; };
 		0D64693D1599D04A00433025 /* OpenViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = OpenViewController.xib; sourceTree = "<group>"; };
-		0D715209181A0C9D00840795 /* Help */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Help; path = "../../gui-common/Help"; sourceTree = "<group>"; };
 		0D8A22361798EA17006044E7 /* crypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypt.h; sourceTree = "<group>"; };
 		0D8A22371798EA17006044E7 /* ioapi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ioapi.c; sourceTree = "<group>"; };
 		0D8A22381798EA17006044E7 /* ioapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ioapi.h; sourceTree = "<group>"; };
@@ -162,8 +163,6 @@
 		0D9D15B815B67E340081C8AB /* help@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "help@2x.png"; sourceTree = "<group>"; };
 		0D9D4DC2156E1F97005DD91D /* StatusView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StatusView.h; sourceTree = "<group>"; };
 		0D9D4DC3156E1F97005DD91D /* StatusView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StatusView.m; sourceTree = "<group>"; };
-		0DA5B31C15F03332005EBBE8 /* Patterns */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Patterns; path = ../../Patterns; sourceTree = "<group>"; };
-		0DA5B31E15F0336C005EBBE8 /* Rules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Rules; path = ../../Rules; sourceTree = "<group>"; };
 		0DA5B32315F03654005EBBE8 /* bigint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bigint.cpp; sourceTree = "<group>"; };
 		0DA5B32415F03654005EBBE8 /* bigint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bigint.h; sourceTree = "<group>"; };
 		0DA5B32515F03654005EBBE8 /* generationsalgo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = generationsalgo.cpp; sourceTree = "<group>"; };
@@ -200,6 +199,7 @@
 		0DA5B34415F03654005EBBE8 /* viewport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = viewport.h; sourceTree = "<group>"; };
 		0DA5B34515F03654005EBBE8 /* writepattern.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = writepattern.cpp; sourceTree = "<group>"; };
 		0DA5B34615F03654005EBBE8 /* writepattern.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = writepattern.h; sourceTree = "<group>"; };
+		0DB7062D1C1C163D008A57C8 /* Help */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Help; path = "../gui-common/Help"; sourceTree = "<group>"; };
 		0DBD205A1C131D9E007A70EF /* PatternViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = PatternViewController.xib; sourceTree = "<group>"; };
 		0DD0EF81178017020061E9A1 /* algos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = algos.cpp; sourceTree = "<group>"; };
 		0DD0EF82178017020061E9A1 /* algos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = algos.h; sourceTree = "<group>"; };
@@ -250,6 +250,9 @@
 		0D078718156881080051973C = {
 			isa = PBXGroup;
 			children = (
+				0D2AA2F31C1C4B2400484BB6 /* Rules */,
+				0D2AA2F11C1C4B0B00484BB6 /* Patterns */,
+				0DB7062D1C1C163D008A57C8 /* Help */,
 				0D07872D156881080051973C /* Golly */,
 				0D078726156881080051973C /* Frameworks */,
 				0D078724156881080051973C /* Products */,
@@ -325,9 +328,6 @@
 		0D07872E156881080051973C /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				0D715209181A0C9D00840795 /* Help */,
-				0DA5B31E15F0336C005EBBE8 /* Rules */,
-				0DA5B31C15F03332005EBBE8 /* Patterns */,
 				0D10CE95156A3CF2001DC67F /* Icon.png */,
 				0D068EB415D93F4300A4EAB3 /* Icon@2x.png */,
 				0D068EB515D93F4300A4EAB3 /* iTunesArtwork */,
@@ -500,6 +500,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D2AA2F41C1C4B2400484BB6 /* Rules in Resources */,
+				0D2AA2F21C1C4B0B00484BB6 /* Patterns in Resources */,
+				0DB7062E1C1C163D008A57C8 /* Help in Resources */,
 				0D078732156881080051973C /* InfoPlist.strings in Resources */,
 				0D07873D156881080051973C /* pattern.png in Resources */,
 				0D07873F156881080051973C /* pattern@2x.png in Resources */,
@@ -523,11 +526,8 @@
 				0D068EB915D93F4300A4EAB3 /* iTunesArtwork@2x in Resources */,
 				0D068EC115D9DD3A00A4EAB3 /* Default-Portrait~ipad.png in Resources */,
 				0D068EC215D9DD3A00A4EAB3 /* Default-Landscape~ipad.png in Resources */,
-				0DA5B31D15F03332005EBBE8 /* Patterns in Resources */,
-				0DA5B31F15F0336C005EBBE8 /* Rules in Resources */,
 				0D1E9E6D17420EE2002C1270 /* triangle-right.png in Resources */,
 				0D1E9E6E17420EE2002C1270 /* triangle-down.png in Resources */,
-				0D71520A181A0C9D00840795 /* Help in Resources */,
 				0DBD205B1C131D9E007A70EF /* PatternViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -546,7 +546,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/tcsh;
-			shellScript = "touch -cm ${SRCROOT}/Help\ntouch -cm ${SRCROOT}/Patterns\ntouch -cm ${SRCROOT}/Rules\n";
+			shellScript = "touch -cm ${SRCROOT}/../gui-common/Help\ntouch -cm ${SRCROOT}/../Patterns\ntouch -cm ${SRCROOT}/../Rules\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -649,7 +649,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 2;
@@ -678,7 +678,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 2;
@@ -702,7 +702,7 @@
 				);
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "Golly/Golly-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = 2;
@@ -722,7 +722,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = IOS_GUI;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "Golly/Golly-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = 2;
@@ -753,7 +753,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
@@ -774,7 +774,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = IOS_GUI;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "Golly/Golly-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = 2;
