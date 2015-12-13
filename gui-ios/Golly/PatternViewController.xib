@@ -48,7 +48,7 @@
                         </barButtonItem>
                         <barButtonItem style="plain" id="17">
                             <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="16">
-                                <rect key="frame" x="50" y="7" width="70" height="30"/>
+                                <rect key="frame" x="54" y="7" width="70" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <state key="normal" title="START">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
@@ -70,7 +70,7 @@
                         </barButtonItem>
                         <barButtonItem style="plain" id="41">
                             <segmentedControl key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="bar" selectedSegmentIndex="0" momentary="YES" id="40">
-                                <rect key="frame" x="222" y="7" width="163" height="30"/>
+                                <rect key="frame" x="226" y="7" width="163" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <segments>
                                     <segment title="Slower"/>
@@ -90,7 +90,7 @@
                         </barButtonItem>
                         <barButtonItem style="plain" id="42">
                             <segmentedControl key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="bar" selectedSegmentIndex="0" momentary="YES" id="43">
-                                <rect key="frame" x="497" y="7" width="192" height="30"/>
+                                <rect key="frame" x="494" y="7" width="192" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <segments>
                                     <segment title="Smaller"/>
@@ -116,7 +116,7 @@
                 </view>
                 <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="10" customClass="PatternView">
                     <rect key="frame" x="0.0" y="152" width="768" height="780"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES" flexibleMaxY="YES"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
                     <subviews>
                         <button opaque="NO" alpha="0.69999998807907104" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="189">
                             <rect key="frame" x="677" y="686" width="81" height="30"/>
@@ -164,7 +164,7 @@
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="129"/>
                         <barButtonItem style="plain" id="132">
                             <view key="customView" opaque="NO" clearsContextBeforeDrawing="NO" userInteractionEnabled="NO" contentMode="scaleToFill" id="131">
-                                <rect key="frame" x="407" y="6" width="66" height="32"/>
+                                <rect key="frame" x="403" y="6" width="66" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <subviews>
                                     <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="State=255" textAlignment="right" lineBreakMode="tailTruncation" minimumFontSize="10" id="133">
@@ -180,14 +180,14 @@
                         </barButtonItem>
                         <barButtonItem style="plain" id="120">
                             <view key="customView" contentMode="scaleToFill" id="119" customClass="StateView">
-                                <rect key="frame" x="483" y="6" width="33" height="33"/>
+                                <rect key="frame" x="479" y="5.5" width="33" height="33"/>
                                 <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
                         </barButtonItem>
                         <barButtonItem width="10" style="plain" systemItem="fixedSpace" id="214"/>
                         <barButtonItem style="plain" id="114">
                             <segmentedControl key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="bar" selectedSegmentIndex="0" id="112">
-                                <rect key="frame" x="536" y="7" width="216" height="30"/>
+                                <rect key="frame" x="532" y="7" width="216" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <segments>
                                     <segment title="Draw"/>

@@ -44,3 +44,6 @@ void EnableTabBar(bool enable);
 
 // show/hide tab bar
 void ShowTabBar(bool show);
+
+// get height of tab bar
+CGFloat TabBarHeight();

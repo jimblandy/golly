@@ -151,3 +151,10 @@ void ShowTabBar(bool show)
 {
     tabBarController.tabBar.hidden = !show;
 }
+
+// -----------------------------------------------------------------------------
+
+CGFloat TabBarHeight()
+{
+    return tabBarController.tabBar.frame.size.height;
+}

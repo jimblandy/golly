@@ -809,7 +809,7 @@ static void InitPaths()
         CGFloat x = pattView.superview.frame.origin.x;
         CGFloat y = pattView.superview.frame.origin.y + topht;
         CGFloat wd = pattView.superview.frame.size.width;
-        CGFloat ht = pattView.superview.frame.size.height - (topht + barht);
+        CGFloat ht = pattView.superview.frame.size.height - (topht + barht + TabBarHeight());
         pattView.frame = CGRectMake(x, y, wd, ht);
         [statView setNeedsDisplay];
     } else {

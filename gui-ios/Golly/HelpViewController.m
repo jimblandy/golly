@@ -190,9 +190,18 @@ static std::string pageurl;
 
     // need URL of this page for relative "get:" links
     NSString *str = [htmlView stringByEvaluatingJavaScriptFromString:@"window.location.href"];
-    // note that htmlView.request.mainDocumentURL.absoluteString returns the
-    // same URL string, but with "%20" instead of spaces (GetURL wants spaces)
+    
+    // we could use this instead:
+    // NSString *str = htmlView.request.mainDocumentURL.absoluteString;
+    
     pageurl = [str cStringUsingEncoding:NSUTF8StringEncoding];
+    
+    // replace each %20 in pageurl with a space (for GetURL)
+    for (size_t pos = pageurl.find("%20");
+         pos != std::string::npos;
+         pos = pageurl.find("%20", pos)) {
+        pageurl.replace(pos, 3, " ");
+    }
 }
 
 // -----------------------------------------------------------------------------
