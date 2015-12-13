@@ -1263,7 +1263,6 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(1.0, 1.0, 1.0, 1.0);
-    // no need???!!! glClear(GL_COLOR_BUFFER_BIT);
 }
 
 // -----------------------------------------------------------------------------
@@ -1950,8 +1949,8 @@ static bool CreateProgramObjects()
     glGenBuffers(1, &vertexPosObject);
     glBindBuffer(GL_ARRAY_BUFFER, vertexPosObject);
 
-    // create buffer for index data (used for drawing textures)
-    // where each cell = 2 triangles with 2 shared vertices (0 and 2)
+    // create index data for glDrawElements (used for drawing textures)
+    // where each texture = 2 triangles with 2 shared vertices (0 and 2)
     //
     //    0 *---* 3
     //      | \ |
@@ -1962,9 +1961,6 @@ static bool CreateProgramObjects()
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    
-    // use the pointProgram initially???!!!
-    glUseProgram(pointProgram);
     
     return true;
 }
