@@ -125,20 +125,21 @@
         // show state number in top left corner of box, as black text on white
         NSString *num = [NSString stringWithFormat:@"%d", i];
         CGRect textrect;
-        textrect.size = [num sizeWithFont:numfont];
+        textrect.size = [num sizeWithAttributes:@{NSFontAttributeName:numfont}];
+        textrect.size = CGSizeMake(ceilf(textrect.size.width), ceilf(textrect.size.height));
         textrect.origin.x = x+1;
         textrect.origin.y = y+1;
-        textrect.size.height -= 3;
+        textrect.size.height -= 2;
         [[UIColor whiteColor] setFill];
         CGContextFillRect(context, textrect);
         textrect.origin.y -= 2;
         [[UIColor blackColor] setFill];
-        [num drawInRect:textrect withFont:numfont];
+        [num drawInRect:textrect withAttributes:@{NSFontAttributeName:numfont}];
         
         // avoid fuzzy lines
         CGContextSetShouldAntialias(context, false);
         
-        // draw lines around box (why do we need to add 1 to y coords???)
+        // draw lines around box
         CGContextMoveToPoint(context, x, y+1);
         CGContextAddLineToPoint(context, x+32, y+1);
         CGContextAddLineToPoint(context, x+32, y+33);

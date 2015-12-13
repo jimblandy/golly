@@ -465,7 +465,7 @@ static int globalButton;
 
 - (IBAction)cancelRuleChange:(id)sender
 {
-    [self dismissModalViewControllerAnimated:YES];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 // -----------------------------------------------------------------------------
@@ -482,7 +482,7 @@ static int globalButton;
     }
     
     // dismiss modal view first in case ChangeAlgorithm calls BeginProgress
-    [self dismissModalViewControllerAnimated:YES];
+    [self dismissViewControllerAnimated:YES completion:nil];
     
     // get current rule in ruleText
     std::string newrule = [ruleText.text cStringUsingEncoding:NSUTF8StringEncoding];
@@ -625,7 +625,7 @@ static int globalButton;
         // look for special prefixes used by Golly (and return NO if found)
         if ([link hasPrefix:@"open:"]) {
             // open specified file, but dismiss modal view first in case OpenFile calls BeginProgress
-            [self dismissModalViewControllerAnimated:YES];
+            [self dismissViewControllerAnimated:YES completion:nil];
             std::string path = [[link substringFromIndex:5] cStringUsingEncoding:NSUTF8StringEncoding];
             OpenFile(path.c_str());
             SavePrefs();

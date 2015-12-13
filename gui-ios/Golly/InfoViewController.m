@@ -185,7 +185,7 @@ static bool textchanged = false;    // true if user changed text
         return;
     }
     
-    [self dismissModalViewControllerAnimated:YES];
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 // -----------------------------------------------------------------------------
@@ -234,7 +234,7 @@ void ShowTextFile(const char* filepath, UIViewController* currentView)
     [modalInfoController setModalPresentationStyle:UIModalPresentationFullScreen];
     
     if (currentView == nil) currentView = CurrentViewController();
-    [currentView presentModalViewController:modalInfoController animated:YES];
+    [currentView presentViewController:modalInfoController animated:YES completion:nil];
     
     modalInfoController = nil;
     

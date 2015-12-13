@@ -34,13 +34,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 using namespace std ;
 
 #ifdef IOS_GUI
-// AKT: logpmsize needs to be 8 in iOS 9.x to avoid drawing bugs -- why???!!!
-const int logpmsize = 8;                     // 8=256x256
+    // AKT: logpmsize needs to be 8 in iOS 9.x to avoid drawing bugs -- why???!!!
+    const int logpmsize = 8;                 // 8=256x256
 #else
-// 64x64 is slightly faster on Mac (< 1%) and Win (1 to 2%)
-// and much faster on Linux/GTK (5 to 40%)
-// AKT: above testing was for wxBitmap drawing so needs to be redone for OpenGL!!!
-const int logpmsize = 6;                     // 6=64x64
+    // 64x64 is slightly faster on Mac (< 1%) and Win (1 to 2%)
+    // and much faster on Linux/GTK (5 to 40%)
+    // AKT: above testing was for wxBitmap drawing so needs to be redone for OpenGL!!!
+    const int logpmsize = 6;                 // 6=64x64
 #endif
 
 const int pmsize = (1<<logpmsize) ;          // pixmap wd and ht, in pixels

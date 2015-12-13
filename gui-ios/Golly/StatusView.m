@@ -64,30 +64,30 @@
     
     // get font to draw lines (do only once)
     static UIFont *font = nil;
-    if (font == nil) font = [UIFont systemFontOfSize:13];
+    if (font == nil) font = [UIFont systemFontOfSize:14];
     
     // set position of text in each line
     float lineht = ht / 3.0;
     CGRect rect1, rect2;
-    rect1.size = [line1 sizeWithFont:font];
-    rect2.size = [line2 sizeWithFont:font];
+    rect1.size = [line1 sizeWithAttributes:@{NSFontAttributeName:font}];
+    rect2.size = [line2 sizeWithAttributes:@{NSFontAttributeName:font}];
     rect1.origin.x = 5.0;
     rect2.origin.x = 5.0;
     rect1.origin.y = (lineht / 2.0) - (rect1.size.height / 2.0);
     rect2.origin.y = rect1.origin.y + lineht;
     
     // draw the top 2 lines
-    [line1 drawInRect:rect1 withFont:font];
-    [line2 drawInRect:rect2 withFont:font];
+    [line1 drawInRect:rect1 withAttributes:@{NSFontAttributeName:font}];
+    [line2 drawInRect:rect2 withAttributes:@{NSFontAttributeName:font}];
 
     if (status3.length() > 0) {
         // display message on bottom line
         NSString *line3 = [NSString stringWithCString:status3.c_str() encoding:NSUTF8StringEncoding];
         CGRect rect3;
-        rect3.size = [line3 sizeWithFont:font];
+        rect3.size = [line3 sizeWithAttributes:@{NSFontAttributeName:font}];
         rect3.origin.x = 5.0;
         rect3.origin.y = rect2.origin.y + lineht;
-        [line3 drawInRect:rect3 withFont:font];
+        [line3 drawInRect:rect3 withAttributes:@{NSFontAttributeName:font}];
     }
 }
 

@@ -243,8 +243,8 @@ static int startx, starty;
         if (currlayer->touchmode == movemode) {
             // if velocity is high then move further in current direction
             CGPoint velocity = [gestureRecognizer velocityInView:self];
-            if (abs(velocity.x) > 1000.0 || abs(velocity.y) > 1000.0) {
-                TouchMoved(prevpt.x + delta.x * abs(velocity.x/100.0), prevpt.y + delta.y * abs(velocity.y/100.0));
+            if (fabs(velocity.x) > 1000.0 || fabs(velocity.y) > 1000.0) {
+                TouchMoved(prevpt.x + delta.x * fabs(velocity.x/100.0), prevpt.y + delta.y * fabs(velocity.y/100.0));
             }
         }
         TouchEnded();
@@ -280,8 +280,8 @@ static int startx, starty;
     } else if (state == UIGestureRecognizerStateEnded) {
         // if velocity is high then move further in current direction
         CGPoint velocity = [gestureRecognizer velocityInView:self];
-        if (abs(velocity.x) > 1000.0 || abs(velocity.y) > 1000.0) {
-            TouchMoved(prevpt.x + delta.x * abs(velocity.x/100.0), prevpt.y + delta.y * abs(velocity.y/100.0));
+        if (fabs(velocity.x) > 1000.0 || fabs(velocity.y) > 1000.0) {
+            TouchMoved(prevpt.x + delta.x * fabs(velocity.x/100.0), prevpt.y + delta.y * fabs(velocity.y/100.0));
         }
         TouchEnded();
         currlayer->touchmode = oldmode;
