@@ -33,16 +33,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <algorithm>
 using namespace std ;
 
-#ifdef IOS_GUI
-    // AKT: logpmsize needs to be 8 in iOS 9.x to avoid drawing bugs -- why???!!!
-    const int logpmsize = 8;                 // 8=256x256
-#else
-    // 64x64 is slightly faster on Mac (< 1%) and Win (1 to 2%)
-    // and much faster on Linux/GTK (5 to 40%)
-    // AKT: above testing was for wxBitmap drawing so needs to be redone for OpenGL!!!
-    const int logpmsize = 6;                 // 6=64x64
-#endif
+// AKT: a 256x256 pixmap is good for OpenGL and matches the size
+// used in qlifedraw.cpp and hlifedraw.cpp;
+// note that logpmsize *must* be 8 in iOS 9.x to avoid drawing problems
+// in my iPad (probably due to a bug in the OpenGL ES 2 driver)
 
+const int logpmsize = 8;                     // 8=256x256
 const int pmsize = (1<<logpmsize) ;          // pixmap wd and ht, in pixels
 const int bpp = 4 ;                          // bytes per pixel (RGBA)
 const int rowoff = (pmsize*bpp) ;            // row offset, in bytes

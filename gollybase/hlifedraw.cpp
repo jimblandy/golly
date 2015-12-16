@@ -32,14 +32,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <algorithm>
 using namespace std ;
 
-const int logbmsize = 7 ;                 // 6=64x64  7=128x128  8=256x256
+const int logbmsize = 8 ;                 // 8=256x256
 const int bmsize = (1<<logbmsize) ;
 const int byteoff = (bmsize/8) ;
 const int ibufsize = (bmsize*bmsize/32) ;
-static unsigned int ibigbuf[ibufsize] ;   // a shared buffer for 128x128 pixels
+static unsigned int ibigbuf[ibufsize] ;   // a shared buffer for 256x256 pixels
 static unsigned char *bigbuf = (unsigned char *)ibigbuf ;
 
-// AKT: 128x128 pixmap where each pixel is 4 RGBA bytes
+// AKT: 256x256 pixmap where each pixel is 4 RGBA bytes
 static unsigned char pixbuf[bmsize*bmsize*4];
 
 // AKT: RGBA values for cell states (see getcolors call)
