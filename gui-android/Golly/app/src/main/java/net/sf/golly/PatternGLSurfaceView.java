@@ -29,7 +29,6 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.opengl.GLES20;
 import android.content.Context;
-// ???!!! import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 // import android.util.Log;
@@ -115,10 +114,6 @@ public class PatternGLSurfaceView extends GLSurfaceView {
 
         // create an OpenGL ES 2.0 context
         setEGLContextClientVersion(2);
-        
-        // no longer needed???!!!
-        // super.setEGLConfigChooser(8, 8, 8, 8, 0/*no depth*/, 0);
-        // getHolder().setFormat(PixelFormat.RGBA_8888);	// avoid crash on some devices
         
         setRenderer(new PatternRenderer());
         setRenderMode(RENDERMODE_WHEN_DIRTY);

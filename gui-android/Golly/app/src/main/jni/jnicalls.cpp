@@ -76,6 +76,8 @@ static bool rendering = false;          // in DrawPattern?
 static bool paused = false;             // generating has been paused?
 static bool touching_pattern = false;   // is pattern being touched?
 static bool highdensity = false;        // screen density is > 300dpi?
+static bool temporary_mode = false;     // is user doing a multi-finger pan/zoom?
+static TouchModes oldmode;              // touch mode at start of multi-finger pan/zoom
 
 // -----------------------------------------------------------------------------
 
@@ -820,6 +822,9 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeMiddle(JNIEnv* env)
 extern "C"
 JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetMode(JNIEnv* env)
 {
+    // avoid mode button changing to Move during a multi-finger pan/zoom
+    if (temporary_mode) return oldmode;
+
     switch (currlayer->touchmode) {
         case drawmode:   return 0;
         case pickmode:   return 1;
@@ -1214,14 +1219,13 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeTouchEnded(J
 
 // -----------------------------------------------------------------------------
 
-static TouchModes oldmode;
-
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeMoveMode(JNIEnv* env)
 {
     // temporarily switch touch mode to movemode
     oldmode = currlayer->touchmode;
     currlayer->touchmode = movemode;
+    temporary_mode = true;
 }
 
 // -----------------------------------------------------------------------------
@@ -1231,6 +1235,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeRestoreMode(
 {
     // restore touch mode saved in nativeMoveMode
     currlayer->touchmode = oldmode;
+    temporary_mode = false;
+    
+    // ensure correct touch mode is displayed (might not be if user tapped a mode button
+    // with another finger while doing a two-finger pan/zoom)
+    UpdateEditBar();
 }
 
 // -----------------------------------------------------------------------------
