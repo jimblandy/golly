@@ -87,11 +87,10 @@ static bigint anchorx, anchory;         // anchor cell of current selection
 static Selection prevsel;               // previous selection
 static int drawstate;                   // new cell state (0..255)
 
-static lifealgo* pastealgo = NULL;      // temporary universe with pattern to be pasted
+static Layer* pastelayer = NULL;        // temporary layer with pattern to be pasted
 static gRect pastebox;                  // bounding box (in cells) for paste pattern
 static std::string oldrule;             // rule before readclipboard is called
 static std::string newrule;             // rule after readclipboard is called
-static int pastetype;                   // algo type for pastealgo
 
 static bool pickingcells = false;       // picking cell states by dragging finger?
 static bool selectingcells = false;     // selecting cells by dragging finger?
@@ -141,7 +140,7 @@ void FitInView(int force)
 {
     if (waitingforpaste && currlayer->algo->isEmpty()) {
         // fit paste image in viewport if there is no pattern
-        // (note that pastealgo->fit() won't work because paste image
+        // (note that pastelayer->algo->fit() won't work because paste image
         // might be bigger than paste pattern)
 
         int vwd = currlayer->view->getxmax();
@@ -930,7 +929,7 @@ bool RotateSelection(bool clockwise, bool inundoredo)
 
 // -----------------------------------------------------------------------------
 
-bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
+bool GetClipboardPattern(Layer* templayer, bigint* t, bigint* l, bigint* b, bigint* r)
 {
     std::string data;
     if ( !GetTextFromClipboard(data) ) return false;
@@ -952,16 +951,16 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
     // remember current rule
     oldrule = currlayer->algo->getrule();
 
-    const char* err = readclipboard(clipfile.c_str(), *pastealgo, t, l, b, r);
+    const char* err = readclipboard(clipfile.c_str(), *templayer->algo, t, l, b, r);
     if (err) {
         // cycle thru all other algos until readclipboard succeeds
         for (int i = 0; i < NumAlgos(); i++) {
             if (i != currlayer->algtype) {
-                delete pastealgo;
-                pastealgo = CreateNewUniverse(i);
-                err = readclipboard(clipfile.c_str(), *pastealgo, t, l, b, r);
+                delete templayer->algo;
+                templayer->algo = CreateNewUniverse(i);
+                err = readclipboard(clipfile.c_str(), *templayer->algo, t, l, b, r);
                 if (!err) {
-                    pastetype = i;   // remember algo type for later use in PasteTemporaryToCurrent
+                    templayer->algtype = i;
                     break;
                 }
             }
@@ -975,7 +974,7 @@ bool GetClipboardPattern(bigint* t, bigint* l, bigint* b, bigint* r)
             newrule = oldrule;
         } else {
             // remember rule set by readclipboard
-            newrule = pastealgo->getrule();
+            newrule = templayer->algo->getrule();
         }
     }
 
@@ -1054,22 +1053,29 @@ void PasteClipboard()
     // and switch to that rule
     if (ClipboardContainsRule()) return;
 
-    // create a temporary universe for storing the clipboard pattern
-    if (pastealgo) {
+    // create a temporary layer for storing the clipboard pattern
+    if (pastelayer) {
         Warning("Bug detected in PasteClipboard!");
-        delete pastealgo;
+        delete pastelayer;
         // might as well continue
     }
-    pastealgo = CreateNewUniverse(currlayer->algtype);
-    pastetype = currlayer->algtype;
+    pastelayer = CreateTemporaryLayer();
+    if (!pastelayer) return;
 
-    // read clipboard pattern into temporary universe
+    // read clipboard pattern into pastelayer
     bigint top, left, bottom, right;
-    if ( GetClipboardPattern(&top, &left, &bottom, &right) ) {
+    if ( GetClipboardPattern(pastelayer, &top, &left, &bottom, &right) ) {
         // make sure given edges are within getcell/setcell limits
         if ( OutsideLimits(top, left, bottom, right) ) {
             ErrorMessage("Clipboard pattern is too big.");
         } else {
+            // temporarily set currlayer to pastelayer so we can update the
+            // paste pattern's colors and icons
+            Layer* savelayer = currlayer;
+            currlayer = pastelayer;
+            UpdateLayerColors();
+            currlayer = savelayer;
+            
             #ifdef WEB_GUI
                 DisplayMessage("Drag paste image to desired location then right-click on it.");
             #else
@@ -1094,14 +1100,14 @@ void PasteClipboard()
             int wd = iright - ileft + 1;
             int ht = ibottom - itop + 1;
             SetRect(pastebox, ileft, itop, wd, ht);
-            InitPaste(pastealgo, pastebox);
+            InitPaste(pastelayer, pastebox);
         }
     }
 
     // waitingforpaste will only be false if an error occurred
     if (!waitingforpaste) {
-        delete pastealgo;
-        pastealgo = NULL;
+        delete pastelayer;
+        pastelayer = NULL;
     }
 }
 
@@ -1121,7 +1127,7 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
         return;
     }
 
-    // set edges of pattern in pastealgo
+    // set edges of pattern in pastelayer
     int itop = pastebox.y;
     int ileft = pastebox.x;
     int ibottom = pastebox.y + pastebox.height - 1;
@@ -1140,10 +1146,10 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
     if (canchangerule > 0 && oldrule != newrule) {
         const char* err = currlayer->algo->setrule( newrule.c_str() );
         // setrule can fail if readclipboard loaded clipboard pattern into
-        // a different type of algo (pastetype)
+        // a different type of algo
         if (err) {
             // allow rule change to cause algo change
-            ChangeAlgorithm(pastetype, newrule.c_str());
+            ChangeAlgorithm(pastelayer->algtype, newrule.c_str());
         } else {
             // if grid is bounded then remove any live cells outside grid edges
             if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
@@ -1189,6 +1195,7 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
     bool abort = false;
     bool pattchanged = false;
     bool reduced = false;
+    lifealgo* pastealgo = pastelayer->algo;
     lifealgo* curralgo = currlayer->algo;
     int maxstate = curralgo->NumCellStates() - 1;
 
@@ -1379,9 +1386,9 @@ void AbortPaste()
     waitingforpaste = false;
     pastex = -1;
     pastey = -1;
-    if (pastealgo) {
-        delete pastealgo;
-        pastealgo = NULL;
+    if (pastelayer) {
+        delete pastelayer;
+        pastelayer = NULL;
     }
 }
 
@@ -1392,24 +1399,24 @@ bool FlipPastePattern(bool topbottom)
     bool result;
     Selection pastesel(pastebox.y, pastebox.x, pastebox.y + pastebox.height - 1, pastebox.x + pastebox.width - 1);
 
-    // flip the pattern in pastealgo
+    // flip the pattern in pastelayer
     lifealgo* savealgo = currlayer->algo;
     int savetype = currlayer->algtype;
-    currlayer->algo = pastealgo;
-    currlayer->algtype = pastetype;
+    currlayer->algo = pastelayer->algo;
+    currlayer->algtype = pastelayer->algtype;
     // pass in true for inundoredo parameter so flip won't be remembered
     // and layer won't be marked as dirty; also set inscript temporarily
     // so that viewport won't be updated
     inscript = true;
     result = pastesel.Flip(topbottom, true);
     // currlayer->algo might point to a *different* universe
-    pastealgo = currlayer->algo;
+    pastelayer->algo = currlayer->algo;
     currlayer->algo = savealgo;
     currlayer->algtype = savetype;
     inscript = false;
 
     if (result) {
-        InitPaste(pastealgo, pastebox);
+        InitPaste(pastelayer, pastebox);
     }
 
     return result;
@@ -1422,18 +1429,18 @@ bool RotatePastePattern(bool clockwise)
     bool result;
     Selection pastesel(pastebox.y, pastebox.x, pastebox.y + pastebox.height - 1, pastebox.x + pastebox.width - 1);
 
-    // rotate the pattern in pastealgo
+    // rotate the pattern in pastelayer
     lifealgo* savealgo = currlayer->algo;
     int savetype = currlayer->algtype;
-    currlayer->algo = pastealgo;
-    currlayer->algtype = pastetype;
+    currlayer->algo = pastelayer->algo;
+    currlayer->algtype = pastelayer->algtype;
     // pass in true for inundoredo parameter so rotate won't be remembered
     // and layer won't be marked as dirty; also set inscript temporarily
     // so that viewport won't be updated and selection size won't be displayed
     inscript = true;
     result = pastesel.Rotate(clockwise, true);
     // currlayer->algo might point to a *different* universe
-    pastealgo = currlayer->algo;
+    pastelayer->algo = currlayer->algo;
     currlayer->algo = savealgo;
     currlayer->algtype = savetype;
     inscript = false;
@@ -1443,10 +1450,29 @@ bool RotatePastePattern(bool clockwise)
         int x, y, wd, ht;
         pastesel.GetRect(&x, &y, &wd, &ht);
         SetRect(pastebox, x, y, wd, ht);
-        InitPaste(pastealgo, pastebox);
+        InitPaste(pastelayer, pastebox);
     }
 
     return result;
+}
+
+// -----------------------------------------------------------------------------
+
+void ToggleCellColors()
+{
+    InvertCellColors();
+    
+    if (pastelayer) {
+        // invert colors used to draw paste pattern
+        for (int n = 0; n <= pastelayer->numicons; n++) {
+            pastelayer->cellr[n] = 255 - pastelayer->cellr[n];
+            pastelayer->cellg[n] = 255 - pastelayer->cellg[n];
+            pastelayer->cellb[n] = 255 - pastelayer->cellb[n];
+        }
+        InvertIconColors(pastelayer->atlas7x7, 8, pastelayer->numicons);
+        InvertIconColors(pastelayer->atlas15x15, 16, pastelayer->numicons);
+        InvertIconColors(pastelayer->atlas31x31, 32, pastelayer->numicons);
+    }
 }
 
 // -----------------------------------------------------------------------------

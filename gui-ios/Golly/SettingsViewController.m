@@ -25,8 +25,9 @@
 #include "utils.h"      // for Beep
 #include "status.h"     // for ClearMessage
 #include "prefs.h"      // for SavePrefs, showgridlines, etc
-#include "layer.h"      // for InvertCellColors
+#include "layer.h"      // for currlayer, etc
 #include "undo.h"       // for currlayer->undoredo->...
+#include "view.h"       // for ToggleCellColors
 #include "control.h"    // for generating
 
 #import "SettingsViewController.h"
@@ -128,7 +129,7 @@ static int oldhashmem;      // detect if user changed maxhashmem
 {
 	[super viewWillDisappear:animated];
     
-    if (swapcolors != oldcolors) InvertCellColors();
+    if (swapcolors != oldcolors) ToggleCellColors();
 
     if (allowundo != oldundo) {
         if (allowundo) {

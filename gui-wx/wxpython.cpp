@@ -1524,18 +1524,18 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
     // because the pattern might have empty borders, or it might even be empty)
     PyObject* outlist = PyList_New(0);
     
-    // create a temporary universe for storing clipboard pattern;
-    // GetClipboardPattern assumes it is same type as current universe
-    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
-    const char* err = tempalgo->setrule(currlayer->algo->getrule());
-    if (err) tempalgo->setrule(tempalgo->DefaultRule());
+    // create a temporary layer for storing the clipboard pattern
+    Layer* templayer = CreateTemporaryLayer();
+    if (!templayer) {
+        PYTHON_ERROR("getclip error: failed to create temporary layer.");
+    }
     
     // read clipboard pattern into temporary universe and set edges
     // (not a minimal bounding box if pattern is empty or has empty borders)
     bigint top, left, bottom, right;
-    if ( viewptr->GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
+    if ( viewptr->GetClipboardPattern(templayer, &top, &left, &bottom, &right) ) {
         if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-            delete tempalgo;
+            delete templayer;
             Py_DECREF(outlist);
             PYTHON_ERROR("getclip error: pattern is too big.");
         }
@@ -1548,7 +1548,8 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
         
         AddTwoInts(outlist, wd, ht);
         
-        // extract cells from tempalgo
+        // extract cells from templayer
+        lifealgo* tempalgo = templayer->algo;
         bool multistate = tempalgo->NumCellStates() > 2;
         int cx, cy;
         int cntr = 0;
@@ -1567,7 +1568,7 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
                 }
                 cntr++;
                 if ((cntr % 4096) == 0 && PythonScriptAborted()) {
-                    delete tempalgo;
+                    delete templayer;
                     Py_DECREF(outlist);
                     return NULL;
                 }
@@ -1578,10 +1579,10 @@ static PyObject* py_getclip(PyObject* self, PyObject* args)
             AddPadding(outlist);
         }
         
-        delete tempalgo;
+        delete templayer;
     } else {
         // assume error message has been displayed
-        delete tempalgo;
+        delete templayer;
         Py_DECREF(outlist);
         return NULL;
     }

@@ -42,10 +42,10 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
 // This routine does not use OpenGL -- it's for drawing icons outside the
 // viewport (eg. in the edit bar).
 
-class lifealgo;
+class Layer;
 
-void InitPaste(lifealgo* pastealgo, wxRect& bbox);
-// Initialize some globals used to draw the pattern stored in pastealgo.
+void InitPaste(Layer* pastelayer, wxRect& bbox);
+// Initialize some globals used to draw the pattern stored in pastelayer.
 // The given bounding box is not necessarily the *minimal* bounding box because
 // the paste pattern might have blank borders (in fact it could be empty).
 

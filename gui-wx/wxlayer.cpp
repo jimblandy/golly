@@ -1237,6 +1237,15 @@ static unsigned char* CreateIconAtlas(wxBitmap** srcicons, int iconsize)
 
 // -----------------------------------------------------------------------------
 
+Layer* CreateTemporaryLayer()
+{
+    Layer* templayer = new Layer();
+    if (templayer == NULL) Warning(_("Failed to create temporary layer!"));
+    return templayer;
+}
+
+// -----------------------------------------------------------------------------
+
 void AddLayer()
 {
     if (numlayers >= MAX_LAYERS) return;
@@ -2615,7 +2624,7 @@ void UpdateIconColors()
 
 // -----------------------------------------------------------------------------
 
-static void InvertIconColors(unsigned char* atlasptr, int iconsize, int numicons)
+void InvertIconColors(unsigned char* atlasptr, int iconsize, int numicons)
 {
     if (atlasptr) {
         int numbytes = numicons * iconsize * iconsize * 4;

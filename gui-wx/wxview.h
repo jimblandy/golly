@@ -30,6 +30,7 @@
 #include "bigint.h"         // for bigint
 #include "lifealgo.h"       // for lifealgo
 #include "wxselect.h"       // for Selection
+#include "wxlayer.h"        // for Layer
 
 // OpenGL is used for viewing and editing patterns:
 
@@ -44,7 +45,7 @@ public:
     void CopySelection();
     void ClearSelection();
     void ClearOutsideSelection();
-    bool GetClipboardPattern(lifealgo** tempalgo, bigint* t, bigint* l, bigint* b, bigint* r);
+    bool GetClipboardPattern(Layer* templayer, bigint* t, bigint* l, bigint* b, bigint* r);
     void PasteClipboard(bool toselection);
     void AbortPaste();
     void CyclePasteLocation();

@@ -64,8 +64,8 @@ hlifealgo::draw() in hlifedraw.cpp.
 - Calls DrawStackedLayers() to overlay multiple layers using the current
   layer's scale and location.
 
-- If the user is doing a paste, DrawPasteImage() creates a temporary
-  viewport (tempview) and draws the paste pattern (stored in pastealgo).
+- If the user is doing a paste, DrawPasteImage() creates a suitable
+  viewport and draws the paste pattern (stored in pastelayer).
 
 - Calls DrawControls() if the translucent controls need to be drawn.
 
@@ -116,7 +116,7 @@ unsigned char prevb[256];               // previous blue component of each state
 static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
 
 // for drawing paste pattern
-lifealgo* pastealgo;                    // universe containing paste pattern
+Layer* pastelayer;                      // layer containing the paste pattern
 wxRect pastebbox;                       // bounding box in cell coords (not necessarily minimal)
 unsigned char* modedata[4] = {NULL};    // RGBA data for drawing current paste mode (And, Copy, Or, Xor)
 const int modewd = 32;                  // width of each modedata
@@ -727,10 +727,10 @@ void DrawSelection(wxRect& rect, bool active)
 
 // -----------------------------------------------------------------------------
 
-void InitPaste(lifealgo* palgo, wxRect& bbox)
+void InitPaste(Layer* player, wxRect& bbox)
 {
     // set globals used in DrawPasteImage
-    pastealgo = palgo;
+    pastelayer = player;
     pastebbox = bbox;
 }
 
@@ -869,8 +869,8 @@ void DrawPasteImage()
         }
     }
     
-    // create temporary viewport for drawing pattern into pastealgo
-    viewport tempview(pastewd, pasteht);
+    // set up viewport for drawing paste pattern
+    pastelayer->view->resize(pastewd, pasteht);
     int midx, midy;
     if (pastemag > 1) {
         // allow for gap between cells
@@ -880,32 +880,53 @@ void DrawPasteImage()
         midx = cellbox.x + cellbox.width / 2;
         midy = cellbox.y + cellbox.height / 2;
     }
-    tempview.setpositionmag(midx, midy, pastemag);
+    pastelayer->view->setpositionmag(midx, midy, pastemag);
     
     // temporarily turn off grid lines
     bool saveshow = showgridlines;
     showgridlines = false;
     
-    // make dead pixels 100% transparent and live pixels 100% opaque
+    // dead pixels will be 100% transparent and live pixels 100% opaque
     dead_alpha = 0;
     live_alpha = 255;
 
-    currwd = tempview.getwidth();
-    currht = tempview.getheight();
+    currwd = pastelayer->view->getwidth();
+    currht = pastelayer->view->getheight();
     
     glTranslatef(r.x, r.y, 0);
+
+    // temporarily set currlayer to pastelayer so golly_render routines
+    // will use the paste pattern's color and icons
+    Layer* savelayer = currlayer;
+    currlayer = pastelayer;
+
+    if (showicons && pastemag > 2) {
+        // only show icons at scales 1:8 and above
+        if (pastemag == 3) {
+            iconatlas = currlayer->atlas7x7;
+            LoadIconAtlas(8, currlayer->numicons);
+        } else if (pastemag == 4) {
+            iconatlas = currlayer->atlas15x15;
+            LoadIconAtlas(16, currlayer->numicons);
+        } else {
+            iconatlas = currlayer->atlas31x31;
+            LoadIconAtlas(32, currlayer->numicons);
+        }
+    } else if (pastemag > 0) {
+        LoadCellAtlas(1 << pastemag, currlayer->numicons, 255);
+    }
     
     if (scalefactor > 1) {
-        // change tempview scale to 1:1 and increase its size by scalefactor
-        tempview.setmag(0);
+        // change scale to 1:1 and increase its size by scalefactor
+        pastelayer->view->setmag(0);
         currwd = currwd * scalefactor;
         currht = currht * scalefactor;
-        tempview.resize(currwd, currht);
+        pastelayer->view->resize(currwd, currht);
         
         glPushMatrix();
         glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
         
-        pastealgo->draw(tempview, renderer);
+        pastelayer->algo->draw(*pastelayer->view, renderer);
         
         // restore viewport settings
         currwd = currwd / scalefactor;
@@ -916,12 +937,13 @@ void DrawPasteImage()
         
     } else {
         // no scaling
-        pastealgo->draw(tempview, renderer);
+        pastelayer->algo->draw(*pastelayer->view, renderer);
     }
     
-    glTranslatef(-r.x, -r.y, 0);
-    
+    currlayer = savelayer;
     showgridlines = saveshow;
+    
+    glTranslatef(-r.x, -r.y, 0);
     
     // overlay translucent rect to show paste area
     DisableTextures();

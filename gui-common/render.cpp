@@ -49,7 +49,7 @@
    if a selection exists and any part of it is visible.
 
  - If the user is doing a paste, DrawPasteImage() draws the paste pattern
-   stored in pastealgo.
+   stored in pastelayer.
 
  ----------------------------------------------------------------------------- */
 
@@ -95,7 +95,7 @@ unsigned char prevg[256];               // previous green component of each stat
 unsigned char prevb[256];               // previous blue component of each state
 
 // for drawing paste pattern
-lifealgo* pastealgo;                    // universe containing paste pattern
+Layer* pastelayer;                      // layer containing the paste pattern
 gRect pastebbox;                        // bounding box in cell coords (not necessarily minimal)
 
 GLuint pointProgram;                    // program object for drawing lines and rects
@@ -757,10 +757,10 @@ void DrawGridBorder(int wd, int ht)
 
 // -----------------------------------------------------------------------------
 
-void InitPaste(lifealgo* palgo, gRect& bbox)
+void InitPaste(Layer* player, gRect& bbox)
 {
     // set globals used in DrawPasteImage
-    pastealgo = palgo;
+    pastelayer = player;
     pastebbox = bbox;
 }
 
@@ -882,8 +882,8 @@ void DrawPasteImage()
     cellbox.width = PixelsToCells(pastewd, pastemag);
     cellbox.height = PixelsToCells(pasteht, pastemag);
 
-    // create temporary viewport
-    viewport tempview(pastewd, pasteht);
+    // set up viewport for drawing paste pattern
+    pastelayer->view->resize(pastewd, pasteht);
     int midx, midy;
     if (pastemag > 1) {
         // allow for gap between cells
@@ -893,7 +893,7 @@ void DrawPasteImage()
         midx = cellbox.x + cellbox.width / 2;
         midy = cellbox.y + cellbox.height / 2;
     }
-    tempview.setpositionmag(midx, midy, pastemag);
+    pastelayer->view->setpositionmag(midx, midy, pastemag);
 
     // temporarily turn off grid lines
     bool saveshow = showgridlines;
@@ -902,25 +902,47 @@ void DrawPasteImage()
     // temporarily change currwd and currht
     int savewd = currwd;
     int saveht = currht;
-    currwd = tempview.getwidth();
-    currht = tempview.getheight();
+    currwd = pastelayer->view->getwidth();
+    currht = pastelayer->view->getheight();
 
-    // temporarily change OpenGL viewport's origin and size to match tempview
+    // temporarily change OpenGL viewport's origin and size to match pastelayer->view
     glViewport(ileft, saveht-currht-itop, currwd, currht);
     
     // make dead pixels 100% transparent and live pixels 100% opaque
     dead_alpha = 0;
     live_alpha = 255;
 
+    // temporarily set currlayer to pastelayer so golly_render routines
+    // will use the paste pattern's color and icons
+    Layer* savelayer = currlayer;
+    currlayer = pastelayer;
+
+    if (showicons && pastemag > 2) {
+        // only show icons at scales 1:8 and above
+        if (pastemag == 3) {
+            iconatlas = currlayer->atlas7x7;
+            LoadIconAtlas(8, currlayer->numicons);
+        } else if (pastemag == 4) {
+            iconatlas = currlayer->atlas15x15;
+            LoadIconAtlas(16, currlayer->numicons);
+        } else {
+            iconatlas = currlayer->atlas31x31;
+            LoadIconAtlas(32, currlayer->numicons);
+        }
+    } else if (pastemag > 0) {
+        LoadCellAtlas(1 << pastemag, currlayer->numicons, 255);
+    }
+
     // draw paste pattern
-    pastealgo->draw(tempview, renderer);
+    pastelayer->algo->draw(*pastelayer->view, renderer);
 
-    // restore OpenGL viewport's origin and size
-    glViewport(0, 0, savewd, saveht);
-
+    currlayer = savelayer;
     showgridlines = saveshow;
     currwd = savewd;
     currht = saveht;
+
+    // restore OpenGL viewport's origin and size
+    glViewport(0, 0, savewd, saveht);
 
     // overlay translucent rect to show paste area
     SetColor(pastergb.r, pastergb.g, pastergb.b, 64);

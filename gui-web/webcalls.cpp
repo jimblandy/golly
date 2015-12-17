@@ -51,6 +51,7 @@ extern "C" {
     extern void jsAlert(const char* msg);
     extern bool jsConfirm(const char* query);
     extern void jsSetBackgroundColor(const char* id, const char* color);
+    extern void jsSetStatus(const char* line1, const char* line2, const char* line3);
     extern void jsSetMode(int index);
     extern void jsSetState(int state, int numstates);
     extern void jsSetClipboard(const char* text);
@@ -97,7 +98,7 @@ void UpdateStatus()
     UpdateStatusLines();    // sets status1, status2, status3
     
     // clear text area first
-    EM_ASM( document.getElementById('statusbar').value = '\0'; );
+    //!!!??? EM_ASM( document.getElementById('statusbar').value = '\0'; );
     
     if (curralgo != currlayer->algtype) {
         // algo has changed so change background color of status bar
@@ -110,9 +111,7 @@ void UpdateStatus()
         jsSetBackgroundColor("statusbar", rgb);
     }
     
-    printf("%s\n", status1.c_str());
-    printf("%s\n", status2.c_str());
-    printf("%s\n", status3.c_str());
+    jsSetStatus(status1.c_str(), status2.c_str(), status3.c_str());
 }
 
 // -----------------------------------------------------------------------------

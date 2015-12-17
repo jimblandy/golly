@@ -1677,18 +1677,18 @@ XS(pl_getclip)
     // because the pattern might have empty borders, or it might even be empty)
     AV* outarray = (AV*)sv_2mortal( (SV*)newAV() );
     
-    // create a temporary universe for storing clipboard pattern;
-    // GetClipboardPattern assumes it is same type as current universe
-    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
-    const char* err = tempalgo->setrule(currlayer->algo->getrule());
-    if (err) tempalgo->setrule(tempalgo->DefaultRule());
+    // create a temporary layer for storing the clipboard pattern
+    Layer* templayer = CreateTemporaryLayer();
+    if (!templayer) {
+        PERL_ERROR("g_getclip error: failed to create temporary layer.");
+    }
     
     // read clipboard pattern into temporary universe and set edges
     // (not a minimal bounding box if pattern is empty or has empty borders)
     bigint top, left, bottom, right;
-    if ( viewptr->GetClipboardPattern(&tempalgo, &top, &left, &bottom, &right) ) {
+    if ( viewptr->GetClipboardPattern(templayer, &top, &left, &bottom, &right) ) {
         if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
-            delete tempalgo;
+            delete templayer;
             PERL_ERROR("g_getclip error: pattern is too big.");
         }
         int itop = top.toint();
@@ -1701,7 +1701,8 @@ XS(pl_getclip)
         av_push(outarray, newSViv(wd));
         av_push(outarray, newSViv(ht));
         
-        // extract cells from tempalgo
+        // extract cells from templayer
+        lifealgo* tempalgo = templayer->algo;
         bool multistate = tempalgo->NumCellStates() > 2;
         int cx, cy;
         int cntr = 0;
@@ -1721,7 +1722,7 @@ XS(pl_getclip)
                 }
                 cntr++;
                 if ((cntr % 4096) == 0 && PerlScriptAborted()) {
-                    delete tempalgo;
+                    delete templayer;
                     Perl_croak(aTHX_ NULL);
                 }
             }
@@ -1731,10 +1732,10 @@ XS(pl_getclip)
             AddPadding(outarray);
         }
         
-        delete tempalgo;
+        delete templayer;
     } else {
         // assume error message has been displayed
-        delete tempalgo;
+        delete templayer;
         Perl_croak(aTHX_ NULL);
     }
     

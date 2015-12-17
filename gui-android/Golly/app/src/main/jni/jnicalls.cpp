@@ -1523,7 +1523,7 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_SettingsActivity_nativeCloseSettings(JNIEnv* env)
 {
     // SettingsActivity is about to disappear
-    if (swapcolors != oldcolors) InvertCellColors();
+    if (swapcolors != oldcolors) ToggleCellColors();
 
     if (allowundo != oldundo) {
         if (allowundo) {

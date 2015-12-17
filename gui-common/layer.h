@@ -230,6 +230,9 @@ bool RestoreRule(const char* rule);
 // The latter can happen if the given rule's table/tree file was
 // deleted or was edited and some sort of error introduced.
 
+Layer* CreateTemporaryLayer();
+// Create a temporary layer with the same algo type as currlayer.
+
 
 // Color handling routines:
 
@@ -251,7 +254,10 @@ void UpdateLayerColors();
 
 void InvertCellColors();
 // Invert the cell colors in all layers, including the dead cell color,
-// grid lines, and the colors in all icon bitmaps.
+// grid lines, and the colors in all icons.
+
+void InvertIconColors(unsigned char* atlasptr, int iconsize, int numicons);
+// Invert the icon colors in the given texture atlas.
 
 void SetLayerColors();
 // Open a dialog to change the current layer's colors.

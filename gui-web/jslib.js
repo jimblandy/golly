@@ -4,8 +4,9 @@
 var LibraryGOLLY = {
 
 $GOLLY: {
-    cancel_progress: false,    // cancel progress dialog?
-    progstart: 0.0,            // time when jsBeginProgress is called
+    cancel_progress: false,     // cancel progress dialog?
+    progstart: 0.0,             // time when jsBeginProgress is called
+    statusbar: null             // status bar element
 },
 
 // -----------------------------------------------------------------------------
@@ -24,6 +25,22 @@ jsConfirm: function(query) {
 
 jsSetBackgroundColor: function(id, color) {
     document.getElementById(Pointer_stringify(id)).style.backgroundColor = Pointer_stringify(color);
+},
+
+// -----------------------------------------------------------------------------
+
+jsSetStatus: function(line1, line2, line3) {
+    // check if the statusbar element lookup has already been done
+    if (!GOLLY.statusbar) {
+        // lookup and cache the statusbar element
+        GOLLY.statusbar = document.getElementById('statusbar');
+    }
+
+    // set the statusbar
+    GOLLY.statusbar.value =
+        Pointer_stringify(line1) + '\n' +
+        Pointer_stringify(line2) + '\n' +
+        Pointer_stringify(line3);
 },
 
 // -----------------------------------------------------------------------------

@@ -1229,6 +1229,7 @@ static void FlipPasteOrSelection(bool direction)
     } else if (SelectionExists()) {
         FlipSelection(direction);
     }
+    UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------
@@ -1240,6 +1241,7 @@ static void RotatePasteOrSelection(bool direction)
     } else if (SelectionExists()) {
         RotateSelection(direction);
     }
+    UpdateEverything();
 }
 
 // -----------------------------------------------------------------------------

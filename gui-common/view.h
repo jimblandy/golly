@@ -84,6 +84,7 @@ bool FlipPastePattern(bool topbottom);
 bool RotatePastePattern(bool clockwise);
 void DoPaste(bool toselection);
 void AbortPaste();
+void ToggleCellColors();
 void ZoomInPos(int x, int y);
 void ZoomOutPos(int x, int y);
 bool PointInView(int x, int y);

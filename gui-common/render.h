@@ -27,7 +27,7 @@
 
 #include "utils.h"      // for gRect
 
-class lifealgo;
+class Layer;
 
 // Routines for rendering the pattern view:
 
@@ -39,8 +39,8 @@ void DrawPattern(int tileindex);
 // Draw the current pattern, grid lines, selection, etc.
 // The given tile index is only used when drawing tiled layers.
 
-void InitPaste(lifealgo* pastealgo, gRect& bbox);
-// Initialize some globals used to draw the pattern stored in pastealgo.
+void InitPaste(Layer* pastelayer, gRect& bbox);
+// Initialize some globals used to draw the pattern stored in pastelayer.
 // The given bounding box is not necessarily the *minimal* bounding box because
 // the paste pattern might have blank borders (in fact it could be empty).
 
