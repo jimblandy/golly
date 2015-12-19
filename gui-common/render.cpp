@@ -81,20 +81,8 @@ int currwd, currht;                     // current width and height of viewport,
 unsigned char dead_alpha = 255;         // alpha value for dead pixels
 unsigned char live_alpha = 255;         // alpha value for live pixels
 GLuint rgbatexture = 0;                 // texture name for drawing RGBA bitmaps
-GLuint icontexture = 0;                 // texture name for drawing icons
-GLuint celltexture = 0;                 // texture name for drawing magnified cells
 unsigned char* iconatlas = NULL;        // pointer to texture atlas for current set of icons
-unsigned char* cellatlas = NULL;        // pointer to texture atlas for current set of magnified cells
 
-// cellatlas needs to be rebuilt if any of these parameters change
-int prevnum = 0;                        // previous number of live states
-int prevsize = 0;                       // previous cell size
-unsigned char prevalpha;                // previous alpha component
-unsigned char prevr[256];               // previous red component of each state
-unsigned char prevg[256];               // previous green component of each state
-unsigned char prevb[256];               // previous blue component of each state
-
-// for drawing paste pattern
 Layer* pastelayer;                      // layer containing the paste pattern
 gRect pastebbox;                        // bounding box in cell coords (not necessarily minimal)
 
@@ -113,6 +101,13 @@ GLint samplerLoc;                       // location of s_texture uniform
 // middle of viewport, top right corner is 1.0,1.0 and bottom left corner is -1.0,-1.0)
 #define XCOORD(x)  (2.0 * (x) / float(currwd) - 1.0)
 #define YCOORD(y) -(2.0 * (y) / float(currht) - 1.0)
+
+// the pxldata array is used to render icons and magnified cells;
+// its size is chosen so that at scale 1:2 DrawMagnifiedCells will only need to call
+// DrawRGBAData once (assuming golly_render::pixblit passes in 256x256 bytes of state data)
+const int maxrows = 256 * 2;
+const int maxbytes = maxrows * maxrows * 4;     // 4 bytes (RGBA) per pixel
+unsigned char pxldata[maxbytes];
 
 // -----------------------------------------------------------------------------
 
@@ -261,8 +256,8 @@ bool InitOGLES2()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     
-    // use the pointProgram initially
-    glUseProgram(pointProgram);
+    // use the pointProgram initially???!!!
+    // glUseProgram(pointProgram);
     
     return true;
 }
@@ -297,9 +292,9 @@ static void FillRect(int x, int y, int wd, int ht)
 
 // -----------------------------------------------------------------------------
 
-void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
+void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h, int scale = 1)
 {
-    // called from golly_render::pixblit to draw a pattern bitmap at 1:1 scale
+    // called from golly_render::pixblit to draw RGBA data at 1:1 scale
 
     // only need to create texture name once
 	if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
@@ -310,19 +305,26 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
     glBindTexture(GL_TEXTURE_2D, rgbatexture);
     glUniform1i(samplerLoc, 0);
     
+    glVertexAttribPointer(texPosLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(0));
+    glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));
+    glEnableVertexAttribArray(texPosLoc);
+    glEnableVertexAttribArray(texCoordLoc);
+    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
-    glVertexAttribPointer(texPosLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(0));
-    glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));
-    glEnableVertexAttribArray(texPosLoc);
-    glEnableVertexAttribArray(texCoordLoc);
-    
     // update the texture with the new RGBA data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
+
+    if (scale > 1) {
+        x *= scale;
+        y *= scale;
+        w *= scale;
+        h *= scale;
+    }
 
     GLfloat vertices[] = {
         XCOORD(x),     YCOORD(y),      // Position 0 = left,top
@@ -337,253 +339,126 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
-    glUseProgram(pointProgram);
+    //???!!! glUseProgram(pointProgram);
 }
 
 // -----------------------------------------------------------------------------
 
-static void LoadIconAtlas(int iconsize, int numicons)
-{
-    // load the texture atlas containing all icons for later use in DrawIcons
-    
-    // create icon texture name once
-	if (icontexture == 0) glGenTextures(1, &icontexture);
-
-    glUseProgram(textureProgram);
-    glActiveTexture(GL_TEXTURE0);   // need???!!!
-    
-    glBindTexture(GL_TEXTURE_2D, icontexture);
-    glUniform1i(samplerLoc, 0);
-
-    // need these calls otherwise texture atlas is rendered black
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    int atlaswd = iconsize * numicons;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlaswd, iconsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, iconatlas);
-    
-#if 0
-    // test above code by displaying the entire atlas
-    GLfloat wd = atlaswd;
-    GLfloat ht = iconsize;
-    int x = 0;
-    int y = 0;
-    GLfloat vertices[] = {
-        XCOORD(x),      YCOORD(y),         // Position 0 = left,top
-        0.0,  0.0,                         // TexCoord 0
-        XCOORD(x),      YCOORD(y + ht),    // Position 1 = left,bottom
-        0.0,  1.0,                         // TexCoord 1
-        XCOORD(x + wd), YCOORD(y + ht),    // Position 2 = right,bottom
-        1.0,  1.0,                         // TexCoord 2
-        XCOORD(x + wd), YCOORD(y),         // Position 3 = right,top
-        1.0,  0.0                          // TexCoord 3
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(texPosLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(0));
-    glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));    
-    glEnableVertexAttribArray(texPosLoc);
-    glEnableVertexAttribArray(texCoordLoc);
-    
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-#endif
-
-    glUseProgram(pointProgram);     // rethink!!!
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numicons)
+void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
     // called from golly_render::pixblit to draw icons for each live cell;
-    // assume pmscale > 2 (should be 8, 16 or 32 -- if higher then the 31x31 icons
-    // will be scaled up)
+    // assume pmscale > 2 (should be 8, 16 or 32 -- if higher then the 31x31 icons will be scaled up)
 
-    glUseProgram(textureProgram);
-    glActiveTexture(GL_TEXTURE0);
-    
-    glBindTexture(GL_TEXTURE_2D, icontexture);
-    glUniform1i(samplerLoc, 0);
-    
-    glVertexAttribPointer(texPosLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(0));
-    glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));
-    glEnableVertexAttribArray(texPosLoc);
-    glEnableVertexAttribArray(texCoordLoc);
+    int iconsize = pmscale > 32 ? 32 : pmscale;
+    int iconwd = (iconsize-1)*4;    // allow for 1 pixel gap at right edge
+    int atlas_rowbytes = iconsize * currlayer->numicons * 4;
 
-    for (int row = 0; row < h; row++) {
-        for (int col = 0; col < w; col++) {
-            unsigned char state = statedata[row*stride + col];
-            if (state > 0) {
-                int xpos = x + col * pmscale;
-                int ypos = y + row * pmscale;
-                
-                GLfloat xleft =   XCOORD(xpos);
-                GLfloat xright =  XCOORD(xpos + pmscale);
-                GLfloat ytop =    YCOORD(ypos);
-                GLfloat ybottom = YCOORD(ypos + pmscale);
-                
-                GLfloat tleft = (state-1) * 1.0 / numicons;
-                GLfloat tright = state * 1.0 / numicons;
-                
-                GLfloat vertices[] = {
-                    xleft,  ytop,       // Position 0 = left,top
-                    tleft,  0.0,        // TexCoord 0
-                    xleft,  ybottom,    // Position 1 = left,bottom
-                    tleft,  1.0,        // TexCoord 1
-                    xright, ybottom,    // Position 2 = right,bottom
-                    tright, 1.0,        // TexCoord 2
-                    xright, ytop,       // Position 3 = right,top
-                    tright, 0.0         // TexCoord 3
-                };
-                glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-            }
-        }
+    int rowbytes = w*iconsize*4;
+    // probably best to bump rowbytes up to nearest power of 2
+    int pot = 1;
+    while (pot < rowbytes) pot *= 2;
+    rowbytes = pot;
+    
+    int stripht = h;
+    int numbytes = rowbytes*stripht*iconsize;
+    while (numbytes > maxbytes) {
+        // do 2 or more horizontal strips
+        stripht = (stripht+1) / 2;
+        numbytes = rowbytes*stripht*iconsize;
     }
     
-    glUseProgram(pointProgram);     // rethink!!!
-}
-
-// -----------------------------------------------------------------------------
-
-static bool ChangeCellAtlas(int cellsize, int numcells, unsigned char alpha)
-{
-    if (numcells != prevnum) return true;
-    if (cellsize != prevsize) return true;
-    if (alpha != prevalpha) return true;
+    int nextstrip = 0;
+    do {
+        memset(pxldata, 0, numbytes);   // all pixels are initially transparent
+        bool sawlivecell = false;       // at least one icon needs to be displayed?
     
-    for (int state = 1; state <= numcells; state++) {
-        if (currlayer->cellr[state] != prevr[state]) return true;
-        if (currlayer->cellg[state] != prevg[state]) return true;
-        if (currlayer->cellb[state] != prevb[state]) return true;
-    }
-    
-    return false;   // no need to change cellatlas
-}
-
-// -----------------------------------------------------------------------------
-
-static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
-{
-    // cellatlas might need to be (re)created
-    if (ChangeCellAtlas(cellsize, numcells, alpha)) {
-        prevnum = numcells;
-        prevsize = cellsize;
-        prevalpha = alpha;
-        for (int state = 1; state <= numcells; state++) {
-            prevr[state] = currlayer->cellr[state];
-            prevg[state] = currlayer->cellg[state];
-            prevb[state] = currlayer->cellb[state];
-        }
-        
-        if (cellatlas) free(cellatlas);
-        
-        // allocate enough memory for texture atlas to store RGBA pixels for a row of cells
-        // (note that we use calloc so all alpha bytes are initially 0)
-        int rowbytes = numcells * cellsize * 4;
-        cellatlas = (unsigned char*) calloc(rowbytes * cellsize, 1);
-        
-        if (cellatlas) {
-            // set pixels in top row
-            int tpos = 0;
-            for (int state = 1; state <= numcells; state++) {
-                unsigned char r = currlayer->cellr[state];
-                unsigned char g = currlayer->cellg[state];
-                unsigned char b = currlayer->cellb[state];
-                
-                // if the cell size is > 2 then there is a 1 pixel gap at right and bottom edge of each cell
-                int cellwd = cellsize > 2 ? cellsize-1 : 2;
-                for (int i = 0; i < cellwd; i++) {
-                    cellatlas[tpos++] = r;
-                    cellatlas[tpos++] = g;
-                    cellatlas[tpos++] = b;
-                    cellatlas[tpos++] = alpha;
+        for (int row = nextstrip; row < nextstrip+stripht && row < h; row++) {
+            for (int col = 0; col < w; col++) {
+                unsigned char state = statedata[row*stride + col];
+                if (state > 0) {
+                    // get position in pxldata of icon's top left pixel
+                    int pos = (row-nextstrip)*rowbytes*iconsize + col*iconsize*4;
+                    
+                    // copy pixel data for icon from appropriate place in iconatlas
+                    int ipos = (state-1)*iconsize*4;
+                    
+                    // subtract 1 from iconsize to allow for 1 pixel gap at bottom edge of icon
+                    for (int i = 0; i < iconsize-1; i ++) {
+                        memcpy(&pxldata[pos], &iconatlas[ipos], iconwd);
+                        pos += rowbytes;
+                        ipos += atlas_rowbytes;
+                    }
+                    sawlivecell = true;
                 }
-                if (cellsize > 2) tpos += 4;    // skip transparent pixel at right edge of cell
-            }
-            // copy top row to remaining rows
-            int remrows = cellsize > 2 ? cellsize - 2 : 1;
-            for (int i = 1; i <= remrows; i++) {
-                memcpy(&cellatlas[i * rowbytes], cellatlas, rowbytes);
             }
         }
-    }
-    
-    // create cell texture name once
-	if (celltexture == 0) glGenTextures(1, &celltexture);
-    
-    glUseProgram(textureProgram);
-    glActiveTexture(GL_TEXTURE0);   // need???!!!
-    
-    glBindTexture(GL_TEXTURE_2D, celltexture);
-    glUniform1i(samplerLoc, 0);
-
-    // need these calls otherwise texture atlas is rendered black
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    // load the texture atlas containing all magnified cells for later use in DrawMagnifiedCells
-    int atlaswd = cellsize * numcells;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlaswd, cellsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, cellatlas);
-
-    glUseProgram(pointProgram);     // rethink!!!
+        
+        if (sawlivecell) DrawRGBAData(pxldata, x, y, rowbytes/4, stripht*iconsize, pmscale/iconsize);
+        
+        y += stripht*iconsize;
+        nextstrip += stripht;
+    } while (nextstrip < h);
 }
 
 // -----------------------------------------------------------------------------
 
-void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
+void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
 
-    glUseProgram(textureProgram);
-    glActiveTexture(GL_TEXTURE0);
+    int rowbytes = w*pmscale*4;
+    // probably best to bump rowbytes up to nearest power of 2
+    int pot = 1;
+    while (pot < rowbytes) pot *= 2;
+    rowbytes = pot;
 
-    glBindTexture(GL_TEXTURE_2D, celltexture);
-    glUniform1i(samplerLoc, 0);
-                
-    glVertexAttribPointer(texPosLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(0));
-    glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));
-    glEnableVertexAttribArray(texPosLoc);
-    glEnableVertexAttribArray(texCoordLoc);
-
-    for (int row = 0; row < h; row++) {
-        for (int col = 0; col < w; col++) {
-            unsigned char state = statedata[row*stride + col];
-            if (state > 0) {
-                int xpos = x + col * pmscale;
-                int ypos = y + row * pmscale;
-                
-                GLfloat xleft =   XCOORD(xpos);
-                GLfloat xright =  XCOORD(xpos + pmscale);
-                GLfloat ytop =    YCOORD(ypos);
-                GLfloat ybottom = YCOORD(ypos + pmscale);
-                
-                GLfloat tleft = (state-1) * 1.0 / numcells;
-                GLfloat tright = state * 1.0 / numcells;
-                
-                GLfloat vertices[] = {
-                    xleft,  ytop,       // Position 0 = left,top
-                    tleft,  0.0,        // TexCoord 0
-                    xleft,  ybottom,    // Position 1 = left,bottom
-                    tleft,  1.0,        // TexCoord 1
-                    xright, ybottom,    // Position 2 = right,bottom
-                    tright, 1.0,        // TexCoord 2
-                    xright, ytop,       // Position 3 = right,top
-                    tright, 0.0         // TexCoord 3
-                };
-                glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-            }
-        }
+    // if pmscale is > 2 then there is a 1 pixel gap at right and bottom edge of each cell
+    int cellsize = pmscale > 2 ? (pmscale-1)*4        : pmscale*4;
+    int rowtotal = pmscale > 2 ? (pmscale-1)*rowbytes : pmscale*rowbytes;
+    
+    int stripht = h;
+    int numbytes = rowbytes*stripht*pmscale;
+    while (numbytes > maxbytes) {
+        // do 2 or more horizontal strips
+        stripht = (stripht+1) / 2;
+        numbytes = rowbytes*stripht*pmscale;
     }
     
-    glUseProgram(pointProgram);     // rethink!!!
+    int nextstrip = 0;
+    do {
+        memset(pxldata, 0, numbytes);   // all pixels are initially transparent
+        bool sawlivecell = false;       // at least one live cell needs to be displayed?
+    
+        for (int row = nextstrip; row < nextstrip+stripht && row < h; row++) {
+            for (int col = 0; col < w; col++) {
+                unsigned char state = statedata[row*stride + col];
+                if (state > 0) {
+                    // set cell's top left pixel
+                    int pos = (row-nextstrip)*rowbytes*pmscale + col*pmscale*4;
+                    pxldata[pos]   = currlayer->cellr[state];
+                    pxldata[pos+1] = currlayer->cellg[state];
+                    pxldata[pos+2] = currlayer->cellb[state];
+                    pxldata[pos+3] = live_alpha;
+                    
+                    // copy 1st pixel to remaining pixels in 1st row
+                    for (int i = 4; i < cellsize; i += 4) {
+                        memcpy(&pxldata[pos+i], &pxldata[pos], 4);
+                    }
+                    
+                    // copy 1st row of pixels to remaining rows
+                    for (int i = rowbytes; i < rowtotal; i += rowbytes) {
+                        memcpy(&pxldata[pos+i], &pxldata[pos], cellsize);
+                    }
+                    sawlivecell = true;
+                }
+            }
+        }
+        
+        if (sawlivecell) DrawRGBAData(pxldata, x, y, rowbytes/4, stripht*pmscale);
+        
+        y += stripht*pmscale;
+        nextstrip += stripht;
+    } while (nextstrip < h);
 }
 
 // -----------------------------------------------------------------------------
@@ -636,12 +511,12 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
         
     } else if (showicons && pmscale > 4 && iconatlas) {
         // draw icons at scales 1:8 and above
-        DrawIcons(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons);
+        DrawIcons(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
         
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
-        DrawMagnifiedCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons);
+        DrawMagnifiedCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride);
     }
 }
 
@@ -662,6 +537,7 @@ void golly_render::getcolors(unsigned char** r, unsigned char** g, unsigned char
 void DrawSelection(gRect& rect, bool active)
 {
     // draw semi-transparent rectangle
+    glUseProgram(pointProgram);
     if (active) {
         SetColor(selectrgb.r, selectrgb.g, selectrgb.b, 128);
     } else {
@@ -715,6 +591,7 @@ void DrawGridBorder(int wd, int ht)
         return;
     }
 
+    glUseProgram(pointProgram);
     SetColor(borderrgb.r, borderrgb.g, borderrgb.b, 255);
 
     if (left >= wd || right < 0 || top >= ht || bottom < 0) {
@@ -921,16 +798,11 @@ void DrawPasteImage()
         // only show icons at scales 1:8 and above
         if (pastemag == 3) {
             iconatlas = currlayer->atlas7x7;
-            LoadIconAtlas(8, currlayer->numicons);
         } else if (pastemag == 4) {
             iconatlas = currlayer->atlas15x15;
-            LoadIconAtlas(16, currlayer->numicons);
         } else {
             iconatlas = currlayer->atlas31x31;
-            LoadIconAtlas(32, currlayer->numicons);
         }
-    } else if (pastemag > 0) {
-        LoadCellAtlas(1 << pastemag, currlayer->numicons, 255);
     }
 
     // draw paste pattern
@@ -945,6 +817,7 @@ void DrawPasteImage()
     glViewport(0, 0, savewd, saveht);
 
     // overlay translucent rect to show paste area
+    glUseProgram(pointProgram);
     SetColor(pastergb.r, pastergb.g, pastergb.b, 64);
     FillRect(ileft, itop, rectwd, rectht);
 }
@@ -974,6 +847,7 @@ void DrawGridLines(int wd, int ht)
         topbold = leftbold = 0;
     }
 
+    glUseProgram(pointProgram);
     glLineWidth(1.0);
 
     // set the stroke color depending on current bg color
@@ -1127,16 +1001,11 @@ void DrawPattern(int tileindex)
         // only show icons at scales 1:8 and above
         if (currmag == 3) {
             iconatlas = currlayer->atlas7x7;
-            LoadIconAtlas(8, currlayer->numicons);
         } else if (currmag == 4) {
             iconatlas = currlayer->atlas15x15;
-            LoadIconAtlas(16, currlayer->numicons);
         } else {
             iconatlas = currlayer->atlas31x31;
-            LoadIconAtlas(32, currlayer->numicons);
         }
-    } else if (currmag > 0) {
-        LoadCellAtlas(1 << currmag, currlayer->numicons, 255);
     }
 
     currwd = currlayer->view->getwidth();
