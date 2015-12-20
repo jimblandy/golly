@@ -254,11 +254,11 @@ bool InitOGLES2()
     GLuint vbo;
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    
-    // use the pointProgram initially???!!!
-    // glUseProgram(pointProgram);
-    
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
+
+    // create texture name
+    glGenTextures(1, &rgbatexture);
+
     return true;
 }
 
@@ -284,7 +284,7 @@ static void FillRect(int x, int y, int wd, int ht)
         XCOORD(x+wd), YCOORD(y),     // right, top
         XCOORD(x),    YCOORD(y),     // left, top
     };
-    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), rect, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), rect, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(positionLoc);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -296,12 +296,9 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h, int scale
 {
     // called from golly_render::pixblit to draw RGBA data at 1:1 scale
 
-    // only need to create texture name once
-	if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
-
     glUseProgram(textureProgram);
-    glActiveTexture(GL_TEXTURE0);
     
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, rgbatexture);
     glUniform1i(samplerLoc, 0);
     
@@ -312,7 +309,7 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h, int scale
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
@@ -336,10 +333,8 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h, int scale
         XCOORD(x + w), YCOORD(y),      // Position 3 = right,top
         1.0,  0.0                      // TexCoord 3
     };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-
-    //???!!! glUseProgram(pointProgram);
 }
 
 // -----------------------------------------------------------------------------
@@ -879,7 +874,7 @@ void DrawGridLines(int wd, int ht)
         if (i % boldspacing != 0 && v >= 0 && v < ht) {
             GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
                                  XCOORD(wd),   YCOORD(v-0.5) };
-            glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_DYNAMIC_DRAW);
             glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(positionLoc);
             glDrawArrays(GL_LINES, 0, 2);
@@ -894,7 +889,7 @@ void DrawGridLines(int wd, int ht)
         if (i % boldspacing != 0 && h >= 0 && h < wd) {
             GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
                                  XCOORD(h-0.5), YCOORD(ht) };
-            glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_DYNAMIC_DRAW);
             glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(positionLoc);
             glDrawArrays(GL_LINES, 0, 2);
@@ -924,7 +919,7 @@ void DrawGridLines(int wd, int ht)
             if (i % boldspacing == 0 && v >= 0 && v < ht) {
                 GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
                                      XCOORD(wd),   YCOORD(v-0.5) };
-                glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_DYNAMIC_DRAW);
                 glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                 glEnableVertexAttribArray(positionLoc);
                 glDrawArrays(GL_LINES, 0, 2);
@@ -939,7 +934,7 @@ void DrawGridLines(int wd, int ht)
             if (i % boldspacing == 0 && h >= 0 && h < wd) {
                 GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
                                      XCOORD(h-0.5), YCOORD(ht) };
-                glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_DYNAMIC_DRAW);
                 glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                 glEnableVertexAttribArray(positionLoc);
                 glDrawArrays(GL_LINES, 0, 2);
