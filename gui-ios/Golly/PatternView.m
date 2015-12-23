@@ -69,19 +69,19 @@ static GLuint viewFramebuffer = 0;
 - (void)createFramebuffer
 {
 	// generate IDs for a framebuffer object and a color renderbuffer
-	glGenFramebuffers(1, &viewFramebuffer);
-	glGenRenderbuffers(1, &viewRenderbuffer);
+	glGenFramebuffersOES(1, &viewFramebuffer);
+	glGenRenderbuffersOES(1, &viewRenderbuffer);
 	
-	glBindFramebuffer(GL_FRAMEBUFFER, viewFramebuffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
+	glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
+	glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
     
 	// associate the storage for the current render buffer with our CAEAGLLayer
 	// so we can draw into a buffer that will later be rendered to screen
-	[context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(id<EAGLDrawable>)self.layer];
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, viewRenderbuffer);
+	[context renderbufferStorage:GL_RENDERBUFFER_OES fromDrawable:(id<EAGLDrawable>)self.layer];
+	glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_RENDERBUFFER_OES, viewRenderbuffer);
     
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		NSLog(@"Error creating framebuffer object: %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
+	if (glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES) != GL_FRAMEBUFFER_COMPLETE_OES) {
+		NSLog(@"Error creating framebuffer object: %x", glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES));
 		Fatal("Failed to create frame buffer!");
 	}
 }
@@ -91,9 +91,9 @@ static GLuint viewFramebuffer = 0;
 - (void)destroyFramebuffer
 {
     // clean up any buffers we have allocated
-	glDeleteFramebuffers(1, &viewFramebuffer);
+	glDeleteFramebuffersOES(1, &viewFramebuffer);
 	viewFramebuffer = 0;
-	glDeleteRenderbuffers(1, &viewRenderbuffer);
+	glDeleteRenderbuffersOES(1, &viewRenderbuffer);
 	viewRenderbuffer = 0;
 }
 
@@ -154,8 +154,8 @@ static GLuint viewFramebuffer = 0;
     DrawPattern(tileindex);
     
     // display the buffer
-    glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
-    [context presentRenderbuffer:GL_RENDERBUFFER];
+    glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
+    [context presentRenderbuffer:GL_RENDERBUFFER_OES];
 }
 
 // -----------------------------------------------------------------------------

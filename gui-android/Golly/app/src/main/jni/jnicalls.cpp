@@ -1828,10 +1828,10 @@ static void SetColor(int r, int g, int b, int a)
 static void FillRect(int x, int y, int wd, int ht)
 {
     GLfloat rect[] = {
-        XCOORD(x),    YCOORD(y+ht),  // left, bottom
-        XCOORD(x+wd), YCOORD(y+ht),  // right, bottom
-        XCOORD(x+wd), YCOORD(y),     // right, top
-        XCOORD(x),    YCOORD(y),     // left, top
+        x,    y+ht,  // left, bottom
+        x+wd, y+ht,  // right, bottom
+        x+wd, y,     // right, top
+        x,    y,     // left, top
     };
     glVertexPointer(2, GL_FLOAT, 0, rect);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -1926,7 +1926,7 @@ static void DrawRect(int state, int x, int y, int wd, int ht)
 // -----------------------------------------------------------------------------
 
 // texture name for drawing RGBA bitmaps
-static GLuint rgbatexture = 0
+static GLuint rgbatexture = 0;
 
 // fixed texture coordinates used by glTexCoordPointer
 static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
