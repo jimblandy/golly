@@ -25,7 +25,7 @@
 /* -------------------- Some notes on Golly's display code ---------------------
 
  The rectangular area used to display patterns is called the viewport.
- All drawing in the viewport is done in this module using OpenGL ES 2.
+ All drawing in the viewport is done in this module using OpenGL ES.
 
  The main rendering routine is DrawPattern() -- see the end of this module.
  DrawPattern() does the following tasks:
@@ -64,12 +64,19 @@
 #include "view.h"        // nopattupdate, waitingforpaste, pasterect, pastex, pastey, etc
 #include "render.h"
 
+#ifdef ANDROID_GUI
+    // the Android version uses OpenGL ES 1
+    #include <GLES/gl.h>
+#endif
+
 #ifdef IOS_GUI
-    // the iOS version uses OpenGL ES 2
-    #import <OpenGLES/ES2/gl.h>
-    #import <OpenGLES/ES2/glext.h>
-#else
-    // the Android and web versions also use OpenGL ES 2
+    // the iOS version uses OpenGL ES 1
+    #import <OpenGLES/ES1/gl.h>
+    #import <OpenGLES/ES1/glext.h>
+#endif
+
+#ifdef WEB_GUI
+    // the web version uses OpenGL ES 2
     #include <GLES2/gl2.h>
 #endif
 
@@ -86,22 +93,6 @@ unsigned char* iconatlas = NULL;        // pointer to texture atlas for current 
 Layer* pastelayer;                      // layer containing the paste pattern
 gRect pastebbox;                        // bounding box in cell coords (not necessarily minimal)
 
-GLuint pointProgram;                    // program object for drawing lines and rects
-GLint positionLoc;                      // location of v_Position attribute
-GLint lineColorLoc;                     // location of LineColor uniform
-
-GLuint textureProgram;                  // program object for drawing 2D textures
-GLint texPosLoc;                        // location of a_Position attribute
-GLint texCoordLoc;                      // location of a_texCoord attribute
-GLint samplerLoc;                       // location of s_texture uniform
-
-// the following 2 macros convert x,y positions in Golly's preferred coordinate
-// system (where 0,0 is top left corner of viewport and bottom right corner is
-// currwd,currht) into OpenGL ES 2's normalized coordinates (where 0.0,0.0 is in
-// middle of viewport, top right corner is 1.0,1.0 and bottom left corner is -1.0,-1.0)
-#define XCOORD(x)  (2.0 * (x) / float(currwd) - 1.0)
-#define YCOORD(y) -(2.0 * (y) / float(currht) - 1.0)
-
 // the pxldata array is used to render icons and magnified cells;
 // its size is chosen so that at scale 1:2 DrawMagnifiedCells will only need to call
 // DrawRGBAData once (assuming golly_render::pixblit passes in 256x256 bytes of state data)
@@ -110,6 +101,27 @@ const int maxbytes = maxrows * maxrows * 4;     // 4 bytes (RGBA) per pixel
 unsigned char pxldata[maxbytes];
 
 // -----------------------------------------------------------------------------
+
+#ifdef WEB_GUI
+    // the following 2 macros convert x,y positions in Golly's preferred coordinate
+    // system (where 0,0 is top left corner of viewport and bottom right corner is
+    // currwd,currht) into OpenGL ES 2's normalized coordinates (where 0.0,0.0 is in
+    // middle of viewport, top right corner is 1.0,1.0 and bottom left corner is -1.0,-1.0)
+    #define XCOORD(x)  (2.0 * (x) / float(currwd) - 1.0)
+    #define YCOORD(y) -(2.0 * (y) / float(currht) - 1.0)
+#else
+    // the following 2 macros don't need to do anything because we've already
+    // changed the viewport coordinate system to what Golly wants
+    #define XCOORD(x) x
+    #define YCOORD(y) y
+
+    // fixed texture coordinates used by glTexCoordPointer
+    const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef WEB_GUI
 
 static GLuint LoadShader(GLenum type, const char* shader_source)
 {
@@ -135,6 +147,15 @@ static GLuint LoadShader(GLenum type, const char* shader_source)
 }
 
 // -----------------------------------------------------------------------------
+
+GLuint pointProgram;        // program object for drawing lines and rects
+GLint positionLoc;          // location of v_Position attribute
+GLint lineColorLoc;         // location of LineColor uniform
+
+GLuint textureProgram;      // program object for drawing 2D textures
+GLint texPosLoc;            // location of a_Position attribute
+GLint texCoordLoc;          // location of a_texCoord attribute
+GLint samplerLoc;           // location of s_texture uniform
 
 bool InitOGLES2()
 {
@@ -256,22 +277,25 @@ bool InitOGLES2()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
 
-    // create texture name
-    glGenTextures(1, &rgbatexture);
-
     return true;
 }
+
+#endif // WEB_GUI
 
 // -----------------------------------------------------------------------------
 
 static void SetColor(int r, int g, int b, int a)
 {
-    GLfloat color[4];
-    color[0] = r/255.0;
-    color[1] = g/255.0;
-    color[2] = b/255.0;
-    color[3] = a/255.0;
-    glUniform4fv(lineColorLoc, 1, color);
+    #ifdef WEB_GUI
+        GLfloat color[4];
+        color[0] = r/255.0;
+        color[1] = g/255.0;
+        color[2] = b/255.0;
+        color[3] = a/255.0;
+        glUniform4fv(lineColorLoc, 1, color);
+    #else
+        glColor4ub(r, g, b, a);
+    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -284,28 +308,53 @@ static void FillRect(int x, int y, int wd, int ht)
         XCOORD(x+wd), YCOORD(y),     // right, top
         XCOORD(x),    YCOORD(y),     // left, top
     };
-    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), rect, GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(positionLoc);
+    #ifdef WEB_GUI
+        glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), rect, GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(positionLoc);
+    #else
+        glVertexPointer(2, GL_FLOAT, 0, rect);
+    #endif
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+// -----------------------------------------------------------------------------
+
+static void DisableTextures()
+{
+    #ifdef WEB_GUI
+        glUseProgram(pointProgram);
+    #else
+        if (glIsEnabled(GL_TEXTURE_2D)) {
+            glDisable(GL_TEXTURE_2D);
+        };
+    #endif
 }
 
 // -----------------------------------------------------------------------------
 
 void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h, int scale = 1)
 {
-    // called from golly_render::pixblit to draw RGBA data at 1:1 scale
+    // called from golly_render::pixblit to draw RGBA data
 
-    glUseProgram(textureProgram);
-    
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, rgbatexture);
-    glUniform1i(samplerLoc, 0);
-    
-    glVertexAttribPointer(texPosLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(0));
-    glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));
-    glEnableVertexAttribArray(texPosLoc);
-    glEnableVertexAttribArray(texCoordLoc);
+    // create texture name once
+    if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
+
+    #ifdef WEB_GUI
+        glUseProgram(textureProgram);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, rgbatexture);
+        glUniform1i(samplerLoc, 0);
+    #else
+        if (!glIsEnabled(GL_TEXTURE_2D)) {
+            // restore texture color and enable textures
+            SetColor(255, 255, 255, 255);
+            glEnable(GL_TEXTURE_2D);
+            // bind our texture
+            glBindTexture(GL_TEXTURE_2D, rgbatexture);
+            glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+        }
+    #endif
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -323,18 +372,36 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h, int scale
         h *= scale;
     }
 
-    GLfloat vertices[] = {
-        XCOORD(x),     YCOORD(y),      // Position 0 = left,top
-        0.0,  0.0,                     // TexCoord 0
-        XCOORD(x),     YCOORD(y + h),  // Position 1 = left,bottom
-        0.0,  1.0,                     // TexCoord 1
-        XCOORD(x + w), YCOORD(y + h),  // Position 2 = right,bottom
-        1.0,  1.0,                     // TexCoord 2
-        XCOORD(x + w), YCOORD(y),      // Position 3 = right,top
-        1.0,  0.0                      // TexCoord 3
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    #ifdef WEB_GUI
+        GLfloat vertices[] = {
+            XCOORD(x),     YCOORD(y),      // Position 0 = left,top
+            0.0,  0.0,                     // TexCoord 0
+            XCOORD(x),     YCOORD(y + h),  // Position 1 = left,bottom
+            0.0,  1.0,                     // TexCoord 1
+            XCOORD(x + w), YCOORD(y + h),  // Position 2 = right,bottom
+            1.0,  1.0,                     // TexCoord 2
+            XCOORD(x + w), YCOORD(y),      // Position 3 = right,top
+            1.0,  0.0                      // TexCoord 3
+        };
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+        
+        glVertexAttribPointer(texPosLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(0));
+        glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));
+        glEnableVertexAttribArray(texPosLoc);
+        glEnableVertexAttribArray(texCoordLoc);
+        
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    #else
+        // w and h must be powers of 2???!!!
+        GLfloat vertices[] = {
+            x,   y,
+            x+w, y,
+            x,   y+h,
+            x+w, y+h,
+        };
+        glVertexPointer(2, GL_FLOAT, 0, vertices);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -532,7 +599,7 @@ void golly_render::getcolors(unsigned char** r, unsigned char** g, unsigned char
 void DrawSelection(gRect& rect, bool active)
 {
     // draw semi-transparent rectangle
-    glUseProgram(pointProgram);
+    DisableTextures();
     if (active) {
         SetColor(selectrgb.r, selectrgb.g, selectrgb.b, 128);
     } else {
@@ -586,7 +653,7 @@ void DrawGridBorder(int wd, int ht)
         return;
     }
 
-    glUseProgram(pointProgram);
+    DisableTextures();
     SetColor(borderrgb.r, borderrgb.g, borderrgb.b, 255);
 
     if (left >= wd || right < 0 || top >= ht || bottom < 0) {
@@ -777,8 +844,12 @@ void DrawPasteImage()
     currwd = pastelayer->view->getwidth();
     currht = pastelayer->view->getheight();
 
-    // temporarily change OpenGL viewport's origin and size to match pastelayer->view
-    glViewport(ileft, saveht-currht-itop, currwd, currht);
+    #ifdef WEB_GUI
+        // temporarily change OpenGL viewport's origin and size to match pastelayer->view
+        glViewport(ileft, saveht-currht-itop, currwd, currht);
+    #else
+        glTranslatef(ileft, itop, 0);
+    #endif
     
     // make dead pixels 100% transparent and live pixels 100% opaque
     dead_alpha = 0;
@@ -803,16 +874,20 @@ void DrawPasteImage()
     // draw paste pattern
     pastelayer->algo->draw(*pastelayer->view, renderer);
 
+    #ifdef WEB_GUI
+        // restore OpenGL viewport's origin and size
+        glViewport(0, 0, savewd, saveht);
+    #else
+        glTranslatef(-ileft, -itop, 0);
+    #endif
+
     currlayer = savelayer;
     showgridlines = saveshow;
     currwd = savewd;
     currht = saveht;
 
-    // restore OpenGL viewport's origin and size
-    glViewport(0, 0, savewd, saveht);
-
     // overlay translucent rect to show paste area
-    glUseProgram(pointProgram);
+    DisableTextures();
     SetColor(pastergb.r, pastergb.g, pastergb.b, 64);
     FillRect(ileft, itop, rectwd, rectht);
 }
@@ -842,7 +917,7 @@ void DrawGridLines(int wd, int ht)
         topbold = leftbold = 0;
     }
 
-    glUseProgram(pointProgram);
+    DisableTextures();
     glLineWidth(1.0);
 
     // set the stroke color depending on current bg color
@@ -872,11 +947,17 @@ void DrawGridLines(int wd, int ht)
         if (v >= ht) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0 && v >= 0 && v < ht) {
-            GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
-                                 XCOORD(wd),   YCOORD(v-0.5) };
-            glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(positionLoc);
+            #ifdef WEB_GUI
+                GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
+                                     XCOORD(wd),   YCOORD(v-0.5) };
+                glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+                glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(positionLoc);
+            #else
+                GLfloat points[] = {   -0.5, v-0.5,
+                                     wd-0.5, v-0.5 };
+                glVertexPointer(2, GL_FLOAT, 0, points);
+            #endif
             glDrawArrays(GL_LINES, 0, 2);
         }
     }
@@ -887,11 +968,17 @@ void DrawGridLines(int wd, int ht)
         if (h >= wd) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0 && h >= 0 && h < wd) {
-            GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
-                                 XCOORD(h-0.5), YCOORD(ht) };
-            glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(positionLoc);
+            #ifdef WEB_GUI
+                GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
+                                     XCOORD(h-0.5), YCOORD(ht) };
+                glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+                glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(positionLoc);
+            #else
+                GLfloat points[] = { h-0.5,   -0.5,
+                                     h-0.5, ht-0.5 };
+                glVertexPointer(2, GL_FLOAT, 0, points);
+            #endif
             glDrawArrays(GL_LINES, 0, 2);
         }
     }
@@ -917,11 +1004,17 @@ void DrawGridLines(int wd, int ht)
             if (v >= ht) break;
             i++;
             if (i % boldspacing == 0 && v >= 0 && v < ht) {
-                GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
-                                     XCOORD(wd),   YCOORD(v-0.5) };
-                glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_DYNAMIC_DRAW);
-                glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-                glEnableVertexAttribArray(positionLoc);
+                #ifdef WEB_GUI
+                    GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
+                                         XCOORD(wd),   YCOORD(v-0.5) };
+                    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+                    glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                    glEnableVertexAttribArray(positionLoc);
+                #else
+                    GLfloat points[] = {   -0.5, v-0.5,
+                                         wd-0.5, v-0.5 };
+                    glVertexPointer(2, GL_FLOAT, 0, points);
+                #endif
                 glDrawArrays(GL_LINES, 0, 2);
             }
         }
@@ -932,11 +1025,17 @@ void DrawGridLines(int wd, int ht)
             if (h >= wd) break;
             i++;
             if (i % boldspacing == 0 && h >= 0 && h < wd) {
-                GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
-                                     XCOORD(h-0.5), YCOORD(ht) };
-                glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_DYNAMIC_DRAW);
-                glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-                glEnableVertexAttribArray(positionLoc);
+                #ifdef WEB_GUI
+                    GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
+                                         XCOORD(h-0.5), YCOORD(ht) };
+                    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+                    glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                    glEnableVertexAttribArray(positionLoc);
+                #else
+                    GLfloat points[] = { h-0.5,   -0.5,
+                                         h-0.5, ht-0.5 };
+                    glVertexPointer(2, GL_FLOAT, 0, points);
+                #endif
                 glDrawArrays(GL_LINES, 0, 2);
             }
         }

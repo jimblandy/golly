@@ -32,14 +32,14 @@
 #include "render.h"     // for stacklayers, tilelayers
 #include "layer.h"      // for currlayer, numlayers, etc
 #include "control.h"    // for generating
-#include "render.h"     // for InitOGLES2, DrawPattern
+#include "render.h"     // for DrawPattern
 #include "view.h"       // for TouchBegan, TouchMoved, TouchEnded, etc
 
 #import <QuartzCore/QuartzCore.h>
 #import <OpenGLES/EAGLDrawable.h>
 #import <OpenGLES/EAGL.h>
-#import <OpenGLES/ES2/gl.h>
-#import <OpenGLES/ES2/glext.h>
+#import <OpenGLES/ES1/gl.h>
+#import <OpenGLES/ES1/glext.h>
 
 #import "PatternViewController.h"   // for PauseGenerating, ResumeGenerating, StopIfGenerating
 #import "PatternView.h"
@@ -107,9 +107,13 @@ static GLuint viewFramebuffer = 0;
     // NSLog(@"layoutSubviews: wd=%f ht=%f", self.bounds.size.width, self.bounds.size.height);
 
     [EAGLContext setCurrentContext:context];
-    
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     CGRect frame = self.bounds;
+    glOrthof(0, frame.size.width, frame.size.height, 0, -1, 1);     // origin is top left and y increases down
     glViewport(0, 0, frame.size.width, frame.size.height);
+    glMatrixMode(GL_MODELVIEW);
     
     if (viewFramebuffer != 0 || viewRenderbuffer != 0) {
         [self destroyFramebuffer];
@@ -464,8 +468,8 @@ static double prevtime = 0.0;   // used to detect a double tap
 		CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
 		eaglLayer.opaque = YES;
         
-        // note that we're using OpenGL ES 2.0
-		context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+        // note that we're using OpenGL ES version 1
+		context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
 		if (!context || ![EAGLContext setCurrentContext:context]) {
 			self = nil;
 			return self;
@@ -474,12 +478,16 @@ static double prevtime = 0.0;   // used to detect a double tap
 		// set the view's scale factor
 		self.contentScaleFactor = 1.0;
         
-        if (!InitOGLES2()) Warning("InitOGLES2 failed!");
-        
         // we only do 2D drawing
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_DITHER);
+        glDisable(GL_MULTISAMPLE);
         glDisable(GL_STENCIL_TEST);
+        glDisable(GL_FOG);
+        
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         

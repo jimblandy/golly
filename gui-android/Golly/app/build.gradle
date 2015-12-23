@@ -29,7 +29,7 @@ model {
         cppFlags += "-fexceptions"
         cppFlags += "-DANDROID_GUI"
         cppFlags += "-DZLIB"
-        ldLibs   += ["log", "z", "GLESv2", "jnigraphics"]
+        ldLibs   += ["log", "z", "GLESv1_CM", "jnigraphics"]
     }
 
     android.sources {

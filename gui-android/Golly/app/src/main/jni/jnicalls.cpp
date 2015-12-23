@@ -23,7 +23,7 @@
  / ***/
 
 #include <jni.h>        // for calling Java from C++ and vice versa
-#include <GLES2/gl2.h>  // for OpenGL ES 2 calls
+#include <GLES/gl.h>    // for OpenGL ES 1.x calls
 #include <unistd.h>     // for usleep
 #include <string>       // for std::string
 #include <list>         // for std::list
@@ -36,7 +36,7 @@
 #include "layer.h"      // for AddLayer, ResizeLayers, currlayer
 #include "control.h"    // for SetMinimumStepExponent
 #include "file.h"       // for NewPattern
-#include "render.h"     // for InitOGLES2, DrawPattern
+#include "render.h"     // for DrawPattern
 #include "view.h"       // for widescreen, fullscreen, TouchBegan, etc
 #include "status.h"     // for UpdateStatusLines, ClearMessage, etc
 #include "undo.h"       // for ClearUndoRedo
@@ -1263,12 +1263,16 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternGLSurfaceView_nativeZoomOut(JNIE
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
 {
-    if (!InitOGLES2()) Warning("InitOGLES2 failed!");
-    
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
+    glDisable(GL_MULTISAMPLE);
     glDisable(GL_STENCIL_TEST);
+    glDisable(GL_FOG);
+
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -1279,7 +1283,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeInit(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_PatternRenderer_nativeResize(JNIEnv* env, jobject obj, jint w, jint h)
 {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrthof(0, w, h, 0, -1, 1);     // origin is top left and y increases down
     glViewport(0, 0, w, h);
+    glMatrixMode(GL_MODELVIEW);
 
     if (w != currlayer->view->getwidth() || h != currlayer->view->getheight()) {
         // update size of viewport
@@ -1746,23 +1754,6 @@ static int max_offset;
 static int lastx, lasty;
 static bool touch_moved;
 
-static GLuint pointProgram;         // program object for drawing lines and rects
-static GLint positionLoc;           // location of v_Position attribute
-static GLint lineColorLoc;          // location of LineColor uniform
-
-static GLuint textureProgram;       // program object for drawing 2D textures
-static GLint texPosLoc;             // location of a_Position attribute
-static GLint texCoordLoc;           // location of a_texCoord attribute
-static GLint samplerLoc;            // location of s_texture uniform
-static GLuint rgbatexture = 0;      // texture name for drawing RGBA bitmaps
-
-// the following 2 macros convert x,y positions in Golly's preferred coordinate
-// system (where 0,0 is top left corner of viewport and bottom right corner is
-// currwd,currht) into OpenGL ES 2's normalized coordinates (where 0.0,0.0 is in
-// middle of viewport, top right corner is 1.0,1.0 and bottom left corner is -1.0,-1.0)
-#define XCOORD(x)  (2.0 * (x) / float(statewd) - 1.0)
-#define YCOORD(y) -(2.0 * (y) / float(stateht) - 1.0)
-
 // -----------------------------------------------------------------------------
 
 extern "C"
@@ -1827,163 +1818,9 @@ JNIEXPORT jboolean JNICALL Java_net_sf_golly_StateGLSurfaceView_nativeTouchEnded
 
 // -----------------------------------------------------------------------------
 
-static GLuint LoadShader(GLenum type, const char* shader_source)
-{
-    // create a shader object, load the shader source, and compile the shader
-    
-    GLuint shader = glCreateShader(type);
-    if (shader == 0) return 0;
-    
-    glShaderSource(shader, 1, &shader_source, NULL);
-    
-    glCompileShader(shader);
-    
-    // check the compile status
-    GLint compiled;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-    if (!compiled) {
-        Warning("Error compiling shader!");
-        glDeleteShader(shader);
-        return 0;
-    }
-
-    return shader;
-}
-
-// -----------------------------------------------------------------------------
-
-static bool CreateProgramObjects()
-{
-    // create the shaders and program objects required by OpenGL ES 2
-    
-    // vertex shader used in pointProgram
-    GLbyte v1ShaderStr[] =
-        "attribute vec4 v_Position;   \n"
-        "void main() {                \n"
-        "    gl_Position = v_Position;\n"
-        "}                            \n";
-    
-    // fragment shader used in pointProgram
-    GLbyte f1ShaderStr[] =
-        "uniform lowp vec4 LineColor; \n"
-        "void main() {                \n"
-        "    gl_FragColor = LineColor;\n"
-        "}                            \n";
-    
-    // vertex shader used in textureProgram
-    GLbyte v2ShaderStr[] =
-        "attribute vec4 a_Position;   \n"
-        "attribute vec2 a_texCoord;   \n"
-        "varying vec2 v_texCoord;     \n"
-        "void main() {                \n"
-        "    gl_Position = a_Position;\n"
-        "    v_texCoord = a_texCoord; \n"
-        "}                            \n";
-   
-    // fragment shader used in textureProgram
-    GLbyte f2ShaderStr[] =
-        "precision mediump float;                            \n"
-        "varying vec2 v_texCoord;                            \n"
-        "uniform sampler2D s_texture;                        \n"
-        "void main()                                         \n"
-        "{                                                   \n"
-        "    gl_FragColor = texture2D(s_texture, v_texCoord);\n"
-        "}                                                   \n";
-    
-    GLuint vertex1Shader, fragment1Shader;
-    GLuint vertex2Shader, fragment2Shader;
-    
-    // load the vertex/fragment shaders
-    vertex1Shader = LoadShader(GL_VERTEX_SHADER, (const char*) v1ShaderStr);
-    vertex2Shader = LoadShader(GL_VERTEX_SHADER, (const char*) v2ShaderStr);
-    fragment1Shader = LoadShader(GL_FRAGMENT_SHADER, (const char*) f1ShaderStr);
-    fragment2Shader = LoadShader(GL_FRAGMENT_SHADER, (const char*) f2ShaderStr);
-    
-    // create the program object
-    pointProgram = glCreateProgram();
-    if (pointProgram == 0) return false;
-
-    textureProgram = glCreateProgram();
-    if (textureProgram == 0) return false;
-
-    glAttachShader(pointProgram, vertex1Shader);
-    glAttachShader(pointProgram, fragment1Shader);
-
-    glAttachShader(textureProgram, vertex2Shader);
-    glAttachShader(textureProgram, fragment2Shader);
-    
-    // link the program objects
-    glLinkProgram(pointProgram);
-    glLinkProgram(textureProgram);
-    
-    // check the link status
-    GLint plinked;
-    glGetProgramiv(pointProgram, GL_LINK_STATUS, &plinked);
-    if (!plinked) {
-        Warning("Error linking pointProgram!");
-        glDeleteProgram(pointProgram);
-        return false;
-    }
-    
-    GLint tlinked;
-    glGetProgramiv(textureProgram, GL_LINK_STATUS, &tlinked);
-    if (!tlinked) {
-        Warning("Error linking textureProgram!");
-        glDeleteProgram(textureProgram);
-        return false;
-    }
-    
-    // get the attribute and uniform locations
-    glUseProgram(pointProgram);
-    positionLoc = glGetAttribLocation(pointProgram, "v_Position");
-    lineColorLoc = glGetUniformLocation(pointProgram, "LineColor");
-    if (positionLoc == -1 || lineColorLoc == -1) {
-        Warning("Failed to get a location in pointProgram!");
-        glDeleteProgram(pointProgram);
-        return false;
-    }
-    
-    glUseProgram(textureProgram);
-    texPosLoc = glGetAttribLocation(textureProgram, "a_Position");
-    texCoordLoc = glGetAttribLocation(textureProgram, "a_texCoord");
-    samplerLoc = glGetUniformLocation (textureProgram, "s_texture");
-    if (texPosLoc == -1 || texCoordLoc == -1 || samplerLoc == -1) {
-        Warning("Failed to get a location in textureProgram!");
-        glDeleteProgram(textureProgram);
-        return false;
-    }
-
-    // create buffer for vertex data (used for drawing lines and rects)
-    GLuint vertexPosObject;
-    glGenBuffers(1, &vertexPosObject);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexPosObject);
-
-    // create index data for glDrawElements (used for drawing textures)
-    // where each texture = 2 triangles with 2 shared vertices (0 and 2)
-    //
-    //    0 *---* 3
-    //      | \ |
-    //    1 *---* 2
-    //
-    GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    
-    return true;
-}
-
-// -----------------------------------------------------------------------------
-
 static void SetColor(int r, int g, int b, int a)
 {
-    GLfloat color[4];
-    color[0] = r/255.0;
-    color[1] = g/255.0;
-    color[2] = b/255.0;
-    color[3] = a/255.0;
-    glUniform4fv(lineColorLoc, 1, color);
+    glColor4ub(r, g, b, a);
 }
 
 // -----------------------------------------------------------------------------
@@ -1996,9 +1833,7 @@ static void FillRect(int x, int y, int wd, int ht)
         XCOORD(x+wd), YCOORD(y),     // right, top
         XCOORD(x),    YCOORD(y),     // left, top
     };
-    glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), rect, GL_STATIC_DRAW);
-    glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(positionLoc);
+    glVertexPointer(2, GL_FLOAT, 0, rect);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
@@ -2007,12 +1842,16 @@ static void FillRect(int x, int y, int wd, int ht)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env)
 {
-    if (!CreateProgramObjects()) Warning("CreateProgramObjects failed!");
-    
     // we only do 2D drawing
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_DITHER);
+    glDisable(GL_MULTISAMPLE);
     glDisable(GL_STENCIL_TEST);
+    glDisable(GL_FOG);
+
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -2023,7 +1862,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeInit(JNIEnv* env)
 extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_StateRenderer_nativeResize(JNIEnv* env, jobject obj, jint w, jint h)
 {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrthof(0, w, h, 0, -1, 1);     // origin is top left and y increases down
     glViewport(0, 0, w, h);
+    glMatrixMode(GL_MODELVIEW);
 
     statewd = w;
     stateht = h;
@@ -2042,8 +1885,8 @@ static void DrawGrid(int wd, int ht)
 {
     int cellsize = highdensity ? 64 : 32;
     int h, v;
-    
-    glUseProgram(pointProgram);
+
+    if (glIsEnabled(GL_TEXTURE_2D)) glDisable(GL_TEXTURE_2D);
 
     // set the stroke color to white
     SetColor(255, 255, 255, 255);
@@ -2051,22 +1894,16 @@ static void DrawGrid(int wd, int ht)
 
     v = 1;
     while (v <= ht) {
-        GLfloat points[] = { XCOORD(-0.5),   YCOORD(v-0.5),
-                             XCOORD(wd-0.5), YCOORD(v-0.5) };
-        glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
-        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(positionLoc);
+        GLfloat points[] = {-0.5, v-0.5, wd-0.5, v-0.5};
+        glVertexPointer(2, GL_FLOAT, 0, points);
         glDrawArrays(GL_LINES, 0, 2);
         v += cellsize;
     }
 
     h = 1;
     while (h <= wd) {
-        GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
-                             XCOORD(h-0.5), YCOORD(ht-0.5) };
-        glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
-        glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(positionLoc);
+        GLfloat points[] = {h-0.5, -0.5, h-0.5, ht-0.5};
+        glVertexPointer(2, GL_FLOAT, 0, points);
         glDrawArrays(GL_LINES, 0, 2);
         h += cellsize;
     }
@@ -2076,8 +1913,8 @@ static void DrawGrid(int wd, int ht)
 
 static void DrawRect(int state, int x, int y, int wd, int ht)
 {
-    glUseProgram(pointProgram);
-    
+    if (glIsEnabled(GL_TEXTURE_2D)) glDisable(GL_TEXTURE_2D);
+
     SetColor(currlayer->cellr[state],
              currlayer->cellg[state],
              currlayer->cellb[state],
@@ -2088,27 +1925,26 @@ static void DrawRect(int state, int x, int y, int wd, int ht)
 
 // -----------------------------------------------------------------------------
 
+// texture name for drawing RGBA bitmaps
+static GLuint rgbatexture = 0
+
+// fixed texture coordinates used by glTexCoordPointer
+static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
+
 static void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 {
     // only need to create texture name once
 	if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
 
-    glUseProgram(textureProgram);
-    glActiveTexture(GL_TEXTURE0);
-    
-    glBindTexture(GL_TEXTURE_2D, rgbatexture);
-    glUniform1i(samplerLoc, 0);
-    
-    glVertexAttribPointer(texPosLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(0));
-    glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (const GLvoid*)(2 * sizeof(GL_FLOAT)));
-    glEnableVertexAttribArray(texPosLoc);
-    glEnableVertexAttribArray(texCoordLoc);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if (!glIsEnabled(GL_TEXTURE_2D)) {
+        // restore texture color and enable textures
+        SetColor(255, 255, 255, 255);
+        glEnable(GL_TEXTURE_2D);
+        // bind our texture
+        glBindTexture(GL_TEXTURE_2D, rgbatexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+    }
     
     // update the texture with the new RGBA data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
@@ -2119,17 +1955,13 @@ static void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
     }
 
     GLfloat vertices[] = {
-        XCOORD(x),     YCOORD(y),      // Position 0 = left,top
-        0.0,  0.0,                     // TexCoord 0
-        XCOORD(x),     YCOORD(y + h),  // Position 1 = left,bottom
-        0.0,  1.0,                     // TexCoord 1
-        XCOORD(x + w), YCOORD(y + h),  // Position 2 = right,bottom
-        1.0,  1.0,                     // TexCoord 2
-        XCOORD(x + w), YCOORD(y),      // Position 3 = right,top
-        1.0,  0.0                      // TexCoord 3
+        x,   y,
+        x+w, y,
+        x,   y+h,
+        x+w, y+h,
     };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 // -----------------------------------------------------------------------------
