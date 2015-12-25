@@ -67,6 +67,7 @@
 #ifdef ANDROID_GUI
     // the Android version uses OpenGL ES 1
     #include <GLES/gl.h>
+    #include "jnicalls.h"   // for LOGI
 #endif
 
 #ifdef IOS_GUI
@@ -366,8 +367,7 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h, int scale
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
 
     if (scale > 1) {
-        x *= scale;
-        y *= scale;
+        // we only do this when drawing icons beyond 1:32
         w *= scale;
         h *= scale;
     }
@@ -392,7 +392,6 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h, int scale
         
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     #else
-        // w and h must be powers of 2???!!!
         GLfloat vertices[] = {
             x,   y,
             x+w, y,
@@ -408,9 +407,9 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h, int scale
 
 void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride)
 {
-    // called from golly_render::pixblit to draw icons for each live cell;
+    // called from golly_render::pixblit to draw icons for each live cell
+    
     // assume pmscale > 2 (should be 8, 16 or 32 -- if higher then the 31x31 icons will be scaled up)
-
     int iconsize = pmscale > 32 ? 32 : pmscale;
     int iconwd = (iconsize-1)*4;    // allow for 1 pixel gap at right edge
     int atlas_rowbytes = iconsize * currlayer->numicons * 4;
@@ -422,13 +421,21 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     rowbytes = pot;
     
     int stripht = h;
+#ifdef ANDROID_GUI
+    // reduce chances of crashes (probably due to OpenGL ES bug, and only on some Nexus devices???)
+    if (pmscale > 16) stripht = 1;
+#endif
     int numbytes = rowbytes*stripht*iconsize;
     while (numbytes > maxbytes) {
         // do 2 or more horizontal strips
+        if (stripht == 1) {
+            // LOGI("BUG in DrawIcons: rowbytes=%d pmscale=%d\n", rowbytes, pmscale);
+            return;
+        }
         stripht = (stripht+1) / 2;
         numbytes = rowbytes*stripht*iconsize;
     }
-    
+
     int nextstrip = 0;
     do {
         memset(pxldata, 0, numbytes);   // all pixels are initially transparent
@@ -457,7 +464,7 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
         
         if (sawlivecell) DrawRGBAData(pxldata, x, y, rowbytes/4, stripht*iconsize, pmscale/iconsize);
         
-        y += stripht*iconsize;
+        y += stripht*pmscale;
         nextstrip += stripht;
     } while (nextstrip < h);
 }
@@ -479,13 +486,21 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     int rowtotal = pmscale > 2 ? (pmscale-1)*rowbytes : pmscale*rowbytes;
     
     int stripht = h;
+#ifdef ANDROID_GUI
+    // reduce chances of crashes (probably due to OpenGL ES bug, and only on some Nexus devices???)
+    if (pmscale > 16) stripht = 1;
+#endif
     int numbytes = rowbytes*stripht*pmscale;
     while (numbytes > maxbytes) {
         // do 2 or more horizontal strips
+        if (stripht == 1) {
+            // LOGI("BUG in DrawMagCells: rowbytes=%d pmscale=%d\n", rowbytes, pmscale);
+            return;
+        }
         stripht = (stripht+1) / 2;
         numbytes = rowbytes*stripht*pmscale;
     }
-    
+
     int nextstrip = 0;
     do {
         memset(pxldata, 0, numbytes);   // all pixels are initially transparent
