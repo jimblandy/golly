@@ -1151,20 +1151,31 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
             // allow rule change to cause algo change
             ChangeAlgorithm(pastelayer->algtype, newrule.c_str());
         } else {
+			// if pattern exists and is at starting gen then ensure savestart is true
+			// so that SaveStartingPattern will save pattern to suitable file
+			// (and thus undo/reset will work correctly)
+			if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+				currlayer->savestart = true;
+			}
+
             // if grid is bounded then remove any live cells outside grid edges
             if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
                 ClearOutsideGrid();
             }
+            
             // rule change might have changed the number of cell states;
             // if there are fewer states then pattern might change
             int newmaxstate = currlayer->algo->NumCellStates() - 1;
             if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
                 ReduceCellStates(newmaxstate);
             }
-            // switch to default colors for new rule
+            
+            // use colors for new rule
             UpdateLayerColors();
-            if (allowundo && !currlayer->stayclean)
+            
+            if (allowundo && !currlayer->stayclean) {
                 currlayer->undoredo->RememberRuleChange(oldrule.c_str());
+            }
         }
     }
 

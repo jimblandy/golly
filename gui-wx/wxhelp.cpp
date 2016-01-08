@@ -493,21 +493,32 @@ void LoadRule(const wxString& rulestring)
     }
     
     wxString newrule = wxString(currlayer->algo->getrule(),wxConvLocal);
-    if (oldrule != newrule) {
+    int newmaxstate = currlayer->algo->NumCellStates() - 1;
+    if (oldrule != newrule || oldmaxstate != newmaxstate) {
         // show new rule in main window's title but don't change name
         mainptr->SetWindowTitle(wxEmptyString);
+        
+		// if pattern exists and is at starting gen then ensure savestart is true
+		// so that SaveStartingPattern will save pattern to suitable file
+		// (and thus undo/reset will work correctly)
+		if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+			currlayer->savestart = true;
+		}
         
         // if grid is bounded then remove any live cells outside grid edges
         if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
             mainptr->ClearOutsideGrid();
         }
-    }
-    
-    // new rule might have changed the number of cell states;
-    // if there are fewer states then pattern might change
-    int newmaxstate = currlayer->algo->NumCellStates() - 1;
-    if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
-        mainptr->ReduceCellStates(newmaxstate);
+	
+		// new rule might have changed the number of cell states;
+		// if there are fewer states then pattern might change
+		if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
+			mainptr->ReduceCellStates(newmaxstate);
+		}
+
+        if (allowundo && !currlayer->stayclean) {
+            currlayer->undoredo->RememberRuleChange(oldrule);
+        }
     }
     
     // update colors and/or icons for the new rule
@@ -515,12 +526,6 @@ void LoadRule(const wxString& rulestring)
     
     // pattern might have changed or colors/icons might have changed
     mainptr->UpdateEverything();
-    
-    if (oldrule != newrule) {
-        if (allowundo && !currlayer->stayclean) {
-            currlayer->undoredo->RememberRuleChange(oldrule);
-        }
-    }
 }
 
 // -----------------------------------------------------------------------------

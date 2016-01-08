@@ -733,7 +733,7 @@ void ReduceCellStates(int newmaxstate)
 
 void ChangeRule(const std::string& rulestring)
 {
-    // load recently installed .rule/table/tree file
+    // load recently installed .rule file
     std::string oldrule = currlayer->algo->getrule();
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
 
@@ -755,48 +755,52 @@ void ChangeRule(const std::string& rulestring)
                     if (i != currlayer->algtype) {
                         RestoreRule(oldrule.c_str());
                         Warning("Algorithm could not be changed (pattern is too big to convert).");
-                        return;
                     } else {
                         UpdateEverything();
-                        return;
                     }
+                    return;
                 }
             }
         }
-        // should only get here if .rule/table/tree file contains some sort of error
+        // should only get here if .rule file contains some sort of error
         RestoreRule(oldrule.c_str());
         Warning("New rule is not valid in any algorithm!");
         return;
     }
 
     std::string newrule = currlayer->algo->getrule();
-    if (oldrule != newrule) {
+    int newmaxstate = currlayer->algo->NumCellStates() - 1;
+    if (oldrule != newrule || oldmaxstate != newmaxstate) {
         UpdateStatus();
+        
+		// if pattern exists and is at starting gen then ensure savestart is true
+		// so that SaveStartingPattern will save pattern to suitable file
+		// (and thus undo/reset will work correctly)
+		if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+			currlayer->savestart = true;
+		}
 
         // if grid is bounded then remove any live cells outside grid edges
         if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
             ClearOutsideGrid();
         }
-    }
 
-    // new table/tree might have changed the number of cell states;
-    // if there are fewer states then pattern might change
-    int newmaxstate = currlayer->algo->NumCellStates() - 1;
-    if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
-        ReduceCellStates(newmaxstate);
+		// new table/tree might have changed the number of cell states;
+		// if there are fewer states then pattern might change
+		if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
+			ReduceCellStates(newmaxstate);
+		}
+
+        if (allowundo && !currlayer->stayclean) {
+            currlayer->undoredo->RememberRuleChange(oldrule.c_str());
+        }
     }
 
     // set colors and icons for new rule
     UpdateLayerColors();
 
-    // pattern might have changed or colors and/or icons might have changed
+    // pattern or colors or icons might have changed
     UpdateEverything();
-
-    if (oldrule != newrule) {
-        if (allowundo && !currlayer->stayclean) {
-            currlayer->undoredo->RememberRuleChange(oldrule.c_str());
-        }
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -976,7 +980,7 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
             // if pattern exists and is at starting gen then set savestart true
             // so that SaveStartingPattern will save pattern to suitable file
             // (and thus ResetPattern will work correctly)
-            if ( currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty() ) {
+            if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
                 currlayer->savestart = true;
             }
 

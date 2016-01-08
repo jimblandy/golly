@@ -108,7 +108,6 @@ bool MainFrame::SaveStartingPattern()
     }
     
     // save starting pattern in tempstart file
-    // use CanWriteFormat(MC_format)???
     if ( currlayer->algo->hyperCapable() ) {
         // much faster to save pattern in a macrocell file
         const char* err = WritePattern(currlayer->tempstart, MC_format,
@@ -1325,9 +1324,9 @@ void MainFrame::ShowRuleDialog()
     viewptr->SaveCurrentSelection();
     
     if (ChangeRule()) {
-        // if ChangeAlgorithm was called then we're done
         if (currlayer->algtype != oldalgo) {
-            // except we have to call UpdateEverything here now that the main window is active
+        	// ChangeAlgorithm was called so we're almost done;
+            // we just have to call UpdateEverything now that the main window is active
             UpdateEverything();
             return;
         }
@@ -1338,10 +1337,18 @@ void MainFrame::ShowRuleDialog()
         SetWindowTitle(wxEmptyString);
         
         // check if the rule string changed, or the number of states changed
-        // (the latter might happen if user edited a table/tree file)
+        // (the latter might happen if user modified .rule file)
         wxString newrule = wxString(currlayer->algo->getrule(), wxConvLocal);
         int newmaxstate = currlayer->algo->NumCellStates() - 1;
         if (oldrule != newrule || oldmaxstate != newmaxstate) {
+            
+            // if pattern exists and is at starting gen then ensure savestart is true
+            // so that SaveStartingPattern will save pattern to suitable file
+            // (and thus undo/reset will work correctly)
+            if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+                currlayer->savestart = true;
+            }
+
             // if grid is bounded then remove any live cells outside grid edges
             if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
                 ClearOutsideGrid();
@@ -1359,7 +1366,7 @@ void MainFrame::ShowRuleDialog()
         }
         
         // switch to default colors and icons for new rule (we need to do this even if
-        // oldrule == newrule in case there's a new/changed .colors or .icons file)
+        // oldrule == newrule in case colors or icons changed)
         UpdateLayerColors();
         
         // pattern or colors or icons might have changed
@@ -1552,8 +1559,7 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
             // if pattern exists and is at starting gen then set savestart true
             // so that SaveStartingPattern will save pattern to suitable file
             // (and thus ResetPattern will work correctly)
-            if ( currlayer->algo->getGeneration() == currlayer->startgen &&
-                !currlayer->algo->isEmpty() ) {
+            if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
                 currlayer->savestart = true;
             }
             

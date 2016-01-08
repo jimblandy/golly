@@ -307,6 +307,13 @@ const char* GSF_setrule(char* rulestring)
         // show new rule in main window's title but don't change name
         ChangeWindowTitle(wxEmptyString);
         
+		// if pattern exists and is at starting gen then ensure savestart is true
+		// so that SaveStartingPattern will save pattern to suitable file
+		// (and thus undo/reset will work correctly)
+		if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+			currlayer->savestart = true;
+		}
+        
         // if grid is bounded then remove any live cells outside grid edges
         if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
             mainptr->ClearOutsideGrid();

@@ -64,7 +64,7 @@ CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
 
 CXXFLAGS = -arch x86_64 \
    -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
-   -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
+   -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wno-potentially-evaluated-expression \
    -fno-strict-aliasing -fno-common
 
 LDFLAGS = -arch x86_64 \

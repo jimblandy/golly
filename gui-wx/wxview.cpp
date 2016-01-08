@@ -500,20 +500,32 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         } else {
             // show new rule in title bar
             mainptr->SetWindowTitle(wxEmptyString);
+
+			// if pattern exists and is at starting gen then ensure savestart is true
+			// so that SaveStartingPattern will save pattern to suitable file
+			// (and thus undo/reset will work correctly)
+			if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+				currlayer->savestart = true;
+			}
+
             // if grid is bounded then remove any live cells outside grid edges
             if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
                 mainptr->ClearOutsideGrid();
             }
+            
             // rule change might have changed the number of cell states;
             // if there are fewer states then pattern might change
             int newmaxstate = currlayer->algo->NumCellStates() - 1;
             if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
                 mainptr->ReduceCellStates(newmaxstate);
             }
-            // switch to default colors for new rule
+            
+            // use colors for new rule
             UpdateLayerColors();
-            if (allowundo && !currlayer->stayclean)
+            
+            if (allowundo && !currlayer->stayclean) {
                 currlayer->undoredo->RememberRuleChange(oldrule);
+            }
         }
     }
     
