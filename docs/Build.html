@@ -51,8 +51,12 @@ Mac users should definitely get 3.0 or later.
 
 <p>
 If your wxWidgets version is earlier than 3.0 then you need to enable OpenGL.
-Open <tt>\wxWidgets\include\wx\msw\setup.h</tt> in your text editor, find the line
+Edit <tt>\wxWidgets\include\wx\msw\setup.h</tt>, find the line
 "<tt>#define wxUSE_GLCANVAS 0</tt>" and change the value to 1.
+If you've previously built wxWidgets 2.x without OpenGL enabled then you might
+also need to edit <tt>\wxWidgets\lib\vc_lib\mswu\wx\setup.h</tt>, change
+<tt>wxUSE_GLCANVAS</tt> to 1, then run "<tt>nmake -f makefile.vc clean</tt>"
+before running "<tt>nmake -f makefile.vc</tt>".
 
 <p>
 If you only want to build one wxWidgets configuration (e.g. a 32-bit release) then
