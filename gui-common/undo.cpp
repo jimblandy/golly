@@ -837,13 +837,17 @@ void UndoRedo::SyncUndoHistory()
         if (change->changeid == genchange && change->oldgen == currlayer->startgen) {
             if (change->scriptgen) {
                 // gen change was done by a script so keep winding back the undo list
-                // to just past the scriptstart node, or until the list is empty
+                // until the scriptstart node, or until the list is empty
                 while (!undolist.empty()) {
                     node = undolist.begin();
                     change = *node;
-                    undolist.erase(node);
-                    redolist.push_front(change);
-                    if (change->changeid == scriptstart) break;
+                    if (change->changeid == scriptstart) {
+                        undolist.erase(node);
+                        redolist.push_front(change);
+                        break;
+                    }
+                    // undo this change so Reset and Undo restore to the same pattern
+                    UndoChange();
                 }
             }
             return;

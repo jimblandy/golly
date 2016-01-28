@@ -64,8 +64,13 @@ CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
 
 CXXFLAGS = -arch x86_64 \
    -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
-   -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -Wno-potentially-evaluated-expression \
+   -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
    -fno-strict-aliasing -fno-common
+
+# determine Mac OS X version (eg. 6 for Snow Leopard, 11 for El Capitan)
+OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
+osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
+CXXFLAGS += $(call osx_ge, 11, "-Wno-potentially-evaluated-expression", "")
 
 LDFLAGS = -arch x86_64 \
    -Wl,-dead_strip -Wl,-S \

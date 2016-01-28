@@ -651,11 +651,9 @@ void UndoRedo::RememberSelection(const wxString& action)
 void UndoRedo::SaveCurrentPattern(const wxString& tempfile)
 {
     const char* err = NULL;
-    //!!! need lifealgo::CanWriteFormat(MC_format) method???
     if ( currlayer->algo->hyperCapable() ) {
         // save hlife pattern in a macrocell file
-        err = mainptr->WritePattern(tempfile, MC_format, no_compression,
-                                    0, 0, 0, 0);
+        err = mainptr->WritePattern(tempfile, MC_format, no_compression, 0, 0, 0, 0);
     } else {
         // can only save RLE file if edges are within getcell/setcell limits
         bigint top, left, bottom, right;
@@ -890,13 +888,17 @@ void UndoRedo::SyncUndoHistory()
         if (change->changeid == genchange && change->oldgen == currlayer->startgen) {
             if (change->scriptgen) {
                 // gen change was done by a script so keep winding back the undo list
-                // to just past the scriptstart node, or until the list is empty
+                // until the scriptstart node, or until the list is empty
                 while (!undolist.IsEmpty()) {
                     node = undolist.GetFirst();
                     change = (ChangeNode*) node->GetData();
-                    undolist.Erase(node);
-                    redolist.Insert(change);
-                    if (change->changeid == scriptstart) break;
+                    if (change->changeid == scriptstart) {
+                        undolist.Erase(node);
+                        redolist.Insert(change);
+                        break;
+                    }
+                    // undo this change so Reset and Undo restore to the same pattern
+                    UndoChange();
                 }
             }
             // update Undo/Redo items so they show the correct suffix
