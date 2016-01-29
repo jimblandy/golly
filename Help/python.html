@@ -1168,10 +1168,9 @@ where <i>charname</i> can be any displayable ASCII character from '!' to '~'
 or one of the following names: space, home, end, pageup, pagedown, help,
 insert, delete, tab, enter, return, left, right, up, down, or f1 to f24.
 If no modifier key was pressed then <i>modifiers</i> is none, otherwise it is
-some combination of alt, cmd, ctrl, meta, shift.  Note that cmd corresponds
-to the command key on a Mac and the control key on Windows/Linux (this lets
-you write portable scripts that work on any platform).  The alt modifier
-corresponds to the option key on a Mac.
+some combination of alt, cmd, ctrl, meta, shift.
+Note that cmd will only be returned on a Mac and corresponds to the command key.
+The alt modifier corresponds to the option key on a Mac.
 </dd>
 <p>
 <dd>
@@ -1206,8 +1205,11 @@ The following examples show the strings returned after various user events:
 Pass the given event to Golly to handle in the usual manner
 (but events that can change the current pattern will be ignored).
 The given event must be a string with the exact same format as returned
-by the <b>getevent</b> command (see above).  If the string is empty then
-Golly does nothing.
+by the <b>getevent</b> command (see above).
+If the string is empty then Golly does nothing.
+Note that the cmd modifier corresponds to the command key on a Mac or
+the control key on Windows/Linux
+(this lets you write portable scripts that work on any platform).
 </dd>
 <dd> Example: <b>golly.doevent("key q cmd")</b> # quit Golly</dd>
 </p>
