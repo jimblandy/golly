@@ -668,8 +668,7 @@ void UndoRedo::RememberGenStart()
             std::list<ChangeNode*>::iterator node = undolist.begin();
             while (node != undolist.end()) {
                 ChangeNode* change = *node;
-                if (change->changeid == setgen &&
-                    change->oldtempstart != change->newtempstart) {
+                if (change->changeid == setgen && change->oldtempstart != change->newtempstart) {
                     change->newdirty = currlayer->startdirty;
                     change->newalgo = currlayer->startalgo;
                     change->newrule = currlayer->startrule;

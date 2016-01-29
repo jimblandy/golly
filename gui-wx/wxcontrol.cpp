@@ -188,16 +188,15 @@ void MainFrame::ResetPattern(bool resetundo)
     currlayer->algtype = currlayer->startalgo;
     
     // restore starting pattern
-    wxString loadedfile;
-    if ( currlayer->startfile.IsEmpty() ) {
+    wxString loadfile;
+    if (currlayer->startfile.IsEmpty()) {
         // restore pattern from currfile
-        loadedfile = currlayer->currfile;
-        LoadPattern(currlayer->currfile, wxEmptyString);
+        loadfile = currlayer->currfile;
     } else {
         // restore pattern from startfile
-        loadedfile = currlayer->startfile;
-        LoadPattern(currlayer->startfile, wxEmptyString);
+        loadfile = currlayer->startfile;
     }
+    LoadPattern(loadfile, wxEmptyString);
     
     if (currlayer->algo->getGeneration() != currlayer->startgen) {
         // LoadPattern failed to reset the gen count to startgen
@@ -205,8 +204,7 @@ void MainFrame::ResetPattern(bool resetundo)
         // so best to clear the pattern and reset the gen count
         CreateUniverse();
         currlayer->algo->setGeneration(currlayer->startgen);
-        Warning(_("A problem occurred trying to reload this pattern file:\n") + loadedfile);
-        
+        Warning(_("A problem occurred trying to reload this pattern file:\n") + loadfile);
     }
     
     // ensure savestart flag is correct
@@ -376,6 +374,7 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
         if (oldgen == currlayer->startgen || newgen <= currlayer->startgen) {
             currlayer->startgen = newgen;
             currlayer->savestart = true;
+            currlayer->startfile = currlayer->tempstart;    // for ResetPattern
         }
         
         if (allowundo && !currlayer->stayclean) {

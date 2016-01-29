@@ -714,8 +714,7 @@ void UndoRedo::RememberGenStart()
             wxList::compatibility_iterator node = undolist.GetFirst();
             while (node) {
                 ChangeNode* change = (ChangeNode*) node->GetData();
-                if (change->changeid == setgen &&
-                    change->oldtempstart != change->newtempstart) {
+                if (change->changeid == setgen && change->oldtempstart != change->newtempstart) {
                     change->newdirty = currlayer->startdirty;
                     change->newalgo = currlayer->startalgo;
                     change->newrule = currlayer->startrule;
@@ -924,6 +923,7 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
         currlayer->tempstart = wxFileName::CreateTempFileName(tempdir + wxT("golly_setgen_"));
         
         // also need to update startfile and currfile (currlayer->savestart is true)
+        if (!currlayer->savestart) Warning(_("Bug in RememberSetGen: savestart is false!"));
         currlayer->startfile = currlayer->tempstart;
         currlayer->currfile = wxEmptyString;
     }

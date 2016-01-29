@@ -27,6 +27,8 @@
      starting generation.
 <li> Fixed a reset problem that could occur after running a script that changed the
      current starting pattern before calling run/step.
+<li> Fixed a bug with Set Generation (or the setgen command) that could cause a
+     "Starting pattern cannot be restored" error upon attempting a reset/undo.
 <li> bgolly now supports rules that specify <a href="bounded.html">bounded grids</a>.
 <li> Fixed a bug in bgolly that prevented use of the RuleLoader algorithm.
 <li> bgolly has a new -s option (or --search) for specifying the folder in which
