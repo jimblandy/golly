@@ -81,7 +81,6 @@ public:
     algo_type startalgo;          // starting algorithm
     bool savestart;               // need to save starting pattern?
     bool startdirty;              // starting state of dirty flag
-    wxString startfile;           // file for saving starting pattern
     wxString startname;           // starting currname
     wxString startrule;           // starting rule
     bigint startgen;              // starting generation (>= 0)

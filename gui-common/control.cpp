@@ -108,10 +108,13 @@ bool SaveStartingPattern()
     currlayer->startsel = currlayer->currsel;
 
     if ( !currlayer->savestart ) {
-        // no need to save pattern; ResetPattern will load currfile
-        currlayer->startfile.clear();
+        // no need to save pattern (use currlayer->currfile as the starting pattern)
+        if (currlayer->currfile.empty())
+            Warning("Bug in SaveStartingPattern: currfile is empty!");
         return true;
     }
+
+    currlayer->currfile = currlayer->tempstart;     // ResetPattern will load tempstart
 
     // save starting pattern in tempstart file
     if ( currlayer->algo->hyperCapable() ) {
@@ -147,7 +150,6 @@ bool SaveStartingPattern()
         }
     }
 
-    currlayer->startfile = currlayer->tempstart;   // ResetPattern will load tempstart
     return true;
 }
 
@@ -206,7 +208,7 @@ void ResetPattern(bool resetundo)
         return;
     }
 
-    if (currlayer->startfile.length() == 0 && currlayer->currfile.length() == 0) {
+    if (currlayer->currfile.empty()) {
         // if this happens then savestart logic is wrong
         Warning("Starting pattern cannot be restored!");
         return;
@@ -221,15 +223,7 @@ void ResetPattern(bool resetundo)
     currlayer->algtype = currlayer->startalgo;
 
     // restore starting pattern
-    std::string loadfile;
-    if (currlayer->startfile.length() == 0) {
-        // restore pattern from currfile
-        loadfile = currlayer->currfile;
-    } else {
-        // restore pattern from startfile
-        loadfile = currlayer->startfile;
-    }
-    LoadPattern(loadfile.c_str(), "");
+    LoadPattern(currlayer->currfile.c_str(), "");
 
     if (currlayer->algo->getGeneration() != currlayer->startgen) {
         // LoadPattern failed to reset the gen count to startgen
@@ -237,13 +231,10 @@ void ResetPattern(bool resetundo)
         // so best to clear the pattern and reset the gen count
         CreateUniverse();
         currlayer->algo->setGeneration(currlayer->startgen);
-        std::string msg = "A problem occurred trying to reload this pattern file:\n";
-        msg += loadfile;
+        std::string msg = "Failed to reset pattern from this file:\n";
+        msg += currlayer->currfile;
         Warning(msg.c_str());
     }
-
-    // ensure savestart flag is correct
-    currlayer->savestart = currlayer->startfile.length() != 0;
 
     // restore settings saved by SaveStartingPattern
     RestoreRule(currlayer->startrule.c_str());
@@ -311,10 +302,12 @@ void RestorePattern(bigint& gen, const char* filename,
         LoadPattern(filename, "");
 
         if (currlayer->algo->getGeneration() != gen) {
-            // filename could not be loaded for some reason,
-            // so best to clear the pattern and set the expected gen count
+            // best to clear the pattern and set the expected gen count
             CreateUniverse();
             currlayer->algo->setGeneration(gen);
+            std::string msg = "Could not restore pattern from this file:\n";
+            msg += filename;
+            Warning(msg.c_str());
         }
 
         // restore step size and set increment
@@ -402,7 +395,6 @@ const char* ChangeGenCount(const char* genstring, bool inundoredo)
         if (oldgen == currlayer->startgen || newgen <= currlayer->startgen) {
             currlayer->startgen = newgen;
             currlayer->savestart = true;
-            currlayer->startfile = currlayer->tempstart;    // for ResetPattern
         }
 
         if (allowundo && !currlayer->stayclean) {

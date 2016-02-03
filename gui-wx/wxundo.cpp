@@ -48,7 +48,19 @@
 
 const wxString lack_of_memory = _("Due to lack of memory, some changes can't be undone!");
 const wxString to_gen = _("to Gen ");
-const wxString temp_prefix = wxT("golly_undo_");
+
+// the following prefixes are used when creating temporary file names
+const wxString genchange_prefix = wxT("golly_undo_");
+const wxString setgen_prefix = wxT("golly_setgen_");
+const wxString dupe1_prefix = wxT("golly_dupe1_");
+const wxString dupe2_prefix = wxT("golly_dupe2_");
+const wxString dupe3_prefix = wxT("golly_dupe3_");
+const wxString dupe4_prefix = wxT("golly_dupe4_");
+const wxString dupe5_prefix = wxT("golly_dupe5_");
+const wxString dupe6_prefix = wxT("golly_dupe6_");
+// NOTE: on Windows (XP at least) the prefixes are truncated to 3 letters
+// and the file names are limited to golHHHH.tmp (ie. maximum 2^16 files)
+// so it might be safer to to use unique 3-letter prefixes!!!???
 
 // -----------------------------------------------------------------------------
 
@@ -110,12 +122,12 @@ public:
     int oldexpo, newexpo;                  // old and new step exponents
     bool scriptgen;                        // gen change was done by script?
     // also uses oldsel, newsel
+    // and oldcurrfile
     
     // setgen info
     bigint oldstartgen, newstartgen;       // old and new startgen values
     bool oldsave, newsave;                 // old and new savestart states
     wxString oldtempstart, newtempstart;   // old and new tempstart paths
-    wxString oldstartfile, newstartfile;   // old and new startfile paths
     wxString oldcurrfile, newcurrfile;     // old and new currfile paths
     wxString oldclone[MAX_LAYERS];         // old starting names for cloned layers
     wxString newclone[MAX_LAYERS];         // new starting names for cloned layers
@@ -154,34 +166,58 @@ ChangeNode::ChangeNode(change_type id)
     newfile = wxEmptyString;
     oldtempstart = wxEmptyString;
     newtempstart = wxEmptyString;
+    oldcurrfile = wxEmptyString;
+    newcurrfile = wxEmptyString;
 }
 
 // -----------------------------------------------------------------------------
+
+bool delete_all_temps = false;   // ok to delete all temporary files?
 
 ChangeNode::~ChangeNode()
 {
     if (cellinfo) free(cellinfo);
     
+    // it's always ok to delete oldfile and newfile if they exist
+    
     if (!oldfile.IsEmpty() && wxFileExists(oldfile)) {
         wxRemoveFile(oldfile);
-        //printf("removed oldfile: %s\n", (const char*)oldfile.mb_str(wxConvLocal));
-    }
-    if (!newfile.IsEmpty() && wxFileExists(newfile)) {
-        wxRemoveFile(newfile);
-        //printf("removed newfile: %s\n", (const char*)newfile.mb_str(wxConvLocal));
+        //printf("removed oldfile: %s\n", (const char*)oldfile.mb_str(wxConvLocal)); fflush(stdout);
     }
     
-    // only delete oldtempstart/newtempstart if they're not being used to
-    // store the current layer's starting pattern
-    if ( !oldtempstart.IsEmpty() && wxFileExists(oldtempstart) &&
-        oldtempstart != currlayer->startfile &&
-        oldtempstart != currlayer->currfile ) {
-        wxRemoveFile(oldtempstart);
+    if (!newfile.IsEmpty() && wxFileExists(newfile)) {
+        wxRemoveFile(newfile);
+        //printf("removed newfile: %s\n", (const char*)newfile.mb_str(wxConvLocal)); fflush(stdout);
     }
-    if ( !newtempstart.IsEmpty() && wxFileExists(newtempstart) &&
-        newtempstart != currlayer->startfile &&
-        newtempstart != currlayer->currfile ) {
-        wxRemoveFile(newtempstart);
+
+    if (delete_all_temps) {
+        // we're in ClearUndoRedo so it's safe to delete oldtempstart/newtempstart/oldcurrfile/newcurrfile
+        // if they are in tempdir and not being used to store the current layer's starting pattern
+        // (the latter condition allows user to Reset after disabling undo/redo)
+        
+        if (!oldtempstart.IsEmpty() && wxFileExists(oldtempstart) &&
+            oldtempstart.StartsWith(tempdir) && oldtempstart != currlayer->currfile) {
+            wxRemoveFile(oldtempstart);
+            //printf("removed oldtempstart: %s\n", (const char*)oldtempstart.mb_str(wxConvLocal)); fflush(stdout);
+        }
+        
+        if (!newtempstart.IsEmpty() && wxFileExists(newtempstart) &&
+            newtempstart.StartsWith(tempdir) && newtempstart != currlayer->currfile) {
+            wxRemoveFile(newtempstart);
+            //printf("removed newtempstart: %s\n", (const char*)newtempstart.mb_str(wxConvLocal)); fflush(stdout);
+        }
+        
+        if (!oldcurrfile.IsEmpty() && wxFileExists(oldcurrfile) &&
+            oldcurrfile.StartsWith(tempdir) && oldcurrfile != currlayer->currfile) {
+            wxRemoveFile(oldcurrfile);
+            //printf("removed oldcurrfile: %s\n", (const char*)oldcurrfile.mb_str(wxConvLocal)); fflush(stdout);
+        }
+        
+        if (!newcurrfile.IsEmpty() && wxFileExists(newcurrfile) &&
+            newcurrfile.StartsWith(tempdir) && newcurrfile != currlayer->currfile) {
+            wxRemoveFile(newcurrfile);
+            //printf("removed newcurrfile: %s\n", (const char*)newcurrfile.mb_str(wxConvLocal)); fflush(stdout);
+        }
     }
 }
 
@@ -260,6 +296,7 @@ bool ChangeNode::DoChange(bool undo)
             break;
             
         case genchange:
+            currlayer->currfile = oldcurrfile;
             if (undo) {
                 currlayer->currsel = oldsel;
                 mainptr->RestorePattern(oldgen, oldfile, oldx, oldy, oldmag, oldbase, oldexpo);
@@ -275,7 +312,6 @@ bool ChangeNode::DoChange(bool undo)
                 currlayer->startgen = oldstartgen;
                 currlayer->savestart = oldsave;
                 currlayer->tempstart = oldtempstart;
-                currlayer->startfile = oldstartfile;
                 currlayer->currfile = oldcurrfile;
                 if (oldtempstart != newtempstart) {
                     currlayer->startdirty = olddirty;
@@ -302,7 +338,6 @@ bool ChangeNode::DoChange(bool undo)
                 currlayer->startgen = newstartgen;
                 currlayer->savestart = newsave;
                 currlayer->tempstart = newtempstart;
-                currlayer->startfile = newstartfile;
                 currlayer->currfile = newcurrfile;
                 if (oldtempstart != newtempstart) {
                     currlayer->startdirty = newdirty;
@@ -744,7 +779,7 @@ void UndoRedo::RememberGenStart()
         
     } else {
         // save starting pattern in a unique temporary file
-        prevfile = wxFileName::CreateTempFileName(tempdir + temp_prefix);
+        prevfile = wxFileName::CreateTempFileName(tempdir + genchange_prefix);
         
         // if head of undo list is a genchange node then we can copy that
         // change node's newfile to prevfile; this makes consecutive generating
@@ -799,7 +834,7 @@ void UndoRedo::RememberGenFinish()
         fpath = wxEmptyString;
     } else {
         // save finishing pattern in a unique temporary file
-        fpath = wxFileName::CreateTempFileName(tempdir + temp_prefix);
+        fpath = wxFileName::CreateTempFileName(tempdir + genchange_prefix);
         SaveCurrentPattern(fpath);
     }
     
@@ -828,6 +863,10 @@ void UndoRedo::RememberGenFinish()
     change->newexpo = currlayer->currexpo;
     change->oldsel = prevsel;
     change->newsel = currlayer->currsel;
+
+    // also remember the file containing the starting pattern
+    // (in case it is changed by by RememberSetGen or RememberNameChange)
+    change->oldcurrfile = currlayer->currfile;
     
     // prevfile has been saved in change->oldfile (~ChangeNode will delete it)
     prevfile = wxEmptyString;
@@ -915,17 +954,15 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
                               bigint& oldstartgen, bool oldsave)
 {
     wxString oldtempstart = currlayer->tempstart;
-    wxString oldstartfile = currlayer->startfile;
     wxString oldcurrfile = currlayer->currfile;
     if (oldgen > oldstartgen && newgen <= oldstartgen) {
         // if pattern is generated then tempstart will be clobbered by
         // SaveStartingPattern, so change tempstart to a new temporary file
-        currlayer->tempstart = wxFileName::CreateTempFileName(tempdir + wxT("golly_setgen_"));
+        currlayer->tempstart = wxFileName::CreateTempFileName(tempdir + setgen_prefix);
         
-        // also need to update startfile and currfile (currlayer->savestart is true)
+        // also need to update currfile (currlayer->savestart is true)
         if (!currlayer->savestart) Warning(_("Bug in RememberSetGen: savestart is false!"));
-        currlayer->startfile = currlayer->tempstart;
-        currlayer->currfile = wxEmptyString;
+        currlayer->currfile = currlayer->tempstart;
     }
     
     // clear the redo history
@@ -945,8 +982,6 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
     change->newsave = currlayer->savestart;
     change->oldtempstart = oldtempstart;
     change->newtempstart = currlayer->tempstart;
-    change->oldstartfile = oldstartfile;
-    change->newstartfile = currlayer->startfile;
     change->oldcurrfile = oldcurrfile;
     change->newcurrfile = currlayer->currfile;
     
@@ -1467,9 +1502,14 @@ void UndoRedo::ClearUndoRedo()
         startcount = 0;
     }
     
+    // set flag so ChangeNode::~ChangeNode() can delete all temporary files
+    delete_all_temps = true;
+
     // clear the undo/redo lists (and delete each node's data)
     WX_CLEAR_LIST(wxList, undolist);
     WX_CLEAR_LIST(wxList, redolist);
+    
+    delete_all_temps = false;
     
     fixsetgen = false;
     
@@ -1490,50 +1530,70 @@ void UndoRedo::ClearUndoRedo()
 
 bool CopyTempFiles(ChangeNode* srcnode, ChangeNode* destnode, const wxString& tempstart1)
 {
-    // if srcnode has any existing temporary files then create new
+    // if srcnode has any existing temporary files then, if necessary, create new
     // temporary file names in the destnode and copy each file
     bool allcopied = true;
     
     if ( !srcnode->oldfile.IsEmpty() && wxFileExists(srcnode->oldfile) ) {
-        destnode->oldfile = wxFileName::CreateTempFileName(tempdir + wxT("golly_dupe1_"));
+        destnode->oldfile = wxFileName::CreateTempFileName(tempdir + dupe1_prefix);
         if ( !wxCopyFile(srcnode->oldfile, destnode->oldfile, true) )
             allcopied = false;
     }
     
     if ( !srcnode->newfile.IsEmpty() && wxFileExists(srcnode->newfile) ) {
-        destnode->newfile = wxFileName::CreateTempFileName(tempdir + wxT("golly_dupe2_"));
+        destnode->newfile = wxFileName::CreateTempFileName(tempdir + dupe2_prefix);
         if ( !wxCopyFile(srcnode->newfile, destnode->newfile, true) )
             allcopied = false;
+    }
+    
+    if ( !srcnode->oldcurrfile.IsEmpty() && wxFileExists(srcnode->oldcurrfile) ) {
+        if (srcnode->oldcurrfile == currlayer->tempstart) {
+            // the file has already been copied to tempstart1 by Layer::Layer()
+            destnode->oldcurrfile = tempstart1;
+        } else if (srcnode->oldcurrfile.StartsWith(tempdir)) {
+            destnode->oldcurrfile = wxFileName::CreateTempFileName(tempdir + dupe3_prefix);
+            if ( !wxCopyFile(srcnode->oldcurrfile, destnode->oldcurrfile, true) )
+                allcopied = false;
+        }
+    }
+    
+    if ( !srcnode->newcurrfile.IsEmpty() && wxFileExists(srcnode->newcurrfile) ) {
+        if (srcnode->newcurrfile == srcnode->oldcurrfile) {
+            // use destnode->oldcurrfile set above or earlier in DuplicateHistory
+            destnode->newcurrfile = destnode->oldcurrfile;
+        } else if (srcnode->newcurrfile == currlayer->tempstart) {
+            // the file has already been copied to tempstart1 by Layer::Layer()
+            destnode->newcurrfile = tempstart1;
+        } else if (srcnode->newcurrfile.StartsWith(tempdir)) {
+            destnode->newcurrfile = wxFileName::CreateTempFileName(tempdir + dupe4_prefix);
+            if ( !wxCopyFile(srcnode->newcurrfile, destnode->newcurrfile, true) )
+                allcopied = false;
+        }
     }
     
     if ( !srcnode->oldtempstart.IsEmpty() && wxFileExists(srcnode->oldtempstart) ) {
         if (srcnode->oldtempstart == currlayer->tempstart) {
             // the file has already been copied to tempstart1 by Layer::Layer()
             destnode->oldtempstart = tempstart1;
-        } else {
-            destnode->oldtempstart = wxFileName::CreateTempFileName(tempdir + wxT("golly_dupe3_"));
+        } else if (srcnode->oldtempstart.StartsWith(tempdir)) {
+            destnode->oldtempstart = wxFileName::CreateTempFileName(tempdir + dupe5_prefix);
             if ( !wxCopyFile(srcnode->oldtempstart, destnode->oldtempstart, true) )
                 allcopied = false;
         }
-        if (srcnode->oldstartfile == srcnode->oldtempstart)
-            destnode->oldstartfile = destnode->oldtempstart;
-        if (srcnode->oldcurrfile == srcnode->oldtempstart)
-            destnode->oldcurrfile = destnode->oldtempstart;
     }
     
     if ( !srcnode->newtempstart.IsEmpty() && wxFileExists(srcnode->newtempstart) ) {
-        if (srcnode->newtempstart == currlayer->tempstart) {
+        if (srcnode->newtempstart == srcnode->oldtempstart) {
+            // use destnode->oldtempstart set above or earlier in DuplicateHistory
+            destnode->newtempstart = destnode->oldtempstart;
+        } else if (srcnode->newtempstart == currlayer->tempstart) {
             // the file has already been copied to tempstart1 by Layer::Layer()
             destnode->newtempstart = tempstart1;
-        } else {
-            destnode->newtempstart = wxFileName::CreateTempFileName(tempdir + wxT("golly_dupe4_"));
+        } else if (srcnode->newtempstart.StartsWith(tempdir)) {
+            destnode->newtempstart = wxFileName::CreateTempFileName(tempdir + dupe6_prefix);
             if ( !wxCopyFile(srcnode->newtempstart, destnode->newtempstart, true) )
                 allcopied = false;
         }
-        if (srcnode->newstartfile == srcnode->newtempstart)
-            destnode->newstartfile = destnode->newtempstart;
-        if (srcnode->newcurrfile == srcnode->newtempstart)
-            destnode->newcurrfile = destnode->newtempstart;
     }
     
     return allcopied;
@@ -1549,7 +1609,7 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
     // a scriptstart node to undolist if inscript is true, but we don't
     // want that here because the old layer's history will already have one
     WX_CLEAR_LIST(wxList, undolist);
-    WX_CLEAR_LIST(wxList, redolist);
+    WX_CLEAR_LIST(wxList, redolist);    // should already be empty but play safe
     
     // safer to do our own shallow copy (avoids setting undolist/redolist)
     savecellchanges = history->savecellchanges;
@@ -1571,7 +1631,7 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
     
     // copy existing temporary file to new name
     if ( !prevfile.IsEmpty() && wxFileExists(prevfile) ) {
-        prevfile = wxFileName::CreateTempFileName(tempdir + temp_prefix);
+        prevfile = wxFileName::CreateTempFileName(tempdir + genchange_prefix);
         if ( !wxCopyFile(history->prevfile, prevfile, true) ) {
             Warning(_("Could not copy prevfile!"));
             return;

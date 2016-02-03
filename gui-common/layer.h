@@ -88,7 +88,6 @@ public:
     algo_type startalgo;          // starting algorithm
     bool savestart;               // need to save starting pattern?
     bool startdirty;              // starting state of dirty flag
-    std::string startfile;        // file for saving starting pattern
     std::string startname;        // starting currname
     std::string startrule;        // starting rule
     bigint startgen;              // starting generation (>= 0)

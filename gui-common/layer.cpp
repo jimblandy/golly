@@ -304,7 +304,6 @@ void SyncClones()
                 cloneptr->savestart = currlayer->savestart;
                 cloneptr->startdirty = currlayer->startdirty;
                 cloneptr->startrule = currlayer->startrule;
-                cloneptr->startfile = currlayer->startfile;
                 cloneptr->startgen = currlayer->startgen;
                 cloneptr->currfile = currlayer->currfile;
                 cloneptr->startsel = currlayer->startsel;
@@ -1767,7 +1766,6 @@ Layer::Layer()
                                 // for the duration of the script
     savestart = false;          // no need to save starting pattern
     startgen = 0;               // initial starting generation
-    startfile.clear();          // no starting pattern
     currname = "untitled";      // initial window title
     currfile.clear();           // no pattern file has been loaded
     originx = 0;                // no X origin offset
@@ -1917,7 +1915,6 @@ Layer::Layer()
             savestart = currlayer->savestart;
             startalgo = currlayer->startalgo;
             startdirty = currlayer->startdirty;
-            startname = currlayer->startname;
             startrule = currlayer->startrule;
             startx = currlayer->startx;
             starty = currlayer->starty;
@@ -1925,9 +1922,14 @@ Layer::Layer()
             startexpo = currlayer->startexpo;
             startmag = currlayer->startmag;
             startgen = currlayer->startgen;
-            startfile = currlayer->startfile;
             currfile = currlayer->currfile;
             startsel = currlayer->startsel;
+            if (cloning) {
+                // clone is being created so we don't want ResetPattern to change its name
+                startname = currlayer->currname;
+            } else {
+                startname = currlayer->startname;
+            }
         }
 
         if (duplicating) {
@@ -1952,12 +1954,7 @@ Layer::Layer()
                     Warning("Could not copy tempstart file!");
                 }
             }
-
-            if (currlayer->startfile == currlayer->tempstart) {
-                startfile = tempstart;
-            }
             if (currlayer->currfile == currlayer->tempstart) {
-                // starting pattern came from clipboard or lexicon pattern
                 currfile = tempstart;
             }
 

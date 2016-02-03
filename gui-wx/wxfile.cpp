@@ -57,11 +57,6 @@
 #include "wxhelp.h"        // for ShowHelp, LoadRule
 #include "wxtimeline.h"    // for InitTimelineFrame, ToggleTimelineBar, etc
 
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-    #include <Carbon/Carbon.h>                      // for OpaqueWindowPtr, etc
-    #include "wx/mac/corefoundation/cfstring.h"     // for wxMacCFStringHolder
-#endif
-
 #ifdef __WXMAC__
     // convert path to decomposed UTF8 so fopen will work
     #define FILEPATH path.fn_str()
@@ -83,20 +78,6 @@ wxString MainFrame::GetBaseName(const wxString& path)
 {
     // extract basename from given path
     return path.AfterLast(wxFILE_SEP_PATH);
-}
-
-// -----------------------------------------------------------------------------
-
-void MainFrame::MySetTitle(const wxString& title)
-{
-    // fix if SetTitle still causes window refresh in Cocoa version!!!
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-    // avoid wxMac's SetTitle call -- it causes an undesirable window refresh
-    SetWindowTitleWithCFString((OpaqueWindowPtr*)this->MacGetWindowRef(),
-                               wxMacCFStringHolder(title, wxFONTENCODING_DEFAULT));
-#else
-    SetTitle(title);
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -139,7 +120,7 @@ void MainFrame::SetWindowTitle(const wxString& filename)
 #endif
     
     // nicer to truncate a really long title???
-    MySetTitle(wtitle);
+    SetTitle(wtitle);
 }
 
 // -----------------------------------------------------------------------------
@@ -333,7 +314,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
     if (!newtitle.IsEmpty()) {
         // show new file name in window title but no rule (which readpattern can change);
         // nicer if user can see file name while loading a very large pattern
-        MySetTitle(_("Loading ") + newtitle);
+        SetTitle(_("Loading ") + newtitle);
     }
     
     if (IsImageFile(path)) {

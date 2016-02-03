@@ -198,7 +198,6 @@ private:
     
     // file functions
     bool LoadImage(const wxString& path);
-    void MySetTitle(const wxString& title);
     wxString GetBaseName(const wxString& path);
     void SaveSucceeded(const wxString& path);
     void AddRecentPattern(const wxString& path);

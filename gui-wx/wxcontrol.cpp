@@ -73,7 +73,7 @@ bool MainFrame::SaveStartingPattern()
         return true;
     }
     
-    // save current rule, dirty flag, scale, location, etc
+    // save current name, rule, dirty flag, scale, location, etc
     currlayer->startname = currlayer->currname;
     currlayer->startrule = wxString(currlayer->algo->getrule(), wxConvLocal);
     currlayer->startdirty = currlayer->dirty;
@@ -102,10 +102,13 @@ bool MainFrame::SaveStartingPattern()
     currlayer->startsel = currlayer->currsel;
     
     if ( !currlayer->savestart ) {
-        // no need to save pattern; ResetPattern will load currfile
-        currlayer->startfile.Clear();
+        // no need to save pattern (use currlayer->currfile as the starting pattern)
+        if (currlayer->currfile.IsEmpty())
+            Warning(_("Bug in SaveStartingPattern: currfile is empty!"));
         return true;
     }
+
+    currlayer->currfile = currlayer->tempstart;     // ResetPattern will load tempstart
     
     // save starting pattern in tempstart file
     if ( currlayer->algo->hyperCapable() ) {
@@ -132,8 +135,7 @@ bool MainFrame::SaveStartingPattern()
         int iright = right.toint();      
         // use XRLE format so the pattern's top left location and the current
         // generation count are stored in the file
-        const char* err = WritePattern(currlayer->tempstart, XRLE_format,
-                                       no_compression,
+        const char* err = WritePattern(currlayer->tempstart, XRLE_format, no_compression,
                                        itop, ileft, ibottom, iright);
         if (err) {
             statusptr->ErrorMessage(wxString(err,wxConvLocal));
@@ -142,7 +144,6 @@ bool MainFrame::SaveStartingPattern()
         }
     }
     
-    currlayer->startfile = currlayer->tempstart;   // ResetPattern will load tempstart
     return true;
 }
 
@@ -167,8 +168,8 @@ void MainFrame::ResetPattern(bool resetundo)
         return;
     }
     
-    if (currlayer->startfile.IsEmpty() && currlayer->currfile.IsEmpty()) {
-        // if this happens then savestart logic is wrong
+    if (currlayer->currfile.IsEmpty()) {
+        // if this happens then savestart or currfile logic is wrong
         Warning(_("Starting pattern cannot be restored!"));
         return;
     }
@@ -188,15 +189,7 @@ void MainFrame::ResetPattern(bool resetundo)
     currlayer->algtype = currlayer->startalgo;
     
     // restore starting pattern
-    wxString loadfile;
-    if (currlayer->startfile.IsEmpty()) {
-        // restore pattern from currfile
-        loadfile = currlayer->currfile;
-    } else {
-        // restore pattern from startfile
-        loadfile = currlayer->startfile;
-    }
-    LoadPattern(loadfile, wxEmptyString);
+    LoadPattern(currlayer->currfile, wxEmptyString);
     
     if (currlayer->algo->getGeneration() != currlayer->startgen) {
         // LoadPattern failed to reset the gen count to startgen
@@ -204,11 +197,8 @@ void MainFrame::ResetPattern(bool resetundo)
         // so best to clear the pattern and reset the gen count
         CreateUniverse();
         currlayer->algo->setGeneration(currlayer->startgen);
-        Warning(_("A problem occurred trying to reload this pattern file:\n") + loadfile);
+        Warning(_("Failed to reset pattern from this file:\n") + currlayer->currfile);
     }
-    
-    // ensure savestart flag is correct
-    currlayer->savestart = !currlayer->startfile.IsEmpty();
     
     // restore settings saved by SaveStartingPattern
     RestoreRule(currlayer->startrule);
@@ -283,10 +273,10 @@ void MainFrame::RestorePattern(bigint& gen, const wxString& filename,
         LoadPattern(filename, wxEmptyString, false);
         
         if (currlayer->algo->getGeneration() != gen) {
-            // filename could not be loaded for some reason,
-            // so best to clear the pattern and set the expected gen count
+            // best to clear the pattern and set the expected gen count
             CreateUniverse();
             currlayer->algo->setGeneration(gen);
+            Warning(_("Could not restore pattern from this file:\n") + filename);
         }
         
         // restore step size and set increment
@@ -374,7 +364,6 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
         if (oldgen == currlayer->startgen || newgen <= currlayer->startgen) {
             currlayer->startgen = newgen;
             currlayer->savestart = true;
-            currlayer->startfile = currlayer->tempstart;    // for ResetPattern
         }
         
         if (allowundo && !currlayer->stayclean) {
@@ -618,7 +607,7 @@ bool MainFrame::StepPattern()
     
     if (!IsIconized()) DisplayPattern();
     
-    /*!!! enable this code if we ever implement isPeriodic()
+    /* enable this code if we ever implement isPeriodic()
     if (autostop) {
         int period = curralgo->isPeriodic();
         if (period > 0) {
@@ -857,7 +846,6 @@ void MainFrame::FinishUp()
         UpdateUserInterface();
     }
     
-    // do we still need this???!!! maybe just DoPendingDraw???
     DoPendingAction(true);     // true means we can restart generating
 }
 
@@ -877,7 +865,6 @@ void MainFrame::StopGenerating()
     if (insideYield) {
         // we're currently in the event poller somewhere inside step(), so we must let
         // step() complete and only call FinishUp after StepPattern has finished
-        //!!! wxBell();
     } else {
         FinishUp();
     }
@@ -973,7 +960,6 @@ void MainFrame::NextGeneration(bool useinc)
     inNextGen = true;
     
     if (!inscript && generating) {
-        // can this happen???!!!
         Stop();
         inNextGen = false;
         return;

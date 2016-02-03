@@ -992,7 +992,6 @@ void SyncClones()
                 cloneptr->savestart = currlayer->savestart;
                 cloneptr->startdirty = currlayer->startdirty;
                 cloneptr->startrule = currlayer->startrule;
-                cloneptr->startfile = currlayer->startfile;
                 cloneptr->startgen = currlayer->startgen;
                 cloneptr->currfile = currlayer->currfile;
                 cloneptr->startsel = currlayer->startsel;
@@ -1633,8 +1632,7 @@ void NameLayerDialog()
     
     wxString oldname = currlayer->currname;
     wxString newname;
-    if ( GetString(_("Name Layer"), _("Enter a new name for the current layer:"),
-                   oldname, newname) &&
+    if ( GetString(_("Name Layer"), _("Enter a new name for the current layer:"), oldname, newname) &&
         !newname.IsEmpty() && oldname != newname ) {
         
         // inscript is false so no need to call SavePendingChanges
@@ -2716,10 +2714,9 @@ Layer::Layer()
     stayclean = inscript;         // if true then keep the dirty flag false
                                   // for the duration of the script
     savestart = false;            // no need to save starting pattern
-    startfile.Clear();            // no starting pattern
+    currfile.Clear();             // no pattern file has been loaded
     startgen = 0;                 // initial starting generation
     currname = _("untitled");     // initial window title
-    currfile.Clear();             // no pattern file has been loaded
     originx = 0;                  // no X origin offset
     originy = 0;                  // no Y origin offset
     
@@ -2868,17 +2865,21 @@ Layer::Layer()
             savestart = currlayer->savestart;
             startalgo = currlayer->startalgo;
             startdirty = currlayer->startdirty;
-            startname = currlayer->startname;
             startrule = currlayer->startrule;
             startx = currlayer->startx;
             starty = currlayer->starty;
             startbase = currlayer->startbase;
             startexpo = currlayer->startexpo;
             startmag = currlayer->startmag;
-            startfile = currlayer->startfile;
             startgen = currlayer->startgen;
             currfile = currlayer->currfile;
             startsel = currlayer->startsel;
+            if (cloning) {
+                // clone is being created so we don't want ResetPattern to change its name
+                startname = currlayer->currname;
+            } else {
+                startname = currlayer->startname;
+            }
         }
         
         if (duplicating) {
@@ -2903,12 +2904,7 @@ Layer::Layer()
                     Warning(_("Could not copy tempstart file!"));
                 }
             }
-            
-            if (currlayer->startfile == currlayer->tempstart) {
-                startfile = tempstart;
-            }
             if (currlayer->currfile == currlayer->tempstart) {
-                // starting pattern came from clipboard or lexicon pattern
                 currfile = tempstart;
             }
             

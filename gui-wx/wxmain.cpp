@@ -2064,7 +2064,12 @@ void MainFrame::UpdateLayerItem(int index)
             cid--;
         }
         
-        label += layer->currname;
+        if (layer->currname.IsEmpty()) {
+            // should never happen, but play safe to avoid assert error in SetLabel
+            label += wxT("BUG!");
+        } else {
+            label += layer->currname;
+        }
         
         // duplicate any ampersands so they appear
         label.Replace(wxT("&"), wxT("&&"));
