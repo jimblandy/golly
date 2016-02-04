@@ -306,9 +306,6 @@ EditBar::EditBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int ht)
     // we need to specify facename to get Monaco instead of Courier
     editfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco"));
     textascent = 10;
-#elif defined(__WXMAC__)
-    editfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
-    textascent = 10;
 #else
     editfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
     textascent = 10;

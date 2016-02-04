@@ -592,13 +592,6 @@ bool MainFrame::ClipboardHasText()
 
 void MainFrame::EnableAllMenus(bool enable)
 {
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-    // enable/disable all menus, including Help menu and items in app menu
-    if (enable)
-        EndAppModalStateForWindow( (OpaqueWindowPtr*)this->MacGetWindowRef() );
-    else
-        BeginAppModalStateForWindow( (OpaqueWindowPtr*)this->MacGetWindowRef() );
-#else
     wxMenuBar* mbar = GetMenuBar();
     if (mbar) {
         int count = (int)(mbar->GetMenuCount());
@@ -613,7 +606,6 @@ void MainFrame::EnableAllMenus(bool enable)
         mbar->Enable(wxID_EXIT, enable);
 #endif
     }
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -647,12 +639,6 @@ void MainFrame::UpdateMenuItems()
         
         bool can_undo = active && !timeline && currlayer->undoredo->CanUndo();
         bool can_redo = active && !timeline && currlayer->undoredo->CanRedo();
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-        // need this stupidity to avoid wxMac bug after modal dialog closes (eg. Set Rule)
-        // and force items to appear correctly enabled/disabled
-        mbar->Enable(ID_UNDO, !can_undo);
-        mbar->Enable(ID_REDO, !can_redo);
-#endif
         
         mbar->Enable(ID_UNDO,            can_undo);
         mbar->Enable(ID_REDO,            can_redo);

@@ -38,11 +38,6 @@
 #include "wxprefs.h"       // for allowbeep
 #include "wxutils.h"
 
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-    #include <Carbon/Carbon.h>
-    #include "wx/mac/corefoundation/cfstring.h"     // for wxMacCFStringHolder
-#endif
-
 // -----------------------------------------------------------------------------
 
 // need platform-specific gap after OK/Cancel buttons
@@ -350,41 +345,11 @@ bool GetInteger(const wxString& title, const wxString& prompt,
     }
 }
 
-// =============================================================================
-
-#if defined(__WXMAC__) && !defined(__WXOSX_COCOA__)
-
-// this filter is used to detect cmd-D in SaveChanges dialog
-
-Boolean SaveChangesFilter(DialogRef dlg, EventRecord* event, DialogItemIndex* item)
-{
-    if (event->what == keyDown && (event->modifiers & cmdKey) && 
-        toupper(event->message & charCodeMask) == 'D') {
-        
-        // temporarily highlight the Don't Save button
-        ControlRef ctrl;
-        Rect box;
-        GetDialogItemAsControl(dlg, kAlertStdAlertOtherButton, &ctrl);
-        HiliteControl(ctrl, kControlButtonPart);
-        GetControlBounds(ctrl, &box);
-        InvalWindowRect(GetDialogWindow(dlg), &box);
-        HIWindowFlush(GetDialogWindow(dlg));
-        Delay(6, NULL);
-        HiliteControl(ctrl, 0);
-        
-        *item = kAlertStdAlertOtherButton;
-        return true;
-    }
-    return StdFilterProc(dlg, event, item);
-}
-
-#endif
-
 // -----------------------------------------------------------------------------
 
 int SaveChanges(const wxString& query, const wxString& msg)
 {
-#if defined(__WXOSX_COCOA__)
+#if defined(__WXMAC__)
     // use a standard looking modal dialog on wxOSX;
     // sadly, positioning over center of parent window is not supported by NSAlert
     wxMessageDialog dialog(wxGetActiveWindow(), msg, query,
@@ -398,45 +363,7 @@ int SaveChanges(const wxString& query, const wxString& msg)
         case wxID_NO:     return 2;    // Save
         case wxID_CANCEL: return 1;    // Don't Save
         default:          return 0;    // should never happen
-    }
-    
-#elif defined(__WXMAC__)
-    // use a standard looking modal dialog on wxMac
-    short result;
-    AlertStdCFStringAlertParamRec param;
-    
-    wxMacCFStringHolder cfSave(_("Save"), wxFONTENCODING_DEFAULT);
-    wxMacCFStringHolder cfDontSave(_("Don't Save"), wxFONTENCODING_DEFAULT);
-    
-    wxMacCFStringHolder cfTitle(query, wxFONTENCODING_DEFAULT);
-    wxMacCFStringHolder cfText(msg, wxFONTENCODING_DEFAULT);
-    
-    param.version =         kStdCFStringAlertVersionOne;
-    param.position =        kWindowAlertPositionParentWindow;
-    param.movable =         true;
-    param.flags =           0;
-    param.defaultText =     cfSave;
-    param.cancelText =      (CFStringRef) kAlertDefaultCancelText;
-    param.otherText =       cfDontSave;
-    param.helpButton =      false;
-    param.defaultButton =   kAlertStdAlertOKButton;
-    param.cancelButton =    kAlertStdAlertCancelButton;
-    
-    ModalFilterUPP filterProc = NewModalFilterUPP(SaveChangesFilter);
-    
-    DialogRef alertRef;
-    CreateStandardAlert(kAlertNoteAlert, cfTitle, cfText, &param, &alertRef);
-    RunStandardAlert(alertRef, filterProc, &result);
-    
-    DisposeModalFilterUPP(filterProc);
-    
-    switch (result) {
-        case 1:  return 2;    // Save
-        case 2:  return 0;    // Cancel
-        case 3:  return 1;    // Don't Save
-        default: return 0;
-    }
-    
+    }    
 #else
     // Windows/Linux
     int answer = wxMessageBox(msg, query,
@@ -553,10 +480,6 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
             
 #if defined(__WXMAC__)
             if (progdlg) {
-#if !defined(__WXOSX_COCOA__)
-                // avoid user selecting Quit or bringing another window to front
-                BeginAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
-#endif
                 // install key event handler
                 progdlg->PushEventHandler(new ProgressHandler());
             }
@@ -573,9 +496,6 @@ void EndProgress()
 {
     if (progdlg) {
 #if defined(__WXMAC__)
-#if !defined(__WXOSX_COCOA__)
-        EndAppModalStateForWindow( (OpaqueWindowPtr*)progdlg->MacGetWindowRef() );
-#endif
         // remove and delete ProgressHandler
         progdlg->PopEventHandler(true);
 #endif

@@ -1513,26 +1513,7 @@ const char* MainFrame::WritePattern(const wxString& path,
     if (format == RLE_format && (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0))
         format = XRLE_format;
     const char* err = writepattern(FILEPATH, *currlayer->algo, format,
-                                   compression, top, left, bottom, right);
-    
-#ifdef __WXMAC__
-    if (!err) {
-        // set the file's creator and type
-        wxFileName filename(path);
-        wxUint32 creator = 'GoLy';
-        wxUint32 type = 'GoLR';         // RLE or XRLE
-        if (format == MC_format) {
-            type = 'GoLM';
-        }
-    #if defined(__WXOSX_COCOA__)
-        // there is no Cocoa call to set file type and creator
-        creator = 'GoLy';               // avoid compiler warning
-    #else
-        filename.MacSetTypeAndCreator(type, creator);
-    #endif
-    }
-#endif
-    
+                                   compression, top, left, bottom, right);    
     return err;
 }
 

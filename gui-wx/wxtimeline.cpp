@@ -248,9 +248,6 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
     // we need to specify facename to get Monaco instead of Courier
     timelinefont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco"));
     textascent = 10;
-#elif defined(__WXMAC__)
-    timelinefont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
-    textascent = 10;
 #else
     timelinefont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
     textascent = 10;

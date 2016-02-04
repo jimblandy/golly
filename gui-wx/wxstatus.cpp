@@ -588,7 +588,6 @@ StatusBar::StatusBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, int h
     statusfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco"));
     textascent = 10;
 #else
-    // __WXMAC__
     statusfont = wxFont::New(10, wxMODERN, wxNORMAL, wxNORMAL);
     textascent = 10;
 #endif

@@ -146,8 +146,6 @@ InfoFrame::InfoFrame(char *comments)
 #if defined(__WXOSX_COCOA__)
         // we need to specify facename to get Monaco instead of Courier
         wxFont(12, wxMODERN, wxNORMAL, wxNORMAL, false, wxT("Monaco")));
-#elif defined(__WXMAC__)
-        wxFont(11, wxMODERN, wxNORMAL, wxNORMAL));
 #else
         wxFont(10, wxMODERN, wxNORMAL, wxNORMAL));
 #endif
@@ -157,7 +155,7 @@ InfoFrame::InfoFrame(char *comments)
         textctrl->WriteText(_("No comments found."));
     } else {
         textctrl->WriteText(wxString(comments,wxConvLocal));
-#if defined(__WXOSX_COCOA__)        
+#if defined(__WXOSX_COCOA__)
         // sigh... wxOSX seems to ignore SetDefaultStyle
         textctrl->SetStyle(0, strlen(comments), textattr);
 #endif
