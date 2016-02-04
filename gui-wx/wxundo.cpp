@@ -50,17 +50,15 @@ const wxString lack_of_memory = _("Due to lack of memory, some changes can't be 
 const wxString to_gen = _("to Gen ");
 
 // the following prefixes are used when creating temporary file names
-const wxString genchange_prefix = wxT("golly_undo_");
-const wxString setgen_prefix = wxT("golly_setgen_");
-const wxString dupe1_prefix = wxT("golly_dupe1_");
-const wxString dupe2_prefix = wxT("golly_dupe2_");
-const wxString dupe3_prefix = wxT("golly_dupe3_");
-const wxString dupe4_prefix = wxT("golly_dupe4_");
-const wxString dupe5_prefix = wxT("golly_dupe5_");
-const wxString dupe6_prefix = wxT("golly_dupe6_");
-// NOTE: on Windows (XP at least) the prefixes are truncated to 3 letters
-// and the file names are limited to golHHHH.tmp (ie. maximum 2^16 files)
-// so it might be safer to to use unique 3-letter prefixes!!!???
+// (only use 3 characters because longer strings are truncated on Windows)
+const wxString genchange_prefix = wxT("gg_");
+const wxString setgen_prefix = wxT("gs_");
+const wxString dupe1_prefix = wxT("g1_");
+const wxString dupe2_prefix = wxT("g2_");
+const wxString dupe3_prefix = wxT("g3_");
+const wxString dupe4_prefix = wxT("g4_");
+const wxString dupe5_prefix = wxT("g5_");
+const wxString dupe6_prefix = wxT("g6_");
 
 // -----------------------------------------------------------------------------
 
