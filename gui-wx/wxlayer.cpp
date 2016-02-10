@@ -1285,7 +1285,8 @@ void AddLayer()
         // copy old layer's colors to new layer
         currlayer->fromrgb = oldlayer->fromrgb;
         currlayer->torgb = oldlayer->torgb;
-        currlayer->numicons = oldlayer->algo->NumCellStates() - 1;
+        currlayer->multicoloricons = oldlayer->multicoloricons;
+        currlayer->numicons = oldlayer->numicons;
         for (int n = 0; n <= currlayer->numicons; n++) {
             currlayer->cellr[n] = oldlayer->cellr[n];
             currlayer->cellg[n] = oldlayer->cellg[n];
@@ -1823,37 +1824,6 @@ void CreateColorGradient()
         currlayer->cellr[maxstate] = r2;
         currlayer->cellg[maxstate] = g2;
         currlayer->cellb[maxstate] = b2;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void UpdateCloneColors()
-{
-    if (currlayer->cloneid > 0) {
-        int maxstate = currlayer->algo->NumCellStates() - 1;
-        for (int i = 0; i < numlayers; i++) {
-            Layer* cloneptr = layer[i];
-            if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
-                cloneptr->fromrgb = currlayer->fromrgb;
-                cloneptr->torgb = currlayer->torgb;
-                for (int n = 0; n <= maxstate; n++) {
-                    cloneptr->cellr[n] = currlayer->cellr[n];
-                    cloneptr->cellg[n] = currlayer->cellg[n];
-                    cloneptr->cellb[n] = currlayer->cellb[n];
-                }
-                
-                // use same icon pointers
-                cloneptr->icons7x7 = currlayer->icons7x7;
-                cloneptr->icons15x15 = currlayer->icons15x15;
-                cloneptr->icons31x31 = currlayer->icons31x31;
-                
-                // use same atlas
-                cloneptr->atlas7x7 = currlayer->atlas7x7;
-                cloneptr->atlas15x15 = currlayer->atlas15x15;
-                cloneptr->atlas31x31 = currlayer->atlas31x31;
-            }
-        }
     }
 }
 
@@ -2589,6 +2559,38 @@ void UpdateCurrentColors()
 
 // -----------------------------------------------------------------------------
 
+void UpdateCloneColors()
+{
+    if (currlayer->cloneid > 0) {
+        for (int i = 0; i < numlayers; i++) {
+            Layer* cloneptr = layer[i];
+            if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
+                cloneptr->fromrgb = currlayer->fromrgb;
+                cloneptr->torgb = currlayer->torgb;
+                cloneptr->multicoloricons = currlayer->multicoloricons;
+                cloneptr->numicons = currlayer->numicons;
+                for (int n = 0; n <= currlayer->numicons; n++) {
+                    cloneptr->cellr[n] = currlayer->cellr[n];
+                    cloneptr->cellg[n] = currlayer->cellg[n];
+                    cloneptr->cellb[n] = currlayer->cellb[n];
+                }
+                
+                // use same icon pointers
+                cloneptr->icons7x7 = currlayer->icons7x7;
+                cloneptr->icons15x15 = currlayer->icons15x15;
+                cloneptr->icons31x31 = currlayer->icons31x31;
+                
+                // use same atlas
+                cloneptr->atlas7x7 = currlayer->atlas7x7;
+                cloneptr->atlas15x15 = currlayer->atlas15x15;
+                cloneptr->atlas31x31 = currlayer->atlas31x31;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void UpdateLayerColors()
 {
     UpdateCurrentColors();
@@ -2862,6 +2864,7 @@ Layer::Layer()
             savesel = currlayer->savesel;
             
             // duplicate the stuff needed to reset pattern
+            currfile = currlayer->currfile;
             savestart = currlayer->savestart;
             startalgo = currlayer->startalgo;
             startdirty = currlayer->startdirty;
@@ -2872,10 +2875,10 @@ Layer::Layer()
             startexpo = currlayer->startexpo;
             startmag = currlayer->startmag;
             startgen = currlayer->startgen;
-            currfile = currlayer->currfile;
             startsel = currlayer->startsel;
             if (cloning) {
-                // clone is being created so we don't want ResetPattern to change its name
+                // if clone is created after pattern has been generated
+                // then we don't want a reset to change its name
                 startname = currlayer->currname;
             } else {
                 startname = currlayer->startname;

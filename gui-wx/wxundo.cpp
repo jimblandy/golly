@@ -62,6 +62,143 @@ const wxString dupe6_prefix = wxT("g6_");
 
 // -----------------------------------------------------------------------------
 
+// the next two classes are needed because Golly allows multiple starting points
+// (by setting the generation count back to 0), so we need to ensure that a Reset
+// goes back to the correct starting info
+
+class VariableInfo {
+public:
+    VariableInfo() {}
+    ~VariableInfo() {}
+    // note that we have to remember pointer to layer and not its index
+    // (the latter can change if user adds/deletes/moves a layer)
+    Layer* layerptr;
+    wxString savename;
+    bigint savex;
+    bigint savey;
+    int savemag;
+    int savebase;
+    int saveexpo;
+};
+
+class StartingInfo {
+public:
+    StartingInfo(StartingInfo* dupe, Layer* oldlayer, Layer* newlayer);
+    ~StartingInfo();
+    void Restore();
+    void RemoveClone(Layer* cloneptr);
+
+    // this info is the same in each clone
+    bool savedirty;
+    algo_type savealgo;
+    wxString saverule;
+    
+    // this info can be different in each clone
+    VariableInfo layer[MAX_LAYERS];
+    int count;
+};
+
+// -----------------------------------------------------------------------------
+
+StartingInfo::StartingInfo(StartingInfo* dupe, Layer* oldlayer, Layer* newlayer)
+{
+    if (dupe) {
+        // called from DuplicateHistory so duplicate given starting info
+        savedirty = dupe->savedirty;
+        savealgo = dupe->savealgo;
+        saverule = dupe->saverule;
+        
+        // new duplicate layer is not a clone
+        count = 0;
+        for (int n = 0; n < dupe->count; n++) {
+            if (dupe->layer[n].layerptr == oldlayer) {
+                layer[0].layerptr = newlayer;
+                layer[0].savename = dupe->layer[n].savename;
+                layer[0].savex = dupe->layer[n].savex;
+                layer[0].savey = dupe->layer[n].savey;
+                layer[0].savemag = dupe->layer[n].savemag;
+                layer[0].savebase = dupe->layer[n].savebase;
+                layer[0].saveexpo = dupe->layer[n].saveexpo;
+                count = 1;
+                break;
+            }
+        }
+
+    } else {
+        // save current starting info (set by most recent SaveStartingPattern)
+        savedirty = currlayer->startdirty;
+        savealgo = currlayer->startalgo;
+        saverule = currlayer->startrule;
+        
+        // save variable info for currlayer and its clones (if any)
+        count = 0;
+        for (int i = 0; i < numlayers; i++) {
+            Layer* lptr = GetLayer(i);
+            if (lptr == currlayer ||
+                (lptr->cloneid > 0 && lptr->cloneid == currlayer->cloneid)) {
+                layer[count].layerptr = lptr;
+                layer[count].savename = lptr->startname;
+                layer[count].savex = lptr->startx;
+                layer[count].savey = lptr->starty;
+                layer[count].savemag = lptr->startmag;
+                layer[count].savebase = lptr->startbase;
+                layer[count].saveexpo = lptr->startexpo;
+                count++;
+            }
+        }
+        if (count == 0) Warning(_("Bug detected in StartingInfo ctor!"));
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+StartingInfo::~StartingInfo()
+{
+    // no need to do anything
+}
+
+// -----------------------------------------------------------------------------
+
+void StartingInfo::Restore()
+{
+    // restore starting info (for use by next ResetPattern)
+    currlayer->startdirty = savedirty;
+    currlayer->startalgo = savealgo;
+    currlayer->startrule = saverule;
+    
+    // restore variable info for currlayer and its clones (if any);
+    // note that currlayer might have changed since the starting info
+    // was saved, and there might be more or fewer clones
+    for (int i = 0; i < numlayers; i++) {
+        Layer* lptr = GetLayer(i);
+        for (int n = 0; n < count; n++) {
+            if (lptr == layer[n].layerptr) {
+                lptr->startname = layer[n].savename;
+                lptr->startx = layer[n].savex;
+                lptr->starty = layer[n].savey;
+                lptr->startmag = layer[n].savemag;
+                lptr->startbase = layer[n].savebase;
+                lptr->startexpo = layer[n].saveexpo;
+                break;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void StartingInfo::RemoveClone(Layer* cloneptr)
+{
+    for (int n = 0; n < count; n++) {
+        if (layer[n].layerptr == cloneptr) {
+            layer[n].layerptr = NULL;
+            return;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 // encapsulate change info stored in undo/redo lists
 
 typedef enum {
@@ -99,56 +236,49 @@ public:
     void ChangeCells(bool undo);
     // change cell states using cellinfo
     
-    change_type changeid;                  // specifies the type of change
-    wxString suffix;                       // action string for Undo/Redo item
-    bool olddirty;                         // layer's dirty state before change
-    bool newdirty;                         // layer's dirty state after change
+    change_type changeid;                   // specifies the type of change
+    wxString suffix;                        // action string for Undo/Redo item
+    bool olddirty;                          // layer's dirty state before change
+    bool newdirty;                          // layer's dirty state after change
     
     // cellstates info
-    cell_change* cellinfo;                 // dynamic array of cell changes
-    unsigned int cellcount;                // number of cell changes in array
+    cell_change* cellinfo;                  // dynamic array of cell changes
+    unsigned int cellcount;                 // number of cell changes in array
     
     // rotatecw/rotateacw/selchange info
-    Selection oldsel, newsel;              // old and new selections
+    Selection oldsel, newsel;               // old and new selections
     
     // genchange info
-    wxString oldfile, newfile;             // old and new pattern files
-    bigint oldgen, newgen;                 // old and new generation counts
-    bigint oldx, oldy, newx, newy;         // old and new positions
-    int oldmag, newmag;                    // old and new scales
-    int oldbase, newbase;                  // old and new base steps
-    int oldexpo, newexpo;                  // old and new step exponents
-    bool scriptgen;                        // gen change was done by script?
+    bool scriptgen;                         // gen change was done by script?
+    wxString oldfile, newfile;              // old and new pattern files
+    bigint oldgen, newgen;                  // old and new generation counts
+    bigint oldx, oldy, newx, newy;          // old and new positions
+    int oldmag, newmag;                     // old and new scales
+    int oldbase, newbase;                   // old and new base steps
+    int oldexpo, newexpo;                   // old and new step exponents
+    StartingInfo* startinfo;                // saves starting info for ResetPattern
     // also uses oldsel, newsel
-    // and oldcurrfile
     
     // setgen info
-    bigint oldstartgen, newstartgen;       // old and new startgen values
-    bool oldsave, newsave;                 // old and new savestart states
-    wxString oldtempstart, newtempstart;   // old and new tempstart paths
-    wxString oldcurrfile, newcurrfile;     // old and new currfile paths
-    wxString oldclone[MAX_LAYERS];         // old starting names for cloned layers
-    wxString newclone[MAX_LAYERS];         // new starting names for cloned layers
+    bigint oldstartgen, newstartgen;        // old and new startgen values
+    bool oldsave, newsave;                  // old and new savestart states
+    wxString oldtempstart, newtempstart;    // old and new tempstart paths
+    wxString oldcurrfile, newcurrfile;      // old and new currfile paths
     // also uses oldgen, newgen
-    // and oldrule, newrule
-    // and oldx, oldy, newx, newy, oldmag, newmag
-    // and oldbase, newbase
-    // and oldexpo, newexpo
-    // and oldsel, newsel
-    // and oldalgo, newalgo
+    // and startinfo
     
     // namechange info
-    wxString oldname, newname;             // old and new layer names
-    Layer* whichlayer;                     // which layer was changed
+    wxString oldname, newname;              // old and new layer names
+    Layer* whichlayer;                      // which layer was changed
     // also uses oldsave, newsave
     // and oldcurrfile, newcurrfile
     
     // rulechange info
-    wxString oldrule, newrule;             // old and new rules
+    wxString oldrule, newrule;              // old and new rules
     // also uses oldsel, newsel
     
     // algochange info
-    algo_type oldalgo, newalgo;            // old and new algorithm types
+    algo_type oldalgo, newalgo;             // old and new algorithm types
     // also uses oldrule, newrule
     // and oldsel, newsel
 };
@@ -158,6 +288,8 @@ public:
 ChangeNode::ChangeNode(change_type id)
 {
     changeid = id;
+    startinfo = NULL;
+    whichlayer = NULL;      // simplifies UndoRedo::DeletingClone
     cellinfo = NULL;
     cellcount = 0;
     oldfile = wxEmptyString;
@@ -174,18 +306,17 @@ bool delete_all_temps = false;   // ok to delete all temporary files?
 
 ChangeNode::~ChangeNode()
 {
+    if (startinfo) delete startinfo;
     if (cellinfo) free(cellinfo);
     
     // it's always ok to delete oldfile and newfile if they exist
     
     if (!oldfile.IsEmpty() && wxFileExists(oldfile)) {
         wxRemoveFile(oldfile);
-        //printf("removed oldfile: %s\n", (const char*)oldfile.mb_str(wxConvLocal)); fflush(stdout);
     }
     
     if (!newfile.IsEmpty() && wxFileExists(newfile)) {
         wxRemoveFile(newfile);
-        //printf("removed newfile: %s\n", (const char*)newfile.mb_str(wxConvLocal)); fflush(stdout);
     }
 
     if (delete_all_temps) {
@@ -299,6 +430,10 @@ bool ChangeNode::DoChange(bool undo)
                 currlayer->currsel = oldsel;
                 mainptr->RestorePattern(oldgen, oldfile, oldx, oldy, oldmag, oldbase, oldexpo);
             } else {
+                if (startinfo) {
+                    // restore starting info for use by ResetPattern
+                    startinfo->Restore();
+                }
                 currlayer->currsel = newsel;
                 mainptr->RestorePattern(newgen, newfile, newx, newy, newmag, newbase, newexpo);
             }
@@ -311,25 +446,9 @@ bool ChangeNode::DoChange(bool undo)
                 currlayer->savestart = oldsave;
                 currlayer->tempstart = oldtempstart;
                 currlayer->currfile = oldcurrfile;
-                if (oldtempstart != newtempstart) {
-                    currlayer->startdirty = olddirty;
-                    currlayer->startalgo = oldalgo;
-                    currlayer->startrule = oldrule;
-                    currlayer->startx = oldx;
-                    currlayer->starty = oldy;
-                    currlayer->startmag = oldmag;
-                    currlayer->startbase = oldbase;
-                    currlayer->startexpo = oldexpo;
-                    currlayer->startsel = oldsel;
-                    currlayer->startname = oldname;
-                    if (currlayer->cloneid > 0) {
-                        for ( int i = 0; i < numlayers; i++ ) {
-                            Layer* cloneptr = GetLayer(i);
-                            if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
-                                cloneptr->startname = oldclone[i];
-                            }
-                        }
-                    }
+                if (startinfo) {
+                    // restore starting info for use by ResetPattern
+                    startinfo->Restore();
                 }
             } else {
                 mainptr->ChangeGenCount(newgen.tostring(), true);
@@ -337,26 +456,6 @@ bool ChangeNode::DoChange(bool undo)
                 currlayer->savestart = newsave;
                 currlayer->tempstart = newtempstart;
                 currlayer->currfile = newcurrfile;
-                if (oldtempstart != newtempstart) {
-                    currlayer->startdirty = newdirty;
-                    currlayer->startalgo = newalgo;
-                    currlayer->startrule = newrule;
-                    currlayer->startx = newx;
-                    currlayer->starty = newy;
-                    currlayer->startmag = newmag;
-                    currlayer->startbase = newbase;
-                    currlayer->startexpo = newexpo;
-                    currlayer->startsel = newsel;
-                    currlayer->startname = newname;
-                    if (currlayer->cloneid > 0) {
-                        for ( int i = 0; i < numlayers; i++ ) {
-                            Layer* cloneptr = GetLayer(i);
-                            if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
-                                cloneptr->startname = newclone[i];
-                            }
-                        }
-                    }
-                }
             }
             // Reset item may become enabled/disabled
             mainptr->UpdateMenuItems();
@@ -380,7 +479,7 @@ bool ChangeNode::DoChange(bool undo)
                 if (whichlayer == currlayer) {
                     if (olddirty == newdirty) mainptr->SetWindowTitle(currlayer->currname);
                     // if olddirty != newdirty then UndoChange/RedoChange will call
-                    // MarkLayerClean/MarkLayerDirty (they call SetWindowTitle)
+                    // MarkLayerClean/MarkLayerDirty (and they call SetWindowTitle)
                 } else {
                     // whichlayer is non-active clone so only update Layer menu items
                     for (int i = 0; i < numlayers; i++)
@@ -447,7 +546,6 @@ UndoRedo::UndoRedo()
     doingscriptchanges = false;   // not undoing/redoing script changes
     prevfile = wxEmptyString;     // play safe for ClearUndoRedo
     startcount = 0;               // unfinished RememberGenStart calls
-    fixsetgen = false;            // no setgen nodes need fixing
     
     // need to remember if script has created a new layer (not a clone)
     if (inscript) RememberScriptStart();
@@ -739,42 +837,6 @@ void UndoRedo::RememberGenStart()
     if (prevgen == currlayer->startgen) {
         // we can just reset to starting pattern
         prevfile = wxEmptyString;
-        
-        if (fixsetgen) {
-            // SaveStartingPattern has just been called so search undolist for setgen
-            // node that changed tempstart and update the starting info in that node;
-            // yuk -- is there a simpler solution???
-            wxList::compatibility_iterator node = undolist.GetFirst();
-            while (node) {
-                ChangeNode* change = (ChangeNode*) node->GetData();
-                if (change->changeid == setgen && change->oldtempstart != change->newtempstart) {
-                    change->newdirty = currlayer->startdirty;
-                    change->newalgo = currlayer->startalgo;
-                    change->newrule = currlayer->startrule;
-                    change->newx = currlayer->startx;
-                    change->newy = currlayer->starty;
-                    change->newmag = currlayer->startmag;
-                    change->newbase = currlayer->startbase;
-                    change->newexpo = currlayer->startexpo;
-                    change->newsel = currlayer->startsel;
-                    change->newname = currlayer->startname;
-                    if (currlayer->cloneid > 0) {
-                        for ( int i = 0; i < numlayers; i++ ) {
-                            Layer* cloneptr = GetLayer(i);
-                            if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
-                                change->newclone[i] = cloneptr->startname;
-                            }
-                        }
-                    }
-                    // do NOT reset fixsetgen to false here; the gen change might
-                    // be removed when clearing the redo list and so we may need
-                    // to update this setgen node again after a new gen change
-                    break;
-                }
-                node = node->GetNext();
-            }
-        }
-        
     } else {
         // save starting pattern in a unique temporary file
         prevfile = wxFileName::CreateTempFileName(tempdir + genchange_prefix);
@@ -865,6 +927,12 @@ void UndoRedo::RememberGenFinish()
     // also remember the file containing the starting pattern
     // (in case it is changed by by RememberSetGen or RememberNameChange)
     change->oldcurrfile = currlayer->currfile;
+
+    if (change->oldgen == currlayer->startgen) {
+        // save starting info set by recent SaveStartingPattern call
+        // (the info will be restored when redoing this genchange node)
+        change->startinfo = new StartingInfo(NULL, NULL, NULL);
+    }
     
     // prevfile has been saved in change->oldfile (~ChangeNode will delete it)
     prevfile = wxEmptyString;
@@ -982,52 +1050,13 @@ void UndoRedo::RememberSetGen(bigint& oldgen, bigint& newgen,
     change->newtempstart = currlayer->tempstart;
     change->oldcurrfile = oldcurrfile;
     change->newcurrfile = currlayer->currfile;
-    
-    if (change->oldtempstart != change->newtempstart) {
-        // save extra starting info set by previous SaveStartingPattern so that
-        // Undoing this setgen change will restore the correct info for a Reset
-        change->olddirty = currlayer->startdirty;
-        change->oldalgo = currlayer->startalgo;
-        change->oldrule = currlayer->startrule;
-        change->oldx = currlayer->startx;
-        change->oldy = currlayer->starty;
-        change->oldmag = currlayer->startmag;
-        change->oldbase = currlayer->startbase;
-        change->oldexpo = currlayer->startexpo;
-        change->oldsel = currlayer->startsel;
-        change->oldname = currlayer->startname;
-        if (currlayer->cloneid > 0) {
-            for ( int i = 0; i < numlayers; i++ ) {
-                Layer* cloneptr = GetLayer(i);
-                if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
-                    change->oldclone[i] = cloneptr->startname;
-                }
-            }
-        }
-        
-        // following settings will be updated by next RememberGenStart call so that
-        // Redoing this setgen change will restore the correct info for a Reset
-        fixsetgen = true;
-        change->newdirty = currlayer->startdirty;
-        change->newalgo = currlayer->startalgo;
-        change->newrule = currlayer->startrule;
-        change->newx = currlayer->startx;
-        change->newy = currlayer->starty;
-        change->newmag = currlayer->startmag;
-        change->newbase = currlayer->startbase;
-        change->newexpo = currlayer->startexpo;
-        change->newsel = currlayer->startsel;
-        change->newname = currlayer->startname;
-        if (currlayer->cloneid > 0) {
-            for ( int i = 0; i < numlayers; i++ ) {
-                Layer* cloneptr = GetLayer(i);
-                if (cloneptr != currlayer && cloneptr->cloneid == currlayer->cloneid) {
-                    change->newclone[i] = cloneptr->startname;
-                }
-            }
-        }
+
+    if (oldtempstart != currlayer->tempstart) {
+        // save starting info set by most recent SaveStartingPattern call
+        // (the info will be restored when undoing this setgen node)
+        change->startinfo = new StartingInfo(NULL, NULL, NULL);
     }
-    
+        
     undolist.Insert(change);
     
     // update Undo item in Edit menu
@@ -1075,10 +1104,9 @@ void UndoRedo::RememberNameChange(const wxString& oldname, const wxString& oldcu
 void UndoRedo::DeletingClone(int index)
 {
     // the given cloned layer is about to be deleted, so we need to go thru the
-    // undo/redo lists and, for each namechange node, set a matching whichlayer
-    // ptr to NULL so DoChange can ignore later changes involving this layer;
-    // very ugly, but I don't see any better solution if we're going to allow
-    // cloned layers to have different names
+    // undo/redo lists and fix up any nodes that have pointers to that clone
+    // (very ugly, but I don't see any better solution if we're going to allow
+    // cloned layers to have different names)
     
     Layer* cloneptr = GetLayer(index);
     wxList::compatibility_iterator node;
@@ -1086,16 +1114,24 @@ void UndoRedo::DeletingClone(int index)
     node = undolist.GetFirst();
     while (node) {
         ChangeNode* change = (ChangeNode*) node->GetData();
-        if (change->changeid == namechange && change->whichlayer == cloneptr)
+        if (change->whichlayer == cloneptr) {
             change->whichlayer = NULL;
+        }
+        if (change->startinfo) {
+            change->startinfo->RemoveClone(cloneptr);
+        }
         node = node->GetNext();
     }
     
     node = redolist.GetFirst();
     while (node) {
         ChangeNode* change = (ChangeNode*) node->GetData();
-        if (change->changeid == namechange && change->whichlayer == cloneptr)
+        if (change->whichlayer == cloneptr) {
             change->whichlayer = NULL;
+        }
+        if (change->startinfo) {
+            change->startinfo->RemoveClone(cloneptr);
+        }
         node = node->GetNext();
     }
 }
@@ -1509,8 +1545,6 @@ void UndoRedo::ClearUndoRedo()
     
     delete_all_temps = false;
     
-    fixsetgen = false;
-    
     if (inscript) {
         // script has called a command like new() so add a scriptstart node
         // to the undo list to match the final scriptfinish node
@@ -1625,7 +1659,6 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
     prevexpo = history->prevexpo;
     prevsel = history->prevsel;
     startcount = history->startcount;
-    fixsetgen = history->fixsetgen;
     
     // copy existing temporary file to new name
     if ( !prevfile.IsEmpty() && wxFileExists(prevfile) ) {
@@ -1677,6 +1710,10 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             memcpy(newchange->cellinfo, change->cellinfo, bytes);
         }
         
+        if (change->startinfo) {
+            newchange->startinfo = new StartingInfo(change->startinfo, oldlayer, newlayer);
+        }
+        
         // copy any existing temporary files to new names
         if (!CopyTempFiles(change, newchange, newlayer->tempstart)) {
             Warning(_("Failed to copy temporary file in undolist!"));
@@ -1684,9 +1721,13 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             return;
         }
         
-        // if node is a name change then update whichlayer to point to new layer
+        // if node is a name change then update whichlayer
         if (newchange->changeid == namechange) {
-            newchange->whichlayer = newlayer;
+            if (change->whichlayer == oldlayer) {
+                newchange->whichlayer = newlayer;
+            } else {
+                newchange->whichlayer = NULL;
+            }
         }
         
         undolist.Append(newchange);
@@ -1720,6 +1761,10 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             memcpy(newchange->cellinfo, change->cellinfo, bytes);
         }
         
+        if (change->startinfo) {
+            newchange->startinfo = new StartingInfo(change->startinfo, oldlayer, newlayer);
+        }
+        
         // copy any existing temporary files to new names
         if (!CopyTempFiles(change, newchange, newlayer->tempstart)) {
             Warning(_("Failed to copy temporary file in redolist!"));
@@ -1727,9 +1772,13 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             return;
         }
         
-        // if node is a name change then update whichlayer to point to new layer
+        // if node is a name change then update whichlayer
         if (newchange->changeid == namechange) {
-            newchange->whichlayer = newlayer;
+            if (change->whichlayer == oldlayer) {
+                newchange->whichlayer = newlayer;
+            } else {
+                newchange->whichlayer = NULL;
+            }
         }
         
         redolist.Append(newchange);

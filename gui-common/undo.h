@@ -148,7 +148,6 @@ private:
     int prevexpo;                 // step exponent at start of gen change
     Selection prevsel;            // selection at start of gen change
     int startcount;               // unfinished RememberGenStart calls
-    bool fixsetgen;               // setgen node needs to be updated?
 
     void ClearUndoHistory();      // clear undolist
     void ClearRedoHistory();      // clear redolist

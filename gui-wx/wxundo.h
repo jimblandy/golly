@@ -145,7 +145,6 @@ private:
     int prevexpo;                 // step exponent at start of gen change
     Selection prevsel;            // selection at start of gen change
     int startcount;               // unfinished RememberGenStart calls
-    bool fixsetgen;               // setgen node needs to be updated?
     
     void SaveCurrentPattern(const wxString& tempfile);
     // save current pattern to given temporary file

@@ -2051,8 +2051,8 @@ void MainFrame::UpdateLayerItem(int index)
         }
         
         if (layer->currname.IsEmpty()) {
-            // should never happen, but play safe to avoid assert error in SetLabel
-            label += wxT("BUG!");
+            // this should never happen, but play safe
+            label += wxT("UNKNOWN");
         } else {
             label += layer->currname;
         }
