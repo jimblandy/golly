@@ -1518,13 +1518,6 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             newchange->startinfo = new StartingInfo(change->startinfo, oldlayer, newlayer);
         }
 
-        // copy any existing temporary files to new names
-        if (!CopyTempFiles(change, newchange, newlayer->tempstart.c_str())) {
-            Warning("Failed to copy temporary file in undolist!");
-            ClearUndoHistory();
-            return;
-        }
-
         // if node is a name change then update whichlayer
         if (newchange->changeid == namechange) {
             if (change->whichlayer == oldlayer) {
@@ -1532,6 +1525,13 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             } else {
                 newchange->whichlayer = NULL;
             }
+        }
+
+        // copy any existing temporary files to new names
+        if (!CopyTempFiles(change, newchange, newlayer->tempstart.c_str())) {
+            Warning("Failed to copy temporary file in undolist!");
+            ClearUndoHistory();
+            return;
         }
 
         undolist.push_back(newchange);
@@ -1569,13 +1569,6 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             newchange->startinfo = new StartingInfo(change->startinfo, oldlayer, newlayer);
         }
 
-        // copy any existing temporary files to new names
-        if (!CopyTempFiles(change, newchange, newlayer->tempstart.c_str())) {
-            Warning("Failed to copy temporary file in redolist!");
-            ClearRedoHistory();
-            return;
-        }
-
         // if node is a name change then update whichlayer to point to new layer
         if (newchange->changeid == namechange) {
             if (change->whichlayer == oldlayer) {
@@ -1583,6 +1576,13 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             } else {
                 newchange->whichlayer = NULL;
             }
+        }
+
+        // copy any existing temporary files to new names
+        if (!CopyTempFiles(change, newchange, newlayer->tempstart.c_str())) {
+            Warning("Failed to copy temporary file in redolist!");
+            ClearRedoHistory();
+            return;
         }
 
         redolist.push_back(newchange);

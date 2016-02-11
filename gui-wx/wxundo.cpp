@@ -1714,13 +1714,6 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             newchange->startinfo = new StartingInfo(change->startinfo, oldlayer, newlayer);
         }
         
-        // copy any existing temporary files to new names
-        if (!CopyTempFiles(change, newchange, newlayer->tempstart)) {
-            Warning(_("Failed to copy temporary file in undolist!"));
-            WX_CLEAR_LIST(wxList, undolist);
-            return;
-        }
-        
         // if node is a name change then update whichlayer
         if (newchange->changeid == namechange) {
             if (change->whichlayer == oldlayer) {
@@ -1728,6 +1721,13 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             } else {
                 newchange->whichlayer = NULL;
             }
+        }
+        
+        // copy any existing temporary files to new names
+        if (!CopyTempFiles(change, newchange, newlayer->tempstart)) {
+            Warning(_("Failed to copy temporary file in undolist!"));
+            WX_CLEAR_LIST(wxList, undolist);
+            return;
         }
         
         undolist.Append(newchange);
@@ -1765,13 +1765,6 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             newchange->startinfo = new StartingInfo(change->startinfo, oldlayer, newlayer);
         }
         
-        // copy any existing temporary files to new names
-        if (!CopyTempFiles(change, newchange, newlayer->tempstart)) {
-            Warning(_("Failed to copy temporary file in redolist!"));
-            WX_CLEAR_LIST(wxList, redolist);
-            return;
-        }
-        
         // if node is a name change then update whichlayer
         if (newchange->changeid == namechange) {
             if (change->whichlayer == oldlayer) {
@@ -1779,6 +1772,13 @@ void UndoRedo::DuplicateHistory(Layer* oldlayer, Layer* newlayer)
             } else {
                 newchange->whichlayer = NULL;
             }
+        }
+        
+        // copy any existing temporary files to new names
+        if (!CopyTempFiles(change, newchange, newlayer->tempstart)) {
+            Warning(_("Failed to copy temporary file in redolist!"));
+            WX_CLEAR_LIST(wxList, redolist);
+            return;
         }
         
         redolist.Append(newchange);
