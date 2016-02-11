@@ -340,7 +340,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeCreate(JNIEnv* env, jobje
     if (baseapp != NULL) env->DeleteGlobalRef(baseapp);
     baseapp = env->NewGlobalRef(obj);
 
-    SetMessage("This is Golly 1.2 for Android.  Copyright 2015 The Golly Gang.");
+    SetMessage("This is Golly 1.2 for Android.  Copyright 2016 The Golly Gang.");
     if (highdensity) {
         MAX_MAG = 6;            // maximum cell size = 64x64
     } else {
