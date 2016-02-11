@@ -72,6 +72,11 @@ static long clicktime;
                          clickedcontrol <= SE_CONTROL && \
                          clickedcontrol != MIDDLE_CONTROL)
 
+// this determines the rate at which OnDragTimer will be called after the mouse
+// is dragged outside the viewport but then kept still (note that OnMouseMotion
+// calls OnDragTimer when the mouse is moved, inside or outside the viewport)
+const int TEN_HERTZ = 100;
+
 // -----------------------------------------------------------------------------
 
 // event table and handlers:
@@ -1813,8 +1818,8 @@ void PatternView::StartDrawingCells(int x, int y)
         RefreshView();
     }
     
-    CaptureMouse();                     // get mouse up event even if outside view
-    dragtimer->Start(SIXTY_HERTZ);      // call OnDragTimer ~60 times per sec
+    CaptureMouse();                 // get mouse up event even if outside view
+    dragtimer->Start(TEN_HERTZ);
     
     if (stopdrawing) {
         // mouse up event has already been seen so terminate drawing immediately
@@ -1987,8 +1992,8 @@ void PatternView::StartSelectingCells(int x, int y, bool shiftdown)
     }
     
     selectingcells = true;
-    CaptureMouse();                     // get mouse up event even if outside view
-    dragtimer->Start(SIXTY_HERTZ);      // call OnDragTimer ~60 times per sec
+    CaptureMouse();                 // get mouse up event even if outside view
+    dragtimer->Start(TEN_HERTZ);
 }
 
 // -----------------------------------------------------------------------------
@@ -2044,9 +2049,9 @@ void PatternView::StartMovingView(int x, int y)
     if (waitingforclick) {
         // avoid calling CaptureMouse again (middle button was pressed)
     } else {
-        CaptureMouse();                 // get mouse up event even if outside view
+        CaptureMouse();             // get mouse up event even if outside view
     }
-    dragtimer->Start(SIXTY_HERTZ);      // call OnDragTimer ~60 times per sec
+    dragtimer->Start(TEN_HERTZ);
 }
 
 // -----------------------------------------------------------------------------
@@ -2833,11 +2838,15 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
         }
     }
 
-    // we do the following test to ensure ReleaseMouse() gets called
-    // (in case OnMouseUp doesn't get called when it should)
     if (drawingcells || selectingcells || movingview || clickedcontrol > NO_CONTROL) {
-        // check if no mouse buttons are being pressed
-        if (!event.Dragging()) StopDraggingMouse();
+        if (event.Dragging()) {
+            wxTimerEvent unused;
+            OnDragTimer(unused);
+        } else {
+            // no mouse buttons are being pressed so ensure ReleaseMouse gets called
+            // (in case OnMouseUp doesn't get called when it should)
+            StopDraggingMouse();
+        }
     }
 }
 
