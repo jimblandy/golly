@@ -1542,17 +1542,16 @@ void MainFrame::ChangeAlgorithm(algo_type newalgotype, const wxString& newrule, 
     UpdateLayerColors();
     
     if (!inundoredo) {
+        // if pattern exists and is at starting gen then set savestart true
+        // so that SaveStartingPattern will save pattern to suitable file
+        // (and thus ResetPattern will work correctly)
+        if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+            currlayer->savestart = true;
+        }
+        
         if (rulechanged) {
             // show new rule in window title (but don't change file name)
             SetWindowTitle(wxEmptyString);
-            
-            // if pattern exists and is at starting gen then set savestart true
-            // so that SaveStartingPattern will save pattern to suitable file
-            // (and thus ResetPattern will work correctly)
-            if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
-                currlayer->savestart = true;
-            }
-            
             if (newrule.IsEmpty()) {
                 if (patternchanged) {
                     statusptr->ErrorMessage(_("Rule has changed and pattern has changed."));

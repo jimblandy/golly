@@ -974,14 +974,14 @@ void ChangeAlgorithm(algo_type newalgotype, const char* newrule, bool inundoredo
     UpdateLayerColors();
 
     if (!inundoredo) {
-        if (rulechanged) {
-            // if pattern exists and is at starting gen then set savestart true
-            // so that SaveStartingPattern will save pattern to suitable file
-            // (and thus ResetPattern will work correctly)
-            if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
-                currlayer->savestart = true;
-            }
+        // if pattern exists and is at starting gen then set savestart true
+        // so that SaveStartingPattern will save pattern to suitable file
+        // (and thus ResetPattern will work correctly)
+        if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+            currlayer->savestart = true;
+        }
 
+        if (rulechanged) {
             if (newrule[0] == 0) {
                 if (patternchanged) {
                     ErrorMessage("Rule has changed and pattern has changed.");
