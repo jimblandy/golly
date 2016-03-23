@@ -344,6 +344,7 @@ struct stepcmd : public cmdbase {
          imp->setIncrement(barg) ;
          imp->step() ;
       }
+      if (timeline) imp->extendtimeline() ;
       cout << imp->getGeneration().tostring() << ": " ;
       cout << imp->getPopulation().tostring() << endl ;
    }
@@ -661,6 +662,7 @@ case 's':
       if (boundedgrid && !imp->CreateBorderCells()) break ;
       imp->step() ;
       if (boundedgrid && !imp->DeleteBorderCells()) break ;
+      if (timeline) imp->extendtimeline() ;
       if (maxgen < 0 && outfilename != 0)
          writepat(fc++) ;
       if (timeline && imp->getframecount() + 2 > MAX_FRAME_COUNT)

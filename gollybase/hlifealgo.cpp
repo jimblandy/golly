@@ -624,7 +624,6 @@ void hlifealgo::step() {
       root = newroot ;
    }
    depth = node_depth(root) ;
-   extendtimeline() ;
 }
 void hlifealgo::setcurrentstate(void *n) {
    if (root != (node *)n) {

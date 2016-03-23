@@ -518,7 +518,6 @@ void ghashbase::step() {
       root = newroot ;
    }
    depth = ghnode_depth(root) ;
-   extendtimeline() ;
 }
 void ghashbase::setcurrentstate(void *n) {
    if (root != (ghnode *)n) {

@@ -594,6 +594,7 @@ bool MainFrame::StepPattern()
                 SetGenIncrement();         // restore correct increment
                 return false;
             }
+            if (curralgo->isrecording()) curralgo->extendtimeline();
             inc -= 1;
         }
         // safe way to restore correct increment in case user altered step base/exponent
@@ -601,6 +602,7 @@ bool MainFrame::StepPattern()
     } else {
         if (wxGetApp().Poller()->checkevents()) return false;
         curralgo->step();
+        if (curralgo->isrecording()) curralgo->extendtimeline();
     }
     
     if (currlayer->autofit) viewptr->FitInView(0);
