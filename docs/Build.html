@@ -14,7 +14,7 @@ This document contains instructions for how to build the desktop version of Goll
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxwin"><b>On Windows</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxmac"><b>On Mac OS X</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#wxlin"><b>On Linux</b></a><br>
-<a href="#perlpython"><b>How to install Perl and Python</b></a><br>
+<a href="#python"><b>How to install Python</b></a><br>
 <a href="#golly"><b>How to build Golly</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gwin"><b>On Windows</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gmac"><b>On Mac OS X</b></a><br>
@@ -173,26 +173,13 @@ installs the wx-config program which will be called by makefile-gtk
 to set the appropriate compile and link options for building Golly.
 
 
-<a name="perlpython"></a>
-<h2>How to install Perl and Python</h2>
+<a name="python"></a>
+<h2>How to install Python</h2>
 
 <p>
-Golly uses Perl and Python for scripting, so you'll need to make
-sure both are installed.  Mac OS X users don't have to do anything
-because Perl and Python are already installed.
-
-<p>
-If you are running Linux, you probably have Perl installed.
-Type "perl -v" at the command line to print out the version.
-Golly's code should compile happily with Perl 5.10.x or later, but
-support for interpreter threads is required.
-
-<p>
-Windows users are advised to download the ActivePerl installer from<br>
-<a href="http://www.activestate.com/Products/ActivePerl">http://www.activestate.com/Products/ActivePerl</a>.
-
-<p>
-Windows and Linux users can download a Python installer from<br>
+Golly uses Python for scripting, so you'll need to make sure Python is installed.
+Mac OS X users don't have to do anything because Python is already installed.
+Windows and Linux users can download a Python installer from
 <a href="http://www.python.org/download">http://www.python.org/download</a>.
 
 
@@ -200,7 +187,7 @@ Windows and Linux users can download a Python installer from<br>
 <h2>How to build Golly</h2>
 
 <p>
-Once wxWidgets, Perl and Python are installed, building Golly should be relatively easy:
+Once wxWidgets and Python are installed, building Golly should be relatively easy:
 
 <a name="gwin"></a>
 <h3>On Windows</h3>
@@ -211,8 +198,8 @@ to a new file called local-win.mk.  This file is included by makefile-win.
 Edit local-win.mk and specify where wxWidgets is installed by changing the
 WX_DIR path near the start of the file.  Also make sure WX_RELEASE specifies
 the first two digits of your wxWidgets version.
-The headers for Perl and Python must also be included, so change the paths for
-PERL_INCLUDE and PYTHON_INCLUDE if necessary.  Now you're ready to build Golly.
+The headers for Python must also be included, so change the path for
+PYTHON_INCLUDE if necessary.  Now you're ready to build Golly.
 
 <p>
 If you edited config.vc to set all the options then it's simple:
@@ -303,7 +290,7 @@ source release, you need to generate the configure script first:
 </pre>
 
 <p>
-This requires that autoconf, automake and Perl 5.x are installed.
+This requires that autoconf and automake are installed.
 
 <p>
 The configure script offers various options to customize building and
@@ -360,10 +347,6 @@ out-of-date and inappropriate for building Golly, so CMakeLists.txt
 sets wxWidgets_CONFIG_EXECUTABLE to /usr/local/bin/wx-config
 where /usr/local/bin is the default location for wx-config if you
 do "sudo make install" after building the wxWidgets libraries.
-<li> 
-Also on Mac OS X, PERL_INCLUDE_PATH and PERL_LIBRARY are overridden
-to avoid statically linking the Perl library.  Their settings assume
-Perl 5.10 so you might need to change the version numbers.
 <li>
 A common issue is that it doesn't find wxWidgets, 
 especially when you have more than one version installed. Set 
@@ -392,7 +375,7 @@ bgolly as the target of the make/nmake command.  For example, on Linux:
 </pre>
 
 <p>
-You don't need to install wxWidgets, Perl or Python to build bgolly.
+You don't need to install wxWidgets or Python to build bgolly.
 
 
 <a name="source"></a>
@@ -473,7 +456,7 @@ a .tar.gz file.  You should see the following directories:
 
 <p><b>Scripts</b><p>
 <dd>
-   Contains Perl and Python scripts that can be run by Golly.
+   Contains Lua and Python scripts that can be run by Golly.
 </dd>
 
 <p>
@@ -609,10 +592,10 @@ Each module is described in (roughly) top-down order, and some key routines are 
    RunScript() runs a given script file.
 </dd>
 
-<p><b>wxperl.*</b><p>
+<p><b>wxlua.*</b><p>
 <dd>
-   Implements Perl script support.<br>
-   RunPerlScript() runs a given .pl file.
+   Implements Lua script support.<br>
+   RunLuaScript() runs a given .lua file.
 </dd>
 
 <p><b>wxpython.*</b><p>

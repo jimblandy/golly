@@ -6,33 +6,15 @@
 Andrew's list:
 ==============
 
-- Only have one panel for showing Patterns, Scripts, Rules, etc,
-  and set initial location to directory containing those sub-folders.
-
 - Add a new check box to Prefs > Layer: "Automatically show/hide layer bar".
   If ticked then layer bar is automatically shown whenever the number of
   layers becomes > 1, and automatically hidden when the number drops to 1.
   Only need to check in a few places (esp. after a script ends).
 
-- Optimize rendering by using OpenGL (see gui-common/render.cpp).
-
 - Auto stop script if it creates too many temp files (for undo).
   This can happen if a long-running script doesn't call new/open
   when it probably should.  See my email to Nathaniel with subject
   "Re: Golly methuselah search script".
-
-- Change all Python commands to g_* for consistency with Perl commands.
-  Unfortutely, we can't really keep the old commands in same module
-  because doing "from golly import *" exposes old and new commands and
-  so a script like goto.py that calls a non-Golly open command will fail.
-  We could put old commands in a separate module called "oldgolly".
-  Maybe best to leave this change for when the scripting API needs
-  significant changes due to multi-rect selections.
-
-- Avoid any remaining algo assumptions (search *_ALGO):
-  - Need IsParityShifted() method to avoid QLIFE_ALGO assumption?
-
-- Allow dragging zoom-in cursor to zoom into rect.
 
 - Stop generating if pattern becomes empty, constant or p2 (qlife only)
   and display suitable message in status bar.  Or maybe just add
@@ -41,10 +23,6 @@ Andrew's list:
 - Allow non-rectangular (and disjoint) selections.
 
 - Add simple methuselah/spaceship/osc/still-life searches as in LifeLab???
-
-- Fix glitches in the way the algo button works:
-  - On Mac we want button to look selected before menu appears.
-  - On Win we want to be able to press-select-release.
 
 - Add case studies to BUILD file: how to add a new menu item, how to add
   a new algorithm, etc.
@@ -115,7 +93,6 @@ H. Koenig:
 - Multiple windows.  [No real need now that we have multiple layers.]
 
 Gabriel Nivasch:
-- Make paste pattern semi-transparent.  [Tried it -- somewhat confusing.]
 - Add a Default button to each Preferences pane (at bottom left?).
 
 Bill Gosper:
@@ -144,9 +121,6 @@ Dean Hickerson:
   and reading it into new layer.
 
 tod222:
-- Provide a way to cleanly shut down Golly from within a script.
-  Maybe just use special exit() string like exit("QUIT GOLLY")?
-  [No need -- can now call doevent("key q cmd").]
 - Allow a command line argument (-minimize?) to start up with the
   main window in minimized state.  Should be possible in OnInit.
 </pre>
