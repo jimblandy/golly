@@ -5,7 +5,7 @@
 # the very few 3-state 2-color 2D Turing machines to exhibit interesting 
 # behavior.
 #
-# http://code.google.com/p/ruletablerepository/wiki/TwoDimensionalTuringMachines
+# http://github.com/GollyGang/ruletablerepository/wiki/TwoDimensionalTuringMachines
 # http://en.wikipedia.org/wiki/Turmite
 #
 # Specification string:

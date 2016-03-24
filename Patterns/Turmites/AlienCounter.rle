@@ -6,7 +6,7 @@
 # time it is counting in base-phi (the golden ratio), if that makes any sense to 
 # you. 
 #
-# http://code.google.com/p/ruletablerepository/wiki/TwoDimensionalTuringMachines
+# http://github.com/GollyGang/ruletablerepository/wiki/TwoDimensionalTuringMachines
 # http://en.wikipedia.org/wiki/Turmite
 #
 # Specification string:
