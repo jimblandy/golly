@@ -11,7 +11,8 @@ WX_RELEASE = 28
 # Change the next line depending on where you installed Python:
 PYTHON_INCLUDE = -I"C:\Python27-64\include"
 
-# Simplified output from "perl -MExtUtils::Embed -e ccopts":
-PERL_INCLUDE = \
--DHAVE_DES_FCRYPT -DNO_HASH_SEED -DUSE_SITECUSTOMIZE -DPERL_IMPLICIT_CONTEXT \
--DPERL_IMPLICIT_SYS -DUSE_PERLIO -DPERL_MSVCRT_READFIX -I"C:\Perl514-64\lib\CORE"
+# Uncomment the next 4 lines to allow Golly to run Perl scripts:
+# PERL_INCLUDE = \
+# -DENABLE_PERL
+# -DHAVE_DES_FCRYPT -DNO_HASH_SEED -DUSE_SITECUSTOMIZE -DPERL_IMPLICIT_CONTEXT \
+# -DPERL_IMPLICIT_SYS -DUSE_PERLIO -DPERL_MSVCRT_READFIX -I"C:\Perl514-64\lib\CORE"

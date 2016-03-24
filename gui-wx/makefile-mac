@@ -19,7 +19,7 @@ WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
 WXUNICODEFLAG = u
 
 APP_NAME = Golly
-APP_VERSION = 2.8b2
+APP_VERSION = 2.8b3
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
@@ -36,14 +36,18 @@ SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
 
-# for Perl script support:
-PERL_INCLUDE = $(shell /usr/bin/perl -MExtUtils::Embed -e ccopts)
-PERL_LINK = $(shell /usr/bin/perl -MExtUtils::Embed -e ldopts)
-# remove unwanted stuff (-arch i386 and -arch ppc):
-PERL_INCLUDE := $(subst -arch i386,,$(PERL_INCLUDE))
-PERL_INCLUDE := $(subst -arch ppc,,$(PERL_INCLUDE))
-PERL_LINK := $(subst -arch i386,,$(PERL_LINK))
-PERL_LINK := $(subst -arch ppc,,$(PERL_LINK))
+# uncomment the next line to allow Golly to run Perl scripts:
+# ENABLE_PERL = 1
+
+ifdef ENABLE_PERL
+    PERL_INCLUDE = $(shell /usr/bin/perl -MExtUtils::Embed -e ccopts)
+    PERL_LINK = $(shell /usr/bin/perl -MExtUtils::Embed -e ldopts)
+    # remove unwanted stuff (-arch i386 and -arch ppc):
+    PERL_INCLUDE := $(subst -arch i386,,$(PERL_INCLUDE))
+    PERL_INCLUDE := $(subst -arch ppc,,$(PERL_INCLUDE))
+    PERL_LINK := $(subst -arch i386,,$(PERL_LINK))
+    PERL_LINK := $(subst -arch ppc,,$(PERL_LINK))
+endif
 
 # for Python script support:
 PYTHON_INCLUDE = -I`/usr/bin/python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
@@ -71,7 +75,12 @@ CXXFLAGS = -arch x86_64 \
    -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
    -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
    -fno-strict-aliasing -fno-common
+
 CXXFLAGS += $(call osx_ge, 11, "-Wno-potentially-evaluated-expression", "")
+
+ifdef ENABLE_PERL
+    CXXFLAGS += -DENABLE_PERL
+endif
 
 LDFLAGS = -arch x86_64 \
    -Wl,-dead_strip -Wl,-S \

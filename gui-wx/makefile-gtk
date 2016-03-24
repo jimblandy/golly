@@ -10,7 +10,7 @@
 # sudo make install
 # sudo ldconfig
 
-APP_VERSION = 2.8b2
+APP_VERSION = 2.8b3
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
@@ -33,15 +33,20 @@ CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
    -O5 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
 LDFLAGS := -Wl,--as-needed $(LDFLAGS)
 
-# for Perl script support
-PERL_INCLUDE = `perl -MExtUtils::Embed -e ccopts`
-# note that we must link in the Perl library if the Perl version is older
-# than 5.10 (this is necessary because boot_DynaLoader is in DynaLoader.a);
-# if using 5.10 or later we can dynamically load the Perl library because
-# it contains the boot_DynaLoader code
-PERL_LINK = `perl -MExtUtils::Embed -e '$$]<5.010 && ldopts'`
-PERL_SHLIB = libperl.so.5.10  # TODO: figure out how to do this dynamically
-PERL_PREFS = -DPERL_SHLIB="$(PERL_SHLIB)"
+# uncomment the next line to allow Golly to run Perl scripts:
+# ENABLE_PERL = 1
+
+ifdef ENABLE_PERL
+    CXXFLAGS += -DENABLE_PERL
+    PERL_INCLUDE = `perl -MExtUtils::Embed -e ccopts`
+    # note that we must link in the Perl library if the Perl version is older
+    # than 5.10 (this is necessary because boot_DynaLoader is in DynaLoader.a);
+    # if using 5.10 or later we can dynamically load the Perl library because
+    # it contains the boot_DynaLoader code
+    PERL_LINK = `perl -MExtUtils::Embed -e '$$]<5.010 && ldopts'`
+    PERL_SHLIB = libperl.so.5.10  # TODO: figure out how to do this dynamically
+    PERL_PREFS = -DPERL_SHLIB="$(PERL_SHLIB)"
+endif
 
 # for Python script support
 PYTHON_INCLUDE = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`

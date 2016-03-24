@@ -62,6 +62,8 @@
 
 // =============================================================================
 
+#ifdef ENABLE_PERL
+
 // Perl scripting support is implemented by embedding a Perl interpreter.
 // See "perldoc perlembed" for details.
 
@@ -480,14 +482,6 @@ static bool LoadPerlLib()
 #else
     #define FILENAME filename
 #endif
-
-// -----------------------------------------------------------------------------
-
-void AbortPerlScript()
-{
-    scripterr = wxString(abortmsg,wxConvLocal);
-    // can't call Perl_croak here (done via RETURN_IF_ABORTED)
-}
 
 // -----------------------------------------------------------------------------
 
@@ -3246,37 +3240,41 @@ EXTERN_C void xs_init(pTHX)
     newXS((char*)"g_fatal",        pl_fatal,        (char*)file);
 }
 
-// =============================================================================
-
 #ifdef PERL510_OR_LATER
     static bool inited = false;
 #endif
 
+#endif // ENABLE_PERL
+
+// =============================================================================
+
 void RunPerlScript(const wxString &filepath)
 {
+#ifdef ENABLE_PERL
+
     // allow re-entrancy
     bool already_in_perl = (my_perl != NULL);
     
     if (!already_in_perl) {
-#ifdef USE_PERL_DYNAMIC
-        if (perldll == NULL) {
-            // try to load Perl library
-            if ( !LoadPerlLib() ) return;
-        }
-#endif
+        #ifdef USE_PERL_DYNAMIC
+            if (perldll == NULL) {
+                // try to load Perl library
+                if ( !LoadPerlLib() ) return;
+            }
+        #endif
         
         // create a dummy environment for initializing the embedded interpreter
         static int argc = 3;
         static char arg1[] = "-e", arg2[] = "0";
         static char *args[] = { NULL, arg1, arg2, NULL }, **argv = &args[0];
         
-#ifdef PERL510_OR_LATER
-        static char *ens[] = { NULL }, **env = &ens[0];
-        if (!inited) {
-            PERL_SYS_INIT3(&argc, &argv, &env);
-            inited = true;
-        }
-#endif
+        #ifdef PERL510_OR_LATER
+            static char *ens[] = { NULL }, **env = &ens[0];
+            if (!inited) {
+                PERL_SYS_INIT3(&argc, &argv, &env);
+                inited = true;
+            }
+        #endif
         
         my_perl = perl_alloc();
         if (!my_perl) {
@@ -3318,12 +3316,32 @@ void RunPerlScript(const wxString &filepath)
         perl_free(my_perl);
         my_perl = NULL;
     }
+
+#else
+
+    Warning(_("Sorry, but Perl scripting is no longer supported."));
+
+#endif // ENABLE_PERL
+}
+
+// -----------------------------------------------------------------------------
+
+void AbortPerlScript()
+{
+#ifdef ENABLE_PERL
+
+    scripterr = wxString(abortmsg,wxConvLocal);
+    // can't call Perl_croak here (done via RETURN_IF_ABORTED)
+
+#endif // ENABLE_PERL
 }
 
 // -----------------------------------------------------------------------------
 
 void FinishPerlScripting()
 {
+#ifdef ENABLE_PERL
+
 #ifdef PERL510_OR_LATER
     if (inited) {
         PERL_SYS_TERM();
@@ -3334,4 +3352,6 @@ void FinishPerlScripting()
     // probably don't really need to do this
     FreePerlLib();
 #endif
+
+#endif // ENABLE_PERL
 }
