@@ -45,14 +45,15 @@ EXEDIR = ..
 DOCSDIR = ..\docs
 BASEDIR = ..\gollybase
 CMDDIR = ..\cmdline
+LUADIR = ..\lua
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)\golly-$(APP_VERSION)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp
 GUIDIRS = configure bitmaps icons
-BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe \
-   $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html
+LUAFILES = $(LUADIR)\*.h $(LUADIR)\*.c $(LUADIR)\*.hpp $(LUADIR)\Makefile $(LUADIR)\ReadMe.html
+BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(DOCSDIR)\ReadMe.html $(DOCSDIR)\License.html
 
 !if "$(TARGET_CPU)" == "X64"
 LIBDIRNAME = $(WX_DIR)\lib\vc_x64_$(LIBTYPE_SUFFIX)$(CFG)
@@ -78,28 +79,61 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 
 OBJDIR = ObjWin
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
-   $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
-   $(BASEDIR)/platform.h $(BASEDIR)/qlifealgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
-   $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
-   $(BASEDIR)/ruleloaderalgo.h
-BASEOBJ = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
-   $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
-   $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
-   $(OBJDIR)/ruletable_algo.obj $(OBJDIR)/ghashbase.obj $(OBJDIR)/ruleloaderalgo.obj \
-   $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
-   $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
-   $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
-   $(OBJDIR)/generationsalgo.obj
-WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h \
-   wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
-   wxtimeline.h wxundo.h wxutils.h wxview.h
-WXOBJ = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
-   $(OBJDIR)/wxrule.obj $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj \
-   $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj $(OBJDIR)/wxrender.obj \
-   $(OBJDIR)/wxscript.obj $(OBJDIR)/wxperl.obj $(OBJDIR)/wxpython.obj \
-   $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj $(OBJDIR)/wxcontrol.obj \
-   $(OBJDIR)/wxtimeline.obj $(OBJDIR)/wxundo.obj $(OBJDIR)/wxlayer.obj \
-   $(OBJDIR)/wxmain.obj $(OBJDIR)/wxselect.obj $(OBJDIR)/wxgolly.obj
+    $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
+    $(BASEDIR)/platform.h $(BASEDIR)/qlifealgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
+    $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
+    $(BASEDIR)/ruleloaderalgo.h
+BASEO = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
+    $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
+    $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
+    $(OBJDIR)/ruletable_algo.obj $(OBJDIR)/ghashbase.obj $(OBJDIR)/ruleloaderalgo.obj \
+    $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
+    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
+    $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
+    $(OBJDIR)/generationsalgo.obj
+WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
+    wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
+    wxtimeline.h wxundo.h wxutils.h wxview.h
+WXO = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
+    $(OBJDIR)/wxrule.obj $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj \
+    $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj $(OBJDIR)/wxrender.obj \
+    $(OBJDIR)/wxscript.obj $(OBJDIR)/wxlua.obj $(OBJDIR)/wxperl.obj $(OBJDIR)/wxpython.obj \
+    $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj $(OBJDIR)/wxcontrol.obj \
+    $(OBJDIR)/wxtimeline.obj $(OBJDIR)/wxundo.obj $(OBJDIR)/wxlayer.obj \
+    $(OBJDIR)/wxmain.obj $(OBJDIR)/wxselect.obj $(OBJDIR)/wxgolly.obj
+LUAO = $(LUADIR)\lapi.obj \
+    $(LUADIR)\lauxlib.obj \
+    $(LUADIR)\lbaselib.obj \
+    $(LUADIR)\lbitlib.obj \
+    $(LUADIR)\lcode.obj \
+    $(LUADIR)\lcorolib.obj \
+    $(LUADIR)\lctype.obj \
+    $(LUADIR)\ldblib.obj \
+    $(LUADIR)\ldebug.obj \
+    $(LUADIR)\ldo.obj \
+    $(LUADIR)\ldump.obj \
+    $(LUADIR)\lfunc.obj \
+    $(LUADIR)\lgc.obj \
+    $(LUADIR)\linit.obj \
+    $(LUADIR)\liolib.obj \
+    $(LUADIR)\llex.obj \
+    $(LUADIR)\lmathlib.obj \
+    $(LUADIR)\lmem.obj \
+    $(LUADIR)\loadlib.obj \
+    $(LUADIR)\lobject.obj \
+    $(LUADIR)\lopcodes.obj \
+    $(LUADIR)\loslib.obj \
+    $(LUADIR)\lparser.obj \
+    $(LUADIR)\lstate.obj \
+    $(LUADIR)\lstring.obj \
+    $(LUADIR)\lstrlib.obj \
+    $(LUADIR)\ltable.obj \
+    $(LUADIR)\ltablib.obj \
+    $(LUADIR)\ltm.obj \
+    $(LUADIR)\lundump.obj \
+    $(LUADIR)\lutf8lib.obj \
+    $(LUADIR)\lvm.obj \
+    $(LUADIR)\lzio.obj
 
 ### Conditionally set variables: ###
 
@@ -334,8 +368,14 @@ __LIB_PNG_p = wxpng$(WXDEBUGFLAG).lib
 
 all: $(OBJDIR) $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe
 
-$(BASEOBJ): $(BASEH)
-$(WXOBJ): $(BASEH) $(WXH) icons/*.ico bitmaps/*.xpm
+$(BASEO): $(BASEH)
+
+$(WXO): $(BASEH) $(WXH) icons\*.ico bitmaps\*.xpm
+
+$(LUAO):
+	cd "$(LUADIR)"
+	cl /MT /O2 /c /nologo *.c
+	cd "$(MAKEDIR)"
 
 $(OBJDIR):
 	mkdir $(OBJDIR)
@@ -347,10 +387,11 @@ clean:
 	-if exist $(EXEDIR)\bgolly.exe del $(EXEDIR)\bgolly.exe
 	-if exist $(EXEDIR)\RuleTableToTree.exe del $(EXEDIR)\RuleTableToTree.exe
 	-if exist golly.pdb del golly.pdb
+	-if exist $(LUADIR)\*.obj del $(LUADIR)\*.obj
 
-$(EXEDIR)\Golly.exe: $(BASEOBJ) $(WXOBJ) golly.res
+$(EXEDIR)\Golly.exe: $(BASEO) $(WXO) $(LUAO) golly.res
 	link /LARGEADDRESSAWARE /NOLOGO /OUT:$(EXEDIR)\Golly.exe $(LDFLAGS) $(__DEBUGINFO_1) /pdb:"golly.pdb" \
-	/LIBPATH:$(LIBDIRNAME) /SUBSYSTEM:WINDOWS $(BASEOBJ) $(WXOBJ) golly.res \
+	/LIBPATH:$(LIBDIRNAME) /SUBSYSTEM:WINDOWS $(BASEO) $(WXO) $(LUAO) golly.res \
 	$(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) \
 	$(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) wxzlib$(WXDEBUGFLAG).lib \
 	wxregex$(WXUNICODEFLAG)$(WXDEBUGFLAG).lib wxexpat$(WXDEBUGFLAG).lib \
@@ -365,13 +406,13 @@ golly.res: golly.rc
 	$(__UNICODE_DEFINE_p_1) /i $(WX_DIR)\include /i $(SETUPHDIR) /i . $(__DLLFLAG_p_1) /d _WINDOWS \
 	/i $(WX_DIR)\samples /d NOPCH golly.rc
 
-$(EXEDIR)\bgolly.exe: $(BASEOBJ) $(OBJDIR)/bgolly.obj
+$(EXEDIR)\bgolly.exe: $(BASEO) $(OBJDIR)/bgolly.obj
 	link /LARGEADDRESSAWARE /NOLOGO /OUT:$(EXEDIR)\bgolly.exe $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) \
-	$(OBJDIR)/bgolly.obj $(BASEOBJ) wxzlib$(WXDEBUGFLAG).lib
+	$(OBJDIR)/bgolly.obj $(BASEO) wxzlib$(WXDEBUGFLAG).lib
 
-$(EXEDIR)\RuleTableToTree.exe: $(BASEOBJ) $(OBJDIR)/RuleTableToTree.obj
+$(EXEDIR)\RuleTableToTree.exe: $(BASEO) $(OBJDIR)/RuleTableToTree.obj
 	link /LARGEADDRESSAWARE /NOLOGO /OUT:$(EXEDIR)\RuleTableToTree.exe $(LDFLAGS) /LIBPATH:$(LIBDIRNAME) \
-	$(OBJDIR)/RuleTableToTree.obj $(BASEOBJ) wxzlib$(WXDEBUGFLAG).lib
+	$(OBJDIR)/RuleTableToTree.obj $(BASEO) wxzlib$(WXDEBUGFLAG).lib
 
 $(OBJDIR)/bgolly.obj: $(CMDDIR)/bgolly.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(CMDDIR)/bgolly.cpp
@@ -466,6 +507,9 @@ $(OBJDIR)/wxview.obj: wxview.cpp
 $(OBJDIR)/wxrender.obj: wxrender.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrender.cpp
 
+$(OBJDIR)/wxlua.obj: wxlua.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) /I$(LUADIR) wxlua.cpp
+
 $(OBJDIR)/wxperl.obj: wxperl.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(PERL_INCLUDE) wxperl.cpp
 
@@ -519,10 +563,12 @@ srcdist:
 	xcopy /S /I $(EXEDIR)\docs $(RELEASENAME)-src\docs
 	xcopy /S /I $(EXEDIR)\gollybase $(RELEASENAME)-src\gollybase
 	xcopy /S /I $(EXEDIR)\cmdline $(RELEASENAME)-src\cmdline	
+	mkdir $(RELEASENAME)-src\lua
 	mkdir $(RELEASENAME)-src\gui-wx
 	mkdir $(RELEASENAME)-src\gui-wx\configure
 	mkdir $(RELEASENAME)-src\gui-wx\bitmaps
 	mkdir $(RELEASENAME)-src\gui-wx\icons
+	for %%F IN ($(LUAFILES)) do xcopy %F $(RELEASENAME)-src\lua
 	for %%F IN ($(GUIFILES)) do xcopy %F $(RELEASENAME)-src\gui-wx
 	for %%F IN ($(GUIDIRS)) do xcopy /S /I %F $(RELEASENAME)-src\gui-wx\%F
 	echo Now zip $(RELEASENAME)-src into $(RELEASENAME)-src.zip

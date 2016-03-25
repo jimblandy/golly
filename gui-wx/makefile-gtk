@@ -17,6 +17,7 @@ EXEDIR = ..
 DOCSDIR = ../docs
 BASEDIR = ../gollybase
 CMDDIR = ../cmdline
+LUADIR = ../lua
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
@@ -26,6 +27,9 @@ DOCFILES = $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
 SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
 GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
+LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
+
+LUALIB = $(LUADIR)/liblua.a
 
 CXXC = g++
 CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
@@ -82,12 +86,12 @@ BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
    $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
    $(OBJDIR)/liferender.o $(OBJDIR)/viewport.o $(OBJDIR)/lifepoll.o \
    $(OBJDIR)/generationsalgo.o
-WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h \
-   wxperl.h wxprefs.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
+WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
+   wxlua.h wxperl.h wxpython.h wxrender.h wxrule.h wxscript.h wxselect.h wxstatus.h \
    wxtimeline.h wxundo.h wxutils.h wxview.h
 WXOBJ = $(OBJDIR)/wxutils.o $(OBJDIR)/wxprefs.o $(OBJDIR)/wxalgos.o $(OBJDIR)/wxrule.o \
    $(OBJDIR)/wxinfo.o $(OBJDIR)/wxhelp.o $(OBJDIR)/wxstatus.o $(OBJDIR)/wxview.o \
-   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
+   $(OBJDIR)/wxrender.o $(OBJDIR)/wxscript.o $(OBJDIR)/wxlua.o $(OBJDIR)/wxperl.o $(OBJDIR)/wxpython.o \
    $(OBJDIR)/wxfile.o $(OBJDIR)/wxedit.o $(OBJDIR)/wxcontrol.o $(OBJDIR)/wxtimeline.o \
    $(OBJDIR)/wxundo.o $(OBJDIR)/wxselect.o $(OBJDIR)/wxlayer.o $(OBJDIR)/wxmain.o $(OBJDIR)/wxgolly.o
 
@@ -102,15 +106,20 @@ $(OBJDIR):
 clean: 
 	rm -f $(OBJDIR)/*.o
 	rm -f $(EXEDIR)/golly $(EXEDIR)/bgolly $(EXEDIR)/RuleTableToTree
+	-(cd $(LUADIR) && $(MAKE) clean)
 
-golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ)
-	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
+golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB)
+	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LUALIB) \
+$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
 
 bgolly: $(OBJDIR) $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)
 
 RuleTableToTree: $(OBJDIR) $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/RuleTableToTree $(BASEOBJ) $(OBJDIR)/RuleTableToTree.o $(LDFLAGS) $(ZLIB_LDFLAGS)
+
+$(LUALIB):
+	(cd $(LUADIR) && $(MAKE) all)
 
 $(OBJDIR)/bgolly.o: $(CMDDIR)/bgolly.cpp
 	$(CXXC) $(CXXFLAGS) $(ZLIB_CXXFLAGS) -c -o $@ $(CMDDIR)/bgolly.cpp
@@ -205,6 +214,9 @@ $(OBJDIR)/wxview.o: wxview.cpp
 $(OBJDIR)/wxrender.o: wxrender.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxrender.cpp
 
+$(OBJDIR)/wxlua.o: wxlua.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -I$(LUADIR) -c -o $@ wxlua.cpp
+
 $(OBJDIR)/wxperl.o: wxperl.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp
 
@@ -245,9 +257,13 @@ srcdist:
 	-rm -rf $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src
 	mkdir $(RELEASENAME)-src/gui-wx
+	mkdir $(RELEASENAME)-src/lua
 	cp -rp $(SRCFILES) $(SHAREDFILES) $(RELEASENAME)-src
 	cp -rp $(GUIFILES) $(RELEASENAME)-src/gui-wx
+	cp -rp $(LUAFILES) $(RELEASENAME)-src/lua
 	find $(RELEASENAME)-src -name '.[^.]*' -delete
+	find $(RELEASENAME)-src -name '*.o' -delete
+	find $(RELEASENAME)-src -name 'makefile' -delete
 	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
