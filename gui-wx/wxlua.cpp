@@ -406,8 +406,8 @@ void RunLuaScript(const wxString& filepath)
     // But it's ~10% slower to access functions because g is global.
     
     if (luaL_dofile(L, filepath.mb_str(wxConvUTF8))) {
-        scripterr += lua_tostring(L, -1);
-        scripterr += "\n";
+        scripterr += wxString(lua_tostring(L, -1), wxConvUTF8);
+        scripterr += wxT("\n");
         // scripterr is checked at the end of RunScript in wxscript.cpp
         lua_pop(L, 1);
     }
