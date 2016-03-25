@@ -77,8 +77,8 @@ void CreatePaleBitmap(const wxBitmap& inmap, wxBitmap& outmap);
 // Create a pale gray version of given bitmap.
 
 bool IsScriptFile(const wxString& filename);
-// Return true if the given file is a Perl or Python script.
-// It simply checks if the file's extension is .pl or .py
+// Return true if the given file is a Lua, Perl or Python script.
+// It simply checks if the file's extension is .lua or .pl or .py
 // (ignoring case).
 
 bool IsHTMLFile(const wxString& filename);

@@ -352,14 +352,6 @@ static bool LoadPythonLib()
 
 // -----------------------------------------------------------------------------
 
-void AbortPythonScript()
-{
-    // raise an exception with a special message
-    PyErr_SetString(PyExc_KeyboardInterrupt, abortmsg);
-}
-
-// -----------------------------------------------------------------------------
-
 bool PythonScriptAborted()
 {
     if (allowcheck) wxGetApp().Poller()->checkevents();
@@ -3080,6 +3072,14 @@ void RunPythonScript(const wxString& filepath)
     
     // note that PyRun_SimpleString returns -1 if an exception occurred;
     // the error message (in scripterr) is checked at the end of RunScript
+}
+
+// -----------------------------------------------------------------------------
+
+void AbortPythonScript()
+{
+    // raise an exception with a special message
+    PyErr_SetString(PyExc_KeyboardInterrupt, abortmsg);
 }
 
 // -----------------------------------------------------------------------------

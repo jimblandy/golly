@@ -44,7 +44,7 @@ extern bool stop_after_script;
 // Stop generating pattern after running script?
 
 void RunScript(const wxString& filename);
-// Run the given Perl or Python script.
+// Run the given script.
 
 void PassClickToScript(const bigint& x, const bigint& y, int button, int modifiers);
 // Called if a script is running and user clicks mouse.
@@ -72,11 +72,11 @@ void SavePendingChanges(bool checkgenchanges = true);
 void FinishScripting();
 // Called when app quits to abort a running script.
 
-// Following are used in wxperl.cpp and wxpython.cpp:
+// Following are used in wxlua/wxperl/wxpython.cpp:
 
 extern bool autoupdate;       // update display after changing current universe?
 extern bool allowcheck;       // allow event checking?
-extern wxString scripterr;    // Perl/Python error message
+extern wxString scripterr;    // error message
 extern wxString mousepos;     // current mouse position
 
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
@@ -85,8 +85,7 @@ const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 void DoAutoUpdate();          // update display if autoupdate is true
 
 // The following Golly Script Functions are used to reduce code duplication.
-// They are called by corresponding pl_* and py_* functions in wxperl.cpp
-// and wxpython.cpp respectively.
+// They are called by corresponding functions in wxlua/wxperl/wxpython.cpp.
 
 const char* GSF_open(char* filename, int remember);
 const char* GSF_save(char* filename, char* format, int remember);

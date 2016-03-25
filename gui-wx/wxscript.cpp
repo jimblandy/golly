@@ -42,6 +42,7 @@
 #include "wxalgos.h"       // for *_ALGO, algoinfo
 #include "wxlayer.h"       // for currlayer, SyncClones
 #include "wxtimeline.h"    // for TimelineExists
+#include "wxlua.h"         // for RunLuaScript, AbortLuaScript
 #include "wxperl.h"        // for RunPerlScript, AbortPerlScript
 #include "wxpython.h"      // for RunPythonScript, AbortPythonScript
 #include "wxscript.h"
@@ -60,6 +61,7 @@ wxString scripterr;        // Perl/Python error message
 wxString mousepos;         // current mouse position
 
 // local globals:
+static bool luascript = false;      // a Lua script is running?
 static bool plscript = false;       // a Perl script is running?
 static bool pyscript = false;       // a Python script is running?
 static bool showtitle;              // need to update window title?
@@ -1255,11 +1257,13 @@ void CheckScriptError(const wxString& ext)
     if (scripterr.IsEmpty()) return;    // no error
     
     if (scripterr.Find(wxString(abortmsg,wxConvLocal)) >= 0) {
-        // error was caused by AbortPerlScript/AbortPythonScript
+        // error was caused by AbortLuaScript/AbortPerlScript/AbortPythonScript
         // so don't display scripterr
     } else {
         wxString errtype;
-        if (ext.IsSameAs(wxT("pl"), false)) {
+        if (ext.IsSameAs(wxT("lua"), false)) {
+            errtype = _("Lua error:");
+        } else if (ext.IsSameAs(wxT("pl"), false)) {
             errtype = _("Perl error:");
             scripterr.Replace(wxT(". at "), wxT("\nat "));
         } else {
@@ -1329,6 +1333,7 @@ void RunScript(const wxString& filename)
     
     // use these flags to allow re-entrancy
     bool already_inscript = inscript;
+    bool in_luascript = luascript;
     bool in_plscript = plscript;
     bool in_pyscript = pyscript;
     wxString savecwd;
@@ -1400,7 +1405,10 @@ void RunScript(const wxString& filename)
     }
     
     wxString ext = filename.AfterLast('.');
-    if (ext.IsSameAs(wxT("pl"), false)) {
+    if (ext.IsSameAs(wxT("lua"), false)) {
+        luascript = true;
+        RunLuaScript(fpath);
+    } else if (ext.IsSameAs(wxT("pl"), false)) {
         plscript = true;
         RunPerlScript(fpath);
     } else if (ext.IsSameAs(wxT("py"), false)) {
@@ -1408,6 +1416,7 @@ void RunScript(const wxString& filename)
         RunPythonScript(fpath);
     } else {
         // should never happen
+        luascript = false;
         plscript = false;
         pyscript = false;
         Warning(_("Unexpected extension in script file:\n") + filename);
@@ -1418,10 +1427,13 @@ void RunScript(const wxString& filename)
         scriptloc = savecwd;
         wxSetWorkingDirectory(scriptloc);
         
-        // display any Perl/Python error message
+        // display any Lua/Perl/Python error message
         CheckScriptError(ext);
         if (!scripterr.IsEmpty()) {
-            if (in_pyscript) {
+            if (in_luascript) {
+                // abort the calling Lua script
+                AbortLuaScript();
+            } else if (in_pyscript) {
                 // abort the calling Python script
                 AbortPythonScript();
             } else if (in_plscript) {
@@ -1430,6 +1442,7 @@ void RunScript(const wxString& filename)
             }
         }
         
+        luascript = in_luascript;
         plscript = in_plscript;
         pyscript = in_pyscript;
         
@@ -1477,13 +1490,14 @@ void RunScript(const wxString& filename)
         // restore current directory to location of Golly app
         wxSetWorkingDirectory(gollydir);
         
+        luascript = false;
         plscript = false;
         pyscript = false;
         
         // update Undo/Redo items based on current layer's history
         if (allowundo) currlayer->undoredo->UpdateUndoRedoItems();
         
-        // display any Perl/Python error message
+        // display any error message
         CheckScriptError(ext);
         
         // update title, menu bar, cursor, viewport, status bar, tool bar, etc
@@ -1521,6 +1535,7 @@ void PassKeyToScript(int key, int modifiers)
             // interrupt a run() or step() command
             wxGetApp().PollerInterrupt();
         }
+        if (luascript) AbortLuaScript();
         if (plscript) AbortPerlScript();
         if (pyscript) AbortPythonScript();
     } else {
@@ -1610,12 +1625,14 @@ void FinishScripting()
             // interrupt a run() or step() command
             wxGetApp().PollerInterrupt();
         }
+        if (luascript) AbortLuaScript();
         if (plscript) AbortPerlScript();
         if (pyscript) AbortPythonScript();
         wxSetWorkingDirectory(gollydir);
         inscript = false;
     }
     
+    FinishLuaScripting();
     FinishPerlScripting();
     FinishPythonScripting();
 }
