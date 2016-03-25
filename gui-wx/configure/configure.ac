@@ -1,13 +1,16 @@
 AC_PREREQ(2.61)
 AC_INIT([golly], [2.8b3])
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE([-Wall -Werror foreign no-define])
+AM_INIT_AUTOMAKE([-Wall foreign no-define])
 AC_CONFIG_SRCDIR([../../cmdline/bgolly.cpp])
 
 # Custom configure arguments:
 AC_ARG_WITH([zlib], [AS_HELP_STRING([--with-zlib],
 	[support reading compressed pattern files with zlib])],
 	, [with_zlib=yes])
+AC_ARG_ENABLE([perl], [AS_HELP_STRING([--enable_perl],
+	[support Perl scripts (deprecated)])],
+	, [enable_perl=no])
 AC_ARG_WITH([perl-shlib], [AS_HELP_STRING([--with-perl-shlib=ARG],
 	[name of the Perl library when loaded dynamically (e.g. libperl.so.5.12)])],
 	, [with_perl_shlib=check])
@@ -49,7 +52,8 @@ WX_STANDARD_OPTIONS([debug,unicode,shared,toolkit,wxshared])
 WX_DEBUG=$DEBUG
 WX_UNICODE=$UNICODE
 WX_CONVERT_STANDARD_OPTIONS_TO_WXCONFIG_FLAGS
-WX_CONFIG_CHECK([2.8.0], , [AC_MSG_ERROR([missing wxWidgets])], , [$WXCONFIG_FLAGS])
+WX_CONFIG_CHECK([2.8.0], , [AC_MSG_ERROR([missing wxWidgets])],
+	[std,gl], [$WXCONFIG_FLAGS])
 WX_DETECT_STANDARD_OPTION_VALUES
 AM_CONDITIONAL([RESCOMP], [test "x$WX_RESCOMP" != x])
 WX_CHECK_IMAGE_HANDLER([BMP])
@@ -57,14 +61,19 @@ WX_CHECK_IMAGE_HANDLER([GIF])
 WX_CHECK_IMAGE_HANDLER([PNG])
 WX_CHECK_IMAGE_HANDLER([TIFF])
 
-# Find Perl
-AC_PATH_PROGS([PERL], [perl5 perl])
-AS_IF([test "x$PERL" = x], [AC_MSG_ERROR([missing Perl])])
-AC_SUBST([PERL_INCLUDE], [`$PERL -MExtUtils::Embed -e ccopts`])
-AS_IF([test "x$with_perl_shlib" = xcheck],
-	[CHECK_SHLIB_USED([shlib], [$PERL], [perl])], [shlib=$with_perl_shlib] )
-AS_IF([test "x$shlib" = x], AC_MSG_ERROR([could not determine Perl shared library name]))
-AC_DEFINE_UNQUOTED([PERL_SHLIB], [$shlib])
+# Find Perl (if enabled)
+AS_IF([test "x$enable_perl" = xyes], [
+	AC_PATH_PROGS([PERL], [perl5 perl])
+	AS_IF([test "x$PERL" = x], [AC_MSG_ERROR([missing Perl])])
+	AC_SUBST([PERL_CPPFLAGS], [-DENABLE_PERL])
+	AC_SUBST([PERL_INCLUDE], [`$PERL -MExtUtils::Embed -e ccopts`])
+	AS_IF([test "x$with_perl_shlib" = xcheck],
+		[CHECK_SHLIB_USED([shlib], [$PERL], [perl])],
+		[shlib=$with_perl_shlib])
+	AS_IF([test "x$shlib" = x],
+		AC_MSG_ERROR([could not determine Perl shared library name]))
+	AC_DEFINE_UNQUOTED([PERL_SHLIB], [$shlib])
+])
 
 # Find Python
 AC_PATH_PROGS(PYTHON, [python2 python])

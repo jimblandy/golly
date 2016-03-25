@@ -3,16 +3,26 @@ AM_CPPFLAGS = -I$(top_srcdir)/../../gollybase/
 AM_CXXFLAGS = -DGOLLYDIR="$(GOLLYDIR)" -Wall -fno-strict-aliasing
 AM_LDFLAGS = -Wl,--as-needed
 
+if MAC
+liblua_a_CPPFLAGS = -DLUA_USE_MACOSX
+endif
+
+if LINUX
+liblua_a_CPPFLAGS = -DLUA_USE_LINUX
+endif
+
 bin_PROGRAMS = golly bgolly
 noinst_PROGRAMS = RuleTableToTree
-noinst_LIBRARIES = libgolly.a
+noinst_LIBRARIES = libgolly.a liblua.a
 doc_DATA = ../../docs/License.html ../../docs/ReadMe.html
 
 include sources.am
 
-golly_CPPFLAGS = $(AM_CPPFLAGS) $(WX_CPPFLAGS) $(PERL_INCLUDE) $(PYTHON_INCLUDE)
+golly_CPPFLAGS = $(AM_CPPFLAGS) $(WX_CPPFLAGS) $(PYTHON_INCLUDE) \
+	$(PERL_CPPFLAGS) $(PERL_INCLUDE) \
+	$(liblua_a_CPPFLAGS) -I$(top_srcdir)/../../lua
 golly_CXXFLAGS = $(AM_CXXFLAGS) $(WX_CXXFLAGS_ONLY)
-golly_LDADD = $(WX_LIBS) libgolly.a
+golly_LDADD = $(WX_LIBS) libgolly.a liblua.a
 
 if WINDOWS
 golly_LDADD += gollyres.o
