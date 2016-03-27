@@ -283,7 +283,7 @@ static const char* ExtractCellArray(lua_State* L, lifealgo* universe, bool shift
         }
         if (multistate && arraylen > 0 && (arraylen & 1) == 0) {
             // add padding zero so the cell array has an odd number of ints
-            // (this is how we distinguish multi-state lists from one-state lists;
+            // (this is how we distinguish multi-state arrays from one-state arrays;
             // the latter always have an even number of ints)
             lua_pushinteger(L, 0); lua_rawseti(L, -2, ++arraylen);
         }
@@ -431,9 +431,12 @@ static int g_new(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* title = luaL_checkstring(L, 1);
     
-    return 0;   // no result???!!!
+    mainptr->NewPattern(wxString(title,wxConvLocal));
+    DoAutoUpdate();
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -442,9 +445,14 @@ static int g_cut(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    if (viewptr->SelectionExists()) {
+        viewptr->CutSelection();
+        DoAutoUpdate();
+    } else {
+        GollyError(L, "cut error: no selection.");
+    }
     
-    return 0;   // no result???!!!
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -453,9 +461,14 @@ static int g_copy(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    if (viewptr->SelectionExists()) {
+        viewptr->CopySelection();
+        DoAutoUpdate();
+    } else {
+        GollyError(L, "copy error: no selection.");
+    }
     
-    return 0;   // no result???!!!
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -463,10 +476,20 @@ static int g_copy(lua_State* L)
 static int g_clear(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    int where = luaL_checkinteger(L, 1);
+
+    if (viewptr->SelectionExists()) {
+        if (where == 0)
+            viewptr->ClearSelection();
+        else
+            viewptr->ClearOutsideSelection();
+        DoAutoUpdate();
+    } else {
+        GollyError(L, "clear error: no selection.");
+    }
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -475,9 +498,14 @@ static int g_paste(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    int x = luaL_checkinteger(L, 1);
+    int y = luaL_checkinteger(L, 2);
+    const char* mode = luaL_checkstring(L, 3);
     
-    return 0;   // no result???!!!
+    const char* err = GSF_paste(x, y, (char*) mode);
+    if (err) GollyError(L, err);
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -486,9 +514,14 @@ static int g_shrink(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    if (viewptr->SelectionExists()) {
+        viewptr->ShrinkSelection(false);    // false == don't fit in viewport
+        DoAutoUpdate();
+    } else {
+        GollyError(L, "shrink error: no selection.");
+    }
     
-    return 0;   // no result???!!!
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -496,10 +529,24 @@ static int g_shrink(lua_State* L)
 static int g_randfill(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    int perc = luaL_checkinteger(L, 1);
+
+    if (perc < 1 || perc > 100) {
+        GollyError(L, "randfill error: percentage must be from 1 to 100.");
+    }
+    
+    if (viewptr->SelectionExists()) {
+        int oldperc = randomfill;
+        randomfill = perc;
+        viewptr->RandomFill();
+        randomfill = oldperc;
+        DoAutoUpdate();
+    } else {
+        GollyError(L, "randfill error: no selection.");
+    }
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -507,10 +554,17 @@ static int g_randfill(lua_State* L)
 static int g_flip(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    int direction = luaL_checkinteger(L, 1);
+
+    if (viewptr->SelectionExists()) {
+        viewptr->FlipSelection(direction != 0);    // 1 = top-bottom
+        DoAutoUpdate();
+    } else {
+        GollyError(L, "flip error: no selection.");
+    }
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -518,10 +572,17 @@ static int g_flip(lua_State* L)
 static int g_rotate(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    int direction = luaL_checkinteger(L, 1);
+
+    if (viewptr->SelectionExists()) {
+        viewptr->RotateSelection(direction == 0);    // 0 = clockwise
+        DoAutoUpdate();
+    } else {
+        GollyError(L, "rotate error: no selection.");
+    }
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -595,10 +656,26 @@ static int g_join(lua_State* L)
 static int g_hash(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    // arg must be a table with 4 ints
+    luaL_checktype(L, 1, LUA_TTABLE);
+    
+    int numints = luaL_len(L, 1);
+    if (numints != 4) {
+        GollyError(L, "hash error: array must have 4 integers.");
+    }
+    
+    lua_rawgeti(L, 1, 1); int x  = luaL_checkinteger(L,-1); lua_pop(L,1);
+    lua_rawgeti(L, 1, 2); int y  = luaL_checkinteger(L,-1); lua_pop(L,1);
+    lua_rawgeti(L, 1, 3); int wd = luaL_checkinteger(L,-1); lua_pop(L,1);
+    lua_rawgeti(L, 1, 4); int ht = luaL_checkinteger(L,-1); lua_pop(L,1);
+    
+    const char* err = GSF_checkrect(x, y, wd, ht);
+    if (err) GollyError(L, err);
+
+    lua_pushinteger(L, GSF_hash(x, y, wd, ht));
+    
+    return 1;   // result is an integer
 }
 
 // -----------------------------------------------------------------------------
@@ -607,9 +684,77 @@ static int g_getclip(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    if (!mainptr->ClipboardHasText()) {
+        GollyError(L, "getclip error: no pattern in clipboard.");
+    }
     
-    return 0;   // no result???!!!
+    // convert pattern in clipboard into a cell array, but where the first 2 items
+    // are the pattern's width and height (not necessarily the minimal bounding box
+    // because the pattern might have empty borders, or it might even be empty)
+    lua_newtable(L);
+    
+    // create a temporary layer for storing the clipboard pattern
+    Layer* templayer = CreateTemporaryLayer();
+    if (!templayer) {
+        GollyError(L, "getclip error: failed to create temporary layer.");
+    }
+    
+    // read clipboard pattern into temporary universe and set edges
+    // (not a minimal bounding box if pattern is empty or has empty borders)
+    bigint top, left, bottom, right;
+    if ( viewptr->GetClipboardPattern(templayer, &top, &left, &bottom, &right) ) {
+        if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+            delete templayer;
+            GollyError(L, "getclip error: pattern is too big.");
+        }
+        int itop = top.toint();
+        int ileft = left.toint();
+        int ibottom = bottom.toint();
+        int iright = right.toint();
+        int wd = iright - ileft + 1;
+        int ht = ibottom - itop + 1;
+        
+        int arraylen = 0;
+        // start array with pattern's width and height
+        lua_pushinteger(L, wd); lua_rawseti(L, -2, ++arraylen);
+        lua_pushinteger(L, ht); lua_rawseti(L, -2, ++arraylen);
+        
+        // extract cells from templayer
+        lifealgo* tempalgo = templayer->algo;
+        bool multistate = tempalgo->NumCellStates() > 2;
+        int cx, cy;
+        int v = 0;
+        for ( cy=itop; cy<=ibottom; cy++ ) {
+            for ( cx=ileft; cx<=iright; cx++ ) {
+                int skip = tempalgo->nextcell(cx, cy, v);
+                if (skip >= 0) {
+                    // found next live cell in this row
+                    cx += skip;
+
+                    // shift cells so that top left cell of bounding box is at 0,0
+                    lua_pushinteger(L, cx - ileft); lua_rawseti(L, -2, ++arraylen);
+                    lua_pushinteger(L, cy - itop ); lua_rawseti(L, -2, ++arraylen);
+
+                    if (multistate) {
+                        lua_pushinteger(L, v); lua_rawseti(L, -2, ++arraylen);
+                    }
+                } else {
+                    cx = iright;  // done this row
+                }
+            }
+        }
+        // if no live cells then return {wd,ht} rather than {wd,ht,0}
+        if (multistate && arraylen > 2 && (arraylen & 1) == 0) {
+            // add padding zero
+            lua_pushinteger(L, 0); lua_rawseti(L, -2, ++arraylen);
+        }
+        delete templayer;
+    } else {
+        delete templayer;
+        GollyError(L, "getclip error: failed to get clipboard pattern.");
+    }
+    
+    return 1;   // result is a cell array
 }
 
 // -----------------------------------------------------------------------------
@@ -618,9 +763,32 @@ static int g_select(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    // arg must be a table with 0 or 4 ints
+    luaL_checktype(L, 1, LUA_TTABLE);
     
-    return 0;   // no result???!!!
+    int numints = luaL_len(L, 1);
+    if (numints == 0) {
+        // remove any existing selection
+        GSF_select(0, 0, 0, 0);
+    
+    } else if (numints == 4) {
+        lua_rawgeti(L, 1, 1); int x  = luaL_checkinteger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, 2); int y  = luaL_checkinteger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, 3); int wd = luaL_checkinteger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, 4); int ht = luaL_checkinteger(L,-1); lua_pop(L,1);
+        
+        const char* err = GSF_checkrect(x, y, wd, ht);
+        if (err) GollyError(L, err);
+    
+        GSF_select(x, y, wd, ht);
+        
+    } else {
+        GollyError(L, "select error: array must have 0 or 4 integers.");
+    }
+
+    DoAutoUpdate();
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -716,10 +884,23 @@ static int g_getcell(lua_State* L)
 static int g_setcursor(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    const char* newcursor = luaL_checkstring(L, 1);
+
+    const char* oldcursor = CursorToString(currlayer->curs);
+    wxCursor* cursptr = StringToCursor(newcursor);
+    if (cursptr) {
+        viewptr->SetCursorMode(cursptr);
+        // see the cursor change, including button in edit bar
+        mainptr->UpdateUserInterface();
+    } else {
+        GollyError(L, "setcursor error: unknown cursor string.");
+    }
+    
+    // return old cursor (simplifies saving and restoring cursor)
+    lua_pushstring(L, oldcursor);
+    
+    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
@@ -728,9 +909,9 @@ static int g_getcursor(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    lua_pushstring(L, CursorToString(currlayer->curs));
     
-    return 0;   // no result???!!!
+    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
@@ -1127,7 +1308,7 @@ static int g_visrect(lua_State* L)
     
     int numints = luaL_len(L, 1);
     if (numints != 4) {
-        GollyError(L, "visrect error: table must have 4 integers.");
+        GollyError(L, "visrect error: array must have 4 integers.");
     }
     
     lua_rawgeti(L, 1, 1); int x  = luaL_checkinteger(L,-1); lua_pop(L,1);
