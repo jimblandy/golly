@@ -80,6 +80,24 @@
 
 // -----------------------------------------------------------------------------
 
+// some useful macros
+
+#define CheckRGB(r,g,b,cmd)                                                 \
+    if (r < 0 || r > 255 || g < 0 || g > 255 || g < 0 || g > 255) {         \
+        char msg[128];                                                      \
+        sprintf(msg, "%s error: bad rgb value (%d,%d,%d)", cmd, r, g, b);   \
+        GollyError(L, msg);                                                 \
+    }
+
+#ifdef __WXMAC__
+    // use decomposed UTF8 so fopen will work
+    #define FILENAME wxString(filename,wxConvLocal).fn_str()
+#else
+    #define FILENAME filename
+#endif
+
+// -----------------------------------------------------------------------------
+
 static bool aborted = false;    // stop the current script?
 
 static void CheckEvents(lua_State* L)
@@ -114,9 +132,14 @@ static int g_open(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* filename = luaL_checkstring(L, 1);
+    int remember = 0;
+    if (lua_gettop(L) > 1) remember = lua_toboolean(L, 2) ? 1 : 0;
+
+    const char* err = GSF_open((char*) filename, remember);
+    if (err) GollyError(L, err);
     
-    return 0;   // no result???!!!
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -125,9 +148,15 @@ static int g_save(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* filename = luaL_checkstring(L, 1);
+    const char* format = luaL_checkstring(L, 2);
+    int remember = 0;
+    if (lua_gettop(L) > 2) remember = lua_toboolean(L, 3) ? 1 : 0;
     
-    return 0;   // no result???!!!
+    const char* err = GSF_save((char*) filename, (char*) format, remember);
+    if (err) GollyError(L, err);
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -136,9 +165,43 @@ static int g_opendialog(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* title = "Choose a file";
+    const char* filetypes = "All files (*)|*";
+    const char* initialdir = "";
+    const char* initialfname = "";
+    int mustexist = 1;
     
-    return 0;   // no result???!!!
+    if (lua_gettop(L) > 0) title = luaL_checkstring(L, 1);
+    if (lua_gettop(L) > 1) filetypes = luaL_checkstring(L, 2);
+    if (lua_gettop(L) > 2) initialdir = luaL_checkstring(L, 3);
+    if (lua_gettop(L) > 3) initialfname = luaL_checkstring(L, 4);
+    if (lua_gettop(L) > 4) mustexist = lua_toboolean(L, 5) ? 1 : 0;
+
+    wxString wxs_title(title, wxConvLocal);
+    wxString wxs_filetypes(filetypes, wxConvLocal);
+    wxString wxs_initialdir(initialdir, wxConvLocal);
+    wxString wxs_initialfname(initialfname, wxConvLocal);
+    wxString wxs_result = wxEmptyString;
+    
+    if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
+    
+    if (wxs_filetypes == wxT("dir")) {
+        // let user choose a directory
+        wxDirDialog dirdlg(NULL, wxs_title, wxs_initialdir, wxDD_NEW_DIR_BUTTON);
+        if (dirdlg.ShowModal() == wxID_OK) {
+            wxs_result = dirdlg.GetPath();
+            if (wxs_result.Last() != wxFILE_SEP_PATH) wxs_result += wxFILE_SEP_PATH;
+        }
+    } else {
+        // let user choose a file
+        wxFileDialog opendlg(NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
+                             wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
+        if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
+    }
+    
+    lua_pushstring(L, (const char*)wxs_result.mb_str(wxConvUTF8));
+    
+    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
@@ -147,9 +210,85 @@ static int g_savedialog(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* title = "Choose a save location and filename";
+    const char* filetypes = "All files (*)|*";
+    const char* initialdir = "";
+    const char* initialfname = "";
+    int suppressprompt = 0;
     
-    return 0;   // no result???!!!
+    if (lua_gettop(L) > 0) title = luaL_checkstring(L, 1);
+    if (lua_gettop(L) > 1) filetypes = luaL_checkstring(L, 2);
+    if (lua_gettop(L) > 2) initialdir = luaL_checkstring(L, 3);
+    if (lua_gettop(L) > 3) initialfname = luaL_checkstring(L, 4);
+    if (lua_gettop(L) > 4) suppressprompt = lua_toboolean(L, 5) ? 1 : 0;
+
+    wxString wxs_title(title, wxConvLocal);
+    wxString wxs_filetypes(filetypes, wxConvLocal);
+    wxString wxs_initialdir(initialdir, wxConvLocal);
+    wxString wxs_initialfname(initialfname, wxConvLocal);
+    
+    if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
+    
+    wxFileDialog savedlg(NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
+                         wxFD_SAVE | (suppressprompt == 0 ? wxFD_OVERWRITE_PROMPT : 0));
+    wxString wxs_savefname = wxEmptyString;
+    if (savedlg.ShowModal() == wxID_OK) wxs_savefname = savedlg.GetPath();
+    
+    lua_pushstring(L, (const char*)wxs_savefname.mb_str(wxConvUTF8));
+    
+    return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
+static const char* ExtractCellArray(lua_State* L, lifealgo* universe, bool shift = false)
+{
+    // extract cell array from given universe
+    lua_newtable(L);
+    if ( !universe->isEmpty() ) {
+        bigint top, left, bottom, right;
+        universe->findedges(&top, &left, &bottom, &right);
+        if ( viewptr->OutsideLimits(top, left, bottom, right) ) {
+            return "Universe is too big to extract all cells!";
+        }
+        bool multistate = universe->NumCellStates() > 2;
+        int itop = top.toint();
+        int ileft = left.toint();
+        int ibottom = bottom.toint();
+        int iright = right.toint();
+        int cx, cy;
+        int v = 0;
+        int arraylen = 0;
+        for ( cy=itop; cy<=ibottom; cy++ ) {
+            for ( cx=ileft; cx<=iright; cx++ ) {
+                int skip = universe->nextcell(cx, cy, v);
+                if (skip >= 0) {
+                    // found next live cell in this row
+                    cx += skip;
+                    if (shift) {
+                        // shift cells so that top left cell of bounding box is at 0,0
+                        lua_pushinteger(L, cx - ileft); lua_rawseti(L, -2, ++arraylen);
+                        lua_pushinteger(L, cy - itop ); lua_rawseti(L, -2, ++arraylen);
+                    } else {
+                        lua_pushinteger(L, cx); lua_rawseti(L, -2, ++arraylen);
+                        lua_pushinteger(L, cy); lua_rawseti(L, -2, ++arraylen);
+                    }
+                    if (multistate) {
+                        lua_pushinteger(L, v); lua_rawseti(L, -2, ++arraylen);
+                    }
+                } else {
+                    cx = iright;  // done this row
+                }
+            }
+        }
+        if (multistate && arraylen > 0 && (arraylen & 1) == 0) {
+            // add padding zero so the cell array has an odd number of ints
+            // (this is how we distinguish multi-state lists from one-state lists;
+            // the latter always have an even number of ints)
+            lua_pushinteger(L, 0); lua_rawseti(L, -2, ++arraylen);
+        }
+    }
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -158,9 +297,38 @@ static int g_load(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* filename = luaL_checkstring(L, 1);
     
-    return 0;   // no result???!!!
+    // create temporary universe of same type as current universe
+    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+    // readpattern will call setrule
+    
+    // read pattern into temporary universe
+    const char* err = readpattern(FILENAME, *tempalgo);
+    if (err) {
+        // try all other algos until readpattern succeeds
+        for (int i = 0; i < NumAlgos(); i++) {
+            if (i != currlayer->algtype) {
+                delete tempalgo;
+                tempalgo = CreateNewUniverse(i, allowcheck);
+                err = readpattern(FILENAME, *tempalgo);
+                if (!err) break;
+            }
+        }
+    }
+    
+    if (err) {
+        delete tempalgo;
+        GollyError(L, err);
+    }
+    
+    // convert pattern into a cell array, shifting cell coords so that the
+    // bounding box's top left cell is at 0,0
+    err = ExtractCellArray(L, tempalgo, true);
+    delete tempalgo;
+    if (err) GollyError(L, err);
+    
+    return 1;   // result is a cell array
 }
 
 // -----------------------------------------------------------------------------
@@ -168,10 +336,62 @@ static int g_load(lua_State* L)
 static int g_store(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    // 1st arg is a cell array
+    luaL_checktype(L, 1, LUA_TTABLE);
+    int len = luaL_len(L, 1);
+    
+    const char* filename = luaL_checkstring(L, 2);
+    
+    // create temporary universe of same type as current universe
+    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+    const char* err = tempalgo->setrule(currlayer->algo->getrule());
+    if (err) tempalgo->setrule(tempalgo->DefaultRule());
+    
+    // copy cell array into temporary universe
+    bool multistate = (len & 1) == 1;
+    int ints_per_cell = multistate ? 3 : 2;
+    int num_cells = len / ints_per_cell;
+    for (int n = 0; n < num_cells; n++) {
+        int item = ints_per_cell * n;
+        
+        lua_rawgeti(L, 1, item+1); int x = lua_tointeger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, item+2); int y = lua_tointeger(L,-1); lua_pop(L,1);
+        
+        // check if x,y is outside bounded grid
+        err = GSF_checkpos(tempalgo, x, y);
+        if (err) {
+            delete tempalgo;
+            GollyError(L, err);
+        }
+        
+        if (multistate) {
+            
+            lua_rawgeti(L, 1, item+3); int state = lua_tointeger(L,-1); lua_pop(L,1);
+            
+            if (tempalgo->setcell(x, y, state) < 0) {
+                tempalgo->endofpattern();
+                delete tempalgo;
+                GollyError(L, "store error: state value is out of range.");
+            }
+        } else {
+            tempalgo->setcell(x, y, 1);
+        }
+    }
+    tempalgo->endofpattern();
+    
+    // write pattern to given file in RLE/XRLE format
+    bigint top, left, bottom, right;
+    tempalgo->findedges(&top, &left, &bottom, &right);
+    pattern_format format = savexrle ? XRLE_format : RLE_format;
+    // if grid is bounded then force XRLE_format so that position info is recorded
+    if (tempalgo->gridwd > 0 || tempalgo->gridht > 0) format = XRLE_format;
+    err = writepattern(FILENAME, *tempalgo, format, no_compression,
+                       top.toint(), left.toint(), bottom.toint(), right.toint());
+    delete tempalgo;
+    if (err) GollyError(L, err);
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -180,9 +400,13 @@ static int g_setdir(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* dirname = luaL_checkstring(L, 1);
+    const char* newdir = luaL_checkstring(L, 2);
     
-    return 0;   // no result???!!!
+    const char* err = GSF_setdir((char*) dirname, (char*) newdir);
+    if (err) GollyError(L, err);
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -515,9 +739,9 @@ static int g_empty(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    lua_pushboolean(L, currlayer->algo->isEmpty());
     
-    return 0;   // no result???!!!
+    return 1;   // result is a boolean
 }
 
 // -----------------------------------------------------------------------------
@@ -526,9 +750,21 @@ static int g_run(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    int ngens = luaL_checkinteger(L, 1);
+
+    if (ngens > 0 && !currlayer->algo->isEmpty()) {
+        if (ngens > 1) {
+            bigint saveinc = currlayer->algo->getIncrement();
+            currlayer->algo->setIncrement(ngens);
+            mainptr->NextGeneration(true);            // step by ngens
+            currlayer->algo->setIncrement(saveinc);
+        } else {
+            mainptr->NextGeneration(false);           // step 1 gen
+        }
+        DoAutoUpdate();
+    }
     
-    return 0;   // no result???!!!
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -537,9 +773,12 @@ static int g_step(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    if (!currlayer->algo->isEmpty()) {
+        mainptr->NextGeneration(true);      // step by current increment
+        DoAutoUpdate();
+    }
     
-    return 0;   // no result???!!!
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -548,9 +787,12 @@ static int g_setstep(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    int exp = luaL_checkinteger(L, 1);
+
+    mainptr->SetStepExponent(exp);
+    DoAutoUpdate();
     
-    return 0;   // no result???!!!
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -559,9 +801,9 @@ static int g_getstep(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    lua_pushinteger(L, currlayer->currexpo);
     
-    return 0;   // no result???!!!
+    return 1;   // result is an integer
 }
 
 // -----------------------------------------------------------------------------
@@ -570,9 +812,15 @@ static int g_setbase(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    int base = luaL_checkinteger(L, 1);
     
-    return 0;   // no result???!!!
+    if (base < 2) base = 2;
+    if (base > MAX_BASESTEP) base = MAX_BASESTEP;
+    currlayer->currbase = base;
+    mainptr->SetGenIncrement();
+    DoAutoUpdate();
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -581,9 +829,9 @@ static int g_getbase(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    lua_pushinteger(L, currlayer->currbase);
     
-    return 0;   // no result???!!!
+    return 1;   // result is an integer
 }
 
 // -----------------------------------------------------------------------------
@@ -591,10 +839,26 @@ static int g_getbase(lua_State* L)
 static int g_advance(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    int where = luaL_checkinteger(L, 1);
+    int ngens = luaL_checkinteger(L, 2);
+
+    if (ngens > 0) {
+        if (viewptr->SelectionExists()) {
+            while (ngens > 0) {
+                ngens--;
+                if (where == 0)
+                    currlayer->currsel.Advance();
+                else
+                    currlayer->currsel.AdvanceOutside();
+            }
+            DoAutoUpdate();
+        } else {
+            GollyError(L, "advance error: no selection.");
+        }
+    }
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -603,9 +867,12 @@ static int g_reset(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    if (currlayer->algo->getGeneration() != currlayer->startgen) {
+        mainptr->ResetPattern();
+        DoAutoUpdate();
+    }
     
-    return 0;   // no result???!!!
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -614,9 +881,12 @@ static int g_setgen(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* genstring = luaL_checkstring(L, 1);
     
-    return 0;   // no result???!!!
+    const char* err = GSF_setgen((char*) genstring);
+    if (err) GollyError(L, err);
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -625,9 +895,15 @@ static int g_getgen(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    char sepchar = '\0';
+    if (lua_gettop(L) > 0) {
+        const char* s = luaL_checkstring(L, 1);
+        sepchar = s[0];
+    }
     
-    return 0;   // no result???!!!
+    lua_pushstring(L, currlayer->algo->getGeneration().tostring(sepchar));
+    
+    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
@@ -664,9 +940,9 @@ static int g_numalgos(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    lua_pushinteger(L, NumAlgos());
     
-    return 0;   // no result???!!!
+    return 1;   // result is an integer
 }
 
 // -----------------------------------------------------------------------------
@@ -675,9 +951,12 @@ static int g_setalgo(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* algostring = luaL_checkstring(L, 1);
     
-    return 0;   // no result???!!!
+    const char* err = GSF_setalgo((char*) algostring);
+    if (err) GollyError(L, err);
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -686,9 +965,18 @@ static int g_getalgo(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    int index = currlayer->algtype;
+    if (lua_gettop(L) > 0) index = luaL_checkinteger(L, 1);
     
-    return 0;   // no result???!!!
+    if (index < 0 || index >= NumAlgos()) {
+        char msg[64];
+        sprintf(msg, "getalgo error: bad index (%d)", index);
+        GollyError(L, msg);
+    }
+    
+    lua_pushstring(L, GetAlgoName(index));
+
+    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
@@ -697,9 +985,12 @@ static int g_setrule(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    const char* rulestring = luaL_checkstring(L, 1);
     
-    return 0;   // no result???!!!
+    const char* err = GSF_setrule((char*) rulestring);
+    if (err) GollyError(L, err);
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -707,10 +998,10 @@ static int g_setrule(lua_State* L)
 static int g_getrule(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    lua_pushstring(L, currlayer->algo->getrule());
+
+    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
@@ -719,9 +1010,9 @@ static int g_getwidth(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    lua_pushinteger(L, currlayer->algo->gridwd);
     
-    return 0;   // no result???!!!
+    return 1;   // result is an integer
 }
 
 // -----------------------------------------------------------------------------
@@ -730,9 +1021,9 @@ static int g_getheight(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    lua_pushinteger(L, currlayer->algo->gridht);
     
-    return 0;   // no result???!!!
+    return 1;   // result is an integer
 }
 
 // -----------------------------------------------------------------------------
@@ -1069,19 +1360,10 @@ static int g_getname(lua_State* L)
         GollyError(L, msg);
     }
     
-    lua_pushstring(L, GetLayer(index)->currname.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)GetLayer(index)->currname.mb_str(wxConvUTF8));
     
     return 1;   // result is a string
 }
-
-// -----------------------------------------------------------------------------
-
-#define CheckRGB(r,g,b,cmd)                                                 \
-    if (r < 0 || r > 255 || g < 0 || g > 255 || g < 0 || g > 255) {         \
-        char msg[128];                                                      \
-        sprintf(msg, "%s error: bad rgb value (%d,%d,%d)", cmd, r, g, b);   \
-        GollyError(L, msg);                                                 \
-    }
 
 // -----------------------------------------------------------------------------
 
@@ -1140,7 +1422,7 @@ static int g_setcolors(lua_State* L)
         UpdateIconColors();
         UpdateCloneColors();
     } else {
-        GollyError(L, "setcolors error: list length is not a multiple of 4.");
+        GollyError(L, "setcolors error: array length is not a multiple of 4.");
     }
     
     DoAutoUpdate();
@@ -1161,12 +1443,12 @@ static int g_getcolors(lua_State* L)
     
     if (state == -1) {
         // return colors for ALL states, including state 0
-        int tindex = 1;
+        int tindex = 0;
         for (state = 0; state < currlayer->algo->NumCellStates(); state++) {
-            lua_pushinteger(L, state);                   lua_rawseti(L, -2, tindex++);
-            lua_pushinteger(L, currlayer->cellr[state]); lua_rawseti(L, -2, tindex++);
-            lua_pushinteger(L, currlayer->cellg[state]); lua_rawseti(L, -2, tindex++);
-            lua_pushinteger(L, currlayer->cellb[state]); lua_rawseti(L, -2, tindex++);
+            lua_pushinteger(L, state);                   lua_rawseti(L, -2, ++tindex);
+            lua_pushinteger(L, currlayer->cellr[state]); lua_rawseti(L, -2, ++tindex);
+            lua_pushinteger(L, currlayer->cellg[state]); lua_rawseti(L, -2, ++tindex);
+            lua_pushinteger(L, currlayer->cellb[state]); lua_rawseti(L, -2, ++tindex);
         }
     } else if (state >= 0 && state < currlayer->algo->NumCellStates()) {
         lua_pushinteger(L, state);                   lua_rawseti(L, -2, 1);
@@ -1291,7 +1573,7 @@ static int g_getclipstr(lua_State* L)
     }
     
     wxString clipstr = data.GetText();
-    lua_pushstring(L, clipstr.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)clipstr.mb_str(wxConvUTF8));
     
     return 1;   // result is a string
 }
@@ -1316,7 +1598,7 @@ static int g_getstring(lua_State* L)
         lua_error(L);
     }
     
-    lua_pushstring(L, result.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)result.mb_str(wxConvUTF8));
     
     return 1;   // result is a string
 }
@@ -1330,7 +1612,7 @@ static int g_getxy(lua_State* L)
     statusptr->CheckMouseLocation(mainptr->infront);   // sets mousepos
     if (viewptr->showcontrols) mousepos = wxEmptyString;
     
-    lua_pushstring(L, mousepos.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)mousepos.mb_str(wxConvUTF8));
     
     return 1;   // result is a string
 }
@@ -1347,7 +1629,7 @@ static int g_getevent(lua_State* L)
     wxString event;
     GSF_getevent(event, get);
     
-    lua_pushstring(L, event.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)event.mb_str(wxConvUTF8));
     
     return 1;   // result is a string
 }
@@ -1610,7 +1892,7 @@ void RunLuaScript(const wxString& filepath)
     //
     // But it's ~10% slower to access functions because g is global.
     
-    if (luaL_dofile(L, filepath.mb_str(wxConvUTF8))) {
+    if (luaL_dofile(L, (const char*)filepath.mb_str(wxConvUTF8))) {
         scripterr += wxString(lua_tostring(L, -1),wxConvLocal);
         scripterr += wxT("\n");
         // scripterr is checked at the end of RunScript in wxscript.cpp
