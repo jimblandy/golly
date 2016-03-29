@@ -7,6 +7,10 @@
 
 <p>
 <ul>
+<li> Golly no longer supports Perl scripting.  In its place we've added support
+     for Lua using a statically linked interpreter, so no need to download an
+     installer or set a path to a shared library.
+     See <a href="lua.html">Lua Scripting</a> for all the details.
 <li> OpenGL is used for rendering patterns.
 <li> Timers are used to control pattern generation and timeline recording/playback.
 <li> The File menu items Show Patterns and Show Scripts have been replaced by a single
@@ -227,7 +231,7 @@
 <li> Two new script commands, <a href="python.html#getwidth">getwidth</a> and
      <a href="python.html#getheight">getheight</a>, return the size of the current grid.
 <li> The new scripts, <a href="open:Scripts/Python/make-torus.py">make-torus.py</a> and
-     <a href="open:Scripts/Perl/make-torus.pl">make-torus.pl</a>, can be used to
+     <a href="open:Scripts/Lua/make-torus.lua">make-torus.lua</a>, can be used to
      convert the current selection into a toroidal universe.
 <li> Any BOARD and WRAP settings in an MCell file are now obeyed
      (e.g. <a href="open:Patterns/Generations/Bloomerang.mcl">Bloomerang.mcl</a>).
@@ -316,7 +320,7 @@
      This wasn't strictly necessary in previous versions, but only because it was
      an undesirable side-effect of the way Golly ran scripts.
 <li> The <a href="python.html#open">open</a> command can now be used to run a given
-     Perl/Python script.
+     Python script.
 <li> New scripting commands: <a href="python.html#opendialog">opendialog</a>,
      <a href="python.html#savedialog">savedialog</a>,
      <a href="python.html#getclipstr">getclipstr</a>,
@@ -405,7 +409,7 @@
      <a href="python.html#setcolors">setcolors</a> and
      <a href="python.html#getcolors">getcolors</a>.
 <li> Some script commands have been modified to handle multi-state patterns.
-     Perl users should read the section on <a href="perl.html#cellarrays">cell arrays</a>.
+     Lua users should read the section on <a href="lua.html#cellarrays">cell arrays</a>.
      Python users should read the section on <a href="python.html#celllists">cell lists</a>.
 <li> The <a href="python.html#getrule">getrule</a> command now returns a canonical rule string.
 <li> The <a href="python.html#setcursor">setcursor</a>/<a href="python.html#getcursor">getcursor</a>
@@ -478,8 +482,7 @@
      <a href="prefs:keyboard">Preferences > Keyboard</a>.
      Note that you can also specify key combinations to open a pattern,
      run a script, or show any HTML file in the help window.
-<li> Golly can be scripted using Perl;
-     see the new <a href="perl.html">Perl Scripting</a> help.
+<li> Golly can be scripted using Perl.
 <li> Added pop-plot.pl/py to the Scripts folder for creating population plots.
 <li> The metafier.py script now creates the metafied pattern in a separate layer.
 <li> Added <a href="python.html#getstring">getstring</a> command for

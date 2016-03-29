@@ -164,6 +164,7 @@ public:
     
     // temporary files
     wxString clipfile;          // name of temporary file for storing clipboard data
+    wxString luafile;           // name of temporary Lua script
     wxString perlfile;          // name of temporary Perl script
     wxString pythonfile;        // name of temporary Python script
     
@@ -378,7 +379,7 @@ enum {
     ID_HELP_ALGOS,
     ID_HELP_KEYBOARD,
     ID_HELP_MOUSE,
-    ID_HELP_PERL,
+    ID_HELP_LUA,
     ID_HELP_PYTHON,
     ID_HELP_LEXICON,
     ID_HELP_ARCHIVES,

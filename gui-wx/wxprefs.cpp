@@ -4280,25 +4280,25 @@ void PrefsDialog::OnChoice(wxCommandEvent& event)
 
 void ChooseTextEditor(wxWindow* parent, wxString& result)
 {
-#ifdef __WXMSW__
-    wxString filetypes = _("Applications (*.exe)|*.exe");
-#elif defined(__WXMAC__)
-    wxString filetypes = _("Applications (*.app)|*.app");
-#else // assume Linux
-    wxString filetypes = _("All files (*)|*");
-#endif
+    #ifdef __WXMSW__
+        wxString filetypes = _("Applications (*.exe)|*.exe");
+    #elif defined(__WXMAC__)
+        wxString filetypes = _("Applications (*.app)|*.app");
+    #else // assume Linux
+        wxString filetypes = _("All files (*)|*");
+    #endif
     
     wxFileDialog opendlg(parent, _("Choose a text editor"),
                          wxEmptyString, wxEmptyString, filetypes,
                          wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     
-#ifdef __WXMSW__
-    opendlg.SetDirectory(_("C:\\Program Files"));
-#elif defined(__WXMAC__)
-    opendlg.SetDirectory(_("/Applications"));
-#else // assume Linux
-    opendlg.SetDirectory(_("/usr/bin"));
-#endif
+    #ifdef __WXMSW__
+        opendlg.SetDirectory(_("C:\\Program Files"));
+    #elif defined(__WXMAC__)
+        opendlg.SetDirectory(_("/Applications"));
+    #else // assume Linux
+        opendlg.SetDirectory(_("/usr/bin"));
+    #endif
     
     if ( opendlg.ShowModal() == wxID_OK ) {
         result = opendlg.GetPath();
@@ -4317,17 +4317,18 @@ void PrefsDialog::OnButton(wxCommandEvent& event)
         // ask user to choose an appropriate file
         wxString filetypes = _("All files (*)|*");
         filetypes +=         _("|Pattern (*.rle;*.mc;*.lif)|*.rle;*.mc;*.lif");
-        filetypes +=         _("|Script (*.pl;*.py)|*.pl;*.py");
+#ifdef ENABLE_PERL
+        filetypes +=         _("|Script (*.lua;*.pl;*.py)|*.lua;*.pl;*.py");
+#else
+        filetypes +=         _("|Script (*.lua;*.py)|*.lua;*.py");
+#endif
         filetypes +=         _("|Rule (*.rule)|*.rule");
         filetypes +=         _("|HTML (*.html;*.htm)|*.html;*.htm");
         
         wxFileDialog opendlg(this, _("Choose a pattern/script/rule/HTML file"),
                              choosedir, wxEmptyString, filetypes,
                              wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-#ifdef __WXGTK__
-        // choosedir is ignored above (bug in wxGTK 2.8.0???)
-        opendlg.SetDirectory(choosedir);
-#endif
+
         if ( opendlg.ShowModal() == wxID_OK ) {
             wxFileName fullpath( opendlg.GetPath() );
             choosedir = fullpath.GetPath();

@@ -979,11 +979,6 @@ void MainFrame::OpenPattern()
                          opensavedir, wxEmptyString, filetypes,
                          wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     
-#ifdef __WXGTK__
-    // opensavedir is ignored above (bug in wxGTK 2.8.0???)
-    opendlg.SetDirectory(opensavedir);
-#endif
-    
     if ( opendlg.ShowModal() == wxID_OK ) {
         wxFileName fullpath( opendlg.GetPath() );
         opensavedir = fullpath.GetPath();
@@ -1002,18 +997,16 @@ void MainFrame::OpenScript()
         return;
     }
     
-    wxString filetypes = _("Perl or Python (*.pl;*.py)|*.pl;*.py");
-    filetypes +=         _("|Perl (*.pl)|*.pl");
+    wxString filetypes = _("Lua or Python (*.lua;*.py)|*.lua;*.py");
+    filetypes +=         _("|Lua (*.lua)|*.lua");
     filetypes +=         _("|Python (*.py)|*.py");
-    
+#ifdef ENABLE_PERL
+    filetypes +=         _("|Perl (*.pl)|*.pl");
+#endif
+
     wxFileDialog opendlg(this, _("Choose a script"),
                          rundir, wxEmptyString, filetypes,
                          wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-    
-#ifdef __WXGTK__
-    // rundir is ignored above (bug in wxGTK 2.8.0???)
-    opendlg.SetDirectory(rundir);
-#endif
     
     if ( opendlg.ShowModal() == wxID_OK ) {
         wxFileName fullpath( opendlg.GetPath() );
@@ -1201,9 +1194,10 @@ void MainFrame::OpenClipboard()
 
 wxString MainFrame::GetScriptFileName(const wxString& text)
 {
-    // examine given text to see if it contains Perl or Python code;
-    // if "use" or "my" occurs at start of line then we assume Perl,
-    // if "import" or "from" occurs at start of line then we assume Python,
+    // examine given text to see if it contains Lua, Perl or Python code:
+    // if "--" or "local" or "require" is at start of line then we assume Lua,
+    // if "use" or "my" is at start of line then we assume Perl,
+    // if "import" or "from" is at start of line then we assume Python,
     // otherwise we compare counts for dollars + semicolons vs colons
     int dollars = 0;
     int semicolons = 0;
@@ -1246,10 +1240,18 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
                 linelen = 0;
                 p++;
                 break;
+            case '-':
+                if (linelen == 1 && p[-1] == '-') return luafile;   // Lua comment at start of line
+                linelen++; p++;
+                break;
             case ' ':
                 // look for language-specific keyword at start of line
                 if (linelen == 2 && strncmp(p-2,"my",2) == 0) return perlfile;
                 if (linelen == 3 && strncmp(p-3,"use",3) == 0) return perlfile;
+                
+                if (linelen == 5 && strncmp(p-5,"local",5) == 0) return luafile;
+                if (linelen == 7 && strncmp(p-7,"require",7) == 0) return luafile;
+                
                 if (linelen == 4 && strncmp(p-4,"from",4) == 0) return pythonfile;
                 if (linelen == 6 && strncmp(p-6,"import",6) == 0) return pythonfile;
                 // don't break
@@ -1295,18 +1297,7 @@ void MainFrame::RunClipboard()
         // copy clipboard data to scriptfile
         wxFile outfile(scriptfile, wxFile::write);
         if (outfile.IsOpened()) {
-#ifdef __WXMAC__
-            if (scriptfile == perlfile) {
-                // Perl script, so replace CRs with LFs
-                wxString str = data.GetText();
-                str.Replace(wxT("\015"), wxT("\012"));
-                outfile.Write( str );
-            } else {
-                outfile.Write( data.GetText() );
-            }
-#else
             outfile.Write( data.GetText() );
-#endif
             outfile.Close();
             RunScript(scriptfile);
         } else {
@@ -1594,11 +1585,6 @@ bool MainFrame::SavePattern()
     wxFileDialog savedlg( this, _("Save pattern"),
                          opensavedir, currlayer->currname, filetypes,
                          wxFD_SAVE | wxFD_OVERWRITE_PROMPT );
-    
-#ifdef __WXGTK__
-    // opensavedir is ignored above (bug in wxGTK 2.8.0???)
-    savedlg.SetDirectory(opensavedir);
-#endif
     
     if ( savedlg.ShowModal() == wxID_OK ) {
         wxFileName fullpath( savedlg.GetPath() );

@@ -10,7 +10,7 @@ import golly as g
 selrect = g.getselrect()
 if len(selrect) == 0: g.exit("There is no selection.")
 
-# use same file name as in shift.pl
+# use same file name as in shift.lua
 INIFileName = g.getdir("data") + "shift.ini"
 oldparams = "0 0 or"
 try:

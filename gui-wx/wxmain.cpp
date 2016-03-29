@@ -1427,7 +1427,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_HELP_ALGOS:     ShowHelp(_("Help/algos.html")); break;
         case ID_HELP_LEXICON:   ShowHelp(_("Help/Lexicon/lex.htm")); break;
         case ID_HELP_ARCHIVES:  ShowHelp(_("Help/archives.html")); break;
-        case ID_HELP_PERL:      ShowHelp(_("Help/perl.html")); break;
+        case ID_HELP_LUA:       ShowHelp(_("Help/lua.html")); break;
         case ID_HELP_PYTHON:    ShowHelp(_("Help/python.html")); break;
         case ID_HELP_KEYBOARD:  ShowHelp(SHOW_KEYBOARD_SHORTCUTS); break;
         case ID_HELP_MOUSE:     ShowHelp(_("Help/mouse.html")); break;
@@ -1912,6 +1912,7 @@ void MainFrame::OnClose(wxCloseEvent& event)
     SavePrefs();
     
     // delete any temporary files
+    if (wxFileExists(luafile)) wxRemoveFile(luafile);
     if (wxFileExists(perlfile)) wxRemoveFile(perlfile);
     if (wxFileExists(pythonfile)) wxRemoveFile(pythonfile);
     for (int i = 0; i < numlayers; i++) {
@@ -2273,7 +2274,7 @@ void MainFrame::CreateMenus()
     helpMenu->Append(ID_HELP_LEXICON,            _("Life Lexicon"));
     helpMenu->Append(ID_HELP_ARCHIVES,           _("Online Archives"));
     helpMenu->AppendSeparator();
-    helpMenu->Append(ID_HELP_PERL,               _("Perl Scripting"));
+    helpMenu->Append(ID_HELP_LUA,                _("Lua Scripting"));
     helpMenu->Append(ID_HELP_PYTHON,             _("Python Scripting"));
     helpMenu->AppendSeparator();
     helpMenu->Append(ID_HELP_KEYBOARD,           _("Keyboard Shortcuts"));
@@ -2505,6 +2506,7 @@ MainFrame::MainFrame()
     // they must be absolute paths in case they are used from a script command when the
     // current directory has been changed to the location of the script file
     clipfile = datadir + wxT("golly_clipboard");
+    luafile = datadir + wxT("golly_clip.lua");
     perlfile = datadir + wxT("golly_clip.pl");
     pythonfile = datadir + wxT("golly_clip.py");
     

@@ -23,7 +23,7 @@ def slideshow ():
                 fullname = join(root, name)
                 g.open(fullname, False)       # don't add file to Open/Run Recent submenu
                 g.update()
-                if name.endswith(".pl") or name.endswith(".py"):
+                if name.endswith(".lua") or name.endswith(".py"):
                     # reshow message in case it was changed by script
                     g.show(message)
 

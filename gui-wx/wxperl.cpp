@@ -637,10 +637,6 @@ XS(pl_opendialog)
         // let user choose a file
         wxFileDialog opendlg(NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
                              wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
-#ifdef __WXGTK__
-        // wxs_initialdir is ignored above (bug in wxGTK 2.8.0???)
-        opendlg.SetDirectory(wxs_initialdir);
-#endif
         if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
     }
     
@@ -679,11 +675,6 @@ XS(pl_savedialog)
     // suppress Overwrite? popup if user just wants to retrieve the string
     wxFileDialog savedlg( NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
                          wxFD_SAVE | (suppressprompt == 0 ? wxFD_OVERWRITE_PROMPT : 0) );
-    
-#ifdef __WXGTK__
-    savedlg.SetDirectory(wxs_initialdir);
-#endif
-    
     
     wxString wxs_savefname = wxEmptyString;
     if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();

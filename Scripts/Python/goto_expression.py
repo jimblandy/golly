@@ -368,7 +368,7 @@ def savegen(filename, gen):
 
 # --------------------------------------------------------------------
 
-# use same file name as in goto.pl
+# use same file name as in goto.lua
 GotoINIFileName = g.getdir("data") + "goto.ini"
 previousgen = ""
 try:
