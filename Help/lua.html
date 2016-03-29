@@ -12,6 +12,7 @@ in lots of interesting ways.
 <dd><a href="#commands"><b>Golly's scripting commands</b></a></dd>
 <dd><a href="#cellarrays"><b>Cell arrays</b></a></dd>
 <dd><a href="#rectarrays"><b>Rectangle arrays</b></a></dd>
+<dd><a href="#gotchas"><b>Lua gotchas</b></a></dd>
 <dd><a href="#copyright"><b>Lua copyright notice</b></a></dd>
 </p>
 
@@ -340,7 +341,7 @@ Write the given cell array to the specified file in RLE format.
 If the <b>savexrle</b> option is true then extended RLE format is used
 (see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
 </dd>
-<dd> Example: <b>g.store(carray, "foo.rle")</b></dd>
+<dd> Example: <b>g.store(cells, "foo.rle")</b></dd>
 </p>
 
 <a name="getdir"></a><p><dt><b>getdir(<i>dirname</i>)</b></dt>
@@ -516,19 +517,16 @@ Return any live cells in the specified rectangle as a cell array.
 The given array can be empty (in which case the cell array is empty)
 or it must represent a valid rectangle of the form {x,y,width,height}.
 </dd>
-<dd> Example: <b>carray = g.getcells( g.getrect() )</b></dd>
+<dd> Example: <b>local cells = g.getcells( g.getrect() )</b></dd>
 </p>
 
 <a name="getclip"></a><p><dt><b>getclip()</b></dt>
 <dd>
-Parse the pattern data in the clipboard and return a cell array,
-but where the first two numbers are the pattern's width and height
-(not necessarily the minimal bounding box because the pattern might
-have empty borders, or it might even be empty).
-If the clipboard data is multi-state but all cell states happen to
-be zero then the returned cell array is {wd,ht} rather than {wd,ht,0}.
+Parse the pattern data in the clipboard and return the pattern's width, height,
+and a cell array.  The width and height are not necessarily the minimal bounding box
+because the pattern might have empty borders, or it might even be empty.
 </dd>
-<dd> Example: <b>carray = g.getclip()</b></dd>
+<dd> Example: <b>local wd, ht, cells = g.getclip()</b></dd>
 </p>
 
 <a name="hash"></a><p><dt><b>hash(<i>rect_array</i>)</b></dt>
@@ -1318,6 +1316,23 @@ A non-empty rectangle is indicated by an array containing four integers:
 The first two items specify the cell at the top left corner of the
 rectangle.  The last two items specify the rectangle's size (in cells).
 The width and height must be greater than zero.
+
+
+<p><a name="gotchas"></a>&nbsp;<br>
+<font size=+1><b>Lua gotchas</b></font>
+
+<p>
+Some important points to remember about Lua, especially when converting an existing
+Perl/Python script to Lua:
+
+<p>
+<ol>
+<li>
+Cell arrays and rectangle arrays start with index 1, not 0.
+This is necessary to be able to use Lua's length operator (#).
+<li>
+Lua's true and false are not equivalent to 1 and 0.  In particular, "if 0" is true.
+</ol>
 
 
 <p><a name="copyright"></a>&nbsp;<br>

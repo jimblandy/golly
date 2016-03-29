@@ -1143,11 +1143,6 @@ static int g_getclip(lua_State* L)
         GollyError(L, "getclip error: no pattern in clipboard.");
     }
     
-    // convert pattern in clipboard into a cell array, but where the first 2 items
-    // are the pattern's width and height (not necessarily the minimal bounding box
-    // because the pattern might have empty borders, or it might even be empty)
-    lua_newtable(L);
-    
     // create a temporary layer for storing the clipboard pattern
     Layer* templayer = CreateTemporaryLayer();
     if (!templayer) {
@@ -1168,11 +1163,15 @@ static int g_getclip(lua_State* L)
         int iright = right.toint();
         int wd = iright - ileft + 1;
         int ht = ibottom - itop + 1;
+
+        // push pattern's width and height (not necessarily the minimal bounding box
+        // because the pattern might have empty borders, or it might even be empty)
+        lua_pushinteger(L, wd);
+        lua_pushinteger(L, ht);
         
+        // now push cell array
+        lua_newtable(L);
         int arraylen = 0;
-        // start array with pattern's width and height
-        lua_pushinteger(L, wd); lua_rawseti(L, -2, ++arraylen);
-        lua_pushinteger(L, ht); lua_rawseti(L, -2, ++arraylen);
         
         // extract cells from templayer
         lifealgo* tempalgo = templayer->algo;
@@ -1209,7 +1208,7 @@ static int g_getclip(lua_State* L)
         GollyError(L, "getclip error: failed to get clipboard pattern.");
     }
     
-    return 1;   // result is a cell array
+    return 3;   // result is wd, ht, cell array
 }
 
 // -----------------------------------------------------------------------------
@@ -2420,7 +2419,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "getcells",     g_getcells },     // return cell array in given rectangle
     { "join",         g_join },         // return concatenation of given cell arrays
     { "hash",         g_hash },         // return hash value for pattern in given rectangle
-    { "getclip",      g_getclip },      // return pattern in clipboard (as cell array)
+    { "getclip",      g_getclip },      // return pattern in clipboard (as wd, ht, cell array)
     { "select",       g_select },       // select {x, y, wd, ht} rectangle or remove if {}
     { "getrect",      g_getrect },      // return pattern rectangle as {} or {x, y, wd, ht}
     { "getselrect",   g_getselrect },   // return selection rectangle as {} or {x, y, wd, ht}
