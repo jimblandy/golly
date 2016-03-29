@@ -354,7 +354,6 @@ static int g_store(lua_State* L)
     int num_cells = len / ints_per_cell;
     for (int n = 0; n < num_cells; n++) {
         int item = ints_per_cell * n;
-        
         lua_rawgeti(L, 1, item+1); int x = lua_tointeger(L,-1); lua_pop(L,1);
         lua_rawgeti(L, 1, item+2); int y = lua_tointeger(L,-1); lua_pop(L,1);
         
@@ -366,9 +365,7 @@ static int g_store(lua_State* L)
         }
         
         if (multistate) {
-            
             lua_rawgeti(L, 1, item+3); int state = lua_tointeger(L,-1); lua_pop(L,1);
-            
             if (tempalgo->setcell(x, y, state) < 0) {
                 tempalgo->endofpattern();
                 delete tempalgo;
@@ -590,10 +587,113 @@ static int g_rotate(lua_State* L)
 static int g_parse(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    const char* s = luaL_checkstring(L, 1);
+    
+    // defaults for optional params
+    int x0  = 0;
+    int y0  = 0;
+    int axx = 1;
+    int axy = 0;
+    int ayx = 0;
+    int ayy = 1;
+    
+    if (lua_gettop(L) > 1) x0 = luaL_checkinteger(L, 2);
+    if (lua_gettop(L) > 2) y0 = luaL_checkinteger(L, 3);
+    if (lua_gettop(L) > 3) axx = luaL_checkinteger(L, 4);
+    if (lua_gettop(L) > 4) axy = luaL_checkinteger(L, 5);
+    if (lua_gettop(L) > 5) ayx = luaL_checkinteger(L, 6);
+    if (lua_gettop(L) > 6) ayy = luaL_checkinteger(L, 7);
+
+    lua_newtable(L);
+    int arraylen = 0;
+
+    int x = 0;
+    int y = 0;
+    
+    if (strchr(s, '*')) {
+        // parsing 'visual' format
+        int c = *s++;
+        while (c) {
+            switch (c) {
+                case '\n': if (x) { x = 0; y++; } break;
+                case '.': x++; break;
+                case '*':
+                    lua_pushinteger(L, x0 + x * axx + y * axy); lua_rawseti(L, -2, ++arraylen);
+                    lua_pushinteger(L, y0 + x * ayx + y * ayy); lua_rawseti(L, -2, ++arraylen);
+                    x++;
+                    break;
+            }
+            c = *s++;
+        }
+    } else {
+        // parsing RLE format; first check if multi-state data is present
+        bool multistate = false;
+        const char* p = s;
+        while (*p) {
+            char c = *p++;
+            if ((c == '.') || ('p' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
+                multistate = true;
+                break;
+            }
+        }
+        int prefix = 0;
+        bool done = false;
+        int c = *s++;
+        while (c && !done) {
+            if (isdigit(c))
+                prefix = 10 * prefix + (c - '0');
+            else {
+                prefix += (prefix == 0);
+                switch (c) {
+                    case '!': done = true; break;
+                    case '$': x = 0; y += prefix; break;
+                    case 'b': x += prefix; break;
+                    case '.': x += prefix; break;
+                    case 'o':
+                        for (int k = 0; k < prefix; k++, x++) {
+                            lua_pushinteger(L, x0 + x * axx + y * axy); lua_rawseti(L, -2, ++arraylen);
+                            lua_pushinteger(L, y0 + x * ayx + y * ayy); lua_rawseti(L, -2, ++arraylen);
+                            if (multistate) {
+                                lua_pushinteger(L, 1); lua_rawseti(L, -2, ++arraylen);
+                            }
+                        }
+                        break;
+                    default:
+                        if (('p' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
+                            // multistate must be true
+                            int state;
+                            if (c < 'p') {
+                                state = c - 'A' + 1;
+                            } else {
+                                state = 24 * (c - 'p' + 1);
+                                c = *s++;
+                                if ('A' <= c && c <= 'X') {
+                                    state = state + c - 'A' + 1;
+                                } else {
+                                    // be forgiving and treat 'p'..'y' like 'o'
+                                    state = 1;
+                                    s--;
+                                }
+                            }
+                            for (int k = 0; k < prefix; k++, x++) {
+                                lua_pushinteger(L, x0 + x * axx + y * axy); lua_rawseti(L, -2, ++arraylen);
+                                lua_pushinteger(L, y0 + x * ayx + y * ayy); lua_rawseti(L, -2, ++arraylen);
+                                lua_pushinteger(L, state); lua_rawseti(L, -2, ++arraylen);
+                            }
+                        }
+                }
+                prefix = 0;
+            }
+            c = *s++;
+        }
+        if (multistate && arraylen > 0 && (arraylen & 1) == 0) {
+            // add padding zero
+            lua_pushinteger(L, 0); lua_rawseti(L, -2, ++arraylen);
+        }
+    }
+    
+    return 1;   // result is a cell array
 }
 
 // -----------------------------------------------------------------------------
@@ -602,9 +702,46 @@ static int g_transform(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    luaL_checktype(L, 1, LUA_TTABLE);   // cell array
+
+    int x0 = luaL_checkinteger(L, 2);
+    int y0 = luaL_checkinteger(L, 3);
     
-    return 0;   // no result???!!!
+    // defaults for optional params
+    int axx = 1;
+    int axy = 0;
+    int ayx = 0;
+    int ayy = 1;
+
+    if (lua_gettop(L) > 3) axx = luaL_checkinteger(L, 4);
+    if (lua_gettop(L) > 4) axy = luaL_checkinteger(L, 5);
+    if (lua_gettop(L) > 5) ayx = luaL_checkinteger(L, 6);
+    if (lua_gettop(L) > 6) ayy = luaL_checkinteger(L, 7);
+
+    lua_newtable(L);
+    int arraylen = 0;
+
+    bool multistate = (luaL_len(L, 1) & 1) == 1;
+    int ints_per_cell = multistate ? 3 : 2;
+    int num_cells = luaL_len(L, 1) / ints_per_cell;
+    for (int n = 0; n < num_cells; n++) {
+        int item = ints_per_cell * n;
+        lua_rawgeti(L, 1, item+1); int x = lua_tointeger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, item+2); int y = lua_tointeger(L,-1); lua_pop(L,1);
+        
+        lua_pushinteger(L, x0 + x * axx + y * axy); lua_rawseti(L, -2, ++arraylen);
+        lua_pushinteger(L, y0 + x * ayx + y * ayy); lua_rawseti(L, -2, ++arraylen);
+        if (multistate) {
+            lua_rawgeti(L, 1, item+3); int state = lua_tointeger(L,-1); lua_pop(L,1);
+            lua_pushinteger(L, state); lua_rawseti(L, -2, ++arraylen);
+        }
+    }
+    if (multistate && arraylen > 0 && (arraylen & 1) == 0) {
+        // add padding zero
+        lua_pushinteger(L, 0); lua_rawseti(L, -2, ++arraylen);
+    }
+    
+    return 1;   // result is a cell array
 }
 
 // -----------------------------------------------------------------------------
@@ -612,21 +749,239 @@ static int g_transform(lua_State* L)
 static int g_evolve(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    luaL_checktype(L, 1, LUA_TTABLE);   // cell array
+    
+    int ngens = luaL_checkinteger(L, 2);
+    if (ngens < 0) {
+        GollyError(L, "evolve error: number of generations is negative.");
+    }
+    
+    // create a temporary universe of same type as current universe
+    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+    const char* err = tempalgo->setrule(currlayer->algo->getrule());
+    if (err) tempalgo->setrule(tempalgo->DefaultRule());
+    
+    // copy cell array into temporary universe
+    bool multistate = (luaL_len(L, 1) & 1) == 1;
+    int ints_per_cell = multistate ? 3 : 2;
+    int num_cells = luaL_len(L, 1) / ints_per_cell;
+    for (int n = 0; n < num_cells; n++) {
+        int item = ints_per_cell * n;
+        lua_rawgeti(L, 1, item+1); int x = lua_tointeger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, item+2); int y = lua_tointeger(L,-1); lua_pop(L,1);
+        // check if x,y is outside bounded grid
+        err = GSF_checkpos(tempalgo, x, y);
+        if (err) {
+            delete tempalgo;
+            GollyError(L, err);
+        }
+        if (multistate) {
+            lua_rawgeti(L, 1, item+3); int state = lua_tointeger(L,-1); lua_pop(L,1);
+            if (tempalgo->setcell(x, y, state) < 0) {
+                tempalgo->endofpattern();
+                delete tempalgo;
+                GollyError(L, "evolve error: state value is out of range.");
+            }
+        } else {
+            tempalgo->setcell(x, y, 1);
+        }
+    }
+    tempalgo->endofpattern();
+    
+    // advance pattern by ngens
+    mainptr->generating = true;
+    if (tempalgo->gridwd > 0 || tempalgo->gridht > 0) {
+        // a bounded grid must use an increment of 1 so we can call
+        // CreateBorderCells and DeleteBorderCells around each step()
+        tempalgo->setIncrement(1);
+        while (ngens > 0) {
+            if (!tempalgo->CreateBorderCells()) break;
+            tempalgo->step();
+            if (!tempalgo->DeleteBorderCells()) break;
+            ngens--;
+        }
+    } else {
+        tempalgo->setIncrement(ngens);
+        tempalgo->step();
+    }
+    mainptr->generating = false;
+    
+    // convert new pattern into a cell array    
+    err = ExtractCellArray(L, tempalgo);
+    delete tempalgo;
+    if (err) GollyError(L, err);
+    
+    return 1;   // result is a cell array
 }
 
 // -----------------------------------------------------------------------------
 
+static const char* BAD_STATE = "putcells error: state value is out of range.";
+
 static int g_putcells(lua_State* L)
 {
     CheckEvents(L);
-
-    //!!!
     
-    return 0;   // no result???!!!
+    luaL_checktype(L, 1, LUA_TTABLE);   // cell array
+
+    // defaults for optional params
+    int x0  = 0;
+    int y0  = 0;
+    int axx = 1;
+    int axy = 0;
+    int ayx = 0;
+    int ayy = 1;
+    // default for mode is 'or'; 'xor' mode is also supported;
+    // for a one-state array 'copy' mode currently has the same effect as 'or' mode
+    // because there is no bounding box to set dead cells, but a multi-state array can
+    // have dead cells so in that case 'copy' mode is not the same as 'or' mode
+    const char* mode = "or";
+    
+    if (lua_gettop(L) > 1) x0 = luaL_checkinteger(L, 2);
+    if (lua_gettop(L) > 2) y0 = luaL_checkinteger(L, 3);
+    if (lua_gettop(L) > 3) axx = luaL_checkinteger(L, 4);
+    if (lua_gettop(L) > 4) axy = luaL_checkinteger(L, 5);
+    if (lua_gettop(L) > 5) ayx = luaL_checkinteger(L, 6);
+    if (lua_gettop(L) > 6) ayy = luaL_checkinteger(L, 7);
+    if (lua_gettop(L) > 7) mode = luaL_checkstring(L, 8);
+        
+    wxString modestr = wxString(mode, wxConvLocal);
+    if ( !(   modestr.IsSameAs(wxT("or"), false)
+           || modestr.IsSameAs(wxT("xor"), false)
+           || modestr.IsSameAs(wxT("copy"), false)
+           || modestr.IsSameAs(wxT("and"), false)
+           || modestr.IsSameAs(wxT("not"), false)) ) {
+        GollyError(L, "putcells error: unknown mode.");
+    }
+    
+    // save cell changes if undo/redo is enabled and script isn't constructing a pattern
+    bool savecells = allowundo && !currlayer->stayclean;
+    // use ChangeCell below and combine all changes due to consecutive setcell/putcells
+    // if (savecells) SavePendingChanges();
+    
+    bool multistate = (luaL_len(L, 1) & 1) == 1;
+    int ints_per_cell = multistate ? 3 : 2;
+    int num_cells = luaL_len(L, 1) / ints_per_cell;
+    const char* err = NULL;
+    bool pattchanged = false;
+    lifealgo* curralgo = currlayer->algo;
+    
+    if (modestr.IsSameAs(wxT("copy"), false)) {
+        // TODO: find bounds of cell array and call ClearRect here (to be added to wxedit.cpp)
+    }
+    
+    if (modestr.IsSameAs(wxT("and"), false)) {
+        if (!curralgo->isEmpty()) {
+            int newstate = 1;
+            for (int n = 0; n < num_cells; n++) {
+                int item = ints_per_cell * n;
+                lua_rawgeti(L, 1, item+1); int x = lua_tointeger(L,-1); lua_pop(L,1);
+                lua_rawgeti(L, 1, item+2); int y = lua_tointeger(L,-1); lua_pop(L,1);
+                int newx = x0 + x * axx + y * axy;
+                int newy = y0 + x * ayx + y * ayy;
+                // check if newx,newy is outside bounded grid
+                err = GSF_checkpos(curralgo, newx, newy);
+                if (err) break;
+                int oldstate = curralgo->getcell(newx, newy);
+                if (multistate) {
+                    // multi-state arrays can contain dead cells so newstate might be 0
+                    lua_rawgeti(L, 1, item+3); newstate = lua_tointeger(L,-1); lua_pop(L,1);
+                }
+                if (newstate != oldstate && oldstate > 0) {
+                    curralgo->setcell(newx, newy, 0);
+                    if (savecells) ChangeCell(newx, newy, oldstate, 0);
+                    pattchanged = true;
+                }
+            }
+        }
+    } else if (modestr.IsSameAs(wxT("xor"), false)) {
+        // loop code is duplicated here to allow 'or' case to execute faster
+        int numstates = curralgo->NumCellStates();
+        for (int n = 0; n < num_cells; n++) {
+            int item = ints_per_cell * n;
+            lua_rawgeti(L, 1, item+1); int x = lua_tointeger(L,-1); lua_pop(L,1);
+            lua_rawgeti(L, 1, item+2); int y = lua_tointeger(L,-1); lua_pop(L,1);
+            int newx = x0 + x * axx + y * axy;
+            int newy = y0 + x * ayx + y * ayy;
+            // check if newx,newy is outside bounded grid
+            err = GSF_checkpos(curralgo, newx, newy);
+            if (err) break;
+            int oldstate = curralgo->getcell(newx, newy);
+            int newstate;
+            if (multistate) {
+                // multi-state arrays can contain dead cells so newstate might be 0
+                lua_rawgeti(L, 1, item+3); newstate = lua_tointeger(L,-1); lua_pop(L,1);
+                if (newstate == oldstate) {
+                    if (oldstate != 0) newstate = 0;
+                } else {
+                    newstate = newstate ^ oldstate;
+                    // if xor overflows then don't change current state
+                    if (newstate >= numstates) newstate = oldstate;
+                }
+                if (newstate != oldstate) {
+                    // paste (possibly transformed) cell into current universe
+                    if (curralgo->setcell(newx, newy, newstate) < 0) {
+                        err = BAD_STATE;
+                        break;
+                    }
+                    if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+                    pattchanged = true;
+                }
+            } else {
+                // one-state arrays only contain live cells
+                newstate = 1 - oldstate;
+                // paste (possibly transformed) cell into current universe
+                if (curralgo->setcell(newx, newy, newstate) < 0) {
+                    err = BAD_STATE;
+                    break;
+                }
+                if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+                pattchanged = true;
+            }
+        }
+    } else {
+        bool notmode = modestr.IsSameAs(wxT("not"), false);
+        bool ormode = modestr.IsSameAs(wxT("or"), false);
+        int newstate = notmode ? 0 : 1;
+        int maxstate = curralgo->NumCellStates() - 1;
+        for (int n = 0; n < num_cells; n++) {
+            int item = ints_per_cell * n;
+            lua_rawgeti(L, 1, item+1); int x = lua_tointeger(L,-1); lua_pop(L,1);
+            lua_rawgeti(L, 1, item+2); int y = lua_tointeger(L,-1); lua_pop(L,1);
+            int newx = x0 + x * axx + y * axy;
+            int newy = y0 + x * ayx + y * ayy;
+            // check if newx,newy is outside bounded grid
+            err = GSF_checkpos(curralgo, newx, newy);
+            if (err) break;
+            int oldstate = curralgo->getcell(newx, newy);
+            if (multistate) {
+                // multi-state arrays can contain dead cells so newstate might be 0
+                lua_rawgeti(L, 1, item+3); newstate = lua_tointeger(L,-1); lua_pop(L,1);
+                if (notmode) newstate = maxstate - newstate;
+                if (ormode && newstate == 0) newstate = oldstate;
+            }
+            if (newstate != oldstate) {
+                // paste (possibly transformed) cell into current universe
+                if (curralgo->setcell(newx, newy, newstate) < 0) {
+                    err = BAD_STATE;
+                    break;
+                }
+                if (savecells) ChangeCell(newx, newy, oldstate, newstate);
+                pattchanged = true;
+            }
+        }
+    }
+    
+    if (pattchanged) {
+        curralgo->endofpattern();
+        MarkLayerDirty();
+        DoAutoUpdate();
+    }
+    
+    if (err) GollyError(L, err);
+    
+    return 0;   // no result
 }
 
 // -----------------------------------------------------------------------------
@@ -635,9 +990,56 @@ static int g_getcells(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    luaL_checktype(L, 1, LUA_TTABLE);   // rect array with 0 or 4 ints
+
+    lua_newtable(L);
+    int arraylen = 0;
     
-    return 0;   // no result???!!!
+    int numints = luaL_len(L, 1);
+    if (numints == 0) {
+        // return empty cell array
+    } else if (numints == 4) {
+        lua_rawgeti(L, 1, 1); int ileft = luaL_checkinteger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, 2); int itop  = luaL_checkinteger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, 3); int wd    = luaL_checkinteger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, 4); int ht    = luaL_checkinteger(L,-1); lua_pop(L,1);
+        
+        const char* err = GSF_checkrect(ileft, itop, wd, ht);
+        if (err) GollyError(L, err);
+        
+        int iright = ileft + wd - 1;
+        int ibottom = itop + ht - 1;
+        int cx, cy;
+        int v = 0;
+        lifealgo* curralgo = currlayer->algo;
+        bool multistate = curralgo->NumCellStates() > 2;
+        for ( cy=itop; cy<=ibottom; cy++ ) {
+            for ( cx=ileft; cx<=iright; cx++ ) {
+                int skip = curralgo->nextcell(cx, cy, v);
+                if (skip >= 0) {
+                    // found next live cell in this row
+                    cx += skip;
+                    if (cx <= iright) {
+                        lua_pushinteger(L, cx); lua_rawseti(L, -2, ++arraylen);
+                        lua_pushinteger(L, cy); lua_rawseti(L, -2, ++arraylen);
+                        if (multistate) {
+                            lua_pushinteger(L, v); lua_rawseti(L, -2, ++arraylen);
+                        }
+                    }
+                } else {
+                    cx = iright;  // done this row
+                }
+            }
+        }
+        if (multistate && arraylen > 0 && (arraylen & 1) == 0) {
+            // add padding zero
+            lua_pushinteger(L, 0); lua_rawseti(L, -2, ++arraylen);
+        }
+    } else {
+        GollyError(L, "getcells error: array must be {} or {x,y,wd,ht}.");
+    }
+    
+    return 1;   // result is a cell array
 }
 
 // -----------------------------------------------------------------------------
@@ -646,9 +1048,62 @@ static int g_join(lua_State* L)
 {
     CheckEvents(L);
 
-    //!!!
+    luaL_checktype(L, 1, LUA_TTABLE);
+    luaL_checktype(L, 2, LUA_TTABLE);
     
-    return 0;   // no result???!!!
+    bool multi1 = (luaL_len(L, 1) & 1) == 1;
+    bool multi2 = (luaL_len(L, 2) & 1) == 1;
+    bool multiout = multi1 || multi2;
+    int ints_per_cell, num_cells;
+    int x, y, state;
+    
+    lua_newtable(L);
+    int arraylen = 0;
+
+    // append 1st array
+    ints_per_cell = multi1 ? 3 : 2;
+    num_cells = luaL_len(L, 1) / ints_per_cell;
+    for (int n = 0; n < num_cells; n++) {
+        int item = ints_per_cell * n;
+        lua_rawgeti(L, 1, item+1); x = lua_tointeger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, item+2); y = lua_tointeger(L,-1); lua_pop(L,1);
+        if (multi1) {
+            lua_rawgeti(L, 1, item+3); state = lua_tointeger(L,-1); lua_pop(L,1);
+        } else {
+            state = 1;
+        }
+        lua_pushinteger(L, x); lua_rawseti(L, -2, ++arraylen);
+        lua_pushinteger(L, y); lua_rawseti(L, -2, ++arraylen);
+        if (multiout) {
+            lua_pushinteger(L, state); lua_rawseti(L, -2, ++arraylen);
+        }
+    }
+    
+    // append 2nd array
+    ints_per_cell = multi2 ? 3 : 2;
+    num_cells = luaL_len(L, 2) / ints_per_cell;
+    for (int n = 0; n < num_cells; n++) {
+        int item = ints_per_cell * n;
+        lua_rawgeti(L, 2, item+1); x = lua_tointeger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 2, item+2); y = lua_tointeger(L,-1); lua_pop(L,1);
+        if (multi2) {
+            lua_rawgeti(L, 2, item+3); state = lua_tointeger(L,-1); lua_pop(L,1);
+        } else {
+            state = 1;
+        }
+        lua_pushinteger(L, x); lua_rawseti(L, -2, ++arraylen);
+        lua_pushinteger(L, y); lua_rawseti(L, -2, ++arraylen);
+        if (multiout) {
+            lua_pushinteger(L, state); lua_rawseti(L, -2, ++arraylen);
+        }
+    }
+    
+    if (multiout && arraylen > 0 && (arraylen & 1) == 0) {
+        // add padding zero
+        lua_pushinteger(L, 0); lua_rawseti(L, -2, ++arraylen);
+    }
+    
+    return 1;   // result is a cell array
 }
 
 // -----------------------------------------------------------------------------
@@ -783,7 +1238,7 @@ static int g_select(lua_State* L)
         GSF_select(x, y, wd, ht);
         
     } else {
-        GollyError(L, "select error: array must have 0 or 4 integers.");
+        GollyError(L, "select error: array must be {} or {x,y,wd,ht}.");
     }
 
     DoAutoUpdate();
