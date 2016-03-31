@@ -12,7 +12,7 @@ in lots of interesting ways.
 <dd><a href="#commands"><b>Golly's scripting commands</b></a></dd>
 <dd><a href="#cellarrays"><b>Cell arrays</b></a></dd>
 <dd><a href="#rectarrays"><b>Rectangle arrays</b></a></dd>
-<dd><a href="#gotchas"><b>Lua gotchas</b></a></dd>
+<dd><a href="#problems"><b>Potential problems</b></a></dd>
 <dd><a href="#copyright"><b>Lua copyright notice</b></a></dd>
 </p>
 
@@ -110,7 +110,12 @@ Control menu.
 
 <p>
 This section describes all the g.* commands that can be used in a script after
-including the line "local g = gollylib()".  Commands are grouped by function
+including this line:
+<p><dd>
+<b>local g = gollylib()</b>
+</dd>
+<p>
+Commands are grouped by function
 (<a href="#filing"><b>filing</b></a>,
 <a href="#editing"><b>editing</b></a>,
 <a href="#control"><b>control</b></a>,
@@ -1296,22 +1301,50 @@ rectangle.  The last two items specify the rectangle's size (in cells).
 The width and height must be greater than zero.
 
 
-<p><a name="gotchas"></a>&nbsp;<br>
-<font size=+1><b>Lua gotchas</b></font>
+<p><a name="problems"></a>&nbsp;<br>
+<font size=+1><b>Potential problems</b></font>
 
 <p>
-Some important points to remember about Lua, especially when converting an existing
-Perl/Python script to Lua:
-
+1.
+There are a couple of important points to remember about Lua, especially
+when converting an existing Perl/Python script to Lua:
 <p>
-<ol>
+<ul>
 <li>
 Cell arrays and rectangle arrays start with index 1, not 0.
 This is necessary to be able to use Lua's length operator (#).
 <li>
 Lua's <b>true</b> and <b>false</b> are <em>not</em> equivalent to 1 and 0.
 In particular, "<b>if 0</b>" is true.
-</ol>
+</ul>
+
+<p>
+2.
+The escape key check to abort a running script is not done by Lua but
+by each Golly scripting command.  This means that very long Lua computations
+should call an occasional "no-op" like <b>g.doevent("")</b> to allow the
+script to be aborted in a timely manner.
+
+<p>
+3.
+When writing a script that creates a pattern, make sure the script starts
+with a <b>g.new</b> call (or, less useful, a <b>g.open</b> call) otherwise
+the script might create lots of temporary files or use lots of memory.
+From the undo history's point of view there are two types of scripts:
+<p>
+<ul>
+<li>
+A script that calls <b>g.new</b> or <b>g.open</b> is assumed to be creating some
+sort of pattern, so when Golly sees these calls it clears any undo history and
+sets an internal flag that says "don't mark this layer as dirty and don't bother
+recording any further changes".
+<li>
+A script that doesn't call <b>g.new</b> or <b>g.open</b> is assumed to modify the
+current pattern. Golly must record <em>all</em> the script's changes so that
+when it finishes you can select "Undo Script Changes" from the Edit menu.
+Generating changes (due to <b>g.run</b> or <b>g.step</b> calls) are stored in
+temporary files, while other changes are stored in memory.
+</ul>
 
 
 <p><a name="copyright"></a>&nbsp;<br>
