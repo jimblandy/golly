@@ -231,15 +231,10 @@ end
 
 --------------------------------------------------------------------------------
 
--- return integer part of given number
+-- return integer part of given floating point number
 
 function int(x)
-    -- if x < 0 then return math.ceil(x) else return math.floor(x) end
-    -- return math.tointeger(x - x%1)
-    return x - x%1
-    -- above 3 all work on Mac and Linux but get error on WinXP!!!
-    -- ie. bad argument #2 to 'putcells' (number has no integer representation)
-
+    return x < 0 and math.ceil(x) or math.floor(x)
 end
 
 --------------------------------------------------------------------------------

@@ -374,7 +374,7 @@ $(WXO): $(BASEH) $(WXH) icons\*.ico bitmaps\*.xpm
 
 $(LUAO):
 	cd "$(LUADIR)"
-	cl /MT /O2 /c /nologo *.c
+	cl /MT /O2 /c /nologo $(LUA_DEFS) *.c
 	cd "$(MAKEDIR)"
 
 $(OBJDIR):
