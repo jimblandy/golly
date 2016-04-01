@@ -231,6 +231,19 @@ end
 
 --------------------------------------------------------------------------------
 
+-- return integer part of given number
+
+function int(x)
+    -- if x < 0 then return math.ceil(x) else return math.floor(x) end
+    -- return math.tointeger(x - x%1)
+    return x - x%1
+    -- above 3 all work on Mac and Linux but get error on WinXP!!!
+    -- ie. bad argument #2 to 'putcells' (number has no integer representation)
+
+end
+
+--------------------------------------------------------------------------------
+
 if g.empty() then g.exit("There is no pattern.") end
 
 -- check that a layer is available for population plot
@@ -318,25 +331,25 @@ draw_line(0, 0, 0, -ylen)
 
 -- add annotation using mono-spaced ASCII font
 local t, wd, ht = make_text(string.upper(pattname))
-g.putcells(t, math.floor((xlen - wd) / 2), -ylen - 10 - ht)
+g.putcells(t, int((xlen - wd) / 2), -ylen - 10 - ht)
 
 t, wd, ht = make_text("POPULATION")
-g.putcells(t, -10 - ht, math.floor(-(ylen - wd) / 2), 0, 1, -1, 0)
+g.putcells(t, -10 - ht, int(-(ylen - wd) / 2), 0, 1, -1, 0)
 
 t, wd, ht = make_text(""..minpop)
-g.putcells(t, -wd - 10, math.floor(-ht / 2))
+g.putcells(t, -wd - 10, int(-ht / 2))
 
 t, wd, ht = make_text(""..maxpop)
-g.putcells(t, -wd - 10, -ylen - math.floor(ht / 2))
+g.putcells(t, -wd - 10, -ylen - int(ht / 2))
 
 t, wd, ht = make_text("GENERATION (step="..stepsize..")")
-g.putcells(t, math.floor((xlen - wd) / 2), 10)
+g.putcells(t, int((xlen - wd) / 2), 10)
 
 t, wd, ht = make_text(""..mingen)
-g.putcells(t, math.floor(-wd / 2), 10)
+g.putcells(t, int(-wd / 2), 10)
 
 t, wd, ht = make_text(""..maxgen)
-g.putcells(t, xlen - math.floor(wd / 2), 10)
+g.putcells(t, xlen - int(wd / 2), 10)
 
 -- display result at scale 1:1
 g.fit()
@@ -344,12 +357,12 @@ g.setmag(0)
 g.show("")
 
 -- plot the data (do last because it could take a while if numsteps is huge)
-local x = math.floor((genlist[1] - mingen) / genscale)
-local y = math.floor((poplist[1] - minpop) / popscale)
+local x = int((genlist[1] - mingen) / genscale)
+local y = int((poplist[1] - minpop) / popscale)
 oldsecs = os.clock()
 for i = 1, numsteps-1 do
-    local newx = math.floor((genlist[i+1] - mingen) / genscale)
-    local newy = math.floor((poplist[i+1] - minpop) / popscale)
+    local newx = int((genlist[i+1] - mingen) / genscale)
+    local newy = int((poplist[i+1] - minpop) / popscale)
     draw_line(x, -y, newx, -newy)
     x = newx
     y = newy
