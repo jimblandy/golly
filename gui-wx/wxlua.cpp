@@ -1802,7 +1802,7 @@ static int g_autoupdate(lua_State* L)
 {
     CheckEvents(L);
 
-    autoupdate = lua_toboolean(L, 1);
+    autoupdate = lua_toboolean(L, 1) ? true : false;    // avoids stupid MVC warning
     
     return 0;   // no result
 }
