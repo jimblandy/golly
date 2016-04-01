@@ -508,7 +508,7 @@ $(OBJDIR)/wxrender.obj: wxrender.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrender.cpp
 
 $(OBJDIR)/wxlua.obj: wxlua.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) /I$(LUADIR) wxlua.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(LUA_DEFS) /I$(LUADIR) wxlua.cpp
 
 $(OBJDIR)/wxperl.obj: wxperl.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(PERL_INCLUDE) wxperl.cpp
