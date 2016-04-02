@@ -6,7 +6,6 @@
 # Authors: Andrew Trevorrow and Dave Greene, April 2006.
 # Updated Sept-Oct 2006 -- XRLE support and reusable default value.
 # Updated April 2010 -- much faster, thanks to PM 2Ring.
-# Save and restore step setting after PM 2Ring algorithm (Munafo)
 
 from glife import validint
 from time import time
@@ -74,7 +73,6 @@ def goto(gen):
     currgen += 1
 
     # use fast stepping (thanks to PM 2Ring)
-    oldstep = g.getstep()
     for i, d in enumerate(intbase(newgen - currgen, g.getbase())):
         if d > 0:
             g.setstep(i)
@@ -87,7 +85,6 @@ def goto(gen):
                 if newsecs - oldsecs >= 1.0:  # do an update every sec
                     oldsecs = newsecs
                     g.update()
-    g.setstep(oldstep)
     g.show("")
 
 # --------------------------------------------------------------------
