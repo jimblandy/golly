@@ -953,24 +953,24 @@ void DrawGridLines(int wd, int ht)
     }
 
     // draw all plain lines first;
-    // note that we need to subtract 0.5 from each coordinate to avoid uneven spacing
+    // note that we need to add/subtract 0.5 from coordinates to avoid uneven spacing
 
     i = showboldlines ? topbold : 1;
     v = 0;
     while (true) {
         v += cellsize;
-        if (v >= ht) break;
+        if (v > ht) break;
         if (showboldlines) i++;
-        if (i % boldspacing != 0 && v >= 0 && v < ht) {
+        if (i % boldspacing != 0) {
             #ifdef WEB_GUI
-                GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
-                                     XCOORD(wd),   YCOORD(v-0.5) };
+                GLfloat points[] = { XCOORD(  -0.5), YCOORD(v-0.5),
+                                     XCOORD(wd+0.5), YCOORD(v-0.5) };
                 glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
                 glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                 glEnableVertexAttribArray(positionLoc);
             #else
                 GLfloat points[] = {   -0.5, v-0.5,
-                                     wd-0.5, v-0.5 };
+                                     wd+0.5, v-0.5 };
                 glVertexPointer(2, GL_FLOAT, 0, points);
             #endif
             glDrawArrays(GL_LINES, 0, 2);
@@ -980,18 +980,18 @@ void DrawGridLines(int wd, int ht)
     h = 0;
     while (true) {
         h += cellsize;
-        if (h >= wd) break;
+        if (h > wd) break;
         if (showboldlines) i++;
-        if (i % boldspacing != 0 && h >= 0 && h < wd) {
+        if (i % boldspacing != 0) {
             #ifdef WEB_GUI
-                GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
-                                     XCOORD(h-0.5), YCOORD(ht) };
+                GLfloat points[] = { XCOORD(h-0.5), YCOORD(  -0.5),
+                                     XCOORD(h-0.5), YCOORD(ht+0.5) };
                 glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
                 glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                 glEnableVertexAttribArray(positionLoc);
             #else
                 GLfloat points[] = { h-0.5,   -0.5,
-                                     h-0.5, ht-0.5 };
+                                     h-0.5, ht+0.5 };
                 glVertexPointer(2, GL_FLOAT, 0, points);
             #endif
             glDrawArrays(GL_LINES, 0, 2);
@@ -1016,18 +1016,18 @@ void DrawGridLines(int wd, int ht)
         v = 0;
         while (true) {
             v += cellsize;
-            if (v >= ht) break;
+            if (v > ht) break;
             i++;
-            if (i % boldspacing == 0 && v >= 0 && v < ht) {
+            if (i % boldspacing == 0) {
                 #ifdef WEB_GUI
-                    GLfloat points[] = { XCOORD(-0.5), YCOORD(v-0.5),
-                                         XCOORD(wd),   YCOORD(v-0.5) };
+                    GLfloat points[] = { XCOORD(  -0.5), YCOORD(v-0.5),
+                                         XCOORD(wd+0.5), YCOORD(v-0.5) };
                     glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
                     glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                     glEnableVertexAttribArray(positionLoc);
                 #else
                     GLfloat points[] = {   -0.5, v-0.5,
-                                         wd-0.5, v-0.5 };
+                                         wd+0.5, v-0.5 };
                     glVertexPointer(2, GL_FLOAT, 0, points);
                 #endif
                 glDrawArrays(GL_LINES, 0, 2);
@@ -1037,18 +1037,18 @@ void DrawGridLines(int wd, int ht)
         h = 0;
         while (true) {
             h += cellsize;
-            if (h >= wd) break;
+            if (h > wd) break;
             i++;
-            if (i % boldspacing == 0 && h >= 0 && h < wd) {
+            if (i % boldspacing == 0) {
                 #ifdef WEB_GUI
-                    GLfloat points[] = { XCOORD(h-0.5), YCOORD(-0.5),
-                                         XCOORD(h-0.5), YCOORD(ht) };
+                    GLfloat points[] = { XCOORD(h-0.5), YCOORD(  -0.5),
+                                         XCOORD(h-0.5), YCOORD(ht+0.5) };
                     glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), points, GL_STATIC_DRAW);
                     glVertexAttribPointer(positionLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
                     glEnableVertexAttribArray(positionLoc);
                 #else
                     GLfloat points[] = { h-0.5,   -0.5,
-                                         h-0.5, ht-0.5 };
+                                         h-0.5, ht+0.5 };
                     glVertexPointer(2, GL_FLOAT, 0, points);
                 #endif
                 glDrawArrays(GL_LINES, 0, 2);

@@ -2177,6 +2177,51 @@ static PyObject* py_visrect(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_setview(PyObject* self, PyObject* args)
+{
+    if (PythonScriptAborted()) return NULL;
+    wxUnusedVar(self);
+    int wd, ht;
+    
+    if (!PyArg_ParseTuple(args, (char*)"ii", &wd, &ht)) return NULL;
+    if (wd < 0) wd = 0;
+    if (ht < 0) ht = 0;
+    
+    int currwd, currht;
+    bigview->GetClientSize(&currwd, &currht);
+    if (currwd < 0) currwd = 0;
+    if (currht < 0) currht = 0;
+    
+    int mainwd, mainht;
+    mainptr->GetSize(&mainwd, &mainht);
+    mainptr->SetSize(mainwd + (wd - currwd), mainht + (ht - currht));
+    
+    RETURN_NONE;
+}
+
+// -----------------------------------------------------------------------------
+
+static PyObject* py_getview(PyObject* self, PyObject* args)
+{
+    if (PythonScriptAborted()) return NULL;
+    wxUnusedVar(self);
+    
+    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+
+    int currwd, currht;
+    bigview->GetClientSize(&currwd, &currht);
+    if (currwd < 0) currwd = 0;
+    if (currht < 0) currht = 0;
+    
+    // return viewport size as wd,ht tuple
+    PyObject* tuple = PyTuple_New(2);
+    PyTuple_SetItem(tuple, 0, Py_BuildValue((char*)"i", currwd));
+    PyTuple_SetItem(tuple, 1, Py_BuildValue((char*)"i", currht));
+    return tuple;
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_update(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
@@ -2935,6 +2980,8 @@ static PyMethodDef py_methods[] = {
     { "fit",          py_fit,        METH_VARARGS, "fit entire pattern in viewport" },
     { "fitsel",       py_fitsel,     METH_VARARGS, "fit selection in viewport" },
     { "visrect",      py_visrect,    METH_VARARGS, "return true if given rect is completely visible" },
+    { "setview",      py_setview,    METH_VARARGS, "set pixel dimensions of viewport" },
+    { "getview",      py_getview,    METH_VARARGS, "get pixel dimensions of viewport" },
     { "update",       py_update,     METH_VARARGS, "update display (viewport and status bar)" },
     { "autoupdate",   py_autoupdate, METH_VARARGS, "update display after each change to universe?" },
     // layers

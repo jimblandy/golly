@@ -1791,6 +1791,46 @@ static int g_visrect(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_setview(lua_State* L)
+{
+    CheckEvents(L);
+    
+    int wd = luaL_checkinteger(L, 1);
+    int ht = luaL_checkinteger(L, 2);
+    if (wd < 0) wd = 0;
+    if (ht < 0) ht = 0;
+
+    int currwd, currht;
+    bigview->GetClientSize(&currwd, &currht);
+    if (currwd < 0) currwd = 0;
+    if (currht < 0) currht = 0;
+    
+    int mainwd, mainht;
+    mainptr->GetSize(&mainwd, &mainht);
+    mainptr->SetSize(mainwd + (wd - currwd), mainht + (ht - currht));
+    
+    return 0;   // no result
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_getview(lua_State* L)
+{
+    CheckEvents(L);
+
+    int currwd, currht;
+    bigview->GetClientSize(&currwd, &currht);
+    if (currwd < 0) currwd = 0;
+    if (currht < 0) currht = 0;
+    
+    lua_pushinteger(L, currwd);
+    lua_pushinteger(L, currht);
+    
+    return 2;   // result is 2 integers (wd, ht)
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_update(lua_State* L)
 {
     CheckEvents(L);
@@ -2460,6 +2500,8 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "fit",          g_fit },          // fit entire pattern in viewport
     { "fitsel",       g_fitsel },       // fit selection in viewport
     { "visrect",      g_visrect },      // return true if given rect is completely visible
+    { "setview",      g_setview },      // set pixel dimensions of viewport
+    { "getview",      g_getview },      // get pixel dimensions of viewport
     { "update",       g_update },       // update display (viewport and status bar)
     { "autoupdate",   g_autoupdate },   // update display after each change to universe?
     // layers

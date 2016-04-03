@@ -318,7 +318,7 @@ const int MAX_MEM_MB =           // maximum value of maximum memory
 const int MAX_BASESTEP = 2000000000;    // maximum base step
 const int MAX_DELAY = 5000;      // maximum mindelay or maxdelay
 const int MAX_THUMBRANGE = 500;  // maximum thumbrange
-const int MIN_DIRWD = 50;        // minimum dirwinwd
+const int MIN_DIRWD = 10;        // minimum dirwinwd
 
 // Golly uses wxTimers to control the speed of generating patterns, drawing cells,
 // playing timelines, etc.  The value defined below will cause the timers to fire

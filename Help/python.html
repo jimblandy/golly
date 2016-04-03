@@ -218,10 +218,10 @@ or you can search for individual commands alphabetically:
 <a href="#getselrect"><b>getselrect</b></a><br>
 <a href="#getstep"><b>getstep</b></a><br>
 <a href="#getstring"><b>getstring</b></a><br>
+<a href="#getview"><b>getview</b></a><br>
 <a href="#getwidth"><b>getwidth</b></a><br>
 <a href="#getxy"><b>getxy</b></a><br>
-<a href="#hash"><b>hash</b></a><br>
-<a href="#help"><b>help</b></a>
+<a href="#hash"><b>hash</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
@@ -265,6 +265,7 @@ or you can search for individual commands alphabetically:
 <a href="#setpos"><b>setpos</b></a><br>
 <a href="#setrule"><b>setrule</b></a><br>
 <a href="#setstep"><b>setstep</b></a><br>
+<a href="#setview"><b>setview</b></a><br>
 <a href="#show"><b>show</b></a><br>
 <a href="#shrink"><b>shrink</b></a><br>
 <a href="#step"><b>step</b></a><br>
@@ -799,7 +800,7 @@ Return the current rule as a string in canonical format.
 
 <a name="getwidth"></a><p><dt><b>getwidth()</b></dt>
 <dd>
-Return the width of the current universe (0 if unbounded).
+Return the width (in cells) of the current universe (0 if unbounded).
 </dd>
 <dd> Example: <b>wd = g.getwidth()</b></dd>
 </dd>
@@ -807,7 +808,7 @@ Return the width of the current universe (0 if unbounded).
 
 <a name="getheight"></a><p><dt><b>getheight()</b></dt>
 <dd>
-Return the height of the current universe (0 if unbounded).
+Return the height (in cells) of the current universe (0 if unbounded).
 </dd>
 <dd> Example: <b>ht = g.getheight()</b></dd>
 </dd>
@@ -878,6 +879,21 @@ Return True if the given rectangle is completely visible in the viewport.
 The rectangle must be a list of the form [x,y,width,height].
 </dd>
 <dd> Example: <b>if g.visrect( [0,0,44,55] ): . . .</b></dd>
+</p>
+
+<a name="setview"></a><p><dt><b>setview(<i>wd, ht</i>)</b></dt>
+<dd>
+Set the pixel width and height of the viewport (the main window will be
+resized accordingly).
+</dd>
+<dd> Example: <b>g.setview(32*32, 32*30)</b></dd>
+</p>
+
+<a name="getview"></a><p><dt><b>getview()</b></dt>
+<dd>
+Return the pixel width and height of the viewport.
+</dd>
+<dd> Example: <b>wd, ht = g.getview()</b></dd>
 </p>
 
 <a name="autoupdate"></a><p><dt><b>autoupdate(<i>bool</i>)</b></dt>
@@ -1264,14 +1280,6 @@ Show the given string in a modal information dialog.
 Useful for displaying multi-line results.
 </dd>
 <dd> Example: <b>g.note("Line 1\nLine 2\nLine 3")</b></dd>
-</p>
-
-<a name="help"></a><p><dt><b>help(<i>htmlfile</i>)</b></dt>
-<dd>
-Display the given HTML file in the help window.
-A non-absolute path is relative to the location of the script.
-</dd>
-<dd> Example: <b>g.help("results.html")</b></dd>
 </p>
 
 <a name="check"></a><p><dt><b>check(<i>bool</i>)</b></dt>
