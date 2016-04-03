@@ -424,11 +424,13 @@ Paste the clipboard pattern at x,y using the given mode ("and", "copy", "or", "x
 <dd> Example: <b>g.paste(0, 0, "or")</b></dd>
 </p>
 
-<a name="shrink"></a><p><dt><b>shrink()</b></dt>
+<a name="shrink"></a><p><dt><b>shrink(<i>remove_if_empty=false</i>)</b></dt>
 <dd>
 Shrink the current selection to the smallest rectangle enclosing all of the
-selection's live cells.
+selection's live cells.  If the selection has no live cells then the optional
+parameter specifies whether the selection remains unchanged or is removed.
 </dd>
+<dd> Example: <b>if #g.getselrect() > 0 then g.shrink(true) end</b></dd>
 </p>
 
 <a name="randfill"></a><p><dt><b>randfill(<i>percentage</i>)</b></dt>

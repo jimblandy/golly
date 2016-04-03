@@ -510,9 +510,13 @@ static int g_paste(lua_State* L)
 static int g_shrink(lua_State* L)
 {
     CheckEvents(L);
+    
+    bool remove_if_empty = false;
+    if (lua_gettop(L) > 0) remove_if_empty = lua_toboolean(L, 1) ? true : false;
 
     if (viewptr->SelectionExists()) {
-        viewptr->ShrinkSelection(false);    // false == don't fit in viewport
+        currlayer->currsel.Shrink(false, remove_if_empty);
+                               // false == don't fit in viewport
         DoAutoUpdate();
     } else {
         GollyError(L, "shrink error: no selection.");

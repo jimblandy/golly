@@ -846,10 +846,12 @@ static PyObject* py_shrink(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     
-    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+    int remove_if_empty = 0;
+    if (!PyArg_ParseTuple(args, (char*)"|i", &remove_if_empty)) return NULL;
     
     if (viewptr->SelectionExists()) {
-        viewptr->ShrinkSelection(false);    // false == don't fit in viewport
+        currlayer->currsel.Shrink(false, remove_if_empty != 0);
+                               // false == don't fit in viewport
         DoAutoUpdate();
     } else {
         PYTHON_ERROR("shrink error: no selection.");

@@ -799,7 +799,7 @@ void Selection::Fit()
 
 // -----------------------------------------------------------------------------
 
-void Selection::Shrink(bool fit)
+void Selection::Shrink(bool fit, bool remove_if_empty)
 {
     if (!exists) return;
     
@@ -812,8 +812,12 @@ void Selection::Shrink(bool fit)
     
     // check if there is no pattern
     if (currlayer->algo->isEmpty()) {
-        statusptr->ErrorMessage(empty_selection);
-        if (fit) viewptr->FitSelection();
+        if (remove_if_empty) {
+            viewptr->RemoveSelection();
+        } else {
+            statusptr->ErrorMessage(empty_selection);
+            if (fit) viewptr->FitSelection();
+        }
         return;
     }
     
@@ -830,7 +834,7 @@ void Selection::Shrink(bool fit)
         viewptr->RememberNewSelection(_("Shrink Selection"));
         viewptr->DisplaySelectionSize();
         if (fit)
-            viewptr->FitSelection();   // calls UpdateEverything
+            viewptr->FitSelection();
         else
             mainptr->UpdatePatternAndStatus();
         return;
@@ -838,8 +842,12 @@ void Selection::Shrink(bool fit)
     
     // check if selection is completely outside pattern edges
     if (Outside(top, left, bottom, right)) {
-        statusptr->ErrorMessage(empty_selection);
-        if (fit) viewptr->FitSelection();
+        if (remove_if_empty) {
+            viewptr->RemoveSelection();
+        } else {
+            statusptr->ErrorMessage(empty_selection);
+            if (fit) viewptr->FitSelection();
+        }
         return;
     }
     
@@ -883,8 +891,14 @@ void Selection::Shrink(bool fit)
     // copy live cells in selection to temporary universe
     if ( viewptr->CopyRect(top.toint(), left.toint(), bottom.toint(), right.toint(),
                            currlayer->algo, tempalgo, false, _("Copying selection")) ) {
-        if ( tempalgo->isEmpty() ) {
-            statusptr->ErrorMessage(empty_selection);
+        if (tempalgo->isEmpty()) {
+            if (remove_if_empty) {
+                viewptr->RemoveSelection();
+                delete tempalgo;
+                return;
+            } else {
+                statusptr->ErrorMessage(empty_selection);
+            }
         } else {
             viewptr->SaveCurrentSelection();
             tempalgo->findedges(&seltop, &selleft, &selbottom, &selright);

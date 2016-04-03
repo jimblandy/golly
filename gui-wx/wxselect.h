@@ -93,9 +93,10 @@ public:
     void Fit();
     // fit the selection inside the current viewport
     
-    void Shrink(bool fit);
+    void Shrink(bool fit, bool remove_if_empty = false);
     // shrink the selection so it just encloses all the live cells
-    // and optionally fit the new selection inside the current viewport
+    // and optionally fit the new selection inside the current viewport;
+    // if remove_if_empty is true then an empty selection is removed
     
     bool Visible(wxRect* visrect);
     // return true if the selection is visible in the current viewport
