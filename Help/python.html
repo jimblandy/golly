@@ -154,7 +154,13 @@ Control menu.
 
 <p>
 This section describes all the commands that can be used in a script after
-importing the <b>golly</b> module.  Commands are grouped by function
+importing the <b>golly</b> module.  The examples below assume you've done the
+import by including this line:
+<p><dd>
+<b>import golly as g</b>
+</dd>
+<p>
+Commands are grouped by function
 (<a href="#filing"><b>filing</b></a>,
 <a href="#editing"><b>editing</b></a>,
 <a href="#control"><b>control</b></a>,
@@ -298,7 +304,7 @@ The 2nd parameter is optional (default = False) and specifies if the given
 pattern or zip file should be remembered in the Open Recent submenu,
 or in the Run Recent submenu if the file is a script.
 </dd>
-<dd> Example: <b>golly.open("my-patterns/foo.rle")</b></dd>
+<dd> Example: <b>g.open("my-patterns/foo.rle")</b></dd>
 </p>
 
 <a name="save"></a><p><dt><b>save(<i>filename, format, remember=False</i>)</b></dt>
@@ -322,7 +328,7 @@ should be remembered in the Open Recent submenu.
 If the <b>savexrle</b> option is True then extended RLE format is used
 (see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
 </dd>
-<dd> Example: <b>golly.save("foo.rle", "rle", True)</b></dd>
+<dd> Example: <b>g.save("foo.rle", "rle", True)</b></dd>
 </p>
 
 <a name="opendialog"></a><p><dt><b>opendialog(<i>title, filetypes, initialdir, initialfname, mustexist=True</i>)</b></dt>
@@ -336,8 +342,8 @@ If the given file type is "dir" then the dialog lets the user choose a directory
 rather than a file.
 If the user cancels the dialog, the return value will be an empty string.
 </dd>
-<dd> Example: <b>fname = golly.opendialog("Open MCell File", "MCell files (*.mcl)|*.mcl", "C:\\Temp", "sample.mcl")</b></dd>
-<dd> Example: <b>dirname = golly.opendialog("Choose a folder", "dir");</b></dd>
+<dd> Example: <b>fname = g.opendialog("Open MCell File", "MCell files (*.mcl)|*.mcl", "C:\\Temp", "sample.mcl")</b></dd>
+<dd> Example: <b>dirname = g.opendialog("Choose a folder", "dir");</b></dd>
 </p>
 
 <a name="savedialog"></a><p><dt><b>savedialog(<i>title, filetypes, initialdir, initialfname, suppressprompt=False</i>)</b></dt>
@@ -349,14 +355,14 @@ If a file already exists at the chosen location, an Overwrite? query will be dis
 unless the 5th parameter (default = False) is set to True.
 If the user cancels the dialog, the return value will be an empty string.
 </dd>
-<dd> Example: <b>fname = golly.savedialog("Save text file", "Text files (*.txt;*.csv)|*.txt;*.csv", "C:\\Temp", "Params.txt", 1)</b></dd>
+<dd> Example: <b>fname = g.savedialog("Save text file", "Text files (*.txt;*.csv)|*.txt;*.csv", "C:\\Temp", "Params.txt", 1)</b></dd>
 </p>
 
 <a name="load"></a><p><dt><b>load(<i>filename</i>)</b></dt>
 <dd>
 Read the given pattern file and return a cell list.
 </dd>
-<dd> Example: <b>blinker = golly.load("blinker.rle")</b></dd>
+<dd> Example: <b>blinker = g.load("blinker.rle")</b></dd>
 </p>
 
 <a name="store"></a><p><dt><b>store(<i>cell_list, filename</i>)</b></dt>
@@ -365,7 +371,7 @@ Write the given cell list to the specified file in RLE format.
 If the <b>savexrle</b> option is True then extended RLE format is used
 (see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
 </dd>
-<dd> Example: <b>golly.store(clist, "foo.rle")</b></dd>
+<dd> Example: <b>g.store(clist, "foo.rle")</b></dd>
 </p>
 
 <a name="getdir"></a><p><dt><b>getdir(<i>dirname</i>)</b></dt>
@@ -414,7 +420,7 @@ set in <a href="prefs:control">Preferences > Control</a>.
 In each case a full path is returned, terminated by the appropriate path separator
 for the current platform.
 </dd>
-<dd> Example: <b>golly.open(golly.getdir("app") + "Patterns/Life/Breeders/breeder.lif")</b></dd>
+<dd> Example: <b>g.open(g.getdir("app") + "Patterns/Life/Breeders/breeder.lif")</b></dd>
 </p>
 
 <a name="setdir"></a><p><dt><b>setdir(<i>dirname, dirpath</i>)</b></dt>
@@ -423,7 +429,7 @@ Set the specified directory to the given path (which must be a full path to
 an existing directory).  All the directory names listed above are allowed,
 except for "app", "data" and "temp".
 </dd>
-<dd> Example: <b>golly.setdir("download", "/path/to/my-downloads/")</b></dd>
+<dd> Example: <b>g.setdir("download", "/path/to/my-downloads/")</b></dd>
 </p>
 
 <p><a name="editing"></a>&nbsp;<br>
@@ -434,7 +440,7 @@ EDITING COMMANDS
 Create a new, empty universe and set the window title.
 If the given title is empty then the current title won't change.
 </dd>
-<dd> Example: <b>golly.new("test-pattern")</b></dd>
+<dd> Example: <b>g.new("test-pattern")</b></dd>
 </p>
 
 <a name="cut"></a><p><dt><b>cut()</b></dt>
@@ -453,14 +459,14 @@ Copy the current selection to the clipboard.
 <dd>
 Clear inside (where = 0) or outside (where = 1) the current selection.
 </dd>
-<dd> Example: <b>golly.clear(1)</b></dd>
+<dd> Example: <b>g.clear(1)</b></dd>
 </p>
 
 <a name="paste"></a><p><dt><b>paste(<i>x, y, mode</i>)</b></dt>
 <dd>
 Paste the clipboard pattern at x,y using the given mode ("and", "copy", "or", "xor").
 </dd>
-<dd> Example: <b>golly.paste(0, 0, "or")</b></dd>
+<dd> Example: <b>g.paste(0, 0, "or")</b></dd>
 </p>
 
 <a name="shrink"></a><p><dt><b>shrink(<i>remove_if_empty=False</i>)</b></dt>
@@ -469,7 +475,7 @@ Shrink the current selection to the smallest rectangle enclosing all of the
 selection's live cells.  If the selection has no live cells then the optional
 parameter specifies whether the selection remains unchanged or is removed.
 </dd>
-<dd> Example: <b>if len(golly.getselrect()) > 0: golly.shrink(True)</b></dd>
+<dd> Example: <b>if len(g.getselrect()) > 0: g.shrink(True)</b></dd>
 </p>
 
 <a name="randfill"></a><p><dt><b>randfill(<i>percentage</i>)</b></dt>
@@ -477,7 +483,7 @@ parameter specifies whether the selection remains unchanged or is removed.
 Randomly fill the current selection to a density specified by the given
 percentage (1 to 100).
 </dd>
-<dd> Example: <b>golly.randfill(50)</b></dd>
+<dd> Example: <b>g.randfill(50)</b></dd>
 </p>
 
 <a name="flip"></a><p><dt><b>flip(<i>direction</i>)</b></dt>
@@ -498,7 +504,7 @@ anticlockwise (direction = 1).
 Advance the pattern in the given cell list by the specified number of generations
 and return the resulting cell list.
 </dd>
-<dd> Example: <b>newpatt = golly.evolve(currpatt, 100)</b></dd>
+<dd> Example: <b>newpatt = g.evolve(currpatt, 100)</b></dd>
 </p>
 
 <a name="join"></a><p><dt><b>join(<i>cell_list1, cell_list2</i>)</b></dt>
@@ -510,7 +516,7 @@ but with one exception: if both lists have no cells then the result is []
 (an empty one-state list) rather than [0].  See <a href="#celllists">below</a>
 for a description of one-state and multi-state cell lists.
 </dd>
-<dd> Example: <b>result = golly.join(part1, part2)</b></dd>
+<dd> Example: <b>result = g.join(part1, part2)</b></dd>
 </p>
 
 <a name="transform"></a><p><dt><b>transform(<i>cell_list, x0, y0, axx=1, axy=0, ayx=0, ayy=1</i>)</b></dt>
@@ -519,14 +525,14 @@ Apply an affine transformation to the given cell list and return the resulting c
 For each x,y cell in the input list the corresponding xn,yn cell in the output list
 is calculated as xn = x0 + x*axx + y*axy, yn = y0 + x*ayx + y*ayy.
 </dd>
-<dd> Example: <b>rot_blinker = golly.transform(blinker, 0, 0, 0, -1, 1, 0)</b></dd>
+<dd> Example: <b>rot_blinker = g.transform(blinker, 0, 0, 0, -1, 1, 0)</b></dd>
 </p>
 
 <a name="parse"></a><p><dt><b>parse(<i>string, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1</i>)</b></dt>
 <dd>
 Parse an RLE or Life 1.05 string and return an optionally transformed cell list.
 </dd>
-<dd> Example: <b>blinker = golly.parse("3o!")</b></dd>
+<dd> Example: <b>blinker = g.parse("3o!")</b></dd>
 </p>
 
 <a name="putcells"></a><p><dt><b>putcells(<i>cell_list, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1, mode="or"</i>)</b></dt>
@@ -534,7 +540,7 @@ Parse an RLE or Life 1.05 string and return an optionally transformed cell list.
 Paste the given cell list into the current universe using an optional affine transformation
 and optional mode ("and", "copy", "not", "or", "xor").
 </dd>
-<dd> Example: <b>golly.putcells(currpatt, 6, -40, 1, 0, 0, 1, "xor")</b></dd>
+<dd> Example: <b>g.putcells(currpatt, 6, -40, 1, 0, 0, 1, "xor")</b></dd>
 </p>
 
 <a name="getcells"></a><p><dt><b>getcells(<i>rect_list</i>)</b></dt>
@@ -543,7 +549,7 @@ Return any live cells in the specified rectangle as a cell list.
 The given list can be empty (in which case the cell list is empty)
 or it must represent a valid rectangle of the form [x,y,width,height].
 </dd>
-<dd> Example: <b>clist = golly.getcells( golly.getrect() )</b></dd>
+<dd> Example: <b>clist = g.getcells( g.getrect() )</b></dd>
 </p>
 
 <a name="getclip"></a><p><dt><b>getclip()</b></dt>
@@ -555,7 +561,7 @@ have empty borders, or it might even be empty).
 If the clipboard data is multi-state but all cell states happen to
 be zero then the returned cell list is [wd,ht] rather than [wd,ht,0].
 </dd>
-<dd> Example: <b>clist = golly.getclip()</b></dd>
+<dd> Example: <b>clist = g.getclip()</b></dd>
 </p>
 
 <a name="hash"></a><p><dt><b>hash(<i>rect_list</i>)</b></dt>
@@ -567,7 +573,7 @@ detect pattern equality, but there is a tiny probability that two different
 patterns will have the same hash value, so you might need to use additional
 (slower) tests to check for true pattern equality.
 </dd>
-<dd> Example: <b>h = golly.hash( golly.getrect() )</b></dd>
+<dd> Example: <b>h = g.hash( g.getrect() )</b></dd>
 </p>
 
 <a name="select"></a><p><dt><b>select(<i>rect_list</i>)</b></dt>
@@ -575,7 +581,7 @@ patterns will have the same hash value, so you might need to use additional
 Create a selection if the given list represents a valid rectangle of the form
 [x,y,width,height] or remove the current selection if the given list is [].
 </dd>
-<dd> Example: <b>golly.select( [-10,-10,20,20] )</b></dd>
+<dd> Example: <b>g.select( [-10,-10,20,20] )</b></dd>
 </p>
 
 <a name="getrect"></a><p><dt><b>getrect()</b></dt>
@@ -584,7 +590,7 @@ Return the current pattern's bounding box as a list.
 If there is no pattern then the list is empty ([]), otherwise the
 list is of the form [x,y,width,height].
 </dd>
-<dd> Example: <b>if len(golly.getrect()) == 0: golly.show("No pattern.")</b></dd>
+<dd> Example: <b>if len(g.getrect()) == 0: g.show("No pattern.")</b></dd>
 </p>
 
 <a name="getselrect"></a><p><dt><b>getselrect()</b></dt>
@@ -593,7 +599,7 @@ Return the current selection rectangle as a list.
 If there is no selection then the list is empty ([]), otherwise the
 list is of the form [x,y,width,height].
 </dd>
-<dd> Example: <b>if len(golly.getselrect()) == 0: golly.show("No selection.")</b></dd>
+<dd> Example: <b>if len(g.getselrect()) == 0: g.show("No selection.")</b></dd>
 </p>
 
 <a name="setcell"></a><p><dt><b>setcell(<i>x, y, state</i>)</b></dt>
@@ -607,7 +613,7 @@ Set the given cell to the specified state (0 for a dead cell, 1 for a live cell)
 Return the state of the given cell.
 The following example inverts the state of the cell at 0,0.
 </dd>
-<dd> Example: <b>golly.setcell(0, 0, 1 - golly.getcell(0, 0))</b></dd>
+<dd> Example: <b>g.setcell(0, 0, 1 - g.getcell(0, 0))</b></dd>
 </p>
 
 <a name="setcursor"></a><p><dt><b>setcursor(<i>string</i>)</b></dt>
@@ -615,7 +621,7 @@ The following example inverts the state of the cell at 0,0.
 Set the current cursor according to the given string and return the old cursor string.
 The given string must match one of the names in the Cursor Mode menu.
 </dd>
-<dd> Example: <b>oldcurs = golly.setcursor("Draw")</b></dd>
+<dd> Example: <b>oldcurs = g.setcursor("Draw")</b></dd>
 </p>
 
 <a name="getcursor"></a><p><dt><b>getcursor()</b></dt>
@@ -633,7 +639,7 @@ Run the current pattern for the specified number of generations.
 Intermediate generations are never displayed, and the final generation
 is only displayed if the current <b>autoupdate</b> setting is True.
 </dd>
-<dd> Example: <b>golly.run(100)</b></dd>
+<dd> Example: <b>g.run(100)</b></dd>
 </p>
 
 <a name="step"></a><p><dt><b>step()</b></dt>
@@ -652,14 +658,14 @@ step, but that delay is ignored by the <b>run</b> and <b>step</b> commands.
 Golly will reset the step exponent to 0 upon creating a new pattern,
 loading a pattern file, or switching to a different algorithm.
 </dd>
-<dd> Example: <b>golly.setstep(0)</b></dd>
+<dd> Example: <b>g.setstep(0)</b></dd>
 </p>
 
 <a name="getstep"></a><p><dt><b>getstep()</b></dt>
 <dd>
 Return the current step exponent.
 </dd>
-<dd> Example: <b>golly.setstep( golly.getstep() + 1 )</b></dd>
+<dd> Example: <b>g.setstep( g.getstep() + 1 )</b></dd>
 </p>
 
 <a name="setbase"></a><p><dt><b>setbase(<i>base</i>)</b></dt>
@@ -669,7 +675,7 @@ Golly will restore the default base step
 (set in <a href="prefs:control">Preferences > Control</a>) upon creating
 a new pattern, loading a pattern file, or switching to a different algorithm.
 </dd>
-<dd> Example: <b>golly.setbase(2)</b></dd>
+<dd> Example: <b>g.setbase(2)</b></dd>
 </p>
 
 <a name="getbase"></a><p><dt><b>getbase()</b></dt>
@@ -683,7 +689,7 @@ Return the current base step.
 Advance inside (where = 0) or outside (where = 1) the current selection by the
 specified number of generations.  The generation count does not change.
 </dd>
-<dd> Example: <b>golly.advance(0, 3)</b></dd>
+<dd> Example: <b>g.advance(0, 3)</b></dd>
 </p>
 
 <a name="reset"></a><p><dt><b>reset()</b></dt>
@@ -703,7 +709,7 @@ Commas and other punctuation marks can be used to make a large number
 more readable.  Include a leading +/- sign to specify a number relative
 to the current generation count.
 </dd>
-<dd> Example: <b>golly.setgen("-1,000")</b></dd>
+<dd> Example: <b>g.setgen("-1,000")</b></dd>
 </p>
 
 <a name="getgen"></a><p><dt><b>getgen(<i>sepchar='\0'</i>)</b></dt>
@@ -711,13 +717,13 @@ to the current generation count.
 Return the current generation count as a string.
 The optional parameter (default = '\0') specifies a separator
 character that can be used to make the resulting string more readable.
-For example, <b>golly.getgen(',')</b> would return a string like "1,234,567"
-but <b>golly.getgen()</b> would return "1234567".  Use the latter call if
+For example, <b>g.getgen(',')</b> would return a string like "1,234,567"
+but <b>g.getgen()</b> would return "1234567".  Use the latter call if
 you want to do arithmetic on the generation count because then it's
 easy to use <b>int</b> to convert the string to an integer.
 Note that Python supports arbitrarily large integers.
 </dd>
-<dd> Example: <b>gen = int( golly.getgen() )</b></dd>
+<dd> Example: <b>gen = int( g.getgen() )</b></dd>
 </p>
 
 <a name="getpop"></a><p><dt><b>getpop(<i>sepchar='\0'</i>)</b></dt>
@@ -725,12 +731,12 @@ Note that Python supports arbitrarily large integers.
 Return the current population as a string.
 The optional parameter (default = '\0') specifies a separator
 character that can be used to make the resulting string more readable.
-For example, <b>golly.getpop(',')</b> would return a string like "1,234,567"
-but <b>golly.getpop()</b> would return "1234567".  Use the latter call if
+For example, <b>g.getpop(',')</b> would return a string like "1,234,567"
+but <b>g.getpop()</b> would return "1234567".  Use the latter call if
 you want to do arithmetic on the population count.
 The following example converts the population to a floating point number.
 </dd>
-<dd> Example: <b>pop = float( golly.getpop() )</b></dd>
+<dd> Example: <b>pop = float( g.getpop() )</b></dd>
 </p>
 
 <a name="empty"></a><p><dt><b>empty()</b></dt>
@@ -738,7 +744,7 @@ The following example converts the population to a floating point number.
 Return True if the universe is empty or False if there is at least one live cell.
 This is much more efficient than testing <b>getpop() == "0"</b>.
 </dd>
-<dd> Example: <b>if golly.empty(): golly.show("All cells are dead.")</b></dd>
+<dd> Example: <b>if g.empty(): g.show("All cells are dead.")</b></dd>
 </p>
 
 <a name="numstates"></a><p><dt><b>numstates()</b></dt>
@@ -746,14 +752,14 @@ This is much more efficient than testing <b>getpop() == "0"</b>.
 Return the number of cell states in the current universe.  This will be a
 number from 2 to 256, depending on the current algorithm and rule.
 </dd>
-<dd> Example: <b>maxstate = golly.numstates() - 1</b></dd>
+<dd> Example: <b>maxstate = g.numstates() - 1</b></dd>
 </p>
 
 <a name="numalgos"></a><p><dt><b>numalgos()</b></dt>
 <dd>
 Return the number of algorithms (ie. the number of items in the Set Algorithm menu).
 </dd>
-<dd> Example: <b>maxalgo = golly.numalgos() - 1</b></dd>
+<dd> Example: <b>maxalgo = g.numalgos() - 1</b></dd>
 </p>
 
 <a name="setalgo"></a><p><dt><b>setalgo(<i>string</i>)</b></dt>
@@ -761,7 +767,7 @@ Return the number of algorithms (ie. the number of items in the Set Algorithm me
 Set the current algorithm according to the given string which must match
 one of the names in the Set Algorithm menu.
 </dd>
-<dd> Example: <b>golly.setalgo("HashLife")</b></dd>
+<dd> Example: <b>g.setalgo("HashLife")</b></dd>
 </p>
 
 <a name="getalgo"></a><p><dt><b>getalgo(<i>index=current</i>)</b></dt>
@@ -769,7 +775,7 @@ one of the names in the Set Algorithm menu.
 Return the algorithm name at the given index in the Set Algorithm menu,
 or the current algorithm's name if no index is supplied.
 </dd>
-<dd> Example: <b>lastalgo = golly.getalgo( golly.numalgos() - 1 )</b></dd>
+<dd> Example: <b>lastalgo = g.getalgo( g.numalgos() - 1 )</b></dd>
 </p>
 
 <a name="setrule"></a><p><dt><b>setrule(<i>string</i>)</b></dt>
@@ -780,14 +786,14 @@ Golly will automatically switch to the first algorithm that does
 support the rule.  If no such algorithm can be found then you'll get
 an error message and the script will be aborted.
 </dd>
-<dd> Example: <b>golly.setrule("b3/s23")</b></dd>
+<dd> Example: <b>g.setrule("b3/s23")</b></dd>
 </p>
 
 <a name="getrule"></a><p><dt><b>getrule()</b></dt>
 <dd>
 Return the current rule as a string in canonical format.
 </dd>
-<dd> Example: <b>oldrule = golly.getrule()</b></dd>
+<dd> Example: <b>oldrule = g.getrule()</b></dd>
 </dd>
 </p>
 
@@ -795,7 +801,7 @@ Return the current rule as a string in canonical format.
 <dd>
 Return the width of the current universe (0 if unbounded).
 </dd>
-<dd> Example: <b>wd = golly.getwidth()</b></dd>
+<dd> Example: <b>wd = g.getwidth()</b></dd>
 </dd>
 </p>
 
@@ -803,7 +809,7 @@ Return the width of the current universe (0 if unbounded).
 <dd>
 Return the height of the current universe (0 if unbounded).
 </dd>
-<dd> Example: <b>ht = golly.getheight()</b></dd>
+<dd> Example: <b>ht = g.getheight()</b></dd>
 </dd>
 </p>
 
@@ -820,7 +826,7 @@ Apart from a leading minus sign, most non-digits are simply ignored;
 only alphabetic characters will cause an error message.
 Note that positive y values increase downwards in Golly's coordinate system.
 </dd>
-<dd> Example: <b>golly.setpos("1,000,000,000,000", "-123456")</b></dd>
+<dd> Example: <b>g.setpos("1,000,000,000,000", "-123456")</b></dd>
 </p>
 
 <a name="getpos"></a><p><dt><b>getpos(<i>sepchar='\0'</i>)</b></dt>
@@ -829,13 +835,13 @@ Return the x,y position of the viewport's middle cell in the form
 of a Python tuple containing two strings.
 The optional parameter (default = '\0') specifies a separator
 character that can be used to make the resulting strings more readable.
-For example, <b>golly.getpos(',')</b> might return two strings like "1,234"
-and "-5,678" but <b>golly.getpos()</b> would return "1234" and "-5678".
+For example, <b>g.getpos(',')</b> might return two strings like "1,234"
+and "-5,678" but <b>g.getpos()</b> would return "1234" and "-5678".
 Use the latter call if you want to do arithmetic on the x,y values,
 or just use the <b>getposint()</b> function defined
 in the <a href="#glife"><b>glife</b></a> package.
 </dd>
-<dd> Example: <b>x, y = golly.getpos()</b></dd>
+<dd> Example: <b>x, y = g.getpos()</b></dd>
 </p>
 
 <a name="setmag"></a><p><dt><b>setmag(<i>mag</i>)</b></dt>
@@ -843,14 +849,14 @@ in the <a href="#glife"><b>glife</b></a> package.
 Set the magnification, where 0 corresponds to the scale 1:1, 1 = 1:2, -1 = 2:1, etc.
 The maximum allowed magnification is 5 (= 1:32).
 </dd>
-<dd> Example: <b>golly.setmag(0)</b></dd>
+<dd> Example: <b>g.setmag(0)</b></dd>
 </p>
 
 <a name="getmag"></a><p><dt><b>getmag()</b></dt>
 <dd>
 Return the current magnification.
 </dd>
-<dd> Example: <b>golly.setmag( golly.getmag() - 1 )</b></dd>
+<dd> Example: <b>g.setmag( g.getmag() - 1 )</b></dd>
 </p>
 
 <a name="fit"></a><p><dt><b>fit()</b></dt>
@@ -871,7 +877,7 @@ The script aborts with an error message if there is no selection.
 Return True if the given rectangle is completely visible in the viewport.
 The rectangle must be a list of the form [x,y,width,height].
 </dd>
-<dd> Example: <b>if golly.visrect( [0,0,44,55] ): . . .</b></dd>
+<dd> Example: <b>if g.visrect( [0,0,44,55] ): . . .</b></dd>
 </p>
 
 <a name="autoupdate"></a><p><dt><b>autoupdate(<i>bool</i>)</b></dt>
@@ -881,7 +887,7 @@ If the given parameter is True then Golly will automatically update the
 viewport and the status bar after each command that changes the
 universe or viewport in some way.  Useful for debugging Python scripts.
 </dd>
-<dd> Example: <b>golly.autoupdate(True)</b></dd>
+<dd> Example: <b>g.autoupdate(True)</b></dd>
 </p>
 
 <a name="update"></a><p><dt><b>update()</b></dt>
@@ -905,7 +911,7 @@ location, cursor mode, etc.
 The step exponent is set to 0, there is no selection,
 no origin offset, and the layer's initial name is "untitled".
 </dd>
-<dd> Example: <b>newindex = golly.addlayer()</b></dd>
+<dd> Example: <b>newindex = g.addlayer()</b></dd>
 </p>
 
 <a name="clone"></a><p><dt><b>clone()</b></dt>
@@ -919,7 +925,7 @@ Each cloned layer does however have a separate viewport, so the same
 pattern can be viewed at different scales and locations
 (at the same time if layers are tiled).
 </dd>
-<dd> Example: <b>cloneindex = golly.clone()</b></dd>
+<dd> Example: <b>cloneindex = g.clone()</b></dd>
 </p>
 
 <a name="duplicate"></a><p><dt><b>duplicate()</b></dt>
@@ -929,7 +935,7 @@ current layer's pattern.
 Also duplicates all the current settings but, unlike a cloned layer,
 the settings are not kept synchronized.
 </dd>
-<dd> Example: <b>dupeindex = golly.duplicate()</b></dd>
+<dd> Example: <b>dupeindex = g.duplicate()</b></dd>
 </p>
 
 <a name="dellayer"></a><p><dt><b>dellayer()</b></dt>
@@ -944,7 +950,7 @@ layer (unless layer 0 was deleted).
 Move a specified layer to a new position in the layer sequence.
 The chosen layer becomes the current layer.
 </dd>
-<dd> Example: <b>golly.movelayer(1, 0)</b></dd>
+<dd> Example: <b>g.movelayer(1, 0)</b></dd>
 </p>
 
 <a name="setlayer"></a><p><dt><b>setlayer(<i>index</i>)</b></dt>
@@ -952,21 +958,21 @@ The chosen layer becomes the current layer.
 Set the current layer to the layer with the given index,
 an integer from 0 to <b>numlayers()</b> - 1.
 </dd>
-<dd> Example: <b>golly.setlayer(0)</b></dd>
+<dd> Example: <b>g.setlayer(0)</b></dd>
 </p>
 
 <a name="getlayer"></a><p><dt><b>getlayer()</b></dt>
 <dd>
 Return the index of the current layer, an integer from 0 to <b>numlayers()</b> - 1.
 </dd>
-<dd> Example: <b>currindex = golly.getlayer()</b></dd>
+<dd> Example: <b>currindex = g.getlayer()</b></dd>
 </p>
 
 <a name="numlayers"></a><p><dt><b>numlayers()</b></dt>
 <dd>
 Return the number of existing layers, an integer from 1 to <b>maxlayers()</b>.
 </dd>
-<dd> Example: <b>if golly.numlayers() > 1: golly.setoption("tilelayers",1)</b></dd>
+<dd> Example: <b>if g.numlayers() > 1: g.setoption("tilelayers",1)</b></dd>
 </p>
 
 <a name="maxlayers"></a><p><dt><b>maxlayers()</b></dt>
@@ -980,7 +986,7 @@ Return the maximum number of layers (10 in this implementation).
 Set the name of the given layer, or the current layer's name
 if no index is supplied.
 </dd>
-<dd> Example: <b>golly.setname("temporary")</b></dd>
+<dd> Example: <b>g.setname("temporary")</b></dd>
 </p>
 
 <a name="getname"></a><p><dt><b>getname(<i>index=current</i>)</b></dt>
@@ -988,7 +994,7 @@ if no index is supplied.
 Return the given layer's name, or the current layer's name
 if no index is supplied.
 </dd>
-<dd> Example: <b>if golly.getname() == "temporary": golly.dellayer()</b></dd>
+<dd> Example: <b>if g.getname() == "temporary": g.dellayer()</b></dd>
 </p>
 
 <a name="setcolors"></a><p><dt><b>setcolors(<i>color_list</i>)</b></dt>
@@ -1011,13 +1017,13 @@ of the default colors for the current layer's algorithm.
 </dd>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td>Example: <b>golly.setcolors([1,0,0,0, 2,0,0,0])</b></td><td width=20>
+<tr><td>Example: <b>g.setcolors([1,0,0,0, 2,0,0,0])</b></td><td width=20>
                         </td><td># set states 1 and 2 to black</td></tr>
-<tr><td>Example: <b>golly.setcolors([-1,0,255,0])</b></td><td width=20>
+<tr><td>Example: <b>g.setcolors([-1,0,255,0])</b></td><td width=20>
                         </td><td># set all live states to green</td></tr>
-<tr><td>Example: <b>golly.setcolors([255,0,0, 0,0,255])</b></td><td width=20>
+<tr><td>Example: <b>g.setcolors([255,0,0, 0,0,255])</b></td><td width=20>
                         </td><td># live states vary from red to blue</td></tr>
-<tr><td>Example: <b>golly.setcolors([])</b></td><td width=20>
+<tr><td>Example: <b>g.setcolors([])</b></td><td width=20>
                         </td><td># restore default colors</td></tr>
 </table>
 </dd>
@@ -1041,8 +1047,8 @@ where N equals <b>numstates()</b> - 1.
 Note that the list returned by <b>getcolors</b> can be passed into <b>setcolors</b>;
 this makes it easy to save and restore colors.
 </dd>
-<dd> Example: <b>allcolors = golly.getcolors()</b></dd>
-<dd> Example: <b>deadcolor = golly.getcolors(0)</b></dd>
+<dd> Example: <b>allcolors = g.getcolors()</b></dd>
+<dd> Example: <b>deadcolor = g.getcolors(0)</b></dd>
 </p>
 
 <p><a name="miscellaneous"></a>&nbsp;<br>
@@ -1088,7 +1094,7 @@ Here are all the valid option names and their possible values:
 </table>
 </dd>
 <p>
-<dd> Example: <b>oldgrid = golly.setoption("showgrid", True)</b></dd>
+<dd> Example: <b>oldgrid = g.setoption("showgrid", True)</b></dd>
 </p>
 
 <a name="getoption"></a><p><dt><b>getoption(<i>name</i>)</b></dt>
@@ -1096,7 +1102,7 @@ Here are all the valid option names and their possible values:
 Return the current value of the given option.
 See above for a list of all the valid option names.
 </dd>
-<dd> Example: <b>if golly.getoption("autofit"): golly.fit()</b></dd>
+<dd> Example: <b>if g.getoption("autofit"): g.fit()</b></dd>
 </p>
 
 <a name="setcolor"></a><p><dt><b>setcolor(<i>name, r, g, b</i>)</b></dt>
@@ -1115,7 +1121,7 @@ Here is a list of all the valid color names and how they are used:
 </table>
 </dd>
 <p>
-<dd> Example: <b>oldrgb = golly.setcolor("HashLife", 255, 255, 255)</b></dd>
+<dd> Example: <b>oldrgb = g.setcolor("HashLife", 255, 255, 255)</b></dd>
 </p>
 
 <a name="getcolor"></a><p><dt><b>getcolor(<i>name</i>)</b></dt>
@@ -1123,21 +1129,21 @@ Here is a list of all the valid color names and how they are used:
 Return the current RGB values for the given color as a 3-tuple.
 See above for a list of all the valid color names.
 </dd>
-<dd> Example: <b>selr, selg, selb = golly.getcolor("select")</b></dd>
+<dd> Example: <b>selr, selg, selb = g.getcolor("select")</b></dd>
 </p>
 
 <a name="getclipstr"></a><p><dt><b>getclipstr()</b></dt>
 <dd>
 Return the current contents of the clipboard as an unmodified string.
 </dd>
-<dd> Example: <b>illegalRLE = golly.getclipstr()</b></dd>
+<dd> Example: <b>illegalRLE = g.getclipstr()</b></dd>
 </p>
 
 <a name="setclipstr"></a><p><dt><b>setclipstr(<i>string</i>)</b></dt>
 <dd>
 Copy an arbitrary string (not necessarily a cell pattern) directly to the clipboard.
 </dd>
-<dd> Example: <b>golly.setclipstr(correctedRLE)</b></dd>
+<dd> Example: <b>g.setclipstr(correctedRLE)</b></dd>
 </p>
 
 <a name="getstring"></a><p><dt><b>getstring(<i>prompt, initial="", title=""</i>)</b></dt>
@@ -1147,7 +1153,7 @@ If the initial string is supplied it will be shown and selected.
 If the title string is supplied it will be used in the dialog's title bar.
 The script will be aborted if the user hits the dialog's Cancel button.
 </dd>
-<dd> Example: <b>i = int( golly.getstring("Enter a number:", "100") )</b></dd>
+<dd> Example: <b>i = int( g.getstring("Enter a number:", "100") )</b></dd>
 </p>
 
 <a name="getevent"></a><p><dt><b>getevent(<i>get=True</i>)</b></dt>
@@ -1199,7 +1205,7 @@ The following examples show the strings returned after various user events:
 </table>
 </dd>
 <p>
-<dd> Example: <b>evt = golly.getevent()</b></dd>
+<dd> Example: <b>evt = g.getevent()</b></dd>
 </p>
 
 <a name="doevent"></a><p><dt><b>doevent(<i>event</i>)</b></dt>
@@ -1213,7 +1219,7 @@ Note that the cmd modifier corresponds to the command key on a Mac or
 the control key on Windows/Linux
 (this lets you write portable scripts that work on any platform).
 </dd>
-<dd> Example: <b>golly.doevent("key q cmd")</b> # quit Golly</dd>
+<dd> Example: <b>g.doevent("key q cmd")</b> # quit Golly</dd>
 </p>
 
 <a name="getxy"></a><p><dt><b>getxy()</b></dt>
@@ -1225,7 +1231,7 @@ coordinates separated by a space; eg. "-999 12345".
 See <a href="edit:Scripts/Python/draw-lines.py">draw-lines.py</a> for a good
 example of how to use this command.
 </dd>
-<dd> Example: <b>mousepos = golly.getxy()</b></dd>
+<dd> Example: <b>mousepos = g.getxy()</b></dd>
 </p>
 
 <a name="show"></a><p><dt><b>show(<i>message</i>)</b></dt>
@@ -1233,7 +1239,7 @@ example of how to use this command.
 Show the given string in the bottom line of the status bar.
 The status bar is automatically shown if necessary.
 </dd>
-<dd> Example: <b>golly.show("Hit any key to continue...")</b></dd>
+<dd> Example: <b>g.show("Hit any key to continue...")</b></dd>
 </p>
 
 <a name="error"></a><p><dt><b>error(<i>message</i>)</b></dt>
@@ -1241,7 +1247,7 @@ The status bar is automatically shown if necessary.
 Beep and show the given string in the bottom line of the status bar.
 The status bar is automatically shown if necessary.
 </dd>
-<dd> Example: <b>golly.error("The pattern is empty.")</b></dd>
+<dd> Example: <b>g.error("The pattern is empty.")</b></dd>
 </p>
 
 <a name="warn"></a><p><dt><b>warn(<i>message</i>)</b></dt>
@@ -1249,7 +1255,7 @@ The status bar is automatically shown if necessary.
 Beep and show the given string in a modal warning dialog.
 Useful for debugging Python scripts or displaying error messages.
 </dd>
-<dd> Example: <b>golly.warn("xxx = " + str(xxx))</b></dd>
+<dd> Example: <b>g.warn("xxx = " + str(xxx))</b></dd>
 </p>
 
 <a name="note"></a><p><dt><b>note(<i>message</i>)</b></dt>
@@ -1257,7 +1263,7 @@ Useful for debugging Python scripts or displaying error messages.
 Show the given string in a modal information dialog.
 Useful for displaying multi-line results.
 </dd>
-<dd> Example: <b>golly.note("Line 1\nLine 2\nLine 3")</b></dd>
+<dd> Example: <b>g.note("Line 1\nLine 2\nLine 3")</b></dd>
 </p>
 
 <a name="help"></a><p><dt><b>help(<i>htmlfile</i>)</b></dt>
@@ -1265,7 +1271,7 @@ Useful for displaying multi-line results.
 Display the given HTML file in the help window.
 A non-absolute path is relative to the location of the script.
 </dd>
-<dd> Example: <b>golly.help("results.html")</b></dd>
+<dd> Example: <b>g.help("results.html")</b></dd>
 </p>
 
 <a name="check"></a><p><dt><b>check(<i>bool</i>)</b></dt>
@@ -1277,7 +1283,7 @@ Typically used to prevent mouse clicks being seen at the wrong time.
 This should only be done for short durations because the script
 cannot be aborted while the setting is False.
 </dd>
-<dd> Example: <b>golly.check(False)</b></dd>
+<dd> Example: <b>g.check(False)</b></dd>
 </p>
 
 <a name="exit"></a><p><dt><b>exit(<i>message=""</i>)</b></dt>
@@ -1288,7 +1294,7 @@ along with a beep, just like the <a href="#error"><b>error</b></a> command.
 If no message is supplied, or if the string is empty, then there is no beep
 and the current status bar message will not be changed.
 </dd>
-<dd> Example: <b>if golly.empty(): golly.exit("There is no pattern.")</b></dd>
+<dd> Example: <b>if g.empty(): g.exit("There is no pattern.")</b></dd>
 </p>
 
 
@@ -1321,7 +1327,7 @@ See <a href="edit:Scripts/Python/tile.py">tile.py</a> for example.
 Note that all scripting commands return <b>[]</b> if the resulting
 cell list has no cells.  They never return <b>[0]</b>, although this
 is a perfectly valid multi-state cell list and all commands can input
-such a list.  For example, <b>newlist = golly.join(list1,[0])</b>
+such a list.  For example, <b>newlist = g.join(list1,[0])</b>
 can be used to convert a non-empty one-state list to multi-state.
 <p>
 One-state cell lists are normally used in a two-state universe, but
@@ -1372,8 +1378,8 @@ of useful synonyms and helper functions.  For example, consider this script:
 Here is the equivalent script without using <b>glife</b>:
 <p>
 <dd><b>import golly as g</b></dd>
-<dd><b>blinker = g.parse("3o!", 0, 0, 1, 0, 0, 1)</b></dd>
-<dd><b>g.putcells(blinker, 1, 2, 1, 0, 0, 1)</b></dd>
+<dd><b>blinker = g.parse("3o!")</b></dd>
+<dd><b>g.putcells(blinker, 1, 2)</b></dd>
 <dd><b>g.putcells(blinker, 6, 7, 0, -1,  1,  0)</b></dd>
 </p>
 <p>
@@ -1437,7 +1443,7 @@ When the module is stable you can remove or comment out the reload command.
 3.
 The escape key check to abort a running script is not done by Python but
 by each Golly scripting command.  This means that very long Python computations
-should call an occasional "no-op" command like <b>doevent("")</b> to allow the
+should call an occasional "no-op" command like <b>g.doevent("")</b> to allow the
 script to be aborted in a timely manner.
 
 <p>
