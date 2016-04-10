@@ -2,13 +2,14 @@
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Mar 2016.
 
 local g = gollylib()
+local gp = require "gpackage"
 
 -- assume one-state cell array (may change below)
 local multistate = false
 
 --------------------------------------------------------------------------------
 
-function clip_rb(cells, right, bottom)
+local function clip_rb(cells, right, bottom)
     -- set given cells except those outside given right and bottom edges
     local len = #cells
     local x = 1
@@ -39,11 +40,8 @@ end
 local selrect = g.getselrect()
 if #selrect == 0 then g.exit("There is no selection.") end
 
--- set selection edges
-local selleft = selrect[1]
-local seltop = selrect[2]
-local selright = selleft + selrect[3] - 1
-local selbottom = seltop + selrect[4] - 1
+-- get selection edges
+local selleft, seltop, selright, selbottom = gp.getedges(selrect)
 
 local pwidth, pheight, p = g.getclip()
 

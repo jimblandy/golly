@@ -337,8 +337,7 @@ static int g_store(lua_State* L)
 {
     CheckEvents(L);
     
-    // 1st arg is a cell array
-    luaL_checktype(L, 1, LUA_TTABLE);
+    luaL_checktype(L, 1, LUA_TTABLE);   // cell array
     int len = luaL_len(L, 1);
     
     const char* filename = luaL_checkstring(L, 2);
@@ -2418,6 +2417,20 @@ static int g_check(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_continue(lua_State* L)
+{
+    // do NOT call CheckEvents here
+
+	aborted = false;	// continue executing any remaining code
+
+	// error will be displayed when script ends
+	scripterr = wxString(luaL_checkstring(L, 1), wxConvLocal);
+    
+    return 0;   // no result
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_exit(lua_State* L)
 {
     // script will terminate so no point calling CheckEvents here
@@ -2535,6 +2548,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "note",         g_note },         // show given string in note dialog
     { "help",         g_help },         // show given HTML file in help window
     { "check",        g_check },        // allow event checking?
+    { "continue",     g_continue },     // continue executing code after a pcall error
     { "exit",         g_exit },         // exit script with optional error message
     {NULL, NULL}
 };
@@ -2572,6 +2586,19 @@ void RunLuaScript(const wxString& filepath)
     // luaL_dostring(L, "g = gollylib()");
     //
     // But it's ~10% slower to access functions because g is global.
+    
+    // append gollydir/Scripts/Lua/?/init.lua to package.path
+    // so scripts can do things like local gp = require "gpackage"
+    wxString pstring = wxT("package.path = package.path..';");
+    pstring += gollydir;
+    pstring += wxT("Scripts");
+    pstring += wxFILE_SEP_PATH;
+    pstring += wxT("Lua");
+    pstring += wxFILE_SEP_PATH;
+    pstring += wxT("?");
+    pstring += wxFILE_SEP_PATH;
+    pstring += wxT("init.lua'");
+    luaL_dostring(L, (const char*)pstring.mb_str(wxConvUTF8));
     
     if (luaL_dofile(L, (const char*)filepath.mb_str(wxConvUTF8))) {
         scripterr += wxString(lua_tostring(L, -1),wxConvLocal);

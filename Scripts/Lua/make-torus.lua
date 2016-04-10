@@ -5,12 +5,10 @@ local g = gollylib()
 
 local selrect = g.getselrect()
 if #selrect == 0 then g.exit("There is no selection.") end
-local x =  selrect[1]
-local y =  selrect[2]
-local wd = selrect[3]
-local ht = selrect[4]
 
+local x, y, wd, ht = table.unpack(selrect)
 local selcells = g.getcells(selrect)
+
 if not g.empty() then
     g.clear(0)
     g.clear(1)

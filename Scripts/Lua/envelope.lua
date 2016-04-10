@@ -71,24 +71,17 @@ end
 
 --------------------------------------------------------------------------------
 
-function envelope()
+local function envelope()
     -- draw stacked layers using same location and scale
     g.setoption("stacklayers", 1)
     
-    g.show("Hit 'Q' key to quit script...")
+    g.show("Hit escape key to stop script...")
     while true do
         g.run(1)
         if g.empty() then
             g.show("Pattern died out.")
             return
         end
-        
-        local e = g.getevent()
-        if e:find("key") == 1 then
-            local ch = e:match("^key (.+) ")
-            if ch == "q" then g.show("") return end
-        end
-        g.doevent(e)
         
         -- copy current pattern to envelope layer
         -- we temporarily disable event checking so thumb scrolling
@@ -119,10 +112,9 @@ local oldstatus = g.setoption("showstatusbar", 1)
 local oldlayerbar = g.setoption("showlayerbar", 0)
 local oldeditbar = g.setoption("showeditbar", 0)
 
-pcall(function () envelope() end)
--- the following code is NOT executed if user hits escape key
--- can this be fixed???!!!  maybe if g.getevent is called then Golly passes escape
--- key to it (ditto if script is stopped via stop button or menu item)
+local status, err = pcall(function () envelope() end)
+if err then g.continue(err) end
+-- the following code is executed even if error occurred or user aborted script
 
 -- restore original state of status/layer/edit bars
 g.setoption("showstatusbar", oldstatus)

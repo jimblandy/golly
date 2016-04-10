@@ -2,6 +2,7 @@
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Mar 2016.
 
 local g = gollylib()
+local gp = require "gpackage"
 
 local selrect = g.getselrect()
 if #selrect == 0 then g.exit("There is no selection.") end
@@ -15,35 +16,7 @@ if (#selpatt & 1) == 1 then inc = 3 end
 
 --------------------------------------------------------------------------------
 
--- return a rect array with the minimal bounding box of given pattern
-
-function getminbox(cells)
-    local len = #cells
-    if len < 2 then return {} end
-    
-    local minx = cells[1]
-    local miny = cells[2]
-    local maxx = minx
-    local maxy = miny
-    
-    -- ignore padding int if present
-    if (inc == 3) and (len % 3 == 1) then len = len - 1 end
-    
-    for x = 1, len, inc do
-        if cells[x] < minx then minx = cells[x] end
-        if cells[x] > maxx then maxx = cells[x] end
-    end
-    for y = 2, len, inc do
-        if cells[y] < miny then miny = cells[y] end
-        if cells[y] > maxy then maxy = cells[y] end
-    end
-    
-    return {minx, miny, maxx - minx + 1, maxy - miny + 1}
-end
-
---------------------------------------------------------------------------------
-
-function clip_left(cells, left)
+local function clip_left(cells, left)
     local len = #cells
     local x = 1
     if inc == 3 then
@@ -67,7 +40,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function clip_right(cells, right)
+local function clip_right(cells, right)
     local len = #cells
     local x = 1
     if inc == 3 then
@@ -91,7 +64,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function clip_top(cells, top)
+local function clip_top(cells, top)
     local len = #cells
     local y = 2
     if inc == 3 then
@@ -115,7 +88,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function clip_bottom(cells, bottom)
+local function clip_bottom(cells, bottom)
     local len = #cells
     local y = 2
     if inc == 3 then
@@ -139,14 +112,11 @@ end
 
 --------------------------------------------------------------------------------
 
--- set selection edges
-local selleft = selrect[1]
-local seltop = selrect[2]
-local selright = selleft + selrect[3] - 1
-local selbottom = seltop + selrect[4] - 1
+-- get selection edges
+local selleft, seltop, selright, selbottom = gp.getedges(selrect)
 
 -- find selpatt's minimal bounding box
-local bbox = getminbox(selpatt)
+local bbox = gp.getminbox(selpatt)
 local i
 
 -- first tile selpatt horizontally, clipping where necessary
@@ -177,7 +147,7 @@ end
 
 -- get new selection pattern and tile vertically, clipping where necessary
 selpatt = g.getcells(selrect)
-bbox = getminbox(selpatt)
+bbox = gp.getminbox(selpatt)
 local top = bbox[2]
 local bottom = top + bbox[4] - 1
 i = 0

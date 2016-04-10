@@ -34,7 +34,7 @@ local hasB0notS8 = r:find("B0") == 1 and r:find("/") > 1 and r:sub(-1,-1) ~= "8"
 
 ----------------------------------------------------------------------
 
-function show_spaceship_speed(period, deltax, deltay)
+local function show_spaceship_speed(period, deltax, deltay)
     -- we found a moving oscillator
     if period == 1 then
         g.show("Spaceship detected (speed = c)")
@@ -61,7 +61,7 @@ end
 
 ----------------------------------------------------------------------
 
-function oscillating()
+local function oscillating()
     -- return true if the pattern is empty, stable or oscillating
     
     -- first get current pattern's bounding box
@@ -139,7 +139,7 @@ end
 
 ----------------------------------------------------------------------
 
-function fit_if_not_visible()
+local function fit_if_not_visible()
     -- fit pattern in viewport if not empty and not completely visible
     local r = g.getrect()
     if #r > 0 and not g.visrect(r) then g.fit() end

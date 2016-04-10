@@ -9,7 +9,7 @@ local g = gollylib()
 
 ----------------------------------------------------------------------
 
-function intbase(n, b)
+local function intbase(n, b)
     -- convert integer n >= 0 to a base b digit array (thanks to PM 2Ring)
     digits = {}
     while n > 0 do
@@ -22,7 +22,7 @@ end
 
 ----------------------------------------------------------------------
 
-function go_to(gen)
+local function go_to(gen)
     local currgen = tonumber(g.getgen())
     local newgen
     if gen:sub(1,1) == '+' then
@@ -99,7 +99,7 @@ end
 
 ----------------------------------------------------------------------
 
-function savegen(filename, gen)
+local function savegen(filename, gen)
     local f = io.open(filename, "w")
     if f then
         f:write(gen)
