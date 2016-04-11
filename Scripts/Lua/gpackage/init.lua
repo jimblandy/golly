@@ -89,7 +89,11 @@ end
 --------------------------------------------------------------------------------
 
 function m.getminbox(cells)
-	-- return a rect array with the minimal bounding box of given cell array
+	-- return a rect array with the minimal bounding box of given cell array or pattern
+	if cells.array then
+	    -- arg is a pattern so get its cell array
+	    cells = cells.array
+	end
     local len = #cells
     if len < 2 then return {} end
     
@@ -115,6 +119,30 @@ function m.getminbox(cells)
     end
     
     return {minx, miny, maxx - minx + 1, maxy - miny + 1}
+end
+
+--------------------------------------------------------------------------------
+
+function m.validint(s)
+    -- return true if given string represents a valid integer
+    if #s == 0 then return false end
+    s = s:gsub(",","")
+    return s:match("^[+-]?%d+$") ~= nil
+end
+
+--------------------------------------------------------------------------------
+
+function m.getposint()
+    -- return current viewport position as integer coords
+    local x, y = g.getpos()
+    return tonumber(x), tonumber(y)
+end
+
+--------------------------------------------------------------------------------
+
+function m.setposint(x,y)
+    -- convert integer coords to strings and set viewport position
+    g.setpos(tostring(x), tostring(y))
 end
 
 --------------------------------------------------------------------------------
@@ -220,7 +248,7 @@ function m.pattern(arg, x0, y0, A)
     elseif type(arg) == "string" then
     	p.array = g.parse(arg, x0, y0, table.unpack(A))
     else
-    	error("1st arg of pattern must be a cell array, or a pattern, or a string", 2)
+    	error("1st arg of pattern must be a cell array, a pattern, or a string", 2)
     end
 
     p.t = function (x, y, A)
@@ -228,7 +256,8 @@ function m.pattern(arg, x0, y0, A)
         return m.pattern( g.transform(p.array, x, y, table.unpack(A)) )
 	end
 	
-	-- !!!
+	-- there's no need to implement p.translate and p.apply as they
+	-- are just trivial variants of p.t
 	
 	p.put = function (x, y, A)
         -- paste pattern into current universe
@@ -248,6 +277,11 @@ function m.pattern(arg, x0, y0, A)
         g.putcells(p.array, x, y, table.unpack(A))
         g.fit()
         g.setcursor(m.zoomin)
+	end
+	
+	p.save = function (filepath)
+        -- save the pattern to given file in RLE format
+        g.store(p.array, filepath)
 	end
 	
 	p.add = function (p1, p2)

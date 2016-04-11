@@ -12,7 +12,7 @@ local oldparams = "0 0 or"
 local f = io.open(inifilename, "r")
 if f then
     -- get the parameters given last time
-    oldparams = f:read("*l")
+    oldparams = f:read("*l") or ""
     f:close()
 end
 

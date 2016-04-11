@@ -6,6 +6,8 @@
 -- Authors: Andrew Trevorrow and Dave Greene, Apr 2016.
 
 local g = gollylib()
+local gp = require "gpackage"
+local validint = gp.validint
 
 ----------------------------------------------------------------------
 
@@ -116,7 +118,7 @@ local GotoINIFileName = g.getdir("data").."goto.ini"
 local previousgen = ""
 local f = io.open(GotoINIFileName, "r")
 if f then
-    previousgen = f:read("*l")
+    previousgen = f:read("*l") or ""
     f:close()
 end
 
@@ -128,7 +130,7 @@ if gen == "" then
 elseif gen == '+' or gen == '-' then
     -- clear the default
     savegen(GotoINIFileName, "")
-elseif not gen:match("^[+-]?%d[%d,]*") then
+elseif not validint(gen) then
     g.exit("Sorry, but \""..gen.."\" is not a valid integer.")
 else
     -- best to save given gen now in case user aborts script
