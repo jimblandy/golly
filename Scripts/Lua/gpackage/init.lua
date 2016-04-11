@@ -147,6 +147,35 @@ end
 
 --------------------------------------------------------------------------------
 
+function m.split(s, sep)
+	-- split given string into substrings that are separated by given sep
+	-- (emulates Python's split function)
+	if not sep then sep = " " end
+	local t = {}
+	local start = 1
+	while true do
+	    local i = s:find(sep, start)
+	    if i == nil then
+	        if start <= #s then
+	            t[#t+1] = s:sub(start, -1)
+	        end
+	        break
+	    end
+	    if i > start then
+	        t[#t+1] = s:sub(start, i-1)
+	    end
+	    start = i + #sep
+	end
+    if #t == 0 then
+        -- sep does not exist in s so return s
+        return s
+    else
+        return table.unpack(t)
+    end
+end
+
+--------------------------------------------------------------------------------
+
 function m.rect(a)
     -- return a table that makes it easier to manipulate rectangles
     -- (emulates glife's rect class)
