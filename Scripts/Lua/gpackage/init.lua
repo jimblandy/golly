@@ -89,13 +89,13 @@ end
 --------------------------------------------------------------------------------
 
 function m.getminbox(cells)
-	-- return a rect array with the minimal bounding box of given cell array or pattern
+	-- return a rect with the minimal bounding box of given cell array or pattern
 	if cells.array then
 	    -- arg is a pattern so get its cell array
 	    cells = cells.array
 	end
     local len = #cells
-    if len < 2 then return {} end
+    if len < 2 then return m.rect( {} ) end
     
     local minx = cells[1]
     local miny = cells[2]
@@ -118,7 +118,7 @@ function m.getminbox(cells)
         if cells[y] > maxy then maxy = cells[y] end
     end
     
-    return {minx, miny, maxx - minx + 1, maxy - miny + 1}
+    return m.rect( {minx, miny, maxx - minx + 1, maxy - miny + 1} )
 end
 
 --------------------------------------------------------------------------------
@@ -202,6 +202,21 @@ function m.rect(a)
 		end
 	else
 		error("rect arg must be {} or {x,y,wd,ht}", 2)
+	end
+
+	r.equal = function (r2)
+	    if r.empty and r2.empty then
+	        return true     -- both rects are empty
+	    elseif r.empty then
+	        return false    -- r2 is not empty
+	    else
+	        -- both rects are not empty
+	        if r.x ~= r2.x then return false end
+	        if r.y ~= r2.y then return false end
+	        if r.wd ~= r2.wd then return false end
+	        if r.ht ~= r2.ht then return false end
+		    return true
+		end
 	end
     
     return r

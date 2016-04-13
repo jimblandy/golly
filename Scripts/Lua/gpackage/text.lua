@@ -111,7 +111,7 @@ mfont['~'] = g.parse("2$bo$obobo$3bo!")
 -- note that the pattern is two-state so we don't have to worry about
 -- getting a multi-state cell array here
 
-local function getminbox(cells)
+local function getbbox(cells)
     local len = #cells
     if len < 2 then return {} end
     
@@ -145,7 +145,7 @@ function m.maketext(s)
         p = g.join(p, symbol)
         x = x + 6
     end
-    local tbox = getminbox(p)
+    local tbox = getbbox(p)
     return p, tbox[3], tbox[4]
 end
 

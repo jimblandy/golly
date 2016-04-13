@@ -3,7 +3,6 @@
 
 local g = gollylib()
 local gp = require "gpackage"
-local split = gp.split
 
 local oldline = {}
 local firstcell = {}    -- pos and state of the 1st cell clicked
@@ -81,7 +80,7 @@ local function drawlines()
         local event = g.getevent()
         if event:find("click") == 1 then
             -- event is a string like "click 10 20 left altctrlshift"
-            local evt, x, y, butt, mods = split(event)
+            local evt, x, y, butt, mods = gp.split(event)
             oldmouse = x .. ' ' .. y
             if started then
                 -- draw permanent line from start pos to end pos
@@ -117,7 +116,7 @@ local function drawlines()
             elseif started and #mousepos > 0 and mousepos ~= oldmouse then
                 -- mouse has moved, so erase old line (if any) and draw new line
                 if #oldline > 0 then eraseline(oldline) end
-                local x, y = split(mousepos)
+                local x, y = gp.split(mousepos)
                 oldline = drawline(startx, starty, tonumber(x), tonumber(y))
                 oldmouse = mousepos
             end

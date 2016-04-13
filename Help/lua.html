@@ -46,6 +46,14 @@ The Scripts folder supplied with Golly contains a number of example Lua scripts:
    <td> &mdash; goes to a given generation</td>
 </tr>
 <tr>
+   <td><b>gun-demo.lua</b></td><td width=10> </td>
+   <td> &mdash; constructs a few spaceship guns</td>
+</tr>
+<tr>
+   <td><b>heisenburp.lua</b></td><td width=10> </td>
+   <td> &mdash; illustrates the use of cloned layers</td>
+</tr>
+<tr>
    <td><b>invert.lua</b></td><td width=10> </td>
    <td> &mdash; inverts all cell states in the current selection</td>
 </tr>
@@ -64,6 +72,10 @@ The Scripts folder supplied with Golly contains a number of example Lua scripts:
 <tr>
    <td><b>oscar.lua</b></td><td width=10> </td>
    <td> &mdash; detects oscillating patterns, including spaceships</td>
+</tr>
+<tr>
+   <td><b>pd-glider.lua</b></td><td width=10> </td>
+   <td> &mdash; creates a set of pentadecathlon+glider collisions</td>
 </tr>
 <tr>
    <td><b>pop-plot.lua</b></td><td width=10> </td>
@@ -134,6 +146,7 @@ or you can search for individual commands alphabetically:
 <a href="#check"><b>check</b></a><br>
 <a href="#clear"><b>clear</b></a><br>
 <a href="#clone"><b>clone</b></a><br>
+<a href="#continue"><b>continue</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
 <a href="#cut"><b>cut</b></a><br>
 <a href="#dellayer"><b>dellayer</b></a><br>
@@ -1241,6 +1254,16 @@ cannot be aborted while the setting is false.
 </dd>
 <dd> Example: <b>g.check(false)</b></dd>
 </p>
+
+<a name="continue"></a><p><dt><b>continue(<i>message</i>)</b></dt>
+<dd>
+This function can be used to continue execution after pcall has
+detected some sort of error or the user has aborted the script.
+It's typically used to ensure some finalization code is executed.
+The given message will be displayed in the status bar after the
+script has finished.
+See the end of <a href="edit:Scripts/Lua/envelope.lua">envelope.lua</a>
+for an example.
 
 <a name="exit"></a><p><dt><b>exit(<i>message=""</i>)</b></dt>
 <dd>

@@ -120,27 +120,27 @@ local bbox = gp.getminbox(selpatt)
 local i
 
 -- first tile selpatt horizontally, clipping where necessary
-local left = bbox[1]
-local right = left + bbox[3] - 1
+local left = bbox.x
+local right = left + bbox.wd - 1
 i = 0
 while left > selleft do
-    left = left - bbox[3]
+    left = left - bbox.wd
     i = i + 1
     if left >= selleft then
-        g.putcells(selpatt, -bbox[3] * i, 0)
+        g.putcells(selpatt, -bbox.wd * i, 0)
     else
-        local tempcells = g.transform(selpatt, -bbox[3] * i, 0)
+        local tempcells = g.transform(selpatt, -bbox.wd * i, 0)
         clip_left(tempcells, selleft)
     end
 end
 i = 0
 while right < selright do
-    right = right + bbox[3]
+    right = right + bbox.wd
     i = i + 1
     if right <= selright then
-        g.putcells(selpatt, bbox[3] * i, 0)
+        g.putcells(selpatt, bbox.wd * i, 0)
     else
-        local tempcells = g.transform(selpatt, bbox[3] * i, 0)
+        local tempcells = g.transform(selpatt, bbox.wd * i, 0)
         clip_right(tempcells, selright)
     end
 end
@@ -148,27 +148,27 @@ end
 -- get new selection pattern and tile vertically, clipping where necessary
 selpatt = g.getcells(selrect)
 bbox = gp.getminbox(selpatt)
-local top = bbox[2]
-local bottom = top + bbox[4] - 1
+local top = bbox.y
+local bottom = top + bbox.ht - 1
 i = 0
 while top > seltop do
-    top = top - bbox[4]
+    top = top - bbox.ht
     i = i + 1
     if top >= seltop then
-        g.putcells(selpatt, 0, -bbox[4] * i)
+        g.putcells(selpatt, 0, -bbox.ht * i)
     else
-        local tempcells = g.transform(selpatt, 0, -bbox[4] * i)
+        local tempcells = g.transform(selpatt, 0, -bbox.ht * i)
         clip_top(tempcells, seltop)
     end
 end
 i = 0
 while bottom < selbottom do
-    bottom = bottom + bbox[4]
+    bottom = bottom + bbox.ht
     i = i + 1
     if bottom <= selbottom then
-        g.putcells(selpatt, 0, bbox[4] * i)
+        g.putcells(selpatt, 0, bbox.ht * i)
     else
-        local tempcells = g.transform(selpatt, 0, bbox[4] * i)
+        local tempcells = g.transform(selpatt, 0, bbox.ht * i)
         clip_bottom(tempcells, selbottom)
     end
 end

@@ -79,37 +79,43 @@ def floodfill():
             g.update()
 
         # check if any orthogonal neighboring cells are in oldstate
-        if checkneighbor( x, y-1, oldstate):
-            clist.append( (x, y-1) )
+        if checkneighbor(  x, y-1, oldstate):
             g.setcell(     x, y-1, newstate)
-        if checkneighbor( x, y+1, oldstate):
-            clist.append( (x, y+1) )
+            clist.append( (x, y-1) )
+        
+        if checkneighbor(  x, y+1, oldstate):
             g.setcell(     x, y+1, newstate)
-        if checkneighbor( x+1, y, oldstate):
-            clist.append( (x+1, y) )
+            clist.append( (x, y+1) )
+        
+        if checkneighbor(  x+1, y, oldstate):
             g.setcell(     x+1, y, newstate)
-        if checkneighbor( x-1, y, oldstate):
-            clist.append( (x-1, y) )
+            clist.append( (x+1, y) )
+        
+        if checkneighbor(  x-1, y, oldstate):
             g.setcell(     x-1, y, newstate)
+            clist.append( (x-1, y) )
 
         # diagonal neighbors are more complicated because we don't
         # want to cross a diagonal line of live cells
-        if checkneighbor( x+1, y+1, oldstate) and (g.getcell(x, y+1) == 0 or
+        if checkneighbor(  x+1, y+1, oldstate) and (g.getcell(x, y+1) == 0 or
                                                    g.getcell(x+1, y) == 0):
-            clist.append( (x+1, y+1) )
             g.setcell(     x+1, y+1, newstate)
-        if checkneighbor( x+1, y-1, oldstate) and (g.getcell(x, y-1) == 0 or
+            clist.append( (x+1, y+1) )
+        
+        if checkneighbor(  x+1, y-1, oldstate) and (g.getcell(x, y-1) == 0 or
                                                    g.getcell(x+1, y) == 0):
-            clist.append( (x+1, y-1) )
             g.setcell(     x+1, y-1, newstate)
-        if checkneighbor( x-1, y+1, oldstate) and (g.getcell(x, y+1) == 0 or
+            clist.append( (x+1, y-1) )
+        
+        if checkneighbor(  x-1, y+1, oldstate) and (g.getcell(x, y+1) == 0 or
                                                    g.getcell(x-1, y) == 0):
-            clist.append( (x-1, y+1) )
             g.setcell(     x-1, y+1, newstate)
-        if checkneighbor( x-1, y-1, oldstate) and (g.getcell(x, y-1) == 0 or
+            clist.append( (x-1, y+1) )
+        
+        if checkneighbor(  x-1, y-1, oldstate) and (g.getcell(x, y-1) == 0 or
                                                    g.getcell(x-1, y) == 0):
-            clist.append( (x-1, y-1) )
             g.setcell(     x-1, y-1, newstate)
+            clist.append( (x-1, y-1) )
 
 # ------------------------------------------------------------------------------
 
