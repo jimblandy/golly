@@ -1,9 +1,9 @@
 -- Based on gun_demo.py from PLife (http://plife.sourceforge.net/).
 
 local g = golly()
-local gp = require "gpackage"
-local gpo = require "gpackage.objects"
-local gpg = require "gpackage.guns"
+local gp = require "gplus"
+local gpo = require "gplus.objects"
+local gpg = require "gplus.guns"
 local gun24 = gpg.gun24
 local gun30 = gpg.gun30
 local gun46 = gpg.gun46

@@ -2,7 +2,7 @@
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Mar 2016.
 
 local g = golly()
-local gp = require "gpackage"
+local gp = require "gplus"
 
 local r = gp.rect(g.getselrect())
 if r.empty then g.exit("There is no selection.") end

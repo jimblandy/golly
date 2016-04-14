@@ -2,7 +2,7 @@
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2016.
 
 local g = golly()
-local gp = require "gpackage"
+local gp = require "gplus"
 
 -- avoid an unbounded fill
 local minx, miny, maxx, maxy

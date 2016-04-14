@@ -2,7 +2,7 @@
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Jan 2011.
 
 local g = golly()
-local gp = require "gpackage"
+local gp = require "gplus"
 local int = gp.int
 local split = gp.split
 local rect = gp.rect

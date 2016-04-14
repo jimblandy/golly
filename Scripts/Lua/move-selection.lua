@@ -2,7 +2,7 @@
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2011.
 
 local g = golly()
-local gp = require "gpackage"
+local gp = require "gplus"
 local split = gp.split
 
 -- set edges of bounded grid for later use

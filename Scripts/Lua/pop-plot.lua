@@ -4,13 +4,13 @@
 
 local g = golly()
 
-local gp = require "gpackage"
+local gp = require "gplus"
 local int = gp.int
 local min = gp.min
 local max = gp.max
 local drawline = gp.drawline
 
-local gpt = require "gpackage.text"
+local gpt = require "gplus.text"
 local maketext = gpt.maketext
 
 -- size of plot

@@ -6,7 +6,7 @@
 -- Authors: Andrew Trevorrow and Dave Greene, Apr 2016.
 
 local g = golly()
-local gp = require "gpackage"
+local gp = require "gplus"
 local validint = gp.validint
 
 ----------------------------------------------------------------------

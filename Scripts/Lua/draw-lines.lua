@@ -2,7 +2,7 @@
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2016.
 
 local g = golly()
-local gp = require "gpackage"
+local gp = require "gplus"
 
 local oldline = {}
 local firstcell = {}    -- pos and state of the 1st cell clicked

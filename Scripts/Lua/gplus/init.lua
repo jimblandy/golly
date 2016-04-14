@@ -1,4 +1,4 @@
--- This module is loaded if a script calls require "gpackage".
+-- This module is loaded if a script calls require "gplus".
 
 local g = golly()
 

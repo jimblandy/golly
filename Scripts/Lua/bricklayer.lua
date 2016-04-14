@@ -1,7 +1,7 @@
 -- Based on bricklayer.py from PLife (http://plife.sourceforge.net/).
 
 local g = golly()
-local gp = require "gpackage"
+local gp = require "gplus"
 local pattern = gp.pattern
 
 g.setrule("B3/S23")

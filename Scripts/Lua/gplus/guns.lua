@@ -1,15 +1,15 @@
--- This module is loaded if a script calls require "gpackage.guns".
+-- This module is loaded if a script calls require "gplus.guns".
 
 local g = golly()
 
-local gp = require "gpackage"
+local gp = require "gplus"
 local pattern = gp.pattern
 local flip = gp.flip
 local flip_x = gp.flip_x
 local flip_y = gp.flip_y
 local rccw = gp.rccw
 
-local gpo = require "gpackage.objects"
+local gpo = require "gplus.objects"
 local block = gpo.block
 local eater = gpo.eater
 local queenbee = gpo.queenbee

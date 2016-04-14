@@ -2589,8 +2589,8 @@ void RunLuaScript(const wxString& filepath)
     
     // append gollydir/Scripts/Lua/?.lua and gollydir/Scripts/Lua/?/init.lua
     // to package.path so scripts can do things like this:
-    // local gp = require "gpackage"
-    // local gpt = require "gpackage.text"  ('.' will be changed to '/')
+    // local gp = require "gplus"
+    // local gpt = require "gplus.text"     ('.' will be changed to '/')
     wxString luadir = gollydir;
     luadir += wxT("Scripts");
     luadir += wxFILE_SEP_PATH;

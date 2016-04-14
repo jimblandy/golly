@@ -1,7 +1,7 @@
--- This module is loaded if a script calls require "gpackage.objects".
+-- This module is loaded if a script calls require "gplus.objects".
 
 local g = golly()
-local gp = require "gpackage"
+local gp = require "gplus"
 local pattern = gp.pattern
 
 local m = {}

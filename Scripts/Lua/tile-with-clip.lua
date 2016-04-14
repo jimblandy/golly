@@ -2,7 +2,7 @@
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Mar 2016.
 
 local g = golly()
-local gp = require "gpackage"
+local gp = require "gplus"
 
 -- assume one-state cell array (may change below)
 local multistate = false
