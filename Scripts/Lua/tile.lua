@@ -1,7 +1,7 @@
 -- Tile current selection with pattern inside selection.
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Mar 2016.
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 
 local selrect = g.getselrect()

@@ -1,7 +1,7 @@
 -- Allow user to move the current selection.
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2011.
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 local split = gp.split
 
@@ -93,7 +93,7 @@ local function lookforkeys(event, deltax, deltay)
     if event == "key > none" or event == "key < none" then
         -- rotate floating selection clockwise or anticlockwise;
         -- because we use g.rotate below we have to use the exact same
-        -- calculation (see Selection::Rotate in wxselect.cpp) for rotrect do
+        -- calculation (see Selection::Rotate in wxselect.cpp) for rotrect
         local midx = selrect[1] + gp.int((selrect[3]-1) / 2)
         local midy = selrect[2] + gp.int((selrect[4]-1) / 2)
         local newleft = midx + selrect[2] - midy
@@ -117,7 +117,7 @@ local function lookforkeys(event, deltax, deltay)
             g.rotate(1)
         end
         selrect = g.getselrect()
-        if not gp.rect(selrect).equal(gp.rect(rotrect)) then
+        if not gp.equal(selrect,rotrect) then
             g.warn("Bug: selrect ~= rotrect")
         end
         selpatt = g.transform(g.getcells(selrect), -deltax, -deltay)

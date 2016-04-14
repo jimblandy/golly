@@ -1,7 +1,7 @@
 -- Invert all cell states in the current selection.
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Mar 2016.
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 
 local r = gp.rect(g.getselrect())

@@ -22,15 +22,6 @@
  
  / ***/
 
-/*
-    Golly uses an embedded Perl interpreter to execute scripts.
-    Perl is Copyright (C) 1993-2007, by Larry Wall and others.
-    It is free software; you can redistribute it and/or modify it under the terms of either:
-    a) the GNU General Public License as published by the Free Software Foundation;
-       either version 1, or (at your option) any later version, or
-    b) the "Artistic License" (http://dev.perl.org/licenses/artistic.html).
-*/
-
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
     #include "wx/wx.h"     // for all others include the necessary headers
@@ -64,8 +55,15 @@
 
 #ifdef ENABLE_PERL
 
-// Perl scripting support is implemented by embedding a Perl interpreter.
-// See "perldoc perlembed" for details.
+/*
+    Golly uses an embedded Perl interpreter to execute scripts.
+    See "perldoc perlembed" for details.
+    Perl is Copyright (C) 1993-2007, by Larry Wall and others.
+    It is free software; you can redistribute it and/or modify it under the terms of either:
+    a) the GNU General Public License as published by the Free Software Foundation;
+       either version 1, or (at your option) any later version, or
+    b) the "Artistic License" (http://dev.perl.org/licenses/artistic.html).
+*/
 
 #ifndef __WXMAC__
     #include "wx/dynlib.h"     // for wxDynamicLibrary

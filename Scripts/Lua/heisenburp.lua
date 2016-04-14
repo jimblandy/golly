@@ -2,7 +2,7 @@
 -- Show several views of a multi-stage signal-processing circuit.
 -- Author: Dave Greene, 27 February 2007.  Lua version 1 April 2016.
 
-local g = gollylib()
+local g = golly()
 local clock = os.clock
 
 local ticks=0

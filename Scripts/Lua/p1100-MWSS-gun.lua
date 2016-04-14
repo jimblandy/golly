@@ -1,6 +1,6 @@
 -- Bill Gosper's pure-period p1100 double MWSS gun, circa 1984.
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 local pattern = gp.pattern
 local flip = gp.flip

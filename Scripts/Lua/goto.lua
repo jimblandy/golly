@@ -5,7 +5,7 @@
 -- to the starting generation (normally 0) and advance to the target.
 -- Authors: Andrew Trevorrow and Dave Greene, Apr 2016.
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 local validint = gp.validint
 

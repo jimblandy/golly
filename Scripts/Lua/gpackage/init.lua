@@ -1,6 +1,6 @@
 -- This module is loaded if a script calls require "gpackage".
 
-local g = gollylib()
+local g = golly()
 
 local m = {}
 
@@ -176,6 +176,22 @@ end
 
 --------------------------------------------------------------------------------
 
+function m.equal(a1, a2)
+    -- return true if given arrays have the same values
+    if #a1 ~= #a2 then
+        -- arrays are not the same length
+        return false
+    else
+        -- both arrays are the same length (possibly 0)
+        for i = 1, #a1 do
+            if a1[i] ~= a2[i] then return false end
+        end
+        return true
+    end
+end
+
+--------------------------------------------------------------------------------
+
 function m.rect(a)
     -- return a table that makes it easier to manipulate rectangles
     -- (emulates glife's rect class)
@@ -202,21 +218,6 @@ function m.rect(a)
 		end
 	else
 		error("rect arg must be {} or {x,y,wd,ht}", 2)
-	end
-
-	r.equal = function (r2)
-	    if r.empty and r2.empty then
-	        return true     -- both rects are empty
-	    elseif r.empty then
-	        return false    -- r2 is not empty
-	    else
-	        -- both rects are not empty
-	        if r.x ~= r2.x then return false end
-	        if r.y ~= r2.y then return false end
-	        if r.wd ~= r2.wd then return false end
-	        if r.ht ~= r2.ht then return false end
-		    return true
-		end
 	end
     
     return r
@@ -336,10 +337,10 @@ function m.pattern(arg, x0, y0, A)
 		return m.pattern( g.evolve(p1.array, n) )
 	end
 	
-	-- set metamethod so users can do pattern1 + pattern2
+	-- set metamethod so scripts can do pattern1 + pattern2
 	mtp.__add = p.add
 
-	-- set metamethod so users can do pattern[10] to get evolved pattern
+	-- set metamethod so scripts can do pattern[10] to get evolved pattern
 	mtp.__index = p.evolve
 
 	return p

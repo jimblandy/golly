@@ -19,7 +19,7 @@
 -- detection due to hash collisions.  The bounding box info also allows us
 -- to detect moving oscillators (spaceships/knightships).
 
-local g = gollylib()
+local g = golly()
 
 -- initialize lists
 local hashlist = {}     -- for pattern hash values

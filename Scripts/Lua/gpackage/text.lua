@@ -1,6 +1,6 @@
 -- This module is loaded if a script calls require "gpackage.text".
 
-local g = gollylib()
+local g = golly()
 
 local m = {}
 

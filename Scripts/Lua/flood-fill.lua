@@ -1,7 +1,7 @@
 -- Fill clicked region with current drawing state.
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2016.
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 
 -- avoid an unbounded fill

@@ -2,7 +2,7 @@
 -- step size) and create a plot of population vs time in separate layer.
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Apr 2016.
 
-local g = gollylib()
+local g = golly()
 
 local gp = require "gpackage"
 local int = gp.int

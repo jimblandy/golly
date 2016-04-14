@@ -1,7 +1,7 @@
 -- Allow user to draw one or more straight lines by clicking end points.
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2016.
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 
 local oldline = {}

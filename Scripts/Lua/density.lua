@@ -1,7 +1,7 @@
 -- Calculates the density of live cells in the current pattern.
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), March 2016.
 
-local g = gollylib()
+local g = golly()
 
 local bbox = g.getrect()
 if #bbox == 0 then g.exit("The pattern is empty.") end

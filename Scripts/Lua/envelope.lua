@@ -2,7 +2,7 @@
 -- The "envelope" layer remembers all live cells.
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Apr 2016.
 
-local g = gollylib()
+local g = golly()
 
 if g.empty() then g.exit("There is no pattern.") end
 

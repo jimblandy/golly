@@ -1,6 +1,6 @@
 -- Based on gun_demo.py from PLife (http://plife.sourceforge.net/).
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 local gpo = require "gpackage.objects"
 local gpg = require "gpackage.guns"

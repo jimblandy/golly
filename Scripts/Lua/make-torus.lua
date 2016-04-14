@@ -1,7 +1,7 @@
 -- Use the current selection to create a toroidal universe.
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Apr 2016.
 
-local g = gollylib()
+local g = golly()
 
 local selrect = g.getselrect()
 if #selrect == 0 then g.exit("There is no selection.") end

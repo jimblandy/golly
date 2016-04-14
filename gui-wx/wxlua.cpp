@@ -2555,7 +2555,7 @@ static const struct luaL_Reg gollyfuncs [] = {
 
 // -----------------------------------------------------------------------------
 
-static int create_gollylib(lua_State* L)
+static int create_golly_table(lua_State* L)
 {
     // create a table with our g_* functions and register them
     luaL_newlib(L, gollyfuncs);
@@ -2573,28 +2573,33 @@ void RunLuaScript(const wxString& filepath)
     luaL_openlibs(L);
 
     // we want our g_* functions to be called from Lua as g.*
-    lua_pushcfunction(L, create_gollylib); lua_setglobal(L, "gollylib");    // or just "golly" ???!!!
+    lua_pushcfunction(L, create_golly_table); lua_setglobal(L, "golly");
 
     // It would be nice if we could do this now:
     //
-    // luaL_dostring(L, "local g = gollylib()");
+    // luaL_dostring(L, "local g = golly()");
     //
     // But it doesn't work because g goes out of scope, so users
     // will have to start their scripts with that line.
     // Note that we could do this:
     //
-    // luaL_dostring(L, "g = gollylib()");
+    // luaL_dostring(L, "g = golly()");
     //
     // But it's ~10% slower to access functions because g is global.
     
-    // append gollydir/Scripts/Lua/?/init.lua to package.path
-    // so scripts can do things like local gp = require "gpackage"
+    // append gollydir/Scripts/Lua/?.lua and gollydir/Scripts/Lua/?/init.lua
+    // to package.path so scripts can do things like this:
+    // local gp = require "gpackage"
+    // local gpt = require "gpackage.text"  ('.' will be changed to '/')
+    wxString luadir = gollydir;
+    luadir += wxT("Scripts");
+    luadir += wxFILE_SEP_PATH;
+    luadir += wxT("Lua");
+    luadir += wxFILE_SEP_PATH;
     wxString pstring = wxT("package.path = package.path..';");
-    pstring += gollydir;
-    pstring += wxT("Scripts");
-    pstring += wxFILE_SEP_PATH;
-    pstring += wxT("Lua");
-    pstring += wxFILE_SEP_PATH;
+    pstring += luadir;
+    pstring += wxT("?.lua;");
+    pstring += luadir;
     pstring += wxT("?");
     pstring += wxFILE_SEP_PATH;
     pstring += wxT("init.lua'");

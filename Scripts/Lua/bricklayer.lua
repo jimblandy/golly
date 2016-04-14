@@ -1,6 +1,6 @@
 -- Based on bricklayer.py from PLife (http://plife.sourceforge.net/).
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 local pattern = gp.pattern
 

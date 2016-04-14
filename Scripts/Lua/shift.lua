@@ -1,7 +1,7 @@
 -- Shift current selection by given x y amounts using optional mode.
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Mar 2016.
 
-local g = gollylib()
+local g = golly()
 
 local selrect = g.getselrect()
 if #selrect == 0 then g.exit("There is no selection.") end

@@ -1,7 +1,7 @@
 -- Allow user to move a connected group of live cells.
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Jan 2011.
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 local int = gp.int
 local split = gp.split

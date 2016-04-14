@@ -1,6 +1,6 @@
 -- This module is loaded if a script calls require "gpackage.objects".
 
-local g = gollylib()
+local g = golly()
 local gp = require "gpackage"
 local pattern = gp.pattern
 
