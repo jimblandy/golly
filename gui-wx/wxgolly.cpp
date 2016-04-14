@@ -258,7 +258,9 @@ void GollyApp::SetFrameIcon(wxFrame* frame)
 void GollyApp::MacOpenFile(const wxString& fullPath)
 {
     mainptr->Raise();
-    mainptr->OpenFile(fullPath);
+    mainptr->pendingfiles.Add(fullPath);
+    // next OnIdle will call OpenFile (if we call OpenFile here with a script
+    // that opens a modal dialog then dialog can't be closed!)
 }
 
 #endif
@@ -375,8 +377,7 @@ bool GollyApp::OnInit()
     // argc is > 1 if command line has one or more script/pattern files
     for (int n = 1; n < argc; n++) {
         wxFileName filename(argv[n]);
-        // convert given path to a full path if not one already; this allows users
-        // to do things like "../golly bricklayer.py" from within Scripts folder
+        // convert given path to a full path if not one already
         if (!filename.IsAbsolute()) filename = initdir + argv[n];
         mainptr->pendingfiles.Add(filename.GetFullPath());
     }
