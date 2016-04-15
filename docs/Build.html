@@ -20,7 +20,6 @@ This document contains instructions for how to build the desktop version of Goll
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#gmac"><b>On Mac OS X</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#glin"><b>On Linux</b></a><br>
 <a href="#configure"><b>Building Golly using configure</b></a><br>
-<a href="#cmake"><b>Building Golly using CMake</b></a><br>
 <a href="#bgolly"><b>How to build bgolly</b></a><br>
 <a href="#source"><b>Source code road map</b></a><br>
    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#dir"><b>Directory structure</b></a><br>
@@ -118,10 +117,6 @@ and type these commands (using the correct path and version number):
    ../configure --with-osx_cocoa --disable-shared --enable-unicode
    make
 </pre>
-
-<p>
-If you plan to build Golly using CMake (see <a href="#cmake">below</a>) then also
-do "<tt>sudo make install</tt>".
 
 <p>
 WARNING: If your version of wxWidgets is later than 2.9.4 then you'll need to make
@@ -313,55 +308,6 @@ system-wide installation, you could do this:
 </pre>
 
 
-<a name="cmake"></a>
-<h2>Building Golly using CMake</h2>
-
-<p>
-The CMakeLists.txt file included in the <b>gui-wx</b> directory allows
-Golly to be built using CMake.
-Visit <a href="http://www.cmake.org">http://www.cmake.org</a>
-and download a suitable installer for your operating system.
-
-<p>
-Once CMake is installed, you can build Golly using these commands:
-
-<pre>
-   cd /path/to/golly/gui-wx     (location of CMakeLists.txt)
-   mkdir cmakedir               (use any name for this subdirectory)
-   cd cmakedir
-   cmake ..
-   make                         (or nmake on Windows)
-</pre>
-
-<p>
-CMake also comes with a GUI application if you'd prefer not to
-use the command line.
-
-<p>
-Some notes:
-
-<ul>
-<li> 
-Although wxWidgets comes pre-installed on Mac OS X, it tends to be
-out-of-date and inappropriate for building Golly, so CMakeLists.txt
-sets wxWidgets_CONFIG_EXECUTABLE to /usr/local/bin/wx-config
-where /usr/local/bin is the default location for wx-config if you
-do "sudo make install" after building the wxWidgets libraries.
-<li>
-A common issue is that it doesn't find wxWidgets, 
-especially when you have more than one version installed. Set 
-wxWidgets_ROOT_DIR to the correct folder and re-configure.
-<li>
-If running CMake on the command-line, the location of wxWidgets can be specified like this:
-<pre>
-cmake -G"NMake Makefiles" -DwxWidgets_ROOT_DIR=C:/wxWidgets/wxWidgets-3.0.1_vs2012_x64_staticCRT 
--DwxWidgets_LIB_DIR=C:\wxWidgets\wxWidgets-3.0.1_vs2012_x64_staticCRT\lib\vc_x64_lib 
-c:\golly-git\golly-code\gui-wx
-</pre>
-(this example is for a x64 build using NMake).
-</ul>
-
-
 <a name="bgolly"></a>
 <h2>How to build bgolly</h2>
 
@@ -435,6 +381,11 @@ a .tar.gz file.  You should see the following directories:
    (see <a href="#guiwx">below</a> for more details).
    Also contains other files and resources needed to build Golly
    (make files, bitmap files, icon files, etc).
+</dd>
+
+<p><b>lua</b><p>
+<dd>
+   Contains the source code for Lua.
 </dd>
 
 <p><b>Help</b><p>
@@ -596,6 +547,12 @@ Each module is described in (roughly) top-down order, and some key routines are 
 <dd>
    Implements Lua script support.<br>
    RunLuaScript() runs a given .lua file.
+</dd>
+
+<p><b>wxperl.*</b><p>
+<dd>
+   Implements Perl script support if ENABLE_PERL is defined.<br>
+   No longer officially supported.
 </dd>
 
 <p><b>wxpython.*</b><p>
