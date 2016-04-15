@@ -8,6 +8,9 @@ local gun24 = gpg.gun24
 local gun30 = gpg.gun30
 local gun46 = gpg.gun46
 
+g.new("")
+-- best to create empty universe before setting rule
+-- to avoid converting an existing pattern (slow if large)
 g.setrule("B3/S23")
 
 --------------------------------------------------------------------------------

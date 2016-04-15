@@ -5,6 +5,9 @@ local g = golly()
 local gp = require "gplus"
 local gpo = require "gplus.objects"
 
+g.new("")
+-- best to create empty universe before setting rule
+-- to avoid converting an existing pattern (slow if large)
 g.setrule("B3/S23")
 
 local function collision(i, j)
@@ -17,4 +20,5 @@ for i = -7, 7 do
         all = all + collision(i, j).t(100 * i, 100 * j)
 	end
 end
+
 all.display("pd-glider")

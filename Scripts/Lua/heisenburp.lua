@@ -454,11 +454,11 @@ end
 
 -- if there's more than one existing layer, the layout won't work correctly
 if g.numlayers() > 1 then
-    answer = g.getstring("All existing layers will be removed. OK?")
+    local answer = g.getstring("All existing layers will be removed. OK?")
     if string.lower(string.sub(answer,1,1)) == "n" then g.exit() end
 end
-oldswitch = g.setoption("switchlayers", 1) -- allow user to switch layers
-oldtile = g.setoption("tilelayers", 1)
+local oldswitch = g.setoption("switchlayers", 1) -- allow user to switch layers
+local oldtile = g.setoption("tilelayers", 1)
 
 local status, err = pcall(function () burp() end)
 if err then g.continue(err) end

@@ -4,6 +4,9 @@ local g = golly()
 local gp = require "gplus"
 local pattern = gp.pattern
 
+g.new("")
+-- best to create empty universe before setting rule
+-- to avoid converting an existing pattern (slow if large)
 g.setrule("B3/S23")
 
 local p22_half = pattern("2o$bo$bobo$2b2o3bo$6bob2o$5bo4bo$6bo3bo$7b3o!")
