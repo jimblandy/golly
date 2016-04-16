@@ -39,7 +39,7 @@ end
 
 function m.drawline(x1, y1, x2, y2, state)
 	-- draw a line of cells from x1,y1 to x2,y2 using Bresenham's algorithm
-	if state == nil then state = 1 end
+	state = state or 1
     g.setcell(x1, y1, state)
     if x1 == x2 and y1 == y2 then return end
     
@@ -150,7 +150,7 @@ end
 function m.split(s, sep)
 	-- split given string into substrings that are separated by given sep
 	-- (emulates Python's split function)
-	if sep == nil then sep = " " end
+	sep = sep or " "
 	local t = {}
 	local start = 1
 	while true do
@@ -301,10 +301,10 @@ function m.pattern(arg, x0, y0, A)
     
     setmetatable(p, mtp)
     
-    if arg == nil then arg = {} end
-	if x0 == nil then x0 = 0 end
-	if y0 == nil then y0 = 0 end
-	if A == nil then A = m.identity end
+    arg = arg or {}
+	x0 = x0 or 0
+	y0 = y0 or 0
+	A = A or m.identity
     
     if type(arg) == "table" then
     	if getmetatable(arg) == mtp then
@@ -325,7 +325,7 @@ function m.pattern(arg, x0, y0, A)
         if type(x) == "table" then
             x, y, A = table.unpack(x)
         end
-        if A == nil then A = m.identity end
+        A = A or m.identity
         return m.pattern( g.transform(p.array, x, y, table.unpack(A)) )
 	end
 	
@@ -334,18 +334,18 @@ function m.pattern(arg, x0, y0, A)
 	
 	p.put = function (x, y, A)
         -- paste pattern into current universe
-        if x == nil then x = 0 end
-        if y == nil then y = 0 end
-        if A == nil then A = m.identity end
+        x = x or 0
+        y = y or 0
+        A = A or m.identity
         g.putcells(p.array, x, y, table.unpack(A))
 	end
 
     p.display = function (title, x, y, A)
         -- paste pattern into new universe and display it all
-        if title == nil then title = "untitled" end
-        if x == nil then x = 0 end
-        if y == nil then y = 0 end
-        if A == nil then A = m.identity end
+        title = title or "untitled"
+        x = x or 0
+        y = y or 0
+        A = A or m.identity
         g.new(title)
         g.putcells(p.array, x, y, table.unpack(A))
         g.fit()

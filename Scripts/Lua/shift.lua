@@ -2,6 +2,7 @@
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Mar 2016.
 
 local g = golly()
+local gp = require "gplus"
 
 local selrect = g.getselrect()
 if #selrect == 0 then g.exit("There is no selection.") end
@@ -19,13 +20,12 @@ end
 local s = g.getstring("Enter x y shift amounts and an optional mode\n"..
                       "(valid modes are copy/or/xor, default is or):",
                       oldparams, "Shift selection")
-local x = string.match(s, "^(%S+)")
-local y = string.match(s, "^%S+%s+(%S+)")
-local mode = string.match(s, "^%S+%s+%S+%s+(%S+)")
+local x, y, mode = gp.split(s)
 
 -- check x and y
-if x == nil then g.exit() end
 if y == nil then g.exit("Enter x and y amounts separated by a space.") end
+if not gp.validint(x) then g.exit("Bad x value: "..x) end
+if not gp.validint(y) then g.exit("Bad y value: "..y) end
 x = tonumber(x)
 y = tonumber(y)
 

@@ -3,8 +3,10 @@
 -- Author: Dave Greene, 27 February 2007.  Lua version 1 April 2016.
 
 local g = golly()
-local clock = os.clock
+local gp = require "gplus"
+local split = gp.split
 
+local clock = os.clock
 local ticks=0
 local tickstep=5
 local last_signal=-99999
@@ -277,7 +279,7 @@ local function prepare_burp()
                  g.transform(inserter2c3,2024,2042))))))
 
     g.new("Stable Pseudo-Heisenburp Device")
-    g.setalgo("HashLife")
+    -- ??? g.setalgo("HashLife")
     g.setrule("B3/S23")
     g.putcells(all)
     g.setmag(0)
@@ -328,6 +330,7 @@ local function burp()
     g.select( {selx,sely,50,50} )
 
     -- keyboard handling
+    local ch = ""
     while ch~="q" do
         if place_signal>0 then
             if ticks-last_signal>1846 then
@@ -345,10 +348,12 @@ local function burp()
             status_text=status_text..instr
         end
         show_status_text(status_text,delay,tickstep)
-        event = g.getevent()
-        if string.sub(event,1,3)=="key" then ch = string.match(event, "^%S+%s+(%S+)") else ch="IRRELEVANT" end
-        -- if event ~= "" then g.note(event .. " " .. string.sub(event,1,3)) end
-        -- if event ~= "" then g.note(ch) end
+        local event = g.getevent()
+        if event:find("key") == 1 then
+            _, ch, _ = split(event)
+        else
+            ch = ""
+        end
         if ch=="r" then
             prepare_burp()
             ticks=0

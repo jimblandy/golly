@@ -173,7 +173,7 @@ end
 -- convert given string to a pattern using one of the above fonts
 
 function m.maketext(s, font)
-    if font == nil then font = "Snakial" end
+    font = font or "Snakial"
     local p = gp.pattern()
     local x = 0
     local f, unknown
