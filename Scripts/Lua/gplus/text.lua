@@ -1,12 +1,71 @@
 -- This module is loaded if a script calls require "gplus.text".
 
 local g = golly()
+local gp = require "gplus"
 
 local m = {}
 
 --------------------------------------------------------------------------------
 
--- create a mono-spaced ASCII font
+-- Eric Angelini integer font
+
+local eafont = {}
+eafont['0'] = g.parse("3o$obo$obo$obo$3o!", 0, -5)
+eafont['0'].width = 4
+eafont['1'] = g.parse("o$o$o$o$o!", 0, -5)
+eafont['1'].width = 2
+eafont['2'] = g.parse("3o$2bo$3o$o$3o!", 0, -5)
+eafont['2'].width = 4
+eafont['3'] = g.parse("3o$2bo$3o$2bo$3o!", 0, -5)
+eafont['3'].width = 4
+eafont['4'] = g.parse("obo$obo$3o$2bo$2bo!", 0, -5)
+eafont['4'].width = 4
+eafont['5'] = g.parse("3o$o$3o$2bo$3o!", 0, -5)
+eafont['5'].width = 4
+eafont['6'] = g.parse("3o$o$3o$obo$3o!", 0, -5)
+eafont['6'].width = 4
+eafont['7'] = g.parse("3o$2bo$2bo$2bo$2bo!", 0, -5)
+eafont['7'].width = 4
+eafont['8'] = g.parse("3o$obo$3o$obo$3o!", 0, -5)
+eafont['8'].width = 4
+eafont['9'] = g.parse("3o$obo$3o$2bo$3o!", 0, -5)
+eafont['9'].width = 4
+eafont[' '] = g.parse("", 0, 0)
+eafont[' '].width = 2
+eafont['-'] = g.parse("", 0, 0)
+eafont['-'].width = 0
+
+--------------------------------------------------------------------------------
+
+-- Snakial font (all chars are stable Life patterns)
+
+local sfont = {}
+sfont['0'] = g.parse("2b2obo$2bob2o$2o4b2o$o5bo$bo5bo$2o4b2o$o5bo$bo5bo$2o4b2o$o5bo$bo5bo$2o4b2o$2b2obo$2bob2o!", 0, -14)
+sfont['0'].width = 10
+sfont['1'] = g.parse("2o$bo$o$2o2$2o$bo$o$2o2$2o$bo$o$2o!", 1, -14)
+sfont['1'].width = 6
+sfont['2'] = g.parse("2b2obo$2bob2o$6b2o$6bo$7bo$6b2o$2b2obo$2bob2o$2o$o$bo$2o$2b2obo$2bob2o!", 0, -14)
+sfont['2'].width = 10
+sfont['3'] = g.parse("2obo$ob2o$4b2o$4bo$5bo$4b2o$2obo$ob2o$4b2o$4bo$5bo$4b2o$2obo$ob2o!", 0, -14)
+sfont['3'].width = 8
+sfont['4'] = g.parse("2o3b2o$2o3b2o2$2o3b2o$obobobo$2bobo$b2obo$5b2o$6bo$5bo$5b2o$6bo$5bo$5b2o!", 0, -14)
+sfont['4'].width = 9
+sfont['5'] = g.parse("2b2obo$2bob2o$2o$o$bo$2o$2b2obo$2bob2o$6b2o$6bo$7bo$6b2o$2b2obo$2bob2o!", 0, -14)
+sfont['5'].width = 10
+sfont['6'] = g.parse("2b2obo$2bob2o$2o$o$bo$2o$2b2obo$2bob2o$2o4b2o$o5bo$bo5bo$2o4b2o$2b2obo$2bob2o!", 0, -14)
+sfont['6'].width = 10
+sfont['7'] = g.parse("ob2o$2obo$4b2o$5bo$4bo$4b2o$2b2o$3bo$2bo$2b2o$2o$bo$o$2o!", 0, -14)
+sfont['7'].width = 8
+sfont['8'] = g.parse("2b2obo$2bob2o$2o4b2o$o5bo$bo5bo$2o4b2o$2b2obo$2bob2o$2o4b2o$o5bo$bo5bo$2o4b2o$2b2obo$2bob2o!", 0, -14)
+sfont['8'].width = 10
+sfont['9'] = g.parse("2b2obo$2bob2o$2o4b2o$o5bo$bo5bo$2o4b2o$2b2obo$2bob2o$6b2o$6bo$7bo$6b2o$2b2obo$2bob2o!", 0, -14)
+sfont['9'].width = 10
+sfont['-'] = g.parse("2obo$ob2o!", 0, -8)
+sfont['-'].width = 6
+
+--------------------------------------------------------------------------------
+
+-- mono-spaced ASCII font
 
 local mfont = {}
 mfont[' '] = g.parse("")
@@ -105,48 +164,40 @@ mfont['|'] = g.parse("2bo$2bo$2bo$2bo$2bo$2bo$2bo!")
 mfont['}'] = g.parse("bo$2bo$2bo$3bo$2bo$2bo$bo!")
 mfont['~'] = g.parse("2$bo$obobo$3bo!")
 
---------------------------------------------------------------------------------
-
--- return a rect which is the minimal bounding box of the given pattern
--- note that the pattern is two-state so we don't have to worry about
--- getting a multi-state cell array here
-
-local function getbbox(cells)
-    local len = #cells
-    if len < 2 then return {} end
-    
-    local minx = cells[1]
-    local miny = cells[2]
-    local maxx = minx
-    local maxy = miny
-    for x = 1, len, 2 do
-        if cells[x] < minx then minx = cells[x] end
-        if cells[x] > maxx then maxx = cells[x] end
-    end
-    for y = 2, len, 2 do
-        if cells[y] < miny then miny = cells[y] end
-        if cells[y] > maxy then maxy = cells[y] end
-    end
-    
-    return {minx, miny, maxx - minx + 1, maxy - miny + 1}
+for key, _ in pairs(mfont) do
+    mfont[key].width = 6
 end
 
 --------------------------------------------------------------------------------
 
--- convert given string to a cell array using above mono-spaced font
--- and also return the array's width and height
+-- convert given string to a cell array using one of the above fonts
+-- and also return the pattern's width and height
 
-function m.maketext(s)
+function m.maketext(s, font)
+    if font == nil then font = "Snakial" end
     local p = {}
     local x = 0
-    for ch in string.gmatch(s, ".[\128-\191]*") do
-        if not mfont[ch] then ch = '?' end
-        local symbol = g.transform(mfont[ch], x, 0)
-        p = g.join(p, symbol)
-        x = x + 6
+    local f, unknown
+
+    if string.lower(font) == "mono" then
+        f = mfont
+        unknown = '?'
+    elseif string.lower(font:sub(1,2)) == "ea" then
+        f = eafont
+        unknown = '-'
+    else
+        f = sfont
+        unknown = '-'
     end
-    local tbox = getbbox(p)
-    return p, tbox[3], tbox[4]
+    
+    for ch in string.gmatch(s, ".[\128-\191]*") do
+        if f[ch] == nil then ch = unknown end
+        p = g.join(p, g.transform(f[ch], x, 0))
+        x = x + f[ch].width
+    end
+    
+    local r = gp.getminbox(p)
+    return p, r.wd, r.ht
 end
 
 --------------------------------------------------------------------------------

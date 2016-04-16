@@ -11,7 +11,7 @@ m.block = pattern([[
 **
 ]])
 
-m.blinker = pattern ("***", -1, 0)
+m.blinker = pattern("***", -1, 0)
 
 m.glider = pattern([[
 .**
@@ -353,5 +353,81 @@ m.biblocker = pattern([[
 ....**...................*....
 ..........................*.*.
 ]])
+
+--------------------------------------------------------------------------------
+
+-- this section emulates glife's herschel.py
+
+m.herschel_ghost = pattern([[
+***
+.
+.*.*
+]])
+
+-- A Herschel conduit is represented by its pattern and
+-- the transformation it applies to the Herschel.
+-- Hence the additional .transform field.
+
+local block = m.block
+local eater = m.eater
+local snake = m.snake
+
+m.hc64 = block.t(14, -8) + block.t(9, -13) + block.t(13, -15) + block.t(7, -19)
+m.hc64.transform = {-9, -9, gp.rccw}
+
+m.hc77 = block.t(9, -13) + eater.t(10, 0, gp.swap_xy) + eater.t(-7, -12, gp.swap_xy_flip)
+m.hc77.transform = {10, -25, gp.flip_x}
+
+m.hc112 = block.t(16, -10) + block.t(-3, -11) + m.aircraft_carrier.t(13, -3, gp.swap_xy) +
+          eater.t(10, 1) + eater.t(-3, -14, gp.flip) + eater.t(9, -16, gp.flip_y)
+m.hc112.transform = {35, -12, gp.rcw}
+
+m.hc117 = eater.t(10, 1) + eater.t(13, -9, gp.swap_xy) + eater.t(0, -12, gp.swap_xy_flip) +
+          block.t(8, -22) + snake.t(15, -19)
+m.hc117.transform = {6, -40, gp.identity}
+
+m.hc119 = block.t(-14, -3) + block.t(-13, -8) + block.t(-19, -9) + eater.t(-17, -2, gp.rcw)
+m.hc119.transform = {-12, -20, gp.flip_x}
+
+m.hc156 = eater.t(10, 0, gp.swap_xy) + eater.t(12, -9, gp.swap_xy) + eater.t(0, -12, gp.swap_xy_flip) +
+          eater.t(17, -21, gp.flip_y) + snake.t(21, -5, gp.rccw) + block.t(24, -15) + m.tub.t(11, -24)
+m.hc156.transform = {43, -17, gp.rcw}
+
+m.hc158 = eater.t(-2, -13, gp.flip) + eater.t(-3, -8, gp.rcw) + eater.t(20, -19, gp.rccw) +
+          pattern([[
+.....**
+.....*.*
+.......*
+.......*.*.**
+..**.*.*.**.*
+..**.**.*
+........*
+..**.***
+...*.*
+...*.*
+**.**
+*.*
+..*
+..**
+]], 14, -12)
+m.hc158.transform = {7, -27, gp.flip_x}
+
+m.hc190 = eater.t(-3, -8, gp.rcw) + eater.t(-10, -12, gp.swap_xy) + eater.t(-3, -12, gp.swap_xy_flip) +
+          eater.t(-8, -17) + eater.t(11, -27, gp.flip_y) + block.t(2, -25) + snake.t(5, -31, gp.rccw) +
+          pattern([[
+..**.*
+..**.***
+........*
+..**.***
+...*.*
+...*.*
+**.**
+*.*
+..*
+..**
+]], 14, -8)
+m.hc190.transform = {-16, -22, gp.rccw}
+
+--------------------------------------------------------------------------------
 
 return m

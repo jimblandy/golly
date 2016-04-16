@@ -24,13 +24,13 @@ local y = string.match(s, "^%S+%s+(%S+)")
 local mode = string.match(s, "^%S+%s+%S+%s+(%S+)")
 
 -- check x and y
-if not x then g.exit() end
-if not y then g.exit("Enter x and y amounts separated by a space.") end
+if x == nil then g.exit() end
+if y == nil then g.exit("Enter x and y amounts separated by a space.") end
 x = tonumber(x)
 y = tonumber(y)
 
 -- check optional mode
-if not mode then
+if mode == nil then
     mode = "or"
 else
     mode = string.lower(mode)

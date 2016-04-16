@@ -39,7 +39,7 @@ end
 
 function m.drawline(x1, y1, x2, y2, state)
 	-- draw a line of cells from x1,y1 to x2,y2 using Bresenham's algorithm
-	if not state then state = 1 end
+	if state == nil then state = 1 end
     g.setcell(x1, y1, state)
     if x1 == x2 and y1 == y2 then return end
     
@@ -150,7 +150,7 @@ end
 function m.split(s, sep)
 	-- split given string into substrings that are separated by given sep
 	-- (emulates Python's split function)
-	if not sep then sep = " " end
+	if sep == nil then sep = " " end
 	local t = {}
 	local start = 1
 	while true do
@@ -260,6 +260,24 @@ m.rccw         = { 0,  1, -1,  0}
 
 --------------------------------------------------------------------------------
 
+function m.compose(S, T)
+    -- Return the composition of two transformations S and T.
+    -- A transformation is an array of the form {x, y, A}, which denotes
+    -- multiplying by matrix A and then translating by vector (x, y).
+    local x, y, A = table.unpack(S)
+    local s, t, B = table.unpack(T)
+    return { x * B[1] + y * B[2] + s,
+             x * B[3] + y * B[4] + t,
+             { A[1] * B[1] + A[3] * B[2],
+               A[2] * B[1] + A[4] * B[2],
+               A[1] * B[3] + A[3] * B[4],
+               A[2] * B[3] + A[4] * B[4]
+             }
+           }
+end
+
+--------------------------------------------------------------------------------
+
 -- create a metatable for all pattern tables
 local mtp = {}
 
@@ -272,10 +290,10 @@ function m.pattern(arg, x0, y0, A)
     
     setmetatable(p, mtp)
     
-    if not arg then arg = {} end
-	if not x0 then x0 = 0 end
-	if not y0 then y0 = 0 end
-	if not A then A = m.identity end
+    if arg == nil then arg = {} end
+	if x0 == nil then x0 = 0 end
+	if y0 == nil then y0 = 0 end
+	if A == nil then A = m.identity end
     
     if type(arg) == "table" then
     	p.array = {}
@@ -297,7 +315,11 @@ function m.pattern(arg, x0, y0, A)
     end
 
     p.t = function (x, y, A)
-        if not A then A = m.identity end
+        -- allow scripts to call patt.t(x,y,A) or patt.t({x,y,A})
+        if type(x) == "table" then
+            x, y, A = table.unpack(x)
+        end
+        if A == nil then A = m.identity end
         return m.pattern( g.transform(p.array, x, y, table.unpack(A)) )
 	end
 	
@@ -306,18 +328,18 @@ function m.pattern(arg, x0, y0, A)
 	
 	p.put = function (x, y, A)
         -- paste pattern into current universe
-        if not x then x = 0 end
-        if not y then y = 0 end
-        if not A then A = m.identity end
+        if x == nil then x = 0 end
+        if y == nil then y = 0 end
+        if A == nil then A = m.identity end
         g.putcells(p.array, x, y, table.unpack(A))
 	end
 
     p.display = function (title, x, y, A)
         -- paste pattern into new universe and display it all
-        if not title then title = "untitled" end
-        if not x then x = 0 end
-        if not y then y = 0 end
-        if not A then A = m.identity end
+        if title == nil then title = "untitled" end
+        if x == nil then x = 0 end
+        if y == nil then y = 0 end
+        if A == nil then A = m.identity end
         g.new(title)
         g.putcells(p.array, x, y, table.unpack(A))
         g.fit()

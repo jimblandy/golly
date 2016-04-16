@@ -9,13 +9,17 @@ local int = gp.int
 local min = gp.min
 local max = gp.max
 local drawline = gp.drawline
-
 local gpt = require "gplus.text"
-local maketext = gpt.maketext
 
 -- size of plot
 local xlen = 500    -- length of x axis
 local ylen = 500    -- length of y axis
+
+--------------------------------------------------------------------------------
+
+local function monotext(s)
+    return gpt.maketext(s, "mono")
+end
 
 --------------------------------------------------------------------------------
 
@@ -114,25 +118,25 @@ drawline(0, 0, xlen, 0)
 drawline(0, 0, 0, -ylen)
 
 -- add annotation using mono-spaced ASCII font
-local t, wd, ht = maketext(string.upper(pattname))
+local t, wd, ht = monotext(string.upper(pattname))
 g.putcells(t, int((xlen - wd) / 2), -ylen - 10 - ht)
 
-t, wd, ht = maketext("POPULATION")
+t, wd, ht = monotext("POPULATION")
 g.putcells(t, -10 - ht, int(-(ylen - wd) / 2), 0, 1, -1, 0)
 
-t, wd, ht = maketext(""..minpop)
+t, wd, ht = monotext(""..minpop)
 g.putcells(t, -wd - 10, int(-ht / 2))
 
-t, wd, ht = maketext(""..maxpop)
+t, wd, ht = monotext(""..maxpop)
 g.putcells(t, -wd - 10, -ylen - int(ht / 2))
 
-t, wd, ht = maketext("GENERATION (step="..stepsize..")")
+t, wd, ht = monotext("GENERATION (step="..stepsize..")")
 g.putcells(t, int((xlen - wd) / 2), 10)
 
-t, wd, ht = maketext(""..mingen)
+t, wd, ht = monotext(""..mingen)
 g.putcells(t, int(-wd / 2), 10)
 
-t, wd, ht = maketext(""..maxgen)
+t, wd, ht = monotext(""..maxgen)
 g.putcells(t, xlen - int(wd / 2), 10)
 
 -- display result at scale 1:1

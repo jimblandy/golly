@@ -4,7 +4,7 @@ local g = golly()
 local gp = require "gplus"
 local pattern = gp.pattern
 
-g.new("")
+g.new("alt-wicks")
 -- best to create empty universe before setting rule
 -- to avoid converting an existing pattern (slow if large)
 g.setrule("B3/S135")
@@ -43,4 +43,4 @@ local B = (head_b_c5[84] + converter_bc_c5.t(0, -31))[100] + tail_c_c5.t(0, -56)
 
 local all = A.t(-25, 0) + B.t(24, 0)
 
-all.display("alt-wicks")
+all.display("") -- don't change name

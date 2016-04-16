@@ -1,6 +1,6 @@
 -- Oscar is an OSCillation AnalyzeR for use with Golly.
 -- Author: Andrew Trevorrow (andrewtrevorrow.com), Mar 2016.
-
+-- 
 -- This script uses Gabriel Nivasch's "keep minima" algorithm.
 -- For each generation, calculate a hash value for the pattern.  Keep all of
 -- the record-breaking minimal hashes in a list, with the oldest first.

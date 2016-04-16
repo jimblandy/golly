@@ -4,7 +4,7 @@ local g = golly()
 local gp = require "gplus"
 local pattern = gp.pattern
 
-g.new("")
+g.new("bricklayer")
 -- best to create empty universe before setting rule
 -- to avoid converting an existing pattern (slow if large)
 g.setrule("B3/S23")
@@ -25,4 +25,4 @@ local pre_lom = pattern("2bo$2ob2o$2ob2o2$b2ob2o$b2ob2o$3bo!")
 local all = gun154[210].t(-52, -38) + gun154[254].t(52, -38, gp.flip_x) +
 	p7_reflector.t(8, 23) + pre_lom.t(-3, 30)
 
-all.display("bricklayer")
+all.display("") -- don't change name

@@ -8,7 +8,7 @@ local gun24 = gpg.gun24
 local gun30 = gpg.gun30
 local gun46 = gpg.gun46
 
-g.new("")
+g.new("gun-demo")
 -- best to create empty universe before setting rule
 -- to avoid converting an existing pattern (slow if large)
 g.setrule("B3/S23")
@@ -45,4 +45,4 @@ local all =
     compose_lwss_gun(gun30, 13, 11, 4).t(0,  70) + lwss_eater.t(100,  70) +
     compose_lwss_gun(gun46, 22, 13, 3).t(0, 130) + lwss_eater.t(100, 130)
 
-all.display("gun-demo")
+all.display("") -- don't change name

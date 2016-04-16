@@ -5,7 +5,7 @@ local g = golly()
 local gp = require "gplus"
 local gpo = require "gplus.objects"
 
-g.new("")
+g.new("pd-glider")
 -- best to create empty universe before setting rule
 -- to avoid converting an existing pattern (slow if large)
 g.setrule("B3/S23")
@@ -21,4 +21,4 @@ for i = -7, 7 do
 	end
 end
 
-all.display("pd-glider")
+all.display("") -- don't change name
