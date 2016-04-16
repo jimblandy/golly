@@ -18,14 +18,17 @@ local ylen = 500    -- length of y axis
 --------------------------------------------------------------------------------
 
 local function monotext(s)
-    return gpt.maketext(s, "mono")
+    -- convert given string to a pattern in a mono-spaced font and return
+    -- its cell array and its minimal width and height
+    local p = gpt.maketext(s, "mono")
+    local r = gp.getminbox(p)
+    return p.array, r.wd, r.ht
 end
 
 --------------------------------------------------------------------------------
 
--- fit pattern in viewport if not empty and not completely visible
-
 local function fit_if_not_visible()
+    -- fit pattern in viewport if not empty and not completely visible
     local r = g.getrect()
     if #r > 0 and not g.visrect(r) then g.fit() end
 end

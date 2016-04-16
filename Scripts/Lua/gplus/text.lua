@@ -170,12 +170,11 @@ end
 
 --------------------------------------------------------------------------------
 
--- convert given string to a cell array using one of the above fonts
--- and also return the pattern's width and height
+-- convert given string to a pattern using one of the above fonts
 
 function m.maketext(s, font)
     if font == nil then font = "Snakial" end
-    local p = {}
+    local p = gp.pattern()
     local x = 0
     local f, unknown
 
@@ -192,12 +191,11 @@ function m.maketext(s, font)
     
     for ch in string.gmatch(s, ".[\128-\191]*") do
         if f[ch] == nil then ch = unknown end
-        p = g.join(p, g.transform(f[ch], x, 0))
+        p = p + gp.pattern(g.transform(f[ch], x, 0))
         x = x + f[ch].width
     end
     
-    local r = gp.getminbox(p)
-    return p, r.wd, r.ht
+    return p
 end
 
 --------------------------------------------------------------------------------

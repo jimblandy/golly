@@ -48,5 +48,5 @@ for i = 1, 3 do
     all = all.t(-720, 450, gp.rccw) + p59_track
 end
 
-all = all + pattern(gpt.maketext('59')).t(-142, 596)
+all = all + gpt.maketext('59').t(-142, 596)
 all.display("")
