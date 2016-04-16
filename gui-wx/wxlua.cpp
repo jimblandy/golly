@@ -300,7 +300,7 @@ static int g_load(lua_State* L)
     const char* filename = luaL_checkstring(L, 1);
     
     // create temporary universe of same type as current universe
-    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, false);
     // readpattern will call setrule
     
     // read pattern into temporary universe
@@ -310,7 +310,7 @@ static int g_load(lua_State* L)
         for (int i = 0; i < NumAlgos(); i++) {
             if (i != currlayer->algtype) {
                 delete tempalgo;
-                tempalgo = CreateNewUniverse(i, allowcheck);
+                tempalgo = CreateNewUniverse(i, false);
                 err = readpattern(FILENAME, *tempalgo);
                 if (!err) break;
             }
@@ -343,7 +343,7 @@ static int g_store(lua_State* L)
     const char* filename = luaL_checkstring(L, 2);
     
     // create temporary universe of same type as current universe
-    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, false);
     const char* err = tempalgo->setrule(currlayer->algo->getrule());
     if (err) tempalgo->setrule(tempalgo->DefaultRule());
     
@@ -761,7 +761,7 @@ static int g_evolve(lua_State* L)
     }
     
     // create a temporary universe of same type as current universe
-    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
+    lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, false);
     const char* err = tempalgo->setrule(currlayer->algo->getrule());
     if (err) tempalgo->setrule(tempalgo->DefaultRule());
     

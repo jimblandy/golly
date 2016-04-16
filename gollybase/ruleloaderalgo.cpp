@@ -207,9 +207,6 @@ ruleloaderalgo::ruleloaderalgo()
 {
     LocalRuleTable = new ruletable_algo();
     LocalRuleTree = new ruletreealgo();
-    
-    if (LocalRuleTable == NULL) lifefatal("RuleLoader failed to create local RuleTable!");
-    if (LocalRuleTree == NULL) lifefatal("RuleLoader failed to create local RuleTree!");
 
     // initialize rule_type
     LocalRuleTree->setrule( LocalRuleTree->DefaultRule() );

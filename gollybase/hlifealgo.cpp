@@ -1421,6 +1421,9 @@ const bigint &hlifealgo::getPopulation() {
       if (inGC) {
         needPop = 1 ;
         return negone ;
+      } else if (poller->isCalculating()) {
+        // AKT: avoid calling poller->bailIfCalculating
+        return negone ;
       } else {
         calcPopulation(root) ;
         popValid = 1 ;
