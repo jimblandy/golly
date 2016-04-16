@@ -253,10 +253,10 @@ local function moveobject()
                 g.show("Extracting object...")
                 local x, y = table.unpack(result)
                 object = getobject(x, y)
-                object1 = getobject(x, y)   -- save in case user aborts script
+                object1 = gp.copy(object)   -- save in case user aborts script
                 if mods == "alt" then
                     -- don't delete object
-                    oldcells = getobject(x, y)
+                    oldcells = gp.copy(object)
                 end
                 break
             else
