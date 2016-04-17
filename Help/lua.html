@@ -86,6 +86,10 @@ The Scripts folder supplied with Golly contains a number of example Lua scripts:
    <td> &mdash; shifts the current selection by given x y amounts</td>
 </tr>
 <tr>
+   <td><b>slide-show.lua</b></td><td width=10> </td>
+   <td> &mdash; displays all patterns in the Patterns folder</td>
+</tr>
+<tr>
    <td><b>tile.lua</b></td><td width=10> </td>
    <td> &mdash; tiles the current selection with the pattern inside it</td>
 </tr>
@@ -172,6 +176,7 @@ or you can search for individual commands alphabetically:
 <a href="#getcolors"><b>getcolors</b></a><br>
 <a href="#getcursor"><b>getcursor</b></a><br>
 <a href="#getdir"><b>getdir</b></a><br>
+<a href="#getfiles"><b>getfiles</b></a><br>
 <a href="#getevent"><b>getevent</b></a><br>
 <a href="#getgen"><b>getgen</b></a><br>
 <a href="#getheight"><b>getheight</b></a><br>
@@ -215,11 +220,11 @@ or you can search for individual commands alphabetically:
 <a href="#savedialog"><b>savedialog</b></a><br>
 <a href="#select"><b>select</b></a><br>
 <a href="#setalgo"><b>setalgo</b></a><br>
-<a href="#setbase"><b>setbase</b></a>
+<a href="#setbase"><b>setbase</b></a><br>
+<a href="#setcell"><b>setcell</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#setcell"><b>setcell</b></a><br>
 <a href="#setclipstr"><b>setclipstr</b></a><br>
 <a href="#setcolor"><b>setcolor</b></a><br>
 <a href="#setcolors"><b>setcolors</b></a><br>
@@ -387,7 +392,7 @@ set in <a href="prefs:control">Preferences > Control</a>.
 <p>
 <dd>
 In each case a full path is returned, terminated by the appropriate path separator
-for the current platform.
+for the current platform ("/" on Mac and Linux, "\" on Windows).
 </dd>
 <dd> Example: <b>g.open(g.getdir("app").."Patterns/Life/Breeders/breeder.lif")</b></dd>
 </p>
@@ -399,6 +404,16 @@ an existing directory).  All the directory names listed above are allowed,
 except for "app", "data" and "temp".
 </dd>
 <dd> Example: <b>g.setdir("download", "/path/to/my-downloads/")</b></dd>
+</p>
+
+<a name="getfiles"></a><p><dt><b>getfiles(<i>dirpath</i>)</b></dt>
+<dd>
+Return the contents of the given directory as an array of strings.
+A non-absolute directory path is relative to the location of the script.
+File names are returned first, then subdirectory names.  The latter names end
+with the platform-specific path separator ("/" on Mac and Linux, "\" on Windows).
+</dd>
+<dd> Example: <b>local contents = g.getfiles(g.getdir("data"))</b></dd>
 </p>
 
 <p><a name="editing"></a>&nbsp;<br>

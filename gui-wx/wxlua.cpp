@@ -53,6 +53,7 @@
 #endif
 
 #include "wx/filename.h"    // for wxFileName
+#include "wx/dir.h"         // for wxDir
 
 #include "bigint.h"
 #include "lifealgo.h"
@@ -121,9 +122,10 @@ static void CheckEvents(lua_State* L)
 
 static void GollyError(lua_State* L, const char* errmsg)
 {
-    // handle an error detected in a g_* function
-    lua_pushstring(L, errmsg);
-    lua_error(L);
+    // handle an error detected in a g_* function;
+    // note that luaL_error will prepend file path and line number info,
+    // and CheckScriptError in wxscript.cpp will replace "GOLLY_ERROR:" with \n
+    luaL_error(L, "GOLLY_ERROR:%s", errmsg);
 }
 
 // -----------------------------------------------------------------------------
@@ -419,6 +421,46 @@ static int g_getdir(lua_State* L)
     lua_pushstring(L, dirstring);
     
     return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_getfiles(lua_State* L)
+{
+    CheckEvents(L);
+    
+    const char* dirname = luaL_checkstring(L, 1);
+    
+    wxString dirpath = wxString(dirname,wxConvLocal);
+
+    if (!wxFileName::DirExists(dirpath)) {
+        GollyError(L, "getfiles error: given directory does not exist.");
+    }
+
+    lua_newtable(L);
+    int arraylen = 0;
+    
+    wxDir dir(dirpath);
+    if (dir.IsOpened()) {
+        wxString filename;
+        // get all files
+        bool more = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES | wxDIR_HIDDEN);
+        while (more) {
+            lua_pushstring(L, (const char*)filename.mb_str(wxConvUTF8));
+            lua_rawseti(L, -2, ++arraylen);
+            more = dir.GetNext(&filename);
+        }
+        // now get all directories and append platform-specific path separator
+        more = dir.GetFirst(&filename, wxEmptyString, wxDIR_DIRS | wxDIR_HIDDEN);
+        while (more) {
+            filename += wxFILE_SEP_PATH;
+            lua_pushstring(L, (const char*)filename.mb_str(wxConvUTF8));
+            lua_rawseti(L, -2, ++arraylen);
+            more = dir.GetNext(&filename);
+        }
+    }
+    
+    return 1;   // result is a table of strings
 }
 
 // -----------------------------------------------------------------------------
@@ -2459,6 +2501,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "store",        g_store },        // write cell array to a file (in RLE format)
     { "setdir",       g_setdir },       // set location of specified directory
     { "getdir",       g_getdir },       // return location of specified directory
+    { "getfiles",     g_getfiles },     // return array of files in specified directory
     // editing
     { "new",          g_new },          // create new universe and set window title
     { "cut",          g_cut },          // cut selection to clipboard
