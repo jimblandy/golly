@@ -128,7 +128,10 @@ const char* GSF_open(char* filename, int remember)
     // return error message here if file doesn't exist
     wxString fullpath = fullname.GetFullPath();
     if (!wxFileName::FileExists(fullpath)) {
-        return "Given file does not exist.";
+        static wxString msg;
+        msg = _("open error - file does not exist:\n");
+        msg += fullpath;
+        return (const char*) msg.mb_str(wxConvLocal);
     }
     
     // only add file to Open Recent submenu if remember flag is non-zero
@@ -1271,9 +1274,9 @@ void CheckScriptError(const wxString& ext)
             scripterr.Replace(wxT("  File \"<string>\", line 1, in ?\n"), wxT(""));
         }
         Beep();
-#ifdef __WXMAC__
-        wxSetCursor(*wxSTANDARD_CURSOR);
-#endif
+        #ifdef __WXMAC__
+            wxSetCursor(*wxSTANDARD_CURSOR);
+        #endif
         wxMessageBox(scripterr, errtype, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
     }
     

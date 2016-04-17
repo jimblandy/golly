@@ -2423,7 +2423,7 @@ static int g_continue(lua_State* L)
 
 	aborted = false;	// continue executing any remaining code
 
-	// error will be displayed when script ends
+	// if not empty, error will be displayed when script ends
 	scripterr = wxString(luaL_checkstring(L, 1), wxConvLocal);
     
     return 0;   // no result
@@ -2451,7 +2451,7 @@ static int g_exit(lua_State* L)
 
 static const struct luaL_Reg gollyfuncs [] = {
     // filing
-    { "open",         g_open },         // open given pattern/rule/html file
+    { "open",         g_open },         // open given pattern/script/rule/html file
     { "save",         g_save },         // save pattern in given file using given format
     { "opendialog",   g_opendialog },   // return input path and filename chosen by user
     { "savedialog",   g_savedialog },   // return output path and filename chosen by user
@@ -2564,46 +2564,55 @@ static int create_golly_table(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+// we want to allow a Lua script to call another Lua script via g_open
+// so we use lua_level to detect if a Lua state has already been created
+static int lua_level = 0;
+static lua_State* L = NULL;
+
 void RunLuaScript(const wxString& filepath)
-{    
-    aborted = false;
+{
+    if (lua_level == 0) {
+        aborted = false;
+        
+        L = luaL_newstate();
+        
+        luaL_openlibs(L);
     
-    lua_State* L = luaL_newstate();
+        // we want our g_* functions to be called from Lua as g.*
+        lua_pushcfunction(L, create_golly_table); lua_setglobal(L, "golly");
     
-    luaL_openlibs(L);
-
-    // we want our g_* functions to be called from Lua as g.*
-    lua_pushcfunction(L, create_golly_table); lua_setglobal(L, "golly");
-
-    // It would be nice if we could do this now:
-    //
-    // luaL_dostring(L, "local g = golly()");
-    //
-    // But it doesn't work because g goes out of scope, so users
-    // will have to start their scripts with that line.
-    // Note that we could do this:
-    //
-    // luaL_dostring(L, "g = golly()");
-    //
-    // But it's ~10% slower to access functions because g is global.
+        // It would be nice if we could do this now:
+        //
+        // luaL_dostring(L, "local g = golly()");
+        //
+        // But it doesn't work because g goes out of scope, so users
+        // will have to start their scripts with that line.
+        // Note that we could do this:
+        //
+        // luaL_dostring(L, "g = golly()");
+        //
+        // But it's ~10% slower to access functions because g is global.
+        
+        // append gollydir/Scripts/Lua/?.lua and gollydir/Scripts/Lua/?/init.lua
+        // to package.path so scripts can do things like this:
+        // local gp = require "gplus"
+        // local gpt = require "gplus.text"     ('.' will be changed to '/')
+        wxString luadir = gollydir;
+        luadir += wxT("Scripts");
+        luadir += wxFILE_SEP_PATH;
+        luadir += wxT("Lua");
+        luadir += wxFILE_SEP_PATH;
+        wxString pstring = wxT("package.path = package.path..';");
+        pstring += luadir;
+        pstring += wxT("?.lua;");
+        pstring += luadir;
+        pstring += wxT("?");
+        pstring += wxFILE_SEP_PATH;
+        pstring += wxT("init.lua'");
+        luaL_dostring(L, (const char*)pstring.mb_str(wxConvUTF8));
+    }
     
-    // append gollydir/Scripts/Lua/?.lua and gollydir/Scripts/Lua/?/init.lua
-    // to package.path so scripts can do things like this:
-    // local gp = require "gplus"
-    // local gpt = require "gplus.text"     ('.' will be changed to '/')
-    wxString luadir = gollydir;
-    luadir += wxT("Scripts");
-    luadir += wxFILE_SEP_PATH;
-    luadir += wxT("Lua");
-    luadir += wxFILE_SEP_PATH;
-    wxString pstring = wxT("package.path = package.path..';");
-    pstring += luadir;
-    pstring += wxT("?.lua;");
-    pstring += luadir;
-    pstring += wxT("?");
-    pstring += wxFILE_SEP_PATH;
-    pstring += wxT("init.lua'");
-    luaL_dostring(L, (const char*)pstring.mb_str(wxConvUTF8));
+    lua_level++;
     
     if (luaL_dofile(L, (const char*)filepath.mb_str(wxConvUTF8))) {
         scripterr += wxString(lua_tostring(L, -1),wxConvLocal);
@@ -2612,7 +2621,11 @@ void RunLuaScript(const wxString& filepath)
         lua_pop(L, 1);
     }
     
-    lua_close(L);
+    lua_level--;
+    
+    if (lua_level == 0) {
+        lua_close(L);
+    }
 }
 
 // -----------------------------------------------------------------------------
