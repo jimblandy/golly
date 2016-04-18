@@ -192,17 +192,6 @@ end
 
 --------------------------------------------------------------------------------
 
-function m.copy(a)
-    -- return a copy of given array
-    -- (faster to use table.pack(table.unpack(a)) if #a is small??? test!!!)
-    -- (or faster to use for k, v in ipairs(a) do acopy[k] = v end ???!!!)
-    acopy = {}
-    for i = 1, #a do acopy[i] = a[i] end
-    return acopy
-end
-
---------------------------------------------------------------------------------
-
 function m.rect(a)
     -- return a table that makes it easier to manipulate rectangles
     -- (emulates glife's rect class)
@@ -309,10 +298,10 @@ function m.pattern(arg, x0, y0, A)
     if type(arg) == "table" then
     	if getmetatable(arg) == mtp then
     		-- arg is a pattern
-    		p.array = m.copy(arg.array)
+    		p.array = g.join({}, arg.array)
     	else
     		-- assume arg is a cell array
-    		p.array = m.copy(arg)
+    		p.array = g.join({}, arg)
     	end
     elseif type(arg) == "string" then
     	p.array = g.parse(arg, x0, y0, table.unpack(A))

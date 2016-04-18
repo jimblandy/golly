@@ -1266,8 +1266,6 @@ void CheckScriptError(const wxString& ext)
         wxString errtype;
         if (ext.IsSameAs(wxT("lua"), false)) {
             errtype = _("Lua error:");
-            // replace special prefix added by GollyError in wxlua.cpp with \n
-            scripterr.Replace(wxT("GOLLY_ERROR:"), wxT("\n"));
         } else if (ext.IsSameAs(wxT("pl"), false)) {
             errtype = _("Perl error:");
             scripterr.Replace(wxT(". at "), wxT("\nat "));

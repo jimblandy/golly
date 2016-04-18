@@ -176,8 +176,8 @@ or you can search for individual commands alphabetically:
 <a href="#getcolors"><b>getcolors</b></a><br>
 <a href="#getcursor"><b>getcursor</b></a><br>
 <a href="#getdir"><b>getdir</b></a><br>
-<a href="#getfiles"><b>getfiles</b></a><br>
 <a href="#getevent"><b>getevent</b></a><br>
+<a href="#getfiles"><b>getfiles</b></a><br>
 <a href="#getgen"><b>getgen</b></a><br>
 <a href="#getheight"><b>getheight</b></a><br>
 <a href="#getlayer"><b>getlayer</b></a><br>
@@ -412,9 +412,8 @@ Return the contents of the given directory as an array of strings.
 A non-absolute directory path is relative to the location of the script.
 File names are returned first, then subdirectory names.  The latter names end
 with the platform-specific path separator ("/" on Mac and Linux, "\" on Windows).
-</dd>
-<dd> Example: <b>local contents = g.getfiles(g.getdir("data"))</b></dd>
-</p>
+See <a href="edit:Scripts/Lua/slide-show.lua">slide-show.lua</a> for an example.
+
 
 <p><a name="editing"></a>&nbsp;<br>
 EDITING COMMANDS
@@ -1275,8 +1274,8 @@ cannot be aborted while the setting is false.
 This function can be used to continue execution after pcall has
 detected some sort of error or the user has aborted the script.
 It's typically used to ensure some finalization code is executed.
-The given message will be displayed in the status bar after the
-script has finished.
+If not empty, the given message will be displayed in the status bar
+after the script has finished.
 See the end of <a href="edit:Scripts/Lua/envelope.lua">envelope.lua</a>
 for an example.
 

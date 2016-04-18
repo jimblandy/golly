@@ -123,9 +123,8 @@ static void CheckEvents(lua_State* L)
 static void GollyError(lua_State* L, const char* errmsg)
 {
     // handle an error detected in a g_* function;
-    // note that luaL_error will prepend file path and line number info,
-    // and CheckScriptError in wxscript.cpp will replace "GOLLY_ERROR:" with \n
-    luaL_error(L, "GOLLY_ERROR:%s", errmsg);
+    // note that luaL_error will prepend file path and line number info
+    luaL_error(L, "\n%s", errmsg);
 }
 
 // -----------------------------------------------------------------------------
