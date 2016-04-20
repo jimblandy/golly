@@ -1369,10 +1369,10 @@ void RunScript(const wxString& filename)
     wxSetWorkingDirectory(scriptloc);
     
     wxString fpath = fullname.GetFullPath();
-#ifdef __WXMAC__
-    // use decomposed UTF8 so interpreter can open names with non-ASCII chars
-    fpath = wxString(fpath.fn_str(),wxConvLocal);
-#endif
+    #ifdef __WXMAC__
+        // use decomposed UTF8 so interpreter can open names with non-ASCII chars
+        fpath = wxString(fpath.fn_str(),wxConvLocal);
+    #endif
     
     if (!already_inscript) {
         if (allowundo) {

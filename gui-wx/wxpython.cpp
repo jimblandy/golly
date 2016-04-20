@@ -3032,18 +3032,18 @@ bool pyinited = false;     // InitPython has been successfully called?
 bool InitPython()
 {
     if (!pyinited) {
-#ifdef USE_PYTHON_DYNAMIC
-        // try to load Python library
-        if ( !LoadPythonLib() ) return false;
-#endif
+        #ifdef USE_PYTHON_DYNAMIC
+            // try to load Python library
+            if ( !LoadPythonLib() ) return false;
+        #endif
         
         // only initialize the Python interpreter once, mainly because multiple
         // Py_Initialize/Py_Finalize calls cause leaks of about 12K each time!
         Py_Initialize();
         
-#ifdef USE_PYTHON_DYNAMIC
-        GetPythonExceptions();
-#endif
+        #ifdef USE_PYTHON_DYNAMIC
+            GetPythonExceptions();
+        #endif
         
         // allow Python to call the above py_* routines
         Py_InitModule((char*)"golly", py_methods);
@@ -3069,6 +3069,10 @@ bool InitPython()
         // build absolute path to Scripts/Python folder and add to Python's
         // import search list so scripts can import glife from anywhere
         wxString scriptsdir = gollydir + _("Scripts");
+        #ifdef __WXMAC__
+            // use decomposed UTF8 so interpreter can find path with non-ASCII chars
+            scriptsdir = wxString(scriptsdir.fn_str(),wxConvLocal);
+        #endif
         scriptsdir += wxFILE_SEP_PATH;
         scriptsdir += _("Python");
         // convert any \ to \\ and then convert any ' to \'
@@ -3132,7 +3136,7 @@ void FinishPythonScripting()
     // if (pyinited) Py_Finalize();
     
     // probably don't really need this either
-#ifdef USE_PYTHON_DYNAMIC
-    FreePythonLib();
-#endif
+    #ifdef USE_PYTHON_DYNAMIC
+        FreePythonLib();
+    #endif
 }
