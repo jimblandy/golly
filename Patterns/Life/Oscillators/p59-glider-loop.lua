@@ -3,6 +3,7 @@
 -- Conversion to Lua by Andrew Trevorrow, Apr 2016.
 
 local g = golly()
+-- require "gplus.strict"
 local gp = require "gplus"
 local pattern = gp.pattern 
 local gpo = require "gplus.objects"
