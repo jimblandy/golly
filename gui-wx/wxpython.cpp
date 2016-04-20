@@ -480,12 +480,12 @@ static PyObject* py_open(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* filename;
+    const char* filename;
     int remember = 0;
     
     if (!PyArg_ParseTuple(args, (char*)"s|i", &filename, &remember)) return NULL;
     
-    const char* err = GSF_open(filename, remember);
+    const char* err = GSF_open(wxString(filename,wxConvLocal), remember);
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -497,8 +497,8 @@ static PyObject* py_save(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* filename;
-    char* format;
+    const char* filename;
+    const char* format;
     int remember = 0;
     
     if (!PyArg_ParseTuple(args, (char*)"ss|i", &filename, &format, &remember)) return NULL;
@@ -586,7 +586,7 @@ static PyObject* py_load(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* filename;
+    const char* filename;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &filename)) return NULL;
     
@@ -633,7 +633,7 @@ static PyObject* py_store(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     PyObject* inlist;
-    char* filename;
+    const char* filename;
     
     if (!PyArg_ParseTuple(args, (char*)"O!s|s", &PyList_Type, &inlist, &filename))
         return NULL;
@@ -718,12 +718,12 @@ static PyObject* py_setdir(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* dirname;
-    char* newdir;
+    const char* dirname;
+    const char* newdir;
     
     if (!PyArg_ParseTuple(args, (char*)"ss", &dirname, &newdir)) return NULL;
     
-    const char* err = GSF_setdir(dirname, newdir);
+    const char* err = GSF_setdir(dirname, wxString(newdir,wxConvLocal));
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -735,7 +735,7 @@ static PyObject* py_getdir(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* dirname;
+    const char* dirname;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &dirname)) return NULL;
     
@@ -751,7 +751,7 @@ static PyObject* py_new(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* title;
+    const char* title;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &title)) return NULL;
     
@@ -829,7 +829,7 @@ static PyObject* py_paste(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     int x, y;
-    char* mode;
+    const char* mode;
     
     if (!PyArg_ParseTuple(args, (char*)"iis", &x, &y, &mode)) return NULL;
     
@@ -933,7 +933,7 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* s;
+    const char* s;
     
     // defaults for optional params
     long x0  = 0;
@@ -967,7 +967,7 @@ static PyObject* py_parse(PyObject* self, PyObject* args)
     } else {
         // parsing RLE format; first check if multi-state data is present
         bool multistate = false;
-        char* p = s;
+        const char* p = s;
         while (*p) {
             char c = *p++;
             if ((c == '.') || ('p' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
@@ -1897,7 +1897,7 @@ static PyObject* py_setgen(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* genstring = NULL;
+    const char* genstring = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &genstring)) return NULL;
     
@@ -1939,7 +1939,7 @@ static PyObject* py_setalgo(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* algostring = NULL;
+    const char* algostring = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &algostring)) return NULL;
     
@@ -1974,7 +1974,7 @@ static PyObject* py_setrule(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* rulestring = NULL;
+    const char* rulestring = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &rulestring)) return NULL;
     
@@ -2050,8 +2050,8 @@ static PyObject* py_setpos(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* x;
-    char* y;
+    const char* x;
+    const char* y;
     
     if (!PyArg_ParseTuple(args, (char*)"ss", &x, &y)) return NULL;
     
@@ -2419,7 +2419,7 @@ static PyObject* py_setname(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* name;
+    const char* name;
     int index = currindex;
     
     if (!PyArg_ParseTuple(args, (char*)"s|i", &name, &index)) return NULL;
@@ -2430,7 +2430,7 @@ static PyObject* py_setname(PyObject* self, PyObject* args)
         PYTHON_ERROR(msg);
     }
     
-    GSF_setname(name, index);
+    GSF_setname(wxString(name,wxConvLocal), index);
     
     RETURN_NONE;
 }
@@ -2559,7 +2559,7 @@ static PyObject* py_setoption(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* optname;
+    const char* optname;
     int oldval, newval;
     
     if (!PyArg_ParseTuple(args, (char*)"si", &optname, &newval)) return NULL;
@@ -2578,7 +2578,7 @@ static PyObject* py_getoption(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* optname;
+    const char* optname;
     int optval;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &optname)) return NULL;
@@ -2596,7 +2596,7 @@ static PyObject* py_setcolor(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* colname;
+    const char* colname;
     int r, g, b;
     
     if (!PyArg_ParseTuple(args, (char*)"siii", &colname, &r, &g, &b)) return NULL;
@@ -2622,7 +2622,7 @@ static PyObject* py_getcolor(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* colname;
+    const char* colname;
     wxColor color;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &colname)) return NULL;
@@ -2645,7 +2645,7 @@ static PyObject* py_setclipstr(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* clipstr;
+    const char* clipstr;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &clipstr)) return NULL;
     
@@ -2677,7 +2677,7 @@ static PyObject* py_getstring(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* prompt;
+    const char* prompt;
     const char* initial = "";
     const char* title = "";
     
@@ -2732,7 +2732,7 @@ static PyObject* py_doevent(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* event;
+    const char* event;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &event)) return NULL;
     
@@ -2754,7 +2754,8 @@ static PyObject* py_getkey(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     char s[2];        // room for char + NULL
-    GSF_getkey(s);
+    s[0] = GSF_getkey();
+    s[1] = '\0';
     
     return Py_BuildValue((char*)"s", s);
 }
@@ -2765,7 +2766,7 @@ static PyObject* py_dokey(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* ascii;
+    const char* ascii;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &ascii)) return NULL;
     
@@ -2780,7 +2781,7 @@ static PyObject* py_show(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* s = NULL;
+    const char* s = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
@@ -2799,7 +2800,7 @@ static PyObject* py_error(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* s = NULL;
+    const char* s = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
@@ -2818,7 +2819,7 @@ static PyObject* py_warn(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* s = NULL;
+    const char* s = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
@@ -2833,7 +2834,7 @@ static PyObject* py_note(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* s = NULL;
+    const char* s = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
@@ -2848,7 +2849,7 @@ static PyObject* py_help(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* htmlfile = NULL;
+    const char* htmlfile = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &htmlfile)) return NULL;
     
@@ -2883,11 +2884,11 @@ static PyObject* py_exit(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* err = NULL;
+    const char* err = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"|s", &err)) return NULL;
     
-    GSF_exit(err);
+    GSF_exit(wxString(err, wxConvLocal));
     AbortPythonScript();
     
     // exception raised so must return NULL
@@ -2901,7 +2902,7 @@ static PyObject* py_stderr(PyObject* self, PyObject* args)
     // probably safer not to call checkevents here
     // if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
-    char* s = NULL;
+    const char* s = NULL;
     
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     

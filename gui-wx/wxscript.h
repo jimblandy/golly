@@ -87,30 +87,30 @@ void DoAutoUpdate();          // update display if autoupdate is true
 // The following Golly Script Functions are used to reduce code duplication.
 // They are called by corresponding functions in wxlua/wxperl/wxpython.cpp.
 
-const char* GSF_open(char* filename, int remember);
-const char* GSF_save(char* filename, char* format, int remember);
-const char* GSF_setdir(char* dirname, char* newdir);
-const char* GSF_getdir(char* dirname);
-const char* GSF_setalgo(char* algostring);
-const char* GSF_setrule(char* rulestring);
-const char* GSF_setgen(char* genstring);
-const char* GSF_setpos(char* x, char* y);
+const char* GSF_open(const wxString& filename, int remember);
+const char* GSF_save(const wxString& filename, const char* format, int remember);
+const char* GSF_setdir(const char* dirname, const wxString& newdir);
+const char* GSF_getdir(const char* dirname);
+const char* GSF_setalgo(const char* algostring);
+const char* GSF_setrule(const char* rulestring);
+const char* GSF_setgen(const char* genstring);
+const char* GSF_setpos(const char* x, const char* y);
 const char* GSF_setcell(int x, int y, int newstate);
-const char* GSF_paste(int x, int y, char* mode);
+const char* GSF_paste(int x, int y, const char* mode);
 const char* GSF_checkpos(lifealgo* algo, int x, int y);
 const char* GSF_checkrect(int x, int y, int wd, int ht);
 int GSF_hash(int x, int y, int wd, int ht);
-bool GSF_setoption(char* optname, int newval, int* oldval);
-bool GSF_getoption(char* optname, int* optval);
-bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol);
-bool GSF_getcolor(char* colname, wxColor& color);
-void GSF_setname(char* name, int index);
+bool GSF_setoption(const char* optname, int newval, int* oldval);
+bool GSF_getoption(const char* optname, int* optval);
+bool GSF_setcolor(const char* colname, wxColor& newcol, wxColor& oldcol);
+bool GSF_getcolor(const char* colname, wxColor& color);
+void GSF_setname(const wxString& name, int index);
 void GSF_select(int x, int y, int wd, int ht);
 void GSF_getevent(wxString& event, int get);
 const char* GSF_doevent(const wxString& event);
-void GSF_getkey(char* s);
-void GSF_dokey(char* ascii);
+char GSF_getkey();
+void GSF_dokey(const char* ascii);
 void GSF_update();
-void GSF_exit(char* errmsg);
+void GSF_exit(const wxString& errmsg);
 
 #endif

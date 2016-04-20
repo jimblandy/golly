@@ -20,8 +20,10 @@ def slideshow ():
                 # ignore hidden files (like .DS_Store on Mac)
                 pass
             else:
+                g.new("")
+                g.setalgo("QuickLife")      # nicer to start from this algo
                 fullname = join(root, name)
-                g.open(fullname, False)       # don't add file to Open/Run Recent submenu
+                g.open(fullname, False)     # don't add file to Open/Run Recent submenu
                 g.update()
                 if name.endswith(".lua") or name.endswith(".py"):
                     # reshow message in case it was changed by script
@@ -30,8 +32,8 @@ def slideshow ():
                 while True:
                     event = g.getevent()
                     if event == "key space none": break
-                    g.doevent(event)           # allow keyboard/mouse interaction
-                    sleep(0.01)                # avoid hogging cpu
+                    g.doevent(event)        # allow keyboard/mouse interaction
+                    sleep(0.01)             # avoid hogging cpu
 
     # if all patterns have been displayed then restore original algo and rule
     # (don't do this if user hits escape in case they want to explore pattern)

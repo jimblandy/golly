@@ -564,11 +564,11 @@ XS(pl_open)
     if (items < 1 || items > 2) PERL_ERROR("Usage: g_open($filename,$remember=0).");
     
     STRLEN n_a;
-    char* filename = SvPV(ST(0), n_a);
+    const char* filename = SvPV(ST(0), n_a);
     int remember = 0;
     if (items > 1) remember = SvIV(ST(1));
     
-    const char* err = GSF_open(filename, remember);
+    const char* err = GSF_open(wxString(filename,wxConvLocal), remember);
     if (err) PERL_ERROR(err);
     
     XSRETURN(0);
@@ -584,12 +584,12 @@ XS(pl_save)
     if (items < 2 || items > 3) PERL_ERROR("Usage: g_save($filename,$format,$remember=0).");
     
     STRLEN n_a;
-    char* filename = SvPV(ST(0), n_a);
-    char* format = SvPV(ST(1), n_a);
+    const char* filename = SvPV(ST(0), n_a);
+    const char* format = SvPV(ST(1), n_a);
     int remember = 0;
     if (items > 2) remember = SvIV(ST(2));
     
-    const char* err = GSF_save(filename, format, remember);
+    const char* err = GSF_save(wxString(filename,wxConvLocal), format, remember);
     if (err) PERL_ERROR(err);
     
     XSRETURN(0);
@@ -690,7 +690,7 @@ XS(pl_load)
     if (items != 1) PERL_ERROR("Usage: $cells = g_load($filename).");
     
     STRLEN n_a;
-    char* filename = SvPV(ST(0), n_a);
+    const char* filename = SvPV(ST(0), n_a);
     
     // create temporary universe of same type as current universe
     lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
@@ -744,7 +744,7 @@ XS(pl_store)
     AV* inarray = (AV*)SvRV(cells);
     
     STRLEN n_a;
-    char* filename = SvPV(ST(1), n_a);
+    const char* filename = SvPV(ST(1), n_a);
     
     // create temporary universe of same type as current universe
     lifealgo* tempalgo = CreateNewUniverse(currlayer->algtype, allowcheck);
@@ -830,10 +830,10 @@ XS(pl_setdir)
     if (items != 2) PERL_ERROR("Usage: g_setdir($dirname,$newdir).");
     
     STRLEN n_a;
-    char* dirname = SvPV(ST(0), n_a);
-    char* newdir = SvPV(ST(1), n_a);
+    const char* dirname = SvPV(ST(0), n_a);
+    const char* newdir = SvPV(ST(1), n_a);
     
-    const char* err = GSF_setdir(dirname, newdir);
+    const char* err = GSF_setdir(dirname, wxString(newdir,wxConvLocal));
     if (err) PERL_ERROR(err);
     
     XSRETURN(0);
@@ -849,7 +849,7 @@ XS(pl_getdir)
     if (items != 1) PERL_ERROR("Usage: $dir = g_getdir($dirname).");
     
     STRLEN n_a;
-    char* dirname = SvPV(ST(0), n_a);
+    const char* dirname = SvPV(ST(0), n_a);
     
     const char* dirstring = GSF_getdir(dirname);
     if (dirstring == NULL) PERL_ERROR("g_getdir error: unknown directory name.");
@@ -867,7 +867,7 @@ XS(pl_new)
     if (items != 1) PERL_ERROR("Usage: g_new($title).");
     
     STRLEN n_a;
-    char* title = SvPV(ST(0), n_a);
+    const char* title = SvPV(ST(0), n_a);
     
     mainptr->NewPattern(wxString(title,wxConvLocal));
     DoAutoUpdate();
@@ -950,7 +950,7 @@ XS(pl_paste)
     int y = SvIV(ST(1));
     
     STRLEN n_a;
-    char* mode = SvPV(ST(2), n_a);
+    const char* mode = SvPV(ST(2), n_a);
     
     const char* err = GSF_paste(x, y, mode);
     if (err) PERL_ERROR(err);
@@ -1058,7 +1058,7 @@ XS(pl_parse)
         PERL_ERROR("Usage: $outcells = g_parse($string,$x=0,$y=0,$axx=1,$axy=0,$ayx=0,$ayy=1).");
     
     STRLEN n_a;
-    char* s = SvPV(ST(0), n_a);
+    const char* s = SvPV(ST(0), n_a);
     
     // default values for optional params
     int x0  = 0;
@@ -1096,7 +1096,7 @@ XS(pl_parse)
     } else {
         // parsing RLE format; first check if multi-state data is present
         bool multistate = false;
-        char* p = s;
+        const char* p = s;
         while (*p) {
             char c = *p++;
             if ((c == '.') || ('p' <= c && c <= 'y') || ('A' <= c && c <= 'X')) {
@@ -2064,7 +2064,7 @@ XS(pl_setgen)
     if (items != 1) PERL_ERROR("Usage: g_setgen($string).");
     
     STRLEN n_a;
-    char* genstring = SvPV(ST(0), n_a);
+    const char* genstring = SvPV(ST(0), n_a);
     
     const char* err = GSF_setgen(genstring);
     if (err) PERL_ERROR(err);
@@ -2120,7 +2120,7 @@ XS(pl_setalgo)
     if (items != 1) PERL_ERROR("Usage: g_setalgo($string).");
     
     STRLEN n_a;
-    char* algostring = SvPV(ST(0), n_a);
+    const char* algostring = SvPV(ST(0), n_a);
     
     const char* err = GSF_setalgo(algostring);
     if (err) PERL_ERROR(err);
@@ -2159,7 +2159,7 @@ XS(pl_setrule)
     if (items != 1) PERL_ERROR("Usage: g_setrule($string).");
     
     STRLEN n_a;
-    char* rulestring = SvPV(ST(0), n_a);
+    const char* rulestring = SvPV(ST(0), n_a);
     
     const char* err = GSF_setrule(rulestring);
     if (err) PERL_ERROR(err);
@@ -2237,8 +2237,8 @@ XS(pl_setpos)
     if (items != 2) PERL_ERROR("Usage: g_setpos($xstring,$ystring).");
     
     STRLEN n_a;
-    char* x = SvPV(ST(0), n_a);
-    char* y = SvPV(ST(1), n_a);
+    const char* x = SvPV(ST(0), n_a);
+    const char* y = SvPV(ST(1), n_a);
     
     const char* err = GSF_setpos(x, y);
     if (err) PERL_ERROR(err);
@@ -2566,7 +2566,7 @@ XS(pl_setname)
     if (items < 1 || items > 2) PERL_ERROR("Usage: g_setname($name,$index=current).");
     
     STRLEN n_a;
-    char* name = SvPV(ST(0), n_a);
+    const char* name = SvPV(ST(0), n_a);
     int index = currindex;
     if (items > 1) index = SvIV(ST(1));
     
@@ -2576,7 +2576,7 @@ XS(pl_setname)
         PERL_ERROR(msg);
     }
     
-    GSF_setname(name, index);
+    GSF_setname(wxString(name,wxConvLocal), index);
     
     XSRETURN(0);
 }
@@ -2723,7 +2723,7 @@ XS(pl_setoption)
     if (items != 2) PERL_ERROR("Usage: $oldval = g_setoption($name,$newval).");
     
     STRLEN n_a;
-    char* optname = SvPV(ST(0), n_a);
+    const char* optname = SvPV(ST(0), n_a);
     int newval = SvIV(ST(1));
     int oldval;
     
@@ -2745,7 +2745,7 @@ XS(pl_getoption)
     if (items != 1) PERL_ERROR("Usage: $int = g_getoption($name).");
     
     STRLEN n_a;
-    char* optname = SvPV(ST(0), n_a);
+    const char* optname = SvPV(ST(0), n_a);
     int optval;
     
     if (!GSF_getoption(optname, &optval)) {
@@ -2765,7 +2765,7 @@ XS(pl_setcolor)
     if (items != 4) PERL_ERROR("Usage: @oldrgb = g_setcolor($name,$r,$g,$b).");
     
     STRLEN n_a;
-    char* colname = SvPV(ST(0), n_a);
+    const char* colname = SvPV(ST(0), n_a);
     wxColor newcol(SvIV(ST(1)), SvIV(ST(2)), SvIV(ST(3)));
     wxColor oldcol;
     
@@ -2791,7 +2791,7 @@ XS(pl_getcolor)
     if (items != 1) PERL_ERROR("Usage: @rgb = g_getcolor($name).");
     
     STRLEN n_a;
-    char* colname = SvPV(ST(0), n_a);
+    const char* colname = SvPV(ST(0), n_a);
     wxColor color;
     
     if (!GSF_getcolor(colname, color)) {
@@ -2816,7 +2816,7 @@ XS(pl_setclipstr)
     if (items != 1) PERL_ERROR("Usage: g_setclipstr($string).");
     
     STRLEN n_a;
-    char* clipstr = SvPV(ST(0), n_a);
+    const char* clipstr = SvPV(ST(0), n_a);
     wxString wxs_clip(clipstr, wxConvLocal);
     
     mainptr->CopyTextToClipboard(wxs_clip);
@@ -2911,7 +2911,7 @@ XS(pl_doevent)
     if (items != 1) PERL_ERROR("Usage: g_doevent($string).");
     
     STRLEN n_a;
-    char* event = SvPV(ST(0), n_a);
+    const char* event = SvPV(ST(0), n_a);
     
     if (event[0]) {
         const char* err = GSF_doevent(wxString(event,wxConvLocal));
@@ -2931,7 +2931,8 @@ XS(pl_getkey)
     if (items != 0) PERL_ERROR("Usage: $char = g_getkey().");
     
     char s[2];        // room for char + NULL
-    GSF_getkey(s);
+    s[0] = GSF_getkey();
+    s[1] = '\0';
     
     XSRETURN_PV(s);
 }
@@ -2946,7 +2947,7 @@ XS(pl_dokey)
     if (items != 1) PERL_ERROR("Usage: g_dokey($char).");
     
     STRLEN n_a;
-    char* ascii = SvPV(ST(0), n_a);
+    const char* ascii = SvPV(ST(0), n_a);
     
     GSF_dokey(ascii);
     
@@ -2963,7 +2964,7 @@ XS(pl_show)
     if (items != 1) PERL_ERROR("Usage: g_show($string).");
     
     STRLEN n_a;
-    char* s = SvPV(ST(0), n_a);
+    const char* s = SvPV(ST(0), n_a);
     
     inscript = false;
     statusptr->DisplayMessage(wxString(s,wxConvLocal));
@@ -2984,7 +2985,7 @@ XS(pl_error)
     if (items != 1) PERL_ERROR("Usage: g_error($string).");
     
     STRLEN n_a;
-    char* s = SvPV(ST(0), n_a);
+    const char* s = SvPV(ST(0), n_a);
     
     inscript = false;
     statusptr->ErrorMessage(wxString(s,wxConvLocal));
@@ -3005,7 +3006,7 @@ XS(pl_warn)
     if (items != 1) PERL_ERROR("Usage: g_warn($string).");
     
     STRLEN n_a;
-    char* s = SvPV(ST(0), n_a);
+    const char* s = SvPV(ST(0), n_a);
     
     Warning(wxString(s,wxConvLocal));
     
@@ -3022,7 +3023,7 @@ XS(pl_note)
     if (items != 1) PERL_ERROR("Usage: g_note($string).");
     
     STRLEN n_a;
-    char* s = SvPV(ST(0), n_a);
+    const char* s = SvPV(ST(0), n_a);
     
     Note(wxString(s,wxConvLocal));
     
@@ -3039,7 +3040,7 @@ XS(pl_help)
     if (items != 1) PERL_ERROR("Usage: g_help($string).");
     
     STRLEN n_a;
-    char* htmlfile = SvPV(ST(0), n_a);
+    const char* htmlfile = SvPV(ST(0), n_a);
     
     ShowHelp(wxString(htmlfile,wxConvLocal));
     
@@ -3076,9 +3077,9 @@ XS(pl_exit)
     if (items > 1) PERL_ERROR("Usage: g_exit($string='').");
     
     STRLEN n_a;
-    char* err = (items == 1) ? SvPV(ST(0),n_a) : NULL;
+    const char* err = (items == 1) ? SvPV(ST(0),n_a) : NULL;
     
-    GSF_exit(err);
+    GSF_exit(wxString(err, wxConvLocal));
     AbortPerlScript();
     Perl_croak(aTHX_ NULL);
 }
@@ -3094,7 +3095,7 @@ XS(pl_fatal)
     if (items != 1) Warning(_("Bug: usage is g_fatal($string)"));
     
     STRLEN n_a;
-    char* err = SvPV(ST(0),n_a);
+    const char* err = SvPV(ST(0),n_a);
     
     if (scripterr == wxString(abortmsg,wxConvLocal)) {
         // this can happen in Perl 5.14 so don't change scripterr

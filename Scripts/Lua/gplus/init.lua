@@ -296,12 +296,13 @@ function m.pattern(arg, x0, y0, A)
 	A = A or m.identity
     
     if type(arg) == "table" then
+        p.array = {}
     	if getmetatable(arg) == mtp then
     		-- arg is a pattern
-    		p.array = g.join({}, arg.array)
+    		if #arg.array > 0 then p.array = g.join({},arg.array) end
     	else
     		-- assume arg is a cell array
-    		p.array = g.join({}, arg)
+    		if #arg > 0 then p.array = g.join({},arg) end
     	end
     elseif type(arg) == "string" then
     	p.array = g.parse(arg, x0, y0, table.unpack(A))
@@ -315,7 +316,9 @@ function m.pattern(arg, x0, y0, A)
             x, y, A = table.unpack(x)
         end
         A = A or m.identity
-        return m.pattern( g.transform(p.array, x, y, table.unpack(A)) )
+	    local newp = m.pattern()
+	    newp.array = g.transform(p.array, x, y, table.unpack(A))
+	    return newp
 	end
 	
 	-- there's no need to implement p.translate and p.apply as they
@@ -347,11 +350,18 @@ function m.pattern(arg, x0, y0, A)
 	end
 	
 	p.add = function (p1, p2)
-		return m.pattern( g.join(p1.array, p2.array) )
+	    local newp = m.pattern()
+	    newp.array = g.join(p1.array, p2.array)
+	    return newp
+	    -- note that above code is about 15% faster than doing
+		-- return m.pattern( g.join(p1.array, p2.array) )
+		-- because it avoids calling g.join again
 	end
 	
 	p.evolve = function (p1, n)
-		return m.pattern( g.evolve(p1.array, n) )
+	    local newp = m.pattern()
+	    newp.array = g.evolve(p1.array, n)
+	    return newp
 	end
 	
 	-- set metamethod so scripts can do pattern1 + pattern2

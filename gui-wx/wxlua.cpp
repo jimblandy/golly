@@ -92,7 +92,7 @@
 
 #ifdef __WXMAC__
     // use decomposed UTF8 so fopen will work
-    #define FILENAME wxString(filename,wxConvLocal).fn_str()
+    #define FILENAME wxString(filename,wxConvUTF8).fn_str()
 #else
     #define FILENAME filename
 #endif
@@ -137,7 +137,7 @@ static int g_open(lua_State* L)
     int remember = 0;
     if (lua_gettop(L) > 1) remember = lua_toboolean(L, 2) ? 1 : 0;
 
-    const char* err = GSF_open((char*) filename, remember);
+    const char* err = GSF_open(wxString(filename,wxConvUTF8), remember);
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -154,7 +154,7 @@ static int g_save(lua_State* L)
     int remember = 0;
     if (lua_gettop(L) > 2) remember = lua_toboolean(L, 3) ? 1 : 0;
     
-    const char* err = GSF_save((char*) filename, (char*) format, remember);
+    const char* err = GSF_save(wxString(filename,wxConvUTF8), format, remember);
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -178,10 +178,10 @@ static int g_opendialog(lua_State* L)
     if (lua_gettop(L) > 3) initialfname = luaL_checkstring(L, 4);
     if (lua_gettop(L) > 4) mustexist = lua_toboolean(L, 5) ? 1 : 0;
 
-    wxString wxs_title(title, wxConvLocal);
-    wxString wxs_filetypes(filetypes, wxConvLocal);
-    wxString wxs_initialdir(initialdir, wxConvLocal);
-    wxString wxs_initialfname(initialfname, wxConvLocal);
+    wxString wxs_title(title, wxConvUTF8);
+    wxString wxs_filetypes(filetypes, wxConvUTF8);
+    wxString wxs_initialdir(initialdir, wxConvUTF8);
+    wxString wxs_initialfname(initialfname, wxConvUTF8);
     wxString wxs_result = wxEmptyString;
     
     if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
@@ -223,10 +223,10 @@ static int g_savedialog(lua_State* L)
     if (lua_gettop(L) > 3) initialfname = luaL_checkstring(L, 4);
     if (lua_gettop(L) > 4) suppressprompt = lua_toboolean(L, 5) ? 1 : 0;
 
-    wxString wxs_title(title, wxConvLocal);
-    wxString wxs_filetypes(filetypes, wxConvLocal);
-    wxString wxs_initialdir(initialdir, wxConvLocal);
-    wxString wxs_initialfname(initialfname, wxConvLocal);
+    wxString wxs_title(title, wxConvUTF8);
+    wxString wxs_filetypes(filetypes, wxConvUTF8);
+    wxString wxs_initialdir(initialdir, wxConvUTF8);
+    wxString wxs_initialfname(initialfname, wxConvUTF8);
     
     if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
     
@@ -400,7 +400,7 @@ static int g_setdir(lua_State* L)
     const char* dirname = luaL_checkstring(L, 1);
     const char* newdir = luaL_checkstring(L, 2);
     
-    const char* err = GSF_setdir((char*) dirname, (char*) newdir);
+    const char* err = GSF_setdir(dirname, wxString(newdir,wxConvUTF8));
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -414,7 +414,7 @@ static int g_getdir(lua_State* L)
     
     const char* dirname = luaL_checkstring(L, 1);
 
-    const char* dirstring = GSF_getdir((char*) dirname);
+    const char* dirstring = GSF_getdir(dirname);
     if (dirstring == NULL) GollyError(L, "getdir error: unknown directory name.");
 
     lua_pushstring(L, dirstring);
@@ -430,7 +430,7 @@ static int g_getfiles(lua_State* L)
     
     const char* dirname = luaL_checkstring(L, 1);
     
-    wxString dirpath = wxString(dirname,wxConvLocal);
+    wxString dirpath = wxString(dirname,wxConvUTF8);
 
     if (!wxFileName::DirExists(dirpath)) {
         GollyError(L, "getfiles error: given directory does not exist.");
@@ -470,7 +470,7 @@ static int g_new(lua_State* L)
 
     const char* title = luaL_checkstring(L, 1);
     
-    mainptr->NewPattern(wxString(title,wxConvLocal));
+    mainptr->NewPattern(wxString(title,wxConvUTF8));
     DoAutoUpdate();
     
     return 0;   // no result
@@ -539,7 +539,7 @@ static int g_paste(lua_State* L)
     int y = luaL_checkinteger(L, 2);
     const char* mode = luaL_checkstring(L, 3);
     
-    const char* err = GSF_paste(x, y, (char*) mode);
+    const char* err = GSF_paste(x, y, mode);
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -890,7 +890,7 @@ static int g_putcells(lua_State* L)
     if (lua_gettop(L) > 6) ayy = luaL_checkinteger(L, 7);
     if (lua_gettop(L) > 7) mode = luaL_checkstring(L, 8);
         
-    wxString modestr = wxString(mode, wxConvLocal);
+    wxString modestr = wxString(mode, wxConvUTF8);
     if ( !(   modestr.IsSameAs(wxT("or"), false)
            || modestr.IsSameAs(wxT("xor"), false)
            || modestr.IsSameAs(wxT("copy"), false)
@@ -1562,7 +1562,7 @@ static int g_setgen(lua_State* L)
 
     const char* genstring = luaL_checkstring(L, 1);
     
-    const char* err = GSF_setgen((char*) genstring);
+    const char* err = GSF_setgen(genstring);
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -1632,7 +1632,7 @@ static int g_setalgo(lua_State* L)
 
     const char* algostring = luaL_checkstring(L, 1);
     
-    const char* err = GSF_setalgo((char*) algostring);
+    const char* err = GSF_setalgo(algostring);
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -1666,7 +1666,7 @@ static int g_setrule(lua_State* L)
 
     const char* rulestring = luaL_checkstring(L, 1);
     
-    const char* err = GSF_setrule((char*) rulestring);
+    const char* err = GSF_setrule(rulestring);
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -1714,7 +1714,7 @@ static int g_setpos(lua_State* L)
     const char* x = luaL_checkstring(L, 1);
     const char* y = luaL_checkstring(L, 2);
 
-    const char* err = GSF_setpos((char*) x, (char*) y);
+    const char* err = GSF_setpos(x, y);
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -2059,7 +2059,7 @@ static int g_setname(lua_State* L)
         GollyError(L, msg);
     }
     
-    GSF_setname((char*) name, index);
+    GSF_setname(wxString(name,wxConvUTF8), index);
     
     return 0;   // no result
 }
@@ -2193,7 +2193,7 @@ static int g_setoption(lua_State* L)
     int newval = luaL_checkinteger(L, 2);
     
     int oldval;
-    if (!GSF_setoption((char*) optname, newval, &oldval)) {
+    if (!GSF_setoption(optname, newval, &oldval)) {
         GollyError(L, "setoption error: unknown option.");
     }
     
@@ -2212,7 +2212,7 @@ static int g_getoption(lua_State* L)
     const char* optname = luaL_checkstring(L, 1);
 
     int optval;
-    if (!GSF_getoption((char*) optname, &optval)) {
+    if (!GSF_getoption(optname, &optval)) {
         GollyError(L, "getoption error: unknown option.");
     }
     
@@ -2235,7 +2235,7 @@ static int g_setcolor(lua_State* L)
     wxColor newcol(r, g, b);
     wxColor oldcol;
     
-    if (!GSF_setcolor((char*) colname, newcol, oldcol)) {
+    if (!GSF_setcolor(colname, newcol, oldcol)) {
         GollyError(L, "setcolor error: unknown color.");
     }
     
@@ -2256,7 +2256,7 @@ static int g_getcolor(lua_State* L)
     const char* colname = luaL_checkstring(L, 1);
 
     wxColor color;
-    if (!GSF_getcolor((char*) colname, color)) {
+    if (!GSF_getcolor(colname, color)) {
         GollyError(L, "getcolor error: unknown color.");
     }
     
@@ -2275,7 +2275,7 @@ static int g_setclipstr(lua_State* L)
     CheckEvents(L);
     
     const char* clipstr = luaL_checkstring(L, 1);
-    mainptr->CopyTextToClipboard(wxString(clipstr,wxConvLocal));
+    mainptr->CopyTextToClipboard(wxString(clipstr,wxConvUTF8));
     
     return 0;   // no result
 }
@@ -2308,9 +2308,9 @@ static int g_getstring(lua_State* L)
     const char* title = lua_gettop(L) > 2 ? luaL_checkstring(L, 3) : "";
     
     wxString result;
-    if (!GetString(wxString(title,wxConvLocal),
-                   wxString(prompt,wxConvLocal),
-                   wxString(initial,wxConvLocal),
+    if (!GetString(wxString(title,wxConvUTF8),
+                   wxString(prompt,wxConvUTF8),
+                   wxString(initial,wxConvUTF8),
                    result)) {
         // user hit Cancel button so abort script
         lua_pushstring(L, abortmsg);
@@ -2362,7 +2362,7 @@ static int g_doevent(lua_State* L)
     const char* event = luaL_checkstring(L, 1);
     
     if (event[0]) {
-        const char* err = GSF_doevent(wxString(event,wxConvLocal));
+        const char* err = GSF_doevent(wxString(event,wxConvUTF8));
         if (err) GollyError(L, err);
     }
     
@@ -2378,7 +2378,7 @@ static int g_show(lua_State* L)
     const char* s = luaL_checkstring(L, 1);
 
     inscript = false;
-    statusptr->DisplayMessage(wxString(s,wxConvLocal));
+    statusptr->DisplayMessage(wxString(s,wxConvUTF8));
     inscript = true;
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
@@ -2395,7 +2395,7 @@ static int g_error(lua_State* L)
     const char* s = luaL_checkstring(L, 1);
     
     inscript = false;
-    statusptr->ErrorMessage(wxString(s,wxConvLocal));
+    statusptr->ErrorMessage(wxString(s,wxConvUTF8));
     inscript = true;
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
@@ -2411,7 +2411,7 @@ static int g_warn(lua_State* L)
 
     const char* s = luaL_checkstring(L, 1);
         
-    Warning(wxString(s,wxConvLocal));
+    Warning(wxString(s,wxConvUTF8));
     
     return 0;   // no result
 }
@@ -2423,7 +2423,8 @@ static int g_note(lua_State* L)
     CheckEvents(L);
     
     const char* s = luaL_checkstring(L, 1);
-    Note(wxString(s,wxConvLocal));
+    
+    Note(wxString(s,wxConvUTF8));
     
     return 0;   // no result
 }
@@ -2435,7 +2436,10 @@ static int g_help(lua_State* L)
     CheckEvents(L);
     
     const char* htmlfile = luaL_checkstring(L, 1);
-    ShowHelp(wxString(htmlfile,wxConvLocal));
+    
+    // file is opened ok but we get an assert if its name has non-ASCII chars!!!
+    // is this a Mac-only bug???!!!
+    ShowHelp(wxString(htmlfile,wxConvUTF8));
     
     return 0;   // no result
 }
@@ -2465,7 +2469,7 @@ static int g_continue(lua_State* L)
 	aborted = false;	// continue executing any remaining code
 
 	// if not empty, error will be displayed when script ends
-	scripterr = wxString(luaL_checkstring(L, 1), wxConvLocal);
+	scripterr = wxString(luaL_checkstring(L, 1), wxConvUTF8);
     
     return 0;   // no result
 }
@@ -2477,9 +2481,10 @@ static int g_exit(lua_State* L)
     // script will terminate so no point calling CheckEvents here
 
     if (lua_gettop(L) == 0) {
-        GSF_exit(NULL);
+        GSF_exit(wxEmptyString);
     } else {
-        GSF_exit((char*) luaL_checkstring(L, 1));
+        const char* err = luaL_checkstring(L, 1);
+        GSF_exit(wxString(err, wxConvUTF8));
     }
     
     lua_pushstring(L, abortmsg);
@@ -2656,11 +2661,13 @@ void RunLuaScript(const wxString& filepath)
     
     lua_level++;
     
-    if (luaL_dofile(L, (const char*)filepath.mb_str(wxConvUTF8))) {
-        scripterr += wxString(lua_tostring(L, -1),wxConvLocal);
+    // don't use wxConvUTF8 in next line because caller has already converted
+    // filepath to decomposed UTF8
+    if (luaL_dofile(L, (const char*)filepath.mb_str(wxConvLocal))) {
+        scripterr += wxString(lua_tostring(L,-1), wxConvUTF8);
         scripterr += wxT("\n");
         // scripterr is checked at the end of RunScript in wxscript.cpp
-        lua_pop(L, 1);
+        lua_pop(L,1);
     }
     
     lua_level--;

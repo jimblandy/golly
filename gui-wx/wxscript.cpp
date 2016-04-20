@@ -118,20 +118,16 @@ void ChangeWindowTitle(const wxString& name)
 // They are called by corresponding pl_* and py_* functions in wxperl.cpp
 // and wxpython.cpp respectively.
 
-const char* GSF_open(char* filename, int remember)
+const char* GSF_open(const wxString& filename, int remember)
 {
     // convert non-absolute filename to absolute path relative to scriptloc
-    wxString fname = wxString(filename,wxConvLocal);
-    wxFileName fullname(fname);
-    if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
+    wxFileName fullname(filename);
+    if (!fullname.IsAbsolute()) fullname = scriptloc + filename;
     
     // return error message here if file doesn't exist
     wxString fullpath = fullname.GetFullPath();
     if (!wxFileName::FileExists(fullpath)) {
-        static wxString msg;
-        msg = _("open error - file does not exist:\n");
-        msg += fullpath;
-        return (const char*) msg.mb_str(wxConvLocal);
+        return "open error: given file does not exist.";
     }
     
     // only add file to Open Recent submenu if remember flag is non-zero
@@ -143,23 +139,21 @@ const char* GSF_open(char* filename, int remember)
 
 // -----------------------------------------------------------------------------
 
-const char* GSF_save(char* filename, char* format, int remember)
+const char* GSF_save(const wxString& filename, const char* format, int remember)
 {
     // convert non-absolute filename to absolute path relative to scriptloc
-    wxString fname = wxString(filename,wxConvLocal);
-    wxFileName fullname(fname);
-    if (!fullname.IsAbsolute()) fullname = scriptloc + fname;
+    wxFileName fullname(filename);
+    if (!fullname.IsAbsolute()) fullname = scriptloc + filename;
     
     // only add file to Open Recent submenu if remember flag is non-zero
-    return mainptr->SaveFile(fullname.GetFullPath(),
-                             wxString(format,wxConvLocal), remember != 0);
+    return mainptr->SaveFile(fullname.GetFullPath(), wxString(format,wxConvLocal), remember != 0);
 }
 
 // -----------------------------------------------------------------------------
 
-const char* GSF_setdir(char* dirname, char* newdir)
+const char* GSF_setdir(const char* dirname, const wxString& newdir)
 {
-    wxString dirpath = wxString(newdir,wxConvLocal);
+    wxString dirpath = newdir;
     if (dirpath.Last() != wxFILE_SEP_PATH) dirpath += wxFILE_SEP_PATH;
     if (!wxFileName::DirExists(dirpath)) {
         return "New directory does not exist.";
@@ -194,7 +188,7 @@ const char* GSF_setdir(char* dirname, char* newdir)
 
 // -----------------------------------------------------------------------------
 
-const char* GSF_getdir(char* dirname)
+const char* GSF_getdir(const char* dirname)
 {
     wxString dirpath;
     
@@ -226,10 +220,10 @@ const char* GSF_getdir(char* dirname)
 
 // -----------------------------------------------------------------------------
 
-const char* GSF_setalgo(char* algostring)
+const char* GSF_setalgo(const char* algostring)
 {
     // find index for given algo name
-    char* algoname = ReplaceDeprecatedAlgo(algostring);
+    char* algoname = ReplaceDeprecatedAlgo((char*) algostring);
     algo_type algoindex = -1;
     for (int i = 0; i < NumAlgos(); i++) {
         if (strcmp(algoname, GetAlgoName(i)) == 0) {
@@ -256,7 +250,7 @@ const char* GSF_setalgo(char* algostring)
 
 // -----------------------------------------------------------------------------
 
-const char* GSF_setrule(char* rulestring)
+const char* GSF_setrule(const char* rulestring)
 {
     wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
@@ -347,7 +341,7 @@ const char* GSF_setrule(char* rulestring)
 
 // -----------------------------------------------------------------------------
 
-const char* GSF_setgen(char* genstring)
+const char* GSF_setgen(const char* genstring)
 {
     const char* err = mainptr->ChangeGenCount(genstring);
     if (!err) DoAutoUpdate();
@@ -357,7 +351,7 @@ const char* GSF_setgen(char* genstring)
 
 // -----------------------------------------------------------------------------
 
-const char* GSF_setpos(char* x, char* y)
+const char* GSF_setpos(const char* x, const char* y)
 {
     // disallow alphabetic chars in x,y
     int i;
@@ -390,9 +384,9 @@ const char* GSF_setpos(char* x, char* y)
 
 // -----------------------------------------------------------------------------
 
-void GSF_setname(char* name, int index)
+void GSF_setname(const wxString& name, int index)
 {
-    if (name == NULL || name[0] == 0) return;
+    if (name.length() == 0) return;
     
     // inscript should be true but play safe
     if (allowundo && !currlayer->stayclean && inscript)
@@ -404,7 +398,7 @@ void GSF_setname(char* name, int index)
         
         // show new name in main window's title;
         // also sets currlayer->currname and updates menu item
-        ChangeWindowTitle(wxString(name,wxConvLocal));
+        ChangeWindowTitle(name);
         
         if (allowundo && !currlayer->stayclean) {
             // note that currfile and savestart/dirty flags don't change
@@ -417,7 +411,7 @@ void GSF_setname(char* name, int index)
         currlayer = GetLayer(index);
         wxString oldname = currlayer->currname;
         
-        currlayer->currname = wxString(name,wxConvLocal);
+        currlayer->currname = name;
         
         if (allowundo && !currlayer->stayclean) {
             // note that currfile and savestart/dirty flags don't change
@@ -464,7 +458,7 @@ const char* GSF_setcell(int x, int y, int newstate)
 
 // -----------------------------------------------------------------------------
 
-const char* GSF_paste(int x, int y, char* mode)
+const char* GSF_paste(int x, int y, const char* mode)
 {
     // check if x,y is outside bounded grid
     if ( (currlayer->algo->gridwd > 0 &&
@@ -594,7 +588,7 @@ void GSF_select(int x, int y, int wd, int ht)
 
 // -----------------------------------------------------------------------------
 
-bool GSF_setoption(char* optname, int newval, int* oldval)
+bool GSF_setoption(const char* optname, int newval, int* oldval)
 {
     if (strcmp(optname, "autofit") == 0) {
         *oldval = currlayer->autofit ? 1 : 0;
@@ -838,7 +832,7 @@ bool GSF_setoption(char* optname, int newval, int* oldval)
 
 // -----------------------------------------------------------------------------
 
-bool GSF_getoption(char* optname, int* optval)
+bool GSF_getoption(const char* optname, int* optval)
 {
     if      (strcmp(optname, "autofit") == 0)       *optval = currlayer->autofit ? 1 : 0;
     else if (strcmp(optname, "boldspacing") == 0)   *optval = boldspacing;
@@ -882,7 +876,7 @@ bool GSF_getoption(char* optname, int* optval)
 
 // -----------------------------------------------------------------------------
 
-bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
+bool GSF_setcolor(const char* colname, wxColor& newcol, wxColor& oldcol)
 {
     if (strncmp(colname, "livecells", 9) == 0) {
         // livecells0..livecells9 are deprecated; get and set color of state 1
@@ -947,7 +941,7 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
         
     } else {
         // look for algo name
-        char* algoname = ReplaceDeprecatedAlgo(colname);
+        char* algoname = ReplaceDeprecatedAlgo((char*) colname);
         for (int i = 0; i < NumAlgos(); i++) {
             if (strcmp(algoname, GetAlgoName(i)) == 0) {
                 oldcol = algoinfo[i]->statusrgb;
@@ -967,7 +961,7 @@ bool GSF_setcolor(char* colname, wxColor& newcol, wxColor& oldcol)
 
 // -----------------------------------------------------------------------------
 
-bool GSF_getcolor(char* colname, wxColor& color)
+bool GSF_getcolor(const char* colname, wxColor& color)
 {
     if (strncmp(colname, "livecells", 9) == 0) {
         // livecells0..livecells9 are deprecated; return color of state 1
@@ -985,7 +979,7 @@ bool GSF_getcolor(char* colname, wxColor& color)
     else if (strcmp(colname, "nothashing") == 0) color = algoinfo[QLIFE_ALGO]->statusrgb;
     else {
         // look for algo name
-        char* algoname = ReplaceDeprecatedAlgo(colname);
+        char* algoname = ReplaceDeprecatedAlgo((char*) colname);
         for (int i = 0; i < NumAlgos(); i++) {
             if (strcmp(algoname, GetAlgoName(i)) == 0) {
                 color = algoinfo[i]->statusrgb;
@@ -1163,18 +1157,18 @@ const char* GSF_doevent(const wxString& event)
 
 // the following is deprecated (use GSF_getevent)
 
-void GSF_getkey(char* s)
+char GSF_getkey()
 {
     passkeys = true;   // future keyboard events will call PassKeyToScript
     
     if (scriptchars.length() == 0) {
         // return empty string
-        s[0] = '\0';
+        return '\0';
     } else {
         // return first char in scriptchars and then remove it
-        s[0] = scriptchars.GetChar(0);
-        s[1] = '\0';
-        scriptchars = scriptchars.AfterFirst(s[0]);
+        char ch = scriptchars.GetChar(0);
+        scriptchars = scriptchars.AfterFirst(ch);
+        return ch;
     }
 }
 
@@ -1182,7 +1176,7 @@ void GSF_getkey(char* s)
 
 // the following is deprecated (use GSF_doevent)
 
-void GSF_dokey(char* ascii)
+void GSF_dokey(const char* ascii)
 {
     if (*ascii) {
         // convert ascii char to corresponding wx key code;
@@ -1239,12 +1233,12 @@ void GSF_update()
 
 // -----------------------------------------------------------------------------
 
-void GSF_exit(char* errmsg)
+void GSF_exit(const wxString& errmsg)
 {
-    if (errmsg && errmsg[0] != 0) {
+    if (!errmsg.IsEmpty()) {
         // display given error message
         inscript = false;
-        statusptr->ErrorMessage(wxString(errmsg,wxConvLocal));
+        statusptr->ErrorMessage(errmsg);
         inscript = true;
         // make sure status bar is visible
         if (!showstatus) mainptr->ToggleStatusBar();
