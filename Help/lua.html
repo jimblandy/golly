@@ -12,6 +12,7 @@ in lots of interesting ways.
 <dd><a href="#commands"><b>Golly's scripting commands</b></a></dd>
 <dd><a href="#cellarrays"><b>Cell arrays</b></a></dd>
 <dd><a href="#rectarrays"><b>Rectangle arrays</b></a></dd>
+<dd><a href="#gplus"><b>Using the gplus package</b></a></dd>
 <dd><a href="#problems"><b>Potential problems</b></a></dd>
 <dd><a href="#copyright"><b>Lua copyright notice</b></a></dd>
 </p>
@@ -125,7 +126,7 @@ Control menu.
 <font size=+1><b>Golly's scripting commands</b></font>
 
 <p>
-This section describes all the g.* commands that can be used in a script after
+This section describes all the <b>g.*</b> commands that can be used in a script after
 including this line:
 <p><dd>
 <b>local g = golly()</b>
@@ -815,7 +816,9 @@ The optional parameter (default = '\0') specifies a separator
 character that can be used to make the resulting strings more readable.
 For example, <b>g.getpos(',')</b> might return two strings like "1,234"
 and "-5,678" but <b>g.getpos()</b> would return "1234" and "-5678".
-Use the latter call if you want to do arithmetic on the x,y values.
+Use the latter call if you want to do arithmetic on the x,y values,
+or just use the <b>getposint()</b> function defined
+in the <a href="#gplus"><b>gplus</b></a> package.
 </dd>
 <dd> Example: <b>local x, y = g.getpos()</b></dd>
 </p>
@@ -1348,36 +1351,154 @@ rectangle.  The last two items specify the rectangle's size (in cells).
 The width and height must be greater than zero.
 
 
+<p><a name="gplus"></a>&nbsp;<br>
+<font size=+1><b>Using the gplus package</b></font>
+
+<p>
+The <b>gplus</b> package supplied with Golly provides a high-level interface
+to many of Golly's built-in scripting commands.  The package consists of a
+set of .lua files stored in the Scripts/Lua/gplus directory.
+The best way to learn how to use <b>gplus</b> is to look at some of the
+scripts supplied with Golly:
+
+<p>
+<ul>
+<li>
+See <a href="edit:Scripts/Lua/bricklayer.lua">bricklayer.lua</a> for how to use
+the <b>pattern</b> function to contruct a complicated pattern by merging
+simpler sub-patterns.
+<li>
+See <a href="edit:Scripts/Lua/invert.lua">invert.lua</a> for how to use
+the <b>rect</b> function to make it easier to manipulate rectangles.
+<li>
+See <a href="edit:Scripts/Lua/pop-plot.lua">pop-plot.lua</a> for how to
+draw lines and text.
+<li>
+See <a href="edit:Scripts/Lua/shift.lua">shift.lua</a> for how to use
+the <b>split</b> and <b>validint</b> functions to parse user input.
+</ul>
+
+<p>
+Here's a summary of the functions available after a script calls
+<b>local gp = require "gplus"</b>
+(see <a href="edit:Scripts/Lua/gplus/init.lua">init.lua</a> for all
+the implementation details):
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td><b>gp.int(x)</b></td><td width=10> </td>
+   <td> &mdash; return integer part of given floating point number</td>
+</tr>
+<tr>
+   <td><b>gp.min(a)</b></td><td width=10> </td>
+   <td> &mdash; return minimum value in given array</td>
+</tr>
+<tr>
+   <td><b>gp.max(a)</b></td><td width=10> </td>
+   <td> &mdash; return maximum value in given array</td>
+</tr>
+<tr>
+   <td><b>gp.drawline(x1,y1,x2,y2,z)</b></td><td width=10> </td>
+   <td> &mdash; draw a line of state z cells from x1,y1 to x2,y2</td>
+</tr>
+<tr>
+   <td><b>gp.getedges(r)</b></td><td width=10> </td>
+   <td> &mdash; return left, top, right, bottom edges of given rectangle array</td>
+</tr>
+<tr>
+   <td><b>gp.getminbox(p)</b></td><td width=10> </td>
+   <td> &mdash; return minimal bounding box of given cell array or pattern</td>
+</tr>
+<tr>
+   <td><b>gp.validint(s)</b></td><td width=10> </td>
+   <td> &mdash; return true if given string is a valid integer</td>
+</tr>
+<tr>
+   <td><b>gp.getposint()</b></td><td width=10> </td>
+   <td> &mdash; return viewport position as 2 integers</td>
+</tr>
+<tr>
+   <td><b>gp.setposint(x,y)</b></td><td width=10> </td>
+   <td> &mdash; use given integers to set viewport position</td>
+</tr>
+<tr>
+   <td><b>gp.split(s,sep)</b></td><td width=10> </td>
+   <td> &mdash; split given string into 1 or more substrings</td>
+</tr>
+<tr>
+   <td><b>gp.equal(a1,a2)</b></td><td width=10> </td>
+   <td> &mdash; return true if given arrays have the same values</td>
+</tr>
+<tr>
+   <td><b>gp.compose(S,T)</b></td><td width=10> </td>
+   <td> &mdash; return the composition of two transformations S and T</td>
+</tr>
+<tr>
+   <td><b>gp.rect(r)</b></td><td width=10> </td>
+   <td> &mdash; return a table for manipulating a rectangle</td>
+</tr>
+<tr>
+   <td><b>gp.pattern(p)</b></td><td width=10> </td>
+   <td> &mdash; return a table for manipulating a pattern</td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+Most of the supplied Lua scripts use <b>gplus</b>, but it isn't compulsory.
+You might prefer to create your own package for use in the scripts you write.
+If a script calls <b>require "foo"</b> then Golly will look for foo.lua
+in the same directory as the script, then it looks for foo/init.lua.
+If a script calls <b>require "foo.bar"</b> then Golly looks for foo/bar.lua.
+(If none of those files exist in the script's directory then Golly will
+look in the supplied Scripts/Lua directory, so scripts can always use the
+<b>gplus</b> package no matter where they are located.)
+
+
 <p><a name="problems"></a>&nbsp;<br>
 <font size=+1><b>Potential problems</b></font>
 
 <p>
 1.
-There are a couple of important points to remember about Lua, especially
+There are some important points to remember about Lua, especially
 when converting an existing Perl/Python script to Lua:
 <p>
 <ul>
 <li>
 Cell arrays and rectangle arrays start with index 1, not 0.
-This is necessary to be able to use Lua's length operator (#).
+This is necessary to be able to use Lua's length operator (<b>#</b>) and
+standard library functions like <b>table.unpack</b>.
 <li>
 Lua's <b>true</b> and <b>false</b> are <em>not</em> equivalent to 1 and 0.
 In particular, "<b>if 0</b>" is true.
+<li>
+Avoid calls like <b>local x, y, wd, ht = g.getrect()</b>.
+Only x will get a non-<b>nil</b> value (a rectangle array).
+You need to do <b>local x, y, wd, ht = table.unpack(g.getrect())</b>.
+<li>
+When writing a complicated script it's a good idea to add the line
+<b>require "gplus.strict"</b> near the top.  This will catch any undeclared
+global variables.  When the script is working just remove or comment out the
+strict line.
 </ul>
+<p>
+More tips can be found at <a href="http://www.luafaq.org/gotchas.html">Lua Gotchas</a>.
 
 <p>
 2.
 The escape key check to abort a running script is not done by Lua but
-by each Golly scripting command.  This means that very long Lua computations
+by each <b>g.*</b> function.  This means that very long Lua computations
 should call an occasional "no-op" like <b>g.doevent("")</b> to allow the
 script to be aborted in a timely manner.
 
 <p>
 3.
-When writing a script that creates a pattern, make sure the script starts
-with a <b>g.new</b> call (or, less useful, a <b>g.open</b> call) otherwise
-the script might create lots of temporary files or use lots of memory.
-From the undo history's point of view there are two types of scripts:
+When writing a script that creates a pattern, make sure the script starts with
+a <b>g.new</b> call (or, less useful, a <b>g.open</b> call that loads a pattern)
+otherwise the script might create lots of temporary files or use lots of memory.
+From Golly's point of view there are two types of scripts:
 <p>
 <ul>
 <li>
@@ -1390,7 +1511,7 @@ A script that doesn't call <b>g.new</b> or <b>g.open</b> is assumed to modify th
 current pattern. Golly must record <em>all</em> the script's changes so that
 when it finishes you can select "Undo Script Changes" from the Edit menu.
 Generating changes (due to <b>g.run</b> or <b>g.step</b> calls) are stored in
-temporary files, while other changes are stored in memory.
+temporary files; all other changes are stored in memory.
 </ul>
 
 

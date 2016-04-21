@@ -82,7 +82,7 @@ end
 --------------------------------------------------------------------------------
 
 function m.getedges(r)
-    -- return left, top, right, bottom edges of given cell rect
+    -- return left, top, right, bottom edges of given rect array
     return r[1], r[2], r[1]+r[3]-1, r[2]+r[4]-1
 end
 
