@@ -2433,8 +2433,6 @@ static int g_help(lua_State* L)
 {
     CheckEvents(L);
     
-    // file is opened ok but we get an assert if its name has non-ASCII chars!!!
-    // seems to be a Mac-only bug!!!
     ShowHelp(wxString(luaL_checkstring(L, 1), LUA_ENC));
     
     return 0;   // no result
