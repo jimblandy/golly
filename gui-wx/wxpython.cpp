@@ -503,7 +503,7 @@ static PyObject* py_save(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"ss|i", &filename, &format, &remember)) return NULL;
     
-    const char* err = GSF_save(filename, format, remember);
+    const char* err = GSF_save(wxString(filename,wxConvLocal), format, remember);
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
