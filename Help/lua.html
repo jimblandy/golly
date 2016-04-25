@@ -63,6 +63,10 @@ The Scripts folder supplied with Golly contains a number of example Lua scripts:
    <td> &mdash; makes a toroidal universe from the current selection</td>
 </tr>
 <tr>
+   <td><b>metafier.lua</b></td><td width=10> </td>
+   <td> &mdash; converts the current selection into a meta pattern</td>
+</tr>
+<tr>
    <td><b>move-object.lua</b></td><td width=10> </td>
    <td> &mdash; lets you move a connected group of live cells</td>
 </tr>
@@ -1480,8 +1484,8 @@ You need to do <b>local x, y, wd, ht = table.unpack(g.getrect())</b>.
 <li>
 When writing a complicated script it's a good idea to add the line
 <b>require "gplus.strict"</b> near the top.  This will catch any undeclared
-global variables.  When the script is working just remove or comment out the
-strict line.
+global variables.  When the script is working just remove or comment out
+that line.
 </ul>
 <p>
 More tips can be found at <a href="http://www.luafaq.org/gotchas.html">Lua Gotchas</a>.

@@ -795,7 +795,6 @@ else:
 OFFcell += RuleBits
 ONcell += RuleBits
 
-g.autoupdate(True)
 g.new(layername)
 g.setalgo("QuickLife")              # qlife's setcell is faster
 
@@ -808,6 +807,7 @@ for j in xrange(selheight):
         else:
             OFFcell.put(2048 * i - 5, 2048 * j - 5)
         g.fit()
+        g.update()
 
 g.show("")
 g.setalgo("HashLife")               # no point running a metapattern without hashing
