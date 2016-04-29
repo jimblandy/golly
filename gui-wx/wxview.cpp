@@ -2292,7 +2292,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
         initgl = false;
     
         glDisable(GL_DEPTH_TEST);       // we only do 2D drawing
-        glDisable(GL_DITHER);           // makes no diff???!!!
+        glDisable(GL_DITHER);           // makes no diff???
         // glDisable(GL_MULTISAMPLE);   // unknown on Windows
         glDisable(GL_STENCIL_TEST);
         glDisable(GL_FOG);
@@ -2854,7 +2854,7 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
 
 void PatternView::OnMouseEnter(wxMouseEvent& WXUNUSED(event))
 {
-    // wx bug???!!! we don't get this event if CaptureMouse has been called
+    // wx bug??? we don't get this event if CaptureMouse has been called
     CheckCursor(mainptr->infront);
     // no need to call CheckMouseLocation here (OnMouseMotion will be called)
 }
@@ -3052,28 +3052,32 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
     int orient = event.GetOrientation();
     
     if (type == wxEVT_SCROLLWIN_LINEUP) {
-        if (orient == wxHORIZONTAL)
+        if (orient == wxHORIZONTAL) {
             PanLeft( SmallScroll(currlayer->view->getwidth()) );
-        else
+        } else {
             PanUp( SmallScroll(currlayer->view->getheight()) );
+        }
         
     } else if (type == wxEVT_SCROLLWIN_LINEDOWN) {
-        if (orient == wxHORIZONTAL)
+        if (orient == wxHORIZONTAL) {
             PanRight( SmallScroll(currlayer->view->getwidth()) );
-        else
+        } else {
             PanDown( SmallScroll(currlayer->view->getheight()) );
+        }
         
     } else if (type == wxEVT_SCROLLWIN_PAGEUP) {
-        if (orient == wxHORIZONTAL)
+        if (orient == wxHORIZONTAL) {
             PanLeft( BigScroll(currlayer->view->getwidth()) );
-        else
+        } else {
             PanUp( BigScroll(currlayer->view->getheight()) );
+        }
         
     } else if (type == wxEVT_SCROLLWIN_PAGEDOWN) {
-        if (orient == wxHORIZONTAL)
+        if (orient == wxHORIZONTAL) {
             PanRight( BigScroll(currlayer->view->getwidth()) );
-        else
+        } else {
             PanDown( BigScroll(currlayer->view->getheight()) );
+        }
         
     } else if (type == wxEVT_SCROLLWIN_THUMBTRACK) {
         int newpos = event.GetPosition();
@@ -3096,7 +3100,7 @@ void PatternView::OnScroll(wxScrollWinEvent& event)
                 RefreshView();
             }
         }
-        
+    
     } else if (type == wxEVT_SCROLLWIN_THUMBRELEASE) {
         // now we can call UpdateScrollBars
         mainptr->UpdateEverything();
@@ -3124,7 +3128,7 @@ void PatternView::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-/* using this doesn't seem to change anything!!!
+/* using this doesn't seem to change anything
 static int attributes[5] = {
     WX_GL_DOUBLEBUFFER,
     WX_GL_RGBA,
@@ -3145,10 +3149,10 @@ PatternView::PatternView(wxWindow* parent, wxCoord x, wxCoord y, int wd, int ht,
     dragtimer = new wxTimer(this, wxID_ANY);
     if (dragtimer == NULL) Fatal(_("Failed to create drag timer!"));
     
-    // avoid erasing background on Linux -- doesn't work!!!
+    // avoid erasing background on Linux -- doesn't work
     // SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     
-    // avoid resizing problems on Mac/Linux -- doesn't work!!!
+    // avoid resizing problems on Mac/Linux -- doesn't work
     // SetBackgroundStyle(wxBG_STYLE_PAINT);
     
     initgl = true;             // need to initialize GL state
