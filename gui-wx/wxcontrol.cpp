@@ -298,7 +298,7 @@ const char* MainFrame::ChangeGenCount(const char* genstring, bool inundoredo)
     // disallow alphabetic chars in genstring
     for (unsigned int i = 0; i < strlen(genstring); i++)
         if ( (genstring[i] >= 'a' && genstring[i] <= 'z') ||
-            (genstring[i] >= 'A' && genstring[i] <= 'Z') )
+             (genstring[i] >= 'A' && genstring[i] <= 'Z') )
             return "Alphabetic character is not allowed in generation string.";
     
     bigint oldgen = currlayer->algo->getGeneration();

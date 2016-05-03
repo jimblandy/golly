@@ -49,7 +49,7 @@ LUADIR = ..\lua
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)\golly-$(APP_VERSION)
-GUIFILES = CMakeLists.txt makefile-gtk makefile-mac makefile-win local-win-template.mk \
+GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp
 GUIDIRS = configure bitmaps icons
 LUAFILES = $(LUADIR)\*.h $(LUADIR)\*.c $(LUADIR)\*.hpp $(LUADIR)\Makefile $(LUADIR)\ReadMe.html
