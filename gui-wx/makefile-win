@@ -57,7 +57,7 @@ BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(DOCSDIR)\ReadMe.html $(DOC
 
 !if "$(TARGET_CPU)" == "X64"
 LIBDIRNAME = $(WX_DIR)\lib\vc_x64_$(LIBTYPE_SUFFIX)$(CFG)
-WX_CPU_DEF = WX_CPU_X64
+WX_CPU_DEF = WX_CPU_AMD64   # ensures include/wx/msw/amd64.manifest is included in golly.res
 !else
 LIBDIRNAME = $(WX_DIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
 WX_CPU_DEF = WX_CPU_X86
