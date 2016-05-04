@@ -1272,12 +1272,12 @@ bool PatternView::PointInView(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-#ifdef __WXGTK__
-    // nicer to redraw entire viewport on Linux
+#ifdef __WXMAC__
+    #define RefreshControls() RefreshRect(controlsrect,false)
+#else
+    // safer to redraw entire viewport on Windows and Linux
     // otherwise we see partial drawing in some cases
     #define RefreshControls() Refresh(false)
-#else
-    #define RefreshControls() RefreshRect(controlsrect,false)
 #endif
 
 void PatternView::CheckCursor(bool active)
