@@ -58,9 +58,11 @@ BINFILES = $(EXEDIR)\Golly.exe $(EXEDIR)\bgolly.exe $(DOCSDIR)\ReadMe.html $(DOC
 !if "$(TARGET_CPU)" == "X64"
 LIBDIRNAME = $(WX_DIR)\lib\vc_x64_$(LIBTYPE_SUFFIX)$(CFG)
 WX_CPU_DEF = WX_CPU_AMD64   # ensures include/wx/msw/amd64.manifest is included in golly.res
+BINNAME = $(RELEASENAME)-win-64bit
 !else
 LIBDIRNAME = $(WX_DIR)\lib\vc_$(LIBTYPE_SUFFIX)$(CFG)
 WX_CPU_DEF = WX_CPU_X86
+BINNAME = $(RELEASENAME)-win-32bit
 !endif
 
 SETUPHDIR = $(LIBDIRNAME)\$(PORTNAME)$(WXUNIVNAME)$(WXUNICODEFLAG)$(WXDEBUGFLAG)
@@ -574,15 +576,15 @@ srcdist:
 	echo Now zip $(RELEASENAME)-src into $(RELEASENAME)-src.zip
 
 bindist: all
-	-rmdir /s /q $(RELEASENAME)-win
-	mkdir $(RELEASENAME)-win
-	mkdir $(RELEASENAME)-win\Help
-	mkdir $(RELEASENAME)-win\Patterns
-	mkdir $(RELEASENAME)-win\Rules
-	mkdir $(RELEASENAME)-win\Scripts
-	xcopy /S /I $(EXEDIR)\Help $(RELEASENAME)-win\Help
-	xcopy /S /I $(EXEDIR)\Patterns $(RELEASENAME)-win\Patterns
-	xcopy /S /I $(EXEDIR)\Rules $(RELEASENAME)-win\Rules
-	xcopy /S /I $(EXEDIR)\Scripts $(RELEASENAME)-win\Scripts	
-	for %%F IN ($(BINFILES)) do xcopy %F $(RELEASENAME)-win
-	echo Now zip $(RELEASENAME)-win into $(RELEASENAME)-win.zip
+	-rmdir /s /q $(BINNAME)
+	mkdir $(BINNAME)
+	mkdir $(BINNAME)\Help
+	mkdir $(BINNAME)\Patterns
+	mkdir $(BINNAME)\Rules
+	mkdir $(BINNAME)\Scripts
+	xcopy /S /I $(EXEDIR)\Help $(BINNAME)\Help
+	xcopy /S /I $(EXEDIR)\Patterns $(BINNAME)\Patterns
+	xcopy /S /I $(EXEDIR)\Rules $(BINNAME)\Rules
+	xcopy /S /I $(EXEDIR)\Scripts $(BINNAME)\Scripts	
+	for %%F IN ($(BINFILES)) do xcopy %F $(BINNAME)
+	echo Now zip $(BINNAME) into $(BINNAME).zip
