@@ -1407,6 +1407,8 @@ void DrawTileBorders()
 
 // -----------------------------------------------------------------------------
 
+static bool firstview = true;
+
 void DrawView(int tileindex)
 {
     wxRect r;
@@ -1414,6 +1416,14 @@ void DrawView(int tileindex)
     viewport* saveview0 = NULL;
     int colorindex;
     int currmag = currlayer->view->getmag();
+    
+    if (firstview) {
+        firstview = false;
+        // draw a tiny pixmap before calling DrawGridLines to avoid crash in NVIDIA driver
+        // (this probably only happens on Windows but safer to do it on all platforms)
+        unsigned char data[] = "RGBARGBARGBARGBA";
+        DrawRGBAData(data, 0, 0, 2, 2); // data has 4 pixels
+    }
     
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
     if ( currlayer->algo->gridwd > 0) {

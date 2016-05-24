@@ -245,13 +245,17 @@ by opening a Terminal window and doing:
 <h3>On Linux</h3>
 
 <p>
-You might need to add some development packages first.  For example, 
-from a default Ubuntu install (at the time of writing) you will need
-to install the following packages: libgtk2.0-dev, python2.6-dev
-(for GTK and Python respectively).
+You will probably need to add some development packages first.
+For example, from a default Ubuntu install (at the time of writing)
+you will need to install the following packages for GTK-2 and Python 2.7:
+
+<pre>
+   sudo apt-get install libgtk2.0-dev
+   sudo apt-get install python2.7-dev
+</pre>
 
 <p>
-Open a terminal window and build the golly executable by doing:
+Then you can build the golly executable:
    
 <pre>
    cd /path/to/golly/gui-wx
