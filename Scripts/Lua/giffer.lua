@@ -1,7 +1,7 @@
 -- Run the current selection for a given number of steps and
 -- create an animated GIF file using the current layer's colors.
 -- Based on giffer.pl by Tony Smith.
--- Conversion to Lua by Andrew Trevorrow.
+-- Conversion to Lua by Andrew Trevorrow and Scorbie.
 
 local g = golly()
 local gp = require "gplus"
@@ -59,20 +59,18 @@ if bitdepth > 0 then codesize = bitdepth + 1 end
 --------------------------------------------------------------------------------
 
 local function getframedata()
-    local lines = {}
+    local data = {}
     for row = y, y+height-1 do
-        local t = {}
         for col = x, x+width-1 do
-            t[#t+1] = chr( getcell(col, row) )
+            data[#data+1] = chr( getcell(col, row) )
         end
-        lines[#lines + 1] = table.concat(t)
     end
-    return lines
+    return data
 end
 
 --------------------------------------------------------------------------------
 
-local function compress(lines)
+local function compress(data)
     local t = {}
     for i = 0, depth-1 do t[chr(i)] = i end
     local curr = 2^codesize
@@ -83,43 +81,40 @@ local function compress(lines)
     local mask = 2^size - 1
     local output = ""
     local code = ""
-    for _, line in ipairs(lines) do
-        for i = 1, #line do
-            local nextch = line:sub(i,i)
-            if t[code .. nextch] then
-                code = code .. nextch
-            else
-                used = used + 1
-                t[code .. nextch] = used
-                curr = curr + lshift(t[code], bits)
-                bits = bits + size
-                while bits >= 8 do
-                    output = output .. chr(curr & 255)
-                    curr = rshift(curr, 8)
-                    bits = bits - 8
-                end
-                if used > mask then
-                    if size < 12 then
-                        size = size + 1
-                        mask = mask*2 + 1
-                    else
-                        curr = curr + lshift(cc, bits)
-                        bits = bits + size
-                        while bits >= 8 do
-                            output = output .. chr(curr & 255)
-                            curr = rshift(curr, 8)
-                            bits = bits - 8
-                        end
-                        -- reset t
-                        t = {}
-                        for j = 0, depth-1 do t[chr(j)] = j end
-                        used = cc + 1
-                        size = codesize + 1
-                        mask = 2^size - 1
-                    end
-                end
-                code = nextch
+    for _, nextch in ipairs(data) do
+        if t[code .. nextch] then
+            code = code .. nextch
+        else
+            used = used + 1
+            t[code .. nextch] = used
+            curr = curr + lshift(t[code], bits)
+            bits = bits + size
+            while bits >= 8 do
+                output = output .. chr(curr & 255)
+                curr = rshift(curr, 8)
+                bits = bits - 8
             end
+            if used > mask then
+                if size < 12 then
+                    size = size + 1
+                    mask = mask*2 + 1
+                else
+                    curr = curr + lshift(cc, bits)
+                    bits = bits + size
+                    while bits >= 8 do
+                        output = output .. chr(curr & 255)
+                        curr = rshift(curr, 8)
+                        bits = bits - 8
+                    end
+                    -- reset t
+                    t = {}
+                    for j = 0, depth-1 do t[chr(j)] = j end
+                    used = cc + 1
+                    size = codesize + 1
+                    mask = 2^size - 1
+                end
+            end
+            code = nextch
         end
     end
     curr = curr + lshift(t[code], bits)
@@ -141,7 +136,7 @@ end
 --------------------------------------------------------------------------------
 
 -- This function packs a list of +ve integers into a binary string using
--- little-endian ordering.  The format parameter is a string composed of 
+-- little-endian ordering.  The format parameter is a string composed of
 -- ASCII digits which specify the size in bytes of the corresponding value.
 -- Based on code at http://lua-users.org/wiki/ReadWriteFormat.
 
@@ -169,7 +164,7 @@ end
 local function savegiffile(gifpath)
     local header = "GIF89a"
     local screendesc = mypack("22111", width, height, 0xF0 + bitdepth, 0, 0)
-    
+
     local colortable = ""
     for state = 0, depth-1 do
         local s, r, g, b = table.unpack(g.getcolors(state))
@@ -179,21 +174,21 @@ local function savegiffile(gifpath)
     while #colortable < fullength do
         colortable = colortable .. mypack("111", 0, 0, 0)
     end
-    
+
     -- this application extension allows looping
     local applicext = "\x21\xFF\x0BNETSCAPE2.0" .. mypack("1121", 3, 1, 0, 0)
-    
+
     local controlext = "\x21\xF9" .. mypack("11211", 4, 0, pause, 0, 0)
     local imagedesc = "," .. mypack("222211", 0, 0, width, height, 0, codesize)
-    
+
     local gif = io.open(gifpath,"wb")
     if not gif then g.exit("Unable to create GIF file: "..gifpath) end
-    
+
     gif:write(header)
     gif:write(screendesc)
     gif:write(colortable)
     gif:write(applicext)
-    
+
     for f = 1, frames do
         -- write the data for this frame
         gif:write(controlext)
@@ -203,10 +198,10 @@ local function savegiffile(gifpath)
         g.step()
         g.update()
     end
-    
+
     gif:write("\x3B")
     gif:close()
-    
+
     g.show("GIF animation saved in "..gifpath)
 end
 
