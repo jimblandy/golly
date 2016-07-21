@@ -428,7 +428,7 @@ int bigint::mod_smallint(int a) {
    if (v.i & 1)
       return (((v.i >> 1) % a) + a) % a ;
    int pos = v.p[0] ;
-   int mm = (1 << 31) % a ;
+   int mm = (2 * ((1 << 30) % a) % a) ;
    int r = 0 ;
    while (pos > 0) {
       r = (mm * r + v.p[pos]) % a ;

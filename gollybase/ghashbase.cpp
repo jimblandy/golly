@@ -661,8 +661,8 @@ ghnode *ghashbase::setbit(ghnode *n, int x, int y, int newstate, int depth) {
       return (ghnode *)l ;
    } else {
       unsigned int w = 0, wh = 0 ;
-      if (depth >= 31) {
-         if (depth == this->depth)
+      if (depth > 31) {
+         if (depth == 32)
             wh = 0x80000000 ;
       } else {
          w = 1 << depth ;
@@ -734,8 +734,8 @@ int ghashbase::getbit(ghnode *n, int x, int y, int depth) {
            return l->ne ;
    } else {
       unsigned int w = 0, wh = 0 ;
-      if (depth >= 31) {
-         if (depth == this->depth)
+      if (depth >= 32) {
+         if (depth == 32)
             wh = 0x80000000 ;
       } else {
          w = 1 << depth ;
