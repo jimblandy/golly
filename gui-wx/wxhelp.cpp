@@ -413,11 +413,11 @@ void HelpFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-void LoadRule(const wxString& rulestring)
+void LoadRule(const wxString& rulestring, bool fromfile)
 {
-    // load recently installed .rule file
     wxString oldrule = wxString(currlayer->algo->getrule(),wxConvLocal);
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
+    const char* err;
     
     // selection might change if grid becomes smaller,
     // so save current selection for RememberRuleChange/RememberAlgoChange
@@ -433,63 +433,95 @@ void LoadRule(const wxString& rulestring)
         return;
     }
     
-    // InitAlgorithms ensures the RuleLoader algo is the last algo
-    int rule_loader_algo = NumAlgos() - 1;
-    
-    const char* err;
-    if (currlayer->algtype == rule_loader_algo) {
-        // RuleLoader is current algo so no need to switch
-        err = currlayer->algo->setrule( rulestring.mb_str(wxConvLocal) );
-    } else {
-        // switch to RuleLoader algo
-        lifealgo* tempalgo = CreateNewUniverse(rule_loader_algo);
-        err = tempalgo->setrule( rulestring.mb_str(wxConvLocal) );
-        delete tempalgo;
-        if (!err) {
-            // change the current algorithm and switch to the new rule
-            mainptr->ChangeAlgorithm(rule_loader_algo, rulestring);
-            if (rule_loader_algo != currlayer->algtype) {
-                RestoreRule(oldrule);
-                Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
-            } else {
-                mainptr->SetWindowTitle(wxEmptyString);
-                mainptr->UpdateEverything();
-            }
-            return;
-        }
-    }
-    
-    if (err) {
-        // RuleLoader algo found some sort of error
-        if (strcmp(err, noTABLEorTREE) == 0) {
-            // .rule file has no TABLE or TREE section but it might be used
-            // to override a built-in rule, so try each algo
-            wxString temprule = rulestring;
-            temprule.Replace(wxT("_"), wxT("/"));   // eg. convert B3_S23 to B3/S23
-            for (int i = 0; i < NumAlgos(); i++) {
-                lifealgo* tempalgo = CreateNewUniverse(i);
-                err = tempalgo->setrule( temprule.mb_str(wxConvLocal) );
-                delete tempalgo;
-                if (!err) {
-                    // change the current algorithm and switch to the new rule
-                    mainptr->ChangeAlgorithm(i, temprule);
-                    if (i != currlayer->algtype) {
-                        RestoreRule(oldrule);
-                        Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
-                    } else {
-                        mainptr->SetWindowTitle(wxEmptyString);
-                        mainptr->UpdateEverything();
-                    }
-                    return;
+    if (fromfile) {
+        // load given rule from a .rule file
+        
+        // InitAlgorithms ensures the RuleLoader algo is the last algo
+        int rule_loader_algo = NumAlgos() - 1;
+        
+        if (currlayer->algtype == rule_loader_algo) {
+            // RuleLoader is current algo so no need to switch
+            err = currlayer->algo->setrule( rulestring.mb_str(wxConvLocal) );
+        } else {
+            // switch to RuleLoader algo
+            lifealgo* tempalgo = CreateNewUniverse(rule_loader_algo);
+            err = tempalgo->setrule( rulestring.mb_str(wxConvLocal) );
+            delete tempalgo;
+            if (!err) {
+                // change the current algorithm and switch to the new rule
+                mainptr->ChangeAlgorithm(rule_loader_algo, rulestring);
+                if (rule_loader_algo != currlayer->algtype) {
+                    RestoreRule(oldrule);
+                    Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
+                } else {
+                    mainptr->SetWindowTitle(wxEmptyString);
+                    mainptr->UpdateEverything();
                 }
+                return;
             }
         }
         
-        RestoreRule(oldrule);
-        wxString msg = _("The rule file is not valid:\n") + rulestring;
-        msg += _("\n\nThe error message:\n") + wxString(err,wxConvLocal);
-        Warning(msg);
-        return;
+        if (err) {
+            // RuleLoader algo found some sort of error
+            if (strcmp(err, noTABLEorTREE) == 0) {
+                // .rule file has no TABLE or TREE section but it might be used
+                // to override a built-in rule, so try each algo
+                wxString temprule = rulestring;
+                temprule.Replace(wxT("_"), wxT("/"));   // eg. convert B3_S23 to B3/S23
+                for (int i = 0; i < NumAlgos(); i++) {
+                    lifealgo* tempalgo = CreateNewUniverse(i);
+                    err = tempalgo->setrule( temprule.mb_str(wxConvLocal) );
+                    delete tempalgo;
+                    if (!err) {
+                        // change the current algorithm and switch to the new rule
+                        mainptr->ChangeAlgorithm(i, temprule);
+                        if (i != currlayer->algtype) {
+                            RestoreRule(oldrule);
+                            Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
+                        } else {
+                            mainptr->SetWindowTitle(wxEmptyString);
+                            mainptr->UpdateEverything();
+                        }
+                        return;
+                    }
+                }
+            }
+            RestoreRule(oldrule);
+            wxString msg = _("The rule file is not valid:\n") + rulestring;
+            msg += _("\n\nThe error message:\n") + wxString(err,wxConvLocal);
+            Warning(msg);
+            return;
+        }
+    
+    } else {
+        // fromfile is false, so switch to rule given in a "rule:" link
+        
+        err = currlayer->algo->setrule( rulestring.mb_str(wxConvLocal) );
+        if (err) {
+            // try to find another algorithm that supports the given rule
+            for (int i = 0; i < NumAlgos(); i++) {
+                if (i != currlayer->algtype) {
+                    lifealgo* tempalgo = CreateNewUniverse(i);
+                    err = tempalgo->setrule( rulestring.mb_str(wxConvLocal) );
+                    delete tempalgo;
+                    if (!err) {
+                        // change the current algorithm and switch to the new rule
+                        mainptr->ChangeAlgorithm(i, rulestring);
+                        if (i != currlayer->algtype) {
+                            RestoreRule(oldrule);
+                            Warning(_("Algorithm could not be changed (pattern is too big to convert)."));
+                        } else {
+                            mainptr->SetWindowTitle(wxEmptyString);
+                            mainptr->UpdateEverything();
+                        }
+                        return;
+                    }
+                }
+            }
+            RestoreRule(oldrule);
+            Warning(_("Given rule is not valid in any algorithm:\n") + rulestring);
+            return;
+        }
     }
     
     wxString newrule = wxString(currlayer->algo->getrule(),wxConvLocal);
@@ -685,7 +717,7 @@ void GetURL(const wxString& url)
         htmlwin->LoadPage(filepath);
         
     } else if (IsRuleFile(filename)) {
-        // load corresponding rule
+        // load corresponding .rule file
         LoadRule(filename.BeforeLast('.'));
         
     } else if (IsTextFile(filename)) {
@@ -731,7 +763,7 @@ void UnzipFile(const wxString& zippath, const wxString& entry)
                     mainptr->EditFile(rulefile);
                 }
             } else {         
-                // load corresponding rule
+                // load corresponding .rule file
                 LoadRule(filename.BeforeLast('.'));
             }
         } else {
@@ -958,7 +990,8 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
         }
         
     } else if ( url.StartsWith(wxT("rule:")) ) {
-        LoadRule( url.AfterFirst(':') );
+        // switch to given rule (false = not necessarily in a .rule file)
+        LoadRule( url.AfterFirst(':'), false );
         
     } else {
         // assume it's a link to a local target or another help file

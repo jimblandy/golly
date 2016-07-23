@@ -731,7 +731,6 @@ void ReduceCellStates(int newmaxstate)
 
 void ChangeRule(const std::string& rulestring)
 {
-    // load recently installed .rule file
     std::string oldrule = currlayer->algo->getrule();
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
 

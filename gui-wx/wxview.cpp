@@ -41,7 +41,7 @@
 #include "wxgolly.h"       // for mainptr, statusptr
 #include "wxutils.h"       // for Warning, Fatal, Beep
 #include "wxprefs.h"       // for showgridlines, canchangerule, etc
-#include "wxhelp.h"        // for ShowHelp, LoadRule
+#include "wxhelp.h"        // for ShowHelp
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for InitPaste, DrawView

@@ -1038,7 +1038,7 @@ bool RuleDialog::TransferDataFromWindow()
         // check if new rule is still valid in current algorithm
         const char* err = currlayer->algo->setrule( newrule.mb_str(wxConvLocal) );
         if (err) {
-            // this can happen if the rule's table/tree file was deleted,
+            // this can happen if the .rule file was deleted,
             // or was edited and some sort of error introduced
             Warning(_("This rule is no longer valid!"));
             ruletext->SetFocus();

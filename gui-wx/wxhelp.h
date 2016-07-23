@@ -43,8 +43,9 @@ void ShowAboutBox();
 void LoadLexiconPattern();
 // Load the lexicon pattern clicked by user.
 
-void LoadRule(const wxString& rulestring);
-// Load recently installed .rule/table/tree/colors/icons file.
+void LoadRule(const wxString& rulestring, bool fromfile = true);
+// Load given rule from a .rule file if fromfile is true,
+// otherwise switch to given rule specified in a "rule:" link.
 
 wxFrame* GetHelpFrame();
 // Return a pointer to the help window.
