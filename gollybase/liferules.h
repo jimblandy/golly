@@ -75,6 +75,7 @@ private:
    int neg_letter_bits[18] ; // bitmask for non-totalistic negative letters used
    int wolfram ;             // >= 0 if Wn rule (n is even and <= 254)
    int survival_offset ;     // bit offset in rulebits for survival
+   void initRule() ;
    void setTotalistic(int value, bool survival) ;
    int flipBits(int x) ;
    int rotateBits90Clockwise(int x) ;
@@ -89,6 +90,8 @@ private:
    void createB0OddRuleMap(const char *birth, const char *survival) ;
    void convertTo4x4Map(char *which) ;
    void createCanonicalName(lifealgo *algo) ;
+   void removeChar(char *string, char skip) ;
+   bool lettersValid(const char *part) ;
    const char *valid_rule_letters ;
    const char *rule_letters[4] ;
    const int *rule_neighborhoods[4] ;
