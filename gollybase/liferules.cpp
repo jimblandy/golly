@@ -50,17 +50,15 @@ liferules::liferules() {
 liferules::~liferules() {
 }
 
-// initialise
+// initialize
 void liferules::initRule() {
-   alternate_rules = 0 ;
-   neighbormask = MOORE ;
+   neighbormask = MOORE ; 
    neighbors = 8 ;
    wolfram = -1 ;
    totalistic = true ;
    rulebits = 0 ;
    memset(letter_bits, 0, sizeof(letter_bits));
    memset(neg_letter_bits, 0, sizeof(letter_bits));
-   alternate_rules = false ;
    memset(rule0, 0, sizeof(rule0)) ;
    memset(rule1, 0, sizeof(rule1)) ;
    memset(rule3x3, 0, sizeof(rule3x3)) ;
@@ -611,7 +609,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    char *bpos = 0 ;                // position of b
    char *spos = 0 ;                // position of s
 
-   // initialise rule type
+   // initialize rule type
    initRule() ;
 
    // we might need to emulate B0 rule by using two different rules for odd/even gens
