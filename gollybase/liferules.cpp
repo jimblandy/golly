@@ -211,7 +211,7 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
 
       // find the index in the valid character list
       letterindex = strchr(valid_rule_letters, current) ;
-      lindex = letterindex - valid_rule_letters ;
+      lindex = letterindex ? letterindex - valid_rule_letters : -1 ;
 
       // check if it is a digit
       if ((lindex > 0 && lindex <= 8) || (lindex == 0 && survival)) {
