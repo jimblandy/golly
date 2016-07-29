@@ -119,14 +119,18 @@ Alan Hensel.  It's very similar to the above "B.../S..." notation but uses
 various lowercase letters to represent unique neighborhoods.
 One or more of these letters can appear after an appropriate digit
 (which must be from 1 to 7, depending on the letters).
+The usual counts of 0 to 8 can still be used when you don't want to constrain
+the neighborhood, but B0 is not allowed.
 
 <p>
 For example, <b><a href="rule:B3/2a34">B3/2a34</a></b> means birth on 3 neighbors
 and survival on 2 adjacent neighbors (a corner and an edge), or 3 or 4 neighbors.
+Non-totalistic rules can use an underscore instead of a slash, but the
+canonical version displayed by Golly always uses a slash.
 
 <p>
-These strings can get long, so it's possible to specify their inverse using a "-"
-between the digit and the letters.
+Letter strings can get quite long, so it's possible to specify their inverse
+using a "-" between the digit and the letters.
 For example, <b><a href="rule:B2cekin/S12">B2cekin/S12</a></b> is equivalent to
 <b><a href="rule:B2-a/S12">B2-a/S12</a></b> and means birth on 2 non-adjacent
 neighbors, and survival on 1 or 2 neighbors.
@@ -141,12 +145,8 @@ edge neighbors are yellow and ignored neighbors are black:
 <img src="hensel.png">
 
 <p>
-The table also makes it clear which digits are allowed before which letters.
+The table makes it clear which digits are allowed before which letters.
 For example, B1a/S and B5z/S are both invalid rules.
-
-<p>
-Golly also allows an underscore to be used instead of a slash, but the
-canonical version displayed by Golly always uses a slash.
 
 
 <p><a name="wolfram"></a>&nbsp;<br>

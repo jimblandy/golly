@@ -906,6 +906,11 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
       if (!lettersValid(spos)) {
          return "Letter not valid for survival neighbor count." ;
       }
+
+      // non-totalistic does not support B0 rules
+      if (!totalistic && strchr(bpos, '0')) {
+         return "Non-totalistic rules do not support B0." ;
+      }
    }
 
    // AKT: check for rule suffix like ":T200,100" to specify a bounded universe
