@@ -73,7 +73,7 @@ or copy then you should only paste into a generation with the same parity.
 The above rules use the Moore neighborhood, where each cell has 8 neighbors.
 In the von Neumann neighborhood each cell has only the 4 orthogonal neighbors.
 To specify this neighborhood just append "V" to the usual "B.../S..." notation
-and use neighbor counts ranging from 0 to 4 (counts above 4 are silently ignored).
+and use neighbor counts ranging from 0 to 4.
 For example, try <b><a href="rule:B13/S012V">B13/S012V</a></b> or
 <b><a href="rule:B2/S013V">B2/S013V</a></b>.
 
@@ -94,8 +94,7 @@ NE and SW corners of the Moore neighborhood so that every cell has 6 neighbors:
    SW S SE         S  SE
 </pre>
 To specify a hexagonal neighborhood just append "H" to the usual "B.../S..." notation
-and use neighbor counts ranging from 0 to 6 (counts above 6 are silently ignored).
-Here's an example:
+and use neighbor counts ranging from 0 to 6.  Here's an example:
 <pre>
 x = 7, y = 6, rule = B245/S3H
 obo$4bo$2bo$bo2bobo$3bo$5bo!
