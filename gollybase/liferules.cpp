@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 
 liferules::liferules() {
+   int i ;
    valid_rule_letters = "012345678ceaiknjqrytwz-" ;
    rule_letters[0] = "ce" ;
    rule_letters[1] = "ceaikn" ;
@@ -42,12 +43,34 @@ liferules::liferules() {
    rule_neighborhoods[2] = entry2 ;
    rule_neighborhoods[3] = entry3 ;
    survival_offset = 9 ;
+   max_letters[0] = 0 ;
+   max_letters[1] = strlen(rule_letters[0]) ;
+   max_letters[2] = strlen(rule_letters[1]) ;
+   max_letters[3] = strlen(rule_letters[2]) ;
+   max_letters[4] = strlen(rule_letters[3]) ;
+   max_letters[5] = max_letters[3] ;
+   max_letters[6] = max_letters[2] ;
+   max_letters[7] = max_letters[1] ;
+   max_letters[8] = max_letters[0] ;
+   for (i = 0; i < survival_offset; i++) {
+      max_letters[i + survival_offset] = max_letters[i] ;
+   }
 
    // initialize
    initRule() ;
 }
 
 liferules::~liferules() {
+}
+
+// returns a count of the number of bits set in given int
+static int bitcount(int v) {
+   int r = 0 ;
+   while (v) {
+      r++ ;
+      v &= v - 1 ;
+   }
+   return r ;
 }
 
 // initialize
@@ -193,7 +216,7 @@ void liferules::setTotalisticRuleFromString(const char *rule, bool survival) {
 
 // set rule from birth or survival string
 void liferules::setRuleFromString(const char *rule, bool survival) {
-   // current and nexr character
+   // current and next character
    char current ;
    char next ;
 
@@ -225,9 +248,8 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
             }
          }
 
-         // is the next character another digit?
+         // is the next character a digit or minus?
          if (nindex == -1) {
-            // yes so set totalitic with the current digit
             setTotalistic(lindex, survival) ;
          }
 
@@ -305,11 +327,70 @@ void liferules::createRuleMap(const char *birth, const char *survival) {
    }
 }
 
+// add canonical letter representation
+int liferules::addLetters(int count, int p) {
+   int bits ;            // bitmask of letters defined at this count
+   int negative = 0 ;    // whether negative
+   int setbits ;         // how many bits are defined
+   int maxbits ;         // maximum number of letters at this count
+   int j ;
+
+   // check if letters are defined for this neighbor count
+   if (letter_bits[count] || neg_letter_bits[count]) {
+      // check whether normal or negative letters defined
+      if (letter_bits[count]) {
+         bits = letter_bits[count] ;
+      }
+      else {
+         bits = neg_letter_bits[count] ;
+         negative = 1 ;
+      }
+
+      // compute the number of bits set
+      setbits = bitcount(bits) ;
+
+      // get the maximum number of allowed letters at this neighbor count
+      maxbits = max_letters[count] ;
+
+      // do not invert if not negative and seven letters
+      if (!(!negative && setbits == 7 && maxbits == 13)) {
+         // if maximum letters minus number used is greater than number used then invert
+         if (setbits + negative > (maxbits >> 1)) {
+            // invert maximum letters for this count
+            bits = ~bits & ((1 << maxbits) - 1) ;
+            if (bits) {
+               negative = !negative ;
+            }
+         }
+      }
+
+      // if negative and no letters then remove neighborhood count
+      if (negative && !bits) {
+         canonrule[p] = 0 ;
+         p-- ;
+      }
+      else {
+         // check whether to output minus
+         if (negative) {
+            canonrule[p++] = '-' ;
+         }
+
+         // add defined letters
+         for (j=0; j<maxbits; j++) {
+            if (bits & (1 << j)) {
+               canonrule[p++] = rule_letters[3][j] ;
+            }
+         }
+      }
+   }
+
+   return p ;
+}
+
 // AKT: store valid rule in canonical format for getrule()
 void liferules::createCanonicalName(lifealgo *algo) {
    int p = 0 ;
    int i = 0 ;
-   int j = 0 ;
 
    // check for wolfram rule
    if (wolfram >= 0) {
@@ -323,21 +404,9 @@ void liferules::createCanonicalName(lifealgo *algo) {
             canonrule[p++] = '0' + (char)i ;
 
             // check for non-totalistic
-            if (letter_bits[i]) {
-               for (j=0; j<13; j++) {
-                  if (letter_bits[i] & (1 << j)) {
-                     canonrule[p++] = rule_letters[3][j] ;
-                  }
-               }
-            }
-
-            if (neg_letter_bits[i]) {
-               canonrule[p++] = '-' ;
-               for (j=0; j<13; j++) {
-                  if (neg_letter_bits[i] & (1 << j)) {
-                     canonrule[p++] = rule_letters[3][j] ;
-                  }
-               }
+            if (!totalistic) {
+               // add any defined letters
+               p = addLetters(i, p) ;
             }
          }
       }
@@ -352,21 +421,9 @@ void liferules::createCanonicalName(lifealgo *algo) {
             canonrule[p++] = '0' + (char)i ;
 
             // check for non-totalistic
-            if (letter_bits[survival_offset+i]) {
-               for (j=0; j<13; j++) {
-                  if (letter_bits[survival_offset+i] & (1 << j)) {
-                     canonrule[p++] = rule_letters[3][j] ;
-                  }
-               }
-            }
-
-            if (neg_letter_bits[survival_offset+i]) {
-               canonrule[p++] = '-' ;
-               for (j=0; j<13; j++) {
-                  if (neg_letter_bits[survival_offset+i] & (1 << j)) {
-                     canonrule[p++] = rule_letters[3][j] ;
-                  }
-               }
+            if (!totalistic) {
+               // add any defined letters
+               p = addLetters(survival_offset + i, p) ;
             }
          }
       }
@@ -847,7 +904,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
                // just spos
                spos = t;
                removeChar(spos, 's') ;
-               bpos = spos + strlen(spos ) ;
+               bpos = spos + strlen(spos) ;
             }
          }
       }

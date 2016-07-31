@@ -124,8 +124,6 @@ the neighborhood, but B0 is not allowed.
 <p>
 For example, <b><a href="rule:B3/2a34">B3/2a34</a></b> means birth on 3 neighbors
 and survival on 2 adjacent neighbors (a corner and an edge), or 3 or 4 neighbors.
-Non-totalistic rules can use an underscore instead of a slash, but the
-canonical version displayed by Golly always uses a slash.
 
 <p>
 Letter strings can get quite long, so it's possible to specify their inverse
@@ -146,6 +144,34 @@ edge neighbors are yellow and ignored neighbors are black:
 <p>
 The table makes it clear which digits are allowed before which letters.
 For example, B1a/S and B5z/S are both invalid rules.
+
+<p>
+Golly uses the following steps to convert a given non-totalistic rule into
+its canonical version:
+
+<p>
+<ol>
+<li>
+An underscore can be used instead of a slash, but the canonical version
+always uses a slash.
+<li>
+The lowercase letters are listed in alphabetical order.
+For example, B2nic/S will become B2cin/S.
+<li>
+A given rule is converted to its shortest equivalent version.
+For example, B2ceikn/S will become B2-a/S.
+If equivalent rules have the same length then the version without the minus sign
+is preferred.  For example, B4-qjrtwz/S will become B4aceikny/S.
+<li>
+It's possible for a non-totalistic rule to be converted to a totalistic rule.
+If you supply all the letters for a specific neighbor count then the canonical
+version removes the letters.  For example, B2aceikn3/S will become B23/S.
+(Note that B2-3/S is equivalent to B2aceikn3/S so will also become B23/S.)
+<li>
+If you supply a minus sign and all the letters for a specific neighbor count
+then the letters <i>and</i> the neighbor count are removed.
+For example, B2-aceikn3/S will become B3/S.
+</ol>
 
 
 <p><a name="wolfram"></a>&nbsp;<br>
