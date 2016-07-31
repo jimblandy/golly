@@ -1,0 +1,3 @@
+#C A 6-cell double Sierpinski triangle builder found by Daniel R. Collazo.
+x = 3, y = 3, rule = B3_S23-a4ei6
+b2o$obo$b2o!

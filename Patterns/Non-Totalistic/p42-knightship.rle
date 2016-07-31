@@ -1,0 +1,8 @@
+# 4,12c/42 knightship discovered by muzik.
+# For more patterns in this rule see the tDryLife thread:
+# http://www.conwaylife.com/forums/viewtopic.php?f=11&t=2266
+x = 32, y = 33, rule = B37/S2-i34q
+16bo$15b2o$15bo3bo$14bo2bob2o$13b2o5bo$13bo2bo2bo$7bo5b2o4bo$7bobo5b2o
+$7bobo6bo4$2o$obo$b2o$17b2o5b2ob3o$16bo3bo2b2ob2obo$16b2o5b2obob2o$17b
+2o3bobo$17bo2bo$18bob2o4$6b3o$6bo19bo$7bo19bobo$29b2o$22b2o2bo4bo$22b
+2ob2ob2obo$22bo2bo2b3o$22b2o2b2o$23b5o!

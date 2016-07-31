@@ -1,0 +1,27 @@
+#C A period 137 (prime) glider loop.
+#C This is based on glider turning reactions using four base period 26
+#C oscillators whose phases are changed to period 37 due to the impacts.
+#C If M is the number of contiguous period 37 gliders in the loop and N
+#C is the number of contiguous period 26 gaps in the loop, then similar
+#C oscillators can be built for any period of the form 37M + 26N, where
+#C M > 0 and N > 0.  (Here M=3 and N=1).
+#C David I. Bell, August 2004
+x = 292, y = 292, rule = B2-a/S12
+140b7o$$142bobo$142bobo$142bobo7$141b3o$143bo3$154bo$152b3o$135boo$
+137bo3$160bo$158bobo$129boo$$130bo$$166bo$166bo$165bo5$118bobo$120bo3$
+177bo$175boo$112b3o$114bo3$183bo$181b3o$106boo$108bo3$189bo$187bobo5$
+96bo$97bo$97bo$$199bo$$198boo$89bobo$91bo3$206bo$204boo$83b3o$85bo3$
+212bo$210b3o5$73boo$74bo$74bo$$222bo$222bo$67bo153boo$68bo$68bo$$228bo
+$$227boo$60bobo$62bo3$235bo$233boo5$50boo$$51bo$$245bo$245bo$44boo198b
+o$45bo$45bo$$251bo$251bo$38bo211boo$39bo$39bo$$257bo$$256boo5$27boo$
+29bo3$268bo$266bobo$21boo$$22bo$$274bo$274bo$15boo256bo$16bo$16bo$291b
+o$280bo10bo$280bo6b3obo$279boo10bo$287b3obo$o290bo$o290bo$ob3o$o10boo$
+ob3o6bo$o10bo$o$275bo$275bo$18bo256boo$17bo$17bo$$269bo$$269boo$23bobo
+$23bo3$262bo$263boo5$34boo$$34bo$$252bo$252bo$40boo211bo$40bo$40bo$$
+246bo$246bo$47bo198boo$46bo$46bo$$240bo$$240boo5$57boo$56bo3$229bo$
+229bobo$63boo$$63bo$$223bo$223bo$69boo153bo$69bo$69bo$$217bo$217bo$
+217boo5$79b3o$79bo3$206bo$206b3o$86boo$85bo3$200bo$200bobo$92boo$$92bo
+$$194bo$194bo$195bo5$102bobo$102bo3$183bo$184boo$108b3o$108bo3$177bo$
+177b3o$115boo$114bo3$171bo$171bobo5$126bo$125bo$125bo$$161bo$$161boo$
+131bobo$131bo3$154bo$155boo$137b3o$137bo3$148bo$148b3o7$147bobo$147bob
+o$147bobo$$145b7o!
