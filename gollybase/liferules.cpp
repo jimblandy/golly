@@ -55,6 +55,23 @@ liferules::liferules() {
    for (i = 0; i < survival_offset; i++) {
       max_letters[i + survival_offset] = max_letters[i] ;
    }
+   static int order0[1] = { 0 } ;
+   static int order1[2] = { 0, 1 } ;
+   static int order2[6] = { 2, 0, 1, 3, 4, 5 } ;
+   static int order3[10] = { 2, 0, 1, 3, 6, 4, 5, 7, 8, 9 } ;
+   static int order4[13] = { 2, 0, 1, 3, 6, 4, 5, 7, 8, 10, 11, 9, 12 } ;
+   order_letters[0] = order0 ;
+   order_letters[1] = order1 ;
+   order_letters[2] = order2 ;
+   order_letters[3] = order3 ;
+   order_letters[4] = order4 ;
+   order_letters[5] = order3 ;
+   order_letters[6] = order2 ;
+   order_letters[7] = order1 ;
+   order_letters[8] = order0 ;
+   for (i = 0; i < survival_offset; i++) {
+      order_letters[i + survival_offset] = order_letters[i] ;
+   }
 
    // initialize
    initRule() ;
@@ -333,6 +350,7 @@ int liferules::addLetters(int count, int p) {
    int negative = 0 ;    // whether negative
    int setbits ;         // how many bits are defined
    int maxbits ;         // maximum number of letters at this count
+   int letter = 0 ;
    int j ;
 
    // check if letters are defined for this neighbor count
@@ -377,8 +395,10 @@ int liferules::addLetters(int count, int p) {
 
          // add defined letters
          for (j=0; j<maxbits; j++) {
-            if (bits & (1 << j)) {
-               canonrule[p++] = rule_letters[3][j] ;
+            // lookup the letter in order
+            letter = order_letters[count][j] ;
+            if (bits & (1 << letter)) {
+               canonrule[p++] = rule_letters[3][letter] ;
             }
          }
       }

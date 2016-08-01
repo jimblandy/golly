@@ -76,6 +76,7 @@ private:
    int wolfram ;             // >= 0 if Wn rule (n is even and <= 254)
    int survival_offset ;     // bit offset in rulebits for survival
    int max_letters[18] ;     // maximum number of letters per neighbor count
+   const int *order_letters[18] ;   // letter order per neighbor count
    void initRule() ;
    void setTotalistic(int value, bool survival) ;
    int flipBits(int x) ;
