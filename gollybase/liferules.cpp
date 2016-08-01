@@ -792,6 +792,17 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
          }
          break ;
 
+      // minus
+      case '-':
+         // check if previous character is a digit
+         if (t == tidystring || *(t-1) < '0' || *(t-1) > '8') {
+            // minus can only follow a digit
+            return "Minus can only follow a digit." ;
+         }
+         *t = c ;
+         t++ ;
+         break ;
+
       // other characters
       default:
          // ignore space
