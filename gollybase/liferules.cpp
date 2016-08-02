@@ -44,10 +44,10 @@ liferules::liferules() {
    rule_neighborhoods[3] = entry3 ;
    survival_offset = 9 ;
    max_letters[0] = 0 ;
-   max_letters[1] = strlen(rule_letters[0]) ;
-   max_letters[2] = strlen(rule_letters[1]) ;
-   max_letters[3] = strlen(rule_letters[2]) ;
-   max_letters[4] = strlen(rule_letters[3]) ;
+   max_letters[1] = (int) strlen(rule_letters[0]) ;
+   max_letters[2] = (int) strlen(rule_letters[1]) ;
+   max_letters[3] = (int) strlen(rule_letters[2]) ;
+   max_letters[4] = (int) strlen(rule_letters[3]) ;
    max_letters[5] = max_letters[3] ;
    max_letters[6] = max_letters[2] ;
    max_letters[7] = max_letters[1] ;
@@ -160,7 +160,7 @@ void liferules::setSymmetrical512(int x, int b) {
 
    // process each of the 4 rotations
    for (i=0; i<4; i++) {
-      rule3x3[y] = b ;
+      rule3x3[y] = (char) b ;
       y = rotateBits90Clockwise(y) ;
    }
 
@@ -169,7 +169,7 @@ void liferules::setSymmetrical512(int x, int b) {
 
    // process each of the 4 rotations
    for (i=0; i<4; i++) {
-      rule3x3[y] = b ;
+      rule3x3[y] = (char) b ;
       y = rotateBits90Clockwise(y) ;
    }
 }
@@ -220,7 +220,8 @@ void liferules::setTotalisticRuleFromString(const char *rule, bool survival) {
    char current ;
 
    // process each character in the rule string
-   while ( (current = *rule) ) {
+   while ( *rule ) {
+      current = *rule ;
       rule++ ;
 
       // convert the digit to an integer
@@ -246,12 +247,13 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
    int nindex = 0 ;
 
    // process each character
-   while ( (current = *rule) ) {
+   while ( *rule ) {
+      current = *rule ;
       rule++ ;
 
       // find the index in the valid character list
-      letterindex = strchr(valid_rule_letters, current) ;
-      lindex = letterindex ? letterindex - valid_rule_letters : -1 ;
+      letterindex = strchr((char*) valid_rule_letters, current) ;
+      lindex = (g_uintptr_t) letterindex ? (g_uintptr_t) letterindex - (g_uintptr_t) valid_rule_letters : -1 ;
 
       // check if it is a digit
       if ((lindex > 0 && lindex <= 8) || (lindex == 0 && survival)) {
@@ -259,9 +261,9 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
          next = *rule ;
          nindex = -1 ;
          if (next) {
-            letterindex = strchr(rule_letters[3], next) ;
+            letterindex = strchr((char*) rule_letters[3], next) ;
             if (letterindex) {
-               nindex = letterindex - rule_letters[3] ;
+               nindex = (g_uintptr_t) letterindex - (g_uintptr_t) rule_letters[3] ;
             }
          }
 
@@ -282,10 +284,10 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
 
          // process non-totalistic characters
          if (next) {
-            letterindex = strchr(rule_letters[3], next) ;
+            letterindex = strchr((char*) rule_letters[3], next) ;
             nindex = -1 ;
             if (letterindex) {
-               nindex = letterindex - rule_letters[3] ;
+               nindex = (g_uintptr_t) letterindex - (g_uintptr_t) rule_letters[3] ;
             }
             while (nindex >= 0) {
                // set symmetrical
@@ -296,9 +298,9 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
                next = *rule ;
                nindex = -1 ;
                if (next) {
-                  letterindex = strchr(rule_letters[3], next) ;
+                  letterindex = strchr((char*) rule_letters[3], next) ;
                   if (letterindex) {
-                     nindex = letterindex - rule_letters[3] ;
+                     nindex = (g_uintptr_t) letterindex - (g_uintptr_t) rule_letters[3] ;
                   }
                }
             }
@@ -498,7 +500,7 @@ void liferules::convertTo4x4Map(char *which) {
       v |= rule3x3[((i & 1792) >> 8) | ((i & 112) >> 1) | ((i & 7) << 6)] ;
 
       // save the entry
-      which[i] = v ;
+      which[i] = (char) v ;
    }
 }
 
@@ -537,13 +539,13 @@ void liferules::createB0SmaxRuleMap(const char *birth, const char *survival) {
       // check if the digit is in the birth part
       if (strchr(birth, '0' + i) == 0) {
          // compute Smax-x and add to survival part
-         newsurvival[s++] = '0' + (neighbors - i) ;
+         newsurvival[s++] = '0' + (char) (neighbors - i) ;
       }
 
       // check if the digit is in the survival part
       if (strchr(survival, '0' + i) == 0) {
          // compute Smax-x and add to birth part
-         newbirth[b++] = '0' + (neighbors - i) ;
+         newbirth[b++] = '0' + (char) (neighbors - i) ;
       }
    }
 
@@ -568,13 +570,13 @@ void liferules::createB0OddRuleMap(const char *birth, const char *survival) {
       // check if the digit is in the birth part
       if (strchr(birth, '0' + i) != 0) {
          // Sx->B(max-x)
-         newsurvival[s++] = '0' + (neighbors - i) ;
+         newsurvival[s++] = '0' + (char) (neighbors - i) ;
       }
 
       // check if the digit is in the survival part
       if (strchr(survival, '0' + i) != 0) {
          // Bx->S(max-x)
-         newbirth[b++] = '0' + (neighbors - i) ;
+         newbirth[b++] = '0' + (char) (neighbors - i) ;
       }
    }
 
@@ -599,13 +601,13 @@ void liferules::createB0EvenRuleMap(const char *birth, const char *survival) {
       // check if the digit is in the birth part
       if (strchr(birth, '0' + i) == 0) {
          // add to birth part
-         newbirth[b++] = '0' + i ;
+         newbirth[b++] = '0' + (char) i ;
       }
 
       // check if the digit is in the survival part
       if (strchr(survival, '0' + i) == 0) {
          // add to survival part
-         newsurvival[s++] = '0' + i ;
+         newsurvival[s++] = '0' + (char) i ;
       }
    }
 
@@ -621,10 +623,12 @@ void liferules::createB0EvenRuleMap(const char *birth, const char *survival) {
 void liferules::removeChar(char *string, char skip) {
    int src = 0 ;
    int dst = 0 ;
-   int c ;
+   char c ;
 
    // copy characters other than skip
-   while( (c = string[src++]) ) {
+   while ( true ) {
+      c = string[src++] ;
+      if (!c) break ;
       if (c != skip) {
          string[dst++] = c ;
       }
@@ -641,7 +645,8 @@ bool liferules::lettersValid(const char *part) {
    int currentCount = -1 ;
 
    // get next character
-   while ( (c = *part) ) {
+   while ( *part ) {
+      c = *part ;
       if (c >= '0' && c <= '8') {
          currentCount = c - '0' ;
          nindex = currentCount - 1;
@@ -658,7 +663,7 @@ bool liferules::lettersValid(const char *part) {
             }
 
             // check against valid rule letters for this neighbor count
-            if (strchr(rule_letters[nindex], c) == 0) {
+            if (strchr((char*) rule_letters[nindex], c) == 0) {
                return false ;
             }
          }
@@ -675,7 +680,6 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    char tidystring[MAXRULESIZE] ;  // tidy version of rule string
    char *t = (char *)tidystring ;
    char *end = r + strlen(r) ;     // end of rule string
-   char len = 0 ;                  // length of tidy string
    char c ;
    char *charpos = 0 ;
    int digit ;
@@ -702,7 +706,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    // create lower case version of rule name without spaces
    while (r < end) {
       // get the next character and convert to lowercase
-      c = tolower(*r) ;
+      c = (char) tolower(*r) ;
 
       // process the character
       switch (c) {
@@ -808,14 +812,14 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
          // ignore space
          if (c != ' ') {
             // check character is valid
-            charpos = strchr(valid_rule_letters, c) ;
+            charpos = strchr((char*) valid_rule_letters, c) ;
             if (charpos) {
                // copy character
                *t = c ; 
                t++ ;
 
                // check if totalistic (i.e. found a valid non-digit)
-               digit = charpos - valid_rule_letters ;
+               digit = (g_uintptr_t) charpos - (g_uintptr_t) valid_rule_letters ;
                if (digit > 8) {
                   totalistic = false ;
                }
@@ -878,7 +882,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    else {
       // if neighborhood specified then must be last character
       if (neighbormask != MOORE) {
-         len = strlen(t) ;
+         size_t len = strlen(t) ;
          if (len) {
             c = t[len - 1] ;
             if (!((c == 'h') || (c == 'v'))) {
