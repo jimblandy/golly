@@ -253,7 +253,7 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
 
       // find the index in the valid character list
       letterindex = strchr((char*) valid_rule_letters, current) ;
-      lindex = letterindex ? letterindex - valid_rule_letters : -1 ;
+      lindex = letterindex ? int(letterindex - valid_rule_letters) : -1 ;
 
       // check if it is a digit
       if ((lindex > 0 && lindex <= 8) || (lindex == 0 && survival)) {
@@ -263,7 +263,7 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
          if (next) {
             letterindex = strchr((char*) rule_letters[3], next) ;
             if (letterindex) {
-               nindex = letterindex - rule_letters[3] ;
+               nindex = int(letterindex - rule_letters[3]) ;
             }
          }
 
@@ -287,7 +287,7 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
             letterindex = strchr((char*) rule_letters[3], next) ;
             nindex = -1 ;
             if (letterindex) {
-               nindex = letterindex - rule_letters[3] ;
+               nindex = int(letterindex - rule_letters[3]) ;
             }
             while (nindex >= 0) {
                // set symmetrical
@@ -300,7 +300,7 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
                if (next) {
                   letterindex = strchr((char*) rule_letters[3], next) ;
                   if (letterindex) {
-                     nindex = letterindex - rule_letters[3] ;
+                     nindex = int(letterindex - rule_letters[3]) ;
                   }
                }
             }
@@ -818,7 +818,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
                t++ ;
 
                // check if totalistic (i.e. found a valid non-digit)
-               digit = charpos - valid_rule_letters ;
+               digit = int(charpos - valid_rule_letters) ;
                if (digit > 8) {
                   totalistic = false ;
                }
