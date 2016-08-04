@@ -1629,8 +1629,8 @@ void AddDefaultRules()
     namedrules.Add(wxT("Day and Night|B3678/S34678"));
     namedrules.Add(wxT("Diamoeba|B35678/S5678"));
     namedrules.Add(wxT("LongLife|B345/S5"));
-    namedrules.Add(wxT("Seeds|B2"));
-    namedrules.Add(wxT("Persian Rug|B234"));
+    namedrules.Add(wxT("Seeds|B2/S"));
+    namedrules.Add(wxT("Persian Rug|B234/S"));
     namedrules.Add(wxT("Replicator|B1357/S1357"));
     namedrules.Add(wxT("Fredkin|B1357/S02468"));
     namedrules.Add(wxT("Morley|B368/S245"));
