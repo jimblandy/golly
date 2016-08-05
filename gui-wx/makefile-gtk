@@ -18,13 +18,14 @@ DOCSDIR = ../docs
 BASEDIR = ../gollybase
 CMDDIR = ../cmdline
 LUADIR = ../lua
+OTHERGUIS = ../gui-android ../gui-common ../gui-ios ../gui-web
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
 SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
 EXEFILES = $(EXEDIR)/golly $(EXEDIR)/bgolly
 DOCFILES = $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
-SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
+SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(OTHERGUIS)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
