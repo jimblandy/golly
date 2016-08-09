@@ -804,6 +804,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
          }
          *t = c ;
          t++ ;
+         totalistic = false ;
          break ;
 
       // other characters
