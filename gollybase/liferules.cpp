@@ -29,11 +29,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 liferules::liferules() {
    int i ;
+
+   // all valid rule letters
    valid_rule_letters = "012345678ceaiknjqrytwz-" ;
+
+   // rule letters per neighbor count
    rule_letters[0] = "ce" ;
    rule_letters[1] = "ceaikn" ;
    rule_letters[2] = "ceaiknjqry" ;
    rule_letters[3] = "ceaiknjqrytwz" ;
+
+   // swap table for 4 neighbor isotropic letters for B0 rules
+   neighbor4swap =   "ecatkrywnjiqz" ;
+
+   // isotropic neighborhoods per neighbor count
    static int entry0[2] = { 1, 2 } ;
    static int entry1[6] = { 5, 10, 3, 40, 33, 68 } ;
    static int entry2[10] = { 69, 42, 11, 7, 98, 13, 14, 70, 41, 97 } ;
@@ -42,7 +51,14 @@ liferules::liferules() {
    rule_neighborhoods[1] = entry1 ;
    rule_neighborhoods[2] = entry2 ;
    rule_neighborhoods[3] = entry3 ;
+
+   // bit offset for suvival part of rule
    survival_offset = 9 ;
+
+   // bit in letter bit mask indicating negative
+   negative_bit = 13 ; 
+
+   // maximum number of letters per neighbor count
    max_letters[0] = 0 ;
    max_letters[1] = (int) strlen(rule_letters[0]) ;
    max_letters[2] = (int) strlen(rule_letters[1]) ;
@@ -52,9 +68,11 @@ liferules::liferules() {
    max_letters[6] = max_letters[2] ;
    max_letters[7] = max_letters[1] ;
    max_letters[8] = max_letters[0] ;
-   for (i = 0; i < survival_offset; i++) {
+   for (i = 0 ; i < survival_offset ; i++) {
       max_letters[i + survival_offset] = max_letters[i] ;
    }
+
+   // canonical letter order per neighbor count
    static int order0[1] = { 0 } ;
    static int order1[2] = { 0, 1 } ;
    static int order2[6] = { 2, 0, 1, 3, 4, 5 } ;
@@ -69,7 +87,7 @@ liferules::liferules() {
    order_letters[6] = order2 ;
    order_letters[7] = order1 ;
    order_letters[8] = order0 ;
-   for (i = 0; i < survival_offset; i++) {
+   for (i = 0 ; i < survival_offset ; i++) {
       order_letters[i + survival_offset] = order_letters[i] ;
    }
 
@@ -92,16 +110,32 @@ static int bitcount(int v) {
 
 // initialize
 void liferules::initRule() {
+   // default to Moore neighbourhood totalistic rule
    neighbormask = MOORE ; 
    neighbors = 8 ;
    wolfram = -1 ;
    totalistic = true ;
+
+   // one bit for each neighbor count
+   // s = survival, b = birth
+   // bit:     17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+   // meaning: s8 s7 s6 s5 s4 s3 s2 s1 s0 b8 b7 b6 b5 b4 b3 b2 b1 b0
    rulebits = 0 ;
-   memset(letter_bits, 0, sizeof(letter_bits));
-   memset(neg_letter_bits, 0, sizeof(letter_bits));
+
+   // one bit for each letter per neighbor count
+   // N = negative bit
+   // bit:     13 12 11 10  9  8  7  6  5  4  3  2  1  0
+   // meaning:  N  z  w  t  y  r  q  j  n  k  i  a  e  c
+   memset(letter_bits, 0, sizeof(letter_bits)) ;
+
+   // two 4x4 rule maps (second used for B0-not-Smax rule emulation)
    memset(rule0, 0, sizeof(rule0)) ;
    memset(rule1, 0, sizeof(rule1)) ;
+
+   // 3x3 rule map
    memset(rule3x3, 0, sizeof(rule3x3)) ;
+
+   // canonical rule string
    memset(canonrule, 0, sizeof(canonrule)) ;
 }
 
@@ -126,8 +160,8 @@ void liferules::setTotalistic(int value, bool survival) {
    }
 
    // fill the array based on totalistic value
-   for (i = 0; i < ALL3X3; i += 32) {
-      for (j = 0; j < 16; j++) {
+   for (i = 0 ; i < ALL3X3 ; i += 32) {
+      for (j = 0 ; j < 16 ; j++) {
          nbrs = 0 ;
          nhood = (i+j) & neighbormask ;
          while (nhood > 0) {
@@ -159,7 +193,7 @@ void liferules::setSymmetrical512(int x, int b) {
    int i = 0 ;
 
    // process each of the 4 rotations
-   for (i=0; i<4; i++) {
+   for (i = 0 ; i < 4 ; i++) {
       rule3x3[y] = (char) b ;
       y = rotateBits90Clockwise(y) ;
    }
@@ -168,7 +202,7 @@ void liferules::setSymmetrical512(int x, int b) {
    y = flipBits(y) ;
 
    // process each of the 4 rotations
-   for (i=0; i<4; i++) {
+   for (i = 0 ; i < 4 ; i++) {
       rule3x3[y] = (char) b ;
       y = rotateBits90Clockwise(y) ;
    }
@@ -199,11 +233,11 @@ void liferules::setSymmetrical(int value, bool survival, int lindex, int normal)
       }
 
       // update the letterbits
-      if (normal) {
-         letter_bits[value + offset] |= 1 << lindex ;
-      }
-      else {
-         neg_letter_bits[value + offset] |= 1 << lindex ;
+      letter_bits[value + offset] |= 1 << lindex ;
+
+      if (!normal) {
+         // set the negative bit
+         letter_bits[value + offset] |= 1 << negative_bit ;
       }
 
       // lookup the neighborhood
@@ -256,7 +290,7 @@ void liferules::setRuleFromString(const char *rule, bool survival) {
       lindex = letterindex ? int(letterindex - valid_rule_letters) : -1 ;
 
       // check if it is a digit
-      if ((lindex > 0 && lindex <= 8) || (lindex == 0 && survival)) {
+      if (lindex >= 0 && lindex <= 8) {
          // determine what follows the digit
          next = *rule ;
          nindex = -1 ;
@@ -317,7 +351,7 @@ void liferules::createWolframMap() {
    memset(rule3x3, 0, ALL3X3) ;
 
    // set in the 3x3 map
-   for (i = 0; i < ALL3X3; i+= 1) {
+   for (i = 0 ; i < ALL3X3 ; i++) {
       if ((wolfram & (1 << (i & 7))) || (i & 16)) {
          rule3x3[i] = 1 ;
       }
@@ -356,13 +390,13 @@ int liferules::addLetters(int count, int p) {
    int j ;
 
    // check if letters are defined for this neighbor count
-   if (letter_bits[count] || neg_letter_bits[count]) {
-      // check whether normal or negative letters defined
-      if (letter_bits[count]) {
-         bits = letter_bits[count] ;
-      }
-      else {
-         bits = neg_letter_bits[count] ;
+   if (letter_bits[count]) {
+      // get the bit mask
+      bits = letter_bits[count] ;
+
+      // check for negative
+      if (bits & (1 << negative_bit)) {
+         // letters are negative
          negative = 1 ;
       }
 
@@ -396,7 +430,7 @@ int liferules::addLetters(int count, int p) {
          }
 
          // add defined letters
-         for (j=0; j<maxbits; j++) {
+         for (j = 0 ; j < maxbits ; j++) {
             // lookup the letter in order
             letter = order_letters[count][j] ;
             if (bits & (1 << letter)) {
@@ -412,7 +446,12 @@ int liferules::addLetters(int count, int p) {
 // AKT: store valid rule in canonical format for getrule()
 void liferules::createCanonicalName(lifealgo *algo) {
    int p = 0 ;
+   int np = 0 ;
    int i = 0 ;
+
+   // the canonical version of a rule containing letters
+   // might be simply totalistic
+   bool stillnontotalistic = false ;
 
    // check for wolfram rule
    if (wolfram >= 0) {
@@ -421,14 +460,22 @@ void liferules::createCanonicalName(lifealgo *algo) {
    } else {
       // output birth part
       canonrule[p++] = 'B' ;
-      for (i=0; i<=neighbors; i++) {
+      for (i = 0 ; i <= neighbors ; i++) {
          if (rulebits & (1 << i)) {
             canonrule[p++] = '0' + (char)i ;
 
             // check for non-totalistic
             if (!totalistic) {
                // add any defined letters
-               p = addLetters(i, p) ;
+               np = addLetters(i, p) ;
+        
+               // check if letters were added
+               if (np != p) {
+                  if (np > p) {
+                     stillnontotalistic = true ;
+                  }
+                  p = np ;   // confident?
+               }
             }
          }
       }
@@ -438,16 +485,29 @@ void liferules::createCanonicalName(lifealgo *algo) {
 
       // output survival part
       canonrule[p++] = 'S' ;
-      for (i=0; i<=neighbors; i++) {
+      for (i = 0 ; i <= neighbors ; i++) {
          if (rulebits & (1 << (survival_offset+i))) {
             canonrule[p++] = '0' + (char)i ;
 
             // check for non-totalistic
             if (!totalistic) {
                // add any defined letters
-               p = addLetters(survival_offset + i, p) ;
+               np = addLetters(survival_offset + i, p) ;
+
+               // check if letters were added
+               if (np != p) {
+                  if (np > p) {
+                     stillnontotalistic = true ;
+                  }
+                  p = np ;
+               }
             }
          }
+      }
+
+      // check if non-totalistic became totalistic
+      if (!totalistic && !stillnontotalistic) {
+         totalistic = true ;
       }
 
       // add neighborhood
@@ -473,7 +533,7 @@ void liferules::convertTo4x4Map(char *which) {
    int v = 0 ;
 
    // create every possible cell combination for 4x4
-   for (i = 0; i < 65536; i += 1) {
+   for (i = 0 ; i < ALL4X4 ; i ++) {
       // perform 4 lookups in the 3x3 map to create the 4x4 entry
       // 15 14 13  x       7  6  5
       // 11 10  9  x  ->  11 10  9  ->  10' x 0 0 x x
@@ -505,47 +565,120 @@ void liferules::convertTo4x4Map(char *which) {
 }
 
 /*
-    Following routines emulate B0 rules using David Eppstein's idea to change
-    the current rule depending on generation parity.
+   Following routines emulate B0 rules using David Eppstein's idea to change
+   the current rule depending on generation parity. This was enhanced for
+   non-totalistic isotropic rules by user toroidelet on the conwaylife.com
+   forum (and kindly explained by Dave Greene).
     
-    If original rule has B0 but not S8:
+   If original rule has B0 but not Smax:
 
-    For even generations, whenever the original rule has a Bx or Sx, omit that 
-    bit from the modified rule, and whenever the original rule is missing a
-    Bx or Sx, add that bit to the modified rule.
-    eg. B03/S23 => B1245678/S0145678.
+      For even generations,
+         whenever the original rule has B[digit][alpha] or
+         S[digit][alpha], omit that bit from the modified rule, and whenever
+         the original rule is missing a B[digit][alpha] or S[digit][alpha], add
+         that bit to the modified rule.
+
+         eg. totalistic: B03/S23 => B1245678/S0145678
+             isotropic:  B0124-k/S1c25 => B34k5678/S01-c34678.
     
-    For odd generations, use Bx if and only if the original rule has S(8-x)
-    and use Sx if and only if the original rule has B(8-x).
-    eg. B03/S23 => B56/S58.
+      For odd generations,
+         for everything except 4-neighbor isotropic bits, use B[digit][alpha]
+         if and only if the original rule has S[max-digit][alpha] and use
+         S[digit][alpha] if and only if the original rule has B[max-digit][alpha].
+
+         for 4-neighbor isotropic bits, use the following table:
+            4c -> 4e
+            4e -> 4c
+            4k -> 4k
+            4a -> 4a
+            4i -> 4t
+            4n -> 4r
+            4y -> 4j
+            4q -> 4w
+            4j -> 4y
+            4r -> 4n
+            4t -> 4i
+            4w -> 4q
+            4z -> 4z
+
+         eg. totalistic: B03/S23 => B56/S58.
+             isotropic:  B0124-k/S1c25 => B367c/S4-k678.
     
-    If original rule has B0 and S8:
+   If original rule has B0 and Smax:
     
-    Such rules don't strobe, so we just want to invert all the cells.
-    The trick is to do both changes: invert the bits, and swap Bx for S(8-x).
-    eg. B03/S238 => B123478/S0123467 (for ALL gens).
+      Such rules don't strobe, so we just want to invert all the cells.
+      The trick is to do both changes: invert the isotropic bits, and swap
+      B[digit][alpha] for S[max-digit][alpha], plus the special 4-neighbor
+      isotropic bit swap shown in the above table.
+
+      eg. totalistic: B03/S238 => B123478/S0123467 (for ALL gens).
 */
 
 // create the B0 (no Smax) even generation rule map
-void liferules::createB0SmaxRuleMap(const char *birth, const char *survival) {
+void liferules::createB0EvenRuleMap(const char *birth, const char *survival) {
    int b = 0 ;
    int s = 0 ;
-   int i = 0 ;
-   char newbirth[10] ;
-   char newsurvival[10] ;
+   int i ;
+   int j ;
+   int bits ;
+   int maxbits ;
+   char newbirth[MAXRULESIZE] ;
+   char newsurvival[MAXRULESIZE] ;
 
-   // invert neighbor counts and Bx->S(max-x) and Sx->B(max-x)
-   for (i = 0 ; i <= neighbors; i++) {
+   // invert neighbor counts
+   for (i = 0 ; i <= neighbors ; i++) {
       // check if the digit is in the birth part
       if (strchr(birth, '0' + i) == 0) {
-         // compute Smax-x and add to survival part
-         newsurvival[s++] = '0' + (char) (neighbors - i) ;
+         // digit missing so add to birth part
+         newbirth[b++] = '0' + (char) i ;
+      }
+      else {
+         // check for letters on this digit
+         bits = letter_bits[i] ;
+         if (bits) {
+            // digit has letters so add to birth part
+            newbirth[b++] = '0' + (char) i ;
+
+            // output inverted sign
+            if (!(bits & (1 << negative_bit))) {
+               newbirth[b++] = '-' ;
+            }
+
+            // output letters
+            maxbits = max_letters[i] ;
+            for (j = 0 ; j < maxbits ; j++) {
+               if (bits & (1 << j)) {
+                  newbirth[b++] = rule_letters[3][j] ;
+               }
+            }
+         }
       }
 
       // check if the digit is in the survival part
       if (strchr(survival, '0' + i) == 0) {
-         // compute Smax-x and add to birth part
-         newbirth[b++] = '0' + (char) (neighbors - i) ;
+         // digit missing add to survival part
+         newsurvival[s++] = '0' + (char) i ;
+      }
+      else {
+         // check for letters on this digit
+         bits = letter_bits[survival_offset + i] ;
+         if (bits) {
+            // digit has letters so add survival part
+            newsurvival[s++] = '0' + (char) i ;
+
+            // output inverted sign
+            if (!(bits & (1 << negative_bit))) {
+               newsurvival[s++] = '-' ;
+            }
+
+            // output letters
+            maxbits = max_letters[survival_offset + i] ;
+            for (j = 0 ; j < maxbits ; j++) {
+               if (bits & (1 << j)) {
+                  newsurvival[s++] = rule_letters[3][j] ;
+               }
+            }
+         }
       }
    }
 
@@ -561,22 +694,71 @@ void liferules::createB0SmaxRuleMap(const char *birth, const char *survival) {
 void liferules::createB0OddRuleMap(const char *birth, const char *survival) {
    int b = 0 ;
    int s = 0 ;
-   int i = 0 ;
-   char newbirth[10] ;
-   char newsurvival[10] ;
+   int i ;
+   int j ;
+   int bits ;
+   int maxbits ;
+   char newbirth[MAXRULESIZE] ;
+   char newsurvival[MAXRULESIZE] ;
 
    // Bx->S(max-x) and Sx->B(max-x)
-   for (i = 0 ; i <= neighbors; i++) {
+   for (i = 0 ; i <= neighbors ; i++) {
       // check if the digit is in the birth part
       if (strchr(birth, '0' + i) != 0) {
          // Sx->B(max-x)
          newsurvival[s++] = '0' + (char) (neighbors - i) ;
+
+         // check for letters on this digit
+         bits = letter_bits[i] ;
+         if (bits) {
+            // output sign
+            if (bits & (1 << negative_bit)) {
+               newsurvival[s++] = '-' ;
+            }
+
+            // output letters
+            maxbits = max_letters[i] ;
+            for (j = 0 ; j < maxbits ; j++) {
+               if (bits & (1 << j)) {
+                  // check for 4-neighbor
+                  if (i == 4) {
+                     newsurvival[s++] = neighbor4swap[j] ;
+                  }
+                  else {
+                     newsurvival[s++] = rule_letters[3][j] ;
+                  }
+               }
+            }
+         }
       }
 
       // check if the digit is in the survival part
       if (strchr(survival, '0' + i) != 0) {
          // Bx->S(max-x)
          newbirth[b++] = '0' + (char) (neighbors - i) ;
+
+         // check for letters on this digit
+         bits = letter_bits[survival_offset + i] ;
+         if (bits) {
+            // output sign
+            if (bits & (1 << negative_bit)) {
+               newbirth[b++] = '-' ;
+            }
+
+            // output letters
+            maxbits = max_letters[survival_offset + i] ;
+            for (j = 0 ; j < maxbits ; j++) {
+               if (bits & (1 << j)) {
+                  // check for 4-neighbor
+                  if (i == 4) {
+                     newbirth[b++] = neighbor4swap[j] ;
+                  }
+                  else {
+                     newbirth[b++] = rule_letters[3][j] ;
+                  }
+               }
+            }
+         }
       }
    }
 
@@ -589,25 +771,82 @@ void liferules::createB0OddRuleMap(const char *birth, const char *survival) {
 }
 
 // create the B0 Smax rule map
-void liferules::createB0EvenRuleMap(const char *birth, const char *survival) {
+void liferules::createB0SmaxRuleMap(const char *birth, const char *survival) {
    int b = 0 ;
    int s = 0 ;
-   int i = 0 ;
-   char newbirth[10] ;
-   char newsurvival[10] ;
+   int i ;
+   int j ;
+   int bits ;
+   int maxbits ;
+   char newbirth[MAXRULESIZE] ;
+   char newsurvival[MAXRULESIZE] ;
 
-   // invert neighbor counts
-   for (i = 0 ; i <= neighbors; i++) {
+   // invert neighbor counts and Bx->S(max-x) and Sx->B(max-x)
+   for (i = 0 ; i <= neighbors ; i++) {
       // check if the digit is in the birth part
       if (strchr(birth, '0' + i) == 0) {
-         // add to birth part
-         newbirth[b++] = '0' + (char) i ;
+         // digit missing so compute Smax-x and add to survival part
+         newsurvival[s++] = '0' + (char) (neighbors - i) ;
+      }
+      else {
+         // check for letters on this digit
+         bits = letter_bits[i] ;
+         if (bits) {
+            // digit has letters to compute Smax-x and add to survival part
+            newsurvival[s++] = '0' + (char) (neighbors - i) ;
+
+            // output inverted sign
+            if (!(bits & (1 << negative_bit))) {
+               newsurvival[s++] = '-' ;
+            }
+
+            // output letters
+            maxbits = max_letters[i] ;
+            for (j = 0 ; j < maxbits ; j++) {
+               if (bits & (1 << j)) {
+                  // check for 4-neighbor
+                  if (i == 4) {
+                     newsurvival[s++] = neighbor4swap[j] ;
+                  }
+                  else {
+                     newsurvival[s++] = rule_letters[3][j] ;
+                  }
+               }
+            }
+         }
       }
 
       // check if the digit is in the survival part
       if (strchr(survival, '0' + i) == 0) {
-         // add to survival part
-         newsurvival[s++] = '0' + (char) i ;
+         // digit missing so compute Smax-x and add to birth part
+         newbirth[b++] = '0' + (char) (neighbors - i) ;
+      }
+      else {
+         // check for letters on this digit
+         bits = letter_bits[survival_offset + i] ;
+         if (bits) {
+            // digit has letters so compute Smax-x and add to birth part
+            newbirth[b++] = '0' + (char) (neighbors - i) ;
+
+            // output inverted sign
+            if (!(bits & (1 << negative_bit))) {
+               newbirth[b++] = '-' ;
+            }
+
+            // output letters
+            maxbits = max_letters[survival_offset + i] ;
+            for (j = 0 ; j < maxbits ; j++) {
+               if (bits & (1 << j)) {
+                  // check for 4-neighbor
+                  if (i == 4) {
+                     newbirth[b++] = neighbor4swap[j] ;
+                  }
+                  else {
+                     newbirth[b++] = rule_letters[3][j] ;
+                  }
+               }
+            }
+         }
       }
    }
 
@@ -648,7 +887,7 @@ bool liferules::lettersValid(const char *part) {
       c = *part ;
       if (c >= '0' && c <= '8') {
          currentCount = c - '0' ;
-         nindex = currentCount - 1;
+         nindex = currentCount - 1 ;
          if (nindex > 3) {
             nindex = 6 - nindex ;
          }
@@ -688,6 +927,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    char *underscorepos = 0 ;       // position of underscore
    char *bpos = 0 ;                // position of b
    char *spos = 0 ;                // position of s
+   int letter_copy[18] ;           // copy of letter bits for B0 processing
 
    // initialize rule type
    initRule() ;
@@ -937,7 +1177,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
             }
             else {
                // just spos
-               spos = t;
+               spos = t ;
                removeChar(spos, 's') ;
                bpos = spos + strlen(spos) ;
             }
@@ -998,11 +1238,6 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
       if (!lettersValid(spos)) {
          return "Letter not valid for survival neighbor count." ;
       }
-
-      // non-totalistic does not support B0 rules
-      if (!totalistic && strchr(bpos, '0')) {
-         return "Non-totalistic rules do not support B0." ;
-      }
    }
 
    // AKT: check for rule suffix like ":T200,100" to specify a bounded universe
@@ -1027,14 +1262,16 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
       convertTo4x4Map(rule0) ;
    }
    else {
-      // generate the 3x3 map (which also creates the data for the canonical format)
+      // generate the 3x3 map
+      // this gets overwritten if the rule contains B0 but is required to create
+      // the data for the canonical rule name
       createRuleMap(bpos, spos) ;
 
       // save the canonical rule name
       createCanonicalName(algo) ;
 
       // check for B0 rules
-      if (totalistic && strchr(bpos, '0')) {
+      if (strchr(bpos, '0')) {
           // check for Smax
           if (strchr(spos, '0' + neighbors)) {
              // B0 Smax
@@ -1047,11 +1284,17 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
              // set alternate rules needed
              alternate_rules = true ;
 
+             // save the letter bits since they will be overwritten by generating the rule map
+             memcpy(letter_copy, letter_bits, sizeof(letter_copy)) ;
+
              // B0 without Smax even generation
              createB0EvenRuleMap(bpos, spos) ;
 
              // convert to the even 4x4 map
              convertTo4x4Map(rule0) ;
+
+             // restore original letter bits
+             memcpy(letter_bits, letter_copy, sizeof(letter_bits)) ;
 
              // B0 without Smax odd generation
              createB0OddRuleMap(bpos, spos) ;

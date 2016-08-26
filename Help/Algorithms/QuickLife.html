@@ -35,37 +35,6 @@ A single 2x2 block turns into a set of Persian rugs.
 Oscillators with extremely long periods can occur quite naturally.
 
 
-<p><a name="b0emulation"></a>&nbsp;<br>
-<font size=+1><b>Emulating B0 rules</b></font>
-
-<p>
-Rules containing B0 are tricky to handle in an unbounded universe because every
-dead cell becomes alive in the next generation.  If the rule doesn't contain S8
-then the "background" cells alternate from all-alive to all-dead, creating a
-nasty strobing effect.  To avoid these problems, Golly emulates rules with B0
-in the following way:
-
-<p>
-A rule containing B0 and S8 is converted into an equivalent rule (without B0)
-by inverting the neighbor counts, then using S(8-x) for the B counts
-and B(8-x) for the S counts.
-For example, B0123478/S01234678 (AntiLife) is changed to B3/S23 (Life)
-via these steps: B0123478/S01234678 -> B56/S5 -> B3/S23.
-
-<p>
-A rule containing B0 but not S8 is converted into a pair of rules (both without B0):
-one is used for the even generations and the other for the odd generations.
-The rule for even generations uses inverted neighbor counts.
-The rule for odd generations uses S(8-x) for the B counts and B(8-x) for the S counts.
-For example, B03/S23 becomes B1245678/S0145678 (even) and B56/S58 (odd).
-
-<p>
-In both cases, the replacement rule(s) generate patterns that are equivalent
-to the requested rule.  However, you need to be careful when editing an
-emulated pattern in a rule that contains B0 but not S8.  If you do a cut
-or copy then you should only paste into a generation with the same parity.
-
-
 <p><a name="vonNeumann"></a>&nbsp;<br>
 <font size=+1><b>Von Neumann neighborhood</b></font>
 
@@ -172,6 +141,65 @@ If you supply a minus sign and all the letters for a specific neighbor count
 then the letters <i>and</i> the neighbor count are removed.
 For example, B2-aceikn3/S will become B3/S.
 </ol>
+
+
+<p><a name="b0emulation"></a>&nbsp;<br>
+<font size=+1><b>Emulating B0 rules</b></font>
+
+<p>
+Rules containing B0 are tricky to handle in an unbounded universe because every
+dead cell becomes alive in the next generation.  If the rule doesn't contain S<i>max</i>
+(where <i>max</i> is the number of neighbors in the neighborhood: 8 for Moore, 6 for
+Hexagonal or 4 for Von Neumann) then the "background" cells alternate from all-alive
+to all-dead, creating a nasty strobing effect.  To avoid these problems, Golly emulates
+rules with B0 in the following way:
+
+<p>
+A totalistic rule containing B0 and Smax is converted into an equivalent rule (without B0) by
+inverting the neighbor counts, then using S(max-x) for the B counts and B(max-x) for
+the S counts.
+For example, B0123478/S01234678 (AntiLife) is changed to B3/S23 (Life)
+via these steps: B0123478/S01234678 -> B56/S5 -> B3/S23.
+
+<p>
+A non-totalistic rule is converted in a similar way. The isotropic letters are inverted and
+then S(max-x)(letters) is used for B counts and B(max-x)(letters) is used for the S counts.
+The 4 neighbor letters are swapped using the following table:
+<pre>
+  4c -> 4e
+  4e -> 4c
+  4k -> 4k
+  4a -> 4a
+  4i -> 4t
+  4n -> 4r
+  4y -> 4j
+  4q -> 4w
+  4j -> 4y
+  4r -> 4n
+  4t -> 4i
+  4w -> 4q
+  4z -> 4z
+</pre>
+<p>
+A totalistic rule containing B0 but not Smax is converted into a pair of rules (both without B0):
+one is used for the even generations and the other for the odd generations.
+The rule for even generations uses inverted neighbor counts.
+The rule for odd generations uses S(max-x) for the B counts and B(max-x) for the S counts.
+For example, B03/S23 becomes B1245678/S0145678 (even) and B56/S58 (odd).
+
+<p>
+A non-totalistic rule is converted in a similar way. For even generations invert both
+B(x)(letter) and S(x)(letter).
+For odd generations except 4-neighbor letters, use B(x)(letter) if and only if the
+original rule has S(max-x)(letter) and use S(x)(letter) if and only if the original rule
+has B(max-x)(letter). For 4-neighbor isotropic letters use the table above.
+For example, B0124-k/S1c25 becomes B34k5678/S01-c34678 (even) and B367c/S4-k678 (odd).
+
+<p>
+In both cases, the replacement rule(s) generate patterns that are equivalent
+to the requested rule.  However, you need to be careful when editing an
+emulated pattern in a rule that contains B0 but not Smax.  If you do a cut
+or copy then you should only paste into a generation with the same parity.
 
 
 <p><a name="wolfram"></a>&nbsp;<br>

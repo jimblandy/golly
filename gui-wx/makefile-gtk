@@ -18,19 +18,18 @@ DOCSDIR = ../docs
 BASEDIR = ../gollybase
 CMDDIR = ../cmdline
 LUADIR = ../lua
-OTHERGUIS = ../gui-android ../gui-common ../gui-ios ../gui-web
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
 SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
 EXEFILES = $(EXEDIR)/golly $(EXEDIR)/bgolly
 DOCFILES = $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
-SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR) $(OTHERGUIS)
+SRCFILES = $(DOCSDIR) $(BASEDIR) $(CMDDIR)
 GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
 
-LUALIB = $(LUADIR)/liblua.a
+LUALIB = $(LUADIR)/liblua.a -ldl
 
 CXXC = g++
 CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
@@ -68,7 +67,7 @@ ZLIB_CXXFLAGS = -DZLIB
 ZLIB_LDFLAGS = -lz
 
 # libs for OpenGL
-EXTRALIBS_OPENGL = -lwx_gtk2u_gl-3.0 -lGL -lGLU
+EXTRALIBS_OPENGL = -lwx_gtk2u_unofficial_gl-3.0 -lGL -lGLU
 
 # for wxGTK support (required for GUI)
 WX_CXXFLAGS = `wx-config --cxxflags`
