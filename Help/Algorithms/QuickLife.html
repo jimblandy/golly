@@ -88,7 +88,7 @@ various lowercase letters to represent unique neighborhoods.
 One or more of these letters can appear after an appropriate digit
 (which must be from 1 to 7, depending on the letters).
 The usual counts of 0 and 8 can still be used without letters since there is no way
-to constrain 0 or 8 neighbors.  B0 is not allowed.
+to constrain 0 or 8 neighbors.
 
 <p>
 For example, <b><a href="rule:B3/2a34">B3/2a34</a></b> means birth on 3 neighbors
@@ -229,8 +229,8 @@ Here are the state transitions for W30:
     |    |    |    |    |    |    |    | 
     0    0    0    1    1    1    1    0  = 30 (2^4 + 2^3 + 2^2 + 2^1)
 </pre>
-Note that odd-numbered rules have the same problem as B0 rules, but Golly
-currently makes no attempt to emulate such rules.
+Note that odd-numbered rules have the same problem as B0 rules.  Golly
+currently makes no attempt to emulate such rules, and they are not supported.
 
 </body>
 </html>
