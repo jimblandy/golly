@@ -935,6 +935,11 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    // we might need to emulate B0 rule by using two different rules for odd/even gens
    alternate_rules = false ;
 
+   // check if rule is too long
+   if (strlen(rulestring) > MAXRULESIZE) {
+      return "Rule name is too long." ;
+   }
+
    // check for colon
    colonpos = strchr(r, ':') ;
    if (colonpos) {
