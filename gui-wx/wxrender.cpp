@@ -2,24 +2,24 @@
  
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
 /* -------------------- Some notes on Golly's display code ---------------------
@@ -98,6 +98,7 @@ int currwd, currht;                     // current width and height of viewport,
 int scalefactor;                        // current scale factor (1, 2, 4, 8 or 16)
 unsigned char dead_alpha = 255;         // alpha value for dead pixels
 unsigned char live_alpha = 255;         // alpha value for live pixels
+unsigned int cellRGBA[256];             // cell RGBA values
 GLuint rgbatexture = 0;                 // texture name for drawing RGBA bitmaps
 GLuint icontexture = 0;                 // texture name for drawing icons
 GLuint celltexture = 0;                 // texture name for drawing magnified cells
@@ -141,6 +142,10 @@ const int rowgap = 4;                   // vertical gap after first 2 rows
 // currently clicked control
 control_id currcontrol = NO_CONTROL;
 
+// magnified buffer
+long magsize = 1024 * 1024 * 4;
+unsigned int *magbuffer = (unsigned int *)malloc(magsize);
+
 #ifdef __WXMSW__
     // this constant isn't defined in the OpenGL headers on Windows (XP at least)
     #define GL_CLAMP_TO_EDGE 0x812F
@@ -157,11 +162,16 @@ static void SetColor(int r, int g, int b, int a)
 
 static void FillRect(int x, int y, int wd, int ht)
 {
+    float xf = (float)x;
+    float yf = (float)y;
+    float wdf = (float)wd;
+    float htf = (float)ht;
+
     GLfloat rect[] = {
-        x,    y+ht,     // left, bottom
-        x+wd, y+ht,     // right, bottom
-        x+wd, y,        // right, top
-        x,    y,        // left, top
+        xf,     yf+htf,     // left, bottom
+        xf+wdf, yf+htf,     // right, bottom
+        xf+wdf, yf,        // right, top
+        xf,     yf,        // left, top
     };
     glVertexPointer(2, GL_FLOAT, 0, rect);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -194,7 +204,7 @@ void CreateTranslucentControls()
     wxImage image(controls_xpm);
     controlswd = image.GetWidth();
     controlsht = image.GetHeight();
-    
+
     // create ctrlsbitmap and initialize its RGBA data based on pixels in image
     ctrlsbitmap = (unsigned char*) malloc(controlswd * controlsht * 4);
     if (ctrlsbitmap) {
@@ -220,10 +230,10 @@ void CreateTranslucentControls()
             }
         }
     }
-    
+
     // allocate bitmap for darkening a clicked button
     darkbutt = (unsigned char*) malloc(buttsize * buttsize * 4);
-    
+
     // create bitmaps for drawing each paste mode
     paste_mode savemode = pmode;
     for (int i = 0; i < 4; i++) {
@@ -237,20 +247,20 @@ void CreateTranslucentControls()
         wxRect r(0, 0, modewd, modeht);
         wxBrush brush(*wxWHITE);
         FillRect(dc, r, brush);
-        
+    
         dc.SetFont(*statusptr->GetStatusFont());
         dc.SetBackgroundMode(wxSOLID);
         dc.SetTextBackground(*wxWHITE);
         dc.SetTextForeground(*wxBLACK);
         dc.SetPen(*wxBLACK);
-        
+    
         int textwd, textht;
         dc.GetTextExtent(pmodestr, &textwd, &textht);
         textwd += 4;
         dc.DrawText(pmodestr, 2, modeht - statusptr->GetTextAscent() - 4);
-        
+     
         dc.SelectObject(wxNullBitmap);
-        
+    
         // now convert modemap data into RGBA data suitable for passing into DrawRGBAData
         modedata[i] = (unsigned char*) malloc(modewd * modeht * 4);
         if (modedata[i]) {
@@ -300,25 +310,30 @@ void DestroyDrawingData()
 
 void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 {
+    float xf = (float)x;
+    float yf = (float)y;
+    float wf = (float)w;
+    float hf = (float)h;
+
     // only need to create texture name once
-	if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
+    if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
 
     EnableTextures();
     glBindTexture(GL_TEXTURE_2D, rgbatexture);
-    
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-    
+
     // update the texture with the new RGBA data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
-    
+
     GLfloat vertices[] = {
-        x,      y,
-        x+w,    y,
-        x,      y+h,
-        x+w,    y+h,
+        xf,      yf,
+        xf+wf,   yf,
+        xf,      yf+hf,
+        xf+wf,   yf+hf,
     };
     glVertexPointer(2, GL_FLOAT, 0, vertices);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -329,19 +344,19 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 static void LoadIconAtlas(int iconsize, int numicons)
 {
     // load the texture atlas containing all icons for later use in DrawIcons
-    
+
     // create icon texture name once
-	if (icontexture == 0) glGenTextures(1, &icontexture);
-    
+    if (icontexture == 0) glGenTextures(1, &icontexture);
+ 
     EnableTextures();
     glBindTexture(GL_TEXTURE_2D, icontexture);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
+ 
     int atlaswd = iconsize * numicons;
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlaswd, iconsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, iconatlas);
-    
+ 
 #if 0
     // test above code by displaying the entire atlas
     GLfloat wd = atlaswd;
@@ -395,7 +410,7 @@ void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                 vertices[5] = ypos + pmscale;
                 vertices[6] = xpos + pmscale;
                 vertices[7] = ypos + pmscale;
-                
+             
                 texcoords[0] = (state-1) * 1.0/numicons;
                 texcoords[1] = 0.0;
                 texcoords[2] = state * 1.0/numicons;
@@ -422,11 +437,11 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
 {
     // draw a single icon (either multi-color or grayscale) outside the viewport,
     // so we don't use OpenGL calls in here
-    
+ 
     int wd = icon->GetWidth();
     int ht = icon->GetHeight();
     wxBitmap pixmap(wd, ht, 32);
-    
+ 
     wxAlphaPixelData pxldata(pixmap);
     if (pxldata) {
 #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
@@ -499,13 +514,13 @@ static bool ChangeCellAtlas(int cellsize, int numcells, unsigned char alpha)
     if (numcells != prevnum) return true;
     if (cellsize != prevsize) return true;
     if (alpha != prevalpha) return true;
-    
+ 
     for (int state = 1; state <= numcells; state++) {
         if (currlayer->cellr[state] != prevr[state]) return true;
         if (currlayer->cellg[state] != prevg[state]) return true;
         if (currlayer->cellb[state] != prevb[state]) return true;
     }
-    
+ 
     return false;   // no need to change cellatlas
 }
 
@@ -558,7 +573,7 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
     }
     
     // create cell texture name once
-	if (celltexture == 0) glGenTextures(1, &celltexture);
+    if (celltexture == 0) glGenTextures(1, &celltexture);
     
     EnableTextures();
     glBindTexture(GL_TEXTURE_2D, celltexture);
@@ -590,7 +605,8 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
 
 // -----------------------------------------------------------------------------
 
-void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
+// fastest when tile contains a few cells
+void DrawMagnifiedCellsFew(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
 {
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
 
@@ -639,6 +655,157 @@ void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, in
     }
 }
 
+// fastest when tile contains many cells
+void DrawMagnifiedCellsMany(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
+{
+    int xs;
+    int ys;
+    unsigned char state;
+
+    // compute the texture size
+    long neededBufferSize = w * pmscale * h * pmscale * 4;
+
+    // check if the current buffer is big enough
+    if (neededBufferSize > magsize) {
+        // grow the buffer to the required size
+        magbuffer = (unsigned int *)realloc(magbuffer, neededBufferSize);
+        magsize = neededBufferSize;
+    }
+
+    // start at beginning of texture buffer
+    unsigned int *buffer = magbuffer;
+
+    // clear the buffer to the dead colour
+    xs = 0;
+    state = cellRGBA[0];
+
+    // clear the first row
+    while (xs < w * pmscale) {
+       *buffer++ = state;
+       xs++;
+    }
+    buffer = magbuffer;
+
+    // copy the first row to subsequent rows
+    ys = 1;
+    while (ys < h * pmscale) {
+        memcpy(buffer + ys * w * pmscale, magbuffer, w * pmscale * 4);
+        ys++;
+    }
+    buffer = magbuffer;
+
+    switch (pmscale) {
+        case 2:
+            // create texture of x2 magnified cells
+            for (int row = 0; row < h; row++) {
+                for (int col = 0; col < w; col++) {
+                    // get the cell state
+                    state = statedata[row*stride + col];
+                    if (state) {
+                        // draw the 2x2 cell
+                        *(buffer + w * pmscale) = cellRGBA[state];
+                        *buffer++ = cellRGBA[state];
+                        *(buffer + w * pmscale) = cellRGBA[state];
+                        *buffer++ = cellRGBA[state];
+                    }
+                    else {
+                        buffer += pmscale;
+                    }
+                }
+    
+                // go to beginning of next row
+                buffer -= pmscale * w;
+                buffer += pmscale * w * pmscale;
+            }
+            break;
+
+        case 4:
+            // create texture of x4 magnified cells
+            for (int row = 0; row < h; row++) {
+                for (int col = 0; col < w; col++) {
+                    // get the cell state
+                    state = statedata[row*stride + col];
+
+                    if (state) {
+                        // draw the 4x4 cell (3x3 with bottom and right gap)
+                        *(buffer + (w + w) * pmscale) = cellRGBA[state];
+                        *(buffer + w * pmscale) = cellRGBA[state];
+                        *buffer++ = cellRGBA[state];
+                        *(buffer + (w + w) * pmscale) = cellRGBA[state];
+                        *(buffer + w * pmscale) = cellRGBA[state];
+                        *buffer++ = cellRGBA[state];
+                        *(buffer + (w + w) * pmscale) = cellRGBA[state];
+                        *(buffer + w * pmscale) = cellRGBA[state];
+                        *buffer++ = cellRGBA[state];
+                        buffer++;
+                    }
+                    else {
+                        buffer += pmscale;
+                    }
+                }
+    
+                // go to beginning of next row
+                buffer -= pmscale * w;
+                buffer += pmscale * w * pmscale;
+            }
+            break;
+
+        default:
+            // create texture of other magnifications (x8, x16, x32)
+            for (int row = 0; row < h; row++) {
+                for (int col = 0; col < w; col++) {
+                    // get the cell state
+                    state = statedata[row*stride + col];
+        
+                    if (state) {
+                        // draw magnified cell in the texture with bottom and right gap
+                        for (ys = 0; ys < pmscale - 1; ys++) {
+                            for (xs = 0; xs < pmscale - 1; xs++) {
+                                *buffer++ = cellRGBA[state];
+                            }
+                            buffer -= pmscale - 1;
+                            buffer += w * pmscale;
+                        }
+            
+                        // go to next column
+                        buffer -= (pmscale - 1) * pmscale * w;
+                        buffer += pmscale;
+                    }
+                    else {
+                        buffer += pmscale;
+                    }
+                }
+        
+                // go to beginning of next row
+                buffer -= pmscale * w;
+                buffer += pmscale * w * pmscale;
+            }
+    }
+
+    // render texture
+    DrawRGBAData((unsigned char *)magbuffer, x, y, w * pmscale, h * pmscale);
+}
+
+void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
+{
+    // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
+
+    // there are two rendering routines:
+    //   one faster when there are a few live cells in the tile
+    //   one fast when there are many live cells in the tile
+    // for now we just pick the routine based on the zoom scale
+    // in the future we could use a cell count to determine the best routine to call
+
+    if (pmscale <= 8) {
+        // likely to be more cells to draw at lower zooms
+        DrawMagnifiedCellsMany(statedata, x, y, w, h, pmscale, stride, numcells);
+    }
+    else {
+        // likely to be less cells to draw at higher zooms
+        DrawMagnifiedCellsFew(statedata, x, y, w, h, pmscale, stride, numcells);
+    }
+}
+
 // -----------------------------------------------------------------------------
 
 class golly_render : public liferender
@@ -659,6 +826,15 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
 {
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
+
+    // create the RGBA cell values
+    unsigned char* rgb = (unsigned char *)cellRGBA;
+    for (int i = 0; i <= currlayer->numicons; i++) {
+        *rgb++ = currlayer->cellr[i];
+        *rgb++ = currlayer->cellg[i];
+        *rgb++ = currlayer->cellb[i];
+        *rgb++ = i ? live_alpha : dead_alpha;
+    }
     
     // stride is the horizontal pixel width of the image data
     int stride = w/pmscale;
@@ -1041,6 +1217,10 @@ void DrawGridLines(int wd, int ht)
     int cellsize = 1 << currlayer->view->getmag();
     int h, v, i, topbold, leftbold;
 
+    float wdf = (float)wd;
+    float htf = (float)ht;
+    float vf, hf;
+
     if (showboldlines) {
         // ensure that origin cell stays next to bold lines;
         // ie. bold lines scroll when pattern is scrolled
@@ -1089,8 +1269,9 @@ void DrawGridLines(int wd, int ht)
         if (v > ht) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0) {
-            GLfloat points[] = {   -0.5, v-0.5,
-                                 wd+0.5, v-0.5 };
+            vf = (float)v;
+            GLfloat points[] = {   -0.5f,  vf-0.5f,
+                                 wdf+0.5f, vf-0.5f };
             glVertexPointer(2, GL_FLOAT, 0, points);
             glDrawArrays(GL_LINES, 0, 2);
         }
@@ -1102,8 +1283,9 @@ void DrawGridLines(int wd, int ht)
         if (h > wd) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0) {
-            GLfloat points[] = { h-0.5,   -0.5,
-                                 h-0.5, ht+0.5 };
+            hf = (float)h;
+            GLfloat points[] = { hf-0.5f,   -0.5f,
+                                 hf-0.5f, htf+0.5f };
             glVertexPointer(2, GL_FLOAT, 0, points);
             glDrawArrays(GL_LINES, 0, 2);
         }
@@ -1130,8 +1312,9 @@ void DrawGridLines(int wd, int ht)
             if (v > ht) break;
             i++;
             if (i % boldspacing == 0) {
-                GLfloat points[] = {   -0.5, v-0.5,
-                                     wd+0.5, v-0.5 };
+                vf = (float)v;
+                GLfloat points[] = {   -0.5f,  vf-0.5f,
+                                     wdf+0.5f, vf-0.5f };
                 glVertexPointer(2, GL_FLOAT, 0, points);
                 glDrawArrays(GL_LINES, 0, 2);
             }
@@ -1143,8 +1326,9 @@ void DrawGridLines(int wd, int ht)
             if (h > wd) break;
             i++;
             if (i % boldspacing == 0) {
-                GLfloat points[] = { h-0.5,   -0.5,
-                                     h-0.5, ht+0.5 };
+                hf = (float)h;
+                GLfloat points[] = { hf-0.5f, -0.5f,
+                                     hf-0.5f, htf+0.5f };
                 glVertexPointer(2, GL_FLOAT, 0, points);
                 glDrawArrays(GL_LINES, 0, 2);
             }
@@ -1416,7 +1600,7 @@ void DrawView(int tileindex)
     viewport* saveview0 = NULL;
     int colorindex;
     int currmag = currlayer->view->getmag();
-    
+
     if (firstview) {
         firstview = false;
         // draw a tiny pixmap before calling DrawGridLines to avoid crash in NVIDIA driver
