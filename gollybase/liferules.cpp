@@ -936,7 +936,7 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
    alternate_rules = false ;
 
    // check if rule is too long
-   if (strlen(rulestring) > MAXRULESIZE) {
+   if (strlen(rulestring) > (size_t) MAXRULESIZE) {
       return "Rule name is too long." ;
    }
 
