@@ -71,6 +71,8 @@ hlifealgo::draw() in hlifedraw.cpp.
 
 ----------------------------------------------------------------------------- */
 
+#include <string.h>        // for memcpy
+
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
     #include "wx/wx.h"     // for all others include the necessary headers
@@ -162,16 +164,11 @@ static void SetColor(int r, int g, int b, int a)
 
 static void FillRect(int x, int y, int wd, int ht)
 {
-    float xf = (float)x;
-    float yf = (float)y;
-    float wdf = (float)wd;
-    float htf = (float)ht;
-
     GLfloat rect[] = {
-        xf,     yf+htf,     // left, bottom
-        xf+wdf, yf+htf,     // right, bottom
-        xf+wdf, yf,        // right, top
-        xf,     yf,        // left, top
+        (float)x,    (float)y+ht,     // left, bottom
+        (float)x+wd, (float)y+ht,     // right, bottom
+        (float)x+wd, (float)y,        // right, top
+        (float)x,    (float)y,        // left, top
     };
     glVertexPointer(2, GL_FLOAT, 0, rect);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -310,11 +307,6 @@ void DestroyDrawingData()
 
 void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 {
-    float xf = (float)x;
-    float yf = (float)y;
-    float wf = (float)w;
-    float hf = (float)h;
-
     // only need to create texture name once
     if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
 
@@ -323,17 +315,17 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
 
     // update the texture with the new RGBA data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
 
     GLfloat vertices[] = {
-        xf,      yf,
-        xf+wf,   yf,
-        xf,      yf+hf,
-        xf+wf,   yf+hf,
+        (float)x,   (float)y,
+        (float)x+w, (float)y,
+        (float)x,   (float)y+h,
+        (float)x+w, (float)y+h,
     };
     glVertexPointer(2, GL_FLOAT, 0, vertices);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -689,10 +681,10 @@ void DrawMagnifiedCellsMany(unsigned char* statedata, int x, int y, int w, int h
     // copy the first row to subsequent rows
     ys = 1;
     while (ys < h * pmscale) {
-        memcpy(buffer + ys * w * pmscale, magbuffer, w * pmscale * 4);
+        // pointer arithmetic on unsigned int in first argument to memcpy removes the need for * 4
+        memcpy(magbuffer + ys * w * pmscale, magbuffer, w * pmscale * 4);
         ys++;
     }
-    buffer = magbuffer;
 
     switch (pmscale) {
         case 2:
@@ -1217,10 +1209,6 @@ void DrawGridLines(int wd, int ht)
     int cellsize = 1 << currlayer->view->getmag();
     int h, v, i, topbold, leftbold;
 
-    float wdf = (float)wd;
-    float htf = (float)ht;
-    float vf, hf;
-
     if (showboldlines) {
         // ensure that origin cell stays next to bold lines;
         // ie. bold lines scroll when pattern is scrolled
@@ -1269,9 +1257,8 @@ void DrawGridLines(int wd, int ht)
         if (v > ht) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0) {
-            vf = (float)v;
-            GLfloat points[] = {   -0.5f,  vf-0.5f,
-                                 wdf+0.5f, vf-0.5f };
+            GLfloat points[] = {  -0.5f,         (float)v-0.5f,
+                                 (float)wd+0.5f, (float)v-0.5f };
             glVertexPointer(2, GL_FLOAT, 0, points);
             glDrawArrays(GL_LINES, 0, 2);
         }
@@ -1283,9 +1270,8 @@ void DrawGridLines(int wd, int ht)
         if (h > wd) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0) {
-            hf = (float)h;
-            GLfloat points[] = { hf-0.5f,   -0.5f,
-                                 hf-0.5f, htf+0.5f };
+            GLfloat points[] = { (float)h-0.5f, -0.5f,
+                                 (float)h-0.5f, (float)ht+0.5f };
             glVertexPointer(2, GL_FLOAT, 0, points);
             glDrawArrays(GL_LINES, 0, 2);
         }
@@ -1312,9 +1298,8 @@ void DrawGridLines(int wd, int ht)
             if (v > ht) break;
             i++;
             if (i % boldspacing == 0) {
-                vf = (float)v;
-                GLfloat points[] = {   -0.5f,  vf-0.5f,
-                                     wdf+0.5f, vf-0.5f };
+                GLfloat points[] = { -0.5f,          (float)v-0.5f,
+                                     (float)wd+0.5f, (float)v-0.5f };
                 glVertexPointer(2, GL_FLOAT, 0, points);
                 glDrawArrays(GL_LINES, 0, 2);
             }
@@ -1326,9 +1311,8 @@ void DrawGridLines(int wd, int ht)
             if (h > wd) break;
             i++;
             if (i % boldspacing == 0) {
-                hf = (float)h;
-                GLfloat points[] = { hf-0.5f, -0.5f,
-                                     hf-0.5f, htf+0.5f };
+                GLfloat points[] = { (float)h-0.5f, -0.5f,
+                                     (float)h-0.5f, (float)ht+0.5f };
                 glVertexPointer(2, GL_FLOAT, 0, points);
                 glDrawArrays(GL_LINES, 0, 2);
             }
