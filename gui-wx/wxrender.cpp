@@ -647,6 +647,8 @@ void DrawMagnifiedCellsFew(unsigned char* statedata, int x, int y, int w, int h,
     }
 }
 
+// -----------------------------------------------------------------------------
+
 // fastest when tile contains many cells
 void DrawMagnifiedCellsMany(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
 {
@@ -666,6 +668,15 @@ void DrawMagnifiedCellsMany(unsigned char* statedata, int x, int y, int w, int h
 
     // start at beginning of texture buffer
     unsigned int *buffer = magbuffer;
+
+    // create the RGBA cell values
+    unsigned char* rgb = (unsigned char *)cellRGBA;
+    for (int i = 0; i <= currlayer->numicons; i++) {
+        *rgb++ = currlayer->cellr[i];
+        *rgb++ = currlayer->cellg[i];
+        *rgb++ = currlayer->cellb[i];
+        *rgb++ = i ? live_alpha : dead_alpha;
+    }
 
     // clear the buffer to the dead colour
     xs = 0;
@@ -778,6 +789,8 @@ void DrawMagnifiedCellsMany(unsigned char* statedata, int x, int y, int w, int h
     DrawRGBAData((unsigned char *)magbuffer, x, y, w * pmscale, h * pmscale);
 }
 
+// -----------------------------------------------------------------------------
+
 void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
 {
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
@@ -818,15 +831,6 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
 {
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
-
-    // create the RGBA cell values
-    unsigned char* rgb = (unsigned char *)cellRGBA;
-    for (int i = 0; i <= currlayer->numicons; i++) {
-        *rgb++ = currlayer->cellr[i];
-        *rgb++ = currlayer->cellg[i];
-        *rgb++ = currlayer->cellb[i];
-        *rgb++ = i ? live_alpha : dead_alpha;
-    }
     
     // stride is the horizontal pixel width of the image data
     int stride = w/pmscale;
