@@ -145,8 +145,12 @@ const int rowgap = 4;                   // vertical gap after first 2 rows
 control_id currcontrol = NO_CONTROL;
 
 // magnified buffer
-long magsize = 1024 * 1024 * 4;
+long magsize = 1024 * 1024 * sizeof(unsigned int);
 unsigned int *magbuffer = (unsigned int *)malloc(magsize);
+
+// vertex buffer
+long vertexsize = 8192 * sizeof(GLfloat);          // enough for 4096x4096 screen resolution at zoom 4
+GLfloat *vertexbuffer = (GLfloat *)malloc(vertexsize);
 
 #ifdef __WXMSW__
     // this constant isn't defined in the OpenGL headers on Windows (XP at least)
@@ -432,7 +436,7 @@ void DrawIconsMany(unsigned char* statedata, int x, int y, int w, int h, int pms
     unsigned int *icon = NULL;
 
     // compute the texture size
-    long neededBufferSize = w * pmscale * h * pmscale * 4;
+    long neededBufferSize = w * pmscale * h * pmscale * sizeof(*magbuffer);
 
     // check if the current buffer is big enough
     if (neededBufferSize > magsize) {
@@ -466,7 +470,7 @@ void DrawIconsMany(unsigned char* statedata, int x, int y, int w, int h, int pms
     ys = 1;
     while (ys < h * pmscale) {
         // pointer arithmetic on unsigned int in first argument to memcpy removes the need for * 4
-        memcpy(magbuffer + ys * w * pmscale, magbuffer, w * pmscale * 4);
+        memcpy(magbuffer + ys * w * pmscale, magbuffer, w * pmscale * sizeof(*magbuffer));
         ys++;
     }
 
@@ -818,7 +822,7 @@ void DrawMagnifiedCellsMany(unsigned char* statedata, int x, int y, int w, int h
     unsigned char state;
 
     // compute the texture size
-    long neededBufferSize = w * pmscale * h * pmscale * 4;
+    long neededBufferSize = w * pmscale * h * pmscale * sizeof(*magbuffer);
 
     // check if the current buffer is big enough
     if (neededBufferSize > magsize) {
@@ -854,7 +858,7 @@ void DrawMagnifiedCellsMany(unsigned char* statedata, int x, int y, int w, int h
     ys = 1;
     while (ys < h * pmscale) {
         // pointer arithmetic on unsigned int in first argument to memcpy removes the need for * 4
-        memcpy(magbuffer + ys * w * pmscale, magbuffer, w * pmscale * 4);
+        memcpy(magbuffer + ys * w * pmscale, magbuffer, w * pmscale * sizeof(*magbuffer));
         ys++;
     }
 
@@ -1374,6 +1378,20 @@ void DrawGridLines(int wd, int ht)
     int cellsize = 1 << currlayer->view->getmag();
     int h, v, i, topbold, leftbold;
 
+    // compute the vertex buffer size
+    long neededBufferSize = ((((wd + ht) * 4) / cellsize) + 1) * sizeof(*vertexbuffer);
+
+    // check if the current buffer is big enough
+    if (neededBufferSize > vertexsize) {
+        // grow the buffer to the required size
+        vertexbuffer = (GLfloat *)realloc(vertexbuffer, neededBufferSize);
+        vertexsize = neededBufferSize;
+    }
+
+    // get the vertex buffer
+    GLfloat *points = vertexbuffer;
+    int numPoints = 0;
+
     if (showboldlines) {
         // ensure that origin cell stays next to bold lines;
         // ie. bold lines scroll when pattern is scrolled
@@ -1422,12 +1440,13 @@ void DrawGridLines(int wd, int ht)
         if (v > ht) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0) {
-            GLfloat points[] = {  -0.5f,         (float)v-0.5f,
-                                 (float)wd+0.5f, (float)v-0.5f };
-            glVertexPointer(2, GL_FLOAT, 0, points);
-            glDrawArrays(GL_LINES, 0, 2);
+            points[numPoints++] = -0.5f;
+            points[numPoints++] = (float)v - 0.5f;
+            points[numPoints++] = (float)wd + 0.5f;
+            points[numPoints++] = (float)v - 0.5f;
         }
     }
+
     i = showboldlines ? leftbold : 1;
     h = 0;
     while (true) {
@@ -1435,15 +1454,20 @@ void DrawGridLines(int wd, int ht)
         if (h > wd) break;
         if (showboldlines) i++;
         if (i % boldspacing != 0) {
-            GLfloat points[] = { (float)h-0.5f, -0.5f,
-                                 (float)h-0.5f, (float)ht+0.5f };
-            glVertexPointer(2, GL_FLOAT, 0, points);
-            glDrawArrays(GL_LINES, 0, 2);
+            points[numPoints++] = (float)h - 0.5f;
+            points[numPoints++] = -0.5f;
+            points[numPoints++] = (float)h - 0.5f;
+            points[numPoints++] = (float)ht + 0.5;
         }
     }
 
+    // draw all plain lines
+    glVertexPointer(2, GL_FLOAT, 0, points);
+    glDrawArrays(GL_LINES, 0, numPoints / 2);
+
     if (showboldlines) {
         // draw bold lines in slightly darker/lighter color
+        numPoints = 0;
         if (gray > 127) {
             // darker lines
             SetColor(r > 64 ? r - 64 : 0,
@@ -1463,12 +1487,13 @@ void DrawGridLines(int wd, int ht)
             if (v > ht) break;
             i++;
             if (i % boldspacing == 0) {
-                GLfloat points[] = { -0.5f,          (float)v-0.5f,
-                                     (float)wd+0.5f, (float)v-0.5f };
-                glVertexPointer(2, GL_FLOAT, 0, points);
-                glDrawArrays(GL_LINES, 0, 2);
+                points[numPoints++] = -0.5f;
+                points[numPoints++] = (float)v - 0.5f;
+                points[numPoints++] = (float)wd + 0.5f;
+                points[numPoints++] = (float)v - 0.5f;
             }
         }
+
         i = leftbold;
         h = 0;
         while (true) {
@@ -1476,12 +1501,16 @@ void DrawGridLines(int wd, int ht)
             if (h > wd) break;
             i++;
             if (i % boldspacing == 0) {
-                GLfloat points[] = { (float)h-0.5f, -0.5f,
-                                     (float)h-0.5f, (float)ht+0.5f };
-                glVertexPointer(2, GL_FLOAT, 0, points);
-                glDrawArrays(GL_LINES, 0, 2);
+                points[numPoints++] = (float)h - 0.5f;
+                points[numPoints++] = -0.5f;
+                points[numPoints++] = (float)h - 0.5f;
+                points[numPoints++] = (float)ht + 0.5f;
             }
         }
+
+        // draw all bold lines
+        glVertexPointer(2, GL_FLOAT, 0, points);
+        glDrawArrays(GL_LINES, 0, numPoints / 2);
     }
 }
 
