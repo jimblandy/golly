@@ -100,7 +100,6 @@ int currwd, currht;                     // current width and height of viewport,
 int scalefactor;                        // current scale factor (1, 2, 4, 8 or 16)
 unsigned char dead_alpha = 255;         // alpha value for dead pixels
 unsigned char live_alpha = 255;         // alpha value for live pixels
-unsigned int cellRGBA[256];             // cell RGBA values
 GLuint rgbatexture = 0;                 // texture name for drawing RGBA bitmaps
 GLuint icontexture = 0;                 // texture name for drawing icons
 GLuint celltexture = 0;                 // texture name for drawing magnified cells
@@ -144,13 +143,17 @@ const int rowgap = 4;                   // vertical gap after first 2 rows
 // currently clicked control
 control_id currcontrol = NO_CONTROL;
 
-// magnified buffer
-long magsize = 1024 * 1024 * sizeof(unsigned int);
-unsigned int *magbuffer = (unsigned int *)malloc(magsize);
-
-// vertex buffer
-long vertexsize = 8192 * sizeof(GLfloat);          // enough for 4096x4096 screen resolution at zoom 4
+// dynamic vertex buffer for grid lines
+// start size is enough for 4096x4096 screen resolution at zoom 4
+long vertexsize = 8192 * sizeof(GLfloat);
 GLfloat *vertexbuffer = (GLfloat *)malloc(vertexsize);
+
+// fixed vertex and texture coordinate buffers for drawing magnified cells or icons
+// for speed cells are drawn in blocks of 4096
+// size is enough for 4096 cells and must be a multiple of 12
+long magbuffersize = 4096 * 12 * sizeof(GLfloat); 
+GLfloat *magvertexbuffer = (GLfloat *)malloc(magbuffersize);
+GLfloat *magtextcoordbuffer = (GLfloat *)malloc(magbuffersize);
 
 #ifdef __WXMSW__
     // this constant isn't defined in the OpenGL headers on Windows (XP at least)
@@ -339,7 +342,7 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 
 static void LoadIconAtlas(int iconsize, int numicons)
 {
-    // load the texture atlas containing all icons for later use in DrawIcons
+    // load the texture atlas containing all icons for later use in DrawCells
 
     // create icon texture name once
     if (icontexture == 0) glGenTextures(1, &icontexture);
@@ -369,220 +372,6 @@ static void LoadIconAtlas(int iconsize, int numicons)
     glVertexPointer(2, GL_FLOAT, 0, vertices);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 #endif
-}
-
-// -----------------------------------------------------------------------------
-
-// fastest when tile contains a few cells
-void DrawIconsFew(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numicons)
-{
-    // called from golly_render::pixblit to draw icons for each live cell;
-    // assume pmscale > 2 (should be 8, 16 or 32 -- if higher then the 31x31 icons
-    // will be scaled up)
-
-    // one icon = 2 triangles = 4 vertices = 8 coordinates for GL_TRIANGLE_STRIP:
-    //
-    //   0,1 *---* 2,3
-    //       | / |
-    //   4,5 *---* 6,7
-    //
-    GLfloat vertices[8];
-    GLfloat texcoords[8];
-
-    EnableTextures();
-    glBindTexture(GL_TEXTURE_2D, icontexture);
-
-    for (int row = 0; row < h; row++) {
-        for (int col = 0; col < w; col++) {
-            unsigned char state = statedata[row*stride + col];
-            if (state > 0) {
-                int xpos = x + col * pmscale;
-                int ypos = y + row * pmscale;
-
-                vertices[0] = xpos;
-                vertices[1] = ypos;
-                vertices[2] = xpos + pmscale;
-                vertices[3] = ypos;
-                vertices[4] = xpos;
-                vertices[5] = ypos + pmscale;
-                vertices[6] = xpos + pmscale;
-                vertices[7] = ypos + pmscale;
-             
-                texcoords[0] = (state-1) * 1.0/numicons;
-                texcoords[1] = 0.0;
-                texcoords[2] = state * 1.0/numicons;
-                texcoords[3] = 0.0;
-                texcoords[4] = texcoords[0];
-                texcoords[5] = 1.0;
-                texcoords[6] = texcoords[2];
-                texcoords[7] = 1.0;
-
-                glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-                glVertexPointer(2, GL_FLOAT, 0, vertices);
-                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            }
-        }
-    }
-} 
-
-// -----------------------------------------------------------------------------
-
-// fastest when tile contains many cells
-void DrawIconsMany(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numicons)
-{
-    int xs;
-    int ys;
-    unsigned char state;
-    unsigned int *icon = NULL;
-
-    // compute the texture size
-    long neededBufferSize = w * pmscale * h * pmscale * sizeof(*magbuffer);
-
-    // check if the current buffer is big enough
-    if (neededBufferSize > magsize) {
-        // grow the buffer to the required size
-        magbuffer = (unsigned int *)realloc(magbuffer, neededBufferSize);
-        magsize = neededBufferSize;
-    }
-
-    // start at beginning of texture buffer
-    unsigned int *buffer = magbuffer;
-
-    // get the RGBA cell value for the background
-    unsigned char* rgb = (unsigned char *)cellRGBA;
-    *rgb++ = currlayer->cellr[0];
-    *rgb++ = currlayer->cellg[0];
-    *rgb++ = currlayer->cellb[0];
-    *rgb++ = dead_alpha;
-
-    // clear the buffer to the dead colour
-    xs = 0;
-    state = cellRGBA[0];
-
-    // clear the first row
-    while (xs < w * pmscale) {
-       *buffer++ = state;
-       xs++;
-    }
-    buffer = magbuffer;
-
-    // copy the first row to subsequent rows
-    ys = 1;
-    while (ys < h * pmscale) {
-        // pointer arithmetic on unsigned int in first argument to memcpy removes the need for * 4
-        memcpy(magbuffer + ys * w * pmscale, magbuffer, w * pmscale * sizeof(*magbuffer));
-        ys++;
-    }
-
-    switch (pmscale) {
-        case 8:
-            // create texture of x8 icons
-            for (int row = 0; row < h; row++) {
-                for (int col = 0; col < w; col++) {
-                    // get the cell state
-                    state = statedata[row*stride + col];
-                
-                    if (state) {
-                        // get the icon data for the state
-                        icon = (unsigned int *)iconatlas;
-                        icon += (state - 1) * pmscale;
-        
-                        // draw the icon onto the texture
-                        for (ys = 0; ys < pmscale; ys++) {
-                            // copy one row of icon
-                            *buffer++ = *icon++;
-                            *buffer++ = *icon++;
-                            *buffer++ = *icon++;
-                            *buffer++ = *icon++;
-                            *buffer++ = *icon++;
-                            *buffer++ = *icon++;
-                            *buffer++ = *icon++;
-                            *buffer++ = *icon++;
-
-                            // next row
-                            icon += numicons * pmscale;
-                            icon -= pmscale;
-                            buffer -= pmscale;
-                            buffer += w * pmscale;
-                        }
-            
-                        // go to next column
-                        buffer -= pmscale * pmscale * w;
-                        buffer += pmscale;
-                    }
-                    else {
-                        buffer += pmscale;
-                    }
-                }
-        
-                // go to beginning of next row
-                buffer -= pmscale * w;
-                buffer += pmscale * w * pmscale;
-            }
-            break;
-
-        default:
-            // create texture of other zoom level icons
-            for (int row = 0; row < h; row++) {
-                for (int col = 0; col < w; col++) {
-                    // get the cell state
-                    state = statedata[row*stride + col];
-                
-                    if (state) {
-                        // get the icon data for the state
-                        icon = (unsigned int *)iconatlas;
-                        icon += (state - 1) * pmscale;
-        
-                        // draw the icon onto the texture
-                        for (ys = 0; ys < pmscale; ys++) {
-                            for (xs = 0; xs < pmscale; xs++) {
-                                *buffer++ = *icon++;
-                            }
-                            icon += numicons * pmscale;
-                            icon -= pmscale;
-                            buffer -= pmscale;
-                            buffer += w * pmscale;
-                        }
-            
-                        // go to next column
-                        buffer -= pmscale * pmscale * w;
-                        buffer += pmscale;
-                    }
-                    else {
-                        buffer += pmscale;
-                    }
-                }
-        
-                // go to beginning of next row
-                buffer -= pmscale * w;
-                buffer += pmscale * w * pmscale;
-            }
-    }
-
-    // render texture
-    DrawRGBAData((unsigned char *)magbuffer, x, y, w * pmscale, h * pmscale);
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawIcons(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numicons)
-{
-    // called from golly_render::pixblit to draw icons for each live cell;
-
-    // there are two rendering routines:
-    //   one faster when there are a few live cells in the tile
-    //   one fast when there are many live cells in the tile
-    // for now we just pick the routine based on the zoom scale
-    // in the future we could use a cell count to determine the best routine to call
-
-    if (pmscale == 8) {
-        // likely to be more icons to draw at lower zooms
-        DrawIconsMany(statedata, x, y, w, h, pmscale, stride, numicons);
-    }
-    else {
-        // likely to be less icons to draw at higher zooms
-        DrawIconsFew(statedata, x, y, w, h, pmscale, stride, numicons);
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -738,7 +527,7 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
-    // load the texture atlas containing all magnified cells for later use in DrawMagnifiedCells
+    // load the texture atlas containing all magnified cells for later use in DrawCells
     int atlaswd = cellsize * numcells;
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlaswd, cellsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, cellatlas);
     
@@ -762,217 +551,77 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
 
 // -----------------------------------------------------------------------------
 
-// fastest when tile contains a few cells
-void DrawMagnifiedCellsFew(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
+void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates, GLuint texture)
 {
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
+    // uses the supplied texture to draw solid cells or icons
+    //
+    // one cell = 2 triangles = 6 vertices = 12 coordinates for GL_TRIANGLES
 
-    // one cell = 2 triangles = 4 vertices = 8 coordinates for GL_TRIANGLE_STRIP:
-    //
-    //   0,1 *---* 2,3
-    //       | / |
-    //   4,5 *---* 6,7
-    //
-    GLfloat vertices[8];
-    GLfloat texcoords[8];
+    int v = 0;
+    int t = 0;
+    float invstates = 1.0 / numstates;
+    int max = magbuffersize / sizeof(*magvertexbuffer);
 
     EnableTextures();
-    glBindTexture(GL_TEXTURE_2D, celltexture);
+    glBindTexture(GL_TEXTURE_2D, texture);
 
     for (int row = 0; row < h; row++) {
         for (int col = 0; col < w; col++) {
             unsigned char state = statedata[row*stride + col];
             if (state > 0) {
+                // add cell to buffer
                 int xpos = x + col * pmscale;
                 int ypos = y + row * pmscale;
 
-                vertices[0] = xpos;
-                vertices[1] = ypos;
-                vertices[2] = xpos + pmscale;
-                vertices[3] = ypos;
-                vertices[4] = xpos;
-                vertices[5] = ypos + pmscale;
-                vertices[6] = xpos + pmscale;
-                vertices[7] = ypos + pmscale;
-                
-                texcoords[0] = (state-1) * 1.0/numcells;
-                texcoords[1] = 0.0;
-                texcoords[2] = state * 1.0/numcells;
-                texcoords[3] = 0.0;
-                texcoords[4] = texcoords[0];
-                texcoords[5] = 1.0;
-                texcoords[6] = texcoords[2];
-                texcoords[7] = 1.0;
+                magvertexbuffer[v++] = xpos;
+                magvertexbuffer[v++] = ypos;
+                magvertexbuffer[v++] = xpos + pmscale;
+                magvertexbuffer[v++] = ypos;
+                magvertexbuffer[v++] = xpos;
+                magvertexbuffer[v++] = ypos + pmscale;
 
-                glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-                glVertexPointer(2, GL_FLOAT, 0, vertices);
-                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                magvertexbuffer[v++] = xpos + pmscale;
+                magvertexbuffer[v++] = ypos;
+                magvertexbuffer[v++] = xpos;
+                magvertexbuffer[v++] = ypos + pmscale;
+                magvertexbuffer[v++] = xpos + pmscale;
+                magvertexbuffer[v++] = ypos + pmscale;
+                
+                magtextcoordbuffer[t++] = (state - 1) * invstates;
+                magtextcoordbuffer[t++] = 0.0;
+                magtextcoordbuffer[t++] = state * invstates;
+                magtextcoordbuffer[t++] = 0.0;
+                magtextcoordbuffer[t++] = (state - 1) * invstates;
+                magtextcoordbuffer[t++] = 1.0;
+
+                magtextcoordbuffer[t++] = state * invstates;
+                magtextcoordbuffer[t++] = 0.0;
+                magtextcoordbuffer[t++] = (state - 1) * invstates;
+                magtextcoordbuffer[t++] = 1.0;
+                magtextcoordbuffer[t++] = state * invstates;
+                magtextcoordbuffer[t++] = 1.0;
+
+                // check if buffer is full
+                if (v == max) {
+                    // draw cells in buffer
+                    glTexCoordPointer(2, GL_FLOAT, 0, magtextcoordbuffer);
+                    glVertexPointer(2, GL_FLOAT, 0, magvertexbuffer);
+                    glDrawArrays(GL_TRIANGLES, 0, v / 2);
+
+                    // reset buffer
+                    v = 0;
+                    t = 0;
+                }
             }
         }
     }
-}
 
-// -----------------------------------------------------------------------------
-
-// fastest when tile contains many cells
-void DrawMagnifiedCellsMany(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
-{
-    int xs;
-    int ys;
-    unsigned char state;
-
-    // compute the texture size
-    long neededBufferSize = w * pmscale * h * pmscale * sizeof(*magbuffer);
-
-    // check if the current buffer is big enough
-    if (neededBufferSize > magsize) {
-        // grow the buffer to the required size
-        magbuffer = (unsigned int *)realloc(magbuffer, neededBufferSize);
-        magsize = neededBufferSize;
-    }
-
-    // start at beginning of texture buffer
-    unsigned int *buffer = magbuffer;
-
-    // create the RGBA cell values
-    unsigned char* rgb = (unsigned char *)cellRGBA;
-    for (int i = 0; i <= numcells; i++) {
-        *rgb++ = currlayer->cellr[i];
-        *rgb++ = currlayer->cellg[i];
-        *rgb++ = currlayer->cellb[i];
-        *rgb++ = i ? live_alpha : dead_alpha;
-    }
-
-    // clear the buffer to the dead colour
-    xs = 0;
-    state = cellRGBA[0];
-
-    // clear the first row
-    while (xs < w * pmscale) {
-       *buffer++ = state;
-       xs++;
-    }
-    buffer = magbuffer;
-
-    // copy the first row to subsequent rows
-    ys = 1;
-    while (ys < h * pmscale) {
-        // pointer arithmetic on unsigned int in first argument to memcpy removes the need for * 4
-        memcpy(magbuffer + ys * w * pmscale, magbuffer, w * pmscale * sizeof(*magbuffer));
-        ys++;
-    }
-
-    switch (pmscale) {
-        case 2:
-            // create texture of x2 magnified cells
-            for (int row = 0; row < h; row++) {
-                for (int col = 0; col < w; col++) {
-                    // get the cell state
-                    state = statedata[row*stride + col];
-                    if (state) {
-                        // draw the 2x2 cell
-                        *(buffer + w * pmscale) = cellRGBA[state];
-                        *buffer++ = cellRGBA[state];
-                        *(buffer + w * pmscale) = cellRGBA[state];
-                        *buffer++ = cellRGBA[state];
-                    }
-                    else {
-                        buffer += pmscale;
-                    }
-                }
-    
-                // go to beginning of next row
-                buffer -= pmscale * w;
-                buffer += pmscale * w * pmscale;
-            }
-            break;
-
-        case 4:
-            // create texture of x4 magnified cells
-            for (int row = 0; row < h; row++) {
-                for (int col = 0; col < w; col++) {
-                    // get the cell state
-                    state = statedata[row*stride + col];
-
-                    if (state) {
-                        // draw the 4x4 cell (3x3 with bottom and right gap)
-                        *(buffer + (w + w) * pmscale) = cellRGBA[state];
-                        *(buffer + w * pmscale) = cellRGBA[state];
-                        *buffer++ = cellRGBA[state];
-                        *(buffer + (w + w) * pmscale) = cellRGBA[state];
-                        *(buffer + w * pmscale) = cellRGBA[state];
-                        *buffer++ = cellRGBA[state];
-                        *(buffer + (w + w) * pmscale) = cellRGBA[state];
-                        *(buffer + w * pmscale) = cellRGBA[state];
-                        *buffer++ = cellRGBA[state];
-                        buffer++;
-                    }
-                    else {
-                        buffer += pmscale;
-                    }
-                }
-    
-                // go to beginning of next row
-                buffer -= pmscale * w;
-                buffer += pmscale * w * pmscale;
-            }
-            break;
-
-        default:
-            // create texture of other magnifications (x8, x16, x32)
-            for (int row = 0; row < h; row++) {
-                for (int col = 0; col < w; col++) {
-                    // get the cell state
-                    state = statedata[row*stride + col];
-        
-                    if (state) {
-                        // draw magnified cell in the texture with bottom and right gap
-                        for (ys = 0; ys < pmscale - 1; ys++) {
-                            for (xs = 0; xs < pmscale - 1; xs++) {
-                                *buffer++ = cellRGBA[state];
-                            }
-                            buffer -= pmscale - 1;
-                            buffer += w * pmscale;
-                        }
-            
-                        // go to next column
-                        buffer -= (pmscale - 1) * pmscale * w;
-                        buffer += pmscale;
-                    }
-                    else {
-                        buffer += pmscale;
-                    }
-                }
-        
-                // go to beginning of next row
-                buffer -= pmscale * w;
-                buffer += pmscale * w * pmscale;
-            }
-    }
-
-    // render texture
-    DrawRGBAData((unsigned char *)magbuffer, x, y, w * pmscale, h * pmscale);
-}
-
-// -----------------------------------------------------------------------------
-
-void DrawMagnifiedCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numcells)
-{
-    // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
-
-    // there are two rendering routines:
-    //   one faster when there are a few live cells in the tile
-    //   one fast when there are many live cells in the tile
-    // for now we just pick the routine based on the zoom scale
-    // in the future we could use a cell count to determine the best routine to call
-
-    if (pmscale <= 8) {
-        // likely to be more cells to draw at lower zooms
-        DrawMagnifiedCellsMany(statedata, x, y, w, h, pmscale, stride, numcells);
-    }
-    else {
-        // likely to be less cells to draw at higher zooms
-        DrawMagnifiedCellsFew(statedata, x, y, w, h, pmscale, stride, numcells);
+    // draw any remaining cells in buffer
+    if (v > 0) { 
+        glTexCoordPointer(2, GL_FLOAT, 0, magtextcoordbuffer);
+        glVertexPointer(2, GL_FLOAT, 0, magvertexbuffer);
+        glDrawArrays(GL_TRIANGLES, 0, v / 2);
     }
 }
 
@@ -1026,12 +675,12 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
         
     } else if (showicons && pmscale > 4 && iconatlas) {
         // draw icons at scales 1:8 and above
-        DrawIcons(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons);
+        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, icontexture);
         
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
-        DrawMagnifiedCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons);
+        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, celltexture);
     }
 }
 
@@ -1645,7 +1294,7 @@ void DrawOneLayer()
             ReplaceAlpha(iconsize, currlayer->numicons, 255, live_alpha);
         }
         
-        // load iconatlas for use by DrawIcons
+        // load iconatlas for use by DrawCells
         LoadIconAtlas(iconsize, currlayer->numicons);
     } else if (currmag > 0) {
         LoadCellAtlas(1 << currmag, currlayer->numicons, live_alpha);
