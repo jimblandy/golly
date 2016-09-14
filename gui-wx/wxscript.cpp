@@ -83,6 +83,13 @@ void DoAutoUpdate()
             showtitle = false;
         }
         inscript = true;
+
+        #ifdef __WXGTK__
+            // needed on Linux to see update immediately
+            insideYield = true;
+            wxGetApp().Yield(true);
+            insideYield = false;
+        #endif
     }
 }
 
@@ -1229,6 +1236,13 @@ void GSF_update()
     }
     
     inscript = true;
+
+    #ifdef __WXGTK__
+        // needed on Linux to see update immediately
+        insideYield = true;
+        wxGetApp().Yield(true);
+        insideYield = false;
+    #endif
 }
 
 // -----------------------------------------------------------------------------
