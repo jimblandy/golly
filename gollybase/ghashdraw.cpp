@@ -46,6 +46,9 @@ const int ibufsize = (pmsize*pmsize*bpp) ;   // buffer size, in bytes
 static unsigned char ipixbuf[ibufsize] ;     // shared buffer for pixels
 static unsigned char *pixbuf = ipixbuf ;
 
+// rowett: RGBA view of pixbuf
+static unsigned int *pixRGBAbuf = (unsigned int *)ipixbuf;
+
 // AKT: arrays of RGB colors for each cell state (set by getcolors call)
 static unsigned char* cellred;
 static unsigned char* cellgreen;
@@ -55,14 +58,15 @@ static unsigned char* cellblue;
 static unsigned char deada;
 static unsigned char livea;
 
+// rowett: RGBA view of cell colors
+static unsigned int cellRGBA[256] ;          // cell colours in RGBA format
+static unsigned int state1RGBA ;               // live RGBA color
+
 void ghashbase::drawpixel(int x, int y) {
    // AKT: draw all live cells using state 1 color
    // pmag == 1, so store RGBA info
-   int i = (pmsize-1-y) * rowoff + x*bpp;
-   pixbuf[i]   = cellred[1];
-   pixbuf[i+1] = cellgreen[1];
-   pixbuf[i+2] = cellblue[1];
-   pixbuf[i+3] = livea;
+   int i = (pmsize - 1 - y) * pmsize + x;
+   pixRGBAbuf[i] = state1RGBA;
 }
 
 /*
@@ -71,9 +75,9 @@ void ghashbase::drawpixel(int x, int y) {
 void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
                           int llx, int lly) {
    // sw,se,nw,ne contain cell states (0..255)
+   int i = (pmsize-1+lly) * pmsize - llx;
    if (pmag > 1) {
       // store state info
-      int i = (pmsize-1+lly) * pmsize - llx;
       if (sw) pixbuf[i] = sw;
       if (se) pixbuf[i+1] = se;
       i -= pmsize;
@@ -81,33 +85,18 @@ void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
       if (ne) pixbuf[i+1] = ne;
    } else {
       // store RGBA info
-      int i = (pmsize-1+lly) * rowoff - (llx*bpp);
       if (sw) {
-         pixbuf[i]   = cellred[sw] ;
-         pixbuf[i+1] = cellgreen[sw] ;
-         pixbuf[i+2] = cellblue[sw] ;
-         pixbuf[i+3] = livea;
+         pixRGBAbuf[i] = cellRGBA[sw] ;
       }
-      i += bpp ;
       if (se) {
-         pixbuf[i]   = cellred[se] ;
-         pixbuf[i+1] = cellgreen[se] ;
-         pixbuf[i+2] = cellblue[se] ;
-         pixbuf[i+3] = livea;
+         pixRGBAbuf[i+1] = cellRGBA[se] ;
       }
-      i -= rowoff ;
-      if (ne) {
-         pixbuf[i]   = cellred[ne] ;
-         pixbuf[i+1] = cellgreen[ne] ;
-         pixbuf[i+2] = cellblue[ne] ;
-         pixbuf[i+3] = livea;
-      }
-      i -= bpp ;
+      i -= pmsize ;
       if (nw) {
-         pixbuf[i]   = cellred[nw] ;
-         pixbuf[i+1] = cellgreen[nw] ;
-         pixbuf[i+2] = cellblue[nw] ;
-         pixbuf[i+3] = livea;
+         pixRGBAbuf[i] = cellRGBA[nw] ;
+      }
+      if (ne) {
+         pixRGBAbuf[i+1] = cellRGBA[ne] ;
       }
    }
 }
@@ -115,33 +104,19 @@ void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
 void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
    // AKT: draw all live cells using state 1 color
    // pmag == 1, so store RGBA info
-   int i = (pmsize-1+lly) * rowoff - (llx*bpp);
+   int i = (pmsize-1+lly) * pmsize - llx;
    if (n->sw != z) {
-      pixbuf[i]   = cellred[1];
-      pixbuf[i+1] = cellgreen[1];
-      pixbuf[i+2] = cellblue[1];
-      pixbuf[i+3] = livea;
+      pixRGBAbuf[i] = state1RGBA;
    }
-   i += bpp;
    if (n->se != z) {
-      pixbuf[i]   = cellred[1];
-      pixbuf[i+1] = cellgreen[1];
-      pixbuf[i+2] = cellblue[1];
-      pixbuf[i+3] = livea;
+      pixRGBAbuf[i+1] = state1RGBA;
    }
-   i -= rowoff;
-   if (n->ne != z) {
-      pixbuf[i]   = cellred[1] ;
-      pixbuf[i+1] = cellgreen[1] ;
-      pixbuf[i+2] = cellblue[1] ;
-      pixbuf[i+3] = livea;
-   }
-   i -= bpp;
+   i -= pmsize;
    if (n->nw != z) {
-      pixbuf[i]   = cellred[1] ;
-      pixbuf[i+1] = cellgreen[1] ;
-      pixbuf[i+2] = cellblue[1] ;
-      pixbuf[i+3] = livea;
+      pixRGBAbuf[i] = state1RGBA;
+   }
+   if (n->ne != z) {
+      pixRGBAbuf[i+1] = state1RGBA;
    }
 }
 
@@ -159,13 +134,12 @@ void ghashbase::killpixels() {
          memset(pixbuf, 0, sizeof(ipixbuf));
       } else {
          // use slower method
-         pixbuf[0] = cellred[0];
-         pixbuf[1] = cellgreen[0];
-         pixbuf[2] = cellblue[0];
-         pixbuf[3] = deada;
-         // copy 1st pixel to remaining pixels in 1st row
-         for (int i = bpp; i < rowoff; i += bpp) {
-            memcpy(&pixbuf[i], pixbuf, bpp);
+         unsigned int deadRGBA = cellRGBA[0];
+         unsigned int *rgbabuf = pixRGBAbuf;
+
+         // fill the first row with the dead pixel state
+         for (int i = 0 ; i < pmsize; i++) {
+            *rgbabuf++ = deadRGBA;
          }
          // copy 1st row to remaining rows
          for (int i = rowoff; i < ibufsize; i += rowoff) {
@@ -282,7 +256,28 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
    renderer = &rendererarg ;
    
    // AKT: get cell colors and alpha values for dead and live pixels
-   renderer->getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea);
+   unsigned int numstates;
+   renderer->getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea, &numstates);
+
+   // rowett: create RGBA view
+   unsigned char *rgbaptr = (unsigned char *)cellRGBA;
+
+   // create dead color
+   *rgbaptr++ = cellred[0];
+   *rgbaptr++ = cellgreen[0];
+   *rgbaptr++ = cellblue[0];
+   *rgbaptr++ = deada;
+
+   // create live colors
+   for (unsigned int i = 1; i <= numstates; i++) {
+       *rgbaptr++ = cellred[i];
+       *rgbaptr++ = cellgreen[i];
+       *rgbaptr++ = cellblue[i];
+       *rgbaptr++ = livea;
+   }
+
+   // remember the live state 1 color
+   state1RGBA = cellRGBA[1];
 
    view = &viewarg ;
    uvieww = view->getwidth() ;

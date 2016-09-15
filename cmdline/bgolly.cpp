@@ -66,7 +66,8 @@ public:
    virtual ~nullrender() {}
    virtual void pixblit(int, int, int, int, unsigned char*, int) {}
    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
-                          unsigned char* dead_alpha, unsigned char* live_alpha) {
+                          unsigned char* dead_alpha, unsigned char* live_alpha,
+                          unsigned int* numstates) {
       static unsigned char dummy[256];
       *r = *g = *b = dummy;
       *dead_alpha = *live_alpha = 255;

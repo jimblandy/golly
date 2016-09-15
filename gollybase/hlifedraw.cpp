@@ -46,6 +46,9 @@ static unsigned char pixbuf[bmsize*bmsize*4];
 static unsigned char deadr, deadg, deadb, deada;
 static unsigned char liver, liveg, liveb, livea;
 
+// rowett: RGBA view of cell states
+static unsigned int liveRGBA, deadRGBA;
+
 static void drawpixel(int x, int y) {
   bigbuf[(((bmsize-1)-y) << (logbmsize-3)) + (x >> 3)] |= (128 >> (x & 7)) ;
 }
@@ -108,33 +111,37 @@ void hlifealgo::renderbm(int x, int y) {
    }
    ry = uviewh - ry - rh ;
    
+   unsigned char *bigptr = bigbuf;
    if (pmag > 1) {
       // convert each bigbuf byte into 8 bytes of state data
-      int j = 0;
+      unsigned char *pixptr = pixbuf;
+
       for (int i = 0; i < ibufsize * 4; i++) {
-         int byte = bigbuf[i];
-         for (int bit = 128; bit > 0; bit >>= 1) {
-            pixbuf[j++] = (byte & bit) ? 1 : 0;
-         }
+         int byte = *bigptr++;
+         *pixptr++ = (byte & 128) ? 1 : 0;
+         *pixptr++ = (byte & 64) ? 1 : 0;
+         *pixptr++ = (byte & 32) ? 1 : 0;
+         *pixptr++ = (byte & 16) ? 1 : 0;
+         *pixptr++ = (byte & 8) ? 1 : 0;
+         *pixptr++ = (byte & 4) ? 1 : 0;
+         *pixptr++ = (byte & 2) ? 1 : 0;
+         *pixptr++ = (byte & 1);   // no condition needed
       }
    } else {
       // convert each bigbuf byte into 32 bytes of pixel data (8 * RGBA)
-      int j = 0;
+      // get RGBA view of pixel buffer
+      unsigned int *pixptr = (unsigned int *)pixbuf;
+
       for (int i = 0; i < ibufsize * 4; i++) {
-         int byte = bigbuf[i];
-         for (int bit = 128; bit > 0; bit >>= 1) {
-            if (byte & bit) {
-               pixbuf[j++] = liver;
-               pixbuf[j++] = liveg;
-               pixbuf[j++] = liveb;
-               pixbuf[j++] = livea;
-            } else {
-               pixbuf[j++] = deadr;
-               pixbuf[j++] = deadg;
-               pixbuf[j++] = deadb;
-               pixbuf[j++] = deada;
-            }
-         }
+         int byte = *bigptr++;
+         *pixptr++ = (byte & 128) ? liveRGBA : deadRGBA;
+         *pixptr++ = (byte & 64) ? liveRGBA : deadRGBA;
+         *pixptr++ = (byte & 32) ? liveRGBA : deadRGBA;
+         *pixptr++ = (byte & 16) ? liveRGBA : deadRGBA;
+         *pixptr++ = (byte & 8) ? liveRGBA : deadRGBA;
+         *pixptr++ = (byte & 4) ? liveRGBA : deadRGBA;
+         *pixptr++ = (byte & 2) ? liveRGBA : deadRGBA;
+         *pixptr++ = (byte & 1) ? liveRGBA : deadRGBA;
       }
    }
    renderer->pixblit(rx, ry, rw, rh, pixbuf, pmag);
@@ -249,13 +256,28 @@ void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
 
    // AKT: get cell colors and alpha values for dead and live pixels
    unsigned char *r, *g, *b;
-   renderer->getcolors(&r, &g, &b, &deada, &livea);
+   unsigned int numstates;
+   renderer->getcolors(&r, &g, &b, &deada, &livea, &numstates);
    deadr = r[0];
    deadg = g[0];
    deadb = b[0];
    liver = r[1];
    liveg = g[1];
    liveb = b[1];
+
+   // create RGBA live color
+   unsigned char *colptr = (unsigned char *)&liveRGBA;
+   *colptr++ = liver;
+   *colptr++ = liveg;
+   *colptr++ = liveb;
+   *colptr++ = livea;
+
+   // create RGBA dead color
+   colptr = (unsigned char *)&deadRGBA;
+   *colptr++ = deadr;
+   *colptr++ = deadg;
+   *colptr++ = deadb;
+   *colptr++ = deada;
 
    view = &viewarg ;
    uvieww = view->getwidth() ;
