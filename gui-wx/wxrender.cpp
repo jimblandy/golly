@@ -634,8 +634,7 @@ public:
     virtual ~golly_render() {}
     virtual void pixblit(int x, int y, int w, int h, unsigned char* pm, int pmscale);
     virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
-                           unsigned char* deada, unsigned char* livea,
-                           unsigned int *numstates);
+                           unsigned char* deada, unsigned char* livea);
 };
 
 golly_render renderer;     // create instance
@@ -688,14 +687,13 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
 // -----------------------------------------------------------------------------
 
 void golly_render::getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
-                             unsigned char* deada, unsigned char* livea, unsigned int *numstates)
+                             unsigned char* deada, unsigned char* livea)
 {
     *r = currlayer->cellr;
     *g = currlayer->cellg;
     *b = currlayer->cellb;
     *deada = dead_alpha;
     *livea = live_alpha;
-    *numstates = currlayer->numicons;
 }
 
 // -----------------------------------------------------------------------------

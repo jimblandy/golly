@@ -58,7 +58,6 @@ public:
    // the drawing code needs access to the current layer's colors,
    // and to the transparency values for dead pixels and live pixels
    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
-                          unsigned char* dead_alpha, unsigned char* live_alpha,
-                          unsigned int* numstates) = 0;
+                          unsigned char* dead_alpha, unsigned char* live_alpha) = 0;
 } ;
 #endif

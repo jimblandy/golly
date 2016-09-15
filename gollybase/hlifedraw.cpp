@@ -256,8 +256,7 @@ void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
 
    // AKT: get cell colors and alpha values for dead and live pixels
    unsigned char *r, *g, *b;
-   unsigned int numstates;
-   renderer->getcolors(&r, &g, &b, &deada, &livea, &numstates);
+   renderer->getcolors(&r, &g, &b, &deada, &livea);
    deadr = r[0];
    deadg = g[0];
    deadb = b[0];

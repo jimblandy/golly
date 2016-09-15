@@ -256,8 +256,7 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
    renderer = &rendererarg ;
    
    // AKT: get cell colors and alpha values for dead and live pixels
-   unsigned int numstates;
-   renderer->getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea, &numstates);
+   renderer->getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea);
 
    // rowett: create RGBA view
    unsigned char *rgbaptr = (unsigned char *)cellRGBA;
@@ -269,7 +268,8 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
    *rgbaptr++ = deada;
 
    // create live colors
-   for (unsigned int i = 1; i <= numstates; i++) {
+   unsigned int livestates = NumCellStates() - 1;
+   for (unsigned int i = 1; i <= livestates; i++) {
        *rgbaptr++ = cellred[i];
        *rgbaptr++ = cellgreen[i];
        *rgbaptr++ = cellblue[i];
