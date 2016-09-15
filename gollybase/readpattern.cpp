@@ -263,7 +263,6 @@ const char *readrle(lifealgo &imp, char *line) {
             right = xoff + wd - 1;
          }
       } else {
-         n = 0 ;
          for (p=line; *p; p++) {
             char c = *p ;
             if ('0' <= c && c <= '9') {
