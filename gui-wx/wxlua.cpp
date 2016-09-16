@@ -74,6 +74,7 @@
 #include "wxundo.h"         // for currlayer->undoredo->...
 #include "wxalgos.h"        // for *_ALGO, CreateNewUniverse, etc
 #include "wxlayer.h"        // for AddLayer, currlayer, currindex, etc
+#include "wxoverlay.h"      // for curroverlay->...
 #include "wxscript.h"       // for inscript, abortmsg, GSF_*, etc
 #include "wxlua.h"
 
@@ -1863,15 +1864,35 @@ static int g_getview(lua_State* L)
 {
     CheckEvents(L);
 
-    int currwd, currht;
-    bigview->GetClientSize(&currwd, &currht);
-    if (currwd < 0) currwd = 0;
-    if (currht < 0) currht = 0;
+    int index = -1;
+    if (lua_gettop(L) > 0) {
+        index = luaL_checkinteger(L, 1);
+        if (index < 0 || index >= numlayers) {
+            char msg[64];
+            sprintf(msg, "getview error: bad index (%d)", index);
+            GollyError(L, msg);
+        }
+    }
+
+    int wd, ht;
+    if (index == -1) {
+        bigview->GetClientSize(&wd, &ht);
+    } else {
+        if (numlayers > 1 && tilelayers) {
+            // tilerect values are only valid when multiple layers are tiled
+            wd = GetLayer(index)->tilerect.width;
+            ht = GetLayer(index)->tilerect.height;
+        } else {
+            bigview->GetClientSize(&wd, &ht);
+        }
+    }
+    if (wd < 0) wd = 0;
+    if (ht < 0) ht = 0;
     
-    lua_pushinteger(L, currwd);
-    lua_pushinteger(L, currht);
+    lua_pushinteger(L, wd);
+    lua_pushinteger(L, ht);
     
-    return 2;   // result is 2 integers (wd, ht)
+    return 2;   // result is 2 integers (width and height)
 }
 
 // -----------------------------------------------------------------------------
@@ -2186,6 +2207,30 @@ static int g_getcolors(lua_State* L)
     }
     
     return 1;   // result is a table
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_overlay(lua_State* L)
+{
+    // call CheckEvents less often here???!!!
+    CheckEvents(L);
+    
+    const char* cmd = luaL_checkstring(L, 1);
+    
+    const char* result = curroverlay->DoOverlayCommand(cmd);
+    
+    if (result == NULL) return 0;   // no error and no result
+    
+    if (result[0] == 'E' && result[1] == 'R' && result[2] == 'R' ) {
+        std::string msg = "overlay error: ";
+        msg += result + 4;  // skip past "ERR:"
+        GollyError(L, msg.c_str());
+    }
+    
+    lua_pushstring(L, result);
+    
+    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
@@ -2571,6 +2616,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "getname",      g_getname },      // get name of given layer
     { "setcolors",    g_setcolors },    // set color(s) used in current layer
     { "getcolors",    g_getcolors },    // get color(s) used in current layer
+    { "overlay",      g_overlay },      // do an overlay command
     // miscellaneous
     { "setoption",    g_setoption },    // set given option to new value (and return old value)
     { "getoption",    g_getoption },    // return current value of given option

@@ -1,5 +1,5 @@
 -- Shift current selection by given x y amounts using optional mode.
--- Author: Andrew Trevorrow (andrewtrevorrow.com), Mar 2016.
+-- Author: Andrew Trevorrow (andrew@trevorrow.com), Mar 2016.
 
 local g = golly()
 local gp = require "gplus"

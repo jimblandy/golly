@@ -1,28 +1,72 @@
 -- Run the current pattern for a given number of steps (using current
--- step size) and create a plot of population vs time in separate layer.
--- Author: Andrew Trevorrow (andrewtrevorrow.com), Apr 2016.
+-- step size) and create a plot of population vs time in an overlay.
+-- Author: Andrew Trevorrow (andrew@trevorrow.com), Sep 2016.
 
 local g = golly()
+-- require "gplus.strict"
 
 local gp = require "gplus"
 local int = gp.int
 local min = gp.min
 local max = gp.max
-local drawline = gp.drawline
-local gpt = require "gplus.text"
 
--- size of plot
+local op = require "oplus"
+local ov = g.overlay
+
+local opacity = 80                      -- initial opacity for bgcolor (as a percentage)
+local bgcolor = "rgba 255 255 255 "     -- white background (alpha will be appended)
+local axiscolor = "rgba 0 0 0 255"      -- black axes
+local textcolor = "rgba 0 0 0 255"      -- black text
+local plotcolor = "rgba 0 0 255 255"    -- blue plot lines
+
 local xlen = 500    -- length of x axis
 local ylen = 500    -- length of y axis
+local tborder = 40  -- border above plot
+local bborder = 80  -- border below plot
+local lborder = 80  -- border left of plot
+local rborder = 80  -- border right of plot
+
+-- width and height of overlay
+local owd = xlen + lborder + rborder
+local oht = ylen + tborder + bborder
+
+local pops = {}     -- store population counts
+local gens = {}     -- store generation counts
+
+local numsteps = xlen
+local stepsize = string.format("%d^%d", g.getbase(), g.getstep())
+local pattname = g.getname()
+
+-- offsets to origin of axes
+local originx = lborder
+local originy = tborder + ylen
+
+local joindots = true
+
+-- these controls are created in create_overlay
+local sbutt, cbutt      -- Save and Cancel buttons
+local jbox              -- check box for toggling joindots
+local oslider           -- slider for adjusting opacity
 
 --------------------------------------------------------------------------------
 
-local function monotext(s)
-    -- convert given string to a pattern in a mono-spaced font and return
-    -- its cell array and its minimal width and height
-    local p = gpt.maketext(s, "mono")
-    local r = gp.getminbox(p)
-    return p.array, r.wd, r.ht
+local function maketext(s)
+    -- convert given string to text in default font and return
+    -- its width and height for later use by pastetext
+    local wd, ht = gp.split(ov("text textclip "..s))
+    return tonumber(wd), tonumber(ht)
+end
+
+--------------------------------------------------------------------------------
+
+local function pastetext(x, y, transform)
+    transform = transform or op.identity
+    -- text background is transparent so paste needs to use alpha blending
+    ov("blend 1")
+    ov(transform)
+    ov("paste "..(x+originx).." "..(y+originy).." textclip")
+    ov(op.identity)
+    ov("blend 0")
 end
 
 --------------------------------------------------------------------------------
@@ -35,131 +79,202 @@ end
 
 --------------------------------------------------------------------------------
 
-if g.empty() then g.exit("There is no pattern.") end
-
--- check that a layer is available for population plot
-local layername = "population plot"
-local poplayer = -1
-for i = 0, g.numlayers()-1 do
-    if g.getname(i) == layername then
-        poplayer = i
-        break
-    end
-end
-if poplayer == -1 and g.numlayers() == g.maxlayers() then
-    g.exit("You need to delete a layer.")
+local function drawline(x1, y1, x2, y2)
+    ov("line "..(x1+originx).." "..(y1+originy).." "
+              ..(x2+originx).." "..(y2+originy))
 end
 
--- prompt user for number of steps
-local s = g.getstring("Enter the number of steps:", xlen, "Population plotter")
-if string.len(s) == 0 then g.exit() end
-local numsteps = tonumber(s)
-if numsteps <= 0 then g.exit() end
+--------------------------------------------------------------------------------
 
--- generate pattern for given number of steps
-local pops = { tonumber(g.getpop()) }
-local gens = { tonumber(g.getgen()) }
-local oldsecs = os.clock()
-for i = 1, numsteps do
-    g.step()
+local function run_pattern()
+    if g.empty() then g.exit("There is no pattern.") end
+    
+    -- prompt user for number of steps
+    local s = g.getstring("Enter the number of steps:", numsteps, "Population plotter")
+    if string.len(s) == 0 then g.exit() end
+    numsteps = tonumber(s)
+    if numsteps <= 0 then g.exit() end
+    
+    -- generate pattern for given number of steps
     pops[#pops+1] = tonumber(g.getpop())
     gens[#gens+1] = tonumber(g.getgen())
-    local newsecs = os.clock()
-    if newsecs - oldsecs >= 1.0 then     -- show pattern every second
-        oldsecs = newsecs
-        fit_if_not_visible()
-        g.update()
-        g.show(string.format("Step %d of %d", i, numsteps))
+    local oldsecs = os.clock()
+    for i = 1, numsteps do
+        g.step()
+        pops[#pops+1] = tonumber(g.getpop())
+        gens[#gens+1] = tonumber(g.getgen())
+        local newsecs = os.clock()
+        if newsecs - oldsecs >= 1.0 then     -- show pattern every second
+            oldsecs = newsecs
+            fit_if_not_visible()
+            g.update()
+            g.show(string.format("Step %d of %d", i, numsteps))
+        end
+    end
+    
+    fit_if_not_visible()
+    g.show(" ")
+end
+
+--------------------------------------------------------------------------------
+
+local function draw_plot()
+    -- fill overlay with background color
+    ov(bgcolor..int(255*opacity/100+0.5))
+    ov("fill") 
+    
+    local minpop = min(pops)
+    local maxpop = max(pops)
+    if minpop == maxpop then
+        -- avoid division by zero
+        minpop = minpop - 1
+    end
+    local popscale = (maxpop - minpop) / ylen
+    
+    local mingen = min(gens)
+    local maxgen = max(gens)
+    local genscale = (maxgen - mingen) / xlen
+    
+    -- draw axes
+    ov(axiscolor)
+    drawline(0, 0, xlen, 0)
+    drawline(0, 0, 0, -ylen)
+    
+    -- add annotation using the overlay's default font
+    ov(textcolor)
+    local wd, ht = maketext(string.upper(pattname))
+    pastetext(int((xlen - wd) / 2), -ylen - 10 - ht)
+    
+    wd, ht = maketext("POPULATION")
+    -- rotate this text 90 degrees anticlockwise
+    pastetext(-10 - ht, int(-(ylen - wd) / 2), op.racw)
+    
+    wd, ht = maketext(""..minpop)
+    pastetext(-wd - 10, int(-ht / 2))
+    
+    wd, ht = maketext(""..maxpop)
+    pastetext(-wd - 10, -ylen - int(ht / 2))
+    
+    wd, ht = maketext("GENERATION (step="..stepsize..")")
+    pastetext(int((xlen - wd) / 2), 10)
+    
+    wd, ht = maketext(""..mingen)
+    pastetext(int(-wd / 2), 10)
+    
+    wd, ht = maketext(""..maxgen)
+    pastetext(xlen - int(wd / 2), 10)
+    
+    -- plot the data (it could take a while if numsteps is huge)
+    ov(plotcolor)
+    local x = int((gens[1] - mingen) / genscale)
+    local y = int((pops[1] - minpop) / popscale)
+    local oldsecs = os.clock()
+    for i = 1, numsteps do
+        local newx = int((gens[i+1] - mingen) / genscale)
+        local newy = int((pops[i+1] - minpop) / popscale)
+        if joindots then
+            drawline(x, -y, newx, -newy)
+        else
+            drawline(newx, -newy, newx, -newy)
+        end
+        x = newx
+        y = newy
+        local newsecs = os.clock()
+        if newsecs - oldsecs >= 1.0 then     -- update plot every second
+            oldsecs = newsecs
+            g.update()
+        end
+    end
+    
+    -- show the Save and Cancel buttons at bottom right corner of overlay
+    sbutt.show(owd-cbutt.wd-sbutt.wd-20, oht-sbutt.ht-10)
+    cbutt.show(owd-cbutt.wd-10, oht-cbutt.ht-10)
+    
+    -- show the check box at bottom left corner of overlay
+    jbox.show(10, oht-jbox.ht-10, joindots)
+    
+    -- show slider at bottom middle of overlay
+    oslider.show(int((owd-oslider.wd)/2)-40, oht-oslider.ht-10, opacity)
+    
+    -- show opacity % at right end of slider
+    ov(textcolor)
+    wd, ht = maketext(""..opacity.."%")
+    pastetext(int((owd-oslider.wd)/2)-40 + oslider.wd + 2 - originx,
+              oht-oslider.ht-10 + int((oslider.ht-ht)/2) - originy)
+    
+    g.update()
+end
+
+--------------------------------------------------------------------------------
+
+local function do_save()
+    -- called if Save button is clicked
+    -- so prompt user to save overlay (minus bottom stuff) in a .png file
+    g.note("Not yet implemented!!!")
+end
+
+--------------------------------------------------------------------------------
+
+local function toggle_dots()
+    -- called if check box is clicked
+    joindots = not joindots
+    draw_plot()
+end
+
+--------------------------------------------------------------------------------
+
+local function do_slider(newval)
+    -- called if oslider position has changed
+    opacity = newval
+    
+    -- hide all controls so draw_plot will show them with the changed background
+    sbutt.hide()
+    cbutt.hide()
+    jbox.hide()
+    oslider.hide()
+    
+    draw_plot()
+end
+
+--------------------------------------------------------------------------------
+
+local function create_overlay()
+    -- create overlay in middle of current layer
+    ov("create "..owd.." "..oht)
+    ov("position middle")
+
+    -- create the Save and Cancel buttons
+    sbutt = op.button("Save as PNG", do_save)
+    cbutt = op.button("Cancel", g.exit)
+    
+    -- create a check box for showing lines or dots
+    jbox = op.checkbox("Join dots", op.black, toggle_dots)
+    
+    -- create a slider for adjusting opacity of background
+    oslider = op.slider("Opacity:", op.black, 101, 0, 100, do_slider)
+    
+    g.setoption("showoverlay", 1)
+end
+
+--------------------------------------------------------------------------------
+
+local function main()
+    run_pattern()
+    create_overlay()
+    draw_plot()
+    -- wait for user to hit escape or click Cancel button
+    while true do
+        local event = op.process( g.getevent() )
+        -- event is empty if op.process handled the given event (eg. button click)
+        if #event > 0 then
+            g.doevent(event)
+        end
     end
 end
 
-fit_if_not_visible()
+--------------------------------------------------------------------------------
 
--- save some info before we switch layers
-local stepsize = string.format("%d^%d", g.getbase(), g.getstep())
-local pattname = g.getname()
-
--- create population plot in separate layer
-g.setoption("stacklayers", 0)
-g.setoption("tilelayers", 0)
-g.setoption("showlayerbar", 1)
-if poplayer == -1 then
-    poplayer = g.addlayer()
-else
-    g.setlayer(poplayer)
-end
-g.new(layername)
-
--- use same rule but without any suffix (we don't want a bounded grid)
-local rule = g.getrule()
-rule = rule:match("^(.+):") or rule
-g.setrule(rule)
-
-local deadr, deadg, deadb = g.getcolor("deadcells")
-if (deadr + deadg + deadb) / 3 > 128 then
-    -- use black if light background
-    g.setcolors({1,0,0,0})
-else
-    -- use white if dark background
-    g.setcolors({1,255,255,255})
-end
-
-local minpop = min(pops)
-local maxpop = max(pops)
-if minpop == maxpop then
-    -- avoid division by zero
-    minpop = minpop - 1
-end
-local popscale = (maxpop - minpop) / ylen
-
-local mingen = min(gens)
-local maxgen = max(gens)
-local genscale = (maxgen - mingen) / xlen
-
--- draw axes with origin at 0,0
-drawline(0, 0, xlen, 0)
-drawline(0, 0, 0, -ylen)
-
--- add annotation using mono-spaced ASCII font
-local t, wd, ht = monotext(string.upper(pattname))
-g.putcells(t, int((xlen - wd) / 2), -ylen - 10 - ht)
-
-t, wd, ht = monotext("POPULATION")
-g.putcells(t, -10 - ht, int(-(ylen - wd) / 2), 0, 1, -1, 0)
-
-t, wd, ht = monotext(""..minpop)
-g.putcells(t, -wd - 10, int(-ht / 2))
-
-t, wd, ht = monotext(""..maxpop)
-g.putcells(t, -wd - 10, -ylen - int(ht / 2))
-
-t, wd, ht = monotext("GENERATION (step="..stepsize..")")
-g.putcells(t, int((xlen - wd) / 2), 10)
-
-t, wd, ht = monotext(""..mingen)
-g.putcells(t, int(-wd / 2), 10)
-
-t, wd, ht = monotext(""..maxgen)
-g.putcells(t, xlen - int(wd / 2), 10)
-
--- display result at scale 1:1
-g.fit()
-g.setmag(0)
-g.show("")
-
--- plot the data (do last because it could take a while if numsteps is huge)
-local x = int((gens[1] - mingen) / genscale)
-local y = int((pops[1] - minpop) / popscale)
-oldsecs = os.clock()
-for i = 1, numsteps do
-    local newx = int((gens[i+1] - mingen) / genscale)
-    local newy = int((pops[i+1] - minpop) / popscale)
-    drawline(x, -y, newx, -newy)
-    x = newx
-    y = newy
-    local newsecs = os.clock()
-    if newsecs - oldsecs >= 1.0 then     -- show pattern every second
-        oldsecs = newsecs
-        g.update()
-    end
-end
+local status, err = pcall(main)
+if err then g.continue(err) end
+-- the following code is always executed
+ov("delete")

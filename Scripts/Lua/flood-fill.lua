@@ -28,15 +28,6 @@ end
 
 --------------------------------------------------------------------------------
 
-local function checkneighbor(x, y, oldstate)
-    -- first check if x,y is outside fill limits
-    if x < minx or x > maxx then return false end
-    if y < miny or y > maxy then return false end
-    return g.getcell(x, y) == oldstate
-end
-
---------------------------------------------------------------------------------
-
 local function floodfill()
     local newstate = g.getoption("drawingstate")
     local oldstate = newstate
@@ -70,62 +61,42 @@ local function floodfill()
     end
     -- tell Golly to handle all further keyboard/mouse events
     g.getevent(false)
-
-    -- do flood fill starting with clicked cell
+    
     g.show("Filling clicked region... (hit escape to stop)")
+    
+    -- do flood fill starting with clicked cell using a scanline algorithm
+    local oldsecs = os.clock()
     local clist = {}
     clist[1] = {x, y}
-    g.setcell(x, y, newstate)
-    local oldsecs = os.clock()
     while #clist > 0 do
         -- remove cell from end of clist (much faster than removing from start)
         x, y = table.unpack( table.remove(clist) )
-        
+        local above = false
+        local below = false
+        while x >= minx and g.getcell(x, y) == oldstate do
+            x = x-1
+        end
+        x = x+1
+        while x <= maxx and g.getcell(x, y) == oldstate do
+            g.setcell(x, y, newstate)
+            if (not above) and y > miny and g.getcell(x, y-1) == oldstate then
+                clist[#clist+1] = {x, y-1}
+                above = true
+            elseif above and y > miny and g.getcell(x, y-1) ~= oldstate then
+                above = false
+            end
+            if (not below) and y < maxy and g.getcell(x, y+1) == oldstate then
+                clist[#clist+1] = {x, y+1}
+                below = true
+            elseif below and y < maxy and g.getcell(x, y+1) ~= oldstate then
+                below = false
+            end
+            x = x+1
+        end
         local newsecs = os.clock()
-        if newsecs - oldsecs >= 0.5 then     -- show changed pattern every half second
+        if newsecs - oldsecs >= 0.5 then    -- show changed pattern every half second
             oldsecs = newsecs
             g.update()
-        end
-        
-        -- check if any orthogonal neighboring cells are in oldstate
-        if checkneighbor(      x, y-1, oldstate) then
-            g.setcell(         x, y-1, newstate)
-            clist[#clist+1] = {x, y-1}
-        end
-        if checkneighbor(      x, y+1, oldstate) then
-            g.setcell(         x, y+1, newstate)
-            clist[#clist+1] = {x, y+1}
-        end
-        if checkneighbor      (x+1, y, oldstate) then
-            g.setcell(         x+1, y, newstate)
-            clist[#clist+1] = {x+1, y}
-        end
-        if checkneighbor(      x-1, y, oldstate) then
-            g.setcell(         x-1, y, newstate)
-            clist[#clist+1] = {x-1, y}
-        end
-        
-        -- check if any diagonal neighboring cells are in oldstate
-        -- (note that we don't want to cross a diagonal line of live cells)
-        if checkneighbor(      x+1, y+1, oldstate) and (g.getcell(x, y+1) == 0 or
-                                                        g.getcell(x+1, y) == 0) then
-            g.setcell(         x+1, y+1, newstate)
-            clist[#clist+1] = {x+1, y+1}
-        end
-        if checkneighbor(      x+1, y-1, oldstate) and (g.getcell(x, y-1) == 0 or
-                                                        g.getcell(x+1, y) == 0) then
-            g.setcell(         x+1, y-1, newstate)
-            clist[#clist+1] = {x+1, y-1}
-        end
-        if checkneighbor(      x-1, y+1, oldstate) and (g.getcell(x, y+1) == 0 or
-                                                        g.getcell(x-1, y) == 0) then
-            g.setcell(         x-1, y+1, newstate)
-            clist[#clist+1] = {x-1, y+1}
-        end
-        if checkneighbor(      x-1, y-1, oldstate) and (g.getcell(x, y-1) == 0 or
-                                                        g.getcell(x-1, y) == 0) then
-            g.setcell(         x-1, y-1, newstate)
-            clist[#clist+1] = {x-1, y-1}
         end
     end
 end
@@ -134,7 +105,7 @@ end
 oldcursor = g.getcursor()
 g.setcursor("Draw")
 
-local status, err = pcall(function () floodfill() end)
+local status, err = pcall(floodfill)
 if err then g.continue(err) end
 -- the following code is executed even if error occurred or user aborted script
 

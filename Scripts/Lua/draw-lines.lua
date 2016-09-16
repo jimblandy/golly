@@ -130,7 +130,7 @@ g.show("Click where to start line...")
 local oldcursor = g.getcursor()
 g.setcursor("Draw")
 
-local status, err = pcall(function () drawlines() end)
+local status, err = pcall(drawlines)
 if err then g.continue(err) end
 -- the following code is executed even if error occurred or user aborted script
 

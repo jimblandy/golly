@@ -45,6 +45,7 @@
 #include "wxlua.h"         // for RunLuaScript, AbortLuaScript
 #include "wxperl.h"        // for RunPerlScript, AbortPerlScript
 #include "wxpython.h"      // for RunPythonScript, AbortPythonScript
+#include "wxoverlay.h"     // for curroverlay
 #include "wxscript.h"
 
 // =============================================================================
@@ -699,6 +700,19 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             DoAutoUpdate();
         }
         
+    } else if (strcmp(optname, "showbuttons") == 0) {
+        *oldval = controlspos;
+        if (newval < 0) newval = 0;
+        if (newval > 4) newval = 4;
+        if (*oldval != newval) {
+            // update position of translucent buttons
+            controlspos = newval;
+            int wd, ht;
+            viewptr->GetClientSize(&wd, &ht);
+            viewptr->SetViewSize(wd, ht);
+            DoAutoUpdate();
+        }
+        
     } else if (strcmp(optname, "showeditbar") == 0) {
         *oldval = showedit ? 1 : 0;
         if (*oldval != newval) {
@@ -736,6 +750,13 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
         *oldval = showlayer ? 1 : 0;
         if (*oldval != newval) {
             ToggleLayerBar();
+            DoAutoUpdate();
+        }
+        
+    } else if (strcmp(optname, "showoverlay") == 0) {
+        *oldval = showoverlay ? 1 : 0;
+        if (*oldval != newval) {
+            showoverlay = !showoverlay;
             DoAutoUpdate();
         }
         
@@ -853,12 +874,14 @@ bool GSF_getoption(const char* optname, int* optval)
     else if (strcmp(optname, "savexrle") == 0)      *optval = savexrle ? 1 : 0;
     else if (strcmp(optname, "showallstates") == 0) *optval = showallstates ? 1 : 0;
     else if (strcmp(optname, "showboldlines") == 0) *optval = showboldlines ? 1 : 0;
+    else if (strcmp(optname, "showbuttons") == 0)   *optval = controlspos;
     else if (strcmp(optname, "showeditbar") == 0)   *optval = showedit ? 1 : 0;
     else if (strcmp(optname, "showexact") == 0)     *optval = showexact ? 1 : 0;
     else if (strcmp(optname, "showgrid") == 0)      *optval = showgridlines ? 1 : 0;
     else if (strcmp(optname, "showhashinfo") == 0)  *optval = currlayer->showhashinfo ? 1 : 0;
     else if (strcmp(optname, "showicons") == 0)     *optval = showicons ? 1 : 0;
     else if (strcmp(optname, "showlayerbar") == 0)  *optval = showlayer ? 1 : 0;
+    else if (strcmp(optname, "showoverlay") == 0)   *optval = showoverlay ? 1 : 0;
     else if (strcmp(optname, "showfiles") == 0)     *optval = showfiles ? 1 : 0;
     else if (strcmp(optname, "showpatterns") == 0)  *optval = showfiles ? 1 : 0;    // deprecated
     else if (strcmp(optname, "showscripts") == 0)   *optval = 0;                    // ditto
@@ -1116,6 +1139,14 @@ const char* GSF_doevent(const wxString& event)
                 inscript = true;
                 showtitle = false;
             }
+            
+        } else if (event.StartsWith(wxT("mup "))) {
+            // ignore mouse up event
+            return NULL;
+            
+        } else if (event.StartsWith(wxT("oclick "))) {
+            // ignore click in overlay
+            return NULL;
             
         } else if (event.StartsWith(wxT("click "))) {
             // parse event string like "click 10 20 left altshift"
@@ -1522,6 +1553,21 @@ void RunScript(const wxString& filename)
 
 // -----------------------------------------------------------------------------
 
+void PassOverlayClickToScript(int ox, int oy, int button, int modifiers)
+{
+    // build a string like "oclick 30 50 left none" and add to event queue
+    // for possible consumption by GSF_getevent
+    wxString clickinfo;
+    clickinfo.Printf(wxT("oclick %d %d"), ox, oy);
+    if (button == wxMOUSE_BTN_LEFT)     clickinfo += wxT(" left ");
+    if (button == wxMOUSE_BTN_MIDDLE)   clickinfo += wxT(" middle ");
+    if (button == wxMOUSE_BTN_RIGHT)    clickinfo += wxT(" right ");
+    AppendModifiers(modifiers, clickinfo);
+    eventqueue.Add(clickinfo);
+}
+
+// -----------------------------------------------------------------------------
+
 void PassClickToScript(const bigint& x, const bigint& y, int button, int modifiers)
 {
     // build a string like "click 10 20 left altshift" and add to event queue
@@ -1534,6 +1580,19 @@ void PassClickToScript(const bigint& x, const bigint& y, int button, int modifie
     if (button == wxMOUSE_BTN_MIDDLE)   clickinfo += wxT(" middle ");
     if (button == wxMOUSE_BTN_RIGHT)    clickinfo += wxT(" right ");
     AppendModifiers(modifiers, clickinfo);
+    eventqueue.Add(clickinfo);
+}
+
+// -----------------------------------------------------------------------------
+
+void PassMouseUpToScript(int button)
+{
+    // build a string like "mup left" and add to event queue
+    // for possible consumption by GSF_getevent
+    wxString clickinfo = wxT("mup ");
+    if (button == wxMOUSE_BTN_LEFT)     clickinfo += wxT("left");
+    if (button == wxMOUSE_BTN_MIDDLE)   clickinfo += wxT("middle");
+    if (button == wxMOUSE_BTN_RIGHT)    clickinfo += wxT("right");
     eventqueue.Add(clickinfo);
 }
 

@@ -134,6 +134,7 @@ bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
 bool showtimeline = false;       // show timeline bar?
 bool showgridlines = true;       // display grid lines?
+bool showoverlay = false;        // display the current overlay?
 bool showicons = false;          // display icons for cell states?
 bool smartscale = false;         // smarter scaling when zoomed out?
 bool swapcolors = false;         // swap colors used for cell states?
@@ -203,6 +204,7 @@ wxCursor* curs_cross;            // for selecting cells
 wxCursor* curs_hand;             // for moving view by dragging
 wxCursor* curs_zoomin;           // for zooming in to a clicked cell
 wxCursor* curs_zoomout;          // for zooming out from a clicked cell
+wxCursor* curs_hidden;           // for hiding cursor when mouse is in overlay
 
 // local (ie. non-exported) globals:
 
@@ -608,6 +610,8 @@ const char* GetActionName(action_id action)
         case DO_SHOWTIME:       return "Show Timeline";
         case DO_INFO:           return "Pattern Info";
         // Layer menu
+        case DO_SHOWOVERLAY:    return "Show Overlay";
+        case DO_DELOVERLAY:     return "Delete Overlay";
         case DO_ADD:            return "Add Layer";
         case DO_CLONE:          return "Clone Layer";
         case DO_DUPLICATE:      return "Duplicate Layer";
@@ -1131,6 +1135,9 @@ void CreateCursors()
     image_zoomout.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, 6);
     curs_zoomout = new wxCursor(image_zoomout);
     if (curs_zoomout == NULL) Fatal(_("Failed to create zoomout cursor!"));
+
+    curs_hidden = new wxCursor(wxCURSOR_BLANK);
+    if (curs_hidden == NULL) Fatal(_("Failed to create hidden cursor!"));
     
     // default cursors for new pattern or after opening pattern
     newcurs = curs_pencil;
@@ -1147,6 +1154,7 @@ void FreeCursors()
     delete curs_hand;
     delete curs_zoomin;
     delete curs_zoomout;
+    delete curs_hidden;
 }
 
 // -----------------------------------------------------------------------------
@@ -1511,6 +1519,7 @@ void SavePrefs()
     fprintf(f, "show_exact=%d\n", showexact ? 1 : 0);
     fprintf(f, "show_timeline=%d\n", showtimeline ? 1 : 0);
     fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
+    fprintf(f, "overlay=%d\n", showoverlay ? 1 : 0);
     fprintf(f, "min_grid_mag=%d (2..%d)\n", mingridmag, MAX_MAG);
     fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
     fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
@@ -2111,6 +2120,9 @@ void GetPrefs()
             
         } else if (strcmp(keyword, "grid_lines") == 0) {
             showgridlines = value[0] == '1';
+            
+        } else if (strcmp(keyword, "overlay") == 0) {
+            showoverlay = value[0] == '1';
             
         } else if (strcmp(keyword, "min_grid_mag") == 0) {
             sscanf(value, "%d", &mingridmag);

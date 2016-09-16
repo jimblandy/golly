@@ -52,6 +52,7 @@
 #include "wxscript.h"      // for inscript, PassKeyToScript
 #include "wxalgos.h"       // for algo_type, algomenu, algomenupop
 #include "wxlayer.h"       // for AddLayer, MAX_LAYERS, currlayer
+#include "wxoverlay.h"     // for curroverlay
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxtimeline.h"    // for CreateTimelineBar, TimelineExists, etc
 #include "wxmain.h"
@@ -736,6 +737,8 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_TIMELINE,     active);
         mbar->Enable(ID_INFO,         !currlayer->currfile.IsEmpty());
         
+        mbar->Enable(ID_SHOW_OVERLAY, active);
+        mbar->Enable(ID_DEL_OVERLAY,  active && !inscript);
         mbar->Enable(ID_ADD_LAYER,    active && !inscript && numlayers < MAX_LAYERS);
         mbar->Enable(ID_CLONE,        active && !inscript && numlayers < MAX_LAYERS);
         mbar->Enable(ID_DUPLICATE,    active && !inscript && numlayers < MAX_LAYERS);
@@ -794,6 +797,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Check(ID_SYNC_CURS,     synccursors);
         mbar->Check(ID_STACK,         stacklayers);
         mbar->Check(ID_TILE,          tilelayers);
+        mbar->Check(ID_SHOW_OVERLAY,  showoverlay);
         for (int i = 0; i < NumAlgos(); i++) {
             mbar->Check(ID_ALGO0 + i, currlayer->algtype == i);
             // keep algomenupop in sync with algomenu
@@ -1250,6 +1254,22 @@ void MainFrame::ToggleFullScreen()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::ToggleOverlay()
+{
+    showoverlay = !showoverlay;
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
+void MainFrame::DeleteOverlay()
+{
+    curroverlay->DeleteOverlay();
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ToggleAllowUndo()
 {
     if (generating) {
@@ -1407,6 +1427,8 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_INFO:           ShowPatternInfo(); break;
             
         // Layer menu
+        case ID_SHOW_OVERLAY:   ToggleOverlay(); break;
+        case ID_DEL_OVERLAY:    DeleteOverlay(); break;
         case ID_ADD_LAYER:      AddLayer(); break;
         case ID_CLONE:          CloneLayer(); break;
         case ID_DUPLICATE:      DuplicateLayer(); break;
@@ -2247,6 +2269,9 @@ void MainFrame::CreateMenus()
     viewMenu->AppendSeparator();
     viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
     
+    layerMenu->AppendCheckItem(ID_SHOW_OVERLAY,  _("Show Overlay") + GetAccelerator(DO_SHOWOVERLAY));
+    layerMenu->Append(ID_DEL_OVERLAY,            _("Delete Overlay") + GetAccelerator(DO_DELOVERLAY));
+    layerMenu->AppendSeparator();
     layerMenu->Append(ID_ADD_LAYER,              _("Add Layer") + GetAccelerator(DO_ADD));
     layerMenu->Append(ID_CLONE,                  _("Clone Layer") + GetAccelerator(DO_CLONE));
     layerMenu->Append(ID_DUPLICATE,              _("Duplicate Layer") + GetAccelerator(DO_DUPLICATE));
@@ -2414,6 +2439,8 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_TIMELINE,        DO_SHOWTIME);
         SetAccelerator(mbar, ID_INFO,            DO_INFO);
         
+        SetAccelerator(mbar, ID_SHOW_OVERLAY,    DO_SHOWOVERLAY);
+        SetAccelerator(mbar, ID_DEL_OVERLAY,     DO_DELOVERLAY);
         SetAccelerator(mbar, ID_ADD_LAYER,       DO_ADD);
         SetAccelerator(mbar, ID_CLONE,           DO_CLONE);
         SetAccelerator(mbar, ID_DUPLICATE,       DO_DUPLICATE);
@@ -2512,6 +2539,9 @@ MainFrame::MainFrame()
     
     // create timer for generating patterns (see OnGenTimer in wxcontrol.cpp)
     gentimer = new wxTimer(this, ID_GENTIMER);
+    
+    // create a scriptable graphics layer
+    curroverlay = new Overlay();
     
     CreateMenus();
     CreateToolbar();
@@ -2615,6 +2645,7 @@ MainFrame::~MainFrame()
     delete hbar;
     delete vbar;
 #endif
+    delete curroverlay;
     delete gentimer;
     DestroyDrawingData();
 }

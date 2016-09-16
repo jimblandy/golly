@@ -1,5 +1,5 @@
 -- Use the current selection to create a toroidal universe.
--- Author: Andrew Trevorrow (andrewtrevorrow.com), Apr 2016.
+-- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2016.
 
 local g = golly()
 

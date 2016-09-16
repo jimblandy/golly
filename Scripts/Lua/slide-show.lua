@@ -62,7 +62,7 @@ local oldlayerbar = g.setoption("showlayerbar", 0)
 local oldeditbar = g.setoption("showeditbar", 0)
 local oldfiles = g.setoption("showfiles", 0)
 
-local status, err = pcall(function () slideshow() end)
+local status, err = pcall(slideshow)
 if err then g.continue(err) end
 
 -- this code is always executed, even after escape/error;

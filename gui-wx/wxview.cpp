@@ -51,6 +51,7 @@
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxalgos.h"       // for algo_type, *_ALGO, CreateNewUniverse, etc
 #include "wxlayer.h"       // for currlayer, ResizeLayers, etc
+#include "wxoverlay.h"     // for curroverlay
 #include "wxtimeline.h"    // for StartStopRecording, DeleteTimeline, etc
 #include "wxview.h"
 
@@ -1282,53 +1283,52 @@ bool PatternView::PointInView(int x, int y)
 
 void PatternView::CheckCursor(bool active)
 {
-    if (active) {
-        // make sure cursor is up to date
-        wxPoint pt = ScreenToClient( wxGetMousePosition() );
-        if (PointInView(pt.x, pt.y)) {         
-            if (numlayers > 1 && tilelayers && tileindex != currindex) {
-                // show arrow cursor if over tile border (ie. bigview) or non-current tile
-#ifdef __WXMAC__
+    if (!active) return;    // main window is not active so don't change cursor
+    
+    // make sure cursor is up to date
+    wxPoint pt = ScreenToClient( wxGetMousePosition() );
+    if (PointInView(pt.x, pt.y)) {
+        int ox, oy;
+        if (numlayers > 1 && tilelayers && tileindex != currindex) {
+            // show arrow cursor if over tile border (ie. bigview) or non-current tile
+            #ifdef __WXMAC__
                 // wxMac bug??? need this to fix probs after toggling status/tool bar
                 wxSetCursor(*wxSTANDARD_CURSOR);
-#endif
-                SetCursor(*wxSTANDARD_CURSOR);
-                if (showcontrols) {
-                    showcontrols = false;
-                    RefreshControls();
-                }
-                
-            } else if ( (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) &&
-                       !(drawingcells || selectingcells || movingview || waitingforclick) ) {
-                // cursor is over translucent controls, or user clicked in a control
-                // and hasn't released mouse button yet
-#ifdef __WXMAC__
+            #endif
+            SetCursor(*wxSTANDARD_CURSOR);
+            if (showcontrols) {
+                showcontrols = false;
+                RefreshControls();
+            }
+        
+        } else if (showoverlay && curroverlay->PointInOverlay(pt.x, pt.y, &ox, &oy)
+                               && !curroverlay->TransparentPixel(ox, oy)) {
+            // cursor is over non-transparent pixel in overlay
+            curroverlay->SetOverlayCursor();
+            if (showcontrols) {
+                showcontrols = false;
+                RefreshControls();
+            }
+        
+        } else if ((controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) &&
+                   !(drawingcells || selectingcells || movingview || waitingforclick) ) {
+            // cursor is over translucent controls, or user clicked in a control
+            // and hasn't released mouse button yet
+            #ifdef __WXMAC__
                 wxSetCursor(*wxSTANDARD_CURSOR);
-#endif
-                SetCursor(*wxSTANDARD_CURSOR);
-                if (!showcontrols) {
-                    showcontrols = true;
-                    RefreshControls();
-                }
-                
-            } else {
-                // show current cursor mode
-#ifdef __WXMAC__
-                wxSetCursor(*currlayer->curs);
-#endif
-                SetCursor(*currlayer->curs);
-                if (showcontrols) {
-                    showcontrols = false;
-                    RefreshControls();
-                }
+            #endif
+            SetCursor(*wxSTANDARD_CURSOR);
+            if (!showcontrols) {
+                showcontrols = true;
+                RefreshControls();
             }
             
         } else {
-            // cursor is not in viewport
-#ifdef __WXMAC__
-            wxSetCursor(*wxSTANDARD_CURSOR);
-#endif
-            SetCursor(*wxSTANDARD_CURSOR);
+            // show current cursor mode
+            #ifdef __WXMAC__
+                wxSetCursor(*currlayer->curs);
+            #endif
+            SetCursor(*currlayer->curs);
             if (showcontrols) {
                 showcontrols = false;
                 RefreshControls();
@@ -1336,7 +1336,15 @@ void PatternView::CheckCursor(bool active)
         }
         
     } else {
-        // main window is not active so don't change cursor
+        // cursor is not in viewport
+        #ifdef __WXMAC__
+            wxSetCursor(*wxSTANDARD_CURSOR);
+        #endif
+        SetCursor(*wxSTANDARD_CURSOR);
+        if (showcontrols) {
+            showcontrols = false;
+            RefreshControls();
+        }
     }
 }
 
@@ -1726,6 +1734,8 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_INFO:        if (!busy) mainptr->ShowPatternInfo(); break;
             
         // Layer menu actions
+        case DO_SHOWOVERLAY: mainptr->ToggleOverlay(); break;
+        case DO_DELOVERLAY:  if (!inscript) mainptr->DeleteOverlay(); break;
         case DO_ADD:         if (!inscript) AddLayer(); break;
         case DO_CLONE:       if (!inscript) CloneLayer(); break;
         case DO_DUPLICATE:   if (!inscript) DuplicateLayer(); break;
@@ -2292,7 +2302,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
         initgl = false;
     
         glDisable(GL_DEPTH_TEST);       // we only do 2D drawing
-        glDisable(GL_DITHER);           // makes no diff???
+        glDisable(GL_DITHER);
         // glDisable(GL_MULTISAMPLE);   // unknown on Windows
         glDisable(GL_STENCIL_TEST);
         glDisable(GL_FOG);
@@ -2763,6 +2773,19 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
         return;
     }
     
+    // tileindex == currindex
+    
+    int ox, oy;
+    if (showoverlay && curroverlay->PointInOverlay(x, y, &ox, &oy)
+                    && !curroverlay->TransparentPixel(ox, oy)) {
+        if (inscript && passclicks) {
+            // let script decide what to do with click in non-transparent pixel in overlay
+            PassOverlayClickToScript(ox, oy, button, modifiers);
+        }
+        // otherwise just ignore click in overlay
+        return;
+    }
+    
     if (showcontrols) {
         currcontrol = WhichControl(x - controlsrect.x, y - controlsrect.y);
         if (currcontrol > NO_CONTROL) {
@@ -2795,7 +2818,7 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
 
 // -----------------------------------------------------------------------------
 
-void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
+void PatternView::OnMouseUp(wxMouseEvent& event)
 {
     if (drawingcells || selectingcells || movingview || clickedcontrol > NO_CONTROL) {
         StopDraggingMouse();
@@ -2803,6 +2826,12 @@ void PatternView::OnMouseUp(wxMouseEvent& WXUNUSED(event))
         // this can happen if user does a quick click while pattern is generating,
         // so set a special flag to force drawing to terminate
         stopdrawing = true;
+    }
+    
+    if (inscript && passclicks) {
+        // let script decide what to do with mouse up event
+        PassMouseUpToScript(event.GetButton());
+        return;
     }
 }
 
@@ -2827,13 +2856,17 @@ void PatternView::OnMouseMotion(wxMouseEvent& event)
     statusptr->CheckMouseLocation(mainptr->infront);
     
     // check if translucent controls need to be shown/hidden
+    // or if the cursor has moved out of or into the overlay
     if (mainptr->infront) {
-        wxPoint pt( event.GetX(), event.GetY() );
-        bool show = (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL) &&
-                    !(drawingcells || selectingcells || movingview || waitingforclick) &&
-                    !(numlayers > 1 && tilelayers && tileindex != currindex);
+        wxPoint pt(event.GetX(), event.GetY());
+        bool active_tile = !(numlayers > 1 && tilelayers && tileindex != currindex);
+        bool busy = drawingcells || selectingcells || movingview || waitingforclick;
+        bool show = active_tile && !busy && (controlsrect.Contains(pt) || clickedcontrol > NO_CONTROL);
         if (showcontrols != show) {
             // let CheckCursor set showcontrols and call RefreshRect
+            CheckCursor(true);
+        } else if (showoverlay && active_tile && !busy) {
+            // cursor might need to change
             CheckCursor(true);
         }
     }

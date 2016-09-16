@@ -465,7 +465,7 @@ end
 local oldswitch = g.setoption("switchlayers", 1) -- allow user to switch layers
 local oldtile = g.setoption("tilelayers", 1)
 
-local status, err = pcall(function () burp() end)
+local status, err = pcall(burp)
 if err then g.continue(err) end
 -- the following code is executed even if error occurred or user aborted script
 

@@ -69,6 +69,8 @@ hlifealgo::draw() in hlifedraw.cpp.
 
 - Calls DrawControls() if the translucent controls need to be drawn.
 
+- Calls DrawOverlay() if the current overlay needs to be drawn.
+
 ----------------------------------------------------------------------------- */
 
 #include <string.h>        // for memcpy
@@ -90,6 +92,7 @@ hlifealgo::draw() in hlifedraw.cpp.
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
 #include "wxlayer.h"       // currlayer, GetLayer, etc
+#include "wxoverlay.h"     // curroverlay, overlay_position
 #include "wxrender.h"
 
 // -----------------------------------------------------------------------------
@@ -1418,6 +1421,41 @@ void DrawTileBorders()
 
 // -----------------------------------------------------------------------------
 
+void DrawOverlay()
+{
+    unsigned char* overlaydata = curroverlay->GetOverlayData();
+    if (overlaydata) {
+        int wd = curroverlay->GetOverlayWidth();
+        int ht = curroverlay->GetOverlayHeight();        
+        int x = 0;
+        int y = 0;
+        switch (curroverlay->GetOverlayPosition()) {
+            case topleft:
+                break;
+            case topright:
+                x = currwd - wd;
+                break;
+            case bottomright:
+                x = currwd - wd;
+                y = currht - ht;
+                break;
+            case bottomleft:
+                y = currht - ht;
+                break;
+            case middle:
+                x = (currwd - wd) / 2;
+                y = (currht - ht) / 2;
+                break;
+        }
+        DrawRGBAData(overlaydata, x, y, wd, ht);
+        
+        // the cursor might need to be changed
+        curroverlay->CheckCursor();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 static bool firstview = true;
 
 void DrawView(int tileindex)
@@ -1434,6 +1472,11 @@ void DrawView(int tileindex)
         // (this probably only happens on Windows but safer to do it on all platforms)
         unsigned char data[] = "RGBARGBARGBARGBA";
         DrawRGBAData(data, 0, 0, 2, 2); // data has 4 pixels
+    }
+    
+    if (curroverlay->OnlyDrawOverlay()) {
+        DrawOverlay();
+        return;
     }
     
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
@@ -1602,6 +1645,15 @@ void DrawView(int tileindex)
     
     if (viewptr->showcontrols) {
         DrawControls(viewptr->controlsrect);
+    }
+    
+    if (showoverlay) {
+        if (numlayers > 1 && tilelayers) {
+            // only display overlay above current tile
+            if (tileindex == currindex) DrawOverlay();
+        } else {
+            DrawOverlay();
+        }
     }
     
     if ( numlayers > 1 && tilelayers ) {

@@ -1,6 +1,6 @@
 -- Use multiple layers to create a history of the current pattern.
 -- The "envelope" layer remembers all live cells.
--- Author: Andrew Trevorrow (andrewtrevorrow.com), Apr 2016.
+-- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2016.
 
 local g = golly()
 
@@ -112,7 +112,7 @@ local oldstatus = g.setoption("showstatusbar", 1)
 local oldlayerbar = g.setoption("showlayerbar", 0)
 local oldeditbar = g.setoption("showeditbar", 0)
 
-local status, err = pcall(function () envelope() end)
+local status, err = pcall(envelope)
 if err then g.continue(err) end
 -- the following code is executed even if error occurred or user aborted script
 

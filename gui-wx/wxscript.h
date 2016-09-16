@@ -46,8 +46,16 @@ extern bool stop_after_script;
 void RunScript(const wxString& filename);
 // Run the given script.
 
+void PassOverlayClickToScript(int ox, int oy, int button, int modifiers);
+// Called if a script is running and user clicks mouse in overlay
+// at the given pixel location.
+
 void PassClickToScript(const bigint& x, const bigint& y, int button, int modifiers);
-// Called if a script is running and user clicks mouse.
+// Called if a script is running and user clicks mouse in grid
+// at the given cell location.
+
+void PassMouseUpToScript(int button);
+// Called if a script is running and user releases a mouse button.
 
 void PassKeyToScript(int key, int modifiers = 0);
 // Called if a script is running and user hits a key.

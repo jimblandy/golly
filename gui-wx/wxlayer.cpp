@@ -879,8 +879,9 @@ void ResizeLayers(int wd, int ht)
         ResizeTiles(wd, ht);
     } else {
         // resize viewport in each layer to bigview's client area
-        for (int i = 0; i < numlayers; i++)
+        for (int i = 0; i < numlayers; i++) {
             layer[i]->view->resize(wd, ht);
+        }
     }
 }
 
@@ -891,13 +892,9 @@ void CreateTiles()
     // create tile windows
     for ( int i = 0; i < numlayers; i++ ) {
         layer[i]->tilewin = new PatternView(bigview,
-                                            // correct size will be set below by ResizeTiles
-                                            0, 0, 0, 0,
-                                            // we draw our own tile borders
-                                            wxNO_BORDER |
-                                            // needed for wxGTK
-                                            wxFULL_REPAINT_ON_RESIZE |
-                                            wxWANTS_CHARS);
+            // correct size will be set below by ResizeTiles
+            0, 0, 0, 0,
+            wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE | wxWANTS_CHARS);
         if (layer[i]->tilewin == NULL) Fatal(_("Failed to create tile window!"));
         
         // set tileindex >= 0; this must always match the layer index, so we'll need to
@@ -932,8 +929,9 @@ void DestroyTiles()
     if (mainptr->infront) viewptr->SetFocus();
     
     // destroy all tile windows
-    for ( int i = 0; i < numlayers; i++ )
+    for ( int i = 0; i < numlayers; i++ ) {
         delete layer[i]->tilewin;
+    }
     
     // resize viewport in each layer to bigview's client area
     int wd, ht;
@@ -941,8 +939,9 @@ void DestroyTiles()
     // wd or ht might be < 1 on Windows
     if (wd < 1) wd = 1;
     if (ht < 1) ht = 1;
-    for ( int i = 0; i < numlayers; i++ )
+    for ( int i = 0; i < numlayers; i++ ) {
         layer[i]->view->resize(wd, ht);
+    }
 }
 
 // -----------------------------------------------------------------------------

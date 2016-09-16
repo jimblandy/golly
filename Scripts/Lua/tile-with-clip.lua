@@ -1,5 +1,5 @@
 -- Tile current selection with clipboard pattern.
--- Author: Andrew Trevorrow (andrewtrevorrow.com), Mar 2016.
+-- Author: Andrew Trevorrow (andrew@trevorrow.com), Mar 2016.
 
 local g = golly()
 local gp = require "gplus"

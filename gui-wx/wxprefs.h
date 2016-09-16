@@ -93,6 +93,7 @@ extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
 extern bool showtimeline;        // show timeline bar?
 extern bool showgridlines;       // display grid lines?
+extern bool showoverlay;         // display the current overlay?
 extern bool showicons;           // display icons for cell states?
 extern bool smartscale;          // smarter scaling when zoomed out?
 extern bool swapcolors;          // swap colors used for cell states?
@@ -178,6 +179,7 @@ typedef enum {
     DO_PASTEMODE,                 // cycle paste mode
     DO_DELETE,                    // delete layer
     DO_DELOTHERS,                 // delete other layers
+    DO_DELOVERLAY,                // delete overlay
     DO_DELTIME,                   // delete timeline
     DO_DISABLE,                   // disable undo/redo
     DO_DUPLICATE,                 // duplicate layer
@@ -245,6 +247,7 @@ typedef enum {
     DO_HASHINFO,                  // show hash info
     DO_HELP,                      // show help
     DO_SHOWLAYER,                 // show layer bar
+    DO_SHOWOVERLAY,               // show overlay
     DO_SHOWSTATUS,                // show status bar
     DO_SHOWTIME,                  // show timeline
     DO_TIMING,                    // show timing
@@ -369,6 +372,7 @@ extern wxCursor* curs_cross;        // for selecting cells
 extern wxCursor* curs_hand;         // for moving view by dragging
 extern wxCursor* curs_zoomin;       // for zooming in to a clicked cell
 extern wxCursor* curs_zoomout;      // for zooming out from a clicked cell
+extern wxCursor* curs_hidden;       // for hiding cursor when mouse is in overlay
 
 void FreeCursors();
 // deallocate memory allocated by CreateCursors()
