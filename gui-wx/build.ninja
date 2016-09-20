@@ -21,7 +21,7 @@
 # sys   0m8.351s
 
 # golly version
-app_version = 2.8
+app_version = 2.9b1
 
 # build directories
 basedir = ../gollybase
@@ -81,7 +81,7 @@ lua_lib = $luadir/liblua.a
 
 # lua library link rule
 rule link_lua
-   command = ar rcu $out $in && ranlib $out
+   command = ar crs $out $in && ranlib $out
    description = AR $out
 
 # build lua library
@@ -100,7 +100,7 @@ cxxflags = -DVERSION=$app_version -DGOLLYDIR="$gollydir" $
 extra_cxxflags =
 
 # additional cxx flags for wx
-wx_cxxflags = `/usr/bin/wx-config --cxxflags`
+wx_cxxflags = `wx-config --cxxflags`
 
 # additional cxx flags for zlib
 zlib_cxxflags = -DZLIB

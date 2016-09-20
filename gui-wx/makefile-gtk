@@ -30,7 +30,7 @@ GUIFILES = makefile-gtk makefile-mac makefile-win local-win-template.mk \
    golly.rc Info.plist.in wx*.h wx*.cpp configure bitmaps icons
 LUAFILES = $(LUADIR)/*.h $(LUADIR)/*.c $(LUADIR)/*.hpp $(LUADIR)/Makefile $(LUADIR)/ReadMe.html
 
-LUALIB = $(LUADIR)/liblua.a
+LUALIB = $(LUADIR)/liblua.a -ldl
 
 CXXC = g++
 CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
