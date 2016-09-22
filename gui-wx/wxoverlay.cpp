@@ -372,6 +372,8 @@ const char* Overlay::DoCursor(const char* args)
     }
 
     viewptr->CheckCursor(mainptr->infront);
+    
+    // return old cursor!!!
     return NULL;
 }
 
