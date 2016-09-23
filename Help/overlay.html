@@ -28,8 +28,8 @@ of population versus time that can be saved as a PNG file.
 The overlay is manipulated using a single script command called
 <a href="lua.html#overlay">overlay</a>.
 It takes a single string parameter that contains a command followed by
-optional arguments separated by spaces.  Some overlay commands can also return
-a single string as their result.
+zero or more arguments separated by spaces.  Some overlay commands can
+also return a single string as their result.
 
 
 <p><a name="commands"></a>&nbsp;<br>
@@ -89,13 +89,23 @@ The examples given below assume a script has started with these lines:
 <dd>
 Turn <a href="#blending">alpha blending</a> on (<i>i</i>=1) or off
 (<i>i</i>=0) and return the previous blend state as a string ("0" or "1").
+The commands affected by alpha blending are:
+<a href="#fill">fill</a>,
+<a href="#flood">flood</a>,
+<a href="#line">line</a>,
+<a href="#load">load</a>,
+<a href="#paste">paste</a>,
+<a href="#set">set</a>.
 </dd>
 <dd> Example: <b>local oldblend = ov("blend 1")</b></dd>
 </p>
 
 <a name="copy"></a><p><dt><b>copy <i>x y wd ht clipname</i></b></dt>
 <dd>
-Copy the pixels in the given rectangle into the named clip.
+Copy the pixels in the given rectangle into the named clip for later use
+by a <a href="#paste">paste</a> command.
+An error will occur if any part of the rectangle is outside the overlay.
+The clip name can contain any characters except a space.
 </dd>
 <dd> Example: <b>ov("copy 0 0 100 200 tempbox")</b></dd>
 </p>
@@ -110,14 +120,34 @@ The overlay's initial position is set to topleft,
 the initial cursor is set to the standard arrow,
 the initial transform values are set to 1,0,0,1 (identity) and
 alpha blending is initially off.
+The initial font for drawing text is the default font at a size of 11pt
+(see the <a href="#font">font</a> command).
 </dd>
 <dd> Example: <b>ov("create 400 300")</b></dd>
 </p>
 
-<a name="cursor"></a><p><dt><b>cursor <i>c</i></b></dt>
+<a name="cursor"></a><p><dt><b>cursor <i>name</i></b></dt>
 <dd>
-Set the overlay cursor according to the given string.
-!!!
+Specify which cursor to use when the mouse moves over a
+non-transparent pixel within the overlay.  The valid cursor names are:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td>arrow</td><td width=20></td><td>    &ndash; standard arrow</td></tr>
+<tr><td>cross</td><td width=20></td><td>    &ndash; crosshairs</td></tr>
+<tr><td>current</td><td width=20></td><td>  &ndash; Golly's current cursor (no change)</td></tr>
+<tr><td>hand</td><td width=20></td><td>     &ndash; hand</td></tr>
+<tr><td>hidden</td><td width=20></td><td>   &ndash; invisible cursor</td></tr>
+<tr><td>pencil</td><td width=20></td><td>   &ndash; pencil</td></tr>
+<tr><td>pick</td><td width=20></td><td>     &ndash; color picker</td></tr>
+<tr><td>zoomin</td><td width=20></td><td>   &ndash; magnifying glass with "+"</td></tr>
+<tr><td>zoomout</td><td width=20></td><td>  &ndash; magnifying glass with "-"</td></tr>
+</table>
+</dd>
+<p>
+<dd>
+The previous cursor name is returned.
 </dd>
 <dd> Example: <b>local oldcursor = ov("cursor pencil")</b></dd>
 </p>
@@ -132,8 +162,13 @@ from the Layer menu.
 
 <a name="fill"></a><p><dt><b>fill <i>x y wd ht</i></b></dt>
 <dd>
-Fill the given rectangle with the current RGBA values (set by the most
-recent <b>rgba</b> command).  !!!
+Fill the given rectangle with the current RGBA values (as set by the most
+recent <a href="#rgba">rgba</a> command).
+Any parts of the rectangle outside the overlay are automatically clipped.
+If no rectangle is given then the entire overlay is filled.
+A width or height less than 1 is relative to the overlay's width or height,
+so a command like <b>ov("fill 1 1 -2 -2")</b> would fill all of the overlay
+except for a 1 pixel border around the edges.
 </dd>
 <dd> Example: <b>ov("fill 10 10 30 50")</b></dd>
 </p>
@@ -141,16 +176,34 @@ recent <b>rgba</b> command).  !!!
 <a name="flood"></a><p><dt><b>flood <i>x y</i></b></dt>
 <dd>
 Flood a connected region of pixels that match the given starting pixel
-with the current RGBA values.  !!!
+with the current RGBA values.
 </dd>
 <dd> Example: <b>ov("flood 10 20")</b></dd>
 </p>
 
 <a name="font"></a><p><dt><b>font <i>fontsize fontname</i></b></dt>
 <dd>
-Set the font used by later <b>text</b> commands and return the
-previous font as a string of the form "fontsize fontname".
-!!!
+Set the font used by later <a href="#text">text</a> commands.
+If the font name is not supplied then only the font size will be changed.
+The valid font names are:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td>default</td><td width=20></td><td>          &ndash; standard system font</td></tr>
+<tr><td>default-bold</td><td width=20></td><td>     &ndash; bold system font</td></tr>
+<tr><td>default-italic</td><td width=20></td><td>   &ndash; italic system font</td></tr>
+<tr><td>mono</td><td width=20></td><td>             &ndash; mono-spaced font</td></tr>
+<tr><td>mono-bold</td><td width=20></td><td>        &ndash; bold mono-spaced font</td></tr>
+<tr><td>mono-italic</td><td width=20></td><td>      &ndash; italic mono-spaced font</td></tr>
+<tr><td>roman</td><td width=20></td><td>            &ndash; roman font</td></tr>
+<tr><td>roman-bold</td><td width=20></td><td>       &ndash; bold roman font</td></tr>
+<tr><td>roman-italic</td><td width=20></td><td>     &ndash; italic roman font</td></tr>
+</table>
+</dd>
+<p>
+<dd>
+The previous font is returned as a string of the form "fontsize fontname".
 </dd>
 <dd> Example: <b>local oldfont = ov("font 15 roman-bold")</b></dd>
 </p>
@@ -159,7 +212,7 @@ previous font as a string of the form "fontsize fontname".
 <dd>
 Return the RGBA values of the given pixel as a string of the form
 "red green blue alpha".  All values will be from 0 to 255.
-!!!
+If the given pixel is outside the overlay then "" is returned.
 </dd>
 <dd> Example: <b>local rgba = ov("get 10 20")</b></dd>
 </p>
@@ -182,18 +235,29 @@ Any pixels outside the overlay edges are automatically clipped.
 
 <a name="paste"></a><p><dt><b>paste <i>x y clipname</i></b></dt>
 <dd>
-Paste the named clip (typically created by an earlier <b>copy</b> command)
-into the overlay at the given location.
+Paste the named clip (created by an earlier <a href="#copy">copy</a> or
+<a href="#text">text</a> command) into the overlay at the given location.
 Any pixels outside the overlay edges are automatically clipped.
 </dd>
 <dd> Example: <b>ov("paste 10 20 tempbox")</b></dd>
 </p>
 
-<a name="position"></a><p><dt><b>position <i>p</i></b></dt>
+<a name="position"></a><p><dt><b>position <i>pos</i></b></dt>
 <dd>
 Specify where the overlay is to be displayed within the current layer.
-!!!
+The valid positions are:
 </dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td>topleft</td><td width=20></td><td>      &ndash; top left corner</td></tr>
+<tr><td>topright</td><td width=20></td><td>     &ndash; top right corner</td></tr>
+<tr><td>bottomright</td><td width=20></td><td>  &ndash; bottom right corner</td></tr>
+<tr><td>bottomleft</td><td width=20></td><td>   &ndash; bottom left corner</td></tr>
+<tr><td>middle</td><td width=20></td><td>       &ndash; middle of layer</td></tr>
+</table>
+</dd>
+<p>
 <dd> Example: <b>ov("position middle")</b></dd>
 </p>
 
@@ -203,7 +267,11 @@ Set the current RGBA values used by later drawing commands
 and return the old values as a string of the form "red green blue alpha".
 All values are from 0 to 255.
 The commands that use the current RGBA values are:
-<b>fill</b>, <b>flood</b>, <b>line</b>, <b>set</b>, <b>text</b>.
+<a href="#fill">fill</a>,
+<a href="#flood">flood</a>,
+<a href="#line">line</a>,
+<a href="#set">set</a>,
+<a href="#text">text</a>.
 </dd>
 <dd> Example: <b>local oldrgba = ov("rgba 255 0 0 255")</b></dd>
 </p>
@@ -211,7 +279,7 @@ The commands that use the current RGBA values are:
 <a name="save"></a><p><dt><b>save <i>x y wd ht file</i></b></dt>
 <dd>
 Save the pixels in the given rectangle in the given PNG file.
-!!!
+An error will occur if any part of the rectangle is outside the overlay.
 </dd>
 <dd> Example: <b>ov("save 0 0 100 80 "..g.getdir("temp").."foo.png")</b></dd>
 </p>
@@ -219,35 +287,52 @@ Save the pixels in the given rectangle in the given PNG file.
 <a name="set"></a><p><dt><b>set <i>x y</i></b></dt>
 <dd>
 Set the given pixel to the current RGBA values.
-!!!
+A pixel outside the overlay is silently ignored.
 </dd>
 <dd> Example: <b>ov("set 10 20")</b></dd>
 </p>
 
-<a name="text"></a><p><dt><b>text <i>!!!</i></b></dt>
+<a name="text"></a><p><dt><b>text <i>clipname arbitrary text ...</i></b></dt>
 <dd>
-!!!
+Create a clip with the given name containing the given text in the
+current font (as set by the most recent <a href="#font">font</a> command).
+Return the dimensions of the clip as a string of the form
+"width height descent leading".  The height is the total height of one line
+in the current font and the descent is the number of pixels under the baseline.
+The leading value is the amount of extra vertical space to put between lines
+(zero in all the currently supported fonts).
+The text's color depends on the most recent <a href="#rgba">rgba</a> command.
+Note that the text has a transparent background, so you'll probably need to set
+<a href="#blend">blend</a> to 1 before drawing the text with <a href="#paste">paste</a>.
 </dd>
-<dd> Example: <b>ov("text 10 20 label")</b></dd>
+<dd> Example: <b>ov("text tempclip To be or not to be...")</b></dd>
 </p>
 
 <a name="transform"></a><p><dt><b>transform <i>axx axy ayx ayy</i></b></dt>
 <dd>
-!!!
+Set the affine transformation values used by later <a href="#paste">paste</a>
+commands and return the old values as a string of the form "axx axy ayx ayy".
 </dd>
 <dd> Example: <b>local oldt = ov("transform 0 -1 1 0")</b></dd>
 </p>
 
 <a name="update"></a><p><dt><b>update</b></dt>
 <dd>
-!!!
+Tell Golly to update the overlay without drawing the underlying layer.
+This will be faster than calling g.update() but should only be used
+in cases where the overlay covers the entire layer <em>and</em> all
+pixels in the overlay are opaque.
 </dd>
 <dd> Example: <b>ov("update")</b></dd>
 </p>
 
 <a name="xy"></a><p><dt><b>xy</b></dt>
 <dd>
-!!!
+Return the current mouse position within the overlay as a string
+of the form "x y", or "" if the mouse is outside the overlay.
+The x and y values are pixel coordinates.
+The top left pixel in the overlay is "0 0"; x values increase
+to the right and y values increase downwards.
 </dd>
 <dd> Example: <b>local mousepos = ov("xy")</b></dd>
 </p>
@@ -293,7 +378,12 @@ the overlay produced by the same script but with the "blend 1" line removed
 Note that drawing with alpha blending on is significantly slower than drawing
 with it off, so it's a good idea to only turn it on when necessary.
 The overlay commands that can do alpha blending are:
-fill, flood, line, load, paste, set.
+<a href="#fill">fill</a>,
+<a href="#flood">flood</a>,
+<a href="#line">line</a>,
+<a href="#load">load</a>,
+<a href="#paste">paste</a>,
+<a href="#set">set</a>.
 
 
 <p><a name="oplus"></a>&nbsp;<br>
