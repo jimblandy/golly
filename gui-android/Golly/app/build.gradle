@@ -1,61 +1,80 @@
-apply plugin: 'com.android.model.application'
+apply plugin: "com.android.application"
 
-model {
-    android {
-        compileSdkVersion = 23
-        buildToolsVersion = "23.0.1"
-        
-        defaultConfig.with {
-            applicationId = "net.sf.golly"
-            minSdkVersion.apiLevel = 11
-            targetSdkVersion.apiLevel = 17
-            versionCode = 3
-            versionName = "1.2"
+android {
+    compileSdkVersion 24
+    buildToolsVersion "24.0.2"
+
+    defaultConfig {
+        applicationId "net.sf.golly"
+        minSdkVersion 11
+        targetSdkVersion 17
+        versionCode 3
+        versionName "1.2"
+        ndk {
+            abiFilters "armeabi-v7a", "armeabi"
         }
-    }
-
-    compileOptions.with {
-        sourceCompatibility=JavaVersion.VERSION_1_7
-        targetCompatibility=JavaVersion.VERSION_1_7
-    }
-
-    android.ndk {
-        moduleName = "golly"
-        stl = "stlport_shared"
-        cppFlags += "-I${file("src/main/jni")}".toString()
-        cppFlags += "-I${file("../../../gui-common")}".toString()
-        cppFlags += "-I${file("../../../gollybase")}".toString()
-        cppFlags += "-I${file("../../../gui-common/MiniZip")}".toString()
-        cppFlags += "-fexceptions"
-        cppFlags += "-DANDROID_GUI"
-        cppFlags += "-DZLIB"
-        ldLibs   += ["log", "z", "GLESv1_CM", "jnigraphics"]
-    }
-
-    android.sources {
-        main {
-            jni {
-                source {
-                    srcDir "src/main/jni"
-                    srcDir "../../../gui-common"
-                    srcDir "../../../gollybase"
-                    srcDir "../../../gui-common/MiniZip"
-                }
+        externalNativeBuild {
+            ndkBuild {
+                arguments "NDK_APPLICATION_MK:=Application.mk"
             }
         }
     }
 
-    android.buildTypes {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    buildTypes {
+        debug {
+            ndk {
+                debuggable true
+            }
+        }
         release {
-            minifyEnabled = false
-            proguardFiles += file('proguard-rules.pro')
-            ndk.with {
-                debuggable = true
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android.txt")
+            ndk {
+                debuggable true
             }
+        }
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path "Android.mk"
         }
     }
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:23.0.1'
+    compile "com.android.support:support-v4:24.2.1"
 }
+
+task zipHelp(type: Zip) {
+    archiveName "Help.zip"
+    from "../../../gui-common/Help"
+    include "**/*"
+    into "Help"
+    destinationDir file("src/main/assets/")
+}
+
+task zipPatterns(type: Zip) {
+    archiveName "Patterns.zip"
+    from "../../../Patterns"
+    include "**/*"
+    into "Patterns"
+    destinationDir file("src/main/assets/")
+}
+
+task zipRules(type: Zip) {
+    archiveName "Rules.zip"
+    from "../../../Rules"
+    include "**/*"
+    into "Rules"
+    destinationDir file("src/main/assets/")
+}
+
+preBuild.dependsOn(zipHelp)
+preBuild.dependsOn(zipPatterns)
+preBuild.dependsOn(zipRules)

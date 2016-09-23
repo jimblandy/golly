@@ -16,3 +16,5 @@ app/app.iml
 app/src/main/assets/Help.zip
 app/src/main/assets/Patterns.zip
 app/src/main/assets/Rules.zip
+
+.externalNativeBuild

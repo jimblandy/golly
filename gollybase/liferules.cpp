@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <cstdlib>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 liferules::liferules() {
    int i ;
