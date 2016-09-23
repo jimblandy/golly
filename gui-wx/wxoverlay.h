@@ -105,19 +105,20 @@ public:
 private:
     const char* DoCreate(const char* args);
     // Create a pixmap with the given width and height.
-    // All bytes are initialized to 0 (ie. pixels are transparent).
+    // All bytes are initialized to 0 (ie. all pixels are transparent).
     // The current RGBA values are all set to 255 (opaque white).
     // The current position is set to topleft.
     // The current cursor is set to the standard arrow.
     // Alpha blending is turned off.
     // The transformation values are set to 1,0,0,1 (identity).
+    // The current font is set to the default font at 11pt.
     
     const char* DoPosition(const char* args);
     // Specify where to display the overlay within the current view.
 
     const char* DoCursor(const char* args);
     // Specify which cursor to use when the mouse moves over a
-    // non-transparent pixel.
+    // non-transparent pixel and return the old cursor name.
     
     const char* DoSetRGBA(const char* args);
     // Set the current RGBA values and return the old values as a string
@@ -202,15 +203,15 @@ private:
     bool only_draw_overlay;     // set by DoUpdate, reset by OnlyDrawOverlay
     overlay_position pos;       // where to display overlay
     const wxCursor* ovcursor;   // cursor to use when mouse is in overlay
-    int axx, axy, ayx, ayy;     // for doing affine transformations
-    bool identity;              // true if transform values are 1,0,0,1
-
+    std::string cursname;       // remember cursor name
+    int axx, axy, ayx, ayy;     // affine transformation values
+    bool identity;              // true if transformation values are 1,0,0,1
     wxFont currfont;            // current font used by text command
     std::string fontname;       // name of current font
     int fontsize;               // size of current font
     
     std::map<std::string,Clip*> clips;
-    // named Clip data used by DoCopy and DoPaste
+    // named Clip data created by DoCopy or DoText and used by DoPaste
 };
 
 extern Overlay* curroverlay;    // pointer to current overlay (set by client)
