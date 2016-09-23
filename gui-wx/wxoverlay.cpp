@@ -111,6 +111,7 @@ const char* Overlay::DoCreate(const char* args)
     pos = topleft;
     
     ovcursor = wxSTANDARD_CURSOR;
+    cursname = "arrow";
 
     // identity transform
     axx = 1;
@@ -372,7 +373,14 @@ const char* Overlay::DoCursor(const char* args)
     }
 
     viewptr->CheckCursor(mainptr->infront);
-    return NULL;
+    
+    std::string oldcursor = cursname;
+    cursname = args+1;
+    
+    // return old cursor name
+    static std::string result;
+    result = oldcursor;
+    return result.c_str();
 }
 
 // -----------------------------------------------------------------------------

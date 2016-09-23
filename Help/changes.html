@@ -7,17 +7,32 @@
 
 <p>
 <ul>
-<li> expand on the following!!!
-<li> new items in Layer menu: Show Overlay and Delete Overlay
-<li> g.overlay("cmd arg1 arg2 ...") and link to Help/overlay.html
-<li> g.getevent returns new events: oclick, mup
-<li> g.setoption("showbuttons",0 to 4)
-<li> g.setoption("showoverlay",0 or 1)
-<li> g.getview(layer=-1)
-<li> new version of pop-plot.lua uses overlay
-<li> hexgrid.lua (not finished!!!)
-<li> flood-fill.lua uses a faster scanline algorithm
+<li> This version introduces a new feature called the
+     <a href="overlay.html">overlay</a>.
+<li> There are two new items at the top of the Layer menu:
+     <a href="layer.html#showoverlay">Show Overlay</a> and
+     <a href="layer.html#deleteoverlay">Delete Overlay</a>.
+<li> Lua scripts can call a new <a href="lua.html#overlay">overlay</a>
+     command to create, modify and delete the overlay.
+<li> The <a href="lua.html#getevent">getevent</a> command returns two
+     new events: "oclick" for detecting a mouse click in the overlay,
+     and "mup" for detecting the release of a mouse button (anywhere).
+<li> The <a href="lua.html#setoption">setoption</a> command recognizes
+     two new options: "showbuttons" (with a value from 0 to 4) for
+     controlling the position of the translucent buttons,
+     and "showoverlay" (with a value of 0 or 1) for controlling the
+     appearance of the overlay.
+<li> The <a href="lua.html#getview">getview</a> command now takes an
+     optional parameter so scripts can get the pixel dimensions of
+     a specified layer.
+<li> A new version of pop-plot.lua creates an overlay to display
+     a much nicer looking plot.
+<li> A new hexgrid.lua script creates an overlay to display a true
+     hexagonal grid over a layer that uses a rule with a hexagonal
+     neighborhood.
+<li> The flood-fill.lua script uses a faster scanline algorithm.
 <li> Non-totalistic rules containing B0 are now supported.
+<li> Pattern rendering is significantly faster when zoomed in.
 </ul>
 
 <p>

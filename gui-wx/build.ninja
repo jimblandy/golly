@@ -1,0 +1,237 @@
+# ninja build file for Golly on Ubuntu
+# 
+# to install ninja:
+# % sudo apt-get install ninja-build
+#
+# to build (requires build.ninja in the current directory):
+# % ninja
+#
+# to clean:
+# % ninja -t clean
+#
+# ninja is like a simple 'make' but faster:
+# % make -f Makefile-gtk clean ; time make -f Makefile-gtk
+# real  1m12.211s
+# user  1m6.997s
+# sys   0m4.817s
+#
+# % make -f Makefile-gtk clean ; time ninja
+# real  0m25.523s
+# user  1m22.618s
+# sys   0m8.351s
+
+# golly version
+app_version = 2.9b1
+
+# build directories
+basedir = ../gollybase
+objdir = ObjGTK
+luadir = ../lua
+cmddir = ../cmdline
+exedir = ..
+gollydir = 
+
+# lua cflags
+cflags = -O2 -Wall -Wextra -DLUA_COMPAT_5_2 -DLUA_USE_LINUX
+
+# lua build rule
+rule cc-lua
+   depfile = $out.d
+   command = cc -MMD -MF $out.d $cflags -c $in -o $out
+   deps = gcc
+   description = CC $in -> $out
+
+# build lua
+build $luadir/lapi.o: cc-lua $luadir/lapi.c
+build $luadir/lauxlib.o: cc-lua $luadir/lauxlib.c
+build $luadir/lbaselib.o: cc-lua $luadir/lbaselib.c
+build $luadir/lbitlib.o: cc-lua $luadir/lbitlib.c
+build $luadir/lcode.o: cc-lua $luadir/lcode.c
+build $luadir/lcorolib.o: cc-lua $luadir/lcorolib.c
+build $luadir/lctype.o: cc-lua $luadir/lctype.c
+build $luadir/ldblib.o: cc-lua $luadir/ldblib.c
+build $luadir/ldebug.o: cc-lua $luadir/ldebug.c
+build $luadir/ldo.o: cc-lua $luadir/ldo.c
+build $luadir/ldump.o: cc-lua $luadir/ldump.c
+build $luadir/lfunc.o: cc-lua $luadir/lfunc.c
+build $luadir/lgc.o: cc-lua $luadir/lgc.c
+build $luadir/linit.o: cc-lua $luadir/linit.c
+build $luadir/liolib.o: cc-lua $luadir/liolib.c
+build $luadir/llex.o: cc-lua $luadir/llex.c
+build $luadir/lmathlib.o: cc-lua $luadir/lmathlib.c
+build $luadir/lmem.o: cc-lua $luadir/lmem.c
+build $luadir/loadlib.o: cc-lua $luadir/loadlib.c
+build $luadir/lobject.o: cc-lua $luadir/lobject.c
+build $luadir/lopcodes.o: cc-lua $luadir/lopcodes.c
+build $luadir/loslib.o: cc-lua $luadir/loslib.c
+build $luadir/lparser.o: cc-lua $luadir/lparser.c
+build $luadir/lstate.o: cc-lua $luadir/lstate.c
+build $luadir/lstring.o: cc-lua $luadir/lstring.c
+build $luadir/lstrlib.o: cc-lua $luadir/lstrlib.c
+build $luadir/ltable.o: cc-lua $luadir/ltable.c
+build $luadir/ltablib.o: cc-lua $luadir/ltablib.c
+build $luadir/ltm.o: cc-lua $luadir/ltm.c
+build $luadir/lundump.o: cc-lua $luadir/lundump.c
+build $luadir/lutf8lib.o: cc-lua $luadir/lutf8lib.c
+build $luadir/lvm.o: cc-lua $luadir/lvm.c
+build $luadir/lzio.o: cc-lua $luadir/lzio.c
+
+# lua library
+lua_lib = $luadir/liblua.a
+
+# lua library link rule
+rule link_lua
+   command = ar crs $out $in && ranlib $out
+   description = AR $out
+
+# build lua library
+build $lua_lib: link_lua $luadir/lapi.o $luadir/lauxlib.o $luadir/lbaselib.o $
+      $luadir/lbitlib.o $luadir/lcode.o $luadir/lcorolib.o $luadir/lctype.o $luadir/ldblib.o $
+      $luadir/ldebug.o $luadir/ldo.o $luadir/ldump.o $luadir/lfunc.o $luadir/lgc.o $
+      $luadir/linit.o $luadir/liolib.o $luadir/llex.o $luadir/lmathlib.o $luadir/lmem.o $
+      $luadir/loadlib.o $luadir/lobject.o $luadir/lopcodes.o $luadir/loslib.o $luadir/lparser.o $
+      $luadir/lstate.o $luadir/lstring.o $luadir/lstrlib.o $luadir/ltable.o $luadir/ltablib.o $
+      $luadir/ltm.o $luadir/lundump.o $luadir/lutf8lib.o $luadir/lvm.o $luadir/lzio.o
+
+# standard cxx flags
+cxxflags = -DVERSION=$app_version -DGOLLYDIR="$gollydir" $
+   -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$basedir $
+   -O5 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
+extra_cxxflags =
+
+# additional cxx flags for wx
+wx_cxxflags = `wx-config --cxxflags`
+
+# additional cxx flags for zlib
+zlib_cxxflags = -DZLIB
+
+# additional cxx flags for python
+python_cxxflags = -I`python -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc()"`
+
+# additional cxx flags for lua
+lua_cxxflags = -I$luadir
+
+# standard build rule
+rule cxxc
+   depfile = $out.d
+   command = g++ -MMD -MF $out.d $cxxflags $extra_cxxflags -c $in -o $out
+   deps = gcc
+   description = CXX $in -> $out
+
+# wx build rule
+rule cxxc_wx
+   depfile = $out.d
+   command = g++ -MMD -MF $out.d $cxxflags $wx_cxxflags $extra_cxxflags -c $in -o $out
+   deps = gcc
+   description = CXX $in -> $out
+
+# base build
+build $objdir/bgolly.o: cxxc $cmddir/bgolly.cpp
+   extra_cxxflags = $zlib_cxxflags
+build $objdir/RuleTableToTree.o: cxxc $cmddir/RuleTableToTree.cpp
+build $objdir/bigint.o: cxxc $basedir/bigint.cpp
+build $objdir/lifealgo.o: cxxc $basedir/lifealgo.cpp
+build $objdir/hlifealgo.o: cxxc $basedir/hlifealgo.cpp
+build $objdir/hlifedraw.o: cxxc $basedir/hlifedraw.cpp
+build $objdir/qlifealgo.o: cxxc $basedir/qlifealgo.cpp
+build $objdir/qlifedraw.o: cxxc $basedir/qlifedraw.cpp
+build $objdir/jvnalgo.o: cxxc $basedir/jvnalgo.cpp
+build $objdir/ruleloaderalgo.o: cxxc $basedir/ruleloaderalgo.cpp
+build $objdir/ruletable_algo.o: cxxc $basedir/ruletable_algo.cpp
+build $objdir/ruletreealgo.o: cxxc $basedir/ruletreealgo.cpp
+build $objdir/generationsalgo.o: cxxc $basedir/generationsalgo.cpp
+build $objdir/ghashbase.o: cxxc $basedir/ghashbase.cpp
+build $objdir/ghashdraw.o: cxxc $basedir/ghashdraw.cpp
+build $objdir/liferules.o: cxxc $basedir/liferules.cpp
+build $objdir/liferender.o: cxxc $basedir/liferender.cpp
+build $objdir/util.o: cxxc $basedir/util.cpp
+build $objdir/viewport.o: cxxc $basedir/viewport.cpp
+build $objdir/lifepoll.o: cxxc $basedir/lifepoll.cpp
+build $objdir/readpattern.o: cxxc $basedir/readpattern.cpp
+   extra_cxxflags = $zlib_cxxflags
+build $objdir/writepattern.o: cxxc $basedir/writepattern.cpp
+   extra_cxxflags = $zlib_cxxflags
+
+# wx build
+build $objdir/wxrender.o: cxxc_wx wxrender.cpp
+build $objdir/wxutils.o: cxxc_wx wxutils.cpp
+build $objdir/wxprefs.o: cxxc_wx wxprefs.cpp
+build $objdir/wxalgos.o: cxxc_wx wxalgos.cpp
+build $objdir/wxrule.o: cxxc_wx wxrule.cpp
+build $objdir/wxinfo.o: cxxc_wx wxinfo.cpp
+build $objdir/wxhelp.o: cxxc_wx wxhelp.cpp
+build $objdir/wxstatus.o: cxxc_wx wxstatus.cpp
+build $objdir/wxview.o: cxxc_wx wxview.cpp
+build $objdir/wxoverlay.o: cxxc_wx wxoverlay.cpp
+build $objdir/wxscript.o: cxxc_wx wxscript.cpp
+build $objdir/wxfile.o: cxxc_wx wxfile.cpp
+build $objdir/wxedit.o: cxxc_wx wxedit.cpp
+build $objdir/wxselect.o: cxxc_wx wxselect.cpp
+build $objdir/wxcontrol.o: cxxc_wx wxcontrol.cpp
+build $objdir/wxtimeline.o: cxxc_wx wxtimeline.cpp
+build $objdir/wxundo.o: cxxc_wx wxundo.cpp
+build $objdir/wxlayer.o: cxxc_wx wxlayer.cpp
+build $objdir/wxmain.o: cxxc_wx wxmain.cpp
+build $objdir/wxgolly.o: cxxc_wx wxgolly.cpp
+build $objdir/wxlua.o: cxxc_wx wxlua.cpp
+   extra_cxxflags = $lua_cxxflags
+build $objdir/wxpython.o: cxxc_wx wxpython.cpp
+   extra_cxxflags = $python_cxxflags
+build $objdir/wxperl.o: cxxc_wx wxperl.cpp
+
+# standard link flags
+ldflags = -Wl,--as-needed
+extra_ldflags =
+
+# additional link flags for zlib
+zlib_ldflags = -lz
+
+# additional link flags for opengl
+extralibs_opengl = -lwx_gtk2u_gl-3.0 -lGL -lGLU
+
+# additional link flags for wx
+wx_ldflags = `wx-config --libs`
+
+# additional link flags for lua
+lua_ldflags = -ldl
+
+# link rule
+rule link
+   command = g++ $cxxflags -o $out $in $ldflags $zlib_ldflags $extra_ldflags
+   description = LINK $out
+  
+# link golly
+build $exedir/golly: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo.o $
+      $objdir/hlifedraw.o $objdir/qlifealgo.o $objdir/qlifedraw.o $
+      $objdir/jvnalgo.o $objdir/ruletreealgo.o $objdir/ruletable_algo.o $objdir/ruleloaderalgo.o $
+      $objdir/ghashbase.o $objdir/ghashdraw.o $objdir/readpattern.o $
+      $objdir/writepattern.o $objdir/liferules.o $objdir/util.o $
+      $objdir/liferender.o $objdir/viewport.o $objdir/lifepoll.o $
+      $objdir/generationsalgo.o $
+      $objdir/wxutils.o $objdir/wxprefs.o $objdir/wxalgos.o $objdir/wxrule.o $
+      $objdir/wxinfo.o $objdir/wxhelp.o $objdir/wxstatus.o $objdir/wxview.o $objdir/wxoverlay.o $
+      $objdir/wxrender.o $objdir/wxscript.o $objdir/wxlua.o $objdir/wxpython.o $objdir/wxperl.o $
+      $objdir/wxfile.o $objdir/wxedit.o $objdir/wxcontrol.o $objdir/wxtimeline.o $
+      $objdir/wxundo.o $objdir/wxselect.o $objdir/wxlayer.o $objdir/wxmain.o $objdir/wxgolly.o $
+      $lua_lib
+   extra_ldflags = $extralibs_opengl $wx_ldflags $lua_ldflags
+  
+# link bgolly
+build $exedir/bgolly: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo.o $
+      $objdir/hlifedraw.o $objdir/qlifealgo.o $objdir/qlifedraw.o $
+      $objdir/jvnalgo.o $objdir/ruletreealgo.o $objdir/ruletable_algo.o $objdir/ruleloaderalgo.o $
+      $objdir/ghashbase.o $objdir/ghashdraw.o $objdir/readpattern.o $
+      $objdir/writepattern.o $objdir/liferules.o $objdir/util.o $
+      $objdir/liferender.o $objdir/viewport.o $objdir/lifepoll.o $
+      $objdir/generationsalgo.o $
+      $objdir/bgolly.o
+
+# link RuleTableToTree
+build $exedir/RuleTableToTree: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo.o $
+      $objdir/hlifedraw.o $objdir/qlifealgo.o $objdir/qlifedraw.o $
+      $objdir/jvnalgo.o $objdir/ruletreealgo.o $objdir/ruletable_algo.o $objdir/ruleloaderalgo.o $
+      $objdir/ghashbase.o $objdir/ghashdraw.o $objdir/readpattern.o $
+      $objdir/writepattern.o $objdir/liferules.o $objdir/util.o $
+      $objdir/liferender.o $objdir/viewport.o $objdir/lifepoll.o $
+      $objdir/generationsalgo.o $
+      $objdir/RuleTableToTree.o

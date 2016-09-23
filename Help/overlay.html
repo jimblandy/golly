@@ -1,0 +1,504 @@
+<html>
+<title>Golly Help: Overlay</title>
+<body bgcolor="#FFFFCE">
+
+<p>
+<dd><a href="#intro"><b>Introduction</b></a></dd>
+<dd><a href="#commands"><b>The overlay commands</b></a></dd>
+<dd><a href="#blending"><b>Alpha blending</b></a></dd>
+<dd><a href="#oplus"><b>The oplus package</b></a></dd>
+</p>
+
+<p><a name="intro"></a>&nbsp;<br>
+<font size=+1><b>Introduction</b></font>
+
+<p>
+The overlay is a rectangular region of pixels that can be displayed
+above the current layer.  Lua scripts have total control of what the
+overlay looks like and how the user interacts with it.
+
+<p>
+The Scripts/Lua folder supplied with Golly has a couple of scripts
+that illustrate how the overlay can be used:
+<b>hexgrid.lua</b> creates a true hexagonal grid for rules that use
+a hexagonal neighborhood, and <b>pop-plot.lua</b> displays a plot
+of population versus time that can be saved as a PNG file.
+
+<p>
+The overlay is manipulated using a single script command called
+<a href="lua.html#overlay">overlay</a>.
+It takes a single string parameter that contains a command followed by
+zero or more arguments separated by spaces.  Some overlay commands can
+also return a single string as their result.
+
+
+<p><a name="commands"></a>&nbsp;<br>
+<font size=+1><b>The overlay commands</b></font>
+
+<p>
+Here is an alphabetical list of all the valid overlay commands:
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top>
+<a href="#blend"><b>blend</b></a><br>
+<a href="#copy"><b>copy</b></a><br>
+<a href="#create"><b>create</b></a><br>
+<a href="#cursor"><b>cursor</b></a><br>
+<a href="#delete"><b>delete</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#fill"><b>fill</b></a><br>
+<a href="#flood"><b>flood</b></a><br>
+<a href="#font"><b>font</b></a><br>
+<a href="#get"><b>get</b></a><br>
+<a href="#line"><b>line</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#load"><b>load</b></a><br>
+<a href="#paste"><b>paste</b></a><br>
+<a href="#position"><b>position</b></a><br>
+<a href="#rgba"><b>rgba</b></a><br>
+<a href="#save"><b>save</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#set"><b>set</b></a><br>
+<a href="#text"><b>text</b></a><br>
+<a href="#transform"><b>transform</b></a><br>
+<a href="#update"><b>update</b></a><br>
+<a href="#xy"><b>xy</b></a>
+</td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+The examples given below assume a script has started with these lines:
+</p>
+<p>
+<dd><b>local g = golly()</b></dd>
+<dd><b>local ov = g.overlay</b></dd>
+</p>
+
+<a name="blend"></a><p><dt><b>blend <i>i</i></b></dt>
+<dd>
+Turn <a href="#blending">alpha blending</a> on (<i>i</i>=1) or off
+(<i>i</i>=0) and return the previous blend state as a string ("0" or "1").
+The commands affected by alpha blending are:
+<a href="#fill">fill</a>,
+<a href="#flood">flood</a>,
+<a href="#line">line</a>,
+<a href="#load">load</a>,
+<a href="#paste">paste</a>,
+<a href="#set">set</a>.
+</dd>
+<dd> Example: <b>local oldblend = ov("blend 1")</b></dd>
+</p>
+
+<a name="copy"></a><p><dt><b>copy <i>x y wd ht clipname</i></b></dt>
+<dd>
+Copy the pixels in the given rectangle into the named clip for later use
+by a <a href="#paste">paste</a> command.
+An error will occur if any part of the rectangle is outside the overlay.
+The clip name can contain any characters except a space.
+</dd>
+<dd> Example: <b>ov("copy 0 0 100 200 tempbox")</b></dd>
+</p>
+
+<a name="create"></a><p><dt><b>create <i>wd ht</i></b></dt>
+<dd>
+Delete any existing overlay and create a new overlay with the given
+width and height.  All pixels are initially transparent
+(their RGBA values are set to 0,0,0,0).  The initial RGBA values used
+by later drawing commands are set to 255,255,255,255 (opaque white).
+The overlay's initial position is set to topleft,
+the initial cursor is set to the standard arrow,
+the initial transform values are set to 1,0,0,1 (identity) and
+alpha blending is initially off.
+The initial font for drawing text is the default font at a size of 11pt
+(see the <a href="#font">font</a> command).
+</dd>
+<dd> Example: <b>ov("create 400 300")</b></dd>
+</p>
+
+<a name="cursor"></a><p><dt><b>cursor <i>name</i></b></dt>
+<dd>
+Specify which cursor to use when the mouse moves over a
+non-transparent pixel within the overlay.  The valid cursor names are:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td>arrow</td><td width=20></td><td>    &ndash; standard arrow</td></tr>
+<tr><td>cross</td><td width=20></td><td>    &ndash; crosshairs</td></tr>
+<tr><td>current</td><td width=20></td><td>  &ndash; Golly's current cursor (no change)</td></tr>
+<tr><td>hand</td><td width=20></td><td>     &ndash; hand</td></tr>
+<tr><td>hidden</td><td width=20></td><td>   &ndash; invisible cursor</td></tr>
+<tr><td>pencil</td><td width=20></td><td>   &ndash; pencil</td></tr>
+<tr><td>pick</td><td width=20></td><td>     &ndash; color picker</td></tr>
+<tr><td>zoomin</td><td width=20></td><td>   &ndash; magnifying glass with "+"</td></tr>
+<tr><td>zoomout</td><td width=20></td><td>  &ndash; magnifying glass with "-"</td></tr>
+</table>
+</dd>
+<p>
+<dd>
+The previous cursor name is returned.
+</dd>
+<dd> Example: <b>local oldcursor = ov("cursor pencil")</b></dd>
+</p>
+
+<a name="delete"></a><p><dt><b>delete</b></dt>
+<dd>
+Delete the current overlay.  Equivalent to selecting Delete Overlay
+from the Layer menu.
+</dd>
+<dd> Example: <b>ov("delete")</b></dd>
+</p>
+
+<a name="fill"></a><p><dt><b>fill <i>x y wd ht</i></b></dt>
+<dd>
+Fill the given rectangle with the current RGBA values (as set by the most
+recent <a href="#rgba">rgba</a> command).
+Any parts of the rectangle outside the overlay are automatically clipped.
+If no rectangle is given then the entire overlay is filled.
+A width or height less than 1 is relative to the overlay's width or height,
+so a command like <b>ov("fill 1 1 -2 -2")</b> would fill all of the overlay
+except for a 1 pixel border around the edges.
+</dd>
+<dd> Example: <b>ov("fill 10 10 30 50")</b></dd>
+</p>
+
+<a name="flood"></a><p><dt><b>flood <i>x y</i></b></dt>
+<dd>
+Flood a connected region of pixels that match the given starting pixel
+with the current RGBA values.
+</dd>
+<dd> Example: <b>ov("flood 10 20")</b></dd>
+</p>
+
+<a name="font"></a><p><dt><b>font <i>fontsize fontname</i></b></dt>
+<dd>
+Set the font used by later <a href="#text">text</a> commands.
+If the font name is not supplied then only the font size will be changed.
+The valid font names are:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td>default</td><td width=20></td><td>          &ndash; standard system font</td></tr>
+<tr><td>default-bold</td><td width=20></td><td>     &ndash; bold system font</td></tr>
+<tr><td>default-italic</td><td width=20></td><td>   &ndash; italic system font</td></tr>
+<tr><td>mono</td><td width=20></td><td>             &ndash; mono-spaced font</td></tr>
+<tr><td>mono-bold</td><td width=20></td><td>        &ndash; bold mono-spaced font</td></tr>
+<tr><td>mono-italic</td><td width=20></td><td>      &ndash; italic mono-spaced font</td></tr>
+<tr><td>roman</td><td width=20></td><td>            &ndash; roman font</td></tr>
+<tr><td>roman-bold</td><td width=20></td><td>       &ndash; bold roman font</td></tr>
+<tr><td>roman-italic</td><td width=20></td><td>     &ndash; italic roman font</td></tr>
+</table>
+</dd>
+<p>
+<dd>
+The previous font is returned as a string of the form "fontsize fontname".
+</dd>
+<dd> Example: <b>local oldfont = ov("font 15 roman-bold")</b></dd>
+</p>
+
+<a name="get"></a><p><dt><b>get <i>x y</i></b></dt>
+<dd>
+Return the RGBA values of the given pixel as a string of the form
+"red green blue alpha".  All values will be from 0 to 255.
+If the given pixel is outside the overlay then "" is returned.
+</dd>
+<dd> Example: <b>local rgba = ov("get 10 20")</b></dd>
+</p>
+
+<a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2</i></b></dt>
+<dd>
+Draw a line of pixels from x1,y1 to x2,y2 using the current RGBA values.
+Any pixels outside the overlay edges are automatically clipped.
+</dd>
+<dd> Example: <b>ov("line 10 20 50 60")</b></dd>
+</p>
+
+<a name="load"></a><p><dt><b>load <i>x y file</i></b></dt>
+<dd>
+Load the given BMP/GIF/PNG/TIFF file into the overlay at the given location.
+Any pixels outside the overlay edges are automatically clipped.
+</dd>
+<dd> Example: <b>ov("load 10 20 foo.png")</b></dd>
+</p>
+
+<a name="paste"></a><p><dt><b>paste <i>x y clipname</i></b></dt>
+<dd>
+Paste the named clip (created by an earlier <a href="#copy">copy</a> or
+<a href="#text">text</a> command) into the overlay at the given location.
+Any pixels outside the overlay edges are automatically clipped.
+</dd>
+<dd> Example: <b>ov("paste 10 20 tempbox")</b></dd>
+</p>
+
+<a name="position"></a><p><dt><b>position <i>pos</i></b></dt>
+<dd>
+Specify where the overlay is to be displayed within the current layer.
+The valid positions are:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td>topleft</td><td width=20></td><td>      &ndash; top left corner</td></tr>
+<tr><td>topright</td><td width=20></td><td>     &ndash; top right corner</td></tr>
+<tr><td>bottomright</td><td width=20></td><td>  &ndash; bottom right corner</td></tr>
+<tr><td>bottomleft</td><td width=20></td><td>   &ndash; bottom left corner</td></tr>
+<tr><td>middle</td><td width=20></td><td>       &ndash; middle of layer</td></tr>
+</table>
+</dd>
+<p>
+<dd> Example: <b>ov("position middle")</b></dd>
+</p>
+
+<a name="rgba"></a><p><dt><b>rgba <i>red green blue alpha</i></b></dt>
+<dd>
+Set the current RGBA values used by later drawing commands
+and return the old values as a string of the form "red green blue alpha".
+All values are from 0 to 255.
+The commands that use the current RGBA values are:
+<a href="#fill">fill</a>,
+<a href="#flood">flood</a>,
+<a href="#line">line</a>,
+<a href="#set">set</a>,
+<a href="#text">text</a>.
+</dd>
+<dd> Example: <b>local oldrgba = ov("rgba 255 0 0 255")</b></dd>
+</p>
+
+<a name="save"></a><p><dt><b>save <i>x y wd ht file</i></b></dt>
+<dd>
+Save the pixels in the given rectangle in the given PNG file.
+An error will occur if any part of the rectangle is outside the overlay.
+</dd>
+<dd> Example: <b>ov("save 0 0 100 80 "..g.getdir("temp").."foo.png")</b></dd>
+</p>
+
+<a name="set"></a><p><dt><b>set <i>x y</i></b></dt>
+<dd>
+Set the given pixel to the current RGBA values.
+A pixel outside the overlay is silently ignored.
+</dd>
+<dd> Example: <b>ov("set 10 20")</b></dd>
+</p>
+
+<a name="text"></a><p><dt><b>text <i>clipname arbitrary text ...</i></b></dt>
+<dd>
+Create a clip with the given name containing the given text in the
+current font (as set by the most recent <a href="#font">font</a> command).
+Return the dimensions of the clip as a string of the form
+"width height descent leading".  The height is the total height of one line
+in the current font and the descent is the number of pixels under the baseline.
+The leading value is the amount of extra vertical space to put between lines
+(zero in all the currently supported fonts).
+The text's color depends on the most recent <a href="#rgba">rgba</a> command.
+Note that the text has a transparent background, so you'll probably need to set
+<a href="#blend">blend</a> to 1 before drawing the text with <a href="#paste">paste</a>.
+</dd>
+<dd> Example: <b>ov("text tempclip To be or not to be...")</b></dd>
+</p>
+
+<a name="transform"></a><p><dt><b>transform <i>axx axy ayx ayy</i></b></dt>
+<dd>
+Set the affine transformation values used by later <a href="#paste">paste</a>
+commands and return the old values as a string of the form "axx axy ayx ayy".
+</dd>
+<dd> Example: <b>local oldt = ov("transform 0 -1 1 0")</b></dd>
+</p>
+
+<a name="update"></a><p><dt><b>update</b></dt>
+<dd>
+Tell Golly to update the overlay without drawing the underlying layer.
+This will be faster than calling g.update() but should only be used
+in cases where the overlay covers the entire layer <em>and</em> all
+pixels in the overlay are opaque.
+</dd>
+<dd> Example: <b>ov("update")</b></dd>
+</p>
+
+<a name="xy"></a><p><dt><b>xy</b></dt>
+<dd>
+Return the current mouse position within the overlay as a string
+of the form "x y", or "" if the mouse is outside the overlay.
+The x and y values are pixel coordinates.
+The top left pixel in the overlay is "0 0"; x values increase
+to the right and y values increase downwards.
+</dd>
+<dd> Example: <b>local mousepos = ov("xy")</b></dd>
+</p>
+
+
+<p><a name="blending"></a>&nbsp;<br>
+<font size=+1><b>Alpha blending</b></font>
+
+<p>
+Alpha blending is a way of drawing translucent pixels on top of existing
+pixels to get nicer looking results.  When an overlay is created, alpha blending
+is initially turned off.  To turn it on a script needs to call "blend 1".
+Consider this simple script which draws a translucent blue square on top
+of a translucent red square (both on top of an opaque white background):
+
+<p>
+<dd><b>local g = golly()</b></dd>
+<dd><b>local ov = g.overlay</b></dd>
+<dd><b>ov("create 100 80")</b></dd>
+<dd><b>ov("fill")</b></dd>
+<dd><b>ov("blend 1")</b></dd>
+<dd><b>ov("rgba 255 0 0 128")</b></dd>
+<dd><b>ov("fill 10 10 50 50")</b></dd>
+<dd><b>ov("rgba 0 0 255 128")</b></dd>
+<dd><b>ov("fill 30 20 50 50")</b></dd>
+<dd><b>g.setoption("showoverlay",1)</b></dd>
+</p>
+
+<p>
+The image on the left shows the resulting overlay.  The image on the right shows
+the overlay produced by the same script but with the "blend 1" line removed
+(the grid lines are from the layer underneath the overlay):
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><img src="blend1.png"></td><td width=50></td><td><img src="blend0.png"></td></tr>
+<tr><td align=center>blend 1</td><td width=50></td><td align=center>blend 0</td></tr>
+</table>
+</dd>
+
+<p>
+Note that drawing with alpha blending on is significantly slower than drawing
+with it off, so it's a good idea to only turn it on when necessary.
+The overlay commands that can do alpha blending are:
+<a href="#fill">fill</a>,
+<a href="#flood">flood</a>,
+<a href="#line">line</a>,
+<a href="#load">load</a>,
+<a href="#paste">paste</a>,
+<a href="#set">set</a>.
+
+
+<p><a name="oplus"></a>&nbsp;<br>
+<font size=+1><b>The oplus package</b></font>
+
+<p>
+The <b>oplus</b> package provides a high-level interface to the overlay commands.
+The package consists of a set of .lua files stored in the Scripts/Lua/oplus
+directory.  The following functions are available after a script calls
+<b>local op = require "oplus"</b>
+(see <a href="edit:Scripts/Lua/oplus/init.lua">init.lua</a> for
+the implementation details):
+
+<p><dt><b>op.button(<i>label, onclick</i>)</b></dt>
+<dd>
+Creates and returns a table representing a button.
+The button width depends on the given label text.
+If the <b>op.process</b> function (see below) detects a click in this
+button then the given onclick function will be called.
+</dd>
+<dd> Example: <b>cancel_button = op.button("Cancel", g.exit)</b></dd>
+</p>
+<p>
+<dd>
+The button will only appear after its show function is called.
+</dd>
+<dd> Example: <b>cancel_button.show(10, 10)</b></dd>
+</p>
+
+<p><dt><b>op.checkbox(<i>label, labelrgba, onclick</i>)</b></dt>
+<dd>
+Creates and returns a table representing a check box.
+The label text will be drawn using the given color to the right of a tickable button.
+If the <b>op.process</b> function (see below) detects a click in this
+check box (including the label) then the given onclick function will be called.
+</dd>
+<dd> Example: <b>line_box = op.checkbox("Show lines", op.black, toggle_lines)</b></dd>
+</p>
+<p>
+<dd>
+The check box will only appear after its show function is called.
+</dd>
+<dd> Example: <b>line_box.show(10, 40, true)</b></dd>
+</p>
+
+<p><dt><b>op.slider(<i>label, labelrgba, barwidth, minval, maxval, onclick</i>)</b></dt>
+<dd>
+Creates and returns a table representing a slider.
+The label text will be drawn using the given color to the left of the slider's
+horizontal bar.  The bar width must be greater than 0.
+The minimum and maximum values of the slider can be any integer values,
+as long as minval is less than maxval.
+If the <b>op.process</b> function (see below) detects a click in this slider,
+and the slider value has changed, then the given onclick function will be called.
+</dd>
+<dd> Example: <b>red_slider = op.slider("Red:", op.black, 64, 0, 255, new_red)</b></dd>
+</p>
+<p>
+<dd>
+The slider will only appear after its show function is called.
+</dd>
+<dd> Example: <b>red_slider.show(10, 70, 255)</b></dd>
+</p>
+
+<p><dt><b>op.process(<i>event</i>)</b></dt>
+<dd>
+Processes the given event (normally the string returned by a
+<a href="lua.html#getevent">getevent</a> command).
+If it detects a click in a previously created button, check box or slider then
+it will call the appropriate onclick function and return an empty string to
+indicate the event was handled, otherwise it returns a copy of the given string
+so the caller can process the event.
+</dd>
+<dd> Example: <b>local event = op.process( g.getevent() )</b></dd>
+</p>
+
+<p>
+The <b>oplus</b> package also defines a number of synonyms for some
+frequently used overlay commands.
+
+<p>
+Opaque colors:
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>op.white</b></td><td width=5></td><td>     = "rgba 255 255 255 255"</td></tr>
+<tr><td><b>op.black</b></td><td width=5></td><td>     = "rgba 0 0 0 255"</td></tr>
+<tr><td><b>op.red</b></td><td width=5></td><td>       = "rgba 255 0 0 255"</td></tr>
+<tr><td><b>op.green</b></td><td width=5></td><td>     = "rgba 0 255 0 255"</td></tr>
+<tr><td><b>op.blue</b></td><td width=5></td><td>      = "rgba 0 0 255 255"</td></tr>
+<tr><td><b>op.cyan</b></td><td width=5></td><td>      = "rgba 0 255 255 255"</td></tr>
+<tr><td><b>op.magenta</b></td><td width=5></td><td>   = "rgba 255 0 255 255"</td></tr>
+<tr><td><b>op.yellow</b></td><td width=5></td><td>    = "rgba 255 255 0 255"</td></tr>
+</table>
+</dd>
+
+<p>
+Affine transformations:
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>op.identity</b></td><td width=5></td><td>     = "transform  1  0  0  1"</td></tr>
+<tr><td><b>op.flip</b></td><td width=5></td><td>         = "transform -1  0  0 -1"</td></tr>
+<tr><td><b>op.flip_x</b></td><td width=5></td><td>       = "transform -1  0  0  1"</td></tr>
+<tr><td><b>op.flip_y</b></td><td width=5></td><td>       = "transform  1  0  0 -1"</td></tr>
+<tr><td><b>op.swap_xy</b></td><td width=5></td><td>      = "transform  0  1  1  0"</td></tr>
+<tr><td><b>op.swap_xy_flip</b></td><td width=5></td><td> = "transform  0 -1 -1  0"</td></tr>
+<tr><td><b>op.rcw</b></td><td width=5></td><td>          = "transform  0 -1  1  0"</td></tr>
+<tr><td><b>op.rccw</b></td><td width=5></td><td>         = "transform  0  1 -1  0"</td></tr>
+<tr><td><b>op.racw</b></td><td width=5></td><td>         = <b>op.rccw</b></td></tr>
+</table>
+</dd>
+
+<p>
+For a good example of how to use the <b>oplus</b> package,
+see the <a href="edit:Scripts/Lua/pop-plot.lua">pop-plot.lua</a> script.
+
+
+</body>
+</html>

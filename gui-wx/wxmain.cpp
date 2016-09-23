@@ -1450,6 +1450,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_HELP_LEXICON:   ShowHelp(_("Help/Lexicon/lex.htm")); break;
         case ID_HELP_ARCHIVES:  ShowHelp(_("Help/archives.html")); break;
         case ID_HELP_LUA:       ShowHelp(_("Help/lua.html")); break;
+        case ID_HELP_OVERLAY:   ShowHelp(_("Help/overlay.html")); break;
         case ID_HELP_PYTHON:    ShowHelp(_("Help/python.html")); break;
         case ID_HELP_KEYBOARD:  ShowHelp(SHOW_KEYBOARD_SHORTCUTS); break;
         case ID_HELP_MOUSE:     ShowHelp(_("Help/mouse.html")); break;
@@ -2300,6 +2301,7 @@ void MainFrame::CreateMenus()
     helpMenu->Append(ID_HELP_ARCHIVES,           _("Online Archives"));
     helpMenu->AppendSeparator();
     helpMenu->Append(ID_HELP_LUA,                _("Lua Scripting"));
+    helpMenu->Append(ID_HELP_OVERLAY,            _("Overlay"));
     helpMenu->Append(ID_HELP_PYTHON,             _("Python Scripting"));
     helpMenu->AppendSeparator();
     helpMenu->Append(ID_HELP_KEYBOARD,           _("Keyboard Shortcuts"));

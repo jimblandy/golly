@@ -11,13 +11,13 @@ local ov = g.overlay
 
 local m = {}
 
+--------------------------------------------------------------------------------
+
 local button_tables = {}    -- for detecting click in a button
 local checkbox_tables = {}  -- for detecting click in a check box
 local slider_tables = {}    -- for detecting click in a slider
 
---------------------------------------------------------------------------------
-
--- some adjustable parameters
+-- some adjustable parameters:
 
 local buttonht = 24     -- height of buttons (also used for check boxes and sliders)
 local sliderwd = 16     -- width of slider button (keep even)
@@ -44,11 +44,11 @@ m.black     = "rgba 0 0 0 255"
 m.red       = "rgba 255 0 0 255"
 m.green     = "rgba 0 255 0 255"
 m.blue      = "rgba 0 0 255 255"
-m.yellow    = "rgba 255 255 0 255"
 m.cyan      = "rgba 0 255 255 255"
 m.magenta   = "rgba 255 0 255 255"
+m.yellow    = "rgba 255 255 0 255"
 
--- transformations
+-- affine transformations
 m.identity     = "transform  1  0  0  1"
 m.flip         = "transform -1  0  0 -1"
 m.flip_x       = "transform -1  0  0  1"
