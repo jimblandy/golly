@@ -5,6 +5,7 @@
 <p>
 <dd><a href="#intro"><b>Introduction</b></a></dd>
 <dd><a href="#commands"><b>The overlay commands</b></a></dd>
+<dd><a href="#clips"><b>Using clips</b></a></dd>
 <dd><a href="#blending"><b>Alpha blending</b></a></dd>
 <dd><a href="#oplus"><b>The oplus package</b></a></dd>
 </p>
@@ -24,18 +25,16 @@ that illustrate how the overlay can be used:
 a hexagonal neighborhood, and <b>pop-plot.lua</b> displays a plot
 of population versus time that can be saved as a PNG file.
 
-<p>
-The overlay is manipulated using a single script command called
-<a href="lua.html#overlay">overlay</a>.
-It takes a single string parameter that contains a command followed by
-zero or more arguments separated by spaces.  Some overlay commands can
-also return a single string as their result.
-
 
 <p><a name="commands"></a>&nbsp;<br>
 <font size=+1><b>The overlay commands</b></font>
 
 <p>
+The overlay is manipulated using a single script command called
+<a href="lua.html#overlay">overlay</a>.
+It takes a single string parameter that contains an overlay command followed
+by zero or more arguments separated by spaces.  Some overlay commands can
+also return a single string as their result.
 Here is an alphabetical list of all the valid overlay commands:
 <p>
 <dd>
@@ -87,8 +86,8 @@ The examples given below assume a script has started with these lines:
 
 <a name="blend"></a><p><dt><b>blend <i>i</i></b></dt>
 <dd>
-Turn <a href="#blending">alpha blending</a> on (<i>i</i>=1) or off
-(<i>i</i>=0) and return the previous blend state as a string ("0" or "1").
+Turn <a href="#blending">alpha blending</a> on (<i>i</i> = 1) or off
+(<i>i</i> = 0) and return the previous blend state as a string ("0" or "1").
 The commands affected by alpha blending are:
 <a href="#fill">fill</a>,
 <a href="#flood">flood</a>,
@@ -102,8 +101,8 @@ The commands affected by alpha blending are:
 
 <a name="copy"></a><p><dt><b>copy <i>x y wd ht clipname</i></b></dt>
 <dd>
-Copy the pixels in the given rectangle into the named clip for later use
-by a <a href="#paste">paste</a> command.
+Copy the pixels in the given rectangle into the named <a href="#clips">clip</a>
+for later use by a <a href="#paste">paste</a> command.
 An error will occur if any part of the rectangle is outside the overlay.
 The clip name can contain any characters except a space.
 </dd>
@@ -117,9 +116,8 @@ width and height.  All pixels are initially transparent
 (their RGBA values are set to 0,0,0,0).  The initial RGBA values used
 by later drawing commands are set to 255,255,255,255 (opaque white).
 The overlay's initial position is set to topleft,
-the initial cursor is set to the standard arrow,
-the initial transform values are set to 1,0,0,1 (identity) and
-alpha blending is initially off.
+the cursor is set to the standard arrow,
+the transform values are set to 1,0,0,1 (identity) and alpha blending is off.
 The initial font for drawing text is the default font at a size of 11pt
 (see the <a href="#font">font</a> command).
 </dd>
@@ -229,8 +227,13 @@ Any pixels outside the overlay edges are automatically clipped.
 <dd>
 Load the given BMP/GIF/PNG/TIFF file into the overlay at the given location.
 Any pixels outside the overlay edges are automatically clipped.
+Return the total size of the image (including any clipped portions) as a
+string of the form "width height".  Note that it's sometimes desirable to call
+this command twice: the 1st call can specify a location completely outside
+the overlay just to get the image's width and height; the 2nd call can then
+use those values to do things like center the image within the overlay.
 </dd>
-<dd> Example: <b>ov("load 10 20 foo.png")</b></dd>
+<dd> Example: <b>local wdht = ov("load 99999 99999 foo.png")</b></dd>
 </p>
 
 <a name="paste"></a><p><dt><b>paste <i>x y clipname</i></b></dt>
@@ -292,9 +295,9 @@ A pixel outside the overlay is silently ignored.
 <dd> Example: <b>ov("set 10 20")</b></dd>
 </p>
 
-<a name="text"></a><p><dt><b>text <i>clipname arbitrary text ...</i></b></dt>
+<a name="text"></a><p><dt><b>text <i>clipname one line of text ...</i></b></dt>
 <dd>
-Create a clip with the given name containing the given text in the
+Create a named <a href="#clips">clip</a> containing the given text in the
 current font (as set by the most recent <a href="#font">font</a> command).
 Return the dimensions of the clip as a string of the form
 "width height descent leading".  The height is the total height of one line
@@ -305,7 +308,7 @@ The text's color depends on the most recent <a href="#rgba">rgba</a> command.
 Note that the text has a transparent background, so you'll probably need to set
 <a href="#blend">blend</a> to 1 before drawing the text with <a href="#paste">paste</a>.
 </dd>
-<dd> Example: <b>ov("text tempclip To be or not to be...")</b></dd>
+<dd> Example: <b>local dimens = ov("text tempclip To be or not to be...")</b></dd>
 </p>
 
 <a name="transform"></a><p><dt><b>transform <i>axx axy ayx ayy</i></b></dt>
@@ -338,6 +341,65 @@ to the right and y values increase downwards.
 </p>
 
 
+<p><a name="clips"></a>&nbsp;<br>
+<font size=+1><b>Using clips</b></font>
+
+<p>
+Overlay scripts can use multiple "clipboards" called clips.
+A clip is simply a chunk of memory containing a rectangular area of pixels.
+Each clip has a unique name consisting of any characters except a space.
+Clips are created using two commands: <a href="#copy">copy</a> and
+<a href="#text">text</a>.  There is only one command that uses clips:
+<a href="#paste">paste</a>.
+
+<p>
+The following script illustrates the use of clips.  It creates a tiled
+background pattern on which some translucent text is drawn.
+The image on the right shows the resulting overlay.
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top>
+<b>local g = golly()</b><br>
+<b>local ov = g.overlay</b><br>
+<b>ov("create 199 177")</b><br>
+<b>ov("rgba 255 255 0 255")</b><br>
+<b>ov("fill")</b><br>
+-- create the tile<br>
+<b>ov("rgba 0 0 0 255")</b><br>
+<b>ov("line 10 0 0 20")</b><br>
+<b>ov("line 10 0 20 20")</b><br>
+<b>ov("line 0 20 20 20")</b><br>
+<b>ov("rgba 200 200 255 255")</b><br>
+<b>ov("flood 10 10")</b><br>
+<b>ov("copy 0 0 21 21 mytile")</b><br>
+-- tile the overlay<br>
+<b>for y = 0, 177, 21 do</b><br>
+<b>&nbsp;&nbsp;&nbsp;for x = 0, 199, 21 do</b><br>
+<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ov("paste "..x.." "..y.." mytile")</b><br>
+<b>&nbsp;&nbsp;&nbsp;end</b><br>
+<b>end</b><br>
+-- create some translucent red text<br>
+<b>ov("rgba 255 0 0 180")</b><br>
+<b>ov("font 72 roman-bold")</b><br>
+<b>ov("text mytext Golly")</b><br>
+<b>ov("blend 1")</b><br>
+<b>ov("paste 10 10 mytext")</b><br>
+<b>g.setoption("showoverlay",1)</b>
+</td>
+<td valign=top width=20> </td>
+<td valign=center>
+<table cellspacing=0 cellpadding=0>
+<tr><td><img src="clips.png"></td></tr>
+</table>
+</td>
+</tr>
+</table>
+</dd>
+
+
 <p><a name="blending"></a>&nbsp;<br>
 <font size=+1><b>Alpha blending</b></font>
 
@@ -349,30 +411,43 @@ Consider this simple script which draws a translucent blue square on top
 of a translucent red square (both on top of an opaque white background):
 
 <p>
-<dd><b>local g = golly()</b></dd>
-<dd><b>local ov = g.overlay</b></dd>
-<dd><b>ov("create 100 80")</b></dd>
-<dd><b>ov("fill")</b></dd>
-<dd><b>ov("blend 1")</b></dd>
-<dd><b>ov("rgba 255 0 0 128")</b></dd>
-<dd><b>ov("fill 10 10 50 50")</b></dd>
-<dd><b>ov("rgba 0 0 255 128")</b></dd>
-<dd><b>ov("fill 30 20 50 50")</b></dd>
-<dd><b>g.setoption("showoverlay",1)</b></dd>
-</p>
-
-<p>
-The image on the left shows the resulting overlay.  The image on the right shows
-the overlay produced by the same script but with the "blend 1" line removed
-(the grid lines are from the layer underneath the overlay):
-
-<p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><img src="blend1.png"></td><td width=50></td><td><img src="blend0.png"></td></tr>
-<tr><td align=center>blend 1</td><td width=50></td><td align=center>blend 0</td></tr>
+<tr>
+<td valign=top>
+<b>local g = golly()</b><br>
+<b>local ov = g.overlay</b><br>
+<b>ov("create 100 80")</b><br>
+<b>ov("fill")</b><br>
+<b>ov("blend 1")</b><br>
+<b>ov("rgba 255 0 0 128")</b><br>
+<b>ov("fill 10 10 50 50")</b><br>
+<b>ov("rgba 0 0 255 128")</b><br>
+<b>ov("fill 30 20 50 50")</b><br>
+<b>g.setoption("showoverlay",1)</b>
+</td>
+<td valign=top width=20> </td>
+<td valign=center>
+<table cellspacing=0 cellpadding=0>
+<tr><td><img src="blend1.png"></td></tr>
+<tr><td align=center>blend 1</td></tr>
+</table>
+</td>
+<td valign=top width=20> </td>
+<td valign=center>
+<table cellspacing=0 cellpadding=0>
+<tr><td><img src="blend0.png"></td></tr>
+<tr><td align=center>blend 0</td></tr>
+</table>
+</td>
+</tr>
 </table>
 </dd>
+
+<p>
+The left image shows the resulting overlay.  The right image shows
+the overlay produced by the same script but with the "blend 1" line removed
+(the grid lines are from the layer underneath the overlay).
 
 <p>
 Note that drawing with alpha blending on is significantly slower than drawing

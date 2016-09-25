@@ -207,9 +207,9 @@ local function pastetext(x, y, transform)
     transform = transform or op.identity
     -- text background is transparent so paste needs to use alpha blending
     local oldblend = ov("blend 1")
-    ov(transform)
+    local oldtransform = ov(transform)
     ov("paste "..x.." "..y.." temp")
-    ov(op.identity)
+    ov("transform "..oldtransform)
     ov("blend "..oldblend)
 end
 
@@ -326,17 +326,26 @@ local function test_text()
     ov("rgba 0 0 0 0")  ov("fill 300 250 100 100")
     
     ov(op.black)
-    maketext("The quick brown fox jumps over 123 dogs.")
+    maketext("The quick brown fox jumps over 1234567890 dogs.")
     pastetext(10, 270)
 
     ov(op.white)
     maketext("SPOOKY")
     pastetext(310, 270)
 
-    oldfont = ov("font 120 default-bold")
+    oldfont = ov("font 100 default-bold")
     ov("rgba 255 0 0 40")   -- translucent red text
-    w, h = maketext("Golly")
-    pastetext(0, 0)
+    w, h, descent = maketext("Golly")
+    pastetext(10, 10)
+    oldblend = ov("blend 1")
+    -- draw box around text
+    ov("line 10 10 "..(w-1+10).." 10")
+    ov("line 10 10 10 "..(h-1+10))
+    ov("line "..(w-1+10).." 10 "..(w-1+10).." "..(h-1+10))
+    ov("line 10 "..(h-1+10).." "..(w-1+10).." "..(h-1+10))
+    -- show baseline
+    ov("line 10 "..(h-1+10-descent).." "..(w-1+10).." "..(h-1+10-descent))
+    ov("blend "..oldblend)
     ov("font "..oldfont)    -- restore previous font
     ov(op.black)
 end
