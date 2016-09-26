@@ -216,7 +216,7 @@ end
 --------------------------------------------------------------------------------
 
 local function test_text()
-    local oldfont, oldblend, w, h, descent, leading, prevw
+    local oldfont, oldblend, w, h, descent, leading, nextx
     
     ov(op.white) -- white background
     ov("fill")
@@ -253,66 +253,72 @@ local function test_text()
     oldfont = ov("font 7 default")
     w, h, descent, leading = maketext("tiny")
     pastetext(250, 80 - h + descent)
+    nextx = 250 + w + 5
 
     ov("font "..oldfont)    -- restore previous font
     w, h, descent, leading = maketext("normal")
-    pastetext(270, 80 - h + descent)
+    pastetext(nextx, 80 - h + descent)
+    nextx = nextx + w + 5
     
     ov("font 20 default-bold")
     w, h, descent, leading = maketext("Big")
-    pastetext(315, 80 - h + descent)
+    pastetext(nextx, 80 - h + descent)
     
     ov("font 11 default-bold")
-    maketext("bold")
+    w = maketext("bold")
     pastetext(250, 90)
+    nextx = 250 + w + 5
     
     ov("font 11 default-italic")
     maketext("italic")
-    pastetext(280, 90)
+    pastetext(nextx, 90)
     
     ov("font 11 mono")
-    w, h, descent, leading = maketext("mono 11")
+    w, h, descent, leading = maketext("mono11")
     pastetext(250, 120 - h + descent)
+    nextx = 250 + w + 5
     
     ov("font 12")   -- just change font size
-    w, h, descent, leading = maketext("mono 12")
-    pastetext(310, 120 - h + descent)
+    w, h, descent, leading = maketext("mono12")
+    pastetext(nextx, 120 - h + descent)
     
     ov("font 11 mono-bold")
-    maketext("mono-bold")
+    w = maketext("mono-bold")
     pastetext(250, 130)
+    nextx = 250 + w + 5
     
     ov("font 11 mono-italic")
     maketext("mono-italic")
-    pastetext(320, 130)
+    pastetext(nextx, 130)
     
     ov("font 11 roman")
     maketext("roman")
     pastetext(250, 150)
     
     ov("font 11 roman-bold")
-    maketext("roman-bold")
+    w = maketext("roman-bold")
     pastetext(250, 170)
+    nextx = 250 + w + 5
     
     ov("font 11 roman-italic")
     maketext("roman-italic")
-    pastetext(320, 170)
+    pastetext(nextx, 170)
     
     ov("font "..oldfont)    -- restore previous font
 
     ov(op.red)
     w, h, descent, leading = maketext("RED")
     pastetext(250, 200 - h + descent)
-    prevw = w
+    nextx = 250 + w + 5
 
     ov(op.green)
     w, h, descent, leading = maketext("GREEN")
-    pastetext(250 + prevw, 200 - h + descent)
-    prevw = prevw + w
+    pastetext(nextx, 200 - h + descent)
+    nextx = nextx + w + 5
 
     ov(op.blue)
     w, h, descent, leading = maketext("BLUE")
-    pastetext(250 + prevw, 200 - h + descent)
+    pastetext(nextx, 200 - h + descent)
 
     ov(op.yellow)
     w, h = maketext("Yellow on black [] gjpqy")

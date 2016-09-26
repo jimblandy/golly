@@ -5,8 +5,9 @@
 <p>
 <dd><a href="#intro"><b>Introduction</b></a></dd>
 <dd><a href="#commands"><b>The overlay commands</b></a></dd>
-<dd><a href="#clips"><b>Using clips</b></a></dd>
 <dd><a href="#blending"><b>Alpha blending</b></a></dd>
+<dd><a href="#clips"><b>Using clips</b></a></dd>
+<dd><a href="#affine"><b>Affine transformations</b></a></dd>
 <dd><a href="#oplus"><b>The oplus package</b></a></dd>
 </p>
 
@@ -313,8 +314,9 @@ Note that the text has a transparent background, so you'll probably need to set
 
 <a name="transform"></a><p><dt><b>transform <i>axx axy ayx ayy</i></b></dt>
 <dd>
-Set the affine transformation values used by later <a href="#paste">paste</a>
-commands and return the old values as a string of the form "axx axy ayx ayy".
+Set the <a href="#affine">affine transformation</a> values used by later
+<a href="#paste">paste</a> commands and return the old values as a string
+of the form "axx axy ayx ayy".
 </dd>
 <dd> Example: <b>local oldt = ov("transform 0 -1 1 0")</b></dd>
 </p>
@@ -339,65 +341,6 @@ to the right and y values increase downwards.
 </dd>
 <dd> Example: <b>local mousepos = ov("xy")</b></dd>
 </p>
-
-
-<p><a name="clips"></a>&nbsp;<br>
-<font size=+1><b>Using clips</b></font>
-
-<p>
-Overlay scripts can use multiple "clipboards" called clips.
-A clip is simply a chunk of memory containing a rectangular area of pixels.
-Each clip has a unique name consisting of any characters except a space.
-Clips are created using two commands: <a href="#copy">copy</a> and
-<a href="#text">text</a>.  There is only one command that uses clips:
-<a href="#paste">paste</a>.
-
-<p>
-The following script illustrates the use of clips.  It creates a tiled
-background pattern on which some translucent text is drawn.
-The image on the right shows the resulting overlay.
-
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr>
-<td valign=top>
-<b>local g = golly()</b><br>
-<b>local ov = g.overlay</b><br>
-<b>ov("create 199 177")</b><br>
-<b>ov("rgba 255 255 0 255")</b><br>
-<b>ov("fill")</b><br>
--- create the tile<br>
-<b>ov("rgba 0 0 0 255")</b><br>
-<b>ov("line 10 0 0 20")</b><br>
-<b>ov("line 10 0 20 20")</b><br>
-<b>ov("line 0 20 20 20")</b><br>
-<b>ov("rgba 200 200 255 255")</b><br>
-<b>ov("flood 10 10")</b><br>
-<b>ov("copy 0 0 21 21 mytile")</b><br>
--- tile the overlay<br>
-<b>for y = 0, 177, 21 do</b><br>
-<b>&nbsp;&nbsp;&nbsp;for x = 0, 199, 21 do</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ov("paste "..x.." "..y.." mytile")</b><br>
-<b>&nbsp;&nbsp;&nbsp;end</b><br>
-<b>end</b><br>
--- create some translucent red text<br>
-<b>ov("rgba 255 0 0 180")</b><br>
-<b>ov("font 72 roman-bold")</b><br>
-<b>ov("text mytext Golly")</b><br>
-<b>ov("blend 1")</b><br>
-<b>ov("paste 10 10 mytext")</b><br>
-<b>g.setoption("showoverlay",1)</b>
-</td>
-<td valign=top width=20> </td>
-<td valign=center>
-<table cellspacing=0 cellpadding=0>
-<tr><td><img src="clips.png"></td></tr>
-</table>
-</td>
-</tr>
-</table>
-</dd>
 
 
 <p><a name="blending"></a>&nbsp;<br>
@@ -459,6 +402,127 @@ The overlay commands that can do alpha blending are:
 <a href="#load">load</a>,
 <a href="#paste">paste</a>,
 <a href="#set">set</a>.
+
+
+<p><a name="clips"></a>&nbsp;<br>
+<font size=+1><b>Using clips</b></font>
+
+<p>
+Overlay scripts can use multiple "clipboards" called clips.
+A clip is simply a chunk of memory containing a rectangular area of pixels.
+Each clip has a unique name consisting of any characters except a space.
+Clips are created using two commands: <a href="#copy">copy</a> and
+<a href="#text">text</a>.  There is only one command that uses clips:
+<a href="#paste">paste</a>.
+
+<p>
+The following script illustrates the use of clips.  It creates a tiled
+background pattern on which some translucent text is drawn.
+The image on the right shows the resulting overlay.
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top>
+<b>local g = golly()</b><br>
+<b>local ov = g.overlay</b><br>
+<b>ov("create 199 177")</b><br>
+<b>ov("rgba 255 255 0 255")</b><br>
+<b>ov("fill")</b><br>
+-- create the tile<br>
+<b>ov("rgba 0 0 0 255")</b><br>
+<b>ov("line 10 0 0 20")</b><br>
+<b>ov("line 10 0 20 20")</b><br>
+<b>ov("line 0 20 20 20")</b><br>
+<b>ov("rgba 200 200 255 255")</b><br>
+<b>ov("flood 10 10")</b><br>
+<b>ov("copy 0 0 21 21 mytile")</b><br>
+-- tile the overlay<br>
+<b>for y = 0, 177, 21 do</b><br>
+<b>&nbsp;&nbsp;&nbsp;for x = 0, 199, 21 do</b><br>
+<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ov("paste "..x.." "..y.." mytile")</b><br>
+<b>&nbsp;&nbsp;&nbsp;end</b><br>
+<b>end</b><br>
+-- create some translucent red text<br>
+<b>ov("rgba 255 0 0 180")</b><br>
+<b>ov("font 72 roman-bold")</b><br>
+<b>ov("text mytext Golly")</b><br>
+<b>ov("blend 1")</b><br>
+<b>ov("paste 10 10 mytext")</b><br>
+<b>g.setoption("showoverlay",1)</b>
+</td>
+<td valign=top width=20> </td>
+<td valign=center>
+<table cellspacing=0 cellpadding=0>
+<tr><td><img src="clips.png"></td></tr>
+</table>
+</td>
+</tr>
+</table>
+</dd>
+
+
+<p><a name="affine"></a>&nbsp;<br>
+<font size=+1><b>Affine transformations</b></font>
+
+<p>
+The <a href="#transform">transform</a> command allows a limited set of
+affine transformations, namely rotation by multiples of 90 degrees and
+reflection about the x, y or diagonal axes.  The following script shows
+how text can be rotated or reflected.  Instead of using explicit
+transform commands it uses mnemonic <a href="#synonyms">synonyms</a>
+defined in the <b>oplus</b> package.  The image on the right shows
+the resulting overlay.
+
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top>
+<b>local g = golly()</b><br>
+<b>local ov = g.overlay</b><br>
+<b>local op = require "oplus"</b><br>
+<b>ov("create 200 380")</b><br>
+<b>ov("fill")</b><br>
+<b>ov("blend 1")</b><br>
+<b>ov("font 16 default-bold")</b><br>
+-- do rotations<br>
+<b>ov("rgba 0 0 255 255")</b><br>
+<b>ov("text temp ROTATE")</b><br>
+<b>ov("set 100 100")</b><br>
+<b>ov("paste 100 100 temp")</b><br>
+<b>ov(op.rcw)</b><br>
+<b>ov("paste 100 100 temp")</b><br>
+<b>ov(op.racw)</b><br>
+<b>ov("paste 100 100 temp")</b><br>
+<b>ov(op.r180)</b><br>
+<b>ov("paste 100 100 temp")</b><br>
+-- do reflections<br>
+<b>ov("rgba 255 0 0 255")</b><br>
+<b>ov(op.identity)</b><br>
+<b>ov("text temp - REFLECT")</b><br>
+<b>ov("set 100 270")</b><br>
+<b>ov("paste 100 270 temp")</b><br>
+<b>ov(op.flip_x)</b><br>
+<b>ov("paste 100 270 temp")</b><br>
+<b>ov(op.flip_y)</b><br>
+<b>ov("paste 100 270 temp")</b><br>
+<b>ov(op.swap_xy)</b><br>
+<b>ov("paste 100 270 temp")</b><br>
+<b>ov(op.swap_xy_flip)</b><br>
+<b>ov("paste 100 270 temp")</b><br>
+<b>g.setoption("showoverlay",1)</b>
+</td>
+<td valign=top width=20> </td>
+<td valign=center>
+<table cellspacing=0 cellpadding=0>
+<tr><td><img src="transforms.png"></td></tr>
+</table>
+</td>
+</tr>
+</table>
+</dd>
 
 
 <p><a name="oplus"></a>&nbsp;<br>
@@ -554,7 +618,7 @@ Opaque colors:
 </table>
 </dd>
 
-<p>
+<p><a name="synonyms"></a>
 Affine transformations:
 <dd>
 <table cellspacing=0 cellpadding=0>
@@ -567,6 +631,7 @@ Affine transformations:
 <tr><td><b>op.rcw</b></td><td width=5></td><td>          = "transform  0 -1  1  0"</td></tr>
 <tr><td><b>op.rccw</b></td><td width=5></td><td>         = "transform  0  1 -1  0"</td></tr>
 <tr><td><b>op.racw</b></td><td width=5></td><td>         = <b>op.rccw</b></td></tr>
+<tr><td><b>op.r180</b></td><td width=5></td><td>         = <b>op.flip</b></td></tr>
 </table>
 </dd>
 

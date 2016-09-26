@@ -58,6 +58,7 @@ m.swap_xy_flip = "transform  0 -1 -1  0"
 m.rcw          = "transform  0 -1  1  0"
 m.rccw         = "transform  0  1 -1  0"
 m.racw         = m.rccw
+m.r180         = m.flip
 
 --------------------------------------------------------------------------------
 
