@@ -49,7 +49,7 @@ local function checkrule()
     rule = rule:match("^(.+):") or rule     -- remove any ":*" suffix
     
     local algo = g.getalgo()
-    if algo == "QuickLife" or algo == "HashLife" then
+    if algo == "QuickLife" or algo == "HashLife" or algo == "Generations" then
         hexrule = rule:sub(-1) == "H"
     elseif algo == "RuleLoader" then
         hexrule = rule:lower():find("hex") ~= nil
