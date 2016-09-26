@@ -1030,6 +1030,7 @@ const char *generationsalgo::setrule(const char *rulestring) {
             return "Only one neighborhood allowed." ;
          }
          neighbormask = HEXAGONAL ;
+         grid_type = HEX_GRID ;
          neighbors = 6 ;
          *t = c ;
          t++ ;
@@ -1042,6 +1043,7 @@ const char *generationsalgo::setrule(const char *rulestring) {
             return "Only one neighborhood allowed." ;
          }
          neighbormask = VON_NEUMANN ;
+         grid_type = VN_GRID ;
          neighbors = 4 ;
          *t = c ;
          t++ ;
