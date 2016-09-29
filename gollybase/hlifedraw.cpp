@@ -117,7 +117,7 @@ void hlifealgo::renderbm(int x, int y) {
       unsigned char *pixptr = pixbuf;
 
       for (int i = 0; i < ibufsize * 4; i++) {
-         int byte = *bigptr++;
+         unsigned char byte = *bigptr++;
          *pixptr++ = (byte & 128) ? 1 : 0;
          *pixptr++ = (byte & 64) ? 1 : 0;
          *pixptr++ = (byte & 32) ? 1 : 0;
@@ -133,7 +133,7 @@ void hlifealgo::renderbm(int x, int y) {
       unsigned int *pixptr = (unsigned int *)pixbuf;
 
       for (int i = 0; i < ibufsize * 4; i++) {
-         int byte = *bigptr++;
+         unsigned char byte = *bigptr++;
          *pixptr++ = (byte & 128) ? liveRGBA : deadRGBA;
          *pixptr++ = (byte & 64) ? liveRGBA : deadRGBA;
          *pixptr++ = (byte & 32) ? liveRGBA : deadRGBA;

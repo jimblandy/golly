@@ -269,10 +269,10 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
 
    // create live colors
    unsigned int livestates = NumCellStates() - 1;
-   for (unsigned int i = 1; i <= livestates; i++) {
-       *rgbaptr++ = cellred[i];
-       *rgbaptr++ = cellgreen[i];
-       *rgbaptr++ = cellblue[i];
+   for (unsigned int ui = 1; ui <= livestates; ui++) {
+       *rgbaptr++ = cellred[ui];
+       *rgbaptr++ = cellgreen[ui];
+       *rgbaptr++ = cellblue[ui];
        *rgbaptr++ = livea;
    }
 

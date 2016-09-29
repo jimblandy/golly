@@ -763,7 +763,9 @@ const char* Overlay::DoLoad(const char* args)
         if (image.HasAlpha()) {
             alphadata = image.GetAlpha();
         }
-        unsigned char maskr, maskg, maskb;
+        unsigned char maskr = 0;
+        unsigned char maskg = 0;
+        unsigned char maskb = 0;
         bool hasmask = false;
         if (alphadata == NULL) {
             hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
@@ -1017,8 +1019,8 @@ const char* Overlay::DoFont(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
     
-    bool samename = false;  // only change font size?
-    const char* newname;
+    bool samename = false;      // only change font size?
+    const char* newname = NULL;
     int newsize;
     int namepos;
     char dummy;

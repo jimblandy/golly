@@ -25,8 +25,14 @@
 #ifndef _WXOVERLAY_H_
 #define _WXOVERLAY_H_
 
-#include <map>      // for std::map
-#include <string>   // for std::string
+#include <string>                   // for std::string
+#ifdef _MSC_VER
+    #pragma warning(disable:4702)   // disable "unreachable code" warnings from MSVC
+#endif
+#include <map>                      // for std::map
+#ifdef _MSC_VER
+    #pragma warning(default:4702)   // enable "unreachable code" warnings
+#endif
 
 // The overlay is a scriptable graphics layer that is (optionally) drawn
 // on top of Golly's current layer.
@@ -38,7 +44,7 @@ typedef enum {
 } overlay_position;
 
 
-// The Clip class is used by the copy command to store pixel data
+// The Clip class is used by the copy and text commands to store pixel data
 // in a named "clipboard" for later use by the paste command:
 class Clip {
 public:
