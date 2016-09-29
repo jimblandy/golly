@@ -119,7 +119,7 @@ by later drawing commands are set to 255,255,255,255 (opaque white).
 The overlay's initial position is set to topleft,
 the cursor is set to the standard arrow,
 the transform values are set to 1,0,0,1 (identity) and alpha blending is off.
-The initial font for drawing text is the default font at a size of 11pt
+The initial font for drawing text is the default system font at a size of 10pt
 (see the <a href="#font">font</a> command).
 </dd>
 <dd> Example: <b>ov("create 400 300")</b></dd>
@@ -446,7 +446,7 @@ The image on the right shows the resulting overlay.
 <b>end</b><br>
 -- create some translucent red text<br>
 <b>ov("rgba 255 0 0 180")</b><br>
-<b>ov("font 72 roman-bold")</b><br>
+<b>ov("font 60 roman-bold")</b><br>
 <b>ov("text mytext Golly")</b><br>
 <b>ov("blend 1")</b><br>
 <b>ov("paste 10 10 mytext")</b><br>
@@ -486,7 +486,7 @@ the resulting overlay.
 <b>ov("create 200 380")</b><br>
 <b>ov("fill")</b><br>
 <b>ov("blend 1")</b><br>
-<b>ov("font 16 default-bold")</b><br>
+<b>ov("font 12 default-bold")</b><br>
 -- do rotations<br>
 <b>ov("rgba 0 0 255 255")</b><br>
 <b>ov("text temp ROTATE")</b><br>

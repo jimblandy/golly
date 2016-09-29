@@ -111,7 +111,7 @@ private:
     // The current cursor is set to the standard arrow.
     // Alpha blending is turned off.
     // The transformation values are set to 1,0,0,1 (identity).
-    // The current font is set to the default font at 11pt.
+    // The current font is set to the default font at 10pt.
     
     const char* DoPosition(const char* args);
     // Specify where to display the overlay within the current view.
