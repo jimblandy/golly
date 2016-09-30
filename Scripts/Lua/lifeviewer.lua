@@ -14,9 +14,12 @@ local generating = false
 local defcamx = 1024
 local defcamy = 1024
 local defcamangle = 0
-local defcamzoom = 0.2
+local defcamzoom = 0.4
 local defcamlayers = 1
 local defcamlayerdepth = 1.02
+
+local minzoom = 0.0625
+local maxzoom = 32
 
 -- camera
 local camx = defcamx
@@ -43,6 +46,15 @@ local function updatecamera()
     ov("camangle "..camangle)
     ov("camxy "..camx.." "..camy)
     ov("camlayers "..camlayers.." "..camlayerdepth)
+
+    -- convert zoom to actual value
+    local zoom = minzoom * math.pow(maxzoom / minzoom, camzoom)
+    if zoom < 0.999 then
+       zoom = -(1 / zoom)
+    end
+
+    -- update status
+    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", zoom).."x  Angle "..camangle.."  X "..string.format("%.1f", camx).."  Y "..string.format("%.1f", camy).."  Layers "..camlayers.."  Depth "..camlayerdepth)
 end
 
 --------------------------------------------------------------------------------
@@ -163,7 +175,7 @@ end
 --------------------------------------------------------------------------------
 
 local function setzoom(zoom)
-    camzoom = math.log(zoom / 0.0625) / math.log(32 / 0.0625)
+    camzoom = math.log(zoom / minzoom) / math.log(maxzoom / minzoom)
     updatecamera()
     refresh()
 end
@@ -235,6 +247,18 @@ end
 
 --------------------------------------------------------------------------------
 
+local function panview(dx, dy)
+    dx = dx / camzoom;
+    dy = dy / camzoom;
+    local sinangle = math.sin(-camangle / 180 * math.pi)
+    local cosangle = math.cos(-camangle / 180 * math.pi)
+    camx = camx + (dx * cosangle + dy * -sinangle)
+    camy = camy + (dx * sinangle + dy * cosangle)
+    updatecamera()
+    refresh()
+end
+
+--------------------------------------------------------------------------------
 
 local function main()
     createoverlay()
@@ -244,7 +268,6 @@ local function main()
     settheme()
     refresh()
     
-    g.show("Hit escape key to abort script...")
     while true do
         -- check if size of layer has changed
         local newwd, newht = g.getview(g.getlayer())
@@ -300,6 +323,14 @@ local function main()
             increaselayerdepth()
         elseif event == "key l none" then
             decreaselayerdepth()
+        elseif event == "key left none" then
+            panview(-1, 0)
+        elseif event == "key right none" then
+            panview(1, 0)
+        elseif event == "key up none" then
+            panview(0, -1)
+        elseif event == "key down none" then
+            panview(0, 1)
         else
             g.doevent(event)
         end

@@ -1542,10 +1542,10 @@ void RefreshCellView(unsigned char* cellviewdata, int cellwd, int cellht, int ce
         leftx = cellx;
     }
     if (rightx >= cellx + cellwd) {
-        rightx = cellx + cellwd;
+        rightx = cellx + cellwd - 1;
     }
     if (bottomy >= celly + cellht) {
-        bottomy = celly + cellht;
+        bottomy = celly + cellht - 1;
     }
     if (topy < celly) {
         topy = celly;
@@ -1555,13 +1555,13 @@ void RefreshCellView(unsigned char* cellviewdata, int cellwd, int cellht, int ce
     memset(cellviewdata, 0, cellwd * cellht * sizeof(*cellviewdata));
 
     // copy live cells into the cell view
-    for (h = topy; h < bottomy; h++) {
-        for (w = leftx; w < rightx; w++) {
+    for (h = topy; h <= bottomy; h++) {
+        for (w = leftx; w <= rightx; w++) {
             skip = algo->nextcell(w, h, v);
             if (skip >= 0) {
                 // live cell found
                 w += skip;
-                if (w < rightx) {
+                if (w <= rightx) {
                     cellviewdata[(h - celly) * cellwd + w - cellx] = v;
                 }
             }
