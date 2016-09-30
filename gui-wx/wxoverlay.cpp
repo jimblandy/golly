@@ -340,8 +340,13 @@ const char* Overlay::DoCreate(const char* args)
     // initialize current font used by text command
     currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
     fontname = "default";
-    fontsize = 11;
-    currfont.SetPointSize(fontsize);
+    fontsize = 10;
+    #ifdef __WXMAC__
+        // need to increase Mac font size by 25% to match text size on Win/Linux
+        currfont.SetPointSize(int(fontsize * 1.25 + 0.5));
+    #else
+        currfont.SetPointSize(fontsize);
+    #endif
     
     return NULL;
 }
@@ -975,7 +980,9 @@ const char* Overlay::DoLoad(const char* args)
         if (image.HasAlpha()) {
             alphadata = image.GetAlpha();
         }
-        unsigned char maskr, maskg, maskb;
+        unsigned char maskr = 0;
+        unsigned char maskg = 0;
+        unsigned char maskb = 0;
         bool hasmask = false;
         if (alphadata == NULL) {
             hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
@@ -1229,8 +1236,8 @@ const char* Overlay::DoFont(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
     
-    bool samename = false;  // only change font size?
-    const char* newname;
+    bool samename = false;      // only change font size?
+    const char* newname = NULL;
     int newsize;
     int namepos;
     char dummy;
@@ -1245,10 +1252,17 @@ const char* Overlay::DoFont(const char* args)
     if (newsize <= 0 || newsize >= 1000) {
         return OverlayError("font size must be > 0 and < 1000");
     }
-    
+
+    #ifdef __WXMAC__
+        // need to increase Mac font size by 25% to match text size on Win/Linux
+        int ptsize = int(newsize * 1.25 + 0.5);
+    #else
+        int ptsize = newsize;
+    #endif
+
     if (samename) {
         // just change the current font's size
-        currfont.SetPointSize(newsize);
+        currfont.SetPointSize(ptsize);
     
     } else {
         newname = args + namepos;
@@ -1256,35 +1270,35 @@ const char* Overlay::DoFont(const char* args)
         // check if given font name is valid
         if (strcmp(newname, "default") == 0) {
             currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-            currfont.SetPointSize(newsize);
+            currfont.SetPointSize(ptsize);
             
         } else if (strcmp(newname, "default-bold") == 0) {
             currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-            currfont.SetPointSize(newsize);
+            currfont.SetPointSize(ptsize);
             currfont.SetWeight(wxFONTWEIGHT_BOLD);
             
         } else if (strcmp(newname, "default-italic") == 0) {
             currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-            currfont.SetPointSize(newsize);
+            currfont.SetPointSize(ptsize);
             currfont.SetStyle(wxFONTSTYLE_ITALIC);
             
         } else if (strcmp(newname, "mono") == 0) {
-            currfont = wxFont(newsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+            currfont = wxFont(ptsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
             
         } else if (strcmp(newname, "mono-bold") == 0) {
-            currfont = wxFont(newsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+            currfont = wxFont(ptsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             
         } else if (strcmp(newname, "mono-italic") == 0) {
-            currfont = wxFont(newsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_ITALIC, wxFONTWEIGHT_NORMAL);
+            currfont = wxFont(ptsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_ITALIC, wxFONTWEIGHT_NORMAL);
             
         } else if (strcmp(newname, "roman") == 0) {
-            currfont = wxFont(newsize, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+            currfont = wxFont(ptsize, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
             
         } else if (strcmp(newname, "roman-bold") == 0) {
-            currfont = wxFont(newsize, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+            currfont = wxFont(ptsize, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
             
         } else if (strcmp(newname, "roman-italic") == 0) {
-            currfont = wxFont(newsize, wxFONTFAMILY_ROMAN, wxFONTSTYLE_ITALIC, wxFONTWEIGHT_NORMAL);
+            currfont = wxFont(ptsize, wxFONTFAMILY_ROMAN, wxFONTSTYLE_ITALIC, wxFONTWEIGHT_NORMAL);
         
         } else {
             return OverlayError("unknown font name");

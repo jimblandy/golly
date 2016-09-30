@@ -223,93 +223,91 @@ local function test_text()
     ov(op.black) -- black text
     
     maketext("FLIP Y")
-    pastetext(20, 40)
-    pastetext(20, 40, op.flip_y)
+    pastetext(20, 30)
+    pastetext(20, 30, op.flip_y)
 
     maketext("FLIP X")
-    pastetext(100, 40)
-    pastetext(100, 40, op.flip_x)
+    pastetext(110, 30)
+    pastetext(110, 30, op.flip_x)
 
     maketext("FLIP BOTH")
-    pastetext(200, 40)
-    pastetext(200, 40, op.flip)
+    pastetext(210, 30)
+    pastetext(210, 30, op.flip)
 
     maketext("ROTATE CW")
     pastetext(20, 170)
     pastetext(20, 170, op.rcw)
 
     maketext("ROTATE ACW")
-    pastetext(20, 150)
-    pastetext(20, 150, op.racw)
+    pastetext(20, 140)
+    pastetext(20, 140, op.racw)
 
     maketext("SWAP XY")
     pastetext(150, 170)
     pastetext(150, 170, op.swap_xy)
 
     maketext("SWAP XY FLIP")
-    pastetext(150, 150)
-    pastetext(150, 150, op.swap_xy_flip)
+    pastetext(150, 140)
+    pastetext(150, 140, op.swap_xy_flip)
 
     oldfont = ov("font 7 default")
     w, h, descent, leading = maketext("tiny")
-    pastetext(250, 80 - h + descent)
-    nextx = 250 + w + 5
+    pastetext(300, 30 - h + descent)
+    nextx = 300 + w + 5
 
     ov("font "..oldfont)    -- restore previous font
     w, h, descent, leading = maketext("normal")
-    pastetext(nextx, 80 - h + descent)
+    pastetext(nextx, 30 - h + descent)
     nextx = nextx + w + 5
     
     ov("font 20 default-bold")
     w, h, descent, leading = maketext("Big")
-    pastetext(nextx, 80 - h + descent)
+    pastetext(nextx, 30 - h + descent)
     
-    ov("font 11 default-bold")
+    ov("font 10 default-bold")
     w = maketext("bold")
-    pastetext(250, 90)
-    nextx = 250 + w + 5
+    pastetext(300, 40)
+    nextx = 300 + w + 5
     
-    ov("font 11 default-italic")
+    ov("font 10 default-italic")
     maketext("italic")
-    pastetext(nextx, 90)
+    pastetext(nextx, 40)
     
-    ov("font 11 mono")
-    w, h, descent, leading = maketext("mono11")
-    pastetext(250, 120 - h + descent)
-    nextx = 250 + w + 5
+    ov("font 10 mono")
+    w, h, descent, leading = maketext("mono")
+    pastetext(300, 80 - h + descent)
+    nextx = 300 + w + 5
     
     ov("font 12")   -- just change font size
     w, h, descent, leading = maketext("mono12")
-    pastetext(nextx, 120 - h + descent)
+    pastetext(nextx, 80 - h + descent)
     
-    ov("font 11 mono-bold")
+    ov("font 10 mono-bold")
     w = maketext("mono-bold")
-    pastetext(250, 130)
-    nextx = 250 + w + 5
+    pastetext(300, 90)
     
-    ov("font 11 mono-italic")
+    ov("font 10 mono-italic")
     maketext("mono-italic")
-    pastetext(nextx, 130)
+    pastetext(300, 105)
     
-    ov("font 11 roman")
+    ov("font 10 roman")
     maketext("roman")
-    pastetext(250, 150)
+    pastetext(300, 130)
     
-    ov("font 11 roman-bold")
+    ov("font 10 roman-bold")
     w = maketext("roman-bold")
-    pastetext(250, 170)
-    nextx = 250 + w + 5
+    pastetext(300, 145)
     
-    ov("font 11 roman-italic")
+    ov("font 10 roman-italic")
     maketext("roman-italic")
-    pastetext(nextx, 170)
+    pastetext(300, 160)
     
     ov("font "..oldfont)    -- restore previous font
 
     ov(op.red)
     w, h, descent, leading = maketext("RED")
-    pastetext(250, 200 - h + descent)
-    nextx = 250 + w + 5
+    pastetext(300, 200 - h + descent)
+    nextx = 300 + w + 5
 
     ov(op.green)
     w, h, descent, leading = maketext("GREEN")
@@ -323,8 +321,8 @@ local function test_text()
     ov(op.yellow)
     w, h = maketext("Yellow on black [] gjpqy")
     ov(op.black)
-    ov("fill 250 210 "..w.." "..h)
-    pastetext(250, 210)
+    ov("fill 300 210 "..w.." "..h)
+    pastetext(300, 210)
 
     ov(op.yellow)       ov("fill 0   250 100 100")
     ov(op.cyan)         ov("fill 100 250 100 100")
@@ -332,7 +330,7 @@ local function test_text()
     ov("rgba 0 0 0 0")  ov("fill 300 250 100 100")
     
     ov(op.black)
-    maketext("The quick brown fox jumps over 1234567890 dogs.")
+    maketext("The quick brown fox jumps over 123 dogs.")
     pastetext(10, 270)
 
     ov(op.white)
@@ -453,7 +451,7 @@ end
 
 local function main()
     g.show("Testing overlay (type h for help)...")
-    create_overlay(400, 300)
+    create_overlay(500, 300)
 
     local mousedown = false
     local prevx, prevy
