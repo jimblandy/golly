@@ -54,6 +54,7 @@ public:
     int cwd, cht;
 };
 
+const int cellviewmaxsize = 4096;  // maximum dimension for cell view
 
 class Overlay {
 public:
@@ -101,6 +102,53 @@ public:
     
     bool OnlyDrawOverlay();
     // If true then DrawView (in wxrender.cpp) will only draw the overlay.
+
+    // cellview
+
+    unsigned char* GetCellViewData() { return cellview; }
+    // Return a pointer to the cellview data (possibly NULL).
+    // If this exists then these cells will be drawn to the overlay
+    // (see DrawOverlay in wxrender.cpp).
+
+    int GetCellViewWidth() { return cellwd; }
+    // Return the width of the cellview in cells.
+
+    int GetCellViewHeight() { return cellht; }
+    // Return the height of the cellview in cells.
+
+    int GetCellViewX() { return cellx; }
+    // Return the x coordinate of the bottom left cell.
+
+    int GetCellViewY() { return celly; }
+    // Return the y coordinate of the bottom left cell.
+
+    bool CellViewNeedsRefresh();
+    // Return whether the cell view needs refreshing (also clears the flag).
+
+    // camera
+
+    double GetCameraX() { return camx; }
+    // Return the camera x coordinate.
+
+    double GetCameraY() { return camy; }
+    // Return the camera y coordinate.
+
+    double GetCameraZoom() { return camzoom; }
+    // Return the camera zoom.
+
+    double GetCameraAngle() { return camangle; }
+    // Return the camera angle in degrees.
+
+    int GetCameraLayers() { return camlayers; }
+    // Return the number of camera layers.
+
+    double GetCameraLayerDepth() { return camlayerdepth; }
+    // Return the camera layer depth.
+
+    // theme
+
+    int GetTheme() { return theme; }
+    // Return the color theme (-1 indicates use pattern colors)
 
 private:
     const char* DoCreate(const char* args);
@@ -196,6 +244,40 @@ private:
     const char* OverlayError(const char* msg);
     // Return a string starting with "ERR:" followed by the given message.
 
+    // cellview
+
+    unsigned char* AllocateCellView(int size);
+    // Return a pointer to a cellview that can fit at least size cells.
+
+    void DoDirty();
+    // Mark the cell view as needing a refresh.
+
+    void DeleteCellView();
+    // Free the memory used by the cell view.
+
+    const char* DoCellView(const char* args);
+    // Create a cell view that tracks a rectangle of cells and can be rapidly
+    // drawn onto the overlay at a particular scale and angle.
+
+    // camera
+
+    const char* DoCamLayers(const char* args);
+    // Set the camera layers and depth.
+
+    const char* DoCamAngle(const char* args);
+    // Set the camera angle.
+
+    const char* DoCamZoom(const char* args);
+    // Set the camera zoom.
+
+    const char* DoCamXY(const char* args);
+    // Set the camera position.
+
+    // theme
+
+    const char* DoTheme(const char* args);
+    // Set the color theme (-1 for pattern colors)
+
     unsigned char* pixmap;      // RGBA data (wd * ht * 4 bytes)
     int wd, ht;                 // width and height of pixmap
     unsigned char r, g, b, a;   // current RGBA values for drawing pixels
@@ -212,6 +294,26 @@ private:
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste
+
+    // cellview
+
+    unsigned char* cellview;    // cell state data (cellwd * cellht bytes)
+    int cellwd, cellht;         // width and height of cellview
+    int cellx, celly;           // x and y position of bottom left cell
+    bool dirty;                 // whether cell view needs refreshing
+
+    // camera
+
+    double camx;                 // camera x position
+    double camy;                 // camera y position
+    double camzoom;              // camera zoom
+    double camangle;             // camera angle
+    int camlayers;               // camera layers
+    double camlayerdepth;        // camera layer depth
+
+    // theme
+
+    int theme;                   // theme number or -1 for pattern colors
 };
 
 extern Overlay* curroverlay;    // pointer to current overlay (set by client)

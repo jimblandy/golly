@@ -50,6 +50,8 @@ const char* no_overlay = "overlay has not been created";
 Overlay::Overlay()
 {
     pixmap = NULL;
+    cellview = NULL;
+    theme = -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -57,6 +59,7 @@ Overlay::Overlay()
 Overlay::~Overlay()
 {
     DeleteOverlay();
+    DeleteCellView();
 }
 
 // -----------------------------------------------------------------------------
@@ -73,6 +76,220 @@ void Overlay::DeleteOverlay()
         delete it->second;
     }
     clips.clear();
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DeleteCellView()
+{
+    if (cellview) {
+        free(cellview);
+        cellview = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+unsigned char* Overlay::AllocateCellView(int size) {
+    // check if the cellview is already allocated
+    if (!cellview) {
+        // use calloc so all cells will be state 0
+        cellview = (unsigned char*) calloc(size, sizeof(*cellview));
+    }
+    else {
+        // check if the cellview needs to grow
+        if (size > cellwd * cellht) {
+            // reallocate the cellview
+            cellview = (unsigned char*) realloc(cellview, size * sizeof(*cellview));
+        }
+
+        // clear the cellview
+        memset(cellview, 0, size * sizeof(*cellview));
+    }
+
+    return cellview;
+}
+
+// -----------------------------------------------------------------------------
+
+bool Overlay::CellViewNeedsRefresh() {
+    bool result = dirty;
+
+    // clear the flag
+    dirty = false;
+
+    // return the original value
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DoDirty() {
+    // set the flag
+    dirty = true;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoCellView(const char* args)
+{
+    // check the arguments are valid
+    int x, y, w, h;
+    if (sscanf(args, " %d %d %d %d", &x, &y, &w, &h) != 4) {
+        return OverlayError("cellview command requires 4 arguments");
+    }
+
+    if (w <= 0) return OverlayError("width of cellview must be > 0");
+    if (h <= 0) return OverlayError("height of cellview must be > 0");
+
+    if (w > cellviewmaxsize) return OverlayError("width of cellview too big");
+    if (h > cellviewmaxsize) return OverlayError("height of cellview too big");
+
+    // allocate the cellview
+    cellview = AllocateCellView(w * h);
+    if (cellview == NULL) return OverlayError("not enough memory to create cellview");
+    
+    // save the arguments
+    cellwd = w;
+    cellht = h;
+    cellx = x;
+    celly = y;
+
+    // set the default camera position to the center
+    camx = x + w / 2;
+    camy = y + w / 2;
+
+    // set default angle
+    camangle = 0;
+
+    // set default zoom
+    camzoom = 0.4;
+
+    // set dirty flag
+    dirty = true;
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoCamZoom(const char* args)
+{
+    // check the argument is valid
+    double zoom;
+    if (sscanf(args, " %lf", &zoom) != 1) {
+        return OverlayError("camzoom command requires 1 argument");
+    }
+
+    if (zoom < 0) return OverlayError("camera zoom too small");
+    if (zoom > 1) return OverlayError("camera zoom too big");
+
+    // argument is ok
+    static char result[30];
+    sprintf(result, "%lf", camzoom);
+
+    // save the new value
+    camzoom = zoom;
+
+    // return the previous value
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoCamAngle(const char* args)
+{
+    // check the argument is valid
+    double angle;
+    if (sscanf(args, " %lf", &angle) != 1) {
+        return OverlayError("camangle command requires 1 argument");
+    }
+
+    if (angle < 0) return OverlayError("camera angle too small");
+    if (angle > 360) return OverlayError("camera angle too big");
+
+    // argument is ok
+    static char result[30];
+    sprintf(result, "%lf", camangle);
+
+    // save the new value
+    camangle = angle;
+
+    // return the previous value
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoCamXY(const char* args)
+{
+    // check the arguments are valid
+    double x;
+    double y;
+    if (sscanf(args, " %lf %lf", &x, &y) != 2) {
+        return OverlayError("camxy command requires 2 arguments");
+    }
+
+    // arguments are ok
+    static char result[60];
+    sprintf(result, "%lf %lf", camx, camy);
+
+    // save the new values
+    camx = x;
+    camy = y;
+
+    // return the previous values
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoCamLayers(const char* args)
+{
+    // check the arguments are valid
+    int howmany;
+    double depth;
+    if (sscanf(args, " %d %lf", &howmany, &depth) != 2) {
+        return OverlayError("camlayers command requires 2 arguments");
+    }
+
+    if (howmany < 1) return OverlayError("must have at least 1 layer");
+    if (howmany > 10) return OverlayError("too many layers");
+    if (depth < 0 || depth > 10) return OverlayError("depth out of range");
+
+    // arguments are ok
+    static char result[60];
+    sprintf(result, "%d %lf", camlayers, camlayerdepth);
+
+    // save the new values
+    camlayers = howmany;
+    camlayerdepth = depth;
+
+    // return the previous values
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoTheme(const char* args)
+{
+    // check the argument is valid
+    int newtheme;
+    if (sscanf(args, " %d", &newtheme) != 1) {
+        return OverlayError("theme command requires 1 argument");
+    }
+
+    if (newtheme < -1 || newtheme > 10) return OverlayError("invalid theme number");
+   
+    // argument is ok
+    static char result[30];
+    sprintf(result, "%d", theme);
+
+    // save the new value
+    theme = newtheme;
+
+    // return the previous value
+    return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -96,7 +313,7 @@ const char* Overlay::DoCreate(const char* args)
     DeleteOverlay();
 
     // use calloc so all pixels will be 100% transparent (alpha = 0)
-    pixmap = (unsigned char*) calloc(wd * ht * 4, 1);
+    pixmap = (unsigned char*) calloc(wd * ht * 4, sizeof(*pixmap));
     if (pixmap == NULL) return OverlayError("not enough memory to create overlay");
     
     // initialize RGBA values to opaque white
@@ -1276,27 +1493,38 @@ const char* Overlay::OverlayError(const char* msg)
 
 const char* Overlay::DoOverlayCommand(const char* cmd)
 {
-    if (strncmp(cmd, "set ", 4) == 0)       return DoSetPixel(cmd+4);
-    if (strncmp(cmd, "get ", 4) == 0)       return DoGetPixel(cmd+4);
-    if (strcmp(cmd,  "xy") == 0)            return DoGetXY();
-    if (strncmp(cmd, "line", 4) == 0)       return DoLine(cmd+4);
-    if (strncmp(cmd, "rgba", 4) == 0)       return DoSetRGBA(cmd+4);
-    if (strncmp(cmd, "fill", 4) == 0)       return DoFill(cmd+4);
-    if (strncmp(cmd, "copy", 4) == 0)       return DoCopy(cmd+4);
-    if (strncmp(cmd, "paste", 5) == 0)      return DoPaste(cmd+5);
-    if (strncmp(cmd, "load", 4) == 0)       return DoLoad(cmd+4);
-    if (strncmp(cmd, "save", 4) == 0)       return DoSave(cmd+4);
-    if (strncmp(cmd, "flood", 5) == 0)      return DoFlood(cmd+5);
-    if (strncmp(cmd, "blend", 5) == 0)      return DoBlend(cmd+5);
-    if (strncmp(cmd, "text", 4) == 0)       return DoText(cmd+4);
-    if (strncmp(cmd, "font", 4) == 0)       return DoFont(cmd+4);
-    if (strncmp(cmd, "transform", 9) == 0)  return DoTransform(cmd+9);
-    if (strncmp(cmd, "position", 8) == 0)   return DoPosition(cmd+8);
-    if (strncmp(cmd, "cursor", 6) == 0)     return DoCursor(cmd+6);
-    if (strcmp(cmd,  "update") == 0)        return DoUpdate();
-    if (strncmp(cmd, "create", 6) == 0)     return DoCreate(cmd+6);
-    if (strcmp(cmd,  "delete") == 0) {
+    if (strncmp(cmd, "set ", 4) == 0)        return DoSetPixel(cmd+4);
+    if (strncmp(cmd, "get ", 4) == 0)        return DoGetPixel(cmd+4);
+    if (strcmp(cmd,  "xy") == 0)             return DoGetXY();
+    if (strncmp(cmd, "line", 4) == 0)        return DoLine(cmd+4);
+    if (strncmp(cmd, "rgba", 4) == 0)        return DoSetRGBA(cmd+4);
+    if (strncmp(cmd, "fill", 4) == 0)        return DoFill(cmd+4);
+    if (strncmp(cmd, "copy", 4) == 0)        return DoCopy(cmd+4);
+    if (strncmp(cmd, "paste", 5) == 0)       return DoPaste(cmd+5);
+    if (strncmp(cmd, "load", 4) == 0)        return DoLoad(cmd+4);
+    if (strncmp(cmd, "save", 4) == 0)        return DoSave(cmd+4);
+    if (strncmp(cmd, "flood", 5) == 0)       return DoFlood(cmd+5);
+    if (strncmp(cmd, "blend", 5) == 0)       return DoBlend(cmd+5);
+    if (strncmp(cmd, "text", 4) == 0)        return DoText(cmd+4);
+    if (strncmp(cmd, "font", 4) == 0)        return DoFont(cmd+4);
+    if (strncmp(cmd, "transform", 9) == 0)   return DoTransform(cmd+9);
+    if (strncmp(cmd, "position", 8) == 0)    return DoPosition(cmd+8);
+    if (strncmp(cmd, "cursor", 6) == 0)      return DoCursor(cmd+6);
+    if (strcmp(cmd,  "update") == 0)         return DoUpdate();
+    if (strncmp(cmd, "create", 6) == 0)      return DoCreate(cmd+6);
+    if (strncmp(cmd, "cellview ", 9) == 0)   return DoCellView(cmd+9);
+    if (strncmp(cmd, "camangle ", 9) == 0)   return DoCamAngle(cmd+9);
+    if (strncmp(cmd, "camxy ", 6) == 0)      return DoCamXY(cmd+6);
+    if (strncmp(cmd, "camzoom ", 8) == 0)    return DoCamZoom(cmd+8);
+    if (strncmp(cmd, "camlayers ", 10) == 0) return DoCamLayers(cmd+10);
+    if (strncmp(cmd, "theme ", 6) == 0)      return DoTheme(cmd+6);
+    if (strcmp(cmd, "dirty") == 0) {
+        DoDirty();
+        return NULL;
+    }
+    if (strcmp(cmd, "delete") == 0) {
         DeleteOverlay();
+        DeleteCellView();
         return NULL;
     }
     return OverlayError("unknown command");
