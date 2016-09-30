@@ -1,6 +1,9 @@
 -- LifeViewer for Golly
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
+-- build number
+local buildnumber = 3
+
 local g = golly()
 
 local ov = g.overlay
@@ -10,16 +13,20 @@ local viewwd, viewht = g.getview(g.getlayer())
 -- whether generating life
 local generating = false
 
+-- view constants
+local minzoom = 0.0625
+local maxzoom = 32
+local viewwidth = 2048
+local viewheight = 2048
+
 -- camera defaults
 local defcamx = 1024
 local defcamy = 1024
 local defcamangle = 0
 local defcamzoom = 0.4
 local defcamlayers = 1
-local defcamlayerdepth = 1.02
+local defcamlayerdepth = 0.05
 
-local minzoom = 0.0625
-local maxzoom = 32
 
 -- camera
 local camx = defcamx
@@ -34,9 +41,65 @@ local theme = -1
 
 --------------------------------------------------------------------------------
 
+local function showhelp()
+    local helptext = "LifeViewer for Golly build "..buildnumber..
+[[
+
+Keyboard commands
+
+Playback controls:
+Enter	toggle play / pause
+Space	pause / next generation
+Tab		pause / next step
+Esc		close
+R		reset to generation 0
+
+Camera controls:
+Key		Function	Shift
+[		zoom out	halve zoom
+]		zoom in		double zoom
+1		1x zoom
+2		2x zoom	-2x zoom
+4		4x zoom	-4x zoom
+8		8x zoom	-8x zoom
+6		16x zoom	-16x zoom
+3		32x zoom
+Left		pan left		pan north west
+Right	pan right	pan south east
+Up		pan up		pan north east
+Down	pan down	pan south west
+<		rotate left	rotate left 90
+>		rotate right	rotate right 90
+
+View controls:
+Q		increase number of layers
+A		decrease number of layers
+P		increase layer depth
+L		decrease layer depth
+C		toggle pattern / theme colors
+]]
+
+    -- display help
+    g.note(helptext)
+end
+
+--------------------------------------------------------------------------------
+
 local function createoverlay()
     -- create overlay over entire viewport
     ov("create "..viewwd.." "..viewht)
+end
+
+--------------------------------------------------------------------------------
+
+local function displaytointernalzoom(zoom)
+    return math.log(zoom / minzoom) / math.log(maxzoom / minzoom)
+end
+
+--------------------------------------------------------------------------------
+
+local function internaltodisplayzoom(zoom)
+    return minzoom * math.pow(maxzoom / minzoom, zoom)
 end
 
 --------------------------------------------------------------------------------
@@ -48,13 +111,17 @@ local function updatecamera()
     ov("camlayers "..camlayers.." "..camlayerdepth)
 
     -- convert zoom to actual value
-    local zoom = minzoom * math.pow(maxzoom / minzoom, camzoom)
+    local zoom = internaltodisplayzoom(camzoom)
     if zoom < 0.999 then
        zoom = -(1 / zoom)
     end
 
+    -- convert x and y to display coordinates
+    local x = camx - viewwidth / 2
+    local y = camy - viewheight / 2
+
     -- update status
-    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", zoom).."x  Angle "..camangle.."  X "..string.format("%.1f", camx).."  Y "..string.format("%.1f", camy).."  Layers "..camlayers.."  Depth "..camlayerdepth)
+    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", zoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth))
 end
 
 --------------------------------------------------------------------------------
@@ -70,7 +137,7 @@ end
 --------------------------------------------------------------------------------
 
 local function createcellview()
-    ov("cellview -1024 -1024 2048 2048")
+    ov("cellview -1024 -1024 "..viewwidth.." "..viewheight)
 end
 
 --------------------------------------------------------------------------------
@@ -118,21 +185,14 @@ end
 
 --------------------------------------------------------------------------------
 
-local function rotateleft()
-    camangle = camangle - 1
-    if camangle < 0 then
-        camangle = 359
-    end
-    updatecamera()
-    refresh()
-end
-
---------------------------------------------------------------------------------
-
-local function rotateright()
-    camangle = camangle + 1
-    if camangle > 359 then
-        camangle = 0
+local function rotate(amount)
+    camangle = camangle + amount
+    if (camangle > 359) then
+        camangle = camangle - 360
+    else
+        if (camangle < 0) then
+            camangle = camangle + 360
+        end
     end
     updatecamera()
     refresh()
@@ -175,9 +235,29 @@ end
 --------------------------------------------------------------------------------
 
 local function setzoom(zoom)
-    camzoom = math.log(zoom / minzoom) / math.log(maxzoom / minzoom)
+    camzoom = displaytointernalzoom(zoom)
     updatecamera()
     refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function halvezoom()
+    local halfzoom = internaltodisplayzoom(camzoom) / 2
+    if halfzoom < minzoom then
+        halfzoom = minzoom
+    end
+    setzoom(halfzoom)
+end
+
+--------------------------------------------------------------------------------
+
+local function doublezoom()
+    local doublezoom = internaltodisplayzoom(camzoom) * 2
+    if doublezoom > maxzoom then
+        doublezoom = maxzoom
+    end
+    setzoom(doublezoom)
 end
 
 --------------------------------------------------------------------------------
@@ -295,22 +375,38 @@ local function main()
             zoomout()
         elseif event == "key ] none" then
             zoomin()
+        elseif event == "key { none" then
+            halvezoom()
+        elseif event == "key } none" then
+            doublezoom()
         elseif event == "key , none" then
-            rotateleft()
+            rotate(-1)
+        elseif event == "key < none" then
+            rotate(-90)
         elseif event == "key . none" then
-            rotateright()
+            rotate(1)
+        elseif event == "key > none" then
+            rotate(90)
         elseif event == "key 5 none" then
             resetangle()
         elseif event == "key 1 none" then
             setzoom(1)
         elseif event == "key 2 none" then
             setzoom(2)
+        elseif event == "key \" none" then
+            setzoom(1/2)
         elseif event == "key 4 none" then
             setzoom(4)
+        elseif event == "key $ none" then
+            setzoom(1/4)
         elseif event == "key 8 none" then
             setzoom(8)
+        elseif event == "key * none" then
+            setzoom(1/8)
         elseif event == "key 6 none" then
             setzoom(16)
+        elseif event == "key ^ none" then
+            setzoom(1/16)
         elseif event == "key 3 none" then
             setzoom(32)
         elseif event == "key c none" then
@@ -331,6 +427,16 @@ local function main()
             panview(0, -1)
         elseif event == "key down none" then
             panview(0, 1)
+        elseif event == "key left shift" then
+            panview(-1, -1)
+        elseif event == "key right shift" then
+            panview(1, 1)
+        elseif event == "key up shift" then
+            panview(1, -1)
+        elseif event == "key down shift" then
+            panview(-1, 1)
+        elseif event == "key h none" then
+            showhelp()
         else
             g.doevent(event)
         end
