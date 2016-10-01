@@ -109,53 +109,6 @@ public:
     bool OnlyDrawOverlay();
     // If true then DrawView (in wxrender.cpp) will only draw the overlay.
 
-    // cellview
-
-    unsigned char* GetCellViewData() { return cellview; }
-    // Return a pointer to the cellview data (possibly NULL).
-    // If this exists then these cells will be drawn to the overlay
-    // (see DrawOverlay in wxrender.cpp).
-
-    int GetCellViewWidth() { return cellwd; }
-    // Return the width of the cellview in cells.
-
-    int GetCellViewHeight() { return cellht; }
-    // Return the height of the cellview in cells.
-
-    int GetCellViewX() { return cellx; }
-    // Return the x coordinate of the bottom left cell.
-
-    int GetCellViewY() { return celly; }
-    // Return the y coordinate of the bottom left cell.
-
-    bool CellViewNeedsRefresh();
-    // Return whether the cell view needs refreshing (also clears the flag).
-
-    // camera
-
-    double GetCameraX() { return camx; }
-    // Return the camera x coordinate.
-
-    double GetCameraY() { return camy; }
-    // Return the camera y coordinate.
-
-    double GetCameraZoom() { return camzoom; }
-    // Return the camera zoom.
-
-    double GetCameraAngle() { return camangle; }
-    // Return the camera angle in degrees.
-
-    int GetCameraLayers() { return camlayers; }
-    // Return the number of camera layers.
-
-    double GetCameraLayerDepth() { return camlayerdepth; }
-    // Return the camera layer depth.
-
-    // theme
-
-    int GetTheme() { return theme; }
-    // Return the color theme (-1 indicates use pattern colors)
-
 private:
     const char* DoCreate(const char* args);
     // Create a pixmap with the given width and height.
@@ -166,7 +119,12 @@ private:
     // Alpha blending is turned off.
     // The transformation values are set to 1,0,0,1 (identity).
     // The current font is set to the default font at 10pt.
+    // No cell view is allocated.
     
+    const char* DoResize(const char* args);
+    // Resizes a pixmap with the given width and height
+    // Does not change any settings and keeps any existing cell view.
+
     const char* DoPosition(const char* args);
     // Specify where to display the overlay within the current view.
 
@@ -250,20 +208,32 @@ private:
     const char* OverlayError(const char* msg);
     // Return a string starting with "ERR:" followed by the given message.
 
-    // cellview
-
-    unsigned char* AllocateCellView(int size);
-    // Return a pointer to a cellview that can fit at least size cells.
-
-    void DoDirty();
-    // Mark the cell view as needing a refresh.
-
-    void DeleteCellView();
-    // Free the memory used by the cell view.
+    // cell view
 
     const char* DoCellView(const char* args);
     // Create a cell view that tracks a rectangle of cells and can be rapidly
     // drawn onto the overlay at a particular scale and angle.
+
+    void DeleteCellView();
+    // Deallocate all memory used by the cell view.
+
+    void RefreshCellView();
+    // Refresh the cell view from the universe.
+
+    void RefreshCellViewWithTheme();
+    // Refresh the cell view from the universe using the theme.
+
+    void GetPatternColors();
+    // Get the state colors from the pattern.
+
+    void GetThemeColors(double brightness);
+    // Get the state colors from the theme.
+
+    const char* DoUpdateCells();
+    // Update the cell view from the universe.
+
+    const char* DoDrawCells();
+    // Draw the cells onto the overlay.
 
     // camera
 
@@ -301,12 +271,12 @@ private:
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste
 
-    // cellview
+    // cell view
 
+    unsigned int cellRGBA[256]; // cell RGBA values
     unsigned char* cellview;    // cell state data (cellwd * cellht bytes)
-    int cellwd, cellht;         // width and height of cellview
+    int cellwd, cellht;         // width and height of cell view
     int cellx, celly;           // x and y position of bottom left cell
-    bool dirty;                 // whether cell view needs refreshing
 
     // camera
 
@@ -316,10 +286,16 @@ private:
     double camangle;             // camera angle
     int camlayers;               // camera layers
     double camlayerdepth;        // camera layer depth
+    double camminzoom;           // minimum zoom
+    double cammaxzoom;           // maximum zoom
 
     // theme
 
     int theme;                   // theme number or -1 for pattern colors
+    int aliveStart;              // new cell color index
+    int aliveMax;                // cell alive longest color index
+    int deadStart;               // cell just died color index
+    int deadMin;                 // cell dead longest color index
 };
 
 extern Overlay* curroverlay;    // pointer to current overlay (set by client)

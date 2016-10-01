@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 3
+local buildnumber = 4
 
 local g = golly()
 
@@ -20,13 +20,12 @@ local viewwidth = 2048
 local viewheight = 2048
 
 -- camera defaults
-local defcamx = 1024
-local defcamy = 1024
+local defcamx = viewwidth / 2
+local defcamy = viewheight / 2
 local defcamangle = 0
-local defcamzoom = 0.4
+local defcamzoomdisplay = 1
 local defcamlayers = 1
 local defcamlayerdepth = 0.05
-
 
 -- camera
 local camx = defcamx
@@ -58,7 +57,7 @@ Camera controls:
 Key		Function	Shift
 [		zoom out	halve zoom
 ]		zoom in		double zoom
-1		1x zoom
+1		1x zoom	integer zoom
 2		2x zoom	-2x zoom
 4		4x zoom	-4x zoom
 8		8x zoom	-8x zoom
@@ -70,6 +69,7 @@ Up		pan up		pan north east
 Down	pan down	pan south west
 <		rotate left	rotate left 90
 >		rotate right	rotate right 90
+5		reset angle
 
 View controls:
 Q		increase number of layers
@@ -130,20 +130,23 @@ local function resetcamera()
     camx = defcamx
     camy = defcamy
     camangle = defcamangle
-    camzoom = defcamzoom
+    camzoom = displaytointernalzoom(defcamzoomdisplay)
+    camlayers = defcamlayers
+    camlayerdepth = defcamlayerdepth
     updatecamera()
 end
 
 --------------------------------------------------------------------------------
 
 local function createcellview()
-    ov("cellview -1024 -1024 "..viewwidth.." "..viewheight)
+    ov("cellview "..math.floor(-viewwidth / 2).." "..math.floor(-viewheight / 2).. " "..viewwidth.." "..viewheight)
 end
 
 --------------------------------------------------------------------------------
 
 local function refresh()
-    ov("update") --???!!!
+    ov("drawcells")
+    ov("update")
 end
 
 --------------------------------------------------------------------------------
@@ -161,26 +164,10 @@ local function advance(by1)
         g.step()
     end
     
-    -- mark cell view as dirty
-    ov("dirty")
-
-    g.update()
-end
-
---------------------------------------------------------------------------------
-
-local function reset()
-    -- reset the camera if at generation 0
-    local gen = tonumber(g.getgen())
-    if gen == 0 then
-        resetcamera()
-    end
-
-    createcellview()
-    updatecamera()
-    g.reset()
-    g.update()
+    ov("updatecells")
     refresh()
+
+    g.update()
 end
 
 --------------------------------------------------------------------------------
@@ -242,6 +229,18 @@ end
 
 --------------------------------------------------------------------------------
 
+local function integerzoom()
+    local zoom = internaltodisplayzoom(camzoom)
+    if zoom >= 1 then
+        zoom = math.floor(zoom + 0.5)
+    else
+        zoom = 1 / math.floor(1 / zoom + 0.5)
+    end
+    setzoom(zoom)
+end
+
+--------------------------------------------------------------------------------
+
 local function halvezoom()
     local halfzoom = internaltodisplayzoom(camzoom) / 2
     if halfzoom < minzoom then
@@ -275,7 +274,7 @@ local function toggletheme()
         theme = -1
     end
     settheme()
-    ov("dirty")
+    ov("updatecells")
     refresh()
 end
 
@@ -340,11 +339,36 @@ end
 
 --------------------------------------------------------------------------------
 
+local function reset()
+    -- reset the camera if at generation 0
+    local gen = tonumber(g.getgen())
+    if gen == 0 then
+        resetcamera()
+    end
+
+    -- reset golly
+    g.reset()
+    g.update()
+
+    -- recreate the cell view if not using theme
+    if theme ~= -1 then
+        createcellview()
+        settheme()
+        updatecamera()
+    end
+
+    -- update cell view from reset universe
+    ov("updatecells")
+
+    refresh()
+end
+
+--------------------------------------------------------------------------------
+
 local function main()
     createoverlay()
     createcellview()
     resetcamera()
-    setzoom(1)
     settheme()
     refresh()
     
@@ -354,7 +378,7 @@ local function main()
         if newwd ~= viewwd or newht ~= viewht then
             viewwd = newwd
             viewht = newht
-            ov("create "..viewwd.." "..viewht)      -- resize overlay
+            ov("resize "..viewwd.." "..viewht)      -- resize overlay
             refresh()
         end
         
@@ -391,6 +415,8 @@ local function main()
             resetangle()
         elseif event == "key 1 none" then
             setzoom(1)
+        elseif event == "key ! none" then
+            integerzoom()
         elseif event == "key 2 none" then
             setzoom(2)
         elseif event == "key \" none" then

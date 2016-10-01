@@ -38,6 +38,7 @@
 
 #include <vector>           // for std::vector
 #include <cstdio>           // for FILE*, etc
+#include <math.h>           // for sin, cos and log
 
 // -----------------------------------------------------------------------------
 
@@ -45,13 +46,25 @@ Overlay* curroverlay = NULL;    // pointer to current overlay
 
 const char* no_overlay = "overlay has not been created";
 
+const char* no_cellview = "overlay does not contain a cell view";
+
 // -----------------------------------------------------------------------------
 
 Overlay::Overlay()
 {
     pixmap = NULL;
     cellview = NULL;
+
+    // initialize camera
+    camminzoom = 0.0625;
+    cammaxzoom = 32;
+    
+    // initialize theme
     theme = -1;
+    aliveStart = 64;
+    aliveMax = 127;
+    deadStart = 63;
+    deadMin = 1;
 }
 
 // -----------------------------------------------------------------------------
@@ -59,7 +72,376 @@ Overlay::Overlay()
 Overlay::~Overlay()
 {
     DeleteOverlay();
-    DeleteCellView();
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::RefreshCellViewWithTheme()
+{
+    // refresh the cellview for a 2 state pattern using LifeViewer theme
+    unsigned char *cellviewptr = cellview;
+    unsigned char state;
+    int h, w, v = 0;
+    int skip;
+    lifealgo *algo = currlayer->algo;
+
+    int rightx = cellx + cellwd;
+    int bottomy = celly + cellht;
+
+    for (h = celly; h < bottomy; h++) {
+        w = cellx;
+        while (w < rightx) {
+            skip = algo->nextcell(w, h, v);
+            if (skip >= 0) {
+                while (skip > 0 && w < rightx) {
+                    // new cells are dead
+                    state = *cellviewptr;
+                    if (state) {
+                        if (state >= aliveStart) {
+                            // cell just died
+                            state = deadStart;
+                        }
+                        else {
+                            if (state > deadMin) {
+                                // cell decaying
+                                state--;
+                            }
+                        }
+                        *cellviewptr = state;
+                    }
+                    cellviewptr++;
+
+                    // next dead cell
+                    skip--;
+                    w++;
+                }
+
+                // cell is alive
+                if (w < rightx) {
+                    state = *cellviewptr;
+                    if (state >= aliveStart) {
+                        // check for max length
+                        if (state < aliveMax) {
+                            // cell living
+                            state++;
+                        }
+                    }
+                    else {
+                        // cell just born
+                        state = aliveStart;
+                    }
+                    *cellviewptr++ = state;
+
+                    // next cell
+                    w++;
+                }
+            }
+            else {
+                // dead to end of row
+                while (w < rightx) {
+                    // new cells are dead
+                    state = *cellviewptr;
+                    if (state) {
+                        if (state >= aliveStart) {
+                            // cell just died
+                            state = deadStart;
+                        }
+                        else {
+                            if (state > deadMin) {
+                                // cell decaying
+                                state--;
+                            }
+                        }
+                        *cellviewptr = state;
+                    }
+                    cellviewptr++;
+
+                    // next dead cell
+                    w++;
+                }
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::RefreshCellView()
+{
+    bigint top, left, bottom, right;
+    int leftx, rightx, topy, bottomy;
+    int h, w, v = 0;
+    int skip;
+    lifealgo *algo = currlayer->algo;
+
+    // find pattern bounding box
+    algo->findedges(&top, &left, &bottom, &right);
+    leftx = left.toint();
+    rightx = right.toint();
+    topy = top.toint();
+    bottomy = bottom.toint();
+
+    // clip to cell view
+    if (leftx < cellx) {
+        leftx = cellx;
+    }
+    if (rightx >= cellx + cellwd) {
+        rightx = cellx + cellwd - 1;
+    }
+    if (bottomy >= celly + cellht) {
+        bottomy = celly + cellht - 1;
+    }
+    if (topy < celly) {
+        topy = celly;
+    }
+
+    // clear the cell view
+    memset(cellview, 0, cellwd * cellht * sizeof(*cellview));
+
+    // copy live cells into the cell view
+    for (h = topy; h <= bottomy; h++) {
+        for (w = leftx; w <= rightx; w++) {
+            skip = algo->nextcell(w, h, v);
+            if (skip >= 0) {
+                // live cell found
+                w += skip;
+                if (w <= rightx) {
+                    cellview[(h - celly) * cellwd + w - cellx] = v;
+                }
+            }
+            else {
+                // end of row
+                w = rightx;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::GetPatternColors()
+{
+    unsigned char *rgb = (unsigned char *)cellRGBA;
+
+    // TBD look these up
+    unsigned char live_alpha = 255;
+    unsigned char dead_alpha = 255;
+
+    // read pattern colours
+    for (int i = 0; i <= currlayer->numicons; i++) {
+        *rgb++ = currlayer->cellr[i];
+        *rgb++ = currlayer->cellg[i];
+        *rgb++ = currlayer->cellb[i];
+        *rgb++ = i ? live_alpha : dead_alpha;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::GetThemeColors(double brightness)
+{
+    unsigned char *rgb = (unsigned char *)cellRGBA;
+    double weight;
+
+    // TBD look these up
+    unsigned char live_alpha = 255;
+    unsigned char dead_alpha = 255;
+
+    // theme definition (hard coded to THEME 1 for now)
+
+    // cell born color - cyan
+    int aliveStartR = 0;
+    int aliveStartG = 255;
+    int aliveStartB = 255;
+
+    // while still alive fades to - white
+    int aliveEndR = 255;
+    int aliveEndG = 255;
+    int aliveEndB = 255;
+
+    // cell just died color - blue
+    int deadStartR = 0;
+    int deadStartG = 0;
+    int deadStartB = 255;
+
+    // while still dead decays to - dark blue
+    int deadEndR = 0;
+    int deadEndG = 0;
+    int deadEndB = 47;
+
+    // cell never occupied color - black
+    int unoccupiedR = 0;
+    int unoccupiedG = 0;
+    int unoccupiedB = 0;
+
+    // set never occupied cell color
+    *rgb++ = unoccupiedR;
+    *rgb++ = unoccupiedG;
+    *rgb++ = unoccupiedB;
+    *rgb++ = dead_alpha;
+
+    // set decaying colors
+    for (int i = deadMin; i <= deadStart; i++) {
+        weight = 1 - ((double)(i - deadMin) / (deadStart - deadMin));
+        *rgb++ = deadStartR * (1 - weight) + deadEndR * weight;
+        *rgb++ = deadStartG * (1 - weight) + deadEndG * weight;
+        *rgb++ = deadStartB * (1 - weight) + deadEndB * weight;
+        *rgb++ = live_alpha;
+    }
+
+    // set living colors
+    for (int i = aliveStart; i <= aliveMax; i++) {
+        weight = 1 - ((double)(i - aliveStart) / (aliveMax - aliveStart));
+        *rgb++ = (aliveStartR * weight + aliveEndR * (1 - weight)) * brightness;
+        *rgb++ = (aliveStartG * weight + aliveEndG * (1 - weight)) * brightness;
+        *rgb++ = (aliveStartB * weight + aliveEndB * (1 - weight)) * brightness;
+        *rgb++ = live_alpha;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoDrawCells()
+{
+    if (cellview == NULL) return OverlayError(no_cellview);
+
+    // convert zoom 0..1 to actual zoom
+    double zoom = camminzoom * pow(cammaxzoom / camminzoom, camzoom);
+
+    // convert depth to actual depth
+    double depth = camlayerdepth / 2 + 1;
+
+    // check pixel brightness depending on layers
+    double brightness = 1;
+    double brightinc = 0;
+
+    if (theme != -1 && camlayers > 1 && depth > 1) {
+        brightness = 0.6;
+        brightinc = 0.4 / (camlayers - 1);
+    }
+
+    // refresh the cell view
+    if (theme != -1) {
+        // using theme colors
+        GetThemeColors(brightness);
+    }
+    else {
+        // using standard pattern colors
+        GetPatternColors();
+    }
+
+    // compute deltas in horizontal and vertical direction based on rotation
+    double dxy = sin(camangle / 180 * M_PI) / zoom;
+    double dyy = cos(camangle / 180 * M_PI) / zoom;
+
+    // compute starting position
+    double sy = -((wd / 2) * (-dxy) + (ht / 2) * dyy) + camy;
+    double sx = -((wd / 2) * dyy + (ht / 2) * dxy) + camx;
+
+    unsigned char state;
+    unsigned int rgba;
+    unsigned int *overlayptr = (unsigned int *)pixmap;
+    double x, y;
+    int ix, iy;
+    int h, w;
+
+    // pixel color for cells outside cell view
+    unsigned int offRGBA = 0xff808080;
+
+    // draw each pixel
+    y = sy;
+    for (h = 0; h < ht; h++) {
+        x = sx;
+        for (w = 0; w < wd; w++) {
+            ix = (int)x;
+            iy = (int)y;
+
+            // check if pixel is in the cell view
+            if (ix >= 0 && ix < cellwd && iy >= 0 && iy < cellht) {
+                state = cellview[cellwd * iy + ix];
+                rgba = cellRGBA[state];
+            }
+            else {
+                rgba = offRGBA;
+            }
+
+            // set the pixel
+            *overlayptr++ = rgba;
+
+            // update row position
+            x += dyy;
+            y -= dxy;
+        }
+
+        // update column position
+        sx += dxy;
+        sy += dyy;
+        y = sy;
+    }
+
+    // draw any layers
+    if (theme != -1) {
+        for (int i = 1; i < camlayers; i++) {
+            unsigned char transparenttarget = (i * ((aliveMax + 1) / camlayers));
+
+            // update brightness
+            brightness += brightinc;
+            GetThemeColors(brightness);
+
+            // adjust zoom for next level
+            dxy /= depth;
+            dyy /= depth;
+
+            sy = -((wd / 2) * (-dxy) + (ht / 2) * dyy) + camy;
+            sx = -((wd / 2) * dyy + (ht / 2) * dxy) + camx;
+
+            overlayptr = (unsigned int *)pixmap;
+
+            // draw each pixel
+            y = sy;
+            for (h = 0; h < ht; h++) {
+                x = sx;
+                for (w = 0; w < wd; w++) {
+                    ix = (int)x;
+                    iy = (int)y;
+
+                    // check if pixel is on the grid
+                    if (ix >= 0 && ix < cellwd && iy >= 0 && iy < cellht) {
+                        state = cellview[cellwd * iy + ix];
+
+                        // check if it is transparent
+                        if (state >= transparenttarget) {
+                            // draw the pixel
+                            rgba = cellRGBA[state];
+                            *overlayptr = rgba;
+                        }
+                    }
+                    overlayptr++;
+
+                    // update row position
+                    x += dyy;
+                    y -= dxy;
+                }
+
+                // update column position
+                sx += dxy;
+                sy += dyy;
+                y = sy;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DeleteCellView()
+{
+    if (cellview) {
+        free(cellview);
+        cellview = NULL;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -76,57 +458,24 @@ void Overlay::DeleteOverlay()
         delete it->second;
     }
     clips.clear();
+
+    DeleteCellView();
 }
 
 // -----------------------------------------------------------------------------
 
-void Overlay::DeleteCellView()
-{
-    if (cellview) {
-        free(cellview);
-        cellview = NULL;
-    }
-}
+const char* Overlay::DoUpdateCells() {
+    if (cellview == NULL) return OverlayError(no_cellview);
 
-// -----------------------------------------------------------------------------
-
-unsigned char* Overlay::AllocateCellView(int size) {
-    // check if the cellview is already allocated
-    if (!cellview) {
-        // use calloc so all cells will be state 0
-        cellview = (unsigned char*) calloc(size, sizeof(*cellview));
+    // check if themes are used
+    if (theme == -1) {
+        RefreshCellView();
     }
     else {
-        // check if the cellview needs to grow
-        if (size > cellwd * cellht) {
-            // reallocate the cellview
-            cellview = (unsigned char*) realloc(cellview, size * sizeof(*cellview));
-        }
-
-        // clear the cellview
-        memset(cellview, 0, size * sizeof(*cellview));
+        RefreshCellViewWithTheme();
     }
 
-    return cellview;
-}
-
-// -----------------------------------------------------------------------------
-
-bool Overlay::CellViewNeedsRefresh() {
-    bool result = dirty;
-
-    // clear the flag
-    dirty = false;
-
-    // return the original value
-    return result;
-}
-
-// -----------------------------------------------------------------------------
-
-void Overlay::DoDirty() {
-    // set the flag
-    dirty = true;
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -145,8 +494,11 @@ const char* Overlay::DoCellView(const char* args)
     if (w > cellviewmaxsize) return OverlayError("width of cellview too big");
     if (h > cellviewmaxsize) return OverlayError("height of cellview too big");
 
-    // allocate the cellview
-    cellview = AllocateCellView(w * h);
+    // delete any existing cellview
+    DeleteCellView();
+
+    // use calloc so all cells will be in state 0
+    cellview = (unsigned char*) calloc(w * h, sizeof(*cellview));
     if (cellview == NULL) return OverlayError("not enough memory to create cellview");
     
     // save the arguments
@@ -163,10 +515,17 @@ const char* Overlay::DoCellView(const char* args)
     camangle = 0;
 
     // set default zoom
-    camzoom = 0.4;
+    camzoom = log(1 / camminzoom) / log(cammaxzoom / camminzoom);
 
-    // set dirty flag
-    dirty = true;
+    // set default layers
+    camlayers = 1;
+    camlayerdepth = 0.05;
+
+    // use standard pattern colors
+    theme = -1;
+
+    // populate cellview
+    DoUpdateCells();
 
     return NULL;
 }
@@ -290,6 +649,35 @@ const char* Overlay::DoTheme(const char* args)
 
     // return the previous value
     return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoResize(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    // don't set wd and ht until we've checked the args are valid
+    int w, h;
+    if (sscanf(args, " %d %d", &w, &h) != 2) {
+        return OverlayError("resize command requires 2 arguments");
+    }
+    
+    if (w <= 0) return OverlayError("width of overlay must be > 0");
+    if (h <= 0) return OverlayError("height of overlay must be > 0");
+    
+    // given width and height are ok
+    wd = w;
+    ht = h;
+    
+    // free the previous pixmap
+    free(pixmap);
+
+    // create the new pixmap
+    pixmap = (unsigned char*) calloc(wd * ht * 4, sizeof(*pixmap));
+    if (pixmap == NULL) return OverlayError("not enough memory to resize overlay");
+
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -1526,19 +1914,17 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "cursor", 6) == 0)      return DoCursor(cmd+6);
     if (strcmp(cmd,  "update") == 0)         return DoUpdate();
     if (strncmp(cmd, "create", 6) == 0)      return DoCreate(cmd+6);
+    if (strncmp(cmd, "resize", 6) == 0)      return DoResize(cmd+6);
     if (strncmp(cmd, "cellview ", 9) == 0)   return DoCellView(cmd+9);
     if (strncmp(cmd, "camangle ", 9) == 0)   return DoCamAngle(cmd+9);
     if (strncmp(cmd, "camxy ", 6) == 0)      return DoCamXY(cmd+6);
     if (strncmp(cmd, "camzoom ", 8) == 0)    return DoCamZoom(cmd+8);
     if (strncmp(cmd, "camlayers ", 10) == 0) return DoCamLayers(cmd+10);
     if (strncmp(cmd, "theme ", 6) == 0)      return DoTheme(cmd+6);
-    if (strcmp(cmd, "dirty") == 0) {
-        DoDirty();
-        return NULL;
-    }
+    if (strcmp(cmd, "updatecells") == 0)     return DoUpdateCells();
+    if (strcmp(cmd, "drawcells") == 0)       return DoDrawCells();
     if (strcmp(cmd, "delete") == 0) {
         DeleteOverlay();
-        DeleteCellView();
         return NULL;
     }
     return OverlayError("unknown command");
