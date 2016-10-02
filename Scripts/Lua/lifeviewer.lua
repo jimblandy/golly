@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 4
+local buildnumber = 5
 
 local g = golly()
 
@@ -365,11 +365,46 @@ end
 
 --------------------------------------------------------------------------------
 
+local function copyzoom()
+    local mag = g.getmag()
+    local zoom
+
+    -- convert magnification to zoom value
+    if mag >= 0 then
+        zoom = 1 << mag
+    else
+        zoom = 1 / (1 << -mag)
+    end
+
+    -- ensure in range
+    if zoom > maxzoom then
+        zoom = maxzoom
+    end
+    if zoom < minzoom then
+        zoom = minzoom
+    end
+
+    -- set the zoom
+    setzoom(zoom)
+end
+
+--------------------------------------------------------------------------------
+
 local function main()
+    -- create overlay and cell view
     createoverlay()
     createcellview()
+
+    -- reset the camera to default position
     resetcamera()
+    
+    -- set initial zoom from Golly's current zoom
+    copyzoom()
+
+    -- set the default theme
     settheme()
+
+    -- update the overlay
     refresh()
     
     while true do

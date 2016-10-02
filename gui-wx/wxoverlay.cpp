@@ -337,9 +337,6 @@ const char* Overlay::DoDrawCells()
     int ix, iy;
     int h, w;
 
-    // pixel color for cells outside cell view
-    unsigned int offRGBA = 0xff808080;
-
     // draw each pixel
     y = sy;
     for (h = 0; h < ht; h++) {
@@ -354,7 +351,7 @@ const char* Overlay::DoDrawCells()
                 rgba = cellRGBA[state];
             }
             else {
-                rgba = offRGBA;
+                rgba = borderRGBA;
             }
 
             // set the pixel
@@ -517,6 +514,18 @@ const char* Overlay::DoCellView(const char* args)
     // use standard pattern colors
     theme = -1;
 
+    // set default border color
+    br = 128;
+    bg = 128;
+    bb = 128;
+    
+    // create the rgba value
+    unsigned char* border = (unsigned char*)&borderRGBA;
+    *border++ = br;
+    *border++ = bg;
+    *border++ = bb;
+    *border++ = 255;   // opaque
+    
     // populate cellview
     DoUpdateCells();
 
@@ -798,6 +807,42 @@ const char* Overlay::DoPosition(const char* args)
     }
     
     return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoSetBorderRGB(const char* args)
+{
+    int a1, a2, a3;
+    if (sscanf(args, " %d %d %d", &a1, &a2, &a3) != 3) {
+        return OverlayError("borderrgb command requires 3 arguments");
+    }
+    
+    if (a1 < 0 || a1 > 255 ||
+        a2 < 0 || a2 > 255 ||
+        a3 < 0 || a3 > 255 ) {
+        return OverlayError("borderrgb values must be from 0 to 255");
+    }
+    
+    unsigned char oldr = br;
+    unsigned char oldg = bg;
+    unsigned char oldb = bb;
+    
+    br = (unsigned char) a1;
+    bg = (unsigned char) a2;
+    bb = (unsigned char) a3;
+
+    // create the rgba value
+    unsigned char* border = (unsigned char*)&borderRGBA;
+    *border++ = br;
+    *border++ = bg;
+    *border++ = bb;
+    *border++ = 255;  // opaque
+    
+    // return old values
+    static char result[16];
+    sprintf(result, "%hhu %hhu %hhu", oldr, oldg, oldb);
+    return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -1914,9 +1959,10 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "camzoom ", 8) == 0)    return DoCamZoom(cmd+8);
     if (strncmp(cmd, "camlayers ", 10) == 0) return DoCamLayers(cmd+10);
     if (strncmp(cmd, "theme ", 6) == 0)      return DoTheme(cmd+6);
-    if (strcmp(cmd, "updatecells") == 0)     return DoUpdateCells();
-    if (strcmp(cmd, "drawcells") == 0)       return DoDrawCells();
-    if (strcmp(cmd, "delete") == 0) {
+    if (strcmp(cmd,  "updatecells") == 0)    return DoUpdateCells();
+    if (strcmp(cmd,  "drawcells") == 0)      return DoDrawCells();
+    if (strncmp(cmd, "borderrgb", 9) == 0)   return DoSetBorderRGB(cmd+9);
+    if (strcmp(cmd,  "delete") == 0) {
         DeleteOverlay();
         return NULL;
     }

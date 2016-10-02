@@ -8,6 +8,7 @@
 <dd><a href="#blending"><b>Alpha blending</b></a></dd>
 <dd><a href="#clips"><b>Using clips</b></a></dd>
 <dd><a href="#affine"><b>Affine transformations</b></a></dd>
+<dd><a href="#cellviewdesc"><b>Cellview</b></a></dd>
 <dd><a href="#oplus"><b>The oplus package</b></a></dd>
 </p>
 
@@ -20,12 +21,15 @@ above the current layer.  Lua scripts have total control of what the
 overlay looks like and how the user interacts with it.
 
 <p>
-The Scripts/Lua folder supplied with Golly has a couple of scripts
-that illustrate how the overlay can be used:
-<b>hexgrid.lua</b> creates a true hexagonal grid for rules that use
-a hexagonal neighborhood, and <b>pop-plot.lua</b> displays a plot
-of population versus time that can be saved as a PNG file.
-
+The Scripts/Lua folder supplied with Golly has a few scripts
+that illustrate how the overlay can be used:<ul>
+<li><a href="edit:Scripts/Lua/hexgrid.lua"><b>hexgrid.lua</b></a> creates a true hexagonal grid for rules that use
+a hexagonal neighborhood.
+<li><a href="edit:Scripts/Lua/pop-plot.lua"><b>pop-plot.lua</b></a> displays a plot of population versus time that can
+be saved as a PNG file.
+<li><a href="edit:Scripts/Lua/lifeviewer.lua"><b>lifeviewer.lua</b></a> displays patterns like LifeViewer with smooth non-integer
+scaling and rotation.
+</ul>
 
 <p><a name="commands"></a>&nbsp;<br>
 <font size=+1><b>The overlay commands</b></font>
@@ -43,34 +47,50 @@ Here is an alphabetical list of all the valid overlay commands:
 <tr>
 <td valign=top>
 <a href="#blend"><b>blend</b></a><br>
+<a href="#borderrgb"><b>borderrgb</b></a><br>
+<a href="#camangle"><b>camangle</b></a><br>
+<a href="#camlayers"><b>camlayers</b></a><br>
+<a href="#camxy"><b>camxy</b></a><br>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#camzoom"><b>camzoom</b></a><br>
+<a href="#cellview"><b>cellview</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
 <a href="#create"><b>create</b></a><br>
 <a href="#cursor"><b>cursor</b></a><br>
-<a href="#delete"><b>delete</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#delete"><b>delete</b></a><br>
+<a href="#drawcells"><b>drawcells</b></a><br>
 <a href="#fill"><b>fill</b></a><br>
 <a href="#flood"><b>flood</b></a><br>
 <a href="#font"><b>font</b></a><br>
-<a href="#get"><b>get</b></a><br>
-<a href="#line"><b>line</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#get"><b>get</b></a><br>
+<a href="#line"><b>line</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#position"><b>position</b></a><br>
-<a href="#rgba"><b>rgba</b></a><br>
-<a href="#save"><b>save</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#resize"><b>resize</b></a><br>
+<a href="#rgba"><b>rgba</b></a><br>
+<a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
 <a href="#text"><b>text</b></a><br>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
-<a href="#xy"><b>xy</b></a>
+<a href="#updatecells"><b>updatecells</b></a><br>
+<a href="#xy"><b>xy</b></a><br>
 </td>
 </tr>
 </table>
@@ -98,6 +118,83 @@ The commands affected by alpha blending are:
 <a href="#set">set</a>.
 </dd>
 <dd> Example: <b>local oldblend = ov("blend 1")</b></dd>
+</p>
+
+<a name="borderrgb"></a><p><dt><b>borderrgb <i>red green blue</i></b></dt>
+<dd>
+Set the border RGB values used by <a href="#cellviewdesc">cellview</a> and
+return the old values as a string of the form "red green blue".
+All values are from 0 to 255. Default is grey.
+</dd>
+<dd> Example: <b>local oldangle = ov("camangle 90")</b></dd>
+</p>
+
+<a name="camangle"></a><p><dt><b>camangle <i>angle</i></b></dt>
+<dd>
+Set the camera angle for <a href="#cellviewdesc">cellview</a> in degrees and returns the previous
+camera angle. The valid range is 0 &lt;= <i>angle</i> &lt; 360. The default is 0.
+</dd>
+<dd> Example: <b>local oldangle = ov("camangle 90")</b></dd>
+</p>
+
+<a name="camlayers"></a><p><dt><b>camlayers <i>layers depth</i></b></dt>
+<dd>
+Set the number of layers and depth between layers for <a href="#cellviewdesc">cellview</a> and
+returns the previous number of layers and depth. <i>layers</i> must be from 1 (the default)
+to 10. <i>depth</i> must be from 0 to 10 and the default is 0.5.
+</dd>
+<dd> Example: <b>local oldlayers = ov("camlayers 6 0.2")</b></dd>
+</p>
+
+<a name="camxy"></a><p><dt><b>camxy <i>x y</i></b></dt>
+<dd>
+Set the camera pan position for <a href="#cellviewdesc">cellview</a> and returns the previous
+pan position. Default position is the centre of the view.
+</dd>
+<dd> Example: <b>local oldxy = ov("camxy -32 100")</b></dd>
+</p>
+
+<a name="camzoom"></a><p><dt><b>camzoom <i>zoom</i></b></dt>
+<dd>
+Set the camera zoom for <a href="#cellviewdesc">cellview</a> from 0 to 1 and returns the previous
+zoom. The 0 to 1 zoom range represents a logarithmic range across the allowable zoom range
+from -16x (0.0625x) to 32x. This is used to create visually smooth zooms. The default is 1x zoom.
+</dd>
+<dd>
+Example: <b>ov("camzoom 0.2")</b><br>
+</dd>
+<dd>
+The following functions can be used to convert between the 0 to 1 range and actual zoom value:<br>
+</dd></p>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top>
+<b>local minzoom = 0.0625</b><br>
+<b>local maxzoom = 32</b><br>
+<br>
+<b>local function actualtolog(zoom)</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<b>return math.log(zoom / minzoom) / math.log(maxzoom / minzoom)</b><br>
+<b>end</b><br>
+<br>
+<b>local function logtoactual(zoom)</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<b>return minzoom * math.pow(maxzoom / minzoom, zoom)</b><br>
+<b>end</b><br>
+<br>
+-- set 16x zoom<br>
+<b>ov("camzoom "..actualtolog(16));<b><br>
+</td>
+</tr>
+</table>
+</dd>
+</p>
+
+<a name="cellview"></a><p><dt><b>cellview <i>x y wd ht</i></b></dt>
+<dd>
+Create a view of cells enclosed by the defined rectangle that can be drawn on the overlay.
+</dd>
+<dd> Example: <b>ov("cellview -1024 -1024 2048 2048")</b></dd>
 </p>
 
 <a name="copy"></a><p><dt><b>copy <i>x y wd ht clipname</i></b></dt>
@@ -157,6 +254,15 @@ Delete the current overlay.  Equivalent to selecting Delete Overlay
 from the Layer menu.
 </dd>
 <dd> Example: <b>ov("delete")</b></dd>
+</p>
+
+<a name="drawcells"></a><p><dt><b>drawcells</b></dt>
+<dd>
+Draw the cells from the <a href="#cellviewdesc">cellview</a> onto the overlay. The cells will be
+drawn using the camera settings and colored using the current theme. Further drawing commands
+can then be used to draw on top of the cell display.
+</dd>
+<dd> Example: <b>ov("drawcells")</b></dd>
 </p>
 
 <a name="fill"></a><p><dt><b>fill <i>x y wd ht</i></b></dt>
@@ -265,6 +371,13 @@ The valid positions are:
 <dd> Example: <b>ov("position middle")</b></dd>
 </p>
 
+<a name="resize"></a><p><dt><b>resize <i>x y</i></b></dt>
+<dd>
+Resize the overlay to the given size. This is typically used if a window resize is detected.
+</dd>
+<dd> Example: <b>ov("resize")</b></dd>
+</p>
+
 <a name="rgba"></a><p><dt><b>rgba <i>red green blue alpha</i></b></dt>
 <dd>
 Set the current RGBA values used by later drawing commands
@@ -312,6 +425,15 @@ Note that the text has a transparent background, so you'll probably need to set
 <dd> Example: <b>local dimens = ov("text tempclip To be or not to be...")</b></dd>
 </p>
 
+<a name="resize"></a><p><dt><b>theme <i>n</i></b></dt>
+<dd>
+Define the color theme for drawing the <a href="#cellviewdesc">cellview</a> and return the
+previous value. A value of -1 (the default) means use the standard pattern colors. Other
+values mean use one of the LifeViewer color themes.
+</dd>
+<dd> Example: <b>ov("theme -1")</b></dd>
+</p>
+
 <a name="transform"></a><p><dt><b>transform <i>axx axy ayx ayy</i></b></dt>
 <dd>
 Set the <a href="#affine">affine transformation</a> values used by later
@@ -329,6 +451,14 @@ in cases where the overlay covers the entire layer <em>and</em> all
 pixels in the overlay are opaque.
 </dd>
 <dd> Example: <b>ov("update")</b></dd>
+</p>
+
+<a name="updatecells"></a><p><dt><b>updatecells</b></dt>
+<dd>
+Updates the <a href="#cellviewdesc">cellview</a> from the universe. 
+This command should typically be used every time the universe changes.
+</dd>
+<dd> Example: <b>ov("updatecells")</b></dd>
 </p>
 
 <a name="xy"></a><p><dt><b>xy</b></dt>
@@ -524,6 +654,13 @@ the resulting overlay.
 </table>
 </dd>
 
+
+<p><a name="cellviewdesc"></a>&nbsp;<br>
+<font size=+1><b>Cellview</b></font>
+
+<p>
+!!!
+</p>
 
 <p><a name="oplus"></a>&nbsp;<br>
 <font size=+1><b>The oplus package</b></font>

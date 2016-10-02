@@ -235,6 +235,10 @@ private:
     const char* DoDrawCells();
     // Draw the cells onto the overlay.
 
+    const char* DoSetBorderRGB(const char* args);
+    // Set the border  RGB values and return the old values as a string
+    // of the form "r g b".
+    
     // camera
 
     const char* DoCamLayers(const char* args);
@@ -277,6 +281,8 @@ private:
     unsigned char* cellview;    // cell state data (cellwd * cellht bytes)
     int cellwd, cellht;         // width and height of cell view
     int cellx, celly;           // x and y position of bottom left cell
+    unsigned char br, bg, bb;   // border r g b components
+    unsigned int borderRGBA;    // border rgba color
 
     // camera
 
