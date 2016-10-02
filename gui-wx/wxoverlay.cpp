@@ -223,16 +223,12 @@ void Overlay::GetPatternColors()
 {
     unsigned char *rgb = (unsigned char *)cellRGBA;
 
-    // TBD look these up
-    unsigned char live_alpha = 255;
-    unsigned char dead_alpha = 255;
-
     // read pattern colours
     for (int i = 0; i <= currlayer->numicons; i++) {
         *rgb++ = currlayer->cellr[i];
         *rgb++ = currlayer->cellg[i];
         *rgb++ = currlayer->cellb[i];
-        *rgb++ = i ? live_alpha : dead_alpha;
+        *rgb++ = 255; // opaque
     }
 }
 
@@ -242,10 +238,6 @@ void Overlay::GetThemeColors(double brightness)
 {
     unsigned char *rgb = (unsigned char *)cellRGBA;
     double weight;
-
-    // TBD look these up
-    unsigned char live_alpha = 255;
-    unsigned char dead_alpha = 255;
 
     // theme definition (hard coded to THEME 1 for now)
 
@@ -278,7 +270,7 @@ void Overlay::GetThemeColors(double brightness)
     *rgb++ = unoccupiedR;
     *rgb++ = unoccupiedG;
     *rgb++ = unoccupiedB;
-    *rgb++ = dead_alpha;
+    *rgb++ = 255; // opaque
 
     // set decaying colors
     for (int i = deadMin; i <= deadStart; i++) {
@@ -286,7 +278,7 @@ void Overlay::GetThemeColors(double brightness)
         *rgb++ = deadStartR * (1 - weight) + deadEndR * weight;
         *rgb++ = deadStartG * (1 - weight) + deadEndG * weight;
         *rgb++ = deadStartB * (1 - weight) + deadEndB * weight;
-        *rgb++ = live_alpha;
+        *rgb++ = 255; // opaque
     }
 
     // set living colors
@@ -295,7 +287,7 @@ void Overlay::GetThemeColors(double brightness)
         *rgb++ = (aliveStartR * weight + aliveEndR * (1 - weight)) * brightness;
         *rgb++ = (aliveStartG * weight + aliveEndG * (1 - weight)) * brightness;
         *rgb++ = (aliveStartB * weight + aliveEndB * (1 - weight)) * brightness;
-        *rgb++ = live_alpha;
+        *rgb++ = 255; // opaque
     }
 }
 
@@ -464,7 +456,8 @@ void Overlay::DeleteOverlay()
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoUpdateCells() {
+const char* Overlay::DoUpdateCells()
+{
     if (cellview == NULL) return OverlayError(no_cellview);
 
     // check if themes are used
