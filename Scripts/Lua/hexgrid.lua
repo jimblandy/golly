@@ -595,7 +595,7 @@ local function main()
         if newwd ~= viewwd or newht ~= viewht then
             viewwd = newwd
             viewht = newht
-            ov("create "..viewwd.." "..viewht)      -- resize overlay
+            ov("resize "..viewwd.." "..viewht)      -- resize overlay
             refresh()
         end
         

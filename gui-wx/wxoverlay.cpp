@@ -297,9 +297,6 @@ const char* Overlay::DoDrawCells()
 {
     if (cellview == NULL) return OverlayError(no_cellview);
 
-    // convert zoom 0..1 to actual zoom
-    double zoom = camminzoom * pow(cammaxzoom / camminzoom, camzoom);
-
     // convert depth to actual depth
     double depth = camlayerdepth / 2 + 1;
 
@@ -323,8 +320,8 @@ const char* Overlay::DoDrawCells()
     }
 
     // compute deltas in horizontal and vertical direction based on rotation
-    double dxy = sin(camangle / 180 * M_PI) / zoom;
-    double dyy = cos(camangle / 180 * M_PI) / zoom;
+    double dxy = sin(camangle / 180 * M_PI) / camzoom;
+    double dyy = cos(camangle / 180 * M_PI) / camzoom;
 
     // compute starting position
     double sy = -((wd / 2) * (-dxy) + (ht / 2) * dyy) + camy;
@@ -337,10 +334,19 @@ const char* Overlay::DoDrawCells()
     int ix, iy;
     int h, w;
 
+    // check for hex rules
+    bool isHex = currlayer->algo->getgridtype() == currlayer->algo->HEX_GRID;
+
     // draw each pixel
     y = sy;
     for (h = 0; h < ht; h++) {
         x = sx;
+
+        // offset if hex rule
+        if (isHex) {
+            x += 0.5 * (int)y;
+        }
+
         for (w = 0; w < wd; w++) {
             ix = (int)x;
             iy = (int)y;
@@ -390,6 +396,12 @@ const char* Overlay::DoDrawCells()
             y = sy;
             for (h = 0; h < ht; h++) {
                 x = sx;
+
+                // offset if hex rule
+                if (isHex) {
+                    x += 0.5 * (int)y;
+                }
+
                 for (w = 0; w < wd; w++) {
                     ix = (int)x;
                     iy = (int)y;
@@ -498,14 +510,14 @@ const char* Overlay::DoCellView(const char* args)
     celly = y;
 
     // set the default camera position to the center
-    camx = x + w / 2;
-    camy = y + w / 2;
+    camx = w / 2;
+    camy = h / 2;
 
     // set default angle
     camangle = 0;
 
     // set default zoom
-    camzoom = log(1 / camminzoom) / log(cammaxzoom / camminzoom);
+    camzoom = 1;
 
     // set default layers
     camlayers = 1;
@@ -542,8 +554,8 @@ const char* Overlay::DoCamZoom(const char* args)
         return OverlayError("camzoom command requires 1 argument");
     }
 
-    if (zoom < 0) return OverlayError("camera zoom too small");
-    if (zoom > 1) return OverlayError("camera zoom too big");
+    if (zoom < camminzoom) return OverlayError("camera zoom too small");
+    if (zoom > cammaxzoom) return OverlayError("camera zoom too big");
 
     // argument is ok
     static char result[30];
