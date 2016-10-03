@@ -158,37 +158,11 @@ pan position. Default position is the centre of the view.
 
 <a name="camzoom"></a><p><dt><b>camzoom <i>zoom</i></b></dt>
 <dd>
-Set the camera zoom for <a href="#cellviewdesc">cellview</a> from 0 to 1 and returns the previous
-zoom. The 0 to 1 zoom range represents a logarithmic range across the allowable zoom range
-from -16x (0.0625x) to 32x. This is used to create visually smooth zooms. The default is 1x zoom.
+Set the camera zoom for <a href="#cellviewdesc">cellview</a> from 0.0625 (-16x) to 32 (32x) and
+returns the previous zoom. The default is 1.
 </dd>
 <dd>
-Example: <b>ov("camzoom 0.2")</b><br>
-</dd>
-<dd>
-The following functions can be used to convert between the 0 to 1 range and actual zoom value:<br>
-</dd></p>
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr>
-<td valign=top>
-<b>local minzoom = 0.0625</b><br>
-<b>local maxzoom = 32</b><br>
-<br>
-<b>local function actualtolog(zoom)</b><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<b>return math.log(zoom / minzoom) / math.log(maxzoom / minzoom)</b><br>
-<b>end</b><br>
-<br>
-<b>local function logtoactual(zoom)</b><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<b>return minzoom * math.pow(maxzoom / minzoom, zoom)</b><br>
-<b>end</b><br>
-<br>
--- set 16x zoom<br>
-<b>ov("camzoom "..actualtolog(16));<b><br>
-</td>
-</tr>
-</table>
+Example: <b>ov("camzoom 3.5")</b><br>
 </dd>
 </p>
 
@@ -668,7 +642,12 @@ steps required:
 <li>Either use the standard pattern colors or pick a theme and border color with the <a href="#theme">theme</a> and <a href="#borderrgb">borderrgb</a> commands.
 <li>Define the camera settings to determine how you want to project the cells onto the overlay using <a href="#camangle">camangle</a>, <a href="#camlayers">camlayers</a>, <a href="#camxy">camxy</a> and <a href="#camzoom">camzoom</a> commands.
 </ol>
-Whenever cells change you should use the <a href="#updatecells">updatecells</a> command. To draw the cells onto the overlay use the <a href="#drawcells">drawcells</a> command.
+</p>
+<p>
+Whenever cells change in the universe you should use the <a href="#updatecells">updatecells</a> command
+to refresh the cellview. To draw the cells onto the overlay use the <a href="#drawcells">drawcells</a> command.
+If the cells don't change and you want to change the camera or theme then just
+use <a href="#drawcells">drawcells</a> after the appropriate camera and theme commands.
 </p>
 
 <p>
@@ -676,73 +655,38 @@ Whenever cells change you should use the <a href="#updatecells">updatecells</a> 
 <table cellspacing=0 cellpadding=0>
 <tr>
 <td valign=top>
--- zoom conversion functions<br>
-<b>local minzoom = 0.0625</b><br>
-<b>local maxzoom = 32</b><br>
-<b>local function actualtolog(zoom)</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;return math.log(zoom / minzoom) / math.log(maxzoom / minzoom)</b><br>
-<b>end</b><br>
-<b>local function logtoactual(zoom)</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;return minzoom * math.pow(maxzoom / minzoom, zoom)</b><br>
-<b>end</b><br>
 -- create an overlay the size of the viewport<br>
 <b>local g = golly()</b><br>
 <b>local ov = g.overlay</b><br>
 <b>local viewwd, viewht = g.getview(g.getlayer())</b><br>
 <b>ov("create "..viewwd.." "..viewht)</b><br>
+-- open example pattern<br>
+<b>g.open(g.getdir("app").."Patterns/Life/Methuselahs/rabbits.lif")</b><br>
 -- create a cellview<br>
-<b>ov("cellview -100 -100 300 300")</b><br>
--- set initial camera position<br>
-<b>ov("camxy 150 150")</b><br>
-<b>ov("borderrgb 48 48 48")</b><br>
-<b>ov("updatecells")</b><br>
--- minimum to 8.5x zoom<br>
-<b>local startzoom = actualtolog(minzoom)</b><br>
-<b>local endzoom = actualtolog(8.5)</b><br>
-<b>for i = startzoom, endzoom, 0.002 do</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("camzoom "..i)</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("drawcells")</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("update")</b><br>
-<b>end</b><br>
--- rotate camera<br>
-<b>for i = 0, 360, 0.5 do</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("camangle "..i)</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("drawcells")</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("update")</b><br>
-<b>end</b><br>
--- show layers while running the pattern<br>
-<b>ov("theme 1")</b><br>
-<b>ov("borderrgb 0 0 0")</b><br>
-<b>for i = 0, 0.3, 0.001 do</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;g.step()</b><br>
+<b>ov("cellview -256 -256 512 512")</b><br>
+-- set camera 14.5x zoom and 30 degree rotation<br>
+<b>ov("camzoom 14.5")</b><br>
+<b>ov("camangle 30")</b><br>
+<b>ov("drawcells")</b><br>
+<b>ov("update")</b><br>
+-- run for 1000 generations<br>
+<b>for i = 0, 1000, 1 do</b><br>
+<b>&nbsp;&nbsp;&nbsp;&nbsp;g.run(1)</b><br>
 <b>&nbsp;&nbsp;&nbsp;&nbsp;ov("updatecells")</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("camlayers 6 "..i)</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("drawcells")</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("update")</b><br>
-<b>end</b><br>
--- zoom out from 8.5x to 1x<br>
-<b>startzoom = actualtolog(8.5)</b><br>
-<b>endzoom = actualtolog(1)</b><br>
-<b>for i = startzoom, endzoom, -0.002 do</b><br>
-<b>&nbsp;&nbsp;&nbsp;&nbsp;ov("camzoom "..i)</b><br>
 <b>&nbsp;&nbsp;&nbsp;&nbsp;ov("drawcells")</b><br>
 <b>&nbsp;&nbsp;&nbsp;&nbsp;ov("update")</b><br>
 <b>end</b><br>
 -- delete the overlay<br>
 <b>ov("delete")</b><br>
 </td>
-<td valign=top width=20> </td>
-<td valign=center>
-<table cellspacing=0 cellpadding=0>
-<tr><td><img src="cellview1.png"></td></tr>
-<tr><td><img src="cellview2.png"></td></tr>
-<tr><td><img src="cellview3.png"></td></tr>
-</table>
-</td>
 </tr>
 </table>
 </dd>
-
+<p>
+To see the above script in action, select and copy the lines to the
+clipboard, then select Run Clipboard from the File menu. For a more
+complex example see <a href="edit:Scripts/Lua/lifeviewer.lua">lifeviewer.lua</a>.
+</p>
 
 <p><a name="oplus"></a>&nbsp;<br>
 <font size=+1><b>The oplus package</b></font>

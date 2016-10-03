@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 5
+local buildnumber = 6
 
 local g = golly()
 
@@ -23,17 +23,19 @@ local viewheight = 2048
 local defcamx = viewwidth / 2
 local defcamy = viewheight / 2
 local defcamangle = 0
-local defcamzoomdisplay = 1
 local defcamlayers = 1
 local defcamlayerdepth = 0.05
+local deflinearzoom  -- set by copygollyzoom()
 
 -- camera
 local camx = defcamx
 local camy = defcamy
 local camangle = defcamangle
-local camzoom = defcamzoom
 local camlayers = defcamlayers
 local camlayerdepth = defcamlayerdepth
+
+-- zoom is held as a value 0..1 for smooth linear zooms
+local linearzoom
 
 -- theme
 local theme = -1
@@ -92,28 +94,30 @@ end
 
 --------------------------------------------------------------------------------
 
-local function displaytointernalzoom(zoom)
+local function realtolinear(zoom)
     return math.log(zoom / minzoom) / math.log(maxzoom / minzoom)
 end
 
 --------------------------------------------------------------------------------
 
-local function internaltodisplayzoom(zoom)
+local function lineartoreal(zoom)
     return minzoom * math.pow(maxzoom / minzoom, zoom)
 end
 
 --------------------------------------------------------------------------------
 
 local function updatecamera()
+    -- convert linear zoom to real zoom
+    local camzoom = lineartoreal(linearzoom)
+
     ov("camzoom "..camzoom)
     ov("camangle "..camangle)
     ov("camxy "..camx.." "..camy)
     ov("camlayers "..camlayers.." "..camlayerdepth)
 
     -- convert zoom to actual value
-    local zoom = internaltodisplayzoom(camzoom)
-    if zoom < 0.999 then
-       zoom = -(1 / zoom)
+    if camzoom < 0.999 then
+       camzoom = -(1 / camzoom)
     end
 
     -- convert x and y to display coordinates
@@ -121,18 +125,20 @@ local function updatecamera()
     local y = camy - viewheight / 2
 
     -- update status
-    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", zoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth))
+    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth))
 end
 
 --------------------------------------------------------------------------------
 
 local function resetcamera()
+    -- restore default camera settings
     camx = defcamx
     camy = defcamy
     camangle = defcamangle
-    camzoom = displaytointernalzoom(defcamzoomdisplay)
     camlayers = defcamlayers
     camlayerdepth = defcamlayerdepth
+    linearzoom = deflinearzoom
+
     updatecamera()
 end
 
@@ -188,10 +194,10 @@ end
 --------------------------------------------------------------------------------
 
 local function zoomout()
-    if camzoom > 0 then
-        camzoom = camzoom - 0.01
-        if camzoom < 0 then
-            camzoom = 0
+    if linearzoom > 0 then
+        linearzoom = linearzoom - 0.01
+        if linearzoom < 0 then
+            linearzoom = 0
         end
         updatecamera()
         refresh()
@@ -201,10 +207,10 @@ end
 --------------------------------------------------------------------------------
 
 local function zoomin()
-    if camzoom < 1 then
-        camzoom = camzoom + 0.01
-        if camzoom > 1 then
-            camzoom = 1
+    if linearzoom < 1 then
+        linearzoom = linearzoom + 0.01
+        if linearzoom > 1 then
+            linearzoom = 1
         end
         updatecamera()
         refresh()
@@ -222,7 +228,7 @@ end
 --------------------------------------------------------------------------------
 
 local function setzoom(zoom)
-    camzoom = displaytointernalzoom(zoom)
+    linearzoom = realtolinear(zoom)
     updatecamera()
     refresh()
 end
@@ -230,33 +236,33 @@ end
 --------------------------------------------------------------------------------
 
 local function integerzoom()
-    local zoom = internaltodisplayzoom(camzoom)
-    if zoom >= 1 then
-        zoom = math.floor(zoom + 0.5)
+    local camzoom = lineartoreal(linearzoom)
+    if camzoom >= 1 then
+        camzoom = math.floor(camzoom + 0.5)
     else
-        zoom = 1 / math.floor(1 / zoom + 0.5)
+        camzoom = 1 / math.floor(1 / camzoom + 0.5)
     end
-    setzoom(zoom)
+    setzoom(camzoom)
 end
 
 --------------------------------------------------------------------------------
 
 local function halvezoom()
-    local halfzoom = internaltodisplayzoom(camzoom) / 2
-    if halfzoom < minzoom then
-        halfzoom = minzoom
+    local camzoom = lineartoreal(linearzoom) / 2
+    if camzoom < minzoom then
+        camzoom = minzoom
     end
-    setzoom(halfzoom)
+    setzoom(camzoom)
 end
 
 --------------------------------------------------------------------------------
 
 local function doublezoom()
-    local doublezoom = internaltodisplayzoom(camzoom) * 2
-    if doublezoom > maxzoom then
-        doublezoom = maxzoom
+    local camzoom = lineartoreal(linearzoom) * 2
+    if camzoom > maxzoom then
+        camzoom = maxzoom
     end
-    setzoom(doublezoom)
+    setzoom(camzoom)
 end
 
 --------------------------------------------------------------------------------
@@ -327,6 +333,7 @@ end
 --------------------------------------------------------------------------------
 
 local function panview(dx, dy)
+    local camzoom = lineartoreal(linearzoom)
     dx = dx / camzoom;
     dy = dy / camzoom;
     local sinangle = math.sin(-camangle / 180 * math.pi)
@@ -365,7 +372,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function copyzoom()
+local function copygollyzoom()
     local mag = g.getmag()
     local zoom
 
@@ -384,6 +391,9 @@ local function copyzoom()
         zoom = minzoom
     end
 
+    -- save as default zoom
+    deflinearzoom = realtolinear(zoom)
+
     -- set the zoom
     setzoom(zoom)
 end
@@ -395,12 +405,12 @@ local function main()
     createoverlay()
     createcellview()
 
+    -- set initial zoom from Golly's current zoom
+    copygollyzoom()
+
     -- reset the camera to default position
     resetcamera()
     
-    -- set initial zoom from Golly's current zoom
-    copyzoom()
-
     -- set the default theme
     settheme()
 
