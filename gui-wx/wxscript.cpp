@@ -228,6 +228,22 @@ const char* GSF_getdir(const char* dirname)
 
 // -----------------------------------------------------------------------------
 
+const char* GSF_os()
+{
+    // return a string that specifies the current operating system
+    #if defined(__WXMSW__)
+        return "Windows";
+    #elif defined(__WXMAC__)
+        return "Mac";
+    #elif defined(__WXGTK__)
+        return "Linux";
+    #else 
+        return "unknown";
+    #endif
+}
+
+// -----------------------------------------------------------------------------
+
 const char* GSF_setalgo(const char* algostring)
 {
     // find index for given algo name

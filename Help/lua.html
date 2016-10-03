@@ -219,6 +219,7 @@ or you can search for individual commands alphabetically:
 <a href="#open"><b>open</b></a><br>
 <a href="#opendialog"><b>opendialog</b></a><br>
 <a href="#overlay"><b>overlay</b></a><br>
+<a href="#os"><b>os</b></a><br>
 <a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#putcells"><b>putcells</b></a><br>
@@ -229,11 +230,11 @@ or you can search for individual commands alphabetically:
 <a href="#save"><b>save</b></a><br>
 <a href="#savedialog"><b>savedialog</b></a><br>
 <a href="#select"><b>select</b></a><br>
-<a href="#setalgo"><b>setalgo</b></a><br>
-<a href="#setbase"><b>setbase</b></a>
+<a href="#setalgo"><b>setalgo</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#setbase"><b>setbase</b></a><br>
 <a href="#setcell"><b>setcell</b></a><br>
 <a href="#setclipstr"><b>setclipstr</b></a><br>
 <a href="#setcolor"><b>setcolor</b></a><br>
@@ -1068,6 +1069,13 @@ this makes it easy to save and restore colors.
 
 <p><a name="miscellaneous"></a>&nbsp;<br>
 MISCELLANEOUS COMMANDS
+
+<a name="os"></a><p><dt><b>os()</b></dt>
+<dd>
+Return the current operating system: "Windows", "Mac" or "Linux".
+</dd>
+<dd> Example: <b>if g.os() == "Mac" then do_mac_stuff() end</b></dd>
+</p>
 
 <a name="setoption"></a><p><dt><b>setoption(<i>name, value</i>)</b></dt>
 <dd>

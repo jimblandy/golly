@@ -99,6 +99,7 @@ const char* GSF_open(const wxString& filename, int remember);
 const char* GSF_save(const wxString& filename, const char* format, int remember);
 const char* GSF_setdir(const char* dirname, const wxString& newdir);
 const char* GSF_getdir(const char* dirname);
+const char* GSF_os();
 const char* GSF_setalgo(const char* algostring);
 const char* GSF_setrule(const char* rulestring);
 const char* GSF_setgen(const char* genstring);
