@@ -14,9 +14,10 @@
      <a href="layer.html#deleteoverlay">Delete Overlay</a>.
 <li> Lua scripts can call a new <a href="lua.html#overlay">overlay</a>
      command to create, modify and delete the overlay.
-<li> The <a href="lua.html#getevent">getevent</a> command returns two
-     new events: "oclick" for detecting a mouse click in the overlay,
-     and "mup" for detecting the release of a mouse button (anywhere).
+<li> The <a href="lua.html#getevent">getevent</a> command can detect
+     a number of new events: a mouse click in the overlay, the release
+     of a mouse button (anywhere), and zooming in/out via the mouse wheel
+     (either in the current layer or in the overlay).
 <li> The <a href="lua.html#setoption">setoption</a> command recognizes
      two new options: "showbuttons" (with a value from 0 to 4) for
      controlling the position of the translucent buttons,
@@ -37,7 +38,8 @@
 <li> The flood-fill.lua script uses a faster scanline algorithm.
 <li> Non-totalistic rules containing B0 are now supported.
 <li> Pattern rendering is significantly faster when zoomed in.
-<li> Generations algorithm now supports Hex, Von Neumann and non-totalistic Moore neighborhoods.
+<li> The Generations algorithm now supports Hex, Von Neumann and
+     non-totalistic Moore neighborhoods.
 </ul>
 
 <p>

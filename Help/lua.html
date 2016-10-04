@@ -1227,6 +1227,18 @@ where <i>button</i> is one of left, middle or right.
 </dd>
 <p>
 <dd>
+Mouse wheel events in the current layer are strings of the form
+"zoomin <i>x</i> <i>y</i>" or "zoomout <i>x</i> <i>y</i>"
+where <i>x</i> and <i>y</i> are the cell position of the mouse.
+</dd>
+<p>
+<dd>
+Mouse wheel events in a non-transparent pixel in the overlay are strings of the form
+"ozoomin <i>x</i> <i>y</i>" or "ozoomout <i>x</i> <i>y</i>"
+where <i>x</i> and <i>y</i> are the mouse's pixel position in the overlay.
+</dd>
+<p>
+<dd>
 The following examples show the strings returned after various user events:
 </dd>
 <p>
@@ -1238,16 +1250,20 @@ The following examples show the strings returned after various user events:
         </td><td>user pressed space bar and shift key</td></tr>
 <tr><td>"key , altctrlshift"</td><td width=15>
         </td><td>user pressed comma and 3 modifier keys</td></tr>
-<tr><td>"click 100 20 left none"</td><td width=15>
-        </td><td>user clicked cell at 100,20 with left button</td></tr>
+<tr><td>"click 100 5 left none"</td><td width=15>
+        </td><td>user clicked cell at 100,5 with left button</td></tr>
 <tr><td>"click -10 9 middle alt"</td><td width=15>
         </td><td>user clicked cell with middle button and pressed alt key</td></tr>
 <tr><td>"click 0 1 right altshift"</td><td width=15>
         </td><td>user clicked cell with right button and pressed 2 modifiers</td></tr>
-<tr><td>"oclick 10 20 left none"</td><td width=15>
-        </td><td>user clicked pixel at 10,20 in overlay with left button</td></tr>
+<tr><td>"oclick 10 5 left none"</td><td width=15>
+        </td><td>user clicked pixel at 10,5 in overlay with left button</td></tr>
 <tr><td>"mup left"</td><td width=15>
         </td><td>user released the left button</td></tr>
+<tr><td>"zoomout -10 -20"</td><td width=15>
+        </td><td>mouse wheel was used to zoom out from given cell</td></tr>
+<tr><td>"ozoomin 10 20"</td><td width=15>
+        </td><td>mouse wheel was used to zoom in to given pixel in overlay</td></tr>
 </table>
 </dd>
 <p>

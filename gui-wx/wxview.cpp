@@ -2527,7 +2527,7 @@ void PatternView::OnChar(wxKeyEvent& event)
         return;
     }
     
-    if ( inscript && (passkeys || key == WXK_ESCAPE) ) {
+    if ( inscript && (pass_key_events || key == WXK_ESCAPE) ) {
         // let script decide what to do with the key
         PassKeyToScript(key, mods);
         return;
@@ -2778,7 +2778,7 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
     int ox, oy;
     if (showoverlay && curroverlay->PointInOverlay(x, y, &ox, &oy)
                     && !curroverlay->TransparentPixel(ox, oy)) {
-        if (inscript && passclicks) {
+        if (inscript && pass_mouse_events) {
             // let script decide what to do with click in non-transparent pixel in overlay
             PassOverlayClickToScript(ox, oy, button, modifiers);
         }
@@ -2806,7 +2806,7 @@ void PatternView::OnMouseDown(wxMouseEvent& event)
         return;
     }
     
-    if (inscript && passclicks && PointInGrid(x, y)) {
+    if (inscript && pass_mouse_events && PointInGrid(x, y)) {
         // let script decide what to do with click in grid
         pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
         PassClickToScript(cellpos.first, cellpos.second, button, modifiers);
@@ -2828,7 +2828,7 @@ void PatternView::OnMouseUp(wxMouseEvent& event)
         stopdrawing = true;
     }
     
-    if (inscript && passclicks) {
+    if (inscript && pass_mouse_events) {
         // let script decide what to do with mouse up event
         PassMouseUpToScript(event.GetButton());
         return;
@@ -2906,7 +2906,7 @@ void PatternView::OnMouseExit(wxMouseEvent& WXUNUSED(event))
 void PatternView::OnMouseWheel(wxMouseEvent& event)
 {
     // wheelpos should be persistent, because in theory we should keep track of
-    // the remainder if the amount scrolled was not an even number of deltas.
+    // the remainder if the amount scrolled was not an even number of deltas
     static int wheelpos = 0;
     int delta, x, y;
     
@@ -2928,21 +2928,33 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
     
     while (wheelpos >= delta) {
         wheelpos -= delta;
-        TestAutoFit();
-        currlayer->view->unzoom(x, y);
+        if (inscript && pass_mouse_events) {
+            // let script decide what to do with wheel event
+            PassZoomOutToScript(x, y);
+        } else {
+            TestAutoFit();
+            currlayer->view->unzoom(x, y);
+        }
     }
     
     while (wheelpos <= -delta) {
         wheelpos += delta;
-        TestAutoFit();
-        if (currlayer->view->getmag() < MAX_MAG) {
-            currlayer->view->zoom(x, y);
+        if (inscript && pass_mouse_events) {
+            // let script decide what to do with wheel event
+            PassZoomInToScript(x, y);
         } else {
-            Beep();
-            wheelpos = 0;
-            break;         // best not to beep lots of times
+            TestAutoFit();
+            if (currlayer->view->getmag() < MAX_MAG) {
+                currlayer->view->zoom(x, y);
+            } else {
+                Beep();
+                wheelpos = 0;
+                break;         // best not to beep lots of times
+            }
         }
     }
+    
+    if (inscript && pass_mouse_events) return;
     
     // allow mouse interaction if script is running
     bool saveinscript = inscript;

@@ -620,6 +620,12 @@ local function main()
             showhelp()
         elseif event:find("^click") then
             doclick(event)
+        elseif event:find("^ozoomin") then
+            -- zoom in to hexagon at given x,y pixel???!!!
+            zoomin()
+        elseif event:find("^ozoomout") then
+            -- zoom out from hexagon at given x,y pixel???!!!
+            zoomout()
         else
             g.doevent(event)
         end

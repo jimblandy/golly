@@ -52,8 +52,8 @@
 
 // exported globals:
 bool inscript = false;     // a script is running?
-bool passkeys;             // pass keyboard events to script?
-bool passclicks;           // pass mouse events to script?
+bool pass_key_events;      // pass keyboard events to script?
+bool pass_mouse_events;    // pass mouse events to script?
 bool canswitch;            // can user switch layers while script is running?
 bool stop_after_script;    // stop generating pattern after running script?
 bool autoupdate;           // update display after each change to current universe?
@@ -1043,12 +1043,12 @@ bool GSF_getcolor(const char* colname, wxColor& color)
 void GSF_getevent(wxString& event, int get)
 {
     if (get) {
-        passkeys = true;     // future keyboard events will call PassKeyToScript
-        passclicks = true;   // future mouse events will call PassClickToScript
+        pass_key_events = true;     // future keyboard events will call PassKeyToScript
+        pass_mouse_events = true;   // future mouse events will call PassClickToScript
     } else {
         // tell Golly to handle future keyboard and mouse events
-        passkeys = false;
-        passclicks = false;
+        pass_key_events = false;
+        pass_mouse_events = false;
         // clear any pending events so event is set to empty string below
         eventqueue.Clear();
     }
@@ -1160,9 +1160,50 @@ const char* GSF_doevent(const wxString& event)
             // ignore mouse up event
             return NULL;
             
-        } else if (event.StartsWith(wxT("oclick "))) {
-            // ignore click in overlay
+        } else if (event.StartsWith(wxT("o"))) {
+            // ignore oclick/ozoomin/ozoomout event in overlay
             return NULL;
+            
+        } else if (event.StartsWith(wxT("zoom"))) {
+            // parse event string like "zoomin 10 20" or "zoomout 10 20"
+            wxString xstr = event.AfterFirst(' ');
+            wxString ystr = xstr.AfterFirst(' ');
+            xstr = xstr.BeforeFirst(' ');
+            if (!xstr.IsNumber()) return "Bad x value.";
+            if (!ystr.IsNumber()) return "Bad y value.";
+            bigint x(xstr.mb_str(wxConvLocal));
+            bigint y(ystr.mb_str(wxConvLocal));
+
+            if (viewptr->CellVisible(x, y) && viewptr->CellInGrid(x, y)) {
+                // convert x,y cell position to pixel position in viewport
+                pair<int,int> xy = currlayer->view->screenPosOf(x, y, currlayer->algo);
+                if (event.StartsWith(wxT("zoomin"))) {
+                    viewptr->TestAutoFit();
+                    if (currlayer->view->getmag() < MAX_MAG) {
+                        currlayer->view->zoom(xy.first, xy.second);
+                    }
+                } else {
+                    viewptr->TestAutoFit();
+                    currlayer->view->unzoom(xy.first, xy.second);
+                }
+
+                inscript = false;
+                mainptr->UpdatePatternAndStatus();
+                bigview->UpdateScrollBars();
+                inscript = true;
+                mainptr->UpdateUserInterface();
+                
+                if (showtitle) {
+                    // update window title
+                    inscript = false;
+                    mainptr->SetWindowTitle(wxEmptyString);
+                    inscript = true;
+                    showtitle = false;
+                }
+            } else {
+                // ignore zoom event if x,y is outside viewport or grid
+                return NULL;
+            }
             
         } else if (event.StartsWith(wxT("click "))) {
             // parse event string like "click 10 20 left altshift"
@@ -1213,7 +1254,7 @@ const char* GSF_doevent(const wxString& event)
 
 char GSF_getkey()
 {
-    passkeys = true;   // future keyboard events will call PassKeyToScript
+    pass_key_events = true;   // future keyboard events will call PassKeyToScript
     
     if (scriptchars.length() == 0) {
         // return empty string
@@ -1417,8 +1458,8 @@ void RunScript(const wxString& filename)
         allowcheck = true;
         showtitle = false;
         updateedit = false;
-        passkeys = false;
-        passclicks = false;
+        pass_key_events = false;
+        pass_mouse_events = false;
         wxGetApp().PollerReset();
     }
     
@@ -1605,11 +1646,57 @@ void PassMouseUpToScript(int button)
 {
     // build a string like "mup left" and add to event queue
     // for possible consumption by GSF_getevent
-    wxString clickinfo = wxT("mup ");
-    if (button == wxMOUSE_BTN_LEFT)     clickinfo += wxT("left");
-    if (button == wxMOUSE_BTN_MIDDLE)   clickinfo += wxT("middle");
-    if (button == wxMOUSE_BTN_RIGHT)    clickinfo += wxT("right");
-    eventqueue.Add(clickinfo);
+    wxString minfo = wxT("mup ");
+    if (button == wxMOUSE_BTN_LEFT)     minfo += wxT("left");
+    if (button == wxMOUSE_BTN_MIDDLE)   minfo += wxT("middle");
+    if (button == wxMOUSE_BTN_RIGHT)    minfo += wxT("right");
+    eventqueue.Add(minfo);
+}
+
+// -----------------------------------------------------------------------------
+
+void PassZoomInToScript(int x, int y)
+{
+    int ox, oy;
+    if (showoverlay && curroverlay->PointInOverlay(x, y, &ox, &oy)
+                    && !curroverlay->TransparentPixel(ox, oy)) {
+        // zoom in to the overlay pixel at ox,oy
+        wxString zoominfo;
+        zoominfo.Printf(wxT("ozoomin %d %d"), ox, oy);
+        eventqueue.Add(zoominfo);
+    
+    } else if (viewptr->PointInGrid(x, y)) {
+        // zoom in to the cell at pixel x,y in the viewport
+        wxString zoominfo = wxT("zoomin ");
+        pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+        zoominfo += wxString(cellpos.first.tostring('\0'),wxConvLocal);
+        zoominfo += wxT(" ");
+        zoominfo += wxString(cellpos.second.tostring('\0'),wxConvLocal);
+        eventqueue.Add(zoominfo);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void PassZoomOutToScript(int x, int y)
+{
+    int ox, oy;
+    if (showoverlay && curroverlay->PointInOverlay(x, y, &ox, &oy)
+                    && !curroverlay->TransparentPixel(ox, oy)) {
+        // zoom out from the overlay pixel at ox,oy
+        wxString zoominfo;
+        zoominfo.Printf(wxT("ozoomout %d %d"), ox, oy);
+        eventqueue.Add(zoominfo);
+    
+    } else if (viewptr->PointInGrid(x, y)) {
+        // zoom out from the cell at pixel x,y in the viewport
+        wxString zoominfo = wxT("zoomout ");
+        pair<bigint, bigint> cellpos = currlayer->view->at(x, y);
+        zoominfo += wxString(cellpos.first.tostring('\0'),wxConvLocal);
+        zoominfo += wxT(" ");
+        zoominfo += wxString(cellpos.second.tostring('\0'),wxConvLocal);
+        eventqueue.Add(zoominfo);
+    }
 }
 
 // -----------------------------------------------------------------------------
