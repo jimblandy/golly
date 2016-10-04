@@ -31,6 +31,11 @@ local textrgba = "rgba 255 255 255 255"     -- white button labels and tick mark
 local labelfont = "font 12 default-bold"    -- font for labels
 local yoffset = -1                          -- for better y position of labels
 
+if g.os() == "Linux" then
+    yoffset = 0
+    labelfont = "font 12 default"
+end
+
 local darken_button = false     -- tell draw_button to use darkerbutton
 local darken_slider = false     -- tell draw_slider to darken the slider button
 
