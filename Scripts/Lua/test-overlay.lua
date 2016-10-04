@@ -418,6 +418,18 @@ end
 
 --------------------------------------------------------------------------------
 
+local function expand(x, y)
+    -- do via some sort of scale command???!!!
+end
+
+--------------------------------------------------------------------------------
+
+local function shrink(x, y)
+    -- do via some sort of scale command???!!!
+end
+
+--------------------------------------------------------------------------------
+
 local errnum = 0
 
 local function test_errors()
@@ -507,6 +519,12 @@ local function main()
             g.update()
         elseif event:find("^mup") then
             mousedown = false
+        elseif event:find("^ozoomin") then
+            local _, x, y = split(event)
+            expand(tonumber(x), tonumber(y))
+        elseif event:find("^ozoomout") then
+            local _, x, y = split(event)
+            shrink(tonumber(x), tonumber(y))
         elseif #event > 0 then
             g.doevent(event)
         end
