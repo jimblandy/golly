@@ -194,6 +194,13 @@ The initial font for drawing text is the default system font at a size of 10pt
 (see the <a href="#font">font</a> command).
 </dd>
 <dd> Example: <b>ov("create 400 300")</b></dd>
+<p>
+<dd>
+Note that the create command automatically ticks the
+<a href="layer.html#showoverlay">Show Overlay</a> option to ensure the
+overlay will be displayed when the viewport is updated (by calling g.update()
+or the <a href="#update">update</a> command).
+</dd>
 </p>
 
 <a name="cursor"></a><p><dt><b>cursor <i>name</i></b></dt>
@@ -470,8 +477,7 @@ of a translucent red square (both on top of an opaque white background):
 <b>ov("rgba 255 0 0 128")</b><br>
 <b>ov("fill 10 10 50 50")</b><br>
 <b>ov("rgba 0 0 255 128")</b><br>
-<b>ov("fill 30 20 50 50")</b><br>
-<b>g.setoption("showoverlay",1)</b>
+<b>ov("fill 30 20 50 50")</b>
 </td>
 <td valign=top width=20> </td>
 <td valign=center>
@@ -553,8 +559,7 @@ The image on the right shows the resulting overlay.
 <b>ov("font 60 roman-bold")</b><br>
 <b>ov("text mytext Golly")</b><br>
 <b>ov("blend 1")</b><br>
-<b>ov("paste 10 10 mytext")</b><br>
-<b>g.setoption("showoverlay",1)</b>
+<b>ov("paste 10 10 mytext")</b>
 </td>
 <td valign=top width=20> </td>
 <td valign=center>
@@ -615,8 +620,7 @@ the resulting overlay.
 <b>ov(op.swap_xy)</b><br>
 <b>ov("paste 100 270 temp")</b><br>
 <b>ov(op.swap_xy_flip)</b><br>
-<b>ov("paste 100 270 temp")</b><br>
-<b>g.setoption("showoverlay",1)</b>
+<b>ov("paste 100 270 temp")</b>
 </td>
 <td valign=top width=20> </td>
 <td valign=center>

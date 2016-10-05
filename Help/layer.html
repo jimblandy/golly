@@ -26,7 +26,7 @@ all layers with the same number of "=" signs share the same universe.
 The current layer is indicated by a tick.
 To switch to another layer just select the corresponding item.
 If a script is running then you can only switch to another layer if the
-script has called <b>golly.setoption("switchlayers",True)</b>.
+script has called <b>g.setoption("switchlayers",1)</b>.
 
 <p>
 A layer containing a modified pattern is indicated by a "*"
@@ -47,7 +47,8 @@ layer bar, or just hit the "\" key.
 <font size=+1><b>Show Overlay</b></font>
 
 <p>
-If ticked then the current overlay will be displayed (if it exists).
+If ticked then the current overlay will be displayed (if it exists
+and if it contains any non-transparent pixels).
 Note that it's possible to show/hide the overlay while a script
 is executing.
 
