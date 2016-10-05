@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 9
+local buildnumber = 10
 
 local g = golly()
 
@@ -654,7 +654,10 @@ local function main()
     fitzoom(true)
     setdefaultcamera()
     
-    -- set the default theme
+    -- use Golly's colors if multi-state patern
+    if (g.numstates() > 2) then
+        themeon = false
+    end
     settheme()
 
     -- update the overlay

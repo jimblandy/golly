@@ -61,6 +61,7 @@ public:
 };
 
 const int cellviewmaxsize = 4096;  // maximum dimension for cell view
+const int cellviewmultiple = 16;   // cellview dimensions must be a multiple of this value
 
 class Overlay {
 public:

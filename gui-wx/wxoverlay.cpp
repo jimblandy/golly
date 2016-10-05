@@ -577,11 +577,14 @@ const char* Overlay::DoCellView(const char* args)
         return OverlayError("cellview command requires 4 arguments");
     }
 
-    if (w <= 0) return OverlayError("width of cellview must be > 0");
-    if (h <= 0) return OverlayError("height of cellview must be > 0");
+    if (w < cellviewmultiple) return OverlayError("width of cellview must be >= 16");
+    if (h < cellviewmultiple) return OverlayError("height of cellview must be >= 16");
 
     if (w > cellviewmaxsize) return OverlayError("width of cellview too big");
     if (h > cellviewmaxsize) return OverlayError("height of cellview too big");
+
+    if ((w & (cellviewmultiple - 1)) != 0) return OverlayError("width of cellview must be a multiple of 16");
+    if ((h & (cellviewmultiple - 1)) != 0) return OverlayError("height of cellview  must be a multiple of 16");
 
     // delete any existing cellview
     DeleteCellView();
