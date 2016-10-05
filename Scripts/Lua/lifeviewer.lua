@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 7
+local buildnumber = 8
 
 local g = golly()
 
@@ -21,6 +21,11 @@ local minzoom = 0.0625
 local maxzoom = 32
 local viewwidth = 2048
 local viewheight = 2048
+local mindepth = 0
+local maxdepth = 1
+local minlayers = 1
+local maxlayers = 10
+local zoomborder = 0.9  -- proportion of view to fill with fit zoom
 
 -- camera defaults
 local defcamx = viewwidth / 2
@@ -36,6 +41,7 @@ local camy = defcamy
 local camangle = defcamangle
 local camlayers = defcamlayers
 local camlayerdepth = defcamlayerdepth
+local autofit = false
 
 -- zoom is held as a value 0..1 for smooth linear zooms
 local linearzoom
@@ -71,6 +77,7 @@ Camera controls:
 Key		Function			Shift
 [		zoom out			halve zoom
 ]		zoom in				double zoom
+F               fit pattern to display	toggle autofit
 1		1x zoom			integer zoom
 2		2x zoom			-2x zoom
 4		4x zoom			-4x zoom
@@ -91,7 +98,7 @@ Q		increase layers
 A		decrease layers
 P		increase layer depth
 L		decrease layer depth
-C		cycle themes		toggle themes
+C		cycle themes		toggle theme
 ]]
 
     -- display help
@@ -101,10 +108,10 @@ end
 --------------------------------------------------------------------------------
 
 local function getmouseposition()
-    local x = viewwidth / 2
-    local y = viewheight / 2
+    local x = viewwd / 2
+    local y = viewht / 2
     local mousepos = ov("xy")
-    if #mousepos > 0 then
+    if mousepos ~= "" then
         x, y = gp.split(mousepos)
         x = tonumber(x)
         y = tonumber(y)
@@ -144,7 +151,13 @@ local function updatestatus()
         themestatus = theme
     end
 
-    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus)
+    -- convert autofit to status
+    local autofitstatus = "off"
+    if autofit then
+        autofitstatus = "on"
+    end
+
+    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus.."  Autofit "..autofitstatus)
 end
 
 --------------------------------------------------------------------------------
@@ -198,9 +211,50 @@ end
 
 --------------------------------------------------------------------------------
 
+local function fitzoom()
+    local rect = g.getrect()
+    if #rect > 0 then
+        local leftx = rect[1]
+        local bottomy = rect[2]
+        local width = rect[3]
+        local height = rect[4]
+
+
+        -- get the smallest zoom needed
+        local zoom = viewwd / width
+        if zoom > viewht / height then
+            zoom = viewht / height
+        end
+
+        -- leave a border around the pattern
+        zoom = zoom * zoomborder
+
+        -- ensure zoom in range
+        if zoom < minzoom then
+            zoom = minzoom
+        else
+            if zoom > maxzoom then
+                zoom = maxzoom
+            end
+        end
+
+        -- get new pan position
+        local newx = viewwidth / 2 + leftx + width / 2
+        local newy = viewheight / 2 + bottomy + height / 2
+
+        -- set camera
+        camx = newx
+        camy = newy
+        linearzoom = realtolinear(zoom)
+        updatecamera()
+        refresh()
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function advance(by1)
     if g.empty() then
-        g.note("There are no live cells.")
         generating = false
         return
     end
@@ -212,6 +266,9 @@ local function advance(by1)
     end
     
     ov("updatecells")
+    if autofit then
+        fitzoom()
+    end
     refresh()
 
     g.update()
@@ -296,7 +353,7 @@ end
 
 local function zoomout()
     local x, y = getmouseposition()
-    adjustzoom(0.01, x, y)
+    adjustzoom(-0.01, x, y)
     updatecamera()
     refresh()
 end
@@ -305,7 +362,7 @@ end
 
 local function zoomin()
     local x, y = getmouseposition()
-    adjustzoom(-0.01, x, y)
+    adjustzoom(0.01, x, y)
     updatecamera()
     refresh()
 end
@@ -397,10 +454,10 @@ end
 --------------------------------------------------------------------------------
 
 local function decreaselayerdepth()
-    if camlayerdepth > 0 then
+    if camlayerdepth > mindepth then
         camlayerdepth = camlayerdepth - 0.01
-        if camlayerdepth < 0 then
-            camlayerdepth = 0
+        if camlayerdepth < mindepth then
+            camlayerdepth = mindepth
         end
         updatecamera()
         refresh()
@@ -410,10 +467,10 @@ end
 --------------------------------------------------------------------------------
 
 local function increaselayerdepth()
-    if camlayerdepth < 10 then
+    if camlayerdepth < maxdepth then
         camlayerdepth = camlayerdepth + 0.01
-        if camlayerdepth > 10 then
-            camlayerdepth = 10
+        if camlayerdepth > maxdepth then
+            camlayerdepth = maxdepth
         end
         updatecamera()
         refresh()
@@ -423,7 +480,7 @@ end
 --------------------------------------------------------------------------------
 
 local function decreaselayers()
-    if camlayers > 1 then
+    if camlayers > minlayers then
         camlayers = camlayers - 1
         updatecamera()
         refresh()
@@ -433,7 +490,7 @@ end
 --------------------------------------------------------------------------------
 
 local function increaselayers()
-    if camlayers < 10 then
+    if camlayers < maxlayers then
         camlayers = camlayers + 1
         updatecamera()
         refresh()
@@ -518,6 +575,13 @@ end
 
 --------------------------------------------------------------------------------
 
+local function toggleautofit()
+    autofit = not autofit
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
 local function copygollyzoom()
     local mag = g.getmag()
     local zoom
@@ -586,6 +650,10 @@ local function main()
         elseif event == "key r none" then
             reset()
             generating = false
+        elseif event == "key f none" then
+            fitzoom()
+        elseif event == "key f shift" then
+            toggleautofit()
         elseif event == "key [ none" then
             zoomout()
         elseif event == "key ] none" then
