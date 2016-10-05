@@ -824,6 +824,9 @@ const char* Overlay::DoCreate(const char* args)
         currfont.SetPointSize(fontsize);
     #endif
     
+    // make sure the Show Overlay option is ticked
+    if (!showoverlay) mainptr->ToggleOverlay();
+    
     return NULL;
 }
 
