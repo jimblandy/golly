@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 8
+local buildnumber = 9
 
 local g = golly()
 
@@ -26,6 +26,18 @@ local maxdepth = 1
 local minlayers = 1
 local maxlayers = 10
 local zoomborder = 0.9  -- proportion of view to fill with fit zoom
+local glidesteps = 20   -- steps to glide camera
+
+-- smooth camera movement
+local startx
+local starty
+local startangle
+local startzoom
+local endx
+local endy
+local endangle
+local endzoom
+local camsteps = -1 
 
 -- camera defaults
 local defcamx = viewwidth / 2
@@ -33,7 +45,7 @@ local defcamy = viewheight / 2
 local defcamangle = 0
 local defcamlayers = 1
 local defcamlayerdepth = 0.05
-local deflinearzoom  -- set by copygollyzoom()
+local deflinearzoom = 0.4
 
 -- camera
 local camx = defcamx
@@ -47,7 +59,7 @@ local autofit = false
 local linearzoom
 
 -- theme
-local themeon = false
+local themeon = true
 local theme = 1
 
 -- mouse drag
@@ -198,8 +210,11 @@ end
 
 --------------------------------------------------------------------------------
 
-local function createcellview()
-    ov("cellview "..math.floor(-viewwidth / 2).." "..math.floor(-viewheight / 2).. " "..viewwidth.." "..viewheight)
+local function setdefaultcamera()
+    defcamx = camx
+    defcamy = camy
+    defcamangle = camangle
+    deflinearzoom = linearzoom
 end
 
 --------------------------------------------------------------------------------
@@ -211,14 +226,39 @@ end
 
 --------------------------------------------------------------------------------
 
-local function fitzoom()
+local function glidecamera()
+    local linearcomplete = camsteps / glidesteps
+    
+    camx = startx + linearcomplete * (endx - startx)
+    camy = starty + linearcomplete * (endy - starty)
+    linearzoom = startzoom + linearcomplete * (endzoom - startzoom)
+    
+    camsteps = camsteps + 1
+    if camsteps > glidesteps then
+        camsteps = -1
+        camx = endx
+        camy = endy
+    end
+
+    updatecamera()
+    refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function createcellview()
+    ov("cellview "..math.floor(-viewwidth / 2).." "..math.floor(-viewheight / 2).. " "..viewwidth.." "..viewheight)
+end
+
+--------------------------------------------------------------------------------
+
+local function fitzoom(immediate)
     local rect = g.getrect()
     if #rect > 0 then
         local leftx = rect[1]
         local bottomy = rect[2]
         local width = rect[3]
         local height = rect[4]
-
 
         -- get the smallest zoom needed
         local zoom = viewwd / width
@@ -242,12 +282,28 @@ local function fitzoom()
         local newx = viewwidth / 2 + leftx + width / 2
         local newy = viewheight / 2 + bottomy + height / 2
 
-        -- set camera
-        camx = newx
-        camy = newy
-        linearzoom = realtolinear(zoom)
-        updatecamera()
-        refresh()
+        -- check whether to fit immediately
+        if (immediate) then
+            camx = newx
+            camy = newy
+            linearzoom = realtolinear(zoom)
+            updatecamera()
+        else
+            -- setup start point
+            startx = camx
+            starty = camy
+            startangle = camangle
+            startzoom = linearzoom
+     
+            -- setup destination point
+            endx = newx
+            endy = newy
+            endangle = camangle
+            endzoom = realtolinear(zoom)
+    
+            -- trigger start
+            camsteps = 0
+        end
     end
 end
 
@@ -267,7 +323,7 @@ local function advance(by1)
     
     ov("updatecells")
     if autofit then
-        fitzoom()
+        fitzoom(true)
     end
     refresh()
 
@@ -378,9 +434,15 @@ end
 --------------------------------------------------------------------------------
 
 local function setzoom(zoom)
-    linearzoom = realtolinear(zoom)
-    updatecamera()
-    refresh()
+    startx = camx
+    starty = camy
+    startzoom = linearzoom
+    startangle = camangle
+    endx = camx
+    endy = camy
+    endzoom = realtolinear(zoom)
+    endangle = camangle
+    camsteps = 0
 end
 
 --------------------------------------------------------------------------------
@@ -423,6 +485,7 @@ local function settheme()
         index = theme
     end
     ov(op.themes[index])
+    ov("updatecells")
     updatestatus()
 end
 
@@ -582,44 +645,14 @@ end
 
 --------------------------------------------------------------------------------
 
-local function copygollyzoom()
-    local mag = g.getmag()
-    local zoom
-
-    -- convert magnification to zoom value
-    if mag >= 0 then
-        zoom = 1 << mag
-    else
-        zoom = 1 / (1 << -mag)
-    end
-
-    -- ensure in range
-    if zoom > maxzoom then
-        zoom = maxzoom
-    end
-    if zoom < minzoom then
-        zoom = minzoom
-    end
-
-    -- save as default zoom
-    deflinearzoom = realtolinear(zoom)
-
-    -- set the zoom
-    setzoom(zoom)
-end
-
---------------------------------------------------------------------------------
-
 local function main()
     -- create overlay and cell view
     createoverlay()
     createcellview()
 
-    -- set initial zoom from Golly's current zoom
-    copygollyzoom()
-
     -- reset the camera to default position
-    resetcamera()
+    fitzoom(true)
+    setdefaultcamera()
     
     -- set the default theme
     settheme()
@@ -651,7 +684,7 @@ local function main()
             reset()
             generating = false
         elseif event == "key f none" then
-            fitzoom()
+            fitzoom(false)
         elseif event == "key f shift" then
             toggleautofit()
         elseif event == "key [ none" then
@@ -737,7 +770,12 @@ local function main()
             checkdrag()
         end
         
-        if generating then advance(false) end
+        if generating then
+             advance(false)
+        end
+        if camsteps ~= -1 then
+             glidecamera()
+        end
     end
 end
 
