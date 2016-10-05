@@ -60,11 +60,11 @@ Overlay::Overlay()
     cammaxzoom = 32;
     
     // initialize theme
-    theme = -1;
+    theme = false;
     aliveStart = 64;
-    aliveMax = 127;
+    aliveEnd = 127;
     deadStart = 63;
-    deadMin = 1;
+    deadEnd = 1;
 }
 
 // -----------------------------------------------------------------------------
@@ -72,6 +72,28 @@ Overlay::Overlay()
 Overlay::~Overlay()
 {
     DeleteOverlay();
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::SetRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a, unsigned int *rgba)
+{
+    unsigned char *rgbaptr = (unsigned char *)rgba;
+    *rgbaptr++ = r;
+    *rgbaptr++ = g;
+    *rgbaptr++ = b;
+    *rgbaptr++ = a;
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::GetRGBA(unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a, unsigned int rgba)
+{
+    unsigned char *rgbaptr = (unsigned char *)&rgba;
+    *r = *rgbaptr++;
+    *g = *rgbaptr++;
+    *b = *rgbaptr++;
+    *a = *rgbaptr++;
 }
 
 // -----------------------------------------------------------------------------
@@ -102,7 +124,7 @@ void Overlay::RefreshCellViewWithTheme()
                             state = deadStart;
                         }
                         else {
-                            if (state > deadMin) {
+                            if (state > deadEnd) {
                                 // cell decaying
                                 state--;
                             }
@@ -121,7 +143,7 @@ void Overlay::RefreshCellViewWithTheme()
                     state = *cellviewptr;
                     if (state >= aliveStart) {
                         // check for max length
-                        if (state < aliveMax) {
+                        if (state < aliveEnd) {
                             // cell living
                             state++;
                         }
@@ -147,7 +169,7 @@ void Overlay::RefreshCellViewWithTheme()
                             state = deadStart;
                         }
                         else {
-                            if (state > deadMin) {
+                            if (state > deadEnd) {
                                 // cell decaying
                                 state--;
                             }
@@ -238,33 +260,29 @@ void Overlay::GetThemeColors(double brightness)
 {
     unsigned char *rgb = (unsigned char *)cellRGBA;
     double weight;
+    unsigned char alpha;
 
-    // theme definition (hard coded to THEME 1 for now)
+    // cell born color
+    unsigned char aliveStartR, aliveStartG, aliveStartB;
 
-    // cell born color - cyan
-    int aliveStartR = 0;
-    int aliveStartG = 255;
-    int aliveStartB = 255;
+    // cell alive long time color
+    unsigned char aliveEndR, aliveEndG, aliveEndB;
 
-    // while still alive fades to - white
-    int aliveEndR = 255;
-    int aliveEndG = 255;
-    int aliveEndB = 255;
+    // cell just died color
+    unsigned char deadStartR, deadStartG, deadStartB;
 
-    // cell just died color - blue
-    int deadStartR = 0;
-    int deadStartG = 0;
-    int deadStartB = 255;
+    // cell dead long time color
+    unsigned char deadEndR, deadEndG, deadEndB;
 
-    // while still dead decays to - dark blue
-    int deadEndR = 0;
-    int deadEndG = 0;
-    int deadEndB = 47;
+    // cell never occupied color
+    unsigned char unoccupiedR, unoccupiedG, unoccupiedB;
 
-    // cell never occupied color - black
-    int unoccupiedR = 0;
-    int unoccupiedG = 0;
-    int unoccupiedB = 0;
+    // get the color rgb components
+    GetRGBA(&aliveStartR, &aliveStartG, &aliveStartB, &alpha, aliveStartRGBA);
+    GetRGBA(&aliveEndR, &aliveEndG, &aliveEndB, &alpha, aliveEndRGBA);
+    GetRGBA(&deadStartR, &deadStartG, &deadStartB, &alpha, deadStartRGBA);
+    GetRGBA(&deadEndR, &deadEndG, &deadEndB, &alpha, deadEndRGBA);
+    GetRGBA(&unoccupiedR, &unoccupiedG, &unoccupiedB, &alpha, unoccupiedRGBA);
 
     // set never occupied cell color
     *rgb++ = unoccupiedR;
@@ -273,8 +291,8 @@ void Overlay::GetThemeColors(double brightness)
     *rgb++ = 255; // opaque
 
     // set decaying colors
-    for (int i = deadMin; i <= deadStart; i++) {
-        weight = 1 - ((double)(i - deadMin) / (deadStart - deadMin));
+    for (int i = deadEnd; i <= deadStart; i++) {
+        weight = 1 - ((double)(i - deadEnd) / (deadStart - deadEnd));
         *rgb++ = deadStartR * (1 - weight) + deadEndR * weight;
         *rgb++ = deadStartG * (1 - weight) + deadEndG * weight;
         *rgb++ = deadStartB * (1 - weight) + deadEndB * weight;
@@ -282,8 +300,8 @@ void Overlay::GetThemeColors(double brightness)
     }
 
     // set living colors
-    for (int i = aliveStart; i <= aliveMax; i++) {
-        weight = 1 - ((double)(i - aliveStart) / (aliveMax - aliveStart));
+    for (int i = aliveStart; i <= aliveEnd; i++) {
+        weight = 1 - ((double)(i - aliveStart) / (aliveEnd - aliveStart));
         *rgb++ = (aliveStartR * weight + aliveEndR * (1 - weight)) * brightness;
         *rgb++ = (aliveStartG * weight + aliveEndG * (1 - weight)) * brightness;
         *rgb++ = (aliveStartB * weight + aliveEndB * (1 - weight)) * brightness;
@@ -304,13 +322,13 @@ const char* Overlay::DoDrawCells()
     double brightness = 1;
     double brightinc = 0;
 
-    if (theme != -1 && camlayers > 1 && depth > 1) {
+    if (theme && camlayers > 1 && depth > 1) {
         brightness = 0.6;
         brightinc = 0.4 / (camlayers - 1);
     }
 
     // refresh the cell view
-    if (theme != -1) {
+    if (theme) {
         // using theme colors
         GetThemeColors(brightness);
     }
@@ -318,6 +336,14 @@ const char* Overlay::DoDrawCells()
         // using standard pattern colors
         GetPatternColors();
     }
+
+    // get the border color
+    unsigned char borderr = borderrgb->Red();
+    unsigned char borderg = borderrgb->Green();
+    unsigned char borderb = borderrgb->Blue();
+    unsigned char bordera = 255;
+    unsigned int borderRGBA;
+    SetRGBA(borderr, borderg, borderb, bordera, &borderRGBA);
 
     // compute deltas in horizontal and vertical direction based on rotation
     double dxy = sin(camangle / 180 * M_PI) / camzoom;
@@ -375,9 +401,9 @@ const char* Overlay::DoDrawCells()
     }
 
     // draw any layers
-    if (theme != -1) {
+    if (theme) {
         for (int i = 1; i < camlayers; i++) {
-            unsigned char transparenttarget = (i * ((aliveMax + 1) / camlayers));
+            unsigned char transparenttarget = (i * ((aliveEnd + 1) / camlayers));
 
             // update brightness
             brightness += brightinc;
@@ -470,11 +496,11 @@ const char* Overlay::DoUpdateCells()
     if (cellview == NULL) return OverlayError(no_cellview);
 
     // check if themes are used
-    if (theme == -1) {
-        RefreshCellView();
+    if (theme) {
+        RefreshCellViewWithTheme();
     }
     else {
-        RefreshCellViewWithTheme();
+        RefreshCellView();
     }
 
     return NULL;
@@ -524,20 +550,8 @@ const char* Overlay::DoCellView(const char* args)
     camlayerdepth = 0.05;
 
     // use standard pattern colors
-    theme = -1;
+    theme = false; 
 
-    // set default border color
-    br = 128;
-    bg = 128;
-    bb = 128;
-    
-    // create the rgba value
-    unsigned char* border = (unsigned char*)&borderRGBA;
-    *border++ = br;
-    *border++ = bg;
-    *border++ = bb;
-    *border++ = 255;   // opaque
-    
     // populate cellview
     DoUpdateCells();
 
@@ -646,20 +660,80 @@ const char* Overlay::DoCamLayers(const char* args)
 
 const char* Overlay::DoTheme(const char* args)
 {
-    // check the argument is valid
-    int newtheme;
-    if (sscanf(args, " %d", &newtheme) != 1) {
-        return OverlayError("theme command requires 1 argument");
+    // check the arguments are valid
+    int asr, asg, asb, aer, aeg, aeb, dsr, dsg, dsb, der, deg, deb, ur, ug, ub;
+    int disable = 0;
+    unsigned char alpha = 255;  // opaque
+
+    if (sscanf(args, " %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+        &asr, &asg, &asb, &aer, &aeg, &aeb, &dsr, &dsg, &dsb, &der, &deg, &deb, &ur, &ug, &ub) != 15) {
+        // check for single argument version
+        if (sscanf(args, " %d", &disable) != 1) {
+            return OverlayError("theme command requires single argument -1 or 15 rgb components");
+        }
+        else {
+            if (disable != -1) {
+                return OverlayError("theme command single argument must be -1");
+            }
+        }
     }
 
-    if (newtheme < -1 || newtheme > 10) return OverlayError("invalid theme number");
-   
-    // argument is ok
-    static char result[30];
-    sprintf(result, "%d", theme);
+    if (disable != -1) {
+        if (asr < 0 || asr > 255 ||
+            asg < 0 || asg > 255 ||
+            asb < 0 || asb > 255 ) {
+            return OverlayError("theme alivestart values must be from 0 to 255");
+        }
+        if (aer < 0 || aer > 255 ||
+            aeg < 0 || aeg > 255 ||
+            aeb < 0 || aeb > 255 ) {
+            return OverlayError("theme aliveend values must be from 0 to 255");
+        }
+        if (dsr < 0 || dsr > 255 ||
+            dsg < 0 || dsg > 255 ||
+            dsb < 0 || dsb > 255 ) {
+            return OverlayError("theme deadstart values must be from 0 to 255");
+        }
+        if (der < 0 || der > 255 ||
+            deg < 0 || deg > 255 ||
+            deb < 0 || deb > 255 ) {
+            return OverlayError("theme deadend values must be from 0 to 255");
+        }
+        if (ur < 0 || ur > 255 ||
+            ug < 0 || ug > 255 ||
+            ub < 0 || ub > 255 ) {
+            return OverlayError("theme unnocupied values must be from 0 to 255");
+        }
+    }
 
-    // save the new value
-    theme = newtheme;
+    // arguments are ok
+    static char result[60];
+    if (theme) {
+        unsigned char asrc, asgc, asbc, aerc, aegc, aebc, dsrc, dsgc, dsbc, derc, degc, debc, urc, ugc, ubc, a;
+        GetRGBA(&asrc, &asgc, &asbc, &a, aliveStartRGBA);
+        GetRGBA(&aerc, &aegc, &aebc, &a, aliveEndRGBA);
+        GetRGBA(&dsrc, &dsgc, &dsbc, &a, deadStartRGBA);
+        GetRGBA(&derc, &degc, &debc, &a, deadEndRGBA);
+        GetRGBA(&urc, &ugc, &ubc, &a, unoccupiedRGBA);
+        sprintf(result, "%hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu ",
+            asrc, asgc, asbc, aerc, aegc, aebc, dsrc, dsgc, dsbc, derc, degc, debc, urc, ugc, ubc);
+    }
+    else {
+        sprintf(result, "-1");
+    }
+
+    // save the new values
+    if (disable == -1) {
+        theme = false;
+    }
+    else {
+        theme = true;
+        SetRGBA(asr, asg, asb, alpha, &aliveStartRGBA);
+        SetRGBA(aer, aeg, aeb, alpha, &aliveEndRGBA);
+        SetRGBA(dsr, dsg, dsb, alpha, &deadStartRGBA);
+        SetRGBA(der, deg, deb, alpha, &deadEndRGBA);
+        SetRGBA(ur, ug, ub, alpha, &unoccupiedRGBA);
+    }
 
     // return the previous value
     return result;
@@ -819,42 +893,6 @@ const char* Overlay::DoPosition(const char* args)
     }
     
     return NULL;
-}
-
-// -----------------------------------------------------------------------------
-
-const char* Overlay::DoSetBorderRGB(const char* args)
-{
-    int a1, a2, a3;
-    if (sscanf(args, " %d %d %d", &a1, &a2, &a3) != 3) {
-        return OverlayError("borderrgb command requires 3 arguments");
-    }
-    
-    if (a1 < 0 || a1 > 255 ||
-        a2 < 0 || a2 > 255 ||
-        a3 < 0 || a3 > 255 ) {
-        return OverlayError("borderrgb values must be from 0 to 255");
-    }
-    
-    unsigned char oldr = br;
-    unsigned char oldg = bg;
-    unsigned char oldb = bb;
-    
-    br = (unsigned char) a1;
-    bg = (unsigned char) a2;
-    bb = (unsigned char) a3;
-
-    // create the rgba value
-    unsigned char* border = (unsigned char*)&borderRGBA;
-    *border++ = br;
-    *border++ = bg;
-    *border++ = bb;
-    *border++ = 255;  // opaque
-    
-    // return old values
-    static char result[16];
-    sprintf(result, "%hhu %hhu %hhu", oldr, oldg, oldb);
-    return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -1973,7 +2011,6 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "theme ", 6) == 0)      return DoTheme(cmd+6);
     if (strcmp(cmd,  "updatecells") == 0)    return DoUpdateCells();
     if (strcmp(cmd,  "drawcells") == 0)      return DoDrawCells();
-    if (strncmp(cmd, "borderrgb", 9) == 0)   return DoSetBorderRGB(cmd+9);
     if (strcmp(cmd,  "delete") == 0) {
         DeleteOverlay();
         return NULL;

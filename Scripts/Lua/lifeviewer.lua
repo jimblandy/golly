@@ -2,11 +2,14 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 6
+local buildnumber = 7
 
 local g = golly()
 
 local ov = g.overlay
+
+local gp = require "gplus"
+local op = require "oplus"
 
 local viewwd, viewht = g.getview(g.getlayer())
 
@@ -39,6 +42,14 @@ local linearzoom
 
 -- theme
 local theme = -1
+
+-- mouse drag
+local lastmousex = 0
+local lastmousey = 0
+local mousedrag = false
+
+local clickx = 0
+local clicky = 0
 
 --------------------------------------------------------------------------------
 
@@ -78,18 +89,11 @@ Q		increase number of layers
 A		decrease number of layers
 P		increase layer depth
 L		decrease layer depth
-C		toggle pattern / theme colors
+C		cycle themes
 ]]
 
     -- display help
     g.note(helptext)
-end
-
---------------------------------------------------------------------------------
-
-local function createoverlay()
-    -- create overlay over entire viewport
-    ov("create "..viewwd.." "..viewht)
 end
 
 --------------------------------------------------------------------------------
@@ -106,6 +110,35 @@ end
 
 --------------------------------------------------------------------------------
 
+local function updatestatus()
+    -- convert zoom to actual value
+    local camzoom = lineartoreal(linearzoom)
+    if camzoom < 0.999 then
+       camzoom = -(1 / camzoom)
+    end
+
+    -- convert x and y to display coordinates
+    local x = camx - viewwidth / 2
+    local y = camy - viewheight / 2
+
+    -- convert theme to status
+    local themestatus = theme
+    if theme == -1 then
+        themestatus = "off"
+    end
+
+    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus)
+end
+
+--------------------------------------------------------------------------------
+
+local function createoverlay()
+    -- create overlay over entire viewport
+    ov("create "..viewwd.." "..viewht)
+end
+
+--------------------------------------------------------------------------------
+
 local function updatecamera()
     -- convert linear zoom to real zoom
     local camzoom = lineartoreal(linearzoom)
@@ -115,17 +148,8 @@ local function updatecamera()
     ov("camxy "..camx.." "..camy)
     ov("camlayers "..camlayers.." "..camlayerdepth)
 
-    -- convert zoom to actual value
-    if camzoom < 0.999 then
-       camzoom = -(1 / camzoom)
-    end
-
-    -- convert x and y to display coordinates
-    local x = camx - viewwidth / 2
-    local y = camy - viewheight / 2
-
     -- update status
-    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth))
+    updatestatus()
 end
 
 --------------------------------------------------------------------------------
@@ -187,6 +211,66 @@ local function rotate(amount)
             camangle = camangle + 360
         end
     end
+    updatecamera()
+    refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function adjustzoom(amount, x, y)
+    local newx = 0
+    local newy = 0
+
+    -- get the current zoom as actual zoom
+    local currentzoom = lineartoreal(linearzoom)
+
+    -- compute new zoom and ensure it is in range
+    linearzoom = linearzoom + amount
+    if linearzoom < 0 then
+        linearzoom = 0
+    else
+        if linearzoom > 1 then
+            linearzoom = 1
+        end
+    end
+
+    local sinangle = math.sin(-camangle / 180 * math.pi)
+    local cosangle = math.cos(-camangle / 180 * math.pi)
+    local dx = 0
+    local dy = 0
+
+    -- convert new zoom to actual zoom
+    newzoom = lineartoreal(linearzoom)
+
+    -- compute as an offset from the centre
+    x = x - viewwd / 2
+    y = y - viewht / 2
+
+    -- compute position based on new zoom
+    newx = x * (newzoom / currentzoom)
+    newy = y * (newzoom / currentzoom)
+    dx = (x - newx) / newzoom
+    dy = -(y - newy) / newzoom
+
+    -- apply pan
+    camx = camx - dx * cosangle + dy * -sinangle
+    camy = camy - dx * sinangle + dy * cosangle
+end
+
+--------------------------------------------------------------------------------
+
+local function zoominto(event)
+    local _, x, y = gp.split(event)
+    adjustzoom(0.1, x, y)
+    updatecamera()
+    refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function zoomoutfrom(event)
+    local _, x, y = gp.split(event)
+    adjustzoom(-0.1, x, y)
     updatecamera()
     refresh()
 end
@@ -268,15 +352,15 @@ end
 --------------------------------------------------------------------------------
 
 local function settheme()
-    ov("theme "..theme)
+    ov(op.themes[theme])
+    updatestatus()
 end
 
 --------------------------------------------------------------------------------
 
-local function toggletheme()
-    if theme == -1 then
-        theme = 1
-    else
+local function cycletheme()
+    theme = theme + 1
+    if theme > op.maxtheme then
         theme = -1
     end
     settheme()
@@ -342,6 +426,42 @@ local function panview(dx, dy)
     camy = camy + (dx * sinangle + dy * cosangle)
     updatecamera()
     refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function doclick(event)
+    local _, x, y, button, mode = gp.split(event)
+
+    -- start of drag
+    lastmousex = tonumber(x)
+    lastmousey = tonumber(y)
+    mousedrag = true
+end
+
+--------------------------------------------------------------------------------
+
+local function stopdrag()
+    mousedrag = false
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function checkdrag()
+    local x, y
+
+    -- check if a drag is in progress
+    if mousedrag then
+        -- get the mouse position
+        local mousepos = ov("xy")
+        if #mousepos > 0 then
+            x, y = gp.split(mousepos)
+            panview(lastmousex - tonumber(x), lastmousey - tonumber(y))
+            lastmousex = x
+            lastmousey = y
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -481,7 +601,7 @@ local function main()
         elseif event == "key 3 none" then
             setzoom(32)
         elseif event == "key c none" then
-            toggletheme()
+            cycletheme()
         elseif event == "key q none" then
             increaselayers()
         elseif event == "key a none" then
@@ -508,8 +628,17 @@ local function main()
             panview(-1, 1)
         elseif event == "key h none" then
             showhelp()
+        elseif event:find("^ozoomin") then
+            zoominto(event)
+        elseif event:find("^ozoomout") then
+            zoomoutfrom(event)
+        elseif event:find("^oclick") then
+            doclick(event)
+        elseif event:find("^mup") then
+            stopdrag()
         else
             g.doevent(event)
+            checkdrag()
         end
         
         if generating then advance(false) end

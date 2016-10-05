@@ -208,6 +208,12 @@ private:
     const char* OverlayError(const char* msg);
     // Return a string starting with "ERR:" followed by the given message.
 
+    void SetRGBA(unsigned char r, unsigned char b, unsigned char g, unsigned char a, unsigned int *rgba);
+    // Set the rgba value from the r, b, g, a components.
+
+    void GetRGBA(unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a, unsigned int rgba);
+    // Get the r, g, b, a components from the rgba value.
+
     // cell view
 
     const char* DoCellView(const char* args);
@@ -235,10 +241,6 @@ private:
     const char* DoDrawCells();
     // Draw the cells onto the overlay.
 
-    const char* DoSetBorderRGB(const char* args);
-    // Set the border  RGB values and return the old values as a string
-    // of the form "r g b".
-    
     // camera
 
     const char* DoCamLayers(const char* args);
@@ -256,7 +258,16 @@ private:
     // theme
 
     const char* DoTheme(const char* args);
-    // Set the color theme (-1 for pattern colors)
+    // Set the color theme RGB values in the form
+    // "r,g,b r,g,b r,g,b r,g,b r,g,b" representing RGB values for cells:
+    // just born
+    // alive at least 63 generations
+    // just died
+    // dead at least 63 generations
+    // never occupied
+    // If a single parameter "-1" is supplied then disable the theme and
+    // use the patterns default colors.
+    // Return the old value as a string.
 
     unsigned char* pixmap;      // RGBA data (wd * ht * 4 bytes)
     int wd, ht;                 // width and height of pixmap
@@ -281,8 +292,6 @@ private:
     unsigned char* cellview;    // cell state data (cellwd * cellht bytes)
     int cellwd, cellht;         // width and height of cell view
     int cellx, celly;           // x and y position of bottom left cell
-    unsigned char br, bg, bb;   // border r g b components
-    unsigned int borderRGBA;    // border rgba color
 
     // camera
 
@@ -297,11 +306,16 @@ private:
 
     // theme
 
-    int theme;                   // theme number or -1 for pattern colors
+    bool theme;                  // whether a theme is active
+    unsigned int aliveStartRGBA; // new cell RGBA
+    unsigned int aliveEndRGBA;   // cell alive longest RGBA
+    unsigned int deadStartRGBA;  // cell just died RGBA
+    unsigned int deadEndRGBA;    // cell dead longest RGBA
+    unsigned int unoccupiedRGBA; // cell never occupied RGBA
     int aliveStart;              // new cell color index
-    int aliveMax;                // cell alive longest color index
+    int aliveEnd;                // cell alive longest color index
     int deadStart;               // cell just died color index
-    int deadMin;                 // cell dead longest color index
+    int deadEnd;                 // cell dead longest color index
 };
 
 extern Overlay* curroverlay;    // pointer to current overlay (set by client)

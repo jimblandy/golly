@@ -50,42 +50,41 @@ Here is an alphabetical list of all the valid overlay commands:
 <tr>
 <td valign=top>
 <a href="#blend"><b>blend</b></a><br>
-<a href="#borderrgb"><b>borderrgb</b></a><br>
 <a href="#camangle"><b>camangle</b></a><br>
 <a href="#camlayers"><b>camlayers</b></a><br>
 <a href="#camxy"><b>camxy</b></a><br>
-<a href="#camzoom"><b>camzoom</b></a>
+<a href="#camzoom"><b>camzoom</b></a><br>
+<a href="#cellview"><b>cellview</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#cellview"><b>cellview</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
 <a href="#create"><b>create</b></a><br>
 <a href="#cursor"><b>cursor</b></a><br>
 <a href="#delete"><b>delete</b></a><br>
-<a href="#drawcells"><b>drawcells</b></a>
+<a href="#drawcells"><b>drawcells</b></a><br>
+<a href="#fill"><b>fill</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#fill"><b>fill</b></a><br>
 <a href="#flood"><b>flood</b></a><br>
 <a href="#font"><b>font</b></a><br>
 <a href="#get"><b>get</b></a><br>
 <a href="#line"><b>line</b></a><br>
-<a href="#load"><b>load</b></a>
+<a href="#load"><b>load</b></a><br>
+<a href="#paste"><b>paste</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#paste"><b>paste</b></a><br>
 <a href="#position"><b>position</b></a><br>
 <a href="#resize"><b>resize</b></a><br>
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
-<a href="#set"><b>set</b></a>
+<a href="#set"><b>set</b></a><br>
+<a href="#text"><b>text</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#text"><b>text</b></a><br>
 <a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
@@ -118,17 +117,6 @@ The commands affected by alpha blending are:
 <a href="#set">set</a>.
 </dd>
 <dd> Example: <b>local oldblend = ov("blend 1")</b></dd>
-</p>
-
-<a name="borderrgb"></a><p><dt><b>borderrgb <i>red green blue</i></b></dt>
-<dd>
-Set the border RGB values used by <a href="#cellviewdesc">cellview</a> and
-return the old values as a string of the form "red green blue".
-All values are from 0 to 255. Default is grey.
-The border color is used when drawing cells to the overlay for any cells that fall outside
-of the defined cellview rectangle.
-</dd>
-<dd> Example: <b>local oldborder = ov("borderrgb 0 0 0")</b></dd>
 </p>
 
 <a name="camangle"></a><p><dt><b>camangle <i>angle</i></b></dt>
@@ -399,14 +387,47 @@ Note that the text has a transparent background, so you'll probably need to set
 <dd> Example: <b>local dimens = ov("text tempclip To be or not to be...")</b></dd>
 </p>
 
-<a name="theme"></a><p><dt><b>theme <i>n</i></b></dt>
+<a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5</i></b></dt>
 <dd>
 Define the color theme for drawing the <a href="#cellviewdesc">cellview</a> and return the
-previous value. A value of -1 (the default) means use the standard pattern colors. Other
-values mean use one of the LifeViewer color themes.
+previous values. Themes allow better visualization of patterns because they highlight history
+and longevity in cells. The arguments define 5 colors:
 </dd>
-<dd> Example: <b>ov("theme -1")</b></dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><i><b>r1 g1 b1</b></i></td><td width=20></td><td><i>born</i></td><td>&nbsp;&nbsp;&nbsp;cell just born</td></tr>
+<tr><td><i><b>r2 g2 b2</b></i></td><td width=20></td><td><i>alive</i></td><td>&nbsp;&nbsp;&nbsp;cell alive for at least 63 generations</td></tr>
+<tr><td><i><b>r3 g3 b3</b></i></td><td width=20></td><td><i>died</i></td><td>&nbsp;&nbsp;&nbsp;cell just died</td></tr>
+<tr><td><i><b>r4 g4 b4</b></i></td><td width=20></td><td><i>dead</i></td><td>&nbsp;&nbsp;&nbsp;cell dead for at least 63 generations</td></tr>
+<tr><td><i><b>r5 g5 b5</b></i></td><td width=20></td><td><i>unoccupied</i></td><td>&nbsp;&nbsp;&nbsp;cell never occupied</td></tr>
+</table>
+</dd>
+<p>
+</dd>
+<dd> Example: <b>ov("theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0")</b><br>
+New cells are drawn in the <i>born</i> color (cyan 0 255 255).<br>
+If they stay alive they fade from the <i>born</i> color to the <i>alive</i> color
+(white 255 255 255) over the next 63 generations. If the cell stays alive after that it remains
+in the <i>alive</i> color. This provides a visual representation of cell longevity.<br>
+Cells are drawn in the <i>died</i> color (blue 0 0 255) when then they die.<br>
+If they stay dead they fade from the <i>died</i> color to the <i>dead</i> color
+(dark blue 0 0 47) over the next 63 generations. If the cell stays dead after that it
+remains in the <i>dead</i> color. This provides a visual representation of cell history.</br>
+Cells that have never been occupied are drawn in the <i>unoccupied</i> color (black 0 0 0).</dd>
 </p>
+<p>
+<dd>
+If no theme is specified then Golly's default colors for the pattern are used. If you want to switch
+off the theme then use the command <b>ov("theme -1")</b>. Note if no theme is enabled when you use the
+command it will return "-1".
+</p>
+<p>
+<dd>
+There is a set of <a href="#themes">predefined themes</a> in the <a href="#oplus">oplus</a> package using
+which the example above would become: <b>ov(op.theme1)</b> or <b>ov(op.themes[1])</b>.
+</dd>
+<p>
 
 <a name="transform"></a><p><dt><b>transform <i>axx axy ayx ayy</i></b></dt>
 <dd>
@@ -576,7 +597,7 @@ affine transformations, namely rotation by multiples of 90 degrees and
 reflection about the x, y or diagonal axes.  The following script shows
 how text can be rotated or reflected.  Instead of using explicit
 transform commands it uses mnemonic <a href="#synonyms">synonyms</a>
-defined in the <b>oplus</b> package.  The image on the right shows
+defined in the <a href="#oplus">oplus</a> package.  The image on the right shows
 the resulting overlay.
 
 <p>
@@ -640,8 +661,8 @@ There are three steps required:
 <ol>
 <li>Specify the rectangle of cells from the universe that you want to display using the
     <a href="#cellview">cellview</a> command.
-<li>Either use the standard pattern colors or pick a theme and border color with the
-    <a href="#theme">theme</a> and <a href="#borderrgb">borderrgb</a> commands.
+<li>Either use the standard pattern colors or pick a theme  with the
+<a href="#theme">theme</a> command.
 <li>Define the camera settings to determine how you want to project the cells onto
     the overlay using <a href="#camangle">camangle</a>, <a href="#camlayers">camlayers</a>,
     <a href="#camxy">camxy</a> and <a href="#camzoom">camzoom</a> commands.
@@ -666,9 +687,9 @@ Here is a simple example:
 <b>ov("create "..viewwd.." "..viewht)</b><br>
 -- open example pattern<br>
 <b>g.open(g.getdir("app").."Patterns/Life/Methuselahs/rabbits.lif")</b><br>
--- create a cellview using theme 1<br>
+-- create a cellview using a theme<br>
 <b>ov("cellview -256 -256 512 512")</b><br>
-<b>ov("theme 1")</b><br>
+<b>ov("theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0")</b><br>
 -- set camera 14.5x zoom and 30 degree rotation<br>
 <b>ov("camzoom 14.5")</b><br>
 <b>ov("camangle 30")</b><br>
@@ -804,10 +825,31 @@ Affine transformations:
 </table>
 </dd>
 
+<p><a name="themes"></a>
+Themes:
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>op.theme0</b></td><td width = 5></td><td> = "theme 255 255 255 255 255 255 0 0 0 0 0 0 0 0 0"</td></tr>
+<tr><td><b>op.theme1</b></td><td width = 5></td><td> = "theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0"</td></tr>
+<tr><td><b>op.theme2</b></td><td width = 5></td><td> = "theme 255 144 0 255 255 0 160 0 0 32 0 0 0 0 0"</td></tr>
+<tr><td><b>op.theme3</b></td><td width = 5></td><td> = "theme 0 255 255 255 255 255 0 128 0 0 24 0 0 0 0"</td></tr>
+<tr><td><b>op.theme4</b></td><td width = 5></td><td> = "theme 255 255 0 255 255 255 128 0 128 0 47 0 0 32 128"</td></tr>
+<tr><td><b>op.theme5</b></td><td width = 5></td><td> = "theme 176 176 176 255 255 255 104 104 104 16 16 16 0 0 0"</td></tr>
+<tr><td><b>op.theme6</b></td><td width = 5></td><td> = "theme 0 0 0 0 0 0 255 255 255 255 255 255 255 255 255"</td></tr>
+<tr><td><b>op.theme7</b></td><td width = 5></td><td> = "theme 0 0 255 0 0 0 0 255 255 240 240 240 255 255 255"</td></tr>
+<tr><td><b>op.theme8</b></td><td width = 5></td><td> = "theme 240 240 240 240 240 240 240 240 240 240 240 240 0 0 0"</td></tr>
+<tr><td><b>op.theme9</b></td><td width = 5></td><td> = "theme 240 240 240 240 240 240 160 0 0 160 0 0 0 0 0"</td></tr>
+</table>
+</dd>
+<p>
+<dd>
+You can also access the themes via an array:<br>
+<b>local mytheme = op.themes[2]</b><br>
+The maximum index in the array is defined by <b>op.maxtheme</b>.
+</dd>
 <p>
 For a good example of how to use the <b>oplus</b> package,
 see the <a href="edit:Scripts/Lua/pop-plot.lua">pop-plot.lua</a> script.
-
 
 </body>
 </html>
