@@ -121,33 +121,33 @@ The commands affected by alpha blending are:
 
 <a name="camangle"></a><p><dt><b>camangle <i>angle</i></b></dt>
 <dd>
-Set the camera angle for <a href="#cellviewdesc">cellview</a> in degrees and return the previous
-camera angle. The valid range is 0 &lt;= <i>angle</i> &lt; 360. The default is 0.
+Set the camera angle for <a href="#cellviewdesc">cellview</a> in degrees.
+The valid range is 0 &lt;= <i>angle</i> &lt; 360. The default is 0.
 </dd>
-<dd> Example: <b>local oldangle = ov("camangle 90")</b></dd>
+<dd> Example: <b>ov("camangle 90")</b></dd>
 </p>
 
 <a name="camlayers"></a><p><dt><b>camlayers <i>layers depth</i></b></dt>
 <dd>
-Set the number of layers and depth between layers for <a href="#cellviewdesc">cellview</a> and
-return the previous number of layers and depth. <i>layers</i> must be from 1 (the default)
-to 10. <i>depth</i> must be from 0 to 10 and the default is 0.5.
+Set the number of layers and depth between layers for <a href="#cellviewdesc">cellview</a>.
+<i>layers</i> must be from 1 (the default) to 10. <i>depth</i> must be from 0 to 10 and the
+default is 0.5.
 </dd>
-<dd> Example: <b>local oldlayers = ov("camlayers 6 0.2")</b></dd>
+<dd> Example: <b>ov("camlayers 6 0.2")</b></dd>
 </p>
 
 <a name="camxy"></a><p><dt><b>camxy <i>x y</i></b></dt>
 <dd>
-Set the camera pan position for <a href="#cellviewdesc">cellview</a> and return the previous
-pan position. Default position is the centre of the view.
+Set the camera pan position for <a href="#cellviewdesc">cellview</a>.
+Default position is the centre of the view.
 </dd>
-<dd> Example: <b>local oldxy = ov("camxy -32 100")</b></dd>
+<dd> Example: <b>ov("camxy -32 100")</b></dd>
 </p>
 
 <a name="camzoom"></a><p><dt><b>camzoom <i>zoom</i></b></dt>
 <dd>
-Set the camera zoom for <a href="#cellviewdesc">cellview</a> from 0.0625 (-16x) to 32 (32x) and
-return the previous zoom. The default is 1.
+Set the camera zoom for <a href="#cellviewdesc">cellview</a> from 0.0625 (-16x) to 32 (32x).
+The default is 1.
 </dd>
 <dd> Example: <b>ov("camzoom 3.5")</b></dd>
 </p>
@@ -396,8 +396,8 @@ Note that the text has a transparent background, so you'll probably need to set
 
 <a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5</i></b></dt>
 <dd>
-Define the color theme for drawing the <a href="#cellviewdesc">cellview</a> and return the
-previous values. Themes allow better visualization of patterns because they highlight history
+Define the color theme for drawing the <a href="#cellviewdesc">cellview</a>.
+Themes allow better visualization of patterns because they highlight history
 and longevity in cells. The arguments define 5 colors:
 </dd>
 <p>
@@ -412,29 +412,33 @@ and longevity in cells. The arguments define 5 colors:
 </dd>
 <p>
 </dd>
-<dd> Example: <b>ov("theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0")</b><br>
-New cells are drawn in the <i>born</i> color (cyan 0 255 255).<br>
+<dd> Example: <b>ov("theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0")</b></dd>
+<dd>
+New cells are drawn in the <i>born</i> color (cyan 0 255 255).</dd>
+<dd>
 If they stay alive they fade from the <i>born</i> color to the <i>alive</i> color
 (white 255 255 255) over the next 63 generations. If the cell stays alive after that it remains
-in the <i>alive</i> color. This provides a visual representation of cell longevity.<br>
-Cells are drawn in the <i>died</i> color (blue 0 0 255) when then they die.<br>
+in the <i>alive</i> color. This provides a visual representation of cell longevity.</dd>
+<dd>
+Cells are drawn in the <i>died</i> color (blue 0 0 255) when then they die.</dd>
+<dd>
 If they stay dead they fade from the <i>died</i> color to the <i>dead</i> color
 (dark blue 0 0 47) over the next 63 generations. If the cell stays dead after that it
-remains in the <i>dead</i> color. This provides a visual representation of cell history.</br>
+remains in the <i>dead</i> color. This provides a visual representation of cell history.</dd>
+<dd>
 Cells that have never been occupied are drawn in the <i>unoccupied</i> color (black 0 0 0).</dd>
 </p>
 <p>
 <dd>
 If no theme is specified then Golly's default colors for the pattern are used. If you want to switch
-off the theme then use the command <b>ov("theme -1")</b>. Note if no theme is enabled when you use the
-command it will return "-1".
+off the theme then use the command <b>ov("theme -1")</b>.
 </p>
 <p>
 <dd>
 There is a set of <a href="#themes">predefined themes</a> in the <a href="#oplus">oplus</a> package using
 which the example above would become: <b>ov(op.theme1)</b> or <b>ov(op.themes[1])</b>.
 </dd>
-<p>
+</p>
 
 <a name="transform"></a><p><dt><b>transform <i>axx axy ayx ayy</i></b></dt>
 <dd>
@@ -846,11 +850,9 @@ Themes:
 </table>
 </dd>
 <p>
-<dd>
-You can also access the themes via an array:<br>
-<b>local mytheme = op.themes[2]</b><br>
-The maximum index in the array is defined by <b>op.maxtheme</b>.
-</dd>
+<dd>You can also access the themes via an array: <b>local mytheme = op.themes[2]</b></dd>
+<p>
+<dd>The maximum index in the array is defined by <b>op.maxtheme</b>.</dd>
 <p>
 For a good example of how to use the <b>oplus</b> package,
 see the <a href="edit:Scripts/Lua/pop-plot.lua">pop-plot.lua</a> script.

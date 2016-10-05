@@ -571,15 +571,10 @@ const char* Overlay::DoCamZoom(const char* args)
     if (zoom < camminzoom) return OverlayError("camera zoom too small");
     if (zoom > cammaxzoom) return OverlayError("camera zoom too big");
 
-    // argument is ok
-    static char result[30];
-    sprintf(result, "%lf", camzoom);
-
     // save the new value
     camzoom = zoom;
 
-    // return the previous value
-    return result;
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -595,15 +590,10 @@ const char* Overlay::DoCamAngle(const char* args)
     if (angle < 0) return OverlayError("camera angle too small");
     if (angle > 360) return OverlayError("camera angle too big");
 
-    // argument is ok
-    static char result[30];
-    sprintf(result, "%lf", camangle);
-
     // save the new value
     camangle = angle;
 
-    // return the previous value
-    return result;
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -617,16 +607,11 @@ const char* Overlay::DoCamXY(const char* args)
         return OverlayError("camxy command requires 2 arguments");
     }
 
-    // arguments are ok
-    static char result[60];
-    sprintf(result, "%lf %lf", camx, camy);
-
     // save the new values
     camx = x;
     camy = y;
 
-    // return the previous values
-    return result;
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -644,16 +629,11 @@ const char* Overlay::DoCamLayers(const char* args)
     if (howmany > 10) return OverlayError("too many layers");
     if (depth < 0 || depth > 10) return OverlayError("depth out of range");
 
-    // arguments are ok
-    static char result[60];
-    sprintf(result, "%d %lf", camlayers, camlayerdepth);
-
     // save the new values
     camlayers = howmany;
     camlayerdepth = depth;
 
-    // return the previous values
-    return result;
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -706,22 +686,6 @@ const char* Overlay::DoTheme(const char* args)
         }
     }
 
-    // arguments are ok
-    static char result[60];
-    if (theme) {
-        unsigned char asrc, asgc, asbc, aerc, aegc, aebc, dsrc, dsgc, dsbc, derc, degc, debc, urc, ugc, ubc, a;
-        GetRGBA(&asrc, &asgc, &asbc, &a, aliveStartRGBA);
-        GetRGBA(&aerc, &aegc, &aebc, &a, aliveEndRGBA);
-        GetRGBA(&dsrc, &dsgc, &dsbc, &a, deadStartRGBA);
-        GetRGBA(&derc, &degc, &debc, &a, deadEndRGBA);
-        GetRGBA(&urc, &ugc, &ubc, &a, unoccupiedRGBA);
-        sprintf(result, "%hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu ",
-            asrc, asgc, asbc, aerc, aegc, aebc, dsrc, dsgc, dsbc, derc, degc, debc, urc, ugc, ubc);
-    }
-    else {
-        sprintf(result, "-1");
-    }
-
     // save the new values
     if (disable == -1) {
         theme = false;
@@ -735,8 +699,7 @@ const char* Overlay::DoTheme(const char* args)
         SetRGBA(ur, ug, ub, alpha, &unoccupiedRGBA);
     }
 
-    // return the previous value
-    return result;
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------

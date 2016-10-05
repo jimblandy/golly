@@ -41,7 +41,8 @@ local camlayerdepth = defcamlayerdepth
 local linearzoom
 
 -- theme
-local theme = -1
+local themeon = false
+local theme = 1
 
 -- mouse drag
 local lastmousex = 0
@@ -67,33 +68,49 @@ Esc		close
 R		reset to generation 0
 
 Camera controls:
-Key		Function	Shift
-[		zoom out	halve zoom
-]		zoom in		double zoom
-1		1x zoom	integer zoom
-2		2x zoom	-2x zoom
-4		4x zoom	-4x zoom
-8		8x zoom	-8x zoom
-6		16x zoom	-16x zoom
+Key		Function			Shift
+[		zoom out			halve zoom
+]		zoom in				double zoom
+1		1x zoom			integer zoom
+2		2x zoom			-2x zoom
+4		4x zoom			-4x zoom
+8		8x zoom			-8x zoom
+6		16x zoom			-16x zoom
 3		32x zoom
-Left		pan left		pan north west
-Right	pan right	pan south east
-Up		pan up		pan north east
-Down	pan down	pan south west
-<		rotate left	rotate left 90
->		rotate right	rotate right 90
+Left		pan left				pan north west
+Right	pan right			pan south east
+Up		pan up				pan north east
+Down	pan down			pan south west
+<		rotate left			rotate left 90
+>		rotate right			rotate right 90
 5		reset angle
 
 View controls:
-Q		increase number of layers
-A		decrease number of layers
+Key		Function			Shift
+Q		increase layers
+A		decrease layers
 P		increase layer depth
 L		decrease layer depth
-C		cycle themes
+C		cycle themes		toggle themes
 ]]
 
     -- display help
     g.note(helptext)
+end
+
+--------------------------------------------------------------------------------
+
+local function getmouseposition()
+    local x = viewwidth / 2
+    local y = viewheight / 2
+    local mousepos = ov("xy")
+    if #mousepos > 0 then
+        x, y = gp.split(mousepos)
+        x = tonumber(x)
+        y = tonumber(y)
+    end
+
+    return x, y
 end
 
 --------------------------------------------------------------------------------
@@ -122,9 +139,9 @@ local function updatestatus()
     local y = camy - viewheight / 2
 
     -- convert theme to status
-    local themestatus = theme
-    if theme == -1 then
-        themestatus = "off"
+    local themestatus = "off"
+    if themeon then
+        themestatus = theme
     end
 
     g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus)
@@ -261,7 +278,7 @@ end
 
 local function zoominto(event)
     local _, x, y = gp.split(event)
-    adjustzoom(0.1, x, y)
+    adjustzoom(0.05, x, y)
     updatecamera()
     refresh()
 end
@@ -270,7 +287,7 @@ end
 
 local function zoomoutfrom(event)
     local _, x, y = gp.split(event)
-    adjustzoom(-0.1, x, y)
+    adjustzoom(-0.05, x, y)
     updatecamera()
     refresh()
 end
@@ -278,27 +295,19 @@ end
 --------------------------------------------------------------------------------
 
 local function zoomout()
-    if linearzoom > 0 then
-        linearzoom = linearzoom - 0.01
-        if linearzoom < 0 then
-            linearzoom = 0
-        end
-        updatecamera()
-        refresh()
-    end
+    local x, y = getmouseposition()
+    adjustzoom(0.01, x, y)
+    updatecamera()
+    refresh()
 end
 
 --------------------------------------------------------------------------------
 
 local function zoomin()
-    if linearzoom < 1 then
-        linearzoom = linearzoom + 0.01
-        if linearzoom > 1 then
-            linearzoom = 1
-        end
-        updatecamera()
-        refresh()
-    end
+    local x, y = getmouseposition()
+    adjustzoom(-0.01, x, y)
+    updatecamera()
+    refresh()
 end
 
 --------------------------------------------------------------------------------
@@ -352,17 +361,34 @@ end
 --------------------------------------------------------------------------------
 
 local function settheme()
-    ov(op.themes[theme])
+    local index = -1
+    if themeon then
+        index = theme
+    end
+    ov(op.themes[index])
     updatestatus()
 end
 
 --------------------------------------------------------------------------------
 
 local function cycletheme()
-    theme = theme + 1
-    if theme > op.maxtheme then
-        theme = -1
+    if themeon then
+        theme = theme + 1
+        if theme > op.maxtheme then
+            theme = 0
+        end
+    else
+        themeon = true
     end
+    settheme()
+    ov("updatecells")
+    refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function toggletheme()
+    themeon = not themeon
     settheme()
     ov("updatecells")
     refresh()
@@ -602,6 +628,8 @@ local function main()
             setzoom(32)
         elseif event == "key c none" then
             cycletheme()
+        elseif event == "key c shift" then
+            toggletheme()
         elseif event == "key q none" then
             increaselayers()
         elseif event == "key a none" then

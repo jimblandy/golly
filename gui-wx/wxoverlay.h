@@ -259,15 +259,14 @@ private:
 
     const char* DoTheme(const char* args);
     // Set the color theme RGB values in the form
-    // "r,g,b r,g,b r,g,b r,g,b r,g,b" representing RGB values for cells:
-    // just born
-    // alive at least 63 generations
-    // just died
-    // dead at least 63 generations
-    // never occupied
+    // "r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5" representing RGB values for cells:
+    // r1 g1 b1  just born
+    // r2 g2 b2  alive at least 63 generations
+    // r3 g3 b3  just died
+    // r4 g4 b4  dead at least 63 generations
+    // r5 g5 b5  never occupied
     // If a single parameter "-1" is supplied then disable the theme and
     // use the patterns default colors.
-    // Return the old value as a string.
 
     unsigned char* pixmap;      // RGBA data (wd * ht * 4 bytes)
     int wd, ht;                 // width and height of pixmap
