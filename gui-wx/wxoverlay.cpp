@@ -54,6 +54,7 @@ Overlay::Overlay()
 {
     pixmap = NULL;
     cellview = NULL;
+    zoomview = NULL;
 
     // initialize camera
     camminzoom = 0.0625;
@@ -311,10 +312,68 @@ void Overlay::GetThemeColors(double brightness)
 
 // -----------------------------------------------------------------------------
 
+void Overlay::UpdateZoomView(unsigned char* source, unsigned char *dest, int step)
+{
+    int h, w;
+    unsigned char state;
+    unsigned char max;
+    int halfstep = step >> 1;
+
+    for (h = 0; h < cellht; h += step) {
+        for (w = 0; w < cellwd; w += step) {
+            // find the maximum state value in each 2x2 block
+            max = source[h * cellwd + w];
+            state = source[h * cellwd + w + halfstep];
+            if (state > max) max = state;
+            state = source[(h + halfstep) * cellwd + w];
+            if (state > max) max = state;
+            state = source[(h + halfstep) * cellwd + w + halfstep];
+            if (state > max) max = state;
+            dest[h * cellwd + w] = max;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoDrawCells()
 {
     if (cellview == NULL) return OverlayError(no_cellview);
 
+    int mask = 0;
+    unsigned char *cells = cellview;
+    unsigned char *source = cellview;
+    unsigned char *dest = zoomview;
+
+    // check for zoom < 1
+    if (camzoom < 1) {
+        int negzoom = (1 / camzoom) - 0.001;
+        int step = 2;
+        do {
+            UpdateZoomView(source, dest, step);
+
+            // next zoom level
+            step <<= 1;
+            negzoom >>= 1;
+            mask = (mask << 1) | 1;
+
+            // update source and destination
+            source = zoomview;
+ 
+        } while (negzoom >= 1);
+
+        // source is the zoom view
+        cells = zoomview;
+    }
+
+    DrawCells(cells, ~mask);
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawCells(unsigned char *cells, int mask)
+{
     // convert depth to actual depth
     double depth = camlayerdepth / 2 + 1;
 
@@ -374,12 +433,12 @@ const char* Overlay::DoDrawCells()
         }
 
         for (w = 0; w < wd; w++) {
-            ix = (int)x;
-            iy = (int)y;
+            ix = (((int)x) & mask);
+            iy = (((int)y) & mask);
 
             // check if pixel is in the cell view
             if (ix >= 0 && ix < cellwd && iy >= 0 && iy < cellht) {
-                state = cellview[cellwd * iy + ix];
+                state = cells[cellwd * iy + ix];
                 rgba = cellRGBA[state];
             }
             else {
@@ -434,7 +493,7 @@ const char* Overlay::DoDrawCells()
 
                     // check if pixel is on the grid
                     if (ix >= 0 && ix < cellwd && iy >= 0 && iy < cellht) {
-                        state = cellview[cellwd * iy + ix];
+                        state = cells[cellwd * iy + ix];
 
                         // check if it is transparent
                         if (state >= transparenttarget) {
@@ -457,8 +516,6 @@ const char* Overlay::DoDrawCells()
             }
         }
     }
-
-    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -468,6 +525,10 @@ void Overlay::DeleteCellView()
     if (cellview) {
         free(cellview);
         cellview = NULL;
+    }
+    if (zoomview) {
+        free(zoomview);
+        zoomview = NULL;
     }
 }
 
@@ -529,6 +590,10 @@ const char* Overlay::DoCellView(const char* args)
     cellview = (unsigned char*) calloc(w * h, sizeof(*cellview));
     if (cellview == NULL) return OverlayError("not enough memory to create cellview");
     
+    // allocate the zoom view
+    zoomview = (unsigned char*) calloc(w * h, sizeof(*zoomview));
+    if (zoomview == NULL) return OverlayError("not enough memory to create cellview");
+
     // save the arguments
     cellwd = w;
     cellht = h;

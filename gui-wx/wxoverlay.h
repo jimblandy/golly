@@ -238,6 +238,12 @@ private:
     const char* DoUpdateCells();
     // Update the cell view from the universe.
 
+    void UpdateZoomView(unsigned char* source, unsigned char *dest, int step);
+    // Update the zoom view from the cell view at the given step size.
+
+    void DrawCells(unsigned char* cells, int mask);
+    // Draw the cells onto the overlay with the given location mask.
+
     const char* DoDrawCells();
     // Draw the cells onto the overlay.
 
@@ -289,6 +295,7 @@ private:
 
     unsigned int cellRGBA[256]; // cell RGBA values
     unsigned char* cellview;    // cell state data (cellwd * cellht bytes)
+    unsigned char* zoomview;    // cell state data (cellwd * cellht bytes) for zoom out
     int cellwd, cellht;         // width and height of cell view
     int cellx, celly;           // x and y position of bottom left cell
 
