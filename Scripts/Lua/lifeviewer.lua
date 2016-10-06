@@ -654,7 +654,7 @@ local function main()
     fitzoom(true)
     setdefaultcamera()
     
-    -- use Golly's colors if multi-state patern
+    -- use Golly's colors if multi-state pattern
     if (g.numstates() > 2) then
         themeon = false
     end

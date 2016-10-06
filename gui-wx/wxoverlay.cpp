@@ -358,15 +358,16 @@ const char* Overlay::DoDrawCells()
             mask = (mask << 1) | 1;
 
             // update source and destination
-            source = zoomview;
- 
+            source = dest;
+            dest = zoomview + (step >> 1) - 1;
         } while (negzoom >= 1);
 
         // source is the zoom view
-        cells = zoomview;
+        cells = source;
     }
 
     DrawCells(cells, ~mask);
+
     return NULL;
 }
 
@@ -381,9 +382,12 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
     double brightness = 1;
     double brightinc = 0;
 
+    // check whether to draw layers
+    int layertarget = 0;
     if (theme && camlayers > 1 && depth > 1) {
         brightness = 0.6;
         brightinc = 0.4 / (camlayers - 1);
+        layertarget = camlayers;
     }
 
     // refresh the cell view
@@ -400,7 +404,7 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
     unsigned char borderr = borderrgb->Red();
     unsigned char borderg = borderrgb->Green();
     unsigned char borderb = borderrgb->Blue();
-    unsigned char bordera = 255;
+    unsigned char bordera = 255;    // opaque
     unsigned int borderRGBA;
     SetRGBA(borderr, borderg, borderb, bordera, &borderRGBA);
 
@@ -461,7 +465,10 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
 
     // draw any layers
     if (theme) {
-        for (int i = 1; i < camlayers; i++) {
+        double layerzoom = camzoom;
+        int zoomlevel;
+
+        for (int i = 1; i < layertarget; i++) {
             unsigned char transparenttarget = (i * ((aliveEnd + 1) / camlayers));
 
             // update brightness
@@ -471,6 +478,36 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
             // adjust zoom for next level
             dxy /= depth;
             dyy /= depth;
+            layerzoom *= depth;
+            cells = cellview;
+            zoomlevel = 0;
+            mask = ~0;
+
+            // compute which zoomview level to use for this layer
+            if (layerzoom < 0.125) {
+                zoomlevel = 8;
+            }
+            else {
+                if (layerzoom < 0.25) {
+                    zoomlevel = 4;
+                }
+                else {
+                    if (layerzoom < 0.5) {
+                        zoomlevel = 2;
+                    }
+                    else {
+                        if (layerzoom < 1) {
+                            zoomlevel = 1;
+                        }
+                    }
+                }
+            }
+
+            // setup the mask for the zoom level
+            if (zoomlevel > 0) {
+                mask = ~((zoomlevel << 1) - 1);
+                cells = zoomview + zoomlevel - 1;
+            }
 
             sy = -((wd / 2) * (-dxy) + (ht / 2) * dyy) + camy;
             sx = -((wd / 2) * dyy + (ht / 2) * dxy) + camx;
@@ -488,8 +525,8 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
                 }
 
                 for (w = 0; w < wd; w++) {
-                    ix = (int)x;
-                    iy = (int)y;
+                    ix = (((int)x) & mask);
+                    iy = (((int)y) & mask);
 
                     // check if pixel is on the grid
                     if (ix >= 0 && ix < cellwd && iy >= 0 && iy < cellht) {
@@ -498,8 +535,7 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
                         // check if it is transparent
                         if (state >= transparenttarget) {
                             // draw the pixel
-                            rgba = cellRGBA[state];
-                            *overlayptr = rgba;
+                            *overlayptr = cellRGBA[state];
                         }
                     }
                     overlayptr++;
@@ -559,6 +595,7 @@ const char* Overlay::DoUpdateCells()
     // check if themes are used
     if (theme) {
         RefreshCellViewWithTheme();
+
     }
     else {
         RefreshCellView();
