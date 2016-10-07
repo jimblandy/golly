@@ -970,10 +970,12 @@ void RightWindow::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
+static bool ok_to_resize = true;
+
 void RightWindow::OnSize(wxSizeEvent& event)
 {
     // we need this to update right pane when dragging sash, or when toggling left pane
-    if (mainptr) {
+    if (mainptr && ok_to_resize) {
         mainptr->ResizeBigView();
     }
     event.Skip();
@@ -1000,8 +1002,12 @@ void MainFrame::ResizeSplitWindow(int wd, int ht)
     if (w < 0) w = 0;
     if (h < 0) h = 0;
     
-    // following will call RightWindow::OnSize
+    // following will call RightWindow::OnSize so avoid ResizeBigView being called twice
+    ok_to_resize = false;
     splitwin->SetSize(x, y, w, h);
+    ok_to_resize = true;
+    
+    ResizeBigView();
 }
 
 // -----------------------------------------------------------------------------
