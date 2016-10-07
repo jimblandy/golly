@@ -866,6 +866,10 @@ void UpdateTimelineBar()
         } else {
             tbarptr->Refresh(false);
         }
+        #ifdef __WXGTK__
+            // avoid bug that can cause buttons to lose their bitmaps
+            tbarptr->Update();
+        #endif
     }
 }
 

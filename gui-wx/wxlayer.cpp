@@ -713,8 +713,9 @@ void UpdateLayerBar()
         layerbarptr->EnableButton(DELETE_LAYER,      active && !inscript && numlayers > 1);
         layerbarptr->EnableButton(STACK_LAYERS,      active);
         layerbarptr->EnableButton(TILE_LAYERS,       active);
-        for (int i = 0; i < numlayers; i++)
+        for (int i = 0; i < numlayers; i++) {
             layerbarptr->EnableButton(i, active && CanSwitchLayer(i));
+        }
         
         // no need to redraw entire bar here if it only contains buttons
         // layerbarptr->Refresh(false);
@@ -734,6 +735,10 @@ void UpdateLayerButton(int index, const wxString& name)
 void RedrawLayerBar()
 {
     layerbarptr->Refresh(false);
+    #ifdef __WXGTK__
+        // avoid bug that can cause buttons to lose their bitmaps
+        layerbarptr->Update();
+    #endif
 }
 
 // -----------------------------------------------------------------------------

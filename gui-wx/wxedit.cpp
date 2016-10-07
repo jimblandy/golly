@@ -468,7 +468,7 @@ void EditBar::DrawEditBar(wxDC& dc, int wd, int ht)
     wxBrush brush(wxColor(202,202,202));
     FillRect(dc, r, brush);
 #endif
-    
+
 #ifdef __WXMSW__
     // use theme background color on Windows
     wxBrush brush(GetBackgroundColour());
@@ -917,6 +917,11 @@ void UpdateEditBar()
         
         // drawing state might have changed
         editbarptr->UpdateScrollBar();
+        
+        #ifdef __WXGTK__
+            // avoid bug that can cause buttons to lose their bitmaps
+            editbarptr->Update();
+        #endif
     }
 }
 
@@ -983,5 +988,9 @@ void CycleDrawingState(bool higher)
     if (showedit) {
         editbarptr->Refresh(false);
         editbarptr->UpdateScrollBar();
+        #ifdef __WXGTK__
+            // avoid bug that can cause buttons to lose their bitmaps
+            editbarptr->Update();
+        #endif
     }
 }
