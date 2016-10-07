@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 10
+local buildnumber = 11
 
 local g = golly()
 
@@ -69,6 +69,15 @@ local mousedrag = false
 
 local clickx = 0
 local clicky = 0
+
+-- whether hex display is on
+local hexon = 0
+
+--------------------------------------------------------------------------------
+
+local function checkhex()
+    hexon = tonumber(ov("gethex"))
+end
 
 --------------------------------------------------------------------------------
 
@@ -169,7 +178,14 @@ local function updatestatus()
         autofitstatus = "on"
     end
 
-    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus.."  Autofit "..autofitstatus)
+    -- convert hex mode to status
+    local hexstatus = "square"
+    if hexon == 1 then
+        hexstatus = "hex"
+    end
+
+    -- update status bar
+    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus)
 end
 
 --------------------------------------------------------------------------------
@@ -184,6 +200,11 @@ end
 local function updatecamera()
     -- convert linear zoom to real zoom
     local camzoom = lineartoreal(linearzoom)
+
+    -- hex mode does not support rotation
+    if hexon == 1 then
+        camangle = 0
+    end
 
     ov("camzoom "..camzoom)
     ov("camangle "..camangle)
@@ -222,6 +243,25 @@ end
 local function refresh()
     ov("drawcells")
     ov("update")
+end
+
+--------------------------------------------------------------------------------
+
+local function sethex()
+    ov("sethex "..hexon)
+end
+
+--------------------------------------------------------------------------------
+
+local function togglehex()
+    if hexon == 1 then
+        hexon = 0
+    else
+        hexton = 1
+    end
+    sethex()
+    updatecamera()
+    refresh()
 end
 
 --------------------------------------------------------------------------------
@@ -623,16 +663,16 @@ local function reset()
     g.reset()
     g.update()
 
-    -- recreate the cell view if not using theme
-    if theme ~= -1 then
+    -- if using theme then need to recreate the cell view to clear history
+    if (theme ~= -1) then
         createcellview()
         settheme()
         updatecamera()
+        sethex()
     end
 
     -- update cell view from reset universe
     ov("updatecells")
-
     refresh()
 end
 
@@ -649,6 +689,9 @@ local function main()
     -- create overlay and cell view
     createoverlay()
     createcellview()
+
+    -- check for hex rules
+    checkhex()
 
     -- reset the camera to default position
     fitzoom(true)
@@ -760,6 +803,8 @@ local function main()
             panview(-1, 1)
         elseif event == "key h none" then
             showhelp()
+        elseif event == "key / none" then
+            togglehex()
         elseif event:find("^ozoomin") then
             zoominto(event)
         elseif event:find("^ozoomout") then

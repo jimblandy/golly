@@ -216,6 +216,12 @@ private:
     // Get the r, g, b, a components from the rgba value.
 
     // cell view
+    
+    const char* DoGetHex();
+    // Return whether the hex display is on for the cellview.
+
+    const char* DoSetHex(const char* args);
+    // Set hex display mode on or off for the cellview.
 
     const char* DoCellView(const char* args);
     // Create a cell view that tracks a rectangle of cells and can be rapidly
@@ -299,6 +305,7 @@ private:
     unsigned char* zoomview;    // cell state data (cellwd * cellht bytes) for zoom out
     int cellwd, cellht;         // width and height of cell view
     int cellx, celly;           // x and y position of bottom left cell
+    bool ishex;                 // whether to display in hex mode
 
     // camera
 

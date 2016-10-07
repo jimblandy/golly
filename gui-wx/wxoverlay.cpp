@@ -59,6 +59,7 @@ Overlay::Overlay()
     // initialize camera
     camminzoom = 0.0625;
     cammaxzoom = 32;
+    ishex = false;
     
     // initialize theme
     theme = false;
@@ -413,8 +414,15 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
     double dyy = cos(camangle / 180 * M_PI) / camzoom;
 
     // compute starting position
+    double adjustedx = camx;
+
+    // adjust if using hex
+    if (ishex) {
+        adjustedx -= camy / 2;
+    }
+
     double sy = -((wd / 2) * (-dxy) + (ht / 2) * dyy) + camy;
-    double sx = -((wd / 2) * dyy + (ht / 2) * dxy) + camx;
+    double sx = -((wd / 2) * dyy + (ht / 2) * dxy) + adjustedx;
 
     unsigned char state;
     unsigned int rgba;
@@ -423,16 +431,13 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
     int ix, iy;
     int h, w;
 
-    // check for hex rules
-    bool isHex = currlayer->algo->getgridtype() == currlayer->algo->HEX_GRID;
-
     // draw each pixel
     y = sy;
     for (h = 0; h < ht; h++) {
         x = sx;
 
         // offset if hex rule
-        if (isHex) {
+        if (ishex) {
             x += 0.5 * (int)y;
         }
 
@@ -510,7 +515,7 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
             }
 
             sy = -((wd / 2) * (-dxy) + (ht / 2) * dyy) + camy;
-            sx = -((wd / 2) * dyy + (ht / 2) * dxy) + camx;
+            sx = -((wd / 2) * dyy + (ht / 2) * dxy) + adjustedx;
 
             overlayptr = (unsigned int *)pixmap;
 
@@ -520,7 +525,7 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
                 x = sx;
 
                 // offset if hex rule
-                if (isHex) {
+                if (ishex) {
                     x += 0.5 * (int)y;
                 }
 
@@ -653,6 +658,9 @@ const char* Overlay::DoCellView(const char* args)
     // set default layers
     camlayers = 1;
     camlayerdepth = 0.05;
+
+    // check for hex rules
+    ishex = currlayer->algo->getgridtype() == currlayer->algo->HEX_GRID;
 
     // use standard pattern colors
     theme = false; 
@@ -1078,6 +1086,39 @@ const char* Overlay::DoGetPixel(const char* args)
     unsigned char* p = pixmap + y*wd*4 + x*4;
     static char result[16];
     sprintf(result, "%hhu %hhu %hhu %hhu", p[0], p[1], p[2], p[3]);
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoSetHex(const char* args)
+{
+    int mode;
+    if (sscanf(args, "%d", &mode) != 1) {
+        return OverlayError("sethex command requires 1 argument");
+    }
+    
+    if (mode) {
+        ishex = true;
+    }
+    else {
+        ishex = false;
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoGetHex()
+{
+    int mode = 0;
+    if (ishex) {
+        mode = 1;
+    }
+
+    static char result[10];
+    sprintf(result, "%d", mode);
     return result;
 }
 
@@ -2056,6 +2097,8 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
 {
     if (strncmp(cmd, "set ", 4) == 0)        return DoSetPixel(cmd+4);
     if (strncmp(cmd, "get ", 4) == 0)        return DoGetPixel(cmd+4);
+    if (strncmp(cmd, "sethex ", 7) == 0)     return DoSetHex(cmd+7);
+    if (strncmp(cmd, "gethex", 6) == 0)      return DoGetHex();
     if (strcmp(cmd,  "xy") == 0)             return DoGetXY();
     if (strncmp(cmd, "line", 4) == 0)        return DoLine(cmd+4);
     if (strncmp(cmd, "rgba", 4) == 0)        return DoSetRGBA(cmd+4);

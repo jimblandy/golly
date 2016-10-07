@@ -30,7 +30,7 @@ that illustrate how the overlay can be used:
 a hexagonal neighborhood.
 <li><a href="edit:Scripts/Lua/pop-plot.lua"><b>pop-plot.lua</b></a> displays a plot of population versus time that can
 be saved as a PNG file.
-<li><a href="edit:Scripts/Lua/lifeviewer.lua"><b>lifeviewer.lua</b></a> displays patterns like LifeViewer with smooth non-integer
+<li><a href="edit:Scripts/Lua/lifeviewer.lua"><b>lifeviewer.lua</b></a> displays patterns like <a href="http://www.conwaylife.com/forums/viewtopic.php?f=3&t=1622">LifeViewer</a> with smooth non-integer
 scaling and rotation.
 </ul>
 
@@ -54,39 +54,41 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#camlayers"><b>camlayers</b></a><br>
 <a href="#camxy"><b>camxy</b></a><br>
 <a href="#camzoom"><b>camzoom</b></a><br>
-<a href="#cellview"><b>cellview</b></a>
+<a href="#cellview"><b>cellview</b></a><br>
+<a href="#copy"><b>copy</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#copy"><b>copy</b></a><br>
 <a href="#create"><b>create</b></a><br>
 <a href="#cursor"><b>cursor</b></a><br>
 <a href="#delete"><b>delete</b></a><br>
 <a href="#drawcells"><b>drawcells</b></a><br>
-<a href="#fill"><b>fill</b></a>
+<a href="#fill"><b>fill</b></a><br>
+<a href="#flood"><b>flood</b></a><br>
+<a href="#font"><b>font</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#flood"><b>flood</b></a><br>
-<a href="#font"><b>font</b></a><br>
 <a href="#get"><b>get</b></a><br>
+<a href="#gethex"><b>gethex</b></a><br>
 <a href="#line"><b>line</b></a><br>
 <a href="#load"><b>load</b></a><br>
-<a href="#paste"><b>paste</b></a>
+<a href="#paste"><b>paste</b></a><br>
+<a href="#position"><b>position</b></a><br>
+<a href="#resize"><b>resize</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#position"><b>position</b></a><br>
-<a href="#resize"><b>resize</b></a><br>
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
-<a href="#text"><b>text</b></a>
+<a href="#sethex"><b>sethex</b></a><br>
+<a href="#text"><b>text</b></a><br>
+<a href="#theme"><b>theme</b></a><br>
+<a href="#transform"><b>transform</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#theme"><b>theme</b></a><br>
-<a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
 <a href="#updatecells"><b>updatecells</b></a><br>
 <a href="#xy"><b>xy</b></a>
@@ -292,6 +294,14 @@ If the given pixel is outside the overlay then "" is returned.
 <dd> Example: <b>local rgba = ov("get 10 20")</b></dd>
 </p>
 
+<a name="gethex"></a><p><dt><b>gethex</b></dt>
+<dd>
+Return whether the cellview is using hex display. Returns the string
+"0" for no and "1" for yes.
+</dd>
+<dd> Example: <b>local hexdisplay = ov("gethex")</b></dd>
+</p>
+
 <a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2</i></b></dt>
 <dd>
 Draw a line of pixels from x1,y1 to x2,y2 using the current RGBA values.
@@ -377,6 +387,13 @@ Set the given pixel to the current RGBA values.
 A pixel outside the overlay is silently ignored.
 </dd>
 <dd> Example: <b>ov("set 10 20")</b></dd>
+</p>
+
+<a name="sethex"></a><p><dt><b>sethex <i>mode</i></b></dt>
+<dd>
+Set the cellview hex display on (<i>mode</i> is "1") or off (<i>mode</i> is "0").
+</dd>
+<dd> Example: <b>ov("sethex 1")</b></dd>
 </p>
 
 <a name="text"></a><p><dt><b>text <i>clipname one line of text ...</i></b></dt>
