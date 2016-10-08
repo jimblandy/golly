@@ -66,17 +66,17 @@ m.racw         = m.rccw
 m.r180         = m.flip
 
 -- themes
-m.theme0       = "theme 255 255 255 255 255 255 0 0 0 0 0 0 0 0 0"
-m.theme1       = "theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0"
-m.theme2       = "theme 255 144 0 255 255 0 160 0 0 32 0 0 0 0 0"
-m.theme3       = "theme 0 255 255 255 255 255 0 128 0 0 24 0 0 0 0"
-m.theme4       = "theme 255 255 0 255 255 255 128 0 128 0 47 0 0 32 128"
-m.theme5       = "theme 176 176 176 255 255 255 104 104 104 16 16 16 0 0 0"
-m.theme6       = "theme 0 0 0 0 0 0 255 255 255 255 255 255 255 255 255"
-m.theme7       = "theme 0 0 255 0 0 0 0 255 255 240 240 240 255 255 255"
-m.theme8       = "theme 240 240 240 240 240 240 240 240 240 240 240 240 0 0 0"
-m.theme9       = "theme 240 240 240 240 240 240 160 0 0 160 0 0 0 0 0"
-m.themes       = {
+m.theme0 = "theme 255 255 255 255 255 255 0 0 0 0 0 0 0 0 0"
+m.theme1 = "theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0"
+m.theme2 = "theme 255 144 0 255 255 0 160 0 0 32 0 0 0 0 0"
+m.theme3 = "theme 0 255 255 255 255 255 0 128 0 0 24 0 0 0 0"
+m.theme4 = "theme 255 255 0 255 255 255 128 0 128 0 47 0 0 32 128"
+m.theme5 = "theme 176 176 176 255 255 255 104 104 104 16 16 16 0 0 0"
+m.theme6 = "theme 0 0 0 0 0 0 255 255 255 255 255 255 255 255 255"
+m.theme7 = "theme 0 0 255 0 0 0 0 255 255 240 240 240 255 255 255"
+m.theme8 = "theme 240 240 240 240 240 240 240 240 240 240 240 240 0 0 0"
+m.theme9 = "theme 240 240 240 240 240 240 160 0 0 160 0 0 0 0 0"
+m.themes = {
     [-1] = "theme -1",
     [0] = m.theme0,
     [1] = m.theme1,
@@ -89,7 +89,7 @@ m.themes       = {
     [8] = m.theme8,
     [9] = m.theme9
 }
-m.maxtheme     = 9
+m.maxtheme = 9
 
 --------------------------------------------------------------------------------
 
@@ -589,6 +589,25 @@ function m.process(event)
         end
     end
     return event
+end
+
+--------------------------------------------------------------------------------
+
+function m.hexrule()
+    -- return true if the current rule uses a hexagonal neighborhood
+    local rule = g.getrule()
+    rule = rule:match("^(.+):") or rule     -- remove any ":*" suffix
+    
+    local algo = g.getalgo()
+    if algo == "QuickLife" or algo == "HashLife" or algo == "Generations" then
+        return rule:sub(-1) == "H"
+    elseif algo == "RuleLoader" then
+        return rule:lower():find("hex") ~= nil
+        -- !!! or maybe look in the .rule file and see if the TABLE section specifies
+        -- neighborhood:hexagonal or the ICONS section specifies hexagons
+    end
+    
+    return false
 end
 
 --------------------------------------------------------------------------------

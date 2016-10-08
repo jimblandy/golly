@@ -6,6 +6,7 @@
 local g = golly()
 --!!! require "gplus.strict"
 local gp = require "gplus"
+local op = require "oplus"
 local int = gp.int
 
 local ov = g.overlay
@@ -43,24 +44,12 @@ local ypos = 0
 --------------------------------------------------------------------------------
 
 local function checkrule()
-    -- try to determine if the current rule uses a hexagonal neighborhood
-    local hexrule = false
-    local rule = g.getrule()
-    rule = rule:match("^(.+):") or rule     -- remove any ":*" suffix
-    
-    local algo = g.getalgo()
-    if algo == "QuickLife" or algo == "HashLife" or algo == "Generations" then
-        hexrule = rule:sub(-1) == "H"
-    elseif algo == "RuleLoader" then
-        hexrule = rule:lower():find("hex") ~= nil
-        -- or maybe look in the .rule file and see if the TABLE section specifies
-        -- neighborhood:hexagonal or the ICONS section specifies hexagons???
-    end
-
-    if not hexrule then
+    -- check if the current rule uses a hexagonal neighborhood
+    if not op.hexrule() then
+        local algo = g.getalgo()
         if algo == "RuleLoader" then
-            g.warn([[
-If the current rule does not use
+            g.warn(
+[[If the current rule does not use
 a hexagonal neighborhood then the
 results won't be correct!]])
             -- let user continue

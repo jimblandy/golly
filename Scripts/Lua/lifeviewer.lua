@@ -71,12 +71,23 @@ local clickx = 0
 local clicky = 0
 
 -- whether hex display is on
-local hexon = 0
+local hexon = false
+
+--------------------------------------------------------------------------------
+
+local function sethex()
+    if hexon then
+        ov("sethex 1")
+    else
+        ov("sethex 0")
+    end
+end
 
 --------------------------------------------------------------------------------
 
 local function checkhex()
-    hexon = tonumber(ov("gethex"))
+    hexon = op.hexrule()
+    sethex()
 end
 
 --------------------------------------------------------------------------------
@@ -180,7 +191,7 @@ local function updatestatus()
 
     -- convert hex mode to status
     local hexstatus = "square"
-    if hexon == 1 then
+    if hexon then
         hexstatus = "hex"
     end
 
@@ -202,7 +213,7 @@ local function updatecamera()
     local camzoom = lineartoreal(linearzoom)
 
     -- hex mode does not support rotation
-    if hexon == 1 then
+    if hexon then
         camangle = 0
     end
 
@@ -247,18 +258,8 @@ end
 
 --------------------------------------------------------------------------------
 
-local function sethex()
-    ov("sethex "..hexon)
-end
-
---------------------------------------------------------------------------------
-
 local function togglehex()
-    if hexon == 1 then
-        hexon = 0
-    else
-        hexton = 1
-    end
+    hexon = not hexon
     sethex()
     updatecamera()
     refresh()
