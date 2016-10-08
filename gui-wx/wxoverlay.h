@@ -37,12 +37,10 @@
 // The overlay is a scriptable graphics layer that is (optionally) drawn
 // on top of Golly's current layer.
 
-
 // The overlay can be displayed at any corner or in the middle:
 typedef enum {
     topleft, topright, bottomright, bottomleft, middle
 } overlay_position;
-
 
 // The Clip class is used by the copy and text commands to store pixel data
 // in a named "clipboard" for later use by the paste command:
@@ -59,9 +57,6 @@ public:
     unsigned char* cdata;   // RGBA data (cwd * cht * 4 bytes)
     int cwd, cht;
 };
-
-const int cellviewmaxsize = 4096;  // maximum dimension for cell view
-const int cellviewmultiple = 16;   // cellview dimensions must be a multiple of this value
 
 class Overlay {
 public:
@@ -216,16 +211,13 @@ private:
     // Get the r, g, b, a components from the rgba value.
 
     // cell view
-    
-    const char* DoGetHex();
-    // Return whether the hex display is on for the cellview.
-
-    const char* DoSetHex(const char* args);
-    // Set hex display mode on or off for the cellview.
 
     const char* DoCellView(const char* args);
     // Create a cell view that tracks a rectangle of cells and can be rapidly
     // drawn onto the overlay at a particular scale and angle.
+
+    const char* DoSetHex(const char* args);
+    // Set hex display mode on or off for the cellview.
 
     void DeleteCellView();
     // Deallocate all memory used by the cell view.
@@ -315,8 +307,6 @@ private:
     double camangle;             // camera angle
     int camlayers;               // camera layers
     double camlayerdepth;        // camera layer depth
-    double camminzoom;           // minimum zoom
-    double cammaxzoom;           // maximum zoom
 
     // theme
 
@@ -326,10 +316,6 @@ private:
     unsigned int deadStartRGBA;  // cell just died RGBA
     unsigned int deadEndRGBA;    // cell dead longest RGBA
     unsigned int unoccupiedRGBA; // cell never occupied RGBA
-    int aliveStart;              // new cell color index
-    int aliveEnd;                // cell alive longest color index
-    int deadStart;               // cell just died color index
-    int deadEnd;                 // cell dead longest color index
 };
 
 extern Overlay* curroverlay;    // pointer to current overlay (set by client)

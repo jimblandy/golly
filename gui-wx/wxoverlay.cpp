@@ -42,11 +42,23 @@
 
 // -----------------------------------------------------------------------------
 
-Overlay* curroverlay = NULL;    // pointer to current overlay
+Overlay* curroverlay = NULL;        // pointer to current overlay
 
 const char* no_overlay = "overlay has not been created";
+const char* no_cellview = "overlay does not have a cell view";
 
-const char* no_cellview = "overlay does not contain a cell view";
+const int cellviewmaxsize = 4096;   // maximum dimension for cell view
+const int cellviewmultiple = 16;    // cellview dimensions must be a multiple of this value
+
+// for camera
+const double camminzoom = 0.0625;   // minimum zoom
+const double cammaxzoom = 32.0;     // maximum zoom
+
+// for theme
+const int aliveStart = 64;          // new cell color index
+const int aliveEnd = 127;           // cell alive longest color index
+const int deadStart = 63;           // cell just died color index
+const int deadEnd = 1;              // cell dead longest color index
 
 // -----------------------------------------------------------------------------
 
@@ -55,18 +67,6 @@ Overlay::Overlay()
     pixmap = NULL;
     cellview = NULL;
     zoomview = NULL;
-
-    // initialize camera
-    camminzoom = 0.0625;
-    cammaxzoom = 32;
-    ishex = false;
-    
-    // initialize theme
-    theme = false;
-    aliveStart = 64;
-    aliveEnd = 127;
-    deadStart = 63;
-    deadEnd = 1;
 }
 
 // -----------------------------------------------------------------------------
@@ -74,6 +74,38 @@ Overlay::Overlay()
 Overlay::~Overlay()
 {
     DeleteOverlay();
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DeleteOverlay()
+{
+    if (pixmap) {
+        free(pixmap);
+        pixmap = NULL;
+    }
+    
+    std::map<std::string,Clip*>::iterator it;
+    for (it = clips.begin(); it != clips.end(); ++it) {
+        delete it->second;
+    }
+    clips.clear();
+
+    DeleteCellView();
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DeleteCellView()
+{
+    if (cellview) {
+        free(cellview);
+        cellview = NULL;
+    }
+    if (zoomview) {
+        free(zoomview);
+        zoomview = NULL;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -561,38 +593,6 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
 
 // -----------------------------------------------------------------------------
 
-void Overlay::DeleteCellView()
-{
-    if (cellview) {
-        free(cellview);
-        cellview = NULL;
-    }
-    if (zoomview) {
-        free(zoomview);
-        zoomview = NULL;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Overlay::DeleteOverlay()
-{
-    if (pixmap) {
-        free(pixmap);
-        pixmap = NULL;
-    }
-    
-    std::map<std::string,Clip*>::iterator it;
-    for (it = clips.begin(); it != clips.end(); ++it) {
-        delete it->second;
-    }
-    clips.clear();
-
-    DeleteCellView();
-}
-
-// -----------------------------------------------------------------------------
-
 const char* Overlay::DoUpdateCells()
 {
     if (cellview == NULL) return OverlayError(no_cellview);
@@ -600,7 +600,6 @@ const char* Overlay::DoUpdateCells()
     // check if themes are used
     if (theme) {
         RefreshCellViewWithTheme();
-
     }
     else {
         RefreshCellView();
@@ -660,7 +659,13 @@ const char* Overlay::DoCellView(const char* args)
     camlayerdepth = 0.05;
 
     // check for hex rules
-    ishex = currlayer->algo->getgridtype() == currlayer->algo->HEX_GRID;
+    // ishex = currlayer->algo->getgridtype() == currlayer->algo->HEX_GRID;
+    
+    // above is not necessarily correct for .rule files that have a TREE section
+    // rather than a TABLE section, so best if we initialize ishex to false
+    // and let scripts use the hexrule() function from the oplus package
+    // to determine if the current rule uses a hexagonal neighborhood
+    ishex = false;
 
     // use standard pattern colors
     theme = false; 
@@ -675,6 +680,8 @@ const char* Overlay::DoCellView(const char* args)
 
 const char* Overlay::DoCamZoom(const char* args)
 {
+    if (cellview == NULL) return OverlayError(no_cellview);
+
     // check the argument is valid
     double zoom;
     if (sscanf(args, " %lf", &zoom) != 1) {
@@ -694,6 +701,8 @@ const char* Overlay::DoCamZoom(const char* args)
 
 const char* Overlay::DoCamAngle(const char* args)
 {
+    if (cellview == NULL) return OverlayError(no_cellview);
+
     // check the argument is valid
     double angle;
     if (sscanf(args, " %lf", &angle) != 1) {
@@ -713,6 +722,8 @@ const char* Overlay::DoCamAngle(const char* args)
 
 const char* Overlay::DoCamXY(const char* args)
 {
+    if (cellview == NULL) return OverlayError(no_cellview);
+
     // check the arguments are valid
     double x;
     double y;
@@ -731,6 +742,8 @@ const char* Overlay::DoCamXY(const char* args)
 
 const char* Overlay::DoCamLayers(const char* args)
 {
+    if (cellview == NULL) return OverlayError(no_cellview);
+
     // check the arguments are valid
     int howmany;
     double depth;
@@ -753,6 +766,8 @@ const char* Overlay::DoCamLayers(const char* args)
 
 const char* Overlay::DoTheme(const char* args)
 {
+    if (cellview == NULL) return OverlayError(no_cellview);
+
     // check the arguments are valid
     int asr, asg, asb, aer, aeg, aeb, dsr, dsg, dsb, der, deg, deb, ur, ug, ub;
     int disable = 0;
@@ -811,6 +826,22 @@ const char* Overlay::DoTheme(const char* args)
         SetRGBA(der, deg, deb, alpha, &deadEndRGBA);
         SetRGBA(ur, ug, ub, alpha, &unoccupiedRGBA);
     }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoSetHex(const char* args)
+{
+    if (cellview == NULL) return OverlayError(no_cellview);
+
+    int mode;
+    if (sscanf(args, "%d", &mode) != 1) {
+        return OverlayError("sethex command requires 1 argument");
+    }
+    
+    ishex = mode == 1;
 
     return NULL;
 }
@@ -952,6 +983,8 @@ bool Overlay::PointInOverlay(int vx, int vy, int* ox, int* oy)
 
 const char* Overlay::DoPosition(const char* args)
 {
+    if (pixmap == NULL) return OverlayError(no_overlay);
+    
     if (strncmp(args+1, "topleft", 7) == 0) {
         pos = topleft;
         
@@ -978,6 +1011,8 @@ const char* Overlay::DoPosition(const char* args)
 
 const char* Overlay::DoSetRGBA(const char* args)
 {
+    if (pixmap == NULL) return OverlayError(no_overlay);
+    
     int a1, a2, a3, a4;
     if (sscanf(args, " %d %d %d %d", &a1, &a2, &a3, &a4) != 4) {
         return OverlayError("rgba command requires 4 arguments");
@@ -1091,39 +1126,6 @@ const char* Overlay::DoGetPixel(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSetHex(const char* args)
-{
-    int mode;
-    if (sscanf(args, "%d", &mode) != 1) {
-        return OverlayError("sethex command requires 1 argument");
-    }
-    
-    if (mode) {
-        ishex = true;
-    }
-    else {
-        ishex = false;
-    }
-
-    return NULL;
-}
-
-// -----------------------------------------------------------------------------
-
-const char* Overlay::DoGetHex()
-{
-    int mode = 0;
-    if (ishex) {
-        mode = 1;
-    }
-
-    static char result[10];
-    sprintf(result, "%d", mode);
-    return result;
-}
-
-// -----------------------------------------------------------------------------
-
 bool Overlay::TransparentPixel(int x, int y)
 {
     if (pixmap == NULL) return false;
@@ -1151,6 +1153,8 @@ void Overlay::SetOverlayCursor()
 
 const char* Overlay::DoCursor(const char* args)
 {
+    if (pixmap == NULL) return OverlayError(no_overlay);
+    
     if (strncmp(args+1, "arrow", 5) == 0) {
         ovcursor = wxSTANDARD_CURSOR;
 
@@ -2097,8 +2101,6 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
 {
     if (strncmp(cmd, "set ", 4) == 0)        return DoSetPixel(cmd+4);
     if (strncmp(cmd, "get ", 4) == 0)        return DoGetPixel(cmd+4);
-    if (strncmp(cmd, "sethex ", 7) == 0)     return DoSetHex(cmd+7);
-    if (strncmp(cmd, "gethex", 6) == 0)      return DoGetHex();
     if (strcmp(cmd,  "xy") == 0)             return DoGetXY();
     if (strncmp(cmd, "line", 4) == 0)        return DoLine(cmd+4);
     if (strncmp(cmd, "rgba", 4) == 0)        return DoSetRGBA(cmd+4);
@@ -2118,6 +2120,7 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "create", 6) == 0)      return DoCreate(cmd+6);
     if (strncmp(cmd, "resize", 6) == 0)      return DoResize(cmd+6);
     if (strncmp(cmd, "cellview ", 9) == 0)   return DoCellView(cmd+9);
+    if (strncmp(cmd, "sethex ", 7) == 0)     return DoSetHex(cmd+7);
     if (strncmp(cmd, "camangle ", 9) == 0)   return DoCamAngle(cmd+9);
     if (strncmp(cmd, "camxy ", 6) == 0)      return DoCamXY(cmd+6);
     if (strncmp(cmd, "camzoom ", 8) == 0)    return DoCamZoom(cmd+8);

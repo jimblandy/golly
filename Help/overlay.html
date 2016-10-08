@@ -70,26 +70,25 @@ Here is an alphabetical list of all the valid overlay commands:
 <td valign=top width=40> </td>
 <td valign=top>
 <a href="#get"><b>get</b></a><br>
-<a href="#gethex"><b>gethex</b></a><br>
 <a href="#line"><b>line</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#position"><b>position</b></a><br>
-<a href="#resize"><b>resize</b></a>
+<a href="#resize"><b>resize</b></a><br>
+<a href="#rgba"><b>rgba</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
 <a href="#sethex"><b>sethex</b></a><br>
 <a href="#text"><b>text</b></a><br>
 <a href="#theme"><b>theme</b></a><br>
-<a href="#transform"><b>transform</b></a>
+<a href="#transform"><b>transform</b></a><br>
+<a href="#update"><b>update</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#update"><b>update</b></a><br>
 <a href="#updatecells"><b>updatecells</b></a><br>
 <a href="#xy"><b>xy</b></a>
 </td>
@@ -292,14 +291,6 @@ Return the RGBA values of the given pixel as a string of the form
 If the given pixel is outside the overlay then "" is returned.
 </dd>
 <dd> Example: <b>local rgba = ov("get 10 20")</b></dd>
-</p>
-
-<a name="gethex"></a><p><dt><b>gethex</b></dt>
-<dd>
-Return whether the cellview is using hex display. Returns the string
-"0" for no and "1" for yes.
-</dd>
-<dd> Example: <b>local hexdisplay = ov("gethex")</b></dd>
 </p>
 
 <a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2</i></b></dt>
