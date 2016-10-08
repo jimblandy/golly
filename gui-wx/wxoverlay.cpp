@@ -678,14 +678,12 @@ const char* Overlay::DoCellView(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCamZoom(const char* args)
+const char* Overlay::CamZoom(const char* args)
 {
-    if (cellview == NULL) return OverlayError(no_cellview);
-
     // check the argument is valid
     double zoom;
     if (sscanf(args, " %lf", &zoom) != 1) {
-        return OverlayError("camzoom command requires 1 argument");
+        return OverlayError("camera zoom command requires 1 argument");
     }
 
     if (zoom < camminzoom) return OverlayError("camera zoom too small");
@@ -699,14 +697,12 @@ const char* Overlay::DoCamZoom(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCamAngle(const char* args)
+const char* Overlay::CamAngle(const char* args)
 {
-    if (cellview == NULL) return OverlayError(no_cellview);
-
     // check the argument is valid
     double angle;
     if (sscanf(args, " %lf", &angle) != 1) {
-        return OverlayError("camangle command requires 1 argument");
+        return OverlayError("camera angle command requires 1 argument");
     }
 
     if (angle < 0) return OverlayError("camera angle too small");
@@ -720,15 +716,13 @@ const char* Overlay::DoCamAngle(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCamXY(const char* args)
+const char* Overlay::CamXY(const char* args)
 {
-    if (cellview == NULL) return OverlayError(no_cellview);
-
     // check the arguments are valid
     double x;
     double y;
     if (sscanf(args, " %lf %lf", &x, &y) != 2) {
-        return OverlayError("camxy command requires 2 arguments");
+        return OverlayError("camera xy command requires 2 arguments");
     }
 
     // save the new values
@@ -740,26 +734,80 @@ const char* Overlay::DoCamXY(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoCamLayers(const char* args)
+const char* Overlay::DoCamera(const char* args)
 {
     if (cellview == NULL) return OverlayError(no_cellview);
 
-    // check the arguments are valid
+    if (strncmp(args, "xy ", 3) == 0)    return CamXY(args+3);
+    if (strncmp(args, "angle ", 6) == 0) return CamAngle(args+6);
+    if (strncmp(args, "zoom ", 5) == 0)  return CamZoom(args+5);
+
+    return OverlayError("unknown camera command");
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::CellOptionLayers(const char* args)
+{
+    // check the argument is valid
     int howmany;
-    double depth;
-    if (sscanf(args, " %d %lf", &howmany, &depth) != 2) {
-        return OverlayError("camlayers command requires 2 arguments");
+
+    if (sscanf(args, " %d", &howmany) != 1) {
+        return OverlayError("celloption layers command requires 1 argument");
     }
 
-    if (howmany < 1) return OverlayError("must have at least 1 layer");
-    if (howmany > 10) return OverlayError("too many layers");
-    if (depth < 0 || depth > 10) return OverlayError("depth out of range");
+    if (howmany < 1) return OverlayError("celloption layers must be at least 1");
+    if (howmany > 10) return OverlayError("celloption layers is too big");
 
     // save the new values
     camlayers = howmany;
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::CellOptionDepth(const char* args)
+{
+    // check the argument is valid
+    double depth;
+    if (sscanf(args, " %lf", &depth) != 1) {
+        return OverlayError("celloption depth command requires 1 argument");
+    }
+
+    if (depth < 0 || depth > 10) return OverlayError("celloption depth is out of range");
+
+    // save the new values
     camlayerdepth = depth;
 
     return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::CellOptionHex(const char* args)
+{
+    int mode;
+    if (sscanf(args, "%d", &mode) != 1) {
+        return OverlayError("celloption hex command requires 1 argument");
+    }
+    
+    ishex = mode == 1;
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoCellOption(const char* args)
+{
+    if (cellview == NULL) return OverlayError(no_cellview);
+
+    if (strncmp(args, "hex ", 3) == 0)    return CellOptionHex(args+3);
+    if (strncmp(args, "depth ", 6) == 0)  return CellOptionDepth(args+6);
+    if (strncmp(args, "layers ", 7) == 0) return CellOptionLayers(args+7);
+
+    return OverlayError("unknown celloption command");
 }
 
 // -----------------------------------------------------------------------------
@@ -826,22 +874,6 @@ const char* Overlay::DoTheme(const char* args)
         SetRGBA(der, deg, deb, alpha, &deadEndRGBA);
         SetRGBA(ur, ug, ub, alpha, &unoccupiedRGBA);
     }
-
-    return NULL;
-}
-
-// -----------------------------------------------------------------------------
-
-const char* Overlay::DoSetHex(const char* args)
-{
-    if (cellview == NULL) return OverlayError(no_cellview);
-
-    int mode;
-    if (sscanf(args, "%d", &mode) != 1) {
-        return OverlayError("sethex command requires 1 argument");
-    }
-    
-    ishex = mode == 1;
 
     return NULL;
 }
@@ -2099,35 +2131,32 @@ const char* Overlay::OverlayError(const char* msg)
 
 const char* Overlay::DoOverlayCommand(const char* cmd)
 {
-    if (strncmp(cmd, "set ", 4) == 0)        return DoSetPixel(cmd+4);
-    if (strncmp(cmd, "get ", 4) == 0)        return DoGetPixel(cmd+4);
-    if (strcmp(cmd,  "xy") == 0)             return DoGetXY();
-    if (strncmp(cmd, "line", 4) == 0)        return DoLine(cmd+4);
-    if (strncmp(cmd, "rgba", 4) == 0)        return DoSetRGBA(cmd+4);
-    if (strncmp(cmd, "fill", 4) == 0)        return DoFill(cmd+4);
-    if (strncmp(cmd, "copy", 4) == 0)        return DoCopy(cmd+4);
-    if (strncmp(cmd, "paste", 5) == 0)       return DoPaste(cmd+5);
-    if (strncmp(cmd, "load", 4) == 0)        return DoLoad(cmd+4);
-    if (strncmp(cmd, "save", 4) == 0)        return DoSave(cmd+4);
-    if (strncmp(cmd, "flood", 5) == 0)       return DoFlood(cmd+5);
-    if (strncmp(cmd, "blend", 5) == 0)       return DoBlend(cmd+5);
-    if (strncmp(cmd, "text", 4) == 0)        return DoText(cmd+4);
-    if (strncmp(cmd, "font", 4) == 0)        return DoFont(cmd+4);
-    if (strncmp(cmd, "transform", 9) == 0)   return DoTransform(cmd+9);
-    if (strncmp(cmd, "position", 8) == 0)    return DoPosition(cmd+8);
-    if (strncmp(cmd, "cursor", 6) == 0)      return DoCursor(cmd+6);
-    if (strcmp(cmd,  "update") == 0)         return DoUpdate();
-    if (strncmp(cmd, "create", 6) == 0)      return DoCreate(cmd+6);
-    if (strncmp(cmd, "resize", 6) == 0)      return DoResize(cmd+6);
-    if (strncmp(cmd, "cellview ", 9) == 0)   return DoCellView(cmd+9);
-    if (strncmp(cmd, "sethex ", 7) == 0)     return DoSetHex(cmd+7);
-    if (strncmp(cmd, "camangle ", 9) == 0)   return DoCamAngle(cmd+9);
-    if (strncmp(cmd, "camxy ", 6) == 0)      return DoCamXY(cmd+6);
-    if (strncmp(cmd, "camzoom ", 8) == 0)    return DoCamZoom(cmd+8);
-    if (strncmp(cmd, "camlayers ", 10) == 0) return DoCamLayers(cmd+10);
-    if (strncmp(cmd, "theme ", 6) == 0)      return DoTheme(cmd+6);
-    if (strcmp(cmd,  "updatecells") == 0)    return DoUpdateCells();
-    if (strcmp(cmd,  "drawcells") == 0)      return DoDrawCells();
+    if (strncmp(cmd, "set ", 4) == 0)         return DoSetPixel(cmd+4);
+    if (strncmp(cmd, "get ", 4) == 0)         return DoGetPixel(cmd+4);
+    if (strcmp(cmd,  "xy") == 0)              return DoGetXY();
+    if (strncmp(cmd, "line", 4) == 0)         return DoLine(cmd+4);
+    if (strncmp(cmd, "rgba", 4) == 0)         return DoSetRGBA(cmd+4);
+    if (strncmp(cmd, "fill", 4) == 0)         return DoFill(cmd+4);
+    if (strncmp(cmd, "copy", 4) == 0)         return DoCopy(cmd+4);
+    if (strncmp(cmd, "paste", 5) == 0)        return DoPaste(cmd+5);
+    if (strncmp(cmd, "load", 4) == 0)         return DoLoad(cmd+4);
+    if (strncmp(cmd, "save", 4) == 0)         return DoSave(cmd+4);
+    if (strncmp(cmd, "flood", 5) == 0)        return DoFlood(cmd+5);
+    if (strncmp(cmd, "blend", 5) == 0)        return DoBlend(cmd+5);
+    if (strncmp(cmd, "text", 4) == 0)         return DoText(cmd+4);
+    if (strncmp(cmd, "font", 4) == 0)         return DoFont(cmd+4);
+    if (strncmp(cmd, "transform", 9) == 0)    return DoTransform(cmd+9);
+    if (strncmp(cmd, "position", 8) == 0)     return DoPosition(cmd+8);
+    if (strncmp(cmd, "cursor", 6) == 0)       return DoCursor(cmd+6);
+    if (strcmp(cmd,  "update") == 0)          return DoUpdate();
+    if (strncmp(cmd, "create", 6) == 0)       return DoCreate(cmd+6);
+    if (strncmp(cmd, "resize", 6) == 0)       return DoResize(cmd+6);
+    if (strncmp(cmd, "cellview ", 9) == 0)    return DoCellView(cmd+9);
+    if (strncmp(cmd, "camera ", 7) == 0)      return DoCamera(cmd+7);
+    if (strncmp(cmd, "celloption ", 11) == 0) return DoCellOption(cmd+11);
+    if (strncmp(cmd, "theme ", 6) == 0)       return DoTheme(cmd+6);
+    if (strcmp(cmd,  "updatecells") == 0)     return DoUpdateCells();
+    if (strcmp(cmd,  "drawcells") == 0)       return DoDrawCells();
     if (strcmp(cmd,  "delete") == 0) {
         DeleteOverlay();
         return NULL;

@@ -216,9 +216,6 @@ private:
     // Create a cell view that tracks a rectangle of cells and can be rapidly
     // drawn onto the overlay at a particular scale and angle.
 
-    const char* DoSetHex(const char* args);
-    // Set hex display mode on or off for the cellview.
-
     void DeleteCellView();
     // Deallocate all memory used by the cell view.
 
@@ -248,18 +245,32 @@ private:
 
     // camera
 
-    const char* DoCamLayers(const char* args);
-    // Set the camera layers and depth.
-
-    const char* DoCamAngle(const char* args);
+    const char* CamAngle(const char* args);
     // Set the camera angle.
 
-    const char* DoCamZoom(const char* args);
+    const char* CamZoom(const char* args);
     // Set the camera zoom.
 
-    const char* DoCamXY(const char* args);
+    const char* CamXY(const char* args);
     // Set the camera position.
 
+    const char* DoCamera(const char* args);
+    // Set a camera parameter.
+
+    // celloption
+
+    const char* CellOptionDepth(const char* args);
+    // Set the cellview layer depth.
+
+    const char* CellOptionLayers(const char* args);
+    // Set the cellview number of layers.
+
+    const char* CellOptionHex(const char* args);
+    // Set hex display mode on or off for the cellview.
+
+    const char* DoCellOption(const char* args);
+    // Set a cellview option.
+    
     // theme
 
     const char* DoTheme(const char* args);

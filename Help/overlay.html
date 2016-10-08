@@ -50,16 +50,14 @@ Here is an alphabetical list of all the valid overlay commands:
 <tr>
 <td valign=top>
 <a href="#blend"><b>blend</b></a><br>
-<a href="#camangle"><b>camangle</b></a><br>
-<a href="#camlayers"><b>camlayers</b></a><br>
-<a href="#camxy"><b>camxy</b></a><br>
-<a href="#camzoom"><b>camzoom</b></a><br>
+<a href="#camera"><b>camera</b></a><br>
+<a href="#celloption"><b>celloption</b></a><br>
 <a href="#cellview"><b>cellview</b></a><br>
-<a href="#copy"><b>copy</b></a>
+<a href="#copy"><b>copy</b></a><br>
+<a href="#create"><b>create</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#create"><b>create</b></a><br>
 <a href="#cursor"><b>cursor</b></a><br>
 <a href="#delete"><b>delete</b></a><br>
 <a href="#drawcells"><b>drawcells</b></a><br>
@@ -74,21 +72,20 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#load"><b>load</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#position"><b>position</b></a><br>
-<a href="#resize"><b>resize</b></a><br>
-<a href="#rgba"><b>rgba</b></a>
+<a href="#resize"><b>resize</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
-<a href="#sethex"><b>sethex</b></a><br>
 <a href="#text"><b>text</b></a><br>
 <a href="#theme"><b>theme</b></a><br>
-<a href="#transform"><b>transform</b></a><br>
-<a href="#update"><b>update</b></a>
+<a href="#transform"><b>transform</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#update"><b>update</b></a><br>
 <a href="#updatecells"><b>updatecells</b></a><br>
 <a href="#xy"><b>xy</b></a>
 </td>
@@ -120,37 +117,80 @@ The commands affected by alpha blending are:
 <dd> Example: <b>local oldblend = ov("blend 1")</b></dd>
 </p>
 
-<a name="camangle"></a><p><dt><b>camangle <i>angle</i></b></dt>
+<a name="camera"></a><p><dt><b>camera <i>setting</i></b></dt>
+<dd>
+Set the camera for <a href="#cellviewdesc">cellview</a>. The
+valid camera settings are:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><a href="#camangle">angle</a></td><td width=20></td><td>&ndash; set camera angle</td></tr>
+<tr><td><a href="#camxy">xy</a></td><td width=20></td><td>&ndash; set camera pan position</td></tr>
+<tr><td><a href="#camzoom">zoom</a></td><td width=20></td><td>&ndash; set camera zoom</td></tr>
+</table>
+</dd>
+</p>
+
+<a name="camangle"></a><p><dt><b>camera angle <i>angle</i></b></dt>
 <dd>
 Set the camera angle for <a href="#cellviewdesc">cellview</a> in degrees.
 The valid range is 0 &lt;= <i>angle</i> &lt; 360. The default is 0.
 </dd>
-<dd> Example: <b>ov("camangle 90")</b></dd>
+<dd> Example: <b>ov("camera angle 90")</b></dd>
 </p>
 
-<a name="camlayers"></a><p><dt><b>camlayers <i>layers depth</i></b></dt>
-<dd>
-Set the number of layers and depth between layers for <a href="#cellviewdesc">cellview</a>.
-<i>layers</i> must be from 1 (the default) to 10. <i>depth</i> must be from 0 to 10 and the
-default is 0.5.
-</dd>
-<dd> Example: <b>ov("camlayers 6 0.2")</b></dd>
-</p>
-
-<a name="camxy"></a><p><dt><b>camxy <i>x y</i></b></dt>
+<a name="camxy"></a><p><dt><b>camera xy <i>x y</i></b></dt>
 <dd>
 Set the camera pan position for <a href="#cellviewdesc">cellview</a>.
 Default position is the centre of the view.
 </dd>
-<dd> Example: <b>ov("camxy -32 100")</b></dd>
+<dd> Example: <b>ov("camera xy -32 100")</b></dd>
 </p>
 
-<a name="camzoom"></a><p><dt><b>camzoom <i>zoom</i></b></dt>
+<a name="camzoom"></a><p><dt><b>camera zoom <i>zoom</i></b></dt>
 <dd>
 Set the camera zoom for <a href="#cellviewdesc">cellview</a> from 0.0625 (-16x) to 32 (32x).
 The default is 1.
 </dd>
-<dd> Example: <b>ov("camzoom 3.5")</b></dd>
+<dd> Example: <b>ov("camera zoom 3.5")</b></dd>
+</p>
+
+<a name="celloption"></a><p><dt><b>celloption <i>setting</i></b></dt>
+<dd>
+Set a display option for <a href="#cellviewdesc">cellview</a>. The valid settings are:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><a href="#celloptiondepth">depth</a></td><td width=20></td><td>&ndash; set layer depth</td></tr>
+<tr><td><a href="#celloptionlayers">layers</a></td><td width=20></td><td>&ndash; set number of layers</td></tr>
+<tr><td><a href="#celloptionhex">hex</a></td><td width=20></td><td>&ndash; set hex display mode</td></tr>
+</table>
+</dd>
+</p>
+
+<a name="celloptiondepth"></a><p><dt><b>celloption depth <i>depth</i></b></dt>
+<dd>
+Set the depth between layers for <a href="#cellviewdesc">cellview</a>.
+<i>depth</i> must be from 0 to 10 and the default is 0.5.
+</dd>
+<dd> Example: <b>ov("celloption depth 0.2")</b></dd>
+</p>
+
+<a name="celloptionlayers"></a><p><dt><b>celloption layers <i>layers</i></b></dt>
+<dd>
+Set the number of layers for <a href="#cellviewdesc">cellview</a>.
+<i>layers</i> must be from 1 (the default) to 10.
+</dd>
+<dd> Example: <b>ov("celloption layers 6")</b></dd>
+</p>
+
+<a name="celloptionhex"></a><p><dt><b>celloption hex <i>mode</i></b></dt>
+<dd>
+Set the <a href="#cellviewdesc">cellview</a> hex display on (<i>mode</i> is "1") or off (<i>mode</i> is "0").
+</dd>
+<dd> Example: <b>ov("celloption hex 1")</b></dd>
 </p>
 
 <a name="cellview"></a><p><dt><b>cellview <i>x y wd ht</i></b></dt>
@@ -378,13 +418,6 @@ Set the given pixel to the current RGBA values.
 A pixel outside the overlay is silently ignored.
 </dd>
 <dd> Example: <b>ov("set 10 20")</b></dd>
-</p>
-
-<a name="sethex"></a><p><dt><b>sethex <i>mode</i></b></dt>
-<dd>
-Set the cellview hex display on (<i>mode</i> is "1") or off (<i>mode</i> is "0").
-</dd>
-<dd> Example: <b>ov("sethex 1")</b></dd>
 </p>
 
 <a name="text"></a><p><dt><b>text <i>clipname one line of text ...</i></b></dt>
@@ -681,8 +714,8 @@ There are three steps required:
 <li>Either use the standard pattern colors or pick a theme  with the
 <a href="#theme">theme</a> command.
 <li>Define the camera settings to determine how you want to project the cells onto
-    the overlay using <a href="#camangle">camangle</a>, <a href="#camlayers">camlayers</a>,
-    <a href="#camxy">camxy</a> and <a href="#camzoom">camzoom</a> commands.
+    the overlay using the <a href="#camera">camera</a> and <a href="#celloption">celloption</a>
+    commands.
 </ol>
 
 <p>
@@ -708,8 +741,8 @@ Here is a simple example:
 <b>ov("cellview -256 -256 512 512")</b><br>
 <b>ov("theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0")</b><br>
 -- set camera 14.5x zoom and 30 degree rotation<br>
-<b>ov("camzoom 14.5")</b><br>
-<b>ov("camangle 30")</b><br>
+<b>ov("camera zoom 14.5")</b><br>
+<b>ov("camera angle 30")</b><br>
 <b>ov("drawcells")</b><br>
 <b>ov("update")</b><br>
 -- run for 1000 generations<br>

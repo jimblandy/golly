@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 11
+local buildnumber = 12
 
 local g = golly()
 
@@ -77,9 +77,9 @@ local hexon = false
 
 local function sethex()
     if hexon then
-        ov("sethex 1")
+        ov("celloption hex 1")
     else
-        ov("sethex 0")
+        ov("celloption hex 0")
     end
 end
 
@@ -131,6 +131,7 @@ A		decrease layers
 P		increase layer depth
 L		decrease layer depth
 C		cycle themes		toggle theme
+/		toggle hex mode
 ]]
 
     -- display help
@@ -217,10 +218,11 @@ local function updatecamera()
         camangle = 0
     end
 
-    ov("camzoom "..camzoom)
-    ov("camangle "..camangle)
-    ov("camxy "..camx.." "..camy)
-    ov("camlayers "..camlayers.." "..camlayerdepth)
+    ov("camera zoom "..camzoom)
+    ov("camera angle "..camangle)
+    ov("camera xy "..camx.." "..camy)
+    ov("celloption layers "..camlayers)
+    ov("celloption depth "..camlayerdepth)
 
     -- update status
     updatestatus()
@@ -324,7 +326,7 @@ local function fitzoom(immediate)
         local newy = viewheight / 2 + bottomy + height / 2
 
         -- check whether to fit immediately
-        if (immediate) then
+        if immediate then
             camx = newx
             camy = newy
             linearzoom = realtolinear(zoom)
@@ -375,10 +377,10 @@ end
 
 local function rotate(amount)
     camangle = camangle + amount
-    if (camangle > 359) then
+    if camangle > 359 then
         camangle = camangle - 360
     else
-        if (camangle < 0) then
+        if camangle < 0 then
             camangle = camangle + 360
         end
     end
@@ -665,7 +667,7 @@ local function reset()
     g.update()
 
     -- if using theme then need to recreate the cell view to clear history
-    if (theme ~= -1) then
+    if theme ~= -1 then
         createcellview()
         settheme()
         updatecamera()
@@ -699,7 +701,7 @@ local function main()
     setdefaultcamera()
     
     -- use Golly's colors if multi-state pattern
-    if (g.numstates() > 2) then
+    if g.numstates() > 2 then
         themeon = false
     end
     settheme()
