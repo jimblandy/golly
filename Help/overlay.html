@@ -8,7 +8,7 @@
 <dd><a href="#blending"><b>Alpha blending</b></a></dd>
 <dd><a href="#clips"><b>Using clips</b></a></dd>
 <dd><a href="#affine"><b>Affine transformations</b></a></dd>
-<dd><a href="#cellviewdesc"><b>Cellview</b></a></dd>
+<dd><a href="#cellviewdesc"><b>Cell views</b></a></dd>
 <dd><a href="#oplus"><b>The oplus package</b></a></dd>
 </p>
 
@@ -117,85 +117,71 @@ The commands affected by alpha blending are:
 <dd> Example: <b>local oldblend = ov("blend 1")</b></dd>
 </p>
 
-<a name="camera"></a><p><dt><b>camera <i>setting</i></b></dt>
+<a name="camera"></a><p><dt><b>camera <i>setting value(s)</i></b></dt>
 <dd>
-Set the camera for <a href="#cellviewdesc">cellview</a>. The
-valid camera settings are:
+Change a camera setting for the current <a href="#cellviewdesc">cell view</a>.
+The valid camera settings and their allowed values are:
 </dd>
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><a href="#camangle">angle</a></td><td width=20></td><td>&ndash; set camera angle</td></tr>
-<tr><td><a href="#camxy">xy</a></td><td width=20></td><td>&ndash; set camera pan position</td></tr>
-<tr><td><a href="#camzoom">zoom</a></td><td width=20></td><td>&ndash; set camera zoom</td></tr>
+<tr><td>angle <i>d</i></td><td width=20></td><td>&ndash;
+set camera angle to <i>d</i> where <i>d</i> is from 0.0 to 360.0</td></tr>
+<tr><td>xy <i>x</i> <i>y</i></td><td width=20></td><td>&ndash;
+set camera pan position to <i>x</i>,<i>y</i></td></tr>
+<tr><td>zoom <i>z</i></td><td width=20></td><td>&ndash;
+set camera zoom to <i>z</i> where <i>z</i> is from 0.0625 (-16x) to 32.0</td></tr>
 </table>
 </dd>
 </p>
-
-<a name="camangle"></a><p><dt><b>camera angle <i>angle</i></b></dt>
-<dd>
-Set the camera angle for <a href="#cellviewdesc">cellview</a> in degrees.
-The valid range is 0 &lt;= <i>angle</i> &lt; 360. The default is 0.
-</dd>
+<p>
 <dd> Example: <b>ov("camera angle 90")</b></dd>
-</p>
-
-<a name="camxy"></a><p><dt><b>camera xy <i>x y</i></b></dt>
-<dd>
-Set the camera pan position for <a href="#cellviewdesc">cellview</a>.
-Default position is the centre of the view.
-</dd>
 <dd> Example: <b>ov("camera xy -32 100")</b></dd>
-</p>
-
-<a name="camzoom"></a><p><dt><b>camera zoom <i>zoom</i></b></dt>
-<dd>
-Set the camera zoom for <a href="#cellviewdesc">cellview</a> from 0.0625 (-16x) to 32 (32x).
-The default is 1.
-</dd>
 <dd> Example: <b>ov("camera zoom 3.5")</b></dd>
 </p>
 
-<a name="celloption"></a><p><dt><b>celloption <i>setting</i></b></dt>
+<p>
 <dd>
-Set a display option for <a href="#cellviewdesc">cellview</a>. The valid settings are:
+The <a href="#cellview">cellview</a> command initializes the
+camera angle to 0 degrees, the x,y position to the centre of the view,
+and the zoom value to 1.
+</dd>
+</p>
+
+<a name="celloption"></a><p><dt><b>celloption <i>option value</i></b></dt>
+<dd>
+Set a display option for the current <a href="#cellviewdesc">cell view</a>.
+The valid options and their allowed values are:
 </dd>
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><a href="#celloptiondepth">depth</a></td><td width=20></td><td>&ndash; set layer depth</td></tr>
-<tr><td><a href="#celloptionlayers">layers</a></td><td width=20></td><td>&ndash; set number of layers</td></tr>
-<tr><td><a href="#celloptionhex">hex</a></td><td width=20></td><td>&ndash; set hex display mode</td></tr>
+<tr><td>depth <i>d</i></td><td width=20></td><td>&ndash;
+set layer depth to <i>d</i> where <i>d</i> is from 0.0 to 10.0</td></tr>
+<tr><td>layers <i>n</i></td><td width=20></td><td>&ndash;
+set number of layers to <i>n</i> where <i>n</i> is an integer from 1 to 10</td></tr>
+<tr><td>hex <i>h</i></td><td width=20></td><td>&ndash;
+set hex display on (<i>h</i> is 1) or off (<i>h</i> is 0)</td></tr>
 </table>
 </dd>
 </p>
-
-<a name="celloptiondepth"></a><p><dt><b>celloption depth <i>depth</i></b></dt>
-<dd>
-Set the depth between layers for <a href="#cellviewdesc">cellview</a>.
-<i>depth</i> must be from 0 to 10 and the default is 0.5.
-</dd>
+<p>
 <dd> Example: <b>ov("celloption depth 0.2")</b></dd>
-</p>
-
-<a name="celloptionlayers"></a><p><dt><b>celloption layers <i>layers</i></b></dt>
-<dd>
-Set the number of layers for <a href="#cellviewdesc">cellview</a>.
-<i>layers</i> must be from 1 (the default) to 10.
-</dd>
 <dd> Example: <b>ov("celloption layers 6")</b></dd>
+<dd> Example: <b>ov("celloption hex 1")</b></dd>
 </p>
 
-<a name="celloptionhex"></a><p><dt><b>celloption hex <i>mode</i></b></dt>
+<p>
 <dd>
-Set the <a href="#cellviewdesc">cellview</a> hex display on (<i>mode</i> is "1") or off (<i>mode</i> is "0").
+The <a href="#cellview">cellview</a> command initializes the
+depth to 0.5, the number of layers to 1, and the hex display to 0.
 </dd>
-<dd> Example: <b>ov("celloption hex 1")</b></dd>
 </p>
 
 <a name="cellview"></a><p><dt><b>cellview <i>x y wd ht</i></b></dt>
 <dd>
-Create a view of cells enclosed by the defined rectangle that can be drawn on the overlay.
+Create a <a href="#cellviewdesc">cell view</a> enclosed by the given rectangle
+that can be drawn on the overlay.
 The width and height must be from 16 to 4096 and a multiple of 16.
 </dd>
 <dd> Example: <b>ov("cellview -1024 -1024 2048 2048")</b></dd>
@@ -261,17 +247,17 @@ The previous cursor name is returned.
 
 <a name="delete"></a><p><dt><b>delete</b></dt>
 <dd>
-Delete the current overlay.  Equivalent to selecting Delete Overlay
-from the Layer menu.
+Delete the current overlay.  Equivalent to selecting
+<a href="layer.html#deleteoverlay">Delete Overlay</a> from the Layer menu.
 </dd>
 <dd> Example: <b>ov("delete")</b></dd>
 </p>
 
 <a name="drawcells"></a><p><dt><b>drawcells</b></dt>
 <dd>
-Draw the cells from the <a href="#cellviewdesc">cellview</a> onto the overlay. The cells will be
-drawn using the camera settings and colored using the current theme. Further drawing commands
-can then be used to draw on top of the cell display.
+Draw the cells from the current <a href="#cellviewdesc">cell view</a> onto the overlay.
+The cells will be drawn using the camera settings and colored using the current theme.
+Further drawing commands can then be used to draw on top of the cell display.
 </dd>
 <dd> Example: <b>ov("drawcells")</b></dd>
 </p>
@@ -438,7 +424,7 @@ Note that the text has a transparent background, so you'll probably need to set
 
 <a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5</i></b></dt>
 <dd>
-Define the color theme for drawing the <a href="#cellviewdesc">cellview</a>.
+Define the color theme for drawing the current <a href="#cellviewdesc">cell view</a>.
 Themes allow better visualization of patterns because they highlight history
 and longevity in cells. The arguments define 5 colors:
 </dd>
@@ -503,7 +489,8 @@ pixels in the overlay are opaque.
 
 <a name="updatecells"></a><p><dt><b>updatecells</b></dt>
 <dd>
-Updates the <a href="#cellviewdesc">cellview</a> from the universe. 
+Update the current <a href="#cellviewdesc">cell view</a> using the cells in
+the current universe.
 This command should typically be used every time the universe changes.
 </dd>
 <dd> Example: <b>ov("updatecells")</b></dd>
@@ -701,26 +688,26 @@ the resulting overlay.
 
 
 <p><a name="cellviewdesc"></a>&nbsp;<br>
-<font size=+1><b>Cellview</b></font>
+<font size=+1><b>Cell views</b></font>
 
 <p>
-Cellview is a flexible way of displaying cells from the universe on the overlay.
-There are three steps required:
+A cell view is a flexible way of displaying cells from the universe onto the overlay.
+Three steps are required:
 
 <p>
 <ol>
-<li>Specify the rectangle of cells from the universe that you want to display using the
-    <a href="#cellview">cellview</a> command.
-<li>Either use the standard pattern colors or pick a theme  with the
-<a href="#theme">theme</a> command.
-<li>Define the camera settings to determine how you want to project the cells onto
-    the overlay using the <a href="#camera">camera</a> and <a href="#celloption">celloption</a>
-    commands.
+<li>Use the <a href="#cellview">cellview</a> command to specify the rectangle of cells
+    from the universe that you want to display.
+<li>Either use the current pattern colors or pick a theme with the
+    <a href="#theme">theme</a> command.
+<li>Use the <a href="#camera">camera</a> and <a href="#celloption">celloption</a>
+    commands to determine how you want to project the cells onto the overlay.
 </ol>
 
 <p>
-Whenever cells change in the universe you should use the <a href="#updatecells">updatecells</a> command
-to refresh the cellview. To draw the cells onto the overlay use the <a href="#drawcells">drawcells</a> command.
+Whenever cells change in the universe you should use the
+<a href="#updatecells">updatecells</a> command to refresh the cell view.
+To draw the cells onto the overlay use the <a href="#drawcells">drawcells</a> command.
 If the cells don't change and you want to change the camera or theme then just
 use drawcells after the appropriate camera and theme commands.
 Here is a simple example:
@@ -737,7 +724,7 @@ Here is a simple example:
 <b>ov("create "..viewwd.." "..viewht)</b><br>
 -- open example pattern<br>
 <b>g.open(g.getdir("app").."Patterns/Life/Methuselahs/rabbits.lif")</b><br>
--- create a cellview using a theme<br>
+-- create a cell view using a theme<br>
 <b>ov("cellview -256 -256 512 512")</b><br>
 <b>ov("theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0")</b><br>
 -- set camera 14.5x zoom and 30 degree rotation<br>
