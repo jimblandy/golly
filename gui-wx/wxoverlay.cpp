@@ -1417,6 +1417,11 @@ const char* Overlay::DoCopy(const char* args)
         return OverlayError("copy command requires 5 arguments");
     }
     
+    // treat non-positive w/h as inset from current width/height
+    // (makes it easy to copy entire overlay via "copy 0 0 0 0 all")
+    if (w <= 0) w = wd + w;
+    if (h <= 0) h = ht + h;
+    
     if (w <= 0) return OverlayError("copy width must be > 0");
     if (h <= 0) return OverlayError("copy height must be > 0");
     
@@ -1667,6 +1672,11 @@ const char* Overlay::DoSave(const char* args)
         // note that %n is not included in the count
         return OverlayError("save command requires 5 arguments");
     }
+    
+    // treat non-positive w/h as inset from current width/height
+    // (makes it easy to save entire overlay via "save 0 0 0 0 foo.png")
+    if (w <= 0) w = wd + w;
+    if (h <= 0) h = ht + h;
     
     if (w <= 0) return OverlayError("save width must be > 0");
     if (h <= 0) return OverlayError("save height must be > 0");
@@ -1951,15 +1961,33 @@ const char* Overlay::DoText(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
-    std::string name;
-    int namepos, textpos;
-    char dummy;
-    if (sscanf(args, " %n%*s %n%c", &namepos, &textpos, &dummy) != 1) {
-        // note that %n and %*s are not included in the count
+    // we don't use sscanf to parse the args because we want to allow the
+    // text to start with a space
+    int namepos = 0;
+    int textpos = 0;
+    const char* p = args;
+    while (*p && *p == ' ') {
+        namepos++;
+        p++;
+    }
+    if (namepos > 0 && *p) {
+        textpos = namepos;
+        while (*p && *p != ' ') {
+            textpos++;
+            p++;
+        }
+        if (*p) p++;        // skip past space after clip name
+        if (*p) {
+            textpos++;
+        } else {
+            textpos = 0;    // no text supplied
+        }
+    }
+    if (namepos == 0 || textpos == 0) {
         return OverlayError("text command requires 2 arguments");
     }
     
-    name = args + namepos;
+    std::string name = args + namepos;
     name = name.substr(0, name.find(" "));
     
     wxString textstr = wxString(args + textpos, wxConvLocal);

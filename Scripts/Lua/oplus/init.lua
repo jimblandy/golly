@@ -612,4 +612,48 @@ end
 
 --------------------------------------------------------------------------------
 
+function m.multiline(clipname, text)
+    local oldtransform = ov(m.identity)
+    local oldblend = ov("blend 0")
+    
+    -- copy entire overlay and fill it with transparent pixels
+    ov("copy 0 0 0 0 oldoverlay")
+    local oldrgba = ov("rgba 0 0 0 0")
+    ov("fill")
+    ov("rgba "..oldrgba)
+    
+    -- draw lines of text into the overlay
+    local maxwd = 0
+    local totalht = 0
+    local lines = { gp.split(text,"\n") }
+    for i, line in ipairs(lines) do
+        if #line == 0 then
+            line = " "      -- convert blank line to a space
+        end
+        local w, h = gp.split(ov("text temp "..line))
+        ov("paste 0 "..totalht.." temp")
+        w = tonumber(w)
+        h = tonumber(h)
+        if w > maxwd then maxwd = w end
+        totalht = totalht + h
+    end
+    
+    -- copy the text into the given clip
+    ov("copy 0 0 "..maxwd.." "..totalht.." "..clipname)
+    
+    -- restore original overlay, transform and blend state
+    ov("paste 0 0 oldoverlay")
+    ov("transform "..oldtransform)
+    ov("blend "..oldblend)
+    
+    -- free most of the clip memory (maybe need a "clearclip" command???!!!)
+    ov("copy 0 0 1 1 oldoverlay")
+    ov("copy 0 0 1 1 temp")
+
+    -- return the given text's width and height
+    return maxwd, totalht
+end
+
+--------------------------------------------------------------------------------
+
 return m

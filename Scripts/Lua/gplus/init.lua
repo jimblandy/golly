@@ -163,6 +163,8 @@ function m.split(s, sep)
 	    end
 	    if i > start then
 	        t[#t+1] = s:sub(start, i-1)
+	    elseif i == start then
+	        t[#t+1] = ""
 	    end
 	    start = i + #sep
 	end

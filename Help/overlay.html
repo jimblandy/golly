@@ -192,6 +192,9 @@ The width and height must be from 16 to 4096 and a multiple of 16.
 Copy the pixels in the given rectangle into the named <a href="#clips">clip</a>
 for later use by a <a href="#paste">paste</a> command.
 An error will occur if any part of the rectangle is outside the overlay.
+If the given width or height is less than 1 then it is treated as an inset from
+the overlay's current width or height (this makes it easy to copy the entire
+overlay with a command like <b>"copy 0 0 0 0 all"</b>).
 The clip name can contain any characters except a space.
 </dd>
 <dd> Example: <b>ov("copy 0 0 100 200 tempbox")</b></dd>
@@ -394,6 +397,9 @@ The commands that use the current RGBA values are:
 <dd>
 Save the pixels in the given rectangle in the given PNG file.
 An error will occur if any part of the rectangle is outside the overlay.
+If the given width or height is less than 1 then it is treated as an inset from
+the overlay's current width or height (this makes it easy to save the entire
+overlay with a command like <b>"save 0 0 0 0 overlay.png"</b>).
 </dd>
 <dd> Example: <b>ov("save 0 0 100 80 "..g.getdir("temp").."foo.png")</b></dd>
 </p>
@@ -420,6 +426,14 @@ Note that the text has a transparent background, so you'll probably need to set
 <a href="#blend">blend</a> to 1 before drawing the text with <a href="#paste">paste</a>.
 </dd>
 <dd> Example: <b>local dimens = ov("text tempclip To be or not to be...")</b></dd>
+</p>
+
+<p>
+<dd>
+The text command will only create one line of text.  If you want to create
+multiple lines then use the <a href="#multiline">multiline</a> function
+from the <a href="#oplus">oplus</a> package.
+</dd>
 </p>
 
 <a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5</i></b></dt>
@@ -832,6 +846,15 @@ so the caller can process the event.
 Return true if the current rule uses a hexagonal neighborhood.
 </dd>
 <dd> Example: <b>if op.hexrule() then do_hex_stuff() end</b></dd>
+</p>
+
+<p><a name="multiline"></a>
+<dt><b>op.multiline(<i>clipname, text</i>)</b></dt>
+<dd>
+Create a clip with the given name containing one or more lines of text
+and return the total width and height of the clip.
+</dd>
+<dd> Example: <b>local wd, ht = op.multiline("myclip", "Line 1\nLine2")</b></dd>
 </p>
 
 <p>

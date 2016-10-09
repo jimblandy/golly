@@ -41,8 +41,14 @@ end
 --------------------------------------------------------------------------------
 
 local function show_help()
-    g.note(
-[[Special keys and their actions:
+    ov(op.yellow)
+    ov("fill")
+    ov(op.black)
+    local oldfont = ov("font 10 mono")   -- use a monospaced font
+    local w, h = op.multiline("helpclip",
+[[
+Special keys and their actions:
+
 b -- test alpha blending
 c -- test cursors
 C -- create overlay that covers layer
@@ -62,6 +68,10 @@ Click and drag to draw.
 Option-click to flood.
 ]]
     )
+    local oldblend = ov("blend 1")
+    ov("paste 5 5 helpclip")
+    ov("blend "..oldblend)
+    ov("font "..oldfont)
 end
 
 --------------------------------------------------------------------------------
@@ -141,7 +151,7 @@ local function test_copy_paste()
     local y = 20
     local boxwd = 105
     local boxht = 83
-    ov("copy 0 0 "..wd.." "..ht.." background")
+    ov("copy 0 0 0 0 background")
     ov("rgba 255 255 255 128")
     ov("fill 0 0 "..boxwd.." "..boxht)
     ov("copy 0 0 "..boxwd.." "..boxht.." box")
