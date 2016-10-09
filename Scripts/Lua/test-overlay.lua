@@ -70,6 +70,7 @@ Option-click to flood.
     )
     local oldblend = ov("blend 1")
     ov("paste 5 5 helpclip")
+    ov("freeclip helpclip")
     ov("blend "..oldblend)
     ov("font "..oldfont)
 end
@@ -167,6 +168,8 @@ local function test_copy_paste()
         -- the overlay must cover the current layer and all pixels must be opaque
     end
     g.show("Time to test copy and paste: "..(os.clock()-t1))
+    ov("freeclip background")
+    ov("freeclip box")
 end
 
 --------------------------------------------------------------------------------

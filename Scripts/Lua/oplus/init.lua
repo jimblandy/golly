@@ -646,9 +646,9 @@ function m.multiline(clipname, text)
     ov("transform "..oldtransform)
     ov("blend "..oldblend)
     
-    -- free most of the clip memory (maybe need a "clearclip" command???!!!)
-    ov("copy 0 0 1 1 oldoverlay")
-    ov("copy 0 0 1 1 temp")
+    -- free the temporary clip memory
+    ov("freeclip oldoverlay")
+    ov("freeclip temp")
 
     -- return the given text's width and height
     return maxwd, totalht
