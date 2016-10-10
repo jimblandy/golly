@@ -2543,6 +2543,17 @@ static int g_exit(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_getinfo(lua_State* L)
+{
+    const char* comments = GSF_getinfo();
+
+    lua_pushstring(L, comments);
+    
+    return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
 static const struct luaL_Reg gollyfuncs [] = {
     // filing
     { "open",         g_open },         // open given pattern/script/rule/html file
@@ -2554,6 +2565,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "setdir",       g_setdir },       // set location of specified directory
     { "getdir",       g_getdir },       // return location of specified directory
     { "getfiles",     g_getfiles },     // return array of files in specified directory
+    { "getinfo",      g_getinfo },      // return comments from pattern file
     // editing
     { "new",          g_new },          // create new universe and set window title
     { "cut",          g_cut },          // cut selection to clipboard

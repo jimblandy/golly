@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 12
+local buildnumber = 13
 
 local g = golly()
 
@@ -15,10 +15,16 @@ local viewwd, viewht = g.getview(g.getlayer())
 
 -- whether generating life
 local generating = false
+local autostart = false
+local loopgen = -1
+local stopgen = -1
+local currentgen = 0
 
 -- view constants
 local minzoom = 0.0625
 local maxzoom = 32
+local minangle = 0
+local maxangle = 360
 local viewwidth = 2048
 local viewheight = 2048
 local mindepth = 0
@@ -27,6 +33,10 @@ local minlayers = 1
 local maxlayers = 10
 local zoomborder = 0.9  -- proportion of view to fill with fit zoom
 local glidesteps = 20   -- steps to glide camera
+local minstop = 1
+local minloop = 1
+local mintheme = 0
+local maxtheme = #op.themes
 
 -- smooth camera movement
 local startx
@@ -73,6 +83,21 @@ local clicky = 0
 -- whether hex display is on
 local hexon = false
 
+-- script tokens
+local tokens = {}
+local curtok = 1
+local scriptstartword = "[["
+local scriptendword   = "]]"
+local angleword       = "ANGLE"
+local autofitword     = "AUTOFIT"
+local autostartword   = "AUTOSTART"
+local depthword       = "DEPTH"
+local layersword      = "LAYERS"
+local loopword        = "LOOP"
+local stopword        = "STOP"
+local themeword       = "THEME"
+local zoomword        = "ZOOM"
+
 --------------------------------------------------------------------------------
 
 local function sethex()
@@ -88,6 +113,34 @@ end
 local function checkhex()
     hexon = op.hexrule()
     sethex()
+end
+
+--------------------------------------------------------------------------------
+
+local function showscripthelp()
+    local helptext = "LifeViewer for Golly build "..buildnumber..
+[[
+
+Scripts must be embedded in pattern comments
+Commands must be surrounded by whitespace
+
+Commands:
+
+]]
+    helptext = helptext..scriptstartword.."							start script section\n"
+    helptext = helptext..scriptendword.."							end script secion\n"
+    helptext = helptext..angleword.."		<"..minangle..".."..maxangle..">		set camera angle\n"
+    helptext = helptext..autofitword.."					fit pattern to display\n"
+    helptext = helptext..autostartword.."					start play automatically\n"
+    helptext = helptext..depthword.."		<"..mindepth..".0.."..maxdepth..".0>		set layer depth\n"
+    helptext = helptext..layersword.."		<"..minlayers..".."..maxlayers..">			set number of layers\n"
+    helptext = helptext..loopword.."		<"..minloop.."..>			loop at generation\n"
+    helptext = helptext..stopword.."		<"..minstop.."..>			stop at generation\n"
+    helptext = helptext..themeword.."		<"..mintheme..".."..maxtheme..">			set theme\n"
+    helptext = helptext..zoomword.."		<"..(-1 / minzoom)..".."..maxzoom..".0>	set camera zoom\n"
+
+    -- display script help
+    g.note(helptext)
 end
 
 --------------------------------------------------------------------------------
@@ -197,7 +250,14 @@ local function updatestatus()
     end
 
     -- update status bar
-    g.show("Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus)
+    local status = "Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus
+    if stopgen ~= -1 then
+        status = status.."  Stop "..stopgen
+    end
+    if loopgen ~= -1 then
+        status = status.."  Loop "..loopgen
+    end
+    g.show(status)
 end
 
 --------------------------------------------------------------------------------
@@ -249,6 +309,8 @@ local function setdefaultcamera()
     defcamy = camy
     defcamangle = camangle
     deflinearzoom = linearzoom
+    defcamlayers = camlayers
+    defcamlayerdepth = camlayerdepth
 end
 
 --------------------------------------------------------------------------------
@@ -364,6 +426,8 @@ local function advance(by1)
         g.step()
     end
     
+    currentgen = tonumber(g.getgen())
+
     ov("updatecells")
     if autofit then
         fitzoom(true)
@@ -377,11 +441,11 @@ end
 
 local function rotate(amount)
     camangle = camangle + amount
-    if camangle > 359 then
-        camangle = camangle - 360
+    if camangle >= maxangle then
+        camangle = camangle - maxangle
     else
-        if camangle < 0 then
-            camangle = camangle + 360
+        if camangle < minangle then
+            camangle = camangle + maxangle
         end
     end
     updatecamera()
@@ -537,8 +601,8 @@ end
 local function cycletheme()
     if themeon then
         theme = theme + 1
-        if theme > op.maxtheme then
-            theme = 0
+        if theme > maxtheme then
+            theme = mintheme
         end
     else
         themeon = true
@@ -655,11 +719,14 @@ end
 
 --------------------------------------------------------------------------------
 
-local function reset()
+local function reset(looping)
     -- reset the camera if at generation 0
     local gen = tonumber(g.getgen())
-    if gen == 0 then
+    if gen == 0 or looping then
         resetcamera()
+        generating = autostart
+    else
+        generating = false
     end
 
     -- reset golly
@@ -688,7 +755,252 @@ end
 
 --------------------------------------------------------------------------------
 
+local function scriptstop()
+    local result = ""
+    local newstop
+
+    curtok = curtok + 1
+    if curtok > #tokens then
+        result = "missing argument"
+    else
+        newstop = tonumber(tokens[curtok])
+        if newstop == nil then
+            result = "argument must be a number"
+        else
+             if newstop < minstop then
+                 result = "argument must be at least "..minstop
+             else
+                 stopgen = newstop
+             end
+        end
+    end
+
+    return result
+end
+
+--------------------------------------------------------------------------------
+
+local function scriptloop()
+    local result = ""
+    local newloop
+
+    curtok = curtok + 1
+    if curtok > #tokens then
+        result = "missing argument"
+    else
+        newloop = tonumber(tokens[curtok])
+        if newloop == nil then
+            result = "argument must be a number"
+        else
+             if newloop < minloop then
+                 result = "argument must be at least "..minloop
+             else
+                 loopgen = newloop
+             end
+        end
+    end
+
+    return result
+end
+
+--------------------------------------------------------------------------------
+
+local function scriptangle()
+    local result = ""
+    local newangle
+
+    curtok = curtok + 1
+    if curtok > #tokens then
+        result = "missing argument"
+    else
+        newangle = tonumber(tokens[curtok])
+        if newangle == nil then
+            result = "argument must be a number"
+        else
+             if newangle < minangle or newangle > maxangle then
+                 result = "argument must be from "..minangle.." to "..maxangle
+             else
+                 camangle = newangle
+             end
+        end
+    end
+
+    return result
+end
+
+--------------------------------------------------------------------------------
+
+local function scriptzoom()
+    local result = ""
+    local newzoom
+
+    curtok = curtok + 1
+    if curtok > #tokens then
+        result = "missing argument"
+    else
+        newzoom = tonumber(tokens[curtok])
+        if newzoom == nil then
+            result = "argument must be a number"
+        else
+             if newzoom < minzoom or newzoom > maxzoom then
+                 result = "argument must be from "..minzoom.." to "..maxzoom
+             else
+                 linearzoom = realtolinear(newzoom)
+             end
+        end
+    end
+
+    return result
+end
+
+--------------------------------------------------------------------------------
+
+local function scriptdepth()
+    local result = ""
+    local newdepth
+
+    curtok = curtok + 1
+    if curtok > #tokens then
+        result = "missing argument"
+    else
+        newdepth = tonumber(tokens[curtok])
+        if newdepth == nil then
+            result = "argument must be a number"
+        else
+             if newdepth < mindepth or newdepth > maxdepth then
+                 result = "argument must be from "..mindepth.." to "..maxdepth
+             else
+                 camlayerdepth = newdepth
+             end
+        end
+    end
+
+    return result
+end
+
+--------------------------------------------------------------------------------
+
+local function scriptlayers()
+    local result = ""
+    local newlayers
+
+    curtok = curtok + 1
+    if curtok > #tokens then
+        result = "missing argument"
+    else
+        newlayers = tonumber(tokens[curtok])
+        if newlayers == nil then
+            result = "argument must be a number"
+        else
+             if newlayers < minlayers or newlayers > maxlayers then
+                 result = "argument must be from "..minlayers.." to "..maxlayers
+             else
+                 camlayers = newlayers
+             end
+        end
+    end
+
+    return result
+end
+
+--------------------------------------------------------------------------------
+
+local function scripttheme()
+    local result = ""
+    local newtheme
+
+    curtok = curtok + 1
+    if curtok > #tokens then
+        result = "missing argument"
+    else
+        newtheme = tonumber(tokens[curtok])
+        if newtheme == nil then
+            result = "argument must be a number"
+        else
+            if newtheme < mintheme or newtheme > maxtheme then
+                result = "argument must be from "..mintheme.." to "..maxtheme
+            else
+                theme = newtheme
+                settheme()
+            end
+        end
+    end
+
+    return result
+end
+
+--------------------------------------------------------------------------------
+
+local function checkscript()
+    local comments = g.getinfo()
+    local inscript = false
+    local invalid = ""
+
+    -- build token list
+    for token in comments:gsub("\n", " "):gmatch("([^ ]*)") do
+        if token ~= "" then
+            if token == scriptendword then
+                inscript = false
+            end
+            if inscript then
+                table.insert(tokens, token)
+            end
+            if token == scriptstartword then
+                inscript = true
+            end
+        end
+    end
+
+    -- process any script comments
+    if #tokens > 0 then
+        curtok = 1
+        while curtok <= #tokens do
+            -- process the next token
+            token = tokens[curtok]
+            if token == angleword then
+                invalid = scriptangle()
+            elseif token == autofitword then
+                autofit = true
+            elseif token == autostartword then
+                autostart = true
+                generating = true
+            elseif token == depthword then
+                invalid = scriptdepth()
+            elseif token == layersword then
+                invalid = scriptlayers()
+            elseif token == loopword then
+                invalid = scriptloop()
+            elseif token == stopword then
+                invalid = scriptstop()
+            elseif token == themeword then
+                invalid = scripttheme() 
+            elseif token == zoomword then
+                invalid = scriptzoom()
+            else
+                invalid = "unknown script commmand"
+            end
+            -- abort script processing on error
+            if invalid ~= "" then
+                curtok = #tokens
+            end
+            curtok = curtok + 1
+        end
+        updatecamera()
+        refresh()
+        if invalid ~= "" then
+            g.note(token..": "..invalid)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function main()
+    -- check if there is a pattern
+    if g.empty() then
+        g.exit("There is no pattern.")
+    end
+
     -- create overlay and cell view
     createoverlay()
     createcellview()
@@ -698,7 +1010,6 @@ local function main()
 
     -- reset the camera to default position
     fitzoom(true)
-    setdefaultcamera()
     
     -- use Golly's colors if multi-state pattern
     if g.numstates() > 2 then
@@ -708,7 +1019,14 @@ local function main()
 
     -- update the overlay
     refresh()
-    
+
+    -- read current generation
+    currentgen = tonumber(g.getgen())
+
+    -- check for script commands
+    checkscript()
+    setdefaultcamera()
+
     while true do
         -- check if size of layer has changed
         local newwd, newht = g.getview(g.getlayer())
@@ -730,8 +1048,7 @@ local function main()
             advance(false)
             generating = false
         elseif event == "key r none" then
-            reset()
-            generating = false
+            reset(false)
         elseif event == "key f none" then
             fitzoom(false)
         elseif event == "key f shift" then
@@ -806,6 +1123,8 @@ local function main()
             panview(-1, 1)
         elseif event == "key h none" then
             showhelp()
+        elseif event == "key s shift" then
+            showscripthelp()
         elseif event == "key / none" then
             togglehex()
         elseif event:find("^ozoomin") then
@@ -823,6 +1142,13 @@ local function main()
         
         if generating then
              advance(false)
+             if stopgen == currentgen then
+                 generating = false
+                 g.note("STOP reached, Play to continue")
+             end              
+             if loopgen == currentgen then
+                 reset(true)
+             end
         end
         if camsteps ~= -1 then
              glidecamera()

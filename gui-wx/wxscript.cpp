@@ -22,6 +22,8 @@
  
  / ***/
 
+#include <string.h>        // for strlen and strcpy
+
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
     #include "wx/wx.h"     // for all others include the necessary headers
@@ -71,6 +73,9 @@ static bool exitcalled;             // GSF_exit was called?
 static wxString scriptchars;        // non-escape chars saved by PassKeyToScript
 static wxString scriptloc;          // location of script file
 static wxArrayString eventqueue;    // FIFO queue for keyboard/mouse events 
+
+// constants:
+const int maxcomments = 8192;       // maximum comment size
 
 // -----------------------------------------------------------------------------
 
@@ -1338,6 +1343,30 @@ void GSF_exit(const wxString& errmsg)
     }
     
     exitcalled = true;   // prevent CheckScriptError changing message
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_getinfo()
+{
+    // comment buffer
+    static char comments[maxcomments];
+
+    // buffer fo receiving comment data (allocate by readcomments)
+    char *commptr = NULL;
+
+    // read the comments in the pattern file
+    const char* err = readcomments(currlayer->currfile, &commptr);
+    if (err) {
+        free(commptr);
+        return "";
+    }
+
+    // copy the comments and truncate to buffer size if longer
+    strncpy(comments, commptr, maxcomments);
+    comments[maxcomments - 1] = '\0';
+    free(commptr);
+    return comments;
 }
 
 // =============================================================================

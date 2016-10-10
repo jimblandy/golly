@@ -2927,6 +2927,18 @@ static PyObject* py_stderr(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_getinfo(PyObject* self, PyObject* args)
+{
+    if (PythonScriptAborted()) return NULL;
+    wxUnusedVar(self);
+
+    const char* comments = GSF_getinfo();
+    
+    return Py_BuildValue((char*)"s", comments);
+}
+
+// -----------------------------------------------------------------------------
+
 static PyMethodDef py_methods[] = {
     // filing
     { "open",         py_open,       METH_VARARGS, "open given pattern file" },
@@ -2937,6 +2949,7 @@ static PyMethodDef py_methods[] = {
     { "store",        py_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
     { "setdir",       py_setdir,     METH_VARARGS, "set location of specified directory" },
     { "getdir",       py_getdir,     METH_VARARGS, "return location of specified directory" },
+    { "getinfo",      py_getinfo,    METH_VARARGS, "return comments from pattern file" },
     // next two are deprecated (use getdir)
     { "appdir",       py_appdir,     METH_VARARGS, "return location of Golly app" },
     { "datadir",      py_datadir,    METH_VARARGS, "return location of user-specific data" },
