@@ -1575,6 +1575,37 @@ const char* Overlay::DoPaste(const char* args)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::DoFreeClip(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    int namepos;
+    char dummy;
+    if (sscanf(args, " %n%c", &namepos, &dummy) != 1) {
+        // note that %n is not included in the count
+        return OverlayError("freeclip command requires 1 argument");
+    }
+    
+    std::string name = args + namepos;
+    std::map<std::string,Clip*>::iterator it;
+    it = clips.find(name);
+    if (it == clips.end()) {
+        static std::string msg;
+        msg = "unknown freeclip name (";
+        msg += name;
+        msg += ")";
+        return OverlayError(msg.c_str());
+    } else {
+        // delete the clip
+        delete it->second;
+        clips.erase(it);
+    }
+    
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoLoad(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -2173,6 +2204,7 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "blend", 5) == 0)        return DoBlend(cmd+5);
     if (strncmp(cmd, "text", 4) == 0)         return DoText(cmd+4);
     if (strncmp(cmd, "font", 4) == 0)         return DoFont(cmd+4);
+    if (strncmp(cmd, "freeclip", 8) == 0)     return DoFreeClip(cmd+8);
     if (strncmp(cmd, "transform", 9) == 0)    return DoTransform(cmd+9);
     if (strncmp(cmd, "position", 8) == 0)     return DoPosition(cmd+8);
     if (strncmp(cmd, "cursor", 6) == 0)       return DoCursor(cmd+6);

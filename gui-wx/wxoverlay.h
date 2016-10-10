@@ -167,6 +167,9 @@ private:
     // Paste the named Clip data into the overlay at the given location.
     // Automatically clips any pixels outside the overlay.
     
+    const char* DoFreeClip(const char* args);
+    // Free the memory used by the named Clip.
+    
     const char* DoLoad(const char* args);
     // Load the image from a given .bmp/gif/png/tiff file into the overlay
     // at a given location, clipping if necessary.  If successful, return the

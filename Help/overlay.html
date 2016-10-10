@@ -67,24 +67,25 @@ Here is an alphabetical list of all the valid overlay commands:
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#freeclip"><b>freeclip</b></a><br>
 <a href="#get"><b>get</b></a><br>
 <a href="#line"><b>line</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
-<a href="#position"><b>position</b></a><br>
-<a href="#resize"><b>resize</b></a>
+<a href="#position"><b>position</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#resize"><b>resize</b></a><br>
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
 <a href="#text"><b>text</b></a><br>
-<a href="#theme"><b>theme</b></a><br>
-<a href="#transform"><b>transform</b></a>
+<a href="#theme"><b>theme</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
 <a href="#updatecells"><b>updatecells</b></a><br>
 <a href="#xy"><b>xy</b></a>
@@ -126,7 +127,7 @@ The valid camera settings and their allowed values are:
 <dd>
 <table cellspacing=0 cellpadding=0>
 <tr><td>angle <i>d</i></td><td width=20></td><td>&ndash;
-set camera angle to <i>d</i> where <i>d</i> is from 0.0 to 360.0</td></tr>
+set camera angle to <i>d</i> degrees where <i>d</i> is from 0.0 to 360.0</td></tr>
 <tr><td>xy <i>x</i> <i>y</i></td><td width=20></td><td>&ndash;
 set camera pan position to <i>x</i>,<i>y</i></td></tr>
 <tr><td>zoom <i>z</i></td><td width=20></td><td>&ndash;
@@ -160,8 +161,8 @@ The valid options and their allowed values are:
 set layer depth to <i>d</i> where <i>d</i> is from 0.0 to 10.0</td></tr>
 <tr><td>layers <i>n</i></td><td width=20></td><td>&ndash;
 set number of layers to <i>n</i> where <i>n</i> is an integer from 1 to 10</td></tr>
-<tr><td>hex <i>h</i></td><td width=20></td><td>&ndash;
-set hex display on (<i>h</i> is 1) or off (<i>h</i> is 0)</td></tr>
+<tr><td>hex <i>i</i></td><td width=20></td><td>&ndash;
+set hex display on (<i>i</i> is 1) or off (<i>i</i> is 0)</td></tr>
 </table>
 </dd>
 </p>
@@ -313,6 +314,13 @@ The previous font is returned as a string of the form "fontsize fontname".
 <dd> Example: <b>local oldfont = ov("font 15 roman-bold")</b></dd>
 </p>
 
+<a name="freeclip"></a><p><dt><b>freeclip <i>clipname</i></b></dt>
+<dd>
+Free the memory used by the given clip.
+</dd>
+<dd> Example: <b>ov("freeclip tempbox")</b></dd>
+</p>
+
 <a name="get"></a><p><dt><b>get <i>x y</i></b></dt>
 <dd>
 Return the RGBA values of the given pixel as a string of the form
@@ -375,7 +383,7 @@ The valid positions are:
 <dd>
 Resize the overlay to the given size. This is typically used if a window resize is detected.
 </dd>
-<dd> Example: <b>ov("resize")</b></dd>
+<dd> Example: <b>ov("resize 1000 800")</b></dd>
 </p>
 
 <a name="rgba"></a><p><dt><b>rgba <i>red green blue alpha</i></b></dt>
@@ -828,8 +836,8 @@ The slider will only appear after its show function is called.
 <dd> Example: <b>red_slider.show(10, 70, 255)</b></dd>
 </p>
 
-<p><a name="process"></a>
-<dt><b>op.process(<i>event</i>)</b></dt>
+<a name="process"></a>
+<p><dt><b>op.process(<i>event</i>)</b></dt>
 <dd>
 Process the given event (normally the string returned by a
 <a href="lua.html#getevent">getevent</a> command).
@@ -848,8 +856,18 @@ Return true if the current rule uses a hexagonal neighborhood.
 <dd> Example: <b>if op.hexrule() then do_hex_stuff() end</b></dd>
 </p>
 
-<p><a name="multiline"></a>
-<dt><b>op.multiline(<i>clipname, text</i>)</b></dt>
+<a name="minbox"></a>
+<p><dt><b>op.minbox(<i>clipname, wd, ht</i>)</b></dt>
+<dd>
+Find the minimal bounding box of non-transparent pixels in the given clip.
+This can be used to determine the real dimensions of some text.
+If all pixels in the clip are transparent then the returned values are all zero.
+</dd>
+<dd> Example: <b>local minx, miny, minwd, minht = op.minbox("textclip", 80, 10)</b></dd>
+</p>
+
+<a name="multiline"></a>
+<p><dt><b>op.multiline(<i>clipname, text</i>)</b></dt>
 <dd>
 Create a clip with the given name containing one or more lines of text
 and return the total width and height of the clip.
