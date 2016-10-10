@@ -41,10 +41,10 @@ end
 --------------------------------------------------------------------------------
 
 local function show_help()
-    ov(op.yellow)
-    ov("fill")
     ov(op.black)
-    local oldfont = ov("font 10 mono")   -- use a monospaced font
+    ov("fill")
+    ov(op.white)
+    local oldfont = ov("font 10 mono-bold")   -- use a monospaced font
     local w, h = op.multiline("helpclip",
 [[
 Special keys and their actions:
