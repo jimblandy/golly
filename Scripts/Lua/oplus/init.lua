@@ -3,11 +3,12 @@
 
 local g = golly()
 -- require "gplus.strict"
+local ov = g.overlay
 
 local gp = require "gplus"
 local int = gp.int
 local rect = gp.rect
-local ov = g.overlay
+local split = gp.split
 
 local m = {}
 
@@ -165,7 +166,7 @@ function m.button(label, onclick)
     b.clipname = string.gsub(b.clipname, " ", "")   -- remove any spaces
     local oldrgba = ov(textrgba)
     local oldfont = ov(labelfont)
-    local w, h = gp.split(ov("text "..b.clipname.." "..label))
+    local w, h = split(ov("text "..b.clipname.." "..label))
     ov("font "..oldfont)
     ov("rgba "..oldrgba)
     
@@ -264,7 +265,7 @@ function m.checkbox(label, labelrgba, onclick)
     c.clipname = string.gsub(c.clipname, " ", "")   -- remove any spaces
     local oldrgba = ov(labelrgba)
     local oldfont = ov(labelfont)
-    local w, h = gp.split(ov("text "..c.clipname.." "..label))
+    local w, h = split(ov("text "..c.clipname.." "..label))
     ov("font "..oldfont)
     ov("rgba "..oldrgba)
     
@@ -388,7 +389,7 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
     s.clipname = string.gsub(s.clipname, " ", "")   -- remove any spaces
     local oldrgba = ov(labelrgba)
     local oldfont = ov(labelfont)
-    local w, h = gp.split(ov("text "..s.clipname.." "..label))
+    local w, h = split(ov("text "..s.clipname.." "..label))
     ov("font "..oldfont)
     ov("rgba "..oldrgba)
     
@@ -463,7 +464,7 @@ local function release_in_rect(r, t)
         if #xy == 0 then
             inrect = false      -- mouse is outside overlay
         else
-            local x, y = gp.split(xy)
+            local x, y = split(xy)
             x = tonumber(x)
             y = tonumber(y)
             inrect = x >= r.left and x <= r.right and y >= r.top and y <= r.bottom
@@ -535,7 +536,7 @@ local function click_in_slider(x, y)
                 if event:find("^mup left") then break end
                 local xy = ov("xy")
                 if #xy > 0 then
-                    local x, _ = gp.split(xy)
+                    local x, _ = split(xy)
                     -- check if slider position needs to change
                     x = tonumber(x)
                     if x < slider.startbar then x = slider.startbar end
@@ -580,7 +581,7 @@ end
 function m.process(event)
     if #event > 0 then
         if event:find("^oclick") then
-            local _, x, y, butt, mods = gp.split(event)
+            local _, x, y, butt, mods = split(event)
             if butt == "left" and mods == "none" then
                 if click_in_button(tonumber(x), tonumber(y)) then return "" end
                 if click_in_checkbox(tonumber(x), tonumber(y)) then return "" end
@@ -613,6 +614,9 @@ end
 --------------------------------------------------------------------------------
 
 function m.multiline(clipname, text)
+    -- create a clip containing text with one or more lines
+    -- and return the total width and height
+    
     local oldtransform = ov(m.identity)
     local oldblend = ov("blend 0")
     
@@ -625,12 +629,12 @@ function m.multiline(clipname, text)
     -- draw lines of text into the overlay
     local maxwd = 0
     local totalht = 0
-    local lines = { gp.split(text,"\n") }
+    local lines = { split(text,"\n") }
     for i, line in ipairs(lines) do
         if #line == 0 then
             line = " "      -- convert blank line to a space
         end
-        local w, h = gp.split(ov("text temp "..line))
+        local w, h = split(ov("text temp "..line))
         ov("paste 0 "..totalht.." temp")
         w = tonumber(w)
         h = tonumber(h)
@@ -652,6 +656,121 @@ function m.multiline(clipname, text)
 
     -- return the given text's width and height
     return maxwd, totalht
+end
+
+--------------------------------------------------------------------------------
+
+local clip_too_big = "minbox clip does not fit in overlay"
+
+function m.minbox(clipname, wd, ht)
+    -- find the minimal bounding box of non-transparent pixels in given clip
+    
+    local xmin, ymin, xmax, ymax, minwd, minht
+    
+    -- copy entire overlay and fill it with transparent pixels
+    ov("copy 0 0 0 0 oldoverlay")
+    local oldrgba = ov("rgba 0 0 0 0")
+    ov("fill")
+    ov("rgba "..oldrgba)
+    
+    -- paste given clip into the top left corner
+    local oldtransform = ov(m.identity)
+    local oldblend = ov("blend 0")
+    ov("paste 0 0 "..clipname)
+    
+    -- find the top edge (ymin)
+    for row = 0, ht-1 do
+        for col = 0, wd-1 do
+            local rgba = ov("get "..col.." "..row)
+            if rgba == "" then
+                error(clip_too_big, 2)
+            else
+                local _, _, _, a = split(rgba)
+                if a ~= "0" then
+                    ymin = row
+                    goto found_top
+                end
+            end
+        end
+    end
+    
+    -- only get here if clip has no non-transparent pixels
+    xmin = 0
+    ymin = 0
+    minwd = 0
+    minht = 0
+    goto finish
+    
+    ::found_top::
+    -- get here if clip has at least one non-transparent pixel
+    
+    -- find the bottom edge (ymax)
+    for row = ht-1, ymin, -1 do
+        for col = 0, wd-1 do
+            local rgba = ov("get "..col.." "..row)
+            if rgba == "" then
+                error(clip_too_big, 2)
+            else
+                local _, _, _, a = split(rgba)
+                if a ~= "0" then
+                    ymax = row
+                    goto found_bottom
+                end
+            end
+        end
+    end
+    ::found_bottom::
+    
+    -- find the left edge (xmin)
+    for col = 0, wd-1 do
+        for row = ymin, ymax do
+            local rgba = ov("get "..col.." "..row)
+            if rgba == "" then
+                error(clip_too_big, 2)
+            else
+                local _, _, _, a = split(rgba)
+                if a ~= "0" then
+                    xmin = col
+                    goto found_left
+                end
+            end
+        end
+    end
+    ::found_left::
+    
+    -- find the right edge (xmax)
+    for col = wd-1, xmin, -1 do
+        for row = ymin, ymax do
+            local rgba = ov("get "..col.." "..row)
+            if rgba == "" then
+                error(clip_too_big, 2)
+            else
+                local _, _, _, a = split(rgba)
+                if a ~= "0" then
+                    xmax = col
+                    goto found_right
+                end
+            end
+        end
+    end
+    ::found_right::
+    
+    -- all edges have been found
+    minwd = xmax - xmin + 1
+    minht = ymax - ymin + 1
+    
+    ::finish::
+    
+    -- restore original overlay, transform and blend state
+    ov("paste 0 0 oldoverlay")
+    ov("transform "..oldtransform)
+    ov("blend "..oldblend)
+    
+    -- free the temporary clip memory
+    ov("freeclip oldoverlay")
+    
+    -- return the bounding box info
+    return xmin, ymin, minwd, minht
 end
 
 --------------------------------------------------------------------------------

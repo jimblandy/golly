@@ -836,8 +836,8 @@ The slider will only appear after its show function is called.
 <dd> Example: <b>red_slider.show(10, 70, 255)</b></dd>
 </p>
 
-<p><a name="process"></a>
-<dt><b>op.process(<i>event</i>)</b></dt>
+<a name="process"></a>
+<p><dt><b>op.process(<i>event</i>)</b></dt>
 <dd>
 Process the given event (normally the string returned by a
 <a href="lua.html#getevent">getevent</a> command).
@@ -856,8 +856,18 @@ Return true if the current rule uses a hexagonal neighborhood.
 <dd> Example: <b>if op.hexrule() then do_hex_stuff() end</b></dd>
 </p>
 
-<p><a name="multiline"></a>
-<dt><b>op.multiline(<i>clipname, text</i>)</b></dt>
+<a name="minbox"></a>
+<p><dt><b>op.minbox(<i>clipname, wd, ht</i>)</b></dt>
+<dd>
+Find the minimal bounding box of non-transparent pixels in the given clip.
+This can be used to determine the real dimensions of some text.
+If all pixels in the clip are transparent then the returned values are all zero.
+</dd>
+<dd> Example: <b>local minx, miny, minwd, minht = op.minbox("textclip", 80, 10)</b></dd>
+</p>
+
+<a name="multiline"></a>
+<p><dt><b>op.multiline(<i>clipname, text</i>)</b></dt>
 <dd>
 Create a clip with the given name containing one or more lines of text
 and return the total width and height of the clip.

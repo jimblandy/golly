@@ -350,11 +350,12 @@ local function test_text()
     maketext("SPOOKY")
     pastetext(310, 270)
 
-    oldfont = ov("font 100 default-bold")
+    oldfont = ov("font 120 default-bold")
     ov("rgba 255 0 0 40")   -- translucent red text
     w, h, descent = maketext("Golly")
     pastetext(10, 10)
     oldblend = ov("blend 1")
+    
     -- draw box around text
     ov("line 10 10 "..(w-1+10).." 10")
     ov("line 10 10 10 "..(h-1+10))
@@ -362,8 +363,15 @@ local function test_text()
     ov("line 10 "..(h-1+10).." "..(w-1+10).." "..(h-1+10))
     -- show baseline
     ov("line 10 "..(h-1+10-descent).." "..(w-1+10).." "..(h-1+10-descent))
+    
+    -- draw minimal bounding rect over text
+    local xoff, yoff, minwd, minht = op.minbox("temp", w, h)
+    ov("rgba 0 0 255 20")
+    ov("fill "..(xoff+10).." "..(yoff+10).." "..minwd.." "..minht)
+    
+    -- restore blend state and font
     ov("blend "..oldblend)
-    ov("font "..oldfont)    -- restore previous font
+    ov("font "..oldfont)
     ov(op.black)
 end
 
