@@ -658,13 +658,9 @@ const char* Overlay::DoCellView(const char* args)
     camlayers = 1;
     camlayerdepth = 0.05;
 
-    // check for hex rules
-    // ishex = currlayer->algo->getgridtype() == currlayer->algo->HEX_GRID;
-    
-    // above is not necessarily correct for .rule files that have a TREE section
-    // rather than a TABLE section, so best if we initialize ishex to false
-    // and let scripts use the hexrule() function from the oplus package
-    // to determine if the current rule uses a hexagonal neighborhood
+    // initialize ishex to false and let scripts use the hexrule() function
+    // from the oplus package to determine if the current rule uses a
+    // hexagonal neighborhood
     ishex = false;
 
     // use standard pattern colors

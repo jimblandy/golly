@@ -157,6 +157,7 @@ Space	pause / next generation
 Tab		pause / next step
 Esc		close
 R		reset to generation 0
+h		help
 
 Camera controls:
 Key		Function			Shift
@@ -1123,7 +1124,6 @@ local function main()
             panview(-1, 1)
         elseif event == "key h none" then
             showhelp()
-        elseif event == "key s shift" then
             showscripthelp()
         elseif event == "key / none" then
             togglehex()
