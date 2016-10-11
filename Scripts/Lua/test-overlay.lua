@@ -44,7 +44,7 @@ local function show_help()
     ov(op.black)
     ov("fill")
     ov(op.white)
-    local oldfont = ov("font 10 mono-bold")   -- use a monospaced font
+    local oldfont = ov("font 10 mono-bold")   -- use a mono-spaced font
     local w, h = op.multiline("helpclip",
 [[
 Special keys and their actions:
