@@ -1,6 +1,7 @@
 -- Run the current pattern for a given number of steps (using current
--- step size) and create a plot of population vs time in an overlay.
--- Author: Andrew Trevorrow (andrew@trevorrow.com), Sep 2016.
+-- step size) and create a plot of population vs time in an overlay
+-- that can be saved in a PNG file.
+-- Author: Andrew Trevorrow (andrew@trevorrow.com), Oct 2016.
 
 local g = golly()
 -- require "gplus.strict"
@@ -41,12 +42,48 @@ local pattname = g.getname()
 local originx = lborder
 local originy = tborder + ylen
 
-local joindots = true
+local lines = true      -- draw connected lines
 
 -- these controls are created in create_overlay
 local sbutt, cbutt      -- Save and Cancel buttons
-local jbox              -- check box for toggling joindots
+local lbox              -- check box for toggling lines
 local oslider           -- slider for adjusting opacity
+
+local controlht         -- height of area containing the controls
+
+-- initial directory for the save dialog
+local initdir = g.getdir("app")
+
+-- user settings are stored in this file
+local settingsfile = g.getdir("data").."pop-plot.ini"
+
+--------------------------------------------------------------------------------
+
+local function read_settings()
+    local f = io.open(settingsfile, "r")
+    if f then
+        -- must match order in write_settings
+        numsteps = tonumber(f:read("*l")) or xlen
+        opacity = tonumber(f:read("*l")) or 80
+        lines = (f:read("*l") or "true") == "true"
+        initdir = f:read("*l") or g.getdir("app")
+        f:close()
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function write_settings()
+    local f = io.open(settingsfile, "w")
+    if f then
+        -- must match order in read_settings
+        f:write(tostring(numsteps).."\n")
+        f:write(tostring(opacity).."\n")
+        f:write(tostring(lines).."\n")
+        f:write(initdir.."\n")
+        f:close()
+    end
+end
 
 --------------------------------------------------------------------------------
 
@@ -86,14 +123,37 @@ end
 
 --------------------------------------------------------------------------------
 
+local function drawdot(x, y)
+    -- draw a small "+" mark
+    x = x + originx
+    y = y + originy
+    ov("set "..x.." "..y)
+    ov("set "..(x-1).." "..y)
+    ov("set "..(x+1).." "..y)
+    ov("set "..x.." "..(y-1))
+    ov("set "..x.." "..(y+1))
+    --[[ enable these calls to draw a square
+    ov("set "..(x-1).." "..(y-1))
+    ov("set "..(x+1).." "..(y-1))
+    ov("set "..(x-1).." "..(y+1))
+    ov("set "..(x+1).." "..(y+1))
+    --]]
+end
+
+--------------------------------------------------------------------------------
+
 local function run_pattern()
     if g.empty() then g.exit("There is no pattern.") end
     
     -- prompt user for number of steps
     local s = g.getstring("Enter the number of steps:", numsteps, "Population plotter")
-    if string.len(s) == 0 then g.exit() end
-    numsteps = tonumber(s)
-    if numsteps <= 0 then g.exit() end
+    if #s == 0 then g.exit() end
+    s = tonumber(s)
+    if s and s > 0 then
+        numsteps = int(s)
+    else
+        g.exit("Number of steps must be > zero.")
+    end
     
     -- generate pattern for given number of steps
     pops[#pops+1] = tonumber(g.getpop())
@@ -119,9 +179,9 @@ end
 --------------------------------------------------------------------------------
 
 local function draw_plot()
-    -- fill overlay with background color
+    -- fill area above control bar with background color
     ov(bgcolor..int(255*opacity/100+0.5))
-    ov("fill") 
+    ov("fill 0 0 "..owd.." "..(oht-controlht))
     
     local minpop = min(pops)
     local maxpop = max(pops)
@@ -172,10 +232,10 @@ local function draw_plot()
     for i = 1, numsteps do
         local newx = int((gens[i+1] - mingen) / genscale)
         local newy = int((pops[i+1] - minpop) / popscale)
-        if joindots then
+        if lines then
             drawline(x, -y, newx, -newy)
         else
-            drawline(newx, -newy, newx, -newy)
+            drawdot(newx, -newy, newx, -newy)
         end
         x = newx
         y = newy
@@ -186,22 +246,6 @@ local function draw_plot()
         end
     end
     
-    -- show the Save and Cancel buttons at bottom right corner of overlay
-    sbutt.show(owd-cbutt.wd-sbutt.wd-20, oht-sbutt.ht-10)
-    cbutt.show(owd-cbutt.wd-10, oht-cbutt.ht-10)
-    
-    -- show the check box at bottom left corner of overlay
-    jbox.show(10, oht-jbox.ht-10, joindots)
-    
-    -- show slider at bottom middle of overlay
-    oslider.show(int((owd-oslider.wd)/2)-40, oht-oslider.ht-10, opacity)
-    
-    -- show opacity % at right end of slider
-    ov(textcolor)
-    wd, ht = maketext(""..opacity.."%")
-    pastetext(int((owd-oslider.wd)/2)-40 + oslider.wd + 2 - originx,
-              oht-oslider.ht-10 + int((oslider.ht-ht)/2) - originy)
-    
     g.update()
 end
 
@@ -209,16 +253,43 @@ end
 
 local function do_save()
     -- called if Save button is clicked
-    -- so prompt user to save overlay (minus bottom stuff) in a .png file
-    g.note("Not yet implemented!!!")
+    
+    -- remove any existing extension from pattern name and append .png
+    local initfile = gp.split(pattname,"%.")..".png"
+    
+    -- prompt for file name and location
+    local pngpath = g.savedialog("Save as PNG file", "PNG (*.png)|*.png",
+                                 initdir, initfile)
+    if #pngpath > 0 then
+        -- save overlay (minus controls) in given file
+        ov("save 0 0 "..owd.." "..(oht-controlht).." "..pngpath)
+        g.show("Population plot was saved in "..pngpath)
+        
+        -- update initdir by stripping off the file name
+        local pathsep = g.getdir("app"):sub(-1)
+        initdir = pngpath:gsub("[^"..pathsep.."]+$","")
+    end
 end
 
 --------------------------------------------------------------------------------
 
-local function toggle_dots()
+local function toggle_lines()
     -- called if check box is clicked
-    joindots = not joindots
+    lines = not lines
     draw_plot()
+end
+
+--------------------------------------------------------------------------------
+
+local function show_opacity()
+    -- show opacity % at right end of slider
+    ov(textcolor)
+    local wd, ht = maketext(""..opacity.."%")
+    ov(bgcolor..255)
+    local x = oslider.x + oslider.wd + 2
+    local y = oht-oslider.ht-10 + int((oslider.ht-ht)/2)
+    ov("fill "..x.." "..y.." 50 "..ht)
+    pastetext(x - originx, y - originy)
 end
 
 --------------------------------------------------------------------------------
@@ -226,13 +297,7 @@ end
 local function do_slider(newval)
     -- called if oslider position has changed
     opacity = newval
-    
-    -- hide all controls so draw_plot will show them with the changed background
-    sbutt.hide()
-    cbutt.hide()
-    jbox.hide()
-    oslider.hide()
-    
+    show_opacity()
     draw_plot()
 end
 
@@ -248,19 +313,40 @@ local function create_overlay()
     cbutt = op.button("Cancel", g.exit)
     
     -- create a check box for showing lines or dots
-    jbox = op.checkbox("Join dots", op.black, toggle_dots)
+    lbox = op.checkbox("Lines", op.black, toggle_lines)
     
     -- create a slider for adjusting opacity of background
     oslider = op.slider("Opacity:", op.black, 101, 0, 100, do_slider)
     
-    g.setoption("showoverlay", 1)
+    controlht = 20 + sbutt.ht
+end
+
+--------------------------------------------------------------------------------
+
+local function draw_controls()
+    ov(bgcolor..255)
+    ov("fill 0 "..(oht-controlht).." "..owd.." "..controlht)
+    
+    -- show the Save and Cancel buttons at bottom right corner of overlay
+    sbutt.show(owd-cbutt.wd-sbutt.wd-20, oht-sbutt.ht-10)
+    cbutt.show(owd-cbutt.wd-10, oht-cbutt.ht-10)
+    
+    -- show the check box at bottom left corner of overlay
+    lbox.show(10, oht-lbox.ht-10, lines)
+    
+    -- show slider to right of check box
+    oslider.show(10+lbox.wd+70, oht-oslider.ht-10, opacity)
+    
+    show_opacity()
 end
 
 --------------------------------------------------------------------------------
 
 local function main()
+    read_settings()
     run_pattern()
     create_overlay()
+    draw_controls()
     draw_plot()
     -- wait for user to hit escape or click Cancel button
     while true do
@@ -278,3 +364,4 @@ local status, err = pcall(main)
 if err then g.continue(err) end
 -- the following code is always executed
 ov("delete")
+write_settings()
