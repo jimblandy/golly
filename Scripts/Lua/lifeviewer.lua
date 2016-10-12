@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 14
+local buildnumber = 15
 
 local g = golly()
 
@@ -122,6 +122,7 @@ local trackword         = "TRACK"
 local trackboxword      = "TRACKBOX"
 local trackloopword     = "TRACKLOOP"
 local zoomword          = "ZOOM"
+local zword             = "Z"
 
 -- keyword decoding
 -- each argument has a type followed by constraint values
@@ -147,6 +148,7 @@ local keywords = {
     [trackboxword] =      { "r", -1, 1, "r", -1, 1, "r", -1, 1, "r", -1, 1, "" },
     [trackloopword] =     { "L", 1, "r", -1, 1, "r", -1, 1, "" },
     [zoomword] =          { "r", mininvzoom, maxzoom, "" }
+    [z] =                 { "r", mininvzoom, maxzoom, "" }
 }
 
 --------------------------------------------------------------------------------
@@ -1021,7 +1023,7 @@ local function checkscript()
                     trackw = tracke
                     trackn = tracks
                     trackdefined = true
-                elseif token == zoomword then
+                elseif token == zoomword or token == zword then
                     if arguments[1] < 0 then
                         arguments[1] = -1 / arguments[1]
                     end
