@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 15
+local buildnumber = 16
 
 local g = golly()
 
@@ -38,6 +38,8 @@ local minstop = 1
 local minloop = 1
 local mintheme = 0
 local maxtheme = #op.themes
+local minpan = -4096
+local maxpan = 4096
 
 -- smooth camera movement
 local startx
@@ -73,6 +75,11 @@ local trackw
 local trackn
 local trackdefined = false
 
+-- origin
+local originx = 0
+local originy = 0
+local originz = 0
+
 -- zoom is held as a value 0..1 for smooth linear zooms
 local linearzoom
 
@@ -92,6 +99,7 @@ local hexon = false
 
 -- grid
 local grid = false
+local gridmajoron = true
 local gridmajor = 10
 local mingridmajor = 0
 local maxgridmajor = 16
@@ -121,6 +129,8 @@ local themeword         = "THEME"
 local trackword         = "TRACK"
 local trackboxword      = "TRACKBOX"
 local trackloopword     = "TRACKLOOP"
+local xword             = "X"
+local yword             = "Y"
 local zoomword          = "ZOOM"
 local zword             = "Z"
 
@@ -147,8 +157,10 @@ local keywords = {
     [trackword] =         { "r", -1, 1, "r", -1, 1, "" },
     [trackboxword] =      { "r", -1, 1, "r", -1, 1, "r", -1, 1, "r", -1, 1, "" },
     [trackloopword] =     { "L", 1, "r", -1, 1, "r", -1, 1, "" },
-    [zoomword] =          { "r", mininvzoom, maxzoom, "" }
-    [z] =                 { "r", mininvzoom, maxzoom, "" }
+    [xword] =             { "r", minpan, maxpan, "" },
+    [yword] =             { "r", minpan, maxpan, "" },
+    [zoomword] =          { "r", mininvzoom, maxzoom, "" },
+    [zword] =             { "r", mininvzoom, maxzoom, "" }
 }
 
 --------------------------------------------------------------------------------
@@ -166,7 +178,11 @@ local function setgridlines()
     else
         ov("celloption grid 0")
     end
-    ov("celloption gridmajor "..gridmajor)
+    if gridmajoron then
+        ov("celloption gridmajor "..gridmajor)
+    else
+        ov("celloption gridmajor 0")
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -355,6 +371,15 @@ end
 
 local function togglegrid()
     grid = not grid
+    setgridlines()
+    updatestatus()
+    refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function togglegridmajor()
+    gridmajoron = not gridmajoron
     setgridlines()
     updatestatus()
     refresh()
@@ -1023,6 +1048,10 @@ local function checkscript()
                     trackw = tracke
                     trackn = tracks
                     trackdefined = true
+                elseif token == xword then
+                    camx = arguments[1]
+                elseif token == yword then
+                    camy = arguments[1]
                 elseif token == zoomword or token == zword then
                     if arguments[1] < 0 then
                         arguments[1] = -1 / arguments[1]
@@ -1188,6 +1217,8 @@ local function main()
             togglehex()
         elseif event == "key x none" then
             togglegrid()
+        elseif event == "key x shift" then
+            togglegridmajor()
         elseif event:find("^ozoomin") then
             zoominto(event)
         elseif event:find("^ozoomout") then

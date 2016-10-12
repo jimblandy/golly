@@ -4,26 +4,157 @@
 
 <p>
 <dd><a href="#intro"><b>Introduction</b></a></dd>
-<dd><a href="#commands"><b>Keyboard Shortcuts</b></a></dd>
-<dd><a href="#blending"><b>Script Keywords</b></a></dd>
+<dd><a href="#keyboard"><b>Keyboard Shortcuts</b></a></dd>
+<dd><a href="#script"><b>Script Commands</b></a></dd>
+<dd><a href="#notes"><b>Notes</b></a></dd>
 </p>
 
-<p><a name="intro"></a>&nbsp;<br>
+<p><a name="intro"></a><br>
 <font size=+1><b>Introduction</b></font>
 
 <p>
-LifeViewer is a scriptable pattern viewer featuring history, smooth
-non-integer zoom, rotation and hex display.
+LifeViewer is a <a href="script">scriptable</a> pattern viewer featuring:
+<ul>
+<li> Rotation and non-integer zoom.
+<li> Color themes with cell history.
+<li> <a href=#hex>Hex</a> grid display.
+<li> Pseudo 3d layers and stars.
+</ul>
 
-<p><a name="keyboard"></a>&nbsp;<br>
+<p><a name="keyboard"></a><br>
 <font size=+1><b>Keyboard Shortcuts</b></font>
 
-The keyboard shortcuts will appear here...
+<p><table cellspacing=1 border=2 width=90% cellpadding = 3>
+<tr><th colspan=2>Playback controls</th></tr>
+<tr><th>Key combination</th><th>Action</th></tr>
+<tr><td align="right">Return</td><td>Toggle play / pause.</td></tr>
+<tr><td align="right">Space</td><td>Pause / next generation.</td></tr>
+<tr><td align="right">Esc</td><td>Close.</td></tr>
+<tr><td align="right">R</td><td>Reset to generation 0.</td></tr>
+<tr><th colspan=2>Camera controls</th></tr>
+<tr><th>Key combination</th><th>Action</th></tr>
+<tr><td align="right">F</td><td>Fit pattern to display.</td></tr>
+<tr><td align="right">Shift F</td><td>Toggle autofit.</td></tr>
+<tr><td align="right">[</td><td>Zoom out.</td></tr>
+<tr><td align="right">]</td><td>Zoom in.</td></tr>
+<tr><td align="right">Shift [</td><td>Halve zoom.</td></tr>
+<tr><td align="right">Shift ]</td><td>Double zoom.</td></tr>
+<tr><td align="right">1</td><td>1x zoom.</td></tr>
+<tr><td align="right">2</td><td>2x zoom.</td></tr>
+<tr><td align="right">4</td><td>4x zoom.</td></tr>
+<tr><td align="right">8</td><td>8x zoom.</td></tr>
+<tr><td align="right">6</td><td>16x zoom.</td></tr>
+<tr><td align="right">3</td><td>32x zoom.</td></tr>
+<tr><td align="right">Shift 1</td><td>Integer zoom</td></tr>
+<tr><td align="right">Shift 2</td><td>-2x zoom.</td></tr>
+<tr><td align="right">Shift 4</td><td>-4x zoom.</td></tr>
+<tr><td align="right">Shift 8</td><td>-8x zoom.</td></tr>
+<tr><td align="right">Shift 6</td><td>-16x zoom.</td></tr>
+<tr><td align="right">Left</td><td>Pan left.</td></tr>
+<tr><td align="right">Right</td><td>Pan right.</td></tr>
+<tr><td align="right">Up</td><td>Pan up.</td></tr>
+<tr><td align="right">Down</td><td>Pan down.</td></tr>
+<tr><td align="right">Shift Left</td><td>Pan north west.</td></tr>
+<tr><td align="right">Shift Right</td><td>Pan south east.</td></tr>
+<tr><td align="right">Shift Up</td><td>Pan north east.</td></tr>
+<tr><td align="right">Shift Down</td><td>Pan south west.</td></tr>
+<tr><td align="right">&lt;</td><td>Rotate left.</td></tr>
+<tr><td align="right">&gt;</td><td>Rotate right.</td></tr>
+<tr><td align="right">Shift &lt;</td><td>Rotate left 90 degrees.</td></tr>
+<tr><td align="right">Shift &gt;</td><td>Rotate right 90 degrees.</td></tr>
+<tr><td align="right">5</td><td>Reset angle.</td></tr>
+<tr><th colspan=2>View controls</th></tr>
+<tr><th>Key combination</th><th>Action</th></tr>
+<tr><td align="right">Q</td><td>Increase number of layers.</td></tr>
+<tr><td align="right">A</td><td>Decrease number of layers.</td></tr>
+<tr><td align="right">P</td><td>Increase layer depth.</td></tr>
+<tr><td align="right">Q</td><td>Decrease layer depth.</td></tr>
+<tr><td align="right">C</td><td>Cycle color theme.</td></tr>
+<tr><td align="right">Shift C</td><td>Toggle theme / standard colors.</td></tr>
+<tr><td align="right">/</td><td>Toggle hex view.</td></tr>
+<tr><td align="right">S</td><td>Toggle stars.</td></tr>
+<tr><td align="right">X</td><td>Toggle grid lines.</td></tr>
+<tr><td align="right">Shift X</td><td>Toggle major grid lines.</td></tr>
+</table>
 
-<p><a name="keyboard"></a>&nbsp;<br>
+<p><a name="script"></a><br>
 <font size=+1><b>Script Commands</b></font>
 
-The script comamnds will appear here...
+<p>
+LifeViewer contains a script language that allows you to control playback of a pattern and
+how it is viewed through a dynamic camera. You can use the script language to do things like:
+<ul>
+<li> Define how you want a pattern to be displayed when LifeViewer starts.
+<li> Specify whether the pattern should automatically start playing when LifeViewer starts.
+<li> Specify that playback should stop or loop back to the start on reaching a certain generation.
+<li> Have the camera track a pattern as it moves across the universe (good for spaceships).
+<li> Define a set of waypoints and have the camera follow them during playback to highlight
+interesting parts of your pattern.
+</ul>
+<p>
+Script commands must be embedded in pattern comments which means that you can add them to
+any pattern file and other pattern readers will happily ignore them.
+They should be enclosed in [[ and ]]. All commands must be surrounded by whitespace. Multiple
+script sections are allowed.
+<p>
+The pattern below contains script commands that mean when LifeViewer is started the pattern will
+be displayed at zoom 9.5 with a camera angle of 30 degrees. The pattern will automatically start
+running and then stop at generation 100.
+<pre>
+#C [[ ZOOM 9.5 ANGLE 30 ]]
+#C [[ AUTOSTART STOP 100 ]]
+x = 3, y = 3, rule = Life
+ooo$
+bbo$
+bo!
+</pre>
+<p>
+To see this in action:
+<ol>
+<li> Stop LifeViewer if it is running (click on the Golly window and press Esc).
+<li> Copy the pattern above to the clipboard.
+<li> Use File->Open Clipboard in Golly.
+<li> Run Scripts/Lua/lifeviewer.lua.
+</ol>
+<p>
+There are many script commands available and they are grouped by function in the table below.
+
+<p><table cellspacing=1 border=2 width=90% cellpadding=3>
+<tr><th>Command</th><th>Arguments<th>Action</th></tr>
+<tr><td align="right">[[</td><td></td><td>Start script section.</td></tr>
+<tr><td align="right">]]</td><td></td><td>End script section.</td></tr>
+<tr><th colspan=3>Playback commands</th></tr>
+<tr><td align="right">AUTOSTART</td><td></td><td>Start play automatically.</td></tr>
+<tr><td align="right">LOOP</td><td>&lt;1..&gt;</td><td>Loop at specified generation.</td></tr>
+<tr><td align="right">STOP</td><td>&lt;1..&gt;</td><td>Stop at specified generation.</td></tr>
+<tr><th colspan=3>Camera commands</th></tr>
+<tr><td align="right">ANGLE</td><td><0.0..359.9></td><td>Set camera angle.</td></tr>
+<tr><td align="right">AUTOFIT</td><td></td><td>Fit pattern to display.</td></tr>
+<tr><td align="right">TRACK</td><td>X Y</td><td>Camera moves at (X, Y) cells/generation.</td></tr>
+<tr><td align="right">TRACKBOX</td><td>E S W N</td><td>Camera tracks bounding box with E, S, W and N edges moving at defined cells/generation.</td></tr>
+<tr><td align="right">TRACKLOOP</td><td>P X Y</td><td>Camera moves at (X, Y) cells/generation and playback loops at generation P.</td></tr>
+<tr><td align="right">X</td><td><-4096.0..4096.0></td><td>Set camera pan in X direction.</td></tr>
+<tr><td align="right">Y</td><td><-4096.0..4096.0></td><td>Set camera pan in Y direction.</td></tr>
+<tr><td align="right">ZOOM or Z</td><td><-16.0..32.0></td><td>Set camera zoom. Negative zooms can also be specified as decimals: -4 = 0.25.</td></tr>
+<tr><th colspan=3>View commands</th></tr>
+<tr><td align="right">DEPTH</td><td><0.0..1.0></td><td>Set layer depth.</td></tr>
+<tr><td align="right">LAYERS</td><td><1..10></td><td>Set number of layers.</td></tr>
+<tr><td align="right">GRID</td><td></td><td>Display grid lines.</td></tr>
+<tr><td align="right">GRIDMAJOR</td><td><0..16></td><td>Set major grid line interval (0 = off).</td></tr>
+<tr><td align="right">HEXDISPLAY</td><td></td><td>Force hex grid display.</td></tr>
+<tr><td align="right">SQUAREDISPLAY</td><td></td><td>Force square grid display.</td></tr>
+<tr><td align="right">STARS</td><td></td><td>Display stars.</td></tr>
+<tr><td align="right">THEME</td><td><0..9></td><td>Set color theme.</td></tr>
+</table>
+
+<p><a name="notes"></a><br>
+<font size=+1><b>Notes</b></font>
+
+<p>
+<ul>
+<li><a name="hex"></a>Hex view does not support camera rotation. Any rotation will be ignored.
+<li>Grid lines only display at 4x zoom and higher and when the camera angle is 0.
+</ul>
 
 </body>
 </html>
