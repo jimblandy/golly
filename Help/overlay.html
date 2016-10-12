@@ -159,10 +159,16 @@ The valid options and their allowed values are:
 <table cellspacing=0 cellpadding=0>
 <tr><td>depth <i>d</i></td><td width=20></td><td>&ndash;
 set layer depth to <i>d</i> where <i>d</i> is from 0.0 to 10.0</td></tr>
-<tr><td>layers <i>n</i></td><td width=20></td><td>&ndash;
-set number of layers to <i>n</i> where <i>n</i> is an integer from 1 to 10</td></tr>
+<tr><td>grid <i>i</i></td><td width=20></td><td>&ndash;
+set grid lines display on (<i>i</i> is 1) or off (<i>i</i> is 0)</td></tr>
+<tr><td>gridmajor <i>g</i></td><td width=20></td><td>&ndash;
+set grid lines major interval to <i>g</i> where <i>g</i> is an integer from 0 to 16</td></tr>
 <tr><td>hex <i>i</i></td><td width=20></td><td>&ndash;
 set hex display on (<i>i</i> is 1) or off (<i>i</i> is 0)</td></tr>
+<tr><td>layers <i>n</i></td><td width=20></td><td>&ndash;
+set number of layers to <i>n</i> where <i>n</i> is an integer from 1 to 10</td></tr>
+<tr><td>stars <i>i</i></td><td width=20></td><td>&ndash;
+set stars display on (<i>i</i> is 1) or off (<i>i</i> is 0)</td></tr>
 </table>
 </dd>
 </p>
@@ -170,12 +176,15 @@ set hex display on (<i>i</i> is 1) or off (<i>i</i> is 0)</td></tr>
 <dd> Example: <b>ov("celloption depth 0.2")</b></dd>
 <dd> Example: <b>ov("celloption layers 6")</b></dd>
 <dd> Example: <b>ov("celloption hex 1")</b></dd>
+<dd> Example: <b>ov("celloption grid 1")</b></dd>
+<dd> Example: <b>ov("celloption gridmajor 8")</b></dd>
+<dd> Example: <b>ov("celloption stars 1")</b></dd>
 </p>
 
 <p>
 <dd>
 The <a href="#cellview">cellview</a> command initializes the
-depth to 0.05, the number of layers to 1, and the hex display to 0.
+depth to 0.05, the number of layers to 1, hex display to 0, grid to 0, gridmajor to 10 and stars to 0.
 </dd>
 </p>
 

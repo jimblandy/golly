@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 
 -- build number
-local buildnumber = 13
+local buildnumber = 14
 
 local g = golly()
 
@@ -22,6 +22,7 @@ local currentgen = 0
 
 -- view constants
 local minzoom = 0.0625
+local mininvzoom = -1 / minzoom
 local maxzoom = 32
 local minangle = 0
 local maxangle = 360
@@ -32,7 +33,7 @@ local maxdepth = 1
 local minlayers = 1
 local maxlayers = 10
 local zoomborder = 0.9  -- proportion of view to fill with fit zoom
-local glidesteps = 20   -- steps to glide camera
+local glidesteps = 50   -- steps to glide camera
 local minstop = 1
 local minloop = 1
 local mintheme = 0
@@ -65,6 +66,13 @@ local camlayers = defcamlayers
 local camlayerdepth = defcamlayerdepth
 local autofit = false
 
+-- tracking
+local tracke
+local tracks
+local trackw
+local trackn
+local trackdefined = false
+
 -- zoom is held as a value 0..1 for smooth linear zooms
 local linearzoom
 
@@ -76,27 +84,91 @@ local theme = 1
 local lastmousex = 0
 local lastmousey = 0
 local mousedrag = false
-
 local clickx = 0
 local clicky = 0
 
 -- whether hex display is on
 local hexon = false
 
+-- grid
+local grid = false
+local gridmajor = 10
+local mingridmajor = 0
+local maxgridmajor = 16
+
+-- stars
+local stars = false
+
 -- script tokens
 local tokens = {}
 local curtok = 1
-local scriptstartword = "[["
-local scriptendword   = "]]"
-local angleword       = "ANGLE"
-local autofitword     = "AUTOFIT"
-local autostartword   = "AUTOSTART"
-local depthword       = "DEPTH"
-local layersword      = "LAYERS"
-local loopword        = "LOOP"
-local stopword        = "STOP"
-local themeword       = "THEME"
-local zoomword        = "ZOOM"
+local arguments
+local scriptstartword   = "[["
+local scriptendword     = "]]"
+local angleword         = "ANGLE"
+local autofitword       = "AUTOFIT"
+local autostartword     = "AUTOSTART"
+local depthword         = "DEPTH"
+local gridword          = "GRID"
+local gridmajorword     = "GRIDMAJOR"
+local hexdisplayword    = "HEXDISPLAY"
+local layersword        = "LAYERS"
+local loopword          = "LOOP"
+local squaredisplayword = "SQUAREDISPLAY"
+local starsword         = "STARS"
+local stopword          = "STOP"
+local themeword         = "THEME"
+local trackword         = "TRACK"
+local trackboxword      = "TRACKBOX"
+local trackloopword     = "TRACKLOOP"
+local zoomword          = "ZOOM"
+
+-- keyword decoding
+-- each argument has a type followed by constraint values
+-- "r" - float range
+-- "R" - int range
+-- "l" - float lower bound
+-- "L" - int lower bound
+local keywords = {
+    [angleword] =         { "r", minangle, maxangle, "" },
+    [autofitword] =       { "" },
+    [autostartword] =     { "" },
+    [depthword] =         { "r", mindepth, maxdepth, "" },
+    [gridword] =          { "" },
+    [gridmajorword] =     { "R", mingridmajor, maxgridmajor, "" },
+    [hexdisplayword] =    { "" },
+    [layersword] =        { "R", minlayers, maxlayers, "" },
+    [loopword] =          { "L", minloop, "" },
+    [squaredisplayword] = { "" },
+    [starsword]         = { "" },
+    [stopword] =          { "L", minstop, "" },
+    [themeword] =         { "R", mintheme, maxtheme, "" },
+    [trackword] =         { "r", -1, 1, "r", -1, 1, "" },
+    [trackboxword] =      { "r", -1, 1, "r", -1, 1, "r", -1, 1, "r", -1, 1, "" },
+    [trackloopword] =     { "L", 1, "r", -1, 1, "r", -1, 1, "" },
+    [zoomword] =          { "r", mininvzoom, maxzoom, "" }
+}
+
+--------------------------------------------------------------------------------
+
+local function setgridlines()
+    if grid then
+        ov("celloption grid 1")
+    else
+        ov("celloption grid 0")
+    end
+    ov("celloption gridmajor "..gridmajor)
+end
+
+--------------------------------------------------------------------------------
+
+local function setstars()
+    if stars then
+        ov("celloption stars 1")
+    else
+        ov("celloption stars 0")
+    end
+end
 
 --------------------------------------------------------------------------------
 
@@ -106,6 +178,7 @@ local function sethex()
     else
         ov("celloption hex 0")
     end
+    ov("camera xy "..camx.." "..camy)
 end
 
 --------------------------------------------------------------------------------
@@ -127,17 +200,24 @@ Commands must be surrounded by whitespace
 Commands:
 
 ]]
-    helptext = helptext..scriptstartword.."							start script section\n"
-    helptext = helptext..scriptendword.."							end script secion\n"
-    helptext = helptext..angleword.."		<"..minangle..".."..maxangle..">		set camera angle\n"
-    helptext = helptext..autofitword.."					fit pattern to display\n"
-    helptext = helptext..autostartword.."					start play automatically\n"
-    helptext = helptext..depthword.."		<"..mindepth..".0.."..maxdepth..".0>		set layer depth\n"
-    helptext = helptext..layersword.."		<"..minlayers..".."..maxlayers..">			set number of layers\n"
-    helptext = helptext..loopword.."		<"..minloop.."..>			loop at generation\n"
-    helptext = helptext..stopword.."		<"..minstop.."..>			stop at generation\n"
-    helptext = helptext..themeword.."		<"..mintheme..".."..maxtheme..">			set theme\n"
-    helptext = helptext..zoomword.."		<"..(-1 / minzoom)..".."..maxzoom..".0>	set camera zoom\n"
+    helptext = helptext..scriptstartword.."									start script section\n"
+    helptext = helptext..scriptendword.."									end script secion\n"
+    helptext = helptext..angleword.."				<"..minangle..".0.."..(maxangle - 1)..".9>		set camera angle\n"
+    helptext = helptext..autofitword.."							fit pattern to display\n"
+    helptext = helptext..autostartword.."							start play automatically\n"
+    helptext = helptext..depthword.."				<"..mindepth..".0.."..maxdepth..".0>		set layer depth\n"
+    helptext = helptext..gridword.."								display grid lines\n"
+    helptext = helptext..gridmajorword.."			<"..mingridmajor..".."..maxgridmajor..">			set major line interval\n"
+    helptext = helptext..hexdisplayword.."						force hex display\n"
+    helptext = helptext..layersword.."				<"..minlayers..".."..maxlayers..">			set number of layers\n"
+    helptext = helptext..loopword.."				<"..minloop.."..>			loop at generation\n"
+    helptext = helptext..squaredisplayword.."					force square display\n"
+    helptext = helptext..stopword.."				<"..minstop.."..>			stop at generation\n"
+    helptext = helptext..themeword.."				<"..mintheme..".."..maxtheme..">			set theme\n"
+    helptext = helptext..trackword.."				X Y				camera tracking\n"
+    helptext = helptext..trackboxword.."			E S W N			camera box tracking\n"
+    helptext = helptext..trackloopword.."			P X Y			looped camera tracking\n"
+    helptext = helptext..zoomword.."				<"..(-1 / minzoom)..".."..maxzoom..".0>	set camera zoom\n"
 
     -- display script help
     g.note(helptext)
@@ -157,13 +237,12 @@ Space	pause / next generation
 Tab		pause / next step
 Esc		close
 R		reset to generation 0
-h		help
 
 Camera controls:
 Key		Function			Shift
 [		zoom out			halve zoom
 ]		zoom in				double zoom
-F               fit pattern to display	toggle autofit
+F		fit pattern to display	toggle autofit
 1		1x zoom			integer zoom
 2		2x zoom			-2x zoom
 4		4x zoom			-4x zoom
@@ -186,6 +265,8 @@ P		increase layer depth
 L		decrease layer depth
 C		cycle themes		toggle theme
 /		toggle hex mode
+X		toggle grid lines
+S		toggle stars
 ]]
 
     -- display help
@@ -231,6 +312,9 @@ local function updatestatus()
     -- convert x and y to display coordinates
     local x = camx - viewwidth / 2
     local y = camy - viewheight / 2
+    if hexon then
+        x = x + camy / 2
+    end
 
     -- convert theme to status
     local themestatus = "off"
@@ -250,8 +334,20 @@ local function updatestatus()
         hexstatus = "hex"
     end
 
+    -- convert grid to status
+    local gridstatus = "off"
+    if grid then
+        gridstatus = "on"
+    end
+
+    -- convert angle to status
+    local displayangle = camangle
+    if hexon then
+        displayangle = 0
+    end
+
     -- update status bar
-    local status = "Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..camangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus
+    local status = "Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..displayangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus.."  Grid "..gridstatus
     if stopgen ~= -1 then
         status = status.."  Stop "..stopgen
     end
@@ -273,12 +369,6 @@ end
 local function updatecamera()
     -- convert linear zoom to real zoom
     local camzoom = lineartoreal(linearzoom)
-
-    -- hex mode does not support rotation
-    if hexon then
-        camangle = 0
-    end
-
     ov("camera zoom "..camzoom)
     ov("camera angle "..camangle)
     ov("camera xy "..camx.." "..camy)
@@ -326,18 +416,55 @@ end
 local function togglehex()
     hexon = not hexon
     sethex()
+    if hexon then
+        camx = camx - camy / 2
+        defcamx = defcamx - camy / 2
+    else
+        camx = camx + camy / 2
+        defcamx = defcamx + camy / 2
+    end
     updatecamera()
     refresh()
 end
 
 --------------------------------------------------------------------------------
 
+local function togglegrid()
+    grid = not grid
+    setgridlines()
+    updatestatus()
+    refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function togglestars()
+    stars = not stars
+    setstars()
+    refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function bezierx(t, x0, x1, x2, x3)
+    local cX = 3 * (x1 - x0)
+    local bX = 3 * (x2 - x1) - cX
+    local aX = x3 - x0 - cX - bX
+
+    -- compute x position
+    local x = (aX * math.pow(t, 3)) + (bX * math.pow(t, 2)) + (cX * t) + x0;
+    return x
+end
+
+--------------------------------------------------------------------------------
+
 local function glidecamera()
     local linearcomplete = camsteps / glidesteps
+    local beziercomplete = bezierx(linearcomplete, 0, 0, 1, 1)
     
-    camx = startx + linearcomplete * (endx - startx)
-    camy = starty + linearcomplete * (endy - starty)
-    linearzoom = startzoom + linearcomplete * (endzoom - startzoom)
+    camx = startx + beziercomplete * (endx - startx)
+    camy = starty + beziercomplete * (endy - starty)
+    linearzoom = startzoom + beziercomplete * (endzoom - startzoom)
     
     camsteps = camsteps + 1
     if camsteps > glidesteps then
@@ -365,6 +492,15 @@ local function fitzoom(immediate)
         local bottomy = rect[2]
         local width = rect[3]
         local height = rect[4]
+        local rightx = leftx + width
+        local topy = bottomy + height
+
+        -- check for hex
+        if hexon then
+            leftx = leftx - bottomy / 2
+            rightx = rightx - topy / 2
+            width = rightx - leftx + 1
+        end
 
         -- get the smallest zoom needed
         local zoom = viewwd / width
@@ -387,6 +523,10 @@ local function fitzoom(immediate)
         -- get new pan position
         local newx = viewwidth / 2 + leftx + width / 2
         local newy = viewheight / 2 + bottomy + height / 2
+
+        if hexon then
+            newx = newx - newy / 2
+        end
 
         -- check whether to fit immediately
         if immediate then
@@ -674,8 +814,13 @@ local function panview(dx, dy)
     local camzoom = lineartoreal(linearzoom)
     dx = dx / camzoom;
     dy = dy / camzoom;
-    local sinangle = math.sin(-camangle / 180 * math.pi)
-    local cosangle = math.cos(-camangle / 180 * math.pi)
+
+    local angle = camangle
+    if hexon then
+        angle = 0
+    end
+    local sinangle = math.sin(-angle / 180 * math.pi)
+    local cosangle = math.cos(-angle / 180 * math.pi)
     camx = camx + (dx * cosangle + dy * -sinangle)
     camy = camy + (dx * sinangle + dy * cosangle)
     updatecamera()
@@ -737,9 +882,11 @@ local function reset(looping)
     -- if using theme then need to recreate the cell view to clear history
     if theme ~= -1 then
         createcellview()
+        setstars()
         settheme()
         updatecamera()
         sethex()
+        setgridlines()
     end
 
     -- update cell view from reset universe
@@ -756,187 +903,10 @@ end
 
 --------------------------------------------------------------------------------
 
-local function scriptstop()
-    local result = ""
-    local newstop
-
-    curtok = curtok + 1
-    if curtok > #tokens then
-        result = "missing argument"
-    else
-        newstop = tonumber(tokens[curtok])
-        if newstop == nil then
-            result = "argument must be a number"
-        else
-             if newstop < minstop then
-                 result = "argument must be at least "..minstop
-             else
-                 stopgen = newstop
-             end
-        end
-    end
-
-    return result
-end
-
---------------------------------------------------------------------------------
-
-local function scriptloop()
-    local result = ""
-    local newloop
-
-    curtok = curtok + 1
-    if curtok > #tokens then
-        result = "missing argument"
-    else
-        newloop = tonumber(tokens[curtok])
-        if newloop == nil then
-            result = "argument must be a number"
-        else
-             if newloop < minloop then
-                 result = "argument must be at least "..minloop
-             else
-                 loopgen = newloop
-             end
-        end
-    end
-
-    return result
-end
-
---------------------------------------------------------------------------------
-
-local function scriptangle()
-    local result = ""
-    local newangle
-
-    curtok = curtok + 1
-    if curtok > #tokens then
-        result = "missing argument"
-    else
-        newangle = tonumber(tokens[curtok])
-        if newangle == nil then
-            result = "argument must be a number"
-        else
-             if newangle < minangle or newangle > maxangle then
-                 result = "argument must be from "..minangle.." to "..maxangle
-             else
-                 camangle = newangle
-             end
-        end
-    end
-
-    return result
-end
-
---------------------------------------------------------------------------------
-
-local function scriptzoom()
-    local result = ""
-    local newzoom
-
-    curtok = curtok + 1
-    if curtok > #tokens then
-        result = "missing argument"
-    else
-        newzoom = tonumber(tokens[curtok])
-        if newzoom == nil then
-            result = "argument must be a number"
-        else
-             if newzoom < minzoom or newzoom > maxzoom then
-                 result = "argument must be from "..minzoom.." to "..maxzoom
-             else
-                 linearzoom = realtolinear(newzoom)
-             end
-        end
-    end
-
-    return result
-end
-
---------------------------------------------------------------------------------
-
-local function scriptdepth()
-    local result = ""
-    local newdepth
-
-    curtok = curtok + 1
-    if curtok > #tokens then
-        result = "missing argument"
-    else
-        newdepth = tonumber(tokens[curtok])
-        if newdepth == nil then
-            result = "argument must be a number"
-        else
-             if newdepth < mindepth or newdepth > maxdepth then
-                 result = "argument must be from "..mindepth.." to "..maxdepth
-             else
-                 camlayerdepth = newdepth
-             end
-        end
-    end
-
-    return result
-end
-
---------------------------------------------------------------------------------
-
-local function scriptlayers()
-    local result = ""
-    local newlayers
-
-    curtok = curtok + 1
-    if curtok > #tokens then
-        result = "missing argument"
-    else
-        newlayers = tonumber(tokens[curtok])
-        if newlayers == nil then
-            result = "argument must be a number"
-        else
-             if newlayers < minlayers or newlayers > maxlayers then
-                 result = "argument must be from "..minlayers.." to "..maxlayers
-             else
-                 camlayers = newlayers
-             end
-        end
-    end
-
-    return result
-end
-
---------------------------------------------------------------------------------
-
-local function scripttheme()
-    local result = ""
-    local newtheme
-
-    curtok = curtok + 1
-    if curtok > #tokens then
-        result = "missing argument"
-    else
-        newtheme = tonumber(tokens[curtok])
-        if newtheme == nil then
-            result = "argument must be a number"
-        else
-            if newtheme < mintheme or newtheme > maxtheme then
-                result = "argument must be from "..mintheme.." to "..maxtheme
-            else
-                theme = newtheme
-                settheme()
-            end
-        end
-    end
-
-    return result
-end
-
---------------------------------------------------------------------------------
-
-local function checkscript()
+local function readtokens()
     local comments = g.getinfo()
     local inscript = false
-    local invalid = ""
-
+    
     -- build token list
     for token in comments:gsub("\n", " "):gmatch("([^ ]*)") do
         if token ~= "" then
@@ -951,41 +921,204 @@ local function checkscript()
             end
         end
     end
+end
+
+--------------------------------------------------------------------------------
+
+local function validatekeyword(token)
+    local invalid = ""
+    local keyword = keywords[token]
+    local validation
+    local index = 1
+    local lower, upper
+    local argvalue
+    local argnum = 1
+
+    if keyword == nil then
+        invalid = "unknown script command"
+    else
+        -- check what sort of validation is required for this keyword
+        arguments = {}
+        validation = keyword[index]
+        while validation ~= "" do
+            -- need an argument
+            if curtok >= #tokens then
+                invalid = "missing argument"
+            else
+                -- get the argument
+                curtok = curtok + 1
+                argvalue = tokens[curtok]
+
+                -- check which sort of validation to perform
+                if validation == "l" then
+                    -- float lower bound
+                    argvalue = tonumber(argvalue)
+                    if argvalue == nil then
+                        invalid = "argument must be a number"
+                    else
+                        index = index + 1
+                        lower = keyword[index]
+                        if (argvalue < lower) then
+                            invalid = "argument must be greater than "..lower
+                        end
+                    end
+                elseif validation == "L" then
+                    -- integer lower bound
+                    argvalue = tonumber(argvalue)
+                    if argvalue == nil then
+                        invalid = "argument must be an integer"
+                    else
+                        if argvalue ~= math.floor(argvalue) then
+                            invalid = "argument must be an integer"
+                        else
+                            index = index + 1
+                            lower = keyword[index]
+                            if (argvalue < lower) then
+                                invalid = "argument must be greater than "..lower
+                            end
+                        end
+                    end
+                elseif validation == "r" then
+                    -- float range
+                    argvalue = tonumber(argvalue)
+                    if argvalue == nil then
+                        invalid = "argument must be a number"
+                    else
+                        index = index + 1
+                        lower = keyword[index]
+                        index = index + 1
+                        upper = keyword[index]
+                        if (argvalue < lower or argvalue > upper) then
+                            invalid = "argument must be between "..lower.." and "..upper
+                        end
+                    end
+                elseif validation == "R" then
+                    -- integer range
+                    argvalue = tonumber(argvalue)
+                    if argvalue == nil then
+                        invalid = "argument must be an integer"
+                    else
+                        if argvalue ~= math.floor(argvalue) then
+                            invalid = "argument must be an integer"
+                        else
+                            index = index + 1
+                            lower = keyword[index]
+                            index = index + 1
+                            upper = keyword[index]
+                            if (argvalue < lower or argvalue > upper) then
+                                invalid = "argument must be between "..lower.." and "..upper
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- check if validation failed
+            if invalid ~= "" then
+                -- exit loop
+                validation = ""
+            else
+                -- save the argument
+                arguments[argnum] = argvalue
+                argnum = argnum + 1
+
+                -- get next argument to validation
+                index = index + 1
+                validation = keyword[index]
+            end
+        end
+    end
+
+    return invalid
+end
+
+--------------------------------------------------------------------------------
+
+local function checkscript()
+    local invalid = ""
+    local token
+
+    -- read tokens
+    readtokens()
 
     -- process any script comments
     if #tokens > 0 then
         curtok = 1
         while curtok <= #tokens do
-            -- process the next token
+            -- get the next token
             token = tokens[curtok]
-            if token == angleword then
-                invalid = scriptangle()
-            elseif token == autofitword then
-                autofit = true
-            elseif token == autostartword then
-                autostart = true
-                generating = true
-            elseif token == depthword then
-                invalid = scriptdepth()
-            elseif token == layersword then
-                invalid = scriptlayers()
-            elseif token == loopword then
-                invalid = scriptloop()
-            elseif token == stopword then
-                invalid = scriptstop()
-            elseif token == themeword then
-                invalid = scripttheme() 
-            elseif token == zoomword then
-                invalid = scriptzoom()
-            else
-                invalid = "unknown script commmand"
+
+            -- check if it is a valid keyword
+            invalid = validatekeyword(token)
+
+            -- process command if valid
+            if invalid == "" then
+                if token == angleword then
+                    camangle = arguments[1]
+                elseif token == autofitword then
+                    autofit = true
+                elseif token == autostartword then
+                    autostart = true
+                    generating = true
+                elseif token == depthword then
+                    camlayerdepth = arguments[1]
+                elseif token == gridword then
+                    grid = true
+                elseif token == gridmajor then
+                    gridmajor = arguments[1]
+                elseif token == hexdisplayword then
+                    hexon = true
+                elseif token == layersword then
+                    camlayers = arguments[1]
+                elseif token == loopword then
+                    loopgen = arguments[1]
+                elseif token == squaredisplayword then
+                    hexon = false
+                elseif token == starsword then
+                    stars = true
+                elseif token == stopword then
+                    stopgen = arguments[1]
+                elseif token == themeword then
+                    theme = arguments[1]
+                elseif token == trackword then
+                    tracke = arguments[1]
+                    tracks = arguments[2]
+                    trackw = tracke
+                    trackn = trackn
+                    trackdefined = true
+                elseif token == trackboxword then
+                    tracke = arguments[1]
+                    tracks = arguments[2]
+                    trackw = arguments[3]
+                    trackn = arguments[4]
+                    trackdefined = true
+                elseif token == trackloopword then
+                    loopgen = arguments[1]
+                    tracke = arguments[1]
+                    tracks = arguments[2]
+                    trackw = tracke
+                    trackn = tracks
+                    trackdefined = true
+                elseif token == zoomword then
+                    if arguments[1] < 0 then
+                        arguments[1] = -1 / arguments[1]
+                    end
+                    linearzoom = realtolinear(arguments[1])
+                end
             end
+
             -- abort script processing on error
             if invalid ~= "" then
                 curtok = #tokens
             end
             curtok = curtok + 1
         end
+        setstars()
+        sethex()
+        if hexon then
+            camx = camx - camy / 2
+        end
+        setgridlines()
         updatecamera()
         refresh()
         if invalid ~= "" then
@@ -1002,6 +1135,12 @@ local function main()
         g.exit("There is no pattern.")
     end
 
+    -- reset pattern if required
+    currentgen = tonumber(g.getgen())
+    if (currentgen ~= 0) then
+        g.reset();
+    end
+
     -- create overlay and cell view
     createoverlay()
     createcellview()
@@ -1016,17 +1155,12 @@ local function main()
     if g.numstates() > 2 then
         themeon = false
     end
-    settheme()
-
-    -- update the overlay
-    refresh()
-
-    -- read current generation
-    currentgen = tonumber(g.getgen())
 
     -- check for script commands
     checkscript()
     setdefaultcamera()
+    settheme()
+    refresh()
 
     while true do
         -- check if size of layer has changed
@@ -1106,6 +1240,8 @@ local function main()
             increaselayerdepth()
         elseif event == "key l none" then
             decreaselayerdepth()
+        elseif event == "key s none" then
+            togglestars()
         elseif event == "key left none" then
             panview(-1, 0)
         elseif event == "key right none" then
@@ -1127,6 +1263,8 @@ local function main()
             showscripthelp()
         elseif event == "key / none" then
             togglehex()
+        elseif event == "key x none" then
+            togglegrid()
         elseif event:find("^ozoomin") then
             zoominto(event)
         elseif event:find("^ozoomout") then

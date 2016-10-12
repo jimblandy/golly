@@ -240,7 +240,7 @@ private:
     void UpdateZoomView(unsigned char* source, unsigned char *dest, int step);
     // Update the zoom view from the cell view at the given step size.
 
-    void DrawCells(unsigned char* cells, int mask);
+    void DrawCells(unsigned char* cells, int mask, double angle);
     // Draw the cells onto the overlay with the given location mask.
 
     const char* DoDrawCells();
@@ -271,6 +271,15 @@ private:
     const char* CellOptionHex(const char* args);
     // Set hex display mode on or off for the cellview.
 
+    const char* CellOptionGrid(const char* args);
+    // Turn grid display on or off.
+
+    const char* CellOptionGridMajor(const char* args);
+    // Set the grid major interval.
+
+    const char* CellOptionStars(const char* args);
+    // Set the stars display on or off.
+
     const char* DoCellOption(const char* args);
     // Set a cellview option.
     
@@ -286,6 +295,28 @@ private:
     // r5 g5 b5  never occupied
     // If a single parameter "-1" is supplied then disable the theme and
     // use the patterns default colors.
+
+    // grid
+
+    void DrawVLine(int x, int y1, int y2, unsigned int color);
+    // Draw vertical line.
+
+    void DrawHLine(int x1, int x2, int y, unsigned int color);
+    // Draw horizontal line.
+
+    void DrawGridLines();
+    // Draw grid lines.
+
+    // stars
+
+    void DrawStars(double angle);
+    // Draw the stars.
+
+    void CreateStars();
+    // Allocate and position the stars.
+
+    void DeleteStars();
+    // Free the memory used by the stars.
 
     unsigned char* pixmap;      // RGBA data (wd * ht * 4 bytes)
     int wd, ht;                 // width and height of pixmap
@@ -330,6 +361,21 @@ private:
     unsigned int deadStartRGBA;  // cell just died RGBA
     unsigned int deadEndRGBA;    // cell dead longest RGBA
     unsigned int unoccupiedRGBA; // cell never occupied RGBA
+
+    // grid
+    bool grid;                   // whether to display grid lines
+    int gridmajor;               // major grid line interval
+    unsigned int gridRGBA;       // grid line color
+    unsigned int gridmajorRGBA;  // major grid line color
+    bool customgridcolor;        // whether grid line color is custom
+    bool customgridmajorcolor;   // whether major grid line color is custom
+
+    // stars
+    double* starx;               // star x coordinates
+    double* stary;               // star y coordinates
+    double* starz;               // star z coordinates
+    unsigned int starRGBA;       // star color
+    bool stars;                  // whether to display stars
 };
 
 extern Overlay* curroverlay;    // pointer to current overlay (set by client)

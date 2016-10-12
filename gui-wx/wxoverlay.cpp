@@ -38,7 +38,8 @@
 
 #include <vector>           // for std::vector
 #include <cstdio>           // for FILE*, etc
-#include <math.h>           // for sin, cos and log
+#include <math.h>           // for sin, cos, log, sqrt and atn2
+#include <stdlib.h>         // for malloc, free, random and srandom
 
 // -----------------------------------------------------------------------------
 
@@ -60,6 +61,14 @@ const int aliveEnd = 127;           // cell alive longest color index
 const int deadStart = 63;           // cell just died color index
 const int deadEnd = 1;              // cell dead longest color index
 
+// for stars
+const int numStars = 10000;         // number of stars in starfield
+const int starMaxX = 8192;
+const int starMaxY = 8192;
+const int starMaxZ = 1024;
+const double degToRad = M_PI / 180;
+const double radToDeg = 180 / M_PI;
+
 // -----------------------------------------------------------------------------
 
 Overlay::Overlay()
@@ -67,6 +76,9 @@ Overlay::Overlay()
     pixmap = NULL;
     cellview = NULL;
     zoomview = NULL;
+    starx = NULL;
+    stary = NULL;
+    starz = NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -96,6 +108,24 @@ void Overlay::DeleteOverlay()
 
 // -----------------------------------------------------------------------------
 
+void Overlay::DeleteStars()
+{
+    if (starx) {
+        free(starx);
+        starx = NULL;
+    }
+    if (stary) {
+        free(stary);
+        stary = NULL;
+    }
+    if (starz) {
+        free(starz);
+        starz = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void Overlay::DeleteCellView()
 {
     if (cellview) {
@@ -106,6 +136,7 @@ void Overlay::DeleteCellView()
         free(zoomview);
         zoomview = NULL;
     }
+    DeleteStars();
 }
 
 // -----------------------------------------------------------------------------
@@ -399,14 +430,28 @@ const char* Overlay::DoDrawCells()
         cells = source;
     }
 
-    DrawCells(cells, ~mask);
+    // check for hex
+    double angle = camangle;
+    if (ishex) {
+        angle = 0;
+    }
+
+    DrawCells(cells, ~mask, angle);
+
+    if (stars) {
+        DrawStars(angle);
+    }
+
+    if (grid && angle == 0 && camzoom >= 4) {
+        DrawGridLines();
+    }
 
     return NULL;
 }
 
 // -----------------------------------------------------------------------------
 
-void Overlay::DrawCells(unsigned char *cells, int mask)
+void Overlay::DrawCells(unsigned char *cells, int mask, double angle)
 {
     // convert depth to actual depth
     double depth = camlayerdepth / 2 + 1;
@@ -442,19 +487,11 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
     SetRGBA(borderr, borderg, borderb, bordera, &borderRGBA);
 
     // compute deltas in horizontal and vertical direction based on rotation
-    double dxy = sin(camangle / 180 * M_PI) / camzoom;
-    double dyy = cos(camangle / 180 * M_PI) / camzoom;
-
-    // compute starting position
-    double adjustedx = camx;
-
-    // adjust if using hex
-    if (ishex) {
-        adjustedx -= camy / 2;
-    }
+    double dxy = sin(angle / 180 * M_PI) / camzoom;
+    double dyy = cos(angle / 180 * M_PI) / camzoom;
 
     double sy = -((wd / 2) * (-dxy) + (ht / 2) * dyy) + camy;
-    double sx = -((wd / 2) * dyy + (ht / 2) * dxy) + adjustedx;
+    double sx = -((wd / 2) * dyy + (ht / 2) * dxy) + camx;
 
     unsigned char state;
     unsigned int rgba;
@@ -547,7 +584,7 @@ void Overlay::DrawCells(unsigned char *cells, int mask)
             }
 
             sy = -((wd / 2) * (-dxy) + (ht / 2) * dyy) + camy;
-            sx = -((wd / 2) * dyy + (ht / 2) * dxy) + adjustedx;
+            sx = -((wd / 2) * dyy + (ht / 2) * dxy) + camx;
 
             overlayptr = (unsigned int *)pixmap;
 
@@ -610,6 +647,352 @@ const char* Overlay::DoUpdateCells()
 
 // -----------------------------------------------------------------------------
 
+void Overlay::DrawVLine(int x, int y1, int y2, unsigned int color)
+{
+    // clip the line to the display
+    if (y1 < 0) {
+        y1 = 0;
+    }
+    else {
+        if (y1 >= ht) {
+            y1 = ht - 1;
+        }
+    }
+    if (y2 < 0) {
+        y2 = 0;
+    }
+    else {
+        if (y2 >= ht) {
+            y2 = ht - 1;
+        }
+    }
+
+    int offset = y1 * wd + x;
+    unsigned int *pix = (unsigned int*)pixmap;
+    pix += offset;
+
+    // check the line is on the display
+    if (x >= 0 && x < wd) {
+        while (y1 <= y2) {
+            *pix = color;
+            pix += wd;
+            y1++;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawHLine(int x1, int x2, int y, unsigned int color)
+{
+    int offset = y * wd + x1;
+    unsigned int *pix = (unsigned int*)pixmap;
+    pix += offset;
+
+    // check the line is on the display
+    if (y >= 0 && y < ht && x1 >= 0 && x1 < wd && x2 >= 0 && x2 < wd) {
+        while (x1 <= x2) {
+            *pix++ = color;
+            x1++;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawGridLines()
+{
+    double x, y;
+    unsigned char* color;
+    unsigned char shade;
+    bool light = false;
+
+    // check if background is light or dark
+    color = (unsigned char*)cellRGBA;
+    if ((color[0] + color[1] + color[2]) / 3 >= 128) {
+        light = true;
+    }
+
+    // check if custom grid line color is defined
+    if (!customgridcolor) {
+        color = (unsigned char*)&gridRGBA;
+
+        // no custom grid color defined to base it on background color
+        shade = light ? 229 : 80;
+        *color++ = shade;
+        *color++ = shade;
+        *color++ = shade;
+        *color = 255;
+    }
+        
+    // check if custom major grid line color is defined
+    if (!customgridmajorcolor) {
+        color = (unsigned char*)&gridmajorRGBA;
+
+        // no custom grid color defined to base it on background color
+        shade = light ? 209 : 112;
+        *color++ = shade;
+        *color++ = shade;
+        *color++ = shade;
+        *color = 255;
+    }
+
+    // compute single cell offset
+    double xoff = remainder(((cellwd / 2 - camx + 0.5) * camzoom) + (wd / 2), camzoom);
+    double yoff = remainder(((cellht / 2 - camy + 0.5) * camzoom) + (ht / 2), camzoom);
+    
+    // draw twice if major grid lines enabled
+    int loop = 1;
+    if (gridmajor > 0) {
+        loop = 2;
+    }
+
+    // start drawing the grid lines
+    unsigned int targetRGBA = gridRGBA;
+    unsigned int drawRGBA = gridRGBA;;
+    int gridlineNum;
+    int vlineNum;
+
+    while (loop) {
+        // compute grid line vertical offset
+        gridlineNum = floor(-(wd / 2 / camzoom) - (cellwd / 2 - camx));
+
+        // draw vertical lines
+        for (x = 0; x <= wd * camzoom; x += camzoom) {
+            if (gridmajor > 0) {
+                // choose whether to use major or minor color
+                if (gridlineNum % gridmajor == 0) {
+                    drawRGBA = gridmajorRGBA;
+                }
+                else {
+                    drawRGBA = gridRGBA;
+                }
+            }
+            gridlineNum++;
+
+            // check whether to draw the line
+            if (drawRGBA == targetRGBA) {
+                // check for hex display
+                if (ishex) {
+                    vlineNum = (int)(-(ht / 2 / camzoom) - (cellht / 2 - camy));
+
+                    // draw staggered vertical line
+                    for (y = yoff - camzoom; y <= ht + camzoom; y += camzoom) {
+                        if ((vlineNum & 1) != 0) {
+                            DrawVLine(round(x + xoff + camzoom / 2), round(y + camzoom / 2), round(y + camzoom / 2 +  camzoom - 1), drawRGBA);
+                        }
+                        else {
+                            DrawVLine(round(x + xoff + camzoom), round(y + camzoom / 2), round(y + camzoom / 2 + camzoom - 1), drawRGBA);
+                        }
+                        vlineNum++;
+                    }
+                }
+                else {
+                    DrawVLine(round(x + xoff + camzoom / 2), 0, ht - 1, drawRGBA);
+                }
+            }
+        }
+
+        // compute grid line horizontal offset
+        gridlineNum = (int)(-(ht / 2 / camzoom) - (cellht / 2 - camy));
+
+        // draw horizontal lines
+        for (y = 0; y <= ht + camzoom; y += camzoom) {
+            if (gridmajor > 0) {
+                // choose whether to use major or minor color
+                if (gridlineNum % gridmajor == 0) {
+                    drawRGBA = gridmajorRGBA;
+                }
+                else {
+                    drawRGBA = gridRGBA;
+                }
+            }
+            gridlineNum++;
+
+            // check whether to draw the line
+            if (drawRGBA == targetRGBA) {
+                DrawHLine(0, wd - 1, round(y + yoff + camzoom / 2), drawRGBA);
+            }
+        }
+
+        // next iteration so switch to major color
+        loop--;
+        targetRGBA = gridmajorRGBA;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::CreateStars()
+{
+    int i;
+    double curx, cury, curz;
+
+    // allocate the stars
+    if (starx == NULL) {
+        starx = (double *)malloc(numStars * sizeof(*starx));
+    }
+    if (stary == NULL) {
+        stary = (double *)malloc(numStars * sizeof(*stary));
+    }
+    if (starz == NULL) {
+        starz = (double *)malloc(numStars * sizeof(*starz));
+    }
+
+    // compute radius^2 of the starfield
+    int radius2 = (starMaxX * starMaxX) + (starMaxY * starMaxY);
+    double id;
+
+    // create random stars
+    srandom(52315);
+    for (i = 0; i < numStars; i++) {
+        // get the next z coordinate based on the star number
+        // (more stars nearer the camera)
+        id = (double)i;
+        curz = ((id / numStars) * (id / numStars) * (id / numStars) * (id / numStars) * starMaxZ) + 1;
+
+        // pick a random 2d position and ensure it is within the radius
+        do {
+            curx = 3 * ((((double)random()) / RAND_MAX * starMaxX) - (starMaxX / 2));
+            cury = 3 * ((((double)random()) / RAND_MAX * starMaxY) - (starMaxY / 2));
+        } while (((curx * curx) + (cury * cury)) > radius2);
+
+        // save the star position
+        starx[i] = curx;
+        stary[i] = cury;
+        starz[i] = curz;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawStars(double angle)
+{
+    int i;
+    double x, y, z;
+    int ix, iy;
+    double radius;
+    double theta;
+    int offset;
+    unsigned int* pixmapRGBA = (unsigned int*)pixmap;
+
+    // get the unoccupied cell pixel color
+    unsigned int blankRGBA = cellRGBA[0];
+    unsigned char* blankCol = (unsigned char*)&blankRGBA;
+    unsigned char blankR = *blankCol++;
+    unsigned char blankG = *blankCol++;
+    unsigned char blankB = *blankCol++;
+
+    // get the star color components
+    unsigned char* starCol = (unsigned char*)&starRGBA;
+    unsigned char starR = *starCol++;
+    unsigned char starG = *starCol++;
+    unsigned char starB = *starCol++;
+
+    unsigned int pixelRGBA;
+    unsigned char* pixelCol = (unsigned char*)&pixelRGBA;
+    pixelCol[3] = 255;
+    unsigned char red, green, blue;
+
+    // check if stars have been allocated
+    if (starx == NULL) {
+        CreateStars();
+    }
+
+    // update each star
+    for (i = 0; i < numStars; i++) {
+        // get the 2d part of 3d position
+        x = starx[i] - camx;
+        y = stary[i] - camy;
+
+        // check if angle is non zero
+        if (angle != 0) {
+            // compute radius
+            radius = sqrt((x * x) + (y * y));
+
+            // get angle
+            theta = atan2(y, x) * radToDeg;
+
+            // add current rotation
+            theta += angle;
+            if (theta < 0) {
+                theta += 360;
+            }
+            else {
+                if (theta >= 360) {
+                    theta -= 360;
+                }
+            }
+
+            // compute rotated position
+            x = radius * cos(theta * degToRad);
+            y = radius * sin(theta * degToRad);
+        }
+
+        // create the 2d position
+        z = (starz[i] / camzoom) * 2;
+        ix = (int)(x / z) + wd / 2;
+        iy = (int)(y / z) + ht / 2;
+
+        // check the star and halo are on the display
+        if (ix > 0 && ix < (wd - 1) && iy > 0 && iy < (ht - 1)) {
+            // compute the star brightness
+            z = 1536 / z;
+            if (z > 255) {
+                z = 255;
+            }
+            z = z / 255;
+
+            // check if pixel is blank
+            offset = ix + iy * wd;
+            if (pixmapRGBA[offset] == blankRGBA) {
+                // compute the color components
+                red = blankR + (starR - blankR) * z;
+                green = blankG + (starG - blankG) * z;
+                blue = blankB + (starB - blankB) * z;
+                pixelCol[0] = red;
+                pixelCol[1] = green;
+                pixelCol[2] = blue;
+                pixmapRGBA[offset] = pixelRGBA;
+            }
+
+            // use a dimmer color for the halo
+            red = blankR + (starR - blankR) * z;
+            green = blankG + (starG - blankG) * z;
+            blue = blankB + (starB - blankB) * z;
+            pixelCol[0] = red;
+            pixelCol[1] = green;
+            pixelCol[2] = blue;
+
+            // left halo
+            offset -= 1;
+            if (pixmapRGBA[offset] == blankRGBA) {
+                pixmapRGBA[offset] = pixelRGBA;
+            }
+
+            // right halo
+            offset += 2;
+            if (pixmapRGBA[offset] == blankRGBA) {
+                pixmapRGBA[offset] = pixelRGBA;
+            }
+
+            // top halo
+            offset -= (1 + wd);
+            if (pixmapRGBA[offset] == blankRGBA) {
+                pixmapRGBA[offset] = pixelRGBA;
+            }
+
+            // bottom halo
+            offset += (wd + wd);
+            if (pixmapRGBA[offset] == blankRGBA) {
+                pixmapRGBA[offset] = pixelRGBA;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoCellView(const char* args)
 {
     // check the arguments are valid
@@ -665,6 +1048,20 @@ const char* Overlay::DoCellView(const char* args)
 
     // use standard pattern colors
     theme = false; 
+
+    // disable grid and set default grid major interval
+    grid = false;
+    gridmajor = 10;
+    customgridcolor = false;
+    customgridmajorcolor = false;
+
+    // disable stars
+    stars = false;
+    unsigned char* starCol = (unsigned char*)&starRGBA;
+    *starCol++ = 255;  // white
+    *starCol++ = 255;
+    *starCol++ = 255;
+    *starCol   = 255;  // opaque
 
     // populate cellview
     DoUpdateCells();
@@ -795,13 +1192,60 @@ const char* Overlay::CellOptionHex(const char* args)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::CellOptionGrid(const char* args)
+{
+    int mode;
+    if (sscanf(args, "%d", &mode) != 1) {
+        return OverlayError("celloption grid command requires 1 argument");
+    }
+    
+    grid = mode == 1;
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::CellOptionGridMajor(const char* args)
+{
+    int major;
+    if (sscanf(args, "%d", &major) != 1) {
+        return OverlayError("celloption grid command requires 1 argument");
+    }
+    
+    if (major < 0 || major > 16) return OverlayError("celloption major is out of range");
+
+    gridmajor = major;
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::CellOptionStars(const char* args)
+{
+    int mode;
+    if (sscanf(args, "%d", &mode) != 1) {
+        return OverlayError("celloption stars command requires 1 argument");
+    }
+    
+    stars = mode == 1;
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoCellOption(const char* args)
 {
     if (cellview == NULL) return OverlayError(no_cellview);
 
-    if (strncmp(args, "hex ", 3) == 0)    return CellOptionHex(args+3);
-    if (strncmp(args, "depth ", 6) == 0)  return CellOptionDepth(args+6);
-    if (strncmp(args, "layers ", 7) == 0) return CellOptionLayers(args+7);
+    if (strncmp(args, "hex ", 3) == 0)        return CellOptionHex(args+3);
+    if (strncmp(args, "depth ", 6) == 0)      return CellOptionDepth(args+6);
+    if (strncmp(args, "layers ", 7) == 0)     return CellOptionLayers(args+7);
+    if (strncmp(args, "grid ", 5) == 0)       return CellOptionGrid(args+5);
+    if (strncmp(args, "gridmajor ", 10) == 0) return CellOptionGridMajor(args+10);
+    if (strncmp(args, "stars ", 6) == 0)      return CellOptionStars(args+6);
 
     return OverlayError("unknown celloption command");
 }
