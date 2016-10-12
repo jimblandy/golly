@@ -151,6 +151,13 @@ local keywords = {
 
 --------------------------------------------------------------------------------
 
+local function refresh()
+    ov("drawcells")
+    ov("update")
+end
+
+--------------------------------------------------------------------------------
+
 local function setgridlines()
     if grid then
         ov("celloption grid 1")
@@ -190,87 +197,9 @@ end
 
 --------------------------------------------------------------------------------
 
-local function showscripthelp()
-    local helptext = "LifeViewer for Golly build "..buildnumber..
-[[
-
-Scripts must be embedded in pattern comments
-Commands must be surrounded by whitespace
-
-Commands:
-
-]]
-    helptext = helptext..scriptstartword.."									start script section\n"
-    helptext = helptext..scriptendword.."									end script secion\n"
-    helptext = helptext..angleword.."				<"..minangle..".0.."..(maxangle - 1)..".9>		set camera angle\n"
-    helptext = helptext..autofitword.."							fit pattern to display\n"
-    helptext = helptext..autostartword.."							start play automatically\n"
-    helptext = helptext..depthword.."				<"..mindepth..".0.."..maxdepth..".0>		set layer depth\n"
-    helptext = helptext..gridword.."								display grid lines\n"
-    helptext = helptext..gridmajorword.."			<"..mingridmajor..".."..maxgridmajor..">			set major line interval\n"
-    helptext = helptext..hexdisplayword.."						force hex display\n"
-    helptext = helptext..layersword.."				<"..minlayers..".."..maxlayers..">			set number of layers\n"
-    helptext = helptext..loopword.."				<"..minloop.."..>			loop at generation\n"
-    helptext = helptext..squaredisplayword.."					force square display\n"
-    helptext = helptext..stopword.."				<"..minstop.."..>			stop at generation\n"
-    helptext = helptext..themeword.."				<"..mintheme..".."..maxtheme..">			set theme\n"
-    helptext = helptext..trackword.."				X Y				camera tracking\n"
-    helptext = helptext..trackboxword.."			E S W N			camera box tracking\n"
-    helptext = helptext..trackloopword.."			P X Y			looped camera tracking\n"
-    helptext = helptext..zoomword.."				<"..(-1 / minzoom)..".."..maxzoom..".0>	set camera zoom\n"
-
-    -- display script help
-    g.note(helptext)
-end
-
---------------------------------------------------------------------------------
-
 local function showhelp()
-    local helptext = "LifeViewer for Golly build "..buildnumber..
-[[
-
-Keyboard commands
-
-Playback controls:
-Enter	toggle play / pause
-Space	pause / next generation
-Tab		pause / next step
-Esc		close
-R		reset to generation 0
-
-Camera controls:
-Key		Function			Shift
-[		zoom out			halve zoom
-]		zoom in				double zoom
-F		fit pattern to display	toggle autofit
-1		1x zoom			integer zoom
-2		2x zoom			-2x zoom
-4		4x zoom			-4x zoom
-8		8x zoom			-8x zoom
-6		16x zoom			-16x zoom
-3		32x zoom
-Left		pan left				pan north west
-Right	pan right			pan south east
-Up		pan up				pan north east
-Down	pan down			pan south west
-<		rotate left			rotate left 90
->		rotate right			rotate right 90
-5		reset angle
-
-View controls:
-Key		Function			Shift
-Q		increase layers
-A		decrease layers
-P		increase layer depth
-L		decrease layer depth
-C		cycle themes		toggle theme
-/		toggle hex mode
-X		toggle grid lines
-S		toggle stars
-]]
-
-    -- display help
-    g.note(helptext)
+    -- open help window
+    g.open("lifeviewer.html")
 end
 
 --------------------------------------------------------------------------------
@@ -402,13 +331,6 @@ local function setdefaultcamera()
     deflinearzoom = linearzoom
     defcamlayers = camlayers
     defcamlayerdepth = camlayerdepth
-end
-
---------------------------------------------------------------------------------
-
-local function refresh()
-    ov("drawcells")
-    ov("update")
 end
 
 --------------------------------------------------------------------------------
@@ -1260,7 +1182,6 @@ local function main()
             panview(-1, 1)
         elseif event == "key h none" then
             showhelp()
-            showscripthelp()
         elseif event == "key / none" then
             togglehex()
         elseif event == "key x none" then

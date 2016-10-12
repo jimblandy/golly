@@ -1168,7 +1168,7 @@ const char* Overlay::CellOptionDepth(const char* args)
         return OverlayError("celloption depth command requires 1 argument");
     }
 
-    if (depth < 0 || depth > 10) return OverlayError("celloption depth is out of range");
+    if (depth < 0 || depth > 1) return OverlayError("celloption depth is out of range");
 
     // save the new values
     camlayerdepth = depth;

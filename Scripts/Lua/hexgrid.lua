@@ -638,7 +638,6 @@ end
 -- local oldtile = g.setoption("tilelayers", 0)
 -- local oldstack = g.setoption("stacklayers", 0)
 
-local oldoverlay = g.setoption("showoverlay", 1)
 local oldbuttons = g.setoption("showbuttons", 0) -- disable translucent buttons
 
 local status, err = pcall(main)
@@ -646,5 +645,4 @@ if err then g.continue(err) end
 -- the following code is always executed
 
 ov("delete")
-g.setoption("showoverlay", oldoverlay)
 g.setoption("showbuttons", oldbuttons)

@@ -1352,7 +1352,7 @@ const char* GSF_getinfo()
     // comment buffer
     static char comments[maxcomments];
 
-    // buffer fo receiving comment data (allocate by readcomments)
+    // buffer for receiving comment data (allocated by readcomments)
     char *commptr = NULL;
 
     // read the comments in the pattern file

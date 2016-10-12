@@ -8,7 +8,7 @@
 <dd><a href="#blending"><b>Alpha blending</b></a></dd>
 <dd><a href="#clips"><b>Using clips</b></a></dd>
 <dd><a href="#affine"><b>Affine transformations</b></a></dd>
-<dd><a href="#cellviewdesc"><b>Cell views</b></a></dd>
+<dd><a href="#cellviewdesc"><b>Cell view</b></a></dd>
 <dd><a href="#oplus"><b>The oplus package</b></a></dd>
 </p>
 
@@ -158,17 +158,17 @@ The valid options and their allowed values are:
 <dd>
 <table cellspacing=0 cellpadding=0>
 <tr><td>depth <i>d</i></td><td width=20></td><td>&ndash;
-set layer depth to <i>d</i> where <i>d</i> is from 0.0 to 10.0</td></tr>
+set layer depth to <i>d</i> where <i>d</i> is from 0.0 to 1.0</td></tr>
 <tr><td>grid <i>i</i></td><td width=20></td><td>&ndash;
-set grid lines display on (<i>i</i> is 1) or off (<i>i</i> is 0)</td></tr>
+set grid lines display on (<i>i</i> = 1) or off (<i>i</i> = 0)</td></tr>
 <tr><td>gridmajor <i>g</i></td><td width=20></td><td>&ndash;
 set grid lines major interval to <i>g</i> where <i>g</i> is an integer from 0 to 16</td></tr>
 <tr><td>hex <i>i</i></td><td width=20></td><td>&ndash;
-set hex display on (<i>i</i> is 1) or off (<i>i</i> is 0)</td></tr>
+set hex display on (<i>i</i> = 1) or off (<i>i</i> = 0)</td></tr>
 <tr><td>layers <i>n</i></td><td width=20></td><td>&ndash;
 set number of layers to <i>n</i> where <i>n</i> is an integer from 1 to 10</td></tr>
 <tr><td>stars <i>i</i></td><td width=20></td><td>&ndash;
-set stars display on (<i>i</i> is 1) or off (<i>i</i> is 0)</td></tr>
+set stars display on (<i>i</i> = 1) or off (<i>i</i> = 0)</td></tr>
 </table>
 </dd>
 </p>
@@ -719,28 +719,33 @@ the resulting overlay.
 
 
 <p><a name="cellviewdesc"></a>&nbsp;<br>
-<font size=+1><b>Cell views</b></font>
+<font size=+1><b>Cell view</b></font>
 
 <p>
 A cell view is a flexible way of displaying cells from the universe onto the overlay.
-Three steps are required:
+A number of steps are required:
 
 <p>
 <ol>
-<li>Use the <a href="#cellview">cellview</a> command to specify the rectangle of cells
-    from the universe that you want to display.
-<li>Either use the current pattern colors or pick a theme with the
-    <a href="#theme">theme</a> command.
-<li>Use the <a href="#camera">camera</a> and <a href="#celloption">celloption</a>
-    commands to determine how you want to project the cells onto the overlay.
-</ol>
-
-<p>
+<li>
+Use the <a href="#cellview">cellview</a> command to specify the rectangle of cells
+from the universe that you want to display.
+<li>
+Either use the current pattern colors or pick a theme with the
+<a href="#theme">theme</a> command.
+<li>
+Use the <a href="#camera">camera</a> and <a href="#celloption">celloption</a>
+commands to determine how you want to project the cells onto the overlay.
+<li>
 Whenever cells change in the universe you should use the
 <a href="#updatecells">updatecells</a> command to refresh the cell view.
+<li>
 To draw the cells onto the overlay use the <a href="#drawcells">drawcells</a> command.
 If the cells don't change and you want to change the camera or theme then just
 use drawcells after the appropriate camera and theme commands.
+</ol>
+
+<p>
 Here is a simple example:
 
 <p>
