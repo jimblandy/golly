@@ -39,7 +39,12 @@
 #include <vector>           // for std::vector
 #include <cstdio>           // for FILE*, etc
 #include <math.h>           // for sin, cos, log, sqrt and atn2
-#include <stdlib.h>         // for malloc, free, random and srandom
+#include <stdlib.h>         // for malloc, free
+
+#ifdef __WXMSW__
+#define round(x) ( int( x < 0 ? x-0.5 : x+0.5 ) )
+#define remainder(n,d) ( n - round(n/d) * d )
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -844,7 +849,12 @@ void Overlay::CreateStars()
     double id;
 
     // create random stars
-    srandom(52315);
+
+    // no need to call srand here???!!! (it's called in wxgolly.cpp)
+    // if a fixed seed *is* necessary then call srand(time(0))
+    // after the for loop
+    // srand(52315);
+
     for (i = 0; i < numStars; i++) {
         // get the next z coordinate based on the star number
         // (more stars nearer the camera)
@@ -853,8 +863,8 @@ void Overlay::CreateStars()
 
         // pick a random 2d position and ensure it is within the radius
         do {
-            curx = 3 * ((((double)random()) / RAND_MAX * starMaxX) - (starMaxX / 2));
-            cury = 3 * ((((double)random()) / RAND_MAX * starMaxY) - (starMaxY / 2));
+            curx = 3 * ((((double)rand()) / RAND_MAX * starMaxX) - (starMaxX / 2));
+            cury = 3 * ((((double)rand()) / RAND_MAX * starMaxY) - (starMaxY / 2));
         } while (((curx * curx) + (cury * cury)) > radius2);
 
         // save the star position
