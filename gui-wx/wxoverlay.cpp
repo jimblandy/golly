@@ -838,12 +838,8 @@ void Overlay::CreateStars()
     int radius2 = (starMaxX * starMaxX) + (starMaxY * starMaxY);
     double id;
 
-    // create random stars
-
-    // no need to call srand here???!!! (it's called in wxgolly.cpp)
-    // if a fixed seed *is* necessary then call srand(time(0))
-    // after the for loop
-    // srand(52315);
+    // create random stars using fixed seed
+    srand(52315);
 
     for (i = 0; i < numStars; i++) {
         // get the next z coordinate based on the star number
@@ -862,6 +858,9 @@ void Overlay::CreateStars()
         stary[i] = cury;
         starz[i] = curz;
     }
+
+    // create random seed
+    srand(time(0));
 }
 
 // -----------------------------------------------------------------------------
