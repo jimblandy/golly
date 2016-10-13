@@ -75,7 +75,7 @@ static wxString scriptloc;          // location of script file
 static wxArrayString eventqueue;    // FIFO queue for keyboard/mouse events 
 
 // constants:
-const int maxcomments = 8192;       // maximum comment size
+const int maxcomments = 128 * 1024; // maximum comment size
 
 // -----------------------------------------------------------------------------
 

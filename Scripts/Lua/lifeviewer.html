@@ -15,24 +15,39 @@
 <p>
 LifeViewer is a <a href="script">scriptable</a> pattern viewer featuring:
 <ul>
-<li> Rotation and non-integer zoom.
-<li> Color themes with cell history.
-<li> <a href=#hex>Hex</a> grid display.
+<li> Rotation and smooth non-integer zoom.
+<li> Color themes with cell history and longevity.
+<li> Automatic <a href=#hex>hex</a> grid display.
 <li> Pseudo 3d layers and stars.
 </ul>
+<p>
+<img src="lifeviewer.png">
+<p>
+A Javascript/HTML5 version of LifeViewer is used on the conwaylife.com
+<a href="http://www.conwaylife.com/forums">forums</a> to display posted
+patterns and also on <a href="http://www.conwaylife.com/wiki">LifeWiki</a>.
 
 <p><a name="keyboard"></a><br>
 <font size=+1><b>Keyboard Shortcuts</b></font>
 
 <p><table cellspacing=1 border=2 width=90% cellpadding = 3>
-<tr><th colspan=2>Playback controls</th></tr>
 <tr><th>Key combination</th><th>Action</th></tr>
+<tr><th colspan="2" align="left">Playback controls</th></tr>
 <tr><td align="right">Return</td><td>Toggle play / pause.</td></tr>
 <tr><td align="right">Space</td><td>Pause / next generation.</td></tr>
-<tr><td align="right">Esc</td><td>Close.</td></tr>
+<tr><td align="right">Tab</td><td>Pause / next step.</td></tr>
+<tr><td align="right">Esc</td><td>Close LifeViewer.</td></tr>
 <tr><td align="right">R</td><td>Reset to generation 0.</td></tr>
-<tr><th colspan=2>Camera controls</th></tr>
-<tr><th>Key combination</th><th>Action</th></tr>
+<tr><td align="right">-</td><td>Decrease generation speed.</td></tr>
+<tr><td align="right">+</td><td>Increase generation speed.</td></tr>
+<tr><td align="right">Shift -</td><td>Minimum generation speed.</td></tr>
+<tr><td align="right">Shift +</td><td>Maximum generation speed.</td></tr>
+<tr><td align="right">D</td><td>Decrease generations per step.</td></tr>
+<tr><td align="right">E</td><td>Increase generations per step.</td></tr>
+<tr><td align="right">Shift D</td><td>Minimum generations per step.</td></tr>
+<tr><td align="right">Shift E</td><td>Maximum generations per step.</td></tr>
+<tr><td align="right">0</td><td>Reset step size and generation speed.</td></tr>
+<tr><th colspan="2" align="left">Camera controls</th></tr>
 <tr><td align="right">F</td><td>Fit pattern to display.</td></tr>
 <tr><td align="right">Shift F</td><td>Toggle autofit.</td></tr>
 <tr><td align="right">[</td><td>Zoom out.</td></tr>
@@ -63,8 +78,7 @@ LifeViewer is a <a href="script">scriptable</a> pattern viewer featuring:
 <tr><td align="right">Shift &lt;</td><td>Rotate left 90 degrees.</td></tr>
 <tr><td align="right">Shift &gt;</td><td>Rotate right 90 degrees.</td></tr>
 <tr><td align="right">5</td><td>Reset angle.</td></tr>
-<tr><th colspan=2>View controls</th></tr>
-<tr><th>Key combination</th><th>Action</th></tr>
+<tr><th colspan="2" align="left">View controls</th></tr>
 <tr><td align="right">Q</td><td>Increase number of layers.</td></tr>
 <tr><td align="right">A</td><td>Decrease number of layers.</td></tr>
 <tr><td align="right">P</td><td>Increase layer depth.</td></tr>
@@ -108,7 +122,6 @@ ooo$
 bbo$
 bo!
 </pre>
-<p>
 To see this in action:
 <ol>
 <li> Stop LifeViewer if it is running (click on the Golly window and press Esc).
@@ -120,31 +133,34 @@ To see this in action:
 There are many script commands available and they are grouped by function in the table below.
 
 <p><table cellspacing=1 border=2 width=90% cellpadding=3>
-<tr><th>Command</th><th>Arguments<th>Action</th></tr>
+<tr><th>Command</th><th>Arguments</th><th>Action</th></tr>
+<tr><th colspan="3" align="left">Script commands</th></tr>
 <tr><td align="right">[[</td><td></td><td>Start script section.</td></tr>
 <tr><td align="right">]]</td><td></td><td>End script section.</td></tr>
-<tr><th colspan=3>Playback commands</th></tr>
+<tr><th colspan="3" align="left">Playback commands</th></tr>
 <tr><td align="right">AUTOSTART</td><td></td><td>Start play automatically.</td></tr>
+<tr><td align="right">GPS</td><td>&lt;1..60&gt;</td><td>Set steps per second.</td></tr>
 <tr><td align="right">LOOP</td><td>&lt;1..&gt;</td><td>Loop at specified generation.</td></tr>
+<tr><td align="right">STEP</td><td>&lt;1..50&gt;</td><td>Set generations per step.</td></tr>
 <tr><td align="right">STOP</td><td>&lt;1..&gt;</td><td>Stop at specified generation.</td></tr>
-<tr><th colspan=3>Camera commands</th></tr>
-<tr><td align="right">ANGLE</td><td><0.0..359.9></td><td>Set camera angle.</td></tr>
+<tr><th colspan="3" align="left">Camera commands</th></tr>
+<tr><td align="right">ANGLE</td><td>&lt;0.0..359.9&gt;</td><td>Set camera angle.</td></tr>
 <tr><td align="right">AUTOFIT</td><td></td><td>Fit pattern to display.</td></tr>
 <tr><td align="right">TRACK</td><td>X Y</td><td>Camera moves at (X, Y) cells/generation.</td></tr>
 <tr><td align="right">TRACKBOX</td><td>E S W N</td><td>Camera tracks bounding box with E, S, W and N edges moving at defined cells/generation.</td></tr>
 <tr><td align="right">TRACKLOOP</td><td>P X Y</td><td>Camera moves at (X, Y) cells/generation and playback loops at generation P.</td></tr>
-<tr><td align="right">X</td><td><-4096.0..4096.0></td><td>Set camera pan in X direction.</td></tr>
-<tr><td align="right">Y</td><td><-4096.0..4096.0></td><td>Set camera pan in Y direction.</td></tr>
-<tr><td align="right">ZOOM or Z</td><td><-16.0..32.0></td><td>Set camera zoom. Negative zooms can also be specified as decimals: -4 = 0.25.</td></tr>
-<tr><th colspan=3>View commands</th></tr>
-<tr><td align="right">DEPTH</td><td><0.0..1.0></td><td>Set layer depth.</td></tr>
-<tr><td align="right">LAYERS</td><td><1..10></td><td>Set number of layers.</td></tr>
+<tr><td align="right">X</td><td>&lt;-4096.0..4096.0&gt;</td><td>Set camera pan in X direction.</td></tr>
+<tr><td align="right">Y</td><td>&lt;-4096.0..4096.0&gt;</td><td>Set camera pan in Y direction.</td></tr>
+<tr><td align="right">ZOOM or Z</td><td>&lt;-16.0..32.0&gt;</td><td>Set camera zoom. Negative zooms can also be specified as decimals or fractions: ZOOM -4 = ZOOM 0.25 = ZOOM 1/4.</td></tr>
+<tr><th colspan="3" align="left">View commands</th></tr>
+<tr><td align="right">DEPTH</td><td>&lt;0.0..1.0&gt;</td><td>Set layer depth.</td></tr>
 <tr><td align="right">GRID</td><td></td><td>Display grid lines.</td></tr>
-<tr><td align="right">GRIDMAJOR</td><td><0..16></td><td>Set major grid line interval (0 = off).</td></tr>
+<tr><td align="right">GRIDMAJOR</td><td>&lt;0..16&gt;</td><td>Set major grid line interval (0 = off).</td></tr>
 <tr><td align="right">HEXDISPLAY</td><td></td><td>Force hex grid display.</td></tr>
+<tr><td align="right">LAYERS</td><td>&lt;1..10&gt;</td><td>Set number of layers.</td></tr>
 <tr><td align="right">SQUAREDISPLAY</td><td></td><td>Force square grid display.</td></tr>
 <tr><td align="right">STARS</td><td></td><td>Display stars.</td></tr>
-<tr><td align="right">THEME</td><td><0..9></td><td>Set color theme.</td></tr>
+<tr><td align="right">THEME</td><td>&lt;0..9&gt;</td><td>Set color theme.</td></tr>
 </table>
 
 <p><a name="notes"></a><br>
@@ -154,6 +170,7 @@ There are many script commands available and they are grouped by function in the
 <ul>
 <li><a name="hex"></a>Hex view does not support camera rotation. Any rotation will be ignored.
 <li>Grid lines only display at 4x zoom and higher and when the camera angle is 0.
+<li>Decimal values may also be specified as fractions: TRACK -0.5 0.25 = TRACK -1/2 1/4
 </ul>
 
 </body>

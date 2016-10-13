@@ -703,38 +703,28 @@ void Overlay::DrawHLine(int x1, int x2, int y, unsigned int color)
 void Overlay::DrawGridLines()
 {
     double x, y;
-    unsigned char* color;
     unsigned char shade;
     bool light = false;
 
     // check if background is light or dark
-    color = (unsigned char*)cellRGBA;
-    if ((color[0] + color[1] + color[2]) / 3 >= 128) {
+    unsigned char r, g, b, a;
+    GetRGBA(&r, &g, &b, &a, cellRGBA[0]);
+    if ((r + g + b) / 3 >= 128) {
         light = true;
     }
 
     // check if custom grid line color is defined
     if (!customgridcolor) {
-        color = (unsigned char*)&gridRGBA;
-
         // no custom grid color defined to base it on background color
         shade = light ? 229 : 80;
-        *color++ = shade;
-        *color++ = shade;
-        *color++ = shade;
-        *color = 255;
+        SetRGBA(shade, shade, shade, 255, &gridRGBA);
     }
         
     // check if custom major grid line color is defined
     if (!customgridmajorcolor) {
-        color = (unsigned char*)&gridmajorRGBA;
-
         // no custom grid color defined to base it on background color
         shade = light ? 209 : 112;
-        *color++ = shade;
-        *color++ = shade;
-        *color++ = shade;
-        *color = 255;
+        SetRGBA(shade, shade, shade, 255, &gridmajorRGBA);
     }
 
     // compute single cell offset
@@ -1055,13 +1045,9 @@ const char* Overlay::DoCellView(const char* args)
     customgridcolor = false;
     customgridmajorcolor = false;
 
-    // disable stars
+    // disable stars and set star color to opaque whie
     stars = false;
-    unsigned char* starCol = (unsigned char*)&starRGBA;
-    *starCol++ = 255;  // white
-    *starCol++ = 255;
-    *starCol++ = 255;
-    *starCol   = 255;  // opaque
+    SetRGBA(255, 255, 255, 255, &starRGBA);
 
     // populate cellview
     DoUpdateCells();

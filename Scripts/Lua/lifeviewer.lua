@@ -1,8 +1,11 @@
 -- LifeViewer for Golly
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
+--
+-- Lua version of the Javascript/HTML5 LifeViewer used
+-- on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 16
+local buildnumber = 17
 
 local g = golly()
 
@@ -33,13 +36,26 @@ local maxdepth = 1
 local minlayers = 1
 local maxlayers = 10
 local zoomborder = 0.9  -- proportion of view to fill with fit zoom
-local glidesteps = 50   -- steps to glide camera
+local glidesteps = 40   -- steps to glide camera
 local minstop = 1
 local minloop = 1
 local mintheme = 0
 local maxtheme = #op.themes
 local minpan = -4096
 local maxpan = 4096
+local mingps = 1
+local maxgps = 60
+local minstep = 1
+local maxstep = 50
+local decaysteps = 64  -- number of steps to decay after life finished
+local decay = 0
+
+-- playback speed
+local defgps = 60
+local defstep = 1
+local gps = defgps
+local step = defstep
+local genstarttime = os.clock()
 
 -- smooth camera movement
 local startx
@@ -69,16 +85,17 @@ local camlayerdepth = defcamlayerdepth
 local autofit = false
 
 -- tracking
-local tracke
-local tracks
-local trackw
-local trackn
+local tracke = 0
+local tracks = 0
+local trackw = 0
+local trackn = 0
+local trackperiod = 0
 local trackdefined = false
 
 -- origin
 local originx = 0
 local originy = 0
-local originz = 0
+local originz = 1
 
 -- zoom is held as a value 0..1 for smooth linear zooms
 local linearzoom
@@ -117,6 +134,7 @@ local angleword         = "ANGLE"
 local autofitword       = "AUTOFIT"
 local autostartword     = "AUTOSTART"
 local depthword         = "DEPTH"
+local gpsword           = "GPS"
 local gridword          = "GRID"
 local gridmajorword     = "GRIDMAJOR"
 local hexdisplayword    = "HEXDISPLAY"
@@ -124,6 +142,7 @@ local layersword        = "LAYERS"
 local loopword          = "LOOP"
 local squaredisplayword = "SQUAREDISPLAY"
 local starsword         = "STARS"
+local stepword          = "STEP"
 local stopword          = "STOP"
 local themeword         = "THEME"
 local trackword         = "TRACK"
@@ -145,6 +164,7 @@ local keywords = {
     [autofitword] =       { "" },
     [autostartword] =     { "" },
     [depthword] =         { "r", mindepth, maxdepth, "" },
+    [gpsword] =           { "r", mingps, maxgps, "" },
     [gridword] =          { "" },
     [gridmajorword] =     { "R", mingridmajor, maxgridmajor, "" },
     [hexdisplayword] =    { "" },
@@ -152,6 +172,7 @@ local keywords = {
     [loopword] =          { "L", minloop, "" },
     [squaredisplayword] = { "" },
     [starsword]         = { "" },
+    [stepword] =          { "r", minstep, maxstep, "" },
     [stopword] =          { "L", minstop, "" },
     [themeword] =         { "R", mintheme, maxtheme, "" },
     [trackword] =         { "r", -1, 1, "r", -1, 1, "" },
@@ -166,6 +187,28 @@ local keywords = {
 --------------------------------------------------------------------------------
 
 local function refresh()
+    local newx, newy
+
+    -- add the fractional part to the current generation
+    local fractionalgen = (os.clock() - genstarttime) * gps
+
+    if fractionalgen < 0 then
+        fractionalgen = 0
+    else
+        if fractionalgen > 1 then
+            fractionalgen = 1
+        end
+    end
+    local gen = currentgen + fractionalgen
+    originx = gen * (tracke + trackw) / 2
+    originy = gen * (tracks + trackn) / 2
+
+    if trackdefined then
+        newx = camx + originx
+        newy = camy + originy
+        ov("camera xy "..newx.." "..newy)
+    end
+
     ov("drawcells")
     ov("update")
 end
@@ -294,7 +337,7 @@ local function updatestatus()
     end
 
     -- update status bar
-    local status = "Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..displayangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus.."  Grid "..gridstatus
+    local status = "Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..displayangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  GPS "..gps.."  Step "..step.."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus.."  Grid "..gridstatus
     if stopgen ~= -1 then
         status = status.."  Stop "..stopgen
     end
@@ -460,6 +503,9 @@ local function fitzoom(immediate)
         -- leave a border around the pattern
         zoom = zoom * zoomborder
 
+        -- apply origin
+        zoom = zoom / originz
+
         -- ensure zoom in range
         if zoom < minzoom then
             zoom = minzoom
@@ -470,8 +516,8 @@ local function fitzoom(immediate)
         end
 
         -- get new pan position
-        local newx = viewwidth / 2 + leftx + width / 2
-        local newy = viewheight / 2 + bottomy + height / 2
+        local newx = viewwidth / 2 + leftx + width / 2 + originy
+        local newy = viewheight / 2 + bottomy + height / 2 + originx
 
         if hexon then
             newx = newx - newy / 2
@@ -504,21 +550,44 @@ end
 
 --------------------------------------------------------------------------------
 
-local function advance(by1)
+local function advance(singlestep)
+    -- check if all cells are dead
     if g.empty() then
         generating = false
+        if decay > 0 then
+            ov("updatecells")
+            refresh()
+            decay = decay - 1
+        end
         return
     end
     
-    if by1 then
-        g.run(1)
-    else
-        g.step()
+    -- check for single step
+    local remaining = step
+    if singlestep then
+        remaining = 1
+    end
+
+    -- check if enough time has elapsed to advance
+    local deltatime = os.clock() - genstarttime
+    if deltatime > 1 / gps then
+        while remaining > 0 do
+            g.run(1)
+            ov("updatecells")
+            if g.empty() then
+                refresh()
+                g.note("Life ended at generation "..tonumber(g.getgen()))
+                remaining = 0
+                decay = decaysteps
+            else
+                remaining = remaining - 1
+            end
+        end
+        genstarttime = os.clock()
     end
     
     currentgen = tonumber(g.getgen())
 
-    ov("updatecells")
     if autofit then
         fitzoom(true)
     end
@@ -819,14 +888,24 @@ local function reset(looping)
     local gen = tonumber(g.getgen())
     if gen == 0 or looping then
         resetcamera()
-        generating = autostart
+        if looping then
+            generating = true
+        else
+            generating = autostart 
+        end
     else
         generating = false
     end
 
+    -- reset origin
+    originx = 0
+    originy = 0
+    originz = 1
+
     -- reset golly
     g.reset()
     g.update()
+    currentgen = 0
 
     -- if using theme then need to recreate the cell view to clear history
     if theme ~= -1 then
@@ -874,6 +953,28 @@ end
 
 --------------------------------------------------------------------------------
 
+local function numberorfraction(argument)
+    local result = nil
+
+    -- search for a fraction
+    local index = argument:find("/")
+    if index == nil then
+        -- simple number
+        result = tonumber(argument)
+    else
+        -- possible fraction
+        local left = argument:sub(1, index - 1)
+        local right = argument:sub(index + 1)
+        if tonumber(left) ~= nil and tonumber(right) ~= nil then
+            result = left / right
+        end
+    end
+
+    return result
+end
+
+--------------------------------------------------------------------------------
+
 local function validatekeyword(token)
     local invalid = ""
     local keyword = keywords[token]
@@ -901,7 +1002,7 @@ local function validatekeyword(token)
                 -- check which sort of validation to perform
                 if validation == "l" then
                     -- float lower bound
-                    argvalue = tonumber(argvalue)
+                    argvalue = numberorfraction(argvalue)
                     if argvalue == nil then
                         invalid = "argument must be a number"
                     else
@@ -929,7 +1030,7 @@ local function validatekeyword(token)
                     end
                 elseif validation == "r" then
                     -- float range
-                    argvalue = tonumber(argvalue)
+                    argvalue = numberorfraction(argvalue)
                     if argvalue == nil then
                         invalid = "argument must be a number"
                     else
@@ -1011,6 +1112,8 @@ local function checkscript()
                     generating = true
                 elseif token == depthword then
                     camlayerdepth = arguments[1]
+                elseif token == gpsword then
+                    gps = arguments[1]
                 elseif token == gridword then
                     grid = true
                 elseif token == gridmajor then
@@ -1025,6 +1128,8 @@ local function checkscript()
                     hexon = false
                 elseif token == starsword then
                     stars = true
+                elseif token == stepword then
+                    step = arguments[1]
                 elseif token == stopword then
                     stopgen = arguments[1]
                 elseif token == themeword then
@@ -1033,7 +1138,7 @@ local function checkscript()
                     tracke = arguments[1]
                     tracks = arguments[2]
                     trackw = tracke
-                    trackn = trackn
+                    trackn = tracks
                     trackdefined = true
                 elseif token == trackboxword then
                     tracke = arguments[1]
@@ -1042,9 +1147,9 @@ local function checkscript()
                     trackn = arguments[4]
                     trackdefined = true
                 elseif token == trackloopword then
-                    loopgen = arguments[1]
-                    tracke = arguments[1]
-                    tracks = arguments[2]
+                    trackperiod = arguments[1]
+                    tracke = arguments[2]
+                    tracks = arguments[3]
                     trackw = tracke
                     trackn = tracks
                     trackdefined = true
@@ -1066,6 +1171,16 @@ local function checkscript()
             end
             curtok = curtok + 1
         end
+
+        -- check for trackloop
+        if trackdefined and trackperiod > 0 then
+            if gridmajor > 0 then
+                loopgen = trackperiod * gridmajor
+            else
+                loopgen = trackperiod
+            end
+        end
+            
         setstars()
         sethex()
         if hexon then
@@ -1078,6 +1193,98 @@ local function checkscript()
             g.note(token..": "..invalid)
         end
     end
+end
+
+--------------------------------------------------------------------------------
+
+local function decreasespeed()
+    if step > minstep then
+        step = step - 1
+    else
+        if gps > mingps then
+            gps = gps - 1
+        end
+    end
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function increasespeed()
+    if gps < maxgps then
+        gps = gps + 1
+    else
+        if step < maxstep then
+            step = step + 1
+        end
+    end
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function setmaxspeed()
+    if gps < maxgps then
+        gps = maxgps
+    else
+        if step < maxstep then
+            step = maxstep
+        end
+    end
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function setminspeed()
+    if step > minstep then
+        step = minstep
+    else
+        if gps > mingps then
+            gps = mingps
+        end
+    end
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function increasestep()
+    if step < maxstep then
+        step = step + 1
+    end
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function decreasestep()
+    if step > minstep then
+        step = step - 1
+    end
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function setmaxstep()
+    step = maxstep
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function setminstep()
+    step = minstep
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function resetspeed()
+   gps = defgps
+   step = defstep
+   updatestatus()
 end
 
 --------------------------------------------------------------------------------
@@ -1115,6 +1322,10 @@ local function main()
     settheme()
     refresh()
 
+    -- start timing
+    genstarttime = os.clock()
+
+    -- loop until quit
     while true do
         -- check if size of layer has changed
         local newwd, newht = g.getview(g.getlayer())
@@ -1137,8 +1348,28 @@ local function main()
             generating = false
         elseif event == "key r none" then
             reset(false)
+        elseif event == "key - none" then
+            decreasespeed()
+        elseif event == "key = none" then
+            increasespeed()
+        elseif event == "key _ none" then
+            setminspeed()
+        elseif event == "key + none" then
+            setmaxspeed()
+        elseif event == "key d none" then
+            decreasestep()
+        elseif event == "key e none" then
+            increasestep()
+        elseif event == "key d shift" then
+            setminstep()
+        elseif event == "key e shift" then
+            setmaxstep()
+        elseif event == "key 0 none" then
+            resetspeed()
         elseif event == "key f none" then
-            fitzoom(false)
+            if not autofit then
+                fitzoom(false)
+            end
         elseif event == "key f shift" then
             toggleautofit()
         elseif event == "key [ none" then
@@ -1232,16 +1463,26 @@ local function main()
             checkdrag()
         end
         
+        -- check if playing
         if generating then
-             advance(false)
-             if stopgen == currentgen then
-                 generating = false
-                 g.note("STOP reached, Play to continue")
-             end              
-             if loopgen == currentgen then
-                 reset(true)
-             end
+            advance(false)
+
+            -- check for stop or loop
+            if stopgen == currentgen then
+                generating = false
+                g.note("STOP reached, Play to continue")
+            end              
+            if loopgen == currentgen then
+                reset(true)
+            end
+        else
+            -- check if life ended but cells still decaying
+            if decay > 0 then
+                advance(false)
+            end
         end
+
+        -- check if camera still gliding to target
         if camsteps ~= -1 then
              glidecamera()
         end
