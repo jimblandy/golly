@@ -42,8 +42,8 @@
 #include <stdlib.h>         // for malloc, free
 
 #ifdef __WXMSW__
-#define round(x) ( int( x < 0 ? x-0.5 : x+0.5 ) )
-#define remainder(n,d) ( n - round(n/d) * d )
+#define round(x) int( (x) < 0 ? (x)-0.5 : (x)+0.5 )
+#define remainder(n,d) ( (n) - round((n)/(d)) * (d) )
 #endif
 
 // -----------------------------------------------------------------------------
