@@ -1347,6 +1347,13 @@ void GSF_exit(const wxString& errmsg)
 
 // -----------------------------------------------------------------------------
 
+#ifdef __WXMAC__
+    // convert path to decomposed UTF8 so fopen will work
+    #define CURRFILE currlayer->currfile.fn_str()
+#else
+    #define CURRFILE currlayer->currfile.mb_str(wxConvLocal)
+#endif
+
 const char* GSF_getinfo()
 {
     // comment buffer
@@ -1356,7 +1363,7 @@ const char* GSF_getinfo()
     char *commptr = NULL;
 
     // read the comments in the pattern file
-    const char* err = readcomments(currlayer->currfile, &commptr);
+    const char* err = readcomments(CURRFILE, &commptr);
     if (err) {
         free(commptr);
         return "";
