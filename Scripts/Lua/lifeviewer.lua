@@ -1,14 +1,19 @@
 -- LifeViewer for Golly
 -- Author: Chris Rowett (rowett@yahoo.com), September 2016.
 --
--- Lua version of the Javascript/HTML5 LifeViewer used
--- on the conwaylife.com forums and the LifeWiki.
+-- LifeViewer is a scriptable pattern viewer featuring:
+-- - Rotation and smooth non-integer zoom.
+-- - Color themes with cell history and longevity.
+-- - Automatic hex grid display.
+-- - Pseudo 3D layers and stars.
+--
+-- This is the Lua version of the Javascript/HTML5 LifeViewer
+-- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 17
+local buildnumber = 18
 
 local g = golly()
-
 local ov = g.overlay
 
 local gp = require "gplus"
@@ -83,6 +88,7 @@ local camangle = defcamangle
 local camlayers = defcamlayers
 local camlayerdepth = defcamlayerdepth
 local autofit = false
+local historyfit = false
 
 -- tracking
 local tracke = 0
@@ -91,6 +97,12 @@ local trackw = 0
 local trackn = 0
 local trackperiod = 0
 local trackdefined = false
+local initialrect        -- initial bounding box for pattern at gen 0
+local initialzoom = 1    -- initial fit zoom value at gen 0
+local histleftx          -- used for autofit history mode
+local histrightx
+local histbottomy
+local histtopy
 
 -- origin
 local originx = 0
@@ -128,6 +140,7 @@ local stars = false
 local tokens = {}
 local curtok = 1
 local arguments
+local rawarguments    -- the script text before conversion
 local scriptstartword   = "[["
 local scriptendword     = "]]"
 local angleword         = "ANGLE"
@@ -138,6 +151,7 @@ local gpsword           = "GPS"
 local gridword          = "GRID"
 local gridmajorword     = "GRIDMAJOR"
 local hexdisplayword    = "HEXDISPLAY"
+local historyfitword    = "HISTORYFIT"
 local layersword        = "LAYERS"
 local loopword          = "LOOP"
 local squaredisplayword = "SQUAREDISPLAY"
@@ -168,6 +182,7 @@ local keywords = {
     [gridword] =          { "" },
     [gridmajorword] =     { "R", mingridmajor, maxgridmajor, "" },
     [hexdisplayword] =    { "" },
+    [historyfitword] =    { "" },
     [layersword] =        { "R", minlayers, maxlayers, "" },
     [loopword] =          { "L", minloop, "" },
     [squaredisplayword] = { "" },
@@ -186,8 +201,77 @@ local keywords = {
 
 --------------------------------------------------------------------------------
 
+local function realtolinear(zoom)
+    return math.log(zoom / minzoom) / math.log(maxzoom / minzoom)
+end
+
+--------------------------------------------------------------------------------
+
+local function lineartoreal(zoom)
+    return minzoom * math.pow(maxzoom / minzoom, zoom)
+end
+
+--------------------------------------------------------------------------------
+
+local function updatestatus()
+    -- convert zoom to actual value
+    local zoom = lineartoreal(linearzoom) * originz
+    if zoom < 0.999 then
+       zoom = -(1 / zoom)
+    end
+
+    -- convert x and y to display coordinates
+    local x = camx - viewwidth / 2 + originx
+    local y = camy - viewheight / 2 + originy
+    if hexon then
+        x = x + camy / 2
+    end
+
+    -- convert theme to status
+    local themestatus = "off"
+    if themeon then
+        themestatus = theme
+    end
+
+    -- convert autofit to status
+    local autofitstatus = "off"
+    if autofit then
+        autofitstatus = "on"
+    end
+
+    -- convert hex mode to status
+    local hexstatus = "square"
+    if hexon then
+        hexstatus = "hex"
+    end
+
+    -- convert grid to status
+    local gridstatus = "off"
+    if grid then
+        gridstatus = "on"
+    end
+
+    -- convert angle to status
+    local displayangle = camangle
+    if hexon then
+        displayangle = 0
+    end
+
+    -- update status bar
+    local status = "Hit escape to abort script.  Zoom "..string.format("%.1f", zoom).."x  Angle "..displayangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  GPS "..gps.."  Step "..step.."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus.."  Grid "..gridstatus
+    if stopgen ~= -1 then
+        status = status.."  Stop "..stopgen
+    end
+    if loopgen ~= -1 then
+        status = status.."  Loop "..loopgen
+    end
+    g.show(status)
+end
+
+--------------------------------------------------------------------------------
+
 local function refresh()
-    local newx, newy
+    local newx, newy, newz
 
     -- add the fractional part to the current generation
     local fractionalgen = (os.clock() - genstarttime) * gps
@@ -200,13 +284,61 @@ local function refresh()
         end
     end
     local gen = currentgen + fractionalgen
+
+    -- compute the new origin
     originx = gen * (tracke + trackw) / 2
     originy = gen * (tracks + trackn) / 2
 
+    -- compute the trackbox
+    local leftx = initialrect[1]
+    local bottomy = initialrect[2]
+    local width = initialrect[3]
+    local height = initialrect[4]
+    local rightx = leftx + width
+    local topy = bottomy + height
+    leftx = leftx + gen * trackw
+    rightx = rightx + gen * tracke
+    bottomy = bottomy + gen * trackn
+    topy = topy + gen * tracks
+    width = rightx - leftx + 1
+    height = topy - bottomy + 1
+
+    -- check for hex
+    if hexon then
+        leftx = leftx - bottomy / 2
+        rightx = rightx - topy / 2
+        width = rightx - leftx + 1
+    end
+
+    -- get the smallest zoom needed
+    local zoom = viewwd / width
+    if zoom > viewht / height then
+        zoom = viewht / height
+    end
+
+    -- leave a border around the pattern
+    zoom = zoom * zoomborder
+    originz = zoom / initialzoom
+
+    -- apply the origin to the camera
     if trackdefined then
         newx = camx + originx
         newy = camy + originy
+        newz = lineartoreal(linearzoom) * originz
+        if newz > maxzoom then
+            newz = maxzoom
+        else
+            if newz < minzoom then
+                newz = minzoom
+            end
+        end
+
+        -- set the new camera settings
         ov("camera xy "..newx.." "..newy)
+        ov("camera zoom "..newz)
+
+        -- update status because camera changed
+        updatestatus()
     end
 
     ov("drawcells")
@@ -280,75 +412,6 @@ end
 
 --------------------------------------------------------------------------------
 
-local function realtolinear(zoom)
-    return math.log(zoom / minzoom) / math.log(maxzoom / minzoom)
-end
-
---------------------------------------------------------------------------------
-
-local function lineartoreal(zoom)
-    return minzoom * math.pow(maxzoom / minzoom, zoom)
-end
-
---------------------------------------------------------------------------------
-
-local function updatestatus()
-    -- convert zoom to actual value
-    local camzoom = lineartoreal(linearzoom)
-    if camzoom < 0.999 then
-       camzoom = -(1 / camzoom)
-    end
-
-    -- convert x and y to display coordinates
-    local x = camx - viewwidth / 2
-    local y = camy - viewheight / 2
-    if hexon then
-        x = x + camy / 2
-    end
-
-    -- convert theme to status
-    local themestatus = "off"
-    if themeon then
-        themestatus = theme
-    end
-
-    -- convert autofit to status
-    local autofitstatus = "off"
-    if autofit then
-        autofitstatus = "on"
-    end
-
-    -- convert hex mode to status
-    local hexstatus = "square"
-    if hexon then
-        hexstatus = "hex"
-    end
-
-    -- convert grid to status
-    local gridstatus = "off"
-    if grid then
-        gridstatus = "on"
-    end
-
-    -- convert angle to status
-    local displayangle = camangle
-    if hexon then
-        displayangle = 0
-    end
-
-    -- update status bar
-    local status = "Hit escape to abort script.  Zoom "..string.format("%.1f", camzoom).."x  Angle "..displayangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  GPS "..gps.."  Step "..step.."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus.."  Grid "..gridstatus
-    if stopgen ~= -1 then
-        status = status.."  Stop "..stopgen
-    end
-    if loopgen ~= -1 then
-        status = status.."  Loop "..loopgen
-    end
-    g.show(status)
-end
-
---------------------------------------------------------------------------------
-
 local function createoverlay()
     -- create overlay over entire viewport
     ov("create "..viewwd.." "..viewht)
@@ -359,6 +422,9 @@ end
 local function updatecamera()
     -- convert linear zoom to real zoom
     local camzoom = lineartoreal(linearzoom)
+    if camzoom > maxzoom then
+        camzoom = maxzoom
+    end
     ov("camera zoom "..camzoom)
     ov("camera angle "..camangle)
     ov("camera xy "..camx.." "..camy)
@@ -463,6 +529,7 @@ local function glidecamera()
         camsteps = -1
         camx = endx
         camy = endy
+        linearzoom = endzoom
     end
 
     updatecamera()
@@ -486,6 +553,30 @@ local function fitzoom(immediate)
         local height = rect[4]
         local rightx = leftx + width
         local topy = bottomy + height
+
+        -- check for historyfit
+        if historyfit then
+            -- update history bounding box
+            if histleftx > leftx then
+                histleftx = leftx
+            end
+            if histrightx < rightx then
+                histrightx = rightx
+            end
+            if histbottomy > bottomy then
+                histbottomy = bottomy
+            end
+            if histtopy < topy then
+                histtopy = topy
+            end
+            
+            leftx = histleftx
+            rightx = histrightx
+            bottomy = histbottomy
+            topy = histtopy
+            width = rightx - leftx + 1
+            height = topy - bottomy + 1
+        end
 
         -- check for hex
         if hexon then
@@ -616,6 +707,7 @@ end
 local function adjustzoom(amount, x, y)
     local newx = 0
     local newy = 0
+    local newzoom
 
     -- get the current zoom as actual zoom
     local currentzoom = lineartoreal(linearzoom)
@@ -700,6 +792,7 @@ end
 --------------------------------------------------------------------------------
 
 local function setzoom(zoom)
+    zoom = zoom / originz
     startx = camx
     starty = camy
     startzoom = linearzoom
@@ -883,6 +976,15 @@ end
 
 --------------------------------------------------------------------------------
 
+local function resethistory()
+    histleftx = initialrect[1]
+    histbottomy = initialrect[2]
+    histrightx = histleftx + initialrect[3] - 1
+    histtopy = histbottomy + initialrect[4] - 1
+end
+
+--------------------------------------------------------------------------------
+
 local function reset(looping)
     -- reset the camera if at generation 0
     local gen = tonumber(g.getgen())
@@ -896,6 +998,9 @@ local function reset(looping)
     else
         generating = false
     end
+
+    -- reset historyfit
+    resethistory()
 
     -- reset origin
     originx = 0
@@ -926,6 +1031,13 @@ end
 
 local function toggleautofit()
     autofit = not autofit
+    updatestatus()
+end
+
+--------------------------------------------------------------------------------
+
+local function togglehistoryfit()
+    historyfit = not historyfit
     updatestatus()
 end
 
@@ -983,48 +1095,53 @@ local function validatekeyword(token)
     local lower, upper
     local argvalue
     local argnum = 1
+    local whicharg
+    local arglist = ""
 
     if keyword == nil then
         invalid = "unknown script command"
     else
         -- check what sort of validation is required for this keyword
         arguments = {}
+        rawarguments = {}
         validation = keyword[index]
         while validation ~= "" do
             -- need an argument
+            whicharg = arglist
             if curtok >= #tokens then
-                invalid = "missing argument"
+                invalid = whicharg.."{{}}\nArgument "..argnum.." is missing"
             else
                 -- get the argument
                 curtok = curtok + 1
                 argvalue = tokens[curtok]
+                whicharg = whicharg.." {{"..argvalue.."}}\nArgument "..argnum
 
                 -- check which sort of validation to perform
                 if validation == "l" then
                     -- float lower bound
                     argvalue = numberorfraction(argvalue)
                     if argvalue == nil then
-                        invalid = "argument must be a number"
+                        invalid = whicharg.." must be a number"
                     else
                         index = index + 1
                         lower = keyword[index]
-                        if (argvalue < lower) then
-                            invalid = "argument must be greater than "..lower
+                        if argvalue < lower then
+                            invalid = whicharg.." must be at least "..lower
                         end
                     end
                 elseif validation == "L" then
                     -- integer lower bound
                     argvalue = tonumber(argvalue)
                     if argvalue == nil then
-                        invalid = "argument must be an integer"
+                        invalid = whicharg.." must be an integer"
                     else
                         if argvalue ~= math.floor(argvalue) then
-                            invalid = "argument must be an integer"
+                            invalid = whicharg.." must be an integer"
                         else
                             index = index + 1
                             lower = keyword[index]
-                            if (argvalue < lower) then
-                                invalid = "argument must be greater than "..lower
+                            if argvalue < lower then
+                                invalid = whicharg.." must be at least "..lower
                             end
                         end
                     end
@@ -1032,31 +1149,31 @@ local function validatekeyword(token)
                     -- float range
                     argvalue = numberorfraction(argvalue)
                     if argvalue == nil then
-                        invalid = "argument must be a number"
+                        invalid = whicharg.." must be a number"
                     else
                         index = index + 1
                         lower = keyword[index]
                         index = index + 1
                         upper = keyword[index]
-                        if (argvalue < lower or argvalue > upper) then
-                            invalid = "argument must be between "..lower.." and "..upper
+                        if argvalue < lower or argvalue > upper then
+                            invalid = whicharg.." must be between "..lower.." and "..upper
                         end
                     end
                 elseif validation == "R" then
                     -- integer range
                     argvalue = tonumber(argvalue)
                     if argvalue == nil then
-                        invalid = "argument must be an integer"
+                        invalid = whicharg.." must be an integer"
                     else
                         if argvalue ~= math.floor(argvalue) then
-                            invalid = "argument must be an integer"
+                            invalid = whicharg.." must be an integer"
                         else
                             index = index + 1
                             lower = keyword[index]
                             index = index + 1
                             upper = keyword[index]
-                            if (argvalue < lower or argvalue > upper) then
-                                invalid = "argument must be between "..lower.." and "..upper
+                            if argvalue < lower or argvalue > upper then
+                                invalid = whicharg.." must be between "..lower.." and "..upper
                             end
                         end
                     end
@@ -1070,7 +1187,9 @@ local function validatekeyword(token)
             else
                 -- save the argument
                 arguments[argnum] = argvalue
+                rawarguments[argnum] = tokens[curtok]
                 argnum = argnum + 1
+                arglist = arglist..tokens[curtok].." "
 
                 -- get next argument to validation
                 index = index + 1
@@ -1122,6 +1241,8 @@ local function checkscript()
                     hexon = true
                 elseif token == layersword then
                     camlayers = arguments[1]
+                elseif token == historyfitword then
+                    historyfit = true
                 elseif token == loopword then
                     loopgen = arguments[1]
                 elseif token == squaredisplayword then
@@ -1145,7 +1266,19 @@ local function checkscript()
                     tracks = arguments[2]
                     trackw = arguments[3]
                     trackn = arguments[4]
-                    trackdefined = true
+                    if trackw > tracke then
+                        invalid = "[["..rawarguments[1].."]] "..rawarguments[2].." [["
+                        invalid = invalid..rawarguments[3].."]] "..rawarguments[4]
+                        invalid = invalid.."\nW is greater than E"
+                    else
+                        if trackn > tracks then
+                            invalid = rawarguments[1].." [["..rawarguments[2].."]] "
+                            invalid = invalid..rawarguments[3].." [["..rawarguments[4].."]]"
+                            invalid = invalid.."\nN is greater than S"
+                        else
+                            trackdefined = true
+                        end
+                    end
                 elseif token == trackloopword then
                     trackperiod = arguments[1]
                     tracke = arguments[2]
@@ -1190,7 +1323,7 @@ local function checkscript()
         updatecamera()
         refresh()
         if invalid ~= "" then
-            g.note(token..": "..invalid)
+            g.note(token.." "..invalid)
         end
     end
 end
@@ -1297,7 +1430,7 @@ local function main()
 
     -- reset pattern if required
     currentgen = tonumber(g.getgen())
-    if (currentgen ~= 0) then
+    if currentgen ~= 0 then
         g.reset();
     end
 
@@ -1310,6 +1443,13 @@ local function main()
 
     -- reset the camera to default position
     fitzoom(true)
+
+    -- get the initial bounding box and zoom
+    initialrect = g.getrect()
+    initialzoom = lineartoreal(linearzoom)
+
+    -- reset history box
+    resethistory()
     
     -- use Golly's colors if multi-state pattern
     if g.numstates() > 2 then
@@ -1372,6 +1512,8 @@ local function main()
             end
         elseif event == "key f shift" then
             toggleautofit()
+        elseif event == "key h shift" then
+            togglehistoryfit()
         elseif event == "key [ none" then
             zoomout()
         elseif event == "key ] none" then

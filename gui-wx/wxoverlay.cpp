@@ -447,10 +447,6 @@ const char* Overlay::DoDrawCells()
         DrawStars(angle);
     }
 
-    if (grid && angle == 0 && camzoom >= 4) {
-        DrawGridLines();
-    }
-
     return NULL;
 }
 
@@ -540,6 +536,11 @@ void Overlay::DrawCells(unsigned char *cells, int mask, double angle)
         sx += dxy;
         sy += dyy;
         y = sy;
+    }
+
+    // draw grid lines if enabled
+    if (grid && angle == 0 && camzoom >= 4) {
+        DrawGridLines();
     }
 
     // draw any layers
