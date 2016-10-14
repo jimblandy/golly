@@ -1611,6 +1611,10 @@ bool Overlay::TransparentPixel(int x, int y)
 
 void Overlay::SetOverlayCursor()
 {
+    if (cursname == "current") {
+        // currlayer->curs might have changed
+        ovcursor = currlayer->curs;
+    }
     #ifdef __WXMAC__
         wxSetCursor(*ovcursor);
     #endif
