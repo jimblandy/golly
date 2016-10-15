@@ -35,7 +35,7 @@ follows:<ol>
 <li>Click on the <b>Keyboard</b> tab in the dialog
 <li>In the <b>Key Combination</b> field enter your preferred key combination
 <li>In the <b>Action</b> drop down select <b>Run Script...</b>
-<li>Click on the <b>Choose File...</b> button and select "<i>lifeviewer.lua</i>"
+<li>Click on the <b>Choose File...</b> button and select "<b>lifeviewer.lua</b>"
 <li>Click on <b>OK</b>
 </ol>
 <p>
@@ -53,7 +53,8 @@ patterns and also on <a href="http://www.conwaylife.com/wiki">LifeWiki</a>.
 <tr><td align="right">Space</td><td>Pause / next generation.</td></tr>
 <tr><td align="right">Tab</td><td>Pause / next step.</td></tr>
 <tr><td align="right">Esc</td><td>Close LifeViewer.</td></tr>
-<tr><td align="right"><a name="reset"></a>R</td><td>Reset to generation 0.</td></tr>
+<tr><td align="right"><a name="reset"></a>R</td><td>Reset to generation 0. Reset at generation 0 also resets camera.</td></tr>
+<tr><td align="right">Shift R</td><td>Toggle <a href="#hardreset">hard reset</a> mode.</td></tr>
 <tr><td align="right">-</td><td>Decrease generation speed.</td></tr>
 <tr><td align="right">+</td><td>Increase generation speed.</td></tr>
 <tr><td align="right">Shift -</td><td>Minimum generation speed.</td></tr>
@@ -101,10 +102,12 @@ patterns and also on <a href="http://www.conwaylife.com/wiki">LifeWiki</a>.
 <tr><td align="right">P</td><td>Increase layer depth.</td></tr>
 <tr><td align="right">Q</td><td>Decrease layer depth.</td></tr>
 <tr><td align="right">C</td><td>Cycle <a href="#themes">color theme</a>.</td></tr>
-<tr><td align="right">Shift C</td><td>Toggle theme / standard colors.</td></tr>
+<tr><td align="right">T</td><td>Toggle timing display.</td></tr>
+<tr><td align="right">Shift T</td><td>Toggle extended timing information.</td></tr>
+<tr><td align="right"><a name="standard"></a>Shift C</td><td>Toggle theme / Golly's standard colors.</td></tr>
 <tr><td align="right">/</td><td>Toggle <a href="#hex">hex grid</a>.</td></tr>
 <tr><td align="right">S</td><td>Toggle stars.</td></tr>
-<tr><td align="right">X</td><td>Toggle grid lines.</td></tr>
+<tr><td align="right"><a name="gridlines"></a>X</td><td>Toggle grid lines.</td></tr>
 <tr><td align="right">Shift X</td><td>Toggle major grid lines.</td></tr>
 </table>
 
@@ -160,18 +163,19 @@ There are many script commands available and they are grouped by function in the
 <p><table cellspacing=1 border=2 width=90% cellpadding=3>
 <tr><th>Command</th><th>Arguments</th><th>Action</th></tr>
 <tr><th colspan="3" align="left">Script commands</th></tr>
-<tr><td align="right">[[</td><td></td><td>Start script section.</td></tr>
-<tr><td align="right">]]</td><td></td><td>End script section.</td></tr>
+<tr><td align="right">[[</td><td>&nbsp;</td><td>Start script section.</td></tr>
+<tr><td align="right">]]</td><td>&nbsp;</td><td>End script section.</td></tr>
 <tr><th colspan="3" align="left">Playback commands</th></tr>
-<tr><td align="right">AUTOSTART</td><td></td><td>Start play automatically.</td></tr>
+<tr><td align="right">AUTOSTART</td><td>&nbsp;</td><td>Start play automatically.</td></tr>
 <tr><td align="right">GPS</td><td>&lt;1..60&gt;</td><td>Set steps per second.</td></tr>
 <tr><td align="right">LOOP</td><td>&lt;1..&gt;</td><td>Loop at specified generation.</td></tr>
+<tr><td align="right"><a name="hardreset"></a>HARDRESET</td><td>&nbsp;</td><td><a href="#reset">Reset</a> always resets camera.</td></tr>
 <tr><td align="right">STEP</td><td>&lt;1..50&gt;</td><td>Set generations per step.</td></tr>
 <tr><td align="right">STOP</td><td>&lt;1..&gt;</td><td>Stop at specified generation.</td></tr>
 <tr><th colspan="3" align="left">Camera commands</th></tr>
 <tr><td align="right">ANGLE</td><td>&lt;0.0..359.9&gt;</td><td>Set camera angle.</td></tr>
-<tr><td align="right"><a name="autofitcommand"></a>AUTOFIT</td><td></td><td>Fit pattern to display.</td></tr>
-<tr><td align="right"><a name="historyfitcommand"></a>HISTORYFIT</td><td></td><td>Modify AutoFit to use pattern history.</td></tr>
+<tr><td align="right"><a name="autofitcommand"></a>AUTOFIT</td><td>&nbsp;</td><td>Fit pattern to display.</td></tr>
+<tr><td align="right"><a name="historyfitcommand"></a>HISTORYFIT</td><td>&nbsp;</td><td>Modify AUTOFIT to use pattern history.</td></tr>
 <tr><td align="right">TRACK</td><td>X Y</td><td>Camera moves at (X, Y) cells/generation.</td></tr>
 <tr><td align="right">TRACKBOX</td><td>E S W N</td><td>Camera tracks bounding box with E, S, W and N edges moving at defined cells/generation.</td></tr>
 <tr><td align="right">TRACKLOOP</td><td>P X Y</td><td>Camera moves at (X, Y) cells/generation and playback loops at generation P.</td></tr>
@@ -180,12 +184,14 @@ There are many script commands available and they are grouped by function in the
 <tr><td align="right">ZOOM or Z</td><td>&lt;-16.0..32.0&gt;</td><td>Set camera zoom. Negative zooms can also be specified as decimals or fractions: ZOOM -4 = ZOOM 0.25 = ZOOM 1/4.</td></tr>
 <tr><th colspan="3" align="left">View commands</th></tr>
 <tr><td align="right"><a name="depthcommand"></a>DEPTH</td><td>&lt;0.0..1.0&gt;</td><td>Set layer depth.</td></tr>
-<tr><td align="right">GRID</td><td></td><td>Display grid lines.</td></tr>
+<tr><td align="right">EXTENDEDTIMING</td><td>&nbsp;</td><td>Show extended timing information when displayed.</td></tr>
+<tr><td align="right">GRID</td><td>&nbsp;</td><td>Display grid lines.</td></tr>
 <tr><td align="right">GRIDMAJOR</td><td>&lt;0..16&gt;</td><td>Set major grid line interval (0 = off).</td></tr>
-<tr><td align="right"><a name="hexdisplaycommand"></a>HEXDISPLAY</td><td></td><td>Force hex grid display.</td></tr>
+<tr><td align="right"><a name="hexdisplaycommand"></a>HEXDISPLAY</td><td>&nbsp;</td><td>Force hex grid display.</td></tr>
 <tr><td align="right"><a name="layerscommand"></a>LAYERS</td><td>&lt;1..10&gt;</td><td>Set number of layers.</td></tr>
-<tr><td align="right"><a name="squaredisplaycommand"></a>SQUAREDISPLAY</td><td></td><td>Force square grid display.</td></tr>
-<tr><td align="right">STARS</td><td></td><td>Display stars.</td></tr>
+<tr><td align="right"><a name="squaredisplaycommand"></a>SQUAREDISPLAY</td><td>&nbsp;</td><td>Force square grid display.</td></tr>
+<tr><td align="right">STARS</td><td>&nbsp;</td><td>Display stars.</td></tr>
+<tr><td align="right">SHOWTIMING</td><td>&nbsp;</td><td>Show timing information.</td></tr>
 <tr><td align="right"><a name="themecommand"><a>THEME</td><td>&lt;0..9&gt;</td><td>Set color theme.</td></tr>
 </table>
 
@@ -263,12 +269,12 @@ in the <i>alive</i> color. This provides a visual representation of cell longevi
 <p>
 <table cellspacing=0 cellpadding=0 width=50%>
 <tr><th colspan=8 align="left">Born</th><th colspan=8 align="right">Alive</th></tr>
-<tr height=20><td bgcolor="#00FFFF"></td>
-<td bgcolor="#10FFFF"></td><td bgcolor="#20FFFF"></td><td bgcolor="#30FFFF"></td>
-<td bgcolor="#40FFFF"></td><td bgcolor="#50FFFF"></td><td bgcolor="#60FFFF"></td>
-<td bgcolor="#70FFFF"></td><td bgcolor="#90FFFF"></td><td bgcolor="#A0FFFF"></td>
-<td bgcolor="#B0FFFF"></td><td bgcolor="#C0FFFF"></td><td bgcolor="#D0FFFF"></td>
-<td bgcolor="#E0FFFF"></td><td bgcolor="#F0FFFF"></td><td bgcolor="#FFFFFF"></td>
+<tr height=20><td bgcolor="#00FFFF">&nbsp;</td>
+<td bgcolor="#10FFFF">&nbsp;</td><td bgcolor="#20FFFF">&nbsp;</td><td bgcolor="#30FFFF">&nbsp;</td>
+<td bgcolor="#40FFFF">&nbsp;</td><td bgcolor="#50FFFF">&nbsp;</td><td bgcolor="#60FFFF">&nbsp;</td>
+<td bgcolor="#70FFFF">&nbsp;</td><td bgcolor="#90FFFF">&nbsp;</td><td bgcolor="#A0FFFF">&nbsp;</td>
+<td bgcolor="#B0FFFF">&nbsp;</td><td bgcolor="#C0FFFF">&nbsp;</td><td bgcolor="#D0FFFF">&nbsp;</td>
+<td bgcolor="#E0FFFF">&nbsp;</td><td bgcolor="#F0FFFF">&nbsp;</td><td bgcolor="#FFFFFF">&nbsp;</td>
 </tr>
 </table>
 <p>
@@ -280,12 +286,12 @@ remain in the <i>dead</i> color. This provides a visual representation of cell h
 <p>
 <table cellspacing=0 cellpadding=0 width=50%>
 <tr><th colspan=8 align="left">Died</th><th colspan=8 align="right">Dead</th></tr>
-<tr height=20><td bgcolor="#0000FF"></td>
-<td bgcolor="#0000F3"></td><td bgcolor="#0000E6"></td><td bgcolor="#0000D9"></td>
-<td bgcolor="#0000CC"></td><td bgcolor="#0000C0"></td><td bgcolor="#0000B3"></td>
-<td bgcolor="#0000A6"></td><td bgcolor="#000099"></td><td bgcolor="#00008C"></td>
-<td bgcolor="#000080"></td><td bgcolor="#000073"></td><td bgcolor="#000066"></td>
-<td bgcolor="#000059"></td><td bgcolor="#00004c"></td><td bgcolor="#000040"></td>
+<tr height=20><td bgcolor="#0000FF">&nbsp;</td>
+<td bgcolor="#0000F3">&nbsp;</td><td bgcolor="#0000E6">&nbsp;</td><td bgcolor="#0000D9">&nbsp;</td>
+<td bgcolor="#0000CC">&nbsp;</td><td bgcolor="#0000C0">&nbsp;</td><td bgcolor="#0000B3">&nbsp;</td>
+<td bgcolor="#0000A6">&nbsp;</td><td bgcolor="#000099">&nbsp;</td><td bgcolor="#00008C">&nbsp;</td>
+<td bgcolor="#000080">&nbsp;</td><td bgcolor="#000073">&nbsp;</td><td bgcolor="#000066">&nbsp;</td>
+<td bgcolor="#000059">&nbsp;</td><td bgcolor="#00004c">&nbsp;</td><td bgcolor="#000040">&nbsp;</td>
 </tr>
 </table>
 <p>
@@ -310,16 +316,16 @@ theme and Golly's default colors for the pattern.
 
 <p><table cellspacing=1 border=2 width=90% cellpadding=3>
 <tr><th>Theme</th><th width=16%>Born</th><th width=16%>Alive</th><th width=16%>Died</th><th width=16%>Dead</th><th width=16%>Unoccupied</th></tr>
-<tr><td align="center">0</td><td bgcolor="#FFFFFF"></td><td bgcolor="#FFFFFF"></td><td bgcolor="#000000"</td><td bgcolor="#000000"></td><td bgcolor="#000000"></td></tr>
-<tr><td align="center">1</td><td bgcolor="#00FFFF"></td><td bgcolor="#FFFFFF"></td><td bgcolor="#0000FF"</td><td bgcolor="#00002F"></td><td bgcolor="#000000"></td></tr>
-<tr><td align="center">2</td><td bgcolor="#FF9000"></td><td bgcolor="#FFFF00"></td><td bgcolor="#A00000"</td><td bgcolor="#200000"></td><td bgcolor="#000000"></td></tr>
-<tr><td align="center">3</td><td bgcolor="#00FFFF"></td><td bgcolor="#FFFFFF"></td><td bgcolor="#008000"</td><td bgcolor="#001800"></td><td bgcolor="#000000"></td></tr>
-<tr><td align="center">4</td><td bgcolor="#FFFF00"></td><td bgcolor="#FFFFFF"></td><td bgcolor="#800080"</td><td bgcolor="#002f00"></td><td bgcolor="#002080"></td></tr>
-<tr><td align="center">5</td><td bgcolor="#B0B0B0"></td><td bgcolor="#FFFFFF"></td><td bgcolor="#686868"</td><td bgcolor="#101010"></td><td bgcolor="#000000"></td></tr>
-<tr><td align="center">6</td><td bgcolor="#000000"></td><td bgcolor="#000000"></td><td bgcolor="#FFFFFF"</td><td bgcolor="#FFFFFF"></td><td bgcolor="#FFFFFF"></td></tr>
-<tr><td align="center">7</td><td bgcolor="#0000FF"></td><td bgcolor="#000000"></td><td bgcolor="#F0F0F0"</td><td bgcolor="#00FFFF"></td><td bgcolor="#FFFFFF"></td></tr>
-<tr><td align="center">8</td><td bgcolor="#F0F0F0"></td><td bgcolor="#F0F0F0"></td><td bgcolor="#F0F0F0"</td><td bgcolor="#F0F0F0"></td><td bgcolor="#000000"></td></tr>
-<tr><td align="center">9</td><td bgcolor="#F0F0F0"></td><td bgcolor="#F0F0F0"></td><td bgcolor="#A00000"</td><td bgcolor="#A00000"></td><td bgcolor="#000000"></td></tr>
+<tr><td align="center">0</td><td bgcolor="#FFFFFF">&nbsp;</td><td bgcolor="#FFFFFF"></td>&nbsp;<td bgcolor="#000000"</td><td bgcolor="#000000">&nbsp;</td><td bgcolor="#000000">&nbsp;</td></tr>
+<tr><td align="center" bgcolor="#FFFFCE">1</td><td bgcolor="#00FFFF">&nbsp;</td><td bgcolor="#FFFFFF"></td>&nbsp;<td bgcolor="#0000FF"</td><td bgcolor="#00002F">&nbsp;</td><td bgcolor="#000000">&nbsp;</td></tr>
+<tr><td align="center" bgcolor="#FFFFCE">2</td><td bgcolor="#FF9000">&nbsp;</td><td bgcolor="#FFFF00"></td>&nbsp;<td bgcolor="#A00000"</td><td bgcolor="#200000">&nbsp;</td><td bgcolor="#000000">&nbsp;</td></tr>
+<tr><td align="center" bgcolor="#FFFFCE">3</td><td bgcolor="#00FFFF">&nbsp;</td><td bgcolor="#FFFFFF"></td>&nbsp;<td bgcolor="#008000"</td><td bgcolor="#001800">&nbsp;</td><td bgcolor="#000000">&nbsp;</td></tr>
+<tr><td align="center" bgcolor="#FFFFCE">4</td><td bgcolor="#FFFF00">&nbsp;</td><td bgcolor="#FFFFFF"></td>&nbsp;<td bgcolor="#800080"</td><td bgcolor="#002f00">&nbsp;</td><td bgcolor="#002080">&nbsp;</td></tr>
+<tr><td align="center" bgcolor="#FFFFCE">5</td><td bgcolor="#B0B0B0">&nbsp;</td><td bgcolor="#FFFFFF"></td>&nbsp;<td bgcolor="#686868"</td><td bgcolor="#101010">&nbsp;</td><td bgcolor="#000000">&nbsp;</td></tr>
+<tr><td align="center" bgcolor="#FFFFCE">6</td><td bgcolor="#000000">&nbsp;</td><td bgcolor="#000000"></td>&nbsp;<td bgcolor="#FFFFFF"</td><td bgcolor="#FFFFFF">&nbsp;</td><td bgcolor="#FFFFFF">&nbsp;</td></tr>
+<tr><td align="center" bgcolor="#FFFFCE">7</td><td bgcolor="#0000FF">&nbsp;</td><td bgcolor="#000000"></td>&nbsp;<td bgcolor="#F0F0F0"</td><td bgcolor="#00FFFF">&nbsp;</td><td bgcolor="#FFFFFF">&nbsp;</td></tr>
+<tr><td align="center" bgcolor="#FFFFCE">8</td><td bgcolor="#F0F0F0">&nbsp;</td><td bgcolor="#F0F0F0"></td>&nbsp;<td bgcolor="#F0F0F0"</td><td bgcolor="#F0F0F0">&nbsp;</td><td bgcolor="#000000">&nbsp;</td></tr>
+<tr><td align="center" bgcolor="#FFFFCE">9</td><td bgcolor="#F0F0F0">&nbsp;</td><td bgcolor="#F0F0F0"></td>&nbsp;<td bgcolor="#A00000"</td><td bgcolor="#A00000">&nbsp;</td><td bgcolor="#000000">&nbsp;</td></tr>
 </table>
 <p>
 Themes 0 and 6 are good for <a href="#trackloop">TRACKLOOP</a> since they have no history.
@@ -363,11 +369,11 @@ or <a href="#squaredisplaycommand">SQUAREDISPLAY</a> script command to the patte
 <p>
 <ul>
 <li><a name="hex"></a><a href="#hex">Hex grid</a> does not support camera rotation. Any rotation will be ignored.
-<li>Grid lines only display at 4x zoom and higher and when the camera angle is 0.
+<li><a href="#gridlines">Grid lines</a> only display at 4x zoom and higher and when the camera angle is 0.
 <li>Decimal values may also be specified as fractions: <b>TRACK -0.5 0.25</b> = <b>TRACK -1/2 1/4</b>.
 <li>Many of the <a href="#keyboard">keyboard shortcuts</a> are the same as Golly's but there are exceptions.
 <li><a href="#historyfitcommand">HISTORYFIT</a> modifies how <a href="#autofitcommand">AUTOFIT</a> works but does not itself switch AUTOFIT on.
-<li>If playback is <a href="#reset">reset</a> when not at generation zero then the pattern is reset but the camera is not. A second reset (while at generation 0) will reset the camera.
+<li><a href="#layers">Layers</a> are only displayed when using a <a href="#themes">color theme</a>. They do not display when viewing a pattern using Golly's <a href="#standard">standard colors</a>.
 </ul>
 
 </body>

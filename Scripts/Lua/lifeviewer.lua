@@ -11,7 +11,7 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 18
+local buildnumber = 19
 
 local g = golly()
 local ov = g.overlay
@@ -21,6 +21,23 @@ local op = require "oplus"
 
 local viewwd, viewht = g.getview(g.getlayer())
 
+-- update flags
+local update = {
+    docells = false,
+    docamera = false,
+    dorefresh = false,
+    dostatus = false
+}
+
+-- timing
+local timing = {
+    docellstime,
+    docameratime,
+    dorefreshtime,
+    showtiming = false,
+    extendedtiming = false
+}
+
 -- whether generating life
 local generating = false
 local autostart = false
@@ -29,31 +46,34 @@ local stopgen = -1
 local currentgen = 0
 
 -- view constants
-local minzoom = 0.0625
-local mininvzoom = -1 / minzoom
-local maxzoom = 32
-local minangle = 0
-local maxangle = 360
-local viewwidth = 2048
-local viewheight = 2048
-local mindepth = 0
-local maxdepth = 1
-local minlayers = 1
-local maxlayers = 10
-local zoomborder = 0.9  -- proportion of view to fill with fit zoom
-local glidesteps = 40   -- steps to glide camera
-local minstop = 1
-local minloop = 1
-local mintheme = 0
-local maxtheme = #op.themes
-local minpan = -4096
-local maxpan = 4096
-local mingps = 1
-local maxgps = 60
-local minstep = 1
-local maxstep = 50
-local decaysteps = 64  -- number of steps to decay after life finished
-local decay = 0
+local viewconstants = {
+    minzoom = 0.0625,
+    maxzoom = 32,
+    minangle = 0,
+    maxangle = 360,
+    viewwidth = 2048,
+    viewheight = 2048,
+    mindepth = 0,
+    maxdepth = 1,
+    minlayers = 1,
+    maxlayers = 10,
+    zoomborder = 0.9,  -- proportion of view to fill with fit zoom
+    glidesteps = 40,   -- steps to glide camera
+    minstop = 1,
+    minloop = 1,
+    mintheme = 0,
+    maxtheme = #op.themes,
+    minpan = -4096,
+    maxpan = 4096,
+    mingps = 1,
+    maxgps = 60,
+    minstep = 1,
+    maxstep = 50,
+    decaysteps = 64,  -- number of steps to decay after life finished
+    mingridmajor = 0,
+    maxgridmajor = 16
+}
+viewconstants.mininvzoom = -1 / viewconstants.minzoom
 
 -- playback speed
 local defgps = 60
@@ -74,8 +94,8 @@ local endzoom
 local camsteps = -1 
 
 -- camera defaults
-local defcamx = viewwidth / 2
-local defcamy = viewheight / 2
+local defcamx = viewconstants.viewwidth / 2
+local defcamy = viewconstants.viewheight / 2
 local defcamangle = 0
 local defcamlayers = 1
 local defcamlayerdepth = 0.05
@@ -89,6 +109,7 @@ local camlayers = defcamlayers
 local camlayerdepth = defcamlayerdepth
 local autofit = false
 local historyfit = false
+local decay = 0
 
 -- tracking
 local tracke = 0
@@ -130,42 +151,48 @@ local hexon = false
 local grid = false
 local gridmajoron = true
 local gridmajor = 10
-local mingridmajor = 0
-local maxgridmajor = 16
 
 -- stars
 local stars = false
+
+-- reset
+local hardreset = false
 
 -- script tokens
 local tokens = {}
 local curtok = 1
 local arguments
 local rawarguments    -- the script text before conversion
-local scriptstartword   = "[["
-local scriptendword     = "]]"
-local angleword         = "ANGLE"
-local autofitword       = "AUTOFIT"
-local autostartword     = "AUTOSTART"
-local depthword         = "DEPTH"
-local gpsword           = "GPS"
-local gridword          = "GRID"
-local gridmajorword     = "GRIDMAJOR"
-local hexdisplayword    = "HEXDISPLAY"
-local historyfitword    = "HISTORYFIT"
-local layersword        = "LAYERS"
-local loopword          = "LOOP"
-local squaredisplayword = "SQUAREDISPLAY"
-local starsword         = "STARS"
-local stepword          = "STEP"
-local stopword          = "STOP"
-local themeword         = "THEME"
-local trackword         = "TRACK"
-local trackboxword      = "TRACKBOX"
-local trackloopword     = "TRACKLOOP"
-local xword             = "X"
-local yword             = "Y"
-local zoomword          = "ZOOM"
-local zword             = "Z"
+local commands = {
+    scriptstartword    = "[[",
+    scriptendword      = "]]",
+    angleword          = "ANGLE",
+    autofitword        = "AUTOFIT",
+    autostartword      = "AUTOSTART",
+    depthword          = "DEPTH",
+    extendedtimingword = "EXTENDEDTIMING",
+    gpsword            = "GPS",
+    gridword           = "GRID",
+    gridmajorword      = "GRIDMAJOR",
+    hardresetword      = "HARDRESET",
+    hexdisplayword     = "HEXDISPLAY",
+    historyfitword     = "HISTORYFIT",
+    layersword         = "LAYERS",
+    loopword           = "LOOP",
+    showtimingword     = "SHOWTIMING",
+    squaredisplayword  = "SQUAREDISPLAY",
+    starsword          = "STARS",
+    stepword           = "STEP",
+    stopword           = "STOP",
+    themeword          = "THEME",
+    trackword          = "TRACK",
+    trackboxword       = "TRACKBOX",
+    trackloopword      = "TRACKLOOP",
+    xword              = "X",
+    yword              = "Y",
+    zoomword           = "ZOOM",
+    zword              = "Z"
+}
 
 -- keyword decoding
 -- each argument has a type followed by constraint values
@@ -174,41 +201,44 @@ local zword             = "Z"
 -- "l" - float lower bound
 -- "L" - int lower bound
 local keywords = {
-    [angleword] =         { "r", minangle, maxangle, "" },
-    [autofitword] =       { "" },
-    [autostartword] =     { "" },
-    [depthword] =         { "r", mindepth, maxdepth, "" },
-    [gpsword] =           { "r", mingps, maxgps, "" },
-    [gridword] =          { "" },
-    [gridmajorword] =     { "R", mingridmajor, maxgridmajor, "" },
-    [hexdisplayword] =    { "" },
-    [historyfitword] =    { "" },
-    [layersword] =        { "R", minlayers, maxlayers, "" },
-    [loopword] =          { "L", minloop, "" },
-    [squaredisplayword] = { "" },
-    [starsword]         = { "" },
-    [stepword] =          { "r", minstep, maxstep, "" },
-    [stopword] =          { "L", minstop, "" },
-    [themeword] =         { "R", mintheme, maxtheme, "" },
-    [trackword] =         { "r", -1, 1, "r", -1, 1, "" },
-    [trackboxword] =      { "r", -1, 1, "r", -1, 1, "r", -1, 1, "r", -1, 1, "" },
-    [trackloopword] =     { "L", 1, "r", -1, 1, "r", -1, 1, "" },
-    [xword] =             { "r", minpan, maxpan, "" },
-    [yword] =             { "r", minpan, maxpan, "" },
-    [zoomword] =          { "r", mininvzoom, maxzoom, "" },
-    [zword] =             { "r", mininvzoom, maxzoom, "" }
+    [commands.angleword] =          { "r", viewconstants.minangle, viewconstants.maxangle, "" },
+    [commands.autofitword] =        { "" },
+    [commands.autostartword] =      { "" },
+    [commands.depthword] =          { "r", viewconstants.mindepth, viewconstants.maxdepth, "" },
+    [commands.extendedtimingword] = { "" },
+    [commands.gpsword] =            { "r", viewconstants.mingps, viewconstants.maxgps, "" },
+    [commands.gridword] =           { "" },
+    [commands.gridmajorword] =      { "R", viewconstants.mingridmajor, viewconstants.maxgridmajor, "" },
+    [commands.hardresetword] =      { "" },
+    [commands.hexdisplayword] =     { "" },
+    [commands.historyfitword] =     { "" },
+    [commands.layersword] =         { "R", viewconstants.minlayers, viewconstants.maxlayers, "" },
+    [commands.loopword] =           { "L", viewconstants.minloop, "" },
+    [commands.showtimingword] =     { "" },
+    [commands.squaredisplayword] =  { "" },
+    [commands.starsword]         =  { "" },
+    [commands.stepword] =           { "r", viewconstants.minstep, viewconstants.maxstep, "" },
+    [commands.stopword] =           { "L", viewconstants.minstop, "" },
+    [commands.themeword] =          { "R", viewconstants.mintheme, viewconstants.maxtheme, "" },
+    [commands.trackword] =          { "r", -1, 1, "r", -1, 1, "" },
+    [commands.trackboxword] =       { "r", -1, 1, "r", -1, 1, "r", -1, 1, "r", -1, 1, "" },
+    [commands.trackloopword] =      { "L", 1, "r", -1, 1, "r", -1, 1, "" },
+    [commands.xword] =              { "r", viewconstants.minpan, viewconstants.maxpan, "" },
+    [commands.yword] =              { "r", viewconstants.minpan, viewconstants.maxpan, "" },
+    [commands.zoomword] =           { "r", viewconstants.mininvzoom, viewconstants.maxzoom, "" },
+    [commands.zword] =              { "r", viewconstants.mininvzoom, viewconstants.maxzoom, "" }
 }
 
 --------------------------------------------------------------------------------
 
 local function realtolinear(zoom)
-    return math.log(zoom / minzoom) / math.log(maxzoom / minzoom)
+    return math.log(zoom / viewconstants.minzoom) / math.log(viewconstants.maxzoom / viewconstants.minzoom)
 end
 
 --------------------------------------------------------------------------------
 
 local function lineartoreal(zoom)
-    return minzoom * math.pow(maxzoom / minzoom, zoom)
+    return viewconstants.minzoom * math.pow(viewconstants.maxzoom / viewconstants.minzoom, zoom)
 end
 
 --------------------------------------------------------------------------------
@@ -216,13 +246,13 @@ end
 local function updatestatus()
     -- convert zoom to actual value
     local zoom = lineartoreal(linearzoom) * originz
-    if zoom < 0.999 then
+    if zoom < 0.99999 then
        zoom = -(1 / zoom)
     end
 
     -- convert x and y to display coordinates
-    local x = camx - viewwidth / 2 + originx
-    local y = camy - viewheight / 2 + originy
+    local x = camx - viewconstants.viewwidth / 2 + originx
+    local y = camy - viewconstants.viewheight / 2 + originy
     if hexon then
         x = x + camy / 2
     end
@@ -258,7 +288,13 @@ local function updatestatus()
     end
 
     -- update status bar
-    local status = "Hit escape to abort script.  Zoom "..string.format("%.1f", zoom).."x  Angle "..displayangle.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y).."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth).."  GPS "..gps.."  Step "..step.."  Theme "..themestatus.."  Autofit "..autofitstatus.."  Mode "..hexstatus.."  Grid "..gridstatus
+    local status = "Hit escape to close."
+    status = status.."  Time "..string.format("%.1f", timing.docellstime).."ms/"..string.format("%.1f", timing.dorefreshtime).."ms"
+    status = status.."  Zoom "..string.format("%.1f", zoom).."x  Angle "..displayangle
+    status = status.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y)
+    status = status.."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth)
+    status = status.."  GPS "..gps.."  Step "..step.."  Theme "..themestatus
+    status = status.."  Autofit "..autofitstatus.."  Mode "..hexstatus.."  Grid "..gridstatus
     if stopgen ~= -1 then
         status = status.."  Stop "..stopgen
     end
@@ -271,65 +307,65 @@ end
 --------------------------------------------------------------------------------
 
 local function refresh()
+    local start = os.clock()
     local newx, newy, newz
 
     -- add the fractional part to the current generation
-    local fractionalgen = (os.clock() - genstarttime) * gps
-
-    if fractionalgen < 0 then
-        fractionalgen = 0
-    else
-        if fractionalgen > 1 then
-            fractionalgen = 1
-        end
-    end
-    local gen = currentgen + fractionalgen
-
-    -- compute the new origin
-    originx = gen * (tracke + trackw) / 2
-    originy = gen * (tracks + trackn) / 2
-
-    -- compute the trackbox
-    local leftx = initialrect[1]
-    local bottomy = initialrect[2]
-    local width = initialrect[3]
-    local height = initialrect[4]
-    local rightx = leftx + width
-    local topy = bottomy + height
-    leftx = leftx + gen * trackw
-    rightx = rightx + gen * tracke
-    bottomy = bottomy + gen * trackn
-    topy = topy + gen * tracks
-    width = rightx - leftx + 1
-    height = topy - bottomy + 1
-
-    -- check for hex
-    if hexon then
-        leftx = leftx - bottomy / 2
-        rightx = rightx - topy / 2
-        width = rightx - leftx + 1
-    end
-
-    -- get the smallest zoom needed
-    local zoom = viewwd / width
-    if zoom > viewht / height then
-        zoom = viewht / height
-    end
-
-    -- leave a border around the pattern
-    zoom = zoom * zoomborder
-    originz = zoom / initialzoom
-
-    -- apply the origin to the camera
     if trackdefined then
+        local fractionalgen = (os.clock() - genstarttime) * gps
+        if fractionalgen < 0 then
+            fractionalgen = 0
+        else
+            if fractionalgen > 1 then
+                fractionalgen = 1
+            end
+        end
+        local gen = currentgen + fractionalgen
+
+        -- compute the new origin
+        originx = gen * (tracke + trackw) / 2
+        originy = gen * (tracks + trackn) / 2
+
+        -- compute the trackbox
+        local leftx = initialrect[1]
+        local bottomy = initialrect[2]
+        local width = initialrect[3]
+        local height = initialrect[4]
+        local rightx = leftx + width
+        local topy = bottomy + height
+        leftx = leftx + gen * trackw
+        rightx = rightx + gen * tracke
+        bottomy = bottomy + gen * trackn
+        topy = topy + gen * tracks
+        width = rightx - leftx + 1
+        height = topy - bottomy + 1
+
+        -- check for hex
+        if hexon then
+            leftx = leftx - bottomy / 2
+            rightx = rightx - topy / 2
+            width = rightx - leftx + 1
+        end
+
+        -- get the smallest zoom needed
+        local zoom = viewwd / width
+        if zoom > viewht / height then
+            zoom = viewht / height
+        end
+    
+        -- leave a border around the pattern
+        zoom = zoom * viewconstants.zoomborder
+
+        -- apply the origin to the camera
+        originz = zoom / initialzoom
         newx = camx + originx
         newy = camy + originy
         newz = lineartoreal(linearzoom) * originz
-        if newz > maxzoom then
-            newz = maxzoom
+        if newz > viewconstants.maxzoom then
+            newz = viewconstants.maxzoom
         else
-            if newz < minzoom then
-                newz = minzoom
+            if newz < viewconstants.minzoom then
+                newz = viewconstants.minzoom
             end
         end
 
@@ -338,11 +374,16 @@ local function refresh()
         ov("camera zoom "..newz)
 
         -- update status because camera changed
-        updatestatus()
+        update.dostatus = true
+    else
+        originx = 0
+        originy = 0
+        originz = 1
     end
 
     ov("drawcells")
     ov("update")
+    timing.dorefreshtime = 1000 * (os.clock() - start)
 end
 
 --------------------------------------------------------------------------------
@@ -419,12 +460,19 @@ end
 
 --------------------------------------------------------------------------------
 
+local function updatecells()
+    local start = os.clock()
+    ov("updatecells")
+    timing.docellstime = 1000 * (os.clock() - start)
+end
+
+--------------------------------------------------------------------------------
+
 local function updatecamera()
+    local start = os.clock()
+
     -- convert linear zoom to real zoom
     local camzoom = lineartoreal(linearzoom)
-    if camzoom > maxzoom then
-        camzoom = maxzoom
-    end
     ov("camera zoom "..camzoom)
     ov("camera angle "..camangle)
     ov("camera xy "..camx.." "..camy)
@@ -432,7 +480,8 @@ local function updatecamera()
     ov("celloption depth "..camlayerdepth)
 
     -- update status
-    updatestatus()
+    update.dostatus = true
+    timing.docameratime = 1000 * (os.clock() - start)
 end
 
 --------------------------------------------------------------------------------
@@ -446,7 +495,7 @@ local function resetcamera()
     camlayerdepth = defcamlayerdepth
     linearzoom = deflinearzoom
 
-    updatecamera()
+    update.docamera = true
 end
 
 --------------------------------------------------------------------------------
@@ -472,8 +521,8 @@ local function togglehex()
         camx = camx + camy / 2
         defcamx = defcamx + camy / 2
     end
-    updatecamera()
-    refresh()
+    update.docamera = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -481,8 +530,8 @@ end
 local function togglegrid()
     grid = not grid
     setgridlines()
-    updatestatus()
-    refresh()
+    update.dostatus = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -490,8 +539,8 @@ end
 local function togglegridmajor()
     gridmajoron = not gridmajoron
     setgridlines()
-    updatestatus()
-    refresh()
+    update.dostatus = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -499,7 +548,7 @@ end
 local function togglestars()
     stars = not stars
     setstars()
-    refresh()
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -517,29 +566,29 @@ end
 --------------------------------------------------------------------------------
 
 local function glidecamera()
-    local linearcomplete = camsteps / glidesteps
+    local linearcomplete = camsteps / viewconstants.glidesteps
     local beziercomplete = bezierx(linearcomplete, 0, 0, 1, 1)
     
     camx = startx + beziercomplete * (endx - startx)
     camy = starty + beziercomplete * (endy - starty)
-    linearzoom = startzoom + beziercomplete * (endzoom - startzoom)
-    
+    local camzoom = startzoom + beziercomplete * (endzoom - startzoom)
+    linearzoom = realtolinear(camzoom)
+
     camsteps = camsteps + 1
-    if camsteps > glidesteps then
+    if camsteps > viewconstants.glidesteps then
         camsteps = -1
         camx = endx
         camy = endy
-        linearzoom = endzoom
+        linearzoom = realtolinear(endzoom)
     end
-
-    updatecamera()
-    refresh()
+    update.docamera = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
 
 local function createcellview()
-    ov("cellview "..math.floor(-viewwidth / 2).." "..math.floor(-viewheight / 2).. " "..viewwidth.." "..viewheight)
+    ov("cellview "..math.floor(-viewconstants.viewwidth / 2).." "..math.floor(-viewconstants.viewheight / 2).. " "..viewconstants.viewwidth.." "..viewconstants.viewheight)
 end
 
 --------------------------------------------------------------------------------
@@ -592,23 +641,25 @@ local function fitzoom(immediate)
         end
 
         -- leave a border around the pattern
-        zoom = zoom * zoomborder
+        zoom = zoom * viewconstants.zoomborder
 
         -- apply origin
-        zoom = zoom / originz
+        if trackdefined then
+            zoom = zoom / originz
+        end
 
         -- ensure zoom in range
-        if zoom < minzoom then
-            zoom = minzoom
+        if zoom < viewconstants.minzoom then
+            zoom = viewconstants.minzoom
         else
-            if zoom > maxzoom then
-                zoom = maxzoom
+            if zoom > viewconstants.maxzoom then
+                zoom = viewconstants.maxzoom
             end
         end
 
         -- get new pan position
-        local newx = viewwidth / 2 + leftx + width / 2 + originy
-        local newy = viewheight / 2 + bottomy + height / 2 + originx
+        local newx = viewconstants.viewwidth / 2 + leftx + width / 2 + originy
+        local newy = viewconstants.viewheight / 2 + bottomy + height / 2 + originx
 
         if hexon then
             newx = newx - newy / 2
@@ -619,19 +670,19 @@ local function fitzoom(immediate)
             camx = newx
             camy = newy
             linearzoom = realtolinear(zoom)
-            updatecamera()
+            update.docamera = true
         else
             -- setup start point
             startx = camx
             starty = camy
             startangle = camangle
-            startzoom = linearzoom
+            startzoom = lineartoreal(linearzoom)
      
             -- setup destination point
             endx = newx
             endy = newy
             endangle = camangle
-            endzoom = realtolinear(zoom)
+            endzoom = zoom
     
             -- trigger start
             camsteps = 0
@@ -646,8 +697,8 @@ local function advance(singlestep)
     if g.empty() then
         generating = false
         if decay > 0 then
-            ov("updatecells")
-            refresh()
+            update.docells = true
+            update.dorefresh = true
             decay = decay - 1
         end
         return
@@ -664,7 +715,7 @@ local function advance(singlestep)
     if deltatime > 1 / gps then
         while remaining > 0 do
             g.run(1)
-            ov("updatecells")
+            updatecells()
             if g.empty() then
                 refresh()
                 g.note("Life ended at generation "..tonumber(g.getgen()))
@@ -682,7 +733,7 @@ local function advance(singlestep)
     if autofit then
         fitzoom(true)
     end
-    refresh()
+    update.dorefresh = true
 
     g.update()
 end
@@ -691,15 +742,15 @@ end
 
 local function rotate(amount)
     camangle = camangle + amount
-    if camangle >= maxangle then
-        camangle = camangle - maxangle
+    if camangle >= viewconstants.maxangle then
+        camangle = camangle - viewconstants.maxangle
     else
-        if camangle < minangle then
-            camangle = camangle + maxangle
+        if camangle < viewconstants.minangle then
+            camangle = camangle + viewconstants.maxangle
         end
     end
-    updatecamera()
-    refresh()
+    update.docamera = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -750,8 +801,8 @@ end
 local function zoominto(event)
     local _, x, y = gp.split(event)
     adjustzoom(0.05, x, y)
-    updatecamera()
-    refresh()
+    update.docamera = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -759,8 +810,8 @@ end
 local function zoomoutfrom(event)
     local _, x, y = gp.split(event)
     adjustzoom(-0.05, x, y)
-    updatecamera()
-    refresh()
+    update.docamera = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -768,8 +819,8 @@ end
 local function zoomout()
     local x, y = getmouseposition()
     adjustzoom(-0.01, x, y)
-    updatecamera()
-    refresh()
+    update.docamera = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -777,29 +828,28 @@ end
 local function zoomin()
     local x, y = getmouseposition()
     adjustzoom(0.01, x, y)
-    updatecamera()
-    refresh()
+    update.docamera = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
 
 local function resetangle()
     camangle = 0
-    updatecamera()
-    refresh()
+    update.docamera = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
 
 local function setzoom(zoom)
-    zoom = zoom / originz
     startx = camx
     starty = camy
-    startzoom = linearzoom
+    startzoom = lineartoreal(linearzoom) / originz
     startangle = camangle
     endx = camx
     endy = camy
-    endzoom = realtolinear(zoom)
+    endzoom = zoom / originz
     endangle = camangle
     camsteps = 0
 end
@@ -819,9 +869,10 @@ end
 --------------------------------------------------------------------------------
 
 local function halvezoom()
-    local camzoom = lineartoreal(linearzoom) / 2
-    if camzoom < minzoom then
-        camzoom = minzoom
+    local camzoom = lineartoreal(linearzoom)
+    camzoom = camzoom / 2
+    if camzoom < viewconstants.minzoom then
+        camzoom = viewconstants.minzoom
     end
     setzoom(camzoom)
 end
@@ -829,9 +880,10 @@ end
 --------------------------------------------------------------------------------
 
 local function doublezoom()
-    local camzoom = lineartoreal(linearzoom) * 2
-    if camzoom > maxzoom then
-        camzoom = maxzoom
+    local camzoom = lineartoreal(linearzoom)
+    camzoom = camzoom * 2
+    if camzoom > viewconstants.maxzoom then
+        camzoom = viewconstants.maxzoom
     end
     setzoom(camzoom)
 end
@@ -844,8 +896,8 @@ local function settheme()
         index = theme
     end
     ov(op.themes[index])
-    ov("updatecells")
-    updatestatus()
+    update.docells = true
+    update.dostatus = true
 end
 
 --------------------------------------------------------------------------------
@@ -853,15 +905,14 @@ end
 local function cycletheme()
     if themeon then
         theme = theme + 1
-        if theme > maxtheme then
-            theme = mintheme
+        if theme > viewconstants.maxtheme then
+            theme = viewconstants.mintheme
         end
     else
         themeon = true
     end
     settheme()
-    ov("updatecells")
-    refresh()
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -869,53 +920,52 @@ end
 local function toggletheme()
     themeon = not themeon
     settheme()
-    ov("updatecells")
-    refresh()
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
 
 local function decreaselayerdepth()
-    if camlayerdepth > mindepth then
+    if camlayerdepth > viewconstants.mindepth then
         camlayerdepth = camlayerdepth - 0.01
-        if camlayerdepth < mindepth then
-            camlayerdepth = mindepth
+        if camlayerdepth < viewconstants.mindepth then
+            camlayerdepth = viewconstants.mindepth
         end
-        updatecamera()
-        refresh()
+        update.docamera = true
+        update.dorefresh = true
     end
 end
 
 --------------------------------------------------------------------------------
 
 local function increaselayerdepth()
-    if camlayerdepth < maxdepth then
+    if camlayerdepth < viewconstants.maxdepth then
         camlayerdepth = camlayerdepth + 0.01
-        if camlayerdepth > maxdepth then
-            camlayerdepth = maxdepth
+        if camlayerdepth > viewconstants.maxdepth then
+            camlayerdepth = viewconstants.maxdepth
         end
-        updatecamera()
-        refresh()
+        update.docamera = true
+        update.dorefresh = true
     end
 end
 
 --------------------------------------------------------------------------------
 
 local function decreaselayers()
-    if camlayers > minlayers then
+    if camlayers > viewconstants.minlayers then
         camlayers = camlayers - 1
-        updatecamera()
-        refresh()
+        update.docamera = true
+        update.dorefresh = true
     end
 end
 
 --------------------------------------------------------------------------------
 
 local function increaselayers()
-    if camlayers < maxlayers then
+    if camlayers < viewconstants.maxlayers then
         camlayers = camlayers + 1
-        updatecamera()
-        refresh()
+        update.docamera = true
+        update.dorefresh = true
     end
 end
 
@@ -934,8 +984,8 @@ local function panview(dx, dy)
     local cosangle = math.cos(-angle / 180 * math.pi)
     camx = camx + (dx * cosangle + dy * -sinangle)
     camy = camy + (dx * sinangle + dy * cosangle)
-    updatecamera()
-    refresh()
+    update.docamera = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
@@ -953,7 +1003,6 @@ end
 
 local function stopdrag()
     mousedrag = false
-    updatestatus()
 end
 
 --------------------------------------------------------------------------------
@@ -988,7 +1037,7 @@ end
 local function reset(looping)
     -- reset the camera if at generation 0
     local gen = tonumber(g.getgen())
-    if gen == 0 or looping then
+    if gen == 0 or looping or hardreset then
         resetcamera()
         if looping then
             generating = true
@@ -1023,22 +1072,22 @@ local function reset(looping)
     end
 
     -- update cell view from reset universe
-    ov("updatecells")
-    refresh()
+    update.docells = true
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
 
 local function toggleautofit()
     autofit = not autofit
-    updatestatus()
+    update.dostatus = true
 end
 
 --------------------------------------------------------------------------------
 
 local function togglehistoryfit()
     historyfit = not historyfit
-    updatestatus()
+    update.dostatus = true
 end
 
 --------------------------------------------------------------------------------
@@ -1050,13 +1099,13 @@ local function readtokens()
     -- build token list
     for token in comments:gsub("\n", " "):gmatch("([^ ]*)") do
         if token ~= "" then
-            if token == scriptendword then
+            if token == commands.scriptendword then
                 inscript = false
             end
             if inscript then
                 table.insert(tokens, token)
             end
-            if token == scriptstartword then
+            if token == commands.scriptstartword then
                 inscript = true
             end
         end
@@ -1222,46 +1271,52 @@ local function checkscript()
 
             -- process command if valid
             if invalid == "" then
-                if token == angleword then
+                if token == commands.angleword then
                     camangle = arguments[1]
-                elseif token == autofitword then
+                elseif token == commands.autofitword then
                     autofit = true
-                elseif token == autostartword then
+                elseif token == commands.autostartword then
                     autostart = true
                     generating = true
-                elseif token == depthword then
+                elseif token == commands.depthword then
                     camlayerdepth = arguments[1]
-                elseif token == gpsword then
+                elseif token == commands.extendedtimingword then
+                    timing.extended = true
+                elseif token == commands.gpsword then
                     gps = arguments[1]
-                elseif token == gridword then
+                elseif token == commands.gridword then
                     grid = true
                 elseif token == gridmajor then
                     gridmajor = arguments[1]
-                elseif token == hexdisplayword then
+                elseif token == commands.hardresetword then
+                    hardreset = true
+                elseif token == commands.hexdisplayword then
                     hexon = true
-                elseif token == layersword then
+                elseif token == commands.layersword then
                     camlayers = arguments[1]
-                elseif token == historyfitword then
+                elseif token == commands.historyfitword then
                     historyfit = true
-                elseif token == loopword then
+                elseif token == commands.loopword then
                     loopgen = arguments[1]
-                elseif token == squaredisplayword then
+                elseif token == commands.showtimingword then
+                    timing.show = true
+                elseif token == commands.squaredisplayword then
                     hexon = false
-                elseif token == starsword then
+                elseif token == commands.starsword then
                     stars = true
-                elseif token == stepword then
+                elseif token == commands.stepword then
                     step = arguments[1]
-                elseif token == stopword then
+                elseif token == commands.stopword then
                     stopgen = arguments[1]
-                elseif token == themeword then
+                elseif token == commands.themeword then
                     theme = arguments[1]
-                elseif token == trackword then
+                elseif token == commands.trackword then
                     tracke = arguments[1]
                     tracks = arguments[2]
                     trackw = tracke
                     trackn = tracks
                     trackdefined = true
-                elseif token == trackboxword then
+                elseif token == commands.trackboxword then
                     tracke = arguments[1]
                     tracks = arguments[2]
                     trackw = arguments[3]
@@ -1279,18 +1334,18 @@ local function checkscript()
                             trackdefined = true
                         end
                     end
-                elseif token == trackloopword then
+                elseif token == commands.trackloopword then
                     trackperiod = arguments[1]
                     tracke = arguments[2]
                     tracks = arguments[3]
                     trackw = tracke
                     trackn = tracks
                     trackdefined = true
-                elseif token == xword then
+                elseif token == commands.xword then
                     camx = arguments[1]
-                elseif token == yword then
+                elseif token == commands.yword then
                     camy = arguments[1]
-                elseif token == zoomword or token == zword then
+                elseif token == commands.zoomword or token == commands.zword then
                     if arguments[1] < 0 then
                         arguments[1] = -1 / arguments[1]
                     end
@@ -1320,8 +1375,8 @@ local function checkscript()
             camx = camx - camy / 2
         end
         setgridlines()
-        updatecamera()
-        refresh()
+        update.docamera = true
+        update.dorefresh = true
         if invalid ~= "" then
             g.note(token.." "..invalid)
         end
@@ -1331,85 +1386,85 @@ end
 --------------------------------------------------------------------------------
 
 local function decreasespeed()
-    if step > minstep then
+    if step > viewconstants.minstep then
         step = step - 1
     else
-        if gps > mingps then
+        if gps > viewconstants.mingps then
             gps = gps - 1
         end
     end
-    updatestatus()
+    update.dostatus = true
 end
 
 --------------------------------------------------------------------------------
 
 local function increasespeed()
-    if gps < maxgps then
+    if gps < viewconstants.maxgps then
         gps = gps + 1
     else
-        if step < maxstep then
+        if step < viewconstants.maxstep then
             step = step + 1
         end
     end
-    updatestatus()
+    update.dostatus = true
 end
 
 --------------------------------------------------------------------------------
 
 local function setmaxspeed()
-    if gps < maxgps then
-        gps = maxgps
+    if gps < viewconstants.maxgps then
+        gps = viewconstants.maxgps
     else
-        if step < maxstep then
-            step = maxstep
+        if step < viewconstants.maxstep then
+            step = viewconstants.maxstep
         end
     end
-    updatestatus()
+    update.dostatus = true
 end
 
 --------------------------------------------------------------------------------
 
 local function setminspeed()
-    if step > minstep then
-        step = minstep
+    if step > viewconstants.minstep then
+        step = viewconstants.minstep
     else
-        if gps > mingps then
-            gps = mingps
+        if gps > viewconstants.mingps then
+            gps = viewconstants.mingps
         end
     end
-    updatestatus()
+    update.dostatus = true
 end
 
 --------------------------------------------------------------------------------
 
 local function increasestep()
-    if step < maxstep then
+    if step < viewconstants.maxstep then
         step = step + 1
+        update.dostatus = true
     end
-    updatestatus()
 end
 
 --------------------------------------------------------------------------------
 
 local function decreasestep()
-    if step > minstep then
+    if step > viewconstants.minstep then
         step = step - 1
+        update.dostatus = true
     end
-    updatestatus()
 end
 
 --------------------------------------------------------------------------------
 
 local function setmaxstep()
-    step = maxstep
-    updatestatus()
+    step = viewconstants.maxstep
+    update.dostatus = true
 end
 
 --------------------------------------------------------------------------------
 
 local function setminstep()
-    step = minstep
-    updatestatus()
+    step = viewconstants.minstep
+    update.dostatus = true
 end
 
 --------------------------------------------------------------------------------
@@ -1417,7 +1472,25 @@ end
 local function resetspeed()
    gps = defgps
    step = defstep
-   updatestatus()
+   update.dostatus = true
+end
+
+--------------------------------------------------------------------------------
+
+local function togglehardreset()
+    hardreset = not hardreset
+end
+
+--------------------------------------------------------------------------------
+
+local function toggletiming()
+    timing.show = not timing.show
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleextendedtiming()
+    timing.extended = not timing.extended
 end
 
 --------------------------------------------------------------------------------
@@ -1458,28 +1531,46 @@ local function main()
 
     -- check for script commands
     checkscript()
+
+    -- save camera settings to use when reset
     setdefaultcamera()
+
+    -- apply any script settings
     settheme()
+    updatecamera()
+    updatecells()
     refresh()
+    updatestatus()
 
     -- start timing
     genstarttime = os.clock()
 
     -- loop until quit
     while true do
+        -- clear update flags
+        update.dorefresh = false
+        update.dostatus = false
+        update.docamera = false
+        update.docells = false
+
         -- check if size of layer has changed
         local newwd, newht = g.getview(g.getlayer())
         if newwd ~= viewwd or newht ~= viewht then
             viewwd = newwd
             viewht = newht
-            ov("resize "..viewwd.." "..viewht)      -- resize overlay
-            refresh()
+
+            -- resize overlay
+            ov("resize "..viewwd.." "..viewht)
+            update.dorefresh = true
         end
         
         -- check for user input
         local event = g.getevent()
         if event == "key enter none" or event == "key return none" then
             generating = not generating
+            if generating then
+                genstarttime = os.clock()
+            end
         elseif event == "key space none" then
             advance(true)
             generating = false
@@ -1488,6 +1579,8 @@ local function main()
             generating = false
         elseif event == "key r none" then
             reset(false)
+        elseif event == "key r shift" then
+            togglehardreset()
         elseif event == "key - none" then
             decreasespeed()
         elseif event == "key = none" then
@@ -1592,6 +1685,10 @@ local function main()
             togglegrid()
         elseif event == "key x shift" then
             togglegridmajor()
+        elseif event == "key t none" then
+            toggletiming()
+        elseif event == "key t shift" then
+            toggleextendedtiming()
         elseif event:find("^ozoomin") then
             zoominto(event)
         elseif event:find("^ozoomout") then
@@ -1627,6 +1724,20 @@ local function main()
         -- check if camera still gliding to target
         if camsteps ~= -1 then
              glidecamera()
+        end
+
+        -- perform required updates
+        if update.docamera then
+            updatecamera()
+        end
+        if update.docells then
+            updatecells()
+        end
+        if update.dorefresh then
+            refresh()
+        end
+        if update.dostatus then
+            updatestatus()
         end
     end
 end
