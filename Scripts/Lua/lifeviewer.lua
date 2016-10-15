@@ -433,7 +433,7 @@ end
 
 local function showhelp()
     -- open help window
-    g.open("lifeviewer.html")
+    g.open(g.getdir("app").."Help/lifeviewer.html")
 end
 
 --------------------------------------------------------------------------------

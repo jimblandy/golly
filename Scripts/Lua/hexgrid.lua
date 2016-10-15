@@ -68,6 +68,8 @@ local function createoverlay()
 
     ov("create "..viewwd.." "..viewht)      -- overlay covers entire viewport
     
+    ov("cursor current")    -- use current Golly cursor
+    
     local currcolors = g.getcolors()
     for i = 0, g.numstates()-1 do
         rgba[i] = ""..currcolors[2+i*4].." "..currcolors[3+i*4].." "..currcolors[4+i*4].." 255"
@@ -503,28 +505,52 @@ end
 
 --------------------------------------------------------------------------------
 
-local function doclick(event)
-    -- process a mouse event like "click 100 20 left none"
+local function do_layer_click(event)
+    -- process a mouse event in current layer like "click 100 20 left none"
     local _, x, y, button, mods = gp.split(event)
-    
     local state = g.getcell(x, y)
-    --[[ !!!???
-    if state == gridstate then
-        -- ignore click in grid line
-        return
-    end
-    --]]
     
-    if g.getcursor() == "Pick" then
-        g.setoption("drawingstate", state)
-        g.update()  -- updates edit bar
-    
-    elseif g.getcursor() == "Draw" then
+    if g.getcursor() == "Draw" then
         local drawstate = g.getoption("drawingstate")
         if state == 0 and drawstate == 0 then
             -- no change
-            return
+        else
+            if state == drawstate then
+                -- kill cell
+                g.setcell(x, y, 0)
+            else
+                g.setcell(x, y, drawstate)
+            end
+            g.update()
         end
+    
+    elseif g.getcursor() == "Pick" then
+        g.setoption("drawingstate", state)
+        g.update()  -- updates edit bar
+    
+    elseif g.getcursor() == "Zoom In" then
+        g.doevent(event)
+    
+    elseif g.getcursor() == "Zoom Out" then
+        g.doevent(event)
+    
+    else
+        -- ignore click with Move/Select cursor???!!!
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function do_overlay_click(event)
+    -- process a mouse event in overlay like "oclick 100 20 left none"
+    local _, x, y, button, mods = gp.split(event)
+    x = tonumber(x)
+    y = tonumber(y)
+    
+    local rgba = ov("get "..x.." "..y)
+
+    if g.getcursor() == "Draw" then
+        local state = 0 --!!!
         
         -- get axial coords of hexagon containing clicked pixel
         local q, r = pixel_to_hex(x, y)
@@ -557,15 +583,21 @@ local function doclick(event)
         else
             g.setcell(xcell, ycell, drawstate)
         end
+
+    elseif g.getcursor() == "Pick" then
+        --!!!
     
+    elseif g.getcursor() == "Move" then
+        --!!!
+    
+    elseif g.getcursor() == "Select" then
+        --!!!
+        
     elseif g.getcursor() == "Zoom In" then
         zoomin()
-    
+        
     elseif g.getcursor() == "Zoom Out" then
         zoomout()
-    
-    else
-        -- ignore click with Move/Select cursor
     end
 end
 
@@ -590,7 +622,17 @@ local function main()
         
         -- check for user input
         local event = g.getevent()
-        if event == "key enter none" or event == "key return none" then
+        if event:find("^click") then
+            do_layer_click(event)
+        elseif event:find("^oclick") then
+            do_overlay_click(event)
+        elseif event:find("^ozoomin") then
+            -- zoom in to hexagon at given x,y pixel???!!!
+            zoomin()
+        elseif event:find("^ozoomout") then
+            -- zoom out from hexagon at given x,y pixel???!!!
+            zoomout()
+        elseif event == "key enter none" or event == "key return none" then
             generating = not generating
         elseif event == "key space none" then
             advance(true)
@@ -607,14 +649,6 @@ local function main()
             zoomout()
         elseif event == "key h none" then
             showhelp()
-        elseif event:find("^click") then
-            doclick(event)
-        elseif event:find("^ozoomin") then
-            -- zoom in to hexagon at given x,y pixel???!!!
-            zoomin()
-        elseif event:find("^ozoomout") then
-            -- zoom out from hexagon at given x,y pixel???!!!
-            zoomout()
         else
             g.doevent(event)
         end
@@ -634,10 +668,7 @@ end
 
 --------------------------------------------------------------------------------
 
--- allow layers to be tiled or stacked???!!!
--- local oldtile = g.setoption("tilelayers", 0)
--- local oldstack = g.setoption("stacklayers", 0)
-
+local oldstack = g.setoption("stacklayers", 0)
 local oldbuttons = g.setoption("showbuttons", 0) -- disable translucent buttons
 
 local status, err = pcall(main)
@@ -645,4 +676,5 @@ if err then g.continue(err) end
 -- the following code is always executed
 
 ov("delete")
+g.setoption("stacklayers", oldstack)
 g.setoption("showbuttons", oldbuttons)
