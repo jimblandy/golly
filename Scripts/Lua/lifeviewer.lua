@@ -11,7 +11,7 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 19
+local buildnumber = 20
 
 local g = golly()
 local ov = g.overlay
@@ -31,11 +31,12 @@ local update = {
 
 -- timing
 local timing = {
-    docellstime,
-    docameratime,
-    dorefreshtime,
-    showtiming = false,
-    extendedtiming = false
+    docellstime = 0,
+    docameratime = 0,
+    dorefreshtime = 0,
+    texttime = 0,
+    show = false,
+    extended = false
 }
 
 -- whether generating life
@@ -112,12 +113,14 @@ local historyfit = false
 local decay = 0
 
 -- tracking
-local tracke = 0
-local tracks = 0
-local trackw = 0
-local trackn = 0
-local trackperiod = 0
-local trackdefined = false
+local tracking = {
+    east = 0,
+    south = 0,
+    west = 0,
+    north = 0,
+    period = 0,
+    defined = false
+}
 local initialrect        -- initial bounding box for pattern at gen 0
 local initialzoom = 1    -- initial fit zoom value at gen 0
 local histleftx          -- used for autofit history mode
@@ -231,6 +234,51 @@ local keywords = {
 
 --------------------------------------------------------------------------------
 
+local function maketext(s)
+    -- convert string to text in current font
+    local w, h, descent, leading = gp.split(ov("text temp "..s))
+    return tonumber(w), tonumber(h), tonumber(descent), tonumber(leading)
+end
+
+--------------------------------------------------------------------------------
+
+local function pastetext(x, y)
+    ov("paste "..x.." "..y.." temp")
+end
+
+--------------------------------------------------------------------------------
+
+local function outputtiming(xoff, yoff)
+    maketext("Cells "..string.format("%.2fms", timing.docellstime))
+    pastetext(20 + xoff, 20 + yoff)
+    maketext("Draw  "..string.format("%.2fms", timing.dorefreshtime))
+    pastetext(20 + xoff, 40 + yoff)
+    if timing.extended then
+        maketext("Cam "..string.format("%.2fms", timing.docameratime))
+        pastetext(20 + xoff, 60 + yoff)
+        maketext("Text "..string.format("%.2fms", timing.texttime))
+        pastetext(20 + xoff, 80 + yoff)
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function drawtiming()
+    local start = os.clock()
+    ov("blend 1")
+
+    -- draw shadow
+    ov(op.black)
+    outputtiming(2, 2)
+
+    -- draw text
+    ov(op.white)
+    outputtiming(0, 0)
+    timing.texttime = 1000 * (os.clock() - start)
+end
+
+--------------------------------------------------------------------------------
+
 local function realtolinear(zoom)
     return math.log(zoom / viewconstants.minzoom) / math.log(viewconstants.maxzoom / viewconstants.minzoom)
 end
@@ -289,7 +337,6 @@ local function updatestatus()
 
     -- update status bar
     local status = "Hit escape to close."
-    status = status.."  Time "..string.format("%.1f", timing.docellstime).."ms/"..string.format("%.1f", timing.dorefreshtime).."ms"
     status = status.."  Zoom "..string.format("%.1f", zoom).."x  Angle "..displayangle
     status = status.."  X "..string.format("%.1f", x).."  Y "..string.format("%.1f", y)
     status = status.."  Layers "..camlayers.."  Depth "..string.format("%.2f",camlayerdepth)
@@ -311,7 +358,7 @@ local function refresh()
     local newx, newy, newz
 
     -- add the fractional part to the current generation
-    if trackdefined then
+    if tracking.defined then
         local fractionalgen = (os.clock() - genstarttime) * gps
         if fractionalgen < 0 then
             fractionalgen = 0
@@ -323,8 +370,8 @@ local function refresh()
         local gen = currentgen + fractionalgen
 
         -- compute the new origin
-        originx = gen * (tracke + trackw) / 2
-        originy = gen * (tracks + trackn) / 2
+        originx = gen * (tracking.east + tracking.west) / 2
+        originy = gen * (tracking.south + tracking.north) / 2
 
         -- compute the trackbox
         local leftx = initialrect[1]
@@ -333,10 +380,10 @@ local function refresh()
         local height = initialrect[4]
         local rightx = leftx + width
         local topy = bottomy + height
-        leftx = leftx + gen * trackw
-        rightx = rightx + gen * tracke
-        bottomy = bottomy + gen * trackn
-        topy = topy + gen * tracks
+        leftx = leftx + gen * tracking.west
+        rightx = rightx + gen * tracking.east
+        bottomy = bottomy + gen * tracking.north
+        topy = topy + gen * tracking.south
         width = rightx - leftx + 1
         height = topy - bottomy + 1
 
@@ -381,7 +428,15 @@ local function refresh()
         originz = 1
     end
 
+    -- draw the cells
     ov("drawcells")
+
+    -- draw timing if on
+    if timing.show then
+        drawtiming()
+    end
+
+    -- update the overlay
     ov("update")
     timing.dorefreshtime = 1000 * (os.clock() - start)
 end
@@ -644,7 +699,7 @@ local function fitzoom(immediate)
         zoom = zoom * viewconstants.zoomborder
 
         -- apply origin
-        if trackdefined then
+        if tracking.defined then
             zoom = zoom / originz
         end
 
@@ -845,13 +900,17 @@ end
 local function setzoom(zoom)
     startx = camx
     starty = camy
-    startzoom = lineartoreal(linearzoom) / originz
+    startzoom = lineartoreal(linearzoom)
     startangle = camangle
     endx = camx
     endy = camy
-    endzoom = zoom / originz
+    endzoom = zoom
     endangle = camangle
     camsteps = 0
+    if tracking.defined then
+        startzoom = startzoom / originz
+        endzoom = endzoom / originz
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -1311,36 +1370,36 @@ local function checkscript()
                 elseif token == commands.themeword then
                     theme = arguments[1]
                 elseif token == commands.trackword then
-                    tracke = arguments[1]
-                    tracks = arguments[2]
-                    trackw = tracke
-                    trackn = tracks
-                    trackdefined = true
+                    tracking.east = arguments[1]
+                    tracking.south = arguments[2]
+                    tracking.west = tracking.east
+                    tracking.north = tracking.south
+                    tracking.defined = true
                 elseif token == commands.trackboxword then
-                    tracke = arguments[1]
-                    tracks = arguments[2]
-                    trackw = arguments[3]
-                    trackn = arguments[4]
-                    if trackw > tracke then
+                    tracking.east = arguments[1]
+                    tracking.south = arguments[2]
+                    tracking.west = arguments[3]
+                    tracking.north = arguments[4]
+                    if tracking.west > tracking.east then
                         invalid = "[["..rawarguments[1].."]] "..rawarguments[2].." [["
                         invalid = invalid..rawarguments[3].."]] "..rawarguments[4]
                         invalid = invalid.."\nW is greater than E"
                     else
-                        if trackn > tracks then
+                        if tracking.north > tracking.south then
                             invalid = rawarguments[1].." [["..rawarguments[2].."]] "
                             invalid = invalid..rawarguments[3].." [["..rawarguments[4].."]]"
                             invalid = invalid.."\nN is greater than S"
                         else
-                            trackdefined = true
+                            tracking.defined = true
                         end
                     end
                 elseif token == commands.trackloopword then
-                    trackperiod = arguments[1]
-                    tracke = arguments[2]
-                    tracks = arguments[3]
-                    trackw = tracke
-                    trackn = tracks
-                    trackdefined = true
+                    tracking.period = arguments[1]
+                    tracking.east = arguments[2]
+                    tracking.south = arguments[3]
+                    tracking.west = tracking.east
+                    tracking.north = tracking.south
+                    tracking.defined = true
                 elseif token == commands.xword then
                     camx = arguments[1]
                 elseif token == commands.yword then
@@ -1361,11 +1420,11 @@ local function checkscript()
         end
 
         -- check for trackloop
-        if trackdefined and trackperiod > 0 then
+        if tracking.defined and tracking.period > 0 then
             if gridmajor > 0 then
-                loopgen = trackperiod * gridmajor
+                loopgen = tracking.period * gridmajor
             else
-                loopgen = trackperiod
+                loopgen = tracking.period
             end
         end
             
