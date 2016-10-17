@@ -185,26 +185,26 @@ void Overlay::RefreshCellViewWithTheme()
         while (w < rightx) {
             skip = algo->nextcell(w, h, v);
             if (skip >= 0) {
-                while (skip > 0 && w < rightx) {
+                skip += w;
+                if (skip >= rightx) skip = rightx;
+                while (w < skip) {
                     // new cells are dead
                     state = *cellviewptr;
                     if (state) {
                         if (state >= aliveStart) {
                             // cell just died
-                            state = deadStart;
+                            *cellviewptr = deadStart;
                         }
                         else {
                             if (state > deadEnd) {
                                 // cell decaying
-                                state--;
+                                *cellviewptr = state - 1;
                             }
                         }
-                        *cellviewptr = state;
                     }
                     cellviewptr++;
 
                     // next dead cell
-                    skip--;
                     w++;
                 }
 
@@ -215,14 +215,14 @@ void Overlay::RefreshCellViewWithTheme()
                         // check for max length
                         if (state < aliveEnd) {
                             // cell living
-                            state++;
+                            *cellviewptr = state + 1;
                         }
                     }
                     else {
                         // cell just born
-                        state = aliveStart;
+                        *cellviewptr = aliveStart;
                     }
-                    *cellviewptr++ = state;
+                    cellviewptr++;
 
                     // next cell
                     w++;
@@ -236,15 +236,14 @@ void Overlay::RefreshCellViewWithTheme()
                     if (state) {
                         if (state >= aliveStart) {
                             // cell just died
-                            state = deadStart;
+                            *cellviewptr = deadStart;
                         }
                         else {
                             if (state > deadEnd) {
                                 // cell decaying
-                                state--;
+                                *cellviewptr = state - 1;
                             }
                         }
-                        *cellviewptr = state;
                     }
                     cellviewptr++;
 
