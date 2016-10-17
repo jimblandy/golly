@@ -2468,14 +2468,12 @@ const char* Overlay::DoText(const char* args)
 
     dc.SetFont(currfont);
     dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
-    if (textwd > wd) textwd = wd;
-    if (textht > ht) textht = ht;
 
     wxBitmap bitmap(textwd, textht, 32);
     dc.SelectObject(bitmap);
 
     // fill background with white
-    wxRect rect(0, 0, wd, ht);
+    wxRect rect(0, 0, textwd, textht);
     wxBrush brush(*wxWHITE);
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.SetBrush(brush);
