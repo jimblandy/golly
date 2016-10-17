@@ -903,7 +903,7 @@ void UndoRedo::AddGenChange()
     prevexpo = currlayer->startexpo;
     prevfile.clear();
 
-    // play safe and pretend RememberGenStart was called
+    // pretend RememberGenStart was called
     startcount = 1;
 
     // avoid RememberGenFinish returning early if inscript is true
@@ -918,6 +918,9 @@ void UndoRedo::AddGenChange()
 
 void UndoRedo::SyncUndoHistory()
 {
+    // reset startcount for the next RememberGenStart call
+    startcount = 0;
+
     // synchronize undo history due to a ResetPattern call;
     // wind back the undo list to just past the genchange node that
     // matches the current layer's starting gen count
@@ -950,6 +953,7 @@ void UndoRedo::SyncUndoHistory()
             return;
         }
     }
+    
     // should never get here
     Warning("Bug detected in SyncUndoHistory!");
 }

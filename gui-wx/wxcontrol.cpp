@@ -744,7 +744,9 @@ void MainFrame::DoPendingAction(bool restart)
         mouseevent.SetEventObject(viewptr);
         viewptr->GetEventHandler()->ProcessEvent(mouseevent);
         while (viewptr->drawingcells) {
+            insideYield = true;
             wxGetApp().Yield(true);
+            insideYield = false;
             wxMilliSleep(5);             // don't hog CPU
         }
         
@@ -783,7 +785,7 @@ void MainFrame::DisplayTimingInfo()
 
 void MainFrame::StartGenerating()
 {
-    if (viewptr->drawingcells || viewptr->waitingforclick) {
+    if (insideYield || viewptr->drawingcells || viewptr->waitingforclick) {
         return;
     }
     
