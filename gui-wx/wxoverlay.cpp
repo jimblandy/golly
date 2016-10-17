@@ -2463,9 +2463,16 @@ const char* Overlay::DoText(const char* args)
     
     wxString textstr = wxString(args + textpos, wxConvLocal);
     
-    // draw text into an offscreen bitmap with same size as overlay
-    wxBitmap bitmap(wd, ht, 32);
+    // draw text into an offscreen bitmap sized to fit the text
     wxMemoryDC dc;
+    int textwd, textht, descent, leading;
+
+    dc.SetFont(currfont);
+    dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
+    if (textwd > wd) textwd = wd;
+    if (textht > ht) textht = ht;
+
+    wxBitmap bitmap(textwd, textht, 32);
     dc.SelectObject(bitmap);
 
     // fill background with white
@@ -2477,20 +2484,14 @@ const char* Overlay::DoText(const char* args)
     dc.SetBrush(wxNullBrush);
     dc.SetPen(wxNullPen);
     
-    dc.SetFont(currfont);
-    
     // set text background to white (it will become transparent below)
     // and use alpha to set gray level of text (to be replaced by r,g,b below)
     dc.SetBackgroundMode(wxSOLID);
     dc.SetTextBackground(*wxWHITE);
     dc.SetTextForeground(wxColour(255-a, 255-a, 255-a, 255));
     
-    int textwd, textht, descent, leading;
-    dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
     dc.DrawText(textstr, 0, 0);
     dc.SelectObject(wxNullBitmap);
-    if (textwd > wd) textwd = wd;
-    if (textht > ht) textht = ht;
 
     // delete any existing clip data with the given name
     std::map<std::string,Clip*>::iterator it;
