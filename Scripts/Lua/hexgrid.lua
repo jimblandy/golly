@@ -4,7 +4,8 @@
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), August 2016.
 
 local g = golly()
---!!! require "gplus.strict"
+--!!!
+require "gplus.strict"
 local gp = require "gplus"
 local op = require "oplus"
 local int = gp.int
@@ -15,7 +16,7 @@ local viewwd, viewht = g.getview(g.getlayer())
 
 -- the following are set in createoverlay()
 local gridr, gridg, gridb   -- RGB colors for grid lines
-local rgba = {}             -- table of "r g b 255" strings for each state
+local state_rgba = {}       -- table of "r g b 255" strings for each state
 local gridwd, gridht        -- width and height of grid (bounded if either > 0)
 
 local minedge = 1   -- minimum length of a hexagon edge
@@ -36,10 +37,10 @@ local hextoy        -- used to find y coord of hexagon's center
 -- remember which hexagons were filled
 local livehexagons = {}
 
--- initial position of viewport
--- fix!!! (use gp.getposint())
-local xpos = 0
-local ypos = 0
+-- initial cell position of viewport
+local xpos, ypos = gp.getposint()
+
+local generating = false
 
 --------------------------------------------------------------------------------
 
@@ -72,7 +73,7 @@ local function createoverlay()
     
     local currcolors = g.getcolors()
     for i = 0, g.numstates()-1 do
-        rgba[i] = ""..currcolors[2+i*4].." "..currcolors[3+i*4].." "..currcolors[4+i*4].." 255"
+        state_rgba[i] = ""..currcolors[2+i*4].." "..currcolors[3+i*4].." "..currcolors[4+i*4].." 255"
     end
     
     -- set grid colors based on current background color
@@ -110,7 +111,7 @@ local function initvalues()
         yrad[i] = edgelen * math.sin(angle_rad)
     end
     
-    -- these values are used in drawlivecells
+    -- these values are used to find x,y coord of a hexagon's center
     hextox = edgelen * 3/2
     hextoy = edgelen * math.sqrt(3)
 end
@@ -135,7 +136,11 @@ end
 --------------------------------------------------------------------------------
 
 local function round(x)
-    return math.floor(x + 0.5)
+    if x < 0 then
+        return math.ceil(x - 0.5)
+    else
+        return math.floor(x + 0.5)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -184,12 +189,6 @@ local function getboundary()
     local minx = -maxx
     local maxy = int((viewht+1) / 2)
     local miny = -maxy
-    
-    minx = minx + xpos
-    maxx = maxx + xpos
-    miny = miny + ypos
-    maxy = maxy + ypos
-
     return minx, maxx, miny, maxy
 end
 
@@ -204,21 +203,21 @@ local function getvisiblerect()
     local _, rmin = pixel_to_hex(maxx, miny)
     local _, rmax = pixel_to_hex(minx, maxy)
 
-    -- convert axial coords to square cell coords
-    minx = qmin + rmin
-    maxx = qmax + rmax
-    miny = rmin
-    maxy = rmax
+    -- convert axial coords to cell coords
+    minx = qmin + rmin + xpos
+    maxx = qmax + rmax + xpos
+    miny = rmin + ypos
+    maxy = rmax + ypos
     
     -- adjust limits if current layer's grid is bounded
     if gridwd > 0 then
-        local bminx = -gp.int(gridwd / 2)
+        local bminx = -int(gridwd / 2)
         local bmaxx = bminx + gridwd - 1
         if minx < bminx then minx = bminx end
         if maxx > bmaxx then maxx = bmaxx end
     end
     if gridht > 0 then
-        local bminy = -gp.int(gridht / 2)
+        local bminy = -int(gridht / 2)
         local bmaxy = bminy + gridht - 1
         if miny < bminy then miny = bminy end
         if maxy > bmaxy then maxy = bmaxy end
@@ -233,10 +232,10 @@ local function fillhexagon(xc, yc, oldstate, newstate)
     xc = xc + int(viewwd/2)
     yc = yc + int(viewht/2)
 
-    ov("rgba "..rgba[newstate])
+    ov("rgba "..state_rgba[newstate])
 
     if edgelen < mingrid then
-        --!!!???
+        --!!!
         ov("set "..xc.." "..yc)
     else
         ov("flood "..xc.." "..yc)
@@ -270,7 +269,7 @@ local function drawlivecells()
         if inc == 3 then state = cells[i+2] end
         
         --[[
-        convert square coords x,y to axial coords q,r so that the pattern
+        convert cell coords x,y to axial coords q,r so that the pattern
         is rotated clockwise by 45 degrees; ie. the square cell at x,y = -1,-1
         will be in the hexagonal cell at q,r = 0,-1
          _________________                  _____
@@ -284,8 +283,8 @@ local function drawlivecells()
         |-1,+1| 0,+1|+1,+1|          -----{  0,+1 }-----
         |_____|_____|_____|                \_____/
         --]]
-        local q = x - y
-        local r = y
+        local r = y - ypos
+        local q = x - xpos - r
         
         -- calculate pixel at center of hexagon and fill it with current state
         local xc = int(hextox * q)
@@ -317,7 +316,6 @@ end
 --------------------------------------------------------------------------------
 
 local function drawline(x1, y1, x2, y2)
-    -- faster to use string.format???!!!
     ov("line "..x1.." "..y1.." "..x2.." "..y2)
 end
 
@@ -349,6 +347,8 @@ local function drawhexgrid()
     local x, y = 0, 0
     
     ov("rgba "..gridr.." "..gridg.." "..gridb.." 255")
+    
+    -- fix occasional gaps at left/top!!!
     
     repeat
         drawhexagon(x, y)
@@ -401,15 +401,14 @@ end
 --------------------------------------------------------------------------------
 
 local function refresh()
-    ov("rgba "..rgba[0]) -- background color
+    ov("rgba "..state_rgba[0])  -- background color
     ov("fill")
     initvalues()
     if edgelen >= mingrid then
         drawhexgrid()
     end
     drawlivecells()
-    --!!! g.update()
-    ov("update") --???!!!
+    ov("update")
 end
 
 --------------------------------------------------------------------------------
@@ -417,6 +416,7 @@ end
 local function advance(by1)
     if g.empty() then
         g.note("There are no live cells.")
+        generating = false
         return
     end
     
@@ -471,31 +471,27 @@ end
 
 --------------------------------------------------------------------------------
 
-local outsidemsg = "Cell is outside grid boundary."
-
 local function outsidegrid(q, r)
     if gridwd == 0 and gridht == 0 then
         -- grid is unbounded
         return false
     end
 
-    -- convert axial coords to square grid coords
-    local x = q + r
-    local y = r
+    -- convert axial coords to cell coords
+    local x = q + r + xpos
+    local y = r + ypos
 
     if gridwd > 0 then
-        local bminx = -gp.int(gridwd / 2)
+        local bminx = -int(gridwd / 2)
         local bmaxx = bminx + gridwd - 1
         if x < bminx or x > bmaxx then
-            g.note(outsidemsg)
             return true
         end
     end
     if gridht > 0 then
-        local bminy = -gp.int(gridht / 2)
+        local bminy = -int(gridht / 2)
         local bmaxy = bminy + gridht - 1
         if y < bminy or y > bmaxy then
-            g.note(outsidemsg)
             return true
         end
     end
@@ -505,10 +501,13 @@ end
 
 --------------------------------------------------------------------------------
 
-local function do_layer_click(event)
-    -- process a mouse event in current layer like "click 100 20 left none"
+local function do_click_in_layer(event)
+    -- process a mouse click in current layer like "click 100 20 left none"
     local _, x, y, button, mods = gp.split(event)
     local state = g.getcell(x, y)
+    
+    if button ~= "left" then return end
+    if mods ~= "none" and mods ~= "shift" then return end
     
     if g.getcursor() == "Draw" then
         local drawstate = g.getoption("drawingstate")
@@ -522,47 +521,69 @@ local function do_layer_click(event)
                 g.setcell(x, y, drawstate)
             end
             g.update()
+            refresh()   -- updates overlay (currently not shown)
         end
     
     elseif g.getcursor() == "Pick" then
         g.setoption("drawingstate", state)
-        g.update()  -- updates edit bar
+        g.update()      -- updates edit bar
     
-    elseif g.getcursor() == "Zoom In" then
-        g.doevent(event)
-    
-    elseif g.getcursor() == "Zoom Out" then
-        g.doevent(event)
+    elseif g.getcursor() == "Select" then
+        -- don't allow selections???!!!
+        -- g.doevent(event)
     
     else
-        -- ignore click with Move/Select cursor???!!!
+        -- g.getcursor() == "Move" or "Zoom In" or "Zoom Out"
+        g.doevent(event)
     end
+end
+--------------------------------------------------------------------------------
+
+local function get_state(color)
+    -- search state_rgba array for color and return matching state
+    for s, c in pairs(state_rgba) do
+        if c == color then
+            return s
+        end
+    end
+    return -1   -- no match
 end
 
 --------------------------------------------------------------------------------
 
-local function do_overlay_click(event)
-    -- process a mouse event in overlay like "oclick 100 20 left none"
+local function do_click_in_overlay(event)
+    -- process a mouse click in overlay like "oclick 100 20 left none"
     local _, x, y, button, mods = gp.split(event)
     x = tonumber(x)
     y = tonumber(y)
     
-    local rgba = ov("get "..x.." "..y)
+    if button ~= "left" then return end
+    if mods ~= "none" and mods ~= "shift" then return end
 
     if g.getcursor() == "Draw" then
-        local state = 0 --!!!
+        local state = get_state( ov("get "..x.." "..y) )
+        if state < 0 then
+            -- no match (click was in a grid line, so ignore it)
+            return
+        end
         
         -- get axial coords of hexagon containing clicked pixel
+        x = x - int(viewwd/2)
+        y = y - int(viewht/2)
         local q, r = pixel_to_hex(x, y)
         
         -- check if cell is outside bounded grid
-        if outsidegrid(q, r) then return end
+        if outsidegrid(q, r) then
+            g.note("Cell is outside grid boundary.")
+            return
+        end
         
         -- find central pixel of hexagon containing x,y
         local xc = int(hextox * q)
         local yc = int(hextoy * (r + q/2))
         
         -- update hexagon
+        local drawstate = g.getoption("drawingstate")
         if state == drawstate then
             -- erase hexagon
             fillhexagon(xc, yc, state, 0)
@@ -574,8 +595,8 @@ local function do_overlay_click(event)
         end
         
         -- update corresponding cell in current layer
-        local xcell = q + r
-        local ycell = r
+        local xcell = q + r + xpos
+        local ycell = r + ypos
         state = g.getcell(xcell, ycell)
         if state == drawstate then
             -- kill cell
@@ -583,20 +604,29 @@ local function do_overlay_click(event)
         else
             g.setcell(xcell, ycell, drawstate)
         end
+        
+        -- update overlay and show new population count in status bar
+        g.update()
 
     elseif g.getcursor() == "Pick" then
-        --!!!
+        local state = get_state( ov("get "..x.." "..y) )
+        if state >= 0 then
+            g.setoption("drawingstate", state)
+            g.update()  -- updates edit bar
+        end
     
     elseif g.getcursor() == "Move" then
-        --!!!
+        --!!!???
     
     elseif g.getcursor() == "Select" then
-        --!!!
+        --!!!???
         
     elseif g.getcursor() == "Zoom In" then
+        -- zoom in to clicked hexagon!!!
         zoomin()
         
     elseif g.getcursor() == "Zoom Out" then
+        -- zoom out from clicked hexagon!!!
         zoomout()
     end
 end
@@ -609,23 +639,22 @@ local function main()
     refresh()
     
     g.show("Hit escape key to abort script...")
-    local generating = false
     while true do
         -- check if size of layer has changed
         local newwd, newht = g.getview(g.getlayer())
         if newwd ~= viewwd or newht ~= viewht then
             viewwd = newwd
             viewht = newht
-            ov("resize "..viewwd.." "..viewht)      -- resize overlay
+            ov("resize "..viewwd.." "..viewht)
             refresh()
         end
         
         -- check for user input
         local event = g.getevent()
         if event:find("^click") then
-            do_layer_click(event)
+            do_click_in_layer(event)
         elseif event:find("^oclick") then
-            do_overlay_click(event)
+            do_click_in_overlay(event)
         elseif event:find("^ozoomin") then
             -- zoom in to hexagon at given x,y pixel???!!!
             zoomin()
@@ -653,13 +682,12 @@ local function main()
             g.doevent(event)
         end
         
-        -- check if pattern position has changed
+        -- check if current layer's position has changed
         local x0, y0 = gp.getposint()
         if x0 ~= xpos or y0 ~= ypos then
             xpos = x0
             ypos = y0
             refresh()
-            --!!! g.note("xpos="..xpos.." ypos="..ypos)
         end
         
         if generating then advance(false) end
