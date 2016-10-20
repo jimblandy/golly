@@ -436,12 +436,6 @@ end
 
 --------------------------------------------------------------------------------
 
-local function show_help()
-    --!!!
-end
-
---------------------------------------------------------------------------------
-
 local function outside_grid(q, r)
     if gridwd == 0 and gridht == 0 then
         -- grid is unbounded
@@ -587,7 +581,7 @@ local function do_click_in_overlay(event)
         end
     
     elseif g.getcursor() == "Move" then
-        -- this sorta works but really need a better approach!!!  ditto for arrow keys???!!!
+        -- this sorta works but really need a better approach!!!
         local q, r = pixel_to_hex(x, y)
         if outside_grid(q, r) then
             return
@@ -607,6 +601,47 @@ local function do_click_in_overlay(event)
         -- zoom out from clicked hexagon!!!
         zoom_out()
     end
+end
+
+--------------------------------------------------------------------------------
+
+local function pan(event)
+    -- user pressed an arrow key
+    if g.getoption("showoverlay") == 0 then
+        -- just pan the current layer
+        g.doevent(event)
+    else
+        local _, key, mods = gp.split(event)
+        if mods == "none" then
+            -- to pan overlay orthogonally we need to pan layer diagonally
+            if key == "left" then
+                gp.setposint(xpos-1, ypos+1)
+            elseif key == "right" then
+                gp.setposint(xpos+1, ypos-1)
+            elseif key == "up" then
+                gp.setposint(xpos-1, ypos-1)
+            elseif key == "down" then
+                gp.setposint(xpos+1, ypos+1)
+            end
+        elseif mods == "shift" then
+            -- to pan overlay diagonally we need to pan layer orthogonally
+            if key == "left" then
+                gp.setposint(xpos-1, ypos)
+            elseif key == "right" then
+                gp.setposint(xpos+1, ypos)
+            elseif key == "up" then
+                gp.setposint(xpos, ypos-1)
+            elseif key == "down" then
+                gp.setposint(xpos, ypos+1)
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function show_help()
+    --!!!
 end
 
 --------------------------------------------------------------------------------
@@ -654,6 +689,11 @@ local function main()
             zoom_in()
         elseif event == "key [ none" then
             zoom_out()
+        elseif event:find("^key left ") or
+               event:find("^key right ") or
+               event:find("^key up ") or
+               event:find("^key down ") then
+            pan(event)
         elseif event == "key h none" then
             show_help()
         else
