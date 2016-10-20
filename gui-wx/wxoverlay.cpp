@@ -1,25 +1,25 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
- 
+
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  Web site:  http://sourceforge.net/projects/golly
  Authors:   rokicki@gmail.com  andrew@trevorrow.com
- 
+
  / ***/
 
 #include "wx/wxprec.h"      // for compilers that support precompilation
@@ -101,7 +101,7 @@ void Overlay::DeleteOverlay()
         free(pixmap);
         pixmap = NULL;
     }
-    
+
     std::map<std::string,Clip*>::iterator it;
     for (it = clips.begin(); it != clips.end(); ++it) {
         delete it->second;
@@ -386,19 +386,27 @@ void Overlay::UpdateZoomView(unsigned char* source, unsigned char *dest, int ste
     unsigned char state;
     unsigned char max;
     int halfstep = step >> 1;
+    int ystep = step * cellwd;
+    unsigned char* row1 = source;
+    unsigned char* row2 = source + halfstep * cellwd;
 
     for (h = 0; h < cellht; h += step) {
         for (w = 0; w < cellwd; w += step) {
             // find the maximum state value in each 2x2 block
-            max = source[h * cellwd + w];
-            state = source[h * cellwd + w + halfstep];
+            max = row1[w];
+            state = row2[w + halfstep];
             if (state > max) max = state;
-            state = source[(h + halfstep) * cellwd + w];
+            state = row2[w];
             if (state > max) max = state;
-            state = source[(h + halfstep) * cellwd + w + halfstep];
+            state = row2[w + halfstep];
             if (state > max) max = state;
-            dest[h * cellwd + w] = max;
+            dest[w] = max;
         }
+
+        // update row pointers
+        row1 += ystep;
+        row2 += ystep;
+        dest += ystep;
     }
 }
 
@@ -440,8 +448,15 @@ const char* Overlay::DoDrawCells()
         angle = 0;
     }
 
-    DrawCells(cells, ~mask, angle);
+    // pick renderer based on whether camera is rotated
+    if (angle == 0) {
+        DrawCellsNoRotate(cells, ~mask);
+    }
+    else {
+        DrawCellsRotate(cells, ~mask, angle);
+    }
 
+    // draw stars if enabled
     if (stars) {
         DrawStars(angle);
     }
@@ -451,7 +466,7 @@ const char* Overlay::DoDrawCells()
 
 // -----------------------------------------------------------------------------
 
-void Overlay::DrawCells(unsigned char *cells, int mask, double angle)
+void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
 {
     // convert depth to actual depth
     double depth = camlayerdepth / 2 + 1;
@@ -635,6 +650,355 @@ void Overlay::DrawCells(unsigned char *cells, int mask, double angle)
 
 // -----------------------------------------------------------------------------
 
+void Overlay::DrawCellsNoRotate(unsigned char *cells, int mask)
+{
+    // convert depth to actual depth
+    double depth = camlayerdepth / 2 + 1;
+
+    // check pixel brightness depending on layers
+    double brightness = 1;
+    double brightinc = 0;
+
+    // check whether to draw layers
+    int layertarget = 0;
+    if (theme && camlayers > 1 && depth > 1) {
+        brightness = 0.6;
+        brightinc = 0.4 / (camlayers - 1);
+        layertarget = camlayers;
+    }
+
+    // refresh the cell view
+    if (theme) {
+        // using theme colors
+        GetThemeColors(brightness);
+    }
+    else {
+        // using standard pattern colors
+        GetPatternColors();
+    }
+
+    // get the border color
+    unsigned char borderr = borderrgb->Red();
+    unsigned char borderg = borderrgb->Green();
+    unsigned char borderb = borderrgb->Blue();
+    unsigned char bordera = 255;    // opaque
+    unsigned int borderRGBA;
+    SetRGBA(borderr, borderg, borderb, bordera, &borderRGBA);
+
+    // compute deltas in horizontal and vertical direction based on rotation
+    double dyy = 1 / camzoom;
+
+    double sy = -((ht / 2) * dyy) + camy;
+    double sx = -((wd / 2) * dyy) + camx;
+
+    unsigned char state;
+    unsigned int rgba;
+    unsigned int *overlayptr = (unsigned int *)pixmap;
+    unsigned char *rowptr;
+    double x, y;
+    int ix, iy;
+    int h, w;
+    int sectionsize = 4;   // size of unrolled loop
+    int endrow = wd & ~(sectionsize - 1);
+
+    // draw each pixel
+    y = sy;
+    for (h = 0; h < ht; h++) {
+        iy = (((int)y) & mask);
+
+        // clip to the grid
+        if (iy >= 0 && iy < cellht) {
+            // get the row
+            rowptr = cells + cellwd * iy;
+            x = sx;
+
+            // offset if hex rule
+            if (ishex) {
+                x += 0.5 * (int)y;
+            }
+
+            w = 0;
+            while (w < endrow) {
+                // check if pixel is in the cell view
+                ix = (((int)x) & mask);
+                if (ix >= 0 && ix < cellwd) {
+                    state = rowptr[ix];
+                    rgba = cellRGBA[state];
+                }
+                else {
+                    rgba = borderRGBA;
+                }
+
+                // set the pixel
+                *overlayptr++ = rgba;
+
+                // update row position
+                x += dyy;
+
+                // loop unroll
+                ix = (((int)x) & mask);
+                if (ix >= 0 && ix < cellwd) {
+                    state = rowptr[ix];
+                    rgba = cellRGBA[state];
+                }
+                else {
+                    rgba = borderRGBA;
+                }
+                *overlayptr++ = rgba;
+                x += dyy;
+
+                // loop unroll
+                ix = (((int)x) & mask);
+                if (ix >= 0 && ix < cellwd) {
+                    state = rowptr[ix];
+                    rgba = cellRGBA[state];
+                }
+                else {
+                    rgba = borderRGBA;
+                }
+                *overlayptr++ = rgba;
+                x += dyy;
+
+                // loop unroll
+                ix = (((int)x) & mask);
+                if (ix >= 0 && ix < cellwd) {
+                    state = rowptr[ix];
+                    rgba = cellRGBA[state];
+                }
+                else {
+                    rgba = borderRGBA;
+                }
+                *overlayptr++ = rgba;
+                x += dyy;
+
+                // next section
+                w += sectionsize;
+            }
+
+            // remaining pixels
+            while (w < wd) {
+                // render pixel
+                ix = (((int)x) & mask);
+                if (ix >= 0 && ix < cellwd) {
+                    state = rowptr[ix];
+                    rgba = cellRGBA[state];
+                }
+                else {
+                    rgba = borderRGBA;
+                }
+                *overlayptr++ = rgba;
+                x += dyy;
+
+                // next pixel
+                w++;
+            }
+        }
+        else {
+            // draw off grid row
+            w = 0;
+            while (w < endrow) {
+                // draw section
+                *overlayptr++ = borderRGBA;
+                *overlayptr++ = borderRGBA;
+                *overlayptr++ = borderRGBA;
+                *overlayptr++ = borderRGBA;
+
+                // next section
+                w += sectionsize;
+            }
+
+            // remaining pixels
+            while (w < wd) {
+                // draw pixel
+                *overlayptr++ = borderRGBA;
+
+                // next pixel
+                w++;
+            }
+        }
+
+        // update column position
+        sy += dyy;
+        y = sy;
+    }
+
+    // draw grid lines if enabled
+    if (grid && camzoom >= 4) {
+        DrawGridLines();
+    }
+
+    // draw any layers
+    if (theme) {
+        double layerzoom = camzoom;
+        int zoomlevel;
+
+        for (int i = 1; i < layertarget; i++) {
+            unsigned char transparenttarget = (i * ((aliveEnd + 1) / camlayers));
+
+            // update brightness
+            brightness += brightinc;
+            GetThemeColors(brightness);
+
+            // adjust zoom for next level
+            dyy /= depth;
+            layerzoom *= depth;
+            cells = cellview;
+            zoomlevel = 0;
+            mask = ~0;
+
+            // compute which zoomview level to use for this layer
+            if (layerzoom < 0.125) {
+                zoomlevel = 8;
+            }
+            else {
+                if (layerzoom < 0.25) {
+                    zoomlevel = 4;
+                }
+                else {
+                    if (layerzoom < 0.5) {
+                        zoomlevel = 2;
+                    }
+                    else {
+                        if (layerzoom < 1) {
+                            zoomlevel = 1;
+                        }
+                    }
+                }
+            }
+
+            // setup the mask for the zoom level
+            if (zoomlevel > 0) {
+                mask = ~((zoomlevel << 1) - 1);
+                cells = zoomview + zoomlevel - 1;
+            }
+
+            sy = -((ht / 2) * dyy) + camy;
+            sx = -((wd / 2) * dyy) + camx;
+
+            overlayptr = (unsigned int *)pixmap;
+
+            // draw each pixel
+            y = sy;
+            for (h = 0; h < ht; h++) {
+                iy = (((int)y) & mask);
+
+                // clip to the grid
+                if (iy >= 0 && iy < cellht) {
+                    // get the row
+                    rowptr = cells + cellwd * iy;
+                    x = sx;
+
+                    // offset if hex rule
+                    if (ishex) {
+                        x += 0.5 * (int)y;
+                    }
+
+                    w = 0;
+                    while (w < endrow) {
+                        // check if pixel is on the grid
+                        ix = (((int)x) & mask);
+                        if (ix >= 0 && ix < cellwd) {
+                            state = rowptr[ix];
+
+                            // check if it is transparent
+                            if (state >= transparenttarget) {
+                                // draw the pixel
+                                *overlayptr = cellRGBA[state];
+                            }
+                        }
+                        overlayptr++;
+
+                        // update row position
+                        x += dyy;
+
+                        // loop unroll
+                        ix = (((int)x) & mask);
+                        if (ix >= 0 && ix < cellwd) {
+                            state = rowptr[ix];
+                            if (state >= transparenttarget) {
+                                *overlayptr = cellRGBA[state];
+                            }
+                        }
+                        overlayptr++;
+                        x += dyy;
+
+                        // loop unroll
+                        ix = (((int)x) & mask);
+                        if (ix >= 0 && ix < cellwd) {
+                            state = rowptr[ix];
+                            if (state >= transparenttarget) {
+                                *overlayptr = cellRGBA[state];
+                            }
+                        }
+                        overlayptr++;
+                        x += dyy;
+
+                        // loop unroll
+                        ix = (((int)x) & mask);
+                        if (ix >= 0 && ix < cellwd) {
+                            state = rowptr[ix];
+                            if (state >= transparenttarget) {
+                                *overlayptr = cellRGBA[state];
+                            }
+                        }
+                        overlayptr++;
+                        x += dyy;
+
+                        // next section
+                        w += sectionsize;
+                    }
+
+                    // remaining pixels
+                    while (w < wd) {
+                        // render pixel
+                        ix = (((int)x) & mask);
+                        if (ix >= 0 && ix < cellwd) {
+                            state = rowptr[ix];
+                            if (state >= transparenttarget) {
+                                *overlayptr = cellRGBA[state];
+                            }
+                        }
+                        overlayptr++;
+                        x += dyy;
+
+                        // next pixel
+                        w++;
+                   }
+                }
+                else {
+                    // draw off grid row
+                    w = 0;
+                    while (w < endrow) {
+                        // draw section
+                        *overlayptr++ = borderRGBA;
+                        *overlayptr++ = borderRGBA;
+                        *overlayptr++ = borderRGBA;
+                        *overlayptr++ = borderRGBA;
+
+                        // next section
+                        w += sectionsize;
+                    }
+
+                    // remaining pixels
+                    while (w < wd) {
+                        // draw pixel
+                        *overlayptr++ = borderRGBA;
+
+                        // next pixel
+                        w++;
+                    }
+                }
+
+                // update column position
+                sy += dyy;
+                y = sy;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoUpdateCells()
 {
     if (cellview == NULL) return OverlayError(no_cellview);
@@ -654,6 +1018,11 @@ const char* Overlay::DoUpdateCells()
 
 void Overlay::DrawVLine(int x, int y1, int y2, unsigned int color)
 {
+    // check the line is on the display
+    if (x < 0 || x >= wd) {
+        return;
+    }
+
     // clip the line to the display
     if (y1 < 0) {
         y1 = 0;
@@ -676,13 +1045,30 @@ void Overlay::DrawVLine(int x, int y1, int y2, unsigned int color)
     unsigned int *pix = (unsigned int*)pixmap;
     pix += offset;
 
-    // check the line is on the display
-    if (x >= 0 && x < wd) {
-        while (y1 <= y2) {
-            *pix = color;
-            pix += wd;
-            y1++;
-        }
+    y2 -= y1;
+    y1 = 0;
+
+    int sectionsize = 4;   // size of unrolled loop
+    int endcol = y2 & ~(sectionsize - 1);
+
+    while (y1 < endcol) {
+        // draw section
+        *pix = color;
+        pix += wd;
+        *pix = color;
+        pix += wd;
+        *pix = color;
+        pix += wd;
+        *pix = color;
+        pix += wd;
+        y1 += sectionsize;
+    }
+
+    // draw remaining pixels
+    while (y1 < y2) {
+        *pix = color;
+        pix += wd;
+        y1++;
     }
 }
 
@@ -690,16 +1076,35 @@ void Overlay::DrawVLine(int x, int y1, int y2, unsigned int color)
 
 void Overlay::DrawHLine(int x1, int x2, int y, unsigned int color)
 {
+    // check the line is on the display
+    if (y < 0 || y >= ht) {
+        return;
+    }
+
     int offset = y * wd + x1;
     unsigned int *pix = (unsigned int*)pixmap;
     pix += offset;
 
+    x2 -= x1;
+    x1 = 0;
+
+    int sectionsize = 4;   // size of unrolled loop
+    int endrow = x2 & ~(sectionsize - 1);
+
     // check the line is on the display
-    if (y >= 0 && y < ht && x1 >= 0 && x1 < wd && x2 >= 0 && x2 < wd) {
-        while (x1 <= x2) {
-            *pix++ = color;
-            x1++;
-        }
+    while (x1 < endrow) {
+        // draw section
+        *pix++ = color;
+        *pix++ = color;
+        *pix++ = color;
+        *pix++ = color;
+        x1 += sectionsize;
+    }
+
+    // remaining pixels
+    while (x1 < x2) {
+        *pix++ = color;
+        x1++;
     }
 }
 
@@ -724,7 +1129,7 @@ void Overlay::DrawGridLines()
         shade = light ? 229 : 80;
         SetRGBA(shade, shade, shade, 255, &gridRGBA);
     }
-        
+
     // check if custom major grid line color is defined
     if (!customgridmajorcolor) {
         // no custom grid color defined to base it on background color
@@ -735,7 +1140,7 @@ void Overlay::DrawGridLines()
     // compute single cell offset
     double xoff = remainder(((cellwd / 2 - camx + 0.5) * camzoom) + (wd / 2), camzoom);
     double yoff = remainder(((cellht / 2 - camy + 0.5) * camzoom) + (ht / 2), camzoom);
-    
+
     // draw twice if major grid lines enabled
     int loop = 1;
     if (gridmajor > 0) {
@@ -1015,7 +1420,7 @@ const char* Overlay::DoCellView(const char* args)
     // use calloc so all cells will be in state 0
     cellview = (unsigned char*) calloc(w * h, sizeof(*cellview));
     if (cellview == NULL) return OverlayError("not enough memory to create cellview");
-    
+
     // allocate the zoom view
     zoomview = (unsigned char*) calloc(w * h, sizeof(*zoomview));
     if (zoomview == NULL) return OverlayError("not enough memory to create cellview");
@@ -1179,7 +1584,7 @@ const char* Overlay::CellOptionHex(const char* args)
     if (sscanf(args, "%d", &mode) != 1) {
         return OverlayError("celloption hex command requires 1 argument");
     }
-    
+
     ishex = mode == 1;
 
     return NULL;
@@ -1193,7 +1598,7 @@ const char* Overlay::CellOptionGrid(const char* args)
     if (sscanf(args, "%d", &mode) != 1) {
         return OverlayError("celloption grid command requires 1 argument");
     }
-    
+
     grid = mode == 1;
 
     return NULL;
@@ -1207,7 +1612,7 @@ const char* Overlay::CellOptionGridMajor(const char* args)
     if (sscanf(args, "%d", &major) != 1) {
         return OverlayError("celloption grid command requires 1 argument");
     }
-    
+
     if (major < 0 || major > 16) return OverlayError("celloption major is out of range");
 
     gridmajor = major;
@@ -1223,7 +1628,7 @@ const char* Overlay::CellOptionStars(const char* args)
     if (sscanf(args, "%d", &mode) != 1) {
         return OverlayError("celloption stars command requires 1 argument");
     }
-    
+
     stars = mode == 1;
 
     return NULL;
@@ -1324,14 +1729,14 @@ const char* Overlay::DoResize(const char* args)
     if (sscanf(args, " %d %d", &w, &h) != 2) {
         return OverlayError("resize command requires 2 arguments");
     }
-    
+
     if (w <= 0) return OverlayError("width of overlay must be > 0");
     if (h <= 0) return OverlayError("height of overlay must be > 0");
-    
+
     // given width and height are ok
     wd = w;
     ht = h;
-    
+
     // free the previous pixmap
     free(pixmap);
 
@@ -1351,32 +1756,32 @@ const char* Overlay::DoCreate(const char* args)
     if (sscanf(args, " %d %d", &w, &h) != 2) {
         return OverlayError("create command requires 2 arguments");
     }
-    
+
     if (w <= 0) return OverlayError("width of overlay must be > 0");
     if (h <= 0) return OverlayError("height of overlay must be > 0");
-    
+
     // given width and height are ok
     wd = w;
     ht = h;
-    
+
     // delete any existing pixmap
     DeleteOverlay();
 
     // use calloc so all pixels will be 100% transparent (alpha = 0)
     pixmap = (unsigned char*) calloc(wd * ht * 4, sizeof(*pixmap));
     if (pixmap == NULL) return OverlayError("not enough memory to create overlay");
-    
+
     // initialize RGBA values to opaque white
     r = g = b = a = 255;
-    
+
     // don't do alpha blending initially
     alphablend = false;
-    
+
     only_draw_overlay = false;
-    
+
     // initial position of overlay is in top left corner of current layer
     pos = topleft;
-    
+
     ovcursor = wxSTANDARD_CURSOR;
     cursname = "arrow";
 
@@ -1386,7 +1791,7 @@ const char* Overlay::DoCreate(const char* args)
     ayx = 0;
     ayy = 1;
     identity = true;
-    
+
     // initialize current font used by text command
     currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
     fontname = "default";
@@ -1397,10 +1802,10 @@ const char* Overlay::DoCreate(const char* args)
     #else
         currfont.SetPointSize(fontsize);
     #endif
-    
+
     // make sure the Show Overlay option is ticked
     if (!showoverlay) mainptr->ToggleOverlay();
-    
+
     return NULL;
 }
 
@@ -1409,11 +1814,11 @@ const char* Overlay::DoCreate(const char* args)
 bool Overlay::PointInOverlay(int vx, int vy, int* ox, int* oy)
 {
     if (pixmap == NULL) return false;
-    
+
     int viewwd, viewht;
     viewptr->GetClientSize(&viewwd, &viewht);
     if (viewwd <= 0 || viewht <= 0) return false;
-    
+
     int x = 0;
     int y = 0;
     switch (pos) {
@@ -1439,7 +1844,7 @@ bool Overlay::PointInOverlay(int vx, int vy, int* ox, int* oy)
     if (vy < y) return false;
     if (vx >= x + wd) return false;
     if (vy >= y + ht) return false;
-    
+
     *ox = vx - x;
     *oy = vy - y;
 
@@ -1451,26 +1856,26 @@ bool Overlay::PointInOverlay(int vx, int vy, int* ox, int* oy)
 const char* Overlay::DoPosition(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     if (strncmp(args+1, "topleft", 7) == 0) {
         pos = topleft;
-        
+
     } else if (strncmp(args+1, "topright", 8) == 0) {
         pos = topright;
-        
+
     } else if (strncmp(args+1, "bottomright", 11) == 0) {
         pos = bottomright;
-        
+
     } else if (strncmp(args+1, "bottomleft", 10) == 0) {
         pos = bottomleft;
-        
+
     } else if (strncmp(args+1, "middle", 6) == 0) {
         pos = middle;
-        
+
     } else {
         return OverlayError("unknown position");
     }
-    
+
     return NULL;
 }
 
@@ -1479,29 +1884,29 @@ const char* Overlay::DoPosition(const char* args)
 const char* Overlay::DoSetRGBA(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     int a1, a2, a3, a4;
     if (sscanf(args, " %d %d %d %d", &a1, &a2, &a3, &a4) != 4) {
         return OverlayError("rgba command requires 4 arguments");
     }
-    
+
     if (a1 < 0 || a1 > 255 ||
         a2 < 0 || a2 > 255 ||
         a3 < 0 || a3 > 255 ||
         a4 < 0 || a4 > 255) {
         return OverlayError("rgba values must be from 0 to 255");
     }
-    
+
     unsigned char oldr = r;
     unsigned char oldg = g;
     unsigned char oldb = b;
     unsigned char olda = a;
-    
+
     r = (unsigned char) a1;
     g = (unsigned char) a2;
     b = (unsigned char) a3;
     a = (unsigned char) a4;
-    
+
     // return old values
     static char result[16];
     sprintf(result, "%hhu %hhu %hhu %hhu", oldr, oldg, oldb, olda);
@@ -1564,7 +1969,7 @@ const char* Overlay::DoSetPixel(const char* args)
     if (sscanf(args, "%d %d", &x, &y) != 2) {
         return OverlayError("set command requires 2 arguments");
     }
-    
+
     // ignore pixel if outside pixmap edges
     if (PixelInOverlay(x, y)) DrawPixel(x, y);
 
@@ -1584,7 +1989,7 @@ const char* Overlay::DoGetPixel(const char* args)
 
     // check if x,y is outside pixmap
     if (!PixelInOverlay(x, y)) return "";
-    
+
     unsigned char* p = pixmap + y*wd*4 + x*4;
     static char result[16];
     sprintf(result, "%hhu %hhu %hhu %hhu", p[0], p[1], p[2], p[3]);
@@ -1599,9 +2004,9 @@ bool Overlay::TransparentPixel(int x, int y)
 
     // check if x,y is outside pixmap
     if (!PixelInOverlay(x, y)) return false;
-    
+
     unsigned char* p = pixmap + y*wd*4 + x*4;
-    
+
     // return true if alpha value is 0
     return p[3] == 0;
 }
@@ -1625,7 +2030,7 @@ void Overlay::SetOverlayCursor()
 const char* Overlay::DoCursor(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     if (strncmp(args+1, "arrow", 5) == 0) {
         ovcursor = wxSTANDARD_CURSOR;
 
@@ -1658,10 +2063,10 @@ const char* Overlay::DoCursor(const char* args)
     }
 
     viewptr->CheckCursor(mainptr->infront);
-    
+
     std::string oldcursor = cursname;
     cursname = args+1;
-    
+
     // return old cursor name
     static std::string result;
     result = oldcursor;
@@ -1683,9 +2088,9 @@ const char* Overlay::DoGetXY()
 {
     if (pixmap == NULL) return "";
     if (!mainptr->infront) return "";
-    
+
     wxPoint pt = viewptr->ScreenToClient( wxGetMousePosition() );
-    
+
     int ox, oy;
     if (PointInOverlay(pt.x, pt.y, &ox, &oy)) {
         static char result[32];
@@ -1701,26 +2106,26 @@ const char* Overlay::DoGetXY()
 const char* Overlay::DoLine(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     int x1, y1, x2, y2;
     if (sscanf(args, " %d %d %d %d", &x1, &y1, &x2, &y2) != 4) {
         return OverlayError("line command requires 4 arguments");
     }
-    
+
     if (x1 == x2 && y1 == y2) {
         if (PixelInOverlay(x1, y1)) DrawPixel(x1, y1);
         return NULL;
     }
-    
+
     // draw a line of pixels from x1,y1 to x2,y2 using Bresenham's algorithm
     int dx = x2 - x1;
     int ax = abs(dx) * 2;
     int sx = dx < 0 ? -1 : 1;
-    
+
     int dy = y2 - y1;
     int ay = abs(dy) * 2;
     int sy = dy < 0 ? -1 : 1;
-    
+
     if (ax > ay) {
         int d = ay - (ax / 2);
         while (x1 != x2) {
@@ -1745,7 +2150,7 @@ const char* Overlay::DoLine(const char* args)
         }
     }
     if (PixelInOverlay(x2, y2)) DrawPixel(x2, y2);
-    
+
     return NULL;
 }
 
@@ -1767,14 +2172,14 @@ void Overlay::FillRect(int x, int y, int w, int h)
         p[1] = g;
         p[2] = b;
         p[3] = a;
-        
+
         // copy above pixel to remaining pixels in first row
         unsigned char* dest = p;
         for (int i=1; i<w; i++) {
             dest += 4;
             memcpy(dest, p, 4);
         }
-        
+
         // copy first row to remaining rows
         dest = p;
         int wbytes = w * 4;
@@ -1800,13 +2205,13 @@ void Overlay::FillRect(int x, int y, int w, int h)
 const char* Overlay::DoFill(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     if (args[0] == ' ') {
         int x, y, w, h;
         if (sscanf(args, " %d %d %d %d", &x, &y, &w, &h) != 4) {
             return OverlayError("fill command requires 0 or 4 arguments");
         }
-        
+
         if (w <= 0) {
             // treat non-positive width as inset from current width
             w = wd + w;
@@ -1817,10 +2222,10 @@ const char* Overlay::DoFill(const char* args)
             h = ht + h;
             if (h <= 0) return NULL;
         }
-        
+
         // ignore rect if completely outside pixmap edges
         if (RectOutsideOverlay(x, y, w, h)) return NULL;
-        
+
         // clip any part of rect outside pixmap edges
         int xmax = x + w - 1;
         int ymax = y + h - 1;
@@ -1830,15 +2235,15 @@ const char* Overlay::DoFill(const char* args)
         if (ymax >= ht) ymax = ht - 1;
         w = xmax - x + 1;
         h = ymax - y + 1;
-        
+
         // fill visible rect with current RGBA values
         FillRect(x, y, w, h);
-        
+
     } else {
         // fill entire pixmap with current RGBA values
         FillRect(0, 0, wd, ht);
     }
-    
+
     return NULL;
 }
 
@@ -1847,7 +2252,7 @@ const char* Overlay::DoFill(const char* args)
 const char* Overlay::DoCopy(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     int x, y, w, h;
     int namepos;
     char dummy;
@@ -1855,21 +2260,21 @@ const char* Overlay::DoCopy(const char* args)
         // note that %n is not included in the count
         return OverlayError("copy command requires 5 arguments");
     }
-    
+
     // treat non-positive w/h as inset from current width/height
     // (makes it easy to copy entire overlay via "copy 0 0 0 0 all")
     if (w <= 0) w = wd + w;
     if (h <= 0) h = ht + h;
-    
+
     if (w <= 0) return OverlayError("copy width must be > 0");
     if (h <= 0) return OverlayError("copy height must be > 0");
-    
+
     if (x < 0 || x+w-1 >= wd || y < 0 || y+h-1 >= ht) {
         return OverlayError("copy rectangle must be within overlay");
     }
-    
+
     std::string name = args + namepos;
-    
+
     // delete any existing clip data with the given name
     std::map<std::string,Clip*>::iterator it;
     it = clips.find(name);
@@ -1877,20 +2282,20 @@ const char* Overlay::DoCopy(const char* args)
         delete it->second;
         clips.erase(it);
     }
-    
+
     Clip* newclip = new Clip(w, h);
     if (newclip == NULL || newclip->cdata == NULL) {
         delete newclip;
         return OverlayError("not enough memory to copy pixels");
     }
-    
+
     // fill newclip->cdata with pixel data from given rectangle in pixmap
     unsigned char* data = newclip->cdata;
-    
+
     if (x == 0 && y == 0 && w == wd && h == ht) {
         // clip and overlay are the same size so do a fast copy
         memcpy(data, pixmap, w * h * 4);
-    
+
     } else {
         // use memcpy to copy each row
         int rowbytes = wd * 4;
@@ -1902,9 +2307,9 @@ const char* Overlay::DoCopy(const char* args)
             data += wbytes;
         }
     }
-    
+
     clips[name] = newclip;      // create named clip for later use by DoPaste
-    
+
     return NULL;
 }
 
@@ -1913,7 +2318,7 @@ const char* Overlay::DoCopy(const char* args)
 const char* Overlay::DoPaste(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     int x, y;
     int namepos;
     char dummy;
@@ -1921,7 +2326,7 @@ const char* Overlay::DoPaste(const char* args)
         // note that %n is not included in the count
         return OverlayError("paste command requires 3 arguments");
     }
-    
+
     std::string name = args + namepos;
     std::map<std::string,Clip*>::iterator it;
     it = clips.find(name);
@@ -1932,19 +2337,19 @@ const char* Overlay::DoPaste(const char* args)
         msg += ")";
         return OverlayError(msg.c_str());
     }
-    
+
     Clip* clipptr = it->second;
     int w = clipptr->cwd;
     int h = clipptr->cht;
-    
+
     // do nothing if rect is completely outside overlay
     if (RectOutsideOverlay(x, y, w, h)) return NULL;
-    
+
     if (x == 0 && y == 0 && w == wd && h == ht && !alphablend && identity) {
         // clip and overlay are the same size and there's no alpha blending
         // or transforming so do a fast paste using a single memcpy call
         memcpy(pixmap, clipptr->cdata, w * h * 4);
-    
+
     } else if (RectInsideOverlay(x, y, w, h) && !alphablend && identity) {
         // rect is within overlay and there's no alpha blending or transforming
         // so use memcpy to paste rows of pixels from clip data into pixmap
@@ -1957,7 +2362,7 @@ const char* Overlay::DoPaste(const char* args)
             p += rowbytes;
             data += wbytes;
         }
-    
+
     } else {
         // save current RGBA values and paste pixel by pixel using DrawPixel,
         // clipping any outside the overlay, and possibly doing alpha blending
@@ -1972,11 +2377,17 @@ const char* Overlay::DoPaste(const char* args)
         if (identity) {
             for (int j = 0; j < h; j++) {
                 for (int i = 0; i < w; i++) {
-                    r = data[datapos++];
-                    g = data[datapos++];
-                    b = data[datapos++];
-                    a = data[datapos++];
-                    if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                    // no point in drawing if alpha is zero
+                    a = data[datapos + 3];
+                    if (a && PixelInOverlay(x, y)) {
+                        r = data[datapos++];
+                        g = data[datapos++];
+                        b = data[datapos++];
+                        datapos++;
+                        DrawPixel(x, y);
+                    } else {
+                        datapos += 4;
+                    }
                     x++;
                 }
                 y++;
@@ -1988,27 +2399,34 @@ const char* Overlay::DoPaste(const char* args)
             int y0 = y - (x * ayx + y * ayy);
             for (int j = 0; j < h; j++) {
                 for (int i = 0; i < w; i++) {
-                    r = data[datapos++];
-                    g = data[datapos++];
-                    b = data[datapos++];
-                    a = data[datapos++];
-                    int newx = x0 + x * axx + y * axy;
-                    int newy = y0 + x * ayx + y * ayy;
-                    if (PixelInOverlay(newx, newy)) DrawPixel(newx, newy);
+                    // no point in drawing if alpha is zero
+                    a = data[datapos + 3];
+                    if (a) {
+                        r = data[datapos++];
+                        g = data[datapos++];
+                        b = data[datapos++];
+                        a = data[datapos++];
+                        int newx = x0 + x * axx + y * axy;
+                        int newy = y0 + x * ayx + y * ayy;
+                        if (PixelInOverlay(newx, newy)) DrawPixel(newx, newy);
+                    }
+                    else {
+                        datapos += 4;
+                    }
                     x++;
                 }
                 y++;
                 x -= w;
             }
         }
-        
+
         // restore saved RGBA values
         r = saver;
         g = saveg;
         b = saveb;
         a = savea;
     }
-    
+
     return NULL;
 }
 
@@ -2024,7 +2442,7 @@ const char* Overlay::DoFreeClip(const char* args)
         // note that %n is not included in the count
         return OverlayError("freeclip command requires 1 argument");
     }
-    
+
     std::string name = args + namepos;
     std::map<std::string,Clip*>::iterator it;
     it = clips.find(name);
@@ -2039,7 +2457,7 @@ const char* Overlay::DoFreeClip(const char* args)
         delete it->second;
         clips.erase(it);
     }
-    
+
     return NULL;
 }
 
@@ -2048,7 +2466,7 @@ const char* Overlay::DoFreeClip(const char* args)
 const char* Overlay::DoLoad(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     int x, y;
     int filepos;
     char dummy;
@@ -2056,17 +2474,17 @@ const char* Overlay::DoLoad(const char* args)
         // note that %n is not included in the count
         return OverlayError("load command requires 3 arguments");
     }
-    
+
     wxString filepath = wxString(args + filepos, wxConvLocal);
     if (!wxFileExists(filepath)) {
         return OverlayError("given file does not exist");
     }
-    
+
     wxImage image;
     if (!image.LoadFile(filepath)) {
         return OverlayError("failed to load image from given file");
     }
-    
+
     int imgwd = image.GetWidth();
     int imght = image.GetHeight();
     if (RectOutsideOverlay(x, y, imgwd, imght)) {
@@ -2086,7 +2504,7 @@ const char* Overlay::DoLoad(const char* args)
         if (alphadata == NULL) {
             hasmask = image.GetOrFindMaskColour(&maskr, &maskg, &maskb);
         }
-        
+
         // save current RGBA values
         unsigned char saver = r;
         unsigned char saveg = g;
@@ -2115,14 +2533,14 @@ const char* Overlay::DoLoad(const char* args)
             y++;
             x -= imgwd;
         }
-        
+
         // restore saved RGBA values
         r = saver;
         g = saveg;
         b = saveb;
         a = savea;
     }
-    
+
     // return image dimensions
     static char result[32];
     sprintf(result, "%d %d", imgwd, imght);
@@ -2134,7 +2552,7 @@ const char* Overlay::DoLoad(const char* args)
 const char* Overlay::DoSave(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     int x, y, w, h;
     int filepos;
     char dummy;
@@ -2142,25 +2560,25 @@ const char* Overlay::DoSave(const char* args)
         // note that %n is not included in the count
         return OverlayError("save command requires 5 arguments");
     }
-    
+
     // treat non-positive w/h as inset from current width/height
     // (makes it easy to save entire overlay via "save 0 0 0 0 foo.png")
     if (w <= 0) w = wd + w;
     if (h <= 0) h = ht + h;
-    
+
     if (w <= 0) return OverlayError("save width must be > 0");
     if (h <= 0) return OverlayError("save height must be > 0");
-    
+
     if (x < 0 || x+w-1 >= wd || y < 0 || y+h-1 >= ht) {
         return OverlayError("save rectangle must be within overlay");
     }
-    
+
     wxString filepath = wxString(args + filepos, wxConvLocal);
     wxString ext = filepath.AfterLast('.');
     if (!ext.IsSameAs(wxT("png"),false)) {
         return OverlayError("save file must have a .png extension");
     }
-    
+
     unsigned char* rgbdata = (unsigned char*) malloc(w * h * 3);
     if (rgbdata== NULL) {
         return OverlayError("not enough memory to save RGB data");
@@ -2170,7 +2588,7 @@ const char* Overlay::DoSave(const char* args)
         free(rgbdata);
         return OverlayError("not enough memory to save alpha data");
     }
-    
+
     int rgbpos = 0;
     int alphapos = 0;
     int rowbytes = wd * 4;
@@ -2184,15 +2602,15 @@ const char* Overlay::DoSave(const char* args)
             alphadata[alphapos++] = p[3];
         }
     }
-    
+
     // create image of requested size using the given RGB and alpha data;
     // static_data flag is false so wxImage dtor will free rgbdata and alphadata
     wxImage image(w, h, rgbdata, alphadata, false);
-    
+
     if (!image.SaveFile(filepath)) {
         return OverlayError("failed to save image in given file");
     }
-    
+
     return NULL;
 }
 
@@ -2227,7 +2645,7 @@ const char* Overlay::DoFlood(const char* args)
     if (sscanf(args, " %d %d", &x, &y) != 2) {
         return OverlayError("flood command requires 2 arguments");
     }
-    
+
     // // check if x,y is outside pixmap
     if (!PixelInOverlay(x, y)) return NULL;
 
@@ -2237,7 +2655,7 @@ const char* Overlay::DoFlood(const char* args)
     unsigned char oldg = oldpxl[1];
     unsigned char oldb = oldpxl[2];
     unsigned char olda = oldpxl[3];
-    
+
     // do nothing if color of given pixel matches current RGBA values
     if (oldr == r && oldg == g && oldb == b && olda == a) return NULL;
 
@@ -2255,10 +2673,10 @@ const char* Overlay::DoFlood(const char* args)
         y = ycoord.back();
         xcoord.pop_back();
         ycoord.pop_back();
-        
+
         bool above = false;
         bool below = false;
-        
+
         unsigned char* newpxl = pixmap + y*rowbytes + x*4;
         while (x >= 0 && PixelsMatch(newpxl,oldr,oldg,oldb,olda)) {
             x--;
@@ -2266,7 +2684,7 @@ const char* Overlay::DoFlood(const char* args)
         }
         x++;
         newpxl += 4;
-        
+
         while (x < wd && PixelsMatch(newpxl,oldr,oldg,oldb,olda)) {
             if (slowdraw) {
                 // pixel is within pixmap
@@ -2277,10 +2695,10 @@ const char* Overlay::DoFlood(const char* args)
                 newpxl[2] = b;
                 newpxl[3] = a;
             }
-            
+
             if (y > 0) {
                 unsigned char* apxl = newpxl - rowbytes;    // pixel at x, y-1
-                
+
                 if (!above && PixelsMatch(apxl,oldr,oldg,oldb,olda)) {
                     xcoord.push_back(x);
                     ycoord.push_back(y-1);
@@ -2289,10 +2707,10 @@ const char* Overlay::DoFlood(const char* args)
                     above = false;
                 }
             }
-            
+
             if (y < maxy) {
                 unsigned char* bpxl = newpxl + rowbytes;    // pixel at x, y+1
-                
+
                 if (!below && PixelsMatch(bpxl,oldr,oldg,oldb,olda)) {
                     xcoord.push_back(x);
                     ycoord.push_back(y+1);
@@ -2301,12 +2719,12 @@ const char* Overlay::DoFlood(const char* args)
                     below = false;
                 }
             }
-            
+
             x++;
             newpxl += 4;
         }
     }
-    
+
     return NULL;
 }
 
@@ -2320,14 +2738,14 @@ const char* Overlay::DoBlend(const char* args)
     if (sscanf(args, " %d", &i) != 1) {
         return OverlayError("blend command requires 1 argument");
     }
-    
+
     if (i < 0 || i > 1) {
         return OverlayError("blend value must be 0 or 1");
     }
-    
+
     int oldblend = alphablend ? 1 : 0;
     alphablend = i > 0;
-    
+
     // return old value
     static char result[2];
     sprintf(result, "%d", oldblend);
@@ -2339,7 +2757,7 @@ const char* Overlay::DoBlend(const char* args)
 const char* Overlay::DoFont(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
-    
+
     bool samename = false;      // only change font size?
     const char* newname = NULL;
     int newsize;
@@ -2352,7 +2770,7 @@ const char* Overlay::DoFont(const char* args)
         // note that %n is not included in the count
         return OverlayError("font command requires 1 or 2 arguments");
     }
-    
+
     if (newsize <= 0 || newsize >= 1000) {
         return OverlayError("font size must be > 0 and < 1000");
     }
@@ -2367,54 +2785,54 @@ const char* Overlay::DoFont(const char* args)
     if (samename) {
         // just change the current font's size
         currfont.SetPointSize(ptsize);
-    
+
     } else {
         newname = args + namepos;
-        
+
         // check if given font name is valid
         if (strcmp(newname, "default") == 0) {
             currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
             currfont.SetPointSize(ptsize);
-            
+
         } else if (strcmp(newname, "default-bold") == 0) {
             currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
             currfont.SetPointSize(ptsize);
             currfont.SetWeight(wxFONTWEIGHT_BOLD);
-            
+
         } else if (strcmp(newname, "default-italic") == 0) {
             currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
             currfont.SetPointSize(ptsize);
             currfont.SetStyle(wxFONTSTYLE_ITALIC);
-            
+
         } else if (strcmp(newname, "mono") == 0) {
             currfont = wxFont(ptsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-            
+
         } else if (strcmp(newname, "mono-bold") == 0) {
             currfont = wxFont(ptsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
-            
+
         } else if (strcmp(newname, "mono-italic") == 0) {
             currfont = wxFont(ptsize, wxFONTFAMILY_MODERN, wxFONTSTYLE_ITALIC, wxFONTWEIGHT_NORMAL);
-            
+
         } else if (strcmp(newname, "roman") == 0) {
             currfont = wxFont(ptsize, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-            
+
         } else if (strcmp(newname, "roman-bold") == 0) {
             currfont = wxFont(ptsize, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
-            
+
         } else if (strcmp(newname, "roman-italic") == 0) {
             currfont = wxFont(ptsize, wxFONTFAMILY_ROMAN, wxFONTSTYLE_ITALIC, wxFONTWEIGHT_NORMAL);
-        
+
         } else {
             return OverlayError("unknown font name");
         }
     }
-    
+
     int oldfontsize = fontsize;
     std::string oldfontname = fontname;
-    
+
     fontsize = newsize;
     if (!samename) fontname = newname;
-    
+
     // return old fontsize and fontname
     char ibuff[16];
     sprintf(ibuff, "%d", oldfontsize);
@@ -2456,20 +2874,47 @@ const char* Overlay::DoText(const char* args)
     if (namepos == 0 || textpos == 0) {
         return OverlayError("text command requires 2 arguments");
     }
-    
+
     std::string name = args + namepos;
     name = name.substr(0, name.find(" "));
-    
-    wxString textstr = wxString(args + textpos, wxConvLocal);
-    
-    // draw text into an offscreen bitmap sized to fit the text
+
     wxMemoryDC dc;
     int textwd, textht, descent, leading;
-
+    int bitmapwd = 0;
+    int bitmapht = 0;
     dc.SetFont(currfont);
-    dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
 
-    wxBitmap bitmap(textwd, textht, 32);
+    // check if the string contains newlines
+    char *textlines = (char*)args + textpos;
+    char *index = strstr(textlines, "\\n");
+    wxString textstr;
+
+    while (index) {
+        // null terminate line
+        *index = 0;
+
+        // get the extent of the line
+        textstr = wxString(textlines, wxConvLocal);
+        dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
+
+        // update the bitmap width and height to accomodate the line
+        if (textwd > bitmapwd) bitmapwd = textwd;
+        bitmapht += textht;
+
+        // next line
+        *index = '\\';
+        textlines = index + 1;
+        index = strstr(textlines, "\n");
+    }
+
+    // add the final line
+    textstr = wxString(textlines, wxConvLocal);
+    dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
+    if (textwd > bitmapwd) bitmapwd = textwd;
+    bitmapht += textht;
+
+    // create a bitmap for the text
+    wxBitmap bitmap(bitmapwd, bitmapht, 32);
     dc.SelectObject(bitmap);
 
     // fill background with white
@@ -2480,14 +2925,33 @@ const char* Overlay::DoText(const char* args)
     dc.DrawRectangle(rect);
     dc.SetBrush(wxNullBrush);
     dc.SetPen(wxNullPen);
-    
+
     // set text background to white (it will become transparent below)
     // and use alpha to set gray level of text (to be replaced by r,g,b below)
     dc.SetBackgroundMode(wxSOLID);
     dc.SetTextBackground(*wxWHITE);
     dc.SetTextForeground(wxColour(255-a, 255-a, 255-a, 255));
-    
-    dc.DrawText(textstr, 0, 0);
+
+    int textrow = 0;
+    textlines = (char*)args + textpos;
+    index = strstr(textlines, "\\n");
+    while (index) {
+        // null terminate line
+        *index = 0;
+        if (*textlines) {
+            textstr = wxString(textlines, wxConvLocal);
+            dc.DrawText(textstr, 0, textrow);
+        }
+        textrow += textht;
+        *index = '\\';
+        textlines = index + 1;
+        index = strstr(textlines, "\n");
+    }
+    if (*textlines) {
+        textstr = wxString(textlines, wxConvLocal);
+        dc.DrawText(textstr, 0, textrow);
+    }
+
     dc.SelectObject(wxNullBitmap);
 
     // delete any existing clip data with the given name
@@ -2497,14 +2961,14 @@ const char* Overlay::DoText(const char* args)
         delete it->second;
         clips.erase(it);
     }
-    
+
     // create clip data with given name and big enough to enclose text
     Clip* textclip = new Clip(textwd, textht);
     if (textclip == NULL || textclip->cdata == NULL) {
         delete textclip;
         return OverlayError("not enough memory for text clip");
     }
-    
+
     // copy text from top left corner of offscreen bitmap into clip data
     unsigned char* m = textclip->cdata;
     int j = 0;
@@ -2534,9 +2998,9 @@ const char* Overlay::DoText(const char* args)
             p.OffsetY(data, 1);
         }
     }
-    
+
     clips[name] = textclip;    // create named clip for later use by DoPaste
-    
+
     // return text info
     static char result[64];
     sprintf(result, "%d %d %d %d", textwd, textht, descent, leading);
@@ -2553,7 +3017,7 @@ const char* Overlay::DoTransform(const char* args)
     if (sscanf(args, " %d %d %d %d", &a1, &a2, &a3, &a4) != 4) {
         return OverlayError("transform command requires 4 arguments");
     }
-    
+
     if (a1 < -1 || a1 > 1 ||
         a2 < -1 || a2 > 1 ||
         a3 < -1 || a3 > 1 ||
@@ -2571,7 +3035,7 @@ const char* Overlay::DoTransform(const char* args)
     ayx = a3;
     ayy = a4;
     identity = (axx == 1) && (axy == 0) && (ayx == 0) && (ayy == 1);
-    
+
     // return old values
     static char result[16];
     sprintf(result, "%d %d %d %d", oldaxx, oldaxy, oldayx, oldayy);

@@ -14,6 +14,13 @@ local ov = g.overlay
 
 local wd, ht        -- overlay's current width and height (set by create_overlay)
 local toggle = 0    -- for toggling alpha blending
+local textmode = 0  -- for toggling multiline mode
+
+--------------------------------------------------------------------------------
+
+local function ms(t)
+    return string.format("%.1f", 1000 * t).."ms"
+end
 
 --------------------------------------------------------------------------------
 
@@ -58,6 +65,7 @@ g -- show pixel value under mouse
 h -- display this help
 i -- test loading image from file
 l -- test drawing lots of lines
+m -- test multiline text
 p -- test overlay positions
 s -- test setting lots of pixels
 t -- test text and transforms
@@ -131,7 +139,7 @@ local function test_set()
         ov("set "..rand(0,maxx).." "..rand(0,maxy))
         -- ov(string.format("set %d %d",rand(0,maxx),rand(0,maxy))) -- slower
     end
-    g.show("Time to set one million pixels: "..(os.clock()-t1))
+    g.show("Time to set one million pixels: "..ms(os.clock()-t1))
 end
 
 --------------------------------------------------------------------------------
@@ -167,7 +175,7 @@ local function test_copy_paste()
         -- above is much faster than g.update() but to avoid display glitches
         -- the overlay must cover the current layer and all pixels must be opaque
     end
-    g.show("Time to test copy and paste: "..(os.clock()-t1))
+    g.show("Time to test copy and paste: "..ms(os.clock()-t1))
     ov("freeclip background")
     ov("freeclip box")
 end
@@ -202,7 +210,7 @@ local function test_lines()
     for i = 1, 1000 do
         ov("line "..rand(0,maxx).." "..rand(0,maxy).." "..rand(0,maxx).." "..rand(0,maxy))
     end
-    g.show("Time to draw one thousand lines: "..(os.clock()-t1))
+    g.show("Time to draw one thousand lines: "..ms(os.clock()-t1))
 end
 
 --------------------------------------------------------------------------------
@@ -228,7 +236,78 @@ end
 
 --------------------------------------------------------------------------------
 
+local function test_multiline_text()
+    local oldfont = ov("font 10 mono-bold")   -- use a mono-spaced font
+    local oldblend = ov("blend 0")
+    ov(op.white) -- white background
+    ov("fill")
+    ov(op.black) -- black text
+    ov("blend 1")
+
+    local textstr =
+[[
+"To be or not to be, that is the question;
+Whether 'tis nobler in the mind to suffer
+The slings and arrows of outrageous fortune,
+Or to take arms against a sea of troubles,
+And by opposing, end them. To die, to sleep;
+No more; and by a sleep to say we end
+The heart-ache and the thousand natural shocks
+That flesh is heir to — 'tis a consummation
+Devoutly to be wish'd. To die, to sleep;
+To sleep, perchance to dream. Ay, there's the rub,
+For in that sleep of death what dreams may come,
+When we have shuffled off this mortal coil,
+Must give us pause. There's the respect
+That makes calamity of so long life,
+For who would bear the whips and scorns of time,
+Th'oppressor's wrong, the proud man's contumely,
+The pangs of despised love, the law's delay,
+The insolence of office, and the spurns
+That patient merit of th'unworthy takes,
+When he himself might his quietus make
+With a bare bodkin? who would fardels bear,
+To grunt and sweat under a weary life,
+But that the dread of something after death,
+The undiscovered country from whose bourn
+No traveller returns, puzzles the will,
+And makes us rather bear those ills we have
+Than fly to others that we know not of?
+Thus conscience does make cowards of us all,
+And thus the native hue of resolution
+Is sicklied o'er with the pale cast of thought,
+And enterprises of great pitch and moment
+With this regard their currents turn awry,
+And lose the name of action.
+Soft you now! The fair Ophelia! Nymph,
+
+in thy orisons be all my sins remember'd."
+]]
+
+    local t1 = os.clock()
+    toggle = 1 - toggle
+    if toggle > 0 then
+        -- test oplus multiline
+        local w, h = op.multiline("multi", textstr)
+        ov("paste 0 0 multi")
+        ov("freeclip multi")
+        g.show("Time to test multiline text: oplus "..ms(os.clock() - t1))
+    else
+        -- test native multiline
+        maketext(textstr)
+        pastetext(0, 0)
+        g.show("Time to test multiline text: native "..ms(os.clock() - t1))
+    end
+
+    ov("font "..oldfont)
+    ov("blend "..oldblend)
+end
+
+--------------------------------------------------------------------------------
+
 local function test_text()
+    local t1 = os.clock()
+
     local oldfont, oldblend, w, h, descent, leading, nextx
     
     ov(op.white) -- white background
@@ -373,6 +452,8 @@ local function test_text()
     ov("blend "..oldblend)
     ov("font "..oldfont)
     ov(op.black)
+
+    g.show("Time to test text: "..ms(os.clock()-t1))
 end
 
 --------------------------------------------------------------------------------
@@ -393,7 +474,7 @@ local function test_fill()
         ov("rgba "..rand(0,255).." "..rand(0,255).." "..rand(0,255).." "..rand(0,255))
         ov("fill "..rand(0,maxx).." "..rand(0,maxy).." "..rand(100).." "..rand(100))
     end
-    g.show("Time to fill one thousand rectangles: "..(os.clock()-t1))
+    g.show("Time to fill one thousand rectangles: "..ms(os.clock()-t1))
     ov("rgba 0 0 0 0")
     ov("fill 10 10 100 100") -- does nothing when alpha blending is on
 
@@ -516,6 +597,8 @@ local function main()
                 test_set()
             elseif ch == 't' then
                 test_text()
+            elseif ch == 'm' then
+                test_multiline_text()
             elseif ch == 'l' then
                 test_lines()
             elseif ch == 'v' then

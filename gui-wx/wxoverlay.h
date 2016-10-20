@@ -240,8 +240,11 @@ private:
     void UpdateZoomView(unsigned char* source, unsigned char *dest, int step);
     // Update the zoom view from the cell view at the given step size.
 
-    void DrawCells(unsigned char* cells, int mask, double angle);
-    // Draw the cells onto the overlay with the given location mask.
+    void DrawCellsRotate(unsigned char* cells, int mask, double angle);
+    // Draw cells onto the overlay with the given location mask and rotation.
+
+    void DrawCellsNoRotate(unsigned char* cells, int mask);
+    // Draw cells onto the overlay with the given location mask but no rotation.
 
     const char* DoDrawCells();
     // Draw the cells onto the overlay.

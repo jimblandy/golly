@@ -617,8 +617,9 @@ function m.multiline(clipname, text)
     -- and return the total width and height
 
     -- clip name can not be "temp"
-    if clipname == "temp" then
-        error("clipname can not be 'temp'", 2)
+    local tempname = "temp"
+    if clipname == tempname then
+        tempname = "temp1"
     end
     
     local oldtransform = ov(m.identity)
@@ -638,8 +639,8 @@ function m.multiline(clipname, text)
         if #line == 0 then
             line = " "      -- convert blank line to a space
         end
-        local w, h = split(ov("text temp "..line))
-        ov("paste 0 "..totalht.." temp")
+        local w, h = split(ov("text "..tempname.." "..line))
+        ov("paste 0 "..totalht.." "..tempname)
         w = tonumber(w)
         h = tonumber(h)
         if w > maxwd then maxwd = w end
@@ -656,7 +657,7 @@ function m.multiline(clipname, text)
     
     -- free the temporary clip memory
     ov("freeclip oldoverlay")
-    ov("freeclip temp")
+    ov("freeclip "..tempname)
 
     -- return the given text's width and height
     return maxwd, totalht

@@ -11,13 +11,15 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 20
+local buildnumber = 21
 
 local g = golly()
 local ov = g.overlay
 
 local gp = require "gplus"
 local op = require "oplus"
+
+local a = require "gplus.strict"
 
 local viewwd, viewht = g.getview(g.getlayer())
 
@@ -29,12 +31,24 @@ local update = {
     dostatus = false
 }
 
+-- textalert
+local textalert = {
+    appear = 0,
+    hold = 0,
+    disappear = 0,
+    color = "32 255 255 255",
+    fontsize = 30,
+    message = "",
+    starttime = 0
+}
+
 -- timing
 local timing = {
-    docellstime = 0,
-    docameratime = 0,
-    dorefreshtime = 0,
+    updatecells = 0,
+    camera = 0,
+    drawcells = 0,
     texttime = 0,
+    update = 0,
     show = false,
     extended = false
 }
@@ -249,16 +263,16 @@ end
 --------------------------------------------------------------------------------
 
 local function outputtiming(xoff, yoff)
-    maketext("Cells "..string.format("%.2fms", timing.docellstime))
-    pastetext(20 + xoff, 20 + yoff)
-    maketext("Draw  "..string.format("%.2fms", timing.dorefreshtime))
-    pastetext(20 + xoff, 40 + yoff)
+    local output = "updatecells  "..string.format("%.1fms", timing.updatecells)
+    output = output.."\ndrawcells  "..string.format("%.1fms", timing.drawcells)
+    output = output.."\nupdate  "..string.format("%.1fms", timing.update)
     if timing.extended then
-        maketext("Cam "..string.format("%.2fms", timing.docameratime))
-        pastetext(20 + xoff, 60 + yoff)
-        maketext("Text "..string.format("%.2fms", timing.texttime))
-        pastetext(20 + xoff, 80 + yoff)
+        output = output.."\ncamera  "..string.format("%.1fms", timing.camera)
+        output = output.."\ntext  "..string.format("%.1fms", timing.texttime)
     end
+    output = output.."\n\n\n\n"
+    maketext(output)
+    pastetext(20 + xoff, 20 + yoff)
 end
 
 --------------------------------------------------------------------------------
@@ -267,6 +281,15 @@ local function drawtiming()
     local start = os.clock()
     ov("blend 1")
 
+    local height = 60
+    if timing.extended then
+        height = 100
+    end
+
+    -- draw rectangle
+    ov("rgba 0 0 0 128")
+    ov("fill 18 20 122 "..height)
+
     -- draw shadow
     ov(op.black)
     outputtiming(2, 2)
@@ -274,7 +297,26 @@ local function drawtiming()
     -- draw text
     ov(op.white)
     outputtiming(0, 0)
+
+    ov("blend 0")
     timing.texttime = 1000 * (os.clock() - start)
+end
+
+--------------------------------------------------------------------------------
+
+local function alert(message, appear, hold, disappear)
+    textalert.message = message
+    textalert.appear = appear
+    textalert.hold = hold
+    textalert.disappear = disappear
+end
+
+--------------------------------------------------------------------------------
+
+local function updatealert()
+    if textalert.message ~= "" then
+
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -430,6 +472,7 @@ local function refresh()
 
     -- draw the cells
     ov("drawcells")
+    timing.drawcells = 1000 * (os.clock() - start)
 
     -- draw timing if on
     if timing.show then
@@ -437,8 +480,9 @@ local function refresh()
     end
 
     -- update the overlay
+    start = os.clock()
     ov("update")
-    timing.dorefreshtime = 1000 * (os.clock() - start)
+    timing.update = 1000 * (os.clock() - start)
 end
 
 --------------------------------------------------------------------------------
@@ -518,7 +562,7 @@ end
 local function updatecells()
     local start = os.clock()
     ov("updatecells")
-    timing.docellstime = 1000 * (os.clock() - start)
+    timing.updatecells = 1000 * (os.clock() - start)
 end
 
 --------------------------------------------------------------------------------
@@ -536,7 +580,7 @@ local function updatecamera()
 
     -- update status
     update.dostatus = true
-    timing.docameratime = 1000 * (os.clock() - start)
+    timing.camera = 1000 * (os.clock() - start)
 end
 
 --------------------------------------------------------------------------------
@@ -775,7 +819,7 @@ local function advance(singlestep)
                 refresh()
                 g.note("Life ended at generation "..tonumber(g.getgen()))
                 remaining = 0
-                decay = decaysteps
+                decay = viewconstants.decaysteps
             else
                 remaining = remaining - 1
             end
@@ -1544,12 +1588,14 @@ end
 
 local function toggletiming()
     timing.show = not timing.show
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
 
 local function toggleextendedtiming()
     timing.extended = not timing.extended
+    update.dorefresh = true
 end
 
 --------------------------------------------------------------------------------
