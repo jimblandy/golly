@@ -615,6 +615,11 @@ end
 function m.multiline(clipname, text)
     -- create a clip containing text with one or more lines
     -- and return the total width and height
+
+    -- clip name can not be "temp"
+    if clipname == "temp" then
+        error("clipname can not be 'temp'", 2)
+    end
     
     local oldtransform = ov(m.identity)
     local oldblend = ov("blend 0")
