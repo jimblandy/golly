@@ -2888,9 +2888,10 @@ const char* Overlay::DoText(const char* args)
     // check if the string contains newlines
     char *textlines = (char*)args + textpos;
     char *index = strchr(textlines, '\n');
-    wxString textstr;
     
-    // still doesn't handle blank lines correctly!!!
+    // get the line height
+    dc.GetTextExtent(textstr, &textwd, &lineht, &descent, &leading);
+fprintf(stderr, "%d\n", lineht);
 
     while (index) {
         // null terminate line
@@ -2902,8 +2903,7 @@ const char* Overlay::DoText(const char* args)
 
         // update the bitmap width and height to accomodate the line
         if (textwd > bitmapwd) bitmapwd = textwd;
-        bitmapht += textht;
-        if (textht > 0) lineht = textht;
+        bitmapht += lineht;
 
         // next line
         *index = '\n';
@@ -2915,7 +2915,7 @@ const char* Overlay::DoText(const char* args)
     textstr = wxString(textlines, wxConvLocal);
     dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
     if (textwd > bitmapwd) bitmapwd = textwd;
-    bitmapht += textht;
+    bitmapht += lineht;
 
     // create a bitmap for the text
     wxBitmap bitmap(bitmapwd, bitmapht, 32);
