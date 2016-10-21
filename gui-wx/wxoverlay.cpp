@@ -2880,14 +2880,17 @@ const char* Overlay::DoText(const char* args)
 
     wxMemoryDC dc;
     int textwd, textht, descent, leading;
+    int lineht = 0;
     int bitmapwd = 0;
     int bitmapht = 0;
     dc.SetFont(currfont);
 
     // check if the string contains newlines
     char *textlines = (char*)args + textpos;
-    char *index = strstr(textlines, "\\n");
+    char *index = strchr(textlines, '\n');
     wxString textstr;
+    
+    // still doesn't handle blank lines correctly!!!
 
     while (index) {
         // null terminate line
@@ -2900,11 +2903,12 @@ const char* Overlay::DoText(const char* args)
         // update the bitmap width and height to accomodate the line
         if (textwd > bitmapwd) bitmapwd = textwd;
         bitmapht += textht;
+        if (textht > 0) lineht = textht;
 
         // next line
-        *index = '\\';
+        *index = '\n';
         textlines = index + 1;
-        index = strstr(textlines, "\n");
+        index = strchr(textlines, '\n');
     }
 
     // add the final line
@@ -2918,7 +2922,7 @@ const char* Overlay::DoText(const char* args)
     dc.SelectObject(bitmap);
 
     // fill background with white
-    wxRect rect(0, 0, textwd, textht);
+    wxRect rect(0, 0, bitmapwd, bitmapht);
     wxBrush brush(*wxWHITE);
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.SetBrush(brush);
@@ -2934,7 +2938,7 @@ const char* Overlay::DoText(const char* args)
 
     int textrow = 0;
     textlines = (char*)args + textpos;
-    index = strstr(textlines, "\\n");
+    index = strchr(textlines, '\n');
     while (index) {
         // null terminate line
         *index = 0;
@@ -2942,10 +2946,10 @@ const char* Overlay::DoText(const char* args)
             textstr = wxString(textlines, wxConvLocal);
             dc.DrawText(textstr, 0, textrow);
         }
-        textrow += textht;
-        *index = '\\';
+        textrow += lineht;
+        *index = '\n';
         textlines = index + 1;
-        index = strstr(textlines, "\n");
+        index = strchr(textlines, '\n');
     }
     if (*textlines) {
         textstr = wxString(textlines, wxConvLocal);
@@ -2963,7 +2967,7 @@ const char* Overlay::DoText(const char* args)
     }
 
     // create clip data with given name and big enough to enclose text
-    Clip* textclip = new Clip(textwd, textht);
+    Clip* textclip = new Clip(bitmapwd, bitmapht);
     if (textclip == NULL || textclip->cdata == NULL) {
         delete textclip;
         return OverlayError("not enough memory for text clip");
@@ -2975,9 +2979,9 @@ const char* Overlay::DoText(const char* args)
     wxAlphaPixelData data(bitmap);
     if (data) {
         wxAlphaPixelData::Iterator p(data);
-        for (int y = 0; y < textht; y++) {
+        for (int y = 0; y < bitmapht; y++) {
             wxAlphaPixelData::Iterator rowstart = p;
-            for (int x = 0; x < textwd; x++) {
+            for (int x = 0; x < bitmapwd; x++) {
                 if (p.Red() == 255 && p.Green() == 255 && p.Blue() == 255) {
                     // white background becomes transparent
                     m[j++] = 0;
@@ -3003,7 +3007,7 @@ const char* Overlay::DoText(const char* args)
 
     // return text info
     static char result[64];
-    sprintf(result, "%d %d %d %d", textwd, textht, descent, leading);
+    sprintf(result, "%d %d %d %d", bitmapwd, bitmapht, descent, leading);
     return result;
 }
 
