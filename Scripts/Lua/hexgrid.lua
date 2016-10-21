@@ -12,9 +12,9 @@ local int = gp.int
 local ov = g.overlay
 
 -- the following are set in create_overlay()
-local gridr, gridg, gridb   -- RGB colors for grid lines
-local state_rgba = {}       -- table of "r g b 255" strings for each state
-local gridwd, gridht        -- width and height of grid (bounded if either > 0)
+local grid_rgba         -- RGBA string for grid lines
+local state_rgba = {}   -- table of RGBA strings for each state
+local gridwd, gridht    -- width and height of grid (bounded if either > 0)
 
 local minedge = 1   -- minimum length of a hexagon edge
 local maxedge = 32  -- maximum length of a hexagon edge
@@ -79,11 +79,11 @@ local function create_overlay()
     
     local currcolors = g.getcolors()
     for i = 0, g.numstates()-1 do
-        state_rgba[i] = ""..currcolors[2+i*4].." "..currcolors[3+i*4].." "..currcolors[4+i*4].." 255"
+        state_rgba[i] = currcolors[2+i*4].." "..currcolors[3+i*4].." "..currcolors[4+i*4].." 255"
     end
     
     -- set grid colors based on current background color
-    gridr, gridg, gridb = currcolors[2], currcolors[3], currcolors[4]
+    local gridr, gridg, gridb = currcolors[2], currcolors[3], currcolors[4]
     local diff = 48
     if (gridr + gridg + gridb) / 3 > 127 then
        -- light background so make grid lines slightly darker
@@ -96,6 +96,7 @@ local function create_overlay()
        if gridg + diff < 256 then gridg = gridg + diff else gridg = 255 end
        if gridb + diff < 256 then gridb = gridb + diff else gridb = 255 end
     end
+    grid_rgba = gridr.." "..gridg.." "..gridb.." 255"
 end
 
 --------------------------------------------------------------------------------
@@ -204,29 +205,79 @@ end
 
 --------------------------------------------------------------------------------
 
-local function fill_hexagon(xc, yc, oldstate, newstate)
-    xc = xc + int(midx)
-    yc = yc + int(midy)
+local function cell_to_hexagon(x, y)
+    --[[
+    convert cell position x,y to axial coords q,r so that the pattern
+    is rotated clockwise by 45 degrees; ie. the square cell at x,y = -1,-1
+    will be in the hexagonal cell at q,r = 0,-1
+     _________________                  _____
+    |     |     |     |                /     \
+    |-1,-1| 0,-1|+1,-1|          -----{  0,-1 }-----
+    |_____|_____|_____|         /-1,0  \_____/ +1,-1\
+    |     |     |     |         \      /     \      /
+    |-1,0 | 0,0 |+1,0 |  --->    -----{  0,0  }----{
+    |_____|_____|_____|         /-1,+1 \_____/ +1,0 \
+    |     |     |     |         \      /     \      /
+    |-1,+1| 0,+1|+1,+1|          -----{  0,+1 }-----
+    |_____|_____|_____|                \_____/
+    --]]
+    local r = y - ypos
+    local q = x - xpos - r
+    
+    -- return central pixel position of corresponding hexagon in overlay
+    x = int(hextox * q + midx)
+    y = int(hextoy * (r + q/2) + midy)
+    
+    return x, y
+end
 
-    ov("rgba "..state_rgba[newstate])
+--------------------------------------------------------------------------------
+
+local function fill_hexagon(xc, yc, state)
+    ov("rgba "..state_rgba[state])
 
     if edgelen < mingrid then
         if edgelen == 1 then
             ov("set "..xc.." "..yc)
         else
-            ov("fill "..int(xc-edgelen/2).." "..int(yc-edgelen/2).." "..edgelen.." "..edgelen)
+            ov("fill "..int(xc-edgelen/2+0.5).." "..int(yc-edgelen/2+0.5).." "..edgelen.." "..edgelen)
         end
     else
         -- adjust xc and/or yc if they are outside overlay but hexagon is partially visible
+        local check_pixel = false
         if xc < 0 then
-            if xc + edgelen >= 0 then xc = 0 end
+            if xc + edgelen >= 0 then
+                xc = 0
+                check_pixel = true
+            else
+                return
+            end
         elseif xc >= viewwd then
-            if xc - edgelen <= viewwd-1 then xc = viewwd-1 end
+            if xc - edgelen <= viewwd-1 then
+                xc = viewwd-1
+                check_pixel = true
+            else
+                return
+            end
         end
         if yc < 0 then
-            if yc + hexht/2 >= 0 then yc = 0 end
+            if yc + hexht/2 >= 0 then
+                yc = 0
+                check_pixel = true
+            else
+                return
+            end
         elseif yc >= viewht then
-            if yc - hexht/2 <= viewht-1 then yc = viewht-1 end
+            if yc - hexht/2 <= viewht-1 then
+                yc = viewht-1
+                check_pixel = true
+            else
+                return
+            end
+        end
+        if check_pixel then
+            -- avoid filling grid line
+            if ov("get "..xc.." "..yc) == grid_rgba then return end
         end
         ov("flood "..xc.." "..yc)
     end
@@ -236,12 +287,10 @@ end
 
 local function draw_live_cells()
     livehexagons = {}
+    if g.empty() then return end
     
-    local cells = {}
-    if not g.empty() then
-        -- get cells that will be visible in current hex grid
-        cells = g.getcells( get_visible_rect() )
-    end
+    -- get cells that will be visible in current hex grid
+    local cells = g.getcells( get_visible_rect() )
     if #cells == 0 then return end
     
     local len = #cells
@@ -258,28 +307,9 @@ local function draw_live_cells()
         local state = 1
         if inc == 3 then state = cells[i+2] end
         
-        --[[
-        convert cell coords x,y to axial coords q,r so that the pattern
-        is rotated clockwise by 45 degrees; ie. the square cell at x,y = -1,-1
-        will be in the hexagonal cell at q,r = 0,-1
-         _________________                  _____
-        |     |     |     |                /     \
-        |-1,-1| 0,-1|+1,-1|          -----{  0,-1 }-----
-        |_____|_____|_____|         /-1,0  \_____/ +1,-1\
-        |     |     |     |         \      /     \      /
-        |-1,0 | 0,0 |+1,0 |  --->    -----{  0,0  }----{
-        |_____|_____|_____|         /-1,+1 \_____/ +1,0 \
-        |     |     |     |         \      /     \      /
-        |-1,+1| 0,+1|+1,+1|          -----{  0,+1 }-----
-        |_____|_____|_____|                \_____/
-        --]]
-        local r = y - ypos
-        local q = x - xpos - r
-        
         -- calculate pixel at center of hexagon and fill it with current state
-        local xc = int(hextox * q)
-        local yc = int(hextoy * (r + q/2))
-        fill_hexagon(xc, yc, 0, state)
+        local xc, yc = cell_to_hexagon(x, y)
+        fill_hexagon(xc, yc, state)
         
         livehexagons[#livehexagons + 1] = {xc, yc, state}
     end
@@ -290,15 +320,15 @@ end
 local function kill_live_cells()
     for _, hexcell in ipairs(livehexagons) do
         local xc, yc, state = table.unpack(hexcell)
-        fill_hexagon(xc, yc, state, 0)
+        fill_hexagon(xc, yc, 0)
     end
     livehexagons = nil
 end
 
 --------------------------------------------------------------------------------
 
-local function get_vertex(cx, cy, i)
-    return int(cx + midx + xrad[i]), int(cy + midy + yrad[i])
+local function get_vertex(xc, yc, i)
+    return int(xc + xrad[i]), int(yc + yrad[i])
 end 
 
 --------------------------------------------------------------------------------
@@ -309,13 +339,15 @@ end
 
 --------------------------------------------------------------------------------
 
-local function draw_hexagon(cx, cy)
-    local x0, y0 = get_vertex(cx, cy, 0)
-    local x1, y1 = get_vertex(cx, cy, 1)
-    local x2, y2 = get_vertex(cx, cy, 2)
-    local x3, y3 = get_vertex(cx, cy, 3)
-    local x4, y4 = get_vertex(cx, cy, 4)
-    local x5, y5 = get_vertex(cx, cy, 5)
+local function draw_hexagon(xc, yc)
+    xc = xc + midx
+    yc = yc + midy
+    local x0, y0 = get_vertex(xc, yc, 0)
+    local x1, y1 = get_vertex(xc, yc, 1)
+    local x2, y2 = get_vertex(xc, yc, 2)
+    local x3, y3 = get_vertex(xc, yc, 3)
+    local x4, y4 = get_vertex(xc, yc, 4)
+    local x5, y5 = get_vertex(xc, yc, 5)
     draw_line(x5, y5, x0, y0)
     draw_line(x0, y0, x1, y1)
     draw_line(x1, y1, x2, y2)
@@ -331,7 +363,7 @@ end
 --------------------------------------------------------------------------------
 
 local function draw_hex_grid()
-    ov("rgba "..gridr.." "..gridg.." "..gridb.." 255")
+    ov("rgba "..grid_rgba)
     
     local minx, maxx, miny, maxy = -midx, midx, -midy, midy
     local x, y = 0, 0
@@ -371,12 +403,96 @@ end
 
 --------------------------------------------------------------------------------
 
+local function draw_boundary_line(x1, y1, x2, y2)
+    x1, y1 = cell_to_hexagon(x1, y1)
+    x2, y2 = cell_to_hexagon(x2, y2)
+    ov("line "..x1.." "..y1.." "..x2.." "..y2)
+end
+
+--------------------------------------------------------------------------------
+
+local function draw_bounded_hexagon(xc, yc, toprow, leftcol)
+    local x0, y0 = get_vertex(xc, yc, 0)
+    local x1, y1 = get_vertex(xc, yc, 1)
+    local x2, y2 = get_vertex(xc, yc, 2)
+    local x3, y3 = get_vertex(xc, yc, 3)
+    local x4, y4 = get_vertex(xc, yc, 4)
+    local x5, y5 = get_vertex(xc, yc, 5)
+    draw_line(x0, y0, x1, y1)
+    draw_line(x1, y1, x2, y2)
+    draw_line(x2, y2, x3, y3)
+    if leftcol then
+        -- need to draw NW edge
+        draw_line(x3, y3, x4, y4)
+    end
+    if toprow then
+        -- need to draw top edge and NE edge
+        draw_line(x4, y4, x5, y5)
+        draw_line(x5, y5, x0, y0)
+    elseif leftcol then
+        -- need to draw top edge
+        draw_line(x4, y4, x5, y5)
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function draw_bounded_grid()
+    local minx, miny, wd, ht = table.unpack( get_visible_rect() )
+    local maxx = minx+wd-1
+    local maxy = miny+ht-1
+    
+    if edgelen < mingrid then
+        -- fill bounded diamond or strip with state 0 color
+        ov("rgba "..state_rgba[0])
+        local offset
+        if edgelen == 2 and (gridht == 0 or gridwd == 0) then
+            -- offset needs to be larger so strip is wider
+            offset = 0.5
+        else
+            offset = (edgelen - 1) / 3
+        end
+        draw_boundary_line(minx-offset, miny-offset, maxx+offset, miny-offset)
+        draw_boundary_line(maxx+offset, miny-offset, maxx+offset, maxy+offset)
+        draw_boundary_line(maxx+offset, maxy+offset, minx-offset, maxy+offset)
+        draw_boundary_line(minx-offset, maxy+offset, minx-offset, miny-offset)
+        if edgelen > 1 or (edgelen == 1 and wd > 1 and ht > 1) then
+            local x, y = cell_to_hexagon(minx + int(wd/2), miny + int(ht/2))
+            ov("flood "..x.." "..y)
+        end
+    else
+        ov("rgba "..grid_rgba)
+        for y = miny, maxy do
+            for x = minx, maxx do
+                local xc, yc = cell_to_hexagon(x, y)
+                draw_bounded_hexagon(xc, yc, y == miny, x == minx)
+                if g.getcell(x, y) == 0 then
+                    -- fill hexagon with state 0 color
+                    fill_hexagon(xc, yc, 0)
+                    ov("rgba "..grid_rgba)
+                end
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function refresh()
     init_values()
-    ov("rgba "..state_rgba[0])  -- background color
-    ov("fill")
-    if edgelen >= mingrid then
-        draw_hex_grid()
+    if gridwd > 0 or gridht > 0 then
+        -- fill overlay with border color
+        local br, bg, bb = g.getcolor("border")
+        ov("rgba "..br.." "..bg.." "..bb.." 255")
+        ov("fill")
+        draw_bounded_grid()
+    else
+        -- fill overlay with state 0 color
+        ov("rgba "..state_rgba[0])
+        ov("fill")
+        if edgelen >= mingrid then
+            draw_hex_grid()
+        end
     end
     draw_live_cells()
     ov("update")
@@ -527,47 +643,37 @@ local function do_click_in_overlay(event)
     if mods ~= "none" and mods ~= "shift" then return end
 
     if g.getcursor() == "Draw" then
-        local state = get_state( ov("get "..x.." "..y) )
-        if state < 0 then
-            -- no match (click was in a grid line, so ignore it)
-            return
-        end
-        
         -- get axial coords of hexagon containing clicked pixel
         local q, r = pixel_to_hex(x, y)
         
-        -- check if cell is outside bounded grid
-        if outside_grid(q, r) then
-            -- no need for this msg if we draw gray border around bounded hexagons!!!
-            g.note("Cell is outside grid boundary.")
-            return
-        end
-        
-        -- find central pixel of hexagon containing x,y
-        local xc = int(hextox * q)
-        local yc = int(hextoy * (r + q/2))
-        
-        -- update hexagon
-        local drawstate = g.getoption("drawingstate")
-        if state == drawstate then
-            -- erase hexagon
-            fill_hexagon(xc, yc, state, 0)
-        else
-            fill_hexagon(xc, yc, state, drawstate)
-            if drawstate > 0 then
-                livehexagons[#livehexagons + 1] = {xc, yc, drawstate}
-            end
-        end
-        
+        -- check if hexagon is outside bounded grid
+        if outside_grid(q, r) then return end
+
         -- update corresponding cell in current layer
         local xcell = q + r + xpos
         local ycell = r + ypos
-        state = g.getcell(xcell, ycell)
+        local state = g.getcell(xcell, ycell)
+        local drawstate = g.getoption("drawingstate")
         if state == drawstate then
             -- kill cell
             g.setcell(xcell, ycell, 0)
         else
             g.setcell(xcell, ycell, drawstate)
+        end
+        
+        -- get central pixel of hexagon
+        local xc = int(hextox * q + midx)
+        local yc = int(hextoy * (r + q/2) + midy)
+        
+        -- update hexagon
+        if state == drawstate then
+            -- erase hexagon
+            fill_hexagon(xc, yc, 0)
+        else
+            fill_hexagon(xc, yc, drawstate)
+            if drawstate > 0 then
+                livehexagons[#livehexagons + 1] = {xc, yc, drawstate}
+            end
         end
         
         -- display overlay and show new population count in status bar
@@ -605,6 +711,27 @@ end
 
 --------------------------------------------------------------------------------
 
+local function set_position(x, y)
+    -- avoid error message from gp.setposint if grid is bounded
+    if gridwd > 0 then
+        local bminx = -int(gridwd / 2)
+        local bmaxx = bminx + gridwd - 1
+        if x < bminx or x > bmaxx then
+            return
+        end
+    end
+    if gridht > 0 then
+        local bminy = -int(gridht / 2)
+        local bmaxy = bminy + gridht - 1
+        if y < bminy or y > bmaxy then
+            return
+        end
+    end
+    gp.setposint(x, y)
+end
+
+--------------------------------------------------------------------------------
+
 local function pan(event)
     -- user pressed an arrow key
     if g.getoption("showoverlay") == 0 then
@@ -615,24 +742,24 @@ local function pan(event)
         if mods == "none" then
             -- to pan overlay orthogonally we need to pan layer diagonally
             if key == "left" then
-                gp.setposint(xpos-1, ypos+1)
+                set_position(xpos-1, ypos+1)
             elseif key == "right" then
-                gp.setposint(xpos+1, ypos-1)
+                set_position(xpos+1, ypos-1)
             elseif key == "up" then
-                gp.setposint(xpos-1, ypos-1)
+                set_position(xpos-1, ypos-1)
             elseif key == "down" then
-                gp.setposint(xpos+1, ypos+1)
+                set_position(xpos+1, ypos+1)
             end
         elseif mods == "shift" then
             -- to pan overlay diagonally we need to pan layer orthogonally
             if key == "left" then
-                gp.setposint(xpos-1, ypos)
+                set_position(xpos-1, ypos)
             elseif key == "right" then
-                gp.setposint(xpos+1, ypos)
+                set_position(xpos+1, ypos)
             elseif key == "up" then
-                gp.setposint(xpos, ypos-1)
+                set_position(xpos, ypos-1)
             elseif key == "down" then
-                gp.setposint(xpos, ypos+1)
+                set_position(xpos, ypos+1)
             end
         end
     end
