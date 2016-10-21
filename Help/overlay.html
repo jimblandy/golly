@@ -430,12 +430,12 @@ A pixel outside the overlay is silently ignored.
 <dd> Example: <b>ov("set 10 20")</b></dd>
 </p>
 
-<a name="text"></a><p><dt><b>text <i>clipname one line of text ...</i></b></dt>
+<a name="text"></a><p><dt><b>text <i>clipname one or more lines of text ...</i></b></dt>
 <dd>
 Create a named <a href="#clips">clip</a> containing the given text in the
 current font (as set by the most recent <a href="#font">font</a> command).
 Return the dimensions of the clip as a string of the form
-"width height descent leading".  The height is the total height of one line
+"width height descent leading".  The height is the total height of the text
 in the current font and the descent is the number of pixels under the baseline.
 The leading value is the amount of extra vertical space to put between lines
 (zero in all the currently supported fonts).
@@ -443,15 +443,7 @@ The text's color depends on the most recent <a href="#rgba">rgba</a> command.
 Note that the text has a transparent background, so you'll probably need to set
 <a href="#blend">blend</a> to 1 before drawing the text with <a href="#paste">paste</a>.
 </dd>
-<dd> Example: <b>local dimens = ov("text tempclip To be or not to be...")</b></dd>
-</p>
-
-<p>
-<dd>
-The text command will only create one line of text.  If you want to create
-multiple lines then use the <a href="#multiline">multiline</a> function
-from the <a href="#oplus">oplus</a> package.
-</dd>
+<dd> Example: <b>local dimens = ov("text tempclip Line 1\nLine 2...")</b></dd>
 </p>
 
 <a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5</i></b></dt>
@@ -879,15 +871,6 @@ This can be used to determine the real dimensions of some text.
 If all pixels in the clip are transparent then the returned values are all zero.
 </dd>
 <dd> Example: <b>local minx, miny, minwd, minht = op.minbox("textclip", 80, 10)</b></dd>
-</p>
-
-<a name="multiline"></a>
-<p><dt><b>op.multiline(<i>clipname, text</i>)</b></dt>
-<dd>
-Create a clip with the given name containing one or more lines of text
-and return the total width and height of the clip.
-</dd>
-<dd> Example: <b>local wd, ht = op.multiline("myclip", "Line 1\nLine2")</b></dd>
 </p>
 
 <p>
