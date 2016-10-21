@@ -2890,8 +2890,8 @@ const char* Overlay::DoText(const char* args)
     char *index = strchr(textlines, '\n');
     
     // get the line height
+    wxString textstr = _("M");
     dc.GetTextExtent(textstr, &textwd, &lineht, &descent, &leading);
-fprintf(stderr, "%d\n", lineht);
 
     while (index) {
         // null terminate line
