@@ -282,6 +282,9 @@ And lose the name of action.
 Soft you now! The fair Ophelia! Nymph,
 
 in thy orisons be all my sins remember'd."
+
+Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
+                ÁÀÂÄÃÅÇÉÈÊËÍÌÎÏÑÓÒÔÖÕÚÙÛÜÆØŒŸ
 ]]
 
     local t1 = os.clock()

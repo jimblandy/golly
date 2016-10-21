@@ -2898,7 +2898,7 @@ const char* Overlay::DoText(const char* args)
         *index = 0;
 
         // get the extent of the line
-        textstr = wxString(textlines, wxConvLocal);
+        textstr = wxString(textlines, wxConvUTF8);
         dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
 
         // update the bitmap width and height to accomodate the line
@@ -2912,7 +2912,7 @@ const char* Overlay::DoText(const char* args)
     }
 
     // add the final line
-    textstr = wxString(textlines, wxConvLocal);
+    textstr = wxString(textlines, wxConvUTF8);
     dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
     if (textwd > bitmapwd) bitmapwd = textwd;
     bitmapht += lineht;
@@ -2943,7 +2943,7 @@ const char* Overlay::DoText(const char* args)
         // null terminate line
         *index = 0;
         if (*textlines) {
-            textstr = wxString(textlines, wxConvLocal);
+            textstr = wxString(textlines, wxConvUTF8);
             dc.DrawText(textstr, 0, textrow);
         }
         textrow += lineht;
@@ -2952,7 +2952,7 @@ const char* Overlay::DoText(const char* args)
         index = strchr(textlines, '\n');
     }
     if (*textlines) {
-        textstr = wxString(textlines, wxConvLocal);
+        textstr = wxString(textlines, wxConvUTF8);
         dc.DrawText(textstr, 0, textrow);
     }
 
