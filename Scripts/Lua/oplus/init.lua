@@ -616,17 +616,15 @@ function m.multiline(clipname, text)
     -- create a clip containing text with one or more lines
     -- and return the total width and height
 
-    -- clip name can not be "temp"
-    local tempname = "temp"
-    if clipname == tempname then
-        tempname = "temp1"
-    end
+    -- ensure clip names used in here are not the same as clipname
+    local oldoverlay = clipname.."+oldoverlay"
+    local textclip = clipname.."+temp"
     
     local oldtransform = ov(m.identity)
     local oldblend = ov("blend 0")
     
     -- copy entire overlay and fill it with transparent pixels
-    ov("copy 0 0 0 0 oldoverlay")
+    ov("copy 0 0 0 0 "..oldoverlay)
     local oldrgba = ov("rgba 0 0 0 0")
     ov("fill")
     ov("rgba "..oldrgba)
@@ -639,8 +637,8 @@ function m.multiline(clipname, text)
         if #line == 0 then
             line = " "      -- convert blank line to a space
         end
-        local w, h = split(ov("text "..tempname.." "..line))
-        ov("paste 0 "..totalht.." "..tempname)
+        local w, h = split(ov("text "..textclip.." "..line))
+        ov("paste 0 "..totalht.." "..textclip)
         w = tonumber(w)
         h = tonumber(h)
         if w > maxwd then maxwd = w end
@@ -651,13 +649,13 @@ function m.multiline(clipname, text)
     ov("copy 0 0 "..maxwd.." "..totalht.." "..clipname)
     
     -- restore original overlay, transform and blend state
-    ov("paste 0 0 oldoverlay")
+    ov("paste 0 0 "..oldoverlay)
     ov("transform "..oldtransform)
     ov("blend "..oldblend)
     
     -- free the temporary clip memory
-    ov("freeclip oldoverlay")
-    ov("freeclip "..tempname)
+    ov("freeclip "..oldoverlay)
+    ov("freeclip "..textclip)
 
     -- return the given text's width and height
     return maxwd, totalht
@@ -671,9 +669,12 @@ function m.minbox(clipname, wd, ht)
     -- find the minimal bounding box of non-transparent pixels in given clip
     
     local xmin, ymin, xmax, ymax, minwd, minht
+
+    -- ensure clip name used in here is not the same as clipname
+    local oldoverlay = clipname.."+oldoverlay"
     
     -- copy entire overlay and fill it with transparent pixels
-    ov("copy 0 0 0 0 oldoverlay")
+    ov("copy 0 0 0 0 "..oldoverlay)
     local oldrgba = ov("rgba 0 0 0 0")
     ov("fill")
     ov("rgba "..oldrgba)
@@ -767,12 +768,12 @@ function m.minbox(clipname, wd, ht)
     ::finish::
     
     -- restore original overlay, transform and blend state
-    ov("paste 0 0 oldoverlay")
+    ov("paste 0 0 "..oldoverlay)
     ov("transform "..oldtransform)
     ov("blend "..oldblend)
     
     -- free the temporary clip memory
-    ov("freeclip oldoverlay")
+    ov("freeclip "..oldoverlay)
     
     -- return the bounding box info
     return xmin, ymin, minwd, minht
