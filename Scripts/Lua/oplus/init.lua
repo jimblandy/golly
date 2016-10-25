@@ -612,57 +612,6 @@ end
 
 --------------------------------------------------------------------------------
 
-function m.multiline(clipname, text)
-    -- create a clip containing text with one or more lines
-    -- and return the total width and height
-
-    -- ensure clip names used in here are not the same as clipname
-    local oldoverlay = clipname.."+oldoverlay"
-    local textclip = clipname.."+temp"
-    
-    local oldtransform = ov(m.identity)
-    local oldblend = ov("blend 0")
-    
-    -- copy entire overlay and fill it with transparent pixels
-    ov("copy 0 0 0 0 "..oldoverlay)
-    local oldrgba = ov("rgba 0 0 0 0")
-    ov("fill")
-    ov("rgba "..oldrgba)
-    
-    -- draw lines of text into the overlay
-    local maxwd = 0
-    local totalht = 0
-    local lines = { split(text,"\n") }
-    for i, line in ipairs(lines) do
-        if #line == 0 then
-            line = " "      -- convert blank line to a space
-        end
-        local w, h = split(ov("text "..textclip.." "..line))
-        ov("paste 0 "..totalht.." "..textclip)
-        w = tonumber(w)
-        h = tonumber(h)
-        if w > maxwd then maxwd = w end
-        totalht = totalht + h
-    end
-    
-    -- copy the text into the given clip
-    ov("copy 0 0 "..maxwd.." "..totalht.." "..clipname)
-    
-    -- restore original overlay, transform and blend state
-    ov("paste 0 0 "..oldoverlay)
-    ov("transform "..oldtransform)
-    ov("blend "..oldblend)
-    
-    -- free the temporary clip memory
-    ov("freeclip "..oldoverlay)
-    ov("freeclip "..textclip)
-
-    -- return the given text's width and height
-    return maxwd, totalht
-end
-
---------------------------------------------------------------------------------
-
 local clip_too_big = "minbox clip does not fit in overlay"
 
 function m.minbox(clipname, wd, ht)

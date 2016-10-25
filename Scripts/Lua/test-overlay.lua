@@ -49,12 +49,36 @@ end
 
 --------------------------------------------------------------------------------
 
+local textclip = "textclip"
+
+local function maketext(s)
+    -- convert given string to text in current font and return
+    -- its width and height etc for later use by pastetext
+    local w, h, descent, leading = split(ov("text "..textclip.." "..s))
+    return tonumber(w), tonumber(h), tonumber(descent), tonumber(leading)
+end
+
+--------------------------------------------------------------------------------
+
+local function pastetext(x, y, transform)
+    transform = transform or op.identity
+    -- text background is transparent so paste needs to use alpha blending
+    local oldblend = ov("blend 1")
+    local oldtransform = ov(transform)
+    ov("paste "..x.." "..y.." "..textclip)
+    ov("transform "..oldtransform)
+    ov("blend "..oldblend)
+end
+
+--------------------------------------------------------------------------------
+
 local function show_help()
     ov(op.black)
     ov("fill")
     ov(op.white)
     local oldfont = ov("font 10 mono-bold")   -- use a mono-spaced font
-    local w, h = op.multiline("helpclip",
+    local oldblend = ov("blend 1")
+    maketext(
 [[
 Special keys and their actions:
 
@@ -78,9 +102,7 @@ Click and drag to draw.
 Option-click to flood.
 ]]
     )
-    local oldblend = ov("blend 1")
-    ov("paste 5 5 helpclip")
-    ov("freeclip helpclip")
+    pastetext(5, 5)
     ov("blend "..oldblend)
     ov("font "..oldfont)
 end
@@ -217,32 +239,18 @@ end
 
 --------------------------------------------------------------------------------
 
-local function maketext(s)
-    -- convert given string to text in current font and return
-    -- its width and height etc for later use by pastetext
-    local w, h, descent, leading = split(ov("text temp "..s))
-    return tonumber(w), tonumber(h), tonumber(descent), tonumber(leading)
-end
-
---------------------------------------------------------------------------------
-
-local function pastetext(x, y, transform)
-    transform = transform or op.identity
-    -- text background is transparent so paste needs to use alpha blending
-    local oldblend = ov("blend 1")
-    local oldtransform = ov(transform)
-    ov("paste "..x.." "..y.." temp")
-    ov("transform "..oldtransform)
-    ov("blend "..oldblend)
-end
-
---------------------------------------------------------------------------------
-
 local function test_multiline_text()
     local oldfont = ov("font 10 mono-bold")   -- use a mono-spaced font
+
+    -- draw solid background
     local oldblend = ov("blend 0")
-    ov(op.blue) -- blue background
+    ov(op.blue)
     ov("fill")
+
+    -- define the multi-line multi-column text to draw
+    -- note in [[ ]] blocks the \t is not converted by
+    -- lua to a tab character, rather the string literal "\t"
+    -- if you want a tab character you have to use tab
 
     local textstr =
 [[
@@ -285,8 +293,12 @@ Soft you now! The fair Ophelia! Nymph,
 \t
 \t\tHello
 in thy orisons be all my sins remember'd."\tCol 2\tCol 3
+
+Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
+                ÁÀÂÄÃÅÇÉÈÊËÍÌÎÏÑÓÒÔÖÕÚÙÛÜÆØŒŸ
 ]]
 
+    -- toggle the column alignments, shadow and transparency
     align[3] = align[3] + 1
     if align[3] == 3 then
         align[3] = 0
@@ -308,8 +320,13 @@ in thy orisons be all my sins remember'd."\tCol 2\tCol 3
         end
     end
 
+    -- set the column delimiter to a literal "\t" string (see above)
     ov("textoption delimiter \\t")
+
+    -- set three columns
     ov("textoption columns 3")
+
+    -- set alignment for each column
     local options = "textoption align"
     local i
     for i = 1, #align do
@@ -323,34 +340,44 @@ in thy orisons be all my sins remember'd."\tCol 2\tCol 3
     end
     ov(options)
 
+    -- set background to transparent or a solid color
     if transparentbg == 1 then
         ov("textoption background 0 0 0 0")
     else
         ov("textoption background 0 0 128 255")
     end
 
+    -- set the text shadow on or off
     if shadow == 1 then
-        ov("textoption shadow 255 0 128 255 4 4")
+        ov("textoption shadow 255 0 128 255 3 3")
     else
         ov("textoption shadow off")
     end
 
-    ov("rgba 255 255 255 255") -- text foreground
+    -- set the text foreground color
+    ov("rgba 255 255 255 255")
 
     local t1 = os.clock()
 
-    -- test multiline
+    -- create the text clip
     maketext(textstr)
     t1 = os.clock() - t1
     t2 = os.clock()
 
+    -- set blending based on whether the background color is transparent
     ov("blend "..transparentbg)
 
-    pastetext(0, 0)
+    -- don't use pastetext because it always uses blend 1
+    ov("paste 0 0 "..textclip)
+
+    -- output timing and drawing options
     g.show("Time to test multiline text "..ms(t1).." "..ms(os.clock() - t2).. " "..options.." shadow "..shadow.." transbg "..transparentbg)
 
+    -- reset to single column no shadow
     ov("textoption columns 1")
     ov("textoption shadow off")
+
+    -- restore old font and blend mode
     ov("font "..oldfont)
     ov("blend "..oldblend)
 end
@@ -496,7 +523,7 @@ local function test_text()
     ov("line 10 "..(h-1+10-descent).." "..(w-1+10).." "..(h-1+10-descent))
     
     -- draw minimal bounding rect over text
-    local xoff, yoff, minwd, minht = op.minbox("temp", w, h)
+    local xoff, yoff, minwd, minht = op.minbox(textclip, w, h)
     ov("rgba 0 0 255 20")
     ov("fill "..(xoff+10).." "..(yoff+10).." "..minwd.." "..minht)
     

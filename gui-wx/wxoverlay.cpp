@@ -1946,29 +1946,32 @@ void Overlay::DrawPixel(int x, int y)
     // caller must guarantee that pixel is within pixmap
     unsigned char* p = pixmap + y*wd*4 + x*4;
     if (alphablend && a < 255) {
-        // source pixel is translucent so blend with destination pixel;
-        // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
-        unsigned char destr = p[0];
-        unsigned char destg = p[1];
-        unsigned char destb = p[2];
-        unsigned char desta = p[3];
-        float alpha = a / 255.0;
-        if (desta == 255) {
-            // destination pixel is opaque
-            p[0] = int(alpha * (r - destr) + destr);
-            p[1] = int(alpha * (g - destg) + destg);
-            p[2] = int(alpha * (b - destb) + destb);
-            // no need to change p[3] (alpha stays at 255)
-        } else {
-            // destination pixel is translucent
-            float inva = 1.0 - alpha;
-            float destalpha = desta / 255.0;
-            float outa = alpha + destalpha * inva;
-            p[3] = int(outa * 255);
-            if (p[3] > 0) {
-                p[0] = int((r * alpha + destr * destalpha * inva) / outa);
-                p[1] = int((g * alpha + destg * destalpha * inva) / outa);
-                p[2] = int((b * alpha + destb * destalpha * inva) / outa);
+        // do nothing if source pixel is transparent
+        if (a > 0) {
+            // source pixel is translucent so blend with destination pixel;
+            // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+            unsigned char destr = p[0];
+            unsigned char destg = p[1];
+            unsigned char destb = p[2];
+            unsigned char desta = p[3];
+            float alpha = a / 255.0;
+            if (desta == 255) {
+                // destination pixel is opaque
+                p[0] = int(alpha * (r - destr) + destr);
+                p[1] = int(alpha * (g - destg) + destg);
+                p[2] = int(alpha * (b - destb) + destb);
+                // no need to change p[3] (alpha stays at 255)
+            } else {
+                // destination pixel is translucent
+                float inva = 1.0 - alpha;
+                float destalpha = desta / 255.0;
+                float outa = alpha + destalpha * inva;
+                p[3] = int(outa * 255);
+                if (p[3] > 0) {
+                    p[0] = int((r * alpha + destr * destalpha * inva) / outa);
+                    p[1] = int((g * alpha + destg * destalpha * inva) / outa);
+                    p[2] = int((b * alpha + destb * destalpha * inva) / outa);
+                }
             }
         }
     } else {
@@ -2386,7 +2389,7 @@ const char* Overlay::DoPaste(const char* args)
     } else {
         // save current RGBA values and paste pixel by pixel using DrawPixel,
         // clipping any outside the overlay, and possibly doing alpha blending
-        // and an affine transformation
+        // and/or an affine transformation
         unsigned char saver = r;
         unsigned char saveg = g;
         unsigned char saveb = b;
@@ -2397,17 +2400,11 @@ const char* Overlay::DoPaste(const char* args)
         if (identity) {
             for (int j = 0; j < h; j++) {
                 for (int i = 0; i < w; i++) {
-                    // no point in drawing if alpha is zero
-                    a = data[datapos + 3];
-                    if (a && PixelInOverlay(x, y)) {
-                        r = data[datapos++];
-                        g = data[datapos++];
-                        b = data[datapos++];
-                        datapos++;
-                        DrawPixel(x, y);
-                    } else {
-                        datapos += 4;
-                    }
+                    r = data[datapos++];
+                    g = data[datapos++];
+                    b = data[datapos++];
+                    a = data[datapos++];
+                    if (PixelInOverlay(x, y)) DrawPixel(x, y);
                     x++;
                 }
                 y++;
@@ -2419,20 +2416,13 @@ const char* Overlay::DoPaste(const char* args)
             int y0 = y - (x * ayx + y * ayy);
             for (int j = 0; j < h; j++) {
                 for (int i = 0; i < w; i++) {
-                    // no point in drawing if alpha is zero
-                    a = data[datapos + 3];
-                    if (a) {
-                        r = data[datapos++];
-                        g = data[datapos++];
-                        b = data[datapos++];
-                        a = data[datapos++];
-                        int newx = x0 + x * axx + y * axy;
-                        int newy = y0 + x * ayx + y * ayy;
-                        if (PixelInOverlay(newx, newy)) DrawPixel(newx, newy);
-                    }
-                    else {
-                        datapos += 4;
-                    }
+                    r = data[datapos++];
+                    g = data[datapos++];
+                    b = data[datapos++];
+                    a = data[datapos++];
+                    int newx = x0 + x * axx + y * axy;
+                    int newy = y0 + x * ayx + y * ayy;
+                    if (PixelInOverlay(newx, newy)) DrawPixel(newx, newy);
                     x++;
                 }
                 y++;
@@ -3243,7 +3233,7 @@ const char* Overlay::DoText(const char* args)
             *tab = 0;
 
             // get the extent of the column
-            textstr = wxString(textlines, wxConvLocal);
+            textstr = wxString(textlines, wxConvUTF8);
             dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
             
             // update the column width if auto sized
@@ -3259,7 +3249,7 @@ const char* Overlay::DoText(const char* args)
         }
 
         // final column
-        textstr = wxString(textlines, wxConvLocal);
+        textstr = wxString(textlines, wxConvUTF8);
         dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
         if (width[col] == -1) {
             if (colwidth[col] < textwd) colwidth[col] = textwd;
@@ -3390,7 +3380,7 @@ const char* Overlay::DoText(const char* args)
                 while (col < columns - 1 && tab) {
                     // draw column
                     *tab = 0;
-                    textstr = wxString(textlines, wxConvLocal);
+                    textstr = wxString(textlines, wxConvUTF8);
     
                     // check column text alignment
                     xpos = 0;
@@ -3412,7 +3402,7 @@ const char* Overlay::DoText(const char* args)
                 }
     
                 // draw final column
-                textstr = wxString(textlines, wxConvLocal);
+                textstr = wxString(textlines, wxConvUTF8);
                 xpos = 0;
                 if (align[col] != left) {
                     mDC->GetTextExtent(textstr, &textwd, &textht, &descent, &leading);

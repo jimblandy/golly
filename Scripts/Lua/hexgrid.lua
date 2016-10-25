@@ -8,6 +8,7 @@ local g = golly()
 local gp = require "gplus"
 local op = require "oplus"
 local int = gp.int
+local split = gp.split
 
 local ov = g.overlay
 
@@ -584,7 +585,7 @@ end
 
 local function do_click_in_layer(event)
     -- process a mouse click in current layer like "click 100 20 left none"
-    local _, x, y, button, mods = gp.split(event)
+    local _, x, y, button, mods = split(event)
     local state = g.getcell(x, y)
     
     if button ~= "left" then return end
@@ -621,6 +622,46 @@ end
 
 --------------------------------------------------------------------------------
 
+local function edit_hexagons(x, y)
+    -- get axial coords of hexagon containing clicked pixel
+    local q, r = pixel_to_hex(x, y)
+    
+    -- check if hexagon is outside bounded grid
+    if outside_grid(q, r) then return end
+
+    -- update corresponding cell in current layer
+    local xcell = q + r + xpos
+    local ycell = r + ypos
+    local state = g.getcell(xcell, ycell)
+    local drawstate = g.getoption("drawingstate")
+    if state == drawstate then
+        -- kill cell
+        g.setcell(xcell, ycell, 0)
+    else
+        g.setcell(xcell, ycell, drawstate)
+    end
+    
+    -- get central pixel of hexagon
+    local xc = int(hextox * q + midx)
+    local yc = int(hextoy * (r + q/2) + midy)
+    
+    -- update hexagon
+    if state == drawstate then
+        -- erase hexagon
+        fill_hexagon(xc, yc, 0)
+    else
+        fill_hexagon(xc, yc, drawstate)
+        if drawstate > 0 then
+            livehexagons[#livehexagons + 1] = {xc, yc, drawstate}
+        end
+    end
+    
+    -- display overlay and show new population count in status bar
+    g.update()
+end
+
+--------------------------------------------------------------------------------
+
 local function get_state(color)
     -- search state_rgba array for color and return matching state
     for s, c in pairs(state_rgba) do
@@ -633,101 +674,102 @@ end
 
 --------------------------------------------------------------------------------
 
-local function do_click_in_overlay(event)
-    -- process a mouse click in overlay like "oclick 100 20 left none"
-    local _, x, y, button, mods = gp.split(event)
-    x = tonumber(x)
-    y = tonumber(y)
-    
-    if button ~= "left" then return end
-    if mods ~= "none" and mods ~= "shift" then return end
-
-    if g.getcursor() == "Draw" then
-        -- get axial coords of hexagon containing clicked pixel
-        local q, r = pixel_to_hex(x, y)
-        
-        -- check if hexagon is outside bounded grid
-        if outside_grid(q, r) then return end
-
-        -- update corresponding cell in current layer
-        local xcell = q + r + xpos
-        local ycell = r + ypos
-        local state = g.getcell(xcell, ycell)
-        local drawstate = g.getoption("drawingstate")
-        if state == drawstate then
-            -- kill cell
-            g.setcell(xcell, ycell, 0)
-        else
-            g.setcell(xcell, ycell, drawstate)
-        end
-        
-        -- get central pixel of hexagon
-        local xc = int(hextox * q + midx)
-        local yc = int(hextoy * (r + q/2) + midy)
-        
-        -- update hexagon
-        if state == drawstate then
-            -- erase hexagon
-            fill_hexagon(xc, yc, 0)
-        else
-            fill_hexagon(xc, yc, drawstate)
-            if drawstate > 0 then
-                livehexagons[#livehexagons + 1] = {xc, yc, drawstate}
-            end
-        end
-        
-        -- display overlay and show new population count in status bar
-        g.update()
-
-    elseif g.getcursor() == "Pick" then
-        local state = get_state( ov("get "..x.." "..y) )
-        if state >= 0 then
-            g.setoption("drawingstate", state)
-            g.update()  -- updates edit bar
-        end
-    
-    elseif g.getcursor() == "Move" then
-        -- this sorta works but really need a better approach!!!
-        local q, r = pixel_to_hex(x, y)
-        if outside_grid(q, r) then
-            return
-        end
-        local xcell = q + r + xpos
-        local ycell = r + ypos
-        g.doevent("click "..xcell.." "..ycell.." left none")
-    
-    elseif g.getcursor() == "Select" then
-        --!!!???
-        
-    elseif g.getcursor() == "Zoom In" then
-        -- zoom in to clicked hexagon!!!
-        zoom_in()
-        
-    elseif g.getcursor() == "Zoom Out" then
-        -- zoom out from clicked hexagon!!!
-        zoom_out()
-    end
-end
-
---------------------------------------------------------------------------------
-
 local function set_position(x, y)
     -- avoid error message from gp.setposint if grid is bounded
     if gridwd > 0 then
         local bminx = -int(gridwd / 2)
         local bmaxx = bminx + gridwd - 1
-        if x < bminx or x > bmaxx then
-            return
-        end
+        if x < bminx or x > bmaxx then return end
     end
     if gridht > 0 then
         local bminy = -int(gridht / 2)
         local bmaxy = bminy + gridht - 1
-        if y < bminy or y > bmaxy then
-            return
-        end
+        if y < bminy or y > bmaxy then return end
     end
     gp.setposint(x, y)
+end
+
+--------------------------------------------------------------------------------
+
+local function check_position()
+    -- refresh if current layer's position has changed
+    local x0, y0 = gp.getposint()
+    if x0 ~= xpos or y0 ~= ypos then
+        xpos = x0
+        ypos = y0
+        refresh()
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function move_hexagons(x, y)
+    -- get axial coords of hexagon containing clicked pixel
+    local q, r = pixel_to_hex(x, y)
+    
+    -- check if hexagon is outside bounded grid
+    if outside_grid(q, r) then return end
+    
+    -- drag clicked hexagon to new position
+    local prevq, prevr = q, r
+    while true do
+        local event = g.getevent()
+        if event:find("^mup") then break end
+        local xy = ov("xy")
+        if #xy > 0 then
+            x, y = split(xy)
+            q, r = pixel_to_hex(tonumber(x), tonumber(y))
+            if q ~= prevq or r ~= prevr then
+                if not outside_grid(q, r) then
+                    local deltaq = q - prevq
+                    local deltar = r - prevr
+                    --[[
+                                    ^
+                                    |  move up/down if deltaq == 0
+                                    v
+                                 }____{             _
+                                /      \            /|
+                         }-----{  q,r-1 }-----{   |/_  move NE/SW if deltaq == -deltar
+                        /       \      /       \ 
+                       { q-1,r   }----{ q+1,r-1 }
+                        \       /      \       /
+                         }-----{  q,r   }-----{
+                        /       \      /       \
+                       { q-1,r+1 }----{ q+1,r   }
+                        \       /      \       /   _
+                         }-----{  q,r+1 }-----{   |\   move NW/SE if deltar == 0
+                                \      /           _\|
+                                 }----{
+                    --]]
+                    if deltar ~= 0 and deltaq == 0 then
+                        -- move current layer diagonally to move hexagons up/down
+                        set_position(xpos - deltar, ypos - deltar)
+                        check_position()
+                    elseif deltaq ~= 0 and deltar == 0 then
+                        -- move current layer left/right to move hexagons NW/SE
+                        set_position(xpos - deltaq, ypos)
+                        check_position()
+                    elseif deltaq == -deltar then
+                        -- move current layer up/down to move hexagons NE/SW
+                        set_position(xpos, ypos + deltaq)
+                        check_position()
+                    else
+                        -- move hexagons NE/SW until prevr = r
+                        deltaq = prevr - r
+                        ypos = ypos + deltaq
+                        set_position(xpos, ypos)
+                        prevq = prevq + deltaq
+                        
+                        -- now move hexagons NW/SE until prevq = q
+                        deltaq = q - prevq
+                        set_position(xpos - deltaq, ypos)
+                        check_position()
+                    end
+                end
+                prevq, prevr = q, r
+            end
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -738,7 +780,7 @@ local function pan(event)
         -- just pan the current layer
         g.doevent(event)
     else
-        local _, key, mods = gp.split(event)
+        local _, key, mods = split(event)
         if mods == "none" then
             -- to pan overlay orthogonally we need to pan layer diagonally
             if key == "left" then
@@ -762,6 +804,43 @@ local function pan(event)
                 set_position(xpos, ypos+1)
             end
         end
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function do_click_in_overlay(event)
+    -- process a mouse click in overlay like "oclick 100 20 left none"
+    local _, x, y, button, mods = split(event)
+    x = tonumber(x)
+    y = tonumber(y)
+    
+    if button ~= "left" then return end
+    if mods ~= "none" and mods ~= "shift" then return end
+
+    if g.getcursor() == "Draw" then
+        edit_hexagons(x, y)
+
+    elseif g.getcursor() == "Pick" then
+        local state = get_state( ov("get "..x.." "..y) )
+        if state >= 0 then
+            g.setoption("drawingstate", state)
+            g.update()  -- updates edit bar
+        end
+
+    elseif g.getcursor() == "Move" then
+        move_hexagons(x, y)
+
+    elseif g.getcursor() == "Select" then
+        --!!!???
+
+    elseif g.getcursor() == "Zoom In" then
+        -- zoom in to clicked hexagon!!!
+        zoom_in()
+
+    elseif g.getcursor() == "Zoom Out" then
+        -- zoom out from clicked hexagon!!!
+        zoom_out()
     end
 end
 
@@ -828,12 +907,7 @@ local function main()
         end
         
         -- check if current layer's position has changed
-        local x0, y0 = gp.getposint()
-        if x0 ~= xpos or y0 ~= ypos then
-            xpos = x0
-            ypos = y0
-            refresh()
-        end
+        check_position()
         
         if generating then advance(false) end
     end
