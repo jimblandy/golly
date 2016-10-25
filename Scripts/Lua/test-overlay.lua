@@ -12,9 +12,11 @@ local rand = math.random
 
 local ov = g.overlay
 
-local wd, ht        -- overlay's current width and height (set by create_overlay)
-local toggle = 0    -- for toggling alpha blending
-local textmode = 0  -- for toggling multiline mode
+local wd, ht               -- overlay's current width and height (set by create_overlay)
+local toggle = 0           -- for toggling alpha blending
+local align = {0, 0, 0}    -- for text alignment
+local shadow = 1           -- for text shadow
+local transparentbg = 1    -- for text background
 
 --------------------------------------------------------------------------------
 
@@ -239,24 +241,22 @@ end
 local function test_multiline_text()
     local oldfont = ov("font 10 mono-bold")   -- use a mono-spaced font
     local oldblend = ov("blend 0")
-    ov(op.white) -- white background
+    ov(op.blue) -- blue background
     ov("fill")
-    ov(op.black) -- black text
-    ov("blend 1")
 
     local textstr =
 [[
-"To be or not to be, that is the question;
-Whether 'tis nobler in the mind to suffer
+"To be or not to be, that is the question;\tIs it really?
+Whether 'tis nobler in the mind to suffer\tNobler!\tMore likely idiotic
 The slings and arrows of outrageous fortune,
 Or to take arms against a sea of troubles,
-And by opposing, end them. To die, to sleep;
+And by opposing, end them. To die, to sleep;\t\tSleep, every time
 No more; and by a sleep to say we end
 The heart-ache and the thousand natural shocks
 That flesh is heir to — 'tis a consummation
-Devoutly to be wish'd. To die, to sleep;
+Devoutly to be wish'd. To die, to sleep;\tI told you before\tSleep
 To sleep, perchance to dream. Ay, there's the rub,
-For in that sleep of death what dreams may come,
+For in that sleep of death what dreams may come,\tToo\tMany\tColumns\tReally
 When we have shuffled off this mortal coil,
 Must give us pause. There's the respect
 That makes calamity of so long life,
@@ -281,24 +281,76 @@ With this regard their currents turn awry,
 And lose the name of action.
 Soft you now! The fair Ophelia! Nymph,
 
-in thy orisons be all my sins remember'd."
+\t\t\t
+\t
+\t\tHello
+in thy orisons be all my sins remember'd."\tCol 2\tCol 3
 ]]
 
-    local t1 = os.clock()
-    toggle = 1 - toggle
-    if toggle > 0 then
-        -- test oplus multiline
-        local w, h = op.multiline("multi", textstr)
-        ov("paste 0 0 multi")
-        ov("freeclip multi")
-        g.show("Time to test multiline text: oplus "..ms(os.clock() - t1))
-    else
-        -- test native multiline
-        maketext(textstr)
-        pastetext(0, 0)
-        g.show("Time to test multiline text: native "..ms(os.clock() - t1))
+    align[3] = align[3] + 1
+    if align[3] == 3 then
+        align[3] = 0
+        align[2] = align[2] + 1
+        if align[2] == 3 then
+            align[2] = 0
+            align[1] = align[1] + 1
+            if align[1] == 3 then
+                align[1] = 0
+                shadow = shadow + 1
+                if shadow == 2 then
+                    shadow = 0
+                    transparentbg = transparentbg + 1
+                    if transparentbg == 2 then
+                        transparentbg = 0
+                    end
+                end
+            end
+        end
     end
 
+    ov("textoption delimiter \\t")
+    ov("textoption columns 3")
+    local options = "textoption align"
+    local i
+    for i = 1, #align do
+        if align[i] == 0 then
+            options = options.." left"
+        elseif align[i] == 1 then
+            options = options.." right"
+        else
+            options = options.." center"
+        end
+    end
+    ov(options)
+
+    if transparentbg == 1 then
+        ov("textoption background 0 0 0 0")
+    else
+        ov("textoption background 0 0 128 255")
+    end
+
+    if shadow == 1 then
+        ov("textoption shadow 255 0 128 255 4 4")
+    else
+        ov("textoption shadow off")
+    end
+
+    ov("rgba 255 255 255 255") -- text foreground
+
+    local t1 = os.clock()
+
+    -- test multiline
+    maketext(textstr)
+    t1 = os.clock() - t1
+    t2 = os.clock()
+
+    ov("blend "..transparentbg)
+
+    pastetext(0, 0)
+    g.show("Time to test multiline text "..ms(t1).." "..ms(os.clock() - t2).. " "..options.." shadow "..shadow.." transbg "..transparentbg)
+
+    ov("textoption columns 1")
+    ov("textoption shadow off")
     ov("font "..oldfont)
     ov("blend "..oldblend)
 end

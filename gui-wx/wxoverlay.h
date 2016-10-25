@@ -34,6 +34,12 @@
     #pragma warning(default:4702)   // enable "unreachable code" warnings
 #endif
 
+// maximum columns
+const int maxcols = 10;
+
+// maximum length delimiter string
+const int maxdelim = 10;
+
 // The overlay is a scriptable graphics layer that is (optionally) drawn
 // on top of Golly's current layer.
 
@@ -41,6 +47,11 @@
 typedef enum {
     topleft, topright, bottomright, bottomleft, middle
 } overlay_position;
+
+// Multiline text can be left or right justified or centered.
+typedef enum {
+    left, right, center
+} text_alignment;
 
 // The Clip class is used by the copy and text commands to store pixel data
 // in a named "clipboard" for later use by the paste command:
@@ -191,6 +202,30 @@ private:
     // Set the current font according to the given point size and font name
     // and return the old font as a string of the form "fontsize fontname".
     
+    void SetTextColumnDefaults();
+    // Set text default widths and alignments.
+
+    const char* TextOptionAlign(const char* args);
+    // Set text alignment per column.
+
+    const char* TextOptionBackground(const char* args);
+    // Set text background r, g, b, a color.
+
+    const char* TextOptionColumns(const char* args);
+    // Set number of text columns.
+
+    const char* TextOptionDelimiter(const char* args);
+    // Set text column delimiter string.
+
+    const char* TextOptionShadow(const char* args);
+    // Set text shadow r, g, b, a color.
+
+    const char* TextOptionWidth(const char* args);
+    // Set text width per column.
+
+    const char* DoTextOption(const char* args);
+    // Set a text option.
+
     const char* DoText(const char* args);
     // Create Clip data with the given name containing the given text.
     // Return the dimensions of the text as a string of the form
@@ -321,19 +356,31 @@ private:
     void DeleteStars();
     // Free the memory used by the stars.
 
-    unsigned char* pixmap;      // RGBA data (wd * ht * 4 bytes)
-    int wd, ht;                 // width and height of pixmap
-    unsigned char r, g, b, a;   // current RGBA values for drawing pixels
-    bool alphablend;            // do alpha blending when drawing translucent pixels?
-    bool only_draw_overlay;     // set by DoUpdate, reset by OnlyDrawOverlay
-    overlay_position pos;       // where to display overlay
-    const wxCursor* ovcursor;   // cursor to use when mouse is in overlay
-    std::string cursname;       // remember cursor name
-    int axx, axy, ayx, ayy;     // affine transformation values
-    bool identity;              // true if transformation values are 1,0,0,1
-    wxFont currfont;            // current font used by text command
-    std::string fontname;       // name of current font
-    int fontsize;               // size of current font
+    unsigned char* pixmap;         // RGBA data (wd * ht * 4 bytes)
+    int wd, ht;                    // width and height of pixmap
+    unsigned char r, g, b, a;      // current RGBA values for drawing pixels
+    bool alphablend;               // do alpha blending when drawing translucent pixels?
+    bool only_draw_overlay;        // set by DoUpdate, reset by OnlyDrawOverlay
+    overlay_position pos;          // where to display overlay
+    const wxCursor* ovcursor;      // cursor to use when mouse is in overlay
+    std::string cursname;          // remember cursor name
+    int axx, axy, ayx, ayy;        // affine transformation values
+    bool identity;                 // true if transformation values are 1,0,0,1
+
+    // text
+
+    wxFont currfont;               // current font used by text command
+    std::string fontname;          // name of current font
+    int fontsize;                  // size of current font
+    text_alignment align[maxcols]; // text alignment (per column)
+    int width[maxcols];            // text width (per column)
+    int columns;                   // number of text columns
+    unsigned int textbgRGBA;       // text background color
+    unsigned int textshadowRGBA;   // text shadow color
+    int textshadowx;               // text shadow x offset
+    int textshadowy;               // text shadow y offset
+    bool textshadow;               // whether shadow enabled
+    char textdelim[maxdelim];      // text column delimiter
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste

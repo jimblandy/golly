@@ -74,6 +74,12 @@ const int starMaxZ = 1024;
 const double degToRad = M_PI / 180;
 const double radToDeg = 180 / M_PI;
 
+// for text
+const int mincols = 1;              // minimum number of columns
+const int maxwidth = 4096;          // maximum column width
+const int minshadowoffset = -16;    // minimum shadow offset
+const int maxshadowoffset = 16;     // maximum shadow offset
+
 // -----------------------------------------------------------------------------
 
 Overlay::Overlay()
@@ -314,7 +320,7 @@ void Overlay::GetPatternColors()
 {
     unsigned char *rgb = (unsigned char *)cellRGBA;
 
-    // read pattern colours
+    // read pattern colors
     for (int i = 0; i <= currlayer->numicons; i++) {
         *rgb++ = currlayer->cellr[i];
         *rgb++ = currlayer->cellg[i];
@@ -1803,6 +1809,20 @@ const char* Overlay::DoCreate(const char* args)
         currfont.SetPointSize(fontsize);
     #endif
 
+    // default text alignment (left), width (auto), columns (1) and delimiter (tab)
+    columns = 1;
+    SetTextColumnDefaults();
+    textdelim[0] = '\0';
+
+    // default text shadow (off, black, offset by 2,2)
+    textshadow = false;
+    SetRGBA(0, 0, 0, 255, &textshadowRGBA);
+    textshadowx = 2;
+    textshadowy = 2;
+
+    // default text background
+    textbgRGBA = 0;       // transparent
+    
     // make sure the Show Overlay option is ticked
     if (!showoverlay) mainptr->ToggleOverlay();
 
@@ -2845,6 +2865,285 @@ const char* Overlay::DoFont(const char* args)
 
 // -----------------------------------------------------------------------------
 
+void Overlay::SetTextColumnDefaults()
+{
+    int col;
+
+    // set text column alignments to left and widths to auto
+    for (col = 0; col < maxcols; col++) {
+        align[col] = left;
+        width[col] = -1;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::TextOptionAlign(const char* args)
+{
+    int col = 0;
+    text_alignment newalign;
+    text_alignment newalignment[maxcols];
+    const char *delim = " ";
+    char *buffer = strdup(args);   // copy the arguments into a buffer since strtok modifies
+    char *nextarg = strtok((char*)buffer, delim);
+
+    if (nextarg == NULL) {
+        free(buffer);
+        return OverlayError("textoption align command requires at least 1 argument");
+    }
+
+    while (nextarg) {
+        // check there are enough columns for the next alignment
+        if (col > columns) {
+            free(buffer);
+            return OverlayError("more alignments specified than current columns");
+        }
+
+        // check the specified alignment
+        if (strcmp(nextarg, "left") == 0) {
+            newalign = left;
+        } else if (strcmp(nextarg, "right") == 0) {
+            newalign = right;
+        } else if (strcmp(nextarg, "center") == 0) {
+            newalign = center;
+        } else {
+            free(buffer);
+            return OverlayError("unknown text alignment");
+        }
+
+        // remember the alignment
+        newalignment[col++] = newalign;
+     
+        // next alignment
+        nextarg = strtok(NULL, delim);
+    }
+
+    // default any unspecified columns to left
+    while (col < maxcols) {
+        newalignment[col++] = left;
+    }
+
+    // save alignment settings
+    for (col = 0; col < maxcols; col++) {
+        align[col] = newalignment[col];
+    }
+
+    free(buffer);
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::TextOptionBackground(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    int a1, a2, a3, a4;
+    if (sscanf(args, " %d %d %d %d", &a1, &a2, &a3, &a4) != 4) {
+        return OverlayError("textoption background command requires 4 arguments");
+    }
+
+    if (a1 < 0 || a1 > 255 ||
+        a2 < 0 || a2 > 255 ||
+        a3 < 0 || a3 > 255 ||
+        a4 < 0 || a4 > 255) {
+        return OverlayError("background rgba values must be from 0 to 255");
+    }
+
+    unsigned char oldr;
+    unsigned char oldg;
+    unsigned char oldb;
+    unsigned char olda;
+    GetRGBA(&oldr, &oldg, &oldb, &olda, textbgRGBA);
+
+    SetRGBA(a1, a2, a3, a4, &textbgRGBA);
+
+    // return old values
+    static char result[16];
+    sprintf(result, "%hhu %hhu %hhu %hhu", oldr, oldg, oldb, olda);
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::TextOptionColumns(const char* args)
+{
+    // check the argument is valid
+    int cols;
+
+    if (sscanf(args, " %d", &cols) != 1) {
+        return OverlayError("textoption columns command requires 1 argument");
+    }
+
+    // check argument is in range
+    if (cols < mincols) {
+        return OverlayError("must have at least 1 text column");
+    }
+    if (cols > maxcols) {
+        return OverlayError("too many text columns");
+    }
+
+    // save the setting
+    columns = cols;
+
+    // set column defaults
+    SetTextColumnDefaults();
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::TextOptionDelimiter(const char* args)
+{
+    // check the argument is valid
+    if (*args == 0) {
+        return OverlayError("textoption delimiter command requires 1 argument");
+    }
+
+    // check argument is in range
+    if (strlen(args) > maxdelim) {
+        return OverlayError("delimiter is too long");
+    }
+
+    // save the setting
+    strcpy(textdelim, args);
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::TextOptionShadow(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    int a1, a2, a3, a4, x, y;
+    if (sscanf(args, " %d %d %d %d %d %d", &a1, &a2, &a3, &a4, &x, &y) == 6) {
+        if (a1 < 0 || a1 > 255 ||
+            a2 < 0 || a2 > 255 ||
+            a3 < 0 || a3 > 255 ||
+            a4 < 0 || a4 > 255) {
+            return OverlayError("shadow rgba values must be from 0 to 255");
+        }
+    
+        if (x < minshadowoffset || x > maxshadowoffset) {
+            return OverlayError("shadow x offset out of range");
+        }
+    
+        if (y < minshadowoffset || y > maxshadowoffset) {
+            return OverlayError("shadow y offset out of range");
+        }
+    
+        unsigned char oldr;
+        unsigned char oldg;
+        unsigned char oldb;
+        unsigned char olda;
+        int oldx = textshadowx;
+        int oldy = textshadowy;
+        GetRGBA(&oldr, &oldg, &oldb, &olda, textshadowRGBA);
+    
+        // save new values and turn shadow on
+        SetRGBA(a1, a2, a3, a4, &textshadowRGBA);
+        textshadowx = x;
+        textshadowy = y;
+        textshadow = true;
+    
+        // return old values
+        static char result[24];
+        sprintf(result, "%hhu %hhu %hhu %hhu %d %d", oldr, oldg, oldb, olda, oldx, oldy);
+        return result;
+    }
+    else {
+        // check for off
+        if (strcmp(args, "off") == 0) {
+            textshadow = false;
+            return NULL;
+        }
+        else {
+            return OverlayError("textoption shadow command requires 6 arguments");
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::TextOptionWidth(const char* args)
+{
+    int col = 0;
+    int newwidthvalue;
+    int newwidth[maxcols];
+    const char *delim = " ";
+    char *buffer = strdup(args);   // copy the arguments into a buffer since strtok modifies
+    char *nextarg = strtok((char*)buffer, delim);
+
+    if (nextarg == NULL) {
+        free(buffer);
+        return OverlayError("textoption width command requires at least 1 argument");
+    }
+
+    while (nextarg) {
+        // check there are enough columns for the next alignment
+        if (col > columns) {
+            free(buffer);
+            return OverlayError("more widths specified than current columns");
+        }
+
+        // check the width
+        if (strcmp(nextarg, "auto") == 0) {
+            newwidthvalue = -1;
+        } else {
+            if (sscanf(nextarg, "%d", &newwidthvalue) != 1) {
+                free(buffer);
+                return OverlayError("invalid width specified");
+            }
+            else {
+                if (newwidthvalue < 1 || newwidthvalue > maxwidth) {
+                    free(buffer);
+                    return OverlayError("width out of range");
+                }
+            }
+        }
+
+        // remember the wdith
+        newwidth[col++] = newwidthvalue;
+     
+        // next alignment
+        nextarg = strtok(NULL, delim);
+    }
+
+    // default any unspecified widths to auto
+    while (col < maxcols) {
+        newwidth[col++] = -1;
+    }
+
+    // save width settings
+    for (col = 0; col < maxcols; col++) {
+        width[col] = newwidth[col];
+    }
+
+    free(buffer);
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoTextOption(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    if (strncmp(args, "align ", 6) == 0)       return TextOptionAlign(args+6);
+    if (strncmp(args, "background ", 11) == 0) return TextOptionBackground(args+11);
+    if (strncmp(args, "columns ", 8) == 0)     return TextOptionColumns(args+8);
+    if (strncmp(args, "delimiter ", 10) == 0)  return TextOptionDelimiter(args+10);
+    if (strncmp(args, "shadow ", 7) == 0)      return TextOptionShadow(args+7);
+    if (strncmp(args, "width ", 6) == 0)       return TextOptionWidth(args+6);
+
+    return OverlayError("unknown textoption command");
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoText(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -2885,78 +3184,101 @@ const char* Overlay::DoText(const char* args)
     int bitmapht = 0;
     dc.SetFont(currfont);
 
-    // check if the string contains newlines
-    char *textlines = (char*)args + textpos;
-    char *index = strchr(textlines, '\n');
-    
     // get the line height
     wxString textstr = _("M");
     dc.GetTextExtent(textstr, &textwd, &lineht, &descent, &leading);
 
+    // initialise column widths from the defined widths
+    int colwidth[maxcols];
+    int col;
+    for (col = 0; col < maxcols; col++) {
+        if (width[col] == -1) {
+            colwidth[col] = 0;
+        } else {
+            colwidth[col] = width[col];
+        }
+    }
+
+    // prepare the line buffer
+    char *textarg = (char*)args + textpos;
+    char *linebuffer = (char*)calloc(strlen(textarg) + 2, sizeof(char));
+    char *source = textarg;
+    char *dest = linebuffer;
+    char *tab = NULL;
+
+    // check for custom delimiter
+    if (*textdelim) {
+        tab = strstr(source, textdelim);
+        int chunksize = 0;
+
+        while (tab) {
+            chunksize = tab - source;
+            strncpy(dest, source, chunksize);
+            dest += chunksize;
+            *dest++ = '\t';
+            source = tab + 2;
+            tab = strstr(source, textdelim);
+        }
+    }
+    strcpy(dest, source);
+
+    // add final newline
+    sprintf(linebuffer, "%s%c", linebuffer, '\n');
+
+    // find first line
+    char *textlines = linebuffer;
+    char *index = strchr(textlines, '\n');
+    
+    // process each line of text
     while (index) {
         // null terminate line
         *index = 0;
+        col = 0;
 
-        // get the extent of the line
+        // check for tabs
+        tab = strchr(textlines, '\t');
+
+        // process each column
+        while (col < columns - 1 && tab) {
+            *tab = 0;
+
+            // get the extent of the column
+            textstr = wxString(textlines, wxConvLocal);
+            dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
+            
+            // update the column width if auto sized
+            if (width[col] == -1) {
+                if (colwidth[col] < textwd) colwidth[col] = textwd;
+            }
+
+            // next column
+            *tab++ = '\t';
+            textlines = tab;
+            tab = strchr(textlines, '\t');
+            col++;
+        }
+
+        // final column
         textstr = wxString(textlines, wxConvLocal);
         dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
+        if (width[col] == -1) {
+            if (colwidth[col] < textwd) colwidth[col] = textwd;
+        }
 
-        // update the bitmap width and height to accomodate the line
-        if (textwd > bitmapwd) bitmapwd = textwd;
+        // update the bitmap height
         bitmapht += lineht;
 
         // next line
-        *index = '\n';
-        textlines = index + 1;
+        *index++ = '\n';
+        textlines = index;
         index = strchr(textlines, '\n');
     }
 
-    // add the final line
-    textstr = wxString(textlines, wxConvLocal);
-    dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
-    if (textwd > bitmapwd) bitmapwd = textwd;
-    bitmapht += lineht;
-
-    // create a bitmap for the text
-    wxBitmap bitmap(bitmapwd, bitmapht, 32);
-    dc.SelectObject(bitmap);
-
-    // fill background with white
-    wxRect rect(0, 0, bitmapwd, bitmapht);
-    wxBrush brush(*wxWHITE);
-    dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.SetBrush(brush);
-    dc.DrawRectangle(rect);
-    dc.SetBrush(wxNullBrush);
-    dc.SetPen(wxNullPen);
-
-    // set text background to white (it will become transparent below)
-    // and use alpha to set gray level of text (to be replaced by r,g,b below)
-    dc.SetBackgroundMode(wxSOLID);
-    dc.SetTextBackground(*wxWHITE);
-    dc.SetTextForeground(wxColour(255-a, 255-a, 255-a, 255));
-
-    int textrow = 0;
-    textlines = (char*)args + textpos;
-    index = strchr(textlines, '\n');
-    while (index) {
-        // null terminate line
-        *index = 0;
-        if (*textlines) {
-            textstr = wxString(textlines, wxConvLocal);
-            dc.DrawText(textstr, 0, textrow);
-        }
-        textrow += lineht;
-        *index = '\n';
-        textlines = index + 1;
-        index = strchr(textlines, '\n');
+    // sum the column widths for the bitmap width
+    bitmapwd = 0;
+    for (col = 0; col < maxcols; col++) {
+        bitmapwd += colwidth[col];
     }
-    if (*textlines) {
-        textstr = wxString(textlines, wxConvLocal);
-        dc.DrawText(textstr, 0, textrow);
-    }
-
-    dc.SelectObject(wxNullBitmap);
 
     // delete any existing clip data with the given name
     std::map<std::string,Clip*>::iterator it;
@@ -2970,40 +3292,225 @@ const char* Overlay::DoText(const char* args)
     Clip* textclip = new Clip(bitmapwd, bitmapht);
     if (textclip == NULL || textclip->cdata == NULL) {
         delete textclip;
+        free(linebuffer);
         return OverlayError("not enough memory for text clip");
     }
 
-    // copy text from top left corner of offscreen bitmap into clip data
-    unsigned char* m = textclip->cdata;
-    int j = 0;
-    wxAlphaPixelData data(bitmap);
-    if (data) {
-        wxAlphaPixelData::Iterator p(data);
-        for (int y = 0; y < bitmapht; y++) {
-            wxAlphaPixelData::Iterator rowstart = p;
-            for (int x = 0; x < bitmapwd; x++) {
-                if (p.Red() == 255 && p.Green() == 255 && p.Blue() == 255) {
-                    // white background becomes transparent
-                    m[j++] = 0;
-                    m[j++] = 0;
-                    m[j++] = 0;
-                    m[j++] = 0;
-                } else {
-                    // change non-white pixel (black or gray) to current RGB colors
-                    m[j++] = r;
-                    m[j++] = g;
-                    m[j++] = b;
-                    // set alpha based on grayness
-                    m[j++] = 255 - p.Red();
-                }
-                p++;
+    // use two passes if shadow defined
+    int pass = 0;
+    int xoff = 0;
+    int yoff = 0;
+    int textrow, xpos, colleft;
+    if (textshadow) {
+        pass = 1;
+    }
+
+    // get background color
+    unsigned char bgr, bgg, bgb, bga;
+    GetRGBA(&bgr, &bgg, &bgb, &bga, textbgRGBA);
+    wxColour textbgcol(bgr, bgg, bgb, bga);
+    wxColour transbgcol(255, 255, 255, 255);
+
+    // get text foreground color
+    wxColour textfgcol(r, g, b, a);
+    wxColour transfgcol(255 - a, 255 - a, 255 - a, 255);
+
+    // get text shadow color
+    unsigned char shadowr, shadowg, shadowb, shadowa;
+    GetRGBA(&shadowr, &shadowg, &shadowb, &shadowa, textshadowRGBA);
+    wxColour textshadowcol(shadowr, shadowg, shadowb, shadowa);
+
+    // create the bitmap
+    wxBitmap bitmap(bitmapwd, bitmapht, 32);
+    wxMemoryDC *mDC = NULL;
+
+    // draw the text
+    while (pass >= 0) {
+        // create the drawing context if needed
+        if (mDC == NULL) {
+            mDC = new wxMemoryDC();
+
+            // set the font
+            mDC->SetFont(currfont);
+
+            // select the bitmap
+            mDC->SelectObject(bitmap);
+
+            // fill the bitmap with the background color
+            wxRect rect(0, 0, bitmapwd, bitmapht);
+            mDC->SetPen(*wxTRANSPARENT_PEN);
+            wxBrush brush(textbgcol);
+    
+            // if background is not opaque then use transparent and replace later
+            if (bga == 0) {
+                brush.SetColour(transbgcol);
             }
-            p = rowstart;
-            p.OffsetY(data, 1);
+            mDC->SetBrush(brush);
+            mDC->DrawRectangle(rect);
+            mDC->SetBrush(wxNullBrush);
+            mDC->SetPen(wxNullPen);
+        
+            // set text background color to transparent
+            mDC->SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
         }
+
+        // set shadow offset if used
+        if (textshadow && pass == 1) {
+            xoff = textshadowx;
+            yoff = textshadowy;
+        }
+
+        // set text foreground color
+        if (bga < 255) {
+            mDC->SetTextForeground(transfgcol);
+        }
+        else {
+            if (textshadow && pass == 1) {
+                mDC->SetTextForeground(textshadowcol);
+            }
+            else {
+                mDC->SetTextForeground(textfgcol);
+            }
+        }
+
+        // draw each text line
+        textlines = linebuffer;
+        index = strchr(textlines, '\n');
+        textrow = 0;
+        while (index) {
+            // null terminate line
+            *index = 0;
+            col = 0;
+            colleft = 0;
+        
+            // check if the line is empty
+            if (*textlines) {
+                // draw each column
+                tab = strchr(textlines, '\t');
+                while (col < columns - 1 && tab) {
+                    // draw column
+                    *tab = 0;
+                    textstr = wxString(textlines, wxConvLocal);
+    
+                    // check column text alignment
+                    xpos = 0;
+                    if (align[col] != left) {
+                        mDC->GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
+                        if (align[col] == right) xpos = colwidth[col] - textwd;
+                        else xpos = (colwidth[col] - textwd) / 2;
+                    }
+    
+                    // draw text
+                    mDC->DrawText(textstr, xpos + colleft + xoff, textrow + yoff);
+    
+                    // next column
+                    *tab++ = '\t';
+                    textlines = tab;
+                    tab = strchr(textlines, '\t');
+                    colleft += colwidth[col];
+                    col++;
+                }
+    
+                // draw final column
+                textstr = wxString(textlines, wxConvLocal);
+                xpos = 0;
+                if (align[col] != left) {
+                    mDC->GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
+                    if (align[col] == right) xpos = colwidth[col] - textwd;
+                    else xpos = (colwidth[col] - textwd) / 2;
+                }
+                mDC->DrawText(textstr, xpos + colleft + xoff, textrow + yoff);
+            }
+    
+            // next line
+            textrow += lineht;
+            *index++ = '\n';
+            textlines = index;
+            index = strchr(textlines, '\n');
+        }
+
+        // deselect the bitmap
+        if (pass == 0 || (textshadow && bga < 255)) {
+            mDC->SelectObject(wxNullBitmap);
+            delete mDC;
+            mDC = NULL;
+
+            // copy text from top left corner of offscreen bitmap into clip data
+            unsigned char* m = textclip->cdata;
+            int j = 0;
+            int bitmapr, bitmapg, bitmapb;
+    
+            // get iterator of bitmap data
+            wxAlphaPixelData data(bitmap);
+            wxAlphaPixelData::Iterator iter(data);
+    
+            for (int y = 0; y < bitmapht; y++) {
+                wxAlphaPixelData::Iterator rowstart = iter;
+                for (int x = 0; x < bitmapwd; x++) {
+                    // get pixel RGB components
+                    bitmapr = iter.Red();
+                    bitmapg = iter.Green();
+                    bitmapb = iter.Blue();
+    
+                    // check for transparent background
+                    if (bga < 255) {
+                        // transparent so look for background pixels to swap
+                        if (bitmapr == 255 && bitmapg == 255 && bitmapb == 255) {
+                            // if second layer then don't overwrite non-backround pixels
+                            if (textshadow && pass == 0 && m[j + 3]) {
+                                m += 4;
+                            }
+                            else {
+                                // background found so replace with transparent pixel
+                                m[j++] = 0;
+                                m[j++] = 0;
+                                m[j++] = 0;
+                                m[j++] = 0;
+                            }
+                        }
+                        else {
+                            // foreground found so replace with foreground color
+                            if (textshadow && pass == 1) {
+                                m[j++] = shadowr;
+                                m[j++] = shadowg;
+                                m[j++] = shadowb;
+                            }
+                            else {
+                                m[j++] = r;
+                                m[j++] = g;
+                                m[j++] = b;
+                            }
+        
+                            // set alpha based on grayness
+                            m[j++] = 255 - bitmapr;
+                        }
+                    }
+                    else {
+                        // opaque background so just copy pixel
+                        m[j++] = bitmapr;
+                        m[j++] = bitmapg;
+                        m[j++] = bitmapb;
+                        m[j++] = 255;
+                    }
+                    iter++;
+                }
+                iter = rowstart;
+                iter.OffsetY(data, 1);
+            }
+        }
+    
+        // next pass
+        pass--;
+
+        // disable shadow offset
+        xoff = 0;
+        yoff = 0;
     }
 
     clips[name] = textclip;    // create named clip for later use by DoPaste
+
+    // free the line buffer
+    free(linebuffer);
 
     // return text info
     static char result[64];
@@ -3108,6 +3615,7 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "save", 4) == 0)         return DoSave(cmd+4);
     if (strncmp(cmd, "flood", 5) == 0)        return DoFlood(cmd+5);
     if (strncmp(cmd, "blend", 5) == 0)        return DoBlend(cmd+5);
+    if (strncmp(cmd, "textoption ", 11) == 0) return DoTextOption(cmd+11);
     if (strncmp(cmd, "text", 4) == 0)         return DoText(cmd+4);
     if (strncmp(cmd, "font", 4) == 0)         return DoFont(cmd+4);
     if (strncmp(cmd, "freeclip", 8) == 0)     return DoFreeClip(cmd+8);
