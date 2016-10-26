@@ -202,26 +202,11 @@ private:
     // Set the current font according to the given point size and font name
     // and return the old font as a string of the form "fontsize fontname".
     
-    void SetTextColumnDefaults();
-    // Set text default widths and alignments.
-
     const char* TextOptionAlign(const char* args);
     // Set text alignment per column.
 
     const char* TextOptionBackground(const char* args);
     // Set text background r, g, b, a color.
-
-    const char* TextOptionColumns(const char* args);
-    // Set number of text columns.
-
-    const char* TextOptionDelimiter(const char* args);
-    // Set text column delimiter string.
-
-    const char* TextOptionShadow(const char* args);
-    // Set text shadow r, g, b, a color.
-
-    const char* TextOptionWidth(const char* args);
-    // Set text width per column.
 
     const char* DoTextOption(const char* args);
     // Set a text option.
@@ -372,15 +357,8 @@ private:
     wxFont currfont;               // current font used by text command
     std::string fontname;          // name of current font
     int fontsize;                  // size of current font
-    text_alignment align[maxcols]; // text alignment (per column)
-    int width[maxcols];            // text width (per column)
-    int columns;                   // number of text columns
+    text_alignment align;          // text alignment
     unsigned int textbgRGBA;       // text background color
-    unsigned int textshadowRGBA;   // text shadow color
-    int textshadowx;               // text shadow x offset
-    int textshadowy;               // text shadow y offset
-    bool textshadow;               // whether shadow enabled
-    char textdelim[maxdelim];      // text column delimiter
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste

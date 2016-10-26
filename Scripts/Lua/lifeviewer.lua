@@ -262,44 +262,56 @@ end
 
 --------------------------------------------------------------------------------
 
-local function outputtiming()
-    local output = "updatecells \t"..string.format("%.1fms", timing.updatecells)
-    output = output.."\ndrawcells \t"..string.format("%.1fms", timing.drawcells)
-    output = output.."\nupdate \t"..string.format("%.1fms", timing.update)
+local function outputtiming(xoff, yoff)
+    -- draw labels
+    local output = "updatecells\ndrawcells\nupdate"
     if timing.extended then
-        output = output.."\ncamera \t"..string.format("%.1fms", timing.camera)
-        output = output.."\ntext \t"..string.format("%.1fms", timing.texttime)
+        output = output.."\ncamera\ntext"
     end
+    ov("textoption align left")
     maketext(output)
-    pastetext(20, 20)
+    pastetext(20 + xoff, 20 + xoff)
+
+    -- draw values
+    output = string.format("%.1fms", timing.updatecells)
+    output = output.."\n"..string.format("%.1fms", timing.drawcells)
+    output = output.."\n"..string.format("%.1fms", timing.update)
+    if timing.extended then
+        output = output.."\n"..string.format("%.1fms", timing.camera)
+        output = output.."\n"..string.format("%.1fms", timing.texttime)
+    end
+    ov("textoption align right")
+    local w = maketext(output)
+    pastetext(138 - w + xoff, 20 + xoff)
 end
 
 --------------------------------------------------------------------------------
 
 local function drawtiming()
     local start = os.clock()
-    ov("blend 1")
-    ov("textoption columns 2")
-    ov("textoption align left right")
-    ov("textoption width 98 20")
+    local oldblend = ov("blend 1")
+    local oldalign = ov("textoption align left")
+    local oldtextbg = ov("textoption background 0 0 0 0")
 
     local height = 3 * 18 + 2
     if timing.extended then
         height = 5 * 18 + 2
     end
 
-    -- draw rectangle
+    -- draw translucent rectangle
     ov("rgba 0 0 0 128")
     ov("fill 18 20 122 "..height)
 
     -- draw text with shadow
+    ov(op.black)
+    outputtiming(2, 2)
     ov(op.white)
-    ov("textoption shadow 0 0 0 255 2 2")
-    outputtiming()
+    outputtiming(0, 0)
 
-    ov("textoption columns 1")
-    ov("textoption shadow off")
-    ov("blend 0")
+    -- restore settings
+    ov("textoption background "..oldtextbg)
+    ov("textoption align "..oldalign)
+    ov("blend "..oldblend)
     timing.texttime = 1000 * (os.clock() - start)
 end
 

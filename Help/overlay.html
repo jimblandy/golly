@@ -447,29 +447,10 @@ The text background color can be set with the <a href="#textbg">textoption backg
 command.
 Note that by default the text has a transparent background, and you'll probably need to set
 <a href="#blend">blend</a> to 1 before drawing the text with <a href="#paste">paste</a>.
-You can also set a text shadow color and position with the <a href="#textshadow">textoption shadow</a>
-command.
+You can also specify text alignment with the <a href="#textalign">textoption align</a> command.
 </dd>
-<p><dd>
-The text command can draw mutliple lines of text in multiple columns. You define the number
-of columns with the <a href="#textcols">textoption column</a> command. Each column
-has its own text alignment (left, right or center), set with the <a href="#textalign">textoption align</a>
-command, and width (automatic or fixed size), set with the <a href="#textwidth">textoption width</a>
-command.
-</dd>
-<p><dd>
-The source text must use a delimiter to separate the line of text into columns. The default delimiter
-is Tab ('\t') but you can specify a custom delimiter using the <a href="#textdelim">textoption delimiter</a>
-command.
-</dd>
-<p><dd>
-The default is a single column with left aligned text, automatic width, transparent background
-and no shadow.
-</dd></p>
+<p>
 <dd> Example: <b>local dimens = ov("text tempclip To be or not to be\nIs that really the question?...")</b></dd>
-<dd> Example:</dd>
-<dd><b>&nbsp;&nbsp;ov("columns 3")</b></dd>
-<dd><b>&nbsp;&nbsp;local dimens = ov("Version\tDate\n2.8\t2016-08-27\n2.7\t2015-05-29\n2.6\t2013-12-10\n")</b></dd>
 </p>
 
 <a name="textoption"></a><p><dt><b>textoption <i>option value</i></b></dt>
@@ -480,31 +461,20 @@ The valid options and their allowed values are:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td width=30%><b><a name="textalign"></a>align</b> <i>a1...</i></td><td width=20></td><td>&ndash;
-set text aligment for column 1 to <i>a1</i> where <i>a1</i> is <b>left</b>, <b>right</b> or <b>center</b>. You may specify alignments up to the current number of defined columns (e.g. <i>a1 a2 a3</i> for three columns). If you specify less alignments than the number of columns then the remaining columns will default to left alignment.</td></tr>
+<tr><td><b><a name="textalign"></a>align</b> <i>alignment</i></td><td width=20></td><td>&ndash;
+set text aligment to <i>alignment</i> where <i>alignment</i> is <b>left</b>, <b>right</b> or <b>center</b> and return the previous alignment
 <tr><td><b><a name="textbg"></a>background</b> <i>red green blue alpha</i></td><td width=20></td><td>&ndash;
-set text background RGBA values and return the old values as a string of the form "red green blue alpha". The default is 0 0 0 0 which is transparent.</td></tr>
-<tr><td><b><a name="textcols"></a>columns</b> <i>c</i></td><td width=20></td><td>&ndash;
-set number of columns to <i>c</i> where <i>c</i> is from 1 to 10. Columns will default to left alignment and automatic width.
-<tr><td><b><a name="textdelim"></a>delimiter</b> <i>string</i></td><td width=20></td><td>&ndash;
-set the column delimiter to <i>string</i>. The default is the Tab character.
-<tr><td><b><a name="textshadow"></a>shadow</b> [<b>off</b> | <i>red green blue alpha x y]</i></td><td width=20></td><td>&ndash;
-set text shadow to off, or on with RGBA values and (x, y) offset. The old values are returned as a string of the form "red green blue alpha x y" unless the shadow is being switched off. The x and y offset values must be between -16 and 16. The default is shadow off.</td></tr>
-<tr><td><b><a name="textwidth"></a>width</b> <i>w1...</i></td><td width=20></td><td>&ndash;
-set width of column 1 to <i>w1</i> where <i>w1</i> is <b>auto</b> or an integer from 0 to 4096. You may specify alignments up to the current number of defined columns (e.g. <i>w1 w2 w3</i> for three columns). The value <b>auto</b> means set the column width to fit the text in the column. If you specify less widths than the number of columns then the remaining columns will default to automatic width.</td></tr>
+set text background RGBA values and return the old values as a string of the form "red green blue alpha"
 </table>
+<p>
+The default is left alignment and transparent background.
 </dd>
 </p>
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td>Example: <b>ov("textoption columns 3")</b></td><td width=20></td><td><i>-- set three column text</i></td></tr>
-<tr><td>Example: <b>ov("textoption align left right center")</b></td><td width=20></td><td><i>-- align column 1 left, column 2 right and column 3 center</i></td></tr>
-<tr><td>Example: <b>ov("textoption width 120 auto 30")</b></td><td width=20></td><td><i>-- set column 1 width to 120, column 2 automatic and column 3 width to 30</i></td></tr>
-<tr><td>Example: <b>local oldbackground = ov("background 255 0 0 255")</b></td><td width=20></td><td><i>-- set solid red text background color</i><td><tr>
-<tr><td>Example: <b>local oldshadow = ov("shadow 0 0 255 255 3 1")</b></td><td width=20></td><td><i>-- set solid blue text shadow color at offset (3, 1)</i><td><tr>
-<tr><td>Example: <b>ov("shadow off")</b></td><td width=20></td><td><i>-- turn text shadow off</i><td><tr>
-<tr><td>Example: <b>ov("delimiter ,")</b></td><td width=20></td><td><i>-- set delimiter to comma</i><td><tr>
+<tr><td>Example: <b>local oldalign = ov("textoption align right")</b></td><tr>
+<tr><td>Example: <b>local oldbackground = ov("background 255 0 0 255")</b></td></tr>
 </table>
 </dd>
 </p>
