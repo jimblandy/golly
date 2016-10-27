@@ -15,6 +15,7 @@ local ov = g.overlay
 local wd, ht               -- overlay's current width and height (set by create_overlay)
 local toggle = 0           -- for toggling alpha blending
 local align = "left"       -- for text alignment
+local transbg = 0          -- for text transparent background
 
 --------------------------------------------------------------------------------
 
@@ -286,7 +287,7 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
                 ÁÀÂÄÃÅÇÉÈÊËÍÌÎÏÑÓÒÔÖÕÚÙÛÜÆØŒŸ
 ]]
 
-    -- toggle the column alignments, shadow and transparency
+    -- toggle the column alignments and transparency
     if align == "left" then
        align = "right"
     else 
@@ -295,6 +296,7 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
         else
             if align == "center" then
                 align = "left"
+                transbg = 1 - transbg
             end
         end
     end
@@ -304,12 +306,19 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
 
     -- set the text foreground color
     ov("rgba 255 255 255 255")
-    ov("textoption background 0 0 0 0")
+
+    -- set the text background color
+    local oldbackground
+    if transbg == 1 then
+        oldbackground = ov("textoption background 0 0 0 0")
+    else
+        oldbackground = ov("textoption background 0 0 128 255")
+    end
 
     local t1 = os.clock()
 
     -- create the text clip
-    ov("blend 1")
+    ov("blend "..transbg)
     maketext(textstr)
     t1 = os.clock() - t1
     t2 = os.clock()
@@ -317,9 +326,10 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     pastetext(0, 0)
 
     -- output timing and drawing options
-    g.show("Time to test multiline text "..ms(t1).." "..ms(os.clock() - t2).. " "..align)
+    g.show("Time to test multiline text: maketext "..ms(t1).."  pastetext "..ms(os.clock() - t2).. "  align "..string.format("%-6s", align).."  transparent "..transbg)
 
     -- restore old settings
+    ov("textoption background "..oldbackground)
     ov("textoption align "..oldalign)
     ov("font "..oldfont)
     ov("blend "..oldblend)

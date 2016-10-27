@@ -2384,17 +2384,33 @@ const char* Overlay::DoPaste(const char* args)
         unsigned char* data = clipptr->cdata;
         int datapos = 0;
         if (identity) {
-            for (int j = 0; j < h; j++) {
-                for (int i = 0; i < w; i++) {
-                    r = data[datapos++];
-                    g = data[datapos++];
-                    b = data[datapos++];
-                    a = data[datapos++];
-                    if (PixelInOverlay(x, y)) DrawPixel(x, y);
-                    x++;
+            if (RectInsideOverlay(x, y, w, h)) {
+                for (int j = 0; j < h; j++) {
+                    for (int i = 0; i < w; i++) {
+                        r = data[datapos++];
+                        g = data[datapos++];
+                        b = data[datapos++];
+                        a = data[datapos++];
+                        DrawPixel(x, y);
+                        x++;
+                    }
+                    y++;
+                    x -= w;
                 }
-                y++;
-                x -= w;
+            }
+            else {
+                for (int j = 0; j < h; j++) {
+                    for (int i = 0; i < w; i++) {
+                        r = data[datapos++];
+                        g = data[datapos++];
+                        b = data[datapos++];
+                        a = data[datapos++];
+                        if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                        x++;
+                    }
+                    y++;
+                    x -= w;
+                }
             }
         } else {
             // do an affine transformation

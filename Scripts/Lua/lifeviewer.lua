@@ -11,7 +11,7 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 21
+local buildnumber = 22
 
 local g = golly()
 local ov = g.overlay
@@ -246,6 +246,14 @@ local keywords = {
     [commands.zword] =              { "r", viewconstants.mininvzoom, viewconstants.maxzoom, "" }
 }
 
+-- pre-rendered text clips
+local clips = {
+    timingshortshadow = "tss",
+    timinglongshadow = "tls",
+    timingshortfg = "tsf",
+    timinglongfg = "tsl"
+}
+
 --------------------------------------------------------------------------------
 
 local function maketext(s)
@@ -262,18 +270,35 @@ end
 
 --------------------------------------------------------------------------------
 
-local function outputtiming(xoff, yoff)
+local function makeclips()
+    local oldalign = ov("textoption align left")
+    local oldtextbg = ov("textoption background 0 0 0 0")
+
+    local label = "updatecells\ndrawcells\nupdate"
+    local longlabel = label.."\ncamera\ntext"
+
+    ov(op.black)
+    ov("text "..clips.timingshortshadow.." "..label)
+    ov("text "..clips.timinglongshadow.." "..longlabel)
+    
+    ov(op.white)
+    ov("text "..clips.timingshortfg.." "..label)
+    ov("text "..clips.timinglongfg.." "..longlabel)
+    
+    -- restore settings
+    ov("textoption background "..oldtextbg)
+    ov("textoption align "..oldalign)
+end
+    
+--------------------------------------------------------------------------------
+
+local function outputtiming(xoff, yoff, labelclip)
     -- draw labels
-    local output = "updatecells\ndrawcells\nupdate"
-    if timing.extended then
-        output = output.."\ncamera\ntext"
-    end
     ov("textoption align left")
-    maketext(output)
-    pastetext(20 + xoff, 20 + xoff)
+    ov("paste "..(20 + xoff).." "..(20 + yoff).." "..labelclip)
 
     -- draw values
-    output = string.format("%.1fms", timing.updatecells)
+    local output = string.format("%.1fms", timing.updatecells)
     output = output.."\n"..string.format("%.1fms", timing.drawcells)
     output = output.."\n"..string.format("%.1fms", timing.update)
     if timing.extended then
@@ -282,7 +307,7 @@ local function outputtiming(xoff, yoff)
     end
     ov("textoption align right")
     local w = maketext(output)
-    pastetext(138 - w + xoff, 20 + xoff)
+    pastetext(138 - w + xoff, 20 + yoff)
 end
 
 --------------------------------------------------------------------------------
@@ -303,10 +328,18 @@ local function drawtiming()
     ov("fill 18 20 122 "..height)
 
     -- draw text with shadow
+    local shadowclip, fgclip
+    if timing.extended then
+       shadowclip = clips.timinglongshadow
+       fgclip = clips.timinglongfg
+    else
+       shadowclip = clips.timingshortshadow
+       fgclip = clips.timingshortfg
+    end
     ov(op.black)
-    outputtiming(2, 2)
+    outputtiming(2, 2, shadowclip)
     ov(op.white)
-    outputtiming(0, 0)
+    outputtiming(0, 0, fgclip)
 
     -- restore settings
     ov("textoption background "..oldtextbg)
@@ -1628,6 +1661,9 @@ local function main()
     -- create overlay and cell view
     createoverlay()
     createcellview()
+
+    -- make prerendered text clips
+    makeclips()
 
     -- check for hex rules
     checkhex()
