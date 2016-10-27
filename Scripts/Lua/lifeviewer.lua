@@ -258,8 +258,8 @@ local clips = {
 
 local function maketext(s)
     -- convert string to text in current font
-    local w, h, descent, leading = gp.split(ov("text temp "..s))
-    return tonumber(w), tonumber(h), tonumber(descent), tonumber(leading)
+    local w, h, descent = gp.split(ov("text temp "..s))
+    return tonumber(w), tonumber(h), tonumber(descent)
 end
 
 --------------------------------------------------------------------------------

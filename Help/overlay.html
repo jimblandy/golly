@@ -437,25 +437,22 @@ A pixel outside the overlay is silently ignored.
 <dd>
 Create a named <a href="#clips">clip</a> containing the given text in the
 current font (as set by the most recent <a href="#font">font</a> command).
-Return the dimensions of the clip as a string of the form
-"width height descent leading".  The height is the total height of the text
-in the current font and the descent is the number of pixels under the baseline.
-The leading value is the amount of extra vertical space to put between lines
-(zero in all the currently supported fonts).
+Return the dimensions of the clip as a string of the form "width height descent".
+The descent is the number of pixels under the baseline (useful if you want to
+place text with different sized fonts on the same line).
 </dd>
 <p><dd>
 The text's color depends on the most recent <a href="#rgba">rgba</a> command.
 The text background color can be set with the <a href="#textbg">textoption background</a>
-command.
-Note that by default the text has a transparent background, and you'll probably need to set
+command.  By default the text has a transparent background, so you'll probably need to set
 <a href="#blend">blend</a> to 1 before drawing the text with <a href="#paste">paste</a>.
 If you specify an opaque background then there's no need to turn on alpha blending
-when doing the paste and drawing such text will be significantly faster.
+when doing the paste, so drawing such text will be significantly faster.
 You can also specify the alignment of multi-line text with the
 <a href="#textalign">textoption align</a> command.
 </dd>
 <p>
-<dd> Example: <b>local dimens = ov("text tempclip First line\nSecond line")</b></dd>
+<dd> Example: <b>local dimens = ov("text tempclip First line.\nSecond line.")</b></dd>
 </p>
 
 <a name="textoption"></a><p><dt><b>textoption <i>option value</i></b></dt>

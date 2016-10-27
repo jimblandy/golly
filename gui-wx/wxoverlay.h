@@ -213,8 +213,8 @@ private:
 
     const char* DoText(const char* args);
     // Create Clip data with the given name containing the given text.
-    // Return the dimensions of the text as a string of the form
-    // "width height descent leading".
+    // Return the dimensions of the text (which can have one or more lines)
+    // as a string of the form "width height descent".
     
     const char* DoTransform(const char* args);
     // Set the affine transformation values used by later paste commands

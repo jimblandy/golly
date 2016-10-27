@@ -3207,8 +3207,8 @@ const char* Overlay::DoText(const char* args)
     clips[name] = textclip;
 
     // return text info
-    static char result[64];
-    sprintf(result, "%d %d %d %d", bitmapwd, bitmapht, descent, leading);
+    static char result[48];
+    sprintf(result, "%d %d %d", bitmapwd, bitmapht, descent);
     return result;
 }
 

@@ -53,8 +53,8 @@ local textclip = "textclip"
 local function maketext(s)
     -- convert given string to text in current font and return
     -- its width and height etc for later use by pastetext
-    local w, h, descent, leading = split(ov("text "..textclip.." "..s))
-    return tonumber(w), tonumber(h), tonumber(descent), tonumber(leading)
+    local w, h, descent = split(ov("text "..textclip.." "..s))
+    return tonumber(w), tonumber(h), tonumber(descent)
 end
 
 --------------------------------------------------------------------------------
@@ -340,7 +340,7 @@ end
 local function test_text()
     local t1 = os.clock()
 
-    local oldfont, oldblend, w, h, descent, leading, nextx
+    local oldfont, oldblend, w, h, descent, nextx
     
     ov(op.white) -- white background
     ov("fill")
@@ -375,17 +375,17 @@ local function test_text()
     pastetext(150, 140, op.swap_xy_flip)
 
     oldfont = ov("font 7 default")
-    w, h, descent, leading = maketext("tiny")
+    w, h, descent = maketext("tiny")
     pastetext(300, 30 - h + descent)
     nextx = 300 + w + 5
 
     ov("font "..oldfont)    -- restore previous font
-    w, h, descent, leading = maketext("normal")
+    w, h, descent = maketext("normal")
     pastetext(nextx, 30 - h + descent)
     nextx = nextx + w + 5
     
     ov("font 20 default-bold")
-    w, h, descent, leading = maketext("Big")
+    w, h, descent = maketext("Big")
     pastetext(nextx, 30 - h + descent)
     
     ov("font 10 default-bold")
@@ -398,12 +398,12 @@ local function test_text()
     pastetext(nextx, 40)
     
     ov("font 10 mono")
-    w, h, descent, leading = maketext("mono")
+    w, h, descent = maketext("mono")
     pastetext(300, 80 - h + descent)
     nextx = 300 + w + 5
     
     ov("font 12")   -- just change font size
-    w, h, descent, leading = maketext("mono12")
+    w, h, descent = maketext("mono12")
     pastetext(nextx, 80 - h + descent)
     
     ov("font 10 mono-bold")
@@ -429,17 +429,17 @@ local function test_text()
     ov("font "..oldfont)    -- restore previous font
 
     ov(op.red)
-    w, h, descent, leading = maketext("RED")
+    w, h, descent = maketext("RED")
     pastetext(300, 200 - h + descent)
     nextx = 300 + w + 5
 
     ov(op.green)
-    w, h, descent, leading = maketext("GREEN")
+    w, h, descent = maketext("GREEN")
     pastetext(nextx, 200 - h + descent)
     nextx = nextx + w + 5
 
     ov(op.blue)
-    w, h, descent, leading = maketext("BLUE")
+    w, h, descent = maketext("BLUE")
     pastetext(nextx, 200 - h + descent)
 
     ov(op.yellow)
