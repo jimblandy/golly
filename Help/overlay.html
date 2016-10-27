@@ -223,6 +223,8 @@ the cursor is set to the standard arrow,
 the transform values are set to 1,0,0,1 (identity) and alpha blending is off.
 The initial font for drawing text is the default system font at a size of 10pt
 (see the <a href="#font">font</a> command).
+The <a href="#textoption">text options</a> are set to left alignment
+(for multi-line text) and a transparent background.
 </dd>
 <dd> Example: <b>ov("create 400 300")</b></dd>
 <p>
@@ -447,10 +449,13 @@ The text background color can be set with the <a href="#textbg">textoption backg
 command.
 Note that by default the text has a transparent background, and you'll probably need to set
 <a href="#blend">blend</a> to 1 before drawing the text with <a href="#paste">paste</a>.
-You can also specify text alignment with the <a href="#textalign">textoption align</a> command.
+If you specify an opaque background then there's no need to turn on alpha blending
+when doing the paste and drawing such text will be significantly faster.
+You can also specify the alignment of multi-line text with the
+<a href="#textalign">textoption align</a> command.
 </dd>
 <p>
-<dd> Example: <b>local dimens = ov("text tempclip To be or not to be\nIs that really the question?...")</b></dd>
+<dd> Example: <b>local dimens = ov("text tempclip First line\nSecond line")</b></dd>
 </p>
 
 <a name="textoption"></a><p><dt><b>textoption <i>option value</i></b></dt>
@@ -462,19 +467,23 @@ The valid options and their allowed values are:
 <dd>
 <table cellspacing=0 cellpadding=0>
 <tr><td><b><a name="textalign"></a>align</b> <i>alignment</i></td><td width=20></td><td>&ndash;
-set text aligment to <i>alignment</i> where <i>alignment</i> is <b>left</b>, <b>right</b> or <b>center</b> and return the previous alignment
-<tr><td><b><a name="textbg"></a>background</b> <i>red green blue alpha</i></td><td width=20></td><td>&ndash;
-set text background RGBA values and return the old values as a string of the form "red green blue alpha"
+set the alignment of multi-line text to <b>left</b>, <b>right</b> or <b>center</b>
+<tr><td><b><a name="textbg"></a>background</b> <i>r g b a</i></td><td width=20></td><td>&ndash;
+set the text background to the given RGBA values (all from 0 to 255)
 </table>
 <p>
-The default is left alignment and transparent background.
+The <a href="#create">create</a> command initializes the
+text options to left alignment and a transparent background.
+Both options return their previous setting as a string:
+the returned alignment value will be "left", "right" or "center";
+the returned background will be a string of the form "red green blue alpha".
 </dd>
 </p>
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
 <tr><td>Example: <b>local oldalign = ov("textoption align right")</b></td><tr>
-<tr><td>Example: <b>local oldbackground = ov("background 255 0 0 255")</b></td></tr>
+<tr><td>Example: <b>local oldbackground = ov("textoption background 255 0 0 255")</b></td></tr>
 </table>
 </dd>
 </p>
