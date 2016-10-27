@@ -14,9 +14,7 @@ local ov = g.overlay
 
 local wd, ht               -- overlay's current width and height (set by create_overlay)
 local toggle = 0           -- for toggling alpha blending
-local align = {0, 0, 0}    -- for text alignment
-local shadow = 1           -- for text shadow
-local transparentbg = 1    -- for text background
+local align = "left"       -- for text alignment
 
 --------------------------------------------------------------------------------
 
@@ -247,24 +245,19 @@ local function test_multiline_text()
     ov(op.blue)
     ov("fill")
 
-    -- define the multi-line multi-column text to draw
-    -- note in [[ ]] blocks the \t is not converted by
-    -- lua to a tab character, rather the string literal "\t"
-    -- if you want a tab character you have to use tab
-
     local textstr =
 [[
-"To be or not to be, that is the question;\tIs it really?
-Whether 'tis nobler in the mind to suffer\tNobler!\tMore likely idiotic
+"To be or not to be, that is the question;
+Whether 'tis nobler in the mind to suffer
 The slings and arrows of outrageous fortune,
 Or to take arms against a sea of troubles,
-And by opposing, end them. To die, to sleep;\t\tSleep, every time
+And by opposing, end them. To die, to sleep;
 No more; and by a sleep to say we end
 The heart-ache and the thousand natural shocks
 That flesh is heir to — 'tis a consummation
-Devoutly to be wish'd. To die, to sleep;\tI told you before\tSleep
+Devoutly to be wish'd. To die, to sleep;
 To sleep, perchance to dream. Ay, there's the rub,
-For in that sleep of death what dreams may come,\tToo\tMany\tColumns\tReally
+For in that sleep of death what dreams may come,
 When we have shuffled off this mortal coil,
 Must give us pause. There's the respect
 That makes calamity of so long life,
@@ -289,95 +282,45 @@ With this regard their currents turn awry,
 And lose the name of action.
 Soft you now! The fair Ophelia! Nymph,
 
-\t\t\t
-\t
-\t\tHello
-in thy orisons be all my sins remember'd."\tCol 2\tCol 3
-
 Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
                 ÁÀÂÄÃÅÇÉÈÊËÍÌÎÏÑÓÒÔÖÕÚÙÛÜÆØŒŸ
 ]]
 
     -- toggle the column alignments, shadow and transparency
-    align[3] = align[3] + 1
-    if align[3] == 3 then
-        align[3] = 0
-        align[2] = align[2] + 1
-        if align[2] == 3 then
-            align[2] = 0
-            align[1] = align[1] + 1
-            if align[1] == 3 then
-                align[1] = 0
-                shadow = shadow + 1
-                if shadow == 2 then
-                    shadow = 0
-                    transparentbg = transparentbg + 1
-                    if transparentbg == 2 then
-                        transparentbg = 0
-                    end
-                end
+    if align == "left" then
+       align = "right"
+    else 
+        if align == "right" then
+            align = "center"
+        else
+            if align == "center" then
+                align = "left"
             end
         end
     end
 
-    -- set the column delimiter to a literal "\t" string (see above)
-    ov("textoption delimiter \\t")
-
-    -- set three columns
-    ov("textoption columns 3")
-
-    -- set alignment for each column
-    local options = "textoption align"
-    local i
-    for i = 1, #align do
-        if align[i] == 0 then
-            options = options.." left"
-        elseif align[i] == 1 then
-            options = options.." right"
-        else
-            options = options.." center"
-        end
-    end
-    ov(options)
-
-    -- set background to transparent or a solid color
-    if transparentbg == 1 then
-        ov("textoption background 0 0 0 0")
-    else
-        ov("textoption background 0 0 128 255")
-    end
-
-    -- set the text shadow on or off
-    if shadow == 1 then
-        ov("textoption shadow 255 0 128 255 3 3")
-    else
-        ov("textoption shadow off")
-    end
+    -- set text alignment
+    local oldalign = ov("textoption align "..align)
 
     -- set the text foreground color
     ov("rgba 255 255 255 255")
+    ov("textoption background 0 0 0 0")
 
     local t1 = os.clock()
 
     -- create the text clip
+    ov("blend 1")
     maketext(textstr)
     t1 = os.clock() - t1
     t2 = os.clock()
 
-    -- set blending based on whether the background color is transparent
-    ov("blend "..transparentbg)
-
-    -- don't use pastetext because it always uses blend 1
-    ov("paste 0 0 "..textclip)
+    pastetext(0, 0)
 
     -- output timing and drawing options
-    g.show("Time to test multiline text "..ms(t1).." "..ms(os.clock() - t2).. " "..options.." shadow "..shadow.." transbg "..transparentbg)
+    g.show("Time to test multiline text "..ms(t1).." "..ms(os.clock() - t2).. " "..align)
 
-    -- reset to single column no shadow
-    ov("textoption columns 1")
-    ov("textoption shadow off")
-
-    -- restore old font and blend mode
+    -- restore old settings
+    ov("textoption align "..oldalign)
     ov("font "..oldfont)
     ov("blend "..oldblend)
 end
