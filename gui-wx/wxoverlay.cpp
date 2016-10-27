@@ -2383,19 +2383,62 @@ const char* Overlay::DoPaste(const char* args)
 
         unsigned char* data = clipptr->cdata;
         int datapos = 0;
+
         if (identity) {
             if (RectInsideOverlay(x, y, w, h)) {
+                unsigned char* p = pixmap + y * wd * 4 + x * 4;
                 for (int j = 0; j < h; j++) {
                     for (int i = 0; i < w; i++) {
-                        r = data[datapos++];
-                        g = data[datapos++];
-                        b = data[datapos++];
-                        a = data[datapos++];
-                        DrawPixel(x, y);
+                        r = *data++;
+                        g = *data++;
+                        b = *data++;
+                        a = *data++;
+
+                        // draw the pixel
+                        if (a < 255) {
+                            // do nothing if source pixel is transparent
+                            if (a > 0) {
+                                // source pixel is translucent so blend with destination pixel;
+                                // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                                unsigned char destr = p[0];
+                                unsigned char destg = p[1];
+                                unsigned char destb = p[2];
+                                unsigned char desta = p[3];
+                                float alpha = a / 255.0;
+                                if (desta == 255) {
+                                    // destination pixel is opaque
+                                    *p++ = int(alpha * (r - destr) + destr);
+                                    *p++ = int(alpha * (g - destg) + destg);
+                                    *p++ = int(alpha * (b - destb) + destb);
+                                    // no need to change p[3] (alpha stays at 255)
+                                    p++;
+                                } else {
+                                    // destination pixel is translucent
+                                    float inva = 1.0 - alpha;
+                                    float destalpha = desta / 255.0;
+                                    float outa = alpha + destalpha * inva;
+                                    p[3] = int(outa * 255);
+                                    if (p[3] > 0) {
+                                        *p++ = int((r * alpha + destr * destalpha * inva) / outa);
+                                        *p++ = int((g * alpha + destg * destalpha * inva) / outa);
+                                        *p++ = int((b * alpha + destb * destalpha * inva) / outa);
+                                        p++;
+                                    }
+                                }
+                            } else {
+                                p += 4;
+                            }
+                        } else {
+                            *p++ = r;
+                            *p++ = g;
+                            *p++ = b;
+                            *p++ = a;
+                        }
                         x++;
                     }
                     y++;
                     x -= w;
+                    p += (wd - w) * 4;
                 }
             }
             else {
@@ -3112,57 +3155,56 @@ const char* Overlay::DoText(const char* args)
     // deselect the bitmap
     dc.SelectObject(wxNullBitmap);
 
-    // copy text from top left corner of offscreen bitmap into clip data
+    // convert the bitmap to an image
+    wxImage image = bitmap.ConvertToImage();
+
+    // get pointer to image data which is array of bytes in RGB format
+    // top-to-bottom and left-to-right order 
+    unsigned char* imagedata = image.GetData();
+
+    // copy text from top left corner of offscreen image into clip data
     unsigned char* m = textclip->cdata;
-    int j = 0;
-    int bitmapr, bitmapg, bitmapb;
-    
-    // get iterator of bitmap data
-    wxAlphaPixelData data(bitmap);
-    wxAlphaPixelData::Iterator iter(data);
-    
-    for (int y = 0; y < bitmapht; y++) {
-        wxAlphaPixelData::Iterator rowstart = iter;
-        for (int x = 0; x < bitmapwd; x++) {
-            // get pixel RGB components
-            bitmapr = iter.Red();
-            bitmapg = iter.Green();
-            bitmapb = iter.Blue();
+    int imager, imageg, imageb;
+    int pixel = 0;
+    int pixels = bitmapwd * bitmapht;
 
-            // check for transparent background
-            if (bga < 255) {
-                // transparent so look for background pixels to swap
-                if (bitmapr == 255 && bitmapg == 255 && bitmapb == 255) {
-                    // background found so replace with transparent pixel
-                    m[j++] = 0;
-                    m[j++] = 0;
-                    m[j++] = 0;
-                    m[j++] = 0;
-                }
-                else {
-                    // foreground found so replace with foreground color
-                    m[j++] = r;
-                    m[j++] = g;
-                    m[j++] = b;
+    while (pixel < pixels) {
+        imager = *imagedata++;
+        imageg = *imagedata++;
+        imageb = *imagedata++;
 
-                    // set alpha based on grayness
-                    m[j++] = 255 - bitmapr;
-                }
+        // check for transparent background
+        if (bga < 255) {
+            // transparent so look for background pixels to swap
+            if (imager == 255 && imageg == 255 && imageb == 255) {
+                // background found so replace with transparent pixel
+                *m++ = 0;
+                *m++ = 0;
+                *m++ = 0;
+                *m++ = 0;
             }
             else {
-                // opaque background so just copy pixel
-                m[j++] = bitmapr;
-                m[j++] = bitmapg;
-                m[j++] = bitmapb;
-                m[j++] = 255;
+                // foreground found so replace with foreground color
+                *m++ = r;
+                *m++ = g;
+                *m++ = b;
+
+                // set alpha based on grayness
+                *m++ = 255 - imager;
             }
-            iter++;
         }
-        iter = rowstart;
-        iter.OffsetY(data, 1);
+        else {
+            // opaque background so just copy pixel
+            *m++ = imager;
+            *m++ = imageg;
+            *m++ = imageb;
+            *m++ = 255;
+        }
+        pixel++;
     }
-    
-    clips[name] = textclip;    // create named clip for later use by DoPaste
+
+    // create named clip for later use by DoPaste
+    clips[name] = textclip;
 
     // return text info
     static char result[64];
