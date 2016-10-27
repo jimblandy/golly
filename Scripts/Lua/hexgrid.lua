@@ -20,7 +20,7 @@ local gridwd, gridht    -- width and height of grid (bounded if either > 0)
 local minedge = 1   -- minimum length of a hexagon edge
 local maxedge = 32  -- maximum length of a hexagon edge
 local edgelen = 16  -- initial length
-local mingrid = 4   -- minimum edgelen at which to draw hexagonal grid
+local mingrid = 5   -- minimum edgelen at which to draw hexagonal grid
 
 -- the following depend on edgelen and are set in init_values()
 local hexwd         -- width of 1 hexagon
@@ -37,13 +37,15 @@ local abs = math.abs
 local ceil = math.ceil
 local floor = math.floor
 
--- remember which hexagons were filled
+-- remember which hexagons were alive
 local livehexagons = {}
 
 local generating = false
 
--- get pixel dimensions of current layer
+-- get pixel dimensions of current layer (used to create/resize overlay)
 local viewwd, viewht = g.getview(g.getlayer())
+
+-- keep track of the layer's middle pixel for drawing the central hexagon
 local midx, midy = viewwd/2, viewht/2
 
 -- initial cell position of current layer (central cell)
@@ -234,6 +236,18 @@ end
 
 --------------------------------------------------------------------------------
 
+local function get_vertex(xc, yc, i)
+    return int(xc + xrad[i]), int(yc + yrad[i])
+end 
+
+--------------------------------------------------------------------------------
+
+local function draw_line(x1, y1, x2, y2)
+    ov("line "..x1.." "..y1.." "..x2.." "..y2)
+end
+
+--------------------------------------------------------------------------------
+
 local function fill_hexagon(xc, yc, state)
     ov("rgba "..state_rgba[state])
 
@@ -254,7 +268,7 @@ local function fill_hexagon(xc, yc, state)
                 return
             end
         elseif xc >= viewwd then
-            if xc - edgelen <= viewwd-1 then
+            if xc - edgelen < viewwd then
                 xc = viewwd-1
                 check_pixel = true
             else
@@ -269,7 +283,7 @@ local function fill_hexagon(xc, yc, state)
                 return
             end
         elseif yc >= viewht then
-            if yc - hexht/2 <= viewht-1 then
+            if yc - hexht/2 < viewht then
                 yc = viewht-1
                 check_pixel = true
             else
@@ -290,7 +304,7 @@ local function draw_live_cells()
     livehexagons = {}
     if g.empty() then return end
     
-    -- get cells that will be visible in current hex grid
+    -- get live cells that will be visible in current hex grid
     local cells = g.getcells( get_visible_rect() )
     if #cells == 0 then return end
     
@@ -312,7 +326,7 @@ local function draw_live_cells()
         local xc, yc = cell_to_hexagon(x, y)
         fill_hexagon(xc, yc, state)
         
-        livehexagons[#livehexagons + 1] = {xc, yc, state}
+        livehexagons[#livehexagons + 1] = {xc, yc}
     end
 end
 
@@ -320,22 +334,10 @@ end
 
 local function kill_live_cells()
     for _, hexcell in ipairs(livehexagons) do
-        local xc, yc, state = table.unpack(hexcell)
+        local xc, yc = table.unpack(hexcell)
         fill_hexagon(xc, yc, 0)
     end
     livehexagons = nil
-end
-
---------------------------------------------------------------------------------
-
-local function get_vertex(xc, yc, i)
-    return int(xc + xrad[i]), int(yc + yrad[i])
-end 
-
---------------------------------------------------------------------------------
-
-local function draw_line(x1, y1, x2, y2)
-    ov("line "..x1.." "..y1.." "..x2.." "..y2)
 end
 
 --------------------------------------------------------------------------------
@@ -383,7 +385,7 @@ local function draw_hex_grid()
         x = x + hdist * 2
         y = 0
     until x - hdist > maxx
-    
+        
     x = -hdist * 2
     y = 0
     repeat
@@ -412,7 +414,44 @@ end
 
 --------------------------------------------------------------------------------
 
-local function draw_bounded_hexagon(xc, yc, toprow, leftcol)
+local function draw_outer_hexagon(xc, yc, toprow, bottomrow, leftcol, rightcol)
+    local x0, y0 = get_vertex(xc, yc, 0)
+    local x1, y1 = get_vertex(xc, yc, 1)
+    local x2, y2 = get_vertex(xc, yc, 2)
+    local x3, y3 = get_vertex(xc, yc, 3)
+    local x4, y4 = get_vertex(xc, yc, 4)
+    local x5, y5 = get_vertex(xc, yc, 5)
+    if toprow then
+        -- draw top edge and NE edge
+        draw_line(x4, y4, x5, y5)
+        draw_line(x5, y5, x0, y0)
+    end
+    if bottomrow then
+        -- draw bottom edge and SW edge
+        draw_line(x1, y1, x2, y2)
+        draw_line(x2, y2, x3, y3)
+    end
+    if leftcol then
+        -- draw NW edge
+        draw_line(x3, y3, x4, y4)
+        if not toprow then
+            -- draw top edge
+            draw_line(x4, y4, x5, y5)
+        end
+    end
+    if rightcol then
+        -- draw SE edge
+        draw_line(x0, y0, x1, y1)
+        if not bottomrow then
+            -- draw bottom edge
+            draw_line(x1, y1, x2, y2)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function draw_inner_hexagon(xc, yc, toprow, leftcol)
     local x0, y0 = get_vertex(xc, yc, 0)
     local x1, y1 = get_vertex(xc, yc, 1)
     local x2, y2 = get_vertex(xc, yc, 2)
@@ -438,6 +477,12 @@ end
 
 --------------------------------------------------------------------------------
 
+local function pixel_in_overlay(x, y)
+    return x >= 0 and x < viewwd and y >= 0 and y < viewht
+end
+
+--------------------------------------------------------------------------------
+
 local function draw_bounded_grid()
     local minx, miny, wd, ht = table.unpack( get_visible_rect() )
     local maxx = minx+wd-1
@@ -458,20 +503,48 @@ local function draw_bounded_grid()
         draw_boundary_line(maxx+offset, maxy+offset, minx-offset, maxy+offset)
         draw_boundary_line(minx-offset, maxy+offset, minx-offset, miny-offset)
         if edgelen > 1 or (edgelen == 1 and wd > 1 and ht > 1) then
-            local x, y = cell_to_hexagon(minx + int(wd/2), miny + int(ht/2))
-            ov("flood "..x.." "..y)
+            local xc, yc = cell_to_hexagon(minx + int(wd/2), miny + int(ht/2))
+            ov("flood "..xc.." "..yc)
         end
     else
+        -- draw the outer edges of the outer hexagons
+        ov("rgba "..grid_rgba)
+        for y = miny, maxy do
+            for x = minx, maxx do
+                if x == minx or x == maxx or y == miny or y == maxy then
+                    local xc, yc = cell_to_hexagon(x, y)
+                    draw_outer_hexagon(xc, yc, y == miny, y == maxy, x == minx, x == maxx)
+                end
+            end
+        end
+        
+        -- flood the interior with state 0 color
+        ov("rgba "..state_rgba[0])
+        local xc, yc = cell_to_hexagon(minx + int(wd/2), miny + int(ht/2))
+        if pixel_in_overlay(xc, yc) then
+            ov("flood "..xc.." "..yc)
+        else
+            -- central hexagon is not visible so search border hexagons
+            for y = miny, maxy do
+                for x = minx, maxx do
+                    if x == minx or x == maxx or y == miny or y == maxy then
+                        local xc, yc = cell_to_hexagon(x, y)
+                        if pixel_in_overlay(xc, yc) then
+                            ov("flood "..xc.." "..yc)
+                            goto done
+                        end
+                    end
+                end
+            end
+            ::done::
+        end
+        
+        -- draw the inner hexagon edges
         ov("rgba "..grid_rgba)
         for y = miny, maxy do
             for x = minx, maxx do
                 local xc, yc = cell_to_hexagon(x, y)
-                draw_bounded_hexagon(xc, yc, y == miny, x == minx)
-                if g.getcell(x, y) == 0 then
-                    -- fill hexagon with state 0 color
-                    fill_hexagon(xc, yc, 0)
-                    ov("rgba "..grid_rgba)
-                end
+                draw_inner_hexagon(xc, yc, y == miny, x == minx)
             end
         end
     end
@@ -479,9 +552,50 @@ end
 
 --------------------------------------------------------------------------------
 
+local function outside_grid(q, r)
+    if gridwd == 0 and gridht == 0 then
+        -- grid is unbounded
+        return false
+    end
+
+    -- convert axial coords to cell coords
+    local x = q + r + xpos
+    local y = r + ypos
+
+    if gridwd > 0 then
+        local bminx = -int(gridwd / 2)
+        local bmaxx = bminx + gridwd - 1
+        if x < bminx or x > bmaxx then
+            return true
+        end
+    end
+    if gridht > 0 then
+        local bminy = -int(gridht / 2)
+        local bmaxy = bminy + gridht - 1
+        if y < bminy or y > bmaxy then
+            return true
+        end
+    end
+    
+    return false
+end
+
+--------------------------------------------------------------------------------
+
+local function border_visible()
+    -- return true if any corner hexagon is outside the bounded grid
+    if outside_grid( pixel_to_hex(0,0) ) then return true end
+    if outside_grid( pixel_to_hex(0,viewht-1) ) then return true end
+    if outside_grid( pixel_to_hex(viewwd-1,0) ) then return true end
+    if outside_grid( pixel_to_hex(viewwd-1,viewht-1) ) then return true end
+    return false
+end
+
+--------------------------------------------------------------------------------
+
 local function refresh()
     init_values()
-    if gridwd > 0 or gridht > 0 then
+    if (gridwd > 0 or gridht > 0) and border_visible() then
         -- fill overlay with border color
         local br, bg, bb = g.getcolor("border")
         ov("rgba "..br.." "..bg.." "..bb.." 255")
@@ -492,7 +606,9 @@ local function refresh()
         ov("rgba "..state_rgba[0])
         ov("fill")
         if edgelen >= mingrid then
+            --!!! local t1 = os.clock()
             draw_hex_grid()
+            --!!! g.show(string.format("hex grid: %.1fms", 1000 * (os.clock() - t1)))
         end
     end
     draw_live_cells()
@@ -534,7 +650,10 @@ end
 --------------------------------------------------------------------------------
 
 local function zoom_in()
-    if edgelen < maxedge then
+    if g.getoption("showoverlay") == 0 then
+        -- zoom in to the current layer's central pixel
+        g.doevent("zoomin "..int(midx).." "..int(midy))
+    elseif edgelen < maxedge then
         -- draw bigger hexagons
         edgelen = edgelen + 1
         refresh()
@@ -544,7 +663,10 @@ end
 --------------------------------------------------------------------------------
 
 local function zoom_out()
-    if edgelen > minedge then
+    if g.getoption("showoverlay") == 0 then
+        -- zoom out from the current layer's central pixel
+        g.doevent("zoomout "..int(midx).." "..int(midy))
+    elseif edgelen > minedge then
         -- draw smaller hexagons
         edgelen = edgelen - 1
         refresh()
@@ -553,32 +675,15 @@ end
 
 --------------------------------------------------------------------------------
 
-local function outside_grid(q, r)
-    if gridwd == 0 and gridht == 0 then
-        -- grid is unbounded
-        return false
+local function zoom_hexagons(event)
+    local direction, x, y = split(event)
+    if direction == "ozoomin" then
+        -- try to zoom in to hexagon at x,y!!!
+        zoom_in()
+    else
+        -- try to zoom out from hexagon at x,y!!!
+        zoom_out()
     end
-
-    -- convert axial coords to cell coords
-    local x = q + r + xpos
-    local y = r + ypos
-
-    if gridwd > 0 then
-        local bminx = -int(gridwd / 2)
-        local bmaxx = bminx + gridwd - 1
-        if x < bminx or x > bmaxx then
-            return true
-        end
-    end
-    if gridht > 0 then
-        local bminy = -int(gridht / 2)
-        local bmaxy = bminy + gridht - 1
-        if y < bminy or y > bmaxy then
-            return true
-        end
-    end
-    
-    return false
 end
 
 --------------------------------------------------------------------------------
@@ -652,7 +757,7 @@ local function edit_hexagons(x, y)
     else
         fill_hexagon(xc, yc, drawstate)
         if drawstate > 0 then
-            livehexagons[#livehexagons + 1] = {xc, yc, drawstate}
+            livehexagons[#livehexagons + 1] = {xc, yc}
         end
     end
     
@@ -777,7 +882,8 @@ end
 local function pan(event)
     -- user pressed an arrow key
     if g.getoption("showoverlay") == 0 then
-        -- just pan the current layer
+        -- just pan the current layer (assuming the user hasn't changed
+        -- the default actions for the arrow keys)
         g.doevent(event)
     else
         local _, key, mods = split(event)
@@ -832,16 +938,23 @@ local function do_click_in_overlay(event)
         move_hexagons(x, y)
 
     elseif g.getcursor() == "Select" then
-        --!!!???
+        -- don't allow selections???!!!
 
     elseif g.getcursor() == "Zoom In" then
-        -- zoom in to clicked hexagon!!!
-        zoom_in()
+        -- zoom in to clicked hexagon
+        zoom_hexagons("ozoomin "..x.." "..y)
 
     elseif g.getcursor() == "Zoom Out" then
-        -- zoom out from clicked hexagon!!!
-        zoom_out()
+        -- zoom out from clicked hexagon
+        zoom_hexagons("ozoomout "..x.." "..y)
     end
+end
+
+--------------------------------------------------------------------------------
+
+local function toggle_overlay()
+    g.setoption("showoverlay", 1 - g.getoption("showoverlay"))
+    g.update()
 end
 
 --------------------------------------------------------------------------------
@@ -874,12 +987,6 @@ local function main()
             do_click_in_layer(event)
         elseif event:find("^oclick") then
             do_click_in_overlay(event)
-        elseif event:find("^ozoomin") then
-            -- zoom in to hexagon at given x,y pixel???!!!
-            zoom_in()
-        elseif event:find("^ozoomout") then
-            -- zoom out from hexagon at given x,y pixel???!!!
-            zoom_out()
         elseif event == "key enter none" or event == "key return none" then
             generating = not generating
         elseif event == "key space none" then
@@ -895,11 +1002,13 @@ local function main()
             zoom_in()
         elseif event == "key [ none" then
             zoom_out()
-        elseif event:find("^key left ") or
-               event:find("^key right ") or
-               event:find("^key up ") or
-               event:find("^key down ") then
+        elseif event:find("^ozoomin") or event:find("^ozoomout") then
+            zoom_hexagons(event)
+        elseif event:find("^key left ") or event:find("^key right ") or
+               event:find("^key up ") or event:find("^key down ") then
             pan(event)
+        elseif event == "key o none" then
+            toggle_overlay()
         elseif event == "key h none" then
             show_help()
         else
