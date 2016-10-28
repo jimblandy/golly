@@ -13,9 +13,10 @@ local split = gp.split
 local ov = g.overlay
 
 -- the following are set in create_overlay()
-local grid_rgba         -- RGBA string for grid lines
 local state_rgba = {}   -- table of RGBA strings for each state
-local gridwd, gridht    -- width and height of grid (bounded if either > 0)
+local show_grid_rgba    -- RGBA string for showing grid lines
+local hide_grid_rgba    -- RGBA string for hiding grid lines
+local grid_rgba         -- set to one of the above
 
 local minedge = 1   -- minimum length of a hexagon edge
 local maxedge = 32  -- maximum length of a hexagon edge
@@ -51,6 +52,10 @@ local midx, midy = viewwd/2, viewht/2
 -- initial cell position of current layer (central cell)
 local xpos, ypos = gp.getposint()
 
+-- get width and height of universe (bounded if either > 0)
+local gridwd = g.getwidth()
+local gridht = g.getheight()
+
 --------------------------------------------------------------------------------
 
 local function check_rule()
@@ -72,11 +77,8 @@ end
 --------------------------------------------------------------------------------
 
 local function create_overlay()
-    -- for checking if grid is bounded
-    gridwd = g.getwidth()
-    gridht = g.getheight()
-
-    ov("create "..viewwd.." "..viewht)      -- overlay covers entire viewport
+    -- overlay covers entire viewport
+    ov("create "..viewwd.." "..viewht)
     
     ov("cursor current")    -- use current Golly cursor
     
@@ -99,7 +101,17 @@ local function create_overlay()
        if gridg + diff < 256 then gridg = gridg + diff else gridg = 255 end
        if gridb + diff < 256 then gridb = gridb + diff else gridb = 255 end
     end
-    grid_rgba = gridr.." "..gridg.." "..gridb.." 255"
+    show_grid_rgba = gridr.." "..gridg.." "..gridb.." 255"
+    if currcolors[2] > 0 then
+        hide_grid_rgba = (currcolors[2]-1).." "..currcolors[3].." "..currcolors[4].." 255"
+    else
+        hide_grid_rgba = (currcolors[2]+1).." "..currcolors[3].." "..currcolors[4].." 255"
+    end
+    if g.getoption("showgrid") == 1 then
+        grid_rgba = show_grid_rgba
+    else
+        grid_rgba = hide_grid_rgba
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -202,6 +214,8 @@ local function get_visible_rect()
         if miny < bminy then miny = bminy end
         if maxy > bmaxy then maxy = bmaxy end
     end
+    
+    --!!! g.show(string.format("visrect: minx=%d miny=%d wd=%d ht=%d",minx, miny, maxx-minx+1, maxy-miny+1))
 
     return { minx, miny, maxx-minx+1, maxy-miny+1 }
 end
@@ -255,7 +269,19 @@ local function fill_hexagon(xc, yc, state)
         if edgelen == 1 then
             ov("set "..xc.." "..yc)
         else
-            ov("fill "..int(xc-edgelen/2+0.5).." "..int(yc-edgelen/2+0.5).." "..edgelen.." "..edgelen)
+            local x = int(xc-edgelen/2+0.5)
+            local y = int(yc-edgelen/2+0.5)
+            ov("fill "..x.." "..y.." "..edgelen.." "..edgelen)
+            if edgelen == 4 then
+                -- try to look more like a hexagon
+                ov("set "..(x-1).." "..(y+2))
+                ov("set "..(x+4).." "..(y+2))
+                ov("set "..(x+1).." "..(y+4))
+                ov("set "..(x+2).." "..(y+4))
+                ov("rgba "..state_rgba[0])
+                ov("set "..x.." "..y)
+                ov("set "..(x+3).." "..y)
+            end
         end
     else
         -- adjust xc and/or yc if they are outside overlay but hexagon is partially visible
@@ -688,7 +714,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function do_click_in_layer(event)
+local function click_in_layer(event)
     -- process a mouse click in current layer like "click 100 20 left none"
     local _, x, y, button, mods = split(event)
     local state = g.getcell(x, y)
@@ -915,7 +941,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function do_click_in_overlay(event)
+local function click_in_overlay(event)
     -- process a mouse click in overlay like "oclick 100 20 left none"
     local _, x, y, button, mods = split(event)
     x = tonumber(x)
@@ -947,6 +973,24 @@ local function do_click_in_overlay(event)
     elseif g.getcursor() == "Zoom Out" then
         -- zoom out from clicked hexagon
         zoom_hexagons("ozoomout "..x.." "..y)
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function check_grid()
+    if g.getoption("showgrid") == 1 then
+        if grid_rgba ~= show_grid_rgba then
+            grid_rgba = show_grid_rgba
+            refresh()
+            g.update()
+        end
+    else
+        if grid_rgba ~= hide_grid_rgba then
+            grid_rgba = hide_grid_rgba
+            refresh()
+            g.update()
+        end
     end
 end
 
@@ -984,9 +1028,9 @@ local function main()
         -- check for user input
         local event = g.getevent()
         if event:find("^click") then
-            do_click_in_layer(event)
+            click_in_layer(event)
         elseif event:find("^oclick") then
-            do_click_in_overlay(event)
+            click_in_overlay(event)
         elseif event == "key enter none" or event == "key return none" then
             generating = not generating
         elseif event == "key space none" then
@@ -1007,6 +1051,9 @@ local function main()
         elseif event:find("^key left ") or event:find("^key right ") or
                event:find("^key up ") or event:find("^key down ") then
             pan(event)
+        elseif event == "key l none" then
+            g.setoption("showgrid", 1 - g.getoption("showgrid"))
+            -- update will be done in check_grid()
         elseif event == "key o none" then
             toggle_overlay()
         elseif event == "key h none" then
@@ -1017,6 +1064,9 @@ local function main()
         
         -- check if current layer's position has changed
         check_position()
+        
+        -- check if user toggled grid lines (possibly via View menu)
+        check_grid()
         
         if generating then advance(false) end
     end
