@@ -14,7 +14,7 @@ local ov = g.overlay
 
 local wd, ht               -- overlay's current width and height (set by create_overlay)
 local toggle = 0           -- for toggling alpha blending
-local align = "left"       -- for text alignment
+local align = "right"       -- for text alignment
 local transbg = 0          -- for text transparent background
 
 --------------------------------------------------------------------------------
@@ -61,12 +61,9 @@ end
 
 local function pastetext(x, y, transform)
     transform = transform or op.identity
-    -- text background is transparent so paste needs to use alpha blending
-    local oldblend = ov("blend 1")
     local oldtransform = ov(transform)
     ov("paste "..x.." "..y.." "..textclip)
     ov("transform "..oldtransform)
-    ov("blend "..oldblend)
 end
 
 --------------------------------------------------------------------------------
@@ -289,12 +286,12 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
 
     -- toggle the column alignments and transparency
     if align == "left" then
-       align = "right"
+       align = "center"
     else 
-        if align == "right" then
-            align = "center"
+        if align == "center" then
+            align = "right"
         else
-            if align == "center" then
+            if align == "right" then
                 align = "left"
                 transbg = 1 - transbg
             end
@@ -323,6 +320,7 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     t1 = os.clock() - t1
     t2 = os.clock()
 
+    -- paste the clip onto the overlay
     pastetext(0, 0)
 
     -- output timing and drawing options
@@ -342,10 +340,12 @@ local function test_text()
 
     local oldfont, oldblend, w, h, descent, nextx
     
+    oldblend = ov("blend 0")
     ov(op.white) -- white background
     ov("fill")
     ov(op.black) -- black text
     
+    ov("blend 1")
     maketext("FLIP Y")
     pastetext(20, 30)
     pastetext(20, 30, op.flip_y)
@@ -448,10 +448,12 @@ local function test_text()
     ov("fill 300 210 "..w.." "..h)
     pastetext(300, 210)
 
+    ov("blend 0")
     ov(op.yellow)       ov("fill 0   250 100 100")
     ov(op.cyan)         ov("fill 100 250 100 100")
     ov(op.magenta)      ov("fill 200 250 100 100")
     ov("rgba 0 0 0 0")  ov("fill 300 250 100 100")
+    ov("blend 1")
     
     ov(op.black)
     maketext("The quick brown fox jumps over 123 dogs.")
@@ -465,7 +467,6 @@ local function test_text()
     ov("rgba 255 0 0 40")   -- translucent red text
     w, h, descent = maketext("Golly")
     pastetext(10, 10)
-    oldblend = ov("blend 1")
     
     -- draw box around text
     ov("line 10 10 "..(w-1+10).." 10")
