@@ -1,7 +1,9 @@
--- If the current rule uses a hexagonal neighborhood then create
--- an overlay that shows the current pattern in a hexagonal grid.
--- Much thanks to http://www.redblobgames.com/grids/hexagons/.
--- Author: Andrew Trevorrow (andrew@trevorrow.com), August 2016.
+--[[
+If the current rule uses a hexagonal neighborhood then create
+an overlay that shows the current pattern in a hexagonal grid.
+Much thanks to http://www.redblobgames.com/grids/hexagons/.
+Author: Andrew Trevorrow (andrew@trevorrow.com), August 2016.
+--]]
 
 local g = golly()
 -- require "gplus.strict"
@@ -12,33 +14,33 @@ local split = gp.split
 
 local ov = g.overlay
 
+local minedge = 1   -- minimum length of a hexagon edge
+local maxedge = 32  -- maximum length of a hexagon edge
+local edgelen = 16  -- initial length
+local mingrid = 4   -- minimum edgelen at which to draw hexagonal grid
+
 -- the following are set in create_overlay()
 local state_rgba = {}   -- table of RGBA strings for each state
 local show_grid_rgba    -- RGBA string for showing grid lines
 local hide_grid_rgba    -- RGBA string for hiding grid lines
 local grid_rgba         -- set to one of the above
 
-local minedge = 1   -- minimum length of a hexagon edge
-local maxedge = 32  -- maximum length of a hexagon edge
-local edgelen = 16  -- initial length
-local mingrid = 5   -- minimum edgelen at which to draw hexagonal grid
-
--- the following depend on edgelen and are set in init_values()
+-- the following depend on edgelen and are set in create_hextile()
+local hextilewd     -- width of tile used to draw hex grid
+local hextileht     -- height of tile used to draw hex grid
 local hexwd         -- width of 1 hexagon
 local hexht         -- height of 1 hexagon
-local hdist         -- horizontal distance between adjacent hexagons
-local vdist         -- vertical distance between adjacent hexagons
 local xrad          -- x distances to each vertex
 local yrad          -- y distances to each vertex
-local hextox        -- used to find x coord of hexagon's center
-local hextoy        -- used to find y coord of hexagon's center
+local hextox        -- used to find central x coord of a hexagon
+local hextoy        -- used to find central y coord of a hexagon
 
 -- minor optimizations
 local abs = math.abs
 local ceil = math.ceil
 local floor = math.floor
 
--- remember which hexagons were alive
+-- this array remembers which hexagons are alive
 local livehexagons = {}
 
 local generating = false
@@ -49,10 +51,10 @@ local viewwd, viewht = g.getview(g.getlayer())
 -- keep track of the layer's middle pixel for drawing the central hexagon
 local midx, midy = viewwd/2, viewht/2
 
--- initial cell position of current layer (central cell)
+-- initial position of the current layer (the central cell)
 local xpos, ypos = gp.getposint()
 
--- get width and height of universe (bounded if either > 0)
+-- get width and height of the universe (bounded if either > 0)
 local gridwd = g.getwidth()
 local gridht = g.getheight()
 
@@ -61,8 +63,7 @@ local gridht = g.getheight()
 local function check_rule()
     -- check if the current rule uses a hexagonal neighborhood
     if not op.hexrule() then
-        local algo = g.getalgo()
-        if algo == "RuleLoader" then
+        if g.getalgo() == "RuleLoader" then
             g.warn(
 [[If the current rule does not use
 a hexagonal neighborhood then the
@@ -116,13 +117,29 @@ end
 
 --------------------------------------------------------------------------------
 
-local function init_values()
-    -- initialize values that depend on edgelen
-    -- (note that we use flat-topped hexagons)
-    hexwd = edgelen * 2
-    hexht = math.sqrt(3) / 2 * hexwd
-    hdist = hexwd * 3/4
-    vdist = hexht
+local function get_vertex(xc, yc, i)
+    return int(xc + xrad[i]), int(yc + yrad[i])
+end 
+
+--------------------------------------------------------------------------------
+
+local function draw_line(x1, y1, x2, y2)
+    ov("line "..x1.." "..y1.." "..x2.." "..y2)
+end
+
+--------------------------------------------------------------------------------
+
+local function create_hextile()
+    --[[
+    initialize values that depend on the current edgelen and
+    create a clip for tiling the background in draw_hex_grid()
+    that contains one flat-topped hexagon (minus bottom edge)
+    with a horizontal edge sticking out from the east vertex:
+             ___
+            /4 5\
+           {3   0}---
+            \2 1/
+    --]]
     
     -- these arrays are used in get_vertex
     xrad = {}
@@ -133,9 +150,36 @@ local function init_values()
         yrad[i] = edgelen * math.sin(angle_rad)
     end
     
-    -- these values are used to find x,y coords of a hexagon's center
+    local x0, y0 = get_vertex(midx, midy, 0) -- E
+    local x1, y1 = get_vertex(midx, midy, 1) -- SE
+    local x2, y2 = get_vertex(midx, midy, 2) -- SW
+    local x3, y3 = get_vertex(midx, midy, 3) -- W
+    local x4, y4 = get_vertex(midx, midy, 4) -- NW
+    local x5, y5 = get_vertex(midx, midy, 5) -- NE
+    
+    hexwd = x0 - x3
+    hexht = y1 - y5
+    
+    -- these values are used to find the x,y coords of a hexagon's center
     hextox = edgelen * 3/2
-    hextoy = edgelen * math.sqrt(3)
+    hextoy = hexht
+    
+    -- create the clip
+    hextilewd = hexwd + edgelen
+    hextileht = hexht
+    ov("rgba "..state_rgba[0])
+    ov("fill "..x3.." "..y4.." "..hextilewd.." "..hextileht)
+    ov("rgba "..grid_rgba)
+    draw_line(x0, y0, x1, y1)
+    -- skip bottom edge
+    -- draw_line(x1, y1, x2, y2)
+    draw_line(x2, y2, x3, y3)
+    draw_line(x3, y3, x4, y4)
+    draw_line(x4, y4, x5, y5)
+    draw_line(x5, y5, x0, y0)
+    -- draw horizontal edge from right-most vertex
+    draw_line(x0, y0, x0 + edgelen, y0)
+    ov("copy "..x3.." "..y4.." "..hextilewd.." "..hextileht.." hextile")
 end
 
 --------------------------------------------------------------------------------
@@ -172,14 +216,9 @@ end
 
 --------------------------------------------------------------------------------
 
-local sqrt3on3 = math.sqrt(3)/3
-
 local function pixel_to_hex(x, y)
-    x = x - midx
-    y = y - midy
-    
-    local q = x * 2/3 / edgelen
-    local r = (-x/3 + sqrt3on3 * y) / edgelen
+    local q = (x - midx) / hextox
+    local r = (y - midy) / hextoy - q / 2
     
     q, r = cube_round(q, -q-r, r)
     
@@ -250,18 +289,6 @@ end
 
 --------------------------------------------------------------------------------
 
-local function get_vertex(xc, yc, i)
-    return int(xc + xrad[i]), int(yc + yrad[i])
-end 
-
---------------------------------------------------------------------------------
-
-local function draw_line(x1, y1, x2, y2)
-    ov("line "..x1.." "..y1.." "..x2.." "..y2)
-end
-
---------------------------------------------------------------------------------
-
 local function fill_hexagon(xc, yc, state)
     ov("rgba "..state_rgba[state])
 
@@ -272,16 +299,6 @@ local function fill_hexagon(xc, yc, state)
             local x = int(xc-edgelen/2+0.5)
             local y = int(yc-edgelen/2+0.5)
             ov("fill "..x.." "..y.." "..edgelen.." "..edgelen)
-            if edgelen == 4 then
-                -- try to look more like a hexagon
-                ov("set "..(x-1).." "..(y+2))
-                ov("set "..(x+4).." "..(y+2))
-                ov("set "..(x+1).." "..(y+4))
-                ov("set "..(x+2).." "..(y+4))
-                ov("rgba "..state_rgba[0])
-                ov("set "..x.." "..y)
-                ov("set "..(x+3).." "..y)
-            end
         end
     else
         -- adjust xc and/or yc if they are outside overlay but hexagon is partially visible
@@ -368,66 +385,34 @@ end
 
 --------------------------------------------------------------------------------
 
-local function draw_hexagon(xc, yc)
-    xc = xc + midx
-    yc = yc + midy
-    local x0, y0 = get_vertex(xc, yc, 0)
-    local x1, y1 = get_vertex(xc, yc, 1)
-    local x2, y2 = get_vertex(xc, yc, 2)
-    local x3, y3 = get_vertex(xc, yc, 3)
-    local x4, y4 = get_vertex(xc, yc, 4)
-    local x5, y5 = get_vertex(xc, yc, 5)
-    draw_line(x5, y5, x0, y0)
-    draw_line(x0, y0, x1, y1)
-    draw_line(x1, y1, x2, y2)
-    draw_line(x2, y2, x3, y3)
-    draw_line(x3, y3, x4, y4)
-    -- no need to draw top edge
-    -- draw_line(x4, y4, x5, y5)
-    
-    -- draw horizontal line from right-most vertex
-    draw_line(x0, y0, x0 + edgelen, y0)
-end
-
---------------------------------------------------------------------------------
-
 local function draw_hex_grid()
-    ov("rgba "..grid_rgba)
+    -- draw middle hexagon
+    local x = int(midx - edgelen)
+    local y = int(midy - hextileht/2)
+    ov("paste "..x.." "..y.." hextile")
     
-    local minx, maxx, miny, maxy = -midx, midx, -midy, midy
-    local x, y = 0, 0
+    -- draw middle row of hexagons
+    while x > 0 do
+        x = x - hextilewd
+        ov("paste "..x.." "..y.." hextile")
+    end
+    x = int(midx - edgelen) + hextilewd
+    while x < viewwd do
+        ov("paste "..x.." "..y.." hextile")
+        x = x + hextilewd
+    end
     
-    repeat
-        draw_hexagon(x, y)
-        while y <= maxy do
-            y = y + vdist
-            draw_hexagon(x, y)
-        end
-        y = 0
-        while y >= miny do
-            y = y - vdist
-            draw_hexagon(x, y)
-        end
-        x = x + hdist * 2
-        y = 0
-    until x - hdist > maxx
-        
-    x = -hdist * 2
-    y = 0
-    repeat
-        draw_hexagon(x, y)
-        while y <= maxy do
-            y = y + vdist
-            draw_hexagon(x, y)
-        end
-        y = 0
-        while y >= miny do
-            y = y - vdist
-            draw_hexagon(x, y)
-        end
-        x = x - hdist * 2
-        y = 0
-    until x + edgelen * 2 < minx
+    -- copy middle row and paste above and below until overlay is tiled
+    ov("copy 0 "..y.." "..viewwd.." "..hextileht.." row")
+    while y > 0 do
+        y = y - hextileht
+        ov("paste 0 "..y.." row")
+    end
+    y = int(midy - hextileht/2) + hextileht
+    while y < viewht do
+        ov("paste 0 "..y.." row")
+        y = y + hextileht
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -620,7 +605,7 @@ end
 --------------------------------------------------------------------------------
 
 local function refresh()
-    init_values()
+    create_hextile()
     if (gridwd > 0 or gridht > 0) and border_visible() then
         -- fill overlay with border color
         local br, bg, bb = g.getcolor("border")
@@ -936,6 +921,7 @@ local function pan(event)
                 set_position(xpos, ypos+1)
             end
         end
+        -- main loop will call check_position()
     end
 end
 
@@ -1009,6 +995,18 @@ end
 
 --------------------------------------------------------------------------------
 
+local function check_layer_size()
+    local newwd, newht = g.getview(g.getlayer())
+    if newwd ~= viewwd or newht ~= viewht then
+        viewwd, viewht = newwd, newht
+        midx, midy = viewwd/2, viewht/2
+        ov("resize "..viewwd.." "..viewht)
+        refresh()
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function main()
     check_rule()
     create_overlay()
@@ -1016,14 +1014,8 @@ local function main()
     
     g.show("Hit escape key to abort script...")
     while true do
-        -- check if size of layer has changed
-        local newwd, newht = g.getview(g.getlayer())
-        if newwd ~= viewwd or newht ~= viewht then
-            viewwd, viewht = newwd, newht
-            midx, midy = viewwd/2, viewht/2
-            ov("resize "..viewwd.." "..viewht)
-            refresh()
-        end
+        -- if size of layer has changed then resize the overlay
+        check_layer_size()
         
         -- check for user input
         local event = g.getevent()
