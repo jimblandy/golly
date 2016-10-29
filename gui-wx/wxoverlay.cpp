@@ -41,10 +41,32 @@
 #include <math.h>           // for sin, cos, log, sqrt and atn2
 #include <stdlib.h>         // for malloc, free
 
+// -----------------------------------------------------------------------------
+
+// some useful macros:
+
 #ifdef __WXMSW__
-#define round(x) int( (x) < 0 ? (x)-0.5 : (x)+0.5 )
-#define remainder(n,d) ( (n) - round((n)/(d)) * (d) )
+    #define round(x) int( (x) < 0 ? (x)-0.5 : (x)+0.5 )
+    #define remainder(n,d) ( (n) - round((n)/(d)) * (d) )
 #endif
+
+#define PixelInOverlay(x,y) \
+    (x >= 0 && x < wd && \
+     y >= 0 && y < ht)
+
+#define RectOutsideOverlay(x,y,w,h) \
+    (x >= wd || x + w <= 0 || \
+     y >= ht || y + h <= 0)
+
+#define RectInsideOverlay(x,y,w,h) \
+    (x >= 0 && x + w <= wd && \
+     y >= 0 && y + h <= ht)
+
+#define PixelsMatch(newpxl,oldr,oldg,oldb,olda) \
+    (newpxl[0] == oldr && \
+     newpxl[1] == oldg && \
+     newpxl[2] == oldb && \
+     newpxl[3] == olda)
 
 // -----------------------------------------------------------------------------
 
@@ -1921,12 +1943,6 @@ const char* Overlay::DoSetRGBA(const char* args)
 
 // -----------------------------------------------------------------------------
 
-#define PixelInOverlay(x,y) \
-    (x >= 0 && x < wd && \
-     y >= 0 && y < ht)
-
-// -----------------------------------------------------------------------------
-
 void Overlay::DrawPixel(int x, int y)
 {
     // caller must guarantee that pixel is within pixmap
@@ -1940,18 +1956,13 @@ void Overlay::DrawPixel(int x, int y)
             unsigned char destg = p[1];
             unsigned char destb = p[2];
             unsigned char desta = p[3];
-            //float alpha = a / 255.0;
             if (desta == 255) {
+                // destination pixel is opaque
                 unsigned int alpha = a + 1;
                 unsigned int invalpha = 256 - a;
-                *p++ = (alpha * r + invalpha * destr) >> 8;
-                *p++ = (alpha * g + invalpha * destg) >> 8;
-                *p++ = (alpha * b + invalpha * destb) >> 8;
-                p++;   // no need to change p[3] (alpha stays at 255)
-                // destination pixel is opaque
-                //p[0] = int(alpha * (r - destr) + destr);
-                //p[1] = int(alpha * (g - destg) + destg);
-                //p[2] = int(alpha * (b - destb) + destb);
+                p[0] = (alpha * r + invalpha * destr) >> 8;
+                p[1] = (alpha * g + invalpha * destg) >> 8;
+                p[2] = (alpha * b + invalpha * destb) >> 8;
                 // no need to change p[3] (alpha stays at 255)
             } else {
                 // destination pixel is translucent
@@ -2179,47 +2190,40 @@ void Overlay::FillRect(int x, int y, int w, int h)
         for (int j=y; j<y+h; j++) {
             for (int i=x; i<x+w; i++) {
                 // draw the pixel
-                if (a < 255) {
-                    // do nothing if source pixel is transparent
-                    if (a > 0) {
-                        // source pixel is translucent so blend with destination pixel;
-                        // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
-                        unsigned char destr = p[0];
-                        unsigned char destg = p[1];
-                        unsigned char destb = p[2];
-                        unsigned char desta = p[3];
-                        if (desta == 255) {
-                            // destination pixel is opaque
-                            unsigned int alpha = a + 1;
-                            unsigned int invalpha = 256 - a;
-                            *p++ = (alpha * r + invalpha * destr) >> 8;
-                            *p++ = (alpha * g + invalpha * destg) >> 8;
-                            *p++ = (alpha * b + invalpha * destb) >> 8;
-                            p++;   // no need to change p[3] (alpha stays at 255)
-                        } else {
-                            // destination pixel is translucent
-                            float alpha = a / 255.0;
-                            float inva = 1.0 - alpha;
-                            float destalpha = desta / 255.0;
-                            float outa = alpha + destalpha * inva;
-                            p[3] = int(outa * 255);
-                            if (p[3] > 0) {
-                                *p++ = int((r * alpha + destr * destalpha * inva) / outa);
-                                *p++ = int((g * alpha + destg * destalpha * inva) / outa);
-                                *p++ = int((b * alpha + destb * destalpha * inva) / outa);
-                                p++;   // already set above
-                            }
-                        }
+                if (a > 0) {
+                    // source pixel is translucent so blend with destination pixel;
+                    // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                    unsigned char destr = p[0];
+                    unsigned char destg = p[1];
+                    unsigned char destb = p[2];
+                    unsigned char desta = p[3];
+                    if (desta == 255) {
+                        // destination pixel is opaque
+                        unsigned int alpha = a + 1;
+                        unsigned int invalpha = 256 - a;
+                        *p++ = (alpha * r + invalpha * destr) >> 8;
+                        *p++ = (alpha * g + invalpha * destg) >> 8;
+                        *p++ = (alpha * b + invalpha * destb) >> 8;
+                        p++;   // no need to change p[3] (alpha stays at 255)
                     } else {
-                        // skip pixel
-                        p += 4;
+                        // destination pixel is translucent
+                        float alpha = a / 255.0;
+                        float inva = 1.0 - alpha;
+                        float destalpha = desta / 255.0;
+                        float outa = alpha + destalpha * inva;
+                        p[3] = int(outa * 255);
+                        if (p[3] > 0) {
+                            *p++ = int((r * alpha + destr * destalpha * inva) / outa);
+                            *p++ = int((g * alpha + destg * destalpha * inva) / outa);
+                            *p++ = int((b * alpha + destb * destalpha * inva) / outa);
+                            p++;   // already set above
+                        } else {
+                            p += 4;
+                        }
                     }
                 } else {
-                    // pixel is opaque so copy it
-                    *p++ = r;
-                    *p++ = g;
-                    *p++ = b;
-                    *p++ = a;
+                    // skip transparent pixel
+                    p += 4;
                 }
             }
             p += (wd - w) * 4;
@@ -2236,7 +2240,7 @@ void Overlay::FillRect(int x, int y, int w, int h)
         unsigned int *dest = (unsigned int*)p;
         unsigned int color = *dest;
         for (int i=1; i<w; i++) {
-            *dest++ = color;
+            *++dest = color;
         }
 
         // copy first row to remaining rows
@@ -2248,16 +2252,6 @@ void Overlay::FillRect(int x, int y, int w, int h)
         }
     }
 }
-
-// -----------------------------------------------------------------------------
-
-#define RectOutsideOverlay(x,y,w,h) \
-    (x >= wd || x + w <= 0 || \
-     y >= ht || y + h <= 0)
-
-#define RectInsideOverlay(x,y,w,h) \
-    (x >= 0 && x + w <= wd && \
-     y >= 0 && y + h <= ht)
 
 // -----------------------------------------------------------------------------
 
@@ -2447,7 +2441,6 @@ const char* Overlay::DoPaste(const char* args)
 
                         // draw the pixel
                         if (a < 255) {
-                            // do nothing if source pixel is transparent
                             if (a > 0) {
                                 // source pixel is translucent so blend with destination pixel;
                                 // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
@@ -2475,10 +2468,12 @@ const char* Overlay::DoPaste(const char* args)
                                         *p++ = int((g * alpha + destg * destalpha * inva) / outa);
                                         *p++ = int((b * alpha + destb * destalpha * inva) / outa);
                                         p++;   // already set above
+                                    } else {
+                                        p += 4;
                                     }
                                 }
                             } else {
-                                // skip pixel
+                                // skip transparent pixel
                                 p += 4;
                             }
                         } else {
@@ -2488,10 +2483,7 @@ const char* Overlay::DoPaste(const char* args)
                             *p++ = b;
                             *p++ = a;
                         }
-                        x++;
                     }
-                    y++;
-                    x -= w;
                     p += (wd - w) * 4;
                 }
             }
@@ -2722,27 +2714,6 @@ const char* Overlay::DoSave(const char* args)
 
     return NULL;
 }
-
-// -----------------------------------------------------------------------------
-
-#define PixelsMatch(newpxl,oldr,oldg,oldb,olda) \
-    (newpxl[0] == oldr && \
-     newpxl[1] == oldg && \
-     newpxl[2] == oldb && \
-     newpxl[3] == olda)
-
-/* above macro is faster
-static bool PixelsMatch(unsigned char* newpxl,
-                        // NOTE: passing in "unsigned char* oldpxl" resulted in a compiler bug
-                        // on Mac OS 10.6.8, so we did this instead:
-                        unsigned char oldr, unsigned char oldg, unsigned char oldb, unsigned char olda)
-{
-    return newpxl[0] == oldr &&
-           newpxl[1] == oldg &&
-           newpxl[2] == oldb &&
-           newpxl[3] == olda;
-}
-*/
 
 // -----------------------------------------------------------------------------
 
@@ -3213,25 +3184,75 @@ const char* Overlay::DoText(const char* args)
     unsigned char* m = textclip->cdata;
 
     #ifdef __WXMAC__
-
-    int bitmapr, bitmapg, bitmapb;
-
-    // get iterator of bitmap data
-    wxAlphaPixelData data(bitmap);
-    wxAlphaPixelData::Iterator iter(data);
+        // don't convert bitmap to a wxImage on Mac (significantly slower)
+        int bitmapr, bitmapg, bitmapb;
     
-    for (int y = 0; y < bitmapht; y++) {
-        wxAlphaPixelData::Iterator rowstart = iter;
-        for (int x = 0; x < bitmapwd; x++) {
-            // get pixel RGB components
-            bitmapr = iter.Red();
-            bitmapg = iter.Green();
-            bitmapb = iter.Blue();
+        // get iterator of bitmap data
+        wxAlphaPixelData data(bitmap);
+        wxAlphaPixelData::Iterator iter(data);
+        
+        for (int y = 0; y < bitmapht; y++) {
+            wxAlphaPixelData::Iterator rowstart = iter;
+            for (int x = 0; x < bitmapwd; x++) {
+                // get pixel RGB components
+                bitmapr = iter.Red();
+                bitmapg = iter.Green();
+                bitmapb = iter.Blue();
+    
+                // check for transparent background
+                if (bga < 255) {
+                    // transparent so look for background pixels to swap
+                    if (bitmapr == 255 && bitmapg == 255 && bitmapb == 255) {
+                        // background found so replace with transparent pixel
+                        *m++ = 0;
+                        *m++ = 0;
+                        *m++ = 0;
+                        *m++ = 0;
+                    }
+                    else {
+                        // foreground found so replace with foreground color
+                        *m++ = r;
+                        *m++ = g;
+                        *m++ = b;
+    
+                        // set alpha based on grayness
+                        *m++ = 255 - bitmapr;
+                    }
+                }
+                else {
+                    // opaque background so just copy pixel
+                    *m++ = bitmapr;
+                    *m++ = bitmapg;
+                    *m++ = bitmapb;
+                    *m++ = 255;
+                }
+                iter++;
+            }
+            iter = rowstart;
+            iter.OffsetY(data, 1);
+        }
 
+    #else
+        // on Windows and Linux it's faster to convert the bitmap to a wxImage
+        wxImage image = bitmap.ConvertToImage();
+    
+        // get pointer to image data which is array of bytes in RGB format
+        // top-to-bottom and left-to-right order 
+        unsigned char* imagedata = image.GetData();
+    
+        int imager, imageg, imageb;
+        int pixel = 0;
+        int pixels = bitmapwd * bitmapht;
+    
+        while (pixel < pixels) {
+            imager = *imagedata++;
+            imageg = *imagedata++;
+            imageb = *imagedata++;
+    
             // check for transparent background
             if (bga < 255) {
                 // transparent so look for background pixels to swap
-                if (bitmapr == 255 && bitmapg == 255 && bitmapb == 255) {
+                if (imager == 255 && imageg == 255 && imageb == 255) {
                     // background found so replace with transparent pixel
                     *m++ = 0;
                     *m++ = 0;
@@ -3243,71 +3264,20 @@ const char* Overlay::DoText(const char* args)
                     *m++ = r;
                     *m++ = g;
                     *m++ = b;
-
+    
                     // set alpha based on grayness
-                    *m++ = 255 - bitmapr;
+                    *m++ = 255 - imager;
                 }
             }
             else {
                 // opaque background so just copy pixel
-                *m++ = bitmapr;
-                *m++ = bitmapg;
-                *m++ = bitmapb;
+                *m++ = imager;
+                *m++ = imageg;
+                *m++ = imageb;
                 *m++ = 255;
             }
-            iter++;
+            pixel++;
         }
-        iter = rowstart;
-        iter.OffsetY(data, 1);
-    }
-
-    #else
-
-    // convert the bitmap to an image
-    wxImage image = bitmap.ConvertToImage();
-
-    // get pointer to image data which is array of bytes in RGB format
-    // top-to-bottom and left-to-right order 
-    unsigned char* imagedata = image.GetData();
-
-    int imager, imageg, imageb;
-    int pixel = 0;
-    int pixels = bitmapwd * bitmapht;
-
-    while (pixel < pixels) {
-        imager = *imagedata++;
-        imageg = *imagedata++;
-        imageb = *imagedata++;
-
-        // check for transparent background
-        if (bga < 255) {
-            // transparent so look for background pixels to swap
-            if (imager == 255 && imageg == 255 && imageb == 255) {
-                // background found so replace with transparent pixel
-                *m++ = 0;
-                *m++ = 0;
-                *m++ = 0;
-                *m++ = 0;
-            }
-            else {
-                // foreground found so replace with foreground color
-                *m++ = r;
-                *m++ = g;
-                *m++ = b;
-
-                // set alpha based on grayness
-                *m++ = 255 - imager;
-            }
-        }
-        else {
-            // opaque background so just copy pixel
-            *m++ = imager;
-            *m++ = imageg;
-            *m++ = imageb;
-            *m++ = 255;
-        }
-        pixel++;
-    }
 
     #endif
 
