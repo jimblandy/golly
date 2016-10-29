@@ -20,7 +20,7 @@ local transbg = 0          -- for text transparent background
 --------------------------------------------------------------------------------
 
 local function ms(t)
-    return string.format("%.1f", 1000 * t).."ms"
+    return string.format("%.2f", 1000 * t).."ms"
 end
 
 --------------------------------------------------------------------------------
@@ -50,19 +50,21 @@ end
 
 local textclip = "textclip"
 
-local function maketext(s)
+local function maketext(s, clipname)
+    clipname = clipname or textclip
     -- convert given string to text in current font and return
     -- its width and height etc for later use by pastetext
-    local w, h, descent = split(ov("text "..textclip.." "..s))
+    local w, h, descent = split(ov("text "..clipname.." "..s))
     return tonumber(w), tonumber(h), tonumber(descent)
 end
 
 --------------------------------------------------------------------------------
 
-local function pastetext(x, y, transform)
+local function pastetext(x, y, transform, clipname)
     transform = transform or op.identity
+    clipname = clipname or textclip
     local oldtransform = ov(transform)
-    ov("paste "..x.." "..y.." "..textclip)
+    ov("paste "..x.." "..y.." "..clipname)
     ov("transform "..oldtransform)
 end
 
@@ -78,6 +80,7 @@ local function show_help()
 [[
 Special keys and their actions:
 
+a -- test animation
 b -- test alpha blending
 c -- test cursors
 C -- create overlay that covers layer
@@ -202,6 +205,178 @@ end
 
 --------------------------------------------------------------------------------
 
+local function test_animation()
+    local t1
+
+    -- grid size
+    local tilewd = 48
+    local tileht = 48
+
+    -- glider
+    local glider = {
+        [1] = { 1, 1, 1, 0, 0, 1, 0, 1, 0 },
+        [2] = { 0, 1, 0, 0, 1, 1, 1, 0, 1 },
+        [3] = { 0, 1, 1, 1, 0, 1, 0, 0, 1 },
+        [4] = { 1, 1, 0, 0, 1, 1, 1, 0, 0 }
+    }
+    local adjustx = { 0, 0, 0, 1 };
+    local adjusty = { 0, -1, 0, 0 };
+
+    -- create text clips
+    local banner = "Golly 2.9"
+    local oldfont = ov("font 200 mono")
+    ov("rgba 255 192 32 144")
+    local w, h = maketext(banner, "clip1")
+    ov("rgba 255 192 32 255")
+    maketext(banner, "clip2")
+
+    -- create graduated background
+    local level
+
+    for y = 0, ht / 2 do
+        level = 32 + math.floor(192 * (y * 2 / ht))
+        ov("rgba 0 0 "..level.." 255")
+        ov("line 0 "..y.." "..wd.." "..y)
+        ov("line 0 "..(ht - y).." "..wd.." "..(ht -y))
+    end
+
+    -- create stars
+    local starx = {}
+    local stary = {}
+    local stard = {}
+    local numstars = 1000
+    for i = 1, numstars do
+        starx[i] = math.random(0, wd - 1)
+        stary[i] = math.random(0, ht - 1)
+        stard[i] = math.floor((i - 1) / 10) / 100
+    end
+
+    -- save background
+    ov("copy 0 0 0 0 bg")
+
+    local textx = wd
+    local texty
+    local gridx = 0
+    local offset
+    local running = true
+    local gliderx = 0
+    local glidery = math.floor(ht / tileht)
+    local gliderframe = 1
+    local x, y
+    local lastframe = -1
+
+    while running do
+        -- stop when key pressed
+        local event = g.getevent()
+        if event:find("^key") then
+            local _, ch, mods = split(event)
+            running = false
+        end
+
+        t1 = os.clock()
+
+        -- draw background
+        ov("blend 0")
+        ov("paste 0 0 bg")
+
+        -- draw stars
+        local level = 50
+        local i = 1
+        ov("rgba "..level.." "..level.." "..level.." 255")
+        local lastd = stard[i]
+
+        for i = 1, numstars do
+            if (stard[i] ~= lastd) then
+                ov("rgba "..level.." "..level.." "..level.." 255")
+                level = level + 2
+                lastd = stard[i]
+            end
+            starx[i] = starx[i] + lastd
+            if starx[i] > wd then
+                starx[i] = 0
+            end
+            x = math.floor(starx[i])
+            y = math.floor(stary[i])
+            ov("set "..x.." "..y)
+        end
+
+        -- draw glider
+        offset = math.floor(gridx)
+        ov(op.white)
+        local gx, gy
+        local frame = math.floor(gliderframe)
+        if frame == 5 then
+            gliderframe = 1
+            frame = 1
+        end
+        if frame ~= lastframe then
+            gliderx = gliderx + adjustx[frame]
+            glidery = glidery + adjusty[frame]
+            lastframe = frame
+            if glidery < -3 then
+                glidery = math.floor(ht / tileht)
+            end
+            if gliderx > wd / tilewd then
+                gliderx = -3 
+            end
+        end
+        gliderframe = gliderframe + 0.05
+        
+        for gy = 0, 2 do
+            for gx = 0, 2 do
+                if glider[frame][3 * gy + gx + 1] == 1 then
+                    x = (gliderx + gx) * tilewd + offset
+                    y = (glidery + gy) * tileht + offset
+                    ov("fill "..x.." "..y.." "..tilewd.." "..tileht)
+                end
+            end
+        end
+
+        -- draw gridlines
+        ov("rgba 128 128 128 255")
+        for i = 0, wd, tilewd do
+           ov("line "..(i + offset).." 0 "..(i + offset).." "..ht)
+        end
+        for i = 0, ht, tileht do
+           ov("line 0 "..(i + offset).." "..wd.." "..(i + offset))
+        end
+
+        -- draw bounding scrolling text
+        ov("blend 1")
+        texty = math.floor(((ht - h) / 2 + (100 * math.sin(textx / 100))))
+        pastetext(textx, texty, op.identity, "clip1")
+
+        texty = math.floor(((ht - h) / 2 - (100 * math.sin(textx / 100))))
+        pastetext(textx, texty, op.identity, "clip2")
+
+        -- update display
+        ov("update")
+
+        -- move grid
+        gridx = gridx + 0.2
+        if gridx >= tilewd then
+            gridx = 0
+            gliderx = gliderx + 1
+            glidery = glidery + 1
+        end
+
+        -- move text
+        textx = textx - 1
+        if textx == -w then
+            textx = wd
+        end
+
+        -- display frame time
+        g.show("Press any key to stop.  Frame time: "..ms(os.clock()-t1))
+    end
+        
+    ov("font "..oldfont)
+    ov("blend 0")
+
+end
+
+--------------------------------------------------------------------------------
+
 local function test_save()
     ov("save 0 0 "..wd.." "..ht.." test-save.png")
     g.show("overlay has been saved in test-save.png")
@@ -221,16 +396,30 @@ end
 --------------------------------------------------------------------------------
 
 local function test_lines()
+    toggle = 1 - toggle
+
+    ov("blend 0")
     ov(op.blue)
     ov("fill")
-    ov(op.red)
+
+    if toggle > 0 then
+        ov("blend 1") -- turn on alpha blending
+        ov("rgba 255 64 64 192")
+    else
+        ov(op.red)
+    end
+
     local maxx = wd-1
     local maxy = ht-1
     local t1 = os.clock()
     for i = 1, 1000 do
         ov("line "..rand(0,maxx).." "..rand(0,maxy).." "..rand(0,maxx).." "..rand(0,maxy))
     end
-    g.show("Time to draw one thousand lines: "..ms(os.clock()-t1))
+    g.show("Time to draw one thousand lines: "..ms(os.clock()-t1).."  transparent "..toggle)
+  
+    if toggle > 0 then
+        ov("blend 0") -- turn off alpha blending
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -279,6 +468,7 @@ And enterprises of great pitch and moment
 With this regard their currents turn awry,
 And lose the name of action.
 Soft you now! The fair Ophelia! Nymph,
+In thy Orisons be all my sins remembered.
 
 Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
                 ÁÀÂÄÃÅÇÉÈÊËÍÌÎÏÑÓÒÔÖÕÚÙÛÜÆØŒŸ
@@ -318,7 +508,7 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     ov("blend "..transbg)
     maketext(textstr)
     t1 = os.clock() - t1
-    t2 = os.clock()
+    local t2 = os.clock()
 
     -- paste the clip onto the overlay
     pastetext(0, 0)
@@ -507,7 +697,7 @@ local function test_fill()
         ov("rgba "..rand(0,255).." "..rand(0,255).." "..rand(0,255).." "..rand(0,255))
         ov("fill "..rand(0,maxx).." "..rand(0,maxy).." "..rand(100).." "..rand(100))
     end
-    g.show("Time to fill one thousand rectangles: "..ms(os.clock()-t1))
+    g.show("Time to fill one thousand rectangles: "..ms(os.clock()-t1).."  transparent "..toggle)
     ov("rgba 0 0 0 0")
     ov("fill 10 10 100 100") -- does nothing when alpha blending is on
 
@@ -636,6 +826,8 @@ local function main()
                 test_lines()
             elseif ch == 'v' then
                 test_copy_paste()
+            elseif ch == 'a' then
+                test_animation()
             elseif ch == 'h' then
                 show_help()
             else

@@ -1171,7 +1171,7 @@ void Overlay::DrawGridLines()
 
     // start drawing the grid lines
     unsigned int targetRGBA = gridRGBA;
-    unsigned int drawRGBA = gridRGBA;;
+    unsigned int drawRGBA = gridRGBA;
     int gridlineNum;
     int vlineNum;
 
@@ -1473,7 +1473,7 @@ const char* Overlay::DoCellView(const char* args)
     ishex = false;
 
     // use standard pattern colors
-    theme = false; 
+    theme = false;
 
     // disable grid and set default grid major interval
     grid = false;
@@ -1830,7 +1830,7 @@ const char* Overlay::DoCreate(const char* args)
 
     // default text background
     textbgRGBA = 0;
-    
+
     // make sure the Show Overlay option is ticked
     if (!showoverlay) mainptr->ToggleOverlay();
 
@@ -2954,7 +2954,7 @@ const char* Overlay::TextOptionAlign(const char* args)
     // save alignment settings
     align = newalign;
 
-    return result;;
+    return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -3062,7 +3062,7 @@ const char* Overlay::DoText(const char* args)
     // find first line
     char *textlines = textarg;
     index = strchr(textlines, '\n');
-    
+
     // process each line of text to size the bitmap
     int bitmapwd = 0;
     int bitmapht = 0;
@@ -3131,7 +3131,7 @@ const char* Overlay::DoText(const char* args)
     wxRect rect(0, 0, bitmapwd, bitmapht);
     dc.SetPen(*wxTRANSPARENT_PEN);
     wxBrush brush(textbgcol);
-    
+
     // if blending use transparent and replace later
     if (bga < 255) brush.SetColour(transbgcol);
 
@@ -3140,7 +3140,7 @@ const char* Overlay::DoText(const char* args)
     dc.DrawRectangle(rect);
     dc.SetBrush(wxNullBrush);
     dc.SetPen(wxNullPen);
-        
+
     // set text background color to transparent
     dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
 
@@ -3186,11 +3186,11 @@ const char* Overlay::DoText(const char* args)
     #ifdef __WXMAC__
         // don't convert bitmap to a wxImage on Mac (significantly slower)
         int bitmapr, bitmapg, bitmapb;
-    
+
         // get iterator of bitmap data
         wxAlphaPixelData data(bitmap);
         wxAlphaPixelData::Iterator iter(data);
-        
+
         for (int y = 0; y < bitmapht; y++) {
             wxAlphaPixelData::Iterator rowstart = iter;
             for (int x = 0; x < bitmapwd; x++) {
@@ -3198,7 +3198,7 @@ const char* Overlay::DoText(const char* args)
                 bitmapr = iter.Red();
                 bitmapg = iter.Green();
                 bitmapb = iter.Blue();
-    
+
                 // check for transparent background
                 if (bga < 255) {
                     // transparent so look for background pixels to swap
@@ -3214,7 +3214,7 @@ const char* Overlay::DoText(const char* args)
                         *m++ = r;
                         *m++ = g;
                         *m++ = b;
-    
+
                         // set alpha based on grayness
                         *m++ = 255 - bitmapr;
                     }
@@ -3235,20 +3235,20 @@ const char* Overlay::DoText(const char* args)
     #else
         // on Windows and Linux it's faster to convert the bitmap to a wxImage
         wxImage image = bitmap.ConvertToImage();
-    
+
         // get pointer to image data which is array of bytes in RGB format
-        // top-to-bottom and left-to-right order 
+        // top-to-bottom and left-to-right order
         unsigned char* imagedata = image.GetData();
-    
+
         int imager, imageg, imageb;
         int pixel = 0;
         int pixels = bitmapwd * bitmapht;
-    
+
         while (pixel < pixels) {
             imager = *imagedata++;
             imageg = *imagedata++;
             imageb = *imagedata++;
-    
+
             // check for transparent background
             if (bga < 255) {
                 // transparent so look for background pixels to swap
@@ -3264,7 +3264,7 @@ const char* Overlay::DoText(const char* args)
                     *m++ = r;
                     *m++ = g;
                     *m++ = b;
-    
+
                     // set alpha based on grayness
                     *m++ = 255 - imager;
                 }
@@ -3335,7 +3335,7 @@ bool Overlay::OnlyDrawOverlay()
         // this flag must only be used for one refresh so reset it immediately
         only_draw_overlay = false;
         return showoverlay && !(numlayers > 1 && tilelayers);
-    } else {   
+    } else {
         return false;
     }
 }
