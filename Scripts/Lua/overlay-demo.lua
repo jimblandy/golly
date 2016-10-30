@@ -300,7 +300,7 @@ reports and suggestions and especially:
 
 Dave Greene
 
-Gariel Nivasch
+Gabriel Nivasch
 
 Dean Hickerson
 
@@ -461,12 +461,8 @@ David Bell
                 lastd = stard[i]
             end
             starx[i] = starx[i] + lastd
-            stary[i] = stary[i] + lastd
             if starx[i] > wd then
                 starx[i] = 0
-            end
-            if stary[i] > ht then
-                stary[i] = 0
             end
             x = math.floor(starx[i])
             y = math.floor(stary[i])
