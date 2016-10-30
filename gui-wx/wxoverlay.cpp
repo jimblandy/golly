@@ -3176,7 +3176,7 @@ const char* Overlay::DoText(const char* args)
     dc.SetPen(wxNullPen);
 
     // set text background color to transparent
-    dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
+    dc.SetBackgroundMode(wxTRANSPARENT);
 
     // set text foreground color
     if (bga < 255) {
