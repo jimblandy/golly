@@ -34,33 +34,34 @@
     #pragma warning(default:4702)   // enable "unreachable code" warnings
 #endif
 
-// maximum columns
-const int maxcols = 10;
-
-// maximum length delimiter string
-const int maxdelim = 10;
 
 // The overlay is a scriptable graphics layer that is (optionally) drawn
-// on top of Golly's current layer.
+// on top of Golly's current layer.  See Help/overlay.html for details.
+
 
 // The overlay can be displayed at any corner or in the middle:
 typedef enum {
     topleft, topright, bottomright, bottomleft, middle
 } overlay_position;
 
-// Multiline text can be left or right justified or centered.
+// Multi-line text can be left or right justified or centered:
 typedef enum {
     left, right, center
 } text_alignment;
+
 
 // The Clip class is used by the copy and text commands to store pixel data
 // in a named "clipboard" for later use by the paste command:
 class Clip {
 public:
-    Clip(int w, int h) {
+    Clip(int w, int h, bool use_calloc = false) {
         cwd = w;
         cht = h;
-        cdata = (unsigned char*) malloc(cwd * cht * 4);
+        if (use_calloc) {
+            cdata = (unsigned char*) calloc(cwd * cht * 4, sizeof(*cdata));
+        } else {
+            cdata = (unsigned char*) malloc(cwd * cht * 4);
+        }
     }
     ~Clip() {
         if (cdata) free(cdata);
@@ -68,6 +69,7 @@ public:
     unsigned char* cdata;   // RGBA data (cwd * cht * 4 bytes)
     int cwd, cht;
 };
+
 
 class Overlay {
 public:
@@ -341,69 +343,65 @@ private:
     void DeleteStars();
     // Free the memory used by the stars.
 
-    unsigned char* pixmap;         // RGBA data (wd * ht * 4 bytes)
-    int wd, ht;                    // width and height of pixmap
-    unsigned char r, g, b, a;      // current RGBA values for drawing pixels
-    bool alphablend;               // do alpha blending when drawing translucent pixels?
-    bool only_draw_overlay;        // set by DoUpdate, reset by OnlyDrawOverlay
-    overlay_position pos;          // where to display overlay
-    const wxCursor* ovcursor;      // cursor to use when mouse is in overlay
-    std::string cursname;          // remember cursor name
-    int axx, axy, ayx, ayy;        // affine transformation values
-    bool identity;                 // true if transformation values are 1,0,0,1
-
-    // text
-
-    wxFont currfont;               // current font used by text command
-    std::string fontname;          // name of current font
-    int fontsize;                  // size of current font
-    text_alignment align;          // text alignment
-    unsigned int textbgRGBA;       // text background color
+    unsigned char* pixmap;          // RGBA data (wd * ht * 4 bytes)
+    int wd, ht;                     // width and height of pixmap
+    unsigned char r, g, b, a;       // current RGBA values for drawing pixels
+    bool alphablend;                // do alpha blending when drawing translucent pixels?
+    bool only_draw_overlay;         // set by DoUpdate, reset by OnlyDrawOverlay
+    overlay_position pos;           // where to display overlay
+    const wxCursor* ovcursor;       // cursor to use when mouse is in overlay
+    std::string cursname;           // remember cursor name
+    int axx, axy, ayx, ayy;         // affine transformation values
+    bool identity;                  // true if transformation values are 1,0,0,1
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste
 
-    // cell view
+    // text
+    wxFont currfont;                // current font used by text command
+    std::string fontname;           // name of current font
+    int fontsize;                   // size of current font
+    text_alignment align;           // text alignment
+    unsigned int textbgRGBA;        // text background color
 
-    unsigned int cellRGBA[256]; // cell RGBA values
-    unsigned char* cellview;    // cell state data (cellwd * cellht bytes)
-    unsigned char* zoomview;    // cell state data (cellwd * cellht bytes) for zoom out
-    int cellwd, cellht;         // width and height of cell view
-    int cellx, celly;           // x and y position of bottom left cell
-    bool ishex;                 // whether to display in hex mode
+    // cell view
+    unsigned int cellRGBA[256];     // cell RGBA values
+    unsigned char* cellview;        // cell state data (cellwd * cellht bytes)
+    unsigned char* zoomview;        // cell state data (cellwd * cellht bytes) for zoom out
+    int cellwd, cellht;             // width and height of cell view
+    int cellx, celly;               // x and y position of bottom left cell
+    bool ishex;                     // whether to display in hex mode
 
     // camera
-
-    double camx;                 // camera x position
-    double camy;                 // camera y position
-    double camzoom;              // camera zoom
-    double camangle;             // camera angle
-    int camlayers;               // camera layers
-    double camlayerdepth;        // camera layer depth
+    double camx;                    // camera x position
+    double camy;                    // camera y position
+    double camzoom;                 // camera zoom
+    double camangle;                // camera angle
+    int camlayers;                  // camera layers
+    double camlayerdepth;           // camera layer depth
 
     // theme
-
-    bool theme;                  // whether a theme is active
-    unsigned int aliveStartRGBA; // new cell RGBA
-    unsigned int aliveEndRGBA;   // cell alive longest RGBA
-    unsigned int deadStartRGBA;  // cell just died RGBA
-    unsigned int deadEndRGBA;    // cell dead longest RGBA
-    unsigned int unoccupiedRGBA; // cell never occupied RGBA
+    bool theme;                     // whether a theme is active
+    unsigned int aliveStartRGBA;    // new cell RGBA
+    unsigned int aliveEndRGBA;      // cell alive longest RGBA
+    unsigned int deadStartRGBA;     // cell just died RGBA
+    unsigned int deadEndRGBA;       // cell dead longest RGBA
+    unsigned int unoccupiedRGBA;    // cell never occupied RGBA
 
     // grid
-    bool grid;                   // whether to display grid lines
-    int gridmajor;               // major grid line interval
-    unsigned int gridRGBA;       // grid line color
-    unsigned int gridmajorRGBA;  // major grid line color
-    bool customgridcolor;        // whether grid line color is custom
-    bool customgridmajorcolor;   // whether major grid line color is custom
+    bool grid;                      // whether to display grid lines
+    int gridmajor;                  // major grid line interval
+    unsigned int gridRGBA;          // grid line color
+    unsigned int gridmajorRGBA;     // major grid line color
+    bool customgridcolor;           // whether grid line color is custom
+    bool customgridmajorcolor;      // whether major grid line color is custom
 
     // stars
-    double* starx;               // star x coordinates
-    double* stary;               // star y coordinates
-    double* starz;               // star z coordinates
-    unsigned int starRGBA;       // star color
-    bool stars;                  // whether to display stars
+    double* starx;                  // star x coordinates
+    double* stary;                  // star y coordinates
+    double* starz;                  // star z coordinates
+    unsigned int starRGBA;          // star color
+    bool stars;                     // whether to display stars
 };
 
 extern Overlay* curroverlay;    // pointer to current overlay (set by client)

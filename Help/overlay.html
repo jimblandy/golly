@@ -203,10 +203,10 @@ The width and height must be from 16 to 4096 and a multiple of 16.
 <dd>
 Copy the pixels in the given rectangle into the named <a href="#clips">clip</a>
 for later use by a <a href="#paste">paste</a> command.
-An error will occur if any part of the rectangle is outside the overlay.
 If the given width or height is less than 1 then it is treated as an inset from
 the overlay's current width or height (this makes it easy to copy the entire
 overlay with a command like <b>"copy 0 0 0 0 all"</b>).
+Any parts of the rectangle outside the overlay are filled with transparent pixels.
 The clip name can contain any characters except a space.
 </dd>
 <dd> Example: <b>ov("copy 0 0 100 200 tempbox")</b></dd>

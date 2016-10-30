@@ -743,6 +743,41 @@ end
 
 --------------------------------------------------------------------------------
 
+local function test_copy_outside()
+    -- test copy rect outside overlay
+    local oldblend = ov("blend 0")
+    
+    ov(op.blue)
+    ov("fill")
+    
+    -- test big clip outside all edges
+    ov("copy -15 -15 "..(wd+30).." "..(ht+30).." foo")
+    ov("paste 50 15 foo")
+    ov("paste "..-int(wd/2).." "..(ht-30).." foo")
+    
+    -- test clip completely outside overlay (and thus transparent)
+    ov("copy -5 -5 5 5 foo")
+    ov("paste 5 30 foo")
+    ov("copy "..wd.." "..ht.." 15 15 foo")
+    ov("paste 5 40 foo")
+    
+    -- partially outside top left corner
+    ov(op.yellow)
+    ov("fill 5 5 5 5")
+    ov("copy -5 -5 15 15 foo")
+    ov("paste 10 10 foo")
+    
+    -- partially outside bottom right corner
+    ov(op.red)
+    ov("fill "..(wd-5).." "..(ht-5).." 5 5")
+    ov("copy "..(wd-5).." "..(ht-5).." 10 10 foo")
+    ov("paste "..(wd-15).." "..(ht-15).." foo")
+    
+    ov("blend "..oldblend)
+end
+
+--------------------------------------------------------------------------------
+
 local function expand(x, y)
     -- do via some sort of scale command???!!!
 end
@@ -759,22 +794,21 @@ local errnum = 0
 
 local function test_errors()
     local function force_error()
-        if errnum >= 14 then errnum = 0 end -- cycle back to 1st error
+        if errnum >= 13 then errnum = 0 end -- cycle back to 1st error
         errnum = errnum + 1
-        if errnum == 1 then ov("xxx") end
-        if errnum == 2 then ov("position yyy") end
-        if errnum == 3 then ov("create -1 1") end
-        if errnum == 4 then ov("create 1 -1") end
-        if errnum == 5 then ov("rgba 1 2 3") end
-        if errnum == 6 then ov("rgba -1 0 0 256") end
-        if errnum == 7 then ov("load 0 0 unknown.png") end
-        if errnum == 8 then ov("save -1 -1 2 2 foo.png") end
-        if errnum == 9 then ov("save 0 0 1 1 unsupported.bmp") end
-        if errnum == 10 then ov("copy -1 -1 2 2 foo") end
-        if errnum == 11 then ov("copy 0 0 1 1 ") end
-        if errnum == 12 then ov("paste 0 0 badname") end
-        if errnum == 13 then ov("cursor xxx") end
-        if errnum == 14 then ov("text foo") end
+        if errnum ==  1 then ov("xxx") end
+        if errnum ==  2 then ov("position yyy") end
+        if errnum ==  3 then ov("create -1 1") end
+        if errnum ==  4 then ov("create 1 -1") end
+        if errnum ==  5 then ov("rgba 1 2 3") end
+        if errnum ==  6 then ov("rgba -1 0 0 256") end
+        if errnum ==  7 then ov("load 0 0 unknown.png") end
+        if errnum ==  8 then ov("save -1 -1 2 2 foo.png") end
+        if errnum ==  9 then ov("save 0 0 1 1 unsupported.bmp") end
+        if errnum == 10 then ov("copy 0 0 1 1 ") end
+        if errnum == 11 then ov("paste 0 0 badname") end
+        if errnum == 12 then ov("cursor xxx") end
+        if errnum == 13 then ov("text foo") end
     end
     local status, err = pcall(force_error)
     if err then
@@ -828,6 +862,8 @@ local function main()
                 test_copy_paste()
             elseif ch == 'a' then
                 test_animation()
+            elseif ch == 'z' then
+                test_copy_outside()
             elseif ch == 'h' then
                 show_help()
             else

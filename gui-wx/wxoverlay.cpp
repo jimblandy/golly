@@ -2265,16 +2265,11 @@ const char* Overlay::DoFill(const char* args)
             return OverlayError("fill command requires 0 or 4 arguments");
         }
 
-        if (w <= 0) {
-            // treat non-positive width as inset from current width
-            w = wd + w;
-            if (w <= 0) return NULL;
-        }
-        if (h <= 0) {
-            // treat non-positive height as inset from current height
-            h = ht + h;
-            if (h <= 0) return NULL;
-        }
+        // treat non-positive w/h as inset from overlay's width/height
+        if (w <= 0) w = wd + w;
+        if (h <= 0) h = ht + h;
+        if (w <= 0) return OverlayError("fill width must be > 0");
+        if (h <= 0) return OverlayError("fill height must be > 0");
 
         // ignore rect if completely outside pixmap edges
         if (RectOutsideOverlay(x, y, w, h)) return NULL;
@@ -2314,17 +2309,12 @@ const char* Overlay::DoCopy(const char* args)
         return OverlayError("copy command requires 5 arguments");
     }
 
-    // treat non-positive w/h as inset from current width/height
+    // treat non-positive w/h as inset from overlay's width/height
     // (makes it easy to copy entire overlay via "copy 0 0 0 0 all")
     if (w <= 0) w = wd + w;
     if (h <= 0) h = ht + h;
-
     if (w <= 0) return OverlayError("copy width must be > 0");
     if (h <= 0) return OverlayError("copy height must be > 0");
-
-    if (x < 0 || x+w-1 >= wd || y < 0 || y+h-1 >= ht) {
-        return OverlayError("copy rectangle must be within overlay");
-    }
 
     std::string name = args + namepos;
 
@@ -2335,29 +2325,72 @@ const char* Overlay::DoCopy(const char* args)
         delete it->second;
         clips.erase(it);
     }
+    
+    bool use_calloc;
+    if (RectInsideOverlay(x, y, w, h)) {
+        // use malloc to allocate clip memory
+        use_calloc = false;
+    } else {
+        // use calloc so parts outside overlay will be transparent
+        use_calloc = true;
+    }
 
-    Clip* newclip = new Clip(w, h);
+    Clip* newclip = new Clip(w, h, use_calloc);
     if (newclip == NULL || newclip->cdata == NULL) {
         delete newclip;
         return OverlayError("not enough memory to copy pixels");
     }
 
-    // fill newclip->cdata with pixel data from given rectangle in pixmap
-    unsigned char* data = newclip->cdata;
-
-    if (x == 0 && y == 0 && w == wd && h == ht) {
-        // clip and overlay are the same size so do a fast copy
-        memcpy(data, pixmap, w * h * 4);
-
+    if (use_calloc) {
+        if (RectOutsideOverlay(x, y, w, h)) {
+            // clip rect is completely outside overlay so no need to copy
+            // overlay pixels (clip pixels are all transparent)
+        } else {
+            // calculate offsets in clip data and bytes per row
+            int clipx = x >= 0 ? 0 : -x;
+            int clipy = y >= 0 ? 0 : -y;
+            int cliprowbytes = w * 4;
+            
+            // set x,y,w,h to intersection with overlay
+            int xmax = x + w - 1;
+            int ymax = y + h - 1;
+            if (x < 0) x = 0;
+            if (y < 0) y = 0;
+            if (xmax >= wd) xmax = wd - 1;
+            if (ymax >= ht) ymax = ht - 1;
+            w = xmax - x + 1;
+            h = ymax - y + 1;
+            
+            // copy intersection rect from overlay into corresponding area of clip data
+            unsigned char* dest = newclip->cdata + clipy*cliprowbytes + clipx*4;
+            int rowbytes = wd * 4;
+            int wbytes = w * 4;
+            unsigned char* src = pixmap + y*rowbytes + x*4;
+            for (int i = 0; i < h; i++) {
+                memcpy(dest, src, wbytes);
+                src += rowbytes;
+                dest += cliprowbytes;
+            }
+        }
     } else {
-        // use memcpy to copy each row
-        int rowbytes = wd * 4;
-        int wbytes = w * 4;
-        unsigned char* p = pixmap + y*rowbytes + x*4;
-        for (int i=0; i<h; i++) {
-            memcpy(data, p, wbytes);
-            p += rowbytes;
-            data += wbytes;
+        // given rectangle is within overlay so fill newclip->cdata with
+        // pixel data from that rectangle in pixmap
+        unsigned char* dest = newclip->cdata;
+    
+        if (x == 0 && y == 0 && w == wd && h == ht) {
+            // clip and overlay are the same size so do a fast copy
+            memcpy(dest, pixmap, w * h * 4);
+    
+        } else {
+            // use memcpy to copy each row
+            int rowbytes = wd * 4;
+            int wbytes = w * 4;
+            unsigned char* src = pixmap + y*rowbytes + x*4;
+            for (int i = 0; i < h; i++) {
+                memcpy(dest, src, wbytes);
+                src += rowbytes;
+                dest += wbytes;
+            }
         }
     }
 
@@ -2662,15 +2695,14 @@ const char* Overlay::DoSave(const char* args)
         return OverlayError("save command requires 5 arguments");
     }
 
-    // treat non-positive w/h as inset from current width/height
+    // treat non-positive w/h as inset from overlay's width/height
     // (makes it easy to save entire overlay via "save 0 0 0 0 foo.png")
     if (w <= 0) w = wd + w;
     if (h <= 0) h = ht + h;
-
     if (w <= 0) return OverlayError("save width must be > 0");
     if (h <= 0) return OverlayError("save height must be > 0");
 
-    if (x < 0 || x+w-1 >= wd || y < 0 || y+h-1 >= ht) {
+    if (x < 0 || x+w > wd || y < 0 || y+h > ht) {
         return OverlayError("save rectangle must be within overlay");
     }
 
