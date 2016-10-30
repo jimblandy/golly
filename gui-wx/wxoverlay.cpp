@@ -3088,8 +3088,8 @@ const char* Overlay::DoText(const char* args)
     }
 
     // allocate line width and start position buffers
-    int width[lines];
-    char *line[lines];
+    int* width = (int*) malloc(lines * sizeof(int));
+    char** line = (char**) malloc(lines * sizeof(char*));
 
     // find first line
     char *textlines = textarg;
@@ -3126,7 +3126,7 @@ const char* Overlay::DoText(const char* args)
             index = strchr(textlines, '\n');
         }
         i++;
-    } while(i < lines);
+    } while (i < lines);
 
     // delete any existing clip data with the given name
     std::map<std::string,Clip*>::iterator it;
@@ -3140,6 +3140,8 @@ const char* Overlay::DoText(const char* args)
     Clip* textclip = new Clip(bitmapwd, bitmapht);
     if (textclip == NULL || textclip->cdata == NULL) {
         delete textclip;
+        free(width);
+        free(line);
         return OverlayError("not enough memory for text clip");
     }
 
@@ -3208,6 +3210,10 @@ const char* Overlay::DoText(const char* args)
         // next line
         textrow += lineht;
     }
+    
+    // deallocate buffers
+    free(width);
+    free(line);
 
     // deselect the bitmap
     dc.SelectObject(wxNullBitmap);
