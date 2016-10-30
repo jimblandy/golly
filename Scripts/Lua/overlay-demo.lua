@@ -223,12 +223,178 @@ local function test_animation()
     local adjusty = { 0, -1, 0, 0 };
 
     -- create text clips
-    local banner = "Golly 2.9"
+    local oldblend = ov("blend 0")
+    local oldalign = ov("textoption align left")
+    local oldbg = ov("textoption background 0 0 0 0")
+
     local oldfont = ov("font 200 mono")
+    local banner = "Golly 2.9"
     ov("rgba 255 192 32 144")
     local w, h = maketext(banner, "clip1")
     ov("rgba 255 192 32 255")
     maketext(banner, "clip2")
+
+    ov("rgba 128 255 255 255")
+    local oldalign = ov("textoption align center")
+    ov("font 14 roman")
+
+    local credits = [[
+GOLLY 2.9
+
+
+© 2016 The Golly Gang:
+
+Tom Rokicki, Andrew Trevorrow, Tim Hutton, Dave Greene,
+Jason Summers, Maks Verver, Robert Munafo, Chris Rowett.
+
+
+
+
+CREDITS
+
+
+
+
+The Pioneers
+
+
+John Conway
+for creating the Game of Life
+
+Martin Gardner
+for popularizing the topic in Scientific American
+
+
+
+
+The Programmers
+
+
+Tom Rokicki
+for the complicated stuff
+
+Andrew Trevorrow
+for the cross-platform GUI and overlay
+
+Tim Hutton
+for the RuleTable algorithm
+
+Dave Greene
+
+Jason Summers
+
+Maks Verver
+
+Robert Munafo
+
+Chris Rowett
+
+
+
+
+The Beta Testers
+
+
+Thanks to all the bug hunters for their
+reports and suggestions and especially:
+
+Dave Greene
+
+Gariel Nivasch
+
+Dean Hickerson
+
+Brice Due
+
+David Eppstein
+
+Tony Smith
+
+Alan Hensel
+
+Dennis Langdeau
+
+Bill Gosper
+
+Mark Jeronimus
+
+Eric Goldstein
+
+
+
+
+Thanks to
+
+
+Bill Gopser
+for the idea behind the HashLife algorithm
+
+Alan Hensel
+for QuickLife ideas and non-totalistic algorithm
+
+David Eppstein
+for the B0 rule emulation idea
+
+Eugene Langvagen
+for Golly's scripting capabilities
+
+Stephen Silver
+for the wonderful Life Lexicon
+
+Nathaniel Johnston
+for the brilliant LifeWiki and the online archive
+
+Julian smart and all wxWidgets developers
+for wxWidgets
+
+Guido van Rossum
+for Python
+
+Roberto Lerusalimschy and all Lua developers
+for Lua
+
+
+
+
+Pattern Collection
+
+
+David Greene and Alan Hensel
+
+Thanks to everybody who allowed us to distribute
+their fantastic patterns, especially:
+
+Nick Gotts
+
+Gabriel Nivasch
+
+David Eppstein
+
+Jason Summers
+
+Stephen Morley
+
+Dean Hickerson
+
+Brice Due
+
+William R. Buckley
+
+David Moore
+
+Mark Owen
+
+Tim Hutton
+
+Renato Nobili
+
+Adam P. Goucher
+
+David Bell
+]]
+    local credwidth, credheight = maketext(credits, "credits")
+    ov(op.black)
+    maketext(credits, "credshadow")
 
     -- create graduated background
     local level
@@ -264,6 +430,9 @@ local function test_animation()
     local gliderframe = 1
     local x, y
     local lastframe = -1
+    local credity = ht
+    local creditx = math.floor((wd - credwidth) / 2)
+    local credpos
 
     while running do
         -- stop when key pressed
@@ -292,8 +461,12 @@ local function test_animation()
                 lastd = stard[i]
             end
             starx[i] = starx[i] + lastd
+            stary[i] = stary[i] + lastd
             if starx[i] > wd then
                 starx[i] = 0
+            end
+            if stary[i] > ht then
+                stary[i] = 0
             end
             x = math.floor(starx[i])
             y = math.floor(stary[i])
@@ -333,7 +506,7 @@ local function test_animation()
         end
 
         -- draw gridlines
-        ov("rgba 128 128 128 255")
+        ov("rgba 64 64 64 255")
         for i = 0, wd, tilewd do
            ov("line "..(i + offset).." 0 "..(i + offset).." "..ht)
         end
@@ -348,6 +521,15 @@ local function test_animation()
 
         texty = math.floor(((ht - h) / 2 - (100 * math.sin(textx / 100))))
         pastetext(textx, texty, op.identity, "clip2")
+
+        -- draw credits
+        credpos = math.floor(credity)
+        pastetext(creditx + 2, credpos + 2, op.identity, "credshadow")
+        pastetext(creditx, credpos, op.identity, "credits")
+        credity = credity - .25
+        if credity < -credheight then
+            credity = ht
+        end
 
         -- update display
         ov("update")
@@ -370,9 +552,10 @@ local function test_animation()
         g.show("Press any key to stop.  Frame time: "..ms(os.clock()-t1))
     end
         
+    ov("textoption align "..oldalign)
+    ov("textoption background "..oldbg)
     ov("font "..oldfont)
-    ov("blend 0")
-
+    ov("blend "..oldblend)
 end
 
 --------------------------------------------------------------------------------
