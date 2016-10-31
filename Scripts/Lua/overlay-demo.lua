@@ -222,23 +222,22 @@ local function test_animation()
     local adjustx = { 0, 0, 0, 1 };
     local adjusty = { 0, -1, 0, 0 };
 
-    -- create text clips
+    -- save settings
     local oldblend = ov("blend 0")
     local oldalign = ov("textoption align left")
     local oldbg = ov("textoption background 0 0 0 0")
 
+    -- create text clips
+    local gollyopaqueclip = "clip1"
+    local gollytranslucentclip = "clip2"
     local oldfont = ov("font 200 mono")
-    local banner = "Golly 2.9"
+    local bannertext = "Golly 2.9"
     ov("rgba 255 192 32 144")
-    local w, h = maketext(banner, "clip1")
+    local w, h = maketext(bannertext, gollyopaqueclip)
     ov("rgba 255 192 32 255")
-    maketext(banner, "clip2")
+    maketext(bannertext, gollytranslucentclip)
 
-    ov("rgba 128 255 255 255")
-    local oldalign = ov("textoption align center")
-    ov("font 14 roman")
-
-    local credits = [[
+    local creditstext = [[
 GOLLY 2.9
 
 
@@ -392,9 +391,16 @@ Adam P. Goucher
 
 David Bell
 ]]
-    local credwidth, credheight = maketext(credits, "credits")
+    local oldalign = ov("textoption align center")
+    ov("font 14 roman")
+
+    local creditsclip = "credits"
+    local creditsshadowclip = "credshadow"
+
+    ov("rgba 128 255 255 255")
+    local credwidth, credheight = maketext(creditstext, creditsclip)
     ov(op.black)
-    maketext(credits, "credshadow")
+    maketext(creditstext, creditsshadowclip)
 
     -- create graduated background
     local level
@@ -406,6 +412,10 @@ David Bell
         ov("line 0 "..(ht - y).." "..wd.." "..(ht -y))
     end
 
+    -- save background
+    local bgclip = "bg"
+    ov("copy 0 0 0 0 "..bgclip)
+
     -- create stars
     local starx = {}
     local stary = {}
@@ -416,9 +426,6 @@ David Bell
         stary[i] = math.random(0, ht - 1)
         stard[i] = math.floor((i - 1) / 10) / 100
     end
-
-    -- save background
-    ov("copy 0 0 0 0 bg")
 
     local textx = wd
     local texty
@@ -434,19 +441,20 @@ David Bell
     local creditx = math.floor((wd - credwidth) / 2)
     local credpos
 
+    -- main loop
     while running do
-        -- stop when key pressed
+        -- stop when key pressed or mouse button clicked
         local event = g.getevent()
-        if event:find("^key") then
-            local _, ch, mods = split(event)
+        if event:find("^key") or event:find("^oclick") then
             running = false
         end
 
+        -- measure frame draw time
         t1 = os.clock()
 
         -- draw background
         ov("blend 0")
-        ov("paste 0 0 bg")
+        ov("paste 0 0 "..bgclip)
 
         -- draw stars
         local level = 50
@@ -463,6 +471,7 @@ David Bell
             starx[i] = starx[i] + lastd
             if starx[i] > wd then
                 starx[i] = 0
+                stary[i] = math.random(0, ht - 1)
             end
             x = math.floor(starx[i])
             y = math.floor(stary[i])
@@ -510,18 +519,18 @@ David Bell
            ov("line 0 "..(i + offset).." "..wd.." "..(i + offset))
         end
 
-        -- draw bounding scrolling text
+        -- draw bouncing scrolling text
         ov("blend 1")
         texty = math.floor(((ht - h) / 2 + (100 * math.sin(textx / 100))))
-        pastetext(textx, texty, op.identity, "clip1")
+        pastetext(textx, texty, op.identity, gollytranslucentclip)
 
         texty = math.floor(((ht - h) / 2 - (100 * math.sin(textx / 100))))
-        pastetext(textx, texty, op.identity, "clip2")
+        pastetext(textx, texty, op.identity, gollyopaqueclip)
 
         -- draw credits
         credpos = math.floor(credity)
-        pastetext(creditx + 2, credpos + 2, op.identity, "credshadow")
-        pastetext(creditx, credpos, op.identity, "credits")
+        pastetext(creditx + 2, credpos + 2, op.identity, creditsshadowclip)
+        pastetext(creditx, credpos, op.identity, creditsclip)
         credity = credity - .25
         if credity < -credheight then
             credity = ht
@@ -545,9 +554,17 @@ David Bell
         end
 
         -- display frame time
-        g.show("Press any key to stop.  Frame time: "..ms(os.clock()-t1))
+        g.show("Press any key or mouse button to stop.  Frame time: "..ms(os.clock()-t1))
     end
-        
+
+    -- free clips
+    ov("freeclip "..gollytranslucentclip)
+    ov("freeclip "..gollyopaqueclip)
+    ov("freeclip "..creditsclip)
+    ov("freeclip "..creditsshadowclip)
+    ov("freeclip "..bgclip)
+
+    -- restore settings
     ov("textoption align "..oldalign)
     ov("textoption background "..oldbg)
     ov("font "..oldfont)
