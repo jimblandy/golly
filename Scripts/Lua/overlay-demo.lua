@@ -443,18 +443,25 @@ David Bell
 
     -- main loop
     while running do
+        t2 = os.clock()
+
+        -- measure frame draw time
+        t1 = os.clock()
+
         -- stop when key pressed or mouse button clicked
         local event = g.getevent()
         if event:find("^key") or event:find("^oclick") then
             running = false
         end
 
-        -- measure frame draw time
-        t1 = os.clock()
+        local timeevent = os.clock() - t1
 
         -- draw background
         ov("blend 0")
         ov("paste 0 0 "..bgclip)
+
+        local timebg = os.clock() - t1
+        t1 = os.clock()
 
         -- draw stars
         local level = 50
@@ -477,6 +484,9 @@ David Bell
             y = math.floor(stary[i])
             ov("set "..x.." "..y)
         end
+
+        local timestars = os.clock() - t1
+        t1 = os.clock()
 
         -- draw glider
         offset = math.floor(gridx)
@@ -510,6 +520,9 @@ David Bell
             end
         end
 
+        local timeglider = os.clock() - t1
+        t1 = os.clock()
+
         -- draw gridlines
         ov("rgba 64 64 64 255")
         for i = 0, wd, tilewd do
@@ -519,6 +532,9 @@ David Bell
            ov("line 0 "..(i + offset).." "..wd.." "..(i + offset))
         end
 
+        local timegrid = os.clock() - t1
+        t1 = os.clock()
+
         -- draw bouncing scrolling text
         ov("blend 1")
         texty = math.floor(((ht - h) / 2 + (100 * math.sin(textx / 100))))
@@ -526,6 +542,9 @@ David Bell
 
         texty = math.floor(((ht - h) / 2 - (100 * math.sin(textx / 100))))
         pastetext(textx, texty, op.identity, gollyopaqueclip)
+
+        local timegolly = os.clock() - t1
+        t1 = os.clock()
 
         -- draw credits
         credpos = math.floor(credity)
@@ -536,8 +555,14 @@ David Bell
             credity = ht
         end
 
+        local timecredits = os.clock() - t1
+        t1 = os.clock()
+
         -- update display
         ov("update")
+
+        local timeupdate = os.clock() - t1
+        t1 = os.clock()
 
         -- move grid
         gridx = gridx + 0.2
@@ -554,7 +579,9 @@ David Bell
         end
 
         -- display frame time
-        g.show("Press any key or mouse button to stop.  Frame time: "..ms(os.clock()-t1))
+        local frametime = os.clock() - t2
+        --g.show("Press any key or mouse button to stop.  Frame time: "..ms(os.clock()-t1))
+        g.show("Time: frame "..ms(frametime).."  event "..ms(timeevent).. "  bg "..ms(timebg).."  stars "..ms(timestars).."  glider "..ms(timeglider).."  grid "..ms(timegrid).."  golly "..ms(timegolly).."  credits "..ms(timecredits).."  update "..ms(timeupdate))
     end
 
     -- free clips
@@ -700,17 +727,18 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
 
     local t1 = os.clock()
 
-    -- create the text clip
     ov("blend "..transbg)
+
+    -- create the text clip
     maketext(textstr)
-    t1 = os.clock() - t1
-    local t2 = os.clock()
 
     -- paste the clip onto the overlay
+    local t2 = os.clock()
+    t1 = t2 - t1
     pastetext(0, 0)
 
     -- output timing and drawing options
-    g.show("Time to test multiline text: maketext "..ms(t1).."  pastetext "..ms(os.clock() - t2).. "  align "..string.format("%-6s", align).."  transparent "..transbg)
+    g.show("Time to test multiline text: maketext "..ms(t1).."  pastetext "..ms(os.clock() - t2).."  align "..string.format("%-6s", align).."  transparent "..transbg)
 
     -- restore old settings
     ov("textoption background "..oldbackground)
