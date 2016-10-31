@@ -2459,7 +2459,6 @@ const char* Overlay::DoPaste(const char* args)
         unsigned char savea = a;
 
         unsigned char* data = clipptr->cdata;
-        int datapos = 0;
 
         if (identity) {
             if (RectInsideOverlay(x, y, w, h)) {
@@ -2521,17 +2520,75 @@ const char* Overlay::DoPaste(const char* args)
                 }
             }
             else {
+                unsigned char* p;
                 for (int j = 0; j < h; j++) {
-                    for (int i = 0; i < w; i++) {
-                        r = data[datapos++];
-                        g = data[datapos++];
-                        b = data[datapos++];
-                        a = data[datapos++];
-                        if (PixelInOverlay(x, y)) DrawPixel(x, y);
-                        x++;
+                    // check if row is in overlay
+                    if (PixelInOverlay(0, y)) {
+                        p = pixmap + y * wd * 4 + x * 4;
+                        for (int i = 0; i < w; i++) {
+                            if (PixelInOverlay(x, y)) {
+                                r = *data++;
+                                g = *data++;
+                                b = *data++;
+                                a = *data++;
+
+                                // draw the pixel
+                                if (a < 255) {
+                                    if (a > 0) {
+                                        // source pixel is translucent so blend with destination pixel;
+                                        // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                                        unsigned char destr = p[0];
+                                        unsigned char destg = p[1];
+                                        unsigned char destb = p[2];
+                                        unsigned char desta = p[3];
+                                        if (desta == 255) {
+                                            // destination pixel is opaque
+                                            unsigned int alpha = a + 1;
+                                            unsigned int invalpha = 256 - a;
+                                            *p++ = (alpha * r + invalpha * destr) >> 8;
+                                            *p++ = (alpha * g + invalpha * destg) >> 8;
+                                            *p++ = (alpha * b + invalpha * destb) >> 8;
+                                            p++;   // no need to change p[3] (alpha stays at 255)
+                                        } else {
+                                            // destination pixel is translucent
+                                            float alpha = a / 255.0;
+                                            float inva = 1.0 - alpha;
+                                            float destalpha = desta / 255.0;
+                                            float outa = alpha + destalpha * inva;
+                                            p[3] = int(outa * 255);
+                                            if (p[3] > 0) {
+                                                *p++ = int((r * alpha + destr * destalpha * inva) / outa);
+                                                *p++ = int((g * alpha + destg * destalpha * inva) / outa);
+                                                *p++ = int((b * alpha + destb * destalpha * inva) / outa);
+                                                p++;   // already set above
+                                            } else {
+                                                p += 4;
+                                            }
+                                        }
+                                    } else {
+                                        // skip transparent pixel
+                                        p += 4;
+                                    }
+                                } else {
+                                    // pixel is opaque so copy it
+                                    *p++ = r;
+                                    *p++ = g;
+                                    *p++ = b;
+                                    *p++ = a;
+                                }
+                            } else {
+                                // pixel is outside overlay
+                                data += 4;
+                                p += 4;
+                            }
+                            x++;
+                        }
+                        x -= w;
+                    } else {
+                        // row is outside overlay
+                        data += 4 * w;
                     }
                     y++;
-                    x -= w;
                 }
             }
         } else {
@@ -2540,10 +2597,10 @@ const char* Overlay::DoPaste(const char* args)
             int y0 = y - (x * ayx + y * ayy);
             for (int j = 0; j < h; j++) {
                 for (int i = 0; i < w; i++) {
-                    r = data[datapos++];
-                    g = data[datapos++];
-                    b = data[datapos++];
-                    a = data[datapos++];
+                    r = *data++;
+                    g = *data++;
+                    b = *data++;
+                    a = *data++;
                     int newx = x0 + x * axx + y * axy;
                     int newy = y0 + x * ayx + y * ayy;
                     if (PixelInOverlay(newx, newy)) DrawPixel(newx, newy);
