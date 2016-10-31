@@ -3278,8 +3278,8 @@ const char* Overlay::DoText(const char* args)
     // copy text from top left corner of offscreen image into clip data
     unsigned char* m = textclip->cdata;
 
-    #ifdef __WXMAC__
-        // don't convert bitmap to a wxImage on Mac (significantly slower)
+    #ifndef __WXGTK__
+        // on Windows and Mac faster to iterate over the bitmap
         int bitmapr, bitmapg, bitmapb;
 
         // get iterator of bitmap data
@@ -3328,7 +3328,7 @@ const char* Overlay::DoText(const char* args)
         }
 
     #else
-        // on Windows and Linux it's faster to convert the bitmap to a wxImage
+        // on Linux it's faster to convert the bitmap to a wxImage
         wxImage image = bitmap.ConvertToImage();
 
         // get pointer to image data which is array of bytes in RGB format
