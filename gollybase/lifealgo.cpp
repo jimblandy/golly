@@ -526,7 +526,7 @@ void lifealgo::JoinTwistedAndShiftedEdges()
     }
 }
 
-void lifealgo::JoinShiftedEdges(int hshift, int vshift)  // horizontal and vertical shifts
+void lifealgo::JoinShiftedEdges()
 {
     // set grid edges
     int gl = gridleft.toint();
@@ -799,7 +799,7 @@ bool lifealgo::CreateBorderCells()
         
     } else if (hshift != 0 || vshift != 0) {
         // torus with horizontal or vertical shift
-        JoinShiftedEdges(hshift, vshift);
+        JoinShiftedEdges();
         
     } else {
         // unshifted torus or infinite tube

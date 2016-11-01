@@ -163,7 +163,7 @@ private:
    // following are called by CreateBorderCells() to join edges in various ways
    void JoinTwistedEdges() ;
    void JoinTwistedAndShiftedEdges() ;
-   void JoinShiftedEdges(int hshift, int vshift) ;
+   void JoinShiftedEdges() ;
    void JoinAdjacentEdges(int pt, int pl, int pb, int pr) ;
    void JoinEdges(int pt, int pl, int pb, int pr) ;
    // following is called by DeleteBorderCells()
