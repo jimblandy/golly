@@ -11,7 +11,7 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 22
+local buildnumber = 23
 
 local g = golly()
 local ov = g.overlay
@@ -95,7 +95,7 @@ local defgps = 60
 local defstep = 1
 local gps = defgps
 local step = defstep
-local genstarttime = os.clock()
+local genstarttime = g.millisecs()
 
 -- smooth camera movement
 local startx
@@ -251,21 +251,25 @@ local clips = {
     timingshortshadow = "tss",
     timinglongshadow = "tls",
     timingshortfg = "tsf",
-    timinglongfg = "tsl"
+    timinglongfg = "tsl",
+    shortht = 0,
+    longht = 0
 }
 
 --------------------------------------------------------------------------------
 
-local function maketext(s)
+local function maketext(s, name)
+    name = name or "temp"
     -- convert string to text in current font
-    local w, h, descent = gp.split(ov("text temp "..s))
+    local w, h, descent = gp.split(ov("text "..name.." "..s))
     return tonumber(w), tonumber(h), tonumber(descent)
 end
 
 --------------------------------------------------------------------------------
 
-local function pastetext(x, y)
-    ov("paste "..x.." "..y.." temp")
+local function pastetext(x, y, name)
+    name = name or "temp"
+    ov("paste "..x.." "..y.." "..name)
 end
 
 --------------------------------------------------------------------------------
@@ -278,12 +282,14 @@ local function makeclips()
     local longlabel = label.."\ncamera\ntext"
 
     ov(op.black)
-    ov("text "..clips.timingshortshadow.." "..label)
-    ov("text "..clips.timinglongshadow.." "..longlabel)
+    local w, h = maketext(label, clips.timingshortshadow)
+    clips.shortht = h
+    w, h = maketext(longlabel, clips.timinglongshadow)
+    clips.longht = h
     
     ov(op.white)
-    ov("text "..clips.timingshortfg.." "..label)
-    ov("text "..clips.timinglongfg.." "..longlabel)
+    maketext(label, clips.timingshortfg)
+    maketext(longlabel, clips.timinglongfg)
     
     -- restore settings
     ov("textoption background "..oldtextbg)
@@ -313,14 +319,14 @@ end
 --------------------------------------------------------------------------------
 
 local function drawtiming()
-    local start = os.clock()
+    local start = g.millisecs()
     local oldblend = ov("blend 1")
     local oldalign = ov("textoption align left")
     local oldtextbg = ov("textoption background 0 0 0 0")
 
-    local height = 3 * 18 + 2
+    local height = clips.shortht
     if timing.extended then
-        height = 5 * 18 + 2
+        height = clips.longht
     end
 
     -- draw translucent rectangle
@@ -345,7 +351,7 @@ local function drawtiming()
     ov("textoption background "..oldtextbg)
     ov("textoption align "..oldalign)
     ov("blend "..oldblend)
-    timing.texttime = 1000 * (os.clock() - start)
+    timing.texttime = g.millisecs() - start
 end
 
 --------------------------------------------------------------------------------
@@ -442,12 +448,12 @@ end
 --------------------------------------------------------------------------------
 
 local function refresh()
-    local start = os.clock()
+    local start = g.millisecs()
     local newx, newy, newz
 
     -- add the fractional part to the current generation
     if tracking.defined then
-        local fractionalgen = (os.clock() - genstarttime) * gps
+        local fractionalgen = (g.millisecs() - genstarttime) * gps
         if fractionalgen < 0 then
             fractionalgen = 0
         else
@@ -518,7 +524,7 @@ local function refresh()
 
     -- draw the cells
     ov("drawcells")
-    timing.drawcells = 1000 * (os.clock() - start)
+    timing.drawcells = g.millisecs() - start
 
     -- draw timing if on
     if timing.show then
@@ -526,9 +532,9 @@ local function refresh()
     end
 
     -- update the overlay
-    start = os.clock()
+    start = g.millisecs()
     ov("update")
-    timing.update = 1000 * (os.clock() - start)
+    timing.update = g.millisecs() - start
 end
 
 --------------------------------------------------------------------------------
@@ -606,15 +612,15 @@ end
 --------------------------------------------------------------------------------
 
 local function updatecells()
-    local start = os.clock()
+    local start = g.millisecs()
     ov("updatecells")
-    timing.updatecells = 1000 * (os.clock() - start)
+    timing.updatecells = g.millisecs() - start
 end
 
 --------------------------------------------------------------------------------
 
 local function updatecamera()
-    local start = os.clock()
+    local start = g.millisecs()
 
     -- convert linear zoom to real zoom
     local camzoom = lineartoreal(linearzoom)
@@ -626,7 +632,7 @@ local function updatecamera()
 
     -- update status
     update.dostatus = true
-    timing.camera = 1000 * (os.clock() - start)
+    timing.camera = g.millisecs() - start
 end
 
 --------------------------------------------------------------------------------
@@ -856,7 +862,7 @@ local function advance(singlestep)
     end
 
     -- check if enough time has elapsed to advance
-    local deltatime = os.clock() - genstarttime
+    local deltatime = g.millisecs() - genstarttime
     if deltatime > 1 / gps then
         while remaining > 0 do
             g.run(1)
@@ -870,7 +876,7 @@ local function advance(singlestep)
                 remaining = remaining - 1
             end
         end
-        genstarttime = os.clock()
+        genstarttime = g.millisecs()
     end
     
     currentgen = tonumber(g.getgen())
@@ -1697,7 +1703,7 @@ local function main()
     updatestatus()
 
     -- start timing
-    genstarttime = os.clock()
+    genstarttime = g.millisecs()
 
     -- loop until quit
     while true do
@@ -1723,7 +1729,7 @@ local function main()
         if event == "key enter none" or event == "key return none" then
             generating = not generating
             if generating then
-                genstarttime = os.clock()
+                genstarttime = g.millisecs()
             end
         elseif event == "key space none" then
             advance(true)
