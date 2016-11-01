@@ -168,24 +168,24 @@ void Overlay::DeleteCellView()
 
 // -----------------------------------------------------------------------------
 
-void Overlay::SetRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a, unsigned int *rgba)
+void Overlay::SetRGBA(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha, unsigned int *rgba)
 {
     unsigned char *rgbaptr = (unsigned char *)rgba;
-    *rgbaptr++ = r;
-    *rgbaptr++ = g;
-    *rgbaptr++ = b;
-    *rgbaptr++ = a;
+    *rgbaptr++ = red;
+    *rgbaptr++ = green;
+    *rgbaptr++ = blue;
+    *rgbaptr++ = alpha;
 }
 
 // -----------------------------------------------------------------------------
 
-void Overlay::GetRGBA(unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a, unsigned int rgba)
+void Overlay::GetRGBA(unsigned char *red, unsigned char *green, unsigned char *blue, unsigned char *alpha, unsigned int rgba)
 {
     unsigned char *rgbaptr = (unsigned char *)&rgba;
-    *r = *rgbaptr++;
-    *g = *rgbaptr++;
-    *b = *rgbaptr++;
-    *a = *rgbaptr++;
+    *red   = *rgbaptr++;
+    *green = *rgbaptr++;
+    *blue  = *rgbaptr++;
+    *alpha = *rgbaptr++;
 }
 
 // -----------------------------------------------------------------------------
@@ -1139,9 +1139,9 @@ void Overlay::DrawGridLines()
     bool light = false;
 
     // check if background is light or dark
-    unsigned char r, g, b, a;
-    GetRGBA(&r, &g, &b, &a, cellRGBA[0]);
-    if ((r + g + b) / 3 >= 128) {
+    unsigned char red, green, blue, alpha;
+    GetRGBA(&red, &green, &blue, &alpha, cellRGBA[0]);
+    if ((red + green + blue) / 3 >= 128) {
         light = true;
     }
 

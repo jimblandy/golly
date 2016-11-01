@@ -520,7 +520,7 @@ void liferules::createCanonicalName(lifealgo *algo) {
    if (algo->gridwd > 0 || algo->gridht > 0) {
       // algo->setgridsize() was successfully called above, so append suffix
       const char* bounds = algo->canonicalsuffix() ;
-      int i = 0 ;
+      i = 0 ;
       while (bounds[i]) canonrule[p++] = bounds[i++] ;
    }
 
