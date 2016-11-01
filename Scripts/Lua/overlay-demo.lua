@@ -14,13 +14,13 @@ local ov = g.overlay
 
 local wd, ht               -- overlay's current width and height (set by create_overlay)
 local toggle = 0           -- for toggling alpha blending
-local align = "right"       -- for text alignment
+local align = "right"      -- for text alignment
 local transbg = 0          -- for text transparent background
 
 --------------------------------------------------------------------------------
 
 local function ms(t)
-    return string.format("%.2f", 1000 * t).."ms"
+    return string.format("%.2fms", t)
 end
 
 --------------------------------------------------------------------------------
@@ -157,18 +157,18 @@ local function test_set()
     ov("set "..wd.." "..ht)
     local maxx = wd-1
     local maxy = ht-1
-    local t1 = os.clock()
+    local t1 = g.millisecs()
     for i = 1, 1000000 do
         ov("set "..rand(0,maxx).." "..rand(0,maxy))
         -- ov(string.format("set %d %d",rand(0,maxx),rand(0,maxy))) -- slower
     end
-    g.show("Time to set one million pixels: "..ms(os.clock()-t1))
+    g.show("Time to set one million pixels: "..ms(g.millisecs()-t1))
 end
 
 --------------------------------------------------------------------------------
 
 local function test_copy_paste()
-    local t1 = os.clock()
+    local t1 = g.millisecs()
     -- tile overlay
     local tilewd = 144
     local tileht = 133
@@ -198,7 +198,7 @@ local function test_copy_paste()
         -- above is much faster than g.update() but to avoid display glitches
         -- the overlay must cover the current layer and all pixels must be opaque
     end
-    g.show("Time to test copy and paste: "..ms(os.clock()-t1))
+    g.show("Time to test copy and paste: "..ms(g.millisecs()-t1))
     ov("freeclip background")
     ov("freeclip box")
 end
@@ -443,10 +443,10 @@ David Bell
 
     -- main loop
     while running do
-        t2 = os.clock()
+        t2 = g.millisecs()
 
         -- measure frame draw time
-        t1 = os.clock()
+        t1 = g.millisecs()
 
         -- stop when key pressed or mouse button clicked
         local event = g.getevent()
@@ -454,14 +454,14 @@ David Bell
             running = false
         end
 
-        local timeevent = os.clock() - t1
+        local timeevent = g.millisecs() - t1
 
         -- draw background
         ov("blend 0")
         ov("paste 0 0 "..bgclip)
 
-        local timebg = os.clock() - t1
-        t1 = os.clock()
+        local timebg = g.millisecs() - t1
+        t1 = g.millisecs()
 
         -- draw stars
         local level = 50
@@ -485,8 +485,8 @@ David Bell
             ov("set "..x.." "..y)
         end
 
-        local timestars = os.clock() - t1
-        t1 = os.clock()
+        local timestars = g.millisecs() - t1
+        t1 = g.millisecs()
 
         -- draw glider
         offset = math.floor(gridx)
@@ -520,8 +520,8 @@ David Bell
             end
         end
 
-        local timeglider = os.clock() - t1
-        t1 = os.clock()
+        local timeglider = g.millisecs() - t1
+        t1 = g.millisecs()
 
         -- draw gridlines
         ov("rgba 64 64 64 255")
@@ -532,8 +532,8 @@ David Bell
            ov("line 0 "..(i + offset).." "..wd.." "..(i + offset))
         end
 
-        local timegrid = os.clock() - t1
-        t1 = os.clock()
+        local timegrid = g.millisecs() - t1
+        t1 = g.millisecs()
 
         -- draw bouncing scrolling text
         ov("blend 1")
@@ -543,8 +543,8 @@ David Bell
         texty = math.floor(((ht - h) / 2 - (100 * math.sin(textx / 100))))
         pastetext(textx, texty, op.identity, gollyopaqueclip)
 
-        local timegolly = os.clock() - t1
-        t1 = os.clock()
+        local timegolly = g.millisecs() - t1
+        t1 = g.millisecs()
 
         -- draw credits
         credpos = math.floor(credity)
@@ -555,14 +555,14 @@ David Bell
             credity = ht
         end
 
-        local timecredits = os.clock() - t1
-        t1 = os.clock()
+        local timecredits = g.millisecs() - t1
+        t1 = g.millisecs()
 
         -- update display
         ov("update")
 
-        local timeupdate = os.clock() - t1
-        t1 = os.clock()
+        local timeupdate = g.millisecs() - t1
+        t1 = g.millisecs()
 
         -- move grid
         gridx = gridx + 0.2
@@ -579,8 +579,8 @@ David Bell
         end
 
         -- display frame time
-        local frametime = os.clock() - t2
-        --g.show("Press any key or mouse button to stop.  Frame time: "..ms(os.clock()-t1))
+        local frametime = g.millisecs() - t2
+        --g.show("Press any key or mouse button to stop.  Frame time: "..ms(g.millisecs()-t1))
         g.show("Time: frame "..ms(frametime).."  event "..ms(timeevent).. "  bg "..ms(timebg).."  stars "..ms(timestars).."  glider "..ms(timeglider).."  grid "..ms(timegrid).."  golly "..ms(timegolly).."  credits "..ms(timecredits).."  update "..ms(timeupdate))
     end
 
@@ -634,11 +634,11 @@ local function test_lines()
 
     local maxx = wd-1
     local maxy = ht-1
-    local t1 = os.clock()
+    local t1 = g.millisecs()
     for i = 1, 1000 do
         ov("line "..rand(0,maxx).." "..rand(0,maxy).." "..rand(0,maxx).." "..rand(0,maxy))
     end
-    g.show("Time to draw one thousand lines: "..ms(os.clock()-t1).."  transparent "..toggle)
+    g.show("Time to draw one thousand lines: "..ms(g.millisecs()-t1).."  transparent "..toggle)
   
     if toggle > 0 then
         ov("blend 0") -- turn off alpha blending
@@ -725,7 +725,7 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
         oldbackground = ov("textoption background 0 0 128 255")
     end
 
-    local t1 = os.clock()
+    local t1 = g.millisecs()
 
     ov("blend "..transbg)
 
@@ -733,12 +733,12 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     maketext(textstr)
 
     -- paste the clip onto the overlay
-    local t2 = os.clock()
+    local t2 = g.millisecs()
     t1 = t2 - t1
     pastetext(0, 0)
 
     -- output timing and drawing options
-    g.show("Time to test multiline text: maketext "..ms(t1).."  pastetext "..ms(os.clock() - t2).."  align "..string.format("%-6s", align).."  transparent "..transbg)
+    g.show("Time to test multiline text: maketext "..ms(t1).."  pastetext "..ms(g.millisecs() - t2).."  align "..string.format("%-6s", align).."  transparent "..transbg)
 
     -- restore old settings
     ov("textoption background "..oldbackground)
@@ -750,7 +750,7 @@ end
 --------------------------------------------------------------------------------
 
 local function test_text()
-    local t1 = os.clock()
+    local t1 = g.millisecs()
 
     local oldfont, oldblend, w, h, descent, nextx
     
@@ -900,7 +900,7 @@ local function test_text()
     ov("font "..oldfont)
     ov(op.black)
 
-    g.show("Time to test text: "..ms(os.clock()-t1))
+    g.show("Time to test text: "..ms(g.millisecs()-t1))
 end
 
 --------------------------------------------------------------------------------
@@ -916,12 +916,12 @@ local function test_fill()
     
     local maxx = wd-1
     local maxy = ht-1
-    local t1 = os.clock()
+    local t1 = g.millisecs()
     for i = 1, 1000 do
         ov("rgba "..rand(0,255).." "..rand(0,255).." "..rand(0,255).." "..rand(0,255))
         ov("fill "..rand(0,maxx).." "..rand(0,maxy).." "..rand(100).." "..rand(100))
     end
-    g.show("Time to fill one thousand rectangles: "..ms(os.clock()-t1).."  transparent "..toggle)
+    g.show("Time to fill one thousand rectangles: "..ms(g.millisecs()-t1).."  transparent "..toggle)
     ov("rgba 0 0 0 0")
     ov("fill 10 10 100 100") -- does nothing when alpha blending is on
 

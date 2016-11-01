@@ -62,7 +62,7 @@
 #include "readpattern.h"
 #include "writepattern.h"
 
-#include "wxgolly.h"        // for wxGetApp, mainptr, viewptr, statusptr
+#include "wxgolly.h"        // for wxGetApp, mainptr, viewptr, statusptr, stopwatch
 #include "wxmain.h"         // for mainptr->...
 #include "wxselect.h"       // for Selection
 #include "wxview.h"         // for viewptr->...
@@ -2245,6 +2245,23 @@ static int g_os(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_millisecs(lua_State* L)
+{
+    CheckEvents(L);
+
+    #if wxCHECK_VERSION(2,9,3)
+        wxLongLong t = stopwatch->TimeInMicro();
+        double d = t.ToDouble() / 1000.0L;
+        lua_pushnumber(L, (lua_Number) d);
+    #else
+        lua_pushnumber(L, (lua_Number) stopwatch->Time());
+    #endif
+    
+    return 1;   // result is a floating point number
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_setoption(lua_State* L)
 {
     CheckEvents(L);
@@ -2641,6 +2658,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "overlay",      g_overlay },      // do an overlay command
     // miscellaneous
     { "os",           g_os },           // return the current OS (Windows/Mac/Linux)
+    { "millisecs",    g_millisecs },    // return elapsed time since Golly started, in millisecs
     { "setoption",    g_setoption },    // set given option to new value (and return old value)
     { "getoption",    g_getoption },    // return current value of given option
     { "setcolor",     g_setcolor },     // set given color to new r,g,b (returns old r,g,b)

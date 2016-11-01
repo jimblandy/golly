@@ -623,9 +623,9 @@ local function refresh()
         ov("rgba "..state_rgba[0])
         ov("fill")
         if edgelen >= mingrid then
-            --!!! local t1 = os.clock()
+            --!!! local t1 = g.millisecs()
             draw_hex_grid()
-            --!!! g.show(string.format("hex grid: %.1fms", 1000 * (os.clock() - t1)))
+            --!!! g.show(string.format("hex grid: %.2fms", (g.millisecs() - t1)))
         end
     end
     draw_live_cells()
