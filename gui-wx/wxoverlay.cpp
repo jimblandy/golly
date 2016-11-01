@@ -168,24 +168,24 @@ void Overlay::DeleteCellView()
 
 // -----------------------------------------------------------------------------
 
-void Overlay::SetRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a, unsigned int *rgba)
+void Overlay::SetRGBA(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha, unsigned int *rgba)
 {
     unsigned char *rgbaptr = (unsigned char *)rgba;
-    *rgbaptr++ = r;
-    *rgbaptr++ = g;
-    *rgbaptr++ = b;
-    *rgbaptr++ = a;
+    *rgbaptr++ = red;
+    *rgbaptr++ = green;
+    *rgbaptr++ = blue;
+    *rgbaptr++ = alpha;
 }
 
 // -----------------------------------------------------------------------------
 
-void Overlay::GetRGBA(unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a, unsigned int rgba)
+void Overlay::GetRGBA(unsigned char *red, unsigned char *green, unsigned char *blue, unsigned char *alpha, unsigned int rgba)
 {
     unsigned char *rgbaptr = (unsigned char *)&rgba;
-    *r = *rgbaptr++;
-    *g = *rgbaptr++;
-    *b = *rgbaptr++;
-    *a = *rgbaptr++;
+    *red   = *rgbaptr++;
+    *green = *rgbaptr++;
+    *blue  = *rgbaptr++;
+    *alpha = *rgbaptr++;
 }
 
 // -----------------------------------------------------------------------------
@@ -1139,9 +1139,9 @@ void Overlay::DrawGridLines()
     bool light = false;
 
     // check if background is light or dark
-    unsigned char r, g, b, a;
-    GetRGBA(&r, &g, &b, &a, cellRGBA[0]);
-    if ((r + g + b) / 3 >= 128) {
+    unsigned char red, green, blue, alpha;
+    GetRGBA(&red, &green, &blue, &alpha, cellRGBA[0]);
+    if ((red + green + blue) / 3 >= 128) {
         light = true;
     }
 
@@ -3277,15 +3277,15 @@ const char* Overlay::DoText(const char* args)
 
     // copy text from top left corner of offscreen image into clip data
     unsigned char* m = textclip->cdata;
+    unsigned int bitmapr, bitmapg, bitmapb;
 
-    #ifndef __WXGTK__
-        // on Windows and Mac faster to iterate over the bitmap
-        int bitmapr, bitmapg, bitmapb;
+    // get iterator over bitmap data
+    wxAlphaPixelData data(bitmap);
+    wxAlphaPixelData::Iterator iter(data);
 
-        // get iterator of bitmap data
-        wxAlphaPixelData data(bitmap);
-        wxAlphaPixelData::Iterator iter(data);
-
+    // check for transparent background
+    if (bga < 255) {
+        // transparent so look for background pixels to swap
         for (int y = 0; y < bitmapht; y++) {
             wxAlphaPixelData::Iterator rowstart = iter;
             for (int x = 0; x < bitmapwd; x++) {
@@ -3294,87 +3294,45 @@ const char* Overlay::DoText(const char* args)
                 bitmapg = iter.Green();
                 bitmapb = iter.Blue();
 
-                // check for transparent background
-                if (bga < 255) {
-                    // transparent so look for background pixels to swap
-                    if (bitmapr == 255 && bitmapg == 255 && bitmapb == 255) {
-                        // background found so replace with transparent pixel
-                        *m++ = 0;
-                        *m++ = 0;
-                        *m++ = 0;
-                        *m++ = 0;
-                    }
-                    else {
-                        // foreground found so replace with foreground color
-                        *m++ = r;
-                        *m++ = g;
-                        *m++ = b;
-
-                        // set alpha based on grayness
-                        *m++ = 255 - bitmapr;
-                    }
-                }
-                else {
-                    // opaque background so just copy pixel
-                    *m++ = bitmapr;
-                    *m++ = bitmapg;
-                    *m++ = bitmapb;
-                    *m++ = 255;
-                }
-                iter++;
-            }
-            iter = rowstart;
-            iter.OffsetY(data, 1);
-        }
-
-    #else
-        // on Linux it's faster to convert the bitmap to a wxImage
-        wxImage image = bitmap.ConvertToImage();
-
-        // get pointer to image data which is array of bytes in RGB format
-        // top-to-bottom and left-to-right order
-        unsigned char* imagedata = image.GetData();
-
-        int imager, imageg, imageb;
-        int pixel = 0;
-        int pixels = bitmapwd * bitmapht;
-
-        while (pixel < pixels) {
-            imager = *imagedata++;
-            imageg = *imagedata++;
-            imageb = *imagedata++;
-
-            // check for transparent background
-            if (bga < 255) {
-                // transparent so look for background pixels to swap
-                if (imager == 255 && imageg == 255 && imageb == 255) {
+                if (bitmapr == 255 && bitmapg == 255 && bitmapb == 255) {
                     // background found so replace with transparent pixel
                     *m++ = 0;
                     *m++ = 0;
                     *m++ = 0;
                     *m++ = 0;
-                }
-                else {
+                } else {
                     // foreground found so replace with foreground color
                     *m++ = r;
                     *m++ = g;
                     *m++ = b;
 
                     // set alpha based on grayness
-                    *m++ = 255 - imager;
+                    *m++ = 255 - bitmapr;
                 }
-            }
-            else {
-                // opaque background so just copy pixel
-                *m++ = imager;
-                *m++ = imageg;
-                *m++ = imageb;
-                *m++ = 255;
-            }
-            pixel++;
-        }
 
-    #endif
+                // pre-increment is faster
+                ++iter;
+            }
+            iter = rowstart;
+            iter.OffsetY(data, 1);
+        }
+    } else {
+        // opaque background so just copy pixels
+        for (int y = 0; y < bitmapht; y++) {
+            wxAlphaPixelData::Iterator rowstart = iter;
+            for (int x = 0; x < bitmapwd; x++) {
+                *m++ = iter.Red();
+                *m++ = iter.Green();
+                *m++ = iter.Blue();
+                *m++ = 255;
+
+                // pre-increment is faster
+                ++iter;
+            }
+            iter = rowstart;
+            iter.OffsetY(data, 1);
+        }
+    }
 
     // create named clip for later use by DoPaste
     clips[name] = textclip;
