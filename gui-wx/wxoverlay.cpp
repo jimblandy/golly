@@ -2089,10 +2089,10 @@ const char* Overlay::DoCursor(const char* args)
         return OverlayError("unknown cursor");
     }
 
-    viewptr->CheckCursor(mainptr->infront);
-
     std::string oldcursor = cursname;
     cursname = args+1;
+
+    viewptr->CheckCursor(mainptr->infront);
 
     // return old cursor name
     static std::string result;
