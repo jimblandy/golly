@@ -160,23 +160,28 @@ function m.button(label, onclick)
     	error("2nd arg of button must be a function", 2)
     end
     
+    b.onclick = onclick     -- remember click handler
+    b.shown = false         -- b.show hasn't been called
+    b.ht = buttonht;
+
+	b.setlabel = function (newlabel, changesize)
+        local oldrgba = ov(textrgba)
+        local oldfont = ov(labelfont)
+        local w, h = split(ov("text "..b.clipname.." "..newlabel))
+        ov("font "..oldfont)
+        ov("rgba "..oldrgba)
+        b.labelwd = tonumber(w);
+        b.labelht = tonumber(h);
+        if changesize then
+            -- use label size to set button width
+            b.wd = b.labelwd + 2*textgap;
+        end
+	end
+    
     -- create text for label with a unique clip name
     b.clipname = tostring(b).."+button"
     b.clipname = string.gsub(b.clipname, " ", "")   -- remove any spaces
-    local oldrgba = ov(textrgba)
-    local oldfont = ov(labelfont)
-    local w, h = split(ov("text "..b.clipname.." "..label))
-    ov("font "..oldfont)
-    ov("rgba "..oldrgba)
-    
-    -- use label size to set button size
-    b.labelwd = tonumber(w);
-    b.labelht = tonumber(h);
-    b.wd = b.labelwd + 2*textgap;
-    b.ht = buttonht;
-    
-    b.onclick = onclick     -- remember click handler
-    b.shown = false         -- b.show hasn't been called
+    b.setlabel(label, true)
 
 	b.show = function (x, y)
 	    b.x = x
@@ -192,7 +197,9 @@ function m.button(label, onclick)
         draw_button(x, y, b.wd, b.ht)
         -- draw the label
         local oldblend = ov("blend 1")
-        ov("paste "..(x+textgap).." "..int(y+yoffset+(b.ht-b.labelht)/2).." "..b.clipname)
+        x = int(x + (b.wd - b.labelwd) / 2)
+        y = int(y + yoffset + (b.ht - b.labelht) / 2)
+        ov("paste "..x.." "..y.." "..b.clipname)
         ov("blend "..oldblend)
         
         -- store this table using the button's rectangle as key
@@ -388,7 +395,13 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
     s.clipname = string.gsub(s.clipname, " ", "")   -- remove any spaces
     local oldrgba = ov(labelrgba)
     local oldfont = ov(labelfont)
-    local w, h = split(ov("text "..s.clipname.." "..label))
+    local w, h
+    if #label == 0 then
+        w, h = split(ov("text "..s.clipname.." "..label.." "))
+        w = 0
+    else
+        w, h = split(ov("text "..s.clipname.." "..label))
+    end
     ov("font "..oldfont)
     ov("rgba "..oldrgba)
     

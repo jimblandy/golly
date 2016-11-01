@@ -58,6 +58,17 @@ local xpos, ypos = gp.getposint()
 local gridwd = g.getwidth()
 local gridht = g.getheight()
 
+-- these controls are created in create_overlay
+local ssbutton      -- Start/Stop button
+local sbutton       -- Step button
+local s1button      -- +1 button
+local rbutton       -- Reset button
+local hbutton       -- ? button
+local ebutton       -- X button
+local zslider       -- slider for zooming in/out
+
+local toolbarht     -- height of tool bar
+
 --------------------------------------------------------------------------------
 
 local function check_rule()
@@ -72,46 +83,6 @@ results won't be correct!]])
         else
             g.exit("The current rule does not use a hexagonal neighborhood.")
         end
-    end
-end
-
---------------------------------------------------------------------------------
-
-local function create_overlay()
-    -- overlay covers entire viewport
-    ov("create "..viewwd.." "..viewht)
-    
-    ov("cursor current")    -- use current Golly cursor
-    
-    local currcolors = g.getcolors()
-    for i = 0, g.numstates()-1 do
-        state_rgba[i] = currcolors[2+i*4].." "..currcolors[3+i*4].." "..currcolors[4+i*4].." 255"
-    end
-    
-    -- set grid colors based on current background color
-    local gridr, gridg, gridb = currcolors[2], currcolors[3], currcolors[4]
-    local diff = 48
-    if (gridr + gridg + gridb) / 3 > 127 then
-       -- light background so make grid lines slightly darker
-       if gridr > diff then gridr = gridr - diff else gridr = 0 end
-       if gridg > diff then gridg = gridg - diff else gridg = 0 end
-       if gridb > diff then gridb = gridb - diff else gridb = 0 end
-    else
-       -- dark background so make grid lines slightly lighter
-       if gridr + diff < 256 then gridr = gridr + diff else gridr = 255 end
-       if gridg + diff < 256 then gridg = gridg + diff else gridg = 255 end
-       if gridb + diff < 256 then gridb = gridb + diff else gridb = 255 end
-    end
-    show_grid_rgba = gridr.." "..gridg.." "..gridb.." 255"
-    if currcolors[2] > 0 then
-        hide_grid_rgba = (currcolors[2]-1).." "..currcolors[3].." "..currcolors[4].." 255"
-    else
-        hide_grid_rgba = (currcolors[2]+1).." "..currcolors[3].." "..currcolors[4].." 255"
-    end
-    if g.getoption("showgrid") == 1 then
-        grid_rgba = show_grid_rgba
-    else
-        grid_rgba = hide_grid_rgba
     end
 end
 
@@ -318,9 +289,9 @@ local function fill_hexagon(xc, yc, state)
                 return
             end
         end
-        if yc < 0 then
-            if yc + hexht/2 >= 0 then
-                yc = 0
+        if yc < toolbarht then
+            if yc + hexht/2 >= toolbarht then
+                yc = toolbarht
                 check_pixel = true
             else
                 return
@@ -488,6 +459,47 @@ end
 
 --------------------------------------------------------------------------------
 
+local function outside_grid(q, r)
+    if gridwd == 0 and gridht == 0 then
+        -- grid is unbounded
+        return false
+    end
+
+    -- convert axial coords to cell coords
+    local x = q + r + xpos
+    local y = r + ypos
+
+    if gridwd > 0 then
+        local bminx = -int(gridwd / 2)
+        local bmaxx = bminx + gridwd - 1
+        if x < bminx or x > bmaxx then
+            return true
+        end
+    end
+    if gridht > 0 then
+        local bminy = -int(gridht / 2)
+        local bmaxy = bminy + gridht - 1
+        if y < bminy or y > bmaxy then
+            return true
+        end
+    end
+    
+    return false
+end
+
+--------------------------------------------------------------------------------
+
+local function border_visible()
+    -- return true if any corner hexagon is outside the bounded grid
+    if outside_grid( pixel_to_hex(0,0) ) then return true end
+    if outside_grid( pixel_to_hex(0,viewht-1) ) then return true end
+    if outside_grid( pixel_to_hex(viewwd-1,0) ) then return true end
+    if outside_grid( pixel_to_hex(viewwd-1,viewht-1) ) then return true end
+    return false
+end
+
+--------------------------------------------------------------------------------
+
 local function pixel_in_overlay(x, y)
     return x >= 0 and x < viewwd and y >= 0 and y < viewht
 end
@@ -563,43 +575,37 @@ end
 
 --------------------------------------------------------------------------------
 
-local function outside_grid(q, r)
-    if gridwd == 0 and gridht == 0 then
-        -- grid is unbounded
-        return false
-    end
+local function draw_tool_bar()
+    ov(op.white)
+    ov("fill 0 0 "..viewwd.." "..toolbarht)
 
-    -- convert axial coords to cell coords
-    local x = q + r + xpos
-    local y = r + ypos
-
-    if gridwd > 0 then
-        local bminx = -int(gridwd / 2)
-        local bmaxx = bminx + gridwd - 1
-        if x < bminx or x > bmaxx then
-            return true
-        end
-    end
-    if gridht > 0 then
-        local bminy = -int(gridht / 2)
-        local bmaxy = bminy + gridht - 1
-        if y < bminy or y > bmaxy then
-            return true
-        end
-    end
+    local gap = 10
+    local x = gap
+    local y = int((toolbarht - ssbutton.ht) / 2)
     
-    return false
-end
+    if y < 10 then return end
+    
+    if x >= viewwd then return end
+    ssbutton.show(x, y)
+    x = x + ssbutton.wd + gap
+    if x >= viewwd then return end
+    sbutton.show(x, y)
+    x = x + sbutton.wd + gap
+    if x >= viewwd then return end
+    s1button.show(x, y)
+    x = x + s1button.wd + gap
+    if x >= viewwd then return end
+    rbutton.show(x, y)
+    x = x + rbutton.wd + gap
+    if x >= viewwd then return end
+    zslider.show(x, y, edgelen)
 
---------------------------------------------------------------------------------
-
-local function border_visible()
-    -- return true if any corner hexagon is outside the bounded grid
-    if outside_grid( pixel_to_hex(0,0) ) then return true end
-    if outside_grid( pixel_to_hex(0,viewht-1) ) then return true end
-    if outside_grid( pixel_to_hex(viewwd-1,0) ) then return true end
-    if outside_grid( pixel_to_hex(viewwd-1,viewht-1) ) then return true end
-    return false
+    x = viewwd - gap - ebutton.wd
+    if x >= viewwd then return end
+    ebutton.show(x, y)
+    x = x - gap - hbutton.wd
+    if x >= viewwd then return end
+    hbutton.show(x, y)
 end
 
 --------------------------------------------------------------------------------
@@ -623,39 +629,8 @@ local function refresh()
         end
     end
     draw_live_cells()
+    draw_tool_bar()
     ov("update")
-end
-
---------------------------------------------------------------------------------
-
-local function advance(by1)
-    if g.empty() then
-        g.note("There are no live cells.")
-        generating = false
-        return
-    end
-    
-    if by1 then
-        g.run(1)
-    else
-        g.step()
-    end
-    
-    -- erase live hexagons and draw new ones
-    kill_live_cells()
-    draw_live_cells()
-    g.update()
-end
-
---------------------------------------------------------------------------------
-
-local function reset()
-    g.reset()
-    
-    -- erase live hexagons and draw new ones
-    kill_live_cells()
-    draw_live_cells()
-    g.update()
 end
 
 --------------------------------------------------------------------------------
@@ -688,6 +663,11 @@ end
 
 local function zoom_hexagons(event)
     local direction, x, y = split(event)
+    x = tonumber(x)
+    y = tonumber(y)
+    
+    if y < toolbarht then return end
+    
     if direction == "ozoomin" then
         -- try to zoom in to hexagon at x,y!!!
         zoom_in()
@@ -933,6 +913,8 @@ local function click_in_overlay(event)
     x = tonumber(x)
     y = tonumber(y)
     
+    if y < toolbarht then return end
+    
     if button ~= "left" then return end
     if mods ~= "none" and mods ~= "shift" then return end
 
@@ -990,7 +972,7 @@ end
 --------------------------------------------------------------------------------
 
 local function show_help()
-    --!!!
+    g.note("Not yet implemented!!!")
 end
 
 --------------------------------------------------------------------------------
@@ -999,9 +981,194 @@ local function check_layer_size()
     local newwd, newht = g.getview(g.getlayer())
     if newwd ~= viewwd or newht ~= viewht then
         viewwd, viewht = newwd, newht
+        if viewwd < 1 then viewwd = 1 end
+        if viewht < 1 then viewht = 1 end
         midx, midy = viewwd/2, viewht/2
         ov("resize "..viewwd.." "..viewht)
+        
+        -- hide tool bar controls to force correct background
+        ssbutton.hide()
+        sbutton.hide()
+        s1button.hide()
+        rbutton.hide()
+        hbutton.hide()
+        ebutton.hide()
+        zslider.hide()
+        
         refresh()
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local arrow_cursor = false
+
+local function check_cursor()
+    local xy = ov("xy")
+    if #xy > 0 then
+        local x, y = split(xy)
+        x = tonumber(x)
+        y = tonumber(y)
+        if y < toolbarht then
+            -- mouse is inside tool bar
+            if not arrow_cursor then
+                ov("cursor arrow")
+                arrow_cursor = true
+                ov("update")
+            end
+        else
+            -- mouse is outside tool bar
+            if arrow_cursor then
+                ov("cursor current")
+                arrow_cursor = false
+                ov("update")
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function update_start_button()
+    -- change label in ssbutton without changing the button's width
+    if generating then
+        ssbutton.setlabel("Stop", false)
+    else
+        ssbutton.setlabel("Start", false)
+    end
+    draw_tool_bar()
+    ov("update")
+end
+
+--------------------------------------------------------------------------------
+
+local function advance(by1)
+    if g.empty() then
+        g.note("There are no live cells.")
+        generating = false
+        update_start_button()
+        return
+    end
+    
+    if by1 then
+        g.run(1)
+    else
+        g.step()
+    end
+    
+    -- erase live hexagons and draw new ones
+    kill_live_cells()
+    draw_live_cells()
+    
+    draw_tool_bar()
+    g.update()
+end
+
+--------------------------------------------------------------------------------
+
+local function step()
+    advance(false)
+    generating = false
+    update_start_button()
+end
+
+--------------------------------------------------------------------------------
+
+local function step1()
+    advance(true)
+    generating = false
+    update_start_button()
+end
+
+--------------------------------------------------------------------------------
+
+local function start_stop()
+    generating = not generating
+    update_start_button()
+end
+
+--------------------------------------------------------------------------------
+
+local function reset()
+    g.reset()
+    
+    -- erase live hexagons and draw new ones
+    kill_live_cells()
+    draw_live_cells()
+    
+    generating = false
+    update_start_button()
+    draw_tool_bar()
+    g.update()
+end
+
+--------------------------------------------------------------------------------
+
+local function zoom_slider(newval)
+    -- called if zslider position has changed
+    edgelen = newval
+    refresh()
+end
+
+--------------------------------------------------------------------------------
+
+local function exit_script()
+    g.show("")  -- clear message
+    g.exit()    -- don't beep
+end
+
+--------------------------------------------------------------------------------
+
+local function create_overlay()
+    -- overlay covers entire viewport
+    ov("create "..viewwd.." "..viewht)
+    
+    ov("cursor current")    -- use current Golly cursor
+
+    -- create our tool bar buttons
+    ssbutton = op.button("Start", start_stop)
+    sbutton = op.button("Step", step)
+    s1button = op.button("+1", step1)
+    rbutton = op.button("Reset", reset)
+    hbutton = op.button("?", show_help)
+    ebutton = op.button("X", exit_script)
+    
+    -- create a slider for zooming in/out
+    zslider = op.slider("", op.black, 64, minedge, maxedge, zoom_slider)
+    
+    toolbarht = 20 + ssbutton.ht
+    
+    local currcolors = g.getcolors()
+    for i = 0, g.numstates()-1 do
+        state_rgba[i] = currcolors[2+i*4].." "..currcolors[3+i*4].." "..currcolors[4+i*4].." 255"
+    end
+    
+    -- set grid colors based on current background color
+    local gridr, gridg, gridb = currcolors[2], currcolors[3], currcolors[4]
+    local diff = 48
+    if (gridr + gridg + gridb) / 3 > 127 then
+       -- light background so make grid lines slightly darker
+       if gridr > diff then gridr = gridr - diff else gridr = 0 end
+       if gridg > diff then gridg = gridg - diff else gridg = 0 end
+       if gridb > diff then gridb = gridb - diff else gridb = 0 end
+    else
+       -- dark background so make grid lines slightly lighter
+       if gridr + diff < 256 then gridr = gridr + diff else gridr = 255 end
+       if gridg + diff < 256 then gridg = gridg + diff else gridg = 255 end
+       if gridb + diff < 256 then gridb = gridb + diff else gridb = 255 end
+    end
+    show_grid_rgba = gridr.." "..gridg.." "..gridb.." 255"
+    if currcolors[2] > 0 then
+        -- hide_grid_rgba is the state 0 color with a slightly different red value
+        -- (this allows fill_hexagon to draw a hexagon with a flood command)
+        hide_grid_rgba = (currcolors[2]-1).." "..currcolors[3].." "..currcolors[4].." 255"
+    else
+        hide_grid_rgba = (currcolors[2]+1).." "..currcolors[3].." "..currcolors[4].." 255"
+    end
+    if g.getoption("showgrid") == 1 then
+        grid_rgba = show_grid_rgba
+    else
+        grid_rgba = hide_grid_rgba
     end
 end
 
@@ -1017,41 +1184,44 @@ local function main()
         -- if size of layer has changed then resize the overlay
         check_layer_size()
         
+        -- update cursor if mouse moves in/out of tool bar
+        check_cursor()
+        
         -- check for user input
-        local event = g.getevent()
-        if event:find("^click") then
-            click_in_layer(event)
-        elseif event:find("^oclick") then
-            click_in_overlay(event)
-        elseif event == "key enter none" or event == "key return none" then
-            generating = not generating
-        elseif event == "key space none" then
-            advance(true)
-            generating = false
-        elseif event == "key tab none" then
-            advance(false)
-            generating = false
-        elseif event == "key r none" then
-            reset()
-            generating = false
-        elseif event == "key ] none" then
-            zoom_in()
-        elseif event == "key [ none" then
-            zoom_out()
-        elseif event:find("^ozoomin") or event:find("^ozoomout") then
-            zoom_hexagons(event)
-        elseif event:find("^key left ") or event:find("^key right ") or
-               event:find("^key up ") or event:find("^key down ") then
-            pan(event)
-        elseif event == "key l none" then
-            g.setoption("showgrid", 1 - g.getoption("showgrid"))
-            -- update will be done in check_grid()
-        elseif event == "key o none" then
-            toggle_overlay()
-        elseif event == "key h none" then
-            show_help()
-        else
-            g.doevent(event)
+        local event = op.process( g.getevent() )
+        -- event is empty if op.process handled the given event
+        if #event > 0 then
+            if event:find("^click") then
+                click_in_layer(event)
+            elseif event:find("^oclick") then
+                click_in_overlay(event)
+            elseif event == "key enter none" or event == "key return none" then
+                start_stop()
+            elseif event == "key space none" then
+                step1()
+            elseif event == "key tab none" then
+                step()
+            elseif event == "key r none" then
+                reset()
+            elseif event == "key ] none" then
+                zoom_in()
+            elseif event == "key [ none" then
+                zoom_out()
+            elseif event:find("^ozoomin") or event:find("^ozoomout") then
+                zoom_hexagons(event)
+            elseif event:find("^key left ") or event:find("^key right ") or
+                   event:find("^key up ") or event:find("^key down ") then
+                pan(event)
+            elseif event == "key l none" then
+                g.setoption("showgrid", 1 - g.getoption("showgrid"))
+                -- update will be done in check_grid()
+            elseif event == "key o none" then
+                toggle_overlay()
+            elseif event == "key h none" then
+                show_help()
+            else
+                g.doevent(event)
+            end
         end
         
         -- check if current layer's position has changed
