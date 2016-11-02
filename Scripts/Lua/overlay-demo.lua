@@ -550,7 +550,7 @@ David Bell
         credpos = math.floor(credity)
         pastetext(creditx + 2, credpos + 2, op.identity, creditsshadowclip)
         pastetext(creditx, credpos, op.identity, creditsclip)
-        credity = credity - .25
+        credity = credity - .5
         if credity < -credheight then
             credity = ht
         end
@@ -562,7 +562,6 @@ David Bell
         ov("update")
 
         local timeupdate = g.millisecs() - t1
-        t1 = g.millisecs()
 
         -- move grid
         gridx = gridx + 0.2
@@ -573,15 +572,24 @@ David Bell
         end
 
         -- move text
-        textx = textx - 1
+        textx = textx - 2
         if textx == -w then
             textx = wd
         end
 
+        -- wait until at least 15ms have elapsed
+        t1 = g.millisecs()
+        local timewait = t1
+        while (t1 - t2 < 15) do
+            t1 = g.millisecs()
+        end
+        timewait = t1 - timewait
+
         -- display frame time
         local frametime = g.millisecs() - t2
+
         --g.show("Press any key or mouse button to stop.  Frame time: "..ms(g.millisecs()-t1))
-        g.show("Time: frame "..ms(frametime).."  event "..ms(timeevent).. "  bg "..ms(timebg).."  stars "..ms(timestars).."  glider "..ms(timeglider).."  grid "..ms(timegrid).."  golly "..ms(timegolly).."  credits "..ms(timecredits).."  update "..ms(timeupdate))
+        g.show("Time: frame "..ms(frametime).."  event "..ms(timeevent).. "  bg "..ms(timebg).."  stars "..ms(timestars).."  glider "..ms(timeglider).."  grid "..ms(timegrid).."  golly "..ms(timegolly).."  credits "..ms(timecredits).."  update "..ms(timeupdate).."  wait "..ms(timewait))
     end
 
     -- free clips
