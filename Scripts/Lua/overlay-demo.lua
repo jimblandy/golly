@@ -295,7 +295,7 @@ The Beta Testers
 
 
 Thanks to all the bug hunters for their
-reports and suggestions and especially:
+reports and suggestions, especially:
 
 Dave Greene
 
@@ -325,7 +325,7 @@ Eric Goldstein
 Thanks to
 
 
-Bill Gopser
+Bill Gosper
 for the idea behind the HashLife algorithm
 
 Alan Hensel
