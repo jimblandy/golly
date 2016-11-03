@@ -206,7 +206,7 @@ end
 --------------------------------------------------------------------------------
 
 local function test_animation()
-    local t1
+    local t1, t2
 
     -- grid size
     local tilewd = 48

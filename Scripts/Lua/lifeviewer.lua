@@ -11,7 +11,7 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 23
+local buildnumber = 24
 
 local g = golly()
 local ov = g.overlay
@@ -45,12 +45,13 @@ local textalert = {
 -- timing
 local timing = {
     updatecells = 0,
-    camera = 0,
     drawcells = 0,
     texttime = 0,
-    update = 0,
     show = false,
-    extended = false
+    extended = false,
+    genstarttime = 0,
+    framestarttime = 0,
+    frameendtime = 0
 }
 
 -- whether generating life
@@ -95,7 +96,6 @@ local defgps = 60
 local defstep = 1
 local gps = defgps
 local step = defstep
-local genstarttime = g.millisecs()
 
 -- smooth camera movement
 local startx
@@ -248,10 +248,8 @@ local keywords = {
 
 -- pre-rendered text clips
 local clips = {
-    timingshortshadow = "tss",
-    timinglongshadow = "tls",
-    timingshortfg = "tsf",
-    timinglongfg = "tsl",
+    timinglongfg = "tlongfg",
+    timinglongshadow = "tlongshadow",
     shortht = 0,
     longht = 0
 }
@@ -278,17 +276,16 @@ local function makeclips()
     local oldalign = ov("textoption align left")
     local oldtextbg = ov("textoption background 0 0 0 0")
 
-    local label = "updatecells\ndrawcells\nupdate"
-    local longlabel = label.."\ncamera\ntext"
+    local label = "fps"
+    local longlabel = "updatecells\ndrawcells\nmenu"
 
     ov(op.black)
-    local w, h = maketext(label, clips.timingshortshadow)
-    clips.shortht = h
-    w, h = maketext(longlabel, clips.timinglongshadow)
+    local w, h = maketext(longlabel, clips.timinglongshadow)
     clips.longht = h
     
     ov(op.white)
-    maketext(label, clips.timingshortfg)
+    w, h = maketext(label)
+    clips.shortht = h
     maketext(longlabel, clips.timinglongfg)
     
     -- restore settings
@@ -300,20 +297,15 @@ end
 
 local function outputtiming(xoff, yoff, labelclip)
     -- draw labels
-    ov("textoption align left")
-    ov("paste "..(20 + xoff).." "..(20 + yoff).." "..labelclip)
+    ov("paste "..(viewwd - 140 + xoff).." "..(20 + yoff + clips.shortht).." "..labelclip)
 
     -- draw values
     local output = string.format("%.1fms", timing.updatecells)
     output = output.."\n"..string.format("%.1fms", timing.drawcells)
-    output = output.."\n"..string.format("%.1fms", timing.update)
-    if timing.extended then
-        output = output.."\n"..string.format("%.1fms", timing.camera)
-        output = output.."\n"..string.format("%.1fms", timing.texttime)
-    end
+    output = output.."\n"..string.format("%.1fms", timing.texttime)
     ov("textoption align right")
     local w = maketext(output)
-    pastetext(138 - w + xoff, 20 + yoff)
+    pastetext(viewwd - w - 20 + xoff, 20 + yoff + clips.shortht)
 end
 
 --------------------------------------------------------------------------------
@@ -324,28 +316,56 @@ local function drawtiming()
     local oldalign = ov("textoption align left")
     local oldtextbg = ov("textoption background 0 0 0 0")
 
+    -- draw translucent rectangle
     local height = clips.shortht
     if timing.extended then
-        height = clips.longht
+        height = height + clips.longht
+    end
+    ov("rgba 0 0 0 128")
+    ov("fill "..(viewwd - 140).." 20 122 "..height)
+
+    -- compute load
+    local frametime = timing.frameendtime - timing.framestarttime
+    local loadamount = frametime / 16
+    if loadamount > 1 then
+        loadamount = 1
+    end
+    if frametime < 16.666 then
+        frametime = 16.666
     end
 
-    -- draw translucent rectangle
-    ov("rgba 0 0 0 128")
-    ov("fill 18 20 122 "..height)
+    -- draw load background
+    if (loadamount < 0.5) then
+        -- fade from green to yellow
+        ov("rgba "..math.floor(255 * loadamount * 2).." 255 0 144")
+    else
+        -- fade from yellow to red
+        ov("rgba 255 "..math.floor(255 * (1 - (loadamount - 0.5) * 2)).." 0 144")
+    end
+    ov("fill "..(viewwd - 140).." 20 "..math.floor(122 * loadamount).." "..clips.shortht)
 
-    -- draw text with shadow
+    -- draw fps and load
+    ov(op.black)
+    maketext(math.floor(1000 / frametime).."fps")
+    pastetext(viewwd - 138, 22)
+    local w = maketext(math.floor(100 * loadamount).."%")
+    pastetext(viewwd - 18 - w, 22)
+    ov(op.white)
+    maketext(math.floor(1000 / frametime).."fps")
+    pastetext(viewwd - 140, 20)
+    maketext(math.floor(100 * loadamount).."%")
+    pastetext(viewwd - w - 20, 20)
+
+    -- draw extended timing if enabled
     local shadowclip, fgclip
     if timing.extended then
        shadowclip = clips.timinglongshadow
        fgclip = clips.timinglongfg
-    else
-       shadowclip = clips.timingshortshadow
-       fgclip = clips.timingshortfg
+       ov(op.black)
+       outputtiming(2, 2, shadowclip)
+       ov(op.white)
+       outputtiming(0, 0, fgclip)
     end
-    ov(op.black)
-    outputtiming(2, 2, shadowclip)
-    ov(op.white)
-    outputtiming(0, 0, fgclip)
 
     -- restore settings
     ov("textoption background "..oldtextbg)
@@ -453,7 +473,7 @@ local function refresh()
 
     -- add the fractional part to the current generation
     if tracking.defined then
-        local fractionalgen = (g.millisecs() - genstarttime) * gps
+        local fractionalgen = (g.millisecs() - timing.genstarttime) * gps
         if fractionalgen < 0 then
             fractionalgen = 0
         else
@@ -526,15 +546,19 @@ local function refresh()
     ov("drawcells")
     timing.drawcells = g.millisecs() - start
 
+    -- end of frame time
+    timing.frameendtime = g.millisecs()
+
     -- draw timing if on
     if timing.show then
         drawtiming()
     end
 
+    local t1 = g.millisecs()
     -- update the overlay
-    start = g.millisecs()
     ov("update")
-    timing.update = g.millisecs() - start
+    t1 = g.millisecs() - t1
+
 end
 
 --------------------------------------------------------------------------------
@@ -620,8 +644,6 @@ end
 --------------------------------------------------------------------------------
 
 local function updatecamera()
-    local start = g.millisecs()
-
     -- convert linear zoom to real zoom
     local camzoom = lineartoreal(linearzoom)
     ov("camera zoom "..camzoom)
@@ -632,7 +654,6 @@ local function updatecamera()
 
     -- update status
     update.dostatus = true
-    timing.camera = g.millisecs() - start
 end
 
 --------------------------------------------------------------------------------
@@ -862,7 +883,7 @@ local function advance(singlestep)
     end
 
     -- check if enough time has elapsed to advance
-    local deltatime = g.millisecs() - genstarttime
+    local deltatime = g.millisecs() - timing.genstarttime
     if deltatime > 1 / gps then
         while remaining > 0 do
             g.run(1)
@@ -876,7 +897,7 @@ local function advance(singlestep)
                 remaining = remaining - 1
             end
         end
-        genstarttime = g.millisecs()
+        timing.genstarttime = g.millisecs()
     end
     
     currentgen = tonumber(g.getgen())
@@ -885,8 +906,6 @@ local function advance(singlestep)
         fitzoom(true)
     end
     update.dorefresh = true
-
-    g.update()
 end
 
 --------------------------------------------------------------------------------
@@ -1703,7 +1722,7 @@ local function main()
     updatestatus()
 
     -- start timing
-    genstarttime = g.millisecs()
+    timing.genstarttime = g.millisecs()
 
     -- loop until quit
     while true do
@@ -1729,7 +1748,7 @@ local function main()
         if event == "key enter none" or event == "key return none" then
             generating = not generating
             if generating then
-                genstarttime = g.millisecs()
+                timing.genstarttime = g.millisecs()
             end
         elseif event == "key space none" then
             advance(true)
@@ -1862,6 +1881,9 @@ local function main()
             checkdrag()
         end
         
+        -- start frame timer
+        timing.framestarttime = g.millisecs()
+
         -- check if playing
         if generating then
             advance(false)
