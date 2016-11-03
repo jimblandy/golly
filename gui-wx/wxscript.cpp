@@ -1180,26 +1180,21 @@ const char* GSF_doevent(const wxString& event)
             int y = wxAtoi(ystr);
 
             // x,y is pixel position in viewport
-            if (viewptr->PointInGrid(x, y)) {
-                if (event.StartsWith(wxT("zoomin"))) {
-                    viewptr->TestAutoFit();
-                    if (currlayer->view->getmag() < MAX_MAG) {
-                        currlayer->view->zoom(x, y);
-                    }
-                } else {
-                    viewptr->TestAutoFit();
-                    currlayer->view->unzoom(x, y);
+            if (event.StartsWith(wxT("zoomin"))) {
+                viewptr->TestAutoFit();
+                if (currlayer->view->getmag() < MAX_MAG) {
+                    currlayer->view->zoom(x, y);
                 }
-
-                inscript = false;
-                mainptr->UpdatePatternAndStatus();
-                bigview->UpdateScrollBars();
-                inscript = true;
-                mainptr->UpdateUserInterface();
             } else {
-                // ignore zoom event if x,y is outside viewport or grid
-                return NULL;
+                viewptr->TestAutoFit();
+                currlayer->view->unzoom(x, y);
             }
+
+            inscript = false;
+            mainptr->UpdatePatternAndStatus();
+            bigview->UpdateScrollBars();
+            inscript = true;
+            mainptr->UpdateUserInterface();
             
         } else if (event.StartsWith(wxT("click "))) {
             // parse event string like "click 10 20 left altshift"
@@ -1692,7 +1687,7 @@ void PassZoomInToScript(int x, int y)
         zinfo.Printf(wxT("ozoomin %d %d"), ox, oy);
         eventqueue.Add(zinfo);
     
-    } else if (viewptr->PointInGrid(x, y)) {
+    } else {
         // zoom in to the viewport pixel at x,y (note that it's best not to
         // pass the corresponding cell position because a doevent call will result
         // in unwanted drifting due to conversion back to a pixel position)
@@ -1714,7 +1709,7 @@ void PassZoomOutToScript(int x, int y)
         zinfo.Printf(wxT("ozoomout %d %d"), ox, oy);
         eventqueue.Add(zinfo);
     
-    } else if (viewptr->PointInGrid(x, y)) {
+    } else {
         // zoom out from the viewport pixel at x,y
         wxString zinfo;
         zinfo.Printf(wxT("zoomout %d %d"), x, y);

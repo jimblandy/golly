@@ -46,6 +46,7 @@ local darken_slider = false     -- tell draw_slider to darken the slider button
 
 -- opaque colors
 m.white     = "rgba 255 255 255 255"
+m.gray      = "rgba 128 128 128 255"
 m.black     = "rgba 0 0 0 255"
 m.red       = "rgba 255 0 0 255"
 m.green     = "rgba 0 255 0 255"

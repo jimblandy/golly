@@ -472,6 +472,17 @@ static int g_getfiles(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_getinfo(lua_State* L)
+{
+    CheckEvents(L);
+
+    lua_pushstring(L, GSF_getinfo());
+    
+    return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_new(lua_State* L)
 {
     CheckEvents(L);
@@ -2556,17 +2567,6 @@ static int g_exit(lua_State* L)
     lua_error(L);
     
     return 0;   // never get here (lua_error does a longjmp)
-}
-
-// -----------------------------------------------------------------------------
-
-static int g_getinfo(lua_State* L)
-{
-    const char* comments = GSF_getinfo();
-
-    lua_pushstring(L, comments);
-    
-    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
