@@ -581,6 +581,10 @@ end
 local function draw_tool_bar()
     ov(op.white)
     ov("fill 0 0 "..viewwd.." "..toolbarht)
+    
+    -- must draw line at bottom edge of tool bar in case a cell color is white
+    ov("rgba "..show_grid_rgba)
+    draw_line(0, toolbarht-1, viewwd-1, toolbarht-1)
 
     local gap = 10
     local x = gap
@@ -977,27 +981,31 @@ local function pan(event)
         g.doevent(event)
     else
         local _, key, mods = split(event)
+        local amount = 1
+        if edgelen < mingrid then
+            amount = 10     -- pan further at this scale
+        end
         if mods == "none" then
             -- to pan overlay orthogonally we need to pan layer diagonally
             if key == "left" then
-                set_position(xpos-1, ypos+1)
+                set_position(xpos-amount, ypos+amount)
             elseif key == "right" then
-                set_position(xpos+1, ypos-1)
+                set_position(xpos+amount, ypos-amount)
             elseif key == "up" then
-                set_position(xpos-1, ypos-1)
+                set_position(xpos-amount, ypos-amount)
             elseif key == "down" then
-                set_position(xpos+1, ypos+1)
+                set_position(xpos+amount, ypos+amount)
             end
         elseif mods == "shift" then
             -- to pan overlay diagonally we need to pan layer orthogonally
             if key == "left" then
-                set_position(xpos-1, ypos)
+                set_position(xpos-amount, ypos)
             elseif key == "right" then
-                set_position(xpos+1, ypos)
+                set_position(xpos+amount, ypos)
             elseif key == "up" then
-                set_position(xpos, ypos-1)
+                set_position(xpos, ypos-amount)
             elseif key == "down" then
-                set_position(xpos, ypos+1)
+                set_position(xpos, ypos+amount)
             end
         end
         -- main loop will call check_position_and_scale()
@@ -1072,6 +1080,13 @@ local function toggle_overlay()
         -- force check_position_and_scale to call refresh
         currmag = 666
     end
+end
+
+--------------------------------------------------------------------------------
+
+local function toggle_grid()
+    g.setoption("showgrid", 1 - g.getoption("showgrid"))
+    -- main loop will call check_grid() to do the update
 end
 
 --------------------------------------------------------------------------------
@@ -1220,9 +1235,11 @@ local function show_help()
     local helptext =
 [[Special keys and their actions:
 
-enter/return - start/stop generating
-tab          - advance by step size
-space        - advance by 1
+enter/return  - start/stop generating
+tab           - advance by step size
+space         - advance by 1
+arrows        - pan up/down/left/right
+shift-arrows  - pan NE/SE/NW/SW
 
 f  - fit pattern
 h  - display this help
@@ -1274,7 +1291,18 @@ local function create_overlay()
     
     ov("cursor current")    -- use current Golly cursor
 
-    -- create our tool bar buttons
+    -- use smaller gray buttons in our tool bar
+    op.buttonht = 20    -- height of buttons (also used for check boxes and sliders)
+    op.sliderwd = 12    -- width of slider button (best if even)
+    op.textgap = 8      -- gap between edge of button and its label
+    op.normalrgb = "rgba 90 90 90"          -- dark gray buttons (alpha will be appended)
+    op.darkerrgb = "rgba 40 40 40"          -- darker gray when buttons are clicked
+    op.textfont = "font 10 default-bold"    -- font for labels
+    if g.os() == "Linux" then
+        op.textfont = "font 10 default"
+    end
+
+    -- create tool bar buttons
     ssbutton = op.button("Start", start_stop)
     sbutton = op.button("Step", step)
     s1button = op.button("+1", step1)
@@ -1344,8 +1372,7 @@ local function do_key(event)
     elseif key == "h none" then
         show_help()
     elseif key == "l none" then
-        g.setoption("showgrid", 1 - g.getoption("showgrid"))
-        -- main loop will call check_grid() to do the update
+        toggle_grid()
     elseif key == "o none" then
         toggle_overlay()
     elseif key == "r none" then
@@ -1355,6 +1382,7 @@ local function do_key(event)
     elseif key == "[ none" then
         zoom_out()
     else
+        -- might be a user keyboard shortcut, so do it
         g.doevent(event)
     end
 end

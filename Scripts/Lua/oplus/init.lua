@@ -14,31 +14,23 @@ local m = {}
 
 --------------------------------------------------------------------------------
 
-local button_tables = {}    -- for detecting click in a button
-local checkbox_tables = {}  -- for detecting click in a check box
-local slider_tables = {}    -- for detecting click in a slider
+-- scripts can adjust these parameters:
 
--- some adjustable parameters:
+m.buttonht = 24     -- height of buttons (also used for check boxes and sliders)
+m.sliderwd = 16     -- width of slider button (best if even)
+m.checkgap = 5      -- gap between check box button and its label
+m.textgap = 10      -- gap between edge of button and its label
 
-local buttonht = 24     -- height of buttons (also used for check boxes and sliders)
-local sliderwd = 16     -- width of slider button (keep even)
-local halfslider = int(sliderwd/2)
-local labelgap = 5      -- gap between check box button and its label
-local textgap = 10      -- gap between edge of button and label
-
-local normalbutton = "rgba 40 128 255 "     -- light blue buttons (alpha is appended)
-local darkerbutton = "rgba 20 64 255 "      -- darker blue when buttons are clicked
-local textrgba = "rgba 255 255 255 255"     -- white button labels and tick mark on check box
-local labelfont = "font 12 default-bold"    -- font for labels
-local yoffset = -1                          -- for better y position of labels
+m.normalrgb = "rgba 40 128 255"         -- light blue buttons (alpha will be appended)
+m.darkerrgb = "rgba 20 64 255"          -- darker blue when buttons are clicked
+m.textrgba = "rgba 255 255 255 255"     -- white button labels and tick mark on check box
+m.textfont = "font 12 default-bold"     -- font for labels
+m.yoffset = -1                          -- for better y position of labels
 
 if g.os() == "Linux" then
-    yoffset = 0
-    labelfont = "font 12 default"
+    m.yoffset = 0
+    m.textfont = "font 12 default"
 end
-
-local darken_button = false     -- tell draw_button to use darkerbutton
-local darken_slider = false     -- tell draw_slider to darken the slider button
 
 --------------------------------------------------------------------------------
 
@@ -94,6 +86,15 @@ m.themes = {
 
 --------------------------------------------------------------------------------
 
+local darken_button = false     -- tell draw_button to use m.darkerrgb
+local darken_slider = false     -- tell draw_slider to darken the slider button
+
+local button_tables = {}        -- for detecting click in a button
+local checkbox_tables = {}      -- for detecting click in a check box
+local slider_tables = {}        -- for detecting click in a slider
+
+--------------------------------------------------------------------------------
+
 local function draw_button(x, y, w, h)
     local oldblend = ov("blend 0")
     local buttrect = " "..x.." "..y.." "..w.." "..h
@@ -105,25 +106,25 @@ local function draw_button(x, y, w, h)
     local oldrgba = ov("rgba 0 0 0 0")
     ov("fill"..buttrect)
     
-    local buttonrgb = normalbutton
+    local buttonrgb = m.normalrgb
     if darken_button then
-        buttonrgb = darkerbutton
+        buttonrgb = m.darkerrgb
     end
     
     -- draw button with rounded corners
-    ov(buttonrgb.."255") -- opaque
+    ov(buttonrgb.." 255") -- opaque
     ov("fill"..buttrect)
     
     -- draw one rounded corner then copy and paste with flips to draw the rest
     ov("rgba 0 0 0 0")
     ov("set "..x.." "..y)
-    ov(buttonrgb.."48")
+    ov(buttonrgb.." 48")
     ov("set "..(x+1).." "..y)
     ov("set "..x.." "..(y+1))
-    ov(buttonrgb.."128")
+    ov(buttonrgb.." 128")
     ov("set "..(x+2).." "..y)
     ov("set "..x.." "..(y+2))
-    ov(buttonrgb.."200")
+    ov(buttonrgb.." 200")
     ov("set "..(x+1).." "..(y+1))
     ov("copy "..x.." "..y.." 3 3 temp_corner")
     ov(m.flip_x)
@@ -163,11 +164,11 @@ function m.button(label, onclick)
     
     b.onclick = onclick     -- remember click handler
     b.shown = false         -- b.show hasn't been called
-    b.ht = buttonht;
+    b.ht = m.buttonht;
 
 	b.setlabel = function (newlabel, changesize)
-        local oldrgba = ov(textrgba)
-        local oldfont = ov(labelfont)
+        local oldrgba = ov(m.textrgba)
+        local oldfont = ov(m.textfont)
         local w, h = split(ov("text "..b.clipname.." "..newlabel))
         ov("font "..oldfont)
         ov("rgba "..oldrgba)
@@ -175,7 +176,7 @@ function m.button(label, onclick)
         b.labelht = tonumber(h);
         if changesize then
             -- use label size to set button width
-            b.wd = b.labelwd + 2*textgap;
+            b.wd = b.labelwd + 2*m.textgap;
         end
 	end
     
@@ -199,7 +200,7 @@ function m.button(label, onclick)
         -- draw the label
         local oldblend = ov("blend 1")
         x = int(x + (b.wd - b.labelwd) / 2)
-        y = int(y + yoffset + (b.ht - b.labelht) / 2)
+        y = int(y + m.yoffset + (b.ht - b.labelht) / 2)
         ov("paste "..x.." "..y.." "..b.clipname)
         ov("blend "..oldblend)
         
@@ -237,7 +238,7 @@ local function draw_checkbox(x, y, w, h, ticked)
     draw_button(x, y, w, h)
     if ticked then
         -- draw a tick mark (needs improvement!!!)
-        local oldrgba = ov(textrgba)
+        local oldrgba = ov(m.textrgba)
         ov("line "..int(x+w/2).." "..(y+h-5).." "..(x+6).." "..(y+h-8))
         ov("line "..int(x+w/2).." "..(y+h-5).." "..(x+w-6).." "..(y+5))
         ov("rgba 255 255 255 128")
@@ -271,7 +272,7 @@ function m.checkbox(label, labelrgba, onclick)
     c.clipname = tostring(c).."+checkbox"
     c.clipname = string.gsub(c.clipname, " ", "")   -- remove any spaces
     local oldrgba = ov(labelrgba)
-    local oldfont = ov(labelfont)
+    local oldfont = ov(m.textfont)
     local w, h = split(ov("text "..c.clipname.." "..label))
     ov("font "..oldfont)
     ov("rgba "..oldrgba)
@@ -279,8 +280,8 @@ function m.checkbox(label, labelrgba, onclick)
     -- use label size to set check box size
     c.labelwd = tonumber(w);
     c.labelht = tonumber(h);
-    c.wd = buttonht + labelgap + c.labelwd;
-    c.ht = buttonht;
+    c.wd = m.buttonht + m.checkgap + c.labelwd;
+    c.ht = m.buttonht;
     
     c.onclick = onclick     -- remember click handler
     c.shown = false         -- c.show hasn't been called
@@ -300,7 +301,7 @@ function m.checkbox(label, labelrgba, onclick)
         draw_checkbox(x+1, y+1, c.ht-2, c.ht-2, ticked)
         -- draw the label
         local oldblend = ov("blend 1")
-        ov("paste "..(x+c.ht+labelgap).." "..int(y+yoffset+(c.ht-c.labelht)/2).." "..c.clipname)
+        ov("paste "..(x+c.ht+m.checkgap).." "..int(y+m.yoffset+(c.ht-c.labelht)/2).." "..c.clipname)
         ov("blend "..oldblend)
         -- store this table using the check box's rectangle as key
         c.rect = rect({c.x, c.y, c.wd, c.ht})
@@ -353,14 +354,14 @@ local function draw_slider(s, barpos)
     if darken_slider then darken_button = true end
     
     -- draw slider button on top of horizontal bar
-    draw_button(x + barpos - halfslider, y, sliderwd, h)
+    draw_button(x + barpos - int(m.sliderwd/2), y, m.sliderwd, h)
     ov("rgba "..oldrgba)
 
     if darken_slider then darken_button = false end
     
     -- draw the label
     local oldblend = ov("blend 1")
-    ov("paste "..s.x.." "..int(y+yoffset+(h-s.labelht)/2).." "..s.clipname)
+    ov("paste "..s.x.." "..int(y+m.yoffset+(h-s.labelht)/2).." "..s.clipname)
     ov("blend "..oldblend)
 end
 
@@ -395,7 +396,7 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
     s.clipname = tostring(s).."+slider"
     s.clipname = string.gsub(s.clipname, " ", "")   -- remove any spaces
     local oldrgba = ov(labelrgba)
-    local oldfont = ov(labelfont)
+    local oldfont = ov(m.textfont)
     local w, h
     if #label == 0 then
         w, h = split(ov("text "..s.clipname.." "..label.." "))
@@ -409,8 +410,8 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
     -- set total slider size (including label)
     s.labelwd = tonumber(w);
     s.labelht = tonumber(h);
-    s.wd = s.labelwd + sliderwd + s.barwidth;
-    s.ht = buttonht;
+    s.wd = s.labelwd + m.sliderwd + s.barwidth;
+    s.ht = m.buttonht;
     
     s.onclick = onclick     -- remember click handler
     s.shown = false         -- s.show hasn't been called
@@ -429,11 +430,11 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
 	    s.background = s.clipname.."+bg"
 	    ov("copy "..s.x.." "..s.y.." "..s.wd.." "..s.ht.." "..s.background)
         -- draw the slider and label at the given location
-        s.startbar = x + s.labelwd + halfslider
+        s.startbar = x + s.labelwd + int(m.sliderwd/2)
         local barpos = int(s.barwidth * (s.pos - s.minval) / (s.maxval - s.minval))
         draw_slider(s, barpos)
         -- store this table using the slider button's rectangle as key
-        s.rect = rect({s.startbar+barpos-halfslider, s.y, sliderwd, s.ht})
+        s.rect = rect({s.startbar+barpos-int(m.sliderwd/2), s.y, m.sliderwd, s.ht})
         slider_tables[s.rect] = s
         s.shown = true
 	end
