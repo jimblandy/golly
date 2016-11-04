@@ -1233,25 +1233,41 @@ local function show_help()
     end
     
     local helptext =
-[[Special keys and their actions:
+[[
+Features:
+
+- Allows toggling between hex layer and current layer.
+- Synchronizes hex layer's scale and position with current layer.
+- Allows simple editing in hex layer or current layer.
+- Allows pattern generation in hex layer or current layer.
+- Hex layer can be zoomed in/out, but only from middle hexagon.
+- Hex layer can be panned via arrow keys or via hand cursor.
+- Hex layer has a tool bar with buttons and a slider for zooming.
+
+Current limitations:
+
+- Doesn't show any selection, nor allow selection to be changed.
+- Doesn't support zooming in/out from a particular hexagon.
+- Doesn't support editing multiple cells/hexagons via click and drag.
+
+Special keys and their actions:
 
 enter/return  - start/stop generating
 tab           - advance by step size
 space         - advance by 1
 arrows        - pan up/down/left/right
 shift-arrows  - pan NE/SE/NW/SW
+f             - fit pattern
+h             - display this help
+l             - show/hide grid lines
+o             - show/hide overlay
+r             - reset to starting pattern
+[             - zoom in
+]             - zoom out
 
-f  - fit pattern
-h  - display this help
-l  - show/hide grid lines
-o  - show/hide overlay
-r  - reset to starting pattern
-[  - zoom in
-]  - zoom out
+                (click or hit any key to close help)]]
 
-  (click or hit any key to close help)  ]]
-
-    ov("font 10 mono")
+    ov("font 11 mono-bold")
     ov(op.black)
     local w, h = split(ov("text temp "..helptext))
     w = tonumber(w) + 20
