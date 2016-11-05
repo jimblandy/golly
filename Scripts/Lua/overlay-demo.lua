@@ -1087,7 +1087,6 @@ end
 local function main()
     g.show("Testing overlay (type h for help)...")
     create_overlay(500, 400)
-
     create_help()
 
     local mousedown = false
@@ -1106,6 +1105,8 @@ local function main()
             elseif ch == 'c' and mods == 'shift' then
                 -- create an overlay covering entire layer
                 create_overlay(g.getview(g.getlayer()))
+                create_help()
+
             elseif ch == 'f' then
                 test_fill()
             elseif ch == 'g' then
