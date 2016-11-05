@@ -11,7 +11,7 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 24
+local buildnumber = 26
 
 local g = golly()
 local ov = g.overlay
@@ -46,6 +46,7 @@ local textalert = {
 local timing = {
     updatecells = 0,
     drawcells = 0,
+    drawmenu = 0,
     texttime = 0,
     show = false,
     extended = false,
@@ -175,6 +176,22 @@ local stars = false
 -- reset
 local hardreset = false
 
+-- menu button images
+local buttons = {
+    ["play"]        = "button0",
+    ["pause"]       = "button1",
+    ["reset"]       = "button2",
+    ["menu"]        = "button3",
+    ["stepback"]    = "button4",
+    ["stepforward"] = "button5",
+    ["autofit"]     = "button6",
+    ["fit"]         = "button7",
+    ["squaregrid"]  = "button8",
+    ["help"]        = "button9",
+    ["shrink"]      = "button10",
+    ["fps"]         = "button11",
+    ["hexgrid"]     = "button12"
+}
 -- script tokens
 local tokens = {}
 local curtok = 1
@@ -302,10 +319,24 @@ local function outputtiming(xoff, yoff, labelclip)
     -- draw values
     local output = string.format("%.1fms", timing.updatecells)
     output = output.."\n"..string.format("%.1fms", timing.drawcells)
-    output = output.."\n"..string.format("%.1fms", timing.texttime)
+    output = output.."\n"..string.format("%.1fms", timing.drawmenu)
     ov("textoption align right")
     local w = maketext(output)
     pastetext(viewwd - w - 20 + xoff, 20 + yoff + clips.shortht)
+end
+
+--------------------------------------------------------------------------------
+
+local function drawmenu()
+    local y = 10
+
+    local i = 0
+    ov("blend 1")
+    while i < 13 do
+        ov("paste "..(i * 50).." "..y.. "button"..i)
+        i = i + 1
+    end
+    ov("blend 0")
 end
 
 --------------------------------------------------------------------------------
@@ -473,7 +504,7 @@ local function refresh()
 
     -- add the fractional part to the current generation
     if tracking.defined then
-        local fractionalgen = (g.millisecs() - timing.genstarttime) * gps
+        local fractionalgen = (g.millisecs() - timing.genstarttime) / 1000 * gps
         if fractionalgen < 0 then
             fractionalgen = 0
         else
@@ -546,6 +577,11 @@ local function refresh()
     ov("drawcells")
     timing.drawcells = g.millisecs() - start
 
+    -- draw the menu
+    local t1 = g.millisecs()
+    drawmenu()
+    timing.drawmenu = g.millisecs() - t1
+
     -- end of frame time
     timing.frameendtime = g.millisecs()
 
@@ -554,11 +590,8 @@ local function refresh()
         drawtiming()
     end
 
-    local t1 = g.millisecs()
     -- update the overlay
     ov("update")
-    t1 = g.millisecs() - t1
-
 end
 
 --------------------------------------------------------------------------------
@@ -883,7 +916,7 @@ local function advance(singlestep)
     end
 
     -- check if enough time has elapsed to advance
-    local deltatime = g.millisecs() - timing.genstarttime
+    local deltatime = (g.millisecs() - timing.genstarttime) / 1000
     if deltatime > 1 / gps then
         while remaining > 0 do
             g.run(1)
@@ -1671,6 +1704,108 @@ end
 
 --------------------------------------------------------------------------------
 
+local function cbauto()
+    toggleautofit()
+end
+
+--------------------------------------------------------------------------------
+
+local function cbfit()
+    if not autofit then
+        fitzoom(false)
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function cbgrid()
+    togglegrid()
+end
+
+--------------------------------------------------------------------------------
+
+local function cbhelp()
+    showhelp()
+end
+
+--------------------------------------------------------------------------------
+
+local function cbreset()
+    reset(false)
+end
+
+--------------------------------------------------------------------------------
+
+local function cbplay()
+    generating = not generating
+end
+
+--------------------------------------------------------------------------------
+
+local function cbfps()
+    toggletiming()
+end
+
+--------------------------------------------------------------------------------
+
+local function createmenu()
+    ov("blend 0")
+
+    -- load button images to get width and height
+    local w, h = gp.split(ov("load "..viewwd.." 0 lifeviewer.png"))
+
+    -- clear a rectangle the size of the buttons
+    ov(op.black)
+    ov("fill 0 0 "..w.." "..h)
+
+    -- load buttons over the rectangle
+    ov("load 0 0 lifeviewer.png")
+
+    -- replace transparent background with semi-opaque
+    ov("rgba 0 0 0 128")
+    local x, y
+    local red, green, blue, alpha
+    for y = 0, h do
+        for x = 0, w do
+            red, green, blue, alpha = gp.split(ov("get "..x.." "..y))
+            if tonumber(alpha) == 0 then
+                ov("set "..x.." "..y)
+            end
+        end
+    end
+
+    -- create clips from the images
+    ov("rgba 32 255 255 255")
+    local x = 0
+    while x < 13 do
+        -- draw box around button
+        ov("line "..(40 * x).." 0 "..(40 * x + 39).." 0")
+        ov("line "..(40 * x).." 39 "..(40 * x + 39).." 39")
+        ov("line "..(40 * x).." 0 "..(40 * x).." 39")
+        ov("line "..(40 * x + 39).." 0 "..(40 * x + 39).." 39")
+
+        -- create clip from button
+        ov("copy "..(40 * x).." 0 40 40 button"..x)
+        x = x + 1
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function setupoverlay()
+    -- create overlay and cell view
+    createoverlay()
+    createcellview()
+
+    -- create menu
+    createmenu()
+
+    -- make prerendered text clips
+    makeclips()
+end
+
+--------------------------------------------------------------------------------
+
 local function main()
     -- check if there is a pattern
     if g.empty() then
@@ -1683,13 +1818,9 @@ local function main()
         g.reset();
     end
 
-    -- create overlay and cell view
-    createoverlay()
-    createcellview()
-
-    -- make prerendered text clips
-    makeclips()
-
+    -- setup overlay
+    setupoverlay()
+    
     -- check for hex rules
     checkhex()
 
@@ -1744,7 +1875,7 @@ local function main()
         end
         
         -- check for user input
-        local event = g.getevent()
+        local event = op.process(g.getevent())
         if event == "key enter none" or event == "key return none" then
             generating = not generating
             if generating then

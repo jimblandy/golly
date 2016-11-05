@@ -70,7 +70,27 @@ end
 
 --------------------------------------------------------------------------------
 
-local function show_help()
+local function exit_stage_right()
+    ov("blend 0")
+    ov("copy 0 0 "..wd.." "..ht.." bg")
+    local x = 10
+    local frametime
+    while x < wd do
+        frametime = g.millisecs()
+        ov("paste "..(x - wd).." 0 menu")
+        ov("paste "..x.." 0 bg")
+        ov("update")
+        x = x + 10
+        while g.millisecs() - frametime < 15 do
+        end
+    end
+    ov("paste 0 0 menu")
+    ov("freeclip bg")
+end
+
+--------------------------------------------------------------------------------
+
+local function create_help()
     ov(op.black)
     ov("fill")
     ov(op.white)
@@ -102,8 +122,17 @@ Option-click to flood.
 ]]
     )
     pastetext(5, 5)
+    ov("copy 0 0 "..wd.." "..ht.." menu")
+    ov("update")
     ov("blend "..oldblend)
     ov("font "..oldfont)
+end
+
+--------------------------------------------------------------------------------
+
+local function show_help()
+    local oldblend = ov("blend 0")
+    ov("paste 0 0 menu")
 end
 
 --------------------------------------------------------------------------------
@@ -238,7 +267,7 @@ local function test_animation()
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext = [[
-GOLLY 2.9
+Golly 2.9
 
 
 © 2016 The Golly Gang:
@@ -406,7 +435,7 @@ David Bell
     local level
 
     for y = 0, ht / 2 do
-        level = 32 + math.floor(192 * (y * 2 / ht))
+        level = 32 + math.floor(176 * (y * 2 / ht))
         ov("rgba 0 0 "..level.." 255")
         ov("line 0 "..y.." "..wd.." "..y)
         ov("line 0 "..(ht - y).." "..wd.." "..(ht -y))
@@ -463,6 +492,19 @@ David Bell
         local timebg = g.millisecs() - t1
         t1 = g.millisecs()
 
+        -- draw gridlines
+        offset = math.floor(gridx)
+        ov("rgba 64 64 64 255")
+        for i = 0, wd, tilewd do
+           ov("line "..(i + offset).." 0 "..(i + offset).." "..ht)
+        end
+        for i = 0, ht, tileht do
+           ov("line 0 "..(i + offset).." "..wd.." "..(i + offset))
+        end
+
+        local timegrid = g.millisecs() - t1
+        t1 = g.millisecs()
+
         -- draw stars
         local level = 50
         local i = 1
@@ -489,7 +531,6 @@ David Bell
         t1 = g.millisecs()
 
         -- draw glider
-        offset = math.floor(gridx)
         ov(op.white)
         local gx, gy
         local frame = math.floor(gliderframe)
@@ -515,24 +556,12 @@ David Bell
                 if glider[frame][3 * gy + gx + 1] == 1 then
                     x = (gliderx + gx) * tilewd + offset
                     y = (glidery + gy) * tileht + offset
-                    ov("fill "..x.." "..y.." "..tilewd.." "..tileht)
+                    ov("fill "..(x + 1).." "..(y + 1).." "..(tilewd - 1).." "..(tileht - 1))
                 end
             end
         end
 
         local timeglider = g.millisecs() - t1
-        t1 = g.millisecs()
-
-        -- draw gridlines
-        ov("rgba 64 64 64 255")
-        for i = 0, wd, tilewd do
-           ov("line "..(i + offset).." 0 "..(i + offset).." "..ht)
-        end
-        for i = 0, ht, tileht do
-           ov("line 0 "..(i + offset).." "..wd.." "..(i + offset))
-        end
-
-        local timegrid = g.millisecs() - t1
         t1 = g.millisecs()
 
         -- draw bouncing scrolling text
@@ -604,6 +633,9 @@ David Bell
     ov("textoption background "..oldbg)
     ov("font "..oldfont)
     ov("blend "..oldblend)
+
+    -- exit
+    exit_stage_right()
 end
 
 --------------------------------------------------------------------------------
@@ -1054,7 +1086,9 @@ end
 
 local function main()
     g.show("Testing overlay (type h for help)...")
-    create_overlay(500, 300)
+    create_overlay(500, 400)
+
+    create_help()
 
     local mousedown = false
     local prevx, prevy
