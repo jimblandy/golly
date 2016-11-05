@@ -19,8 +19,6 @@ if g.getheight() > 0 then
     gridb = gridt + g.getheight() - 1
 end
 
-local helpmsg = " (hit 'h' for help)"
-
 local ncells = {}       -- list of neighboring live cells
 local oldcells = {}     -- cells under moved object
 local object = {}       -- cells in moving object
@@ -28,26 +26,20 @@ local object1 = {}      -- cells in initial object
 
 --------------------------------------------------------------------------------
 
-local function showhelp1()
+local function showhelp()
     g.note([[
-Hit the escape key to abort the script.
+Alt-clicking on an object allows you to COPY
+it to another location (the original object
+is not deleted).
 
-Note that alt-clicking on an object allows you to COPY it
-to another location (the original object is not deleted).]])
-end
+While dragging the object the following keys
+can be used:
 
---------------------------------------------------------------------------------
-
-local function showhelp2()
-    g.note([[
-While moving the object the following keys can be used:
-
-x -- flip object left-right
-y -- flip object top-bottom
-> -- rotate object clockwise
-< -- rotate object anticlockwise
-h -- show this help
-escape -- abort and restore the object]])
+x  - flip object left-right
+y  - flip object top-bottom
+>  - rotate object clockwise
+<  - rotate object anticlockwise
+escape  - abort and restore the object]])
 end
 
 --------------------------------------------------------------------------------
@@ -205,7 +197,7 @@ local function lookforkeys(event)
         local newtop = midy + obox.left - midx
         local rotrect = { newleft, newtop, obox.ht, obox.wd }
         if not rectingrid(rotrect) then
-            g.warn("Rotation is not allowed if object would be outside grid.")
+            g.show("Rotation is not allowed if object would be outside grid.")
             return
         end
         g.putcells(object, 0, 0, 1, 0, 0, 1, "xor")  -- erase object
@@ -227,10 +219,10 @@ local function lookforkeys(event)
     end
     
     if event == "key h none" then
-        showhelp2()
+        -- best not to show Help window while dragging object!
         return
     end
-    
+
     g.doevent(event)
 end
 
@@ -239,10 +231,10 @@ end
 local function moveobject()
     local oldmouse, mousepos, prevx, prevy
     
-    -- wait for 1st click in live cell
+    -- wait for click in or near a live cell
     while true do
         local event = g.getevent()
-        if event:find("click") == 1 then
+        if event:find("^click") then
             -- event is a string like "click 10 20 left none"
             local evt, xstr, ystr, butt, mods = split(event)
             local result = findlivecell(tonumber(xstr), tonumber(ystr))
@@ -263,25 +255,23 @@ local function moveobject()
                 g.warn("Click on or near a live cell belonging to the desired object.")
             end
         elseif event == "key h none" then
-            showhelp1()
+            showhelp()
         else
             g.doevent(event)
         end
     end
     
-    -- wait for 2nd click while moving object
-    g.show("Move mouse and click again..." .. helpmsg)
-    local gotclick = false
-    while not gotclick do
+    -- wait for mouse-up while moving object
+    g.show("Move mouse and release button...")
+    local mousedown = true
+    while mousedown do
         local event = g.getevent()
-        if event:find("click") == 1 then
-            local evt, x, y, butt, mods = split(event)
-            mousepos = x..' '..y
-            gotclick = true
-        else
-            if #event > 0 then lookforkeys(event) end
-            mousepos = g.getxy()
+        if event:find("^mup") then
+            mousedown = false
+        elseif #event > 0 then
+            lookforkeys(event)
         end
+        mousepos = g.getxy()
         if #mousepos > 0 and mousepos ~= oldmouse then
             -- mouse has moved, so move object
             g.putcells(object, 0, 0, 1, 0, 0, 1, "xor")  -- erase object
@@ -325,7 +315,7 @@ end
 
 if #g.getrect() == 0 then g.exit("There are no objects.") end
 
-g.show("Click on or near live cell in object, move mouse and click again..."..helpmsg)
+g.show("Click on or near a live cell, move mouse and release button... (hit 'h' for help)")
 local oldcursor = g.getcursor()
 g.setcursor("Move")
 

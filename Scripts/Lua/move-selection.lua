@@ -16,8 +16,6 @@ if g.getheight() > 0 then
     gridb = gridt + g.getheight() - 1
 end
 
-local helpmsg = " (hit 'h' for help)"
-
 local selrect = g.getselrect()
 if #selrect == 0 then g.exit("There is no selection.") end
 local selpatt = g.getcells(selrect)
@@ -25,26 +23,20 @@ local oldcells = {}
 
 --------------------------------------------------------------------------------
 
-local function showhelp1()
+local function showhelp()
     g.note([[
-Hit the escape key to abort the script.
+Alt-clicking in the selection allows you to
+COPY it to another location (the original
+selection is not deleted).
 
-Note that alt-clicking in the selection allows you to COPY it
-to another location (the original selection is not deleted).]])
-end
+While moving the selection the following keys
+can be used:
 
---------------------------------------------------------------------------------
-
-local function showhelp2()
-    g.note([[
-While moving the selection the following keys can be used:
-
-x -- flip selection left-right
-y -- flip selection top-bottom
-> -- rotate selection clockwise
-< -- rotate selection anticlockwise
-h -- show this help
-escape -- abort and restore the selection]])
+x  - flip selection left-right
+y  - flip selection top-bottom
+>  - rotate selection clockwise
+<  - rotate selection anticlockwise
+escape  - abort and restore the selection]])
 end
 
 --------------------------------------------------------------------------------
@@ -100,7 +92,7 @@ local function lookforkeys(event, deltax, deltay)
         local newtop = midy + selrect[1] - midx
         local rotrect = { newleft, newtop, selrect[4], selrect[3] }
         if not rectingrid(rotrect) then
-            g.warn("Rotation is not allowed if selection would be outside grid.")
+            g.show("Rotation is not allowed if selection would be outside grid.")
             return
         end
         g.clear(0)
@@ -117,9 +109,6 @@ local function lookforkeys(event, deltax, deltay)
             g.rotate(1)
         end
         selrect = g.getselrect()
-        if not gp.equal(selrect,rotrect) then
-            g.warn("Bug: selrect ~= rotrect")
-        end
         selpatt = g.transform(g.getcells(selrect), -deltax, -deltay)
         if #oldcells > 0 then
             g.clear(0)
@@ -131,7 +120,7 @@ local function lookforkeys(event, deltax, deltay)
     end
     
     if event == "key h none" then
-        showhelp2()
+        -- best not to show Help window while dragging selection!
         return
     end
     
@@ -143,10 +132,10 @@ end
 local function moveselection()
     local x, y, firstx, firsty, xoffset, yoffset, oldmouse
 
-    -- wait for 1st click in selection
+    -- wait for click in selection
     while true do
         local event = g.getevent()
-        if event:find("click") == 1 then
+        if event:find("^click") then
             -- event is a string like "click 10 20 left none"
             local evt, xstr, ystr, butt, mods = split(event)
             x = tonumber(xstr)
@@ -164,31 +153,27 @@ local function moveselection()
                 break
             end
         elseif event == "key h none" then
-            showhelp1()
+            showhelp()
         else
             g.doevent(event)
         end
     end
     
-    -- wait for 2nd click while moving selection
-    g.show("Move mouse and click again..."..helpmsg)
-    local gotclick = false
+    -- wait for mouse-up while moving selection
+    g.show("Move mouse and release button...")
+    local mousedown = true
     local mousepos
-    while not gotclick do
+    while mousedown do
         local event = g.getevent()
-        if event:find("click") == 1 then
-            local evt, x, y, butt, mods = split(event)
-            mousepos = x..' '..y
-            gotclick = true
-        else
-            if #event > 0 then
-                lookforkeys(event, x - firstx, y - firsty)
-                -- update xoffset,yoffset in case selection was rotated
-                xoffset = x - selrect[1]
-                yoffset = y - selrect[2]
-            end
-            mousepos = g.getxy()
+        if event:find("^mup") then
+            mousedown = false
+        elseif #event > 0 then
+            lookforkeys(event, x - firstx, y - firsty)
+            -- update xoffset,yoffset in case selection was rotated
+            xoffset = x - selrect[1]
+            yoffset = y - selrect[2]
         end
+        mousepos = g.getxy()
         if #mousepos > 0 and mousepos ~= oldmouse then
             -- mouse has moved, so move selection rect and pattern
             g.clear(0)
@@ -235,7 +220,7 @@ end
 local firstrect = g.getselrect()
 local firstpatt = g.getcells(selrect)
 
-g.show("Click anywhere in selection, move mouse and click again..."..helpmsg)
+g.show("Click anywhere in selection, move mouse and release button... (hit 'h' for help)")
 local oldcursor = g.getcursor()
 g.setcursor("Move")
 

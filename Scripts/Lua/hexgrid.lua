@@ -1262,8 +1262,8 @@ h             - display this help
 l             - show/hide grid lines
 o             - show/hide overlay
 r             - reset to starting pattern
-[             - zoom in
-]             - zoom out
+[             - zoom out
+]             - zoom in
 
                 (click or hit any key to close help)]]
 
