@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (rowett@yahoo.com), November 2016
 
 local g = golly()
--- require "gplus.strict"
+require "gplus.strict"
 local gp = require "gplus"
 local split = gp.split
 local int = gp.int
@@ -50,8 +50,9 @@ local function bricks()
 
     -- messages
     local gameoverstr = "Game Over"
-    local newballstr  = "Click to launch"
-    local pausestr    = "Paused: click to continue"
+    local newballstr  = "Click or Enter to launch ball"
+    local controlstr  = "Mouse or Arrow keys to move bat"
+    local pausestr    = "Paused: Click or Enter to continue"
 
     -- create the background
     local oldblend = ov("blend 0")
@@ -67,7 +68,9 @@ local function bricks()
     -- save the background clip
     ov("copy 0 0 "..wd.." "..ht.." bg")
 
-    local again = true
+    local hiscore = 0
+    local newhigh
+    local again   = true
 
     -- play games until finished
     while again == true do
@@ -105,6 +108,7 @@ local function bricks()
         local baty    = ht - batht * 4
         local bathits = 0
         local maxhits = 8 
+        local lastx   = -1
     
         -- initialize the ball
         local ballsize  = wd / 80
@@ -114,7 +118,7 @@ local function bricks()
         local balldy    = -1
         local speeddef  = 1
         local ballspeed = speeddef
-        local speedinc  = 1.05
+        local speedinc  = 0.05
         local maxspeed  = 4
         local speeddiv  = 4
     
@@ -124,10 +128,11 @@ local function bricks()
         local shadowcol = "rgba 0 0 0 128"
     
         -- whether alive
-        local balls = 3
-        local score = 0
+        local balls   = 3
+        local score   = 0
         local newball = true
-        local pause = false
+        local pause   = false
+        newhigh       = false
     
         -- main loop
         while balls > 0 and bricksleft > 0 do
@@ -136,12 +141,22 @@ local function bricks()
     
             -- check for mouse click
             local event = g.getevent()
-            if event:find("^oclick") then
+            if event:find("^oclick") or event == "key enter none" or event == "key return none" then
                 if newball then
                     newball = false
                     pause = false
                 else
                     pause = not pause
+                end
+            elseif event == "key left none" then
+                batx = batx - (wd / 50)
+                if batx < 0 then
+                    batx = 0
+                end
+            elseif event == "key right none" then
+                batx = batx + (wd / 50)
+                if batx + batwd >= wd then
+                    batx = wd - batwd
                 end
             end
            
@@ -185,10 +200,10 @@ local function bricks()
             -- draw the bat
             ov(shadowcol)
             ov("blend 1")
-            ov("fill "..(batx + shadowx).." "..(baty + shadowy).." "..batwd.." "..batht)
+            ov("fill "..(math.floor(batx) + shadowx).." "..(math.floor(baty) + shadowy).." "..batwd.." "..batht)
             ov("blend 0")
             ov("rgba 192 192 192 255")
-            ov("fill "..batx.." "..baty.." "..batwd.." "..batht)
+            ov("fill "..math.floor(batx).." "..math.floor(baty).." "..batwd.." "..batht)
     
             -- check if paused
             if pause then
@@ -199,7 +214,7 @@ local function bricks()
                 pastetext(math.floor((wd - w) / 2) + 2, math.floor((ht - h) / 2) + 2)
                 ov(op.white)
                 maketext(pausestr)
-                pastetext(math.floor((wd - w) / 2) + 2, math.floor((ht - h) / 2) + 2)
+                pastetext(math.floor((wd - w) / 2), math.floor((ht - h) / 2))
             else
                 -- update ball position
                 if newball then
@@ -208,7 +223,13 @@ local function bricks()
                     ov("font 24 mono")
                     ov("blend 1")
                     ov(op.black)
-                    local w, h = maketext(newballstr)
+                    local w, h = maketext(controlstr)
+                    pastetext(math.floor((wd - w) / 2) + 2, math.floor((ht - h) / 2) + 2 + 60)
+                    ov(op.white)
+                    maketext(controlstr)
+                    pastetext(math.floor((wd - w) / 2), math.floor((ht - h) / 2) + 60)
+                    ov(op.black)
+                    w, h = maketext(newballstr)
                     pastetext(math.floor((wd - w) / 2) + 2, math.floor((ht - h) / 2) + 2 + 20)
                     ov(op.white)
                     maketext(newballstr)
@@ -275,8 +296,12 @@ local function bricks()
                             -- hit a brick!
                             rows[bricky][brickx] = false
                             score = score + 10 * (numrows - bricky + 1)
+                            if score > hiscore then
+                                hiscore = score
+                                newhigh = true
+                            end
                             balldy = -balldy
-                            ballspeed = ballspeed * speedinc
+                            ballspeed = ballspeed + speedinc
                             if ballspeed > maxspeed then
                                 ballspeed = maxspeed
                             end
@@ -290,9 +315,12 @@ local function bricks()
             local mousepos = ov("xy")
             if mousepos ~= "" then
                 local mousex, mousey = split(mousepos)
-                batx = tonumber(mousex)
-                if batx > wd - batwd then
-                    batx = wd - batwd
+                if mousex ~= lastx then
+                    lastx = mousex
+                    batx = tonumber(mousex)
+                    if batx > wd - batwd then
+                        batx = wd - batwd
+                    end
                 end
             end
     
@@ -313,7 +341,10 @@ local function bricks()
                 pastetext(5 + xoff, 5 + yoff)
                 local w = maketext("Balls "..balls)
                 pastetext(wd - w - 5 + xoff, 5 + yoff)
-                w = maketext("Speed "..string.format("%.1f", ballspeed))
+                if pass == 2 and newhigh == true then
+                    ov(op.red)
+                end
+                w = maketext("High Score "..hiscore)
                 pastetext(math.floor((wd - w) / 2) + xoff, 5 + yoff)
             end
               
@@ -346,6 +377,8 @@ local function bricks()
                 if button == "right" then
                     again = false
                 end
+                finished = true
+            elseif event == "key enter none" or event == "key return none" then
                 finished = true
             end
         end
