@@ -1,49 +1,74 @@
--- Test all the overlay commands.
+--[[
+This script demonstrates the overlay's capabilities.
+Authors: Andrew Trevorrow (andrew@trevorrow.com) and Chris Rowett (rowett@yahoo.com).
+--]]
 
 local g = golly()
--- require "gplus.strict"
+--!!!
+require "gplus.strict"
 local gp = require "gplus"
 local split = gp.split
 local int = gp.int
 local op = require "oplus"
 
+local ov = g.overlay
+
 math.randomseed(os.time())  -- init seed for math.random
 local rand = math.random
 
-local ov = g.overlay
+local wd, ht            -- overlay's current width and height
+local toggle = 0        -- for toggling alpha blending
+local align = "right"   -- for text alignment
+local transbg = 0       -- for text transparent background
 
-local wd, ht               -- overlay's current width and height (set by create_overlay)
-local toggle = 0           -- for toggling alpha blending
-local align = "right"      -- for text alignment
-local transbg = 0          -- for text transparent background
+-- buttons for main menu (created in create_menu_buttons)
+local blend_button
+local animation_button
+local cursor_button
+local line_button
+local error_button
+local fill_button
+local load_button
+local mouse_button
+local multiline_button
+local pos_button
+local save_button
+local text_button
+
+local return_to_main_menu = false
+
+--------------------------------------------------------------------------------
+
+local function create_overlay()
+    wd = 1000
+    ht = 1000
+    ov("create "..wd.." "..ht)
+    ov("position middle")
+    
+    -- main_menu will resize overlay to just fit buttons and text
+end
+
+--------------------------------------------------------------------------------
+
+local function wait_for_return()
+    g.update()
+    
+    -- note that if we call op.process below then we'll need to hide all the
+    -- main menu buttons so they can't be clicked!!!
+    
+    while true do
+        local event = g.getevent()
+        if event == "key enter none" or event == "key return none" then
+            break
+        end
+    end
+    return_to_main_menu = true
+end
 
 --------------------------------------------------------------------------------
 
 local function ms(t)
     return string.format("%.2fms", t)
-end
-
---------------------------------------------------------------------------------
-
-local function create_overlay(w, h)
-    wd = w
-    ht = h
-    ov("create "..w.." "..h)
-    ov("fill")              -- fill overlay with opaque white
-    ov("rgba 0 0 255 64")   -- 25% translucent blue
-    ov("fill 1 1 -2 -2")    -- non +ve wd/ht are treated as insets
-    
-    ov(op.yellow)
-    
-    -- rects completely outside overlay are ignored
-    ov("fill -1 -1 1 1")
-    ov("fill 1000000 1000000 1 1")
-    -- rects partially outside overlay are clipped
-    ov("fill -20 "..(h-20).." 40 40")
-    ov("fill "..(w-20).." -20 40 40")
-    
-    g.setoption("showoverlay", 1)
-    g.update()
 end
 
 --------------------------------------------------------------------------------
@@ -70,74 +95,8 @@ end
 
 --------------------------------------------------------------------------------
 
-local function exit_stage_right()
-    ov("blend 0")
-    ov("copy 0 0 "..wd.." "..ht.." bg")
-    local x = 10
-    local frametime
-    while x < wd do
-        frametime = g.millisecs()
-        ov("paste "..(x - wd).." 0 menu")
-        ov("paste "..x.." 0 bg")
-        ov("update")
-        x = x + 10
-        while g.millisecs() - frametime < 15 do
-        end
-    end
-    ov("paste 0 0 menu")
-    ov("freeclip bg")
-end
-
---------------------------------------------------------------------------------
-
-local function create_help()
-    ov(op.black)
-    ov("fill")
-    ov(op.white)
-    local oldfont = ov("font 10 mono-bold")   -- use a mono-spaced font
-    local oldblend = ov("blend 1")
-    maketext(
-[[
-Special keys and their actions:
-
-a -- test animation
-b -- test alpha blending
-c -- test cursors
-C -- create overlay that covers layer
-e -- test error messages
-f -- test filling lots of rectangles
-g -- show pixel value under mouse
-h -- display this help
-i -- test loading image from file
-l -- test drawing lots of lines
-m -- test multiline text
-p -- test overlay positions
-s -- test setting lots of pixels
-t -- test text and transforms
-v -- test copy and paste
-w -- test saving overlay to file
-
-Click and drag to draw.
-Option-click to flood.
-]]
-    )
-    pastetext(5, 5)
-    ov("copy 0 0 "..wd.." "..ht.." menu")
-    ov("update")
-    ov("blend "..oldblend)
-    ov("font "..oldfont)
-end
-
---------------------------------------------------------------------------------
-
-local function show_help()
-    local oldblend = ov("blend 0")
-    ov("paste 0 0 menu")
-end
-
---------------------------------------------------------------------------------
-
 local pos = 0
+
 local function test_positions()
     pos = pos + 1
     if pos == 1 then ov("position middle") end
@@ -145,11 +104,14 @@ local function test_positions()
     if pos == 3 then ov("position bottomright") end
     if pos == 4 then ov("position bottomleft") end
     if pos == 5 then ov("position topleft") ; pos = 0 end
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
 
 local curs = 0
+
 local function test_cursors()
     curs = curs + 1
     if curs == 1 then ov("cursor pencil") end
@@ -161,6 +123,8 @@ local function test_cursors()
     if curs == 7 then ov("cursor arrow") end
     if curs == 8 then ov("cursor current") end
     if curs == 9 then ov("cursor hidden") ; curs = 0 end
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -173,6 +137,8 @@ local function test_get()
     else
         g.show("mouse is outside overlay")
     end
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -192,6 +158,8 @@ local function test_set()
         -- ov(string.format("set %d %d",rand(0,maxx),rand(0,maxy))) -- slower
     end
     g.show("Time to set one million pixels: "..ms(g.millisecs()-t1))
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -230,11 +198,17 @@ local function test_copy_paste()
     g.show("Time to test copy and paste: "..ms(g.millisecs()-t1))
     ov("freeclip background")
     ov("freeclip box")
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
 
 local function test_animation()
+    -- resize overlay to cover entire current layer
+    wd, ht = g.getview( g.getlayer() )
+    ov("resize "..wd.." "..ht)
+
     local t1, t2
 
     -- grid size
@@ -633,9 +607,8 @@ David Bell
     ov("textoption background "..oldbg)
     ov("font "..oldfont)
     ov("blend "..oldblend)
-
-    -- exit
-    exit_stage_right()
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -643,6 +616,8 @@ end
 local function test_save()
     ov("save 0 0 "..wd.." "..ht.." test-save.png")
     g.show("overlay has been saved in test-save.png")
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -654,6 +629,8 @@ local function test_load()
     local iw, ih = split(imgsize)
     ov("load "..int((wd-iw)/2).." "..int((ht-ih)/2).." test-alpha.png")
     g.show("Image width and height: "..imgsize)
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -683,6 +660,8 @@ local function test_lines()
     if toggle > 0 then
         ov("blend 0") -- turn off alpha blending
     end
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -785,6 +764,8 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     ov("textoption align "..oldalign)
     ov("font "..oldfont)
     ov("blend "..oldblend)
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -941,6 +922,8 @@ local function test_text()
     ov(op.black)
 
     g.show("Time to test text: "..ms(g.millisecs()-t1))
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -968,6 +951,8 @@ local function test_fill()
     if toggle > 0 then
         ov("blend 0") -- turn off alpha blending
     end
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -1003,6 +988,8 @@ local function test_blending()
     if toggle > 0 then
         ov("blend 0") -- turn off alpha blending
     end
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -1038,18 +1025,8 @@ local function test_copy_outside()
     ov("paste "..(wd-15).." "..(ht-15).." foo")
     
     ov("blend "..oldblend)
-end
-
---------------------------------------------------------------------------------
-
-local function expand(x, y)
-    -- do via some sort of scale command???!!!
-end
-
---------------------------------------------------------------------------------
-
-local function shrink(x, y)
-    -- do via some sort of scale command???!!!
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
@@ -1080,66 +1057,41 @@ local function test_errors()
         g.warn(err)
         g.continue("")
     end
+    
+    wait_for_return()
 end
 
 --------------------------------------------------------------------------------
 
-local function main()
-    g.show("Testing overlay (type h for help)...")
-    create_overlay(500, 400)
-    create_help()
+local function test_mouse()
+    ov(op.black)
+    ov("fill")
+    ov(op.white)
+    
+    local oldfont = ov("font 10 mono-bold")
+    local oldblend = ov("blend 1")
+    if g.os() == "Mac" then
+        maketext("Click and drag to draw.\nOption-click to flood.")
+    else
+        maketext("Click and drag to draw.\nAlt-click to flood.")
+    end
+    pastetext(5, 5)
+    ov("blend "..oldblend)
+    ov("font "..oldfont)
+    
+    ov("cursor pencil")
+    g.update()
 
     local mousedown = false
     local prevx, prevy
-    
     while true do
         local event = g.getevent()
-        if event:find("^key") then
-            local _, ch, mods = split(event)
-            if ch == 'e' then
-                test_errors()
-            elseif ch == 'b' then
-                test_blending()
-            elseif ch == 'c' and mods == 'none' then
-                test_cursors()
-            elseif ch == 'c' and mods == 'shift' then
-                -- create an overlay covering entire layer
-                create_overlay(g.getview(g.getlayer()))
-                create_help()
-
-            elseif ch == 'f' then
-                test_fill()
-            elseif ch == 'g' then
-                test_get()
-            elseif ch == 'i' then
-                test_load()
-            elseif ch == 'w' then
-                test_save()
-            elseif ch == 'p' then
-                test_positions()
-            elseif ch == 's' then
-                test_set()
-            elseif ch == 't' then
-                test_text()
-            elseif ch == 'm' then
-                test_multiline_text()
-            elseif ch == 'l' then
-                test_lines()
-            elseif ch == 'v' then
-                test_copy_paste()
-            elseif ch == 'a' then
-                test_animation()
-            elseif ch == 'z' then
-                test_copy_outside()
-            elseif ch == 'h' then
-                show_help()
-            else
-                g.doevent(event)
-            end
-            g.update()
-        elseif event:find("^oclick") then
+        if event == "key enter none" or event == "key return none" then
+            return_to_main_menu = true
+            return
+        end
+        if event:find("^oclick") then
             local _, x, y, button, mods = split(event)
-            ov(op.white)
             if mods:find("alt") then
                 ov("flood "..x.." "..y)
             else
@@ -1151,12 +1103,6 @@ local function main()
             g.update()
         elseif event:find("^mup") then
             mousedown = false
-        elseif event:find("^ozoomin") then
-            local _, x, y = split(event)
-            expand(tonumber(x), tonumber(y))
-        elseif event:find("^ozoomout") then
-            local _, x, y = split(event)
-            shrink(tonumber(x), tonumber(y))
         elseif #event > 0 then
             g.doevent(event)
         end
@@ -1171,6 +1117,124 @@ local function main()
                 g.update()
             end
         end
+    end
+    
+    -- above loop checks for enter/return key
+    -- wait_for_return()
+end
+
+--------------------------------------------------------------------------------
+
+local function create_menu_buttons()
+    local longest = "Text and Transforms"
+    blend_button = op.button(longest, test_blending)
+    animation_button = op.button(longest, test_animation)
+    cursor_button = op.button(longest, test_cursors)
+    line_button = op.button(longest, test_lines)
+    error_button = op.button(longest, test_errors)
+    fill_button = op.button(longest, test_fill)
+    load_button = op.button(longest, test_load)
+    mouse_button = op.button(longest, test_mouse)
+    multiline_button = op.button(longest, test_multiline_text)
+    pos_button = op.button(longest, test_positions)
+    save_button = op.button(longest, test_save)
+    text_button = op.button(longest, test_text)
+
+    -- change labels without changing button width
+    blend_button.setlabel("Alpha Blending", false)
+    animation_button.setlabel("Animation", false)
+    cursor_button.setlabel("Cursors", false)
+    line_button.setlabel("Drawing Lines", false)
+    error_button.setlabel("Errors", false)
+    fill_button.setlabel("Filling Rectangles", false)
+    load_button.setlabel("Loading Images", false)
+    mouse_button.setlabel("Mouse Tracking", false)
+    multiline_button.setlabel("Multi-line Text", false)
+    pos_button.setlabel("Overlay Positions", false)
+    save_button.setlabel("Saving the Overlay", false)
+    text_button.setlabel("Text and Transforms", false)
+end
+
+--------------------------------------------------------------------------------
+
+local function main_menu()
+    local numbutts = 12
+    local buttwd = blend_button.wd
+    local buttht = blend_button.ht
+    local buttgap = 10
+    local hgap = 20
+    local textgap = 10
+
+    local oldfont = ov("font 24 default-bold")
+    ov(op.black)
+    local w1, h1 = maketext("Welcome to the overlay!", "bigtext")
+    ov("font 11 default-bold")
+    local w2, h2 = maketext("Click on a button to see what's possible.", "smalltext")
+    local textht = h1 + textgap + h2
+    
+    -- resize overlay to fit buttons and text
+    wd = hgap + buttwd + hgap + w1 + hgap
+    ht = hgap + numbutts * buttht + (numbutts-1) * buttgap + hgap
+    ov("resize "..wd.." "..ht)
+    
+    ov("cursor arrow")
+    ov(op.gray)
+    ov("fill")
+    ov(op.white)
+    ov("fill 2 2 -4 -4")
+    
+    local x = hgap
+    local y = hgap
+    
+    blend_button.show(x, y)         y = y + buttgap + buttht
+    animation_button.show(x, y)     y = y + buttgap + buttht
+    cursor_button.show(x, y)        y = y + buttgap + buttht
+    line_button.show(x, y)          y = y + buttgap + buttht
+    error_button.show(x, y)         y = y + buttgap + buttht
+    fill_button.show(x, y)          y = y + buttgap + buttht
+    load_button.show(x, y)          y = y + buttgap + buttht
+    mouse_button.show(x, y)         y = y + buttgap + buttht
+    multiline_button.show(x, y)     y = y + buttgap + buttht
+    pos_button.show(x, y)           y = y + buttgap + buttht
+    save_button.show(x, y)          y = y + buttgap + buttht
+    text_button.show(x, y)
+    
+    local oldblend = ov("blend 1")
+    
+    x = hgap + buttwd + hgap
+    y = int((ht - textht) / 2)
+    pastetext(x, y, op.identity, "bigtext")
+    x = x + int((w1 - w2) / 2)
+    y = y + h1 + textgap
+    pastetext(x, y, op.identity, "smalltext")
+    
+    ov("blend "..oldblend)
+    ov("font "..oldfont)
+    
+    g.update()
+    g.show(" ") -- clear any timing info
+
+    -- wait for user to click a button
+    return_to_main_menu = false
+    while true do
+        local event = op.process( g.getevent() )
+        if return_to_main_menu then
+            return
+        end
+        if #event > 0 then
+            -- might be a keyboard shortcut
+            g.doevent(event)
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function main()
+    create_overlay()
+    create_menu_buttons()
+    while true do
+        main_menu()
     end
 end
 
