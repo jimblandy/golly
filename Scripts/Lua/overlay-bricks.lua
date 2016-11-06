@@ -2,15 +2,45 @@
 -- Author: Chris Rowett (rowett@yahoo.com), November 2016
 
 local g = golly()
-require "gplus.strict"
+-- require "gplus.strict"
 local gp = require "gplus"
 local split = gp.split
 local int = gp.int
 local op = require "oplus"
 local ov = g.overlay
+local floor = math.floor
+
+-- text alignment
+local alignleft   = 0
+local aligncenter = 1
+local alignright  = 2
 
 -- overlay width and height
 local wd, ht
+
+-- high score is saved in this file
+local scorefile = g.getdir("data").."overlay-bricks.ini"
+
+--------------------------------------------------------------------------------
+
+local function readscore()
+    local score = 0
+    local f = io.open(scorefile, "r")
+    if f then
+        score = tonumber(f:read("*l")) or 0
+    end
+    return score
+end
+
+--------------------------------------------------------------------------------
+
+local function writescore(score)
+    local f = io.open(scorefile, "w")
+    if f then
+        f:write(tostring(score).."\n")
+        f:close()
+    end
+end
 
 --------------------------------------------------------------------------------
 
@@ -42,6 +72,26 @@ end
 
 --------------------------------------------------------------------------------
 
+local function shadowtext(x, y, text, align, color)
+    align = align or alignleft
+    color = color or op.white
+    ov("blend 1")
+    ov(op.black)
+    local w, h = maketext(text)
+    local textx = 0
+    if align == aligncenter then
+        textx = (wd - w) / 2
+    elseif align == alignright then
+    	textx = wd - w
+    end
+    pastetext(floor(textx + x + 2), floor(y + 2))
+    ov(color)
+    maketext(text)
+    pastetext(floor(textx + x), floor(y))
+end
+
+--------------------------------------------------------------------------------
+
 local function bricks()
     -- set font
     local oldfont   = ov("font 16 mono")
@@ -53,6 +103,9 @@ local function bricks()
     local newballstr  = "Click or Enter to launch ball"
     local controlstr  = "Mouse or Arrow keys to move bat"
     local pausestr    = "Paused: Click or Enter to continue"
+    local restartstr  = "Click or Enter to start again"
+    local quitstr     = "Right Click or Esc to quit"
+    local continuestr = "Click or Enter for next level"
 
     -- create the background
     local oldblend = ov("blend 0")
@@ -60,7 +113,7 @@ local function bricks()
     ov("fill")
     local y, c
     for y = 0, ht - 1 do
-        c = math.floor((y / ht) * 128)
+        c = floor((y / ht) * 128)
         ov("rgba 0 "..(128 - c).." "..c.." 255")
         ov("line 0 "..y.." "..(wd - 1).." "..y)
     end
@@ -68,22 +121,28 @@ local function bricks()
     -- save the background clip
     ov("copy 0 0 "..wd.." "..ht.." bg")
 
-    local hiscore = 0
-    local newhigh
-    local again   = true
-
     -- play games until finished
+    local balls      = 3
+    local score      = 0
+    local level      = 1
+    local again      = true
+    local hiscore    = readscore()
+    local numrows    = 6
+    local numcols    = 20
+    local maxoffsety = 20
+    local newhigh
+
     while again == true do
         -- initialize the bricks
         local rows       = {}
-        local numrows    = 6
-        local numcols    = 20
-        local brickwd    = math.floor(wd / numcols)
-        local brickht    = math.floor(ht / 40)
-        local offsety    = 2
-        local maxoffsety = 12
+        local brickwd    = floor(wd / numcols)
+        local brickht    = floor(ht / 40)
+        local offsety    = level + 1
         local bricksleft = numrows * numcols
         local brickx, bricky
+        if offsety > maxoffsety then
+            offsety = maxoffsety
+        end
     
         for y = 1, numrows do
             local bricks = {}
@@ -102,8 +161,8 @@ local function bricks()
         }
          
         -- intiialize the bat
-        local batwd   = math.floor(wd / 10)
-        local batx    = math.floor((wd - batwd) / 2)
+        local batwd   = floor(wd / 10)
+        local batx    = floor((wd - batwd) / 2)
         local batht   = brickht
         local baty    = ht - batht * 4
         local bathits = 0
@@ -123,15 +182,15 @@ local function bricks()
         local speeddiv  = 4
     
         -- shadow
-        local shadowx = math.floor(-wd / 100)
-        local shadowy = math.floor(ht / 100)
+        local shadowx = floor(-wd / 100)
+        local shadowy = floor(ht / 100)
         local shadowcol = "rgba 0 0 0 128"
     
         -- whether alive
-        local balls   = 3
-        local score   = 0
         local newball = true
         local pause   = false
+
+        -- whether new high score
         newhigh       = false
     
         -- main loop
@@ -161,6 +220,7 @@ local function bricks()
             end
            
             -- draw the background
+            ov("blend 0")
             ov("paste 0 0 bg")
     
             -- draw the bricks
@@ -192,83 +252,60 @@ local function bricks()
             -- draw the ball
             ov(shadowcol)
             ov("blend 1")
-            ov("fill "..(math.floor(ballx - ballsize / 2) + shadowx).." "..(math.floor(bally - ballsize / 2) + shadowy).." "..math.floor(ballsize).." "..math.floor(ballsize))
+            ov("fill "..(floor(ballx - ballsize / 2) + shadowx).." "..(floor(bally - ballsize / 2) + shadowy).." "..floor(ballsize).." "..floor(ballsize))
             ov("blend 0")
             ov("rgba 255 255 255 255")
-            ov("fill "..math.floor(ballx - ballsize / 2).." "..math.floor(bally - ballsize / 2).." "..math.floor(ballsize).." "..math.floor(ballsize))
+            ov("fill "..floor(ballx - ballsize / 2).." "..floor(bally - ballsize / 2).." "..floor(ballsize).." "..floor(ballsize))
     
             -- draw the bat
             ov(shadowcol)
             ov("blend 1")
-            ov("fill "..(math.floor(batx) + shadowx).." "..(math.floor(baty) + shadowy).." "..batwd.." "..batht)
+            ov("fill "..(floor(batx) + shadowx).." "..(floor(baty) + shadowy).." "..batwd.." "..batht)
             ov("blend 0")
             ov("rgba 192 192 192 255")
-            ov("fill "..math.floor(batx).." "..math.floor(baty).." "..batwd.." "..batht)
+            ov("fill "..floor(batx).." "..floor(baty).." "..batwd.." "..batht)
     
             -- check if paused
             if pause then
                 ov("font 16 mono")
-                ov("blend 1")
-                ov(op.black)
-                local w, h = maketext(pausestr)
-                pastetext(math.floor((wd - w) / 2) + 2, math.floor((ht - h) / 2) + 2)
-                ov(op.white)
-                maketext(pausestr)
-                pastetext(math.floor((wd - w) / 2), math.floor((ht - h) / 2))
+                shadowtext(0, ht / 2, pausestr, aligncenter)
             else
                 -- update ball position
                 if newball then
                     ballx = batx + batwd / 2
                     bally = baty - ballsize
+                    ov("font 16 mono")
+                    shadowtext(0, ht / 2 + 70, controlstr, aligncenter)
+                    shadowtext(0, ht / 2 + 30, newballstr, aligncenter)
                     ov("font 24 mono")
-                    ov("blend 1")
-                    ov(op.black)
-                    local w, h = maketext(controlstr)
-                    pastetext(math.floor((wd - w) / 2) + 2, math.floor((ht - h) / 2) + 2 + 60)
-                    ov(op.white)
-                    maketext(controlstr)
-                    pastetext(math.floor((wd - w) / 2), math.floor((ht - h) / 2) + 60)
-                    ov(op.black)
-                    w, h = maketext(newballstr)
-                    pastetext(math.floor((wd - w) / 2) + 2, math.floor((ht - h) / 2) + 2 + 20)
-                    ov(op.white)
-                    maketext(newballstr)
-                    pastetext(math.floor((wd - w) / 2), math.floor((ht - h) / 2) + 20)
-                    ov(op.black)
                     local remstr
                     if balls == 1 then
                         remstr = "Last ball!"
                     else
                         remstr = balls.." balls left"
                     end
-                    ov(op.black)
-                    w, h = maketext(remstr)
-                    pastetext(math.floor((wd - w) / 2) + 2, math.floor((ht - h) / 2) + 2 - 20)
-                    ov(op.white)
-                    maketext(remstr)
-                    pastetext(math.floor((wd - w) / 2), math.floor((ht - h) / 2) - 20)
+                    shadowtext(0, ht / 2 - 20, remstr, aligncenter)
+                    shadowtext(0, ht / 2 - 70, "Level "..level, aligncenter)
                 else
                     ballx = ballx + (balldx * ballspeed * ballsize) / speeddiv
                     bally = bally + (balldy * ballspeed * ballsize) / speeddiv
                     -- check for ball hitting boundary
-                    if ballx < 0 or ballx >= wd then
+                    if ballx < ballsize / 2 or ballx >= wd - ballsize / 2 then
                         balldx = -balldx
                         ballx = ballx + balldx * 2
-                    end
-                    if bally <= 0 then
+                    elseif bally < ballsize / 2 then
                         balldy = -balldy
-                        bally = bally + balldy * 2
-                    end
-                    if bally >= ht then
+                        bally = bally + balldy * 2.5
+                    elseif bally >= ht then
                         -- ball lost!
-                        balls = balls - 1
-                        bally = baty
-                        balldy = -1
+                        balls     = balls - 1
+                        bally     = baty
+                        balldy    = -1
+                        balldx    = 1
                         ballspeed = speeddef
-                        newball = true
-                    end
+                        newball   = true
                     -- check for ball hitting bat
-                    if bally >= baty and bally <= baty + batht - 1 and ballx >= batx and ballx < batx + batwd then
+                    elseif bally >= baty and bally <= baty + batht - 1 and ballx >= batx and ballx < batx + batwd then
                         -- set dx from where ball hit bat
                         balldx = (3 * (ballx - batx) / batwd) - 1.5
                         if balldx >= 0 and balldx < 0.1 then
@@ -289,18 +326,25 @@ local function bricks()
                        end
                     end
                     -- check for ball hitting brick
-                    bricky = math.floor(bally / brickht) - offsety
-                    brickx = math.floor(ballx / brickwd) + 1
+                    bricky = floor(bally / brickht) - offsety
+                    brickx = floor(ballx / brickwd) + 1
                     if bricky >= 1 and bricky <= numrows then
                         if rows[bricky][brickx] == true then
                             -- hit a brick!
                             rows[bricky][brickx] = false
-                            score = score + 10 * (numrows - bricky + 1)
+                            score = score + (level + 9) * (numrows - bricky + 1)
                             if score > hiscore then
                                 hiscore = score
                                 newhigh = true
                             end
-                            balldy = -balldy
+                            -- work out which axis to invert
+                            local lastbricky = floor((bally - (balldy * ballspeed * ballsize / speeddiv)) / brickht) - offsety
+                            if lastbricky == bricky then
+                                balldx = -balldx
+                            else
+                                balldy = -balldy
+                            end
+                            -- speed the ball up
                             ballspeed = ballspeed + speedinc
                             if ballspeed > maxspeed then
                                 ballspeed = maxspeed
@@ -327,27 +371,14 @@ local function bricks()
             -- draw the score and lives
             ov("blend 1")
             ov("font 16 mono")
-            for pass = 1, 2 do
-                if pass == 1 then
-                    ov(op.black)
-                    xoff = 2
-                    yoff = 2
-                else
-                    ov(op.white)
-                    xoff = 0
-                    yoff = 0
-                end
-                maketext("Score "..score)
-                pastetext(5 + xoff, 5 + yoff)
-                local w = maketext("Balls "..balls)
-                pastetext(wd - w - 5 + xoff, 5 + yoff)
-                if pass == 2 and newhigh == true then
-                    ov(op.red)
-                end
-                w = maketext("High Score "..hiscore)
-                pastetext(math.floor((wd - w) / 2) + xoff, 5 + yoff)
+            shadowtext(5, 5, "Score "..score)
+            shadowtext(-5, 5, "Balls "..balls, alignright)
+            local highcol = op.white
+            if newhigh == true then
+                highcol = op.yellow
             end
-              
+            shadowtext(0, 5, "High Score "..hiscore, aligncenter, highcol)
+
             -- update the display
             ov("update")
     
@@ -357,17 +388,33 @@ local function bricks()
             end
         end
 
-        -- game over
+        -- save high score
+        if newhigh == true then
+            writescore(hiscore)
+        end
+
+        -- check why game finished
         ov("font 48 mono")
-        ov("blend 1")
-        ov(op.black)
-        local w, h = maketext(gameoverstr)
-        pastetext(math.floor((wd - w) / 2) + 2, math.floor((ht - h) / 2) + 2)
-        ov(op.white)
-        maketext(gameoverstr)
-        pastetext(math.floor((wd - w) / 2), math.floor((ht - h) / 2))
+        if balls == 0 then
+            -- game over
+            shadowtext(0, ht / 2 - 40, gameoverstr, aligncenter)
+            ov("font 16 mono")
+            shadowtext(0, ht / 2 + 40, restartstr, aligncenter)
+            score = 0
+            balls = 3
+            level = 1
+        else
+            -- level complete
+            ov("font 48 mono")
+            shadowtext(0, ht / 2 - 40, "Level "..level.." complete!", aligncenter)
+            ov("font 16 mono")
+            shadowtext(0, ht / 2 + 40, continuestr, aligncenter)
+            level = level + 1
+        end
+        shadowtext(0, ht / 2 + 70, quitstr, aligncenter)
         ov("update")
     
+        -- wait until mouse button clicked or enter pressed
         local finished = false
         while not finished do
             local event = g.getevent()
