@@ -17,6 +17,8 @@ local alignright  = 2
 
 -- overlay width and height
 local wd, ht
+local minwd = 512
+local minht = 512
 
 -- high score is saved in this file
 local scorefile = g.getdir("data").."overlay-bricks.ini"
@@ -92,23 +94,8 @@ end
 
 --------------------------------------------------------------------------------
 
-local function bricks()
-    -- set font
-    local oldfont   = ov("font 16 mono")
-    local oldbg     = ov("textoption background 0 0 0 0")
-    local oldcursor = ov("cursor hidden")
-
-    -- messages
-    local gameoverstr = "Game Over"
-    local newballstr  = "Click or Enter to launch ball"
-    local controlstr  = "Mouse or Arrow keys to move bat"
-    local pausestr    = "Paused: Click or Enter to continue"
-    local restartstr  = "Click or Enter to start again"
-    local quitstr     = "Right Click or Esc to quit"
-    local continuestr = "Click or Enter for next level"
-
-    -- create the background
-    local oldblend = ov("blend 0")
+local function createbackground()
+    ov("blend 0")
     ov(op.black)
     ov("fill")
     local y, c
@@ -120,6 +107,28 @@ local function bricks()
 
     -- save the background clip
     ov("copy 0 0 "..wd.." "..ht.." bg")
+end
+
+--------------------------------------------------------------------------------
+
+local function bricks()
+    -- set font
+    local oldfont   = ov("font 16 mono")
+    local oldbg     = ov("textoption background 0 0 0 0")
+    local oldcursor = ov("cursor hidden")
+    local oldblend  = ov("blend 0")
+
+    -- messages
+    local gameoverstr = "Game Over"
+    local newballstr  = "Click or Enter to launch ball"
+    local controlstr  = "Mouse or Arrow keys to move bat"
+    local pausestr    = "Paused: Click or Enter to continue"
+    local restartstr  = "Click or Enter to start again"
+    local quitstr     = "Right Click or Esc to quit"
+    local continuestr = "Click or Enter for next level"
+
+    -- create the background
+    createbackground()
 
     -- play games until finished
     local balls      = 3
@@ -198,6 +207,36 @@ local function bricks()
             -- time frame
             local frametime = g.millisecs()
     
+            -- check if size of layer has changed
+            local newwd, newht = g.getview(g.getlayer())
+            if (newwd ~= wd or new ~= viewht) and (newwd >= minwd and newht >= minht) then
+                -- reposition the bat and ball
+                batx = batx * (newwd / wd)
+                ballx = ballx * (newwd / wd)
+                bally = bally * (newht / ht)
+
+                -- resize overlay
+                wd = newwd
+                ht = newht
+                ov("resize "..wd.." "..ht)
+
+                -- scale bat, ball and bricks
+                brickwd  = floor(wd / numcols)
+                brickht  = floor(ht / 40)
+                batwd    = floor(wd / 10)
+                batht    = brickht
+                batx     = batx * (newwd / wd)
+                baty     = ht - batht * 4
+                ballsize = wd / 80
+    
+                -- recreate background
+                ov("freeclip bg")
+                createbackground()
+
+                -- pause
+                pause = true
+            end
+
             -- check for mouse click
             local event = g.getevent()
             if event:find("^oclick") or event == "key enter none" or event == "key return none" then
@@ -366,6 +405,9 @@ local function bricks()
                         batx = wd - batwd
                     end
                 end
+            else
+                -- pause if mouse goes outside overlay
+                pause = true
             end
     
             -- draw the score and lives
@@ -443,6 +485,12 @@ end
 
 local function main()
     wd, ht = g.getview(g.getlayer())
+    if wd < minwd then
+        wd = minwd
+    end
+    if ht < minht then
+        ht = minht
+    end
     ov("create "..wd.." "..ht)
     bricks()
 end
