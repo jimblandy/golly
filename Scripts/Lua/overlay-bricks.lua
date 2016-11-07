@@ -204,7 +204,7 @@ local function bricks()
         local pause   = false
 
         -- whether new high score
-        newhigh       = false
+        newhigh = false
 
         -- main loop
         while balls > 0 and bricksleft > 0 do
@@ -241,9 +241,10 @@ local function bricks()
                 pause = true
             end
 
-            -- check for mouse click
+            -- check for mouse click or key press
             local event = g.getevent()
             if event:find("^oclick") or event == "key enter none" or event == "key return none" then
+                -- click or enter starts or toggles pause
                 if newball then
                     newball = false
                     pause   = false
@@ -251,11 +252,13 @@ local function bricks()
                     pause = not pause
                 end
             elseif event == "key left none" then
+                -- left arrow moves bat left
                 batx = batx - (wd / 50)
                 if batx < 0 then
                     batx = 0
                 end
             elseif event == "key right none" then
+                -- right arrow moves bat right
                 batx = batx + (wd / 50)
                 if batx + batwd >= wd then
                     batx = wd - batwd
@@ -267,21 +270,16 @@ local function bricks()
             ov("paste 0 0 bg")
 
             -- draw the bricks
-            local xoff, yoff
+            local xoff = shadowx
+            local yoff = shadowy
+            ov("blend 1")
+            ov(shadowcol)
             for pass = 1, 2 do
                 for y = 1, numrows do
                     bricks = rows[y]
                     bricky = (y + offsety) * brickht
-                    if pass == 1 then
-                        ov("blend 1")
-                        ov(shadowcol)
-                        xoff = shadowx
-                        yoff = shadowy
-                    else
-                        ov("blend 0")
+                    if pass == 2 then
                         ov(brickcols[y])
-                        xoff = 0
-                        yoff = 0
                     end
                     for x = 1, numcols do
                         if bricks[x] == true then
@@ -290,6 +288,9 @@ local function bricks()
                         end
                     end
                 end
+                ov("blend 0")
+                xoff = 0
+                yoff = 0
             end
 
             -- draw the ball
