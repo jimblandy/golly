@@ -126,6 +126,7 @@ local function bricks()
     local restartstr  = "Click or Enter to start again"
     local quitstr     = "Right Click or Esc to quit"
     local continuestr = "Click or Enter for next level"
+    local newhighstr  = "New High Score!"
 
     -- create the background
     createbackground()
@@ -152,7 +153,7 @@ local function bricks()
         if offsety > maxoffsety then
             offsety = maxoffsety
         end
-    
+
         for y = 1, numrows do
             local bricks = {}
             for x = 1, numcols do
@@ -168,16 +169,16 @@ local function bricks()
             [5] = "rgba 0 255 255 255",
             [6] = "rgba 0 0 255 255",
         }
-         
+
         -- intiialize the bat
         local batwd   = floor(wd / 10)
         local batx    = floor((wd - batwd) / 2)
         local batht   = brickht
         local baty    = ht - batht * 4
         local bathits = 0
-        local maxhits = 8 
+        local maxhits = 8
         local lastx   = -1
-    
+
         -- initialize the ball
         local ballsize  = wd / 80
         local ballx     = (wd - ballsize) / 2
@@ -189,24 +190,24 @@ local function bricks()
         local speedinc  = 0.05
         local maxspeed  = 4
         local speeddiv  = 4
-    
+
         -- shadow
         local shadowx = floor(-wd / 100)
         local shadowy = floor(ht / 100)
         local shadowcol = "rgba 0 0 0 128"
-    
+
         -- whether alive
         local newball = true
         local pause   = false
 
         -- whether new high score
         newhigh       = false
-    
+
         -- main loop
         while balls > 0 and bricksleft > 0 do
             -- time frame
             local frametime = g.millisecs()
-    
+
             -- check if size of layer has changed
             local newwd, newht = g.getview(g.getlayer())
             if (newwd ~= wd or new ~= viewht) and (newwd >= minwd and newht >= minht) then
@@ -228,7 +229,7 @@ local function bricks()
                 batx     = batx * (newwd / wd)
                 baty     = ht - batht * 4
                 ballsize = wd / 80
-    
+
                 -- recreate background
                 ov("freeclip bg")
                 createbackground()
@@ -257,11 +258,11 @@ local function bricks()
                     batx = wd - batwd
                 end
             end
-           
+
             -- draw the background
             ov("blend 0")
             ov("paste 0 0 bg")
-    
+
             -- draw the bricks
             local xoff, yoff
             for pass = 1, 2 do
@@ -287,7 +288,7 @@ local function bricks()
                     end
                 end
             end
-    
+
             -- draw the ball
             ov(shadowcol)
             ov("blend 1")
@@ -295,7 +296,7 @@ local function bricks()
             ov("blend 0")
             ov("rgba 255 255 255 255")
             ov("fill "..floor(ballx - ballsize / 2).." "..floor(bally - ballsize / 2).." "..floor(ballsize).." "..floor(ballsize))
-    
+
             -- draw the bat
             ov(shadowcol)
             ov("blend 1")
@@ -303,7 +304,7 @@ local function bricks()
             ov("blend 0")
             ov("rgba 192 192 192 255")
             ov("fill "..floor(batx).." "..floor(baty).." "..batwd.." "..batht)
-    
+
             -- check if paused
             if pause then
                 ov("font 16 mono")
@@ -317,13 +318,19 @@ local function bricks()
                     shadowtext(0, ht / 2 + 70, controlstr, aligncenter)
                     shadowtext(0, ht / 2 + 30, newballstr, aligncenter)
                     ov("font 24 mono")
-                    local remstr
+                    local remstr, remcol
                     if balls == 1 then
                         remstr = "Last ball!"
+                        remcol = op.red
                     else
                         remstr = balls.." balls left"
+                        if balls == 2 then
+                            remcol = op.yellow
+                        else
+                            remcol = op.green
+                        end
                     end
-                    shadowtext(0, ht / 2 - 20, remstr, aligncenter)
+                    shadowtext(0, ht / 2 - 20, remstr, aligncenter, remcol)
                     shadowtext(0, ht / 2 - 70, "Level "..level, aligncenter)
                 else
                     ballx = ballx + (balldx * ballspeed * ballsize) / speeddiv
@@ -331,10 +338,15 @@ local function bricks()
                     -- check for ball hitting boundary
                     if ballx < ballsize / 2 or ballx >= wd - ballsize / 2 then
                         balldx = -balldx
-                        ballx = ballx + balldx * 2
+                        ballx  = ballx + balldx * 2
                     elseif bally < ballsize / 2 then
-                        balldy = -balldy
-                        bally = bally + balldy * 2.5
+                        -- ball hit top so speed up a little bit
+                        balldy    = -balldy
+                        bally     = bally + balldy * 2.5
+                        ballspeed = ballspeed + speedinc / 4
+                        if ballspeed > maxspeed then
+                            ballspeed = maxspeed
+                        end
                     elseif bally >= ht then
                         -- ball lost!
                         balls     = balls - 1
@@ -393,7 +405,7 @@ local function bricks()
                     end
                 end
             end
-    
+
             -- update bat position
             local mousepos = ov("xy")
             if mousepos ~= "" then
@@ -409,7 +421,7 @@ local function bricks()
                 -- pause if mouse goes outside overlay
                 pause = true
             end
-    
+
             -- draw the score and lives
             ov("blend 1")
             ov("font 16 mono")
@@ -417,15 +429,15 @@ local function bricks()
             shadowtext(-5, 5, "Balls "..balls, alignright)
             local highcol = op.white
             if newhigh == true then
-                highcol = op.yellow
+                highcol = op.green
             end
             shadowtext(0, 5, "High Score "..hiscore, aligncenter, highcol)
 
             -- update the display
             ov("update")
-    
+
             -- pause until frame time reached
-            g.show("Frame time: "..ms(g.millisecs() - frametime))
+            g.show("Golly Bricks - press Esc to exit.  Frame time: "..ms(g.millisecs() - frametime))
             while g.millisecs() - frametime < 16 do
             end
         end
@@ -442,6 +454,11 @@ local function bricks()
             shadowtext(0, ht / 2 - 40, gameoverstr, aligncenter)
             ov("font 16 mono")
             shadowtext(0, ht / 2 + 40, restartstr, aligncenter)
+            if newhigh then
+                shadowtext(0, ht / 2 - 70, newhighstr, aligncenter, op.green)
+            end
+
+            -- reset
             score = 0
             balls = 3
             level = 1
@@ -455,7 +472,7 @@ local function bricks()
         end
         shadowtext(0, ht / 2 + 70, quitstr, aligncenter)
         ov("update")
-    
+
         -- wait until mouse button clicked or enter pressed
         local finished = false
         while not finished do
