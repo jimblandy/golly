@@ -185,11 +185,14 @@ local function bricks()
         local bally     = baty - ballsize
         local balldx    = 1
         local balldy    = -1
-        local speeddef  = 1
-        local ballspeed = speeddef
+        local maxspeed  = 3
         local speedinc  = 0.05
-        local maxspeed  = 4
-        local speeddiv  = 4
+        local speeddef  = 1 + (level - 1) * speedinc
+        if speeddef > maxspeed then
+            speeddef = maxspeed
+        end
+        local ballspeed = speeddef
+        local speeddiv  = 3
 
         -- shadow
         local shadowx = floor(-wd / 100)
@@ -243,7 +246,7 @@ local function bricks()
             if event:find("^oclick") or event == "key enter none" or event == "key return none" then
                 if newball then
                     newball = false
-                    pause = false
+                    pause   = false
                 else
                     pause = not pause
                 end
@@ -305,15 +308,19 @@ local function bricks()
             ov("rgba 192 192 192 255")
             ov("fill "..floor(batx).." "..floor(baty).." "..batwd.." "..batht)
 
+            -- if new ball then set ball to sit on bat
+            if newball then
+                ballx = batx + batwd / 2
+                bally = baty - ballsize
+            end
+
             -- check if paused
             if pause then
                 ov("font 16 mono")
                 shadowtext(0, ht / 2, pausestr, aligncenter)
             else
-                -- update ball position
+                -- check for new ball
                 if newball then
-                    ballx = batx + batwd / 2
-                    bally = baty - ballsize
                     ov("font 16 mono")
                     shadowtext(0, ht / 2 + 70, controlstr, aligncenter)
                     shadowtext(0, ht / 2 + 30, newballstr, aligncenter)
@@ -333,16 +340,19 @@ local function bricks()
                     shadowtext(0, ht / 2 - 20, remstr, aligncenter, remcol)
                     shadowtext(0, ht / 2 - 70, "Level "..level, aligncenter)
                 else
+                    -- update ball position
                     ballx = ballx + (balldx * ballspeed * ballsize) / speeddiv
                     bally = bally + (balldy * ballspeed * ballsize) / speeddiv
+
                     -- check for ball hitting boundary
                     if ballx < ballsize / 2 or ballx >= wd - ballsize / 2 then
                         balldx = -balldx
                         ballx  = ballx + balldx * 2
-                    elseif bally < ballsize / 2 then
+                    end
+                    if bally < ballsize / 2 then
                         -- ball hit top so speed up a little bit
                         balldy    = -balldy
-                        bally     = bally + balldy * 2.5
+                        bally     = bally + balldy * 2
                         ballspeed = ballspeed + speedinc / 4
                         if ballspeed > maxspeed then
                             ballspeed = maxspeed
@@ -412,8 +422,10 @@ local function bricks()
                 local mousex, mousey = split(mousepos)
                 if mousex ~= lastx then
                     lastx = mousex
-                    batx = tonumber(mousex)
-                    if batx > wd - batwd then
+                    batx = tonumber(mousex) - batwd / 2
+                    if batx < 0 then
+                        batx = 0
+                    elseif batx > wd - batwd then
                         batx = wd - batwd
                     end
                 end
@@ -437,7 +449,6 @@ local function bricks()
             ov("update")
 
             -- pause until frame time reached
-            g.show("Golly Bricks - press Esc to exit.  Frame time: "..ms(g.millisecs() - frametime))
             while g.millisecs() - frametime < 16 do
             end
         end
@@ -451,7 +462,7 @@ local function bricks()
         ov("font 48 mono")
         if balls == 0 then
             -- game over
-            shadowtext(0, ht / 2 - 40, gameoverstr, aligncenter)
+            shadowtext(0, ht / 2 - 40, gameoverstr, aligncenter, op.red)
             ov("font 16 mono")
             shadowtext(0, ht / 2 + 40, restartstr, aligncenter)
             if newhigh then
@@ -501,6 +512,10 @@ end
 --------------------------------------------------------------------------------
 
 local function main()
+    -- display status message
+    g.show("Golly Bricks - press Esc to exit.")
+
+    -- get size of overlay
     wd, ht = g.getview(g.getlayer())
     if wd < minwd then
         wd = minwd
@@ -508,7 +523,11 @@ local function main()
     if ht < minht then
         ht = minht
     end
+
+    -- create overlay
     ov("create "..wd.." "..ht)
+
+    -- run bricks
     bricks()
 end
 
