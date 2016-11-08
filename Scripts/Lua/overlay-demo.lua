@@ -796,6 +796,119 @@ end
 --------------------------------------------------------------------------------
 
 local function test_lines()
+    local maxx = wd - 1
+    local maxy = ht - 1
+    local x1 = rand(0, maxx)
+    local y1 = rand(0, maxy)
+    local x2 = rand(0, maxx)
+    local y2 = rand(0, maxy)
+    local dx1 = 0.5 + rand(0, 50) / 50
+    local dy1 = 0.5 + rand(0, 50) / 50
+    local dx2 = 0.5 + rand(0, 50) / 50
+    local dy2 = 0.5 + rand(0, 50) / 50
+    local hx1 = {}
+    local hx2 = {}
+    local hy1 = {}
+    local hy2 = {}
+    local numlines = 0
+    local index = 0
+    local maxindex = 1000
+
+    -- create the exit message
+    local oldfont = ov(demofont)
+    local text
+    if g.os() == "Mac" then
+        text = "Click or hit the return key to return to the main menu."
+    else
+        text = "Click or hit the enter key to return to the main menu."
+    end
+    ov(op.white)
+    local w,h = maketext(text)
+    ov(op.black)
+    maketext(text, "shadow")
+
+    -- loop until key pressed or mouse clicked
+    while not return_to_main_menu do
+        local event = g.getevent()
+        if event:find("^oclick") or event == "key enter none" or event == "key return none" then
+            -- return to main menu
+            return_to_main_menu = true
+        end
+
+        -- fill the background with blue
+        ov("blend 0")
+        ov(op.blue)
+        ov("fill")
+
+        -- time drawing 1000 lines
+        local t1 = g.millisecs()
+
+        -- update the line endpoints
+        x1 = x1 + dx1
+        y1 = y1 + dy1
+        x2 = x2 + dx2
+        y2 = y2 + dy2
+        if x1 < 0 or x1 > maxx then
+            dx1 = -dx1
+            x1 = x1 + dx1
+        end
+        if y1 < 0 or y1 > maxy then
+            dy1 = -dy1
+            y1 = y1 + dy1
+        end
+        if x2 < 0 or x2 > maxx then
+            dx2 = -dx2
+            x2 = x2 + dx2
+        end
+        if y2 < 0 or y2 > maxy then
+            dy2 = -dy2
+            y2 = y2 + dy2
+        end
+
+        -- store the new line position in the history buffer
+        if numlines < maxindex then
+            numlines = numlines + 1
+        end
+        index = index + 1
+        if index > maxindex then
+            index = 0
+        end
+        hx1[index] = x1
+        hy1[index] = y1
+        hx2[index] = x2
+        hy2[index] = y2
+        temp = index - numlines + 1
+        if temp < 0 then
+           temp = temp + numlines
+        end
+
+        -- draw 1000 lines
+        for i = 1, numlines do
+            local c = floor((i / numlines) * 255)
+            ov("rgba "..c.." "..c.." 255 255")
+            ov("line "..floor(hx1[temp]).." "..floor(hy1[temp]).." "..floor(hx2[temp]).." "..floor(hy2[temp]))
+            temp = temp + 1
+            if temp > maxindex then
+                temp = 0
+            end
+        end
+
+        -- display elapsed time
+        g.show("Time to draw 1000 lines "..ms(g.millisecs() - t1))
+
+        -- draw the exit message
+        ov("blend 1")
+        pastetext(10 + 2, ht - h - 10 + 2, op.identity, "shadow")
+        pastetext(10, ht - h - 10)
+        ov("update")
+    end
+    ov("font "..oldfont)
+end
+
+--------------------------------------------------------------------------------
+--[[  remove if you prefer the new version above
+
+local function test_lines()
     ::restart::
 
     toggle = 1 - toggle
@@ -825,7 +938,7 @@ local function test_lines()
     
     if repeat_test(" with a different blend setting") then goto restart end
 end
-
+]]
 --------------------------------------------------------------------------------
 
 local function test_multiline_text()
@@ -1278,7 +1391,7 @@ local function test_mouse()
                         "Hit the return key to return to the main menu.", "botlines")
     else
         maketext("Click and drag to draw.\n"..
-                 "Alt-click to flood."..
+                 "Alt-click to flood. "..
                  "Control-click or right-click to change the color.")
         w, h = maketext("Hit the space bar to restart this test.\n"..
                         "Hit the enter key to return to the main menu.", "botlines")
