@@ -354,6 +354,9 @@ for the complicated stuff
 Andrew Trevorrow
 for the cross-platform GUI and overlay
 
+Chris Rowett
+for rendering and overlay improvements
+
 Tim Hutton
 for the RuleTable algorithm
 
@@ -364,8 +367,6 @@ Jason Summers
 Maks Verver
 
 Robert Munafo
-
-Chris Rowett
 
 
 
@@ -414,7 +415,7 @@ David Eppstein
 for the B0 rule emulation idea
 
 Eugene Langvagen
-for Golly's scripting capabilities
+for inspiring Golly's scripting capabilities
 
 Stephen Silver
 for the wonderful Life Lexicon
@@ -422,13 +423,13 @@ for the wonderful Life Lexicon
 Nathaniel Johnston
 for the brilliant LifeWiki and the online archive
 
-Julian smart and all wxWidgets developers
+Julian Smart and all wxWidgets developers
 for wxWidgets
 
 Guido van Rossum
 for Python
 
-Roberto Lerusalimschy and all Lua developers
+Roberto Ierusalimschy and all Lua developers
 for Lua
 
 
@@ -437,7 +438,7 @@ for Lua
 Pattern Collection
 
 
-David Greene and Alan Hensel
+Dave Greene and Alan Hensel
 
 Thanks to everybody who allowed us to distribute
 their fantastic patterns, especially:
@@ -638,8 +639,8 @@ David Bell
         t1 = g.millisecs()
 
         -- draw exit message
-        pastetext(floor((wd - exitw) / 2 + 2), 10 + 2, op.identity, exitshadowclip)
-        pastetext(floor((wd - exitw) / 2), 10, op.identity, exitclip)
+        pastetext(floor((wd - exitw) / 2 + 2), 20 + 2, op.identity, exitshadowclip)
+        pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
 
         -- update display
         ov("update")
