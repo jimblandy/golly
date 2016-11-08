@@ -4,7 +4,7 @@ Authors: Andrew Trevorrow (andrew@trevorrow.com) and Chris Rowett (rowett@yahoo.
 --]]
 
 local g = golly()
---require "gplus.strict"
+-- require "gplus.strict"
 local gp = require "gplus"
 local split = gp.split
 local int = gp.int
@@ -33,14 +33,13 @@ local animation_button
 local copy_button
 local cursor_button
 local line_button
-local error_button
+local set_button
 local fill_button
 local load_button
 local mouse_button
 local multiline_button
 local pos_button
 local save_button
-local set_button
 local text_button
 
 local return_to_main_menu = false
@@ -231,33 +230,6 @@ of the current layer, or at any corner.]]
     if repeat_test(" using a different position") then goto restart end
     pos = 0
 end
-
---------------------------------------------------------------------------------
-
---[[ too boring???!!!
-
-local function test_set()
-    ::restart::
-
-    ov(op.blue)
-    ov("fill")
-    ov(op.green)
-    -- pixels outside overlay are ignored
-    ov("set -1 -1")
-    ov("set "..wd.." "..ht)
-    local maxx = wd-1
-    local maxy = ht-1
-    local t1 = g.millisecs()
-    for i = 1, 1000000 do
-        ov("set "..rand(0,maxx).." "..rand(0,maxy))
-        -- ov(string.format("set %d %d",rand(0,maxx),rand(0,maxy))) -- slower
-    end
-    g.show("Time to set one million pixels: "..ms(g.millisecs()-t1))
-    
-    if repeat_test() then goto restart end
-end
-
---]]
 
 --------------------------------------------------------------------------------
 
@@ -847,7 +819,7 @@ local function test_set()
 
         -- fill the background with dark blue
         local bgcol = "0 0 128 255"
-        ov("blend 0")
+        local oldblend = ov("blend 0")
         ov("rgba "..bgcol)
         ov("fill")
 
@@ -886,6 +858,8 @@ local function test_set()
 
         -- update display
         ov("update")
+        
+        ov("blend "..oldblend)
     end
     ov("font "..oldfont)
 end
@@ -933,7 +907,7 @@ local function test_lines()
         end
 
         -- fill the background with blue
-        ov("blend 0")
+        local oldblend = ov("blend 0")
         ov(op.blue)
         ov("fill")
 
@@ -998,44 +972,12 @@ local function test_lines()
         pastetext(10 + 2, ht - h - 10 + 2, op.identity, "shadow")
         pastetext(10, ht - h - 10)
         ov("update")
+        
+        ov("blend "..oldblend)
     end
     ov("font "..oldfont)
 end
 
---------------------------------------------------------------------------------
---[[  remove if you prefer the new version above
-
-local function test_lines()
-    ::restart::
-
-    toggle = 1 - toggle
-
-    ov("blend 0")
-    ov(op.blue)
-    ov("fill")
-
-    if toggle > 0 then
-        ov("blend 1") -- turn on alpha blending
-        ov("rgba 255 64 64 192")
-    else
-        ov(op.red)
-    end
-
-    local maxx = wd-1
-    local maxy = ht-1
-    local t1 = g.millisecs()
-    for i = 1, 1000 do
-        ov("line "..rand(0,maxx).." "..rand(0,maxy).." "..rand(0,maxx).." "..rand(0,maxy))
-    end
-    g.show("Time to draw one thousand lines: "..ms(g.millisecs()-t1).."  blend "..toggle)
-  
-    if toggle > 0 then
-        ov("blend 0") -- turn off alpha blending
-    end
-    
-    if repeat_test(" with a different blend setting") then goto restart end
-end
-]]
 --------------------------------------------------------------------------------
 
 local function test_multiline_text()
@@ -1384,92 +1326,6 @@ end
 
 --------------------------------------------------------------------------------
 
---[[ too boring???!!!
-
-local function test_copy_outside()
-    ::restart::
-
-    local oldblend = ov("blend 0")
-    
-    ov(op.blue)
-    ov("fill")
-    
-    -- test big clip outside all edges
-    ov("copy -15 -15 "..(wd+30).." "..(ht+30).." foo")
-    ov("paste 50 15 foo")
-    ov("paste "..-int(wd/2).." "..(ht-30).." foo")
-    
-    -- test clip completely outside overlay (and thus transparent)
-    ov("copy -5 -5 5 5 foo")
-    ov("paste 5 30 foo")
-    ov("copy "..wd.." "..ht.." 15 15 foo")
-    ov("paste 5 40 foo")
-    
-    -- partially outside top left corner
-    ov(op.yellow)
-    ov("fill 5 5 5 5")
-    ov("copy -5 -5 15 15 foo")
-    ov("paste 10 10 foo")
-    
-    -- partially outside bottom right corner
-    ov(op.red)
-    ov("fill "..(wd-5).." "..(ht-5).." 5 5")
-    ov("copy "..(wd-5).." "..(ht-5).." 10 10 foo")
-    ov("paste "..(wd-15).." "..(ht-15).." foo")
-    
-    ov("blend "..oldblend)
-    
-    if repeat_test() then goto restart end
-end
-
---]]
-
---------------------------------------------------------------------------------
-
--- is this too boring???!!!
-
-local errnum = 0
-
-local function test_errors()
-    ::restart::
-
-    local function force_error()
-        if errnum >= 13 then errnum = 0 end -- cycle back to 1st error
-        errnum = errnum + 1
-        if errnum ==  1 then ov("xxx") end
-        if errnum ==  2 then ov("position yyy") end
-        if errnum ==  3 then ov("create -1 1") end
-        if errnum ==  4 then ov("create 1 -1") end
-        if errnum ==  5 then ov("rgba 1 2 3") end
-        if errnum ==  6 then ov("rgba -1 0 0 256") end
-        if errnum ==  7 then ov("load 0 0 unknown.png") end
-        if errnum ==  8 then ov("save -1 -1 2 2 foo.png") end
-        if errnum ==  9 then ov("save 0 0 1 1 unsupported.bmp") end
-        if errnum == 10 then ov("copy 0 0 1 1 ") end
-        if errnum == 11 then ov("paste 0 0 badname") end
-        if errnum == 12 then ov("cursor xxx") end
-        if errnum == 13 then ov("text foo") end
-    end
-    
-    ov(op.white)
-    ov("fill")
-    ov(op.black)
-    demotext(10, 10, "This is a rather boring test, although it does show how\n"..
-                     "to capture errors and stop them from aborting a script.")
-    g.update()
-    
-    local status, err = pcall(force_error)
-    if err then
-        -- show error message now and not when script finishes
-        g.warn(err)
-        g.continue("")
-    end
-    
-    if repeat_test(" with a different error message", true) then goto restart end
-end
-
---------------------------------------------------------------------------------
-
 local function test_mouse()
     ::restart::
 
@@ -1559,9 +1415,8 @@ local function create_menu_buttons()
     animation_button = op.button(   longest, test_animation)
     copy_button = op.button(        longest, test_copy_paste)
     cursor_button = op.button(      longest, test_cursors)
-    set_button = op.button(         longest, test_set)
     line_button = op.button(        longest, test_lines)
-    error_button = op.button(       longest, test_errors)
+    set_button = op.button(         longest, test_set)
     fill_button = op.button(        longest, test_fill)
     load_button = op.button(        longest, test_load)
     mouse_button = op.button(       longest, test_mouse)
@@ -1575,9 +1430,8 @@ local function create_menu_buttons()
     animation_button.setlabel(  "Animation", false)
     copy_button.setlabel(       "Copy and Paste", false)
     cursor_button.setlabel(     "Cursors", false)
-    set_button.setlabel(        "Points", false)
     line_button.setlabel(       "Drawing Lines", false)
-    error_button.setlabel(      "Errors", false)
+    set_button.setlabel(        "Drawing Pixels", false)
     fill_button.setlabel(       "Filling Rectangles", false)
     load_button.setlabel(       "Loading Images", false)
     mouse_button.setlabel(      "Mouse Tracking", false)
@@ -1590,7 +1444,7 @@ end
 --------------------------------------------------------------------------------
 
 local function main_menu()
-    local numbutts = 14
+    local numbutts = 13
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
     local buttgap = 10
@@ -1623,9 +1477,8 @@ local function main_menu()
     animation_button.show(x, y)     y = y + buttgap + buttht
     copy_button.show(x, y)          y = y + buttgap + buttht
     cursor_button.show(x, y)        y = y + buttgap + buttht
-    set_button.show(x, y)           y = y + buttgap + buttht
     line_button.show(x, y)          y = y + buttgap + buttht
-    error_button.show(x, y)         y = y + buttgap + buttht
+    set_button.show(x, y)           y = y + buttgap + buttht
     fill_button.show(x, y)          y = y + buttgap + buttht
     load_button.show(x, y)          y = y + buttgap + buttht
     mouse_button.show(x, y)         y = y + buttgap + buttht
