@@ -1752,14 +1752,14 @@ local function createmenu()
     ov("blend 0")
 
     -- load button images to get width and height
-    local w, h = gp.split(ov("load "..viewwd.." 0 lifeviewer.png"))
+    local w, h = gp.split(ov("load "..viewwd.." 0 oplus/lifeviewer.png"))
 
     -- clear a rectangle the size of the buttons
     ov(op.black)
     ov("fill 0 0 "..w.." "..h)
 
     -- load buttons over the rectangle
-    ov("load 0 0 lifeviewer.png")
+    ov("load 0 0 oplus/lifeviewer.png")
 
     -- replace transparent background with semi-opaque
     ov("rgba 0 0 0 128")
