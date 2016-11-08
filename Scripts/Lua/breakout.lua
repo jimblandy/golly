@@ -1,4 +1,4 @@
--- Bricks for Golly
+-- Breakout for Golly
 -- Author: Chris Rowett (rowett@yahoo.com), November 2016
 
 local g = golly()
@@ -111,7 +111,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function bricks()
+local function breakout()
     -- set font
     local oldfont   = ov("font 16 mono")
     local oldbg     = ov("textoption background 0 0 0 0")
@@ -514,7 +514,7 @@ end
 
 local function main()
     -- display status message
-    g.show("Golly Bricks - press Esc to exit.")
+    g.show("Golly Breakout - press Esc to exit.")
 
     -- get size of overlay
     wd, ht = g.getview(g.getlayer())
@@ -528,8 +528,8 @@ local function main()
     -- create overlay
     ov("create "..wd.." "..ht)
 
-    -- run bricks
-    bricks()
+    -- run breakout
+    breakout()
 end
 
 --------------------------------------------------------------------------------
