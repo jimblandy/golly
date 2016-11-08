@@ -1246,9 +1246,10 @@ Features:
 
 Current limitations:
 
+- Doesn't allow editing multiple cells/hexagons via click and drag.
 - Doesn't show any selection, nor allow selection to be changed.
 - Doesn't support zooming in/out from a particular hexagon.
-- Doesn't support editing multiple cells/hexagons via click and drag.
+- Hex layer can't be zoomed out beyond 1:1 scale.
 
 Special keys and their actions:
 
@@ -1265,7 +1266,7 @@ r             - reset to starting pattern
 [             - zoom out
 ]             - zoom in
 
-                (click or hit any key to close help)]]
+               (click or hit any key to close help)]]
 
     ov("font 11 mono-bold")
     ov(op.black)
