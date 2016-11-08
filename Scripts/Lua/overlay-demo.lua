@@ -4,7 +4,7 @@ Authors: Andrew Trevorrow (andrew@trevorrow.com) and Chris Rowett (rowett@yahoo.
 --]]
 
 local g = golly()
--- require "gplus.strict"
+--require "gplus.strict"
 local gp = require "gplus"
 local split = gp.split
 local int = gp.int
@@ -40,6 +40,7 @@ local mouse_button
 local multiline_button
 local pos_button
 local save_button
+local set_button
 local text_button
 
 local return_to_main_menu = false
@@ -327,9 +328,16 @@ local function test_animation()
     local oldalign = ov("textoption align left")
 
     -- create text clips
+    local exitclip = "exit"
+    local exitshadowclip = "exitshadow"
+    local oldfont = ov("font 12 roman")
+    ov(op.white)
+    local exitw = maketext("Click or press any key to return to the main menu.", exitclip)
+    ov(op.black)
+    maketext("Click or press any key to return to the main menu.", exitshadowclip)
     local gollyopaqueclip = "clip1"
     local gollytranslucentclip = "clip2"
-    local oldfont = ov("font 200 mono")
+    ov("font 200 mono")
     local bannertext = "Golly 2.9"
     ov("rgba 255 192 32 144")
     local w, h = maketext(bannertext, gollyopaqueclip)
@@ -337,9 +345,6 @@ local function test_animation()
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext = [[
-(click or hit any key to return to the main menu)
-
-
 Golly 2.9
 
 
@@ -660,6 +665,10 @@ David Bell
         local timecredits = g.millisecs() - t1
         t1 = g.millisecs()
 
+        -- draw exit message
+        pastetext(floor((wd - exitw) / 2 + 2), 10 + 2, op.identity, exitshadowclip)
+        pastetext(floor((wd - exitw) / 2), 10, op.identity, exitclip)
+
         -- update display
         ov("update")
 
@@ -675,7 +684,7 @@ David Bell
 
         -- move text
         textx = textx - 2
-        if textx == -w then
+        if textx <= -w then
             textx = wd
         end
 
@@ -698,6 +707,8 @@ David Bell
     end
 
     -- free clips
+    ov("freeclip "..exitclip)
+    ov("freeclip "..exitshadowclip)
     ov("freeclip "..gollytranslucentclip)
     ov("freeclip "..gollyopaqueclip)
     ov("freeclip "..creditsclip)
@@ -795,6 +806,92 @@ end
 
 --------------------------------------------------------------------------------
 
+local function test_set()
+    local maxx = wd - 1
+    local maxy = ht - 1
+    local flakes = 10000
+
+    -- create the exit message
+    local oldfont = ov(demofont)
+    local text
+    if g.os() == "Mac" then
+        text = "Click or hit the return key to return to the main menu."
+    else
+        text = "Click or hit the enter key to return to the main menu."
+    end
+    ov(op.white)
+    local w, h = maketext(text)
+    ov(op.black)
+    maketext(text, "shadow")
+
+    -- create the golly text
+    ov("font 100 mono")
+    ov(op.yellow)
+    local gw, gh = maketext("Golly", "gollyclip")
+
+    -- initialize flake positions
+    local x = {}
+    local y = {}
+    for i = 1, flakes do
+        x[i] = rand(0, maxx)
+        y[i] = rand(0, 20 * maxy) - 20 * maxy
+    end
+
+    -- loop until key pressed or mouse clicked
+    while not return_to_main_menu do
+        local event = g.getevent()
+        if event:find("^oclick") or event == "key enter none" or event == "key return none" then
+            -- return to main menu
+            return_to_main_menu = true
+        end
+
+        -- fill the background with dark blue
+        local bgcol = "0 0 128 255"
+        ov("blend 0")
+        ov("rgba "..bgcol)
+        ov("fill")
+
+        -- draw golly
+        ov("blend 1")
+        pastetext(floor((wd - gw) / 2), ht - gh - h, op.identity, "gollyclip")
+
+        -- time drawing 1000 pixels
+        local t1 = g.millisecs()
+        ov(op.white)
+        local drawn = 0
+        for i = 1, flakes do
+            if y[i] >= 0 and y[i] < ht then
+                ov("set "..x[i].." "..y[i])
+                drawn = drawn + 1
+                local rgba = ov("get "..x[i].." "..(y[i] + 1))
+                if rgba == bgcol then
+                    y[i] = y[i] + 1
+                end
+            else
+                y[i] = y[i] + 1
+            end
+        end
+
+        -- display elapsed time
+        g.show("Time to draw "..drawn.." pixels "..ms(g.millisecs() - t1))
+
+        -- draw the exit message
+        ov("blend 1")
+        pastetext(10 + 2, ht - h - 10 + 2, op.identity, "shadow")
+        pastetext(10, ht - h - 10)
+
+        -- wait for frame time
+        while g.millisecs() - t1 < 15 do
+        end
+
+        -- update display
+        ov("update")
+    end
+    ov("font "..oldfont)
+end
+
+--------------------------------------------------------------------------------
+
 local function test_lines()
     local maxx = wd - 1
     local maxy = ht - 1
@@ -877,7 +974,7 @@ local function test_lines()
         hy1[index] = y1
         hx2[index] = x2
         hy2[index] = y2
-        temp = index - numlines + 1
+        local temp = index - numlines + 1
         if temp < 0 then
            temp = temp + numlines
         end
@@ -1462,6 +1559,7 @@ local function create_menu_buttons()
     animation_button = op.button(   longest, test_animation)
     copy_button = op.button(        longest, test_copy_paste)
     cursor_button = op.button(      longest, test_cursors)
+    set_button = op.button(         longest, test_set)
     line_button = op.button(        longest, test_lines)
     error_button = op.button(       longest, test_errors)
     fill_button = op.button(        longest, test_fill)
@@ -1477,6 +1575,7 @@ local function create_menu_buttons()
     animation_button.setlabel(  "Animation", false)
     copy_button.setlabel(       "Copy and Paste", false)
     cursor_button.setlabel(     "Cursors", false)
+    set_button.setlabel(        "Points", false)
     line_button.setlabel(       "Drawing Lines", false)
     error_button.setlabel(      "Errors", false)
     fill_button.setlabel(       "Filling Rectangles", false)
@@ -1491,7 +1590,7 @@ end
 --------------------------------------------------------------------------------
 
 local function main_menu()
-    local numbutts = 13
+    local numbutts = 14
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
     local buttgap = 10
@@ -1524,6 +1623,7 @@ local function main_menu()
     animation_button.show(x, y)     y = y + buttgap + buttht
     copy_button.show(x, y)          y = y + buttgap + buttht
     cursor_button.show(x, y)        y = y + buttgap + buttht
+    set_button.show(x, y)           y = y + buttgap + buttht
     line_button.show(x, y)          y = y + buttgap + buttht
     error_button.show(x, y)         y = y + buttgap + buttht
     fill_button.show(x, y)          y = y + buttgap + buttht
