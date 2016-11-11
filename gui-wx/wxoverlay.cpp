@@ -2042,6 +2042,7 @@ const char* Overlay::DoReplace(const char* args)
 
     // count how many pixels are replaced
     int numchanged = 0;
+    static char result[16];
 
     // optimization case 1: fixed find and replace
     if ((findr != matchany && findg != matchany && findb != matchany && finda != matchany) &&
@@ -2059,6 +2060,7 @@ const char* Overlay::DoReplace(const char* args)
             for (int i = 0; i < w * h; i++) {
                 if (*cdata != findcol) {
                     *cdata = replacecol;
+                    numchanged++;
                 }
                 cdata++;
             }
@@ -2066,12 +2068,15 @@ const char* Overlay::DoReplace(const char* args)
             for (int i = 0; i < w * h; i++) {
                 if (*cdata == findcol) {
                     *cdata = replacecol;
+                    numchanged++;
                 }
                 cdata++;
             }
         }
 
-        return NULL;
+        // return number of pixels replaced
+        sprintf(result, "%d", numchanged);
+        return result;
     }
 
     // optimization case 2: fill
@@ -2086,7 +2091,10 @@ const char* Overlay::DoReplace(const char* args)
             *cdata++ = replacecol;
         }
 
-        return NULL;
+        // return number of pixels replaced
+        numchanged = w * h;
+        sprintf(result, "%d", numchanged);
+        return result;
     }
 
     // optimization case 3: no-op
@@ -2094,8 +2102,9 @@ const char* Overlay::DoReplace(const char* args)
         (replacer == 5 && replaceg == 5 && replaceb == 5 && replacea == 5) &&
         (invr == 0 && invg == 0 && invb == 0 && inva == 0)) {
 
-        // nothing to do
-        return NULL;
+        // return number of pixels replaced
+        sprintf(result, "%d", numchanged);
+        return result;
     }
 
     // optimization case 4: set constant alpha value on every pixel
@@ -2109,7 +2118,10 @@ const char* Overlay::DoReplace(const char* args)
             clipdata += 4;
         }
 
-        return NULL;
+        // return number of pixels replaced
+        numchanged = w * h;
+        sprintf(result, "%d", numchanged);
+        return result;
     }
 
     // optimization case 5: invert colors
@@ -2127,7 +2139,10 @@ const char* Overlay::DoReplace(const char* args)
             cdata++;
         }
 
-        return NULL;
+        // return number of pixels replaced
+        numchanged = w * h;
+        sprintf(result, "%d", numchanged);
+        return result;
     }
 
     // general case
@@ -2274,7 +2289,6 @@ const char* Overlay::DoReplace(const char* args)
     }
 
     // return number of pixels replaced
-    static char result[16];
     sprintf(result, "%d", numchanged);
     return result;
 }
