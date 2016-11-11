@@ -4,7 +4,7 @@ Authors: Andrew Trevorrow (andrew@trevorrow.com) and Chris Rowett (rowett@yahoo.
 --]]
 
 local g = golly()
--- require "gplus.strict"
+--require "gplus.strict"
 local gp = require "gplus"
 local split = gp.split
 local int = gp.int
@@ -911,7 +911,7 @@ end
 local function test_set()
     local maxx = wd - 1
     local maxy = ht - 1
-    local flakes = 10000
+    local flakes = 7500
 
     -- create the exit message
     local oldfont = ov(demofont)
@@ -933,6 +933,7 @@ local function test_set()
 
     -- fill the background with graduated blue to black
     local oldblend = ov("blend 0")
+    local c
     for i = 0, ht - 1 do
         c = floor(i / ht * 128)
         ov("rgba 0 0 "..c.." 255")
@@ -941,7 +942,8 @@ local function test_set()
 
     -- draw golly text
     ov("blend 1")
-    pastetext(floor((wd - gw) / 2), ht - gh - h, op.identity, "gollyclip")
+    local texty = ht - gh - h
+    pastetext(floor((wd - gw) / 2), texty, op.identity, "gollyclip")
 
     -- create the background clip
     ov("copy 0 0 "..wd.." "..ht.." bg")
@@ -952,13 +954,19 @@ local function test_set()
     local screen = {}
     for i = 0, ht - 1 do
         local row = {}
-        for j = 0, wd - 1 do
-            rgba = ov("get "..j.." "..i)
-            local r, g, b = split(rgba)
-            if tonumber(r) == 0 and tonumber(g) == 0 then
+        if i < texty then
+            for j = 0, wd - 1 do
                 row[j] = true
-            else
-                row[j] = false
+            end
+        else
+            for j = 0, wd - 1 do
+                rgba = ov("get "..j.." "..i)
+                local r, g, b = split(rgba)
+                if tonumber(r) == 0 and tonumber(g) == 0 then
+                    row[j] = true
+                else
+                    row[j] = false
+                end
             end
         end
         screen[i] = row
@@ -968,6 +976,7 @@ local function test_set()
     local maxpos = -20 * maxy
     local x = {}
     local y = {}
+    local dy = {}
     for i = 1, flakes do
         x[i] = rand(0, maxx)
         local yval = 0
@@ -978,6 +987,7 @@ local function test_set()
         if y[i] > maxpos then
             maxpos = y[i]
         end
+        dy[i] = rand() / 5 + 0.8
     end
     for i = 1, flakes do
         y[i] = y[i] - maxpos
@@ -999,40 +1009,43 @@ local function test_set()
         -- time drawing the pixels
         ov(op.white)
         local drawn = 0
-        local lastx, lasty
-        local newx, newy
+        local lastx, lasty, newx, newy, diry
         for i = 1, flakes do
             lastx = x[i]
             lasty = y[i]
+            diry = dy[i]
             newx = lastx
             newy = lasty
             if lasty >= 0 and lasty < ht - 1 then
-                if screen[lasty + 1][lastx] == true then
-                    newy = lasty + 1
+                if floor(lasty) == floor(lasty + diry) then
+                    newy = lasty + diry
                 else
-                    if rand() < 0.1 then
-                        local dx = 1
-                        if rand() < 0.5 then
-                            dx = -1
-                        end
-                        if lastx + dx >= 0 and lastx + dx < wd then
-                            if screen[lasty + 1][lastx + dx] == true then
-                               newx = lastx + dx
-                               newy = lasty + 1
+                    if screen[floor(lasty + diry)][lastx] == true then
+                        newy = lasty + diry
+                    else
+                        if rand() < 0.05 then
+                            local dx = 1
+                            if rand() < 0.5 then
+                                dx = -1
+                            end
+                            if lastx + dx >= 0 and lastx + dx < wd then
+                                if screen[floor(lasty + diry)][lastx + dx] == true then
+                                   newx = lastx + dx
+                                   newy = lasty + diry
+                                end
                             end
                         end
                     end
+                    screen[floor(lasty)][lastx] = true
+                    screen[floor(newy)][newx] = false
                 end
-
-                screen[lasty][lastx] = true
-                screen[newy][newx] = false
             elseif lasty < 0 then
-                newy = lasty + 1
+                newy = lasty + diry
             end
             x[i] = newx
             y[i] = newy
             if newy >= 0 and newy < ht then
-                ov("set "..newx.." "..newy)
+                ov("set "..newx.." "..floor(newy))
                 drawn = drawn + 1
             end
         end
@@ -1042,8 +1055,8 @@ local function test_set()
 
         -- draw the exit message
         ov("blend 1")
-        pastetext(10 + 2, ht - h - 10 + 2, op.identity, "shadow")
-        pastetext(10, ht - h - 10)
+        pastetext(floor((wd - w) / 2) + 2, 10 + 2, op.identity, "shadow")
+        pastetext(floor((wd - w) / 2), 10)
 
         -- wait for frame time
         while g.millisecs() - t1 < 15 do
