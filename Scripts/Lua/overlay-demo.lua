@@ -931,6 +931,38 @@ local function test_set()
     ov(op.yellow)
     local gw, gh = maketext("Golly", "gollyclip")
 
+    -- fill the background with graduated blue to black
+    local oldblend = ov("blend 0")
+    for i = 0, ht - 1 do
+        c = floor(i / ht * 128)
+        ov("rgba 0 0 "..c.." 255")
+        ov("line 0 "..i.." "..(wd - 1).." "..i)
+    end
+
+    -- draw golly text
+    ov("blend 1")
+    pastetext(floor((wd - gw) / 2), ht - gh - h, op.identity, "gollyclip")
+
+    -- create the background clip
+    ov("copy 0 0 "..wd.." "..ht.." bg")
+
+    -- read the screen
+    local rgba
+    local screen = {}
+    for i = 0, ht - 1 do
+        local row = {}
+        for j = 0, wd - 1 do
+            rgba = ov("get "..j.." "..i)
+            local r, g, b = split(rgba)
+            if tonumber(r) == 0 and tonumber(g) == 0 then
+                row[j] = true
+            else
+                row[j] = false
+            end
+        end
+        screen[i] = row
+    end
+
     -- initialize flake positions
     local maxpos = -20 * maxy
     local x = {}
@@ -941,7 +973,7 @@ local function test_set()
         for j = 1, 10 do
             yval = yval + rand(0, 20 * maxy)
         end
-        y[i] = -(yval / 10)
+        y[i] = floor(-(yval / 10))
         if y[i] > maxpos then
             maxpos = y[i]
         end
@@ -958,30 +990,49 @@ local function test_set()
             return_to_main_menu = true
         end
 
-        -- fill the background with dark blue
-        local bgcol = "0 0 128 255"
-        local oldblend = ov("blend 0")
-        ov("rgba "..bgcol)
-        ov("fill")
-
-        -- draw golly
-        ov("blend 1")
-        pastetext(floor((wd - gw) / 2), ht - gh - h, op.identity, "gollyclip")
+        -- draw the background
+        local t1 = g.millisecs()
+        ov("blend 0")
+        ov("paste 0 0 bg")
 
         -- time drawing the pixels
-        local t1 = g.millisecs()
         ov(op.white)
         local drawn = 0
+        local lastx, lasty
+        local newx, newy
         for i = 1, flakes do
-            if y[i] >= 0 and y[i] < ht then
-                ov("set "..x[i].." "..y[i])
-                drawn = drawn + 1
-                local rgba = ov("get "..x[i].." "..(y[i] + 1))
-                if rgba == bgcol then
-                    y[i] = y[i] + 1
+            lastx = x[i]
+            lasty = y[i]
+            newx = lastx
+            newy = lasty
+            if lasty >= 0 and lasty < ht - 1 then
+                if screen[lasty + 1][lastx] == true then
+                    newy = lasty + 1
+                else
+                    if rand() < 0.1 then
+                        local dx = 1
+                        if rand() < 0.5 then
+                            dx = -1
+                        end
+                        if lastx + dx >= 0 and lastx + dx < wd then
+                            if screen[lasty + 1][lastx + dx] == true then
+                               newx = lastx + dx
+                               newy = lasty + 1
+                            end
+                        end
+                    end
                 end
-            else
-                y[i] = y[i] + 1
+
+                screen[lasty][lastx] = true
+                screen[newy][newx] = false
+            elseif lasty < 0 then
+                newy = lasty + 1
+            end
+            x[i] = newx
+            y[i] = newy
+            if newy >= 0 and newy < ht then
+                ov("set "..newx.." "..newy)
+                drawn = drawn + 1
             end
         end
 
@@ -999,9 +1050,11 @@ local function test_set()
 
         -- update display
         ov("update")
-        
-        ov("blend "..oldblend)
     end
+
+    -- free clips and restore settings
+    ov("freeclip bg")
+    ov("blend "..oldblend)
     ov("font "..oldfont)
 end
 
