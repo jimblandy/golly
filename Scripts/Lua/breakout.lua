@@ -206,6 +206,7 @@ local function breakout()
 
         -- whether new high score
         newhigh = false
+ bricksleft = 2
 
         -- main loop
         while balls > 0 and bricksleft > 0 do
@@ -486,8 +487,8 @@ local function breakout()
             level = 1
         else
             -- level complete
-            ov("font "..floor(36 * fontscale).." mono")
-            shadowtext(0, ht / 2 - 30 * fontscale, "Level "..level.." complete!", aligncenter)
+            ov("font "..floor(24 * fontscale).." mono")
+            shadowtext(0, ht / 2 - 30 * fontscale, "Level "..level.." complete!", aligncenter, op.green)
             ov("font "..floor(12 * fontscale).." mono")
             shadowtext(0, ht / 2 + 30 * fontscale, continuestr, aligncenter)
             level = level + 1
