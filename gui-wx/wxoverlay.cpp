@@ -1913,7 +1913,7 @@ const char* Overlay::DoPosition(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, bool* invreplace) {
+const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace) {
     // argument is a string defining the find component value and optional replacement
     // find part is one of:
     //     *      (match any value)
@@ -1931,7 +1931,7 @@ const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind,
     *find       = 0;
     *negfind    = false;
     *replace    = 0;
-    *invreplace = false;
+    *invreplace = 0;
 
     // decode find
     if (*p == '*') {
@@ -1966,7 +1966,7 @@ const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind,
         p++;
         // invert if required
         if (*p == '-') {
-            *invreplace = true;
+            *invreplace = 255;
             p++;
         }
     }
@@ -2008,10 +2008,10 @@ const char* Overlay::DoReplace(const char* args)
     bool negg = false;
     bool negb = false;
     bool nega = false;
-    bool invr = false;
-    bool invg = false;
-    bool invb = false;
-    bool inva = false;
+    int invr = 0;
+    int invg = 0;
+    int invb = 0;
+    int inva = 0;
     const char *error = DecodeReplaceArg(arg1, &findr, &negr, &replacer, &invr);
     if (error) return OverlayError(error);
     error = DecodeReplaceArg(arg2, &findg, &negg, &replaceg, &invg);
@@ -2043,7 +2043,94 @@ const char* Overlay::DoReplace(const char* args)
     // count how many pixels are replaced
     int numchanged = 0;
 
-    // replace pixels in the clip
+    // optimization case 1: fixed find and replace
+    if ((findr != matchany && findg != matchany && findb != matchany && finda != matchany) &&
+        (replacer == 0 && replaceg == 0 && replaceb == 0 && replacea == 0) &&
+        (!nega)) {
+
+        unsigned int* cdata = (unsigned int*)clipdata;
+        unsigned int findcol = 0;
+        unsigned int replacecol = 0;
+        SetRGBA(findr, findg, findb, finda, &findcol);
+        SetRGBA(r, g, b, a, &replacecol);
+
+        // check for not equals case
+        if (negr || negg || negb) {
+            for (int i = 0; i < w * h; i++) {
+                if (*cdata != findcol) {
+                    *cdata = replacecol;
+                }
+                cdata++;
+            }
+        } else {
+            for (int i = 0; i < w * h; i++) {
+                if (*cdata == findcol) {
+                    *cdata = replacecol;
+                }
+                cdata++;
+            }
+        }
+
+        return NULL;
+    }
+
+    // optimization case 2: fill
+    if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
+        (replacer == 0 && replaceg == 0 && replaceb == 0 && replacea == 0)) {
+
+        // fill clip with current RGBA
+        unsigned int* cdata = (unsigned int*)clipdata;
+        unsigned int replacecol = 0;
+        SetRGBA(r, g, b, a, &replacecol);
+        for (int i = 0; i < w * h; i++) {
+            *cdata++ = replacecol;
+        }
+
+        return NULL;
+    }
+
+    // optimization case 3: no-op
+    if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
+        (replacer == 5 && replaceg == 5 && replaceb == 5 && replacea == 5) &&
+        (invr == 0 && invg == 0 && invb == 0 && inva == 0)) {
+
+        // nothing to do
+        return NULL;
+    }
+
+    // optimization case 4: set constant alpha value on every pixel
+    if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
+        (replacer == 5 && replaceg == 5 && replaceb == 5 && replacea == 0) &&
+        (invr == 0 && invg == 0 && invb == 0)) {
+
+        // set alpha
+        for (int i = 0; i < w * h; i++) {
+            clipdata[3] = a;
+            clipdata += 4;
+        }
+
+        return NULL;
+    }
+
+    // optimization case 5: invert colors
+    if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
+        (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 5) &&
+        (invr != 0 && invg != 0 && invb != 0 && inva == 0)) {
+
+        // invert every pixel
+        unsigned int* cdata = (unsigned int*)clipdata;
+        unsigned int invmask = 0;
+        SetRGBA(255, 255, 255, 0, &invmask);
+
+        for (int i = 0; i < w * h; i++) {
+            *cdata = *cdata ^ invmask;
+            cdata++;
+        }
+
+        return NULL;
+    }
+
+    // general case
     bool matchr, matchg, matchb, matcha, matchpixel;
     for (int i = 0; i < w * h; i++) {
         // read the clip pixel
@@ -2077,23 +2164,23 @@ const char* Overlay::DoReplace(const char* args)
                     break;
                 case 1:
                     // use clip r component
-                    *clipdata++ = invr ? 255 - clipr : clipr;
+                    *clipdata++ = clipr ^ invr;
                     break;
                 case 2:
                     // use clip g component
-                    *clipdata++ = invr ? 255 - clipg : clipg;
+                    *clipdata++ = clipg ^ invr;
                     break;
                 case 3:
                     // use clip b component
-                    *clipdata++ = invr ? 255 - clipb : clipb;
+                    *clipdata++ = clipb ^ invr;
                     break;
                 case 4:
                     // use clip a component
-                    *clipdata++ = invr ? 255 - clipa : clipa;
+                    *clipdata++ = clipa ^ invr;
                     break;
                 case 5:
                     // use current clip component
-                    *clipdata++ = invr ? 255 - clipr : clipr;
+                    *clipdata++ = clipr ^ invr;
                     break;
             }
 
@@ -2105,23 +2192,23 @@ const char* Overlay::DoReplace(const char* args)
                     break;
                 case 1:
                     // use clip r component
-                    *clipdata++ = invg ? 255 - clipr : clipr;
+                    *clipdata++ = clipr ^ invg;
                     break;
                 case 2:
                     // use clip g component
-                    *clipdata++ = invg ? 255 - clipg : clipg;
+                    *clipdata++ = clipg ^ invg;
                     break;
                 case 3:
                     // use clip b component
-                    *clipdata++ = invg ? 255 - clipb : clipb;
+                    *clipdata++ = clipb ^ invg;
                     break;
                 case 4:
                     // use clip a component
-                    *clipdata++ = invg ? 255 - clipa : clipa;
+                    *clipdata++ = clipa ^ invg;
                     break;
                 case 5:
                     // use current clip component
-                    *clipdata++ = invg ? 255 - clipg : clipg;
+                    *clipdata++ = clipg ^ invg;
                     break;
             }
 
@@ -2133,23 +2220,23 @@ const char* Overlay::DoReplace(const char* args)
                     break;
                 case 1:
                     // use clip r component
-                    *clipdata++ = invb ? 255 - clipr : clipr;
+                    *clipdata++ = clipr ^ invb;
                     break;
                 case 2:
                     // use clip g component
-                    *clipdata++ = invb ? 255 - clipg : clipg;
+                    *clipdata++ = clipr ^ invb;
                     break;
                 case 3:
                     // use clip b component
-                    *clipdata++ = invb ? 255 - clipb : clipb;
+                    *clipdata++ = clipb ^ invb;
                     break;
                 case 4:
                     // use clip a component
-                    *clipdata++ = invb ? 255 - clipa : clipa;
+                    *clipdata++ = clipa ^ invb;
                     break;
                 case 5:
                     // use current clip component
-                    *clipdata++ = invb ? 255 - clipb : clipb;
+                    *clipdata++ = clipb ^ invb;
                     break;
             }
 
@@ -2161,23 +2248,23 @@ const char* Overlay::DoReplace(const char* args)
                     break;
                 case 1:
                     // use clip r component
-                    *clipdata++ = inva ? 255 - clipr : clipr;
+                    *clipdata++ = clipr ^ inva;
                     break;
                 case 2:
                     // use clip g component
-                    *clipdata++ = inva ? 255 - clipg : clipg;
+                    *clipdata++ = clipg ^ inva;
                     break;
                 case 3:
                     // use clip b component
-                    *clipdata++ = inva ? 255 - clipb : clipb;
+                    *clipdata++ = clipb ^ inva;
                     break;
                 case 4:
                     // use clip a component
-                    *clipdata++ = inva ? 255 - clipa : clipa;
+                    *clipdata++ = clipa ^ inva;
                     break;
                 case 5:
                     // use current clip component
-                    *clipdata++ = inva ? 255 - clipa : clipa;
+                    *clipdata++ = clipa ^ inva;
                     break;
             }
         } else {

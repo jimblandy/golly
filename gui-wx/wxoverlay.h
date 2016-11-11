@@ -180,7 +180,7 @@ private:
     // Paste the named Clip data into the overlay at the given location.
     // Automatically clips any pixels outside the overlay.
     
-    const char* DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, bool* invreplace);
+    const char* DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace);
     // Decodes a single argument for the replace comand.
 
     const char* DoReplace(const char* args);
