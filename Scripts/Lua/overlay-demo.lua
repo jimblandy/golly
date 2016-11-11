@@ -39,6 +39,7 @@ local load_button
 local mouse_button
 local multiline_button
 local pos_button
+local replace_button
 local save_button
 local text_button
 
@@ -229,6 +230,134 @@ of the current layer, or at any corner.]]
     
     if repeat_test(" using a different position") then goto restart end
     pos = 0
+end
+
+--------------------------------------------------------------------------------
+
+local replace = 1
+local replacements = {
+    [1] = { op.yellow, "replace 255 0 0 255", "replace red pixels with yellow" },
+    [2] = { "rgba 255 255 0 128", "replace 0 0 0 255", "replace black with semi-tranparent yellow" },
+    [3] = { op.yellow, "replace !255 !0 !0 255", "replace non-red pixels with yellow" },
+    [4] = { "", "replace *g *r *# *#", "swap red and green components" },
+    [5] = { "rgba 0 0 0 128", "replace *# *# *# *", "make all pixels semi-transparent" },
+    [6] = { "", "replace *r- *g- *b- *#", "invert r g b components" },
+    [7] = { op.yellow, "replace * * * !255", "replace non-opaque pixels with yellow" },
+    [8] = { "rgba 255 255 255 255", "replace *a *a *a *", "convert alpha to greyscale" },
+    [9] = { op.yellow, "replace 0 255 0 !255", "replace non-opaque green with yellow" },
+    [10] = { op.yellow, "replace * * * *", "fill (replace any pixel with yellow)" },
+    [11] = { "", "replace *# *# *# *#", "no-op (replace pixels with clip pixels)" }
+}
+
+local function test_replace()
+    ::restart::
+
+    -- create clip
+    local oldblend = ov("blend 0")
+    ov("rgba 0 0 0 0")
+    ov("fill")
+    ov("blend 1")
+    ov(op.black)
+    ov("fill 20 20 192 256")
+    ov(op.red)
+    ov("fill 84 84 128 128")
+    ov(op.blue)
+    ov("fill 148 148 64 64")
+    ov("rgba 0 255 0 128")
+    ov("fill 64 64 104 104")
+    ov("rgba 255 255 255 64")
+    ov("fill 212 20 64 64")
+    ov("rgba 255 255 255 128")
+    ov("fill 212 84 64 64")
+    ov("rgba 255 255 255 192")
+    ov("fill 212 148 64 64")
+    ov("rgba 255 255 255 255")
+    ov("fill 212 212 64 64")
+    ov("blend 0")
+    ov("rgba 0 255 0 128")
+    ov("fill 20 212 64 64")
+    ov("blend 1")
+    ov(op.white)
+    ov("line 20 20 275 20")
+    ov("line 20 275 275 275")
+    ov("line 20 20 20 275")
+    ov("line 275 20 275 275")
+    ov("copy 20 20 256 256 clip")
+
+    -- create the background with some text
+    local oldfont = ov("font 24 mono")
+    ov("rgba 0 0 192 255")
+    ov("fill")
+    ov("rgba 192 192 192 255")
+    local w, h = maketext("Golly")
+    ov("blend 1")
+    for y = 0, ht - 70, h do
+        for x = 0, wd, w do
+            pastetext(x, y)
+        end
+    end
+
+    -- draw the clip
+    ov("paste 20 20 clip")
+
+    -- replace clip
+    local drawcol = replacements[replace][1]
+    local replacecmd = replacements[replace][2]
+    if drawcol ~= "" then
+        -- set RGBA color
+        ov(drawcol)
+    end
+    -- execute replace and draw clip
+    local t1 = g.millisecs()
+    ov(replacecmd.." clip")
+    t1 = g.millisecs() - t1
+    ov("paste "..(wd - 276).." 20 clip")
+
+    -- draw replacement text background
+    ov("blend 1")
+    ov("rgba 0 0 0 192")
+    ov("fill 20 300 "..(wd - 40).. " 144")
+
+    -- draw test name
+    ov("font 14 mono")
+    ov(op.black)
+    local testname = "Test "..replace..": "..replacements[replace][3]
+    w, h = maketext(testname)
+    pastetext(floor((wd - w) / 2) + 2, 310 + 2)
+    ov(op.white)
+    maketext(testname)
+    pastetext(floor((wd - w) / 2), 310)
+
+    -- draw test commands
+    ov("font 24 mono")
+    if drawcol ~= "" then
+        ov(op.black)
+        w, h = maketext(drawcol)
+        pastetext(floor((wd - w) / 2) + 2, 340 + 2)
+        ov(op.yellow)
+        maketext(drawcol)
+        pastetext(floor((wd - w) / 2), 340)
+    end
+    ov(op.black)
+    w, h = maketext(replacecmd.." clip")
+    pastetext(floor((wd - w) / 2) + 2, 390 + 2)
+    ov(op.yellow)
+    maketext(replacecmd.." clip")
+    pastetext(floor((wd - w) / 2), 390)
+
+    -- next replacement
+    replace = replace + 1
+    if replace > #replacements then
+        replace = 1
+    end
+
+    -- restore settings
+    ov("blend "..oldblend)
+    ov("font "..oldfont)
+
+    g.show("Time to replace: "..ms(t1))
+    if repeat_test(" with different options") then goto restart end
+
 end
 
 --------------------------------------------------------------------------------
@@ -803,11 +932,22 @@ local function test_set()
     local gw, gh = maketext("Golly", "gollyclip")
 
     -- initialize flake positions
+    local maxpos = -20 * maxy
     local x = {}
     local y = {}
     for i = 1, flakes do
         x[i] = rand(0, maxx)
-        y[i] = rand(0, 20 * maxy) - 20 * maxy
+        local yval = 0
+        for j = 1, 10 do
+            yval = yval + rand(0, 20 * maxy)
+        end
+        y[i] = -(yval / 10)
+        if y[i] > maxpos then
+            maxpos = y[i]
+        end
+    end
+    for i = 1, flakes do
+        y[i] = y[i] - maxpos
     end
 
     -- loop until key pressed or mouse clicked
@@ -828,7 +968,7 @@ local function test_set()
         ov("blend 1")
         pastetext(floor((wd - gw) / 2), ht - gh - h, op.identity, "gollyclip")
 
-        -- time drawing 1000 pixels
+        -- time drawing the pixels
         local t1 = g.millisecs()
         ov(op.white)
         local drawn = 0
@@ -1423,6 +1563,7 @@ local function create_menu_buttons()
     mouse_button = op.button(       longest, test_mouse)
     multiline_button = op.button(   longest, test_multiline_text)
     pos_button = op.button(         longest, test_positions)
+    replace_button = op.button(     longest, test_replace)
     save_button = op.button(        longest, test_save)
     text_button = op.button(        longest, test_text)
 
@@ -1438,6 +1579,7 @@ local function create_menu_buttons()
     mouse_button.setlabel(      "Mouse Tracking", false)
     multiline_button.setlabel(  "Multi-line Text", false)
     pos_button.setlabel(        "Overlay Positions", false)
+    replace_button.setlabel(    "Replacing Pixels", false)
     save_button.setlabel(       "Saving the Overlay", false)
     text_button.setlabel(       "Text and Transforms", false)
 end
@@ -1445,7 +1587,7 @@ end
 --------------------------------------------------------------------------------
 
 local function main_menu()
-    local numbutts = 13
+    local numbutts = 14
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
     local buttgap = 10
@@ -1485,6 +1627,7 @@ local function main_menu()
     mouse_button.show(x, y)         y = y + buttgap + buttht
     multiline_button.show(x, y)     y = y + buttgap + buttht
     pos_button.show(x, y)           y = y + buttgap + buttht
+    replace_button.show(x, y)       y = y + buttgap + buttht
     save_button.show(x, y)          y = y + buttgap + buttht
     text_button.show(x, y)
     

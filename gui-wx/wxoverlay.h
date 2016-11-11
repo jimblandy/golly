@@ -180,6 +180,14 @@ private:
     // Paste the named Clip data into the overlay at the given location.
     // Automatically clips any pixels outside the overlay.
     
+    const char* DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, bool* invreplace);
+    // Decodes a single argument for the replace comand.
+
+    const char* DoReplace(const char* args);
+    // Replace pixels of a specified RGBA color in the named clip with the
+    // current RGBA values.
+    // Return the number of pixels replaced.
+
     const char* DoFreeClip(const char* args);
     // Free the memory used by the named Clip.
     

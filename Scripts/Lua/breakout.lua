@@ -14,11 +14,12 @@ local floor = math.floor
 local alignleft   = 0
 local aligncenter = 1
 local alignright  = 2
+local fontscale   = 1
 
 -- overlay width and height
 local wd, ht
-local minwd = 512
-local minht = 512
+local minwd = 400
+local minht = 400
 
 -- high score is saved in this file
 local scorefile = g.getdir("data").."overlay-bricks.ini"
@@ -162,12 +163,12 @@ local function breakout()
             rows[y] = bricks
         end
         local brickcols = {
-            [1] = "rgba 255 0 0 255",
-            [2] = "rgba 255 255 0 255",
-            [3] = "rgba 255 0 255 255",
-            [4] = "rgba 0 255 0 255",
-            [5] = "rgba 0 255 255 255",
-            [6] = "rgba 0 0 255 255",
+            [1] = op.red,
+            [2] = op.yellow,
+            [3] = op.magenta,
+            [4] = op.green,
+            [5] = op.cyan,
+            [6] = op.blue
         }
 
         -- intiialize the bat
@@ -213,7 +214,15 @@ local function breakout()
 
             -- check if size of layer has changed
             local newwd, newht = g.getview(g.getlayer())
-            if (newwd ~= wd or new ~= viewht) and (newwd >= minwd and newht >= minht) then
+            if newwd ~= wd or new ~= viewht then
+		-- check minimum size
+		if newwd < minwd then
+	            newwd = minwd
+		end
+		if newht < minht then
+		    newht = minht
+		end
+
                 -- reposition the bat and ball
                 batx = batx * (newwd / wd)
                 ballx = ballx * (newwd / wd)
@@ -223,6 +232,7 @@ local function breakout()
                 wd = newwd
                 ht = newht
                 ov("resize "..wd.." "..ht)
+		fontscale = wd / minwd
 
                 -- scale bat, ball and bricks
                 brickwd  = floor(wd / numcols)
@@ -298,7 +308,7 @@ local function breakout()
             ov("blend 1")
             ov("fill "..(floor(ballx - ballsize / 2) + shadowx).." "..(floor(bally - ballsize / 2) + shadowy).." "..floor(ballsize).." "..floor(ballsize))
             ov("blend 0")
-            ov("rgba 255 255 255 255")
+            ov(op.white)
             ov("fill "..floor(ballx - ballsize / 2).." "..floor(bally - ballsize / 2).." "..floor(ballsize).." "..floor(ballsize))
 
             -- draw the bat
@@ -317,15 +327,15 @@ local function breakout()
 
             -- check if paused
             if pause then
-                ov("font 16 mono")
+                ov("font "..floor(12 * fontscale).." mono")
                 shadowtext(0, ht / 2, pausestr, aligncenter)
             else
                 -- check for new ball
                 if newball then
-                    ov("font 16 mono")
-                    shadowtext(0, ht / 2 + 70, controlstr, aligncenter)
-                    shadowtext(0, ht / 2 + 30, newballstr, aligncenter)
-                    ov("font 24 mono")
+                    ov("font "..floor(12 * fontscale).." mono")
+                    shadowtext(0, ht / 2 + 52 * fontscale, controlstr, aligncenter)
+                    shadowtext(0, ht / 2 + 22 * fontscale, newballstr, aligncenter)
+                    ov("font "..floor(18 * fontscale).." mono")
                     local remstr, remcol
                     if balls == 1 then
                         remstr = "Last ball!"
@@ -338,8 +348,8 @@ local function breakout()
                             remcol = op.green
                         end
                     end
-                    shadowtext(0, ht / 2 - 20, remstr, aligncenter, remcol)
-                    shadowtext(0, ht / 2 - 70, "Level "..level, aligncenter)
+                    shadowtext(0, ht / 2 - 15 * fontscale, remstr, aligncenter, remcol)
+                    shadowtext(0, ht / 2 - 52 * fontscale, "Level "..level, aligncenter)
                 else
                     -- update ball position
                     ballx = ballx + (balldx * ballspeed * ballsize) / speeddiv
@@ -437,7 +447,7 @@ local function breakout()
 
             -- draw the score and lives
             ov("blend 1")
-            ov("font 16 mono")
+            ov("font "..floor(12 * fontscale).." mono")
             shadowtext(5, 5, "Score "..score)
             shadowtext(-5, 5, "Balls "..balls, alignright)
             local highcol = op.white
@@ -460,14 +470,14 @@ local function breakout()
         end
 
         -- check why game finished
-        ov("font 48 mono")
+        ov("font "..floor(36 * fontscale).." mono")
         if balls == 0 then
             -- game over
-            shadowtext(0, ht / 2 - 40, gameoverstr, aligncenter, op.red)
-            ov("font 16 mono")
-            shadowtext(0, ht / 2 + 40, restartstr, aligncenter)
+            shadowtext(0, ht / 2 - 30 * fontscale, gameoverstr, aligncenter, op.red)
+            ov("font "..floor(12 * fontscale).." mono")
+            shadowtext(0, ht / 2 + 30 * fontscale, restartstr, aligncenter)
             if newhigh then
-                shadowtext(0, ht / 2 - 70, newhighstr, aligncenter, op.green)
+                shadowtext(0, ht / 2 - 52 * fontscale, newhighstr, aligncenter, op.green)
             end
 
             -- reset
@@ -476,13 +486,13 @@ local function breakout()
             level = 1
         else
             -- level complete
-            ov("font 48 mono")
-            shadowtext(0, ht / 2 - 40, "Level "..level.." complete!", aligncenter)
-            ov("font 16 mono")
-            shadowtext(0, ht / 2 + 40, continuestr, aligncenter)
+            ov("font "..floor(36 * fontscale).." mono")
+            shadowtext(0, ht / 2 - 30 * fontscale, "Level "..level.." complete!", aligncenter)
+            ov("font "..floor(12 * fontscale).." mono")
+            shadowtext(0, ht / 2 + 30 * fontscale, continuestr, aligncenter)
             level = level + 1
         end
-        shadowtext(0, ht / 2 + 70, quitstr, aligncenter)
+        shadowtext(0, ht / 2 + 52 * fontscale, quitstr, aligncenter)
         ov("update")
 
         -- wait until mouse button clicked or enter pressed
@@ -527,6 +537,7 @@ local function main()
 
     -- create overlay
     ov("create "..wd.." "..ht)
+    fontscale = wd / minwd
 
     -- run breakout
     breakout()

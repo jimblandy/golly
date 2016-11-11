@@ -33,6 +33,8 @@ with history and smooth non-integer scaling and rotation.
 how to use most of the overlay functions.
 <li><a href="open:Scripts/Lua/pop-plot.lua"><b>pop-plot.lua</b></a> displays a plot of
 population versus time that can be saved as a PNG file.
+<li><a href="open:Scripts/Lua/breakout.lua"><b>breakout.lua</b></a> shows how to use the overlay
+functions together to create a working game.
 </ul>
 
 <p>
@@ -83,15 +85,16 @@ Here is an alphabetical list of all the valid overlay commands:
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#replace"><b>replace</b></a><br>
 <a href="#resize"><b>resize</b></a><br>
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
-<a href="#text"><b>text</b></a><br>
-<a href="#textoption"><b>textoption</b></a>
+<a href="#text"><b>text</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#textoption"><b>textoption</b></a><br>
 <a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
@@ -398,6 +401,57 @@ The valid positions are:
 <dd> Example: <b>ov("position middle")</b></dd>
 </p>
 
+<a name="replace"></a><p><dt><b>replace <i>red green blue alpha clipname</i></b></dt>
+<dd>
+Replace pixels with color <i>red green blue alpha</i> in <i>clipname</i> with the current
+RGBA values.
+Returns the number of pixels replaced as a string.
+</p>
+<dd> Example:</dd>
+<dd><i>-- replace opaque black pixels with semi-transparent blue pixels</i></dd>
+<dd><b>ov("rgba 0 0 255 128")</b></dd>
+<dd><b>local replaced = ov("replace 0 0 0 255 myclip")</b></dd>
+</p>
+<dd>
+There are two special characters that can be used in the color specification for
+more advanced matches: <b>*</b> and <b>!</b>.
+A color component may be specified as <b>*</b> which means match any value for that component.
+Alternatively a color compoment may be prefixed with <b>!</b> which means match clip pixels that do not have that
+color component value.
+</dd>
+</p>
+<dd> Example:</dd>
+<dd><i>-- replace any non-opaque pixel with opaque blue</i></dd>
+<dd><b>ov(op.blue)</b></dd>
+<dd><b>local replaced = ov("replace * * * !255 myclip")</b></dd>
+<p>
+<dd>
+Normally when a match is found the clip pixel is replaced with the current RGBA values. This
+can be overridden by postfixing one or more color components with <b>r</b>, <b>g</b>, <b>b</b>,
+<b>a</b> or <b>#</b>. Each color component in the clip pixel can either be left unchanged
+(in the case of <b>#</b>) or replaced with the specified color component from the clip pixel.
+If the postfix character is followed by <b>-</b> then the component value is inverted.
+</dd>
+<p>
+<dd> Examples:</dd>
+<dd><i>-- make transparent pixels opaque (r g b 0 -> r g b 255)</i></dd>
+<dd><b>ov("rgba 0 0 0 255")</b></dd>
+<dd><b>local replaced = ov("replace *# *# *# 0 myclip")</b></dd>
+</p>
+<p>
+<dd><i>-- swap the red and green components in the clip (r g b a -> g r b a)</i></dd>
+<dd><b>local replaced = ov("replace *g *r *# *# myclip")</b></dd>
+</p>
+<p>
+<dd><i>-- set the pixels to opaque gray based on the alpha level (r g b a -> a a a 255)</i></dd>
+<dd><b>ov("rgba 0 0 0 255")</b></dd>
+<dd><b>local replaced = ov("replace *a *a *a * myclip")</b></dd>
+</p>
+<p>
+<dd><i>-- invert the r g b components but leave alpha unchanged (r g b a -> 255-r 255-g 255-b a)</i></dd>
+<dd><b>local replaced = ov("replace *r- *g- *b- *# myclip")</b></dd>
+</p>
+
 <a name="resize"></a><p><dt><b>resize <i>x y</i></b></dt>
 <dd>
 Resize the overlay to the given size. This is typically used if a window resize is detected.
@@ -414,6 +468,7 @@ The commands that use the current RGBA values are:
 <a href="#fill">fill</a>,
 <a href="#flood">flood</a>,
 <a href="#line">line</a>,
+<a href="#replace">replace</a>,
 <a href="#set">set</a>,
 <a href="#text">text</a>.
 </dd>
