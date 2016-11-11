@@ -206,7 +206,6 @@ local function breakout()
 
         -- whether new high score
         newhigh = false
- bricksleft = 2
 
         -- main loop
         while balls > 0 and bricksleft > 0 do
