@@ -24,6 +24,8 @@ that illustrate how the overlay can be used:
 
 <p>
 <ul>
+<li><a href="open:Scripts/Lua/breakout.lua"><b>breakout.lua</b></a> shows how to use
+the overlay functions to create a working game.
 <li><a href="open:Scripts/Lua/hexgrid.lua"><b>hexgrid.lua</b></a> creates a true
 hexagonal grid for rules that use a hexagonal neighborhood.
 <li><a href="open:Scripts/Lua/lifeviewer.lua"><b>lifeviewer.lua</b></a> displays patterns like
@@ -33,8 +35,6 @@ with history and smooth non-integer scaling and rotation.
 how to use most of the overlay functions.
 <li><a href="open:Scripts/Lua/pop-plot.lua"><b>pop-plot.lua</b></a> displays a plot of
 population versus time that can be saved as a PNG file.
-<li><a href="open:Scripts/Lua/breakout.lua"><b>breakout.lua</b></a> shows how to use the overlay
-functions together to create a working game.
 </ul>
 
 <p>
@@ -412,6 +412,7 @@ Returns the number of pixels replaced as a string.
 <dd><b>ov("rgba 0 0 255 128")</b></dd>
 <dd><b>local replaced = ov("replace 0 0 0 255 myclip")</b></dd>
 </p>
+<p>
 <dd>
 There are two special characters that can be used in the color specification for
 more advanced matches: <b>*</b> and <b>!</b>.
@@ -452,9 +453,12 @@ If the postfix character is followed by <b>-</b> then the component value is inv
 <dd><b>local replaced = ov("replace *r- *g- *b- *# myclip")</b></dd>
 </p>
 
-<a name="resize"></a><p><dt><b>resize <i>x y</i></b></dt>
+<a name="resize"></a><p><dt><b>resize <i>wd ht</i></b></dt>
 <dd>
-Resize the overlay to the given size. This is typically used if a window resize is detected.
+Resize the overlay to the given width and height.
+Other than the size, the current overlay options and clips are not changed.
+This command is typically used if a window resize is detected and you
+wish to keep the overlay covering all of the current layer.
 </dd>
 <dd> Example: <b>ov("resize 1000 800")</b></dd>
 </p>
@@ -698,9 +702,10 @@ The overlay commands that can do alpha blending are:
 Overlay scripts can use multiple "clipboards" called clips.
 A clip is simply a chunk of memory containing a rectangular area of pixels.
 Each clip has a unique name consisting of any characters except a space.
-Clips are created using two commands: <a href="#copy">copy</a> and
-<a href="#text">text</a>.  There is only one command that uses clips:
-<a href="#paste">paste</a>.
+Clips are created using two commands:
+<a href="#copy">copy</a> and <a href="#text">text</a>.
+There are two command that use clips:
+<a href="#paste">paste</a> and <a href="#replace">replace</a>.
 
 <p>
 The following script illustrates the use of clips.  It creates a tiled
