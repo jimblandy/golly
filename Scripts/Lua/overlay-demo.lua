@@ -945,6 +945,7 @@ local function test_set()
 
     -- create the background clip
     ov("copy 0 0 "..wd.." "..ht.." bg")
+    ov("update")
 
     -- read the screen
     local rgba
