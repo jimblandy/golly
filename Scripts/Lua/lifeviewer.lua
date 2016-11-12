@@ -1,5 +1,5 @@
--- LifeViewer for Golly
--- Author: Chris Rowett (rowett@yahoo.com), September 2016.
+-- LifeViewer for Golly (work in progress)
+-- Author: Chris Rowett (crowett@gmail.com), September 2016.
 --
 -- LifeViewer is a scriptable pattern viewer featuring:
 -- - Rotation and smooth non-integer zoom.
@@ -11,7 +11,7 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 26
+local buildnumber = 27
 
 local g = golly()
 local ov = g.overlay
@@ -333,7 +333,7 @@ local function drawmenu()
     local i = 0
     ov("blend 1")
     while i < 13 do
-        ov("paste "..(i * 50).." "..y.. "button"..i)
+        --ov("paste "..(i * 50).." "..y.. "button"..i)
         i = i + 1
     end
     ov("blend 0")

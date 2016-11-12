@@ -1,6 +1,6 @@
 --[[
 This script demonstrates the overlay's capabilities.
-Authors: Andrew Trevorrow (andrew@trevorrow.com) and Chris Rowett (rowett@yahoo.com).
+Authors: Andrew Trevorrow (andrew@trevorrow.com) and Chris Rowett (crowett@gmail.com).
 --]]
 
 local g = golly()

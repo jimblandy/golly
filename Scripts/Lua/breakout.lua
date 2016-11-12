@@ -1,5 +1,5 @@
 -- Breakout for Golly
--- Author: Chris Rowett (rowett@yahoo.com), November 2016
+-- Author: Chris Rowett (crowett@gmail.com), November 2016
 
 local g = golly()
 -- require "gplus.strict"
@@ -233,6 +233,9 @@ local function breakout()
                 ht = newht
                 ov("resize "..wd.." "..ht)
 		fontscale = wd / minwd
+                if (ht /minht) < fontscale then
+                    fontscale = ht / minht
+                end
 
                 -- scale bat, ball and bricks
                 brickwd  = floor(wd / numcols)
@@ -327,15 +330,15 @@ local function breakout()
 
             -- check if paused
             if pause then
-                ov("font "..floor(12 * fontscale).." mono")
+                ov("font "..floor(10 * fontscale).." mono")
                 shadowtext(0, ht / 2, pausestr, aligncenter)
             else
                 -- check for new ball
                 if newball then
-                    ov("font "..floor(12 * fontscale).." mono")
+                    ov("font "..floor(10 * fontscale).." mono")
                     shadowtext(0, ht / 2 + 52 * fontscale, controlstr, aligncenter)
                     shadowtext(0, ht / 2 + 22 * fontscale, newballstr, aligncenter)
-                    ov("font "..floor(18 * fontscale).." mono")
+                    ov("font "..floor(15 * fontscale).." mono")
                     local remstr, remcol
                     if balls == 1 then
                         remstr = "Last ball!"
@@ -447,7 +450,7 @@ local function breakout()
 
             -- draw the score and lives
             ov("blend 1")
-            ov("font "..floor(12 * fontscale).." mono")
+            ov("font "..floor(10 * fontscale).." mono")
             shadowtext(5, 5, "Score "..score)
             shadowtext(-5, 5, "Balls "..balls, alignright)
             local highcol = op.white
@@ -470,11 +473,11 @@ local function breakout()
         end
 
         -- check why game finished
-        ov("font "..floor(36 * fontscale).." mono")
+        ov("font "..floor(30 * fontscale).." mono")
         if balls == 0 then
             -- game over
             shadowtext(0, ht / 2 - 30 * fontscale, gameoverstr, aligncenter, op.red)
-            ov("font "..floor(12 * fontscale).." mono")
+            ov("font "..floor(10 * fontscale).." mono")
             shadowtext(0, ht / 2 + 30 * fontscale, restartstr, aligncenter)
             if newhigh then
                 shadowtext(0, ht / 2 - 52 * fontscale, newhighstr, aligncenter, op.green)
@@ -486,9 +489,9 @@ local function breakout()
             level = 1
         else
             -- level complete
-            ov("font "..floor(24 * fontscale).." mono")
+            ov("font "..floor(20 * fontscale).." mono")
             shadowtext(0, ht / 2 - 30 * fontscale, "Level "..level.." complete!", aligncenter, op.green)
-            ov("font "..floor(12 * fontscale).." mono")
+            ov("font "..floor(10 * fontscale).." mono")
             shadowtext(0, ht / 2 + 30 * fontscale, continuestr, aligncenter)
             level = level + 1
         end
@@ -538,6 +541,9 @@ local function main()
     -- create overlay
     ov("create "..wd.." "..ht)
     fontscale = wd / minwd
+    if (ht /minht) < fontscale then
+        fontscale = ht / minht
+    end
 
     -- run breakout
     breakout()
