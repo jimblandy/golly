@@ -177,18 +177,21 @@ local function breakout()
         local batht   = brickht
         local baty    = ht - batht * 4
         local bathits = 0
-        local maxhits = 8
+        local maxhits = 7
         local lastx   = -1
 
         -- initialize the ball
         local ballsize  = wd / 80
         local ballx     = (wd - ballsize) / 2
         local bally     = baty - ballsize
-        local balldx    = 1
+        local balldx    = 0.5
         local balldy    = -1
-        local maxspeed  = 3
-        local speedinc  = 0.05
-        local speeddef  = 1 + (level - 1) * speedinc
+        local maxspeed  = 2.25 + (level  - 1) * 0.25
+        if maxspeed > 3 then
+            maxspeed = 3
+        end
+        local speedinc  = 0.04
+        local speeddef  = 1 + (level - 1) * speedinc * 2
         if speeddef > maxspeed then
             speeddef = maxspeed
         end
@@ -376,7 +379,7 @@ local function breakout()
                         balls     = balls - 1
                         bally     = baty
                         balldy    = -1
-                        balldx    = 1
+                        balldx    = 0.5
                         ballspeed = speeddef
                         newball   = true
                     -- check for ball hitting bat

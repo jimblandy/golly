@@ -954,7 +954,7 @@ local function test_set()
     local screen = {}
     for i = 0, ht - 1 do
         local row = {}
-        if i < texty then
+        if i < texty or i > texty + gh then
             for j = 0, wd - 1 do
                 row[j] = true
             end
