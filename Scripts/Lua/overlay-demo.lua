@@ -43,171 +43,9 @@ local pos_button
 local replace_button
 local save_button
 local text_button
+local transition_button
 
 local return_to_main_menu = false
-
---------------------------------------------------------------------------------
-
-local day = 1
-
-local function imhereallweek()
-    local oldblend = ov("blend 0")
-    ov(op.black)
-    ov("line 0 0 "..(wd - 1).." 0")
-    ov("line 0 0 0 "..(ht - 1))
-    ov("line "..(wd - 1).." 0 "..(wd - 1).." "..(ht - 1))
-    ov("line 0 "..(ht - 1).." "..(wd - 1).." "..(ht - 1))
-    ov("copy 0 0 "..wd.." "..ht.." bg")
-
-    -- monday: exit stage left
-    if day == 1 then
-        for x = 0, wd, 10 do
-            local t = g.millisecs()
-            ov("paste 0 0 menu")
-            ov("paste "..-x.." 0 bg")
-            ov("update")
-            while g.millisecs() - t < 15 do end
-        end
-    -- tuesday: duck and cover
-    elseif day == 2 then
-        ov(op.white)
-        for y = 0, ht, 10 do
-            local t = g.millisecs()
-            ov("paste 0 0 menu")
-            ov("paste 0 "..y.." bg")
-            ov("update")
-            while g.millisecs() - t < 15 do end
-        end
-    -- wednesday: slide to the right
-    elseif day == 3 then
-        for y = 0, ht, 8 do
-            ov("copy 0 "..y.." "..wd.." 8 bg"..y)
-        end
-        local d
-        local p
-        for x = 0, wd * 2, 20 do
-            local t = g.millisecs()
-            ov("paste 0 0 menu")
-            d = 0
-            for y = 0, ht, 8 do
-                 p = x + 10 * d - wd
-                 if p < 0 then p = 0 end
-                 ov("paste "..p.." "..y.." bg"..y)
-                 d = d + 1
-            end
-            ov("update")
-            while g.millisecs() - t < 15 do end
-        end
-        for y = 0, ht, 8 do
-            ov("freeclip bg"..y)
-        end
-    -- thursday: as if by magic
-    elseif day == 4 then
-        ov("paste 0 0 menu")
-        ov("copy 0 0 "..wd.." "..ht.." blend")
-        for a = 0, 255, 5 do
-            local t = g.millisecs()
-            ov("blend 0")
-            ov("paste 0 0 bg")
-            ov("blend 1")
-            ov("rgba 0 0 0 "..a)
-            ov("replace *r *g *b * blend")
-            ov("paste 0 0 blend")
-            ov("update")
-            while g.millisecs() - t < 15 do end
-        end
-        ov("freeclip blend")
-    -- friday: you spin me round
-    elseif day == 5 then
-        local x, y, r
-        local deg2rad = 57.3
-        for a = 0, 360, 6 do
-            local t = g.millisecs()
-            r = wd / 360 * a
-            x = floor(r * sin(a / deg2rad))
-            y = floor(r * cos(a / deg2rad))
-            ov("paste 0 0 menu")
-            ov("paste "..x.." "..y.." bg")
-            ov("update")
-            while g.millisecs() - t < 15 do end
-       end
-    -- saturday: through the square window
-    elseif day == 6 then
-        for x = 1, wd / 2, 4 do
-            local t = g.millisecs()           
-            local y = x * (ht / wd)
-            ov("blend 0")
-            ov("paste 0 0 bg")
-            ov("rgba 0 0 0 0")
-            ov("fill "..floor(wd / 2 - x).." "..floor(ht / 2 - y).." "..(x * 2).." "..floor(y * 2))
-            ov("copy 0 0 "..wd.." "..ht.." trans")
-            ov("paste 0 0 menu")
-            ov("blend 1")
-            ov("paste 0 0 trans")
-            ov("update")
-            while g.millisecs() - t < 15 do end
-        end
-        ov("freeclip trans")
-    -- sunday: people in glass houses
-    elseif day == 7 then
-        local box = {}
-        local n = 1
-        local tx, ty
-        for y = 0, ht, 16 do
-            for x = 0, wd, 16 do
-                tx = x + rand(0, floor(wd / 8)) - wd / 16
-                ty = ht + rand(0, floor(ht / 2))
-                local entry = {}
-                entry[1] = x
-                entry[2] = y
-                entry[3] = tx
-                entry[4] = ty
-                box[n] = entry
-                ov("copy "..x.." "..y.." 16 16 sprite"..n)
-                n = n + 1
-            end
-        end
-        for i = 0, 100 do
-            local t = g.millisecs()
-            local a = i / 100
-            local x, y
-            ov("paste 0 0 menu")
-            for n = 1, #box do
-                x = box[n][1]
-                y = box[n][2]
-                tx = box[n][3]
-                ty = box[n][4]
-                ov("paste "..floor(x * (1 - a) + tx * a).." "..floor(y * (1 - a) + ty * a).." sprite"..n)
-            end
-            ov("update")
-            while g.millisecs() - t < 15 do end
-        end
-        n = 1
-        for y = 0, ht, 16 do
-            for x = 0, wd, 16 do
-                ov("freeclip sprite"..n)
-                n = n + 1
-            end
-        end
-    end
-
-    -- next day
-    day = day + 1
-    if day == 8 then
-        day = 1
-    end
-
-    -- restore settings
-    ov("blend "..oldblend)
-    ov("freeclip bg")
-end
-
---------------------------------------------------------------------------------
-
-local function create_overlay()
-    ov("create 1000 1000")
-    -- main_menu() will resize the overlay to just fit buttons and text
-end
 
 --------------------------------------------------------------------------------
 
@@ -229,6 +67,13 @@ local function pastetext(x, y, transform, clipname)
     local oldtransform = ov(transform)
     ov("paste "..x.." "..y.." "..clipname)
     ov("transform "..oldtransform)
+end
+
+--------------------------------------------------------------------------------
+
+local function create_overlay()
+    ov("create 1000 1000")
+    -- main_menu() will resize the overlay to just fit buttons and text
 end
 
 --------------------------------------------------------------------------------
@@ -295,14 +140,193 @@ local function repeat_test(extratext, palebg)
             g.doevent(event)
         end
     end
-    
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
 
 local function ms(t)
     return string.format("%.2fms", t)
+end
+
+--------------------------------------------------------------------------------
+
+local day = 1
+
+local function test_transitions()
+    -- create a clip from the menu screen
+    local oldblend = ov("blend 0")
+    ov(op.black)
+    ov("line 0 0 "..(wd - 1).." 0")
+    ov("line 0 0 0 "..(ht - 1))
+    ov("line "..(wd - 1).." 0 "..(wd - 1).." "..(ht - 1))
+    ov("line 0 "..(ht - 1).." "..(wd - 1).." "..(ht - 1))
+    ov("copy 0 0 "..wd.." "..ht.." bg")
+    
+    -- create the background clip
+    ov(op.blue)
+    ov("fill")
+    local oldfont = ov("font 100 mono")
+    ov(op.yellow)
+    local w,h = maketext("Golly")
+    ov("blend 1")
+    pastetext(floor((wd - w) / 2), floor((ht - h) / 2))
+    ov("copy 0 0 "..wd.." "..ht.." menu")
+    ov("blend 0")
+
+    ::restart::
+    ov("paste 0 0 bg")
+    ov("update")
+    local t = g.millisecs()
+    while g.millisecs() - t < 250 do end
+
+    -- monday: exit stage left
+    if day == 1 then
+        for x = 0, wd, 10 do
+            t = g.millisecs()
+            ov("paste 0 0 menu")
+            ov("paste "..-x.." 0 bg")
+            ov("update")
+            while g.millisecs() - t < 15 do end
+        end
+    -- tuesday: duck and cover
+    elseif day == 2 then
+        ov(op.white)
+        for y = 0, ht, 10 do
+            t = g.millisecs()
+            ov("paste 0 0 menu")
+            ov("paste 0 "..y.." bg")
+            ov("update")
+            while g.millisecs() - t < 15 do end
+        end
+    -- wednesday: slide to the right
+    elseif day == 3 then
+        for y = 0, ht, 8 do
+            ov("copy 0 "..y.." "..wd.." 8 bg"..y)
+        end
+        local d
+        local p
+        for x = 0, wd * 2, 20 do
+            t = g.millisecs()
+            ov("paste 0 0 menu")
+            d = 0
+            for y = 0, ht, 8 do
+                 p = x + 10 * d - wd
+                 if p < 0 then p = 0 end
+                 ov("paste "..p.." "..y.." bg"..y)
+                 d = d + 1
+            end
+            ov("update")
+            while g.millisecs() - t < 15 do end
+        end
+        for y = 0, ht, 8 do
+            ov("freeclip bg"..y)
+        end
+    -- thursday: as if by magic
+    elseif day == 4 then
+        ov("paste 0 0 menu")
+        ov("copy 0 0 "..wd.." "..ht.." blend")
+        for a = 0, 255, 5 do
+            t = g.millisecs()
+            ov("blend 0")
+            ov("paste 0 0 bg")
+            ov("blend 1")
+            ov("rgba 0 0 0 "..a)
+            ov("replace *r *g *b * blend")
+            ov("paste 0 0 blend")
+            ov("update")
+            while g.millisecs() - t < 15 do end
+        end
+        ov("freeclip blend")
+    -- friday: you spin me round
+    elseif day == 5 then
+        local x, y, r
+        local deg2rad = 57.3
+        for a = 0, 360, 6 do
+            t = g.millisecs()
+            r = wd / 360 * a
+            x = floor(r * sin(a / deg2rad))
+            y = floor(r * cos(a / deg2rad))
+            ov("paste 0 0 menu")
+            ov("paste "..x.." "..y.." bg")
+            ov("update")
+            while g.millisecs() - t < 15 do end
+       end
+    -- saturday: through the square window
+    elseif day == 6 then
+        for x = 1, wd / 2, 4 do
+            t = g.millisecs()           
+            local y = x * (ht / wd)
+            ov("blend 0")
+            ov("paste 0 0 bg")
+            ov("rgba 0 0 0 0")
+            ov("fill "..floor(wd / 2 - x).." "..floor(ht / 2 - y).." "..(x * 2).." "..floor(y * 2))
+            ov("copy 0 0 "..wd.." "..ht.." trans")
+            ov("paste 0 0 menu")
+            ov("blend 1")
+            ov("paste 0 0 trans")
+            ov("update")
+            while g.millisecs() - t < 15 do end
+        end
+        ov("freeclip trans")
+    -- sunday: people in glass houses
+    elseif day == 7 then
+        local box = {}
+        local n = 1
+        local tx, ty
+        for y = 0, ht, 16 do
+            for x = 0, wd, 16 do
+                tx = x + rand(0, floor(wd / 8)) - wd / 16
+                ty = ht + rand(0, floor(ht / 2))
+                local entry = {}
+                entry[1] = x
+                entry[2] = y
+                entry[3] = tx
+                entry[4] = ty
+                box[n] = entry
+                ov("copy "..x.." "..y.." 16 16 sprite"..n)
+                n = n + 1
+            end
+        end
+        for i = 0, 100 do
+            t = g.millisecs()
+            local a = i / 100
+            local x, y
+            ov("paste 0 0 menu")
+            for n = 1, #box do
+                x = box[n][1]
+                y = box[n][2]
+                tx = box[n][3]
+                ty = box[n][4]
+                ov("paste "..floor(x * (1 - a) + tx * a).." "..floor(y * (1 - a) + ty * a).." sprite"..n)
+            end
+            ov("update")
+            while g.millisecs() - t < 15 do end
+        end
+        n = 1
+        for y = 0, ht, 16 do
+            for x = 0, wd, 16 do
+                ov("freeclip sprite"..n)
+                n = n + 1
+            end
+        end
+    end
+
+    -- next day
+    day = day + 1
+    if day == 8 then
+        day = 1
+    end
+
+    ov("paste 0 0 menu")
+    ov("update")
+    if repeat_test(" using a different transition", false) then goto restart end
+
+    -- restore settings
+    ov("blend "..oldblend)
+    ov("font "..oldfont)
+    ov("freeclip menu")
+    ov("freeclip bg")
+
 end
 
 --------------------------------------------------------------------------------
@@ -342,8 +366,6 @@ local function test_cursors()
     
     if repeat_test(" using a different cursor", true) then goto restart end
     curs = 0
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -517,8 +539,6 @@ local function test_replace()
 
     g.show("Time to replace: "..ms(t1))
     if repeat_test(" with different options") then goto restart end
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -560,8 +580,6 @@ local function test_copy_paste()
     g.show("Time to test copy and paste: "..ms(g.millisecs()-t1))
     
     if repeat_test(" with different sized tiles") then goto restart end
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -1017,8 +1035,6 @@ local function test_load()
     end
     
     if repeat_test(" and load another image", true) then goto restart end
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -1069,8 +1085,6 @@ local function test_save()
     end
     
     if repeat_test(" and save a different overlay", true) then goto restart end
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -1237,8 +1251,6 @@ local function test_set()
     ov("freeclip bg")
     ov("blend "..oldblend)
     ov("font "..oldfont)
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -1353,8 +1365,6 @@ local function test_lines()
         ov("blend "..oldblend)
     end
     ov("font "..oldfont)
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -1631,8 +1641,6 @@ local function test_text()
     g.show("Time to test text: "..ms(g.millisecs()-t1))
     
     if repeat_test(" with a different sized \"Golly\"", true) then goto restart end
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -1664,8 +1672,6 @@ local function test_fill()
     end
     
     if repeat_test(" with a different blend setting") then goto restart end
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -1705,8 +1711,6 @@ local function test_blending()
     end
     
     if repeat_test(" with a different blend setting", true) then goto restart end
-
-    imhereallweek()
 end
 
 --------------------------------------------------------------------------------
@@ -1750,7 +1754,6 @@ local function test_mouse()
             goto restart
         end
         if event == "key enter none" or event == "key return none" then
-            imhereallweek()
             return_to_main_menu = true
             return
         end
@@ -1811,6 +1814,7 @@ local function create_menu_buttons()
     replace_button = op.button(     longest, test_replace)
     save_button = op.button(        longest, test_save)
     text_button = op.button(        longest, test_text)
+    transition_button = op.button(  longest, test_transitions)
 
     -- change labels without changing button widths
     blend_button.setlabel(      "Alpha Blending", false)
@@ -1827,14 +1831,13 @@ local function create_menu_buttons()
     replace_button.setlabel(    "Replacing Pixels", false)
     save_button.setlabel(       "Saving the Overlay", false)
     text_button.setlabel(       "Text and Transforms", false)
+    transition_button.setlabel( "Transitions", false)
 end
 
 --------------------------------------------------------------------------------
 
-local clip = false
-
 local function main_menu()
-    local numbutts = 14
+    local numbutts = 15
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
     local buttgap = 10
@@ -1876,7 +1879,8 @@ local function main_menu()
     pos_button.show(x, y)           y = y + buttgap + buttht
     replace_button.show(x, y)       y = y + buttgap + buttht
     save_button.show(x, y)          y = y + buttgap + buttht
-    text_button.show(x, y)
+    text_button.show(x, y)          y = y + buttgap + buttht
+    transition_button.show(x, y)
     
     local oldblend = ov("blend 1")
     
@@ -1890,11 +1894,6 @@ local function main_menu()
     ov("blend "..oldblend)
     ov("font "..oldfont)
     
-    if not clip then
-        ov("copy 0 0 "..wd.." "..ht.." menu")
-        clip = true
-    end
-
     g.update()
     g.show(" ") -- clear any timing info
 
