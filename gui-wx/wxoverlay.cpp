@@ -1913,7 +1913,7 @@ const char* Overlay::DoPosition(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace) {
+const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace, int component) {
     // argument is a string defining the find component value and optional replacement
     // find part is one of:
     //     *      (match any value)
@@ -1963,6 +1963,7 @@ const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind,
             return "replace argument postfix is invalid";
         }
         *replace = match - valid + 1;
+        if (*replace == 5) *replace = component;
         p++;
         // invert if required
         if (*p == '-') {
@@ -2012,13 +2013,13 @@ const char* Overlay::DoReplace(const char* args)
     int invg = 0;
     int invb = 0;
     int inva = 0;
-    const char *error = DecodeReplaceArg(arg1, &findr, &negr, &replacer, &invr);
+    const char *error = DecodeReplaceArg(arg1, &findr, &negr, &replacer, &invr, 1);
     if (error) return OverlayError(error);
-    error = DecodeReplaceArg(arg2, &findg, &negg, &replaceg, &invg);
+    error = DecodeReplaceArg(arg2, &findg, &negg, &replaceg, &invg, 2);
     if (error) return OverlayError(error);
-    error = DecodeReplaceArg(arg3, &findb, &negb, &replaceb, &invb);
+    error = DecodeReplaceArg(arg3, &findb, &negb, &replaceb, &invb, 3);
     if (error) return OverlayError(error);
-    error = DecodeReplaceArg(arg4, &finda, &nega, &replacea, &inva);
+    error = DecodeReplaceArg(arg4, &finda, &nega, &replacea, &inva, 4);
     if (error) return OverlayError(error);
 
     // search for the named clip
@@ -2099,7 +2100,7 @@ const char* Overlay::DoReplace(const char* args)
 
     // optimization case 3: no-op
     if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
-        (replacer == 5 && replaceg == 5 && replaceb == 5 && replacea == 5) &&
+        (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 4) &&
         (invr == 0 && invg == 0 && invb == 0 && inva == 0)) {
 
         // return number of pixels replaced
@@ -2109,7 +2110,7 @@ const char* Overlay::DoReplace(const char* args)
 
     // optimization case 4: set constant alpha value on every pixel
     if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
-        (replacer == 5 && replaceg == 5 && replaceb == 5 && replacea == 0) &&
+        (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 0) &&
         (invr == 0 && invg == 0 && invb == 0)) {
 
         // set alpha
@@ -2193,10 +2194,6 @@ const char* Overlay::DoReplace(const char* args)
                     // use clip a component
                     *clipdata++ = clipa ^ invr;
                     break;
-                case 5:
-                    // use current clip component
-                    *clipdata++ = clipr ^ invr;
-                    break;
             }
 
             // g component
@@ -2220,10 +2217,6 @@ const char* Overlay::DoReplace(const char* args)
                 case 4:
                     // use clip a component
                     *clipdata++ = clipa ^ invg;
-                    break;
-                case 5:
-                    // use current clip component
-                    *clipdata++ = clipg ^ invg;
                     break;
             }
 
@@ -2249,10 +2242,6 @@ const char* Overlay::DoReplace(const char* args)
                     // use clip a component
                     *clipdata++ = clipa ^ invb;
                     break;
-                case 5:
-                    // use current clip component
-                    *clipdata++ = clipb ^ invb;
-                    break;
             }
 
             // a component
@@ -2275,10 +2264,6 @@ const char* Overlay::DoReplace(const char* args)
                     break;
                 case 4:
                     // use clip a component
-                    *clipdata++ = clipa ^ inva;
-                    break;
-                case 5:
-                    // use current clip component
                     *clipdata++ = clipa ^ inva;
                     break;
             }
