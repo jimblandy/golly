@@ -170,20 +170,21 @@ local function test_transitions()
     local w,h = maketext("Golly")
     ov("blend 1")
     pastetext(floor((wd - w) / 2), floor((ht - h) / 2))
-    ov("copy 0 0 "..wd.." "..ht.." menu")
+    ov("copy 0 0 "..wd.." "..ht.." fg")
     ov("blend 0")
+    local pause = 0
 
     ::restart::
     ov("paste 0 0 bg")
     ov("update")
     local t = g.millisecs()
-    while g.millisecs() - t < 250 do end
+    while g.millisecs() - t < pause do end
 
     -- monday: exit stage left
     if day == 1 then
         for x = 0, wd, 10 do
             t = g.millisecs()
-            ov("paste 0 0 menu")
+            ov("paste 0 0 fg")
             ov("paste "..-x.." 0 bg")
             ov("update")
             while g.millisecs() - t < 15 do end
@@ -193,7 +194,7 @@ local function test_transitions()
         ov(op.white)
         for y = 0, ht, 10 do
             t = g.millisecs()
-            ov("paste 0 0 menu")
+            ov("paste 0 0 fg")
             ov("paste 0 "..y.." bg")
             ov("update")
             while g.millisecs() - t < 15 do end
@@ -207,7 +208,7 @@ local function test_transitions()
         local p
         for x = 0, wd * 2, 20 do
             t = g.millisecs()
-            ov("paste 0 0 menu")
+            ov("paste 0 0 fg")
             d = 0
             for y = 0, ht, 8 do
                  p = x + 10 * d - wd
@@ -223,7 +224,7 @@ local function test_transitions()
         end
     -- thursday: as if by magic
     elseif day == 4 then
-        ov("paste 0 0 menu")
+        ov("paste 0 0 fg")
         ov("copy 0 0 "..wd.." "..ht.." blend")
         for a = 0, 255, 5 do
             t = g.millisecs()
@@ -246,7 +247,7 @@ local function test_transitions()
             r = wd / 360 * a
             x = floor(r * sin(a / deg2rad))
             y = floor(r * cos(a / deg2rad))
-            ov("paste 0 0 menu")
+            ov("paste 0 0 fg")
             ov("paste "..x.." "..y.." bg")
             ov("update")
             while g.millisecs() - t < 15 do end
@@ -261,7 +262,7 @@ local function test_transitions()
             ov("rgba 0 0 0 0")
             ov("fill "..floor(wd / 2 - x).." "..floor(ht / 2 - y).." "..(x * 2).." "..floor(y * 2))
             ov("copy 0 0 "..wd.." "..ht.." trans")
-            ov("paste 0 0 menu")
+            ov("paste 0 0 fg")
             ov("blend 1")
             ov("paste 0 0 trans")
             ov("update")
@@ -291,7 +292,7 @@ local function test_transitions()
             t = g.millisecs()
             local a = i / 100
             local x, y
-            ov("paste 0 0 menu")
+            ov("paste 0 0 fg")
             for n = 1, #box do
                 x = box[n][1]
                 y = box[n][2]
@@ -317,16 +318,16 @@ local function test_transitions()
         day = 1
     end
 
-    ov("paste 0 0 menu")
+    ov("paste 0 0 fg")
     ov("update")
+    pause = 300
     if repeat_test(" using a different transition", false) then goto restart end
 
     -- restore settings
     ov("blend "..oldblend)
     ov("font "..oldfont)
-    ov("freeclip menu")
+    ov("freeclip fg")
     ov("freeclip bg")
-
 end
 
 --------------------------------------------------------------------------------
