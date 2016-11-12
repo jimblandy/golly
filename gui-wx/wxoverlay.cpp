@@ -2026,7 +2026,6 @@ const char* Overlay::DoReplace(const char* args)
     if (error) { free(buffer); return OverlayError(error); }
     error = DecodeReplaceArg(arg4, &finda, &nega, &replacea, &inva, 4);
     if (error) { free(buffer); return OverlayError(error); }
-    free(buffer);
 
     // search for the named clip
     std::string name = arg5;
@@ -2037,8 +2036,10 @@ const char* Overlay::DoReplace(const char* args)
         msg = "unknown paste name (";
         msg += name;
         msg += ")";
+        free(buffer);
         return OverlayError(msg.c_str());
     }
+    free(buffer);
 
     // get the clip
     Clip* clipptr = it->second;
