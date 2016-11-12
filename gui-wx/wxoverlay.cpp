@@ -1985,14 +1985,19 @@ const char* Overlay::DoReplace(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
+    // allocate memory for the arguments
+    char* buffer = (char*)malloc(strlen(args) + 1);
+    strcpy(buffer, args);
+    
     // check the arguments exist
     const char* delim = " ";
-    const char *arg1 = strtok((char*)args, delim);
+    const char *arg1 = strtok(buffer, delim);
     const char *arg2 = strtok(NULL, delim);
     const char *arg3 = strtok(NULL, delim);
     const char *arg4 = strtok(NULL, delim);
     const char *arg5 = strtok(NULL, delim);
     if (arg1 == NULL || arg2 == NULL || arg3 == NULL || arg4 == NULL || arg5 == NULL) {
+        free(buffer);
         return OverlayError("replace command requires 5 arguments");
     }
 
@@ -2014,13 +2019,14 @@ const char* Overlay::DoReplace(const char* args)
     int invb = 0;
     int inva = 0;
     const char *error = DecodeReplaceArg(arg1, &findr, &negr, &replacer, &invr, 1);
-    if (error) return OverlayError(error);
+    if (error) { free(buffer); return OverlayError(error); }
     error = DecodeReplaceArg(arg2, &findg, &negg, &replaceg, &invg, 2);
-    if (error) return OverlayError(error);
+    if (error) { free(buffer); return OverlayError(error); }
     error = DecodeReplaceArg(arg3, &findb, &negb, &replaceb, &invb, 3);
-    if (error) return OverlayError(error);
+    if (error) { free(buffer); return OverlayError(error); }
     error = DecodeReplaceArg(arg4, &finda, &nega, &replacea, &inva, 4);
-    if (error) return OverlayError(error);
+    if (error) { free(buffer); return OverlayError(error); }
+    free(buffer);
 
     // search for the named clip
     std::string name = arg5;
