@@ -1308,12 +1308,10 @@ local function create_overlay()
     
     ov("cursor current")    -- use current Golly cursor
 
-    -- use smaller gray buttons in our tool bar
+    -- use smaller buttons in our tool bar
     op.buttonht = 20    -- height of buttons (also used for check boxes and sliders)
     op.sliderwd = 12    -- width of slider button (best if even)
     op.textgap = 8      -- gap between edge of button and its label
-    op.normalrgb = "rgba 90 90 90"          -- dark gray buttons (alpha will be appended)
-    op.darkerrgb = "rgba 40 40 40"          -- darker gray when buttons are clicked
     op.textfont = "font 10 default-bold"    -- font for labels
     if g.os() == "Linux" then
         op.textfont = "font 10 default"
