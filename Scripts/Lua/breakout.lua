@@ -546,7 +546,6 @@ local function breakout()
                     shadowtext(0, ht / 2 - 52 * fontscale, "Level "..level, aligncenter)
                 else
                     -- update ball position
-g.show(string.format("%.2f", ((balldx * ballspeed * ballsize) / speeddiv)).." "..ballsize)
                     ballx = ballx + (balldx * ballspeed * ballsize) / speeddiv
                     bally = bally + (balldy * ballspeed * ballsize) / speeddiv
 
