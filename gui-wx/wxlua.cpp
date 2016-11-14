@@ -62,7 +62,7 @@
 #include "readpattern.h"
 #include "writepattern.h"
 
-#include "wxgolly.h"        // for wxGetApp, mainptr, viewptr, statusptr
+#include "wxgolly.h"        // for wxGetApp, mainptr, viewptr, statusptr, stopwatch
 #include "wxmain.h"         // for mainptr->...
 #include "wxselect.h"       // for Selection
 #include "wxview.h"         // for viewptr->...
@@ -468,6 +468,17 @@ static int g_getfiles(lua_State* L)
     }
     
     return 1;   // result is a table of strings
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_getinfo(lua_State* L)
+{
+    CheckEvents(L);
+
+    lua_pushstring(L, GSF_getinfo());
+    
+    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
@@ -2213,7 +2224,6 @@ static int g_getcolors(lua_State* L)
 
 static int g_overlay(lua_State* L)
 {
-    // call CheckEvents less often here???!!!
     CheckEvents(L);
     
     const char* cmd = luaL_checkstring(L, 1);
@@ -2231,6 +2241,34 @@ static int g_overlay(lua_State* L)
     lua_pushstring(L, result);
     
     return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_os(lua_State* L)
+{
+    CheckEvents(L);
+
+    lua_pushstring(L, GSF_os());
+    
+    return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_millisecs(lua_State* L)
+{
+    CheckEvents(L);
+
+    #if wxCHECK_VERSION(2,9,3)
+        wxLongLong t = stopwatch->TimeInMicro();
+        double d = t.ToDouble() / 1000.0L;
+        lua_pushnumber(L, (lua_Number) d);
+    #else
+        lua_pushnumber(L, (lua_Number) stopwatch->Time());
+    #endif
+    
+    return 1;   // result is a floating point number
 }
 
 // -----------------------------------------------------------------------------
@@ -2544,6 +2582,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "setdir",       g_setdir },       // set location of specified directory
     { "getdir",       g_getdir },       // return location of specified directory
     { "getfiles",     g_getfiles },     // return array of files in specified directory
+    { "getinfo",      g_getinfo },      // return comments from pattern file
     // editing
     { "new",          g_new },          // create new universe and set window title
     { "cut",          g_cut },          // cut selection to clipboard
@@ -2618,6 +2657,8 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "getcolors",    g_getcolors },    // get color(s) used in current layer
     { "overlay",      g_overlay },      // do an overlay command
     // miscellaneous
+    { "os",           g_os },           // return the current OS (Windows/Mac/Linux)
+    { "millisecs",    g_millisecs },    // return elapsed time since Golly started, in millisecs
     { "setoption",    g_setoption },    // set given option to new value (and return old value)
     { "getoption",    g_getoption },    // return current value of given option
     { "setcolor",     g_setcolor },     // set given color to new r,g,b (returns old r,g,b)

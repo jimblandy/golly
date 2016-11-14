@@ -22,6 +22,8 @@
  
  / ***/
 
+#include <string.h>        // for strlen and strcpy
+
 #include "wx/wxprec.h"     // for compilers that support precompilation
 #ifndef WX_PRECOMP
     #include "wx/wx.h"     // for all others include the necessary headers
@@ -52,8 +54,8 @@
 
 // exported globals:
 bool inscript = false;     // a script is running?
-bool passkeys;             // pass keyboard events to script?
-bool passclicks;           // pass mouse events to script?
+bool pass_key_events;      // pass keyboard events to script?
+bool pass_mouse_events;    // pass mouse events to script?
 bool canswitch;            // can user switch layers while script is running?
 bool stop_after_script;    // stop generating pattern after running script?
 bool autoupdate;           // update display after each change to current universe?
@@ -71,6 +73,9 @@ static bool exitcalled;             // GSF_exit was called?
 static wxString scriptchars;        // non-escape chars saved by PassKeyToScript
 static wxString scriptloc;          // location of script file
 static wxArrayString eventqueue;    // FIFO queue for keyboard/mouse events 
+
+// constants:
+const int maxcomments = 128 * 1024; // maximum comment size
 
 // -----------------------------------------------------------------------------
 
@@ -224,6 +229,22 @@ const char* GSF_getdir(const char* dirname)
         dirbuff = dirpath.mb_str(wxConvLocal);
     #endif
     return (const char*) dirbuff;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_os()
+{
+    // return a string that specifies the current operating system
+    #if defined(__WXMSW__)
+        return "Windows";
+    #elif defined(__WXMAC__)
+        return "Mac";
+    #elif defined(__WXGTK__)
+        return "Linux";
+    #else 
+        return "unknown";
+    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -1027,12 +1048,12 @@ bool GSF_getcolor(const char* colname, wxColor& color)
 void GSF_getevent(wxString& event, int get)
 {
     if (get) {
-        passkeys = true;     // future keyboard events will call PassKeyToScript
-        passclicks = true;   // future mouse events will call PassClickToScript
+        pass_key_events = true;     // future keyboard events will call PassKeyToScript
+        pass_mouse_events = true;   // future mouse events will call PassClickToScript
     } else {
         // tell Golly to handle future keyboard and mouse events
-        passkeys = false;
-        passclicks = false;
+        pass_key_events = false;
+        pass_mouse_events = false;
         // clear any pending events so event is set to empty string below
         eventqueue.Clear();
     }
@@ -1144,9 +1165,36 @@ const char* GSF_doevent(const wxString& event)
             // ignore mouse up event
             return NULL;
             
-        } else if (event.StartsWith(wxT("oclick "))) {
-            // ignore click in overlay
+        } else if (event.StartsWith(wxT("o"))) {
+            // ignore oclick/ozoomin/ozoomout event in overlay
             return NULL;
+            
+        } else if (event.StartsWith(wxT("zoom"))) {
+            // parse event string like "zoomin 10 20" or "zoomout 10 20"
+            wxString xstr = event.AfterFirst(' ');
+            wxString ystr = xstr.AfterFirst(' ');
+            xstr = xstr.BeforeFirst(' ');
+            if (!xstr.IsNumber()) return "Bad x value.";
+            if (!ystr.IsNumber()) return "Bad y value.";
+            int x = wxAtoi(xstr);
+            int y = wxAtoi(ystr);
+
+            // x,y is pixel position in viewport
+            if (event.StartsWith(wxT("zoomin"))) {
+                viewptr->TestAutoFit();
+                if (currlayer->view->getmag() < MAX_MAG) {
+                    currlayer->view->zoom(x, y);
+                }
+            } else {
+                viewptr->TestAutoFit();
+                currlayer->view->unzoom(x, y);
+            }
+
+            inscript = false;
+            mainptr->UpdatePatternAndStatus();
+            bigview->UpdateScrollBars();
+            inscript = true;
+            mainptr->UpdateUserInterface();
             
         } else if (event.StartsWith(wxT("click "))) {
             // parse event string like "click 10 20 left altshift"
@@ -1197,7 +1245,7 @@ const char* GSF_doevent(const wxString& event)
 
 char GSF_getkey()
 {
-    passkeys = true;   // future keyboard events will call PassKeyToScript
+    pass_key_events = true;   // future keyboard events will call PassKeyToScript
     
     if (scriptchars.length() == 0) {
         // return empty string
@@ -1290,6 +1338,37 @@ void GSF_exit(const wxString& errmsg)
     }
     
     exitcalled = true;   // prevent CheckScriptError changing message
+}
+
+// -----------------------------------------------------------------------------
+
+#ifdef __WXMAC__
+    // convert path to decomposed UTF8 so fopen will work
+    #define CURRFILE currlayer->currfile.fn_str()
+#else
+    #define CURRFILE currlayer->currfile.mb_str(wxConvLocal)
+#endif
+
+const char* GSF_getinfo()
+{
+    // comment buffer
+    static char comments[maxcomments];
+
+    // buffer for receiving comment data (allocated by readcomments)
+    char *commptr = NULL;
+
+    // read the comments in the pattern file
+    const char* err = readcomments(CURRFILE, &commptr);
+    if (err) {
+        free(commptr);
+        return "";
+    }
+
+    // copy the comments and truncate to buffer size if longer
+    strncpy(comments, commptr, maxcomments);
+    comments[maxcomments - 1] = '\0';
+    free(commptr);
+    return comments;
 }
 
 // =============================================================================
@@ -1401,8 +1480,8 @@ void RunScript(const wxString& filename)
         allowcheck = true;
         showtitle = false;
         updateedit = false;
-        passkeys = false;
-        passclicks = false;
+        pass_key_events = false;
+        pass_mouse_events = false;
         wxGetApp().PollerReset();
     }
     
@@ -1589,11 +1668,53 @@ void PassMouseUpToScript(int button)
 {
     // build a string like "mup left" and add to event queue
     // for possible consumption by GSF_getevent
-    wxString clickinfo = wxT("mup ");
-    if (button == wxMOUSE_BTN_LEFT)     clickinfo += wxT("left");
-    if (button == wxMOUSE_BTN_MIDDLE)   clickinfo += wxT("middle");
-    if (button == wxMOUSE_BTN_RIGHT)    clickinfo += wxT("right");
-    eventqueue.Add(clickinfo);
+    wxString minfo = wxT("mup ");
+    if (button == wxMOUSE_BTN_LEFT)     minfo += wxT("left");
+    if (button == wxMOUSE_BTN_MIDDLE)   minfo += wxT("middle");
+    if (button == wxMOUSE_BTN_RIGHT)    minfo += wxT("right");
+    eventqueue.Add(minfo);
+}
+
+// -----------------------------------------------------------------------------
+
+void PassZoomInToScript(int x, int y)
+{
+    int ox, oy;
+    if (showoverlay && curroverlay->PointInOverlay(x, y, &ox, &oy)
+                    && !curroverlay->TransparentPixel(ox, oy)) {
+        // zoom in to the overlay pixel at ox,oy
+        wxString zinfo;
+        zinfo.Printf(wxT("ozoomin %d %d"), ox, oy);
+        eventqueue.Add(zinfo);
+    
+    } else {
+        // zoom in to the viewport pixel at x,y (note that it's best not to
+        // pass the corresponding cell position because a doevent call will result
+        // in unwanted drifting due to conversion back to a pixel position)
+        wxString zinfo;
+        zinfo.Printf(wxT("zoomin %d %d"), x, y);
+        eventqueue.Add(zinfo);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void PassZoomOutToScript(int x, int y)
+{
+    int ox, oy;
+    if (showoverlay && curroverlay->PointInOverlay(x, y, &ox, &oy)
+                    && !curroverlay->TransparentPixel(ox, oy)) {
+        // zoom out from the overlay pixel at ox,oy
+        wxString zinfo;
+        zinfo.Printf(wxT("ozoomout %d %d"), ox, oy);
+        eventqueue.Add(zinfo);
+    
+    } else {
+        // zoom out from the viewport pixel at x,y
+        wxString zinfo;
+        zinfo.Printf(wxT("zoomout %d %d"), x, y);
+        eventqueue.Add(zinfo);
+    }
 }
 
 // -----------------------------------------------------------------------------

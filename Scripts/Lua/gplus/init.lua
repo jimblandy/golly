@@ -15,24 +15,38 @@ end
 
 function m.min(a)
 	-- return minimum value in given array
-    if #a == 0 then return nil end
-    local n = a[1]
-    for i = 2, #a do
-        if a[i] < n then n = a[i] end
+	local alen = #a
+    if alen == 0 then return nil end
+    if alen < 100000 then
+        -- use faster math.min call
+        return math.min( table.unpack(a) )
+    else
+        -- slower code but no danger of exceeding stack limit
+        local n = a[1]
+        for i = 2, alen do
+            if a[i] < n then n = a[i] end
+        end
+        return n
     end
-    return n
 end
 
 --------------------------------------------------------------------------------
 
 function m.max(a)
 	-- return maximum value in given array
-    if #a == 0 then return nil end
-    local n = a[1]
-    for i = 2, #a do
-        if a[i] > n then n = a[i] end
+	local alen = #a
+    if alen == 0 then return nil end
+    if alen < 100000 then
+        -- use faster math.max call
+        return math.max( table.unpack(a) )
+    else
+        -- slower code but no danger of exceeding stack limit
+        local n = a[1]
+        for i = 2, alen do
+            if a[i] > n then n = a[i] end
+        end
+        return n
     end
-    return n
 end
 
 --------------------------------------------------------------------------------
@@ -163,6 +177,8 @@ function m.split(s, sep)
 	    end
 	    if i > start then
 	        t[#t+1] = s:sub(start, i-1)
+	    elseif i == start then
+	        t[#t+1] = ""
 	    end
 	    start = i + #sep
 	end

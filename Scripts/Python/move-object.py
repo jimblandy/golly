@@ -14,29 +14,22 @@ if g.getheight() > 0:
     gridt = -int(g.getheight()/2)
     gridb = gridt + g.getheight() - 1
 
-helpmsg = " (hit 'h' for help)"
-
 # --------------------------------------------------------------------
 
-def showhelp1():
+def showhelp():
     g.note(
- """Hit the escape key to abort the script.
+"""Alt-clicking on an object allows you to COPY
+it to another location (the original object
+is not deleted).
+ 
+While dragging the object the following keys
+can be used:
 
- Note that alt-clicking on an object allows you to COPY it
- to another location (the original object is not deleted).""")
-
-# --------------------------------------------------------------------
-
-def showhelp2():
-    g.note(
- """While moving the object the following keys can be used:
-
- x -- flip object left-right
- y -- flip object top-bottom
- > -- rotate object clockwise
- < -- rotate object anticlockwise
- h -- show this help
- escape -- abort and restore the object""")
+x  - flip object left-right
+y  - flip object top-bottom
+>  - rotate object clockwise
+<  - rotate object anticlockwise
+escape  - abort and restore the object""")
 
 # ------------------------------------------------------------------------------
 
@@ -181,7 +174,7 @@ def lookforkeys(event):
         newtop = midy + obox.left - midx
         rotrect = [ newleft, newtop, obox.ht, obox.wd ]
         if not rectingrid(rotrect):
-            g.warn("Rotation is not allowed if object would be outside grid.")
+            g.show("Rotation is not allowed if object would be outside grid.")
             return
         g.putcells(object, 0, 0, 1, 0, 0, 1, "xor")  # erase object
         if len(oldcells) > 0: g.putcells(oldcells)
@@ -200,7 +193,7 @@ def lookforkeys(event):
         return
 
     if event == "key h none":
-        showhelp2()
+        # best not to show Help window while dragging object!
         return
 
     g.doevent(event)
@@ -210,7 +203,7 @@ def lookforkeys(event):
 def moveobject():
     global oldcells, object, object1
 
-    # wait for 1st click in live cell
+    # wait for click in or near a live cell
     while True:
         event = g.getevent()
         if event.startswith("click"):
@@ -232,22 +225,20 @@ def moveobject():
             else:
                 g.warn("Click on or near a live cell belonging to the desired object.")
         elif event == "key h none":
-            showhelp1()
+            showhelp()
         else:
             g.doevent(event)
 
-    # wait for 2nd click while moving object
-    g.show("Move mouse and click again..." + helpmsg)
-    gotclick = False
-    while not gotclick:
+    # wait for mouse-up while moving object
+    g.show("Move mouse and release button...")
+    mousedown = True
+    while mousedown:
         event = g.getevent()
-        if event.startswith("click"):
-            evt, x, y, butt, mods = event.split()
-            mousepos = x+' '+y
-            gotclick = True
-        else:
-            if len(event) > 0: lookforkeys(event)
-            mousepos = g.getxy()
+        if event.startswith("mup"):
+            mousedown = False
+        elif len(event) > 0:
+            lookforkeys(event)
+        mousepos = g.getxy()
         if len(mousepos) > 0 and mousepos != oldmouse:
             # mouse has moved, so move object
             g.putcells(object, 0, 0, 1, 0, 0, 1, "xor")  # erase object
@@ -283,7 +274,7 @@ def moveobject():
 
 if len(g.getrect()) == 0: g.exit("There are no objects.")
 
-g.show("Click on or near live cell in object, move mouse and click again..." + helpmsg)
+g.show("Click on or near live cell, move mouse and release button... (hit 'h' for help)")
 oldcursor = g.getcursor()
 g.setcursor("Move")
 oldcells = []        # cells under moved object

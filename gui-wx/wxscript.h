@@ -31,11 +31,11 @@ extern bool inscript;
 // Is a script currently running?  We allow access to this flag
 // so clients can temporarily save and restore its setting.
 
-extern bool passkeys;
-extern bool passclicks;
+extern bool pass_key_events;
+extern bool pass_mouse_events;
 // Pass keyboard and/or mouse events to script?  Both flags are initially false
 // at the start of a script; both become true if the script calls getevent.
-// If the script calls getkey (deprecated) then only passkeys becomes true.
+// If the script calls getkey (deprecated) then only pass_key_events becomes true.
 
 extern bool canswitch;
 // Can user switch layers while a script is running?
@@ -56,6 +56,12 @@ void PassClickToScript(const bigint& x, const bigint& y, int button, int modifie
 
 void PassMouseUpToScript(int button);
 // Called if a script is running and user releases a mouse button.
+
+void PassZoomInToScript(int x, int y);
+// Called if a script is running and mouse wheel is used to zoom in.
+
+void PassZoomOutToScript(int x, int y);
+// Called if a script is running and mouse wheel is used to zoom out.
 
 void PassKeyToScript(int key, int modifiers = 0);
 // Called if a script is running and user hits a key.
@@ -99,6 +105,7 @@ const char* GSF_open(const wxString& filename, int remember);
 const char* GSF_save(const wxString& filename, const char* format, int remember);
 const char* GSF_setdir(const char* dirname, const wxString& newdir);
 const char* GSF_getdir(const char* dirname);
+const char* GSF_os();
 const char* GSF_setalgo(const char* algostring);
 const char* GSF_setrule(const char* rulestring);
 const char* GSF_setgen(const char* genstring);
@@ -120,5 +127,6 @@ char GSF_getkey();
 void GSF_dokey(const char* ascii);
 void GSF_update();
 void GSF_exit(const wxString& errmsg);
+const char* GSF_getinfo();
 
 #endif

@@ -68,7 +68,7 @@
 // -----------------------------------------------------------------------------
 
 #ifdef __WXMSW__
-    static bool set_focus = false;              // OnIdle needs to call SetFocus?
+    static bool set_focus = false;             // OnIdle needs to call SetFocus?
     static wxString editpath = wxEmptyString;   // OnIdle calls EditFile if this isn't empty
 #endif
 

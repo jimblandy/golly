@@ -11,29 +11,23 @@ if g.getheight() > 0:
     gridt = -int(g.getheight()/2)
     gridb = gridt + g.getheight() - 1
 
-helpmsg = " (hit 'h' for help)"
-
 # --------------------------------------------------------------------
 
-def showhelp1():
+def showhelp():
     g.note(
- """Hit the escape key to abort the script.
+"""Alt-clicking in the selection allows you
+to COPY it to another location (the original
+selection is not deleted).
 
- Note that alt-clicking in the selection allows you to COPY it
- to another location (the original selection is not deleted).""")
+While moving the selection the following
+keys can be used:
 
-# --------------------------------------------------------------------
-
-def showhelp2():
-    g.note(
- """While moving the selection the following keys can be used:
-
- x -- flip selection left-right
- y -- flip selection top-bottom
- > -- rotate selection clockwise
- < -- rotate selection anticlockwise
- h -- show this help
- escape -- abort and restore the selection""")
+x  - flip selection left-right
+y  - flip selection top-bottom
+>  - rotate selection clockwise
+<  - rotate selection anticlockwise
+h  - show this help
+escape  - abort and restore the selection""")
 
 # ------------------------------------------------------------------------------
 
@@ -84,7 +78,7 @@ def lookforkeys(event, deltax, deltay):
         newtop = midy + selrect[0] - midx
         rotrect = [ newleft, newtop, selrect[3], selrect[2] ]
         if not rectingrid(rotrect):
-            g.warn("Rotation is not allowed if selection would be outside grid.")
+            g.show("Rotation is not allowed if selection would be outside grid.")
             return
         g.clear(0)
         if len(oldcells) > 0: g.putcells(oldcells)
@@ -99,7 +93,6 @@ def lookforkeys(event, deltax, deltay):
         else:
             g.rotate(1)
         selrect = g.getselrect()
-        if selrect != rotrect: g.warn("Bug: selrect != rotrect")
         selpatt = g.transform(g.getcells(selrect), -deltax, -deltay)
         if len(oldcells) > 0:
             g.clear(0)
@@ -109,7 +102,7 @@ def lookforkeys(event, deltax, deltay):
         return
 
     if event == "key h none":
-        showhelp2()
+        # best not to show Help window while dragging selection!
         return
 
     g.doevent(event)
@@ -119,7 +112,7 @@ def lookforkeys(event, deltax, deltay):
 def moveselection():
     global oldcells, selrect, selpatt
 
-    # wait for 1st click in selection
+    # wait for click in selection
     while True:
         event = g.getevent()
         if event.startswith("click"):
@@ -138,26 +131,23 @@ def moveselection():
                     oldcells = g.getcells(selrect)
                 break
         elif event == "key h none":
-            showhelp1()
+            showhelp()
         else:
             g.doevent(event)
 
-    # wait for 2nd click while moving selection
-    g.show("Move mouse and click again..." + helpmsg)
-    gotclick = False
-    while not gotclick:
+    # wait for mouse-up while moving selection
+    g.show("Move mouse and release button...")
+    mousedown = True
+    while mousedown:
         event = g.getevent()
-        if event.startswith("click"):
-            evt, x, y, butt, mods = event.split()
-            mousepos = x+' '+y
-            gotclick = True
-        else:
-            if len(event) > 0:
-                lookforkeys(event, x - firstx, y - firsty)
-                # update xoffset,yoffset in case selection was rotated
-                xoffset = x - selrect[0]
-                yoffset = y - selrect[1]
-            mousepos = g.getxy()
+        if event.startswith("mup"):
+            mousedown = False
+        elif len(event) > 0:
+            lookforkeys(event, x - firstx, y - firsty)
+            # update xoffset,yoffset in case selection was rotated
+            xoffset = x - selrect[0]
+            yoffset = y - selrect[1]
+        mousepos = g.getxy()
         if len(mousepos) > 0 and mousepos != oldmouse:
             # mouse has moved, so move selection rect and pattern
             g.clear(0)
@@ -201,7 +191,7 @@ selpatt = g.getcells(selrect)
 firstrect = g.getselrect()
 firstpatt = g.getcells(selrect)
 
-g.show("Click anywhere in selection, move mouse and click again..." + helpmsg)
+g.show("Click anywhere in selection, move mouse and release button... (hit 'h' for help)")
 oldcursor = g.getcursor()
 g.setcursor("Move")
 oldcells = []

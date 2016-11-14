@@ -26,7 +26,7 @@ local function compose_lwss_gun(glider_gun, A, B, C)
     -- construct an lwss gun using 3 copies of an 'aligned' glider gun
     -- where A, B and C are distances from the glider collision point to
     -- NE, NW and SW guns respectively
-    local m = gp.min({A, B, C})
+    local m = math.min(A, B, C)
     local a = A - m
     local b = B - m
     local c = C - m

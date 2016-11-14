@@ -92,5 +92,98 @@ can be found at Mirek Wojtowicz's
 See also the Patterns/Generations folder which contains a number of
 interesting patterns extracted from the MCell pattern collection.
 
+<p><a name="vonNeumann"></a>&nbsp;<br>
+<font size=+1><b>Von Neumann neighborhood</b></font>
+
+<p>
+The above rules use the Moore neighborhood, where each cell has 8 neighbors.
+In the von Neumann neighborhood each cell has only the 4 orthogonal neighbors.
+To specify this neighborhood just append "V" to the usual notation
+and use neighbor counts ranging from 0 to 4.
+
+<p>
+Note that when viewing patterns at scales 1:8 or 1:16 or 1:32, Golly displays
+diamond-shaped icons for rules using the von Neumann neighborhood
+and circular dots for rules using the Moore neighborhood.
+
+<p><a name="hex"></a>&nbsp;<br>
+<font size=+1><b>Hexagonal neighborhood</b></font>
+
+<p>
+Golly can emulate a hexagonal neighborhood on a square grid by ignoring the
+NE and SW corners of the Moore neighborhood so that every cell has 6 neighbors:
+<pre>
+   NW N NE         NW  N
+   W  C  E   ->   W  C  E
+   SW S SE         S  SE
+</pre>
+To specify a hexagonal neighborhood just append "H" to the usual notation
+and use neighbor counts ranging from 0 to 6.
+
+Editing hexagonal patterns in a square grid can be somewhat confusing,
+so to help make things a bit easier Golly displays slanted hexagons
+(in icon mode) at scales 1:8 or 1:16 or 1:32.
+
+<p><a name="nontotal"></a>&nbsp;<br>
+<font size=+1><b>Non-totalistic rules</b></font>
+
+<p>
+All of the above rules are classified as "totalistic" because the outcome depends only
+on the total number of neighbors.  Golly also supports non-totalistic rules for Moore
+neighborhoods &mdash;
+such rules depend on the configuration of the neighbors, not just their counts.
+
+<p>
+The syntax used to specify a non-totalistic rule is based on a notation developed by
+Alan Hensel.  It's very similar to the above notation but uses
+various lowercase letters to represent unique neighborhoods.
+One or more of these letters can appear after an appropriate digit
+(which must be from 1 to 7, depending on the letters).
+The usual counts of 0 and 8 can still be used without letters since there is no way
+to constrain 0 or 8 neighbors.
+
+Letter strings can get quite long, so it's possible to specify their inverse
+using a "-" between the digit and the letters.
+
+<p>
+The following table shows which letters correspond to which neighborhoods.
+The central cell in each neighborhood is colored red, corner neighbors are green,
+edge neighbors are yellow and ignored neighbors are black:
+
+<p>
+<img src="hensel.png">
+
+<p>
+The table makes it clear which digits are allowed before which letters.
+For example, /1a/8 and /5z/8 are both invalid rules.
+
+<p>
+Golly uses the following steps to convert a given non-totalistic rule into
+its canonical version:
+
+<p>
+<ol>
+<li>
+An underscore can be used instead of a slash, but the canonical version
+always uses a slash.
+<li>
+The lowercase letters are listed in alphabetical order.
+For example, /2nic/8 will become /2cin/8.
+<li>
+A given rule is converted to its shortest equivalent version.
+For example, /2ceikn/8 will become /2-a/8.
+If equivalent rules have the same length then the version without the minus sign
+is preferred.  For example, /4-qjrtwz/8 will become /4aceikny/8.
+<li>
+It's possible for a non-totalistic rule to be converted to a totalistic rule.
+If you supply all the letters for a specific neighbor count then the canonical
+version removes the letters.  For example, /2aceikn3/8 will become /23/8.
+(Note that /2-3/8 is equivalent to /2aceikn3/8 so will also become /23/8.)
+<li>
+If you supply a minus sign and all the letters for a specific neighbor count
+then the letters <i>and</i> the neighbor count are removed.
+For example, /2-aceikn3/8 will become /3/8.
+</ol>
+
 </body>
 </html>

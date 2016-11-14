@@ -2556,6 +2556,18 @@ static PyObject* py_getcolors(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_os(PyObject* self, PyObject* args)
+{
+    if (PythonScriptAborted()) return NULL;
+    wxUnusedVar(self);
+    
+    if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
+
+    return Py_BuildValue((char*)"s", GSF_os());
+}
+
+// -----------------------------------------------------------------------------
+
 static PyObject* py_setoption(PyObject* self, PyObject* args)
 {
     if (PythonScriptAborted()) return NULL;
@@ -2915,6 +2927,18 @@ static PyObject* py_stderr(PyObject* self, PyObject* args)
 
 // -----------------------------------------------------------------------------
 
+static PyObject* py_getinfo(PyObject* self, PyObject* args)
+{
+    if (PythonScriptAborted()) return NULL;
+    wxUnusedVar(self);
+
+    const char* comments = GSF_getinfo();
+    
+    return Py_BuildValue((char*)"s", comments);
+}
+
+// -----------------------------------------------------------------------------
+
 static PyMethodDef py_methods[] = {
     // filing
     { "open",         py_open,       METH_VARARGS, "open given pattern file" },
@@ -2925,6 +2949,7 @@ static PyMethodDef py_methods[] = {
     { "store",        py_store,      METH_VARARGS, "write cell list to a file (in RLE format)" },
     { "setdir",       py_setdir,     METH_VARARGS, "set location of specified directory" },
     { "getdir",       py_getdir,     METH_VARARGS, "return location of specified directory" },
+    { "getinfo",      py_getinfo,    METH_VARARGS, "return comments from pattern file" },
     // next two are deprecated (use getdir)
     { "appdir",       py_appdir,     METH_VARARGS, "return location of Golly app" },
     { "datadir",      py_datadir,    METH_VARARGS, "return location of user-specific data" },
@@ -3001,6 +3026,7 @@ static PyMethodDef py_methods[] = {
     { "setcolors",    py_setcolors,  METH_VARARGS, "set color(s) used in current layer" },
     { "getcolors",    py_getcolors,  METH_VARARGS, "get color(s) used in current layer" },
     // miscellaneous
+    { "os",           py_os,         METH_VARARGS, "get the current OS (Windows/Mac/Linux)" },
     { "setoption",    py_setoption,  METH_VARARGS, "set given option to new value (returns old value)" },
     { "getoption",    py_getoption,  METH_VARARGS, "return current value of given option" },
     { "setcolor",     py_setcolor,   METH_VARARGS, "set given color to new r,g,b (returns old r,g,b)" },

@@ -3,36 +3,34 @@
 
 local g = golly()
 -- require "gplus.strict"
+local ov = g.overlay
 
 local gp = require "gplus"
 local int = gp.int
 local rect = gp.rect
-local ov = g.overlay
+local split = gp.split
 
 local m = {}
 
 --------------------------------------------------------------------------------
 
-local button_tables = {}    -- for detecting click in a button
-local checkbox_tables = {}  -- for detecting click in a check box
-local slider_tables = {}    -- for detecting click in a slider
+-- scripts can adjust these parameters:
 
--- some adjustable parameters:
+m.buttonht = 24     -- height of buttons (also used for check boxes and sliders)
+m.sliderwd = 16     -- width of slider button (best if even)
+m.checkgap = 5      -- gap between check box button and its label
+m.textgap = 10      -- gap between edge of button and its label
 
-local buttonht = 24     -- height of buttons (also used for check boxes and sliders)
-local sliderwd = 16     -- width of slider button (keep even)
-local halfslider = int(sliderwd/2)
-local labelgap = 5      -- gap between check box button and its label
-local textgap = 10      -- gap between edge of button and label
+m.normalrgb = "rgba 40 128 255"         -- light blue buttons (alpha will be appended)
+m.darkerrgb = "rgba 20 64 255"          -- darker blue when buttons are clicked
+m.textrgba = "rgba 255 255 255 255"     -- white button labels and tick mark on check box
+m.textfont = "font 12 default-bold"     -- font for labels
+m.yoffset = -1                          -- for better y position of labels
 
-local normalbutton = "rgba 40 128 255 "     -- light blue buttons (alpha is appended)
-local darkerbutton = "rgba 20 64 255 "      -- darker blue when buttons are clicked
-local textrgba = "rgba 255 255 255 255"     -- white button labels and tick mark on check box
-local labelfont = "font 12 default-bold"    -- font for labels
-local yoffset = -1                          -- for better y position of labels
-
-local darken_button = false     -- tell draw_button to use darkerbutton
-local darken_slider = false     -- tell draw_slider to darken the slider button
+if g.os() == "Linux" then
+    m.yoffset = 0
+    m.textfont = "font 12 default"
+end
 
 --------------------------------------------------------------------------------
 
@@ -40,6 +38,7 @@ local darken_slider = false     -- tell draw_slider to darken the slider button
 
 -- opaque colors
 m.white     = "rgba 255 255 255 255"
+m.gray      = "rgba 128 128 128 255"
 m.black     = "rgba 0 0 0 255"
 m.red       = "rgba 255 0 0 255"
 m.green     = "rgba 0 255 0 255"
@@ -58,6 +57,41 @@ m.swap_xy_flip = "transform  0 -1 -1  0"
 m.rcw          = "transform  0 -1  1  0"
 m.rccw         = "transform  0  1 -1  0"
 m.racw         = m.rccw
+m.r180         = m.flip
+
+-- themes
+m.theme0 = "theme 255 255 255 255 255 255 0 0 0 0 0 0 0 0 0"
+m.theme1 = "theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0"
+m.theme2 = "theme 255 144 0 255 255 0 160 0 0 32 0 0 0 0 0"
+m.theme3 = "theme 0 255 255 255 255 255 0 128 0 0 24 0 0 0 0"
+m.theme4 = "theme 255 255 0 255 255 255 128 0 128 0 47 0 0 32 128"
+m.theme5 = "theme 176 176 176 255 255 255 104 104 104 16 16 16 0 0 0"
+m.theme6 = "theme 0 0 0 0 0 0 255 255 255 255 255 255 255 255 255"
+m.theme7 = "theme 0 0 255 0 0 0 0 255 255 240 240 240 255 255 255"
+m.theme8 = "theme 240 240 240 240 240 240 240 240 240 240 240 240 0 0 0"
+m.theme9 = "theme 240 240 240 240 240 240 160 0 0 160 0 0 0 0 0"
+m.themes = {
+    [-1] = "theme -1",
+    [0] = m.theme0,
+    [1] = m.theme1,
+    [2] = m.theme2,
+    [3] = m.theme3,
+    [4] = m.theme4,
+    [5] = m.theme5,
+    [6] = m.theme6,
+    [7] = m.theme7,
+    [8] = m.theme8,
+    [9] = m.theme9
+}
+
+--------------------------------------------------------------------------------
+
+local darken_button = false     -- tell draw_button to use m.darkerrgb
+local darken_slider = false     -- tell draw_slider to darken the slider button
+
+local button_tables = {}        -- for detecting click in a button
+local checkbox_tables = {}      -- for detecting click in a check box
+local slider_tables = {}        -- for detecting click in a slider
 
 --------------------------------------------------------------------------------
 
@@ -72,25 +106,25 @@ local function draw_button(x, y, w, h)
     local oldrgba = ov("rgba 0 0 0 0")
     ov("fill"..buttrect)
     
-    local buttonrgb = normalbutton
+    local buttonrgb = m.normalrgb
     if darken_button then
-        buttonrgb = darkerbutton
+        buttonrgb = m.darkerrgb
     end
     
     -- draw button with rounded corners
-    ov(buttonrgb.."255") -- opaque
+    ov(buttonrgb.." 255") -- opaque
     ov("fill"..buttrect)
     
     -- draw one rounded corner then copy and paste with flips to draw the rest
     ov("rgba 0 0 0 0")
     ov("set "..x.." "..y)
-    ov(buttonrgb.."48")
+    ov(buttonrgb.." 48")
     ov("set "..(x+1).." "..y)
     ov("set "..x.." "..(y+1))
-    ov(buttonrgb.."128")
+    ov(buttonrgb.." 128")
     ov("set "..(x+2).." "..y)
     ov("set "..x.." "..(y+2))
-    ov(buttonrgb.."200")
+    ov(buttonrgb.." 200")
     ov("set "..(x+1).." "..(y+1))
     ov("copy "..x.." "..y.." 3 3 temp_corner")
     ov(m.flip_x)
@@ -128,23 +162,28 @@ function m.button(label, onclick)
     	error("2nd arg of button must be a function", 2)
     end
     
+    b.onclick = onclick     -- remember click handler
+    b.shown = false         -- b.show hasn't been called
+    b.ht = m.buttonht;
+
+	b.setlabel = function (newlabel, changesize)
+        local oldrgba = ov(m.textrgba)
+        local oldfont = ov(m.textfont)
+        local w, h = split(ov("text "..b.clipname.." "..newlabel))
+        ov("font "..oldfont)
+        ov("rgba "..oldrgba)
+        b.labelwd = tonumber(w);
+        b.labelht = tonumber(h);
+        if changesize then
+            -- use label size to set button width
+            b.wd = b.labelwd + 2*m.textgap;
+        end
+	end
+    
     -- create text for label with a unique clip name
     b.clipname = tostring(b).."+button"
     b.clipname = string.gsub(b.clipname, " ", "")   -- remove any spaces
-    local oldrgba = ov(textrgba)
-    local oldfont = ov(labelfont)
-    local w, h = gp.split(ov("text "..b.clipname.." "..label))
-    ov("font "..oldfont)
-    ov("rgba "..oldrgba)
-    
-    -- use label size to set button size
-    b.labelwd = tonumber(w);
-    b.labelht = tonumber(h);
-    b.wd = b.labelwd + 2*textgap;
-    b.ht = buttonht;
-    
-    b.onclick = onclick     -- remember click handler
-    b.shown = false         -- b.show hasn't been called
+    b.setlabel(label, true)
 
 	b.show = function (x, y)
 	    b.x = x
@@ -160,7 +199,9 @@ function m.button(label, onclick)
         draw_button(x, y, b.wd, b.ht)
         -- draw the label
         local oldblend = ov("blend 1")
-        ov("paste "..(x+textgap).." "..int(y+yoffset+(b.ht-b.labelht)/2).." "..b.clipname)
+        x = int(x + (b.wd - b.labelwd) / 2)
+        y = int(y + m.yoffset + (b.ht - b.labelht) / 2)
+        ov("paste "..x.." "..y.." "..b.clipname)
         ov("blend "..oldblend)
         
         -- store this table using the button's rectangle as key
@@ -197,7 +238,7 @@ local function draw_checkbox(x, y, w, h, ticked)
     draw_button(x, y, w, h)
     if ticked then
         -- draw a tick mark (needs improvement!!!)
-        local oldrgba = ov(textrgba)
+        local oldrgba = ov(m.textrgba)
         ov("line "..int(x+w/2).." "..(y+h-5).." "..(x+6).." "..(y+h-8))
         ov("line "..int(x+w/2).." "..(y+h-5).." "..(x+w-6).." "..(y+5))
         ov("rgba 255 255 255 128")
@@ -231,16 +272,16 @@ function m.checkbox(label, labelrgba, onclick)
     c.clipname = tostring(c).."+checkbox"
     c.clipname = string.gsub(c.clipname, " ", "")   -- remove any spaces
     local oldrgba = ov(labelrgba)
-    local oldfont = ov(labelfont)
-    local w, h = gp.split(ov("text "..c.clipname.." "..label))
+    local oldfont = ov(m.textfont)
+    local w, h = split(ov("text "..c.clipname.." "..label))
     ov("font "..oldfont)
     ov("rgba "..oldrgba)
     
     -- use label size to set check box size
     c.labelwd = tonumber(w);
     c.labelht = tonumber(h);
-    c.wd = buttonht + labelgap + c.labelwd;
-    c.ht = buttonht;
+    c.wd = m.buttonht + m.checkgap + c.labelwd;
+    c.ht = m.buttonht;
     
     c.onclick = onclick     -- remember click handler
     c.shown = false         -- c.show hasn't been called
@@ -260,7 +301,7 @@ function m.checkbox(label, labelrgba, onclick)
         draw_checkbox(x+1, y+1, c.ht-2, c.ht-2, ticked)
         -- draw the label
         local oldblend = ov("blend 1")
-        ov("paste "..(x+c.ht+labelgap).." "..int(y+yoffset+(c.ht-c.labelht)/2).." "..c.clipname)
+        ov("paste "..(x+c.ht+m.checkgap).." "..int(y+m.yoffset+(c.ht-c.labelht)/2).." "..c.clipname)
         ov("blend "..oldblend)
         -- store this table using the check box's rectangle as key
         c.rect = rect({c.x, c.y, c.wd, c.ht})
@@ -313,14 +354,14 @@ local function draw_slider(s, barpos)
     if darken_slider then darken_button = true end
     
     -- draw slider button on top of horizontal bar
-    draw_button(x + barpos - halfslider, y, sliderwd, h)
+    draw_button(x + barpos - int(m.sliderwd/2), y, m.sliderwd, h)
     ov("rgba "..oldrgba)
 
     if darken_slider then darken_button = false end
     
     -- draw the label
     local oldblend = ov("blend 1")
-    ov("paste "..s.x.." "..int(y+yoffset+(h-s.labelht)/2).." "..s.clipname)
+    ov("paste "..s.x.." "..int(y+m.yoffset+(h-s.labelht)/2).." "..s.clipname)
     ov("blend "..oldblend)
 end
 
@@ -355,16 +396,22 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
     s.clipname = tostring(s).."+slider"
     s.clipname = string.gsub(s.clipname, " ", "")   -- remove any spaces
     local oldrgba = ov(labelrgba)
-    local oldfont = ov(labelfont)
-    local w, h = gp.split(ov("text "..s.clipname.." "..label))
+    local oldfont = ov(m.textfont)
+    local w, h
+    if #label == 0 then
+        w, h = split(ov("text "..s.clipname.." "..label.." "))
+        w = 0
+    else
+        w, h = split(ov("text "..s.clipname.." "..label))
+    end
     ov("font "..oldfont)
     ov("rgba "..oldrgba)
     
     -- set total slider size (including label)
     s.labelwd = tonumber(w);
     s.labelht = tonumber(h);
-    s.wd = s.labelwd + sliderwd + s.barwidth;
-    s.ht = buttonht;
+    s.wd = s.labelwd + m.sliderwd + s.barwidth;
+    s.ht = m.buttonht;
     
     s.onclick = onclick     -- remember click handler
     s.shown = false         -- s.show hasn't been called
@@ -383,11 +430,11 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
 	    s.background = s.clipname.."+bg"
 	    ov("copy "..s.x.." "..s.y.." "..s.wd.." "..s.ht.." "..s.background)
         -- draw the slider and label at the given location
-        s.startbar = x + s.labelwd + halfslider
+        s.startbar = x + s.labelwd + int(m.sliderwd/2)
         local barpos = int(s.barwidth * (s.pos - s.minval) / (s.maxval - s.minval))
         draw_slider(s, barpos)
         -- store this table using the slider button's rectangle as key
-        s.rect = rect({s.startbar+barpos-halfslider, s.y, sliderwd, s.ht})
+        s.rect = rect({s.startbar+barpos-int(m.sliderwd/2), s.y, m.sliderwd, s.ht})
         slider_tables[s.rect] = s
         s.shown = true
 	end
@@ -431,7 +478,7 @@ local function release_in_rect(r, t)
         if #xy == 0 then
             inrect = false      -- mouse is outside overlay
         else
-            local x, y = gp.split(xy)
+            local x, y = split(xy)
             x = tonumber(x)
             y = tonumber(y)
             inrect = x >= r.left and x <= r.right and y >= r.top and y <= r.bottom
@@ -503,7 +550,7 @@ local function click_in_slider(x, y)
                 if event:find("^mup left") then break end
                 local xy = ov("xy")
                 if #xy > 0 then
-                    local x, _ = gp.split(xy)
+                    local x, _ = split(xy)
                     -- check if slider position needs to change
                     x = tonumber(x)
                     if x < slider.startbar then x = slider.startbar end
@@ -548,7 +595,7 @@ end
 function m.process(event)
     if #event > 0 then
         if event:find("^oclick") then
-            local _, x, y, butt, mods = gp.split(event)
+            local _, x, y, butt, mods = split(event)
             if butt == "left" and mods == "none" then
                 if click_in_button(tonumber(x), tonumber(y)) then return "" end
                 if click_in_checkbox(tonumber(x), tonumber(y)) then return "" end
@@ -557,6 +604,143 @@ function m.process(event)
         end
     end
     return event
+end
+
+--------------------------------------------------------------------------------
+
+function m.hexrule()
+    -- return true if the current rule uses a hexagonal neighborhood
+    local rule = g.getrule()
+    rule = rule:match("^(.+):") or rule     -- remove any ":*" suffix
+    
+    local algo = g.getalgo()
+    if algo == "QuickLife" or algo == "HashLife" or algo == "Generations" then
+        return rule:sub(-1) == "H"
+    elseif algo == "RuleLoader" then
+        return rule:lower():find("hex") ~= nil
+        -- !!! or maybe look in the .rule file and see if the TABLE section specifies
+        -- neighborhood:hexagonal or the ICONS section specifies hexagons
+    end
+    
+    return false
+end
+
+--------------------------------------------------------------------------------
+
+local clip_too_big = "minbox clip does not fit in overlay"
+
+function m.minbox(clipname, wd, ht)
+    -- find the minimal bounding box of non-transparent pixels in given clip
+    
+    local xmin, ymin, xmax, ymax, minwd, minht
+
+    -- ensure clip name used in here is not the same as clipname
+    local oldoverlay = clipname.."+oldoverlay"
+    
+    -- copy entire overlay and fill it with transparent pixels
+    ov("copy 0 0 0 0 "..oldoverlay)
+    local oldrgba = ov("rgba 0 0 0 0")
+    ov("fill")
+    ov("rgba "..oldrgba)
+    
+    -- paste given clip into the top left corner
+    local oldtransform = ov(m.identity)
+    local oldblend = ov("blend 0")
+    ov("paste 0 0 "..clipname)
+    
+    -- find the top edge (ymin)
+    for row = 0, ht-1 do
+        for col = 0, wd-1 do
+            local rgba = ov("get "..col.." "..row)
+            if rgba == "" then
+                error(clip_too_big, 2)
+            else
+                local _, _, _, a = split(rgba)
+                if a ~= "0" then
+                    ymin = row
+                    goto found_top
+                end
+            end
+        end
+    end
+    
+    -- only get here if clip has no non-transparent pixels
+    xmin = 0
+    ymin = 0
+    minwd = 0
+    minht = 0
+    goto finish
+    
+    ::found_top::
+    -- get here if clip has at least one non-transparent pixel
+    
+    -- find the bottom edge (ymax)
+    for row = ht-1, ymin, -1 do
+        for col = 0, wd-1 do
+            local rgba = ov("get "..col.." "..row)
+            if rgba == "" then
+                error(clip_too_big, 2)
+            else
+                local _, _, _, a = split(rgba)
+                if a ~= "0" then
+                    ymax = row
+                    goto found_bottom
+                end
+            end
+        end
+    end
+    ::found_bottom::
+    
+    -- find the left edge (xmin)
+    for col = 0, wd-1 do
+        for row = ymin, ymax do
+            local rgba = ov("get "..col.." "..row)
+            if rgba == "" then
+                error(clip_too_big, 2)
+            else
+                local _, _, _, a = split(rgba)
+                if a ~= "0" then
+                    xmin = col
+                    goto found_left
+                end
+            end
+        end
+    end
+    ::found_left::
+    
+    -- find the right edge (xmax)
+    for col = wd-1, xmin, -1 do
+        for row = ymin, ymax do
+            local rgba = ov("get "..col.." "..row)
+            if rgba == "" then
+                error(clip_too_big, 2)
+            else
+                local _, _, _, a = split(rgba)
+                if a ~= "0" then
+                    xmax = col
+                    goto found_right
+                end
+            end
+        end
+    end
+    ::found_right::
+    
+    -- all edges have been found
+    minwd = xmax - xmin + 1
+    minht = ymax - ymin + 1
+    
+    ::finish::
+    
+    -- restore original overlay, transform and blend state
+    ov("paste 0 0 "..oldoverlay)
+    ov("transform "..oldtransform)
+    ov("blend "..oldblend)
+    
+    -- free the temporary clip memory
+    ov("freeclip "..oldoverlay)
+    
+    -- return the bounding box info
+    return xmin, ymin, minwd, minht
 end
 
 --------------------------------------------------------------------------------

@@ -1424,6 +1424,7 @@ void DrawTileBorders()
 void DrawOverlay()
 {
     unsigned char* overlaydata = curroverlay->GetOverlayData();
+
     if (overlaydata) {
         int wd = curroverlay->GetOverlayWidth();
         int ht = curroverlay->GetOverlayHeight();        
@@ -1447,6 +1448,8 @@ void DrawOverlay()
                 y = (currht - ht) / 2;
                 break;
         }
+
+        // render the overlay
         DrawRGBAData(overlaydata, x, y, wd, ht);
         
         // the cursor might need to be changed

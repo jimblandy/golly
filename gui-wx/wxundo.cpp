@@ -808,8 +808,8 @@ void UndoRedo::RememberGenStart()
 {
     startcount++;
     if (startcount > 1) {
-        // return immediately and ignore next RememberGenFinish call;
-        // this can happen in Linux app if user holds down space bar
+        // return immediately and ignore next RememberGenFinish call
+        // (this probably can't happen any more, but play safe)
         return;
     }
     
@@ -961,7 +961,7 @@ void UndoRedo::AddGenChange()
     prevexpo = currlayer->startexpo;
     prevfile = wxEmptyString;
     
-    // play safe and pretend RememberGenStart was called
+    // pretend RememberGenStart was called
     startcount = 1;
     
     // avoid RememberGenFinish returning early if inscript is true
@@ -976,6 +976,9 @@ void UndoRedo::AddGenChange()
 
 void UndoRedo::SyncUndoHistory()
 {
+    // reset startcount for the next RememberGenStart call
+    startcount = 0;
+
     // synchronize undo history due to a ResetPattern call;
     // wind back the undo list to just past the genchange node that
     // matches the current layer's starting gen count
@@ -1010,6 +1013,7 @@ void UndoRedo::SyncUndoHistory()
             return;
         }
     }
+    
     // should never get here
     Warning(_("Bug detected in SyncUndoHistory!"));
 }

@@ -25,11 +25,18 @@
 #ifndef _WXOVERLAY_H_
 #define _WXOVERLAY_H_
 
-#include <map>      // for std::map
-#include <string>   // for std::string
+#include <string>                   // for std::string
+#ifdef _MSC_VER
+    #pragma warning(disable:4702)   // disable "unreachable code" warnings from MSVC
+#endif
+#include <map>                      // for std::map
+#ifdef _MSC_VER
+    #pragma warning(default:4702)   // enable "unreachable code" warnings
+#endif
+
 
 // The overlay is a scriptable graphics layer that is (optionally) drawn
-// on top of Golly's current layer.
+// on top of Golly's current layer.  See Help/overlay.html for details.
 
 
 // The overlay can be displayed at any corner or in the middle:
@@ -37,15 +44,24 @@ typedef enum {
     topleft, topright, bottomright, bottomleft, middle
 } overlay_position;
 
+// Multi-line text can be left or right justified or centered:
+typedef enum {
+    left, right, center
+} text_alignment;
 
-// The Clip class is used by the copy command to store pixel data
+
+// The Clip class is used by the copy and text commands to store pixel data
 // in a named "clipboard" for later use by the paste command:
 class Clip {
 public:
-    Clip(int w, int h) {
+    Clip(int w, int h, bool use_calloc = false) {
         cwd = w;
         cht = h;
-        cdata = (unsigned char*) malloc(cwd * cht * 4);
+        if (use_calloc) {
+            cdata = (unsigned char*) calloc(cwd * cht * 4, sizeof(*cdata));
+        } else {
+            cdata = (unsigned char*) malloc(cwd * cht * 4);
+        }
     }
     ~Clip() {
         if (cdata) free(cdata);
@@ -111,8 +127,13 @@ private:
     // The current cursor is set to the standard arrow.
     // Alpha blending is turned off.
     // The transformation values are set to 1,0,0,1 (identity).
-    // The current font is set to the default font at 11pt.
+    // The current font is set to the default font at 10pt.
+    // No cell view is allocated.
     
+    const char* DoResize(const char* args);
+    // Resizes a pixmap with the given width and height
+    // Does not change any settings and keeps any existing cell view.
+
     const char* DoPosition(const char* args);
     // Specify where to display the overlay within the current view.
 
@@ -159,6 +180,17 @@ private:
     // Paste the named Clip data into the overlay at the given location.
     // Automatically clips any pixels outside the overlay.
     
+    const char* DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace, int component);
+    // Decodes a single argument for the replace comand.
+
+    const char* DoReplace(const char* args);
+    // Replace pixels of a specified RGBA color in the named clip with the
+    // current RGBA values.
+    // Return the number of pixels replaced.
+
+    const char* DoFreeClip(const char* args);
+    // Free the memory used by the named Clip.
+    
     const char* DoLoad(const char* args);
     // Load the image from a given .bmp/gif/png/tiff file into the overlay
     // at a given location, clipping if necessary.  If successful, return the
@@ -180,10 +212,19 @@ private:
     // Set the current font according to the given point size and font name
     // and return the old font as a string of the form "fontsize fontname".
     
+    const char* TextOptionAlign(const char* args);
+    // Set text alignment per column.
+
+    const char* TextOptionBackground(const char* args);
+    // Set text background r, g, b, a color.
+
+    const char* DoTextOption(const char* args);
+    // Set a text option.
+
     const char* DoText(const char* args);
     // Create Clip data with the given name containing the given text.
-    // Return the dimensions of the text as a string of the form
-    // "width height descent leading".
+    // Return the dimensions of the text (which can have one or more lines)
+    // as a string of the form "width height descent".
     
     const char* DoTransform(const char* args);
     // Set the affine transformation values used by later paste commands
@@ -196,22 +237,179 @@ private:
     const char* OverlayError(const char* msg);
     // Return a string starting with "ERR:" followed by the given message.
 
-    unsigned char* pixmap;      // RGBA data (wd * ht * 4 bytes)
-    int wd, ht;                 // width and height of pixmap
-    unsigned char r, g, b, a;   // current RGBA values for drawing pixels
-    bool alphablend;            // do alpha blending when drawing translucent pixels?
-    bool only_draw_overlay;     // set by DoUpdate, reset by OnlyDrawOverlay
-    overlay_position pos;       // where to display overlay
-    const wxCursor* ovcursor;   // cursor to use when mouse is in overlay
-    std::string cursname;       // remember cursor name
-    int axx, axy, ayx, ayy;     // affine transformation values
-    bool identity;              // true if transformation values are 1,0,0,1
-    wxFont currfont;            // current font used by text command
-    std::string fontname;       // name of current font
-    int fontsize;               // size of current font
+    void SetRGBA(unsigned char r, unsigned char b, unsigned char g, unsigned char a, unsigned int *rgba);
+    // Set the rgba value from the r, b, g, a components.
+
+    void GetRGBA(unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a, unsigned int rgba);
+    // Get the r, g, b, a components from the rgba value.
+
+    // cell view
+
+    const char* DoCellView(const char* args);
+    // Create a cell view that tracks a rectangle of cells and can be rapidly
+    // drawn onto the overlay at a particular scale and angle.
+
+    void DeleteCellView();
+    // Deallocate all memory used by the cell view.
+
+    void RefreshCellView();
+    // Refresh the cell view from the universe.
+
+    void RefreshCellViewWithTheme();
+    // Refresh the cell view from the universe using the theme.
+
+    void GetPatternColors();
+    // Get the state colors from the pattern.
+
+    void GetThemeColors(double brightness);
+    // Get the state colors from the theme.
+
+    const char* DoUpdateCells();
+    // Update the cell view from the universe.
+
+    void UpdateZoomView(unsigned char* source, unsigned char *dest, int step);
+    // Update the zoom view from the cell view at the given step size.
+
+    void DrawCellsRotate(unsigned char* cells, int mask, double angle);
+    // Draw cells onto the overlay with the given location mask and rotation.
+
+    void DrawCellsNoRotate(unsigned char* cells, int mask);
+    // Draw cells onto the overlay with the given location mask but no rotation.
+
+    const char* DoDrawCells();
+    // Draw the cells onto the overlay.
+
+    // camera
+
+    const char* CamAngle(const char* args);
+    // Set the camera angle.
+
+    const char* CamZoom(const char* args);
+    // Set the camera zoom.
+
+    const char* CamXY(const char* args);
+    // Set the camera position.
+
+    const char* DoCamera(const char* args);
+    // Set a camera parameter.
+
+    // celloption
+
+    const char* CellOptionDepth(const char* args);
+    // Set the cellview layer depth.
+
+    const char* CellOptionLayers(const char* args);
+    // Set the cellview number of layers.
+
+    const char* CellOptionHex(const char* args);
+    // Set hex display mode on or off for the cellview.
+
+    const char* CellOptionGrid(const char* args);
+    // Turn grid display on or off.
+
+    const char* CellOptionGridMajor(const char* args);
+    // Set the grid major interval.
+
+    const char* CellOptionStars(const char* args);
+    // Set the stars display on or off.
+
+    const char* DoCellOption(const char* args);
+    // Set a cellview option.
+    
+    // theme
+
+    const char* DoTheme(const char* args);
+    // Set the color theme RGB values in the form
+    // "r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5" representing RGB values for cells:
+    // r1 g1 b1  just born
+    // r2 g2 b2  alive at least 63 generations
+    // r3 g3 b3  just died
+    // r4 g4 b4  dead at least 63 generations
+    // r5 g5 b5  never occupied
+    // If a single parameter "-1" is supplied then disable the theme and
+    // use the patterns default colors.
+
+    // grid
+
+    void DrawVLine(int x, int y1, int y2, unsigned int color);
+    // Draw vertical line.
+
+    void DrawHLine(int x1, int x2, int y, unsigned int color);
+    // Draw horizontal line.
+
+    void DrawGridLines();
+    // Draw grid lines.
+
+    // stars
+
+    void DrawStars(double angle);
+    // Draw the stars.
+
+    void CreateStars();
+    // Allocate and position the stars.
+
+    void DeleteStars();
+    // Free the memory used by the stars.
+
+    unsigned char* pixmap;          // RGBA data (wd * ht * 4 bytes)
+    int wd, ht;                     // width and height of pixmap
+    unsigned char r, g, b, a;       // current RGBA values for drawing pixels
+    bool alphablend;                // do alpha blending when drawing translucent pixels?
+    bool only_draw_overlay;         // set by DoUpdate, reset by OnlyDrawOverlay
+    overlay_position pos;           // where to display overlay
+    const wxCursor* ovcursor;       // cursor to use when mouse is in overlay
+    std::string cursname;           // remember cursor name
+    int axx, axy, ayx, ayy;         // affine transformation values
+    bool identity;                  // true if transformation values are 1,0,0,1
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste
+
+    // text
+    wxFont currfont;                // current font used by text command
+    std::string fontname;           // name of current font
+    int fontsize;                   // size of current font
+    text_alignment align;           // text alignment
+    unsigned int textbgRGBA;        // text background color
+
+    // cell view
+    unsigned int cellRGBA[256];     // cell RGBA values
+    unsigned char* cellview;        // cell state data (cellwd * cellht bytes)
+    unsigned char* zoomview;        // cell state data (cellwd * cellht bytes) for zoom out
+    int cellwd, cellht;             // width and height of cell view
+    int cellx, celly;               // x and y position of bottom left cell
+    bool ishex;                     // whether to display in hex mode
+
+    // camera
+    double camx;                    // camera x position
+    double camy;                    // camera y position
+    double camzoom;                 // camera zoom
+    double camangle;                // camera angle
+    int camlayers;                  // camera layers
+    double camlayerdepth;           // camera layer depth
+
+    // theme
+    bool theme;                     // whether a theme is active
+    unsigned int aliveStartRGBA;    // new cell RGBA
+    unsigned int aliveEndRGBA;      // cell alive longest RGBA
+    unsigned int deadStartRGBA;     // cell just died RGBA
+    unsigned int deadEndRGBA;       // cell dead longest RGBA
+    unsigned int unoccupiedRGBA;    // cell never occupied RGBA
+
+    // grid
+    bool grid;                      // whether to display grid lines
+    int gridmajor;                  // major grid line interval
+    unsigned int gridRGBA;          // grid line color
+    unsigned int gridmajorRGBA;     // major grid line color
+    bool customgridcolor;           // whether grid line color is custom
+    bool customgridmajorcolor;      // whether major grid line color is custom
+
+    // stars
+    double* starx;                  // star x coordinates
+    double* stary;                  // star y coordinates
+    double* starz;                  // star z coordinates
+    unsigned int starRGBA;          // star color
+    bool stars;                     // whether to display stars
 };
 
 extern Overlay* curroverlay;    // pointer to current overlay (set by client)

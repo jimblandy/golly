@@ -14,9 +14,10 @@
      <a href="layer.html#deleteoverlay">Delete Overlay</a>.
 <li> Lua scripts can call a new <a href="lua.html#overlay">overlay</a>
      command to create, modify and delete the overlay.
-<li> The <a href="lua.html#getevent">getevent</a> command returns two
-     new events: "oclick" for detecting a mouse click in the overlay,
-     and "mup" for detecting the release of a mouse button (anywhere).
+<li> The <a href="lua.html#getevent">getevent</a> command can detect
+     a number of new events: a mouse click in the overlay, the release
+     of a mouse button (anywhere), and zooming in/out via the mouse wheel
+     (either in the current layer or in the overlay).
 <li> The <a href="lua.html#setoption">setoption</a> command recognizes
      two new options: "showbuttons" (with a value from 0 to 4) for
      controlling the position of the translucent buttons,
@@ -25,14 +26,32 @@
 <li> The <a href="lua.html#getview">getview</a> command now takes an
      optional parameter so scripts can get the pixel dimensions of
      a specified layer.
+<li> The new <a href="lua.html#os">os</a> command allows scripts to
+     detect the current operating system.
+<li> The new <a href="lua.html#getinfo">getinfo</a> command can be used
+     to get the comments from the current pattern.
+<li> The new <a href="lua.html#millisecs">millisecs</a> command allows
+     Lua scripts to get the elapsed time since Golly started up.
 <li> A new version of pop-plot.lua creates an overlay to display
      a much nicer looking plot.
-<li> A new hexgrid.lua script creates an overlay to display a true
+<li> The new hexgrid.lua script creates an overlay to display a true
      hexagonal grid over a layer that uses a rule with a hexagonal
      neighborhood.
+<li> The new lifeviewer.lua script creates an overlay to display patterns
+     like <a href="lifeviewer.html">LifeViewer</a>
+     with history and smooth non-integer scaling and rotation.
+<li> The new overlay-demo.lua script demonstrates most of the overlay functions.
+<li> The new breakout.lua script shows how to use the overlay functions together
+     to create a working game.
 <li> The flood-fill.lua script uses a faster scanline algorithm.
+<li> The move-*.lua/py scripts now wait for the mouse button to be released
+     instead of waiting for a second click.
 <li> Non-totalistic rules containing B0 are now supported.
 <li> Pattern rendering is significantly faster when zoomed in.
+<li> The Generations algorithm now supports Hex, Von Neumann and
+     non-totalistic Moore neighborhoods.
+<li> Fixed bug in Linux app that caused buttons to lose their bitmaps.
+<li> Fixed bug that could result in a "Bug detected in SyncUndoHistory!" warning.
 </ul>
 
 <p>
