@@ -830,9 +830,11 @@ JNIEXPORT int JNICALL Java_net_sf_golly_MainActivity_nativeGetMode(JNIEnv* env)
         case pickmode:   return 1;
         case selectmode: return 2;
         case movemode:   return 3;
+        default:
+            Warning("Bug detected in nativeGetMode!");
+            return 0;
     }
-    Warning("Bug detected in nativeGetMode!");
-    return 0;
+
 }
 
 // -----------------------------------------------------------------------------
@@ -845,8 +847,11 @@ JNIEXPORT void JNICALL Java_net_sf_golly_MainActivity_nativeSetMode(JNIEnv* env,
         case 1: currlayer->touchmode = pickmode;   return;
         case 2: currlayer->touchmode = selectmode; return;
         case 3: currlayer->touchmode = movemode;   return;
+        default:
+            Warning("Bug detected in nativeSetMode!");
+            return;
     }
-    Warning("Bug detected in nativeSetMode!");
+
 }
 
 // -----------------------------------------------------------------------------

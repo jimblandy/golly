@@ -40,6 +40,7 @@
 #include "layer.h"
 
 #include <map>              // for std::map
+#include <algorithm>        // for std::replace
 
 // -----------------------------------------------------------------------------
 

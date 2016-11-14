@@ -31,6 +31,7 @@
 #include "layer.h"      // for currlayer
 #include "view.h"       // for nopattupdate, widescreen, PointInView, etc
 #include "status.h"
+#include <math.h>       // for fabs
 
 #ifdef ANDROID_GUI
     #include "jnicalls.h"   // for UpdateStatus, GetRuleName
@@ -38,7 +39,6 @@
 
 #ifdef WEB_GUI
     #include "webcalls.h"   // for UpdateStatus, GetRuleName
-    #include <math.h>       // for fabs
 #endif
 
 #ifdef IOS_GUI

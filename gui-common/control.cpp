@@ -41,6 +41,7 @@
 
 #include <stdexcept>        // for std::runtime_error and std::exception
 #include <sstream>          // for std::ostringstream
+#include <algorithm>        // for std::find
 
 #ifdef ANDROID_GUI
     #include "jnicalls.h"		// for UpdateStatus, BeginProgress, etc

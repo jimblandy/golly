@@ -1,8 +1,8 @@
 apply plugin: "com.android.application"
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion "24.0.2"
+    compileSdkVersion 25
+    buildToolsVersion "25"
 
     defaultConfig {
         applicationId "net.sf.golly"
@@ -10,12 +10,17 @@ android {
         targetSdkVersion 17
         versionCode 3
         versionName "1.2"
-        ndk {
-            abiFilters "armeabi-v7a", "armeabi"
-        }
         externalNativeBuild {
-            ndkBuild {
-                arguments "NDK_APPLICATION_MK:=Application.mk"
+            cmake {
+
+                // needed for std::string etc
+                // also need System.loadLibrary("stlport_shared") in MainActivity.java
+                arguments "-DANDROID_STL=stlport_shared"
+
+                // define ANDROID_GUI used in the shared C++ code in gui-common;
+                // define ZLIB so Golly can read/write .gz files;
+                // set -fexceptions so we can use stdexcept
+                cppFlags "-DANDROID_GUI", "-DZLIB", "-fexceptions"
             }
         }
     }
@@ -41,14 +46,14 @@ android {
     }
 
     externalNativeBuild {
-        ndkBuild {
-            path "Android.mk"
+        cmake {
+            path 'CMakeLists.txt'
         }
     }
 }
 
 dependencies {
-    compile "com.android.support:support-v4:24.2.1"
+    compile "com.android.support:support-v4:25.0.0"
 }
 
 task zipHelp(type: Zip) {

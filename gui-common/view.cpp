@@ -39,6 +39,7 @@
 #include "control.h"        // for generating, ChangeRule
 #include "file.h"           // for GetTextFromClipboard
 #include "view.h"
+#include <cstdlib>          // for abs
 
 #ifdef ANDROID_GUI
     #include "jnicalls.h"   // for UpdatePattern, BeginProgress, etc

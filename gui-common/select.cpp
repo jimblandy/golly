@@ -36,6 +36,7 @@
 #include "control.h"        // for generating, etc
 #include "file.h"           // for CreateUniverse
 #include "select.h"
+#include <stdlib.h>         // for rand
 
 #ifdef ANDROID_GUI
     #include "jnicalls.h"   // for BeginProgress, etc

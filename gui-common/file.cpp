@@ -44,6 +44,7 @@
 #include <list>             // for std::list
 #include <stdexcept>        // for std::runtime_error and std::exception
 #include <sstream>          // for std::ostringstream
+#include <algorithm>        // for std::replace
 
 #include "bigint.h"
 #include "lifealgo.h"
