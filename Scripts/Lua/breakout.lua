@@ -1,9 +1,9 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
--- build 14
+-- build 15
 
 local g = golly()
-require "gplus.strict"
+-- require "gplus.strict"
 local gp = require "gplus"
 local split = gp.split
 local int = gp.int
@@ -18,10 +18,11 @@ local alignright  = 2
 local fontscale   = 1
 
 -- overlay width and height
-local wd, ht = g.getview(g.getlayer())
-local minwd   = 400
-local minht   = 400
-local edgegap = 0
+local wd, ht   = g.getview(g.getlayer())
+local minwd    = 400
+local minht    = 400
+local edgegapl = 0
+local edgegapr = 0
 
 -- shadow settings
 local shadowx   = floor(-wd / 100)
@@ -58,6 +59,7 @@ local batht
 local ballsize = wd / 80
 local ballx    = 0
 local bally    = 0
+local numsteps = 4
 
 -- game settings
 local level      = 1
@@ -157,11 +159,11 @@ local function shadowtext(x, y, text, align, color)
     ov("blend 1")
     ov(op.black)
     local w, h = maketext(text)
-    local textx = 0
+    local textx = edgegapl
     if align == aligncenter then
-        textx = (wd - w - edgegap) / 2
+        textx = (wd - w) / 2 + edgegapl
     elseif align == alignright then
-        textx = wd - w - edgegap
+        textx = wd - w - edgegapr
     end
     pastetext(floor(textx + x + 2), floor(y + 2))
     ov(color)
@@ -191,9 +193,13 @@ end
 local function drawbackground()
     ov("blend 0")
     ov("paste 0 0 bg")
-    if edgegap > 0 then
+    if edgegapl > 0 then
         ov(op.black)
-        ov("fill "..(wd - edgegap).." 0 "..edgegap.." "..(ht - 1))
+        ov("fill 0 0 "..edgegapl.." "..(ht -1))
+    end
+    if edgegapr > 0 then
+        ov(op.black)
+        ov("fill "..(wd - edgegapr).." 0 "..edgegapr.." "..(ht - 1))
     end
 end
 
@@ -214,7 +220,7 @@ local function drawbricks()
             for x = 1, numcols do
                 if bricks[x] == true then
                     brickx = (x - 1) * brickwd
-                    ov("fill "..(brickx + xoff).." "..(bricky + yoff).." "..(brickwd - 1).." "..(brickht - 1))
+                    ov("fill "..(brickx + xoff + edgegapl).." "..(bricky + yoff).." "..(brickwd - 1).." "..(brickht - 1))
                 end
             end
         end
@@ -262,7 +268,9 @@ local function initbricks()
     if offsety > maxoffsety then
         offsety = maxoffsety
     end
-    edgegap = wd - brickwd * numcols
+    local edgegap = wd - brickwd * numcols
+    edgegapl = floor(edgegap / 2)
+    edgegapr = edgegap - edgegapl
 
     for y = 1, numrows do
         local bricks = {}
@@ -389,7 +397,9 @@ local function resizegame(newwd, newht)
     batx     = batx * (newwd / wd)
     baty     = ht - batht * 4
     ballsize = wd / 80
-    edgegap  = wd - brickwd * numcols
+    local edgegap  = wd - brickwd * numcols
+    edgegapl = floor(edgegap / 2)
+    edgegapr = edgegap - edgegapl
 
     -- recreate background
     ov("freeclip bg")
@@ -438,6 +448,39 @@ end
 local function drawpause()
     ov("font "..floor(10 * fontscale).." mono")
     shadowtext(0, ht / 2, pausestr, aligncenter)
+end
+
+--------------------------------------------------------------------------------
+
+local function drawnewball()
+    ov("font "..floor(10 * fontscale).." mono")
+    shadowtext(0, ht / 2 + 82 * fontscale, fullstr, aligncenter)
+    shadowtext(0, ht / 2 + 52 * fontscale, controlstr, aligncenter)
+    shadowtext(0, ht / 2 + 22 * fontscale, newballstr, aligncenter)
+    ov("font "..floor(15 * fontscale).." mono")
+    local remstr, remcol
+    if balls == 1 then
+        remstr = "Last ball!"
+        remcol = op.red
+    else
+        remstr = balls.." balls left"
+        if balls == 2 then
+            remcol = op.yellow
+        else
+            remcol = op.green
+        end
+    end
+    shadowtext(0, ht / 2 - 15 * fontscale, remstr, aligncenter, remcol)
+    shadowtext(0, ht / 2 - 52 * fontscale, "Level "..level, aligncenter)
+end
+
+--------------------------------------------------------------------------------
+
+local function checkforresize()
+    local newwd, newht = g.getview(g.getlayer())
+    if newwd ~= wd or newht ~= ht then
+        resizegame(newwd, newht)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -511,10 +554,7 @@ local function breakout()
             processinput()
 
             -- check if size of layer has changed
-            local newwd, newht = g.getview(g.getlayer())
-            if newwd ~= wd or newht ~= ht then
-                resizegame(newwd, newht)
-            end
+            checkforresize()
 
             -- draw the background
             drawbackground()
@@ -525,97 +565,91 @@ local function breakout()
             else
                 -- check for new ball
                 if newball then
-                    ov("font "..floor(10 * fontscale).." mono")
-                    shadowtext(0, ht / 2 + 82 * fontscale, fullstr, aligncenter)
-                    shadowtext(0, ht / 2 + 52 * fontscale, controlstr, aligncenter)
-                    shadowtext(0, ht / 2 + 22 * fontscale, newballstr, aligncenter)
-                    ov("font "..floor(15 * fontscale).." mono")
-                    local remstr, remcol
-                    if balls == 1 then
-                        remstr = "Last ball!"
-                        remcol = op.red
-                    else
-                        remstr = balls.." balls left"
-                        if balls == 2 then
-                            remcol = op.yellow
-                        else
-                            remcol = op.green
-                        end
-                    end
-                    shadowtext(0, ht / 2 - 15 * fontscale, remstr, aligncenter, remcol)
-                    shadowtext(0, ht / 2 - 52 * fontscale, "Level "..level, aligncenter)
+                    drawnewball()
                 else
-                    -- update ball position
-                    ballx = ballx + (balldx * ballspeed * ballsize) / speeddiv
-                    bally = bally + (balldy * ballspeed * ballsize) / speeddiv
+                    -- update ball position incrementally
+                    i = 1
+                    while i <= numsteps and not newball do
+                        i = i + 1
+                        local stepx = ((balldx * ballspeed * ballsize) / speeddiv) / numsteps
+                        local stepy = ((balldy * ballspeed * ballsize) / speeddiv) / numsteps
+                        ballx = ballx + stepx
+                        bally = bally + stepy
 
-                    -- check for ball hitting boundary
-                    if ballx < ballsize / 2 or ballx >= wd - edgegap - ballsize / 2 then
-                        balldx = -balldx
-                        ballx  = ballx + balldx * 2
-                    end
-                    if bally < ballsize / 2 then
-                        -- ball hit top so speed up a little bit
-                        balldy    = -balldy
-                        bally     = bally + balldy * 2
-                        ballspeed = ballspeed + speedinc / 4
-                        if ballspeed > maxspeed then
-                            ballspeed = maxspeed
+                        -- check for ball hitting left or right boundary
+                        if ballx < ballsize / 2 + edgegapl or ballx >= wd - edgegapr - ballsize / 2 then
+                            -- invert x direction
+                            balldx = -balldx
+                            ballx  = ballx - stepx
                         end
-                    elseif bally >= ht then
-                        -- ball lost!
-                        balls     = balls - 1
-                        bally     = baty
-                        balldy    = -1
-                        balldx    = 0.5
-                        ballspeed = speeddef
-                        newball   = true
-                    -- check for ball hitting bat
-                    elseif bally >= baty and bally <= baty + batht - 1 and ballx >= batx and ballx < batx + batwd then
-                        -- set dx from where ball hit bat
-                        balldx = (3 * (ballx - batx) / batwd) - 1.5
-                        if balldx >= 0 and balldx < 0.1 then
-                            balldx = 0.1
-                        end
-                        if balldx > -0.1 and balldx <= 0 then
-                            balldx = -0.1
-                        end
-                        balldy = -balldy
-                        bally = baty
-                        bathits = bathits + 1
-                        -- move the bricks down after a number of bat hits
-                        if bathits == maxhits then
-                            bathits = 0
-                            if offsety < maxoffsety then
-                                offsety = offsety + 1
-                            end
-                       end
-                    end
-                    -- check for ball hitting brick
-                    bricky = floor(bally / brickht) - offsety
-                    brickx = floor(ballx / brickwd) + 1
-                    if bricky >= 1 and bricky <= numrows then
-                        if rows[bricky][brickx] == true then
-                            -- hit a brick!
-                            rows[bricky][brickx] = false
-                            score = score + (level + 9) * (numrows - bricky + 1)
-                            if score > hiscore then
-                                hiscore = score
-                                newhigh = true
-                            end
-                            -- work out which axis to invert
-                            local lastbricky = floor((bally - (balldy * ballspeed * ballsize / speeddiv)) / brickht) - offsety
-                            if lastbricky == bricky then
-                                balldx = -balldx
-                            else
-                                balldy = -balldy
-                            end
-                            -- speed the ball up
-                            ballspeed = ballspeed + speedinc
+
+                        -- check for ball hitting top boundary
+                        if bally < ballsize / 2 then
+                            -- ball hit top so speed up a little bit
+                            balldy    = -balldy
+                            bally     = bally - stepy
+                            ballspeed = ballspeed + speedinc / 4
                             if ballspeed > maxspeed then
                                 ballspeed = maxspeed
                             end
-                            bricksleft = bricksleft - 1
+
+                        -- check for ball hitting bottom boundary
+                        elseif bally >= ht then
+                            -- ball lost!
+                            balls     = balls - 1
+                            balldy    = -1
+                            balldx    = 0.5
+                            ballspeed = speeddef
+                            newball   = true
+
+                        -- check for ball hitting bat
+                        elseif bally >= baty and bally <= baty + batht - 1 and ballx >= batx and ballx < batx + batwd then
+                            -- set dx from where ball hit bat
+                            balldx = (3 * (ballx - batx) / batwd) - 1.5
+                            if balldx >= 0 and balldx < 0.1 then
+                                balldx = 0.1
+                            end
+                            if balldx > -0.1 and balldx <= 0 then
+                                balldx = -0.1
+                            end
+                            balldy = -balldy
+                            bally = baty
+                            bathits = bathits + 1
+                            -- move the bricks down after a number of bat hits
+                            if bathits == maxhits then
+                                bathits = 0
+                                if offsety < maxoffsety then
+                                    offsety = offsety + 1
+                                end
+                           end
+                        end
+
+                        -- check for ball hitting brick
+                        bricky = floor(bally / brickht) - offsety
+                        brickx = floor(ballx / brickwd) + 1
+                        if bricky >= 1 and bricky <= numrows then
+                            if rows[bricky][brickx] == true then
+                                -- hit a brick!
+                                rows[bricky][brickx] = false
+                                score = score + (level + 9) * (numrows - bricky + 1)
+                                if score > hiscore then
+                                    hiscore = score
+                                    newhigh = true
+                                end
+                                -- work out which axis to invert
+                                local lastbricky = floor((bally - stepy) / brickht) - offsety
+                                if lastbricky == bricky then
+                                    balldx = -balldx
+                                else
+                                    balldy = -balldy
+                                end
+                                -- speed the ball up
+                                ballspeed = ballspeed + speedinc
+                                if ballspeed > maxspeed then
+                                    ballspeed = maxspeed
+                                end
+                                bricksleft = bricksleft - 1
+                            end
                         end
                     end
                 end
@@ -628,10 +662,10 @@ local function breakout()
                 if mousex ~= lastx then
                     lastx = mousex
                     batx = tonumber(mousex) - batwd / 2
-                    if batx < 0 then
-                        batx = 0
-                    elseif batx > wd - edgegap - batwd then
-                        batx = wd - edgegap - batwd
+                    if batx < edgegapl then
+                        batx = edgegapl
+                    elseif batx > wd - edgegapr - batwd then
+                        batx = wd - edgegapr - batwd
                     end
                 end
                 offoverlay = false
@@ -677,10 +711,7 @@ local function breakout()
             local frametime = g.millisecs()
 
             -- check if size of layer has changed
-            local newwd, newht = g.getview(g.getlayer())
-            if newwd ~= wd or newht ~= ht then
-                resizegame(newwd, newht)
-            end
+            checkforresize()
 
             -- draw background
             drawbackground()
@@ -705,6 +736,9 @@ local function breakout()
                 -- level complete
                 drawlevelcomplete()
             end
+
+            -- draw score line
+            drawscoreline()
 
             -- get key or mouse event
             processendinput()
