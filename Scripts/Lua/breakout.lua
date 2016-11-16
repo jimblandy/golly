@@ -1,15 +1,16 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
--- build 15
+-- build 16
 
 local g = golly()
 -- require "gplus.strict"
-local gp = require "gplus"
+local gp    = require "gplus"
 local split = gp.split
-local int = gp.int
-local op = require "oplus"
-local ov = g.overlay
+local int   = gp.int
+local op    = require "oplus"
+local ov    = g.overlay
 local floor = math.floor
+local rand  = math.random
 
 -- text alignment
 local alignleft   = 0
@@ -59,7 +60,13 @@ local batht
 local ballsize = wd / 80
 local ballx    = 0
 local bally    = 0
-local numsteps = 4
+local numsteps = 20
+
+-- particle settings
+local particles      = {}
+local brickparticles = 128
+local ballparticles  = 1
+local ballpartchance = 0.25
 
 -- game settings
 local level      = 1
@@ -74,8 +81,15 @@ local offoverlay = false
 local finished   = false
 local again      = true
 
+-- timing settings
+local times         = {}
+local timenum       = 1
+local numtimes      = 10
+local showtiming    = 0
+local showparticles = 1
+
 -- settings are saved in this file
-local settingsfile = g.getdir("data").."overlay-bricks.ini"
+local settingsfile = g.getdir("data").."breakout.ini"
 
 -- messages
 local gameoverstr = "Game Over"
@@ -102,31 +116,27 @@ end
 --------------------------------------------------------------------------------
 
 local function readsettings()
-    local score = 0
-    local fullscreen = 0
     local f = io.open(settingsfile, "r")
     if f then
-        score = tonumber(f:read("*l")) or 0
-        fullscreen = tonumber(f:read("*l")) or 0
-    end
-    return score, fullscreen
-end
-
---------------------------------------------------------------------------------
-
-local function writesettings(score, fullscreen)
-    local f = io.open(settingsfile, "w")
-    if f then
-        f:write(tostring(score).."\n")
-        f:write(tostring(fullscreen).."\n")
+        hiscore       = tonumber(f:read("*l")) or 0
+        fullscreen    = tonumber(f:read("*l")) or 0
+        showtiming    = tonumber(f:read("*l")) or 0
+        showparticles = tonumber(f:read("*l")) or 1
         f:close()
     end
 end
 
 --------------------------------------------------------------------------------
 
-local function ms(t)
-    return string.format("%.2fms", t)
+local function writesettings()
+    local f = io.open(settingsfile, "w")
+    if f then
+        f:write(tostring(hiscore).."\n")
+        f:write(tostring(fullscreen).."\n")
+        f:write(tostring(showtiming).."\n")
+        f:write(tostring(showparticles).."\n")
+        f:close()
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -169,6 +179,67 @@ local function shadowtext(x, y, text, align, color)
     ov(color)
     maketext(text)
     pastetext(floor(textx + x), floor(y))
+end
+
+--------------------------------------------------------------------------------
+
+local function initparticles()
+    particles = {}
+end
+
+--------------------------------------------------------------------------------
+
+local function createparticles(x, y, areawd, areaht, howmany)
+    -- find the first free slot
+    i = 1
+    while i <= #particles and particles[i][1] > 0 do
+        i = i + 1
+    end
+    for j = 1, howmany do
+        local item = { 255, x - rand(floor(areawd)), y + rand(floor(areaht)), rand() - 0.5, rand() - 0.5 }
+        particles[i] = item
+        i = i + 1
+        -- find the next free slot
+        while i <= #particles and particles[i][1] > 0 do
+            i = i + 1
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function drawparticles()
+    ov("blend 1")
+    for i = 1, #particles do
+        local item = particles[i]
+        local alpha = item[1]
+        -- check if particle is still alive
+        if alpha > 0 then
+            local x = item[2]
+            local y = item[3]
+            local dx = item[4]
+            local dy = item[5]
+            if showparticles ~= 0 then
+                ov("rgba 255 255 255 "..alpha)
+                ov("set "..floor(x).." "..floor(y))
+            end
+            -- fade item
+            alpha = alpha - 3
+            if alpha < 0 then
+                alpha = 0
+            end
+            item[1] = alpha
+            item[2] = x + dx
+            item[3] = y + dy
+            item[4] = dx * 0.99
+            if dy < 0 then
+                dy = dy + 0.05
+            else
+                dy = (dy + 0.02) * 1.02
+            end
+            item[5] = dy
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -239,6 +310,9 @@ local function drawball()
     ov("blend 0")
     ov(op.white)
     ov("fill "..floor(ballx - ballsize / 2).." "..floor(bally - ballsize / 2).." "..floor(ballsize).." "..floor(ballsize))
+    if rand() < ballpartchance then
+        createparticles(ballx + ballsize / 2, bally - ballsize / 2, ballsize, ballsize, ballparticles)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -268,10 +342,13 @@ local function initbricks()
     if offsety > maxoffsety then
         offsety = maxoffsety
     end
+
+    -- distribute any gap left and right
     local edgegap = wd - brickwd * numcols
     edgegapl = floor(edgegap / 2)
     edgegapr = edgegap - edgegapl
 
+    -- mark all bricks alive
     for y = 1, numrows do
         local bricks = {}
         for x = 1, numcols do
@@ -312,8 +389,8 @@ local function processinput()
     -- check for click, enter or return
     local event = g.getevent()
     if #event then
-        if event:find("^oclick") or event == "key enter none" or event == "key return none" then
-            -- click or enter starts or toggles pause
+        if event:find("^oclick") or event == "key enter none" or event == "key return none" or event == "key space none" then
+            -- click, enter or space starts or toggles pause
             if newball then
                 newball = false
                 pause   = false
@@ -322,21 +399,27 @@ local function processinput()
             end
         elseif event == "key left none" then
             -- left arrow moves bat left
-            batx = batx - (wd / 50)
+            batx = batx - (wd / 40)
             if batx < 0 then
                 batx = 0
             end
         elseif event == "key right none" then
             -- right arrow moves bat right
-            batx = batx + (wd / 50)
+            batx = batx + (wd / 40)
             if batx + batwd >= wd then
                 batx = wd - batwd
             end
         elseif event == "key f11 none" then
             -- toggle fullscreen
             fullscreen = 1 - fullscreen
-            writesettings(hiscore, fullscreen)
+            writesettings()
             setfullscreen()
+        elseif event == "key t none" then
+            showtiming = 1 - showtiming
+            writesettings()
+        elseif event == "key p none" then
+            showparticles = 1 - showparticles
+            writesettings()
         end
     end
 end
@@ -353,13 +436,19 @@ local function processendinput()
                 again = false
             end
             finished = true
-        elseif event == "key enter none" or event == "key return none" then
+        elseif event == "key enter none" or event == "key return none" or event == "key space none" then
             finished = true
         elseif event == "key f11 none" then
             -- toggle fullscreen
             fullscreen = 1 - fullscreen
-            writesettings(hiscore, fullscreen)
+            writesettings()
             setfullscreen()
+        elseif event == "key t none" then
+            showtiming = 1 - showtiming
+            writesettings()
+        elseif event == "key p none" then
+            showparticles = 1 - showparticles
+            writesettings()
         end
     end
 end
@@ -374,18 +463,15 @@ local function resizegame(newwd, newht)
     if newht < minht then
         newht = minht
     end
-
-    -- reposition the bat and ball
-    batx = batx * (newwd / wd)
-    ballx = ballx * (newwd / wd)
-    bally = bally * (newht / ht)
+    local xscale = newwd / wd
+    local yscale = newht / ht
 
     -- resize overlay
     wd = newwd
     ht = newht
     ov("resize "..wd.." "..ht)
     fontscale = wd / minwd
-    if (ht /minht) < fontscale then
+    if (ht / minht) < fontscale then
         fontscale = ht / minht
     end
 
@@ -394,12 +480,23 @@ local function resizegame(newwd, newht)
     brickht  = floor(ht / 40)
     batwd    = floor(wd / 10)
     batht    = brickht
-    batx     = batx * (newwd / wd)
-    baty     = ht - batht * 4
     ballsize = wd / 80
     local edgegap  = wd - brickwd * numcols
     edgegapl = floor(edgegap / 2)
     edgegapr = edgegap - edgegapl
+
+    -- reposition the bat and ball
+    batx  = batx * xscale
+    baty  = ht - batht * 4
+    ballx = ballx * xscale
+    bally = bally * yscale
+
+    -- reposition particles
+    for i = 1, #particles do
+        local item = particles[i]
+        item[2] = item[2] * xscale
+        item[3] = item[3] * yscale
+    end
 
     -- recreate background
     ov("freeclip bg")
@@ -476,6 +573,23 @@ end
 
 --------------------------------------------------------------------------------
 
+local function drawtiming(t)
+    times[timenum] = t
+    timenum = timenum + 1
+    if timenum > numtimes then
+        timenum = 1
+    end
+    local average = 0
+    for i = 1, #times do
+        average = average + times[i]
+    end
+    average = average / #times
+    ov("font "..floor(8 * fontscale).." mono")
+    shadowtext(-5, ht - (8 * fontscale) - 8, string.format("%.1fms", average), alignright)
+end
+
+--------------------------------------------------------------------------------
+
 local function checkforresize()
     local newwd, newht = g.getview(g.getlayer())
     if newwd ~= wd or newht ~= ht then
@@ -493,7 +607,7 @@ local function breakout()
     local oldcursor = ov("cursor arrow")
 
     -- read saved settings
-    hiscore, fullscreen = readsettings()
+    readsettings()
     setfullscreen()
 
     -- create the background
@@ -535,6 +649,9 @@ local function breakout()
         -- initialize shadow
         initshadow()
 
+        -- initialize particles
+        initparticles()
+
         -- whether alive
         newball = true
         pause   = false
@@ -560,13 +677,9 @@ local function breakout()
             drawbackground()
 
             -- check if paused
-            if pause then
-                drawpause()
-            else
+            if not pause then
                 -- check for new ball
-                if newball then
-                    drawnewball()
-                else
+                if not newball then
                     -- update ball position incrementally
                     i = 1
                     while i <= numsteps and not newball do
@@ -601,6 +714,7 @@ local function breakout()
                             balldx    = 0.5
                             ballspeed = speeddef
                             newball   = true
+                            i         = numsteps  -- exit loop
 
                         -- check for ball hitting bat
                         elseif bally >= baty and bally <= baty + batht - 1 and ballx >= batx and ballx < batx + batwd then
@@ -626,8 +740,8 @@ local function breakout()
 
                         -- check for ball hitting brick
                         bricky = floor(bally / brickht) - offsety
-                        brickx = floor(ballx / brickwd) + 1
                         if bricky >= 1 and bricky <= numrows then
+                            brickx = floor((ballx - edgegapl) / brickwd) + 1
                             if rows[bricky][brickx] == true then
                                 -- hit a brick!
                                 rows[bricky][brickx] = false
@@ -648,6 +762,9 @@ local function breakout()
                                 if ballspeed > maxspeed then
                                     ballspeed = maxspeed
                                 end
+                                -- create particles
+                                createparticles(brickx * brickwd + edgegapl, (bricky + offsety) * brickht, brickwd, brickht, brickparticles)
+                                -- one less brick
                                 bricksleft = bricksleft - 1
                             end
                         end
@@ -680,17 +797,34 @@ local function breakout()
                 bally = baty - ballsize
             end
 
+            -- draw the particles
+            drawparticles()
+
             -- draw the bricks
             drawbricks()
 
             -- draw the ball
-            drawball()
+            if balls > 0 then
+                drawball()
+            end
 
             -- draw the bat
             drawbat()
 
             -- draw the score, high score and lives
             drawscoreline()
+
+            -- check for pause
+            if pause then
+                drawpause()
+            elseif newball and balls > 0 then
+                drawnewball()
+            end
+
+            -- draw timing if on
+            if showtiming == 1 then
+                drawtiming(g.millisecs() - frametime)
+            end
 
             -- update the display
             ov("update")
@@ -701,7 +835,7 @@ local function breakout()
 
         -- save high score
         if newhigh == true then
-            writesettings(hiscore, fullscreen)
+            writesettings()
         end
 
         -- loop until mouse button clicked or enter pressed
@@ -724,6 +858,9 @@ local function breakout()
                 offoverlay = true
             end
 
+            -- draw particles
+            drawparticles()
+
             -- draw bricks and bat but not ball
             drawbricks()
             drawbat()
@@ -742,6 +879,11 @@ local function breakout()
 
             -- get key or mouse event
             processendinput()
+
+            -- draw timing if on
+            if showtiming == 1 then
+                drawtiming(g.millisecs() - frametime)
+            end
 
             -- update the display
             ov("update")
