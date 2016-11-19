@@ -579,13 +579,11 @@ end
 
 --------------------------------------------------------------------------------
 
-local function drawnewball(controls)
-    if controls then
-        ov("font "..floor(10 * fontscale).." mono")
-        shadowtext(0, ht / 2 + 82 * fontscale, fullstr, aligncenter)
-        shadowtext(0, ht / 2 + 52 * fontscale, controlstr, aligncenter)
-        shadowtext(0, ht / 2 + 22 * fontscale, newballstr, aligncenter)
-    end
+local function drawnewball()
+    ov("font "..floor(10 * fontscale).." mono")
+    shadowtext(0, ht / 2 + 82 * fontscale, fullstr, aligncenter)
+    shadowtext(0, ht / 2 + 52 * fontscale, controlstr, aligncenter)
+    shadowtext(0, ht / 2 + 22 * fontscale, newballstr, aligncenter)
     ov("font "..floor(15 * fontscale).." mono")
     local remstr, remcol
     if balls == 1 then
@@ -872,7 +870,7 @@ local function breakout()
             if pause then
                 drawpause()
             elseif newball and balls > 0 then
-                drawnewball(true)
+                drawnewball()
             end
 
             -- draw timing if on
