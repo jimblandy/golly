@@ -1,6 +1,6 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
--- build 17
+-- build 18
 
 local g = golly()
 -- require "gplus.strict"
@@ -62,7 +62,7 @@ local batht
 local ballsize = wd / 80
 local ballx    = 0
 local bally    = 0
-local numsteps = 20
+local numsteps = 24
 
 -- particle settings
 local particles      = {}
@@ -721,9 +721,6 @@ local function breakout()
         newball = true
         pause   = false
 
-        -- whether new high score
-        newhigh = false
-
         -- whether mouse off overlay
         offoverlay = false
 
@@ -942,9 +939,10 @@ local function breakout()
         -- check why game finished
         if balls == 0 then
             -- reset
-            score = 0
-            balls = 3
-            level = 1
+            score   = 0
+            balls   = 3
+            level   = 1
+            newhigh = false
         else
             -- level complete
             level = level + 1
