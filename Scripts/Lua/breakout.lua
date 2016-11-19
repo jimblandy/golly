@@ -771,7 +771,7 @@ local function breakout()
                             if ballspeed > maxspeed then
                                 ballspeed = maxspeed
                             end
-                            createparticles(ballx, bally, 1, 1, wallparticels)
+                            createparticles(ballx, bally, 1, 1, wallparticles)
 
                         -- check for ball hitting bottom boundary
                         elseif bally >= ht then
