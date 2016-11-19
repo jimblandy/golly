@@ -1,6 +1,6 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
--- build 16
+-- build 17
 
 local g = golly()
 -- require "gplus.strict"
@@ -29,6 +29,8 @@ local edgegapr = 0
 local shadowx   = floor(-wd / 100)
 local shadowy   = floor(ht / 100)
 local shadowcol = "rgba 0 0 0 128"
+local shadtxtx  = 2
+local shadtxty  = 2
 
 -- brick settings
 local numrows    = 6
@@ -67,6 +69,9 @@ local particles      = {}
 local brickparticles = 128
 local ballparticles  = 1
 local ballpartchance = 0.25
+local wallparticles  = 20
+local batparticles   = 20
+local highparticles  = 4
 
 -- game settings
 local level      = 1
@@ -87,6 +92,8 @@ local timenum       = 1
 local numtimes      = 10
 local showtiming    = 0
 local showparticles = 1
+local autopause     = 0
+local autostart     = 0
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."breakout.ini"
@@ -96,6 +103,7 @@ local gameoverstr = "Game Over"
 local newballstr  = "Click or Enter to launch ball"
 local controlstr  = "Mouse or Arrow keys to move bat"
 local pausestr    = "Paused: Click or Enter to continue"
+local focusstr    = "Paused: Move mouse onto overlay to continue"
 local fullstr     = "F11 to toggle full screen mode"
 local restartstr  = "Click or Enter to start again"
 local quitstr     = "Right Click or Esc to quit"
@@ -122,6 +130,8 @@ local function readsettings()
         fullscreen    = tonumber(f:read("*l")) or 0
         showtiming    = tonumber(f:read("*l")) or 0
         showparticles = tonumber(f:read("*l")) or 1
+        autopause     = tonumber(f:read("*l")) or 0
+        autostart     = tonumber(f:read("*l")) or 0
         f:close()
     end
 end
@@ -135,6 +145,8 @@ local function writesettings()
         f:write(tostring(fullscreen).."\n")
         f:write(tostring(showtiming).."\n")
         f:write(tostring(showparticles).."\n")
+        f:write(tostring(autopause).."\n")
+        f:write(tostring(autostart).."\n")
         f:close()
     end
 end
@@ -175,10 +187,11 @@ local function shadowtext(x, y, text, align, color)
     elseif align == alignright then
         textx = wd - w - edgegapr
     end
-    pastetext(floor(textx + x + 2), floor(y + 2))
+    pastetext(floor(textx + x + shadtxtx), floor(y + shadtxty))
     ov(color)
     maketext(text)
     pastetext(floor(textx + x), floor(y))
+    return w + shadtxtx, h + shadtxty 
 end
 
 --------------------------------------------------------------------------------
@@ -420,6 +433,12 @@ local function processinput()
         elseif event == "key p none" then
             showparticles = 1 - showparticles
             writesettings()
+        elseif event == "key a none" then
+            autopause = 1 - autopause
+            writesettings()
+        elseif event == "key s none" then
+            autostart = 1 - autostart
+            writesettings()
         end
     end
 end
@@ -448,6 +467,12 @@ local function processendinput()
             writesettings()
         elseif event == "key p none" then
             showparticles = 1 - showparticles
+            writesettings()
+        elseif event == "key a none" then
+            autopause = 1 - autopause
+            writesettings()
+        elseif event == "key s none" then
+            autostart = 1 - autostart
             writesettings()
         end
     end
@@ -525,7 +550,8 @@ local function drawgameover()
     ov("font "..floor(10 * fontscale).." mono")
     shadowtext(0, ht / 2 + 30 * fontscale, restartstr, aligncenter)
     if newhigh then
-        shadowtext(0, ht / 2 - 52 * fontscale, newhighstr, aligncenter, op.green)
+        local w, h = shadowtext(0, ht / 2 + 82 * fontscale, newhighstr, aligncenter, op.green)
+        createparticles(edgegapl + floor(wd / 2) + w / 2, floor(ht / 2 + 82 * fontscale), w, 1, highparticles)
     end
     shadowtext(0, ht / 2 + 52 * fontscale, quitstr, aligncenter)
 end
@@ -544,16 +570,22 @@ end
 
 local function drawpause()
     ov("font "..floor(10 * fontscale).." mono")
-    shadowtext(0, ht / 2, pausestr, aligncenter)
+    if offoverlay and autopause ~= 0 and autostart ~= 0 then
+       shadowtext(0, ht / 2, focusstr, aligncenter)
+    else
+       shadowtext(0, ht / 2, pausestr, aligncenter)
+    end
 end
 
 --------------------------------------------------------------------------------
 
-local function drawnewball()
-    ov("font "..floor(10 * fontscale).." mono")
-    shadowtext(0, ht / 2 + 82 * fontscale, fullstr, aligncenter)
-    shadowtext(0, ht / 2 + 52 * fontscale, controlstr, aligncenter)
-    shadowtext(0, ht / 2 + 22 * fontscale, newballstr, aligncenter)
+local function drawnewball(controls)
+    if controls then
+        ov("font "..floor(10 * fontscale).." mono")
+        shadowtext(0, ht / 2 + 82 * fontscale, fullstr, aligncenter)
+        shadowtext(0, ht / 2 + 52 * fontscale, controlstr, aligncenter)
+        shadowtext(0, ht / 2 + 22 * fontscale, newballstr, aligncenter)
+    end
     ov("font "..floor(15 * fontscale).." mono")
     local remstr, remcol
     if balls == 1 then
@@ -599,6 +631,39 @@ end
 
 --------------------------------------------------------------------------------
 
+local function updatebatposition()
+    local mousepos = ov("xy")
+    if mousepos ~= "" then
+        local mousex, mousey = split(mousepos)
+        if mousex ~= lastx then
+            lastx = mousex
+            batx = tonumber(mousex) - batwd / 2
+            if batx < edgegapl then
+                batx = edgegapl
+            elseif batx > wd - edgegapr - batwd then
+                batx = wd - edgegapr - batwd
+            end
+        end
+        -- check if mouse was off overlay
+        if offoverlay then
+            -- check if paused
+            if pause and autostart ~= 0 then
+                pause = false
+            end
+        end
+        offoverlay = false
+    else
+        -- mouse off overlay
+        offoverlay = true
+        -- check for autopause
+        if autopause ~= 0 then
+            pause = true
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function breakout()
     -- set font
     local oldfont   = ov("font 16 mono")
@@ -620,18 +685,20 @@ local function breakout()
     again   = true
     newhigh = false
 
+    -- initialise the bat and ball
+    initbat()
+    initball()
+
     while again == true do
         -- initialize the bricks
         initbricks()
 
         -- intiialize the bat
-        initbat()
         local bathits = 0
         local maxhits = 7
         local lastx   = -1
 
         -- initialize the ball
-        initball()
         local balldx    = 0.5
         local balldy    = -1
         local maxspeed  = 2.25 + (level  - 1) * 0.25
@@ -694,6 +761,7 @@ local function breakout()
                             -- invert x direction
                             balldx = -balldx
                             ballx  = ballx - stepx
+                            createparticles(ballx, bally, 1, 1, wallparticles)
                         end
 
                         -- check for ball hitting top boundary
@@ -705,6 +773,7 @@ local function breakout()
                             if ballspeed > maxspeed then
                                 ballspeed = maxspeed
                             end
+                            createparticles(ballx, bally, 1, 1, wallparticels)
 
                         -- check for ball hitting bottom boundary
                         elseif bally >= ht then
@@ -736,6 +805,7 @@ local function breakout()
                                     offsety = offsety + 1
                                 end
                            end
+                           createparticles(ballx, bally - ballsize / 2, 1, 1, batparticles)
                         end
 
                         -- check for ball hitting brick
@@ -773,23 +843,7 @@ local function breakout()
             end
 
             -- update bat position
-            local mousepos = ov("xy")
-            if mousepos ~= "" then
-                local mousex, mousey = split(mousepos)
-                if mousex ~= lastx then
-                    lastx = mousex
-                    batx = tonumber(mousex) - batwd / 2
-                    if batx < edgegapl then
-                        batx = edgegapl
-                    elseif batx > wd - edgegapr - batwd then
-                        batx = wd - edgegapr - batwd
-                    end
-                end
-                offoverlay = false
-            else
-                -- mouse off overlay
-                offoverlay = true
-            end
+            updatebatposition()
 
             -- if new ball then set ball to sit on bat
             if newball then
@@ -818,7 +872,7 @@ local function breakout()
             if pause then
                 drawpause()
             elseif newball and balls > 0 then
-                drawnewball()
+                drawnewball(true)
             end
 
             -- draw timing if on
@@ -842,7 +896,7 @@ local function breakout()
         finished = false
         while not finished do
             -- time frame
-            local frametime = g.millisecs()
+            frametime = g.millisecs()
 
             -- check if size of layer has changed
             checkforresize()
@@ -850,13 +904,8 @@ local function breakout()
             -- draw background
             drawbackground()
 
-            -- check for mouse off overlay
-            local mousepos = ov("xy")
-            if mousepos ~= "" then
-                offoverlay = false
-            else
-                offoverlay = true
-            end
+            -- update bat position
+            updatebatposition()
 
             -- draw particles
             drawparticles()
