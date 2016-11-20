@@ -1,6 +1,6 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
--- build 18
+-- build 19
 
 local g = golly()
 -- require "gplus.strict"
@@ -66,12 +66,13 @@ local numsteps = 24
 
 -- particle settings
 local particles      = {}
-local brickparticles = 128
+local brickparticles = 192
 local ballparticles  = 1
 local ballpartchance = 0.25
 local wallparticles  = 20
 local batparticles   = 20
 local highparticles  = 4
+local lostparticles  = 1024
 
 -- game settings
 local level      = 1
@@ -523,6 +524,9 @@ local function resizegame(newwd, newht)
         item[3] = item[3] * yscale
     end
 
+    -- resize shadow
+    initshadow()
+
     -- recreate background
     ov("freeclip bg")
     createbackground()
@@ -654,7 +658,7 @@ local function updatebatposition()
         -- mouse off overlay
         offoverlay = true
         -- check for autopause
-        if autopause ~= 0 then
+        if autopause ~= 0 and fullscreen == 0 then
             pause = true
         end
     end
@@ -778,7 +782,12 @@ local function breakout()
                             balldx    = 0.5
                             ballspeed = speeddef
                             newball   = true
-                            i         = numsteps  -- exit loop
+                            -- destroy bat if no balls left
+                            if balls == 0 then
+                               createparticles(batx + batwd, baty, batwd, batht, lostparticles)
+                            end
+                            -- exit loop
+                            i = numsteps
 
                         -- check for ball hitting bat
                         elseif bally >= baty and bally <= baty + batht - 1 and ballx >= batx and ballx < batx + batwd then
@@ -905,15 +914,16 @@ local function breakout()
             -- draw particles
             drawparticles()
 
-            -- draw bricks and bat but not ball
+            -- draw bricks
             drawbricks()
-            drawbat()
 
             -- check why game finished
             if balls == 0 then
                 -- game over
                 drawgameover()
             else
+                -- draw bat
+                drawbat()
                 -- level complete
                 drawlevelcomplete()
             end
