@@ -1834,6 +1834,9 @@ const char* Overlay::DoCreate(const char* args)
 
     // default text background
     textbgRGBA = 0;
+    
+    // default width for lines and ellipses
+    linewidth = 1.0;
 
     // make sure the Show Overlay option is ticked
     if (!showoverlay) mainptr->ToggleOverlay();
@@ -2508,6 +2511,328 @@ const char* Overlay::DoGetXY()
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::LineOptionWidth(const char* args)
+{
+    double w, oldwidth;
+    if (sscanf(args, " %lf", &w) != 1) {
+        return OverlayError("lineoption width command requires 1 argument");
+    }
+
+    if (w <= 0.0) return OverlayError("line width must be > 0.0");
+    if (w >= 1000.0) return OverlayError("line width must be < 1000.0");
+    
+    oldwidth = linewidth;
+    linewidth = w;
+    
+    static char result[64];
+    sprintf(result, "%lf", oldwidth);
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoLineOption(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    if (strncmp(args, "width ", 6) == 0) return LineOptionWidth(args+6);
+
+    return OverlayError("unknown lineoption command");
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawAAPixel(int x, int y, double opacity)
+{
+    if (PixelInOverlay(x, y)) {
+        unsigned char newalpha = 255-int(opacity);
+        if (newalpha == 0) return;
+        
+        if (!alphablend && newalpha < 128) return;
+        
+        // temporarily adjust current alpha value
+        unsigned char olda = a;
+        if (a < 255) newalpha = int(newalpha * a / 255);
+        a = newalpha;
+        
+        DrawPixel(x, y);
+        
+        // restore alpha
+        a = olda;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int ystep,
+                             int einit, int winit, double w)
+{
+    // dx > dy
+    int threshold = dx - 2*dy;
+    int E_diag = -2*dx;
+    int E_square = 2*dy;
+    int x = x0;
+    int y = y0;
+    int err = einit;
+    int tk = dx+dy-winit;
+    double D2 = 2*sqrt(dx*dx+dy*dy);
+
+    // draw top/bottom half of line
+    int q = 0;
+    while (tk <= w) {
+        if (alphablend) {
+            double alfa = 255 * (w - tk) / D2;
+            if (alfa < 255) {
+                DrawAAPixel(x, y, 255-alfa);
+            } else {
+                if (PixelInOverlay(x, y)) DrawPixel(x, y);
+            }
+        } else {
+            if (PixelInOverlay(x, y)) DrawPixel(x, y);
+        }
+        if (err >= threshold) {
+            x += xstep;
+            err += E_diag;
+            tk += 2*dy;
+        }
+        err += E_square;
+        y += ystep;
+        tk += 2*dx;
+        q++;
+    }
+
+    y = y0;
+    x = x0;
+    err = -einit;
+    tk = dx+dy+winit;
+
+    // draw other half of line
+    int p = 0;
+    while (tk <= w) {
+        if (p > 0) {
+            if (alphablend) {
+                double alfa = 255 * (w - tk) / D2;
+                if (alfa < 255) {
+                    DrawAAPixel(x, y, 255-alfa);
+                } else {
+                    if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                }
+            } else {
+                if (PixelInOverlay(x, y)) DrawPixel(x, y);
+            }
+        }
+        if (err > threshold) {
+            x -= xstep;
+            err += E_diag;
+            tk += 2*dy;
+        }
+        err += E_square;
+        y -= ystep;
+        tk += 2*dx;
+        p++;
+    }
+
+    if (q == 0 && p < 2) {
+        // needed for very thin lines
+        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int ystep,
+                             int einit, int winit, double w)
+{
+    // dx <= dy
+    int threshold = dy - 2*dx;
+    int E_diag = -2*dy;
+    int E_square = 2*dx;
+    int x = x0;
+    int y = y0;
+    int err = -einit;
+    int tk = dx+dy+winit;
+    double D2 = 2*sqrt(dx*dx+dy*dy);
+    
+    // draw left/right half of line
+    int q = 0;
+    while (tk <= w) {
+        if (alphablend) {
+            double alfa = 255 * (w - tk) / D2;
+            if (alfa < 255) {
+                DrawAAPixel(x, y, 255-alfa);
+            } else {
+                if (PixelInOverlay(x, y)) DrawPixel(x, y);
+            }
+        } else {
+            if (PixelInOverlay(x, y)) DrawPixel(x, y);
+        }
+        if (err > threshold) {
+            y += ystep;
+            err += E_diag;
+            tk += 2*dx;
+        }
+        err += E_square;
+        x += xstep;
+        tk += 2*dy;
+        q++;
+    }
+
+    y = y0;
+    x = x0;
+    err = einit;
+    tk = dx+dy-winit;
+
+    // draw other half of line
+    int p = 0;
+    while (tk <= w) {
+        if (p > 0) {
+            if (alphablend) {
+                double alfa = 255 * (w - tk) / D2;
+                if (alfa < 255) {
+                    DrawAAPixel(x, y, 255-alfa);
+                } else {
+                    if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                }
+            } else {
+                if (PixelInOverlay(x, y)) DrawPixel(x, y);
+            }
+        }
+        if (err >= threshold) {
+            y -= ystep;
+            err += E_diag;
+            tk += 2*dx;
+        }
+        err += E_square;
+        x -= xstep;
+        tk += 2*dy;
+        p++;
+    }
+
+    if (q == 0 && p < 2) {
+        // needed for very thin lines
+        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
+{
+    // based on code from http://kt8216.unixcab.org/murphy/index.html
+    
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+    int xstep = 1;
+    int ystep = 1;
+    int pxstep, pystep;
+
+    if (dx < 0) { dx = -dx; xstep = -1; }
+    if (dy < 0) { dy = -dy; ystep = -1; }
+    
+    if (dx == 0 && dy == 0) {
+        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
+        return;
+    }
+    
+    // use FillRect if dx or dy is zero???!!!
+
+    if (dx == 0) xstep = 0;
+    if (dy == 0) ystep = 0;
+
+    switch (xstep + ystep*4) {
+        case -1 + -1*4 : pystep = -1; pxstep =  1; break;   // -5
+        case -1 +  0*4 : pystep = -1; pxstep =  0; break;   // -1
+        case -1 +  1*4 : pystep =  1; pxstep =  1; break;   //  3
+        case  0 + -1*4 : pystep =  0; pxstep = -1; break;   // -4
+        case  0 +  0*4 : pystep =  0; pxstep =  0; break;   //  0
+        case  0 +  1*4 : pystep =  0; pxstep =  1; break;   //  4
+        case  1 + -1*4 : pystep = -1; pxstep = -1; break;   // -3
+        case  1 +  0*4 : pystep = -1; pxstep =  0; break;   //  1
+        case  1 +  1*4 : pystep =  1; pxstep = -1; break;   //  5
+    }
+
+    double w = (linewidth + 1) * sqrt(dx*dx + dy*dy);
+    int p_error = 0;
+    int err = 0;
+    int x = x0;
+    int y = y0;
+    
+    if (dx > dy) {
+        int threshold = dx - 2*dy;
+        int E_diag = -2*dx;
+        int E_square = 2*dy;
+        int length = dx + 1;
+        for (int p = 0; p < length; p++) {
+            PerpendicularX(x, y, dx, dy, pxstep, pystep, p_error, err, w);
+            if (err >= threshold) {
+                y += ystep;
+                err += E_diag;
+                if (p_error >= threshold) {
+                    p_error += E_diag;
+                    PerpendicularX(x, y, dx, dy, pxstep, pystep, p_error+E_square, err, w);
+                }
+                p_error += E_square;
+            }
+            err += E_square;
+            x += xstep;
+        }
+    } else {
+        int threshold = dy - 2*dx;
+        int E_diag = -2*dy;
+        int E_square = 2*dx;
+        int length = dy + 1;
+        for (int p = 0; p < length; p++) {
+            PerpendicularY(x, y, dx, dy, pxstep, pystep, p_error, err, w);
+            if (err >= threshold) {
+                x += xstep;
+                err += E_diag;
+                if (p_error >= threshold) {
+                    p_error += E_diag;
+                    PerpendicularY(x, y, dx, dy, pxstep, pystep, p_error+E_square, err, w);
+                }
+                p_error += E_square;
+            }
+            err += E_square;
+            y += ystep;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawAntialiasedLine(int x0, int y0, int x1, int y1)
+{
+    // based on code from http://members.chello.at/~easyfilter/bresenham.html
+
+    long dx = abs(x1-x0);
+    long dy = abs(y1-y0);
+    long err = dx-dy;
+    long e2, x2;
+    double ed = dx+dy == 0 ? 1 : sqrt(dx*dx+dy*dy);
+    int sx = x0 < x1 ? 1 : -1;
+    int sy = y0 < y1 ? 1 : -1;
+
+    while (true) {
+        DrawAAPixel(x0, y0, 255*abs(err-dx+dy)/ed);
+        e2 = err;
+        x2 = x0;
+        if (2*e2 >= -dx) {
+            if (x0 == x1) break;
+            if (e2+dy < ed) DrawAAPixel(x0, y0+sy, 255*(e2+dy)/ed);
+            err -= dy;
+            x0 += sx;
+        }
+        if (2*e2 <= dy) {
+            if (y0 == y1) break;
+            if (dx-e2 < ed) DrawAAPixel(x2+sx, y0, 255*(dx-e2)/ed);
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoLine(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -2516,9 +2841,19 @@ const char* Overlay::DoLine(const char* args)
     if (sscanf(args, " %d %d %d %d", &x1, &y1, &x2, &y2) != 4) {
         return OverlayError("line command requires 4 arguments");
     }
+    
+    if (linewidth != 1.0) {
+        DrawThickLine(x1, y1, x2, y2);
+        return NULL;
+    }
 
     if (x1 == x2 && y1 == y2) {
         if (PixelInOverlay(x1, y1)) DrawPixel(x1, y1);
+        return NULL;
+    }
+    
+    if (alphablend) {
+        DrawAntialiasedLine(x1, y1, x2, y2);
         return NULL;
     }
 
@@ -2556,6 +2891,341 @@ const char* Overlay::DoLine(const char* args)
     }
     if (PixelInOverlay(x2, y2)) DrawPixel(x2, y2);
 
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
+{
+    // based on code from http://members.chello.at/~easyfilter/bresenham.html
+
+    double th = linewidth;
+    if (th < 1.5) {
+        if (alphablend) {
+            DrawAntialiasedEllipse(x0, y0, x1, y1);
+        } else {
+            DrawEllipse(x0, y0, x1, y1);
+        }
+        return;
+    }
+    
+    if (x1 == x0 || y1 == y0) {
+        DrawThickLine(x0, y0, x1, y1);
+        return;
+    }
+    
+    long a = abs(x1-x0);
+    long b = abs(y1-y0);
+    long b1 = b&1;
+    double a2 = a-2*th;
+    double b2 = b-2*th;
+    double dx = 4*(a-1)*b*b;
+    double dy = 4*(b1-1)*a*a;
+    double i = a+b2;
+    double err = b1*a*a;
+    double dx2, dy2, e2, ed; 
+    
+    if ((th-1)*(2*b-th) > a*a) {
+        b2 = sqrt(a*(b-a)*i*a2)/(a-th);
+    }
+    if ((th-1)*(2*a-th) > b*b) {
+        a2 = sqrt(b*(a-b)*i*b2)/(b-th);
+        th = (a-a2)/2;
+    }
+    
+    if (b2 <= 0) th = a;    // filled ellipse
+    
+    e2 = th-floor(th);
+    th = x0+th-e2;
+    dx2 = 4*(a2+2*e2-1)*b2*b2;
+    dy2 = 4*(b1-1)*a2*a2;
+    e2 = dx2*e2;
+    y0 += (b+1)>>1;
+    y1 = y0-b1;
+    a = 8*a*a;
+    b1 = 8*b*b;
+    a2 = 8*a2*a2;
+    b2 = 8*b2*b2;
+   
+    do {          
+        while (true) {                           
+            if (err < 0 || x0 > x1) { i = x0; break; }
+            // do outside antialiasing
+            i = dx < dy ? dx : dy;
+            ed = dx > dy ? dx : dy;
+            if (y0 == y1+1 && 2*err > dx && a > b1) {
+                ed = a/4;
+            } else {
+                ed += 2*ed*i*i/(4*ed*ed+i*i+1)+1;
+            }
+            i = 255*err/ed;
+            // i can be > 255
+            if (i <= 255) {
+                // extra tests avoid some pixels being drawn twice
+                if (x0 == x1) {
+                    DrawAAPixel(x0, y0, i);
+                    DrawAAPixel(x0, y1, i);
+                } else if (y0 == y1) {
+                    DrawAAPixel(x0, y0, i);
+                    DrawAAPixel(x1, y0, i);
+                } else {
+                    // x0 != x1 and y0 != y1
+                    DrawAAPixel(x0, y0, i);
+                    DrawAAPixel(x0, y1, i);
+                    DrawAAPixel(x1, y0, i);
+                    DrawAAPixel(x1, y1, i);
+                }
+            }
+            if (err+dy+a < dx) { i = x0+1; break; }
+            x0++;
+            x1--;
+            err -= dx;
+            dx -= b1;
+        }
+        while (i < th && 2*i <= x0+x1) {
+            // set pixel within line
+            int x = x0+x1-i;
+            // extra tests avoid some pixels being drawn twice
+            if (x == i && y0 == y1) {
+                if (PixelInOverlay(i, y0)) DrawPixel(i, y0);
+            } else if (x == i) {
+                if (PixelInOverlay(i, y0)) DrawPixel(i, y0);
+                if (PixelInOverlay(i, y1)) DrawPixel(i, y1);
+            } else if (y0 == y1) {
+                if (PixelInOverlay(i, y0)) DrawPixel(i, y0);
+                if (PixelInOverlay(x, y0)) DrawPixel(x, y0);
+            } else {
+                // x != i and y0 != y1
+                if (PixelInOverlay(i, y0)) DrawPixel(i, y0);
+                if (PixelInOverlay(x, y0)) DrawPixel(x, y0); 
+                if (PixelInOverlay(i, y1)) DrawPixel(i, y1);
+                if (PixelInOverlay(x, y1)) DrawPixel(x, y1);
+            }
+            i++;
+        }    
+        while (e2 > 0 && x0+x1 >= 2*th) {
+            // do inside antialiasing
+            i = dx2 < dy2 ? dx2 : dy2;
+            ed = dx2 > dy2 ? dx2 : dy2;
+            if (y0 == y1+1 && 2*e2 > dx2 && a2 > b2) {
+                ed = a2/4;
+            } else {
+                ed += 2*ed*i*i/(4*ed*ed+i*i);
+            }
+            i = 255-255*e2/ed;
+            // i can be -ve
+            if (i < 0) i = 0;
+            int x = x0+x1-th;
+            // extra test avoids some pixels being drawn twice
+            if (x == th) {
+                DrawAAPixel(x, y0, i);
+                DrawAAPixel(x, y1, i);
+            } else {
+                DrawAAPixel(th, y0, i);
+                DrawAAPixel(x,  y0, i);
+                DrawAAPixel(th, y1, i);
+                DrawAAPixel(x,  y1, i);
+            }
+            if (e2+dy2+a2 < dx2) break;
+            th++;
+            e2 -= dx2;
+            dx2 -= b2;
+        }
+        e2 += dy2 += a2;
+        y0++;
+        y1--;
+        err += dy += a;
+    } while (x0 < x1);
+   
+    if (y0-y1 <= b) {
+        if (err > dy+a) {
+            y0--;
+            y1++;
+            err -= dy -= a;
+        }
+        while (y0-y1 <= b) {
+            i = 255*4*err/b1;
+            DrawAAPixel(x0, y0,   i);
+            DrawAAPixel(x1, y0++, i);
+            DrawAAPixel(x0, y1,   i);
+            DrawAAPixel(x1, y1--, i);
+            err += dy += a;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawAntialiasedEllipse(int x0, int y0, int x1, int y1)
+{
+    // based on code from http://members.chello.at/~easyfilter/bresenham.html
+
+    long a = abs(x1-x0);
+    long b = abs(y1-y0);
+    long b1 = b&1;
+    double dx = 4*(a-1.0)*b*b;
+    double dy = 4*(b1+1)*a*a;
+    double err = b1*a*a-dx+dy;
+    double ed, i;
+    bool f;
+
+    if (a == 0 || b == 0) {
+        DrawAntialiasedLine(x0, y0, x1, y1);
+        return;
+    }
+    
+    y0 += (b+1)/2;
+    y1 = y0-b1;
+    a = 8*a*a;
+    b1 = 8*b*b;
+
+    while (true) {
+        i = dx < dy ? dx : dy;
+        ed = dx > dy ? dx : dy;
+        if (y0 == y1+1 && err > dy && a > b1) {
+            ed = 255*4.0/a;
+        } else {
+            ed = 255/(ed+2*ed*i*i/(4*ed*ed+i*i));
+        }
+        i = ed*fabs(err+dx-dy);     // intensity depends on pixel error
+
+        // extra tests avoid pixels at extremities being drawn twice
+        if (x0 == x1) {
+            DrawAAPixel(x0, y0, i);
+            DrawAAPixel(x0, y1, i);
+        } else if (y0 == y1) {
+            DrawAAPixel(x0, y0, i);
+            DrawAAPixel(x1, y0, i);
+        } else {
+            // x0 != x1 and y0 != y1
+            DrawAAPixel(x0, y0, i);
+            DrawAAPixel(x0, y1, i);
+            DrawAAPixel(x1, y0, i);
+            DrawAAPixel(x1, y1, i);
+        }
+
+        f = 2*err+dy >= 0;
+        if (f) {
+            if (x0 >= x1) break;
+            i = ed*(err+dx);
+            if (i < 255) {
+                DrawAAPixel(x0, y0+1, i);
+                DrawAAPixel(x0, y1-1, i);
+                DrawAAPixel(x1, y0+1, i);
+                DrawAAPixel(x1, y1-1, i);
+            }
+        }
+        if (2*err <= dx) {
+            i = ed*(dy-err);
+            if (i < 255) {
+                DrawAAPixel(x0+1, y0, i);
+                DrawAAPixel(x1-1, y0, i);
+                DrawAAPixel(x0+1, y1, i);
+                DrawAAPixel(x1-1, y1, i);
+            }
+            y0++;
+            y1--;
+            err += dy += a;
+        }
+        if (f) {
+            x0++;
+            x1--;
+            err -= dx -= b1;
+        }
+    }
+    
+    if (--x0 == x1++) {
+        while (y0-y1 < b) {
+            i = 255*4*fabs(err+dx)/b1;
+            DrawAAPixel(x0, ++y0, i);
+            DrawAAPixel(x1,   y0, i);
+            DrawAAPixel(x0, --y1, i);
+            DrawAAPixel(x1,   y1, i);
+            err += dy += a;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::DrawEllipse(int x0, int y0, int x1, int y1)
+{
+    // based on code from http://members.chello.at/~easyfilter/bresenham.html
+    
+    long a = abs(x1-x0);
+    long b = abs(y1-y0);
+    long b1 = b&1;
+    double dx = 4*(1.0-a)*b*b;
+    double dy = 4*(b1+1)*a*a;
+    double err = dx+dy+b1*a*a;
+    double e2;
+
+    y0 += (b+1)/2;
+    y1 = y0-b1;
+    a = 8*a*a;
+    b1 = 8*b*b;
+
+    do {
+        if (PixelInOverlay(x1, y0)) DrawPixel(x1, y0);
+        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
+        if (PixelInOverlay(x0, y1)) DrawPixel(x0, y1);
+        if (PixelInOverlay(x1, y1)) DrawPixel(x1, y1);
+        e2 = 2*err;
+        if (e2 <= dy) {
+            y0++;
+            y1--;
+            err += dy += a;
+        }
+        if (e2 >= dx || 2*err > dy) {
+            x0++;
+            x1--;
+            err += dx += b1;
+        }
+    } while (x0 <= x1);
+
+    while (y0-y1 <= b) {
+        // finish tip of ellipse
+        x0--;
+        x1++;
+        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
+        if (PixelInOverlay(x1, y0)) DrawPixel(x1, y0);
+        if (PixelInOverlay(x0, y1)) DrawPixel(x0, y1);
+        if (PixelInOverlay(x1, y1)) DrawPixel(x1, y1);
+        y0++;
+        y1--;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoEllipse(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    int x, y, w, h;
+    if (sscanf(args, " %d %d %d %d", &x, &y, &w, &h) != 4) {
+        return OverlayError("ellipse command requires 4 arguments");
+    }
+
+    // treat non-positive w/h as inset from overlay's width/height
+    if (w <= 0) w = wd + w;
+    if (h <= 0) h = ht + h;
+    if (w <= 0) return OverlayError("ellipse width must be > 0");
+    if (h <= 0) return OverlayError("ellipse height must be > 0");
+    
+    if (linewidth != 1.0) {
+        DrawThickEllipse(x, y, x+w-1, y+h-1);
+        return NULL;
+    }
+    
+    if (alphablend) {
+        DrawAntialiasedEllipse(x, y, x+w-1, y+h-1);
+        return NULL;
+    }
+    
+    // draw a non-antialiased ellipse where linewidth is 1
+    DrawEllipse(x, y, x+w-1, y+h-1);
     return NULL;
 }
 
@@ -3809,28 +4479,30 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "set ", 4) == 0)         return DoSetPixel(cmd+4);
     if (strncmp(cmd, "get ", 4) == 0)         return DoGetPixel(cmd+4);
     if (strcmp(cmd,  "xy") == 0)              return DoGetXY();
-    if (strncmp(cmd, "line", 4) == 0)         return DoLine(cmd+4);
     if (strncmp(cmd, "rgba", 4) == 0)         return DoSetRGBA(cmd+4);
+    if (strncmp(cmd, "blend", 5) == 0)        return DoBlend(cmd+5);
     if (strncmp(cmd, "fill", 4) == 0)         return DoFill(cmd+4);
     if (strncmp(cmd, "copy", 4) == 0)         return DoCopy(cmd+4);
     if (strncmp(cmd, "paste", 5) == 0)        return DoPaste(cmd+5);
-    if (strncmp(cmd, "load", 4) == 0)         return DoLoad(cmd+4);
-    if (strncmp(cmd, "save", 4) == 0)         return DoSave(cmd+4);
+    if (strncmp(cmd, "lineoption ", 11) == 0) return DoLineOption(cmd+11);
+    if (strncmp(cmd, "line", 4) == 0)         return DoLine(cmd+4);
+    if (strncmp(cmd, "ellipse", 7) == 0)      return DoEllipse(cmd+7);
     if (strncmp(cmd, "flood", 5) == 0)        return DoFlood(cmd+5);
-    if (strncmp(cmd, "blend", 5) == 0)        return DoBlend(cmd+5);
     if (strncmp(cmd, "textoption ", 11) == 0) return DoTextOption(cmd+11);
     if (strncmp(cmd, "text", 4) == 0)         return DoText(cmd+4);
     if (strncmp(cmd, "font", 4) == 0)         return DoFont(cmd+4);
     if (strncmp(cmd, "freeclip", 8) == 0)     return DoFreeClip(cmd+8);
     if (strncmp(cmd, "transform", 9) == 0)    return DoTransform(cmd+9);
     if (strncmp(cmd, "position", 8) == 0)     return DoPosition(cmd+8);
+    if (strncmp(cmd, "load", 4) == 0)         return DoLoad(cmd+4);
+    if (strncmp(cmd, "save", 4) == 0)         return DoSave(cmd+4);
     if (strncmp(cmd, "cursor", 6) == 0)       return DoCursor(cmd+6);
     if (strcmp(cmd,  "update") == 0)          return DoUpdate();
     if (strncmp(cmd, "create", 6) == 0)       return DoCreate(cmd+6);
     if (strncmp(cmd, "resize", 6) == 0)       return DoResize(cmd+6);
     if (strncmp(cmd, "cellview ", 9) == 0)    return DoCellView(cmd+9);
-    if (strncmp(cmd, "camera ", 7) == 0)      return DoCamera(cmd+7);
     if (strncmp(cmd, "celloption ", 11) == 0) return DoCellOption(cmd+11);
+    if (strncmp(cmd, "camera ", 7) == 0)      return DoCamera(cmd+7);
     if (strncmp(cmd, "theme ", 6) == 0)       return DoTheme(cmd+6);
     if (strncmp(cmd, "replace ", 8) == 0)     return DoReplace(cmd+8);
     if (strcmp(cmd,  "updatecells") == 0)     return DoUpdateCells();

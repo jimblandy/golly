@@ -149,6 +149,9 @@ private:
     // Called by DoSetPixel, DoLine, etc to set a given pixel
     // that is within the overlay.
     
+    void DrawAAPixel(int x, int y, double opacity);
+    // Draw an antialiased pixel.
+
     const char* DoSetPixel(const char* args);
     // Set the given pixel to the current RGBA values.
     // Does nothing if the pixel is outside the edges of the overlay.
@@ -161,16 +164,52 @@ private:
     // Return the current mouse position within the overlay as a string
     // of the form "x y", or "" if the mouse is outside the overlay.
     
+    const char* LineOptionWidth(const char* args);
+    // Set linewidth and return previous value as a string.
+    
+    const char* DoLineOption(const char* args);
+    // Set a line option.
+    
     const char* DoLine(const char* args);
     // Draw a line using the current RGBA values.
     // Automatically clips any parts of the line outside the overlay.
     
-    void FillRect(int x, int y, int w, int h);
-    // Called by DoFill to set pixels in given rectangle.
+    void DrawThickLine(int x0, int y0, int x1, int y1);
+    // Called by DoLine to draw a line when linewidth is not 1.
+    // If alphablend is true then the edges will be antialiased.
+    
+    void PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int ystep,
+                        int einit, int winit, double w);
+    // Called by DrawThickLine.
+    
+    void PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int ystep,
+                        int einit, int winit, double w);
+    // Called by DrawThickLine.
+
+    void DrawAntialiasedLine(int x0, int y0, int x1, int y1);
+    // Called by DoLine to draw an antialiased line when alphablend is true
+    // and linewidth is 1.
+    
+    const char* DoEllipse(const char* args);
+    // Draw an ellipse within the given rectangle.
+
+    void DrawEllipse(int x0, int y0, int x1, int y1);
+    // Called by DoEllipse to draw a non-antialiased ellipse when linewidth is 1.
+    
+    void DrawThickEllipse(int x0, int y0, int x1, int y1);
+    // Called by DoEllipse to draw an ellipse when linewidth is not 1.
+    // If alphablend is true then the edges will be antialiased.
+    
+    void DrawAntialiasedEllipse(int x0, int y0, int x1, int y1);
+    // Called by DoEllipse to draw an antialiased ellipse when alphablend is true
+    // and linewidth is 1.
     
     const char* DoFill(const char* args);
     // Fill a given rectangle with the current RGBA values.
     // Automatically clips any parts of the rectangle outside the overlay.
+
+    void FillRect(int x, int y, int w, int h);
+    // Called by DoFill to set pixels in given rectangle.
     
     const char* DoCopy(const char* args);
     // Copy the pixels in a given rectangle into Clip data with a given name.
@@ -361,6 +400,7 @@ private:
     std::string cursname;           // remember cursor name
     int axx, axy, ayx, ayy;         // affine transformation values
     bool identity;                  // true if transformation values are 1,0,0,1
+    double linewidth;               // for lines and ellipses
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste
