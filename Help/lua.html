@@ -1228,14 +1228,18 @@ for a good example.
 </dd>
 <p>
 <dd>
-Keyboard events are strings of the form "key <i>charname</i> <i>modifiers</i>"
+There are two types of keyboard events:<br>
+The first type are triggered when a key
+is pressed or autorepeats and are strings of the form "key <i>charname</i> <i>modifiers</i>" 
 where <i>charname</i> can be any displayable ASCII character from '!' to '~'
 or one of the following names: space, home, end, pageup, pagedown, help,
 insert, delete, tab, enter, return, left, right, up, down, or f1 to f24.
 If no modifier key was pressed then <i>modifiers</i> is none, otherwise it is
 some combination of alt, cmd, ctrl, meta, shift.
 Note that cmd will only be returned on a Mac and corresponds to the command key.
-The alt modifier corresponds to the option key on a Mac.
+The alt modifier corresponds to the option key on a Mac.<br>
+The second type occurs when a key is released and are strings of the form
+"kup <i>charname</i>".
 </dd>
 <p>
 <dd>

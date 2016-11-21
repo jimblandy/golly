@@ -1719,6 +1719,49 @@ void PassZoomOutToScript(int x, int y)
 
 // -----------------------------------------------------------------------------
 
+void PassKeyUpToScript(int key)
+{
+    // build a string like "key x" and add to event queue
+    // for possible consumption by GSF_getevent
+    wxString keyinfo = wxT("kup ");
+    if (key > ' ' && key <= '~') {
+        // displayable ASCII
+        keyinfo += wxChar(key);
+    } else if (key >= WXK_F1 && key <= WXK_F24) {
+        // function key
+        keyinfo += wxString::Format(wxT("f%d"), key - WXK_F1 + 1);
+    } else {
+        // convert some special key codes to names like space, tab, delete, etc
+        // (must match reverse conversion in GSF_doevent)
+        switch (key) {
+            case ' ':               keyinfo += wxT("space");      break;
+            case WXK_HOME:          keyinfo += wxT("home");       break;
+            case WXK_END:           keyinfo += wxT("end");        break;
+            case WXK_PAGEUP:        keyinfo += wxT("pageup");     break;
+            case WXK_PAGEDOWN:      keyinfo += wxT("pagedown");   break;
+            case WXK_HELP:          keyinfo += wxT("help");       break;
+            case WXK_INSERT:        keyinfo += wxT("insert");     break;
+            case WXK_BACK:          // treat backspace like delete
+            case WXK_DELETE:        keyinfo += wxT("delete");     break;
+            case WXK_TAB:           keyinfo += wxT("tab");        break;
+            case WXK_NUMPAD_ENTER:  // treat enter like return
+            case WXK_RETURN:        keyinfo += wxT("return");     break;
+            case WXK_LEFT:          keyinfo += wxT("left");       break;
+            case WXK_RIGHT:         keyinfo += wxT("right");      break;
+            case WXK_UP:            keyinfo += wxT("up");         break;
+            case WXK_DOWN:          keyinfo += wxT("down");       break;
+            case WXK_ADD:           keyinfo += wxT("+");          break;
+            case WXK_SUBTRACT:      keyinfo += wxT("-");          break;
+            case WXK_DIVIDE:        keyinfo += wxT("/");          break;
+            case WXK_MULTIPLY:      keyinfo += wxT("*");          break;
+            default:                return;  // ignore all other key codes
+        }
+    }
+    eventqueue.Add(keyinfo);
+}
+
+// -----------------------------------------------------------------------------
+
 void PassKeyToScript(int key, int modifiers)
 {
     if (key == WXK_ESCAPE) {

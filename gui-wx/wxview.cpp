@@ -45,7 +45,7 @@
 #include "wxmain.h"        // for mainptr->...
 #include "wxstatus.h"      // for statusptr->...
 #include "wxrender.h"      // for InitPaste, DrawView
-#include "wxscript.h"      // for inscript, PassKeyToScript, PassClickToScript
+#include "wxscript.h"      // for inscript, PassKeyToScript, PassClickToScript, PassKeyUpToScript
 #include "wxselect.h"      // for Selection
 #include "wxedit.h"        // for UpdateEditBar, ToggleEditBar, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
@@ -2469,6 +2469,11 @@ void PatternView::OnKeyUp(wxKeyEvent& event)
         }
     }
     
+    if (inscript && pass_key_events) {
+        // let script decide what to do with they key-up events
+        PassKeyUpToScript(key);
+    }
+
     // no need to call event.Skip() here
 }
 

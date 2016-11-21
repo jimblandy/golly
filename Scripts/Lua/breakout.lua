@@ -1,6 +1,6 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
--- build 20
+-- build 21
 
 local g = golly()
 -- require "gplus.strict"
@@ -57,6 +57,7 @@ local batx
 local baty
 local batwd
 local batht
+local batkeydir = 0
 
 -- ball settings
 local ballsize = wd / 80
@@ -414,16 +415,10 @@ local function processinput()
             end
         elseif event == "key left none" then
             -- left arrow moves bat left
-            batx = batx - (wd / 40)
-            if batx < 0 then
-                batx = 0
-            end
+            batkeydir = -1
         elseif event == "key right none" then
             -- right arrow moves bat right
-            batx = batx + (wd / 40)
-            if batx + batwd >= wd then
-                batx = wd - batwd
-            end
+            batkeydir = 1
         elseif event == "key f11 none" then
             -- toggle fullscreen
             fullscreen = 1 - fullscreen
@@ -441,6 +436,14 @@ local function processinput()
         elseif event == "key s none" then
             autostart = 1 - autostart
             writesettings()
+        elseif event == "kup left" then
+            if batkeydir == -1 then
+                batkeydir = 0
+            end
+        elseif event == "kup right" then
+            if batkeydir == 1 then
+                batkeydir = 0
+            end
         end
     end
 end
@@ -661,6 +664,21 @@ local function updatebatposition()
         -- check for autopause
         if autopause ~= 0 and fullscreen == 0 then
             pause = true
+        end
+    end
+
+    -- check for keyboard move
+    if batkeydir == -1 then
+        -- move bat left
+        batx = batx - (wd / 60)
+        if batx < edgegapl then
+            batx = edgegapl
+        end
+    elseif batkeydir == 1 then
+        -- move bat right
+        batx = batx + (wd / 60)
+        if batx > wd - edgegapr - batwd then
+            batx = wd - edgegapr - batwd
         end
     end
 end
