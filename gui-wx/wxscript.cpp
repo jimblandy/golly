@@ -1232,6 +1232,10 @@ const char* GSF_doevent(const wxString& event)
                 return NULL;
             }
             
+        } else if (event.StartsWith(wxT("kup "))) {
+            // ignore key up event
+            return NULL;
+
         } else {
             return "Unknown event.";
         }
