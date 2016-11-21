@@ -2519,7 +2519,7 @@ const char* Overlay::LineOptionWidth(const char* args)
     }
 
     if (w <= 0.0) return OverlayError("line width must be > 0.0");
-    if (w >= 1000.0) return OverlayError("line width must be < 1000.0");
+    if (w >= 10000.0) return OverlayError("line width must be < 10000.0");
     
     oldwidth = linewidth;
     linewidth = w;

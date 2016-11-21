@@ -85,7 +85,7 @@ local function check_rule()
             g.warn(
 [[If the current rule does not use
 a hexagonal neighborhood then the
-results won't be correct!]])
+results will look a bit strange!]])
             -- let user continue
         else
             g.exit("The current rule does not use a hexagonal neighborhood.")

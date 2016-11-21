@@ -63,39 +63,41 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#celloption"><b>celloption</b></a><br>
 <a href="#cellview"><b>cellview</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
-<a href="#create"><b>create</b></a>
+<a href="#create"><b>create</b></a><br>
+<a href="#cursor"><b>cursor</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#cursor"><b>cursor</b></a><br>
 <a href="#delete"><b>delete</b></a><br>
 <a href="#drawcells"><b>drawcells</b></a><br>
+<a href="#ellipse"><b>ellipse</b></a><br>
 <a href="#fill"><b>fill</b></a><br>
 <a href="#flood"><b>flood</b></a><br>
-<a href="#font"><b>font</b></a>
+<a href="#font"><b>font</b></a><br>
+<a href="#freeclip"><b>freeclip</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#freeclip"><b>freeclip</b></a><br>
 <a href="#get"><b>get</b></a><br>
 <a href="#line"><b>line</b></a><br>
+<a href="#lineoption"><b>lineoption</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
-<a href="#position"><b>position</b></a>
+<a href="#position"><b>position</b></a><br>
+<a href="#replace"><b>replace</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#replace"><b>replace</b></a><br>
 <a href="#resize"><b>resize</b></a><br>
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
-<a href="#text"><b>text</b></a>
+<a href="#text"><b>text</b></a><br>
+<a href="#textoption"><b>textoption</b></a><br>
+<a href="#theme"><b>theme</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#textoption"><b>textoption</b></a><br>
-<a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
 <a href="#updatecells"><b>updatecells</b></a><br>
@@ -119,12 +121,14 @@ The examples given below assume a script has started with these lines:
 Turn <a href="#blending">alpha blending</a> on (<i>i</i> = 1) or off
 (<i>i</i> = 0) and return the previous blend state as a string ("0" or "1").
 The commands affected by alpha blending are:
+<a href="#ellipse">ellipse</a>,
 <a href="#fill">fill</a>,
 <a href="#flood">flood</a>,
 <a href="#line">line</a>,
 <a href="#load">load</a>,
 <a href="#paste">paste</a>,
 <a href="#set">set</a>.
+Note that turning on alpha blending also forces ellipses and lines to be antialiased.
 </dd>
 <dd> Example: <b>local oldblend = ov("blend 1")</b></dd>
 </p>
@@ -234,6 +238,8 @@ The initial font for drawing text is the default system font at a size of 10pt
 (see the <a href="#font">font</a> command).
 The <a href="#textoption">text options</a> are set to left alignment
 (for multi-line text) and a transparent background.
+The initial line width (used by the <a href="#ellipse">ellipse</a> and
+<a href="#line">line</a> commands) is set to 1.0.
 </dd>
 <dd> Example: <b>ov("create 400 300")</b></dd>
 <p>
@@ -288,10 +294,22 @@ Further drawing commands can then be used to draw on top of the cell display.
 <dd> Example: <b>ov("drawcells")</b></dd>
 </p>
 
+<a name="ellipse"></a><p><dt><b>ellipse <i>x y wd ht</i></b></dt>
+<dd>
+Draw an ellipse inside the given rectangle using the current <a href="#rgba">rgba</a> values.
+Any parts of the ellipse outside the overlay are automatically clipped.
+A width or height less than 1 is relative to the overlay's width or height.
+If the width equals the height (and both are positive) then the result is a circle.
+If alpha blending is turned on then the edges of the ellipse are antialiased.
+The <a href="#lineoption">lineoption width</a> command determines the thickness
+of the ellipse.
+</dd>
+<dd> Example: <b>ov("ellipse 10 10 60 40")</b></dd>
+</p>
+
 <a name="fill"></a><p><dt><b>fill <i>x y wd ht</i></b></dt>
 <dd>
-Fill the given rectangle with the current RGBA values (as set by the most
-recent <a href="#rgba">rgba</a> command).
+Fill the given rectangle with the current <a href="#rgba">rgba</a> values.
 Any parts of the rectangle outside the overlay are automatically clipped.
 If no rectangle is given then the entire overlay is filled.
 A width or height less than 1 is relative to the overlay's width or height,
@@ -304,7 +322,7 @@ except for a 1 pixel border around the edges.
 <a name="flood"></a><p><dt><b>flood <i>x y</i></b></dt>
 <dd>
 Flood a connected region of pixels that match the given starting pixel
-with the current RGBA values.
+with the current <a href="#rgba">rgba</a> values.
 </dd>
 <dd> Example: <b>ov("flood 10 20")</b></dd>
 </p>
@@ -354,10 +372,38 @@ If the given pixel is outside the overlay then "" is returned.
 
 <a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2</i></b></dt>
 <dd>
-Draw a line of pixels from x1,y1 to x2,y2 using the current RGBA values.
+Draw a line of pixels from x1,y1 to x2,y2 using the current <a href="#rgba">rgba</a> values.
 Any pixels outside the overlay edges are automatically clipped.
+If alpha blending is turned on then the line is antialiased.
+The <a href="#lineoption">lineoption width</a> command determines
+the thickness of the line.
 </dd>
 <dd> Example: <b>ov("line 10 20 50 60")</b></dd>
+</p>
+
+<a name="lineoption"></a><p><dt><b>lineoption <i>option value</i></b></dt>
+<dd>
+Set an option used by the <a href="#ellipse">ellipse</a> and <a href="#line">line</a> commands.
+There is currently one valid option:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b><a name="linewidth"></a>width</b> <i>w</i></td><td width=20></td><td>&ndash;
+set the line width to a real number &gt; 0.0 and &lt; 10000.0.
+</table>
+<p>
+<dd>
+The previous line width is returned as a string.
+The <a href="#create">create</a> command initializes the line width to 1.0.
+</dd>
+</p>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td>Example: <b>local oldwidth = ov("lineoption width 3")</b></td><tr>
+</table>
+</dd>
 </p>
 
 <a name="load"></a><p><dt><b>load <i>x y file</i></b></dt>
@@ -427,9 +473,10 @@ color component value.
 <dd><b>local replaced = ov("replace * * * !255 myclip")</b></dd>
 <p>
 <dd>
-Normally when a match is found the clip pixel is replaced with the current RGBA values. This
-can be overridden by postfixing one or more color components with <b>r</b>, <b>g</b>, <b>b</b>,
-<b>a</b> or <b>#</b>. Each color component in the clip pixel can either be left unchanged
+Normally when a match is found the clip pixel is replaced with the current
+<a href="#rgba">rgba</a> values. This can be overridden by postfixing
+one or more color components with <b>r</b>, <b>g</b>, <b>b</b>, <b>a</b> or <b>#</b>.
+Each color component in the clip pixel can either be left unchanged
 (in the case of <b>#</b>) or replaced with the specified color component from the clip pixel.
 If the postfix character is followed by <b>-</b> then the component value is inverted.
 </dd>
@@ -469,6 +516,7 @@ Set the current RGBA values used by later drawing commands
 and return the old values as a string of the form "red green blue alpha".
 All values are from 0 to 255.
 The commands that use the current RGBA values are:
+<a href="#ellipse">ellipse</a>,
 <a href="#fill">fill</a>,
 <a href="#flood">flood</a>,
 <a href="#line">line</a>,
@@ -492,7 +540,7 @@ overlay with a command like <b>"save 0 0 0 0 overlay.png"</b>).
 
 <a name="set"></a><p><dt><b>set <i>x y</i></b></dt>
 <dd>
-Set the given pixel to the current RGBA values.
+Set the given pixel to the current <a href="#rgba">rgba</a> values.
 A pixel outside the overlay is silently ignored.
 </dd>
 <dd> Example: <b>ov("set 10 20")</b></dd>
@@ -549,6 +597,7 @@ the returned background will be a string of the form "red green blue alpha".
 </table>
 </dd>
 </p>
+
 <a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5</i></b></dt>
 <dd>
 Define the color theme for drawing the current <a href="#cellviewdesc">cell view</a>.
@@ -687,6 +736,7 @@ the overlay produced by the same script but with the "blend 1" line removed
 Note that drawing with alpha blending on is significantly slower than drawing
 with it off, so it's a good idea to only turn it on when necessary.
 The overlay commands that can do alpha blending are:
+<a href="#ellipse">ellipse</a>,
 <a href="#fill">fill</a>,
 <a href="#flood">flood</a>,
 <a href="#line">line</a>,
