@@ -1,6 +1,6 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
--- build 19
+-- build 20
 
 local g = golly()
 -- require "gplus.strict"
@@ -29,7 +29,7 @@ local edgegapr = 0
 local shadowx   = floor(-wd / 100)
 local shadowy   = floor(ht / 100)
 local shadowcol = "rgba 0 0 0 128"
-local shadtxtx  = 2
+local shadtxtx  = -2
 local shadtxty  = 2
 
 -- brick settings
@@ -318,15 +318,16 @@ end
 --------------------------------------------------------------------------------
 
 local function drawball()
+    local oldwidth = ov("lineoption width "..floor(ballsize / 2))
     ov(shadowcol)
     ov("blend 1")
-    ov("fill "..(floor(ballx - ballsize / 2) + shadowx).." "..(floor(bally - ballsize / 2) + shadowy).." "..floor(ballsize).." "..floor(ballsize))
-    ov("blend 0")
+    ov("ellipse "..(floor(ballx - ballsize / 2) + shadowx).." "..(floor(bally - ballsize / 2) + shadowy).." "..floor(ballsize).." "..floor(ballsize))
     ov(op.white)
-    ov("fill "..floor(ballx - ballsize / 2).." "..floor(bally - ballsize / 2).." "..floor(ballsize).." "..floor(ballsize))
+    ov("ellipse "..floor(ballx - ballsize / 2).." "..floor(bally - ballsize / 2).." "..floor(ballsize).." "..floor(ballsize))
     if rand() < ballpartchance then
         createparticles(ballx + ballsize / 2, bally - ballsize / 2, ballsize, ballsize, ballparticles)
     end
+    ov("lineoption width "..oldwidth)
 end
 
 --------------------------------------------------------------------------------
