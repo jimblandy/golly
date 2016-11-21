@@ -1132,7 +1132,7 @@ const char* GSF_doevent(const wxString& event)
                 }
             } else if (event[5] != ' ') {
                 // parse special char name like space, tab, etc
-                // must match reverse conversion in PassKeyToScript
+                // must match reverse conversion in PassKeyToScript and PassKeyUpToScript
                 if (event.Contains(wxT("space")))      key = ' '; else
                 if (event.Contains(wxT("home")))       key = WXK_HOME; else
                 if (event.Contains(wxT("end")))        key = WXK_END; else
@@ -1160,14 +1160,6 @@ const char* GSF_doevent(const wxString& event)
                 inscript = true;
                 showtitle = false;
             }
-            
-        } else if (event.StartsWith(wxT("mup "))) {
-            // ignore mouse up event
-            return NULL;
-            
-        } else if (event.StartsWith(wxT("o"))) {
-            // ignore oclick/ozoomin/ozoomout event in overlay
-            return NULL;
             
         } else if (event.StartsWith(wxT("zoom"))) {
             // parse event string like "zoomin 10 20" or "zoomout 10 20"
@@ -1231,9 +1223,17 @@ const char* GSF_doevent(const wxString& event)
                 // ignore click if x,y is outside viewport or grid
                 return NULL;
             }
-            
+
         } else if (event.StartsWith(wxT("kup "))) {
             // ignore key up event
+            return NULL;
+
+        } else if (event.StartsWith(wxT("mup "))) {
+            // ignore mouse up event
+            return NULL;
+
+        } else if (event.StartsWith(wxT("o"))) {
+            // ignore oclick/ozoomin/ozoomout event in overlay
             return NULL;
 
         } else {
@@ -1725,7 +1725,7 @@ void PassZoomOutToScript(int x, int y)
 
 void PassKeyUpToScript(int key)
 {
-    // build a string like "key x" and add to event queue
+    // build a string like "kup x" and add to event queue
     // for possible consumption by GSF_getevent
     wxString keyinfo = wxT("kup ");
     if (key > ' ' && key <= '~') {

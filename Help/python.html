@@ -1209,7 +1209,8 @@ for a good example.
 </dd>
 <p>
 <dd>
-Keyboard events are strings of the form "key <i>charname</i> <i>modifiers</i>"
+Key-down events are triggered when a key is pressed or autorepeats.
+The returned string is of the form "key <i>charname</i> <i>modifiers</i>" 
 where <i>charname</i> can be any displayable ASCII character from '!' to '~'
 or one of the following names: space, home, end, pageup, pagedown, help,
 insert, delete, tab, enter, return, left, right, up, down, or f1 to f24.
@@ -1217,6 +1218,11 @@ If no modifier key was pressed then <i>modifiers</i> is none, otherwise it is
 some combination of alt, cmd, ctrl, meta, shift.
 Note that cmd will only be returned on a Mac and corresponds to the command key.
 The alt modifier corresponds to the option key on a Mac.
+</dd>
+<p>
+<dd>
+Key-up events occur when a key is released and are strings of the form
+"kup <i>charname</i>".
 </dd>
 <p>
 <dd>
@@ -1263,6 +1269,8 @@ The following examples show the strings returned after various user events:
         </td><td>user pressed space bar and shift key</td></tr>
 <tr><td>"key , altctrlshift"</td><td width=15>
         </td><td>user pressed comma and 3 modifier keys</td></tr>
+<tr><td>"kup left"</td><td width=15>
+        </td><td>user released the left arrow key</td></tr>
 <tr><td>"click 100 5 left none"</td><td width=15>
         </td><td>user clicked cell at 100,5 with left button</td></tr>
 <tr><td>"click -10 9 middle alt"</td><td width=15>
@@ -1272,7 +1280,7 @@ The following examples show the strings returned after various user events:
 <tr><td>"oclick 10 5 left none"</td><td width=15>
         </td><td>user clicked pixel at 10,5 in overlay with left button</td></tr>
 <tr><td>"mup left"</td><td width=15>
-        </td><td>user released the left button</td></tr>
+        </td><td>user released the mouse's left button</td></tr>
 <tr><td>"zoomout 10 20"</td><td width=15>
         </td><td>mouse wheel was used to zoom out from pixel in viewport</td></tr>
 <tr><td>"ozoomin 10 20"</td><td width=15>

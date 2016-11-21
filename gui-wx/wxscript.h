@@ -68,7 +68,7 @@ void PassKeyToScript(int key, int modifiers = 0);
 // Can also be used to abort a script by passing WXK_ESCAPE.
 
 void PassKeyUpToScript(int key);
-// Called if a script is running and a user releases a key.
+// Called if a script is running and user releases a key.
 
 void ShowTitleLater();
 // Called if a script is running and window title has changed.
