@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
--- build 21
 
+local build = 22
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -58,6 +58,7 @@ local baty
 local batwd
 local batht
 local batkeydir = 0
+local lastx
 
 -- ball settings
 local ballsize = wd / 80
@@ -99,6 +100,12 @@ local autostart     = 0
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."breakout.ini"
+
+-- notifications
+local notifyduration = 240
+local notifytrans    = 20
+local notifycurrent  = 0
+local notifymessage  = ""
 
 -- messages
 local gameoverstr = "Game Over"
@@ -198,6 +205,51 @@ end
 
 --------------------------------------------------------------------------------
 
+local function updatenotification()
+    -- check if there is a message to display
+    if notifymessage ~= "" then
+        local y = 0
+        -- check if notification finished
+        if notifycurrent >= notifyduration then
+            notifymessage = ""
+            notifycurrent = 0
+        else
+            -- select font
+            ov("font "..floor(8 * fontscale).." mono")
+            -- check for appear phase
+            if notifycurrent < notifytrans then
+                y = (notifycurrent / notifytrans) * (8 * fontscale)
+            -- check for disappear phase
+            elseif notifycurrent > notifyduration - notifytrans then
+                y = (notifyduration - notifycurrent) / notifytrans * (8 * fontscale)
+            -- hold phase
+            else
+                y = (8 * fontscale)
+            end
+            -- draw notification
+            shadowtext(5, floor(ht - y - 4 * fontscale), notifymessage)
+            notifycurrent = notifycurrent + 1
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function notify(message, flag)
+    flag = flag or -1
+    notifymessage = message
+    if flag == 0 then
+        notifymessage = message.." off"
+    elseif flag == 1 then
+        notifymessage = message.." on"
+    end
+    if notifycurrent ~= 0 then
+        notifycurrent = notifytrans
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function initparticles()
     particles = {}
 end
@@ -206,7 +258,7 @@ end
 
 local function createparticles(x, y, areawd, areaht, howmany)
     -- find the first free slot
-    i = 1
+    local i = 1
     while i <= #particles and particles[i][1] > 0 do
         i = i + 1
     end
@@ -427,15 +479,19 @@ local function processinput()
         elseif event == "key t none" then
             showtiming = 1 - showtiming
             writesettings()
+            notify("Timing", showtiming)
         elseif event == "key p none" then
             showparticles = 1 - showparticles
             writesettings()
+            notify("Particles", showparticles)
         elseif event == "key a none" then
             autopause = 1 - autopause
             writesettings()
+            notify("Autopause", autopause)
         elseif event == "key s none" then
             autostart = 1 - autostart
             writesettings()
+            notify("Autostart", autostart)
         elseif event == "kup left" then
             if batkeydir == -1 then
                 batkeydir = 0
@@ -470,15 +526,19 @@ local function processendinput()
         elseif event == "key t none" then
             showtiming = 1 - showtiming
             writesettings()
+            notify("Timing", showtiming)
         elseif event == "key p none" then
             showparticles = 1 - showparticles
             writesettings()
+            notify("Particles", showparticles)
         elseif event == "key a none" then
             autopause = 1 - autopause
             writesettings()
+            notify("Autopause", autopause)
         elseif event == "key s none" then
             autostart = 1 - autostart
             writesettings()
+            notify("Autostart", autostart)
         end
     end
 end
@@ -623,7 +683,7 @@ local function drawtiming(t)
     end
     average = average / #times
     ov("font "..floor(8 * fontscale).." mono")
-    shadowtext(-5, ht - (8 * fontscale) - 8, string.format("%.1fms", average), alignright)
+    shadowtext(-5, ht - (8 * fontscale) - (4 * fontscale), string.format("%.1fms", average), alignright)
 end
 
 --------------------------------------------------------------------------------
@@ -710,6 +770,10 @@ local function breakout()
     initbat()
     initball()
 
+    -- welcome message
+    notify("Golly Breakout build "..build)
+
+    -- main loop
     while again == true do
         -- initialize the bricks
         initbricks()
@@ -717,7 +781,7 @@ local function breakout()
         -- intiialize the bat
         local bathits = 0
         local maxhits = 7
-        local lastx   = -1
+        lastx         = -1
 
         -- initialize the ball
         local balldx    = 0.5
@@ -747,7 +811,7 @@ local function breakout()
         -- whether mouse off overlay
         offoverlay = false
 
-        -- main loop
+        -- game loop
         while balls > 0 and bricksleft > 0 do
             -- time frame
             local frametime = g.millisecs()
@@ -766,7 +830,7 @@ local function breakout()
                 -- check for new ball
                 if not newball then
                     -- update ball position incrementally
-                    i = 1
+                    local i = 1
                     while i <= numsteps and not newball do
                         i = i + 1
                         local stepx = ((balldx * ballspeed * ballsize) / speeddiv) / numsteps
@@ -903,6 +967,9 @@ local function breakout()
                 drawtiming(g.millisecs() - frametime)
             end
 
+            -- update notification
+            updatenotification()
+
             -- update the display
             ov("update")
 
@@ -919,7 +986,7 @@ local function breakout()
         finished = false
         while not finished do
             -- time frame
-            frametime = g.millisecs()
+            local frametime = g.millisecs()
 
             -- check if size of layer has changed
             checkforresize()
@@ -958,6 +1025,9 @@ local function breakout()
                 drawtiming(g.millisecs() - frametime)
             end
 
+            -- update notification
+            updatenotification()
+
             -- update the display
             ov("update")
 
@@ -976,7 +1046,6 @@ local function breakout()
             -- level complete
             level = level + 1
         end
-
     end
 
     -- free clips and restore settings
