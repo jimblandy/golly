@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 22
+local build = 23
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -11,11 +11,13 @@ local op    = require "oplus"
 local ov    = g.overlay
 local floor = math.floor
 local rand  = math.random
+local abs   = math.abs
 
 -- text alignment
 local alignleft   = 0
 local aligncenter = 1
 local alignright  = 2
+local alignraw    = 3
 local fontscale   = 1
 
 -- overlay width and height
@@ -64,7 +66,7 @@ local lastx
 local ballsize = wd / 80
 local ballx    = 0
 local bally    = 0
-local numsteps = 24
+local numsteps = 50
 
 -- particle settings
 local particles      = {}
@@ -93,10 +95,13 @@ local again      = true
 local times         = {}
 local timenum       = 1
 local numtimes      = 10
+
+-- game options
 local showtiming    = 0
 local showparticles = 1
 local autopause     = 0
 local autostart     = 0
+local showmouse     = 1
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."breakout.ini"
@@ -121,10 +126,20 @@ local newhighstr  = "New High Score!"
 
 --------------------------------------------------------------------------------
 
+local function showcursor()
+    if showmouse == 0 then
+        ov("cursor hidden")
+    else
+        ov("cursor arrow")
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function setfullscreen()
     g.setoption("fullscreen", fullscreen)
     if fullscreen == 0 then
-        ov("cursor arrow")
+        showcursor()
     else
         ov("cursor hidden")
     end
@@ -141,6 +156,7 @@ local function readsettings()
         showparticles = tonumber(f:read("*l")) or 1
         autopause     = tonumber(f:read("*l")) or 0
         autostart     = tonumber(f:read("*l")) or 0
+        showmouse     = tonumber(f:read("*l")) or 1
         f:close()
     end
 end
@@ -156,6 +172,7 @@ local function writesettings()
         f:write(tostring(showparticles).."\n")
         f:write(tostring(autopause).."\n")
         f:write(tostring(autostart).."\n")
+        f:write(tostring(showmouse).."\n")
         f:close()
     end
 end
@@ -187,20 +204,117 @@ end
 local function shadowtext(x, y, text, align, color)
     align = align or alignleft
     color = color or op.white
-    ov("blend 1")
-    ov(op.black)
+    -- save settings
+    local oldblend = ov("blend 1")
+    local oldrgba = ov(op.black)
     local w, h = maketext(text)
     local textx = edgegapl
+    -- process alignment
     if align == aligncenter then
         textx = (wd - w) / 2 + edgegapl
     elseif align == alignright then
         textx = wd - w - edgegapr
+    elseif align == alignraw then
+        textx = 0
     end
+    -- adjust position for shadow
+    if shadtxtx < 0 then
+        x = x - shadtxtx
+    end
+    if shadtxty < 0 then
+        y = y - shadtxty
+    end
+    -- draw shadow
     pastetext(floor(textx + x + shadtxtx), floor(y + shadtxty))
+    -- draw text
     ov(color)
     maketext(text)
     pastetext(floor(textx + x), floor(y))
-    return w + shadtxtx, h + shadtxty 
+    -- adjust width and height for shadow
+    w = w + abs(shadtxtx)
+    h = h + abs(shadtxty)
+    -- restore settings
+    ov("blend "..oldblend)
+    ov("rgba "..oldrgba)
+    return w, h
+end
+
+--------------------------------------------------------------------------------
+
+-- width and height of static text clips
+local gameoverw, gameoverh
+local restartw, restarth
+local quitw, quith
+local highscorew, highscoreh
+local focusw, focush
+local pausew, pauseh
+local fullw, fullh
+local controlw, controlh
+local newballw, newballh
+local continuew, continueh
+
+local function createstatictext()
+    -- clear background to transparent black
+    ov("rgba 0 0 0 0")
+    ov("fill")
+
+    -- create game over text
+    local y = 0
+    local fontsize = floor(30 * fontscale)
+    if fontsize == 70 then
+        fontsize = 71 -- bug in wxFont
+    end
+    ov("font "..fontsize.." mono")
+    gameoverw, gameoverh = shadowtext(0, y, gameoverstr, alignraw, op.red)
+    ov("copy 0 "..y.." "..gameoverw.." "..gameoverh.." gameover")
+    y = y + gameoverh
+
+    -- create restart text
+    fontsize = floor(10 * fontscale)
+    ov("font "..fontsize.." mono")
+    restartw, restarth = shadowtext(0, y, restartstr, alignraw)
+    ov("copy 0 "..y.." "..restartw.." "..restarth.." restart")
+    y = y + restarth
+  
+    -- create quit text
+    quitw, quith = shadowtext(0, y, quitstr, alignraw)
+    ov("copy 0 "..y.." "..quitw.." "..quith.." quit")
+    y = y + quith
+
+    -- create highscore text
+    highscorew, highscoreh = shadowtext(0, y, newhighstr, alignraw, op.green)
+    ov("copy 0 "..y.." "..highscorew.." "..highscoreh.." highscore")
+    y = y + highscoreh
+
+    -- create off overlay text
+    focusw, focush = shadowtext(0, y, focusstr, alignraw)
+    ov("copy 0 "..y.." "..focusw.." "..focush.." focus")
+    y = y + focush
+
+    -- create pause text
+    pausew, pauseh = shadowtext(0, y, pausestr, alignraw)
+    ov("copy 0 "..y.." "..pausew.." "..pauseh.." pause")
+    y = y + pauseh
+
+    -- create full screen text
+    fullw, fullh = shadowtext(0, y, fullstr, alignraw)
+    ov("copy 0 "..y.." "..fullw.." "..fullh.." full")
+    y = y + fullh
+
+    -- create controls text
+    controlw, controlh = shadowtext(0, y, controlstr, alignraw)
+    ov("copy 0 "..y.." "..controlw.." "..controlh.." control")
+    y = y + controlh
+
+    -- create new ball text
+    newballw, newballh = shadowtext(0, y, newballstr, alignraw)
+    ov("copy 0 "..y.." "..newballw.." "..newballh.." newball")
+    y = y + newballh
+
+    -- create continue text
+    continuew, continueh = shadowtext(0, y, continuestr, alignraw)
+    ov("copy 0 "..y.." "..continuew.." "..continueh.." continue")
+    y = y + continueh
 end
 
 --------------------------------------------------------------------------------
@@ -492,6 +606,11 @@ local function processinput()
             autostart = 1 - autostart
             writesettings()
             notify("Autostart", autostart)
+        elseif event == "key m none" then
+            showmouse = 1 - showmouse
+            writesettings()
+            showcursor()
+            notify("Mouse pointer", showmouse)
         elseif event == "kup left" then
             if batkeydir == -1 then
                 batkeydir = 0
@@ -539,6 +658,11 @@ local function processendinput()
             autostart = 1 - autostart
             writesettings()
             notify("Autostart", autostart)
+        elseif event == "key m none" then
+            showmouse = 1 - showmouse
+            writesettings()
+            showcursor()
+            notify("Mouse pointer", showmouse)
         end
     end
 end
@@ -594,6 +718,9 @@ local function resizegame(newwd, newht)
     -- recreate background
     ov("freeclip bg")
     createbackground()
+
+    -- recreate static text
+    createstatictext()
 end
 
 --------------------------------------------------------------------------------
@@ -613,45 +740,44 @@ end
 --------------------------------------------------------------------------------
 
 local function drawgameover()
-    ov("font "..floor(30 * fontscale).." mono")
-    shadowtext(0, ht / 2 - 30 * fontscale, gameoverstr, aligncenter, op.red)
-    ov("font "..floor(10 * fontscale).." mono")
-    shadowtext(0, ht / 2 + 30 * fontscale, restartstr, aligncenter)
+    ov("blend 1")
     if newhigh then
-        local w, h = shadowtext(0, ht / 2 + 82 * fontscale, newhighstr, aligncenter, op.green)
-        createparticles(edgegapl + floor(wd / 2) + w / 2, floor(ht / 2 + 82 * fontscale), w, 1, highparticles)
+        ov("paste "..floor((wd - highscorew) / 2).." "..floor(ht / 2 + 82 * fontscale).." highscore")
+        createparticles(edgegapl + floor(wd / 2) + highscorew / 2, floor(ht / 2 + 82 * fontscale), highscorew, 1, highparticles)
     end
-    shadowtext(0, ht / 2 + 52 * fontscale, quitstr, aligncenter)
+    ov("paste "..floor((wd - gameoverw) / 2).." "..floor(ht / 2 - 30 * fontscale).." gameover")
+    ov("paste "..floor((wd - restartw) / 2).." "..floor(ht / 2 + 30 * fontscale).." restart")
+    ov("paste "..floor((wd - quitw) / 2).." "..floor(ht / 2 + 52 * fontscale).." quit")
 end
 
 --------------------------------------------------------------------------------
 
 local function drawlevelcomplete()
+    ov("blend 1")
     ov("font "..floor(20 * fontscale).." mono")
     shadowtext(0, ht / 2 - 30 * fontscale, "Level "..level.." complete!", aligncenter, op.green)
-    ov("font "..floor(10 * fontscale).." mono")
-    shadowtext(0, ht / 2 + 30 * fontscale, continuestr, aligncenter)
-    shadowtext(0, ht / 2 + 52 * fontscale, quitstr, aligncenter)
+    ov("paste "..floor((wd - continuew) / 2).." "..floor(ht / 2 + 30 * fontscale).." continue")
+    ov("paste "..floor((wd - quitw) / 2).." "..floor(ht / 2 + 52 * fontscale).." quit")
 end
 
 --------------------------------------------------------------------------------
 
 local function drawpause()
-    ov("font "..floor(10 * fontscale).." mono")
+    ov("blend 1")
     if offoverlay and autopause ~= 0 and autostart ~= 0 then
-       shadowtext(0, ht / 2, focusstr, aligncenter)
+       ov("paste "..floor((wd - focusw) / 2).." "..floor(ht / 2).." focus")
     else
-       shadowtext(0, ht / 2, pausestr, aligncenter)
+       ov("paste "..floor((wd - pausew) / 2).." "..floor(ht / 2).." pause")
     end
 end
 
 --------------------------------------------------------------------------------
 
 local function drawnewball()
-    ov("font "..floor(10 * fontscale).." mono")
-    shadowtext(0, ht / 2 + 82 * fontscale, fullstr, aligncenter)
-    shadowtext(0, ht / 2 + 52 * fontscale, controlstr, aligncenter)
-    shadowtext(0, ht / 2 + 22 * fontscale, newballstr, aligncenter)
+    ov("blend 1")
+    ov("paste "..floor((wd - fullw) / 2).." "..floor(ht / 2 + 82 * fontscale).." full")
+    ov("paste "..floor((wd - controlw) / 2).." "..floor(ht / 2 + 52 * fontscale).." control")
+    ov("paste "..floor((wd - newballw) / 2).." "..floor(ht / 2 + 22 * fontscale).." newball")
     ov("font "..floor(15 * fontscale).." mono")
     local remstr, remcol
     if balls == 1 then
@@ -772,6 +898,9 @@ local function breakout()
 
     -- welcome message
     notify("Golly Breakout build "..build)
+
+    -- create static text
+    createstatictext()
 
     -- main loop
     while again == true do
