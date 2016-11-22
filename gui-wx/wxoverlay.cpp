@@ -4010,16 +4010,13 @@ const char* Overlay::DoFont(const char* args)
         // check if given font name is valid
         if (strcmp(newname, "default") == 0) {
             currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-            currfont.SetPointSize(ptsize);
 
         } else if (strcmp(newname, "default-bold") == 0) {
             currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-            currfont.SetPointSize(ptsize);
             currfont.SetWeight(wxFONTWEIGHT_BOLD);
 
         } else if (strcmp(newname, "default-italic") == 0) {
             currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-            currfont.SetPointSize(ptsize);
             currfont.SetStyle(wxFONTSTYLE_ITALIC);
 
         } else if (strcmp(newname, "mono") == 0) {
@@ -4043,6 +4040,10 @@ const char* Overlay::DoFont(const char* args)
         } else {
             return OverlayError("unknown font name");
         }
+        
+        // note that calling SetPointSize here avoids a bug in wxFont
+        // that causes a 70pt font to end up as 8pt
+        currfont.SetPointSize(ptsize);
     }
 
     int oldfontsize = fontsize;
