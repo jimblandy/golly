@@ -1,18 +1,24 @@
 # Makefile for building a 64-bit Cocoa version of Golly using wxWidgets 3.x on Mac OS 10.6+.
 # It assumes you've built the wxWidgets libraries with commands like these:
 #
-# cd /HD/wxWidgets/wxWidgets-3.0.2
+# cd /HD/wxWidgets/wxWidgets-3.0.2  (use 3.1.0 on Mac OS 10.12+)
 # mkdir build-osx
 # cd build-osx
 # ../configure --enable-unicode --disable-shared --with-osx_cocoa
+# If on Mac OS 10.12+ use this:
+# ../configure --enable-unicode --disable-shared --with-osx_cocoa --with-macosx-version-min=10.9 --disable-mediactrl
 # make
 
 # In the lines below, change WX_DIR to where you installed wxWidgets,
 # change WXLIB_DIR to where you built the wx libraries, and change
 # WX_RELEASE to match your wxWidgets version (first two digits).
 
-WX_RELEASE = 3.0
-WX_DIR = /HD/wxWidgets/wxWidgets-3.0.2
+# determine Mac OS X version (eg. 6 for Snow Leopard, 11 for El Capitan)
+OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
+osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
+
+WX_RELEASE = $(call osx_ge,12,"3.1","3.0")
+WX_DIR = $(call osx_ge,12,"/HD/wxWidgets/wxWidgets-3.1.0","/HD/wxWidgets/wxWidgets-3.0.2")
 WXLIB_DIR = $(WX_DIR)/build-osx
 
 WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
@@ -65,12 +71,8 @@ TOOLKIT = OSX_COCOA
 TOOLKIT_LOWERCASE = osx_cocoa
 TOOLKIT_VERSION = 
 
-# determine Mac OS X version (eg. 6 for Snow Leopard, 11 for El Capitan)
-OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
-osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
-
 CXXC = g++
-CXXC += $(call osx_ge, 9, "-mmacosx-version-min=10.9", "-mmacosx-version-min=10.6")
+CXXC += $(call osx_ge,9,"-mmacosx-version-min=10.9","-mmacosx-version-min=10.6")
 
 CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
    -I${WXINC_DIR} -I${WX_DIR}/include \
@@ -81,7 +83,7 @@ CXXFLAGS = -arch x86_64 \
    -DZLIB -O3 -Wall -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor \
    -fno-strict-aliasing -fno-common
 
-CXXFLAGS += $(call osx_ge, 11, "-Wno-potentially-evaluated-expression", "")
+CXXFLAGS += $(call osx_ge,11,"-Wno-potentially-evaluated-expression","")
 
 ifdef ENABLE_PERL
     CXXFLAGS += -DENABLE_PERL

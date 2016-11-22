@@ -6,6 +6,12 @@ CC = cc
 PLATFORM = $(shell uname)
 ifeq "$(PLATFORM)" "Darwin"
 CFLAGS = -O2 -Wall -Wextra -DLUA_COMPAT_5_2 -DLUA_USE_MACOSX -arch x86_64
+
+# determine Mac OS X version (eg. 6 for Snow Leopard, 11 for El Capitan)
+OS_VERSION = $(shell sw_vers -productVersion | cut -f 2 -d '.')
+osx_ge = $(shell if [ $(OS_VERSION) -ge $(1) ] ; then echo "$(2)"; else echo "$(3)"; fi ;)
+
+CFLAGS += $(call osx_ge,9,"-mmacosx-version-min=10.9","")
 else
 CFLAGS = -O2 -Wall -Wextra -DLUA_COMPAT_5_2 -DLUA_USE_LINUX
 endif

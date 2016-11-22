@@ -237,7 +237,7 @@ HelpFrame::HelpFrame()
     
     wxButton* closebutt = new wxButton(this, wxID_CLOSE, _("Close"));
     closebutt->SetDefault();
-    hbox->Add(closebutt, 0, wxALL | wxALIGN_RIGHT, 10);
+    hbox->Add(closebutt, 0, wxALL, 10);
     
     vbox->Add(hbox, 0, wxALL | wxEXPAND | wxALIGN_TOP, 0);
     
