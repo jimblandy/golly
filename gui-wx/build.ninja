@@ -21,7 +21,7 @@
 # sys   0m8.351s
 
 # golly version
-app_version = 2.9b1
+app_version = 2.9b2
 
 # build directories
 basedir = ../gollybase

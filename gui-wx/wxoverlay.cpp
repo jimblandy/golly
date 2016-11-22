@@ -2724,7 +2724,8 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
     int dy = y1 - y0;
     int xstep = 1;
     int ystep = 1;
-    int pxstep, pystep;
+    int pxstep = 0;
+    int pystep = 0;
 
     if (dx < 0) { dx = -dx; xstep = -1; }
     if (dy < 0) { dy = -dy; ystep = -1; }
