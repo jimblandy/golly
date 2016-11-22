@@ -43,7 +43,7 @@ and grab the appropriate source archive for your platform:
 <p>
 Golly should compile with wxWidgets 2.8.0 or later, but it's best to
 use the latest stable version (3.0.2 at time of writing).
-Mac users should definitely get 3.0 or later.
+Mac users should definitely get 3.0 or later (3.1 or later if you have Mac OS 10.12+).
 
 <a name="wxwin"></a>
 <h3>On Windows</h3>
@@ -107,33 +107,70 @@ For a 32-bit release build, open a x32 Visual Studio command prompt
 <h3>On Mac OS X</h3>
 
 <p>
-Unpack the wxWidgets source archive wherever you like, start up Terminal
-and type these commands (using the correct path and version number):
+Unpack the wxWidgets source archive wherever you like.
+Before building wxWidgets you need to make a couple of small but important
+changes to the source code:
+
+<ol>
+<li>
+Open <tt>src/osx/nonownedwnd_osx.cpp</tt> and edit the <tt>wxNonOwnedWindow::Update</tt>
+routine so that it looks like this:
+
+<pre>
+void wxNonOwnedWindow::Update()
+{
+    m_nowpeer->Update();
+}
+</pre>
+
+<p>
+This routine is called whenever a Golly script wants to update the viewport.
+Without this change, scripts like heisenburp.lua will run way too fast.
+
+<li>
+Open <tt>src/osx/cocoa/scrolbar.mm</tt> and edit the <tt>wxOSXScrollBarCocoaImpl::mouseEvent</tt>
+routine so that it begins like this:
+
+<pre>
+static bool in_mouseEvent = false;
+void wxOSXScrollBarCocoaImpl::mouseEvent(WX_NSEvent event, WXWidget slf, void *_cmd)
+{
+    // avoid crash due to possible re-entrancy
+    if (in_mouseEvent) return;
+    in_mouseEvent = true;
+    wxWidgetCocoaImpl::mouseEvent(event, slf, _cmd);
+    in_mouseEvent = false;
+</pre>
+</ol>
+
+<p>
+Now you're ready to build wxWidgets.  If you're using Mac OS 10.12 or later
+then start up Terminal and type these commands (using the correct path and version number):
+
+<pre>
+   cd /path/to/wxWidgets-3.1.0
+   mkdir build-osx
+   cd build-osx
+   ../configure --with-osx_cocoa --disable-shared --enable-unicode --with-macosx-version-min=10.9
+                --disable-mediactrl
+   make
+</pre>
+
+<p>
+If your Mac OS is older than 10.12 then these commands should work
+(again, use the correct path and version number):
 
 <pre>
    cd /path/to/wxWidgets-3.0.2
    mkdir build-osx
    cd build-osx
-   ../configure --with-osx_cocoa --disable-shared --enable-unicode
+   ../configure --with-osx_cocoa --disable-shared --enable-unicode --with-macosx-version-min=10.9
    make
 </pre>
 
 <p>
-WARNING: If your version of wxWidgets is later than 2.9.4 then you'll need to make
-the following patch before running make.  Open <tt>src/osx/nonownedwnd_osx.cpp</tt>
-and edit the <tt>wxNonOwnedWindow::Update()</tt> routine so that it looks like this:
-
-<pre>
-   void wxNonOwnedWindow::Update()
-   {
-       m_nowpeer->Update();
-   }
-</pre>
-
-<p>
-This routine is called whenever a Golly script wants to update the viewport via
-an update() or autoupdate(True) command.  Without this change, scripts like
-heisenburp.py will run way too fast.
+If your Mac OS is older than 10.9 then remove <tt>--with-macosx-version-min=10.9</tt> from
+the configure command.
 
 
 <a name="wxlin"></a>
@@ -551,6 +588,12 @@ Each module is described in (roughly) top-down order, and some key routines are 
 <dd>
    Implements Lua script support.<br>
    RunLuaScript() runs a given .lua file.
+</dd>
+
+<p><b>wxoverlay.*</b><p>
+<dd>
+   Implements the overlay commands.<br>
+   DoOverlayCommand() is where it all starts.
 </dd>
 
 <p><b>wxperl.*</b><p>
