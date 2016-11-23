@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 23
+local build = 24
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -127,7 +127,7 @@ local newhighstr  = "New High Score!"
 --------------------------------------------------------------------------------
 
 local function showcursor()
-    if showmouse == 0 then
+    if showmouse == 0 or fullscreen == 1 then
         ov("cursor hidden")
     else
         ov("cursor arrow")
@@ -138,11 +138,7 @@ end
 
 local function setfullscreen()
     g.setoption("fullscreen", fullscreen)
-    if fullscreen == 0 then
-        showcursor()
-    else
-        ov("cursor hidden")
-    end
+    showcursor()
 end
 
 --------------------------------------------------------------------------------
@@ -261,9 +257,6 @@ local function createstatictext()
     -- create game over text
     local y = 0
     local fontsize = floor(30 * fontscale)
-    if fontsize == 70 then
-        fontsize = 71 -- bug in wxFont
-    end
     ov("font "..fontsize.." mono")
     gameoverw, gameoverh = shadowtext(0, y, gameoverstr, alignraw, op.red)
     ov("copy 0 "..y.." "..gameoverw.." "..gameoverh.." gameover")
@@ -427,13 +420,19 @@ end
 
 local function createbackground()
     ov("blend 0")
-    ov(op.black)
-    ov("fill")
     local y, c
     for y = 0, ht - 1 do
         c = floor((y / ht) * 128)
         ov("rgba 0 "..(128 - c).." "..c.." 255")
         ov("line 0 "..y.." "..(wd - 1).." "..y)
+    end
+    if edgegapl > 0 then
+        ov(op.black)
+        ov("fill 0 0 "..edgegapl.." "..(ht - 1))
+    end
+    if edgegapr > 0 then
+        ov(op.black)
+        ov("fill "..(wd - edgegapr).." 0 "..edgegapr.." "..(ht - 1))
     end
 
     -- save the background clip
@@ -445,14 +444,6 @@ end
 local function drawbackground()
     ov("blend 0")
     ov("paste 0 0 bg")
-    if edgegapl > 0 then
-        ov(op.black)
-        ov("fill 0 0 "..edgegapl.." "..(ht -1))
-    end
-    if edgegapr > 0 then
-        ov(op.black)
-        ov("fill "..(wd - edgegapr).." 0 "..edgegapr.." "..(ht - 1))
-    end
 end
 
 --------------------------------------------------------------------------------
