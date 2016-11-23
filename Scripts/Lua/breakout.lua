@@ -3,7 +3,7 @@
 
 local build = 25
 local g = golly()
-require "gplus.strict"
+-- require "gplus.strict"
 local gp    = require "gplus"
 local split = gp.split
 local int   = gp.int
@@ -792,7 +792,7 @@ end
 
 local function drawgameover()
     ov("blend 1")
-    if not newhigh then
+    if newhigh then
         local highscorew = drawtextclip("highscore", floor(ht / 2 + 96 * fontscale))
         createparticles(edgegapl + floor(wd / 2) + highscorew / 2, floor(ht / 2 + 96 * fontscale), highscorew, 1, highparticles)
     end
