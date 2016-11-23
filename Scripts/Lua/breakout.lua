@@ -1,9 +1,9 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 24
+local build = 25
 local g = golly()
--- require "gplus.strict"
+require "gplus.strict"
 local gp    = require "gplus"
 local split = gp.split
 local int   = gp.int
@@ -102,6 +102,8 @@ local showparticles = 1
 local autopause     = 0
 local autostart     = 0
 local showmouse     = 1
+local showshadows   = 1
+local showoptions   = false
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."breakout.ini"
@@ -112,17 +114,31 @@ local notifytrans    = 20
 local notifycurrent  = 0
 local notifymessage  = ""
 
--- messages
-local gameoverstr = "Game Over"
-local newballstr  = "Click or Enter to launch ball"
-local controlstr  = "Mouse or Arrow keys to move bat"
-local pausestr    = "Paused: Click or Enter to continue"
-local focusstr    = "Paused: Move mouse onto overlay to continue"
-local fullstr     = "F11 to toggle full screen mode"
-local restartstr  = "Click or Enter to start again"
-local quitstr     = "Right Click or Esc to quit"
-local continuestr = "Click or Enter for next level"
-local newhighstr  = "New High Score!"
+-- static messages and clip names
+local messages = {
+    ["gameover"]   = { "Game Over", 30, op.red },
+    ["newball"]    = { "Click or Enter to launch ball", 10 },
+    ["control"]    = { "Mouse or Arrow keys to move bat", 10 },
+    ["pause"]      = { "Paused: Click or Enter to continue", 10 },
+    ["focus"]      = { "Paused: Move mouse onto overlay to continue", 10 },
+    ["option"]     = { "Tab for Game Settings", 10 },
+    ["restart"]    = { "Click or Enter to start again", 10 },
+    ["quit"]       = { "Right Click or Esc to quit", 10 },
+    ["continue"]   = { "Click or Enter for next level", 10 },
+    ["highscore"]  = { "New High Score!", 10, op.green },
+    ["close"]      = { "Click or Tab to close Game Settings", 10 },
+    ["autopause"]  = { "Autopause", 10, "rgba 192 192 192 255" },
+    ["shadows"]    = { "Shadows", 10, "rgba 192 192 192 255" },
+    ["mouse"]      = { "Mouse Pointer", 10, "rgba 192 192 192 255" },
+    ["particles"]  = { "Particles", 10, "rgba 192 192 192 255" },
+    ["autostart"]  = { "Autostart", 10, "rgba 192 192 192 255" },
+    ["timing"]     = { "Timing", 10, "rgba 192 192 192 255" },
+    ["fullscreen"] = { "Fullscreen", 10, "rgba 192 192 192 255" },
+    ["function"]   = { "Function", 10 },
+    ["on"]         = { "On", 10, op.green },
+    ["off"]        = { "Off", 10, op.red },
+    ["state"]      = { "State", 10 }
+}
 
 --------------------------------------------------------------------------------
 
@@ -153,6 +169,7 @@ local function readsettings()
         autopause     = tonumber(f:read("*l")) or 0
         autostart     = tonumber(f:read("*l")) or 0
         showmouse     = tonumber(f:read("*l")) or 1
+        showshadows   = tonumber(f:read("*l")) or 1
         f:close()
     end
 end
@@ -169,6 +186,7 @@ local function writesettings()
         f:write(tostring(autopause).."\n")
         f:write(tostring(autostart).."\n")
         f:write(tostring(showmouse).."\n")
+        f:write(tostring(showshadows).."\n")
         f:close()
     end
 end
@@ -237,77 +255,33 @@ end
 
 --------------------------------------------------------------------------------
 
--- width and height of static text clips
-local gameoverw, gameoverh
-local restartw, restarth
-local quitw, quith
-local highscorew, highscoreh
-local focusw, focush
-local pausew, pauseh
-local fullw, fullh
-local controlw, controlh
-local newballw, newballh
-local continuew, continueh
-
 local function createstatictext()
     -- clear background to transparent black
     ov("rgba 0 0 0 0")
     ov("fill")
 
-    -- create game over text
+    -- create each static text clip
     local y = 0
-    local fontsize = floor(30 * fontscale)
-    ov("font "..fontsize.." mono")
-    gameoverw, gameoverh = shadowtext(0, y, gameoverstr, alignraw, op.red)
-    ov("copy 0 "..y.." "..gameoverw.." "..gameoverh.." gameover")
-    y = y + gameoverh
-
-    -- create restart text
-    fontsize = floor(10 * fontscale)
-    ov("font "..fontsize.." mono")
-    restartw, restarth = shadowtext(0, y, restartstr, alignraw)
-    ov("copy 0 "..y.." "..restartw.." "..restarth.." restart")
-    y = y + restarth
-  
-    -- create quit text
-    quitw, quith = shadowtext(0, y, quitstr, alignraw)
-    ov("copy 0 "..y.." "..quitw.." "..quith.." quit")
-    y = y + quith
-
-    -- create highscore text
-    highscorew, highscoreh = shadowtext(0, y, newhighstr, alignraw, op.green)
-    ov("copy 0 "..y.." "..highscorew.." "..highscoreh.." highscore")
-    y = y + highscoreh
-
-    -- create off overlay text
-    focusw, focush = shadowtext(0, y, focusstr, alignraw)
-    ov("copy 0 "..y.." "..focusw.." "..focush.." focus")
-    y = y + focush
-
-    -- create pause text
-    pausew, pauseh = shadowtext(0, y, pausestr, alignraw)
-    ov("copy 0 "..y.." "..pausew.." "..pauseh.." pause")
-    y = y + pauseh
-
-    -- create full screen text
-    fullw, fullh = shadowtext(0, y, fullstr, alignraw)
-    ov("copy 0 "..y.." "..fullw.." "..fullh.." full")
-    y = y + fullh
-
-    -- create controls text
-    controlw, controlh = shadowtext(0, y, controlstr, alignraw)
-    ov("copy 0 "..y.." "..controlw.." "..controlh.." control")
-    y = y + controlh
-
-    -- create new ball text
-    newballw, newballh = shadowtext(0, y, newballstr, alignraw)
-    ov("copy 0 "..y.." "..newballw.." "..newballh.." newball")
-    y = y + newballh
-
-    -- create continue text
-    continuew, continueh = shadowtext(0, y, continuestr, alignraw)
-    ov("copy 0 "..y.." "..continuew.." "..continueh.." continue")
-    y = y + continueh
+    local fontsize
+    local lastsize = -1
+    for clipname, message in pairs(messages) do
+        -- get the font size for this message
+        local fontsize = floor(message[2] * fontscale)
+        -- if it is different than the last message then set the new font
+        if fontsize ~= lastsize then
+            ov("font "..fontsize.." mono")
+            lastsize = fontsize
+        end
+        -- create the text message
+        local w, h = shadowtext(0, y, message[1], alignraw, message[3])
+        -- copy to the named clip
+        ov("copy 0 "..y.." "..w.." "..h.." "..clipname)
+        -- save the clip width and height
+        message[4] = w
+        message[5] = h
+        -- next screen position
+        y = y + h
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -421,9 +395,10 @@ end
 local function createbackground()
     ov("blend 0")
     local y, c
+    local level = 96
     for y = 0, ht - 1 do
-        c = floor((y / ht) * 128)
-        ov("rgba 0 "..(128 - c).." "..c.." 255")
+        c = floor((y / ht) * level)
+        ov("rgba 0 "..(level - c).." "..c.." 255")
         ov("line 0 "..y.." "..(wd - 1).." "..y)
     end
     if edgegapl > 0 then
@@ -451,9 +426,18 @@ end
 local function drawbricks()
     local xoff = shadowx
     local yoff = shadowy
-    ov("blend 1")
-    ov(shadowcol)
-    for pass = 1, 2 do
+    local startpass = 1
+    -- check whether the draw shadows
+    if showshadows == 0 then
+        xoff = 0
+        yoff = 0
+        startpass = 2
+        ov("blend 0")
+    else
+        ov("blend 1")
+        ov(shadowcol)
+    end
+    for pass = startpass, 2 do
         for y = 1, numrows do
             local bricks = rows[y]
             bricky = (y + offsety) * brickht
@@ -477,9 +461,11 @@ end
 
 local function drawball()
     local oldwidth = ov("lineoption width "..floor(ballsize / 2))
-    ov(shadowcol)
-    ov("blend 1")
-    ov("ellipse "..(floor(ballx - ballsize / 2) + shadowx).." "..(floor(bally - ballsize / 2) + shadowy).." "..floor(ballsize).." "..floor(ballsize))
+    if showshadows == 1 then
+        ov(shadowcol)
+        ov("blend 1")
+        ov("ellipse "..(floor(ballx - ballsize / 2) + shadowx).." "..(floor(bally - ballsize / 2) + shadowy).." "..floor(ballsize).." "..floor(ballsize))
+    end
     ov(op.white)
     ov("ellipse "..floor(ballx - ballsize / 2).." "..floor(bally - ballsize / 2).." "..floor(ballsize).." "..floor(ballsize))
     if rand() < ballpartchance then
@@ -491,9 +477,11 @@ end
 --------------------------------------------------------------------------------
 
 local function drawbat()
-    ov(shadowcol)
-    ov("blend 1")
-    ov("fill "..(floor(batx) + shadowx).." "..(floor(baty) + shadowy).." "..batwd.." "..batht)
+    if showshadows == 1 then
+        ov(shadowcol)
+        ov("blend 1")
+        ov("fill "..(floor(batx) + shadowx).." "..(floor(baty) + shadowy).." "..batwd.." "..batht)
+    end
     ov("blend 0")
     -- draw the bat in red if mouse is off the overlay
     if offoverlay then
@@ -558,13 +546,102 @@ end
 
 --------------------------------------------------------------------------------
 
+local function togglefullscreen()
+    fullscreen = 1 - fullscreen
+    writesettings()
+    setfullscreen()
+end
+
+--------------------------------------------------------------------------------
+
+local function toggletiming()
+    showtiming = 1 - showtiming
+    writesettings()
+    notify("Timing", showtiming)
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleparticles()
+    showparticles = 1 - showparticles
+    writesettings()
+    notify("Particles", showparticles)
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleautopause()
+    autopause = 1 - autopause
+    writesettings()
+    notify("Autopause", autopause)
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleautostart()
+    autostart = 1 - autostart
+    writesettings()
+    notify("Autostart", autostart)
+end
+
+--------------------------------------------------------------------------------
+
+local function togglemouse()
+    showmouse = 1 - showmouse
+    writesettings()
+    showcursor()
+    notify("Mouse pointer", showmouse)
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleshadowdisplay()
+    showshadows = 1 - showshadows
+    writesettings()
+    notify("Shadows", showshadows)
+end
+
+--------------------------------------------------------------------------------
+
+local function processstandardkeys(event)
+    if event == "key f11 none" then
+        -- toggle fullscreen
+        togglefullscreen()
+    elseif event == "key a none" then
+        -- toggle autopause when mouse moves off overlay
+        toggleautopause()
+    elseif event == "key d none" then
+        -- toggle shadow display
+        toggleshadowdisplay()
+    elseif event == "key m none" then
+        -- toggle mouse cursor display when not fullscreen
+        togglemouse()
+    elseif event == "key p none" then
+        -- toggle particle display
+        toggleparticles()
+    elseif event == "key s none" then
+        -- toggle autostart when mouse moves onto overlay
+        toggleautostart()
+    elseif event == "key t none" then
+        -- toggle timing display
+        toggletiming()
+    elseif event == "key tab none" then
+        -- show options
+        showoptions = not showoptions
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function processinput()
     -- check for click, enter or return
     local event = g.getevent()
     if #event then
         if event:find("^oclick") or event == "key enter none" or event == "key return none" or event == "key space none" then
-            -- click, enter or space starts or toggles pause
-            if newball then
+            -- click, enter or space starts or toggles pause or dismisses options
+            if showoptions then
+                showoptions = false
+            elseif newball then
                 newball = false
                 pause   = false
             else
@@ -576,40 +653,18 @@ local function processinput()
         elseif event == "key right none" then
             -- right arrow moves bat right
             batkeydir = 1
-        elseif event == "key f11 none" then
-            -- toggle fullscreen
-            fullscreen = 1 - fullscreen
-            writesettings()
-            setfullscreen()
-        elseif event == "key t none" then
-            showtiming = 1 - showtiming
-            writesettings()
-            notify("Timing", showtiming)
-        elseif event == "key p none" then
-            showparticles = 1 - showparticles
-            writesettings()
-            notify("Particles", showparticles)
-        elseif event == "key a none" then
-            autopause = 1 - autopause
-            writesettings()
-            notify("Autopause", autopause)
-        elseif event == "key s none" then
-            autostart = 1 - autostart
-            writesettings()
-            notify("Autostart", autostart)
-        elseif event == "key m none" then
-            showmouse = 1 - showmouse
-            writesettings()
-            showcursor()
-            notify("Mouse pointer", showmouse)
         elseif event == "kup left" then
+            -- left key up stops left movement
             if batkeydir == -1 then
                 batkeydir = 0
             end
         elseif event == "kup right" then
+            -- right key up stops right movement
             if batkeydir == 1 then
                 batkeydir = 0
             end
+        else
+            processstandardkeys(event)
         end
     end
 end
@@ -621,39 +676,23 @@ local function processendinput()
     if #event > 0 then
         if event:find("^oclick") then
             local _, x, y, button, mods = split(event)
-            -- quit if right button pressed
-            if button == "right" then
-                again = false
+            if showoptions then
+                showoptions = false
+            else
+                -- quit if right button pressed
+                if button == "right" then
+                    again = false
+                end
+                finished = true
             end
-            finished = true
         elseif event == "key enter none" or event == "key return none" or event == "key space none" then
-            finished = true
-        elseif event == "key f11 none" then
-            -- toggle fullscreen
-            fullscreen = 1 - fullscreen
-            writesettings()
-            setfullscreen()
-        elseif event == "key t none" then
-            showtiming = 1 - showtiming
-            writesettings()
-            notify("Timing", showtiming)
-        elseif event == "key p none" then
-            showparticles = 1 - showparticles
-            writesettings()
-            notify("Particles", showparticles)
-        elseif event == "key a none" then
-            autopause = 1 - autopause
-            writesettings()
-            notify("Autopause", autopause)
-        elseif event == "key s none" then
-            autostart = 1 - autostart
-            writesettings()
-            notify("Autostart", autostart)
-        elseif event == "key m none" then
-            showmouse = 1 - showmouse
-            writesettings()
-            showcursor()
-            notify("Mouse pointer", showmouse)
+            if showoptions then
+                showoptions = false
+            else
+                finished = true
+            end
+        else
+            processstandardkeys(event)
         end
     end
 end
@@ -716,6 +755,27 @@ end
 
 --------------------------------------------------------------------------------
 
+local function drawtextclip(name, y, align, x)
+    align = align or aligncenter
+    x = x or 0
+    local message = messages[name]
+    local w = message[4]
+    local textx = edgegapl
+    -- process alignment
+    if align == aligncenter then
+        textx = (wd - w) / 2 + edgegapl
+    elseif align == alignright then
+        textx = wd - w - edgegapr
+    elseif align == alignraw then
+        textx = 0
+    end
+    -- paste clip
+    ov("paste "..floor(x + textx).." "..y.." "..name)
+    return w
+end
+
+--------------------------------------------------------------------------------
+
 local function drawscoreline()
     ov("blend 1")
     ov("font "..floor(10 * fontscale).." mono")
@@ -732,13 +792,14 @@ end
 
 local function drawgameover()
     ov("blend 1")
-    if newhigh then
-        ov("paste "..floor((wd - highscorew) / 2).." "..floor(ht / 2 + 82 * fontscale).." highscore")
-        createparticles(edgegapl + floor(wd / 2) + highscorew / 2, floor(ht / 2 + 82 * fontscale), highscorew, 1, highparticles)
+    if not newhigh then
+        local highscorew = drawtextclip("highscore", floor(ht / 2 + 96 * fontscale))
+        createparticles(edgegapl + floor(wd / 2) + highscorew / 2, floor(ht / 2 + 96 * fontscale), highscorew, 1, highparticles)
     end
-    ov("paste "..floor((wd - gameoverw) / 2).." "..floor(ht / 2 - 30 * fontscale).." gameover")
-    ov("paste "..floor((wd - restartw) / 2).." "..floor(ht / 2 + 30 * fontscale).." restart")
-    ov("paste "..floor((wd - quitw) / 2).." "..floor(ht / 2 + 52 * fontscale).." quit")
+    drawtextclip("gameover", floor(ht / 2 - 30 * fontscale))
+    drawtextclip("restart", floor(ht / 2 + 30 * fontscale))
+    drawtextclip("quit", floor(ht / 2 + 52 * fontscale))
+    drawtextclip("option", floor(ht / 2 + 74 * fontscale))
 end
 
 --------------------------------------------------------------------------------
@@ -747,8 +808,9 @@ local function drawlevelcomplete()
     ov("blend 1")
     ov("font "..floor(20 * fontscale).." mono")
     shadowtext(0, ht / 2 - 30 * fontscale, "Level "..level.." complete!", aligncenter, op.green)
-    ov("paste "..floor((wd - continuew) / 2).." "..floor(ht / 2 + 30 * fontscale).." continue")
-    ov("paste "..floor((wd - quitw) / 2).." "..floor(ht / 2 + 52 * fontscale).." quit")
+    drawtextclip("continue", floor(ht / 2 + 30 * fontscale))
+    drawtextclip("quit", floor(ht / 2 + 52 * fontscale))
+    drawtextclip("option", floor(ht / 2 + 74 * fontscale))
 end
 
 --------------------------------------------------------------------------------
@@ -756,9 +818,9 @@ end
 local function drawpause()
     ov("blend 1")
     if offoverlay and autopause ~= 0 and autostart ~= 0 then
-       ov("paste "..floor((wd - focusw) / 2).." "..floor(ht / 2).." focus")
+       drawtextclip("focus", floor(ht / 2))
     else
-       ov("paste "..floor((wd - pausew) / 2).." "..floor(ht / 2).." pause")
+       drawtextclip("pause", floor(ht / 2))
     end
 end
 
@@ -766,9 +828,9 @@ end
 
 local function drawnewball()
     ov("blend 1")
-    ov("paste "..floor((wd - fullw) / 2).." "..floor(ht / 2 + 82 * fontscale).." full")
-    ov("paste "..floor((wd - controlw) / 2).." "..floor(ht / 2 + 52 * fontscale).." control")
-    ov("paste "..floor((wd - newballw) / 2).." "..floor(ht / 2 + 22 * fontscale).." newball")
+    drawtextclip("option", floor(ht / 2 + 66 * fontscale))
+    drawtextclip("control", floor(ht / 2 + 44 * fontscale))
+    drawtextclip("newball", floor(ht / 2 + 22 * fontscale))
     ov("font "..floor(15 * fontscale).." mono")
     local remstr, remcol
     if balls == 1 then
@@ -801,6 +863,42 @@ local function drawtiming(t)
     average = average / #times
     ov("font "..floor(8 * fontscale).." mono")
     shadowtext(-5, ht - (8 * fontscale) - (4 * fontscale), string.format("%.1fms", average), alignright)
+end
+
+--------------------------------------------------------------------------------
+
+local function drawoption(key, setting, state, leftx, h, y, color)
+    color = color or "rgba 192 192 192 255"
+    shadowtext(leftx, y, key, alignleft, color)
+    drawtextclip(setting, y)
+    drawtextclip(state, y, alignright, -leftx)
+    return y + h
+end
+
+--------------------------------------------------------------------------------
+
+local function drawoptions()
+    local leftx = floor(wd / 6)
+    local state = {[0] = "off", [1] = "on"}
+
+    -- draw header
+    ov("blend 1")
+    ov("font "..floor(10 * fontscale).." mono")
+    local w, h = maketext(0, 0, "M")
+    local y = floor((ht - 8 * h) / 2)
+    y = drawoption("Key", "function", "state", leftx, h, y, op.white)
+
+    -- draw options
+    y = drawoption("A", "autopause", state[autopause], leftx, h, y)
+    y = drawoption("D", "shadows", state[showshadows], leftx, h, y)
+    y = drawoption("M", "mouse", state[showmouse], leftx, h, y)
+    y = drawoption("P", "particles", state[showparticles], leftx, h, y)
+    y = drawoption("S", "autostart", state[autostart], leftx, h, y)
+    y = drawoption("T", "timing", state[showtiming], leftx, h, y)
+    y = drawoption("F11", "fullscreen", state[fullscreen], leftx, h, y)
+
+    -- draw close options
+    drawtextclip("close", y + h)
 end
 
 --------------------------------------------------------------------------------
@@ -946,7 +1044,7 @@ local function breakout()
             drawbackground()
 
             -- check if paused
-            if not pause then
+            if not pause and not showoptions then
                 -- check for new ball
                 if not newball then
                     -- update ball position incrementally
@@ -1075,8 +1173,10 @@ local function breakout()
             -- draw the score, high score and lives
             drawscoreline()
 
-            -- check for pause
-            if pause then
+            -- check for text overlay
+            if showoptions then
+                drawoptions()
+            elseif pause then
                 drawpause()
             elseif newball and balls > 0 then
                 drawnewball()
@@ -1125,13 +1225,21 @@ local function breakout()
 
             -- check why game finished
             if balls == 0 then
-                -- game over
-                drawgameover()
+                if showoptions then
+                    drawoptions()
+                else
+                    -- game over
+                    drawgameover()
+                end
             else
                 -- draw bat
                 drawbat()
-                -- level complete
-                drawlevelcomplete()
+                if showoptions then
+                    drawoptions()
+                else
+                    -- level complete
+                    drawlevelcomplete()
+                end
             end
 
             -- draw score line
