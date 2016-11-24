@@ -1256,116 +1256,332 @@ end
 
 --------------------------------------------------------------------------------
 
-local function test_lines()
-    local maxx = wd - 1
-    local maxy = ht - 1
-    local x1 = rand(0, maxx)
-    local y1 = rand(0, maxy)
-    local x2 = rand(0, maxx)
-    local y2 = rand(0, maxy)
-    local dx1 = 0.5 + rand(0, 50) / 50
-    local dy1 = 0.5 + rand(0, 50) / 50
-    local dx2 = 0.5 + rand(0, 50) / 50
-    local dy2 = 0.5 + rand(0, 50) / 50
-    local hx1 = {}
-    local hx2 = {}
-    local hy1 = {}
-    local hy2 = {}
-    local numlines = 0
-    local index = 0
-    local maxindex = 1000
+local function dot(x, y)
+    local oldrgba = ov(op.red)
+    ov("set "..x.." "..y)
+    ov("rgba "..oldrgba)
+end
 
-    -- create the exit message
+--------------------------------------------------------------------------------
+
+local function draw_rect(x0, y0, x1, y1)
+    local oldrgba = ov(op.red)
+    local oldwidth = ov("lineoption width 1")
+    ov("line "..x0.." "..y0.." "..x1.." "..y0)
+    ov("line "..x1.." "..y0.." "..x1.." "..y1)
+    ov("line "..x1.." "..y1.." "..x0.." "..y1)
+    ov("line "..x0.." "..y1.." "..x0.." "..y0)
+    ov("rgba "..oldrgba)
+    ov("lineoption width "..oldwidth)
+end
+
+--------------------------------------------------------------------------------
+
+local function draw_line(x0, y0, x1, y1)
+    ov("line "..x0.." "..y0.." "..x1.." "..y1)
+end
+
+--------------------------------------------------------------------------------
+
+local function draw_ellipse(x, y, w, h)
+    ov("ellipse "..x.." "..y.." "..w.." "..h)
+    -- enable next call to check that ellipse is inside given rectangle
+    -- draw_rect(x, y, x+w-1, y+h-1)
+end
+
+--------------------------------------------------------------------------------
+
+local function radial_lines(x0, y0, length)
+    draw_line(x0, y0, x0+length, y0)
+    draw_line(x0, y0, x0, y0+length)
+    draw_line(x0, y0, x0, y0-length)
+    draw_line(x0, y0, x0-length, y0)
+    for angle = 15, 75, 15 do
+        local rad = angle * math.pi/180
+        local xd = int(length * cos(rad))
+        local yd = int(length * sin(rad))
+        draw_line(x0, y0, x0+xd, y0+yd)
+        draw_line(x0, y0, x0+xd, y0-yd)
+        draw_line(x0, y0, x0-xd, y0+yd)
+        draw_line(x0, y0, x0-xd, y0-yd)
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function vertical_lines(x, y)
+    local oldwidth = ov("lineoption width 0.5")
+    local len = 30
+    local gap = 12
+    draw_line(x, y, x, y+len)      dot(x,y)  dot(x,y+len)  x = x+gap
+    for w = 1, 8 do
+        ov("lineoption width "..w)
+        draw_line(x, y, x, y+len)  dot(x,y)  dot(x,y+len)  x = x+gap
+    end
+    ov("lineoption width "..oldwidth)
+end
+
+--------------------------------------------------------------------------------
+
+local function diagonal_lines(x, y)
+    local oldwidth = ov("lineoption width 0.5")
+    local len = 30
+    local gap = 12
+    draw_line(x, y, x+len, y+len)      dot(x,y)  dot(x+len,y+len)  x = x+gap
+    for w = 1, 8 do
+        ov("lineoption width "..w)
+        draw_line(x, y, x+len, y+len)  dot(x,y)  dot(x+len,y+len)  x = x+gap
+    end
+    ov("lineoption width "..oldwidth)
+end
+
+--------------------------------------------------------------------------------
+
+local function nested_ellipses(x, y)
+    -- start with a circle
+    local w = 91
+    local h = 91
+    draw_ellipse(x, y, w, h)
+    for i = 1, 3 do
+        draw_ellipse(x-i*10, y-i*15, w+i*20, h+i*30)
+        draw_ellipse(x+i*10, y+i*15, w-i*20, h-i*30)
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function show_magnified_pixels(x, y)
+    local radius = 5
+    local numcols = radius*2+1
+    local numrows = numcols
+    local magsize = 14
+    local boxsize = (1+magsize)*numcols+1
+    local xyrgba = ov("get "..x.." "..y)
+    
+    -- get pixel colors
+    local color = {}
+    for i = 1, numrows do
+        color[i] = {}
+        for j = 1, numcols do
+            color[i][j] = ov("get "..(x-radius-1+j).." "..(y-radius-1+i))
+        end
+    end
+    
+    -- draw gray background (ie. grid lines around pixels)
+    local oldrgba = ov(op.gray)
+    local xbox = int(x-boxsize/2)
+    local ybox = int(y-boxsize/2)
+    ov("fill "..xbox.." "..ybox.." "..boxsize.." "..boxsize)
+    
+    for i = 1, numrows do
+        for j = 1, numcols do
+            if #color[i][j] > 0 then
+                ov("rgba "..color[i][j])
+                local x = xbox+1+(j-1)*(magsize+1)
+                local y = ybox+1+(i-1)*(magsize+1)
+                ov("fill "..x.." "..y.." "..magsize.." "..magsize)
+            end
+        end
+    end
+    
+    -- draw text showing position and color of the pixel at x,y
+    local oldblend = ov("blend 1")
+    local oldfont = ov("font 9 default-bold")
+    local pxlinfo = "xy: "..x.." "..y.."\nrgba: "..xyrgba
+    ov(op.blue)
+    ov("fill "..xbox.." "..ybox.." "..boxsize.." "..((magsize+1)*2))
+    ov(op.white)
+    ov("text whiteinfo "..pxlinfo)
+    ov("paste "..(xbox+3).." "..(ybox+1).." whiteinfo")
+    ov("freeclip whiteinfo")
+    
+    ov("blend "..oldblend)
+    ov("rgba "..oldrgba)
+    ov("font "..oldfont)
+end
+
+--------------------------------------------------------------------------------
+
+local function test_lines()
+    -- this test requires a bigger overlay
+    local owd = 800
+    local oht = 600
+    ov("resize "..owd.." "..oht)
+    
+    ov(op.white)
+    ov("fill")
+    ov(op.black)
+    
+    local oldblend = ov("blend 0")
+    local oldwidth = ov("lineoption width 1")
+
+    -- non-antialiased lines (linewd = 1)
+    radial_lines(100, 100, 50)
+    
+    -- antialiased lines (linewd = 1)
+    ov("blend 1")
+    radial_lines(220, 100, 50)
+    ov("blend 0")
+    
+    -- thick non-antialiased lines
+    ov("lineoption width 3")            -- 2 is same as 1!!!??? (2.5 is ok)
+    radial_lines(100, 220, 50)
+    vertical_lines(50, 300)
+    diagonal_lines(50, 350)
+    
+    -- thick antialiased lines
+    ov("blend 1")
+    radial_lines(220, 220, 50)
+    vertical_lines(170, 300)
+    diagonal_lines(170, 350)
+    ov("blend 0")
+    
+    -- non-antialiased ellipses (linewd = 1)
+    ov("lineoption width 1")
+    nested_ellipses(350, 100)
+    
+    -- antialiased ellipses (linewd = 1)
+    ov("blend 1")
+    nested_ellipses(520, 100)
+    ov("blend 0")
+    
+    -- thick non-antialiased ellipses
+    ov("lineoption width 3")
+    nested_ellipses(350, 300)
+    
+    -- thick antialiased ellipses
+    ov("blend 1")
+    nested_ellipses(520, 300)
+    ov("blend 0")
+    ov("lineoption width 1")
+    
+    -- test overlapping translucent colors
+    ov("blend 1")
+    ov("lineoption width 20")
+    local oldrgba = ov("rgba 0 255 0 128")
+    draw_ellipse(50, 450, 100, 100)
+    ov("rgba 255 0 0 128")
+    draw_line(50, 450, 150, 550)
+    ov("rgba 0 0 255 128")
+    draw_line(150, 450, 50, 550)
+    ov("blend 0")
+    ov("lineoption width 1")
+    ov("rgba "..oldrgba)
+
+    -- draw filled ellipses using oplus function
+    op.fill_ellipse(300, 450, 100, 80, 15, op.green)
+    op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 200")
+
+    -- draw solid circles (non-antialiased and antialiased)
+    ov("lineoption width 10")
+    draw_ellipse(450, 500, 20, 20)
+    ov("blend 1")
+    draw_ellipse(480, 500, 20, 20)
+    ov("blend 0")
+    ov("lineoption width 1")
+    
+    -- draw solid ellipses (non-antialiased and antialiased)
+    ov("lineoption width 11")
+    draw_ellipse(510, 500, 21, 40)
+    ov("blend 1")
+    draw_ellipse(540, 500, 21, 40)
+    ov("blend 0")
+    ov("lineoption width 1")
+    
+    -- create a circular hole with fuzzy edges
+    ov("rgba 255 255 255 0")
+    ov("blend 0")
+    ov("lineoption width 25")
+    local x, y, w, h = 670, 470, 50, 50
+    draw_ellipse(x, y, w, h)
+    ov("lineoption width 1")
+    local a = 0
+    for i = 1, 63 do
+        a = a + 4
+        ov("rgba 255 255 255 "..a)
+        -- we need to draw 2 offset ellipses to ensure all pixels are altered
+        x = x-1
+        w = w+2
+        draw_ellipse(x, y, w, h)
+        y = y-1
+        h = h+2
+        draw_ellipse(x, y, w, h)
+    end
+    ov("lineoption width 1")
+    ov("rgba "..oldrgba)
+
+    -- create and draw the exit message
     local oldfont = ov(demofont)
+    ov("blend 1")
     local text
     if g.os() == "Mac" then
         text = "Click or hit the return key to return to the main menu."
     else
         text = "Click or hit the enter key to return to the main menu."
     end
-    ov(op.white)
-    local w,h = maketext(text)
     ov(op.black)
-    maketext(text, "shadow")
+    local w,h = maketext(text)
+    pastetext(10, oht - h - 10)
+    maketext("Hit the M key to toggle the magnifying box.")
+    pastetext(10, 10)
+    ov("font "..oldfont)
+    
+    g.update()
 
-    -- loop until key pressed or mouse clicked
-    while not return_to_main_menu do
+    ov("blend 0")
+    ov("copy 0 0 0 0 bg")
+    local showing_magnifier = false
+    local display_magnifier = true
+    local prevx, prevy
+    
+    -- loop until enter/return key pressed or mouse clicked
+    while true do
         local event = g.getevent()
         if event:find("^oclick") or event == "key enter none" or event == "key return none" then
-            -- return to main menu
+            -- tidy up and return to main menu
+            ov("blend "..oldblend)
+            ov("lineoption width "..oldwidth)
+            ov("freeclip bg")
             return_to_main_menu = true
-        end
-
-        -- fill the background with blue
-        local oldblend = ov("blend 0")
-        ov(op.blue)
-        ov("fill")
-
-        -- time drawing 1000 lines
-        local t1 = g.millisecs()
-
-        -- update the line endpoints
-        x1 = x1 + dx1
-        y1 = y1 + dy1
-        x2 = x2 + dx2
-        y2 = y2 + dy2
-        if x1 < 0 or x1 > maxx then
-            dx1 = -dx1
-            x1 = x1 + dx1
-        end
-        if y1 < 0 or y1 > maxy then
-            dy1 = -dy1
-            y1 = y1 + dy1
-        end
-        if x2 < 0 or x2 > maxx then
-            dx2 = -dx2
-            x2 = x2 + dx2
-        end
-        if y2 < 0 or y2 > maxy then
-            dy2 = -dy2
-            y2 = y2 + dy2
-        end
-
-        -- store the new line position in the history buffer
-        if numlines < maxindex then
-            numlines = numlines + 1
-        end
-        index = index + 1
-        if index > maxindex then
-            index = 0
-        end
-        hx1[index] = x1
-        hy1[index] = y1
-        hx2[index] = x2
-        hy2[index] = y2
-        local temp = index - numlines + 1
-        if temp < 0 then
-           temp = temp + numlines
-        end
-
-        -- draw 1000 lines
-        for i = 1, numlines do
-            local c = floor((i / numlines) * 255)
-            ov("rgba "..c.." "..c.." 255 255")
-            ov("line "..floor(hx1[temp]).." "..floor(hy1[temp]).." "..floor(hx2[temp]).." "..floor(hy2[temp]))
-            temp = temp + 1
-            if temp > maxindex then
-                temp = 0
+            return
+        elseif event == "key m none" then
+            -- toggle magnifier
+            display_magnifier = not display_magnifier
+            if showing_magnifier and not display_magnifier then
+                ov("paste 0 0 bg")
+                g.update()
+                showing_magnifier = false
+            elseif display_magnifier and not showing_magnifier then
+                -- force it to appear if mouse is in overlay
+                prevx = -1
             end
+        else
+            -- might be a keyboard shortcut
+            g.doevent(event)
         end
-
-        -- display elapsed time
-        g.show("Time to draw 1000 lines "..ms(g.millisecs() - t1))
-
-        -- draw the exit message
-        ov("blend 1")
-        pastetext(10 + 2, ht - h - 10 + 2, op.identity, "shadow")
-        pastetext(10, ht - h - 10)
-        ov("update")
         
-        ov("blend "..oldblend)
+        -- track mouse and magnify pixels under cursor
+        local xy = ov("xy")
+        if #xy > 0 then
+            local x, y = split(xy)
+            x = tonumber(x)
+            y = tonumber(y)
+            if x ~= prevx or y ~= prevy then
+                prevx = x
+                prevy = y
+                ov("paste 0 0 bg")
+                if display_magnifier then
+                    show_magnified_pixels(x, y)
+                    g.update()
+                    showing_magnifier = true
+                end
+            end
+        elseif showing_magnifier then
+            ov("paste 0 0 bg")
+            g.update()
+            showing_magnifier = false
+        end
     end
-    ov("font "..oldfont)
 end
 
 --------------------------------------------------------------------------------
@@ -1691,10 +1907,12 @@ local function test_blending()
     local oldfont = ov(demofont)
     local oldblend = ov("blend 1")
     ov(op.black)
-    maketext("Alpha blending is turned on or off using the blend command.")
+    maketext("Alpha blending is turned on or off using the blend command:")
     pastetext(10, 10)
     maketext("blend "..oldblend)
     pastetext(40, 50)
+    maketext("The blend command also controls antialiasing of lines and ellipses:")
+    pastetext(10, 300)
     ov("blend "..oldblend)
     ov("font "..oldfont)
     
@@ -1706,6 +1924,16 @@ local function test_blending()
     
     ov("rgba 0 0 255 128")      -- 50% translucent blue
     ov("fill 120 150 100 100")
+    
+    ov(op.black)
+    radial_lines(100, 400, 50)
+    draw_ellipse(200, 350, 200, 100)
+    draw_ellipse(260, 360, 80, 80)
+    draw_ellipse(290, 370, 20, 60)
+    -- draw a solid circle by setting the line width to the radius
+    local oldwidth = ov("lineoption width 50")
+    draw_ellipse(450, 350, 100, 100)
+    ov("lineoption width "..oldwidth)
     
     if toggle > 0 then
         ov("blend 0")           -- turn off alpha blending
@@ -1805,9 +2033,9 @@ local function create_menu_buttons()
     animation_button = op.button(   longest, test_animation)
     copy_button = op.button(        longest, test_copy_paste)
     cursor_button = op.button(      longest, test_cursors)
-    line_button = op.button(        longest, test_lines)
     set_button = op.button(         longest, test_set)
     fill_button = op.button(        longest, test_fill)
+    line_button = op.button(        longest, test_lines)
     load_button = op.button(        longest, test_load)
     mouse_button = op.button(       longest, test_mouse)
     multiline_button = op.button(   longest, test_multiline_text)
@@ -1822,9 +2050,9 @@ local function create_menu_buttons()
     animation_button.setlabel(  "Animation", false)
     copy_button.setlabel(       "Copy and Paste", false)
     cursor_button.setlabel(     "Cursors", false)
-    line_button.setlabel(       "Drawing Lines", false)
     set_button.setlabel(        "Drawing Pixels", false)
     fill_button.setlabel(       "Filling Rectangles", false)
+    line_button.setlabel(       "Lines and Ellipses", false)
     load_button.setlabel(       "Loading Images", false)
     mouse_button.setlabel(      "Mouse Tracking", false)
     multiline_button.setlabel(  "Multi-line Text", false)
@@ -1871,9 +2099,9 @@ local function main_menu()
     animation_button.show(x, y)     y = y + buttgap + buttht
     copy_button.show(x, y)          y = y + buttgap + buttht
     cursor_button.show(x, y)        y = y + buttgap + buttht
-    line_button.show(x, y)          y = y + buttgap + buttht
     set_button.show(x, y)           y = y + buttgap + buttht
     fill_button.show(x, y)          y = y + buttgap + buttht
+    line_button.show(x, y)          y = y + buttgap + buttht
     load_button.show(x, y)          y = y + buttgap + buttht
     mouse_button.show(x, y)         y = y + buttgap + buttht
     multiline_button.show(x, y)     y = y + buttgap + buttht
