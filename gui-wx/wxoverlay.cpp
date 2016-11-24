@@ -2575,7 +2575,7 @@ void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int yste
     int y = y0;
     int err = einit;
     int tk = dx+dy-winit;
-    double D2 = 2*sqrt(dx*dx+dy*dy);
+    double D2 = 2*sqrt(double(dx*dx+dy*dy));
 
     // draw top/bottom half of line
     int q = 0;
@@ -2651,7 +2651,7 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
     int y = y0;
     int err = -einit;
     int tk = dx+dy+winit;
-    double D2 = 2*sqrt(dx*dx+dy*dy);
+    double D2 = 2*sqrt(double(dx*dx+dy*dy));
     
     // draw left/right half of line
     int q = 0;
@@ -2752,7 +2752,7 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
         case  1 +  1*4 : pystep =  1; pxstep = -1; break;   //  5
     }
 
-    double w = (linewidth + 1) * sqrt(dx*dx + dy*dy);
+    double w = (linewidth + 1) * sqrt(double(dx*dx + dy*dy));
     int p_error = 0;
     int err = 0;
     int x = x0;
@@ -2809,7 +2809,7 @@ void Overlay::DrawAntialiasedLine(int x0, int y0, int x1, int y1)
     long dy = abs(y1-y0);
     long err = dx-dy;
     long e2, x2;
-    double ed = dx+dy == 0 ? 1 : sqrt(dx*dx+dy*dy);
+    double ed = dx+dy == 0 ? 1 : sqrt(double(dx*dx+dy*dy));
     int sx = x0 < x1 ? 1 : -1;
     int sy = y0 < y1 ? 1 : -1;
 
