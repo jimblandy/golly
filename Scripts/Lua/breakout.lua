@@ -1346,10 +1346,11 @@ local function breakout()
         -- check why game finished
         if balls == 0 then
             -- reset
-            score   = 0
-            balls   = 3
-            level   = 1
-            newhigh = false
+            score    = 0
+            balls    = 3
+            level    = 1
+            newhigh  = false
+            newcombo = false
         else
             -- level complete
             level = level + 1
