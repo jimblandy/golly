@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 26
+local build = 27
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -69,14 +69,15 @@ local bally    = 0
 local numsteps = 50
 
 -- particle settings
-local particles      = {}
-local brickparticles = 192
-local ballparticles  = 1
-local ballpartchance = 0.25
-local wallparticles  = 20
-local batparticles   = 20
-local highparticles  = 4
-local lostparticles  = 1024
+local particles       = {}
+local brickparticles  = 192
+local ballparticles   = 1
+local ballpartchance  = 0.25
+local wallparticles   = 20
+local batparticles    = 20
+local highparticles   = 4
+local comboparticles  = 4
+local lostparticles   = 1024
 
 -- game settings
 local level      = 1
@@ -85,8 +86,13 @@ local pause      = false
 local fullscreen = 0
 local hiscore    = 0
 local score      = 0
+local combo      = 1
+local combomult  = 1
+local combofact  = 1.04
+local maxcombo   = 2
 local balls      = 3
 local newhigh    = false
+local newcombo   = false
 local offoverlay = false
 local finished   = false
 local again      = true
@@ -127,6 +133,7 @@ local messages = {
     ["quit"]       = { "Right Click or Esc to quit", 10 },
     ["continue"]   = { "Click or Enter for next level", 10 },
     ["newhigh"]    = { "New High Score!", 10, op.green },
+    ["newcombo"]   = { "New Best Combo!", 10, op.green },
     ["close"]      = { "Click or Tab to close Game Settings", 10 },
     ["autopause"]  = { "Autopause", 10, optcol },
     ["shadows"]    = { "Shadows", 10, optcol },
@@ -148,7 +155,18 @@ local messages = {
     ["t"]          = { "T", 10, optcol },
     ["f11"]        = { "F11", 10, optcol },
     ["score"]      = { "Score ", 10 },
-    ["balls"]      = { "Balls ", 10 }
+    ["balls"]      = { "Balls ", 10 },
+    ["combo"]      = { "Combo x", 10 },
+    ["combog"]     = { "Combo x", 10, op.green },
+    ["high"]       = { "High Score ", 10 },
+    ["highg"]      = { "High Score ", 10, op.green },
+    ["level"]      = { "Level ", 15 },
+    ["3left"]      = { "3 balls left ", 15, op.green },
+    ["2left"]      = { "2 balls left ", 15, op.yellow },
+    ["1left"]      = { "Last ball! ", 15, op.red },
+    ["10"]         = { "M", 10 },
+    ["15"]         = { "M", 15 },
+    ["30"]         = { "M", 30 }
 }
 
 --------------------------------------------------------------------------------
@@ -181,6 +199,7 @@ local function readsettings()
         autostart     = tonumber(f:read("*l")) or 0
         showmouse     = tonumber(f:read("*l")) or 1
         showshadows   = tonumber(f:read("*l")) or 1
+        maxcombo      = tonumber(f:read("*l")) or 2
         f:close()
     end
 end
@@ -198,6 +217,7 @@ local function writesettings()
         f:write(tostring(autostart).."\n")
         f:write(tostring(showmouse).."\n")
         f:write(tostring(showshadows).."\n")
+        f:write(tostring(maxcombo).."\n")
         f:close()
     end
 end
@@ -460,7 +480,7 @@ local function drawbricks()
                 ov(brickcols[y])
             end
             for x = 1, numcols do
-                if bricks[x] == true then
+                if bricks[x] then
                     brickx = (x - 1) * brickwd
                     ov("fill "..(brickx + xoff + edgegapl).." "..(bricky + yoff).." "..(brickwd - 1).." "..(brickht - 1))
                 end
@@ -775,6 +795,7 @@ local function drawtextclip(name, y, align, x)
     x = x or 0
     local message = messages[name]
     local w = message[4]
+    local h = message[5]
     local textx = edgegapl
     -- process alignment
     if align == aligncenter then
@@ -786,7 +807,33 @@ local function drawtextclip(name, y, align, x)
     end
     -- paste clip
     ov("paste "..floor(x + textx).." "..y.." "..name)
-    return w
+    return w, h
+end
+
+--------------------------------------------------------------------------------
+
+local function centertextclip(name, value, y, col)
+    col = col or op.white
+
+    -- get the clip
+    local message = messages[name]
+    -- get the clip string
+    local leftval = message[1]
+    -- get the clip font size
+    local size    = tostring(message[2])
+    -- find the font size clip
+    local charmsg = messages[size]
+    -- get the width of the font size clip
+    local charw   = charmsg[4] - abs(shadtxtx)
+    -- get the length of the full message
+    local length  = (leftval..tostring(value)):len()
+    -- compute the center position
+    local x = floor((wd - length * charw) / 2)
+    -- draw the clip
+    drawtextclip(name, y, alignleft, x)
+    -- draw the value
+    ov("font "..floor(tonumber(size) * fontscale).." mono")
+    shadowtext(x + charw * leftval:len(), y, value, alignleft, col)
 end
 
 --------------------------------------------------------------------------------
@@ -794,15 +841,22 @@ end
 local function drawscoreline()
     ov("blend 1")
     ov("font "..floor(10 * fontscale).." mono")
-    local w = drawtextclip("score", 5, alignleft, 3)
+    local w, h = drawtextclip("score", 5, alignleft, 3)
     shadowtext(w + 5, 5, score)
     local w = shadowtext(-5, 5, balls, alignright)
     drawtextclip("balls", 5, alignright, -w)
-    local highcol = op.white
-    if newhigh == true then
-        highcol = op.green
+    if newhigh then
+        centertextclip("highg", hiscore, 5, op.green)
+    else
+        centertextclip("high", hiscore, 5)
     end
-    shadowtext(0, 5, "High "..hiscore, aligncenter, highcol)
+    if combo > 2 then
+        if combo == maxcombo then
+            centertextclip("combog", combo - 1, ht - h, op.green)
+        else
+            centertextclip("combo", combo - 1, ht - h)
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -812,6 +866,11 @@ local function drawgameover()
     if newhigh then
         local highscorew = drawtextclip("newhigh", floor(ht / 2 + 96 * fontscale))
         createparticles(edgegapl + floor(wd / 2) + highscorew / 2, floor(ht / 2 + 96 * fontscale), highscorew, 1, highparticles)
+    end
+    if newcombo then
+        local combow = drawtextclip("newcombo", floor(ht / 2 + 118 * fontscale))
+        createparticles(edgegapl + floor(wd / 2) + combow / 2, floor(ht / 2 + 118 * fontscale), combow, 1, comboparticles)
+        combo = maxcombo
     end
     drawtextclip("gameover", floor(ht / 2 - 30 * fontscale))
     drawtextclip("restart", floor(ht / 2 + 30 * fontscale))
@@ -848,21 +907,8 @@ local function drawnewball()
     drawtextclip("option", floor(ht / 2 + 66 * fontscale))
     drawtextclip("control", floor(ht / 2 + 44 * fontscale))
     drawtextclip("newball", floor(ht / 2 + 22 * fontscale))
-    ov("font "..floor(15 * fontscale).." mono")
-    local remstr, remcol
-    if balls == 1 then
-        remstr = "Last ball!"
-        remcol = op.red
-    else
-        remstr = balls.." balls left"
-        if balls == 2 then
-            remcol = op.yellow
-        else
-            remcol = op.green
-        end
-    end
-    shadowtext(0, ht / 2 - 15 * fontscale, remstr, aligncenter, remcol)
-    shadowtext(0, ht / 2 - 52 * fontscale, "Level "..level, aligncenter)
+    drawtextclip(balls.."left", floor(ht / 2 - 15 * fontscale))
+    centertextclip("level", level, floor(ht / 2 - 52 * fontscale))
 end
 
 --------------------------------------------------------------------------------
@@ -991,11 +1037,12 @@ local function breakout()
     createbackground()
 
     -- play games until finished
-    balls   = 3
-    score   = 0
-    level   = 1
-    again   = true
-    newhigh = false
+    balls    = 3
+    score    = 0
+    level    = 1
+    again    = true
+    newhigh  = false
+    newcombo = false
 
     -- initialise the bat and ball
     initbat()
@@ -1008,7 +1055,7 @@ local function breakout()
     createstatictext()
 
     -- main loop
-    while again == true do
+    while again do
         -- initialize the bricks
         initbricks()
 
@@ -1044,6 +1091,10 @@ local function breakout()
 
         -- whether mouse off overlay
         offoverlay = false
+
+        -- reset combo
+        combo     = 1
+        combomult = 1
 
         -- game loop
         while balls > 0 and bricksleft > 0 do
@@ -1099,6 +1150,8 @@ local function breakout()
                             balldx    = 0.5
                             ballspeed = speeddef
                             newball   = true
+                            combo     = 1
+                            combomult = 1
                             -- destroy bat if no balls left
                             if balls == 0 then
                                createparticles(batx + batwd, baty, batwd, batht, lostparticles)
@@ -1127,19 +1180,30 @@ local function breakout()
                                 end
                            end
                            createparticles(ballx, bally - ballsize / 2, 1, 1, batparticles)
+                           -- reset combo
+                           combo     = 1
+                           combomult = 1
                         end
 
                         -- check for ball hitting brick
                         bricky = floor(bally / brickht) - offsety
                         if bricky >= 1 and bricky <= numrows then
                             brickx = floor((ballx - edgegapl) / brickwd) + 1
-                            if rows[bricky][brickx] == true then
+                            if rows[bricky][brickx] then
                                 -- hit a brick!
                                 rows[bricky][brickx] = false
-                                score = score + (level + 9) * (numrows - bricky + 1)
+                                -- adjust score
+                                score     = score + floor((level + 9) * (numrows - bricky + 1) * combomult)
                                 if score > hiscore then
                                     hiscore = score
                                     newhigh = true
+                                end
+                                -- increment combo
+                                combo     = combo + 1
+                                combomult = combomult * combofact
+                                if combo > maxcombo then
+                                    maxcombo = combo
+                                    newcombo = true
                                 end
                                 -- work out which axis to invert
                                 local lastbricky = floor((bally - stepy) / brickht) - offsety
@@ -1213,8 +1277,8 @@ local function breakout()
             while g.millisecs() - frametime < 16 do end
         end
 
-        -- save high score
-        if newhigh == true then
+        -- save high score and max combo
+        if newhigh or newcombo then
             writesettings()
         end
 
