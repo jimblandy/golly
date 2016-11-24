@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 25
+local build = 26
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -115,6 +115,7 @@ local notifycurrent  = 0
 local notifymessage  = ""
 
 -- static messages and clip names
+local optcol = "rgba 192 192 192 255"
 local messages = {
     ["gameover"]   = { "Game Over", 30, op.red },
     ["newball"]    = { "Click or Enter to launch ball", 10 },
@@ -125,19 +126,29 @@ local messages = {
     ["restart"]    = { "Click or Enter to start again", 10 },
     ["quit"]       = { "Right Click or Esc to quit", 10 },
     ["continue"]   = { "Click or Enter for next level", 10 },
-    ["highscore"]  = { "New High Score!", 10, op.green },
+    ["newhigh"]    = { "New High Score!", 10, op.green },
     ["close"]      = { "Click or Tab to close Game Settings", 10 },
-    ["autopause"]  = { "Autopause", 10, "rgba 192 192 192 255" },
-    ["shadows"]    = { "Shadows", 10, "rgba 192 192 192 255" },
-    ["mouse"]      = { "Mouse Pointer", 10, "rgba 192 192 192 255" },
-    ["particles"]  = { "Particles", 10, "rgba 192 192 192 255" },
-    ["autostart"]  = { "Autostart", 10, "rgba 192 192 192 255" },
-    ["timing"]     = { "Timing", 10, "rgba 192 192 192 255" },
-    ["fullscreen"] = { "Fullscreen", 10, "rgba 192 192 192 255" },
+    ["autopause"]  = { "Autopause", 10, optcol },
+    ["shadows"]    = { "Shadows", 10, optcol },
+    ["mouse"]      = { "Mouse Pointer", 10, optcol },
+    ["particles"]  = { "Particles", 10, optcol },
+    ["autostart"]  = { "Autostart", 10, optcol },
+    ["timing"]     = { "Timing", 10, optcol },
+    ["fullscreen"] = { "Fullscreen", 10, optcol },
     ["function"]   = { "Function", 10 },
     ["on"]         = { "On", 10, op.green },
     ["off"]        = { "Off", 10, op.red },
-    ["state"]      = { "State", 10 }
+    ["state"]      = { "State", 10 },
+    ["key"]        = { "Key", 10 },
+    ["a"]          = { "A", 10, optcol },
+    ["d"]          = { "D", 10, optcol },
+    ["m"]          = { "M", 10, optcol },
+    ["p"]          = { "P", 10, optcol },
+    ["s"]          = { "S", 10, optcol },
+    ["t"]          = { "T", 10, optcol },
+    ["f11"]        = { "F11", 10, optcol },
+    ["score"]      = { "Score ", 10 },
+    ["balls"]      = { "Balls ", 10 }
 }
 
 --------------------------------------------------------------------------------
@@ -281,6 +292,10 @@ local function createstatictext()
         message[5] = h
         -- next screen position
         y = y + h
+        if y > ht * 7 / 8 then
+            y = 0
+            ov("fill")
+        end
     end
 end
 
@@ -779,13 +794,15 @@ end
 local function drawscoreline()
     ov("blend 1")
     ov("font "..floor(10 * fontscale).." mono")
-    shadowtext(5, 5, "Score "..score)
-    shadowtext(-5, 5, "Balls "..balls, alignright)
+    local w = drawtextclip("score", 5, alignleft, 3)
+    shadowtext(w + 5, 5, score)
+    local w = shadowtext(-5, 5, balls, alignright)
+    drawtextclip("balls", 5, alignright, -w)
     local highcol = op.white
     if newhigh == true then
         highcol = op.green
     end
-    shadowtext(0, 5, "High Score "..hiscore, aligncenter, highcol)
+    shadowtext(0, 5, "High "..hiscore, aligncenter, highcol)
 end
 
 --------------------------------------------------------------------------------
@@ -793,7 +810,7 @@ end
 local function drawgameover()
     ov("blend 1")
     if newhigh then
-        local highscorew = drawtextclip("highscore", floor(ht / 2 + 96 * fontscale))
+        local highscorew = drawtextclip("newhigh", floor(ht / 2 + 96 * fontscale))
         createparticles(edgegapl + floor(wd / 2) + highscorew / 2, floor(ht / 2 + 96 * fontscale), highscorew, 1, highparticles)
     end
     drawtextclip("gameover", floor(ht / 2 - 30 * fontscale))
@@ -868,8 +885,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawoption(key, setting, state, leftx, h, y, color)
-    color = color or "rgba 192 192 192 255"
-    shadowtext(leftx, y, key, alignleft, color)
+    drawtextclip(key, y, alignleft, leftx)
     drawtextclip(setting, y)
     drawtextclip(state, y, alignright, -leftx)
     return y + h
@@ -886,16 +902,16 @@ local function drawoptions()
     ov("font "..floor(10 * fontscale).." mono")
     local w, h = maketext(0, 0, "M")
     local y = floor((ht - 8 * h) / 2)
-    y = drawoption("Key", "function", "state", leftx, h, y, op.white)
+    y = drawoption("key", "function", "state", leftx, h, y, op.white)
 
     -- draw options
-    y = drawoption("A", "autopause", state[autopause], leftx, h, y)
-    y = drawoption("D", "shadows", state[showshadows], leftx, h, y)
-    y = drawoption("M", "mouse", state[showmouse], leftx, h, y)
-    y = drawoption("P", "particles", state[showparticles], leftx, h, y)
-    y = drawoption("S", "autostart", state[autostart], leftx, h, y)
-    y = drawoption("T", "timing", state[showtiming], leftx, h, y)
-    y = drawoption("F11", "fullscreen", state[fullscreen], leftx, h, y)
+    y = drawoption("a", "autopause", state[autopause], leftx, h, y)
+    y = drawoption("d", "shadows", state[showshadows], leftx, h, y)
+    y = drawoption("m", "mouse", state[showmouse], leftx, h, y)
+    y = drawoption("p", "particles", state[showparticles], leftx, h, y)
+    y = drawoption("s", "autostart", state[autostart], leftx, h, y)
+    y = drawoption("t", "timing", state[showtiming], leftx, h, y)
+    y = drawoption("f11", "fullscreen", state[fullscreen], leftx, h, y)
 
     -- draw close options
     drawtextclip("close", y + h)
