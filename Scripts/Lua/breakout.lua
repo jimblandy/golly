@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 28
+local build = 29
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -127,11 +127,13 @@ local messages = {
     ["gameover"]   = { "Game Over", 30, op.red },
     ["newball"]    = { "Click or Enter to launch ball", 10 },
     ["control"]    = { "Mouse or Arrow keys to move bat", 10 },
-    ["pause"]      = { "Paused: Click or Enter to continue", 10 },
-    ["focus"]      = { "Paused: Move mouse onto overlay to continue", 10 },
+    ["pause"]      = { "Paused", 15, op.yellow },
+    ["resume"]     = { "Click or Enter to continue", 10 },
+    ["focus"]      = { "Move mouse onto overlay to continue", 10 },
+    ["quitgame"]   = { "Right Click to quit game", 10 },
     ["option"]     = { "Tab for Game Settings", 10 },
     ["restart"]    = { "Click or Enter to start again", 10 },
-    ["quit"]       = { "Right Click or Esc to quit", 10 },
+    ["quit"]       = { "Right Click or Esc to exit", 10 },
     ["continue"]   = { "Click or Enter for next level", 10 },
     ["newhigh"]    = { "New High Score!", 10, op.green },
     ["newcombo"]   = { "New Best Combo!", 10, op.green },
@@ -672,9 +674,17 @@ end
 local function processinput()
     -- check for click, enter or return
     local event = g.getevent()
-    if #event then
-        if event:find("^oclick") or event == "key enter none" or event == "key return none" or event == "key space none" then
-            -- click, enter or space starts or toggles pause or dismisses options
+    if #event > 0 then
+        local _, x, y, button = "", mods
+        if event:find("^oclick") then
+            _, x, y, button, mods = split(event)
+        end
+        -- right click quits game if paused
+        if button == "right" then
+            balls = 0
+            showoptions = false
+        elseif button == "left" or event == "key enter none" or event == "key return none" or event == "key space none" then
+            -- left click, enter or space starts game, toggles pause or dismisses settings
             if showoptions then
                 showoptions = false
             elseif newball then
@@ -710,18 +720,23 @@ end
 local function processendinput()
     local event = g.getevent()
     if #event > 0 then
+        local _, x, y, button = "", mods
         if event:find("^oclick") then
-            local _, x, y, button, mods = split(event)
-            if showoptions then
-                showoptions = false
-            else
-                -- quit if right button pressed
-                if button == "right" then
-                    again = false
-                end
+            _, x, y, button, mods = split(event)
+        end
+        -- right click quits application or dismisses settings
+        if button == "right" then
+            -- quit application if game over
+            if balls == 0 then
+                again    = false
                 finished = true
+            else
+                -- otherwise quit game
+                balls = 0
             end
-        elseif event == "key enter none" or event == "key return none" or event == "key space none" then
+            showoptions = false
+        elseif button == "left" or event == "key enter none" or event == "key return none" or event == "key space none" then
+            -- left click, enter or space restarts game or dismisses settings
             if showoptions then
                 showoptions = false
             else
@@ -886,7 +901,7 @@ local function drawlevelcomplete()
     ov("font "..floor(20 * fontscale).." mono")
     shadowtext(0, ht / 2 - 30 * fontscale, "Level "..level.." complete!", aligncenter, op.green)
     drawtextclip("continue", floor(ht / 2 + 30 * fontscale))
-    drawtextclip("quit", floor(ht / 2 + 52 * fontscale))
+    drawtextclip("quitgame", floor(ht / 2 + 52 * fontscale))
     drawtextclip("option", floor(ht / 2 + 74 * fontscale))
 end
 
@@ -894,10 +909,13 @@ end
 
 local function drawpause()
     ov("blend 1")
+    drawtextclip("pause", floor(ht / 2 - 15 * fontscale))
     if offoverlay and autopause ~= 0 and autostart ~= 0 then
-       drawtextclip("focus", floor(ht / 2))
+       drawtextclip("focus", floor(ht / 2 + 22 * fontscale))
     else
-       drawtextclip("pause", floor(ht / 2))
+       drawtextclip("resume", floor(ht / 2 + 22 * fontscale))
+       drawtextclip("quitgame", floor(ht / 2 + 44 * fontscale))
+       drawtextclip("option", floor(ht / 2 + 66 * fontscale))
     end
 end
 
@@ -905,9 +923,10 @@ end
 
 local function drawnewball()
     ov("blend 1")
-    drawtextclip("option", floor(ht / 2 + 66 * fontscale))
-    drawtextclip("control", floor(ht / 2 + 44 * fontscale))
     drawtextclip("newball", floor(ht / 2 + 22 * fontscale))
+    drawtextclip("control", floor(ht / 2 + 44 * fontscale))
+    drawtextclip("quitgame", floor(ht / 2 + 66 * fontscale))
+    drawtextclip("option", floor(ht / 2 + 88 * fontscale))
     drawtextclip(balls.."left", floor(ht / 2 - 15 * fontscale))
     centertextclip("level", level, floor(ht / 2 - 52 * fontscale))
 end
@@ -962,6 +981,11 @@ local function drawoptions()
 
     -- draw close options
     drawtextclip("close", y + h)
+    if balls == 0 then
+        drawtextclip("quit", floor(y + h * 2.5))
+    else
+        drawtextclip("quitgame", floor(y + h * 2.5))
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -991,7 +1015,7 @@ local function updatebatposition()
         -- check if mouse was off overlay
         if offoverlay then
             -- check if paused
-            if pause and autostart ~= 0 then
+            if pause and autostart ~= 0 and autopause ~= 0 then
                 pause = false
             end
         end
