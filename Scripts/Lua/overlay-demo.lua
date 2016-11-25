@@ -420,7 +420,7 @@ end
 local replace = 1
 local replacements = {
     [1] = { op.yellow, "replace 255 0 0 255", "replace red pixels with yellow" },
-    [2] = { "rgba 255 255 0 128", "replace 0 0 0 255", "replace black with semi-tranparent yellow" },
+    [2] = { "rgba 255 255 0 128", "replace 0 0 0 255", "replace black with semi-transparent yellow" },
     [3] = { op.yellow, "replace !255 !0 !0 255", "replace non-red pixels with yellow" },
     [4] = { "", "replace *g *r *# *#", "swap red and green components" },
     [5] = { "rgba 0 0 0 128", "replace *# *# *# *", "make all pixels semi-transparent" },
