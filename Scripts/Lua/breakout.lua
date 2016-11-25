@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 27
+local build = 28
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -89,6 +89,7 @@ local score      = 0
 local combo      = 1
 local combomult  = 1
 local combofact  = 1.04
+local gamecombo  = 1
 local maxcombo   = 2
 local balls      = 3
 local newhigh    = false
@@ -867,10 +868,10 @@ local function drawgameover()
         local highscorew = drawtextclip("newhigh", floor(ht / 2 + 96 * fontscale))
         createparticles(edgegapl + floor(wd / 2) + highscorew / 2, floor(ht / 2 + 96 * fontscale), highscorew, 1, highparticles)
     end
+    combo = gamecombo
     if newcombo then
         local combow = drawtextclip("newcombo", floor(ht / 2 + 118 * fontscale))
         createparticles(edgegapl + floor(wd / 2) + combow / 2, floor(ht / 2 + 118 * fontscale), combow, 1, comboparticles)
-        combo = maxcombo
     end
     drawtextclip("gameover", floor(ht / 2 - 30 * fontscale))
     drawtextclip("restart", floor(ht / 2 + 30 * fontscale))
@@ -1205,6 +1206,9 @@ local function breakout()
                                     maxcombo = combo
                                     newcombo = true
                                 end
+                                if combo > gamecombo then
+                                    gamecombo = combo
+                                end
                                 -- work out which axis to invert
                                 local lastbricky = floor((bally - stepy) / brickht) - offsety
                                 if lastbricky == bricky then
@@ -1346,11 +1350,12 @@ local function breakout()
         -- check why game finished
         if balls == 0 then
             -- reset
-            score    = 0
-            balls    = 3
-            level    = 1
-            newhigh  = false
-            newcombo = false
+            score     = 0
+            balls     = 3
+            level     = 1
+            newhigh   = false
+            newcombo  = false
+            gamecombo = 1
         else
             -- level complete
             level = level + 1
