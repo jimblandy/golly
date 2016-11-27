@@ -1095,7 +1095,14 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
         
     } else {
         // assume full path or local link
-        LoadPage(filepath);
+        //!!! LoadPage(filepath);
+        // try avoiding problem finding images/*.png on Win 10???
+        wxFileName fname(filepath);
+        if (fname.IsAbsolute()) {
+            LoadFile(fname);    // calls LoadPage(wxFileSystem::FileNameToURL(fname))
+        } else {
+            LoadPage(filepath);
+        }
     }
 }
 
