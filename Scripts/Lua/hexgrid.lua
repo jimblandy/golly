@@ -1313,6 +1313,9 @@ local function create_overlay()
     op.sliderwd = 12    -- width of slider button (best if even)
     op.textgap = 8      -- gap between edge of button and its label
     op.textfont = "font 10 default-bold"    -- font for labels
+    if g.os() == "Mac" then
+        op.yoffset = -1
+    end
     if g.os() == "Linux" then
         op.textfont = "font 10 default"
     end

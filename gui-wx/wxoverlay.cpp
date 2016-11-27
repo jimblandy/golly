@@ -100,6 +100,12 @@ const double radToDeg = 180 / M_PI;
 // for replace
 const int matchany = -1;            // match any component value
 
+#ifdef __WXMAC__
+    // on Mac we'll need to increase the line height of text by 1 or 2 pixels to avoid
+    // a GetTextExtent bug that clips the bottom pixels of descenders like "gjpqy"
+    int extraht;
+#endif
+
 // -----------------------------------------------------------------------------
 
 Overlay::Overlay()
@@ -1825,6 +1831,7 @@ const char* Overlay::DoCreate(const char* args)
     #ifdef __WXMAC__
         // need to increase Mac font size by 25% to match text size on Win/Linux
         currfont.SetPointSize(int(fontsize * 1.25 + 0.5));
+        extraht = 1;
     #else
         currfont.SetPointSize(fontsize);
     #endif
@@ -3996,6 +4003,14 @@ const char* Overlay::DoFont(const char* args)
     #ifdef __WXMAC__
         // need to increase Mac font size by 25% to match text size on Win/Linux
         int ptsize = int(newsize * 1.25 + 0.5);
+        
+        // set extraht to avoid GetTextExtent bug that clips descenders
+        extraht = 1;
+        if (strncmp(args+namepos, "default", 7) == 0 &&
+            (newsize == 20 || newsize == 24 || newsize == 47)) {
+            // strange but true
+            extraht = 2;
+        }
     #else
         int ptsize = newsize;
     #endif
@@ -4179,11 +4194,17 @@ const char* Overlay::DoText(const char* args)
     wxMemoryDC dc;
     dc.SetFont(currfont);
 
-    // get the line height
+    // get the line height and descent (leading is ignored)
     wxString textstr = _("M");
-    int textwd, textht, descent, leading;
+    int textwd, descent, ignored;
     int lineht = 0;
-    dc.GetTextExtent(textstr, &textwd, &lineht, &descent, &leading);
+    dc.GetTextExtent(textstr, &textwd, &lineht, &descent, &ignored);
+
+    #ifdef __WXMAC__
+        // increase lineht and descent on Mac to avoid clipping descenders
+        lineht += extraht;
+        descent += extraht;
+    #endif
 
     // count lines
     char *textarg = (char*)args + textpos;
@@ -4194,7 +4215,7 @@ const char* Overlay::DoText(const char* args)
         index++;
     }
 
-    // allocate line width and start position buffers
+    // allocate buffers for line width and start position
     int* width = (int*) malloc(lines * sizeof(int));
     char** line = (char**) malloc(lines * sizeof(char*));
 
@@ -4216,7 +4237,7 @@ const char* Overlay::DoText(const char* args)
 
         // get the drawn string width
         textstr = wxString(textlines, wxConvUTF8);
-        dc.GetTextExtent(textstr, &textwd, &textht, &descent, &leading);
+        dc.GetTextExtent(textstr, &textwd, &ignored, &ignored, &ignored);
 
         // save the line width
         width[i] = textwd;

@@ -25,10 +25,13 @@ m.normalrgb = "rgba 40 128 255"         -- light blue buttons (alpha will be app
 m.darkerrgb = "rgba 20 64 255"          -- darker blue when buttons are clicked
 m.textrgba = "rgba 255 255 255 255"     -- white button labels and tick mark on check box
 m.textfont = "font 12 default-bold"     -- font for labels
-m.yoffset = -1                          -- for better y position of labels
+m.yoffset = 0                           -- for better y position of labels
+
+if g.os() == "Windows" then
+    m.yoffset = -1
+end
 
 if g.os() == "Linux" then
-    m.yoffset = 0
     m.textfont = "font 12 default"
 end
 
