@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 29
+local build = 30
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -116,7 +116,7 @@ local showoptions   = false
 local settingsfile = g.getdir("data").."breakout.ini"
 
 -- notifications
-local notifyduration = 240
+local notifyduration = 300
 local notifytrans    = 20
 local notifycurrent  = 0
 local notifymessage  = ""
@@ -164,8 +164,8 @@ local messages = {
     ["high"]       = { "High Score ", 10 },
     ["highg"]      = { "High Score ", 10, op.green },
     ["level"]      = { "Level ", 15 },
-    ["3left"]      = { "3 balls left ", 15, op.green },
-    ["2left"]      = { "2 balls left ", 15, op.yellow },
+    ["3left"]      = { "3 balls left", 15, op.green },
+    ["2left"]      = { "2 balls left", 15, op.yellow },
     ["1left"]      = { "Last ball! ", 15, op.red },
     ["10"]         = { "M", 10 },
     ["15"]         = { "M", 15 },
@@ -1309,6 +1309,9 @@ local function breakout()
         if newhigh or newcombo then
             writesettings()
         end
+
+        -- draw best combo
+        notify("Best Combo x"..maxcombo)
 
         -- loop until mouse button clicked or enter pressed
         finished = false
