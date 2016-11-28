@@ -1311,7 +1311,7 @@ local function breakout()
         end
 
         -- draw best combo
-        notify("Best Combo x"..maxcombo)
+        notify("Best Combo x"..maxcombo - 1)
 
         -- loop until mouse button clicked or enter pressed
         finished = false
