@@ -153,6 +153,7 @@ int mingridmag = 2;              // minimum mag to draw grid lines
 int boldspacing = 10;            // spacing of bold grid lines
 bool showboldlines = true;       // show bold grid lines?
 bool mathcoords = false;         // show Y values increasing upwards?
+bool cellborders = true;         // should zoomed cells have borders?
 bool syncviews = false;          // synchronize viewports?
 bool synccursors = true;         // synchronize cursors?
 bool stacklayers = false;        // stack all layers?
@@ -1524,6 +1525,7 @@ void SavePrefs()
     fprintf(f, "bold_spacing=%d (2..%d)\n", boldspacing, MAX_SPACING);
     fprintf(f, "show_bold_lines=%d\n", showboldlines ? 1 : 0);
     fprintf(f, "math_coords=%d\n", mathcoords ? 1 : 0);
+    fprintf(f, "cell_borders=%d\n", cellborders ? 1 : 0);
     
     fputs("\n", f);
     
@@ -2140,6 +2142,9 @@ void GetPrefs()
         } else if (strcmp(keyword, "math_coords") == 0) {
             mathcoords = value[0] == '1';
             
+        } else if (strcmp(keyword, "cell_borders") == 0) {
+            cellborders = value[0] == '1';
+
         } else if (strcmp(keyword, "sync_views") == 0) {
             syncviews = value[0] == '1';
             
@@ -2670,6 +2675,7 @@ enum {
     PREF_SHOW_TIPS,
     PREF_RESTORE,
     PREF_Y_UP,
+    PREF_CELL_BORDERS,
     PREF_SHOW_BOLD,
     PREF_BOLD_SPACING,
     PREF_MIN_GRID_SCALE,
@@ -3642,6 +3648,10 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     
     wxCheckBox* check1 = new wxCheckBox(panel, PREF_Y_UP, _("Y coordinates increase upwards"));
     
+    // zoomed cell borders
+
+    wxCheckBox* check5 = new wxCheckBox(panel, PREF_CELL_BORDERS, _("Zoomed cells have borders"));
+
     // show_bold_lines and bold_spacing
     
     wxBoxSizer* hbox2 = new wxBoxSizer(wxHORIZONTAL);
@@ -3770,6 +3780,8 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     vbox->AddSpacer(CH2VGAP + 3);
     vbox->Add(check1, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(SVGAP);
+    vbox->Add(check5, 0, wxLEFT | wxRIGHT, LRGAP);
+    vbox->AddSpacer(SVGAP);
     vbox->Add(hbox2, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(SVGAP);
 #ifdef __WXMAC__
@@ -3789,6 +3801,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
 #endif
     check4->SetValue(restoreview);
     check1->SetValue(mathcoords);
+    check5->SetValue(cellborders);
     check2->SetValue(showboldlines);
     spin5->SetRange(2, MAX_THUMBRANGE); spin5->SetValue(thumbrange);
     spin2->SetRange(2, MAX_SPACING);    spin2->SetValue(boldspacing);
@@ -4760,6 +4773,7 @@ bool PrefsDialog::TransferDataFromWindow()
 #endif
     restoreview    = GetCheckVal(PREF_RESTORE);
     mathcoords     = GetCheckVal(PREF_Y_UP);
+    cellborders    = GetCheckVal(PREF_CELL_BORDERS);
     showboldlines  = GetCheckVal(PREF_SHOW_BOLD);
     boldspacing    = GetSpinVal(PREF_BOLD_SPACING);
     mingridindex   = GetChoiceVal(PREF_MIN_GRID_SCALE);

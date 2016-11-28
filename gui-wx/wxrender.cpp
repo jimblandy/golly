@@ -116,6 +116,7 @@ unsigned char prevalpha;                // previous alpha component
 unsigned char prevr[256];               // previous red component of each state
 unsigned char prevg[256];               // previous green component of each state
 unsigned char prevb[256];               // previous blue component of each state
+bool prevborders = false;               // previous cell borders setting
 
 // fixed texture coordinates used by glTexCoordPointer
 static const GLshort texture_coordinates[] = { 0,0, 1,0, 0,1, 1,1 };
@@ -458,11 +459,12 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
 
 // -----------------------------------------------------------------------------
 
-static bool ChangeCellAtlas(int cellsize, int numcells, unsigned char alpha)
+static bool ChangeCellAtlas(int cellsize, int numcells, unsigned char alpha, bool borders)
 {
     if (numcells != prevnum) return true;
     if (cellsize != prevsize) return true;
     if (alpha != prevalpha) return true;
+    if (borders != prevborders) return true;
  
     for (int state = 1; state <= numcells; state++) {
         if (currlayer->cellr[state] != prevr[state]) return true;
@@ -478,10 +480,11 @@ static bool ChangeCellAtlas(int cellsize, int numcells, unsigned char alpha)
 static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
 {
     // cellatlas might need to be (re)created
-    if (ChangeCellAtlas(cellsize, numcells, alpha)) {
+    if (ChangeCellAtlas(cellsize, numcells, alpha, cellborders)) {
         prevnum = numcells;
         prevsize = cellsize;
         prevalpha = alpha;
+        prevborders = cellborders;
         for (int state = 1; state <= numcells; state++) {
             prevr[state] = currlayer->cellr[state];
             prevg[state] = currlayer->cellg[state];
@@ -496,6 +499,9 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
         cellatlas = (unsigned char*) calloc(rowbytes * cellsize, 1);
         
         if (cellatlas) {
+            // determine whether zoomed cells have a border
+            bool haveborder = (cellborders && cellsize > 2);
+
             // set pixels in top row
             int tpos = 0;
             for (int state = 1; state <= numcells; state++) {
@@ -503,18 +509,20 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
                 unsigned char g = currlayer->cellg[state];
                 unsigned char b = currlayer->cellb[state];
                 
-                // if the cell size is > 2 then there is a 1 pixel gap at right and bottom edge of each cell
-                int cellwd = cellsize > 2 ? cellsize-1 : 2;
+                // if the cell size is > 2 and cellborders are on then leave a 1 pixel gap at right
+                // and bottom edge of each cell
+                int cellwd = cellsize - (haveborder ? 1 : 0);
+                
                 for (int i = 0; i < cellwd; i++) {
                     cellatlas[tpos++] = r;
                     cellatlas[tpos++] = g;
                     cellatlas[tpos++] = b;
                     cellatlas[tpos++] = alpha;
                 }
-                if (cellsize > 2) tpos += 4;    // skip transparent pixel at right edge of cell
+                if (haveborder) tpos += 4;    // skip transparent pixel at right edge of cell
             }
             // copy top row to remaining rows
-            int remrows = cellsize > 2 ? cellsize - 2 : 1;
+            int remrows = cellsize - (haveborder ? 2 : 1);
             for (int i = 1; i <= remrows; i++) {
                 memcpy(&cellatlas[i * rowbytes], cellatlas, rowbytes);
             }

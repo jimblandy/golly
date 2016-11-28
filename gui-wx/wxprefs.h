@@ -112,6 +112,7 @@ extern int mingridmag;           // minimum mag to draw grid lines
 extern int boldspacing;          // spacing of bold grid lines
 extern bool showboldlines;       // show bold grid lines?
 extern bool mathcoords;          // show Y values increasing upwards?
+extern bool cellborders;         // should zoomed cells have borders?
 extern bool syncviews;           // synchronize viewports?
 extern bool synccursors;         // synchronize cursors?
 extern bool stacklayers;         // stack all layers?
