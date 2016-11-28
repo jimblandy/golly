@@ -271,6 +271,20 @@ void UpdateHelpButtons()
     
     wxString location = htmlwin->GetOpenedPage();
     if ( !location.IsEmpty() ) {
+
+    	if (location.StartsWith(wxT("file:"))) {
+    		// this happens in wx 3.1.0, so convert location from URL to file path
+    		wxFileName fname = wxFileSystem::URLToFileName(location);
+    		location = fname.GetFullPath();
+			#ifdef __WXMSW__
+				location.Replace(wxT("\\"), wxT("/"));
+			#endif
+    	}
+    	
+    	// avoid bug in wx 3.1.0
+    	location.Replace(wxT("%20"), wxT(" "));
+    	location.Replace(wxT("%23"), wxT("#"));
+    	
         // set currhelp so user can close help window and then open same page
         currhelp = location;
         
@@ -659,6 +673,7 @@ void GetURL(const wxString& url)
     }
     
     wxString filename = fullurl.AfterLast('/');
+    
     // remove ugly stuff at start of file names downloaded from ConwayLife.com
     if (filename.StartsWith(wxT("download.php?f=")) ||
         filename.StartsWith(wxT("pattern.asp?p=")) ||
@@ -711,9 +726,7 @@ void GetURL(const wxString& url)
     }
     
     if (IsHTMLFile(filename)) {
-        // display html file in help window;
-        // search file for any simple img links and also download those files???
-        // maybe in version 3!
+        // display html file in help window
         htmlwin->LoadPage(filepath);
         
     } else if (IsRuleFile(filename)) {
@@ -1095,14 +1108,17 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
         
     } else {
         // assume full path or local link
-        //!!! LoadPage(filepath);
-        // try avoiding problem finding images/*.png on Win 10???
-        wxFileName fname(filepath);
-        if (fname.IsAbsolute()) {
-            LoadFile(fname);    // calls LoadPage(wxFileSystem::FileNameToURL(fname))
-        } else {
-            LoadPage(filepath);
-        }
+		#if defined(__WXMSW__) && wxCHECK_VERSION(3,1,0)
+			wxFileName fname(filepath);
+			if (fname.IsAbsolute()) {
+				// call LoadFile rather than LoadPage to avoid bug in wx 3.1.0 on Windows 10
+				LoadFile(fname);
+			} else {
+				LoadPage(filepath);
+			}
+		#else
+			LoadPage(filepath);
+		#endif
     }
 }
 
@@ -1228,9 +1244,23 @@ void HtmlView::OnSize(wxSizeEvent& event)
     
     wxHtmlWindow::OnSize(event);
     
-    wxString currpage = GetOpenedPage();
-    if ( !currpage.IsEmpty() && canreload ) {
-        CheckAndLoad(currpage);    // reload page
+    wxString location = GetOpenedPage();
+    if ( !location.IsEmpty() && canreload ) {
+
+    	if (location.StartsWith(wxT("file:"))) {
+    		// this happens in wx 3.1.0, so convert location from URL to file path
+    		wxFileName fname = wxFileSystem::URLToFileName(location);
+    		location = fname.GetFullPath();
+			#ifdef __WXMSW__
+				location.Replace(wxT("\\"), wxT("/"));
+			#endif
+    	}
+    	
+    	// avoid bug in wx 3.1.0
+    	location.Replace(wxT("%20"), wxT(" "));
+    	location.Replace(wxT("%23"), wxT("#"));
+    
+        CheckAndLoad(location);    // reload page
         Scroll(x, y);              // scroll to old position
     }
     
