@@ -88,7 +88,11 @@ local viewconstants = {
     maxstep = 50,
     decaysteps = 64,  -- number of steps to decay after life finished
     mingridmajor = 0,
-    maxgridmajor = 16
+    maxgridmajor = 16,
+    minviewerwidth = 480,
+    maxviewerwidth = 4096,
+    minviewerheight = 480,
+    maxviewerheight = 4096
 }
 viewconstants.mininvzoom = -1 / viewconstants.minzoom
 
@@ -192,6 +196,7 @@ local buttons = {
     ["fps"]         = "button11",
     ["hexgrid"]     = "button12"
 }
+
 -- script tokens
 local tokens = {}
 local curtok = 1
@@ -209,19 +214,23 @@ local commands = {
     gridword           = "GRID",
     gridmajorword      = "GRIDMAJOR",
     hardresetword      = "HARDRESET",
+    heightword         = "HEIGHT",
     hexdisplayword     = "HEXDISPLAY",
     historyfitword     = "HISTORYFIT",
     layersword         = "LAYERS",
     loopword           = "LOOP",
+    pauseword          = "PAUSE",
     showtimingword     = "SHOWTIMING",
     squaredisplayword  = "SQUAREDISPLAY",
     starsword          = "STARS",
     stepword           = "STEP",
     stopword           = "STOP",
+    tword              = "T",
     themeword          = "THEME",
     trackword          = "TRACK",
     trackboxword       = "TRACKBOX",
     trackloopword      = "TRACKLOOP",
+    widthword          = "WIDTH",
     xword              = "X",
     yword              = "Y",
     zoomword           = "ZOOM",
@@ -244,19 +253,23 @@ local keywords = {
     [commands.gridword] =           { "" },
     [commands.gridmajorword] =      { "R", viewconstants.mingridmajor, viewconstants.maxgridmajor, "" },
     [commands.hardresetword] =      { "" },
+    [commands.heightword] =         { "R", viewconstants.minviewerheight, viewconstants.maxviewerheight, "" },
     [commands.hexdisplayword] =     { "" },
     [commands.historyfitword] =     { "" },
     [commands.layersword] =         { "R", viewconstants.minlayers, viewconstants.maxlayers, "" },
     [commands.loopword] =           { "L", viewconstants.minloop, "" },
+    [commands.pauseword] =          { "l", 0.0, "" },
     [commands.showtimingword] =     { "" },
     [commands.squaredisplayword] =  { "" },
     [commands.starsword]         =  { "" },
     [commands.stepword] =           { "r", viewconstants.minstep, viewconstants.maxstep, "" },
     [commands.stopword] =           { "L", viewconstants.minstop, "" },
+    [commands.tword] =              { "L", 0, "" },
     [commands.themeword] =          { "R", viewconstants.mintheme, viewconstants.maxtheme, "" },
     [commands.trackword] =          { "r", -1, 1, "r", -1, 1, "" },
     [commands.trackboxword] =       { "r", -1, 1, "r", -1, 1, "r", -1, 1, "r", -1, 1, "" },
     [commands.trackloopword] =      { "L", 1, "r", -1, 1, "r", -1, 1, "" },
+    [commands.widthword] =          { "R", viewconstants.minviewerwidth, viewconstants.maxviewerwidth, "" },
     [commands.xword] =              { "r", viewconstants.minpan, viewconstants.maxpan, "" },
     [commands.yword] =              { "r", viewconstants.minpan, viewconstants.maxpan, "" },
     [commands.zoomword] =           { "r", viewconstants.mininvzoom, viewconstants.maxzoom, "" },
@@ -1497,6 +1510,8 @@ local function checkscript()
                     gridmajor = arguments[1]
                 elseif token == commands.hardresetword then
                     hardreset = true
+                elseif token == commands.heightword then
+                    -- ignored
                 elseif token == commands.hexdisplayword then
                     hexon = true
                 elseif token == commands.layersword then
@@ -1548,6 +1563,8 @@ local function checkscript()
                     tracking.west = tracking.east
                     tracking.north = tracking.south
                     tracking.defined = true
+                elseif token == commands.widthword then
+                    -- ignored
                 elseif token == commands.xword then
                     camx = arguments[1]
                 elseif token == commands.yword then

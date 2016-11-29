@@ -31,6 +31,7 @@ local demofont = "font 11 default-bold"
 -- buttons for main menu (created in create_menu_buttons)
 local blend_button
 local animation_button
+local cellview_button
 local copy_button
 local cursor_button
 local line_button
@@ -581,6 +582,214 @@ local function test_copy_paste()
     g.show("Time to test copy and paste: "..ms(g.millisecs()-t1))
     
     if repeat_test(" with different sized tiles") then goto restart end
+end
+
+--------------------------------------------------------------------------------
+
+local function bezierx(t, x0, x1, x2, x3)
+    local cX = 3 * (x1 - x0)
+    local bX = 3 * (x2 - x1) - cX
+    local aX = x3 - x0 - cX - bX
+
+    -- compute x position
+    local x = (aX * math.pow(t, 3)) + (bX * math.pow(t, 2)) + (cX * t) + x0;
+    return x
+end
+
+--------------------------------------------------------------------------------
+
+local themenum = 1
+
+local function test_cellview()
+    -- resize overlay to cover entire layer
+    wd, ht = g.getview( g.getlayer() )
+    ov("resize "..wd.." "..ht)
+
+    -- create a new pattern with 50% random fill
+    g.new("")
+    for y = 0, ht - 1 do
+        for x = 0, wd - 1 do
+            if rand() > 0.5 then
+                g.setcell(x, y, 1)
+            end
+        end
+    end
+
+    -- save settings
+    local oldblend = ov("blend 0")
+    local oldalign = ov("textoption align left")
+
+    -- create text clips
+    local exitclip = "exit"
+    local exitshadowclip = "exitshadow"
+    local oldfont = ov("font 16 roman")
+    ov(op.white)
+    local exitw = maketext("Click or press any key to return to the main menu.", exitclip)
+    ov(op.black)
+    maketext("Click or press any key to return to the main menu.", exitshadowclip)
+    ov("blend 1")
+
+    -- create a cellview (width and height must be multiples of 16)
+    local w16 = wd & ~15
+    local h16 = ht & ~15
+    ov("cellview 0 0 "..w16.." "..h16)
+
+    -- set the theme
+    ov(op.themes[themenum])
+    themenum = themenum + 1
+    if themenum > #op.themes then
+        themenum = 0
+    end
+
+    -- initialize the camera
+    local angle = 0
+    local zoom = 6
+    local x = wd / 2
+    local y = ht / 2
+    local depth = 0
+    local startangle = angle
+    local startzoom = zoom
+    local startx = x
+    local starty = y
+    local startdepth = depth
+    local targetangle = angle
+    local targetzoom = zoom
+    local targetx = x
+    local targety = y
+    local targetdepth = depth
+    local anglesteps = 600
+    local zoomsteps = 400
+    local xysteps = 200
+    local depthsteps = 800
+    local anglestep = 0
+    local zoomstep = 0
+    local xystep = 0
+    local depthstep = 0
+    local firstdepth = true
+    local firstxy = true
+    local firstangle = true
+    local firstzoom = true
+
+    -- use 6 layers
+    ov("celloption layers 6")
+
+    -- animate the cells
+    local running = true
+    while running do
+        local t1 = g.millisecs()
+
+        -- stop when key pressed or mouse button clicked
+        local event = g.getevent()
+        if event:find("^key") or event:find("^oclick") then
+            running = false
+        end
+
+        -- next generation
+        g.run(1)
+
+        -- update cell view from pattern
+        ov("updatecells")
+
+        -- set the camera
+        ov("camera angle "..angle)
+        ov("camera zoom "..zoom)
+        ov("camera xy "..x.." "..y)
+
+        -- set the layer depth
+        ov("celloption depth "..depth)
+
+        -- update the camera zoom
+        if zoomstep == zoomsteps then
+            zoomstep = 0
+            zoomsteps = rand(600, 800)
+            startzoom = zoom
+            if rand() > 0.25 or firstzoom then
+                targetzoom = rand(2, 10)
+                firstzoom = false
+            else
+                targetzoom = startzoom
+            end
+        else
+            zoom = startzoom + bezierx(zoomstep / zoomsteps, 0, 0, 1, 1) * (targetzoom - startzoom)
+            zoomstep = zoomstep + 1
+        end
+
+        -- update the camera angle
+        if anglestep == anglesteps then
+            anglestep = 0
+            anglesteps = rand(600, 800)
+            startangle = angle
+            if rand() > 0.25 or firstangle then
+                targetangle = rand(0, 359)
+                firstangle = false
+            else
+                targetangle = startangle
+            end
+        else
+            angle = startangle + bezierx(anglestep / anglesteps, 0, 0, 1, 1) * (targetangle - startangle)
+            anglestep = anglestep + 1
+        end
+
+        -- update the camera position
+        if xystep == xysteps then
+            xystep = 0
+            xysteps = rand(1000, 1200)
+            startx = x
+            starty = y
+            if rand() > 0.25 or firstxy then
+                targetx = rand(0, w16 - 1)
+                targety = rand(0, h16 - 1)
+                firstxy = false
+            else
+                targetx = startx
+                targety = starty
+            end
+        else
+            x = startx + bezierx(xystep / xysteps, 0, 0, 1, 1) * (targetx - startx)
+            y = starty + bezierx(xystep / xysteps, 0, 0, 1, 1) * (targety - starty)
+            xystep = xystep + 1
+        end
+
+        -- update the layer depth
+        if depthstep == depthsteps then
+            depthstep = 0
+            depthsteps = rand(600, 800)
+            startdepth = depth
+            if rand() > 0.5 or firstdepth then
+                targetdepth = rand()
+                firstdepth = false
+            else
+                targetdepth = 0
+            end
+        else
+            depth = startdepth + bezierx(depthstep / depthsteps, 0, 0, 1, 1) * (targetdepth - startdepth)
+            depthstep = depthstep + 1
+        end
+
+        -- draw the cell view
+        ov("drawcells")
+
+        -- draw exit message
+        pastetext(floor((wd - exitw) / 2 + 2), 20 + 2, op.identity, exitshadowclip)
+        pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
+
+        g.show("Time to test cellview: "..ms(g.millisecs()-t1))
+
+        -- update the overlay
+        ov("update")
+        while g.millisecs() - t1 < 15 do end
+    end
+
+    -- free clips
+    ov("freeclip "..exitclip)
+    ov("freeclip "..exitshadowclip)
+
+    -- restore settings
+    ov("textoption align "..oldalign)
+    ov("font "..oldfont)
+    ov("blend "..oldblend)
+
+    return_to_main_menu = true
 end
 
 --------------------------------------------------------------------------------
@@ -2031,6 +2240,7 @@ local function create_menu_buttons()
     local longest = "Text and Transforms"
     blend_button = op.button(       longest, test_blending)
     animation_button = op.button(   longest, test_animation)
+    cellview_button = op.button(    longest, test_cellview)
     copy_button = op.button(        longest, test_copy_paste)
     cursor_button = op.button(      longest, test_cursors)
     set_button = op.button(         longest, test_set)
@@ -2048,6 +2258,7 @@ local function create_menu_buttons()
     -- change labels without changing button widths
     blend_button.setlabel(      "Alpha Blending", false)
     animation_button.setlabel(  "Animation", false)
+    cellview_button.setlabel(   "Cell View", false)
     copy_button.setlabel(       "Copy and Paste", false)
     cursor_button.setlabel(     "Cursors", false)
     set_button.setlabel(        "Drawing Pixels", false)
@@ -2066,7 +2277,7 @@ end
 --------------------------------------------------------------------------------
 
 local function main_menu()
-    local numbutts = 15
+    local numbutts = 16
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
     local buttgap = 10
@@ -2097,6 +2308,7 @@ local function main_menu()
     
     blend_button.show(x, y)         y = y + buttgap + buttht
     animation_button.show(x, y)     y = y + buttgap + buttht
+    cellview_button.show(x, y)      y = y + buttgap + buttht
     copy_button.show(x, y)          y = y + buttgap + buttht
     cursor_button.show(x, y)        y = y + buttgap + buttht
     set_button.show(x, y)           y = y + buttgap + buttht
