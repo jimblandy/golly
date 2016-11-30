@@ -601,19 +601,20 @@ end
 local themenum = 1
 
 local function test_cellview()
+    -- create a new layer
+    g.addlayer()
+    g.setalgo("QuickLife")
+    g.setrule("b3/s23")
+
     -- resize overlay to cover entire layer
     wd, ht = g.getview( g.getlayer() )
     ov("resize "..wd.." "..ht)
 
-    -- create a new pattern with 50% random fill
-    g.new("")
-    for y = 0, ht - 1 do
-        for x = 0, wd - 1 do
-            if rand() > 0.5 then
-                g.setcell(x, y, 1)
-            end
-        end
-    end
+    -- create a new layer with 50% random fill
+    local size = 400
+    g.select( {0, 0, size, size} )
+    g.randfill(50)
+    g.select( {} )
 
     -- save settings
     local oldblend = ov("blend 0")
@@ -630,8 +631,8 @@ local function test_cellview()
     ov("blend 1")
 
     -- create a cellview (width and height must be multiples of 16)
-    local w16 = wd & ~15
-    local h16 = ht & ~15
+    local w16 = size & ~15
+    local h16 = size & ~15
     ov("cellview 0 0 "..w16.." "..h16)
 
     -- set the theme
@@ -644,8 +645,8 @@ local function test_cellview()
     -- initialize the camera
     local angle = 0
     local zoom = 6
-    local x = wd / 2
-    local y = ht / 2
+    local x = size / 2
+    local y = size / 2
     local depth = 0
     local startangle = angle
     local startzoom = zoom
@@ -788,6 +789,9 @@ local function test_cellview()
     ov("textoption align "..oldalign)
     ov("font "..oldfont)
     ov("blend "..oldblend)
+
+    -- delete the layer
+    g.dellayer()
 
     return_to_main_menu = true
 end

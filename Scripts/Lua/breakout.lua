@@ -1150,14 +1150,15 @@ local function breakout()
 
                         -- check for ball hitting left or right boundary
                         if ballx < ballsize / 2 + edgegapl or ballx >= wd - edgegapr - ballsize / 2 then
+                            createparticles(ballx, bally, 1, 1, wallparticles)
                             -- invert x direction
                             balldx = -balldx
                             ballx  = ballx - stepx
-                            createparticles(ballx, bally, 1, 1, wallparticles)
                         end
 
                         -- check for ball hitting top boundary
                         if bally < ballsize / 2 then
+                            createparticles(ballx, bally, 1, 1, wallparticles)
                             -- ball hit top so speed up a little bit
                             balldy    = -balldy
                             bally     = bally - stepy
@@ -1165,7 +1166,6 @@ local function breakout()
                             if ballspeed > maxspeed then
                                 ballspeed = maxspeed
                             end
-                            createparticles(ballx, bally, 1, 1, wallparticles)
 
                         -- check for ball hitting bottom boundary
                         elseif bally >= ht then
