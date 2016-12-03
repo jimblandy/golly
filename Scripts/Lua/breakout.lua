@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 30
+local build = 31
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -63,10 +63,10 @@ local batkeydir = 0
 local lastx
 
 -- ball settings
-local ballsize = wd / 80
-local ballx    = 0
-local bally    = 0
-local numsteps = 50
+local ballsize  = wd / 80
+local ballx     = 0
+local bally     = 0
+local numsteps  = 80
 
 -- particle settings
 local particles       = {}
@@ -102,6 +102,7 @@ local again      = true
 local times         = {}
 local timenum       = 1
 local numtimes      = 10
+local framemult     = 1
 
 -- game options
 local showtiming    = 0
@@ -347,7 +348,7 @@ local function updatenotification()
             end
             -- draw notification
             shadowtext(5, floor(ht - y - 4 * fontscale), notifymessage)
-            notifycurrent = notifycurrent + 1
+            notifycurrent = notifycurrent + framemult
         end
     end
 end
@@ -406,17 +407,17 @@ local function drawparticles()
             local dx = item[4]
             local dy = item[5]
             if showparticles ~= 0 then
-                ov("rgba 255 255 255 "..alpha)
+                ov("rgba 255 255 255 "..floor(alpha))
                 ov("set "..floor(x).." "..floor(y))
             end
             -- fade item
-            alpha = alpha - 3
+            alpha = alpha - 3 * framemult
             if alpha < 0 then
                 alpha = 0
             end
             item[1] = alpha
-            item[2] = x + dx
-            item[3] = y + dy
+            item[2] = x + dx * framemult
+            item[3] = y + dy * framemult
             item[4] = dx * 0.99
             if dy < 0 then
                 dy = dy + 0.05
@@ -506,7 +507,7 @@ local function drawball()
     end
     ov(op.white)
     ov("ellipse "..floor(ballx - ballsize / 2).." "..floor(bally - ballsize / 2).." "..floor(ballsize).." "..floor(ballsize))
-    if rand() < ballpartchance then
+    if rand() < ballpartchance * framemult then
         createparticles(ballx + ballsize / 2, bally - ballsize / 2, ballsize, ballsize, ballparticles)
     end
     ov("lineoption width "..oldwidth)
@@ -1092,12 +1093,12 @@ local function breakout()
         -- initialize the ball
         local balldx    = 0.5
         local balldy    = -1
-        local maxspeed  = 2.25 + (level  - 1) * 0.25
+        local maxspeed  = 2.2 + (level - 1) * 0.1
         if maxspeed > 3 then
             maxspeed = 3
         end
-        local speedinc  = 0.04
-        local speeddef  = 1 + (level - 1) * speedinc * 2
+        local speedinc  = 0.02
+        local speeddef  = 1 + (level - 1) * speedinc * 4
         if speeddef > maxspeed then
             speeddef = maxspeed
         end
@@ -1140,8 +1141,9 @@ local function breakout()
                 -- check for new ball
                 if not newball then
                     -- update ball position incrementally
+                    local framesteps = floor(numsteps * framemult)
                     local i = 1
-                    while i <= numsteps and not newball do
+                    while i <= framesteps and not newball do
                         i = i + 1
                         local stepx = ((balldx * ballspeed * ballsize) / speeddiv) / numsteps
                         local stepy = ((balldy * ballspeed * ballsize) / speeddiv) / numsteps
@@ -1162,7 +1164,7 @@ local function breakout()
                             -- ball hit top so speed up a little bit
                             balldy    = -balldy
                             bally     = bally - stepy
-                            ballspeed = ballspeed + speedinc / 4
+                            ballspeed = ballspeed + speedinc / 2
                             if ballspeed > maxspeed then
                                 ballspeed = maxspeed
                             end
@@ -1303,6 +1305,13 @@ local function breakout()
 
             -- pause until frame time reached
             while g.millisecs() - frametime < 16 do end
+
+            -- check what the actual frame time was and scale speed accordingly
+            framemult = 1
+            local finaltime = g.millisecs() - frametime
+            if finaltime > 16.7 then
+                framemult = finaltime / 16.7
+            end
         end
 
         -- save high score and max combo
@@ -1372,6 +1381,13 @@ local function breakout()
 
             -- pause until frame time reached
             while g.millisecs() - frametime < 16 do end
+
+            -- check what the actual frame time was and scale speed accordingly
+            framemult = 1
+            local finaltime = g.millisecs() - frametime
+            if finaltime > 16.7 then
+                framemult = finaltime / 16.7
+            end
         end
 
         -- check why game finished
