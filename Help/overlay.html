@@ -527,10 +527,13 @@ If the postfix character is followed by <b>-</b> then the component value is inv
 <dd><i>-- invert the r g b components in the clip but leave alpha unchanged (r g b a -> 255-r 255-g 255-b a)</i></dd>
 <dd><b>local replaced = ov("replace *#- *#- *#- *# myclip")</b></dd>
 </p>
+<p>
 <dd>
 Color components can also be adjusted by using <b>--</b> to decrement, <b>++</b> to increment,
 <b>-<i>value</i></b> to subtract a constant or <b>+<i>value</i></b> to add a constant.
 Component values are clamped to the range 0 to 255.
+</dd>
+</p>
 <p>
 <dd><i>-- increase the brightness of all pixels in the clip</i></dd>
 <dd><b>local replaced = ov("replace *#+50 *#+50 *#+50 *# myclip")</b></dd>
