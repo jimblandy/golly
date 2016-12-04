@@ -422,7 +422,7 @@ local replace = 1
 local replacements = {
     [1] = { op.yellow, "replace 255 0 0 255", "replace red pixels with yellow" },
     [2] = { "rgba 255 255 0 128", "replace 0 0 0 255", "replace black with semi-transparent yellow" },
-    [3] = { op.yellow, "replace !255 !0 !0 255", "replace non-red pixels with yellow" },
+    [3] = { op.yellow, "replace !255 0 0 255", "replace non-red pixels with yellow" },
     [4] = { "", "replace *g *r *# *#", "swap red and green components" },
     [5] = { "rgba 0 0 0 128", "replace *# *# *# *", "make all pixels semi-transparent" },
     [6] = { "", "replace *r- *g- *b- *#", "invert r g b components" },
@@ -430,7 +430,11 @@ local replacements = {
     [8] = { "rgba 255 255 255 255", "replace *a *a *a *", "convert alpha to greyscale" },
     [9] = { op.yellow, "replace 0 255 0 !255", "replace non-opaque green with yellow" },
     [10] = { op.yellow, "replace * * * *", "fill (replace any pixel with yellow)" },
-    [11] = { "", "replace *# *# *# *#", "no-op (replace pixels with clip pixels)" }
+    [11] = { "", "replace *# *# *# *#", "no-op (replace pixels with clip pixels)" },
+    [12] = { "rgba 0 0 0 128", "replace *# *# *# *", "make whole overlay semi-transparent", true },
+    [13] = { "", "replace *#+64 *#+64 *#+64 *#", "make pixels brighter" },
+    [14] = { "", "replace *#++ *#++ *#++ *#", "fade to white using increment", true, true },
+    [15] = { "", "replace *#-- *#-- *#-- *#", "fade to black using decrement", true, true }
 }
 
 local function test_replace()
@@ -493,14 +497,27 @@ local function test_replace()
     end
     -- execute replace and draw clip
     local t1 = g.millisecs()
-    ov(replacecmd.." clip")
+    if replacements[replace][4] ~= true then
+        replacecmd = replacecmd.." clip"
+    end
+    if replacements[replace][5] == true then
+        local remaining = 1
+        while remaining > 0 do
+            remaining = tonumber(ov(replacecmd))
+            ov("update")
+        end
+    else
+        ov(replacecmd)
+    end
     t1 = g.millisecs() - t1
-    ov("paste "..(wd - 276).." 20 clip")
+    if replacements[replace][4] ~= true then
+        ov("paste "..(wd - 276).." 20 clip")
+    end
 
     -- draw replacement text background
     ov("blend 1")
     ov("rgba 0 0 0 192")
-    ov("fill 20 300 "..(wd - 40).. " 144")
+    ov("fill 0 300 "..wd.. " 144")
 
     -- draw test name
     ov("font 14 mono")
@@ -523,10 +540,10 @@ local function test_replace()
         pastetext(floor((wd - w) / 2), 340)
     end
     ov(op.black)
-    w, h = maketext(replacecmd.." clip")
+    w, h = maketext(replacecmd)
     pastetext(floor((wd - w) / 2) + 2, 390 + 2)
     ov(op.yellow)
-    maketext(replacecmd.." clip")
+    maketext(replacecmd)
     pastetext(floor((wd - w) / 2), 390)
 
     -- next replacement
@@ -611,7 +628,7 @@ local function test_cellview()
     ov("resize "..wd.." "..ht)
 
     -- create a new layer with 50% random fill
-    local size = 400
+    local size = 512
     g.select( {0, 0, size, size} )
     g.randfill(50)
     g.select( {} )

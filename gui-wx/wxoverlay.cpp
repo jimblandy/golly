@@ -1923,20 +1923,24 @@ const char* Overlay::DoPosition(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace, int component) {
+const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace, int* delta, int component) {
     // argument is a string defining the find component value and optional replacement
     // find part is one of:
-    //     *      (match any value)
-    //     0-255  (match specific value)
-    //     !0-255 (match values other than this value)
+    //     *       (match any value)
+    //     0..255  (match specific value)
+    //     !0..255 (match values other than this value)
     // optional replacement part is one of:
-    //     r   (replace with red component)
-    //     g   (replace with green component)
-    //     b   (replace with blue component)
-    //     a   (replace with alpha component)
-    //     #   (leave this component unchanged)
-    // replacement part can be followed by - to indicate component should be negated
-
+    //     r       (replace with red component)
+    //     g       (replace with green component)
+    //     b       (replace with blue component)
+    //     a       (replace with alpha component)
+    //     #       (leave this component unchanged)
+    // replacement part can be followed by one of:
+    //     -       (component value should be inverted: v -> 255-v)
+    //     --      (component value should be decremented)
+    //     ++      (component value should be incremented)
+    //     -0..255 (component value should have constant subtracted from it)
+    //     +0..255 (component value should have constant added to it)
     char *p     = (char*)arg;
     *find       = 0;
     *negfind    = false;
@@ -1975,10 +1979,46 @@ const char* Overlay::DecodeReplaceArg(const char* arg, int* find, bool* negfind,
         *replace = match - valid + 1;
         if (*replace == 5) *replace = component;
         p++;
-        // invert if required
+        // check for invert, increment or decrement
         if (*p == '-') {
-            *invreplace = 255;
             p++;
+            if (*p == '-') {
+                *delta = -1;
+                p++;
+            } else {
+                if (*p >= '0' && *p <= '9') {
+                    while (*p >= '0' && *p <= '9') {
+                        *delta = 10 * (*delta) + *p - '0';
+                        p++;
+                    }
+                    if (*delta < 0 || *delta > 255) {
+                        return "replace delta is out of range";
+                    }
+                    *delta = -*delta;
+                } else {
+                    *invreplace = 255;
+                }
+            }
+        } else {
+            if (*p == '+') {
+                p++;
+                if (*p == '+') {
+                    *delta = 1;
+                    p++;
+                } else {
+                    if (*p >= '0' && *p <= '9') {
+                        while (*p >= '0' && *p <= '9') {
+                            *delta = 10 * (*delta) + *p - '0';
+                            p++;
+                        }
+                        if (*delta < 0 || *delta > 255) {
+                            return "replace delta is out of range";
+                        }
+                    } else {
+                        p--;
+                    }
+                }
+            }
         }
     }
 
@@ -2006,9 +2046,9 @@ const char* Overlay::DoReplace(const char* args)
     const char *arg3 = strtok(NULL, delim);
     const char *arg4 = strtok(NULL, delim);
     const char *arg5 = strtok(NULL, delim);
-    if (arg1 == NULL || arg2 == NULL || arg3 == NULL || arg4 == NULL || arg5 == NULL) {
+    if (arg1 == NULL || arg2 == NULL || arg3 == NULL || arg4 == NULL) {
         free(buffer);
-        return OverlayError("replace command requires 5 arguments");
+        return OverlayError("replace command requires 4 or 5 arguments");
     }
 
     // decode the r g b a arguments
@@ -2028,45 +2068,67 @@ const char* Overlay::DoReplace(const char* args)
     int invg = 0;
     int invb = 0;
     int inva = 0;
-    const char *error = DecodeReplaceArg(arg1, &findr, &negr, &replacer, &invr, 1);
+    int deltar = 0;
+    int deltag = 0;
+    int deltab = 0;
+    int deltaa = 0;
+    const char *error = DecodeReplaceArg(arg1, &findr, &negr, &replacer, &invr, &deltar, 1);
     if (error) { free(buffer); return OverlayError(error); }
-    error = DecodeReplaceArg(arg2, &findg, &negg, &replaceg, &invg, 2);
+    error = DecodeReplaceArg(arg2, &findg, &negg, &replaceg, &invg, &deltag, 2);
     if (error) { free(buffer); return OverlayError(error); }
-    error = DecodeReplaceArg(arg3, &findb, &negb, &replaceb, &invb, 3);
+    error = DecodeReplaceArg(arg3, &findb, &negb, &replaceb, &invb, &deltab, 3);
     if (error) { free(buffer); return OverlayError(error); }
-    error = DecodeReplaceArg(arg4, &finda, &nega, &replacea, &inva, 4);
+    error = DecodeReplaceArg(arg4, &finda, &nega, &replacea, &inva, &deltaa, 4);
     if (error) { free(buffer); return OverlayError(error); }
 
-    // search for the named clip
-    std::string name = arg5;
-    std::map<std::string,Clip*>::iterator it;
-    it = clips.find(name);
-    if (it == clips.end()) {
-        static std::string msg;
-        msg = "unknown paste name (";
-        msg += name;
-        msg += ")";
-        free(buffer);
-        return OverlayError(msg.c_str());
+    // check if a clip was specified
+    unsigned char* clipdata = NULL;
+    int w = 0;
+    int h = 0;
+    if (arg5) {
+        // search for the named clip
+        std::string name = arg5;
+        std::map<std::string,Clip*>::iterator it;
+        it = clips.find(name);
+        if (it == clips.end()) {
+            static std::string msg;
+            msg = "unknown paste name (";
+            msg += name;
+            msg += ")";
+            free(buffer);
+            return OverlayError(msg.c_str());
+        }
+        // get the clip
+        Clip* clipptr = it->second;
+        w = clipptr->cwd;
+        h = clipptr->cht;
+        clipdata = clipptr->cdata;
+    }
+    else {
+        // use overlay
+        clipdata = pixmap;
+        w = wd;
+        h = ht;
     }
     free(buffer);
 
-    // get the clip
-    Clip* clipptr = it->second;
-    int w = clipptr->cwd;
-    int h = clipptr->cht;
-    unsigned char* clipdata = clipptr->cdata;
     unsigned char clipr, clipg, clipb, clipa;
 
     // count how many pixels are replaced
     int numchanged = 0;
     static char result[16];
 
+    bool allwild = (findr == matchany && findg == matchany && findb == matchany && finda == matchany);
+    bool zerodelta = (deltar == 0 && deltag == 0 && deltab == 0 && deltaa == 0);
+    bool zeroinv = (invr == 0 && invg == 0 && invb == 0 && inva == 0);
+    bool fixedreplace = (replacer == 0 && replaceg == 0 && replaceb == 0 && replacea == 0);
+    bool destreplace = (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 4);
+
     // optimization case 1: fixed find and replace
     if ((findr != matchany && findg != matchany && findb != matchany && finda != matchany) &&
-        (replacer == 0 && replaceg == 0 && replaceb == 0 && replacea == 0) &&
-        (!nega)) {
-
+        fixedreplace &&
+        (!negg && !negb && !nega)) {
+        // use 32 bit colors
         unsigned int* cdata = (unsigned int*)clipdata;
         unsigned int findcol = 0;
         unsigned int replacecol = 0;
@@ -2074,7 +2136,7 @@ const char* Overlay::DoReplace(const char* args)
         SetRGBA(r, g, b, a, &replacecol);
 
         // check for not equals case
-        if (negr || negg || negb) {
+        if (negr) {
             for (int i = 0; i < w * h; i++) {
                 if (*cdata != findcol) {
                     *cdata = replacecol;
@@ -2098,9 +2160,7 @@ const char* Overlay::DoReplace(const char* args)
     }
 
     // optimization case 2: fill
-    if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
-        (replacer == 0 && replaceg == 0 && replaceb == 0 && replacea == 0)) {
-
+    if (allwild && zerodelta && fixedreplace) {
         // fill clip with current RGBA
         unsigned int* cdata = (unsigned int*)clipdata;
         unsigned int replacecol = 0;
@@ -2116,20 +2176,15 @@ const char* Overlay::DoReplace(const char* args)
     }
 
     // optimization case 3: no-op
-    if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
-        (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 4) &&
-        (invr == 0 && invg == 0 && invb == 0 && inva == 0)) {
-
+    if (allwild && zerodelta && zeroinv && destreplace) {
         // return number of pixels replaced
         sprintf(result, "%d", numchanged);
         return result;
     }
 
     // optimization case 4: set constant alpha value on every pixel
-    if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
-        (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 0) &&
-        (invr == 0 && invg == 0 && invb == 0)) {
-
+    if (allwild && zerodelta && zeroinv &&
+        (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 0)) {
         // set alpha
         for (int i = 0; i < w * h; i++) {
             clipdata[3] = a;
@@ -2143,10 +2198,8 @@ const char* Overlay::DoReplace(const char* args)
     }
 
     // optimization case 5: invert colors
-    if ((findr == matchany && findg == matchany && findb == matchany && finda == matchany) &&
-        (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 5) &&
+    if (allwild && zerodelta && destreplace &&
         (invr != 0 && invg != 0 && invb != 0 && inva == 0)) {
-
         // invert every pixel
         unsigned int* cdata = (unsigned int*)clipdata;
         unsigned int invmask = 0;
@@ -2159,6 +2212,91 @@ const char* Overlay::DoReplace(const char* args)
 
         // return number of pixels replaced
         numchanged = w * h;
+        sprintf(result, "%d", numchanged);
+        return result;
+    }
+
+    // optimization case 6: increment r g b values
+    if (allwild && zeroinv && destreplace && !zerodelta) {
+        // increment rgb values of every pixel
+        bool changed;
+        int value, orig;
+
+        for (int i = 0; i < w * h; i++) {
+            changed = false;
+            
+            // change r if required
+            if (deltar) {
+                orig = clipdata[0];
+                value = orig + deltar;
+                if (value < 0) {
+                    value = 0;
+                } else {
+                    if (value > 255) {
+                        value = 255;
+                    }
+                }
+                changed = value != orig;
+                if (changed) {
+                    clipdata[0] = value;
+                }
+            }
+            // change g if required
+            if (deltag) {
+                orig = clipdata[1];
+                value = orig + deltag;
+                if (value < 0) {
+                    value = 0;
+                } else {
+                    if (value > 255) {
+                        value = 255;
+                    }
+                }
+                changed = value != orig;
+                if (changed) {
+                    clipdata[1] = value;
+                }
+            }
+            // change b if required
+            if (deltab) {
+                orig = clipdata[2];
+                value = orig + deltab;
+                if (value < 0) {
+                    value = 0;
+                } else {
+                    if (value > 255) {
+                        value = 255;
+                    }
+                }
+                changed = value != orig;
+                if (changed) {
+                    clipdata[2] = value;
+                }
+            }
+            // change a if required
+            if (deltaa) {
+                orig = clipdata[3];
+                value = orig + deltaa;
+                if (value < 0) {
+                    value = 0;
+                } else {
+                    if (value > 255) {
+                        value = 255;
+                    }
+                }
+                changed = value != orig;
+                if (changed) {
+                    clipdata[3] = value;
+                }
+            }
+            // count number changed
+            if (changed) {
+                numchanged++;
+            }
+            clipdata += 4;
+        }
+
+        // return number of pixels replaced
         sprintf(result, "%d", numchanged);
         return result;
     }
@@ -2188,102 +2326,148 @@ const char* Overlay::DoReplace(const char* args)
         }
 
         // did pixel match
+        int value = 0;
         if (matchpixel) {
+            numchanged++;
             // match made so process r component
             switch (replacer) {
                 case 0:
                     // use current RGBA r component
-                    *clipdata++ = r;
+                    value = r;
                     break;
                 case 1:
                     // use clip r component
-                    *clipdata++ = clipr ^ invr;
+                    value = clipr ^ invr;
                     break;
                 case 2:
                     // use clip g component
-                    *clipdata++ = clipg ^ invr;
+                    value = clipg ^ invr;
                     break;
                 case 3:
                     // use clip b component
-                    *clipdata++ = clipb ^ invr;
+                    value = clipb ^ invr;
                     break;
                 case 4:
                     // use clip a component
-                    *clipdata++ = clipa ^ invr;
+                    value = clipa ^ invr;
                     break;
             }
+            if (deltar) {
+                value += deltar;
+                if (value < 0) {
+                    value = 0;
+                } else {
+                    if (value > 255) {
+                        value = 255;
+                    }
+                }
+            }
+            *clipdata++ = value;
 
             // g component
             switch (replaceg) {
                 case 0:
                     // use current RGBA g component
-                    *clipdata++ = g;
+                    value = g;
                     break;
                 case 1:
                     // use clip r component
-                    *clipdata++ = clipr ^ invg;
+                    value = clipr ^ invg;
                     break;
                 case 2:
                     // use clip g component
-                    *clipdata++ = clipg ^ invg;
+                    value = clipg ^ invg;
                     break;
                 case 3:
                     // use clip b component
-                    *clipdata++ = clipb ^ invg;
+                    value = clipb ^ invg;
                     break;
                 case 4:
                     // use clip a component
-                    *clipdata++ = clipa ^ invg;
+                    value = clipa ^ invg;
                     break;
             }
+            if (deltag) {
+                value += deltag;
+                if (value < 0) {
+                    value = 0;
+                } else {
+                    if (value > 255) {
+                        value = 255;
+                    }
+                }
+            }
+            *clipdata++ = value;
 
             // b component
             switch (replaceb) {
                 case 0:
                     // use current RGBA b component
-                    *clipdata++ = b;
+                    value = b;
                     break;
                 case 1:
                     // use clip r component
-                    *clipdata++ = clipr ^ invb;
+                    value = clipr ^ invb;
                     break;
                 case 2:
                     // use clip g component
-                    *clipdata++ = clipr ^ invb;
+                    value = clipr ^ invb;
                     break;
                 case 3:
                     // use clip b component
-                    *clipdata++ = clipb ^ invb;
+                    value = clipb ^ invb;
                     break;
                 case 4:
                     // use clip a component
-                    *clipdata++ = clipa ^ invb;
+                    value = clipa ^ invb;
                     break;
             }
+            if (deltab) {
+                value += deltab;
+                if (value < 0) {
+                    value = 0;
+                } else {
+                    if (value > 255) {
+                        value = 255;
+                    }
+                }
+            }
+            *clipdata++ = value;
 
             // a component
             switch (replacea) {
                 case 0:
                     // use current RGBA a component
-                    *clipdata++ = a;
+                    value = a;
                     break;
                 case 1:
                     // use clip r component
-                    *clipdata++ = clipr ^ inva;
+                    value = clipr ^ inva;
                     break;
                 case 2:
                     // use clip g component
-                    *clipdata++ = clipg ^ inva;
+                    value = clipg ^ inva;
                     break;
                 case 3:
                     // use clip b component
-                    *clipdata++ = clipb ^ inva;
+                    value = clipb ^ inva;
                     break;
                 case 4:
                     // use clip a component
-                    *clipdata++ = clipa ^ inva;
+                    value = clipa ^ inva;
                     break;
             }
+            if (deltaa) {
+                value += deltaa;
+                if (value < 0) {
+                    value = 0;
+                } else {
+                    if (value > 255) {
+                        value = 255;
+                    }
+                }
+            }
+            *clipdata++ = value;
         } else {
             // no match so skip pixel
             clipdata += 4;

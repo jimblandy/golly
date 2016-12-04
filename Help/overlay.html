@@ -450,25 +450,44 @@ The valid positions are:
 <a name="replace"></a><p><dt><b>replace <i>red green blue alpha clipname</i></b></dt>
 <dd>
 Replace pixels with color <i>red green blue alpha</i> in <i>clipname</i> with the current
-RGBA values.
+RGBA values. If the clip name is not specified then replace pixels in the overlay.
 Returns the number of pixels replaced as a string.
 </p>
 <dd> Example:</dd>
-<dd><i>-- replace opaque black pixels with semi-transparent blue pixels</i></dd>
+<dd><i>-- replace opaque black pixels with semi-transparent blue pixels in clip named 'myclip'</i></dd>
 <dd><b>ov("rgba 0 0 255 128")</b></dd>
 <dd><b>local replaced = ov("replace 0 0 0 255 myclip")</b></dd>
 </p>
 <p>
 <dd>
 There are two special characters that can be used in the color specification for
-more advanced matches: <b>*</b> and <b>!</b>.
-A color component may be specified as <b>*</b> which means match any value for that component.
-Alternatively a color compoment may be prefixed with <b>!</b> which means match clip pixels that do not have that
-color component value.
+more advanced matches: <b>!</b> and <b>*</b>.
+A color component may be specified as the wildcard <b>*</b> which means match any value for
+that component.
+</dd>
+<p>
+<dd> Example:</dd>
+<dd><i>-- replace any opaque pixel with opaque blue in the clip</i></dd>
+<dd><b>ov(op.blue)</b></dd>
+<dd><b>local replaced = ov("replace * * * 255 myclip")</b></dd>
+<p>
+<dd>
+If there are no wildcards in the color specification and the first component is prefixed
+with <b>!</b> then match pixels that do not have the specified color.
+</dd>
+<p>
+<dd> Example:</dd>
+<dd><i>-- replace any pixel that isn't white with yellow in the clip</i></dd>
+<dd><b>ov(op.yellow)</b></dd>
+<dd><b>local replaced = ov("replace !255 255 255 255 myclip")</b></dd>
+<p>
+<dd>
+If there are wildcards in the color specification then any non-wildcard component can be
+prefixed with <b>!</b> to match pixels that do not have that color component value.
 </dd>
 </p>
 <dd> Example:</dd>
-<dd><i>-- replace any non-opaque pixel with opaque blue</i></dd>
+<dd><i>-- replace any non-opaque pixel with opaque blue in the clip</i></dd>
 <dd><b>ov(op.blue)</b></dd>
 <dd><b>local replaced = ov("replace * * * !255 myclip")</b></dd>
 <p>
@@ -478,11 +497,10 @@ Normally when a match is found the clip pixel is replaced with the current
 one or more color components with <b>r</b>, <b>g</b>, <b>b</b>, <b>a</b> or <b>#</b>.
 Each color component in the clip pixel can either be left unchanged
 (in the case of <b>#</b>) or replaced with the specified color component from the clip pixel.
-If the postfix character is followed by <b>-</b> then the component value is inverted.
 </dd>
 <p>
 <dd> Examples:</dd>
-<dd><i>-- make transparent pixels opaque (r g b 0 -> r g b 255)</i></dd>
+<dd><i>-- make transparent pixels in the clip opaque (r g b 0 -> r g b 255)</i></dd>
 <dd><b>ov("rgba 0 0 0 255")</b></dd>
 <dd><b>local replaced = ov("replace *# *# *# 0 myclip")</b></dd>
 </p>
@@ -491,13 +509,31 @@ If the postfix character is followed by <b>-</b> then the component value is inv
 <dd><b>local replaced = ov("replace *g *r *# *# myclip")</b></dd>
 </p>
 <p>
-<dd><i>-- set the pixels to opaque gray based on the alpha level (r g b a -> a a a 255)</i></dd>
+<dd><i>-- set the pixels in the clip to opaque gray based on the alpha level (r g b a -> a a a 255)</i></dd>
 <dd><b>ov("rgba 0 0 0 255")</b></dd>
 <dd><b>local replaced = ov("replace *a *a *a * myclip")</b></dd>
 </p>
 <p>
-<dd><i>-- invert the r g b components but leave alpha unchanged (r g b a -> 255-r 255-g 255-b a)</i></dd>
-<dd><b>local replaced = ov("replace *r- *g- *b- *# myclip")</b></dd>
+<dd>
+If the postfix character is followed by <b>-</b> then the component value is inverted.
+</P>
+<p>
+<dd><i>-- invert the r g b components in the clip but leave alpha unchanged (r g b a -> 255-r 255-g 255-b a)</i></dd>
+<dd><b>local replaced = ov("replace *#- *#- *#- *# myclip")</b></dd>
+</p>
+<dd>
+Color components can also be adjusted by using <b>--</b> to decrement, <b>++</b> to increment,
+<b>-<i>value</i></b> to subtract a constant or <b>+<i>value</i></b> to add a constant.
+Component values are clamped to the range 0 to 255.
+<p>
+<dd><i>-- increase the brightness of all pixels in the clip</i></dd>
+<dd><b>local replaced = ov("replace *#+50 *#+50 *#+50 *# myclip")</b></dd>
+</p>
+<p>
+<dd><i>-- fade all pixels in the overlay to black</i></dd>
+<dd><b>while tonumber(ov("replace *#-- *#-- *#-- *#")) > 0 do</b></dd>
+<dd><b>&nbsp;&nbsp;&nbsp;&nbsp;ov("update")</b></dd>
+<dd><b>end</b></dd>
 </p>
 
 <a name="resize"></a><p><dt><b>resize <i>wd ht</i></b></dt>
