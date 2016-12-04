@@ -465,31 +465,37 @@ more advanced matches: <b>!</b> and <b>*</b>.
 A color component may be specified as the wildcard <b>*</b> which means match any value for
 that component.
 </dd>
+</p>
 <p>
 <dd> Example:</dd>
 <dd><i>-- replace any opaque pixel with opaque blue in the clip</i></dd>
 <dd><b>ov(op.blue)</b></dd>
 <dd><b>local replaced = ov("replace * * * 255 myclip")</b></dd>
+</p>
 <p>
 <dd>
-If there are no wildcards in the color specification and the first component is prefixed
-with <b>!</b> then match pixels that do not have the specified color.
+If the match specification is prefixed with <b>!</b> then pixels that don't match
+the specification are replaced.
 </dd>
+</p>
 <p>
 <dd> Example:</dd>
 <dd><i>-- replace any pixel that isn't white with yellow in the clip</i></dd>
 <dd><b>ov(op.yellow)</b></dd>
 <dd><b>local replaced = ov("replace !255 255 255 255 myclip")</b></dd>
+</p>
 <p>
 <dd>
-If there are wildcards in the color specification then any non-wildcard component can be
-prefixed with <b>!</b> to match pixels that do not have that color component value.
+Alternatively if the alpha specification is prefixed with <b>!</b> then pixels
+that don't have the specified alpha value are replaced.
 </dd>
 </p>
+<p>
 <dd> Example:</dd>
 <dd><i>-- replace any non-opaque pixel with opaque blue in the clip</i></dd>
 <dd><b>ov(op.blue)</b></dd>
 <dd><b>local replaced = ov("replace * * * !255 myclip")</b></dd>
+</p>
 <p>
 <dd>
 Normally when a match is found the clip pixel is replaced with the current
@@ -516,7 +522,7 @@ Each color component in the clip pixel can either be left unchanged
 <p>
 <dd>
 If the postfix character is followed by <b>-</b> then the component value is inverted.
-</P>
+</p>
 <p>
 <dd><i>-- invert the r g b components in the clip but leave alpha unchanged (r g b a -> 255-r 255-g 255-b a)</i></dd>
 <dd><b>local replaced = ov("replace *#- *#- *#- *# myclip")</b></dd>

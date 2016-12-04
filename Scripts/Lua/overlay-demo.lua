@@ -530,7 +530,7 @@ local function test_replace()
     pastetext(floor((wd - w) / 2), 310)
 
     -- draw test commands
-    ov("font 24 mono")
+    ov("font 22 mono")
     if drawcol ~= "" then
         ov(op.black)
         w, h = maketext(drawcol)

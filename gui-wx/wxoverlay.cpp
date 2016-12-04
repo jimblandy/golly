@@ -2112,6 +2112,11 @@ const char* Overlay::DoReplace(const char* args)
     }
     free(buffer);
 
+    // check that negation is correctly used
+    if (negg || negb || (nega && negr)) {
+        return OverlayError("replace ! may only be at start or before alpha");
+    }
+
     unsigned char clipr, clipg, clipb, clipa;
 
     // count how many pixels are replaced
@@ -2126,8 +2131,7 @@ const char* Overlay::DoReplace(const char* args)
 
     // optimization case 1: fixed find and replace
     if ((findr != matchany && findg != matchany && findb != matchany && finda != matchany) &&
-        fixedreplace &&
-        (!negg && !negb && !nega)) {
+        fixedreplace && !nega) {
         // use 32 bit colors
         unsigned int* cdata = (unsigned int*)clipdata;
         unsigned int findcol = 0;
@@ -2216,9 +2220,9 @@ const char* Overlay::DoReplace(const char* args)
         return result;
     }
 
-    // optimization case 6: increment r g b values
+    // optimization case 6: offset r g b a values
     if (allwild && zeroinv && destreplace && !zerodelta) {
-        // increment rgb values of every pixel
+        // offset rgba values of every pixel
         bool changed;
         int value, orig;
 
@@ -2303,6 +2307,8 @@ const char* Overlay::DoReplace(const char* args)
 
     // general case
     bool matchr, matchg, matchb, matcha, matchpixel;
+    int value = 0;
+    bool changed = false;
     for (int i = 0; i < w * h; i++) {
         // read the clip pixel
         clipr = clipdata[0];
@@ -2317,18 +2323,19 @@ const char* Overlay::DoReplace(const char* args)
         matcha = (finda == matchany) || (finda == clipa);
 
         // check for negative components
-        if (nega) { matcha = !matcha; }
-        if (negr || negg || negb) {
-            if (nega) { matcha = !matcha; }
+        if (negr) {
             matchpixel = !(matchr && matchg && matchb && matcha);
         } else {
-            matchpixel = (matchr && matchg && matchb && matcha);
+            if (nega) {
+                matchpixel = (matchr && matchg && matchb && !matcha);
+            } else {
+                matchpixel = (matchr && matchg && matchb && matcha);
+            }
         }
 
         // did pixel match
-        int value = 0;
+        changed = false;
         if (matchpixel) {
-            numchanged++;
             // match made so process r component
             switch (replacer) {
                 case 0:
@@ -2362,7 +2369,11 @@ const char* Overlay::DoReplace(const char* args)
                     }
                 }
             }
-            *clipdata++ = value;
+            if (value != clipr) {
+                *clipdata = value;
+                changed = true;
+            }
+            clipdata++;
 
             // g component
             switch (replaceg) {
@@ -2397,7 +2408,11 @@ const char* Overlay::DoReplace(const char* args)
                     }
                 }
             }
-            *clipdata++ = value;
+            if (value != clipg) {
+                *clipdata = value;
+                changed = true;
+            }
+            clipdata++;
 
             // b component
             switch (replaceb) {
@@ -2432,7 +2447,11 @@ const char* Overlay::DoReplace(const char* args)
                     }
                 }
             }
-            *clipdata++ = value;
+            if (value != clipb) {
+                *clipdata = value;
+                changed = true;
+            }
+            clipdata++;
 
             // a component
             switch (replacea) {
@@ -2467,7 +2486,16 @@ const char* Overlay::DoReplace(const char* args)
                     }
                 }
             }
-            *clipdata++ = value;
+            if (value != clipa) {
+                *clipdata = value;
+                changed = true;
+            }
+            clipdata++;
+
+            // check if pixel changed
+            if (changed) {
+                numchanged++;
+            }
         } else {
             // no match so skip pixel
             clipdata += 4;
