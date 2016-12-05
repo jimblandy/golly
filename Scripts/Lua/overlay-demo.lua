@@ -426,15 +426,16 @@ local replacements = {
     [4] = { "", "replace *g *r *# *#", "swap red and green components" },
     [5] = { "rgba 0 0 0 128", "replace *# *# *# *", "make all pixels semi-transparent" },
     [6] = { "", "replace *r- *g- *b- *#", "invert r g b components" },
-    [7] = { op.yellow, "replace * * * !255", "replace non-opaque pixels with yellow" },
-    [8] = { "rgba 255 255 255 255", "replace *a *a *a *", "convert alpha to grayscale" },
-    [9] = { op.yellow, "replace 0 255 0 !255", "replace non-opaque green with yellow" },
-    [10] = { op.yellow, "replace * * * *", "fill (replace any pixel with yellow)" },
-    [11] = { "", "replace *# *# *# *#", "no-op (replace pixels with clip pixels)" },
-    [12] = { "rgba 0 0 0 128", "replace *# *# *# *", "make whole overlay semi-transparent", true },
-    [13] = { "", "replace *#+64 *#+64 *#+64 *#", "make pixels brighter" },
-    [14] = { "", "replace *#++ *#++ *#++ *#", "fade to white using increment", true, true },
-    [15] = { "", "replace *#-- *#-- *#-- *#", "fade to black using decrement", true, true }
+    [7] = { "", "replace *# *# *# *#-", "make tranparent pixels opaque and vice versa" },
+    [8] = { op.yellow, "replace * * * !255", "replace non-opaque pixels with yellow" },
+    [9] = { "rgba 255 255 255 255", "replace *a *a *a *", "convert alpha to grayscale" },
+    [10] = { op.yellow, "replace 0 255 0 !255", "replace non-opaque green with yellow" },
+    [11] = { op.yellow, "replace * * * *", "fill (replace any pixel with yellow)" },
+    [12] = { "", "replace *# *# *# *#", "no-op (replace pixels with clip pixels)" },
+    [13] = { "rgba 0 0 0 128", "replace *# *# *# *", "make whole overlay semi-transparent", true },
+    [14] = { "", "replace *#+64 *#+64 *#+64 *#", "make pixels brighter" },
+    [15] = { "", "replace *#++ *#++ *#++ *#", "fade to white using increment", true, true },
+    [16] = { "", "replace *#-- *#-- *#-- *#", "fade to black using decrement", true, true }
 }
 
 local function test_replace()
@@ -462,6 +463,8 @@ local function test_replace()
     ov("rgba 255 255 255 255")
     ov("fill 212 212 64 64")
     ov("blend 0")
+    ov("rgba 255 255 0 0")
+    ov("fill 84 212 64 64")
     ov("rgba 0 255 0 128")
     ov("fill 20 212 64 64")
     ov("blend 1")

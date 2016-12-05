@@ -452,7 +452,6 @@ The valid positions are:
 Replace pixels with color <i>red green blue alpha</i> in <i>clipname</i> with the current
 RGBA values. If the clip name is not specified then replace pixels in the overlay.
 Returns the number of pixels replaced as a string.
-</p>
 <dd> Example:</dd>
 <dd><i>-- replace opaque black pixels with semi-transparent blue pixels in clip named 'myclip'</i></dd>
 <dd><b>ov("rgba 0 0 255 128")</b></dd>
@@ -465,8 +464,6 @@ more advanced matches: <b>!</b> and <b>*</b>.
 A color component may be specified as the wildcard <b>*</b> which means match any value for
 that component.
 </dd>
-</p>
-<p>
 <dd> Example:</dd>
 <dd><i>-- replace any opaque pixel with opaque blue in the clip</i></dd>
 <dd><b>ov(op.blue)</b></dd>
@@ -477,8 +474,6 @@ that component.
 If the match specification is prefixed with <b>!</b> then pixels that don't match
 the specification are replaced.
 </dd>
-</p>
-<p>
 <dd> Example:</dd>
 <dd><i>-- replace any pixel that isn't white with yellow in the clip</i></dd>
 <dd><b>ov(op.yellow)</b></dd>
@@ -489,8 +484,6 @@ the specification are replaced.
 Alternatively if the alpha specification is prefixed with <b>!</b> then pixels
 that don't have the specified alpha value are replaced.
 </dd>
-</p>
-<p>
 <dd> Example:</dd>
 <dd><i>-- replace any non-opaque pixel with opaque blue in the clip</i></dd>
 <dd><b>ov(op.blue)</b></dd>
@@ -504,7 +497,6 @@ one or more color components with <b>r</b>, <b>g</b>, <b>b</b>, <b>a</b> or <b>#
 Each color component in the clip pixel can either be left unchanged
 (in the case of <b>#</b>) or replaced with the specified color component from the clip pixel.
 </dd>
-<p>
 <dd> Examples:</dd>
 <dd><i>-- make transparent pixels in the clip opaque (r g b 0 -> r g b 255)</i></dd>
 <dd><b>ov("rgba 0 0 0 255")</b></dd>
@@ -522,10 +514,14 @@ Each color component in the clip pixel can either be left unchanged
 <p>
 <dd>
 If the postfix character is followed by <b>-</b> then the component value is inverted.
-</p>
-<p>
+</dd>
+<dd> Examples:</dd>
 <dd><i>-- invert the r g b components in the clip but leave alpha unchanged (r g b a -> 255-r 255-g 255-b a)</i></dd>
 <dd><b>local replaced = ov("replace *#- *#- *#- *# myclip")</b></dd>
+</p>
+<p>
+<dd><i>-- make transparent pixels opaque and vice versa (r g b a -> r g b 255-a)</i></dd>
+<dd><b>local replaced = ov("replace *# *# *# *#- myclip")</b></dd>
 </p>
 <p>
 <dd>
@@ -533,8 +529,7 @@ Color components can also be adjusted by using <b>--</b> to decrement, <b>++</b>
 <b>-<i>value</i></b> to subtract a constant or <b>+<i>value</i></b> to add a constant.
 Component values are clamped to the range 0 to 255.
 </dd>
-</p>
-<p>
+<dd> Examples:</dd>
 <dd><i>-- increase the brightness of all pixels in the clip</i></dd>
 <dd><b>local replaced = ov("replace *#+50 *#+50 *#+50 *# myclip")</b></dd>
 </p>

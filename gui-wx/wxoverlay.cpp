@@ -2172,7 +2172,7 @@ const char* Overlay::DoReplace(const char* args)
         unsigned int* cdata = (unsigned int*)clipdata;
         unsigned int replacecol = 0;
         SetRGBA(r, g, b, a, &replacecol);
-        if (destreplace) {
+        if (findr != matchany) {
             // fixed match
             for (int i = 0; i < w * h; i++) {
                 if (clipdata[0] == findr && clipdata[1] == findg && clipdata[2] == findb && clipdata[3] != finda) {
