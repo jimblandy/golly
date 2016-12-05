@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 31
+local build = 32
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -50,7 +50,8 @@ local brickcols  = {
     [5] = op.cyan,
     [6] = op.blue
 }
-local bricksleft = numrows * numcols
+local bricksleft  = numrows * numcols
+local totalbricks = numrows * numcols
 local brickx
 local bricky
 
@@ -122,6 +123,22 @@ local notifytrans    = 20
 local notifycurrent  = 0
 local notifymessage  = ""
 
+-- bonus level
+local bonus = {
+    805203,
+    699732,
+    830290,
+    698705,
+    698705,
+    805158
+}
+local bonuslevel    = false
+local bonusinterval = 3
+local bonustime     = 60
+local bonuscurrent  = 0
+local bonusgreen    = 10
+local bonusyellow   = 20
+
 -- static messages and clip names
 local optcol = "rgba 192 192 192 255"
 local messages = {
@@ -165,6 +182,14 @@ local messages = {
     ["high"]       = { "High Score ", 10 },
     ["highg"]      = { "High Score ", 10, op.green },
     ["level"]      = { "Level ", 15 },
+    ["bonus"]      = { "Bonus Level", 15 },
+    ["bcomplete"]  = { "Bonus Level Complete", 15 },
+    ["remaing"]    = { "Bricks left ", 10, op.green },
+    ["remainy"]    = { "Bricks left ", 10, op.yellow },
+    ["remainr"]    = { "Bricks left ", 10, op.red },
+    ["timeg"]      = { "Time ", 15, op.green },
+    ["timey"]      = { "Time ", 15, op.yellow },
+    ["timer"]      = { "Time ", 15, op.red  },
     ["3left"]      = { "3 balls left", 15, op.green },
     ["2left"]      = { "2 balls left", 15, op.yellow },
     ["1left"]      = { "Last ball! ", 15, op.red },
@@ -534,13 +559,21 @@ end
 --------------------------------------------------------------------------------
 
 local function initbricks()
-    rows       = {}
-    brickwd    = floor(wd / numcols)
-    brickht    = floor(ht / 40)
-    bricksleft = numrows * numcols
-    offsety    = level + 1
+    rows        = {}
+    brickwd     = floor(wd / numcols)
+    brickht     = floor(ht / 40)
+    bricksleft  = 0
+    totalbricks = 0
+    offsety     = level + 1
     if offsety > maxoffsety then
         offsety = maxoffsety
+    end
+
+    -- check for bonus level
+    bonuscurrent = bonustime
+    bonuslevel = false
+    if (level  % bonusinterval) == 0 then
+       bonuslevel   = true
     end
 
     -- distribute any gap left and right
@@ -548,14 +581,31 @@ local function initbricks()
     edgegapl = floor(edgegap / 2)
     edgegapr = edgegap - edgegapl
 
-    -- mark all bricks alive
+    -- set the required bricks alive
+    local match = 1
     for y = 1, numrows do
         local bricks = {}
-        for x = 1, numcols do
-            bricks[x] = true
+        if bonuslevel then
+            local bonusrow = bonus[y]
+            match = 1
+            for x = numcols - 1, 0, -1 do
+                if (bonusrow & match) == match then
+                    bricks[x + 1] = true
+                    bricksleft = bricksleft + 1
+                else
+                    bricks[x + 1] = false
+                end
+                match = match + match
+            end
+        else
+            for x = 1, numcols do
+                bricks[x] = true
+                bricksleft = bricksleft + 1
+            end
         end
         rows[y] = bricks
     end
+    totalbricks = bricksleft
 end
 
 --------------------------------------------------------------------------------
@@ -676,7 +726,8 @@ local function processinput()
     -- check for click, enter or return
     local event = g.getevent()
     if #event > 0 then
-        local _, x, y, button = "", mods
+        local _, x, y, button, mods
+        button = ""
         if event:find("^oclick") then
             _, x, y, button, mods = split(event)
         end
@@ -721,7 +772,8 @@ end
 local function processendinput()
     local event = g.getevent()
     if #event > 0 then
-        local _, x, y, button = "", mods
+        local _, x, y, button, mods
+        button = ""
         if event:find("^oclick") then
             _, x, y, button, mods = split(event)
         end
@@ -874,6 +926,22 @@ local function drawscoreline()
             centertextclip("combo", combo - 1, ht - h)
         end
     end
+    if not newball and not pause and not showoptions and bonuslevel and bonuscurrent >= 0 then
+        if bonuscurrent < 10 then
+            centertextclip("timer", string.format("%.1f", bonuscurrent), floor(ht / 2), op.red)
+        elseif bonuscurrent < 20 then
+            centertextclip("timey", string.format("%.1f", bonuscurrent), floor(ht / 2), op.yellow)
+        else
+            centertextclip("timeg", string.format("%.1f", bonuscurrent), floor(ht / 2), op.green)
+        end
+        if bricksleft <= bonusgreen then
+            centertextclip("remaing", bricksleft, floor(ht / 2 + 25 * fontscale), op.green)
+        elseif bricksleft <= bonusyellow then
+            centertextclip("remainy", bricksleft, floor(ht / 2 + 25 * fontscale), op.yellow)
+        else
+            centertextclip("remainr", bricksleft, floor(ht / 2 + 25 * fontscale), op.red)
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -908,6 +976,24 @@ end
 
 --------------------------------------------------------------------------------
 
+local function drawbonuscomplete(remainingtime, bonusscore)
+    ov("blend 1")
+    ov("font "..floor(15 * fontscale).." mono")
+    drawtextclip("bcomplete", floor(ht / 2 - 30 * fontscale))
+    if bricksleft <= bonusgreen  then
+        shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.green)
+    elseif bricksleft < bonusyellow then
+        shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.yellow)
+    else
+        shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = No Bonus", aligncenter, op.red)
+    end
+    drawtextclip("continue", floor(ht / 2 + 30 * fontscale))
+    drawtextclip("quitgame", floor(ht / 2 + 52 * fontscale))
+    drawtextclip("option", floor(ht / 2 + 74 * fontscale))
+end
+
+--------------------------------------------------------------------------------
+
 local function drawpause()
     ov("blend 1")
     drawtextclip("pause", floor(ht / 2 - 15 * fontscale))
@@ -929,7 +1015,11 @@ local function drawnewball()
     drawtextclip("quitgame", floor(ht / 2 + 66 * fontscale))
     drawtextclip("option", floor(ht / 2 + 88 * fontscale))
     drawtextclip(balls.."left", floor(ht / 2 - 15 * fontscale))
-    centertextclip("level", level, floor(ht / 2 - 52 * fontscale))
+    if bonuslevel then
+        drawtextclip("bonus", floor(ht / 2 - 52 * fontscale))
+    else
+        centertextclip("level", level, floor(ht / 2 - 52 * fontscale))
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -1048,6 +1138,35 @@ end
 
 --------------------------------------------------------------------------------
 
+local function clearbonusbricks()
+    local bricks = {}
+    for y = 1, numrows do
+        bricks = rows[y]
+        for x = 1, numcols do
+            if bricks[x] then
+                bricks[x] = false
+                createparticles(x * brickwd + edgegapl, (y + offsety) * brickht, brickwd, brickht, brickparticles)
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function computebonus()
+    local bonusscore = 0
+    if bricksleft <= bonusgreen then
+        bonusscore = (totalbricks - bricksleft) * (100 + (level - 1) * 10)
+    elseif bricksleft <= bonusyellow then
+        bonusscore = (totalbricks - bricksleft) * (50 + (level - 1) * 10)
+    end
+    score = score + bonusscore
+
+    return bonusscore
+end
+
+--------------------------------------------------------------------------------
+
 local function breakout()
     -- set font
     local oldfont   = ov("font 16 mono")
@@ -1123,7 +1242,7 @@ local function breakout()
         combomult = 1
 
         -- game loop
-        while balls > 0 and bricksleft > 0 do
+        while balls > 0 and bricksleft > 0 and bonuscurrent > 0 do
             -- time frame
             local frametime = g.millisecs()
 
@@ -1137,7 +1256,7 @@ local function breakout()
             drawbackground()
 
             -- check if paused
-            if not pause and not showoptions then
+            if not pause and not showoptions and bonuscurrent > 0 then
                 -- check for new ball
                 if not newball then
                     -- update ball position incrementally
@@ -1171,20 +1290,26 @@ local function breakout()
 
                         -- check for ball hitting bottom boundary
                         elseif bally >= ht then
-                            -- ball lost!
-                            balls     = balls - 1
-                            balldy    = -1
-                            balldx    = 0.5
-                            ballspeed = speeddef
-                            newball   = true
-                            combo     = 1
-                            combomult = 1
-                            -- destroy bat if no balls left
-                            if balls == 0 then
-                               createparticles(batx + batwd, baty, batwd, batht, lostparticles)
+                            -- check for bonus level
+                            if bonuslevel then
+                                -- end bonus level
+                                bonuscurrent = 0
+                            else
+                                -- ball lost!
+                                balls     = balls - 1
+                                balldy    = -1
+                                balldx    = 0.5
+                                ballspeed = speeddef
+                                newball   = true
+                                combo     = 1
+                                combomult = 1
+                                -- destroy bat if no balls left
+                                if balls == 0 then
+                                   createparticles(batx + batwd, baty, batwd, batht, lostparticles)
+                                end
                             end
                             -- exit loop
-                            i = numsteps
+                            i = framesteps + 1
 
                         -- check for ball hitting bat
                         elseif bally >= baty and bally <= baty + batht - 1 and ballx >= batx and ballx < batx + batwd then
@@ -1196,8 +1321,8 @@ local function breakout()
                             if balldx > -0.1 and balldx <= 0 then
                                 balldx = -0.1
                             end
-                            balldy = -balldy
-                            bally = baty
+                            balldy  = -balldy
+                            bally   = baty
                             bathits = bathits + 1
                             -- move the bricks down after a number of bat hits
                             if bathits == maxhits then
@@ -1312,6 +1437,19 @@ local function breakout()
             if finaltime > 16.7 then
                 framemult = finaltime / 16.7
             end
+
+            -- update bonus time if on bonus level
+            if bonuslevel and not pause and not newball and not showoptions then
+                bonuscurrent = bonuscurrent - (finaltime / 1000)
+            end
+        end
+
+        -- check for bonus level complete
+        local bonusfinal = bonuscurrent
+        local bonusscore = 0
+        if bonuslevel then
+            bonusscore = computebonus()
+            clearbonusbricks()
         end
 
         -- save high score and max combo
@@ -1323,6 +1461,7 @@ local function breakout()
         notify("Best Combo x"..maxcombo - 1)
 
         -- loop until mouse button clicked or enter pressed
+        bonuscurrent = -1
         finished = false
         while not finished do
             -- time frame
@@ -1344,21 +1483,22 @@ local function breakout()
             drawbricks()
 
             -- check why game finished
-            if balls == 0 then
-                if showoptions then
-                    drawoptions()
-                else
+            if showoptions then
+                drawoptions()
+            else
+                if balls == 0 then
                     -- game over
                     drawgameover()
-                end
-            else
-                -- draw bat
-                drawbat()
-                if showoptions then
-                    drawoptions()
                 else
-                    -- level complete
-                    drawlevelcomplete()
+                    -- draw bat
+                    drawbat()
+                    if bonuslevel then
+                        -- end of bonus level
+                        drawbonuscomplete(bonusfinal, bonusscore)
+                    else
+                        -- level complete
+                        drawlevelcomplete()
+                    end
                 end
             end
 
