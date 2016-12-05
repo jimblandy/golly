@@ -496,18 +496,19 @@ local function test_replace()
         ov(drawcol)
     end
     -- execute replace and draw clip
+    local replaced = 0
     local t1 = g.millisecs()
     if replacements[replace][4] ~= true then
         replacecmd = replacecmd.." clip"
     end
     if replacements[replace][5] == true then
-        local remaining = 1
-        while remaining > 0 do
-            remaining = tonumber(ov(replacecmd))
+        replaced = 1
+        while replaced > 0 do
+            replaced = tonumber(ov(replacecmd))
             ov("update")
         end
     else
-        ov(replacecmd)
+        replaced = tonumber(ov(replacecmd))
     end
     t1 = g.millisecs() - t1
     if replacements[replace][4] ~= true then
@@ -556,7 +557,7 @@ local function test_replace()
     ov("blend "..oldblend)
     ov("font "..oldfont)
 
-    g.show("Time to replace: "..ms(t1))
+    g.show("Time to replace: "..ms(t1).."  Pixels replaced: "..replaced)
     if repeat_test(" with different options") then goto restart end
 end
 

@@ -2129,6 +2129,9 @@ const char* Overlay::DoReplace(const char* args)
     bool fixedreplace = (replacer == 0 && replaceg == 0 && replaceb == 0 && replacea == 0);
     bool destreplace = (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 4);
 
+    // some specific common use cases are optimized for performance followed by the general purpose routine
+    // the optimized versions are typically an order of magnitude faster
+
     // optimization case 1: fixed find and replace
     if ((findr != matchany && findg != matchany && findb != matchany && finda != matchany) &&
         fixedreplace && !nega) {
@@ -2163,7 +2166,40 @@ const char* Overlay::DoReplace(const char* args)
         return result;
     }
 
-    // optimization case 2: fill
+    // optimization case 2: match pixels with different alpha and fixed replace
+    if (zerodelta && fixedreplace && zeroinv && nega &&
+        ((findr != matchany && findg != matchany && findb != matchany) || (findr == matchany && findg == matchany && findb == matchany))) {
+        unsigned int* cdata = (unsigned int*)clipdata;
+        unsigned int replacecol = 0;
+        SetRGBA(r, g, b, a, &replacecol);
+        if (destreplace) {
+            // fixed match
+            for (int i = 0; i < w * h; i++) {
+                if (clipdata[0] == findr && clipdata[1] == findg && clipdata[2] == findb && clipdata[3] != finda) {
+                    *cdata = replacecol;
+                    numchanged++;
+                }
+                cdata++;
+                clipdata += 4;
+            }
+        } else {
+            // r g b wildcard match
+            for (int i = 0; i < w * h; i++) {
+                if (clipdata[3] != finda) {
+                    *cdata = replacecol;
+                    numchanged++;
+                }
+                cdata++;
+                clipdata += 4;
+            }
+        }
+
+        // return number of pixels replaced
+        sprintf(result, "%d", numchanged);
+        return result;
+    }
+
+    // optimization case 3: fill
     if (allwild && zerodelta && fixedreplace) {
         // fill clip with current RGBA
         unsigned int* cdata = (unsigned int*)clipdata;
@@ -2179,29 +2215,31 @@ const char* Overlay::DoReplace(const char* args)
         return result;
     }
 
-    // optimization case 3: no-op
+    // optimization case 4: no-op
     if (allwild && zerodelta && zeroinv && destreplace) {
         // return number of pixels replaced
         sprintf(result, "%d", numchanged);
         return result;
     }
 
-    // optimization case 4: set constant alpha value on every pixel
+    // optimization case 5: set constant alpha value on every pixel
     if (allwild && zerodelta && zeroinv &&
         (replacer == 1 && replaceg == 2 && replaceb == 3 && replacea == 0)) {
         // set alpha
         for (int i = 0; i < w * h; i++) {
-            clipdata[3] = a;
+            if (clipdata[3] != a) {
+                clipdata[3] = a;
+                numchanged++;
+            }
             clipdata += 4;
         }
 
         // return number of pixels replaced
-        numchanged = w * h;
         sprintf(result, "%d", numchanged);
         return result;
     }
 
-    // optimization case 5: invert colors
+    // optimization case 6: invert colors
     if (allwild && zerodelta && destreplace &&
         (invr != 0 && invg != 0 && invb != 0 && inva == 0)) {
         // invert every pixel
@@ -2220,7 +2258,7 @@ const char* Overlay::DoReplace(const char* args)
         return result;
     }
 
-    // optimization case 6: offset r g b a values
+    // optimization case 7: offset r g b a values
     if (allwild && zeroinv && destreplace && !zerodelta) {
         // offset rgba values of every pixel
         bool changed;
