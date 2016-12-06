@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 33
+local build = 34
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -1165,6 +1165,10 @@ local function computebonus()
         bonusscore = (totalbricks - bricksleft) * (50 + (level - 1) * 10)
     end
     score = score + bonusscore
+    if score > hiscore then
+        hiscore = score
+        newhigh = true
+    end
 
     return bonusscore
 end
