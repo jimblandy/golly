@@ -450,7 +450,7 @@ The valid positions are:
 <a name="replace"></a><p><dt><b>replace <i>red green blue alpha clipname</i></b></dt>
 <dd>
 Replace pixels with color <i>red green blue alpha</i> in <i>clipname</i> with the current
-RGBA values. If the clip name is not specified then replace pixels in the overlay.
+<a href="#rgba">rgba</a> values. If the clip name is not specified then replace pixels in the overlay.
 Returns the number of pixels replaced as a string.
 <dd> Example:</dd>
 <dd><i>-- replace opaque black pixels with semi-transparent blue pixels in clip named 'myclip'</i></dd>
@@ -520,7 +520,7 @@ If the postfix character is followed by <b>-</b> then the component value is inv
 <dd><b>local replaced = ov("replace *#- *#- *#- *# myclip")</b></dd>
 </p>
 <p>
-<dd><i>-- make transparent pixels opaque and vice versa (r g b a -> r g b 255-a)</i></dd>
+<dd><i>-- make transparent pixels opaque in the clip and vice versa (r g b a -> r g b 255-a)</i></dd>
 <dd><b>local replaced = ov("replace *# *# *# *#- myclip")</b></dd>
 </p>
 <p>

@@ -2124,6 +2124,8 @@ const char* Overlay::DoReplace(const char* args)
     }
 
     unsigned char clipr, clipg, clipb, clipa;
+    const int bytebits = 8;
+    const int remainbits = 32 - bytebits;
 
     // count how many pixels are replaced
     int numchanged = 0;
@@ -2269,6 +2271,7 @@ const char* Overlay::DoReplace(const char* args)
         // offset rgba values of every pixel
         bool changed;
         int value, orig;
+        unsigned int clamp;
 
         for (int i = 0; i < w * h; i++) {
             changed = false;
@@ -2277,13 +2280,7 @@ const char* Overlay::DoReplace(const char* args)
             if (deltar) {
                 orig = clipdata[0];
                 value = orig + deltar;
-                if (value < 0) {
-                    value = 0;
-                } else {
-                    if (value > 255) {
-                        value = 255;
-                    }
-                }
+                if ((clamp = value >> bytebits)) { value = ~clamp >> remainbits; }
                 changed = value != orig;
                 if (changed) {
                     clipdata[0] = value;
@@ -2293,13 +2290,7 @@ const char* Overlay::DoReplace(const char* args)
             if (deltag) {
                 orig = clipdata[1];
                 value = orig + deltag;
-                if (value < 0) {
-                    value = 0;
-                } else {
-                    if (value > 255) {
-                        value = 255;
-                    }
-                }
+                if ((clamp = value >> bytebits)) { value = ~clamp >> remainbits; }
                 changed = value != orig;
                 if (changed) {
                     clipdata[1] = value;
@@ -2309,13 +2300,7 @@ const char* Overlay::DoReplace(const char* args)
             if (deltab) {
                 orig = clipdata[2];
                 value = orig + deltab;
-                if (value < 0) {
-                    value = 0;
-                } else {
-                    if (value > 255) {
-                        value = 255;
-                    }
-                }
+                if ((clamp = value >> bytebits)) { value = ~clamp >> remainbits; }
                 changed = value != orig;
                 if (changed) {
                     clipdata[2] = value;
@@ -2325,13 +2310,7 @@ const char* Overlay::DoReplace(const char* args)
             if (deltaa) {
                 orig = clipdata[3];
                 value = orig + deltaa;
-                if (value < 0) {
-                    value = 0;
-                } else {
-                    if (value > 255) {
-                        value = 255;
-                    }
-                }
+                if ((clamp = value >> bytebits)) { value = ~clamp >> remainbits; }
                 changed = value != orig;
                 if (changed) {
                     clipdata[3] = value;
@@ -2353,6 +2332,7 @@ const char* Overlay::DoReplace(const char* args)
     bool matchr, matchg, matchb, matcha, matchpixel;
     int value = 0;
     bool changed = false;
+    unsigned int clamp;
     for (int i = 0; i < w * h; i++) {
         // read the clip pixel
         clipr = clipdata[0];
@@ -2405,13 +2385,7 @@ const char* Overlay::DoReplace(const char* args)
             }
             if (deltar) {
                 value += deltar;
-                if (value < 0) {
-                    value = 0;
-                } else {
-                    if (value > 255) {
-                        value = 255;
-                    }
-                }
+                if ((clamp = value >> bytebits)) { value = ~clamp >> remainbits; }
             }
             if (value != clipr) {
                 *clipdata = value;
@@ -2444,13 +2418,7 @@ const char* Overlay::DoReplace(const char* args)
             }
             if (deltag) {
                 value += deltag;
-                if (value < 0) {
-                    value = 0;
-                } else {
-                    if (value > 255) {
-                        value = 255;
-                    }
-                }
+                if ((clamp = value >> bytebits)) { value = ~clamp >> remainbits; }
             }
             if (value != clipg) {
                 *clipdata = value;
@@ -2483,13 +2451,7 @@ const char* Overlay::DoReplace(const char* args)
             }
             if (deltab) {
                 value += deltab;
-                if (value < 0) {
-                    value = 0;
-                } else {
-                    if (value > 255) {
-                        value = 255;
-                    }
-                }
+                if ((clamp = value >> bytebits)) { value = ~clamp >> remainbits; }
             }
             if (value != clipb) {
                 *clipdata = value;
@@ -2522,13 +2484,6 @@ const char* Overlay::DoReplace(const char* args)
             }
             if (deltaa) {
                 value += deltaa;
-                if (value < 0) {
-                    value = 0;
-                } else {
-                    if (value > 255) {
-                        value = 255;
-                    }
-                }
             }
             if (value != clipa) {
                 *clipdata = value;
@@ -2538,6 +2493,7 @@ const char* Overlay::DoReplace(const char* args)
 
             // check if pixel changed
             if (changed) {
+                if ((clamp = value >> bytebits)) { value = ~clamp >> remainbits; }
                 numchanged++;
             }
         } else {
