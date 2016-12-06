@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 32
+local build = 33
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -79,6 +79,8 @@ local batparticles    = 20
 local highparticles   = 4
 local comboparticles  = 4
 local lostparticles   = 1024
+local bonusparticlesg = 6
+local bonusparticlesy = 3
 
 -- game settings
 local level      = 1
@@ -201,7 +203,7 @@ local messages = {
 --------------------------------------------------------------------------------
 
 local function showcursor()
-    if showmouse == 0 or fullscreen == 1 then
+    if showmouse == 0 then
         ov("cursor hidden")
     else
         ov("cursor arrow")
@@ -950,12 +952,12 @@ local function drawgameover()
     ov("blend 1")
     if newhigh then
         local highscorew = drawtextclip("newhigh", floor(ht / 2 + 96 * fontscale))
-        createparticles(edgegapl + floor(wd / 2) + highscorew / 2, floor(ht / 2 + 96 * fontscale), highscorew, 1, highparticles)
+        createparticles(edgegapl + floor(wd / 2 + highscorew / 2), floor(ht / 2 + 96 * fontscale), highscorew, 1, highparticles)
     end
     combo = gamecombo
     if newcombo then
         local combow = drawtextclip("newcombo", floor(ht / 2 + 118 * fontscale))
-        createparticles(edgegapl + floor(wd / 2) + combow / 2, floor(ht / 2 + 118 * fontscale), combow, 1, comboparticles)
+        createparticles(edgegapl + floor(wd / 2 + combow / 2), floor(ht / 2 + 118 * fontscale), combow, 1, comboparticles)
     end
     drawtextclip("gameover", floor(ht / 2 - 30 * fontscale))
     drawtextclip("restart", floor(ht / 2 + 30 * fontscale))
@@ -981,9 +983,11 @@ local function drawbonuscomplete(remainingtime, bonusscore)
     ov("font "..floor(15 * fontscale).." mono")
     drawtextclip("bcomplete", floor(ht / 2 - 30 * fontscale))
     if bricksleft <= bonusgreen  then
-        shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.green)
+        local w = shadowtext(0, floor(ht / 2), "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.green)
+        createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, bonusparticlesg)
     elseif bricksleft < bonusyellow then
-        shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.yellow)
+        local w = shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.yellow)
+        createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, bonusparticlesy)
     else
         shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = No Bonus", aligncenter, op.red)
     end
