@@ -737,8 +737,9 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_TIMELINE,     active);
         mbar->Enable(ID_INFO,         !currlayer->currfile.IsEmpty());
         
+        mbar->Enable(ID_SAVE_OVERLAY, active && showoverlay && curroverlay->GetOverlayData());
         mbar->Enable(ID_SHOW_OVERLAY, active);
-        mbar->Enable(ID_DEL_OVERLAY,  active && !inscript);
+        mbar->Enable(ID_DEL_OVERLAY,  active && !inscript && curroverlay->GetOverlayData());
         mbar->Enable(ID_ADD_LAYER,    active && !inscript && numlayers < MAX_LAYERS);
         mbar->Enable(ID_CLONE,        active && !inscript && numlayers < MAX_LAYERS);
         mbar->Enable(ID_DUPLICATE,    active && !inscript && numlayers < MAX_LAYERS);
@@ -1427,6 +1428,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_INFO:           ShowPatternInfo(); break;
             
         // Layer menu
+        case ID_SAVE_OVERLAY:   SaveOverlay(); break;
         case ID_SHOW_OVERLAY:   ToggleOverlay(); break;
         case ID_DEL_OVERLAY:    DeleteOverlay(); break;
         case ID_ADD_LAYER:      AddLayer(); break;
@@ -2270,6 +2272,7 @@ void MainFrame::CreateMenus()
     viewMenu->AppendSeparator();
     viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
     
+    layerMenu->Append(ID_SAVE_OVERLAY,           _("Save Overlay...") + GetAccelerator(DO_SAVEOVERLAY));
     layerMenu->AppendCheckItem(ID_SHOW_OVERLAY,  _("Show Overlay") + GetAccelerator(DO_SHOWOVERLAY));
     layerMenu->Append(ID_DEL_OVERLAY,            _("Delete Overlay") + GetAccelerator(DO_DELOVERLAY));
     layerMenu->AppendSeparator();
@@ -2441,6 +2444,7 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_TIMELINE,        DO_SHOWTIME);
         SetAccelerator(mbar, ID_INFO,            DO_INFO);
         
+        SetAccelerator(mbar, ID_SAVE_OVERLAY,    DO_SAVEOVERLAY);
         SetAccelerator(mbar, ID_SHOW_OVERLAY,    DO_SHOWOVERLAY);
         SetAccelerator(mbar, ID_DEL_OVERLAY,     DO_DELOVERLAY);
         SetAccelerator(mbar, ID_ADD_LAYER,       DO_ADD);

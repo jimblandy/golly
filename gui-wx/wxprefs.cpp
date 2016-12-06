@@ -173,6 +173,7 @@ int thumbrange = 10;             // thumb box scrolling range in terms of view w
 int mindelay = 250;              // minimum millisec delay
 int maxdelay = 2000;             // maximum millisec delay
 wxString opensavedir;            // directory for Open and Save dialogs
+wxString overlaydir;             // directory for Save Overlay dialog
 wxString rundir;                 // directory for Run Script dialog
 wxString choosedir;              // directory used by Choose File button
 wxString filedir;                // directory used by Show Files
@@ -611,6 +612,7 @@ const char* GetActionName(action_id action)
         case DO_SHOWTIME:       return "Show Timeline";
         case DO_INFO:           return "Pattern Info";
         // Layer menu
+        case DO_SAVEOVERLAY:    return "Save Overlay...";
         case DO_SHOWOVERLAY:    return "Show Overlay";
         case DO_DELOVERLAY:     return "Delete Overlay";
         case DO_ADD:            return "Add Layer";
@@ -1564,6 +1566,7 @@ void SavePrefs()
     fputs("\n", f);
     
     SaveRelPath(f, "open_save_dir", opensavedir);
+    SaveRelPath(f, "overlay_dir", overlaydir);
     SaveRelPath(f, "run_dir", rundir);
     SaveRelPath(f, "choose_dir", choosedir);
     SaveRelPath(f, "file_dir", filedir);
@@ -1803,6 +1806,7 @@ void GetPrefs()
     opensavedir = gollydir;
     choosedir = gollydir;
     filedir = gollydir;
+    overlaydir = datadir;
     
     // init the text editor to something reasonable
 #ifdef __WXMSW__
@@ -2234,6 +2238,7 @@ void GetPrefs()
             savexrle = value[0] == '1';
             
         } else if (strcmp(keyword, "open_save_dir") == 0) { GetRelPath(value, opensavedir);
+        } else if (strcmp(keyword, "overlay_dir") == 0)   { GetRelPath(value, overlaydir);
         } else if (strcmp(keyword, "run_dir") == 0)       { GetRelPath(value, rundir, SCRIPT_DIR);
         } else if (strcmp(keyword, "choose_dir") == 0)    { GetRelPath(value, choosedir);
         } else if (strcmp(keyword, "file_dir") == 0)      { GetRelPath(value, filedir);

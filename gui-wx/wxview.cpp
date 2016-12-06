@@ -1734,6 +1734,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_INFO:        if (!busy) mainptr->ShowPatternInfo(); break;
             
         // Layer menu actions
+        case DO_SAVEOVERLAY: mainptr->SaveOverlay(); break;
         case DO_SHOWOVERLAY: mainptr->ToggleOverlay(); break;
         case DO_DELOVERLAY:  if (!inscript) mainptr->DeleteOverlay(); break;
         case DO_ADD:         if (!inscript) AddLayer(); break;

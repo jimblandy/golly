@@ -131,7 +131,8 @@ extern int mousewheelmode;       // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomI
 extern int thumbrange;           // thumb box scrolling range in terms of view wd/ht
 extern int mindelay;             // minimum millisec delay
 extern int maxdelay;             // maximum millisec delay
-extern wxString opensavedir;     // directory for Open and Save dialogs
+extern wxString opensavedir;     // directory for Open/Save Pattern dialogs
+extern wxString overlaydir;      // directory for Save Overlay dialog
 extern wxString rundir;          // directory for Run Script dialog
 extern wxString choosedir;       // directory used by Choose File button
 extern wxString filedir;         // directory used by Show Files
@@ -218,6 +219,7 @@ typedef enum {
     DO_RUNCLIP,                   // run clipboard
     DO_RUNSCRIPT,                 // run script...
     DO_SAVEXRLE,                  // save extended rle
+    DO_SAVEOVERLAY,               // save overlay...
     DO_SAVE,                      // save pattern...
     DO_DOWN,                      // scroll down
     DO_LEFT,                      // scroll left

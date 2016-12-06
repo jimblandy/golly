@@ -51,7 +51,7 @@ typedef enum {
 
 
 // The Clip class is used by the copy and text commands to store pixel data
-// in a named "clipboard" for later use by the paste command:
+// in a named "clipboard" for later use by the paste and replace commands:
 class Clip {
 public:
     Clip(int w, int h, bool use_calloc = false) {
@@ -117,6 +117,9 @@ public:
     
     bool OnlyDrawOverlay();
     // If true then DrawView (in wxrender.cpp) will only draw the overlay.
+    
+    void SaveOverlay(const wxString& pngpath);
+    // Save overlay in given PNG file.
 
 private:
     const char* DoCreate(const char* args);

@@ -54,6 +54,7 @@
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxalgos.h"       // for CreateNewUniverse, algo_type, algoinfo, etc
 #include "wxlayer.h"       // for currlayer, etc
+#include "wxoverlay.h"     // for curroverlay
 #include "wxhelp.h"        // for ShowHelp, LoadRule
 #include "wxtimeline.h"    // for InitTimelineFrame, ToggleTimelineBar, etc
 
@@ -1705,6 +1706,24 @@ void MainFrame::SaveSucceeded(const wxString& path)
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::SaveOverlay()
+{
+    if (showoverlay && curroverlay->GetOverlayData()) {
+        wxFileDialog savedlg(this, _("Save overlay as PNG file"),
+                             overlaydir, _("overlay.png"), _("PNG (*.png)|*.png"),
+                             wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+        
+        if (savedlg.ShowModal() == wxID_OK) {
+            wxString pngpath = savedlg.GetPath();
+            wxFileName fullpath(pngpath);
+            overlaydir = fullpath.GetPath();
+            curroverlay->SaveOverlay(pngpath);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ToggleShowFiles()
 {
     if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
@@ -1734,8 +1753,9 @@ void MainFrame::ToggleShowFiles()
 void MainFrame::ChangeFileDir()
 {
     wxDirDialog dirdlg(this, _("Choose a new file folder"), filedir, wxDD_NEW_DIR_BUTTON);
-    if (dirdlg.ShowModal() == wxID_OK)
+    if (dirdlg.ShowModal() == wxID_OK) {
         SetFileDir(dirdlg.GetPath());
+    }
 }
 
 // -----------------------------------------------------------------------------

@@ -143,6 +143,7 @@ public:
     wxWindow* RightPane();
     
     // layer functions
+    void SaveOverlay();
     void ToggleOverlay();
     void DeleteOverlay();
     void UpdateLayerItem(int index);
@@ -359,6 +360,7 @@ enum {
     ID_SCALE_32,
     
     // Layer menu
+    ID_SAVE_OVERLAY,
     ID_SHOW_OVERLAY,
     ID_DEL_OVERLAY,
     ID_ADD_LAYER,

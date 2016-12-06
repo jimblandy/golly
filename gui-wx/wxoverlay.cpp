@@ -34,6 +34,7 @@
 #include "wxview.h"         // for viewptr->...
 #include "wxlayer.h"        // for currlayer->...
 #include "wxprefs.h"        // for showoverlay
+#include "wxutils.h"        // for Warning
 #include "wxoverlay.h"
 
 #include <vector>           // for std::vector
@@ -1846,7 +1847,12 @@ const char* Overlay::DoCreate(const char* args)
     linewidth = 1.0;
 
     // make sure the Show Overlay option is ticked
-    if (!showoverlay) mainptr->ToggleOverlay();
+    if (!showoverlay) {
+        mainptr->ToggleOverlay();
+    } else {
+        // enable Save Overlay
+        mainptr->UpdateMenuItems();
+    }
 
     return NULL;
 }
@@ -4108,6 +4114,49 @@ const char* Overlay::DoSave(const char* args)
     }
 
     return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+void Overlay::SaveOverlay(const wxString& pngpath)
+{
+    if (pixmap == NULL) {
+        Warning(_("There is no overlay data to save!"));
+        return;
+    }
+    
+    unsigned char* rgbdata = (unsigned char*) malloc(wd * ht * 3);
+    if (rgbdata== NULL) {
+        Warning(_("Not enough memory to copy RGB data."));
+        return;
+    }
+    unsigned char* alphadata = (unsigned char*) malloc(wd * ht);
+    if (alphadata == NULL) {
+        free(rgbdata);
+        Warning(_("Not enough memory to copy alpha data."));
+        return;
+    }
+    
+    unsigned char* p = pixmap;
+    int rgbpos = 0;
+    int alphapos = 0;
+    for (int j=0; j<ht; j++) {
+        for (int i=0; i<wd; i++) {
+            rgbdata[rgbpos++] = p[0];
+            rgbdata[rgbpos++] = p[1];
+            rgbdata[rgbpos++] = p[2];
+            alphadata[alphapos++] = p[3];
+            p += 4;
+        }
+    }
+
+    // create image using the given RGB and alpha data;
+    // static_data flag is false so wxImage dtor will free rgbdata and alphadata
+    wxImage image(wd, ht, rgbdata, alphadata, false);
+
+    if (!image.SaveFile(pngpath)) {
+        Warning(_("Failed to save overlay in given file."));
+    }
 }
 
 // -----------------------------------------------------------------------------
