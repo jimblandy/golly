@@ -52,7 +52,7 @@ local oslider           -- slider for adjusting opacity
 local controlht         -- height of area containing the controls
 
 -- initial directory for the save dialog
-local initdir = g.getdir("app")
+local initdir = g.getdir("data")
 
 -- user settings are stored in this file
 local settingsfile = g.getdir("data").."pop-plot.ini"
@@ -66,7 +66,7 @@ local function read_settings()
         numsteps = tonumber(f:read("*l")) or xlen
         opacity = tonumber(f:read("*l")) or 80
         lines = (f:read("*l") or "true") == "true"
-        initdir = f:read("*l") or g.getdir("app")
+        initdir = f:read("*l") or g.getdir("data")
         f:close()
     end
 end
