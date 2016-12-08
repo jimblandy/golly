@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 35
+local build = 36
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -696,31 +696,44 @@ end
 
 --------------------------------------------------------------------------------
 
+local function savescreenshot()
+    local filename = g.getdir("data").."shot"..os.date("%y%m%d%H%M%S", os.time())..".png"
+    ov("save 0 0 0 0 "..filename)
+    notify("Saved screenshot "..filename)
+end
+
+--------------------------------------------------------------------------------
+
 local function processstandardkeys(event)
-    if event == "key f11 none" then
-        -- toggle fullscreen
-        togglefullscreen()
-    elseif event == "key a none" then
-        -- toggle autopause when mouse moves off overlay
-        toggleautopause()
-    elseif event == "key d none" then
-        -- toggle shadow display
-        toggleshadowdisplay()
-    elseif event == "key m none" then
-        -- toggle mouse cursor display when not fullscreen
-        togglemouse()
-    elseif event == "key p none" then
-        -- toggle particle display
-        toggleparticles()
-    elseif event == "key s none" then
-        -- toggle autostart when mouse moves onto overlay
-        toggleautostart()
-    elseif event == "key t none" then
-        -- toggle timing display
-        toggletiming()
-    elseif event == "key tab none" then
-        -- show options
-        showoptions = not showoptions
+    if event:find("^key") then
+        if event == "key f11 none" then
+            -- toggle fullscreen
+            togglefullscreen()
+        elseif event == "key a none" then
+            -- toggle autopause when mouse moves off overlay
+            toggleautopause()
+        elseif event == "key d none" then
+            -- toggle shadow display
+            toggleshadowdisplay()
+        elseif event == "key m none" then
+            -- toggle mouse cursor display when not fullscreen
+            togglemouse()
+        elseif event == "key p none" then
+            -- toggle particle display
+            toggleparticles()
+        elseif event == "key s none" then
+            -- toggle autostart when mouse moves onto overlay
+            toggleautostart()
+        elseif event == "key t none" then
+            -- toggle timing display
+            toggletiming()
+        elseif event == "key tab none" then
+            -- show options
+            showoptions = not showoptions
+        elseif event == "key f12 none" then
+            -- save screenshot
+            savescreenshot()
+        end
     end
 end
 
@@ -1121,7 +1134,7 @@ local function updatebatposition()
         -- mouse off overlay
         offoverlay = true
         -- check for autopause
-        if autopause ~= 0 and fullscreen == 0 then
+        if autopause ~= 0 then
             pause = true
         end
     end
