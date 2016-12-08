@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 34
+local build = 35
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -106,6 +106,8 @@ local times         = {}
 local timenum       = 1
 local numtimes      = 10
 local framemult     = 1
+local framecap      = 100
+local sixtyhz       = 16.7
 
 -- game options
 local showtiming    = 0
@@ -1442,8 +1444,12 @@ local function breakout()
             -- check what the actual frame time was and scale speed accordingly
             framemult = 1
             local finaltime = g.millisecs() - frametime
-            if finaltime > 16.7 then
-                framemult = finaltime / 16.7
+            if finaltime > sixtyhz then
+                -- cap to maximum frame time in case external event took control for a long time
+                if finaltime > framecap then
+                    finaltime = framecap
+                end
+                framemult = finaltime / sixtyhz
             end
 
             -- update bonus time if on bonus level
@@ -1533,8 +1539,12 @@ local function breakout()
             -- check what the actual frame time was and scale speed accordingly
             framemult = 1
             local finaltime = g.millisecs() - frametime
-            if finaltime > 16.7 then
-                framemult = finaltime / 16.7
+            if finaltime > sixtyhz then
+                -- cap to maximum frame time in case external event took control for a long time
+                if finaltime > framecap then
+                    finaltime = framecap
+                end
+                framemult = finaltime / sixtyhz
             end
         end
 
