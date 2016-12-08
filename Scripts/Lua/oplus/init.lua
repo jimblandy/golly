@@ -240,18 +240,15 @@ end
 local function draw_checkbox(x, y, w, h, ticked)
     draw_button(x, y, w, h)
     if ticked then
-        -- draw a tick mark (needs improvement!!!)
+        -- draw a tick mark
         local oldrgba = ov(m.textrgba)
-        ov("line "..int(x+w/2).." "..(y+h-5).." "..(x+6).." "..(y+h-8))
-        ov("line "..int(x+w/2).." "..(y+h-5).." "..(x+w-6).." "..(y+5))
-        ov("rgba 255 255 255 128")
         local oldblend = ov("blend 1")
-        ov("line "..int(x+w/2).." "..(y+h-6).." "..(x+6).." "..(y+h-9))
-        ov("line "..int(x+w/2).." "..(y+h-6).." "..(x+6).." "..(y+h-10))
-        ov("line "..int(x+w/2-1).." "..(y+h-5).." "..(x+w-7).." "..(y+5))
-        ov("line "..int(x+w/2+1).." "..(y+h-6).." "..(x+w-5).." "..(y+5))
-        ov("rgba "..oldrgba)
+        local oldwidth = ov("lineoption width 4")
+        ov("line "..int(x+w/2).." "..int(y+h*0.75).." "..int(x+w*0.75).." "..int(y+h*0.25))
+        ov("line "..int(x+w/2+1).." "..int(y+h*0.75).." "..int(x+w*0.25).." "..int(y+h*0.6))
+        ov("lineoption width "..oldwidth)
         ov("blend "..oldblend)
+        ov("rgba "..oldrgba)
     end
 end
 
