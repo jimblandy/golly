@@ -1703,6 +1703,8 @@ local function test_lines()
     ov("rgba "..oldrgba)
 
     -- draw filled ellipses using oplus function
+    -- (no border if given border width is 0)
+    op.fill_ellipse(370, 450, 50, 100, 0, "rgba 0 0 255 128")
     op.fill_ellipse(300, 450, 100, 80, 15, op.green)
     op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 200")
 

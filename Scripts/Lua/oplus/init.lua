@@ -748,11 +748,23 @@ end
 
 --------------------------------------------------------------------------------
 
-function m.fill_ellipse(x, y, w, h, linewd, fillrgba)
-    -- draw an ellipse with the given line width using the current color
+function m.fill_ellipse(x, y, w, h, borderwd, fillrgba)
+    -- draw an ellipse with the given border width using the current color
     -- and fill it with the given color
 
-    if w <= linewd/2 or h <= linewd/2 then
+    if borderwd == 0 then
+        -- just draw solid anti-aliased ellipse using fillrgba
+        local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
+        local oldblend = ov("blend 1")
+        local oldrgba = ov(fillrgba)
+        ov("ellipse "..x.." "..y.." "..w.." "..h)
+        ov("rgba "..oldrgba)
+        ov("blend "..oldblend)
+        ov("lineoption width "..oldwidth)
+        return
+    end
+
+    if w <= borderwd/2 or h <= borderwd/2 then
         -- no room to fill so just draw anti-aliased ellipse using current color
         local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
         local oldblend = ov("blend 1")
@@ -770,9 +782,9 @@ function m.fill_ellipse(x, y, w, h, linewd, fillrgba)
     local oldwidth = ov("lineoption width "..int(math.min(smallw,smallh)/2 + 0.5))
     ov("ellipse "..(x+1).." "..(y+1).." "..smallw.." "..smallh)
 
-    -- restore color and now draw outer ellipse using given linewd
+    -- restore color and now draw outer ellipse using given borderwd
     ov("rgba "..oldrgba)
-    ov("lineoption width "..linewd)
+    ov("lineoption width "..borderwd)
     ov("ellipse "..x.." "..y.." "..w.." "..h)
     
     -- restore line width and blend state
