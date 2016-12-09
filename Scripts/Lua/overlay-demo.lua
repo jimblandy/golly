@@ -1590,7 +1590,6 @@ local function show_magnified_pixels(x, y)
     local numrows = numcols
     local magsize = 14
     local boxsize = (1+magsize)*numcols+1
-    local xyrgba = ov("get "..x.." "..y)
     
     -- get pixel colors
     local color = {}
@@ -1607,6 +1606,7 @@ local function show_magnified_pixels(x, y)
     local ybox = int(y-boxsize/2)
     ov("fill "..xbox.." "..ybox.." "..boxsize.." "..boxsize)
     
+    -- draw magnified pixels
     for i = 1, numrows do
         for j = 1, numcols do
             if #color[i][j] > 0 then
@@ -1617,21 +1617,6 @@ local function show_magnified_pixels(x, y)
             end
         end
     end
-    
-    -- draw text showing position and color of the pixel at x,y
-    local oldblend = ov("blend 1")
-    local oldfont = ov("font 9 default-bold")
-    local pxlinfo = "xy: "..x.." "..y.."\nrgba: "..xyrgba
-    ov(op.blue)
-    ov("fill "..xbox.." "..ybox.." "..boxsize.." "..((magsize+1)*2))
-    ov(op.white)
-    ov("text whiteinfo "..pxlinfo)
-    ov("paste "..(xbox+3).." "..(ybox+1).." whiteinfo")
-    ov("freeclip whiteinfo")
-    
-    ov("blend "..oldblend)
-    ov("rgba "..oldrgba)
-    ov("font "..oldfont)
 end
 
 --------------------------------------------------------------------------------
@@ -1785,6 +1770,7 @@ local function test_lines()
             display_magnifier = not display_magnifier
             if showing_magnifier and not display_magnifier then
                 ov("paste 0 0 bg")
+                g.show("")
                 g.update()
                 showing_magnifier = false
             elseif display_magnifier and not showing_magnifier then
@@ -1807,6 +1793,8 @@ local function test_lines()
                 prevy = y
                 ov("paste 0 0 bg")
                 if display_magnifier then
+                    -- first show position and color of x,y pixel in status bar
+                    g.show("xy: "..x.." "..y.."  rgba: "..ov("get "..x.." "..y))
                     show_magnified_pixels(x, y)
                     g.update()
                     showing_magnifier = true
@@ -1814,6 +1802,7 @@ local function test_lines()
             end
         elseif showing_magnifier then
             ov("paste 0 0 bg")
+            g.show("")
             g.update()
             showing_magnifier = false
         end
