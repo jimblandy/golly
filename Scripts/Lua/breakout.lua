@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 36
+local build = 38
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -82,6 +82,9 @@ local lostparticles   = 1024
 local bonusparticlesg = 6
 local bonusparticlesy = 3
 
+-- points settings
+local points = {}
+
 -- game settings
 local level      = 1
 local newball    = true
@@ -110,6 +113,7 @@ local framecap      = 100
 local sixtyhz       = 16.7
 
 -- game options
+local brickscore    = 1
 local showtiming    = 0
 local showparticles = 1
 local autopause     = 0
@@ -161,6 +165,7 @@ local messages = {
     ["newcombo"]   = { "New Best Combo!", 10, op.green },
     ["close"]      = { "Click or Tab to close Game Settings", 10 },
     ["autopause"]  = { "Autopause", 10, optcol },
+    ["brickscore"] = { "Brick Score", 10, optcol },
     ["shadows"]    = { "Shadows", 10, optcol },
     ["mouse"]      = { "Mouse Pointer", 10, optcol },
     ["particles"]  = { "Particles", 10, optcol },
@@ -173,6 +178,7 @@ local messages = {
     ["state"]      = { "State", 10 },
     ["key"]        = { "Key", 10 },
     ["a"]          = { "A", 10, optcol },
+    ["b"]          = { "B", 10, optcol },
     ["d"]          = { "D", 10, optcol },
     ["m"]          = { "M", 10, optcol },
     ["p"]          = { "P", 10, optcol },
@@ -233,6 +239,7 @@ local function readsettings()
         showmouse     = tonumber(f:read("*l")) or 1
         showshadows   = tonumber(f:read("*l")) or 1
         maxcombo      = tonumber(f:read("*l")) or 2
+        brickscore    = tonumber(f:read("*l")) or 1
         f:close()
     end
 end
@@ -251,6 +258,7 @@ local function writesettings()
         f:write(tostring(showmouse).."\n")
         f:write(tostring(showshadows).."\n")
         f:write(tostring(maxcombo).."\n")
+        f:write(tostring(brickscore).."\n")
         f:close()
     end
 end
@@ -460,6 +468,62 @@ end
 
 --------------------------------------------------------------------------------
 
+local function initpoints()
+    points = {}
+end
+
+--------------------------------------------------------------------------------
+
+local function createpoints(x, y, value)
+    ov("font "..floor(7 * fontscale).." mono")
+    ov("blend 1")
+    -- find the first free slot
+    local i = 1
+    while i <= #points and points[i][1] > 0 do
+        i = i + 1
+    end
+    -- create shadow clip
+    ov(op.black)
+    local w, h = maketext(value, "pointshadow"..i)
+    -- create clip
+    ov(op.white)
+    maketext(value, "point"..i)
+    -- save the item
+    local item = { 60, floor(x + brickwd / 2 - w / 2), floor(y + brickht / 2 - h / 2) }
+    points[i] = item
+end
+
+--------------------------------------------------------------------------------
+
+local function drawpoints()
+    ov("blend 1")
+    for i = 1, #points do
+        local item = points[i]
+        local display = item[1]
+        -- check if item is still avlie
+        if display > 0 then
+            local x = item[2]
+            local y = floor(item[3] + offsety * brickht)
+            if display < 8 then
+                -- fade out by replacing clip alpha
+                ov("replace *# *# *# *#-16 pointshadow"..i)
+                ov("replace *# *# *# *#-16 point"..i)
+            end
+            -- draw shadow
+            ov("paste "..(x + shadtxtx).." "..(y + shadtxty).." pointshadow"..i)
+            -- draw item
+            ov("paste "..x.." "..y.." point"..i)
+            display = display - 1 * framemult
+            if display < 0 then
+                display = 0
+            end
+            item[1] = display
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function createbackground()
     ov("blend 0")
     local y, c
@@ -643,6 +707,7 @@ local function togglefullscreen()
     fullscreen = 1 - fullscreen
     writesettings()
     setfullscreen()
+    initpoints()
 end
 
 --------------------------------------------------------------------------------
@@ -696,6 +761,14 @@ end
 
 --------------------------------------------------------------------------------
 
+local function togglebrickscore()
+    brickscore = 1 - brickscore
+    writesettings()
+    notify("Brick Score", brickscore)
+end
+
+--------------------------------------------------------------------------------
+
 local function savescreenshot()
     local filename = g.getdir("data").."shot"..os.date("%y%m%d%H%M%S", os.time())..".png"
     ov("save 0 0 0 0 "..filename)
@@ -712,6 +785,9 @@ local function processstandardkeys(event)
         elseif event == "key a none" then
             -- toggle autopause when mouse moves off overlay
             toggleautopause()
+        elseif event == "key b none" then
+            -- toggle brick score display
+            togglebrickscore()
         elseif event == "key d none" then
             -- toggle shadow display
             toggleshadowdisplay()
@@ -1082,6 +1158,7 @@ local function drawoptions()
 
     -- draw options
     y = drawoption("a", "autopause", state[autopause], leftx, h, y)
+    y = drawoption("b", "brickscore", state[brickscore], leftx, h, y)
     y = drawoption("d", "shadows", state[showshadows], leftx, h, y)
     y = drawoption("m", "mouse", state[showmouse], leftx, h, y)
     y = drawoption("p", "particles", state[showparticles], leftx, h, y)
@@ -1253,6 +1330,9 @@ local function breakout()
         -- initialize particles
         initparticles()
 
+        -- initialise points
+        initpoints()
+
         -- whether alive
         newball = true
         pause   = false
@@ -1368,13 +1448,15 @@ local function breakout()
                                 -- hit a brick!
                                 rows[bricky][brickx] = false
                                 -- adjust score
-                                score     = score + floor((level + 9) * (numrows - bricky + 1) * combomult)
+                                local points = floor((level + 9) * (numrows - bricky + 1) * combomult)
+                                score = score + points
                                 if score > hiscore then
                                     hiscore = score
                                     newhigh = true
                                 end
+                                createpoints((brickx - 1) * brickwd + edgegapl, bricky * brickht, points)
                                 -- increment combo
-                                combo     = combo + 1
+                                combo = combo + 1
                                 combomult = combomult * combofact
                                 if combo > maxcombo then
                                     maxcombo = combo
@@ -1419,6 +1501,11 @@ local function breakout()
 
             -- draw the bricks
             drawbricks()
+
+            -- draw the points
+            if brickscore == 1 then
+                drawpoints()
+            end
 
             -- draw the ball
             if balls > 0 then
