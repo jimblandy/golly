@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 38
+local build = 39
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -120,7 +120,9 @@ local autopause     = 0
 local autostart     = 0
 local showmouse     = 1
 local showshadows   = 1
+local confirmquit   = 0
 local showoptions   = false
+local confirming    = false
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."breakout.ini"
@@ -153,7 +155,10 @@ local messages = {
     ["gameover"]   = { "Game Over", 30, op.red },
     ["newball"]    = { "Click or Enter to launch ball", 10 },
     ["control"]    = { "Mouse or Arrow keys to move bat", 10 },
+    ["askquit"]    = { "Quit Game?", 15, op.yellow },
     ["pause"]      = { "Paused", 15, op.yellow },
+    ["askleft"]    = { "Click or Enter to Confirm", 10 },
+    ["askright"]   = { "Right Click to Cancel", 10 },
     ["resume"]     = { "Click or Enter to continue", 10 },
     ["focus"]      = { "Move mouse onto overlay to continue", 10 },
     ["quitgame"]   = { "Right Click to quit game", 10 },
@@ -169,6 +174,7 @@ local messages = {
     ["shadows"]    = { "Shadows", 10, optcol },
     ["mouse"]      = { "Mouse Pointer", 10, optcol },
     ["particles"]  = { "Particles", 10, optcol },
+    ["confirm"]    = { "Confirm Quit", 10, optcol },
     ["autostart"]  = { "Autostart", 10, optcol },
     ["timing"]     = { "Timing", 10, optcol },
     ["fullscreen"] = { "Fullscreen", 10, optcol },
@@ -182,6 +188,7 @@ local messages = {
     ["d"]          = { "D", 10, optcol },
     ["m"]          = { "M", 10, optcol },
     ["p"]          = { "P", 10, optcol },
+    ["q"]          = { "Q", 10, optcol },
     ["s"]          = { "S", 10, optcol },
     ["t"]          = { "T", 10, optcol },
     ["f11"]        = { "F11", 10, optcol },
@@ -240,6 +247,7 @@ local function readsettings()
         showshadows   = tonumber(f:read("*l")) or 1
         maxcombo      = tonumber(f:read("*l")) or 2
         brickscore    = tonumber(f:read("*l")) or 1
+        confirmquit   = tonumber(f:read("*l")) or 1
         f:close()
     end
 end
@@ -259,6 +267,7 @@ local function writesettings()
         f:write(tostring(showshadows).."\n")
         f:write(tostring(maxcombo).."\n")
         f:write(tostring(brickscore).."\n")
+        f:write(tostring(confirmquit).."\n")
         f:close()
     end
 end
@@ -777,6 +786,14 @@ end
 
 --------------------------------------------------------------------------------
 
+local function toggleconfirmquit()
+    confirmquit = 1 - confirmquit
+    writesettings()
+    notify("Confirm Quit", confirmquit)
+end
+
+--------------------------------------------------------------------------------
+
 local function processstandardkeys(event)
     if event:find("^key") then
         if event == "key f11 none" then
@@ -797,6 +814,9 @@ local function processstandardkeys(event)
         elseif event == "key p none" then
             -- toggle particle display
             toggleparticles()
+        elseif event == "key q none" then
+            -- toggle confirm quit 
+            toggleconfirmquit()
         elseif event == "key s none" then
             -- toggle autostart when mouse moves onto overlay
             toggleautostart()
@@ -824,13 +844,21 @@ local function processinput()
         if event:find("^oclick") then
             _, x, y, button, mods = split(event)
         end
-        -- right click quits game if paused
+        -- right click quits game
         if button == "right" then
-            balls = 0
-            showoptions = false
+            if confirmquit == 0 then
+                balls = 0
+                showoptions = false
+            else
+                confirming = not confirming
+            end
         elseif button == "left" or event == "key enter none" or event == "key return none" or event == "key space none" then
             -- left click, enter or space starts game, toggles pause or dismisses settings
-            if showoptions then
+            if confirming then
+                balls = 0
+                showoptions = false
+                confirming = false
+            elseif showoptions then
                 showoptions = false
             elseif newball then
                 newball = false
@@ -1089,15 +1117,24 @@ end
 
 --------------------------------------------------------------------------------
 
+local function drawconfirm()
+    ov("blend 1")
+    drawtextclip("askquit", floor(ht / 2 - 15 * fontscale))
+    drawtextclip("askleft", floor(ht / 2 + 22 * fontscale))
+    drawtextclip("askright", floor(ht / 2 + 44 * fontscale))
+end
+
+--------------------------------------------------------------------------------
+
 local function drawpause()
     ov("blend 1")
     drawtextclip("pause", floor(ht / 2 - 15 * fontscale))
     if offoverlay and autopause ~= 0 and autostart ~= 0 then
-       drawtextclip("focus", floor(ht / 2 + 22 * fontscale))
+        drawtextclip("focus", floor(ht / 2 + 22 * fontscale))
     else
-       drawtextclip("resume", floor(ht / 2 + 22 * fontscale))
-       drawtextclip("quitgame", floor(ht / 2 + 44 * fontscale))
-       drawtextclip("option", floor(ht / 2 + 66 * fontscale))
+        drawtextclip("resume", floor(ht / 2 + 22 * fontscale))
+        drawtextclip("quitgame", floor(ht / 2 + 44 * fontscale))
+        drawtextclip("option", floor(ht / 2 + 66 * fontscale))
     end
 end
 
@@ -1162,6 +1199,7 @@ local function drawoptions()
     y = drawoption("d", "shadows", state[showshadows], leftx, h, y)
     y = drawoption("m", "mouse", state[showmouse], leftx, h, y)
     y = drawoption("p", "particles", state[showparticles], leftx, h, y)
+    y = drawoption("q", "confirm", state[confirmquit], leftx, h, y)
     y = drawoption("s", "autostart", state[autostart], leftx, h, y)
     y = drawoption("t", "timing", state[showtiming], leftx, h, y)
     y = drawoption("f11", "fullscreen", state[fullscreen], leftx, h, y)
@@ -1334,8 +1372,9 @@ local function breakout()
         initpoints()
 
         -- whether alive
-        newball = true
-        pause   = false
+        newball    = true
+        pause      = false
+        confirming = false
 
         -- whether mouse off overlay
         offoverlay = false
@@ -1359,7 +1398,7 @@ local function breakout()
             drawbackground()
 
             -- check if paused
-            if not pause and not showoptions and bonuscurrent > 0 then
+            if not pause and not confirming and not showoptions and bonuscurrent > 0 then
                 -- check for new ball
                 if not newball then
                     -- update ball position incrementally
@@ -1519,7 +1558,9 @@ local function breakout()
             drawscoreline()
 
             -- check for text overlay
-            if showoptions then
+            if confirming then
+                drawconfirm()
+            elseif showoptions then
                 drawoptions()
             elseif pause then
                 drawpause()

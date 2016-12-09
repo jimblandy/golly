@@ -1585,8 +1585,8 @@ end
 
 --------------------------------------------------------------------------------
 
-local function show_magnified_pixels(x, y)
-    local radius = 5
+local function show_magnified_pixels(x, y, owd, oht)
+    local radius = 12
     local numcols = radius*2+1
     local numrows = numcols
     local magsize = 14
@@ -1603,8 +1603,16 @@ local function show_magnified_pixels(x, y)
     
     -- draw gray background (ie. grid lines around pixels)
     local oldrgba = ov(op.gray)
-    local xbox = int(x-boxsize/2)
-    local ybox = int(y-boxsize/2)
+
+    -- position magifier to avoid cursor
+    local xbox = 0
+    local ybox = 0
+    if x < owd / 2 then
+        xbox = owd - boxsize
+    end
+    if y < oht / 2 then
+        ybox = oht - boxsize
+    end
     ov("fill "..xbox.." "..ybox.." "..boxsize.." "..boxsize)
     
     -- draw magnified pixels
@@ -1796,7 +1804,7 @@ local function test_lines()
                 if display_magnifier then
                     -- first show position and color of x,y pixel in status bar
                     g.show("xy: "..x.." "..y.."  rgba: "..ov("get "..x.." "..y))
-                    show_magnified_pixels(x, y)
+                    show_magnified_pixels(x, y, owd, oht)
                     g.update()
                     showing_magnifier = true
                 end
