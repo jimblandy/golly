@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 37
+local build = 38
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -504,6 +504,11 @@ local function drawpoints()
         if display > 0 then
             local x = item[2]
             local y = floor(item[3] + offsety * brickht)
+            if display < 8 then
+                -- fade out by replacing clip alpha
+                ov("replace *# *# *# *#-16 pointshadow"..i)
+                ov("replace *# *# *# *#-16 point"..i)
+            end
             -- draw shadow
             ov("paste "..(x + shadtxtx).." "..(y + shadtxty).." pointshadow"..i)
             -- draw item

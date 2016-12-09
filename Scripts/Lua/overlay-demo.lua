@@ -434,8 +434,9 @@ local replacements = {
     [12] = { "", "replace *# *# *# *#", "no-op (replace pixels with clip pixels)" },
     [13] = { "rgba 0 0 0 128", "replace *# *# *# *", "make whole overlay semi-transparent", true },
     [14] = { "", "replace *#+64 *#+64 *#+64 *#", "make pixels brighter" },
-    [15] = { "", "replace *#++ *#++ *#++ *#", "fade to white using increment", true, true },
-    [16] = { "", "replace *#-- *#-- *#-- *#", "fade to black using decrement", true, true }
+    [15] = { "", "replace *# *# *# *#-64", "make pixels more transparent" },
+    [16] = { "", "replace *#++ *#++ *#++ *#", "fade to white using increment", true, true },
+    [17] = { "", "replace *#-- *#-- *#-- *#", "fade to black using decrement", true, true }
 }
 
 local function test_replace()
