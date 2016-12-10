@@ -1603,23 +1603,60 @@ local function show_magnified_pixels(x, y)
         end
     end
     
+    -- save area in top left corner big enough to draw the magnifying glass
+    local outersize = int(math.sqrt(boxsize*boxsize+boxsize*boxsize) + 0.5)
+    ov("copy 0 0 "..outersize.." "..outersize.." outer_bg")
+    local oldrgba = ov("rgba 0 0 0 0")
+    local oldblend = ov("blend 0")
+    ov("fill 0 0 "..outersize.." "..outersize)
+    
     -- draw gray background (ie. grid lines around pixels)
-    local oldrgba = ov(op.gray)
-    local xbox = int(x-boxsize/2)
-    local ybox = int(y-boxsize/2)
-    ov("fill "..xbox.." "..ybox.." "..boxsize.." "..boxsize)
+    ov(op.gray)
+    local xpos = int((outersize-boxsize)/2)
+    local ypos = int((outersize-boxsize)/2)
+    ov("fill "..xpos.." "..ypos.." "..boxsize.." "..boxsize)
     
     -- draw magnified pixels
     for i = 1, numrows do
         for j = 1, numcols do
             if #color[i][j] > 0 then
                 ov("rgba "..color[i][j])
-                local x = xbox+1+(j-1)*(magsize+1)
-                local y = ybox+1+(i-1)*(magsize+1)
+                local x = xpos+1+(j-1)*(magsize+1)
+                local y = ypos+1+(i-1)*(magsize+1)
                 ov("fill "..x.." "..y.." "..magsize.." "..magsize)
             end
         end
     end
+    
+    -- erase outer ring
+    local oldwidth = ov("lineoption width "..int((outersize-boxsize)/2))
+    ov("rgba 0 0 0 0")
+    draw_ellipse(0, 0, outersize, outersize)
+    
+    -- surround with a gray circle
+    ov(op.gray)
+    ov("lineoption width 4")
+    ov("blend 1")
+    draw_ellipse(xpos-2, ypos-2, boxsize+4, boxsize+4)
+    ov("blend 0")
+    
+    ov("copy 0 0 "..outersize.." "..outersize.." mag_box")
+    
+    -- restore background saved above
+    ov("paste 0 0 outer_bg")
+    ov("freeclip outer_bg")
+    
+    -- draw magnified circle with center at x,y
+    xpos = int(x-outersize/2)
+    ypos = int(y-outersize/2)
+    ov("blend 1")
+    ov("paste "..xpos.." "..ypos.." mag_box")
+    ov("freeclip mag_box")
+    
+    -- restore settings
+    ov("rgba "..oldrgba)
+    ov("blend "..oldblend)
+    ov("lineoption width "..oldwidth)
 end
 
 --------------------------------------------------------------------------------
@@ -1746,7 +1783,7 @@ local function test_lines()
     ov(op.black)
     local w,h = maketext(text)
     pastetext(10, oht - h - 10)
-    maketext("Hit the M key to toggle the magnifying box.")
+    maketext("Hit the M key to toggle the magnifying glass.")
     pastetext(10, 10)
     ov("font "..oldfont)
     
