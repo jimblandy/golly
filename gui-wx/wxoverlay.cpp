@@ -2767,7 +2767,14 @@ void Overlay::DrawAAPixel(int x, int y, double opacity)
         unsigned char newalpha = 255-int(opacity);
         if (newalpha == 0) return;
         
-        if (!alphablend && newalpha < 128) return;
+        if (!alphablend) {
+            // only true in DrawThickEllipse
+            if (newalpha > 127) {
+                // don't adjust current alpha value
+                DrawPixel(x, y);
+            }
+            return;
+        }
         
         // temporarily adjust current alpha value
         unsigned char olda = a;
