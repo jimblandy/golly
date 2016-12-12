@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 39
+local build = 40
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -71,7 +71,7 @@ local numsteps  = 80
 
 -- particle settings
 local particles       = {}
-local brickparticles  = 192
+local brickparticles  = floor(brickwd * brickht / 10)
 local ballparticles   = 1
 local ballpartchance  = 0.25
 local wallparticles   = 20
@@ -446,6 +446,7 @@ local function drawparticles()
     for i = 1, #particles do
         local item = particles[i]
         local alpha = item[1]
+        local scale = ht / 1000
         -- check if particle is still alive
         if alpha > 0 then
             local x = item[2]
@@ -462,8 +463,8 @@ local function drawparticles()
                 alpha = 0
             end
             item[1] = alpha
-            item[2] = x + dx * framemult
-            item[3] = y + dy * framemult
+            item[2] = x + dx * framemult * scale
+            item[3] = y + dy * framemult * scale
             item[4] = dx * 0.99
             if dy < 0 then
                 dy = dy + 0.05
@@ -534,6 +535,7 @@ end
 --------------------------------------------------------------------------------
 
 local function createbackground()
+    -- create background gradient
     ov("blend 0")
     local y, c
     local level = 96
@@ -542,6 +544,8 @@ local function createbackground()
         ov("rgba 0 "..(level - c).." "..c.." 255")
         ov("line 0 "..y.." "..(wd - 1).." "..y)
     end
+
+    -- add borders if required
     if edgegapl > 0 then
         ov(op.black)
         ov("fill 0 0 "..edgegapl.." "..(ht - 1))
@@ -550,7 +554,7 @@ local function createbackground()
         ov(op.black)
         ov("fill "..(wd - edgegapr).." 0 "..edgegapr.." "..(ht - 1))
     end
-
+    
     -- save the background clip
     ov("copy 0 0 "..wd.." "..ht.." bg")
 end
@@ -945,14 +949,15 @@ local function resizegame(newwd, newht)
     end
 
     -- scale bat, ball and bricks
-    brickwd  = floor(wd / numcols)
-    brickht  = floor(ht / 40)
-    batwd    = floor(wd / 10)
-    batht    = brickht
-    ballsize = wd / 80
+    brickwd        = floor(wd / numcols)
+    brickht        = floor(ht / 40)
+    brickparticles = floor(brickwd * brickht / 10)
+    batwd          = floor(wd / 10)
+    batht          = brickht
+    ballsize       = wd / 80
     local edgegap  = wd - brickwd * numcols
-    edgegapl = floor(edgegap / 2)
-    edgegapr = edgegap - edgegapl
+    edgegapl       = floor(edgegap / 2)
+    edgegapr       = edgegap - edgegapl
 
     -- reposition the bat and ball
     batx  = batx * xscale
@@ -1104,7 +1109,7 @@ local function drawbonuscomplete(remainingtime, bonusscore)
     if bricksleft <= bonusgreen  then
         local w = shadowtext(0, floor(ht / 2), "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.green)
         createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, bonusparticlesg)
-    elseif bricksleft < bonusyellow then
+    elseif bricksleft <= bonusyellow then
         local w = shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.yellow)
         createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, bonusparticlesy)
     else
