@@ -124,9 +124,6 @@ local function repeat_test(extratext, palebg)
 
     g.update()
     
-    -- note that if we call op.process below then we'll need to hide all the
-    -- main menu buttons so they can't be clicked!!!
-    
     while true do
         local event = g.getevent()
         if event:find("^oclick") or event == "key enter none" or event == "key return none" then
@@ -1727,11 +1724,27 @@ local function test_lines()
     ov("lineoption width 1")
     ov("rgba "..oldrgba)
 
-    -- draw filled ellipses using oplus function
+    -- draw filled ellipses using fill_ellipse function from oplus
     -- (no border if given border width is 0)
     op.fill_ellipse(370, 450, 50, 100, 0, "rgba 0 0 255 128")
+    ov("rgba 200 200 200 128") -- translucent gray border
     op.fill_ellipse(300, 450, 100, 80, 15, op.green)
-    op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 200")
+    ov("rgba "..oldrgba)
+    op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 128")
+
+    -- draw rounded rectangles using round_rect function from oplus
+    op.round_rect(670, 50, 60, 40,  10,  3, "")
+    op.round_rect(670, 100, 60, 40, 20,  0, "rgba 0 0 255 128")
+    op.round_rect(670, 150, 60, 21,  3,  0, op.blue)
+    ov("rgba 200 200 200 128") -- translucent gray border
+    op.round_rect(700, 30, 70, 200, 35, 10, "rgba 255 255 0 128")
+    ov("rgba "..oldrgba)
+
+    -- draw some non-rounded rectangles (radius is 0)
+    op.round_rect(670, 200, 10, 8, 0, 3, "")
+    op.round_rect(670, 210, 10, 8, 0, 1, op.red)
+    op.round_rect(670, 220, 10, 8, 0, 0, op.green)
+    op.round_rect(670, 230, 10, 8, 0, 0, "")        -- nothing is drawn
 
     -- draw solid circles (non-antialiased and antialiased)
     ov("lineoption width 10")

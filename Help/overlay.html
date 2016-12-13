@@ -1070,11 +1070,23 @@ If all pixels in the clip are transparent then the returned values are all zero.
 <a name="fill_ellipse"></a>
 <p><dt><b>op.fill_ellipse(<i>x, y, w, h, borderwd, fillrgba</i>)</b></dt>
 <dd>
-Draw an ellipse (or circle) inside the given rectangle and fill it with the given color.
-If the given border width is greater than zero then a border is drawn around the
-ellipse using the current color.
+Draw an ellipse (or circle) inside the given rectangle.
+If borderwd is greater than zero then an antialiased ellipse of the given thickness
+is drawn using the current color.
+If fillrgba is not an empty string then the ellipse is filled with the given color.
 </dd>
 <dd> Example: <b>op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 200")</b></dd>
+</p>
+
+<a name="round_rect"></a>
+<p><dt><b>op.round_rect(<i>x, y, w, h, radius, borderwd, fillrgba</i>)</b></dt>
+<dd>
+Draw a rounded rectangle where the given radius determines the curvature of each corner.
+If borderwd is greater than zero then an antialiased border of the given thickness
+is drawn using the current color.
+If fillrgba is not an empty string then the rectangle is filled with the given color.
+</dd>
+<dd> Example: <b>op.round_rect(200, 300, 60, 30, 15, 0, "rgba 255 0 0 128")</b></dd>
 </p>
 
 <p>

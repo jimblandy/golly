@@ -746,22 +746,24 @@ end
 --------------------------------------------------------------------------------
 
 function m.fill_ellipse(x, y, w, h, borderwd, fillrgba)
-    -- draw an ellipse with the given border width using the current color
-    -- and fill it with the given color
+    -- draw an ellipse with the given border width (if > 0) using the current color
+    -- and fill it with the given color (if fillrgba isn't "")
 
     if borderwd == 0 then
-        -- just draw solid anti-aliased ellipse using fillrgba
-        local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
-        local oldblend = ov("blend 1")
-        local oldrgba = ov(fillrgba)
-        ov("ellipse "..x.." "..y.." "..w.." "..h)
-        ov("rgba "..oldrgba)
-        ov("blend "..oldblend)
-        ov("lineoption width "..oldwidth)
+        if #fillrgba > 0 then
+            -- just draw solid anti-aliased ellipse using fillrgba
+            local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
+            local oldblend = ov("blend 1")
+            local oldrgba = ov(fillrgba)
+            ov("ellipse "..x.." "..y.." "..w.." "..h)
+            ov("rgba "..oldrgba)
+            ov("blend "..oldblend)
+            ov("lineoption width "..oldwidth)
+        end
         return
     end
 
-    if w <= borderwd/2 or h <= borderwd/2 then
+    if w <= borderwd*2 or h <= borderwd*2 then
         -- no room to fill so just draw anti-aliased ellipse using current color
         local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
         local oldblend = ov("blend 1")
@@ -771,21 +773,116 @@ function m.fill_ellipse(x, y, w, h, borderwd, fillrgba)
         return
     end
 
-    -- draw slightly smaller filled ellipse using fillrgba
-    local oldrgba = ov(fillrgba)
     local oldblend = ov("blend 1")
-    local smallw = w - 2
-    local smallh = h - 2
-    local oldwidth = ov("lineoption width "..int(math.min(smallw,smallh)/2 + 0.5))
-    ov("ellipse "..(x+1).." "..(y+1).." "..smallw.." "..smallh)
 
-    -- restore color and now draw outer ellipse using given borderwd
-    ov("rgba "..oldrgba)
-    ov("lineoption width "..borderwd)
+    if #fillrgba > 0 then
+        -- draw smaller filled ellipse using fillrgba
+        local oldrgba = ov(fillrgba)
+        local smallw = w - borderwd*2
+        local smallh = h - borderwd*2
+        local oldwidth = ov("lineoption width "..int(math.min(smallw,smallh)/2 + 0.5))
+        ov("ellipse "..(x+borderwd).." "..(y+borderwd).." "..smallw.." "..smallh)
+        ov("rgba "..oldrgba)
+        ov("lineoption width "..oldwidth)
+    end
+
+    -- draw outer ellipse using given borderwd
+    local oldwidth = ov("lineoption width "..borderwd)
     ov("ellipse "..x.." "..y.." "..w.." "..h)
     
     -- restore line width and blend state
     ov("lineoption width "..oldwidth)
+    ov("blend "..oldblend)
+end
+
+--------------------------------------------------------------------------------
+
+function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
+    -- draw a rounded rectangle using the given radius for the corners
+    -- with a border in the current color using the given width (if > 0)
+    -- and filled with the given color (if fillrgba isn't "")
+
+    if radius == 0 then
+        -- draw a non-rounded rectangle (possibly translucent)
+        local oldblend = ov("blend 1")
+        if borderwd > 0 then
+            -- draw border lines using current color
+            ov("fill "..x.." "..y.." "..w.." "..borderwd)
+            ov("fill "..x.." "..(y+h-borderwd).." "..w.." "..borderwd)
+            ov("fill "..x.." "..(y+borderwd).." "..borderwd.." "..(h-borderwd*2))
+            ov("fill "..(x+w-borderwd).." "..(y+borderwd).." "..borderwd.." "..(h-borderwd*2))
+        end
+        if #fillrgba > 0 then
+            -- draw interior of rectangle
+            local oldrgba = ov(fillrgba)
+            ov("fill "..(x+borderwd).." "..(y+borderwd).." "..(w-borderwd*2).." "..(h-borderwd*2))
+            ov("rgba "..oldrgba)
+        end
+        ov("blend "..oldblend)
+        return
+    end
+    
+    if radius > w/2 then radius = int(w/2) end
+    if radius > h/2 then radius = int(h/2) end
+
+    -- construct rounded rectangle in top left corner of overlay
+    ov("copy 0 0 "..w.." "..h.." rectbg")
+    local oldrgba = ov("rgba 0 0 0 0")
+    local oldblend = ov("blend 0")
+    ov("fill 0 0 "..w.." "..h)
+    ov("rgba "..oldrgba)
+    
+    -- create bottom right quarter circle in top left corner of overlay
+    m.fill_ellipse(-radius, -radius, radius*2, radius*2, borderwd, fillrgba)
+    ov("copy 0 0 "..radius.." "..radius.." qcircle")
+    
+    -- draw corners
+    ov("paste "..(w-radius).." "..(h-radius).." qcircle")
+    ov(m.flip_y)
+    ov("paste "..(w-radius).." "..(radius-1).." qcircle")
+    ov(m.flip_x)
+    ov("paste "..(radius-1).." "..(h-radius).." qcircle")
+    ov(m.flip)
+    ov("paste "..(radius-1).." "..(radius-1).." qcircle")
+    ov(m.identity)
+    ov("freeclip qcircle")
+    
+    if #fillrgba > 0 then
+        -- draw non-corner portions of rectangle
+        ov(fillrgba)
+        if radius < w/2 then
+            ov("fill "..radius.." 0 "..(w-radius*2).." "..h)
+        end
+        if radius < h/2 then
+            ov("fill 0 "..radius.." "..radius.." "..(h-radius*2))
+            ov("fill "..(w-radius).." "..radius.." "..radius.." "..(h-radius*2))
+        end
+        ov("rgba "..oldrgba)
+    end
+
+    if borderwd > 0 then
+        -- draw border lines using current color
+        if radius < w/2 then
+            ov("fill "..radius.." 0 "..(w-radius*2).." "..borderwd)
+            ov("fill "..radius.." "..(h-borderwd).." "..(w-radius*2).." "..borderwd)
+        end
+        if radius < h/2 then
+            ov("fill 0 "..radius.." "..borderwd.." "..(h-radius*2))
+            ov("fill "..(w-borderwd).." "..radius.." "..borderwd.." "..(h-radius*2))
+        end
+    end
+    
+    -- save finished rectangle in a clip
+    ov("copy 0 0 "..w.." "..h.." roundedrect")
+    
+    -- restore top left corner of overlay and draw rounded rectangle
+    ov("paste 0 0 rectbg")
+    ov("freeclip rectbg")
+    ov("blend 1")
+    ov("paste "..x.." "..y.." roundedrect")
+    ov("freeclip roundedrect")
+    
+    -- restore blend setting
     ov("blend "..oldblend)
 end
 
