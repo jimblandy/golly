@@ -622,6 +622,9 @@ end
 local themenum = 1
 
 local function test_cellview()
+    -- remove tile layers option if on
+    local oldtile = g.setoption("tilelayers", 0)
+
     -- create a new layer
     g.addlayer()
     g.setalgo("QuickLife")
@@ -813,6 +816,9 @@ local function test_cellview()
 
     -- delete the layer
     g.dellayer()
+
+    -- restore tile option
+    g.setoption("tilelayers", oldtile)
 
     return_to_main_menu = true
 end
