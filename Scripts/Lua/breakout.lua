@@ -1,12 +1,11 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 40
+local build = 41
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
 local split = gp.split
-local int   = gp.int
 local op    = require "oplus"
 local ov    = g.overlay
 local floor = math.floor
@@ -152,67 +151,67 @@ local bonusyellow   = 20
 -- static messages and clip names
 local optcol = "rgba 192 192 192 255"
 local messages = {
-    ["gameover"]   = { "Game Over", 30, op.red },
-    ["newball"]    = { "Click or Enter to launch ball", 10 },
-    ["control"]    = { "Mouse or Arrow keys to move bat", 10 },
-    ["askquit"]    = { "Quit Game?", 15, op.yellow },
-    ["pause"]      = { "Paused", 15, op.yellow },
-    ["askleft"]    = { "Click or Enter to Confirm", 10 },
-    ["askright"]   = { "Right Click to Cancel", 10 },
-    ["resume"]     = { "Click or Enter to continue", 10 },
-    ["focus"]      = { "Move mouse onto overlay to continue", 10 },
-    ["quitgame"]   = { "Right Click to quit game", 10 },
-    ["option"]     = { "Tab for Game Settings", 10 },
-    ["restart"]    = { "Click or Enter to start again", 10 },
-    ["quit"]       = { "Right Click or Esc to exit", 10 },
-    ["continue"]   = { "Click or Enter for next level", 10 },
-    ["newhigh"]    = { "New High Score!", 10, op.green },
-    ["newcombo"]   = { "New Best Combo!", 10, op.green },
-    ["close"]      = { "Click or Tab to close Game Settings", 10 },
-    ["autopause"]  = { "Autopause", 10, optcol },
-    ["brickscore"] = { "Brick Score", 10, optcol },
-    ["shadows"]    = { "Shadows", 10, optcol },
-    ["mouse"]      = { "Mouse Pointer", 10, optcol },
-    ["particles"]  = { "Particles", 10, optcol },
-    ["confirm"]    = { "Confirm Quit", 10, optcol },
-    ["autostart"]  = { "Autostart", 10, optcol },
-    ["timing"]     = { "Timing", 10, optcol },
-    ["fullscreen"] = { "Fullscreen", 10, optcol },
-    ["function"]   = { "Function", 10 },
-    ["on"]         = { "On", 10, op.green },
-    ["off"]        = { "Off", 10, op.red },
-    ["state"]      = { "State", 10 },
-    ["key"]        = { "Key", 10 },
-    ["a"]          = { "A", 10, optcol },
-    ["b"]          = { "B", 10, optcol },
-    ["d"]          = { "D", 10, optcol },
-    ["m"]          = { "M", 10, optcol },
-    ["p"]          = { "P", 10, optcol },
-    ["q"]          = { "Q", 10, optcol },
-    ["s"]          = { "S", 10, optcol },
-    ["t"]          = { "T", 10, optcol },
-    ["f11"]        = { "F11", 10, optcol },
-    ["score"]      = { "Score ", 10 },
-    ["balls"]      = { "Balls ", 10 },
-    ["combo"]      = { "Combo x", 10 },
-    ["combog"]     = { "Combo x", 10, op.green },
-    ["high"]       = { "High Score ", 10 },
-    ["highg"]      = { "High Score ", 10, op.green },
-    ["level"]      = { "Level ", 15 },
-    ["bonus"]      = { "Bonus Level", 15 },
-    ["bcomplete"]  = { "Bonus Level Complete", 15 },
-    ["remaing"]    = { "Bricks left ", 10, op.green },
-    ["remainy"]    = { "Bricks left ", 10, op.yellow },
-    ["remainr"]    = { "Bricks left ", 10, op.red },
-    ["timeg"]      = { "Time ", 15, op.green },
-    ["timey"]      = { "Time ", 15, op.yellow },
-    ["timer"]      = { "Time ", 15, op.red  },
-    ["3left"]      = { "3 balls left", 15, op.green },
-    ["2left"]      = { "2 balls left", 15, op.yellow },
-    ["1left"]      = { "Last ball! ", 15, op.red },
-    ["10"]         = { "M", 10 },
-    ["15"]         = { "M", 15 },
-    ["30"]         = { "M", 30 }
+    ["gameover"]   = { text = "Game Over", size = 30, color = op.red },
+    ["newball"]    = { text = "Click or Enter to launch ball", size = 10 },
+    ["control"]    = { text = "Mouse or Arrow keys to move bat", size = 10 },
+    ["askquit"]    = { text = "Quit Game?", size = 15, color = op.yellow },
+    ["pause"]      = { text = "Paused", size = 15, color = op.yellow },
+    ["askleft"]    = { text = "Click or Enter to Confirm", size = 10 },
+    ["askright"]   = { text = "Right Click to Cancel", size = 10 },
+    ["resume"]     = { text = "Click or Enter to continue", size = 10 },
+    ["focus"]      = { text = "Move mouse onto overlay to continue", size = 10 },
+    ["quitgame"]   = { text = "Right Click to quit game", size = 10 },
+    ["option"]     = { text = "Tab for Game Settings", size = 10 },
+    ["restart"]    = { text = "Click or Enter to start again", size = 10 },
+    ["quit"]       = { text = "Right Click or Esc to exit", size = 10 },
+    ["continue"]   = { text = "Click or Enter for next level", size = 10 },
+    ["newhigh"]    = { text = "New High Score!", size = 10, color = op.green },
+    ["newcombo"]   = { text = "New Best Combo!", size = 10, color = op.green },
+    ["close"]      = { text = "Click or Tab to close Game Settings", size = 10 },
+    ["autopause"]  = { text = "Autopause", size = 10, color = optcol },
+    ["brickscore"] = { text = "Brick Score", size = 10, color = optcol },
+    ["shadows"]    = { text = "Shadows", size = 10, color = optcol },
+    ["mouse"]      = { text = "Mouse Pointer", size = 10, color = optcol },
+    ["particles"]  = { text = "Particles", size = 10, color = optcol },
+    ["confirm"]    = { text = "Confirm Quit", size = 10, color = optcol },
+    ["autostart"]  = { text = "Autostart", size = 10, color = optcol },
+    ["timing"]     = { text = "Timing", size = 10, color = optcol },
+    ["fullscreen"] = { text = "Fullscreen", size = 10, color = optcol },
+    ["function"]   = { text = "Function", size = 10 },
+    ["on"]         = { text = "On", size = 10, color = op.green },
+    ["off"]        = { text = "Off", size = 10, color = op.red },
+    ["state"]      = { text = "State", size = 10 },
+    ["key"]        = { text = "Key", size = 10 },
+    ["a"]          = { text = "A", size = 10, color = optcol },
+    ["b"]          = { text = "B", size = 10, color = optcol },
+    ["d"]          = { text = "D", size = 10, color = optcol },
+    ["m"]          = { text = "M", size = 10, color = optcol },
+    ["p"]          = { text = "P", size = 10, color = optcol },
+    ["q"]          = { text = "Q", size = 10, color = optcol },
+    ["s"]          = { text = "S", size = 10, color = optcol },
+    ["t"]          = { text = "T", size = 10, color = optcol },
+    ["f11"]        = { text = "F11", size = 10, color = optcol },
+    ["score"]      = { text = "Score ", size = 10 },
+    ["balls"]      = { text = "Balls ", size = 10 },
+    ["combo"]      = { text = "Combo x", size = 10 },
+    ["combog"]     = { text = "Combo x", size = 10, color = op.green },
+    ["high"]       = { text = "High Score ", size = 10 },
+    ["highg"]      = { text = "High Score ", size = 10, color = op.green },
+    ["level"]      = { text = "Level ", size = 15 },
+    ["bonus"]      = { text = "Bonus Level", size = 15 },
+    ["bcomplete"]  = { text = "Bonus Level Complete", size = 15 },
+    ["remaing"]    = { text = "Bricks left ", size = 10, color = op.green },
+    ["remainy"]    = { text = "Bricks left ", size = 10, color = op.yellow },
+    ["remainr"]    = { text = "Bricks left ", size = 10, color = op.red },
+    ["timeg"]      = { text = "Time ", size = 15, color = op.green },
+    ["timey"]      = { text = "Time ", size = 15, color = op.yellow },
+    ["timer"]      = { text = "Time ", size = 15, color = op.red  },
+    ["3left"]      = { text = "3 balls left", size = 15, color = op.green },
+    ["2left"]      = { text = "2 balls left", size = 15, color = op.yellow },
+    ["1left"]      = { text = "Last ball! ", size = 15, color = op.red },
+    ["10"]         = { text = "M", size = 10 },
+    ["15"]         = { text = "M", size = 15 },
+    ["30"]         = { text = "M", size = 30 }
 }
 
 --------------------------------------------------------------------------------
@@ -347,19 +346,19 @@ local function createstatictext()
     local lastsize = -1
     for clipname, message in pairs(messages) do
         -- get the font size for this message
-        local fontsize = floor(message[2] * fontscale)
+        local fontsize = floor(message.size * fontscale)
         -- if it is different than the last message then set the new font
         if fontsize ~= lastsize then
             ov("font "..fontsize.." mono")
             lastsize = fontsize
         end
         -- create the text message
-        local w, h = shadowtext(0, y, message[1], alignraw, message[3])
+        local w, h = shadowtext(0, y, message.text, alignraw, message.color)
         -- copy to the named clip
         ov("copy 0 "..y.." "..w.." "..h.." "..clipname)
         -- save the clip width and height
-        message[4] = w
-        message[5] = h
+        message.width = w
+        message.height = h
         -- next screen position
         y = y + h
         if y > ht * 7 / 8 then
@@ -425,15 +424,15 @@ end
 local function createparticles(x, y, areawd, areaht, howmany)
     -- find the first free slot
     local i = 1
-    while i <= #particles and particles[i][1] > 0 do
+    while i <= #particles and particles[i].alpha > 0 do
         i = i + 1
     end
     for j = 1, howmany do
-        local item = { 255, x - rand(floor(areawd)), y + rand(floor(areaht)), rand() - 0.5, rand() - 0.5 }
+        local item = { alpha = 255, x = x - rand(floor(areawd)), y = y + rand(floor(areaht)), dx = rand() - 0.5, dy = rand() - 0.5 }
         particles[i] = item
         i = i + 1
         -- find the next free slot
-        while i <= #particles and particles[i][1] > 0 do
+        while i <= #particles and particles[i].alpha > 0 do
             i = i + 1
         end
     end
@@ -445,33 +444,26 @@ local function drawparticles()
     ov("blend 1")
     for i = 1, #particles do
         local item = particles[i]
-        local alpha = item[1]
         local scale = ht / 1000
         -- check if particle is still alive
-        if alpha > 0 then
-            local x = item[2]
-            local y = item[3]
-            local dx = item[4]
-            local dy = item[5]
+        if item.alpha > 0 then
             if showparticles ~= 0 then
-                ov("rgba 255 255 255 "..floor(alpha))
-                ov("set "..floor(x).." "..floor(y))
+                ov("rgba 255 255 255 "..floor(item.alpha))
+                ov("set "..floor(item.x).." "..floor(item.y))
             end
             -- fade item
-            alpha = alpha - 3 * framemult
-            if alpha < 0 then
-                alpha = 0
+            item.alpha = item.alpha - 3 * framemult
+            if item.alpha < 0 then
+                item.alpha = 0
             end
-            item[1] = alpha
-            item[2] = x + dx * framemult * scale
-            item[3] = y + dy * framemult * scale
-            item[4] = dx * 0.99
-            if dy < 0 then
-                dy = dy + 0.05
+            item.x = item.x + item.dx * framemult * scale
+            item.y = item.y + item.dy * framemult * scale
+            item.dx = item.dx * 0.99
+            if item.dy < 0 then
+                item.dy = item.dy + 0.05
             else
-                dy = (dy + 0.02) * 1.02
+                item.dy = (item.dy + 0.02) * 1.02
             end
-            item[5] = dy
         end
     end
 end
@@ -489,7 +481,7 @@ local function createpoints(x, y, value)
     ov("blend 1")
     -- find the first free slot
     local i = 1
-    while i <= #points and points[i][1] > 0 do
+    while i <= #points and points[i].duration > 0 do
         i = i + 1
     end
     -- create shadow clip
@@ -499,7 +491,7 @@ local function createpoints(x, y, value)
     ov(op.white)
     maketext(value, "point"..i)
     -- save the item
-    local item = { 60, floor(x + brickwd / 2 - w / 2), floor(y + brickht / 2 - h / 2) }
+    local item = { duration = 60, x = floor(x + brickwd / 2 - w / 2), y = floor(y + brickht / 2 - h / 2) }
     points[i] = item
 end
 
@@ -509,25 +501,22 @@ local function drawpoints()
     ov("blend 1")
     for i = 1, #points do
         local item = points[i]
-        local display = item[1]
-        -- check if item is still avlie
-        if display > 0 then
-            local x = item[2]
-            local y = floor(item[3] + offsety * brickht)
-            if display < 8 then
+        -- check if item is still alive
+        if item.duration > 0 then
+            local y = floor(item.y + offsety * brickht)
+            if item.duration < 8 then
                 -- fade out by replacing clip alpha
                 ov("replace *# *# *# *#-16 pointshadow"..i)
                 ov("replace *# *# *# *#-16 point"..i)
             end
             -- draw shadow
-            ov("paste "..(x + shadtxtx).." "..(y + shadtxty).." pointshadow"..i)
+            ov("paste "..(item.x + shadtxtx).." "..(y + shadtxty).." pointshadow"..i)
             -- draw item
-            ov("paste "..x.." "..y.." point"..i)
-            display = display - 1 * framemult
-            if display < 0 then
-                display = 0
+            ov("paste "..item.x.." "..y.." point"..i)
+            item.duration = item.duration - 1 * framemult
+            if item.duration < 0 then
+                item.duration = 0
             end
-            item[1] = display
         end
     end
 end
@@ -686,6 +675,7 @@ local function initbricks()
         end
         rows[y] = bricks
     end
+    bricksleft = 1
     totalbricks = bricksleft
 end
 
@@ -968,8 +958,8 @@ local function resizegame(newwd, newht)
     -- reposition particles
     for i = 1, #particles do
         local item = particles[i]
-        item[2] = item[2] * xscale
-        item[3] = item[3] * yscale
+        item.x = item.x * xscale
+        item.y = item.y * yscale
     end
 
     -- resize shadow
@@ -989,8 +979,8 @@ local function drawtextclip(name, y, align, x)
     align = align or aligncenter
     x = x or 0
     local message = messages[name]
-    local w = message[4]
-    local h = message[5]
+    local w = message.width
+    local h = message.height
     local textx = edgegapl
     -- process alignment
     if align == aligncenter then
@@ -1013,13 +1003,13 @@ local function centertextclip(name, value, y, col)
     -- get the clip
     local message = messages[name]
     -- get the clip string
-    local leftval = message[1]
+    local leftval = message.text
     -- get the clip font size
-    local size    = tostring(message[2])
+    local size    = tostring(message.size)
     -- find the font size clip
     local charmsg = messages[size]
     -- get the width of the font size clip
-    local charw   = charmsg[4] - abs(shadtxtx)
+    local charw   = charmsg.width - abs(shadtxtx)
     -- get the length of the full message
     local length  = (leftval..tostring(value)):len()
     -- compute the center position
@@ -1179,6 +1169,10 @@ end
 --------------------------------------------------------------------------------
 
 local function drawoption(key, setting, state, leftx, h, y, color)
+    if key ~= "key" then
+        ov("rgba 32 32 32 255")
+        ov("fill "..(leftx + edgegapl).." "..y.." "..(messages[key].width + 3).." "..(messages[key].height - 4))
+    end
     drawtextclip(key, y, alignleft, leftx)
     drawtextclip(setting, y)
     drawtextclip(state, y, alignright, -leftx)
