@@ -675,7 +675,6 @@ local function initbricks()
         end
         rows[y] = bricks
     end
-    bricksleft = 1
     totalbricks = bricksleft
 end
 
