@@ -2192,18 +2192,18 @@ local function test_target()
 
     target = 1 - target
 
-    -- fill the overlay with white
+    -- fill the overlay with black
     ov("blend 0")
     ov(op.black)
     ov("fill")
 
-    -- grab a 200 x 200 white clip
-    ov("copy 20 20 200 200 clip")
+    -- grab a 300 x 300 clip
+    ov("copy 0 0 300 300 clip")
 
     -- change the clip contents to yellow
     ov("target clip")
     ov(op.yellow)
-    ov("replace 0 0 0 255")
+    ov("fill")
 
     -- either draw to the overlay or clip
     if target == 0 then
@@ -2227,21 +2227,30 @@ local function test_target()
     ov(op.white)
     op.fill_ellipse(0, 0, 100, 100, 1, op.magenta)
 
-    -- draw text label
-    ov(op.white)
-    if target == 0 then
-        maketext("Clip")
-    else
-        maketext("Overlay")
+    -- draw some lines
+    ov(op.cyan)
+    for x = 0, wd, 20 do
+        ov("line 0 0 "..x.." "..ht)
     end
-    pastetext(0, 0)
+
+    -- draw text label
+    local textstring = "Clip"
+    if target ~= 0 then
+        textstring = "Overlay"
+    end
+    ov(op.black)
+    maketext(textstring)
+    pastetext(0, 2)
+    ov(op.white)
+    maketext(textstring)
+    pastetext(2, 0)
 
     -- set overlay as the target
     ov("target")
 
     -- paste the clip
     ov("blend 0")
-    ov("paste 100 0 clip")
+    ov("paste 200 0 clip")
         
     if repeat_test(" with a different target") then goto restart end
 
