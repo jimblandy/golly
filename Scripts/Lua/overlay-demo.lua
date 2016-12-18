@@ -41,6 +41,7 @@ local load_button
 local mouse_button
 local multiline_button
 local pos_button
+local render_button
 local replace_button
 local save_button
 local text_button
@@ -500,7 +501,7 @@ local function test_replace()
     local replaced = 0
     local t1 = g.millisecs()
     if replacements[replace][4] ~= true then
-        replacecmd = replacecmd.." clip"
+        ov("target clip")
     end
     if replacements[replace][5] == true then
         replaced = 1
@@ -514,6 +515,7 @@ local function test_replace()
         replaced = tonumber(ov(replacecmd))
     end
     t1 = g.millisecs() - t1
+    ov("target ")
     if replacements[replace][4] ~= true then
         ov("paste "..(wd - 276).." 20 clip")
     end
@@ -562,6 +564,7 @@ local function test_replace()
 
     g.show("Time to replace: "..ms(t1).."  Pixels replaced: "..replaced)
     if repeat_test(" with different options") then goto restart end
+    ov("target")
 end
 
 --------------------------------------------------------------------------------
@@ -2177,6 +2180,80 @@ end
 
 --------------------------------------------------------------------------------
 
+local target = 1
+
+local function test_target()
+    -- set overlay as the rendering target
+    local oldtarget = ov("target")
+    local oldfont = ov("font 16 mono")
+    local oldblend = ov("blend 0")
+
+    ::restart::
+
+    target = 1 - target
+
+    -- fill the overlay with white
+    ov("blend 0")
+    ov(op.black)
+    ov("fill")
+
+    -- grab a 200 x 200 white clip
+    ov("copy 20 20 200 200 clip")
+
+    -- change the clip contents to yellow
+    ov("target clip")
+    ov(op.yellow)
+    ov("replace 0 0 0 255")
+
+    -- either draw to the overlay or clip
+    if target == 0 then
+        ov("target clip")
+    else
+        ov("target")
+    end
+
+    -- draw red, green and blue squares
+    ov(op.red)
+    ov("fill 0 0 "..wd.." 50")
+
+    ov(op.green)
+    ov("fill 0 50 "..wd.." 50")
+
+    ov(op.blue)
+    ov("fill 0 100 "..wd.. " 50")
+
+    -- draw circle
+    ov("blend 1")
+    ov(op.white)
+    op.fill_ellipse(0, 0, 100, 100, 1, op.magenta)
+
+    -- draw text label
+    ov(op.white)
+    if target == 0 then
+        maketext("Clip")
+    else
+        maketext("Overlay")
+    end
+    pastetext(0, 0)
+
+    -- set overlay as the target
+    ov("target")
+
+    -- paste the clip
+    ov("blend 0")
+    ov("paste 100 0 clip")
+        
+    if repeat_test(" with a different target") then goto restart end
+
+    -- free clip and restore previous target
+    ov("freeclip clip")
+    ov("target "..oldtarget)
+    ov("font "..oldfont)
+    ov("blend "..oldblend)
+end
+
+--------------------------------------------------------------------------------
+
 local function test_blending()
     ::restart::
 
@@ -2325,34 +2402,36 @@ local function create_menu_buttons()
     mouse_button = op.button(       longest, test_mouse)
     multiline_button = op.button(   longest, test_multiline_text)
     pos_button = op.button(         longest, test_positions)
+    render_button = op.button(      longest, test_target)
     replace_button = op.button(     longest, test_replace)
     save_button = op.button(        longest, test_save)
     text_button = op.button(        longest, test_text)
     transition_button = op.button(  longest, test_transitions)
 
     -- change labels without changing button widths
-    blend_button.setlabel(      "Alpha Blending", false)
-    animation_button.setlabel(  "Animation", false)
-    cellview_button.setlabel(   "Cell View", false)
-    copy_button.setlabel(       "Copy and Paste", false)
-    cursor_button.setlabel(     "Cursors", false)
-    set_button.setlabel(        "Drawing Pixels", false)
-    fill_button.setlabel(       "Filling Rectangles", false)
-    line_button.setlabel(       "Lines and Ellipses", false)
-    load_button.setlabel(       "Loading Images", false)
-    mouse_button.setlabel(      "Mouse Tracking", false)
-    multiline_button.setlabel(  "Multi-line Text", false)
-    pos_button.setlabel(        "Overlay Positions", false)
-    replace_button.setlabel(    "Replacing Pixels", false)
-    save_button.setlabel(       "Saving the Overlay", false)
-    text_button.setlabel(       "Text and Transforms", false)
-    transition_button.setlabel( "Transitions", false)
+    blend_button.setlabel(       "Alpha Blending", false)
+    animation_button.setlabel(   "Animation", false)
+    cellview_button.setlabel(    "Cell View", false)
+    copy_button.setlabel(        "Copy and Paste", false)
+    cursor_button.setlabel(      "Cursors", false)
+    set_button.setlabel(         "Drawing Pixels", false)
+    fill_button.setlabel(        "Filling Rectangles", false)
+    line_button.setlabel(        "Lines and Ellipses", false)
+    load_button.setlabel(        "Loading Images", false)
+    mouse_button.setlabel(       "Mouse Tracking", false)
+    multiline_button.setlabel(   "Multi-line Text", false)
+    pos_button.setlabel(         "Overlay Positions", false)
+    render_button.setlabel(      "Render Target", false)
+    replace_button.setlabel(     "Replacing Pixels", false)
+    save_button.setlabel(        "Saving the Overlay", false)
+    text_button.setlabel(        "Text and Transforms", false)
+    transition_button.setlabel(  "Transitions", false)
 end
 
 --------------------------------------------------------------------------------
 
 local function main_menu()
-    local numbutts = 16
+    local numbutts = 17
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
     local buttgap = 10
@@ -2393,6 +2472,7 @@ local function main_menu()
     mouse_button.show(x, y)         y = y + buttgap + buttht
     multiline_button.show(x, y)     y = y + buttgap + buttht
     pos_button.show(x, y)           y = y + buttgap + buttht
+    render_button.show(x, y)        y = y + buttgap + buttht
     replace_button.show(x, y)       y = y + buttgap + buttht
     save_button.show(x, y)          y = y + buttgap + buttht
     text_button.show(x, y)          y = y + buttgap + buttht

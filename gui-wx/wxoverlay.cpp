@@ -101,6 +101,9 @@ const double radToDeg = 180 / M_PI;
 // for replace
 const int matchany = -1;            // match any component value
 
+// for clips
+const int maxclipname = 256;        // maximum length of clip name
+
 #ifdef __WXMAC__
     // on Mac we'll need to increase the line height of text by 1 or 2 pixels to avoid
     // a GetTextExtent bug that clips the bottom pixels of descenders like "gjpqy"
@@ -112,6 +115,7 @@ const int matchany = -1;            // match any component value
 Overlay::Overlay()
 {
     pixmap = NULL;
+    ovpixmap = NULL;
     cellview = NULL;
     zoomview = NULL;
     starx = NULL;
@@ -130,10 +134,11 @@ Overlay::~Overlay()
 
 void Overlay::DeleteOverlay()
 {
-    if (pixmap) {
-        free(pixmap);
-        pixmap = NULL;
+    if (ovpixmap) {
+        free(ovpixmap);
+        ovpixmap = NULL;
     }
+    pixmap = NULL;
 
     std::map<std::string,Clip*>::iterator it;
     for (it = clips.begin(); it != clips.end(); ++it) {
@@ -1753,9 +1758,18 @@ const char* Overlay::DoTheme(const char* args)
 
 // -----------------------------------------------------------------------------
 
+void Overlay::SetRenderTarget(unsigned char* pix, int pwd, int pht)
+{
+    pixmap = pix;
+    wd = pwd;
+    ht = pht;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoResize(const char* args)
 {
-    if (pixmap == NULL) return OverlayError(no_overlay);
+    if (ovpixmap == NULL) return OverlayError(no_overlay);
 
     // don't set wd and ht until we've checked the args are valid
     int w, h;
@@ -1767,15 +1781,20 @@ const char* Overlay::DoResize(const char* args)
     if (h <= 0) return OverlayError("height of overlay must be > 0");
 
     // given width and height are ok
-    wd = w;
-    ht = h;
+    ovwd = w;
+    ovht = h;
 
     // free the previous pixmap
-    free(pixmap);
+    free(ovpixmap);
 
     // create the new pixmap
-    pixmap = (unsigned char*) calloc(wd * ht * 4, sizeof(*pixmap));
-    if (pixmap == NULL) return OverlayError("not enough memory to resize overlay");
+    ovpixmap = (unsigned char*) calloc(ovwd * ovht * 4, sizeof(*ovpixmap));
+    if (ovpixmap == NULL) return OverlayError("not enough memory to resize overlay");
+
+    // check if overlay is the render target
+    if (targetname == "") {
+        SetRenderTarget(ovpixmap, ovwd, ovht);
+    }
 
     return NULL;
 }
@@ -1794,15 +1813,15 @@ const char* Overlay::DoCreate(const char* args)
     if (h <= 0) return OverlayError("height of overlay must be > 0");
 
     // given width and height are ok
-    wd = w;
-    ht = h;
+    ovwd = w;
+    ovht = h;
 
     // delete any existing pixmap
     DeleteOverlay();
 
     // use calloc so all pixels will be 100% transparent (alpha = 0)
-    pixmap = (unsigned char*) calloc(wd * ht * 4, sizeof(*pixmap));
-    if (pixmap == NULL) return OverlayError("not enough memory to create overlay");
+    ovpixmap = (unsigned char*) calloc(ovwd * ovht * 4, sizeof(*ovpixmap));
+    if (ovpixmap == NULL) return OverlayError("not enough memory to create overlay");
 
     // initialize RGBA values to opaque white
     r = g = b = a = 255;
@@ -1854,6 +1873,10 @@ const char* Overlay::DoCreate(const char* args)
         mainptr->UpdateMenuItems();
     }
 
+    // set overlay as render target
+    SetRenderTarget(ovpixmap, ovwd, ovht);
+    targetname = "";
+
     return NULL;
 }
 
@@ -1873,25 +1896,25 @@ bool Overlay::PointInOverlay(int vx, int vy, int* ox, int* oy)
         case topleft:
             break;
         case topright:
-            x = viewwd - wd;
+            x = viewwd - ovwd;
             break;
         case bottomright:
-            x = viewwd - wd;
-            y = viewht - ht;
+            x = viewwd - ovwd;
+            y = viewht - ovht;
             break;
         case bottomleft:
-            y = viewht - ht;
+            y = viewht - ovht;
             break;
         case middle:
-            x = (viewwd - wd) / 2;
-            y = (viewht - ht) / 2;
+            x = (viewwd - ovwd) / 2;
+            y = (viewht - ovht) / 2;
             break;
     }
 
     if (vx < x) return false;
     if (vy < y) return false;
-    if (vx >= x + wd) return false;
-    if (vy >= y + ht) return false;
+    if (vx >= x + ovwd) return false;
+    if (vy >= y + ovht) return false;
 
     *ox = vx - x;
     *oy = vy - y;
@@ -2051,10 +2074,9 @@ const char* Overlay::DoReplace(const char* args)
     const char *arg2 = strtok(NULL, delim);
     const char *arg3 = strtok(NULL, delim);
     const char *arg4 = strtok(NULL, delim);
-    const char *arg5 = strtok(NULL, delim);
     if (arg1 == NULL || arg2 == NULL || arg3 == NULL || arg4 == NULL) {
         free(buffer);
-        return OverlayError("replace command requires 4 or 5 arguments");
+        return OverlayError("replace command requires 4 arguments");
     }
 
     // decode the r g b a arguments
@@ -2086,37 +2108,12 @@ const char* Overlay::DoReplace(const char* args)
     if (error) { free(buffer); return OverlayError(error); }
     error = DecodeReplaceArg(arg4, &finda, &nega, &replacea, &inva, &deltaa, 4);
     if (error) { free(buffer); return OverlayError(error); }
-
-    // check if a clip was specified
-    unsigned char* clipdata = NULL;
-    int w = 0;
-    int h = 0;
-    if (arg5) {
-        // search for the named clip
-        std::string name = arg5;
-        std::map<std::string,Clip*>::iterator it;
-        it = clips.find(name);
-        if (it == clips.end()) {
-            static std::string msg;
-            msg = "unknown paste name (";
-            msg += name;
-            msg += ")";
-            free(buffer);
-            return OverlayError(msg.c_str());
-        }
-        // get the clip
-        Clip* clipptr = it->second;
-        w = clipptr->cwd;
-        h = clipptr->cht;
-        clipdata = clipptr->cdata;
-    }
-    else {
-        // use overlay
-        clipdata = pixmap;
-        w = wd;
-        h = ht;
-    }
     free(buffer);
+
+    // get the current render target
+    unsigned char* clipdata = pixmap;
+    int w = wd;
+    int h = ht;
 
     // check that negation is correctly used
     if (negg || negb || (nega && negr)) {
@@ -3898,6 +3895,54 @@ const char* Overlay::DoPaste(const char* args)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::DoTarget(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    int namepos;
+    char dummy;
+    int numargs = sscanf(args, " %n%c", &namepos, &dummy);
+    if (numargs != 1) {
+        if (*args == 0 || *args == ' ') {
+            numargs = 0;
+        } else {
+            return OverlayError("target command requires 0 or 1 arguments");
+        }
+    }
+
+    // previous target name
+    static char result[maxclipname];
+    strcpy(result, targetname.c_str());
+    
+    // no arguments means overlay is the target
+    if (numargs == 0) {
+        SetRenderTarget(ovpixmap, ovwd, ovht);
+        targetname = "";
+    } else {
+        // one argument means clip is the target
+        std::string name = args + namepos;
+        std::map<std::string,Clip*>::iterator it;
+        it = clips.find(name);
+        if (it == clips.end()) {
+            static std::string msg;
+            msg = "unknown target name (";
+            msg += name;
+            msg += ")";
+            return OverlayError(msg.c_str());
+        } else {
+            // set clip as the target
+            Clip* clipptr = it->second;
+            SetRenderTarget(clipptr->cdata, clipptr->cwd, clipptr->cht);
+            targetname = name;
+        }
+    }
+
+    // return previous  
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoFreeClip(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -3919,9 +3964,14 @@ const char* Overlay::DoFreeClip(const char* args)
         msg += ")";
         return OverlayError(msg.c_str());
     } else {
-        // delete the clip
-        delete it->second;
-        clips.erase(it);
+        // check if the clip is the current render target
+        if (name == targetname) {
+            return OverlayError("freeclip clip is current render target");
+        } else {
+            // delete the clip
+            delete it->second;
+            clips.erase(it);
+        }
     }
 
     return NULL;
@@ -4715,7 +4765,8 @@ const char* Overlay::DoTransform(const char* args)
 
 bool Overlay::OnlyDrawOverlay()
 {
-    if (pixmap == NULL) return false;
+    // only use the overlay
+    if (ovpixmap == NULL) return false;
 
     if (only_draw_overlay) {
         // this flag must only be used for one refresh so reset it immediately
@@ -4761,6 +4812,7 @@ const char* Overlay::OverlayError(const char* msg)
 
 const char* Overlay::DoOverlayCommand(const char* cmd)
 {
+    // determine which command to run
     if (strncmp(cmd, "set ", 4) == 0)         return DoSetPixel(cmd+4);
     if (strncmp(cmd, "get ", 4) == 0)         return DoGetPixel(cmd+4);
     if (strcmp(cmd,  "xy") == 0)              return DoGetXY();
@@ -4789,6 +4841,7 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "celloption ", 11) == 0) return DoCellOption(cmd+11);
     if (strncmp(cmd, "camera ", 7) == 0)      return DoCamera(cmd+7);
     if (strncmp(cmd, "theme ", 6) == 0)       return DoTheme(cmd+6);
+    if (strncmp(cmd, "target", 6) == 0)       return DoTarget(cmd+6);
     if (strncmp(cmd, "replace ", 8) == 0)     return DoReplace(cmd+8);
     if (strcmp(cmd,  "updatecells") == 0)     return DoUpdateCells();
     if (strcmp(cmd,  "drawcells") == 0)       return DoDrawCells();

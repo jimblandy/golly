@@ -101,15 +101,15 @@ public:
     void CheckCursor();
     // If the pixmap has changed then the cursor might need to be changed.
     
-    unsigned char* GetOverlayData() { return pixmap; }
+    unsigned char* GetOverlayData() { return ovpixmap; }
     // Return a pointer to the overlay's RGBA data (possibly NULL).
     // This data is used to render the overlay (see DrawOverlay in
     // wxrender.cpp).
     
-    int GetOverlayWidth() { return wd; }
+    int GetOverlayWidth() { return ovwd; }
     // Return the current pixel width of the overlay.
     
-    int GetOverlayHeight() { return ht; }
+    int GetOverlayHeight() { return ovht; }
     // Return the current pixel height of the overlay.
     
     overlay_position GetOverlayPosition() { return pos; }
@@ -122,6 +122,9 @@ public:
     // Save overlay in given PNG file.
 
 private:
+    void SetRenderTarget(unsigned char* pix, int pwd, int pht);
+    // Set the render target pixmap and size.
+
     const char* DoCreate(const char* args);
     // Create a pixmap with the given width and height.
     // All bytes are initialized to 0 (ie. all pixels are transparent).
@@ -144,6 +147,11 @@ private:
     // Specify which cursor to use when the mouse moves over a
     // non-transparent pixel and return the old cursor name.
     
+    const char* DoTarget(const char* args);
+    // Sets the render target to the named clip or the overlay
+    // if no clip specified.
+    // Returns the old render target clip name or "" for overlay.
+
     const char* DoSetRGBA(const char* args);
     // Set the current RGBA values and return the old values as a string
     // of the form "r g b a".
@@ -393,8 +401,14 @@ private:
     void DeleteStars();
     // Free the memory used by the stars.
 
-    unsigned char* pixmap;          // RGBA data (wd * ht * 4 bytes)
-    int wd, ht;                     // width and height of pixmap
+    // render target
+    unsigned char* pixmap;          // current render target RGBA data (wd * ht * 4 bytes)
+    int wd, ht;                     // current render target pixmap width and height
+    std::string targetname;         // render target name
+
+    // overlay
+    unsigned char* ovpixmap;        // overlay RGBA data
+    int ovwd, ovht;                 // width and height of overlay pixmap
     unsigned char r, g, b, a;       // current RGBA values for drawing pixels
     bool alphablend;                // do alpha blending when drawing translucent pixels?
     bool only_draw_overlay;         // set by DoUpdate, reset by OnlyDrawOverlay
