@@ -109,8 +109,8 @@ Here is an alphabetical list of all the valid overlay commands:
 </p>
 
 <p>
-All of the drawing commands work against the current rendering <a href="#target">target</a>.
-The rendering target is initally the overlay but can be changed to a
+All of the drawing commands use the current rendering target.
+This is initally the overlay but can be changed to a
 <a href="#clips">clip</a> with the <a href="#target">target</a> command.
 </p>
 
@@ -233,10 +233,9 @@ The clip name can contain any characters except a space.
 
 <a name="create"></a><p><dt><b>create <i>wd ht (clipname)</i></b></dt>
 <dd>
-Create the overlay or if a clip name is specified create a new clip width the given
-width and height. All pixels are initially transparent (their RGBA values are set to
-0,0,0,0).
-When creating the overlay then the following are also set:
+Create the overlay or if a clip name is specified create a new clip with the given
+width and height. All pixels are initially transparent (their RGBA values are set to 0,0,0,0).
+When creating the overlay the following are also set:
 </dd>
 <p>
 <dd>
@@ -290,19 +289,15 @@ The previous cursor name is returned.
 <dd> Example: <b>local oldcursor = ov("cursor pencil")</b></dd>
 </p>
 
-<a name="delete"></a><p><dt><b>delete</b></dt>
+<a name="delete"></a><p><dt><b>delete <i>(clipname)</i></b></dt>
 <dd>
 Delete the overlay or if a clip name is specified delete the named clip.
 When deleting the overlay this is equivalent to selecting
 <a href="layer.html#deleteoverlay">Delete Overlay</a> from the Layer menu.
+Note that it is an error to delete a clip that is the current render <a href="#target">target</a>.
 </dd>
 <dd> Example: <b>ov("delete")</b></dd>
 <dd> Example: <b>ov("delete myclip")</b></dd>
-</p>
-<p>
-<dd>
-Note that it is an error to delete a clip that is the current render <a href="#target">target</a>.
-</dd>
 </p>
 
 <a name="drawcells"></a><p><dt><b>drawcells</b></dt>
@@ -435,8 +430,8 @@ use those values to do things like center the image within the rendering target.
 
 <a name="paste"></a><p><dt><b>paste <i>x y clipname</i></b></dt>
 <dd>
-Paste the named clip (created by an earlier <a href="#copy">copy</a> or
-<a href="#text">text</a> command) into the rendering target at the given location.
+Paste the named clip (created by an earlier <a href="#create">create</a>, <a href="#copy">copy</a>
+or <a href="#text">text</a> command) into the rendering target at the given location.
 Any pixels outside the rendering target edges are automatically clipped.
 </dd>
 <dd> Example: <b>ov("paste 10 20 tempbox")</b></dd>
@@ -560,9 +555,10 @@ Component values are clamped to the range 0 to 255.
 <dd>
 Resize the overlay or if a clip name is specified resize the named clip.
 The previous size is returned as a string of the form "width height".
-For the overlay other than the size, the current overlay options and clips are not changed.
 This command is typically used if a window resize is detected and you
 wish to keep the overlay covering all of the current layer.
+Note that all pixels in the resized overlay/clip become transparent
+(their RGBA values are reset to 0,0,0,0).
 </dd>
 <dd> Example: <b>local oldsize = ov("resize 1000 800")</b></dd>
 <dd> Example: <b>local oldsize = ov("resize 300 240 myclip")</b></dd>
@@ -607,9 +603,9 @@ A pixel outside the rendering target is silently ignored.
 <a name="target"></a><p><dt><b>target <i>(clipname)</i></b></dt>
 <dd>
 Set the rendering target to the named <a href="#clips">clip</a> or to the overlay if no
-clip is specified. All subsequent drawing commands will use the defined rendering target.
-Returns the previous target as a string. Note if the previous target was the overlay then "" is returned.
-It is an error to attempt to <a href="#freeclip">free</a> a clip while it is the
+clip is specified. All subsequent drawing commands will use the new rendering target.
+Returns the previous target as a string (an empty string if it was the overlay).
+It is an error to attempt to <a href="#delete">delete</a> a clip while it is the
 rendering target.
 The commands that use the rendering target are:
 <a href="#copy">copy</a> (as the source),
@@ -834,8 +830,8 @@ The overlay commands that can do alpha blending are:
 Overlay scripts can use multiple "clipboards" called clips.
 A clip is simply a chunk of memory containing a rectangular area of pixels.
 Each clip has a unique name consisting of any characters except a space.
-Clips are created using two commands:
-<a href="#copy">copy</a> and <a href="#text">text</a>.
+Clips can be created using three commands:
+<a href="#create">create</a>, <a href="#copy">copy</a> and <a href="#text">text</a>.
 Clips can be the rendering <a href="#target">target</a> for any of the drawing commands.
 
 <p>

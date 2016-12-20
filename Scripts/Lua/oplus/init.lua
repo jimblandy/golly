@@ -737,7 +737,7 @@ function m.minbox(clipname, wd, ht)
     ov("blend "..oldblend)
     
     -- free the temporary clip memory
-    ov("freeclip "..oldoverlay)
+    ov("delete "..oldoverlay)
     
     -- return the bounding box info
     return xmin, ymin, minwd, minht
@@ -845,7 +845,7 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
     ov(m.flip)
     ov("paste "..(radius-1).." "..(radius-1).." qcircle")
     ov(m.identity)
-    ov("freeclip qcircle")
+    ov("delete qcircle")
     
     if #fillrgba > 0 then
         -- draw non-corner portions of rectangle
@@ -877,10 +877,10 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
     
     -- restore top left corner of overlay and draw rounded rectangle
     ov("paste 0 0 rectbg")
-    ov("freeclip rectbg")
+    ov("delete rectbg")
     ov("blend 1")
     ov("paste "..x.." "..y.." roundedrect")
-    ov("freeclip roundedrect")
+    ov("delete roundedrect")
     
     -- restore blend setting
     ov("blend "..oldblend)
