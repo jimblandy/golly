@@ -126,18 +126,24 @@ private:
     // Set the render target pixmap and size.
 
     const char* DoCreate(const char* args);
-    // Create a pixmap with the given width and height.
+    // Create the current render target with the given width and height.
     // All bytes are initialized to 0 (ie. all pixels are transparent).
-    // The current RGBA values are all set to 255 (opaque white).
-    // The current position is set to topleft.
-    // The current cursor is set to the standard arrow.
-    // Alpha blending is turned off.
-    // The transformation values are set to 1,0,0,1 (identity).
-    // The current font is set to the default font at 10pt.
-    // No cell view is allocated.
+    // If the render target is the overlay then additionally:
+    //   The current RGBA values are all set to 255 (opaque white).
+    //   The current position is set to topleft.
+    //   The current cursor is set to the standard arrow.
+    //   Alpha blending is turned off.
+    //   The transformation values are set to 1,0,0,1 (identity).
+    //   The current font is set to the default font at 10pt.
+    //   No cell view is allocated.
+
+    const char* DoDelete(const char* args);
+    // Delete the named clip or if no clip specified delete the overlay.
+    // It is an error to attempt to delete a clip if it is the render target.
     
     const char* DoResize(const char* args);
-    // Resizes a pixmap with the given width and height
+    // Resize the named clip or if no clip specified resize the overlay.
+    // Returns the previous size as a string.
     // Does not change any settings and keeps any existing cell view.
 
     const char* DoPosition(const char* args);
@@ -158,18 +164,18 @@ private:
     
     void DrawPixel(int x, int y);
     // Called by DoSetPixel, DoLine, etc to set a given pixel
-    // that is within the overlay.
+    // that is within the render target.
     
     void DrawAAPixel(int x, int y, double opacity);
-    // Draw an antialiased pixel.
+    // Draw an antialiased pixel in the render target.
 
     const char* DoSetPixel(const char* args);
     // Set the given pixel to the current RGBA values.
-    // Does nothing if the pixel is outside the edges of the overlay.
+    // Does nothing if the pixel is outside the edges of the render target.
     
     const char* DoGetPixel(const char* args);
     // Return the RGBA values of the given pixel as a string of the
-    // form "r g b a", or "" if the pixel is outside the overlay.
+    // form "r g b a", or "" if the pixel is outside the render target.
     
     const char* DoGetXY();
     // Return the current mouse position within the overlay as a string
@@ -183,7 +189,7 @@ private:
     
     const char* DoLine(const char* args);
     // Draw a line using the current RGBA values.
-    // Automatically clips any parts of the line outside the overlay.
+    // Automatically clips any parts of the line outside the render target.
     
     void DrawThickLine(int x0, int y0, int x1, int y1);
     // Called by DoLine to draw a line when linewidth is not 1.
@@ -217,38 +223,35 @@ private:
     
     const char* DoFill(const char* args);
     // Fill a given rectangle with the current RGBA values.
-    // Automatically clips any parts of the rectangle outside the overlay.
+    // Automatically clips any parts of the rectangle outside the render target.
 
     void FillRect(int x, int y, int w, int h);
     // Called by DoFill to set pixels in given rectangle.
     
     const char* DoCopy(const char* args);
     // Copy the pixels in a given rectangle into Clip data with a given name.
-    // The rectangle must be within the overlay.
+    // The rectangle must be within the render target.
     
     const char* DoPaste(const char* args);
-    // Paste the named Clip data into the overlay at the given location.
-    // Automatically clips any pixels outside the overlay.
+    // Paste the named Clip data into the render target at the given location.
+    // Automatically clips any pixels outside the render target.
     
     const char* DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace, int* delta, int component);
     // Decodes a single argument for the replace comand.
 
     const char* DoReplace(const char* args);
-    // Replace pixels of a specified RGBA color in the named clip with the
+    // Replace pixels of a specified RGBA color in the render target with the
     // current RGBA values.
     // Return the number of pixels replaced.
 
-    const char* DoFreeClip(const char* args);
-    // Free the memory used by the named Clip.
-    
     const char* DoLoad(const char* args);
-    // Load the image from a given .bmp/gif/png/tiff file into the overlay
+    // Load the image from a given .bmp/gif/png/tiff file into the render target
     // at a given location, clipping if necessary.  If successful, return the
     // total dimensions of the image as a string of the form "width height".
     
     const char* DoSave(const char* args);
     // Save the pixels in a given rectangle into a given .png file.
-    // The rectangle must be within the overlay.
+    // The rectangle must be within the render target.
     
     const char* DoFlood(const char* args);
     // Do a flood fill starting from the given pixel and using the
@@ -297,7 +300,7 @@ private:
 
     const char* DoCellView(const char* args);
     // Create a cell view that tracks a rectangle of cells and can be rapidly
-    // drawn onto the overlay at a particular scale and angle.
+    // drawn onto the the render target at a particular scale and angle.
 
     void DeleteCellView();
     // Deallocate all memory used by the cell view.
@@ -321,10 +324,10 @@ private:
     // Update the zoom view from the cell view at the given step size.
 
     void DrawCellsRotate(unsigned char* cells, int mask, double angle);
-    // Draw cells onto the overlay with the given location mask and rotation.
+    // Draw cells onto the render target with the given location mask and rotation.
 
     void DrawCellsNoRotate(unsigned char* cells, int mask);
-    // Draw cells onto the overlay with the given location mask but no rotation.
+    // Draw cells onto the render target with the given location mask but no rotation.
 
     const char* DoDrawCells();
     // Draw the cells onto the overlay.

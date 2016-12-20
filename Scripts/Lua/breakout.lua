@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 42
+local build = 43
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -968,7 +968,7 @@ local function resizegame(newwd, newht)
     initshadow()
 
     -- recreate background
-    ov("freeclip bg")
+    ov("delete bg")
     createbackground()
 
     -- recreate static text
@@ -1706,7 +1706,7 @@ local function breakout()
     end
 
     -- free clips and restore settings
-    ov("freeclip bg")
+    ov("delete bg")
     ov("blend "..oldblend)
     ov("font "..oldfont)
     ov("textoption background "..oldbg)

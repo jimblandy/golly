@@ -74,31 +74,30 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#fill"><b>fill</b></a><br>
 <a href="#flood"><b>flood</b></a><br>
 <a href="#font"><b>font</b></a><br>
-<a href="#freeclip"><b>freeclip</b></a>
+<a href="#get"><b>get</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#get"><b>get</b></a><br>
 <a href="#line"><b>line</b></a><br>
 <a href="#lineoption"><b>lineoption</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#position"><b>position</b></a><br>
-<a href="#replace"><b>replace</b></a>
+<a href="#replace"><b>replace</b></a><br>
+<a href="#resize"><b>resize</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#resize"><b>resize</b></a><br>
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
 <a href="#target"><b>target</b></a><br>
 <a href="#text"><b>text</b></a><br>
-<a href="#textoption"><b>textoption</b></a>
+<a href="#textoption"><b>textoption</b></a><br>
+<a href="#theme"><b>theme</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
 <a href="#updatecells"><b>updatecells</b></a><br>
@@ -232,12 +231,16 @@ The clip name can contain any characters except a space.
 <dd> Example: <b>ov("copy 0 0 100 200 tempbox")</b></dd>
 </p>
 
-<a name="create"></a><p><dt><b>create <i>wd ht</i></b></dt>
+<a name="create"></a><p><dt><b>create <i>wd ht (clipname)</i></b></dt>
 <dd>
-Delete any existing overlay and create a new overlay with the given
-width and height.  All pixels are initially transparent
-(their RGBA values are set to 0,0,0,0).  The initial RGBA values used
-by later drawing commands are set to 255,255,255,255 (opaque white).
+Create the overlay or if a clip name is specified create a new clip width the given
+width and height. All pixels are initially transparent (their RGBA values are set to
+0,0,0,0).
+When creating the overlay then the following are also set:
+</dd>
+<p>
+<dd>
+The initial RGBA values used by later drawing commands are set to 255,255,255,255 (opaque white).
 The overlay's initial position is set to topleft,
 the cursor is set to the standard arrow,
 the transform values are set to 1,0,0,1 (identity) and alpha blending is off.
@@ -249,10 +252,12 @@ The initial line width (used by the <a href="#ellipse">ellipse</a> and
 <a href="#line">line</a> commands) is set to 1.0. The rendering <a href="#target">target</a>
 is set to be the overlay.
 </dd>
+</p>
 <dd> Example: <b>ov("create 400 300")</b></dd>
+<dd> Example: <b>ov("create 400 300 myclip")</b></dd>
 <p>
 <dd>
-Note that the create command automatically ticks the
+Note that the when creating the overlay this command automatically ticks the
 <a href="layer.html#showoverlay">Show Overlay</a> option to ensure the
 overlay will be displayed when the viewport is updated (by calling g.update()
 or the <a href="#update">update</a> command).
@@ -287,10 +292,17 @@ The previous cursor name is returned.
 
 <a name="delete"></a><p><dt><b>delete</b></dt>
 <dd>
-Delete the current overlay.  Equivalent to selecting
+Delete the overlay or if a clip name is specified delete the named clip.
+When deleting the overlay this is equivalent to selecting
 <a href="layer.html#deleteoverlay">Delete Overlay</a> from the Layer menu.
 </dd>
 <dd> Example: <b>ov("delete")</b></dd>
+<dd> Example: <b>ov("delete myclip")</b></dd>
+</p>
+<p>
+<dd>
+Note that it is an error to delete a clip that is the current render <a href="#target">target</a>.
+</dd>
 </p>
 
 <a name="drawcells"></a><p><dt><b>drawcells</b></dt>
@@ -361,14 +373,6 @@ The valid font names are:
 The previous font is returned as a string of the form "fontsize fontname".
 </dd>
 <dd> Example: <b>local oldfont = ov("font 15 roman-bold")</b></dd>
-</p>
-
-<a name="freeclip"></a><p><dt><b>freeclip <i>clipname</i></b></dt>
-<dd>
-Free the memory used by the given clip. You can not free a clip if it is the current
-rendering target.
-</dd>
-<dd> Example: <b>ov("freeclip tempbox")</b></dd>
 </p>
 
 <a name="get"></a><p><dt><b>get <i>x y</i></b></dt>
@@ -552,14 +556,16 @@ Component values are clamped to the range 0 to 255.
 <dd><b>end</b></dd>
 </p>
 
-<a name="resize"></a><p><dt><b>resize <i>wd ht</i></b></dt>
+<a name="resize"></a><p><dt><b>resize <i>wd ht (clipname)</i></b></dt>
 <dd>
-Resize the overlay to the given width and height.
-Other than the size, the current overlay options and clips are not changed.
+Resize the overlay or if a clip name is specified resize the named clip.
+The previous size is returned as a string of the form "width height".
+For the overlay other than the size, the current overlay options and clips are not changed.
 This command is typically used if a window resize is detected and you
 wish to keep the overlay covering all of the current layer.
 </dd>
-<dd> Example: <b>ov("resize 1000 800")</b></dd>
+<dd> Example: <b>local oldsize = ov("resize 1000 800")</b></dd>
+<dd> Example: <b>local oldsize = ov("resize 300 240 myclip")</b></dd>
 </p>
 
 <a name="rgba"></a><p><dt><b>rgba <i>red green blue alpha</i></b></dt>

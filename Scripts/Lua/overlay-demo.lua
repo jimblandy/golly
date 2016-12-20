@@ -219,7 +219,7 @@ local function test_transitions()
             while g.millisecs() - t < 15 do end
         end
         for y = 0, ht, 8 do
-            ov("freeclip bg"..y)
+            ov("delete bg"..y)
         end
     -- thursday: as if by magic
     elseif day == 4 then
@@ -238,7 +238,7 @@ local function test_transitions()
             ov("update")
             while g.millisecs() - t < 15 do end
         end
-        ov("freeclip blend")
+        ov("delete blend")
     -- friday: you spin me round
     elseif day == 5 then
         local x, y, r
@@ -269,7 +269,7 @@ local function test_transitions()
             ov("update")
             while g.millisecs() - t < 15 do end
         end
-        ov("freeclip trans")
+        ov("delete trans")
     -- sunday: people in glass houses
     elseif day == 7 then
         local box = {}
@@ -307,7 +307,7 @@ local function test_transitions()
         n = 1
         for y = 0, ht, 16 do
             for x = 0, wd, 16 do
-                ov("freeclip sprite"..n)
+                ov("delete sprite"..n)
                 n = n + 1
             end
         end
@@ -327,8 +327,8 @@ local function test_transitions()
     -- restore settings
     ov("blend "..oldblend)
     ov("font "..oldfont)
-    ov("freeclip fg")
-    ov("freeclip bg")
+    ov("delete fg")
+    ov("delete bg")
 end
 
 --------------------------------------------------------------------------------
@@ -602,8 +602,8 @@ local function test_copy_paste()
         ov("paste 0 "..y.." row")
     end
     
-    ov("freeclip tile")
-    ov("freeclip row")
+    ov("delete tile")
+    ov("delete row")
     
     g.show("Time to test copy and paste: "..ms(g.millisecs()-t1))
     
@@ -811,8 +811,8 @@ local function test_cellview()
     end
 
     -- free clips
-    ov("freeclip "..exitclip)
-    ov("freeclip "..exitshadowclip)
+    ov("delete "..exitclip)
+    ov("delete "..exitshadowclip)
 
     -- restore settings
     ov("textoption align "..oldalign)
@@ -1236,13 +1236,13 @@ David Bell
     end
 
     -- free clips
-    ov("freeclip "..exitclip)
-    ov("freeclip "..exitshadowclip)
-    ov("freeclip "..gollytranslucentclip)
-    ov("freeclip "..gollyopaqueclip)
-    ov("freeclip "..creditsclip)
-    ov("freeclip "..creditsshadowclip)
-    ov("freeclip "..bgclip)
+    ov("delete "..exitclip)
+    ov("delete "..exitshadowclip)
+    ov("delete "..gollytranslucentclip)
+    ov("delete "..gollyopaqueclip)
+    ov("delete "..creditsclip)
+    ov("delete "..creditsshadowclip)
+    ov("delete "..bgclip)
 
     -- restore settings
     ov("textoption align "..oldalign)
@@ -1494,7 +1494,7 @@ local function test_set()
     end
 
     -- free clips and restore settings
-    ov("freeclip bg")
+    ov("delete bg")
     ov("blend "..oldblend)
     ov("font "..oldfont)
 end
@@ -1652,14 +1652,14 @@ local function show_magnified_pixels(x, y)
     
     -- restore background saved above
     ov("paste 0 0 outer_bg")
-    ov("freeclip outer_bg")
+    ov("delete outer_bg")
     
     -- draw magnified circle with center at x,y
     xpos = int(x-outersize/2)
     ypos = int(y-outersize/2)
     ov("blend 1")
     ov("paste "..xpos.." "..ypos.." mag_box")
-    ov("freeclip mag_box")
+    ov("delete mag_box")
     
     -- restore settings
     ov("rgba "..oldrgba)
@@ -1826,7 +1826,7 @@ local function test_lines()
             -- tidy up and return to main menu
             ov("blend "..oldblend)
             ov("lineoption width "..oldwidth)
-            ov("freeclip bg")
+            ov("delete bg")
             return_to_main_menu = true
             return
         elseif event == "key m none" then
@@ -2199,8 +2199,8 @@ local function test_target()
     ov(op.black)
     ov("fill")
 
-    -- grab a 300 x 300 clip
-    ov("copy 0 0 300 300 clip")
+    -- create a 300x300 clip
+    ov("create 300 300 clip")
 
     -- change the clip contents to yellow
     ov("target clip")
@@ -2257,7 +2257,7 @@ local function test_target()
     if repeat_test(" with a different target") then goto restart end
 
     -- free clip and restore previous target
-    ov("freeclip clip")
+    ov("delete clip")
     ov("target "..oldtarget)
     ov("font "..oldfont)
     ov("blend "..oldblend)

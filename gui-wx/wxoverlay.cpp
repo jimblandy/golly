@@ -53,14 +53,18 @@
 #endif
 
 #define PixelInOverlay(x,y) \
+    (x >= 0 && x < ovwd && \
+     y >= 0 && y < ovht)
+
+#define PixelInTarget(x,y) \
     (x >= 0 && x < wd && \
      y >= 0 && y < ht)
 
-#define RectOutsideOverlay(x,y,w,h) \
+#define RectOutsideTarget(x,y,w,h) \
     (x >= wd || x + w <= 0 || \
      y >= ht || y + h <= 0)
 
-#define RectInsideOverlay(x,y,w,h) \
+#define RectInsideTarget(x,y,w,h) \
     (x >= 0 && x + w <= wd && \
      y >= 0 && y + h <= ht)
 
@@ -1769,34 +1773,91 @@ void Overlay::SetRenderTarget(unsigned char* pix, int pwd, int pht)
 
 const char* Overlay::DoResize(const char* args)
 {
-    if (ovpixmap == NULL) return OverlayError(no_overlay);
+    if (pixmap == NULL) return OverlayError(no_overlay);
 
     // don't set wd and ht until we've checked the args are valid
-    int w, h;
-    if (sscanf(args, " %d %d", &w, &h) != 2) {
-        return OverlayError("resize command requires 2 arguments");
+    int w, h, oldw, oldh;
+    bool isclip = false;
+    int namepos;
+    char dummy;
+    if (sscanf(args, " %d %d %n%c", &w, &h, &namepos, &dummy) != 3) {
+        if (sscanf(args, " %d %d", &w, &h) != 2) {
+            return OverlayError("create command requires 2 or 3 arguments");
+        }
+    } else {
+        isclip = true;
     }
 
-    if (w <= 0) return OverlayError("width of overlay must be > 0");
-    if (h <= 0) return OverlayError("height of overlay must be > 0");
+    // check whether resizing clip or overlay
+    if (isclip) {
+        // resize overlay
+        if (w <= 0) return OverlayError("width of clip must be > 0");
+        if (h <= 0) return OverlayError("height of clip must be > 0");
 
-    // given width and height are ok
-    ovwd = w;
-    ovht = h;
+        // resize clip
+        std::string name = args + namepos;
 
-    // free the previous pixmap
-    free(ovpixmap);
+        // check if the clip exists
+        std::map<std::string,Clip*>::iterator it;
+        it = clips.find(name);
+        if (it == clips.end()) {
+            static std::string msg;
+            msg = "unknown resize clip (";
+            msg += name;
+            msg += ")";
+            return OverlayError(msg.c_str());
+        }
 
-    // create the new pixmap
-    ovpixmap = (unsigned char*) calloc(ovwd * ovht * 4, sizeof(*ovpixmap));
-    if (ovpixmap == NULL) return OverlayError("not enough memory to resize overlay");
+        // get the clip dimensions
+        oldw = it->second->cwd;
+        oldh = it->second->cht;
 
-    // check if overlay is the render target
-    if (targetname == "") {
-        SetRenderTarget(ovpixmap, ovwd, ovht);
+        // delete the clip
+        delete it->second;
+        clips.erase(it);
+
+        // allocate the resized clip with calloc
+        Clip* newclip = new Clip(w, h, true);
+        if (newclip == NULL || newclip->cdata == NULL) {
+            delete newclip;
+            return OverlayError("not enough memory to resize clip");
+        }
+
+        // save named clip
+        clips[name] = newclip;
+
+        // check if the clip is the render target
+        if (targetname == name) {
+            SetRenderTarget(newclip->cdata, newclip->cwd, newclip->cht);
+        }   
+    } else {
+        // resize overlay
+        if (w <= 0) return OverlayError("width of overlay must be > 0");
+        if (h <= 0) return OverlayError("height of overlay must be > 0");
+
+        // given width and height are ok
+        oldw = ovwd;
+        oldh = ovht;
+        ovwd = w;
+        ovht = h;
+
+        // free the previous pixmap
+        free(ovpixmap);
+
+        // create the new pixmap
+        ovpixmap = (unsigned char*) calloc(ovwd * ovht * 4, sizeof(*ovpixmap));
+        if (ovpixmap == NULL) return OverlayError("not enough memory to resize overlay");
+
+        // check if overlay is the render target
+        if (targetname == "") {
+            SetRenderTarget(ovpixmap, ovwd, ovht);
+        }
     }
 
-    return NULL;
+    // return old dimensions
+    static char result[32];
+    sprintf(result, "%d %d", oldw, oldh);
+    return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -1805,77 +1866,112 @@ const char* Overlay::DoCreate(const char* args)
 {
     // don't set wd and ht until we've checked the args are valid
     int w, h;
-    if (sscanf(args, " %d %d", &w, &h) != 2) {
-        return OverlayError("create command requires 2 arguments");
-    }
-
-    if (w <= 0) return OverlayError("width of overlay must be > 0");
-    if (h <= 0) return OverlayError("height of overlay must be > 0");
-
-    // given width and height are ok
-    ovwd = w;
-    ovht = h;
-
-    // delete any existing pixmap
-    DeleteOverlay();
-
-    // use calloc so all pixels will be 100% transparent (alpha = 0)
-    ovpixmap = (unsigned char*) calloc(ovwd * ovht * 4, sizeof(*ovpixmap));
-    if (ovpixmap == NULL) return OverlayError("not enough memory to create overlay");
-
-    // initialize RGBA values to opaque white
-    r = g = b = a = 255;
-
-    // don't do alpha blending initially
-    alphablend = false;
-
-    only_draw_overlay = false;
-
-    // initial position of overlay is in top left corner of current layer
-    pos = topleft;
-
-    ovcursor = wxSTANDARD_CURSOR;
-    cursname = "arrow";
-
-    // identity transform
-    axx = 1;
-    axy = 0;
-    ayx = 0;
-    ayy = 1;
-    identity = true;
-
-    // initialize current font used by text command
-    currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-    fontname = "default";
-    fontsize = 10;
-    #ifdef __WXMAC__
-        // need to increase Mac font size by 25% to match text size on Win/Linux
-        currfont.SetPointSize(int(fontsize * 1.25 + 0.5));
-        extraht = 1;
-    #else
-        currfont.SetPointSize(fontsize);
-    #endif
-
-    // default text alignment
-    align = left;
-
-    // default text background
-    textbgRGBA = 0;
-    
-    // default width for lines and ellipses
-    linewidth = 1.0;
-
-    // make sure the Show Overlay option is ticked
-    if (!showoverlay) {
-        mainptr->ToggleOverlay();
+    bool isclip = false;
+    int namepos;
+    char dummy;
+    if (sscanf(args, " %d %d %n%c", &w, &h, &namepos, &dummy) != 3) {
+        if (sscanf(args, " %d %d", &w, &h) != 2) {
+            return OverlayError("create command requires 2 or 3 arguments");
+        }
     } else {
-        // enable Save Overlay
-        mainptr->UpdateMenuItems();
+        isclip = true;
     }
 
-    // set overlay as render target
-    SetRenderTarget(ovpixmap, ovwd, ovht);
-    targetname = "";
+    // check whether creating clip or overlay
+    if (isclip) {
+        // create clip
+        if (w <= 0) return OverlayError("width of clip must be > 0");
+        if (h <= 0) return OverlayError("height of clip must be > 0");
+
+        std::string name = args + namepos;
+
+        // delete any existing clip data with the given name
+        std::map<std::string,Clip*>::iterator it;
+        it = clips.find(name);
+        if (it != clips.end()) {
+            delete it->second;
+            clips.erase(it);
+        }
+
+        // allocate the clip with calloc
+        Clip* newclip = new Clip(w, h, true);
+        if (newclip == NULL || newclip->cdata == NULL) {
+            delete newclip;
+            return OverlayError("not enough memory to create clip");
+        }
+
+        // create named clip
+        clips[name] = newclip;
+    } else {
+        // creating overlay
+        if (w <= 0) return OverlayError("width of overlay must be > 0");
+        if (h <= 0) return OverlayError("height of overlay must be > 0");
+
+        // given width and height are ok
+        ovwd = w;
+        ovht = h;
+
+        // delete any existing pixmap
+        DeleteOverlay();
+
+        // use calloc so all pixels will be 100% transparent (alpha = 0)
+        ovpixmap = (unsigned char*) calloc(ovwd * ovht * 4, sizeof(*ovpixmap));
+        if (ovpixmap == NULL) return OverlayError("not enough memory to create overlay");
+    
+        // initialize RGBA values to opaque white
+        r = g = b = a = 255;
+
+        // don't do alpha blending initially
+        alphablend = false;
+
+        only_draw_overlay = false;
+
+        // initial position of overlay is in top left corner of current layer
+        pos = topleft;
+
+        ovcursor = wxSTANDARD_CURSOR;
+        cursname = "arrow";
+
+        // identity transform
+        axx = 1;
+        axy = 0;
+        ayx = 0;
+        ayy = 1;
+        identity = true;
+    
+        // initialize current font used by text command
+        currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+        fontname = "default";
+        fontsize = 10;
+        #ifdef __WXMAC__
+            // need to increase Mac font size by 25% to match text size on Win/Linux
+            currfont.SetPointSize(int(fontsize * 1.25 + 0.5));
+            extraht = 1;
+        #else
+            currfont.SetPointSize(fontsize);
+        #endif
+    
+        // default text alignment
+        align = left;
+
+        // default text background
+        textbgRGBA = 0;
+    
+        // default width for lines and ellipses
+        linewidth = 1.0;
+
+        // make sure the Show Overlay option is ticked
+        if (!showoverlay) {
+            mainptr->ToggleOverlay();
+        } else {
+            // enable Save Overlay
+            mainptr->UpdateMenuItems();
+        }
+    
+        // set overlay as render target
+        SetRenderTarget(ovpixmap, ovwd, ovht);
+        targetname = "";
+    }
 
     return NULL;
 }
@@ -1884,7 +1980,7 @@ const char* Overlay::DoCreate(const char* args)
 
 bool Overlay::PointInOverlay(int vx, int vy, int* ox, int* oy)
 {
-    if (pixmap == NULL) return false;
+    if (ovpixmap == NULL) return false;
 
     int viewwd, viewht;
     viewptr->GetClientSize(&viewwd, &viewht);
@@ -2595,7 +2691,7 @@ const char* Overlay::DoSetPixel(const char* args)
     }
 
     // ignore pixel if outside pixmap edges
-    if (PixelInOverlay(x, y)) DrawPixel(x, y);
+    if (PixelInTarget(x, y)) DrawPixel(x, y);
 
     return NULL;
 }
@@ -2612,7 +2708,7 @@ const char* Overlay::DoGetPixel(const char* args)
     }
 
     // check if x,y is outside pixmap
-    if (!PixelInOverlay(x, y)) return "";
+    if (!PixelInTarget(x, y)) return "";
 
     unsigned char* p = pixmap + y*wd*4 + x*4;
     static char result[16];
@@ -2624,12 +2720,12 @@ const char* Overlay::DoGetPixel(const char* args)
 
 bool Overlay::TransparentPixel(int x, int y)
 {
-    if (pixmap == NULL) return false;
+    if (ovpixmap == NULL) return false;
 
     // check if x,y is outside pixmap
     if (!PixelInOverlay(x, y)) return false;
 
-    unsigned char* p = pixmap + y*wd*4 + x*4;
+    unsigned char* p = ovpixmap + y*ovwd*4 + x*4;
 
     // return true if alpha value is 0
     return p[3] == 0;
@@ -2760,7 +2856,7 @@ const char* Overlay::DoLineOption(const char* args)
 
 void Overlay::DrawAAPixel(int x, int y, double opacity)
 {
-    if (PixelInOverlay(x, y)) {
+    if (PixelInTarget(x, y)) {
         unsigned char newalpha = 255-int(opacity);
         if (newalpha == 0) return;
         
@@ -2808,10 +2904,10 @@ void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int yste
             if (alfa < 255) {
                 DrawAAPixel(x, y, 255-alfa);
             } else {
-                if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                if (PixelInTarget(x, y)) DrawPixel(x, y);
             }
         } else {
-            if (PixelInOverlay(x, y)) DrawPixel(x, y);
+            if (PixelInTarget(x, y)) DrawPixel(x, y);
         }
         if (err >= threshold) {
             x += xstep;
@@ -2838,10 +2934,10 @@ void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int yste
                 if (alfa < 255) {
                     DrawAAPixel(x, y, 255-alfa);
                 } else {
-                    if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                    if (PixelInTarget(x, y)) DrawPixel(x, y);
                 }
             } else {
-                if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                if (PixelInTarget(x, y)) DrawPixel(x, y);
             }
         }
         if (err > threshold) {
@@ -2857,7 +2953,7 @@ void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int yste
 
     if (q == 0 && p < 2) {
         // needed for very thin lines
-        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
+        if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
     }
 }
 
@@ -2884,10 +2980,10 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
             if (alfa < 255) {
                 DrawAAPixel(x, y, 255-alfa);
             } else {
-                if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                if (PixelInTarget(x, y)) DrawPixel(x, y);
             }
         } else {
-            if (PixelInOverlay(x, y)) DrawPixel(x, y);
+            if (PixelInTarget(x, y)) DrawPixel(x, y);
         }
         if (err > threshold) {
             y += ystep;
@@ -2914,10 +3010,10 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
                 if (alfa < 255) {
                     DrawAAPixel(x, y, 255-alfa);
                 } else {
-                    if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                    if (PixelInTarget(x, y)) DrawPixel(x, y);
                 }
             } else {
-                if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                if (PixelInTarget(x, y)) DrawPixel(x, y);
             }
         }
         if (err >= threshold) {
@@ -2933,7 +3029,7 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
 
     if (q == 0 && p < 2) {
         // needed for very thin lines
-        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
+        if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
     }
 }
 
@@ -2954,7 +3050,7 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
     if (dy < 0) { dy = -dy; ystep = -1; }
     
     if (dx == 0 && dy == 0) {
-        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
+        if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
         return;
     }
     
@@ -3072,7 +3168,7 @@ const char* Overlay::DoLine(const char* args)
     }
 
     if (x1 == x2 && y1 == y2) {
-        if (PixelInOverlay(x1, y1)) DrawPixel(x1, y1);
+        if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
         return NULL;
     }
     
@@ -3093,7 +3189,7 @@ const char* Overlay::DoLine(const char* args)
     if (ax > ay) {
         int d = ay - (ax / 2);
         while (x1 != x2) {
-            if (PixelInOverlay(x1, y1)) DrawPixel(x1, y1);
+            if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
             if (d >= 0) {
                 y1 = y1 + sy;
                 d = d - ax;
@@ -3104,7 +3200,7 @@ const char* Overlay::DoLine(const char* args)
     } else {
         int d = ax - (ay / 2);
         while (y1 != y2) {
-            if (PixelInOverlay(x1, y1)) DrawPixel(x1, y1);
+            if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
             if (d >= 0) {
                 x1 = x1 + sx;
                 d = d - ay;
@@ -3113,7 +3209,7 @@ const char* Overlay::DoLine(const char* args)
             d = d + ax;
         }
     }
-    if (PixelInOverlay(x2, y2)) DrawPixel(x2, y2);
+    if (PixelInTarget(x2, y2)) DrawPixel(x2, y2);
 
     return NULL;
 }
@@ -3212,19 +3308,19 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
             int x = x0+x1-i;
             // extra tests avoid some pixels being drawn twice
             if (x == i && y0 == y1) {
-                if (PixelInOverlay(i, y0)) DrawPixel(i, y0);
+                if (PixelInTarget(i, y0)) DrawPixel(i, y0);
             } else if (x == i) {
-                if (PixelInOverlay(i, y0)) DrawPixel(i, y0);
-                if (PixelInOverlay(i, y1)) DrawPixel(i, y1);
+                if (PixelInTarget(i, y0)) DrawPixel(i, y0);
+                if (PixelInTarget(i, y1)) DrawPixel(i, y1);
             } else if (y0 == y1) {
-                if (PixelInOverlay(i, y0)) DrawPixel(i, y0);
-                if (PixelInOverlay(x, y0)) DrawPixel(x, y0);
+                if (PixelInTarget(i, y0)) DrawPixel(i, y0);
+                if (PixelInTarget(x, y0)) DrawPixel(x, y0);
             } else {
                 // x != i and y0 != y1
-                if (PixelInOverlay(i, y0)) DrawPixel(i, y0);
-                if (PixelInOverlay(x, y0)) DrawPixel(x, y0); 
-                if (PixelInOverlay(i, y1)) DrawPixel(i, y1);
-                if (PixelInOverlay(x, y1)) DrawPixel(x, y1);
+                if (PixelInTarget(i, y0)) DrawPixel(i, y0);
+                if (PixelInTarget(x, y0)) DrawPixel(x, y0); 
+                if (PixelInTarget(i, y1)) DrawPixel(i, y1);
+                if (PixelInTarget(x, y1)) DrawPixel(x, y1);
             }
             i++;
         }    
@@ -3391,10 +3487,10 @@ void Overlay::DrawEllipse(int x0, int y0, int x1, int y1)
     b1 = 8*b*b;
 
     do {
-        if (PixelInOverlay(x1, y0)) DrawPixel(x1, y0);
-        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
-        if (PixelInOverlay(x0, y1)) DrawPixel(x0, y1);
-        if (PixelInOverlay(x1, y1)) DrawPixel(x1, y1);
+        if (PixelInTarget(x1, y0)) DrawPixel(x1, y0);
+        if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
+        if (PixelInTarget(x0, y1)) DrawPixel(x0, y1);
+        if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
         e2 = 2*err;
         if (e2 <= dy) {
             y0++;
@@ -3412,10 +3508,10 @@ void Overlay::DrawEllipse(int x0, int y0, int x1, int y1)
         // finish tip of ellipse
         x0--;
         x1++;
-        if (PixelInOverlay(x0, y0)) DrawPixel(x0, y0);
-        if (PixelInOverlay(x1, y0)) DrawPixel(x1, y0);
-        if (PixelInOverlay(x0, y1)) DrawPixel(x0, y1);
-        if (PixelInOverlay(x1, y1)) DrawPixel(x1, y1);
+        if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
+        if (PixelInTarget(x1, y0)) DrawPixel(x1, y0);
+        if (PixelInTarget(x0, y1)) DrawPixel(x0, y1);
+        if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
         y0++;
         y1--;
     }
@@ -3544,7 +3640,7 @@ const char* Overlay::DoFill(const char* args)
         if (h <= 0) return OverlayError("fill height must be > 0");
 
         // ignore rect if completely outside pixmap edges
-        if (RectOutsideOverlay(x, y, w, h)) return NULL;
+        if (RectOutsideTarget(x, y, w, h)) return NULL;
 
         // clip any part of rect outside pixmap edges
         int xmax = x + w - 1;
@@ -3599,7 +3695,7 @@ const char* Overlay::DoCopy(const char* args)
     }
 
     bool use_calloc;
-    if (RectInsideOverlay(x, y, w, h)) {
+    if (RectInsideTarget(x, y, w, h)) {
         // use malloc to allocate clip memory
         use_calloc = false;
     } else {
@@ -3614,7 +3710,7 @@ const char* Overlay::DoCopy(const char* args)
     }
 
     if (use_calloc) {
-        if (RectOutsideOverlay(x, y, w, h)) {
+        if (RectOutsideTarget(x, y, w, h)) {
             // clip rect is completely outside overlay so no need to copy
             // overlay pixels (clip pixels are all transparent)
         } else {
@@ -3701,14 +3797,14 @@ const char* Overlay::DoPaste(const char* args)
     int h = clipptr->cht;
 
     // do nothing if rect is completely outside overlay
-    if (RectOutsideOverlay(x, y, w, h)) return NULL;
+    if (RectOutsideTarget(x, y, w, h)) return NULL;
 
     if (x == 0 && y == 0 && w == wd && h == ht && !alphablend && identity) {
         // clip and overlay are the same size and there's no alpha blending
         // or transforming so do a fast paste using a single memcpy call
         memcpy(pixmap, clipptr->cdata, w * h * 4);
 
-    } else if (RectInsideOverlay(x, y, w, h) && !alphablend && identity) {
+    } else if (RectInsideTarget(x, y, w, h) && !alphablend && identity) {
         // rect is within overlay and there's no alpha blending or transforming
         // so use memcpy to paste rows of pixels from clip data into pixmap
         unsigned char* data = clipptr->cdata;
@@ -3733,7 +3829,7 @@ const char* Overlay::DoPaste(const char* args)
         unsigned char* data = clipptr->cdata;
 
         if (identity) {
-            if (RectInsideOverlay(x, y, w, h)) {
+            if (RectInsideTarget(x, y, w, h)) {
                 // clip is inside overlay so no need for bounds checking
                 unsigned char* p = pixmap + y * wd * 4 + x * 4;
                 for (int j = 0; j < h; j++) {
@@ -3795,10 +3891,10 @@ const char* Overlay::DoPaste(const char* args)
                 unsigned char* p;
                 for (int j = 0; j < h; j++) {
                     // check if row is in overlay
-                    if (PixelInOverlay(0, y)) {
+                    if (PixelInTarget(0, y)) {
                         p = pixmap + y * wd * 4 + x * 4;
                         for (int i = 0; i < w; i++) {
-                            if (PixelInOverlay(x, y)) {
+                            if (PixelInTarget(x, y)) {
                                 r = *data++;
                                 g = *data++;
                                 b = *data++;
@@ -3875,7 +3971,7 @@ const char* Overlay::DoPaste(const char* args)
                     a = *data++;
                     int newx = x0 + x * axx + y * axy;
                     int newy = y0 + x * ayx + y * ayy;
-                    if (PixelInOverlay(newx, newy)) DrawPixel(newx, newy);
+                    if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
                     x++;
                 }
                 y++;
@@ -3943,30 +4039,41 @@ const char* Overlay::DoTarget(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoFreeClip(const char* args)
+const char* Overlay::DoDelete(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
+    // check for optional clip name
     int namepos;
     char dummy;
-    if (sscanf(args, " %n%c", &namepos, &dummy) != 1) {
-        // note that %n is not included in the count
-        return OverlayError("freeclip command requires 1 argument");
+    int numargs = sscanf(args, " %n%c", &namepos, &dummy);
+    if (numargs != 1) {
+        if (*args == 0 || *args == ' ') {
+            numargs = 0;
+        } else {
+            return OverlayError("delete command requires 0 or 1 arguments");
+        }
     }
 
-    std::string name = args + namepos;
-    std::map<std::string,Clip*>::iterator it;
-    it = clips.find(name);
-    if (it == clips.end()) {
-        static std::string msg;
-        msg = "unknown freeclip name (";
-        msg += name;
-        msg += ")";
-        return OverlayError(msg.c_str());
+    // was optional clip name specified
+    if (numargs == 0) {
+        // no so delete overlay
+        DeleteOverlay();
     } else {
+        // yes so look up clip by name
+        std::string name = args + namepos;
+        std::map<std::string,Clip*>::iterator it;
+        it = clips.find(name);
+	if (it == clips.end()) {
+            static std::string msg;
+            msg = "unknown delete clip (";
+            msg += name;
+            msg += ")";
+            return OverlayError(msg.c_str());
+	}
         // check if the clip is the current render target
         if (name == targetname) {
-            return OverlayError("freeclip clip is current render target");
+            return OverlayError("delete clip is current render target");
         } else {
             // delete the clip
             delete it->second;
@@ -4003,7 +4110,7 @@ const char* Overlay::DoLoad(const char* args)
 
     int imgwd = image.GetWidth();
     int imght = image.GetHeight();
-    if (RectOutsideOverlay(x, y, imgwd, imght)) {
+    if (RectOutsideTarget(x, y, imgwd, imght)) {
         // do nothing if image rect is completely outside overlay,
         // but we still return the image dimensions so users can do things
         // like center the image within the overlay
@@ -4043,7 +4150,7 @@ const char* Overlay::DoLoad(const char* args)
                 } else {
                     a = 255;
                 }
-                if (PixelInOverlay(x, y)) DrawPixel(x, y);
+                if (PixelInTarget(x, y)) DrawPixel(x, y);
                 x++;
             }
             y++;
@@ -4133,24 +4240,24 @@ const char* Overlay::DoSave(const char* args)
 
 void Overlay::SaveOverlay(const wxString& pngpath)
 {
-    if (pixmap == NULL) {
+    if (ovpixmap == NULL) {
         Warning(_("There is no overlay data to save!"));
         return;
     }
     
-    unsigned char* rgbdata = (unsigned char*) malloc(wd * ht * 3);
+    unsigned char* rgbdata = (unsigned char*) malloc(ovwd * ovht * 3);
     if (rgbdata== NULL) {
         Warning(_("Not enough memory to copy RGB data."));
         return;
     }
-    unsigned char* alphadata = (unsigned char*) malloc(wd * ht);
+    unsigned char* alphadata = (unsigned char*) malloc(ovwd * ovht);
     if (alphadata == NULL) {
         free(rgbdata);
         Warning(_("Not enough memory to copy alpha data."));
         return;
     }
     
-    unsigned char* p = pixmap;
+    unsigned char* p = ovpixmap;
     int rgbpos = 0;
     int alphapos = 0;
     for (int j=0; j<ht; j++) {
@@ -4184,7 +4291,7 @@ const char* Overlay::DoFlood(const char* args)
     }
 
     // // check if x,y is outside pixmap
-    if (!PixelInOverlay(x, y)) return NULL;
+    if (!PixelInTarget(x, y)) return NULL;
 
     int rowbytes = wd * 4;
     unsigned char* oldpxl = pixmap + y*rowbytes + x*4;
@@ -4828,7 +4935,6 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "textoption ", 11) == 0) return DoTextOption(cmd+11);
     if (strncmp(cmd, "text", 4) == 0)         return DoText(cmd+4);
     if (strncmp(cmd, "font", 4) == 0)         return DoFont(cmd+4);
-    if (strncmp(cmd, "freeclip", 8) == 0)     return DoFreeClip(cmd+8);
     if (strncmp(cmd, "transform", 9) == 0)    return DoTransform(cmd+9);
     if (strncmp(cmd, "position", 8) == 0)     return DoPosition(cmd+8);
     if (strncmp(cmd, "load", 4) == 0)         return DoLoad(cmd+4);
@@ -4845,9 +4951,6 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "replace ", 8) == 0)     return DoReplace(cmd+8);
     if (strcmp(cmd,  "updatecells") == 0)     return DoUpdateCells();
     if (strcmp(cmd,  "drawcells") == 0)       return DoDrawCells();
-    if (strcmp(cmd,  "delete") == 0) {
-        DeleteOverlay();
-        return NULL;
-    }
+    if (strncmp(cmd,  "delete", 6) == 0)      return DoDelete(cmd+6);
     return OverlayError("unknown command");
 }
