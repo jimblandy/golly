@@ -700,8 +700,9 @@ local function test_cellview()
     local firstangle = true
     local firstzoom = true
 
-    -- use 6 layers
-    ov("celloption layers 6")
+    -- create the world view clip
+    local worldsize = 256
+    ov("create "..worldsize.." "..worldsize.." world")
 
     -- animate the cells
     local running = true
@@ -725,8 +726,9 @@ local function test_cellview()
         ov("camera zoom "..zoom)
         ov("camera xy "..x.." "..y)
 
-        -- set the layer depth
+        -- set the layer depth and number of layers
         ov("celloption depth "..depth)
+        ov("celloption layers 6")
 
         -- update the camera zoom
         if zoomstep == zoomsteps then
@@ -797,9 +799,24 @@ local function test_cellview()
         end
 
         -- draw the cell view
+        ov("blend 0")
         ov("drawcells")
 
+        -- draw the world view
+        ov("target world")
+        ov("camera angle 0")
+        ov("camera zoom 1")
+        ov("camera xy "..floor(size / 2).." "..floor(size / 2))
+        ov("celloption layers 1")
+        ov("drawcells")
+        ov("rgba 128 128 128 255")
+        ov("line 0 0 "..(worldsize - 1).." 0")
+        ov("line 0 0 0 "..(worldsize - 1))
+        ov("target")
+        ov("paste "..(wd - worldsize).." "..(ht - worldsize).." world")
+
         -- draw exit message
+        ov("blend 1")
         pastetext(floor((wd - exitw) / 2 + 2), 20 + 2, op.identity, exitshadowclip)
         pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
 
@@ -811,6 +828,7 @@ local function test_cellview()
     end
 
     -- free clips
+    ov("delete world")
     ov("delete "..exitclip)
     ov("delete "..exitshadowclip)
 
