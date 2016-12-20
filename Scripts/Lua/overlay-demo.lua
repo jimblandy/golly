@@ -47,6 +47,7 @@ local save_button
 local text_button
 local transition_button
 
+local extra_layer = false
 local return_to_main_menu = false
 
 --------------------------------------------------------------------------------
@@ -627,11 +628,9 @@ end
 local themenum = 1
 
 local function test_cellview()
-    -- remove tile layers option if on
-    local oldtile = g.setoption("tilelayers", 0)
-
     -- create a new layer
     g.addlayer()
+    extra_layer = true
     g.setalgo("QuickLife")
     g.setrule("b3/s23")
 
@@ -839,9 +838,7 @@ local function test_cellview()
 
     -- delete the layer
     g.dellayer()
-
-    -- restore tile option
-    g.setoption("tilelayers", oldtile)
+    extra_layer = false
 
     return_to_main_menu = true
 end
@@ -2550,11 +2547,17 @@ end
 
 local oldoverlay = g.setoption("showoverlay", 1)
 local oldbuttons = g.setoption("showbuttons", 0) -- disable translucent buttons
+local oldtile = g.setoption("tilelayers", 0)
+local oldstack = g.setoption("stacklayers", 0)
 
 local status, err = pcall(main)
 if err then g.continue(err) end
 -- the following code is always executed
 
+-- delete the overlay and restore settings saved above
 ov("delete")
 g.setoption("showoverlay", oldoverlay)
 g.setoption("showbuttons", oldbuttons)
+g.setoption("tilelayers", oldtile)
+g.setoption("stacklayers", oldstack)
+if extra_layer then g.dellayer() end
