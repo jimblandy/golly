@@ -888,4 +888,80 @@ end
 
 --------------------------------------------------------------------------------
 
+local textclip = "textclip"
+
+--------------------------------------------------------------------------------
+
+function m.pastetext(x, y, transform, clipname)
+    -- set optional parameter defaults
+    transform = transform or m.identity
+    clipname  = clipname or textclip
+    -- apply transform and paste text clip
+    local oldtransform = ov(transform)
+    ov("paste "..x.." "..y.." "..clipname)
+    -- resotre settings
+    ov("transform "..oldtransform)
+end
+
+--------------------------------------------------------------------------------
+
+function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
+    local oldrgba = ov(m.white)
+    -- set optional paramter defaults
+    clipname  = clipname or textclip
+    textcol   = textcol or "rgba "..oldrgba
+    shadowx   = shadowx or 0
+    shadowy   = shadowy or 0
+    shadowcol = shadowcol or m.black
+    local w, h, d
+    -- check if shadow required
+    if shadowx == 0 and shadowy == 0 then
+        ov(textcol)
+        w, h, d = split(ov("text "..clipname.." "..s))
+    else
+        -- build shadow clip
+        ov(shadowcol)
+        local oldblend = ov("blend 1")
+        local tempclip = clipname.."_temp"
+        w, h, d  = split(ov("text "..tempclip.." "..s))
+        -- compute paste location based on shadow offset
+        local tx = 0
+        local ty = 0
+        local sx = 0
+        local sy = 0
+        if shadowx < 0 then
+            tx = -shadowx
+        else
+            sx = shadowx
+        end
+        if shadowy < 0 then
+            ty = -shadowy
+        else
+            sy = shadowy
+        end
+        -- size result clip to fit text and shadow
+        w = tonumber(w) + math.abs(shadowx)
+        h = tonumber(h) + math.abs(shadowy)
+        ov("create ".." "..w.." "..h.." "..clipname)
+        -- paste shadow onto result
+        local oldtarget = ov("target "..clipname)
+        m.pastetext(sx, sy, nil, tempclip)
+        -- build normal text clip
+        ov(textcol)
+        ov("text "..tempclip.." "..s)
+        -- paste normal onto result
+        m.pastetext(tx, ty, nil, tempclip)
+        -- restore settings
+        ov("delete "..tempclip)
+        ov("target "..oldtarget)
+        ov("blend "..oldblend)
+    end
+    -- restore color
+    ov("rgba "..oldrgba)
+
+    return tonumber(w), tonumber(h), tonumber(d)
+end
+
+--------------------------------------------------------------------------------
+
 return m

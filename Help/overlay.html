@@ -1126,6 +1126,49 @@ If fillrgba is not an empty string then the rectangle is filled with the given c
 <dd> Example: <b>op.round_rect(200, 300, 60, 30, 15, 0, "rgba 255 0 0 128")</b></dd>
 </p>
 
+<a name="maketext"></a>
+<p><dt><b>op.maketext(<i>text, clipname, color, shadowx, shadowy, shadowcolor</i>)</b></dt>
+<dd>
+A simpler and more powerful way of creating text that can then be drawn with <a href="#pastetext">pastetext</a>.
+Only the first argument, <i>text</i>, is required.
+</dd>
+<dd> Example:</b></dd>
+<dd> <i>-- draw the string "Hello World" at 0, 0 on the current render target</i>
+<dd> <b>op.maketext("Hello World")</b></dd>
+<dd> <b>op.pastetext(0, 0)</b></dd>
+</p>
+<p>
+<dd>
+Ususally the text clip is created using the current <a href="#rgba">rgba</a> values. This can be
+overridden by specifying the <i>color</i> argument.
+The text may also be given a shadow at a specific x, y pixel offset defined with the <i>shadowx</i>
+and <i>shadowy</i> arguments. The shadow will be drawn in opaque black unless a different color is
+specified with the <i>shadowcol</i> argument.
+</dd>
+<dd> Example:</b></dd>
+<dd> <i>-- create a clip named "hello" with the text "Hello World" in blue with a yellow shadow offset by -1, -2 pixels.
+<dd> <b>op.maketext("Hello World", "hello", op.blue, -1, -2, op.yellow)</b></dd>
+</p>
+
+<a name="pastetext"></a>
+<p><dt><b>op.pastetext(<i>x, y, transform, clipname</i>)</b></dt>
+<dd>
+Paste text onto the current render target. Only the first two arguments <i>x, y</i> are required.
+</dd>
+<dd> Example:</b></dd>
+<dd> <i>-- paste a text clip at 0, 0 on the current render target</i>
+<dd> <b>op.pastetext(0, 0)</b></dd>
+</p>
+<p>
+<dd>
+The <i>transform</i> argument can be used to specify an <a href="#affine">affine transformation</a>. The <i>clipname</i> may
+be used to specify a non-default clipname.
+<dd> Example:</b></dd>
+<dd> <i>-- paste the clip named "hello" at 0, 0 and rotated clockwise on the current render target</i>
+<dd> <b>op.pastetext(0, 0, op.rcw, "hello")</b></dd>
+</dd>
+</p>
+
 <p>
 The <b>oplus</b> package also defines a number of synonyms for some
 frequently used overlay commands.
