@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 43
+local build = 44
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -16,7 +16,8 @@ local abs   = math.abs
 local alignleft   = 0
 local aligncenter = 1
 local alignright  = 2
-local alignraw    = 3
+local aligntop    = 3
+local alignbottom = 4
 local fontscale   = 1
 
 -- overlay width and height
@@ -152,22 +153,22 @@ local bonusyellow   = 20
 local optcol = "rgba 192 192 192 255"
 local messages = {
     ["gameover"]   = { text = "Game Over", size = 30, color = op.red },
-    ["newball"]    = { text = "Click or Enter to launch ball", size = 10 },
-    ["control"]    = { text = "Mouse or Arrow keys to move bat", size = 10 },
+    ["newball"]    = { text = "Click or Enter to launch ball", size = 10, color = op.white },
+    ["control"]    = { text = "Mouse or Arrow keys to move bat", size = 10, color = op.white },
     ["askquit"]    = { text = "Quit Game?", size = 15, color = op.yellow },
     ["pause"]      = { text = "Paused", size = 15, color = op.yellow },
-    ["askleft"]    = { text = "Click or Enter to Confirm", size = 10 },
-    ["askright"]   = { text = "Right Click to Cancel", size = 10 },
-    ["resume"]     = { text = "Click or Enter to continue", size = 10 },
-    ["focus"]      = { text = "Move mouse onto overlay to continue", size = 10 },
-    ["quitgame"]   = { text = "Right Click to quit game", size = 10 },
-    ["option"]     = { text = "Tab for Game Settings", size = 10 },
-    ["restart"]    = { text = "Click or Enter to start again", size = 10 },
-    ["quit"]       = { text = "Right Click or Esc to exit", size = 10 },
-    ["continue"]   = { text = "Click or Enter for next level", size = 10 },
+    ["askleft"]    = { text = "Click or Enter to Confirm", size = 10, color = op.white },
+    ["askright"]   = { text = "Right Click to Cancel", size = 10, color = op.white },
+    ["resume"]     = { text = "Click or Enter to continue", size = 10, color = op.white },
+    ["focus"]      = { text = "Move mouse onto overlay to continue", size = 10, color = op.white },
+    ["quitgame"]   = { text = "Right Click to quit game", size = 10, color = op.white },
+    ["option"]     = { text = "Tab for Game Settings", size = 10, color = op.white },
+    ["restart"]    = { text = "Click or Enter to start again", size = 10, color = op.white },
+    ["quit"]       = { text = "Right Click or Esc to exit", size = 10, color = op.white },
+    ["continue"]   = { text = "Click or Enter for next level", size = 10, color = op.white },
     ["newhigh"]    = { text = "New High Score!", size = 10, color = op.green },
     ["newcombo"]   = { text = "New Best Combo!", size = 10, color = op.green },
-    ["close"]      = { text = "Click or Tab to close Game Settings", size = 10 },
+    ["close"]      = { text = "Click or Tab to close Game Settings", size = 10, color = op.white },
     ["autopause"]  = { text = "Autopause", size = 10, color = optcol },
     ["brickscore"] = { text = "Brick Score", size = 10, color = optcol },
     ["shadows"]    = { text = "Shadows", size = 10, color = optcol },
@@ -177,11 +178,11 @@ local messages = {
     ["autostart"]  = { text = "Autostart", size = 10, color = optcol },
     ["timing"]     = { text = "Timing", size = 10, color = optcol },
     ["fullscreen"] = { text = "Fullscreen", size = 10, color = optcol },
-    ["function"]   = { text = "Function", size = 10 },
+    ["function"]   = { text = "Function", size = 10, color = op.white },
     ["on"]         = { text = "On", size = 10, color = op.green },
     ["off"]        = { text = "Off", size = 10, color = op.red },
-    ["state"]      = { text = "State", size = 10 },
-    ["key"]        = { text = "Key", size = 10 },
+    ["state"]      = { text = "State", size = 10, color = op.white },
+    ["key"]        = { text = "Key", size = 10, color = op.white },
     ["a"]          = { text = "A", size = 10, color = optcol },
     ["b"]          = { text = "B", size = 10, color = optcol },
     ["d"]          = { text = "D", size = 10, color = optcol },
@@ -191,27 +192,20 @@ local messages = {
     ["s"]          = { text = "S", size = 10, color = optcol },
     ["t"]          = { text = "T", size = 10, color = optcol },
     ["f11"]        = { text = "F11", size = 10, color = optcol },
-    ["score"]      = { text = "Score ", size = 10 },
-    ["balls"]      = { text = "Balls ", size = 10 },
-    ["combo"]      = { text = "Combo x", size = 10 },
-    ["combog"]     = { text = "Combo x", size = 10, color = op.green },
-    ["high"]       = { text = "High Score ", size = 10 },
-    ["highg"]      = { text = "High Score ", size = 10, color = op.green },
-    ["level"]      = { text = "Level ", size = 15 },
-    ["bonus"]      = { text = "Bonus Level", size = 15 },
-    ["bcomplete"]  = { text = "Bonus Level Complete", size = 15 },
-    ["remaing"]    = { text = "Bricks left ", size = 10, color = op.green },
-    ["remainy"]    = { text = "Bricks left ", size = 10, color = op.yellow },
-    ["remainr"]    = { text = "Bricks left ", size = 10, color = op.red },
-    ["timeg"]      = { text = "Time ", size = 15, color = op.green },
-    ["timey"]      = { text = "Time ", size = 15, color = op.yellow },
-    ["timer"]      = { text = "Time ", size = 15, color = op.red  },
-    ["3left"]      = { text = "3 balls left", size = 15, color = op.green },
-    ["2left"]      = { text = "2 balls left", size = 15, color = op.yellow },
-    ["1left"]      = { text = "Last ball! ", size = 15, color = op.red },
-    ["10"]         = { text = "M", size = 10 },
-    ["15"]         = { text = "M", size = 15 },
-    ["30"]         = { text = "M", size = 30 }
+    ["level"]      = { text = "Level ", size = 15, color = op.white },
+    ["bonus"]      = { text = "Bonus Level", size = 15, color = op.white },
+    ["bcomplete"]  = { text = "Bonus Level Complete", size = 15, color = op.white },
+    ["remain"]     = { text = "Bricks left", size = 10, color = op.green },
+    ["time"]       = { text = "Time", size = 15, color = op.green },
+    ["left"]       = { text = "3 balls left", size = 15, color = op.yellow },
+    ["score"]      = { text = "Score", size = 10, color = op.white },
+    ["high"]       = { text = "High Score", size = 10, color = op.white },
+    ["balls"]      = { text = "Balls", size = 10, color = op.white },
+    ["combo"]      = { text = "Combo", size = 10, color = op.white },
+    ["notify"]     = { text = "Notify", size = 7, color = op.white },
+    ["ms"]         = { text = "1 ms", size = 7, color = op.white },
+    ["complete"]   = { text = "Level Complete", size = 20, color = op.green },
+    ["awarded"]    = { text = "No Bonus", size = 15, color = op.red }
 }
 
 --------------------------------------------------------------------------------
@@ -273,99 +267,105 @@ end
 
 --------------------------------------------------------------------------------
 
-local textclip = "textclip"
-
-local function maketext(s, clipname)
-    clipname = clipname or textclip
-    -- convert given string to text in current font and return
-    -- its width and height etc for later use by pastetext
-    local w, h, descent = split(ov("text "..clipname.." "..s))
-    return tonumber(w), tonumber(h), tonumber(descent)
-end
-
---------------------------------------------------------------------------------
-
-local function pastetext(x, y, transform, clipname)
-    transform = transform or op.identity
-    clipname = clipname or textclip
-    local oldtransform = ov(transform)
-    ov("paste "..x.." "..y.." "..clipname)
-    ov("transform "..oldtransform)
-end
-
---------------------------------------------------------------------------------
-
-local function shadowtext(x, y, text, align, color)
-    align = align or alignleft
-    color = color or op.white
-    -- save settings
-    local oldblend = ov("blend 1")
-    local oldrgba = ov(op.black)
-    local w, h = maketext(text)
-    local textx = edgegapl
-    -- process alignment
-    if align == aligncenter then
-        textx = (wd - w) / 2 + edgegapl
-    elseif align == alignright then
-        textx = wd - w - edgegapr
-    elseif align == alignraw then
-        textx = 0
+local function updatemessage(name, s, color)
+    -- lookup the message
+    local message = messages[name]
+    if color ~= nil then
+        message.color = color
     end
-    -- adjust position for shadow
-    if shadtxtx < 0 then
-        x = x - shadtxtx
-    end
-    if shadtxty < 0 then
-        y = y - shadtxty
-    end
-    -- draw shadow
-    pastetext(floor(textx + x + shadtxtx), floor(y + shadtxty))
-    -- draw text
-    ov(color)
-    maketext(text)
-    pastetext(floor(textx + x), floor(y))
-    -- adjust width and height for shadow
-    w = w + abs(shadtxtx)
-    h = h + abs(shadtxty)
-    -- restore settings
-    ov("blend "..oldblend)
-    ov("rgba "..oldrgba)
-    return w, h
-end
+    -- get the font size for this message
+    ov("font "..floor(message.size * fontscale))
+    -- create the text message clips
+    message.text = s
+    local w, h = op.maketext(message.text, name, message.color, shadtxtx, shadtxty)
+    -- save the clip width and height
+    message.width  = w
+    message.height = h
+end   
 
 --------------------------------------------------------------------------------
 
 local function createstatictext()
-    -- clear background to transparent black
-    ov("rgba 0 0 0 0")
-    ov("fill")
-
     -- create each static text clip
-    local y = 0
-    local fontsize
-    local lastsize = -1
     for clipname, message in pairs(messages) do
-        -- get the font size for this message
-        local fontsize = floor(message.size * fontscale)
-        -- if it is different than the last message then set the new font
-        if fontsize ~= lastsize then
-            ov("font "..fontsize.." mono")
-            lastsize = fontsize
-        end
-        -- create the text message
-        local w, h = shadowtext(0, y, message.text, alignraw, message.color)
-        -- copy to the named clip
-        ov("copy 0 "..y.." "..w.." "..h.." "..clipname)
-        -- save the clip width and height
-        message.width = w
-        message.height = h
-        -- next screen position
-        y = y + h
-        if y > ht * 7 / 8 then
-            y = 0
-            ov("fill")
-        end
+        updatemessage(clipname, message.text)
     end
+end
+
+--------------------------------------------------------------------------------
+
+local function updatelevel(value)
+    level = value
+    updatemessage("level", "Level "..level)
+    updatemessage("complete", "Level "..level.." complete!")
+end
+
+--------------------------------------------------------------------------------
+
+local function updatescore(value)
+    score = value
+    updatemessage("score", "Score "..score)
+end
+
+--------------------------------------------------------------------------------
+
+local function updatehighscore(value)
+    local color = op.white
+    if newhigh then
+        color = op.green
+    end
+    hiscore = value
+    updatemessage("high", "High Score "..hiscore, color)
+end
+
+--------------------------------------------------------------------------------
+
+local function updateballs(value)
+    balls = value
+    updatemessage("balls", "Balls "..balls)
+    if balls == 1 then
+        updatemessage("left", "Last ball!", op.red)
+    elseif balls == 2 then
+        updatemessage("left", balls.." balls left", op.yellow)
+    else
+        updatemessage("left", balls.." balls left", op.green)
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function updatecombo(value)
+    local color = op.white
+    combo = value
+    if combo == maxcombo then
+        color = op.green
+    end
+    updatemessage("combo", "Combo x"..combo - 1, color)
+end
+
+--------------------------------------------------------------------------------
+
+local function drawtextclip(name, x, y, xalign, yalign)
+    xalign = xalign or alignleft
+    yalign = yalign or aligntop
+    -- lookup the message
+    message = messages[name]
+    w = message.width
+    h = message.height
+    local xoffset = 0
+    local yoffset = 0
+    if xalign == aligncenter then
+        xoffset = (wd - w) / 2
+    elseif xalign == alignright then
+        xoffset = wd - w - edgegapr - edgegapl
+    end
+    if yalign == aligncenter then
+        yoffset = (ht - h) / 2
+    elseif yalign == alignbottom then
+        yoffset = ht - h
+    end
+    op.pastetext(floor(x + xoffset) + edgegapl, floor(y + yoffset), nil, name)
+    return w, h
 end
 
 --------------------------------------------------------------------------------
@@ -379,20 +379,19 @@ local function updatenotification()
             notifymessage = ""
             notifycurrent = 0
         else
-            -- select font
-            ov("font "..floor(8 * fontscale).." mono")
-            -- check for appear phase
+            -- check which phase
             if notifycurrent < notifytrans then
+                -- appear
                 y = (notifycurrent / notifytrans) * (8 * fontscale)
-            -- check for disappear phase
             elseif notifycurrent > notifyduration - notifytrans then
+                -- disappear
                 y = (notifyduration - notifycurrent) / notifytrans * (8 * fontscale)
-            -- hold phase
             else
+                -- hold
                 y = (8 * fontscale)
             end
             -- draw notification
-            shadowtext(5, floor(ht - y - 4 * fontscale), notifymessage)
+            drawtextclip("notify", 4, (8 * fontscale) - y, alignleft, alignbottom)
             notifycurrent = notifycurrent + framemult
         end
     end
@@ -408,6 +407,8 @@ local function notify(message, flag)
     elseif flag == 1 then
         notifymessage = message.." on"
     end
+    -- create the text clip
+    updatemessage("notify", notifymessage)
     if notifycurrent ~= 0 then
         notifycurrent = notifytrans
     end
@@ -477,19 +478,15 @@ end
 --------------------------------------------------------------------------------
 
 local function createpoints(x, y, value)
-    ov("font "..floor(7 * fontscale).." mono")
-    ov("blend 1")
     -- find the first free slot
     local i = 1
     while i <= #points and points[i].duration > 0 do
         i = i + 1
     end
-    -- create shadow clip
-    ov(op.black)
-    local w, h = maketext(value, "pointshadow"..i)
-    -- create clip
-    ov(op.white)
-    maketext(value, "point"..i)
+    -- create the clip
+    ov("font "..floor(7 * fontscale).." mono")
+    local w, h = op.maketext(value, "point"..i, op.white, shadtxtx, shadtxty)
+
     -- save the item
     local item = { duration = 60, x = floor(x + brickwd / 2 - w / 2), y = floor(y + brickht / 2 - h / 2) }
     points[i] = item
@@ -506,14 +503,10 @@ local function drawpoints()
             local y = floor(item.y + offsety * brickht)
             if item.duration < 8 then
                 -- fade out by replacing clip alpha
-                ov("target pointshadow"..i)
-                ov("replace *# *# *# *#-16")
                 ov("target point"..i)
                 ov("replace *# *# *# *#-16")
                 ov("target")
             end
-            -- draw shadow
-            ov("paste "..(item.x + shadtxtx).." "..(y + shadtxty).." pointshadow"..i)
             -- draw item
             ov("paste "..item.x.." "..y.." point"..i)
             item.duration = item.duration - 1 * framemult
@@ -843,7 +836,7 @@ local function processinput()
         -- right click quits game
         if button == "right" then
             if confirmquit == 0 then
-                balls = 0
+                updateballs(0)
                 showoptions = false
             else
                 confirming = not confirming
@@ -851,7 +844,7 @@ local function processinput()
         elseif button == "left" or event == "key enter none" or event == "key return none" or event == "key space none" then
             -- left click, enter or space starts game, toggles pause or dismisses settings
             if confirming then
-                balls = 0
+                updateballs(0)
                 showoptions = false
                 confirming = false
             elseif showoptions then
@@ -977,88 +970,31 @@ end
 
 --------------------------------------------------------------------------------
 
-local function drawtextclip(name, y, align, x)
-    align = align or aligncenter
-    x = x or 0
-    local message = messages[name]
-    local w = message.width
-    local h = message.height
-    local textx = edgegapl
-    -- process alignment
-    if align == aligncenter then
-        textx = (wd - w) / 2 + edgegapl
-    elseif align == alignright then
-        textx = wd - w - edgegapr
-    elseif align == alignraw then
-        textx = 0
-    end
-    -- paste clip
-    ov("paste "..floor(x + textx).." "..y.." "..name)
-    return w, h
-end
-
---------------------------------------------------------------------------------
-
-local function centertextclip(name, value, y, col)
-    col = col or op.white
-
-    -- get the clip
-    local message = messages[name]
-    -- get the clip string
-    local leftval = message.text
-    -- get the clip font size
-    local size    = tostring(message.size)
-    -- find the font size clip
-    local charmsg = messages[size]
-    -- get the width of the font size clip
-    local charw   = charmsg.width - abs(shadtxtx)
-    -- get the length of the full message
-    local length  = (leftval..tostring(value)):len()
-    -- compute the center position
-    local x = floor((wd - length * charw) / 2)
-    -- draw the clip
-    drawtextclip(name, y, alignleft, x)
-    -- draw the value
-    ov("font "..floor(tonumber(size) * fontscale).." mono")
-    shadowtext(x + charw * leftval:len(), y, value, alignleft, col)
-end
-
---------------------------------------------------------------------------------
-
 local function drawscoreline()
     ov("blend 1")
-    ov("font "..floor(10 * fontscale).." mono")
-    local w, h = drawtextclip("score", 5, alignleft, 3)
-    shadowtext(w + 5, 5, score)
-    local w = shadowtext(-5, 5, balls, alignright)
-    drawtextclip("balls", 5, alignright, -w)
-    if newhigh then
-        centertextclip("highg", hiscore, 5, op.green)
-    else
-        centertextclip("high", hiscore, 5)
-    end
+    drawtextclip("score", 4, 4, alignleft)
+    drawtextclip("balls", -4, 4, alignright)
+    drawtextclip("high", 0, 4, aligncenter)
     if combo > 2 then
-        if combo == maxcombo then
-            centertextclip("combog", combo - 1, ht - h, op.green)
-        else
-            centertextclip("combo", combo - 1, ht - h)
-        end
+        drawtextclip("combo", 0, 0, aligncenter, alignbottom)
     end
     if not newball and not pause and not showoptions and bonuslevel and bonuscurrent >= 0 then
+        local color = op.green
         if bonuscurrent < 10 then
-            centertextclip("timer", string.format("%.1f", bonuscurrent), floor(ht / 2), op.red)
+            color = op.red
         elseif bonuscurrent < 20 then
-            centertextclip("timey", string.format("%.1f", bonuscurrent), floor(ht / 2), op.yellow)
-        else
-            centertextclip("timeg", string.format("%.1f", bonuscurrent), floor(ht / 2), op.green)
+            color = op.yellow
         end
-        if bricksleft <= bonusgreen then
-            centertextclip("remaing", bricksleft, floor(ht / 2 + 25 * fontscale), op.green)
-        elseif bricksleft <= bonusyellow then
-            centertextclip("remainy", bricksleft, floor(ht / 2 + 25 * fontscale), op.yellow)
-        else
-            centertextclip("remainr", bricksleft, floor(ht / 2 + 25 * fontscale), op.red)
+        updatemessage("time", "Time "..string.format("%.1f", bonuscurrent), color)
+        drawtextclip("time", 0, ht / 2, aligncenter)
+        color = op.green
+        if bricksleft > bonusyellow then
+            color = op.red
+        elseif bricksleft > bonusgreen then
+            color = op.yellow
         end
+        updatemessage("remain", "Bricks left "..bricksleft, color)
+        drawtextclip("remain", 0, ht / 2 + 25 * fontscale, aligncenter)
     end
 end
 
@@ -1067,71 +1003,67 @@ end
 local function drawgameover()
     ov("blend 1")
     if newhigh then
-        local highscorew = drawtextclip("newhigh", floor(ht / 2 + 96 * fontscale))
+        local highscorew = drawtextclip("newhigh", 0, ht / 2 + 96 * fontscale, aligncenter)
         createparticles(edgegapl + floor(wd / 2 + highscorew / 2), floor(ht / 2 + 96 * fontscale), highscorew, 1, highparticles)
     end
     combo = gamecombo
     if newcombo then
-        local combow = drawtextclip("newcombo", floor(ht / 2 + 118 * fontscale))
+        local combow = drawtextclip("newcombo", 0, ht / 2 + 118 * fontscale, aligncenter)
         createparticles(edgegapl + floor(wd / 2 + combow / 2), floor(ht / 2 + 118 * fontscale), combow, 1, comboparticles)
     end
-    drawtextclip("gameover", floor(ht / 2 - 30 * fontscale))
-    drawtextclip("restart", floor(ht / 2 + 30 * fontscale))
-    drawtextclip("quit", floor(ht / 2 + 52 * fontscale))
-    drawtextclip("option", floor(ht / 2 + 74 * fontscale))
+    drawtextclip("gameover", 0, ht / 2 - 30 * fontscale, aligncenter)
+    drawtextclip("restart", 0, ht / 2 + 30 * fontscale, aligncenter)
+    drawtextclip("quit", 0, ht / 2 + 52 * fontscale, aligncenter)
+    drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter)
 end
 
 --------------------------------------------------------------------------------
 
 local function drawlevelcomplete()
     ov("blend 1")
-    ov("font "..floor(20 * fontscale).." mono")
-    shadowtext(0, ht / 2 - 30 * fontscale, "Level "..level.." complete!", aligncenter, op.green)
-    drawtextclip("continue", floor(ht / 2 + 30 * fontscale))
-    drawtextclip("quitgame", floor(ht / 2 + 52 * fontscale))
-    drawtextclip("option", floor(ht / 2 + 74 * fontscale))
+    drawtextclip("complete", 0, ht / 2 - 30 * fontscale, aligncenter)
+    drawtextclip("continue", 0, ht / 2 + 30 * fontscale, aligncenter)
+    drawtextclip("quitgame", 0, ht / 2 + 52 * fontscale, aligncenter)
+    drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter)
 end
 
 --------------------------------------------------------------------------------
 
 local function drawbonuscomplete(remainingtime, bonusscore)
     ov("blend 1")
-    ov("font "..floor(15 * fontscale).." mono")
-    drawtextclip("bcomplete", floor(ht / 2 - 30 * fontscale))
-    if bricksleft <= bonusgreen  then
-        local w = shadowtext(0, floor(ht / 2), "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.green)
+    drawtextclip("bcomplete", 0, ht / 2 - 30 * fontscale, aligncenter)
+
+    local w = drawtextclip("awarded", 0, ht / 2, aligncenter)
+    if bricksleft <= bonusgreen then
         createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, bonusparticlesg)
     elseif bricksleft <= bonusyellow then
-        local w = shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = "..bonusscore, aligncenter, op.yellow)
         createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, bonusparticlesy)
-    else
-        shadowtext(0, ht / 2 - 0 * fontscale, "Bricks left "..bricksleft.." = No Bonus", aligncenter, op.red)
     end
-    drawtextclip("continue", floor(ht / 2 + 30 * fontscale))
-    drawtextclip("quitgame", floor(ht / 2 + 52 * fontscale))
-    drawtextclip("option", floor(ht / 2 + 74 * fontscale))
+    drawtextclip("continue", 0, ht / 2 + 30 * fontscale, aligncenter)
+    drawtextclip("quitgame", 0, ht / 2 + 52 * fontscale, aligncenter)
+    drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter)
 end
 
 --------------------------------------------------------------------------------
 
 local function drawconfirm()
     ov("blend 1")
-    drawtextclip("askquit", floor(ht / 2 - 15 * fontscale))
-    drawtextclip("askleft", floor(ht / 2 + 22 * fontscale))
-    drawtextclip("askright", floor(ht / 2 + 44 * fontscale))
+    drawtextclip("askquit", 0, ht / 2 - 15 * fontscale, aligncenter)
+    drawtextclip("askleft", 0, ht / 2 + 22 * fontscale, aligncenter)
+    drawtextclip("askright", 0, ht / 2 + 44 * fontscale, aligncenter)
 end
 
 --------------------------------------------------------------------------------
 
 local function drawpause()
     ov("blend 1")
-    drawtextclip("pause", floor(ht / 2 - 15 * fontscale))
+    drawtextclip("pause", 0, ht / 2 - 15 * fontscale, aligncenter)
     if offoverlay and autopause ~= 0 and autostart ~= 0 then
-        drawtextclip("focus", floor(ht / 2 + 22 * fontscale))
+        drawtextclip("focus", 0, ht / 2 + 22 * fontscale, aligncenter)
     else
-        drawtextclip("resume", floor(ht / 2 + 22 * fontscale))
-        drawtextclip("quitgame", floor(ht / 2 + 44 * fontscale))
-        drawtextclip("option", floor(ht / 2 + 66 * fontscale))
+        drawtextclip("resume", 0, ht / 2 + 22 * fontscale, aligncenter)
+        drawtextclip("quitgame", 0, ht / 2 + 44 * fontscale, aligncenter)
+        drawtextclip("option", 0, ht / 2 + 66 * fontscale, aligncenter)
     end
 end
 
@@ -1139,15 +1071,15 @@ end
 
 local function drawnewball()
     ov("blend 1")
-    drawtextclip("newball", floor(ht / 2 + 22 * fontscale))
-    drawtextclip("control", floor(ht / 2 + 44 * fontscale))
-    drawtextclip("quitgame", floor(ht / 2 + 66 * fontscale))
-    drawtextclip("option", floor(ht / 2 + 88 * fontscale))
-    drawtextclip(balls.."left", floor(ht / 2 - 15 * fontscale))
+    drawtextclip("newball", 0, ht / 2 + 22 * fontscale, aligncenter)
+    drawtextclip("control", 0, ht / 2 + 44 * fontscale, aligncenter)
+    drawtextclip("quitgame", 0, ht / 2 + 66 * fontscale, aligncenter)
+    drawtextclip("option", 0,  ht / 2 + 88 * fontscale, aligncenter)
+    drawtextclip("left", 0, ht / 2 - 15 * fontscale, aligncenter)
     if bonuslevel then
-        drawtextclip("bonus", floor(ht / 2 - 52 * fontscale))
+        drawtextclip("bonus", 0, ht / 2 - 52 * fontscale, aligncenter)
     else
-        centertextclip("level", level, floor(ht / 2 - 52 * fontscale))
+        drawtextclip("level", 0, ht / 2 - 52 * fontscale, aligncenter)
     end
 end
 
@@ -1164,8 +1096,9 @@ local function drawtiming(t)
         average = average + times[i]
     end
     average = average / #times
-    ov("font "..floor(8 * fontscale).." mono")
-    shadowtext(-5, ht - (8 * fontscale) - (4 * fontscale), string.format("%.1fms", average), alignright)
+    ov("blend 1")
+    updatemessage("ms", string.format("%.1fms", average))
+    drawtextclip("ms", -4, 0, alignright, alignbottom)
 end
 
 --------------------------------------------------------------------------------
@@ -1175,9 +1108,9 @@ local function drawoption(key, setting, state, leftx, h, y, color)
         ov("rgba 32 32 32 255")
         ov("fill "..(leftx + edgegapl).." "..y.." "..(messages[key].width + 3).." "..(messages[key].height - 4))
     end
-    drawtextclip(key, y, alignleft, leftx)
-    drawtextclip(setting, y)
-    drawtextclip(state, y, alignright, -leftx)
+    drawtextclip(key, leftx, y, alignleft)
+    drawtextclip(setting, 0, y, aligncenter)
+    drawtextclip(state, -leftx, y, alignright)
     return y + h
 end
 
@@ -1189,8 +1122,7 @@ local function drawoptions()
 
     -- draw header
     ov("blend 1")
-    ov("font "..floor(10 * fontscale).." mono")
-    local w, h = maketext(0, 0, "M")
+    local h = messages["key"].height
     local y = floor((ht - 8 * h) / 2)
     y = drawoption("key", "function", "state", leftx, h, y, op.white)
 
@@ -1206,11 +1138,11 @@ local function drawoptions()
     y = drawoption("f11", "fullscreen", state[fullscreen], leftx, h, y)
 
     -- draw close options
-    drawtextclip("close", y + h)
+    drawtextclip("close", 0, y + h, aligncenter)
     if balls == 0 then
-        drawtextclip("quit", floor(y + h * 2.5))
+        drawtextclip("quit", 0, y + h * 2.5, aligncenter)
     else
-        drawtextclip("quitgame", floor(y + h * 2.5))
+        drawtextclip("quitgame", 0, y + h * 2.5, aligncenter)
     end
 end
 
@@ -1292,13 +1224,17 @@ local function computebonus()
     local bonusscore = 0
     if bricksleft <= bonusgreen then
         bonusscore = (totalbricks - bricksleft) * (100 + (level - 1) * 10)
+        updatemessage("awarded", "Bricks left "..bricksleft.." = "..bonusscore, op.green)
     elseif bricksleft <= bonusyellow then
         bonusscore = (totalbricks - bricksleft) * (50 + (level - 1) * 10)
+        updatemessage("awarded", "Bricks left "..bricksleft.." = "..bonusscore, op.yellow)
+    else
+        updatemessage("awarded", "Bricks left "..bricksleft.." = ".."No Bonus", op.red)
     end
-    score = score + bonusscore
+    updatescore(score + bonusscore)
     if score > hiscore then
-        hiscore = score
         newhigh = true
+        updatehighscore(score)
     end
 
     return bonusscore
@@ -1316,9 +1252,6 @@ local function breakout()
     -- read saved settings
     readsettings()
     setfullscreen()
-
-    -- create the background
-    createbackground()
 
     -- play games until finished
     balls    = 3
@@ -1338,10 +1271,19 @@ local function breakout()
     -- create static text
     createstatictext()
 
+    -- initialize dynamic text
+    updatescore(score)
+    updatehighscore(hiscore)
+    updateballs(balls)
+    updatelevel(level)
+
     -- main loop
     while again do
         -- initialize the bricks
         initbricks()
+
+        -- create the background
+        createbackground()
 
         -- intiialize the bat
         local bathits = 0
@@ -1381,7 +1323,7 @@ local function breakout()
         offoverlay = false
 
         -- reset combo
-        combo     = 1
+        updatecombo(1)
         combomult = 1
 
         -- game loop
@@ -1439,7 +1381,7 @@ local function breakout()
                                 bonuscurrent = 0
                             else
                                 -- ball lost!
-                                balls     = balls - 1
+                                updateballs(balls - 1)
                                 balldy    = -1
                                 balldx    = 0.5
                                 ballspeed = speeddef
@@ -1489,19 +1431,19 @@ local function breakout()
                                 rows[bricky][brickx] = false
                                 -- adjust score
                                 local points = floor((level + 9) * (numrows - bricky + 1) * combomult)
-                                score = score + points
+                                updatescore(score + points)
                                 if score > hiscore then
-                                    hiscore = score
                                     newhigh = true
+                                    updatehighscore(score)
                                 end
                                 createpoints((brickx - 1) * brickwd + edgegapl, bricky * brickht, points)
                                 -- increment combo
-                                combo = combo + 1
                                 combomult = combomult * combofact
-                                if combo > maxcombo then
-                                    maxcombo = combo
+                                if combo + 1 > maxcombo then
+                                    maxcombo = combo + 1
                                     newcombo = true
                                 end
+                                updatecombo(combo + 1)
                                 if combo > gamecombo then
                                     gamecombo = combo
                                 end
@@ -1693,15 +1635,16 @@ local function breakout()
         -- check why game finished
         if balls == 0 then
             -- reset
-            score     = 0
-            balls     = 3
-            level     = 1
+            updatescore(0)
+            updateballs(3)
+            updatelevel(1)
             newhigh   = false
+            updatehighscore(hiscore)
             newcombo  = false
             gamecombo = 1
         else
             -- level complete
-            level = level + 1
+            updatelevel(level + 1)
         end
     end
 
@@ -1731,9 +1674,14 @@ local function main()
     if (ht /minht) < fontscale then
         fontscale = ht / minht
     end
+    -- create static clip
+    ov("create 1 1 static")
 
     -- run breakout
     breakout()
+
+   -- delete static clip
+   ov("delete static")
 end
 
 --------------------------------------------------------------------------------
