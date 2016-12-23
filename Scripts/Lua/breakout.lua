@@ -1674,14 +1674,9 @@ local function main()
     if (ht /minht) < fontscale then
         fontscale = ht / minht
     end
-    -- create static clip
-    ov("create 1 1 static")
 
     -- run breakout
     breakout()
-
-   -- delete static clip
-   ov("delete static")
 end
 
 --------------------------------------------------------------------------------
