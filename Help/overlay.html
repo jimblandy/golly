@@ -1147,7 +1147,11 @@ specified with the <i>shadowcol</i> argument.
 </dd>
 <dd> Example:</b></dd>
 <dd> <i>-- create a clip named "hello" with the text "Hello World" in blue with a yellow shadow offset by -1, -2 pixels.
-<dd> <b>op.maketext("Hello World", "hello", op.blue, -1, -2, op.yellow)</b></dd>
+<dd> <b>local w, h = op.maketext("Hello World", "hello", op.blue, -1, -2, op.yellow)</b></dd>
+</p>
+<p>
+<dd>
+The function returns the width and height of the created clip (including any shadow).
 </p>
 
 <a name="pastetext"></a>
