@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 44
+local build = 45
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -1006,7 +1006,7 @@ local function drawgameover()
         local highscorew = drawtextclip("newhigh", 0, ht / 2 + 96 * fontscale, aligncenter)
         createparticles(edgegapl + floor(wd / 2 + highscorew / 2), floor(ht / 2 + 96 * fontscale), highscorew, 1, highparticles)
     end
-    combo = gamecombo
+    updatecombo(gamecombo)
     if newcombo then
         local combow = drawtextclip("newcombo", 0, ht / 2 + 118 * fontscale, aligncenter)
         createparticles(edgegapl + floor(wd / 2 + combow / 2), floor(ht / 2 + 118 * fontscale), combow, 1, comboparticles)
