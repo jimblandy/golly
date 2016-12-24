@@ -921,7 +921,14 @@ function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
     else
         -- build shadow clip
         ov(shadowcol)
-        local oldblend = ov("blend 1")
+        local oldbg = ov("textoption background 0 0 0 0")
+        local oldblend
+        if oldbg == "0 0 0 0" then
+            oldblend = ov("blend 1")
+        else
+            oldblend = ov("blend 0")
+            ov("textoption background "..oldbg)
+        end
         local tempclip = clipname.."_temp"
         w, h, d  = split(ov("text "..tempclip.." "..s))
         -- compute paste location based on shadow offset
@@ -948,10 +955,16 @@ function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
         m.pastetext(sx, sy, nil, tempclip)
         -- build normal text clip
         ov(textcol)
+        if oldbg ~= "0 0 0 0" then
+            ov("textoption background 0 0 0 0")
+            ov("blend 1")
+        end
         ov("text "..tempclip.." "..s)
         -- paste normal onto result
+        
         m.pastetext(tx, ty, nil, tempclip)
         -- restore settings
+        ov("textoption background "..oldbg)
         ov("delete "..tempclip)
         ov("target "..oldtarget)
         ov("blend "..oldblend)

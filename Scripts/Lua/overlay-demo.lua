@@ -27,6 +27,7 @@ local wd, ht            -- overlay's current width and height
 local toggle = 0        -- for toggling alpha blending
 local align = "right"   -- for text alignment
 local transbg = 0       -- for text transparent background
+local shadow = 0        -- for text shadow
 
 local demofont = "font 11 default-bold"
 
@@ -1909,6 +1910,9 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
             if align == "right" then
                 align = "left"
                 transbg = 1 - transbg
+                if transbg == 1 then
+                    shadow = 1 - shadow
+                end
             end
         end
     end
@@ -1926,8 +1930,8 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
         oldbackground = ov("textoption background 0 0 0 0")
         transmsg = "transparent background"
     else
-        oldbackground = ov("textoption background 0 0 128 255")
-        transmsg = "opaque background"
+        oldbackground = ov("textoption background 0 128 128 255")
+        transmsg = "opaque background     "
     end
 
     local t1 = g.millisecs()
@@ -1935,7 +1939,11 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     ov("blend "..transbg)
 
     -- create the text clip
-    maketext(textstr)
+    if shadow == 0 then
+        maketext(textstr)
+    else
+        maketext(textstr, nil, nil, 2, 2)
+    end
 
     -- paste the clip onto the overlay
     local t2 = g.millisecs()
@@ -1943,10 +1951,16 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     pastetext(0, 0)
 
     -- output timing and drawing options
+    local shadowmsg
+    if shadow == 1 then
+        shadowmsg = "on"
+    else
+        shadowmsg = "off"
+    end
     g.show("Time to test multiline text: maketext "..ms(t1)..
            "  pastetext "..ms(g.millisecs() - t2)..
            "  align "..string.format("%-6s", align)..
-           "  "..transmsg)
+           "  "..transmsg.."  shadow "..shadowmsg)
 
     -- restore old settings
     ov("textoption background "..oldbackground)
