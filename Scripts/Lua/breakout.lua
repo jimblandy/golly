@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 45
+local build = 46
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -1105,6 +1105,8 @@ end
 
 local function drawoption(key, setting, state, leftx, h, y, color)
     if key ~= "key" then
+        ov(op.black)
+        ov("fill "..(leftx + edgegapl + shadtxtx).." "..(y + shadtxty).." "..(messages[key].width + 3).." "..(messages[key].height - 4))
         ov("rgba 32 32 32 255")
         ov("fill "..(leftx + edgegapl).." "..y.." "..(messages[key].width + 3).." "..(messages[key].height - 4))
     end
