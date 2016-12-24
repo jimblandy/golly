@@ -952,6 +952,10 @@ function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
         ov("create ".." "..w.." "..h.." "..clipname)
         -- paste shadow onto result
         local oldtarget = ov("target "..clipname)
+        if oldbg ~= "0 0 0 0" then
+            ov("rgba "..oldbg)
+            ov("fill")
+        end
         m.pastetext(sx, sy, nil, tempclip)
         -- build normal text clip
         ov(textcol)
