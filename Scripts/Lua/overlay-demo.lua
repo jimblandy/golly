@@ -9,6 +9,8 @@ local gp = require "gplus"
 local split = gp.split
 local int = gp.int
 local op = require "oplus"
+local maketext = op.maketext
+local pastetext = op.pastetext
 
 local ov = g.overlay
 
@@ -52,28 +54,6 @@ local return_to_main_menu = false
 
 --------------------------------------------------------------------------------
 
-local textclip = "textclip"
-
-local function maketext(s, clipname)
-    clipname = clipname or textclip
-    -- convert given string to text in current font and return
-    -- its width and height etc for later use by pastetext
-    local w, h, descent = split(ov("text "..clipname.." "..s))
-    return tonumber(w), tonumber(h), tonumber(descent)
-end
-
---------------------------------------------------------------------------------
-
-local function pastetext(x, y, transform, clipname)
-    transform = transform or op.identity
-    clipname = clipname or textclip
-    local oldtransform = ov(transform)
-    ov("paste "..x.." "..y.." "..clipname)
-    ov("transform "..oldtransform)
-end
-
---------------------------------------------------------------------------------
-
 local function create_overlay()
     ov("create 1000 1000")
     -- main_menu() will resize the overlay to just fit buttons and text
@@ -113,12 +93,9 @@ local function repeat_test(extratext, palebg)
     else
         -- draw white text with a black shadow
         ov(op.white)
-        local w, h = maketext(text)
-        ov(op.black)
-        maketext(text, "shadow")
+        local w, h = maketext(text, nil, op.white, 2, 2)
         local x = 10
         local y = ht - 10 - h
-        pastetext(x+2, y+2, op.identity, "shadow")
         pastetext(x, y)
     end
     ov("blend "..oldblend)
@@ -650,12 +627,8 @@ local function test_cellview()
 
     -- create text clips
     local exitclip = "exit"
-    local exitshadowclip = "exitshadow"
     local oldfont = ov("font 16 roman")
-    ov(op.white)
-    local exitw = maketext("Click or press any key to return to the main menu.", exitclip)
-    ov(op.black)
-    maketext("Click or press any key to return to the main menu.", exitshadowclip)
+    local exitw = maketext("Click or press any key to return to the main menu.", exitclip, op.white, 2, 2)
     ov("blend 1")
 
     -- create a cellview (width and height must be multiples of 16)
@@ -816,7 +789,6 @@ local function test_cellview()
 
         -- draw exit message
         ov("blend 1")
-        pastetext(floor((wd - exitw) / 2 + 2), 20 + 2, op.identity, exitshadowclip)
         pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
 
         g.show("Time to test cellview: "..ms(g.millisecs()-t1))
@@ -829,7 +801,6 @@ local function test_cellview()
     -- free clips
     ov("delete world")
     ov("delete "..exitclip)
-    ov("delete "..exitshadowclip)
 
     -- restore settings
     ov("textoption align "..oldalign)
@@ -872,12 +843,8 @@ local function test_animation()
 
     -- create text clips
     local exitclip = "exit"
-    local exitshadowclip = "exitshadow"
     local oldfont = ov("font 12 roman")
-    ov(op.white)
-    local exitw = maketext("Click or press any key to return to the main menu.", exitclip)
-    ov(op.black)
-    maketext("Click or press any key to return to the main menu.", exitshadowclip)
+    local exitw = maketext("Click or press any key to return to the main menu.", exitclip, op.white, 2, 2)
     local gollyopaqueclip = "clip1"
     local gollytranslucentclip = "clip2"
     ov("font 200 mono")
@@ -1046,12 +1013,7 @@ David Bell
     ov("font 14 roman")
 
     local creditsclip = "credits"
-    local creditsshadowclip = "credshadow"
-
-    ov("rgba 128 255 255 255")
-    local credwidth, credheight = maketext(creditstext, creditsclip)
-    ov(op.black)
-    maketext(creditstext, creditsshadowclip)
+    local credwidth, credheight = maketext(creditstext, creditsclip, "rgba 128 255 255 255", 2, 2)
 
     -- create graduated background
     local level
@@ -1104,8 +1066,6 @@ David Bell
         if event:find("^key") or event:find("^oclick") then
             running = false
         end
-
-        local timeevent = g.millisecs() - t1
 
         -- draw background
         ov("blend 0")
@@ -1199,7 +1159,6 @@ David Bell
 
         -- draw credits
         credpos = floor(credity)
-        pastetext(creditx + 2, credpos + 2, op.identity, creditsshadowclip)
         pastetext(creditx, credpos, op.identity, creditsclip)
         credity = credity - .5
         if credity < -credheight then
@@ -1210,7 +1169,6 @@ David Bell
         t1 = g.millisecs()
 
         -- draw exit message
-        pastetext(floor((wd - exitw) / 2 + 2), 20 + 2, op.identity, exitshadowclip)
         pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
 
         -- update display
@@ -1243,7 +1201,7 @@ David Bell
         -- display frame time
         local frametime = g.millisecs() - t2
 
-        g.show("Time: frame "..ms(frametime).."  event "..ms(timeevent)..
+        g.show("Time: frame "..ms(frametime)..
                "  bg "..ms(timebg).."  stars "..ms(timestars)..
                "  glider "..ms(timeglider).."  grid "..ms(timegrid)..
                "  golly "..ms(timegolly).."  credits "..ms(timecredits)..
@@ -1252,11 +1210,9 @@ David Bell
 
     -- free clips
     ov("delete "..exitclip)
-    ov("delete "..exitshadowclip)
     ov("delete "..gollytranslucentclip)
     ov("delete "..gollyopaqueclip)
     ov("delete "..creditsclip)
-    ov("delete "..creditsshadowclip)
     ov("delete "..bgclip)
 
     -- restore settings
@@ -1363,10 +1319,7 @@ local function test_set()
     else
         text = "Click or hit the enter key to return to the main menu."
     end
-    ov(op.white)
-    local w, h = maketext(text)
-    ov(op.black)
-    maketext(text, "shadow")
+    local w, h = maketext(text, nil, op.white, 2, 2)
 
     -- create the golly text
     ov("font 100 mono")
@@ -1497,7 +1450,6 @@ local function test_set()
 
         -- draw the exit message
         ov("blend 1")
-        pastetext(floor((wd - w) / 2) + 2, 10 + 2, op.identity, "shadow")
         pastetext(floor((wd - w) / 2), 10)
 
         -- wait for frame time
@@ -1509,6 +1461,7 @@ local function test_set()
     end
 
     -- free clips and restore settings
+    ov("delete gollyclip")
     ov("delete bg")
     ov("blend "..oldblend)
     ov("font "..oldfont)
@@ -2256,11 +2209,8 @@ local function test_target()
         textstring = "Overlay"
     end
     ov(op.black)
-    maketext(textstring)
-    pastetext(0, 2)
-    ov(op.white)
-    maketext(textstring)
-    pastetext(2, 0)
+    maketext(textstring, nil, op.white, 2, 2)
+    pastetext(0, 0)
 
     -- set overlay as the target
     ov("target")
