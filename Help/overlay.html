@@ -109,7 +109,7 @@ Here is an alphabetical list of all the valid overlay commands:
 </p>
 
 <p>
-All of the drawing commands use the current rendering target.
+All of the drawing commands use the current render target.
 This is initally the overlay but can be changed to a
 <a href="#clips">clip</a> with the <a href="#target">target</a> command.
 </p>
@@ -220,12 +220,12 @@ The width and height must be from 16 to 4096 and a multiple of 16.
 
 <a name="copy"></a><p><dt><b>copy <i>x y wd ht clipname</i></b></dt>
 <dd>
-Copy the pixels in the given rectangle from the current rendering target into the named
+Copy the pixels in the given rectangle from the current render target into the named
 <a href="#clips">clip</a> for later use by a <a href="#paste">paste</a> command.
 If the given width or height is less than 1 then it is treated as an inset from
-the rendering target's current width or height (this makes it easy to copy the entire
-rendering target with a command like <b>"copy 0 0 0 0 all"</b>).
-Any parts of the rectangle outside the rendering target are filled with transparent pixels.
+the render target's current width or height (this makes it easy to copy the entire
+render target with a command like <b>"copy 0 0 0 0 all"</b>).
+Any parts of the rectangle outside the render target are filled with transparent pixels.
 The clip name can contain any characters except a space.
 </dd>
 <dd> Example: <b>ov("copy 0 0 100 200 tempbox")</b></dd>
@@ -248,7 +248,7 @@ The initial font for drawing text is the default system font at a size of 10pt
 The <a href="#textoption">text options</a> are set to left alignment
 (for multi-line text) and a transparent background.
 The initial line width (used by the <a href="#ellipse">ellipse</a> and
-<a href="#line">line</a> commands) is set to 1.0. The rendering <a href="#target">target</a>
+<a href="#line">line</a> commands) is set to 1.0. The render <a href="#target">target</a>
 is set to be the overlay.
 </dd>
 </p>
@@ -302,7 +302,7 @@ Note that it is an error to delete a clip that is the current render <a href="#t
 
 <a name="drawcells"></a><p><dt><b>drawcells</b></dt>
 <dd>
-Draw the cells from the current <a href="#cellviewdesc">cell view</a> onto the rendering target.
+Draw the cells from the current <a href="#cellviewdesc">cell view</a> onto the render target.
 The cells will be drawn using the camera settings and colored using the current theme.
 Further drawing commands can then be used to draw on top of the cell display.
 </dd>
@@ -312,9 +312,9 @@ Further drawing commands can then be used to draw on top of the cell display.
 <a name="ellipse"></a><p><dt><b>ellipse <i>x y wd ht</i></b></dt>
 <dd>
 Draw an ellipse inside the given rectangle using the current <a href="#rgba">rgba</a> values onto
-the rendering target.
-Any parts of the ellipse outside the rendering target are automatically clipped.
-A width or height less than 1 is relative to the rendering target's width or height.
+the render target.
+Any parts of the ellipse outside the render target are automatically clipped.
+A width or height less than 1 is relative to the render target's width or height.
 If the width equals the height (and both are positive) then the result is a circle.
 If alpha blending is turned on then the edges of the ellipse are antialiased.
 The <a href="#lineoption">lineoption width</a> command determines the thickness
@@ -325,11 +325,11 @@ of the ellipse.
 
 <a name="fill"></a><p><dt><b>fill <i>x y wd ht</i></b></dt>
 <dd>
-Fill the given rectangle in the rendering target with the current <a href="#rgba">rgba</a> values.
-Any parts of the rectangle outside the rendering target are automatically clipped.
-If no rectangle is given then the entire rendering target is filled.
-A width or height less than 1 is relative to the rendering target's width or height,
-so a command like <b>ov("fill 1 1 -2 -2")</b> would fill all of the rendering target
+Fill the given rectangle in the render target with the current <a href="#rgba">rgba</a> values.
+Any parts of the rectangle outside the render target are automatically clipped.
+If no rectangle is given then the entire render target is filled.
+A width or height less than 1 is relative to the render target's width or height,
+so a command like <b>ov("fill 1 1 -2 -2")</b> would fill all of the render target
 except for a 1 pixel border around the edges.
 </dd>
 <dd> Example: <b>ov("fill 10 10 30 50")</b></dd>
@@ -337,7 +337,7 @@ except for a 1 pixel border around the edges.
 
 <a name="flood"></a><p><dt><b>flood <i>x y</i></b></dt>
 <dd>
-Flood a connected region of pixels in the rendering target that match the given starting pixel
+Flood a connected region of pixels in the render target that match the given starting pixel
 with the current <a href="#rgba">rgba</a> values.
 </dd>
 <dd> Example: <b>ov("flood 10 20")</b></dd>
@@ -372,17 +372,17 @@ The previous font is returned as a string of the form "fontsize fontname".
 
 <a name="get"></a><p><dt><b>get <i>x y</i></b></dt>
 <dd>
-Return the RGBA values of the given pixel in the rendering target as a string of the form
+Return the RGBA values of the given pixel in the render target as a string of the form
 "red green blue alpha".  All values will be from 0 to 255.
-If the given pixel is outside the rendering target then "" is returned.
+If the given pixel is outside the render target then "" is returned.
 </dd>
 <dd> Example: <b>local rgba = ov("get 10 20")</b></dd>
 </p>
 
 <a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2</i></b></dt>
 <dd>
-Draw a line of pixels from x1,y1 to x2,y2 in the rendering target using the current <a href="#rgba">rgba</a> values.
-Any pixels outside the rendering target edges are automatically clipped.
+Draw a line of pixels from x1,y1 to x2,y2 in the render target using the current <a href="#rgba">rgba</a> values.
+Any pixels outside the render target edges are automatically clipped.
 If alpha blending is turned on then the line is antialiased.
 The <a href="#lineoption">lineoption width</a> command determines
 the thickness of the line.
@@ -417,13 +417,13 @@ The <a href="#create">create</a> command initializes the line width to 1.0.
 
 <a name="load"></a><p><dt><b>load <i>x y file</i></b></dt>
 <dd>
-Load the given BMP/GIF/PNG/TIFF file into the rendering target at the given location.
-Any pixels outside the rendering target edges are automatically clipped.
+Load the given BMP/GIF/PNG/TIFF file into the render target at the given location.
+Any pixels outside the render target edges are automatically clipped.
 Return the total size of the image (including any clipped portions) as a
 string of the form "width height".  Note that it's sometimes desirable to call
 this command twice: the 1st call can specify a location completely outside
-the rendering target just to get the image's width and height; the 2nd call can then
-use those values to do things like center the image within the rendering target.
+the render target just to get the image's width and height; the 2nd call can then
+use those values to do things like center the image within the render target.
 </dd>
 <dd> Example: <b>local wdht = ov("load 99999 99999 foo.png")</b></dd>
 </p>
@@ -431,8 +431,8 @@ use those values to do things like center the image within the rendering target.
 <a name="paste"></a><p><dt><b>paste <i>x y clipname</i></b></dt>
 <dd>
 Paste the named clip (created by an earlier <a href="#create">create</a>, <a href="#copy">copy</a>
-or <a href="#text">text</a> command) into the rendering target at the given location.
-Any pixels outside the rendering target edges are automatically clipped.
+or <a href="#text">text</a> command) into the render target at the given location.
+Any pixels outside the render target edges are automatically clipped.
 </dd>
 <dd> Example: <b>ov("paste 10 20 tempbox")</b></dd>
 </p>
@@ -458,7 +458,7 @@ The valid positions are:
 
 <a name="replace"></a><p><dt><b>replace <i>red green blue alpha</i></b></dt>
 <dd>
-Replace pixels with color <i>red green blue alpha</i> in the rendering target with the current
+Replace pixels with color <i>red green blue alpha</i> in the render target with the current
 <a href="#rgba">rgba</a> values.
 Returns the number of pixels replaced as a string.
 <dd> Example:</dd>
@@ -583,31 +583,31 @@ The commands that use the current RGBA values are:
 
 <a name="save"></a><p><dt><b>save <i>x y wd ht file</i></b></dt>
 <dd>
-Save the pixels in the given rectangle of the rendering target in the given PNG file.
-An error will occur if any part of the rectangle is outside the rendering target.
+Save the pixels in the given rectangle of the render target in the given PNG file.
+An error will occur if any part of the rectangle is outside the render target.
 If the given width or height is less than 1 then it is treated as an inset from
-the rendering target's current width or height (this makes it easy to save the entire
-rendering target with a command like <b>"save 0 0 0 0 overlay.png"</b>).
+the render target's current width or height (this makes it easy to save the entire
+render target with a command like <b>"save 0 0 0 0 overlay.png"</b>).
 </dd>
 <dd> Example: <b>ov("save 0 0 100 80 "..g.getdir("temp").."foo.png")</b></dd>
 </p>
 
 <a name="set"></a><p><dt><b>set <i>x y</i></b></dt>
 <dd>
-Set the given pixel to the current <a href="#rgba">rgba</a> values in the rendering target.
-A pixel outside the rendering target is silently ignored.
+Set the given pixel to the current <a href="#rgba">rgba</a> values in the render target.
+A pixel outside the render target is silently ignored.
 </dd>
 <dd> Example: <b>ov("set 10 20")</b></dd>
 </p>
 
 <a name="target"></a><p><dt><b>target <i>(clipname)</i></b></dt>
 <dd>
-Set the rendering target to the named <a href="#clips">clip</a> or to the overlay if no
-clip is specified. All subsequent drawing commands will use the new rendering target.
+Set the render target to the named <a href="#clips">clip</a> or to the overlay if no
+clip is specified. All subsequent drawing commands will use the new render target.
 Returns the previous target as a string (an empty string if it was the overlay).
 It is an error to attempt to <a href="#delete">delete</a> a clip while it is the
-rendering target.
-The commands that use the rendering target are:
+render target.
+The commands that use the render target are:
 <a href="#copy">copy</a> (as the source),
 <a href="#drawcells">drawcells</a>,
 <a href="#ellipse">ellipse</a>,
@@ -832,7 +832,7 @@ A clip is simply a chunk of memory containing a rectangular area of pixels.
 Each clip has a unique name consisting of any characters except a space.
 Clips can be created using three commands:
 <a href="#create">create</a>, <a href="#copy">copy</a> and <a href="#text">text</a>.
-Clips can be the rendering <a href="#target">target</a> for any of the drawing commands.
+Clips can be the render <a href="#target">target</a> for any of the drawing commands.
 
 <p>
 The following script illustrates the use of clips.  It creates a tiled
@@ -1016,12 +1016,102 @@ complex example see <a href="edit:Scripts/Lua/lifeviewer.lua">lifeviewer.lua</a>
 <font size=+1><b>The oplus package</b></font>
 
 <p>
-The <b>oplus</b> package provides a high-level interface to the overlay commands.
+The <b>oplus</b> package provides a high-level interface to the overlay commands
+which implement
+<a href="#oplusgraphics">graphics</a>,
+<a href="#oplustext">text</a>,
+<a href="#oplusui">user interface</a> and
+<a href="#oplusutil">utilitity</a>
+functions.
 The package consists of a set of .lua files stored in the Scripts/Lua/oplus
 directory.  The following functions are available after a script calls
 <b>local op = require "oplus"</b>
 (see <a href="edit:Scripts/Lua/oplus/init.lua">init.lua</a> for
-the implementation details):
+the implementation details).
+
+<p><b><a name="oplusgraphics"></a>Graphics commands</b>
+
+<a name="fill_ellipse"></a>
+<p><dt><b>op.fill_ellipse(<i>x, y, w, h, borderwd, fillrgba</i>)</b></dt>
+<dd>
+Draw an ellipse (or circle) inside the given rectangle.
+If borderwd is greater than zero then an antialiased ellipse of the given thickness
+is drawn using the current color.
+If fillrgba is not an empty string then the ellipse is filled with the given color.
+</dd>
+<dd> Example: <b>op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 200")</b></dd>
+</p>
+
+<a name="round_rect"></a>
+<p><dt><b>op.round_rect(<i>x, y, w, h, radius, borderwd, fillrgba</i>)</b></dt>
+<dd>
+Draw a rounded rectangle where the given radius determines the curvature of each corner.
+If borderwd is greater than zero then an antialiased border of the given thickness
+is drawn using the current color.
+If fillrgba is not an empty string then the rectangle is filled with the given color.
+</dd>
+<dd> Example: <b>op.round_rect(200, 300, 60, 30, 15, 0, "rgba 255 0 0 128")</b></dd>
+</p>
+
+<p><b><a name="oplustext"></a>Text commands</b>
+
+<a name="minbox"></a>
+<p><dt><b>op.minbox(<i>clipname, wd, ht</i>)</b></dt>
+<dd>
+Find the minimal bounding box of non-transparent pixels in the given clip.
+This can be used to determine the real dimensions of some text.
+If all pixels in the clip are transparent then the returned values are all zero.
+</dd>
+<dd> Example: <b>local minx, miny, minwd, minht = op.minbox("textclip", 80, 10)</b></dd>
+</p>
+
+<a name="maketext"></a>
+<p><dt><b>op.maketext(<i>text, clipname, color, shadowx, shadowy, shadowcolor</i>)</b></dt>
+<dd>
+A simpler and more powerful way of creating text that can then be drawn with <a href="#pastetext">pastetext</a>.
+Only the first argument, <i>text</i>, is required.
+</dd>
+<dd> Example:</b></dd>
+<dd> <i>-- draw the string "Hello World" at 0, 0 on the current render target</i>
+<dd> <b>op.maketext("Hello World")</b></dd>
+<dd> <b>op.pastetext(0, 0)</b></dd>
+</p>
+<p>
+<dd>
+Ususally the text clip is created using the current <a href="#rgba">rgba</a> values. This can be
+overridden by specifying the <i>color</i> argument.
+The text may also be given a shadow at a specific x, y pixel offset defined with the <i>shadowx</i>
+and <i>shadowy</i> arguments. The shadow will be drawn in opaque black unless a different color is
+specified with the <i>shadowcol</i> argument.
+</dd>
+<dd> Example:</b></dd>
+<dd> <i>-- create a clip named "hello" with the text "Hello World" in blue with a yellow shadow offset by -1, -2 pixels.
+<dd> <b>local w, h = op.maketext("Hello World", "hello", op.blue, -1, -2, op.yellow)</b></dd>
+</p>
+<p>
+<dd>
+The function returns the width and height of the created clip (including any shadow).
+</p>
+
+<a name="pastetext"></a>
+<p><dt><b>op.pastetext(<i>x, y, transform, clipname</i>)</b></dt>
+<dd>
+Paste text onto the current render target. Only the first two arguments <i>x, y</i> are required.
+</dd>
+<dd> Example:</b></dd>
+<dd> <i>-- paste a text clip at 0, 0 on the current render target</i>
+<dd> <b>op.pastetext(0, 0)</b></dd>
+</p>
+<p>
+<dd>
+The <i>transform</i> argument can be used to specify an <a href="#affine">affine transformation</a>. The <i>clipname</i> may
+be used to specify a non-default clipname.
+<dd> Example:</b></dd>
+<dd> <i>-- paste the clip named "hello" at 0, 0 and rotated clockwise on the current render target</i>
+<dd> <b>op.pastetext(0, 0, op.rcw, "hello")</b></dd>
+</dd>
+</p>
+<p><b><a name="oplusui"></a>User interface commands</b>
 
 <p><dt><b>op.button(<i>label, onclick</i>)</b></dt>
 <dd>
@@ -1087,90 +1177,13 @@ so the caller can process the event.
 <dd> Example: <b>local event = op.process( g.getevent() )</b></dd>
 </p>
 
+<p><b><a name="oplusutil"></a>Utility commands</b>
+
 <p><dt><b>op.hexrule()</b></dt>
 <dd>
 Return true if the current rule uses a hexagonal neighborhood.
 </dd>
 <dd> Example: <b>if op.hexrule() then do_hex_stuff() end</b></dd>
-</p>
-
-<a name="minbox"></a>
-<p><dt><b>op.minbox(<i>clipname, wd, ht</i>)</b></dt>
-<dd>
-Find the minimal bounding box of non-transparent pixels in the given clip.
-This can be used to determine the real dimensions of some text.
-If all pixels in the clip are transparent then the returned values are all zero.
-</dd>
-<dd> Example: <b>local minx, miny, minwd, minht = op.minbox("textclip", 80, 10)</b></dd>
-</p>
-
-<a name="fill_ellipse"></a>
-<p><dt><b>op.fill_ellipse(<i>x, y, w, h, borderwd, fillrgba</i>)</b></dt>
-<dd>
-Draw an ellipse (or circle) inside the given rectangle.
-If borderwd is greater than zero then an antialiased ellipse of the given thickness
-is drawn using the current color.
-If fillrgba is not an empty string then the ellipse is filled with the given color.
-</dd>
-<dd> Example: <b>op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 200")</b></dd>
-</p>
-
-<a name="round_rect"></a>
-<p><dt><b>op.round_rect(<i>x, y, w, h, radius, borderwd, fillrgba</i>)</b></dt>
-<dd>
-Draw a rounded rectangle where the given radius determines the curvature of each corner.
-If borderwd is greater than zero then an antialiased border of the given thickness
-is drawn using the current color.
-If fillrgba is not an empty string then the rectangle is filled with the given color.
-</dd>
-<dd> Example: <b>op.round_rect(200, 300, 60, 30, 15, 0, "rgba 255 0 0 128")</b></dd>
-</p>
-
-<a name="maketext"></a>
-<p><dt><b>op.maketext(<i>text, clipname, color, shadowx, shadowy, shadowcolor</i>)</b></dt>
-<dd>
-A simpler and more powerful way of creating text that can then be drawn with <a href="#pastetext">pastetext</a>.
-Only the first argument, <i>text</i>, is required.
-</dd>
-<dd> Example:</b></dd>
-<dd> <i>-- draw the string "Hello World" at 0, 0 on the current render target</i>
-<dd> <b>op.maketext("Hello World")</b></dd>
-<dd> <b>op.pastetext(0, 0)</b></dd>
-</p>
-<p>
-<dd>
-Ususally the text clip is created using the current <a href="#rgba">rgba</a> values. This can be
-overridden by specifying the <i>color</i> argument.
-The text may also be given a shadow at a specific x, y pixel offset defined with the <i>shadowx</i>
-and <i>shadowy</i> arguments. The shadow will be drawn in opaque black unless a different color is
-specified with the <i>shadowcol</i> argument.
-</dd>
-<dd> Example:</b></dd>
-<dd> <i>-- create a clip named "hello" with the text "Hello World" in blue with a yellow shadow offset by -1, -2 pixels.
-<dd> <b>local w, h = op.maketext("Hello World", "hello", op.blue, -1, -2, op.yellow)</b></dd>
-</p>
-<p>
-<dd>
-The function returns the width and height of the created clip (including any shadow).
-</p>
-
-<a name="pastetext"></a>
-<p><dt><b>op.pastetext(<i>x, y, transform, clipname</i>)</b></dt>
-<dd>
-Paste text onto the current render target. Only the first two arguments <i>x, y</i> are required.
-</dd>
-<dd> Example:</b></dd>
-<dd> <i>-- paste a text clip at 0, 0 on the current render target</i>
-<dd> <b>op.pastetext(0, 0)</b></dd>
-</p>
-<p>
-<dd>
-The <i>transform</i> argument can be used to specify an <a href="#affine">affine transformation</a>. The <i>clipname</i> may
-be used to specify a non-default clipname.
-<dd> Example:</b></dd>
-<dd> <i>-- paste the clip named "hello" at 0, 0 and rotated clockwise on the current render target</i>
-<dd> <b>op.pastetext(0, 0, op.rcw, "hello")</b></dd>
-</dd>
 </p>
 
 <p>
