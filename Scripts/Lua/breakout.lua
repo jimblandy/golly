@@ -644,7 +644,7 @@ local function initbricks()
     -- check for bonus level
     bonuscurrent = bonustime
     bonuslevel = false
-    if (level  % bonusinterval) == 0 or 1 then
+    if (level  % bonusinterval) == 0 then
        bonuslevel   = true
     end
 
