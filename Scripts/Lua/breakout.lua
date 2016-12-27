@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 46
+local build = 47
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -78,6 +78,7 @@ local wallparticles   = 20
 local batparticles    = 20
 local highparticles   = 4
 local comboparticles  = 4
+local bonusparticles  = 4
 local lostparticles   = 1024
 local bonusparticlesg = 6
 local bonusparticlesy = 3
@@ -100,6 +101,7 @@ local maxcombo   = 2
 local balls      = 3
 local newhigh    = false
 local newcombo   = false
+local newbonus   = false
 local offoverlay = false
 local finished   = false
 local again      = true
@@ -148,6 +150,7 @@ local bonustime     = 60
 local bonuscurrent  = 0
 local bonusgreen    = 10
 local bonusyellow   = 20
+local bestbonus     = 0
 
 -- static messages and clip names
 local optcol = "rgba 192 192 192 255"
@@ -168,6 +171,7 @@ local messages = {
     ["continue"]   = { text = "Click or Enter for next level", size = 10, color = op.white },
     ["newhigh"]    = { text = "New High Score!", size = 10, color = op.green },
     ["newcombo"]   = { text = "New Best Combo!", size = 10, color = op.green },
+    ["newbonus"]   = { text = "New Best Bonus!", size = 10, color = op.green },
     ["close"]      = { text = "Click or Tab to close Game Settings", size = 10, color = op.white },
     ["autopause"]  = { text = "Autopause", size = 10, color = optcol },
     ["brickscore"] = { text = "Brick Score", size = 10, color = optcol },
@@ -241,6 +245,7 @@ local function readsettings()
         maxcombo      = tonumber(f:read("*l")) or 2
         brickscore    = tonumber(f:read("*l")) or 1
         confirmquit   = tonumber(f:read("*l")) or 1
+        bestbonus     = tonumber(f:read("*l")) or 0
         f:close()
     end
 end
@@ -261,6 +266,7 @@ local function writesettings()
         f:write(tostring(maxcombo).."\n")
         f:write(tostring(brickscore).."\n")
         f:write(tostring(confirmquit).."\n")
+        f:write(tostring(bestbonus).."\n")
         f:close()
     end
 end
@@ -349,9 +355,9 @@ local function drawtextclip(name, x, y, xalign, yalign)
     xalign = xalign or alignleft
     yalign = yalign or aligntop
     -- lookup the message
-    message = messages[name]
-    w = message.width
-    h = message.height
+    local message = messages[name]
+    local w = message.width
+    local h = message.height
     local xoffset = 0
     local yoffset = 0
     if xalign == aligncenter then
@@ -591,9 +597,9 @@ end
 
 local function drawball()
     local oldwidth = ov("lineoption width "..floor(ballsize / 2))
+    ov("blend 1")
     if showshadows == 1 then
         ov(shadowcol)
-        ov("blend 1")
         ov("ellipse "..(floor(ballx - ballsize / 2) + shadowx).." "..(floor(bally - ballsize / 2) + shadowy).." "..floor(ballsize).." "..floor(ballsize))
     end
     ov(op.white)
@@ -638,7 +644,7 @@ local function initbricks()
     -- check for bonus level
     bonuscurrent = bonustime
     bonuslevel = false
-    if (level  % bonusinterval) == 0 then
+    if (level  % bonusinterval) == 0 or 1 then
        bonuslevel   = true
     end
 
@@ -1042,6 +1048,10 @@ local function drawbonuscomplete(remainingtime, bonusscore)
     drawtextclip("continue", 0, ht / 2 + 30 * fontscale, aligncenter)
     drawtextclip("quitgame", 0, ht / 2 + 52 * fontscale, aligncenter)
     drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter)
+    if newbonus then
+        local bonusw = drawtextclip("newbonus", 0, ht / 2 + 96 * fontscale, aligncenter)
+        createparticles(edgegapl + floor(wd / 2 + bonusw / 2), floor(ht / 2 + 96 * fontscale), bonusw, 1, bonusparticles)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -1209,12 +1219,13 @@ end
 
 local function clearbonusbricks()
     local bricks = {}
+    local clearparticles = brickparticles / 4
     for y = 1, numrows do
         bricks = rows[y]
         for x = 1, numcols do
             if bricks[x] then
                 bricks[x] = false
-                createparticles(x * brickwd + edgegapl, (y + offsety) * brickht, brickwd, brickht, brickparticles)
+                createparticles(x * brickwd + edgegapl, (y + offsety) * brickht, brickwd, brickht, clearparticles)
             end
         end
     end
@@ -1237,6 +1248,10 @@ local function computebonus()
     if score > hiscore then
         newhigh = true
         updatehighscore(score)
+    end
+    if bonusscore > bestbonus then
+        newbonus = true
+        bestbonus = bonusscore
     end
 
     return bonusscore
@@ -1262,6 +1277,7 @@ local function breakout()
     again    = true
     newhigh  = false
     newcombo = false
+    newbonus = false
 
     -- initialise the bat and ball
     initbat()
@@ -1552,8 +1568,8 @@ local function breakout()
             clearbonusbricks()
         end
 
-        -- save high score and max combo
-        if newhigh or newcombo then
+        -- save high score, max combo and best bonus
+        if newhigh or newcombo or newbonus then
             writesettings()
         end
 
@@ -1648,6 +1664,7 @@ local function breakout()
             -- level complete
             updatelevel(level + 1)
         end
+        newbonus = false
     end
 
     -- free clips and restore settings
