@@ -634,32 +634,15 @@ function m.minbox(clipname, wd, ht)
     
     local xmin, ymin, xmax, ymax, minwd, minht
 
-    -- ensure clip name used in here is not the same as clipname
-    local oldoverlay = clipname.."+oldoverlay"
-    
-    -- copy entire overlay and fill it with transparent pixels
-    ov("copy 0 0 0 0 "..oldoverlay)
-    local oldrgba = ov("rgba 0 0 0 0")
-    ov("fill")
-    ov("rgba "..oldrgba)
-    
-    -- paste given clip into the top left corner
-    local oldtransform = ov(m.identity)
-    local oldblend = ov("blend 0")
-    ov("paste 0 0 "..clipname)
-    
     -- find the top edge (ymin)
+    local oldtarget = ov("target "..clipname)
     for row = 0, ht-1 do
         for col = 0, wd-1 do
             local rgba = ov("get "..col.." "..row)
-            if rgba == "" then
-                error(clip_too_big, 2)
-            else
-                local _, _, _, a = split(rgba)
-                if a ~= "0" then
-                    ymin = row
-                    goto found_top
-                end
+            local _, _, _, a = split(rgba)
+            if a ~= "0" then
+                ymin = row
+                goto found_top
             end
         end
     end
@@ -678,14 +661,10 @@ function m.minbox(clipname, wd, ht)
     for row = ht-1, ymin, -1 do
         for col = 0, wd-1 do
             local rgba = ov("get "..col.." "..row)
-            if rgba == "" then
-                error(clip_too_big, 2)
-            else
-                local _, _, _, a = split(rgba)
-                if a ~= "0" then
-                    ymax = row
-                    goto found_bottom
-                end
+            local _, _, _, a = split(rgba)
+            if a ~= "0" then
+                ymax = row
+                goto found_bottom
             end
         end
     end
@@ -695,14 +674,10 @@ function m.minbox(clipname, wd, ht)
     for col = 0, wd-1 do
         for row = ymin, ymax do
             local rgba = ov("get "..col.." "..row)
-            if rgba == "" then
-                error(clip_too_big, 2)
-            else
-                local _, _, _, a = split(rgba)
-                if a ~= "0" then
-                    xmin = col
-                    goto found_left
-                end
+            local _, _, _, a = split(rgba)
+            if a ~= "0" then
+                xmin = col
+                goto found_left
             end
         end
     end
@@ -712,14 +687,10 @@ function m.minbox(clipname, wd, ht)
     for col = wd-1, xmin, -1 do
         for row = ymin, ymax do
             local rgba = ov("get "..col.." "..row)
-            if rgba == "" then
-                error(clip_too_big, 2)
-            else
-                local _, _, _, a = split(rgba)
-                if a ~= "0" then
-                    xmax = col
-                    goto found_right
-                end
+            local _, _, _, a = split(rgba)
+            if a ~= "0" then
+                xmax = col
+                goto found_right
             end
         end
     end
@@ -731,15 +702,8 @@ function m.minbox(clipname, wd, ht)
     
     ::finish::
     
-    -- restore original overlay, transform and blend state
-    ov("paste 0 0 "..oldoverlay)
-    ov("transform "..oldtransform)
-    ov("blend "..oldblend)
-    
-    -- free the temporary clip memory
-    ov("delete "..oldoverlay)
-    
     -- return the bounding box info
+    ov("target "..oldtarget)
     return xmin, ymin, minwd, minht
 end
 
@@ -899,8 +863,10 @@ function m.pastetext(x, y, transform, clipname)
     -- apply transform and paste text clip
     local oldtransform = ov(transform)
     ov("paste "..x.." "..y.." "..clipname)
-    -- resotre settings
+    -- restore settings
     ov("transform "..oldtransform)
+
+    return clipname
 end
 
 --------------------------------------------------------------------------------

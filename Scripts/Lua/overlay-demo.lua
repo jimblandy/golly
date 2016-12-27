@@ -4,7 +4,7 @@ Authors: Andrew Trevorrow (andrew@trevorrow.com) and Chris Rowett (crowett@gmail
 --]]
 
 local g = golly()
--- require "gplus.strict"
+require "gplus.strict"
 local gp = require "gplus"
 local split = gp.split
 local int = gp.int
@@ -2106,7 +2106,7 @@ local function test_text()
     oldfont = ov("font "..rand(10,150).." default-bold")
     ov("rgba 255 0 0 40")   -- translucent red text
     w, h, descent = maketext("Golly")
-    pastetext(10, 10)
+    local gollyclip = pastetext(10, 10)
     
     -- draw box around text
     ov("line 10 10 "..(w-1+10).." 10")
@@ -2117,7 +2117,7 @@ local function test_text()
     ov("line 10 "..(h-1+10-descent).." "..(w-1+10).." "..(h-1+10-descent))
     
     -- draw minimal bounding rect over text
-    local xoff, yoff, minwd, minht = op.minbox(textclip, w, h)
+    local xoff, yoff, minwd, minht = op.minbox(gollyclip, w, h)
     ov("rgba 0 0 255 20")
     ov("fill "..(xoff+10).." "..(yoff+10).." "..minwd.." "..minht)
     

@@ -1096,11 +1096,11 @@ The function returns the width and height of the created clip (including any sha
 <a name="pastetext"></a>
 <p><dt><b>op.pastetext(<i>x, y, transform, clipname</i>)</b></dt>
 <dd>
-Paste text onto the current render target. Only the first two arguments <i>x, y</i> are required.
+Paste text onto the current render target. Only the first two arguments <i>x, y</i> are required. Returns the clip name.
 </dd>
 <dd> Example:</b></dd>
 <dd> <i>-- paste a text clip at 0, 0 on the current render target</i>
-<dd> <b>op.pastetext(0, 0)</b></dd>
+<dd> <b>local textclip = op.pastetext(0, 0)</b></dd>
 </p>
 <p>
 <dd>
