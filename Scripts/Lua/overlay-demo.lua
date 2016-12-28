@@ -4,7 +4,7 @@ Authors: Andrew Trevorrow (andrew@trevorrow.com) and Chris Rowett (crowett@gmail
 --]]
 
 local g = golly()
-require "gplus.strict"
+-- require "gplus.strict"
 local gp = require "gplus"
 local split = gp.split
 local int = gp.int
@@ -2232,7 +2232,7 @@ local function test_target()
     -- paste the clip
     ov("blend 0")
     ov("paste 200 0 clip")
-        
+ 
     if repeat_test(" with a different target") then goto restart end
 
     -- free clip and restore previous target

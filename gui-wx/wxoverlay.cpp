@@ -4608,6 +4608,10 @@ const char* Overlay::DoText(const char* args)
 
     std::string name = args + namepos;
     name = name.substr(0, name.find(" "));
+    // check if the clip is the current render target
+    if (name == targetname) {
+        return OverlayError("text clip is current render target");
+    }
 
     // create memory drawing context
     wxMemoryDC dc;
