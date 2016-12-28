@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 47
+local build = 48
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -60,7 +60,6 @@ local batx
 local baty
 local batwd
 local batht
-local batkeydir = 0
 local lastx
 
 -- ball settings
@@ -152,12 +151,16 @@ local bonusgreen    = 10
 local bonusyellow   = 20
 local bestbonus     = 0
 
+-- key highlight color and names
+local keycol = "rgba 32 32 32 255"
+local keynames = { "Esc", "Tab", "Enter" }
+
 -- static messages and clip names
 local optcol = "rgba 192 192 192 255"
 local messages = {
     ["gameover"]   = { text = "Game Over", size = 30, color = op.red },
     ["newball"]    = { text = "Click or Enter to launch ball", size = 10, color = op.white },
-    ["control"]    = { text = "Mouse or Arrow keys to move bat", size = 10, color = op.white },
+    ["control"]    = { text = "Mouse to move bat", size = 10, color = op.white },
     ["askquit"]    = { text = "Quit Game?", size = 15, color = op.yellow },
     ["pause"]      = { text = "Paused", size = 15, color = op.yellow },
     ["askleft"]    = { text = "Click or Enter to Confirm", size = 10, color = op.white },
@@ -351,6 +354,23 @@ end
 
 --------------------------------------------------------------------------------
 
+local function highlightkey(text, x, y, w, h, token)
+    local t1, t2 = text:find(token)
+    if t1 ~= nil then
+        local charw = w / text:len()
+        local x1 = x + (t1 - 1) * charw
+        local oldblend = ov("blend 0")
+        local oldrgba = ov(op.black)
+        ov("fill "..floor(x1 + shadtxtx).." "..floor(y + shadtxty).." "..floor(charw * (t2 - t1 + 1) + 3).." "..floor(h - 4))
+        ov(keycol)
+        ov("fill "..floor(x1).." "..floor(y).." "..floor(charw * (t2 - t1 + 1) + 3).." "..floor(h - 4))
+        ov("rgba "..oldrgba)
+        ov("blend "..oldblend)
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function drawtextclip(name, x, y, xalign, yalign)
     xalign = xalign or alignleft
     yalign = yalign or aligntop
@@ -370,7 +390,13 @@ local function drawtextclip(name, x, y, xalign, yalign)
     elseif yalign == alignbottom then
         yoffset = ht - h
     end
+    -- check for keyboard key names
+    for i, name in pairs(keynames) do
+        highlightkey(message.text, floor(x + xoffset) + edgegapl, floor(y + yoffset), w, h, name)
+    end
+    -- draw the text clip
     op.pastetext(floor(x + xoffset) + edgegapl, floor(y + yoffset), nil, name)
+    -- return clip dimensions
     return w, h
 end
 
@@ -861,22 +887,6 @@ local function processinput()
             else
                 pause = not pause
             end
-        elseif event == "key left none" then
-            -- left arrow moves bat left
-            batkeydir = -1
-        elseif event == "key right none" then
-            -- right arrow moves bat right
-            batkeydir = 1
-        elseif event == "kup left" then
-            -- left key up stops left movement
-            if batkeydir == -1 then
-                batkeydir = 0
-            end
-        elseif event == "kup right" then
-            -- right key up stops right movement
-            if batkeydir == 1 then
-                batkeydir = 0
-            end
         else
             processstandardkeys(event)
         end
@@ -1117,7 +1127,7 @@ local function drawoption(key, setting, state, leftx, h, y, color)
     if key ~= "key" then
         ov(op.black)
         ov("fill "..(leftx + edgegapl + shadtxtx).." "..(y + shadtxty).." "..(messages[key].width + 3).." "..(messages[key].height - 4))
-        ov("rgba 32 32 32 255")
+        ov(keycol)
         ov("fill "..(leftx + edgegapl).." "..y.." "..(messages[key].width + 3).." "..(messages[key].height - 4))
     end
     drawtextclip(key, leftx, y, alignleft)
@@ -1196,21 +1206,6 @@ local function updatebatposition()
         -- check for autopause
         if autopause ~= 0 then
             pause = true
-        end
-    end
-
-    -- check for keyboard move
-    if batkeydir == -1 then
-        -- move bat left
-        batx = batx - (wd / 60)
-        if batx < edgegapl then
-            batx = edgegapl
-        end
-    elseif batkeydir == 1 then
-        -- move bat right
-        batx = batx + (wd / 60)
-        if batx > wd - edgegapr - batwd then
-            batx = wd - edgegapr - batwd
         end
     end
 end
