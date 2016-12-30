@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 49
+local build = 50
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -1175,10 +1175,17 @@ end
 
 --------------------------------------------------------------------------------
 
-local function checkforresize()
+local function checkforsystemevent()
+    -- check for resize
     local newwd, newht = g.getview(g.getlayer())
     if newwd ~= wd or newht ~= ht then
         resizegame(newwd, newht)
+    end
+    -- check for overlay hidden
+    if not pause then
+        if g.getoption("showoverlay") == 0 then
+            pause = true
+        end
     end
 end
 
@@ -1352,8 +1359,8 @@ local function breakout()
             -- check for mouse click or key press
             processinput()
 
-            -- check if size of layer has changed
-            checkforresize()
+            -- check if size of overlay has changed or overlay is hidden
+            checkforsystemevent()
 
             -- draw the background
             drawbackground()
@@ -1583,8 +1590,8 @@ local function breakout()
             -- time frame
             local frametime = g.millisecs()
 
-            -- check if size of layer has changed
-            checkforresize()
+            -- check if size of overlay has changed or overlay hidden
+            checkforsystemevent()
 
             -- draw background
             drawbackground()
