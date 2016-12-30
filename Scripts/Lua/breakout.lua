@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 48
+local build = 49
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -26,6 +26,9 @@ local minwd    = 400
 local minht    = 400
 local edgegapl = 0
 local edgegapr = 0
+
+-- background settings
+local bgclip = "bg"
 
 -- shadow settings
 local shadowx   = floor(-wd / 100)
@@ -552,6 +555,9 @@ end
 --------------------------------------------------------------------------------
 
 local function createbackground()
+    -- create background clip
+    ov("create "..wd.." "..ht.." "..bgclip)
+    ov("target "..bgclip)
     -- create background gradient
     ov("blend 0")
     local y, c
@@ -572,15 +578,15 @@ local function createbackground()
         ov("fill "..(wd - edgegapr).." 0 "..edgegapr.." "..(ht - 1))
     end
     
-    -- save the background clip
-    ov("copy 0 0 "..wd.." "..ht.." bg")
+    -- reset target
+    ov("target")
 end
 
 --------------------------------------------------------------------------------
 
 local function drawbackground()
     ov("blend 0")
-    ov("paste 0 0 bg")
+    ov("paste 0 0 "..bgclip)
 end
 
 --------------------------------------------------------------------------------
@@ -977,7 +983,6 @@ local function resizegame(newwd, newht)
     initshadow()
 
     -- recreate background
-    ov("delete bg")
     createbackground()
 
     -- recreate static text
@@ -1663,7 +1668,7 @@ local function breakout()
     end
 
     -- free clips and restore settings
-    ov("delete bg")
+    ov("delete "..bgclip)
     ov("blend "..oldblend)
     ov("font "..oldfont)
     ov("textoption background "..oldbg)
