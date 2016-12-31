@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 50
+local build = 51
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -946,10 +946,8 @@ local function resizegame(newwd, newht)
     local xscale = newwd / wd
     local yscale = newht / ht
 
-    -- resize overlay
     wd = newwd
     ht = newht
-    ov("resize "..wd.." "..ht)
     fontscale = wd / minwd
     if (ht / minht) < fontscale then
         fontscale = ht / minht
@@ -987,6 +985,9 @@ local function resizegame(newwd, newht)
 
     -- recreate static text
     createstatictext()
+
+    -- resize overlay
+    ov("resize "..wd.." "..ht)
 end
 
 --------------------------------------------------------------------------------
