@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 51
+local build = 52
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -111,7 +111,7 @@ local again      = true
 -- timing settings
 local times         = {}
 local timenum       = 1
-local numtimes      = 10
+local numtimes      = 8
 local framemult     = 1
 local framecap      = 100
 local sixtyhz       = 16.7
@@ -909,16 +909,11 @@ local function processendinput()
         if event:find("^oclick") then
             _, x, y, button, mods = split(event)
         end
-        -- right click quits application or dismisses settings
+        -- right click quits application
         if button == "right" then
-            -- quit application if game over
-            if balls == 0 then
-                again    = false
-                finished = true
-            else
-                -- otherwise quit game
-                balls = 0
-            end
+            -- quit application
+            again       = false
+            finished    = true
             showoptions = false
         elseif button == "left" or event == "key enter none" or event == "key return none" or event == "key space none" then
             -- left click, enter or space restarts game or dismisses settings
