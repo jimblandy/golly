@@ -627,8 +627,6 @@ end
 
 --------------------------------------------------------------------------------
 
-local clip_too_big = "minbox clip does not fit in overlay"
-
 function m.minbox(clipname, wd, ht)
     -- find the minimal bounding box of non-transparent pixels in given clip
     
@@ -638,8 +636,7 @@ function m.minbox(clipname, wd, ht)
     local oldtarget = ov("target "..clipname)
     for row = 0, ht-1 do
         for col = 0, wd-1 do
-            local rgba = ov("get "..col.." "..row)
-            local _, _, _, a = split(rgba)
+            local _, _, _, a = split(ov("get "..col.." "..row))
             if a ~= "0" then
                 ymin = row
                 goto found_top
@@ -648,10 +645,7 @@ function m.minbox(clipname, wd, ht)
     end
     
     -- only get here if clip has no non-transparent pixels
-    xmin = 0
-    ymin = 0
-    minwd = 0
-    minht = 0
+    xmin, ymin, minwd, minht = 0, 0, 0, 0
     goto finish
     
     ::found_top::
@@ -660,8 +654,7 @@ function m.minbox(clipname, wd, ht)
     -- find the bottom edge (ymax)
     for row = ht-1, ymin, -1 do
         for col = 0, wd-1 do
-            local rgba = ov("get "..col.." "..row)
-            local _, _, _, a = split(rgba)
+            local _, _, _, a = split(ov("get "..col.." "..row))
             if a ~= "0" then
                 ymax = row
                 goto found_bottom
@@ -673,8 +666,7 @@ function m.minbox(clipname, wd, ht)
     -- find the left edge (xmin)
     for col = 0, wd-1 do
         for row = ymin, ymax do
-            local rgba = ov("get "..col.." "..row)
-            local _, _, _, a = split(rgba)
+            local _, _, _, a = split(ov("get "..col.." "..row))
             if a ~= "0" then
                 xmin = col
                 goto found_left
@@ -686,8 +678,7 @@ function m.minbox(clipname, wd, ht)
     -- find the right edge (xmax)
     for col = wd-1, xmin, -1 do
         for row = ymin, ymax do
-            local rgba = ov("get "..col.." "..row)
-            local _, _, _, a = split(rgba)
+            local _, _, _, a = split(ov("get "..col.." "..row))
             if a ~= "0" then
                 xmax = col
                 goto found_right
