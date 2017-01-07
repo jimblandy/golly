@@ -8,8 +8,6 @@ local gp = require "gplus"
 local getcell = g.getcell
 local int = gp.int
 local chr = string.char
-local lshift = bit32.lshift
-local rshift = bit32.rshift
 
 local r = g.getselrect()
 if #r == 0 then g.exit("There is no selection.") end
@@ -87,11 +85,11 @@ local function compress(data)
         else
             used = used + 1
             t[code .. nextch] = used
-            curr = curr + lshift(t[code], bits)
+            curr = curr + (t[code] << bits)
             bits = bits + size
             while bits >= 8 do
                 output = output .. chr(curr & 255)
-                curr = rshift(curr, 8)
+                curr = curr >> 8
                 bits = bits - 8
             end
             if used > mask then
@@ -99,11 +97,11 @@ local function compress(data)
                     size = size + 1
                     mask = mask*2 + 1
                 else
-                    curr = curr + lshift(cc, bits)
+                    curr = curr + (cc << bits)
                     bits = bits + size
                     while bits >= 8 do
                         output = output .. chr(curr & 255)
-                        curr = rshift(curr, 8)
+                        curr = curr >> 8
                         bits = bits - 8
                     end
                     -- reset t
@@ -117,11 +115,11 @@ local function compress(data)
             code = nextch
         end
     end
-    curr = curr + lshift(t[code], bits)
+    curr = curr + (t[code] << bits)
     bits = bits + size
     while bits >= 8 do
         output = output .. chr(curr & 255)
-        curr = rshift(curr, 8)
+        curr = curr >> 8
         bits = bits - 8
     end
     output = output .. chr(curr)
