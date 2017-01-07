@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 52
+local build = 53
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -457,14 +457,15 @@ end
 
 --------------------------------------------------------------------------------
 
-local function createparticles(x, y, areawd, areaht, howmany)
+local function createparticles(x, y, areawd, areaht, howmany, color)
+    color = color or "rgba 255 255 255 255"
     -- find the first free slot
     local i = 1
     while i <= #particles and particles[i].alpha > 0 do
         i = i + 1
     end
     for j = 1, howmany do
-        local item = { alpha = 255, x = x - rand(floor(areawd)), y = y + rand(floor(areaht)), dx = rand() - 0.5, dy = rand() - 0.5 }
+        local item = { alpha = 255, x = x - rand(floor(areawd)), y = y + rand(floor(areaht)), dx = rand() - 0.5, dy = rand() - 0.5, color = color }
         particles[i] = item
         i = i + 1
         -- find the next free slot
@@ -481,14 +482,19 @@ local function drawparticles()
     for i = 1, #particles do
         local item = particles[i]
         local scale = ht / 1000
+        local lastcol = ""
         -- check if particle is still alive
         if item.alpha > 0 then
             if showparticles ~= 0 then
-                ov("rgba 255 255 255 "..floor(item.alpha))
-                ov("set "..floor(item.x).." "..floor(item.y))
+                local color = item.color:sub(1, -4)..floor(item.alpha)
+                if color ~= lastcol then
+                    ov(color)
+                    lastcol = color
+                end
+                ov("fill "..floor(item.x).." "..floor(item.y).." 2 2")
             end
             -- fade item
-            item.alpha = item.alpha - 3 * framemult
+            item.alpha = item.alpha - 4 * framemult
             if item.alpha < 0 then
                 item.alpha = 0
             end
@@ -1481,7 +1487,7 @@ local function breakout()
                                     ballspeed = maxspeed
                                 end
                                 -- create particles
-                                createparticles(brickx * brickwd + edgegapl, (bricky + offsety) * brickht, brickwd, brickht, brickparticles)
+                                createparticles(brickx * brickwd + edgegapl, (bricky + offsety) * brickht, brickwd, brickht, brickparticles, brickcols[bricky])
                                 -- one less brick
                                 bricksleft = bricksleft - 1
                             end
