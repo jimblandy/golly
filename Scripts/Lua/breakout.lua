@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 53
+local build = 54
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -155,8 +155,12 @@ local bonusyellow   = 20
 local bestbonus     = 0
 
 -- key highlight color and names
-local keycol = "rgba 32 32 32 255"
-local keynames = { "Esc", "Tab", "Enter" }
+local keycol   = "rgba 32 32 32 255"
+local mousecol = "rgba 48 0 0 255"
+local keynames = {
+     [keycol]   = { "Esc", "Tab", "Enter" },
+     [mousecol] = { "Click", "Right Click", "Mouse" }
+}
 
 -- static messages and clip names
 local optcol = "rgba 192 192 192 255"
@@ -357,7 +361,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function highlightkey(text, x, y, w, h, token)
+local function highlightkey(text, x, y, w, h, token, color)
     local t1, t2 = text:find(token)
     if t1 ~= nil then
         local charw = w / text:len()
@@ -365,7 +369,7 @@ local function highlightkey(text, x, y, w, h, token)
         local oldblend = ov("blend 0")
         local oldrgba = ov(op.black)
         ov("fill "..floor(x1 + shadtxtx).." "..floor(y + shadtxty).." "..floor(charw * (t2 - t1 + 1) + 3).." "..floor(h - 4))
-        ov(keycol)
+        ov(color)
         ov("fill "..floor(x1).." "..floor(y).." "..floor(charw * (t2 - t1 + 1) + 3).." "..floor(h - 4))
         ov("rgba "..oldrgba)
         ov("blend "..oldblend)
@@ -374,9 +378,10 @@ end
 
 --------------------------------------------------------------------------------
 
-local function drawtextclip(name, x, y, xalign, yalign)
-    xalign = xalign or alignleft
-    yalign = yalign or aligntop
+local function drawtextclip(name, x, y, xalign, yalign, highlight)
+    xalign    = xalign or alignleft
+    yalign    = yalign or aligntop
+    highlight = highlight or false
     -- lookup the message
     local message = messages[name]
     local w = message.width
@@ -393,9 +398,13 @@ local function drawtextclip(name, x, y, xalign, yalign)
     elseif yalign == alignbottom then
         yoffset = ht - h
     end
-    -- check for keyboard key names
-    for i, name in pairs(keynames) do
-        highlightkey(message.text, floor(x + xoffset) + edgegapl, floor(y + yoffset), w, h, name)
+    -- check for highlight text
+    if highlight == true then
+        for color, list in pairs(keynames) do
+            for i, name in pairs(list) do
+                highlightkey(message.text, floor(x + xoffset) + edgegapl, floor(y + yoffset), w, h, name, color)
+            end
+        end
     end
     -- draw the text clip
     op.pastetext(floor(x + xoffset) + edgegapl, floor(y + yoffset), nil, name)
@@ -1035,9 +1044,9 @@ local function drawgameover()
         createparticles(edgegapl + floor(wd / 2 + combow / 2), floor(ht / 2 + 118 * fontscale), combow, 1, comboparticles)
     end
     drawtextclip("gameover", 0, ht / 2 - 30 * fontscale, aligncenter)
-    drawtextclip("restart", 0, ht / 2 + 30 * fontscale, aligncenter)
-    drawtextclip("quit", 0, ht / 2 + 52 * fontscale, aligncenter)
-    drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter)
+    drawtextclip("restart", 0, ht / 2 + 30 * fontscale, aligncenter, nil, true)
+    drawtextclip("quit", 0, ht / 2 + 52 * fontscale, aligncenter, nil, true)
+    drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter, nil, true)
 end
 
 --------------------------------------------------------------------------------
@@ -1045,9 +1054,9 @@ end
 local function drawlevelcomplete()
     ov("blend 1")
     drawtextclip("complete", 0, ht / 2 - 30 * fontscale, aligncenter)
-    drawtextclip("continue", 0, ht / 2 + 30 * fontscale, aligncenter)
-    drawtextclip("quitgame", 0, ht / 2 + 52 * fontscale, aligncenter)
-    drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter)
+    drawtextclip("continue", 0, ht / 2 + 30 * fontscale, aligncenter, nil, true)
+    drawtextclip("quitgame", 0, ht / 2 + 52 * fontscale, aligncenter, nil, true)
+    drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter, nil, true)
 end
 
 --------------------------------------------------------------------------------
@@ -1062,9 +1071,9 @@ local function drawbonuscomplete(remainingtime, bonusscore)
     elseif bricksleft <= bonusyellow then
         createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, bonusparticlesy)
     end
-    drawtextclip("continue", 0, ht / 2 + 30 * fontscale, aligncenter)
-    drawtextclip("quitgame", 0, ht / 2 + 52 * fontscale, aligncenter)
-    drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter)
+    drawtextclip("continue", 0, ht / 2 + 30 * fontscale, aligncenter, nil, true)
+    drawtextclip("quitgame", 0, ht / 2 + 52 * fontscale, aligncenter, nil, true)
+    drawtextclip("option", 0, ht / 2 + 74 * fontscale, aligncenter, nil, true)
     if newbonus then
         local bonusw = drawtextclip("newbonus", 0, ht / 2 + 96 * fontscale, aligncenter)
         createparticles(edgegapl + floor(wd / 2 + bonusw / 2), floor(ht / 2 + 96 * fontscale), bonusw, 1, bonusparticles)
@@ -1075,9 +1084,9 @@ end
 
 local function drawconfirm()
     ov("blend 1")
-    drawtextclip("askquit", 0, ht / 2 - 15 * fontscale, aligncenter)
-    drawtextclip("askleft", 0, ht / 2 + 22 * fontscale, aligncenter)
-    drawtextclip("askright", 0, ht / 2 + 44 * fontscale, aligncenter)
+    drawtextclip("askquit", 0, ht / 2 - 15 * fontscale, aligncenter, nil, true)
+    drawtextclip("askleft", 0, ht / 2 + 22 * fontscale, aligncenter, nil, true)
+    drawtextclip("askright", 0, ht / 2 + 44 * fontscale, aligncenter, nil, true)
 end
 
 --------------------------------------------------------------------------------
@@ -1088,9 +1097,9 @@ local function drawpause()
     if offoverlay and autopause ~= 0 and autostart ~= 0 then
         drawtextclip("focus", 0, ht / 2 + 22 * fontscale, aligncenter)
     else
-        drawtextclip("resume", 0, ht / 2 + 22 * fontscale, aligncenter)
-        drawtextclip("quitgame", 0, ht / 2 + 44 * fontscale, aligncenter)
-        drawtextclip("option", 0, ht / 2 + 66 * fontscale, aligncenter)
+        drawtextclip("resume", 0, ht / 2 + 22 * fontscale, aligncenter, nil, true)
+        drawtextclip("quitgame", 0, ht / 2 + 44 * fontscale, aligncenter, nil, true)
+        drawtextclip("option", 0, ht / 2 + 66 * fontscale, aligncenter, nil, true)
     end
 end
 
@@ -1098,10 +1107,10 @@ end
 
 local function drawnewball()
     ov("blend 1")
-    drawtextclip("newball", 0, ht / 2 + 22 * fontscale, aligncenter)
-    drawtextclip("control", 0, ht / 2 + 44 * fontscale, aligncenter)
-    drawtextclip("quitgame", 0, ht / 2 + 66 * fontscale, aligncenter)
-    drawtextclip("option", 0,  ht / 2 + 88 * fontscale, aligncenter)
+    drawtextclip("newball", 0, ht / 2 + 22 * fontscale, aligncenter, nil, true)
+    drawtextclip("control", 0, ht / 2 + 44 * fontscale, aligncenter, nil, true)
+    drawtextclip("quitgame", 0, ht / 2 + 66 * fontscale, aligncenter, nil, true)
+    drawtextclip("option", 0,  ht / 2 + 88 * fontscale, aligncenter, nil, true)
     drawtextclip("left", 0, ht / 2 - 15 * fontscale, aligncenter)
     if bonuslevel then
         drawtextclip("bonus", 0, ht / 2 - 52 * fontscale, aligncenter)
@@ -1167,11 +1176,11 @@ local function drawoptions()
     y = drawoption("f11", "fullscreen", state[fullscreen], leftx, h, y)
 
     -- draw close options
-    drawtextclip("close", 0, y + h, aligncenter)
+    drawtextclip("close", 0, y + h, aligncenter, nil, true)
     if balls == 0 then
-        drawtextclip("quit", 0, y + h * 2.5, aligncenter)
+        drawtextclip("quit", 0, y + h * 2.5, aligncenter, nil, true)
     else
-        drawtextclip("quitgame", 0, y + h * 2.5, aligncenter)
+        drawtextclip("quitgame", 0, y + h * 2.5, aligncenter, nil, true)
     end
 end
 
