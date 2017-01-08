@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 54
+local build = 55
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -98,6 +98,8 @@ local score      = 0
 local combo      = 1
 local combomult  = 1
 local combofact  = 1.04
+local comboraw   = 0
+local comboextra = 0
 local gamecombo  = 1
 local maxcombo   = 2
 local balls      = 3
@@ -127,6 +129,7 @@ local showshadows   = 1
 local confirmquit   = 0
 local showoptions   = false
 local confirming    = false
+local comboscore    = 1
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."breakout.ini"
@@ -185,6 +188,7 @@ local messages = {
     ["close"]      = { text = "Click or Tab to close Game Settings", size = 10, color = op.white },
     ["autopause"]  = { text = "Autopause", size = 10, color = optcol },
     ["brickscore"] = { text = "Brick Score", size = 10, color = optcol },
+    ["comboscore"] = { text = "Combo Score", size = 10, color = optcol },
     ["shadows"]    = { text = "Shadows", size = 10, color = optcol },
     ["mouse"]      = { text = "Mouse Pointer", size = 10, color = optcol },
     ["particles"]  = { text = "Particles", size = 10, color = optcol },
@@ -199,6 +203,7 @@ local messages = {
     ["key"]        = { text = "Key", size = 10, color = op.white },
     ["a"]          = { text = "A", size = 10, color = optcol },
     ["b"]          = { text = "B", size = 10, color = optcol },
+    ["c"]          = { text = "C", size = 10, color = optcol },
     ["d"]          = { text = "D", size = 10, color = optcol },
     ["m"]          = { text = "M", size = 10, color = optcol },
     ["p"]          = { text = "P", size = 10, color = optcol },
@@ -256,6 +261,7 @@ local function readsettings()
         brickscore    = tonumber(f:read("*l")) or 1
         confirmquit   = tonumber(f:read("*l")) or 1
         bestbonus     = tonumber(f:read("*l")) or 0
+        comboscore    = tonumber(f:read("*l")) or 1
         f:close()
     end
 end
@@ -277,6 +283,7 @@ local function writesettings()
         f:write(tostring(brickscore).."\n")
         f:write(tostring(confirmquit).."\n")
         f:write(tostring(bestbonus).."\n")
+        f:write(tostring(comboscore).."\n")
         f:close()
     end
 end
@@ -368,9 +375,9 @@ local function highlightkey(text, x, y, w, h, token, color)
         local x1 = x + (t1 - 1) * charw
         local oldblend = ov("blend 0")
         local oldrgba = ov(op.black)
-        ov("fill "..floor(x1 + shadtxtx).." "..floor(y + shadtxty).." "..floor(charw * (t2 - t1 + 1) + 3).." "..floor(h - 4))
+        ov("fill "..floor(x1 + shadtxtx).." "..floor(y + shadtxty).." "..floor(charw * (t2 - t1 + 1) + 5).." "..floor(h - 4))
         ov(color)
-        ov("fill "..floor(x1).." "..floor(y).." "..floor(charw * (t2 - t1 + 1) + 3).." "..floor(h - 4))
+        ov("fill "..floor(x1).." "..floor(y).." "..floor(charw * (t2 - t1 + 1) + 5).." "..floor(h - 4))
         ov("rgba "..oldrgba)
         ov("blend "..oldblend)
     end
@@ -836,6 +843,14 @@ end
 
 --------------------------------------------------------------------------------
 
+local function togglecomboscore()
+    comboscore = 1 - comboscore
+    writesettings()
+    notify("Combo Score", comboscore)
+end
+
+--------------------------------------------------------------------------------
+
 local function processstandardkeys(event)
     if event:find("^key") then
         if event == "key f11 none" then
@@ -847,6 +862,9 @@ local function processstandardkeys(event)
         elseif event == "key b none" then
             -- toggle brick score display
             togglebrickscore()
+        elseif event == "key c none" then
+            -- toggle combo score display
+            togglecomboscore()
         elseif event == "key d none" then
             -- toggle shadow display
             toggleshadowdisplay()
@@ -1161,12 +1179,13 @@ local function drawoptions()
     -- draw header
     ov("blend 1")
     local h = messages["key"].height
-    local y = floor((ht - 8 * h) / 2)
+    local y = floor((ht - 10 * h) / 2)
     y = drawoption("key", "function", "state", leftx, h, y, op.white)
 
     -- draw options
     y = drawoption("a", "autopause", state[autopause], leftx, h, y)
     y = drawoption("b", "brickscore", state[brickscore], leftx, h, y)
+    y = drawoption("c", "comboscore", state[comboscore], leftx, h, y)
     y = drawoption("d", "shadows", state[showshadows], leftx, h, y)
     y = drawoption("m", "mouse", state[showmouse], leftx, h, y)
     y = drawoption("p", "particles", state[showparticles], leftx, h, y)
@@ -1243,7 +1262,7 @@ local function clearbonusbricks()
         for x = 1, numcols do
             if bricks[x] then
                 bricks[x] = false
-                createparticles(x * brickwd + edgegapl, (y + offsety) * brickht, brickwd, brickht, clearparticles)
+                createparticles(x * brickwd + edgegapl, (y + offsety) * brickht, brickwd, brickht, clearparticles, brickcols[y])
             end
         end
     end
@@ -1273,6 +1292,15 @@ local function computebonus()
     end
 
     return bonusscore
+end
+
+--------------------------------------------------------------------------------
+
+local function resetcombo()
+    updatecombo(1)
+    combomult  = 1
+    comboraw   = 0
+    comboextra = 0
 end
 
 --------------------------------------------------------------------------------
@@ -1359,8 +1387,7 @@ local function breakout()
         offoverlay = false
 
         -- reset combo
-        updatecombo(1)
-        combomult = 1
+        resetcombo()
 
         -- game loop
         while balls > 0 and bricksleft > 0 and bonuscurrent > 0 do
@@ -1422,8 +1449,13 @@ local function breakout()
                                 balldx    = 0.5
                                 ballspeed = speeddef
                                 newball   = true
-                                combo     = 1
-                                combomult = 1
+                                -- reset combo
+                                if comboextra - comboraw > 0 then
+                                    if comboscore == 1 then
+                                        notify("Combo x "..(combo - 1).." Score "..comboextra - comboraw.." (+"..(floor(100 * comboextra / comboraw) - 100).."%)")
+                                    end
+                                end
+                                resetcombo()
                                 -- destroy bat if no balls left
                                 if balls == 0 then
                                    createparticles(batx + batwd, baty, batwd, batht, lostparticles)
@@ -1451,11 +1483,15 @@ local function breakout()
                                 if offsety < maxoffsety then
                                     offsety = offsety + 1
                                 end
-                           end
-                           createparticles(ballx, bally - ballsize / 2, 1, 1, batparticles)
-                           -- reset combo
-                           combo     = 1
-                           combomult = 1
+                            end
+                            createparticles(ballx, bally - ballsize / 2, 1, 1, batparticles)
+                            -- reset combo
+                            if comboextra - comboraw > 0 then
+                                if comboscore == 1 then
+                                    notify("Combo x "..(combo - 1).." Score "..comboextra - comboraw.." (+"..(floor(100 * comboextra / comboraw) - 100).."%)")
+                                end
+                            end
+                            resetcombo()
                         end
 
                         -- check for ball hitting brick
@@ -1467,6 +1503,11 @@ local function breakout()
                                 rows[bricky][brickx] = false
                                 -- adjust score
                                 local points = floor((level + 9) * (numrows - bricky + 1) * combomult)
+                                local rawpoints = floor((level + 9) * (numrows - bricky + 1))
+                                if combo > 1 then
+                                    comboraw = comboraw + rawpoints
+                                    comboextra = comboextra + points
+                                end
                                 updatescore(score + points)
                                 if score > hiscore then
                                     newhigh = true
