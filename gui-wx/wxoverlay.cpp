@@ -42,6 +42,7 @@
 #include <math.h>           // for sin, cos, log, sqrt and atn2
 #include <stdlib.h>         // for malloc, free
 #include <string.h>         // for strchr, strtok
+#include <ctype.h>          // for isspace, isdigit
 
 // -----------------------------------------------------------------------------
 
@@ -1917,7 +1918,7 @@ const char* Overlay::DoCreate(const char* args)
         // use calloc so all pixels will be 100% transparent (alpha = 0)
         ovpixmap = (unsigned char*) calloc(ovwd * ovht * 4, sizeof(*ovpixmap));
         if (ovpixmap == NULL) return OverlayError("not enough memory to create overlay");
-    
+
         // initialize RGBA values to opaque white
         r = g = b = a = 255;
 
@@ -1938,7 +1939,7 @@ const char* Overlay::DoCreate(const char* args)
         ayx = 0;
         ayy = 1;
         identity = true;
-    
+
         // initialize current font used by text command
         currfont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
         fontname = "default";
@@ -1950,13 +1951,13 @@ const char* Overlay::DoCreate(const char* args)
         #else
             currfont.SetPointSize(fontsize);
         #endif
-    
+
         // default text alignment
         align = left;
 
         // default text background
         textbgRGBA = 0;
-    
+
         // default width for lines and ellipses
         linewidth = 1.0;
 
@@ -1967,7 +1968,7 @@ const char* Overlay::DoCreate(const char* args)
             // enable Save Overlay
             mainptr->UpdateMenuItems();
         }
-    
+
         // set overlay as render target
         SetRenderTarget(ovpixmap, ovwd, ovht);
         targetname = "";
@@ -2163,7 +2164,7 @@ const char* Overlay::DoReplace(const char* args)
     // allocate memory for the arguments
     char* buffer = (char*)malloc(strlen(args) + 1);
     strcpy(buffer, args);
-    
+
     // check the arguments exist
     const char* delim = " ";
     const char *arg1 = strtok(buffer, delim);
@@ -2368,7 +2369,7 @@ const char* Overlay::DoReplace(const char* args)
 
         for (int i = 0; i < w * h; i++) {
             changed = false;
-            
+
             // change r if required
             if (deltar) {
                 orig = clipdata[0];
@@ -2681,17 +2682,90 @@ void Overlay::DrawPixel(int x, int y)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::GetCoordinatePair(const char* args, int* x, int* y)
+{
+    // attempt to decode integers
+    char c = *args++;
+    int sign = 1;
+    int newx = 0;
+    int newy = 0;
+
+    // skip whitespace
+    while (isspace(c)) {
+        c = *args++;
+    }
+    if (!c) return NULL;
+
+    // check for sign
+    if (c == '-') {
+        sign = -1;
+        c = *args++;
+    }
+    if (!c) return NULL;
+
+    // read digits
+    while (isdigit(c)) {
+        newx = 10 * newx + (c - '0');
+        c = *args++;
+    }
+    newx *= sign;
+
+    // check for end of word
+    if (c && !isspace(c)) return NULL;
+
+    // skip whitespace
+    while (isspace(c)) {
+        c = *args++;
+    }
+    if (!c) return NULL;
+
+    // check for sign
+    sign = 1;
+    if (c == '-') {
+        sign = -1;
+        c = *args++;
+    }
+
+    // read digits
+    while (isdigit(c)) {
+        newy = 10 * newy + (c - '0');
+        c = *args++;
+    }
+    newy *= sign;
+
+    // check for end of word
+    if (c && !isspace(c)) return NULL;
+    while (isspace(c)) {
+        c = *args++;
+    }
+    args--;
+
+    // return coordinates
+    *x = newx;
+    *y = newy;
+    return args;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoSetPixel(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
-    int x, y;
-    if (sscanf(args, "%d %d", &x, &y) != 2) {
-        return OverlayError("set command requires 2 arguments");
-    }
-
+    int x = 0;
+    int y = 0;
+    // get the first pixel coordinates (mandatory)
+    args = GetCoordinatePair(args, &x, &y);
+    if (!args) return OverlayError("set command requires coordinate pairs");
     // ignore pixel if outside pixmap edges
     if (PixelInTarget(x, y)) DrawPixel(x, y);
+
+    // read any further coordinates
+    while (*args) {
+        args = GetCoordinatePair(args, &x, &y);
+        if (!args) return OverlayError("set command illegal coordinates");
+        if (PixelInTarget(x, y)) DrawPixel(x, y);
+    }
 
     return NULL;
 }
@@ -2832,10 +2906,10 @@ const char* Overlay::LineOptionWidth(const char* args)
 
     if (w <= 0.0) return OverlayError("line width must be > 0.0");
     if (w >= 10000.0) return OverlayError("line width must be < 10000.0");
-    
+
     oldwidth = linewidth;
     linewidth = w;
-    
+
     static char result[64];
     sprintf(result, "%lf", oldwidth);
     return result;
@@ -2859,7 +2933,7 @@ void Overlay::DrawAAPixel(int x, int y, double opacity)
     if (PixelInTarget(x, y)) {
         unsigned char newalpha = 255-int(opacity);
         if (newalpha == 0) return;
-        
+
         if (!alphablend) {
             // only true in DrawThickEllipse
             if (newalpha > 127) {
@@ -2868,14 +2942,14 @@ void Overlay::DrawAAPixel(int x, int y, double opacity)
             }
             return;
         }
-        
+
         // temporarily adjust current alpha value
         unsigned char olda = a;
         if (a < 255) newalpha = int(newalpha * a / 255);
         a = newalpha;
-        
+
         DrawPixel(x, y);
-        
+
         // restore alpha
         a = olda;
     }
@@ -2971,7 +3045,7 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
     int err = -einit;
     int tk = dx+dy+winit;
     double D2 = 2*sqrt(double(dx*dx+dy*dy));
-    
+
     // draw left/right half of line
     int q = 0;
     while (tk <= w) {
@@ -3038,7 +3112,7 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
 void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
 {
     // based on code from http://kt8216.unixcab.org/murphy/index.html
-    
+
     int dx = x1 - x0;
     int dy = y1 - y0;
     int xstep = 1;
@@ -3048,12 +3122,12 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
 
     if (dx < 0) { dx = -dx; xstep = -1; }
     if (dy < 0) { dy = -dy; ystep = -1; }
-    
+
     if (dx == 0 && dy == 0) {
         if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
         return;
     }
-    
+
     // use FillRect if dx or dy is zero???!!!
 
     if (dx == 0) xstep = 0;
@@ -3076,7 +3150,7 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
     int err = 0;
     int x = x0;
     int y = y0;
-    
+
     if (dx > dy) {
         int threshold = dx - 2*dy;
         int E_diag = -2*dx;
@@ -3157,61 +3231,78 @@ const char* Overlay::DoLine(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
-    int x1, y1, x2, y2;
-    if (sscanf(args, " %d %d %d %d", &x1, &y1, &x2, &y2) != 4) {
-        return OverlayError("line command requires 4 arguments");
+    int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+    args = GetCoordinatePair(args, &x1, &y1);
+    if (!args) return OverlayError("line command requires at least two coordinate pairs");
+    args = GetCoordinatePair(args, &x2, &y2);
+    if (!args) return OverlayError("line command requires at least two coordinate pairs");
+
+    // draw the line
+    RenderLine(x1, y1, x2, y2);
+
+    // read any further coordinates
+    while (*args) {
+        x1 = x2;
+        y1 = y2;
+        args = GetCoordinatePair(args, &x2, &y2);
+        if (!args) return OverlayError("line command illegal coordinates");
+        RenderLine(x1, y1, x2, y2);
     }
-    
+    return NULL;
+}
+
+
+// -----------------------------------------------------------------------------
+
+void Overlay::RenderLine(int x0, int y0, int x1, int y1) {
     if (linewidth != 1.0) {
-        DrawThickLine(x1, y1, x2, y2);
-        return NULL;
+        DrawThickLine(x0, y0, x1, y1);
+        return;
     }
 
-    if (x1 == x2 && y1 == y2) {
-        if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
-        return NULL;
+    if (x0 == x1 && y0 == y1) {
+        if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
+        return;
     }
-    
+
     if (alphablend) {
-        DrawAntialiasedLine(x1, y1, x2, y2);
-        return NULL;
+        DrawAntialiasedLine(x0, y0, x1, y1);
+        return;
     }
 
-    // draw a line of pixels from x1,y1 to x2,y2 using Bresenham's algorithm
-    int dx = x2 - x1;
+    // draw a line of pixels from x0,y0 to x1,y1 using Bresenham's algorithm
+    int dx = x1 - x0;
     int ax = abs(dx) * 2;
     int sx = dx < 0 ? -1 : 1;
 
-    int dy = y2 - y1;
+    int dy = y1 - y0;
     int ay = abs(dy) * 2;
     int sy = dy < 0 ? -1 : 1;
 
     if (ax > ay) {
         int d = ay - (ax / 2);
-        while (x1 != x2) {
-            if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
+        while (x0 != x1) {
+            if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
             if (d >= 0) {
-                y1 = y1 + sy;
+                y0 = y0 + sy;
                 d = d - ax;
             }
-            x1 = x1 + sx;
+            x0 = x0 + sx;
             d = d + ay;
         }
     } else {
         int d = ax - (ay / 2);
-        while (y1 != y2) {
-            if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
+        while (y0 != y1) {
+            if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
             if (d >= 0) {
-                x1 = x1 + sx;
+                x0 = x0 + sx;
                 d = d - ay;
             }
-            y1 = y1 + sy;
+            y0 = y0 + sy;
             d = d + ax;
         }
     }
-    if (PixelInTarget(x2, y2)) DrawPixel(x2, y2);
-
-    return NULL;
+    if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
 }
 
 // -----------------------------------------------------------------------------
@@ -3229,12 +3320,12 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
         }
         return;
     }
-    
+
     if (x1 == x0 || y1 == y0) {
         DrawThickLine(x0, y0, x1, y1);
         return;
     }
-    
+
     long a = abs(x1-x0);
     long b = abs(y1-y0);
     long b1 = b&1;
@@ -3245,7 +3336,7 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
     double i = a+b2;
     double err = b1*a*a;
     double dx2, dy2, e2, ed; 
-    
+
     if ((th-1)*(2*b-th) > a*a) {
         b2 = sqrt(a*(b-a)*i*a2)/(a-th);
     }
@@ -3253,9 +3344,9 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
         a2 = sqrt(b*(a-b)*i*b2)/(b-th);
         th = (a-a2)/2;
     }
-    
+
     if (b2 <= 0) th = a;    // filled ellipse
-    
+
     e2 = th-floor(th);
     th = x0+th-e2;
     dx2 = 4*(a2+2*e2-1)*b2*b2;
@@ -3267,7 +3358,7 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
     b1 = 8*b*b;
     a2 = 8*a2*a2;
     b2 = 8*b2*b2;
-   
+
     do {          
         while (true) {                           
             if (err < 0 || x0 > x1) { i = x0; break; }
@@ -3357,7 +3448,7 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
         y1--;
         err += dy += a;
     } while (x0 < x1);
-   
+
     if (y0-y1 <= b) {
         if (err > dy+a) {
             y0--;
@@ -3394,7 +3485,7 @@ void Overlay::DrawAntialiasedEllipse(int x0, int y0, int x1, int y1)
         DrawAntialiasedLine(x0, y0, x1, y1);
         return;
     }
-    
+
     y0 += (b+1)/2;
     y1 = y0-b1;
     a = 8*a*a;
@@ -3454,7 +3545,7 @@ void Overlay::DrawAntialiasedEllipse(int x0, int y0, int x1, int y1)
             err -= dx -= b1;
         }
     }
-    
+
     if (--x0 == x1++) {
         while (y0-y1 < b) {
             i = 255*4*fabs(err+dx)/b1;
@@ -3472,7 +3563,7 @@ void Overlay::DrawAntialiasedEllipse(int x0, int y0, int x1, int y1)
 void Overlay::DrawEllipse(int x0, int y0, int x1, int y1)
 {
     // based on code from http://members.chello.at/~easyfilter/bresenham.html
-    
+
     long a = abs(x1-x0);
     long b = abs(y1-y0);
     long b1 = b&1;
@@ -3533,17 +3624,17 @@ const char* Overlay::DoEllipse(const char* args)
     if (h <= 0) h = ht + h;
     if (w <= 0) return OverlayError("ellipse width must be > 0");
     if (h <= 0) return OverlayError("ellipse height must be > 0");
-    
+
     if (linewidth != 1.0) {
         DrawThickEllipse(x, y, x+w-1, y+h-1);
         return NULL;
     }
-    
+
     if (alphablend) {
         DrawAntialiasedEllipse(x, y, x+w-1, y+h-1);
         return NULL;
     }
-    
+
     // draw a non-antialiased ellipse where linewidth is 1
     DrawEllipse(x, y, x+w-1, y+h-1);
     return NULL;
@@ -4009,7 +4100,7 @@ const char* Overlay::DoTarget(const char* args)
     // previous target name
     static char result[maxclipname];
     strcpy(result, targetname.c_str());
-    
+
     // no arguments means overlay is the target
     if (numargs == 0) {
         SetRenderTarget(ovpixmap, ovwd, ovht);
@@ -4244,7 +4335,7 @@ void Overlay::SaveOverlay(const wxString& pngpath)
         Warning(_("There is no overlay data to save!"));
         return;
     }
-    
+
     unsigned char* rgbdata = (unsigned char*) malloc(ovwd * ovht * 3);
     if (rgbdata== NULL) {
         Warning(_("Not enough memory to copy RGB data."));
@@ -4256,7 +4347,7 @@ void Overlay::SaveOverlay(const wxString& pngpath)
         Warning(_("Not enough memory to copy alpha data."));
         return;
     }
-    
+
     unsigned char* p = ovpixmap;
     int rgbpos = 0;
     int alphapos = 0;
@@ -4422,7 +4513,7 @@ const char* Overlay::DoFont(const char* args)
     #ifdef __WXMAC__
         // need to increase Mac font size by 25% to match text size on Win/Linux
         int ptsize = int(newsize * 1.25 + 0.5);
-        
+
         // set extraht to avoid GetTextExtent bug that clips descenders
         extraht = 1;
         if (strncmp(args+namepos, "default", 7) == 0 &&
@@ -4474,7 +4565,7 @@ const char* Overlay::DoFont(const char* args)
         } else {
             return OverlayError("unknown font name");
         }
-        
+
         // note that calling SetPointSize here avoids a bug in wxFont
         // that causes a 70pt font to end up as 8pt
         currfont.SetPointSize(ptsize);

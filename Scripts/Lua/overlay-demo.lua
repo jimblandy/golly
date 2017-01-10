@@ -134,10 +134,7 @@ local function test_transitions()
     -- create a clip from the menu screen
     local oldblend = ov("blend 0")
     ov(op.black)
-    ov("line 0 0 "..(wd - 1).." 0")
-    ov("line 0 0 0 "..(ht - 1))
-    ov("line "..(wd - 1).." 0 "..(wd - 1).." "..(ht - 1))
-    ov("line 0 "..(ht - 1).." "..(wd - 1).." "..(ht - 1))
+    ov("line 0 0 "..(wd - 1).." 0 "..(wd - 1).." "..(ht - 1).." 0 "..(ht - 1).." 0 0")
     ov("copy 0 0 "..wd.." "..ht.." bg")
     
     -- create the background clip
@@ -449,10 +446,7 @@ local function test_replace()
     ov("fill 20 212 64 64")
     ov("blend 1")
     ov(op.white)
-    ov("line 20 20 275 20")
-    ov("line 20 275 275 275")
-    ov("line 20 20 20 275")
-    ov("line 275 20 275 275")
+    ov("line 20 20 275 20 275 275 20 275 20 20")
     ov("copy 20 20 256 256 clip")
 
     -- create the background with some text
@@ -1093,9 +1087,14 @@ David Bell
         local i = 1
         ov("rgba "..level.." "..level.." "..level.." 255")
         local lastd = stard[i]
+        local coords = ""
 
         for i = 1, numstars do
             if (stard[i] ~= lastd) then
+                if coords ~= "" then
+                    ov("set"..coords)
+                    coords = ""
+                end
                 ov("rgba "..level.." "..level.." "..level.." 255")
                 level = level + 2
                 lastd = stard[i]
@@ -1107,7 +1106,10 @@ David Bell
             end
             x = floor(starx[i])
             y = floor(stary[i])
-            ov("set "..x.." "..y)
+            coords = coords.." "..x.." "..y
+        end
+        if coords ~= "" then
+            ov("set"..coords)
         end
 
         local timestars = g.millisecs() - t1
@@ -1406,6 +1408,9 @@ local function test_set()
         ov(op.white)
         local drawn = 0
         local lastx, lasty, newx, newy, diry
+        local coords = ""
+        local numcoords = 0
+        local batch = 8
         for i = 1, flakes do
             lastx = x[i]
             lasty = y[i]
@@ -1441,13 +1446,22 @@ local function test_set()
             x[i] = newx
             y[i] = newy
             if newy >= 0 and newy < ht then
-                ov("set "..newx.." "..floor(newy))
+                coords = coords.." "..newx.." "..floor(newy)
+                numcoords = numcoords + 1
+                if numcoords == batch then
+                    ov("set"..coords)
+                    coords = ""
+                    numcoords = 0
+                end
                 drawn = drawn + 1
             end
         end
+        if numcoords > 0 then
+            ov("set"..coords)
+        end
 
         -- display elapsed time
-        g.show("Time to draw "..drawn.." pixels "..ms(g.millisecs() - t1))
+        g.show("Time to draw "..drawn.." pixels "..ms(g.millisecs() - t1).."  Batch "..batch)
 
         -- draw the exit message
         ov("blend 1")
@@ -1481,10 +1495,7 @@ end
 local function draw_rect(x0, y0, x1, y1)
     local oldrgba = ov(op.red)
     local oldwidth = ov("lineoption width 1")
-    ov("line "..x0.." "..y0.." "..x1.." "..y0)
-    ov("line "..x1.." "..y0.." "..x1.." "..y1)
-    ov("line "..x1.." "..y1.." "..x0.." "..y1)
-    ov("line "..x0.." "..y1.." "..x0.." "..y0)
+    ov("line "..x0.." "..y0.." "..x1.." "..y0.." "..x1.." "..y1.." "..x0.." "..y1.." "..x0.." "..y0)
     ov("rgba "..oldrgba)
     ov("lineoption width "..oldwidth)
 end
@@ -2109,10 +2120,7 @@ local function test_text()
     local gollyclip = pastetext(10, 10)
     
     -- draw box around text
-    ov("line 10 10 "..(w-1+10).." 10")
-    ov("line 10 10 10 "..(h-1+10))
-    ov("line "..(w-1+10).." 10 "..(w-1+10).." "..(h-1+10))
-    ov("line 10 "..(h-1+10).." "..(w-1+10).." "..(h-1+10))
+    ov("line 10 10 "..(w-1+10).." 10 "..(w+1+10).." "..(h-1+10).." 10 "..(h-1+10).." 10 10")
     -- show baseline
     ov("line 10 "..(h-1+10-descent).." "..(w-1+10).." "..(h-1+10-descent))
     

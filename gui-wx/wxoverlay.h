@@ -122,6 +122,11 @@ public:
     // Save overlay in given PNG file.
 
 private:
+    const char* GetCoordinatePair(const char* args, int* x, int* y);
+    // Decode a pair of integers from the supplied string.
+    // Returns a pointer to the first non-space character after
+    // the coordinate pair or NULL if decode failed.
+
     void SetRenderTarget(unsigned char* pix, int pwd, int pht);
     // Set the render target pixmap and size.
 
@@ -187,12 +192,15 @@ private:
     const char* DoLineOption(const char* args);
     // Set a line option.
     
+    void RenderLine(int x0, int y0, int x1, int y1);
+    // Called by DoLine to render a line.
+
     const char* DoLine(const char* args);
     // Draw a line using the current RGBA values.
     // Automatically clips any parts of the line outside the render target.
     
     void DrawThickLine(int x0, int y0, int x1, int y1);
-    // Called by DoLine to draw a line when linewidth is not 1.
+    // Called by RenderLine to draw a line when linewidth is not 1.
     // If alphablend is true then the edges will be antialiased.
     
     void PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int ystep,
