@@ -323,10 +323,10 @@ of the ellipse.
 <dd> Example: <b>ov("ellipse 10 10 60 40")</b></dd>
 </p>
 
-<a name="fill"></a><p><dt><b>fill <i>x y wd ht</i></b></dt>
+<a name="fill"></a><p><dt><b>fill <i>x y wd ht (...x y wd ht)</i></b></dt>
 <dd>
-Fill the given rectangle in the render target with the current <a href="#rgba">rgba</a> values.
-Any parts of the rectangle outside the render target are automatically clipped.
+Fill the given rectangles in the render target with the current <a href="#rgba">rgba</a> values.
+Any parts of the rectangles outside the render target are automatically clipped.
 If no rectangle is given then the entire render target is filled.
 A width or height less than 1 is relative to the render target's width or height,
 so a command like <b>ov("fill 1 1 -2 -2")</b> would fill all of the render target

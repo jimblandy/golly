@@ -2686,56 +2686,56 @@ const char* Overlay::GetCoordinatePair(const char* args, int* x, int* y)
 {
     // attempt to decode integers
     char c = *args++;
-    int sign = 1;
+    bool sign = false;
     int newx = 0;
     int newy = 0;
 
     // skip whitespace
-    while (isspace(c)) {
+    while (c == ' ') {
         c = *args++;
     }
     if (!c) return NULL;
 
     // check for sign
     if (c == '-') {
-        sign = -1;
+        sign = true;
         c = *args++;
     }
     if (!c) return NULL;
 
     // read digits
-    while (isdigit(c)) {
+    while (c >= '0' && c <= '9') {
         newx = 10 * newx + (c - '0');
         c = *args++;
     }
-    newx *= sign;
+    if (sign) newx = -newx;
 
     // check for end of word
-    if (c && !isspace(c)) return NULL;
+    if (c && c != ' ') return NULL;
 
     // skip whitespace
-    while (isspace(c)) {
+    while (c == ' ') {
         c = *args++;
     }
     if (!c) return NULL;
 
     // check for sign
-    sign = 1;
+    sign = false;
     if (c == '-') {
-        sign = -1;
+        sign = true;
         c = *args++;
     }
 
     // read digits
-    while (isdigit(c)) {
+    while (c >= '0' && c <= '9') {
         newy = 10 * newy + (c - '0');
         c = *args++;
     }
-    newy *= sign;
+    if (sign) newy = -newy;
 
     // check for end of word
-    if (c && !isspace(c)) return NULL;
-    while (isspace(c)) {
+    if (c && c != ' ') return NULL;
+    while (c == ' ') {
         c = *args++;
     }
     args--;
@@ -3718,11 +3718,12 @@ const char* Overlay::DoFill(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
-    if (args[0] == ' ') {
-        int x, y, w, h;
-        if (sscanf(args, " %d %d %d %d", &x, &y, &w, &h) != 4) {
-            return OverlayError("fill command requires 0 or 4 arguments");
-        }
+    if (*args == ' ') {
+        int x = 0, y = 0, w = 0, h = 0;
+        args = GetCoordinatePair(args, &x, &y);
+        if (!args) return OverlayError("fill command requires 0 or at least 4 arguments");
+        args = GetCoordinatePair(args, &w, &h);
+        if (!args) return OverlayError("fill command requires 0 or at least 4 arguments");
 
         // treat non-positive w/h as inset from overlay's width/height
         if (w <= 0) w = wd + w;
@@ -3731,21 +3732,49 @@ const char* Overlay::DoFill(const char* args)
         if (h <= 0) return OverlayError("fill height must be > 0");
 
         // ignore rect if completely outside pixmap edges
-        if (RectOutsideTarget(x, y, w, h)) return NULL;
+        if (!RectOutsideTarget(x, y, w, h)) {
+            // clip any part of rect outside pixmap edges
+            int xmax = x + w - 1;
+            int ymax = y + h - 1;
+            if (x < 0) x = 0;
+            if (y < 0) y = 0;
+            if (xmax >= wd) xmax = wd - 1;
+            if (ymax >= ht) ymax = ht - 1;
+            w = xmax - x + 1;
+            h = ymax - y + 1;
 
-        // clip any part of rect outside pixmap edges
-        int xmax = x + w - 1;
-        int ymax = y + h - 1;
-        if (x < 0) x = 0;
-        if (y < 0) y = 0;
-        if (xmax >= wd) xmax = wd - 1;
-        if (ymax >= ht) ymax = ht - 1;
-        w = xmax - x + 1;
-        h = ymax - y + 1;
+            // fill visible rect with current RGBA values
+            FillRect(x, y, w, h);
+        }
+        
+        while (*args) {
+            args = GetCoordinatePair(args, &x, &y);
+            if (!args) return OverlayError("fill command invalid arguments");
+            args = GetCoordinatePair(args, &w, &h);
+            if (!args) return OverlayError("fill command invalid arguments");
 
-        // fill visible rect with current RGBA values
-        FillRect(x, y, w, h);
-
+            // treat non-positive w/h as inset from overlay's width/height
+            if (w <= 0) w = wd + w;
+            if (h <= 0) h = ht + h;
+            if (w <= 0) return OverlayError("fill width must be > 0");
+            if (h <= 0) return OverlayError("fill height must be > 0");
+    
+            // ignore rect if completely outside pixmap edges
+            if (!RectOutsideTarget(x, y, w, h)) {
+                // clip any part of rect outside pixmap edges
+                int xmax = x + w - 1;
+                int ymax = y + h - 1;
+                if (x < 0) x = 0;
+                if (y < 0) y = 0;
+                if (xmax >= wd) xmax = wd - 1;
+                if (ymax >= ht) ymax = ht - 1;
+                w = xmax - x + 1;
+                h = ymax - y + 1;
+    
+                // fill visible rect with current RGBA values
+                FillRect(x, y, w, h);
+            }
+        }
     } else {
         // fill entire pixmap with current RGBA values
         FillRect(0, 0, wd, ht);
