@@ -381,10 +381,10 @@ If the given pixel is outside the render target then "" is returned.
 
 <a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2 (...xn yn)</i></b></dt>
 <dd>
-Draw one or more lines of pixels between the supplied coordinates <i>x1 y1</i> to <i>xn yn</i> on the render target
-using the current <a href="#rgba">rgba</a> values.
+Draw one or more lines of pixels between the supplied coordinates <i>x1 y1</i> to <i>xn yn</i>
+on the render target using the current <a href="#rgba">rgba</a> values.
 Any pixels outside the render target edges are automatically clipped.
-If alpha blending is turned on then the line is antialiased.
+If alpha blending is turned on then the lines are antialiased.
 The <a href="#lineoption">lineoption width</a> command determines
 the thickness of the lines.
 </dd>
@@ -600,7 +600,7 @@ render target with a command like <b>"save 0 0 0 0 overlay.png"</b>).
 <a name="set"></a><p><dt><b>set <i>x1 y1 (...xn yn)</i></b></dt>
 <dd>
 Set the specified pixels to the current <a href="#rgba">rgba</a> values in the render target.
-Pixels outside the render target is silently ignored.
+Pixels outside the render target are silently ignored.
 </dd>
 <dd>Examples:</dd>
 <dd><i>-- set pixel at (10, 20)</i></dd>
