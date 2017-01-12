@@ -32,6 +32,7 @@ local shadow = 0        -- for text shadow
 local demofont = "font 11 default-bold"
 
 -- buttons for main menu (created in create_menu_buttons)
+local batch_button
 local blend_button
 local animation_button
 local cellview_button
@@ -103,7 +104,7 @@ local function repeat_test(extratext, palebg)
     ov("font "..oldfont)
 
     g.update()
-    
+
     while true do
         local event = g.getevent()
         if event:find("^oclick") or event == "key enter none" or event == "key return none" then
@@ -136,7 +137,7 @@ local function test_transitions()
     ov(op.black)
     ov("line 0 0 "..(wd - 1).." 0 "..(wd - 1).." "..(ht - 1).." 0 "..(ht - 1).." 0 0")
     ov("copy 0 0 "..wd.." "..ht.." bg")
-    
+
     -- create the background clip
     ov(op.blue)
     ov("fill")
@@ -332,7 +333,7 @@ local function test_cursors()
     -- create a transparent hole
     ov("rgba 0 0 0 0")
     ov("fill 100 100 100 100")
-    
+
     if cmd == "cursor current" then
         cmd = cmd.."\n\n".."The overlay cursor matches Golly's current cursor."
     else
@@ -341,7 +342,7 @@ local function test_cursors()
     end
     ov(op.black)
     demotext(10, 10, cmd)
-    
+
     if repeat_test(" using a different cursor", true) then goto restart end
     curs = 0
 end
@@ -352,19 +353,19 @@ local pos = 0
 
 local function test_positions()
     ::restart::
-    
+
     pos = pos + 1
     if pos == 1 then ov("position topleft") end
     if pos == 2 then ov("position topright") end
     if pos == 3 then ov("position bottomright") end
     if pos == 4 then ov("position bottomleft") end
     if pos == 5 then ov("position middle") pos = 0 end
-    
+
     ov(op.white)
     ov("fill")
     ov("rgba 0 0 255 128")
     ov("fill 1 1 -2 -2")
-    
+
     local text =
 [[The overlay can be positioned in the middle
 of the current layer, or at any corner.]]
@@ -387,7 +388,7 @@ of the current layer, or at any corner.]]
     pastetext(x, y)
     ov("blend "..oldblend)
     ov("font "..oldfont)
-    
+
     if repeat_test(" using a different position") then goto restart end
     pos = 0
 end
@@ -546,13 +547,13 @@ end
 
 local function test_copy_paste()
     ::restart::
-    
+
     local t1 = g.millisecs()
 
     -- tile the overlay with a checkerboard pattern
     local sqsize = rand(5, 300)
     local tilesize = sqsize * 2
-    
+
     -- create the 1st tile (2x2 squares) in the top left corner
     ov(op.white)
     ov("fill 0 0 "..tilesize.." "..tilesize)
@@ -563,23 +564,23 @@ local function test_copy_paste()
     ov("fill "..(sqsize+1).." 1 "..(sqsize-1).." "..(sqsize-1))
     ov("fill 1 "..(sqsize+1).." "..(sqsize-1).." "..(sqsize-1))
     ov("copy 0 0 "..tilesize.." "..tilesize.." tile")
-    
+
     -- tile the top row
     for x = tilesize, wd, tilesize do
         ov("paste "..x.." 0 tile")
     end
-    
+
     -- copy the top row and use it to tile the remaining rows
     ov("copy 0 0 "..wd.." "..tilesize.." row")
     for y = tilesize, ht, tilesize do
         ov("paste 0 "..y.." row")
     end
-    
+
     ov("delete tile")
     ov("delete row")
-    
+
     g.show("Time to test copy and paste: "..ms(g.millisecs()-t1))
-    
+
     if repeat_test(" with different sized tiles") then goto restart end
 end
 
@@ -1135,7 +1136,7 @@ David Bell
             end
         end
         gliderframe = gliderframe + 0.05
-        
+
         for gy = 0, 2 do
             for gx = 0, 2 do
                 if glider[frame][3 * gy + gx + 1] == 1 then
@@ -1222,7 +1223,7 @@ David Bell
     ov("textoption align "..oldalign)
     ov("font "..oldfont)
     ov("blend "..oldblend)
-    
+
     -- no point calling repeat_test()
     return_to_main_menu = true
 end
@@ -1233,11 +1234,11 @@ local loaddir = g.getdir("app").."Help/images/"
 
 local function test_load()
     ::restart::
-    
+
     ov(op.yellow)
     ov("fill")
     g.update()
-    
+
     -- prompt user to load a BMP/GIF/PNG/TIFF file
     local filetypes = "Image files (*.bmp;*.gif;*.png;*.tiff)|*.bmp;*.gif;*.png;*.tiff"
     local filepath = g.opendialog("Load an image file", filetypes, loaddir, "")
@@ -1248,12 +1249,12 @@ local function test_load()
         local iw, ih = split(imgsize)
         ov("load "..int((wd-iw)/2).." "..int((ht-ih)/2).." "..filepath)
         g.show("Image width and height: "..imgsize)
-        
+
         -- update loaddir by stripping off the file name
         local pathsep = g.getdir("app"):sub(-1)
         loaddir = filepath:gsub("[^"..pathsep.."]+$","")
     end
-    
+
     if repeat_test(" and load another image", true) then goto restart end
 end
 
@@ -1263,7 +1264,7 @@ local savedir = g.getdir("data")
 
 local function test_save()
     ::restart::
-    
+
     -- create gradient from one random pale color to another
     local r1, g1, b1, r2, g2, b2
     repeat
@@ -1288,7 +1289,7 @@ local function test_save()
     -- create a transparent hole in the middle
     ov("rgba 0 0 0 0")
     ov("fill "..int((wd-100)/2).." "..int((ht-100)/2).." 100 100")
-    
+
     g.update()
 
     -- prompt for file name and location
@@ -1298,12 +1299,12 @@ local function test_save()
         -- save overlay in given file
         ov("save 0 0 "..wd.." "..ht.." "..pngpath)
         g.show("Overlay was saved in "..pngpath)
-        
+
         -- update savedir by stripping off the file name
         local pathsep = g.getdir("app"):sub(-1)
         savedir = pngpath:gsub("[^"..pathsep.."]+$","")
     end
-    
+
     if repeat_test(" and save a different overlay", true) then goto restart end
 end
 
@@ -1581,7 +1582,7 @@ local function show_magnified_pixels(x, y)
     local numrows = numcols
     local magsize = 14
     local boxsize = (1+magsize)*numcols+1
-    
+
     -- get pixel colors
     local color = {}
     for i = 1, numrows do
@@ -1590,20 +1591,20 @@ local function show_magnified_pixels(x, y)
             color[i][j] = ov("get "..(x-radius-1+j).." "..(y-radius-1+i))
         end
     end
-    
+
     -- save area in top left corner big enough to draw the magnifying glass
     local outersize = int(math.sqrt(boxsize*boxsize+boxsize*boxsize) + 0.5)
     ov("copy 0 0 "..outersize.." "..outersize.." outer_bg")
     local oldrgba = ov("rgba 0 0 0 0")
     local oldblend = ov("blend 0")
     ov("fill 0 0 "..outersize.." "..outersize)
-    
+
     -- draw gray background (ie. grid lines around pixels)
     ov(op.gray)
     local xpos = int((outersize-boxsize)/2)
     local ypos = int((outersize-boxsize)/2)
     ov("fill "..xpos.." "..ypos.." "..boxsize.." "..boxsize)
-    
+
     -- draw magnified pixels
     for i = 1, numrows do
         for j = 1, numcols do
@@ -1615,32 +1616,32 @@ local function show_magnified_pixels(x, y)
             end
         end
     end
-    
+
     -- erase outer ring
     local oldwidth = ov("lineoption width "..int((outersize-boxsize)/2))
     ov("rgba 0 0 0 0")
     draw_ellipse(0, 0, outersize, outersize)
-    
+
     -- surround with a gray circle
     ov(op.gray)
     ov("lineoption width 4")
     ov("blend 1")
     draw_ellipse(xpos-2, ypos-2, boxsize+4, boxsize+4)
     ov("blend 0")
-    
+
     ov("copy 0 0 "..outersize.." "..outersize.." mag_box")
-    
+
     -- restore background saved above
     ov("paste 0 0 outer_bg")
     ov("delete outer_bg")
-    
+
     -- draw magnified circle with center at x,y
     xpos = int(x-outersize/2)
     ypos = int(y-outersize/2)
     ov("blend 1")
     ov("paste "..xpos.." "..ypos.." mag_box")
     ov("delete mag_box")
-    
+
     -- restore settings
     ov("rgba "..oldrgba)
     ov("blend "..oldblend)
@@ -1654,54 +1655,54 @@ local function test_lines()
     local owd = 800
     local oht = 600
     ov("resize "..owd.." "..oht)
-    
+
     ov(op.white)
     ov("fill")
     ov(op.black)
-    
+
     local oldblend = ov("blend 0")
     local oldwidth = ov("lineoption width 1")
 
     -- non-antialiased lines (linewd = 1)
     radial_lines(100, 100, 50)
-    
+
     -- antialiased lines (linewd = 1)
     ov("blend 1")
     radial_lines(220, 100, 50)
     ov("blend 0")
-    
+
     -- thick non-antialiased lines
     ov("lineoption width 3")            -- 2 is same as 1!!!??? (2.5 is ok)
     radial_lines(100, 220, 50)
     vertical_lines(50, 300)
     diagonal_lines(50, 350)
-    
+
     -- thick antialiased lines
     ov("blend 1")
     radial_lines(220, 220, 50)
     vertical_lines(170, 300)
     diagonal_lines(170, 350)
     ov("blend 0")
-    
+
     -- non-antialiased ellipses (linewd = 1)
     ov("lineoption width 1")
     nested_ellipses(350, 100)
-    
+
     -- antialiased ellipses (linewd = 1)
     ov("blend 1")
     nested_ellipses(520, 100)
     ov("blend 0")
-    
+
     -- thick non-antialiased ellipses
     ov("lineoption width 3")
     nested_ellipses(350, 300)
-    
+
     -- thick antialiased ellipses
     ov("blend 1")
     nested_ellipses(520, 300)
     ov("blend 0")
     ov("lineoption width 1")
-    
+
     -- test overlapping translucent colors
     ov("blend 1")
     ov("lineoption width 20")
@@ -1744,7 +1745,7 @@ local function test_lines()
     draw_ellipse(480, 500, 20, 20)
     ov("blend 0")
     ov("lineoption width 1")
-    
+
     -- draw solid ellipses (non-antialiased and antialiased)
     ov("lineoption width 11")
     draw_ellipse(510, 500, 21, 40)
@@ -1752,7 +1753,7 @@ local function test_lines()
     draw_ellipse(540, 500, 21, 40)
     ov("blend 0")
     ov("lineoption width 1")
-    
+
     -- create a circular hole with fuzzy edges
     ov("rgba 255 255 255 0")
     ov("blend 0")
@@ -1790,7 +1791,7 @@ local function test_lines()
     maketext("Hit the M key to toggle the magnifying glass.")
     pastetext(10, 10)
     ov("font "..oldfont)
-    
+
     g.update()
 
     ov("blend 0")
@@ -1798,7 +1799,7 @@ local function test_lines()
     local showing_magnifier = false
     local display_magnifier = true
     local prevx, prevy
-    
+
     -- loop until enter/return key pressed or mouse clicked
     while true do
         local event = g.getevent()
@@ -1825,7 +1826,7 @@ local function test_lines()
             -- might be a keyboard shortcut
             g.doevent(event)
         end
-        
+
         -- track mouse and magnify pixels under cursor
         local xy = ov("xy")
         if #xy > 0 then
@@ -1978,7 +1979,7 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     ov("textoption align "..oldalign)
     ov("font "..oldfont)
     ov("blend "..oldblend)
-    
+
     if repeat_test(" with different text options") then goto restart end
 end
 
@@ -1990,12 +1991,12 @@ local function test_text()
     local t1 = g.millisecs()
 
     local oldfont, oldblend, w, h, descent, nextx
-    
+
     oldblend = ov("blend 0")
     ov(op.white) -- white background
     ov("fill")
     ov(op.black) -- black text
-    
+
     ov("blend 1")
     maketext("FLIP Y")
     pastetext(20, 30)
@@ -2034,49 +2035,49 @@ local function test_text()
     w, h, descent = maketext("normal")
     pastetext(nextx, 30 - h + descent)
     nextx = nextx + w + 5
-    
+
     ov("font 20 default-bold")
     w, h, descent = maketext("Big")
     pastetext(nextx, 30 - h + descent)
-    
+
     ov("font 10 default-bold")
     w = maketext("bold")
     pastetext(300, 40)
     nextx = 300 + w + 5
-    
+
     ov("font 10 default-italic")
     maketext("italic")
     pastetext(nextx, 40)
-    
+
     ov("font 10 mono")
     w, h, descent = maketext("mono")
     pastetext(300, 80 - h + descent)
     nextx = 300 + w + 5
-    
+
     ov("font 12")   -- just change font size
     w, h, descent = maketext("mono12")
     pastetext(nextx, 80 - h + descent)
-    
+
     ov("font 10 mono-bold")
     w = maketext("mono-bold")
     pastetext(300, 90)
-    
+
     ov("font 10 mono-italic")
     maketext("mono-italic")
     pastetext(300, 105)
-    
+
     ov("font 10 roman")
     maketext("roman")
     pastetext(300, 130)
-    
+
     ov("font 10 roman-bold")
     w = maketext("roman-bold")
     pastetext(300, 145)
-    
+
     ov("font 10 roman-italic")
     maketext("roman-italic")
     pastetext(300, 160)
-    
+
     ov("font "..oldfont)    -- restore previous font
 
     ov(op.red)
@@ -2105,7 +2106,7 @@ local function test_text()
     ov(op.magenta)      ov("fill 200 250 100 100")
     ov("rgba 0 0 0 0")  ov("fill 300 250 100 100")
     ov("blend 1")
-    
+
     ov(op.black)
     maketext("The quick brown fox jumps over 123 dogs.")
     pastetext(10, 270)
@@ -2118,24 +2119,24 @@ local function test_text()
     ov("rgba 255 0 0 40")   -- translucent red text
     w, h, descent = maketext("Golly")
     local gollyclip = pastetext(10, 10)
-    
+
     -- draw box around text
     ov("line 10 10 "..(w-1+10).." 10 "..(w+1+10).." "..(h-1+10).." 10 "..(h-1+10).." 10 10")
     -- show baseline
     ov("line 10 "..(h-1+10-descent).." "..(w-1+10).." "..(h-1+10-descent))
-    
+
     -- draw minimal bounding rect over text
     local xoff, yoff, minwd, minht = op.minbox(gollyclip, w, h)
     ov("rgba 0 0 255 20")
     ov("fill "..(xoff+10).." "..(yoff+10).." "..minwd.." "..minht)
-    
+
     -- restore blend state and font
     ov("blend "..oldblend)
     ov("font "..oldfont)
     ov(op.black)
 
     g.show("Time to test text: "..ms(g.millisecs()-t1))
-    
+
     if repeat_test(" with a different sized \"Golly\"", true) then goto restart end
 end
 
@@ -2146,12 +2147,12 @@ local function test_fill()
 
     ov(op.white)
     ov("fill")
-    
+
     toggle = 1 - toggle
     if toggle > 0 then
         ov("blend 1") -- turn on alpha blending
     end
-    
+
     local maxx = wd-1
     local maxy = ht-1
     local t1 = g.millisecs()
@@ -2166,7 +2167,7 @@ local function test_fill()
     if toggle > 0 then
         ov("blend 0") -- turn off alpha blending
     end
-    
+
     if repeat_test(" with a different blend setting") then goto restart end
 end
 
@@ -2240,7 +2241,7 @@ local function test_target()
     -- paste the clip
     ov("blend 0")
     ov("paste 200 0 clip")
- 
+
     if repeat_test(" with a different target") then goto restart end
 
     -- free clip and restore previous target
@@ -2252,17 +2253,131 @@ end
 
 --------------------------------------------------------------------------------
 
+local batchsize = 2
+local maxbatch  = 512
+
+local function test_batch()
+    ::restart::
+
+    ov(op.black)
+    ov("fill")
+
+    -- udpate the batch size
+    batchsize = batchsize * 2
+    if batchsize > maxbatch then
+        batchsize = 4
+    end
+
+    -- random items
+    local x = {}
+    local y = {}
+    local coords = {}
+    local allcoords
+    local items = batchsize
+    local reps  = floor(20 * maxbatch / batchsize)
+
+    -- create random positions
+    for i = 1, items do
+        x[i] = rand(0, wd - 1)
+        y[i] = rand(0, ht - 1)
+    end
+
+    -- create random lines
+    allcoords = "line"
+    ov(op.green)
+    for i = 1, items do
+        local j = i + 1
+        if j > items then
+            j = 1
+        end
+        coords[i] = "line "..x[i].." "..y[i].." "..x[j].." "..y[j]
+        allcoords = allcoords.." "..x[i].." "..y[i].." "..x[j].." "..y[j]
+    end
+
+    -- timme draw one a a time
+    local t3 = g.millisecs()
+    for i = 1, reps do
+        for i = 1, items do
+            ov(coords[i])
+        end
+    end
+    t3 = g.millisecs() - t3
+
+    -- time drawing all at once
+    local t4 = g.millisecs()
+    for i = 1, reps do
+        ov(allcoords)
+    end
+    t4 = g.millisecs() - t4
+
+    -- create random rectangles
+    allcoords = "fill"
+    ov(op.red)
+    for i = 1, items do
+        coords[i] = "fill "..(x[i] - 4).." "..(y[i] - 4).." 9 9"
+        allcoords = allcoords.." "..(x[i] - 4).." "..(y[i] - 4).." 9 9"
+    end
+
+    -- timme draw one a a time
+    local t5 = g.millisecs()
+    for i = 1, reps do
+        for i = 1, items do
+            ov(coords[i])
+        end
+    end
+    t5 = g.millisecs() - t5
+
+    -- time drawing all at once
+    local t6 = g.millisecs()
+    for i = 1, reps do
+        ov(allcoords)
+    end
+    t6 = g.millisecs() - t6
+
+    -- create random pixels
+    allcoords = "set"
+    ov(op.white)
+    for i = 1, items do
+        coords[i] = "set "..x[i].." "..y[i]
+        allcoords = allcoords.." "..x[i].." "..y[i]
+    end
+
+    -- time drawing one at a time
+    ov(op.white)
+    local t1 = g.millisecs()
+    for i = 1, reps do
+        for i = 1, items do
+            ov(coords[i])
+        end
+    end
+    t1 = g.millisecs() - t1
+
+    -- time drawing all at once
+    local t2 = g.millisecs()
+    for i = 1, reps do
+        ov(allcoords)
+    end
+    t2 = g.millisecs() - t2
+
+    g.show("reps: "..reps.."  items: "..items.."  pixels: single "..ms(t1).." batch "..ms(t2).."  lines: single "..ms(t3).." batch "..ms(t4).."  rectangles: single "..ms(t5).." batch "..ms(t6))
+
+    -- create batch string
+    if repeat_test(" with a different batch size") then goto restart end
+end
+
+--------------------------------------------------------------------------------
+
 local function test_blending()
     ::restart::
 
     ov(op.white)
     ov("fill")
-    
+
     toggle = 1 - toggle
     if toggle > 0 then
         ov("blend 1")           -- turn on alpha blending
     end
-    
+
     local oldfont = ov(demofont)
     local oldblend = ov("blend 1")
     ov(op.black)
@@ -2274,16 +2389,16 @@ local function test_blending()
     pastetext(10, 300)
     ov("blend "..oldblend)
     ov("font "..oldfont)
-    
+
     ov("rgba 0 255 0 128")      -- 50% translucent green
     ov("fill 40 70 100 100")
-    
+
     ov("rgba 255 0 0 128")      -- 50% translucent red
     ov("fill 80 110 100 100")
-    
+
     ov("rgba 0 0 255 128")      -- 50% translucent blue
     ov("fill 120 150 100 100")
-    
+
     ov(op.black)
     radial_lines(100, 400, 50)
     draw_ellipse(200, 350, 200, 100)
@@ -2293,11 +2408,11 @@ local function test_blending()
     local oldwidth = ov("lineoption width 50")
     draw_ellipse(450, 350, 100, 100)
     ov("lineoption width "..oldwidth)
-    
+
     if toggle > 0 then
         ov("blend 0")           -- turn off alpha blending
     end
-    
+
     if repeat_test(" with a different blend setting", true) then goto restart end
 end
 
@@ -2309,7 +2424,7 @@ local function test_mouse()
     ov(op.black)
     ov("fill")
     ov(op.white)
-    
+
     local oldfont = ov(demofont)
     local oldblend = ov("blend 1")
     local w, h
@@ -2330,7 +2445,7 @@ local function test_mouse()
     pastetext(10, ht - 10 - h, op.identity, "botlines")
     ov("blend "..oldblend)
     ov("font "..oldfont)
-    
+
     ov("cursor pencil")
     g.update()
 
@@ -2364,7 +2479,7 @@ local function test_mouse()
         elseif #event > 0 then
             g.doevent(event)
         end
-        
+
         local xy = ov("xy")
         if #xy > 0 then
             local x, y = split(xy)
@@ -2379,7 +2494,7 @@ local function test_mouse()
             g.show("mouse is outside overlay")
         end
     end
-    
+
     -- above loop checks for enter/return/space key
     -- if repeat_test() then goto restart end
 end
@@ -2388,6 +2503,7 @@ end
 
 local function create_menu_buttons()
     local longest = "Text and Transforms"
+    batch_button = op.button(       longest, test_batch)
     blend_button = op.button(       longest, test_blending)
     animation_button = op.button(   longest, test_animation)
     cellview_button = op.button(    longest, test_cellview)
@@ -2407,6 +2523,7 @@ local function create_menu_buttons()
     transition_button = op.button(  longest, test_transitions)
 
     -- change labels without changing button widths
+    batch_button.setlabel(       "Batch", false)
     blend_button.setlabel(       "Alpha Blending", false)
     animation_button.setlabel(   "Animation", false)
     cellview_button.setlabel(    "Cell View", false)
@@ -2429,7 +2546,7 @@ end
 --------------------------------------------------------------------------------
 
 local function main_menu()
-    local numbutts = 17
+    local numbutts = 18
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
     local buttgap = 10
@@ -2442,22 +2559,23 @@ local function main_menu()
     ov(demofont)
     local w2, h2 = maketext("Click on a button to see what's possible.", "smalltext")
     local textht = h1 + textgap + h2
-    
+
     -- resize overlay to fit buttons and text
     wd = hgap + buttwd + hgap + w1 + hgap
     ht = hgap + numbutts * buttht + (numbutts-1) * buttgap + hgap
     ov("resize "..wd.." "..ht)
-    
+
     ov("position middle")
     ov("cursor arrow")
     ov(op.gray)
     ov("fill")
     ov(op.white)
     ov("fill 2 2 -4 -4")
-    
+
     local x = hgap
     local y = hgap
-    
+
+    batch_button.show(x, y)         y = y + buttgap + buttht
     blend_button.show(x, y)         y = y + buttgap + buttht
     animation_button.show(x, y)     y = y + buttgap + buttht
     cellview_button.show(x, y)      y = y + buttgap + buttht
@@ -2475,19 +2593,19 @@ local function main_menu()
     save_button.show(x, y)          y = y + buttgap + buttht
     text_button.show(x, y)          y = y + buttgap + buttht
     transition_button.show(x, y)
-    
+
     local oldblend = ov("blend 1")
-    
+
     x = hgap + buttwd + hgap
     y = int((ht - textht) / 2)
     pastetext(x, y, op.identity, "bigtext")
     x = x + int((w1 - w2) / 2)
     y = y + h1 + textgap
     pastetext(x, y, op.identity, "smalltext")
-    
+
     ov("blend "..oldblend)
     ov("font "..oldfont)
-    
+
     g.update()
     g.show(" ") -- clear any timing info
 
