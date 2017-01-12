@@ -2294,7 +2294,7 @@ local function test_batch()
         allcoords = allcoords.." "..x[i].." "..y[i].." "..x[j].." "..y[j]
     end
 
-    -- timme draw one a a time
+    -- timme draw one at a time
     local t3 = g.millisecs()
     for i = 1, reps do
         for i = 1, items do
@@ -2318,7 +2318,7 @@ local function test_batch()
         allcoords = allcoords.." "..(x[i] - 4).." "..(y[i] - 4).." 9 9"
     end
 
-    -- timme draw one a a time
+    -- timme draw one at a time
     local t5 = g.millisecs()
     for i = 1, reps do
         for i = 1, items do
