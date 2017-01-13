@@ -1313,7 +1313,7 @@ end
 local function test_set()
     local maxx = wd - 1
     local maxy = ht - 1
-    local flakes = 7500
+    local flakes = 10000
 
     -- create the exit message
     local oldfont = ov(demofont)
@@ -1373,9 +1373,10 @@ local function test_set()
 
     -- initialize flake positions
     local maxpos = -20 * maxy
-    local x = {}
-    local y = {}
+    local x  = {}
+    local y  = {}
     local dy = {}
+    local xy = {}
     for i = 1, flakes do
         x[i] = rand(0, maxx)
         local yval = 0
@@ -1409,9 +1410,7 @@ local function test_set()
         ov(op.white)
         local drawn = 0
         local lastx, lasty, newx, newy, diry
-        local coords = ""
-        local numcoords = 0
-        local batch = 8
+        local m = 1
         for i = 1, flakes do
             lastx = x[i]
             lasty = y[i]
@@ -1447,22 +1446,18 @@ local function test_set()
             x[i] = newx
             y[i] = newy
             if newy >= 0 and newy < ht then
-                coords = coords.." "..newx.." "..floor(newy)
-                numcoords = numcoords + 1
-                if numcoords == batch then
-                    ov("set"..coords)
-                    coords = ""
-                    numcoords = 0
-                end
+                xy[m] = newx
+                xy[m + 1] = floor(newy)
+                m = m + 2
                 drawn = drawn + 1
             end
         end
-        if numcoords > 0 then
-            ov("set"..coords)
+        if m > 1 then
+            ov("set "..table.concat(xy, " "))
         end
 
         -- display elapsed time
-        g.show("Time to draw "..drawn.." pixels "..ms(g.millisecs() - t1).."  Batch "..batch)
+        g.show("Time to draw "..drawn.." pixels "..ms(g.millisecs() - t1))
 
         -- draw the exit message
         ov("blend 1")
@@ -2268,37 +2263,40 @@ local function test_batch()
         batchsize = 4
     end
 
-    -- random items
-    local x = {}
-    local y = {}
-    local coords = {}
-    local allcoords
+    -- random coordinates
+    local xy    = {}
+    local xywh  = {}
     local items = batchsize
     local reps  = floor(20 * maxbatch / batchsize)
 
     -- create random positions
+    local m = 1
     for i = 1, items do
-        x[i] = rand(0, wd - 1)
-        y[i] = rand(0, ht - 1)
+        xy[m] = rand(0, wd - 1)
+        xy[m + 1] = rand(0, ht - 1)
+        xywh[m] = xy[m] - 2
+        xywh[m + 1] = (xy[m + 1] - 2).." 5 5"
+        m = m + 2
     end
 
-    -- create random lines
-    allcoords = "line"
+    -- create list of all coordinates
+    local xylist   = table.concat(xy, " ").." "..xy[1].." "..xy[2]
+    local xywhlist = table.concat(xywh, " ")
+
+    -- draw random lines
     ov(op.green)
-    for i = 1, items do
-        local j = i + 1
-        if j > items then
-            j = 1
-        end
-        coords[i] = "line "..x[i].." "..y[i].." "..x[j].." "..y[j]
-        allcoords = allcoords.." "..x[i].." "..y[i].." "..x[j].." "..y[j]
-    end
 
     -- time draw one at a time
     local t3 = g.millisecs()
     for i = 1, reps do
+        m = 1
         for i = 1, items do
-            ov(coords[i])
+            if i == items then
+                ov("line "..xy[m].." "..xy[m + 1].." "..xy[1].." "..xy[2])
+            else
+                ov("line "..xy[m].." "..xy[m + 1].." "..xy[m + 2].." "..xy[m + 3])
+            end
+            m = m + 2
         end
     end
     t3 = g.millisecs() - t3
@@ -2306,23 +2304,20 @@ local function test_batch()
     -- time drawing all at once
     local t4 = g.millisecs()
     for i = 1, reps do
-        ov(allcoords)
+        ov("line "..xylist)
     end
     t4 = g.millisecs() - t4
 
-    -- create random rectangles
-    allcoords = "fill"
+    -- draw random rectangles
     ov(op.red)
-    for i = 1, items do
-        coords[i] = "fill "..(x[i] - 4).." "..(y[i] - 4).." 9 9"
-        allcoords = allcoords.." "..(x[i] - 4).." "..(y[i] - 4).." 9 9"
-    end
 
     -- time draw one at a time
     local t5 = g.millisecs()
     for i = 1, reps do
+        m = 1
         for i = 1, items do
-            ov(coords[i])
+            ov("fill "..xywh[m].." "..xywh[m + 1])
+            m = m + 2
         end
     end
     t5 = g.millisecs() - t5
@@ -2330,24 +2325,21 @@ local function test_batch()
     -- time drawing all at once
     local t6 = g.millisecs()
     for i = 1, reps do
-        ov(allcoords)
+        ov("fill "..xywhlist)
     end
     t6 = g.millisecs() - t6
 
-    -- create random pixels
-    allcoords = "set"
+    -- draw random pixels
     ov(op.white)
-    for i = 1, items do
-        coords[i] = "set "..x[i].." "..y[i]
-        allcoords = allcoords.." "..x[i].." "..y[i]
-    end
 
     -- time drawing one at a time
     ov(op.white)
     local t1 = g.millisecs()
     for i = 1, reps do
+        m = 1
         for i = 1, items do
-            ov(coords[i])
+            ov("set "..xy[m].." "..xy[m + 1])
+            m = m + 2
         end
     end
     t1 = g.millisecs() - t1
@@ -2355,7 +2347,7 @@ local function test_batch()
     -- time drawing all at once
     local t2 = g.millisecs()
     for i = 1, reps do
-        ov(allcoords)
+        ov("set "..xylist)
     end
     t2 = g.millisecs() - t2
 
@@ -2503,9 +2495,9 @@ end
 
 local function create_menu_buttons()
     local longest = "Text and Transforms"
-    batch_button = op.button(       longest, test_batch)
     blend_button = op.button(       longest, test_blending)
     animation_button = op.button(   longest, test_animation)
+    batch_button = op.button(       longest, test_batch)
     cellview_button = op.button(    longest, test_cellview)
     copy_button = op.button(        longest, test_copy_paste)
     cursor_button = op.button(      longest, test_cursors)
@@ -2523,9 +2515,9 @@ local function create_menu_buttons()
     transition_button = op.button(  longest, test_transitions)
 
     -- change labels without changing button widths
-    batch_button.setlabel(       "Batch", false)
     blend_button.setlabel(       "Alpha Blending", false)
     animation_button.setlabel(   "Animation", false)
+    batch_button.setlabel(       "Batch Draw", false)
     cellview_button.setlabel(    "Cell View", false)
     copy_button.setlabel(        "Copy and Paste", false)
     cursor_button.setlabel(      "Cursors", false)
@@ -2575,9 +2567,9 @@ local function main_menu()
     local x = hgap
     local y = hgap
 
-    batch_button.show(x, y)         y = y + buttgap + buttht
     blend_button.show(x, y)         y = y + buttgap + buttht
     animation_button.show(x, y)     y = y + buttgap + buttht
+    batch_button.show(x, y)         y = y + buttgap + buttht
     cellview_button.show(x, y)      y = y + buttgap + buttht
     copy_button.show(x, y)          y = y + buttgap + buttht
     cursor_button.show(x, y)        y = y + buttgap + buttht
