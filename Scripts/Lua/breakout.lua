@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 56
+local build = 57
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -495,24 +495,30 @@ end
 
 local function drawparticles()
     ov("blend 1")
-    local coords  = ""
+    local xy = {}
+    local m  = 1
     local lastcol = ""
+    local color
     for i = 1, #particles do
-        local item    = particles[i]
-        local scale   = ht / 1000
+        local item  = particles[i]
+        local scale = ht / 1000
         -- check if particle is still alive
         if item.alpha > 0 then
             if showparticles ~= 0 then
-                local color = item.color:sub(1, -4)..floor(item.alpha)
+                color = item.color:sub(1, -4)..floor(item.alpha)
                 if color ~= lastcol then
-                    if coords ~= "" then
-                        ov("fill"..coords)
-                        coords = ""
+                    if m > 1 then
+                        ov("fill "..table.concat(xy, " "))
+                        m = 1
+                        xy = {}
                     end
                     ov(color)
                     lastcol = color
                 end
-                coords = coords.." "..floor(item.x).." "..floor(item.y).." 2 2"
+                xy[m] = floor(item.x)
+                xy[m + 1] = floor(item.y)
+                xy[m + 2] = "2 2"
+                m = m + 3
             end
             -- fade item
             item.alpha = item.alpha - 4 * framemult
@@ -529,8 +535,8 @@ local function drawparticles()
             end
         end
     end
-    if coords ~= "" then
-        ov("fill"..coords)
+    if m > 1 then
+        ov("fill "..table.concat(xy, " "))
     end
 end
 
