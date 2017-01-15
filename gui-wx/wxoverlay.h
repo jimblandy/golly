@@ -34,6 +34,7 @@
     #pragma warning(default:4702)   // enable "unreachable code" warnings
 #endif
 
+#include "wx/sound.h"               // for wxSound
 
 // The overlay is a scriptable graphics layer that is (optionally) drawn
 // on top of Golly's current layer.  See Help/overlay.html for details.
@@ -48,7 +49,6 @@ typedef enum {
 typedef enum {
     left, right, center
 } text_alignment;
-
 
 // The Clip class is used by the copy and text commands to store pixel data
 // in a named "clipboard" for later use by the paste and replace commands:
@@ -295,6 +295,19 @@ private:
     // Set only_draw_overlay to true and then update the current layer
     // so DrawView will only draw the overlay if OnlyDrawOverlay() is true.
 
+    const char* SoundStop();
+    // Stop sound playback.
+
+    const char* SoundPlay(const char* args, unsigned flags);
+    // Play the specified sound.
+    // If flags is wxSOUND_SYNC then block and wait until the sound is played.
+    // If flags is wxSOUND_ASYNC then sound is played asynchronously and return immediately.
+    // If flags is wxSOUND_ASYNC|wxSOUND_LOOP then sound is played asynchronously and loops until
+    // another sound is played, SoundStop() is called, or the Overlay is deleted.
+
+    const char* DoSound(const char* args);
+    // Play a sound or stop playback.
+
     const char* OverlayError(const char* msg);
     // Return a string starting with "ERR:" followed by the given message.
 
@@ -432,6 +445,9 @@ private:
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste
+
+    std::map<std::string,wxSound*> sounds;
+    // sound cache for sounds created by DoPlay
 
     // text
     wxFont currfont;                // current font used by text command

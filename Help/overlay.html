@@ -41,7 +41,11 @@ population versus time that can be saved as a PNG file.
 To study how these scripts work, control-click or right-click on one of the
 above links to open the script in your preferred text editor, then run the
 script by clicking on the same link.
+</p>
 
+<p>
+As well as graphics the overlay supports simple <a href="#sound">audio playback</a>.
+</p>
 
 <p><a name="commands"></a>&nbsp;<br>
 <font size=+1><b>The overlay commands</b></font>
@@ -52,6 +56,8 @@ The overlay is manipulated using a single script command called
 It takes a single string parameter that contains an overlay command followed
 by zero or more arguments separated by spaces.  Some overlay commands can
 also return a single string as their result.
+</p>
+
 Here is an alphabetical list of all the valid overlay commands:
 <p>
 <dd>
@@ -91,13 +97,14 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
+<a href="#sound"><b>sound</b></a><br>
 <a href="#target"><b>target</b></a><br>
 <a href="#text"><b>text</b></a><br>
-<a href="#textoption"><b>textoption</b></a><br>
-<a href="#theme"><b>theme</b></a>
+<a href="#textoption"><b>textoption</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
 <a href="#updatecells"><b>updatecells</b></a><br>
@@ -295,6 +302,7 @@ Delete the overlay or if a clip name is specified delete the named clip.
 When deleting the overlay this is equivalent to selecting
 <a href="layer.html#deleteoverlay">Delete Overlay</a> from the Layer menu.
 Note that it is an error to delete a clip that is the current render <a href="#target">target</a>.
+Also note that deleting the overlay will <a href="#stop">stop</a> any sound that is playing.
 </dd>
 <dd> Example: <b>ov("delete")</b></dd>
 <dd> Example: <b>ov("delete myclip")</b></dd>
@@ -607,6 +615,34 @@ Pixels outside the render target are silently ignored.
 <dd><b>ov("set 10 20")</b></dd>
 <dd><i>-- set pixels at (10, 20), (15, 25) and (16, 25)</i></dd>
 <dd><b>ov("set 10 20 15 25 16 25")</b></dd>
+</p>
+
+<a name="sound"></a><p><dt><b>sound <i>command (soundfile)</i></b></dt>
+<dd>
+Controls playback of an audio file. The <i>soundfile</i> argument must point to a WAV format
+file containing the sound to be played. Only one sound can be played at a time and playing
+a sound will immediately stop any previous sound that was playing.
+</dd>
+<dd>
+There are four sound <i>commands</i>:
+</aa>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>play <i>soundfile</i></b></td><td width=20></td><td>      &ndash; play the named <i>soundfile</i> asynchronously and return immediately</td></tr>
+<tr><td><b>wait <i>soundfile</i></b></td><td width=20></td><td>     &ndash; block and wait until the named <i>soundfile</i> is played</td></tr>
+<tr><td><b>loop <i>soundfile</i></b></td><td width=20></td><td>  &ndash;  play the named <i>soundfile</i> asynchronously and loop until another sound is played or the <a href="#stop">stop</a> command is used</td></tr>
+<tr><td><a name="stop"></a><b>stop</b></td><td width=20></td><td>   &ndash; stop sound playback</td></tr>
+</table>
+</dd>
+<p>
+<dd>
+Note that deleting the overlay will stop any sound that is playing.
+</dd>
+</p>
+<p>
+<dd> Example: <b>ov("sound play beep.wav")</b></dd>
+<dd> Example: <b>ov("sound stop")</b></dd>
 </p>
 
 <a name="target"></a><p><dt><b>target <i>(clipname)</i></b></dt>

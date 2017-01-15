@@ -11,7 +11,7 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 27
+local buildnumber = 28
 
 local g = golly()
 local ov = g.overlay
@@ -346,7 +346,7 @@ local function drawmenu()
     local i = 0
     ov("blend 1")
     while i < 13 do
-        --ov("paste "..(i * 50).." "..y.. "button"..i)
+        -- TBD ov("paste "..(i * 50).." "..y.. "button"..i)
         i = i + 1
     end
     ov("blend 0")
@@ -1767,29 +1767,19 @@ end
 
 local function createmenu()
     ov("blend 0")
+    ov("create 1 1 menuclip")
+    ov("target menuclip")
 
     -- load button images to get width and height
-    local w, h = gp.split(ov("load "..viewwd.." 0 oplus/lifeviewer.png"))
-
-    -- clear a rectangle the size of the buttons
-    ov(op.black)
-    ov("fill 0 0 "..w.." "..h)
+    local w, h = gp.split(ov("load 1 0 oplus/images/lifeviewer.png"))
+    ov("resize "..w.." "..h.." menuclip")
 
     -- load buttons over the rectangle
-    ov("load 0 0 oplus/lifeviewer.png")
+    ov("load 0 0 oplus/images/lifeviewer.png")
 
     -- replace transparent background with semi-opaque
     ov("rgba 0 0 0 128")
-    local x, y
-    local red, green, blue, alpha
-    for y = 0, h do
-        for x = 0, w do
-            red, green, blue, alpha = gp.split(ov("get "..x.." "..y))
-            if tonumber(alpha) == 0 then
-                ov("set "..x.." "..y)
-            end
-        end
-    end
+    ov("replace *# *# *# 0")
 
     -- create clips from the images
     ov("rgba 32 255 255 255")
@@ -1805,6 +1795,10 @@ local function createmenu()
         ov("copy "..(40 * x).." 0 40 40 button"..x)
         x = x + 1
     end
+
+    -- delete menuclip
+    ov("target")
+    ov("delete menuclip")
 end
 
 --------------------------------------------------------------------------------

@@ -145,12 +145,22 @@ void Overlay::DeleteOverlay()
     }
     pixmap = NULL;
 
+    // delete clips
     std::map<std::string,Clip*>::iterator it;
     for (it = clips.begin(); it != clips.end(); ++it) {
         delete it->second;
     }
     clips.clear();
 
+    // stop and sound playback and delete cached sounds
+    SoundStop();
+    std::map<std::string,wxSound*>::iterator it2;
+    for (it2 = sounds.begin(); it2 != sounds.end(); ++it2) {
+        delete it2->second;
+    }
+    sounds.clear();
+
+    // delete cellview
     DeleteCellView();
 }
 
@@ -4959,6 +4969,61 @@ const char* Overlay::DoText(const char* args)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::SoundPlay(const char* args, unsigned flags)
+{
+    if (*args == 0) {
+        return OverlayError("sound play command requires an argument");
+    }
+
+    // check if the sound is cached
+    wxSound* sound = NULL;
+    std::map<std::string,wxSound*>::iterator it;
+    it = sounds.find(args);
+    if (it != sounds.end()) {
+        // found sound in the cache
+        sound = it->second;
+    }
+    else {
+        // attempt to load the sound
+        wxString filename(args);
+        sound = new wxSound(filename);
+        if (!sound->IsOk()) {
+            delete sound;
+            return OverlayError("sound play command illegal sound specified");
+        }
+        // cache sound
+        sounds[args] = sound;
+    }
+
+    // play the sound with the specified flags
+    sound->Play(flags);
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::SoundStop()
+{
+    wxSound::Stop();
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoSound(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    if (strncmp(args, "play ", 5) == 0) return SoundPlay(args+5, wxSOUND_ASYNC);
+    if (strncmp(args, "wait ", 5) == 0) return SoundPlay(args+5, wxSOUND_SYNC);
+    if (strncmp(args, "loop ", 5) == 0) return SoundPlay(args+5, wxSOUND_ASYNC|wxSOUND_LOOP);
+    if (strcmp(args, "stop") == 0)      return SoundStop();
+
+    return OverlayError("unknown souind command");
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoTransform(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -5073,8 +5138,9 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "theme ", 6) == 0)       return DoTheme(cmd+6);
     if (strncmp(cmd, "target", 6) == 0)       return DoTarget(cmd+6);
     if (strncmp(cmd, "replace ", 8) == 0)     return DoReplace(cmd+8);
+    if (strncmp(cmd, "sound ", 6) == 0)       return DoSound(cmd+6);
     if (strcmp(cmd,  "updatecells") == 0)     return DoUpdateCells();
     if (strcmp(cmd,  "drawcells") == 0)       return DoDrawCells();
-    if (strncmp(cmd,  "delete", 6) == 0)      return DoDelete(cmd+6);
+    if (strncmp(cmd, "delete", 6) == 0)       return DoDelete(cmd+6);
     return OverlayError("unknown command");
 }
