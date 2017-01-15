@@ -14,29 +14,6 @@ local m = {}
 
 --------------------------------------------------------------------------------
 
--- scripts can adjust these parameters:
-
-m.buttonht = 24     -- height of buttons (also used for check boxes and sliders)
-m.sliderwd = 16     -- width of slider button (best if even)
-m.checkgap = 5      -- gap between check box button and its label
-m.textgap = 10      -- gap between edge of button and its label
-
-m.normalrgb = "rgba 40 128 255"         -- light blue buttons (alpha will be appended)
-m.darkerrgb = "rgba 20 64 255"          -- darker blue when buttons are clicked
-m.textrgba = "rgba 255 255 255 255"     -- white button labels and tick mark on check box
-m.textfont = "font 12 default-bold"     -- font for labels
-m.yoffset = 0                           -- for better y position of labels
-
-if g.os() == "Windows" then
-    m.yoffset = -1
-end
-
-if g.os() == "Linux" then
-    m.textfont = "font 12 default"
-end
-
---------------------------------------------------------------------------------
-
 -- synonyms for some common overlay commands:
 
 -- opaque colors
@@ -89,12 +66,181 @@ m.themes = {
 
 --------------------------------------------------------------------------------
 
-local darken_button = false     -- tell draw_button to use m.darkerrgb
+-- scripts can adjust these parameters:
+
+m.buttonht = 24     -- height of buttons (also used for check boxes and sliders)
+m.sliderwd = 16     -- width of slider button (best if even)
+m.checkgap = 5      -- gap between check box button and its label
+m.textgap = 10      -- gap between edge of button and its label
+m.radius = 3        -- curvature of button corners
+m.border = 0        -- thickness of button border (no border if 0)
+
+m.buttonrgba = "rgba 40 128 255 255"    -- light blue buttons
+m.darkerrgba = "rgba 20 64 255 255"     -- darker blue when buttons are clicked
+m.borderrgba = m.white                  -- white border around buttons (if m.border > 0)
+m.textrgba = m.white                    -- white button labels and tick mark on check box
+m.textfont = "font 12 default-bold"     -- font for labels
+m.yoffset = 0                           -- for better y position of labels
+
+if g.os() == "Windows" then
+    m.yoffset = -1
+end
+
+if g.os() == "Linux" then
+    m.textfont = "font 12 default"
+end
+
+--------------------------------------------------------------------------------
+
+local darken_button = false     -- tell draw_button to use m.darkerrgba
 local darken_slider = false     -- tell draw_slider to darken the slider button
 
 local button_tables = {}        -- for detecting click in a button
 local checkbox_tables = {}      -- for detecting click in a check box
 local slider_tables = {}        -- for detecting click in a slider
+
+--------------------------------------------------------------------------------
+
+function m.fill_ellipse(x, y, w, h, borderwd, fillrgba)
+    -- draw an ellipse with the given border width (if > 0) using the current color
+    -- and fill it with the given color (if fillrgba isn't "")
+
+    if borderwd == 0 then
+        if #fillrgba > 0 then
+            -- just draw solid anti-aliased ellipse using fillrgba
+            local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
+            local oldblend = ov("blend 1")
+            local oldrgba = ov(fillrgba)
+            ov("ellipse "..x.." "..y.." "..w.." "..h)
+            ov("rgba "..oldrgba)
+            ov("blend "..oldblend)
+            ov("lineoption width "..oldwidth)
+        end
+        return
+    end
+
+    if w <= borderwd*2 or h <= borderwd*2 then
+        -- no room to fill so just draw anti-aliased ellipse using current color
+        local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
+        local oldblend = ov("blend 1")
+        ov("ellipse "..x.." "..y.." "..w.." "..h)
+        ov("blend "..oldblend)
+        ov("lineoption width "..oldwidth)
+        return
+    end
+
+    local oldblend = ov("blend 1")
+
+    if #fillrgba > 0 then
+        -- draw smaller filled ellipse using fillrgba
+        local oldrgba = ov(fillrgba)
+        local smallw = w - borderwd*2
+        local smallh = h - borderwd*2
+        local oldwidth = ov("lineoption width "..int(math.min(smallw,smallh)/2 + 0.5))
+        ov("ellipse "..(x+borderwd).." "..(y+borderwd).." "..smallw.." "..smallh)
+        ov("rgba "..oldrgba)
+        ov("lineoption width "..oldwidth)
+    end
+
+    -- draw outer ellipse using given borderwd
+    local oldwidth = ov("lineoption width "..borderwd)
+    ov("ellipse "..x.." "..y.." "..w.." "..h)
+    
+    -- restore line width and blend state
+    ov("lineoption width "..oldwidth)
+    ov("blend "..oldblend)
+end
+
+--------------------------------------------------------------------------------
+
+function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
+    -- draw a rounded rectangle using the given radius for the corners
+    -- with a border in the current color using the given width (if > 0)
+    -- and filled with the given color (if fillrgba isn't "")
+
+    if radius == 0 then
+        -- draw a non-rounded rectangle (possibly translucent)
+        local oldblend = ov("blend 1")
+        if borderwd > 0 then
+            -- draw border lines using current color
+            ov("fill "..x.." "..y.." "..w.." "..borderwd)
+            ov("fill "..x.." "..(y+h-borderwd).." "..w.." "..borderwd)
+            ov("fill "..x.." "..(y+borderwd).." "..borderwd.." "..(h-borderwd*2))
+            ov("fill "..(x+w-borderwd).." "..(y+borderwd).." "..borderwd.." "..(h-borderwd*2))
+        end
+        if #fillrgba > 0 then
+            -- draw interior of rectangle
+            local oldrgba = ov(fillrgba)
+            ov("fill "..(x+borderwd).." "..(y+borderwd).." "..(w-borderwd*2).." "..(h-borderwd*2))
+            ov("rgba "..oldrgba)
+        end
+        ov("blend "..oldblend)
+        return
+    end
+    
+    if radius > w/2 then radius = int(w/2) end
+    if radius > h/2 then radius = int(h/2) end
+
+    -- construct rounded rectangle in top left corner of overlay
+    ov("copy 0 0 "..w.." "..h.." rectbg")
+    local oldrgba = ov("rgba 0 0 0 0")
+    local oldblend = ov("blend 0")
+    ov("fill 0 0 "..w.." "..h)
+    ov("rgba "..oldrgba)
+    
+    -- create bottom right quarter circle in top left corner of overlay
+    m.fill_ellipse(-radius, -radius, radius*2, radius*2, borderwd, fillrgba)
+    ov("copy 0 0 "..radius.." "..radius.." qcircle")
+    
+    -- draw corners
+    ov("paste "..(w-radius).." "..(h-radius).." qcircle")
+    ov(m.flip_y)
+    ov("paste "..(w-radius).." "..(radius-1).." qcircle")
+    ov(m.flip_x)
+    ov("paste "..(radius-1).." "..(h-radius).." qcircle")
+    ov(m.flip)
+    ov("paste "..(radius-1).." "..(radius-1).." qcircle")
+    ov(m.identity)
+    ov("delete qcircle")
+    
+    if #fillrgba > 0 then
+        -- draw non-corner portions of rectangle
+        ov(fillrgba)
+        if radius < w/2 then
+            ov("fill "..radius.." 0 "..(w-radius*2).." "..h)
+        end
+        if radius < h/2 then
+            ov("fill 0 "..radius.." "..radius.." "..(h-radius*2))
+            ov("fill "..(w-radius).." "..radius.." "..radius.." "..(h-radius*2))
+        end
+        ov("rgba "..oldrgba)
+    end
+
+    if borderwd > 0 then
+        -- draw border lines using current color
+        if radius < w/2 then
+            ov("fill "..radius.." 0 "..(w-radius*2).." "..borderwd)
+            ov("fill "..radius.." "..(h-borderwd).." "..(w-radius*2).." "..borderwd)
+        end
+        if radius < h/2 then
+            ov("fill 0 "..radius.." "..borderwd.." "..(h-radius*2))
+            ov("fill "..(w-borderwd).." "..radius.." "..borderwd.." "..(h-radius*2))
+        end
+    end
+    
+    -- save finished rectangle in a clip
+    ov("copy 0 0 "..w.." "..h.." roundedrect")
+    
+    -- restore top left corner of overlay and draw rounded rectangle
+    ov("paste 0 0 rectbg")
+    ov("delete rectbg")
+    ov("blend 1")
+    ov("paste "..x.." "..y.." roundedrect")
+    ov("delete roundedrect")
+    
+    -- restore blend setting
+    ov("blend "..oldblend)
+end
 
 --------------------------------------------------------------------------------
 
@@ -109,34 +255,16 @@ local function draw_button(x, y, w, h)
     local oldrgba = ov("rgba 0 0 0 0")
     ov("fill"..buttrect)
     
-    local buttonrgb = m.normalrgb
+    local butt_rgba = m.buttonrgba
     if darken_button then
-        buttonrgb = m.darkerrgb
+        butt_rgba = m.darkerrgba
     end
     
     -- draw button with rounded corners
-    ov(buttonrgb.." 255") -- opaque
-    ov("fill"..buttrect)
-    
-    -- draw one rounded corner then copy and paste with flips to draw the rest
-    ov("rgba 0 0 0 0")
-    ov("set "..x.." "..y)
-    ov(buttonrgb.." 48")
-    ov("set "..(x+1).." "..y)
-    ov("set "..x.." "..(y+1))
-    ov(buttonrgb.." 128")
-    ov("set "..(x+2).." "..y)
-    ov("set "..x.." "..(y+2))
-    ov(buttonrgb.." 200")
-    ov("set "..(x+1).." "..(y+1))
-    ov("copy "..x.." "..y.." 3 3 temp_corner")
-    ov(m.flip_x)
-    ov("paste "..(x+w-1).." "..y.." temp_corner")
-    ov(m.flip_y)
-    ov("paste "..x.." "..(y+h-1).." temp_corner")
-    ov(m.flip)
-    ov("paste "..(x+w-1).." "..(y+h-1).." temp_corner")
-    ov(m.identity)
+    if m.border > 0 then
+        ov(m.borderrgba)
+    end
+    m.round_rect(x, y, w, h, m.radius, m.border, butt_rgba)
     
     -- copy rect to temp_button
     ov("copy"..buttrect.." temp_button")
@@ -172,7 +300,7 @@ function m.button(label, onclick)
 	b.setlabel = function (newlabel, changesize)
         local oldrgba = ov(m.textrgba)
         local oldfont = ov(m.textfont)
-        local w, h = split(ov("text "..b.clipname.." "..newlabel))
+        local w, h = split(ov("text "..b.labelclip.." "..newlabel))
         ov("font "..oldfont)
         ov("rgba "..oldrgba)
         b.labelwd = tonumber(w);
@@ -181,11 +309,14 @@ function m.button(label, onclick)
             -- use label size to set button width
             b.wd = b.labelwd + 2*m.textgap;
         end
+        b.savetextrgba = m.textrgba
+        b.savetextfont = m.textfont
+        b.savelabel = newlabel
 	end
     
     -- create text for label with a unique clip name
-    b.clipname = tostring(b).."+button"
-    b.clipname = string.gsub(b.clipname, " ", "")   -- remove any spaces
+    b.labelclip = tostring(b).."+button"
+    b.labelclip = string.gsub(b.labelclip, " ", "")   -- remove any spaces
     b.setlabel(label, true)
 
 	b.show = function (x, y)
@@ -196,15 +327,22 @@ function m.button(label, onclick)
 	        b.hide()
 	    end
 	    -- remember position and save background pixels
-	    b.background = b.clipname.."+bg"
+	    b.background = b.labelclip.."+bg"
 	    ov("copy "..b.x.." "..b.y.." "..b.wd.." "..b.ht.." "..b.background)
+        
         -- draw the button at the given location
         draw_button(x, y, b.wd, b.ht)
+        
+        -- if m.textrgba or m.textfont has changed then recreate b.labelclip
+        if b.savetextrgba ~= m.textrgba or b.savetextfont ~= m.textfont then
+            b.setlabel(b.savelabel, false)
+        end
+        
         -- draw the label
         local oldblend = ov("blend 1")
         x = int(x + (b.wd - b.labelwd) / 2)
         y = int(y + m.yoffset + (b.ht - b.labelht) / 2)
-        ov("paste "..x.." "..y.." "..b.clipname)
+        ov("paste "..x.." "..y.." "..b.labelclip)
         ov("blend "..oldblend)
         
         -- store this table using the button's rectangle as key
@@ -297,12 +435,15 @@ function m.checkbox(label, labelrgba, onclick)
 	    -- remember position and save background pixels
 	    c.background = c.clipname.."+bg"
 	    ov("copy "..c.x.." "..c.y.." "..c.wd.." "..c.ht.." "..c.background)
+        
         -- draw the check box (excluding label) at the given location
         draw_checkbox(x+1, y+1, c.ht-2, c.ht-2, ticked)
+        
         -- draw the label
         local oldblend = ov("blend 1")
         ov("paste "..(x+c.ht+m.checkgap).." "..int(y+m.yoffset+(c.ht-c.labelht)/2).." "..c.clipname)
         ov("blend "..oldblend)
+        
         -- store this table using the check box's rectangle as key
         c.rect = rect({c.x, c.y, c.wd, c.ht})
         checkbox_tables[c.rect] = c
@@ -429,10 +570,12 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
 	    s.y = y
 	    s.background = s.clipname.."+bg"
 	    ov("copy "..s.x.." "..s.y.." "..s.wd.." "..s.ht.." "..s.background)
+        
         -- draw the slider and label at the given location
         s.startbar = x + s.labelwd + int(m.sliderwd/2)
         local barpos = int(s.barwidth * (s.pos - s.minval) / (s.maxval - s.minval))
         draw_slider(s, barpos)
+        
         -- store this table using the slider button's rectangle as key
         s.rect = rect({s.startbar+barpos-int(m.sliderwd/2), s.y, m.sliderwd, s.ht})
         slider_tables[s.rect] = s
@@ -470,6 +613,8 @@ local function release_in_rect(r, t)
     darken_button = true
     t.refresh()
     
+    local t0 = g.millisecs()
+    
     while true do
         local event = g.getevent()
         if event:find("^mup left") then break end
@@ -489,6 +634,9 @@ local function release_in_rect(r, t)
             t.refresh()
         end
     end
+
+    -- pause to ensure darkened button is seen
+    while g.millisecs() - t0 < 16 do end
     
     if inrect then
         -- undarken button
@@ -700,150 +848,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function m.fill_ellipse(x, y, w, h, borderwd, fillrgba)
-    -- draw an ellipse with the given border width (if > 0) using the current color
-    -- and fill it with the given color (if fillrgba isn't "")
-
-    if borderwd == 0 then
-        if #fillrgba > 0 then
-            -- just draw solid anti-aliased ellipse using fillrgba
-            local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
-            local oldblend = ov("blend 1")
-            local oldrgba = ov(fillrgba)
-            ov("ellipse "..x.." "..y.." "..w.." "..h)
-            ov("rgba "..oldrgba)
-            ov("blend "..oldblend)
-            ov("lineoption width "..oldwidth)
-        end
-        return
-    end
-
-    if w <= borderwd*2 or h <= borderwd*2 then
-        -- no room to fill so just draw anti-aliased ellipse using current color
-        local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
-        local oldblend = ov("blend 1")
-        ov("ellipse "..x.." "..y.." "..w.." "..h)
-        ov("blend "..oldblend)
-        ov("lineoption width "..oldwidth)
-        return
-    end
-
-    local oldblend = ov("blend 1")
-
-    if #fillrgba > 0 then
-        -- draw smaller filled ellipse using fillrgba
-        local oldrgba = ov(fillrgba)
-        local smallw = w - borderwd*2
-        local smallh = h - borderwd*2
-        local oldwidth = ov("lineoption width "..int(math.min(smallw,smallh)/2 + 0.5))
-        ov("ellipse "..(x+borderwd).." "..(y+borderwd).." "..smallw.." "..smallh)
-        ov("rgba "..oldrgba)
-        ov("lineoption width "..oldwidth)
-    end
-
-    -- draw outer ellipse using given borderwd
-    local oldwidth = ov("lineoption width "..borderwd)
-    ov("ellipse "..x.." "..y.." "..w.." "..h)
-    
-    -- restore line width and blend state
-    ov("lineoption width "..oldwidth)
-    ov("blend "..oldblend)
-end
-
---------------------------------------------------------------------------------
-
-function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
-    -- draw a rounded rectangle using the given radius for the corners
-    -- with a border in the current color using the given width (if > 0)
-    -- and filled with the given color (if fillrgba isn't "")
-
-    if radius == 0 then
-        -- draw a non-rounded rectangle (possibly translucent)
-        local oldblend = ov("blend 1")
-        if borderwd > 0 then
-            -- draw border lines using current color
-            ov("fill "..x.." "..y.." "..w.." "..borderwd)
-            ov("fill "..x.." "..(y+h-borderwd).." "..w.." "..borderwd)
-            ov("fill "..x.." "..(y+borderwd).." "..borderwd.." "..(h-borderwd*2))
-            ov("fill "..(x+w-borderwd).." "..(y+borderwd).." "..borderwd.." "..(h-borderwd*2))
-        end
-        if #fillrgba > 0 then
-            -- draw interior of rectangle
-            local oldrgba = ov(fillrgba)
-            ov("fill "..(x+borderwd).." "..(y+borderwd).." "..(w-borderwd*2).." "..(h-borderwd*2))
-            ov("rgba "..oldrgba)
-        end
-        ov("blend "..oldblend)
-        return
-    end
-    
-    if radius > w/2 then radius = int(w/2) end
-    if radius > h/2 then radius = int(h/2) end
-
-    -- construct rounded rectangle in top left corner of overlay
-    ov("copy 0 0 "..w.." "..h.." rectbg")
-    local oldrgba = ov("rgba 0 0 0 0")
-    local oldblend = ov("blend 0")
-    ov("fill 0 0 "..w.." "..h)
-    ov("rgba "..oldrgba)
-    
-    -- create bottom right quarter circle in top left corner of overlay
-    m.fill_ellipse(-radius, -radius, radius*2, radius*2, borderwd, fillrgba)
-    ov("copy 0 0 "..radius.." "..radius.." qcircle")
-    
-    -- draw corners
-    ov("paste "..(w-radius).." "..(h-radius).." qcircle")
-    ov(m.flip_y)
-    ov("paste "..(w-radius).." "..(radius-1).." qcircle")
-    ov(m.flip_x)
-    ov("paste "..(radius-1).." "..(h-radius).." qcircle")
-    ov(m.flip)
-    ov("paste "..(radius-1).." "..(radius-1).." qcircle")
-    ov(m.identity)
-    ov("delete qcircle")
-    
-    if #fillrgba > 0 then
-        -- draw non-corner portions of rectangle
-        ov(fillrgba)
-        if radius < w/2 then
-            ov("fill "..radius.." 0 "..(w-radius*2).." "..h)
-        end
-        if radius < h/2 then
-            ov("fill 0 "..radius.." "..radius.." "..(h-radius*2))
-            ov("fill "..(w-radius).." "..radius.." "..radius.." "..(h-radius*2))
-        end
-        ov("rgba "..oldrgba)
-    end
-
-    if borderwd > 0 then
-        -- draw border lines using current color
-        if radius < w/2 then
-            ov("fill "..radius.." 0 "..(w-radius*2).." "..borderwd)
-            ov("fill "..radius.." "..(h-borderwd).." "..(w-radius*2).." "..borderwd)
-        end
-        if radius < h/2 then
-            ov("fill 0 "..radius.." "..borderwd.." "..(h-radius*2))
-            ov("fill "..(w-borderwd).." "..radius.." "..borderwd.." "..(h-radius*2))
-        end
-    end
-    
-    -- save finished rectangle in a clip
-    ov("copy 0 0 "..w.." "..h.." roundedrect")
-    
-    -- restore top left corner of overlay and draw rounded rectangle
-    ov("paste 0 0 rectbg")
-    ov("delete rectbg")
-    ov("blend 1")
-    ov("paste "..x.." "..y.." roundedrect")
-    ov("delete roundedrect")
-    
-    -- restore blend setting
-    ov("blend "..oldblend)
-end
-
---------------------------------------------------------------------------------
-
-local textclip = "textclip"
+local textclip = "textclip" -- default clip name for m.maketext and m.pastetext
 
 --------------------------------------------------------------------------------
 
