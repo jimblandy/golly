@@ -622,17 +622,21 @@ Pixels outside the render target are silently ignored.
 Controls playback of an audio file. The <i>soundfile</i> argument must point to a WAV format
 file containing the sound to be played. Only one sound can be played at a time and playing
 a sound will immediately stop any previous sound that was playing.
-</dd>
-<dd>
 There are four sound <i>commands</i>:
 </aa>
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><b>play <i>soundfile</i></b></td><td width=20></td><td>      &ndash; play the named <i>soundfile</i> asynchronously and return immediately</td></tr>
-<tr><td><b>wait <i>soundfile</i></b></td><td width=20></td><td>     &ndash; block and wait until the named <i>soundfile</i> is played</td></tr>
-<tr><td><b>loop <i>soundfile</i></b></td><td width=20></td><td>  &ndash;  play the named <i>soundfile</i> asynchronously and loop until another sound is played or the <a href="#stop">stop</a> command is used</td></tr>
-<tr><td><a name="stop"></a><b>stop</b></td><td width=20></td><td>   &ndash; stop sound playback</td></tr>
+<tr><td><b>play <i>soundfile</i></b></td><td width=20></td><td>&ndash; </td><td>
+play the named <i>soundfile</i> asynchronously and return immediately</td></tr>
+<tr><td><b>wait <i>soundfile</i></b></td><td width=20></td><td>&ndash; </td><td>
+block and wait until the named <i>soundfile</i> is played</td></tr>
+<tr><td><b>loop <i>soundfile</i></b></td><td width=20></td><td>&ndash; </td><td>
+play the named <i>soundfile</i> asynchronously and loop until another</td></tr>
+<tr><td> </td><td width=20></td><td> </td><td>
+sound is played or the <a href="#stop">stop</a> command is used</td></tr>
+<tr><td><a name="stop"></a><b>stop</b></td><td width=20></td><td>&ndash; </td><td>
+stop sound playback</td></tr>
 </table>
 </dd>
 <p>
