@@ -152,7 +152,7 @@ void Overlay::DeleteOverlay()
     }
     clips.clear();
 
-    // stop and sound playback and delete cached sounds
+    // stop any sound playback and delete cached sounds
     SoundStop();
     std::map<std::string,wxSound*>::iterator it2;
     for (it2 = sounds.begin(); it2 != sounds.end(); ++it2) {
@@ -4972,7 +4972,7 @@ const char* Overlay::DoText(const char* args)
 const char* Overlay::SoundPlay(const char* args, unsigned flags)
 {
     if (*args == 0) {
-        return OverlayError("sound play command requires an argument");
+        return OverlayError("sound command requires an argument");
     }
 
     // check if the sound is cached
@@ -4989,7 +4989,7 @@ const char* Overlay::SoundPlay(const char* args, unsigned flags)
         sound = new wxSound(filename);
         if (!sound->IsOk()) {
             delete sound;
-            return OverlayError("sound play command illegal sound specified");
+            return OverlayError("sound command illegal sound name");
         }
         // cache sound
         sounds[args] = sound;
@@ -5019,7 +5019,7 @@ const char* Overlay::DoSound(const char* args)
     if (strncmp(args, "loop ", 5) == 0) return SoundPlay(args+5, wxSOUND_ASYNC|wxSOUND_LOOP);
     if (strcmp(args, "stop") == 0)      return SoundStop();
 
-    return OverlayError("unknown souind command");
+    return OverlayError("unknown sound command");
 }
 
 // -----------------------------------------------------------------------------
