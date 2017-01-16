@@ -106,9 +106,6 @@ const double radToDeg = 180 / M_PI;
 // for replace
 const int matchany = -1;            // match any component value
 
-// for clips
-const int maxclipname = 256;        // maximum length of clip name
-
 #ifdef __WXMAC__
     // on Mac we'll need to increase the line height of text by 1 or 2 pixels to avoid
     // a GetTextExtent bug that clips the bottom pixels of descenders like "gjpqy"
@@ -4137,8 +4134,8 @@ const char* Overlay::DoTarget(const char* args)
     }
 
     // previous target name
-    static char result[maxclipname];
-    strcpy(result, targetname.c_str());
+    static std::string result;
+    result = targetname;
 
     // no arguments means overlay is the target
     if (numargs == 0) {
@@ -4163,8 +4160,8 @@ const char* Overlay::DoTarget(const char* args)
         }
     }
 
-    // return previous  
-    return result;
+    // return previous target
+    return result.c_str();
 }
 
 // -----------------------------------------------------------------------------
