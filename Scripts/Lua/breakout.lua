@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 58
+local build = 59
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -131,6 +131,7 @@ local showoptions   = false
 local confirming    = false
 local comboscore    = 1
 local soundon       = true
+local loopmusic     = false
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."breakout.ini"
@@ -197,6 +198,7 @@ local messages = {
     ["autostart"]  = { text = "Autostart", size = 10, color = optcol },
     ["timing"]     = { text = "Timing", size = 10, color = optcol },
     ["fullscreen"] = { text = "Fullscreen", size = 10, color = optcol },
+    ["loopmusic"]  = { text = "Loop Music", size = 10, color = optcol },
     ["effects"]    = { text = "Sound Effects", size = 10, color = optcol },
     ["function"]   = { text = "Function", size = 10, color = op.white },
     ["on"]         = { text = "On", size = 10, color = op.green },
@@ -208,6 +210,7 @@ local messages = {
     ["c"]          = { text = "C", size = 10, color = optcol },
     ["d"]          = { text = "D", size = 10, color = optcol },
     ["e"]          = { text = "E", size = 10, color = optcol },
+    ["l"]          = { text = "L", size = 10, color = optcol },
     ["m"]          = { text = "M", size = 10, color = optcol },
     ["p"]          = { text = "P", size = 10, color = optcol },
     ["q"]          = { text = "Q", size = 10, color = optcol },
@@ -266,6 +269,7 @@ local function readsettings()
         bestbonus     = tonumber(f:read("*l")) or 0
         comboscore    = tonumber(f:read("*l")) or 1
         soundon       = tonumber(f:read("*l")) or 1
+        loopmusic     = tonumber(f:read("*l")) or 0
         f:close()
     end
 end
@@ -289,6 +293,7 @@ local function writesettings()
         f:write(tostring(bestbonus).."\n")
         f:write(tostring(comboscore).."\n")
         f:write(tostring(soundon).."\n")
+        f:write(tostring(loopmusic).."\n")
         f:close()
     end
 end
@@ -320,12 +325,23 @@ local function createstatictext()
     end
 end
 
-
 --------------------------------------------------------------------------------
 
 local function playsound(name)
     if soundon == 1 then
-        ov("sound play oplus/sounds/"..name)
+        ov("sound play oplus/sounds/"..name..".wav")
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function playsoundloop(name)
+    if soundon == 1 then
+        if loopmusic == 1 then
+            ov("sound loop oplus/sounds/"..name.."loop.wav")
+        else
+            playsound(name)
+        end
     end
 end
 
@@ -766,6 +782,7 @@ local function initbricks()
         rows[y] = bricks
     end
     totalbricks = bricksleft
+    bricksleft = 2
 end
 
 --------------------------------------------------------------------------------
@@ -893,6 +910,16 @@ local function togglesound()
         stopsound()
     end
 end
+--------------------------------------------------------------------------------
+
+local function toggleloopmusic()
+    loopmusic = 1 - loopmusic
+    writesettings()
+    notify("Loop Music", loopmusic)
+    if loopmusic == 0 then
+        stopsound()
+    end
+end
 
 --------------------------------------------------------------------------------
 
@@ -916,6 +943,9 @@ local function processstandardkeys(event)
         elseif event == "key e none" then
             -- toggle sound effects
             togglesound()
+        elseif event == "key l none" then
+            -- toggle loop music
+            toggleloopmusic()
         elseif event == "key m none" then
             -- toggle mouse cursor display when not fullscreen
             togglemouse()
@@ -1227,7 +1257,7 @@ local function drawoptions()
     -- draw header
     ov("blend 1")
     local h = messages["key"].height
-    local y = floor((ht - 10 * h) / 2)
+    local y = floor((ht - 14 * h) / 2)
     y = drawoption("key", "function", "state", leftx, h, y, op.white)
 
     -- draw options
@@ -1236,6 +1266,7 @@ local function drawoptions()
     y = drawoption("c", "comboscore", state[comboscore], leftx, h, y)
     y = drawoption("d", "shadows", state[showshadows], leftx, h, y)
     y = drawoption("e", "effects", state[soundon], leftx, h, y)
+    y = drawoption("l", "loopmusic", state[loopmusic], leftx, h, y)
     y = drawoption("m", "mouse", state[showmouse], leftx, h, y)
     y = drawoption("p", "particles", state[showparticles], leftx, h, y)
     y = drawoption("q", "confirm", state[confirmquit], leftx, h, y)
@@ -1324,14 +1355,13 @@ local function computebonus()
     if bricksleft <= bonusgreen then
         bonusscore = (totalbricks - bricksleft) * (100 + (level - 1) * 10)
         updatemessage("awarded", "Bricks left "..bricksleft.." = "..bonusscore, op.green)
-        playsound("levelcomplete")
     elseif bricksleft <= bonusyellow then
         bonusscore = (totalbricks - bricksleft) * (50 + (level - 1) * 10)
         updatemessage("awarded", "Bricks left "..bricksleft.." = "..bonusscore, op.yellow)
-        playsound("levelcomplete")
     else
         updatemessage("awarded", "Bricks left "..bricksleft.." = ".."No Bonus", op.red)
     end
+    playsoundloop("levelcomplete")
     updatescore(score + bonusscore)
     if score > hiscore then
         newhigh = true
@@ -1441,7 +1471,7 @@ local function breakout()
         resetcombo()
 
         -- game loop
-        playsound("gamestart.wav")
+        playsoundloop("gamestart")
         while balls > 0 and bricksleft > 0 and bonuscurrent > 0 do
             -- time frame
             local frametime = g.millisecs()
@@ -1475,7 +1505,7 @@ local function breakout()
                             -- invert x direction
                             balldx = -balldx
                             ballx  = ballx - stepx
-                            playsound("edge.wav")
+                            playsound("edge")
                         end
 
                         -- check for ball hitting top boundary
@@ -1488,7 +1518,7 @@ local function breakout()
                             if ballspeed > maxspeed then
                                 ballspeed = maxspeed
                             end
-                            playsound("top.wav")
+                            playsound("top")
 
                         -- check for ball hitting bottom boundary
                         elseif bally >= ht then
@@ -1513,9 +1543,9 @@ local function breakout()
                                 -- destroy bat if no balls left
                                 if balls == 0 then
                                     createparticles(batx + batwd, baty, batwd, batht, lostparticles)
-                                    playsound("gameover.wav")
+                                    playsound("gameover")
                                 else
-                                    playsound("lostball.wav")
+                                    playsound("lostball")
                                 end
                             end
                             -- exit loop
@@ -1549,7 +1579,7 @@ local function breakout()
                                 end
                             end
                             resetcombo()
-                            playsound("bat.wav")
+                            playsound("bat")
                         end
 
                         -- check for ball hitting brick
@@ -1598,7 +1628,7 @@ local function breakout()
                                 createparticles(brickx * brickwd + edgegapl, (bricky + offsety) * brickht, brickwd, brickht, brickparticles, brickcols[bricky])
                                 -- one less brick
                                 bricksleft = bricksleft - 1
-                                playsound("brick"..bricky..".wav")
+                                playsound("brick"..bricky)
                             end
                         end
                     end
@@ -1686,7 +1716,7 @@ local function breakout()
             clearbonusbricks()
         else
             if bricksleft == 0 then
-                playsound("levelcomplete")
+                playsoundloop("levelcomplete")
             end
         end
 
