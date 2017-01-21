@@ -48,6 +48,7 @@ local pos_button
 local render_button
 local replace_button
 local save_button
+local sound_button
 local text_button
 local transition_button
 
@@ -504,29 +505,20 @@ local function test_replace()
 
     -- draw test name
     ov("font 14 mono")
-    ov(op.black)
-    local testname = "Test "..replace..": "..replacements[replace][3]
-    w, h = maketext(testname)
-    pastetext(floor((wd - w) / 2) + 2, 310 + 2)
     ov(op.white)
-    maketext(testname)
+    local testname = "Test "..replace..": "..replacements[replace][3]
+    w, h = maketext(testname, nil, nil, 2, 2)
     pastetext(floor((wd - w) / 2), 310)
 
     -- draw test commands
     ov("font 22 mono")
     if drawcol ~= "" then
-        ov(op.black)
-        w, h = maketext(drawcol)
-        pastetext(floor((wd - w) / 2) + 2, 340 + 2)
         ov(op.yellow)
-        maketext(drawcol)
+        w, h = maketext(drawcol, nil, nil, 2, 2)
         pastetext(floor((wd - w) / 2), 340)
     end
-    ov(op.black)
-    w, h = maketext(replacecmd)
-    pastetext(floor((wd - w) / 2) + 2, 390 + 2)
     ov(op.yellow)
-    maketext(replacecmd)
+    w, h = maketext(replacecmd, nil, nil, 2, 2)
     pastetext(floor((wd - w) / 2), 390)
 
     -- next replacement
@@ -2357,7 +2349,7 @@ local function test_batch()
     -- create batch string
     if repeat_test(" with a different batch size") then goto restart end
 end
-
+ 
 --------------------------------------------------------------------------------
 
 local function test_blending()
@@ -2407,6 +2399,88 @@ local function test_blending()
     end
 
     if repeat_test(" with a different blend setting", true) then goto restart end
+end
+
+--------------------------------------------------------------------------------
+
+local function test_sound()
+    local oldblend = ov("blend 0")
+    ov(op.blue)
+    ov("fill")
+    ov("update")
+
+    -- draw exit message
+    ov("blend 1")
+    ov(op.white)
+    local oldfont = ov(demofont)
+    local exitw = maketext("Click or press enter to return to the main menu.", nil, nil, 2, 2)
+    pastetext(floor((wd - exitw) / 2), 500)
+
+    -- draw commands
+    ov("font 22 mono")
+    ov(op.yellow)
+    local w, h = maketext("sound play audio.wav", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 100)
+    w, h = maketext("sound loop audio.wav", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 200)
+    w, h = maketext("sound stop", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 300)
+
+    -- draw controls
+    ov("font 16 mono")
+    ov(op.white)
+    w, h = maketext("Press P to play sound", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 70)
+    w, h = maketext("Press L to loop sound", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 170)
+    w, h = maketext("Press S to stop sound", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 270)
+
+    -- update screen then copy background
+    ov("update")
+    local bgclip = "bg"
+    ov("copy 0 0 0 0 "..bgclip)
+
+    local soundname = "oplus/sounds/levelcompleteloop.wav"
+    local running = true
+
+    -- main loop
+    local command = "stop"
+    while running do
+        -- check for input
+        local event = g.getevent()
+        if event:find("^oclick") or event == "key enter none" or event == "key return none" then
+            running = false
+        elseif event == "key p none" then
+            command = "play"
+            ov("sound play "..soundname)
+        elseif event == "key l none" then
+            command = "loop"
+            ov("sound loop "..soundname)
+        elseif event == "key s none" then
+            command = "stop"
+            ov("sound stop")
+        end
+
+        -- draw background
+        ov("blend 0")
+        ov("paste 0 0 "..bgclip)
+        -- draw last command
+        ov("blend 1")
+        ov(op.cyan)
+        w, h = maketext("Last command: "..command, nil, nil, 2, 2)
+        pastetext(floor((wd - w) / 2), 400)
+        ov("update")
+    end
+
+    -- stop any sounds before exit
+    ov("sound stop")
+
+    -- no point calling repeat_test()
+    return_to_main_menu = true
+    ov("delete "..bgclip)
+    ov("font "..oldfont)
+    ov("blend "..oldblend)
 end
 
 --------------------------------------------------------------------------------
@@ -2512,6 +2586,7 @@ local function create_menu_buttons()
     render_button = op.button(      longest, test_target)
     replace_button = op.button(     longest, test_replace)
     save_button = op.button(        longest, test_save)
+    sound_button = op.button(       longest, test_sound)
     text_button = op.button(        longest, test_text)
     transition_button = op.button(  longest, test_transitions)
 
@@ -2532,6 +2607,7 @@ local function create_menu_buttons()
     render_button.setlabel(      "Render Target", false)
     replace_button.setlabel(     "Replacing Pixels", false)
     save_button.setlabel(        "Saving the Overlay", false)
+    sound_button.setlabel(       "Sounds", false)
     text_button.setlabel(        "Text and Transforms", false)
     transition_button.setlabel(  "Transitions", false)
 end
@@ -2539,7 +2615,7 @@ end
 --------------------------------------------------------------------------------
 
 local function main_menu()
-    local numbutts = 18
+    local numbutts = 19
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
     local buttgap = 10
@@ -2584,6 +2660,7 @@ local function main_menu()
     render_button.show(x, y)        y = y + buttgap + buttht
     replace_button.show(x, y)       y = y + buttgap + buttht
     save_button.show(x, y)          y = y + buttgap + buttht
+    sound_button.show(x, y)         y = y + buttgap + buttht
     text_button.show(x, y)          y = y + buttgap + buttht
     transition_button.show(x, y)
 
