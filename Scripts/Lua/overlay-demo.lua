@@ -317,15 +317,16 @@ local function test_cursors()
 
     local cmd
     curs = curs + 1
-    if curs == 1 then cmd = "cursor pencil" end
-    if curs == 2 then cmd = "cursor pick" end
-    if curs == 3 then cmd = "cursor cross" end
-    if curs == 4 then cmd = "cursor hand" end
-    if curs == 5 then cmd = "cursor zoomin" end
-    if curs == 6 then cmd = "cursor zoomout" end
-    if curs == 7 then cmd = "cursor arrow" end
-    if curs == 8 then cmd = "cursor current" end
-    if curs == 9 then cmd = "cursor hidden" curs = 0 end
+    if curs ==  1 then cmd = "cursor pencil" end
+    if curs ==  2 then cmd = "cursor pick" end
+    if curs ==  3 then cmd = "cursor cross" end
+    if curs ==  4 then cmd = "cursor hand" end
+    if curs ==  5 then cmd = "cursor zoomin" end
+    if curs ==  6 then cmd = "cursor zoomout" end
+    if curs ==  7 then cmd = "cursor arrow" end
+    if curs ==  8 then cmd = "cursor current" end
+    if curs ==  9 then cmd = "cursor wait" end
+    if curs == 10 then cmd = "cursor hidden" curs = 0 end
     ov(cmd)
 
     ov(op.white)

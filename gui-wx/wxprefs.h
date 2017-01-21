@@ -375,6 +375,7 @@ extern wxCursor* curs_cross;        // for selecting cells
 extern wxCursor* curs_hand;         // for moving view by dragging
 extern wxCursor* curs_zoomin;       // for zooming in to a clicked cell
 extern wxCursor* curs_zoomout;      // for zooming out from a clicked cell
+extern wxCursor* curs_wait;         // for indicating a lengthy task is in progress
 extern wxCursor* curs_hidden;       // for hiding cursor when mouse is in overlay
 
 void FreeCursors();

@@ -206,6 +206,7 @@ wxCursor* curs_cross;            // for selecting cells
 wxCursor* curs_hand;             // for moving view by dragging
 wxCursor* curs_zoomin;           // for zooming in to a clicked cell
 wxCursor* curs_zoomout;          // for zooming out from a clicked cell
+wxCursor* curs_wait;             // for indicating a lengthy task is in progress
 wxCursor* curs_hidden;           // for hiding cursor when mouse is in overlay
 
 // local (ie. non-exported) globals:
@@ -1139,6 +1140,9 @@ void CreateCursors()
     curs_zoomout = new wxCursor(image_zoomout);
     if (curs_zoomout == NULL) Fatal(_("Failed to create zoomout cursor!"));
 
+    curs_wait = new wxCursor(wxCURSOR_WAIT);
+    if (curs_wait == NULL) Fatal(_("Failed to create wait cursor!"));
+
     curs_hidden = new wxCursor(wxCURSOR_BLANK);
     if (curs_hidden == NULL) Fatal(_("Failed to create hidden cursor!"));
     
@@ -1157,6 +1161,7 @@ void FreeCursors()
     delete curs_hand;
     delete curs_zoomin;
     delete curs_zoomout;
+    delete curs_wait;
     delete curs_hidden;
 }
 
