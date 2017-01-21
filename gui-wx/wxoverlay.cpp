@@ -2856,6 +2856,9 @@ const char* Overlay::DoCursor(const char* args)
     } else if (strncmp(args+1, "zoomout", 7) == 0) {
         ovcursor = curs_zoomout;
 
+    } else if (strncmp(args+1, "wait", 4) == 0) {
+        ovcursor = curs_wait;
+
     } else if (strncmp(args+1, "hidden", 6) == 0) {
         ovcursor = curs_hidden;
 
