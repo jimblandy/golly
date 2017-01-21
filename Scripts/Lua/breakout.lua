@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 59
+local build = 60
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -782,7 +782,6 @@ local function initbricks()
         rows[y] = bricks
     end
     totalbricks = bricksleft
-    bricksleft = 2
 end
 
 --------------------------------------------------------------------------------
@@ -1510,7 +1509,7 @@ local function breakout()
 
                         -- check for ball hitting top boundary
                         if bally < ballsize / 2 then
-                            createparticles(ballx, bally, 1, 1, wallparticles)
+                            createparticles(ballx, floor(bally - ballsize / 2), 1, 1, wallparticles)
                             -- ball hit top so speed up a little bit
                             balldy    = -balldy
                             bally     = bally - stepy
