@@ -127,11 +127,12 @@ local autostart     = 0
 local showmouse     = 1
 local showshadows   = 1
 local confirmquit   = 0
+local comboscore    = 1
+local soundon       = 1
+local loopmusic     = 0
+
 local showoptions   = false
 local confirming    = false
-local comboscore    = 1
-local soundon       = true
-local loopmusic     = false
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."breakout.ini"
