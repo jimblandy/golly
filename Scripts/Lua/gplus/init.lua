@@ -14,8 +14,8 @@ end
 --------------------------------------------------------------------------------
 
 function m.min(a)
-	-- return minimum value in given array
-	local alen = #a
+    -- return minimum value in given array
+    local alen = #a
     if alen == 0 then return nil end
     if alen < 100000 then
         -- use faster math.min call
@@ -33,8 +33,8 @@ end
 --------------------------------------------------------------------------------
 
 function m.max(a)
-	-- return maximum value in given array
-	local alen = #a
+    -- return maximum value in given array
+    local alen = #a
     if alen == 0 then return nil end
     if alen < 100000 then
         -- use faster math.max call
@@ -52,8 +52,8 @@ end
 --------------------------------------------------------------------------------
 
 function m.drawline(x1, y1, x2, y2, state)
-	-- draw a line of cells from x1,y1 to x2,y2 using Bresenham's algorithm
-	state = state or 1
+    -- draw a line of cells from x1,y1 to x2,y2 using Bresenham's algorithm
+    state = state or 1
     g.setcell(x1, y1, state)
     if x1 == x2 and y1 == y2 then return end
     
@@ -103,11 +103,11 @@ end
 --------------------------------------------------------------------------------
 
 function m.getminbox(cells)
-	-- return a rect with the minimal bounding box of given cell array or pattern
-	if cells.array then
-	    -- arg is a pattern so get its cell array
-	    cells = cells.array
-	end
+    -- return a rect with the minimal bounding box of given cell array or pattern
+    if cells.array then
+        -- arg is a pattern so get its cell array
+        cells = cells.array
+    end
     local len = #cells
     if len < 2 then return m.rect( {} ) end
     
@@ -116,9 +116,9 @@ function m.getminbox(cells)
     local maxx = minx
     local maxy = miny
 
-	-- determine if cell array is one-state or multi-state
-	local inc = 2
-	if (len & 1) == 1 then inc = 3 end
+    -- determine if cell array is one-state or multi-state
+    local inc = 2
+    if (len & 1) == 1 then inc = 3 end
     
     -- ignore padding int if present
     if (inc == 3) and (len % 3 == 1) then len = len - 1 end
@@ -162,26 +162,26 @@ end
 --------------------------------------------------------------------------------
 
 function m.split(s, sep)
-	-- split given string into substrings that are separated by given sep
-	-- (emulates Python's split function)
-	sep = sep or " "
-	local t = {}
-	local start = 1
-	while true do
-	    local i = s:find(sep, start)
-	    if i == nil then
-	        if start <= #s then
-	            t[#t+1] = s:sub(start, -1)
-	        end
-	        break
-	    end
-	    if i > start then
-	        t[#t+1] = s:sub(start, i-1)
-	    elseif i == start then
-	        t[#t+1] = ""
-	    end
-	    start = i + #sep
-	end
+    -- split given string into substrings that are separated by given sep
+    -- (emulates Python's split function)
+    sep = sep or " "
+    local t = {}
+    local start = 1
+    while true do
+        local i = s:find(sep, start)
+        if i == nil then
+            if start <= #s then
+                t[#t+1] = s:sub(start, -1)
+            end
+            break
+        end
+        if i > start then
+            t[#t+1] = s:sub(start, i-1)
+        elseif i == start then
+            t[#t+1] = ""
+        end
+        start = i + #sep
+    end
     if #t == 0 then
         -- sep does not exist in s so return s
         return s
@@ -213,28 +213,28 @@ function m.rect(a)
     -- (emulates glife's rect class)
     local r = {}
 
-	if #a == 0 then
-		r.empty = true
-	elseif #a == 4 then
-		r.empty = false
-		r.x  = a[1]
-		r.y  = a[2]
-		r.wd = a[3]
-		r.ht = a[4]
-		r.left   = r.x
-		r.top    = r.y
-		r.width  = r.wd
-		r.height = r.ht
-		if r.wd <= 0 then error("rect width must be > 0", 2) end
-		if r.ht <= 0 then error("rect height must be > 0", 2) end
-		r.right  = r.left + r.wd - 1
-		r.bottom = r.top  + r.ht - 1
-		r.visible = function ()
-			return g.visrect( {r.x, r.y, r.wd, r.ht} )
-		end
-	else
-		error("rect arg must be {} or {x,y,wd,ht}", 2)
-	end
+    if #a == 0 then
+        r.empty = true
+    elseif #a == 4 then
+        r.empty = false
+        r.x  = a[1]
+        r.y  = a[2]
+        r.wd = a[3]
+        r.ht = a[4]
+        r.left   = r.x
+        r.top    = r.y
+        r.width  = r.wd
+        r.height = r.ht
+        if r.wd <= 0 then error("rect width must be > 0", 2) end
+        if r.ht <= 0 then error("rect height must be > 0", 2) end
+        r.right  = r.left + r.wd - 1
+        r.bottom = r.top  + r.ht - 1
+        r.visible = function ()
+            return g.visrect( {r.x, r.y, r.wd, r.ht} )
+        end
+    else
+        error("rect arg must be {} or {x,y,wd,ht}", 2)
+    end
     
     return r
 end
@@ -307,23 +307,23 @@ function m.pattern(arg, x0, y0, A)
     setmetatable(p, mtp)
     
     arg = arg or {}
-	x0 = x0 or 0
-	y0 = y0 or 0
-	A = A or m.identity
+    x0 = x0 or 0
+    y0 = y0 or 0
+    A = A or m.identity
     
     if type(arg) == "table" then
         p.array = {}
-    	if getmetatable(arg) == mtp then
-    		-- arg is a pattern
-    		if #arg.array > 0 then p.array = g.join({},arg.array) end
-    	else
-    		-- assume arg is a cell array
-    		if #arg > 0 then p.array = g.join({},arg) end
-    	end
+        if getmetatable(arg) == mtp then
+            -- arg is a pattern
+            if #arg.array > 0 then p.array = g.join({},arg.array) end
+        else
+            -- assume arg is a cell array
+            if #arg > 0 then p.array = g.join({},arg) end
+        end
     elseif type(arg) == "string" then
-    	p.array = g.parse(arg, x0, y0, table.unpack(A))
+        p.array = g.parse(arg, x0, y0, table.unpack(A))
     else
-    	error("1st arg of pattern must be a cell array, a pattern, or a string", 2)
+        error("1st arg of pattern must be a cell array, a pattern, or a string", 2)
     end
 
     p.t = function (x, y, A)
@@ -332,61 +332,65 @@ function m.pattern(arg, x0, y0, A)
             x, y, A = table.unpack(x)
         end
         A = A or m.identity
-	    local newp = m.pattern()
-	    newp.array = g.transform(p.array, x, y, table.unpack(A))
-	    return newp
-	end
-	
-	-- there's no need to implement p.translate and p.apply as they
-	-- are just trivial variants of p.t
-	
-	p.put = function (x, y, A)
+        local newp = m.pattern()
+        newp.array = g.transform(p.array, x, y, table.unpack(A))
+        return newp
+    end
+    
+    -- there's no need to implement p.translate and p.apply as they
+    -- are just trivial variants of p.t
+    
+    p.put = function (x, y, A, mode)
         -- paste pattern into current universe
         x = x or 0
         y = y or 0
         A = A or m.identity
-        g.putcells(p.array, x, y, table.unpack(A))
-	end
+        mode = mode or "or"
+        local axx, axy, ayx, ayy = table.unpack(A)
+        g.putcells(p.array, x, y, axx, axy, ayx, ayy, mode)
+    end
 
-    p.display = function (title, x, y, A)
+    p.display = function (title, x, y, A, mode)
         -- paste pattern into new universe and display it all
         title = title or "untitled"
         x = x or 0
         y = y or 0
         A = A or m.identity
+        mode = mode or "or"
         g.new(title)
-        g.putcells(p.array, x, y, table.unpack(A))
+        local axx, axy, ayx, ayy = table.unpack(A)
+        g.putcells(p.array, x, y, axx, axy, ayx, ayy, mode)
         g.fit()
         g.setcursor(m.zoomin)
-	end
-	
-	p.save = function (filepath)
+    end
+    
+    p.save = function (filepath)
         -- save the pattern to given file in RLE format
         g.store(p.array, filepath)
-	end
-	
-	p.add = function (p1, p2)
-	    local newp = m.pattern()
-	    newp.array = g.join(p1.array, p2.array)
-	    return newp
-	    -- note that above code is about 15% faster than doing
-		-- return m.pattern( g.join(p1.array, p2.array) )
-		-- because it avoids calling g.join again
-	end
-	
-	p.evolve = function (p1, n)
-	    local newp = m.pattern()
-	    newp.array = g.evolve(p1.array, n)
-	    return newp
-	end
-	
-	-- set metamethod so scripts can do pattern1 + pattern2
-	mtp.__add = p.add
+    end
+    
+    p.add = function (p1, p2)
+        local newp = m.pattern()
+        newp.array = g.join(p1.array, p2.array)
+        return newp
+        -- note that above code is about 15% faster than doing
+        -- return m.pattern( g.join(p1.array, p2.array) )
+        -- because it avoids calling g.join again
+    end
+    
+    p.evolve = function (p1, n)
+        local newp = m.pattern()
+        newp.array = g.evolve(p1.array, n)
+        return newp
+    end
+    
+    -- set metamethod so scripts can do pattern1 + pattern2
+    mtp.__add = p.add
 
-	-- set metamethod so scripts can do pattern[10] to get evolved pattern
-	mtp.__index = p.evolve
+    -- set metamethod so scripts can do pattern[10] to get evolved pattern
+    mtp.__index = p.evolve
 
-	return p
+    return p
 end
 
 --------------------------------------------------------------------------------
