@@ -26,6 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <ctype.h>
 
+#if defined(WIN32) || defined(WIN64)
+#define strncasecmp _strnicmp
+#endif
+
 using namespace std ;
 
 int generationsalgo::NumCellStates() {
@@ -420,7 +424,7 @@ void generationsalgo::createRuleMap512(const char *base64) {
    if (strlen(base64) >= MAP512LENGTH) {
       // deocde the base64 string
       int i = 0 ;
-      int c = 0 ;
+      char c = 0 ;
       int j = 0 ;
 
       // decode the base64 string
@@ -429,7 +433,7 @@ void generationsalgo::createRuleMap512(const char *base64) {
          // convert character to base64 index
          index = strchr(base64_characters, *base64) ;
          base64++ ;
-         c = index ? index - base64_characters : 0 ;
+         c = index ? (char)(index - base64_characters) : 0 ;
 
          // deocde the character
          rule3x3[j] = c >> 5 ; 
@@ -448,7 +452,7 @@ void generationsalgo::createRuleMap512(const char *base64) {
 
       // decode final character
       index = strchr(base64_characters, *base64) ;
-      c = index ? index - base64_characters : 0 ;
+      c = index ? (char)(index - base64_characters) : 0 ;
       rule3x3[j] = c >> 5 ;
       j++ ;
       rule3x3[j] = (c >> 4) & 1 ;
@@ -635,7 +639,7 @@ void generationsalgo::createCanonicalName(const char *base64) {
    if (gridwd > 0 || gridht > 0) {
       // algo->setgridsize() was successfully called above, so append suffix
       const char* bounds = canonicalsuffix() ;
-      int i = 0 ;
+      i = 0 ;
       while (bounds[i]) canonrule[p++] = bounds[i++] ;
    }
 

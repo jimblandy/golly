@@ -28,6 +28,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <stdlib.h>
 #include <ctype.h>
 
+#if defined(WIN32) || defined(WIN64)
+#define strncasecmp _strnicmp
+#endif
+
 liferules::liferules() {
    int i ;
 
@@ -369,7 +373,7 @@ void liferules::createRuleMap512(const char *base64) {
    if (strlen(base64) >= MAP512LENGTH) {
       // deocde the base64 string
       int i = 0 ;
-      int c = 0 ;
+      char c = 0 ;
       int j = 0 ;
 
       // decode the base64 string
@@ -378,7 +382,7 @@ void liferules::createRuleMap512(const char *base64) {
          // convert character to base64 index
          index = strchr(base64_characters, *base64) ;
          base64++ ;
-         c = index ? index - base64_characters : 0 ;
+         c = index ? (char)(index - base64_characters) : 0 ;
    
          // deocde the character
          rule3x3[j] = c >> 5 ;
@@ -397,7 +401,7 @@ void liferules::createRuleMap512(const char *base64) {
    
       // decode final character
       index = strchr(base64_characters, *base64) ;
-      c = index ? index - base64_characters : 0 ;
+      c = index ? (char)(index - base64_characters) : 0 ;
       rule3x3[j] = c >> 5 ;
       j++ ;
       rule3x3[j] = (c >> 4) & 1 ;
