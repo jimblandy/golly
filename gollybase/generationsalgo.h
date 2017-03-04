@@ -59,6 +59,7 @@ private:
    char canonrule[MAXRULESIZE] ;      // canonical version of valid rule passed into setrule
    neighborhood_masks neighbormask ;  // neighborhood masks in 3x3 table
    bool totalistic ;                  // is rule totalistic?
+   bool using_map ;                   // is rule a map?
    int neighbors ;                    // number of neighbors
    int rulebits ;                     // bitmask of neighbor counts used (9 birth, 9 survival)
    int letter_bits[18] ;              // bitmask for non-totalistic letters used
@@ -70,7 +71,7 @@ private:
    const char *rule_letters[4] ;      // valid rule letters per neighbor count
    const int *rule_neighborhoods[4] ; // isotropic neighborhoods per neighbor count
    char rule3x3[ALL3X3] ;             // all 3x3 cell mappings 012345678->4'
-   const char *neighbor4swap ;        // swap table for 4 neighbor isotropic letters for B0 rules
+   const char *base64_characters ;    // base 64 encoding characters
 
    void initRule() ;
    void setTotalistic(int value, bool survival) ;
@@ -80,14 +81,13 @@ private:
    void setSymmetrical(int value, bool survival, int lindex, int normal) ;
    void setTotalisticRuleFromString(const char *rule, bool survival) ;
    void setRuleFromString(const char *rule, bool survival) ;
+   void createRuleMap512(const char *base64) ;
    void createRuleMap(const char *birth, const char *survival) ;
-   void createB0SmaxRuleMap(const char *birth, const char *survival) ;
-   void createB0EvenRuleMap(const char *birth, const char *survival) ;
-   void createB0OddRuleMap(const char *birth, const char *survival) ;
-   void createCanonicalName() ;
+   void createCanonicalName(const char *base64) ;
    void removeChar(char *string, char skip) ;
    bool lettersValid(const char *part) ;
    int addLetters(int count, int p) ;
+   void saveRule() ;
 } ;
 
 #endif

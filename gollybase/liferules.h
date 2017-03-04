@@ -34,9 +34,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef LIFERULES_H
 #define LIFERULES_H
 #include "lifealgo.h"
-const int MAXRULESIZE = 200 ;  // maximum number of characters in a rule
+const int MAXRULESIZE = 500 ;  // maximum number of characters in a rule
 const int ALL3X3 = 512 ;       // all possible 3x3 cell combinations
 const int ALL4X4 = 65536 ;     // all possible 4x4 cell combinations
+const int MAP512LENGTH = 86 ;  // number of base64 characters to encode 512bit map
+
 class liferules {
 public:
    liferules() ;
@@ -69,6 +71,7 @@ private:
    char canonrule[MAXRULESIZE] ;      // canonical version of valid rule passed into setrule
    neighborhood_masks neighbormask ;  // neighborhood masks in 3x3 table
    bool totalistic ;                  // is rule totalistic?
+   bool using_map ;                   // is rule a map?
    int neighbors ;                    // number of neighbors
    int rulebits ;                     // bitmask of neighbor counts used (9 birth, 9 survival)
    int letter_bits[18] ;              // bitmask for non-totalistic letters used
@@ -81,7 +84,7 @@ private:
    const char *rule_letters[4] ;      // valid rule letters per neighbor count
    const int *rule_neighborhoods[4] ; // isotropic neighborhoods per neighbor count
    char rule3x3[ALL3X3] ;             // all 3x3 cell mappings 012345678->4'
-   const char *neighbor4swap ;        // swap table for 4 neighbor isotropic letters for B0 rules
+   const char *base64_characters ;    // base 64 encoding characters
 
    void initRule() ;
    void setTotalistic(int value, bool survival) ;
@@ -92,12 +95,11 @@ private:
    void setTotalisticRuleFromString(const char *rule, bool survival) ;
    void setRuleFromString(const char *rule, bool survival) ;
    void createWolframMap() ;
+   void createRuleMap512(const char *base64) ;
    void createRuleMap(const char *birth, const char *survival) ;
-   void createB0SmaxRuleMap(const char *birth, const char *survival) ;
-   void createB0EvenRuleMap(const char *birth, const char *survival) ;
-   void createB0OddRuleMap(const char *birth, const char *survival) ;
    void convertTo4x4Map(char *which) ;
-   void createCanonicalName(lifealgo *algo) ;
+   void saveRule() ;
+   void createCanonicalName(lifealgo *algo, const char *base64) ;
    void removeChar(char *string, char skip) ;
    bool lettersValid(const char *part) ;
    int addLetters(int count, int p) ;

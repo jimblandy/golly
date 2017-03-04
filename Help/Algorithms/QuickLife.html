@@ -144,6 +144,59 @@ For example, B2-aceikn3/S will become B3/S.
 </ol>
 
 
+<p><a name="map"></a>&nbsp;<br>
+<font size=+1><b>MAP rules</b></font>
+
+<p>
+The totalistic and non-totalistic rules above are only a small subset of all possible
+rules for a 2-state Moore neighborhood. The Moore neighborhood has 9 cells which gives
+512 (2^9) possible combinations of cells. For each of these combinations you define whether
+the output cell is dead or alive, giving a string of 512 digits, each being 0 (dead) or 1 (alive).
+<pre>
+0 1 2
+3 4 5  ->  4'
+6 7 8
+</pre>
+The first few entries for Conway's Life (B3/S23) in this format are as follows:
+<pre>
+Cell 0 1 2 3 4 5 6 7 8  ->  4'
+0    0 0 0 0 0 0 0 0 0  ->  0
+1    0 0 0 0 0 0 0 0 1  ->  0
+2    0 0 0 0 0 0 0 1 0  ->  0
+3    0 0 0 0 0 0 0 1 1  ->  0
+4    0 0 0 0 0 0 1 0 0  ->  0
+5    0 0 0 0 0 0 1 0 1  ->  0
+6    0 0 0 0 0 0 1 1 0  ->  0
+7    0 0 0 0 0 0 1 1 1  ->  1   B3
+8    0 0 0 0 0 1 0 0 0  ->  0
+9    0 0 0 0 0 1 0 0 1  ->  0
+10   0 0 0 0 0 1 0 1 0  ->  0
+11   0 0 0 0 0 1 0 1 1  ->  1   B3
+...
+19   0 0 0 0 1 0 0 1 1  ->  1   S2
+...
+511  1 1 1 1 1 1 1 1 1  ->  0
+</pre>
+This creates a string of 512 binary digits:
+<pre>
+Conway's Life (B3/S23) = 00000001000100000001...0
+</pre>
+This string of 512 bits is then base64 encoded for brevity giving a string of 86 characters:
+<pre>
+ARYXfhZofugWaH7oaIDogBZofuhogOiAaIDogIAAgAAWaH7oaIDogGiA6ICAAIAAaIDogIAAgACAAIAAAAAAAA
+</pre>
+The syntax of the rule becomes:
+<pre>
+rule = MAP&lt;base64_string&gt;
+</pre>
+Conway's Life (B3/S23) encoded as a map is as follows:
+<pre>
+rule = MAPARYXfhZofugWaH7oaIDogBZofuhogOiAaIDogIAAgAAWaH7oaIDogGiA6ICAAIAAaIDogIAAgACAAIAAAAAAAA
+</pre>
+Given each MAP rule has 512 bits this leads to 2^512 (roughly 1.34x10^154) unique rules.
+Totalistic rules are a subset of non-totalistic rules which are a subset of MAP rules.
+
+<p>
 <p><a name="b0emulation"></a>&nbsp;<br>
 <font size=+1><b>Emulating B0 rules</b></font>
 
@@ -197,7 +250,12 @@ has B(max-x)(letter). For 4-neighbor isotropic letters use the table above.
 For example, B0124-k/S1c25 becomes B34k5678/S01-c34678 (even) and B367c/S4-k678 (odd).
 
 <p>
-In both cases, the replacement rule(s) generate patterns that are equivalent
+For a MAP rule B0 is equivalent to the first bit being 0. Smax is equivalent to the 511th
+bit being 1. For B0 with Smax the rule is converted to NOT(REVERSE(bits)). For B0 with Smax
+the even rule is NOT(bits) and the odd rule is REVERSE(bits).
+
+<p>
+In all cases, the replacement rule(s) generate patterns that are equivalent
 to the requested rule.  However, you need to be careful when editing an
 emulated pattern in a rule that contains B0 but not Smax.  If you do a cut
 or copy then you should only paste into a generation with the same parity.

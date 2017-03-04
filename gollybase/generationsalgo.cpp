@@ -98,6 +98,9 @@ void generationsalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
 generationsalgo::generationsalgo() {
    int i ;
 
+   // base64 encoding characters
+   base64_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" ;
+
    // all valid rule letters
    valid_rule_letters = "012345678ceaiknjqrytwz-" ;
 
@@ -106,9 +109,6 @@ generationsalgo::generationsalgo() {
    rule_letters[1] = "ceaikn" ;
    rule_letters[2] = "ceaiknjqry" ;
    rule_letters[3] = "ceaiknjqrytwz" ;
-
-   // swap table for 4 neighbor isotropic letters for B0 rules
-   neighbor4swap =   "ecatkrywnjiqz" ;
 
    // isotropic neighborhoods per neighbor count
    static int entry0[2] = { 1, 2 } ;
@@ -182,6 +182,7 @@ void generationsalgo::initRule() {
    neighbormask = MOORE ; 
    neighbors = 8 ;
    totalistic = true ;
+   using_map = false ;
 
    // we may need this to be >2 here so it's recognized as multistate
    maxCellStates = 3 ;
@@ -410,6 +411,50 @@ void generationsalgo::setRuleFromString(const char *rule, bool survival) {
    }
 }
 
+// create the rule map from the base64 encoded map
+void generationsalgo::createRuleMap512(const char *base64) {
+   // clear the rule array
+   memset(rule3x3, 0, ALL3X3) ;
+      
+   // check the string is long enough
+   if (strlen(base64) >= MAP512LENGTH) {
+      // deocde the base64 string
+      int i = 0 ;
+      int c = 0 ;
+      int j = 0 ;
+
+      // decode the base64 string
+      const char *index = 0 ;
+      for (i = 0 ; i < MAP512LENGTH - 1 ; i++) { 
+         // convert character to base64 index
+         index = strchr(base64_characters, *base64) ;
+         base64++ ;
+         c = index ? index - base64_characters : 0 ;
+
+         // deocde the character
+         rule3x3[j] = c >> 5 ; 
+         j++ ;
+         rule3x3[j] = (c >> 4) & 1 ;
+         j++ ;
+         rule3x3[j] = (c >> 3) & 1 ;
+         j++ ;
+         rule3x3[j] = (c >> 2) & 1 ;
+         j++ ;
+         rule3x3[j] = (c >> 1) & 1 ;
+         j++ ;
+         rule3x3[j] = c & 1 ;
+         j++ ;
+      } 
+
+      // decode final character
+      index = strchr(base64_characters, *base64) ;
+      c = index ? index - base64_characters : 0 ;
+      rule3x3[j] = c >> 5 ;
+      j++ ;
+      rule3x3[j] = (c >> 4) & 1 ;
+   } 
+}
+
 // create the rule map from birth and survival strings
 void generationsalgo::createRuleMap(const char *birth, const char *survival) {
    // clear the rule array
@@ -496,7 +541,7 @@ int generationsalgo::addLetters(int count, int p) {
 }
 
 // AKT: store valid rule in canonical format for getrule()
-void generationsalgo::createCanonicalName() {
+void generationsalgo::createCanonicalName(const char *base64) {
    int p = 0 ;
    int np = 0 ;
    int i = 0 ;
@@ -505,46 +550,63 @@ void generationsalgo::createCanonicalName() {
    // might be simply totalistic
    bool stillnontotalistic = false ;
 
-   // output survival part
-   for (i = 0 ; i <= neighbors ; i++) {
-      if (rulebits & (1 << (survival_offset+i))) {
-         canonrule[p++] = '0' + (char)i ;
+   // check for map rule
+   if (using_map) {
+      // output map
+      canonrule[p++] = 'M' ;
+      canonrule[p++] = 'A' ;
+      canonrule[p++] = 'P' ;
 
-         // check for non-totalistic
-         if (!totalistic) {
-            // add any defined letters
-            np = addLetters(survival_offset + i, p) ;
-
-            // check if letters were added
-            if (np != p) {
-               if (np > p) {
-                  stillnontotalistic = true ;
-               }
-               p = np ;
-            }
+      // copy base64 part
+      for (i = 0 ; i < MAP512LENGTH; i++) {
+         if (*base64) {
+            canonrule[p++] = *base64 ;
+            base64++ ;
          }
       }
    }
-
-   // add slash
-   canonrule[p++] = '/' ;
-
-   // output birth part
-   for (i = 0 ; i <= neighbors ; i++) {
-      if (rulebits & (1 << i)) {
-         canonrule[p++] = '0' + (char)i ;
-
-         // check for non-totalistic
-         if (!totalistic) {
-            // add any defined letters
-            np = addLetters(i, p) ;
-     
-            // check if letters were added
-            if (np != p) {
-               if (np > p) {
-                  stillnontotalistic = true ;
+   else {
+      // output survival part
+      for (i = 0 ; i <= neighbors ; i++) {
+         if (rulebits & (1 << (survival_offset+i))) {
+            canonrule[p++] = '0' + (char)i ;
+   
+            // check for non-totalistic
+            if (!totalistic) {
+               // add any defined letters
+               np = addLetters(survival_offset + i, p) ;
+   
+               // check if letters were added
+               if (np != p) {
+                  if (np > p) {
+                     stillnontotalistic = true ;
+                  }
+                  p = np ;
                }
-               p = np ;
+            }
+         }
+      }
+   
+      // add slash
+      canonrule[p++] = '/' ;
+   
+      // output birth part
+      for (i = 0 ; i <= neighbors ; i++) {
+         if (rulebits & (1 << i)) {
+            canonrule[p++] = '0' + (char)i ;
+   
+            // check for non-totalistic
+            if (!totalistic) {
+               // add any defined letters
+               np = addLetters(i, p) ;
+        
+               // check if letters were added
+               if (np != p) {
+                  if (np > p) {
+                     stillnontotalistic = true ;
+                  }
+                  p = np ;
+               }
             }
          }
       }
@@ -584,298 +646,46 @@ void generationsalgo::createCanonicalName() {
    ghashbase::setrule(canonrule);
 }
 
-/*
-   Following routines emulate B0 rules using David Eppstein's idea to change
-   the current rule depending on generation parity. This was enhanced for
-   non-totalistic isotropic rules by user toroidelet on the conwaylife.com
-   forum (and kindly explained by Dave Greene).
-    
-   If original rule has B0 but not Smax:
+// save the rule (and handle B0)
+void generationsalgo::saveRule() {
+   int i = 0 ;
+   char tmp ;
 
-      For even generations,
-         whenever the original rule has B[digit][alpha] or
-         S[digit][alpha], omit that bit from the modified rule, and whenever
-         the original rule is missing a B[digit][alpha] or S[digit][alpha], add
-         that bit to the modified rule.
-
-         eg. totalistic: B03/S23 => B1245678/S0145678
-             isotropic:  B0124-k/S1c25 => B34k5678/S01-c34678.
-    
-      For odd generations,
-         for everything except 4-neighbor isotropic bits, use B[digit][alpha]
-         if and only if the original rule has S[max-digit][alpha] and use
-         S[digit][alpha] if and only if the original rule has B[max-digit][alpha].
-
-         for 4-neighbor isotropic bits, use the following table:
-            4c -> 4e
-            4e -> 4c
-            4k -> 4k
-            4a -> 4a
-            4i -> 4t
-            4n -> 4r
-            4y -> 4j
-            4q -> 4w
-            4j -> 4y
-            4r -> 4n
-            4t -> 4i
-            4w -> 4q
-            4z -> 4z
-
-         eg. totalistic: B03/S23 => B56/S58.
-             isotropic:  B0124-k/S1c25 => B367c/S4-k678.
-    
-   If original rule has B0 and Smax:
-    
-      Such rules don't strobe, so we just want to invert all the cells.
-      The trick is to do both changes: invert the isotropic bits, and swap
-      B[digit][alpha] for S[max-digit][alpha], plus the special 4-neighbor
-      isotropic bit swap shown in the above table.
-
-      eg. totalistic: B03/S238 => B123478/S0123467 (for ALL gens).
-*/
-
-// create the B0 (no Smax) even generation rule map
-void generationsalgo::createB0EvenRuleMap(const char *birth, const char *survival) {
-   int b = 0 ;
-   int s = 0 ;
-   int i ;
-   int j ;
-   int bits ;
-   int maxbits ;
-   char newbirth[MAXRULESIZE] ;
-   char newsurvival[MAXRULESIZE] ;
-
-   // invert neighbor counts
-   for (i = 0 ; i <= neighbors ; i++) {
-      // check if the digit is in the birth part
-      if (strchr(birth, '0' + i) == 0) {
-         // digit missing so add to birth part
-         newbirth[b++] = '0' + (char) i ;
-      }
-      else {
-         // check for letters on this digit
-         bits = letter_bits[i] ;
-         if (bits) {
-            // digit has letters so add to birth part
-            newbirth[b++] = '0' + (char) i ;
-
-            // output inverted sign
-            if (!(bits & (1 << negative_bit))) {
-               newbirth[b++] = '-' ;
-            }
-
-            // output letters
-            maxbits = max_letters[i] ;
-            for (j = 0 ; j < maxbits ; j++) {
-               if (bits & (1 << j)) {
-                  newbirth[b++] = rule_letters[3][j] ;
-               }
-            }
+   // check for B0
+   if (rule3x3[0]) {
+      // check for Smax
+      if (rule3x3[ALL3X3 - 1]) {
+         // B0 with Smax: rule -> NOT(reverse(bits))
+         for (i = 0 ; i < ALL3X3 / 2 ; i++) {
+            tmp = rule3x3[i] ;
+            rule3x3[i] = 1 - rule3x3[ALL3X3 - i - 1] ;
+            rule3x3[ALL3X3 - i - 1] = 1 - tmp ;
          }
       }
-
-      // check if the digit is in the survival part
-      if (strchr(survival, '0' + i) == 0) {
-         // digit missing add to survival part
-         newsurvival[s++] = '0' + (char) i ;
-      }
       else {
-         // check for letters on this digit
-         bits = letter_bits[survival_offset + i] ;
-         if (bits) {
-            // digit has letters so add survival part
-            newsurvival[s++] = '0' + (char) i ;
+         // B0 without Smax needs two rules: one for odd and one for even generations
+         alternate_rules = true ;
 
-            // output inverted sign
-            if (!(bits & (1 << negative_bit))) {
-               newsurvival[s++] = '-' ;
-            }
+         // odd rule -> reverse(bits)
+         for (i = 0 ; i < ALL3X3 / 2 ; i++) {
+            tmp = rule3x3[i] ;
+            rule3x3[i] = rule3x3[ALL3X3 - i - 1] ;
+            rule3x3[ALL3X3 - i - 1] = tmp ;
+         }
+         memcpy(rule1, rule3x3, sizeof(rule3x3)) ;
 
-            // output letters
-            maxbits = max_letters[survival_offset + i] ;
-            for (j = 0 ; j < maxbits ; j++) {
-               if (bits & (1 << j)) {
-                  newsurvival[s++] = rule_letters[3][j] ;
-               }
-            }
+         // even rule -> NOT(bits)
+         for (i = 0 ; i < ALL3X3 / 2 ; i++) {
+            tmp = rule3x3[i] ;
+            // need to reverse then invert due to even rule above
+            rule3x3[i] = 1 - rule3x3[ALL3X3 - i - 1] ;
+            rule3x3[ALL3X3 - i - 1] = 1 - tmp ;
          }
       }
    }
 
-   // terminate strings
-   newbirth[b] = 0 ;
-   newsurvival[s] = 0 ;
-
-   // create the rule map
-   createRuleMap(newbirth, newsurvival) ;
-}
-
-// create the B0 (no Smax) odd generation rule map
-void generationsalgo::createB0OddRuleMap(const char *birth, const char *survival) {
-   int b = 0 ;
-   int s = 0 ;
-   int i ;
-   int j ;
-   int bits ;
-   int maxbits ;
-   char newbirth[MAXRULESIZE] ;
-   char newsurvival[MAXRULESIZE] ;
-
-   // Bx->S(max-x) and Sx->B(max-x)
-   for (i = 0 ; i <= neighbors ; i++) {
-      // check if the digit is in the birth part
-      if (strchr(birth, '0' + i) != 0) {
-         // Sx->B(max-x)
-         newsurvival[s++] = '0' + (char) (neighbors - i) ;
-
-         // check for letters on this digit
-         bits = letter_bits[i] ;
-         if (bits) {
-            // output sign
-            if (bits & (1 << negative_bit)) {
-               newsurvival[s++] = '-' ;
-            }
-
-            // output letters
-            maxbits = max_letters[i] ;
-            for (j = 0 ; j < maxbits ; j++) {
-               if (bits & (1 << j)) {
-                  // check for 4-neighbor
-                  if (i == 4) {
-                     newsurvival[s++] = neighbor4swap[j] ;
-                  }
-                  else {
-                     newsurvival[s++] = rule_letters[3][j] ;
-                  }
-               }
-            }
-         }
-      }
-
-      // check if the digit is in the survival part
-      if (strchr(survival, '0' + i) != 0) {
-         // Bx->S(max-x)
-         newbirth[b++] = '0' + (char) (neighbors - i) ;
-
-         // check for letters on this digit
-         bits = letter_bits[survival_offset + i] ;
-         if (bits) {
-            // output sign
-            if (bits & (1 << negative_bit)) {
-               newbirth[b++] = '-' ;
-            }
-
-            // output letters
-            maxbits = max_letters[survival_offset + i] ;
-            for (j = 0 ; j < maxbits ; j++) {
-               if (bits & (1 << j)) {
-                  // check for 4-neighbor
-                  if (i == 4) {
-                     newbirth[b++] = neighbor4swap[j] ;
-                  }
-                  else {
-                     newbirth[b++] = rule_letters[3][j] ;
-                  }
-               }
-            }
-         }
-      }
-   }
-
-   // terminate strings
-   newbirth[b] = 0 ;
-   newsurvival[s] = 0 ;
-
-   // create the rule map
-   createRuleMap(newbirth, newsurvival) ;
-}
-
-// create the B0 Smax rule map
-void generationsalgo::createB0SmaxRuleMap(const char *birth, const char *survival) {
-   int b = 0 ;
-   int s = 0 ;
-   int i ;
-   int j ;
-   int bits ;
-   int maxbits ;
-   char newbirth[MAXRULESIZE] ;
-   char newsurvival[MAXRULESIZE] ;
-
-   // invert neighbor counts and Bx->S(max-x) and Sx->B(max-x)
-   for (i = 0 ; i <= neighbors ; i++) {
-      // check if the digit is in the birth part
-      if (strchr(birth, '0' + i) == 0) {
-         // digit missing so compute Smax-x and add to survival part
-         newsurvival[s++] = '0' + (char) (neighbors - i) ;
-      }
-      else {
-         // check for letters on this digit
-         bits = letter_bits[i] ;
-         if (bits) {
-            // digit has letters to compute Smax-x and add to survival part
-            newsurvival[s++] = '0' + (char) (neighbors - i) ;
-
-            // output inverted sign
-            if (!(bits & (1 << negative_bit))) {
-               newsurvival[s++] = '-' ;
-            }
-
-            // output letters
-            maxbits = max_letters[i] ;
-            for (j = 0 ; j < maxbits ; j++) {
-               if (bits & (1 << j)) {
-                  // check for 4-neighbor
-                  if (i == 4) {
-                     newsurvival[s++] = neighbor4swap[j] ;
-                  }
-                  else {
-                     newsurvival[s++] = rule_letters[3][j] ;
-                  }
-               }
-            }
-         }
-      }
-
-      // check if the digit is in the survival part
-      if (strchr(survival, '0' + i) == 0) {
-         // digit missing so compute Smax-x and add to birth part
-         newbirth[b++] = '0' + (char) (neighbors - i) ;
-      }
-      else {
-         // check for letters on this digit
-         bits = letter_bits[survival_offset + i] ;
-         if (bits) {
-            // digit has letters so compute Smax-x and add to birth part
-            newbirth[b++] = '0' + (char) (neighbors - i) ;
-
-            // output inverted sign
-            if (!(bits & (1 << negative_bit))) {
-               newbirth[b++] = '-' ;
-            }
-
-            // output letters
-            maxbits = max_letters[survival_offset + i] ;
-            for (j = 0 ; j < maxbits ; j++) {
-               if (bits & (1 << j)) {
-                  // check for 4-neighbor
-                  if (i == 4) {
-                     newbirth[b++] = neighbor4swap[j] ;
-                  }
-                  else {
-                     newbirth[b++] = rule_letters[3][j] ;
-                  }
-               }
-            }
-         }
-      }
-   }
-
-   // terminate strings
-   newbirth[b] = 0 ;
-   newsurvival[s] = 0 ;
-
-   // create the rule map
-   createRuleMap(newbirth, newsurvival) ;
+   // save rule
+   memcpy(rule0, rule3x3, sizeof(rule3x3)) ;
 }
 
 // remove character from a string in place
@@ -947,7 +757,6 @@ const char *generationsalgo::setrule(const char *rulestring) {
    char *slashpos2 = 0 ;           // position of second slash
    char *bpos = 0 ;                // position of b
    char *spos = 0 ;                // position of s
-   int letter_copy[18] ;           // copy of letter bits for B0 processing
    bool underscore_used = false ;  // whether underscore used
    int num_states = 0 ;            // number of cell states
 
@@ -969,288 +778,358 @@ const char *generationsalgo::setrule(const char *rulestring) {
       end = colonpos ;
    }
 
-   // create lower case version of rule name without spaces
-   while (r < end) {
-      // get the next character and convert to lowercase
-      c = (char) tolower(*r) ;
-
-      // process the character
-      switch (c) {
-      // birth
-      case 'b':
-         if (bpos) {
-            // multiple b found
-            return "Only one B allowed." ;
-         }
-         bpos = t ;
-         *t = c ;
-         t++ ;
-         break ;
-
-      // survival
-      case 's':
-         if (spos) {
-            // multiple s found
-            return "Only one S allowed." ;
-         }
-         spos = t ;
-         *t = c ;
-         t++ ;
-         break ;
-
-      // underscore
-      case '_':
-         underscore_used = true ;
-         // fall through...
-
-      // slash
-      case '/':
-         if (slashpos) {
-            // multiple slashes found
-            if (slashpos2) {
-               return "Only two slashes allowed." ;
-            }
-            else {
-               slashpos2 = t ;
-               *t = c ;
-               t++ ;
-            }
-         }
-         else {
-            slashpos = t ;
-            *t = c ;
-            t++ ;
-         }
-         break ;
-        
-      // hex
-      case 'h':
-         if (neighbormask != MOORE) {
-            // multiple neighborhoods specified
-            return "Only one neighborhood allowed." ;
-         }
-         neighbormask = HEXAGONAL ;
-         grid_type = HEX_GRID ;
-         neighbors = 6 ;
-         *t = c ;
-         t++ ;
-         break ;
-
-      // von neumann
-      case 'v':
-         if (neighbormask != MOORE) {
-            // multiple neighborhoods specified
-            return "Only one neighborhood allowed." ;
-         }
-         neighbormask = VON_NEUMANN ;
-         grid_type = VN_GRID ;
-         neighbors = 4 ;
-         *t = c ;
-         t++ ;
-         break ;
-
-      // minus
-      case '-':
-         // check if previous character is a digit
-         if (t == tidystring || *(t-1) < '0' || *(t-1) > '8') {
-            // minus can only follow a digit
-            return "Minus can only follow a digit." ;
-         }
-         *t = c ;
-         t++ ;
-         totalistic = false ;
-         break ;
-
-      // other characters
-      default:
-         // ignore space
-         if (c != ' ') {
-            // check for state count after final slash
-            if (slashpos2) {
-               if (c >= '0' && c <= '9') {
-                  num_states = num_states * 10 + (c - '0') ;
-               }
-               else {
-                  return "Bad character found." ;
-               }
-            }
-            else {
-               // check character is valid
-               charpos = strchr((char*) valid_rule_letters, c) ;
-               if (charpos) {
-                  // copy character
-                  *t = c ; 
-                  t++ ;
-   
-                  // check if totalistic (i.e. found a valid non-digit)
-                  digit = int(charpos - valid_rule_letters) ;
-                  if (digit > 8) {
-                     totalistic = false ;
-                  }
-                  else {
-                     // update maximum digit found
-                     if (digit > maxdigit) {
-                        maxdigit = digit ;
-                     }
-                  }
-               }
-               else {
-                  return "Bad character found." ;
-               }
-            }
-         }
-         break ;
-      }
-
-      // next character
+   // skip any whitespace
+   while (*r == ' ') {
       r++ ;
    }
 
-   // ensure null terminated
-   *t = 0 ;
+   // check for map
+   if (strncasecmp(r, "map", 3) == 0) {
+      // attempt to decode map
+      r += 3 ;
+      bpos = r ;
 
-   // don't allow empty rule string
-   t = tidystring ;
-   if (*t == 0) {
-      return "Rule cannot be empty string." ;
-   }
+      // check the base64 encoded map string is long enough for 512 bits
+      if (strlen(r) < MAP512LENGTH) {
+         return "MAP rule needs 86 base64 characters." ;
+      }
 
-   // check for two slashes
-   if (!slashpos || !slashpos2) {
-      return "Rule must contain two slashes." ;
-   }
-
-   // check number of cell states is valid
-   if (num_states < 2) {
-      return "Number of states too low in Generations rule" ;
-   }
-   if (num_states > 256) {
-      return "Number of states too high in Generations rule" ;
-   }
-
-   // set the number of cell states
-   maxCellStates = num_states ;
-
-   // underscore only valid for non-totalistic rules
-   if (underscore_used && totalistic) {
-      return "Underscore not valid for totalistic rules, use slash." ;
-   }
-
-   // if neighborhood specified then must be last character
-   if (neighbormask != MOORE) {
-      size_t len = strlen(t) ;
-      if (len) {
-         c = t[len - 1] ;
-         if (!((c == 'h') || (c == 'v'))) {
-            return "Neighborhood must be at end of rule." ;
+      // validate the characters
+      spos = r + MAP512LENGTH ;
+      while (r < spos) {
+         if (!strchr(base64_characters, *r)) {
+            return "MAP contains illegal base64 character." ;
          }
-         // remove character
-         t[len - 1] = 0 ;
+         r++ ;
       }
-   }
 
-   // digits can not be greater than the number of neighbors for the defined neighborhood
-   if (maxdigit > neighbors) {
-      return "Digit greater than neighborhood allows." ;
-   }
-
-   // terminate the rule string at the second slash
-   *slashpos2 = 0 ;
-
-   // if slash present and both b and s then one must be each side of the slash
-   if (slashpos && bpos && spos) {
-      if ((bpos < slashpos && spos < slashpos) || (bpos > slashpos && spos > slashpos)) {
-         return "B and S must be either side of slash." ;
+      // skip any trailing whitespace
+      while (*r == ' ') {
+         r++ ;
       }
-   }
 
-   // check if there was a slash to divide birth from survival
-   if (!slashpos) {
-      // check if both b and s exist
-      if (bpos && spos) {
-         // determine whether b or s is first
-         if (bpos < spos) {
-            // skip b and cut the string using s
-            bpos++ ;
-            *spos = 0 ;
-            spos++ ;
+      // check for slash and number of states
+      if (*r != '/') {
+          return "Generations rule needs number of states." ;
+      }
+
+      // read number of states
+      r++ ;
+      c = *r ;
+      while (c) {
+         if (c >= '0' && c <= '9') {
+            num_states = num_states * 10 + (c - '0') ;
+            r++ ;
+            c = *r ;
          }
          else {
-            // skip s and cut the string using b
-            spos++ ;
-            *bpos = 0 ;
-            bpos++ ;
+            c = 0 ;
          }
       }
-      else {
-         // just bpos
-         if (bpos) {
-            bpos = t ;
-            removeChar(bpos, 'b') ;
-            spos = bpos + strlen(bpos) ;
-         }
-         else {
-            // just spos
-            spos = t ;
-            removeChar(spos, 's') ;
-            bpos = spos + strlen(spos) ;
-         }
+
+      // check number of cell states is valid
+      if (num_states < 2) {
+         return "Number of states too low in Generations rule." ;
       }
+      if (num_states > 256) {
+         return "Number of states too high in Generations rule." ;
+      }
+
+      // check for trailing characters
+      if (*r && r != colonpos) {
+         return "Illegal trailing characters after MAP." ;
+      }
+
+      // set the number of cell states
+      maxCellStates = num_states ;
+
+      // map looks valid
+      using_map = true ;
    }
    else {
-      // slash exists so set determine which part is b and which is s
-      *slashpos = 0 ;
-
-      // check if b or s are defined
-      if (bpos || spos) {
-         // check for birth first
-         if ((bpos && bpos < slashpos) || (spos && spos > slashpos)) {
-            // birth then survival
+      // create lower case version of rule name without spaces
+      while (r < end) {
+         // get the next character and convert to lowercase
+         c = (char) tolower(*r) ;
+   
+         // process the character
+         switch (c) {
+         // birth
+         case 'b':
+            if (bpos) {
+               // multiple b found
+               return "Only one B allowed." ;
+            }
             bpos = t ;
-            spos = slashpos + 1 ;
+            *t = c ;
+            t++ ;
+            break ;
+   
+         // survival
+         case 's':
+            if (spos) {
+               // multiple s found
+               return "Only one S allowed." ;
+            }
+            spos = t ;
+            *t = c ;
+            t++ ;
+            break ;
+   
+         // underscore
+         case '_':
+            underscore_used = true ;
+            // fall through...
+   
+         // slash
+         case '/':
+            if (slashpos) {
+               // multiple slashes found
+               if (slashpos2) {
+                  return "Only two slashes allowed." ;
+               }
+               else {
+                  slashpos2 = t ;
+                  *t = c ;
+                  t++ ;
+               }
+            }
+            else {
+               slashpos = t ;
+               *t = c ;
+               t++ ;
+            }
+            break ;
+           
+         // hex
+         case 'h':
+            if (neighbormask != MOORE) {
+               // multiple neighborhoods specified
+               return "Only one neighborhood allowed." ;
+            }
+            neighbormask = HEXAGONAL ;
+            grid_type = HEX_GRID ;
+            neighbors = 6 ;
+            *t = c ;
+            t++ ;
+            break ;
+   
+         // von neumann
+         case 'v':
+            if (neighbormask != MOORE) {
+               // multiple neighborhoods specified
+               return "Only one neighborhood allowed." ;
+            }
+            neighbormask = VON_NEUMANN ;
+            grid_type = VN_GRID ;
+            neighbors = 4 ;
+            *t = c ;
+            t++ ;
+            break ;
+   
+         // minus
+         case '-':
+            // check if previous character is a digit
+            if (t == tidystring || *(t-1) < '0' || *(t-1) > '8') {
+               // minus can only follow a digit
+               return "Minus can only follow a digit." ;
+            }
+            *t = c ;
+            t++ ;
+            totalistic = false ;
+            break ;
+   
+         // other characters
+         default:
+            // ignore space
+            if (c != ' ') {
+               // check for state count after final slash
+               if (slashpos2) {
+                  if (c >= '0' && c <= '9') {
+                     num_states = num_states * 10 + (c - '0') ;
+                  }
+                  else {
+                     return "Bad character found." ;
+                  }
+               }
+               else {
+                  // check character is valid
+                  charpos = strchr((char*) valid_rule_letters, c) ;
+                  if (charpos) {
+                     // copy character
+                     *t = c ; 
+                     t++ ;
+      
+                     // check if totalistic (i.e. found a valid non-digit)
+                     digit = int(charpos - valid_rule_letters) ;
+                     if (digit > 8) {
+                        totalistic = false ;
+                     }
+                     else {
+                        // update maximum digit found
+                        if (digit > maxdigit) {
+                           maxdigit = digit ;
+                        }
+                     }
+                  }
+                  else {
+                     return "Bad character found." ;
+                  }
+               }
+            }
+            break ;
+         }
+   
+         // next character
+         r++ ;
+      }
+   
+      // ensure null terminated
+      *t = 0 ;
+   
+      // don't allow empty rule string
+      t = tidystring ;
+      if (*t == 0) {
+         return "Rule cannot be empty string." ;
+      }
+   
+      // check for two slashes
+      if (!slashpos || !slashpos2) {
+         return "Rule must contain two slashes." ;
+      }
+   
+      // check number of cell states is valid
+      if (num_states < 2) {
+         return "Number of states too low in Generations rule." ;
+      }
+      if (num_states > 256) {
+         return "Number of states too high in Generations rule." ;
+      }
+   
+      // set the number of cell states
+      maxCellStates = num_states ;
+   
+      // underscore only valid for non-totalistic rules
+      if (underscore_used && totalistic) {
+         return "Underscore not valid for totalistic rules, use slash." ;
+      }
+   
+      // if neighborhood specified then must be last character
+      if (neighbormask != MOORE) {
+         size_t len = strlen(t) ;
+         if (len) {
+            c = t[len - 1] ;
+            if (!((c == 'h') || (c == 'v'))) {
+               return "Neighborhood must be at end of rule." ;
+            }
+            // remove character
+            t[len - 1] = 0 ;
+         }
+      }
+   
+      // digits can not be greater than the number of neighbors for the defined neighborhood
+      if (maxdigit > neighbors) {
+         return "Digit greater than neighborhood allows." ;
+      }
+   
+      // terminate the rule string at the second slash
+      *slashpos2 = 0 ;
+   
+      // if slash present and both b and s then one must be each side of the slash
+      if (slashpos && bpos && spos) {
+         if ((bpos < slashpos && spos < slashpos) || (bpos > slashpos && spos > slashpos)) {
+            return "B and S must be either side of slash." ;
+         }
+      }
+   
+      // check if there was a slash to divide birth from survival
+      if (!slashpos) {
+         // check if both b and s exist
+         if (bpos && spos) {
+            // determine whether b or s is first
+            if (bpos < spos) {
+               // skip b and cut the string using s
+               bpos++ ;
+               *spos = 0 ;
+               spos++ ;
+            }
+            else {
+               // skip s and cut the string using b
+               spos++ ;
+               *bpos = 0 ;
+               bpos++ ;
+            }
          }
          else {
-            // survival then birth
-            bpos = slashpos + 1 ;
-            spos = t ;
+            // just bpos
+            if (bpos) {
+               bpos = t ;
+               removeChar(bpos, 'b') ;
+               spos = bpos + strlen(bpos) ;
+            }
+            else {
+               // just spos
+               spos = t ;
+               removeChar(spos, 's') ;
+               bpos = spos + strlen(spos) ;
+            }
          }
-
-         // remove b or s from rule parts
-         removeChar(bpos, 'b') ;
-         removeChar(spos, 's') ;
       }
       else {
-         // no b or s so survival first
-         spos = t ;
-         bpos = slashpos + 1 ;
+         // slash exists so set determine which part is b and which is s
+         *slashpos = 0 ;
+   
+         // check if b or s are defined
+         if (bpos || spos) {
+            // check for birth first
+            if ((bpos && bpos < slashpos) || (spos && spos > slashpos)) {
+               // birth then survival
+               bpos = t ;
+               spos = slashpos + 1 ;
+            }
+            else {
+               // survival then birth
+               bpos = slashpos + 1 ;
+               spos = t ;
+            }
+   
+            // remove b or s from rule parts
+            removeChar(bpos, 'b') ;
+            removeChar(spos, 's') ;
+         }
+         else {
+            // no b or s so survival first
+            spos = t ;
+            bpos = slashpos + 1 ;
+         }
       }
-   }
-
-   // if not totalistic and a part exists it must start with a digit
-   if (!totalistic) {
-      // check birth
-      c = *bpos ;
-      if (c && (c < '0' || c > '8')) {
-         return "Non-totalistic birth must start with a digit." ;
+   
+      // if not totalistic and a part exists it must start with a digit
+      if (!totalistic) {
+         // check birth
+         c = *bpos ;
+         if (c && (c < '0' || c > '8')) {
+            return "Non-totalistic birth must start with a digit." ;
+         }
+         // check survival
+         c = *spos ;
+         if (c && (c < '0' || c > '8')) {
+            return "Non-totalistic survival must start with a digit." ;
+         }
       }
-      // check survival
-      c = *spos ;
-      if (c && (c < '0' || c > '8')) {
-         return "Non-totalistic survival must start with a digit." ;
+   
+      // if not totalistic then neighborhood must be Moore
+      if (!totalistic && neighbormask != MOORE) {
+         return "Non-totalistic only supported with Moore neighborhood." ;
       }
-   }
-
-   // if not totalistic then neighborhood must be Moore
-   if (!totalistic && neighbormask != MOORE) {
-      return "Non-totalistic only supported with Moore neighborhood." ;
-   }
-
-   // validate letters used against each specified neighbor count
-   if (!lettersValid(bpos)) {
-      return "Letter not valid for birth neighbor count." ;
-   }
-   if (!lettersValid(spos)) {
-      return "Letter not valid for survival neighbor count." ;
+   
+      // validate letters used against each specified neighbor count
+      if (!lettersValid(bpos)) {
+         return "Letter not valid for birth neighbor count." ;
+      }
+      if (!lettersValid(spos)) {
+         return "Letter not valid for survival neighbor count." ;
+      }
    }
 
    // AKT: check for rule suffix like ":T200,100" to specify a bounded universe
@@ -1263,45 +1142,21 @@ const char *generationsalgo::setrule(const char *rulestring) {
       gridht = 0 ;
    }
 
-   // generate the 3x3 map
-   // this gets overwritten if the rule contains B0 but is required to create
-   // the data for the canonical rule name
-   createRuleMap(bpos, spos) ;
-
-   // save the canonical rule name
-   createCanonicalName() ;
-
-   // check for B0 rules
-   if (strchr(bpos, '0')) {
-      // check for Smax
-      if (strchr(spos, '0' + neighbors)) {
-         // B0 Smax
-         createB0SmaxRuleMap(bpos, spos) ;
-         memcpy(rule0, rule3x3, sizeof(rule3x3)) ;
-      }
-      else {
-         // set alternate rules needed
-         alternate_rules = true ;
-
-         // save the letter bits since they will be overwritten by generating the rule map
-         memcpy(letter_copy, letter_bits, sizeof(letter_copy)) ;
-
-         // B0 without Smax even generation
-         createB0EvenRuleMap(bpos, spos) ;
-         memcpy(rule0, rule3x3, sizeof(rule3x3)) ;
-
-         // restore original letter bits
-         memcpy(letter_bits, letter_copy, sizeof(letter_bits)) ;
-
-         // B0 without Smax odd generation
-         createB0OddRuleMap(bpos, spos) ;
-         memcpy(rule1, rule3x3, sizeof(rule3x3)) ;
-      }
+   // check for map
+   if (using_map) {
+      // generate the 3x3 map from the 512bit map
+      createRuleMap512(bpos) ;
    }
    else {
-      // not a B0 rule
-      memcpy(rule0, rule3x3, sizeof(rule3x3)) ;
+      // generate the 3x3 map from the birth and survival rules
+      createRuleMap(bpos, spos) ;
    }
+
+   // save the canonical rule name
+   createCanonicalName(bpos) ;
+
+   // save the rule
+   saveRule() ;
 
    // exit with success
    return 0 ;
