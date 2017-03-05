@@ -421,8 +421,8 @@ void generationsalgo::createRuleMap512(const char *base64) {
    memset(rule3x3, 0, ALL3X3) ;
       
    // check the string is long enough
-   if (strlen(base64) >= MAP512LENGTH) {
-      // deocde the base64 string
+   if ((int) strlen(base64) >= MAP512LENGTH) {
+      // decode the base64 string
       int i = 0 ;
       char c = 0 ;
       int j = 0 ;
@@ -435,7 +435,7 @@ void generationsalgo::createRuleMap512(const char *base64) {
          base64++ ;
          c = index ? (char)(index - base64_characters) : 0 ;
 
-         // deocde the character
+         // decode the character
          rule3x3[j] = c >> 5 ; 
          j++ ;
          rule3x3[j] = (c >> 4) & 1 ;
@@ -794,7 +794,7 @@ const char *generationsalgo::setrule(const char *rulestring) {
       bpos = r ;
 
       // check the base64 encoded map string is long enough for 512 bits
-      if (strlen(r) < MAP512LENGTH) {
+      if ((int) strlen(r) < MAP512LENGTH) {
          return "MAP rule needs 86 base64 characters." ;
       }
 
