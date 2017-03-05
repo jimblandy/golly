@@ -44,7 +44,9 @@ script by clicking on the same link.
 </p>
 
 <p>
-As well as graphics the overlay supports simple <a href="#sound">audio playback</a>.
+As well as graphics the overlay supports <a href="#sound">audio playback</a>.
+Note that audio support is a compile time option for Golly and is not enabled in the
+standard builds.
 </p>
 
 <p><a name="commands"></a>&nbsp;<br>
@@ -618,36 +620,51 @@ Pixels outside the render target are silently ignored.
 <dd><b>ov("set 10 20 15 25 16 25")</b></dd>
 </p>
 
-<a name="sound"></a><p><dt><b>sound <i>command (soundfile)</i></b></dt>
+<a name="sound"></a><p><dt><b>sound <i>(command (soundfile))</i></b></dt>
 <dd>
-Controls playback of an audio file. The <i>soundfile</i> argument must point to a WAV format
-file containing the sound to be played. Only one sound can be played at a time and playing
-a sound will immediately stop any previous sound that was playing.
-There are four sound <i>commands</i>:
-</aa>
+Controls playback of audio files. If present the <i>soundfile</i> argument must point to a WAV or OGG format
+file containing the sound to be played. Multiple sounds can be played simultaneously.
+</dd>
+</p>
+<p><dd>
+If the command is invoked with no arguments then it returns a string indicating whether sound is available.
+<table cellspacing=0 cellpadding=0>
+<tr><td width=20><b>0</b></td><td>Sound support is not available</td></tr>
+<tr><td width=20><b>1</b></td><td>Sound support is available but failed to initialize</td></tr>
+<tr><td width=20><b>2</b></td><td>Sound support is available and ready to use</td></tr>
+</table>
+</dd>
+</p>
+<p><dd>
+There are five sound <i>commands</i>:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><b>play <i>soundfile</i></b></td><td width=20></td><td>&ndash; </td><td>
+<tr><td><b>play <i>soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
 play the named <i>soundfile</i> asynchronously and return immediately</td></tr>
-<tr><td><b>wait <i>soundfile</i></b></td><td width=20></td><td>&ndash; </td><td>
-block and wait until the named <i>soundfile</i> is played</td></tr>
-<tr><td><b>loop <i>soundfile</i></b></td><td width=20></td><td>&ndash; </td><td>
-play the named <i>soundfile</i> asynchronously and loop until another</td></tr>
-<tr><td> </td><td width=20></td><td> </td><td>
-sound is played or the <a href="#stop">stop</a> command is used</td></tr>
-<tr><td><a name="stop"></a><b>stop</b></td><td width=20></td><td>&ndash; </td><td>
-stop sound playback</td></tr>
+<tr><td><b>loop <i>soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
+play the named <i>soundfile</i> asynchronously and loop until the <a href="#stop">stop</a> command is used</td></tr>
+<tr><td><a name="stop"></a><b>stop <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
+stop all sound playback or just the specified sound</td></tr>
+<tr><td><a name="volume"></a><b>volume <i>level soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
+set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum)</td></tr>
+<tr><td><a name="state"></a><b>state <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
+returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, or <i>"stopped"</i> otherwise
 </table>
 </dd>
-<p>
-<dd>
-Note that deleting the overlay will stop any sound that is playing.
+<p><dd>
+Notes:
+<p><dd>
+Deleting the overlay will stop any sounds that are playing. The <b>state</b> command
+will return <i>"unknown"</i> if the specified sound is not found.
+If sound support is not available then the five sound commands will silently do nothing.
 </dd>
 </p>
 <p>
 <dd> Example: <b>ov("sound play beep.wav")</b></dd>
 <dd> Example: <b>ov("sound stop")</b></dd>
+<dd> Example: <b>ov("sound loop background.ogg")</b></dd>
+<dd> Example: <b>ov("sound volume 0.7 background.ogg")</b></dd>
 </p>
 
 <a name="target"></a><p><dt><b>target <i>(clipname)</i></b></dt>

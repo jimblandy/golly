@@ -38,6 +38,16 @@ CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
    -O5 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
 LDFLAGS := -Wl,--as-needed $(LDFLAGS)
 
+# uncomment the next line to allow Golly to play sounds
+#ENABLE_SOUND = 1
+
+ifdef ENABLE_SOUND
+    IRRKLANGDIR = ../../irrKlang-64bit-1.5.0
+    IRRKLANG_INCLUDE = -I$(IRRKLANGDIR)/include
+    IRRKLANG_LINK = $(IRRKLANGDIR)/bin/linux-gcc-64/libIrrKlang.so
+    CXXFLAGS += -DENABLE_SOUND
+endif
+
 # uncomment the next line to allow Golly to run Perl scripts:
 # ENABLE_PERL = 1
 
@@ -71,7 +81,7 @@ ZLIB_LDFLAGS = -lz
 EXTRALIBS_OPENGL = -lwx_gtk2u_gl-3.0 -lGL -lGLU
 
 # for wxGTK support (required for GUI)
-WX_CXXFLAGS = `wx-config --cxxflags`
+WX_CXXFLAGS = `wx-config --cxxflags` $(IRRKLANG_INCLUDE)
 WX_LDFLAGS = `wx-config --libs`
 
 OBJDIR = ObjGTK
@@ -111,7 +121,7 @@ clean:
 
 golly: $(OBJDIR) $(BASEOBJ) $(WXOBJ) $(LUALIB)
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/golly $(BASEOBJ) $(WXOBJ) $(LUALIB) \
-$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK)
+$(LDFLAGS) $(ZLIB_LDFLAGS) $(EXTRALIBS_OPENGL) $(WX_LDFLAGS) $(PYTHON_LINK) $(PERL_LINK) $(IRRKLANG_LINK)
 
 bgolly: $(OBJDIR) $(BASEOBJ) $(OBJDIR)/bgolly.o
 	$(CXXC) $(CXXFLAGS) -o $(EXEDIR)/bgolly $(BASEOBJ) $(OBJDIR)/bgolly.o $(LDFLAGS) $(ZLIB_LDFLAGS)

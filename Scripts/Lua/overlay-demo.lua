@@ -55,6 +55,9 @@ local transition_button
 local extra_layer = false
 local return_to_main_menu = false
 
+-- flag if sound is available
+local sound_enabled = false
+
 --------------------------------------------------------------------------------
 
 local function create_overlay()
@@ -2629,6 +2632,9 @@ local function main_menu()
     local w2, h2 = maketext("Click on a button to see what's possible.", "smalltext")
     local textht = h1 + textgap + h2
 
+    -- check if sound is enabled
+    if (sound_enabled == false) then numbutts = numbutts - 1 end
+
     -- resize overlay to fit buttons and text
     wd = hgap + buttwd + hgap + w1 + hgap
     ht = hgap + numbutts * buttht + (numbutts-1) * buttgap + hgap
@@ -2660,7 +2666,9 @@ local function main_menu()
     render_button.show(x, y)        y = y + buttgap + buttht
     replace_button.show(x, y)       y = y + buttgap + buttht
     save_button.show(x, y)          y = y + buttgap + buttht
-    sound_button.show(x, y)         y = y + buttgap + buttht
+    if (sound_enabled) then
+        sound_button.show(x, y)         y = y + buttgap + buttht
+    end
     text_button.show(x, y)          y = y + buttgap + buttht
     transition_button.show(x, y)
 
@@ -2696,8 +2704,16 @@ end
 --------------------------------------------------------------------------------
 
 local function main()
+    -- create overlay
     create_overlay()
+
+    -- check if sound is available
+    if (ov("sound") == "2") then sound_enabled = true end
+
+    -- create menu
     create_menu_buttons()
+
+    -- run main loop
     while true do
         main_menu()
     end

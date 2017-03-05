@@ -10,12 +10,12 @@
 # % ninja -t clean
 #
 # ninja is like a simple 'make' but faster:
-# % make -f Makefile-gtk clean ; time make -f Makefile-gtk
+# % make -f makefile-gtk clean ; time make -f makefile-gtk
 # real  1m12.211s
 # user  1m6.997s
 # sys   0m4.817s
 #
-# % make -f Makefile-gtk clean ; time ninja
+# % make -f makefile-gtk clean ; time ninja
 # real  0m25.523s
 # user  1m22.618s
 # sys   0m8.351s
@@ -30,6 +30,11 @@ luadir = ../lua
 cmddir = ../cmdline
 exedir = ..
 gollydir = 
+
+# uncomment the next three lines to enable Golly sound support
+#irrklangdir = ../../irrKlang-64bit-1.5.0
+#irrklang_cxxflags = -I$irrklangdir/include -DENABLE_SOUND
+#irrklang_ldflags = $irrklangdir/bin/linux-gcc-64/libIrrKlang.so
 
 # lua cflags
 cflags = -O2 -Wall -Wextra -DLUA_COMPAT_5_2 -DLUA_USE_LINUX
@@ -121,7 +126,7 @@ rule cxxc
 # wx build rule
 rule cxxc_wx
    depfile = $out.d
-   command = g++ -MMD -MF $out.d $cxxflags $wx_cxxflags $extra_cxxflags -c $in -o $out
+   command = g++ -MMD -MF $out.d $cxxflags $wx_cxxflags $irrklang_cxxflags $extra_cxxflags -c $in -o $out
    deps = gcc
    description = CXX $in -> $out
 
@@ -214,7 +219,7 @@ build $exedir/golly: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo.
       $objdir/wxfile.o $objdir/wxedit.o $objdir/wxcontrol.o $objdir/wxtimeline.o $
       $objdir/wxundo.o $objdir/wxselect.o $objdir/wxlayer.o $objdir/wxmain.o $objdir/wxgolly.o $
       $lua_lib
-   extra_ldflags = $extralibs_opengl $wx_ldflags $lua_ldflags
+   extra_ldflags = $extralibs_opengl $wx_ldflags $lua_ldflags $irrklang_ldflags
   
 # link bgolly
 build $exedir/bgolly: link $objdir/bigint.o $objdir/lifealgo.o $objdir/hlifealgo.o $

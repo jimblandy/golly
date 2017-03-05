@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 60
+local build = 61
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -127,12 +127,11 @@ local autostart     = 0
 local showmouse     = 1
 local showshadows   = 1
 local confirmquit   = 0
-local comboscore    = 1
-local soundon       = 1
-local loopmusic     = 0
-
 local showoptions   = false
 local confirming    = false
+local comboscore    = 1
+local soundvol      = 1
+local musicvol      = 1
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."breakout.ini"
@@ -199,8 +198,6 @@ local messages = {
     ["autostart"]  = { text = "Autostart", size = 10, color = optcol },
     ["timing"]     = { text = "Timing", size = 10, color = optcol },
     ["fullscreen"] = { text = "Fullscreen", size = 10, color = optcol },
-    ["loopmusic"]  = { text = "Loop Music", size = 10, color = optcol },
-    ["effects"]    = { text = "Sound Effects", size = 10, color = optcol },
     ["function"]   = { text = "Function", size = 10, color = op.white },
     ["on"]         = { text = "On", size = 10, color = op.green },
     ["off"]        = { text = "Off", size = 10, color = op.red },
@@ -210,14 +207,20 @@ local messages = {
     ["b"]          = { text = "B", size = 10, color = optcol },
     ["c"]          = { text = "C", size = 10, color = optcol },
     ["d"]          = { text = "D", size = 10, color = optcol },
-    ["e"]          = { text = "E", size = 10, color = optcol },
-    ["l"]          = { text = "L", size = 10, color = optcol },
     ["m"]          = { text = "M", size = 10, color = optcol },
     ["p"]          = { text = "P", size = 10, color = optcol },
     ["q"]          = { text = "Q", size = 10, color = optcol },
     ["s"]          = { text = "S", size = 10, color = optcol },
     ["t"]          = { text = "T", size = 10, color = optcol },
     ["f11"]        = { text = "F11", size = 10, color = optcol },
+    ["-"]          = { text = "-", size = 10, color = optcol },
+    ["="]          = { text = "+", size = 10, color = optcol },
+    ["["]          = { text = "[", size = 10, color = optcol },
+    ["]"]          = { text = "]", size = 10, color = optcol },
+    ["sound"]      = { text = "Sound Volume", size = 10, color = optcol },
+    ["music"]      = { text = "Music Volume", size = 10, color = optcol },
+    ["fxvol"]      = { text = "100%", size = 10, color = op.green },
+    ["musicvol"]   = { text = "100%", size = 10, color = op.green },
     ["level"]      = { text = "Level ", size = 15, color = op.white },
     ["bonus"]      = { text = "Bonus Level", size = 15, color = op.white },
     ["bcomplete"]  = { text = "Bonus Level Complete", size = 15, color = op.white },
@@ -269,9 +272,16 @@ local function readsettings()
         confirmquit   = tonumber(f:read("*l")) or 1
         bestbonus     = tonumber(f:read("*l")) or 0
         comboscore    = tonumber(f:read("*l")) or 1
-        soundon       = tonumber(f:read("*l")) or 1
-        loopmusic     = tonumber(f:read("*l")) or 0
+        soundvol      = tonumber(f:read("*l")) or 100
+        musicvol      = tonumber(f:read("*l")) or 70
         f:close()
+
+        if soundvol == 1 then
+           soundvol = 100
+        end
+        if musicvol == 1 then
+           musicvol = 100
+        end
     end
 end
 
@@ -293,8 +303,8 @@ local function writesettings()
         f:write(tostring(confirmquit).."\n")
         f:write(tostring(bestbonus).."\n")
         f:write(tostring(comboscore).."\n")
-        f:write(tostring(soundon).."\n")
-        f:write(tostring(loopmusic).."\n")
+        f:write(tostring(soundvol).."\n")
+        f:write(tostring(musicvol).."\n")
         f:close()
     end
 end
@@ -328,28 +338,62 @@ end
 
 --------------------------------------------------------------------------------
 
-local function playsound(name)
-    if soundon == 1 then
-        ov("sound play oplus/sounds/"..name..".wav")
+local function setchannelvolume(channel, vol)
+    if (vol == 0) then
+        updatemessage(channel.."vol", "Off", op.red)
+    else
+        updatemessage(channel.."vol", vol.."%", op.green)
+    end
+    if (channel == "fx") then
+    else
+        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/gamestart.ogg")
+        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/gameover.ogg")
+        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/gameloop.ogg")
+        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/lostball.ogg")
+        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/levelcompleteloop.ogg")
+        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/bonusloop.ogg")
     end
 end
 
 --------------------------------------------------------------------------------
 
-local function playsoundloop(name)
-    if soundon == 1 then
-        if loopmusic == 1 then
-            ov("sound loop oplus/sounds/"..name.."loop.wav")
-        else
-            playsound(name)
-        end
-    end
-end
-
---------------------------------------------------------------------------------
-
-local function stopsound()
+local function stopallsound()
     ov("sound stop")
+end
+
+--------------------------------------------------------------------------------
+
+local function stopmusic()
+    ov("sound stop oplus/sounds/breakout/gamestart.ogg")
+    ov("sound stop oplus/sounds/breakout/gameover.ogg")
+    ov("sound stop oplus/sounds/breakout/gameloop.ogg")
+    ov("sound stop oplus/sounds/breakout/lostball.ogg")
+    ov("sound stop oplus/sounds/breakout/levelcompleteloop.ogg")
+    ov("sound stop oplus/sounds/breakout/bonusloop.ogg")
+end
+--------------------------------------------------------------------------------
+
+local function playsound(name, loop)
+    loop = loop or false
+    if loop then
+        ov("sound loop oplus/sounds/breakout/"..name..".ogg")
+    else
+        ov("sound play oplus/sounds/breakout/"..name..".ogg")
+    end
+    ov("sound volume "..(soundvol / 100).." oplus/sounds/breakout/"..name..".ogg")
+end
+
+--------------------------------------------------------------------------------
+
+local function playmusic(name, loop)
+    loop = loop or false
+    stopmusic()
+    if loop then
+        ov("sound loop oplus/sounds/breakout/"..name..".ogg")
+    else
+        ov("sound play oplus/sounds/breakout/"..name..".ogg")
+    end
+    ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/"..name..".ogg")
 end
 
 --------------------------------------------------------------------------------
@@ -748,9 +792,9 @@ local function initbricks()
 
     -- check for bonus level
     bonuscurrent = bonustime
-    bonuslevel = false
+    bonuslevel   = false
     if (level  % bonusinterval) == 0 then
-       bonuslevel   = true
+       bonuslevel = true
     end
 
     -- distribute any gap left and right
@@ -902,23 +946,32 @@ end
 
 --------------------------------------------------------------------------------
 
-local function togglesound()
-    soundon = 1 - soundon
-    writesettings()
-    notify("Sound Effects", soundon)
-    if soundon == 0 then
-        stopsound()
+local function adjustsoundvol(delta)
+    soundvol = soundvol + delta
+    if soundvol > 100 then
+        soundvol = 100
     end
+    if soundvol < 0 then
+        soundvol = 0
+    end
+    writesettings()
+    notify("Sound Volume "..soundvol.."%")
+    setchannelvolume("fx", soundvol)
 end
+
 --------------------------------------------------------------------------------
 
-local function toggleloopmusic()
-    loopmusic = 1 - loopmusic
-    writesettings()
-    notify("Loop Music", loopmusic)
-    if loopmusic == 0 then
-        stopsound()
+local function adjustmusicvol(delta)
+    musicvol = musicvol + delta
+    if musicvol > 100 then
+        musicvol = 100
     end
+    if musicvol < 0 then
+        musicvol = 0
+    end
+    writesettings()
+    notify("Music Volume "..musicvol.."%")
+    setchannelvolume("music", musicvol)
 end
 
 --------------------------------------------------------------------------------
@@ -940,12 +993,12 @@ local function processstandardkeys(event)
         elseif event == "key d none" then
             -- toggle shadow display
             toggleshadowdisplay()
-        elseif event == "key e none" then
-            -- toggle sound effects
-            togglesound()
-        elseif event == "key l none" then
-            -- toggle loop music
-            toggleloopmusic()
+        elseif event == "key = none" then
+            -- increase sound volume
+            adjustsoundvol(10)
+        elseif event == "key - none" then
+            -- decrease sound volume
+            adjustsoundvol(-10)
         elseif event == "key m none" then
             -- toggle mouse cursor display when not fullscreen
             togglemouse()
@@ -961,6 +1014,12 @@ local function processstandardkeys(event)
         elseif event == "key t none" then
             -- toggle timing display
             toggletiming()
+        elseif event == "key [ none" then
+            -- decrease music volume
+            adjustmusicvol(-10)
+        elseif event == "key ] none" then
+            -- increase music volume
+            adjustmusicvol(10)
         elseif event == "key tab none" then
             -- show options
             showoptions = not showoptions
@@ -999,6 +1058,11 @@ local function processinput()
             elseif showoptions then
                 showoptions = false
             elseif newball then
+                if bonuslevel then
+		    playmusic("bonusloop", true)
+                else
+		    playmusic("gameloop", true)
+                end
                 newball = false
                 pause   = false
             else
@@ -1228,14 +1292,15 @@ local function drawtiming(t)
         average = average + times[i]
     end
     average = average / #times
-    ov("blend 1")
+    local oldblend = ov("blend 1")
     updatemessage("ms", string.format("%.1fms", average))
     drawtextclip("ms", -4, 0, alignright, alignbottom)
+    ov("blend "..oldblend)
 end
 
 --------------------------------------------------------------------------------
 
-local function drawoption(key, setting, state, leftx, h, y, color)
+local function drawoption(key, setting, state, leftx, h, y)
     if key ~= "key" then
         ov(op.black)
         ov("fill "..(leftx + edgegapl + shadtxtx).." "..(y + shadtxty).." "..(messages[key].width + 3).." "..(messages[key].height - 4))
@@ -1250,6 +1315,24 @@ end
 
 --------------------------------------------------------------------------------
 
+local function drawpercent(downkey, upkey, setting, valname, leftx, h, y)
+    local width  = messages[downkey].width
+    local height = messages[downkey].height
+    ov(op.black)
+    ov("fill "..(leftx + edgegapl + shadtxtx).." "..(y + shadtxty).." "..(width + 3).." "..(height - 4))
+    ov("fill "..(leftx + width * 2 + edgegapl + shadtxtx).." "..(y + shadtxty).." "..(width + 3).." "..(height - 4))
+    ov(keycol)
+    ov("fill "..(leftx + edgegapl).." "..y.." "..(width + 3).." "..(height - 4))
+    ov("fill "..(leftx + width * 2 + edgegapl).." "..y.." "..(width + 3).." "..(height - 4))
+    drawtextclip(downkey, leftx, y, alignleft)
+    drawtextclip(upkey, leftx + width * 2, y, alignleft)
+    drawtextclip(setting, 0, y, aligncenter)
+    drawtextclip(valname, -leftx, y, alignright)
+    return y + h
+end
+
+--------------------------------------------------------------------------------
+
 local function drawoptions()
     local leftx = floor(wd / 6)
     local state = {[0] = "off", [1] = "on"}
@@ -1258,21 +1341,21 @@ local function drawoptions()
     ov("blend 1")
     local h = messages["key"].height
     local y = floor((ht - 14 * h) / 2)
-    y = drawoption("key", "function", "state", leftx, h, y, op.white)
+    y = drawoption("key", "function", "state", leftx, h, y)
 
     -- draw options
     y = drawoption("a", "autopause", state[autopause], leftx, h, y)
     y = drawoption("b", "brickscore", state[brickscore], leftx, h, y)
     y = drawoption("c", "comboscore", state[comboscore], leftx, h, y)
     y = drawoption("d", "shadows", state[showshadows], leftx, h, y)
-    y = drawoption("e", "effects", state[soundon], leftx, h, y)
-    y = drawoption("l", "loopmusic", state[loopmusic], leftx, h, y)
     y = drawoption("m", "mouse", state[showmouse], leftx, h, y)
     y = drawoption("p", "particles", state[showparticles], leftx, h, y)
     y = drawoption("q", "confirm", state[confirmquit], leftx, h, y)
     y = drawoption("s", "autostart", state[autostart], leftx, h, y)
     y = drawoption("t", "timing", state[showtiming], leftx, h, y)
     y = drawoption("f11", "fullscreen", state[fullscreen], leftx, h, y)
+    y = drawpercent("-", "=", "sound", "fxvol", leftx, h, y)
+    y = drawpercent("[", "]", "music", "musicvol", leftx, h, y)
 
     -- draw close options
     drawtextclip("close", 0, y + h, aligncenter, nil, true)
@@ -1361,7 +1444,7 @@ local function computebonus()
     else
         updatemessage("awarded", "Bricks left "..bricksleft.." = ".."No Bonus", op.red)
     end
-    playsoundloop("levelcomplete")
+    playmusic("levelcompleteloop", true)
     updatescore(score + bonusscore)
     if score > hiscore then
         newhigh = true
@@ -1386,6 +1469,54 @@ end
 
 --------------------------------------------------------------------------------
 
+local function playexit()
+    local box = {}
+    local n = 1
+    local tx, ty
+    local tilesize = math.floor(wd / 32)
+    ov("blend 0")
+    for y = 0, ht, tilesize do
+        for x = 0, wd, tilesize do
+            tx = x + rand(0, floor(wd / 8)) - wd / 16
+            ty = ht + rand(0, floor(ht / 2))
+            local entry = {}
+            entry[1] = x
+            entry[2] = y
+            entry[3] = tx
+            entry[4] = ty
+            box[n] = entry
+            ov("copy "..x.." "..y.." "..tilesize.." "..tilesize.." sprite"..n)
+            n = n + 1
+        end
+    end
+    ov(op.black)
+    for i = 0, 100 do
+        t = g.millisecs()
+        local a = i / 100
+        local x, y
+        ov("fill")
+        for n = 1, #box do
+            x = box[n][1]
+            y = box[n][2]
+            tx = box[n][3]
+            ty = box[n][4]
+            ov("paste "..floor(x * (1 - a) + tx * a).." "..floor(y * (1 - a) + ty * a).." sprite"..n)
+        end
+        drawtiming(g.millisecs() - t)
+        ov("update")
+        while g.millisecs() - t < 15 do end
+    end
+    n = 1
+    for y = 0, ht, tilesize do
+        for x = 0, wd, tilesize do
+            ov("delete sprite"..n)
+            n = n + 1
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function breakout()
     -- set font
     local oldfont   = ov("font 16 mono")
@@ -1396,6 +1527,10 @@ local function breakout()
     -- read saved settings
     readsettings()
     setfullscreen()
+
+    -- set sound and music volume
+    setchannelvolume("fx", soundvol)
+    setchannelvolume("music", musicvol)
 
     -- play games until finished
     balls    = 3
@@ -1471,7 +1606,7 @@ local function breakout()
         resetcombo()
 
         -- game loop
-        playsoundloop("gamestart")
+        playmusic("gamestart")
         while balls > 0 and bricksleft > 0 and bonuscurrent > 0 do
             -- time frame
             local frametime = g.millisecs()
@@ -1543,9 +1678,9 @@ local function breakout()
                                 -- destroy bat if no balls left
                                 if balls == 0 then
                                     createparticles(batx + batwd, baty, batwd, batht, lostparticles)
-                                    playsound("gameover")
+                                    playmusic("gameover")
                                 else
-                                    playsound("lostball")
+                                    playmusic("lostball")
                                 end
                             end
                             -- exit loop
@@ -1716,7 +1851,7 @@ local function breakout()
             clearbonusbricks()
         else
             if bricksleft == 0 then
-                playsoundloop("levelcomplete")
+                playmusic("levelcompleteloop", true)
             end
         end
 
@@ -1819,6 +1954,9 @@ local function breakout()
         newbonus = false
     end
 
+    -- exit animation
+    playexit()
+
     -- free clips and restore settings
     ov("delete "..bgclip)
     ov("blend "..oldblend)
@@ -1860,6 +1998,7 @@ local status, err = pcall(main)
 if err then g.continue(err) end
 -- the following code is always executed
 
+stopallsound()
 ov("delete")
 g.setoption("showoverlay", oldoverlay)
 g.setoption("showbuttons", oldbuttons)

@@ -34,7 +34,10 @@
     #pragma warning(default:4702)   // enable "unreachable code" warnings
 #endif
 
-#include "wx/sound.h"               // for wxSound
+#ifdef ENABLE_SOUND
+#include <irrKlang.h>               // for sound
+using namespace irrklang;
+#endif
 
 // The overlay is a scriptable graphics layer that is (optionally) drawn
 // on top of Golly's current layer.  See Help/overlay.html for details.
@@ -295,18 +298,23 @@ private:
     // Set only_draw_overlay to true and then update the current layer
     // so DrawView will only draw the overlay if OnlyDrawOverlay() is true.
 
-    const char* SoundStop();
-    // Stop sound playback.
+#ifdef ENABLE_SOUND
+    const char* SoundStop(const char* args);
+    // Stop sound playback for specified sound or all sounds if none specified.
 
-    const char* SoundPlay(const char* args, unsigned flags);
-    // Play the specified sound.
-    // If flags is wxSOUND_SYNC then block and wait until the sound is played.
-    // If flags is wxSOUND_ASYNC then sound is played asynchronously and return immediately.
-    // If flags is wxSOUND_ASYNC|wxSOUND_LOOP then sound is played asynchronously and loops until
-    // another sound is played, SoundStop() is called, or the Overlay is deleted.
+    const char* SoundPlay(const char* args, bool loop);
+    // Play the specified sound once or in a loop.
+
+    const char* SoundState(const char* args);
+    // Returns whether the specified sound or any sound (if none specified) is playing.
+    // Can be "playing", "stopped", or "unknown" if the specified sound is not found.
+
+    const char* SoundVolume(const char* args);
+    // Sets the volume of the specified sound.
+#endif
 
     const char* DoSound(const char* args);
-    // Play a sound or stop playback.
+    // Play a sound, stop playback, get playback status, or set volume.
 
     const char* OverlayError(const char* msg);
     // Return a string starting with "ERR:" followed by the given message.
@@ -446,8 +454,11 @@ private:
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste
 
-    std::map<std::string,wxSound*> sounds;
-    // sound cache for sounds created by DoPlay
+#ifdef ENABLE_SOUND
+    // sound
+    std::map<std::string,ISound*> sounds;
+    ISoundEngine* engine;
+#endif
 
     // text
     wxFont currfont;                // current font used by text command

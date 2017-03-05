@@ -35,6 +35,7 @@
 #include "wxlayer.h"        // for currlayer->...
 #include "wxprefs.h"        // for showoverlay
 #include "wxutils.h"        // for Warning
+
 #include "wxoverlay.h"
 
 #include <vector>           // for std::vector
@@ -123,6 +124,9 @@ Overlay::Overlay()
     starx = NULL;
     stary = NULL;
     starz = NULL;
+    #ifdef ENABLE_SOUND
+    engine = NULL;
+    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -149,13 +153,21 @@ void Overlay::DeleteOverlay()
     }
     clips.clear();
 
+    #ifdef ENABLE_SOUND
     // stop any sound playback and delete cached sounds
-    SoundStop();
-    std::map<std::string,wxSound*>::iterator it2;
-    for (it2 = sounds.begin(); it2 != sounds.end(); ++it2) {
-        delete it2->second;
+    if (engine) {
+        // delete sounds
+        std::map<std::string,ISound*>::iterator it;
+        for (it = sounds.begin(); it != sounds.end(); ++it) {
+            it->second->drop();
+        }
+        sounds.clear();
+
+        // delete engine
+        engine->drop();
+        engine = NULL;
     }
-    sounds.clear();
+    #endif
 
     // delete cellview
     DeleteCellView();
@@ -1979,6 +1991,14 @@ const char* Overlay::DoCreate(const char* args)
         // set overlay as render target
         SetRenderTarget(ovpixmap, ovwd, ovht);
         targetname = "";
+
+        #ifdef ENABLE_SOUND
+        // initialise sound
+        engine = createIrrKlangDevice(ESOD_AUTO_DETECT, ESEO_MULTI_THREADED | ESEO_LOAD_PLUGINS | ESEO_USE_3D_BUFFERS);
+        if (!engine) {
+            Warning(_("Unable to initialize sound"));
+        }
+        #endif
     }
 
     return NULL;
@@ -4194,13 +4214,13 @@ const char* Overlay::DoDelete(const char* args)
         std::string name = args + namepos;
         std::map<std::string,Clip*>::iterator it;
         it = clips.find(name);
-	if (it == clips.end()) {
+        if (it == clips.end()) {
             static std::string msg;
             msg = "unknown delete clip (";
             msg += name;
             msg += ")";
             return OverlayError(msg.c_str());
-	}
+        }
         // check if the clip is the current render target
         if (name == targetname) {
             return OverlayError("delete clip is current render target");
@@ -4969,44 +4989,188 @@ const char* Overlay::DoText(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::SoundPlay(const char* args, unsigned flags)
+#ifdef ENABLE_SOUND
+const char* Overlay::SoundPlay(const char* args, bool loop)
 {
-    if (*args == 0) {
-        return OverlayError("sound command requires an argument");
-    }
-
-    // check if the sound is cached
-    wxSound* sound = NULL;
-    std::map<std::string,wxSound*>::iterator it;
-    it = sounds.find(args);
-    if (it != sounds.end()) {
-        // found sound in the cache
-        sound = it->second;
-    }
-    else {
-        // attempt to load the sound
-        wxString filename(args);
-        sound = new wxSound(filename);
-        if (!sound->IsOk()) {
-            delete sound;
-            return OverlayError("sound command illegal sound name");
+    // check for engine
+    if (engine) {
+        if (*args == 0) {
+            if (loop) {
+                return OverlayError("sound loop requires an argument");
+            }
+            else {
+                return OverlayError("sound play requires an argument");
+            }
         }
-        // cache sound
+    
+        // lookup the sound source
+        ISoundSource* source = engine->getSoundSource(args, false);
+        if (!source) {
+            // create and preload the sound source
+            source = engine->addSoundSourceFromFile(args, ESM_AUTO_DETECT, true);
+            if (!source) {
+                if (loop) {
+                    return OverlayError("sound loop illegal sound specified");
+                }
+                else {
+                    return OverlayError("sound play illegal sound specified");
+                }
+            }
+        }
+    
+        // check if the sound exists
+        std::map<std::string,ISound*>::iterator it;
+        it = sounds.find(args);
+        if (it != sounds.end()) {
+            // sound exists so drop it
+            it->second->drop();
+            sounds.erase(it);
+        }
+
+        // play the sound
+        ISound* sound = engine->play2D(source, loop, false, true);
+        if (!sound) {
+            if (loop) {
+                return OverlayError("sound loop unable to play sound");
+            }
+            else {
+                return OverlayError("sound play unable to play sound");
+            }
+        }
+
+        // cache the sound
         sounds[args] = sound;
     }
 
-    // play the sound with the specified flags
-    sound->Play(flags);
     return NULL;
 }
+#endif
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::SoundStop()
+#ifdef ENABLE_SOUND
+const char* Overlay::SoundStop(const char* args)
 {
-    wxSound::Stop();
+    // check for engine
+    if (engine) {
+        // check for argument
+        if (*args == 0) {
+            // stop all sounds
+            engine->stopAllSounds();
+        }
+        else {
+            // skip whitespace
+            while (*args == ' ') {
+                args++;
+            }
+    
+            // stop named sound
+            ISoundSource* source = engine->getSoundSource(args, false);
+            if (source) {
+                // find the sound
+                std::map<std::string,ISound*>::iterator it;
+                it = sounds.find(args);
+                if (it != sounds.end()) {
+                   // stop the sound
+                   ISound* sound = it->second;
+                   if (!sound->isFinished()) {
+                       sound->stop();
+                   }
+                }
+            }
+        }
+    }
+
     return NULL;
 }
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* Overlay::SoundState(const char* args)
+{
+    bool playing = false;
+
+    // check for engine
+    if (engine) {
+        // check for argument
+        if (*args == 0) {
+            // see if any sounds are playing
+            for (int i = 0; i < engine->getSoundSourceCount(); i++) {
+                if (engine->isCurrentlyPlaying(engine->getSoundSource(i))) {
+                    playing = true;
+                }
+            }
+        }
+        else {
+            // skip whitespace
+            while (*args == ' ') {
+                args++;
+            }
+    
+            // see if named sound is playing
+            ISoundSource* source = engine->getSoundSource(args, false);
+            if (!source) {
+                return "unknown";
+            }
+            else {
+                if (engine->isCurrentlyPlaying(source)) {
+                    playing = true;
+                }       
+            }
+        }
+    }
+
+    // return status as string
+    if (playing) {
+        return "playing";
+    }
+    else {
+        return "stopped";
+    }
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* Overlay::SoundVolume(const char* args)
+{
+    // check for engine
+    if (engine) {
+        float v = 1;
+        char dummy;
+        int namepos;
+        if (sscanf(args, " %f %n%c", &v, &namepos, &dummy) != 2) {
+            return OverlayError("sound volume command requires two arguments");
+        }
+        if (v < 0.0 || v > 1.0) {
+            return OverlayError("sound volume argument must be in the range 0 to 1");
+        }
+    
+        // lookup the sound
+        ISoundSource* source = engine->getSoundSource(args + namepos, false);
+        if (source) {
+            // set the default volume for the source
+            source->setDefaultVolume(v);
+
+            // check if the sound is playing
+            std::map<std::string,ISound*>::iterator it;
+            it = sounds.find(args + namepos);
+            if (it != sounds.end()) {
+               // set the sound volume
+               ISound* sound = it->second;
+               if (!sound->isFinished()) {
+                   sound->setVolume(v);
+               }
+            }
+        }
+    }
+    
+    return NULL;
+}
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -5014,12 +5178,36 @@ const char* Overlay::DoSound(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
-    if (strncmp(args, "play ", 5) == 0) return SoundPlay(args+5, wxSOUND_ASYNC);
-    if (strncmp(args, "wait ", 5) == 0) return SoundPlay(args+5, wxSOUND_SYNC);
-    if (strncmp(args, "loop ", 5) == 0) return SoundPlay(args+5, wxSOUND_ASYNC|wxSOUND_LOOP);
-    if (strcmp(args, "stop") == 0)      return SoundStop();
+    #ifdef ENABLE_SOUND
+    // check for sound engine query
+    if (!*args) {
+        if (engine) {
+            // sound engine enabled
+            return "2";
+        }
+        else {
+            // sound engine failed to start
+            return "1";
+        }
+    }
+
+    // skip whitespace
+    while (*args == ' ') {
+        args++;
+    }
+
+    // check which sound command is specified
+    if (strncmp(args, "play ", 5) == 0)    return SoundPlay(args+5, false);
+    if (strncmp(args, "loop ", 5) == 0)    return SoundPlay(args+5, true);
+    if (strncmp(args, "stop", 4) == 0)     return SoundStop(args+4);
+    if (strncmp(args, "state", 5) == 0)    return SoundState(args+5);
+    if (strncmp(args, "volume ", 7) == 0)  return SoundVolume(args+7);
 
     return OverlayError("unknown sound command");
+    #else
+    // if sound support not enabled then just return
+    return "0";
+    #endif
 }
 
 // -----------------------------------------------------------------------------
@@ -5091,6 +5279,13 @@ const char* Overlay::DoUpdate()
         insideYield = false;
     #endif
 
+    #ifdef ENABLE_SOUND
+    // update sound engine (in case threading not supported)
+    if (engine) {
+        engine->update();
+    }
+    #endif
+
     return NULL;
 }
 
@@ -5138,7 +5333,7 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "theme ", 6) == 0)       return DoTheme(cmd+6);
     if (strncmp(cmd, "target", 6) == 0)       return DoTarget(cmd+6);
     if (strncmp(cmd, "replace ", 8) == 0)     return DoReplace(cmd+8);
-    if (strncmp(cmd, "sound ", 6) == 0)       return DoSound(cmd+6);
+    if (strncmp(cmd, "sound", 5) == 0)        return DoSound(cmd+5);
     if (strcmp(cmd,  "updatecells") == 0)     return DoUpdateCells();
     if (strcmp(cmd,  "drawcells") == 0)       return DoDrawCells();
     if (strncmp(cmd, "delete", 6) == 0)       return DoDelete(cmd+6);
