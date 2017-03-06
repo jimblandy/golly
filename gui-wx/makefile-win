@@ -52,6 +52,8 @@ LUADIR = ..\lua
 IRRKLANG_INCLUDE = $(IRRKLANGDIR)\include
 IRRKLANG_CXXFLAGS = /I$(IRRKLANG_INCLUDE) /DENABLE_SOUND
 IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlang.lib
+IRRKLANG_DLL_DEST = $(EXEDIR)\irrKlang.dll
+IRRKLANG_DLL_SRC = $(IRRKLANGDIR)\bin\winx64-visualStudio\irrKlang.dll
 !endif
 
 # for building binary and source distributions:
@@ -399,7 +401,12 @@ clean:
 	-if exist golly.pdb del golly.pdb
 	-if exist $(LUADIR)\*.obj del $(LUADIR)\*.obj
 
-$(EXEDIR)\Golly.exe: $(BASEO) $(WXO) $(LUAO) golly.res
+!if "$(ENABLE_SOUND)" == "1"
+$(IRRKLANG_DLL_DEST):
+	copy $(IRRKLANG_DLL_SRC) $(IRRKLANG_DLL_DEST)
+!endif
+
+$(EXEDIR)\Golly.exe: $(BASEO) $(WXO) $(LUAO) golly.res $(IRRKLANG_DLL_DEST)
 	link /LARGEADDRESSAWARE /NOLOGO /OUT:$(EXEDIR)\Golly.exe $(LDFLAGS) $(__DEBUGINFO_1) /pdb:"golly.pdb" \
 	/MANIFEST:NO /LIBPATH:$(LIBDIRNAME) /SUBSYSTEM:WINDOWS $(BASEO) $(WXO) $(LUAO) golly.res \
 	$(__WXLIB_HTML_p) $(__WXLIB_ADV_p) $(__WXLIB_CORE_p) $(__WXLIB_BASE_p) $(__WXLIB_NET_p) \

@@ -5009,33 +5009,30 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
             // create and preload the sound source
             source = engine->addSoundSourceFromFile(args, ESM_AUTO_DETECT, true);
             if (!source) {
-                if (loop) {
-                    return OverlayError("sound loop illegal sound specified");
-                }
-                else {
-                    return OverlayError("sound play illegal sound specified");
-                }
+                // don't throw error just return error message
+                return "could not find sound";
             }
         }
     
         // check if the sound exists
+        ISound* sound = NULL;
         std::map<std::string,ISound*>::iterator it;
         it = sounds.find(args);
         if (it != sounds.end()) {
             // sound exists so drop it
-            it->second->drop();
+            sound = it->second;
+            if (!sound->isFinished()) {
+                sound->stop();
+            }
+            sound->drop();
             sounds.erase(it);
         }
 
         // play the sound
-        ISound* sound = engine->play2D(source, loop, false, true);
+        sound = engine->play2D(source, loop, false, true);
         if (!sound) {
-            if (loop) {
-                return OverlayError("sound loop unable to play sound");
-            }
-            else {
-                return OverlayError("sound play unable to play sound");
-            }
+            // don't throw error just return error message
+            return "could not play sound";
         }
 
         // cache the sound

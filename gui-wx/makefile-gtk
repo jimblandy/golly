@@ -42,7 +42,7 @@ LDFLAGS := -Wl,--as-needed $(LDFLAGS)
 #ENABLE_SOUND = 1
 
 ifdef ENABLE_SOUND
-    IRRKLANGDIR = ../../irrKlang-64bit-1.5.0
+    IRRKLANGDIR = /home/chris/irrKlang-64bit-1.5.0
     IRRKLANG_INCLUDE = -I$(IRRKLANGDIR)/include
     IRRKLANG_LINK = $(IRRKLANGDIR)/bin/linux-gcc-64/libIrrKlang.so
     CXXFLAGS += -DENABLE_SOUND

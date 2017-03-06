@@ -2406,6 +2406,8 @@ end
 
 --------------------------------------------------------------------------------
 
+local volume = 70
+
 local function test_sound()
     local oldblend = ov("blend 0")
     ov(op.blue)
@@ -2417,7 +2419,7 @@ local function test_sound()
     ov(op.white)
     local oldfont = ov(demofont)
     local exitw = maketext("Click or press enter to return to the main menu.", nil, nil, 2, 2)
-    pastetext(floor((wd - exitw) / 2), 500)
+    pastetext(floor((wd - exitw) / 2), 570)
 
     -- draw commands
     ov("font 22 mono")
@@ -2438,16 +2440,19 @@ local function test_sound()
     pastetext(floor((wd - w) / 2), 170)
     w, h = maketext("Press S to stop sound", nil, nil, 2, 2)
     pastetext(floor((wd - w) / 2), 270)
+    w, h = maketext("Press - or + to adjust volume", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 370)
 
     -- update screen then copy background
     ov("update")
     local bgclip = "bg"
     ov("copy 0 0 0 0 "..bgclip)
 
-    local soundname = "oplus/sounds/levelcompleteloop.wav"
+    local soundname = "oplus/sounds/breakout/levelcompleteloop.ogg"
     local running = true
 
     -- main loop
+    local result = ""
     local command = "stop"
     while running do
         -- check for input
@@ -2456,23 +2461,49 @@ local function test_sound()
             running = false
         elseif event == "key p none" then
             command = "play"
-            ov("sound play "..soundname)
+            result = ov("sound play "..soundname)
+            ov("sound volume "..(volume / 100).." "..soundname)
         elseif event == "key l none" then
             command = "loop"
-            ov("sound loop "..soundname)
+            result = ov("sound loop "..soundname)
+            ov("sound volume "..(volume / 100).." "..soundname)
         elseif event == "key s none" then
             command = "stop"
             ov("sound stop")
+            result = ""
+        elseif event == "key - none" then
+            volume = volume - 10
+            if (volume < 0) then volume = 0 end
+            command = "volume "..(volume / 100)
+            ov("sound volume "..(volume / 100).." "..soundname)
+        elseif event == "key + none" or event == "key = none" then
+            volume = volume + 10
+            if (volume > 100) then volume = 100 end
+            command = "volume "..(volume / 100)
+            ov("sound volume "..(volume / 100).." "..soundname)
         end
 
         -- draw background
         ov("blend 0")
         ov("paste 0 0 "..bgclip)
+
+        -- display volume
+        ov("blend 1")
+        ov(op.yellow)
+        ov("font 22 mono")
+        w, h = maketext("sound volume "..(volume / 100), nil, nil, 2, 2)
+        pastetext(floor((wd - w) / 2), 400)
+
         -- draw last command
         ov("blend 1")
         ov(op.cyan)
-        w, h = maketext("Last command: "..command, nil, nil, 2, 2)
-        pastetext(floor((wd - w) / 2), 400)
+        ov("font 16 mono")
+        if (result ~= "" and result ~= nil) then
+            w, h = maketext("Last command: "..command.." ("..result..")", nil, nil, 2, 2)
+        else
+            w, h = maketext("Last command: "..command, nil, nil, 2, 2)
+        end
+        pastetext(floor((wd - w) / 2), 470)
         ov("update")
     end
 

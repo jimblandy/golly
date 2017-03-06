@@ -655,9 +655,11 @@ returns the playback state of <i>"playing"</i> if any sound (or the specified so
 <p><dd>
 Notes:
 <p><dd>
-Deleting the overlay will stop any sounds that are playing. The <b>state</b> command
-will return <i>"unknown"</i> if the specified sound is not found.
-If sound support is not available then the five sound commands will silently do nothing.
+<ul>
+<li>Deleting the overlay will stop any sounds that are playing.</li>
+<li>The <b>play</b> command returns the empty string "" if successful and an error message otherwise.</li>
+<li>The <b>state</b> command will return <i>"unknown"</i> if the specified sound is not found.</li>
+<li>If sound support is not available then the five sound commands will silently do nothing.</li>
 </dd>
 </p>
 <p>
