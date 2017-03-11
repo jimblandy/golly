@@ -395,4 +395,31 @@ end
 
 --------------------------------------------------------------------------------
 
+function m.trace(msg)
+    -- this function can be passed into xpcall so that a nice stack trace gets
+    -- appended to a runtime error message
+    if msg and #msg > 0 then
+        -- append a stack trace starting with this function's caller (level 2)
+        local result = msg.."\n\n"..debug.traceback(nil, 2)
+        -- modify result to make it more readable
+        result = result:gsub("\t", "")
+        result = result:gsub("in upvalue ", "in function ") -- local function
+        -- strip off paths that don't start with "." then remove ".\" or "./"
+        if g.os() == "Windows" then
+            result = result:gsub("\n[^%.][^:]+[\\]", "\n")
+            result = result:gsub("%.\\", "")
+        else
+            result = result:gsub("\n[^%.][^:]+[/]", "\n")
+            result = result:gsub("%./", "")
+        end
+        -- following is nicer if a local function is passed into xpcall
+        result = result:gsub("<.+:(%d+)>", "on line %1")
+        return result
+    else
+        return msg
+    end
+end
+
+--------------------------------------------------------------------------------
+
 return m

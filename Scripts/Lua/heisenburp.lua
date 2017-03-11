@@ -317,7 +317,7 @@ end
 
 -------------------------------------------------------
 
-local function burp()
+function burp()
     local test_signal=g.parse([[40bo$41bo$39b3o17$40bo4bo4bo4bo4bo$41bo4bo4bo4bo4bo$39b3o2b3o2b3o2b3o
     2b3o3$40bo4bo4bo4bo4bo$41bo4bo4bo4bo4bo$39b3o2b3o2b3o2b3o2b3o3$40bo4bo
     4bo4bo4bo$41bo4bo4bo4bo4bo$39b3o2b3o2b3o2b3o2b3o3$40bo4bo4bo4bo4bo$41b
@@ -465,7 +465,7 @@ end
 local oldswitch = g.setoption("switchlayers", 1) -- allow user to switch layers
 local oldtile = g.setoption("tilelayers", 1)
 
-local status, err = pcall(burp)
+local status, err = xpcall(burp, gp.trace)
 if err then g.continue(err) end
 -- the following code is executed even if error occurred or user aborted script
 

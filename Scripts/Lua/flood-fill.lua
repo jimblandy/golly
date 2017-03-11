@@ -28,7 +28,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function floodfill()
+function floodfill()
     local newstate = g.getoption("drawingstate")
     local oldstate = newstate
     local x, y
@@ -105,7 +105,7 @@ end
 oldcursor = g.getcursor()
 g.setcursor("Draw")
 
-local status, err = pcall(floodfill)
+local status, err = xpcall(floodfill, gp.trace)
 if err then g.continue(err) end
 -- the following code is executed even if error occurred or user aborted script
 

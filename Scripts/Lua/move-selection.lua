@@ -129,7 +129,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function moveselection()
+function moveselection()
     local x, y, firstx, firsty, xoffset, yoffset, oldmouse
 
     -- wait for click in selection
@@ -225,7 +225,7 @@ local oldcursor = g.getcursor()
 g.setcursor("Move")
 
 local aborted = true
-local status, err = pcall(function () moveselection() aborted = false end)
+local status, err = xpcall(function () moveselection() aborted = false end, gp.trace)
 if err then g.continue(err) end
 
 g.setcursor(oldcursor)

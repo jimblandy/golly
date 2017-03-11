@@ -2,6 +2,7 @@
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2016.
 
 local g = golly()
+local gp = require "gplus"
 
 local pathsep = g.getdir("app"):sub(-1)
 local message = "Hit space to continue or escape to exit the slide show..."
@@ -39,7 +40,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function slideshow()
+function slideshow()
     local oldalgo = g.getalgo()
     local oldrule = g.getrule()
 
@@ -62,7 +63,7 @@ local oldlayerbar = g.setoption("showlayerbar", 0)
 local oldeditbar = g.setoption("showeditbar", 0)
 local oldfiles = g.setoption("showfiles", 0)
 
-local status, err = pcall(slideshow)
+local status, err = xpcall(slideshow, gp.trace)
 if err then g.continue(err) end
 
 -- this code is always executed, even after escape/error;

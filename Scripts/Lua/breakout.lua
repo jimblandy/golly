@@ -1967,7 +1967,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function main()
+function main()
     -- get size of overlay
     wd, ht = g.getview(g.getlayer())
     if wd < minwd then
@@ -1994,7 +1994,7 @@ local oldoverlay = g.setoption("showoverlay", 1)
 local oldbuttons = g.setoption("showbuttons", 0) -- disable translucent buttons
 local oldfs      = g.getoption("fullscreen")
 
-local status, err = pcall(main)
+local status, err = xpcall(main, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 

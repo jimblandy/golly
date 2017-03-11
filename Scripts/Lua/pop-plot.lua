@@ -342,7 +342,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function main()
+function main()
     read_settings()
     run_pattern()
     create_overlay()
@@ -360,7 +360,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local status, err = pcall(main)
+local status, err = xpcall(main, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 ov("delete")

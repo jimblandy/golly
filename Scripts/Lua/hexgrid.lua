@@ -1407,7 +1407,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function main()
+function main()
     check_rule()
     create_overlay()
     refresh()
@@ -1455,7 +1455,7 @@ end
 local oldstack = g.setoption("stacklayers", 0)
 local oldbuttons = g.setoption("showbuttons", 0) -- disable translucent buttons
 
-local status, err = pcall(main)
+local status, err = xpcall(main, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 

@@ -72,7 +72,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function drawlines()
+function drawlines()
     local started = false
     local oldmouse = ""
     local startx, starty, endx, endy
@@ -130,7 +130,7 @@ g.show("Click where to start line...")
 local oldcursor = g.getcursor()
 g.setcursor("Draw")
 
-local status, err = pcall(drawlines)
+local status, err = xpcall(drawlines, gp.trace)
 if err then g.continue(err) end
 -- the following code is executed even if error occurred or user aborted script
 

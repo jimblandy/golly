@@ -228,7 +228,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function moveobject()
+function moveobject()
     local oldmouse, mousepos, prevx, prevy
     
     -- wait for click in or near a live cell
@@ -320,7 +320,7 @@ local oldcursor = g.getcursor()
 g.setcursor("Move")
 
 local aborted = true
-local status, err = pcall(function () moveobject() aborted = false end)
+local status, err = xpcall(function () moveobject() aborted = false end, gp.trace)
 if err then g.continue(err) end
 
 g.setcursor(oldcursor)

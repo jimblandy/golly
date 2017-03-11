@@ -1817,7 +1817,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function main()
+function main()
     -- check if there is a pattern
     if g.empty() then
         g.exit("There is no pattern.")
@@ -2068,7 +2068,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local status, err = pcall(main)
+local status, err = xpcall(main, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 

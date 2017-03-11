@@ -3,6 +3,7 @@
 -- Author: Andrew Trevorrow (andrew@trevorrow.com), Apr 2016.
 
 local g = golly()
+local gp = require "gplus"
 
 if g.empty() then g.exit("There is no pattern.") end
 
@@ -71,7 +72,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function envelope()
+function envelope()
     -- draw stacked layers using same location and scale
     g.setoption("stacklayers", 1)
     
@@ -112,7 +113,7 @@ local oldstatus = g.setoption("showstatusbar", 1)
 local oldlayerbar = g.setoption("showlayerbar", 0)
 local oldeditbar = g.setoption("showeditbar", 0)
 
-local status, err = pcall(envelope)
+local status, err = xpcall(envelope, gp.trace)
 if err then g.continue(err) end
 -- the following code is executed even if error occurred or user aborted script
 

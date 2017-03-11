@@ -2734,7 +2734,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function main()
+function main()
     -- create overlay
     create_overlay()
 
@@ -2757,7 +2757,7 @@ local oldbuttons = g.setoption("showbuttons", 0) -- disable translucent buttons
 local oldtile = g.setoption("tilelayers", 0)
 local oldstack = g.setoption("stacklayers", 0)
 
-local status, err = pcall(main)
+local status, err = xpcall(main, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 
