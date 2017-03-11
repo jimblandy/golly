@@ -406,10 +406,10 @@ function m.trace(msg)
         result = result:gsub("in upvalue ", "in function ") -- local function
         -- strip off paths that don't start with "." then remove ".\" or "./"
         if g.os() == "Windows" then
-            result = result:gsub("\n[^%.][^:]+[\\]", "\n")
+            result = result:gsub("\n[^%.][^<\n]+\\", "\n")
             result = result:gsub("%.\\", "")
         else
-            result = result:gsub("\n[^%.][^:]+[/]", "\n")
+            result = result:gsub("\n[^%.][^<\n]+/", "\n")
             result = result:gsub("%./", "")
         end
         -- following is nicer if a local function is passed into xpcall
