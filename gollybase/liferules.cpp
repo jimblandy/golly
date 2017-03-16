@@ -517,9 +517,11 @@ void liferules::createCanonicalName(lifealgo *algo, const char *base64) {
          canonrule[p++] = 'P' ;
 
          // copy base64 part
-         while (*base64) {
-            canonrule[p++] = *base64 ;
-            base64++ ;
+         for (i = 0 ; i < MAP512LENGTH ; i++) {
+            if (*base64) {
+               canonrule[p++] = *base64 ;
+               base64++ ;
+            }
          }
       }
       else {
