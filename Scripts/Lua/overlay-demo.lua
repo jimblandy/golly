@@ -885,7 +885,7 @@ Andrew Trevorrow
 for the cross-platform GUI and overlay
 
 Chris Rowett
-for rendering and overlay improvements
+for rule, rendering and overlay improvements
 
 Tim Hutton
 for the RuleTable algorithm
@@ -1045,6 +1045,11 @@ David Bell
     local credity = ht
     local creditx = floor((wd - credwidth) / 2)
     local credpos
+
+    -- start music if sound enabled
+    if sound_enabled then
+        ov("sound loop oplus/sounds/overlay-demo/animation.ogg")
+    end
 
     -- main loop
     while running do
@@ -1219,6 +1224,11 @@ David Bell
     ov("textoption align "..oldalign)
     ov("font "..oldfont)
     ov("blend "..oldblend)
+
+    -- stop music
+    if sound_enabled then
+        ov("sound stop")
+    end
 
     -- no point calling repeat_test()
     return_to_main_menu = true
