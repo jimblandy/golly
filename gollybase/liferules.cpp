@@ -448,6 +448,7 @@ int liferules::addLetters(int count, int p) {
       if (bits & (1 << negative_bit)) {
          // letters are negative
          negative = 1 ;
+         bits &= ~(1 << negative_bit) ;
       }
 
       // compute the number of bits set
