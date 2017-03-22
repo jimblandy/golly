@@ -339,7 +339,7 @@ bool GollyApp::OnInit()
 #else
     banner +=         _(" (32-bit)");
 #endif
-    banner +=         _(".  Copyright 2016 The Golly Gang.");
+    banner +=         _(".  Copyright 2017 The Golly Gang.");
     if (debuglevel > 0) {
         banner += wxString::Format(_("  *** debuglevel = %d ***"), debuglevel);
     }

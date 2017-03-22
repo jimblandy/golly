@@ -850,7 +850,7 @@ local function test_animation()
 Golly 2.9
 
 
-© 2016 The Golly Gang:
+© 2017 The Golly Gang:
 
 Tom Rokicki, Andrew Trevorrow, Tim Hutton, Dave Greene,
 Jason Summers, Maks Verver, Robert Munafo, Chris Rowett.
