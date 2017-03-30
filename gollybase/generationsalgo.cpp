@@ -34,6 +34,7 @@ using namespace std ;
 
 int generationsalgo::NumCellStates() {
    return maxCellStates ;
+
 }
 
 static const char *DEFAULTRULE = "12/34/3" ;
@@ -47,19 +48,12 @@ state generationsalgo::slowcalc(state nw, state n, state ne, state w, state c,
    state result = 0 ;
 
    // get the lookup table
-   char *lookup = rule0 ;
+   char *lookup = rule3x3 ;
 
    // create array index
    int index = ((nw == 1) ? 256 : 0) | ((n == 1) ? 128 : 0) | ((ne == 1) ? 64 : 0)
       | ((w == 1) ? 32 : 0) | ((c == 1) ? 16 : 0) | ((e == 1) ? 8 : 0)
       | ((sw == 1) ? 4 : 0) | ((s == 1) ? 2 : 0) | ((se == 1) ? 1 : 0) ;
-
-   // check for B0-not-Smax rule
-   if (alternate_rules) {
-      if (generation.odd()) {
-         lookup = rule1 ;
-      }
-   }
 
    // lookup the next generation
    if (c <= 1 && lookup[index]) {
@@ -67,13 +61,14 @@ state generationsalgo::slowcalc(state nw, state n, state ne, state w, state c,
    }
    else {
       if (c > 0 && c + 1 < maxCellStates) {
-         result =  c + 1 ;
+         result = c + 1 ;
       }
       else {
          result = 0 ;
       }
    }
 
+//if (c + result > 0) { fprintf(stderr, " %d:%d", c, result); }
    return result ;
 }
 
@@ -202,10 +197,6 @@ void generationsalgo::initRule() {
    // bit:     13 12 11 10  9  8  7  6  5  4  3  2  1  0
    // meaning:  N  z  w  t  y  r  q  j  n  k  i  a  e  c
    memset(letter_bits, 0, sizeof(letter_bits)) ;
-
-   // two 3x3 rule maps (second used for B0-not-Smax rule emulation)
-   memset(rule0, 0, sizeof(rule0)) ;
-   memset(rule1, 0, sizeof(rule1)) ;
 
    // canonical rule string
    memset(canonrule, 0, sizeof(canonrule)) ;
@@ -651,10 +642,11 @@ void generationsalgo::createCanonicalName(const char *base64) {
    ghashbase::setrule(canonrule);
 }
 
-// save the rule (and handle B0)
-void generationsalgo::saveRule() {
+// validate B0
+bool generationsalgo::validateB0() {
    int i = 0 ;
    char tmp ;
+   bool result = true ;
 
    // check for B0
    if (rule3x3[0]) {
@@ -668,29 +660,13 @@ void generationsalgo::saveRule() {
          }
       }
       else {
-         // B0 without Smax needs two rules: one for odd and one for even generations
-         alternate_rules = true ;
-
-         // odd rule -> reverse(bits)
-         for (i = 0 ; i < ALL3X3 / 2 ; i++) {
-            tmp = rule3x3[i] ;
-            rule3x3[i] = rule3x3[ALL3X3 - i - 1] ;
-            rule3x3[ALL3X3 - i - 1] = tmp ;
-         }
-         memcpy(rule1, rule3x3, sizeof(rule3x3)) ;
-
-         // even rule -> NOT(bits)
-         for (i = 0 ; i < ALL3X3 / 2 ; i++) {
-            tmp = rule3x3[i] ;
-            // need to reverse then invert due to even rule above
-            rule3x3[i] = 1 - rule3x3[ALL3X3 - i - 1] ;
-            rule3x3[ALL3X3 - i - 1] = 1 - tmp ;
-         }
+         // Generations does not support B0 without Smax
+         result = false ;
       }
    }
 
-   // save rule
-   memcpy(rule0, rule3x3, sizeof(rule3x3)) ;
+   // return flag
+   return result ;
 }
 
 // remove character from a string in place
@@ -767,9 +743,6 @@ const char *generationsalgo::setrule(const char *rulestring) {
 
    // initialize rule type
    initRule() ;
-
-   // we might need to emulate B0 rule by using two different rules for odd/even gens
-   alternate_rules = false ;
 
    // check if rule is too long
    if (strlen(rulestring) > (size_t) MAXRULESIZE) {
@@ -1160,8 +1133,10 @@ const char *generationsalgo::setrule(const char *rulestring) {
    // save the canonical rule name
    createCanonicalName(bpos) ;
 
-   // save the rule
-   saveRule() ;
+   // validate B0
+   if (!validateB0()) {
+      return "Generations does not support B0 without Smax." ;
+   }
 
    // exit with success
    return 0 ;

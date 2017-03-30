@@ -39,13 +39,6 @@ public:
    virtual int NumCellStates() ;
    static void doInitializeAlgoInfo(staticAlgoInfo &) ;
 
-   // we need 2 tables to support B0-not-Smax rule emulation
-   // where max is 8, 6 or 4 depending on the neighborhood
-   char rule0[ALL3X3] ;      // rule table for even gens if rule has B0 but not Smax,
-                             // or for all gens if rule has no B0, or it has B0 *and* Smax
-   char rule1[ALL3X3] ;      // rule table for odd gens if rule has B0 but not Smax
-   bool alternate_rules ;    // set by setrule; true if rule has B0 but not Smax
-
    enum neighborhood_masks {
       MOORE = 0x1ff,         // all 8 neighbors
       HEXAGONAL = 0x1bb,     // ignore NE and SW neighbors
@@ -87,7 +80,7 @@ private:
    void removeChar(char *string, char skip) ;
    bool lettersValid(const char *part) ;
    int addLetters(int count, int p) ;
-   void saveRule() ;
+   bool validateB0() ;
 } ;
 
 #endif
