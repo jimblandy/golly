@@ -68,7 +68,6 @@ state generationsalgo::slowcalc(state nw, state n, state ne, state w, state c,
       }
    }
 
-//if (c + result > 0) { fprintf(stderr, " %d:%d", c, result); }
    return result ;
 }
 
