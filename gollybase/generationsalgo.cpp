@@ -80,16 +80,16 @@ void generationsalgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.minstates = 2 ;
    ai.maxstates = 256 ;
    // init default color scheme
-   ai.defgradient = true;              // use gradient
-   ai.defr1 = 255;                     // start color = red
-   ai.defg1 = 0;
-   ai.defb1 = 0;
-   ai.defr2 = 255;                     // end color = yellow
-   ai.defg2 = 255;
-   ai.defb2 = 0;
+   ai.defgradient = true ;              // use gradient
+   ai.defr1 = 255 ;                     // start color = red
+   ai.defg1 = 0 ;
+   ai.defb1 = 0 ;
+   ai.defr2 = 255 ;                     // end color = yellow
+   ai.defg2 = 255 ;
+   ai.defb2 = 0 ;
    // if not using gradient then set all states to white
-   for (int i=0; i<256; i++) {
-      ai.defr[i] = ai.defg[i] = ai.defb[i] = 255;
+   for (int i=0 ; i<256 ; i++) {
+      ai.defr[i] = ai.defg[i] = ai.defb[i] = 255 ;
    }
 }
 
@@ -638,34 +638,7 @@ void generationsalgo::createCanonicalName(const char *base64) {
    canonrule[p] = 0 ;
 
    // set canonical rule
-   ghashbase::setrule(canonrule);
-}
-
-// validate B0
-bool generationsalgo::validateB0() {
-   int i = 0 ;
-   char tmp ;
-   bool result = true ;
-
-   // check for B0
-   if (rule3x3[0]) {
-      // check for Smax
-      if (rule3x3[ALL3X3 - 1]) {
-         // B0 with Smax: rule -> NOT(reverse(bits))
-         for (i = 0 ; i < ALL3X3 / 2 ; i++) {
-            tmp = rule3x3[i] ;
-            rule3x3[i] = 1 - rule3x3[ALL3X3 - i - 1] ;
-            rule3x3[ALL3X3 - i - 1] = 1 - tmp ;
-         }
-      }
-      else {
-         // Generations does not support B0 without Smax
-         result = false ;
-      }
-   }
-
-   // return flag
-   return result ;
+   ghashbase::setrule(canonrule) ;
 }
 
 // remove character from a string in place
@@ -1129,13 +1102,13 @@ const char *generationsalgo::setrule(const char *rulestring) {
       createRuleMap(bpos, spos) ;
    }
 
+   // check for B0 rules
+   if (rule3x3[0]) {
+      return "Generations does not support B0." ;
+   }
+
    // save the canonical rule name
    createCanonicalName(bpos) ;
-
-   // validate B0
-   if (!validateB0()) {
-      return "Generations does not support B0 without Smax." ;
-   }
 
    // exit with success
    return 0 ;
