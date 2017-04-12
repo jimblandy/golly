@@ -456,7 +456,7 @@ void Overlay::UpdateZoomView(unsigned char* source, unsigned char *dest, int ste
         for (w = 0; w < cellwd; w += step) {
             // find the maximum state value in each 2x2 block
             max = row1[w];
-            state = row2[w + halfstep];
+            state = row1[w + halfstep];
             if (state > max) max = state;
             state = row2[w];
             if (state > max) max = state;
