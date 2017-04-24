@@ -826,7 +826,6 @@ local function test_animation()
     g.addlayer()
     extra_layer = true
     g.setalgo("QuickLife")
-    g.setrule("b3/s23:C40,20")
 
     -- add the pattern
     g.open("../../Patterns/Life/Guns/golly-ticker.rle")
