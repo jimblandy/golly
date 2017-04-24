@@ -58,6 +58,15 @@ local return_to_main_menu = false
 -- flag if sound is available
 local sound_enabled = false
 
+local minzoom = 1/16
+local maxzoom = 32
+
+--------------------------------------------------------------------------------
+
+local function lineartoreal(zoom)
+    return minzoom * math.pow(maxzoom / minzoom, zoom)
+end
+
 --------------------------------------------------------------------------------
 
 local function create_overlay()
@@ -588,7 +597,7 @@ local function bezierx(t, x0, x1, x2, x3)
     local aX = x3 - x0 - cX - bX
 
     -- compute x position
-    local x = (aX * math.pow(t, 3)) + (bX * math.pow(t, 2)) + (cX * t) + x0;
+    local x = (aX * math.pow(t, 3)) + (bX * math.pow(t, 2)) + (cX * t) + x0
     return x
 end
 
@@ -813,21 +822,37 @@ local function test_animation()
     wd, ht = g.getview( g.getlayer() )
     ov("resize "..wd.." "..ht)
 
+    -- create a new layer
+    g.addlayer()
+    extra_layer = true
+    g.setalgo("QuickLife")
+    g.setrule("b3/s23:C40,20")
+
+    -- add the pattern
+    g.open("../../Patterns/Life/Guns/golly-ticker.rle")
+    g.run(1024)
+
+    -- get the current border color and then set it to black
+    local bordr, bordg, bordb = g.getcolor("border")
+    g.setcolor("border", 0, 0, 0)
+
+    -- create the cellview
+    ov("cellview 1640 -150 1024 1024")
+    ov("celloption grid 0")
+    ov("theme 192 192 192 192 192 192 0 0 0 0 0 0 0 0 0")
+    ov("create "..wd.." "..ht.." pattern")
+    local camzoom = 1
+    local zoomdelta = 0.0002
+    local minzoom = 5/9
+    local maxzoom = 8/9
+    local camhold = 1000
+    local camcount = camhold
+
+    -- update the pattern every n frames
+    local patternupdateframe = 4
+    local gliderframe = patternupdateframe
+
     local t1, t2
-
-    -- grid size
-    local tilewd = 48
-    local tileht = 48
-
-    -- glider
-    local glider = {
-        [1] = { 1, 1, 1, 0, 0, 1, 0, 1, 0 },
-        [2] = { 0, 1, 0, 0, 1, 1, 1, 0, 1 },
-        [3] = { 0, 1, 1, 1, 0, 1, 0, 0, 1 },
-        [4] = { 1, 1, 0, 0, 1, 1, 1, 0, 0 }
-    }
-    local adjustx = { 0, 0, 0, 1 };
-    local adjusty = { 0, -1, 0, 0 };
 
     -- save settings
     local oldblend = ov("blend 0")
@@ -1001,6 +1026,14 @@ Adam P. Goucher
 
 David Bell
 ]]
+
+    -- start music if sound enabled
+    if sound_enabled then
+        ov("sound loop oplus/sounds/overlay-demo/animation.ogg")
+        creditstext = creditstext.."\n\n\n\nMusic\n\nContentment by Chris Rowett"
+    end
+
+    -- create credits clip
     local oldalign = ov("textoption align center")
     ov("font 14 roman")
 
@@ -1011,7 +1044,7 @@ David Bell
     local level
 
     for y = 0, ht / 2 do
-        level = 32 + floor(176 * (y * 2 / ht))
+        level = 32 + floor(160 * (y * 2 / ht))
         ov("rgba 0 0 "..level.." 255")
         ov("line 0 "..y.." "..wd.." "..y)
         ov("line 0 "..(ht - y).." "..wd.." "..(ht -y))
@@ -1025,7 +1058,7 @@ David Bell
     local starx = {}
     local stary = {}
     local stard = {}
-    local numstars = 1000
+    local numstars = 800
     for i = 1, numstars do
         starx[i] = rand(0, wd - 1)
         stary[i] = rand(0, ht - 1)
@@ -1034,22 +1067,13 @@ David Bell
 
     local textx = wd
     local texty
-    local gridx = 0
-    local offset
     local running = true
-    local gliderx = 0
-    local glidery = floor(ht / tileht)
-    local gliderframe = 1
+    local patternframe = patternupdateframe
     local x, y
     local lastframe = -1
     local credity = ht
     local creditx = floor((wd - credwidth) / 2)
     local credpos
-
-    -- start music if sound enabled
-    if sound_enabled then
-        ov("sound loop oplus/sounds/overlay-demo/animation.ogg")
-    end
 
     -- main loop
     while running do
@@ -1069,19 +1093,6 @@ David Bell
         ov("paste 0 0 "..bgclip)
 
         local timebg = g.millisecs() - t1
-        t1 = g.millisecs()
-
-        -- draw gridlines
-        offset = floor(gridx)
-        ov("rgba 64 64 64 255")
-        for i = 0, wd, tilewd do
-           ov("line "..(i + offset).." 0 "..(i + offset).." "..ht)
-        end
-        for i = 0, ht, tileht do
-           ov("line 0 "..(i + offset).." "..wd.." "..(i + offset))
-        end
-
-        local timegrid = g.millisecs() - t1
         t1 = g.millisecs()
 
         -- draw stars
@@ -1117,36 +1128,52 @@ David Bell
         local timestars = g.millisecs() - t1
         t1 = g.millisecs()
 
-        -- draw glider
-        ov(op.white)
-        local gx, gy
-        local frame = floor(gliderframe)
-        if frame == 5 then
+        -- update pattern every few frames
+        if gliderframe == patternupdateframe then
             gliderframe = 1
-            frame = 1
+            g.run(1)
+            ov("updatecells")
         end
-        if frame ~= lastframe then
-            gliderx = gliderx + adjustx[frame]
-            glidery = glidery + adjusty[frame]
-            lastframe = frame
-            if glidery < -3 then
-                glidery = floor(ht / tileht)
-            end
-            if gliderx > wd / tilewd then
-                gliderx = -3 
-            end
-        end
-        gliderframe = gliderframe + 0.05
+        gliderframe = gliderframe + 1
 
-        for gy = 0, 2 do
-            for gx = 0, 2 do
-                if glider[frame][3 * gy + gx + 1] == 1 then
-                    x = (gliderx + gx) * tilewd + offset
-                    y = (glidery + gy) * tileht + offset
-                    ov("fill "..(x + 1).." "..(y + 1).." "..(tilewd - 1).." "..(tileht - 1))
+        -- update cell view
+        ov("target pattern")
+        ov("camera zoom "..lineartoreal(camzoom))
+        ov("drawcells")
+        ov("rgba 0 0 0 0")
+        ov("replace 0 0 0 255")
+        ov("target")
+
+        -- update camera zoom
+        if camcount < camhold then
+            camcount = camcount + 1
+        else
+            if zoomdelta < 0 then
+                if camzoom > minzoom then
+                    camzoom = camzoom + zoomdelta
+                    if camzoom < minzoom then
+                        camzoom = minzoom
+                    end
+                else
+                    camcount = 1
+                    zoomdelta = -zoomdelta
+                end
+            else
+                if camzoom < maxzoom then
+                    camzoom = camzoom + zoomdelta
+                    if camzoom > maxzoom then
+                        camzoom = maxzoom
+                    end
+                else
+                    camcount = 1
+                    zoomdelta = -zoomdelta
                 end
             end
         end
+        
+        -- paste the pattern onto the background
+        ov("blend 1")
+        ov("paste 0 0 pattern")
 
         local timeglider = g.millisecs() - t1
         t1 = g.millisecs()
@@ -1177,17 +1204,9 @@ David Bell
         pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
 
         -- update display
-        ov("update")
+	ov("update")
 
         local timeupdate = g.millisecs() - t1
-
-        -- move grid
-        gridx = gridx + 0.2
-        if gridx >= tilewd then
-            gridx = 0
-            gliderx = gliderx + 1
-            glidery = glidery + 1
-        end
 
         -- move text
         textx = textx - 2
@@ -1208,12 +1227,13 @@ David Bell
 
         g.show("Time: frame "..ms(frametime)..
                "  bg "..ms(timebg).."  stars "..ms(timestars)..
-               "  glider "..ms(timeglider).."  grid "..ms(timegrid)..
+               "  pattern "..ms(timeglider)..
                "  golly "..ms(timegolly).."  credits "..ms(timecredits)..
                "  update "..ms(timeupdate).."  wait "..ms(timewait))
     end
 
     -- free clips
+    ov("delete pattern")
     ov("delete "..exitclip)
     ov("delete "..gollytranslucentclip)
     ov("delete "..gollyopaqueclip)
@@ -1229,6 +1249,13 @@ David Bell
     if sound_enabled then
         ov("sound stop")
     end
+
+    -- delete the layer
+    g.dellayer()
+    extra_layer = false
+
+    -- restore border color
+    g.setcolor("border", bordr, bordg, bordb)
 
     -- no point calling repeat_test()
     return_to_main_menu = true
@@ -1281,9 +1308,9 @@ local function test_save()
         g2 = rand(128,255)
         b2 = rand(128,255)
     until abs(r1-r2) + abs(g1-g2) + abs(b1-b2) > 128
-    local rfrac = (r2 - r1) / ht;
-    local gfrac = (g2 - g1) / ht;
-    local bfrac = (b2 - b1) / ht;
+    local rfrac = (r2 - r1) / ht
+    local gfrac = (g2 - g1) / ht
+    local bfrac = (b2 - b1) / ht
     for y = 0, ht-1 do
         local rval = int(r1 + y * rfrac + 0.5)
         local gval = int(g1 + y * gfrac + 0.5)
