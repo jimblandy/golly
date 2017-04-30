@@ -1513,7 +1513,7 @@ end
 --------------------------------------------------------------------------------
 
 local function dot(x, y)
-    local oldrgba = ov(op.red)
+    local oldrgba = ov(op.green)
     ov("set "..x.." "..y)
     ov("rgba "..oldrgba)
 end
@@ -1563,11 +1563,10 @@ end
 --------------------------------------------------------------------------------
 
 local function vertical_lines(x, y)
-    local oldwidth = ov("lineoption width 0.5")
+    local oldwidth = ov("lineoption width 1")
     local len = 30
-    local gap = 12
-    draw_line(x, y, x, y+len)      dot(x,y)  dot(x,y+len)  x = x+gap
-    for w = 1, 8 do
+    local gap = 15
+    for w = 1, 7 do
         ov("lineoption width "..w)
         draw_line(x, y, x, y+len)  dot(x,y)  dot(x,y+len)  x = x+gap
     end
@@ -1577,11 +1576,10 @@ end
 --------------------------------------------------------------------------------
 
 local function diagonal_lines(x, y)
-    local oldwidth = ov("lineoption width 0.5")
+    local oldwidth = ov("lineoption width 1")
     local len = 30
-    local gap = 12
-    draw_line(x, y, x+len, y+len)      dot(x,y)  dot(x+len,y+len)  x = x+gap
-    for w = 1, 8 do
+    local gap = 15
+    for w = 1, 7 do
         ov("lineoption width "..w)
         draw_line(x, y, x+len, y+len)  dot(x,y)  dot(x+len,y+len)  x = x+gap
     end
@@ -1691,24 +1689,24 @@ local function test_lines()
     local oldwidth = ov("lineoption width 1")
 
     -- non-antialiased lines (linewd = 1)
-    radial_lines(100, 100, 50)
+    radial_lines(80, 100, 50)
 
     -- antialiased lines (linewd = 1)
     ov("blend 1")
-    radial_lines(220, 100, 50)
+    radial_lines(200, 100, 50)
     ov("blend 0")
 
     -- thick non-antialiased lines
-    ov("lineoption width 3")            -- 2 is same as 1!!!??? (2.5 is ok)
-    radial_lines(100, 220, 50)
-    vertical_lines(50, 300)
-    diagonal_lines(50, 350)
+    ov("lineoption width 3")
+    radial_lines(80, 220, 50)
+    vertical_lines(30, 300)
+    diagonal_lines(30, 350)
 
     -- thick antialiased lines
     ov("blend 1")
-    radial_lines(220, 220, 50)
-    vertical_lines(170, 300)
-    diagonal_lines(170, 350)
+    radial_lines(200, 220, 50)
+    vertical_lines(150, 300)
+    diagonal_lines(150, 350)
     ov("blend 0")
 
     -- non-antialiased ellipses (linewd = 1)

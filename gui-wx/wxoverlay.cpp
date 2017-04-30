@@ -2790,7 +2790,7 @@ const char* Overlay::DoSetPixel(const char* args)
     // read any further coordinates
     while (*args) {
         args = GetCoordinatePair(args, &x, &y);
-        if (!args) return OverlayError("set command illegal coordinates");
+        if (!args) return OverlayError("set command has illegal coordinates");
         if (PixelInTarget(x, y)) DrawPixel(x, y);
     }
 
@@ -2987,6 +2987,9 @@ void Overlay::DrawAAPixel(int x, int y, double opacity)
 
 // -----------------------------------------------------------------------------
 
+// adjustment for thick lines when linewidth is an even number
+static double even_w;
+
 void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int ystep,
                              int einit, int winit, double w)
 {
@@ -3002,10 +3005,11 @@ void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int yste
 
     // draw top/bottom half of line
     int q = 0;
-    while (tk <= w) {
+    while (tk <= even_w) {
         if (alphablend) {
             double alfa = 255 * (w - tk) / D2;
             if (alfa < 255) {
+                if (even_w != w) alfa = 128;
                 DrawAAPixel(x, y, 255-alfa);
             } else {
                 if (PixelInTarget(x, y)) DrawPixel(x, y);
@@ -3036,6 +3040,7 @@ void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int yste
             if (alphablend) {
                 double alfa = 255 * (w - tk) / D2;
                 if (alfa < 255) {
+                    if (even_w != w) alfa = 128;
                     DrawAAPixel(x, y, 255-alfa);
                 } else {
                     if (PixelInTarget(x, y)) DrawPixel(x, y);
@@ -3082,6 +3087,7 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
         if (alphablend) {
             double alfa = 255 * (w - tk) / D2;
             if (alfa < 255) {
+                if (even_w != w) alfa = 128;
                 DrawAAPixel(x, y, 255-alfa);
             } else {
                 if (PixelInTarget(x, y)) DrawPixel(x, y);
@@ -3107,11 +3113,12 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
 
     // draw other half of line
     int p = 0;
-    while (tk <= w) {
+    while (tk <= even_w) {
         if (p > 0) {
             if (alphablend) {
                 double alfa = 255 * (w - tk) / D2;
                 if (alfa < 255) {
+                    if (even_w != w) alfa = 128;
                     DrawAAPixel(x, y, 255-alfa);
                 } else {
                     if (PixelInTarget(x, y)) DrawPixel(x, y);
@@ -3142,6 +3149,16 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
 void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
 {
     // based on code from http://kt8216.unixcab.org/murphy/index.html
+    
+    // following code fixes alignment problems when linewidth is an even number of pixels
+    if (x0 > x1) {
+        // swap starting and end points so we always draw lines from left to right
+        int tempx = x0; x0 = x1; x1 = tempx;
+        int tempy = y0; y0 = y1; y1 = tempy;
+    } else if (x0 == x1 && y0 > y1) {
+        // swap y coords so vertical lines are always drawn from top to bottom
+        int tempy = y0; y0 = y1; y1 = tempy;
+    }
 
     int dx = x1 - x0;
     int dy = y1 - y0;
@@ -3158,8 +3175,6 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
         return;
     }
 
-    // use FillRect if dx or dy is zero???!!!
-
     if (dx == 0) xstep = 0;
     if (dy == 0) ystep = 0;
 
@@ -3174,8 +3189,24 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
         case  1 +  0*4 : pystep = -1; pxstep =  0; break;   //  1
         case  1 +  1*4 : pystep =  1; pxstep = -1; break;   //  5
     }
+    
+    double D = sqrt(double(dx*dx + dy*dy));
+    double w = (linewidth + 1) * D;
+    
+    // need to reduce thickness of line if linewidth is an even number
+    // and line is vertical or horizontal
+    if (int(linewidth + 0.5) % 2 == 0 && (dx == 0 || dy == 0)) {
+        even_w = linewidth * D;
+    } else {
+        even_w = w;
+    }
+    
+    // this hack is needed to improve antialiased sloped lines of width 2
+    if (alphablend && int(linewidth + 0.5) == 2 && dx != 0 && dy != 0) {
+        even_w = (linewidth + 1.75) * D;
+        w = even_w;
+    }
 
-    double w = (linewidth + 1) * sqrt(double(dx*dx + dy*dy));
     int p_error = 0;
     int err = 0;
     int x = x0;
@@ -3275,7 +3306,7 @@ const char* Overlay::DoLine(const char* args)
         x1 = x2;
         y1 = y2;
         args = GetCoordinatePair(args, &x2, &y2);
-        if (!args) return OverlayError("line command illegal coordinates");
+        if (!args) return OverlayError("line command has illegal coordinates");
         RenderLine(x1, y1, x2, y2);
     }
     return NULL;
