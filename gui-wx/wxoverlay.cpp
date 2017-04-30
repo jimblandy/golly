@@ -1978,7 +1978,7 @@ const char* Overlay::DoCreate(const char* args)
         textbgRGBA = 0;
 
         // default width for lines and ellipses
-        linewidth = 1.0;
+        linewidth = 1;
 
         // make sure the Show Overlay option is ticked
         if (!showoverlay) {
@@ -2929,19 +2929,19 @@ const char* Overlay::DoGetXY()
 
 const char* Overlay::LineOptionWidth(const char* args)
 {
-    double w, oldwidth;
-    if (sscanf(args, " %lf", &w) != 1) {
+    int w, oldwidth;
+    if (sscanf(args, " %d", &w) != 1) {
         return OverlayError("lineoption width command requires 1 argument");
     }
 
-    if (w <= 0.0) return OverlayError("line width must be > 0.0");
-    if (w >= 10000.0) return OverlayError("line width must be < 10000.0");
+    if (w < 1) return OverlayError("line width must be > 0");
+    if (w > 10000) return OverlayError("line width must be <= 10000");
 
     oldwidth = linewidth;
     linewidth = w;
 
-    static char result[64];
-    sprintf(result, "%lf", oldwidth);
+    static char result[32];
+    sprintf(result, "%d", oldwidth);
     return result;
 }
 
@@ -2987,11 +2987,11 @@ void Overlay::DrawAAPixel(int x, int y, double opacity)
 
 // -----------------------------------------------------------------------------
 
-// adjustment for thick lines when linewidth is an even number
+// need an adjustment for thick lines when linewidth is an even number
 static double even_w;
 
 void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int ystep,
-                             int einit, int winit, double w)
+                             int einit, int winit, double w, double D2)
 {
     // dx > dy
     int threshold = dx - 2*dy;
@@ -3001,7 +3001,6 @@ void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int yste
     int y = y0;
     int err = einit;
     int tk = dx+dy-winit;
-    double D2 = 2*sqrt(double(dx*dx+dy*dy));
 
     // draw top/bottom half of line
     int q = 0;
@@ -3069,7 +3068,7 @@ void Overlay::PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int yste
 // -----------------------------------------------------------------------------
 
 void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int ystep,
-                             int einit, int winit, double w)
+                             int einit, int winit, double w, double D2)
 {
     // dx <= dy
     int threshold = dy - 2*dx;
@@ -3079,7 +3078,6 @@ void Overlay::PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int yste
     int y = y0;
     int err = -einit;
     int tk = dx+dy+winit;
-    double D2 = 2*sqrt(double(dx*dx+dy*dy));
 
     // draw left/right half of line
     int q = 0;
@@ -3150,7 +3148,7 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
 {
     // based on code from http://kt8216.unixcab.org/murphy/index.html
     
-    // following code fixes alignment problems when linewidth is an even number of pixels
+    // following code fixes alignment problems when linewidth is an even number
     if (x0 > x1) {
         // swap starting and end points so we always draw lines from left to right
         int tempx = x0; x0 = x1; x1 = tempx;
@@ -3191,18 +3189,19 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
     }
     
     double D = sqrt(double(dx*dx + dy*dy));
+    double D2 = 2*D;
     double w = (linewidth + 1) * D;
     
     // need to reduce thickness of line if linewidth is an even number
     // and line is vertical or horizontal
-    if (int(linewidth + 0.5) % 2 == 0 && (dx == 0 || dy == 0)) {
+    if (linewidth % 2 == 0 && (dx == 0 || dy == 0)) {
         even_w = linewidth * D;
     } else {
         even_w = w;
     }
     
     // this hack is needed to improve antialiased sloped lines of width 2
-    if (alphablend && int(linewidth + 0.5) == 2 && dx != 0 && dy != 0) {
+    if (alphablend && linewidth == 2 && dx != 0 && dy != 0) {
         even_w = (linewidth + 1.75) * D;
         w = even_w;
     }
@@ -3218,13 +3217,13 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
         int E_square = 2*dy;
         int length = dx + 1;
         for (int p = 0; p < length; p++) {
-            PerpendicularX(x, y, dx, dy, pxstep, pystep, p_error, err, w);
+            PerpendicularX(x, y, dx, dy, pxstep, pystep, p_error, err, w, D2);
             if (err >= threshold) {
                 y += ystep;
                 err += E_diag;
                 if (p_error >= threshold) {
                     p_error += E_diag;
-                    PerpendicularX(x, y, dx, dy, pxstep, pystep, p_error+E_square, err, w);
+                    PerpendicularX(x, y, dx, dy, pxstep, pystep, p_error+E_square, err, w, D2);
                 }
                 p_error += E_square;
             }
@@ -3237,13 +3236,13 @@ void Overlay::DrawThickLine(int x0, int y0, int x1, int y1)
         int E_square = 2*dx;
         int length = dy + 1;
         for (int p = 0; p < length; p++) {
-            PerpendicularY(x, y, dx, dy, pxstep, pystep, p_error, err, w);
+            PerpendicularY(x, y, dx, dy, pxstep, pystep, p_error, err, w, D2);
             if (err >= threshold) {
                 x += xstep;
                 err += E_diag;
                 if (p_error >= threshold) {
                     p_error += E_diag;
-                    PerpendicularY(x, y, dx, dy, pxstep, pystep, p_error+E_square, err, w);
+                    PerpendicularY(x, y, dx, dy, pxstep, pystep, p_error+E_square, err, w, D2);
                 }
                 p_error += E_square;
             }
@@ -3316,7 +3315,7 @@ const char* Overlay::DoLine(const char* args)
 // -----------------------------------------------------------------------------
 
 void Overlay::RenderLine(int x0, int y0, int x1, int y1) {
-    if (linewidth != 1.0) {
+    if (linewidth > 1) {
         DrawThickLine(x0, y0, x1, y1);
         return;
     }
@@ -3372,8 +3371,7 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
 {
     // based on code from http://members.chello.at/~easyfilter/bresenham.html
 
-    double th = linewidth;
-    if (th < 1.5) {
+    if (linewidth == 1) {
         if (alphablend) {
             DrawAntialiasedEllipse(x0, y0, x1, y1);
         } else {
@@ -3387,6 +3385,7 @@ void Overlay::DrawThickEllipse(int x0, int y0, int x1, int y1)
         return;
     }
 
+    double th = linewidth;
     long a = abs(x1-x0);
     long b = abs(y1-y0);
     long b1 = b&1;
@@ -3537,7 +3536,7 @@ void Overlay::DrawAntialiasedEllipse(int x0, int y0, int x1, int y1)
     long b = abs(y1-y0);
     long b1 = b&1;
     double dx = 4*(a-1.0)*b*b;
-    double dy = 4*(b1+1)*a*a;
+    double dy = 4*(b1+1.0)*a*a;
     double err = b1*a*a-dx+dy;
     double ed, i;
     bool f;
@@ -3629,7 +3628,7 @@ void Overlay::DrawEllipse(int x0, int y0, int x1, int y1)
     long b = abs(y1-y0);
     long b1 = b&1;
     double dx = 4*(1.0-a)*b*b;
-    double dy = 4*(b1+1)*a*a;
+    double dy = 4*(b1+1.0)*a*a;
     double err = dx+dy+b1*a*a;
     double e2;
 
@@ -3686,7 +3685,7 @@ const char* Overlay::DoEllipse(const char* args)
     if (w <= 0) return OverlayError("ellipse width must be > 0");
     if (h <= 0) return OverlayError("ellipse height must be > 0");
 
-    if (linewidth != 1.0) {
+    if (linewidth > 1) {
         DrawThickEllipse(x, y, x+w-1, y+h-1);
         return NULL;
     }

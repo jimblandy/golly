@@ -203,15 +203,15 @@ private:
     // Automatically clips any parts of the line outside the render target.
     
     void DrawThickLine(int x0, int y0, int x1, int y1);
-    // Called by RenderLine to draw a line when linewidth is not 1.
+    // Called by RenderLine to draw a line when linewidth is > 1.
     // If alphablend is true then the edges will be antialiased.
     
     void PerpendicularX(int x0, int y0, int dx, int dy, int xstep, int ystep,
-                        int einit, int winit, double w);
+                        int einit, int winit, double w, double D2);
     // Called by DrawThickLine.
     
     void PerpendicularY(int x0, int y0, int dx, int dy, int xstep, int ystep,
-                        int einit, int winit, double w);
+                        int einit, int winit, double w, double D2);
     // Called by DrawThickLine.
 
     void DrawAntialiasedLine(int x0, int y0, int x1, int y1);
@@ -225,7 +225,7 @@ private:
     // Called by DoEllipse to draw a non-antialiased ellipse when linewidth is 1.
     
     void DrawThickEllipse(int x0, int y0, int x1, int y1);
-    // Called by DoEllipse to draw an ellipse when linewidth is not 1.
+    // Called by DoEllipse to draw an ellipse when linewidth is > 1.
     // If alphablend is true then the edges will be antialiased.
     
     void DrawAntialiasedEllipse(int x0, int y0, int x1, int y1);
@@ -247,7 +247,8 @@ private:
     // Paste the named Clip data into the render target at the given location.
     // Automatically clips any pixels outside the render target.
     
-    const char* DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace, int* invreplace, int* delta, int component);
+    const char* DecodeReplaceArg(const char* arg, int* find, bool* negfind, int* replace,
+                                 int* invreplace, int* delta, int component);
     // Decodes a single argument for the replace comand.
 
     const char* DoReplace(const char* args);
@@ -449,7 +450,7 @@ private:
     std::string cursname;           // remember cursor name
     int axx, axy, ayx, ayy;         // affine transformation values
     bool identity;                  // true if transformation values are 1,0,0,1
-    double linewidth;               // for lines and ellipses
+    int linewidth;                  // for lines and ellipses
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste

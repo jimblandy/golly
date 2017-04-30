@@ -257,7 +257,7 @@ The initial font for drawing text is the default system font at a size of 10pt
 The <a href="#textoption">text options</a> are set to left alignment
 (for multi-line text) and a transparent background.
 The initial line width (used by the <a href="#ellipse">ellipse</a> and
-<a href="#line">line</a> commands) is set to 1.0. The render <a href="#target">target</a>
+<a href="#line">line</a> commands) is set to 1. The render <a href="#target">target</a>
 is set to be the overlay.
 </dd>
 </p>
@@ -415,12 +415,12 @@ There is currently one valid option:
 <dd>
 <table cellspacing=0 cellpadding=0>
 <tr><td><b><a name="linewidth"></a>width</b> <i>w</i></td><td width=20></td><td>&ndash;
-set the line width to a real number &gt; 0.0 and &lt; 10000.0.
+set the line width to an integer from 1 to 10000.
 </table>
 <p>
 <dd>
 The previous line width is returned as a string.
-The <a href="#create">create</a> command initializes the line width to 1.0.
+The <a href="#create">create</a> command initializes the line width to 1.
 </dd>
 </p>
 <p>

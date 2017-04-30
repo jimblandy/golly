@@ -1688,43 +1688,55 @@ local function test_lines()
     local oldblend = ov("blend 0")
     local oldwidth = ov("lineoption width 1")
 
-    -- non-antialiased lines (linewd = 1)
-    radial_lines(80, 100, 50)
-
-    -- antialiased lines (linewd = 1)
+    -- non-antialiased lines (line width = 1)
+    radial_lines(80, 90, 45)
+    -- antialiased lines
     ov("blend 1")
-    radial_lines(200, 100, 50)
+    radial_lines(200, 90, 45)
     ov("blend 0")
 
-    -- thick non-antialiased lines
-    ov("lineoption width 3")
-    radial_lines(80, 220, 50)
-    vertical_lines(30, 300)
-    diagonal_lines(30, 350)
-
+    -- thick non-antialiased lines (line width = 2)
+    ov("lineoption width 2")
+    radial_lines(80, 190, 45)
     -- thick antialiased lines
     ov("blend 1")
-    radial_lines(200, 220, 50)
-    vertical_lines(150, 300)
-    diagonal_lines(150, 350)
+    radial_lines(200, 190, 45)
     ov("blend 0")
 
-    -- non-antialiased ellipses (linewd = 1)
-    ov("lineoption width 1")
-    nested_ellipses(350, 100)
-
-    -- antialiased ellipses (linewd = 1)
+    -- thick non-antialiased lines (line width = 3)
+    ov("lineoption width 3")
+    radial_lines(80, 290, 45)
+    -- thick antialiased lines
     ov("blend 1")
-    nested_ellipses(520, 100)
+    radial_lines(200, 290, 45)
+    ov("blend 0")
+
+    -- non-antialiased lines with increasing thickness
+    vertical_lines(30, 350)
+    diagonal_lines(30, 390)
+
+    -- antialiased lines with increasing thickness
+    ov("blend 1")
+    vertical_lines(150, 350)
+    diagonal_lines(150, 390)
+    ov("blend 0")
+
+    -- non-antialiased ellipses (line width = 1)
+    ov("lineoption width 1")
+    nested_ellipses(350, 90)
+
+    -- antialiased ellipses (line width = 1)
+    ov("blend 1")
+    nested_ellipses(520, 90)
     ov("blend 0")
 
     -- thick non-antialiased ellipses
     ov("lineoption width 3")
-    nested_ellipses(350, 300)
+    nested_ellipses(350, 290)
 
     -- thick antialiased ellipses
     ov("blend 1")
-    nested_ellipses(520, 300)
+    nested_ellipses(520, 290)
     ov("blend 0")
     ov("lineoption width 1")
 
