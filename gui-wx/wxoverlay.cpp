@@ -4012,18 +4012,22 @@ const char* Overlay::DoPaste(const char* args)
             if (RectInsideTarget(x, y, w, h)) {
                 // clip is inside overlay so no need for bounds checking
                 unsigned char* p = pixmap + y * wd * 4 + x * 4;
+                unsigned int* lp = (unsigned int*)p;
+                unsigned int* ldata = (unsigned int*)data;
+                unsigned int rgba;
                 for (int j = 0; j < h; j++) {
                     for (int i = 0; i < w; i++) {
-                        r = *data++;
-                        g = *data++;
-                        b = *data++;
-                        a = *data++;
+                        rgba = *ldata++;
+                        a = rgba >> 24;
 
                         // draw the pixel
                         if (a < 255) {
                             if (a > 0) {
                                 // source pixel is translucent so blend with destination pixel;
                                 // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                                r = rgba & 255;
+                                g = (rgba >> 8) & 255;
+                                b = (rgba >> 16) & 255;
                                 unsigned char destr = p[0];
                                 unsigned char destg = p[1];
                                 unsigned char destb = p[2];
@@ -4058,13 +4062,13 @@ const char* Overlay::DoPaste(const char* args)
                             }
                         } else {
                             // pixel is opaque so copy it
-                            *p++ = r;
-                            *p++ = g;
-                            *p++ = b;
-                            *p++ = a;
+                            *lp = rgba;
+                            p += 4;
                         }
+                        lp++;
                     }
                     p += (wd - w) * 4;
+                    lp = (unsigned int*)p;
                 }
             }
             else {
