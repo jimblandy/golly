@@ -836,16 +836,17 @@ local function test_animation()
     g.setcolor("border", 0, 0, 0)
 
     -- create the cellview
-    ov("cellview 1640 -150 1024 1024")
+    ov("cellview 1640 -138 1024 1024")
     ov("celloption grid 0")
     ov("theme 192 192 192 192 192 192 0 0 0 0 0 0 0 0 0")
     ov("create "..wd.." "..ht.." pattern")
-    local camzoom = 1
     local zoomdelta = 0.0002
-    local minzoom = 5/9
-    local maxzoom = 8/9
+    local camminzoom = 5/9
+    local cammaxzoom = 8/9
+    local camzoom = cammaxzoom
     local camhold = 1000
     local camcount = camhold
+    local smoothzoom = camzoom
 
     -- update the pattern every n frames
     local patternupdateframe = 4
@@ -1043,7 +1044,7 @@ David Bell
     local level
 
     for y = 0, ht / 2 do
-        level = 32 + floor(160 * (y * 2 / ht))
+        level = 32 + floor(128 * (y * 2 / ht))
         ov("rgba 0 0 "..level.." 255")
         ov("line 0 "..y.." "..wd.." "..y)
         ov("line 0 "..(ht - y).." "..wd.." "..(ht -y))
@@ -1135,33 +1136,25 @@ David Bell
         end
         gliderframe = gliderframe + 1
 
-        -- update cell view
-        ov("target pattern")
-        ov("camera zoom "..lineartoreal(camzoom))
-        ov("drawcells")
-        ov("rgba 0 0 0 0")
-        ov("replace 0 0 0 255")
-        ov("target")
-
         -- update camera zoom
         if camcount < camhold then
             camcount = camcount + 1
         else
             if zoomdelta < 0 then
-                if camzoom > minzoom then
+                if camzoom > camminzoom then
                     camzoom = camzoom + zoomdelta
-                    if camzoom < minzoom then
-                        camzoom = minzoom
+                    if camzoom < camminzoom then
+                        camzoom = camminzoom
                     end
                 else
                     camcount = 1
                     zoomdelta = -zoomdelta
                 end
             else
-                if camzoom < maxzoom then
+                if camzoom < cammaxzoom then
                     camzoom = camzoom + zoomdelta
-                    if camzoom > maxzoom then
-                        camzoom = maxzoom
+                    if camzoom > cammaxzoom then
+                        camzoom = cammaxzoom
                     end
                 else
                     camcount = 1
@@ -1169,12 +1162,21 @@ David Bell
                 end
             end
         end
+        smoothzoom = bezierx((camzoom - camminzoom) / (cammaxzoom - camminzoom), 0, 0, 1, 1) * (cammaxzoom - camminzoom) + camminzoom
         
+        -- update cell view
+        ov("target pattern")
+        ov("camera zoom "..lineartoreal(smoothzoom))
+        ov("drawcells")
+        ov("rgba 0 0 0 0")
+        ov("replace 0 0 0 255")
+        ov("target")
+
         -- paste the pattern onto the background
         ov("blend 1")
         ov("paste 0 0 pattern")
 
-        local timeglider = g.millisecs() - t1
+        local timepattern = g.millisecs() - t1
         t1 = g.millisecs()
 
         -- draw bouncing scrolling text
@@ -1226,7 +1228,7 @@ David Bell
 
         g.show("Time: frame "..ms(frametime)..
                "  bg "..ms(timebg).."  stars "..ms(timestars)..
-               "  pattern "..ms(timeglider)..
+               "  pattern "..ms(timepattern)..
                "  golly "..ms(timegolly).."  credits "..ms(timecredits)..
                "  update "..ms(timeupdate).."  wait "..ms(timewait))
     end
