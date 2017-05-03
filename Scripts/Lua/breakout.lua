@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 61
+local build = 62
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -1475,6 +1475,8 @@ local function playexit()
     local tx, ty
     local tilesize = math.floor(wd / 32)
     ov("blend 0")
+
+    -- copy the screen into tiles
     for y = 0, ht, tilesize do
         for x = 0, wd, tilesize do
             tx = x + rand(0, floor(wd / 8)) - wd / 16
@@ -1495,6 +1497,7 @@ local function playexit()
         local a = i / 100
         local x, y
         ov("fill")
+        -- update each tile
         for n = 1, #box do
             x = box[n][1]
             y = box[n][2]
@@ -1502,11 +1505,15 @@ local function playexit()
             ty = box[n][4]
             ov("paste "..floor(x * (1 - a) + tx * a).." "..floor(y * (1 - a) + ty * a).." sprite"..n)
         end
-        drawtiming(g.millisecs() - t)
+        -- draw timing if on
+        if showtiming == 1 then
+            drawtiming(g.millisecs() - frametime)
+        end
         ov("update")
         while g.millisecs() - t < 15 do end
     end
     n = 1
+    -- delete tiles
     for y = 0, ht, tilesize do
         for x = 0, wd, tilesize do
             ov("delete sprite"..n)
