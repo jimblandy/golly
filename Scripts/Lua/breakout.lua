@@ -1507,7 +1507,7 @@ local function playexit()
         end
         -- draw timing if on
         if showtiming == 1 then
-            drawtiming(g.millisecs() - frametime)
+            drawtiming(g.millisecs() - t)
         end
         ov("update")
         while g.millisecs() - t < 15 do end
