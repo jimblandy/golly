@@ -124,6 +124,7 @@ Overlay::Overlay()
     starx = NULL;
     stary = NULL;
     starz = NULL;
+    renderclip = NULL;
     #ifdef ENABLE_SOUND
     engine = NULL;
     #endif
@@ -522,6 +523,9 @@ const char* Overlay::DoDrawCells()
     if (stars) {
         DrawStars(angle);
     }
+
+    // mark target clip as changed
+    DisableTargetClipIndex();
 
     return NULL;
 }
@@ -1782,11 +1786,12 @@ const char* Overlay::DoTheme(const char* args)
 
 // -----------------------------------------------------------------------------
 
-void Overlay::SetRenderTarget(unsigned char* pix, int pwd, int pht)
+void Overlay::SetRenderTarget(unsigned char* pix, int pwd, int pht, Clip* clip)
 {
     pixmap = pix;
     wd = pwd;
     ht = pht;
+    renderclip = clip;
 }
 
 // -----------------------------------------------------------------------------
@@ -1848,7 +1853,7 @@ const char* Overlay::DoResize(const char* args)
 
         // check if the clip is the render target
         if (targetname == name) {
-            SetRenderTarget(newclip->cdata, newclip->cwd, newclip->cht);
+            SetRenderTarget(newclip->cdata, newclip->cwd, newclip->cht, newclip);
         }   
     } else {
         // resize overlay
@@ -1870,7 +1875,7 @@ const char* Overlay::DoResize(const char* args)
 
         // check if overlay is the render target
         if (targetname == "") {
-            SetRenderTarget(ovpixmap, ovwd, ovht);
+            SetRenderTarget(ovpixmap, ovwd, ovht, NULL);
         }
     }
 
@@ -1989,7 +1994,7 @@ const char* Overlay::DoCreate(const char* args)
         }
 
         // set overlay as render target
-        SetRenderTarget(ovpixmap, ovwd, ovht);
+        SetRenderTarget(ovpixmap, ovwd, ovht, NULL);
         targetname = "";
 
         #ifdef ENABLE_SOUND
@@ -2243,6 +2248,9 @@ const char* Overlay::DoReplace(const char* args)
     if (negg || negb || (nega && negr)) {
         return OverlayError("replace ! may only be at start or before alpha");
     }
+
+    // mark target clip as changed
+    DisableTargetClipIndex();
 
     unsigned char clipr, clipg, clipb, clipa;
     const int bytebits = 8;
@@ -2784,6 +2792,10 @@ const char* Overlay::DoSetPixel(const char* args)
     // get the first pixel coordinates (mandatory)
     args = GetCoordinatePair(args, &x, &y);
     if (!args) return OverlayError("set command requires coordinate pairs");
+
+    // mark target clip as changed
+    DisableTargetClipIndex();
+
     // ignore pixel if outside pixmap edges
     if (PixelInTarget(x, y)) DrawPixel(x, y);
 
@@ -3297,6 +3309,9 @@ const char* Overlay::DoLine(const char* args)
     args = GetCoordinatePair(args, &x2, &y2);
     if (!args) return OverlayError("line command requires at least two coordinate pairs");
 
+    // mark target clip as changed
+    DisableTargetClipIndex();
+
     // draw the line
     RenderLine(x1, y1, x2, y2);
 
@@ -3685,6 +3700,9 @@ const char* Overlay::DoEllipse(const char* args)
     if (w <= 0) return OverlayError("ellipse width must be > 0");
     if (h <= 0) return OverlayError("ellipse height must be > 0");
 
+    // mark target clip as changed
+    DisableTargetClipIndex();
+
     if (linewidth > 1) {
         DrawThickEllipse(x, y, x+w-1, y+h-1);
         return NULL;
@@ -3790,6 +3808,9 @@ const char* Overlay::DoFill(const char* args)
         if (h <= 0) h = ht + h;
         if (w <= 0) return OverlayError("fill width must be > 0");
         if (h <= 0) return OverlayError("fill height must be > 0");
+
+        // mark target clip as changed
+        DisableTargetClipIndex();
 
         // ignore rect if completely outside pixmap edges
         if (!RectOutsideTarget(x, y, w, h)) {
@@ -3949,6 +3970,50 @@ const char* Overlay::DoCopy(const char* args)
 
 // -----------------------------------------------------------------------------
 
+void Overlay::DisableTargetClipIndex()
+{
+    // if the current target is a clip then it may have been modified so disable index
+    if (renderclip) {
+        renderclip->removeIndex();
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoOptimize(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    int namepos;
+    char dummy;
+    if (sscanf(args, " %n%c", &namepos, &dummy) != 1) {
+        // note that %n is not included in the count
+        return OverlayError("optimize command requires an argument");
+    }
+
+    std::string name = args + namepos;
+    std::map<std::string,Clip*>::iterator it;
+    it = clips.find(name);
+    if (it == clips.end()) {
+        static std::string msg;
+        msg = "unknown optimize clip (";
+        msg += name;
+        msg += ")";
+        return OverlayError(msg.c_str());
+    }
+
+    Clip* clipptr = it->second;
+
+    // add index to the clip
+    int numblank = clipptr->addIndex();
+
+    static char result[8];
+    sprintf(result, "%d", numblank);
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoPaste(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -3966,7 +4031,7 @@ const char* Overlay::DoPaste(const char* args)
     it = clips.find(name);
     if (it == clips.end()) {
         static std::string msg;
-        msg = "unknown paste name (";
+        msg = "unknown paste clip (";
         msg += name;
         msg += ")";
         return OverlayError(msg.c_str());
@@ -3979,6 +4044,9 @@ const char* Overlay::DoPaste(const char* args)
     // do nothing if rect is completely outside overlay
     if (RectOutsideTarget(x, y, w, h)) return NULL;
 
+    // mark target clip as changed
+    DisableTargetClipIndex();
+
     // check for transformation
     if (identity) {
         // no transformation, check for clip and overlay the same size without alpha blending
@@ -3990,6 +4058,7 @@ const char* Overlay::DoPaste(const char* args)
             // get the clip data
             unsigned int *ldata = (unsigned int*)clipptr->cdata;
             int cliprowpixels = w;
+            int rowoffset = 0;
     
             // check for clipping
             int xmax = x + w - 1;
@@ -4002,6 +4071,7 @@ const char* Overlay::DoPaste(const char* args)
             if (y < 0) {
                 // skip pixels off top edge
                 ldata += -y * cliprowpixels;
+                rowoffset = -y;
                 y = 0;
             }
             if (xmax >= wd) xmax = wd - 1;
@@ -4023,59 +4093,67 @@ const char* Overlay::DoPaste(const char* args)
                 unsigned char pg;
                 unsigned char pb;
                 unsigned char pa;
+                bool hasindex = clipptr->hasindex;
+                unsigned char* rowindex = clipptr->rowindex;
     
                 for (int j = 0; j < h; j++) {
-                    for (int i = 0; i < w; i++) {
-                        // get the source pixel
-                        rgba = *ldata++;
-                        pa = rgba >> 24;
-    
-                        // draw the pixel
-                        if (pa < 255) {
-                            if (pa > 0) {
-                                // source pixel is translucent so blend with destination pixel;
-                                // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
-                                pr = rgba & 255;
-                                pg = (rgba >> 8) & 255;
-                                pb = (rgba >> 16) & 255;
-                                unsigned char destr = p[0];
-                                unsigned char destg = p[1];
-                                unsigned char destb = p[2];
-                                unsigned char desta = p[3];
-                                if (desta == 255) {
-                                    // destination pixel is opaque
-                                    unsigned int alpha = pa + 1;
-                                    unsigned int invalpha = 256 - pa;
-                                    *p++ = (alpha * pr + invalpha * destr) >> 8;
-                                    *p++ = (alpha * pg + invalpha * destg) >> 8;
-                                    *p++ = (alpha * pb + invalpha * destb) >> 8;
-                                    p++;   // no need to change p[3] (alpha stays at 255)
-                                } else {
-                                    // destination pixel is translucent
-                                    float alpha = pa / 255.0;
-                                    float inva = 1.0 - alpha;
-                                    float destalpha = desta / 255.0;
-                                    float outa = alpha + destalpha * inva;
-                                    p[3] = int(outa * 255);
-                                    if (p[3] > 0) {
-                                        *p++ = int((pr * alpha + destr * destalpha * inva) / outa);
-                                        *p++ = int((pg * alpha + destg * destalpha * inva) / outa);
-                                        *p++ = int((pb * alpha + destb * destalpha * inva) / outa);
-                                        p++;   // already set above
+                    // if row index exists then skip row if blank (all pixels have alpha 0)
+                    if (hasindex && !rowindex[rowoffset + j]) {
+                        ldata += w;
+                        lp += w;
+                    } else {
+                        for (int i = 0; i < w; i++) {
+                            // get the source pixel
+                            rgba = *ldata++;
+                            pa = rgba >> 24;
+        
+                            // draw the pixel
+                            if (pa < 255) {
+                                if (pa > 0) {
+                                    // source pixel is translucent so blend with destination pixel;
+                                    // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                                    pr = rgba & 255;
+                                    pg = (rgba >> 8) & 255;
+                                    pb = (rgba >> 16) & 255;
+                                    unsigned char destr = p[0];
+                                    unsigned char destg = p[1];
+                                    unsigned char destb = p[2];
+                                    unsigned char desta = p[3];
+                                    if (desta == 255) {
+                                        // destination pixel is opaque
+                                        unsigned int alpha = pa + 1;
+                                        unsigned int invalpha = 256 - pa;
+                                        *p++ = (alpha * pr + invalpha * destr) >> 8;
+                                        *p++ = (alpha * pg + invalpha * destg) >> 8;
+                                        *p++ = (alpha * pb + invalpha * destb) >> 8;
+                                        p++;   // no need to change p[3] (alpha stays at 255)
                                     } else {
-                                        p += 4;
+                                        // destination pixel is translucent
+                                        float alpha = pa / 255.0;
+                                        float inva = 1.0 - alpha;
+                                        float destalpha = desta / 255.0;
+                                        float outa = alpha + destalpha * inva;
+                                        p[3] = int(outa * 255);
+                                        if (p[3] > 0) {
+                                            *p++ = int((pr * alpha + destr * destalpha * inva) / outa);
+                                            *p++ = int((pg * alpha + destg * destalpha * inva) / outa);
+                                            *p++ = int((pb * alpha + destb * destalpha * inva) / outa);
+                                            p++;   // already set above
+                                        } else {
+                                            p += 4;
+                                        }
                                     }
+                                } else {
+                                    // skip transparent pixel
+                                    p += 4;
                                 }
                             } else {
-                                // skip transparent pixel
+                                // pixel is opaque so copy it
+                                *lp = rgba;
                                 p += 4;
                             }
-                        } else {
-                            // pixel is opaque so copy it
-                            *lp = rgba;
-                            p += 4;
+                            lp++;
                         }
-                        lp++;
                     }
                     // next clip and target row
                     lp += targetrowpixels - w;
@@ -4154,7 +4232,7 @@ const char* Overlay::DoTarget(const char* args)
 
     // no arguments means overlay is the target
     if (numargs == 0) {
-        SetRenderTarget(ovpixmap, ovwd, ovht);
+        SetRenderTarget(ovpixmap, ovwd, ovht, NULL);
         targetname = "";
     } else {
         // one argument means clip is the target
@@ -4170,7 +4248,7 @@ const char* Overlay::DoTarget(const char* args)
         } else {
             // set clip as the target
             Clip* clipptr = it->second;
-            SetRenderTarget(clipptr->cdata, clipptr->cwd, clipptr->cht);
+            SetRenderTarget(clipptr->cdata, clipptr->cwd, clipptr->cht, clipptr);
             targetname = name;
         }
     }
@@ -4257,6 +4335,9 @@ const char* Overlay::DoLoad(const char* args)
         // but we still return the image dimensions so users can do things
         // like center the image within the overlay
     } else {
+        // mark target clip as changed
+        DisableTargetClipIndex();
+
         // use alpha data if it exists otherwise try looking for mask
         unsigned char* alphadata = NULL;
         if (image.HasAlpha()) {
@@ -4444,6 +4525,9 @@ const char* Overlay::DoFlood(const char* args)
 
     // do nothing if color of given pixel matches current RGBA values
     if (oldr == r && oldg == g && oldb == b && olda == a) return NULL;
+
+    // mark target clip as changed
+    DisableTargetClipIndex();
 
     // do flood fill using fast scanline algorithm
     // (based on code at http://lodev.org/cgtutor/floodfill.html)
@@ -5301,6 +5385,7 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "fill", 4) == 0)         return DoFill(cmd+4);
     if (strncmp(cmd, "copy", 4) == 0)         return DoCopy(cmd+4);
     if (strncmp(cmd, "paste", 5) == 0)        return DoPaste(cmd+5);
+    if (strncmp(cmd, "optimize", 8) == 0)     return DoOptimize(cmd+8);
     if (strncmp(cmd, "lineoption ", 11) == 0) return DoLineOption(cmd+11);
     if (strncmp(cmd, "line", 4) == 0)         return DoLine(cmd+4);
     if (strncmp(cmd, "ellipse", 7) == 0)      return DoEllipse(cmd+7);

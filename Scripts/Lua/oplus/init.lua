@@ -935,6 +935,9 @@ function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
         ov("target "..oldtarget)
         ov("blend "..oldblend)
     end
+    -- add index
+    ov("optimize "..clipname)
+
     -- restore color
     ov("rgba "..oldrgba)
 
