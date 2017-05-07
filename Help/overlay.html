@@ -314,8 +314,9 @@ Also note that deleting the overlay will <a href="#stop">stop</a> any sound that
 <a name="drawcells"></a><p><dt><b>drawcells</b></dt>
 <dd>
 Draw the cells from the current <a href="#cellviewdesc">cell view</a> onto the render target.
-The cells will be drawn using the camera settings and colored using the current theme.
-Further drawing commands can then be used to draw on top of the cell display.
+The cells will be drawn using the camera settings and colored using the current <a href="#theme">theme</a>.
+Further drawing commands can then be used to draw on top of the cell display. Pixels outside of the
+current <a href="#cellviewdesc">cell view</a> are drawn in the current <a href="prefs:color">grid border color</a>.
 </dd>
 <dd> Example: <b>ov("drawcells")</b></dd>
 </p>
