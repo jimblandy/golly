@@ -745,11 +745,11 @@ the returned background will be a string of the form "red green blue alpha".
 </dd>
 </p>
 
-<a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5</i></b></dt>
+<a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5 (alivea, deada, unoccupieda)</i></b></dt>
 <dd>
 Define the color theme for drawing the current <a href="#cellviewdesc">cell view</a>.
 Themes allow better visualization of patterns because they highlight history
-and longevity in cells. The arguments define 5 colors:
+and longevity of cells. The arguments define 5 colors:
 </dd>
 <p>
 <dd>
@@ -779,6 +779,11 @@ remains in the <i>dead</i> color. This provides a visual representation of cell 
 <dd>
 Cells that have never been occupied are drawn in the <i>unoccupied</i> color (black 0 0 0).</dd>
 </p>
+<p>
+<dd>
+Optionally you can specify the alpha values to use for the <i>born</i> to <i>alive</i> colors (<b>alivea</b>),
+<i>died</i> to <i>dead</i> colors (<b>deada</b>) and <i>unoccupied</i> color (<b>unoccupieda</b>).
+If you omit these then they all default to 255 (opaque).
 <p>
 <dd>
 If no theme is specified then Golly's default colors for the pattern are used. If you want to switch

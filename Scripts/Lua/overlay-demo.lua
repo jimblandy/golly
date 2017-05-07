@@ -838,7 +838,7 @@ local function test_animation()
     -- create the cellview
     ov("cellview 1640 -138 1024 1024")
     ov("celloption grid 0")
-    ov("theme 192 192 192 192 192 192 0 0 0 0 0 0 0 0 0")
+    ov("theme 192 192 192 192 192 192 0 0 0 0 0 0 0 0 0 255 0 0")
     ov("create "..wd.." "..ht.." pattern")
     local zoomdelta = 0.0002
     local camminzoom = 5/9
@@ -1168,15 +1168,14 @@ David Bell
         ov("target pattern")
         ov("camera zoom "..lineartoreal(smoothzoom))
         ov("drawcells")
-        ov("rgba 0 0 0 0")
-        ov("replace 0 0 0 255")
-        ov("target")
+        local timedrawcells = g.millisecs() - t1
+        t1 = g.millisecs()
 
         -- paste the pattern onto the background
+        ov("target")
         ov("blend 1")
         ov("paste 0 0 pattern")
-
-        local timepattern = g.millisecs() - t1
+        local timepatpaste = g.millisecs() - t1
         t1 = g.millisecs()
 
         -- draw bouncing scrolling text
@@ -1228,7 +1227,7 @@ David Bell
 
         g.show("Time: frame "..ms(frametime)..
                "  bg "..ms(timebg).."  stars "..ms(timestars)..
-               "  pattern "..ms(timepattern)..
+               "  drawcells "..ms(timedrawcells).."  pattern "..ms(timepatpaste)..
                "  golly "..ms(timegolly).."  credits "..ms(timecredits)..
                "  update "..ms(timeupdate).."  wait "..ms(timewait))
     end

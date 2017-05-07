@@ -392,35 +392,34 @@ void Overlay::GetThemeColors(double brightness)
 {
     unsigned char *rgb = (unsigned char *)cellRGBA;
     double weight;
-    unsigned char alpha;
 
     // cell born color
-    unsigned char aliveStartR, aliveStartG, aliveStartB;
+    unsigned char aliveStartR, aliveStartG, aliveStartB, aliveStartA;
 
     // cell alive long time color
     unsigned char aliveEndR, aliveEndG, aliveEndB;
 
     // cell just died color
-    unsigned char deadStartR, deadStartG, deadStartB;
+    unsigned char deadStartR, deadStartG, deadStartB, deadStartA;
 
     // cell dead long time color
     unsigned char deadEndR, deadEndG, deadEndB;
 
     // cell never occupied color
-    unsigned char unoccupiedR, unoccupiedG, unoccupiedB;
+    unsigned char unoccupiedR, unoccupiedG, unoccupiedB, unoccupiedA;
 
     // get the color rgb components
-    GetRGBA(&aliveStartR, &aliveStartG, &aliveStartB, &alpha, aliveStartRGBA);
-    GetRGBA(&aliveEndR, &aliveEndG, &aliveEndB, &alpha, aliveEndRGBA);
-    GetRGBA(&deadStartR, &deadStartG, &deadStartB, &alpha, deadStartRGBA);
-    GetRGBA(&deadEndR, &deadEndG, &deadEndB, &alpha, deadEndRGBA);
-    GetRGBA(&unoccupiedR, &unoccupiedG, &unoccupiedB, &alpha, unoccupiedRGBA);
+    GetRGBA(&aliveStartR, &aliveStartG, &aliveStartB, &aliveStartA, aliveStartRGBA);
+    GetRGBA(&aliveEndR, &aliveEndG, &aliveEndB, &aliveStartA, aliveEndRGBA);
+    GetRGBA(&deadStartR, &deadStartG, &deadStartB, &deadStartA, deadStartRGBA);
+    GetRGBA(&deadEndR, &deadEndG, &deadEndB, &deadStartA, deadEndRGBA);
+    GetRGBA(&unoccupiedR, &unoccupiedG, &unoccupiedB, &unoccupiedA, unoccupiedRGBA);
 
     // set never occupied cell color
     *rgb++ = unoccupiedR;
     *rgb++ = unoccupiedG;
     *rgb++ = unoccupiedB;
-    *rgb++ = 255; // opaque
+    *rgb++ = unoccupiedA;
 
     // set decaying colors
     for (int i = deadEnd; i <= deadStart; i++) {
@@ -428,7 +427,7 @@ void Overlay::GetThemeColors(double brightness)
         *rgb++ = deadStartR * (1 - weight) + deadEndR * weight;
         *rgb++ = deadStartG * (1 - weight) + deadEndG * weight;
         *rgb++ = deadStartB * (1 - weight) + deadEndB * weight;
-        *rgb++ = 255; // opaque
+        *rgb++ = deadStartA;
     }
 
     // set living colors
@@ -437,7 +436,7 @@ void Overlay::GetThemeColors(double brightness)
         *rgb++ = (aliveStartR * weight + aliveEndR * (1 - weight)) * brightness;
         *rgb++ = (aliveStartG * weight + aliveEndG * (1 - weight)) * brightness;
         *rgb++ = (aliveStartB * weight + aliveEndB * (1 - weight)) * brightness;
-        *rgb++ = 255; // opaque
+        *rgb++ = aliveStartA;
     }
 }
 
@@ -1724,18 +1723,28 @@ const char* Overlay::DoTheme(const char* args)
 
     // check the arguments are valid
     int asr, asg, asb, aer, aeg, aeb, dsr, dsg, dsb, der, deg, deb, ur, ug, ub;
-    int disable = 0;
-    unsigned char alpha = 255;  // opaque
 
-    if (sscanf(args, " %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-        &asr, &asg, &asb, &aer, &aeg, &aeb, &dsr, &dsg, &dsb, &der, &deg, &deb, &ur, &ug, &ub) != 15) {
-        // check for single argument version
-        if (sscanf(args, " %d", &disable) != 1) {
-            return OverlayError("theme command requires single argument -1 or 15 rgb components");
-        }
-        else {
-            if (disable != -1) {
-                return OverlayError("theme command single argument must be -1");
+    // default alpha values to opaque
+    int aa = 255;
+    int da = 255;
+    int ua = 255;
+
+    // whether theme is disabled
+    int disable = 0;
+
+    // check for 18 argument version
+    if (sscanf(args, " %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d", 
+        &asr, &asg, &asb, &aer, &aeg, &aeb, &dsr, &dsg, &dsb, &der, &deg, &deb, &ur, &ug, &ub, &aa, &da, &ua) != 18) {
+        if (sscanf(args, " %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+            &asr, &asg, &asb, &aer, &aeg, &aeb, &dsr, &dsg, &dsb, &der, &deg, &deb, &ur, &ug, &ub) != 15) {
+            // check for single argument version
+            if (sscanf(args, " %d", &disable) != 1) {
+                return OverlayError("theme command requires single argument -1, or 15 or 18 rgb components");
+            }
+            else {
+                if (disable != -1) {
+                    return OverlayError("theme command single argument must be -1");
+                }
             }
         }
     }
@@ -1766,6 +1775,15 @@ const char* Overlay::DoTheme(const char* args)
             ub < 0 || ub > 255 ) {
             return OverlayError("theme unnocupied values must be from 0 to 255");
         }
+        if (aa < 0 || aa > 255) {
+            return OverlayError("theme alive alpha must be from 0 to 255");
+        }
+        if (da < 0 || da > 255) {
+            return OverlayError("theme dead alpha must be from 0 to 255");
+        }
+        if (ua < 0 || ua > 255) {
+            return OverlayError("theme unoccupied alpha must be from 0 to 255");
+        }
     }
 
     // save the new values
@@ -1774,11 +1792,11 @@ const char* Overlay::DoTheme(const char* args)
     }
     else {
         theme = true;
-        SetRGBA(asr, asg, asb, alpha, &aliveStartRGBA);
-        SetRGBA(aer, aeg, aeb, alpha, &aliveEndRGBA);
-        SetRGBA(dsr, dsg, dsb, alpha, &deadStartRGBA);
-        SetRGBA(der, deg, deb, alpha, &deadEndRGBA);
-        SetRGBA(ur, ug, ub, alpha, &unoccupiedRGBA);
+        SetRGBA(asr, asg, asb, aa, &aliveStartRGBA);
+        SetRGBA(aer, aeg, aeb, aa, &aliveEndRGBA);
+        SetRGBA(dsr, dsg, dsb, da, &deadStartRGBA);
+        SetRGBA(der, deg, deb, da, &deadEndRGBA);
+        SetRGBA(ur, ug, ub, ua, &unoccupiedRGBA);
     }
 
     return NULL;
