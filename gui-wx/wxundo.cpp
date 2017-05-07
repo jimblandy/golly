@@ -210,6 +210,8 @@ typedef enum {
     rotatepattcw,        // pattern was rotated clockwise
     rotatepattacw,       // pattern was rotated anticlockwise
     namechange,          // layer name was changed
+    scriptstart,         // later changes were made by script
+    scriptfinish,        // earlier changes were made by script
     
     // WARNING: code in UndoChange/RedoChange assumes only changes < selchange
     // can alter the layer's dirty state; ie. the olddirty/newdirty flags are
@@ -219,9 +221,7 @@ typedef enum {
     genchange,           // pattern was generated
     setgen,              // generation count was changed
     rulechange,          // rule was changed
-    algochange,          // algorithm was changed
-    scriptstart,         // later changes were made by script
-    scriptfinish         // earlier changes were made by script
+    algochange           // algorithm was changed
 } change_type;
 
 class ChangeNode: public wxObject {
@@ -1256,6 +1256,9 @@ void UndoRedo::RememberScriptStart()
     
     change->suffix = _("Script Changes");
     
+    // remmember dirty flag at start of script
+    change->olddirty = currlayer->dirty;
+    
     undolist.Insert(change);
     
     // update Undo action and clear Redo action
@@ -1298,6 +1301,9 @@ void UndoRedo::RememberScriptFinish()
     
     change->suffix = _("Script Changes");
     
+    // remmember dirty flag at end of script
+    change->newdirty = currlayer->dirty;
+    
     undolist.Insert(change);
     
     // update Undo item in Edit menu
@@ -1328,6 +1334,19 @@ bool UndoRedo::CanRedo()
 
 // -----------------------------------------------------------------------------
 
+static void ChangeDirtyFlag(bool newdirty)
+{
+    // change dirty flag to newdirty, update window title and Layer menu items
+    if (newdirty) {
+        currlayer->dirty = false;   // make sure it changes to true
+        MarkLayerDirty();
+    } else {
+        MarkLayerClean(currlayer->currname);
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void UndoRedo::UndoChange()
 {
     if (!CanUndo()) return;
@@ -1352,6 +1371,8 @@ void UndoRedo::UndoChange()
         undolist.Erase(node);
         redolist.Insert(change);
         
+        bool dirty_at_end = change->newdirty;
+        
         while (change->changeid != scriptstart) {
             // call UndoChange recursively; temporarily set doingscriptchanges so
             // 1) UndoChange won't return if DoChange is aborted
@@ -1364,6 +1385,12 @@ void UndoRedo::UndoChange()
             if (node == NULL) Fatal(_("Bug in UndoChange!"));
             change = (ChangeNode*) node->GetData();
         }
+        
+        // update dirty flag if it was changed by script
+        if (change->olddirty != dirty_at_end) {
+            ChangeDirtyFlag(change->olddirty);
+        }
+        
         mainptr->UpdatePatternAndStatus();
         // continue below so that scriptstart node is removed from undo list
         // and added to redo list
@@ -1371,20 +1398,14 @@ void UndoRedo::UndoChange()
     } else {
         // user might abort the undo (eg. a lengthy rotate/flip)
         if (!change->DoChange(true) && !doingscriptchanges) return;
+        
+        if (!doingscriptchanges && change->changeid < selchange && change->olddirty != change->newdirty) {
+            ChangeDirtyFlag(change->olddirty);
+        }
     }
     
     // remove node from head of undo list (doesn't delete node's data)
     undolist.Erase(node);
-    
-    if (change->changeid < selchange && change->olddirty != change->newdirty) {
-        // change dirty flag, update window title and Layer menu items
-        if (change->olddirty) {
-            currlayer->dirty = false;  // make sure it changes
-            MarkLayerDirty();
-        } else {
-            MarkLayerClean(currlayer->currname);
-        }
-    }
     
     // add change to head of redo list
     redolist.Insert(change);
@@ -1421,6 +1442,8 @@ void UndoRedo::RedoChange()
         redolist.Erase(node);
         undolist.Insert(change);
         
+        bool dirty_at_start = change->olddirty;
+        
         while (change->changeid != scriptfinish) {
             // call RedoChange recursively; temporarily set doingscriptchanges so
             // 1) RedoChange won't return if DoChange is aborted
@@ -1433,6 +1456,12 @@ void UndoRedo::RedoChange()
             if (node == NULL) Fatal(_("Bug in RedoChange!"));
             change = (ChangeNode*) node->GetData();
         }
+        
+        // update dirty flag if it was changed by script
+        if (change->newdirty != dirty_at_start) {
+            ChangeDirtyFlag(change->newdirty);
+        }
+        
         mainptr->UpdatePatternAndStatus();
         // continue below so that scriptfinish node is removed from redo list
         // and added to undo list
@@ -1440,20 +1469,14 @@ void UndoRedo::RedoChange()
     } else {
         // user might abort the redo (eg. a lengthy rotate/flip)
         if (!change->DoChange(false) && !doingscriptchanges) return;
+        
+        if (!doingscriptchanges && change->changeid < selchange && change->olddirty != change->newdirty) {
+            ChangeDirtyFlag(change->newdirty);
+        }
     }
     
     // remove node from head of redo list (doesn't delete node's data)
     redolist.Erase(node);
-    
-    if (change->changeid < selchange && change->olddirty != change->newdirty) {
-        // change dirty flag, update window title and Layer menu items
-        if (change->newdirty) {
-            currlayer->dirty = false;  // make sure it changes
-            MarkLayerDirty();
-        } else {
-            MarkLayerClean(currlayer->currname);
-        }
-    }
     
     // add change to head of undo list
     undolist.Insert(change);
