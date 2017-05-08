@@ -4202,33 +4202,50 @@ const char* Overlay::DoPaste(const char* args)
         int x0 = x - (x * axx + y * axy);
         int y0 = y - (x * ayx + y * ayy);
 
-        // save RGBA values
-        unsigned char saver = r;
-        unsigned char saveg = g;
-        unsigned char saveb = b;
-        unsigned char savea = a;
+        // check for alpha blend
+        if (alphablend) {
+            // save RGBA values
+            unsigned char saver = r;
+            unsigned char saveg = g;
+            unsigned char saveb = b;
+            unsigned char savea = a;
 
-        // apply transformation
-        for (int j = 0; j < h; j++) {
-            for (int i = 0; i < w; i++) {
-                r = *data++;
-                g = *data++;
-                b = *data++;
-                a = *data++;
-                int newx = x0 + x * axx + y * axy;
-                int newy = y0 + x * ayx + y * ayy;
-                if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
-                x++;
+            for (int j = 0; j < h; j++) {
+                for (int i = 0; i < w; i++) {
+                    r = *data++;
+                    g = *data++;
+                    b = *data++;
+                    a = *data++;
+                    int newx = x0 + x * axx + y * axy;
+                    int newy = y0 + x * ayx + y * ayy;
+                    if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
+                    x++;
+                }
+                y++;
+                x -= w;
             }
-            y++;
-            x -= w;
+
+            // restore saved RGBA values
+            r = saver;
+            g = saveg;
+            b = saveb;
+            a = savea;
+        } else {
+            // no alpha blend
+            unsigned int* ldata = (unsigned int*)data;
+            unsigned int* lp = (unsigned int*)pixmap;
+            for (int j = 0; j < h; j++) {
+                for (int i = 0; i < w; i++) {
+                    int newx = x0 + x * axx + y * axy;
+                    int newy = y0 + x * ayx + y * ayy;
+                    if (PixelInTarget(newx, newy)) *(lp + newy * wd + newx) = *ldata;
+                    ldata++;
+                    x++;
+                }
+                y++;
+                x -= w;
+            }
         }
-  
-        // restore saved RGBA values
-        r = saver;
-        g = saveg;
-        b = saveb;
-        a = savea;
     }
 
     return NULL;
