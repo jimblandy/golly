@@ -838,7 +838,8 @@ local function test_animation()
     -- create the cellview
     ov("cellview 1640 -138 1024 1024")
     ov("celloption grid 0")
-    ov("theme 192 192 192 192 192 192 0 0 0 0 0 0 0 0 0 255 0 0")
+    -- theme with opaque alive cells and transparent dead and unoccupied cells and border
+    ov("theme 192 192 192 192 192 192 0 0 0 0 0 0 0 0 0 255 0 0 0")
     ov("create "..wd.." "..ht.." pattern")
     local zoomdelta = 0.0002
     local camminzoom = 5/9

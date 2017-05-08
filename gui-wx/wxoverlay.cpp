@@ -384,6 +384,13 @@ void Overlay::GetPatternColors()
         *rgb++ = currlayer->cellb[i];
         *rgb++ = 255; // opaque
     }
+
+    // read border color from View Settings
+    unsigned char borderr = borderrgb->Red();
+    unsigned char borderg = borderrgb->Green();
+    unsigned char borderb = borderrgb->Blue();
+    unsigned char alpha = 255; // opaque
+    SetRGBA(borderr, borderg, borderb, alpha, &borderRGBA);
 }
 
 // -----------------------------------------------------------------------------
@@ -438,6 +445,12 @@ void Overlay::GetThemeColors(double brightness)
         *rgb++ = (aliveStartB * weight + aliveEndB * (1 - weight)) * brightness;
         *rgb++ = aliveStartA;
     }
+
+    // read border color from View Settings
+    unsigned char borderr = borderrgb->Red();
+    unsigned char borderg = borderrgb->Green();
+    unsigned char borderb = borderrgb->Blue();
+    SetRGBA(borderr, borderg, borderb, bordera, &borderRGBA);
 }
 
 // -----------------------------------------------------------------------------
@@ -557,14 +570,6 @@ void Overlay::DrawCellsRotate(unsigned char *cells, int mask, double angle)
         // using standard pattern colors
         GetPatternColors();
     }
-
-    // get the border color
-    unsigned char borderr = borderrgb->Red();
-    unsigned char borderg = borderrgb->Green();
-    unsigned char borderb = borderrgb->Blue();
-    unsigned char bordera = 255;    // opaque
-    unsigned int borderRGBA;
-    SetRGBA(borderr, borderg, borderb, bordera, &borderRGBA);
 
     // compute deltas in horizontal and vertical direction based on rotation
     double dxy = sin(angle / 180 * M_PI) / camzoom;
@@ -741,14 +746,6 @@ void Overlay::DrawCellsNoRotate(unsigned char *cells, int mask)
         // using standard pattern colors
         GetPatternColors();
     }
-
-    // get the border color
-    unsigned char borderr = borderrgb->Red();
-    unsigned char borderg = borderrgb->Green();
-    unsigned char borderb = borderrgb->Blue();
-    unsigned char bordera = 255;    // opaque
-    unsigned int borderRGBA;
-    SetRGBA(borderr, borderg, borderb, bordera, &borderRGBA);
 
     // compute deltas in horizontal and vertical direction based on rotation
     double dyy = 1 / camzoom;
@@ -1728,23 +1725,29 @@ const char* Overlay::DoTheme(const char* args)
     int aa = 255;
     int da = 255;
     int ua = 255;
+    int ba = 255;
 
     // whether theme is disabled
     int disable = 0;
 
-    // check for 18 argument version
-    if (sscanf(args, " %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d", 
-        &asr, &asg, &asb, &aer, &aeg, &aeb, &dsr, &dsg, &dsb, &der, &deg, &deb, &ur, &ug, &ub, &aa, &da, &ua) != 18) {
-        if (sscanf(args, " %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-            &asr, &asg, &asb, &aer, &aeg, &aeb, &dsr, &dsg, &dsb, &der, &deg, &deb, &ur, &ug, &ub) != 15) {
+    // argument count
+    int count = 0;
+
+    // check for 19 argument version
+    count = sscanf(args, " %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d", 
+        &asr, &asg, &asb, &aer, &aeg, &aeb, &dsr, &dsg, &dsb, &der, &deg, &deb, &ur, &ug, &ub, &aa, &da, &ua, &ba);
+    if (count != 19) {
+        // check for 15 argument version
+        if (count != 15) {        
             // check for single argument version
-            if (sscanf(args, " %d", &disable) != 1) {
-                return OverlayError("theme command requires single argument -1, or 15 or 18 rgb components");
-            }
-            else {
+            if (count == 1) {
+                disable = asr;
                 if (disable != -1) {
                     return OverlayError("theme command single argument must be -1");
                 }
+            }
+            else {
+                return OverlayError("theme command requires single argument -1, or 15 or 19 rgb components");
             }
         }
     }
@@ -1784,6 +1787,9 @@ const char* Overlay::DoTheme(const char* args)
         if (ua < 0 || ua > 255) {
             return OverlayError("theme unoccupied alpha must be from 0 to 255");
         }
+        if (ba < 0 || ba > 255) {
+            return OverlayError("theme border alpha must be from 0 to 255");
+        }
     }
 
     // save the new values
@@ -1797,6 +1803,7 @@ const char* Overlay::DoTheme(const char* args)
         SetRGBA(dsr, dsg, dsb, da, &deadStartRGBA);
         SetRGBA(der, deg, deb, da, &deadEndRGBA);
         SetRGBA(ur, ug, ub, ua, &unoccupiedRGBA);
+        bordera = ba;
     }
 
     return NULL;

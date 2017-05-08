@@ -534,11 +534,13 @@ private:
 
     // theme
     bool theme;                     // whether a theme is active
-    unsigned int aliveStartRGBA;    // new cell RGBA
+    unsigned int aliveStartRGBA;    // cell just born RGBA
     unsigned int aliveEndRGBA;      // cell alive longest RGBA
     unsigned int deadStartRGBA;     // cell just died RGBA
     unsigned int deadEndRGBA;       // cell dead longest RGBA
     unsigned int unoccupiedRGBA;    // cell never occupied RGBA
+    unsigned int borderRGBA;        // border RGBA
+    unsigned char bordera;          // border alpha (RGB comes from View Settings)
 
     // grid
     bool grid;                      // whether to display grid lines

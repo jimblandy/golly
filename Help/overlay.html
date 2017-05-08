@@ -730,6 +730,7 @@ set the alignment of multi-line text to <b>left</b>, <b>right</b> or <b>center</
 set the text background to the given RGBA values (all from 0 to 255)
 </table>
 <p>
+<dd>
 The <a href="#create">create</a> command initializes the
 text options to left alignment and a transparent background.
 Both options return their previous setting as a string:
@@ -746,7 +747,7 @@ the returned background will be a string of the form "red green blue alpha".
 </dd>
 </p>
 
-<a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5 (alivea, deada, unoccupieda)</i></b></dt>
+<a name="theme"></a><p><dt><b>theme <i>r1 g1 b1 r2 g2 b2 r3 g3 b3 r4 g4 b4 r5 g5 b5 (alivea, deada, unoccupieda, bordera)</i></b></dt>
 <dd>
 Define the color theme for drawing the current <a href="#cellviewdesc">cell view</a>.
 Themes allow better visualization of patterns because they highlight history
@@ -763,7 +764,6 @@ and longevity of cells. The arguments define 5 colors:
 </table>
 </dd>
 <p>
-</dd>
 <dd> Example: <b>ov("theme 0 255 255 255 255 255 0 0 255 0 0 47 0 0 0")</b></dd>
 <dd>
 New cells are drawn in the <i>born</i> color (cyan 0 255 255).</dd>
@@ -782,9 +782,25 @@ Cells that have never been occupied are drawn in the <i>unoccupied</i> color (bl
 </p>
 <p>
 <dd>
-Optionally you can specify the alpha values to use for the <i>born</i> to <i>alive</i> colors (<b>alivea</b>),
-<i>died</i> to <i>dead</i> colors (<b>deada</b>) and <i>unoccupied</i> color (<b>unoccupieda</b>).
-If you omit these then they all default to 255 (opaque).
+Optionally you can specify the alpha values for the different cell types:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><i><b>alivea</b></i></td><td>&nbsp;&nbsp;&nbsp;<i>born</i> to <i>alive</i></td></tr>
+<tr><td><i><b>deada</b></i></td><td>&nbsp;&nbsp;&nbsp;<i>died</i> to <i>dead</i></td></tr>
+<tr><td><i><b>unoccupieda</b></i></td><td>&nbsp;&nbsp;&nbsp;<i>unoccupied</i></td></tr>
+<tr><td><i><b>bordera</b></i></td><td>&nbsp;&nbsp;&nbsp;<i>border</i></td></tr>
+</table>
+</dd>
+<p>
+<dd>
+The border color RGB components are read from the View Preference
+<a href="prefs:color">grid border color</a>. If you don't want a border drawn around the <a href="#cellviewdesc">cell view</a>
+then set <i><b>bordera</b></i> to 0 (transparent).
+<p>
+<dd>
+If you omit alpha values then they all default to 255 (opaque).
 <p>
 <dd>
 If no theme is specified then Golly's default colors for the pattern are used. If you want to switch
