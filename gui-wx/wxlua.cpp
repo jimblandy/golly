@@ -472,6 +472,17 @@ static int g_getfiles(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_getpath(lua_State* L)
+{
+    CheckEvents(L);
+
+    lua_pushstring(L, GSF_getpath());
+    
+    return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_getinfo(lua_State* L)
 {
     CheckEvents(L);
@@ -2587,6 +2598,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "setdir",       g_setdir },       // set location of specified directory
     { "getdir",       g_getdir },       // return location of specified directory
     { "getfiles",     g_getfiles },     // return array of files in specified directory
+    { "getpath",      g_getpath },      // return the path to the current opened pattern
     { "getinfo",      g_getinfo },      // return comments from pattern file
     // editing
     { "new",          g_new },          // create new universe and set window title

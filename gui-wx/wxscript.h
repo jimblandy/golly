@@ -130,6 +130,7 @@ char GSF_getkey();
 void GSF_dokey(const char* ascii);
 void GSF_update();
 void GSF_exit(const wxString& errmsg);
+const char* GSF_getpath();
 const char* GSF_getinfo();
 
 #endif

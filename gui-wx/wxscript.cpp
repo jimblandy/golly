@@ -1344,14 +1344,24 @@ void GSF_exit(const wxString& errmsg)
     exitcalled = true;   // prevent CheckScriptError changing message
 }
 
-// -----------------------------------------------------------------------------
-
 #ifdef __WXMAC__
     // convert path to decomposed UTF8 so fopen will work
     #define CURRFILE currlayer->currfile.fn_str()
 #else
     #define CURRFILE currlayer->currfile.mb_str(wxConvLocal)
 #endif
+
+// -----------------------------------------------------------------------------
+
+const char* GSF_getpath()
+{
+    // need to be careful converting Unicode wxString to char*
+    static wxCharBuffer path;
+    path = CURRFILE;
+    return (const char*) path;
+}
+
+// -----------------------------------------------------------------------------
 
 const char* GSF_getinfo()
 {
