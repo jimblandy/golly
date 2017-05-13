@@ -3,13 +3,13 @@
 -- Home to reload current pattern
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 2
+-- Build 3
 
 local g = golly()
 local gp = require "gplus"
 local int = gp.int
 local op = require "oplus"
-require "gplus.strict"
+--require "gplus.strict"
 local ov = g.overlay
 local viewwd, viewht = g.getview(g.getlayer())
 local guiht = 24
@@ -21,16 +21,18 @@ local numpatterns = 0
 local whichpattern = 1
 
 -- gui buttons
-local prevbutton
-local nextbutton
-local reloadbutton
-local exitbutton
+local prevbutton    -- Previous button
+local nextbutton    -- Next button
+local reloadbutton  -- Reload button
+local exitbutton    -- Exit button
+local startcheck    -- AutoStart checkbox
+local fitcheck      -- AutoFit checkbox
 
--- whether to load a new pattern
-local loadnew = false
-
--- whether to eit
-local exitnow = false
+-- flags
+local loadnew = false   -- whether to load a new pattern
+local exitnow = false   -- whether to exit
+local autostart = false -- whether to autostart playback on pattern load
+local autofit = false   -- whether to switch on autofit on pattern load
 
 --------------------------------------------------------------------------------
 
@@ -88,6 +90,18 @@ end
 
 --------------------------------------------------------------------------------
 
+local function toggleautostart()
+    autostart = not autostart
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleautofit()
+    autofit = not autofit
+end
+
+--------------------------------------------------------------------------------
+
 local function createoverlay()
     -- single text line at the top of the display
     ov("create "..viewwd.." "..guiht)
@@ -106,6 +120,8 @@ local function createoverlay()
     nextbutton = op.button("Next", nextpattern)
     reloadbutton = op.button("Reload", reloadpattern)
     exitbutton = op.button("Exit", exitbrowser)
+    startcheck = op.checkbox("AutoStart", op.black, toggleautostart)
+    fitcheck = op.checkbox("AutoFit", op.black, toggleautofit)
 
     -- draw overlay
     ov(op.white)
@@ -120,6 +136,10 @@ local function createoverlay()
     reloadbutton.show(x, y)
     x = x + reloadbutton.wd + gap
     exitbutton.show(x, y)
+    x = x + exitbutton.wd + gap
+    startcheck.show(x, y)
+    x = x + startcheck.wd + gap
+    fitcheck.show(x, y)
 end
 
 --------------------------------------------------------------------------------
@@ -152,7 +172,7 @@ local function browsepatterns(startpattern)
         g.open(fullname, false)     -- don't add file to Open/Run Recent submenu
         g.show("Pattern "..whichpattern.." of "..numpatterns..". "..controls)
         g.update()
-        generating = false
+        generating = autostart
 
         -- decode key presses
         loadnew = false
@@ -205,6 +225,9 @@ local function browsepatterns(startpattern)
                     now = t
                     target = delay
                 end
+            end
+            if autofit then
+                g.fit()
             end
             g.update()
         end
