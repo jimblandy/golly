@@ -47,6 +47,69 @@
 
 // -----------------------------------------------------------------------------
 
+class Clip {
+public:
+    Clip(int w, int h, bool use_calloc = false) {
+        cwd = w;
+        cht = h;
+        if (use_calloc) {
+            cdata = (unsigned char*) calloc(cwd * cht * 4, sizeof(*cdata));
+        } else {
+            cdata = (unsigned char*) malloc(cwd * cht * 4);
+        }
+        rowindex = NULL;
+        hasindex = false;
+    }
+
+    ~Clip() {
+        if (cdata) free(cdata);
+        if (rowindex) free(rowindex);
+    }
+
+    // add row index to the clip
+    int addIndex() {
+        if (!rowindex) {
+            // allocate the index
+            rowindex = (unsigned char*) malloc(cht);
+        }
+        unsigned int* ldata = (unsigned int*)cdata;
+        unsigned char* r = rowindex;
+        unsigned char alpha;
+        int j;
+ 
+        // check each row
+        int numblank = 0;
+        for (int i = 0; i < cht; i++) {
+            j = 0;
+            // check pixels in the row stopping as soon as non-zero alpha found
+            alpha = 0;
+            while (j < cwd && !alpha) {
+                alpha = (*ldata++) >> 24;
+                j++;
+            }
+            // save row flag
+            *r++ = alpha;
+            ldata += cwd - j;
+            if (!alpha) numblank++;
+        }
+        // only enable the index if there were blank rows found
+        hasindex = numblank ? true : false;
+        return numblank;
+    }
+
+    // remove row index from the clip
+    void removeIndex() {
+        hasindex = false;
+    }
+
+    unsigned char* cdata;    // RGBA data (cwd * cht * 4 bytes)
+    int cwd, cht;            // width and height of the clip in pixels
+    unsigned char* rowindex; // flag per row if it contains non-zero alpha pixels
+    bool hasindex;           // whether the clip currently has a row index
+};
+
+// -----------------------------------------------------------------------------
+
 // some useful macros:
 
 #ifdef __WXMSW__
