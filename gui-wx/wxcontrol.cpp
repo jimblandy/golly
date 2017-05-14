@@ -109,7 +109,7 @@ bool MainFrame::SaveStartingPattern()
     }
 
     currlayer->currfile = currlayer->tempstart;     // ResetPattern will load tempstart
-    
+
     // save starting pattern in tempstart file
     if ( currlayer->algo->hyperCapable() ) {
         // much faster to save pattern in a macrocell file
@@ -248,8 +248,7 @@ void MainFrame::ResetPattern(bool resetundo)
     
     if (allowundo && !currlayer->stayclean) {
         if (inscript) {
-            // script called reset() so remember gen change
-            // (RememberGenStart was called above)
+            // script called reset() so remember gen change (RememberGenStart was called above)
             currlayer->undoredo->RememberGenFinish();
         } else if (resetundo) {
             // wind back the undo history to the starting pattern

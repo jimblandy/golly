@@ -258,6 +258,7 @@ public:
     int oldexpo, newexpo;                   // old and new step exponents
     StartingInfo* startinfo;                // saves starting info for ResetPattern
     // also uses oldsel, newsel
+    // and oldtempstart, newtempstart
     
     // setgen info
     bigint oldstartgen, newstartgen;        // old and new startgen values
@@ -426,14 +427,16 @@ bool ChangeNode::DoChange(bool undo)
             
         case genchange:
             currlayer->currfile = oldcurrfile;
+            if (startinfo) {
+                // restore starting info for use by ResetPattern
+                startinfo->Restore();
+            }
             if (undo) {
+                currlayer->tempstart = oldtempstart;    // in case script called reset()
                 currlayer->currsel = oldsel;
                 mainptr->RestorePattern(oldgen, oldfile, oldx, oldy, oldmag, oldbase, oldexpo);
             } else {
-                if (startinfo) {
-                    // restore starting info for use by ResetPattern
-                    startinfo->Restore();
-                }
+                currlayer->tempstart = newtempstart;    // in case script called reset()
                 currlayer->currsel = newsel;
                 mainptr->RestorePattern(newgen, newfile, newx, newy, newmag, newbase, newexpo);
             }
@@ -838,7 +841,7 @@ void UndoRedo::RememberGenStart()
         // we can just reset to starting pattern
         prevfile = wxEmptyString;
     } else {
-        // save starting pattern in a unique temporary file
+        // save current pattern in a unique temporary file
         prevfile = wxFileName::CreateTempFileName(tempdir + genchange_prefix);
         
         // if head of undo list is a genchange node then we can copy that
@@ -887,11 +890,19 @@ void UndoRedo::RememberGenFinish()
         prevfile = wxEmptyString;
         return;
     }
+
+    // currlayer->tempstart will need to change if script calls reset()
+    wxString oldtempstart = currlayer->tempstart;
     
     wxString fpath;
     if (currlayer->algo->getGeneration() == currlayer->startgen) {
-        // this can happen if script called reset() so just use starting pattern
+        // script called reset() so just use starting pattern
         fpath = wxEmptyString;
+
+        // if script generates pattern then tempstart will be clobbered by
+        // SaveStartingPattern, so change currlayer->tempstart to a new temporary file
+        currlayer->tempstart = wxFileName::CreateTempFileName(tempdir + wxT("gr_"));
+
     } else {
         // save finishing pattern in a unique temporary file
         fpath = wxFileName::CreateTempFileName(tempdir + genchange_prefix);
@@ -923,6 +934,8 @@ void UndoRedo::RememberGenFinish()
     change->newexpo = currlayer->currexpo;
     change->oldsel = prevsel;
     change->newsel = currlayer->currsel;
+    change->oldtempstart = oldtempstart;
+    change->newtempstart = currlayer->tempstart;
 
     // also remember the file containing the starting pattern
     // (in case it is changed by by RememberSetGen or RememberNameChange)
