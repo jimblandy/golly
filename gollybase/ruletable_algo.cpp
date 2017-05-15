@@ -441,6 +441,12 @@ string ruletable_algo::LoadRuleTable(string rule)
                return oss.str();
             }
             output = c-'0';
+            if (output >= n_states)     // AKT: avoid later crash in PackTransition
+            {
+                ostringstream oss;
+                oss << "Error reading " << full_filename << " on line " << lineno << ": " << line << " - state out of range";
+                return oss.str();
+            }
             transition_table.push_back(make_pair(inputs,output));
          }
          else // transition line with commas
