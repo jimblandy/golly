@@ -228,6 +228,10 @@ private:
     const char* DoPaste(const char* args);
     // Paste the named Clip data into the render target at the given location.
     // Automatically clips any pixels outside the render target.
+    
+    const char* DoScale(const char* args);
+    // Scale the named Clip data into the render target using the given rectangle.
+    // Automatically clips any pixels outside the render target.
 
     void DisableTargetClipIndex();
     // Disable the index on the render target clip (used when it is written to which

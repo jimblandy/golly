@@ -41,13 +41,13 @@ local cursor_button
 local line_button
 local set_button
 local fill_button
-local load_button
 local mouse_button
 local multiline_button
 local pos_button
 local render_button
 local replace_button
 local save_button
+local scale_button
 local sound_button
 local text_button
 local transition_button
@@ -1266,30 +1266,106 @@ end
 
 local loaddir = g.getdir("app").."Help/images/"
 
-local function test_load()
+local function test_scale()
+    local loaded = false
+    local iw, ih
+    local quality = "best"
+    local minscale = 0.1
+    local maxscale = 8.0
+    local scale = 1.0         -- no scaling
+    
     ::restart::
 
     ov(op.yellow)
     ov("fill")
-    g.update()
 
-    -- prompt user to load a BMP/GIF/PNG/TIFF file
-    local filetypes = "Image files (*.bmp;*.gif;*.png;*.tiff)|*.bmp;*.gif;*.png;*.tiff"
-    local filepath = g.opendialog("Load an image file", filetypes, loaddir, "")
-    if #filepath > 0 then
-        -- center image in overlay by first loading the file completely outside it
-        -- so we get the image dimensions without changing the overlay
-        local imgsize = ov("load "..wd.." "..ht.." "..filepath)
-        local iw, ih = split(imgsize)
-        ov("load "..int((wd-iw)/2).." "..int((ht-ih)/2).." "..filepath)
-        g.show("Image width and height: "..imgsize)
-
-        -- update loaddir by stripping off the file name
-        local pathsep = g.getdir("app"):sub(-1)
-        loaddir = filepath:gsub("[^"..pathsep.."]+$","")
+    local text = "Hit the space bar to load another image.\n"
+    if g.os() == "Mac" then
+        text = text.."Click or hit the return key to return to the main menu."
+    else
+        text = text.."Click or hit the enter key to return to the main menu."
+    end
+    local oldfont = ov(demofont)
+    local oldblend = ov("blend 1")
+    ov(op.black)
+    local w, h = maketext(text)
+    pastetext(10, ht - 10 - h)
+    maketext("Hit [ to scale down, ] to scale up, 1 to reset scale to 1.0, Q to toggle quality.")
+    pastetext(10, 10)
+    ov("font "..oldfont)
+    
+    if not loaded then
+        -- prompt user to load a BMP/GIF/PNG/TIFF file
+        g.update()
+        local filetypes = "Image files (*.bmp;*.gif;*.png;*.tiff)|*.bmp;*.gif;*.png;*.tiff"
+        local filepath = g.opendialog("Load an image file", filetypes, loaddir, "")
+        if #filepath > 0 then
+            -- update loaddir by stripping off the file name
+            local pathsep = g.getdir("app"):sub(-1)
+            loaddir = filepath:gsub("[^"..pathsep.."]+$","")
+    
+            -- center image in overlay by first loading the file completely outside it
+            -- so we get the image dimensions without changing the overlay
+            local imgsize = ov("load "..wd.." "..ht.." "..filepath)
+            iw, ih = split(imgsize)
+            iw = tonumber(iw)
+            ih = tonumber(ih)
+            
+            -- now load image into a clip
+            ov("create "..iw.." "..ih.." img")
+            ov("target img")
+            ov("load 0 0 "..filepath)
+            ov("target")
+            loaded = true
+        end
+    end
+    
+    if loaded then
+        -- draw image at current scale
+        local scaledw = int(iw*scale)
+        local scaledh = int(ih*scale)
+        local x = int((wd-scaledw)/2)
+        local y = int((ht-scaledh)/2)
+        g.show("Image width and height: "..scaledw.." "..scaledh..
+               "  scale: "..scale.."  quality: "..quality)
+        ov("scale "..quality.." "..x.." "..y.." "..scaledw.." "..scaledh.." img")
     end
 
-    if repeat_test(" and load another image", true) then goto restart end
+    ov("blend "..oldblend)
+    g.update()
+
+    while true do
+        local event = g.getevent()
+        if event == "key space none" then
+            loaded = false
+            scale = 1.0
+            goto restart
+        end
+        if event == "key [ none" then
+            scale = scale - 0.1
+            if scale < minscale then scale = minscale end
+            goto restart
+        end
+        if event == "key ] none" then
+            scale = scale + 0.1
+            if scale > maxscale then scale = maxscale end
+            goto restart
+        end
+        if event == "key 1 none" then
+            scale = 1.0
+            goto restart
+        end
+        if event == "key q none" then
+            if quality == "fast" then quality = "best" else quality = "fast" end
+            goto restart
+        end
+        if event:find("^oclick") or event == "key enter none" or event == "key return none" then
+            return_to_main_menu = true
+            return
+        elseif #event > 0 then
+            g.doevent(event)
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -2643,9 +2719,6 @@ local function test_mouse()
             g.show("mouse is outside overlay")
         end
     end
-
-    -- above loop checks for enter/return/space key
-    -- if repeat_test() then goto restart end
 end
 
 --------------------------------------------------------------------------------
@@ -2661,13 +2734,13 @@ local function create_menu_buttons()
     set_button = op.button(         longest, test_set)
     fill_button = op.button(        longest, test_fill)
     line_button = op.button(        longest, test_lines)
-    load_button = op.button(        longest, test_load)
     mouse_button = op.button(       longest, test_mouse)
     multiline_button = op.button(   longest, test_multiline_text)
     pos_button = op.button(         longest, test_positions)
     render_button = op.button(      longest, test_target)
     replace_button = op.button(     longest, test_replace)
     save_button = op.button(        longest, test_save)
+    scale_button = op.button(       longest, test_scale)
     sound_button = op.button(       longest, test_sound)
     text_button = op.button(        longest, test_text)
     transition_button = op.button(  longest, test_transitions)
@@ -2682,13 +2755,13 @@ local function create_menu_buttons()
     set_button.setlabel(         "Drawing Pixels", false)
     fill_button.setlabel(        "Filling Rectangles", false)
     line_button.setlabel(        "Lines and Ellipses", false)
-    load_button.setlabel(        "Loading Images", false)
     mouse_button.setlabel(       "Mouse Tracking", false)
     multiline_button.setlabel(   "Multi-line Text", false)
     pos_button.setlabel(         "Overlay Positions", false)
     render_button.setlabel(      "Render Target", false)
     replace_button.setlabel(     "Replacing Pixels", false)
     save_button.setlabel(        "Saving the Overlay", false)
+    scale_button.setlabel(       "Scaling Images", false)
     sound_button.setlabel(       "Sounds", false)
     text_button.setlabel(        "Text and Transforms", false)
     transition_button.setlabel(  "Transitions", false)
@@ -2738,13 +2811,13 @@ local function main_menu()
     set_button.show(x, y)           y = y + buttgap + buttht
     fill_button.show(x, y)          y = y + buttgap + buttht
     line_button.show(x, y)          y = y + buttgap + buttht
-    load_button.show(x, y)          y = y + buttgap + buttht
     mouse_button.show(x, y)         y = y + buttgap + buttht
     multiline_button.show(x, y)     y = y + buttgap + buttht
     pos_button.show(x, y)           y = y + buttgap + buttht
     render_button.show(x, y)        y = y + buttgap + buttht
     replace_button.show(x, y)       y = y + buttgap + buttht
     save_button.show(x, y)          y = y + buttgap + buttht
+    scale_button.show(x, y)         y = y + buttgap + buttht
     if (sound_enabled) then
         sound_button.show(x, y)         y = y + buttgap + buttht
     end

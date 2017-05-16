@@ -3900,9 +3900,9 @@ const char* Overlay::DoFill(const char* args)
         // mark target clip as changed
         DisableTargetClipIndex();
 
-        // ignore rect if completely outside pixmap edges
+        // ignore rect if completely outside target edges
         if (!RectOutsideTarget(x, y, w, h)) {
-            // clip any part of rect outside pixmap edges
+            // clip any part of rect outside target edges
             int xmax = x + w - 1;
             int ymax = y + h - 1;
             if (x < 0) x = 0;
@@ -3928,9 +3928,9 @@ const char* Overlay::DoFill(const char* args)
             if (w <= 0) return OverlayError("fill width must be > 0");
             if (h <= 0) return OverlayError("fill height must be > 0");
     
-            // ignore rect if completely outside pixmap edges
+            // ignore rect if completely outside target edges
             if (!RectOutsideTarget(x, y, w, h)) {
-                // clip any part of rect outside pixmap edges
+                // clip any part of rect outside target edges
                 int xmax = x + w - 1;
                 int ymax = y + h - 1;
                 if (x < 0) x = 0;
@@ -3945,7 +3945,7 @@ const char* Overlay::DoFill(const char* args)
             }
         }
     } else {
-        // fill entire pixmap with current RGBA values
+        // fill entire target with current RGBA values
         FillRect(0, 0, wd, ht);
     }
 
@@ -3988,7 +3988,7 @@ const char* Overlay::DoCopy(const char* args)
         // use malloc to allocate clip memory
         use_calloc = false;
     } else {
-        // use calloc so parts outside overlay will be transparent
+        // use calloc so parts outside target will be transparent
         use_calloc = true;
     }
 
@@ -4000,15 +4000,15 @@ const char* Overlay::DoCopy(const char* args)
 
     if (use_calloc) {
         if (RectOutsideTarget(x, y, w, h)) {
-            // clip rect is completely outside overlay so no need to copy
-            // overlay pixels (clip pixels are all transparent)
+            // clip rect is completely outside target so no need to copy
+            // target pixels (clip pixels are all transparent)
         } else {
             // calculate offsets in clip data and bytes per row
             int clipx = x >= 0 ? 0 : -x;
             int clipy = y >= 0 ? 0 : -y;
             int cliprowbytes = w * 4;
 
-            // set x,y,w,h to intersection with overlay
+            // set x,y,w,h to intersection with target
             int xmax = x + w - 1;
             int ymax = y + h - 1;
             if (x < 0) x = 0;
@@ -4018,7 +4018,7 @@ const char* Overlay::DoCopy(const char* args)
             w = xmax - x + 1;
             h = ymax - y + 1;
 
-            // copy intersection rect from overlay into corresponding area of clip data
+            // copy intersection rect from target into corresponding area of clip data
             unsigned char* dest = newclip->cdata + clipy*cliprowbytes + clipx*4;
             int rowbytes = wd * 4;
             int wbytes = w * 4;
@@ -4030,7 +4030,7 @@ const char* Overlay::DoCopy(const char* args)
             }
         }
     } else {
-        // given rectangle is within overlay so fill newclip->cdata with
+        // given rectangle is within target so fill newclip->cdata with
         // pixel data from that rectangle in pixmap
         unsigned char* dest = newclip->cdata;
 
@@ -4051,7 +4051,7 @@ const char* Overlay::DoCopy(const char* args)
         }
     }
 
-    clips[name] = newclip;      // create named clip for later use by DoPaste
+    clips[name] = newclip;      // create named clip for later use by paste, scale, etc
 
     return NULL;
 }
@@ -4129,7 +4129,7 @@ const char* Overlay::DoPaste(const char* args)
     int w = clipptr->cwd;
     int h = clipptr->cht;
 
-    // do nothing if rect is completely outside overlay
+    // do nothing if rect is completely outside target
     if (RectOutsideTarget(x, y, w, h)) return NULL;
 
     // mark target clip as changed
@@ -4137,7 +4137,7 @@ const char* Overlay::DoPaste(const char* args)
 
     // check for transformation
     if (identity) {
-        // no transformation, check for clip and overlay the same size without alpha blending
+        // no transformation, check for clip and target the same size without alpha blending
         if (!alphablend && x == 0 && y == 0 && w == wd && h == ht) {
             // fast paste with single memcpy call
             memcpy(pixmap, clipptr->cdata, w * h * 4);
@@ -4316,6 +4316,132 @@ const char* Overlay::DoPaste(const char* args)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::DoScale(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    wxImageResizeQuality quality;
+    if (strncmp(args, " best ", 6) == 0) {
+        quality = wxIMAGE_QUALITY_HIGH;
+        args += 5;
+    } else if (strncmp(args, " fast ", 6) == 0) {
+        quality = wxIMAGE_QUALITY_NORMAL;
+        args += 5;
+    } else {
+        return OverlayError("scale quality must be best or fast");
+    }
+    
+    int x, y, w, h;
+    int namepos;
+    char dummy;
+    if (sscanf(args, " %d %d %d %d %n%c", &x, &y, &w, &h, &namepos, &dummy) != 5) {
+        // note that %n is not included in the count
+        return OverlayError("scale command requires 5 arguments");
+    }
+
+    // treat non-positive w/h as inset from target's width/height
+    if (w <= 0) w = wd + w;
+    if (h <= 0) h = ht + h;
+    if (w <= 0) return OverlayError("scale width must be > 0");
+    if (h <= 0) return OverlayError("scale height must be > 0");
+
+    std::string name = args + namepos;
+    std::map<std::string,Clip*>::iterator it;
+    it = clips.find(name);
+    if (it == clips.end()) {
+        static std::string msg;
+        msg = "unknown scale clip (";
+        msg += name;
+        msg += ")";
+        return OverlayError(msg.c_str());
+    }
+
+    // do nothing if scaled rect is completely outside target
+    if (RectOutsideTarget(x, y, w, h)) return NULL;
+
+    Clip* clipptr = it->second;
+    int clipw = clipptr->cwd;
+    int cliph = clipptr->cht;
+    
+    if (w > clipw && w % clipw == 0 &&
+        h > cliph && h % cliph == 0 && quality == wxIMAGE_QUALITY_NORMAL) {
+        // no need to create a wxImage to expand pixels by integer multiples
+        /*
+        int xinc = w / clipw;
+        int yinc = h / cliph;
+        !!!
+        return NULL;
+        */
+    }
+
+    // get the clip's RGB and alpha data so we can create a wxImage
+    unsigned char* rgbdata = (unsigned char*) malloc(clipw * cliph * 3);
+    if (rgbdata== NULL) {
+        return OverlayError("not enough memory to scale rgb data");
+    }
+    unsigned char* alphadata = (unsigned char*) malloc(clipw * cliph);
+    if (alphadata == NULL) {
+        free(rgbdata);
+        return OverlayError("not enough memory to scale alpha data");
+    }
+
+    unsigned char* p = clipptr->cdata;
+    int rgbpos = 0;
+    int alphapos = 0;
+    for (int j = 0; j < cliph; j++) {
+        for (int i = 0; i < clipw; i++) {
+            rgbdata[rgbpos++] = *p++;
+            rgbdata[rgbpos++] = *p++;
+            rgbdata[rgbpos++] = *p++;
+            alphadata[alphapos++] = *p++;
+        }
+    }
+
+    // create wxImage with the given clip's size and using its RGB and alpha data;
+    // static_data flag is false so wxImage dtor will free rgbdata and alphadata
+    wxImage image(clipw, cliph, rgbdata, alphadata, false);
+    
+    // scale the wxImage to the requested width and height
+    image.Rescale(w, h, quality);
+
+    // mark target clip as changed
+    DisableTargetClipIndex();
+
+    // save current RGBA values
+    unsigned char saver = r;
+    unsigned char saveg = g;
+    unsigned char saveb = b;
+    unsigned char savea = a;
+    
+    // copy the pixels from the scaled wxImage into the current target
+    unsigned char* rdata = image.GetData();
+    unsigned char* adata = image.GetAlpha();
+    rgbpos = 0;
+    alphapos = 0;
+    for (int j = 0; j < h; j++) {
+        for (int i = 0; i < w; i++) {
+            r = rdata[rgbpos++];
+            g = rdata[rgbpos++];
+            b = rdata[rgbpos++];
+            a = adata[alphapos++];
+            if (PixelInTarget(x, y)) DrawPixel(x, y);
+            x++;
+        }
+        y++;
+        x -= w;
+    }
+
+    // restore saved RGBA values
+    r = saver;
+    g = saveg;
+    b = saveb;
+    a = savea;
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoTarget(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -4436,9 +4562,9 @@ const char* Overlay::DoLoad(const char* args)
     int imgwd = image.GetWidth();
     int imght = image.GetHeight();
     if (RectOutsideTarget(x, y, imgwd, imght)) {
-        // do nothing if image rect is completely outside overlay,
+        // do nothing if image rect is completely outside target,
         // but we still return the image dimensions so users can do things
-        // like center the image within the overlay
+        // like center the image within the target
     } else {
         // mark target clip as changed
         DisableTargetClipIndex();
@@ -4865,8 +4991,6 @@ const char* Overlay::TextOptionAlign(const char* args)
 
 const char* Overlay::TextOptionBackground(const char* args)
 {
-    if (pixmap == NULL) return OverlayError(no_overlay);
-
     int a1, a2, a3, a4;
     if (sscanf(args, " %d %d %d %d", &a1, &a2, &a3, &a4) != 4) {
         return OverlayError("textoption background command requires 4 arguments");
@@ -5159,7 +5283,7 @@ const char* Overlay::DoText(const char* args)
         }
     }
 
-    // create named clip for later use by DoPaste
+    // create named clip for later use by paste, scale, etc
     clips[name] = textclip;
 
     // return text info
@@ -5502,6 +5626,7 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "position", 8) == 0)     return DoPosition(cmd+8);
     if (strncmp(cmd, "load", 4) == 0)         return DoLoad(cmd+4);
     if (strncmp(cmd, "save", 4) == 0)         return DoSave(cmd+4);
+    if (strncmp(cmd, "scale", 5) == 0)        return DoScale(cmd+5);
     if (strncmp(cmd, "cursor", 6) == 0)       return DoCursor(cmd+6);
     if (strcmp(cmd,  "update") == 0)          return DoUpdate();
     if (strncmp(cmd, "create", 6) == 0)       return DoCreate(cmd+6);
