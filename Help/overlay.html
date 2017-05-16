@@ -89,23 +89,24 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#line"><b>line</b></a><br>
 <a href="#lineoption"><b>lineoption</b></a><br>
 <a href="#load"><b>load</b></a><br>
+<a href="#optimize"><b>optimize</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#position"><b>position</b></a><br>
-<a href="#replace"><b>replace</b></a><br>
-<a href="#resize"><b>resize</b></a>
+<a href="#replace"><b>replace</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#resize"><b>resize</b></a><br>
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#set"><b>set</b></a><br>
 <a href="#sound"><b>sound</b></a><br>
 <a href="#target"><b>target</b></a><br>
-<a href="#text"><b>text</b></a><br>
-<a href="#textoption"><b>textoption</b></a>
+<a href="#text"><b>text</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#textoption"><b>textoption</b></a><br>
 <a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
@@ -443,6 +444,20 @@ the render target just to get the image's width and height; the 2nd call can the
 use those values to do things like center the image within the render target.
 </dd>
 <dd> Example: <b>local wdht = ov("load 99999 99999 foo.png")</b></dd>
+</p>
+
+<a name="optimize"></a><p><dt><b>optimize <i>clipname</i></b></dt>
+<dd>
+Optimizes the named clip for improved <a href="#paste">paste</a> performance when
+using <a href="#blending">alpha blending</a> if the clip contains complete rows
+of transparent or opaque pixels.
+Returns the number of completely transparent rows.
+A clip that is modified after optimization must be optimized again before use to get the
+performance benefit.
+Especially effective for text rendering and used automatically by the
+<a href="#maketext">op.maketext</a> function.
+</dd>
+<dd> Example: <b>local transparentrows = ov("optimize textclip")</b></dd>
 </p>
 
 <a name="paste"></a><p><dt><b>paste <i>x y clipname</i></b></dt>
