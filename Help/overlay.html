@@ -99,13 +99,14 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#resize"><b>resize</b></a><br>
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
+<a href="#scale"><b>scale</b></a><br>
 <a href="#set"><b>set</b></a><br>
 <a href="#sound"><b>sound</b></a><br>
-<a href="#target"><b>target</b></a><br>
-<a href="#text"><b>text</b></a>
+<a href="#target"><b>target</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#text"><b>text</b></a><br>
 <a href="#textoption"><b>textoption</b></a><br>
 <a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
@@ -142,7 +143,8 @@ The commands affected by alpha blending are:
 <a href="#flood">flood</a>,
 <a href="#line">line</a>,
 <a href="#load">load</a>,
-<a href="#paste">paste</a> and
+<a href="#paste">paste</a>,
+<a href="#scale">scale</a> and
 <a href="#set">set</a>.
 Note that turning on alpha blending also forces ellipses and lines to be antialiased.
 </dd>
@@ -231,7 +233,8 @@ The width and height must be from 16 to 4096 and a multiple of 16.
 <a name="copy"></a><p><dt><b>copy <i>x y wd ht clipname</i></b></dt>
 <dd>
 Copy the pixels in the given rectangle from the current render target into the named
-<a href="#clips">clip</a> for later use by a <a href="#paste">paste</a> command.
+<a href="#clips">clip</a> for later use in a command like <a href="#paste">paste</a>
+or <a href="#scale">scale</a>.
 If the given width or height is less than 1 then it is treated as an inset from
 the render target's current width or height (this makes it easy to copy the entire
 render target with a command like <b>"copy 0 0 0 0 all"</b>).
@@ -626,7 +629,7 @@ render target with a command like <b>"save 0 0 0 0 overlay.png"</b>).
 
 <a name="set"></a><p><dt><b>set <i>x1 y1 (...xn yn)</i></b></dt>
 <dd>
-Set the specified pixels to the current <a href="#rgba">rgba</a> values in the render target.
+Set the specified pixels in the render target to the current <a href="#rgba">rgba</a> values.
 Pixels outside the render target are silently ignored.
 </dd>
 <dd>Examples:</dd>
@@ -634,6 +637,25 @@ Pixels outside the render target are silently ignored.
 <dd><b>ov("set 10 20")</b></dd>
 <dd><i>-- set pixels at (10, 20), (15, 25) and (16, 25)</i></dd>
 <dd><b>ov("set 10 20 15 25 16 25")</b></dd>
+</p>
+
+<a name="scale"></a><p><dt><b>scale <i>quality x y wd ht clipname</i></b></dt>
+<dd>
+Paste the named clip into the current render target, scaling it so it fits into the
+specified rectangle.  Any pixels outside the render target edges are automatically clipped.
+The given <i>quality</i> must be one of these strings:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b>best</b></td><td width=20></td><td>&ndash;
+use a high quality, but slow, scaling algorithm
+<tr><td><b>fast</b></td><td width=20></td><td>&ndash;
+use a fast, but lower quality, scaling algorithm
+</table>
+</dd>
+<p>
+<dd> Example: <b>ov("scale best 10 10 100 200 image")</b></dd>
 </p>
 
 <a name="sound"></a><p><dt><b>sound <i>(command (soundfile))</i></b></dt>
@@ -703,7 +725,8 @@ The commands that use the render target are:
 <a href="#load">load</a>,
 <a href="#paste">paste</a>,
 <a href="#replace">replace</a>,
-<a href="#save">save</a> (as the source) and
+<a href="#save">save</a> (as the source),
+<a href="#scale">scale</a> and
 <a href="#set">set</a>.
 </dd>
 <dd> Example: <b>local oldtarget = ov("target myclip")</b></dd>
@@ -927,6 +950,7 @@ The overlay commands that can do alpha blending are:
 <a href="#line">line</a>,
 <a href="#load">load</a>,
 <a href="#paste">paste</a>,
+<a href="#scale">scale</a>,
 <a href="#set">set</a>.
 
 

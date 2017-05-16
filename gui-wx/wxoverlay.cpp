@@ -4335,10 +4335,10 @@ const char* Overlay::DoScale(const char* args)
     wxImageResizeQuality quality;
     if (strncmp(args, " best ", 6) == 0) {
         quality = wxIMAGE_QUALITY_HIGH;
-        args += 5;
+        args += 6;
     } else if (strncmp(args, " fast ", 6) == 0) {
         quality = wxIMAGE_QUALITY_NORMAL;
-        args += 5;
+        args += 6;
     } else {
         return OverlayError("scale quality must be best or fast");
     }
@@ -4346,7 +4346,7 @@ const char* Overlay::DoScale(const char* args)
     int x, y, w, h;
     int namepos;
     char dummy;
-    if (sscanf(args, " %d %d %d %d %n%c", &x, &y, &w, &h, &namepos, &dummy) != 5) {
+    if (sscanf(args, "%d %d %d %d %n%c", &x, &y, &w, &h, &namepos, &dummy) != 5) {
         // note that %n is not included in the count
         return OverlayError("scale command requires 5 arguments");
     }
@@ -4379,9 +4379,14 @@ const char* Overlay::DoScale(const char* args)
         h > cliph && h % cliph == 0 && quality == wxIMAGE_QUALITY_NORMAL) {
         // no need to create a wxImage to expand pixels by integer multiples
         /*
-        int xinc = w / clipw;
-        int yinc = h / cliph;
-        !!!
+        DisableTargetClipIndex();
+        int xscale = w / clipw;
+        int yscale = h / cliph;
+        if (RectInsideTarget(x, y, w, h)) {
+            !!!
+        } else {
+            !!!
+        }
         return NULL;
         */
     }
