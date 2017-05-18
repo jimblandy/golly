@@ -1322,13 +1322,14 @@ local function test_scale()
     
     if loaded then
         -- draw image at current scale
-        local scaledw = int(iw*scale)
-        local scaledh = int(ih*scale)
-        local x = int((wd-scaledw)/2)
-        local y = int((ht-scaledh)/2)
-        g.show("Image width and height: "..scaledw.." "..scaledh..
-               "  scale: "..scale.."  quality: "..quality)
+        local scaledw = int(iw*scale+0.5)
+        local scaledh = int(ih*scale+0.5)
+        local x = int((wd-scaledw)/2+0.5)
+        local y = int((ht-scaledh)/2+0.5)
+        local t1 = g.millisecs()
         ov("scale "..quality.." "..x.." "..y.." "..scaledw.." "..scaledh.." img")
+        g.show("Image width and height: "..scaledw.." "..scaledh..
+               "  scale: "..scale.."  quality: "..quality.."  time: "..ms(g.millisecs()-t1))
     end
 
     ov("blend "..oldblend)
@@ -1340,26 +1341,25 @@ local function test_scale()
             loaded = false
             scale = 1.0
             goto restart
-        end
-        if event == "key [ none" then
-            scale = scale - 0.1
-            if scale < minscale then scale = minscale end
-            goto restart
-        end
-        if event == "key ] none" then
-            scale = scale + 0.1
-            if scale > maxscale then scale = maxscale end
-            goto restart
-        end
-        if event == "key 1 none" then
+        elseif event == "key [ none" or event:find("^ozoomout") then
+            if scale > minscale then
+                scale = scale - 0.1
+                if scale < minscale then scale = minscale end
+                goto restart
+            end
+        elseif event == "key ] none" or event:find("^ozoomin") then
+            if scale < maxscale then
+                scale = scale + 0.1
+                if scale > maxscale then scale = maxscale end
+                goto restart
+            end
+        elseif event == "key 1 none" then
             scale = 1.0
             goto restart
-        end
-        if event == "key q none" then
+        elseif event == "key q none" then
             if quality == "fast" then quality = "best" else quality = "fast" end
             goto restart
-        end
-        if event:find("^oclick") or event == "key enter none" or event == "key return none" then
+        elseif event:find("^oclick") or event == "key enter none" or event == "key return none" then
             return_to_main_menu = true
             return
         elseif #event > 0 then

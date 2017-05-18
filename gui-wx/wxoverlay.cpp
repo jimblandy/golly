@@ -4378,17 +4378,60 @@ const char* Overlay::DoScale(const char* args)
     if (w > clipw && w % clipw == 0 &&
         h > cliph && h % cliph == 0 && quality == wxIMAGE_QUALITY_NORMAL) {
         // no need to create a wxImage to expand pixels by integer multiples
-        /*
         DisableTargetClipIndex();
         int xscale = w / clipw;
         int yscale = h / cliph;
+        unsigned char* p = clipptr->cdata;
+
+        // save current RGBA values
+        unsigned char saver = r;
+        unsigned char saveg = g;
+        unsigned char saveb = b;
+        unsigned char savea = a;
+        
         if (RectInsideTarget(x, y, w, h)) {
-            !!!
+            for (int j = 0; j < cliph; j++) {
+                for (int i = 0; i < clipw; i++) {
+                    r = *p++;
+                    g = *p++;
+                    b = *p++;
+                    a = *p++;
+                    FillRect(x, y, xscale, yscale);
+                    x += xscale;
+                }
+                y += yscale;
+                x -= clipw * xscale;
+            }
         } else {
-            !!!
+            for (int j = 0; j < cliph; j++) {
+                for (int i = 0; i < clipw; i++) {
+                    r = *p++;
+                    g = *p++;
+                    b = *p++;
+                    a = *p++;
+                    if (RectOutsideTarget(x, y, xscale, yscale)) {
+                        // expanded pixel is outside target
+                    } else {
+                        for (int row = 0; row < yscale; row++) {
+                            for (int col = 0; col < xscale; col++) {
+                                if (PixelInTarget(x+col, y+row)) DrawPixel(x+col, y+row);
+                            }
+                        }
+                    }
+                    x += xscale;
+                }
+                y += yscale;
+                x -= clipw * xscale;
+            }
         }
+
+        // restore saved RGBA values
+        r = saver;
+        g = saveg;
+        b = saveb;
+        a = savea;
+
         return NULL;
-        */
     }
 
     // get the clip's RGB and alpha data so we can create a wxImage
