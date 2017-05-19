@@ -2562,7 +2562,7 @@ static int g_continue(lua_State* L)
     // for some unknown reason we can get this error if a script passes gp.trace into
     // xpcall AND the user aborts the script (via escape key or stop button) so we
     // need to change scripterr to abortmsg
-	if (scripterr == wxT("error in error handling")) scripterr = abortmsg;
+	if (scripterr == wxT("error in error handling")) scripterr = wxString(abortmsg, LUA_ENC);
     
     return 0;   // no result
 }
