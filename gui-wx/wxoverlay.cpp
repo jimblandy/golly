@@ -118,6 +118,10 @@ public:
 
 // some useful macros:
 
+#if !wxCHECK_VERSION(2,9,0)
+    #define wxImageResizeQuality int
+#endif
+
 #ifdef __WXMSW__
     #define round(x) int( (x) < 0 ? (x)-0.5 : (x)+0.5 )
     #define remainder(n,d) ( (n) - round((n)/(d)) * (d) )
