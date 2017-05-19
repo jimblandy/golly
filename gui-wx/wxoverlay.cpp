@@ -73,7 +73,6 @@ public:
             rowindex = (unsigned char*) malloc(cht);
         }
         unsigned int* ldata = (unsigned int*)cdata;
-        unsigned char* r = rowindex;
         unsigned char alpha;
         unsigned char first;
         int j;
@@ -92,13 +91,19 @@ public:
                     j++;
                 }
             }
-            // save row flag
-            *r++ = alpha;
+            // set this row's flag
+            if (alpha == 0 && first == 0) {
+                numtrans++;
+                rowindex[i] = 0;
+            } else if (alpha == 255 && first == 255) {
+                numopaque++;
+                rowindex[i] = 255;
+            } else {
+                rowindex[i] = 128;  // anything but 0 or 255
+            }
             ldata += cwd - j;
-            if (!alpha) numtrans++;
-            if (alpha == 255) numopaque++;
         }
-        // only enable the index if there were blank rows found
+        // only enable the index if there were any transparent or opaque rows
         hasindex = (numtrans || numopaque) ? true : false;
         return numtrans;
     }
@@ -108,10 +113,10 @@ public:
         hasindex = false;
     }
 
-    unsigned char* cdata;    // RGBA data (cwd * cht * 4 bytes)
-    int cwd, cht;            // width and height of the clip in pixels
-    unsigned char* rowindex; // flag per row if it contains non-zero alpha pixels
-    bool hasindex;           // whether the clip currently has a row index
+    unsigned char* cdata;       // RGBA data (cwd * cht * 4 bytes)
+    int cwd, cht;               // width and height of the clip in pixels
+    unsigned char* rowindex;    // flag per row (0 if transparent, 255 if opaque)
+    bool hasindex;              // whether the clip currently has a row index
 };
 
 // -----------------------------------------------------------------------------
