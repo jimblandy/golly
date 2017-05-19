@@ -178,6 +178,7 @@ local function test_transitions()
             ov("update")
             while g.millisecs() - t < 15 do end
         end
+
     -- tuesday: duck and cover
     elseif day == 2 then
         ov(op.white)
@@ -188,6 +189,7 @@ local function test_transitions()
             ov("update")
             while g.millisecs() - t < 15 do end
         end
+
     -- wednesday: slide to the right
     elseif day == 3 then
         for y = 0, ht, 8 do
@@ -211,6 +213,7 @@ local function test_transitions()
         for y = 0, ht, 8 do
             ov("delete bg"..y)
         end
+
     -- thursday: as if by magic
     elseif day == 4 then
         ov("paste 0 0 fg")
@@ -229,6 +232,7 @@ local function test_transitions()
             while g.millisecs() - t < 15 do end
         end
         ov("delete blend")
+
     -- friday: you spin me round
     elseif day == 5 then
         local x, y, r
@@ -243,6 +247,7 @@ local function test_transitions()
             ov("update")
             while g.millisecs() - t < 15 do end
        end
+
     -- saturday: through the square window
     elseif day == 6 then
         for x = 1, wd / 2, 4 do
@@ -260,6 +265,7 @@ local function test_transitions()
             while g.millisecs() - t < 15 do end
         end
         ov("delete trans")
+
     -- sunday: people in glass houses
     elseif day == 7 then
         local box = {}
@@ -301,11 +307,21 @@ local function test_transitions()
                 n = n + 1
             end
         end
+
+    -- bonus day: objects in the mirror are closer than they appear
+    elseif day == 8 then
+        for x = 0, 100 do
+            t = g.millisecs()
+            ov("paste 0 0 bg")
+            ov("scale best "..floor(wd / 2 - ((wd / 2) * x / 100)).." "..floor(ht / 2 - ((ht / 2) * x / 100)).." "..floor(wd * x / 100).." "..floor(ht * x / 100).." fg")
+            ov("update")
+            while g.millisecs() - t < 15 do end
+        end
     end
 
     -- next day
     day = day + 1
-    if day == 8 then
+    if day == 9 then
         day = 1
     end
 
