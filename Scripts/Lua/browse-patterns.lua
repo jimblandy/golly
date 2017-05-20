@@ -9,7 +9,7 @@ local g = golly()
 local gp = require "gplus"
 local int = gp.int
 local op = require "oplus"
--- require "gplus.strict"
+require "gplus.strict"
 local ov = g.overlay
 local viewwd, viewht = g.getview(g.getlayer())
 local guiht = 24
@@ -377,7 +377,6 @@ local function createoverlay()
     op.maketext("Advance", "advance")
 
     -- create gui buttons
-    local option = false
     prevbutton = op.button("Previous", previouspattern)
     nextbutton = op.button("Next", nextpattern)
     exitbutton = op.button("Exit", exitbrowser)
