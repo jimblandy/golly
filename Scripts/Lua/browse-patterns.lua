@@ -3,13 +3,13 @@
 -- Home to select a new folder to browse
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 5
+-- Build 6
 
 local g = golly()
 local gp = require "gplus"
 local int = gp.int
 local op = require "oplus"
-require "gplus.strict"
+-- require "gplus.strict"
 local ov = g.overlay
 local viewwd, viewht = g.getview(g.getlayer())
 local guiht = 24
@@ -23,7 +23,6 @@ local overlaycreated = false
 
 -- settings are saved in this file
 local settingsfile = g.getdir("data").."browse-patterns.ini"
-g.show(settingsfile)
 
 -- gui buttons
 local prevbutton      -- Previous button
@@ -76,6 +75,7 @@ local function savesettings()
         f:write(tostring(subdirs).."\n")
         f:write(tostring(looping).."\n")
         f:write(tostring(advancespeed).."\n")
+        f:close()
     end
 end
 
@@ -89,7 +89,8 @@ local function loadsettings()
         keepspeed    = tonumber(f:read("*l")) or 0
         subdirs      = tonumber(f:read("*l")) or 1
         looping      = tonumber(f:read("*l")) or 1
-        advancespeed = tonumber(f:read("*l")) or 9
+        advancespeed = tonumber(f:read("*l")) or 0
+        f:close()
     end
 end
 
