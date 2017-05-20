@@ -1047,7 +1047,7 @@ David Bell
     -- start music if sound enabled
     if sound_enabled then
         ov("sound loop oplus/sounds/overlay-demo/animation.ogg")
-        creditstext = creditstext.."\n\n\n\nMusic\n\nContentment by Chris Rowett"
+        creditstext = creditstext.."\n\n\n\nMusic\n\n\n'Contentment'\nWritten and performed by Chris Rowett"
     end
 
     -- create credits clip
