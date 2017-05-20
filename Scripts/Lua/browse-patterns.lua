@@ -3,7 +3,7 @@
 -- Home to select a new folder to browse
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 4
+-- Build 5
 
 local g = golly()
 local gp = require "gplus"
@@ -21,6 +21,10 @@ local numpatterns = 0
 local whichpattern = 1
 local overlaycreated = false
 
+-- settings are saved in this file
+local settingsfile = g.getdir("data").."browse-patterns.ini"
+g.show(settingsfile)
+
 -- gui buttons
 local prevbutton      -- Previous button
 local nextbutton      -- Next button
@@ -36,35 +40,65 @@ local loopcheck       -- Loop checkbox
 local closebutton     -- Close options button
 
 -- position
-local slidertextx = 0   -- text position following slider
-local maxsliderval = 7  -- maxmimum slider value (2^n seconds)
+local slidertextx  = 0    -- text position following slider
+local maxsliderval = 15   -- maxmimum slider value (2^n seconds)
+local sliderpower  = 1.5  -- slider power
 
 -- flags
-local loadnew = false     -- whether to load a new pattern
-local exitnow = false     -- whether to exit
-local autostart = false   -- whether to autostart playback on pattern load
-local autofit = false     -- whether to switch on autofit on pattern load
-local keepspeed = false   -- whether to maintain speed between patterns
-local subdirs = true      -- whether to include subdirectories
-local looping = true      -- whether to loop pattern list
-local showoptions = false -- whether options are displayed
+local loadnew     = false  -- whether to load a new pattern
+local exitnow     = false  -- whether to exit
+local showoptions = false  -- whether options are displayed
 
--- advance speed (0 for manual)
-local advancespeed = 0
-local patternloadtime = 0
+-- settings
+local autostart    = 0   -- whether to autostart playback on pattern load
+local autofit      = 0   -- whether to switch on autofit on pattern load
+local keepspeed    = 0   -- whether to maintain speed between patterns
+local subdirs      = 1   -- whether to include subdirectories
+local looping      = 1   -- whether to loop pattern list
+local advancespeed = 0   -- advance speed (0 for manual)
 
 -- current base and step
 local currentbase = g.getbase()
 local currentstep = g.getstep()
+local patternloadtime = 0
 
--- file extensions to ignore
+-- file extensions to load
 local matchlist = { ".rle", ".mcl", ".mc", ".lif", ".gz" }
+
+--------------------------------------------------------------------------------
+
+local function savesettings()
+    local f = io.open(settingsfile, "w")
+    if f then
+        f:write(tostring(autostart).."\n")
+        f:write(tostring(autofit).."\n")
+        f:write(tostring(keepspeed).."\n")
+        f:write(tostring(subdirs).."\n")
+        f:write(tostring(looping).."\n")
+        f:write(tostring(advancespeed).."\n")
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function loadsettings()
+    local f = io.open(settingsfile, "r")
+    if f then
+        autostart    = tonumber(f:read("*l")) or 0
+        autofit      = tonumber(f:read("*l")) or 0
+        keepspeed    = tonumber(f:read("*l")) or 0
+        subdirs      = tonumber(f:read("*l")) or 1
+        looping      = tonumber(f:read("*l")) or 1
+        advancespeed = tonumber(f:read("*l")) or 9
+    end
+end
 
 --------------------------------------------------------------------------------
 
 local function shoulddisplay(name)
     local result = false
 
+    -- check the file extension against allowed extensions
     for i = 1, #matchlist do
         local item = matchlist[i]
         if name:sub(-item:len()) == item then
@@ -85,7 +119,7 @@ local function findpatterns(dir)
             -- ignore hidden files (like .DS_Store on Mac)
         elseif name:sub(-1) == pathsep then
             -- name is a subdirectory
-            if subdirs then
+            if subdirs == 1 then
                 findpatterns(dir..name)
             end
         else
@@ -115,7 +149,7 @@ end
 local function previouspattern()
     local new = whichpattern - 1
     if new < 1 then
-        if looping then
+        if looping == 1 then
             new = numpatterns
         else
             new = 1
@@ -132,7 +166,7 @@ end
 local function nextpattern()
     local new = whichpattern + 1
     if new > numpatterns then
-        if looping then
+        if looping == 1 then
             new = 1
         else
             new = numpatterns
@@ -154,13 +188,15 @@ end
 --------------------------------------------------------------------------------
 
 local function toggleautostart()
-    autostart = not autostart
+    autostart = 1 - autostart
+    savesettings()
 end
 
 --------------------------------------------------------------------------------
 
 local function toggleautofit()
-    autofit = not autofit
+    autofit = 1 - autofit
+    savesettings()
 end
 
 --------------------------------------------------------------------------------
@@ -181,17 +217,16 @@ end
 
 --------------------------------------------------------------------------------
 
-local function updatespeed(newval)
-    advancespeed = newval
-end
-
---------------------------------------------------------------------------------
-
 local function drawspeed(x, y)
     -- convert speed into labael
     local message = "Manual"
     if advancespeed > 0 then
-        message = int(2 ^ (maxsliderval - advancespeed)).."s         "
+        local time = int(sliderpower ^ (maxsliderval - advancespeed))
+        if time < 60 then
+            message = time.."s"
+        else
+            message = int(time / 60).."m"..(time % 60).."s"
+        end
     end
 
     -- update the label
@@ -204,19 +239,22 @@ end
 --------------------------------------------------------------------------------
 
 local function togglespeed()
-    keepspeed = not keepspeed
+    keepspeed = 1 - keepspeed
+    savesettings()
 end
 
 --------------------------------------------------------------------------------
 
 local function toggleloop()
-    looping = not looping
+    looping = 1 - looping
+    savesettings()
 end
 
 --------------------------------------------------------------------------------
 
 local function togglesubdirs()
-    subdirs = not subdirs
+    subdirs = 1 - subdirs
+    savesettings()
 end
 
 --------------------------------------------------------------------------------
@@ -261,17 +299,33 @@ local function drawgui()
         op.pastetext(x, y, op.identity, "playback")
         ov("blend 0")
         y = y + 24
-        startcheck.show(x, y, autostart)
+        if autostart == 1 then
+            startcheck.show(x, y, true)
+        else
+            startcheck.show(x, y, false)
+        end
         y = y + startcheck.ht + gapy
-        fitcheck.show(x, y, autofit)
+        if autofit == 1 then
+            fitcheck.show(x, y, true)
+        else
+            fitcheck.show(x, y, false)
+        end
         y = y + fitcheck.ht + gapy
-        keepspeedcheck.show(x, y, keepspeed)
+        if keepspeed == 1 then
+            keepspeedcheck.show(x, y, true)
+        else
+            keepspeedcheck.show(x, y, false)
+        end
         y = y + keepspeedcheck.ht + gapy + gapy + gapy
         ov("blend 1")
         op.pastetext(x, y, op.identity, "folder")
         ov("blend 0")
         y = y + 24
-        subdircheck.show(x, y, subdirs)
+        if subdirs == 1 then
+            subdircheck.show(x, y, true)
+        else
+            subdircheck.show(x, y, false)
+        end
         y = y + subdircheck.ht + gapy + gapy + gapy
         ov("blend 1")
         op.pastetext(x, y, op.identity, "advance")
@@ -282,10 +336,22 @@ local function drawgui()
         drawspeed(x, y)
         y = y + speedslider.ht + gapy
         x = gapx
-        loopcheck.show(x, y, looping)
+        if looping == 1 then
+            loopcheck.show(x, y, true)
+        else
+            loopcheck.show(x, y, false)
+        end
         y = y + loopcheck.ht + gapy + gapy + gapy
         closebutton.show(x, y)
     end
+end
+
+--------------------------------------------------------------------------------
+
+local function updatespeed(newval)
+    advancespeed = newval
+    savesettings()
+    drawgui()
 end
 
 --------------------------------------------------------------------------------
@@ -311,6 +377,7 @@ local function createoverlay()
     op.maketext("Advance", "advance")
 
     -- create gui buttons
+    local option = false
     prevbutton = op.button("Previous", previouspattern)
     nextbutton = op.button("Next", nextpattern)
     exitbutton = op.button("Exit", exitbrowser)
@@ -331,7 +398,7 @@ end
 --------------------------------------------------------------------------------
 
 local function browsepatterns(startpattern)
-    local generating = false
+    local generating = 0
     local now = g.millisecs()
     local target = 15
     local delay = target
@@ -364,7 +431,7 @@ local function browsepatterns(startpattern)
         generating = autostart
 
         -- restore playback speed if requested
-        if keepspeed then
+        if keepspeed == 1 then
             g.setbase(currentbase)
             g.setstep(currentstep)
         end
@@ -383,21 +450,21 @@ local function browsepatterns(startpattern)
                 selectfolder()
                 patternloadtime = g.millisecs()
             elseif event == "key enter none" or event == "key return none" then
-                generating = not generating
+                generating = 1 - generating
             elseif event == "key o none" then
                 toggleoptions()
             elseif event == "key space none" then
-                if generating then
-                    generating = false
+                if generating == 1 then
+                    generating = 0
                 else
                     g.run(1)
                 end
             elseif event == "key r ctrl" then
-                generating = false
+                generating = 0
                 g.reset()
             elseif event == "key tab none" then
-                if generating then
-                    generating = false
+                if generating == 1 then
+                    generating = 0
                 else
                     g.step()
                 end
@@ -406,12 +473,12 @@ local function browsepatterns(startpattern)
             end
 
             -- run the pattern
-            if generating then
+            if generating == 1 then
                 currentbase = g.getbase()
                 currentstep = g.getstep()
                 if currentstep < 0 then
                     -- convert negative steps into delays
-                    delay = 2 ^ -currentstep * 125
+                    delay = sliderpower ^ -currentstep * 125
                     currentstep = 0
                 else
                     delay = 15
@@ -426,13 +493,13 @@ local function browsepatterns(startpattern)
                     target = delay
                 end
             end
-            if autofit then
+            if autofit == 1 then
                 g.fit()
             end
 
             -- check for auto advance
             if advancespeed > 0 then
-                local targettime = (2 ^ (maxsliderval - advancespeed)) * 1000
+                local targettime = (sliderpower ^ (maxsliderval - advancespeed)) * 1000
                 if g.millisecs() - patternloadtime > targettime then
                     nextpattern()
                     patternloadtime = g.millisecs()
@@ -458,6 +525,7 @@ function browse()
         dirname = pathname:sub(1, pathname:find(pathsep.."[^"..pathsep.."/]*$"))
     end
     if dirname ~= "" then
+        loadsettings()
         getpatternlist(dirname)
         if numpatterns > 0 then
             -- display gui
