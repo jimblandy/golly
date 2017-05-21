@@ -72,7 +72,7 @@ public:
             // allocate the index
             rowindex = (unsigned char*) malloc(cht);
         }
-        unsigned int* ldata = (unsigned int*)cdata;
+        unsigned char* p = cdata;
         unsigned char alpha;
         unsigned char first;
         int j;
@@ -82,12 +82,14 @@ public:
         int numopaque = 0;
         for (int i = 0; i < cht; i++) {
             // check if row contains all transparent or all opaque pixels
-            first = (*ldata++) >> 24;
+            first = p[3];
             alpha = first;
+            p += 4;
             j = 1;
             if (first == 0 || first == 255) {
                 while (j < cwd && alpha == first) {
-                    alpha = (*ldata++) >> 24;
+                    alpha = p[3];
+                    p += 4;
                     j++;
                 }
             }
@@ -101,7 +103,7 @@ public:
             } else {
                 rowindex[i] = 128;  // anything but 0 or 255
             }
-            ldata += cwd - j;
+            p += (cwd - j) * 4;
         }
         // only enable the index if there were any transparent or opaque rows
         hasindex = (numtrans || numopaque) ? true : false;
@@ -4199,11 +4201,6 @@ const char* Overlay::DoPaste(const char* args)
             if (alphablend) {
                 // alpha blending
                 unsigned char* p = (unsigned char*)lp;
-                unsigned int rgba;
-                unsigned char pr;
-                unsigned char pg;
-                unsigned char pb;
-                unsigned char pa;
                 bool hasindex = clipptr->hasindex;
                 unsigned char* rowindex = clipptr->rowindex;
     
@@ -4221,17 +4218,18 @@ const char* Overlay::DoPaste(const char* args)
                         } else {
                             for (int i = 0; i < w; i++) {
                                 // get the source pixel
-                                rgba = *ldata++;
-                                pa = rgba >> 24;
+                                unsigned char* srcp = (unsigned char*)ldata;
+                                unsigned int rgba = *ldata++;
+                                unsigned char pa = srcp[3];
             
                                 // draw the pixel
                                 if (pa < 255) {
                                     if (pa > 0) {
                                         // source pixel is translucent so blend with destination pixel;
                                         // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
-                                        pr = rgba & 255;
-                                        pg = (rgba >> 8) & 255;
-                                        pb = (rgba >> 16) & 255;
+                                        unsigned char pr = srcp[0];
+                                        unsigned char pg = srcp[1];
+                                        unsigned char pb = srcp[2];
                                         unsigned char destr = p[0];
                                         unsigned char destg = p[1];
                                         unsigned char destb = p[2];
