@@ -310,7 +310,7 @@ local function test_transitions()
 
     -- bonus day: objects in the mirror are closer than they appear
     elseif day == 8 then
-        for x = 0, 100 do
+        for x = 1, 100 do
             t = g.millisecs()
             ov("paste 0 0 bg")
             ov("scale best "..floor(wd / 2 - ((wd / 2) * x / 100)).." "..floor(ht / 2 - ((ht / 2) * x / 100)).." "..floor(wd * x / 100).." "..floor(ht * x / 100).." fg")
