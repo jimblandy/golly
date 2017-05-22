@@ -66,6 +66,104 @@ m.themes = {
 
 --------------------------------------------------------------------------------
 
+local textclip = "textclip" -- default clip name for m.maketext and m.pastetext
+
+--------------------------------------------------------------------------------
+
+function m.pastetext(x, y, transform, clipname)
+    -- set optional parameter defaults
+    transform = transform or m.identity
+    clipname  = clipname or textclip
+    -- apply transform and paste text clip
+    local oldtransform = ov(transform)
+    ov("paste "..x.." "..y.." "..clipname)
+    -- restore settings
+    ov("transform "..oldtransform)
+
+    return clipname
+end
+
+--------------------------------------------------------------------------------
+
+function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
+    local oldrgba = ov(m.white)
+    -- set optional paramter defaults
+    clipname  = clipname or textclip
+    textcol   = textcol or "rgba "..oldrgba
+    shadowx   = shadowx or 0
+    shadowy   = shadowy or 0
+    shadowcol = shadowcol or m.black
+    local w, h, d
+    -- check if shadow required
+    if shadowx == 0 and shadowy == 0 then
+        ov(textcol)
+        w, h, d = split(ov("text "..clipname.." "..s))
+    else
+        -- build shadow clip
+        ov(shadowcol)
+        local oldbg = ov("textoption background 0 0 0 0")
+        local oldblend
+        if oldbg == "0 0 0 0" then
+            oldblend = ov("blend 1")
+        else
+            oldblend = ov("blend 0")
+            ov("textoption background "..oldbg)
+        end
+        local tempclip = clipname.."_temp"
+        w, h, d  = split(ov("text "..tempclip.." "..s))
+        -- compute paste location based on shadow offset
+        local tx = 0
+        local ty = 0
+        local sx = 0
+        local sy = 0
+        if shadowx < 0 then
+            tx = -shadowx
+        else
+            sx = shadowx
+        end
+        if shadowy < 0 then
+            ty = -shadowy
+        else
+            sy = shadowy
+        end
+        -- size result clip to fit text and shadow
+        w = tonumber(w) + math.abs(shadowx)
+        h = tonumber(h) + math.abs(shadowy)
+        ov("create ".." "..w.." "..h.." "..clipname)
+        -- paste shadow onto result
+        local oldtarget = ov("target "..clipname)
+        if oldbg ~= "0 0 0 0" then
+            ov("rgba "..oldbg)
+            ov("fill")
+        end
+        m.pastetext(sx, sy, nil, tempclip)
+        -- build normal text clip
+        ov(textcol)
+        if oldbg ~= "0 0 0 0" then
+            ov("textoption background 0 0 0 0")
+            ov("blend 1")
+        end
+        ov("text "..tempclip.." "..s)
+        -- paste normal onto result
+        
+        m.pastetext(tx, ty, nil, tempclip)
+        -- restore settings
+        ov("textoption background "..oldbg)
+        ov("delete "..tempclip)
+        ov("target "..oldtarget)
+        ov("blend "..oldblend)
+    end
+    -- add index
+    ov("optimize "..clipname)
+
+    -- restore color
+    ov("rgba "..oldrgba)
+
+    return tonumber(w), tonumber(h), tonumber(d)
+end
+
+--------------------------------------------------------------------------------
+
 -- scripts can adjust these parameters:
 
 m.buttonht = 24     -- height of buttons (also used for check boxes and sliders)
@@ -80,6 +178,9 @@ m.darkerrgba = "rgba 20 64 255 255"     -- darker blue when buttons are clicked
 m.borderrgba = m.white                  -- white border around buttons (if m.border > 0)
 m.textrgba = m.white                    -- white button labels and tick mark on check box
 m.textfont = "font 12 default-bold"     -- font for labels
+m.textshadox = 0                        -- label shadow x offset
+m.textshadoy = 0                        -- label shadow y offset
+m.textshadowrgba = m.black              -- black label color
 m.yoffset = 0                           -- for better y position of labels
 
 if g.os() == "Windows" then
@@ -298,11 +399,9 @@ function m.button(label, onclick)
     b.ht = m.buttonht;
 
 	b.setlabel = function (newlabel, changesize)
-        local oldrgba = ov(m.textrgba)
         local oldfont = ov(m.textfont)
-        local w, h = split(ov("text "..b.labelclip.." "..newlabel))
+        local w, h = m.maketext(newlabel, b.labelclip, m.textrgba, m.textshadowx, m.textshadowy, m.textshadowrgba)
         ov("font "..oldfont)
-        ov("rgba "..oldrgba)
         b.labelwd = tonumber(w);
         b.labelht = tonumber(h);
         if changesize then
@@ -409,11 +508,9 @@ function m.checkbox(label, labelrgba, onclick)
     -- create text for label with a unique clip name
     c.clipname = tostring(c).."+checkbox"
     c.clipname = string.gsub(c.clipname, " ", "")   -- remove any spaces
-    local oldrgba = ov(labelrgba)
     local oldfont = ov(m.textfont)
-    local w, h = split(ov("text "..c.clipname.." "..label))
+    local w, h = m.maketext(label, c.clipname, labelrgba, m.textshadowx, m.textshadowy, m.textshadowrgba)
     ov("font "..oldfont)
-    ov("rgba "..oldrgba)
     
     -- use label size to set check box size
     c.labelwd = tonumber(w);
@@ -536,17 +633,16 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
     -- create text for label with a unique clip name
     s.clipname = tostring(s).."+slider"
     s.clipname = string.gsub(s.clipname, " ", "")   -- remove any spaces
-    local oldrgba = ov(labelrgba)
     local oldfont = ov(m.textfont)
     local w, h
     if #label == 0 then
         w, h = split(ov("text "..s.clipname.." "..label.." "))
+        w, h = m.maketext(label.." ", s.clipname, labelrgba, m.textshadowx, m.textshadowy, m.textshadowrgba)
         w = 0
     else
-        w, h = split(ov("text "..s.clipname.." "..label))
+        w, h = m.maketext(label, s.clipname, labelrgba, m.textshadowx, m.textshadowy, m.textshadowrgba)
     end
     ov("font "..oldfont)
-    ov("rgba "..oldrgba)
     
     -- set total slider size (including label)
     s.labelwd = tonumber(w);
@@ -844,104 +940,6 @@ function m.minbox(clipname, wd, ht)
     -- return the bounding box info
     ov("target "..oldtarget)
     return xmin, ymin, minwd, minht
-end
-
---------------------------------------------------------------------------------
-
-local textclip = "textclip" -- default clip name for m.maketext and m.pastetext
-
---------------------------------------------------------------------------------
-
-function m.pastetext(x, y, transform, clipname)
-    -- set optional parameter defaults
-    transform = transform or m.identity
-    clipname  = clipname or textclip
-    -- apply transform and paste text clip
-    local oldtransform = ov(transform)
-    ov("paste "..x.." "..y.." "..clipname)
-    -- restore settings
-    ov("transform "..oldtransform)
-
-    return clipname
-end
-
---------------------------------------------------------------------------------
-
-function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
-    local oldrgba = ov(m.white)
-    -- set optional paramter defaults
-    clipname  = clipname or textclip
-    textcol   = textcol or "rgba "..oldrgba
-    shadowx   = shadowx or 0
-    shadowy   = shadowy or 0
-    shadowcol = shadowcol or m.black
-    local w, h, d
-    -- check if shadow required
-    if shadowx == 0 and shadowy == 0 then
-        ov(textcol)
-        w, h, d = split(ov("text "..clipname.." "..s))
-    else
-        -- build shadow clip
-        ov(shadowcol)
-        local oldbg = ov("textoption background 0 0 0 0")
-        local oldblend
-        if oldbg == "0 0 0 0" then
-            oldblend = ov("blend 1")
-        else
-            oldblend = ov("blend 0")
-            ov("textoption background "..oldbg)
-        end
-        local tempclip = clipname.."_temp"
-        w, h, d  = split(ov("text "..tempclip.." "..s))
-        -- compute paste location based on shadow offset
-        local tx = 0
-        local ty = 0
-        local sx = 0
-        local sy = 0
-        if shadowx < 0 then
-            tx = -shadowx
-        else
-            sx = shadowx
-        end
-        if shadowy < 0 then
-            ty = -shadowy
-        else
-            sy = shadowy
-        end
-        -- size result clip to fit text and shadow
-        w = tonumber(w) + math.abs(shadowx)
-        h = tonumber(h) + math.abs(shadowy)
-        ov("create ".." "..w.." "..h.." "..clipname)
-        -- paste shadow onto result
-        local oldtarget = ov("target "..clipname)
-        if oldbg ~= "0 0 0 0" then
-            ov("rgba "..oldbg)
-            ov("fill")
-        end
-        m.pastetext(sx, sy, nil, tempclip)
-        -- build normal text clip
-        ov(textcol)
-        if oldbg ~= "0 0 0 0" then
-            ov("textoption background 0 0 0 0")
-            ov("blend 1")
-        end
-        ov("text "..tempclip.." "..s)
-        -- paste normal onto result
-        
-        m.pastetext(tx, ty, nil, tempclip)
-        -- restore settings
-        ov("textoption background "..oldbg)
-        ov("delete "..tempclip)
-        ov("target "..oldtarget)
-        ov("blend "..oldblend)
-    end
-    -- add index
-    ov("optimize "..clipname)
-
-    -- restore color
-    ov("rgba "..oldrgba)
-
-    return tonumber(w), tonumber(h), tonumber(d)
 end
 
 --------------------------------------------------------------------------------
