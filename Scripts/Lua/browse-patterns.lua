@@ -4,7 +4,7 @@
 -- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 8
+-- Build 9
 
 local g = golly()
 local gp = require "gplus"
@@ -46,6 +46,7 @@ local gapy         = 4     -- vertical gap between controls
 local slidertextx  = 0     -- text position following slider
 local maxsliderval = 22    -- maxmimum slider value (2^n seconds)
 local sliderpower  = 1.32  -- slider power
+local remainx      = 0     -- remaining time position
 
 -- style
 local toolbarbgcolor = "rgba 0 0 0 192"
@@ -274,7 +275,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function drawgui()
+local function drawgui(remain)
     -- draw gui background
     local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
     optht = optht + 24 * 3 + gapy * 15 + closebutton.ht
@@ -304,7 +305,7 @@ local function drawgui()
     -- check for options
     if showoptions then
         -- draw options background
-        ov("fill 0 "..guiht.." 262 ".. optht)
+        ov("fill 0 "..guiht.." "..viewwd.." "..optht)
 
         -- draw option controls
         x = gapx
@@ -339,7 +340,18 @@ local function drawgui()
         if advancespeed == 0 then
             op.pastetext(x, y, op.identity, "advancemanual")
         else
+            -- convert remaining ms into minutes and seconds
+            if remain < 0 then remain = 0 end
+            remain = int(remain / 1000)
+            local message
+            if remain > 60 then
+                message = int(remain / 60).."m"..(remain % 60).."s"
+            else
+                message = remain.."s"
+            end
             op.pastetext(x, y, op.identity, "advanceauto")
+            op.maketext(message, "remain", op.white, 2, 2, op.black)
+            op.pastetext(x + remainx, y, op.identity, "remain")
         end
         ov("blend 0")
         y = y + 24
@@ -369,7 +381,7 @@ end
 local function updatespeed(newval)
     advancespeed = newval
     savesettings()
-    drawgui()
+    drawgui(0)
 end
 
 --------------------------------------------------------------------------------
@@ -393,7 +405,7 @@ local function createoverlay()
     op.maketext("Playback", "playback", op.white, 2, 2, op.black)
     op.maketext("Folder", "folder", op.white, 2, 2, op.black)
     op.maketext("Advance Manually", "advancemanual", op.white, 2, 2, op.black)
-    op.maketext("Advance Automatically", "advanceauto", op.white, 2, 2, op.black)
+    remainx = op.maketext("Advance Automatically in ", "advanceauto", op.white, 2, 2, op.black)
 
     -- create gui buttons
     op.textshadowx = 2
@@ -418,7 +430,7 @@ local function createoverlay()
     ov("resize "..guiwd.." "..(guiht + optht))
 
     -- draw the overlay
-    drawgui()
+    drawgui(0)
 end
 
 --------------------------------------------------------------------------------
@@ -520,18 +532,27 @@ local function browsepatterns(startpattern)
                 end
             end
             if autofit == 1 then
-                g.fit()
+                -- get pattern bounding box
+                local rect = g.getrect()
+                if #rect ~= 0 then
+                    -- check if entire bounding box is visible in the viewport
+                    if not g.visrect(rect) then
+                        g.fit()
+                    end
+                end
             end
 
             -- check for auto advance
+            local remaintime = 0
             if advancespeed > 0 then
                 local targettime = (sliderpower ^ (maxsliderval - advancespeed)) * 1000
-                if g.millisecs() - patternloadtime > targettime then
+                remaintime = targettime - (g.millisecs() - patternloadtime)
+                if remaintime < 0 then
                     nextpattern()
                     patternloadtime = g.millisecs()
                 end
             end
-            drawgui()
+            drawgui(remaintime)
             g.update()
         end
     end
