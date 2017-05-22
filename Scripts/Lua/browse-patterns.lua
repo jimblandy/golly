@@ -3,7 +3,7 @@
 -- Home to select a new folder to browse
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 6
+-- Build 7
 
 local g = golly()
 local gp = require "gplus"
@@ -231,10 +231,11 @@ local function drawspeed(x, y)
     end
 
     -- update the label
-    ov("textoption background 255 255 255 255")
-    ov(op.black)
-    local wd, ht = op.maketext(message)
-    op.pastetext(x, y)
+    ov("textoption background 0 0 0 0")
+    local wd, ht = op.maketext(message, "label", op.white, 2, 2, op.black)
+    ov("blend 1")
+    op.pastetext(x, y, op.identity, "label")
+    ov("blend 0")
 end
 
 --------------------------------------------------------------------------------
@@ -268,15 +269,24 @@ end
 
 local function drawgui()
     -- draw gui background
-    ov(op.white)
-    ov("fill 0 0 "..viewwd.." "..guiht)
-    if not showoptions then
-        ov("rgba 0 0 0 0")
-    end
     local gapx = 10
     local gapy = 4
     local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
     optht = optht + 24 * 3 + gapy * 15 + closebutton.ht
+
+    -- clear gui
+    ov("blend 0")
+    ov("rgba 0 0 0 0")
+    ov("fill 0 0 "..viewwd.." "..(guiht + optht))
+
+    -- draw toolbar background
+    ov("rgba 128 128 128 192")
+    ov("fill 0 0 "..viewwd.." "..guiht)
+    
+    -- draw or clear options background
+    if not showoptions then
+        ov("rgba 0 0 0 0")
+    end
     ov("fill 0 "..guiht.." 250 ".. optht)
 
     -- draw main buttons
@@ -311,13 +321,7 @@ local function drawgui()
         else
             fitcheck.show(x, y, false)
         end
-        y = y + fitcheck.ht + gapy
-        if keepspeed == 1 then
-            keepspeedcheck.show(x, y, true)
-        else
-            keepspeedcheck.show(x, y, false)
-        end
-        y = y + keepspeedcheck.ht + gapy + gapy + gapy
+        y = y + fitcheck.ht + gapy + gapy + gapy
         ov("blend 1")
         op.pastetext(x, y, op.identity, "folder")
         ov("blend 0")
@@ -342,7 +346,13 @@ local function drawgui()
         else
             loopcheck.show(x, y, false)
         end
-        y = y + loopcheck.ht + gapy + gapy + gapy
+        y = y + loopcheck.ht + gapy
+        if keepspeed == 1 then
+            keepspeedcheck.show(x, y, true)
+        else
+            keepspeedcheck.show(x, y, false)
+        end
+        y = y + keepspeedcheck.ht + gapy + gapy + gapy
         closebutton.show(x, y)
     end
 end
@@ -373,23 +383,25 @@ local function createoverlay()
 
     -- create labels
     ov(op.black)
-    op.maketext("Playback", "playback")
-    op.maketext("Folder", "folder")
-    op.maketext("Advance", "advance")
+    op.maketext("Playback", "playback", op.white, 2, 2, op.black)
+    op.maketext("Folder", "folder", op.white, 2, 2, op.black)
+    op.maketext("Advance", "advance", op.white, 2, 2, op.black)
 
     -- create gui buttons
+    op.textshadowx = 2
+    op.textshadowy = 2
     prevbutton = op.button("Previous", previouspattern)
     nextbutton = op.button("Next", nextpattern)
     exitbutton = op.button("Exit", exitbrowser)
     folderbutton = op.button("Folder", selectfolder)
-    startcheck = op.checkbox("AutoStart", op.black, toggleautostart)
-    fitcheck = op.checkbox("AutoFit", op.black, toggleautofit)
-    speedslider = op.slider("Speed: ", op.black, 81, 0, maxsliderval, updatespeed)
+    startcheck = op.checkbox("Start playback on pattern load", op.white, toggleautostart)
+    fitcheck = op.checkbox("Fit pattern to display", op.white, toggleautofit)
+    speedslider = op.slider("Speed: ", op.white, 81, 0, maxsliderval, updatespeed)
     optionsbutton = op.button("Options", toggleoptions)
-    subdircheck = op.checkbox("Include subdirectories", op.black, togglesubdirs)
-    keepspeedcheck = op.checkbox("Maintain playback speed", op.black, togglespeed)
-    loopcheck = op.checkbox("Loop", op.black, toggleloop)
-    closebutton = op.button("Close", toggleoptions)
+    subdircheck = op.checkbox("Include subdirectories", op.white, togglesubdirs)
+    keepspeedcheck = op.checkbox("Maintain speed across patterns", op.white, togglespeed)
+    loopcheck = op.checkbox("Loop patterns", op.white, toggleloop)
+    closebutton = op.button("Close Options", toggleoptions)
 
     -- draw the overlay
     drawgui()
