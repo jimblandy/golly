@@ -144,7 +144,7 @@ end
 
 local day = 1
 
-local function test_transitions()
+function test_transitions()
     -- create a clip from the menu screen
     local oldblend = ov("blend 0")
     ov(op.black)
@@ -341,7 +341,7 @@ end
 
 local curs = 0
 
-local function test_cursors()
+function test_cursors()
     ::restart::
 
     local cmd
@@ -381,7 +381,7 @@ end
 
 local pos = 0
 
-local function test_positions()
+function test_positions()
     ::restart::
 
     pos = pos + 1
@@ -446,7 +446,7 @@ local replacements = {
     [17] = { "", "replace *#-4 *#-4 *#-4 *#", "fast fade to black", true, true }
 }
 
-local function test_replace()
+function test_replace()
     ::restart::
 
     -- create clip
@@ -566,7 +566,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function test_copy_paste()
+function test_copy_paste()
     ::restart::
 
     local t1 = g.millisecs()
@@ -621,7 +621,7 @@ end
 
 local themenum = 1
 
-local function test_cellview()
+function test_cellview()
     -- create a new layer
     g.addlayer()
     extra_layer = true
@@ -833,7 +833,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function test_animation()
+function test_animation()
     -- resize overlay to cover entire layer
     wd, ht = g.getview( g.getlayer() )
     ov("resize "..wd.." "..ht)
@@ -1282,7 +1282,7 @@ end
 
 local loaddir = g.getdir("app").."Help/images/"
 
-local function test_scale()
+function test_scale()
     local loaded = false
     local iw, ih
     local quality = "best"
@@ -1388,7 +1388,7 @@ end
 
 local savedir = g.getdir("data")
 
-local function test_save()
+function test_save()
     ::restart::
 
     -- create gradient from one random pale color to another
@@ -1436,7 +1436,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function test_set()
+function test_set()
     local maxx = wd - 1
     local maxy = ht - 1
     local flakes = 10000
@@ -1769,7 +1769,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function test_lines()
+function test_lines()
     -- this test requires a bigger overlay
     local owd = 800
     local oht = 600
@@ -1987,7 +1987,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function test_multiline_text()
+function test_multiline_text()
     ::restart::
 
     -- resize overlay to cover entire layer
@@ -2116,7 +2116,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function test_text()
+function test_text()
     ::restart::
 
     local t1 = g.millisecs()
@@ -2273,7 +2273,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function test_fill()
+function test_fill()
     ::restart::
 
     ov(op.white)
@@ -2306,7 +2306,7 @@ end
 
 local target = 1
 
-local function test_target()
+function test_target()
     -- set overlay as the rendering target
     local oldtarget = ov("target")
     local oldfont = ov("font 16 mono")
@@ -2387,7 +2387,7 @@ end
 local batchsize = 2
 local maxbatch  = 512
 
-local function test_batch()
+function test_batch()
     ::restart::
 
     ov(op.black)
@@ -2495,7 +2495,7 @@ end
  
 --------------------------------------------------------------------------------
 
-local function test_blending()
+function test_blending()
     ::restart::
 
     ov(op.white)
@@ -2548,7 +2548,7 @@ end
 
 local volume = 70
 
-local function test_sound()
+function test_sound()
     local oldblend = ov("blend 0")
     ov(op.blue)
     ov("fill")
@@ -2659,7 +2659,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function test_mouse()
+function test_mouse()
     ::restart::
 
     ov(op.black)
@@ -2739,7 +2739,20 @@ end
 
 --------------------------------------------------------------------------------
 
-local function create_menu_buttons()
+function create_menu_buttons()
+    op.buttonht = 22
+    op.radius = 12
+    op.textgap = 15
+    op.textfont = "font 10 default-bold"
+    if g.os() == "Mac" then
+        op.yoffset = -1
+    end
+    if g.os() == "Linux" then
+        op.textfont = "font 10 default"
+    end
+    op.textshadowx = 2
+    op.textshadowy = 2
+
     local longest = "Text and Transforms"
     blend_button = op.button(       longest, test_blending)
     animation_button = op.button(   longest, test_animation)
@@ -2785,11 +2798,11 @@ end
 
 --------------------------------------------------------------------------------
 
-local function main_menu()
+function main_menu()
     local numbutts = 19
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
-    local buttgap = 10
+    local buttgap = 9
     local hgap = 20
     local textgap = 10
 
