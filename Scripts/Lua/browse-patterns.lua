@@ -1,9 +1,10 @@
--- Browse through patterns in a folder (and subfolders)
+-- Browse through patterns in a folder (and optionally subfolders)
 -- Page Up/Page Down to cycle through patterns
 -- Home to select a new folder to browse
+-- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 7
+-- Build 8
 
 local g = golly()
 local gp = require "gplus"
@@ -12,7 +13,6 @@ local op = require "oplus"
 -- require "gplus.strict"
 local ov = g.overlay
 local viewwd, viewht = g.getview(g.getlayer())
-local guiht = 24
 local pathsep = g.getdir("app"):sub(-1)
 local busy = "Finding patterns, please wait..."
 local controls = "[Page Up] previous, [Page Down] next, [Home] select folder, [O] options, [Esc] exit."
@@ -39,9 +39,16 @@ local loopcheck       -- Loop checkbox
 local closebutton     -- Close options button
 
 -- position
-local slidertextx  = 0    -- text position following slider
-local maxsliderval = 15   -- maxmimum slider value (2^n seconds)
-local sliderpower  = 1.5  -- slider power
+local guiht        = 24    -- height of toolbar
+local guiwd        = 0     -- computed width of toolbar (from control widths)
+local gapx         = 10    -- horitzonal gap between controls
+local gapy         = 4     -- vertical gap between controls
+local slidertextx  = 0     -- text position following slider
+local maxsliderval = 22    -- maxmimum slider value (2^n seconds)
+local sliderpower  = 1.32  -- slider power
+
+-- style
+local toolbarbgcolor = "rgba 0 0 0 192"
 
 -- flags
 local loadnew     = false  -- whether to load a new pattern
@@ -269,26 +276,18 @@ end
 
 local function drawgui()
     -- draw gui background
-    local gapx = 10
-    local gapy = 4
     local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
     optht = optht + 24 * 3 + gapy * 15 + closebutton.ht
 
     -- clear gui
     ov("blend 0")
     ov("rgba 0 0 0 0")
-    ov("fill 0 0 "..viewwd.." "..(guiht + optht))
+    ov("fill")
 
     -- draw toolbar background
-    ov("rgba 128 128 128 192")
-    ov("fill 0 0 "..viewwd.." "..guiht)
+    ov(toolbarbgcolor)
+    ov("fill 0 0 "..guiwd.." "..guiht)
     
-    -- draw or clear options background
-    if not showoptions then
-        ov("rgba 0 0 0 0")
-    end
-    ov("fill 0 "..guiht.." 250 ".. optht)
-
     -- draw main buttons
     local y = int((guiht - prevbutton.ht) / 2)
     local x = gapx
@@ -304,6 +303,10 @@ local function drawgui()
 
     -- check for options
     if showoptions then
+        -- draw options background
+        ov("fill 0 "..guiht.." 262 ".. optht)
+
+        -- draw option controls
         x = gapx
         y = guiht + gapy
         ov("blend 1")
@@ -333,7 +336,11 @@ local function drawgui()
         end
         y = y + subdircheck.ht + gapy + gapy + gapy
         ov("blend 1")
-        op.pastetext(x, y, op.identity, "advance")
+        if advancespeed == 0 then
+            op.pastetext(x, y, op.identity, "advancemanual")
+        else
+            op.pastetext(x, y, op.identity, "advanceauto")
+        end
         ov("blend 0")
         y = y + 24
         speedslider.show(x, y, advancespeed)
@@ -385,7 +392,8 @@ local function createoverlay()
     ov(op.black)
     op.maketext("Playback", "playback", op.white, 2, 2, op.black)
     op.maketext("Folder", "folder", op.white, 2, 2, op.black)
-    op.maketext("Advance", "advance", op.white, 2, 2, op.black)
+    op.maketext("Advance Manually", "advancemanual", op.white, 2, 2, op.black)
+    op.maketext("Advance Automatically", "advanceauto", op.white, 2, 2, op.black)
 
     -- create gui buttons
     op.textshadowx = 2
@@ -399,9 +407,15 @@ local function createoverlay()
     speedslider = op.slider("Speed: ", op.white, 81, 0, maxsliderval, updatespeed)
     optionsbutton = op.button("Options", toggleoptions)
     subdircheck = op.checkbox("Include subdirectories", op.white, togglesubdirs)
-    keepspeedcheck = op.checkbox("Maintain speed across patterns", op.white, togglespeed)
+    keepspeedcheck = op.checkbox("Maintain step speed across patterns", op.white, togglespeed)
     loopcheck = op.checkbox("Loop patterns", op.white, toggleloop)
     closebutton = op.button("Close Options", toggleoptions)
+
+    -- resize the overlay to fit the controls
+    local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
+    optht = optht + 24 * 3 + gapy * 15 + closebutton.ht
+    guiwd = prevbutton.wd + nextbutton.wd + folderbutton.wd + optionsbutton.wd + exitbutton.wd + 6 * gapx
+    ov("resize "..guiwd.." "..(guiht + optht))
 
     -- draw the overlay
     drawgui()
