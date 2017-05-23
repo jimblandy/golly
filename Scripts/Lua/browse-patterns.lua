@@ -4,7 +4,7 @@
 -- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 9
+-- Build 10
 
 local g = golly()
 local gp = require "gplus"
@@ -39,10 +39,11 @@ local loopcheck       -- Loop checkbox
 local closebutton     -- Close options button
 
 -- position
-local guiht        = 24    -- height of toolbar
+local guiht        = 32    -- height of toolbar
 local guiwd        = 0     -- computed width of toolbar (from control widths)
 local gapx         = 10    -- horitzonal gap between controls
 local gapy         = 4     -- vertical gap between controls
+local sectiongapy  = 16    -- vertical gap between sections
 local slidertextx  = 0     -- text position following slider
 local maxsliderval = 22    -- maxmimum slider value (2^n seconds)
 local sliderpower  = 1.32  -- slider power
@@ -71,6 +72,9 @@ local patternloadtime = 0
 
 -- file extensions to load
 local matchlist = { ".rle", ".mcl", ".mc", ".lif", ".gz" }
+
+-- remaining time before auto advance
+local remaintime = 0
 
 --------------------------------------------------------------------------------
 
@@ -230,11 +234,15 @@ local function drawspeed(x, y)
     -- convert speed into labael
     local message = "Manual"
     if advancespeed > 0 then
-        local time = int(sliderpower ^ (maxsliderval - advancespeed))
+        local time = sliderpower ^ (maxsliderval - advancespeed)
         if time < 60 then
-            message = time.."s"
+            if time < 10 then
+                message = string.format("%.1f", time).."s"
+            else
+                message = int(time).."s"
+            end
         else
-            message = int(time / 60).."m"..(time % 60).."s"
+            message = int(time / 60).."m"..int(time % 60).."s"
         end
     end
 
@@ -275,10 +283,10 @@ end
 
 --------------------------------------------------------------------------------
 
-local function drawgui(remain)
+local function drawgui()
     -- draw gui background
     local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
-    optht = optht + 24 * 3 + gapy * 15 + closebutton.ht
+    optht = optht + 24 * 3 + gapy * 6 + sectiongapy * 3 + closebutton.ht
 
     -- clear gui
     ov("blend 0")
@@ -325,7 +333,7 @@ local function drawgui(remain)
         else
             fitcheck.show(x, y, false)
         end
-        y = y + fitcheck.ht + gapy + gapy + gapy
+        y = y + fitcheck.ht + sectiongapy
         ov("blend 1")
         op.pastetext(x, y, op.identity, "folder")
         ov("blend 0")
@@ -335,21 +343,27 @@ local function drawgui(remain)
         else
             subdircheck.show(x, y, false)
         end
-        y = y + subdircheck.ht + gapy + gapy + gapy
+        y = y + subdircheck.ht + sectiongapy
         ov("blend 1")
         if advancespeed == 0 then
             op.pastetext(x, y, op.identity, "advancemanual")
         else
             -- convert remaining ms into minutes and seconds
-            if remain < 0 then remain = 0 end
-            remain = int(remain / 1000)
-            local message
-            if remain > 60 then
-                message = int(remain / 60).."m"..(remain % 60).."s"
-            else
-                message = remain.."s"
-            end
             op.pastetext(x, y, op.identity, "advanceauto")
+            local remain = int(remaintime / 1000)
+            local message = "in "
+            if remain > 60 then
+                message = message..int(remain / 60).."m"..(remain % 60).."s"
+            else
+                if remain < 10 then
+                    remain = remaintime / 1000
+                    if remain < 0 then remain = 0 end
+                    message = message..string.format("%.1f", remain).."s"
+                else
+                    if remain < 0 then remain = 0 end
+                    message = message..remain.."s"
+                end
+            end
             op.maketext(message, "remain", op.white, 2, 2, op.black)
             op.pastetext(x + remainx, y, op.identity, "remain")
         end
@@ -371,7 +385,7 @@ local function drawgui(remain)
         else
             keepspeedcheck.show(x, y, false)
         end
-        y = y + keepspeedcheck.ht + gapy + gapy + gapy
+        y = y + keepspeedcheck.ht + sectiongapy
         closebutton.show(x, y)
     end
 end
@@ -381,7 +395,7 @@ end
 local function updatespeed(newval)
     advancespeed = newval
     savesettings()
-    drawgui(0)
+    drawgui()
 end
 
 --------------------------------------------------------------------------------
@@ -405,7 +419,7 @@ local function createoverlay()
     op.maketext("Playback", "playback", op.white, 2, 2, op.black)
     op.maketext("Folder", "folder", op.white, 2, 2, op.black)
     op.maketext("Advance Manually", "advancemanual", op.white, 2, 2, op.black)
-    remainx = op.maketext("Advance Automatically in ", "advanceauto", op.white, 2, 2, op.black)
+    remainx = op.maketext("Advance Automatically ", "advanceauto", op.white, 2, 2, op.black)
 
     -- create gui buttons
     op.textshadowx = 2
@@ -425,7 +439,7 @@ local function createoverlay()
 
     -- resize the overlay to fit the controls
     local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
-    optht = optht + 24 * 3 + gapy * 15 + closebutton.ht
+    optht = optht + 24 * 3 + gapy * 6 + sectiongapy * 3 + closebutton.ht
     guiwd = prevbutton.wd + nextbutton.wd + folderbutton.wd + optionsbutton.wd + exitbutton.wd + 6 * gapx
     ov("resize "..guiwd.." "..(guiht + optht))
 
@@ -543,7 +557,7 @@ local function browsepatterns(startpattern)
             end
 
             -- check for auto advance
-            local remaintime = 0
+            remaintime = 0
             if advancespeed > 0 then
                 local targettime = (sliderpower ^ (maxsliderval - advancespeed)) * 1000
                 remaintime = targettime - (g.millisecs() - patternloadtime)
@@ -552,7 +566,7 @@ local function browsepatterns(startpattern)
                     patternloadtime = g.millisecs()
                 end
             end
-            drawgui(remaintime)
+            drawgui()
             g.update()
         end
     end
