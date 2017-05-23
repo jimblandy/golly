@@ -137,15 +137,23 @@ static void GollyError(lua_State* L, const char* errmsg)
 
 // -----------------------------------------------------------------------------
 
+static bool CheckBoolean(lua_State* L, int arg)
+{
+    luaL_checktype(L, arg, LUA_TBOOLEAN);
+    return lua_toboolean(L, arg) ? true : false;
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_open(lua_State* L)
 {
     CheckEvents(L);
 
     const char* filename = luaL_checkstring(L, 1);
-    int remember = 0;
-    if (lua_gettop(L) > 1) remember = lua_toboolean(L, 2) ? 1 : 0;
+    bool remember = false;
+    if (lua_gettop(L) > 1) remember = CheckBoolean(L, 2);
 
-    const char* err = GSF_open(wxString(filename, LUA_ENC), remember);
+    const char* err = GSF_open(wxString(filename, LUA_ENC), remember ? 1 : 0);
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -159,10 +167,10 @@ static int g_save(lua_State* L)
 
     const char* filename = luaL_checkstring(L, 1);
     const char* format = luaL_checkstring(L, 2);
-    int remember = 0;
-    if (lua_gettop(L) > 2) remember = lua_toboolean(L, 3) ? 1 : 0;
+    bool remember = false;
+    if (lua_gettop(L) > 2) remember = CheckBoolean(L, 3);
     
-    const char* err = GSF_save(wxString(filename, LUA_ENC), format, remember);
+    const char* err = GSF_save(wxString(filename, LUA_ENC), format, remember ? 1 : 0);
     if (err) GollyError(L, err);
     
     return 0;   // no result
@@ -178,13 +186,13 @@ static int g_opendialog(lua_State* L)
     const char* filetypes = "All files (*)|*";
     const char* initialdir = "";
     const char* initialfname = "";
-    int mustexist = 1;
+    bool mustexist = true;
     
     if (lua_gettop(L) > 0) title = luaL_checkstring(L, 1);
     if (lua_gettop(L) > 1) filetypes = luaL_checkstring(L, 2);
     if (lua_gettop(L) > 2) initialdir = luaL_checkstring(L, 3);
     if (lua_gettop(L) > 3) initialfname = luaL_checkstring(L, 4);
-    if (lua_gettop(L) > 4) mustexist = lua_toboolean(L, 5) ? 1 : 0;
+    if (lua_gettop(L) > 4) mustexist = CheckBoolean(L, 5);
 
     wxString wxs_title(title, LUA_ENC);
     wxString wxs_filetypes(filetypes, LUA_ENC);
@@ -204,7 +212,7 @@ static int g_opendialog(lua_State* L)
     } else {
         // let user choose a file
         wxFileDialog opendlg(NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
-                             wxFD_OPEN | (mustexist == 0 ? 0 : wxFD_FILE_MUST_EXIST) );
+                             wxFD_OPEN | (mustexist ? wxFD_FILE_MUST_EXIST : 0) );
         if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
     }
     
@@ -223,13 +231,13 @@ static int g_savedialog(lua_State* L)
     const char* filetypes = "All files (*)|*";
     const char* initialdir = "";
     const char* initialfname = "";
-    int suppressprompt = 0;
+    bool suppressprompt = false;
     
     if (lua_gettop(L) > 0) title = luaL_checkstring(L, 1);
     if (lua_gettop(L) > 1) filetypes = luaL_checkstring(L, 2);
     if (lua_gettop(L) > 2) initialdir = luaL_checkstring(L, 3);
     if (lua_gettop(L) > 3) initialfname = luaL_checkstring(L, 4);
-    if (lua_gettop(L) > 4) suppressprompt = lua_toboolean(L, 5) ? 1 : 0;
+    if (lua_gettop(L) > 4) suppressprompt = CheckBoolean(L, 5);
 
     wxString wxs_title(title, LUA_ENC);
     wxString wxs_filetypes(filetypes, LUA_ENC);
@@ -239,7 +247,7 @@ static int g_savedialog(lua_State* L)
     if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
     
     wxFileDialog savedlg(NULL, wxs_title, wxs_initialdir, wxs_initialfname, wxs_filetypes,
-                         wxFD_SAVE | (suppressprompt == 0 ? wxFD_OVERWRITE_PROMPT : 0));
+                         wxFD_SAVE | (suppressprompt ? 0 : wxFD_OVERWRITE_PROMPT));
     wxString wxs_savefname = wxEmptyString;
     if (savedlg.ShowModal() == wxID_OK) wxs_savefname = savedlg.GetPath();
     
@@ -580,10 +588,7 @@ static int g_shrink(lua_State* L)
     CheckEvents(L);
     
     bool remove_if_empty = false;
-    if (lua_gettop(L) > 0) {
-        luaL_checktype(L, 1, LUA_TBOOLEAN);
-        remove_if_empty = lua_toboolean(L, 1) ? true : false;
-    }
+    if (lua_gettop(L) > 0) remove_if_empty = CheckBoolean(L, 1);
 
     if (viewptr->SelectionExists()) {
         currlayer->currsel.Shrink(false, remove_if_empty);
@@ -1937,8 +1942,7 @@ static int g_autoupdate(lua_State* L)
 {
     CheckEvents(L);
 
-    luaL_checktype(L, 1, LUA_TBOOLEAN);
-    autoupdate = lua_toboolean(L, 1) ? true : false;    // avoids stupid MVC warning
+    autoupdate = CheckBoolean(L, 1);
     
     return 0;   // no result
 }
@@ -2446,11 +2450,11 @@ static int g_getevent(lua_State* L)
 {
     CheckEvents(L);
 
-    int get = 1;
-    if (lua_gettop(L) > 0) get = lua_toboolean(L, 1) ? 1 : 0;
+    bool get = true;
+    if (lua_gettop(L) > 0) get = CheckBoolean(L, 1);
     
     wxString event;
-    GSF_getevent(event, get);
+    GSF_getevent(event, get ? 1 : 0);
     
     lua_pushstring(L, (const char*)event.mb_str(wxConvUTF8));
     
@@ -2547,8 +2551,7 @@ static int g_check(lua_State* L)
     //       ... do stuff to target layer ...
     //       g.check(true)
     
-    luaL_checktype(L, 1, LUA_TBOOLEAN);
-    allowcheck = lua_toboolean(L, 1) ? true : false;
+    allowcheck = CheckBoolean(L, 1);
     
     return 0;   // no result
 }
