@@ -88,11 +88,11 @@ function envelope()
         -- we temporarily disable event checking so thumb scrolling
         -- and other mouse events won't cause confusing changes
         local currpatt = g.getcells(g.getrect())
-        g.check(0)
+        g.check(false)
         g.setlayer(envindex)
         g.putcells(currpatt)
         g.setlayer(currindex)
-        g.check(1)
+        g.check(true)
         
         local step = 1
         local expo = g.getstep()

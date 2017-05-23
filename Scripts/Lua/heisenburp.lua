@@ -403,7 +403,7 @@ function burp()
             if currlayer ~= 4 then
                 -- user has switched layer so temporarily change it back
                 -- so we only change location of bottom right layer
-                g.check(0)
+                g.check(false)
                 g.setlayer(4)
             end
 
@@ -428,7 +428,7 @@ function burp()
 
             if currlayer ~= 4 then
                 g.setlayer(currlayer)
-                g.check(1)
+                g.check(true)
             end
 
             -- change viewport speed at appropriate times to follow the action

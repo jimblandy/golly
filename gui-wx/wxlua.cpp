@@ -580,7 +580,10 @@ static int g_shrink(lua_State* L)
     CheckEvents(L);
     
     bool remove_if_empty = false;
-    if (lua_gettop(L) > 0) remove_if_empty = lua_toboolean(L, 1) ? true : false;
+    if (lua_gettop(L) > 0) {
+        luaL_checktype(L, 1, LUA_TBOOLEAN);
+        remove_if_empty = lua_toboolean(L, 1) ? true : false;
+    }
 
     if (viewptr->SelectionExists()) {
         currlayer->currsel.Shrink(false, remove_if_empty);
@@ -1934,6 +1937,7 @@ static int g_autoupdate(lua_State* L)
 {
     CheckEvents(L);
 
+    luaL_checktype(L, 1, LUA_TBOOLEAN);
     autoupdate = lua_toboolean(L, 1) ? true : false;    // avoids stupid MVC warning
     
     return 0;   // no result
@@ -2539,11 +2543,12 @@ static int g_check(lua_State* L)
     // CheckEvents(L);
     // don't call CheckEvents here otherwise we can't safely write code like
     //    if g.getlayer() == target then
-    //       g.check(0)
+    //       g.check(false)
     //       ... do stuff to target layer ...
-    //       g.check(1)
+    //       g.check(true)
     
-    allowcheck = (luaL_checkinteger(L, 1) != 0);
+    luaL_checktype(L, 1, LUA_TBOOLEAN);
+    allowcheck = lua_toboolean(L, 1) ? true : false;
     
     return 0;   // no result
 }
