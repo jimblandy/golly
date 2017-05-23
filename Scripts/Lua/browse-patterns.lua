@@ -4,11 +4,11 @@
 -- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 10
+-- Build 11
 
 local g = golly()
 local gp = require "gplus"
-local int = gp.int
+local floor = math.floor
 local op = require "oplus"
 -- require "gplus.strict"
 local ov = g.overlay
@@ -65,13 +65,12 @@ local subdirs      = 1   -- whether to include subdirectories
 local looping      = 1   -- whether to loop pattern list
 local advancespeed = 0   -- advance speed (0 for manual)
 
--- current base and step
-local currentbase = g.getbase()
+-- current step
 local currentstep = g.getstep()
 local patternloadtime = 0
 
 -- file extensions to load
-local matchlist = { ".rle", ".mcl", ".mc", ".lif", ".gz" }
+local matchlist = { rle = true, mcl = true, mc = true, lif = true, gz = true }
 
 -- remaining time before auto advance
 local remaintime = 0
@@ -108,23 +107,6 @@ end
 
 --------------------------------------------------------------------------------
 
-local function shoulddisplay(name)
-    local result = false
-
-    -- check the file extension against allowed extensions
-    for i = 1, #matchlist do
-        local item = matchlist[i]
-        if name:sub(-item:len()) == item then
-            result = true
-            break
-        end
-    end
-
-    return result
-end
-
---------------------------------------------------------------------------------
-
 local function findpatterns(dir)
     local files = g.getfiles(dir)
     for _, name in ipairs(files) do
@@ -137,10 +119,13 @@ local function findpatterns(dir)
             end
         else
             -- check the file is the right type to display
-            if shoulddisplay(name) then
-                -- add to list of patterns
-                numpatterns = numpatterns + 1
-                patterns[numpatterns] = dir..name
+            local index = name:match'^.*()%.'
+            if index then
+                if matchlist[name:sub(index+1)] then
+                    -- add to list of patterns
+                    numpatterns = numpatterns + 1
+                    patterns[numpatterns] = dir..name
+                end
             end
         end
     end
@@ -239,10 +224,10 @@ local function drawspeed(x, y)
             if time < 10 then
                 message = string.format("%.1f", time).."s"
             else
-                message = int(time).."s"
+                message = floor(time).."s"
             end
         else
-            message = int(time / 60).."m"..int(time % 60).."s"
+            message = floor(time / 60).."m"..floor(time % 60).."s"
         end
     end
 
@@ -298,7 +283,7 @@ local function drawgui()
     ov("fill 0 0 "..guiwd.." "..guiht)
     
     -- draw main buttons
-    local y = int((guiht - prevbutton.ht) / 2)
+    local y = floor((guiht - prevbutton.ht) / 2)
     local x = gapx
     prevbutton.show(x, y)
     x = x + prevbutton.wd + gapx
@@ -350,10 +335,10 @@ local function drawgui()
         else
             -- convert remaining ms into minutes and seconds
             op.pastetext(x, y, op.identity, "advanceauto")
-            local remain = int(remaintime / 1000)
+            local remain = floor(remaintime / 1000)
             local message = "in "
-            if remain > 60 then
-                message = message..int(remain / 60).."m"..(remain % 60).."s"
+            if remain >= 60 then
+                message = message..floor(remain / 60).."m"..(remain % 60).."s"
             else
                 if remain < 10 then
                     remain = remaintime / 1000
@@ -415,6 +400,7 @@ local function createoverlay()
     end
 
     -- create labels
+    ov(op.textfont)
     ov(op.black)
     op.maketext("Playback", "playback", op.white, 2, 2, op.black)
     op.maketext("Folder", "folder", op.white, 2, 2, op.black)
@@ -472,7 +458,6 @@ local function browsepatterns(startpattern)
     exitnow = false
     while not exitnow do
         -- load the pattern
-        currentbase = g.getbase()
         currentstep = g.getstep()
         g.new("")
         g.setalgo("QuickLife")      -- nicer to start from this algo
@@ -484,7 +469,6 @@ local function browsepatterns(startpattern)
 
         -- restore playback speed if requested
         if keepspeed == 1 then
-            g.setbase(currentbase)
             g.setstep(currentstep)
         end
 
@@ -526,7 +510,6 @@ local function browsepatterns(startpattern)
 
             -- run the pattern
             if generating == 1 then
-                currentbase = g.getbase()
                 currentstep = g.getstep()
                 if currentstep < 0 then
                     -- convert negative steps into delays
@@ -540,7 +523,7 @@ local function browsepatterns(startpattern)
                 end
                 local t = g.millisecs()
                 if t - now > target then
-                    g.run(currentbase ^ currentstep)
+                    g.run(g.getbase() ^ currentstep)
                     now = t
                     target = delay
                 end
