@@ -273,12 +273,8 @@ local function drawgui()
     local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
     optht = optht + 24 * 3 + gapy * 6 + sectiongapy * 3 + closebutton.ht
 
-    -- clear gui
-    ov("blend 0")
-    ov("rgba 0 0 0 0")
-    ov("fill")
-
     -- draw toolbar background
+    ov("blend 0")
     ov(toolbarbgcolor)
     ov("fill 0 0 "..guiwd.." "..guiht)
     
@@ -372,6 +368,11 @@ local function drawgui()
         end
         y = y + keepspeedcheck.ht + sectiongapy
         closebutton.show(x, y)
+    else
+        -- not showing options so clear the area under the toolbar
+        local oldrgba = ov("rgba 0 0 0 0")
+        ov("fill 0 "..guiht.." "..viewwd.." "..optht)
+        ov("rgba "..oldrgba)
     end
 end
 
@@ -430,7 +431,7 @@ local function createoverlay()
     ov("resize "..guiwd.." "..(guiht + optht))
 
     -- draw the overlay
-    drawgui(0)
+    drawgui()
 end
 
 --------------------------------------------------------------------------------
