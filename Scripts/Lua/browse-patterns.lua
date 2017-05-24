@@ -4,7 +4,7 @@
 -- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 12
+-- Build 13
 
 local g = golly()
 local gp = require "gplus"
@@ -16,9 +16,13 @@ local viewwd, viewht = g.getview(g.getlayer())
 local pathsep = g.getdir("app"):sub(-1)
 local busy = "Finding patterns, please wait..."
 local controls = "[Page Up] previous, [Page Down] next, [Home] select folder, [O] options, [Esc] exit."
-local patterns = {}
-local numpatterns = 0
-local whichpattern = 1
+
+-- pattern list
+local patterns = {}           -- Array of patterns
+local numpatterns = 0         -- Number of patterns
+local numsubs = 0             -- Number of subdirectories
+local whichpattern = 1        -- Current pattern index
+
 local overlaycreated = false
 
 -- settings are saved in this file
@@ -37,10 +41,12 @@ local subdircheck     -- Include subdirectories checkbox
 local keepspeedcheck  -- Keep speed checkbox
 local loopcheck       -- Loop checkbox
 local closebutton     -- Close options button
+local infocheck       -- Show Info checkbox
 
 -- position
 local guiht        = 32    -- height of toolbar
 local guiwd        = 0     -- computed width of toolbar (from control widths)
+local optht        = 0     -- height of options panel
 local gapx         = 10    -- horitzonal gap between controls
 local gapy         = 4     -- vertical gap between controls
 local sectiongapy  = 16    -- vertical gap between sections
@@ -65,9 +71,21 @@ local keepspeed    = 0   -- whether to maintain speed between patterns
 local subdirs      = 1   -- whether to include subdirectories
 local looping      = 1   -- whether to loop pattern list
 local advancespeed = 0   -- advance speed (0 for manual)
+local showinfo     = 1   -- show info if present
 
 local currentstep     = g.getstep()  -- current step
 local patternloadtime = 0            -- pattern load time (ms)
+
+-- pattern information
+local infonum     = 0       -- number of info clips
+local infowd      = {}      -- width of pattern info clips
+local infoht      = {}      -- height of pattern info clips
+local infox       = 0       -- info text x coordinate
+local infoclip    = "info"  -- info clip prefix name
+local infotime    = 0       -- time last information frame drawn
+local infochunk   = 256     -- number of characters per info clip
+local infowdtotal = 0       -- total width of info clips
+local infospeed   = 24      -- scrolling speed (ms to move one pixel)
 
 -- file extensions to load
 local matchlist = { rle = true, mcl = true, mc = true, lif = true, gz = true }
@@ -86,6 +104,7 @@ local function savesettings()
         f:write(tostring(subdirs).."\n")
         f:write(tostring(looping).."\n")
         f:write(tostring(advancespeed).."\n")
+        f:write(tostring(showinfo).."\n")
         f:close()
     end
 end
@@ -101,6 +120,7 @@ local function loadsettings()
         subdirs      = tonumber(f:read("*l")) or 1
         looping      = tonumber(f:read("*l")) or 1
         advancespeed = tonumber(f:read("*l")) or 0
+        showinfo     = tonumber(f:read("*l")) or 1
         f:close()
     end
 end
@@ -114,6 +134,7 @@ local function findpatterns(dir)
             -- ignore hidden files (like .DS_Store on Mac)
         elseif name:sub(-1) == pathsep then
             -- name is a subdirectory
+            numsubs = numsubs + 1
             if subdirs == 1 then
                 findpatterns(dir..name)
             end
@@ -135,10 +156,15 @@ end
 
 local function getpatternlist(dir)
     numpatterns = 0
+    numsubs = 0
     g.show(busy)
     findpatterns(dir)
     if numpatterns == 0 then
-        g.note("No patterns found in:\n\n"..dir)
+        if numsubs == 0 then
+            g.note("No patterns found in:\n\n"..dir)
+        else
+            g.note("Only subdirectories found in:\n\n"..dir)
+        end
     end
 end
 
@@ -269,15 +295,43 @@ end
 
 --------------------------------------------------------------------------------
 
+local function drawinfo()
+    -- draw the info backgrouund
+    ov(toolbarbgcolor)
+    ov("fill 0 "..guiht.." "..guiwd.." "..guiht)
+
+    -- compute how far to move the text based on time since last update
+    local now = g.millisecs()
+    local dx = now - infotime
+    infotime = now
+    infox = infox - dx / infospeed
+    if infox < -infowdtotal then
+        infox = guiwd
+    end
+
+    -- draw the info text
+    ov("blend 1")
+    local x = floor(infox)
+    local y = infoht[1]
+    for i = 1, infonum do
+        op.pastetext(x, guiht + floor((guiht - y) / 2), op.identity, infoclip..i)
+        x = x + infowd[i] - 2  -- make subsequent clips overlap slightly to remove text gap
+    end
+    ov("blend 0")
+end
+
+--------------------------------------------------------------------------------
+
 local function drawgui()
+    -- check whether to draw info
+    if showinfo == 1 and infowdtotal ~= 0 then
+        drawinfo()
+    end
+
     -- check if the gui needs to be refreshed
     if refreshgui or (showoptions and advancespeed > 0) then
         -- mark gui as refreshed
         refreshgui = false
-
-        -- draw gui background
-        local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
-        optht = optht + 24 * 3 + gapy * 6 + sectiongapy * 3 + closebutton.ht
 
         -- draw toolbar background
         ov("blend 0")
@@ -297,14 +351,22 @@ local function drawgui()
         x = x + optionsbutton.wd + gapx
         exitbutton.show(x, y)
 
+        -- compute offset for options if info is displayed
+        local infoy = 0
+        if showinfo == 1 and infowdtotal ~= 0 then
+            infoy = guiht
+        end
+
         -- check for options
         if showoptions then
             -- draw options background
-            ov("fill 0 "..guiht.." "..viewwd.." "..optht)
+            ov("fill 0 "..(guiht + infoy).." "..guiwd.." "..optht)
+            ov("rgba 0 0 0 0")
+            ov("fill 0 "..(guiht + infoy + optht).." "..guiwd.." "..infoy)
 
             -- draw option controls
             x = gapx
-            y = guiht + gapy
+            y = guiht + gapy + infoy
             ov("blend 1")
             op.pastetext(x, y, op.identity, "playback")
             ov("blend 0")
@@ -320,7 +382,13 @@ local function drawgui()
             else
                 fitcheck.show(x, y, false)
             end
-            y = y + fitcheck.ht + sectiongapy
+            y = y + fitcheck.ht + gapy
+            if showinfo == 1 then
+                infocheck.show(x, y, true)
+            else
+                infocheck.show(x, y, false)
+            end
+            y = y + infocheck.ht + sectiongapy
             ov("blend 1")
             op.pastetext(x, y, op.identity, "folder")
             ov("blend 0")
@@ -377,10 +445,23 @@ local function drawgui()
         else
             -- not showing options so clear the area under the toolbar
             local oldrgba = ov("rgba 0 0 0 0")
-            ov("fill 0 "..guiht.." "..viewwd.." "..optht)
+            ov("fill 0 "..(guiht + infoy).." "..guiwd.." "..optht)
             ov("rgba "..oldrgba)
         end
     end
+
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleinfo()
+    showinfo = 1 - showinfo
+    savesettings()
+    refreshgui = true
+    drawgui()
+
+    -- need to refresh again since options panel will move if open
+    refreshgui = true
 end
 
 --------------------------------------------------------------------------------
@@ -411,7 +492,7 @@ local function createoverlay()
     -- create labels
     ov(op.textfont)
     ov(op.black)
-    op.maketext("Playback", "playback", op.white, 2, 2, op.black)
+    op.maketext("Pattern", "playback", op.white, 2, 2, op.black)
     op.maketext("Folder", "folder", op.white, 2, 2, op.black)
     op.maketext("Advance Manually", "advancemanual", op.white, 2, 2, op.black)
     remainx = op.maketext("Advance Automatically ", "advanceauto", op.white, 2, 2, op.black)
@@ -431,15 +512,45 @@ local function createoverlay()
     keepspeedcheck = op.checkbox("Maintain step speed across patterns", op.white, togglespeed)
     loopcheck = op.checkbox("Loop pattern list", op.white, toggleloop)
     closebutton = op.button("Close Options", toggleoptions)
+    infocheck = op.checkbox("Show pattern information", op.white, toggleinfo)
 
     -- resize the overlay to fit the controls
-    local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
-    optht = optht + 24 * 3 + gapy * 6 + sectiongapy * 3 + closebutton.ht
+    optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
+    optht = optht + 24 * 3 + gapy * 7 + sectiongapy * 3 + closebutton.ht + infocheck.ht
     guiwd = prevbutton.wd + nextbutton.wd + folderbutton.wd + optionsbutton.wd + exitbutton.wd + 6 * gapx
-    ov("resize "..guiwd.." "..(guiht + optht))
+    ov("resize "..guiwd.." "..(guiht + optht + guiht))
 
     -- draw the overlay
     drawgui()
+end
+
+--------------------------------------------------------------------------------
+
+local function loadinfo()
+     -- clear pattern info
+     infowdtotal = 0
+     refreshgui = true
+
+     -- load pattern info
+     local info = g.getinfo()
+     if info ~= "" then
+         -- format into a single line
+         local clean = info:gsub("#CXRLE.-\n", ""):gsub("#C", ""):gsub("#D", ""):gsub("#", ""):gsub("\n", " "):gsub("  *", " ")
+         if clean ~= "" then
+             -- split into a number of clips due to bitmap width limits
+             infonum = floor((clean:len() - 1) / infochunk) + 1
+
+             -- create the text clips
+             for i = 1, infonum do
+                 local i1 = (i - 1) * infochunk + 1
+                 local i2 = i1 + infochunk - 1
+                 infowd[i], infoht[i] = op.maketext(clean:sub(i1, i2), infoclip..i, op.white, 2, 2, op.black)
+                 infowdtotal = infowdtotal + infowd[i]
+             end
+             infox = guiwd
+         end
+     end
+     infotime = g.millisecs()
 end
 
 --------------------------------------------------------------------------------
@@ -472,10 +583,13 @@ local function browsepatterns(startpattern)
         g.setalgo("QuickLife")      -- nicer to start from this algo
         local fullname = patterns[whichpattern]
         g.open(fullname, false)     -- don't add file to Open/Run Recent submenu
-        patternloadtime = g.millisecs()
+        loadinfo()
         g.show("Pattern "..whichpattern.." of "..numpatterns..". "..controls)
         g.update()
         generating = autostart
+
+        -- reset pattern load time
+        patternloadtime = g.millisecs()
 
         -- restore playback speed if requested
         if keepspeed == 1 then
