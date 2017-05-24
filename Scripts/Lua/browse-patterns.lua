@@ -4,7 +4,7 @@
 -- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 11
+-- Build 12
 
 local g = golly()
 local gp = require "gplus"
@@ -45,7 +45,7 @@ local gapx         = 10    -- horitzonal gap between controls
 local gapy         = 4     -- vertical gap between controls
 local sectiongapy  = 16    -- vertical gap between sections
 local slidertextx  = 0     -- text position following slider
-local maxsliderval = 22    -- maxmimum slider value (2^n seconds)
+local maxsliderval = 22    -- maxmimum slider value
 local sliderpower  = 1.32  -- slider power
 local remainx      = 0     -- remaining time position
 
@@ -56,6 +56,7 @@ local toolbarbgcolor = "rgba 0 0 0 192"
 local loadnew     = false  -- whether to load a new pattern
 local exitnow     = false  -- whether to exit
 local showoptions = false  -- whether options are displayed
+local refreshgui  = true   -- whether the gui needs to be refreshed
 
 -- settings
 local autostart    = 0   -- whether to autostart playback on pattern load
@@ -65,9 +66,8 @@ local subdirs      = 1   -- whether to include subdirectories
 local looping      = 1   -- whether to loop pattern list
 local advancespeed = 0   -- advance speed (0 for manual)
 
--- current step
-local currentstep = g.getstep()
-local patternloadtime = 0
+local currentstep     = g.getstep()  -- current step
+local patternloadtime = 0            -- pattern load time (ms)
 
 -- file extensions to load
 local matchlist = { rle = true, mcl = true, mc = true, lif = true, gz = true }
@@ -264,115 +264,122 @@ end
 
 local function toggleoptions()
     showoptions = not showoptions
+    refreshgui = true
 end
 
 --------------------------------------------------------------------------------
 
 local function drawgui()
-    -- draw gui background
-    local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
-    optht = optht + 24 * 3 + gapy * 6 + sectiongapy * 3 + closebutton.ht
+    -- check if the gui needs to be refreshed
+    if refreshgui or (showoptions and advancespeed > 0) then
+        -- mark gui as refreshed
+        refreshgui = false
 
-    -- draw toolbar background
-    ov("blend 0")
-    ov(toolbarbgcolor)
-    ov("fill 0 0 "..guiwd.." "..guiht)
+        -- draw gui background
+        local optht = startcheck.ht + fitcheck.ht + keepspeedcheck.ht + subdircheck.ht + loopcheck.ht + speedslider.ht
+        optht = optht + 24 * 3 + gapy * 6 + sectiongapy * 3 + closebutton.ht
+
+        -- draw toolbar background
+        ov("blend 0")
+        ov(toolbarbgcolor)
+        ov("fill 0 0 "..guiwd.." "..guiht)
     
-    -- draw main buttons
-    local y = floor((guiht - prevbutton.ht) / 2)
-    local x = gapx
-    prevbutton.show(x, y)
-    x = x + prevbutton.wd + gapx
-    nextbutton.show(x, y)
-    x = x + nextbutton.wd + gapx
-    folderbutton.show(x, y)
-    x = x + folderbutton.wd + gapx
-    optionsbutton.show(x, y)
-    x = x + optionsbutton.wd + gapx
-    exitbutton.show(x, y)
+        -- draw main buttons
+        local y = floor((guiht - prevbutton.ht) / 2)
+        local x = gapx
+        prevbutton.show(x, y)
+        x = x + prevbutton.wd + gapx
+        nextbutton.show(x, y)
+        x = x + nextbutton.wd + gapx
+        folderbutton.show(x, y)
+        x = x + folderbutton.wd + gapx
+        optionsbutton.show(x, y)
+        x = x + optionsbutton.wd + gapx
+        exitbutton.show(x, y)
 
-    -- check for options
-    if showoptions then
-        -- draw options background
-        ov("fill 0 "..guiht.." "..viewwd.." "..optht)
+        -- check for options
+        if showoptions then
+            -- draw options background
+            ov("fill 0 "..guiht.." "..viewwd.." "..optht)
 
-        -- draw option controls
-        x = gapx
-        y = guiht + gapy
-        ov("blend 1")
-        op.pastetext(x, y, op.identity, "playback")
-        ov("blend 0")
-        y = y + 24
-        if autostart == 1 then
-            startcheck.show(x, y, true)
-        else
-            startcheck.show(x, y, false)
-        end
-        y = y + startcheck.ht + gapy
-        if autofit == 1 then
-            fitcheck.show(x, y, true)
-        else
-            fitcheck.show(x, y, false)
-        end
-        y = y + fitcheck.ht + sectiongapy
-        ov("blend 1")
-        op.pastetext(x, y, op.identity, "folder")
-        ov("blend 0")
-        y = y + 24
-        if subdirs == 1 then
-            subdircheck.show(x, y, true)
-        else
-            subdircheck.show(x, y, false)
-        end
-        y = y + subdircheck.ht + sectiongapy
-        ov("blend 1")
-        if advancespeed == 0 then
-            op.pastetext(x, y, op.identity, "advancemanual")
-        else
-            -- convert remaining ms into minutes and seconds
-            op.pastetext(x, y, op.identity, "advanceauto")
-            local remain = floor(remaintime / 1000)
-            local message = "in "
-            if remain >= 60 then
-                message = message..floor(remain / 60).."m"..(remain % 60).."s"
+            -- draw option controls
+            x = gapx
+            y = guiht + gapy
+            ov("blend 1")
+            op.pastetext(x, y, op.identity, "playback")
+            ov("blend 0")
+            y = y + 24
+            if autostart == 1 then
+                startcheck.show(x, y, true)
             else
-                if remain < 10 then
-                    remain = remaintime / 1000
-                    if remain < 0 then remain = 0 end
-                    message = message..string.format("%.1f", remain).."s"
-                else
-                    if remain < 0 then remain = 0 end
-                    message = message..remain.."s"
-                end
+                startcheck.show(x, y, false)
             end
-            op.maketext(message, "remain", op.white, 2, 2, op.black)
-            op.pastetext(x + remainx, y, op.identity, "remain")
-        end
-        ov("blend 0")
-        y = y + 24
-        speedslider.show(x, y, advancespeed)
-        x = x + speedslider.wd + gapx
-        drawspeed(x, y)
-        y = y + speedslider.ht + gapy
-        x = gapx
-        if looping == 1 then
-            loopcheck.show(x, y, true)
+            y = y + startcheck.ht + gapy
+            if autofit == 1 then
+                fitcheck.show(x, y, true)
+            else
+                fitcheck.show(x, y, false)
+            end
+            y = y + fitcheck.ht + sectiongapy
+            ov("blend 1")
+            op.pastetext(x, y, op.identity, "folder")
+            ov("blend 0")
+            y = y + 24
+            if subdirs == 1 then
+                subdircheck.show(x, y, true)
+            else
+                subdircheck.show(x, y, false)
+            end
+            y = y + subdircheck.ht + sectiongapy
+            ov("blend 1")
+            if advancespeed == 0 then
+                op.pastetext(x, y, op.identity, "advancemanual")
+            else
+                -- convert remaining ms into minutes and seconds
+                op.pastetext(x, y, op.identity, "advanceauto")
+                local remain = floor(remaintime / 1000)
+                local message = "in "
+                if remain >= 60 then
+                    message = message..floor(remain / 60).."m"..(remain % 60).."s"
+                else
+                    if remain < 10 then
+                        remain = remaintime / 1000
+                        if remain < 0 then remain = 0 end
+                        message = message..string.format("%.1f", remain).."s"
+                    else
+                        if remain < 0 then remain = 0 end
+                        message = message..remain.."s"
+                    end
+                end
+                op.maketext(message, "remain", op.white, 2, 2, op.black)
+                op.pastetext(x + remainx, y, op.identity, "remain")
+            end
+            ov("blend 0")
+            y = y + 24
+            speedslider.show(x, y, advancespeed)
+            x = x + speedslider.wd + gapx
+            drawspeed(x, y)
+            y = y + speedslider.ht + gapy
+            x = gapx
+            if looping == 1 then
+                loopcheck.show(x, y, true)
+            else
+                loopcheck.show(x, y, false)
+            end
+            y = y + loopcheck.ht + gapy
+            if keepspeed == 1 then
+                keepspeedcheck.show(x, y, true)
+            else
+                keepspeedcheck.show(x, y, false)
+            end
+            y = y + keepspeedcheck.ht + sectiongapy
+            closebutton.show(x, y)
         else
-            loopcheck.show(x, y, false)
+            -- not showing options so clear the area under the toolbar
+            local oldrgba = ov("rgba 0 0 0 0")
+            ov("fill 0 "..guiht.." "..viewwd.." "..optht)
+            ov("rgba "..oldrgba)
         end
-        y = y + loopcheck.ht + gapy
-        if keepspeed == 1 then
-            keepspeedcheck.show(x, y, true)
-        else
-            keepspeedcheck.show(x, y, false)
-        end
-        y = y + keepspeedcheck.ht + sectiongapy
-        closebutton.show(x, y)
-    else
-        -- not showing options so clear the area under the toolbar
-        local oldrgba = ov("rgba 0 0 0 0")
-        ov("fill 0 "..guiht.." "..viewwd.." "..optht)
-        ov("rgba "..oldrgba)
     end
 end
 
@@ -381,6 +388,7 @@ end
 local function updatespeed(newval)
     advancespeed = newval
     savesettings()
+    refreshgui = true
     drawgui()
 end
 
@@ -421,7 +429,7 @@ local function createoverlay()
     optionsbutton = op.button("Options", toggleoptions)
     subdircheck = op.checkbox("Include subdirectories", op.white, togglesubdirs)
     keepspeedcheck = op.checkbox("Maintain step speed across patterns", op.white, togglespeed)
-    loopcheck = op.checkbox("Loop patterns", op.white, toggleloop)
+    loopcheck = op.checkbox("Loop pattern list", op.white, toggleloop)
     closebutton = op.button("Close Options", toggleoptions)
 
     -- resize the overlay to fit the controls
@@ -464,6 +472,7 @@ local function browsepatterns(startpattern)
         g.setalgo("QuickLife")      -- nicer to start from this algo
         local fullname = patterns[whichpattern]
         g.open(fullname, false)     -- don't add file to Open/Run Recent submenu
+        patternloadtime = g.millisecs()
         g.show("Pattern "..whichpattern.." of "..numpatterns..". "..controls)
         g.update()
         generating = autostart
@@ -479,13 +488,10 @@ local function browsepatterns(startpattern)
             local event = op.process(g.getevent())
             if event == "key pagedown none" then
                 nextpattern()
-                patternloadtime = g.millisecs()
             elseif event == "key pageup none" then
                 previouspattern()
-                patternloadtime = g.millisecs()
             elseif event == "key home none" then
                 selectfolder()
-                patternloadtime = g.millisecs()
             elseif event == "key enter none" or event == "key return none" then
                 generating = 1 - generating
             elseif event == "key o none" then
