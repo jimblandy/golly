@@ -4,7 +4,7 @@
 -- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 14
+-- Build 15
 
 local g = golly()
 local gp = require "gplus"
@@ -263,7 +263,7 @@ local function drawspeed(x, y)
             message = message..floor(remain / 60).."m"..(remain % 60).."s"
         else
             if remain < 10 then
-                remain = remaintime / 1000
+                remain = floor(remaintime / 100) / 10
                 if remain < 0 then remain = 0 end
                 message = message..string.format("%.1f", remain).."s"
             else
