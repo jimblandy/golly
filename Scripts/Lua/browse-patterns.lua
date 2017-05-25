@@ -4,7 +4,7 @@
 -- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 16
+-- Build 17
 
 local g = golly()
 local gp = require "gplus"
@@ -304,6 +304,7 @@ local function updatenextbutton()
             if wd > nextbutton.wd then
                 wd = nextbutton.wd
             end
+            -- shade a proportion of the next button in green
             ov("copy "..x.." "..y.." "..wd.." "..ht.." "..clipname)
             ov("target "..clipname)
             ov("rgba 40 192 0 255")
@@ -311,7 +312,6 @@ local function updatenextbutton()
             ov("target")
             ov("blend 0")
             ov("paste "..x.." "..y.." "..clipname)
-            ov("delete "..clipname)
         end
     end
 end
@@ -352,6 +352,10 @@ end
 --------------------------------------------------------------------------------
 
 local function drawinfo()
+    -- move the first option page control down since it won't have moved if show info
+    -- in on first viewed pattern didn't have any pattern comments
+    startcheck.y = guiht + guiht + gapy
+
     -- draw the info background
     ov(toolbarbgcolor)
     ov("fill 0 "..guiht.." "..guiwd.." "..guiht)
