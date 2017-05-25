@@ -4,7 +4,7 @@
 -- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 15
+-- Build 16
 
 local g = golly()
 local gp = require "gplus"
@@ -240,12 +240,20 @@ end
 
 --------------------------------------------------------------------------------
 
+local function getremainingtime()
+    local time = sliderpower ^ (maxsliderval - advancespeed)
+    local remain = remaintime / 1000
+    return time, remain
+end
+
+--------------------------------------------------------------------------------
+
 local function drawspeed(x, y)
     -- convert speed into labael
     local message = "Manual"
     if advancespeed > 0 then
         -- convert the slider position into minutes and seconds
-        local time = sliderpower ^ (maxsliderval - advancespeed)
+        local time, remain = getremainingtime()
         if time < 60 then
             if time < 10 then
                 message = string.format("%.1f", time).."s"
@@ -257,10 +265,9 @@ local function drawspeed(x, y)
         end
 
         -- convert remaining ms into minutes and seconds
-        local remain = floor(remaintime / 1000)
         message = message.."  (next in "
         if remain >= 60 then
-            message = message..floor(remain / 60).."m"..(remain % 60).."s"
+            message = message..floor(remain / 60).."m"..floor(remain % 60).."s"
         else
             if remain < 10 then
                 remain = floor(remaintime / 100) / 10
@@ -268,17 +275,45 @@ local function drawspeed(x, y)
                 message = message..string.format("%.1f", remain).."s"
             else
                 if remain < 0 then remain = 0 end
-                message = message..remain.."s"
+                message = message..floor(remain).."s"
             end
         end
         message = message..")"
     end
 
     -- update the label
-    op.maketext(message, "label", op.white, 2, 2, op.black)
-    ov("blend 1")
-    op.pastetext(x, y, op.identity, "label")
-    ov("blend 0")
+    if showoptions then
+        op.maketext(message, "label", op.white, 2, 2, op.black)
+        ov("blend 1")
+        op.pastetext(x, y, op.identity, "label")
+        ov("blend 0")
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function updatenextbutton()
+    if advancespeed > 0 then
+        local time, remain = getremainingtime()
+        local clipname = "nextcopy"
+        local x = nextbutton.x
+        local y = nextbutton.y
+        local ht = nextbutton.ht
+        local wd = floor(nextbutton.wd * ((time - remain) / time))
+        if wd > 0 then
+            if wd > nextbutton.wd then
+                wd = nextbutton.wd
+            end
+            ov("copy "..x.." "..y.." "..wd.." "..ht.." "..clipname)
+            ov("target "..clipname)
+            ov("rgba 40 192 0 255")
+            ov("replace 40 128 255 255")
+            ov("target")
+            ov("blend 0")
+            ov("paste "..x.." "..y.." "..clipname)
+            ov("delete "..clipname)
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -436,6 +471,8 @@ local function drawgui()
         end
     end
 
+    -- update the next button
+    updatenextbutton()
 end
 
 --------------------------------------------------------------------------------
@@ -455,6 +492,9 @@ end
 local function updatespeed(newval)
     advancespeed = newval
     savesettings()
+    patternloadtime = g.millisecs()
+    local targettime = (sliderpower ^ (maxsliderval - advancespeed)) * 1000
+    remaintime = targettime - (g.millisecs() - patternloadtime)
     refreshgui = true
     drawgui()
 end
