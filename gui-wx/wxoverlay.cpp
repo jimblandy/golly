@@ -5649,13 +5649,12 @@ const char* Overlay::DoUpdate()
     viewptr->Update();
     // DrawView in wxrender.cpp will call OnlyDrawOverlay (see above)
 
-    // better to do this on all platforms???!!!
-    // #ifdef __WXGTK__
+    #ifdef __WXGTK__
         // needed on Linux to see update immediately
         insideYield = true;
         wxGetApp().Yield(true);
         insideYield = false;
-    // #endif
+    #endif
 
     #ifdef ENABLE_SOUND
     // update sound engine (in case threading not supported)

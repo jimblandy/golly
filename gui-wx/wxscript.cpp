@@ -90,13 +90,12 @@ void DoAutoUpdate()
         }
         inscript = true;
 
-        // better to do this on all platforms???!!!
-        // #ifdef __WXGTK__
+        #ifdef __WXGTK__
             // needed on Linux to see update immediately
             insideYield = true;
             wxGetApp().Yield(true);
             insideYield = false;
-        // #endif
+        #endif
     }
 }
 
@@ -1321,13 +1320,12 @@ void GSF_update()
     
     inscript = true;
 
-    // better to do this on all platforms???!!!
-    // #ifdef __WXGTK__
+    #ifdef __WXGTK__
         // needed on Linux to see update immediately
         insideYield = true;
         wxGetApp().Yield(true);
         insideYield = false;
-    // #endif
+    #endif
 }
 
 // -----------------------------------------------------------------------------
