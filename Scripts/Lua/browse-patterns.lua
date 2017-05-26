@@ -4,7 +4,7 @@
 -- O to display options
 -- Esc to exit at current pattern
 -- Author: Chris Rowett (crowett@gmail.com)
--- Build 17
+-- Build 18
 
 local g = golly()
 local gp = require "gplus"
@@ -91,6 +91,9 @@ local matchlist = { rle = true, mcl = true, mc = true, lif = true, gz = true }
 
 -- remaining time before auto advance
 local remaintime = 0
+
+-- temporary file path
+local temppath = g.getdir("temp")
 
 --------------------------------------------------------------------------------
 
@@ -353,7 +356,7 @@ end
 
 local function drawinfo()
     -- move the first option page control down since it won't have moved if show info
-    -- in on first viewed pattern didn't have any pattern comments
+    -- in on and the first viewed pattern didn't have any pattern comments
     startcheck.y = guiht + guiht + gapy
 
     -- draw the info background
@@ -634,6 +637,8 @@ local function browsepatterns(startpattern)
                 generating = 1 - generating
             elseif event == "key o none" then
                 toggleoptions()
+            elseif event == "key i shift" then
+                toggleinfo()
             elseif event == "key space none" then
                 if generating == 1 then
                     generating = 0
@@ -706,7 +711,9 @@ function browse()
     -- try to get the current open pattern folder
     local pathname = g.getpath()
     local dirname = ""
-    if pathname == "" then
+    
+    -- check for no saved pattern or a pattern from the clipboard
+    if pathname == "" or pathname:sub(1, pathname:find(pathsep.."[^"..pathsep.."/]*$")) == temppath then
         -- ask for a folder
         dirname = g.opendialog("Choose a folder", "dir", g.getdir("app"))
     else
