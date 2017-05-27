@@ -785,7 +785,7 @@ local function click_in_slider(x, y)
             g.update()
             
             local prevx = x
-            local range = slider.maxval - slider.minval
+            local range = slider.maxval - slider.minval + 1
             local maxx = slider.startbar + slider.barwidth
             
             -- track horizontal movement of mouse until button is released
@@ -817,6 +817,7 @@ local function click_in_slider(x, y)
                             slider.pos = newpos
                             -- call this slider's handler
                             slider.onclick(newpos)
+                            g.update()
                         end
                         
                         prevx = x
