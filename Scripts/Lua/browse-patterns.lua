@@ -1,10 +1,18 @@
 -- Browse through patterns in a folder (and optionally subfolders)
--- Page Up/Page Down to cycle through patterns
--- Home to select a new folder to browse
--- O to display options
--- Esc to exit at current pattern
--- Author: Chris Rowett (crowett@gmail.com)
--- Build 18
+--
+-- Keyboard shortcuts:
+--   Page Down  - next pattern
+--   Page Up    - previous pattern
+--   Home       - select a new folder to browse
+--   O          - toggle options display
+--   Control-I  - toggle pattern information display
+--   Control-T  - toggle autofit
+--   Esc        - exit at current pattern
+--
+-- Author:
+--   Chris Rowett (crowett@gmail.com)
+
+local build = 19           -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -35,6 +43,7 @@ local prevbutton      -- Previous button
 local nextbutton      -- Next button
 local folderbutton    -- Folder button
 local exitbutton      -- Exit button
+local helpbutton      -- Help button
 local startcheck      -- AutoStart checkbox
 local fitcheck        -- AutoFit checkbox
 local speedslider     -- AutoAdvance speed slider
@@ -45,23 +54,24 @@ local loopcheck       -- Loop checkbox
 local infocheck       -- Show Info checkbox
 
 -- position
-local guiht        = 32    -- height of toolbar
-local guiwd        = 0     -- computed width of toolbar (from control widths)
-local optht        = 0     -- height of options panel
-local gapx         = 10    -- horitzonal gap between controls
-local gapy         = 4     -- vertical gap between controls
-local slidertextx  = 0     -- text position following slider
-local maxsliderval = 22    -- maxmimum slider value
-local sliderpower  = 1.32  -- slider power
+local guiht        = 32          -- height of toolbar
+local guiwd        = 0           -- computed width of toolbar (from control widths)
+local optht        = 0           -- height of options panel
+local gapx         = 10          -- horitzonal gap between controls
+local gapy         = 4           -- vertical gap between controls
+local slidertextx  = 0           -- text position following slider
+local maxsliderval = 22          -- maxmimum slider value
+local sliderpower  = 1.32        -- slider power
+local textrect     = "textrect"  -- clip name for clipping info text
 
 -- style
-local toolbarbgcolor = "rgba 0 0 0 192"
+local toolbarbgcolor = "0 0 0 192"
 
 -- flags
-local loadnew     = false  -- whether to load a new pattern
-local exitnow     = false  -- whether to exit
-local showoptions = false  -- whether options are displayed
-local refreshgui  = true   -- whether the gui needs to be refreshed
+local loadnew      = false  -- whether to load a new pattern
+local exitnow      = false  -- whether to exit
+local showoptions  = false  -- whether options are displayed
+local refreshgui   = true   -- whether the gui needs to be refreshed
 
 -- settings
 local autostart    = 0   -- whether to autostart playback on pattern load
@@ -94,6 +104,19 @@ local remaintime = 0
 
 -- temporary file path
 local temppath = g.getdir("temp")
+
+--------------------------------------------------------------------------------
+
+local function setfont()
+    op.textfont = "font 10 default-bold"
+    if g.os() == "Mac" then
+        op.yoffset = -1
+    end
+    if g.os() == "Linux" then
+        op.textfont = "font 10 default"
+    end
+    ov(op.textfont)
+end
 
 --------------------------------------------------------------------------------
 
@@ -165,79 +188,8 @@ local function getpatternlist(dir)
         if numsubs == 0 then
             g.note("No patterns found in:\n\n"..dir)
         else
-            g.note("Only subdirectories found in:\n\n"..dir)
+            g.note("Only subdirectories found in:\n\n"..dir.."\n\nInclude subdirectories option not selected.")
         end
-    end
-end
-
---------------------------------------------------------------------------------
-
-local function previouspattern()
-    local new = whichpattern - 1
-    if new < 1 then
-        if looping == 1 then
-            new = numpatterns
-        else
-            new = 1
-        end
-    end
-    if new ~= whichpattern then
-        whichpattern = new
-        loadnew = true
-    end
-end
-
---------------------------------------------------------------------------------
-
-local function nextpattern()
-    local new = whichpattern + 1
-    if new > numpatterns then
-        if looping == 1 then
-            new = 1
-        else
-            new = numpatterns
-        end
-    end
-    if new ~= whichpattern then
-        whichpattern = new
-        loadnew = true
-    end
-end
-
---------------------------------------------------------------------------------
-
-local function exitbrowser()
-    loadnew = true
-    exitnow = true
-end
-
---------------------------------------------------------------------------------
-
-local function toggleautostart()
-    autostart = 1 - autostart
-    savesettings()
-end
-
---------------------------------------------------------------------------------
-
-local function toggleautofit()
-    autofit = 1 - autofit
-    savesettings()
-end
-
---------------------------------------------------------------------------------
-
-local function selectfolder()
-    -- remove the filename from the supplied path
-    local current = patterns[whichpattern]
-    local dirname = current:sub(1, current:find(pathsep.."[^"..pathsep.."/]*$"))
-
-    -- ask for a folder
-    local dirname = g.opendialog("Choose a folder", "dir", dirname)
-    if dirname ~= "" then
-        getpatternlist(dirname)
-        whichpattern = 1
-        loadnew = true
     end
 end
 
@@ -247,6 +199,32 @@ local function getremainingtime()
     local time = sliderpower ^ (maxsliderval - advancespeed)
     local remain = remaintime / 1000
     return time, remain
+end
+
+--------------------------------------------------------------------------------
+
+local function updatenextbutton()
+    if advancespeed > 0 then
+        local time, remain = getremainingtime()
+        local clipname = "nextcopy"
+        local x = nextbutton.x
+        local y = nextbutton.y
+        local ht = nextbutton.ht
+        local wd = floor(nextbutton.wd * ((time - remain) / time))
+        if wd > 0 then
+            if wd > nextbutton.wd then
+                wd = nextbutton.wd
+            end
+            -- shade a proportion of the next button in green
+            ov("copy "..x.." "..y.." "..wd.." "..ht.." "..clipname)
+            ov("target "..clipname)
+            ov("rgba 40 192 0 255")
+            ov("replace 40 128 255 255")
+            ov("target")
+            ov("blend 0")
+            ov("paste "..x.." "..y.." "..clipname)
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -295,73 +273,10 @@ end
 
 --------------------------------------------------------------------------------
 
-local function updatenextbutton()
-    if advancespeed > 0 then
-        local time, remain = getremainingtime()
-        local clipname = "nextcopy"
-        local x = nextbutton.x
-        local y = nextbutton.y
-        local ht = nextbutton.ht
-        local wd = floor(nextbutton.wd * ((time - remain) / time))
-        if wd > 0 then
-            if wd > nextbutton.wd then
-                wd = nextbutton.wd
-            end
-            -- shade a proportion of the next button in green
-            ov("copy "..x.." "..y.." "..wd.." "..ht.." "..clipname)
-            ov("target "..clipname)
-            ov("rgba 40 192 0 255")
-            ov("replace 40 128 255 255")
-            ov("target")
-            ov("blend 0")
-            ov("paste "..x.." "..y.." "..clipname)
-        end
-    end
-end
-
---------------------------------------------------------------------------------
-
-local function togglespeed()
-    keepspeed = 1 - keepspeed
-    savesettings()
-end
-
---------------------------------------------------------------------------------
-
-local function toggleloop()
-    looping = 1 - looping
-    savesettings()
-end
-
---------------------------------------------------------------------------------
-
-local function togglesubdirs()
-    subdirs = 1 - subdirs
-    savesettings()
-end
-
---------------------------------------------------------------------------------
-
-local function toggleoptions()
-    showoptions = not showoptions
-    if showoptions then
-        optionsbutton.setlabel("Close", false)
-    else
-        optionsbutton.setlabel("Options", false)
-    end
-    refreshgui = true
-end
-
---------------------------------------------------------------------------------
-
 local function drawinfo()
     -- move the first option page control down since it won't have moved if show info
     -- in on and the first viewed pattern didn't have any pattern comments
     startcheck.y = guiht + guiht + gapy
-
-    -- draw the info background
-    ov(toolbarbgcolor)
-    ov("fill 0 "..guiht.." "..guiwd.." "..guiht)
 
     -- compute how far to move the text based on time since last update
     local now = g.millisecs()
@@ -373,14 +288,20 @@ local function drawinfo()
     end
 
     -- draw the info text
+    ov("target "..textrect)
+    ov("blend 0")
+    ov("rgba "..toolbarbgcolor)
+    ov("fill")
     ov("blend 1")
     local x = floor(infox)
     local y = infoht[1]
     for i = 1, infonum do
-        op.pastetext(x, guiht + floor((guiht - y) / 2), op.identity, infoclip..i)
+        op.pastetext(x, floor((guiht - y) / 2), op.identity, infoclip..i)
         x = x + infowd[i] - 2  -- make subsequent clips overlap slightly to remove text gap
     end
+    ov("target")
     ov("blend 0")
+    ov("paste 0 "..guiht.." "..textrect)
 end
 
 --------------------------------------------------------------------------------
@@ -398,7 +319,7 @@ local function drawgui()
 
         -- draw toolbar background
         ov("blend 0")
-        ov(toolbarbgcolor)
+        ov("rgba "..toolbarbgcolor)
         ov("fill 0 0 "..guiwd.." "..guiht)
     
         -- draw main buttons
@@ -412,6 +333,8 @@ local function drawgui()
         x = x + folderbutton.wd + gapx
         optionsbutton.show(x, y)
         x = x + optionsbutton.wd + gapx
+        helpbutton.show(x, y)
+        x = x + helpbutton.wd + gapx
         exitbutton.show(x, y)
 
         -- compute offset for options if info is displayed
@@ -484,6 +407,198 @@ end
 
 --------------------------------------------------------------------------------
 
+local function showhelp()
+    local helptext = "Pattern Browser                                 build "..build.."\n"
+    helptext = helptext..
+[[
+
+Features:
+
+- Browse through patterns in a folder manually by
+  clicking the "Next" or "Previous" buttons.
+- Select a new folder to browse by clicking the
+  "Folder" button.
+- Starts in the current pattern's folder or prompts
+  for a starting folder.
+
+Options:
+
+- Automatically advance to the next pattern after
+  a given amount of time.
+- Start running each pattern as it loads.
+- Fit the pattern to the display while it runs.
+- Show scrolling pattern information.
+- Include patterns in subdirectories.
+- Loop back to the first pattern after the last pattern.
+- Maintain the step speed across patterns.
+
+Note that options are saved across sessions.
+
+Special keys and their actions:
+
+Page Down - next pattern
+Page Up   - previous pattern
+Home      - select new folder to browse
+O         - toggle options display
+?         - display this help information
+Esc       - exit pattern browser
+Ctrl-I    - toggle scrolling pattern information
+Ctrl-T    - toggle autofit
+
+          (click or hit any key to close help) ]]
+
+    -- draw help text
+    ov("font 11 mono-bold")
+    ov(op.black)
+    local w, h = gp.split(ov("text temp "..helptext))
+    w = tonumber(w) + 20
+    h = tonumber(h) + 20
+    local x = floor((viewwd - w) / 2)
+    local y = floor((viewht - h) / 2)
+    ov(op.gray)
+    ov("fill "..x.." "..y.." "..w.." "..h)
+    ov("rgba 255 253 217 255") -- pale yellow (matches Help window)
+    ov("fill "..(x+2).." "..(y+2).." "..(w-4).." "..(h-4))
+    local oldblend = ov("blend 1")
+    ov("paste "..(x+10).." "..(y+10).." temp")
+    ov("blend "..oldblend)
+    ov("update")
+
+
+    -- save current time
+    local now = g.millisecs()
+
+    -- wait for a key or click
+    while true do
+        local event = g.getevent()
+        if event:find("^key") or event:find("^oclick") then
+            break
+        end
+    end
+
+    -- clear help
+    ov("rgba 0 0 0 0")
+    ov("blend 0")
+    ov("fill "..x.." "..y.." "..w.." "..h)
+    refreshgui = true
+
+    -- reset font
+    setfont()
+
+    -- ensure scrolling info continues from where it paused
+    infotime = g.millisecs()
+
+    -- adjust pattern load time
+    patternloadtime = patternloadtime + (g.millisecs() - now)
+end
+
+--------------------------------------------------------------------------------
+
+local function previouspattern()
+    local new = whichpattern - 1
+    if new < 1 then
+        if looping == 1 then
+            new = numpatterns
+        else
+            new = 1
+        end
+    end
+    if new ~= whichpattern then
+        whichpattern = new
+        loadnew = true
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function nextpattern()
+    local new = whichpattern + 1
+    if new > numpatterns then
+        if looping == 1 then
+            new = 1
+        else
+            new = numpatterns
+        end
+    end
+    if new ~= whichpattern then
+        whichpattern = new
+        loadnew = true
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function exitbrowser()
+    loadnew = true
+    exitnow = true
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleautostart()
+    autostart = 1 - autostart
+    savesettings()
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleautofit()
+    autofit = 1 - autofit
+    savesettings()
+    refreshgui = true
+end
+
+--------------------------------------------------------------------------------
+
+local function selectfolder()
+    -- remove the filename from the supplied path
+    local current = patterns[whichpattern]
+    local dirname = current:sub(1, current:find(pathsep.."[^"..pathsep.."/]*$"))
+
+    -- ask for a folder
+    local dirname = g.opendialog("Choose a folder", "dir", dirname)
+    if dirname ~= "" then
+        getpatternlist(dirname)
+        whichpattern = 1
+        loadnew = true
+    end
+end
+
+--------------------------------------------------------------------------------
+
+local function togglespeed()
+    keepspeed = 1 - keepspeed
+    savesettings()
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleloop()
+    looping = 1 - looping
+    savesettings()
+end
+
+--------------------------------------------------------------------------------
+
+local function togglesubdirs()
+    subdirs = 1 - subdirs
+    savesettings()
+end
+
+--------------------------------------------------------------------------------
+
+local function toggleoptions()
+    showoptions = not showoptions
+    if showoptions then
+        optionsbutton.setlabel("Close", false)
+    else
+        optionsbutton.setlabel("Options", false)
+    end
+    refreshgui = true
+end
+
+--------------------------------------------------------------------------------
+
 local function toggleinfo()
     showinfo = 1 - showinfo
     savesettings()
@@ -516,21 +631,15 @@ local function createoverlay()
     op.textgap = 8
 
     -- set font
-    op.textfont = "font 10 default-bold"
-    if g.os() == "Mac" then
-        op.yoffset = -1
-    end
-    if g.os() == "Linux" then
-        op.textfont = "font 10 default"
-    end
-    ov(op.textfont)
+    setfont()
 
     -- create gui buttons
     op.textshadowx = 2
     op.textshadowy = 2
     prevbutton = op.button("Previous", previouspattern)
     nextbutton = op.button("Next", nextpattern)
-    exitbutton = op.button("Exit", exitbrowser)
+    exitbutton = op.button("X", exitbrowser)
+    helpbutton = op.button("?", showhelp)
     folderbutton = op.button("Folder", selectfolder)
     startcheck = op.checkbox("Start playback on pattern load", op.white, toggleautostart)
     fitcheck = op.checkbox("Fit pattern to display", op.white, toggleautofit)
@@ -541,11 +650,13 @@ local function createoverlay()
     loopcheck = op.checkbox("Loop pattern list", op.white, toggleloop)
     infocheck = op.checkbox("Show pattern information", op.white, toggleinfo)
 
-    -- resize the overlay to fit the controls
+    -- get the size of the gui controls
     optht = startcheck.ht + fitcheck.ht + infocheck.ht + subdircheck.ht + speedslider.ht
     optht = optht + loopcheck.ht + keepspeedcheck.ht + 8 * gapy
-    guiwd = prevbutton.wd + nextbutton.wd + folderbutton.wd + optionsbutton.wd + exitbutton.wd + 6 * gapx
-    ov("resize "..guiwd.." "..(guiht + optht + guiht))
+    guiwd = prevbutton.wd + nextbutton.wd + folderbutton.wd + optionsbutton.wd + helpbutton.wd + exitbutton.wd + 7 * gapx
+
+    -- create the clip for clipping info text
+    ov("create "..guiwd.." "..guiht.." "..textrect)
 
     -- draw the overlay
     drawgui()
@@ -566,6 +677,7 @@ local function loadinfo()
          if clean ~= "" then
              -- split into a number of clips due to bitmap width limits
              infonum = floor((clean:len() - 1) / infochunk) + 1
+             ov("blend 0")
 
              -- create the text clips
              for i = 1, infonum do
@@ -578,6 +690,36 @@ local function loadinfo()
          end
      end
      infotime = g.millisecs()
+end
+
+--------------------------------------------------------------------------------
+
+function checkforresize()
+    local newwd, newht = g.getview(g.getlayer())
+    if newwd ~= viewwd or newht ~= viewht then
+        -- hide controls so show draws correct background
+        prevbutton.hide()
+        nextbutton.hide()
+        folderbutton.hide()
+        exitbutton.hide()
+        helpbutton.hide()
+        startcheck.hide()
+        fitcheck.hide()
+        speedslider.hide()
+        optionsbutton.hide()
+        subdircheck.hide()
+        keepspeedcheck.hide()
+        loopcheck.hide()
+        infocheck.hide()
+
+        -- resize overlay
+        if newwd < 1 then newwd = 1 end
+        if newht < 1 then newht = 1 end
+        viewwd = newwd
+        viewht = newht
+        ov("resize "..viewwd.." "..viewht)
+        refreshgui = true
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -626,7 +768,13 @@ local function browsepatterns(startpattern)
         -- decode key presses
         loadnew = false
         while not loadnew do
+            -- check for window reisze
+            checkforresize()
+
+            -- check for event
             local event = op.process(g.getevent())
+
+            -- process key events
             if event == "key pagedown none" then
                 nextpattern()
             elseif event == "key pageup none" then
@@ -637,8 +785,10 @@ local function browsepatterns(startpattern)
                 generating = 1 - generating
             elseif event == "key o none" then
                 toggleoptions()
-            elseif event == "key i shift" then
+            elseif event == "key i ctrl" then
                 toggleinfo()
+            elseif event == "key t ctrl" then
+                toggleautofit()
             elseif event == "key space none" then
                 if generating == 1 then
                     generating = 0
@@ -654,7 +804,10 @@ local function browsepatterns(startpattern)
                 else
                     g.step()
                 end
+            elseif event == "key ? none" then
+                showhelp()
             else
+               -- pass event to Golly for processing
                g.doevent(event)
             end
 
