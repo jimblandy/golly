@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 19           -- build number
+local build = 20           -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -153,6 +153,8 @@ end
 --------------------------------------------------------------------------------
 
 local function findpatterns(dir)
+    g.show("Searching for patterns in "..dir)
+    g.update()
     local files = g.getfiles(dir)
     for _, name in ipairs(files) do
         if name:sub(1,1) == "." then
@@ -182,7 +184,6 @@ end
 local function getpatternlist(dir)
     numpatterns = 0
     numsubs = 0
-    g.show(busy)
     findpatterns(dir)
     if numpatterns == 0 then
         if numsubs == 0 then
@@ -443,7 +444,7 @@ O         - toggle options display
 ?         - display this help information
 Esc       - exit pattern browser
 Ctrl-I    - toggle scrolling pattern information
-Ctrl-T    - toggle autofit
+Ctrl-T    - toggle autofit during playback
 
           (click or hit any key to close help) ]]
 
@@ -830,14 +831,16 @@ local function browsepatterns(startpattern)
                     now = t
                     target = delay
                 end
-            end
-            if autofit == 1 then
-                -- get pattern bounding box
-                local rect = g.getrect()
-                if #rect ~= 0 then
-                    -- check if entire bounding box is visible in the viewport
-                    if not g.visrect(rect) then
-                        g.fit()
+
+                -- check for autofit when running
+                if autofit == 1 then
+                    -- get pattern bounding box
+                    local rect = g.getrect()
+                    if #rect ~= 0 then
+                        -- check if entire bounding box is visible in the viewport
+                        if not g.visrect(rect) then
+                            g.fit()
+                        end
                     end
                 end
             end
