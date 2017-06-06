@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 20           -- build number
+local build = 21   -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -674,7 +674,7 @@ local function loadinfo()
      local info = g.getinfo()
      if info ~= "" then
          -- format into a single line
-         local clean = info:gsub("#CXRLE.-\n", ""):gsub("#C", ""):gsub("#D", ""):gsub("#", ""):gsub("\n", " "):gsub("  *", " ")
+         local clean = info:gsub("#CXRLE.-\n", ""):gsub("#[CDNO ]? *", ""):gsub(" +", " "):gsub(" *\n", " ")
          if clean ~= "" then
              -- split into a number of clips due to bitmap width limits
              infonum = floor((clean:len() - 1) / infochunk) + 1
