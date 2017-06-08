@@ -416,6 +416,10 @@ const char *readmcell(lifealgo &imp, char *line) {
    const char *errmsg;
    bool sawrule = false;            // saw explicit rule?
    bool extendedHL = false;         // special-case rule translation for extended HistoricalLife rules
+   bool useltl = false;             // using a Larger than Life rule?
+   char ltlrule[MAXRULESIZE];       // the Larger than Life rule (without any suffix)
+   int defwd, defht;                // default grid size for Larger than Life
+   int Lcount = 0;                  // number of #L lines seen
 
    while (getline(line, LINESIZE)) {
       if (line[0] == '#') {
@@ -426,6 +430,24 @@ const char *readmcell(lifealgo &imp, char *line) {
                errmsg = imp.setrule("B3/S23");
                if (errmsg) return errmsg;
                sawrule = true;
+            }
+
+            Lcount++;
+            if (Lcount == 1 && useltl) {
+                // call setrule again with correct width and height so we don't need
+                // yet another setrule call at the end
+                char rule[MAXRULESIZE];
+                if (wd == 0 && ht == 0) {
+                    // no #BOARD line was seen so use default size saved earlier
+                    wd = defwd;
+                    ht = defht;
+                }
+                if (wrapped)
+                    sprintf(rule, "%s:T%d,%d", ltlrule, wd, ht);
+                else
+                    sprintf(rule, "%s:P%d,%d", ltlrule, wd, ht);
+                errmsg = imp.setrule(rule);
+                if (errmsg) return errmsg;
             }
 
             int n = 0;
@@ -468,6 +490,10 @@ const char *readmcell(lifealgo &imp, char *line) {
                }
             }
 
+         // look for Larger than Life
+         } else if (strncmp(line, "#GAME Larger than Life", 22) == 0) {
+            useltl = true;
+
          // look for bounded universe
          } else if (strncmp(line, "#BOARD ", 7) == 0) {
             sscanf(line + 7, "%dx%d", &wd, &ht);
@@ -509,6 +535,13 @@ const char *readmcell(lifealgo &imp, char *line) {
                *p = 0;
                errmsg = imp.setrule(ruleptr);
                if (errmsg) return errmsg;
+               if (useltl) {
+                  // save suffix-less rule string for later use when we see first #L line
+                  sprintf(ltlrule, "%s", ruleptr);
+                  // also save default grid size in case there is no #BOARD line
+                  defwd = imp.gridwd;
+                  defht = imp.gridht;
+               }
                sawrule = true;
             }
          }
@@ -516,17 +549,21 @@ const char *readmcell(lifealgo &imp, char *line) {
    }
    
    if (wd > 0 || ht > 0) {
-      // grid is bounded, so append suitable suffix to rule
-      char rule[MAXRULESIZE];
-      if (wrapped)
-         sprintf(rule, "%s:T%d,%d", imp.getrule(), wd, ht);
-      else
-         sprintf(rule, "%s:P%d,%d", imp.getrule(), wd, ht);
-      errmsg = imp.setrule(rule);
-      if (errmsg) {
-         // should never happen
-         lifewarning("Bug in readmcell code!");
-         return errmsg;
+      if (useltl) {
+         // setrule has already been called above
+      } else {
+         // grid is bounded, so append suitable suffix to rule
+         char rule[MAXRULESIZE];
+         if (wrapped)
+            sprintf(rule, "%s:T%d,%d", imp.getrule(), wd, ht);
+         else
+            sprintf(rule, "%s:P%d,%d", imp.getrule(), wd, ht);
+         errmsg = imp.setrule(rule);
+         if (errmsg) {
+            // should never happen
+            lifewarning("Bug in readmcell code!");
+            return errmsg;
+         }
       }
       // shift pattern to middle of bounded grid
       imp.endofpattern();
@@ -912,7 +949,7 @@ const char *readcomments(const char *filename, char **commptr)
       }
 
    } else {
-      // no comments in text pattern file???
+      // no comments in text pattern file
    }
 
    lifeendprogress();

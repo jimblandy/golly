@@ -334,7 +334,7 @@ struct loadcmd : public cmdbase {
 struct stepcmd : public cmdbase {
    stepcmd() : cmdbase("step", "b") {}
    virtual void doit() {
-      if (imp->gridwd > 0 || imp->gridht > 0) {
+      if (imp->unbounded && (imp->gridwd > 0 || imp->gridht > 0)) {
          // bounded grid, so must step by 1
          imp->setIncrement(1) ;
          if (!imp->CreateBorderCells()) exit(10) ;
@@ -618,7 +618,7 @@ case 's':
       err = imp->setrule(liferule) ;
       if (err) lifefatal(err) ;
    }
-   bool boundedgrid = (imp->gridwd > 0 || imp->gridht > 0) ;
+   bool boundedgrid = imp->unbounded && (imp->gridwd > 0 || imp->gridht > 0) ;
    if (boundedgrid) {
       hyper = 0 ;
       inc = 1 ;     // only step by 1

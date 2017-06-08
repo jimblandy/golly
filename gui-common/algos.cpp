@@ -26,8 +26,9 @@
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "jvnalgo.h"
 #include "generationsalgo.h"
+#include "ltlalgo.h"
+#include "jvnalgo.h"
 #include "ruleloaderalgo.h"
 
 #include "utils.h"      // for Fatal, Warning, SetColor, Poller
@@ -899,8 +900,9 @@ void InitAlgorithms()
     qlifealgo::doInitializeAlgoInfo(AlgoData::tick());
     hlifealgo::doInitializeAlgoInfo(AlgoData::tick());
     
-    // these algos can be in any order (but nicer if alphabetic)
+    // these algos can be in any order
     generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
+    ltlalgo::doInitializeAlgoInfo(AlgoData::tick());
     jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
     
     // RuleLoader must be last so we can display detailed error messages
@@ -921,9 +923,9 @@ void InitAlgorithms()
             case 0: SetColor(ad->statusrgb, 255, 255, 206); break;  // pale yellow
             case 1: SetColor(ad->statusrgb, 226, 250, 248); break;  // pale blue
             case 2: SetColor(ad->statusrgb, 255, 233, 233); break;  // pale pink
-            case 3: SetColor(ad->statusrgb, 225, 255, 225); break;  // pale green
-            case 4: SetColor(ad->statusrgb, 243, 225, 255); break;  // pale purple
-            case 5: SetColor(ad->statusrgb, 255, 220, 180); break;  // pale orange
+            case 3: SetColor(ad->statusrgb, 255, 227, 178); break;  // pale orange
+            case 4: SetColor(ad->statusrgb, 225, 255, 225); break;  // pale green
+            case 5: SetColor(ad->statusrgb, 243, 225, 255); break;  // pale purple
             case 6: SetColor(ad->statusrgb, 200, 255, 255); break;  // pale aqua
             case 7: SetColor(ad->statusrgb, 200, 200, 200); break;  // pale gray
             case 8: SetColor(ad->statusrgb, 255, 255, 255); break;  // white

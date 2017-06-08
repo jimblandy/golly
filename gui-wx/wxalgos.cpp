@@ -34,6 +34,7 @@
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "generationsalgo.h"
+#include "ltlalgo.h"
 #include "jvnalgo.h"
 #include "ruleloaderalgo.h"
 
@@ -778,8 +779,9 @@ void InitAlgorithms()
     qlifealgo::doInitializeAlgoInfo(AlgoData::tick());
     hlifealgo::doInitializeAlgoInfo(AlgoData::tick());
     
-    // these algos can be in any order (but nicer if alphabetic)
+    // these algos can be in any order
     generationsalgo::doInitializeAlgoInfo(AlgoData::tick());
+    ltlalgo::doInitializeAlgoInfo(AlgoData::tick());
     jvnalgo::doInitializeAlgoInfo(AlgoData::tick());
     
     // RuleLoader must be last so we can display detailed error messages
@@ -804,16 +806,16 @@ void InitAlgorithms()
         algomenupop->AppendCheckItem(ID_ALGO0 + i, name);
         
         // does algo use hashing?
-        ad->canhash = ad->defbase == 8;    //!!! safer method needed???
+        ad->canhash = ad->defbase == 8;    // safer method needed???
         
         // set status bar background by cycling thru a few pale colors
         switch (i % 9) {
             case 0: ad->statusrgb.Set(255, 255, 206); break;  // pale yellow
             case 1: ad->statusrgb.Set(226, 250, 248); break;  // pale blue
             case 2: ad->statusrgb.Set(255, 233, 233); break;  // pale pink
-            case 3: ad->statusrgb.Set(225, 255, 225); break;  // pale green
-            case 4: ad->statusrgb.Set(243, 225, 255); break;  // pale purple
-            case 5: ad->statusrgb.Set(255, 220, 180); break;  // pale orange
+            case 3: ad->statusrgb.Set(255, 227, 178); break;  // pale orange
+            case 4: ad->statusrgb.Set(225, 255, 225); break;  // pale green
+            case 5: ad->statusrgb.Set(243, 225, 255); break;  // pale purple
             case 6: ad->statusrgb.Set(200, 255, 255); break;  // pale aqua
             case 7: ad->statusrgb.Set(200, 200, 200); break;  // pale gray
             case 8: ad->statusrgb.Set(255, 255, 255); break;  // white

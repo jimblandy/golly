@@ -195,7 +195,6 @@ private:
    void new_ngens(int newval) ;
    int log2(unsigned int n) ;
    ghnode *runpattern() ;
-   void clearrect(int x, int y, int w, int h) ;
    void renderbm(int x, int y) ;
    void fill_ll(int d) ;
    void drawghnode(ghnode *n, int llx, int lly, int depth, ghnode *z) ;

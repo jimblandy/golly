@@ -86,12 +86,12 @@ WX_LDFLAGS = `wx-config --libs`
 
 OBJDIR = ObjGTK
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
-   $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
-   $(BASEDIR)/platform.h $(BASEDIR)/qlifealgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
+   $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
+   $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
    $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
    $(BASEDIR)/ruleloaderalgo.h
 BASEOBJ = $(OBJDIR)/bigint.o $(OBJDIR)/lifealgo.o $(OBJDIR)/hlifealgo.o \
-   $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o \
+   $(OBJDIR)/hlifedraw.o $(OBJDIR)/qlifealgo.o $(OBJDIR)/qlifedraw.o $(OBJDIR)/ltlalgo.o $(OBJDIR)/ltldraw.o \
    $(OBJDIR)/jvnalgo.o $(OBJDIR)/ruletreealgo.o $(OBJDIR)/ruletable_algo.o $(OBJDIR)/ruleloaderalgo.o \
    $(OBJDIR)/ghashbase.o $(OBJDIR)/ghashdraw.o $(OBJDIR)/readpattern.o \
    $(OBJDIR)/writepattern.o $(OBJDIR)/liferules.o $(OBJDIR)/util.o \
@@ -155,6 +155,12 @@ $(OBJDIR)/qlifealgo.o: $(BASEDIR)/qlifealgo.cpp
 
 $(OBJDIR)/qlifedraw.o: $(BASEDIR)/qlifedraw.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/qlifedraw.cpp
+
+$(OBJDIR)/ltlalgo.o: $(BASEDIR)/ltlalgo.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/ltlalgo.cpp
+
+$(OBJDIR)/ltldraw.o: $(BASEDIR)/ltldraw.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/ltldraw.cpp
 
 $(OBJDIR)/jvnalgo.o: $(BASEDIR)/jvnalgo.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ $(BASEDIR)/jvnalgo.cpp

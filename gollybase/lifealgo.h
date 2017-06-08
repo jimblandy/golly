@@ -66,7 +66,8 @@ class lifealgo {
 public:
    lifealgo() : generation(0), increment(0), timeline(), grid_type(SQUARE_GRID)
       {  poller = &default_poller ;
-         gridwd = gridht = 0 ;         // default is an unbounded universe
+         gridwd = gridht = 0 ;      // default is an unbounded universe
+         unbounded = true ;         // most algorithms use an unbounded universe
       }
    virtual ~lifealgo() ;
    virtual void clearall() = 0 ;
@@ -135,18 +136,31 @@ public:
    bool htwist, vtwist ;            // Klein bottle if either is true,
                                     // or cross-surface if both are true
    int hshift, vshift ;             // torus with horizontal or vertical shift
+
    const char* setgridsize(const char* suffix) ;
    // use in setrule() to parse a suffix like ":T100,200" and set
    // the above parameters
+
    const char* canonicalsuffix() ;
    // use in setrule() to return the canonical version of suffix;
    // eg. ":t0020" would be converted to ":T20,0"
+
    bool CreateBorderCells() ;
    bool DeleteBorderCells() ;
    // the above routines can be called around step() to create the
    // illusion of a bounded universe (note that increment must be 1);
    // they return false if the pattern exceeds the editing limits
-   
+
+   bool unbounded;
+   // algorithms that uses a finite universe should set this flag false
+   // so the GUI code won't call CreateBorderCells or DeleteBorderCells
+
+   vector<int> clipped_cells;
+   // algorithms that uses a finite universe need to save live cells
+   // that might be clipped when a setrule call reduces the size of
+   // the universe (this allows the GUI code to restore the cells
+   // if the rule change is undone)
+
    enum TGridType { SQUARE_GRID, TRI_GRID, HEX_GRID, VN_GRID } ;
    TGridType getgridtype() const { return grid_type ; }
 

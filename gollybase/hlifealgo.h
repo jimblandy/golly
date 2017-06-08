@@ -287,7 +287,6 @@ private:
    void new_ngens(int newval) ;
    int log2(unsigned int n) ;
    node *runpattern() ;
-   void clearrect(int x, int y, int w, int h) ;
    void renderbm(int x, int y) ;
    void fill_ll(int d) ;
    void drawnode(node *n, int llx, int lly, int depth, node *z) ;

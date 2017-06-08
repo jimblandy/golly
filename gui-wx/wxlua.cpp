@@ -871,7 +871,7 @@ static int g_evolve(lua_State* L)
     
     // advance pattern by ngens
     mainptr->generating = true;
-    if (tempalgo->gridwd > 0 || tempalgo->gridht > 0) {
+    if (tempalgo->unbounded && (tempalgo->gridwd > 0 || tempalgo->gridht > 0)) {
         // a bounded grid must use an increment of 1 so we can call
         // CreateBorderCells and DeleteBorderCells around each step()
         tempalgo->setIncrement(1);

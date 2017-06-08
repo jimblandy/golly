@@ -91,13 +91,13 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 
 OBJDIR = ObjWin
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
-    $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
-    $(BASEDIR)/platform.h $(BASEDIR)/qlifealgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
+    $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
+    $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
     $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
     $(BASEDIR)/ruleloaderalgo.h
 BASEO = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
     $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
-    $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
+    $(OBJDIR)/ltlalgo.obj $(OBJDIR)/ltldraw.obj $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
     $(OBJDIR)/ruletable_algo.obj $(OBJDIR)/ghashbase.obj $(OBJDIR)/ruleloaderalgo.obj \
     $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
     $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
@@ -454,6 +454,12 @@ $(OBJDIR)/qlifealgo.obj: $(BASEDIR)/qlifealgo.cpp
 
 $(OBJDIR)/qlifedraw.obj: $(BASEDIR)/qlifedraw.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/qlifedraw.cpp
+
+$(OBJDIR)/ltlalgo.obj: $(BASEDIR)/ltlalgo.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ltlalgo.cpp
+
+$(OBJDIR)/ltldraw.obj: $(BASEDIR)/ltldraw.cpp
+	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ltldraw.cpp
 
 $(OBJDIR)/jvnalgo.obj: $(BASEDIR)/jvnalgo.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/jvnalgo.cpp

@@ -30,8 +30,6 @@
 // Golly supports multiple algorithms.  The first algorithm
 // registered must *always* be qlifealgo.  The second must
 // *always* be hlifealgo.  (These are to support old scripts.)
-// The order of the rest do not matter and indeed should soon
-// be capable of being dynamic.
 
 enum {
     QLIFE_ALGO,    // QuickLife

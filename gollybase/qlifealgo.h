@@ -264,9 +264,7 @@ private:
    void renderbm(int x, int y, int xsize, int ysize) ;
    void BlitCells(supertile *p, int xoff, int yoff, int wd, int ht, int lev) ;
    void ShrinkCells(supertile *p, int xoff, int yoff, int wd, int ht, int lev) ;
-   void clearrect(int minx, int miny, int w, int h) ;
    int nextcell(int x, int y, supertile *n, int lev) ;
-   void drawshpixel(int x, int y) ;
    void fill_ll(int d) ;
    int lowsub(vector<supertile*> &src, vector<supertile*> &dst, int lev) ;
    int highsub(vector<supertile*> &src, vector<supertile*> &dst, int lev) ;

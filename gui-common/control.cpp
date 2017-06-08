@@ -483,7 +483,7 @@ void StopGenerating()
 void NextGeneration(bool useinc)
 {
     lifealgo* curralgo = currlayer->algo;
-    bool boundedgrid = (curralgo->gridwd > 0 || curralgo->gridht > 0);
+    bool boundedgrid = curralgo->unbounded && (curralgo->gridwd > 0 || curralgo->gridht > 0);
 
     if (generating) {
         // we were called via timer so StartGenerating has already checked
@@ -578,83 +578,101 @@ void ClearOutsideGrid()
     // might also need to truncate selection
     currlayer->currsel.CheckGridEdges();
 
-    if (currlayer->algo->isEmpty()) return;
-
-    // check if current pattern is too big to use nextcell/setcell
-    bigint top, left, bottom, right;
-    currlayer->algo->findedges(&top, &left, &bottom, &right);
-    if ( OutsideLimits(top, left, bottom, right) ) {
-        ErrorMessage("Pattern too big to check (outside +/- 10^9 boundary).");
-        return;
-    }
-
-    int itop = top.toint();
-    int ileft = left.toint();
-    int ibottom = bottom.toint();
-    int iright = right.toint();
-
-    // no need to do anything if pattern is entirely within grid
-    int gtop = currlayer->algo->gridtop.toint();
-    int gleft = currlayer->algo->gridleft.toint();
-    int gbottom = currlayer->algo->gridbottom.toint();
-    int gright = currlayer->algo->gridright.toint();
-    if (currlayer->algo->gridwd == 0) {
-        // grid has infinite width
-        gleft = INT_MIN;
-        gright = INT_MAX;
-    }
-    if (currlayer->algo->gridht == 0) {
-        // grid has infinite height
-        gtop = INT_MIN;
-        gbottom = INT_MAX;
-    }
-    if (itop >= gtop && ileft >= gleft && ibottom <= gbottom && iright <= gright) {
-        return;
-    }
-
-    int ht = ibottom - itop + 1;
-    int cx, cy;
-
-    // for showing accurate progress we need to add pattern height to pop count
-    // in case this is a huge pattern with many blank rows
-    double maxcount = currlayer->algo->getPopulation().todouble() + ht;
-    double accumcount = 0;
-    int currcount = 0;
-    bool abort = false;
-    int v = 0;
-    BeginProgress("Checking cells outside grid");
-
-    lifealgo* curralgo = currlayer->algo;
-    for ( cy=itop; cy<=ibottom; cy++ ) {
-        currcount++;
-        for ( cx=ileft; cx<=iright; cx++ ) {
-            int skip = curralgo->nextcell(cx, cy, v);
-            if (skip >= 0) {
-                // found next live cell in this row
-                cx += skip;
-                if (cx < gleft || cx > gright || cy < gtop || cy > gbottom) {
-                    // clear cell outside grid
-                    if (savechanges) currlayer->undoredo->SaveCellChange(cx, cy, v, 0);
-                    curralgo->setcell(cx, cy, 0);
-                    patternchanged = true;
+    if (!currlayer->algo->unbounded) {
+        if (currlayer->algo->clipped_cells.size() > 0) {
+            // cells outside the grid were clipped
+            if (savechanges) {
+                for (size_t i = 0; i < currlayer->algo->clipped_cells.size(); i += 3) {
+                    int x = currlayer->algo->clipped_cells[i];
+                    int y = currlayer->algo->clipped_cells[i+1];
+                    int s = currlayer->algo->clipped_cells[i+2];
+                    currlayer->undoredo->SaveCellChange(x, y, s, 0);
                 }
-                currcount++;
-            } else {
-                cx = iright;  // done this row
             }
-            if (currcount > 1024) {
-                accumcount += currcount;
-                currcount = 0;
-                abort = AbortProgress(accumcount / maxcount, "");
-                if (abort) break;
-            }
+            currlayer->algo->clipped_cells.clear();
+            patternchanged = true;
         }
-        if (abort) break;
+
+    } else {
+        // algo uses an unbounded grid
+        if (currlayer->algo->isEmpty()) return;
+    
+        // check if current pattern is too big to use nextcell/setcell
+        bigint top, left, bottom, right;
+        currlayer->algo->findedges(&top, &left, &bottom, &right);
+        if ( OutsideLimits(top, left, bottom, right) ) {
+            ErrorMessage("Pattern too big to check (outside +/- 10^9 boundary).");
+            return;
+        }
+    
+        int itop = top.toint();
+        int ileft = left.toint();
+        int ibottom = bottom.toint();
+        int iright = right.toint();
+    
+        // no need to do anything if pattern is entirely within grid
+        int gtop = currlayer->algo->gridtop.toint();
+        int gleft = currlayer->algo->gridleft.toint();
+        int gbottom = currlayer->algo->gridbottom.toint();
+        int gright = currlayer->algo->gridright.toint();
+        if (currlayer->algo->gridwd == 0) {
+            // grid has infinite width
+            gleft = INT_MIN;
+            gright = INT_MAX;
+        }
+        if (currlayer->algo->gridht == 0) {
+            // grid has infinite height
+            gtop = INT_MIN;
+            gbottom = INT_MAX;
+        }
+        if (itop >= gtop && ileft >= gleft && ibottom <= gbottom && iright <= gright) {
+            return;
+        }
+    
+        int ht = ibottom - itop + 1;
+        int cx, cy;
+    
+        // for showing accurate progress we need to add pattern height to pop count
+        // in case this is a huge pattern with many blank rows
+        double maxcount = currlayer->algo->getPopulation().todouble() + ht;
+        double accumcount = 0;
+        int currcount = 0;
+        bool abort = false;
+        int v = 0;
+        BeginProgress("Checking cells outside grid");
+    
+        lifealgo* curralgo = currlayer->algo;
+        for ( cy=itop; cy<=ibottom; cy++ ) {
+            currcount++;
+            for ( cx=ileft; cx<=iright; cx++ ) {
+                int skip = curralgo->nextcell(cx, cy, v);
+                if (skip >= 0) {
+                    // found next live cell in this row
+                    cx += skip;
+                    if (cx < gleft || cx > gright || cy < gtop || cy > gbottom) {
+                        // clear cell outside grid
+                        if (savechanges) currlayer->undoredo->SaveCellChange(cx, cy, v, 0);
+                        curralgo->setcell(cx, cy, 0);
+                        patternchanged = true;
+                    }
+                    currcount++;
+                } else {
+                    cx = iright;  // done this row
+                }
+                if (currcount > 1024) {
+                    accumcount += currcount;
+                    currcount = 0;
+                    abort = AbortProgress(accumcount / maxcount, "");
+                    if (abort) break;
+                }
+            }
+            if (abort) break;
+        }
+    
+        curralgo->endofpattern();
+        EndProgress();
     }
-
-    curralgo->endofpattern();
-    EndProgress();
-
+    
     if (patternchanged) {
         ErrorMessage("Pattern was truncated (live cells were outside grid).");
     }

@@ -13,6 +13,8 @@ SOURCES = main.cpp webcalls.cpp \
     ../gollybase/lifepoll.cpp \
     ../gollybase/liferender.cpp \
     ../gollybase/liferules.cpp \
+    ../gollybase/ltlalgo.cpp \
+    ../gollybase/ltldraw.cpp \
     ../gollybase/qlifealgo.cpp \
     ../gollybase/qlifedraw.cpp \
     ../gollybase/readpattern.cpp \
@@ -64,6 +66,8 @@ OBJECTS = main.o webcalls.o \
     ../gollybase/lifepoll.o \
     ../gollybase/liferender.o \
     ../gollybase/liferules.o \
+    ../gollybase/ltlalgo.o \
+    ../gollybase/ltldraw.o \
     ../gollybase/qlifealgo.o \
     ../gollybase/qlifedraw.o \
     ../gollybase/readpattern.o \

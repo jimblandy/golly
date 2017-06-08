@@ -292,7 +292,7 @@ void Selection::Advance()
     bool savecells = allowundo && !currlayer->stayclean;
     //!!! if (savecells && inscript) SavePendingChanges();
 
-    bool boundedgrid = (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0);
+    bool boundedgrid = currlayer->algo->unbounded && (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0);
 
     // check if selection encloses entire pattern;
     // can't do this if qlife because it uses gen parity to decide which bits to draw;
@@ -430,7 +430,7 @@ void Selection::AdvanceOutside()
     bool savecells = allowundo && !currlayer->stayclean;
     //!!! if (savecells && inscript) SavePendingChanges();
 
-    bool boundedgrid = (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0);
+    bool boundedgrid = currlayer->algo->unbounded && (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0);
 
     // check if selection is completely outside pattern edges;
     // can't do this if qlife because it uses gen parity to decide which bits to draw;
