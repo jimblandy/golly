@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 21   -- build number
+local build = 22   -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -169,7 +169,7 @@ local function findpatterns(dir)
             -- check the file is the right type to display
             local index = name:match'^.*()%.'
             if index then
-                if matchlist[name:sub(index+1)] then
+                if matchlist[name:sub(index+1):lower()] then
                     -- add to list of patterns
                     numpatterns = numpatterns + 1
                     patterns[numpatterns] = dir..name
@@ -182,6 +182,12 @@ end
 --------------------------------------------------------------------------------
 
 local function getpatternlist(dir)
+    local result = true
+
+    -- save current list    
+    local currentpatterns = numpatterns
+
+    -- search for patterns in the specified folder
     numpatterns = 0
     numsubs = 0
     findpatterns(dir)
@@ -191,7 +197,12 @@ local function getpatternlist(dir)
         else
             g.note("Only subdirectories found in:\n\n"..dir.."\n\nInclude subdirectories option not selected.")
         end
+        -- restore current list
+        numpatterns = currentpatterns
+        result = false
     end
+
+    return result  
 end
 
 --------------------------------------------------------------------------------
@@ -559,9 +570,10 @@ local function selectfolder()
     -- ask for a folder
     local dirname = g.opendialog("Choose a folder", "dir", dirname)
     if dirname ~= "" then
-        getpatternlist(dirname)
-        whichpattern = 1
-        loadnew = true
+        if getpatternlist(dirname) then
+            whichpattern = 1
+            loadnew = true
+        end
     end
 end
 
@@ -878,8 +890,7 @@ function browse()
     end
     if dirname ~= "" then
         loadsettings()
-        getpatternlist(dirname)
-        if numpatterns > 0 then
+        if getpatternlist(dirname) then
             -- display gui
             createoverlay()
 
