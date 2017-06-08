@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "util.h"
 #include <stdlib.h>
 #include <limits.h>     // for INT_MIN and INT_MAX
+#include <string.h>     // for memset and strchr
 
 // -----------------------------------------------------------------------------
 
