@@ -1920,11 +1920,11 @@ const char* Overlay::DoResize(const char* args)
 
     // check whether resizing clip or overlay
     if (isclip) {
-        // resize overlay
+        // resize clip
         if (w <= 0) return OverlayError("width of clip must be > 0");
         if (h <= 0) return OverlayError("height of clip must be > 0");
 
-        // resize clip
+        // get clip name
         std::string name = args + namepos;
 
         // check if the clip exists
