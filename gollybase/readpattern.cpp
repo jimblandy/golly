@@ -482,8 +482,13 @@ const char *readmcell(lifealgo &imp, char *line) {
                         return "Illegal multi-char state";
                      }
                      while (n-- > 0) {
-                        if (imp.setcell(x++, y, state) < 0)
-                           return "Cell state out of range";
+                        if (imp.setcell(x, y, state) < 0) {
+                           // instead of returning an error message like "Cell state out of range"
+                           // it's nicer to convert the state to 1 (this is what MCell seems to do
+                           // for patterns like Bug1.mcl in its LtL collection)
+                           imp.setcell(x, y, 1);
+                        }
+                        x++;
                      }
                   }
                   n = 0;
