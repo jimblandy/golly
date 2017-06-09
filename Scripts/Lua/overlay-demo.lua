@@ -833,10 +833,32 @@ end
 
 --------------------------------------------------------------------------------
 
+function create_anim_bg(clipname, wd, ht)
+    local level
+
+    -- create a clip the size of the overlay and make it the render target
+    ov("create "..wd.." "..ht.." "..clipname)
+    ov("target "..clipname)
+
+    -- create the graduated background
+    for y = 0, ht / 2 do
+        level = 32 + floor(128 * (y * 2 / ht))
+        ov("rgba 0 0 "..level.." 255")
+        ov("line 0 "..y.." "..wd.." "..y)
+        ov("line 0 "..(ht - y).." "..wd.." "..(ht - y))
+    end
+
+    -- make the overlay the render target
+    ov("target")
+end
+
+--------------------------------------------------------------------------------
+
 function test_animation()
     -- resize overlay to cover entire layer
-    wd, ht = g.getview( g.getlayer() )
+    wd, ht = g.getview(g.getlayer())
     ov("resize "..wd.." "..ht)
+    ov("position topleft")
 
     -- create a new layer
     g.addlayer()
@@ -882,14 +904,14 @@ function test_animation()
     local gollyopaqueclip = "clip1"
     local gollytranslucentclip = "clip2"
     ov("font 200 mono")
-    local bannertext = "Golly 2.9"
+    local bannertext = "Golly 3.0"
     ov("rgba 255 192 32 144")
     local w, h = maketext(bannertext, gollyopaqueclip)
     ov("rgba 255 192 32 255")
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext = [[
-Golly 2.9
+Golly 3.0
 
 
 © 2017 The Golly Gang:
@@ -1058,18 +1080,8 @@ David Bell
     local credwidth, credheight = maketext(creditstext, creditsclip, "rgba 128 255 255 255", 2, 2)
 
     -- create graduated background
-    local level
-
-    for y = 0, ht / 2 do
-        level = 32 + floor(128 * (y * 2 / ht))
-        ov("rgba 0 0 "..level.." 255")
-        ov("line 0 "..y.." "..wd.." "..y)
-        ov("line 0 "..(ht - y).." "..wd.." "..(ht -y))
-    end
-
-    -- save background
     local bgclip = "bg"
-    ov("copy 0 0 0 0 "..bgclip)
+    create_anim_bg(bgclip, wd, ht)
 
     -- create stars
     local starx = {}
@@ -1098,6 +1110,36 @@ David Bell
 
         -- measure frame draw time
         t1 = g.millisecs()
+
+        -- check for resize
+        local newwd, newht = g.getview(g.getlayer())
+        if newwd ~= wd or newht ~= ht then
+            -- resize overlay
+            if newwd < 1 then newwd = 1 end
+            if newht < 1 then newht = 1 end
+
+            -- scale stars
+            local i = 1
+            for i = 1, numstars do
+                starx[i] = floor(starx[i] * newwd / wd)
+            end
+
+            -- save new size
+            wd = newwd
+            ht = newht
+
+            -- resize overlay
+            ov("resize "..wd.." "..ht)
+
+            -- resize cellview pattern clip
+            ov("resize "..wd.." "..ht.." pattern")
+
+            -- recreate background
+            create_anim_bg(bgclip, wd, ht)
+
+            -- recenter credits text
+            creditx = floor((wd - credwidth) / 2)
+        end
 
         -- stop when key pressed or mouse button clicked
         local event = g.getevent()
