@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 22   -- build number
+local build = 23   -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -192,7 +192,7 @@ local function getpatternlist(dir)
     numsubs = 0
     findpatterns(dir)
     if numpatterns == 0 then
-        if numsubs == 0 then
+        if numsubs == 0 or subdirs == 1 then
             g.note("No patterns found in:\n\n"..dir)
         else
             g.note("Only subdirectories found in:\n\n"..dir.."\n\nInclude subdirectories option not selected.")
