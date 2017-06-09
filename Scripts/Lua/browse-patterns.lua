@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 23   -- build number
+local build = 24   -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -573,6 +573,8 @@ local function selectfolder()
         if getpatternlist(dirname) then
             whichpattern = 1
             loadnew = true
+        else
+            g.show("Pattern "..whichpattern.." of "..numpatterns..". "..controls)
         end
     end
 end
