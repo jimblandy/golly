@@ -562,7 +562,16 @@ const char *ltlalgo::setrule(const char *s)
     char n;
     if (sscanf(s, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c%n",
                   &r, &c, &m, &s1, &s2, &b1, &b2, &n, &endpos) != 8) {
-        return "bad syntax in Larger than Life rule";
+        // try alternate LtL syntax as defined by Kellie Evans;
+        // eg: 5,34,45,34,58 is equivalent to R5,C0,M1,S34..58,B34..45,NM
+        if (sscanf(s, "%d,%d,%d,%d,%d%n",
+                      &r, &b1, &b2, &s1, &s2, &endpos) == 5) {
+            c = 0;
+            m = 1;
+            n = 'M';
+        } else {
+            return "bad syntax in Larger than Life rule";
+        }
     }
     
     if (r < 1 || r > 10) return "R value be from 1 to 10";
