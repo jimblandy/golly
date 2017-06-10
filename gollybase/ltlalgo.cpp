@@ -318,24 +318,62 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
             int yoffset = y * gridwd;
             int ymrange = y - range;
             int yprange = y + range;
-            for (int x = mincol; x <= maxcol; x++) {
-                int xmrange = x - range;
-                int xprange = x + range;
-                // count the state-1 neighbors within the current range
-                // using the extended Moore neighborhood with no edge checks
-                int ncount = 0;
-        
-                // optimize by using rolling counts of the left, middle, right columns
-                // int lcount, midcount, rcount;
-                //!!!
-        
-                for (int j = ymrange; j <= yprange; j++) {
-                    unsigned char* cellptr = currgrid + j * gridwd + xmrange;
-                    for (int i = xmrange; i <= xprange; i++) {
-                        if (*cellptr++ == 1) ncount++;
-                    }
+            
+            // for the 1st cell in this row we count the state-1 cells in the
+            // Moore neighborhood's left column, middle columns, and right column
+            int lcount = 0, midcount = 0, rcount = 0;
+            int xmrange = mincol - range;
+            int xprange = mincol + range;
+            
+            // get lcount
+            unsigned char* cellptr = currgrid + ymrange * gridwd + xmrange;
+            for (int j = ymrange; j <= yprange; j++) {
+                if (*cellptr == 1) lcount++;
+                cellptr += gridwd;
+            }
+            
+            // get rcount
+            cellptr = currgrid + ymrange * gridwd + xprange;
+            for (int j = ymrange; j <= yprange; j++) {
+                if (*cellptr == 1) rcount++;
+                cellptr += gridwd;
+            }
+            
+            // get midcount
+            xmrange++;
+            xprange--;
+            for (int j = ymrange; j <= yprange; j++) {
+                cellptr = currgrid + j * gridwd + xmrange;
+                for (int i = xmrange; i <= xprange; i++) {
+                    if (*cellptr++ == 1) midcount++;
                 }
-                update_next_grid(x, y, yoffset, ncount);
+            }
+            
+            update_next_grid(mincol, y, yoffset, lcount+midcount+rcount);
+            
+            // for the remaining cells in this row we only need to count
+            // the left and right columns in each cell's neighborhood
+            for (int x = mincol+1; x <= maxcol; x++) {
+                // get new lcount
+                lcount = 0;
+                cellptr = currgrid + ymrange * gridwd + x - range;
+                for (int j = ymrange; j <= yprange; j++) {
+                    if (*cellptr == 1) lcount++;
+                    cellptr += gridwd;
+                }
+                
+                // new midcount = old midcount + old rcount - new lcount
+                midcount = midcount + rcount - lcount;
+
+                // get new rcount
+                rcount = 0;
+                cellptr = currgrid + ymrange * gridwd + x + range;
+                for (int j = ymrange; j <= yprange; j++) {
+                    if (*cellptr == 1) rcount++;
+                    cellptr += gridwd;
+                }
+                
+                update_next_grid(x, y, yoffset, lcount+midcount+rcount);
             }
         }
     
