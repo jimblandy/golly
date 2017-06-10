@@ -42,7 +42,7 @@ static const char *DEFAULTRULE = "R1,C0,M0,S2..3,B3..3,NM";
 // define maximum and minimum sizes of gridwd and gridht
 // (note that MAXSIZE^2 must be < 2^31 so population can't overflow)
 #define MAXSIZE 4000        // ???!!!
-#define MINSIZE 20          // max range * 2
+#define MINSIZE 20          // max range * 2  (change to be dynamic!!!)
 
 // -----------------------------------------------------------------------------
 
@@ -82,11 +82,15 @@ void ltlalgo::create_grids()
     nextgrid = (unsigned char*) calloc(gridbytes, sizeof(*nextgrid));
     if (currgrid == NULL || nextgrid == NULL) lifefatal("not enough memory for LtL grids!");
 
+    // cell at bottom right corner of grid
+    gridwdm1 = gridwd - 1;
+    gridhtm1 = gridht - 1;
+
     // set cell coordinates of grid edges
     gtop = -int(gridht / 2);
     gleft = -int(gridwd / 2);
-    gbottom = gtop + gridht - 1;
-    gright = gleft + gridwd - 1;
+    gbottom = gtop + gridhtm1;
+    gright = gleft + gridwdm1;
     
     // also need to set bigint versions of grid edges (used by GUI code)
     gridtop = gtop;
@@ -223,7 +227,7 @@ int ltlalgo::isEmpty()
 
 void ltlalgo::update_next_grid(int x, int y, int yoffset, int ncount)
 {
-    // x,y cell in nextgrid might change based on neighborhood count
+    // x,y cell in nextgrid might change based on the given neighborhood count
     unsigned char* currcell = currgrid + yoffset + x;
     if (*currcell == 0) {
         // this cell is dead
@@ -283,183 +287,100 @@ void ltlalgo::update_next_grid(int x, int y, int yoffset, int ncount)
 
 // -----------------------------------------------------------------------------
 
-void ltlalgo::dogen_torus()
+void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
 {
-    int mincol, minrow, maxcol, maxrow;
-    if (minB == 0) {
-        // birth in every empty cell so process entire grid
-        mincol = 0;
-        minrow = 0;
-        maxcol = gridwd-1;
-        maxrow = gridht-1;
-    } else {
-        // limit processing to rectangle where births could occur
-        mincol = minx - range;
-        minrow = miny - range;
-        maxcol = maxx + range;
-        maxrow = maxy + range;
-        // check if these limits are outside grid edges
-        if (mincol < 0 || maxcol >= (int)gridwd) {
-            mincol = 0;
-            maxcol = gridwd-1;
-        }
-        if (minrow < 0 || maxrow >= (int)gridht) {
-            minrow = 0;
-            maxrow = gridht-1;
-        }
-    }
-
-    // reset boundaries for first birth or survivor in nextgrid
-    empty_boundaries();
-    
-    // use the pattern in currgrid to calculate the next generation in nextgrid
-    for (int y = minrow; y <= maxrow; y++) {
-        int yoffset = y * gridwd;
-        int ymrange = y - range;
-        int yprange = y + range;
-        bool innery = ymrange >= 0 && yprange < (int)gridht;
-        
-        for (int x = mincol; x <= maxcol; x++) {
-        
-            int xmrange = x - range;
-            int xprange = x + range;
-            bool innerxy = innery && xmrange >= 0 && xprange < (int)gridwd;
-            
-            // count the state-1 neighbors within the current range
-            int ncount = 0;
-            if (ntype == 'M') {
-                // use extended Moore neighborhood
-                
-                // do more optimization if range is 1!!!???
-                
-                if (innerxy) {
-                    // no need to check if range is beyond grid edges
-                    for (int newy = ymrange; newy <= yprange; newy++) {
-                        unsigned char* cellptr = currgrid + newy * gridwd + xmrange;
-                        for (int newx = xmrange; newx <= xprange; newx++) {
-                            if (*cellptr++ == 1) ncount++;
-                        }
-                    }
-                } else {
-                    for (int j = -range; j <= range; j++) {
-                        int newy = y + j;
-                        if (newy >= (int)gridht) newy = newy % gridht;
-                        else if (newy < 0) newy += gridht;
-                        unsigned char* rowptr = currgrid + newy * gridwd;
-                        for (int i = -range; i <= range; i++) {
-                            int newx = x + i;
-                            if (newx >= (int)gridwd) newx = newx % gridwd;
-                            else if (newx < 0) newx += gridwd;
-                            unsigned char* cellptr = rowptr + newx;
-                            if (*cellptr == 1) ncount++;
-                        }
-                    }
-                }
-            } else {
-                // use extended von Neumann neighborhood
-                
-                // do more optimization if range is 1!!!???
-                
-                if (innerxy) {
-                    // no need to check if range is beyond grid edges
-                    unsigned char* cellptr = currgrid + yoffset + xmrange;
-                    for (int newx = xmrange; newx <= xprange; newx++) {
-                        if (*cellptr++ == 1) ncount++;
-                    }
-                    cellptr = currgrid + ymrange * gridwd + x;
-                    for (int newy = ymrange; newy < y; newy++) {
-                        if (*cellptr == 1) ncount++;
-                        cellptr += gridwd;
-                    }
-                    for (int newy = y+1; newy <= yprange; newy++) {
-                        cellptr += gridwd;
-                        if (*cellptr == 1) ncount++;
-                    }
-                } else {
-                    unsigned char* rowptr = currgrid + yoffset;
-                    for (int i = -range; i <= range; i++) {
-                        int newx = x + i;
-                        if (newx >= (int)gridwd) newx = newx % gridwd;
-                        else if (newx < 0) newx += gridwd;
-                        unsigned char* cellptr = rowptr + newx;
-                        if (*cellptr == 1) ncount++;
-                    }
-                    unsigned char* colptr = currgrid + x;
-                    for (int j = -range; j <= range; j++) {
-                        if (j != 0) {
-                            int newy = y + j;
-                            if (newy >= (int)gridht) newy = newy % gridht;
-                            else if (newy < 0) newy += gridht;
-                            unsigned char* cellptr = colptr + newy * gridwd;
-                            if (*cellptr == 1) ncount++;
-                        }
-                    }
-                }
+    if (range == 1) {
+        for (int y = minrow; y <= maxrow; y++) {
+            int yoffset = y * gridwd;
+            unsigned char* topy = currgrid + (y - range) * gridwd;
+            for (int x = mincol; x <= maxcol; x++) {
+                // count the state-1 neighbors within the current range
+                // using the extended Moore neighborhood with no edge checks
+                int ncount = 0;
+                unsigned char* cellptr = topy + (x - range);
+                if (*cellptr++ == 1) ncount++;
+                if (*cellptr++ == 1) ncount++;
+                if (*cellptr   == 1) ncount++;
+                cellptr += gridwd;
+                if (*cellptr   == 1) ncount++;
+                if (*--cellptr == 1) ncount++;
+                if (*--cellptr == 1) ncount++;
+                cellptr += gridwd;
+                if (*cellptr++ == 1) ncount++;
+                if (*cellptr++ == 1) ncount++;
+                if (*cellptr   == 1) ncount++;
+                update_next_grid(x, y, yoffset, ncount);
             }
-            
-            update_next_grid(x, y, yoffset, ncount);
         }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void ltlalgo::dogen_plane()
-{
-    int mincol, minrow, maxcol, maxrow;
-    if (minB == 0) {
-        // birth in every empty cell so process entire grid
-        mincol = 0;
-        minrow = 0;
-        maxcol = gridwd-1;
-        maxrow = gridht-1;
     } else {
-        // limit processing to rectangle where births could occur
-        mincol = minx - range;
-        minrow = miny - range;
-        maxcol = maxx + range;
-        maxrow = maxy + range;
-        // check if these limits are outside grid edges
-        if (mincol < 0 || maxcol >= (int)gridwd) {
-            mincol = 0;
-            maxcol = gridwd-1;
-        }
-        if (minrow < 0 || maxrow >= (int)gridht) {
-            minrow = 0;
-            maxrow = gridht-1;
-        }
-    }
-
-    // reset boundaries for first birth or survivor in nextgrid
-    empty_boundaries();
-    
-    // use the pattern in currgrid to calculate the next generation in nextgrid
-    for (int y = minrow; y <= maxrow; y++) {
-        int yoffset = y * gridwd;
-        int ymrange = y - range;
-        int yprange = y + range;
-        if (ymrange < 0) ymrange = 0;
-        if (yprange >= (int)gridht) yprange = gridht-1;
+        // range > 1
+        for (int y = minrow; y <= maxrow; y++) {
+            int yoffset = y * gridwd;
+            int ymrange = y - range;
+            int yprange = y + range;
+            for (int x = mincol; x <= maxcol; x++) {
+                int xmrange = x - range;
+                int xprange = x + range;
+                // count the state-1 neighbors within the current range
+                // using the extended Moore neighborhood with no edge checks
+                int ncount = 0;
         
-        for (int x = mincol; x <= maxcol; x++) {
+                // optimize by using rolling counts of the left, middle, right columns
+                // int lcount, midcount, rcount;
+                //!!!
         
-            int xmrange = x - range;
-            int xprange = x + range;
-            if (xmrange < 0) xmrange = 0;
-            if (xprange >= (int)gridwd) xprange = gridwd-1;
-            
-            // count the state-1 neighbors within the current range (clipped to plane)
-            int ncount = 0;
-            if (ntype == 'M') {
-                // use extended Moore neighborhood
                 for (int newy = ymrange; newy <= yprange; newy++) {
                     unsigned char* cellptr = currgrid + newy * gridwd + xmrange;
                     for (int newx = xmrange; newx <= xprange; newx++) {
                         if (*cellptr++ == 1) ncount++;
                     }
                 }
-            } else {
-                // use extended von Neumann neighborhood
+                update_next_grid(x, y, yoffset, ncount);
+            }
+        }
+    
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::fast_Neumann(int mincol, int minrow, int maxcol, int maxrow)
+{
+    if (range == 1) {
+        int gridwd2 = gridwd * 2;
+        for (int y = minrow; y <= maxrow; y++) {
+            int yoffset = y * gridwd;
+            unsigned char* yptr = currgrid + yoffset;
+            for (int x = mincol; x <= maxcol; x++) {
+                // count the state-1 neighbors within the current range
+                // using the extended von Neumann neighborhood with no edge checks
+                int ncount = 0;
+                unsigned char* cellptr = yptr + (x - range);
+                if (*cellptr++ == 1) ncount++;
+                if (*cellptr++ == 1) ncount++;
+                if (*cellptr   == 1) ncount++;
+                cellptr -= gridwd;
+                if (*--cellptr == 1) ncount++;
+                cellptr += gridwd2;
+                if (*cellptr   == 1) ncount++;
+                update_next_grid(x, y, yoffset, ncount);
+            }
+        }
+    } else {
+        // range > 1
+        for (int y = minrow; y <= maxrow; y++) {
+            int yoffset = y * gridwd;
+            int ymrange = y - range;
+            int yprange = y + range;
+            for (int x = mincol; x <= maxcol; x++) {
+                int xmrange = x - range;
+                int xprange = x + range;
+                // count the state-1 neighbors within the current range
+                // using the extended von Neumann neighborhood with no edge checks
+                int ncount = 0;
+                
+                // fix this code to use a diamond!!!
+                
                 unsigned char* cellptr = currgrid + yoffset + xmrange;
                 for (int newx = xmrange; newx <= xprange; newx++) {
                     if (*cellptr++ == 1) ncount++;
@@ -473,9 +394,257 @@ void ltlalgo::dogen_plane()
                     cellptr += gridwd;
                     if (*cellptr == 1) ncount++;
                 }
+                update_next_grid(x, y, yoffset, ncount);
             }
-            
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::slow_torus_Moore(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * gridwd;
+        for (int x = mincol; x <= maxcol; x++) {
+            // count the state-1 neighbors within the current range
+            // using the extended Moore neighborhood and wrapping at grid edges
+            int ncount = 0;
+            for (int j = -range; j <= range; j++) {
+                int newy = y + j;
+                if (newy >= (int)gridht) {
+                    newy = newy % gridht;
+                } else if (newy < 0) {
+                    newy += gridht;
+                }
+                unsigned char* rowptr = currgrid + newy * gridwd;
+                for (int i = -range; i <= range; i++) {
+                    int newx = x + i;
+                    if (newx >= (int)gridwd) {
+                        newx = newx % gridwd;
+                    } else if (newx < 0) {
+                        newx += gridwd;
+                    }
+                    unsigned char* cellptr = rowptr + newx;
+                    if (*cellptr == 1) ncount++;
+                }
+            }
             update_next_grid(x, y, yoffset, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::slow_torus_Neumann(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * gridwd;
+        for (int x = mincol; x <= maxcol; x++) {
+            // count the state-1 neighbors within the current range
+            // using the extended von Neumann neighborhood
+            int ncount = 0;
+            
+            // fix this code to use a diamond!!!
+            
+            unsigned char* rowptr = currgrid + yoffset;
+            for (int i = -range; i <= range; i++) {
+                int newx = x + i;
+                if (newx >= (int)gridwd) {
+                    newx = newx % gridwd;
+                } else if (newx < 0) {
+                    newx += gridwd;
+                }
+                unsigned char* cellptr = rowptr + newx;
+                if (*cellptr == 1) ncount++;
+            }
+            unsigned char* colptr = currgrid + x;
+            for (int j = -range; j <= range; j++) {
+                if (j != 0) {
+                    int newy = y + j;
+                    if (newy >= (int)gridht) {
+                        newy = newy % gridht;
+                    } else if (newy < 0) {
+                        newy += gridht;
+                    }
+                    unsigned char* cellptr = colptr + newy * gridwd;
+                    if (*cellptr == 1) ncount++;
+                }
+            }            
+            update_next_grid(x, y, yoffset, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::slow_plane_Moore(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * gridwd;
+        int ymrange = y - range;
+        int yprange = y + range;
+        if (ymrange < 0) ymrange = 0;
+        if (yprange >= (int)gridht) yprange = gridhtm1;
+        
+        for (int x = mincol; x <= maxcol; x++) {
+            int xmrange = x - range;
+            int xprange = x + range;
+            if (xmrange < 0) xmrange = 0;
+            if (xprange >= (int)gridwd) xprange = gridwdm1;
+            
+            // count the state-1 neighbors within the current range (clipped to plane)
+            // using the extended Moore neighborhood
+            int ncount = 0;
+            for (int newy = ymrange; newy <= yprange; newy++) {
+                unsigned char* cellptr = currgrid + newy * gridwd + xmrange;
+                for (int newx = xmrange; newx <= xprange; newx++) {
+                    if (*cellptr++ == 1) ncount++;
+                }
+            }
+            update_next_grid(x, y, yoffset, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::slow_plane_Neumann(int mincol, int minrow, int maxcol, int maxrow)
+{
+    for (int y = minrow; y <= maxrow; y++) {
+        int yoffset = y * gridwd;
+        int ymrange = y - range;
+        int yprange = y + range;
+        if (ymrange < 0) ymrange = 0;
+        if (yprange >= (int)gridht) yprange = gridhtm1;
+        
+        for (int x = mincol; x <= maxcol; x++) {
+            int xmrange = x - range;
+            int xprange = x + range;
+            if (xmrange < 0) xmrange = 0;
+            if (xprange >= (int)gridwd) xprange = gridwdm1;
+            
+            // count the state-1 neighbors within the current range (clipped to plane)
+            // using the extended von Neumann neighborhood
+            int ncount = 0;
+                
+            // fix this code to use a diamond!!! (possibly truncated so can't use clipped edges???!!!)
+            
+            unsigned char* cellptr = currgrid + yoffset + xmrange;
+            for (int newx = xmrange; newx <= xprange; newx++) {
+                if (*cellptr++ == 1) ncount++;
+            }
+            cellptr = currgrid + ymrange * gridwd + x;
+            for (int newy = ymrange; newy < y; newy++) {
+                if (*cellptr == 1) ncount++;
+                cellptr += gridwd;
+            }
+            for (int newy = y+1; newy <= yprange; newy++) {
+                cellptr += gridwd;
+                if (*cellptr == 1) ncount++;
+            }
+            update_next_grid(x, y, yoffset, ncount);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::slowgen(int mincol, int minrow, int maxcol, int maxrow)
+{
+    // process all cells in the given rectangle, taking into account the topology
+    // and checking if the extended neighborhood is outside the grid edges
+    if (topology == 'T') {
+        // torus
+        if (ntype == 'M') {
+            slow_torus_Moore(mincol, minrow, maxcol, maxrow);
+        } else {
+            slow_torus_Neumann(mincol, minrow, maxcol, maxrow);
+        }
+    } else {
+        // plane
+        if (ntype == 'M') {
+            slow_plane_Moore(mincol, minrow, maxcol, maxrow);
+        } else {
+            slow_plane_Neumann(mincol, minrow, maxcol, maxrow);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::dogen()
+{
+    if (minB == 0 || gridwd == MINSIZE || gridht == MINSIZE) {
+        // reset minx,miny,maxx,maxy for first birth or survivor in nextgrid
+        empty_boundaries();
+    
+        // process every cell in the grid
+        slowgen(0, 0, gridwdm1, gridhtm1);
+    
+    } else {
+        // limit processing to rectangle where births/deaths can occur
+        int mincol = minx - range;
+        int minrow = miny - range;
+        int maxcol = maxx + range;
+        int maxrow = maxy + range;
+        
+        // check if the limits are outside the grid edges
+        if (mincol < 0 || maxcol >= (int)gridwd) {
+            mincol = 0;
+            maxcol = gridwdm1;
+        }
+        if (minrow < 0 || maxrow >= (int)gridht) {
+            minrow = 0;
+            maxrow = gridhtm1;
+        }
+        
+        // reset minx,miny,maxx,maxy for first birth or survivor in nextgrid
+        empty_boundaries();
+    
+        // if the limits are outside the inner rectangle (ie. grid inset by range)
+        // then we need to call slowgen up to 4 times:
+        //                    grid
+        //   o--------------------------------------   o = (0,0)
+        //   |  m--------------------------------  |   m = (mincol,minrow)
+        //   |  |*******************************|  |
+        //   |  |**r--------------------------**|  |   r = (range,range)
+        //   |  |**|                         |**|  |
+        //   |  |**|     inner rectangle     |**|  |
+        //   |  |**|                         |**|  |
+        //   |  |**--------------------------s**|  |   s = (gridwdm1-range,gridhtm1-range)
+        //   |  |*******************************|  |
+        //   |  --------------------------------n  |   n = (maxcol,maxrow)
+        //   --------------------------------------p   p = (gridwdm1,gridhtm1)
+        
+        if (minrow < range) {
+            // process rectangle above inner rectangle
+            slowgen(mincol, minrow, maxcol, range - 1);
+        }
+        if (mincol < range) {
+            // process rectangle to the left of inner rectangle
+            slowgen(mincol, range, range - 1, gridhtm1 - range);
+        }
+        if (maxrow > gridhtm1 - range) {
+            // process rectangle below inner rectangle
+            slowgen(mincol, gridhtm1 - range + 1, maxcol, maxrow);
+        }
+        if (maxcol > gridwdm1 - range) {
+            // process rectangle to the right of inner rectangle
+            slowgen(gridwdm1 - range + 1, range, maxcol, gridhtm1 - range);
+        }
+        
+        // find the intersection of the limits with the inner rectangle
+        // and process that rectangle rapidly (no need to worry about
+        // a cell's extended neighborhood being outside the grid edges)
+        if (minrow < range) minrow = range;
+        if (mincol < range) mincol = range;
+        if (maxrow > gridhtm1 - range) maxrow = gridhtm1 - range;
+        if (maxcol > gridwdm1 - range) maxcol = gridwdm1 - range;
+        if (ntype == 'M') {
+            fast_Moore(mincol, minrow, maxcol, maxrow);
+        } else {
+            fast_Neumann(mincol, minrow, maxcol, maxrow);
         }
     }
 }
@@ -488,18 +657,17 @@ void ltlalgo::step()
 {
     bigint t = increment;
     while (t != 0) {
-        if (topology == 'T')
-            dogen_torus();
-        else
-            dogen_plane();
-    
-        // swap currgrid and nextgrid
-        unsigned char* temp = currgrid;
-        currgrid = nextgrid;
-        nextgrid = temp;
+        if (population > 0 || minB == 0) {
+            dogen();
         
-        // clear nextgrid for next dogen call
-        memset(nextgrid, 0, gridbytes);
+            // swap currgrid and nextgrid
+            unsigned char* temp = currgrid;
+            currgrid = nextgrid;
+            nextgrid = temp;
+            
+            // clear nextgrid for next dogen call
+            memset(nextgrid, 0, gridbytes);
+        }
     
         generation += bigint::one;
         
@@ -621,6 +789,13 @@ const char *ltlalgo::setrule(const char *s)
     maxB = b2;
     ntype = n;
     topology = t;
+    
+    // set the grid_type so the GUI can display circles or diamonds in icon mode
+    grid_type = ntype == 'M' ? SQUARE_GRID : VN_GRID;
+    
+    // need to set a lifealgo flag if minB is 0 so GUI code can allow
+    // pattern generation when the population is 0
+    //!!! hasB0 = minB == 0;
 
     if ((int)gridwd != newwd || (int)gridht != newht) {
         if (population > 0) {

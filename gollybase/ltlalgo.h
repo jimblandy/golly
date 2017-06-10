@@ -70,6 +70,7 @@ private:
     unsigned char* currgrid;            // contains gridwd*gridht cells for current generation
     unsigned char* nextgrid;            // contains gridwd*gridht cells for next generation
     int gridbytes;                      // gridwd*gridht
+    int gridwdm1, gridhtm1;             // gridwd-1, gridht-1 (bottom right corner of grid)
     int gtop, gleft, gbottom, gright;   // cell coordinates of grid edges (middle cell is 0,0)
     int minx, miny, maxx, maxy;         // boundary of live cells (in grid coordinates)
     vector<int> cell_list;              // used by save_cells and restore_cells
@@ -87,11 +88,24 @@ private:
     void empty_boundaries();            // set minx, miny, maxx, maxy when population is 0
     void save_cells();                  // save current pattern in cell_list
     void restore_cells();               // restore pattern from cell_list
-    void dogen_torus();                 // calculate the next generation in torus
-    void dogen_plane();                 // calculate the next generation in plane
+    void dogen();                       // called from step() to calculate the next generation
+    
+    void slowgen(int mincol, int minrow, int maxcol, int maxrow);
+    void slow_torus_Moore(int mincol, int minrow, int maxcol, int maxrow);
+    void slow_torus_Neumann(int mincol, int minrow, int maxcol, int maxrow);
+    void slow_plane_Moore(int mincol, int minrow, int maxcol, int maxrow);
+    void slow_plane_Neumann(int mincol, int minrow, int maxcol, int maxrow);
+    // called from dogen() to process a rectangular region of cells where
+    // the extended neighborhood of a cell might be outside the grid edges
+    
+    void fast_Moore(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Neumann(int mincol, int minrow, int maxcol, int maxrow);
+    // called from dogen() to process a rectangular region of cells where
+    // we know the extended neighborhood of every cell is inside the grid edges
     
     void update_next_grid(int x, int y, int yoffset, int ncount);
-    // set x,y cell in nextgrid based on given neighborhood count
+    // called from each of the slow_* and fast_* routines to set x,y cell
+    // in nextgrid based on given neighborhood count
 };
 
 #endif
