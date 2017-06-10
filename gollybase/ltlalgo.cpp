@@ -329,9 +329,9 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
                 // int lcount, midcount, rcount;
                 //!!!
         
-                for (int newy = ymrange; newy <= yprange; newy++) {
-                    unsigned char* cellptr = currgrid + newy * gridwd + xmrange;
-                    for (int newx = xmrange; newx <= xprange; newx++) {
+                for (int j = ymrange; j <= yprange; j++) {
+                    unsigned char* cellptr = currgrid + j * gridwd + xmrange;
+                    for (int i = xmrange; i <= xprange; i++) {
                         if (*cellptr++ == 1) ncount++;
                     }
                 }
@@ -354,6 +354,7 @@ void ltlalgo::fast_Neumann(int mincol, int minrow, int maxcol, int maxrow)
             for (int x = mincol; x <= maxcol; x++) {
                 // count the state-1 neighbors within the current range
                 // using the extended von Neumann neighborhood with no edge checks
+                // (at range 1 a diamond is a cross: +)
                 int ncount = 0;
                 unsigned char* cellptr = yptr + (x - range);
                 if (*cellptr++ == 1) ncount++;
@@ -373,26 +374,29 @@ void ltlalgo::fast_Neumann(int mincol, int minrow, int maxcol, int maxrow)
             int ymrange = y - range;
             int yprange = y + range;
             for (int x = mincol; x <= maxcol; x++) {
-                int xmrange = x - range;
-                int xprange = x + range;
                 // count the state-1 neighbors within the current range
-                // using the extended von Neumann neighborhood with no edge checks
+                // using the extended von Neumann neighborhood (diamond) with no edge checks
                 int ncount = 0;
-                
-                // fix this code to use a diamond!!!
-                
-                unsigned char* cellptr = currgrid + yoffset + xmrange;
-                for (int newx = xmrange; newx <= xprange; newx++) {
-                    if (*cellptr++ == 1) ncount++;
+                int xoffset = 0;
+                unsigned char* rowptr = currgrid + ymrange * gridwd;
+                for (int j = ymrange; j < y; j++) {
+                    unsigned char* cellptr = rowptr + (x - xoffset);
+                    int len = 2 * xoffset + 1;
+                    for (int i = 0; i < len; i++) {
+                        if (*cellptr++ == 1) ncount++;
+                    }
+                    xoffset++;          // 0, 1, 2, ..., range
+                    rowptr += gridwd;
                 }
-                cellptr = currgrid + ymrange * gridwd + x;
-                for (int newy = ymrange; newy < y; newy++) {
-                    if (*cellptr == 1) ncount++;
-                    cellptr += gridwd;
-                }
-                for (int newy = y+1; newy <= yprange; newy++) {
-                    cellptr += gridwd;
-                    if (*cellptr == 1) ncount++;
+                // xoffset == range
+                for (int j = y; j <= yprange; j++) {
+                    unsigned char* cellptr = rowptr + (x - xoffset);
+                    int len = 2 * xoffset + 1;
+                    for (int i = 0; i < len; i++) {
+                        if (*cellptr++ == 1) ncount++;
+                    }
+                    xoffset--;          // range-1, ..., 2, 1, 0
+                    rowptr += gridwd;
                 }
                 update_next_grid(x, y, yoffset, ncount);
             }
@@ -440,37 +444,58 @@ void ltlalgo::slow_torus_Neumann(int mincol, int minrow, int maxcol, int maxrow)
 {
     for (int y = minrow; y <= maxrow; y++) {
         int yoffset = y * gridwd;
+        int ymrange = y - range;
+        int yprange = y + range;
         for (int x = mincol; x <= maxcol; x++) {
             // count the state-1 neighbors within the current range
-            // using the extended von Neumann neighborhood
+            // using the extended von Neumann neighborhood and wrapping at grid edges
             int ncount = 0;
-            
-            // fix this code to use a diamond!!!
-            
-            unsigned char* rowptr = currgrid + yoffset;
-            for (int i = -range; i <= range; i++) {
-                int newx = x + i;
-                if (newx >= (int)gridwd) {
-                    newx = newx % gridwd;
-                } else if (newx < 0) {
-                    newx += gridwd;
+            int xoffset = 0;
+            for (int j = ymrange; j < y; j++) {
+                int newy = j;
+                if (newy >= (int)gridht) {
+                    newy = newy % gridht;
+                } else if (newy < 0) {
+                    newy += gridht;
                 }
-                unsigned char* cellptr = rowptr + newx;
-                if (*cellptr == 1) ncount++;
-            }
-            unsigned char* colptr = currgrid + x;
-            for (int j = -range; j <= range; j++) {
-                if (j != 0) {
-                    int newy = y + j;
-                    if (newy >= (int)gridht) {
-                        newy = newy % gridht;
-                    } else if (newy < 0) {
-                        newy += gridht;
+                unsigned char* rowptr = currgrid + newy * gridwd;
+                int xleft = x - xoffset;
+                int len = 2 * xoffset + 1;
+                for (int i = 0; i < len; i++) {
+                    int newx = xleft + i;
+                    if (newx >= (int)gridwd) {
+                        newx = newx % gridwd;
+                    } else if (newx < 0) {
+                        newx += gridwd;
                     }
-                    unsigned char* cellptr = colptr + newy * gridwd;
+                    unsigned char* cellptr = rowptr + newx;
                     if (*cellptr == 1) ncount++;
                 }
-            }            
+                xoffset++;          // 0, 1, 2, ..., range
+            }
+            // xoffset == range
+            for (int j = y; j <= yprange; j++) {
+                int newy = j;
+                if (newy >= (int)gridht) {
+                    newy = newy % gridht;
+                } else if (newy < 0) {
+                    newy += gridht;
+                }
+                unsigned char* rowptr = currgrid + newy * gridwd;
+                int xleft = x - xoffset;
+                int len = 2 * xoffset + 1;
+                for (int i = 0; i < len; i++) {
+                    int newx = xleft + i;
+                    if (newx >= (int)gridwd) {
+                        newx = newx % gridwd;
+                    } else if (newx < 0) {
+                        newx += gridwd;
+                    }
+                    unsigned char* cellptr = rowptr + newx;
+                    if (*cellptr == 1) ncount++;
+                }
+                xoffset--;          // range-1, ..., 2, 1, 0
+            }
             update_next_grid(x, y, yoffset, ncount);
         }
     }
@@ -493,12 +518,12 @@ void ltlalgo::slow_plane_Moore(int mincol, int minrow, int maxcol, int maxrow)
             if (xmrange < 0) xmrange = 0;
             if (xprange >= (int)gridwd) xprange = gridwdm1;
             
-            // count the state-1 neighbors within the current range (clipped to plane)
-            // using the extended Moore neighborhood
+            // count the state-1 neighbors within the current range
+            // using the extended Moore neighborhood clipped to plane
             int ncount = 0;
-            for (int newy = ymrange; newy <= yprange; newy++) {
-                unsigned char* cellptr = currgrid + newy * gridwd + xmrange;
-                for (int newx = xmrange; newx <= xprange; newx++) {
+            for (int j = ymrange; j <= yprange; j++) {
+                unsigned char* cellptr = currgrid + j * gridwd + xmrange;
+                for (int i = xmrange; i <= xprange; i++) {
                     if (*cellptr++ == 1) ncount++;
                 }
             }
@@ -515,33 +540,41 @@ void ltlalgo::slow_plane_Neumann(int mincol, int minrow, int maxcol, int maxrow)
         int yoffset = y * gridwd;
         int ymrange = y - range;
         int yprange = y + range;
-        if (ymrange < 0) ymrange = 0;
-        if (yprange >= (int)gridht) yprange = gridhtm1;
-        
         for (int x = mincol; x <= maxcol; x++) {
-            int xmrange = x - range;
-            int xprange = x + range;
-            if (xmrange < 0) xmrange = 0;
-            if (xprange >= (int)gridwd) xprange = gridwdm1;
-            
-            // count the state-1 neighbors within the current range (clipped to plane)
-            // using the extended von Neumann neighborhood
+            // count the state-1 neighbors within the current range
+            // using the extended von Neumann neighborhood clipped to plane
             int ncount = 0;
-                
-            // fix this code to use a diamond!!! (possibly truncated so can't use clipped edges???!!!)
-            
-            unsigned char* cellptr = currgrid + yoffset + xmrange;
-            for (int newx = xmrange; newx <= xprange; newx++) {
-                if (*cellptr++ == 1) ncount++;
+            int xoffset = 0;
+            for (int j = ymrange; j < y; j++) {
+                if (j >= 0 && j < (int)gridht) {
+                    unsigned char* rowptr = currgrid + j * gridwd;
+                    int xleft = x - xoffset;
+                    int len = 2 * xoffset + 1;
+                    for (int i = 0; i < len; i++) {
+                        int newx = xleft + i;
+                        if (newx >= 0 && newx < (int)gridwd) {
+                            unsigned char* cellptr = rowptr + newx;
+                            if (*cellptr == 1) ncount++;
+                        }
+                    }
+                }
+                xoffset++;          // 0, 1, 2, ..., range
             }
-            cellptr = currgrid + ymrange * gridwd + x;
-            for (int newy = ymrange; newy < y; newy++) {
-                if (*cellptr == 1) ncount++;
-                cellptr += gridwd;
-            }
-            for (int newy = y+1; newy <= yprange; newy++) {
-                cellptr += gridwd;
-                if (*cellptr == 1) ncount++;
+            // xoffset == range
+            for (int j = y; j <= yprange; j++) {
+                if (j >= 0 && j < (int)gridht) {
+                    unsigned char* rowptr = currgrid + j * gridwd;
+                    int xleft = x - xoffset;
+                    int len = 2 * xoffset + 1;
+                    for (int i = 0; i < len; i++) {
+                        int newx = xleft + i;
+                        if (newx >= 0 && newx < (int)gridwd) {
+                            unsigned char* cellptr = rowptr + newx;
+                            if (*cellptr == 1) ncount++;
+                        }
+                    }
+                }
+                xoffset--;          // range-1, ..., 2, 1, 0
             }
             update_next_grid(x, y, yoffset, ncount);
         }
