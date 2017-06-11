@@ -1022,12 +1022,15 @@ bool PatternView::RotatePastePattern(bool clockwise)
             }
             char rule[MAXRULESIZE];
             sprintf(rule, "%s", pastelayer->algo->getrule());
+            char topology = 'T';
             char *suffix = strchr(rule, ':');
-            if (suffix) suffix[0] = 0;
-            char topology = pastelayer->algo->boundedplane ? 'P' : 'T';
+            if (suffix) {
+                topology = suffix[1];
+                suffix[0] = 0;
+            }
             sprintf(rule, "%s:%c%d,%d", rule, topology, newwd, newht);
             if (pastelayer->algo->setrule(rule)) {
-                // should never happen but play safe
+                // unlikely, but could happen if the new grid size is too big
                 Warning(_("Sorry, but the clipboard pattern could not be rotated."));
                 return false;
             }
@@ -1058,7 +1061,8 @@ bool PatternView::RotatePastePattern(bool clockwise)
         pastesel.GetRect(&x, &y, &wd, &ht);
         pastebox = wxRect(x, y, wd, ht);
         InitPaste(pastelayer, pastebox);
-        RefreshView();
+        if (wd == ht) RefreshView();
+        // if wd != ht then PasteTemporaryToCurrent will call Refresh
     }
     
     return result;

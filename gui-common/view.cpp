@@ -1438,8 +1438,50 @@ bool FlipPastePattern(bool topbottom)
 
 bool RotatePastePattern(bool clockwise)
 {
-    bool result;
-    Selection pastesel(pastebox.y, pastebox.x, pastebox.y + pastebox.height - 1, pastebox.x + pastebox.width - 1);
+    Selection pastesel(pastebox.y, pastebox.x,
+                       pastebox.y + pastebox.height - 1,
+                       pastebox.x + pastebox.width - 1);
+    
+    // check if pastelayer->algo uses a finite grid
+    if (!pastelayer->algo->unbounded) {
+        // readclipboard has loaded the pattern into top left corner of grid,
+        // so if pastebox isn't square we need to expand the grid to avoid the
+        // rotated pattern being clipped (WARNING: this assumes the algo won't
+        // change the pattern's cell coordinates when setrule expands the grid)
+        int x, y, wd, ht;
+        pastesel.GetRect(&x, &y, &wd, &ht);
+        if (wd != ht) {
+        
+            // better solution would be to check if pastebox is small enough for
+            // pattern to be safely rotated after shifting to center of grid and only
+            // expand grid if it can't!!!??? (must also update pastesel edges)
+            
+            int newwd, newht;
+            if (wd > ht) {
+                // expand grid vertically
+                newht = pastelayer->algo->gridht + wd;
+                newwd = pastelayer->algo->gridwd;
+            } else {
+                // wd < ht so expand grid horizontally
+                newwd = pastelayer->algo->gridwd + ht;
+                newht = pastelayer->algo->gridht;
+            }
+            char rule[MAXRULESIZE];
+            sprintf(rule, "%s", pastelayer->algo->getrule());
+            char topology = 'T';
+            char *suffix = strchr(rule, ':');
+            if (suffix) {
+                topology = suffix[1];
+                suffix[0] = 0;
+            }
+            sprintf(rule, "%s:%c%d,%d", rule, topology, newwd, newht);
+            if (pastelayer->algo->setrule(rule)) {
+                // unlikely, but could happen if the new grid size is too big
+                Warning("Sorry, but the clipboard pattern could not be rotated.");
+                return false;
+            }
+        }
+    }
 
     // rotate the pattern in pastelayer
     lifealgo* savealgo = currlayer->algo;
@@ -1450,7 +1492,7 @@ bool RotatePastePattern(bool clockwise)
     // and layer won't be marked as dirty; also set inscript temporarily
     // so that viewport won't be updated and selection size won't be displayed
     inscript = true;
-    result = pastesel.Rotate(clockwise, true);
+    bool result = pastesel.Rotate(clockwise, true);
     // currlayer->algo might point to a *different* universe
     pastelayer->algo = currlayer->algo;
     currlayer->algo = savealgo;
