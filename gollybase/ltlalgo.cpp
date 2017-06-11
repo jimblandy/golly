@@ -321,27 +321,29 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
             
             // for the 1st cell in this row we count the state-1 cells in the
             // Moore neighborhood's left column, middle columns, and right column
-            int lcount = 0, midcount = 0, rcount = 0;
             int xmrange = mincol - range;
             int xprange = mincol + range;
             
-            // get lcount
+            // get count in left column
+            int lcount = 0;
             unsigned char* cellptr = currgrid + ymrange * gridwd + xmrange;
             for (int j = ymrange; j <= yprange; j++) {
                 if (*cellptr == 1) lcount++;
                 cellptr += gridwd;
             }
             
-            // get rcount
+            // get count in right column
+            int rcount = 0;
             cellptr = currgrid + ymrange * gridwd + xprange;
             for (int j = ymrange; j <= yprange; j++) {
                 if (*cellptr == 1) rcount++;
                 cellptr += gridwd;
             }
             
-            // get midcount
+            // get count in middle columns
             xmrange++;
             xprange--;
+            int midcount = 0;
             for (int j = ymrange; j <= yprange; j++) {
                 cellptr = currgrid + j * gridwd + xmrange;
                 for (int i = xmrange; i <= xprange; i++) {
@@ -349,12 +351,22 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
                 }
             }
             
+            // we now have the neighborhood counts in 3 parts:
+            //      2*range+1
+            //   ---------------
+            //   | |         | |
+            //   | |         | |
+            //   |l|    m    |r| 2*range+1
+            //   | |         | |
+            //   | |         | |
+            //   ---------------
+            
             update_next_grid(mincol, y, yoffset, lcount+midcount+rcount);
             
             // for the remaining cells in this row we only need to count
             // the left and right columns in each cell's neighborhood
             for (int x = mincol+1; x <= maxcol; x++) {
-                // get new lcount
+                // get new left count
                 lcount = 0;
                 cellptr = currgrid + ymrange * gridwd + x - range;
                 for (int j = ymrange; j <= yprange; j++) {
@@ -362,10 +374,10 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
                     cellptr += gridwd;
                 }
                 
-                // new midcount = old midcount + old rcount - new lcount
+                // new midcount = old midcount + OLD rcount - NEW lcount
                 midcount = midcount + rcount - lcount;
 
-                // get new rcount
+                // get new right count
                 rcount = 0;
                 cellptr = currgrid + ymrange * gridwd + x + range;
                 for (int j = ymrange; j <= yprange; j++) {
@@ -623,21 +635,23 @@ void ltlalgo::slow_plane_Neumann(int mincol, int minrow, int maxcol, int maxrow)
 
 void ltlalgo::slowgen(int mincol, int minrow, int maxcol, int maxrow)
 {
-    // process all cells in the given rectangle, taking into account the topology
-    // and checking if the extended neighborhood is outside the grid edges
-    if (topology == 'T') {
-        // torus
-        if (ntype == 'M') {
-            slow_torus_Moore(mincol, minrow, maxcol, maxrow);
+    if (minrow <= maxrow && mincol <= maxcol) {
+        // process all cells in the given rectangle, taking into account the topology
+        // and checking if the extended neighborhood is outside the grid edges
+        if (topology == 'T') {
+            // torus
+            if (ntype == 'M') {
+                slow_torus_Moore(mincol, minrow, maxcol, maxrow);
+            } else {
+                slow_torus_Neumann(mincol, minrow, maxcol, maxrow);
+            }
         } else {
-            slow_torus_Neumann(mincol, minrow, maxcol, maxrow);
-        }
-    } else {
-        // plane
-        if (ntype == 'M') {
-            slow_plane_Moore(mincol, minrow, maxcol, maxrow);
-        } else {
-            slow_plane_Neumann(mincol, minrow, maxcol, maxrow);
+            // plane
+            if (ntype == 'M') {
+                slow_plane_Moore(mincol, minrow, maxcol, maxrow);
+            } else {
+                slow_plane_Neumann(mincol, minrow, maxcol, maxrow);
+            }
         }
     }
 }
@@ -646,28 +660,37 @@ void ltlalgo::slowgen(int mincol, int minrow, int maxcol, int maxrow)
 
 void ltlalgo::dogen()
 {
-    if (minB == 0 || gridwd == MINSIZE || gridht == MINSIZE) {
+    if (gridwd == MINSIZE && gridht == MINSIZE) {
         // reset minx,miny,maxx,maxy for first birth or survivor in nextgrid
         empty_boundaries();
     
-        // process every cell in the grid
+        // process every cell in the grid, with edge checks
         slowgen(0, 0, gridwdm1, gridhtm1);
     
     } else {
         // limit processing to rectangle where births/deaths can occur
-        int mincol = minx - range;
-        int minrow = miny - range;
-        int maxcol = maxx + range;
-        int maxrow = maxy + range;
-        
-        // check if the limits are outside the grid edges
-        if (mincol < 0 || maxcol >= (int)gridwd) {
+        int mincol, minrow, maxcol, maxrow;
+        if (minB == 0) {
+            // birth in every dead cell so process entire grid
             mincol = 0;
-            maxcol = gridwdm1;
-        }
-        if (minrow < 0 || maxrow >= (int)gridht) {
             minrow = 0;
+            maxcol = gridwdm1;
             maxrow = gridhtm1;
+        } else {
+            mincol = minx - range;
+            minrow = miny - range;
+            maxcol = maxx + range;
+            maxrow = maxy + range;
+            
+            // check if the limits are outside the grid edges
+            if (mincol < 0 || maxcol >= (int)gridwd) {
+                mincol = 0;
+                maxcol = gridwdm1;
+            }
+            if (minrow < 0 || maxrow >= (int)gridht) {
+                minrow = 0;
+                maxrow = gridhtm1;
+            }
         }
         
         // reset minx,miny,maxx,maxy for first birth or survivor in nextgrid
@@ -675,6 +698,7 @@ void ltlalgo::dogen()
     
         // if the limits are outside the inner rectangle (ie. grid inset by range)
         // then we need to call slowgen up to 4 times:
+        //
         //                    grid
         //   o--------------------------------------   o = (0,0)
         //   |  m--------------------------------  |   m = (mincol,minrow)
@@ -687,7 +711,7 @@ void ltlalgo::dogen()
         //   |  |*******************************|  |
         //   |  --------------------------------n  |   n = (maxcol,maxrow)
         //   --------------------------------------p   p = (gridwdm1,gridhtm1)
-        
+        //
         if (minrow < range) {
             // process rectangle above inner rectangle
             slowgen(mincol, minrow, maxcol, range - 1);
@@ -706,16 +730,18 @@ void ltlalgo::dogen()
         }
         
         // find the intersection of the limits with the inner rectangle
-        // and process that rectangle rapidly (no need to worry about
-        // a cell's extended neighborhood being outside the grid edges)
+        // and process that intersection rapidly (there's no need to check
+        // if a cell's extended neighborhood is outside the grid edges)
         if (minrow < range) minrow = range;
         if (mincol < range) mincol = range;
         if (maxrow > gridhtm1 - range) maxrow = gridhtm1 - range;
         if (maxcol > gridwdm1 - range) maxcol = gridwdm1 - range;
-        if (ntype == 'M') {
-            fast_Moore(mincol, minrow, maxcol, maxrow);
-        } else {
-            fast_Neumann(mincol, minrow, maxcol, maxrow);
+        if (minrow <= maxrow && mincol <= maxcol) {
+            if (ntype == 'M') {
+                fast_Moore(mincol, minrow, maxcol, maxrow);
+            } else {
+                fast_Neumann(mincol, minrow, maxcol, maxrow);
+            }
         }
     }
 }
