@@ -1970,12 +1970,12 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
     if (!inundoredo) {
         // check if rotated selection edges are outside bounded grid
         if ( (currlayer->algo->gridwd > 0 &&
-              (newleft < currlayer->algo->gridleft || newright > currlayer->algo->gridright)) ||
-            (currlayer->algo->gridht > 0 &&
-             (newtop < currlayer->algo->gridtop || newbottom > currlayer->algo->gridbottom)) ) {
-                statusptr->ErrorMessage(_("New selection would be outside grid boundary."));
-                return false;
-            }
+                (newleft < currlayer->algo->gridleft || newright > currlayer->algo->gridright)) ||
+             (currlayer->algo->gridht > 0 &&
+                (newtop < currlayer->algo->gridtop || newbottom > currlayer->algo->gridbottom)) ) {
+            statusptr->ErrorMessage(_("New selection would be outside grid boundary."));
+            return false;
+        }
     }
     
     // if there is no pattern then just rotate the selection edges
@@ -1996,7 +1996,7 @@ bool Selection::Rotate(bool clockwise, bool inundoredo)
     bigint top, left, bottom, right;
     currlayer->algo->findedges(&top, &left, &bottom, &right);
     if ( (seltop > bottom || selbottom < top || selleft > right || selright < left) &&
-        (newtop > bottom || newbottom < top || newleft > right || newright < left) ) {
+         (newtop > bottom || newbottom < top || newleft > right || newright < left) ) {
         viewptr->SaveCurrentSelection();
         seltop    = newtop;
         selbottom = newbottom;

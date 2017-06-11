@@ -454,9 +454,9 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         if ( !PointInView(pastex, pastey) ||
             // allow paste if any corner of pasterect is within grid
             !( PointInGrid(pastex, pastey) ||
-              PointInGrid(pastex+pasterect.width-1, pastey) ||
-              PointInGrid(pastex, pastey+pasterect.height-1) ||
-              PointInGrid(pastex+pasterect.width-1, pastey+pasterect.height-1) ) ) {
+               PointInGrid(pastex+pasterect.width-1, pastey) ||
+               PointInGrid(pastex, pastey+pasterect.height-1) ||
+               PointInGrid(pastex+pasterect.width-1, pastey+pasterect.height-1) ) ) {
                 statusptr->DisplayMessage(_("Paste aborted."));
                 return;
             }
@@ -993,20 +993,59 @@ bool PatternView::FlipPastePattern(bool topbottom)
 
 bool PatternView::RotatePastePattern(bool clockwise)
 {
-    bool result;
     Selection pastesel(pastebox.GetTop(), pastebox.GetLeft(),
                        pastebox.GetBottom(), pastebox.GetRight());
+    
+    // check if pastelayer->algo uses a finite grid
+    if (!pastelayer->algo->unbounded) {
+        // readclipboard has loaded the pattern into top left corner of grid,
+        // so if pastebox isn't square we need to expand the grid to avoid the
+        // rotated pattern being clipped (WARNING: this assumes the algo won't
+        // change the pattern's cell coordinates when setrule expands the grid)
+        int x, y, wd, ht;
+        pastesel.GetRect(&x, &y, &wd, &ht);
+        if (wd != ht) {
+        
+            // better solution would be to check if pastebox is small enough for
+            // pattern to be safely rotated after shifting to center of grid and only
+            // expand grid if it can't!!!??? (must also update pastesel edges)
+            
+            int newwd, newht;
+            if (wd > ht) {
+                // expand grid vertically
+                newht = pastelayer->algo->gridht + wd;
+                newwd = pastelayer->algo->gridwd;
+            } else {
+                // wd < ht so expand grid horizontally
+                newwd = pastelayer->algo->gridwd + ht;
+                newht = pastelayer->algo->gridht;
+            }
+            char rule[MAXRULESIZE];
+            sprintf(rule, "%s", pastelayer->algo->getrule());
+            char *suffix = strchr(rule, ':');
+            if (suffix) suffix[0] = 0;
+            char topology = pastelayer->algo->boundedplane ? 'P' : 'T';
+            sprintf(rule, "%s:%c%d,%d", rule, topology, newwd, newht);
+            if (pastelayer->algo->setrule(rule)) {
+                // should never happen but play safe
+                Warning(_("Sorry, but the clipboard pattern could not be rotated."));
+                return false;
+            }
+        }
+    }
     
     // rotate the pattern in pastelayer
     lifealgo* savealgo = currlayer->algo;
     int savetype = currlayer->algtype;
     currlayer->algo = pastelayer->algo;
     currlayer->algtype = pastelayer->algtype;
+    
     // pass in true for inundoredo parameter so rotate won't be remembered
     // and layer won't be marked as dirty; also set inscript temporarily
     // so that viewport won't be updated
     inscript = true;
-    result = pastesel.Rotate(clockwise, true);
+    bool result = pastesel.Rotate(clockwise, true);
+    
     // currlayer->algo might point to a *different* universe
     pastelayer->algo = currlayer->algo;
     currlayer->algo = savealgo;

@@ -890,6 +890,8 @@ const char *ltlalgo::setrule(const char *s)
     // set the grid_type so the GUI can display circles or diamonds in icon mode
     grid_type = ntype == 'M' ? SQUARE_GRID : VN_GRID;
     
+    boundedplane = topology == 'P';
+    
     // need to set a lifealgo flag if minB is 0 so GUI code can allow
     // pattern generation when the population is 0
     //!!! hasB0 = minB == 0;
