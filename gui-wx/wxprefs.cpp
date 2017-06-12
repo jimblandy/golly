@@ -2038,10 +2038,14 @@ void GetPrefs()
                         algoinfo[algoindex]->algog[state] = g;
                         algoinfo[algoindex]->algob[state] = b;
                     }
-                    while (*value != ',') value++; value++;
-                    while (*value != ',') value++; value++;
-                    while (*value != ',') value++; value++;
-                    while (*value != ',') value++; value++;
+                    while (*value != ',') value++;
+                    value++;
+                    while (*value != ',') value++;
+                    value++;
+                    while (*value != ',') value++;
+                    value++;
+                    while (*value != ',') value++;
+                    value++;
                 }
             }
             

@@ -223,9 +223,11 @@ const char *readrle(lifealgo &imp, char *line) {
       } else if (line[0] == 'x' && (line[1] <= ' ' || line[1] == '=')) {
          // extract wd and ht
          p = line;
-         while (*p && *p != '=') p++; p++;
+         while (*p && *p != '=') p++;
+         p++;
          sscanf(p, "%d", &wd);
-         while (*p && *p != '=') p++; p++;
+         while (*p && *p != '=') p++;
+         p++;
          sscanf(p, "%d", &ht);
 
          while (*p && *p != 'r') p++;
@@ -418,7 +420,7 @@ const char *readmcell(lifealgo &imp, char *line) {
    bool extendedHL = false;         // special-case rule translation for extended HistoricalLife rules
    bool useltl = false;             // using a Larger than Life rule?
    char ltlrule[MAXRULESIZE];       // the Larger than Life rule (without any suffix)
-   int defwd, defht;                // default grid size for Larger than Life
+   int defwd = 0, defht = 0;        // default grid size for Larger than Life
    int Lcount = 0;                  // number of #L lines seen
 
    while (getline(line, LINESIZE)) {
