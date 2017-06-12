@@ -4120,7 +4120,7 @@ const char* Overlay::DoOptimize(const char* args)
     // add index to the clip
     int numtrans = clipptr->addIndex();
 
-    static char result[8];
+    static char result[12];
     sprintf(result, "%d", numtrans);
     return result;
 }
