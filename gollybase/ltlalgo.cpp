@@ -37,12 +37,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // set default rule to match Life
 static const char *DEFAULTRULE = "R1,C0,M0,S2..3,B3..3,NM";
 
-#define DEFAULTSIZE 500     // ???!!!
+#define MAXRANGE 50             // too slow???!!!
+#define DEFAULTSIZE 400         // must be >= 2*MAXRANGE
 
-// define maximum and minimum sizes of gridwd and gridht
-// (note that MAXSIZE^2 must be < 2^31 so population can't overflow)
-#define MAXSIZE 4000        // ???!!!
-#define MINSIZE 20          // max range * 2  (change to be dynamic!!!)
+// maximum number of cells in grid must be < 2^31 so population can't overflow
+#define MAXCELLS 100000000.0    // too big???!!!
 
 // -----------------------------------------------------------------------------
 
@@ -292,12 +291,12 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
     if (range == 1) {
         for (int y = minrow; y <= maxrow; y++) {
             int yoffset = y * gridwd;
-            unsigned char* topy = currgrid + (y - range) * gridwd;
+            unsigned char* topy = currgrid + (y - 1) * gridwd;
             for (int x = mincol; x <= maxcol; x++) {
                 // count the state-1 neighbors within the current range
                 // using the extended Moore neighborhood with no edge checks
                 int ncount = 0;
-                unsigned char* cellptr = topy + (x - range);
+                unsigned char* cellptr = topy + (x - 1);
                 if (*cellptr++ == 1) ncount++;
                 if (*cellptr++ == 1) ncount++;
                 if (*cellptr   == 1) ncount++;
@@ -318,6 +317,7 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
             int yoffset = y * gridwd;
             int ymrange = y - range;
             int yprange = y + range;
+            unsigned char* topy = currgrid + ymrange * gridwd;
             
             // for the 1st cell in this row we count the state-1 cells in the
             // Moore neighborhood's left column, middle columns, and right column
@@ -326,7 +326,7 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
             
             // get count in left column
             int lcount = 0;
-            unsigned char* cellptr = currgrid + ymrange * gridwd + xmrange;
+            unsigned char* cellptr = topy + xmrange;
             for (int j = ymrange; j <= yprange; j++) {
                 if (*cellptr == 1) lcount++;
                 cellptr += gridwd;
@@ -334,7 +334,7 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
             
             // get count in right column
             int rcount = 0;
-            cellptr = currgrid + ymrange * gridwd + xprange;
+            cellptr = topy + xprange;
             for (int j = ymrange; j <= yprange; j++) {
                 if (*cellptr == 1) rcount++;
                 cellptr += gridwd;
@@ -368,7 +368,7 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
             for (int x = mincol+1; x <= maxcol; x++) {
                 // get new left count
                 lcount = 0;
-                cellptr = currgrid + ymrange * gridwd + x - range;
+                cellptr = topy + x - range;
                 for (int j = ymrange; j <= yprange; j++) {
                     if (*cellptr == 1) lcount++;
                     cellptr += gridwd;
@@ -379,7 +379,7 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
 
                 // get new right count
                 rcount = 0;
-                cellptr = currgrid + ymrange * gridwd + x + range;
+                cellptr = topy + x + range;
                 for (int j = ymrange; j <= yprange; j++) {
                     if (*cellptr == 1) rcount++;
                     cellptr += gridwd;
@@ -400,13 +400,13 @@ void ltlalgo::fast_Neumann(int mincol, int minrow, int maxcol, int maxrow)
         int gridwd2 = gridwd * 2;
         for (int y = minrow; y <= maxrow; y++) {
             int yoffset = y * gridwd;
-            unsigned char* yptr = currgrid + yoffset;
+            unsigned char* topy = currgrid + yoffset;
             for (int x = mincol; x <= maxcol; x++) {
                 // count the state-1 neighbors within the current range
                 // using the extended von Neumann neighborhood with no edge checks
                 // (at range 1 a diamond is a cross: +)
                 int ncount = 0;
-                unsigned char* cellptr = yptr + (x - range);
+                unsigned char* cellptr = topy + (x - 1);
                 if (*cellptr++ == 1) ncount++;
                 if (*cellptr++ == 1) ncount++;
                 if (*cellptr   == 1) ncount++;
@@ -423,12 +423,13 @@ void ltlalgo::fast_Neumann(int mincol, int minrow, int maxcol, int maxrow)
             int yoffset = y * gridwd;
             int ymrange = y - range;
             int yprange = y + range;
+            unsigned char* topy = currgrid + ymrange * gridwd;
             for (int x = mincol; x <= maxcol; x++) {
                 // count the state-1 neighbors within the current range
                 // using the extended von Neumann neighborhood (diamond) with no edge checks
                 int ncount = 0;
                 int xoffset = 0;
-                unsigned char* rowptr = currgrid + ymrange * gridwd;
+                unsigned char* rowptr = topy;
                 for (int j = ymrange; j < y; j++) {
                     unsigned char* cellptr = rowptr + (x - xoffset);
                     int len = 2 * xoffset + 1;
@@ -660,7 +661,7 @@ void ltlalgo::slowgen(int mincol, int minrow, int maxcol, int maxrow)
 
 void ltlalgo::dogen()
 {
-    if (gridwd == MINSIZE && gridht == MINSIZE) {
+    if ((int)gridwd == minsize && (int)gridht == minsize) {
         // reset minx,miny,maxx,maxy for first birth or survivor in nextgrid
         empty_boundaries();
     
@@ -839,7 +840,8 @@ const char *ltlalgo::setrule(const char *s)
         }
     }
     
-    if (r < 1 || r > 10) return "R value be from 1 to 10";
+    if (r < 1) return "R value is too small";
+    if (r > MAXRANGE) return "R value is too big";
     if (c < 0 || c > 255) return "C value must be from 0 to 255";
     if (m < 0 || m > 1) return "M value must be 0 or 1";
     if (s1 > s2) return "S minimum must be <= S maximum";
@@ -869,12 +871,10 @@ const char *ltlalgo::setrule(const char *s)
                     newht = newwd;
                 }
             }
-            if (newwd < MINSIZE) newwd = MINSIZE;
-            if (newht < MINSIZE) newht = MINSIZE;
-            if (newwd > MAXSIZE) newwd = MAXSIZE;
-            if (newht > MAXSIZE) newht = MAXSIZE;
         }
     }
+
+    if ((float)newwd * (float)newht > MAXCELLS) return "grid size is too big";
 
     // the given rule is valid
     range = r;
@@ -886,6 +886,10 @@ const char *ltlalgo::setrule(const char *s)
     maxB = b2;
     ntype = n;
     topology = t;
+
+    minsize = 2 * range;
+    if (newwd < minsize) newwd = minsize;
+    if (newht < minsize) newht = minsize;
     
     // set the grid_type so the GUI can display circles or diamonds in icon mode
     grid_type = ntype == 'M' ? SQUARE_GRID : VN_GRID;

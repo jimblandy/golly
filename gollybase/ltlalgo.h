@@ -71,6 +71,7 @@ private:
     unsigned char* nextgrid;            // contains gridwd*gridht cells for next generation
     int gridbytes;                      // gridwd*gridht
     int gridwdm1, gridhtm1;             // gridwd-1, gridht-1 (bottom right corner of grid)
+    int minsize;                        // minimum size of gridwd/ht is 2*range
     int gtop, gleft, gbottom, gright;   // cell coordinates of grid edges (middle cell is 0,0)
     int minx, miny, maxx, maxy;         // boundary of live cells (in grid coordinates)
     vector<int> cell_list;              // used by save_cells and restore_cells
