@@ -631,6 +631,7 @@ function test_cellview()
     -- resize overlay to cover entire layer
     wd, ht = g.getview( g.getlayer() )
     ov("resize "..wd.." "..ht)
+    ov("position topleft")
 
     -- create a new layer with 50% random fill
     local size = 512
@@ -698,10 +699,29 @@ function test_cellview()
     while running do
         local t1 = g.millisecs()
 
+        -- check for resize
+        local newwd, newht = g.getview(g.getlayer())
+        if newwd ~= wd or newht ~= ht then
+            -- resize overlay
+            if newwd < 1 then newwd = 1 end
+            if newht < 1 then newht = 1 end
+
+            -- save new size
+            wd = newwd
+            ht = newht
+
+            -- resize overlay
+            ov("resize "..wd.." "..ht)
+        end
+
         -- stop when key pressed or mouse button clicked
         local event = g.getevent()
-        if event:find("^key") or event:find("^oclick") then
-            running = false
+        if event == "key f11 none" then
+            g.doevent(event)
+        else
+            if event:find("^key") or event:find("^oclick") then
+                running = false
+            end
         end
 
         -- next generation
@@ -1143,8 +1163,12 @@ David Bell
 
         -- stop when key pressed or mouse button clicked
         local event = g.getevent()
-        if event:find("^key") or event:find("^oclick") then
-            running = false
+        if event == "key f11 none" then
+            g.doevent(event)
+        else
+            if event:find("^key") or event:find("^oclick") then
+                running = false
+            end
         end
 
         -- draw background
