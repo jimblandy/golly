@@ -3,7 +3,147 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-TO DO!!!
+The Larger than Life algorithm supports a family of rules with an
+extendable neighborhood, as defined by Kellie Michele Evans in her 1996
+<a href="http://www.csun.edu/~kme52026/thesis.html">thesis</a>.
+The rule notation used by Golly is identical to the one created by
+Mirek Wojtowicz for <a href="http://www.mirekw.com/ca/rullex_lgtl.html">MCell</a>:
+
+<p>
+<dd>
+R<i>r</i>,C<i>c</i>,M<i>m</i>,S<i>smin</i>..<i>smax</i>,B<i>bmin</i>..<i>bmax</i>,N<i>n</i>
+</dd>
+
+<p>
+R<i>r</i> - specifies the range (<i>r</i> is from 1 to 50).<br>
+C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 255).<br>
+M<i>m</i> - specifies if the middle cell is included in the neighborhood count (<i>m</i> is 0 or 1).<br>
+S<i>smin</i>..<i>smax</i> - specifies the count limits for a state 1 cell to survive.<br>
+B<i>bmin</i>..<i>bmax</i> - specifies the count limits for a dead cell to become a birth.<br>
+N<i>n</i> - specifies the extended neighborhood type (<i>n</i> is M for Moore or N for von Neumann).
+
+<p>
+This diagram shows the extended Moore and von Neumann neighborhoods for range 3:
+
+<p>
+<dd><img src="extended.png"></dd>
+
+<p>
+If the number of states (specified after C) is greater than 2 then states 1 and above
+don't die immediately but gradually decay.  Note that state values above 1 are not
+included in the neighborhood counts and thus play no part in deciding the survival
+of a state 1 cell, nor the birth of an empty cell.  C0 and C1 are equivalent to C2.
+
+<p>&nbsp;<br>
+<font size=+1><b>Examples</b></font>
+
+<p>
+The Patterns/Larger-than-Life folder contains a number of
+example patterns (mostly from the MCell collection).
+The following table shows a number of example rules along with
+their commonly used names:
+
+<p>
+<table cellspacing=0 cellpadding=0>
+<tr>
+   <td><b><a href="rule:R1,C0,M0,S2..3,B3..3,NM">R1,C0,M0,S2..3,B3..3,NM</a></b></td>
+   <td width=10> </td><td>[Life]</td><td width=10> </td>
+   <td> - the default rule for this algorithm.</td>
+</tr>
+<tr>
+   <td><b><a href="rule:R5,C0,M1,S34..58,B34..45,NM">R5,C0,M1,S34..58,B34..45,NM</a></b></td>
+   <td width=10> </td><td>[Bugs]</td><td width=10> </td>
+   <td> - a chaotic rule by Kellie Evans.</td>
+</tr>
+<tr>
+   <td><b><a href="rule:R10,C0,M1,S123..212,B123..170,NM">R10,C0,M1,S123..212,B123..170,NM</a></b></td>
+   <td width=10> </td><td>[Bugsmovie]</td><td width=10> </td>
+   <td> - a chaotic rule by David Griffeath.</td>
+</tr>
+<tr>
+   <td><b><a href="rule:R8,C0,M0,S163..223,B74..252,NM">R8,C0,M0,S163..223,B74..252,NM</a></b></td>
+   <td width=10> </td><td>[Globe]</td><td width=10> </td>
+   <td> - an expanding rule by Mirek Wojtowicz.</td>
+</tr>
+<tr>
+   <td><b><a href="rule:R1,C0,M1,S1..1,B1..1,NN">R1,C0,M1,S1..1,B1..1,NN</a></b></td>
+   <td width=10> </td><td>[Gnarl]</td><td width=10> </td>
+   <td> - an exploding rule by Kellie Evans.</td>
+</tr>
+<tr>
+   <td><b><a href="rule:R4,C0,M1,S41..81,B41..81,NM">R4,C0,M1,S41..81,B41..81,NM</a></b></td>
+   <td width=10> </td><td>[Majority]</td><td width=10> </td>
+   <td> - a stable rule by David Griffeath.</td>
+</tr>
+<tr>
+   <td><b><a href="rule:R7,C0,M1,S113..225,B113..225,NM">R7,C0,M1,S113..225,B113..225,NM</a></b></td>
+   <td width=10> </td><td>[Majorly]</td><td width=10> </td>
+   <td> - an expanding rule by David Griffeath.</td>
+</tr>
+<tr>
+   <td><b><a href="rule:R10,C255,M1,S2..3,B3..3,NM">R10,C255,M1,S2..3,B3..3,NM</a></b></td>
+   <td width=10> </td><td>[ModernArt]</td><td width=10> </td>
+   <td> - a chaotic rule by Charles A. Rockafellor.</td>
+</tr>
+<tr>
+   <td><b><a href="rule:R7,C0,M1,S100..200,B75..170,NM">R7,C0,M1,S100..200,B75..170,NM</a></b></td>
+   <td width=10> </td><td>[Waffle]</td><td width=10> </td>
+   <td> - an expanding rule by Kellie Evans.</td>
+</tr>
+</table>
+</p>
+
+<p>&nbsp;<br>
+<font size=+1><b>Alternative rule notation</b></font>
+
+<p>
+Golly also allows rules to be entered using the notation defined by
+Kellie Evans in her thesis.  The range, birth limits and survival limits
+are specified by five integers separated by commas:
+
+<p>
+<dd>
+<i>r</i>,<i>bmin</i>,<i>bmax</i>,<i>smin</i>,<i>smax</i>
+</dd>
+
+<p>
+This notation assumes an extended Moore neighborhood in which a live middle cell
+is included in the neighborhood count (ie. totalistic).
+For example, Life can be entered as 1,3,3,3,4.
+
+<p>&nbsp;<br>
+<font size=+1><b>Grid topology and size limits</b></font>
+
+<p>
+Unlike Golly's other algorithms, Larger than Life uses a finite universe.
+The topology can be either a torus or a plane and is specified by appending
+a suitable suffix to the rule.  For example,
+<b><a href="rule:R5,C0,M1,S34..58,B34..45,NM:T500,40">R5,C0,M1,S34..58,B34..45,NM:T500,40</a></b>
+creates a 500 by 40 torus using the Bugs rule, and
+<b><a href="rule:1,3,3,3,4:P300,200">1,3,3,3,4:P300,200</a></b>
+creates a 300 by 200 plane using Life.
+
+<p>
+The maximum grid size allowed is 100 million cells.
+The minimum width and height is twice the range.
+If a given rule has no suffix then the grid will be a torus with a default size
+of 400 by 400 cells.
+
+<p>
+Note that Golly's canonical version of a Larger than Life rule
+uses the MCell syntax and always includes a suffix showing the
+topology and the grid size.
+
+<p>&nbsp;<br>
+<font size=+1><b>References</b></font>
+
+<p>
+MCell rules lexicon for Larger than Life:<br>
+<a href="http://www.mirekw.com/ca/rullex_lgtl.html">http://www.mirekw.com/ca/rullex_lgtl.html</a>
+
+<p>
+Kellie Michele Evans' 1996 dissertation:<br>
+<a href="http://www.csun.edu/~kme52026/thesis.html">http://www.csun.edu/~kme52026/thesis.html</a>
 
 </body>
 </html>
