@@ -1,0 +1,21 @@
+#MCell 2.20
+#GAME Larger than Life
+#RULE R1,C0,M1,S1..1,B1..1,NN
+#BOARD 160x160
+#SPEED 0
+#WRAP 1
+#CCOLORS 2
+#D      A popular form of recreational mathematics is to grow fractals,
+#D snowflakes, and related patterns from simple CA rules. Here is a nice
+#D example provided by Kellie Evans. The rule is an LTL model in which cell
+#D x is occupied next time if and only if the range 1 Diamond neighborhood
+#D centered at x contains exactly 1 occupied cell this time. Started from a
+#D configuration of two diagonally adjacent occupied cells, a periodic
+#D tiling emerges in two quadrants of the plane while complex dynamics
+#D occupy the other two quadrants. We have named this experiment in homage
+#D to Rudy Rucker. His book "Artificial Life Lab" (Waite Group, 1993)
+#D suggests that the three fundamental characteristics of life are gnarl,
+#D sex and death. Check it out.
+#D 
+#D David Griffeath
+#L .A$A

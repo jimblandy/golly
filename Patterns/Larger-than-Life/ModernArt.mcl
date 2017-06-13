@@ -1,0 +1,14 @@
+#MCell 4.00
+#GAME Larger than Life
+#RULE R10,C255,M1,S2..3,B3..3,NM
+#BOARD 120x120
+#SPEED 20
+#WRAP 1
+#CCOLORS 255
+#D Most simple patterns expand into lines and blocks of color, except
+#D for the really simple ones, which form stable power blocks (literally).
+#D 
+#D Discovered by Charles A. Rockafellor, March 2000
+#L 4A$4.AA15.6A$6.AA11.AA$8.3A5.3A$11.AA..A$13.AA$12.A..AA$11.A5.AA$11.A
+#L 7.AA$10.A10.3A$9.A14.AA$8.A17.AA$7.A20.AA$6.A23.AA$5.A26.3A$4.A30.A$
+#L 36.A$37.A$38.A$39.AA$41.AA$42.A

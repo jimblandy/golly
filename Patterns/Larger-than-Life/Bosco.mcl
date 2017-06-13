@@ -1,0 +1,22 @@
+#MCell 2.20
+#GAME Larger than Life
+#RULE R5,C0,M1,S34..58,B34..45,NM
+#BOARD 100x100
+#SPEED 0
+#WRAP 1
+#CCOLORS 2
+#D "Bugs" rule
+#D 
+#D      Here's a little range 5, Larger than Life creature that Kellie Evans
+#D discovered while exploring LtLife phase space on the CAM8 cellular automaton
+#D machine. It's a seriously endangered species in the crowded environment of
+#D the rule's characteristic dynamics, so we have isolated our oscillating bug,
+#D named Bosco, in its own MCell experiment.
+#D 
+#D      Practice your MCell skills by verifying that Bosco is indeed periodic,
+#D and compute the exact length of its period. Playing with Step Size, you
+#D should be able to complete this exercise within a minute or so.
+#D 
+#D David Griffeath
+#L 29.A$27.5A$25.5A.AA$24.5A3.AA$24.4A5.A$23.4A5.3A$24.4A3.3A$24.5A.4A$
+#L 25.8A$26.7A$27.5A31$A

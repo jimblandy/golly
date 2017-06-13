@@ -1,0 +1,31 @@
+#MCell 2.20
+#GAME Larger than Life
+#RULE R7,C0,M1,S100..200,B75..170,NM
+#BOARD 300x300
+#SPEED 0
+#WRAP 1
+#CCOLORS 25
+#COLORING 2
+#D 
+#D      Here is a a beautiful 'waffle' for the range 7 Box Larger than Life rule
+#D with birth interval [75,170] and survival interval [100,200], after 90
+#D updates, with all 0's boundary conditions. The initial configuration is
+#D a central lattice circle of occupied sites with radius 12.
+#D 
+#D Starting from a 50-50 random mix of live and dead cells, the dynamics
+#D produce a familiar nucleation scenario - most of the space relaxes to
+#D all 0's, but isolated pockets of activity form seeds for spreading
+#D colonies of 1's. Try it! Early on we observe an assortment of waffles,
+#D most imperfect, but some highly patterned and nearly symmetric. Later the
+#D imperfections take over and cover the space with another variety of
+#D pseduo-random 'seething gurp'.
+#D 
+#D Intrigued by the delicate transient droplet patterns, Kellie Evans segued
+#D into 'engineering' mode in search of the perfect waffle. She discovered
+#D that for the LtL given here, if we start from a radius 10 lattice circle,
+#D then the waffle appears to grow 'perfectly' for more than 70 updates before
+#D beginning to unravel.
+#D 
+#D David Griffeath
+#L 7.9A$5.13A$4.15A$3.17A$..19A$.21A$.21A$23A$23A$23A$23A$23A$23A$23A$23A
+#L $23A$.21A$.21A$..19A$3.17A$4.15A$5.13A$7.9A

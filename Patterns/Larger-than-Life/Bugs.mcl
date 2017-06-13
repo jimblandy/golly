@@ -1,0 +1,28 @@
+#MCell 2.20
+#GAME Larger than Life
+#RULE R5,C0,M1,S34..58,B34..45,NM
+#BOARD 120x120
+#SPEED 0
+#WRAP 1
+#CCOLORS 2
+#D "Bugs" rule
+#D 
+#D Discovered while exploring LtLife phase space on the CAM8
+#D cellular automaton machine. It's a seriously endangered species
+#D in the crowded environment of the rule's characteristic dynamics.
+#D 
+#D Kellie Evans
+#L .A.A5.A.6A5.A.6A$.AA.4A..A.3A..A.A3.A.AA..A$..AA3.3A.4A.AA9.AA$3.A..A.
+#L 4A.A3.A..AA.A.3A.A$.4A..A.AA..A.AA3.A.3A.4A$5.A.A.A..A..3A3.4A.AA.A$..
+#L A.A4.A.AA3.AA.A5.4A$AA.A.A..A.3A.3A.AA.A.A.3A$4A.A.4A..3A.A3.AA3.A..A$
+#L A.A6.4A3.3A3.A.A3.A$4A.AA3.A..A.A.3A.A.7A$A..AA.A3.3A.10A..A.AA$A.AA..
+#L 3A..A3.A4.A5.A$4.AA..AA4.A.A..A.A.A.AA..A$A.4A..A.AA..A.A4.A3.AA.A$4A
+#L 4.A6.A.A.AA.AA3.AA$A.A.6A.3A.A4.4A3.AA$.A5.3A.A3.A..A.AA.7A$..A3.A4.A
+#L 5.3A.A.A5.A$..3A.3A.3A..AA.A..A..4A.A$..AA3.A6.AA.3A.5A$..A.A.AA.A.3A.
+#L AA.3A6.A$.A.AA.3A.3A.A3.A.AA..AA..AA$.A.3A.A4.4A.A.8A..A$.A..A.A7.6A..
+#L AA.AA.AA$..4A..A.AA.A3.A4.AA..A.A$7.A3.AA..A.6A..A3.A$.5A.AA5.A..A..A.
+#L A.AA3.A$3.3A.A.AA..4A.A4.AA..3A$.A.A..A..A.A..A..A.4A.A4.A$.AA.A.A.A.
+#L AA..A3.A4.AA.AA$3.A.A6.6A.A..A.AA.A.A$3.3A.3A.5A.A.5A..AA.A$.A3.5A..4A
+#L 3.A.AA.A$.5A.A..A.A.A..A.A5.AA.AA$..A.A.A.AA4.3A.AA.A6.A$..A.AA..3A.AA
+#L 4.A..A.AA$3.4A.A.A..AA3.3A.AA..AA$5.3A6.AA.AA..A6.A$..5A.A.A..3A3.7A..
+#L AA$.A.A.A.A.A.A6.A.A3.3A.AA$.AA.A3.3A3.A6.AA..A$..A.A.3A.AA.A.6A.A.3A
