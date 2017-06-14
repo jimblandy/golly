@@ -216,7 +216,7 @@ static int g_opendialog(lua_State* L)
         if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
     }
     
-    lua_pushstring(L, (const char*)wxs_result.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)wxs_result.mb_str(LUA_ENC));
     
     return 1;   // result is a string
 }
@@ -251,7 +251,7 @@ static int g_savedialog(lua_State* L)
     wxString wxs_savefname = wxEmptyString;
     if (savedlg.ShowModal() == wxID_OK) wxs_savefname = savedlg.GetPath();
     
-    lua_pushstring(L, (const char*)wxs_savefname.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)wxs_savefname.mb_str(LUA_ENC));
     
     return 1;   // result is a string
 }
@@ -461,7 +461,7 @@ static int g_getfiles(lua_State* L)
         // get all files
         bool more = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES | wxDIR_HIDDEN);
         while (more) {
-            lua_pushstring(L, (const char*)filename.mb_str(wxConvUTF8));
+            lua_pushstring(L, (const char*)filename.mb_str(LUA_ENC));
             lua_rawseti(L, -2, ++arraylen);
             more = dir.GetNext(&filename);
         }
@@ -469,7 +469,7 @@ static int g_getfiles(lua_State* L)
         more = dir.GetFirst(&filename, wxEmptyString, wxDIR_DIRS | wxDIR_HIDDEN);
         while (more) {
             filename += wxFILE_SEP_PATH;
-            lua_pushstring(L, (const char*)filename.mb_str(wxConvUTF8));
+            lua_pushstring(L, (const char*)filename.mb_str(LUA_ENC));
             lua_rawseti(L, -2, ++arraylen);
             more = dir.GetNext(&filename);
         }
@@ -2135,7 +2135,7 @@ static int g_getname(lua_State* L)
         GollyError(L, msg);
     }
     
-    lua_pushstring(L, (const char*)GetLayer(index)->currname.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)GetLayer(index)->currname.mb_str(LUA_ENC));
     
     return 1;   // result is a string
 }
@@ -2400,7 +2400,7 @@ static int g_getclipstr(lua_State* L)
     }
     
     wxString clipstr = data.GetText();
-    lua_pushstring(L, (const char*)clipstr.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)clipstr.mb_str(LUA_ENC));
     
     return 1;   // result is a string
 }
@@ -2425,7 +2425,7 @@ static int g_getstring(lua_State* L)
         lua_error(L);
     }
     
-    lua_pushstring(L, (const char*)result.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)result.mb_str(LUA_ENC));
     
     return 1;   // result is a string
 }
@@ -2439,7 +2439,7 @@ static int g_getxy(lua_State* L)
     statusptr->CheckMouseLocation(mainptr->infront);   // sets mousepos
     if (viewptr->showcontrols) mousepos = wxEmptyString;
     
-    lua_pushstring(L, (const char*)mousepos.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)mousepos.mb_str(LUA_ENC));
     
     return 1;   // result is a string
 }
@@ -2456,7 +2456,7 @@ static int g_getevent(lua_State* L)
     wxString event;
     GSF_getevent(event, get ? 1 : 0);
     
-    lua_pushstring(L, (const char*)event.mb_str(wxConvUTF8));
+    lua_pushstring(L, (const char*)event.mb_str(LUA_ENC));
     
     return 1;   // result is a string
 }
@@ -2766,7 +2766,7 @@ void RunLuaScript(const wxString& filepath)
         // (definitely necessary on Windows because wxFILE_SEP_PATH is a backslash)
         pstring.Replace(wxT("\\"), wxT("\\\\"));
 
-        luaL_dostring(L, (const char*)pstring.mb_str(wxConvUTF8));
+        luaL_dostring(L, (const char*)pstring.mb_str(LUA_ENC));
     }
     
     lua_level++;
