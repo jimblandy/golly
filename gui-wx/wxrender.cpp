@@ -108,6 +108,8 @@ GLuint icontexture = 0;                 // texture name for drawing icons
 GLuint celltexture = 0;                 // texture name for drawing magnified cells
 unsigned char* iconatlas = NULL;        // pointer to texture atlas for current set of icons
 unsigned char* cellatlas = NULL;        // pointer to texture atlas for current set of magnified cells
+unsigned char* iconatlasPOT = NULL;     // pointer to power of 2 texture atlas for current icons
+unsigned char* cellatlasPOT = NULL;     // pointer to power of 2 texture atlas for magnified cells
 
 // cellatlas needs to be rebuilt if any of these parameters change
 int prevnum = 0;                        // previous number of live states
@@ -307,6 +309,14 @@ void CreateTranslucentControls()
 void DestroyDrawingData()
 {
     if (cellatlas) free(cellatlas);
+    if (cellatlasPOT) {
+        free(cellatlasPOT);
+        cellatlasPOT = NULL;
+    }
+    if (iconatlasPOT) {
+        free(iconatlasPOT);
+        iconatlasPOT = NULL;
+    }
     if (ctrlsbitmap) free(ctrlsbitmap);
     if (darkbutt) free(darkbutt);
     for (int i = 0; i < 4; i++) {
@@ -316,12 +326,11 @@ void DestroyDrawingData()
 
 // -----------------------------------------------------------------------------
 
-void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
+unsigned char* GetPOTTexture(unsigned char* data, int *w, int *h)
 {
     // initially assume texture width and height same as data
-    int texturew = w;
-    int textureh = h;
-    unsigned char* texturedata = rgbadata;
+    int texturew = *w;
+    int textureh = *h;
     unsigned char* pow2data = NULL;
 
     // OpenGL versions earlier than 2.0 require textures to be a power of 2 in size (POT)
@@ -329,36 +338,62 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
         // check if width is a POT
         if (texturew & (texturew - 1)) {
             texturew = 2;
-            while (texturew < w) texturew <<= 1;
+            while (texturew < *w) texturew <<= 1;
         }
         
         // check if height is a POT
         if (textureh & (textureh - 1)) {
             textureh = 2;
-            while (textureh < h) textureh <<= 1;
+            while (textureh < *h) textureh <<= 1;
+        }
+
+        // need to make width and height the same
+        if (texturew < textureh) {
+            texturew = textureh;
+        }
+        else {
+            textureh = texturew;
         }
 
         // check if texture size is now different than the data size
-        if (w != texturew || h != textureh) {
+        if (*w != texturew || *h != textureh) {
             // allocate memory for POT texture using calloc so pixels outside supplied data will be transparent
             pow2data = (unsigned char*)calloc(texturew * textureh, 4);
             if (!pow2data) {
-                fprintf(stderr, "DrawRGBAData could not allocate POT buffer for %dx%d\n", texturew, textureh);
-                return;
+                fprintf(stderr, "Could not allocate POT buffer for %dx%d\n", texturew, textureh);
+                return NULL;
             }
 
             // copy the data to the top left of the POT texture
-            unsigned char* srcptr = rgbadata;
+            unsigned char* srcptr = data;
             unsigned char* dstptr = pow2data;
-            for (int y = 0; y < h; y++) {
-                memcpy(dstptr, srcptr, w * 4);
-                srcptr += w * 4;
+            for (int y = 0; y < *h; y++) {
+                memcpy(dstptr, srcptr, *w * 4);
+                srcptr += *w * 4;
                 dstptr += texturew * 4;
             }
 
-            // the texture is now the newly allocated POT buffer
-            texturedata = pow2data;
+            // return the new size
+            *w = texturew;
+            *h = textureh;
         }
+    }
+
+    // return the POT buffer (or NULL if not needed/allocated)
+    return pow2data;
+}
+
+// -----------------------------------------------------------------------------
+
+void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
+{
+    // convert texture to POT if needed
+    int texturew = w;
+    int textureh = h;
+    unsigned char* texturedata = rgbadata;
+    unsigned char* pow2data = GetPOTTexture(rgbadata, &texturew, &textureh);
+    if (pow2data) {
+        texturedata = pow2data;
     }
 
     // only need to create texture name once
@@ -407,7 +442,22 @@ static void LoadIconAtlas(int iconsize, int numicons)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
  
     int atlaswd = iconsize * numicons;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlaswd, iconsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, iconatlas);
+
+    // convert texture to POT if needed
+    int texturew = atlaswd;
+    int textureh = iconsize;
+    unsigned char* texturedata = iconatlas;
+    unsigned char* pow2data = GetPOTTexture(iconatlas, &texturew, &textureh);
+    if (pow2data) {
+        texturedata = pow2data;
+
+        // overwrite previous buffer if allocated
+        if (iconatlasPOT) free(iconatlasPOT);
+        iconatlasPOT = texturedata;
+    }
+
+    // create the texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texturew, textureh, 0, GL_RGBA, GL_UNSIGNED_BYTE, texturedata);
  
 #if 0
     // test above code by displaying the entire atlas
@@ -589,7 +639,22 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
     
     // load the texture atlas containing all magnified cells for later use in DrawCells
     int atlaswd = cellsize * numcells;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlaswd, cellsize, 0, GL_RGBA, GL_UNSIGNED_BYTE, cellatlas);
+
+    // convert texture to POT if needed
+    int texturew = atlaswd;
+    int textureh = cellsize;
+    unsigned char* texturedata = cellatlas;
+    unsigned char* pow2data = GetPOTTexture(cellatlas, &texturew, &textureh);
+    if (pow2data) {
+        texturedata = pow2data;
+
+        // overwrite previous buffer if allocated
+        if (cellatlasPOT) free(cellatlasPOT);
+        cellatlasPOT = texturedata;
+    }
+
+    // create the texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texturew, textureh, 0, GL_RGBA, GL_UNSIGNED_BYTE, texturedata);
     
 #if 0
     // test above code by displaying the entire atlas
@@ -611,7 +676,7 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
 
 // -----------------------------------------------------------------------------
 
-void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates, GLuint texture)
+void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates, GLuint texture, unsigned char* pot2)
 {
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
     // uses the supplied texture to draw solid cells or icons
@@ -621,7 +686,11 @@ void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     int v = 0;
     int t = 0;
     float invstates = 1.0 / numstates;
+    float ycoord = 1.0;
     int max = magbuffersize / sizeof(*magvertexbuffer);
+
+    // if using power of 2 textures then adjust the y coordinate
+    if (pot2) ycoord = invstates;
 
     EnableTextures();
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -653,14 +722,14 @@ void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                 magtextcoordbuffer[t++] = state * invstates;
                 magtextcoordbuffer[t++] = 0.0;
                 magtextcoordbuffer[t++] = (state - 1) * invstates;
-                magtextcoordbuffer[t++] = 1.0;
+                magtextcoordbuffer[t++] = ycoord;
 
                 magtextcoordbuffer[t++] = state * invstates;
                 magtextcoordbuffer[t++] = 0.0;
                 magtextcoordbuffer[t++] = (state - 1) * invstates;
-                magtextcoordbuffer[t++] = 1.0;
+                magtextcoordbuffer[t++] = ycoord;
                 magtextcoordbuffer[t++] = state * invstates;
-                magtextcoordbuffer[t++] = 1.0;
+                magtextcoordbuffer[t++] = ycoord; 
 
                 // check if buffer is full
                 if (v == max) {
@@ -735,12 +804,12 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
         
     } else if (showicons && pmscale > 4 && iconatlas) {
         // draw icons at scales 1:8 and above
-        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, icontexture);
+        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, icontexture, iconatlasPOT);
         
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
-        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, celltexture);
+        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, celltexture, cellatlasPOT);
     }
 }
 
