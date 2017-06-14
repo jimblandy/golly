@@ -696,11 +696,14 @@ void RuleDialog::UpdateHelp()
     if (expanded) {
         if (algoindex < NumAlgos()) {
             // display Help/Algorithms/algoname.html
+            wxString filename = wxString(GetAlgoName(algoindex),wxConvLocal);
+            // replace any spaces with underscores
+            filename.Replace(wxT(" "),wxT("_"));
             wxString filepath = gollydir + wxT("Help");
             filepath += wxFILE_SEP_PATH;
             filepath += wxT("Algorithms");
             filepath += wxFILE_SEP_PATH;
-            filepath += wxString(GetAlgoName(algoindex),wxConvLocal);
+            filepath += filename;
             filepath += wxT(".html");
             htmlwin->DisplayFile(filepath);
         } else {
