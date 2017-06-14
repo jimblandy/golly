@@ -318,6 +318,49 @@ void DestroyDrawingData()
 
 void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 {
+    // initially assume texture width and height same as data
+    int texturew = w;
+    int textureh = h;
+    unsigned char* texturedata = rgbadata;
+    unsigned char* pow2data = NULL;
+
+    // OpenGL versions earlier than 2.0 require textures to be a power of 2 in size (POT)
+    if (glMajor < 2) {
+        // check if width is a POT
+        if (texturew & (texturew - 1)) {
+            texturew = 2;
+            while (texturew < w) texturew <<= 1;
+        }
+        
+        // check if height is a POT
+        if (textureh & (textureh - 1)) {
+            textureh = 2;
+            while (textureh < h) textureh <<= 1;
+        }
+
+        // check if texture size is now different than the data size
+        if (w != texturew || h != textureh) {
+            // allocate memory for POT texture using calloc so pixels outside supplied data will be transparent
+            pow2data = (unsigned char*)calloc(texturew * textureh, 4);
+            if (!pow2data) {
+                fprintf(stderr, "DrawRGBAData could not allocate POT buffer for %dx%d\n", texturew, textureh);
+                return;
+            }
+
+            // copy the data to the top left of the POT texture
+            unsigned char* srcptr = rgbadata;
+            unsigned char* dstptr = pow2data;
+            for (int y = 0; y < h; y++) {
+                memcpy(dstptr, srcptr, w * 4);
+                srcptr += w * 4;
+                dstptr += texturew * 4;
+            }
+
+            // the texture is now the newly allocated POT buffer
+            texturedata = pow2data;
+        }
+    }
+
     // only need to create texture name once
     if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
 
@@ -327,19 +370,25 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
 
     // update the texture with the new RGBA data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbadata);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texturew, textureh, 0, GL_RGBA, GL_UNSIGNED_BYTE, texturedata);
 
     GLfloat vertices[] = {
-        (float)x,   (float)y,
-        (float)x+w, (float)y,
-        (float)x,   (float)y+h,
-        (float)x+w, (float)y+h,
+        (float)x,            (float)y,
+        (float)x + texturew, (float)y,
+        (float)x,            (float)y + textureh,
+        (float)x + texturew, (float)y + textureh,
     };
     glVertexPointer(2, GL_FLOAT, 0, vertices);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    // free the POT buffer if allocated
+    if (pow2data) {
+        free(pow2data);
+    }
 }
 
 // -----------------------------------------------------------------------------

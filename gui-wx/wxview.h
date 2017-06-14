@@ -32,6 +32,9 @@
 #include "wxselect.h"       // for Selection
 #include "wxlayer.h"        // for Layer
 
+extern int glMajor;
+extern int glMinor;
+
 // OpenGL is used for viewing and editing patterns:
 
 class PatternView : public wxGLCanvas

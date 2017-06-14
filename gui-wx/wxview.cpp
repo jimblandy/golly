@@ -78,6 +78,10 @@ static long clicktime;
 // calls OnDragTimer when the mouse is moved, inside or outside the viewport)
 const int TEN_HERTZ = 100;
 
+// OpenGL major and minor version
+int glMajor = 0;
+int glMinor = 0;
+
 // -----------------------------------------------------------------------------
 
 // event table and handlers:
@@ -2363,6 +2367,13 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
         glOrtho(0, wd, ht, 0, -1, 1);   // origin is top left and y increases down
         glViewport(0, 0, wd, ht);
         glMatrixMode(GL_MODELVIEW);
+
+        // get GL version
+        const char* version = NULL;
+        version = (const char*)glGetString(GL_VERSION);
+        if (version) {
+            sscanf(version, "%d.%d", &glMajor, &glMinor);
+        }
     }
     
     DrawView(tileindex);
