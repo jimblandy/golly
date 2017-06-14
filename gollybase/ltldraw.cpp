@@ -355,7 +355,7 @@ void ltlalgo::fit(viewport &view, int force)
     midy += top;
     
     int mag = MAX_MAG;
-    while (true) {
+    for (;;) {
         view.setpositionmag(midx, midy, mag);
         if (view.contains(left, top) && view.contains(right, bottom))
             break;

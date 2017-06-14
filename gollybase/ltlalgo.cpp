@@ -146,7 +146,7 @@ int ltlalgo::setcell(int x, int y, int newstate)
     unsigned char* cellptr = currgrid + gy * gridwd + gx;
     int oldstate = *cellptr;
     if (newstate != oldstate) {
-        *cellptr = newstate;
+        *cellptr = (unsigned char)newstate;
         // population might change
         if (oldstate == 0 && newstate > 0) {
             population++;
