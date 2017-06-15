@@ -40,6 +40,9 @@ static const char *DEFAULTRULE = "R1,C0,M0,S2..3,B3..3,NM";
 #define MAXRANGE 50             // too slow???!!!
 #define DEFAULTSIZE 400         // must be >= 2*MAXRANGE
 
+// maximum number of columns in a cell's neighborhood (used in fast_Moore)
+static const int MAXNCOLS = 2 * MAXRANGE + 1;
+
 // maximum number of cells in grid must be < 2^31 so population can't overflow
 #define MAXCELLS 100000000.0    // too big???!!!
 
@@ -313,6 +316,7 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
         }
     } else {
         // range > 1
+        int rightcol = 2 * range;
         for (int y = minrow; y <= maxrow; y++) {
             int yoffset = y * gridwd;
             int ymrange = y - range;
@@ -320,72 +324,55 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
             unsigned char* topy = currgrid + ymrange * gridwd;
             
             // for the 1st cell in this row we count the state-1 cells in the
-            // Moore neighborhood's left column, middle columns, and right column
+            // extended Moore neighborhood and remember the column counts
+            int colcount[MAXNCOLS];
             int xmrange = mincol - range;
             int xprange = mincol + range;
-            
-            // get count in left column
-            int lcount = 0;
-            unsigned char* cellptr = topy + xmrange;
-            for (int j = ymrange; j <= yprange; j++) {
-                if (*cellptr == 1) lcount++;
-                cellptr += gridwd;
-            }
-            
-            // get count in right column
-            int rcount = 0;
-            cellptr = topy + xprange;
-            for (int j = ymrange; j <= yprange; j++) {
-                if (*cellptr == 1) rcount++;
-                cellptr += gridwd;
-            }
-            
-            // get count in middle columns
-            xmrange++;
-            xprange--;
-            int midcount = 0;
-            for (int j = ymrange; j <= yprange; j++) {
-                cellptr = currgrid + j * gridwd + xmrange;
-                for (int i = xmrange; i <= xprange; i++) {
-                    if (*cellptr++ == 1) midcount++;
-                }
-            }
-            
-            // we now have the neighborhood counts in 3 parts:
-            //      2*range+1
-            //   ---------------
-            //   | |         | |
-            //   | |         | |
-            //   |l|    m    |r| 2*range+1
-            //   | |         | |
-            //   | |         | |
-            //   ---------------
-            
-            update_next_grid(mincol, y, yoffset, lcount+midcount+rcount);
-            
-            // for the remaining cells in this row we only need to count
-            // the left and right columns in each cell's neighborhood
-            for (int x = mincol+1; x <= maxcol; x++) {
-                // get new left count
-                lcount = 0;
-                cellptr = topy + x - range;
+            int ncount = 0;
+            for (int i = xmrange; i <= xprange; i++) {
+                unsigned char* cellptr = topy + i;
+                int col = i - xmrange;
+                colcount[col] = 0;
                 for (int j = ymrange; j <= yprange; j++) {
-                    if (*cellptr == 1) lcount++;
+                    if (*cellptr == 1) colcount[col]++;
                     cellptr += gridwd;
                 }
-                
-                // new midcount = old midcount + OLD rcount - NEW lcount
-                midcount = midcount + rcount - lcount;
-
-                // get new right count
-                rcount = 0;
-                cellptr = topy + x + range;
+                ncount += colcount[col];
+            }
+            
+            // we now have the neighborhood counts in each column;
+            // eg. 7 columns if range == 3:
+            //   ---------------
+            //   | | | | | | | |
+            //   | | | | | | | |
+            //   |0|1|2|3|4|5|6|
+            //   | | | | | | | |
+            //   | | | | | | | |
+            //   ---------------
+            
+            update_next_grid(mincol, y, yoffset, ncount);
+            
+            // for the remaining cells in this row we only need to update
+            // the count in the right column of the new neighborhood
+            // and shift the other column counts to the left
+            topy += range;
+            for (int x = mincol+1; x <= maxcol; x++) {
+                // get count in right column
+                int rcount = 0;
+                unsigned char* cellptr = topy + x;
                 for (int j = ymrange; j <= yprange; j++) {
                     if (*cellptr == 1) rcount++;
                     cellptr += gridwd;
                 }
                 
-                update_next_grid(x, y, yoffset, lcount+midcount+rcount);
+                ncount = rcount;
+                for (int i = 1; i <= rightcol; i++) {
+                    ncount += colcount[i];
+                    colcount[i-1] = colcount[i];
+                }
+                colcount[rightcol] = rcount;
+                
+                update_next_grid(x, y, yoffset, ncount);
             }
         }
     
@@ -468,7 +455,7 @@ void ltlalgo::slow_torus_Moore(int mincol, int minrow, int maxcol, int maxrow)
             for (int j = -range; j <= range; j++) {
                 int newy = y + j;
                 if (newy >= (int)gridht) {
-                    newy = newy % gridht;
+                    newy -= gridht;
                 } else if (newy < 0) {
                     newy += gridht;
                 }
@@ -476,7 +463,7 @@ void ltlalgo::slow_torus_Moore(int mincol, int minrow, int maxcol, int maxrow)
                 for (int i = -range; i <= range; i++) {
                     int newx = x + i;
                     if (newx >= (int)gridwd) {
-                        newx = newx % gridwd;
+                        newx -= gridwd;
                     } else if (newx < 0) {
                         newx += gridwd;
                     }
@@ -505,7 +492,7 @@ void ltlalgo::slow_torus_Neumann(int mincol, int minrow, int maxcol, int maxrow)
             for (int j = ymrange; j < y; j++) {
                 int newy = j;
                 if (newy >= (int)gridht) {
-                    newy = newy % gridht;
+                    newy -= gridht;
                 } else if (newy < 0) {
                     newy += gridht;
                 }
@@ -515,7 +502,7 @@ void ltlalgo::slow_torus_Neumann(int mincol, int minrow, int maxcol, int maxrow)
                 for (int i = 0; i < len; i++) {
                     int newx = xleft + i;
                     if (newx >= (int)gridwd) {
-                        newx = newx % gridwd;
+                        newx -= gridwd;
                     } else if (newx < 0) {
                         newx += gridwd;
                     }
@@ -528,7 +515,7 @@ void ltlalgo::slow_torus_Neumann(int mincol, int minrow, int maxcol, int maxrow)
             for (int j = y; j <= yprange; j++) {
                 int newy = j;
                 if (newy >= (int)gridht) {
-                    newy = newy % gridht;
+                    newy -= gridht;
                 } else if (newy < 0) {
                     newy += gridht;
                 }
@@ -538,7 +525,7 @@ void ltlalgo::slow_torus_Neumann(int mincol, int minrow, int maxcol, int maxrow)
                 for (int i = 0; i < len; i++) {
                     int newx = xleft + i;
                     if (newx >= (int)gridwd) {
-                        newx = newx % gridwd;
+                        newx -= gridwd;
                     } else if (newx < 0) {
                         newx += gridwd;
                     }
