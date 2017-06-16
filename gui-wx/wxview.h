@@ -32,8 +32,10 @@
 #include "wxselect.h"       // for Selection
 #include "wxlayer.h"        // for Layer
 
+// OpenGL version and relevant features
 extern int glMajor;
 extern int glMinor;
+extern bool glTextureRectangle;
 
 // OpenGL is used for viewing and editing patterns:
 

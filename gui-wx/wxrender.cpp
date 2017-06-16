@@ -109,7 +109,11 @@ GLuint celltexture = 0;                 // texture name for drawing magnified ce
 unsigned char* iconatlas = NULL;        // pointer to texture atlas for current set of icons
 unsigned char* cellatlas = NULL;        // pointer to texture atlas for current set of magnified cells
 unsigned char* iconatlasPOT = NULL;     // pointer to power of 2 texture atlas for current icons
+float iconscalew = 1.0;
+float iconscaleh = 1.0;
 unsigned char* cellatlasPOT = NULL;     // pointer to power of 2 texture atlas for magnified cells
+float cellscalew = 1.0;
+float cellscaleh = 1.0;
 
 // cellatlas needs to be rebuilt if any of these parameters change
 int prevnum = 0;                        // previous number of live states
@@ -347,14 +351,6 @@ unsigned char* GetPOTTexture(unsigned char* data, int *w, int *h)
             while (textureh < *h) textureh <<= 1;
         }
 
-        // need to make width and height the same
-        if (texturew < textureh) {
-            texturew = textureh;
-        }
-        else {
-            textureh = texturew;
-        }
-
         // check if texture size is now different than the data size
         if (*w != texturew || *h != textureh) {
             // allocate memory for POT texture using calloc so pixels outside supplied data will be transparent
@@ -455,6 +451,10 @@ static void LoadIconAtlas(int iconsize, int numicons)
         if (iconatlasPOT) free(iconatlasPOT);
         iconatlasPOT = texturedata;
     }
+
+    // compute the x and y scale factors for the potentially resized texture
+    iconscalew = (float)atlaswd / texturew;
+    iconscaleh = (float)iconsize / textureh;
 
     // create the texture
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texturew, textureh, 0, GL_RGBA, GL_UNSIGNED_BYTE, texturedata);
@@ -653,6 +653,10 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
         cellatlasPOT = texturedata;
     }
 
+    // compute the x and y scale factors for the potentially resized texture
+    cellscalew = (float)atlaswd / texturew;
+    cellscaleh = (float)cellsize / textureh;
+
     // create the texture
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texturew, textureh, 0, GL_RGBA, GL_UNSIGNED_BYTE, texturedata);
     
@@ -676,7 +680,7 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
 
 // -----------------------------------------------------------------------------
 
-void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates, GLuint texture, unsigned char* pot2)
+void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates, GLuint texture, float xscale, float yscale)
 {
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
     // uses the supplied texture to draw solid cells or icons
@@ -686,11 +690,7 @@ void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     int v = 0;
     int t = 0;
     float invstates = 1.0 / numstates;
-    float ycoord = 1.0;
     int max = magbuffersize / sizeof(*magvertexbuffer);
-
-    // if using power of 2 textures then adjust the y coordinate
-    if (pot2) ycoord = invstates;
 
     EnableTextures();
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -717,19 +717,19 @@ void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                 magvertexbuffer[v++] = xpos + pmscale;
                 magvertexbuffer[v++] = ypos + pmscale;
                 
-                magtextcoordbuffer[t++] = (state - 1) * invstates;
+                magtextcoordbuffer[t++] = (state - 1) * invstates * xscale;
                 magtextcoordbuffer[t++] = 0.0;
-                magtextcoordbuffer[t++] = state * invstates;
+                magtextcoordbuffer[t++] = state * invstates * xscale;
                 magtextcoordbuffer[t++] = 0.0;
-                magtextcoordbuffer[t++] = (state - 1) * invstates;
-                magtextcoordbuffer[t++] = ycoord;
+                magtextcoordbuffer[t++] = (state - 1) * invstates * xscale;
+                magtextcoordbuffer[t++] = yscale;
 
-                magtextcoordbuffer[t++] = state * invstates;
+                magtextcoordbuffer[t++] = state * invstates * xscale;
                 magtextcoordbuffer[t++] = 0.0;
-                magtextcoordbuffer[t++] = (state - 1) * invstates;
-                magtextcoordbuffer[t++] = ycoord;
-                magtextcoordbuffer[t++] = state * invstates;
-                magtextcoordbuffer[t++] = ycoord; 
+                magtextcoordbuffer[t++] = (state - 1) * invstates * xscale;
+                magtextcoordbuffer[t++] = yscale;
+                magtextcoordbuffer[t++] = state * invstates * xscale;
+                magtextcoordbuffer[t++] = yscale; 
 
                 // check if buffer is full
                 if (v == max) {
@@ -804,12 +804,12 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
         
     } else if (showicons && pmscale > 4 && iconatlas) {
         // draw icons at scales 1:8 and above
-        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, icontexture, iconatlasPOT);
+        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, icontexture, iconscalew, iconscaleh);
         
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
-        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, celltexture, cellatlasPOT);
+        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, celltexture, cellscalew, cellscaleh);
     }
 }
 

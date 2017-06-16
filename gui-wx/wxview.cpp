@@ -81,6 +81,7 @@ const int TEN_HERTZ = 100;
 // OpenGL major and minor version
 int glMajor = 0;
 int glMinor = 0;
+bool glTextureRectangle = false;
 
 // -----------------------------------------------------------------------------
 
@@ -511,12 +512,12 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
             // show new rule in title bar
             mainptr->SetWindowTitle(wxEmptyString);
 
-			// if pattern exists and is at starting gen then ensure savestart is true
-			// so that SaveStartingPattern will save pattern to suitable file
-			// (and thus undo/reset will work correctly)
-			if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
-				currlayer->savestart = true;
-			}
+            // if pattern exists and is at starting gen then ensure savestart is true
+            // so that SaveStartingPattern will save pattern to suitable file
+            // (and thus undo/reset will work correctly)
+            if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+                currlayer->savestart = true;
+            }
 
             // if grid is bounded then remove any live cells outside grid edges
             if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
@@ -2374,6 +2375,30 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
         if (version) {
             sscanf(version, "%d.%d", &glMajor, &glMinor);
         }
+
+        // check for texture_rectangle extension
+        const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
+        if (extensions) {
+            if (strstr(extensions, "GL_ARB_texture_rectangle") || strstr(extensions, "GL_EXT_texture_rectangle")) {
+                glTextureRectangle = true;
+            }
+        }
+
+#define STRINGIFY(arg) STR2(arg)
+#define STR2(arg) #arg
+
+        // update Golly banner to show OpenGL version
+        wxString banner = _("This is Golly version ");
+        banner += _(STRINGIFY(VERSION));
+#ifdef GOLLY64BIT
+        banner += _(" (64bit, ");
+#else
+        banner += _(" (32bit, ");
+#endif
+        banner += wxString::Format(_(" OpenGL %d.%d"), glMajor, glMinor);
+	if (glTextureRectangle) banner += _(" texture_rectangle");
+        banner += _("). Copyright 2017 The Golly Gang.");
+        statusptr->SetMessage(banner);
     }
     
     DrawView(tileindex);
