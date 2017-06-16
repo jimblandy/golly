@@ -36,6 +36,7 @@
 extern int glMajor;
 extern int glMinor;
 extern bool glTextureRectangle;
+extern int glMaxTextureSize;
 
 // OpenGL is used for viewing and editing patterns:
 

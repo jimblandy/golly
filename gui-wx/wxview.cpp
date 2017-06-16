@@ -78,10 +78,11 @@ static long clicktime;
 // calls OnDragTimer when the mouse is moved, inside or outside the viewport)
 const int TEN_HERTZ = 100;
 
-// OpenGL major and minor version
-int glMajor = 0;
-int glMinor = 0;
-bool glTextureRectangle = false;
+// OpenGL parameters
+int glMajor = 0;                     // major version
+int glMinor = 0;                     // minor version
+bool glTextureRectangle = false;     // whether texture rectangles are supported
+int glMaxTextureSize = 1024;         // maximum texture size
 
 // -----------------------------------------------------------------------------
 
@@ -2384,6 +2385,9 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
             }
         }
 
+        // get maximum texture size
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
+
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
 
@@ -2395,10 +2399,14 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 #else
         banner += _(" (32bit, ");
 #endif
-        banner += wxString::Format(_(" OpenGL %d.%d"), glMajor, glMinor);
+        banner += wxString::Format(_("OpenGL %d.%d"), glMajor, glMinor);
 	if (glTextureRectangle) banner += _(" texture_rectangle");
+        banner += wxString::Format(_(" %d"), glMaxTextureSize);
+#ifdef ENABLE_SOUND
+        banner += _(", Sound");
+#endif
         banner += _("). Copyright 2017 The Golly Gang.");
-        statusptr->SetMessage(banner);
+        statusptr->DisplayMessage(banner);
     }
     
     DrawView(tileindex);
