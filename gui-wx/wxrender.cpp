@@ -352,7 +352,7 @@ unsigned char* GetTexture(unsigned char *data, int *w, int *h, GLuint *texturena
     if (scaleh) *scaleh = 1.0;
 
     // OpenGL versions earlier than 2.0 require textures to be a power of 2 in size (POT)
-    if (glMajor < 3) {
+    if (glMajor < 2) {
         // check if width is a POT
         if (texturew & (texturew - 1)) {
             texturew = 1;
