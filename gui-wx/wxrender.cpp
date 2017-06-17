@@ -330,24 +330,38 @@ void DestroyDrawingData()
 
 // -----------------------------------------------------------------------------
 
-unsigned char* GetPOTTexture(unsigned char* data, int *w, int *h)
+unsigned char* GetTexture(unsigned char *data, int *w, int *h, GLuint *texturename, float *scalew, float *scaleh)
 {
+    // enable textures
+    EnableTextures();
+
+    // create the texture name once
+    if (*texturename == 0) glGenTextures(1, texturename);
+    glBindTexture(GL_TEXTURE_2D, *texturename);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     // initially assume texture width and height same as data
     int texturew = *w;
     int textureh = *h;
     unsigned char* pow2data = NULL;
 
+    // set scale to 1 if specified
+    if (scalew) *scalew = 1.0;
+    if (scaleh) *scaleh = 1.0;
+
     // OpenGL versions earlier than 2.0 require textures to be a power of 2 in size (POT)
-    if (glMajor < 2) {
+    if (glMajor < 3) {
         // check if width is a POT
         if (texturew & (texturew - 1)) {
-            texturew = 2;
+            texturew = 1;
             while (texturew < *w) texturew <<= 1;
         }
         
         // check if height is a POT
         if (textureh & (textureh - 1)) {
-            textureh = 2;
+            textureh = 1;
             while (textureh < *h) textureh <<= 1;
         }
 
@@ -369,11 +383,22 @@ unsigned char* GetPOTTexture(unsigned char* data, int *w, int *h)
                 dstptr += texturew * 4;
             }
 
+            // compute the width and height scale factors for the potentially resized texture
+            if (scalew) *scalew = (float)*w / texturew;
+            if (scaleh) *scaleh = (float)*h / textureh;
+
             // return the new size
             *w = texturew;
             *h = textureh;
+
+            // use the POT buffer for the texture
+            data = pow2data;
         }
     }
+
+    // create the texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texturew, textureh, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
 
     // return the POT buffer (or NULL if not needed/allocated)
     return pow2data;
@@ -386,26 +411,11 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
     // convert texture to POT if needed
     int texturew = w;
     int textureh = h;
-    unsigned char* texturedata = rgbadata;
-    unsigned char* pow2data = GetPOTTexture(rgbadata, &texturew, &textureh);
-    if (pow2data) {
-        texturedata = pow2data;
-    }
-
-    // only need to create texture name once
-    if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
-
-    EnableTextures();
-    glBindTexture(GL_TEXTURE_2D, rgbatexture);
+    unsigned char* pow2data = GetTexture(rgbadata, &texturew, &textureh, &rgbatexture, NULL, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-
-    // update the texture with the new RGBA data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texturew, textureh, 0, GL_RGBA, GL_UNSIGNED_BYTE, texturedata);
 
     GLfloat vertices[] = {
         (float)x,            (float)y,
@@ -427,37 +437,14 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 static void LoadIconAtlas(int iconsize, int numicons)
 {
     // load the texture atlas containing all icons for later use in DrawCells
-
-    // create icon texture name once
-    if (icontexture == 0) glGenTextures(1, &icontexture);
- 
-    EnableTextures();
-    glBindTexture(GL_TEXTURE_2D, icontexture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
- 
-    int atlaswd = iconsize * numicons;
-
-    // convert texture to POT if needed
-    int texturew = atlaswd;
+    int texturew = iconsize * numicons;
     int textureh = iconsize;
-    unsigned char* texturedata = iconatlas;
-    unsigned char* pow2data = GetPOTTexture(iconatlas, &texturew, &textureh);
+    unsigned char* pow2data = GetTexture(iconatlas, &texturew, &textureh, &icontexture, &iconscalew, &iconscaleh);
     if (pow2data) {
-        texturedata = pow2data;
-
         // overwrite previous buffer if allocated
         if (iconatlasPOT) free(iconatlasPOT);
-        iconatlasPOT = texturedata;
+        iconatlasPOT = pow2data;
     }
-
-    // compute the x and y scale factors for the potentially resized texture
-    iconscalew = (float)atlaswd / texturew;
-    iconscaleh = (float)iconsize / textureh;
-
-    // create the texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texturew, textureh, 0, GL_RGBA, GL_UNSIGNED_BYTE, texturedata);
  
 #if 0
     // test above code by displaying the entire atlas
@@ -628,38 +615,16 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
         }
     }
     
-    // create cell texture name once
-    if (celltexture == 0) glGenTextures(1, &celltexture);
-    
-    EnableTextures();
-    glBindTexture(GL_TEXTURE_2D, celltexture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
     // load the texture atlas containing all magnified cells for later use in DrawCells
-    int atlaswd = cellsize * numcells;
-
-    // convert texture to POT if needed
-    int texturew = atlaswd;
+    int texturew = cellsize * numcells;
     int textureh = cellsize;
-    unsigned char* texturedata = cellatlas;
-    unsigned char* pow2data = GetPOTTexture(cellatlas, &texturew, &textureh);
+    unsigned char* pow2data = GetTexture(cellatlas, &texturew, &textureh, &celltexture, &cellscalew, &cellscaleh);
     if (pow2data) {
-        texturedata = pow2data;
-
         // overwrite previous buffer if allocated
         if (cellatlasPOT) free(cellatlasPOT);
-        cellatlasPOT = texturedata;
+        cellatlasPOT = pow2data;
     }
 
-    // compute the x and y scale factors for the potentially resized texture
-    cellscalew = (float)atlaswd / texturew;
-    cellscaleh = (float)cellsize / textureh;
-
-    // create the texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texturew, textureh, 0, GL_RGBA, GL_UNSIGNED_BYTE, texturedata);
-    
 #if 0
     // test above code by displaying the entire atlas
     GLfloat wd = atlaswd;
