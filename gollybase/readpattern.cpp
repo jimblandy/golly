@@ -253,9 +253,18 @@ const char *readrle(lifealgo &imp, char *line) {
 
          // imp.setrule() has set imp.gridwd and imp.gridht
          if (!sawpos && (imp.gridwd > 0 || imp.gridht > 0)) {
-            // position pattern at top left corner of bounded grid
-            xoff = -int(imp.gridwd / 2);
-            yoff = -int(imp.gridht / 2);
+            if (wd > 0 && (wd <= (int)imp.gridwd || imp.gridwd == 0) &&
+                ht > 0 && (ht <= (int)imp.gridht || imp.gridht == 0)) {
+                // pattern size is known and fits within the bounded grid
+                // so position pattern in the middle of the grid
+                xoff = -int(wd / 2);
+                yoff = -int(ht / 2);
+            } else {
+                // position pattern at top left corner of bounded grid
+                // to try and ensure the entire pattern will fit
+                xoff = -int(imp.gridwd / 2);
+                yoff = -int(imp.gridht / 2);
+            }
          }
 
          if (getedges) {
