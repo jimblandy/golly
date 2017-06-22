@@ -81,7 +81,6 @@ const int TEN_HERTZ = 100;
 // OpenGL parameters
 int glMajor = 0;                     // major version
 int glMinor = 0;                     // minor version
-bool glTextureRectangle = false;     // whether texture rectangles are supported
 int glMaxTextureSize = 1024;         // maximum texture size
 
 // -----------------------------------------------------------------------------
@@ -2377,14 +2376,6 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
             sscanf(version, "%d.%d", &glMajor, &glMinor);
         }
 
-        // check for texture_rectangle extension
-        const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
-        if (extensions) {
-            if (strstr(extensions, "GL_ARB_texture_rectangle") || strstr(extensions, "GL_EXT_texture_rectangle")) {
-                glTextureRectangle = true;
-            }
-        }
-
         // get maximum texture size
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
 
@@ -2399,9 +2390,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 #else
         banner += _(" (32bit, ");
 #endif
-        banner += wxString::Format(_("OpenGL %d.%d"), glMajor, glMinor);
-	if (glTextureRectangle) banner += _(" texture_rectangle");
-        banner += wxString::Format(_(" %d"), glMaxTextureSize);
+        banner += wxString::Format(_("OpenGL %d.%d %d"), glMajor, glMinor, glMaxTextureSize);
 #ifdef ENABLE_SOUND
         banner += _(", Sound");
 #endif
