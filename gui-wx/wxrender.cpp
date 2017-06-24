@@ -1,5 +1,5 @@
 /*** /
- 
+
  This file is part of Golly, a Game of Life Simulator.
  Copyright (C) 2013 Andrew Trevorrow and Tomas Rokicki.
 
@@ -112,6 +112,7 @@ unsigned char* iconatlasPOT = NULL;     // pointer to power of 2 texture atlas f
 float iconscalew = 1.0;
 float iconscaleh = 1.0;
 unsigned char* cellatlasPOT = NULL;     // pointer to power of 2 texture atlas for magnified cells
+unsigned char* tilebuffer = NULL;      // pointer to tile texture buffer (will be power of 2 in size)
 float cellscalew = 1.0;
 float cellscaleh = 1.0;
 
@@ -136,7 +137,7 @@ const int modeht = 16;                  // height of each modedata
 
 // for drawing translucent controls
 unsigned char* ctrlsbitmap = NULL;      // RGBA data for controls bitmap
-unsigned char* darkbutt = NULL;         // RGBA data for darkening one button  
+unsigned char* darkbutt = NULL;         // RGBA data for darkening one button
 int controlswd;                         // width of ctrlsbitmap
 int controlsht;                         // height of ctrlsbitmap
 
@@ -161,7 +162,7 @@ GLfloat *vertexbuffer = (GLfloat *)malloc(vertexsize);
 // fixed vertex and texture coordinate buffers for drawing magnified cells or icons
 // for speed cells are drawn in blocks of 4096
 // size is enough for 4096 cells and must be a multiple of 12
-long magbuffersize = 4096 * 12 * sizeof(GLfloat); 
+long magbuffersize = 4096 * 12 * sizeof(GLfloat);
 GLfloat *magvertexbuffer = (GLfloat *)malloc(magbuffersize);
 GLfloat *magtextcoordbuffer = (GLfloat *)malloc(magbuffersize);
 
@@ -261,20 +262,20 @@ void CreateTranslucentControls()
         wxRect r(0, 0, modewd, modeht);
         wxBrush brush(*wxWHITE);
         FillRect(dc, r, brush);
-    
+
         dc.SetFont(*statusptr->GetStatusFont());
         dc.SetBackgroundMode(wxSOLID);
         dc.SetTextBackground(*wxWHITE);
         dc.SetTextForeground(*wxBLACK);
         dc.SetPen(*wxBLACK);
-    
+
         int textwd, textht;
         dc.GetTextExtent(pmodestr, &textwd, &textht);
         textwd += 4;
         dc.DrawText(pmodestr, 2, modeht - statusptr->GetTextAscent() - 4);
-     
+
         dc.SelectObject(wxNullBitmap);
-    
+
         // now convert modemap data into RGBA data suitable for passing into DrawRGBAData
         modedata[i] = (unsigned char*) malloc(modewd * modeht * 4);
         if (modedata[i]) {
@@ -321,6 +322,10 @@ void DestroyDrawingData()
         free(iconatlasPOT);
         iconatlasPOT = NULL;
     }
+    if (tilebuffer) {
+        free(tilebuffer);
+        tilebuffer = NULL;
+    }
     if (ctrlsbitmap) free(ctrlsbitmap);
     if (darkbutt) free(darkbutt);
     for (int i = 0; i < 4; i++) {
@@ -358,7 +363,7 @@ unsigned char* GetTexture(unsigned char *data, int *w, int *h, GLuint *texturena
             texturew = 1;
             while (texturew < *w) texturew <<= 1;
         }
-        
+
         // check if height is a POT
         if (textureh & (textureh - 1)) {
             textureh = 1;
@@ -369,10 +374,7 @@ unsigned char* GetTexture(unsigned char *data, int *w, int *h, GLuint *texturena
         if (*w != texturew || *h != textureh) {
             // allocate memory for POT texture using calloc so pixels outside supplied data will be transparent
             pow2data = (unsigned char*)calloc(texturew * textureh, 4);
-            if (!pow2data) {
-                fprintf(stderr, "Could not allocate POT buffer for %dx%d\n", texturew, textureh);
-                return NULL;
-            }
+            if (!pow2data) Fatal(_("Cound not allocate POT buffer!"));
 
             // copy the data to the top left of the POT texture
             unsigned char* srcptr = data;
@@ -408,28 +410,104 @@ unsigned char* GetTexture(unsigned char *data, int *w, int *h, GLuint *texturena
 
 void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 {
-    // convert texture to POT if needed
-    int texturew = w;
-    int textureh = h;
-    unsigned char* pow2data = GetTexture(rgbadata, &texturew, &textureh, &rgbatexture, NULL, NULL);
+    // check if data fits in single texture
+    if (w <= glMaxTextureSize && h <= glMaxTextureSize) {
+        // convert texture to POT if needed
+        int texturew = w;
+        int textureh = h;
+        unsigned char* pow2data = GetTexture(rgbadata, &texturew, &textureh, &rgbatexture, NULL, NULL);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
-    glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
+        glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
 
-    GLfloat vertices[] = {
-        (float)x,            (float)y,
-        (float)x + texturew, (float)y,
-        (float)x,            (float)y + textureh,
-        (float)x + texturew, (float)y + textureh,
-    };
-    glVertexPointer(2, GL_FLOAT, 0, vertices);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        GLfloat vertices[] = {
+            (float)x,            (float)y,
+            (float)x + texturew, (float)y,
+            (float)x,            (float)y + textureh,
+            (float)x + texturew, (float)y + textureh,
+        };
+        glVertexPointer(2, GL_FLOAT, 0, vertices);
 
-    // free the POT buffer if allocated
-    if (pow2data) {
-        free(pow2data);
+        // draw the texture
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        // free the POT buffer if allocated
+        if (pow2data) {
+            free(pow2data);
+        }
     }
+    else {
+        // compute number of tiles in the x and y direction
+        int tilex = ((w - 1) / glMaxTextureSize) + 1;
+        int tiley = ((h - 1) / glMaxTextureSize) + 1;
+
+        // create the buffer for the tile once (this will be a power of 2)
+        if (tilebuffer == 0) tilebuffer = (unsigned char*)calloc(glMaxTextureSize * glMaxTextureSize, 4);
+        if (!tilebuffer) Fatal(_("Could not allocate tile buffer!"));
+
+        // enable textures
+        EnableTextures();
+
+        // create the texture name once
+        if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
+        glBindTexture(GL_TEXTURE_2D, rgbatexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
+                glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+
+        // draw each row
+        for (int iy = 0; iy < tiley; iy++) {
+            // compute the tile height for tiles in this row
+            int tileh = h - (iy * glMaxTextureSize);
+            if (tileh > glMaxTextureSize) tileh = glMaxTextureSize;
+
+            // draw each tile in the row
+            for (int ix = 0; ix < tilex ; ix++) {
+                // compute the tile width
+                int tilew = w - (ix * glMaxTextureSize);
+                if (tilew > glMaxTextureSize) tilew = glMaxTextureSize;
+
+                // copy the relevant data into the texture buffer
+                unsigned char* srcptr = rgbadata + (ix * glMaxTextureSize * 4) + (iy * glMaxTextureSize * w * 4);
+                unsigned char* dstptr = tilebuffer;
+                for (int r = 0; r < tileh; r++) {
+                    // copy data
+                    memcpy(dstptr, srcptr, tilew * 4);
+
+                    // clear to end of line if needed
+                    if (tilew < glMaxTextureSize) memset(dstptr + tilew * 4, 0, (glMaxTextureSize - tilew) * 4);
+
+                    // next row
+                    srcptr += w * 4;
+                    dstptr += glMaxTextureSize * 4;
+                }
+
+                // clear to end of tile if needed
+                if (tileh < glMaxTextureSize) {
+                    memset(dstptr, 0, (glMaxTextureSize - tileh) * glMaxTextureSize * 4);
+                }
+
+                // create the texture
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glMaxTextureSize, glMaxTextureSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, tilebuffer);
+
+                // set the vertices for the texture position
+                GLfloat vertices[] = {
+                    (float)(x + (ix * glMaxTextureSize)),     (float)(y + (iy * glMaxTextureSize)),
+                    (float)(x + (ix + 1) * glMaxTextureSize), (float)(y + (iy * glMaxTextureSize)),
+                    (float)(x + (ix * glMaxTextureSize)),     (float)(y + (iy + 1) * glMaxTextureSize),
+                    (float)(x + (ix + 1) * glMaxTextureSize), (float)(y + (iy + 1) * glMaxTextureSize)
+                };
+                glVertexPointer(2, GL_FLOAT, 0, vertices);
+
+                // draw the tile
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            }
+        }
+    }
+
 }
 
 // -----------------------------------------------------------------------------
@@ -445,7 +523,7 @@ static void LoadIconAtlas(int iconsize, int numicons)
         if (iconatlasPOT) free(iconatlasPOT);
         iconatlasPOT = pow2data;
     }
- 
+
 #if 0
     // test above code by displaying the entire atlas
     GLfloat wd = atlaswd;
@@ -473,11 +551,11 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
 {
     // draw a single icon (either multi-color or grayscale) outside the viewport,
     // so we don't use OpenGL calls in here
- 
+
     int wd = icon->GetWidth();
     int ht = icon->GetHeight();
     wxBitmap pixmap(wd, ht, 32);
- 
+
     wxAlphaPixelData pxldata(pixmap);
     if (pxldata) {
 #if defined(__WXGTK__) && !wxCHECK_VERSION(2,9,0)
@@ -511,7 +589,7 @@ void DrawOneIcon(wxDC& dc, int x, int y, wxBitmap* icon,
                                 p.Green() = liveg;
                                 p.Blue()  = liveb;
                             } else {
-                                // replace gray pixel with appropriate shade between 
+                                // replace gray pixel with appropriate shade between
                                 // live and dead cell colors
                                 float frac = (float)(iconpxl.Red()) / 255.0;
                                 p.Red()   = (int)(deadr + frac * (liver - deadr) + 0.5);
@@ -551,13 +629,13 @@ static bool ChangeCellAtlas(int cellsize, int numcells, unsigned char alpha, boo
     if (cellsize != prevsize) return true;
     if (alpha != prevalpha) return true;
     if (borders != prevborders) return true;
- 
+
     for (int state = 1; state <= numcells; state++) {
         if (currlayer->cellr[state] != prevr[state]) return true;
         if (currlayer->cellg[state] != prevg[state]) return true;
         if (currlayer->cellb[state] != prevb[state]) return true;
     }
- 
+
     return false;   // no need to change cellatlas
 }
 
@@ -576,14 +654,14 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
             prevg[state] = currlayer->cellg[state];
             prevb[state] = currlayer->cellb[state];
         }
-        
+
         if (cellatlas) free(cellatlas);
-        
+
         // allocate enough memory for texture atlas to store RGBA pixels for a row of cells
         // (note that we use calloc so all alpha bytes are initially 0)
         int rowbytes = numcells * cellsize * 4;
         cellatlas = (unsigned char*) calloc(rowbytes * cellsize, 1);
-        
+
         if (cellatlas) {
             // determine whether zoomed cells have a border
             bool haveborder = (cellborders && cellsize > 2);
@@ -594,11 +672,11 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
                 unsigned char r = currlayer->cellr[state];
                 unsigned char g = currlayer->cellg[state];
                 unsigned char b = currlayer->cellb[state];
-                
+
                 // if the cell size is > 2 and cellborders are on then leave a 1 pixel gap at right
                 // and bottom edge of each cell
                 int cellwd = cellsize - (haveborder ? 1 : 0);
-                
+
                 for (int i = 0; i < cellwd; i++) {
                     cellatlas[tpos++] = r;
                     cellatlas[tpos++] = g;
@@ -614,7 +692,7 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
             }
         }
     }
-    
+
     // load the texture atlas containing all magnified cells for later use in DrawCells
     int texturew = cellsize * numcells;
     int textureh = cellsize;
@@ -681,7 +759,7 @@ void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                 magvertexbuffer[v++] = ypos + pmscale;
                 magvertexbuffer[v++] = xpos + pmscale;
                 magvertexbuffer[v++] = ypos + pmscale;
-                
+
                 magtextcoordbuffer[t++] = (state - 1) * invstates * xscale;
                 magtextcoordbuffer[t++] = 0.0;
                 magtextcoordbuffer[t++] = state * invstates * xscale;
@@ -694,7 +772,7 @@ void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                 magtextcoordbuffer[t++] = (state - 1) * invstates * xscale;
                 magtextcoordbuffer[t++] = yscale;
                 magtextcoordbuffer[t++] = state * invstates * xscale;
-                magtextcoordbuffer[t++] = yscale; 
+                magtextcoordbuffer[t++] = yscale;
 
                 // check if buffer is full
                 if (v == max) {
@@ -712,7 +790,7 @@ void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale
     }
 
     // draw any remaining cells in buffer
-    if (v > 0) { 
+    if (v > 0) {
         glTexCoordPointer(2, GL_FLOAT, 0, magtextcoordbuffer);
         glVertexPointer(2, GL_FLOAT, 0, magvertexbuffer);
         glDrawArrays(GL_TRIANGLES, 0, v / 2);
@@ -739,10 +817,10 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
 {
     if (x >= currwd || y >= currht) return;
     if (x + w <= 0 || y + h <= 0) return;
-    
+
     // stride is the horizontal pixel width of the image data
     int stride = w/pmscale;
-    
+
     // clip data outside viewport
     if (pmscale > 1) {
         // pmdata contains 1 byte per `pmscale' pixels, so we must be careful
@@ -762,15 +840,15 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
         if (x + w >= currwd + pmscale) w = (currwd - x + pmscale - 1)/pmscale*pmscale;
         if (y + h >= currht + pmscale) h = (currht - y + pmscale - 1)/pmscale*pmscale;
     }
-    
+
     if (pmscale == 1) {
         // draw RGBA pixel data at scale 1:1
         DrawRGBAData(pmdata, x, y, w, h);
-        
+
     } else if (showicons && pmscale > 4 && iconatlas) {
         // draw icons at scales 1:8 and above
         DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, icontexture, iconscalew, iconscaleh);
-        
+
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
@@ -832,17 +910,17 @@ int PixelsToCells(int pixels, int mag) {
 void DrawPasteImage()
 {
     int pastemag = currlayer->view->getmag();
-    
+
     // note that viewptr->pasterect.width > 0
     int prectwd = viewptr->pasterect.width;
     int prectht = viewptr->pasterect.height;
-    
+
     // calculate size of paste image; we could just set it to pasterect size
     // but that would be slow and wasteful for large pasterects, so we use
     // the following code (the only tricky bit is when plocation = Middle)
     int pastewd = prectwd;
     int pasteht = prectht;
-    
+
     wxRect cellbox = pastebbox;
     if (pastewd > currlayer->view->getwidth() || pasteht > currlayer->view->getheight()) {
         if (plocation == Middle) {
@@ -917,7 +995,7 @@ void DrawPasteImage()
             }
         }
     }
-    
+
     wxRect r = viewptr->pasterect;
     if (r.width > pastewd || r.height > pasteht) {
         // paste image is smaller than pasterect (which can't fit in viewport)
@@ -948,7 +1026,7 @@ void DrawPasteImage()
                 break;
         }
     }
-    
+
     // set up viewport for drawing paste pattern
     pastelayer->view->resize(pastewd, pasteht);
     int midx, midy;
@@ -961,18 +1039,18 @@ void DrawPasteImage()
         midy = cellbox.y + cellbox.height / 2;
     }
     pastelayer->view->setpositionmag(midx, midy, pastemag);
-    
+
     // temporarily turn off grid lines
     bool saveshow = showgridlines;
     showgridlines = false;
-    
+
     // dead pixels will be 100% transparent and live pixels 100% opaque
     dead_alpha = 0;
     live_alpha = 255;
 
     currwd = pastelayer->view->getwidth();
     currht = pastelayer->view->getheight();
-    
+
     glTranslatef(r.x, r.y, 0);
 
     // temporarily set currlayer to pastelayer so golly_render routines
@@ -995,42 +1073,42 @@ void DrawPasteImage()
     } else if (pastemag > 0) {
         LoadCellAtlas(1 << pastemag, currlayer->numicons, 255);
     }
-    
+
     if (scalefactor > 1) {
         // change scale to 1:1 and increase its size by scalefactor
         pastelayer->view->setmag(0);
         currwd = currwd * scalefactor;
         currht = currht * scalefactor;
         pastelayer->view->resize(currwd, currht);
-        
+
         glPushMatrix();
         glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
-        
+
         pastelayer->algo->draw(*pastelayer->view, renderer);
-        
+
         // restore viewport settings
         currwd = currwd / scalefactor;
         currht = currht / scalefactor;
-                
+
         // restore OpenGL scale
         glPopMatrix();
-        
+
     } else {
         // no scaling
         pastelayer->algo->draw(*pastelayer->view, renderer);
     }
-    
+
     currlayer = savelayer;
     showgridlines = saveshow;
-    
+
     glTranslatef(-r.x, -r.y, 0);
-    
+
     // overlay translucent rect to show paste area
     DisableTextures();
     SetColor(pastergb->Red(), pastergb->Green(), pastergb->Blue(), 64);
     r = viewptr->pasterect;
     FillRect(r.x, r.y, r.width, r.height);
-    
+
     // show current paste mode
     if (r.y > 0 && modedata[(int)pmode]) {
         DrawRGBAData(modedata[(int)pmode], r.x, r.y - modeht - 1, modewd, modeht);
@@ -1043,11 +1121,11 @@ control_id WhichControl(int x, int y)
 {
     // determine which button is at x,y in controls bitmap
     int col, row;
-    
+
     x -= buttborder;
     y -= buttborder;
     if (x < 0 || y < 0) return NO_CONTROL;
-    
+
     // allow for vertical gap after first 2 rows
     if (y < (buttsize + rowgap)) {
         if (y > buttsize) return NO_CONTROL;               // in 1st gap
@@ -1058,11 +1136,11 @@ control_id WhichControl(int x, int y)
     } else {
         row = 3 + (y - 2*(buttsize + rowgap)) / buttsize;
     }
-    
+
     col = 1 + x / buttsize;
     if (col < 1 || col > buttsperrow) return NO_CONTROL;
     if (row < 1 || row > numbutts/buttsperrow) return NO_CONTROL;
-    
+
     int control = (row - 1) * buttsperrow + col;
     return (control_id) control;
 }
@@ -1073,13 +1151,13 @@ void DrawControls(wxRect& rect)
 {
     if (ctrlsbitmap) {
         DrawRGBAData(ctrlsbitmap, rect.x, rect.y, controlswd, controlsht);
-        
+
         if (currcontrol > NO_CONTROL && darkbutt) {
             // show clicked control
             int i = (int)currcontrol - 1;
             int x = buttborder + (i % buttsperrow) * buttsize;
             int y = buttborder + (i / buttsperrow) * buttsize;
-            
+
             // allow for vertical gap after first 2 rows
             if (i < buttsperrow) {
                 // y is correct
@@ -1088,7 +1166,7 @@ void DrawControls(wxRect& rect)
             } else {
                 y += 2*rowgap;
             }
-            
+
             // draw one darkened button
             int p = 0;
             for ( int row = 0; row < buttsize; row++ ) {
@@ -1222,7 +1300,7 @@ void DrawGridLines(int wd, int ht)
                      g + 64 < 256 ? g + 64 : 255,
                      b + 64 < 256 ? b + 64 : 255, 255);
         }
-        
+
         i = topbold;
         v = 0;
         while (true) {
@@ -1363,10 +1441,10 @@ void DrawOneLayer()
     // dead pixels will be 100% transparent, and live pixels will use opacity setting
     dead_alpha = 0;
     live_alpha = int(2.55 * opacity);
-    
+
     int iconsize = 0;
     int currmag = currlayer->view->getmag();
-    
+
     if (showicons && currmag > 2) {
         // only show icons at scales 1:8 and above
         if (currmag == 3) {
@@ -1379,42 +1457,42 @@ void DrawOneLayer()
             iconatlas = currlayer->atlas31x31;
             iconsize = 32;
         }
-        
+
         // DANGER: we're making assumptions about what CreateIconAtlas does in wxlayer.cpp
-        
+
         if (live_alpha < 255) {
             // this is ugly, but we need to replace the alpha 255 values in iconatlas
             // with live_alpha so that LoadIconAtlas will load translucent icons
             ReplaceAlpha(iconsize, currlayer->numicons, 255, live_alpha);
         }
-        
+
         // load iconatlas for use by DrawCells
         LoadIconAtlas(iconsize, currlayer->numicons);
     } else if (currmag > 0) {
         LoadCellAtlas(1 << currmag, currlayer->numicons, live_alpha);
     }
-    
+
     if (scalefactor > 1) {
         // temporarily change viewport scale to 1:1 and increase its size by scalefactor
         currlayer->view->setmag(0);
         currwd = currwd * scalefactor;
         currht = currht * scalefactor;
         currlayer->view->resize(currwd, currht);
-        
+
         glPushMatrix();
         glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
-        
+
         currlayer->algo->draw(*currlayer->view, renderer);
-        
+
         // restore viewport settings
         currwd = currwd / scalefactor;
         currht = currht / scalefactor;
         currlayer->view->resize(currwd, currht);
         currlayer->view->setmag(currmag);
-        
+
         // restore OpenGL scale
         glPopMatrix();
-        
+
     } else {
         currlayer->algo->draw(*currlayer->view, renderer);
     }
@@ -1432,31 +1510,31 @@ void DrawStackedLayers()
     // temporarily turn off grid lines
     bool saveshow = showgridlines;
     showgridlines = false;
-    
+
     // overlay patterns in layers 1..numlayers-1
     for ( int i = 1; i < numlayers; i++ ) {
         Layer* savelayer = currlayer;
         currlayer = GetLayer(i);
-        
+
         // use real current layer's viewport
         viewport* saveview = currlayer->view;
         currlayer->view = savelayer->view;
-        
+
         if ( !currlayer->algo->isEmpty() ) {
             DrawOneLayer();
         }
-        
+
         // draw this layer's selection if necessary
         wxRect r;
         if ( currlayer->currsel.Visible(&r) ) {
             DrawSelection(r, i == currindex);
         }
-        
+
         // restore viewport and currlayer
         currlayer->view = saveview;
         currlayer = savelayer;
     }
-    
+
     showgridlines = saveshow;
 }
 
@@ -1466,17 +1544,17 @@ void DrawTileFrame(wxRect& trect, int wd)
 {
     trect.Inflate(wd);
     wxRect r = trect;
-    
+
     r.height = wd;
     FillRect(r.x, r.y, r.width, r.height);       // top edge
-    
+
     r.y += trect.height - wd;
     FillRect(r.x, r.y, r.width, r.height);       // bottom edge
-    
+
     r = trect;
     r.width = wd;
     FillRect(r.x, r.y, r.width, r.height);       // left edge
-    
+
     r.x += trect.width - wd;
     FillRect(r.x, r.y, r.width, r.height);       // right edge
 }
@@ -1486,12 +1564,12 @@ void DrawTileFrame(wxRect& trect, int wd)
 void DrawTileBorders()
 {
     if (tileborder <= 0) return;    // no borders
-    
+
     // draw tile borders in bigview window
     int wd, ht;
     bigview->GetClientSize(&wd, &ht);
     if (wd < 1 || ht < 1) return;
-    
+
     // most people will choose either a very light or very dark color for dead cells,
     // so draw mid gray border around non-current tiles
     DisableTextures();
@@ -1503,7 +1581,7 @@ void DrawTileBorders()
             DrawTileFrame(trect, tileborder);
         }
     }
-    
+
     // draw green border around current tile
     trect = GetLayer(currindex)->tilerect;
     SetColor(0, 255, 0, 255);
@@ -1518,7 +1596,7 @@ void DrawOverlay()
 
     if (overlaydata) {
         int wd = curroverlay->GetOverlayWidth();
-        int ht = curroverlay->GetOverlayHeight();        
+        int ht = curroverlay->GetOverlayHeight();
         int x = 0;
         int y = 0;
         switch (curroverlay->GetOverlayPosition()) {
@@ -1542,7 +1620,7 @@ void DrawOverlay()
 
         // render the overlay
         DrawRGBAData(overlaydata, x, y, wd, ht);
-        
+
         // the cursor might need to be changed
         curroverlay->CheckCursor();
     }
@@ -1567,12 +1645,12 @@ void DrawView(int tileindex)
         unsigned char data[] = "RGBARGBARGBARGBA";
         DrawRGBAData(data, 0, 0, 2, 2); // data has 4 pixels
     }
-    
+
     if (curroverlay->OnlyDrawOverlay()) {
         DrawOverlay();
         return;
     }
-    
+
     // if grid is bounded then ensure viewport's central cell is not outside grid edges
     if ( currlayer->algo->gridwd > 0) {
         if ( currlayer->view->x < currlayer->algo->gridleft )
@@ -1594,7 +1672,7 @@ void DrawView(int tileindex)
                                             currlayer->algo->gridbottom,
                                             currmag);
     }
-    
+
     if ( viewptr->nopattupdate ) {
         // don't draw incomplete pattern, just fill background
         glClearColor(currlayer->cellr[0]/255.0,
@@ -1613,7 +1691,7 @@ void DrawView(int tileindex)
         }
         return;
     }
-    
+
     if ( numlayers > 1 && tilelayers ) {
         if ( tileindex < 0 ) {
             DrawTileBorders();
@@ -1654,7 +1732,7 @@ void DrawView(int tileindex)
                  currlayer->cellb[0]/255.0,
                  1.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    
+
     if (showicons && currmag > 2) {
         // only show icons at scales 1:8 and above
         if (currmag == 3) {
@@ -1670,58 +1748,58 @@ void DrawView(int tileindex)
     } else if (currmag > 0) {
         LoadCellAtlas(1 << currmag, currlayer->numicons, 255);
     }
-    
+
     currwd = currlayer->view->getwidth();
     currht = currlayer->view->getheight();
-    
+
     // all pixels are initially opaque
     dead_alpha = 255;
     live_alpha = 255;
-    
+
     // draw pattern using a sequence of pixblit calls
     if (smartscale && currmag <= -1 && currmag >= -4) {
         // current scale is from 2^1:1 to 2^4:1
         scalefactor = 1 << (-currmag);
-        
+
         // temporarily change viewport scale to 1:1 and increase its size by scalefactor
         currlayer->view->setmag(0);
         currwd = currwd * scalefactor;
         currht = currht * scalefactor;
         currlayer->view->resize(currwd, currht);
-        
+
         glPushMatrix();
         glScalef(1.0/scalefactor, 1.0/scalefactor, 1.0);
-        
+
         currlayer->algo->draw(*currlayer->view, renderer);
-        
+
         // restore viewport settings
         currwd = currwd / scalefactor;
         currht = currht / scalefactor;
         currlayer->view->resize(currwd, currht);
         currlayer->view->setmag(currmag);
-        
+
         // restore OpenGL scale
         glPopMatrix();
-        
+
     } else {
         // no scaling
         scalefactor = 1;
         currlayer->algo->draw(*currlayer->view, renderer);
     }
-    
+
     if ( viewptr->GridVisible() ) {
         DrawGridLines(currwd, currht);
     }
-    
+
     // if universe is bounded then draw border regions (if visible)
     if ( currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0 ) {
         DrawGridBorder(currwd, currht);
     }
-    
+
     if ( currlayer->currsel.Visible(&r) ) {
         DrawSelection(r, colorindex == currindex);
     }
-    
+
     if ( numlayers > 1 && stacklayers ) {
         // must restore currlayer before we call DrawStackedLayers
         currlayer = savelayer;
@@ -1732,15 +1810,15 @@ void DrawView(int tileindex)
         // draw layers 1, 2, ... numlayers-1
         DrawStackedLayers();
     }
-    
+
     if ( viewptr->waitingforclick && viewptr->pasterect.width > 0 ) {
         DrawPasteImage();
     }
-    
+
     if (viewptr->showcontrols) {
         DrawControls(viewptr->controlsrect);
     }
-    
+
     if (showoverlay) {
         if (numlayers > 1 && tilelayers) {
             // only display overlay above current tile
@@ -1749,7 +1827,7 @@ void DrawView(int tileindex)
             DrawOverlay();
         }
     }
-    
+
     if ( numlayers > 1 && tilelayers ) {
         // restore globals changed above
         currlayer = savelayer;

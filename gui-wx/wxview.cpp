@@ -2378,6 +2378,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
 
         // get maximum texture size
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
+        if (glMaxTextureSize < 1024) glMaxTextureSize = 1024;
 
 #define STRINGIFY(arg) STR2(arg)
 #define STR2(arg) #arg
