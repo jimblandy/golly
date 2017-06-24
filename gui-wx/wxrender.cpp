@@ -438,12 +438,15 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
         }
     }
     else {
+        // use a smaller tile size (balance between number of tiles rendered and partial tile setup)
+        int tilesize = 512;
+
         // compute number of tiles in the x and y direction
-        int tilex = ((w - 1) / glMaxTextureSize) + 1;
-        int tiley = ((h - 1) / glMaxTextureSize) + 1;
+        int tilex = ((w - 1) / tilesize) + 1;
+        int tiley = ((h - 1) / tilesize) + 1;
 
         // create the buffer for the tile once (this will be a power of 2)
-        if (tilebuffer == 0) tilebuffer = (unsigned char*)calloc(glMaxTextureSize * glMaxTextureSize, 4);
+        if (tilebuffer == 0) tilebuffer = (unsigned char*)calloc(tilesize * tilesize, 4);
         if (!tilebuffer) Fatal(_("Could not allocate tile buffer!"));
 
         // enable textures
@@ -454,60 +457,64 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
         glBindTexture(GL_TEXTURE_2D, rgbatexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
-                glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
 
         // draw each row
         for (int iy = 0; iy < tiley; iy++) {
             // compute the tile height for tiles in this row
-            int tileh = h - (iy * glMaxTextureSize);
-            if (tileh > glMaxTextureSize) tileh = glMaxTextureSize;
+            int tileh = h - (iy * tilesize);
+            if (tileh > tilesize) tileh = tilesize;
 
             // draw each tile in the row
             for (int ix = 0; ix < tilex ; ix++) {
                 // compute the tile width
-                int tilew = w - (ix * glMaxTextureSize);
-                if (tilew > glMaxTextureSize) tilew = glMaxTextureSize;
+                int tilew = w - (ix * tilesize);
+                if (tilew > tilesize) tilew = tilesize;
 
                 // copy the relevant data into the texture buffer
-                unsigned char* srcptr = rgbadata + (ix * glMaxTextureSize * 4) + (iy * glMaxTextureSize * w * 4);
+                unsigned char* srcptr = rgbadata + (ix * tilesize * 4) + (iy * tilesize * w * 4);
                 unsigned char* dstptr = tilebuffer;
                 for (int r = 0; r < tileh; r++) {
                     // copy data
                     memcpy(dstptr, srcptr, tilew * 4);
 
                     // clear to end of line if needed
-                    if (tilew < glMaxTextureSize) memset(dstptr + tilew * 4, 0, (glMaxTextureSize - tilew) * 4);
+                    if (tilew < tilesize) memset(dstptr + tilew * 4, 0, (tilesize - tilew) * 4);
 
                     // next row
                     srcptr += w * 4;
-                    dstptr += glMaxTextureSize * 4;
+                    dstptr += tilesize * 4;
                 }
 
                 // clear to end of tile if needed
-                if (tileh < glMaxTextureSize) {
-                    memset(dstptr, 0, (glMaxTextureSize - tileh) * glMaxTextureSize * 4);
+                if (tileh < tilesize) {
+                    memset(dstptr, 0, (tilesize - tileh) * tilesize * 4);
                 }
 
                 // create the texture
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glMaxTextureSize, glMaxTextureSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, tilebuffer);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tilesize, tilesize, 0, GL_RGBA, GL_UNSIGNED_BYTE, tilebuffer);
 
                 // set the vertices for the texture position
                 GLfloat vertices[] = {
-                    (float)(x + (ix * glMaxTextureSize)),     (float)(y + (iy * glMaxTextureSize)),
-                    (float)(x + (ix + 1) * glMaxTextureSize), (float)(y + (iy * glMaxTextureSize)),
-                    (float)(x + (ix * glMaxTextureSize)),     (float)(y + (iy + 1) * glMaxTextureSize),
-                    (float)(x + (ix + 1) * glMaxTextureSize), (float)(y + (iy + 1) * glMaxTextureSize)
+                    (float)(x + (ix * tilesize)),         (float)(y + (iy * tilesize)),
+                    (float)(x + (ix * tilesize) + tilew), (float)(y + (iy * tilesize)),
+                    (float)(x + (ix * tilesize)),         (float)(y + (iy * tilesize) + tileh),
+                    (float)(x + (ix * tilesize) + tilew), (float)(y + (iy * tilesize) + tileh),
                 };
                 glVertexPointer(2, GL_FLOAT, 0, vertices);
+
+                // set the part of the texture to draw
+                GLfloat xscale = (double)tilew / tilesize;
+                GLfloat yscale = (double)tileh / tilesize;
+                GLfloat coordinates[] = { 0, 0, xscale, 0, 0, yscale, xscale, yscale };
+                glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
 
                 // draw the tile
                 glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             }
         }
     }
-
 }
 
 // -----------------------------------------------------------------------------
