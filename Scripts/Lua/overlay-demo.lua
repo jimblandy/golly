@@ -2978,6 +2978,7 @@ if err then g.continue(err) end
 -- the following code is always executed
 
 -- delete the overlay and restore settings saved above
+g.check(false)
 ov("delete")
 g.setoption("showoverlay", oldoverlay)
 g.setoption("showbuttons", oldbuttons)

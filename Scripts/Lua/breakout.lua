@@ -2005,6 +2005,7 @@ local status, err = xpcall(main, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 
+g.check(false)
 stopallsound()
 ov("delete")
 g.setoption("showoverlay", oldoverlay)

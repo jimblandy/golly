@@ -472,24 +472,17 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
                 int tilew = w - (ix * tilesize);
                 if (tilew > tilesize) tilew = tilesize;
 
-                // copy the relevant data into the texture buffer
+                // copy the relevant data top left into the texture buffer
+                // no need to clear unused portion since it isn't rendered below
                 unsigned char* srcptr = rgbadata + (ix * tilesize * 4) + (iy * tilesize * w * 4);
                 unsigned char* dstptr = tilebuffer;
                 for (int r = 0; r < tileh; r++) {
                     // copy data
                     memcpy(dstptr, srcptr, tilew * 4);
 
-                    // clear to end of line if needed
-                    if (tilew < tilesize) memset(dstptr + tilew * 4, 0, (tilesize - tilew) * 4);
-
                     // next row
                     srcptr += w * 4;
                     dstptr += tilesize * 4;
-                }
-
-                // clear to end of tile if needed
-                if (tileh < tilesize) {
-                    memset(dstptr, 0, (tilesize - tileh) * tilesize * 4);
                 }
 
                 // create the texture
