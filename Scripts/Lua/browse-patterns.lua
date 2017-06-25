@@ -909,5 +909,6 @@ if err then g.continue(err) end
 
 -- this code is always executed, even after escape/error;
 -- clear message line in case there was no escape/error
+g.check(false)
 g.show("")
 if overlaycreated then ov("delete") end
