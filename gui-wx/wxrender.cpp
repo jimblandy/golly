@@ -106,6 +106,7 @@ unsigned char live_alpha = 255;         // alpha value for live pixels
 GLuint rgbatexture = 0;                 // texture name for drawing RGBA bitmaps
 GLuint icontexture = 0;                 // texture name for drawing icons
 GLuint celltexture = 0;                 // texture name for drawing magnified cells
+GLuint tiletexture = 0;                 // texture name for tiled drawing
 unsigned char* iconatlas = NULL;        // pointer to texture atlas for current set of icons
 unsigned char* cellatlas = NULL;        // pointer to texture atlas for current set of magnified cells
 unsigned char* iconatlasPOT = NULL;     // pointer to power of 2 texture atlas for current icons
@@ -439,7 +440,7 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
     }
     else {
         // use a smaller tile size (balance between number of tiles rendered and partial tile setup)
-        int tilesize = 512;
+        int tilesize = 256;
 
         // compute number of tiles in the x and y direction
         int tilex = ((w - 1) / tilesize) + 1;
@@ -452,13 +453,27 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
         // enable textures
         EnableTextures();
 
-        // create the texture name once
-        if (rgbatexture == 0) glGenTextures(1, &rgbatexture);
-        glBindTexture(GL_TEXTURE_2D, rgbatexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
+        // create the texture name and texture once
+        if (tiletexture == 0) {
+            // generate the texture name
+            glGenTextures(1, &tiletexture);
+
+            // make the named texture current
+            glBindTexture(GL_TEXTURE_2D, tiletexture);
+
+            // setup the texture paramters
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
+
+            // allocate the texture memory
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tilesize, tilesize, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        }
+        else {
+            // make the named texture current
+            glBindTexture(GL_TEXTURE_2D, tiletexture);
+        }
 
         // draw each row
         for (int iy = 0; iy < tiley; iy++) {
@@ -476,6 +491,7 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
                 // no need to clear unused portion since it isn't rendered below
                 unsigned char* srcptr = rgbadata + (ix * tilesize * 4) + (iy * tilesize * w * 4);
                 unsigned char* dstptr = tilebuffer;
+
                 for (int r = 0; r < tileh; r++) {
                     // copy data
                     memcpy(dstptr, srcptr, tilew * 4);
@@ -485,8 +501,8 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
                     dstptr += tilesize * 4;
                 }
 
-                // create the texture
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tilesize, tilesize, 0, GL_RGBA, GL_UNSIGNED_BYTE, tilebuffer);
+                // update the texture with the tile data
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tilesize, tilesize, GL_RGBA, GL_UNSIGNED_BYTE, tilebuffer);
 
                 // set the vertices for the texture position
                 GLfloat vertices[] = {
