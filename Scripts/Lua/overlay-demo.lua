@@ -1142,6 +1142,7 @@ David Bell
             local i = 1
             for i = 1, numstars do
                 starx[i] = floor(starx[i] * newwd / wd)
+                stary[i] = floor(stary[i] * newht / ht)
             end
 
             -- save new size
