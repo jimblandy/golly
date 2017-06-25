@@ -439,8 +439,8 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
         }
     }
     else {
-        // use a smaller tile size (balance between number of tiles rendered and partial tile setup)
-        int tilesize = 256;
+        // use the maximum texture size as the tile size
+        int tilesize = glMaxTextureSize;
 
         // compute number of tiles in the x and y direction
         int tilex = ((w - 1) / tilesize) + 1;
@@ -467,7 +467,7 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    // avoids edge effects when scaling
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    // ditto
 
-            // allocate the texture memory
+            // create the texture and have OpenGL allocate the memory
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tilesize, tilesize, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         }
         else {
@@ -498,11 +498,11 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 
                     // next row
                     srcptr += w * 4;
-                    dstptr += tilesize * 4;
+                    dstptr += tilew * 4;
                 }
 
                 // update the texture with the tile data
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tilesize, tilesize, GL_RGBA, GL_UNSIGNED_BYTE, tilebuffer);
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tilew, tileh, GL_RGBA, GL_UNSIGNED_BYTE, tilebuffer);
 
                 // set the vertices for the texture position
                 GLfloat vertices[] = {
