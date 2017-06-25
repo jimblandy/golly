@@ -968,6 +968,12 @@ void MainFrame::NextGeneration(bool useinc)
         return;
     }
     
+    if (insideYield) {
+        // avoid calling step() recursively
+        inNextGen = false;
+        return;
+    }
+    
     if (viewptr->drawingcells || viewptr->waitingforclick) {
         Beep();
         inNextGen = false;
