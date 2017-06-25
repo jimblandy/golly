@@ -11,7 +11,7 @@
 -- used on the conwaylife.com forums and the LifeWiki.
 
 -- build number
-local buildnumber = 28
+local buildnumber = 29
 
 local g = golly()
 local ov = g.overlay
@@ -25,82 +25,82 @@ local viewwd, viewht = g.getview(g.getlayer())
 
 -- update flags
 local update = {
-    docells = false,
-    docamera = false,
+    docells   = false,
+    docamera  = false,
     dorefresh = false,
-    dostatus = false
+    dostatus  = false
 }
 
 -- textalert
 local textalert = {
-    appear = 0,
-    hold = 0,
+    appear    = 0,
+    hold      = 0,
     disappear = 0,
-    color = "32 255 255 255",
-    fontsize = 30,
-    message = "",
+    color     = "32 255 255 255",
+    fontsize  = 30,
+    message   = "",
     starttime = 0
 }
 
 -- timing
 local timing = {
-    updatecells = 0,
-    drawcells = 0,
-    drawmenu = 0,
-    texttime = 0,
-    show = false,
-    extended = false,
-    genstarttime = 0,
+    updatecells    = 0,
+    drawcells      = 0,
+    drawmenu       = 0,
+    texttime       = 0,
+    show           = false,
+    extended       = false,
+    genstarttime   = 0,
     framestarttime = 0,
-    frameendtime = 0
+    frameendtime   = 0
 }
 
 -- whether generating life
 local generating = false
-local autostart = false
-local loopgen = -1
-local stopgen = -1
+local autostart  = false
+local loopgen    = -1
+local stopgen    = -1
 local currentgen = 0
 
 -- view constants
 local viewconstants = {
-    minzoom = 0.0625,
-    maxzoom = 32,
-    minangle = 0,
-    maxangle = 360,
-    viewwidth = 2048,
-    viewheight = 2048,
-    mindepth = 0,
-    maxdepth = 1,
-    minlayers = 1,
-    maxlayers = 10,
-    zoomborder = 0.9,  -- proportion of view to fill with fit zoom
-    glidesteps = 40,   -- steps to glide camera
-    minstop = 1,
-    minloop = 1,
-    mintheme = 0,
-    maxtheme = #op.themes,
-    minpan = -4096,
-    maxpan = 4096,
-    mingps = 1,
-    maxgps = 60,
-    minstep = 1,
-    maxstep = 50,
-    decaysteps = 64,  -- number of steps to decay after life finished
-    mingridmajor = 0,
-    maxgridmajor = 16,
-    minviewerwidth = 480,
-    maxviewerwidth = 4096,
+    minzoom         = 0.0625, -- 1/16
+    maxzoom         = 32,
+    minangle        = 0,
+    maxangle        = 360,
+    viewwidth       = 2048,
+    viewheight      = 2048,
+    mindepth        = 0,
+    maxdepth        = 1,
+    minlayers       = 1,
+    maxlayers       = 10,
+    zoomborder      = 0.9,  -- proportion of view to fill with fit zoom
+    glidesteps      = 40,   -- steps to glide camera
+    minstop         = 1,
+    minloop         = 1,
+    mintheme        = 0,
+    maxtheme        = #op.themes,
+    minpan          = -4096,
+    maxpan          = 4096,
+    mingps          = 1,
+    maxgps          = 60,
+    minstep         = 1,
+    maxstep         = 50,
+    decaysteps      = 64,  -- number of steps to decay after life finished
+    mingridmajor    = 0,
+    maxgridmajor    = 16,
+    minviewerwidth  = 480,
+    maxviewerwidth  = 4096,
     minviewerheight = 480,
     maxviewerheight = 4096
 }
 viewconstants.mininvzoom = -1 / viewconstants.minzoom
 
 -- playback speed
-local defgps = 60
+local defgps  = 60
 local defstep = 1
-local gps = defgps
-local step = defstep
+local gps     = defgps
+local step    = defstep
 
 -- smooth camera movement
 local startx
@@ -114,30 +114,30 @@ local endzoom
 local camsteps = -1 
 
 -- camera defaults
-local defcamx = viewconstants.viewwidth / 2
-local defcamy = viewconstants.viewheight / 2
-local defcamangle = 0
-local defcamlayers = 1
+local defcamx          = viewconstants.viewwidth / 2
+local defcamy          = viewconstants.viewheight / 2
+local defcamangle      = 0
+local defcamlayers     = 1
 local defcamlayerdepth = 0.05
-local deflinearzoom = 0.4
+local deflinearzoom    = 0.4
 
 -- camera
-local camx = defcamx
-local camy = defcamy
-local camangle = defcamangle
-local camlayers = defcamlayers
+local camx          = defcamx
+local camy          = defcamy
+local camangle      = defcamangle
+local camlayers     = defcamlayers
 local camlayerdepth = defcamlayerdepth
-local autofit = false
-local historyfit = false
-local decay = 0
+local autofit       = false
+local historyfit    = false
+local decay         = 0
 
 -- tracking
 local tracking = {
-    east = 0,
-    south = 0,
-    west = 0,
-    north = 0,
-    period = 0,
+    east    = 0,
+    south   = 0,
+    west    = 0,
+    north   = 0,
+    period  = 0,
     defined = false
 }
 local initialrect        -- initial bounding box for pattern at gen 0
@@ -157,22 +157,22 @@ local linearzoom
 
 -- theme
 local themeon = true
-local theme = 1
+local theme   = 1
 
 -- mouse drag
 local lastmousex = 0
 local lastmousey = 0
-local mousedrag = false
-local clickx = 0
-local clicky = 0
+local mousedrag  = false
+local clickx     = 0
+local clicky     = 0
 
 -- whether hex display is on
 local hexon = false
 
 -- grid
-local grid = false
+local grid        = false
 local gridmajoron = true
-local gridmajor = 10
+local gridmajor   = 10
 
 -- stars
 local stars = false
@@ -777,7 +777,7 @@ local function bezierx(t, x0, x1, x2, x3)
     local aX = x3 - x0 - cX - bX
 
     -- compute x position
-    local x = (aX * math.pow(t, 3)) + (bX * math.pow(t, 2)) + (cX * t) + x0;
+    local x = (aX * math.pow(t, 3)) + (bX * math.pow(t, 2)) + (cX * t) + x0
     return x
 end
 
@@ -1193,8 +1193,8 @@ end
 
 local function panview(dx, dy)
     local camzoom = lineartoreal(linearzoom)
-    dx = dx / camzoom;
-    dy = dy / camzoom;
+    dx = dx / camzoom
+    dy = dy / camzoom
 
     local angle = camangle
     if hexon then
@@ -1826,7 +1826,7 @@ function main()
     -- reset pattern if required
     currentgen = tonumber(g.getgen())
     if currentgen ~= 0 then
-        g.reset();
+        g.reset()
     end
 
     -- setup overlay
@@ -2072,4 +2072,5 @@ local status, err = xpcall(main, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 
+g.check(false)
 ov("delete")
