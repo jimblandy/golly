@@ -889,10 +889,6 @@ function test_animation()
     g.open("../../Patterns/Life/Guns/golly-ticker.rle")
     g.run(1024)
 
-    -- get the current border color and then set it to black
-    local bordr, bordg, bordb = g.getcolor("border")
-    g.setcolor("border", 0, 0, 0)
-
     -- create the cellview
     ov("cellview 1640 -138 1024 1024")
     ov("celloption grid 0")
@@ -1337,9 +1333,6 @@ David Bell
     -- delete the layer
     g.dellayer()
     extra_layer = false
-
-    -- restore border color
-    g.setcolor("border", bordr, bordg, bordb)
 
     -- no point calling repeat_test()
     return_to_main_menu = true
