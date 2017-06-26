@@ -113,8 +113,9 @@ else:
     g.setlayer(poplayer)
 g.new(layername)
 
-# use same rule but without any suffix (we don't want a bounded grid)
-g.setrule(g.getrule().split(":")[0])
+# use QuickLife with an unbounded grid
+g.setalgo("QuickLife")
+g.setrule("B3/S23")
 
 deadr, deadg, deadb = g.getcolor("deadcells")
 if (deadr + deadg + deadb) / 3 > 128:
