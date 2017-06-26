@@ -286,7 +286,7 @@ function moveobject()
                 if obox.left < gridl then
                     x = x + gridl - obox.left
                 elseif obox.right > gridr then
-                    x = x - obox.right - gridr
+                    x = x - (obox.right - gridr)
                 end
             end
             
@@ -296,7 +296,7 @@ function moveobject()
                 if obox.top < gridt then
                     y = y + gridt - obox.top
                 elseif obox.bottom > gridb then
-                    y = y - obox.bottom - gridb
+                    y = y - (obox.bottom - gridb)
                 end
             end
             
