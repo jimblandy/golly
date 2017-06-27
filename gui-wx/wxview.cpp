@@ -458,10 +458,10 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
         
         if ( !PointInView(pastex, pastey) ||
             // allow paste if any corner of pasterect is within grid
-            !( PointInGrid(pastex, pastey) ||
-               PointInGrid(pastex+pasterect.width-1, pastey) ||
-               PointInGrid(pastex, pastey+pasterect.height-1) ||
-               PointInGrid(pastex+pasterect.width-1, pastey+pasterect.height-1) ) ) {
+            !( PointInGrid(pasterect.x, pasterect.y) ||
+               PointInGrid(pasterect.x+pasterect.width-1, pasterect.y) ||
+               PointInGrid(pasterect.x, pasterect.y+pasterect.height-1) ||
+               PointInGrid(pasterect.x+pasterect.width-1, pasterect.y+pasterect.height-1) ) ) {
                 statusptr->DisplayMessage(_("Paste aborted."));
                 return;
             }
