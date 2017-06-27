@@ -292,6 +292,26 @@ bool PatternView::PointInGrid(int x, int y)
 
 // -----------------------------------------------------------------------------
 
+bool PatternView::RectOutsideGrid(const wxRect& rect)
+{
+    if (currlayer->algo->gridwd == 0 && currlayer->algo->gridht == 0) {
+        // unbounded grid
+        return false;
+    }
+    
+    pair<bigint, bigint> lt = currlayer->view->at(rect.x, rect.y);
+    pair<bigint, bigint> rb = currlayer->view->at(rect.x+rect.width-1, rect.y+rect.height-1);
+    
+    return (currlayer->algo->gridwd > 0 &&
+                (lt.first > currlayer->algo->gridright ||
+                 rb.first < currlayer->algo->gridleft)) ||
+           (currlayer->algo->gridht > 0 &&
+                (lt.second > currlayer->algo->gridbottom ||
+                 rb.second < currlayer->algo->gridtop));
+}
+
+// -----------------------------------------------------------------------------
+
 void PatternView::SetPasteRect(wxRect& rect, bigint& wd, bigint& ht)
 {
     int x, y, pastewd, pasteht;
@@ -456,15 +476,11 @@ void PatternView::PasteTemporaryToCurrent(bool toselection,
             Refresh(false);
         }
         
-        if ( !PointInView(pastex, pastey) ||
-            // allow paste if any corner of pasterect is within grid
-            !( PointInGrid(pasterect.x, pasterect.y) ||
-               PointInGrid(pasterect.x+pasterect.width-1, pasterect.y) ||
-               PointInGrid(pasterect.x, pasterect.y+pasterect.height-1) ||
-               PointInGrid(pasterect.x+pasterect.width-1, pasterect.y+pasterect.height-1) ) ) {
-                statusptr->DisplayMessage(_("Paste aborted."));
-                return;
-            }
+        // only allow paste if some part of pasterect is within the (possibly bounded) grid
+        if ( !PointInView(pastex, pastey) || RectOutsideGrid(pasterect) ) {
+            statusptr->DisplayMessage(_("Paste aborted."));
+            return;
+        }
         
         // set paste rectangle's top left cell coord
         pair<bigint, bigint> clickpos = currlayer->view->at(pastex, pastey);

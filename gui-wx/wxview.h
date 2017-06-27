@@ -108,6 +108,7 @@ public:
     bool CellVisible(const bigint& x, const bigint& y);
     bool CellInGrid(const bigint& x, const bigint& y);
     bool PointInGrid(int x, int y);
+    bool RectOutsideGrid(const wxRect& rect);
     void TestAutoFit();
     
     // process keyboard and mouse events
