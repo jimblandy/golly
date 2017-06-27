@@ -511,9 +511,12 @@ function test_replace()
     end
     if replacements[replace][5] == true then
         replaced = 1
+        local count = 0
         while replaced > 0 do
             local t = g.millisecs()
+            count = count + 1
             replaced = tonumber(ov(replacecmd))
+            g.show("Test "..replace..": pixels replace in step "..count..": "..replaced)
             ov("update")
             while g.millisecs() - t < 15 do end
         end
