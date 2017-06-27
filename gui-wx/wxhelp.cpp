@@ -272,19 +272,19 @@ void UpdateHelpButtons()
     wxString location = htmlwin->GetOpenedPage();
     if ( !location.IsEmpty() ) {
 
-    	if (location.StartsWith(wxT("file:"))) {
-    		// this happens in wx 3.1.0, so convert location from URL to file path
-    		wxFileName fname = wxFileSystem::URLToFileName(location);
-    		location = fname.GetFullPath();
-			#ifdef __WXMSW__
-				location.Replace(wxT("\\"), wxT("/"));
-			#endif
-    	}
-    	
-    	// avoid bug in wx 3.1.0
-    	location.Replace(wxT("%20"), wxT(" "));
-    	location.Replace(wxT("%23"), wxT("#"));
-    	
+        if (location.StartsWith(wxT("file:"))) {
+            // this happens in wx 3.1.0, so convert location from URL to file path
+            wxFileName fname = wxFileSystem::URLToFileName(location);
+            location = fname.GetFullPath();
+            #ifdef __WXMSW__
+                location.Replace(wxT("\\"), wxT("/"));
+            #endif
+        }
+        
+        // avoid bug in wx 3.1.0
+        location.Replace(wxT("%20"), wxT(" "));
+        location.Replace(wxT("%23"), wxT("#"));
+        
         // set currhelp so user can close help window and then open same page
         currhelp = location;
         
@@ -544,23 +544,23 @@ void LoadRule(const wxString& rulestring, bool fromfile)
         // show new rule in main window's title but don't change name
         mainptr->SetWindowTitle(wxEmptyString);
         
-		// if pattern exists and is at starting gen then ensure savestart is true
-		// so that SaveStartingPattern will save pattern to suitable file
-		// (and thus undo/reset will work correctly)
-		if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
-			currlayer->savestart = true;
-		}
+        // if pattern exists and is at starting gen then ensure savestart is true
+        // so that SaveStartingPattern will save pattern to suitable file
+        // (and thus undo/reset will work correctly)
+        if (currlayer->algo->getGeneration() == currlayer->startgen && !currlayer->algo->isEmpty()) {
+            currlayer->savestart = true;
+        }
         
         // if grid is bounded then remove any live cells outside grid edges
         if (currlayer->algo->gridwd > 0 || currlayer->algo->gridht > 0) {
             mainptr->ClearOutsideGrid();
         }
-	
-		// new rule might have changed the number of cell states;
-		// if there are fewer states then pattern might change
-		if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
-			mainptr->ReduceCellStates(newmaxstate);
-		}
+    
+        // new rule might have changed the number of cell states;
+        // if there are fewer states then pattern might change
+        if (newmaxstate < oldmaxstate && !currlayer->algo->isEmpty()) {
+            mainptr->ReduceCellStates(newmaxstate);
+        }
 
         if (allowundo && !currlayer->stayclean) {
             currlayer->undoredo->RememberRuleChange(oldrule);
@@ -1108,17 +1108,17 @@ void HtmlView::CheckAndLoad(const wxString& filepath)
         
     } else {
         // assume full path or local link
-		#if defined(__WXMSW__) && wxCHECK_VERSION(3,1,0)
-			wxFileName fname(filepath);
-			if (fname.IsAbsolute()) {
-				// call LoadFile rather than LoadPage to avoid bug in wx 3.1.0 on Windows 10
-				LoadFile(fname);
-			} else {
-				LoadPage(filepath);
-			}
-		#else
-			LoadPage(filepath);
-		#endif
+        #if defined(__WXMSW__) && wxCHECK_VERSION(3,1,0)
+            wxFileName fname(filepath);
+            if (fname.IsAbsolute()) {
+                // call LoadFile rather than LoadPage to avoid bug in wx 3.1.0 on Windows 10
+                LoadFile(fname);
+            } else {
+                LoadPage(filepath);
+            }
+        #else
+            LoadPage(filepath);
+        #endif
     }
 }
 
@@ -1247,18 +1247,18 @@ void HtmlView::OnSize(wxSizeEvent& event)
     wxString location = GetOpenedPage();
     if ( !location.IsEmpty() && canreload ) {
 
-    	if (location.StartsWith(wxT("file:"))) {
-    		// this happens in wx 3.1.0, so convert location from URL to file path
-    		wxFileName fname = wxFileSystem::URLToFileName(location);
-    		location = fname.GetFullPath();
-			#ifdef __WXMSW__
-				location.Replace(wxT("\\"), wxT("/"));
-			#endif
-    	}
-    	
-    	// avoid bug in wx 3.1.0
-    	location.Replace(wxT("%20"), wxT(" "));
-    	location.Replace(wxT("%23"), wxT("#"));
+        if (location.StartsWith(wxT("file:"))) {
+            // this happens in wx 3.1.0, so convert location from URL to file path
+            wxFileName fname = wxFileSystem::URLToFileName(location);
+            location = fname.GetFullPath();
+            #ifdef __WXMSW__
+                location.Replace(wxT("\\"), wxT("/"));
+            #endif
+        }
+        
+        // avoid bug in wx 3.1.0
+        location.Replace(wxT("%20"), wxT(" "));
+        location.Replace(wxT("%23"), wxT("#"));
     
         CheckAndLoad(location);    // reload page
         Scroll(x, y);              // scroll to old position
