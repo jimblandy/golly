@@ -559,27 +559,29 @@ function test_replace()
     end
 
     -- draw replacement text background
-    ov("blend 1")
-    ov("rgba 0 0 0 192")
-    ov("fill 0 300 "..wd.. " 144")
+    if replacements[replace].loop ~= true then
+        ov("blend 1")
+        ov("rgba 0 0 0 192")
+        ov("fill 0 300 "..wd.. " 144")
 
-    -- draw test name
-    ov("font 14 mono")
-    ov(op.white)
-    local testname = "Test "..replace..": "..replacements[replace].desc
-    w, h = maketext(testname, nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 310)
+        -- draw test name
+        ov("font 14 mono")
+        ov(op.white)
+        local testname = "Test "..replace..": "..replacements[replace].desc
+        w, h = maketext(testname, nil, nil, 2, 2)
+        pastetext(floor((wd - w) / 2), 310)
 
-    -- draw test commands
-    ov("font 22 mono")
-    if drawcol ~= "" then
+        -- draw test commands
+        ov("font 22 mono")
+        if drawcol ~= "" then
+            ov(op.yellow)
+            w, h = maketext(drawcol, nil, nil, 2, 2)
+            pastetext(floor((wd - w) / 2), 340)
+        end
         ov(op.yellow)
-        w, h = maketext(drawcol, nil, nil, 2, 2)
-        pastetext(floor((wd - w) / 2), 340)
+        w, h = maketext(replacecmd, nil, nil, 2, 2)
+        pastetext(floor((wd - w) / 2), 390)
     end
-    ov(op.yellow)
-    w, h = maketext(replacecmd, nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 390)
 
     -- restore settings
     ov("blend "..oldblend)
