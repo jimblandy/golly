@@ -427,23 +427,23 @@ end
 
 local replace = 1
 local replacements = {
-    [1] = { op.yellow, "replace 255 0 0 255", "replace red pixels with yellow" },
-    [2] = { "rgba 255 255 0 128", "replace 0 0 0 255", "replace black with semi-transparent yellow" },
-    [3] = { op.yellow, "replace !255 0 0 255", "replace non-red pixels with yellow" },
-    [4] = { "", "replace *g *r *# *#", "swap red and green components" },
-    [5] = { "rgba 0 0 0 128", "replace *# *# *# *", "make all pixels semi-transparent" },
-    [6] = { "", "replace *r- *g- *b- *#", "invert r g b components" },
-    [7] = { "", "replace *# *# *# *#-", "make transparent pixels opaque and vice versa" },
-    [8] = { op.yellow, "replace * * * !255", "replace non-opaque pixels with yellow" },
-    [9] = { "rgba 255 255 255 255", "replace *a *a *a *", "convert alpha to grayscale" },
-    [10] = { op.yellow, "replace 0 255 0 !255", "replace non-opaque green with yellow" },
-    [11] = { op.yellow, "replace * * * *", "fill (replace any pixel with yellow)" },
-    [12] = { "", "replace *# *# *# *#", "no-op (replace pixels with clip pixels)" },
-    [13] = { "rgba 0 0 0 128", "replace *# *# *# *", "make whole overlay semi-transparent", true },
-    [14] = { "", "replace *#+64 *#+64 *#+64 *#", "make pixels brighter" },
-    [15] = { "", "replace *# *# *# *#-64", "make pixels more transparent" },
-    [16] = { "", "replace *#++ *#++ *#++ *#", "fade to white using increment", true, true },
-    [17] = { "", "replace *#-4 *#-4 *#-4 *#", "fast fade to black", true, true }
+    [1] = { col = op.yellow, cmd = "replace 255 0 0 255", desc = "replace red pixels with yellow" },
+    [2] = { col = "rgba 255 255 0 128", cmd = "replace 0 0 0 255", desc = "replace black with semi-transparent yellow" },
+    [3] = { col = op.yellow, cmd = "replace !255 0 0 255", desc = "replace non-red pixels with yellow" },
+    [4] = { col = "", cmd = "replace *g *r *# *#", desc = "swap red and green components" },
+    [5] = { col = "rgba 0 0 0 128", cmd = "replace *# *# *# *", desc = "make all pixels semi-transparent" },
+    [6] = { col = "", cmd = "replace *r- *g- *b- *#", desc = "invert r g b components" },
+    [7] = { col = "", cmd = "replace *# *# *# *#-", desc = "make transparent pixels opaque and vice versa" },
+    [8] = { col = op.yellow, cmd = "replace * * * !255", desc = "replace non-opaque pixels with yellow" },
+    [9] = { col = "rgba 255 255 255 255", cmd = "replace *a *a *a *", desc = "convert alpha to grayscale" },
+    [10] = { col = op.yellow, cmd = "replace 0 255 0 !255", desc = "replace non-opaque green with yellow" },
+    [11] = { col = op.yellow, cmd = "replace * * * *", desc = "fill (replace any pixel with yellow)" },
+    [12] = { col = "", cmd = "replace *# *# *# *#", desc = "no-op (replace pixels with clip pixels)" },
+    [13] = { col = "rgba 0 0 0 128", cmd = "replace *# *# *# *", desc = "make whole overlay semi-transparent", overlay = true },
+    [14] = { col = "", cmd = "replace *#+64 *#+64 *#+64 *#", desc = "make pixels brighter" },
+    [15] = { col = "", cmd = "replace *# *# *# *#-64", desc = "make pixels more transparent" },
+    [16] = { col = "", cmd = "replace *#++ *#++ *#++ *#", desc = "fade to white using increment", overlay = true, loop = true },
+    [17] = { col = "", cmd = "replace *#-4 *#-4 *#-4 *#", desc = "fast fade to black", overlay = true, loop = true }
 }
 
 function test_replace()
@@ -497,8 +497,8 @@ function test_replace()
     ov("paste 20 20 clip")
 
     -- replace clip
-    local drawcol = replacements[replace][1]
-    local replacecmd = replacements[replace][2]
+    local drawcol = replacements[replace].col
+    local replacecmd = replacements[replace].cmd
     if drawcol ~= "" then
         -- set RGBA color
         ov(drawcol)
@@ -506,17 +506,46 @@ function test_replace()
     -- execute replace and draw clip
     local replaced = 0
     local t1 = g.millisecs()
-    if replacements[replace][4] ~= true then
+    if replacements[replace].overlay ~= true then
         ov("target clip")
     end
-    if replacements[replace][5] == true then
+    if replacements[replace].loop == true then
+        -- copy overlay to bigclip
+        ov("copy 0 0 0 0 bigclip")
         replaced = 1
         local count = 0
         while replaced > 0 do
             local t = g.millisecs()
             count = count + 1
+            -- replace pixels in bigclip
+            ov("target bigclip")
             replaced = tonumber(ov(replacecmd))
-            g.show("Test "..replace..": pixels replace in step "..count..": "..replaced)
+            -- paste bigclip to the overlay
+            ov("target")
+            ov("paste 0 0 bigclip")
+            -- draw test number over the bigclip
+            ov("blend 1")
+            ov("rgba 0 0 0 192")
+            ov("fill 0 300 "..wd.. " 144")
+
+            -- draw test name
+            ov("font 14 mono")
+            ov(op.white)
+            local testname = "Test "..replace..": "..replacements[replace].desc
+            w, h = maketext(testname, nil, nil, 2, 2)
+            pastetext(floor((wd - w) / 2), 310)
+            ov("font 22 mono")
+            if drawcol ~= "" then
+                ov(op.yellow)
+                w, h = maketext(drawcol, nil, nil, 2, 2)
+                pastetext(floor((wd - w) / 2), 340)
+            end
+            ov(op.yellow)
+            w, h = maketext(replacecmd, nil, nil, 2, 2)
+            pastetext(floor((wd - w) / 2), 390)
+        
+            -- update display
+            g.show("Test "..replace..": pixels replaced in step "..count..": "..replaced)
             ov("update")
             while g.millisecs() - t < 15 do end
         end
@@ -525,7 +554,7 @@ function test_replace()
     end
     t1 = g.millisecs() - t1
     ov("target ")
-    if replacements[replace][4] ~= true then
+    if replacements[replace].overlay ~= true then
         ov("paste "..(wd - 276).." 20 clip")
     end
 
@@ -537,7 +566,7 @@ function test_replace()
     -- draw test name
     ov("font 14 mono")
     ov(op.white)
-    local testname = "Test "..replace..": "..replacements[replace][3]
+    local testname = "Test "..replace..": "..replacements[replace].desc
     w, h = maketext(testname, nil, nil, 2, 2)
     pastetext(floor((wd - w) / 2), 310)
 
@@ -552,17 +581,23 @@ function test_replace()
     w, h = maketext(replacecmd, nil, nil, 2, 2)
     pastetext(floor((wd - w) / 2), 390)
 
+    -- restore settings
+    ov("blend "..oldblend)
+    ov("font "..oldfont)
+
+    -- display elapsed time
+    if replacements[replace].loop ~= true then
+        g.show("Time to replace: "..ms(t1).."  Pixels replaced: "..replaced)
+    else
+        g.show("Time to replace: "..ms(t1))
+    end
+
     -- next replacement
     replace = replace + 1
     if replace > #replacements then
         replace = 1
     end
 
-    -- restore settings
-    ov("blend "..oldblend)
-    ov("font "..oldfont)
-
-    g.show("Time to replace: "..ms(t1).."  Pixels replaced: "..replaced)
     if repeat_test(" with different options") then goto restart end
     ov("target")
 end
