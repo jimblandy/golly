@@ -36,9 +36,7 @@ boxlist = []         # corresponding bounding boxes
 
 def show_spaceship_speed(period, deltax, deltay):
     # we found a moving oscillator
-    if period == 1:
-        g.show("Spaceship detected (speed = c)")
-    elif (deltax == deltay) or (deltax == 0) or (deltay == 0):
+    if (deltax == deltay) or (deltax == 0) or (deltay == 0):
         speed = ""
         if (deltax == 0) or (deltay == 0):
             # orthogonal spaceship
@@ -48,11 +46,17 @@ def show_spaceship_speed(period, deltax, deltay):
             # diagonal spaceship (deltax == deltay)
             if deltax > 1:
                 speed += str(deltax)
-        g.show("Spaceship detected (speed = " + speed + "c/" +str(period) + ")")
+        if period == 1:
+            g.show("Spaceship detected (speed = " + speed + "c)")
+        else:
+            g.show("Spaceship detected (speed = " + speed + "c/" +str(period) + ")")
     else:
         # deltax != deltay and both > 0
         speed = str(deltay) + "," + str(deltax)
-        g.show("Knightship detected (speed = " + speed + "c/" + str(period) + ")")
+        if period == 1:
+            g.show("Knightship detected (speed = " + speed + "c)")
+        else:
+            g.show("Knightship detected (speed = " + speed + "c/" + str(period) + ")")
 
 # --------------------------------------------------------------------
 
@@ -106,13 +110,12 @@ def oscillating():
                     # gen G+p if p is odd
                     return False
 
-                if period == 1:
-                    if pbox == boxlist[pos]:
+                if pbox == boxlist[pos]:
+                    # pattern hasn't moved
+                    if period == 1:
                         g.show("The pattern is stable.")
                     else:
-                        show_spaceship_speed(1, 0, 0)
-                elif pbox == boxlist[pos]:
-                    g.show("Oscillator detected (period = " + str(period) + ")")
+                        g.show("Oscillator detected (period = " + str(period) + ")")
                 else:
                     deltax = abs(boxlist[pos].x - pbox.x)
                     deltay = abs(boxlist[pos].y - pbox.y)

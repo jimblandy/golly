@@ -36,9 +36,7 @@ local hasB0notS8 = r:find("B0") == 1 and r:find("/") > 1 and r:sub(-1,-1) ~= "8"
 
 local function show_spaceship_speed(period, deltax, deltay)
     -- we found a moving oscillator
-    if period == 1 then
-        g.show("Spaceship detected (speed = c)")
-    elseif deltax == deltay or deltax == 0 or deltay == 0 then
+    if deltax == deltay or deltax == 0 or deltay == 0 then
         local speed = ""
         if deltax == 0 or deltay == 0 then
             -- orthogonal spaceship
@@ -51,11 +49,19 @@ local function show_spaceship_speed(period, deltax, deltay)
                 speed = speed..deltax
             end
         end
-        g.show("Spaceship detected (speed = "..speed.."c/"..period..")")
+        if period == 1 then
+            g.show("Spaceship detected (speed = "..speed.."c)")
+        else
+            g.show("Spaceship detected (speed = "..speed.."c/"..period..")")
+        end
     else
         -- deltax != deltay and both > 0
         local speed = deltay..","..deltax
-        g.show("Knightship detected (speed = "..speed.."c/"..period..")")
+        if period == 1 then
+            g.show("Knightship detected (speed = "..speed.."c)")
+        else
+            g.show("Knightship detected (speed = "..speed.."c/"..period..")")
+        end
     end
 end
 
@@ -105,16 +111,14 @@ local function oscillating()
                     return false
                 end
                 
-                if period == 1 then
-                    if pbox[1] == rect[1] and pbox[2] == rect[2] and
-                       pbox[3] == rect[3] and pbox[4] == rect[4] then
+                if pbox[1] == rect[1] and pbox[2] == rect[2] and
+                   pbox[3] == rect[3] and pbox[4] == rect[4] then
+                    -- pattern hasn't moved
+                    if period == 1 then
                         g.show("The pattern is stable.")
                     else
-                        show_spaceship_speed(1, 0, 0)
+                        g.show("Oscillator detected (period = "..period..")")
                     end
-                elseif pbox[1] == rect[1] and pbox[2] == rect[2] and
-                       pbox[3] == rect[3] and pbox[4] == rect[4] then
-                    g.show("Oscillator detected (period = "..period..")")
                 else
                     local deltax = math.abs(rect[1] - pbox[1])
                     local deltay = math.abs(rect[2] - pbox[2])
