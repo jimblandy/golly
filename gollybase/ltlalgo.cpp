@@ -671,13 +671,21 @@ void ltlalgo::dogen()
             maxrow = maxy + range;
             
             // check if the limits are outside the grid edges
-            if (mincol < 0 || maxcol >= (int)gridwd) {
+            if (mincol < 0) {
                 mincol = 0;
-                maxcol = gridwdm1;
+                if (topology == 'T') maxcol = gridwdm1;
             }
-            if (minrow < 0 || maxrow >= (int)gridht) {
+            if (maxcol > gridwdm1) {
+                maxcol = gridwdm1;
+                if (topology == 'T') mincol = 0;
+            }
+            if (minrow < 0) {
                 minrow = 0;
+                if (topology == 'T') maxrow = gridhtm1;
+            }
+            if (maxrow > gridhtm1) {
                 maxrow = gridhtm1;
+                if (topology == 'T') minrow = 0;
             }
         }
         
