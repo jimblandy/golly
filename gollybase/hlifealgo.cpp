@@ -1654,10 +1654,32 @@ default:       return "Illegal character in readmacrocell." ;
    hashed = 1 ;
    return 0 ;
 }
+
+// Flip bits in given rule talbe.
+static void fliprule(char *rptr) {
+   for (int i=0; i<65536; i++) {
+      int j = ((i & 0xf) << 12) +
+               ((i & 0xf0) << 4) + ((i & 0xf00) >> 4) + ((i & 0xf000) >> 12) ;
+      if (i <= j) {
+         char fi = rptr[i] ;
+         char fj = rptr[j] ;
+         fi = ((fi & 0x30) >> 4) + ((fi & 0x3) << 4) ;
+         fj = ((fj & 0x30) >> 4) + ((fj & 0x3) << 4) ;
+         rptr[i] = fj ;
+         rptr[j] = fi ;
+      }
+   }
+}
+
 const char *hlifealgo::setrule(const char *s) {
    poller->bailIfCalculating() ;
    const char* err = hliferules.setrule(s, this);
    if (err) return err;
+
+   // invert orientation if not hex or Wolfram
+   if (!(hliferules.isHexagonal() || hliferules.isWolfram())) {
+      fliprule(hliferules.rule0);
+   }
 
    clearcache() ;
    
