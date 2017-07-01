@@ -555,7 +555,10 @@ void MainFrame::OpenZipFile(const wxString& zippath)
     wxSortedArrayString deplist;            // list of installed deprecated files
     wxSortedArrayString rulelist;           // list of installed .rule files
     
-    wxString contents = wxT("<html><title>") + GetBaseName(zippath);
+    // note that we need to create the HTML file with UTF-8 encoding
+    // in case zippath contains non-ASCII characters
+    wxString contents = wxT("<html><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">");
+    contents += wxT("<title>") + GetBaseName(zippath);
     contents += wxT("</title>\n");
     contents += wxT("<body bgcolor=\"#FFFFCE\">\n");
     contents += wxT("<p>\n");
