@@ -1655,7 +1655,7 @@ default:       return "Illegal character in readmacrocell." ;
    return 0 ;
 }
 
-// Flip bits in given rule talbe.
+// Flip bits in given rule table.
 static void fliprule(char *rptr) {
    for (int i=0; i<65536; i++) {
       int j = ((i & 0xf) << 12) +
