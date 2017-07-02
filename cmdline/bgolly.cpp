@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "qlifealgo.h"
 #include "hlifealgo.h"
 #include "generationsalgo.h"
+#include "ltlalgo.h"
 #include "jvnalgo.h"
 #include "ruleloaderalgo.h"
 #include "readpattern.h"
@@ -450,8 +451,10 @@ lifealgo *createUniverse() {
        algoName = (char *)"RuleLoader" ;
    }
    staticAlgoInfo *ai = staticAlgoInfo::byName(algoName) ;
-   if (ai == 0)
+   if (ai == 0) {
+      cout << algoName << endl ; //!!!
       lifefatal("No such algorithm") ;
+   }
    lifealgo *imp = (ai->creator)() ;
    if (imp == 0)
       lifefatal("Could not create universe") ;
@@ -525,6 +528,7 @@ int main(int argc, char *argv[]) {
    qlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    hlifealgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    generationsalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
+   ltlalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    jvnalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    ruleloaderalgo::doInitializeAlgoInfo(staticAlgoInfo::tick()) ;
    while (argc > 1 && argv[1][0] == '-') {
