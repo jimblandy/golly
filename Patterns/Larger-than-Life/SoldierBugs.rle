@@ -5,7 +5,7 @@
 # The following pattern by Dave Greene shows how twelve soldier bugs
 # can be arranged to create a period 46 oscillator.
 #
-x = 113, y = 113, rule = R7,C0,M1,S65..114,B65..95,NM:T500,500
+x = 113, y = 113, rule = R7,C0,M1,S65..114,B65..95,NM
 49b4o$47b7o$46b10o$45b12o$45b13o19b2o$44b3o5b6o17b6o$22b3o19b3o5b6o16b
 9o$20b7o17b3o5b6o15b11o$19b9o16b3o5b6o14b3ob9o$18b12o15b3o2b8o14b3o4b
 7o$18b13o14b12o14b3o6b6o$17b5o3b6o15b10o15b3o6b6o$17b2o7b5o16b7o17b3o
