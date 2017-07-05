@@ -927,6 +927,9 @@ function test_animation()
 
     -- add the pattern
     g.open("../../Patterns/Life/Guns/golly-ticker.rle")
+    g.setname("Credits")
+    g.update()
+ 
     g.run(1024)
 
     -- create the cellview
