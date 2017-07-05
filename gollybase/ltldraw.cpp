@@ -87,6 +87,8 @@ static void killpixels()
 
 void ltlalgo::draw(viewport &view, liferender &renderer)
 {
+    if (population == 0) return;
+
     // get cell colors and alpha values for dead and live pixels
     renderer.getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea);
     
@@ -126,8 +128,8 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
         // simply display the entire grid -- ie. no need to use pixbuf
         int x = ltpxl.first;        // already multiplied by pmag
         int y = ltpxl.second;       // ditto
-        int wd = gridwd * pmag;
-        int ht = gridht * pmag;
+        int wd = gwd * pmag;
+        int ht = ght * pmag;
         renderer.pixblit(x, y, wd, ht, currgrid, pmag);
     
     } else {
@@ -135,12 +137,12 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
         killpixels();
         if (mag == 0) {
             // divide grid into pmsize * pmsize blocks and draw them at scale 1:1
-            for (unsigned int row = 0; row < gridht; row += pmsize) {
-                for (unsigned int col = 0; col < gridwd; col += pmsize) {
+            for (int row = 0; row < ght; row += pmsize) {
+                for (int col = 0; col < gwd; col += pmsize) {
                     
                     // don't go beyond bottom/right edges of grid
-                    int jmax = row + pmsize <= gridht ? pmsize : pmsize - (row + pmsize - gridht);
-                    int imax = col + pmsize <= gridwd ? pmsize : pmsize - (col + pmsize - gridwd);
+                    int jmax = row + pmsize <= ght ? pmsize : pmsize - (row + pmsize - ght);
+                    int imax = col + pmsize <= gwd ? pmsize : pmsize - (col + pmsize - gwd);
                 
                     // check if this block is visible in view
                     int x = ltpxl.first + col;
@@ -149,7 +151,7 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
                         // not visible
                     } else {
                         // get cell at top left corner of this block
-                        unsigned char* cellptr = currgrid + row * gridwd + col;
+                        unsigned char* cellptr = currgrid + row * gwd + col;
                         
                         // find live cells in this block and store their RGBA data in pixbuf
                         for (int j = 0; j < jmax; j++) {
@@ -159,7 +161,7 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
                                 if (*p > 0) pixRGBAbuf[pixrow + i] = cellRGBA[*p];
                                 p++;
                             }
-                            cellptr += gridwd;
+                            cellptr += gwd;
                         }
                         
                         // draw this block
@@ -175,7 +177,7 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
             unsigned int state1RGBA = cellRGBA[1];
             
             // check if grid shrinks to 1 pixel
-            if ((gridwd >> mag) == 0 && (gridht >> mag) == 0) {
+            if ((gwd >> mag) == 0 && (ght >> mag) == 0) {
                 pixRGBAbuf[0] = state1RGBA;     // there is at least 1 live cell in grid
                 int x = ltpxl.first;
                 int y = ltpxl.second;
@@ -188,8 +190,8 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
             if (mag > 20) mag = 20;
             pmag = 1 << mag;
             int blocksize = pmsize * pmag;
-            for (unsigned int row = 0; row < gridht; row += blocksize) {
-                for (unsigned int col = 0; col < gridwd; col += blocksize) {
+            for (int row = 0; row < ght; row += blocksize) {
+                for (int col = 0; col < gwd; col += blocksize) {
                 
                     // check if shrunken block is visible in view
                     int x = ltpxl.first + (col >> mag);
@@ -198,24 +200,24 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
                         // not visible
                     } else {
                         // get cell at top left corner of this big block
-                        unsigned char* cellptr = currgrid + row * gridwd + col;
+                        unsigned char* cellptr = currgrid + row * gwd + col;
                         
                         // avoid going way beyond bottom/right edges of grid
-                        int jmax = row + blocksize <= gridht ? blocksize : blocksize - (row + blocksize - gridht);
-                        int imax = col + blocksize <= gridwd ? blocksize : blocksize - (col + blocksize - gridwd);
+                        int jmax = row + blocksize <= ght ? blocksize : blocksize - (row + blocksize - ght);
+                        int imax = col + blocksize <= gwd ? blocksize : blocksize - (col + blocksize - gwd);
                         
                         for (int j = 0; j < jmax; j += pmag) {
                             unsigned char* p = cellptr;
-                            unsigned int sqtop = row + j;
+                            int sqtop = row + j;
                             for (int i = 0; i < imax; i += pmag) {
                             
                                 // shrink pmag*pmag cells in grid down to 1 pixel in pixbuf
-                                unsigned int sqleft = col + i;
+                                int sqleft = col + i;
                                 for (int r = 0; r < pmag; r++) {
-                                    if (sqtop + r < gridht) {
-                                        unsigned char* topleft = p + r * gridwd;
+                                    if (sqtop + r < ght) {
+                                        unsigned char* topleft = p + r * gwd;
                                         for (int c = 0; c < pmag; c++) {
-                                            if (sqleft + c < gridwd) {
+                                            if (sqleft + c < gwd) {
                                                 unsigned char* q = topleft + c;
                                                 if (*q > 0) {
                                                     pixRGBAbuf[(j >> mag) * pmsize + (i >> mag)] = state1RGBA;
@@ -230,7 +232,7 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
                                 p += pmag;
                                 
                             }
-                            cellptr += gridwd * pmag;
+                            cellptr += gwd * pmag;
                         }
                         
                         // draw the shrunken block
@@ -263,7 +265,7 @@ void ltlalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pr
 
     // find the top edge (miny)
     for (int row = miny; row <= maxy; row++) {
-        unsigned char* cellptr = currgrid + row * gridwd + minx;
+        unsigned char* cellptr = currgrid + row * gwd + minx;
         for (int col = minx; col <= maxx; col++) {
             if (*cellptr > 0) {
                 miny = row;
@@ -279,7 +281,7 @@ void ltlalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pr
     
     // find the bottom edge (maxy)
     for (int row = maxy; row >= miny; row--) {
-        unsigned char* cellptr = currgrid + row * gridwd + minx;
+        unsigned char* cellptr = currgrid + row * gwd + minx;
         for (int col = minx; col <= maxx; col++) {
             if (*cellptr > 0) {
                 maxy = row;
@@ -288,32 +290,35 @@ void ltlalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pr
             cellptr++;
         }
     }
+    
     found_bottom:
     
     // find the left edge (minx)
     for (int col = minx; col <= maxx; col++) {
-        unsigned char* cellptr = currgrid + miny * gridwd + col;
+        unsigned char* cellptr = currgrid + miny * gwd + col;
         for (int row = miny; row <= maxy; row++) {
             if (*cellptr > 0) {
                 minx = col;
                 goto found_left;
             }
-            cellptr += gridwd;
+            cellptr += gwd;
         }
     }
+    
     found_left:
     
     // find the right edge (maxx)
     for (int col = maxx; col >= minx; col--) {
-        unsigned char* cellptr = currgrid + miny * gridwd + col;
+        unsigned char* cellptr = currgrid + miny * gwd + col;
         for (int row = miny; row <= maxy; row++) {
             if (*cellptr > 0) {
                 maxx = col;
                 goto found_right;
             }
-            cellptr += gridwd;
+            cellptr += gwd;
         }
     }
+    
     found_right:
 
     // set pattern edges (in cell coordinates)

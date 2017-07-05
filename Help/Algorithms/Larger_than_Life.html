@@ -111,28 +111,34 @@ This notation assumes an extended Moore neighborhood in which a live middle cell
 is included in the neighborhood count (ie. totalistic).
 For example, Life can be entered as 1,3,3,3,4.
 
+<p>
+Note that Golly's canonical version of a Larger than Life rule
+always uses the MCell syntax.
+
 <p>&nbsp;<br>
 <font size=+1><b>Grid topology and size limits</b></font>
 
 <p>
-Unlike Golly's other algorithms, Larger than Life uses a finite universe.
-The topology can be either a torus or a plane and is specified by appending
-a suitable suffix to the rule.  For example,
+The Larger than Life algorithm supports both bounded and unbounded universes,
+but with certain restrictions.
+As in Golly's other algorithms, a bounded universe is specified by appending
+a suitable suffix to the rule, but the topology can only be a simple torus or a plane.
+For example,
 <b><a href="rule:R5,C0,M1,S34..58,B34..45,NM:T500,40">R5,C0,M1,S34..58,B34..45,NM:T500,40</a></b>
 creates a 500 by 40 torus using the Bugs rule, and
 <b><a href="rule:1,3,3,3,4:P300,200">1,3,3,3,4:P300,200</a></b>
 creates a 300 by 200 plane using Life.
+The maximum grid size is 100 million cells.
+The minimum width or height is twice the supplied range.  Values less than that
+(including zero) are automatically increased to the minimum value.
 
 <p>
-The maximum grid size allowed is 100 million cells.
-The minimum width and height is twice the range.
-If a given rule has no suffix then the grid will be a torus with a default size
-of 400 by 400 cells.
-
-<p>
-Note that Golly's canonical version of a Larger than Life rule
-uses the MCell syntax and always includes a suffix showing the
-topology and the grid size.
+If a given rule has no suffix then the universe is unbounded.
+Well, almost.  Golly maintains an internal grid that is automatically resized
+as a pattern expands or shrinks.  The size of this grid is limited to
+100 million cells, and the cell coordinates of the grid edges must remain
+within the editing limits of +/- 1 billion.
+For the vast majority of patterns these limits won't ever be a problem.
 
 <p>&nbsp;<br>
 <font size=+1><b>References</b></font>
