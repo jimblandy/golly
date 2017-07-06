@@ -928,8 +928,6 @@ function test_animation()
     -- add the pattern
     g.open("../../Patterns/Life/Guns/golly-ticker.rle")
     g.setname("Credits")
-    g.update()
- 
     g.run(1024)
 
     -- create the cellview
@@ -1162,6 +1160,7 @@ David Bell
     local credity = ht
     local creditx = floor((wd - credwidth) / 2)
     local credpos
+    local firsttime = true
 
     -- main loop
     while running do
@@ -1328,6 +1327,10 @@ David Bell
 
         -- update display
 	ov("update")
+        if firsttime then
+            firsttime = false
+            g.update()
+        end
 
         local timeupdate = g.millisecs() - t1
 
