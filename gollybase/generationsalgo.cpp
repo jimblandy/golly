@@ -553,11 +553,18 @@ void generationsalgo::createCanonicalName(const char *base64) {
       canonrule[p++] = 'P' ;
 
       // copy base64 part
-      for (i = 0 ; i < MAP512LENGTH ; i++) {
+      for (i = 0 ; i < MAP512LENGTH - 1 ; i++) {
          if (*base64) {
             canonrule[p++] = *base64 ;
             base64++ ;
          }
+      }
+
+      // copy final 2 bits of last character
+      if (*base64) {
+         const char *index = strchr(base64_characters, *base64);
+         int c = index ? (char)(index - base64_characters) : 0;
+         canonrule[p++] = base64_characters[c & ((1<< 5) | (1 << 4))];
       }
    }
    else {
