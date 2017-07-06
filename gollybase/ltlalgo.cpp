@@ -347,7 +347,7 @@ int ltlalgo::isEmpty()
 void ltlalgo::update_next_grid(int x, int y, int xyoffset, int ncount)
 {
     // x,y cell in nextgrid might change based on the given neighborhood count
-    int state = *(currgrid + xyoffset);
+    unsigned char state = *(currgrid + xyoffset);
     if (state == 0) {
         // this cell is dead
         if (ncount >= minB && ncount <= maxB) {
