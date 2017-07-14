@@ -114,6 +114,10 @@ private:
     void update_next_grid(int x, int y, int xyoffset, int ncount);
     // called from each of the slow_* and fast_* routines to set x,y cell
     // in nextgrid based on the given neighborhood count
+    
+    int* colcounts;                     // cumulative column counts of state-1 cells
+    void faster_Moore(int mincol, int minrow, int maxcol, int maxrow);
+    // faster version of fast_Moore (uses Adam P. Goucher's neighbor counting algorithm)
 };
 
 #endif

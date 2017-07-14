@@ -69,6 +69,7 @@ ltlalgo::~ltlalgo()
 {
     free(currgrid);
     free(nextgrid);
+    if (colcounts) free(colcounts);
 }
 
 // -----------------------------------------------------------------------------
@@ -101,6 +102,9 @@ void ltlalgo::create_grids()
     
     // init boundaries so next birth will change them
     empty_boundaries();
+    
+    colcounts = (int*) malloc(gridbytes*4);
+    // if NULL then use fast_Moore, otherwise faster_Moore
 }
 
 // -----------------------------------------------------------------------------
@@ -205,6 +209,10 @@ const char* ltlalgo::resize_grids(int up, int down, int left, int right)
     gridleft = gleft;
     gridbottom = gbottom;
     gridright = gright;
+
+    if (colcounts) free(colcounts);
+    colcounts = (int*) malloc(gridbytes*4);
+    // if NULL then use fast_Moore, otherwise faster_Moore
 
     return NULL;    // success
 }
@@ -400,6 +408,114 @@ void ltlalgo::update_next_grid(int x, int y, int xyoffset, int ncount)
             // cell dies
             population--;
             if (population == 0) empty_boundaries();
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::faster_Moore(int mincol, int minrow, int maxcol, int maxrow)
+{
+    // use Adam P. Goucher's algorithm to calculate Moore neighborhood counts
+    minrow -= range;
+    mincol -= range;
+    maxrow += range;
+    maxcol += range;
+    
+    if (unbounded) {
+        // we can safely assume there is at least a 2*range boundary of
+        // dead cells surrounding the pattern
+        int r2 = range * 2;
+        int minrowpr2 = minrow+r2;
+        int mincolpr2 = mincol+r2;
+        
+        // put zeros in top 2*range rows of colcounts
+        for (int i = minrow; i < minrowpr2; i++) {
+            int* ccptr = colcounts + i * gwd + mincol;
+            for (int j = mincol; j <= maxcol; j++) {
+                *ccptr++ = 0;
+            }
+        }
+    
+        // put zeros in left 2*range columns of colcounts
+        for (int j = mincol; j < mincolpr2; j++) {
+            int* ccptr = colcounts + minrowpr2 * gwd + j;
+            for (int i = minrowpr2; i <= maxrow; i++) {
+                *ccptr = 0;
+                ccptr += gwd;
+            }
+        }
+    
+        // calculate cumulative counts for remaining columns and store in colcounts
+        for (int i = minrowpr2; i <= maxrow; i++) {
+            int rowcount = 0;
+            for (int j = mincolpr2; j <= maxcol; j++) {
+                int offset = i * gwd + j;
+                unsigned char* cellptr = currgrid + offset;
+                if (*cellptr == 1) rowcount++;
+                int* ccptr = colcounts + offset;
+                *ccptr = *(ccptr - gwd) + rowcount;
+            }
+        }
+    } else {
+        // bounded grid, so the expanded edges might contain state-1 cells;
+        // calculate cumulative counts for each column and store in colcounts
+        for (int i = minrow; i <= maxrow; i++) {
+            int rowcount = 0;
+            for (int j = mincol; j <= maxcol; j++) {
+                int offset = i * gwd + j;
+                unsigned char* cellptr = currgrid + offset;
+                if (*cellptr == 1) rowcount++;
+                int* ccptr = colcounts + offset;
+                if (i > minrow) {
+                    *ccptr = *(ccptr - gwd) + rowcount;
+                } else {
+                    *ccptr = rowcount;
+                }
+            }
+        }
+    }
+    
+    minrow += range;
+    mincol += range;
+    maxrow -= range;
+    maxcol -= range;
+
+    // calculate final neighborhood counts using values in colcounts
+    // and update the corresponding cells in nextgrid
+    int minrowplus = minrow + range;
+    int mincolplus = mincol + range;
+    int* colptr = colcounts + minrowplus * gwd;
+    int* ccptr = colptr + mincolplus;
+    update_next_grid(mincol, minrow, minrow*gwd+mincol, *ccptr);
+    
+    int rangep1 = range + 1;
+    for (int j = mincol+1; j <= maxcol; j++) {
+        // do i == minrow
+        int* ccptr1 = colptr + (j+range);
+        int* ccptr2 = colptr + (j-rangep1);
+        update_next_grid(j, minrow, minrow*gwd+j, *ccptr1 - *ccptr2);
+    }
+    
+    colptr = colcounts + mincolplus;
+    for (int i = minrow+1; i <= maxrow; i++) {
+        // do j == mincol
+        int* ccptr1 = colptr + (i+range) * gwd;
+        int* ccptr2 = colptr + (i-rangep1) * gwd;
+        update_next_grid(mincol, i, i*gwd+mincol, *ccptr1 - *ccptr2);
+    }
+    
+    for (int i = minrow+1; i <= maxrow; i++) {
+        int* ipr = colcounts + (i+range) * gwd;
+        int* imrm1 = colcounts + (i-rangep1) * gwd;
+        for (int j = mincol+1; j <= maxcol; j++) {
+            int jpr = j+range;
+            int jmrm1 = j-rangep1;
+            int* ccptr1 = ipr + jpr;
+            int* ccptr2 = imrm1 + jmrm1;
+            int* ccptr3 = ipr + jmrm1;
+            int* ccptr4 = imrm1 + jpr;
+            update_next_grid(j, i, i*gwd+j, *ccptr1 + *ccptr2 - *ccptr3 - *ccptr4);
         }
     }
 }
@@ -851,7 +967,11 @@ void ltlalgo::do_bounded_gen()
         if (maxcol > gwdm1 - range) maxcol = gwdm1 - range;
         if (minrow <= maxrow && mincol <= maxcol) {
             if (ntype == 'M') {
-                fast_Moore(mincol, minrow, maxcol, maxrow);
+                if (colcounts) {
+                    faster_Moore(mincol, minrow, maxcol, maxrow);
+                } else {
+                    fast_Moore(mincol, minrow, maxcol, maxrow);
+                }
             } else {
                 fast_Neumann(mincol, minrow, maxcol, maxrow);
             }
@@ -907,7 +1027,11 @@ bool ltlalgo::do_unbounded_gen()
     empty_boundaries();
 
     if (ntype == 'M') {
-        fast_Moore(mincol, minrow, maxcol, maxrow);
+        if (colcounts) {
+            faster_Moore(mincol, minrow, maxcol, maxrow);
+        } else {
+            fast_Moore(mincol, minrow, maxcol, maxrow);
+        }
     } else {
         fast_Neumann(mincol, minrow, maxcol, maxrow);
     }
@@ -1089,6 +1213,7 @@ const char *ltlalgo::setrule(const char *s)
             ght = newht;
             free(currgrid);
             free(nextgrid);
+            if (colcounts) free(colcounts);
             create_grids();
             if (cell_list.size() > 0) {
                 // restore the pattern (if the new grid is smaller then any live cells
