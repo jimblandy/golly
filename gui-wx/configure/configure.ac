@@ -92,6 +92,12 @@ AS_IF([test "x$with_zlib" != xno],
 		AC_SEARCH_LIBS([gzopen], [z], , [AC_MSG_ERROR([missing zlib])])
 		AC_DEFINE(ZLIB) ] )
 
+# Find library to link for dlopen (typically -ldl on Linux).
+AC_SEARCH_LIBS([dlopen], [dl], , [AC_MSG_ERROR([missing dlopen])])
+
+# Find library to link for OpenGL (typically -lGL).
+AC_SEARCH_LIBS([glViewport], [GL], , [AC_MSG_ERROR([missing OpenGL])])
+
 # Definitions used in the source:
 AC_DEFINE_UNQUOTED([VERSION], [$PACKAGE_VERSION])
 GOLLYDIR=${GOLLYDIR:-'${pkgdatadir}'}
