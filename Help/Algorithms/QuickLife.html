@@ -195,8 +195,12 @@ So, Conway's Life (B3/S23) encoded as a MAP rule is:
 </pre>
 Given each MAP rule has 512 bits this leads to 2^512 (roughly 1.34x10^154) unique rules.
 Totalistic rules are a subset of isotropic non-totalistic rules which are a subset of MAP rules.
-
-
+<p>
+MAP rules can also be specified for Hexagonal and von Neumann neighborhoods.
+<p>
+Hexagonal neighborhoods have 7 cells (center plus 6 neighbors) which gives 128 (2^7) possible combinations of cells. These encode into 22 base64 characters.
+<p>
+Von Neumann neighborhoods have 5 cells (center plus 4 neighbors) which gives 32 (2^5) possible combinations of cells. These encode into 6 base 64 characters.
 <p><a name="b0emulation"></a>&nbsp;<br>
 <font size=+1><b>Emulating B0 rules</b></font>
 

@@ -860,7 +860,7 @@ function m.hexrule()
     
     local algo = g.getalgo()
     if algo == "QuickLife" or algo == "HashLife" or algo == "Generations" then
-        return rule:sub(-1) == "H"
+        return (rule:sub(1, 3) == "MAP" and rule:len() == 25) or rule:sub(-1) == "H"
     elseif algo == "RuleLoader" then
         return rule:lower():find("hex") ~= nil
         -- !!! or maybe look in the .rule file and see if the TABLE section specifies

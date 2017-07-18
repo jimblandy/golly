@@ -74,7 +74,7 @@ private:
    void setSymmetrical(int value, bool survival, int lindex, int normal) ;
    void setTotalisticRuleFromString(const char *rule, bool survival) ;
    void setRuleFromString(const char *rule, bool survival) ;
-   void createRuleMap512(const char *base64) ;
+   void createRuleMapFromMAP(const char *base64) ;
    void createRuleMap(const char *birth, const char *survival) ;
    void createCanonicalName(const char *base64) ;
    void removeChar(char *string, char skip) ;

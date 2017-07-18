@@ -406,47 +406,71 @@ void generationsalgo::setRuleFromString(const char *rule, bool survival) {
 }
 
 // create the rule map from the base64 encoded map
-void generationsalgo::createRuleMap512(const char *base64) {
-   // clear the rule array
-   memset(rule3x3, 0, ALL3X3) ;
-      
-   // check the string is long enough
-   if ((int) strlen(base64) >= MAP512LENGTH) {
-      // decode the base64 string
-      int i = 0 ;
-      char c = 0 ;
-      int j = 0 ;
+void generationsalgo::createRuleMapFromMAP(const char *base64) {
+   // set the number of characters to read
+   int power2 = 1 << (neighbors + 1) ;
+   int fullchars = power2 / 6 ;
+   int remainbits = power2 % 6 ;
 
-      // decode the base64 string
-      const char *index = 0 ;
-      for (i = 0 ; i < MAP512LENGTH - 1 ; i++) { 
-         // convert character to base64 index
-         index = strchr(base64_characters, *base64) ;
-         base64++ ;
-         c = index ? (char)(index - base64_characters) : 0 ;
+   // create an array to read the MAP bits
+   char bits[ALL3X3] ;
 
-         // decode the character
-         rule3x3[j] = c >> 5 ; 
-         j++ ;
-         rule3x3[j] = (c >> 4) & 1 ;
-         j++ ;
-         rule3x3[j] = (c >> 3) & 1 ;
-         j++ ;
-         rule3x3[j] = (c >> 2) & 1 ;
-         j++ ;
-         rule3x3[j] = (c >> 1) & 1 ;
-         j++ ;
-         rule3x3[j] = c & 1 ;
-         j++ ;
-      } 
+   // decode the base64 string
+   int i = 0 ;
+   char c = 0 ;
+   int j = 0 ;
+   const char *index = 0 ;
 
-      // decode final character
+   for (i = 0 ; i < fullchars ; i++) {
+      // convert character to base64 index
+      index = strchr(base64_characters, *base64) ;
+      base64++ ;
+      c = index ? (char)(index - base64_characters) : 0 ;
+
+      // decode the character
+      bits[j] = c >> 5 ;
+      j++ ;
+      bits[j] = (c >> 4) & 1 ;
+      j++ ;
+      bits[j] = (c >> 3) & 1 ;
+      j++ ;
+      bits[j] = (c >> 2) & 1 ;
+      j++ ;
+      bits[j] = (c >> 1) & 1 ;
+      j++ ;
+      bits[j] = c & 1 ;
+      j++ ;
+   }
+
+   // decode remaining bits from final character
+   if (remainbits > 0) {
       index = strchr(base64_characters, *base64) ;
       c = index ? (char)(index - base64_characters) : 0 ;
-      rule3x3[j] = c >> 5 ;
-      j++ ;
-      rule3x3[j] = (c >> 4) & 1 ;
-   } 
+      int b = 5 ;
+
+      while (remainbits > 0) {
+          bits[j] = (c >> b) & 1 ;
+          b-- ;
+          j++ ;
+          remainbits-- ;
+      }
+   }
+
+   // copy into rule array using the neighborhood mask
+   int k, m ;
+   for (i = 0 ; i < ALL3X3 ; i++) {
+      k = 0 ;
+      m = neighbors ;
+      for (j = 8 ; j >= 0 ; j--) {
+         if (neighbormask & (1 << j)) {
+             if (i & (1 << j)) {
+                k |= (1 << m) ;
+             }
+             m-- ;
+         }
+      }
+      rule3x3[i] = bits[k] ;
+   }
 }
 
 // create the rule map from birth and survival strings
@@ -547,24 +571,35 @@ void generationsalgo::createCanonicalName(const char *base64) {
 
    // check for map rule
    if (using_map) {
-      // output map
+      // output map header
       canonrule[p++] = 'M' ;
       canonrule[p++] = 'A' ;
       canonrule[p++] = 'P' ;
 
+      // compute number of base64 characters
+      int power2 = 1 << (neighbors + 1) ;
+      int fullchars = power2 / 6 ;
+      int remainbits = power2 % 6 ;
+
       // copy base64 part
-      for (i = 0 ; i < MAP512LENGTH - 1 ; i++) {
+      for (i = 0 ; i < fullchars ; i++) {
          if (*base64) {
             canonrule[p++] = *base64 ;
             base64++ ;
          }
       }
 
-      // copy final 2 bits of last character
+      // copy final bits of last character
       if (*base64) {
-         const char *index = strchr(base64_characters, *base64);
-         int c = index ? (char)(index - base64_characters) : 0;
-         canonrule[p++] = base64_characters[c & ((1<< 5) | (1 << 4))];
+         const char *index = strchr(base64_characters, *base64) ;
+         int c = index ? (char)(index - base64_characters) : 0 ;
+         int k = 0 ;
+         int m = 5 ;
+         for (i = 0 ; i < remainbits ; i++) {
+            k |= c & (1 << m) ;
+            m-- ;
+         }
+         canonrule[p++] = base64_characters[c] ;
       }
    }
    else {
@@ -746,28 +781,49 @@ const char *generationsalgo::setrule(const char *rulestring) {
       r += 3 ;
       bpos = r ;
 
-      // check the base64 encoded map string is long enough for 512 bits
-      if ((int) strlen(r) < MAP512LENGTH) {
-         return "MAP rule needs 86 base64 characters." ;
+     // terminate at the colon if one is present
+      if (colonpos) *colonpos = 0 ;
+
+      // check the length of the map
+      int maplen = (int) strlen(r) ;
+
+      // find the last slash
+      char *lastslash = strrchr(r, '/') ;
+
+      // replace the colon if one was present
+      if (colonpos) *colonpos = ':' ;
+
+      // check if there was a final slash
+      if (lastslash == NULL) {
+          return "Generations rule needs number of states." ;
+      }
+
+      // length is up to the final slash
+      maplen = (int) (lastslash - r) ;
+
+      // check if the map length is valid for Moore, Hexagonal or von Neumann neighborhoods
+      if (!(maplen == MAP512LENGTH || maplen == MAP128LENGTH || maplen == MAP32LENGTH)) {
+          return "MAP rule needs 6, 22 or 86 base64 characters." ;
       }
 
       // validate the characters
-      spos = r + MAP512LENGTH ;
+      spos = r + maplen ;
       while (r < spos) {
          if (!strchr(base64_characters, *r)) {
-            return "MAP contains illegal base64 character." ;
+             return "MAP contains illegal base64 character." ;
          }
          r++ ;
       }
 
-      // skip any trailing whitespace
-      while (*r == ' ') {
-         r++ ;
-      }
-
-      // check for slash and number of states
-      if (*r != '/') {
-          return "Generations rule needs number of states." ;
+      // set the neighborhood based on the map length
+      if (maplen == MAP128LENGTH) {
+         neighbormask = HEXAGONAL ;
+         neighbors = 6 ;
+      } else {
+         if (maplen == MAP32LENGTH) {
+            neighbormask = VON_NEUMANN ;
+            neighbors = 4 ;
+         }
       }
 
       // read number of states
@@ -1102,7 +1158,7 @@ const char *generationsalgo::setrule(const char *rulestring) {
    // check for map
    if (using_map) {
       // generate the 3x3 map from the 512bit map
-      createRuleMap512(bpos) ;
+      createRuleMapFromMAP(bpos) ;
    }
    else {
       // generate the 3x3 map from the birth and survival rules

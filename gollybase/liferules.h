@@ -37,7 +37,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 const int MAXRULESIZE = 500 ;  // maximum number of characters in a rule
 const int ALL3X3 = 512 ;       // all possible 3x3 cell combinations
 const int ALL4X4 = 65536 ;     // all possible 4x4 cell combinations
-const int MAP512LENGTH = 86 ;  // number of base64 characters to encode 512bit map
+const int MAP512LENGTH = 86 ;  // number of base64 characters to encode 512bit map for Moore neighborhood
+const int MAP128LENGTH = 22 ;  // number of base64 characters to encode 128bit map for Hex neighborhood
+const int MAP32LENGTH  = 6 ;   // number of base64 characters to encode 32bit map for von Neumann neighborhood
 
 class liferules {
 public:
@@ -95,7 +97,7 @@ private:
    void setTotalisticRuleFromString(const char *rule, bool survival) ;
    void setRuleFromString(const char *rule, bool survival) ;
    void createWolframMap() ;
-   void createRuleMap512(const char *base64) ;
+   void createRuleMapFromMAP(const char *base64) ;
    void createRuleMap(const char *birth, const char *survival) ;
    void convertTo4x4Map(char *which) ;
    void saveRule() ;
