@@ -35,7 +35,7 @@ LUALIB = $(LUADIR)/liblua.a -ldl
 CXXC = g++
 CXXFLAGS := -DVERSION=$(APP_VERSION) -DGOLLYDIR="$(GOLLYDIR)" \
    -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -I$(BASEDIR) \
-   -O5 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
+   -O3 -Wall -Wno-non-virtual-dtor -fno-strict-aliasing $(CXXFLAGS)
 LDFLAGS := -Wl,--as-needed $(LDFLAGS)
 
 # uncomment the next line to allow Golly to play sounds
