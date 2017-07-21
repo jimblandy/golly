@@ -125,13 +125,26 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
     pair<int,int> ltpxl = view.screenPosOf(gridleft, gridtop, this);
     
     if (pmag > 1) {
-        // simply display the entire grid -- ie. no need to use pixbuf
-        int x = ltpxl.first;        // already multiplied by pmag
-        int y = ltpxl.second;       // ditto
-        int wd = gwd * pmag;
-        int ht = ght * pmag;
-        renderer.pixblit(x, y, wd, ht, currgrid, pmag);
-    
+        if (unbounded) {
+            // simply display the entire grid -- ie. no need to use pixbuf
+            int x = ltpxl.first;        // already multiplied by pmag
+            int y = ltpxl.second;       // ditto
+            int wd = gwd * pmag;
+            int ht = ght * pmag;
+            renderer.pixblit(x, y, wd, ht, currgrid, pmag);
+        } else {
+            // the universe is bounded so we need to include the outer border
+            bigint outerleft = gridleft;
+            bigint outertop = gridtop;
+            outerleft -= border;
+            outertop -= border;
+            ltpxl = view.screenPosOf(outerleft, outertop, this);
+            int x = ltpxl.first;
+            int y = ltpxl.second;
+            int wd = outerwd * pmag;
+            int ht = outerht * pmag;
+            renderer.pixblit(x, y, wd, ht, outergrid1, pmag);
+        }
     } else {
         // pmag is 1 so first fill pixbuf with dead cells
         killpixels();
@@ -151,7 +164,7 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
                         // not visible
                     } else {
                         // get cell at top left corner of this block
-                        unsigned char* cellptr = currgrid + row * gwd + col;
+                        unsigned char* cellptr = currgrid + row * outerwd + col;
                         
                         // find live cells in this block and store their RGBA data in pixbuf
                         for (int j = 0; j < jmax; j++) {
@@ -161,7 +174,7 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
                                 if (*p > 0) pixRGBAbuf[pixrow + i] = cellRGBA[*p];
                                 p++;
                             }
-                            cellptr += gwd;
+                            cellptr += outerwd;
                         }
                         
                         // draw this block
@@ -200,7 +213,7 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
                         // not visible
                     } else {
                         // get cell at top left corner of this big block
-                        unsigned char* cellptr = currgrid + row * gwd + col;
+                        unsigned char* cellptr = currgrid + row * outerwd + col;
                         
                         // avoid going way beyond bottom/right edges of grid
                         int jmax = row + blocksize <= ght ? blocksize : blocksize - (row + blocksize - ght);
@@ -215,7 +228,7 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
                                 int sqleft = col + i;
                                 for (int r = 0; r < pmag; r++) {
                                     if (sqtop + r < ght) {
-                                        unsigned char* topleft = p + r * gwd;
+                                        unsigned char* topleft = p + r * outerwd;
                                         for (int c = 0; c < pmag; c++) {
                                             if (sqleft + c < gwd) {
                                                 unsigned char* q = topleft + c;
@@ -232,7 +245,7 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
                                 p += pmag;
                                 
                             }
-                            cellptr += gwd * pmag;
+                            cellptr += outerwd * pmag;
                         }
                         
                         // draw the shrunken block
@@ -265,7 +278,7 @@ void ltlalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pr
 
     // find the top edge (miny)
     for (int row = miny; row <= maxy; row++) {
-        unsigned char* cellptr = currgrid + row * gwd + minx;
+        unsigned char* cellptr = currgrid + row * outerwd + minx;
         for (int col = minx; col <= maxx; col++) {
             if (*cellptr > 0) {
                 miny = row;
@@ -281,7 +294,7 @@ void ltlalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pr
     
     // find the bottom edge (maxy)
     for (int row = maxy; row >= miny; row--) {
-        unsigned char* cellptr = currgrid + row * gwd + minx;
+        unsigned char* cellptr = currgrid + row * outerwd + minx;
         for (int col = minx; col <= maxx; col++) {
             if (*cellptr > 0) {
                 maxy = row;
@@ -295,13 +308,13 @@ void ltlalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pr
     
     // find the left edge (minx)
     for (int col = minx; col <= maxx; col++) {
-        unsigned char* cellptr = currgrid + miny * gwd + col;
+        unsigned char* cellptr = currgrid + miny * outerwd + col;
         for (int row = miny; row <= maxy; row++) {
             if (*cellptr > 0) {
                 minx = col;
                 goto found_left;
             }
-            cellptr += gwd;
+            cellptr += outerwd;
         }
     }
     
@@ -309,13 +322,13 @@ void ltlalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pr
     
     // find the right edge (maxx)
     for (int col = maxx; col >= minx; col--) {
-        unsigned char* cellptr = currgrid + miny * gwd + col;
+        unsigned char* cellptr = currgrid + miny * outerwd + col;
         for (int row = miny; row <= maxy; row++) {
             if (*cellptr > 0) {
                 maxx = col;
                 goto found_right;
             }
-            cellptr += gwd;
+            cellptr += outerwd;
         }
     }
     
