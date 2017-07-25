@@ -168,7 +168,7 @@ function m.split(s, sep)
     local t = {}
     local start = 1
     while true do
-        local i = s:find(sep, start)
+        local i = s:find(sep, start, true)  -- find string, not pattern
         if i == nil then
             if start <= #s then
                 t[#t+1] = s:sub(start, -1)
