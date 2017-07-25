@@ -37,8 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // set default rule to match Life
 static const char *DEFAULTRULE = "R1,C0,M0,S2..3,B3..3,NM";
 
-#define MAXRANGE 100
-#define DEFAULTSIZE 400     // must be >= 2*MAXRANGE
+#define MAXRANGE 500
+#define DEFAULTSIZE 400     // must be >= 2
 
 // maximum number of columns in a cell's neighborhood (used in fast_Moore)
 static const int MAXNCOLS = 2 * MAXRANGE + 1;
@@ -52,9 +52,10 @@ static const int MAXNCOLS = 2 * MAXRANGE + 1;
 
 ltlalgo::ltlalgo()
 {
-    // create a bounded universe with the default grid size and range
+    // create a bounded universe with the default grid size, range and neighborhood
     unbounded = false;
     range = 1;
+    ntype = 'M';
     create_grids(DEFAULTSIZE, DEFAULTSIZE);
     generation = 0;
     increment = 1;
@@ -115,8 +116,16 @@ void ltlalgo::create_grids(int wd, int ht)
     // init boundaries so next birth will change them
     empty_boundaries();
     
-    colcounts = (int*) malloc(outerbytes * 4);
-    // if NULL then use fast_Moore, otherwise faster_Moore_*
+    if (ntype == 'M') {
+        colcounts = (int*) malloc(outerbytes * 4);
+        // if NULL then use fast_Moore, otherwise faster_Moore_bounded
+    } else if (ntype == 'N') {
+        // additional rows are needed to calculate counts for the von Neumann neighborhood
+        colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * 4);
+        // if NULL then use fast_Neumann, otherwise faster_Neumann_bounded
+    } else {
+        lifefatal("Unexpected ntype in create_grids!");
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -223,8 +232,16 @@ const char* ltlalgo::resize_grids(int up, int down, int left, int right)
     gridright = gright;
 
     if (colcounts) free(colcounts);
-    colcounts = (int*) malloc(outerbytes * 4);
-    // if NULL then use fast_Moore, otherwise faster_Moore_*
+    if (ntype == 'M') {
+        colcounts = (int*) malloc(outerbytes * 4);
+        // if NULL then use fast_Moore, otherwise faster_Moore_unbounded
+    } else if (ntype == 'N') {
+        // additional rows are needed to calculate counts for the von Neumann neighborhood
+        colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * 4);
+        // if NULL then use fast_Neumann, otherwise faster_Neumann_unbounded
+    } else {
+        lifefatal("Unexpected ntype in resize_grids!");
+    }
 
     return NULL;    // success
 }
@@ -433,7 +450,7 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
     // might contain live cells (the border is range+1 cells thick and the
     // outermost cells are always dead)
     
-    // the given limits are relative to currgrid so we need to shift them
+    // the given limits are relative to currgrid so we need to add border
     // so they are relative to outergrid1, and then expand them by range
     int bmr = border - range;
     int bpr = border + range;
@@ -687,6 +704,166 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
 
 // -----------------------------------------------------------------------------
 
+int ltlalgo::getcount(int i, int j)
+{
+    // From Dean Hickerson:
+    // C[i][j] is the sum of G[i'][j'] for all cells between northwest and northeast from
+    // (i,j) with i'+j' == i+j (mod 2).  I.e. the sum of these:
+    //
+    // ...                                    ...                                    ...
+    //    G[i-3][j-3]           G[i-3][j-1]         G[i-3][j+1]           G[i-3][j+3]
+    //               G[i-2][j-2]           G[i-2][j]           G[i-2][j+2]
+    //                          G[i-1][j-1]         G[i-1][j+1]
+    //                                      G[i][j]
+    //
+    // We only need to compute and store C[i][j] for  0 <= i < ncols,  0 <= j < nrows + floor((ncols-1)/2);
+    // other values that we need are equal to one of these, as given by this function.
+    //
+    if (i < 0 || i+j < 0 || j-i >= ncols) {
+        return 0;
+    }
+    if (j < 0 && i+j < ccht) {
+        // return C[i+j][0]
+        return *(colcounts + (i+j) * outerwd);
+    }
+    if (j >= ncols && j-i >= ncols-ccht) {
+        // return C[i+ncols-1-j][ncols-1]
+        return *(colcounts + (i+ncols-1-j) * outerwd + (ncols-1));
+    }
+    if (i < ccht) {
+        // return C[i][j]
+        return *(colcounts + i * outerwd + j);
+    }
+    if ((i-ccht+1)+j <= halfccwd) {
+        // return C[ccht-1][i-ccht+1+j]
+        return *(colcounts + (ccht-1) * outerwd + (i-ccht+1+j));
+    }
+    if (j-(i-ccht+1) >= halfccwd) {
+        // return C[ccht-1][j-(i-ccht+1)]
+        return *(colcounts + (ccht-1) * outerwd + (j-(i-ccht+1)));
+    }
+    // return C[ccht-1][halfccwd + ((i+j+ccht+halfccwd+1) % 2)]
+    return *(colcounts + (ccht-1) * outerwd + (halfccwd + ((i+j+ccht+halfccwd+1) % 2)));
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::faster_Neumann_bounded(int mincol, int minrow, int maxcol, int maxrow)
+{
+    // use Dean Hickerson's algorithm (based on Adam P. Goucher's algorithm for the
+    // Moore neighborhood) to calculate extended von Neumann neighborhood counts
+    // in a bounded universe; note that currgrid is surrounded by a border that
+    // might contain live cells (the border is range+1 cells thick and the
+    // outermost cells are always dead)
+    
+    // the given limits are relative to currgrid so we need to add border
+    // so they are relative to outergrid1, and then expand them by range
+    int bmr = border - range;
+    int bpr = border + range;
+    minrow += bmr;
+    mincol += bmr;
+    maxrow += bpr;
+    maxcol += bpr;
+    
+    // set variables used below and in getcount
+    nrows = maxrow - minrow + 1;
+    ncols = maxcol - mincol + 1;
+    ccht = nrows + (ncols-1)/2;
+    halfccwd = ncols/2;
+
+    // calculate cumulative counts in top left corner of colcounts
+    for (int i = 0; i < ccht; i++) {
+        int* Coffset = colcounts + i * outerwd;
+        unsigned char* Goffset = outergrid1 + (i + minrow) * outerwd;
+        int im1 = i - 1;
+        int im2 = im1 - 1;
+        for (int j = 0; j < ncols; j++) {
+            int* Cij = Coffset + j;
+            *Cij = getcount(im1,j-1) + getcount(im1,j+1) - getcount(im2,j);
+            if (i < nrows) {
+                unsigned char* Gij = Goffset + j + mincol;
+                if (*Gij == 1) *Cij += *Gij;
+            }
+        }
+    }
+    
+    // set minrow and mincol for update_next_grid calls
+    minrow -= border;
+    mincol -= border;
+
+    // calculate final neighborhood counts and update the corresponding cells in nextgrid
+    for (int i = range; i < nrows-range; i++) {
+        int im1 = i - 1;
+        int ipr = i + range;
+        int iprm1 = ipr - 1;
+        int imrm1 = i - range - 1;
+        int imrm2 = imrm1 - 1;
+        int ipminrow = i + minrow;
+        int ioffset = ipminrow * outerwd;
+        for (int j = range; j < ncols-range; j++) {
+            int jpr = j + range;
+            int jmr = j - range;
+            int jpmincol = j + mincol;
+            int n = getcount(ipr,j)   - getcount(im1,jpr+1) - getcount(im1,jmr-1) + getcount(imrm2,j) +
+                    getcount(iprm1,j) - getcount(im1,jpr)   - getcount(im1,jmr)   + getcount(imrm1,j);
+            update_next_grid(jpmincol, ipminrow, ioffset+jpmincol, n);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::faster_Neumann_unbounded(int mincol, int minrow, int maxcol, int maxrow)
+{
+    // use Dean Hickerson's algorithm (based on Adam P. Goucher's algorithm for the
+    // Moore neighborhood) to calculate extended von Neumann neighborhood counts
+    // in an unbounded universe; note that we can safely assume there is at least
+    // a 2*range border of dead cells surrounding the pattern
+    
+    // set variables used below and in getcount
+    nrows = maxrow - minrow + 1;
+    ncols = maxcol - mincol + 1;
+    ccht = nrows + (ncols-1)/2;
+    halfccwd = ncols/2;
+
+    // calculate cumulative counts in top left corner of colcounts
+    for (int i = 0; i < ccht; i++) {
+        int* Coffset = colcounts + i * outerwd;
+        unsigned char* Goffset = outergrid1 + (i + minrow) * outerwd;
+        int im1 = i - 1;
+        int im2 = im1 - 1;
+        for (int j = 0; j < ncols; j++) {
+            int* Cij = Coffset + j;
+            *Cij = getcount(im1,j-1) + getcount(im1,j+1) - getcount(im2,j);
+            if (i < nrows) {
+                unsigned char* Gij = Goffset + j + mincol;
+                if (*Gij == 1) *Cij += *Gij;
+            }
+        }
+    }
+
+    // calculate final neighborhood counts and update the corresponding cells in nextgrid
+    for (int i = 0; i < nrows; i++) {
+        int im1 = i - 1;
+        int ipr = i + range;
+        int iprm1 = ipr - 1;
+        int imrm1 = i - range - 1;
+        int imrm2 = imrm1 - 1;
+        int ipminrow = i + minrow;
+        int ioffset = ipminrow * outerwd;
+        for (int j = 0; j < ncols; j++) {
+            int jpr = j + range;
+            int jmr = j - range;
+            int jpmincol = j + mincol;
+            int n = getcount(ipr,j)   - getcount(im1,jpr+1) - getcount(im1,jmr-1) + getcount(imrm2,j) +
+                    getcount(iprm1,j) - getcount(im1,jpr)   - getcount(im1,jmr)   + getcount(imrm1,j);
+            update_next_grid(jpmincol, ipminrow, ioffset+jpmincol, n);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void ltlalgo::fast_Neumann(int mincol, int minrow, int maxcol, int maxrow)
 {
     if (range == 1) {
@@ -912,7 +1089,13 @@ void ltlalgo::do_bounded_gen()
             fast_Moore(mincol, minrow, maxcol, maxrow);
         }
     } else {
-        fast_Neumann(mincol, minrow, maxcol, maxrow);
+        // faster_Neumann_bounded is much slower than fast_Neumann when the
+        // range is 1 or 2, similar when 5, but much faster when 10 or above
+        if (colcounts && range > 4) {
+            faster_Neumann_bounded(mincol, minrow, maxcol, maxrow);
+        } else {
+            fast_Neumann(mincol, minrow, maxcol, maxrow);
+        }
     }
 }
 
@@ -962,7 +1145,13 @@ bool ltlalgo::do_unbounded_gen()
             fast_Moore(mincol, minrow, maxcol, maxrow);
         }
     } else {
-        fast_Neumann(mincol, minrow, maxcol, maxrow);
+        // faster_Neumann_unbounded is much slower than fast_Neumann when the
+        // range is 1 or 2, similar when 5, but much faster when 10 or above
+        if (colcounts && range > 4) {
+            faster_Neumann_unbounded(mincol, minrow, maxcol, maxrow);
+        } else {
+            fast_Neumann(mincol, minrow, maxcol, maxrow);
+        }
     }
     return true;
 }
@@ -1118,6 +1307,7 @@ const char *ltlalgo::setrule(const char *s)
 
     // the given rule is valid
     int oldrange = range;
+    char oldtype = ntype;
     range = r;
     scount = c;
     totalistic = m;
@@ -1133,13 +1323,13 @@ const char *ltlalgo::setrule(const char *s)
     
     if (suffix) {
         // use a bounded universe
-        minsize = 2 * range;
+        int minsize = 2 * range;
         if (newwd < minsize) newwd = minsize;
         if (newht < minsize) newht = minsize;
         
-        // if the new size is different or the range has changed or the old universe
-        // is unbounded then we need to create new grids
-        if (gwd != newwd || ght != newht || range != oldrange || unbounded) {
+        // if the new size is different or range has changed or ntype has changed
+        // or the old universe is unbounded then we need to create new grids
+        if (gwd != newwd || ght != newht || range != oldrange || ntype != oldtype || unbounded) {
             if (population > 0) {
                 save_cells();       // store the current pattern in cell_list
             }
@@ -1154,10 +1344,6 @@ const char *ltlalgo::setrule(const char *s)
                 restore_cells();
             }
         }
-
-        // need to set a lifealgo flag if minB is 0 so the GUI code can allow
-        // pattern generation when the population is 0???
-        // hasB0 = minB == 0;
         
         // tell GUI code not to call CreateBorderCells and DeleteBorderCells
         unbounded = false;

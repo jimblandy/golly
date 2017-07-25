@@ -71,7 +71,6 @@ private:
     int gwdm1, ghtm1;                   // gwd-1, ght-1 (bottom right corner of grid)
     unsigned char* currgrid;            // points to gwd*ght cells for current generation
     unsigned char* nextgrid;            // points to gwd*ght cells for next generation
-    int minsize;                        // minimum size of gwd and ght is 2*range
     int minx, miny, maxx, maxy;         // boundary of live cells (in grid coordinates)
     int gtop, gleft, gbottom, gright;   // cell coordinates of grid edges
     vector<int> cell_list;              // used by save_cells and restore_cells
@@ -88,9 +87,14 @@ private:
     int outerbytes;                     // outerwd*outerht
     unsigned char* outergrid1;          // points to outerwd*outerht cells for current generation
     unsigned char* outergrid2;          // points to outerwd*outerht cells for next generation
+
+    // these variables are used in getcount and faster_Neumann_*
+    int ccht;                           // height of colcounts array when ntype = N
+    int halfccwd;                       // half width of colcounts array when ntype = N
+    int nrows, ncols;                   // size of rectangle being processed
     
     // rule parameters (set by setrule)
-    int range;                          // neighborhood radius (1..100)
+    int range;                          // neighborhood radius
     int scount;                         // count of states (0..255; values > 2 activate history)
     int totalistic;                     // include middle cell in neighborhood count? (1 or 0)
     int minS, maxS;                     // limits for survival
@@ -104,6 +108,7 @@ private:
     void restore_cells();               // restore pattern from cell_list
     void do_bounded_gen();              // calculate the next generation in a bounded universe
     bool do_unbounded_gen();            // calculate the next generation in an unbounded universe
+    int getcount(int i, int j);         // used in faster_Neumann_*
 
     const char* resize_grids(int up, int down, int left, int right);
     // try to resize an unbounded universe by the given amounts (possibly -ve);
@@ -113,6 +118,8 @@ private:
     void faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxrow);
     void faster_Moore_unbounded(int mincol, int minrow, int maxcol, int maxrow);
     void fast_Neumann(int mincol, int minrow, int maxcol, int maxrow);
+    void faster_Neumann_bounded(int mincol, int minrow, int maxcol, int maxrow);
+    void faster_Neumann_unbounded(int mincol, int minrow, int maxcol, int maxrow);
     // these routines are called from do_*_gen to process a rectangular region of cells
     
     void update_next_grid(int x, int y, int xyoffset, int ncount);
