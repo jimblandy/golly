@@ -3762,7 +3762,7 @@ void Overlay::DrawEllipse(int x0, int y0, int x1, int y1)
 
     y0 += (b+1)/2;
     y1 = y0-b1;
-    a = 8*a*a;
+    a *= 8*a;
     b1 = 8*b*b;
 
     do {
@@ -3783,14 +3783,13 @@ void Overlay::DrawEllipse(int x0, int y0, int x1, int y1)
         }
     } while (x0 <= x1);
 
+    // note that next test must be <= b
     while (y0-y1 <= b) {
         // finish tip of ellipse
-        x0--;
-        x1++;
-        if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
-        if (PixelInTarget(x1, y0)) DrawPixel(x1, y0);
-        if (PixelInTarget(x0, y1)) DrawPixel(x0, y1);
-        if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
+        if (PixelInTarget(x0-1, y0)) DrawPixel(x0-1, y0);
+        if (PixelInTarget(x1+1, y0)) DrawPixel(x1+1, y0);
+        if (PixelInTarget(x0-1, y1)) DrawPixel(x0-1, y1);
+        if (PixelInTarget(x1+1, y1)) DrawPixel(x1+1, y1);
         y0++;
         y1--;
     }
