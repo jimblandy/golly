@@ -60,7 +60,7 @@ public:
     virtual void lowerRightPixel(bigint& x, bigint& y, int mag);
     virtual void findedges(bigint* t, bigint* l, bigint* b, bigint* r);
     virtual const char* writeNativeFormat(std::ostream&, char*) {
-        return "No native format for ltlalgo!";
+        return "No native format for ltlalgo.";
     }
     static void doInitializeAlgoInfo(staticAlgoInfo&);
 

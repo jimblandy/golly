@@ -595,11 +595,11 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
         if (mincol > maxx) maxx = mincol;
     }
     
+    rowchanged = false;
     for (int i = minrow+1; i <= maxrow; i++) {
         int* ipr = colcounts + (i + bpr) * outerwd;
         int* imrm1 = colcounts + (i + bmrm1) * outerwd;
         stateptr = currgrid + i*outerwd + mincol+1;
-        rowchanged = false;
         for (int j = mincol+1; j <= maxcol; j++) {
             int jpr = j + bpr;
             int jmrm1 = j + bmrm1;
@@ -619,6 +619,7 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
         if (rowchanged) {
             if (i < miny) miny = i;
             if (i > maxy) maxy = i;
+            rowchanged = false;
         }
     }
 }
@@ -735,11 +736,11 @@ void ltlalgo::faster_Moore_unbounded(int mincol, int minrow, int maxcol, int max
         if (mincol > maxx) maxx = mincol;
     }
     
+    rowchanged = false;
     for (int i = minrow+1; i <= maxrow; i++) {
         int* ipr = colcounts + (i+range) * outerwd;
         int* imrm1 = colcounts + (i-rangep1) * outerwd;
         stateptr = currgrid + i*outerwd + mincol+1;
-        rowchanged = false;
         for (int j = mincol+1; j <= maxcol; j++) {
             int jpr = j+range;
             int jmrm1 = j-rangep1;
@@ -759,6 +760,7 @@ void ltlalgo::faster_Moore_unbounded(int mincol, int minrow, int maxcol, int max
         if (rowchanged) {
             if (i < miny) miny = i;
             if (i > maxy) maxy = i;
+            rowchanged = false;
         }
     }
 }
@@ -940,11 +942,12 @@ void ltlalgo::faster_Neumann_bounded(int mincol, int minrow, int maxcol, int max
         }
     }
     
-    // set minrow and mincol for update_next_grid calls
+    // set minrow and mincol for update_current_grid calls
     minrow -= border;
     mincol -= border;
 
-    // calculate final neighborhood counts and update the corresponding cells in nextgrid
+    // calculate final neighborhood counts and update the corresponding cells in the grid
+    bool rowchanged = false;
     for (int i = range; i < nrows-range; i++) {
         int im1 = i - 1;
         int ipr = i + range;
@@ -952,14 +955,26 @@ void ltlalgo::faster_Neumann_bounded(int mincol, int minrow, int maxcol, int max
         int imrm1 = i - range - 1;
         int imrm2 = imrm1 - 1;
         int ipminrow = i + minrow;
-        int ioffset = ipminrow * outerwd;
+        unsigned char* stateptr = currgrid + ipminrow*outerwd + range + mincol;
         for (int j = range; j < ncols-range; j++) {
             int jpr = j + range;
             int jmr = j - range;
-            int jpmincol = j + mincol;
             int n = getcount(ipr,j)   - getcount(im1,jpr+1) - getcount(im1,jmr-1) + getcount(imrm2,j) +
                     getcount(iprm1,j) - getcount(im1,jpr)   - getcount(im1,jmr)   + getcount(imrm1,j);
-            update_next_grid(jpmincol, ipminrow, ioffset+jpmincol, n);
+            unsigned char state = *stateptr;
+            update_current_grid(state, n);
+            *stateptr++ = state;
+            if (state) {
+                int jpmincol = j + mincol;
+                if (jpmincol < minx) minx = jpmincol;
+                if (jpmincol > maxx) maxx = jpmincol;
+                rowchanged = true;
+            }
+        }
+        if (rowchanged) {
+            if (ipminrow < miny) miny = ipminrow;
+            if (ipminrow > maxy) maxy = ipminrow;
+            rowchanged = false;
         }
     }
 }
@@ -995,7 +1010,8 @@ void ltlalgo::faster_Neumann_unbounded(int mincol, int minrow, int maxcol, int m
         }
     }
 
-    // calculate final neighborhood counts and update the corresponding cells in nextgrid
+    // calculate final neighborhood counts and update the corresponding cells in the grid
+    bool rowchanged = false;
     for (int i = 0; i < nrows; i++) {
         int im1 = i - 1;
         int ipr = i + range;
@@ -1003,14 +1019,26 @@ void ltlalgo::faster_Neumann_unbounded(int mincol, int minrow, int maxcol, int m
         int imrm1 = i - range - 1;
         int imrm2 = imrm1 - 1;
         int ipminrow = i + minrow;
-        int ioffset = ipminrow * outerwd;
+        unsigned char* stateptr = currgrid + ipminrow*outerwd + mincol;
         for (int j = 0; j < ncols; j++) {
             int jpr = j + range;
             int jmr = j - range;
-            int jpmincol = j + mincol;
             int n = getcount(ipr,j)   - getcount(im1,jpr+1) - getcount(im1,jmr-1) + getcount(imrm2,j) +
                     getcount(iprm1,j) - getcount(im1,jpr)   - getcount(im1,jmr)   + getcount(imrm1,j);
-            update_next_grid(jpmincol, ipminrow, ioffset+jpmincol, n);
+            unsigned char state = *stateptr;
+            update_current_grid(state, n);
+            *stateptr++ = state;
+            if (state) {
+                int jpmincol = j + mincol;
+                if (jpmincol < minx) minx = jpmincol;
+                if (jpmincol > maxx) maxx = jpmincol;
+                rowchanged = true;
+            }
+        }
+        if (rowchanged) {
+            if (ipminrow < miny) miny = ipminrow;
+            if (ipminrow > maxy) maxy = ipminrow;
+            rowchanged = false;
         }
     }
 }
