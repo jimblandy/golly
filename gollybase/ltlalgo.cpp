@@ -1144,6 +1144,13 @@ void ltlalgo::do_bounded_gen()
         }
     }
     
+    // save grid dimensions for boundary clear
+    int sminx = minx;
+    int smaxx = maxx;
+    int sminy = miny;
+    int smaxy = maxy;
+
+    // check for torus
     if (torus) {
         // If a pattern edge is within range of a grid edge then copy cells
         // into appropriate border cells next to the opposite grid edge,
@@ -1258,11 +1265,13 @@ void ltlalgo::do_bounded_gen()
                 }
             }
         }
+
     }
     
     // reset minx,miny,maxx,maxy for first birth or survivor in nextgrid
     empty_boundaries();
     
+    // create next generation
     if (ntype == 'M') {
         if (colcounts) {
             faster_Moore_bounded(mincol, minrow, maxcol, maxrow);
@@ -1276,6 +1285,94 @@ void ltlalgo::do_bounded_gen()
             faster_Neumann_bounded(mincol, minrow, maxcol, maxrow);
         } else {
             fast_Neumann(mincol, minrow, maxcol, maxrow);
+        }
+    }
+
+    // need to clear boundaries if using one grid with a Torus
+    if (colcounts && torus) {
+        if (sminy < range) {
+            // copy cells near top edge of currgrid to bottom border
+            int numrows = range - sminy;
+            int numcols = smaxx - sminx + 1;
+            unsigned char* src = currgrid + sminy * outerwd + sminx;
+            unsigned char* dest = src + ght * outerwd;
+            for (int row = 0; row < numrows; row++) {
+                memset(dest, 0, numcols);
+                dest += outerwd;
+            }
+            if (sminx < range) {
+                // copy cells near top left corner of currgrid to bottom right border
+                numcols = range - sminx;
+                src = currgrid + sminy * outerwd + sminx;
+                dest = src + ght * outerwd + gwd;
+                for (int row = 0; row < numrows; row++) {
+                    memset(dest, 0, numcols);
+                    dest += outerwd;
+                }
+            }
+        }
+        if (smaxy + range > ghtm1) {
+            // copy cells near bottom edge of currgrid to top border
+            int numrows = smaxy + range - ghtm1;
+            int numcols = smaxx - sminx + 1;
+            unsigned char* src = currgrid + (smaxy - (numrows - 1)) * outerwd + sminx;
+            unsigned char* dest = src - ght * outerwd;
+            for (int row = 0; row < numrows; row++) {
+                memset(dest, 0, numcols);
+                dest += outerwd;
+            }
+            if (smaxx + range > gwdm1) {
+                // copy cells near bottom right corner of currgrid to top left border
+                numcols = smaxx + range - gwdm1;
+                src = currgrid + (smaxy - (numrows - 1)) * outerwd + gwd - range;
+                dest = src - ght * outerwd - gwd;
+                for (int row = 0; row < numrows; row++) {
+                    memset(dest, 0, numcols);
+                    dest += outerwd;
+                }
+            }
+        }
+        if (sminx < range) {
+            // copy cells near left edge of currgrid to right border
+            int numrows = smaxy - sminy + 1;
+            int numcols = range - sminx;
+            unsigned char* src = currgrid + sminy * outerwd + sminx;
+            unsigned char* dest = src + gwd;
+            for (int row = 0; row < numrows; row++) {
+                memset(dest, 0, numcols);
+                dest += outerwd;
+            }
+            if (smaxy + range > ghtm1) {
+                // copy cells near bottom left corner of currgrid to top right border
+                numrows = smaxy + range - ghtm1;
+                src = currgrid + (ght - range) * outerwd + sminx;
+                dest = src - ght * outerwd + gwd;
+                for (int row = 0; row < numrows; row++) {
+                    memset(dest, 0, numcols);
+                    dest += outerwd;
+                }
+            }
+        }
+        if (smaxx + range > gwdm1) {
+            // copy cells near right edge of currgrid to left border
+            int numrows = smaxy - sminy + 1;
+            int numcols = smaxx + range - gwdm1;
+            unsigned char* src = currgrid + sminy * outerwd + smaxx - (numcols - 1);
+            unsigned char* dest = src - gwd;
+            for (int row = 0; row < numrows; row++) {
+                memset(dest, 0, numcols);
+                dest += outerwd;
+            }
+            if (sminy < range) {
+                // copy cells near top right corner of currgrid to bottom left border
+                numrows = range - sminy;
+                src = currgrid + gwd - range;
+                dest = src + ght * outerwd - gwd;
+                for (int row = 0; row < numrows; row++) {
+                    memset(dest, 0, numcols);
+                    dest += outerwd;
+                }
+            }
         }
     }
 }
