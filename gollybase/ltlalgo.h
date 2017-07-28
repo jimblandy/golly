@@ -60,7 +60,7 @@ public:
     virtual void lowerRightPixel(bigint& x, bigint& y, int mag);
     virtual void findedges(bigint* t, bigint* l, bigint* b, bigint* r);
     virtual const char* writeNativeFormat(std::ostream&, char*) {
-        return "No native format for ltlalgo.";
+        return "No native format for ltlalgo!";
     }
     static void doInitializeAlgoInfo(staticAlgoInfo&);
 
@@ -122,6 +122,7 @@ private:
     void faster_Neumann_unbounded(int mincol, int minrow, int maxcol, int maxrow);
     // these routines are called from do_*_gen to process a rectangular region of cells
     
+    void update_current_grid(unsigned char &state, int ncount);
     void update_next_grid(int x, int y, int xyoffset, int ncount);
     // called from each of the fast* routines to set the state of the x,y cell
     // in nextgrid based on the given neighborhood count
