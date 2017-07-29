@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
                         / ***/
 
 // Implementation code for the "Larger than Life" family of rules.
-// See http://psoup.math.wisc.edu/mcell/rullex_lgtl.html for details.
+// See Help/Algorithms/Larger_than_Life.html for more info.
 
 #include "ltlalgo.h"
 #include "liferules.h"
@@ -45,6 +45,10 @@ static const int MAXNCOLS = 2 * MAXRANGE + 1;
 
 // maximum number of cells in grid must be < 2^31 so population can't overflow
 #define MAXCELLS 100000000.0
+
+// faster_Neumann_* calls are much slower than fast_Neumann when the
+// range is 1 or 2, similar when 5, but much faster when 10 or above
+#define SMALL_NN_RANGE 4
 
 // -----------------------------------------------------------------------------
 
@@ -88,11 +92,16 @@ void ltlalgo::create_grids(int wd, int ht)
     // allocate memory for cell counts
     if (ntype == 'M') {
         colcounts = (int*) malloc(outerbytes * 4);
-        // if NULL then use fast_Moore, otherwise faster_Moore_*
+        // if NULL then use fast_Moore, otherwise faster_Moore_bounded
     } else if (ntype == 'N') {
-        // additional rows are needed to calculate counts for the von Neumann neighborhood
-        colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * 4);
-        // if NULL then use fast_Neumann, otherwise faster_Neumann_*
+        if (range <= SMALL_NN_RANGE) {
+            // use fast_Neumann (faster than faster_Neumann_bounded for small ranges)
+            colcounts = NULL;
+        } else {
+            // additional rows are needed to calculate counts in faster_Neumann_bounded
+            colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * 4);
+            // if NULL then use fast_Neumann
+        }
     } else {
         lifefatal("Unexpected ntype in create_grids!");
     }
@@ -104,7 +113,7 @@ void ltlalgo::create_grids(int wd, int ht)
     // point currgrid to top left non-border cells within outergrid1
     currgrid = outergrid1 + offset;
 
-    // if using fast_* algo then allocate next grid
+    // if using fast_Moore or fast_Neumann we need to allocate outergrid2
     if (colcounts == NULL) {
         outergrid2 = (unsigned char*) calloc(outerbytes, sizeof(*outergrid2));
         if (outergrid2 == NULL) lifefatal("Not enough memory for LtL grids!");
@@ -217,7 +226,7 @@ const char* ltlalgo::resize_grids(int up, int down, int left, int right)
     }
     
     free(outergrid1);
-    free(outergrid2);
+    if (outergrid2) free(outergrid2);
     outergrid1 = currgrid = newcurr;
     outergrid2 = nextgrid = newnext;
 
@@ -244,18 +253,25 @@ const char* ltlalgo::resize_grids(int up, int down, int left, int right)
     if (colcounts) free(colcounts);
     if (ntype == 'M') {
         colcounts = (int*) malloc(outerbytes * 4);
-        // if NULL then use fast_Moore, otherwise faster_Moore_*
+        // if NULL then use fast_Moore, otherwise faster_Moore_unbounded
     } else if (ntype == 'N') {
-        // additional rows are needed to calculate counts for the von Neumann neighborhood
-        colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * 4);
-        // if NULL then use fast_Neumann, otherwise faster_Neumann_*
+        if (range <= SMALL_NN_RANGE) {
+            // use fast_Neumann (faster than faster_Neumann_unbounded for small ranges)
+            colcounts = NULL;
+        } else {
+            // additional rows are needed to calculate counts in faster_Neumann_unbounded
+            colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * 4);
+            // if NULL then use fast_Neumann
+        }
     } else {
         lifefatal("Unexpected ntype in resize_grids!");
     }
 
     if (colcounts) {
+        // faster_* calls don't need to use outergrid2
         free(outergrid2);
         outergrid2 = NULL;
+        nextgrid = NULL;
     }
 
     return NULL;    // success
@@ -1144,7 +1160,7 @@ void ltlalgo::do_bounded_gen()
         }
     }
     
-    // save grid dimensions for boundary clear
+    // save pattern limits for clearing border cells at end
     int sminx = minx;
     int smaxx = maxx;
     int sminy = miny;
@@ -1279,19 +1295,17 @@ void ltlalgo::do_bounded_gen()
             fast_Moore(mincol, minrow, maxcol, maxrow);
         }
     } else {
-        // faster_Neumann_bounded is much slower than fast_Neumann when the
-        // range is 1 or 2, similar when 5, but much faster when 10 or above
-        if (colcounts && range > 4) {
+        if (colcounts) {
             faster_Neumann_bounded(mincol, minrow, maxcol, maxrow);
         } else {
             fast_Neumann(mincol, minrow, maxcol, maxrow);
         }
     }
 
-    // need to clear boundaries if using one grid with a Torus
+    // if using one grid with a torus then clear border cells copied above
     if (colcounts && torus) {
         if (sminy < range) {
-            // copy cells near top edge of currgrid to bottom border
+            // clear cells in bottom border
             int numrows = range - sminy;
             int numcols = smaxx - sminx + 1;
             unsigned char* src = currgrid + sminy * outerwd + sminx;
@@ -1301,7 +1315,7 @@ void ltlalgo::do_bounded_gen()
                 dest += outerwd;
             }
             if (sminx < range) {
-                // copy cells near top left corner of currgrid to bottom right border
+                // clear cells in bottom right border
                 numcols = range - sminx;
                 src = currgrid + sminy * outerwd + sminx;
                 dest = src + ght * outerwd + gwd;
@@ -1312,7 +1326,7 @@ void ltlalgo::do_bounded_gen()
             }
         }
         if (smaxy + range > ghtm1) {
-            // copy cells near bottom edge of currgrid to top border
+            // clear cells in top border
             int numrows = smaxy + range - ghtm1;
             int numcols = smaxx - sminx + 1;
             unsigned char* src = currgrid + (smaxy - (numrows - 1)) * outerwd + sminx;
@@ -1322,7 +1336,7 @@ void ltlalgo::do_bounded_gen()
                 dest += outerwd;
             }
             if (smaxx + range > gwdm1) {
-                // copy cells near bottom right corner of currgrid to top left border
+                // clear cells in top left border
                 numcols = smaxx + range - gwdm1;
                 src = currgrid + (smaxy - (numrows - 1)) * outerwd + gwd - range;
                 dest = src - ght * outerwd - gwd;
@@ -1333,7 +1347,7 @@ void ltlalgo::do_bounded_gen()
             }
         }
         if (sminx < range) {
-            // copy cells near left edge of currgrid to right border
+            // clear cells in right border
             int numrows = smaxy - sminy + 1;
             int numcols = range - sminx;
             unsigned char* src = currgrid + sminy * outerwd + sminx;
@@ -1343,7 +1357,7 @@ void ltlalgo::do_bounded_gen()
                 dest += outerwd;
             }
             if (smaxy + range > ghtm1) {
-                // copy cells near bottom left corner of currgrid to top right border
+                // clear cells in top right border
                 numrows = smaxy + range - ghtm1;
                 src = currgrid + (ght - range) * outerwd + sminx;
                 dest = src - ght * outerwd + gwd;
@@ -1354,7 +1368,7 @@ void ltlalgo::do_bounded_gen()
             }
         }
         if (smaxx + range > gwdm1) {
-            // copy cells near right edge of currgrid to left border
+            // clear cells in left border
             int numrows = smaxy - sminy + 1;
             int numcols = smaxx + range - gwdm1;
             unsigned char* src = currgrid + sminy * outerwd + smaxx - (numcols - 1);
@@ -1364,7 +1378,7 @@ void ltlalgo::do_bounded_gen()
                 dest += outerwd;
             }
             if (sminy < range) {
-                // copy cells near top right corner of currgrid to bottom left border
+                // clear cells in bottom left border
                 numrows = range - sminy;
                 src = currgrid + gwd - range;
                 dest = src + ght * outerwd - gwd;
@@ -1423,9 +1437,7 @@ bool ltlalgo::do_unbounded_gen()
             fast_Moore(mincol, minrow, maxcol, maxrow);
         }
     } else {
-        // faster_Neumann_unbounded is much slower than fast_Neumann when the
-        // range is 1 or 2, similar when 5, but much faster when 10 or above
-        if (colcounts && range > 4) {
+        if (colcounts) {
             faster_Neumann_unbounded(mincol, minrow, maxcol, maxrow);
         } else {
             fast_Neumann(mincol, minrow, maxcol, maxrow);
