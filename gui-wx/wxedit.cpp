@@ -40,7 +40,6 @@
 #include "wxutils.h"       // for Fatal
 #include "wxprefs.h"       // for showedit, showallstates, etc
 #include "wxstatus.h"      // for statusptr->...
-#include "wxscript.h"      // for inscript
 #include "wxview.h"        // for viewptr->...
 #include "wxrender.h"      // for DrawOneIcon
 #include "wxlayer.h"       // for currlayer, LayerBarHeight, SetLayerColors
@@ -589,8 +588,6 @@ void EditBar::OnMouseDown(wxMouseEvent& event)
     
     mainptr->showbanner = false;
     statusptr->ClearMessage();
-    
-    if (inscript) return;    // let script control drawing state
     
     int x = event.GetX();
     int y = event.GetY();
