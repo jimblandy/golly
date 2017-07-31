@@ -1,0 +1,6 @@
+#C RR14gun
+#C Reflectorless rotating 14-barrelled shotgun
+#C Daniel R. Collazo, 19 February 2017
+#C http://conwaylife.com/forums/viewtopic.php?f=11&t=1638&p=40766#p40761
+x = 4, y = 6, rule = B2-ac3ai/S1c2-n3-aky4a
+3o$ob2o$ob2o$2bo$3bo$2b2o!

@@ -1,0 +1,5 @@
+#C puffer for reflectorless rotating oscillator
+#C Daniel R. Collazo, 3 June 2017; cleanup found by wildmyron
+#C http://conwaylife.com/forums/viewtopic.php?f=11&t=803&p=44061#p44069
+x = 15, y = 40, rule = B3-ej6e/S234i
+9b3o$9bobo$11b2o21$13b2o$11bobo$11b3o12$2b2o$obo$3o!

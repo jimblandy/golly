@@ -1,0 +1,6 @@
+#C intergalactic cruise ship factory
+#C Brian Prentice, 26 June 2017
+#C http://conwaylife.com/forums/viewtopic.php?f=11&t=2792&p=45314#p45314
+x = 118, y = 5, rule = B2aei3r4kn5jnr6k/S2ai3k4iknqr5r6ai
+o116bo$bo114bo$35bo3bo5bobo5bo3bo2bo3bo5bobo5bo3bo$35bo21bo2bo21bo$36b
+o19bo4bo19bo!

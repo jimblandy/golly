@@ -1,0 +1,16 @@
+#C infinite binary ruler generator from random asymmetric soup
+#C Daniel R. Collazo, 30 May 2017
+#C http://www.conwaylife.com/forums/viewtopic.php?f=11&t=803&p=43939#p43939
+x = 32, y = 32, rule = B2ak3nr4iy/S3-nr4ent5er
+o2bobob2o3b3o2bob2ob6o3bo$2bob5o2bo3b3obo3bobo3bobo$ob4ob3obo2b5ob2obo
+3b5o$o2bo4b2obobo2bob2obob2o3bob2o$2bo2bo3b5obo2bobob3o$10bo2bob2obo3b
+2o3bo2bo$o4bo2bo2b3obo2bob8ob3o$bob2obobo2bo3bobob3o2b2o2b2obo$bo2bo2b
+2obobo5bo3b5obo$bobo3b4o2bob5o2b3ob2o2b2o$b2obo2bobobo2bob3o2bo5bo2b2o
+$b3ob3ob4o2bo4b2o2b8o$bo3bo2bo2b2o3bo2bo2bo2bo2bobo$3bo2b3obob7o2bobo
+4b4o$2o4bo2bo2b4obobobo3b3ob3o$7obo6bob3o2bobobob2obo$o3bob2obo3bob2o
+2b3ob2o2b2o$3obobo3b2obob7ob2ob2o2bo$b5o2b3obobo4b3ob3obo3bo$bob2ob5o
+2b2obo2bo4b4ob2o$bob4o2bo2bo3bo4b3ob4o2bo$b4obob6o3bo3bobo2b5o$2bo4bob
+ob2ob2o2bobobobo2b2obo$ob4obo2bob4o7b2ob2o2b2o$3ob2obo2bobob3o2bo5b2ob
+2o$4b2ob2o2bo6bobo2bo4bob2o$bo4bob6o3b7obob3o$7bo4bobo5bobo4bobo$o2bo
+5b2obo3b2ob5obo2b4o$b3o2bob2o2b2ob3ob5o3bobobo$3b2ob2o3bobo3bobo2b4ob
+3o$b2o3b2obobob3obob2obo3b3ob2o!
