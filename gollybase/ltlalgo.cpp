@@ -531,19 +531,30 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
     maxcol += bpr;
 
     // calculate cumulative counts for each column and store in colcounts
-    for (int i = minrow; i <= maxrow; i++) {
-        int rowcount = 0;
+
+    unsigned char* cellptr = outergrid1 + minrow * outerwd + mincol;
+    int* ccptr = colcounts + minrow * outerwd + mincol;
+    int nextrow = outerwd - (maxcol - mincol + 1);
+
+    int rowcount = 0;
+    for (int j = mincol; j <= maxcol; j++) {
+        if (*cellptr == 1) rowcount++;
+        *ccptr = rowcount;
+        cellptr++;
+        ccptr++;
+    }
+    cellptr += nextrow;
+    ccptr += nextrow;
+    for (int i = minrow + 1; i <= maxrow; i++) {
+        rowcount = 0;
         for (int j = mincol; j <= maxcol; j++) {
-            int offset = i * outerwd + j;
-            unsigned char* cellptr = outergrid1 + offset;
             if (*cellptr == 1) rowcount++;
-            int* ccptr = colcounts + offset;
-            if (i > minrow) {
-                *ccptr = *(ccptr - outerwd) + rowcount;
-            } else {
-                *ccptr = rowcount;
-            }
+            *ccptr = *(ccptr - outerwd) + rowcount;
+            cellptr++;
+            ccptr++;
         }
+        cellptr += nextrow;
+        ccptr += nextrow;
     }
     
     // restore given limits (necessary for update_current_grid calls)
@@ -556,7 +567,7 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
     // and update the corresponding cells in current grid
     
     int* colptr = colcounts + (minrow + bpr) * outerwd;
-    int* ccptr = colptr + mincol + bpr;
+    ccptr = colptr + mincol + bpr;
     unsigned char* stateptr = currgrid + minrow*outerwd+mincol;
     unsigned char state = *stateptr;
     update_current_grid(state, *ccptr);
@@ -675,18 +686,22 @@ void ltlalgo::faster_Moore_unbounded(int mincol, int minrow, int maxcol, int max
         }
     }
 
-    // calculate cumulative counts for remaining columns and store in colcounts
+    unsigned char* cellptr = currgrid + minrowpr2 * outerwd + mincolpr2;
+    int* ccptr = colcounts + minrowpr2 * outerwd + mincolpr2;
+    int nextrow = outerwd - (maxcol - mincolpr2 + 1);
+
     for (int i = minrowpr2; i <= maxrow; i++) {
         int rowcount = 0;
         for (int j = mincolpr2; j <= maxcol; j++) {
-            int offset = i * outerwd + j;
-            unsigned char* cellptr = currgrid + offset;
             if (*cellptr == 1) rowcount++;
-            int* ccptr = colcounts + offset;
             *ccptr = *(ccptr - outerwd) + rowcount;
+            cellptr++;
+            ccptr++;
         }
+        cellptr += nextrow;
+        ccptr += nextrow;
     }
-    
+
     // restore given limits
     minrow += range;
     mincol += range;
@@ -697,7 +712,7 @@ void ltlalgo::faster_Moore_unbounded(int mincol, int minrow, int maxcol, int max
     // and update the corresponding cells in current grid
     
     int* colptr = colcounts + (minrow + range) * outerwd;
-    int* ccptr = colptr + mincol + range;
+    ccptr = colptr + mincol + range;
     unsigned char* stateptr = currgrid + minrow*outerwd+mincol;
     unsigned char state = *stateptr;
     update_current_grid(state, *ccptr);
