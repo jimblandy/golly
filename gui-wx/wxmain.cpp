@@ -68,7 +68,7 @@
 // -----------------------------------------------------------------------------
 
 #ifdef __WXMSW__
-    static bool set_focus = false;             // OnIdle needs to call SetFocus?
+    static bool set_focus = false;              // OnIdle needs to call SetFocus?
     static wxString editpath = wxEmptyString;   // OnIdle calls EditFile if this isn't empty
 #endif
 
@@ -1872,20 +1872,19 @@ bool MainFrame::SaveCurrentLayer()
 void MainFrame::OnClose(wxCloseEvent& event)
 {
     if (event.CanVeto()) {
-        // we can cancel the close event if necessary
-        if (viewptr->waitingforclick) {
+        if (inscript || generating) Stop();
+        
+        // if insideYield is true then we might have been called from
+        // StepPattern in OnGenTimer, so we need to call OnClose again via
+        // OnIdle until insideYield is false and OnGenTimer has finished
+        if (insideYield) {
+            call_close = true;
             event.Veto();
             return;
         }
         
-        if (inscript || generating) {
-            Stop();
-            /* using wxPostEvent doesn't work if we've been called from Yield:
-            wxCommandEvent quitevt(wxEVT_COMMAND_MENU_SELECTED, wxID_EXIT);
-            wxPostEvent(this->GetEventHandler(), quitevt);
-            */
-            // set flag so OnClose gets called again in next OnIdle
-            call_close = true;
+        // we can cancel the close event if necessary
+        if (viewptr->waitingforclick) {
             event.Veto();
             return;
         }

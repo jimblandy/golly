@@ -1,4 +1,4 @@
-#C Collection of spaceships in the Bugs rule.
+#C Collection of spaceships in Bosco's Rule.
 #C Found by Kellie Evans and Dean Hickerson, about 2000-2003.
 x = 123, y = 131, rule = R5,C0,M1,S34..58,B34..45,NM:T400,400
 11bo3bo78bo4bo$11bo9bo71b3o3bo$9b3o3bo3b3o3b3o53b3o3b3o4bo4b3o$9bobo3b

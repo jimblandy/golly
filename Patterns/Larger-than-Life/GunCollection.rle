@@ -1,4 +1,4 @@
-#C Smallest known period-166 guns for 7 spaceships in the Bugs rule.
+#C Smallest known period-166 guns for 7 spaceships in Bosco's Rule.
 #C All are based on collisions between the sparks of 2 Boscos.
 #C These were found by Dean Hickerson and Kellie Evans in April-May, 2000.
 x = 510, y = 527, rule = R5,C0,M1,S34..58,B34..45,NM:P700,700
