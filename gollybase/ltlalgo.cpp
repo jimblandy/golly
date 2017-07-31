@@ -534,6 +534,7 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
 
     unsigned char* cellptr = outergrid1 + minrow * outerwd + mincol;
     int* ccptr = colcounts + minrow * outerwd + mincol;
+    int *prevptr = NULL;
     int nextrow = outerwd - (maxcol - mincol + 1);
 
     int rowcount = 0;
@@ -545,16 +546,19 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
     }
     cellptr += nextrow;
     ccptr += nextrow;
+    prevptr = ccptr - outerwd;
     for (int i = minrow + 1; i <= maxrow; i++) {
         rowcount = 0;
         for (int j = mincol; j <= maxcol; j++) {
             if (*cellptr == 1) rowcount++;
-            *ccptr = *(ccptr - outerwd) + rowcount;
+            *ccptr = *prevptr + rowcount;
             cellptr++;
             ccptr++;
+            prevptr++;
         }
         cellptr += nextrow;
         ccptr += nextrow;
+        prevptr += nextrow;
     }
     
     // restore given limits (necessary for update_current_grid calls)
@@ -688,18 +692,21 @@ void ltlalgo::faster_Moore_unbounded(int mincol, int minrow, int maxcol, int max
 
     unsigned char* cellptr = currgrid + minrowpr2 * outerwd + mincolpr2;
     int* ccptr = colcounts + minrowpr2 * outerwd + mincolpr2;
+    int* prevptr = ccptr - outerwd;
     int nextrow = outerwd - (maxcol - mincolpr2 + 1);
 
     for (int i = minrowpr2; i <= maxrow; i++) {
         int rowcount = 0;
         for (int j = mincolpr2; j <= maxcol; j++) {
             if (*cellptr == 1) rowcount++;
-            *ccptr = *(ccptr - outerwd) + rowcount;
+            *ccptr = *prevptr + rowcount;
             cellptr++;
             ccptr++;
+            prevptr++;
         }
         cellptr += nextrow;
         ccptr += nextrow;
+        prevptr += nextrow;
     }
 
     // restore given limits
