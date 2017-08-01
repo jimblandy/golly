@@ -57,7 +57,16 @@ void Note(const wxString& msg)
 #ifdef __WXMAC__
     wxSetCursor(*wxSTANDARD_CURSOR);
 #endif
-    wxMessageBox(msg, title, wxOK | wxICON_INFORMATION, wxGetActiveWindow());
+    if (inscript) {
+        // add a Cancel button so user can abort script
+        int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_INFORMATION,
+                                  wxGetActiveWindow());
+        if (button == wxCANCEL) {
+            PassKeyToScript(WXK_ESCAPE);     // abort script
+        }
+    } else {
+        wxMessageBox(msg, title, wxOK | wxICON_INFORMATION, wxGetActiveWindow());
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -69,7 +78,16 @@ void Warning(const wxString& msg)
 #ifdef __WXMAC__
     wxSetCursor(*wxSTANDARD_CURSOR);
 #endif
-    wxMessageBox(msg, title, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
+    if (inscript) {
+        // add a Cancel button so user can abort script
+        int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_EXCLAMATION,
+                                  wxGetActiveWindow());
+        if (button == wxCANCEL) {
+            PassKeyToScript(WXK_ESCAPE);     // abort script
+        }
+    } else {
+        wxMessageBox(msg, title, wxOK | wxICON_EXCLAMATION, wxGetActiveWindow());
+    }
 }
 
 // -----------------------------------------------------------------------------
