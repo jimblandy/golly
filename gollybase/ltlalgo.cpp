@@ -538,27 +538,51 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
     int nextrow = outerwd - (maxcol - mincol + 1);
 
     int rowcount = 0;
-    for (int j = mincol; j <= maxcol; j++) {
-        if (*cellptr == 1) rowcount++;
-        *ccptr = rowcount;
-        cellptr++;
-        ccptr++;
-    }
-    cellptr += nextrow;
-    ccptr += nextrow;
-    prevptr = ccptr - outerwd;
-    for (int i = minrow + 1; i <= maxrow; i++) {
-        rowcount = 0;
+
+    // check for 2 state pattern
+    if (maxCellStates == 2) {
         for (int j = mincol; j <= maxcol; j++) {
-            if (*cellptr == 1) rowcount++;
-            *ccptr = *prevptr + rowcount;
-            cellptr++;
-            ccptr++;
-            prevptr++;
+            rowcount += *cellptr++;
+            *ccptr++ = rowcount;
         }
         cellptr += nextrow;
         ccptr += nextrow;
-        prevptr += nextrow;
+        prevptr = ccptr - outerwd;
+        for (int i = minrow + 1; i <= maxrow; i++) {
+            rowcount = 0;
+            for (int j = mincol; j <= maxcol; j++) {
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+            }
+            cellptr += nextrow;
+            ccptr += nextrow;
+            prevptr += nextrow;
+        }
+    }
+    else {
+        // > 2 state pattern
+        for (int j = mincol; j <= maxcol; j++) {
+            if (*cellptr == 1) rowcount++;
+            *ccptr = rowcount;
+            cellptr++;
+            ccptr++;
+        }
+        cellptr += nextrow;
+        ccptr += nextrow;
+        prevptr = ccptr - outerwd;
+        for (int i = minrow + 1; i <= maxrow; i++) {
+            rowcount = 0;
+            for (int j = mincol; j <= maxcol; j++) {
+                if (*cellptr == 1) rowcount++;
+                *ccptr = *prevptr + rowcount;
+                cellptr++;
+                ccptr++;
+                prevptr++;
+            }
+            cellptr += nextrow;
+            ccptr += nextrow;
+            prevptr += nextrow;
+        }
     }
     
     // restore given limits (necessary for update_current_grid calls)
@@ -695,18 +719,34 @@ void ltlalgo::faster_Moore_unbounded(int mincol, int minrow, int maxcol, int max
     int* prevptr = ccptr - outerwd;
     int nextrow = outerwd - (maxcol - mincolpr2 + 1);
 
-    for (int i = minrowpr2; i <= maxrow; i++) {
-        int rowcount = 0;
-        for (int j = mincolpr2; j <= maxcol; j++) {
-            if (*cellptr == 1) rowcount++;
-            *ccptr = *prevptr + rowcount;
-            cellptr++;
-            ccptr++;
-            prevptr++;
+    // check for 2 state pattern
+    if (maxCellStates == 2) {
+        for (int i = minrowpr2; i <= maxrow; i++) {
+            int rowcount = 0;
+            for (int j = mincolpr2; j <= maxcol; j++) {
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+            }
+            cellptr += nextrow;
+            ccptr += nextrow;
+            prevptr += nextrow;
         }
-        cellptr += nextrow;
-        ccptr += nextrow;
-        prevptr += nextrow;
+    }
+    else {
+        // > 2 state pattern
+        for (int i = minrowpr2; i <= maxrow; i++) {
+            int rowcount = 0;
+            for (int j = mincolpr2; j <= maxcol; j++) {
+                if (*cellptr == 1) rowcount++;
+                *ccptr = *prevptr + rowcount;
+                cellptr++;
+                ccptr++;
+                prevptr++;
+            }
+            cellptr += nextrow;
+            ccptr += nextrow;
+            prevptr += nextrow;
+        }
     }
 
     // restore given limits
