@@ -232,7 +232,7 @@ ghnode *ghashbase::getres(ghnode *n, int depth) {
     */
 
    // AKT: avoid possible crash if a user event results in a call to ghashbase::draw
-   // if (poller->poll()) return zeroghnode(depth-1) ;
+   if (poller->poll()) return zeroghnode(depth-1) ;
 
    int sp = gsp ;
    depth-- ;
@@ -518,8 +518,8 @@ void ghashbase::step() {
          break ;
       popValid = 0 ;
       root = newroot ;
+      depth = ghnode_depth(root) ;
    }
-   depth = ghnode_depth(root) ;
 }
 void ghashbase::setcurrentstate(void *n) {
    if (root != (ghnode *)n) {

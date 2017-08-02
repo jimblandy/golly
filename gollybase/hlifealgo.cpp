@@ -622,8 +622,8 @@ void hlifealgo::step() {
          break ;
       popValid = 0 ;
       root = newroot ;
+      depth = node_depth(root) ;
    }
-   depth = node_depth(root) ;
 }
 void hlifealgo::setcurrentstate(void *n) {
    if (root != (node *)n) {
