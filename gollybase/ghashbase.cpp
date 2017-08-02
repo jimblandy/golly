@@ -230,10 +230,7 @@ ghnode *ghashbase::getres(ghnode *n, int depth) {
     *   calls here, one to prevent us going deeper, and another
     *   to prevent us from destroying the cache field.
     */
-
-   // AKT: avoid possible crash if a user event results in a call to ghashbase::draw
    if (poller->poll()) return zeroghnode(depth-1) ;
-
    int sp = gsp ;
    depth-- ;
    if (ngens >= depth) {
