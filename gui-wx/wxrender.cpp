@@ -737,10 +737,10 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
                 memcpy(&cellatlas[i * rowbytes], cellatlas, rowbytes);
             }
         }
-
-        // convert row to 2D grid of icons
-        Create16x16Grid(cellatlas, cellsize, numcells);
     }
+
+    // convert row to 2D grid of icons
+    Create16x16Grid(cellatlas, cellsize, numcells);
 
     // enable textures
     EnableTextures();
