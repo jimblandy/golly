@@ -109,11 +109,15 @@ GLuint celltexture = 0;                 // texture name for drawing magnified ce
 GLuint tiletexture = 0;                 // texture name for tiled drawing
 unsigned char* iconatlas = NULL;        // pointer to texture atlas for current set of icons
 unsigned char* cellatlas = NULL;        // pointer to texture atlas for current set of magnified cells
-unsigned char* iconatlasPOT = NULL;     // pointer to power of 2 texture atlas for current icons
+unsigned char* itemgrid = NULL;         // pointer to buffer for 16x16 cell/icon grid
+const int itemgridwidth = 512;          // item grid width in pixels
+const int itemgridheight = 512;         // item grid height in pixels
+const int itemgridrows = 16;            // number of item rows
+const int itemgridcols = 16;            // number of item columns
 float iconscalew = 1.0;
 float iconscaleh = 1.0;
 unsigned char* cellatlasPOT = NULL;     // pointer to power of 2 texture atlas for magnified cells
-unsigned char* tilebuffer = NULL;      // pointer to tile texture buffer (will be power of 2 in size)
+unsigned char* tilebuffer = NULL;       // pointer to tile texture buffer (will be power of 2 in size)
 float cellscalew = 1.0;
 float cellscaleh = 1.0;
 
@@ -319,9 +323,9 @@ void DestroyDrawingData()
         free(cellatlasPOT);
         cellatlasPOT = NULL;
     }
-    if (iconatlasPOT) {
-        free(iconatlasPOT);
-        iconatlasPOT = NULL;
+    if (itemgrid) {
+        free(itemgrid);
+        itemgrid = NULL;
     }
     if (tilebuffer) {
         free(tilebuffer);
@@ -528,34 +532,60 @@ void DrawRGBAData(unsigned char* rgbadata, int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
-static void LoadIconAtlas(int iconsize, int numicons)
-{
-    // load the texture atlas containing all icons for later use in DrawCells
-    int texturew = iconsize * numicons;
-    int textureh = iconsize;
-    unsigned char* pow2data = GetTexture(iconatlas, &texturew, &textureh, &icontexture, &iconscalew, &iconscaleh);
-    if (pow2data) {
-        // overwrite previous buffer if allocated
-        if (iconatlasPOT) free(iconatlasPOT);
-        iconatlasPOT = pow2data;
+void Create16x16Grid(unsigned char* itemrow, int itemsize, int numitems) {
+    // item width in bytes
+    int itemwidth = itemsize * 4;
+
+    // source pixel row size in bytes
+    int sourcerow = itemwidth * numitems;
+
+    // destination pixel row size in bytes
+    int destrow = itemgridwidth * 4;
+
+    // destination item row size in bytes
+    int destitemrow = destrow * itemsize;
+
+    // allocate the 16x16 item grid if not already allocated
+    if (!itemgrid) {
+        // maximum item size is 32x32 RGBA pixels
+        itemgrid = (unsigned char*)malloc(itemgridrows * itemgridcols * 4 * 32 * 32);
     }
 
-#if 0
-    // test above code by displaying the entire atlas
-    GLfloat wd = atlaswd;
-    GLfloat ht = iconsize;
-    glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-    int x = 0;
-    int y = 0;
-    GLfloat vertices[] = {
-        x,      y,
-        x + wd, y,
-        x,      y + ht,
-        x + wd, y + ht,
-    };
-    glVertexPointer(2, GL_FLOAT, 0, vertices);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-#endif
+    // copy the items into the 16x16 buffer
+    for (int i = 0; i < numitems; i++) {
+        // get the source item
+        unsigned char* source = itemrow + i * itemwidth;
+
+        // get the destination position
+        unsigned char* dest = itemgrid + (i / itemgridcols) * destitemrow + (i & (itemgridcols - 1)) * itemwidth;
+
+        // copy item into destination
+        for (int y = 0; y < itemsize; y++) {
+            memcpy(dest, source, itemwidth);
+            source += sourcerow;
+            dest += destrow;
+        }
+    }
+}
+ 
+// -----------------------------------------------------------------------------
+
+static void LoadIconAtlas(int iconsize, int numicons)
+{
+    // convert row to 2D grid of icons
+    Create16x16Grid(iconatlas, iconsize, numicons);
+
+    // enable textures
+    EnableTextures();
+
+    // create the texture name once
+    if (icontexture == 0) glGenTextures(1, &icontexture);
+    glBindTexture(GL_TEXTURE_2D, icontexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // put the icons in the texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, itemgridwidth, itemgridheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, itemgrid);
 }
 
 // -----------------------------------------------------------------------------
@@ -707,39 +737,27 @@ static void LoadCellAtlas(int cellsize, int numcells, unsigned char alpha)
                 memcpy(&cellatlas[i * rowbytes], cellatlas, rowbytes);
             }
         }
+
+        // convert row to 2D grid of icons
+        Create16x16Grid(cellatlas, cellsize, numcells);
     }
 
-    // load the texture atlas containing all magnified cells for later use in DrawCells
-    int texturew = cellsize * numcells;
-    int textureh = cellsize;
-    unsigned char* pow2data = GetTexture(cellatlas, &texturew, &textureh, &celltexture, &cellscalew, &cellscaleh);
-    if (pow2data) {
-        // overwrite previous buffer if allocated
-        if (cellatlasPOT) free(cellatlasPOT);
-        cellatlasPOT = pow2data;
-    }
+    // enable textures
+    EnableTextures();
 
-#if 0
-    // test above code by displaying the entire atlas
-    GLfloat wd = atlaswd;
-    GLfloat ht = cellsize;
-    glTexCoordPointer(2, GL_SHORT, 0, texture_coordinates);
-    int x = 0;
-    int y = 0;
-    GLfloat vertices[] = {
-        x,      y,
-        x + wd, y,
-        x,      y + ht,
-        x + wd, y + ht,
-    };
-    glVertexPointer(2, GL_FLOAT, 0, vertices);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-#endif
+    // create the texture name once
+    if (celltexture == 0) glGenTextures(1, &celltexture);
+    glBindTexture(GL_TEXTURE_2D, celltexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // put the cells in the texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, itemgridwidth, itemgridheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, itemgrid);
 }
 
 // -----------------------------------------------------------------------------
 
-void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates, GLuint texture, float xscale, float yscale)
+void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale, int stride, int numstates, GLuint texture)
 {
     // called from golly_render::pixblit to draw cells magnified by pmscale (2, 4, ... 2^MAX_MAG)
     // uses the supplied texture to draw solid cells or icons
@@ -748,8 +766,9 @@ void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale
 
     int v = 0;
     int t = 0;
-    float invstates = 1.0 / numstates;
     int max = magbuffersize / sizeof(*magvertexbuffer);
+
+    float tscale = (float)pmscale / itemgridwidth;
 
     EnableTextures();
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -776,19 +795,22 @@ void DrawCells(unsigned char* statedata, int x, int y, int w, int h, int pmscale
                 magvertexbuffer[v++] = xpos + pmscale;
                 magvertexbuffer[v++] = ypos + pmscale;
 
-                magtextcoordbuffer[t++] = (state - 1) * invstates * xscale;
-                magtextcoordbuffer[t++] = 0.0;
-                magtextcoordbuffer[t++] = state * invstates * xscale;
-                magtextcoordbuffer[t++] = 0.0;
-                magtextcoordbuffer[t++] = (state - 1) * invstates * xscale;
-                magtextcoordbuffer[t++] = yscale;
+                int tx = (state - 1) & (itemgridcols - 1);
+                int ty = (state - 1) / itemgridcols;
 
-                magtextcoordbuffer[t++] = state * invstates * xscale;
-                magtextcoordbuffer[t++] = 0.0;
-                magtextcoordbuffer[t++] = (state - 1) * invstates * xscale;
-                magtextcoordbuffer[t++] = yscale;
-                magtextcoordbuffer[t++] = state * invstates * xscale;
-                magtextcoordbuffer[t++] = yscale;
+                magtextcoordbuffer[t++] = (float)tx * tscale;
+                magtextcoordbuffer[t++] = (float)ty * tscale;
+                magtextcoordbuffer[t++] = (float)(tx + 1) * tscale;
+                magtextcoordbuffer[t++] = (float)ty * tscale;
+                magtextcoordbuffer[t++] = (float)tx * tscale;
+                magtextcoordbuffer[t++] = (float)(ty + 1) * tscale;
+
+                magtextcoordbuffer[t++] = (float)(tx + 1) * tscale;
+                magtextcoordbuffer[t++] = (float)ty * tscale;
+                magtextcoordbuffer[t++] = (float)tx * tscale;
+                magtextcoordbuffer[t++] = (float)(ty + 1) * tscale;
+                magtextcoordbuffer[t++] = (float)(tx + 1) * tscale;
+                magtextcoordbuffer[t++] = (float)(ty + 1) * tscale;
 
                 // check if buffer is full
                 if (v == max) {
@@ -863,12 +885,12 @@ void golly_render::pixblit(int x, int y, int w, int h, unsigned char* pmdata, in
 
     } else if (showicons && pmscale > 4 && iconatlas) {
         // draw icons at scales 1:8 and above
-        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, icontexture, iconscalew, iconscaleh);
+        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, icontexture);
 
     } else {
         // draw magnified cells, assuming pmdata contains (w/pmscale)*(h/pmscale) bytes
         // where each byte contains a cell state
-        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, celltexture, cellscalew, cellscaleh);
+        DrawCells(pmdata, x, y, w/pmscale, h/pmscale, pmscale, stride, currlayer->numicons, celltexture);
     }
 }
 
