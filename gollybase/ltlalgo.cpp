@@ -1282,7 +1282,6 @@ void ltlalgo::do_bounded_gen()
     int sminy = miny;
     int smaxy = maxy;
 
-    // check for torus
     if (torus) {
         // If a pattern edge is within range of a grid edge then copy cells
         // into appropriate border cells next to the opposite grid edge,
@@ -1332,7 +1331,7 @@ void ltlalgo::do_bounded_gen()
             // copy cells near bottom edge of currgrid to top border
             int numrows = maxy + range - ghtm1;
             int numcols = maxx - minx + 1;
-            unsigned char* src = currgrid + (maxy - (numrows - 1)) * outerwd + minx;
+            unsigned char* src = currgrid + (ght - range) * outerwd + minx;
             unsigned char* dest = src - ght * outerwd;
             for (int row = 0; row < numrows; row++) {
                 memcpy(dest, src, numcols);
@@ -1342,7 +1341,7 @@ void ltlalgo::do_bounded_gen()
             if (maxx + range > gwdm1) {
                 // copy cells near bottom right corner of currgrid to top left border
                 numcols = maxx + range - gwdm1;
-                src = currgrid + (maxy - (numrows - 1)) * outerwd + gwd - range;
+                src = currgrid + (ght - range) * outerwd + gwd - range;
                 dest = src - ght * outerwd - gwd;
                 for (int row = 0; row < numrows; row++) {
                     memcpy(dest, src, numcols);
@@ -1378,7 +1377,7 @@ void ltlalgo::do_bounded_gen()
             // copy cells near right edge of currgrid to left border
             int numrows = maxy - miny + 1;
             int numcols = maxx + range - gwdm1;
-            unsigned char* src = currgrid + miny * outerwd + maxx - (numcols - 1);
+            unsigned char* src = currgrid + miny * outerwd + gwd - range;
             unsigned char* dest = src - gwd;
             for (int row = 0; row < numrows; row++) {
                 memcpy(dest, src, numcols);
@@ -1388,7 +1387,7 @@ void ltlalgo::do_bounded_gen()
             if (miny < range) {
                 // copy cells near top right corner of currgrid to bottom left border
                 numrows = range - miny;
-                src = currgrid + gwd - range;
+                src = currgrid + miny * outerwd + gwd - range;
                 dest = src + ght * outerwd - gwd;
                 for (int row = 0; row < numrows; row++) {
                     memcpy(dest, src, numcols);
@@ -1397,7 +1396,6 @@ void ltlalgo::do_bounded_gen()
                 }
             }
         }
-
     }
     
     // reset minx,miny,maxx,maxy for first birth or survivor in nextgrid
@@ -1445,7 +1443,7 @@ void ltlalgo::do_bounded_gen()
             // clear cells in top border
             int numrows = smaxy + range - ghtm1;
             int numcols = smaxx - sminx + 1;
-            unsigned char* src = currgrid + (smaxy - (numrows - 1)) * outerwd + sminx;
+            unsigned char* src = currgrid + (ght - range) * outerwd + sminx;
             unsigned char* dest = src - ght * outerwd;
             for (int row = 0; row < numrows; row++) {
                 memset(dest, 0, numcols);
@@ -1454,7 +1452,7 @@ void ltlalgo::do_bounded_gen()
             if (smaxx + range > gwdm1) {
                 // clear cells in top left border
                 numcols = smaxx + range - gwdm1;
-                src = currgrid + (smaxy - (numrows - 1)) * outerwd + gwd - range;
+                src = currgrid + (ght - range) * outerwd + gwd - range;
                 dest = src - ght * outerwd - gwd;
                 for (int row = 0; row < numrows; row++) {
                     memset(dest, 0, numcols);
@@ -1487,7 +1485,7 @@ void ltlalgo::do_bounded_gen()
             // clear cells in left border
             int numrows = smaxy - sminy + 1;
             int numcols = smaxx + range - gwdm1;
-            unsigned char* src = currgrid + sminy * outerwd + smaxx - (numcols - 1);
+            unsigned char* src = currgrid + sminy * outerwd + gwd - range;
             unsigned char* dest = src - gwd;
             for (int row = 0; row < numrows; row++) {
                 memset(dest, 0, numcols);
@@ -1496,7 +1494,7 @@ void ltlalgo::do_bounded_gen()
             if (sminy < range) {
                 // clear cells in bottom left border
                 numrows = range - sminy;
-                src = currgrid + gwd - range;
+                src = currgrid + sminy * outerwd + gwd - range;
                 dest = src + ght * outerwd - gwd;
                 for (int row = 0; row < numrows; row++) {
                     memset(dest, 0, numcols);
