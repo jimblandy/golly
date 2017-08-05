@@ -287,11 +287,20 @@ srcdist:
 	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
-bindist: all
-	-rm -rf $(RELEASENAME)-gtk
-	mkdir $(RELEASENAME)-gtk
-	install $(EXEFILES) $(RELEASENAME)-gtk
-	cp -rp $(DOCFILES) $(SHAREDFILES) $(RELEASENAME)-gtk
-	find $(RELEASENAME)-gtk -name '.[^.]*' -delete
-	find $(RELEASENAME)-gtk/Scripts/Python -name '*.pyc' -delete
-	tar -cf - ./$(RELEASENAME)-gtk | gzip > $(RELEASENAME)-gtk.tar.gz
+bindist32:
+	-rm -rf $(RELEASENAME)-gtk-32bit
+	mkdir $(RELEASENAME)-gtk-32bit
+	install $(EXEFILES) $(RELEASENAME)-gtk-32bit
+	cp -rp $(DOCFILES) $(SHAREDFILES) $(RELEASENAME)-gtk-32bit
+	find $(RELEASENAME)-gtk-32bit -name '.[^.]*' -delete
+	find $(RELEASENAME)-gtk-32bit/Scripts/Python -name '*.pyc' -delete
+	tar -cf - ./$(RELEASENAME)-gtk-32bit | gzip > $(RELEASENAME)-gtk-32bit.tar.gz
+
+bindist64:
+	-rm -rf $(RELEASENAME)-gtk-64bit
+	mkdir $(RELEASENAME)-gtk-64bit
+	install $(EXEFILES) $(RELEASENAME)-gtk-64bit
+	cp -rp $(DOCFILES) $(SHAREDFILES) $(RELEASENAME)-gtk-64bit
+	find $(RELEASENAME)-gtk-64bit -name '.[^.]*' -delete
+	find $(RELEASENAME)-gtk-64bit/Scripts/Python -name '*.pyc' -delete
+	tar -cf - ./$(RELEASENAME)-gtk-64bit | gzip > $(RELEASENAME)-gtk-64bit.tar.gz
