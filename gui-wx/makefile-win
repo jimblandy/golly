@@ -437,101 +437,47 @@ $(OBJDIR)/bgolly.obj: $(CMDDIR)/bgolly.cpp
 $(OBJDIR)/RuleTableToTree.obj: $(CMDDIR)/RuleTableToTree.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(CMDDIR)/RuleTableToTree.cpp
 
-$(OBJDIR)/bigint.obj: $(BASEDIR)/bigint.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/bigint.cpp
+MBASEO = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
+    $(OBJDIR)/hlifedraw.obj $(OBJDIR)/qlifealgo.obj $(OBJDIR)/qlifedraw.obj \
+    $(OBJDIR)/ltlalgo.obj $(OBJDIR)/ltldraw.obj $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
+    $(OBJDIR)/ruletable_algo.obj $(OBJDIR)/ghashbase.obj $(OBJDIR)/ruleloaderalgo.obj \
+    $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
+    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
+    $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
+    $(OBJDIR)/generationsalgo.obj
 
-$(OBJDIR)/lifealgo.obj: $(BASEDIR)/lifealgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/lifealgo.cpp
+MBASES = $(BASEDIR)/bigint.cpp $(BASEDIR)/lifealgo.cpp $(BASEDIR)/hlifealgo.cpp \
+    $(BASEDIR)/hlifedraw.cpp $(BASEDIR)/qlifealgo.cpp $(BASEDIR)/qlifedraw.cpp \
+    $(BASEDIR)/ltlalgo.cpp $(BASEDIR)/ltldraw.cpp $(BASEDIR)/jvnalgo.cpp $(BASEDIR)/ruletreealgo.cpp \
+    $(BASEDIR)/ruletable_algo.cpp $(BASEDIR)/ghashbase.cpp $(BASEDIR)/ruleloaderalgo.cpp \
+    $(BASEDIR)/ghashdraw.cpp $(BASEDIR)/readpattern.cpp \
+    $(BASEDIR)/writepattern.cpp $(BASEDIR)/liferules.cpp $(BASEDIR)/util.cpp \
+    $(BASEDIR)/liferender.cpp $(BASEDIR)/viewport.cpp $(BASEDIR)/lifepoll.cpp \
+    $(BASEDIR)/generationsalgo.cpp
 
-$(OBJDIR)/hlifealgo.obj: $(BASEDIR)/hlifealgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/hlifealgo.cpp
+$(MBASEO): $(MBASES)
+	-$(CXX) /MP8 /c /nologo $(CXXFLAGS) $(MBASES)
+	move *.obj $(OBJDIR)
 
-$(OBJDIR)/hlifedraw.obj: $(BASEDIR)/hlifedraw.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/hlifedraw.cpp
+MWXO = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
+    $(OBJDIR)/wxrule.obj $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj \
+    $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj $(OBJDIR)/wxoverlay.obj $(OBJDIR)/wxrender.obj \
+    $(OBJDIR)/wxscript.obj \
+    $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj $(OBJDIR)/wxcontrol.obj \
+    $(OBJDIR)/wxtimeline.obj $(OBJDIR)/wxundo.obj $(OBJDIR)/wxlayer.obj \
+    $(OBJDIR)/wxmain.obj $(OBJDIR)/wxselect.obj
 
-$(OBJDIR)/qlifealgo.obj: $(BASEDIR)/qlifealgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/qlifealgo.cpp
+MWXS = wxutils.cpp wxprefs.cpp wxalgos.cpp \
+    wxrule.cpp wxinfo.cpp wxhelp.cpp \
+    wxstatus.cpp wxview.cpp wxoverlay.cpp wxrender.cpp \
+    wxscript.cpp \
+    wxfile.cpp wxedit.cpp wxcontrol.cpp \
+    wxtimeline.cpp wxundo.cpp wxlayer.cpp \
+    wxmain.cpp wxselect.cpp
 
-$(OBJDIR)/qlifedraw.obj: $(BASEDIR)/qlifedraw.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/qlifedraw.cpp
-
-$(OBJDIR)/ltlalgo.obj: $(BASEDIR)/ltlalgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ltlalgo.cpp
-
-$(OBJDIR)/ltldraw.obj: $(BASEDIR)/ltldraw.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ltldraw.cpp
-
-$(OBJDIR)/jvnalgo.obj: $(BASEDIR)/jvnalgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/jvnalgo.cpp
-
-$(OBJDIR)/ruleloaderalgo.obj: $(BASEDIR)/ruleloaderalgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ruleloaderalgo.cpp
-
-$(OBJDIR)/ruletable_algo.obj: $(BASEDIR)/ruletable_algo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ruletable_algo.cpp
-
-$(OBJDIR)/ruletreealgo.obj: $(BASEDIR)/ruletreealgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ruletreealgo.cpp
-
-$(OBJDIR)/generationsalgo.obj: $(BASEDIR)/generationsalgo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/generationsalgo.cpp
-
-$(OBJDIR)/ghashbase.obj: $(BASEDIR)/ghashbase.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ghashbase.cpp
-
-$(OBJDIR)/ghashdraw.obj: $(BASEDIR)/ghashdraw.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/ghashdraw.cpp
-
-$(OBJDIR)/liferules.obj: $(BASEDIR)/liferules.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/liferules.cpp
-
-$(OBJDIR)/liferender.obj: $(BASEDIR)/liferender.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/liferender.cpp
-
-$(OBJDIR)/readpattern.obj: $(BASEDIR)/readpattern.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/readpattern.cpp
-
-$(OBJDIR)/writepattern.obj: $(BASEDIR)/writepattern.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/writepattern.cpp
-
-$(OBJDIR)/util.obj: $(BASEDIR)/util.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/util.cpp
-
-$(OBJDIR)/viewport.obj: $(BASEDIR)/viewport.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/viewport.cpp
-
-$(OBJDIR)/lifepoll.obj: $(BASEDIR)/lifepoll.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(BASEDIR)/lifepoll.cpp
-
-$(OBJDIR)/wxutils.obj: wxutils.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxutils.cpp
-
-$(OBJDIR)/wxprefs.obj: wxprefs.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxprefs.cpp
-
-$(OBJDIR)/wxalgos.obj: wxalgos.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxalgos.cpp
-
-$(OBJDIR)/wxrule.obj: wxrule.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrule.cpp
-
-$(OBJDIR)/wxinfo.obj: wxinfo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxinfo.cpp
-
-$(OBJDIR)/wxhelp.obj: wxhelp.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxhelp.cpp
-
-$(OBJDIR)/wxstatus.obj: wxstatus.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxstatus.cpp
-
-$(OBJDIR)/wxview.obj: wxview.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxview.cpp
-
-$(OBJDIR)/wxoverlay.obj: wxoverlay.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxoverlay.cpp
-
-$(OBJDIR)/wxrender.obj: wxrender.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxrender.cpp
+$(MWXO): $(MWXS)
+	-$(CXX) /MP8 /c /nologo $(CXXFLAGS) $(MWXS)
+	move *.obj $(OBJDIR)
 
 $(OBJDIR)/wxlua.obj: wxlua.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(LUA_DEFS) /I$(LUADIR) wxlua.cpp
@@ -541,33 +487,6 @@ $(OBJDIR)/wxperl.obj: wxperl.cpp
 
 $(OBJDIR)/wxpython.obj: wxpython.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(PYTHON_INCLUDE) wxpython.cpp
-
-$(OBJDIR)/wxscript.obj: wxscript.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxscript.cpp
-
-$(OBJDIR)/wxfile.obj: wxfile.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxfile.cpp
-
-$(OBJDIR)/wxedit.obj: wxedit.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxedit.cpp
-
-$(OBJDIR)/wxselect.obj: wxselect.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxselect.cpp
-
-$(OBJDIR)/wxcontrol.obj: wxcontrol.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxcontrol.cpp
-
-$(OBJDIR)/wxtimeline.obj: wxtimeline.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxtimeline.cpp
-
-$(OBJDIR)/wxundo.obj: wxundo.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxundo.cpp
-
-$(OBJDIR)/wxlayer.obj: wxlayer.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxlayer.cpp
-
-$(OBJDIR)/wxmain.obj: wxmain.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) wxmain.cpp
 
 $(OBJDIR)/wxgolly.obj: wxgolly.cpp
 	$(CXX) /c /TP /nologo /Fo$@ $(CXXFLAGS) wxgolly.cpp
