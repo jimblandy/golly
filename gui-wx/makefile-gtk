@@ -22,6 +22,8 @@ OTHERGUIS = ../gui-android ../gui-common ../gui-ios ../gui-web
 
 # for building binary and source distributions:
 RELEASENAME = $(EXEDIR)/golly-$(APP_VERSION)
+BITSIZE = $(shell getconf LONG_BIT)
+DIRNAME = $(RELEASENAME)-gtk-$(BITSIZE)bit
 SHAREDFILES = $(EXEDIR)/Help $(EXEDIR)/Patterns $(EXEDIR)/Scripts $(EXEDIR)/Rules
 EXEFILES = $(EXEDIR)/golly $(EXEDIR)/bgolly
 DOCFILES = $(DOCSDIR)/ReadMe.html $(DOCSDIR)/License.html
@@ -287,20 +289,11 @@ srcdist:
 	find $(RELEASENAME)-src/Scripts/Python -name '*.pyc' -delete
 	tar -cf - ./$(RELEASENAME)-src | gzip > $(RELEASENAME)-src.tar.gz
 
-bindist32:
-	-rm -rf $(RELEASENAME)-gtk-32bit
-	mkdir $(RELEASENAME)-gtk-32bit
-	install $(EXEFILES) $(RELEASENAME)-gtk-32bit
-	cp -rp $(DOCFILES) $(SHAREDFILES) $(RELEASENAME)-gtk-32bit
-	find $(RELEASENAME)-gtk-32bit -name '.[^.]*' -delete
-	find $(RELEASENAME)-gtk-32bit/Scripts/Python -name '*.pyc' -delete
-	tar -cf - ./$(RELEASENAME)-gtk-32bit | gzip > $(RELEASENAME)-gtk-32bit.tar.gz
-
-bindist64:
-	-rm -rf $(RELEASENAME)-gtk-64bit
-	mkdir $(RELEASENAME)-gtk-64bit
-	install $(EXEFILES) $(RELEASENAME)-gtk-64bit
-	cp -rp $(DOCFILES) $(SHAREDFILES) $(RELEASENAME)-gtk-64bit
-	find $(RELEASENAME)-gtk-64bit -name '.[^.]*' -delete
-	find $(RELEASENAME)-gtk-64bit/Scripts/Python -name '*.pyc' -delete
-	tar -cf - ./$(RELEASENAME)-gtk-64bit | gzip > $(RELEASENAME)-gtk-64bit.tar.gz
+bindist: all
+	-rm -rf $(DIRNAME)
+	mkdir $(DIRNAME)
+	install $(EXEFILES) $(DIRNAME)
+	cp -rp $(DOCFILES) $(SHAREDFILES) $(DIRNAME)
+	find $(DIRNAME) -name '.[^.]*' -delete
+	find $(DIRNAME)/Scripts/Python -name '*.pyc' -delete
+	tar -cf - ./$(DIRNAME) | gzip > $(DIRNAME).tar.gz
