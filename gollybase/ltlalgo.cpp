@@ -1657,6 +1657,9 @@ const char *ltlalgo::setrule(const char *s)
     if (s1 > s2) return "S minimum must be <= S maximum";
     if (b1 > b2) return "B minimum must be <= B maximum";
     if (n != 'M' && n != 'N') return "N must be followed by M or N";
+    int maxn = n == 'M' ? (2*r+1)*(2*r+1) : 2*r*(r+1)+1;
+    if (s1 < 0 || s1 > maxn || s2 < 0 || s2 > maxn) return "S value must be from 0 to max neighbors";
+    if (b1 < 0 || b1 > maxn || b2 < 0 || b2 > maxn) return "B value must be from 0 to max neighbors";
     if (s[endpos] != 0 && s[endpos] != ':') return "bad suffix";
 
     char t = 'T';

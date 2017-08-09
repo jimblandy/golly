@@ -22,10 +22,14 @@ B<i>bmin</i>..<i>bmax</i> - specifies the count limits for a dead cell to become
 N<i>n</i> - specifies the extended neighborhood type (<i>n</i> is M for Moore or N for von Neumann).
 
 <p>
-This diagram shows the extended Moore and von Neumann neighborhoods for range 3:
+This diagram shows the extended Moore and von Neumann neighborhoods for <i>r</i> = 3:
 
 <p>
 <dd><img src="extended.png"></dd>
+
+<p>
+The S and B limits must be from 0 to the neighborhood size:
+(2<i>r</i>+1)^2 when <i>n</i> = M, or 2<i>r</i>(<i>r</i>+1)+1 when <i>n</i> = N.
 
 <p>
 If the number of states (specified after C) is greater than 2 then states 1 and above
