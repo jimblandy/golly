@@ -179,8 +179,8 @@ const char* ltlalgo::resize_grids(int up, int down, int left, int right)
     }
     
     int newbytes = newwd * newht;
-    unsigned char* newcurr = (unsigned char*) calloc(newbytes, sizeof(*newcurr));
-    unsigned char* newnext = (unsigned char*) calloc(newbytes, sizeof(*newnext));
+    unsigned char* newcurr = (unsigned char*) calloc(newbytes, sizeof(unsigned char));
+    unsigned char* newnext = (unsigned char*) calloc(newbytes, sizeof(unsigned char));
     if (newcurr == NULL || newnext == NULL) {
         if (newcurr) free(newcurr);
         if (newnext) free(newnext);
@@ -231,7 +231,7 @@ const char* ltlalgo::resize_grids(int up, int down, int left, int right)
 
     if (colcounts) free(colcounts);
     if (ntype == 'M') {
-        colcounts = (int*) malloc(outerbytes * 4);
+        colcounts = (int*) malloc(outerbytes * sizeof(int));
         // if NULL then use fast_Moore, otherwise faster_Moore_unbounded
     } else if (ntype == 'N') {
         if (range <= SMALL_NN_RANGE) {
@@ -239,7 +239,7 @@ const char* ltlalgo::resize_grids(int up, int down, int left, int right)
             colcounts = NULL;
         } else {
             // additional rows are needed to calculate counts in faster_Neumann_unbounded
-            colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * 4);
+            colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * sizeof(int));
             // if NULL then use fast_Neumann
         }
     } else {
@@ -403,7 +403,6 @@ void ltlalgo::update_current_grid(unsigned char &state, int ncount)
         }
     } else if (state == 1) {
         // this cell is alive
-        if (totalistic == 0) ncount--;              // don't count this cell
         if (ncount < minS || ncount > maxS) {
             // this cell doesn't survive
             if (maxCellStates > 2) {
@@ -449,7 +448,6 @@ void ltlalgo::update_next_grid(int x, int y, int xyoffset, int ncount)
         }
     } else if (state == 1) {
         // this cell is alive
-        if (totalistic == 0) ncount--;              // don't count this cell
         if (ncount >= minS && ncount <= maxS) {
             // cell survives so copy into nextgrid
             unsigned char* nextcell = nextgrid + xyoffset;
@@ -518,76 +516,27 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
     int nextrow = outerwd - width;
     int rowcount = 0;
 
-    // process in 8 cell chunks
-    int chunks = width >> 3;
-    int remainder = width - (chunks << 3);
-    int j = 0;
-
-    // check for 2 state pattern
-    if (maxCellStates == 2) {
-        for (j = mincol; j <= maxcol; j++) {
-            rowcount += *cellptr++;
-            *ccptr++ = rowcount;
-        }
-        cellptr += nextrow;
-        ccptr += nextrow;
-        prevptr = ccptr - outerwd;
-        for (int i = minrow + 1; i <= maxrow; i++) {
-            rowcount = 0;
-            // process any 8 cell chunks
-            for (j = 0; j < chunks; j++) {
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-            }
-            // process remaining cells
-            for (j = 0; j < remainder; j++) {
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-            }
-            // next row
-            cellptr += nextrow;
-            ccptr += nextrow;
-            prevptr += nextrow;
-        }
+    for (int j = mincol; j <= maxcol; j++) {
+        if (*cellptr == 1) rowcount++;
+        *ccptr = rowcount;
+        cellptr++;
+        ccptr++;
     }
-    else {
-        // > 2 state pattern
-        for (j = mincol; j <= maxcol; j++) {
+    cellptr += nextrow;
+    ccptr += nextrow;
+    prevptr = ccptr - outerwd;
+    for (int i = minrow + 1; i <= maxrow; i++) {
+        rowcount = 0;
+        for (int j = mincol; j <= maxcol; j++) {
             if (*cellptr == 1) rowcount++;
-            *ccptr = rowcount;
+            *ccptr = *prevptr + rowcount;
             cellptr++;
             ccptr++;
+            prevptr++;
         }
         cellptr += nextrow;
         ccptr += nextrow;
-        prevptr = ccptr - outerwd;
-        for (int i = minrow + 1; i <= maxrow; i++) {
-            rowcount = 0;
-            for (j = mincol; j <= maxcol; j++) {
-                if (*cellptr == 1) rowcount++;
-                *ccptr = *prevptr + rowcount;
-                cellptr++;
-                ccptr++;
-                prevptr++;
-            }
-            cellptr += nextrow;
-            ccptr += nextrow;
-            prevptr += nextrow;
-        }
+        prevptr += nextrow;
     }
     
     // restore given limits (necessary for update_current_grid calls)
@@ -615,7 +564,7 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
     bool rowchanged = false;
     int bmrm1 = border - range - 1;
     stateptr = currgrid + minrow*outerwd + mincol+1;
-    for (j = mincol+1; j <= maxcol; j++) {
+    for (int j = mincol+1; j <= maxcol; j++) {
         // do i == minrow
         int* ccptr1 = colptr + (j + bpr);
         int* ccptr2 = colptr + (j + bmrm1);
@@ -660,7 +609,7 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
         int* ipr = colcounts + (i + bpr) * outerwd;
         int* imrm1 = colcounts + (i + bmrm1) * outerwd;
         stateptr = currgrid + i*outerwd + mincol+1;
-        for (j = mincol+1; j <= maxcol; j++) {
+        for (int j = mincol+1; j <= maxcol; j++) {
             int jpr = j + bpr;
             int jmrm1 = j + bmrm1;
             int* ccptr1 = ipr + jpr;
@@ -682,6 +631,275 @@ void ltlalgo::faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxro
             rowchanged = false;
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxrow)
+{
+    // use Adam P. Goucher's algorithm to calculate Moore neighborhood counts
+    // in a bounded universe; note that currgrid is surrounded by a border that
+    // might contain live cells (the border is range+1 cells thick and the
+    // outermost cells are always dead)
+    
+    // the given limits are relative to currgrid so we need to add border
+    // so they are relative to outergrid1, and then expand them by range
+    int bmr = border - range;
+    int bpr = border + range;
+    minrow += bmr;
+    mincol += bmr;
+    maxrow += bpr;
+    maxcol += bpr;
+
+    // calculate cumulative counts for each column and store in colcounts
+
+    unsigned char* cellptr = outergrid1 + minrow * outerwd + mincol;
+    int* ccptr = colcounts + minrow * outerwd + mincol;
+    int *prevptr = NULL;
+    int width = (maxcol - mincol + 1);
+    int nextrow = outerwd - width;
+    int rowcount = 0;
+
+    // compute 4 cell offset
+    int offset = (4 - ((long)cellptr & 3)) & 3;
+    if (offset > width) offset = width;
+
+    // process in 4 cell chunks
+    int chunks = (width - offset) >> 2;
+    int remainder = (width - offset) - (chunks << 2);
+    int j = 0;
+
+    // process cells in the first row
+
+    // process cells up to the first 4 cell chunk
+    for (j = 0; j < offset; j++) {
+        rowcount += *cellptr++;
+        *ccptr++ = rowcount;
+    }
+
+    // process any 4 cell chunks
+    unsigned int *lcellptr = (unsigned int*)cellptr;
+    unsigned int value;
+    for (j = 0; j < chunks; j++) {
+        value = *lcellptr++;
+        if (value) {
+            rowcount += *cellptr++;
+            *ccptr++ = rowcount;
+            rowcount += *cellptr++;
+            *ccptr++ = rowcount;
+            rowcount += *cellptr++;
+            *ccptr++ = rowcount;
+            rowcount += *cellptr++;
+            *ccptr++ = rowcount;
+        } else {
+            *ccptr++ = rowcount;
+            *ccptr++ = rowcount;
+            *ccptr++ = rowcount;
+            *ccptr++ = rowcount;
+            cellptr += 4;
+        }
+    }
+
+    // process any remaining cells
+    for (j = 0; j < remainder; j++) {
+        rowcount += *cellptr++;
+        *ccptr++ = rowcount;
+    }
+    cellptr += nextrow;
+    ccptr += nextrow;
+    prevptr = ccptr - outerwd;
+
+    // process the remaining rows of cells
+
+    for (int i = minrow + 1; i <= maxrow; i++) {
+        rowcount = 0;
+
+        // process cells up to the first 4 cell chunk
+        for (j = 0; j < offset; j++) {
+            rowcount += *cellptr++;
+            *ccptr++ = *prevptr++ + rowcount;
+        }
+        lcellptr = (unsigned int*)cellptr;
+
+        // process any 4 cell chunks
+        for (j = 0; j < chunks; j++) {
+            value = *lcellptr++;
+            // check if any of the cells are alive
+            if (value) {
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+           } else {
+                *ccptr++ = *prevptr++ + rowcount;
+                *ccptr++ = *prevptr++ + rowcount;
+                *ccptr++ = *prevptr++ + rowcount;
+                *ccptr++ = *prevptr++ + rowcount;
+                cellptr += 4;
+            }
+        }
+
+        // process any remaining cells
+        for (j = 0; j < remainder; j++) {
+            rowcount += *cellptr++;
+            *ccptr++ = *prevptr++ + rowcount;
+        }
+        // next row
+        cellptr += nextrow;
+        ccptr += nextrow;
+        prevptr += nextrow;
+    }
+    
+    // restore given limits (necessary for update_current_grid calls)
+    minrow -= bmr;
+    mincol -= bmr;
+    maxrow -= bpr;
+    maxcol -= bpr;
+
+    // calculate final neighborhood counts using values in colcounts
+    // and update the corresponding cells in current grid
+    
+    int* colptr = colcounts + (minrow + bpr) * outerwd;
+    ccptr = colptr + mincol + bpr;
+    unsigned char* stateptr = currgrid + minrow*outerwd+mincol;
+    int ncount = *ccptr;
+    if (*stateptr == 0) {
+        if (ncount >= minB && ncount <= maxB) {
+            *stateptr = 1;
+            population++;
+            minx = mincol;
+            maxx = mincol;
+            miny = minrow;
+            maxy = minrow;
+        }
+    } else {
+        if (ncount < minS || ncount > maxS) {
+            *stateptr = 0;
+            population--;
+        }
+        else {
+            minx = mincol;
+            maxx = maxcol;
+            miny = minrow;
+            maxy = maxrow;
+        }
+    }
+
+    bool rowchanged = false;
+    int bmrm1 = border - range - 1;
+    stateptr = currgrid + minrow*outerwd + mincol+1;
+    int* ccptr1 = colptr + (mincol+1 + bpr);
+    int* ccptr2 = colptr + (mincol+1 + bmrm1);
+    for (j = mincol+1; j <= maxcol; j++) {
+        // do i == minrow
+        ncount = *ccptr1++ - *ccptr2++;
+        if (*stateptr == 0) {
+            if (ncount >= minB && ncount <= maxB) {
+                *stateptr = 1;
+                population++;
+                if (j < minx) minx = j;
+                if (j > maxx) maxx = j;
+                rowchanged = true;
+            }
+        } else {
+            if (ncount < minS || ncount > maxS) {
+                *stateptr = 0;
+                population--;
+            }
+            else {
+                if (j < minx) minx = j;
+                if (j > maxx) maxx = j;
+                rowchanged = true;
+            }
+        }
+        stateptr++;
+    }
+    if (rowchanged) {
+        if (minrow < miny) miny = minrow;
+        if (minrow > maxy) maxy = minrow;
+    }
+    
+    bool colchanged = false;
+    colptr = colcounts + mincol + bpr;
+    stateptr = currgrid + (minrow+1)*outerwd + mincol;
+    ccptr1 = colptr + (minrow+1 + bpr) * outerwd;
+    ccptr2 = colptr + (minrow+1 + bmrm1) * outerwd;
+    for (int i = minrow+1; i <= maxrow; i++) {
+        // do j == mincol
+        ncount = *ccptr1 - *ccptr2;
+        if (*stateptr == 0) {
+            if (ncount >= minB && ncount <= maxB) {
+                *stateptr = 1;
+                population++;
+                if (i < miny) miny = i;
+                if (i > maxy) maxy = i;
+                colchanged = true;
+            }
+        } else {
+            if (ncount < minS || ncount > maxS) {
+                *stateptr = 0;
+                population--;
+            }
+            else {
+                if (i < miny) miny = i;
+                if (i > maxy) maxy = i;
+                colchanged = true;
+            }
+        }
+        stateptr += outerwd;
+        ccptr1 += outerwd;
+        ccptr2 += outerwd;
+    }
+    if (colchanged) {
+        if (mincol < minx) minx = mincol;
+        if (mincol > maxx) maxx = mincol;
+    }
+    
+    rowchanged = false;
+    for (int i = minrow+1; i <= maxrow; i++) {
+        int* ipr = colcounts + (i + bpr) * outerwd;
+        int* imrm1 = colcounts + (i + bmrm1) * outerwd;
+        int jpr = mincol+1 + bpr;
+        int jmrm1 = mincol+1 + bmrm1;
+        ccptr1 = ipr + jpr;
+        ccptr2 = imrm1 + jmrm1;
+        int* ccptr3 = ipr + jmrm1;
+        int* ccptr4 = imrm1 + jpr;
+        stateptr = currgrid + i*outerwd + mincol+1;
+        for (j = mincol+1; j <= maxcol; j++) {
+            ncount = *ccptr1++ + *ccptr2++ - *ccptr3++ - *ccptr4++;
+            if (*stateptr == 0) {
+                if (ncount >= minB && ncount <= maxB) {
+                    *stateptr = 1;
+                    population++;
+                    if (j < minx) minx = j;
+                    if (j > maxx) maxx = j;
+                    rowchanged = true;
+                }
+            } else {
+                if (ncount < minS || ncount > maxS) {
+                    *stateptr = 0;
+                    population--;
+                }
+                else {
+                    if (j < minx) minx = j;
+                    if (j > maxx) maxx = j;
+                    rowchanged = true;
+                }
+            }
+            stateptr++;
+        }
+        if (rowchanged) {
+            if (i < miny) miny = i;
+            if (i > maxy) maxy = i;
+            rowchanged = false;
+        }
+    }
+    if (population == 0) empty_boundaries();
 }
 
 // -----------------------------------------------------------------------------
@@ -725,61 +943,20 @@ void ltlalgo::faster_Moore_unbounded(int mincol, int minrow, int maxcol, int max
     int width = (maxcol - mincolpr2 + 1);
     int nextrow = outerwd - width;
     int rowcount = 0;
-
-    // process in 8 cell chunks
-    int chunks = width >> 3;
-    int remainder = width - (chunks << 3);
     int j = 0;
 
-    // check for 2 state pattern
-    if (maxCellStates == 2) {
-        for (int i = minrowpr2; i <= maxrow; i++) {
-            rowcount = 0;
-            // process any 8 cell chunks
-            for (j = 0; j < chunks; j++) {
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-            }
-            // process any remaining cells
-            for (j = 0; j < remainder; j++) {
-                rowcount += *cellptr++;
-                *ccptr++ = *prevptr++ + rowcount;
-            }
-            // next row
-            cellptr += nextrow;
-            ccptr += nextrow;
-            prevptr += nextrow;
+    for (int i = minrowpr2; i <= maxrow; i++) {
+        rowcount = 0;
+        for (j = mincolpr2; j <= maxcol; j++) {
+            if (*cellptr == 1) rowcount++;
+            *ccptr = *prevptr + rowcount;
+            cellptr++;
+            ccptr++;
+            prevptr++;
         }
-    }
-    else {
-        // > 2 state pattern
-        for (int i = minrowpr2; i <= maxrow; i++) {
-            rowcount = 0;
-            for (j = mincolpr2; j <= maxcol; j++) {
-                if (*cellptr == 1) rowcount++;
-                *ccptr = *prevptr + rowcount;
-                cellptr++;
-                ccptr++;
-                prevptr++;
-            }
-            cellptr += nextrow;
-            ccptr += nextrow;
-            prevptr += nextrow;
-        }
+        cellptr += nextrow;
+        ccptr += nextrow;
+        prevptr += nextrow;
     }
 
     // restore given limits
@@ -874,6 +1051,291 @@ void ltlalgo::faster_Moore_unbounded(int mincol, int minrow, int maxcol, int max
             rowchanged = false;
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+
+void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int maxrow)
+{
+    // use Adam P. Goucher's algorithm to calculate Moore neighborhood counts
+    // in an unbounded universe; note that we can safely assume there is at least
+    // a 2*range border of dead cells surrounding the pattern
+    
+    // temporarily expand the given limits
+    minrow -= range;
+    mincol -= range;
+    maxrow += range;
+    maxcol += range;
+    
+    int r2 = range * 2;
+    int minrowpr2 = minrow+r2;
+    int mincolpr2 = mincol+r2;
+    
+    // put zeros in top 2*range rows of colcounts
+    for (int i = minrow; i < minrowpr2; i++) {
+        int* ccptr = colcounts + i * outerwd + mincol;
+        for (int j = mincol; j <= maxcol; j++) {
+            *ccptr++ = 0;
+        }
+    }
+
+    // put zeros in left 2*range columns of colcounts
+    for (int j = mincol; j < mincolpr2; j++) {
+        int* ccptr = colcounts + minrowpr2 * outerwd + j;
+        for (int i = minrowpr2; i <= maxrow; i++) {
+            *ccptr = 0;
+            ccptr += outerwd;
+        }
+    }
+
+    // calculate cumulative counts for each column and store in colcounts
+
+    unsigned char* cellptr = currgrid + minrowpr2 * outerwd + mincolpr2;
+    int* ccptr = colcounts + minrowpr2 * outerwd + mincolpr2;
+    int* prevptr = ccptr - outerwd;
+    int width = (maxcol - mincolpr2 + 1);
+    int nextrow = outerwd - width;
+    int rowcount = 0;
+
+    // compute 4 cell offset
+    int offset = (4 - ((long)cellptr & 3)) & 3;
+    if (offset > width) offset = width;
+
+    // process in 4 cell chunks
+    int chunks = (width - offset) >> 2;
+    int remainder = (width - offset) - (chunks << 2);
+    int j = 0;
+
+    // process cells in the first row
+
+    // process cells up to the first 4 cell chunk
+    for (j = 0; j < offset; j++) {
+        rowcount += *cellptr++;
+        *ccptr++ = rowcount;
+    }
+
+    // process any 4 cell chunks
+    unsigned int *lcellptr = (unsigned int*)cellptr;
+    unsigned int value;
+    for (j = 0; j < chunks; j++) {
+        value = *lcellptr++;
+        if (value) {
+            rowcount += *cellptr++;
+            *ccptr++ = rowcount;
+            rowcount += *cellptr++;
+            *ccptr++ = rowcount;
+            rowcount += *cellptr++;
+            *ccptr++ = rowcount;
+            rowcount += *cellptr++;
+            *ccptr++ = rowcount;
+        } else {
+            *ccptr++ = rowcount;
+            *ccptr++ = rowcount;
+            *ccptr++ = rowcount;
+            *ccptr++ = rowcount;
+            cellptr += 4;
+        }
+    }
+
+    // process any remaining cells
+    for (j = 0; j < remainder; j++) {
+        rowcount += *cellptr++;
+        *ccptr++ = rowcount;
+    }
+    cellptr += nextrow;
+    ccptr += nextrow;
+    prevptr = ccptr - outerwd;
+
+    // process the remaining rows of cells
+
+    for (int i = minrowpr2 + 1; i <= maxrow; i++) {
+        rowcount = 0;
+        // process cells up to the first 4 cell chunk
+        for (j = 0; j < offset; j++) {
+            rowcount += *cellptr++;
+            *ccptr++ = *prevptr++ + rowcount;
+        }
+        lcellptr = (unsigned int*)cellptr;
+
+        // process any 4 cell chunks
+        for (j = 0; j < chunks; j++) {
+            value = *lcellptr++;
+            // check if any of the cells are alive
+            if (value) {
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+                rowcount += *cellptr++;
+                *ccptr++ = *prevptr++ + rowcount;
+           } else {
+                *ccptr++ = *prevptr++ + rowcount;
+                *ccptr++ = *prevptr++ + rowcount;
+                *ccptr++ = *prevptr++ + rowcount;
+                *ccptr++ = *prevptr++ + rowcount;
+                cellptr += 4;
+            }
+        }
+
+        // process any remaining cells
+        for (j = 0; j < remainder; j++) {
+            rowcount += *cellptr++;
+            *ccptr++ = *prevptr++ + rowcount;
+        }
+        // next row
+        cellptr += nextrow;
+        ccptr += nextrow;
+        prevptr += nextrow;
+    }
+
+    // restore given limits
+    minrow += range;
+    mincol += range;
+    maxrow -= range;
+    maxcol -= range;
+
+    // calculate final neighborhood counts using values in colcounts
+    // and update the corresponding cells in current grid
+    
+    int* colptr = colcounts + (minrow + range) * outerwd;
+    ccptr = colptr + mincol + range;
+    unsigned char* stateptr = currgrid + minrow*outerwd+mincol;
+    int ncount = *ccptr;
+    if (*stateptr == 0) {
+        if (ncount >= minB && ncount <= maxB) {
+            *stateptr = 1;
+            population++;
+            minx = mincol;
+            maxx = mincol;
+            miny = minrow;
+            maxy = minrow;
+        }
+    } else {
+        if (ncount < minS || ncount > maxS) {
+            *stateptr = 0;
+            population--;
+        }
+        else {
+            minx = mincol;
+            maxx = maxcol;
+            miny = minrow;
+            maxy = maxrow;
+        }
+    }
+
+    bool rowchanged = false;
+    int rangep1 = range + 1;
+    stateptr = currgrid + minrow*outerwd + mincol+1;
+    int* ccptr1 = colptr + (mincol+1 + range);
+    int* ccptr2 = colptr + (mincol+1 - rangep1);
+    for (j = mincol+1; j <= maxcol; j++) {
+        // do i == minrow
+        ncount = *ccptr1++ - *ccptr2++;
+        if (*stateptr == 0) {
+            if (ncount >= minB && ncount <= maxB) {
+                *stateptr = 1;
+                population++;
+                if (j < minx) minx = j;
+                if (j > maxx) maxx = j;
+                rowchanged = true;
+            }
+        } else {
+            if (ncount < minS || ncount > maxS) {
+                *stateptr = 0;
+                population--;
+            }
+            else {
+                if (j < minx) minx = j;
+                if (j > maxx) maxx = j;
+                rowchanged = true;
+            }
+        }
+        stateptr++;
+    }
+    if (rowchanged) {
+        if (minrow < miny) miny = minrow;
+        if (minrow > maxy) maxy = minrow;
+    }
+
+    bool colchanged = false;
+    colptr = colcounts + mincol + range;
+    stateptr = currgrid + (minrow+1)*outerwd + mincol;
+    ccptr1 = colptr + (minrow+1+range) * outerwd;
+    ccptr2 = colptr + (minrow+1-rangep1) * outerwd;
+    for (int i = minrow+1; i <= maxrow; i++) {
+        // do j == mincol
+        ncount = *ccptr1 - *ccptr2;
+        if (*stateptr == 0) {
+            if (ncount >= minB && ncount <= maxB) {
+                *stateptr = 1;
+                population++;
+                if (i < miny) miny = i;
+                if (i > maxy) maxy = i;
+                colchanged = true;
+            }
+        } else {
+            if (ncount < minS || ncount > maxS) {
+                *stateptr = 0;
+                population--;
+            }
+            else {
+                if (i < miny) miny = i;
+                if (i > maxy) maxy = i;
+                colchanged = true;
+            }
+        }
+        stateptr += outerwd;
+        ccptr1 += outerwd;
+        ccptr2 += outerwd;
+    }
+    if (colchanged) {
+        if (mincol < minx) minx = mincol;
+        if (mincol > maxx) maxx = mincol;
+    }
+    
+    rowchanged = false;
+    for (int i = minrow+1; i <= maxrow; i++) {
+        int* ipr = colcounts + (i+range) * outerwd;
+        int* imrm1 = colcounts + (i-rangep1) * outerwd;
+        int jpr = mincol+1+range;
+        int jmrm1 = mincol+1-rangep1;
+        ccptr1 = ipr + jpr;
+        ccptr2 = imrm1 + jmrm1;
+        int* ccptr3 = ipr + jmrm1;
+        int* ccptr4 = imrm1 + jpr;
+        stateptr = currgrid + i*outerwd + mincol+1;
+        for (j = mincol+1; j <= maxcol; j++) {
+            ncount = *ccptr1++ + *ccptr2++ - *ccptr3++ - *ccptr4++;
+            if (*stateptr == 0) {
+                if (ncount >= minB && ncount <= maxB) {
+                    *stateptr = 1;
+                    population++;
+                    if (j < minx) minx = j;
+                    if (j > maxx) maxx = j;
+                    rowchanged = true;
+                }
+            } else {
+                if (ncount < minS || ncount > maxS) {
+                    *stateptr = 0;
+                    population--;
+                }
+                else {
+                    if (j < minx) minx = j;
+                    if (j > maxx) maxx = j;
+                    rowchanged = true;
+                }
+            }
+            stateptr++;
+        }
+        if (rowchanged) {
+            if (i < miny) miny = i;
+            if (i > maxy) maxy = i;
+            rowchanged = false;
+        }
+    }
+    if (population == 0) empty_boundaries();
 }
 
 // -----------------------------------------------------------------------------
@@ -1383,7 +1845,11 @@ void ltlalgo::do_bounded_gen()
     // create next generation
     if (ntype == 'M') {
         if (colcounts) {
-            faster_Moore_bounded(mincol, minrow, maxcol, maxrow);
+            if (maxCellStates == 2) {
+                faster_Moore_bounded2(mincol, minrow, maxcol, maxrow);
+            } else {
+                faster_Moore_bounded(mincol, minrow, maxcol, maxrow);
+            }
         } else {
             fast_Moore(mincol, minrow, maxcol, maxrow);
         }
@@ -1525,7 +1991,11 @@ bool ltlalgo::do_unbounded_gen()
 
     if (ntype == 'M') {
         if (colcounts) {
-            faster_Moore_unbounded(mincol, minrow, maxcol, maxrow);
+            if (maxCellStates == 2) {
+                faster_Moore_unbounded2(mincol, minrow, maxcol, maxrow);
+            } else {
+                faster_Moore_unbounded(mincol, minrow, maxcol, maxrow);
+            }
         } else {
             fast_Moore(mincol, minrow, maxcol, maxrow);
         }
@@ -1803,6 +2273,12 @@ const char *ltlalgo::setrule(const char *s)
                            topology, gwd, ght);
     }
     
+    // adjust the survival range if the center cell is not included
+    if (totalistic == 0) {
+        minS++;
+        maxS++;
+    }
+
     return 0;
 }
 

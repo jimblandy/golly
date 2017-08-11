@@ -95,7 +95,9 @@ private:
     
     void fast_Moore(int mincol, int minrow, int maxcol, int maxrow);
     void faster_Moore_bounded(int mincol, int minrow, int maxcol, int maxrow);
+    void faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxrow);
     void faster_Moore_unbounded(int mincol, int minrow, int maxcol, int maxrow);
+    void faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int maxrow);
     void fast_Neumann(int mincol, int minrow, int maxcol, int maxrow);
     void faster_Neumann_bounded(int mincol, int minrow, int maxcol, int maxrow);
     void faster_Neumann_unbounded(int mincol, int minrow, int maxcol, int maxrow);
