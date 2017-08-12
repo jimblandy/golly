@@ -284,6 +284,13 @@ int ltlalgo::setcell(int x, int y, int newstate)
                 int down = y > gbottom ? y - gbottom : 0;
                 int left = x < gleft ? gleft - x : 0;
                 int right = x > gright ? x - gright : 0;
+                
+                // if the down or right amount is 1 then it's likely a pattern file
+                // is being loaded, so increase the amount to reduce the number of
+                // resize_grids calls and speed up the loading time
+                if (down == 1) down = 10;
+                if (right == 1) right = 10;
+                
                 const char* errmsg = resize_grids(up, down, left, right);
                 if (errmsg) {
                     if (show_warning) lifewarning(errmsg);
