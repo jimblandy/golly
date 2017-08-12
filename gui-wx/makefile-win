@@ -386,7 +386,7 @@ $(WXO): $(BASEH) $(WXH) icons\*.ico bitmaps\*.xpm
 
 $(LUAO):
 	cd "$(LUADIR)"
-	cl /MT /O2 /c /nologo $(LUA_DEFS) *.c
+	cl /MP8 /MT /O2 /c /nologo $(LUA_DEFS) *.c
 	cd "$(MAKEDIR)"
 
 $(OBJDIR):
