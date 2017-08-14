@@ -118,12 +118,14 @@ const char* ruleloaderalgo::setrule(const char* s)
     // first check if rulename is the default rule for RuleTable or RuleTree
     // in which case there is no need to look for a .rule/table/tree file
     if (LocalRuleTable->IsDefaultRule(rulename.c_str())) {
-        LocalRuleTable->setrule(s);
+        const char *err = LocalRuleTable->setrule(s);
+        if (err) return err;
         SetAlgoVariables(TABLE);
         return NULL;
     }
     if (LocalRuleTree->IsDefaultRule(rulename.c_str())) {
-        LocalRuleTree->setrule(s);
+        const char* err = LocalRuleTree->setrule(s);
+        if (err) return err;
         SetAlgoVariables(TREE);
         return NULL;
     }
