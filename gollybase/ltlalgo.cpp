@@ -2154,13 +2154,23 @@ const char *ltlalgo::setrule(const char *s)
             return "bad topology in suffix (must be torus or plane)";
         }
         if (suffix[2] != 0) {
-            if (sscanf(suffix+2, "%d,%d", &newwd, &newht) != 2) {
-                if (sscanf(suffix+2, "%d", &newwd) != 1) {
+            bool oneval = false;
+            if (sscanf(suffix+2, "%d,%d%n", &newwd, &newht, &endpos) != 2) {
+                if (sscanf(suffix+2, "%d%n", &newwd, &endpos) != 1) {
                     return "bad grid size";
                 } else {
                     newht = newwd;
+                    oneval = true;
+                    if (suffix[endpos+2] != 0) {
+                        if (suffix[endpos+2] == ',' && suffix[endpos+3] == 0) {
+                            // allow dangling comma after width to be consistent with lifealgo::setgridsize
+                        } else {
+                            return "unexpected character in suffix";
+                        }
+                    }
                 }
             }
+            if (!oneval && suffix[endpos+2] != 0) return "unexpected character in suffix";
         }
         if ((float)newwd * (float)newht > MAXCELLS) return "grid size is too big";
     }

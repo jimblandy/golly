@@ -789,6 +789,9 @@ void RuleDialog::OnChooseAlgo(wxCommandEvent& event)
                 }
                 defrule += wxT(":");
                 defrule += thisrule.AfterFirst(':');
+                // check that suffix is valid in this algo (if not, use default rule)
+                err = tempalgo->setrule( defrule.mb_str(wxConvLocal) );
+                if (err) defrule = wxString(tempalgo->DefaultRule(), wxConvLocal);
             }
             ignore_text_change = true;
             ruletext->SetValue(defrule);
