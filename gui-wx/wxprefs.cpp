@@ -24,7 +24,7 @@
 
 #include "wxgolly.h"        // for wxGetApp, mainptr, viewptr
 #include "wxmain.h"         // for ID_*, mainptr->...
-#include "wxview.h"         // for viewptr->...
+#include "wxview.h"         // for viewptr->..., glMajor, etc
 #include "wxutils.h"        // for Warning, Fatal, Beep, FillRect
 #include "wxhelp.h"         // for GetHelpFrame
 #include "wxinfo.h"         // for GetInfoFrame
@@ -1377,6 +1377,7 @@ void SavePrefs()
     fprintf(f, "golly_version=%s\n", GOLLY_VERSION);
     wxString wxversion = wxVERSION_STRING;
     fprintf(f, "wx_version=%s\n", (const char*)wxversion.mb_str(wxConvLocal));
+    fprintf(f, "opengl_version=%d.%d, glMaxTextureSize=%d\n", glMajor, glMinor, glMaxTextureSize);
 #if defined(__WXMAC__)
     fprintf(f, "platform=Mac\n");
 #elif defined(__WXMSW__)

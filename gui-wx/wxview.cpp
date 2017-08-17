@@ -2364,7 +2364,7 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
         glViewport(0, 0, wd, ht);
         glMatrixMode(GL_MODELVIEW);
 
-        // get GL version
+        // get OpenGL version
         const char* version = NULL;
         version = (const char*)glGetString(GL_VERSION);
         if (version) {
@@ -2374,24 +2374,6 @@ void PatternView::OnPaint(wxPaintEvent& WXUNUSED(event))
         // get maximum texture size
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTextureSize);
         if (glMaxTextureSize < 1024) glMaxTextureSize = 1024;
-
-#define STRINGIFY(arg) STR2(arg)
-#define STR2(arg) #arg
-
-        // update Golly banner to show OpenGL version
-        wxString banner = _("This is Golly version ");
-        banner += _(STRINGIFY(VERSION));
-#ifdef GOLLY64BIT
-        banner += _(" (64bit, ");
-#else
-        banner += _(" (32bit, ");
-#endif
-        banner += wxString::Format(_("OpenGL %d.%d %d"), glMajor, glMinor, glMaxTextureSize);
-#ifdef ENABLE_SOUND
-        banner += _(", Sound");
-#endif
-        banner += _("). Copyright 2017 The Golly Gang.");
-        statusptr->DisplayMessage(banner);
     }
     
     DrawView(tileindex);

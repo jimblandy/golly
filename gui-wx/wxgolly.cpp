@@ -313,12 +313,16 @@ bool GollyApp::OnInit()
     
     wxString banner = _("This is Golly version ");
     banner +=         _(STRINGIFY(VERSION)); 
+    banner +=         _(" (");
 #ifdef GOLLY64BIT
-    banner +=         _(" (64-bit)");
+    banner +=         _("64-bit");
 #else
-    banner +=         _(" (32-bit)");
+    banner +=         _("32-bit");
 #endif
-    banner +=         _(".  Copyright 2017 The Golly Gang.");
+#ifdef ENABLE_SOUND
+    banner +=         _(", Sound");
+#endif
+    banner +=         _(").  Copyright 2017 The Golly Gang.");
     if (debuglevel > 0) {
         banner += wxString::Format(_("  *** debuglevel = %d ***"), debuglevel);
     }
