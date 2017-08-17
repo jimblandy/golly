@@ -854,12 +854,14 @@ void MainFrame::StopGenerating()
 
 // -----------------------------------------------------------------------------
 
+// this flag is used to avoid re-entrancy in OnGenTimer (note that on Windows
+// the timer can fire while a wxMessageBox dialog is open)
+static bool in_timer = false;
+
 void MainFrame::OnGenTimer(wxTimerEvent& WXUNUSED(event))
 {
-    // called when gentimer fires a timer event
-    
-    // play safe and avoid re-entrancy if timer fires while insideYield
-    if (insideYield) return;
+    if (in_timer) return;
+    in_timer = true;
     
     if (!StepPattern()) {
         if (generating) {
@@ -869,6 +871,7 @@ void MainFrame::OnGenTimer(wxTimerEvent& WXUNUSED(event))
             // StopGenerating() was called while insideYield
             FinishUp();
         }
+        in_timer = false;
         return;
     }
     
@@ -885,6 +888,7 @@ void MainFrame::OnGenTimer(wxTimerEvent& WXUNUSED(event))
             wxString msg;
             msg.Printf(_("No more frames can be recorded (maximum = %d)."), MAX_FRAME_COUNT);
             Warning(msg);
+            in_timer = false;
             return;
         }
     } else if (currlayer->hyperspeed && currlayer->algo->hyperCapable()) {
@@ -899,6 +903,8 @@ void MainFrame::OnGenTimer(wxTimerEvent& WXUNUSED(event))
         // StopGenerating() was called while insideYield
         FinishUp();
     }
+    
+    in_timer = false;
 }
 
 // -----------------------------------------------------------------------------

@@ -3046,10 +3046,16 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
 
 // -----------------------------------------------------------------------------
 
+// this flag is used to avoid re-entrancy in OnDragTimer
+static bool in_timer = false;
+
 void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
 {
-    // called periodically while drawing/selecting/moving
+    // called periodically while drawing/selecting/moving,
     // or if user has clicked a translucent control and button is still down
+    if (in_timer) return;
+    in_timer = true;
+
     wxPoint pt = ScreenToClient( wxGetMousePosition() );
     int x = pt.x;
     int y = pt.y;
@@ -3068,6 +3074,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
             currcontrol = NO_CONTROL;
         }
         if (currcontrol != oldcontrol) RefreshRect(controlsrect, false);
+        in_timer = false;
         return;
     }
     
@@ -3079,10 +3086,12 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
         // user can disable scrolling
         if ( drawingcells && !scrollpencil ) {
             DrawCells(x, y);
+            in_timer = false;
             return;
         }
         if ( selectingcells && !scrollcross ) {
             SelectCells(x, y);
+            in_timer = false;
             return;
         }
         if ( movingview && !scrollhand ) {
@@ -3092,6 +3101,7 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
             if (x > currlayer->view->getxmax()) x = currlayer->view->getxmax();
             if (y > currlayer->view->getymax()) y = currlayer->view->getymax();
             MoveView(x, y);
+            in_timer = false;
             return;
         }
         
@@ -3165,6 +3175,8 @@ void PatternView::OnDragTimer(wxTimerEvent& WXUNUSED(event))
     } else if ( movingview ) {
         MoveView(x, y);
     }
+    
+    in_timer = false;
 }
 
 // -----------------------------------------------------------------------------
