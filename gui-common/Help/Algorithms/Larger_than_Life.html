@@ -3,11 +3,10 @@
 <body bgcolor="#FFFFCE">
 
 <p>
-The Larger than Life algorithm supports a family of rules with an
-extendable neighborhood, as defined by Kellie Michele Evans in her 1996
-<a href="http://www.csun.edu/~kme52026/thesis.html">thesis</a>.
-The rule notation used by Golly is identical to the one created by
-Mirek Wojtowicz for <a href="http://www.mirekw.com/ca/rullex_lgtl.html">MCell</a>:
+Larger than Life (LtL) is a family of cellular automata rules that generalize
+John Conway's Game of Life to large neighborhoods and general birth and survival thresholds.
+The LtL rule notation used by Golly is identical to the one created by Mirek Wojtowicz
+for <a href="http://www.mirekw.com/ca/rullex_lgtl.html">MCell</a>:
 
 <p>
 <dd>
@@ -15,7 +14,7 @@ R<i>r</i>,C<i>c</i>,M<i>m</i>,S<i>smin</i>..<i>smax</i>,B<i>bmin</i>..<i>bmax</i
 </dd>
 
 <p>
-R<i>r</i> - specifies the range (<i>r</i> is from 1 to 50).<br>
+R<i>r</i> - specifies the neighborhood range (<i>r</i> is from 1 to 500).<br>
 C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 255).<br>
 M<i>m</i> - specifies if the middle cell is included in the neighborhood count (<i>m</i> is 0 or 1).<br>
 S<i>smin</i>..<i>smax</i> - specifies the count limits for a state 1 cell to survive.<br>
@@ -23,10 +22,14 @@ B<i>bmin</i>..<i>bmax</i> - specifies the count limits for a dead cell to become
 N<i>n</i> - specifies the extended neighborhood type (<i>n</i> is M for Moore or N for von Neumann).
 
 <p>
-This diagram shows the extended Moore and von Neumann neighborhoods for range 3:
+This diagram shows the extended Moore and von Neumann neighborhoods for <i>r</i> = 3:
 
 <p>
 <dd><img src="extended.png"></dd>
+
+<p>
+The S and B limits must be from 0 to the neighborhood size:
+(2<i>r</i>+1)^2 when <i>n</i> = M, or 2<i>r</i>(<i>r</i>+1)+1 when <i>n</i> = N.
 
 <p>
 If the number of states (specified after C) is greater than 2 then states 1 and above
@@ -52,8 +55,8 @@ their commonly used names:
 </tr>
 <tr>
    <td><b><a href="rule:R5,C0,M1,S34..58,B34..45,NM">R5,C0,M1,S34..58,B34..45,NM</a></b></td>
-   <td width=10> </td><td>[Bugs]</td><td width=10> </td>
-   <td> - a chaotic rule by Kellie Evans.</td>
+   <td width=10> </td><td>[Bosco's Rule]</td><td width=10> </td>
+   <td> - (aka Bugs) a chaotic rule by Kellie Evans.</td>
 </tr>
 <tr>
    <td><b><a href="rule:R10,C0,M1,S123..212,B123..170,NM">R10,C0,M1,S123..212,B123..170,NM</a></b></td>
@@ -98,7 +101,7 @@ their commonly used names:
 
 <p>
 Golly also allows rules to be entered using the notation defined by
-Kellie Evans in her thesis.  The range, birth limits and survival limits
+Kellie Evans in her thesis [<a href="#2">2</a>].  The range, birth limits and survival limits
 are specified by five integers separated by commas:
 
 <p>
@@ -111,39 +114,117 @@ This notation assumes an extended Moore neighborhood in which a live middle cell
 is included in the neighborhood count (ie. totalistic).
 For example, Life can be entered as 1,3,3,3,4.
 
+<p>
+Note that Golly's canonical version of a Larger than Life rule
+always uses the MCell syntax.
+
 <p>&nbsp;<br>
 <font size=+1><b>Grid topology and size limits</b></font>
 
 <p>
-Unlike Golly's other algorithms, Larger than Life uses a finite universe.
-The topology can be either a torus or a plane and is specified by appending
-a suitable suffix to the rule.  For example,
+The Larger than Life algorithm supports both bounded and unbounded universes,
+but with certain restrictions.
+As in Golly's other algorithms, a bounded universe is specified by appending
+a suitable suffix to the rule, but the topology can only be a simple torus or a plane.
+For example,
 <b><a href="rule:R5,C0,M1,S34..58,B34..45,NM:T500,40">R5,C0,M1,S34..58,B34..45,NM:T500,40</a></b>
-creates a 500 by 40 torus using the Bugs rule, and
+creates a 500 by 40 torus using Bosco's Rule, and
 <b><a href="rule:1,3,3,3,4:P300,200">1,3,3,3,4:P300,200</a></b>
 creates a 300 by 200 plane using Life.
+The maximum grid size is 100 million cells.
+The minimum width or height is twice the supplied range.  Values less than that
+(including zero) are automatically increased to the minimum value.
 
 <p>
-The maximum grid size allowed is 100 million cells.
-The minimum width and height is twice the range.
-If a given rule has no suffix then the grid will be a torus with a default size
-of 400 by 400 cells.
+If a given rule has no suffix then the universe is unbounded.
+Well, almost.  Golly maintains an internal grid that is automatically resized
+as a pattern expands or shrinks.  The size of this grid is limited to
+100 million cells, and the cell coordinates of the grid edges must remain
+within the editing limits of +/- 1 billion.
+For the vast majority of patterns these limits won't ever be a problem.
 
 <p>
-Note that Golly's canonical version of a Larger than Life rule
-uses the MCell syntax and always includes a suffix showing the
-topology and the grid size.
+One more restriction worth noting: B0 is not allowed in an unbounded universe.
+
+<p>&nbsp;<br>
+<font size=+1><b>History</b></font>
+
+<p>
+Larger than Life was first imagined by David Griffeath in the early 1990s to explore
+whether Life might be a clue to a critical phase point in the threshold-range
+scaling limit [<a href="#1">1</a>].
+The LtL family of rules includes Life as well as a rich set of
+two-dimensional rules, some of which exhibit dynamics vastly different from
+Life [<a href="#2">2</a>], [<a href="#3">3</a>].
+Kellie Evans studied LtL in her 1996 thesis and discovered that
+a family of "Life-like" rules comprises a much larger subset of LtL parameter
+space than initially imagined [<a href="#2">2</a>], [<a href="#4">4</a>], [<a href="#5">5</a>].
+
+<p>
+In order to study LtL rules, David Griffeath and Bob Fisch developed WinCA,
+a cellular automata modeling environment for Windows.  WinCA's editing capabilities
+were modest, but the software was able to implement LtL rules to range 200 and its
+speed increased together with the hardware on which it ran.  In those early days of
+Windows, Griffeath's Primordial Soup Kitchen shared graphics and other discoveries
+via weekly "soup recipes" [<a href="#6">6</a>].
+
+<p>
+In 1999 Mirek Wojtowicz developed Mirek's Cellebration (MCell) [<a href="#9">9</a>],
+a cellular automata modeling environment for Windows, which was excellent for editing on the fly
+and working with small configurations for LtL rules up to range 10.  Dean Hickerson used
+MCell to construct the first "bug gun" using the period 166 oscillator known as Bosco,
+which was discovered by Kellie Evans.  This construction led to numerous other
+constructions and questions [<a href="#7">7</a>].
+
+<p>
+Golly is a game changer in the study of LtL: the first software with seemingly
+boundless possibilities that implements LtL in ranges up to 500 and the potential
+to discover LtL dynamics as yet unimagined.
 
 <p>&nbsp;<br>
 <font size=+1><b>References</b></font>
 
-<p>
-MCell rules lexicon for Larger than Life:<br>
-<a href="http://www.mirekw.com/ca/rullex_lgtl.html">http://www.mirekw.com/ca/rullex_lgtl.html</a>
+<a name="1"></a><p>
+[1] D. Griffeath. <i>Self-organization of random cellular automata: Four snapshots,
+in "Probability and Phase Transitions"</i>, 1994. (G. Grimmett Ed.), Kluwer Academic,
+Dordrecht/Norwell, MA.
 
-<p>
-Kellie Michele Evans' 1996 dissertation:<br>
+<a name="2"></a><p>
+[2] K. Evans. <i>"Larger than Life: it's so nonlinear"</i>, 1996. Ph.D. dissertation,
+University of Wisconsin- Madison.<br>
 <a href="http://www.csun.edu/~kme52026/thesis.html">http://www.csun.edu/~kme52026/thesis.html</a>
+
+<a name="3"></a><p>
+[3] J. Gravner and D. Griffeath. <i>Cellular automaton growth on Z2: theorems, examples,
+and problems</i>, 1998. Advances in App. Math 21, 241-304.<br>
+<a href="http://psoup.math.wisc.edu/extras/r1shapes/r1shapes.html">http://psoup.math.wisc.edu/extras/r1shapes/r1shapes.html</a>
+
+<a name="4"></a><p>
+[4] K. Evans. <i>Larger than Life: digital creatures in a family of two-dimensional
+cellular automata</i>, 2001. Discrete Mathematics and Theoretical Computer Science,
+Volume AA, 2001, 177-192<br>
+<a href="http://dmtcs.loria.fr/proceedings/html/dmAA0113.abs.html">http://dmtcs.loria.fr/proceedings/html/dmAA0113.abs.html</a>
+
+<a name="5"></a><p>
+[5] K. Evans, <i>Threshold-range scaling of Life's coherent structures</i>, Physica D 183
+(2003), 45-67.
+
+<a name="6"></a><p>
+[6] D. Griffeath. <i>Primordial Soup Kitchen</i>.<br>
+<a href="http://psoup.math.wisc.edu/kitchen.html">http://psoup.math.wisc.edu/kitchen.html</a>
+
+<a name="7"></a><p>
+[7] K. Evans, <i>Is Bosco's rule universal?</i>, in "Lecture Notes in Computer Science," Vol. 3354,
+ed. Maurice Margenstern. Springer-Verlag GmbH (2005), 188–199. WWW companion page to paper<br>
+<a href="http://www.csun.edu/~kme52026/bosco/bosco.html">http://www.csun.edu/~kme52026/bosco/bosco.html</a>
+
+<a name="8"></a><p>
+[8] K. Evans. <i>Replicators and Larger than Life examples</i>, 2002.
+In "New Constructions in Cellular Automata", eds. David Griffeath and Cris Moore. Oxford University Press.
+
+<a name="9"></a><p>
+[9] MCell rules lexicon for Larger than Life:<br>
+<a href="http://www.mirekw.com/ca/rullex_lgtl.html">http://www.mirekw.com/ca/rullex_lgtl.html</a>
 
 </body>
 </html>

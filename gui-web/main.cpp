@@ -6,8 +6,9 @@
 #include "lifealgo.h"
 #include "qlifealgo.h"
 #include "hlifealgo.h"
-#include "jvnalgo.h"
 #include "generationsalgo.h"
+#include "ltlalgo.h"
+#include "jvnalgo.h"
 #include "ruleloaderalgo.h"
 
 // gui-common
@@ -1406,6 +1407,7 @@ void UpdateMenuItems(const char* id)
         jsTickMenuItem("algo2", currlayer->algtype == 2);
         jsTickMenuItem("algo3", currlayer->algtype == 3);
         jsTickMenuItem("algo4", currlayer->algtype == 4);
+        jsTickMenuItem("algo5", currlayer->algtype == 5);
     
     } else if (menu == "View_menu") {
         if (SelectionExists()) {
@@ -1498,6 +1500,7 @@ void DoMenuItem(const char* id)
     if (item == "algo2") SetAlgo(2); else
     if (item == "algo3") SetAlgo(3); else
     if (item == "algo4") SetAlgo(4); else
+    if (item == "algo5") SetAlgo(5); else
     if (item == "control_setrule") SetRule(); else
     
     // items in View menu:
@@ -1952,7 +1955,7 @@ static void DoFrame()
 
 int EMSCRIPTEN_KEEPALIVE main()
 {
-    SetMessage("This is Golly 0.9 for the web.  Copyright 2016 The Golly Gang.");
+    SetMessage("This is Golly 3.0 for the web.  Copyright 2017 The Golly Gang.");
     InitPaths();                // init tempdir, prefsfile, etc
     MAX_MAG = 5;                // maximum cell size = 32x32
     maxhashmem = 300;           // enough for caterpillar

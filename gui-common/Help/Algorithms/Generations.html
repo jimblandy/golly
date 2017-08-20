@@ -92,5 +92,159 @@ can be found at Mirek Wojtowicz's
 See also the Patterns/Generations folder which contains a number of
 interesting patterns extracted from the MCell pattern collection.
 
+<p><a name="vonNeumann"></a>&nbsp;<br>
+<font size=+1><b>Von Neumann neighborhood</b></font>
+
+<p>
+The above rules use the Moore neighborhood, where each cell has 8 neighbors.
+In the von Neumann neighborhood each cell has only the 4 orthogonal neighbors.
+To specify this neighborhood just append "V" to the usual notation
+and use neighbor counts ranging from 0 to 4.
+
+<p>
+Note that when viewing patterns at scales 1:8 or 1:16 or 1:32, Golly displays
+diamond-shaped icons for rules using the von Neumann neighborhood
+and circular dots for rules using the Moore neighborhood.
+
+<p><a name="hex"></a>&nbsp;<br>
+<font size=+1><b>Hexagonal neighborhood</b></font>
+
+<p>
+Golly can emulate a hexagonal neighborhood on a square grid by ignoring the
+NE and SW corners of the Moore neighborhood so that every cell has 6 neighbors:
+<pre>
+   NW N NE         NW  N
+   W  C  E   ->   W  C  E
+   SW S SE         S  SE
+</pre>
+To specify a hexagonal neighborhood just append "H" to the usual notation
+and use neighbor counts ranging from 0 to 6.
+
+Editing hexagonal patterns in a square grid can be somewhat confusing,
+so to help make things a bit easier Golly displays slanted hexagons
+(in icon mode) at scales 1:8 or 1:16 or 1:32.
+
+<p><a name="nontotal"></a>&nbsp;<br>
+<font size=+1><b>Non-totalistic rules</b></font>
+
+<p>
+All of the above rules are classified as "totalistic" because the outcome depends only
+on the total number of neighbors.  Golly also supports non-totalistic rules for Moore
+neighborhoods &mdash;
+such rules depend on the configuration of the neighbors, not just their counts.
+
+<p>
+The syntax used to specify a non-totalistic rule is based on a notation developed by
+Alan Hensel.  It's very similar to the above notation but uses
+various lowercase letters to represent unique neighborhoods.
+One or more of these letters can appear after an appropriate digit
+(which must be from 1 to 7, depending on the letters).
+The usual counts of 0 and 8 can still be used without letters since there is no way
+to constrain 0 or 8 neighbors.
+
+Letter strings can get quite long, so it's possible to specify their inverse
+using a "-" between the digit and the letters.
+
+<p>
+The following table shows which letters correspond to which neighborhoods.
+The central cell in each neighborhood is colored red, corner neighbors are green,
+edge neighbors are yellow and ignored neighbors are black:
+
+<p>
+<img src="hensel.png">
+
+<p>
+The table makes it clear which digits are allowed before which letters.
+For example, /1a/8 and /5z/8 are both invalid rules.
+
+<p>
+Golly uses the following steps to convert a given non-totalistic rule into
+its canonical version:
+
+<p>
+<ol>
+<li>
+An underscore can be used instead of a slash, but the canonical version
+always uses a slash.
+<li>
+The lowercase letters are listed in alphabetical order.
+For example, /2nic/8 will become /2cin/8.
+<li>
+A given rule is converted to its shortest equivalent version.
+For example, /2ceikn/8 will become /2-a/8.
+If equivalent rules have the same length then the version without the minus sign
+is preferred.  For example, /4-qjrtwz/8 will become /4aceikny/8.
+<li>
+It's possible for a non-totalistic rule to be converted to a totalistic rule.
+If you supply all the letters for a specific neighbor count then the canonical
+version removes the letters.  For example, /2aceikn3/8 will become /23/8.
+(Note that /2-3/8 is equivalent to /2aceikn3/8 so will also become /23/8.)
+<li>
+If you supply a minus sign and all the letters for a specific neighbor count
+then the letters <i>and</i> the neighbor count are removed.
+For example, /2-aceikn3/8 will become /3/8.
+</ol>
+
+<p><a name="map"></a>&nbsp;<br>
+<font size=+1><b>MAP rules</b></font>
+
+<p>
+The totalistic and non-totalistic rules above are only a small subset of all possible
+rules for a 2-state Moore neighborhood. The Moore neighborhood has 9 cells which gives
+512 (2^9) possible combinations of cells. For each of these combinations you define whether
+the output cell is dead or alive, giving a string of 512 digits, each being 0 (dead) or 1 (alive).
+<pre>
+   0 1 2
+   3 4 5  ->  4'
+   6 7 8
+</pre>
+The first few entries for Conway's Life in Generations form (23/3/2) in this format are as follows:
+<pre>
+   Cell 0 1 2 3 4 5 6 7 8  ->  4'
+   0    0 0 0 0 0 0 0 0 0  ->  0
+   1    0 0 0 0 0 0 0 0 1  ->  0
+   2    0 0 0 0 0 0 0 1 0  ->  0
+   3    0 0 0 0 0 0 0 1 1  ->  0
+   4    0 0 0 0 0 0 1 0 0  ->  0
+   5    0 0 0 0 0 0 1 0 1  ->  0
+   6    0 0 0 0 0 0 1 1 0  ->  0
+   7    0 0 0 0 0 0 1 1 1  ->  1   B3
+   8    0 0 0 0 0 1 0 0 0  ->  0
+   9    0 0 0 0 0 1 0 0 1  ->  0
+   10   0 0 0 0 0 1 0 1 0  ->  0
+   11   0 0 0 0 0 1 0 1 1  ->  1   B3
+   ...
+   19   0 0 0 0 1 0 0 1 1  ->  1   S2
+   ...
+   511  1 1 1 1 1 1 1 1 1  ->  0
+</pre>
+This creates a string of 512 binary digits:
+<pre>
+   00000001000100000001...0
+</pre>
+This binary string is then base64 encoded for brevity giving a string of 86 characters:
+<pre>
+   ARYXfhZofugWaH7oaIDogBZofuhogOiAaIDogIAAgAAWaH7oaIDogGiA6ICAAIAAaIDogIAAgACAAIAAAAAAAA
+</pre>
+By prefixing this string with "MAP" the syntax of the rule becomes:
+<pre>
+   rule = MAP&lt;base64_string&gt/&lt;states&gt;
+</pre>
+So, Conway's Life in Generations (23/3/2) form encoded as a MAP rule is:
+<pre>
+   rule = MAPARYXfhZofugWaH7oaIDogBZofuhogOiAaIDogIAAgAAWaH7oaIDogGiA6ICAAIAAaIDogIAAgACAAIAAAAAAAA/2
+</pre>
+Given each MAP rule has 512 bits and there are 255 different Generations states (2 to 256) this
+leads to 255*2^512 (roughly 3.42x10^156) unique rules.
+Totalistic rules are a subset of isotropic non-totalistic rules which are a subset of MAP rules.
+<p>
+MAP rules can also be specified for Hexagonal and von Neumann neighborhoods.
+<p>
+Hexagonal neighborhoods have 7 cells (center plus 6 neighbors) which gives 128 (2^7) possible combinations of
+cells. These encode into 22 base64 characters.
+<p>
+Von Neumann neighborhoods have 5 cells (center plus 4 neighbors) which gives 32 (2^5) possible combinations of
+cells. These encode into 6 base 64 characters.
+
 </body>
 </html>
