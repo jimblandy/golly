@@ -112,7 +112,9 @@ CFLAGS = -Izlib -Wall -Wextra -Wno-unused-parameter -Wno-implicit-function-decla
 CXXFLAGS = -Izlib -I. -I../gollybase -I../gui-common -I../gui-common/MiniZip \
     -DVERSION=3.0 -DZLIB -DWEB_GUI -Wall -Wextra -Wno-unused-parameter -O2
 
-# note that using -O2 results in a much smaller golly.js and no .map file
+# NOTE 1: -O2 results in a much smaller golly.js and no .map file
+# NOTE 2: replace -O2 with the following settings to catch errors:
+# -s ASSERTIONS=2 -s SAFE_HEAP=1
 
 TARGET = golly.html
 
@@ -133,7 +135,7 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
     --preload-file ../gui-common/Help/algos.html@/Help/algos.html \
     --preload-file ../gui-common/Help/Algorithms@/Help/Algorithms \
     --preload-file ../gui-common/Help/Lexicon@/Help/Lexicon \
-    -s TOTAL_MEMORY=300000000 \
+    -s TOTAL_MEMORY=320*1024*1024 \
     -s EXPORTED_FUNCTIONS="[ '_ClearStatus', '_NewUniverse', '_ResizeCanvas', \
     '_SetViewport', '_StartStop', '_Next', '_Step', '_GoSlower', '_GoFaster', '_StepBy1', \
     '_Undo', '_Redo', '_Fit', '_ZoomOut', '_ZoomIn', '_Scale1to1', '_Reset', \
@@ -147,6 +149,7 @@ $(TARGET): $(OBJECTS) jslib.js shell.html
     -o $@ $(LDFLAGS) $(OBJECTS)
 
 # better to use -s ALLOW_MEMORY_GROWTH=1 instead of setting TOTAL_MEMORY???
+# (note that newer versions of Emscripten require TOTAL_MEMORY to be multiple of 16MB)
 
 clean:
 	$(RM) $(OBJECTS) $(TARGET) golly.js golly.data
