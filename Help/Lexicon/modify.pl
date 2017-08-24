@@ -7,7 +7,7 @@ for $file (@files) {
    $f = join('', @f) ;
    for (($f)) {
       s/<body>/<body bgcolor="#FFFFCE">/g ;
-      s!<center><a HREF="http://www.argentum.freeserve.co.uk/lex_home.htm">Life Lexicon Home Page</a>!<center><A HREF="lex.htm">Introduction</A> \| <A HREF="lex_bib.htm">Bibliography</A></center>!g ;
+      s!<center><a HREF="lex_home.htm">Life Lexicon Home Page</a>!<center><A HREF="lex.htm">Introduction</A> \| <A HREF="lex_bib.htm">Bibliography</A></center>!g ;
       s|<center><b class=l>Life Lexicon</b></center>||g ;
       s:^<A HREF="lex.htm">Introduction</A> \|:<font size=-1><b>:gm ;
       s:^<a href="lex.htm">Introduction</a> \|:<font size=-1><b>:gm ;
