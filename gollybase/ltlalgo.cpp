@@ -29,6 +29,14 @@ static const int MAXNCOLS = 2 * MAXRANGE + 1;
 // range is 1 or 2, similar when 5, but much faster when 10 or above
 #define SMALL_NN_RANGE 4
 
+#if EMSCRIPTEN
+    // if building webGolly we need to force LLVM to emit unaligned loads/stores
+    // in a few places where we access grid memory as an array of unsigned ints
+    typedef unsigned int __attribute__((aligned(1))) unaligned_uint;
+#else
+    typedef unsigned int unaligned_uint;
+#endif
+
 // -----------------------------------------------------------------------------
 
 // Create a new empty universe.
@@ -87,14 +95,14 @@ void ltlalgo::create_grids(int wd, int ht)
 
     // allocate memory for grid
     int offset = border * outerwd + border;
-    outergrid1 = (unsigned char*) calloc(outerbytes, sizeof(*outergrid1));
+    outergrid1 = (unsigned char*) calloc(outerbytes, sizeof(unsigned char));
     if (outergrid1 == NULL) lifefatal("Not enough memory for LtL grid!");
     // point currgrid to top left non-border cells within outergrid1
     currgrid = outergrid1 + offset;
 
     // if using fast_Moore or fast_Neumann we need to allocate outergrid2
     if (colcounts == NULL) {
-        outergrid2 = (unsigned char*) calloc(outerbytes, sizeof(*outergrid2));
+        outergrid2 = (unsigned char*) calloc(outerbytes, sizeof(unsigned char));
         if (outergrid2 == NULL) lifefatal("Not enough memory for LtL grids!");
         // point nextgrid to top left non-border cells within outergrid2
         nextgrid = outergrid2 + offset;
@@ -685,11 +693,9 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
     }
 
     // process any 4 cell chunks
-    unsigned int *lcellptr = (unsigned int*)cellptr;
-    unsigned int value;
+    unaligned_uint *lcellptr = (unaligned_uint*)cellptr;
     for (j = 0; j < chunks; j++) {
-        value = *lcellptr++;
-        if (value) {
+        if (*lcellptr++) {
             rowcount += *cellptr++;
             *ccptr++ = rowcount;
             rowcount += *cellptr++;
@@ -726,13 +732,12 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
             rowcount += *cellptr++;
             *ccptr++ = *prevptr++ + rowcount;
         }
-        lcellptr = (unsigned int*)cellptr;
+        lcellptr = (unaligned_uint*)cellptr;
 
         // process any 4 cell chunks
         for (j = 0; j < chunks; j++) {
-            value = *lcellptr++;
             // check if any of the cells are alive
-            if (value) {
+            if (*lcellptr++) {
                 rowcount += *cellptr++;
                 *ccptr++ = *prevptr++ + rowcount;
                 rowcount += *cellptr++;
@@ -1122,11 +1127,9 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
     }
 
     // process any 4 cell chunks
-    unsigned int *lcellptr = (unsigned int*)cellptr;
-    unsigned int value;
+    unaligned_uint *lcellptr = (unaligned_uint*)cellptr;
     for (j = 0; j < chunks; j++) {
-        value = *lcellptr++;
-        if (value) {
+        if (*lcellptr++) {
             rowcount += *cellptr++;
             *ccptr++ = rowcount;
             rowcount += *cellptr++;
@@ -1162,13 +1165,12 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
             rowcount += *cellptr++;
             *ccptr++ = *prevptr++ + rowcount;
         }
-        lcellptr = (unsigned int*)cellptr;
+        lcellptr = (unaligned_uint*)cellptr;
 
         // process any 4 cell chunks
         for (j = 0; j < chunks; j++) {
-            value = *lcellptr++;
             // check if any of the cells are alive
-            if (value) {
+            if (*lcellptr++) {
                 rowcount += *cellptr++;
                 *ccptr++ = *prevptr++ + rowcount;
                 rowcount += *cellptr++;
