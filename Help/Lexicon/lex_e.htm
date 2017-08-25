@@ -5,6 +5,7 @@
 <meta name="author" content="Stephen A. Silver">
 <meta name="description" content="Part of Stephen Silver's Life Lexicon.">
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
 <link rel="begin" type="text/html" href="lex.htm" title="Life Lexicon">
 <base target="_top">
 </head>
@@ -67,8 +68,8 @@ on a glider.
 OO.......
 </a></pre></td></tr></table></center>
 <p><a name=eater1>:</a><b>eater1</b> (p1) Usually simply called an <a href="#eater">eater</a>, and also called a
-fishhook. Its ability to eat various objects was discovered by
-Bill Gosper in 1971.
+fishhook. Its ability to eat various objects was discovered by Bill
+Gosper in 1971.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OO..
 O.O.
@@ -78,12 +79,8 @@ O.O.
 <p><a name=eater2>:</a><b>eater2</b> (p1) This <a href="#eater">eater</a> was found by Dave Buckingham in the 1970s.
 Mostly it works like the ordinary eater (see <a href="#eater1">eater1</a>) but with two
 slight differences that make it useful despite its size: it takes
-longer to recover from each bite and it acts like an eater in two
-directions. The first property means that, among other things, it
-can eat a <a href="lex_g.htm#glider">glider</a> in a position that would destroy a fishhook. This
-novel glider-eating action is occasionally of use in itself, and
-combined with the symmetry means that an eater2 can eat gliders along
-four different paths.
+longer to recover from each bite, and it can eat objects appearing at
+two different positions.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ...O.OO
 .OOO.OO
@@ -93,19 +90,37 @@ O......
 ...O.O.
 ....O..
 </a></pre></td></tr></table></center>
-The following eater2 variant (Stephen Silver, May 1998) can be useful
-for obtaining smaller <a href="lex_b.htm#boundingbox">bounding boxes</a>. A more compact variant with
-the same purpose can be seen under <a href="lex_g.htm#gliderless">gliderless</a>.
+The first property means that, among other things, it can eat a
+<a href="lex_g.htm#glider">glider</a> in a position that would destroy a fishhook. This novel
+glider-eating action is occasionally of use in itself, and combined
+with the symmetry means that an eater2 can eat gliders traveling
+along four adjacent glider <a href="lex_l.htm#lane">lanes</a>, as shown below.
+<p>The following eater2 variant (Stephen Silver, May 1998) can be
+useful for obtaining smaller <a href="lex_b.htm#boundingbox">bounding boxes</a>. A more compact
+variant with the same purpose can be seen under <a href="lex_g.htm#gliderless">gliderless</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
-OO....
-O.....
-..O.OO
-.OO.OO
-......
-.OO.OO
-..O.O.
-..O.O.
-...O..
+.O.................
+..O................
+OOO................
+...................
+....O..............
+.....O.............
+...OOO.............
+...................
+.......O...........
+........O..........
+......OOO..........
+...................
+..........O........
+...........O.....OO
+.........OOO......O
+.............OO.O..
+.............OO.OO.
+...................
+.............OO.OO.
+..............O.O..
+..............O.O..
+...............O...
 </a></pre></td></tr></table></center>
 <p><a name=eater3>:</a><b>eater3</b> (p1) This large symmetric <a href="#eater">eater</a>, found by Dave Buckingham,
 has a very different eating action from the <a href="#eater1">eater1</a> and <a href="#eater2">eater2</a>.
@@ -126,9 +141,9 @@ O.O.O.....O.
 ........O...
 </a></pre></td></tr></table></center>
 <p><a name=eater4>:</a><b>eater4</b> (p1) Another <a href="#eater">eater</a> by Dave Buckingham, which he found in
-1971, but did not recognize as an eater until 1975 or 1976. It
-can't eat <a href="lex_g.htm#glider">gliders</a>, but it can be used for various other purposes.
-The four NE-most centre cells regrow in a few generations after being
+1971, but did not recognize as an eater until 1975 or 1976. It can't
+eat <a href="lex_g.htm#glider">gliders</a>, but it can be used for various other purposes. The
+four NE-most centre cells regrow in a few generations after being
 destroyed by taking a bite out of something.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ...OO.........
@@ -145,6 +160,33 @@ O..OO.........
 .........O....
 .........O.O..
 ..........OO..
+</a></pre></td></tr></table></center>
+<p><a name=eater5>:</a><b>eater5</b> (p1) A compound eater that can eat gliders coming from two
+different directions. Also called the tub-with-tail eater (TWIT), it
+is often placed along the edges of <a href="lex_g.htm#gliderlane">glider lanes</a> to suppress
+unwanted gliders in <a href="lex_c.htm#conduit">conduits</a>. Below is the standard form, a compact
+form with a <a href="lex_l.htm#longhook">long hook</a>, and an often-useful conjoined form found
+with <a href="lex_b.htm#bellman">Bellman</a>. The <a href="lex_s.htm#sidesnagger">sidesnagger</a> is a Spartan constellation that
+has a similar glider-absorbing function, using a <a href="lex_l.htm#loaf">loaf</a>. See also
+<a href="lex_1.htm#a-7x9eater">7x9 eater</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.O.........O.........O...........
+..O.........O.........O..........
+OOO.......OOO.......OOO..........
+.................................
+......O.........O.........O......
+.....O.........O.........O.......
+.....OOO.......OOO.......OOO.....
+.................................
+..........OO.....................
+......O...OO....O...OO....O...OO.
+.....O.O.......O.O...O...O.O...O.
+....O.O.......O.O...O....OO...O..
+....O.........O....O.........O...
+...OO........OO.....OOO..OOOOO.O.
+......................O..O....O.O
+...........................O..O.O
+..........................OO...O.
 </a></pre></td></tr></table></center>
 <p><a name=eaterblockfrob>:</a><b>eater/block frob</b> (p4) Found by Dave Buckingham in 1976 or earlier.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -173,11 +215,10 @@ O.........
 .O......
 OO......
 </a></pre></td></tr></table></center>
-<p><a name=eaters>:</a><b>eaters +</b> = <a href="lex_f.htm#frenchkiss">French kiss</a>
 <p><a name=eatersplus>:</a><b>eaters plus</b> = <a href="lex_f.htm#frenchkiss">French kiss</a>
 <p><a name=ecologist>:</a><b>ecologist</b> (<i>c</i>/2 orthogonally, p20) This consists of the classic
-<a href="lex_p.htm#puffertrain">puffer train</a> with a <a href="lex_l.htm#lwss">LWSS</a> added to suppress the debris. See
-also <a href="lex_s.htm#spacerake">space rake</a>.
+<a href="lex_p.htm#puffertrain">puffer train</a> with a <a href="lex_l.htm#lwss">LWSS</a> added to suppress the debris. See also
+<a href="lex_s.htm#spacerake">space rake</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OOOO.....OO........
 O...O...OO.OO......
@@ -199,9 +240,9 @@ O..................
 .O..O..............
 </a></pre></td></tr></table></center>
 <p><a name=edgerepairspaceship>:</a><b>edge-repair spaceship</b> A <a href="lex_s.htm#spaceship">spaceship</a> which has an edge that possesses
-no <a href="lex_s.htm#spark">spark</a> and yet is able to <a href="lex_p.htm#perturb">perturb</a> things because of its
-ability to repair certain types of damage to itself. The most
-useful examples are the following two small p3 <i>c</i>/3 spaceships:
+no <a href="lex_s.htm#spark">spark</a> and yet is able to <a href="lex_p.htm#perturb">perturb</a> things because of its ability
+to repair certain types of damage to itself. The most useful
+examples are the following two small p3 <a href="lex_c.htm#c3spaceship">c/3 spaceships</a>:
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..................................O.....
 ........O.......................OOO.OOO.
@@ -212,8 +253,8 @@ O...O.......O..O........O...O...........
 .O.O..O..................O.O..O.........
 .....O.......................O..........
 </a></pre></td></tr></table></center>
-These were found by David Bell in 1992, but the usefulness of
-the edge-repair property wasn't recognised until July 1997. The
+These were found by David Bell in 1992, but the usefulness of the
+edge-repair property wasn't recognised until July 1997. The
 following diagram (showing an edge-repair spaceship deleting a
 <a href="lex_h.htm#herschel">Herschel</a>) demonstrates the self-repairing action.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -225,8 +266,8 @@ OOO......OOOO.....O..OO.
 .........O.O..O.........
 .............O..........
 </a></pre></td></tr></table></center>
-In October 2000, David Bell found that a <a href="lex_t.htm#ttetromino">T-tetromino</a> component of
-a <i>c</i>/4 spaceship can also be self-repairing. Stephen Silver noticed
+In October 2000, David Bell found that a <a href="lex_t.htm#ttetromino">T-tetromino</a> component of a
+<a href="lex_c.htm#c4spaceship">c/4 spaceship</a> can also be self-repairing. Stephen Silver noticed
 that it could be used to delete beehives and, in November 2000, found
 the smallest known <i>c</i>/4 spaceship with this edge-repair component - in
 fact, two copies of the component:
@@ -250,11 +291,11 @@ O..O.........................
 O..O.........................
 .OO..........................
 </a></pre></td></tr></table></center>
-<p><a name=edgeshooter>:</a><b>edge shooter</b> A <a href="lex_g.htm#gun">gun</a> which fires its gliders (or whatever) right
-at the edge of the pattern, so that it can be used to fire them
-closely parallel to others. This is useful for constructing
-complex guns. Compare <a href="lex_g.htm#gliderpusher">glider pusher</a>, which can in fact be used
-for making edge shooters.
+<p><a name=edgeshooter>:</a><b>edge shooter</b> A <a href="lex_g.htm#gun">gun</a> which fires its gliders (or whatever) right at
+the edge of the pattern, so that it can be used to fire them closely
+parallel to others. This is useful for constructing complex guns.
+Compare <a href="lex_g.htm#gliderpusher">glider pusher</a>, which can in fact be used for making edge
+shooters.
 <p>The following diagram shows a p46 edge shooter found by Paul
 Callahan in June 1994.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -291,20 +332,31 @@ OO............OO..O....OO.................
 ...............................OO.....OO..
 ...............................OO.....OO..
 </a></pre></td></tr></table></center>
-<p><a name=edgespark>:</a><b>edge spark</b> A <a href="lex_s.htm#spark">spark</a> at the side of a <a href="lex_s.htm#spaceship">spaceship</a> that can be
-used to <a href="lex_p.htm#perturb">perturb</a> things as the spaceship passes by.
+<p><a name=edgespark>:</a><b>edge spark</b> A <a href="lex_s.htm#spark">spark</a> at the side of a <a href="lex_s.htm#spaceship">spaceship</a> that can be used to
+<a href="lex_p.htm#perturb">perturb</a> things as the spaceship passes by.
 <p><a name=edgesparker>:</a><b>edge sparker</b> A <a href="lex_s.htm#spaceship">spaceship</a> that produces one or more <a href="#edgespark">edge sparks</a>.
-<p><a name=egg>:</a><b>egg</b> = <a href="lex_n.htm#nonspark">non-spark</a>
+<p><a name=edgy>:</a><b>edgy</b> In <a href="lex_s.htm#slowsalvo">slow salvo</a> terminology, an edgy glider construction recipe
+is one that places its final product at or very near the edge of its
+<a href="lex_c.htm#constructionenvelope">construction envelope</a>.
+<p><a name=egg>:</a><b>egg</b> = <a href="lex_n.htm#nonspark">non-spark</a>. This term is no longer in use.
 <p><a name=eheptomino>:</a><b>E-heptomino</b> Name given by Conway to the following <a href="lex_h.htm#heptomino">heptomino</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .OOO
 OO..
 .OO.
 </a></pre></td></tr></table></center>
-<p><a name=elbowladder>:</a><b>elbow ladder</b> Scot Ellison's name for the type of pattern he
-created in which one or more <a href="lex_g.htm#glider">gliders</a> shuttle back and forth (using
-the <a href="lex_k.htm#kickbackreaction">kickback reaction</a>) deleting the output gliders from a pair of
+<p><a name=elbow>:</a><b>elbow</b> Depending on context, this term may refer to a <a href="lex_s.htm#signalelbow">signal elbow</a>
+or a <a href="lex_c.htm#constructionelbow">construction elbow</a>. See also <a href="#elbowladder">elbow ladder</a>.
+<p><a name=elbowladder>:</a><b>elbow ladder</b> Scot Ellison's name for the type of pattern he created
+in which one or more <a href="lex_g.htm#glider">gliders</a> shuttle back and forth (using the
+<a href="lex_k.htm#kickbackreaction">kickback reaction</a>) deleting the output gliders from a pair of
 <a href="lex_s.htm#slidegun">slide guns</a>.
+<p><a name=elbowoperation>:</a><b>elbow operation</b> A recipe, usually a <a href="lex_s.htm#salvo">salvo</a> of <a href="lex_g.htm#glider">gliders</a> traveling on
+one or more <a href="lex_c.htm#constructionlane">construction lanes</a>, that collides with an <a href="#elbow">elbow</a>
+<a href="lex_c.htm#constellation">constellation</a> and performs one of the standard transformations on
+it -- <a href="lex_p.htm#push">push</a>, <a href="lex_p.htm#pull">pull</a>, or <a href="lex_f.htm#fire">fire</a> for simple construction arms, along
+with possible construct, duplicate-elbow, or delete-elbow ops for
+more complicated systems. See <a href="lex_c.htm#constructionelbow">construction elbow</a>.
 <p><a name=electricfence>:</a><b>electric fence</b> (p5) A stabilization of <a href="lex_a.htm#ants">ants</a>. Dean Hickerson,
 February 1993.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -324,6 +376,20 @@ OO.OO.O.O.OOOOO.....O..................OO...O..O.O.OO.OO..OO.
 ......................................O.O....................
 ......................................OO.....................
 </a></pre></td></tr></table></center>
+<p><a name=elementary>:</a><b>elementary</b> Not reducible to a combination of smaller parts.
+Elementary <a href="lex_s.htm#spaceship">spaceships</a> in particular are usually those found by
+search programs, and they can't be subdivided into smaller
+spaceships, tagalongs, and supporting reactions, as contrasted with
+engineered <a href="lex_m.htm#macrospaceship">macro-spaceships</a>.
+<p><a name=elementaryconduit>:</a><b>elementary conduit</b> A <a href="lex_c.htm#conduit">conduit</a> with no recognizable active signal
+stage besides its input and output. Theoretically an elementary
+conduit may become a composite conduit, if another conduit can be
+found that shares the beginning or end of the conduit in question.
+In practice this happens only rarely, because many of the most likely
+branch points have already been identified: <a href="lex_g.htm#glider">glider</a>, standard *WSS
+<a href="lex_s.htm#spaceship">spaceship</a>, <a href="lex_h.htm#herschel">Herschel</a>, <a href="lex_b.htm#bheptomino">B-heptomino</a>, <a href="lex_r.htm#rpentomino">R-pentomino</a>,
+<a href="lex_p.htm#piheptomino">pi-heptomino</a>, <a href="lex_q.htm#queenbeeshuttle">queen bee shuttle</a>, <a href="lex_c.htm#century">century</a> or <a href="lex_b.htm#bookend">bookend</a>, <a href="lex_d.htm#dove">dove</a>,
+and <a href="lex_w.htm#wing">wing</a>.
 <p><a name=elevener>:</a><b>elevener</b> (p1)
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OO....
@@ -349,16 +415,24 @@ O..OOO...
 periods 57, 58, 59 and 61 are emus. See also <a href="lex_q.htm#quetzal">Quetzal</a>.
 <p><a name=emulator>:</a><b>emulator</b> Any one of three p4 oscillators that produce <a href="lex_s.htm#spark">sparks</a>
 similar to those produced by <a href="lex_l.htm#lwss">LWSS</a>, <a href="lex_m.htm#mwss">MWSS</a> and <a href="lex_h.htm#hwss">HWSS</a>. See
-<a href="lex_l.htm#lwemulator">LW emulator</a>, <a href="lex_m.htm#mwemulator">MW emulator</a> and <a href="lex_h.htm#hwemulator">HW emulator</a>. Larger emulators
-are also possible, but they require stabilizing objects to suppress
-their <a href="lex_n.htm#nonspark">non-sparks</a> and so are of little use. The emulators were
-discovered by Robert Wainwright in June 1980.
+<a href="lex_l.htm#lwemulator">LW emulator</a>, <a href="lex_m.htm#mwemulator">MW emulator</a> and <a href="lex_h.htm#hwemulator">HW emulator</a>. Larger emulators are
+also possible, but they require stabilizing objects to suppress their
+<a href="lex_n.htm#nonspark">non-sparks</a> and so are of little use. The emulators were discovered
+by Robert Wainwright in June 1980.
 <p><a name=engine>:</a><b>engine</b> The active portion of an object (usually a <a href="lex_p.htm#puffer">puffer</a> or <a href="lex_g.htm#gun">gun</a>)
 which is considered to actually produce its output, and which
 generally permits no variation in how it works. The other parts of
 the object are just there to support the engine. For examples, see
 <a href="lex_p.htm#puffertrain">puffer train</a>, <a href="lex_s.htm#schickengine">Schick engine</a>, <a href="lex_b.htm#blinkerpuffer">blinker puffer</a>, <a href="lex_f.htm#frothingpuffer">frothing puffer</a>
 and <a href="lex_l.htm#linepuffer">line puffer</a>.
+<p><a name=engineless>:</a><b>engineless</b> A <a href="lex_r.htm#rake">rake</a> or <a href="lex_p.htm#puffer">puffer</a> which does not contain a specific
+<a href="#engine">engine</a> for its operation. Instead it depends on perturbations of
+gliders or other objects by passing spaceships. The period of such
+objects is often adjustable, and in some cases the speed as well. An
+early example was the creation of <i>c</i>/5 rakes in September 1997, using
+gliders circulating among a convoy of <i>c</i>/5 spaceships. More recently,
+the passing spaceships themselves are also constructed, as in the
+<a href="lex_c.htm#caterloopillar">Caterloopillar</a>.
 <p><a name=enretard>:</a><b>en retard</b> (p3) Found by Dave Buckingham, August 1972.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .....O.....
@@ -397,6 +471,7 @@ O........OO..........
 ...........O..O......
 .............O.......
 </a></pre></td></tr></table></center>
+<p><a name=envelope>:</a><b>envelope</b> See <a href="lex_c.htm#constructionenvelope">construction envelope</a>, <a href="lex_r.htm#reactionenvelope">reaction envelope</a>.
 <p><a name=eureka>:</a><b>Eureka</b> (p30) A <a href="lex_p.htm#prepulsar">pre-pulsar</a> <a href="lex_s.htm#shuttle">shuttle</a> found by Dave Buckingham in
 August 1980. A variant is obtained by shifting the top half two
 spaces to either side.
@@ -414,10 +489,14 @@ O.O....O.......O.O
 .O..............O.
 </a></pre></td></tr></table></center>
 <p><a name=evolutionaryfactor>:</a><b>evolutionary factor</b> For an unstable pattern, the time to
-stabilization divided by the initial <a href="lex_p.htm#population">population</a>. For example,
-the <a href="lex_r.htm#rpentomino">R-pentomino</a> has an evolutionary factor of 220.6, while
-<a href="lex_b.htm#bunnies">bunnies</a> has an evolutionary factor of 1925.777... The term
-is no longer in use.
+stabilization divided by the initial <a href="lex_p.htm#population">population</a>. For example, the
+<a href="lex_r.htm#rpentomino">R-pentomino</a> has an evolutionary factor of 220.6, while <a href="lex_b.htm#bunnies">bunnies</a>
+has an evolutionary factor of 1925.777... The term is no longer in
+use.
+<p><a name=exponentialfilter>:</a><b>exponential filter</b> A toolkit developed by Gabriel Nivasch in 2006,
+enabling the construction of patterns with asymptotic population
+growth matching O((log log ... log(<i>t</i>)) for any number of nested log
+operations. See also <a href="lex_q.htm#quadraticfilter">quadratic filter</a>, <a href="lex_r.htm#recursivefilter">recursive filter</a>.
 <p><a name=exposure>:</a><b>exposure</b> = <a href="lex_u.htm#underpopulation">underpopulation</a>
 <p><a name=extensible>:</a><b>extensible</b> A pattern is said to be extensible if arbitrarily large
 patterns of the same type can be made by repeating parts of the

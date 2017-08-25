@@ -3,15 +3,16 @@
 <head>
 <title>Life Lexicon (Introduction)</title>
 <meta name="Author" content="Stephen A. Silver">
-<meta name="Description" content="Stephen Silver's lexicon of terms used in Conway's Game of Life. Release 25.">
+<meta name="Description" content="Stephen Silver's lexicon of terms used in Conway's Game of Life. Release 26.">
 <meta name="KeyWords" content="John Horton Conway's game of Life lexicon glossary John Conway's Life dictionary encyclopedia">
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
 <base target="_top">
 </head>
 <body bgcolor="#FFFFCE">
 <center><table border="9" cellpadding="9" summary="Title"><tr align="center">
 <td><b class=l>Life Lexicon</b>
-<p>Release 25, 2006 February 28<br>Multipage HTML version
+<p>Release 26, 2017 August 29<br>Multipage HTML version
 </td></tr></table></center>
 <hr>
 <center>
@@ -49,32 +50,33 @@
 <h5 class=g>INTRODUCTION</h5>
 This is a lexicon of terms relating to John Horton Conway's Game of Life.
 It is also available in a single-page HTML version and an ASCII version.
-<p>This lexicon was compiled by Stephen A. Silver - see below for additional credits.
-The latest versions of this lexicon (both HTML and ASCII) should be available from the
-<a href="http://www.conwaylife.com/ref/lexicon">Life Lexicon Home Page</a>.
+<p>This lexicon was originally compiled between 1997 and 2006 by
+Stephen A. Silver, and was updated in 2016-17 by Dave Greene.  See
+below for additional credits.
+<p>The latest versions of this lexicon (both HTML and ASCII)
+should be available from the
+<a href="http://conwaylife.com/ref/lexicon/lex_home.htm" target="_top">Life Lexicon Home Page</a>.
 <h5 class=g>CREDITS</h5>
 The largest single source for the early versions of this lexicon was a
-<a href="http://www.ibiblio.org/lifepatterns/lifep.zip">glossary
-compiled by Alan Hensel</a>
-&#34;with indispensable help from John Conway, Dean Hickerson, David Bell,
-Bill Gosper, Bob Wainwright, Noam Elkies, Nathan Thompson, Harold McIntosh,
-and Dan Hoey&#34;.<p>
-Other sources include the works listed in the <a href="lex_bib.htm">bibliography</a> at the
+<a href="http://www.ibiblio.org/lifepatterns/lifep.zip" target="_top">glossary compiled by Alan Hensel</a>
+&#34;with indispensable help from John Conway, Dean Hickerson, David Bell, Bill Gosper,
+Bob Wainwright, Noam Elkies, Nathan Thompson, Harold McIntosh, and Dan Hoey&#34;.
+<p>Other sources include the works listed in the <a href="lex_bib.htm">bibliography</a> at the
 end of this lexicon, as well as pattern collections by
-<a href="http://www.ibiblio.org/lifepatterns/lifep.zip">Alan Hensel</a>
+<a href="http://www.ibiblio.org/lifepatterns/lifep.zip" target="_top">Alan Hensel</a>
 and
-<a href="ftp://sunsite.unc.edu/pub/Linux/games/amusements/life/dblifelib-2.tgz">David Bell</a>
+<a href="ftp://ftp.ibiblio.org/pub/linux/games/amusements/life/dblifelib-2.tgz">David Bell</a>
 (and especially Dean Hickerson's file <TT>stamp.l</TT> in the latter collection),
 and the web sites of
-<a href="http://home.interserv.com/~mniemiec/lifepage.htm">Mark Niemiec</a>,
-<a href="http://www.radicaleye.com/lifepage/">Paul Callahan</a>,
-<a href="http://wwwhomes.uni-bielefeld.de/achim/gol.html">Achim Flammenkamp</a>,
-<a href="http://members.aol.com/life1ine/life/lifepage.htm">Robert Wainwright</a>
+<a href="http://conwaylife.com/ref/mniemiec/lifepage.htm" target="_top">Mark Niemiec</a>,
+<a href="http://conwaylife.com/ref/pcallahan/lifepage/" target="_top">Paul Callahan</a>,
+<a href="http://wwwhomes.uni-bielefeld.de/achim/gol.html" target="_top">Achim Flammenkamp</a>,
+<a href="https://web.archive.org/web/20071112172439/http://members.aol.com/life1ine/life/lifepage.htm" target="_top">Robert Wainwright</a>
 and
-<a href="http://www.pentadecathlon.com/LifeInfo/LifeInfo.html">Heinrich Koenig</a>.
+<a href="http://www.pentadecathlon.com/" target="_top">Heinrich Koenig</a>.
 Recent releases also use a lot of information from Dean Hickerson's
 header to his 1995
-<a href="http://www.radicaleye.com/DRH/stamps.html">stamp file</a>.
+<a href="http://conwaylife.com/ref/dhickerson/stamps.html" target="_top">stamp file</a>.
 <p>Most of the information on recent results is from the discoverers themselves.
 <p>The following people all provided useful comments on earlier releases
 of this lexicon: David Bell, Nicolay Beluchenko, Johan Bontes, Scot
@@ -82,9 +84,11 @@ Ellison, Nick Gotts, Dave Greene, Alan Hensel, Dean Hickerson, Dieter
 Leithner, Mark Niemiec, Gabriel Nivasch, Andrew Okrasinski, Peter Rott,
 Ken Takusagawa, Andrew Trevorrow and Malcolm Tyrrell.
 <p>The format, errors, use of British English and anything else you
-might want to complain about are by Stephen Silver.
+might want to complain about are by Stephen Silver -- except that for
+post-Version 25 definitions, everything besides the British English
+may well be Dave Greene's fault instead.
 <h5 class=g>COPYING</h5>
-This lexicon is copyright &copy; Stephen Silver, 1997-2005.
+This lexicon is copyright &copy; Stephen Silver, 1997-2016.
 It may be freely copied and/or modified as long as due credit is given.
 This includes not just credit to those who have
 contributed in some way to the present version (see above),
@@ -103,10 +107,10 @@ The diagrams in this lexicon are in a very standard format.
 You should be able to simply copy a pattern, paste it into
 a new file and run it in your favourite Life program.
 If you use
-<a href="http://www.xs4all.nl/~jbontes/">Johan Bontes' Life32</a>,
-<a href="http://www.mirwoj.opus.chelm.pl/ca/index.html">Mirek Wojtowicz' MCell</a>
+<a href="https://github.com/JBontes/Life32/" target="_top">Johan Bontes' Life32</a>,
+<a href="http://psoup.math.wisc.edu/mcell/index.html" target="_top">Mirek Wojtowicz' MCell</a>
 or
-<a href="http://golly.sourceforge.net/">Andrew Trevorrow and Tomas Rokicki's Golly</a>
+<a href="http://golly.sourceforge.net/" target="_top">Andrew Trevorrow and Tomas Rokicki's Golly</a>
 then you can just paste the pattern directly into the Life program.
 I have restricted myself to diagrams of size 64x64 or less.
 <p>Most definitions that have a diagram have also some data in brackets
@@ -126,10 +130,11 @@ David Bell has written articles on two other interesting cellular automata:
 HighLife (which is similar to Life, but has a tiny replicator) and
 Day &amp; Night (which is very different, but exhibits many of the same phenomena).
 These articles can be found on
-<a href="http://www.canb.auug.org.au/~dbell/">his web-site</a>.
+<a href="http://www.canb.auug.org.au/~dbell/" target="_top">his web-site</a>.
 <h5 class=g>ERRORS AND OMISSIONS</h5>
 If you find any errors (including typos) or serious omissions, then please
-let me know.
+email b3s23life@gmail.com with the details.
+As of August 2017 this email address is monitored by Dave Greene.
 <h5 class=g>NAMES</h5>
 When deciding whether to use full or abbreviated forms of forenames
 I have tried, wherever possible, to follow the usage of the person concerned.

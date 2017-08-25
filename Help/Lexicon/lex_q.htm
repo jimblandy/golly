@@ -5,6 +5,7 @@
 <meta name="author" content="Stephen A. Silver">
 <meta name="description" content="Part of Stephen Silver's Life Lexicon.">
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
 <link rel="begin" type="text/html" href="lex.htm" title="Life Lexicon">
 <base target="_top">
 </head>
@@ -45,6 +46,7 @@
 </center>
 <hr>
 <p><a name=q>:</a><b>Q</b> = <a href="#quetzal">Quetzal</a>
+<p><a name=qd>:</a><b>qd</b> Abbreviation for <a href="#quarterdiagonal">quarter diagonal</a>.
 <p><a name=qpentomino>:</a><b>Q-pentomino</b> Conway's name for the following <a href="lex_p.htm#pentomino">pentomino</a>, a
 <a href="lex_t.htm#trafficlight">traffic light</a> <a href="lex_p.htm#predecessor">predecessor</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -61,7 +63,7 @@ O..O.O
 O.O..O
 OO..OO
 </a></pre></td></tr></table></center>
-<p><a name=quadlife>:</a><b>QuadLife</b> A form of <a href="lex_c.htm#colorizedlife">colorized Life</a> in which there are four types of
+<p><a name=quadlife>:</a><b>QuadLife</b> A form of <a href="lex_c.htm#colourisedlife">colourised Life</a> in which there are four types of
 ON cell. A newly-born cell takes the type of the majority of its
 three <a href="lex_p.htm#parentcells">parent cells</a>, or the remaining type if its parent cells are
 all of different types. In areas where there are only two types of
@@ -76,9 +78,40 @@ O.O....
 ....O.O
 .....OO
 </a></pre></td></tr></table></center>
+<p><a name=quadraticfilter>:</a><b>quadratic filter</b> A toolkit developed by Dean Hickerson and Gabriel
+Nivasch in 2006, enabling the construction of patterns with
+asymptotic population growth matching an infinite number of different
+sublinear functions -- namely, O(<i>t</i><sup><i>(</i></sup>1/2<sup><i>n</i></sup>)) for any chosen <i>n</i>. See
+also <a href="lex_e.htm#exponentialfilter">exponential filter</a>, <a href="lex_r.htm#recursivefilter">recursive filter</a>.
+<p><a name=quadraticgrowth>:</a><b>quadratic growth</b> The fastest possible asymptotic rate of population
+growth for any Life pattern -- O(<i>t</i><sup>2</sup>) in big-O notation, where <i>t</i> is
+the number of ticks. The first quadratic-growth pattern found was
+Bill Gosper's <a href="lex_b.htm#breeder">breeder</a>, in 1971; many other types of breeders and
+<a href="lex_s.htm#spacefiller">spacefillers</a> have been constructed since.
+<p>In April 2011, Stephen Silver gave an example of a one-cell-thick
+pattern over a million cells long that exhibited quadratic growth.
+In November 2014, Chris Cain constructed a one-cell-thick pattern
+with a reduced bounding box of 7242x1.
+<p>There are an infinite number of possible growth rates for Life
+patterns, between linear and quadratic growth -- see
+<a href="lex_s.htm#superlineargrowth">superlinear growth</a>.
+<p><a name=quadraticreplicator>:</a><b>quadratic replicator</b> A pattern that fills all or part of the Life
+plane by making copies of itself in a nonlinear way. Small quadratic
+replicators are known in other Life-like rules, but as of January
+2016 no example has been found or constructed in Conway's Life.
+<p><a name=quadraticsawtooth>:</a><b>quadratic sawtooth</b> Any <a href="lex_s.htm#sawtooth">sawtooth</a> pattern with a quadratic envelope,
+or specifically a pattern assembled by Martin Grant in May 2015,
+consisting of two caber tossers with period multipliers for timing
+which activate and deactivate two toggle rake guns. The gliders
+emitted by those rakes annihilate on the diagonal while the rakes are
+eaten by 2<i>c</i>/5 ships. All the rakes and gliders are destroyed before
+the next cycle. See also <a href="lex_o.htm#osqrtlogt">Osqrtlogt</a>.
 <p><a name=quapole>:</a><b>quapole</b> = <a href="#quadpole">quadpole</a>
-<p><a name=quarter>:</a><b>quarter</b> (<i>c</i>/4 diagonally, p4) The following 25-cell <a href="lex_s.htm#spaceship">spaceship</a>, found
-by Jason Summers in September 2000. See also <a href="lex_t.htm#tubstretcher">tubstretcher</a>.
+<p><a name=quarter>:</a><b>quarter</b> (<i>c</i>/4 diagonally, p4) The following <a href="lex_s.htm#spaceship">spaceship</a>, found by
+Jason Summers in September 2000. The name is due to the 25-cell
+minimum population. This is the smallest known <a href="lex_c.htm#c4spaceship">c/4 spaceship</a> other
+than the <a href="lex_g.htm#glider">glider</a>. This spaceship can also be used to make the
+smallest known <a href="lex_t.htm#tubstretcher">tubstretcher</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ........OO...
 .......OO....
@@ -93,6 +126,11 @@ OO.....O.....
 ....OO..O....
 ....OO.......
 </a></pre></td></tr></table></center>
+<p><a name=quarterdiagonal>:</a><b>quarter diagonal</b> A unit of measurement sometimes used for diagonal
+distances, especially for <a href="lex_s.htm#slowsalvo">slow salvo</a> glider <a href="lex_l.htm#lane">lanes</a>. One advantage
+of measurement in quarter diagonals is that gliders travel diagonally
+at 1qd/tick, so that the same integer value can serve as either a
+time or a diagonal distance measurement.
 <p><a name=quasar>:</a><b>quasar</b> (p3) Found by Robert Wainwright, August 1971. See <a href="lex_p.htm#pulsar">pulsar</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..........OOO...OOO..........
@@ -128,10 +166,10 @@ O....O.O....O...O....O.O....O
 <p><a name=queenbee>:</a><b>queen bee</b> See <a href="#queenbeeshuttle">queen bee shuttle</a>.
 <p><a name=queenbeeshuttle>:</a><b>queen bee shuttle</b> (p30) Found by Bill Gosper in 1970. There are a
 number of ways to stabilize the ends. Gosper originally stabilized
-shuttles against one another in a square of eight shuttles.
-Two simpler methods are shown here; for a third see <a href="lex_b.htm#buckaroo">buckaroo</a>.
-The queen bee shuttle is the basis of all known <a href="lex_t.htm#true">true</a> p30 <a href="lex_g.htm#gun">guns</a>
-(see <a href="lex_g.htm#gosperglidergun">Gosper glider gun</a>).
+shuttles against one another in a square of eight shuttles. Two
+simpler methods are shown here; for a third see <a href="lex_b.htm#buckaroo">buckaroo</a>. The queen
+bee shuttle is the basis of all known <a href="lex_t.htm#true">true</a> p30 <a href="lex_g.htm#gun">guns</a> (see
+<a href="lex_g.htm#gosperglidergun">Gosper glider gun</a>).
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .........O............
 .......O.O............
@@ -153,15 +191,15 @@ using a mechanism found by Noam Elkies for this purpose. In October
 <p>Some of the more recent Quetzals are not Herschel loops, but are
 instead short Herschel tracks firing several glider streams all but
 one of which is reflected back to the beginning of the track to
-create a new Herschel. Noam Elkies first had the idea of doing
-this for the p55 case, and Stephen Silver constructed the resulting
-gun shortly after building the original (much larger) p55 Quetzal.
-Jason Summers later built a p54 version, which is more complicated
-because the evenness of the period makes the timing problems
-considerably more difficult.
+create a new Herschel. Noam Elkies first had the idea of doing this
+for the p55 case, and Stephen Silver constructed the resulting gun
+shortly after building the original (much larger) p55 Quetzal. Jason
+Summers later built a p54 version, which is more complicated because
+the evenness of the period makes the timing problems considerably
+more difficult.
 <p><a name=quetzalcoatlus>:</a><b>Quetzalcoatlus</b> A giant flying dinosaur after which Dieter Leithner
-named his p54 gun. Usually abbreviated to <a href="#quetzal">Quetzal</a>, or simply Q
-(as in Q54, Q55, Q56, Q-gun, etc.).
+named his p54 gun. Usually abbreviated to <a href="#quetzal">Quetzal</a>, or simply Q (as
+in Q54, Q55, Q56, Q-gun, etc.).
 <p><a name=quilt>:</a><b>quilt</b> = <a href="lex_s.htm#squaredance">squaredance</a>
 <hr>
 <center>

@@ -5,6 +5,7 @@
 <meta name="author" content="Stephen A. Silver">
 <meta name="description" content="Part of Stephen Silver's Life Lexicon.">
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
 <link rel="begin" type="text/html" href="lex.htm" title="Life Lexicon">
 <base target="_top">
 </head>
@@ -44,64 +45,78 @@
 
 </center>
 <hr>
+<p><a name=uc>:</a><b>UC</b> = <a href="#universalconstructor">universal constructor</a>.
 <p><a name=underpopulation>:</a><b>underpopulation</b> Death of a cell caused by it having fewer than two
 <a href="lex_n.htm#neighbour">neighbours</a>. See also <a href="lex_o.htm#overpopulation">overpopulation</a>.
-<p><a name=unitlifecell>:</a><b>unit Life cell</b> A rectangular pattern, of size greater than 1x1,
-that can simulate Life in the following sense. The pattern
-by itself represents a dead Life cell, and some other pattern
-represents a live Life cell. When the plane is tiled by these
-two patterns (which then represent the state of a whole Life
-universe) they evolve, after a fixed amount of time, into another
-tiling of the plane by the same two patterns which correctly
-represents the Life generation following the one they initially
-represented. It is usual to use capital letters for the simulated
-things, so, for example, for the first known unit Life cell
-(constructed by David Bell in January 1996), one Generation is
-5760 generations, and one Cell is 500x500 cells.
-<p>In December 2005, Jason Summers constructed an analogous unit
-cell for Wolfram's Rule 100, a one-dimensional <a href="lex_c.htm#cellularautomaton">cellular automaton</a>
-that is know be universal.
+<p><a name=unitcell>:</a><b>unit cell</b> See <a href="lex_m.htm#metacell">metacell</a>.
+<p><a name=unitlifecell>:</a><b>unit Life cell</b> A rectangular pattern, of size greater than 1x1, that
+can simulate Life in the following sense. The pattern by itself
+represents a dead Life cell, and some other pattern represents a live
+Life cell. When the plane is tiled by these two patterns (which then
+represent the state of a whole Life universe) they evolve, after a
+fixed amount of time, into another tiling of the plane by the same
+two patterns which correctly represents the Life generation following
+the one they initially represented. It is usual to use capital
+letters for the simulated things, so, for example, for the first
+known unit Life cell (constructed by David Bell in January 1996), one
+Generation is 5760 generations, and one Cell is 500x500 cells.
+<p>In December 2005, Jason Summers constructed an analogous unit cell
+for Wolfram's Rule 110, a one-dimensional <a href="lex_c.htm#cellularautomaton">cellular automaton</a> that
+is known be universal.
+<p><a name=universal>:</a><b>universal</b> See <a href="#universalcomputer">universal computer</a>, <a href="#universalconstructor">universal constructor</a>,
+<a href="#universaltoolkit">universal toolkit</a>.
 <p><a name=universalcomputer>:</a><b>universal computer</b> A computer that can compute anything that is
-computable. (The concept of computability can be defined in terms
-of Turing machines, or by Church's lambda calculus, or by a number
-of other methods, all of which can be shown to lead to equivalent
-definitions.) The relevance of this to Life is that both Bill
-Gosper and John Conway proved early on that it is possible to
-construct a universal computer in the Life universe. (To prove
-the universality of a <a href="lex_c.htm#cellularautomaton">cellular automaton</a> with simple rules was
-in fact Conway's aim in Life right from the start.) Conway's proof
-is outlined in <a href="lex_w.htm#winningways">Winning Ways</a>, and also in <a href="lex_t.htm#therecursiveuniverse">The Recursive Universe</a>.
+computable. (The concept of computability can be defined in terms of
+Turing machines, or by Church's lambda calculus, or by a number of
+other methods, all of which can be shown to lead to equivalent
+definitions.) The relevance of this to Life is that both Bill Gosper
+and John Conway proved early on that it is possible to construct a
+universal computer in the Life universe. (To prove the universality
+of a <a href="lex_c.htm#cellularautomaton">cellular automaton</a> with simple rules was in fact Conway's aim
+in Life right from the start.) Conway's proof is outlined in
+<a href="lex_w.htm#winningways">Winning Ways</a>, and also in <a href="lex_t.htm#therecursiveuniverse">The Recursive Universe</a>.
 <p>Until recently, no universal Life computer had ever been built in
-practice, because it would be enormous, even with the improvements
-that have been devised since those early proofs. In April 2000,
-Paul Rendell completed a Turing machine construction (described
-in <a href="http://www.cs.ualberta.ca/~bulitko/F02/papers/tm_words.pdf">http://www.cs.ualberta.ca/~bulitko/F02/papers/tm_words.pdf</a>).
+practice In April 2000, Paul Rendell completed a Turing machine
+construction (see <a href="http://rendell-attic.org/gol/tm.htm">http://rendell-attic.org/gol/tm.htm</a> for details).
 This, however, has a finite tape, as opposed to the infinite tape of
 a true Turing machine, and is therefore not a universal computer.
-But in November 2002, Paul Chapman announced the construction
-of a universal computer, details of which can be found at
-<a href="http://www.igblan.free-online.co.uk/igblan/ca/">http://www.igblan.free-online.co.uk/igblan/ca/</a>. This is
-a universal register machine based around Dean Hickerson's
+But in November 2002, Paul Chapman announced the construction of a
+universal computer, see
+<a href="http://www.igblan.free-online.co.uk/igblan/ca/">http://www.igblan.free-online.co.uk/igblan/ca/</a>. This is a universal
+register machine based around Dean Hickerson's
 <a href="lex_s.htm#slidingblockmemory">sliding block memory</a>.
+<p>In 2009 Adam P. Goucher constructed a programmable <a href="lex_s.htm#spartan">Spartan</a>
+universal computer/constructor pattern using stable <a href="lex_h.htm#herschel">Herschel</a>
+circuitry. It included memory tapes and registers capable of holding
+a simple universal instruction set and program data, and also a
+minimal <a href="lex_s.htm#singlearm">single-arm</a> universal constructor. Its size meant that it
+was extremely impractical to program it to be <a href="lex_s.htm#selfconstructing">self-constructing</a>,
+though this was theoretically possible -- at least if the escape of
+large numbers of gliders could be allowed as a side effect.
+<p>In February 2010, Paul Rendell completed a universal Turing machine
+design with an unlimited tape, as described in his thesis at
+<a href="http://eprints.uwe.ac.uk/22323/1/thesis.pdf">http://eprints.uwe.ac.uk/22323/1/thesis.pdf</a>.
+<p>In 2016 Nicolas Loizeau ("Coban") completed a Life pattern
+emulating a complete 8-bit programmable computer.
 <p>See also <a href="#universalconstructor">universal constructor</a>.
 <p><a name=universalconstructor>:</a><b>universal constructor</b> A pattern that is capable of constructing
 almost any pattern that has a <a href="lex_g.htm#glidersynthesis">glider synthesis</a>. This definition is
 a bit vague. A precise definition seems impossible because it has
-not been proved that all possible glider fleets are constructible.
-In any case, a universal constructor ought to be able to construct
+not been proved that all possible glider fleets are constructible. In
+any case, a universal constructor ought to be able to construct
 itself in order to qualify as such. An outline of Conway's proof
 that such a pattern exists can be found in <a href="lex_w.htm#winningways">Winning Ways</a>, and also
-in <a href="lex_t.htm#therecursiveuniverse">The Recursive Universe</a>. The key mechanism for the production
-of gliders with any given path and timing is known as side-tracking,
-and is based on the <a href="lex_k.htm#kickbackreaction">kickback reaction</a>. A universal constructor
-designed in this way can also function as a universal destructor
-- it can delete almost any pattern that can be deleted by gliders.
+in <a href="lex_t.htm#therecursiveuniverse">The Recursive Universe</a>. The key mechanism for the production of
+gliders with any given path and timing is known as side-tracking, and
+is based on the <a href="lex_k.htm#kickbackreaction">kickback reaction</a>. A universal constructor
+designed in this way can also function as a universal destructor - it
+can delete almost any pattern that can be deleted by gliders.
 <p>In May 2004, Paul Chapman and Dave Greene produced a prototype
 programmable universal constructor. This is able to construct
-objects by means of <a href="lex_s.htm#slowgliderconstruction">slow glider constructions</a>. It likely that
-it could be programmed to be construct itself, but the necessary
-program would be very large; moreover an additional mechanism would
-be needed in order to copy the program.
+objects by means of <a href="lex_s.htm#slowgliderconstruction">slow glider constructions</a>. It likely that it
+could be programmed to be construct itself, but the necessary program
+would be very large; moreover an additional mechanism would be needed
+in order to copy the program.
 <p>A universal constructor is most useful when attached to a
 <a href="#universalcomputer">universal computer</a>, which can be programmed to control the
 constructor to produce the desired pattern of gliders. In what
@@ -111,9 +126,9 @@ this computer.
 theoretical consequences.
 <p>For example, the constructor could be programmed to make copies of
 itself. This is a <a href="lex_r.htm#replicator">replicator</a>.
-<p>The constructor could even be programmed to make just one copy
-of itself translated by a certain amount and then delete itself.
-This would be a (very large, very high period) <a href="lex_s.htm#spaceship">spaceship</a>. Any
+<p>The constructor could even be programmed to make just one copy of
+itself translated by a certain amount and then delete itself. This
+would be a (very large, very high period) <a href="lex_s.htm#spaceship">spaceship</a>. Any
 translation is possible (except that it must not be too small), so
 that the spaceship could travel in any direction. It could also
 travel slower than any given speed, since we could program it to
@@ -124,15 +139,39 @@ choose for it to leave some debris behind, thus making a <a href="lex_p.htm#puff
 constructor implies the existence of a <a href="lex_s.htm#stable">stable</a> <a href="lex_r.htm#reflector">reflector</a>. This
 proof is not so easy, however, and is no longer of much significance
 now that explicit examples of such reflectors are known.
+<p>Progressively smaller universal-constructor mechanisms have been
+used in the <a href="lex_l.htm#linearpropagator">linear propagator</a>, <a href="lex_s.htm#spiralgrowth">spiral growth</a> pattern, and the
+<a href="lex_d.htm#demonoid">Demonoids</a> and <a href="lex_o.htm#orthogonoid">Orthogonoid</a>.
+<p>Another strange consequence of the existence of universal
+constructors was pointed out by Adam P. Goucher in 2015. Any
+glider-constructible pattern, no matter how large, can be constructed
+with a fixed number of gliders, probably less than ten thousand.
+This can be done by working out a construction recipe for some type
+of <a href="lex_s.htm#slidingblockmemory">sliding block memory</a> with a faraway block, attached to a
+universal constructor. The block's position encodes an integer value
+that can be processed to retrieve as many bits of information as are
+needed to build a :1G seed:. Eventually, after a completely
+unreasonable number of ticks, the seed can be <a href="lex_t.htm#trigger">triggered</a> to produce
+glider salvos which interact to construct the actual target object,
+after sending a self-destruct signal to the sliding block memory
+unit.
 <p><a name=universaldestructor>:</a><b>universal destructor</b> See <a href="#universalconstructor">universal constructor</a>.
 <p><a name=universalregistermachine>:</a><b>universal register machine</b> = <a href="#urm">URM</a>
 <p><a name=universalregulator>:</a><b>universal regulator</b> A <a href="lex_r.htm#regulator">regulator</a> in which the incoming gliders are
-aligned to period 1, that is, they have arbitrary timing (subject
-to some minimum time required for the regulator to recover from the
+aligned to period 1, that is, they have arbitrary timing (subject to
+some minimum time required for the regulator to recover from the
 previous glider).
 <p>Paul Chapman constructed the first universal regulator in March
 2003. It is adjustable, so that the output can be aligned to any
-desired period.
+desired period. A <a href="lex_s.htm#stable">stable</a> universal regulator was constructed by
+Dave Greene in September 2015, with a minimum delay between test
+signals of 1177 ticks. This provides a possible way for two complex
+<a href="lex_c.htm#circuit">circuits</a> to interact safely, even if they have different base
+<a href="lex_p.htm#period">periods</a> -- e.g., to allow signals from a <a href="lex_s.htm#stable">stable</a> logic circuit to
+be processed by a period-30 mechanism.
+<p><a name=universaltoolkit>:</a><b>universal toolkit</b> A set of Life reactions and mechanisms that can be
+used to construct any object that can be constructed by glider
+collisions.
 <p><a name=unix>:</a><b>unix</b> (p6) Two <a href="lex_b.htm#block">blocks</a> eating a <a href="lex_l.htm#longbarge">long barge</a>. This is a useful
 <a href="lex_s.htm#sparker">sparker</a>, found by Dave Buckingham in February 1976. The name
 derives from the fact that it was for some time the mascot of the
@@ -154,9 +193,9 @@ rapidly dies.
 O.O
 OOO
 </a></pre></td></tr></table></center>
-<p><a name=urm>:</a><b>URM</b> A universal register machine, particularly Paul Chapman's
-Life implementation of such a machine. See <a href="#universalcomputer">universal computer</a>
-for more information.
+<p><a name=urm>:</a><b>URM</b> A universal register machine, particularly Paul Chapman's Life
+implementation of such a machine. See <a href="#universalcomputer">universal computer</a> for more
+information.
 <hr>
 <center>
 <font size=-1><b>

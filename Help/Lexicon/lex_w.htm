@@ -5,6 +5,7 @@
 <meta name="author" content="Stephen A. Silver">
 <meta name="description" content="Part of Stephen Silver's Life Lexicon.">
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
 <link rel="begin" type="text/html" href="lex.htm" title="Life Lexicon">
 <base target="_top">
 </head>
@@ -44,6 +45,23 @@
 
 </center>
 <hr>
+<p><a name=wainwrightstagalong>:</a><b>Wainwright's tagalong</b> A small p4 <i>c</i>/4 diagonal <a href="lex_t.htm#tagalong">tagalong</a> that has 7
+cells in every phase. It is shown here attached to the back of a
+<a href="lex_c.htm#canadagoose">Canada goose</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OOO.............
+O.........OO....
+.O......OOO.O...
+...OO..OO.......
+....O...........
+........O.....O.
+....OO...O...OO.
+...O.O.OO....O.O
+...O.O..O.OO.O..
+..O....OO.....O.
+..OO............
+..OO............
+</a></pre></td></tr></table></center>
 <p><a name=washerwoman>:</a><b>washerwoman</b> (2<i>c</i>/3 p18 fuse) A <a href="lex_f.htm#fuse">fuse</a> by Earl Abbe.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 O.......................................................
@@ -77,6 +95,31 @@ O.O.O.OOOO............
 ..O...................
 ..O...................
 </a></pre></td></tr></table></center>
+<p><a name=waterbear>:</a><b>waterbear</b> ((23,5)<i>c</i>/79 obliquely, p158) A <a href="lex_s.htm#selfsupporting">self-supporting</a> oblique
+<a href="lex_m.htm#macrospaceship">macro-spaceship</a> constructed by Brett Berger on December 28, 2014.
+It is currently the fastest oblique spaceship in Conway's Game of
+Life by several orders of magnitude, and is also the smallest known
+oblique spaceship in terms of bounding box, superseding the
+<a href="lex_p.htm#parallelhbk">Parallel HBK</a>. Previous oblique spaceships, the <a href="lex_g.htm#gemini">Gemini</a> and the
+<a href="lex_h.htm#halfbakedknightship">half-baked knightships</a>, are stationary throughout almost all of
+their life cycles, as they construct the necessary mechanisms to
+support a sudden short move. The waterbear constructs support for
+<a href="lex_1.htm#a-235c79">(23,5)c/79</a> <a href="lex_r.htm#reburnablefuse">reburnable fuse</a> reactions which are in constant
+motion.
+<p><a name=wave>:</a><b>wave</b> A wick-like structure attached at both ends to moving
+spaceship-like patterns, in such a way that the entire pattern is
+mobile. If the wave gets longer over time, the supporting patterns
+are <a href="#wavestretcher">wavestretchers</a>.
+<p>Also, the gliders or spaceships emitted by a rake may be referred
+to as a wave, again because the line as a whole appears to move in a
+different direction from the individual components, due to the rake's
+movement. Compare with <a href="lex_s.htm#stream">stream</a>.
+<p>In general a wave can be interpreted as moving at a variety of
+different velocities, depending on which specific subcomponents are
+chosen as the starting and ending points for calculating speed and
+direction. See <a href="lex_a.htm#antstretcher">antstretcher</a>, <a href="#wavestretcher">wavestretcher</a> for a practical
+example of identical wave ends being connected to spaceships with
+different velocities.
 <p><a name=wavefront>:</a><b>wavefront</b> (p4) Found by Dave Buckingham, 1976 or earlier.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ........OO...
@@ -93,11 +136,77 @@ O.OO.O.OO....
 ....O.O......
 .....O.......
 </a></pre></td></tr></table></center>
-<p><a name=waveguide>:</a><b>waveguide</b> See <a href="lex_s.htm#superstring">superstring</a>.
-<p><a name=weekender>:</a><b>weekender</b> (2<i>c</i>/7 orthogonally, p7) Found by David Eppstein in
-January 2000. In April 2000 Stephen Silver found a tagalong for a
-pair of weekenders. At present, <i>n</i> weekenders pulling <i>n</i>-1 tagalongs
-constitute the only known <a href="lex_s.htm#spaceship">spaceships</a> of this speed or period.
+<p><a name=waveguide>:</a><b>waveguide</b> = <a href="lex_s.htm#superstring">superstring</a>.
+<p><a name=wavestretcher>:</a><b>wavestretcher</b> A <a href="lex_s.htm#spaceship">spaceship</a> pattern that supports a connection to an
+extensible periodic <a href="#wick">wick</a>-like structure, whose speed and/or
+direction of propagation are different from those of the
+wavestretcher spaceship.
+<p>Connecting the following to a standard diagonal <a href="lex_a.htm#antstretcher">antstretcher</a>
+creates a new oblique <a href="#wavestretcher">wavestretcher</a> (a type of <a href="lex_g.htm#growingspaceship">growing spaceship</a>)
+and also an alternate <a href="lex_s.htm#spacenonfiller">space nonfiller</a> mechanism.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.......................................................O.....
+.......................................................OO....
+.....................................................O..O....
+....................................................O........
+.................................................OO..O.......
+................................................O..O.........
+.................................................O...........
+.............................................O...OO..........
+............................................O.OO.............
+...........................................OO..O.............
+...........................................OO.OO.............
+...........................................O..O..OO..........
+..........................................OO......OO.........
+...........................................O.OO.O.OO.........
+..........................................O.OOO.O............
+..........................................O.O.O.O............
+.............................................................
+........................................O...O................
+.......................................OO....................
+.....................................OOO..O..................
+..................................OO.OO......................
+...................................O.........................
+....................................O.O......................
+...................................O.........................
+...................................O..O......................
+..................................O..........................
+.....................................O.......................
+..................................OOOO.......................
+................................O.OO.O.......................
+.....................................O.......................
+................................O............................
+.................................O..O........................
+...................................O.........................
+.........................O....OOO....................OOO.....
+OO......................O.OOO....O......................O...O
+..OO.OO.................O..O....O....................O...O...
+..OO...OO.OO...............O..O................OO.O...O.OOOO.
+OO.....OO...OO.OO.........OO.OOO...OO..OO.OOO.O....O.....O..O
+.....OO.....OO...OO.OO......O.OO..O.O..OOO.OO.O.O...O......O.
+..........OO.....OO...OO.O...O....O.O.O..OO..O..O...OOOO.....
+...............OO.....OO..O.O.OO..O..O.......................
+....................OO...........O....O..........OO...OO.....
+.......................................O..........O..........
+....................................O........................
+....................................OO.......................
+</a></pre></td></tr></table></center>
+A required supporting <i>c</i>/5 <a href="lex_s.htm#spark">spark</a> is shown at the right edge. It can
+be supplied by a <a href="lex_s.htm#spider">spider</a> or another <i>c</i>/5 orthogonal spaceship with a
+similar <a href="lex_e.htm#edgespark">edge spark</a>. Alternatively, the <i>c</i>/5 component could
+theoretically be replaced by a supporting spaceship traveling
+diagonally at <i>c</i>/6, to support the same oblique trail of ants. As of
+August 2017 no workable <i>c</i>/6 component has been found.
+<p><a name=wedge>:</a><b>wedge</b> A 26-cell quadratic growth pattern found by Nick Gotts in March
+2006, based on <a href="lex_g.htm#gottsdots">Gotts dots</a>. In terms of its initial population,
+this is the smallest known pattern with superlinear growth.
+<p><a name=wedgegrow>:</a><b>wedge grow</b> = <a href="#wedge">wedge</a>.
+<p><a name=weekender>:</a><b>weekender</b> (2<i>c</i>/7 orthogonally, p7) Found by David Eppstein in January
+2000. In April 2000 Stephen Silver found a tagalong for a pair of
+weekenders. At present, <i>n</i> weekenders pulling <i>n</i>-1 tagalongs
+constitute the only known <a href="lex_s.htm#spaceship">spaceships</a> of this speed or period,
+except for variants of the <a href="#weekenderdistaff">weekender distaff</a> that suppress its
+output gliders.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .O............O.
 .O............O.
@@ -111,6 +220,11 @@ O.O..........O.O
 ....O......O....
 .....OO..OO.....
 </a></pre></td></tr></table></center>
+<p><a name=weekenderdistaff>:</a><b>weekender distaff</b> (2<i>c</i>/7, p16982) The first orthogonal 2<i>c</i>/7 rake,
+constructed by Ivan Fomichev on May 22nd, 2014. It uses the weak
+<a href="lex_s.htm#spark">sparks</a> from <a href="#weekender">weekenders</a> to perturb an LWSS into an active reaction
+in a variable-period loop, which produces a series of <a href="lex_s.htm#slowsalvo">slow salvo</a>
+gliders that finally rebuilds the LWSS.
 <p><a name=weld>:</a><b>weld</b> To join two or more <a href="lex_s.htm#stilllife">still lifes</a> or <a href="lex_o.htm#oscillator">oscillators</a> together.
 This is often done in order to fit the objects into a smaller space
 than would otherwise be possible. The simplest useful example is
@@ -118,8 +232,8 @@ probably the <a href="lex_i.htm#integralsign">integral sign</a>, which can be co
 welded <a href="lex_e.htm#eater1">eater1s</a>.
 <p><a name=wheelslifeandothermathematicalamusements>:</a><b>Wheels, Life, and other Mathematical Amusements</b> One of Martin
 Gardner's books (1983) that collects together material from his
-column in Scientific American. The last three chapters of this
-book contain all the Life stuff.
+column in Scientific American. The last three chapters of this book
+contain all the Life stuff.
 <p><a name=whynot>:</a><b>why not</b> (p2) Found by Dave Buckingham, July 1977.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ...O...
@@ -132,9 +246,9 @@ O.OOOOO
 </a></pre></td></tr></table></center>
 <p><a name=wick>:</a><b>wick</b> A stable or oscillating linearly repeating pattern that can be
 made to burn at one end. See <a href="lex_f.htm#fuse">fuse</a>.
-<p><a name=wickstretcher>:</a><b>wickstretcher</b> A <a href="lex_s.htm#spaceship">spaceship</a>-like object which stretches a <a href="#wick">wick</a>
-that is fixed at the other end. The wick here is assumed to be
-in some sense connected, otherwise most <a href="lex_p.htm#puffer">puffers</a> would qualify as
+<p><a name=wickstretcher>:</a><b>wickstretcher</b> A <a href="lex_s.htm#spaceship">spaceship</a>-like object which stretches a <a href="#wick">wick</a> that
+is fixed at the other end. The wick here is assumed to be in some
+sense connected, otherwise most <a href="lex_p.htm#puffer">puffers</a> would qualify as
 wickstretchers. The first example of a wickstretcher was found in
 October 1992 (front end by Hartmut Holzwart and back end by Dean
 Hickerson) and stretches <a href="lex_a.htm#ants">ants</a> at a speed of <i>c</i>/4. This is shown
@@ -158,16 +272,16 @@ O.OO..OO...O...OOOO.O.O.......O.O...OO....O..O.O.
 .............OO....O.................O.O.........
 .................OO...................O..........
 </a></pre></td></tr></table></center>
-Diagonally moving <i>c</i>/4 and <i>c</i>/12 wickstretchers have also been built:
+<p>Diagonally moving <i>c</i>/4 and <i>c</i>/12 wickstretchers have also been built:
 see <a href="lex_t.htm#tubstretcher">tubstretcher</a> and <a href="lex_l.htm#linestretcher">linestretcher</a>. In July 2000 Jason Summers
 constructed a <i>c</i>/2 wickstretcher, stretching a p50 <a href="lex_t.htm#trafficjam">traffic jam</a> wick,
 based on an earlier (October 1994) pattern by Hickerson.
-<p><a name=wicktrailer>:</a><b>wicktrailer</b> Any <a href="lex_e.htm#extensible">extensible</a> <a href="lex_t.htm#tagalong">tagalong</a>, that is, one which can
-be attached to the back of itself, as well as to the back of a
+<p><a name=wicktrailer>:</a><b>wicktrailer</b> Any <a href="lex_e.htm#extensible">extensible</a> <a href="lex_t.htm#tagalong">tagalong</a>, that is, one which can be
+attached to the back of itself, as well as to the back of a
 <a href="lex_s.htm#spaceship">spaceship</a>. The number of generations which it takes for the
-tagalong to occur again in the same place is often called the
-period of the wicktrailer - this has little relation to the period
-of the tagalong units themselves.
+tagalong to occur again in the same place is often called the period
+of the wicktrailer - this has little relation to the period of the
+tagalong units themselves.
 <p><a name=windmill>:</a><b>windmill</b> (p4) Found by Dean Hickerson, November 1989.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ...........O......
@@ -199,10 +313,78 @@ O..O
 </a></pre></td></tr></table></center>
 <p><a name=winlifesearch>:</a><b>WinLifeSearch</b> Jason Summers' GUI version of <a href="lex_l.htm#lifesrc">lifesrc</a> for MS Windows.
 It is available from <a href="http://entropymine.com/jason/life/software/">http://entropymine.com/jason/life/software/</a>.
-<p><a name=winningways>:</a><b>Winning Ways</b> A two-volume book (1982) by Elwyn Berlekamp, John
-Conway and Richard Guy on mathematical games. The last chapter
-of the second volume concerns Life, and outlines a proof of the
-existence of a <a href="lex_u.htm#universalconstructor">universal constructor</a>.
+<p><a name=winningways>:</a><b>Winning Ways</b> A two-volume book (1982) by Elwyn Berlekamp, John Conway
+and Richard Guy on mathematical games. The last chapter of the
+second volume concerns Life, and outlines a proof of the existence of
+a <a href="lex_u.htm#universalconstructor">universal constructor</a>.
+<p><a name=wire>:</a><b>wire</b> a repeating stable structure, usually fairly dense, that a
+<a href="lex_s.htm#signal">signal</a> can travel along without making any permanent change. Known
+wires are the diagonal <a href="lex_1.htm#a-2c3wire">2c/3 wire</a>, and <a href="lex_l.htm#lightspeedtelegraph">lightspeed telegraph</a> wire
+made from an orthogonal chain of beehives.
+<p><a name=withthegrain>:</a><b>with the grain</b> term used for <a href="lex_n.htm#negativespaceship">negative spaceships</a> traveling in
+<a href="lex_z.htm#zebrastripes">zebra stripes</a> agar, parallel to the stripes, and also for
+<a href="#withthegraingreyship">with-the-grain grey ships</a>.
+<p>Below are three small examples of "negative spaceships" found by
+Gabriel Nivasch in July 1999, traveling with the grain through a
+stabilized finite segment of zebra stripes agar:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.O..O..O..O..O..O..O..O..O..O..O..O..O..O..O..O..O..O.
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+......................................................
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+O....................................................O
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+................................................O.....
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.OOOO....OOO.
+O.........................................OO.....O...O
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.....OOOOOOOOO.
+.............................................O........
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.........OO..OOO.
+O.....................................O.O.....OO.O...O
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO...O.....OOO.OOO.
+.............................................O........
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.....OOOOOOOOO.
+O.........................................OO.....O...O
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.OOOO....OOO.
+................................................O.....
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+O....................................................O
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+......................................................
+.OOOOOOOOOOOOOOOOOOOOOOOOO..OOO..OOO..OOO..OOOOOOOOOO.
+O..........................OO...OO...OO...OO..O......O
+.OOOOOOOOOOOOOOOOOOOOOOO...O....O....O....O.....OOOOO.
+...........................OO...OO...OO...OO...O......
+.OOOOOOOOOOOOOOOOOOOOOOOOO..OOO..OOO..OOO..OOOOOOOOOO.
+O....................................................O
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+......................................................
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+O....................................................O
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+......................................................
+.OOOOOOOOOOOOOOOOOOOOOOO..OOO..OOO..OOO..OOO..OOOOOOO.
+O........................OO...OO...OO...OO...OO......O
+.OOOOOOOOOOOOOOOOOOOOOOO...OO...OO...OO...OO...OOOOOO.
+................................................O.....
+.OOOOOOOOOOOOOOOOOOOOO...........................OOOO.
+O................................................O...O
+.OOOOOOOOOOOOOOOOOOOOO...........................OOOO.
+................................................O.....
+.OOOOOOOOOOOOOOOOOOOOOOO...OO...OO...OO...OO...OOOOOO.
+O........................OO...OO...OO...OO...OO......O
+.OOOOOOOOOOOOOOOOOOOOOOO..OOO..OOO..OOO..OOO..OOOOOOO.
+......................................................
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+O....................................................O
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+......................................................
+.OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO.
+.O..O..O..O..O..O..O..O..O..O..O..O..O..O..O..O..O..O.
+</a></pre></td></tr></table></center>
+It has been proven that signals traveling non-destructively with the
+grain through zebra stripes cannot travel at less than the
+<a href="lex_s.htm#speedoflight">speed of light</a>.
 <p><a name=withthegraingreyship>:</a><b>with-the-grain grey ship</b> A <a href="lex_g.htm#greyship">grey ship</a> in which the region of density
 1/2 consists of lines of ON cells lying parallel to the direction in
 which the spaceship moves. See also <a href="lex_a.htm#againstthegraingreyship">against-the-grain grey ship</a>.
@@ -233,6 +415,8 @@ O..
 OO.
 .OO
 </a></pre></td></tr></table></center>
+<p><a name=wss>:</a><b>*WSS</b> Any of the standard orthogonal spaceships -- <a href="lex_l.htm#lwss">LWSS</a>, <a href="lex_m.htm#mwss">MWSS</a>, or
+<a href="lex_h.htm#hwss">HWSS</a>.
 <hr>
 <center>
 <font size=-1><b>
