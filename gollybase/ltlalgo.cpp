@@ -29,14 +29,6 @@ static const int MAXNCOLS = 2 * MAXRANGE + 1;
 // range is 1 or 2, similar when 5, but much faster when 10 or above
 #define SMALL_NN_RANGE 4
 
-#if EMSCRIPTEN
-    // if building webGolly we need to force LLVM to emit unaligned loads/stores
-    // in a few places where we access grid memory as an array of unsigned ints
-    typedef unsigned int __attribute__((aligned(1))) unaligned_uint;
-#else
-    typedef unsigned int unaligned_uint;
-#endif
-
 // -----------------------------------------------------------------------------
 
 // Create a new empty universe.
@@ -693,7 +685,7 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
     }
 
     // process any 4 cell chunks
-    unaligned_uint *lcellptr = (unaligned_uint*)cellptr;
+    unsigned int *lcellptr = (unsigned int*)cellptr;
     for (j = 0; j < chunks; j++) {
         if (*lcellptr++) {
             rowcount += *cellptr++;
@@ -727,12 +719,20 @@ void ltlalgo::faster_Moore_bounded2(int mincol, int minrow, int maxcol, int maxr
     for (int i = minrow + 1; i <= maxrow; i++) {
         rowcount = 0;
 
+        // compute 4 cell offset
+        offset = (4 - ((long)cellptr & 3)) & 3;
+        if (offset > width) offset = width;
+
+        // process in 4 cell chunks
+        chunks = (width - offset) >> 2;
+        remainder = (width - offset) - (chunks << 2);
+
         // process cells up to the first 4 cell chunk
         for (j = 0; j < offset; j++) {
             rowcount += *cellptr++;
             *ccptr++ = *prevptr++ + rowcount;
         }
-        lcellptr = (unaligned_uint*)cellptr;
+        lcellptr = (unsigned int*)cellptr;
 
         // process any 4 cell chunks
         for (j = 0; j < chunks; j++) {
@@ -1127,7 +1127,7 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
     }
 
     // process any 4 cell chunks
-    unaligned_uint *lcellptr = (unaligned_uint*)cellptr;
+    unsigned int *lcellptr = (unsigned int*)cellptr;
     for (j = 0; j < chunks; j++) {
         if (*lcellptr++) {
             rowcount += *cellptr++;
@@ -1160,12 +1160,21 @@ void ltlalgo::faster_Moore_unbounded2(int mincol, int minrow, int maxcol, int ma
 
     for (int i = minrowpr2 + 1; i <= maxrow; i++) {
         rowcount = 0;
+
+        // compute 4 cell offset
+        offset = (4 - ((long)cellptr & 3)) & 3;
+        if (offset > width) offset = width;
+
+        // process in 4 cell chunks
+        chunks = (width - offset) >> 2;
+        remainder = (width - offset) - (chunks << 2);
+
         // process cells up to the first 4 cell chunk
         for (j = 0; j < offset; j++) {
             rowcount += *cellptr++;
             *ccptr++ = *prevptr++ + rowcount;
         }
-        lcellptr = (unaligned_uint*)cellptr;
+        lcellptr = (unsigned int*)cellptr;
 
         // process any 4 cell chunks
         for (j = 0; j < chunks; j++) {
