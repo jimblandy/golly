@@ -62,7 +62,7 @@ synchronized salvos of gliders. These re-activate the lines of
 half-bakeries, thus closing the cycle and moving the entire spaceship
 obliquely by (6,3).
 <p><a name=halfbakery>:</a><b>half bakery</b> = <a href="lex_b.htm#biloaf">bi-loaf</a>.
-<p><a name=halfbakeryreaction>:</a><b>half-bakery reaction</b> the key reaction used in the
+<p><a name=halfbakeryreaction>:</a><b>half-bakery reaction</b> The key reaction used in the
 <a href="#halfbakedknightship">half-baked knightship</a> and <a href="lex_p.htm#parallelhbk">Parallel HBK</a>, where a half-bakery is
 moved by (6,3) when a glider collides with it, and the glider
 continues on a new lane. Ivan Fomichev noticed in May 2014 that
@@ -307,8 +307,10 @@ OO....O.O..............O...............
 </a></pre></td></tr></table></center>
 <p><a name=heisenburpdevice>:</a><b>Heisenburp device</b> A pattern which can detect the passage of a
 <a href="lex_g.htm#glider">glider</a> without affecting the glider's path or timing. The first
-such device was constructed by David Bell in December 1992. The term
-is due to Bill Gosper.
+such device was constructed by David Bell in December 1992. The
+term, coined by Bill Gosper, refers to the fact that Heisenberg's
+Uncertainty Principle fails to apply in the Life universe. See also
+<a href="lex_s.htm#stablepseudoheisenburp">stable pseudo-Heisenburp</a>.
 <p>The following is an example of the kind of reaction used at the
 heart of a Heisenburp device. The glider at bottom right alters the
 reaction of the other two gliders without itself being affected in
@@ -459,22 +461,22 @@ the orientation shown above).
 -----------------------------------------
 name/steps  m     dx   dy     discovery
 -----------------------------------------
-{R64}       R    -11    9   DJB, Sep 1995
-{Fx77}      Ff   -25   -8   DJB, Aug 1996
-{L112}      L    -12  -33   DJB, Jul 1996
-{F116}      F    -32    1   PBC, Feb 1997
-{F117}      F    -40   -6   DJB, Jul 1996
-{Bx125}     Bf     9  -17   PBC, Nov 1998
-{Fx119}     Ff   -20   14   DJB, Sep 1996
-{Fx153}     Ff   -48   -4   PBC, Feb 1997
-{L156}      L    -17  -41   DJB, Aug 1996
-{Fx158}     Ff   -27   -5   DJB, Jul 1996
-{F166}      F    -49    3   PBC, May 1997
-{Fx176}     Ff   -45    0   PBC, Oct 1997
-{R190}      R    -24   16   DJB, Jul 1996
-{Lx200}     Lf   -17  -40   PBC, Jun 1997
-{Rx202}     Rf    -7   32   DJB, May 1997
-{Bx222}     Bf     6  -16   PBC, Oct 1998
+<a href="lex_r.htm#r64">R64</a>         R    -11    9   DJB, Sep 1995
+<a href="lex_f.htm#fx77">Fx77</a>        Ff   -25   -8   DJB, Aug 1996
+<a href="lex_l.htm#l112">L112</a>        L    -12  -33   DJB, Jul 1996
+<a href="lex_f.htm#f116">F116</a>        F    -32    1   PBC, Feb 1997
+<a href="lex_f.htm#f117">F117</a>        F    -40   -6   DJB, Jul 1996
+<a href="lex_b.htm#bx125">Bx125</a>       Bf     9  -17   PBC, Nov 1998
+<a href="lex_f.htm#fx119">Fx119</a>       Ff   -20   14   DJB, Sep 1996
+<a href="lex_f.htm#fx153">Fx153</a>       Ff   -48   -4   PBC, Feb 1997
+<a href="lex_l.htm#l156">L156</a>        L    -17  -41   DJB, Aug 1996
+<a href="lex_f.htm#fx158">Fx158</a>       Ff   -27   -5   DJB, Jul 1996
+<a href="lex_f.htm#f166">F166</a>        F    -49    3   PBC, May 1997
+<a href="lex_f.htm#fx176">Fx176</a>       Ff   -45    0   PBC, Oct 1997
+<a href="lex_r.htm#r190">R190</a>        R    -24   16   DJB, Jul 1996
+<a href="lex_l.htm#lx200">Lx200</a>       Lf   -17  -40   PBC, Jun 1997
+<a href="lex_r.htm#rx202">Rx202</a>       Rf    -7   32   DJB, May 1997
+<a href="lex_b.htm#bx222">Bx222</a>       Bf     6  -16   PBC, Oct 1998
 -----------------------------------------
 </font></pre></td></tr></table></center>
 <p>See also <a href="#herscheltransceiver">Herschel transceiver</a>.
@@ -648,6 +650,7 @@ O.O......
 <p><a name=hexomino>:</a><b>hexomino</b> Any 6-cell <a href="lex_p.htm#polyomino">polyomino</a>. There are 35 such objects. For some
 examples see <a href="lex_c.htm#century">century</a>, <a href="lex_s.htm#stairstephexomino">stairstep hexomino</a>, <a href="lex_t.htm#table">table</a>, <a href="lex_t.htm#toad">toad</a> and
 <a href="lex_z.htm#zhexomino">Z-hexomino</a>.
+<p><a name=hf>:</a><b>HF</b> = <a href="#honeyfarm">honey farm</a>
 <p><a name=hheptomino>:</a><b>H-heptomino</b> Name given by Conway to the following <a href="#heptomino">heptomino</a>. After
 one generation this is the same as the <a href="lex_i.htm#iheptomino">I-heptomino</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -665,7 +668,7 @@ efficiently in the timing of those signals. Specifically, the new
 transmitter sends five bits every 960 ticks by adjusting the relative
 timings inside each of the five mirror-image paired subunits of the
 composite signal in the beehive-chain <a href="lex_l.htm#lightspeedwire">lightspeed wire</a> <a href="lex_f.htm#fuse">fuse</a>.
-<p><a name=highwayrobber>:</a><b>highway robber</b> any mechanism that can retrieve a signal from a
+<p><a name=highwayrobber>:</a><b>highway robber</b> Any mechanism that can retrieve a signal from a
 spaceship <a href="lex_l.htm#lane">lane</a> while allowing spaceships on nearby lanes to pass by
 unaffected. In practice the spaceship is generally a glider. The
 signal is removed from the lane, an output signal is generated
@@ -682,7 +685,7 @@ another glider following on the same <a href="lex_l.htm#lane">lane</a> 200 ticks
 cleanly reflected to a new path -- and another glider following that
 one will also pass by unharmed. The only imperfection is a few ticks
 at the very end of the reconstruction, as the beehive is being
-rebuilt::
+rebuilt:
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ......................O...........O.........
 ......................OOO.......O.O.........
