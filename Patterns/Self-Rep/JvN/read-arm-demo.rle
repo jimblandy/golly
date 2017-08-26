@@ -1,0 +1,81 @@
+# Read arm demo.
+# Author: Renato Nobili <renato.nobili@pd.infn.it>
+#
+# Controls are provided to direct the read arm (r-arm). Set the machine 
+# running at a slow speed to see it working.
+#
+# A pulse on the input line (IN) causes the pattern to send one of two
+# signal-trains down the output line (OUT), depending on the presence (1)
+# or absence (0) of a mark on the tape at the current position. The 
+# reading head then moves forward, ready to read the next cell.
+#
+# As with the construction arm, OTS (blue) and STS (red) lines work 
+# together to manipulate the cells at the end of the read arm. Various 
+# coders (C) and decoders (D) are used to send the required signal trains,
+# which depend on the output of the read operation since the read head is
+# left in one of two states.
+#
+# Other controls (not shown) are needed to retract the read-arm.
+#
+# http://www.pd.infn.it/~rnobili/wjvn/index.htm
+# http://www.pd.infn.it/~rnobili/au_cell/
+# http://en.wikipedia.org/wiki/Von_Neumann_universal_constructor
+# http://en.wikipedia.org/wiki/Von_Neumann_cellular_automata
+#
+# Originally distributed as: RW-ARM_ADV.JVN
+# Redistributed with permission.
+#
+x = 124, y = 88, rule = JvN29
+13.2pA6.pA2.2pA2.pA3.pA4.pA3.pA2.2pA2.pA.pA.pA.pA2.pA2.2pA4.3pA2.2pA
+2.2pA2.pA3.pA2.pA2.2pA2.2pA3.2pA$13.pA.pA4.pA.pA.pA.pA.2pA.2pA4.2pA.
+2pA.pA2.pA.pA.pA.pA.2pA.pA.pA6.pA3.pA2.pA.pA.pA.pA3.pA.pA.pA.pA.pA.pA
+.pA.pA$13.pA.pA.2pA.pA.pA.pA.pA.pA.pA.pA4.pA.pA.pA.pA2.pA.pA.pA.pA.pA
+.2pA.pA6.2pA2.pA2.pA.2pA2.pA3.pA.pA.pA.2pA2.pA.pA2.pA$13.2pA5.3pA.2pA
+2.pA3.pA4.pA3.pA.pA2.pA.pA.pA.pA.pA2.pA.pA.pA4.pA3.pA2.pA.2pA2.pA.pA.
+pA.3pA.2pA2.pA.pA3.pA$13.pA.pA4.pA.pA.pA.pA.pA3.pA4.pA3.pA2.2pA3.pA2.
+pA.pA2.pA2.2pA4.pA4.2pA2.pA.pA2.pA.pA2.pA.pA.pA.pA.2pA2.2pA9$73.2pA2.
+2pA$72.pA3.pA$72.pA3.pA$72.pA3.pA$51.2pA2.2pA16.2pA2.2pA$51.pA.pA.pA.
+pA$51.pA.pA.pA.pA8.18ILIL$51.pA.pA.pA.pA8.J.J.pA.J.J.pA7.LJLIpA$2.pA.
+pA2.pA17.3pA2.2pA19.2pA2.2pA9.J.J.JIJIJIJ7.LJLJL$2.pA.2pA.pA18.pA2.pA
+36.J.J.2JKJKJK7.LJLJL$2.pA.pA.2pA18.pA2.pA21.pAIpAIpA10IpAIpAIpAIpAIpA
+IpAIpAIpAIpA.LJLJL$2.pA.pA2.pA18.pA2.pA20.IJ.J.J9.JL.L.2LKLKLKLKLKLK.
+LJLJL$2.pA.pA2.pA18.pA3.2pA18.JK.pA.J9.JL.L.LILILILILILIL.LJLJLIL$50.
+IJIJ.J9.JL.L.L.L.L.2LKLKLK.IJIJIJL.6IL$8.pA27.3Q11.JKJK.J9.JL.L.pA.L.
+L.LILILI2L7K.JL5K$8.2pA16.23IpAIpAIpAIpA9.JL.L.L.L.L.pA.L.2LKL3.5IJ6I
+L$2.9pA2.M12IpAIpAIpA14.J3.L.pAIpAIpAL8.JL.L.L.L.L.L.L.LI2L3.JL11K$8.
+2pA35.J3.LIJ.J.JL8.J21IJ12IL$8.pA36.J3.LJK.J.J9IpA.10ILILILILILJ13.L$
+45.J3.LIJIJ.J9.L.J.J.pA5.LJLJLJLJLJ13.L$45.J3.LJKJK.J9.L.J.J.J5.LJLJL
+JLJLJ13.L$45.J3.pAIpAIpAIpA9.2IpAIpAIpA5.IJIJIJIJIJ13.L$45.J3.L50.L$
+45.J3.L50.L$45.J3.L50.L$41.2pA2.J3.L50.L$40.pA4.J3.L50.L$33.2pA5.pA4.
+J3.L50.L$33.pA.pA4.pA4.J3.L50.L$33.pA.pA5.2pA2.J3.pA50.L$33.pA.pA9.J
+3.L50.L$33.2pA6.pA3.J3.L50.L$41.pA3.J3.L50.L$41.pA3.J3.L5.pA15.pA28.L
+$34.pA6.pA3.J3.L2.2pA.pA12.2pA.pA28.L$34.pA4.5pA.J3.L2.pA.pA12.pA32.L
+$34.pA5.3pA2.J3.pA2.pA.pA12.pA32.L$34.pA6.pA3.J3.L2.pA.pA12.pA32.L$
+34.pA10.J3.L2.2pA14.2pA30.L$32.5pA8.J3.L31.Q.Q.Q14.L$33.3pA3.Q2.2Q.J
+3.L22.28IL$34.pA4.6IJ3.L.pAIpAIpA10IpAIpAIpA.J27.L$39.J.JIJ.J3.L.J.J.
+J10.L.2LK.J27.L$39.J.2JK.J3.LIJ.pA.J10.L.LIL.J27.L$33.pAIpA3IpAIpAIpA
+.J3.LJK.J.J10.L.pA.L.J27.L$33.J.J9.J3.pAIpAIpAIpA10.6IJ27.L$33.J.pA9.
+J3.L50.L$30.2Q.J.J3.Q.Q.Q.J3.L50.L$27.6IpAIpA3.6IJ3.L39.pA10.L$27.J
+11.J.pA.J5.L32.2pA2.2pA.pA10.L$21.pA5.J11.J.JIJ5.L31.pA3.pA14.L$20.2pA
+5.J11.J.2JK5.pA31.pA3.pA14.L$21.pA5.J5.pAIpA3IpAIpAIpA5.L9.pA21.pA3.pA
+14.L$21.pA5.J5.J.J13.L2.2pA2.2pA.pA22.2pA2.2pA12.L$21.pA5.J5.JIJ13.L
+2.pA.pA.pA.pA41.L$27.J.Q.Q.2JK13.L2.pA.pA.pA.pA12.10ILILILILILILILIL
+4.L$4.pA15.2S5.pA5IpAIpA13.L2.pA.pA.pA.pA12.J.J.J.J.pA.LJLJLJLJLJLJLJ
+L4.L$3.2pA22.J21.pA2.2pA2.2pA13.J.J.J.J.J.LJLJLJLJLJLJLJL4.L$2.9pA.I
+14KpA21.L13.8IpAIpAIpAIpAIpA.LJLJLJLJLJLJLJL4.L$3.2pA22.J4K17.L13.J.L
+6K9.IJIJIJIJIJIJIJ4I2L$4.pA14.S.S5.J.pAKpAKpAK14.L.pAIpAIpA7IJ.L33I2L
+$27.J5.LJpAKpAKpA9.LIJ.J.J9.LJ.J.J.J.J.J.J.J.J.J.pA.pA.pA.pA.IL3.2L$
+20.2pA5.J4.LpA.J.J.JK8.LJK.J.J8.LKJ.J.J.J.J.J.J.J.J.J.J.J.JIJ.JL3.2L$
+.2pA2.pA2.pA.3pA6.pA2.pA4.J4.2L.J.J.IJ8.LIJIJ.J8.ILJ.J.J.J.pA.pA.pA.pA
+.J.J.J.J.2JK.JL3.2L$pA2.pA.pA2.pA2.pA7.pA2.pA4.J4.LpA.J.JKJK8.LJKJK.J
+9.LJ.J.J.J.J.J.J.JIJIJIJIJIJIJ.JL3.2L$pA2.pA.pA2.pA2.pA7.pA2.pA4.J4.
+2L.J.IJIJ8.pAIpAIpAIpA9.LJ.J.J.J.J.J.J.2JKJKJKJKJKJK.JLIL.2L$pA2.pA.pA
+2.pA2.pA8.2pA5.J4.LpA.pAKpAKpAKpAK6.L.pAIpAIpA10IpAIpAIpAIpAIpAIpAIpA
+IpAIpAIpAIpAIpAIpAIpA.JLJL.2L$.2pA3.2pA3.pA15.J4.2L7.LJ6.LIJ.J.J10.L.
+L.L.L.L.2LKLKLKLKLK7.JLJL.2L$27.J4.LpA7.LJ6.LJK.pA.J10.L.L.L.L.L.LILI
+LILILIL.ILILILJLJL.2L$27.J4.2L3.LKLKLJ6.LIJIJ.J10.L.L.L.L.L.L.L.2LKLK
+LK.JLJLJLJLJL.2L$27.J3K.LpA3.LJLJLJ6.LJKJK.J10.L.L.L.L.L.L.L.LILILIL.
+JLJLJLJLJL.2L$28.pA.J.pA4.LJLJLJ6.2IpAIpAIpA10.L.L.pA.pA.pA.pA.pA.pA.
+L.L.L.JLJLJLJLJL.LIpAIL$28.J.J.T4.LJLJLJ23.22IJIJIJIJIJ4IpAQL$28.pAKpA
+KpAK3.LJLJLJ60.L.L.L.L.L.L.L.L.L.L.L$33.J4KJKJKJ61K!
+

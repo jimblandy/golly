@@ -1,0 +1,24 @@
+# Repeater-emitter demo in Codd's CA
+#
+# Signals travel along state 1 wires, sheathed in state 2 cells.
+#
+# As in WireWorld, each signal has a trailing state to indicate its
+# direction. Here the signals 7 and 6 each with their trailing 0. 
+#
+# T-junctions act as fan-outs - duplicating the signal onto the two
+# output wires. Here the two signals circulate around the loop but are
+# also copied onto the output wire.
+#
+# The effect of the 7-0 signal hitting the capped end is to expose the
+# bare wire. When 6-0 comes along afterwards it 'repairs' this exposed
+# end, restoring the sheath cells. The effect of a 7-0..6-0 signal train
+# is therefore to extend the wire by one cell.
+#
+# By putting the 7-0..6-0 signal trains in a repeater-emitter loop, the
+# extending operation happens again and again. This simple but useful
+# component became the inspiration for Langton's Loops (see 
+# Patterns/Loops).
+#
+x = 21, y = 11, rule = Codd
+.9B$B9AB$BA7BAB$BFB5.BAB$B.B5.BAB$BAB5.B.B$BAB5.BGB$BAB5.BAB$BA7BA10B
+$B19AB$.19B!

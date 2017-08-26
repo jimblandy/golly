@@ -1,0 +1,32 @@
+# Cell coders demo.
+# Author: Renato Nobili <renato.nobili@pd.infn.it>
+#
+# There are nine cell types that can be constructed in von Neumann's
+# CA: 9-12,17-20 and 25. The signal trains needed for each are shown
+# on the left. Advance five generations to see the result.
+#
+# These nine signal trains can be created by using coders. On the right
+# are shown the necessary coders for each, converting a single excited
+# pulse into the necessary signal train. The confluent cell type is 
+# used as a splitter, to duplicate a pulse onto two wires, and also as
+# a 1-generation delay unit, to synchronise the pulses correctly. 
+#
+# http://www.pd.infn.it/~rnobili/wjvn/index.htm
+# http://www.pd.infn.it/~rnobili/au_cell/
+# http://en.wikipedia.org/wiki/Von_Neumann_universal_constructor
+# http://en.wikipedia.org/wiki/Von_Neumann_cellular_automata
+#
+# Originally distributed as: Q-STATE_CODERS.JVN
+# Redistributed with permission.
+#
+x = 60, y = 66, rule = JvN29
+18.2pA.3pA.pA3.pA7.2pA2.2pA2.2pA2.3pA.2pA3.2pA$17.pA3.pA3.pA3.pA6.pA
+3.pA2.pA.pA.pA.pA3.pA.pA.pA$17.pA3.2pA2.pA3.pA6.pA3.pA2.pA.pA.pA.2pA
+2.pA.pA2.pA$17.pA3.pA3.pA3.pA6.pA3.pA2.pA.pA.pA.pA3.2pA4.pA$18.2pA.3pA
+.3pA.3pA5.2pA2.2pA2.2pA2.3pA.pA.pA.2pA5$4IM3.I14.M28I3.I$44.I$M3IM3.J
+$32.20I3.J$IM2IM3.K23.2JK5.I3.I$32.JIJ$2IMIM3.L23.2JK$23.M8IpAIJ$I2MI
+M3.Q2$3I2M3.R$32.20I3.K$IMI2M3.S23.JIJ6.I2.I$32.2JK$2I3M3.T14.M8IpAIpA
+2$I4M3.pA2$33.19I3.L$33.JIJ6.I.I$33.2JK$23.M9IpAIJ4$33.19I3.Q$33.J3.pA
+4.2I.I$33.J.2IJ$23.M9IpAIpAIpA6$33.19I3.R$23.M9IpAIpA7.2I4$33.19I3.S$
+33.J.JIJ4.I.2I$33.J.2JK$23.M9IpAIpAIJ6$33.19I3.T$23.M9IpAIpAIpA4.3I6$
+33.19I3.pA$23.M9IpAIpAIpAIpA.4I!

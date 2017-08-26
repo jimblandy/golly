@@ -1,0 +1,20 @@
+# An organ that can discriminate between 6 signals and 7 signals. It uses
+# two compact "7-transforms" and a special T-junction structure to direct the 
+# flow of signals appropriately. Unlike in Codd's CA, these structures are 
+# initialised by the sheathing structure.
+#
+# John Devore writes: (part II)
+#   "I recall two other important components. One was a miniature 7-transform.
+# Any signal that went through it came out as a 7. ... [And then] there was a 
+# 6-7 discriminator. This latter one had an input and two outputs (sort of like 
+# a T junction, but with a more complex structure at the junction). If a 6 came 
+# in the input a 7 would go out one of the outputs. If a 7 came in the input a 7
+# would go out the other output.  This one required some minor modification to 
+# the collision rules -- actually addition of rules to handle collision of 
+# different signals -- Codd only defined collision of identical signals."
+#
+x = 79, y = 14, rule = Devore
+67.5A4.3A$47.A19.A3.A6.A$43.25A3.A6.A$43.A3.A5.A13.A3.A5.A$43.A9.A13.
+5A5.A$.35B7.A9.A$B3A.F29A.F17A$BA24BA9B4.A12.A$BAB22.BAB12.A12.A13.5A
+5.A$BAB22.BAB12.A6.A5.A13.A3.A4.A$BAB22.BAB12.28A3.A4.2A$BA24BAB19.A
+5.A13.A3.A4.A.A$B21AG.3AB39.5A5.A$.26B!

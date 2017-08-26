@@ -1,0 +1,22 @@
+# Extend coder - Codd's CA
+#
+# This coder generates 7-6 signals, causing the output line to extend.
+#
+# Initially in the unsheathed state as it would be after construction,
+# the pattern is first sheathed by the 6 signal, and then repeatedly
+# triggered by a 7 signal coming from a periodic emitter.
+#
+# Four gates are required for the machine to function correctly. One stops
+# the 7 signals from entering the lower section the wrong way. One stops
+# the 6 signals from entering the upper section the wrong way. The other two
+# stop these previous gates from being turned off.
+#
+# See construction-arm-demo.rle and golly-constructor.rle.gz for examples of
+# construction. Other demos show gates, sheathing and signals.
+#
+x = 54, y = 20, rule = Codd
+34.5A$34.A3.A$.5B28.A3.A$B5AB27.A2.2A$BA3BAB27.A3.A$BAB.BAB27.A$BAB.B
+AB27.A$BAB.BAB21.13A$BAB.BAB21.A11.A$BAB.BAB21.A11.14A$BAB.BA9B13.A
+11.A$BAB.B7A.F24A2.A$BAB.BA9B11.A6.A6.A$BAB.BAB19.A6.A6.A$BAB.BAB19.A
+3.A2.A4.3A$BAB.BAB19.A3.4A4.A.A$BAB.BAB19.A11.3A$BA3BAB19.3A6.4A$BAG.
+2AB19.A.A6.A.A$.5B20.12A!

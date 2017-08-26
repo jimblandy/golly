@@ -1,0 +1,33 @@
+# A demonstration of the sheathing problems in Codd's ruleset. Run
+# the pattern and note that the sheathing goes wrong on every case.
+# At the top is shown the problem in isolated form, while the bottom 
+# row shows a real-world example of the problem in context.
+#
+# Now reload the pattern (or undo back to generation 0) and change the
+# rule to Codd2 (Control menu | Set rule...). Now all the examples
+# sheath correctly.
+#
+# To achieve this, the following three transition rules were added to
+# Codd's ruleset:
+# 0,0,6,6,2,2
+# 0,6,6,0,2,2
+# 1,6,6,6,0,6
+#
+# In simple patterns it is easy to avoid these problem patterns, by
+# introducing delays in various places. On more complex patterns though
+# this is not so easy - introducing a delay in one place causes the
+# sheathing problems to reappear elsewhere. For patterns over a certain
+# threshold there is no easy alternative to using the extended ruleset.
+#
+x = 99, y = 33, rule = Codd
+87.BAB$8.A14.A20.BAB16.BAB21.BAB$8.A14.A20.B.B16.B.B21.BAB$8.A14.A21.
+F18.F22.B.B$2.3B3.A.3B6.3B.A3.3B15.A18.A23.F$2.2A.F3AF.2A6.2A.F3AF.2A
+9.5B.A18.A.5B11.4B2.A2.4B$2.3B5.3B6.3B5.3B9.4A.F5A10.5AF.4A11.3A.F3AF
+.3A$39.5B22.5B11.4B5.4B5$5.6A11.6A16.7A10.6A$5.A4.A11.A4.A16.A5.A10.A
+4.A16.6A4.6A$5.A4.A11.A4.A7.2B7.A5.A10.A4.9A8.A4.A4.A4.A$5.A4.A6.2B3.
+A4.A7.A.F7A5.A10.A9.A11.A4.A4.A4.A$2B3.A4.A6.A.F3A4.5A3.2B3.A9.A5.2B
+3.A9.A6.2B3.A4.A4.A4.A$A.F3A4.5A2.2B3.A4.A12.A9.A5.A.F7A5.A6.A.F3A4.
+6A4.A$2B3.A4.A11.A4.A12.A4.9A2.2B7.A5.A6.2B3.A14.A$5.A4.A11.A4.A12.A
+4.A19.A5.A11.A14.A$5.A4.A11.A4.A12.6A19.7A11.A2.5A7.A$5.6A11.6A55.A2.
+A3.A7.A$83.A2.A3.A7.A$83.A2.A3.A7.A$83.4A3.A3.5A$83.A6.A3.A3.A$83.A6.
+A3.A3.A$83.A6.A3.A3.A$83.A6.5A3.A$83.A14.A$83.A14.A$83.A14.A$83.16A!

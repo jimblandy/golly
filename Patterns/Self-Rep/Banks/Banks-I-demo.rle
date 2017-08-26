@@ -1,0 +1,46 @@
+# Edwin Roger Banks, PhD Thesis 1971
+#
+# Two-state, five-neighbor CA for a universal computer.
+# (Appendix I)
+#
+# At the top are shown wires in several configurations. Signals travel
+# down either side of the wire and can be destroyed by single cell
+# protrusions on the wire.
+# 
+# Below are shown a fan-out junction and an inside-to-inside turn.
+#
+# Below that is shown a clock, a periodic emitter of signals.
+#
+# At the bottom is shown a logic gate. If the input from the top is A
+# and that from the left is B then the output signal is present if the
+# function "B and not A" is true. The inputs have to be correctly
+# synchronized for this to work but this can always be arranged.
+#
+# Banks reports that this functionality is sufficient for constructs in 
+# the CA to be computation universal. This CA is notable because there 
+# are only three rules in the rule table (see Rules/Banks-I.table).
+#
+# See: http://www.bottomlayer.com/bottom/banks/banks_commentary.htm
+#
+x = 75, y = 123, rule = Banks-I
+o18bo$5ob14o$4ob15o$20o6b5o2b5o2b5o2b5o$o18bo7b3o4b3o4b3o4b3o$27b3o4b
+3o4b3o4b3o$27b3o4b3o4b3o4b3o$o18bo7b3o4bobo4b3o4bobo$15ob4o7b3o5b2o4b
+3o4b2o$16ob3o7b3o4b3o4b3o4b3o$20o7b3o4b3o4b3o4b3o$o18bo7b3o4b3o4b3o4b
+3o$27b3o4b3o4b3o4b3o$27b3o4b3o4b3o4b3o$o18bo7b3o4b3o4b3o4b3o$20o7b3o4b
+3o4b3o4b3o$4ob15o7b3o4b3o4b3o4b3o$5ob14o7b3o4b3o4b3o4b3o$o18bo7b3o4b3o
+4b2o5b3o$28b2o4b3o4bobo4b3o$27bobo4b3o4b3o4b3o$o18bo7b3o4b3o4b3o4b3o$
+20o6b5o2b5o2b5o2b5o$17ob2o$16ob3o$o18bo5$o13bo4bo$5ob14o$4ob15o$20o6b
+5o2b5o2b5o2b5o$o18bo7b3o4b3o4b3o4b3o$27b3o4b3o4b3o4b3o$27b3o4b3o4b3o4b
+3o$o6bo11bo7b3o4bobo4b3o4bobo$15ob4o7b3o5b2o4b4o3b2o$16ob3o7b3o4b3o4b
+3o4b3o$20o6b4o4b3o4b3o4b3o$o18bo7b3o4b3o4b3o4b3o$27b3o4b3o4b3o4b3o$27b
+3o4b3o4b3o4b3o$o18bo7b3o4b3o4b3o4b3o$20o7b3o4b3o4b3o4b3o$4ob15o7b3o3b
+4o4b3o4b4o$5ob14o7b3o4b3o4b3o4b3o$o12bo5bo7b3o4b3o4b2o5b3o$28b2o4b3o4b
+obo4b3o$27bobo4b3o4b3o4b3o$o18bo7b3o4b3o4b3o4b3o$20o6b5o2b5o2b5o2b5o$
+17ob2o$16ob3o$o5bo12bo7$14b5o30b5o$15b3o32b3o$15b3o32bobo$15b3o32b2o$
+15b3o32b3o$15b3o32b3o$15b3o32b3o$15b3o32b3o$15b3o32b3o$15b3o32b3o$o14b
+3o32b3o$3ob14o15bo16b3o$2ob31o16b3o$15o3b16o15b4o$o12b2o3b16o16b3o$13b
+2o3b3o12bo16b3o$12b4o2b3o28b4o4bo$18b3o30b7o16bo$18b3o30b24o$18b3o30bo
+6b17o$18b3o37b17o$18b3o37bo15bo$18b3o$18b3o$18b3o$18b3o$18b3o$17b5o8$
+9bo25bo$9b27o$bo8b26o$b9ob25o$7obo26bo$8bo3$16b5o$17b3o$17b3o$17b3o$
+17b3o$17b3o$17bobo$18b2o$17b3o$17b4o$17b3o$o16b3o$3ob8ob7o19bo$2ob8ob
+28o$17o3b20o$o14b2o3b20o$15b2o3bo18bo$14b4o!

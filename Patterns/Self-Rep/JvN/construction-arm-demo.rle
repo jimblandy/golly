@@ -1,0 +1,94 @@
+# Construction-arm demo.
+# Author: Renato Nobili <renato.nobili@pd.infn.it>
+#
+# Controls are provided to direct the construction arm (c-arm). Use
+# the edit bar and the pencil tool to draw a right-directed excited
+# ordinary tranmission state (OTS, green arrow, 13) at the start of 
+# one of the 14 input lines on the left. Set the machine running at 
+# a slow speed to see it working.
+#
+# The first 9 inputs pass the pulse through quiescent cell coders 
+# (QCC) before passing along the special transmission states (STS, red 
+# arrows) of the c-arm. At the end the quiescent cell specified is 
+# written. Immediately after writing, a sequence of pulses is sent to 
+# retract the c-arm by one cell, to allow the next cell to be written.
+#
+# The next 4 inputs below allow the c-arm to be moved around in the
+# directions shown. The pulse passes through various coders that send
+# a choreographed sequence of instructions down both wires of the 
+# c-arm. You will discover that the c-arm can be broken by moving it 
+# down or left without having previously moved it up or right, 
+# respectively.
+#
+# The final input inserts an activation pulse (AP) - an excited pulse
+# that enters the configuration you have constructed. This is used in
+# self-replication for triggering the new copy into life. If there is
+# no cell immediately above the final STS (red arrow) then the pulse 
+# causes a right-directed OTS (blue arrow) to be written.
+#
+# The construction arm is designed to be capable of writing any pattern
+# of quiescent (non-active) cells, and of inserting one or more 
+# activation pulses. This functionality is used to allow a suitably
+# designed machine to construct a working copy of itself - see for 
+# example NP-replicator.rle.
+#
+# Although this demonstration uses the extended von Neumann rules, the
+# construction arm in von Neumann's original design works in the same
+# way, having both an STS line and an OTS line.
+#
+# http://www.pd.infn.it/~rnobili/wjvn/index.htm
+# http://www.pd.infn.it/~rnobili/au_cell/
+# http://en.wikipedia.org/wiki/Von_Neumann_universal_constructor
+# http://en.wikipedia.org/wiki/Von_Neumann_cellular_automata
+#
+# Originally distributed as: C-ARM_CONTROLS.EVN
+# Redistributed with permission.
+#
+x = 96, y = 110, rule = Nobili32
+21.2pA6.2pA2.3pA2.pA3.pA7.2pA2.2pA2.pA2.pA.3pA.3pA3.2pA2.pA4.3pA$20.pA
+7.pA2.pA.pA2.pA.2pA.2pA6.pA3.pA2.pA.2pA.pA2.pA2.pA2.pA.pA2.pA.pA3.pA$
+20.pA7.pA2.pA.pA2.pA.pA.pA.pA6.pA3.pA2.pA.pA.2pA2.pA2.pA2.pA.pA2.pA.pA
+3.pA$20.pA3.3pA.4pA.3pA2.pA3.pA6.pA3.pA2.pA.pA2.pA2.pA2.3pA2.pA2.pA.pA
+4.2pA$20.pA7.pA2.pA.2pA3.pA3.pA6.pA3.pA2.pA.pA2.pA2.pA2.2pA3.pA2.pA.pA
+6.pA$20.pA7.pA2.pA.pA.pA2.pA3.pA6.pA3.pA2.pA.pA2.pA2.pA2.pA.pA2.pA2.pA
+.pA6.pA$21.2pA5.pA2.pA.pA2.pA.pA3.pA7.2pA2.2pA2.pA2.pA2.pA2.pA2.pA2.
+2pA2.3pA.3pA10$4.2pA3.2pA2.2pA$3.pA2.pA.pA3.pA$3.pA2.pA.pA3.pA$3.pA2.
+pA.pA3.pA$4.3pA2.2pA2.2pA33.2IL.IpA2IpALIpAL$7.pA40.J.pAIpA.L2KIJ.pAI
+pA$43.5IpA5IpA8IL$43.JpAIpA.2JpAIpA.2IpAIpA4.L$pA.4IpAIpAIpAIpA4IL19.
+7IJ.2IpAIJ12.L$6.9IL.L19.J25.L$15.L.L19.J6.pA2IL15.L$6.9IpAIL19.J6.J.
+LpALIpAL11.L$6.J2.2IL3.L.L19.J.5IpA.2LpAJ.IpAIpA8.L$Q.4IpA2IpA.pAIpA.
+L.L19.J.J4.L.17IL$9.IpA4IL.L19.J.J4.2IpAIpA14.L$15.L.L19.J.J14.3IL5.L
+$6.9IpAIL19.J.J4.10IpA2.pAL4.L$6.J6.I2L.L19.J.J4.J9KIpAI2pAIpAIpAL$S.
+4IpA2IpAIpAIJ2L.L19.J.J.12IpA9IL$9.6IL.L19.J.J.JpAIpA.JpAIpALJKJ9.L$
+15.L.L19.J.J2.J.3IJ2.2IpAJ9.L$6.9IpAIL19.J.J2.J20.L$6.J8.L.L3.16IpAIpA
+2IpA5IpA2IpAIL9.L$T.4IpA2IpAIpAIpA.L.L3.J15.J.J2.J5.L2.2LpAIpA2L5.L$
+9.6IL.L3.J15.J.J2.J5.L.LK4IpA6IL21.11Q$15.L.L3.J15.J.J2.J5.L.2IpAIpA.
+LJpAIpA2.L21.R9IJ$6.9IpAIL3.J15.J.J2.J5.L7.pAIJ4.L21.RJ$6.J8.L.L3.J
+15.J.J2.J5.L14.pA21.RJ$R.4IpA2IpAIpA3.2IpA3IpA15IpAIpA2IpA5IpA13IpA
+22QRJ$9.6IJ.L3.J15.J.J2.J5.L.6ILILILJ.23IJ$6.9IpAIL3.J15.J.J2.J5.L.JK
+pAIpAJLJLJLJ.J$6.J8.J.L3.J15.J.J2.J5.L3.J.IJIJIJIJ.J$6.J2.2IpA3.J.L3.
+J8.7IpAIpA2IpA5IpA3IpAIL.7IJ$J.4IpA2IpA.IpA2.J.L3.J8.J6.J.J2.J5.L3.pA
+KpA.pAIpA4.J11.2pA4.pA2.2pA2.pA3.pA$9.6IJ.L3.J8.J6.J.J2.J5.L3.4IJ6.J
+10.pA5.pA.pA.pA.pA.2pA.2pA$15.J.L3.J8.J6.J.J2.J5.L7.IL5.J10.pA2.2pA.pA
+.pA.pA.pA.pA.pA.pA$6.9IpAIL3.J8.J6.J.J2.J5.L7.JIpAIpA2.J10.pA5.3pA.2pA
+2.pA3.pA$6.J2.2IL3.J.4IpA8IpA6IpAIpA2IpA5.L3.4IpA6IJ11.2pA3.pA.pA.pA.
+pA.pA3.pA$K.4IpA2IpA.pA3.J.J3.J8.J6.J.J2.L5.4IpAIpA.2JpAIpA2.J$9.6IJ.
+J3.J8.J6.J.J2.L11.2IpAIJ4.J$15.J.J3.J8.J6.J.J2.L2.8IL9.J$6.9IpAIJ3.J
+2.6IpA6IpA.J2.L2.J5K.LK9.J$6.J2.2IL3.J.J3.J2.J5.J6.L.J2.L2.5IpAIpA10I
+J$L.4IpA2IpA.L3.J.J3.J2.J5.J6.L.J2.L2.2JpA2IJ.IpAIpA2.pAKpAIpAJ$9.6IJ
+.J3.J2.J5.J6.L.J2.L2.JpAJ7.IpAIpAIJ.IJ$15.J.J3.J2.J2.3IpA6IpAIpA2.4IJ
+16.J$15.J.J3.J2.J2.J2.J6.L.L9.2IpA2IpAIL6.J$6.9IpAIJ3.J2.J2.J2.J6.L.L
+8.IpAL3.L.L.IL3.J$6.J8.J.J3.J2.J2.J2.J6.L.7IpAIpA.pAIpA.L.pAIpAL3.J$I
+.4IpA8IJ.J3.J2.J2.J2.J6.L8.8IpA8IJ$17.J3.J2.J2.J2.J6.L16.L.pAIpAIpA2.
+J$17.J3.J2.J2.J2.J6.L16.pAIJ6.J$17.J3.J2.J2.J2.J6.L25.J$17.J3.J2.J2.J
+2.J6.L25IJ$17.J3.J2.J2.J2.J6.IpAIpA.JpAIpAJ3.pAI2pAIpA.pAKpA3K$17.J3.
+J2.J2.J2.J9.3IJ.IpAIpAIJ2.J.LIpA2.pAKpA$17.J3.J2.J2.J2.J17.5IpA.IJ3IpA
+IJ$6.pA10.J3.J2.J2.J2.J$5.2pA10.J3.J2.J2.J2.J$4.6pA.6IJ3.J2.J2.J2.J$
+5.2pA14.J2.J2.J2.J$6.pA14.J2.J2.J2.J$21.J2.J2.J2.J$21.J2.J2.J2.J$21.J
+2.J2.J2.J$6.pA14.J2.J2.J2.J$6.2pA13.J2.J2.J2.J$3.6pA2.10IJ2.J2.J2.J$
+6.2pA16.J2.J2.J$6.pA17.J2.J2.J$24.J2.J2.J$24.J2.J2.J$6.pA17.J2.J2.J$
+6.pA17.J2.J2.J$6.pA17.J2.J2.J$4.5pA2.13IJ2.J2.J$5.3pA19.J2.J$6.pA20.J
+2.J$27.J2.J$27.J2.J$6.pA20.J2.J$5.3pA19.J2.J$4.5pA18.J2.J$6.pA4.16IJ
+2.J$6.pA23.J$6.pA23.J$30.J$30.J$30.J$4.pA2.2pA21.J$3.pA.pA.pA.pA20.J$
+3.pA.pA.pA.pA.19IJ$3.3pA.2pA$3.pA.pA.pA!
+
