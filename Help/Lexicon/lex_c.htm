@@ -302,9 +302,10 @@ unusual type of MMS <a href="lex_b.htm#breeder">breeder</a>.
 similar cellular automata, set up by Adam P. Goucher in 2015 at
 <a href="http://catagolue.appspot.com">http://catagolue.appspot.com</a>. It gathers data from a distributed
 search of random initial configurations and records the eventual
-decay products. Within a year of operation it had completed a census
-of the <a href="lex_a.htm#ash">ash</a> objects from over two trillion asymmetric 16x16 soups.
-As of August 2017 the number is near ten trillion.
+decay products. Within a year of operation it had completed a
+<a href="#census">census</a> of the <a href="lex_a.htm#ash">ash</a> objects from over two trillion asymmetric 16x16
+<a href="lex_s.htm#soup">soups</a>. As of August 2017, over two hundred trillion ash objects
+have been counted, from nearly ten trillion asymmetric soups.
 <p>It is often possible to find equivalent <a href="lex_g.htm#glidersynthesis">glider synthesis</a> recipes
 for selected parts of long-running active reactions. Results from
 these random <a href="lex_s.htm#soup">soup</a> searches have made it possible to find efficient
@@ -349,13 +350,13 @@ Caterloopillars with periods <i>c</i>/(6+4<i>N</i>) can't be constructed. Howeve
 this is only a limitation of the current construction script, not of
 the underlying Caterloopillar <a href="lex_u.htm#universaltoolkit">universal toolkit</a>.
 <p><a name=caterpillar>:</a><b>Caterpillar</b> A <a href="lex_s.htm#spaceship">spaceship</a> that works by laying tracks at its front
-end. The only example constructed to date is a p270 17<i>c</i>/45 spaceship
-built by Gabriel Nivasch in December 2004, based on work by himself,
-Jason Summers and David Bell. This Caterpillar has a population of
-about 12 million in each generation and was put together by a
-computer program that Nivasch wrote. At the time it was by far the
-largest and most complex Life object ever constructed, and it is
-still one of the largest in terms of population.
+end. The first example constructed was a p270 17<i>c</i>/45 spaceship built
+by Gabriel Nivasch in December 2004, based on work by himself, Jason
+Summers and David Bell. This Caterpillar has a population of about
+12 million in each generation and was put together by a computer
+program that Nivasch wrote. At the time it was by far the largest
+and most complex Life object ever constructed, and it is still one of
+the largest in terms of population.
 <p>The 17<i>c</i>/45 Caterpillar is based on the following reaction between a
 <a href="lex_p.htm#piheptomino">pi-heptomino</a> and a <a href="lex_b.htm#blinker">blinker</a>:
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -457,6 +458,11 @@ other non-deterministic transition rules, etc.
 (hyper)cube centred on that cell. (This includes those cases where
 the neighbourhood might more naturally be thought of as a proper
 subset of this cube.) This is known as the Moore neighbourhood.
+<p><a name=census>:</a><b>census</b> A count of the number of different individual Life objects
+within one larger object, most often the final <a href="lex_a.htm#ash">ash</a> of a random
+<a href="lex_s.htm#soup">soup</a> experiment. This includes the number of <a href="lex_b.htm#block">blocks</a>, <a href="lex_b.htm#blinker">blinkers</a>,
+<a href="lex_g.htm#glider">gliders</a>, and other common objects, as well as any rarer larger
+<a href="lex_s.htm#stilllife">still lifes</a>, <a href="lex_o.htm#oscillator">oscillators</a> or <a href="lex_s.htm#spaceship">spaceships</a>.
 <p><a name=centinal>:</a><b>centinal</b> (p100) Found by Bill Gosper. This combines the mechanisms
 of the p46 and p54 shuttles (see <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a> and
 <a href="lex_p.htm#p54shuttle">p54 shuttle</a>).
@@ -494,6 +500,19 @@ OOO.
 <p><a name=channel>:</a><b>channel</b> A lane or <a href="lex_s.htm#signal">signal</a> path, usually synchronized with one or
 more coordinated signals on other paths. See <a href="lex_g.htm#gemini">Gemini</a>, <a href="lex_g.htm#geminoid">Geminoid</a>,
 <a href="#constructionarm">construction arm</a>, <a href="lex_s.htm#singlechannel">single-channel</a>.
+<p><a name=chaoticgrowth>:</a><b>chaotic growth</b> An object whose <a href="lex_f.htm#fate">fate</a> is unknown, other that it
+seemingly grows forever in an unpredictable manner. In Life, no
+pattern has yet been found that is chaotic. This is in contrast to
+many other Life-like rules, where even small objects can appear to
+grow chaotically.
+<p>It is possible that chaotic growth may occur rarely or even
+regularly for large enough random Life objects, but if so the minimum
+size of such patterns must be larger than what can currently be
+experimentally simulated (but see <a href="lex_n.htm#noveltygenerator">novelty generator</a>).
+<p>In any case, it is not decidable whether a pattern that apparently
+grows randomly forever is in fact displaying chaotic growth.
+Continuing to evolve such a pattern might at any time result in it
+suddenly cleaning itself up and becoming predictable.
 <p><a name=chemist>:</a><b>chemist</b> (p5)
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .......O.......
@@ -1160,7 +1179,7 @@ O..O..................
 <a href="lex_g.htm#glider">gliders</a>, or other <a href="lex_s.htm#spaceship">spaceships</a>, is fired into some junk.
 <p>The most common example is initiated by the following collision of
 a glider with a <a href="lex_b.htm#block">block</a>. With a glider stream of even <a href="lex_p.htm#period">period</a> at
-least 82, this gives a crystal which forms a pair <a href="lex_b.htm#beehive">beehives</a> for
+least 82, this gives a crystal which forms a pair of <a href="lex_b.htm#beehive">beehives</a> for
 every 11 gliders which hit it.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .O......
