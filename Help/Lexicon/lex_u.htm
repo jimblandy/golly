@@ -56,10 +56,13 @@ Life cell. When the plane is tiled by these two patterns (which then
 represent the state of a whole Life universe) they evolve, after a
 fixed amount of time, into another tiling of the plane by the same
 two patterns which correctly represents the Life generation following
-the one they initially represented. It is usual to use capital
-letters for the simulated things, so, for example, for the first
-known unit Life cell (constructed by David Bell in January 1996), one
-Generation is 5760 generations, and one <a href="lex_m.htm#metacell">metacell</a> is 500x500 cells.
+the one they initially represented.
+<p>It is usual to use the prefix "meta-" for simulated Life features,
+so, for example, for the first known unit Life cell (constructed by
+David Bell in January 1996), one metatick is 5760 <a href="lex_t.htm#tick">ticks</a>, and one
+<a href="lex_m.htm#metacell">metacell</a> is 500x500 cells. Capital letters were originally used to
+make this distinction -- e.g., Generation, Cell -- but this usage is
+no longer common.
 <p>In December 2005, Jason Summers constructed an analogous unit cell
 for Wolfram's Rule 110, a one-dimensional <a href="lex_c.htm#cellularautomaton">cellular automaton</a> that
 is known be universal. See also <a href="lex_o.htm#otcametapixel">OTCA metapixel</a>, <a href="lex_p.htm#p1megacell">p1 megacell</a>.
@@ -150,7 +153,7 @@ This can be done by working out a construction recipe for some type
 of <a href="lex_s.htm#slidingblockmemory">sliding block memory</a> with a faraway block, attached to a
 universal constructor. The block's position encodes an integer value
 that can be processed to retrieve as many bits of information as are
-needed to build a 1G <a href="lex_s.htm#seed">seed</a>. Eventually, after a completely
+needed to build a <a href="lex_1.htm#a-1gseed">1G seed</a>. Eventually, after a completely
 unreasonable number of ticks, the seed can be <a href="lex_t.htm#trigger">triggered</a> to produce
 glider salvos which interact to construct the actual target object,
 after sending a self-destruct signal to the sliding block memory
