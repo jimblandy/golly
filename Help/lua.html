@@ -1,1675 +1,1 @@
-<html>
-<title>Golly Help: Lua Scripting</title>
-<body bgcolor="#FFFFCE">
-
-<p>
-Golly uses a statically embedded <a href="http://www.lua.org">Lua</a> interpreter
-(version 5.3.4) to execute .lua scripts.  This lets you extend Golly's capabilities
-in lots of interesting ways.
-
-<p>
-<dd><a href="#examples"><b>Example scripts</b></a></dd>
-<dd><a href="#commands"><b>Golly's scripting commands</b></a></dd>
-<dd><a href="#cellarrays"><b>Cell arrays</b></a></dd>
-<dd><a href="#rectarrays"><b>Rectangle arrays</b></a></dd>
-<dd><a href="#gplus"><b>Using the gplus package</b></a></dd>
-<dd><a href="#problems"><b>Potential problems</b></a></dd>
-<dd><a href="#copyright"><b>Lua copyright notice</b></a></dd>
-</p>
-
-
-<p><a name="examples"></a>&nbsp;<br>
-<font size=+1><b>Example scripts</b></font>
-
-<p>
-The Scripts folder supplied with Golly contains a number of example Lua scripts:
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0 width=520>
-<tr>
-   <td><b>breakout.lua</b></td><td width=10> </td>
-   <td> &mdash; shows how to use the <a href="overlay.html">overlay</a> to create a game<td>
-</tr>
-<tr>
-   <td><b>browse-patterns.lua</b></td><td width=10> </td>
-   <td> &mdash; lets you browse through patterns in a folder<td>
-</tr>
-<tr>
-   <td><b>density.lua</b></td><td width=10> </td>
-   <td> &mdash; calculates the density of the current pattern</td>
-</tr>
-<tr>
-   <td><b>draw-lines.lua</b></td><td width=10> </td>
-   <td> &mdash; lets you draw one or more straight lines</td>
-</tr>
-<tr>
-   <td><b>envelope.lua</b></td><td width=10> </td>
-   <td> &mdash; uses multiple layers to show a pattern's history</td>
-</tr>
-<tr>
-   <td><b>flood-fill.lua</b></td><td width=10> </td>
-   <td> &mdash; fills a clicked region with the current drawing state</td>
-</tr>
-<tr>
-   <td><b>giffer.lua</b></td><td width=10> </td>
-   <td> &mdash; creates an animated GIF file using the selection</td>
-</tr>
-<tr>
-   <td><b>goto.lua</b></td><td width=10> </td>
-   <td> &mdash; goes to a given generation</td>
-</tr>
-<tr>
-   <td><b>gun-demo.lua</b></td><td width=10> </td>
-   <td> &mdash; constructs a few spaceship guns</td>
-</tr>
-<tr>
-   <td><b>heisenburp.lua</b></td><td width=10> </td>
-   <td> &mdash; illustrates the use of cloned layers</td>
-</tr>
-<tr>
-   <td><b>hexgrid.lua</b></td><td width=10> </td>
-   <td> &mdash; creates a true hexagonal grid</td>
-</tr>
-<tr>
-   <td><b>invert.lua</b></td><td width=10> </td>
-   <td> &mdash; inverts all cell states in the current selection</td>
-</tr>
-<tr>
-   <td><b>lifeviewer.lua</b></td><td width=10> </td>
-   <td> &mdash; displays patterns like <a href="http://www.conwaylife.com/forums/viewtopic.php?f=3&t=1622">LifeViewer</a></td>
-</tr>
-<tr>
-   <td><b>make-torus.lua</b></td><td width=10> </td>
-   <td> &mdash; makes a toroidal universe from the selection</td>
-</tr>
-<tr>
-   <td><b>metafier.lua</b></td><td width=10> </td>
-   <td> &mdash; converts the current selection into a meta pattern</td>
-</tr>
-<tr>
-   <td><b>move-object.lua</b></td><td width=10> </td>
-   <td> &mdash; lets you move a connected group of live cells</td>
-</tr>
-<tr>
-   <td><b>move-selection.lua</b></td><td width=10> </td>
-   <td> &mdash; lets you move the current selection</td>
-</tr>
-<tr>
-   <td><b>oscar.lua</b></td><td width=10> </td>
-   <td> &mdash; detects oscillating patterns, including spaceships</td>
-</tr>
-<tr>
-   <td><b>overlay-demo.lua</b></td><td width=10> </td>
-   <td> &mdash; demonstrates most of the <a href="overlay.html">overlay</a> functions</td>
-</tr>
-<tr>
-   <td><b>pd-glider.lua</b></td><td width=10> </td>
-   <td> &mdash; creates a set of pentadecathlon+glider collisions</td>
-</tr>
-<tr>
-   <td><b>pop-plot.lua</b></td><td width=10> </td>
-   <td> &mdash; displays a plot of population versus time</td>
-</tr>
-<tr>
-   <td><b>shift.lua</b></td><td width=10> </td>
-   <td> &mdash; shifts the current selection by given x y amounts</td>
-</tr>
-<tr>
-   <td><b>slide-show.lua</b></td><td width=10> </td>
-   <td> &mdash; displays all patterns in the Patterns folder</td>
-</tr>
-<tr>
-   <td><b>tile.lua</b></td><td width=10> </td>
-   <td> &mdash; tiles the selection with the pattern inside it</td>
-</tr>
-<tr>
-   <td><b>tile-with-clip.lua</b></td><td width=10> </td>
-   <td> &mdash; tiles the selection with the clipboard pattern</td>
-</tr>
-</table>
-</dd>
-</p>
-
-<p>
-To run one of these scripts, tick the <b>Show Files</b> item in the File menu,
-open the Scripts/Lua folder and then simply click on the script's name.
-You can also select one of the <b>Run</b> items in the File menu.
-For a frequently used script you might like to assign a keyboard shortcut
-to run it (see <a href="prefs:keyboard">Preferences > Keyboard</a>).
-
-<p>
-When Golly starts up it looks for a script called <b>golly-start.lua</b>
-in the same directory as the Golly application and then in a user-specific
-data directory (see the <a href="#getdir"><b>getdir</b></a> command for
-the likely path on your system).
-If the script is found then it is automatically executed.
-
-<p>
-There are a number of ways to abort a running script.  Hit the escape key,
-or click on the stop button in the tool bar, or select the Stop item in the
-Control menu.
-
-
-<p><a name="commands"></a>&nbsp;<br>
-<font size=+1><b>Golly's scripting commands</b></font>
-
-<p>
-This section describes all the <b>g.*</b> commands that can be used in a script after
-including this line:
-<p><dd>
-<b>local g = golly()</b>
-</dd>
-<p>
-Commands are grouped by function
-(<a href="#filing"><b>filing</b></a>,
-<a href="#editing"><b>editing</b></a>,
-<a href="#control"><b>control</b></a>,
-<a href="#viewing"><b>viewing</b></a>,
-<a href="#layers"><b>layers</b></a>
-and <a href="#miscellaneous"><b>miscellaneous</b></a>)
-or you can search for individual commands alphabetically:
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr>
-<td valign=top>
-<a href="#addlayer"><b>addlayer</b></a><br>
-<a href="#advance"><b>advance</b></a><br>
-<a href="#autoupdate"><b>autoupdate</b></a><br>
-<a href="#check"><b>check</b></a><br>
-<a href="#clear"><b>clear</b></a><br>
-<a href="#clone"><b>clone</b></a><br>
-<a href="#continue"><b>continue</b></a><br>
-<a href="#copy"><b>copy</b></a><br>
-<a href="#cut"><b>cut</b></a><br>
-<a href="#dellayer"><b>dellayer</b></a><br>
-<a href="#doevent"><b>doevent</b></a><br>
-<a href="#duplicate"><b>duplicate</b></a><br>
-<a href="#empty"><b>empty</b></a><br>
-<a href="#error"><b>error</b></a><br>
-<a href="#evolve"><b>evolve</b></a><br>
-<a href="#exit"><b>exit</b></a><br>
-<a href="#fit"><b>fit</b></a><br>
-<a href="#fitsel"><b>fitsel</b></a><br>
-<a href="#flip"><b>flip</b></a><br>
-<a href="#getalgo"><b>getalgo</b></a>
-</td>
-<td valign=top width=40> </td>
-<td valign=top>
-<a href="#getbase"><b>getbase</b></a><br>
-<a href="#getcell"><b>getcell</b></a><br>
-<a href="#getcells"><b>getcells</b></a><br>
-<a href="#getclip"><b>getclip</b></a><br>
-<a href="#getclipstr"><b>getclipstr</b></a><br>
-<a href="#getcolor"><b>getcolor</b></a><br>
-<a href="#getcolors"><b>getcolors</b></a><br>
-<a href="#getcursor"><b>getcursor</b></a><br>
-<a href="#getdir"><b>getdir</b></a><br>
-<a href="#getevent"><b>getevent</b></a><br>
-<a href="#getfiles"><b>getfiles</b></a><br>
-<a href="#getgen"><b>getgen</b></a><br>
-<a href="#getheight"><b>getheight</b></a><br>
-<a href="#getinfo"><b>getinfo</b></a><br>
-<a href="#getlayer"><b>getlayer</b></a><br>
-<a href="#getmag"><b>getmag</b></a><br>
-<a href="#getname"><b>getname</b></a><br>
-<a href="#getoption"><b>getoption</b></a><br>
-<a href="#getpath"><b>getpath</b></a><br>
-<a href="#getpop"><b>getpop</b></a>
-</td>
-<td valign=top width=40> </td>
-<td valign=top>
-<a href="#getpos"><b>getpos</b></a><br>
-<a href="#getrect"><b>getrect</b></a><br>
-<a href="#getrule"><b>getrule</b></a><br>
-<a href="#getselrect"><b>getselrect</b></a><br>
-<a href="#getstep"><b>getstep</b></a><br>
-<a href="#getstring"><b>getstring</b></a><br>
-<a href="#getview"><b>getview</b></a><br>
-<a href="#getwidth"><b>getwidth</b></a><br>
-<a href="#getxy"><b>getxy</b></a><br>
-<a href="#hash"><b>hash</b></a><br>
-<a href="#join"><b>join</b></a><br>
-<a href="#load"><b>load</b></a><br>
-<a href="#maxlayers"><b>maxlayers</b></a><br>
-<a href="#millisecs"><b>millisecs</b></a><br>
-<a href="#movelayer"><b>movelayer</b></a><br>
-<a href="#new"><b>new</b></a><br>
-<a href="#note"><b>note</b></a><br>
-<a href="#numalgos"><b>numalgos</b></a><br>
-<a href="#numlayers"><b>numlayers</b></a><br>
-<a href="#numstates"><b>numstates</b></a>
-</td>
-<td valign=top width=40> </td>
-<td valign=top>
-<a href="#open"><b>open</b></a><br>
-<a href="#opendialog"><b>opendialog</b></a><br>
-<a href="#overlay"><b>overlay</b></a><br>
-<a href="#os"><b>os</b></a><br>
-<a href="#parse"><b>parse</b></a><br>
-<a href="#paste"><b>paste</b></a><br>
-<a href="#putcells"><b>putcells</b></a><br>
-<a href="#randfill"><b>randfill</b></a><br>
-<a href="#reset"><b>reset</b></a><br>
-<a href="#rotate"><b>rotate</b></a><br>
-<a href="#run"><b>run</b></a><br>
-<a href="#save"><b>save</b></a><br>
-<a href="#savedialog"><b>savedialog</b></a><br>
-<a href="#select"><b>select</b></a><br>
-<a href="#setalgo"><b>setalgo</b></a><br>
-<a href="#setbase"><b>setbase</b></a><br>
-<a href="#setcell"><b>setcell</b></a><br>
-<a href="#setclipstr"><b>setclipstr</b></a><br>
-<a href="#setcolor"><b>setcolor</b></a><br>
-<a href="#setcolors"><b>setcolors</b></a>
-</td>
-<td valign=top width=40> </td>
-<td valign=top>
-<a href="#setcursor"><b>setcursor</b></a><br>
-<a href="#setdir"><b>setdir</b></a><br>
-<a href="#setgen"><b>setgen</b></a><br>
-<a href="#setlayer"><b>setlayer</b></a><br>
-<a href="#setmag"><b>setmag</b></a><br>
-<a href="#setname"><b>setname</b></a><br>
-<a href="#setoption"><b>setoption</b></a><br>
-<a href="#setpos"><b>setpos</b></a><br>
-<a href="#setrule"><b>setrule</b></a><br>
-<a href="#setstep"><b>setstep</b></a><br>
-<a href="#setview"><b>setview</b></a><br>
-<a href="#show"><b>show</b></a><br>
-<a href="#shrink"><b>shrink</b></a><br>
-<a href="#step"><b>step</b></a><br>
-<a href="#store"><b>store</b></a><br>
-<a href="#transform"><b>transform</b></a><br>
-<a href="#update"><b>update</b></a><br>
-<a href="#visrect"><b>visrect</b></a><br>
-<a href="#warn"><b>warn</b></a>
-</td>
-</tr>
-</table>
-</dd>
-</p>
-
-<p><a name="filing"></a>&nbsp;<br>
-FILING COMMANDS
-
-<a name="open"></a><p><dt><b>open(<i>filename, remember=false</i>)</b></dt>
-<dd>
-Open the given file and process it according to its type:
-</dd>
-<p><dd>
-<ul>
-<li>A HTML file (.htm or .html extension) is displayed in the help window.
-<li>A text file (.txt or .doc extension, or a name containing "readme")
-    is opened in your text editor.
-<li>A script file (.lua or .py extension) is executed.
-<li>A zip file (.zip extension) is processed as described
-    <a href="formats.html#zip">here</a>.
-<li>Any other type of file is assumed to be a pattern file and is loaded
-    into the current layer.
-</ul>
-</dd>
-<p><dd>
-A non-absolute path is relative to the location of the script.
-The 2nd parameter is optional (default = false) and specifies if the given
-pattern or zip file should be remembered in the Open Recent submenu,
-or in the Run Recent submenu if the file is a script.
-</dd>
-<dd> Example: <b>g.open("my-patterns/foo.rle")</b></dd>
-</p>
-
-<a name="save"></a><p><dt><b>save(<i>filename, format, remember=false</i>)</b></dt>
-<dd>
-Save the current pattern in a given file using the specified format:
-</dd>
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr><td><b>"rle"</b></td><td width=20>     </td><td>run length encoded (RLE)</td></tr>
-<tr><td><b>"rle.gz"</b></td><td width=20>  </td><td>compressed RLE</td></tr>
-<tr><td><b>"mc"</b></td><td width=20>      </td><td>macrocell</td></tr>
-<tr><td><b>"mc.gz"</b></td><td width=20>   </td><td>compressed macrocell</td></tr>
-</table>
-</dd>
-<p>
-<dd>
-A non-absolute path is relative to the location of the script.
-The 3rd parameter is optional (default = false) and specifies if the file
-should be remembered in the Open Recent submenu.
-If the <b>savexrle</b> option is true then extended RLE format is used
-(see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
-</dd>
-<dd> Example: <b>g.save("foo.rle", "rle", true)</b></dd>
-</p>
-
-<a name="opendialog"></a><p><dt><b>opendialog(<i>title, filetypes, initialdir, initialfname, mustexist=true</i>)</b></dt>
-<dd>
-Present a standard Open dialog to the user and return the chosen path in a string.
-All parameters are optional; the default is an Open dialog showing the current directory,
-with a title of "Choose a file" and a file type of "All files (*)|*".
-If the 5th parameter (default = true) is set to false, the user can specify a new filename
-instead of choosing an existing file.
-If the given file type is "dir" then the dialog lets the user choose a directory
-rather than a file.
-If the user cancels the dialog, the return value will be an empty string.
-</dd>
-<dd> Example: <b>local fname = g.opendialog("Open MCell File", "MCell files (*.mcl)|*.mcl", "C:\\Temp", "sample.mcl")</b></dd>
-<dd> Example: <b>local dirname = g.opendialog("Choose a folder", "dir");</b></dd>
-</p>
-
-<a name="savedialog"></a><p><dt><b>savedialog(<i>title, filetypes, initialdir, initialfname, suppressprompt=false</i>)</b></dt>
-<dd>
-Present a standard Save dialog to the user and return the chosen path in a string.
-All parameters are optional; the default is a Save dialog showing the current directory,
-with a title of "Choose a save location and filename" and a file type of "All files (*)|*".
-If a file already exists at the chosen location, an Overwrite? query will be displayed
-unless the 5th parameter (default = false) is set to true.
-If the user cancels the dialog, the return value will be an empty string.
-</dd>
-<dd> Example: <b>local fname = g.savedialog("Save text file", "Text files (*.txt;*.csv)|*.txt;*.csv", "C:\\Temp", "Params.txt", 1)</b></dd>
-</p>
-
-<a name="load"></a><p><dt><b>load(<i>filename</i>)</b></dt>
-<dd>
-Read the given pattern file and return a cell array.
-</dd>
-<dd> Example: <b>local blinker = g.load("blinker.rle")</b></dd>
-</p>
-
-<a name="store"></a><p><dt><b>store(<i>cell_array, filename</i>)</b></dt>
-<dd>
-Write the given cell array to the specified file in RLE format.
-If the <b>savexrle</b> option is true then extended RLE format is used
-(see the <a href="file.html#xrle">Save Extended RLE</a> item for details).
-</dd>
-<dd> Example: <b>g.store(cells, "foo.rle")</b></dd>
-</p>
-
-<a name="getdir"></a><p><dt><b>getdir(<i>dirname</i>)</b></dt>
-<dd>
-Return the path of the specified directory:
-</dd>
-<p>
-<dd>
-<b>"app"</b> &mdash; the directory containing the Golly application.
-</dd>
-<p>
-<dd>
-<b>"data"</b> &mdash; the user-specific data directory:
-</dd>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr><td>On Linux:</td><td width=10>
-    </td><td>~/.golly/</td></tr>
-<tr><td>On Mac OS X:</td><td width=10>
-    </td><td>~/Library/Application Support/Golly/</td></tr>
-<tr><td>On Windows XP:</td><td width=10>
-    </td><td>C:\Documents and Settings\username\Application Data\Golly\</td></tr>
-<tr><td>On Windows 7+:</td><td width=10>
-    </td><td>C:\Users\username\AppData\Roaming\Golly\</td></tr>
-</table>
-</dd>
-</td></tr>
-<p>
-<dd>
-<b>"temp"</b> &mdash; the directory Golly uses to store various temporary files.
-All these files are deleted when Golly quits.
-</dd>
-<p>
-<dd>
-<b>"rules"</b> &mdash; the user-specific rules directory
-set in <a href="prefs:control">Preferences > Control</a>.
-</dd>
-<p>
-<dd>
-<b>"files"</b> &mdash; the directory displayed by File > Show Files.
-</dd>
-<p>
-<dd>
-<b>"download"</b> &mdash; the directory Golly uses to store downloaded files.
-</dd>
-<p>
-<dd>
-In each case a full path is returned, terminated by the appropriate path separator
-for the current platform ("/" on Mac and Linux, "\" on Windows).
-</dd>
-<dd> Example: <b>g.open(g.getdir("app").."Patterns/Life/Breeders/breeder.lif")</b></dd>
-</p>
-
-<a name="setdir"></a><p><dt><b>setdir(<i>dirname, dirpath</i>)</b></dt>
-<dd>
-Set the specified directory to the given path (which must be a full path to
-an existing directory).  All the directory names listed above are allowed,
-except for "app", "data" and "temp".
-</dd>
-<dd> Example: <b>g.setdir("download", "/path/to/my-downloads/")</b></dd>
-</p>
-
-<a name="getfiles"></a><p><dt><b>getfiles(<i>dirpath</i>)</b></dt>
-<dd>
-Return the contents of the given directory as an array of strings.
-A non-absolute directory path is relative to the location of the script.
-File names are returned first, then subdirectory names.  The latter names end
-with the platform-specific path separator ("/" on Mac and Linux, "\" on Windows).
-See <a href="edit:Scripts/Lua/slide-show.lua">slide-show.lua</a> for an example.
-</dd>
-
-<a name="getinfo"></a><p><dt><b>getinfo()</b></dt>
-<dd>
-Return the comments from the current pattern.
-</dd>
-<dd> Example: <b>local comments = g.getinfo()</b></dd>
-
-<a name="getpath"></a><p><dt><b>getpath()</b></dt>
-<dd>
-Return the pathname of the current open pattern. Returns "" if the current
-pattern is new and has not been saved.
-</dd>
-<dd> Example: <b>local path = g.getpath()</b></dd>
-</p>
-
-<p><a name="editing"></a>&nbsp;<br>
-EDITING COMMANDS
-
-<a name="new"></a><p><dt><b>new(<i>title</i>)</b></dt>
-<dd>
-Create a new, empty universe and set the window title.
-If the given title is empty then the current title won't change.
-</dd>
-<dd> Example: <b>g.new("test-pattern")</b></dd>
-</p>
-
-<a name="cut"></a><p><dt><b>cut()</b></dt>
-<dd>
-Cut the current selection to the clipboard.
-</dd>
-</p>
-
-<a name="copy"></a><p><dt><b>copy()</b></dt>
-<dd>
-Copy the current selection to the clipboard.
-</dd>
-</p>
-
-<a name="clear"></a><p><dt><b>clear(<i>where</i>)</b></dt>
-<dd>
-Clear inside (where = 0) or outside (where = 1) the current selection.
-</dd>
-<dd> Example: <b>g.clear(1)</b></dd>
-</p>
-
-<a name="paste"></a><p><dt><b>paste(<i>x, y, mode</i>)</b></dt>
-<dd>
-Paste the clipboard pattern at x,y using the given mode ("and", "copy", "or", "xor").
-</dd>
-<dd> Example: <b>g.paste(0, 0, "or")</b></dd>
-</p>
-
-<a name="shrink"></a><p><dt><b>shrink(<i>remove_if_empty=false</i>)</b></dt>
-<dd>
-Shrink the current selection to the smallest rectangle enclosing all of the
-selection's live cells.  If the selection has no live cells then the optional
-parameter specifies whether the selection remains unchanged or is removed.
-</dd>
-<dd> Example: <b>if #g.getselrect() > 0 then g.shrink(true) end</b></dd>
-</p>
-
-<a name="randfill"></a><p><dt><b>randfill(<i>percentage</i>)</b></dt>
-<dd>
-Randomly fill the current selection to a density specified by the given
-percentage (1 to 100).
-</dd>
-<dd> Example: <b>g.randfill(50)</b></dd>
-</p>
-
-<a name="flip"></a><p><dt><b>flip(<i>direction</i>)</b></dt>
-<dd>
-Flip the current selection left-right (direction = 0) or top-bottom (direction = 1).
-</dd>
-</p>
-
-<a name="rotate"></a><p><dt><b>rotate(<i>direction</i>)</b></dt>
-<dd>
-Rotate the current selection 90 degrees clockwise (direction = 0) or
-anticlockwise (direction = 1).
-</dd>
-</p>
-
-<a name="evolve"></a><p><dt><b>evolve(<i>cell_array, numgens</i>)</b></dt>
-<dd>
-Advance the pattern in the given cell array by the specified number of generations
-and return the resulting cell array.
-</dd>
-<dd> Example: <b>local newpatt = g.evolve(currpatt, 100)</b></dd>
-</p>
-
-<a name="join"></a><p><dt><b>join(<i>cell_array1, cell_array2</i>)</b></dt>
-<dd>
-Join the given cell arrays and return the resulting cell array.
-If the given arrays are both one-state then the result is one-state.
-If at least one of the given arrays is multi-state then the result is multi-state,
-but with one exception: if both arrays have no cells then the result is {}
-(an empty one-state array) rather than {0}.  See <a href="#cellarrays">below</a>
-for a description of one-state and multi-state cell arrays.
-</dd>
-<dd> Example: <b>local result = g.join(part1, part2)</b></dd>
-</p>
-
-<a name="transform"></a><p><dt><b>transform(<i>cell_array, x0, y0, axx=1, axy=0, ayx=0, ayy=1</i>)</b></dt>
-<dd>
-Apply an affine transformation to the given cell array and return the resulting cell array.
-For each x,y cell in the input array the corresponding xn,yn cell in the output array
-is calculated as xn = x0 + x*axx + y*axy, yn = y0 + x*ayx + y*ayy.
-</dd>
-<dd> Example: <b>local rot_blinker = g.transform(blinker, 0, 0, 0, -1, 1, 0)</b></dd>
-</p>
-
-<a name="parse"></a><p><dt><b>parse(<i>string, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1</i>)</b></dt>
-<dd>
-Parse an RLE or Life 1.05 string and return an optionally transformed cell array.
-</dd>
-<dd> Example: <b>local blinker = g.parse("3o!")</b></dd>
-</p>
-
-<a name="putcells"></a><p><dt><b>putcells(<i>cell_array, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1, mode="or"</i>)</b></dt>
-<dd>
-Paste the given cell array into the current universe using an optional affine transformation
-and optional mode ("and", "copy", "not", "or", "xor").
-</dd>
-<dd> Example: <b>g.putcells(currpatt, 6, -40, 1, 0, 0, 1, "xor")</b></dd>
-</p>
-
-<a name="getcells"></a><p><dt><b>getcells(<i>rect_array</i>)</b></dt>
-<dd>
-Return any live cells in the specified rectangle as a cell array.
-The given array can be empty (in which case the cell array is empty)
-or it must represent a valid rectangle of the form {x,y,width,height}.
-</dd>
-<dd> Example: <b>local cells = g.getcells( g.getrect() )</b></dd>
-</p>
-
-<a name="getclip"></a><p><dt><b>getclip()</b></dt>
-<dd>
-Parse the pattern data in the clipboard and return the pattern's width, height,
-and a cell array.  The width and height are not necessarily the minimal bounding box
-because the pattern might have empty borders, or it might even be empty.
-</dd>
-<dd> Example: <b>local wd, ht, cells = g.getclip()</b></dd>
-</p>
-
-<a name="hash"></a><p><dt><b>hash(<i>rect_array</i>)</b></dt>
-<dd>
-Return an integer hash value for the pattern in the given rectangle.
-Two identical patterns will have the same hash value, regardless of their
-location in the universe.  This command provides a fast way to
-detect pattern equality, but there is a tiny probability that two different
-patterns will have the same hash value, so you might need to use additional
-(slower) tests to check for true pattern equality.
-</dd>
-<dd> Example: <b>local h = g.hash( g.getrect() )</b></dd>
-</p>
-
-<a name="select"></a><p><dt><b>select(<i>rect_array</i>)</b></dt>
-<dd>
-Create a selection if the given array represents a valid rectangle of the form
-{x,y,width,height} or remove the current selection if the given array is {}.
-</dd>
-<dd> Example: <b>g.select( {-10,-10,20,20} )</b></dd>
-</p>
-
-<a name="getrect"></a><p><dt><b>getrect()</b></dt>
-<dd>
-Return the current pattern's bounding box as an array.
-If there is no pattern then the array is empty ({}), otherwise the
-array is of the form {x,y,width,height}.
-</dd>
-<dd> Example: <b>if #g.getrect() == 0 then g.show("No pattern.") end</b></dd>
-</p>
-
-<a name="getselrect"></a><p><dt><b>getselrect()</b></dt>
-<dd>
-Return the current selection rectangle as an array.
-If there is no selection then the array is empty ({}), otherwise the
-array is of the form {x,y,width,height}.
-</dd>
-<dd> Example: <b>if #g.getselrect() == 0 then g.show("No selection.") end</b></dd>
-</p>
-
-<a name="setcell"></a><p><dt><b>setcell(<i>x, y, state</i>)</b></dt>
-<dd>
-Set the given cell to the specified state (0 for a dead cell, 1 for a live cell).
-</dd>
-</p>
-
-<a name="getcell"></a><p><dt><b>getcell(<i>x, y</i>)</b></dt>
-<dd>
-Return the state of the given cell.
-The following example inverts the state of the cell at 0,0.
-</dd>
-<dd> Example: <b>g.setcell(0, 0, 1 - g.getcell(0, 0))</b></dd>
-</p>
-
-<a name="setcursor"></a><p><dt><b>setcursor(<i>string</i>)</b></dt>
-<dd>
-Set the current cursor according to the given string and return the old cursor string.
-The given string must match one of the names in the Cursor Mode menu.
-</dd>
-<dd> Example: <b>local oldcurs = g.setcursor("Draw")</b></dd>
-</p>
-
-<a name="getcursor"></a><p><dt><b>getcursor()</b></dt>
-<dd>
-Return the current cursor as a string (ie. the ticked name in the Cursor Mode menu).
-</dd>
-</p>
-
-<p><a name="control"></a>&nbsp;<br>
-CONTROL COMMANDS
-
-<a name="run"></a><p><dt><b>run(<i>numgens</i>)</b></dt>
-<dd>
-Run the current pattern for the specified number of generations.
-Intermediate generations are never displayed, and the final generation
-is only displayed if the current <b>autoupdate</b> setting is true.
-</dd>
-<dd> Example: <b>g.run(100)</b></dd>
-</p>
-
-<a name="step"></a><p><dt><b>step()</b></dt>
-<dd>
-Run the current pattern for the current step.
-Intermediate generations are never displayed, and the final generation
-is only displayed if the current <b>autoupdate</b> setting is true.
-</dd>
-</p>
-
-<a name="setstep"></a><p><dt><b>setstep(<i>exp</i>)</b></dt>
-<dd>
-Temporarily set the current step exponent to the given integer.
-A negative exponent sets the step size to 1 and also sets a delay between each
-step, but that delay is ignored by the <b>run</b> and <b>step</b> commands.
-Golly will reset the step exponent to 0 upon creating a new pattern,
-loading a pattern file, or switching to a different algorithm.
-</dd>
-<dd> Example: <b>g.setstep(0)</b></dd>
-</p>
-
-<a name="getstep"></a><p><dt><b>getstep()</b></dt>
-<dd>
-Return the current step exponent.
-</dd>
-<dd> Example: <b>g.setstep( g.getstep() + 1 )</b></dd>
-</p>
-
-<a name="setbase"></a><p><dt><b>setbase(<i>base</i>)</b></dt>
-<dd>
-Temporarily set the current base step to an integer from 2 to 10000.
-Golly will restore the default base step
-(set in <a href="prefs:control">Preferences > Control</a>) upon creating
-a new pattern, loading a pattern file, or switching to a different algorithm.
-</dd>
-<dd> Example: <b>g.setbase(2)</b></dd>
-</p>
-
-<a name="getbase"></a><p><dt><b>getbase()</b></dt>
-<dd>
-Return the current base step.
-</dd>
-</p>
-
-<a name="advance"></a><p><dt><b>advance(<i>where, numgens</i>)</b></dt>
-<dd>
-Advance inside (where = 0) or outside (where = 1) the current selection by the
-specified number of generations.  The generation count does not change.
-</dd>
-<dd> Example: <b>g.advance(0, 3)</b></dd>
-</p>
-
-<a name="reset"></a><p><dt><b>reset()</b></dt>
-<dd>
-Restore the starting pattern and generation count.
-Also reset the algorithm, rule, scale, location and step exponent
-to the values they had at the starting generation.
-The starting generation is usually zero, but it can be larger after
-loading an RLE/macrocell file that stores a non-zero generation count.
-</dd>
-</p>
-
-<a name="setgen"></a><p><dt><b>setgen(<i>gen</i>)</b></dt>
-<dd>
-Set the generation count using the given string.
-Commas and other punctuation marks can be used to make a large number
-more readable.  Include a leading +/- sign to specify a number relative
-to the current generation count.
-</dd>
-<dd> Example: <b>g.setgen("-1,000")</b></dd>
-</p>
-
-<a name="getgen"></a><p><dt><b>getgen(<i>sepchar='\0'</i>)</b></dt>
-<dd>
-Return the current generation count as a string.
-The optional parameter (default = '\0') specifies a separator
-character that can be used to make the resulting string more readable.
-For example, <b>g.getgen(',')</b> would return a string like "1,234,567"
-but <b>g.getgen()</b> would return "1234567".  Use the latter call if
-you want to do arithmetic on the generation count because then it's
-easy to convert the string to a number.
-</dd>
-<dd> Example: <b>local gen = tonumber( g.getgen() )</b></dd>
-</p>
-
-<a name="getpop"></a><p><dt><b>getpop(<i>sepchar='\0'</i>)</b></dt>
-<dd>
-Return the current population as a string.
-The optional parameter (default = '\0') specifies a separator
-character that can be used to make the resulting string more readable.
-For example, <b>g.getpop(',')</b> would return a string like "1,234,567"
-but <b>g.getpop()</b> would return "1234567".  Use the latter call if
-you want to do arithmetic on the population count.
-The following example converts the population to a number.
-</dd>
-<dd> Example: <b>local pop = tonumber( g.getpop() )</b></dd>
-</p>
-
-<a name="empty"></a><p><dt><b>empty()</b></dt>
-<dd>
-Return true if the universe is empty or false if there is at least one live cell.
-This is much more efficient than testing <b>getpop() == "0"</b>.
-</dd>
-<dd> Example: <b>if g.empty() then g.show("All cells are dead.") end</b></dd>
-</p>
-
-<a name="numstates"></a><p><dt><b>numstates()</b></dt>
-<dd>
-Return the number of cell states in the current universe.  This will be a
-number from 2 to 256, depending on the current algorithm and rule.
-</dd>
-<dd> Example: <b>local maxstate = g.numstates() - 1</b></dd>
-</p>
-
-<a name="numalgos"></a><p><dt><b>numalgos()</b></dt>
-<dd>
-Return the number of algorithms (ie. the number of items in the Set Algorithm menu).
-</dd>
-<dd> Example: <b>local maxalgo = g.numalgos() - 1</b></dd>
-</p>
-
-<a name="setalgo"></a><p><dt><b>setalgo(<i>string</i>)</b></dt>
-<dd>
-Set the current algorithm according to the given string which must match
-one of the names in the Set Algorithm menu.
-</dd>
-<dd> Example: <b>g.setalgo("HashLife")</b></dd>
-</p>
-
-<a name="getalgo"></a><p><dt><b>getalgo(<i>index=current</i>)</b></dt>
-<dd>
-Return the algorithm name at the given index in the Set Algorithm menu,
-or the current algorithm's name if no index is supplied.
-</dd>
-<dd> Example: <b>local lastalgo = g.getalgo( g.numalgos() - 1 )</b></dd>
-</p>
-
-<a name="setrule"></a><p><dt><b>setrule(<i>string</i>)</b></dt>
-<dd>
-Set the current rule according to the given string.
-If the current algorithm doesn't support the specified rule then
-Golly will automatically switch to the first algorithm that does
-support the rule.  If no such algorithm can be found then you'll get
-an error message and the script will be aborted.
-</dd>
-<dd> Example: <b>g.setrule("b3/s23")</b></dd>
-</p>
-
-<a name="getrule"></a><p><dt><b>getrule()</b></dt>
-<dd>
-Return the current rule as a string in canonical format.
-</dd>
-<dd> Example: <b>local oldrule = g.getrule()</b></dd>
-</dd>
-</p>
-
-<a name="getwidth"></a><p><dt><b>getwidth()</b></dt>
-<dd>
-Return the width (in cells) of the current universe (0 if unbounded).
-</dd>
-<dd> Example: <b>local wd = g.getwidth()</b></dd>
-</dd>
-</p>
-
-<a name="getheight"></a><p><dt><b>getheight()</b></dt>
-<dd>
-Return the height (in cells) of the current universe (0 if unbounded).
-</dd>
-<dd> Example: <b>local ht = g.getheight()</b></dd>
-</dd>
-</p>
-
-<p><a name="viewing"></a>&nbsp;<br>
-VIEWING COMMANDS
-
-<a name="setpos"></a><p><dt><b>setpos(<i>x, y</i>)</b></dt>
-<dd>
-Change the position of the viewport so the given cell is in the middle.
-The x,y coordinates are given as strings so the viewport can be moved
-to any location in the unbounded universe.
-Commas and other punctuation marks can be used to make large numbers more readable.
-Apart from a leading minus sign, most non-digits are simply ignored;
-only alphabetic characters will cause an error message.
-Note that positive y values increase downwards in Golly's coordinate system.
-</dd>
-<dd> Example: <b>g.setpos("1,000,000,000,000", "-123456")</b></dd>
-</p>
-
-<a name="getpos"></a><p><dt><b>getpos(<i>sepchar='\0'</i>)</b></dt>
-<dd>
-Return the x,y position of the viewport's middle cell in the form of two strings.
-The optional parameter (default = '\0') specifies a separator
-character that can be used to make the resulting strings more readable.
-For example, <b>g.getpos(',')</b> might return two strings like "1,234"
-and "-5,678" but <b>g.getpos()</b> would return "1234" and "-5678".
-Use the latter call if you want to do arithmetic on the x,y values,
-or just use the <b>getposint()</b> function defined
-in the <a href="#gplus"><b>gplus</b></a> package.
-</dd>
-<dd> Example: <b>local x, y = g.getpos()</b></dd>
-</p>
-
-<a name="setmag"></a><p><dt><b>setmag(<i>mag</i>)</b></dt>
-<dd>
-Set the magnification, where 0 corresponds to the scale 1:1, 1 = 1:2, -1 = 2:1, etc.
-The maximum allowed magnification is 5 (= 1:32).
-</dd>
-<dd> Example: <b>g.setmag(0)</b></dd>
-</p>
-
-<a name="getmag"></a><p><dt><b>getmag()</b></dt>
-<dd>
-Return the current magnification.
-</dd>
-<dd> Example: <b>g.setmag( g.getmag() - 1 )</b></dd>
-</p>
-
-<a name="fit"></a><p><dt><b>fit()</b></dt>
-<dd>
-Fit the entire pattern in the viewport.
-</dd>
-</p>
-
-<a name="fitsel"></a><p><dt><b>fitsel()</b></dt>
-<dd>
-Fit the current selection in the viewport.
-The script aborts with an error message if there is no selection.
-</dd>
-</p>
-
-<a name="visrect"></a><p><dt><b>visrect(<i>rect_array</i>)</b></dt>
-<dd>
-Return true if the given rectangle is completely visible in the viewport.
-The rectangle must be an array of the form {x,y,width,height}.
-</dd>
-<dd> Example: <b>if not g.visrect({0,0,1,1}) then g.setpos("0","0") end</b></dd>
-</p>
-
-<a name="setview"></a><p><dt><b>setview(<i>wd, ht</i>)</b></dt>
-<dd>
-Set the pixel width and height of the viewport (the main window will be
-resized accordingly).
-</dd>
-<dd> Example: <b>g.setview(32*32, 32*30)</b></dd>
-</p>
-
-<a name="getview"></a><p><dt><b>getview(<i>index=-1</i>)</b></dt>
-<dd>
-Return the pixel width and height of the viewport if the given index is -1
-(the default), or the pixel width and height of the specified layer if
-the given index is an integer from 0 to <b>numlayers()</b> - 1.
-</dd>
-<dd> Example: <b>local wd, ht = g.getview()</b></dd>
-</p>
-
-<a name="autoupdate"></a><p><dt><b>autoupdate(<i>bool</i>)</b></dt>
-<dd>
-When Golly runs a script this setting is initially false.
-If the given parameter is true then Golly will automatically update the
-viewport and the status bar after each command that changes the
-universe or viewport in some way.  Useful for debugging scripts.
-</dd>
-<dd> Example: <b>g.autoupdate(true)</b></dd>
-</p>
-
-<a name="update"></a><p><dt><b>update()</b></dt>
-<dd>
-Immediately update the viewport and the status bar, regardless of the
-current <b>autoupdate</b> setting.  Note that Golly always does an
-update when a script finishes.
-</dd>
-</p>
-
-<p><a name="layers"></a>&nbsp;<br>
-LAYER COMMANDS
-
-<a name="overlay"></a><p><dt><b>overlay(<i>command</i>)</b></dt>
-<dd>
-Call a command to create, modify or delete the <a href="overlay.html">overlay</a>,
-a rectangular area of pixels that can be displayed on top of the current layer.
-</dd>
-<dd> Example: <b>g.overlay("create 400 300")</b></dd>
-</p>
-
-<a name="addlayer"></a><p><dt><b>addlayer()</b></dt>
-<dd>
-Add a new, empty layer immediately after the current layer and
-return the new layer's index, an integer from 0 to <b>numlayers()</b> - 1.
-The new layer becomes the current layer and inherits most of
-the previous layer's settings, including its algorithm, rule, scale,
-location, cursor mode, etc.
-The step exponent is set to 0, there is no selection,
-no origin offset, and the layer's initial name is "untitled".
-</dd>
-<dd> Example: <b>local newindex = g.addlayer()</b></dd>
-</p>
-
-<a name="clone"></a><p><dt><b>clone()</b></dt>
-<dd>
-Like <b>addlayer</b> (see above) but the new layer shares the
-same universe as the current layer.
-The current layer's settings are duplicated and most will be
-kept synchronized so that a change to one clone automatically changes
-all the others.
-Each cloned layer does however have a separate viewport, so the same
-pattern can be viewed at different scales and locations
-(at the same time if layers are tiled).
-</dd>
-<dd> Example: <b>local cloneindex = g.clone()</b></dd>
-</p>
-
-<a name="duplicate"></a><p><dt><b>duplicate()</b></dt>
-<dd>
-Like <b>addlayer</b> (see above) but the new layer has a copy of the
-current layer's pattern.
-Also duplicates all the current settings but, unlike a cloned layer,
-the settings are not kept synchronized.
-</dd>
-<dd> Example: <b>local dupeindex = g.duplicate()</b></dd>
-</p>
-
-<a name="dellayer"></a><p><dt><b>dellayer()</b></dt>
-<dd>
-Delete the current layer.  The current layer changes to the previous
-layer (unless layer 0 was deleted).
-</dd>
-</p>
-
-<a name="movelayer"></a><p><dt><b>movelayer(<i>fromindex, toindex</i>)</b></dt>
-<dd>
-Move a specified layer to a new position in the layer sequence.
-The chosen layer becomes the current layer.
-</dd>
-<dd> Example: <b>g.movelayer(1, 0)</b></dd>
-</p>
-
-<a name="setlayer"></a><p><dt><b>setlayer(<i>index</i>)</b></dt>
-<dd>
-Set the current layer to the layer with the given index,
-an integer from 0 to <b>numlayers()</b> - 1.
-</dd>
-<dd> Example: <b>g.setlayer(0)</b></dd>
-</p>
-
-<a name="getlayer"></a><p><dt><b>getlayer()</b></dt>
-<dd>
-Return the index of the current layer, an integer from 0 to <b>numlayers()</b> - 1.
-</dd>
-<dd> Example: <b>local currindex = g.getlayer()</b></dd>
-</p>
-
-<a name="numlayers"></a><p><dt><b>numlayers()</b></dt>
-<dd>
-Return the number of existing layers, an integer from 1 to <b>maxlayers()</b>.
-</dd>
-<dd> Example: <b>if g.numlayers() > 1 then g.setoption("tilelayers",1) end</b></dd>
-</p>
-
-<a name="maxlayers"></a><p><dt><b>maxlayers()</b></dt>
-<dd>
-Return the maximum number of layers (10 in this implementation).
-</dd>
-</p>
-
-<a name="setname"></a><p><dt><b>setname(<i>string, index=current</i>)</b></dt>
-<dd>
-Set the name of the given layer, or the current layer's name
-if no index is supplied.
-</dd>
-<dd> Example: <b>g.setname("temporary")</b></dd>
-</p>
-
-<a name="getname"></a><p><dt><b>getname(<i>index=current</i>)</b></dt>
-<dd>
-Return the given layer's name, or the current layer's name
-if no index is supplied.
-</dd>
-<dd> Example: <b>if g.getname() == "temporary" then g.dellayer() end</b></dd>
-</p>
-
-<a name="setcolors"></a><p><dt><b>setcolors(<i>color_array</i>)</b></dt>
-<dd>
-Set the color(s) of one or more states in the current layer and its clones (if any).
-If the given array contains a multiple of 4 integers then they are interpreted
-as <i>state, red, green, blue</i> values.
-A state value of -1 can be used to set all live states to the same color
-(state 0 is <i>not</i> changed).
-If the given array contains exactly 6 integers then they are interpreted
-as a color gradient from <i>r1, g1, b1</i> to <i>r2, g2, b2</i>
-for all the live states (state 0 is <i>not</i> changed).
-If the given array is empty then all states (including state 0) are reset
-to their default colors, depending on the current algorithm and rule.
-Note that the color changes made by this command are only temporary.
-Golly will restore the default colors if a new pattern is opened or created,
-or if the algorithm or rule changes,
-or if <a href="prefs:color">Preferences > Color</a> is used to change any
-of the default colors for the current layer's algorithm.
-</dd>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr><td>Example: <b>g.setcolors({1,0,0,0, 2,0,0,0})</b></td><td width=20>
-                        </td><td># set states 1 and 2 to black</td></tr>
-<tr><td>Example: <b>g.setcolors({-1,0,255,0})</b></td><td width=20>
-                        </td><td># set all live states to green</td></tr>
-<tr><td>Example: <b>g.setcolors({255,0,0, 0,0,255})</b></td><td width=20>
-                        </td><td># live states vary from red to blue</td></tr>
-<tr><td>Example: <b>g.setcolors({})</b></td><td width=20>
-                        </td><td># restore default colors</td></tr>
-</table>
-</dd>
-</p>
-
-<a name="getcolors"></a><p><dt><b>getcolors(<i>state=-1</i>)</b></dt>
-<dd>
-Return the color of a given state in the current layer as an array of the form
-</dd>
-<p>
-<dd><b>{ state, red, green, blue }</b></dd>
-<p>
-<dd>
-or if the given state is -1 (or not supplied) then return all colors as
-</dd>
-<p>
-<dd><b>{ 0, r0, g0, b0, . . . N, rN, gN, bN }</b></dd>
-<p>
-<dd>
-where N equals <b>numstates()</b> - 1.
-Note that the array returned by <b>getcolors</b> can be passed into <b>setcolors</b>;
-this makes it easy to save and restore colors.
-</dd>
-<dd> Example: <b>local allcolors = g.getcolors()</b></dd>
-<dd> Example: <b>local deadcolor = g.getcolors(0)</b></dd>
-</p>
-
-<p><a name="miscellaneous"></a>&nbsp;<br>
-MISCELLANEOUS COMMANDS
-
-<a name="os"></a><p><dt><b>os()</b></dt>
-<dd>
-Return the current operating system: "Windows", "Mac" or "Linux".
-</dd>
-<dd> Example: <b>if g.os() == "Mac" then do_mac_stuff() end</b></dd>
-</p>
-
-<a name="millisecs"></a><p><dt><b>millisecs()</b></dt>
-<dd>
-Return the number of milliseconds that have elapsed since Golly started up.
-The returned value is a floating point number.
-</dd>
-<dd> Example: <b>local t1 = g.millisecs()</b></dd>
-</p>
-
-<a name="setoption"></a><p><dt><b>setoption(<i>name, value</i>)</b></dt>
-<dd>
-Set the given option to the given value.
-The old value is returned to make it easy to restore a setting.
-Here are all the valid option names and their possible values:
-</dd>
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr><td><b>"autofit"</b></td><td width=20>       </td><td>1 or 0</td></tr>
-<tr><td><b>"boldspacing"</b></td><td width=20>   </td><td>2 to 1000 (cells)</td></tr>
-<tr><td><b>"drawingstate"</b></td><td width=20>  </td><td>0 to numstates()-1</td></tr>
-<tr><td><b>"fullscreen"</b></td><td width=20>    </td><td>1 or 0</td></tr>
-<tr><td><b>"hyperspeed"</b></td><td width=20>    </td><td>1 or 0</td></tr>
-<tr><td><b>"maxdelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr>
-<tr><td><b>"mindelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr>
-<tr><td><b>"opacity"</b></td><td width=20>       </td><td>1 to 100 (percent)</td></tr>
-<tr><td><b>"restoreview"</b></td><td width=20>   </td><td>1 or 0</td></tr>
-<tr><td><b>"savexrle"</b></td><td width=20>      </td><td>1 or 0</td></tr>
-<tr><td><b>"showallstates"</b></td><td width=20> </td><td>1 or 0</td></tr>
-<tr><td><b>"showboldlines"</b></td><td width=20> </td><td>1 or 0</td></tr>
-<tr><td><b>"showbuttons"</b></td><td width=20>   </td><td>0 to 4</td></tr>
-<tr><td><b>"showeditbar"</b></td><td width=20>   </td><td>1 or 0</td></tr>
-<tr><td><b>"showexact"</b></td><td width=20>     </td><td>1 or 0</td></tr>
-<tr><td><b>"showfiles"</b></td><td width=20>     </td><td>1 or 0</td></tr>
-<tr><td><b>"showgrid"</b></td><td width=20>      </td><td>1 or 0</td></tr>
-<tr><td><b>"showhashinfo"</b></td><td width=20>  </td><td>1 or 0</td></tr>
-<tr><td><b>"showicons"</b></td><td width=20>     </td><td>1 or 0</td></tr>
-<tr><td><b>"showlayerbar"</b></td><td width=20>  </td><td>1 or 0</td></tr>
-<tr><td><b>"showoverlay"</b></td><td width=20>   </td><td>1 or 0</td></tr>
-<tr><td><b>"showstatusbar"</b></td><td width=20> </td><td>1 or 0</td></tr>
-<tr><td><b>"showtoolbar"</b></td><td width=20>   </td><td>1 or 0</td></tr>
-<tr><td><b>"smartscale"</b></td><td width=20>    </td><td>1 or 0</td></tr>
-<tr><td><b>"stacklayers"</b></td><td width=20>   </td><td>1 or 0</td></tr>
-<tr><td><b>"swapcolors"</b></td><td width=20>    </td><td>1 or 0</td></tr>
-<tr><td><b>"switchlayers"</b></td><td width=20>  </td><td>1 or 0</td></tr>
-<tr><td><b>"synccursors"</b></td><td width=20>   </td><td>1 or 0</td></tr>
-<tr><td><b>"syncviews"</b></td><td width=20>     </td><td>1 or 0</td></tr>
-<tr><td><b>"tilelayers"</b></td><td width=20>    </td><td>1 or 0</td></tr>
-</table>
-</dd>
-<p>
-<dd> Example: <b>local oldgrid = g.setoption("showgrid", 1)</b></dd>
-</p>
-
-<a name="getoption"></a><p><dt><b>getoption(<i>name</i>)</b></dt>
-<dd>
-Return the current value of the given option.
-See above for a list of all the valid option names.
-</dd>
-<dd> Example: <b>if g.getoption("autofit") == 1 then g.fit() end</b></dd>
-</p>
-
-<a name="setcolor"></a><p><dt><b>setcolor(<i>name, r, g, b</i>)</b></dt>
-<dd>
-Set the given color to the given RGB values (integers from 0 to 255).
-The old RGB values are returned as 3 integers to make it easy to restore the color.
-Here is a list of all the valid color names and how they are used:
-</dd>
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr><td><b>"border"</b></td><td width=20>      </td><td>color for border around bounded grid</td></tr>
-<tr><td><b>"paste"</b></td><td width=20>       </td><td>color for pasting patterns</td></tr>
-<tr><td><b>"select"</b></td><td width=20>      </td><td>color for selections (will be 50% transparent)</td></tr>
-<tr><td><b><i>algoname</i></b></td><td width=20> </td><td>status bar background for given algorithm</td></tr>
-</table>
-</dd>
-<p>
-<dd> Example: <b>local oldr, oldg, oldb = g.setcolor("HashLife", 255, 255, 255)</b></dd>
-</p>
-
-<a name="getcolor"></a><p><dt><b>getcolor(<i>name</i>)</b></dt>
-<dd>
-Return the current RGB values for the given color as 3 integers.
-See above for a list of all the valid color names.
-</dd>
-<dd> Example: <b>local selr, selg, selb = g.getcolor("select")</b></dd>
-</p>
-
-<a name="getclipstr"></a><p><dt><b>getclipstr()</b></dt>
-<dd>
-Return the current contents of the clipboard as an unmodified string.
-</dd>
-<dd> Example: <b>local illegalRLE = g.getclipstr()</b></dd>
-</p>
-
-<a name="setclipstr"></a><p><dt><b>setclipstr(<i>string</i>)</b></dt>
-<dd>
-Copy an arbitrary string (not necessarily a cell pattern) directly to the clipboard.
-</dd>
-<dd> Example: <b>g.setclipstr(correctedRLE)</b></dd>
-</p>
-
-<a name="getstring"></a><p><dt><b>getstring(<i>prompt, initial="", title=""</i>)</b></dt>
-<dd>
-Display a dialog box and get a string from the user.
-If the initial string is supplied it will be shown and selected.
-If the title string is supplied it will be used in the dialog's title bar.
-The script will be aborted if the user hits the dialog's Cancel button.
-</dd>
-<dd> Example: <b>local n = tonumber( g.getstring("Enter a number:", "100") )</b></dd>
-</p>
-
-<a name="getevent"></a><p><dt><b>getevent(<i>get=true</i>)</b></dt>
-<dd>
-When Golly runs a script it initially handles all keyboard and mouse events, but
-if the script calls <b>getevent()</b> then future events are put into a queue
-for retrieval via later calls.  These events are returned in
-the form of strings (see below for the syntax).  If there are no events in the queue
-then the returned string is empty.  Note that the very first <b>getevent()</b>
-call will always return an empty string, but this isn't likely to be a problem
-because it normally occurs very soon after the script starts running.
-A script can call <b>getevent(false)</b> if it wants Golly to resume handling any
-further events.  See <a href="edit:Scripts/Lua/flood-fill.lua">flood-fill.lua</a>
-for a good example.
-</dd>
-<p>
-<dd>
-Key-down events are triggered when a key is pressed or autorepeats.
-The returned string is of the form "key <i>charname</i> <i>modifiers</i>" 
-where <i>charname</i> can be any displayable ASCII character from '!' to '~'
-or one of the following names: space, home, end, pageup, pagedown, help,
-insert, delete, tab, enter, return, left, right, up, down, or f1 to f24.
-If no modifier key was pressed then <i>modifiers</i> is none, otherwise it is
-some combination of alt, cmd, ctrl, meta, shift.
-Note that cmd will only be returned on a Mac and corresponds to the command key.
-The alt modifier corresponds to the option key on a Mac.
-</dd>
-<p>
-<dd>
-Key-up events occur when a key is released and are strings of the form
-"kup <i>charname</i>".
-</dd>
-<p>
-<dd>
-Mouse-down events in the current layer are strings of the form
-"click <i>x</i> <i>y</i> <i>button</i> <i>modifiers</i>"
-where <i>x</i> and <i>y</i> are integers giving the cell position of the click,
-<i>button</i> is one of left, middle or right, and <i>modifiers</i> is the same as above.
-</dd>
-<p>
-<dd>
-Mouse-down events in a non-transparent pixel in the overlay are strings of the form
-"oclick <i>x</i> <i>y</i> <i>button</i> <i>modifiers</i>"
-where <i>x</i> and <i>y</i> are integers giving the pixel position in the overlay
-(0,0 is the top left pixel),
-<i>button</i> is one of left, middle or right, and <i>modifiers</i> is the same as above.
-</dd>
-<p>
-<dd>
-Mouse-up events are strings of the form "mup <i>button</i>"
-where <i>button</i> is one of left, middle or right.
-</dd>
-<p>
-<dd>
-Mouse wheel events in the current layer are strings of the form
-"zoomin <i>x</i> <i>y</i>" or "zoomout <i>x</i> <i>y</i>"
-where <i>x</i> and <i>y</i> are the mouse's pixel position in the viewport.
-</dd>
-<p>
-<dd>
-Mouse wheel events in a non-transparent pixel in the overlay are strings of the form
-"ozoomin <i>x</i> <i>y</i>" or "ozoomout <i>x</i> <i>y</i>"
-where <i>x</i> and <i>y</i> are the mouse's pixel position in the overlay.
-</dd>
-<p>
-<dd>
-The following examples show the strings returned after various user events:
-</dd>
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr><td>"key m none"</td><td width=15>
-        </td><td>user pressed M key</td></tr>
-<tr><td>"key space shift"</td><td width=15>
-        </td><td>user pressed space bar and shift key</td></tr>
-<tr><td>"key , altctrlshift"</td><td width=15>
-        </td><td>user pressed comma and 3 modifier keys</td></tr>
-<tr><td>"kup left"</td><td width=15>
-        </td><td>user released the left arrow key</td></tr>
-<tr><td>"click 100 5 left none"</td><td width=15>
-        </td><td>user clicked cell at 100,5 with left button</td></tr>
-<tr><td>"click -10 9 middle alt"</td><td width=15>
-        </td><td>user clicked cell with middle button and pressed alt key</td></tr>
-<tr><td>"click 0 1 right altshift"</td><td width=15>
-        </td><td>user clicked cell with right button and pressed 2 modifiers</td></tr>
-<tr><td>"oclick 10 5 left none"</td><td width=15>
-        </td><td>user clicked pixel at 10,5 in overlay with left button</td></tr>
-<tr><td>"mup left"</td><td width=15>
-        </td><td>user released the mouse's left button</td></tr>
-<tr><td>"zoomout 10 20"</td><td width=15>
-        </td><td>mouse wheel was used to zoom out from pixel in viewport</td></tr>
-<tr><td>"ozoomin 10 20"</td><td width=15>
-        </td><td>mouse wheel was used to zoom in to pixel in overlay</td></tr>
-</table>
-</dd>
-<p>
-<dd> Example: <b>local evt = g.getevent()</b></dd>
-</p>
-
-<a name="doevent"></a><p><dt><b>doevent(<i>event</i>)</b></dt>
-<dd>
-Pass the given event to Golly to handle in the usual manner
-(but events that can change the current pattern will be ignored).
-The given event must be a string with the exact same format as returned
-by the <b>getevent</b> command (see above).
-If the string is empty then Golly does nothing.
-Note that the cmd modifier corresponds to the command key on a Mac or
-the control key on Windows/Linux
-(this lets you write portable scripts that work on any platform).
-</dd>
-<dd> Example: <b>g.doevent("key q cmd")</b> -- quit Golly</dd>
-</p>
-
-<a name="getxy"></a><p><dt><b>getxy()</b></dt>
-<dd>
-Return the mouse's current grid position as a string.
-The string is empty if the mouse is outside the viewport or outside a bounded grid
-or over the translucent buttons, otherwise the string contains x and y cell
-coordinates separated by a space; eg. "-999 12345".
-See <a href="edit:Scripts/Lua/draw-lines.lua">draw-lines.lua</a> for a good
-example of how to use this command.
-</dd>
-<dd> Example: <b>local mousepos = g.getxy()</b></dd>
-</p>
-
-<a name="show"></a><p><dt><b>show(<i>message</i>)</b></dt>
-<dd>
-Show the given string in the bottom line of the status bar.
-The status bar is automatically shown if necessary.
-</dd>
-<dd> Example: <b>g.show("Hit any key to continue...")</b></dd>
-</p>
-
-<a name="error"></a><p><dt><b>error(<i>message</i>)</b></dt>
-<dd>
-Beep and show the given string in the bottom line of the status bar.
-The status bar is automatically shown if necessary.
-</dd>
-<dd> Example: <b>g.error("The pattern is empty.")</b></dd>
-</p>
-
-<a name="warn"></a><p><dt><b>warn(<i>message</i>)</b></dt>
-<dd>
-Beep and show the given string in a modal warning dialog.
-Useful for debugging Lua scripts or displaying error messages.
-The dialog has two buttons: clicking OK will close the dialog and continue;
-clicking Cancel will close the dialog and abort the script.
-</dd>
-<dd> Example: <b>g.warn("xxx = "..xxx)</b></dd>
-</p>
-
-<a name="note"></a><p><dt><b>note(<i>message</i>)</b></dt>
-<dd>
-Show the given string in a modal information dialog.
-Useful for displaying multi-line results.
-The dialog has two buttons: clicking OK will close the dialog and continue;
-clicking Cancel will close the dialog and abort the script.
-</dd>
-<dd> Example: <b>g.note("Line 1\nLine 2\nLine 3")</b></dd>
-</p>
-
-<a name="check"></a><p><dt><b>check(<i>bool</i>)</b></dt>
-<dd>
-When Golly runs a script this setting is initially true,
-which means that event checking is enabled.
-If the given parameter is false then event checking is disabled.
-Typically used to prevent mouse clicks being seen at the wrong time.
-This should only be done for short durations because the script
-cannot be aborted while the setting is false.
-</dd>
-<dd> Example: <b>g.check(false)</b></dd>
-</p>
-
-<a name="continue"></a><p><dt><b>continue(<i>message</i>)</b></dt>
-<dd>
-This function can be used to continue execution after pcall has
-detected some sort of error or the user has aborted the script.
-It's typically used to ensure some finalization code is executed.
-If not empty, the given message will be displayed in the status bar
-after the script has finished.
-See the end of <a href="edit:Scripts/Lua/envelope.lua">envelope.lua</a>
-for an example.
-
-<a name="exit"></a><p><dt><b>exit(<i>message=""</i>)</b></dt>
-<dd>
-Exit the script with an optional error message.
-If a non-empty string is supplied then it will be displayed in the status bar
-along with a beep, just like the <a href="#error"><b>error</b></a> command.
-If no message is supplied, or if the string is empty, then there is no beep
-and the current status bar message will not be changed.
-</dd>
-<dd> Example: <b>if g.empty() then g.exit("There is no pattern.") end</b></dd>
-</p>
-
-
-<p><a name="cellarrays"></a>&nbsp;<br>
-<font size=+1><b>Cell arrays</b></font>
-
-<p>
-Some scripting commands manipulate patterns in the form of cell arrays.
-Golly supports two types of cell arrays: one-state and multi-state.
-A one-state cell array contains an even number of integers specifying
-the x,y coordinates for a set of cells, all of which are assumed to
-be in state 1:
-<p>
-<dd><b>{ x1, y1, . . . xN, yN }</b></dd>
-<p>
-A multi-state cell array contains an odd number of integers specifying
-the x,y,state values for a set of cells.  If the number of cells is even
-then a padding integer (zero) is added at the end of the array to ensure
-the total number of integers is odd:
-<p>
-<dd><b>{ x1, y1, state1, . . . xN, yN, stateN }</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if N is odd</dd>
-<dd><b>{ x1, y1, state1, . . . xN, yN, stateN, 0 }</b>&nbsp; if N is even</dd>
-<p>
-All scripting commands that input cell arrays use the length of the
-array to determine its type.  When writing a script to handle multi-state
-cell arrays you may need to allow for the padding integer, especially
-if accessing cells within the array.
-See <a href="edit:Scripts/Lua/tile.lua">tile.lua</a> for example.
-<p>
-Note that all scripting commands return <b>{}</b> if the resulting
-cell array has no cells.  They never return <b>{0}</b>, although this
-is a perfectly valid multi-state cell array and all commands can input
-such an array.  For example, <b>newarray = g.join(array1,{0})</b>
-can be used to convert a non-empty one-state array to multi-state.
-<p>
-One-state cell arrays are normally used in a two-state universe, but
-they can also be used in a universe with more than two states.
-A multi-state cell array can be used in a two-state universe, but
-only if the array's cell states are 0 or 1.
-<p>
-The ordering of cells within either type of array doesn't matter.
-Also note that positive y values increase downwards in Golly's
-coordinate system.
-
-
-<p><a name="rectarrays"></a>&nbsp;<br>
-<font size=+1><b>Rectangle arrays</b></font>
-
-<p>
-Some commands manipulate rectangles in the form of arrays.
-An empty rectangle is indicated by an array with no items; ie. <b>{}</b>.
-A non-empty rectangle is indicated by an array containing four integers:
-<p>
-<dd><b>{ left, top, width, height }</b></dd>
-<p>
-The first two items specify the cell at the top left corner of the
-rectangle.  The last two items specify the rectangle's size (in cells).
-The width and height must be greater than zero.
-
-
-<p><a name="gplus"></a>&nbsp;<br>
-<font size=+1><b>Using the gplus package</b></font>
-
-<p>
-The <b>gplus</b> package supplied with Golly provides a high-level interface
-to many of Golly's built-in scripting commands.  The package consists of a
-set of .lua files stored in the Scripts/Lua/gplus directory.
-The best way to learn how to use <b>gplus</b> is to look at some of the
-scripts supplied with Golly:
-
-<p>
-<ul>
-<li>
-See <a href="edit:Scripts/Lua/bricklayer.lua">bricklayer.lua</a> for how to use
-the <b>pattern</b> function to contruct a complicated pattern by combining
-simpler sub-patterns.
-<li>
-See <a href="edit:Scripts/Lua/invert.lua">invert.lua</a> for how to use
-the <b>rect</b> function to make it easier to manipulate rectangles.
-<li>
-See <a href="edit:Scripts/Lua/shift.lua">shift.lua</a> for how to use
-the <b>split</b> and <b>validint</b> functions to parse user input.
-</ul>
-
-<p>
-Here's a summary of the functions available after a script calls
-<b>local gp = require "gplus"</b>
-(see <a href="edit:Scripts/Lua/gplus/init.lua">init.lua</a> for all
-the implementation details):
-<p>
-<dd>
-<table cellspacing=0 cellpadding=0>
-<tr>
-   <td><b>gp.int(x)</b></td><td width=10> </td>
-   <td> &mdash; return integer part of given floating point number</td>
-</tr>
-<tr>
-   <td><b>gp.min(a)</b></td><td width=10> </td>
-   <td> &mdash; return minimum value in given array</td>
-</tr>
-<tr>
-   <td><b>gp.max(a)</b></td><td width=10> </td>
-   <td> &mdash; return maximum value in given array</td>
-</tr>
-<tr>
-   <td><b>gp.drawline(x1,y1,x2,y2,z)</b></td><td width=10> </td>
-   <td> &mdash; draw a line of state z cells from x1,y1 to x2,y2</td>
-</tr>
-<tr>
-   <td><b>gp.getedges(r)</b></td><td width=10> </td>
-   <td> &mdash; return left, top, right, bottom edges of given rectangle array</td>
-</tr>
-<tr>
-   <td><b>gp.getminbox(p)</b></td><td width=10> </td>
-   <td> &mdash; return minimal bounding box of given cell array or pattern</td>
-</tr>
-<tr>
-   <td><b>gp.validint(s)</b></td><td width=10> </td>
-   <td> &mdash; return true if given string is a valid integer</td>
-</tr>
-<tr>
-   <td><b>gp.getposint()</b></td><td width=10> </td>
-   <td> &mdash; return viewport position as 2 integers</td>
-</tr>
-<tr>
-   <td><b>gp.setposint(x,y)</b></td><td width=10> </td>
-   <td> &mdash; use given integers to set viewport position</td>
-</tr>
-<tr>
-   <td><b>gp.split(s,sep)</b></td><td width=10> </td>
-   <td> &mdash; split given string into 1 or more substrings</td>
-</tr>
-<tr>
-   <td><b>gp.equal(a1,a2)</b></td><td width=10> </td>
-   <td> &mdash; return true if given arrays have the same values</td>
-</tr>
-<tr>
-   <td><b>gp.compose(S,T)</b></td><td width=10> </td>
-   <td> &mdash; return the composition of two transformations S and T</td>
-</tr>
-<tr>
-   <td><b>gp.rect(r)</b></td><td width=10> </td>
-   <td> &mdash; return a table for manipulating a rectangle</td>
-</tr>
-<tr>
-   <td><b>gp.pattern(p)</b></td><td width=10> </td>
-   <td> &mdash; return a table for manipulating a pattern</td>
-</tr>
-<tr>
-   <td><b>gp.trace(msg)</b></td><td width=10> </td>
-   <td> &mdash; pass into xpcall so a runtime error will have a stack trace</td>
-</tr>
-</table>
-</dd>
-</p>
-
-<p>
-Most of the supplied Lua scripts use <b>gplus</b>, but it isn't compulsory.
-You might prefer to create your own package for use in the scripts you write.
-If a script calls <b>require "foo"</b> then Golly will look for foo.lua
-in the same directory as the script, then it looks for foo/init.lua.
-If a script calls <b>require "foo.bar"</b> then Golly looks for foo/bar.lua.
-(If none of those files exist in the script's directory then Golly will
-look in the supplied Scripts/Lua directory, so scripts can always use the
-<b>gplus</b> package no matter where they are located.)
-
-
-<p><a name="problems"></a>&nbsp;<br>
-<font size=+1><b>Potential problems</b></font>
-
-<p>
-1.
-There are some important points to remember about Lua, especially
-when converting an existing Perl/Python script to Lua:
-<p>
-<ul>
-<li>
-Cell arrays and rectangle arrays start with index 1, not 0.
-This is necessary to be able to use Lua's length operator (<b>#</b>) and
-standard library functions like <b>table.unpack</b>.
-<li>
-Lua's <b>true</b> and <b>false</b> are <em>not</em> equivalent to 1 and 0.
-In particular, "<b>if 0</b>" is true.
-<li>
-Avoid calls like <b>local x, y, wd, ht = g.getrect()</b>.
-Only x will get a non-<b>nil</b> value (a rectangle array).
-You need to do <b>local x, y, wd, ht = table.unpack(g.getrect())</b>.
-<li>
-When writing a complicated script it's a good idea to add the line
-<b>require "gplus.strict"</b> near the top.  This will catch any undeclared
-global variables.  When the script is working just remove or comment out
-that line.
-</ul>
-<p>
-More tips can be found at <a href="http://www.luafaq.org/gotchas.html">Lua Gotchas</a>.
-
-<p>
-2.
-The escape key check to abort a running script is not done by Lua but
-by each <b>g.*</b> function.  This means that very long Lua computations
-should call an occasional "no-op" like <b>g.doevent("")</b> to allow the
-script to be aborted in a timely manner.
-
-<p>
-3.
-When writing a script that creates a pattern, make sure the script starts with
-a <b>g.new</b> call (or, less useful, a <b>g.open</b> call that loads a pattern)
-otherwise the script might create lots of temporary files or use lots of memory.
-From Golly's point of view there are two types of scripts:
-<p>
-<ul>
-<li>
-A script that calls <b>g.new</b> or <b>g.open</b> is assumed to be creating some
-sort of pattern, so when Golly sees these calls it clears any undo history and
-sets an internal flag that says "don't mark this layer as dirty and don't bother
-recording any further changes".
-<li>
-A script that doesn't call <b>g.new</b> or <b>g.open</b> is assumed to modify the
-current pattern. Golly must record <em>all</em> the script's changes so that
-when it finishes you can select "Undo Script Changes" from the Edit menu.
-Generating changes (due to <b>g.run</b> or <b>g.step</b> calls) are stored in
-temporary files; all other changes are stored in memory.
-</ul>
-
-
-<p><a name="copyright"></a>&nbsp;<br>
-<font size=+1><b>Lua copyright notice</b></font>
-
-<P>
-Copyright &copy; 1994&ndash;2015 Lua.org, PUC-Rio.
-
-<P>
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-<P>
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-<P>
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-</body>
-</html>
+<html><title>Golly Help: Lua Scripting</title><body bgcolor="#FFFFCE"><p>Golly uses a statically embedded <a href="http://www.lua.org">Lua</a> interpreter(version 5.3.4) to execute .lua scripts.  This lets you extend Golly's capabilitiesin lots of interesting ways.<p><dd><a href="#examples"><b>Example scripts</b></a></dd><dd><a href="#commands"><b>Golly's scripting commands</b></a></dd><dd><a href="#cellarrays"><b>Cell arrays</b></a></dd><dd><a href="#rectarrays"><b>Rectangle arrays</b></a></dd><dd><a href="#gplus"><b>Using the gplus package</b></a></dd><dd><a href="#problems"><b>Potential problems</b></a></dd><dd><a href="#copyright"><b>Lua copyright notice</b></a></dd></p><p><a name="examples"></a>&nbsp;<br><font size=+1><b>Example scripts</b></font><p>The Scripts folder supplied with Golly contains a number of example Lua scripts:<p><dd><table cellspacing=0 cellpadding=0 width=520><tr>   <td><b>breakout.lua</b></td><td width=10> </td>   <td> &mdash; shows how to use the <a href="overlay.html">overlay</a> to create a game</td></tr><tr>   <td><b>bricklayer.lua</b></td><td width=10> </td>   <td> &mdash; simple use of <b>gplus</b> to build a multipart pattern</td></tr><tr>   <td><b>browse-patterns.lua</b></td><td width=10> </td>   <td> &mdash; lets you browse through patterns in a folder</td></tr><tr>   <td><b>density.lua</b></td><td width=10> </td>   <td> &mdash; calculates the density of the current pattern</td></tr><tr>   <td><b>draw-lines.lua</b></td><td width=10> </td>   <td> &mdash; lets you draw one or more straight lines</td></tr><tr>   <td><b>envelope.lua</b></td><td width=10> </td>   <td> &mdash; uses multiple layers to show a pattern's history</td></tr><tr>   <td><b>flood-fill.lua</b></td><td width=10> </td>   <td> &mdash; fills a clicked region with the current drawing state</td></tr><tr>   <td><b>giffer.lua</b></td><td width=10> </td>   <td> &mdash; creates an animated GIF file using the selection</td></tr><tr>   <td><b>goto.lua</b></td><td width=10> </td>   <td> &mdash; goes to a given generation</td></tr><tr>   <td><b>gun-demo.lua</b></td><td width=10> </td>   <td> &mdash; constructs a few spaceship guns</td></tr><tr>   <td><b>heisenburp.lua</b></td><td width=10> </td>   <td> &mdash; illustrates the use of cloned layers</td></tr><tr>   <td><b>hexgrid.lua</b></td><td width=10> </td>   <td> &mdash; creates a true hexagonal grid</td></tr><tr>   <td><b>invert.lua</b></td><td width=10> </td>   <td> &mdash; inverts all cell states in the current selection</td></tr><tr>   <td><b>lifeviewer.lua</b></td><td width=10> </td>   <td> &mdash; displays patterns like <a href="http://www.conwaylife.com/forums/viewtopic.php?f=3&t=1622">LifeViewer</a>   (details <a href="lifeviewer.html">here</a>)</td></tr><tr>   <td><b>make-torus.lua</b></td><td width=10> </td>   <td> &mdash; makes a toroidal universe from the selection</td></tr><tr>   <td><b>metafier.lua</b></td><td width=10> </td>   <td> &mdash; converts the current selection into a meta pattern</td></tr><tr>   <td><b>move-object.lua</b></td><td width=10> </td>   <td> &mdash; lets you move a connected group of live cells</td></tr><tr>   <td><b>move-selection.lua</b></td><td width=10> </td>   <td> &mdash; lets you move the current selection</td></tr><tr>   <td><b>oscar.lua</b></td><td width=10> </td>   <td> &mdash; detects oscillating patterns, including spaceships</td></tr><tr>   <td><b>overlay-demo.lua</b></td><td width=10> </td>   <td> &mdash; demonstrates most of the <a href="overlay.html">overlay</a> functions</td></tr><tr>   <td><b>p1100-MWSS-gun.lua</b></td><td width=10> </td>   <td> &mdash; extended use of <b>gplus</b> to build a complex pattern</td></tr><tr>   <td><b>pd-glider.lua</b></td><td width=10> </td>   <td> &mdash; creates a set of pentadecathlon+glider collisions</td></tr><tr>   <td><b>pop-plot.lua</b></td><td width=10> </td>   <td> &mdash; displays a plot of population versus time</td></tr><tr>   <td><b>shift.lua</b></td><td width=10> </td>   <td> &mdash; shifts current selection by given x y</td></tr><tr>   <td><b>slide-show.lua</b></td><td width=10> </td>   <td> &mdash; displays all patterns in the Patterns folder</td></tr><tr>   <td><b>tile.lua</b></td><td width=10> </td>   <td> &mdash; tiles the selection with the pattern inside it</td></tr><tr>   <td><b>tile-with-clip.lua</b></td><td width=10> </td>   <td> &mdash; tiles the selection with the clipboard pattern</td></tr><tr>   <td><b>toLife.lua</b></td><td width=10> </td>   <td> &mdash; converts LifeHistory patterns to plain Life</td></tr><tr>   <td><b>toLifeHistory.lua</b></td><td width=10> </td>   <td> &mdash; converts Life patterns to LifeHistory</td></tr></table></dd></p><p>To run one of these scripts, tick the <b>Show Files</b> item in the File menu,open the Scripts/Lua folder and then simply click on the script's name.You can also select one of the <b>Run</b> items in the File menu.For a frequently used script you might like to assign a keyboard shortcutto run it (see <a href="prefs:keyboard">Preferences > Keyboard</a>).<p>When Golly starts up it looks for a script called <b>golly-start.lua</b>in the same directory as the Golly application and then in a user-specificdata directory (see the <a href="#getdir"><b>getdir</b></a> command forthe likely path on your system).If the script is found then it is automatically executed.<p>There are a number of ways to abort a running script.  Hit the escape key,or click on the stop button in the tool bar, or select the Stop item in theControl menu.<p><a name="commands"></a>&nbsp;<br><font size=+1><b>Golly's scripting commands</b></font><p>This section describes all the <b>g.*</b> commands that can be used in a script afterincluding this line:<p><dd><b>local g = golly()</b></dd><p>Commands are grouped by function(<a href="#filing"><b>filing</b></a>,<a href="#editing"><b>editing</b></a>,<a href="#control"><b>control</b></a>,<a href="#viewing"><b>viewing</b></a>,<a href="#layers"><b>layers</b></a>and <a href="#miscellaneous"><b>miscellaneous</b></a>)or you can search for individual commands alphabetically:<p><dd><table cellspacing=0 cellpadding=0><tr><td valign=top><a href="#addlayer"><b>addlayer</b></a><br><a href="#advance"><b>advance</b></a><br><a href="#autoupdate"><b>autoupdate</b></a><br><a href="#check"><b>check</b></a><br><a href="#clear"><b>clear</b></a><br><a href="#clone"><b>clone</b></a><br><a href="#continue"><b>continue</b></a><br><a href="#copy"><b>copy</b></a><br><a href="#cut"><b>cut</b></a><br><a href="#dellayer"><b>dellayer</b></a><br><a href="#doevent"><b>doevent</b></a><br><a href="#duplicate"><b>duplicate</b></a><br><a href="#empty"><b>empty</b></a><br><a href="#error"><b>error</b></a><br><a href="#evolve"><b>evolve</b></a><br><a href="#exit"><b>exit</b></a><br><a href="#fit"><b>fit</b></a><br><a href="#fitsel"><b>fitsel</b></a><br><a href="#flip"><b>flip</b></a><br><a href="#getalgo"><b>getalgo</b></a></td><td valign=top width=40> </td><td valign=top><a href="#getbase"><b>getbase</b></a><br><a href="#getcell"><b>getcell</b></a><br><a href="#getcells"><b>getcells</b></a><br><a href="#getclip"><b>getclip</b></a><br><a href="#getclipstr"><b>getclipstr</b></a><br><a href="#getcolor"><b>getcolor</b></a><br><a href="#getcolors"><b>getcolors</b></a><br><a href="#getcursor"><b>getcursor</b></a><br><a href="#getdir"><b>getdir</b></a><br><a href="#getevent"><b>getevent</b></a><br><a href="#getfiles"><b>getfiles</b></a><br><a href="#getgen"><b>getgen</b></a><br><a href="#getheight"><b>getheight</b></a><br><a href="#getinfo"><b>getinfo</b></a><br><a href="#getlayer"><b>getlayer</b></a><br><a href="#getmag"><b>getmag</b></a><br><a href="#getname"><b>getname</b></a><br><a href="#getoption"><b>getoption</b></a><br><a href="#getpath"><b>getpath</b></a><br><a href="#getpop"><b>getpop</b></a></td><td valign=top width=40> </td><td valign=top><a href="#getpos"><b>getpos</b></a><br><a href="#getrect"><b>getrect</b></a><br><a href="#getrule"><b>getrule</b></a><br><a href="#getselrect"><b>getselrect</b></a><br><a href="#getstep"><b>getstep</b></a><br><a href="#getstring"><b>getstring</b></a><br><a href="#getview"><b>getview</b></a><br><a href="#getwidth"><b>getwidth</b></a><br><a href="#getxy"><b>getxy</b></a><br><a href="#hash"><b>hash</b></a><br><a href="#join"><b>join</b></a><br><a href="#load"><b>load</b></a><br><a href="#maxlayers"><b>maxlayers</b></a><br><a href="#millisecs"><b>millisecs</b></a><br><a href="#movelayer"><b>movelayer</b></a><br><a href="#new"><b>new</b></a><br><a href="#note"><b>note</b></a><br><a href="#numalgos"><b>numalgos</b></a><br><a href="#numlayers"><b>numlayers</b></a><br><a href="#numstates"><b>numstates</b></a></td><td valign=top width=40> </td><td valign=top><a href="#open"><b>open</b></a><br><a href="#opendialog"><b>opendialog</b></a><br><a href="#overlay"><b>overlay</b></a><br><a href="#os"><b>os</b></a><br><a href="#parse"><b>parse</b></a><br><a href="#paste"><b>paste</b></a><br><a href="#putcells"><b>putcells</b></a><br><a href="#randfill"><b>randfill</b></a><br><a href="#reset"><b>reset</b></a><br><a href="#rotate"><b>rotate</b></a><br><a href="#run"><b>run</b></a><br><a href="#save"><b>save</b></a><br><a href="#savedialog"><b>savedialog</b></a><br><a href="#select"><b>select</b></a><br><a href="#setalgo"><b>setalgo</b></a><br><a href="#setbase"><b>setbase</b></a><br><a href="#setcell"><b>setcell</b></a><br><a href="#setclipstr"><b>setclipstr</b></a><br><a href="#setcolor"><b>setcolor</b></a><br><a href="#setcolors"><b>setcolors</b></a></td><td valign=top width=40> </td><td valign=top><a href="#setcursor"><b>setcursor</b></a><br><a href="#setdir"><b>setdir</b></a><br><a href="#setgen"><b>setgen</b></a><br><a href="#setlayer"><b>setlayer</b></a><br><a href="#setmag"><b>setmag</b></a><br><a href="#setname"><b>setname</b></a><br><a href="#setoption"><b>setoption</b></a><br><a href="#setpos"><b>setpos</b></a><br><a href="#setrule"><b>setrule</b></a><br><a href="#setstep"><b>setstep</b></a><br><a href="#setview"><b>setview</b></a><br><a href="#show"><b>show</b></a><br><a href="#shrink"><b>shrink</b></a><br><a href="#step"><b>step</b></a><br><a href="#store"><b>store</b></a><br><a href="#transform"><b>transform</b></a><br><a href="#update"><b>update</b></a><br><a href="#visrect"><b>visrect</b></a><br><a href="#warn"><b>warn</b></a></td></tr></table></dd></p><p><a name="filing"></a>&nbsp;<br>FILING COMMANDS<a name="open"></a><p><dt><b>open(<i>filename, remember=false</i>)</b></dt><dd>Open the given file and process it according to its type:</dd><p><dd><ul><li>A HTML file (.htm or .html extension) is displayed in the help window.<li>A text file (.txt or .doc extension, or a name containing "readme")    is opened in your text editor.<li>A script file (.lua or .py extension) is executed.<li>A zip file (.zip extension) is processed as described    <a href="formats.html#zip">here</a>.<li>Any other type of file is assumed to be a pattern file and is loaded    into the current layer.</ul></dd><p><dd>A non-absolute path is relative to the location of the script.The 2nd parameter is optional (default = false) and specifies if the givenpattern or zip file should be remembered in the Open Recent submenu,or in the Run Recent submenu if the file is a script.</dd><dd> Example: <b>g.open("my-patterns/foo.rle")</b></dd></p><a name="save"></a><p><dt><b>save(<i>filename, format, remember=false</i>)</b></dt><dd>Save the current pattern in a given file using the specified format:</dd><p><dd><table cellspacing=0 cellpadding=0><tr><td><b>"rle"</b></td><td width=20>     </td><td>run length encoded (RLE)</td></tr><tr><td><b>"rle.gz"</b></td><td width=20>  </td><td>compressed RLE</td></tr><tr><td><b>"mc"</b></td><td width=20>      </td><td>macrocell</td></tr><tr><td><b>"mc.gz"</b></td><td width=20>   </td><td>compressed macrocell</td></tr></table></dd><p><dd>A non-absolute path is relative to the location of the script.The 3rd parameter is optional (default = false) and specifies if the fileshould be remembered in the Open Recent submenu.If the <b>savexrle</b> option is true then extended RLE format is used(see the <a href="file.html#xrle">Save Extended RLE</a> item for details).</dd><dd> Example: <b>g.save("foo.rle", "rle", true)</b></dd></p><a name="opendialog"></a><p><dt><b>opendialog(<i>title, filetypes, initialdir, initialfname, mustexist=true</i>)</b></dt><dd>Present a standard Open dialog to the user and return the chosen path in a string.All parameters are optional; the default is an Open dialog showing the current directory,with a title of "Choose a file" and a file type of "All files (*)|*".If the 5th parameter (default = true) is set to false, the user can specify a new filenameinstead of choosing an existing file.If the given file type is "dir" then the dialog lets the user choose a directoryrather than a file.If the user cancels the dialog, the return value will be an empty string.</dd><dd> Example: <b>local fname = g.opendialog("Open MCell File", "MCell files (*.mcl)|*.mcl", "C:\\Temp", "sample.mcl")</b></dd><dd> Example: <b>local dirname = g.opendialog("Choose a folder", "dir");</b></dd></p><a name="savedialog"></a><p><dt><b>savedialog(<i>title, filetypes, initialdir, initialfname, suppressprompt=false</i>)</b></dt><dd>Present a standard Save dialog to the user and return the chosen path in a string.All parameters are optional; the default is a Save dialog showing the current directory,with a title of "Choose a save location and filename" and a file type of "All files (*)|*".If a file already exists at the chosen location, an Overwrite? query will be displayedunless the 5th parameter (default = false) is set to true.If the user cancels the dialog, the return value will be an empty string.</dd><dd> Example: <b>local fname = g.savedialog("Save text file", "Text files (*.txt;*.csv)|*.txt;*.csv", "C:\\Temp", "Params.txt", 1)</b></dd></p><a name="load"></a><p><dt><b>load(<i>filename</i>)</b></dt><dd>Read the given pattern file and return a cell array.</dd><dd> Example: <b>local blinker = g.load("blinker.rle")</b></dd></p><a name="store"></a><p><dt><b>store(<i>cell_array, filename</i>)</b></dt><dd>Write the given cell array to the specified file in RLE format.If the <b>savexrle</b> option is true then extended RLE format is used(see the <a href="file.html#xrle">Save Extended RLE</a> item for details).</dd><dd> Example: <b>g.store(cells, "foo.rle")</b></dd></p><a name="getdir"></a><p><dt><b>getdir(<i>dirname</i>)</b></dt><dd>Return the path of the specified directory:</dd><p><dd><b>"app"</b> &mdash; the directory containing the Golly application.</dd><p><dd><b>"data"</b> &mdash; the user-specific data directory:</dd><dd><table cellspacing=0 cellpadding=0><tr><td>On Linux:</td><td width=10>    </td><td>~/.golly/</td></tr><tr><td>On Mac OS X:</td><td width=10>    </td><td>~/Library/Application Support/Golly/</td></tr><tr><td>On Windows XP:</td><td width=10>    </td><td>C:\Documents and Settings\username\Application Data\Golly\</td></tr><tr><td>On Windows 7+:</td><td width=10>    </td><td>C:\Users\username\AppData\Roaming\Golly\</td></tr></table></dd></td></tr><p><dd><b>"temp"</b> &mdash; the directory Golly uses to store various temporary files.All these files are deleted when Golly quits.</dd><p><dd><b>"rules"</b> &mdash; the user-specific rules directoryset in <a href="prefs:control">Preferences > Control</a>.</dd><p><dd><b>"files"</b> &mdash; the directory displayed by File > Show Files.</dd><p><dd><b>"download"</b> &mdash; the directory Golly uses to store downloaded files.</dd><p><dd>In each case a full path is returned, terminated by the appropriate path separatorfor the current platform ("/" on Mac and Linux, "\" on Windows).</dd><dd> Example: <b>g.open(g.getdir("app").."Patterns/Life/Breeders/breeder.lif")</b></dd></p><a name="setdir"></a><p><dt><b>setdir(<i>dirname, dirpath</i>)</b></dt><dd>Set the specified directory to the given path (which must be a full path toan existing directory).  All the directory names listed above are allowed,except for "app", "data" and "temp".</dd><dd> Example: <b>g.setdir("download", "/path/to/my-downloads/")</b></dd></p><a name="getfiles"></a><p><dt><b>getfiles(<i>dirpath</i>)</b></dt><dd>Return the contents of the given directory as an array of strings.A non-absolute directory path is relative to the location of the script.File names are returned first, then subdirectory names.  The latter names endwith the platform-specific path separator ("/" on Mac and Linux, "\" on Windows).See <a href="edit:Scripts/Lua/slide-show.lua">slide-show.lua</a> for an example.</dd><a name="getinfo"></a><p><dt><b>getinfo()</b></dt><dd>Return the comments from the current pattern.</dd><dd> Example: <b>local comments = g.getinfo()</b></dd><a name="getpath"></a><p><dt><b>getpath()</b></dt><dd>Return the pathname of the current open pattern. Returns "" if the currentpattern is new and has not been saved.</dd><dd> Example: <b>local path = g.getpath()</b></dd></p><p><a name="editing"></a>&nbsp;<br>EDITING COMMANDS<a name="new"></a><p><dt><b>new(<i>title</i>)</b></dt><dd>Create a new, empty universe and set the window title.If the given title is empty then the current title won't change.</dd><dd> Example: <b>g.new("test-pattern")</b></dd></p><a name="cut"></a><p><dt><b>cut()</b></dt><dd>Cut the current selection to the clipboard.</dd></p><a name="copy"></a><p><dt><b>copy()</b></dt><dd>Copy the current selection to the clipboard.</dd></p><a name="clear"></a><p><dt><b>clear(<i>where</i>)</b></dt><dd>Clear inside (where = 0) or outside (where = 1) the current selection.</dd><dd> Example: <b>g.clear(1)</b></dd></p><a name="paste"></a><p><dt><b>paste(<i>x, y, mode</i>)</b></dt><dd>Paste the clipboard pattern at x,y using the given mode ("and", "copy", "or", "xor").</dd><dd> Example: <b>g.paste(0, 0, "or")</b></dd></p><a name="shrink"></a><p><dt><b>shrink(<i>remove_if_empty=false</i>)</b></dt><dd>Shrink the current selection to the smallest rectangle enclosing all of theselection's live cells.  If the selection has no live cells then the optionalparameter specifies whether the selection remains unchanged or is removed.</dd><dd> Example: <b>if #g.getselrect() > 0 then g.shrink(true) end</b></dd></p><a name="randfill"></a><p><dt><b>randfill(<i>percentage</i>)</b></dt><dd>Randomly fill the current selection to a density specified by the givenpercentage (1 to 100).</dd><dd> Example: <b>g.randfill(50)</b></dd></p><a name="flip"></a><p><dt><b>flip(<i>direction</i>)</b></dt><dd>Flip the current selection left-right (direction = 0) or top-bottom (direction = 1).</dd></p><a name="rotate"></a><p><dt><b>rotate(<i>direction</i>)</b></dt><dd>Rotate the current selection 90 degrees clockwise (direction = 0) oranticlockwise (direction = 1).</dd></p><a name="evolve"></a><p><dt><b>evolve(<i>cell_array, numgens</i>)</b></dt><dd>Advance the pattern in the given cell array by the specified number of generationsand return the resulting cell array.</dd><dd> Example: <b>local newpatt = g.evolve(currpatt, 100)</b></dd></p><a name="join"></a><p><dt><b>join(<i>cell_array1, cell_array2</i>)</b></dt><dd>Join the given cell arrays and return the resulting cell array.If the given arrays are both one-state then the result is one-state.If at least one of the given arrays is multi-state then the result is multi-state,but with one exception: if both arrays have no cells then the result is {}(an empty one-state array) rather than {0}.  See <a href="#cellarrays">below</a>for a description of one-state and multi-state cell arrays.</dd><dd> Example: <b>local result = g.join(part1, part2)</b></dd></p><a name="transform"></a><p><dt><b>transform(<i>cell_array, x0, y0, axx=1, axy=0, ayx=0, ayy=1</i>)</b></dt><dd>Apply an affine transformation to the given cell array and return the resulting cell array.For each x,y cell in the input array the corresponding xn,yn cell in the output arrayis calculated as xn = x0 + x*axx + y*axy, yn = y0 + x*ayx + y*ayy.</dd><dd> Example: <b>local rot_blinker = g.transform(blinker, 0, 0, 0, -1, 1, 0)</b></dd></p><a name="parse"></a><p><dt><b>parse(<i>string, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1</i>)</b></dt><dd>Parse an RLE or Life 1.05 string and return an optionally transformed cell array.</dd><dd> Example: <b>local blinker = g.parse("3o!")</b></dd></p><a name="putcells"></a><p><dt><b>putcells(<i>cell_array, x0=0, y0=0, axx=1, axy=0, ayx=0, ayy=1, mode="or"</i>)</b></dt><dd>Paste the given cell array into the current universe using an optional affine transformationand optional mode ("and", "copy", "not", "or", "xor").</dd><dd> Example: <b>g.putcells(currpatt, 6, -40, 1, 0, 0, 1, "xor")</b></dd></p><a name="getcells"></a><p><dt><b>getcells(<i>rect_array</i>)</b></dt><dd>Return any live cells in the specified rectangle as a cell array.The given array can be empty (in which case the cell array is empty)or it must represent a valid rectangle of the form {x,y,width,height}.</dd><dd> Example: <b>local cells = g.getcells( g.getrect() )</b></dd></p><a name="getclip"></a><p><dt><b>getclip()</b></dt><dd>Parse the pattern data in the clipboard and return the pattern's width, height,and a cell array.  The width and height are not necessarily the minimal bounding boxbecause the pattern might have empty borders, or it might even be empty.</dd><dd> Example: <b>local wd, ht, cells = g.getclip()</b></dd></p><a name="hash"></a><p><dt><b>hash(<i>rect_array</i>)</b></dt><dd>Return an integer hash value for the pattern in the given rectangle.Two identical patterns will have the same hash value, regardless of theirlocation in the universe.  This command provides a fast way todetect pattern equality, but there is a tiny probability that two differentpatterns will have the same hash value, so you might need to use additional(slower) tests to check for true pattern equality.</dd><dd> Example: <b>local h = g.hash( g.getrect() )</b></dd></p><a name="select"></a><p><dt><b>select(<i>rect_array</i>)</b></dt><dd>Create a selection if the given array represents a valid rectangle of the form{x,y,width,height} or remove the current selection if the given array is {}.</dd><dd> Example: <b>g.select( {-10,-10,20,20} )</b></dd></p><a name="getrect"></a><p><dt><b>getrect()</b></dt><dd>Return the current pattern's bounding box as an array.If there is no pattern then the array is empty ({}), otherwise thearray is of the form {x,y,width,height}.</dd><dd> Example: <b>if #g.getrect() == 0 then g.show("No pattern.") end</b></dd></p><a name="getselrect"></a><p><dt><b>getselrect()</b></dt><dd>Return the current selection rectangle as an array.If there is no selection then the array is empty ({}), otherwise thearray is of the form {x,y,width,height}.</dd><dd> Example: <b>if #g.getselrect() == 0 then g.show("No selection.") end</b></dd></p><a name="setcell"></a><p><dt><b>setcell(<i>x, y, state</i>)</b></dt><dd>Set the given cell to the specified state (0 for a dead cell, 1 for a live cell).</dd></p><a name="getcell"></a><p><dt><b>getcell(<i>x, y</i>)</b></dt><dd>Return the state of the given cell.The following example inverts the state of the cell at 0,0.</dd><dd> Example: <b>g.setcell(0, 0, 1 - g.getcell(0, 0))</b></dd></p><a name="setcursor"></a><p><dt><b>setcursor(<i>string</i>)</b></dt><dd>Set the current cursor according to the given string and return the old cursor string.The given string must match one of the names in the Cursor Mode menu.</dd><dd> Example: <b>local oldcurs = g.setcursor("Draw")</b></dd></p><a name="getcursor"></a><p><dt><b>getcursor()</b></dt><dd>Return the current cursor as a string (ie. the ticked name in the Cursor Mode menu).</dd></p><p><a name="control"></a>&nbsp;<br>CONTROL COMMANDS<a name="run"></a><p><dt><b>run(<i>numgens</i>)</b></dt><dd>Run the current pattern for the specified number of generations.Intermediate generations are never displayed, and the final generationis only displayed if the current <b>autoupdate</b> setting is true.</dd><dd> Example: <b>g.run(100)</b></dd></p><a name="step"></a><p><dt><b>step()</b></dt><dd>Run the current pattern for the current step.Intermediate generations are never displayed, and the final generationis only displayed if the current <b>autoupdate</b> setting is true.</dd></p><a name="setstep"></a><p><dt><b>setstep(<i>exp</i>)</b></dt><dd>Temporarily set the current step exponent to the given integer.A negative exponent sets the step size to 1 and also sets a delay between eachstep, but that delay is ignored by the <b>run</b> and <b>step</b> commands.Golly will reset the step exponent to 0 upon creating a new pattern,loading a pattern file, or switching to a different algorithm.</dd><dd> Example: <b>g.setstep(0)</b></dd></p><a name="getstep"></a><p><dt><b>getstep()</b></dt><dd>Return the current step exponent.</dd><dd> Example: <b>g.setstep( g.getstep() + 1 )</b></dd></p><a name="setbase"></a><p><dt><b>setbase(<i>base</i>)</b></dt><dd>Temporarily set the current base step to an integer from 2 to 10000.Golly will restore the default base step(set in <a href="prefs:control">Preferences > Control</a>) upon creatinga new pattern, loading a pattern file, or switching to a different algorithm.</dd><dd> Example: <b>g.setbase(2)</b></dd></p><a name="getbase"></a><p><dt><b>getbase()</b></dt><dd>Return the current base step.</dd></p><a name="advance"></a><p><dt><b>advance(<i>where, numgens</i>)</b></dt><dd>Advance inside (where = 0) or outside (where = 1) the current selection by thespecified number of generations.  The generation count does not change.</dd><dd> Example: <b>g.advance(0, 3)</b></dd></p><a name="reset"></a><p><dt><b>reset()</b></dt><dd>Restore the starting pattern and generation count.Also reset the algorithm, rule, scale, location and step exponentto the values they had at the starting generation.The starting generation is usually zero, but it can be larger afterloading an RLE/macrocell file that stores a non-zero generation count.</dd></p><a name="setgen"></a><p><dt><b>setgen(<i>gen</i>)</b></dt><dd>Set the generation count using the given string.Commas and other punctuation marks can be used to make a large numbermore readable.  Include a leading +/- sign to specify a number relativeto the current generation count.</dd><dd> Example: <b>g.setgen("-1,000")</b></dd></p><a name="getgen"></a><p><dt><b>getgen(<i>sepchar='\0'</i>)</b></dt><dd>Return the current generation count as a string.The optional parameter (default = '\0') specifies a separatorcharacter that can be used to make the resulting string more readable.For example, <b>g.getgen(',')</b> would return a string like "1,234,567"but <b>g.getgen()</b> would return "1234567".  Use the latter call ifyou want to do arithmetic on the generation count because then it'seasy to convert the string to a number.</dd><dd> Example: <b>local gen = tonumber( g.getgen() )</b></dd></p><a name="getpop"></a><p><dt><b>getpop(<i>sepchar='\0'</i>)</b></dt><dd>Return the current population as a string.The optional parameter (default = '\0') specifies a separatorcharacter that can be used to make the resulting string more readable.For example, <b>g.getpop(',')</b> would return a string like "1,234,567"but <b>g.getpop()</b> would return "1234567".  Use the latter call ifyou want to do arithmetic on the population count.The following example converts the population to a number.</dd><dd> Example: <b>local pop = tonumber( g.getpop() )</b></dd></p><a name="empty"></a><p><dt><b>empty()</b></dt><dd>Return true if the universe is empty or false if there is at least one live cell.This is much more efficient than testing <b>getpop() == "0"</b>.</dd><dd> Example: <b>if g.empty() then g.show("All cells are dead.") end</b></dd></p><a name="numstates"></a><p><dt><b>numstates()</b></dt><dd>Return the number of cell states in the current universe.  This will be anumber from 2 to 256, depending on the current algorithm and rule.</dd><dd> Example: <b>local maxstate = g.numstates() - 1</b></dd></p><a name="numalgos"></a><p><dt><b>numalgos()</b></dt><dd>Return the number of algorithms (ie. the number of items in the Set Algorithm menu).</dd><dd> Example: <b>local maxalgo = g.numalgos() - 1</b></dd></p><a name="setalgo"></a><p><dt><b>setalgo(<i>string</i>)</b></dt><dd>Set the current algorithm according to the given string which must matchone of the names in the Set Algorithm menu.</dd><dd> Example: <b>g.setalgo("HashLife")</b></dd></p><a name="getalgo"></a><p><dt><b>getalgo(<i>index=current</i>)</b></dt><dd>Return the algorithm name at the given index in the Set Algorithm menu,or the current algorithm's name if no index is supplied.</dd><dd> Example: <b>local lastalgo = g.getalgo( g.numalgos() - 1 )</b></dd></p><a name="setrule"></a><p><dt><b>setrule(<i>string</i>)</b></dt><dd>Set the current rule according to the given string.If the current algorithm doesn't support the specified rule thenGolly will automatically switch to the first algorithm that doessupport the rule.  If no such algorithm can be found then you'll getan error message and the script will be aborted.</dd><dd> Example: <b>g.setrule("b3/s23")</b></dd></p><a name="getrule"></a><p><dt><b>getrule()</b></dt><dd>Return the current rule as a string in canonical format.</dd><dd> Example: <b>local oldrule = g.getrule()</b></dd></dd></p><a name="getwidth"></a><p><dt><b>getwidth()</b></dt><dd>Return the width (in cells) of the current universe (0 if unbounded).</dd><dd> Example: <b>local wd = g.getwidth()</b></dd></dd></p><a name="getheight"></a><p><dt><b>getheight()</b></dt><dd>Return the height (in cells) of the current universe (0 if unbounded).</dd><dd> Example: <b>local ht = g.getheight()</b></dd></dd></p><p><a name="viewing"></a>&nbsp;<br>VIEWING COMMANDS<a name="setpos"></a><p><dt><b>setpos(<i>x, y</i>)</b></dt><dd>Change the position of the viewport so the given cell is in the middle.The x,y coordinates are given as strings so the viewport can be movedto any location in the unbounded universe.Commas and other punctuation marks can be used to make large numbers more readable.Apart from a leading minus sign, most non-digits are simply ignored;only alphabetic characters will cause an error message.Note that positive y values increase downwards in Golly's coordinate system.</dd><dd> Example: <b>g.setpos("1,000,000,000,000", "-123456")</b></dd></p><a name="getpos"></a><p><dt><b>getpos(<i>sepchar='\0'</i>)</b></dt><dd>Return the x,y position of the viewport's middle cell in the form of two strings.The optional parameter (default = '\0') specifies a separatorcharacter that can be used to make the resulting strings more readable.For example, <b>g.getpos(',')</b> might return two strings like "1,234"and "-5,678" but <b>g.getpos()</b> would return "1234" and "-5678".Use the latter call if you want to do arithmetic on the x,y values,or just use the <b>getposint()</b> function definedin the <a href="#gplus"><b>gplus</b></a> package.</dd><dd> Example: <b>local x, y = g.getpos()</b></dd></p><a name="setmag"></a><p><dt><b>setmag(<i>mag</i>)</b></dt><dd>Set the magnification, where 0 corresponds to the scale 1:1, 1 = 1:2, -1 = 2:1, etc.The maximum allowed magnification is 5 (= 1:32).</dd><dd> Example: <b>g.setmag(0)</b></dd></p><a name="getmag"></a><p><dt><b>getmag()</b></dt><dd>Return the current magnification.</dd><dd> Example: <b>g.setmag( g.getmag() - 1 )</b></dd></p><a name="fit"></a><p><dt><b>fit()</b></dt><dd>Fit the entire pattern in the viewport.</dd></p><a name="fitsel"></a><p><dt><b>fitsel()</b></dt><dd>Fit the current selection in the viewport.The script aborts with an error message if there is no selection.</dd></p><a name="visrect"></a><p><dt><b>visrect(<i>rect_array</i>)</b></dt><dd>Return true if the given rectangle is completely visible in the viewport.The rectangle must be an array of the form {x,y,width,height}.</dd><dd> Example: <b>if not g.visrect({0,0,1,1}) then g.setpos("0","0") end</b></dd></p><a name="setview"></a><p><dt><b>setview(<i>wd, ht</i>)</b></dt><dd>Set the pixel width and height of the viewport (the main window will beresized accordingly).</dd><dd> Example: <b>g.setview(32*32, 32*30)</b></dd></p><a name="getview"></a><p><dt><b>getview(<i>index=-1</i>)</b></dt><dd>Return the pixel width and height of the viewport if the given index is -1(the default), or the pixel width and height of the specified layer ifthe given index is an integer from 0 to <b>numlayers()</b> - 1.</dd><dd> Example: <b>local wd, ht = g.getview()</b></dd></p><a name="autoupdate"></a><p><dt><b>autoupdate(<i>bool</i>)</b></dt><dd>When Golly runs a script this setting is initially false.If the given parameter is true then Golly will automatically update theviewport and the status bar after each command that changes theuniverse or viewport in some way.  Useful for debugging scripts.</dd><dd> Example: <b>g.autoupdate(true)</b></dd></p><a name="update"></a><p><dt><b>update()</b></dt><dd>Immediately update the viewport and the status bar, regardless of thecurrent <b>autoupdate</b> setting.  Note that Golly always does anupdate when a script finishes.</dd></p><p><a name="layers"></a>&nbsp;<br>LAYER COMMANDS<a name="overlay"></a><p><dt><b>overlay(<i>command</i>)</b></dt><dd>Call a command to create, modify or delete the <a href="overlay.html">overlay</a>,a rectangular area of pixels that can be displayed on top of the current layer.</dd><dd> Example: <b>g.overlay("create 400 300")</b></dd></p><a name="addlayer"></a><p><dt><b>addlayer()</b></dt><dd>Add a new, empty layer immediately after the current layer andreturn the new layer's index, an integer from 0 to <b>numlayers()</b> - 1.The new layer becomes the current layer and inherits most ofthe previous layer's settings, including its algorithm, rule, scale,location, cursor mode, etc.The step exponent is set to 0, there is no selection,no origin offset, and the layer's initial name is "untitled".</dd><dd> Example: <b>local newindex = g.addlayer()</b></dd></p><a name="clone"></a><p><dt><b>clone()</b></dt><dd>Like <b>addlayer</b> (see above) but the new layer shares thesame universe as the current layer.The current layer's settings are duplicated and most will bekept synchronized so that a change to one clone automatically changesall the others.Each cloned layer does however have a separate viewport, so the samepattern can be viewed at different scales and locations(at the same time if layers are tiled).</dd><dd> Example: <b>local cloneindex = g.clone()</b></dd></p><a name="duplicate"></a><p><dt><b>duplicate()</b></dt><dd>Like <b>addlayer</b> (see above) but the new layer has a copy of thecurrent layer's pattern.Also duplicates all the current settings but, unlike a cloned layer,the settings are not kept synchronized.</dd><dd> Example: <b>local dupeindex = g.duplicate()</b></dd></p><a name="dellayer"></a><p><dt><b>dellayer()</b></dt><dd>Delete the current layer.  The current layer changes to the previouslayer (unless layer 0 was deleted).</dd></p><a name="movelayer"></a><p><dt><b>movelayer(<i>fromindex, toindex</i>)</b></dt><dd>Move a specified layer to a new position in the layer sequence.The chosen layer becomes the current layer.</dd><dd> Example: <b>g.movelayer(1, 0)</b></dd></p><a name="setlayer"></a><p><dt><b>setlayer(<i>index</i>)</b></dt><dd>Set the current layer to the layer with the given index,an integer from 0 to <b>numlayers()</b> - 1.</dd><dd> Example: <b>g.setlayer(0)</b></dd></p><a name="getlayer"></a><p><dt><b>getlayer()</b></dt><dd>Return the index of the current layer, an integer from 0 to <b>numlayers()</b> - 1.</dd><dd> Example: <b>local currindex = g.getlayer()</b></dd></p><a name="numlayers"></a><p><dt><b>numlayers()</b></dt><dd>Return the number of existing layers, an integer from 1 to <b>maxlayers()</b>.</dd><dd> Example: <b>if g.numlayers() > 1 then g.setoption("tilelayers",1) end</b></dd></p><a name="maxlayers"></a><p><dt><b>maxlayers()</b></dt><dd>Return the maximum number of layers (10 in this implementation).</dd></p><a name="setname"></a><p><dt><b>setname(<i>string, index=current</i>)</b></dt><dd>Set the name of the given layer, or the current layer's nameif no index is supplied.</dd><dd> Example: <b>g.setname("temporary")</b></dd></p><a name="getname"></a><p><dt><b>getname(<i>index=current</i>)</b></dt><dd>Return the given layer's name, or the current layer's nameif no index is supplied.</dd><dd> Example: <b>if g.getname() == "temporary" then g.dellayer() end</b></dd></p><a name="setcolors"></a><p><dt><b>setcolors(<i>color_array</i>)</b></dt><dd>Set the color(s) of one or more states in the current layer and its clones (if any).If the given array contains a multiple of 4 integers then they are interpretedas <i>state, red, green, blue</i> values.A state value of -1 can be used to set all live states to the same color(state 0 is <i>not</i> changed).If the given array contains exactly 6 integers then they are interpretedas a color gradient from <i>r1, g1, b1</i> to <i>r2, g2, b2</i>for all the live states (state 0 is <i>not</i> changed).If the given array is empty then all states (including state 0) are resetto their default colors, depending on the current algorithm and rule.Note that the color changes made by this command are only temporary.Golly will restore the default colors if a new pattern is opened or created,or if the algorithm or rule changes,or if <a href="prefs:color">Preferences > Color</a> is used to change anyof the default colors for the current layer's algorithm.</dd><dd><table cellspacing=0 cellpadding=0><tr><td>Example: <b>g.setcolors({1,0,0,0, 2,0,0,0})</b></td><td width=20>                        </td><td># set states 1 and 2 to black</td></tr><tr><td>Example: <b>g.setcolors({-1,0,255,0})</b></td><td width=20>                        </td><td># set all live states to green</td></tr><tr><td>Example: <b>g.setcolors({255,0,0, 0,0,255})</b></td><td width=20>                        </td><td># live states vary from red to blue</td></tr><tr><td>Example: <b>g.setcolors({})</b></td><td width=20>                        </td><td># restore default colors</td></tr></table></dd></p><a name="getcolors"></a><p><dt><b>getcolors(<i>state=-1</i>)</b></dt><dd>Return the color of a given state in the current layer as an array of the form</dd><p><dd><b>{ state, red, green, blue }</b></dd><p><dd>or if the given state is -1 (or not supplied) then return all colors as</dd><p><dd><b>{ 0, r0, g0, b0, . . . N, rN, gN, bN }</b></dd><p><dd>where N equals <b>numstates()</b> - 1.Note that the array returned by <b>getcolors</b> can be passed into <b>setcolors</b>;this makes it easy to save and restore colors.</dd><dd> Example: <b>local allcolors = g.getcolors()</b></dd><dd> Example: <b>local deadcolor = g.getcolors(0)</b></dd></p><p><a name="miscellaneous"></a>&nbsp;<br>MISCELLANEOUS COMMANDS<a name="os"></a><p><dt><b>os()</b></dt><dd>Return the current operating system: "Windows", "Mac" or "Linux".</dd><dd> Example: <b>if g.os() == "Mac" then do_mac_stuff() end</b></dd></p><a name="millisecs"></a><p><dt><b>millisecs()</b></dt><dd>Return the number of milliseconds that have elapsed since Golly started up.The returned value is a floating point number.</dd><dd> Example: <b>local t1 = g.millisecs()</b></dd></p><a name="setoption"></a><p><dt><b>setoption(<i>name, value</i>)</b></dt><dd>Set the given option to the given value.The old value is returned to make it easy to restore a setting.Here are all the valid option names and their possible values:</dd><p><dd><table cellspacing=0 cellpadding=0><tr><td><b>"autofit"</b></td><td width=20>       </td><td>1 or 0</td></tr><tr><td><b>"boldspacing"</b></td><td width=20>   </td><td>2 to 1000 (cells)</td></tr><tr><td><b>"drawingstate"</b></td><td width=20>  </td><td>0 to numstates()-1</td></tr><tr><td><b>"fullscreen"</b></td><td width=20>    </td><td>1 or 0</td></tr><tr><td><b>"hyperspeed"</b></td><td width=20>    </td><td>1 or 0</td></tr><tr><td><b>"maxdelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr><tr><td><b>"mindelay"</b></td><td width=20>      </td><td>0 to 5000 (millisecs)</td></tr><tr><td><b>"opacity"</b></td><td width=20>       </td><td>1 to 100 (percent)</td></tr><tr><td><b>"restoreview"</b></td><td width=20>   </td><td>1 or 0</td></tr><tr><td><b>"savexrle"</b></td><td width=20>      </td><td>1 or 0</td></tr><tr><td><b>"showallstates"</b></td><td width=20> </td><td>1 or 0</td></tr><tr><td><b>"showboldlines"</b></td><td width=20> </td><td>1 or 0</td></tr><tr><td><b>"showbuttons"</b></td><td width=20>   </td><td>0 to 4</td></tr><tr><td><b>"showeditbar"</b></td><td width=20>   </td><td>1 or 0</td></tr><tr><td><b>"showexact"</b></td><td width=20>     </td><td>1 or 0</td></tr><tr><td><b>"showfiles"</b></td><td width=20>     </td><td>1 or 0</td></tr><tr><td><b>"showgrid"</b></td><td width=20>      </td><td>1 or 0</td></tr><tr><td><b>"showhashinfo"</b></td><td width=20>  </td><td>1 or 0</td></tr><tr><td><b>"showicons"</b></td><td width=20>     </td><td>1 or 0</td></tr><tr><td><b>"showlayerbar"</b></td><td width=20>  </td><td>1 or 0</td></tr><tr><td><b>"showoverlay"</b></td><td width=20>   </td><td>1 or 0</td></tr><tr><td><b>"showstatusbar"</b></td><td width=20> </td><td>1 or 0</td></tr><tr><td><b>"showtoolbar"</b></td><td width=20>   </td><td>1 or 0</td></tr><tr><td><b>"smartscale"</b></td><td width=20>    </td><td>1 or 0</td></tr><tr><td><b>"stacklayers"</b></td><td width=20>   </td><td>1 or 0</td></tr><tr><td><b>"swapcolors"</b></td><td width=20>    </td><td>1 or 0</td></tr><tr><td><b>"switchlayers"</b></td><td width=20>  </td><td>1 or 0</td></tr><tr><td><b>"synccursors"</b></td><td width=20>   </td><td>1 or 0</td></tr><tr><td><b>"syncviews"</b></td><td width=20>     </td><td>1 or 0</td></tr><tr><td><b>"tilelayers"</b></td><td width=20>    </td><td>1 or 0</td></tr></table></dd><p><dd> Example: <b>local oldgrid = g.setoption("showgrid", 1)</b></dd></p><a name="getoption"></a><p><dt><b>getoption(<i>name</i>)</b></dt><dd>Return the current value of the given option.See above for a list of all the valid option names.</dd><dd> Example: <b>if g.getoption("autofit") == 1 then g.fit() end</b></dd></p><a name="setcolor"></a><p><dt><b>setcolor(<i>name, r, g, b</i>)</b></dt><dd>Set the given color to the given RGB values (integers from 0 to 255).The old RGB values are returned as 3 integers to make it easy to restore the color.Here is a list of all the valid color names and how they are used:</dd><p><dd><table cellspacing=0 cellpadding=0><tr><td><b>"border"</b></td><td width=20>      </td><td>color for border around bounded grid</td></tr><tr><td><b>"paste"</b></td><td width=20>       </td><td>color for pasting patterns</td></tr><tr><td><b>"select"</b></td><td width=20>      </td><td>color for selections (will be 50% transparent)</td></tr><tr><td><b><i>algoname</i></b></td><td width=20> </td><td>status bar background for given algorithm</td></tr></table></dd><p><dd> Example: <b>local oldr, oldg, oldb = g.setcolor("HashLife", 255, 255, 255)</b></dd></p><a name="getcolor"></a><p><dt><b>getcolor(<i>name</i>)</b></dt><dd>Return the current RGB values for the given color as 3 integers.See above for a list of all the valid color names.</dd><dd> Example: <b>local selr, selg, selb = g.getcolor("select")</b></dd></p><a name="getclipstr"></a><p><dt><b>getclipstr()</b></dt><dd>Return the current contents of the clipboard as an unmodified string.</dd><dd> Example: <b>local illegalRLE = g.getclipstr()</b></dd></p><a name="setclipstr"></a><p><dt><b>setclipstr(<i>string</i>)</b></dt><dd>Copy an arbitrary string (not necessarily a cell pattern) directly to the clipboard.</dd><dd> Example: <b>g.setclipstr(correctedRLE)</b></dd></p><a name="getstring"></a><p><dt><b>getstring(<i>prompt, initial="", title=""</i>)</b></dt><dd>Display a dialog box and get a string from the user.If the initial string is supplied it will be shown and selected.If the title string is supplied it will be used in the dialog's title bar.The script will be aborted if the user hits the dialog's Cancel button.</dd><dd> Example: <b>local n = tonumber( g.getstring("Enter a number:", "100") )</b></dd></p><a name="getevent"></a><p><dt><b>getevent(<i>get=true</i>)</b></dt><dd>When Golly runs a script it initially handles all keyboard and mouse events, butif the script calls <b>getevent()</b> then future events are put into a queuefor retrieval via later calls.  These events are returned inthe form of strings (see below for the syntax).  If there are no events in the queuethen the returned string is empty.  Note that the very first <b>getevent()</b>call will always return an empty string, but this isn't likely to be a problembecause it normally occurs very soon after the script starts running.A script can call <b>getevent(false)</b> if it wants Golly to resume handling anyfurther events.  See <a href="edit:Scripts/Lua/flood-fill.lua">flood-fill.lua</a>for a good example.</dd><p><dd>Key-down events are triggered when a key is pressed or autorepeats.The returned string is of the form "key <i>charname</i> <i>modifiers</i>"where <i>charname</i> can be any displayable ASCII character from '!' to '~'or one of the following names: space, home, end, pageup, pagedown, help,insert, delete, tab, enter, return, left, right, up, down, or f1 to f24.If no modifier key was pressed then <i>modifiers</i> is none, otherwise it issome combination of alt, cmd, ctrl, meta, shift.Note that cmd will only be returned on a Mac and corresponds to the command key.The alt modifier corresponds to the option key on a Mac.</dd><p><dd>Key-up events occur when a key is released and are strings of the form"kup <i>charname</i>".</dd><p><dd>Mouse-down events in the current layer are strings of the form"click <i>x</i> <i>y</i> <i>button</i> <i>modifiers</i>"where <i>x</i> and <i>y</i> are integers giving the cell position of the click,<i>button</i> is one of left, middle or right, and <i>modifiers</i> is the same as above.</dd><p><dd>Mouse-down events in a non-transparent pixel in the overlay are strings of the form"oclick <i>x</i> <i>y</i> <i>button</i> <i>modifiers</i>"where <i>x</i> and <i>y</i> are integers giving the pixel position in the overlay(0,0 is the top left pixel),<i>button</i> is one of left, middle or right, and <i>modifiers</i> is the same as above.</dd><p><dd>Mouse-up events are strings of the form "mup <i>button</i>"where <i>button</i> is one of left, middle or right.</dd><p><dd>Mouse wheel events in the current layer are strings of the form"zoomin <i>x</i> <i>y</i>" or "zoomout <i>x</i> <i>y</i>"where <i>x</i> and <i>y</i> are the mouse's pixel position in the viewport.</dd><p><dd>Mouse wheel events in a non-transparent pixel in the overlay are strings of the form"ozoomin <i>x</i> <i>y</i>" or "ozoomout <i>x</i> <i>y</i>"where <i>x</i> and <i>y</i> are the mouse's pixel position in the overlay.</dd><p><dd>The following examples show the strings returned after various user events:</dd><p><dd><table cellspacing=0 cellpadding=0><tr><td>"key m none"</td><td width=15>        </td><td>user pressed M key</td></tr><tr><td>"key space shift"</td><td width=15>        </td><td>user pressed space bar and shift key</td></tr><tr><td>"key , altctrlshift"</td><td width=15>        </td><td>user pressed comma and 3 modifier keys</td></tr><tr><td>"kup left"</td><td width=15>        </td><td>user released the left arrow key</td></tr><tr><td>"click 100 5 left none"</td><td width=15>        </td><td>user clicked cell at 100,5 with left button</td></tr><tr><td>"click -10 9 middle alt"</td><td width=15>        </td><td>user clicked cell with middle button and pressed alt key</td></tr><tr><td>"click 0 1 right altshift"</td><td width=15>        </td><td>user clicked cell with right button and pressed 2 modifiers</td></tr><tr><td>"oclick 10 5 left none"</td><td width=15>        </td><td>user clicked pixel at 10,5 in overlay with left button</td></tr><tr><td>"mup left"</td><td width=15>        </td><td>user released the mouse's left button</td></tr><tr><td>"zoomout 10 20"</td><td width=15>        </td><td>mouse wheel was used to zoom out from pixel in viewport</td></tr><tr><td>"ozoomin 10 20"</td><td width=15>        </td><td>mouse wheel was used to zoom in to pixel in overlay</td></tr></table></dd><p><dd> Example: <b>local evt = g.getevent()</b></dd></p><a name="doevent"></a><p><dt><b>doevent(<i>event</i>)</b></dt><dd>Pass the given event to Golly to handle in the usual manner(but events that can change the current pattern will be ignored).The given event must be a string with the exact same format as returnedby the <b>getevent</b> command (see above).If the string is empty then Golly does nothing.Note that the cmd modifier corresponds to the command key on a Mac orthe control key on Windows/Linux(this lets you write portable scripts that work on any platform).</dd><dd> Example: <b>g.doevent("key q cmd")</b> -- quit Golly</dd></p><a name="getxy"></a><p><dt><b>getxy()</b></dt><dd>Return the mouse's current grid position as a string.The string is empty if the mouse is outside the viewport or outside a bounded gridor over the translucent buttons, otherwise the string contains x and y cellcoordinates separated by a space; eg. "-999 12345".See <a href="edit:Scripts/Lua/draw-lines.lua">draw-lines.lua</a> for a goodexample of how to use this command.</dd><dd> Example: <b>local mousepos = g.getxy()</b></dd></p><a name="show"></a><p><dt><b>show(<i>message</i>)</b></dt><dd>Show the given string in the bottom line of the status bar.The status bar is automatically shown if necessary.</dd><dd> Example: <b>g.show("Hit any key to continue...")</b></dd></p><a name="error"></a><p><dt><b>error(<i>message</i>)</b></dt><dd>Beep and show the given string in the bottom line of the status bar.The status bar is automatically shown if necessary.</dd><dd> Example: <b>g.error("The pattern is empty.")</b></dd></p><a name="warn"></a><p><dt><b>warn(<i>message</i>)</b></dt><dd>Beep and show the given string in a modal warning dialog.Useful for debugging Lua scripts or displaying error messages.The dialog has two buttons: clicking OK will close the dialog and continue;clicking Cancel will close the dialog and abort the script.</dd><dd> Example: <b>g.warn("xxx = "..xxx)</b></dd></p><a name="note"></a><p><dt><b>note(<i>message</i>)</b></dt><dd>Show the given string in a modal information dialog.Useful for displaying multi-line results.The dialog has two buttons: clicking OK will close the dialog and continue;clicking Cancel will close the dialog and abort the script.</dd><dd> Example: <b>g.note("Line 1\nLine 2\nLine 3")</b></dd></p><a name="check"></a><p><dt><b>check(<i>bool</i>)</b></dt><dd>When Golly runs a script this setting is initially true,which means that event checking is enabled.If the given parameter is false then event checking is disabled.Typically used to prevent mouse clicks being seen at the wrong time.This should only be done for short durations because the scriptcannot be aborted while the setting is false.</dd><dd> Example: <b>g.check(false)</b></dd></p><a name="continue"></a><p><dt><b>continue(<i>message</i>)</b></dt><dd>This function can be used to continue execution after pcall hasdetected some sort of error or the user has aborted the script.It's typically used to ensure some finalization code is executed.If not empty, the given message will be displayed in the status barafter the script has finished.See the end of <a href="edit:Scripts/Lua/envelope.lua">envelope.lua</a>for an example.<a name="exit"></a><p><dt><b>exit(<i>message=""</i>)</b></dt><dd>Exit the script with an optional error message.If a non-empty string is supplied then it will be displayed in the status baralong with a beep, just like the <a href="#error"><b>error</b></a> command.If no message is supplied, or if the string is empty, then there is no beepand the current status bar message will not be changed.</dd><dd> Example: <b>if g.empty() then g.exit("There is no pattern.") end</b></dd></p><p><a name="cellarrays"></a>&nbsp;<br><font size=+1><b>Cell arrays</b></font><p>Some scripting commands manipulate patterns in the form of cell arrays.Golly supports two types of cell arrays: one-state and multi-state.A one-state cell array contains an even number of integers specifyingthe x,y coordinates for a set of cells, all of which are assumed tobe in state 1:<p><dd><b>{ x1, y1, . . . xN, yN }</b></dd><p>A multi-state cell array contains an odd number of integers specifyingthe x,y,state values for a set of cells.  If the number of cells is eventhen a padding integer (zero) is added at the end of the array to ensurethe total number of integers is odd:<p><dd><b>{ x1, y1, state1, . . . xN, yN, stateN }</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if N is odd</dd><dd><b>{ x1, y1, state1, . . . xN, yN, stateN, 0 }</b>&nbsp; if N is even</dd><p>All scripting commands that input cell arrays use the length of thearray to determine its type.  When writing a script to handle multi-statecell arrays you may need to allow for the padding integer, especiallyif accessing cells within the array.See <a href="edit:Scripts/Lua/tile.lua">tile.lua</a> for example.<p>Note that all scripting commands return <b>{}</b> if the resultingcell array has no cells.  They never return <b>{0}</b>, although thisis a perfectly valid multi-state cell array and all commands can inputsuch an array.  For example, <b>newarray = g.join(array1,{0})</b>can be used to convert a non-empty one-state array to multi-state.<p>One-state cell arrays are normally used in a two-state universe, butthey can also be used in a universe with more than two states.A multi-state cell array can be used in a two-state universe, butonly if the array's cell states are 0 or 1.<p>The ordering of cells within either type of array doesn't matter.Also note that positive y values increase downwards in Golly'scoordinate system.<p><a name="rectarrays"></a>&nbsp;<br><font size=+1><b>Rectangle arrays</b></font><p>Some commands manipulate rectangles in the form of arrays.An empty rectangle is indicated by an array with no items; ie. <b>{}</b>.A non-empty rectangle is indicated by an array containing four integers:<p><dd><b>{ left, top, width, height }</b></dd><p>The first two items specify the cell at the top left corner of therectangle.  The last two items specify the rectangle's size (in cells).The width and height must be greater than zero.<p><a name="gplus"></a>&nbsp;<br><font size=+1><b>Using the gplus package</b></font><p>The <b>gplus</b> package supplied with Golly provides a high-level interfaceto many of Golly's built-in scripting commands.  The package consists of aset of .lua files stored in the Scripts/Lua/gplus directory.The best way to learn how to use <b>gplus</b> is to look at some of thescripts supplied with Golly:<p><ul><li>See <a href="edit:Scripts/Lua/bricklayer.lua">bricklayer.lua</a> for how to usethe <b>pattern</b> function to contruct a complicated pattern by combiningsimpler sub-patterns.<li>See <a href="edit:Scripts/Lua/invert.lua">invert.lua</a> for how to usethe <b>rect</b> function to make it easier to manipulate rectangles.<li>See <a href="edit:Scripts/Lua/p1100-MWSS-gun.lua">p1100-MWSS-gun.lua</a>for an extended example of an efficient script representation of a largecomplex pattern.  This uses the <b>pattern</b> function to place differentphases and orientations of each component object, and the <b>put</b> function topopulate the resulting structure with spaceships.<li>See <a href="edit:Scripts/Lua/shift.lua">shift.lua</a> for how to usethe <b>split</b> and <b>validint</b> functions to parse user input.</ul><p>Here's a summary of the functions available after a script calls<b>local gp = require "gplus"</b>(see <a href="edit:Scripts/Lua/gplus/init.lua">init.lua</a> for allthe implementation details):<p><dd><table cellspacing=0 cellpadding=0><tr>   <td><b>gp.int(x)</b></td><td width=10> </td>   <td> &mdash; return integer part of given floating point number</td></tr><tr>   <td><b>gp.min(a)</b></td><td width=10> </td>   <td> &mdash; return minimum value in given array</td></tr><tr>   <td><b>gp.max(a)</b></td><td width=10> </td>   <td> &mdash; return maximum value in given array</td></tr><tr>   <td><b>gp.drawline(x1,y1,x2,y2,z)</b></td><td width=10> </td>   <td> &mdash; draw a line of state z cells from x1,y1 to x2,y2</td></tr><tr>   <td><b>gp.getedges(r)</b></td><td width=10> </td>   <td> &mdash; return left, top, right, bottom edges of given rectangle array</td></tr><tr>   <td><b>gp.getminbox(p)</b></td><td width=10> </td>   <td> &mdash; return minimal bounding box of given cell array or pattern</td></tr><tr>   <td><b>gp.validint(s)</b></td><td width=10> </td>   <td> &mdash; return true if given string is a valid integer</td></tr><tr>   <td><b>gp.getposint()</b></td><td width=10> </td>   <td> &mdash; return viewport position as 2 integers</td></tr><tr>   <td><b>gp.setposint(x,y)</b></td><td width=10> </td>   <td> &mdash; use given integers to set viewport position</td></tr><tr>   <td><b>gp.split(s,sep)</b></td><td width=10> </td>   <td> &mdash; split given string into 1 or more substrings</td></tr><tr>   <td><b>gp.equal(a1,a2)</b></td><td width=10> </td>   <td> &mdash; return true if given arrays have the same values</td></tr><tr>   <td><b>gp.compose(S,T)</b></td><td width=10> </td>   <td> &mdash; return the composition of two transformations S and T</td></tr><tr>   <td><b>gp.rect(r)</b></td><td width=10> </td>   <td> &mdash; return a table for manipulating a rectangle</td></tr><tr>   <td><b>gp.pattern(p)</b></td><td width=10> </td>   <td> &mdash; return a table for manipulating a pattern</td></tr><tr>   <td><b>gp.trace(msg)</b></td><td width=10> </td>   <td> &mdash; pass into xpcall so a runtime error will have a stack trace</td></tr></table></dd></p><p>Most of the supplied Lua scripts use <b>gplus</b>, but it isn't compulsory.You might prefer to create your own package for use in the scripts you write.If a script calls <b>require "foo"</b> then Golly will look for foo.luain the same directory as the script, then it looks for foo/init.lua.If a script calls <b>require "foo.bar"</b> then Golly looks for foo/bar.lua.(If none of those files exist in the script's directory then Golly willlook in the supplied Scripts/Lua directory, so scripts can always use the<b>gplus</b> package no matter where they are located.)<p><a name="problems"></a>&nbsp;<br><font size=+1><b>Potential problems</b></font><p>1.There are some important points to remember about Lua, especiallywhen converting an existing Perl/Python script to Lua:<p><ul><li>Cell arrays and rectangle arrays start with index 1, not 0.This is necessary to be able to use Lua's length operator (<b>#</b>) andstandard library functions like <b>table.unpack</b>.<li>Lua's <b>true</b> and <b>false</b> are <em>not</em> equivalent to 1 and 0.In particular, "<b>if 0</b>" is true.<li>Avoid calls like <b>local x, y, wd, ht = g.getrect()</b>.Only x will get a non-<b>nil</b> value (a rectangle array).You need to do <b>local x, y, wd, ht = table.unpack(g.getrect())</b>.<li>When writing a complicated script it's a good idea to add the line<b>require "gplus.strict"</b> near the top.  This will catch any undeclaredglobal variables.  When the script is working just remove or comment outthat line.</ul><p>More tips can be found at <a href="http://www.luafaq.org/gotchas.html">Lua Gotchas</a>.<p>2.The escape key check to abort a running script is not done by Lua butby each <b>g.*</b> function.  This means that very long Lua computationsshould call an occasional "no-op" like <b>g.doevent("")</b> to allow thescript to be aborted in a timely manner.<p>3.When writing a script that creates a pattern, make sure the script starts witha <b>g.new</b> call (or, less useful, a <b>g.open</b> call that loads a pattern)otherwise the script might create lots of temporary files or use lots of memory.From Golly's point of view there are two types of scripts:<p><ul><li>A script that calls <b>g.new</b> or <b>g.open</b> is assumed to be creating somesort of pattern, so when Golly sees these calls it clears any undo history andsets an internal flag that says "don't mark this layer as dirty and don't botherrecording any further changes".<li>A script that doesn't call <b>g.new</b> or <b>g.open</b> is assumed to modify thecurrent pattern. Golly must record <em>all</em> the script's changes so thatwhen it finishes you can select "Undo Script Changes" from the Edit menu.Generating changes (due to <b>g.run</b> or <b>g.step</b> calls) are stored intemporary files; all other changes are stored in memory.</ul><p><a name="copyright"></a>&nbsp;<br><font size=+1><b>Lua copyright notice</b></font><P>Copyright &copy; 1994&ndash;2015 Lua.org, PUC-Rio.<P>Permission is hereby granted, free of charge, to any person obtaining a copyof this software and associated documentation files (the "Software"), to dealin the Software without restriction, including without limitation the rightsto use, copy, modify, merge, publish, distribute, sublicense, and/or sellcopies of the Software, and to permit persons to whom the Software isfurnished to do so, subject to the following conditions:<P>The above copyright notice and this permission notice shall be included inall copies or substantial portions of the Software.<P>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS ORIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THEAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHERLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS INTHE SOFTWARE.</body></html>
