@@ -344,10 +344,14 @@ void AddDefaultKeyActions()
     // these default shortcuts are similar to the hard-wired shortcuts in v1.2
     
     // include some examples of DO_OPENFILE
-    keyaction[(int)'s'][mk_SHIFT].id =     DO_OPENFILE;
-    keyaction[(int)'s'][mk_SHIFT].file =   wxT("Scripts/Python/shift.py");
+    keyaction[(int)'h'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'h'][mk_ALT].file =     wxT("Rules/LifeHistory.rule");
+    keyaction[(int)'j'][mk_ALT].id =       DO_OPENFILE;
+    keyaction[(int)'j'][mk_ALT].file =     wxT("Scripts/Lua/toLife.lua");
     keyaction[(int)'l'][mk_ALT].id =       DO_OPENFILE;
     keyaction[(int)'l'][mk_ALT].file =     wxT("Help/Lexicon/lex.htm");
+    keyaction[(int)'s'][mk_SHIFT].id =     DO_OPENFILE;
+    keyaction[(int)'s'][mk_SHIFT].file =   wxT("Scripts/Lua/shift.lua");
     
     // File menu
     keyaction[(int)'n'][mk_CMD].id =    DO_NEWPATT;
