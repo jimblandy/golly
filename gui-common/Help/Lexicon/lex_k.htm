@@ -5,6 +5,7 @@
 <meta name="author" content="Stephen A. Silver">
 <meta name="description" content="Part of Stephen Silver's Life Lexicon.">
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
 <link rel="begin" type="text/html" href="lex.htm" title="Life Lexicon">
 <base target="_top">
 </head>
@@ -44,11 +45,29 @@
 
 </center>
 <hr>
+<p><a name=karelsp15>:</a><b>Karel's p15</b> (p15) An <a href="lex_o.htm#oscillator">oscillator</a> discovered by Karel Suhajda on
+December 11, 2002. It consists of a period 15 rotor supported by the
+domino spark of a pentadecathlon. It provides accessible sparks that
+can be used to perturb reactions or thin signal <a href="lex_s.htm#stream">streams</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..O....O..$..OOOOOO..$..O....O..$..........$..........$..........$..OOOOOO..$.O......O.$O........O$.O......O.$..OOOOOO..$"
+>..O....O..
+..OOOOOO..
+..O....O..
+..........
+..........
+..........
+..OOOOOO..
+.O......O.
+O........O
+.O......O.
+..OOOOOO..
+</a></pre></td></tr></table></center>
 <p><a name=keys>:</a><b>keys</b> See <a href="lex_s.htm#shortkeys">short keys</a>, <a href="lex_b.htm#bentkeys">bent keys</a> and <a href="lex_o.htm#oddkeys">odd keys</a>.
+<p><a name=kickback>:</a><b>kickback</b> = <a href="#kickbackreaction">kickback reaction</a> or <a href="lex_1.htm#a-180degreekickback">180-degree kickback</a>.
 <p><a name=kickbackreaction>:</a><b>kickback reaction</b> The following collision of two <a href="lex_g.htm#glider">gliders</a> whose
-product is a single glider travelling in the opposite direction
-to one of the original gliders. This is important in the proof
-of the existence of a <a href="lex_u.htm#universalconstructor">universal constructor</a>, and in Bill Gosper's
+product is a single glider travelling in the opposite direction to
+one of the original gliders. This is important in the proof of the
+existence of a <a href="lex_u.htm#universalconstructor">universal constructor</a>, and in Bill Gosper's
 <a href="lex_t.htm#totalaperiodic">total aperiodic</a>, as well as a number of other constructions.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.....O..$......OO$.OO..OO.$O.O.....$..O.....$"
 >.....O..
@@ -57,6 +76,7 @@ of the existence of a <a href="lex_u.htm#universalconstructor">universal constru
 O.O.....
 ..O.....
 </a></pre></td></tr></table></center>
+See also <a href="lex_1.htm#a-180degreekickback">180-degree kickback</a>.
 <p><a name=kidney>:</a><b>kidney</b> A Gosperism for <a href="lex_c.htm#century">century</a>. See also <a href="lex_d.htm#diuresis">diuresis</a>.
 <p><a name=killertoads>:</a><b>killer toads</b> A pair of <a href="lex_t.htm#toad">toads</a> acting together so that they can eat
 things. Here, for example, are some killer toads eating a <a href="lex_h.htm#hwss">HWSS</a>.
@@ -71,21 +91,31 @@ O.....O.......
 ..........OOO.
 ...........OOO
 </a></pre></td></tr></table></center>
-<p><a name=kleinbottle>:</a><b>Klein bottle</b> As an alternative to a <a href="lex_t.htm#torus">torus</a>, it's possible to make
-a finite Life universe in the form of a Klein bottle. The simplest
-way to do this is to use an <i>m</i> x <i>n</i> rectangle with the top edge joined
-to the bottom edge (as for a torus) and the left edge twisted and
-joined to the right.
-<p><a name=knightship>:</a><b>knightship</b> Any <a href="lex_s.htm#spaceship">spaceship</a> of type (2<i>m</i>,<i>m</i>)/<i>n</i>. Such spaceships do
-exist (see <a href="lex_u.htm#universalconstructor">universal constructor</a>), but no concrete example is
-known. A knightship must be asymmetric and its period must be at
-least 6, which makes searching for them using programs like <a href="lex_l.htm#lifesrc">lifesrc</a>
-very difficult.
+<p><a name=kleinbottle>:</a><b>Klein bottle</b> As an alternative to a <a href="lex_t.htm#torus">torus</a>, it's possible to make a
+finite Life universe in the form of a Klein bottle. The simplest way
+to do this is to use an <i>m</i> x <i>n</i> rectangle with the top edge joined to
+the bottom edge (as for a torus) and the left edge twisted and joined
+to the right.
+<p><a name=knightship>:</a><b>knightship</b> Any <a href="lex_s.htm#spaceship">spaceship</a> of type (2<i>m</i>,<i>m</i>)/<i>n</i> -- that is, a spaceship
+of any speed that moves obliquely in a (2,1) direction. The first
+Conway's Life knightship was a variant of Andrew Wade's <a href="lex_g.htm#gemini">Gemini</a>
+spaceship, constructed in May 2010. The next was an even slower
+knightship based on the <a href="lex_h.htm#halfbakeryreaction">half-bakery reaction</a>. A knightship must be
+asymmetric and its period must be at least 6, which makes it very
+difficult to search for <a href="lex_e.htm#elementary">elementary</a> knightships using programs like
+<a href="lex_l.htm#lifesrc">lifesrc</a>.
 <p>By analogy with the corresponding fairy chess pieces, spaceships of
 types (3<i>m</i>,<i>m</i>)/<i>n</i>, (3<i>m</i>,2<i>m</i>)/<i>n</i> and (4<i>m</i>,<i>m</i>)/<i>n</i> would presumably be called
-camelships, zebraships and giraffeships, respectively. But no
-examples of these are known either, and they are even more difficult
-to search for.
+camelships, zebraships and giraffeships, respectively. Such
+spaceships do exist (see <a href="lex_u.htm#universalconstructor">universal constructor</a>) but small
+elementary versions are even more difficult to search for. Any of
+these ship types could be constructed by trivially modifying a Gemini
+spaceship, or less trivially by reprogramming one of the more recent
+small <a href="lex_g.htm#geminoid">Geminoid</a> <a href="lex_c.htm#constructionarm">construction arms</a>, but as of August 2017 a
+camelship Gemini is the only example that has been explicitly built.
+<p>Alternatively, the term "knightship" is regularly used to refer to
+any <a href="lex_o.htm#oblique">oblique</a> spaceship -- e.g., the original <a href="lex_g.htm#gemini">Gemini</a> or the
+<a href="lex_w.htm#waterbear">waterbear</a>.
 <p><a name=koksgalaxy>:</a><b>Kok's galaxy</b> (p8) Found by Jan Kok in 1971. See <a href="lex_c.htm#converter">converter</a> for a
 use of this <a href="lex_s.htm#sparker">sparker</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:OOOOOO.OO$OOOOOO.OO$.......OO$OO.....OO$OO.....OO$OO.....OO$OO.......$OO.OOOOOO$OO.OOOOOO$"

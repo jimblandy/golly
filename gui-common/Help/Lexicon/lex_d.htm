@@ -5,6 +5,7 @@
 <meta name="author" content="Stephen A. Silver">
 <meta name="description" content="Part of Stephen Silver's Life Lexicon.">
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<link href="lifelex.css" rel="stylesheet" type="text/css">
 <link rel="begin" type="text/html" href="lex.htm" title="Life Lexicon">
 <base target="_top">
 </head>
@@ -44,7 +45,10 @@
 
 </center>
 <hr>
-<p><a name=dart>:</a><b>dart</b> (<i>c</i>/3 orthogonally, p3) Found by David Bell, May 1992.
+<p><a name=dart>:</a><b>dart</b> (<i>c</i>/3 orthogonally, p3) Found by David Bell, May 1992. A
+25-glider recipe for the dart was found in December 2014 by Martin
+Grant and Chris Cain, making it the first glider-constructible <i>c</i>/3
+spaceship.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.......O.......$......O.O......$.....O...O.....$......OOO......$...............$....OO...OO....$..O...O.O...O..$.OO...O.O...OO.$O.....O.O.....O$.O.OO.O.O.OO.O.$"
 >.......O.......
 ......O.O......
@@ -65,10 +69,11 @@ O.O.O.O
 O.O.O.O
 OO...OO
 </a></pre></td></tr></table></center>
+<p><a name=debris>:</a><b>debris</b> = <a href="lex_a.htm#ash">ash</a>.
 <p><a name=debruijndiagram>:</a><b>de Bruijn diagram</b> = <a href="#debruijngraph">de Bruijn graph</a>
-<p><a name=debruijngraph>:</a><b>de Bruijn graph</b> As applied to Life, a de Bruijn graph is a
-graph showing which pieces can be linked to which other pieces
-to form a valid part of a Life pattern of a particular kind.
+<p><a name=debruijngraph>:</a><b>de Bruijn graph</b> As applied to Life, a de Bruijn graph is a graph
+showing which pieces can be linked to which other pieces to form a
+valid part of a Life pattern of a particular kind.
 <p>For example, if we are interested in <a href="lex_s.htm#stilllife">still lifes</a>, then we could
 consider 2x3 rectangular pieces and the de Bruijn graph would show
 which pairs of these can be overlapped to form 3x3 squares in which
@@ -88,6 +93,15 @@ of <i>P</i><sub>2</sub> in parallel with another simulation of a universe filled
 Deep Cells, with these doubly simulated Deep Cells simulating <i>P</i><sub>3</sub> in
 parallel with yet another universe of Deep Cells, and so on.
 <p>Deep Cell is available from <a href="http://psychoticdeath.com/life.htm">http://psychoticdeath.com/life.htm</a>.
+<p><a name=demonoid>:</a><b>Demonoid</b> The first self-constructing diagonal spaceship. A 0<a href="lex_h.htm#hd">hd</a>
+Demonoid was completed by Chris Cain in December 2015, shortly after
+a much larger 10<a href="lex_h.htm#hd">hd</a> version constructed the previous month in
+collaboration with Dave Greene. The 0hd spaceship fits in a bounding
+box about 55,000 cells square, and displaces itself by 65 cells
+diagonally every 438,852 generations.
+<p>The first 0hd Demonoid was fired by a gun. As of this writing
+(2017) this is the only case where a spaceship gun pattern was
+completed before the first appearance of the actual spaceship.
 <p><a name=density>:</a><b>density</b> The density of a pattern is the limit of the proportion of
 live cells in a (2<i>n</i>+1)x(2<i>n</i>+1) square centred on a particular cell as
 <i>n</i> tends to infinity, when this limit exists. (Note that it does not
@@ -96,8 +110,8 @@ note that if the pattern is finite then the density is zero.) There
 are other definitions of density, but this one will do here.
 <p>In 1994 Noam Elkies proved that the maximum density of a stable
 pattern is 1/2, which had been the conjectured value. See the paper
-listed in the bibliography. Marcus Moore provided a simpler proof
-in 1995, and in fact proves that a <a href="lex_s.htm#stilllife">still life</a> with an <i>m</i> x <i>n</i>
+listed in the bibliography. Marcus Moore provided a simpler proof in
+1995, and in fact proves that a <a href="lex_s.htm#stilllife">still life</a> with an <i>m</i> x <i>n</i>
 <a href="lex_b.htm#boundingbox">bounding box</a> has at most (<i>mn</i>+<i>m</i>+<i>n</i>)/2 cells.
 <p>But what is the maximum average density of an oscillating pattern?
 The answer is conjectured to be 1/2 again, but this remains unproved.
@@ -107,6 +121,26 @@ September 1992).
 pattern is also unknown. An example with a density of 3/4 is known
 (see <a href="lex_a.htm#agar">agar</a>), but densities arbitrarily close to 1 may perhaps be
 possible.
+<p><a name=dependentconduit>:</a><b>dependent conduit</b> A <a href="lex_h.htm#herschelconduit">Herschel conduit</a> in which the input <a href="lex_h.htm#herschel">Herschel</a>
+interacts with catalysts in the first few ticks -- technically at
+T=-3, before the Herschel is completely formed. Compare
+<a href="lex_i.htm#independentconduit">independent conduit</a>. The Herschel is prevented from emitting its
+<a href="lex_f.htm#firstnaturalglider">first natural glider</a>. This is useful in cases where the previous
+conduit cannot survive a first natural glider emitted from its output
+Herschel.
+<p>This term is somewhat confusing, since it is actually the previous
+conduit that depends on the dependent conduit to suppress the
+problematic glider. Dependent conduits such as the <a href="lex_f.htm#f166">F166</a> and
+<a href="lex_l.htm#lx200">Lx200</a> do not actually depend on anything. They can be freely
+connected to any other conduits that fit, as long as the output
+Herschel evolves from its standard great-grandparent. As of this
+writing, the <a href="lex_f.htm#fx158">Fx158</a> is the only known case where a conduit's output
+Herschel has an alternate great-grandparent, which is incompatible
+with dependent conduits' initial transparent block.
+<p><a name=destructorarm>:</a><b>destructor arm</b> A dedicated <a href="lex_c.htm#constructionarm">construction arm</a> in the <a href="lex_g.htm#gemini">Gemini</a>
+spaceship, used only for removing previously active <a href="lex_c.htm#circuit">circuitry</a> once
+it is no longer needed. More generally, any circuitry in a
+self-constructing pattern dedicated exclusively to cleanup.
 <p><a name=dheptomino>:</a><b>D-heptomino</b> = <a href="lex_h.htm#herschel">Herschel</a>
 <p><a name=diamond>:</a><b>diamond</b> = <a href="lex_t.htm#tub">tub</a>
 <p><a name=diamondring>:</a><b>diamond ring</b> (p3) Found by Dave Buckingham in 1972.
@@ -152,10 +186,14 @@ OO.......OOO.
 ...........O.
 </a></pre></td></tr></table></center>
 <p><a name=dirty>:</a><b>dirty</b> Opposite of <a href="lex_c.htm#clean">clean</a>. A reaction which produces a large amount
-of complicated junk which is difficult to control or use is said
-to be dirty. Many basic <a href="lex_p.htm#pufferengine">puffer engines</a> are dirty and need to
-be <a href="lex_t.htm#tame">tamed</a> by accompanying <a href="lex_s.htm#spaceship">spaceships</a> in order to produce clean
-output.
+of complicated junk which is difficult to control or use is said to
+be dirty. Many basic <a href="lex_p.htm#pufferengine">puffer engines</a> are dirty and need to be
+<a href="lex_t.htm#tame">tamed</a> by accompanying <a href="lex_s.htm#spaceship">spaceships</a> in order to produce clean
+output. Similarly, a dirty <a href="lex_c.htm#conduit">conduit</a> is one that does not recover
+perfectly after the passage of a <a href="lex_s.htm#signal">signal</a>; one or more extra <a href="lex_a.htm#ash">ash</a>
+objects are left behind (or more rarely a <a href="lex_c.htm#catalyst">catalyst</a> is damaged) and
+additional signals must be used to clean up the circuit before it can
+be re-used.
 <p><a name=diuresis>:</a><b>diuresis</b> (p90) Found by David Eppstein in October 1998. His original
 stabilization used <a href="lex_p.htm#pentadecathlon">pentadecathlons</a>. The stabilization with
 complicated <a href="lex_s.htm#stilllife">still lifes</a> shown here (in two slightly different
@@ -240,16 +278,16 @@ OO........O...O.....O.....OO............................
 OO........O...O............OO...........................
 OO........OOO..............OO...........................
 </a></pre></td></tr></table></center>
-<p><a name=doublebarrelled>:</a><b>double-barrelled</b> Of a <a href="lex_g.htm#gun">gun</a>, emitting two streams of <a href="lex_s.htm#spaceship">spaceships</a>
-(or <a href="lex_r.htm#rake">rakes</a>). See <a href="lex_b.htm#b52bomber">B-52 bomber</a> for an example.
+<p><a name=doublebarrelled>:</a><b>double-barrelled</b> Of a <a href="lex_g.htm#gun">gun</a>, emitting two streams of <a href="lex_s.htm#spaceship">spaceships</a> (or
+<a href="lex_r.htm#rake">rakes</a>). See <a href="lex_b.htm#b52bomber">B-52 bomber</a> for an example.
 <p><a name=doubleblockreaction>:</a><b>double block reaction</b> A certain reaction that can be used to
-stabilize the <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a> (qv). This was discovered by
-David Bell in October 1996.
+stabilize the <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a> (qv). This was discovered by David
+Bell in October 1996.
 <p>The same reaction sometimes works in other situations, as shown in
 the following diagram where a pair of blocks eats an <a href="lex_r.htm#rpentomino">R-pentomino</a>
 and a <a href="lex_l.htm#lwss">LWSS</a>. (The LWSS version was known at least as early 1994,
-when Paul Callahan saw it form spontaneously as a result of firing
-a LWSS stream at some random junk.)
+when Paul Callahan saw it form spontaneously as a result of firing a
+LWSS stream at some random junk.)
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.OOOO.....OO....$O...O......OO.OO$....O......O..OO$O..O............$................$.............OO.$.............OO.$"
 >.OOOO.....OO....
 O...O......OO.OO
@@ -298,8 +336,9 @@ OO.O.O..............
 ............O.......
 ............OO......
 </a></pre></td></tr></table></center>
-<p><a name=doublewing>:</a><b>double wing</b> = <a href="lex_m.htm#mooseantlers">moose antlers</a>
-<p><a name=dove>:</a><b>dove</b> The following <a href="lex_i.htm#inductioncoil">induction coil</a>.
+<p><a name=doublewing>:</a><b>double wing</b> = <a href="lex_m.htm#mooseantlers">moose antlers</a>. This term is no longer in use.
+<p><a name=dove>:</a><b>dove</b> The following <a href="lex_i.htm#inductioncoil">induction coil</a>, found in 2015 to be a possible
+active reaction for the input or output of a <a href="lex_c.htm#converter">converter</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.OO..$O..O.$.O..O$..OOO$"
 >.OO..
 O..O.
@@ -307,10 +346,14 @@ O..O.
 ..OOO
 </a></pre></td></tr></table></center>
 <p><a name=downboatwithtail>:</a><b>down boat with tail</b> = <a href="lex_c.htm#cisboatwithtail">cis-boat with tail</a>
-<p><a name=dragon>:</a><b>dragon</b> (<i>c</i>/6 orthogonally, p6) This <a href="lex_s.htm#spaceship">spaceship</a>, discovered by
-Paul Tooke in April 2000, was the first known <i>c</i>/6 spaceship.
-All other known orthogonal <i>c</i>/6 spaceships are <a href="lex_f.htm#flotilla">flotillas</a> involving
-at least two dragons.
+<p><a name=dr>:</a><b>dr</b> Short identifier for Dean Hickerson's 'drifter' search program,
+used at various times to find <a href="lex_w.htm#wire">wires</a>, <a href="lex_e.htm#eater">eaters</a>, higher-period
+<a href="lex_b.htm#billiardtableconfiguration">billiard table configurations</a>, and related <a href="lex_s.htm#signal">signal</a>-carrying and
+signal-processing mechanisms. See also <a href="#drifter">drifter</a>.
+<p><a name=dragon>:</a><b>dragon</b> (<i>c</i>/6 orthogonally, p6) This <a href="lex_s.htm#spaceship">spaceship</a>, discovered by Paul
+Tooke in April 2000, was the first known <a href="lex_c.htm#c6spaceship">c/6 spaceship</a>. With 102
+cells, it was the smallest known orthogonal <i>c</i>/6 spaceship until
+Hartmut Holzwart discovered <a href="lex_1.htm#a-56p6h1v0">56P6H1V0</a> in April 2009.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.............O..OO......O..OOO$.....O...OOOO.OOOOOO....O..OOO$.OOOOO....O....O....OOO.......$O......OO.O......OO.OOO..O.OOO$.OOOOO.OOO........OOOO...O.OOO$.....O..O..............O......$........OO..........OO.OO.....$........OO..........OO.OO.....$.....O..O..............O......$.OOOOO.OOO........OOOO...O.OOO$O......OO.O......OO.OOO..O.OOO$.OOOOO....O....O....OOO.......$.....O...OOOO.OOOOOO....O..OOO$.............O..OO......O..OOO$"
 >.............O..OO......O..OOO
 .....O...OOOO.OOOOOO....O..OOO
@@ -327,19 +370,52 @@ O......OO.O......OO.OOO..O.OOO
 .....O...OOOO.OOOOOO....O..OOO
 .............O..OO......O..OOO
 </a></pre></td></tr></table></center>
-<p><a name=draintrap>:</a><b>drain trap</b> = <a href="lex_p.htm#paperclip">paperclip</a>
+<p><a name=draintrap>:</a><b>drain trap</b> = <a href="lex_p.htm#paperclip">paperclip</a>. This term is no longer in use.
+<p><a name=dried>:</a><b>dried</b> = <a href="lex_f.htm#freezedried">freeze-dried</a>.
 <p><a name=drifter>:</a><b>drifter</b> A perturbation moving within a stable pattern. Dean
-Hickerson has written a program to search for drifters, with the
-hope of finding one which could be moved around a track. Because
-drifters can be very small, they could be packed more tightly than
+Hickerson has written a program to search for drifters, with the hope
+of finding one which could be moved around a track. Because drifters
+can be very small, they could be packed more tightly than
 <a href="lex_h.htm#herschel">Herschels</a>, and so allow the creation of <a href="lex_o.htm#oscillator">oscillators</a> of periods
 not yet attained, and possibly prove that Life is <a href="lex_o.htm#omniperiodic">omniperiodic</a>.
-Hickerson has found a number of components towards this end, but
-it has proved difficult to change the direction of movement of a
+Hickerson has found a number of components towards this end, but it
+has proved difficult to change the direction of movement of a
 drifter, and so far no complete track has been found. However,
 Hickerson has had success using the same search program to find
 <a href="lex_e.htm#eater">eaters</a> with novel properties, such as that used in <a href="#diuresis">diuresis</a>.
 <p><a name=dual1234>:</a><b>dual 1-2-3-4</b> = <a href="lex_a.htm#achimsp4">Achim's p4</a>
+<p><a name=duoplet>:</a><b>duoplet</b> A diagonal two-bit spark produced by many oscillators and
+eater reactions. Among other uses, it can reflect gliders 90
+degrees. The following pattern shows an <a href="lex_e.htm#eater5">eater5</a> eating gliders and
+producing duoplets which are then used to reflect a separate glider
+stream.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..O....................$O.O....................$.OO....................$.......................$.......................$.......O...............$.....O.O...............$......OO...............$.....................O.$....................O..$....................OOO$.......................$.......................$................O......$...............O.......$...............OOO.....$.......................$....................OO.$................O...OO.$...............O.O.....$..............O.O......$..............O........$.............OO........$"
+>..O....................
+O.O....................
+.OO....................
+.......................
+.......................
+.......O...............
+.....O.O...............
+......OO...............
+.....................O.
+....................O..
+....................OOO
+.......................
+.......................
+................O......
+...............O.......
+...............OOO.....
+.......................
+....................OO.
+................O...OO.
+...............O.O.....
+..............O.O......
+..............O........
+.............OO........
+</a></pre></td></tr></table></center>
+<p><a name=dyingspark>:</a><b>dying spark</b> See <a href="lex_s.htm#spark">spark</a>. A spark by definition dies out completely
+after some number of ticks.
 <hr>
 <center>
 <b>
