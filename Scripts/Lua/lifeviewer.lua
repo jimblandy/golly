@@ -9,6 +9,12 @@
 --
 -- This is the Lua version of the Javascript/HTML5 LifeViewer
 -- used on the conwaylife.com forums and the LifeWiki.
+--
+-- Press H after running lifeviewer.lua to display the list of
+--  supported keyboard shortcuts and script commands.
+--
+-- To see some example LifeViewer script commands in action, open
+-- Patterns/Life/Rakes/c2-Cordership-rake.rle, then run lifeviewer.lua.
 
 -- build number
 local buildnumber = 29

@@ -124,3 +124,5 @@ o$208b4o3bo4bobo$209boo3bo5bobbo$213bobbo6bo$209boo3bo5bobbo$208b4o3bo
 $192bo8b4o28bo$193bobbo5boo29bo4bo$224b3o6b5o$224bo$195boo7bo20bo$194b
 obo3boo7b5o$194bo18bo$194b3o13b3o6b3o$205boo4bo7bo$205boo13bo3$192b4o$
 192bo3bo13bobbo$192bo16bo$193bobbo12bo3bo$209b4o!
+#C Script commands for lifeviewer.lua:
+#C [[ AUTOSTART AUTOFIT THEME 4 ANGLE 10 STEP 8 PAUSE 2 STARS ]]
