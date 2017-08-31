@@ -964,8 +964,12 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
                      }
                   }
                }
+               else if (wolfram == 0 && c == '9') {
+                  *t = c ; 
+                  t++ ;
+               }
                else {
-                  return "Bad character found." ;
+                  return "Bad character found.";
                }
             }
             break ;
