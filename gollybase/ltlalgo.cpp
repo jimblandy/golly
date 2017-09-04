@@ -2300,6 +2300,14 @@ const char *ltlalgo::setrule(const char *s)
                 lifefatal("Unexpected ntype in setrule!");
             }
         }
+        
+        if (colcounts == NULL && outergrid2 == NULL) {
+            // this can happen if previous rule used NM and was unbounded,
+            // and new rule uses NN and is unbounded and range <= SMALL_NN_RANGE
+            outergrid2 = (unsigned char*) calloc(outerbytes, sizeof(unsigned char));
+            if (outergrid2 == NULL) lifefatal("Not enough memory for nextgrid!");
+            nextgrid = outergrid2;
+        }
     }
 
     // set the number of cell states

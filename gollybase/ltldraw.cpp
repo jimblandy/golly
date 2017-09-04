@@ -268,7 +268,7 @@ void ltlalgo::findedges(bigint *ptop, bigint *pleft, bigint *pbottom, bigint *pr
         }
     }
     // should never get here if population > 0
-    lifefatal("bug detected in ltlalgo::findedges!");
+    lifewarning("Bug detected in ltlalgo::findedges!");
     
     found_top:
     
