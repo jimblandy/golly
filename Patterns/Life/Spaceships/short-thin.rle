@@ -1,0 +1,118 @@
+#C From thin.rle (left side of pattern):
+#C This table shows the minimum possible width of those types of
+#C  spaceships for which this has been determined.  The width is
+#C  measured over all time, so that, for example, the width of a
+#C  LWSS is counted as 5 even though each individual phase has
+#C  width 4.
+#C A period p spaceship which displaces itself (m,n) during its
+#C  period, where m >= n, is said to be of type (m,n)/p.
+#C  the "width" of a non-orthogonal spaceship is considered to be
+#C  along the same direction as that of the least displacement.
+#C  For example, the width of a (2,1)c/6 spaceship is parallel
+#C  to the direction of travel that is 1 cell per period.
+#C For each type I also give the minimum known length for a spaceship
+#C  of minimal width.  The length here is defined as the length of the
+#C  union of n successive generations (where n is the period), the
+#C  starting generation being chosen to minimise this figure.
+#C Lengths marked with an asterisk (*) indicate that they are the
+#C  minimum possible.
+#C For types where the minimum width is not known, the maximum width
+#C  that has been fully searched is given, preceded by a less than (>)
+#C  symbol.
+#C
+#C            | minimum |
+#C     type   |  width  | minimum length for this width
+#C  ----------+---------+------------------------------------
+#C  (1,0)c/2  |   21    | 12* (Hartmut Holzwart, 3 Jul 1992)
+#C  (1,0)c/3  |   12    | 13* ("turtle", Dean Hickerson, Aug 1989)
+#C  (1,0)c/4  |   10    | 44* (Stephen Silver, 2 Mar 1999)
+#C  (1,1)c/4  |    3    |  4* ("glider", Richard Guy, 1970)
+#C  (2,0)c/4  |    5    |  6* ("LWSS", John Conway, 1970)
+#C  (1,0)c/5  |   11    | 89  (Paul Tooke, 12 Mar 2001)
+#C  (1,1)c/5  |   10    | 26  (Tim Coe, Dec 2015)
+#C  (2,0)c/5  |   10    | 31* (Stephen Silver, 2 Mar 1999)
+#C  (1,0)c/6  |  >11    |
+#C  (1,1)c/6  |  >10    |
+#C  (2,0)c/6  |   12    | 48  (Matthias Merzenich, 4 Feb 2017)
+#C  (2,1)c/6  |  >15    |
+#C  (3,0)c/6  |  >18    |
+#C  (1,0)c/7  |   10    | 10  ("loafer", Josh Ball, 17 Feb 2013)
+#C  (1,1)c/7  |  > 9    |
+#C  (2,0)c/7  |  >10    |
+#C  (2,1)c/7  |  >11    |
+#C  (3,0)c/7  |  >14    |
+#C
+#C From short.rle (right side of pattern):
+#C This table shows the minimum possible length of those types
+#C  of orthogonal spaceship for which this has been determined.
+#C  For each type I also give the minimum known width for a
+#C  spaceship of minimal length.
+#C Widths marked with an asterisk (*) indicate that they are the
+#C  minimum possible.
+#C For types where the minimum length is not known, the maximum length
+#C  that has been fully searched is given, preceded by a less than (>)
+#C  symbol.
+#C
+#C            | minimum |
+#C     type   |  length | minimum width for this length
+#C  ----------+---------+------------------------------------
+#C  (1,0)c/2  |    8    | 31* (Dean Hickerson, 28 Jul 1989)
+#C  (1,0)c/3  |    5    | 16* (Dean Hickerson, Aug 1989)
+#C  (1,0)c/4  |    8    | 26* (Tim Coe, 6 Aug 1995)
+#C  (1,1)c/4  |    3    |  4* ("glider", Richard Guy, 1970)
+#C  (2,0)c/4  |    6    |  5* ("LWSS", John Conway, 1970)
+#C  (1,0)c/5  |    8    | 31* ("spider", David Bell, 14 Apr 1997)
+#C  (1,1)c/5  |   10    | 26  (Tim Coe, Dec 2015)
+#C  (2,0)c/5  |   11    | 16  (Matthias Merzenich, 8 Aug 2015)
+#C  (1,0)c/6  |  > 9    |
+#C  (1,1)c/6  |  >10    |
+#C  (2,0)c/6  |  > 7    |
+#C  (2,1)c/6  |  >10    |
+#C  (3,0)c/6  |  > 9    |
+#C  (1,0)c/7  |  > 8    |
+#C  (1,1)c/7  |  > 9    |
+#C  (2,0)c/7  |  > 8    |
+#C  (2,1)c/7  |  > 7    |
+#C  (3,0)c/7  |  > 7    |
+#C
+#C Patterns and comments from Stephen Silver's 12 Jan 2004 'ships.zip'
+#C Updated on 1 Sep 2017.
+x = 376, y = 114, rule = B3/S23
+351bo17bo$26b3o34bo25b2ob2o24bo33b2o26b2o27bo28bo29bo3bo77b3o15b3o$b2o
+22bo36bobo23bo3bobo22b3o29b2ob2o22b2obo2bob2o22bobo26b3o27b3ob3o74b2ob
+3o13b3ob2o$2o22bo5bo30bo2bo23bobobobo22b3o26b4o2bobo21b2o6b2o21b2ob2o
+24b2obo26b2obobob2o74bo2bob2o4bo4b2obo2bo$2bo21bo5bo31b2o25b2ob2o51bo
+4bo4bo20bobo4bobo21b2o2bo24b3o26b2o7b2o70b2obo4bobob2ob2obobo4bob2o$
+25b2obo90b3o24b2o7bo22b2o2b2o26b3o24b2o27bo7bo71b2obobo2bobo7bobo2bobo
+b2o$24b3o2bob2o25bo5bo57bobo30bo21b2ob2ob2o22b2o4b2o50b2o7b2o70bo8b3ob
+obob3o8bo$25bo5bo25bobo3bo26b3o29bo2bo25b3o25bo2bo28b4o48b2obobo3bobob
+2o67b2o7b2o9b2o7b2o$32bo23bo2bo3b2o24b3o2bo27bo3bo23bo26bo6bo24b2o5bo
+47bobob2ob2obobo$25b2o29bo2b2o3bo23bo32bo3bo24bobo24bo6bo25bob3o46b2ob
+o2bobobobo2bob2o$24b3o68b2o21bo5b2o23b2o60bo49b2obob2obobob2obob2o$24b
+o3b2o59bo4b2o21b2ob2o2bo23b3o26b8o26bobo47bo2bo4bobo4bo2bo$24b3o64b5o
+24bobob2o24bobo23b2o6b2o27bobo44b2o2bob2obobob2obo2b2o$24b2o7b2o57bobo
+25bo31b2o60bobo$25bo5bo3bo58b2o54bo3bo56bo$25b2obob2o2bo57bo2bo30bo23b
+o59bobo$25bo4bo62b3o25b5o22b3o62bo146bo$26bo4bo2bo54b4o31bo22bo2bo62bo
+145b3o$31bobo55b2o2bobo25b2obo21bo63bobo145b2obo$30bob2o56b3o2bo24bo4b
+o83b2o147b3o$30bobo59bo26b2obo23bob2obo57b2ob2o145b2o$31b2o54b2o2bo27b
+2o2bobo20bo3b3o$32bo55b3obob3o25bobo24bo3bo60bo$32bo54bo3bob2obo22b2ob
+obo22bo64bobo$31bo56b2ob5o22bo3bo25bobo62bo$32b2o54b2obob2o23bo2b2o24b
+2ob3o60b2o$90b3o30bo22bobobob2o59b2o$90bo31b2o21b2obobo3bo57bo$89bob3o
+24b2o4bo23bo60b2o2b2o$88b2o3bo24b2ob2o22b2obobo58b2o145bo$87bo5bo25bob
+o28bo59bo144b3o$88bo3bo25b2ob2o23bo4bo202bo3bo$89bo30b3o23bo2bo2b2o
+200b2ob2o5bo$87b2ob2o58b3o211b2o$86bo3b3o26bobo231b4obo5bob2o$86bo32b
+3o232bo2bo2b3o2bo$89bobo29b2o24b2o211b3o$91b2o29bo23bo2b2o213bo$91bo
+30bo26b2o213bob2o$91b2o27bo29bo$87b2o2b2o27bobo$87b2obo28bo26b2o2bo$
+88b4o2bo27bo24b3o$91bo2bo26b2o25bo$92b2obo52bobo$148bobo$91bo56bo$91b
+2o56bo210bo$91bobo259b2ob3ob3o$90b2ob2o258b2o4bo2b2ob2o$90b2obo258bo2b
+ob2o3bo2b2o$90bo2bo270bo2bo$88bo2bo$89b2o$89b3o$90b3o$91bobo$94bo$91bo
+$91bo$89b3o3bo$88bo2bo3b2o$87bo3bo256bo$92bo2b2o251bo7b3o11b3o$91bo
+255bobo4b2o5b3o$88bo2bo262b5ob5o4bo2bo$89bobo2bo257bobo2bo2bo3bo5bo$
+90b4o254b6o3bo2b2o4b6o$91b3o255b2o6bobo2b2o3bo$89b2obo266bo6bo$87b3ob
+3o$87bobobobo$88bo3bo$88bo3bo$86b2o5b2o$86b3o3b3o$87bo5bo$356bo7bo$88b
+5o257b2obobob2o3b2obobob2o$89bob2o254b3obob3o9b3obob3o$89b4o254bo3bobo
+5bobo5bobo3bo$89bo2bo258b2o6bobo6b2o$89bo2bob3o251b2o9bobo9b2o$88b2obo
+2b3o251b2ob2o15b2ob2o$87b3o2bob2o256bo15bo$87bo3b2o$88bo4bo$87b2o2b2o$
+87b2o4$360bo$360b2o$359bobo8$360b4o3bob2o$357b5ob2ob3o2bo$356bobo2bob
+2o2b2o3bo$372bo$358bo3bo5bo3bo$362bo4bo$353b2o2b2o10b2o$349bo2bo2b2ob
+2o6b2o$348bob5o10bobo$348bo5b2o4bo$356bobobo$359bo!
