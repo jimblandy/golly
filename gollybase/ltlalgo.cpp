@@ -247,7 +247,7 @@ const char* ltlalgo::resize_grids(int up, int down, int left, int right)
     }
 
     if (colcounts) {
-        // faster_* calls don't need to use outergrid2
+        // faster_* calls don't use outergrid2
         free(outergrid2);
         outergrid2 = NULL;
         nextgrid = NULL;
@@ -2307,6 +2307,14 @@ const char *ltlalgo::setrule(const char *s)
             outergrid2 = (unsigned char*) calloc(outerbytes, sizeof(unsigned char));
             if (outergrid2 == NULL) lifefatal("Not enough memory for nextgrid!");
             nextgrid = outergrid2;
+        }
+
+        if (colcounts && outergrid2) {
+            // faster_* calls don't use outergrid2, so we deallocate it and
+            // reset it to NULL (also necessary for test in step() loop)
+            free(outergrid2);
+            outergrid2 = NULL;
+            nextgrid = NULL;
         }
     }
 
