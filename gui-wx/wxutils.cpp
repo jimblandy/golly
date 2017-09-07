@@ -13,7 +13,7 @@
 #include "wxgolly.h"       // for wxGetApp, viewptr, mainptr
 #include "wxview.h"        // for viewptr->...
 #include "wxmain.h"        // for mainptr->...
-#include "wxscript.h"      // for inscript, PassKeyToScript
+#include "wxscript.h"      // for inscript, showprogress, PassKeyToScript
 #include "wxprefs.h"       // for allowbeep
 #include "wxutils.h"
 
@@ -421,6 +421,8 @@ void ProgressHandler::OnKeyDown(wxKeyEvent& event)
 
 void BeginProgress(const wxString& dlgtitle)
 {
+    if (inscript && !showprogress) return;
+
     if (progdlg) {
         // better do this in case of nested call
         delete progdlg;
@@ -446,6 +448,8 @@ void BeginProgress(const wxString& dlgtitle)
 
 bool AbortProgress(double fraction_done, const wxString& newmsg)
 {
+    if (inscript && !showprogress) return false;
+
     long msecs = progwatch->Time();
     if (progdlg) {
         if (msecs < prognext) return false;
@@ -491,6 +495,8 @@ bool AbortProgress(double fraction_done, const wxString& newmsg)
 
 void EndProgress()
 {
+    if (inscript && !showprogress) return;
+
     if (progdlg) {
 #if defined(__WXMAC__)
         // remove and delete ProgressHandler

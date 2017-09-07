@@ -16,11 +16,13 @@ extern bool pass_mouse_events;
 // at the start of a script; both become true if the script calls getevent.
 // If the script calls getkey (deprecated) then only pass_key_events becomes true.
 
-extern bool canswitch;
-// Can user switch layers while a script is running?
-
-extern bool stop_after_script;
-// Stop generating pattern after running script?
+extern bool canswitch;          // can user switch layers while a script is running?
+extern bool stop_after_script;  // stop generating pattern after running script?
+extern bool autoupdate;         // update display after changing current universe?
+extern bool allowcheck;         // allow event checking?
+extern bool showprogress;       // script can display the progress dialog?
+extern wxString scripterr;      // error message
+extern wxString mousepos;       // current mouse position
 
 void RunScript(const wxString& filename);
 // Run the given script.
@@ -67,13 +69,6 @@ void SavePendingChanges(bool checkgenchanges = true);
 
 void FinishScripting();
 // Called when app quits to abort a running script.
-
-// Following are used in wxlua/wxperl/wxpython.cpp:
-
-extern bool autoupdate;       // update display after changing current universe?
-extern bool allowcheck;       // allow event checking?
-extern wxString scripterr;    // error message
-extern wxString mousepos;     // current mouse position
 
 const char abortmsg[] = "GOLLY: ABORT SCRIPT";
 // special message used to indicate that the script was aborted

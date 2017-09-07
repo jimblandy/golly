@@ -39,7 +39,8 @@ bool canswitch;            // can user switch layers while script is running?
 bool stop_after_script;    // stop generating pattern after running script?
 bool autoupdate;           // update display after each change to current universe?
 bool allowcheck;           // allow event checking?
-wxString scripterr;        // Perl/Python error message
+bool showprogress;         // script can display the progress dialog?
+wxString scripterr;        // Lua/Perl/Python error message
 wxString mousepos;         // current mouse position
 
 // local globals:
@@ -760,6 +761,13 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             DoAutoUpdate();
         }
         
+    } else if (strcmp(optname, "showprogress") == 0) {
+        *oldval = showprogress ? 1 : 0;
+        if (*oldval != newval) {
+            showprogress = !showprogress;
+            // no need for DoAutoUpdate();
+        }
+        
     } else if (strcmp(optname, "showfiles") == 0 ||
                strcmp(optname, "showpatterns") == 0) {      // deprecated
         *oldval = showfiles ? 1 : 0;
@@ -882,6 +890,7 @@ bool GSF_getoption(const char* optname, int* optval)
     else if (strcmp(optname, "showicons") == 0)     *optval = showicons ? 1 : 0;
     else if (strcmp(optname, "showlayerbar") == 0)  *optval = showlayer ? 1 : 0;
     else if (strcmp(optname, "showoverlay") == 0)   *optval = showoverlay ? 1 : 0;
+    else if (strcmp(optname, "showprogress") == 0)  *optval = showprogress ? 1 : 0;
     else if (strcmp(optname, "showfiles") == 0)     *optval = showfiles ? 1 : 0;
     else if (strcmp(optname, "showpatterns") == 0)  *optval = showfiles ? 1 : 0;    // deprecated
     else if (strcmp(optname, "showscripts") == 0)   *optval = 0;                    // ditto
@@ -1471,6 +1480,7 @@ void RunScript(const wxString& filename)
         autoupdate = false;
         exitcalled = false;
         allowcheck = true;
+        showprogress = true;
         showtitle = false;
         updateedit = false;
         pass_key_events = false;
