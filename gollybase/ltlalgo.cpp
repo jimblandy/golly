@@ -39,6 +39,7 @@ ltlalgo::ltlalgo()
     unbounded = false;
     range = 1;
     ntype = 'M';
+    colcounts = NULL;
     create_grids(DEFAULTSIZE, DEFAULTSIZE);
     generation = 0;
     increment = 1;
@@ -58,6 +59,29 @@ ltlalgo::~ltlalgo()
 
 // -----------------------------------------------------------------------------
 
+void ltlalgo::allocate_colcounts()
+{
+    // allocate the array used for cumulative column counts of state-1 cells
+    if (colcounts) free(colcounts);
+    if (ntype == 'M') {
+        colcounts = (int*) malloc(outerbytes * sizeof(int));
+        // if NULL then use fast_Moore, otherwise faster_Moore_*
+    } else if (ntype == 'N') {
+        if (range <= SMALL_NN_RANGE) {
+            // use fast_Neumann (faster than faster_Neumann_* for small ranges)
+            colcounts = NULL;
+        } else {
+            // additional rows are needed to calculate counts in faster_Neumann_*
+            colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * sizeof(int));
+            // if NULL then use fast_Neumann
+        }
+    } else {
+        lifefatal("Unexpected ntype!");
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 void ltlalgo::create_grids(int wd, int ht)
 {
     // create a bounded universe of given width and height
@@ -68,22 +92,7 @@ void ltlalgo::create_grids(int wd, int ht)
     outerht = ght + border * 2;         // add top and bottom border
     outerbytes = outerwd * outerht;
     
-    // allocate memory for cell counts
-    if (ntype == 'M') {
-        colcounts = (int*) malloc(outerbytes * sizeof(int));
-        // if NULL then use fast_Moore, otherwise faster_Moore_bounded
-    } else if (ntype == 'N') {
-        if (range <= SMALL_NN_RANGE) {
-            // use fast_Neumann (faster than faster_Neumann_bounded for small ranges)
-            colcounts = NULL;
-        } else {
-            // additional rows are needed to calculate counts in faster_Neumann_bounded
-            colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * sizeof(int));
-            // if NULL then use fast_Neumann
-        }
-    } else {
-        lifefatal("Unexpected ntype in create_grids!");
-    }
+    allocate_colcounts();
 
     // allocate memory for grid
     int offset = border * outerwd + border;
@@ -99,6 +108,7 @@ void ltlalgo::create_grids(int wd, int ht)
         // point nextgrid to top left non-border cells within outergrid2
         nextgrid = outergrid2 + offset;
     } else {
+        // faster_* calls don't use outergrid2
         outergrid2 = NULL;
         nextgrid = NULL;
     }
@@ -229,22 +239,7 @@ const char* ltlalgo::resize_grids(int up, int down, int left, int right)
     gridbottom = gbottom;
     gridright = gright;
 
-    if (colcounts) free(colcounts);
-    if (ntype == 'M') {
-        colcounts = (int*) malloc(outerbytes * sizeof(int));
-        // if NULL then use fast_Moore, otherwise faster_Moore_unbounded
-    } else if (ntype == 'N') {
-        if (range <= SMALL_NN_RANGE) {
-            // use fast_Neumann (faster than faster_Neumann_unbounded for small ranges)
-            colcounts = NULL;
-        } else {
-            // additional rows are needed to calculate counts in faster_Neumann_unbounded
-            colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * sizeof(int));
-            // if NULL then use fast_Neumann
-        }
-    } else {
-        lifefatal("Unexpected ntype in resize_grids!");
-    }
+    allocate_colcounts();
 
     if (colcounts) {
         // faster_* calls don't use outergrid2
@@ -2225,7 +2220,6 @@ const char *ltlalgo::setrule(const char *s)
                 free(outergrid2);
                 outergrid2 = NULL;
             }
-            if (colcounts) free(colcounts);
             create_grids(newwd, newht);
             if (cell_list.size() > 0) {
                 // restore the pattern (if the new grid is smaller then any live cells
@@ -2283,22 +2277,7 @@ const char *ltlalgo::setrule(const char *s)
 
         // reallocate colcounts if ntype has changed
         if (ntype != oldtype) {
-            if (colcounts) free(colcounts);
-            if (ntype == 'M') {
-                colcounts = (int*) malloc(outerbytes * sizeof(int));
-                // if NULL then use fast_Moore, otherwise faster_Moore_unbounded
-            } else if (ntype == 'N') {
-                if (range <= SMALL_NN_RANGE) {
-                    // use fast_Neumann (faster than faster_Neumann_unbounded for small ranges)
-                    colcounts = NULL;
-                } else {
-                    // additional rows are needed to calculate counts in faster_Neumann_unbounded
-                    colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * sizeof(int));
-                    // if NULL then use fast_Neumann
-                }
-            } else {
-                lifefatal("Unexpected ntype in setrule!");
-            }
+            allocate_colcounts();
         }
         
         if (colcounts == NULL && outergrid2 == NULL) {

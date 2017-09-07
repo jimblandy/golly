@@ -82,6 +82,7 @@ private:
     char topology;                      // grid topology (T = torus, P = plane)
     
     void create_grids(int wd, int ht);  // create a bounded universe of given width and height
+    void allocate_colcounts();          // allocate the colcounts array
     void empty_boundaries();            // set minx, miny, maxx, maxy when population is 0
     void save_cells();                  // save current pattern in cell_list
     void restore_cells();               // restore pattern from cell_list
