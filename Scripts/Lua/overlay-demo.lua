@@ -961,17 +961,14 @@ function test_animation()
     local gollyopaqueclip = "clip1"
     local gollytranslucentclip = "clip2"
     ov("font 200 mono")
-    local bannertext = "Golly 3.0"
+    local bannertext = "Golly"
     ov("rgba 255 192 32 144")
     local w, h = maketext(bannertext, gollyopaqueclip)
     ov("rgba 255 192 32 255")
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext = [[
-Golly 3.0
-
-
-© 2017 The Golly Gang:
+© The Golly Gang:
 
 Tom Rokicki, Andrew Trevorrow, Tim Hutton, Dave Greene,
 Jason Summers, Maks Verver, Robert Munafo, Chris Rowett.
