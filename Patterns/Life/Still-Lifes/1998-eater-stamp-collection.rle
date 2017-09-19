@@ -191,13 +191,3 @@ bo14bobo$6b2o2b2o19b2o$6bo4bo11b2o$7bo2bo12bo2bob2o$6b2o2b2o13b2obo$2b
 2obo6bob2o10bobo5b2obo$2bob2o6b2obo9bo2b3o3bob2o$2o14b2o8b2o3bo$o16bo
 10b4o$bo14bo11bo$2o14b2o8bobob2o$2b2obo6bob2o10b2o2bo$2bob2o6b2obo14bo
 bo$31b2o!
-Check for inclusion of Karel's eater variants -- 2003-02-14:
-x = 7, y = 10
-3b2o$3bobo$5bo$5b2o$2b2obo$3bobo$3bob2o$2obo$o2bo$b2o!
-.*......**
-..*..**..*
-***...*.*.
-......*.**
-...**.*...
-...*..*...
-....**....

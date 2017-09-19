@@ -1,0 +1,47 @@
+#C A small c/18 HighLife spaceship -- many orders of magnitude smaller
+#C than other known slow spaceships in this rule, e.g., the Basilisk:
+#C pentadecathlon.com/lifeNews/2013/01/new_highlife_velocities.html
+#C Luka Okanishi, 4 October 2017
+#C http://conwaylife.com/forums/viewtopic.php?f=&p=51616#p51616
+x = 588, y = 601, rule = B36/S23
+267b2o$266b2o$267b2obo$268b3o$269bo10$280b3o$279bo2bo$282bo$278bo3bo$
+282bo$279bobo4$242bo$241b3o$244bo$240b3ob2o$239bo2b3o$240b2o12$242b2o$
+239b3o2bo$238b2ob3o$239bo$240b3o$241bo3$230bo$229b3o$229bob2o$232b2o$
+231b2o26$288b3o$287bo2bo$209b2o79bo$208b2o76bo3bo$209b2obo77bo$210b3o
+74bobo$211bo12$193bo$192b3o$192bob2o$195b2o$194b2o12$176bo$176b2o$172b
+o3bobo$172bo4b3o4$176b2o23$296b3o$295bo2bo$137bo160bo$137bo12bo143bo3b
+o$150bo147bo$295bobo8$126b2o4$124b3o4bo$125bobo3bo$126b2o$127bo23$86b
+3o$82b2o5bo$84bo4bo$89bo2$87bo$88bo$88bo24bo$114b2o$113b2o2$72bo$72bo$
+73bo2$71bo$71bo4bo$71bo5b2o$72b3o3$304b3o$303bo2bo$306bo$54b2o246bo3bo
+$53b2o251bo$54b2obo245bobo$55b3o$50bo5bo$49b3o$49bob2o$52b2o$51b2o19$
+141bo$142b2o$141b2o6$32b5o$31bo4bo$36bo$31bo3bo$20b2o11bo4$96b5o$95bo
+4bo$100bo$95bo3bo$97bo4$160b5o$159bo4bo$164bo$159bo3bo$11b3o147bo$11bo
+2bo$11bo3bo$12bo2bo$7b3o3b3o208b5o$7bo2bo60bo151bo4bo$7bo3bo58b2o156bo
+83b3o$8bo2bo58bobo150bo3bo83bo2bo$9b3o213bo88bo$310bo3bo$314bo$311bobo
+$288b5o$287bo4bo$292bo$287bo3bo$169bo119bo$170b2o$169b2o$o$o351b5o$o
+350bo4bo$356bo$351bo3bo$353bo4$416b5o$415bo4bo$420bo$415bo3bo$417bo$
+115bo$114b2o$114bobo$480b5o$479bo4bo$484bo$479bo3bo$481bo4$544b5o$543b
+o4bo$548bo$543bo3bo$545bo6$587bo$587bo5$197bo$159bo38b2o$158b2o37b2o$
+158bobo5$583b2o$582b2o$320b3o260b2obo$319bo2bo261b3o$322bo262bo$318bo
+3bo$322bo$319bobo$575bo$574b3o$574bob2o$577b2o$576b2o9$203bo347b2o$
+202b2o346b2o$202bobo346b2obo$552b3o$553bo4$543bo$542b3o$542bob2o$545b
+2o$544b2o3$225bo$226b2o307b2o$225b2o307b2o$535b2obo$536b3o$537bo$519b
+2o$518b2obo$519bobo3b2o$520bob3ob2o$521b2ob3obo$522b2o3bobo$527bob2o$
+247bo280b2o$246b2o263bo$246bobo261b3o$510bob2o$513b2o$512b2o12$328b3o$
+327bo2bo$330bo$326bo3bo$330bo$327bobo6$291bo$290b2o$290bobo$253bo$254b
+2o$253b2o9$471bo$471b2o$467bo3bobo$467bo4b3o2$464b2o2$471b2o2$462b3o4b
+o$463bobo3bo$464b2o$465bo2$335bo$334b2o$334bobo17$281bo$282b2o$281b2o
+158bo$441b2o$437bo3bobo$437bo4b3o$336b3o$335bo2bo95b2o$338bo$334bo3bo
+40bo61b2o$338bo39b2o$335bobo40bobo51b3o4bo$433bobo3bo$434b2o$435bo4$
+425bo$425b2o$421bo3bobo$421bo4b3o2$418b2o2$425b2o2$416b3o4bo$417bobo3b
+o$418b2o$419bo11$414b3o$410b2o5bo$412bo4bo$309bo98bo8bo$310b2o96bo$
+309b2o98bo5bo$416bo$407bo8bo$407bo4bo$407bo5b2o$408b3o7$388bobo$387bo
+2bo$387bo3bo$387b4obo$387bobo3bo$386bo$384b3o4bo$384bo7b2o$394bo$385bo
+bobo$387b3o3bo$390bob2o$344b3o39b3ob3o$343bo2bo40b2ob2o$346bo45bo$342b
+o3bo45bo$346bo$343bobo13$337bo$338b2o34b2o$337b2o34b2o$374b2obo$375b3o
+$370bo5bo$369b3o$369bob2o$372b2o$366b2o3b2o$365b2o$366b2obo$367b3o$
+362bo5bo$361b3o$361bob2o$364b2o$363b2o10$334b3o$334bo2bo$334bo3bo$335b
+o2bo$330b3o3b3o$330bo2bo$330bo3bo$331bo2bo$326b3o3b3o$326bo2bo$326bo3b
+o$327bo2bo$322b3o3b3o$322bo2bo$322bo3bo$323bo2bo$318b3o3b3o$318bo2bo$
+318bo3bo$319bo2bo$314b3o3b3o$314bo2bo$314bo3bo$315bo2bo$316b3o3$315bo$
+315bo$315bo!
