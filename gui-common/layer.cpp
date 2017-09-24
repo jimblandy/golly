@@ -1212,7 +1212,7 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                 }
 
                 // copy data inside "..." to next string in xpmdata
-                int len = strlen(linebuf);
+                int len = (int)strlen(linebuf);
                 while (linebuf[len] != '"') len--;
                 len--;
                 if (xpmstrings > 0 && xpmstrings <= numcolors) {

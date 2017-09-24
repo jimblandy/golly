@@ -252,7 +252,7 @@ static int oldhashmem;      // detect if user changed maxhashmem
     // called when editing has ended (ie. keyboard disappears)
     if (tf == percentageText) {
         if (tf.text.length > 0) {
-            randomfill = [tf.text integerValue];
+            randomfill = (int)[tf.text integerValue];
             if (randomfill < 1) randomfill = 1;
             if (randomfill > 100) randomfill = 100;
         }
@@ -260,7 +260,7 @@ static int oldhashmem;      // detect if user changed maxhashmem
         percentageSlider.value = randomfill;
     } else if (tf == memoryText) {
         if (tf.text.length > 0) {
-            maxhashmem = [tf.text integerValue];
+            maxhashmem = (int)[tf.text integerValue];
             if (maxhashmem < MIN_MEM_MB) maxhashmem = MIN_MEM_MB;
             if (maxhashmem > MAX_MEM_MB) maxhashmem = MAX_MEM_MB;
         }

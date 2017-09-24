@@ -95,7 +95,7 @@ static bool textchanged = false;    // true if user changed text
         // allow user to edit this file
         fileView.editable = YES;
         // show Save button
-        saveButton.style = UIBarButtonItemStyleBordered;
+        saveButton.style = UIBarButtonItemStylePlain;
         saveButton.enabled = YES;
         saveButton.title = @"Save";
     } else {

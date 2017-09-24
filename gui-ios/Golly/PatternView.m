@@ -334,7 +334,7 @@ static UIActionSheet *pastesheet;
 // -----------------------------------------------------------------------------
 
 static UIActionSheet *globalSheet;
-static int globalButton;
+static NSInteger globalButton;
 
 - (void)doDelayedAction
 {

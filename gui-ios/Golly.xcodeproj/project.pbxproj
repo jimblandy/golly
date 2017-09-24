@@ -77,6 +77,8 @@
 		0DA5B35915F03654005EBBE8 /* writepattern.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34515F03654005EBBE8 /* writepattern.cpp */; settings = {COMPILER_FLAGS = "-DZLIB"; }; };
 		0DB7062E1C1C163D008A57C8 /* Help in Resources */ = {isa = PBXBuildFile; fileRef = 0DB7062D1C1C163D008A57C8 /* Help */; };
 		0DBD205B1C131D9E007A70EF /* PatternViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0DBD205A1C131D9E007A70EF /* PatternViewController.xib */; };
+		0DCABC1D1F77319200C91FE0 /* ltlalgo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DCABC1A1F77319200C91FE0 /* ltlalgo.cpp */; };
+		0DCABC1E1F77319200C91FE0 /* ltldraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DCABC1C1F77319200C91FE0 /* ltldraw.cpp */; };
 		0DD0EF97178017020061E9A1 /* algos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF81178017020061E9A1 /* algos.cpp */; };
 		0DD0EF98178017020061E9A1 /* control.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF83178017020061E9A1 /* control.cpp */; };
 		0DD0EF99178017020061E9A1 /* file.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF85178017020061E9A1 /* file.cpp */; };
@@ -201,6 +203,9 @@
 		0DA5B34615F03654005EBBE8 /* writepattern.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = writepattern.h; sourceTree = "<group>"; };
 		0DB7062D1C1C163D008A57C8 /* Help */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Help; path = "../gui-common/Help"; sourceTree = "<group>"; };
 		0DBD205A1C131D9E007A70EF /* PatternViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = PatternViewController.xib; sourceTree = "<group>"; };
+		0DCABC1A1F77319200C91FE0 /* ltlalgo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ltlalgo.cpp; sourceTree = "<group>"; };
+		0DCABC1B1F77319200C91FE0 /* ltlalgo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ltlalgo.h; sourceTree = "<group>"; };
+		0DCABC1C1F77319200C91FE0 /* ltldraw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ltldraw.cpp; sourceTree = "<group>"; };
 		0DD0EF81178017020061E9A1 /* algos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = algos.cpp; sourceTree = "<group>"; };
 		0DD0EF82178017020061E9A1 /* algos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = algos.h; sourceTree = "<group>"; };
 		0DD0EF83178017020061E9A1 /* control.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = control.cpp; sourceTree = "<group>"; };
@@ -370,6 +375,9 @@
 		0DA5B32215F03654005EBBE8 /* gollybase */ = {
 			isa = PBXGroup;
 			children = (
+				0DCABC1A1F77319200C91FE0 /* ltlalgo.cpp */,
+				0DCABC1B1F77319200C91FE0 /* ltlalgo.h */,
+				0DCABC1C1F77319200C91FE0 /* ltldraw.cpp */,
 				0DA5B32315F03654005EBBE8 /* bigint.cpp */,
 				0DA5B32415F03654005EBBE8 /* bigint.h */,
 				0DA5B32515F03654005EBBE8 /* generationsalgo.cpp */,
@@ -471,7 +479,7 @@
 		0D07871A156881080051973C /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0720;
+				LastUpgradeCheck = 0810;
 				TargetAttributes = {
 					0D078722156881080051973C = {
 						DevelopmentTeam = UQZQF2G54F;
@@ -555,6 +563,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0DCABC1E1F77319200C91FE0 /* ltldraw.cpp in Sources */,
 				0D078734156881080051973C /* main.m in Sources */,
 				0D078738156881080051973C /* GollyAppDelegate.m in Sources */,
 				0D07873B156881080051973C /* PatternViewController.m in Sources */,
@@ -581,6 +590,7 @@
 				0DA5B35015F03654005EBBE8 /* liferender.cpp in Sources */,
 				0DA5B35115F03654005EBBE8 /* liferules.cpp in Sources */,
 				0DA5B35215F03654005EBBE8 /* qlifealgo.cpp in Sources */,
+				0DCABC1D1F77319200C91FE0 /* ltlalgo.cpp in Sources */,
 				0DA5B35315F03654005EBBE8 /* qlifedraw.cpp in Sources */,
 				0DA5B35415F03654005EBBE8 /* readpattern.cpp in Sources */,
 				0DA5B35515F03654005EBBE8 /* ruletable_algo.cpp in Sources */,
@@ -629,7 +639,9 @@
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -653,7 +665,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 2;
@@ -669,7 +681,9 @@
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -685,7 +699,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 2;
@@ -709,7 +723,7 @@
 				);
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "Golly/Golly-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.trevorrow.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -730,7 +744,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = IOS_GUI;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "Golly/Golly-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.trevorrow.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -749,7 +763,9 @@
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
@@ -765,7 +781,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
@@ -786,7 +802,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = IOS_GUI;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				INFOPLIST_FILE = "Golly/Golly-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.trevorrow.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";

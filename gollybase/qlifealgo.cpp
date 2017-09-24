@@ -923,7 +923,7 @@ G_INT64 qlifealgo::find_set_bits(supertile *p, int lev, int gm1) {
             if (p->d[i] != nullroots[lev-1])
                pop += find_set_bits(p->d[i], lev-1, gm1) ;
          if (pop < 500000000) {
-            p->pop[gm1] = (long)pop ;
+            p->pop[gm1] = (int)pop ;
             p->flags &= ~(0x20000000 << gm1) ;
          } else {
             p->pop[gm1] = 0xfffffff ; // placeholder; *some* bits are set

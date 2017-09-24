@@ -244,6 +244,10 @@ static void CreateRuleLinks(std::string& htmldata, const std::string& dir,
                          baseURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]];
                                  // the above base URL is needed for links like <img src='foo.png'> to work
     } else {
+        if ([algoname isEqualToString:@"Larger than Life"]) {
+            // replace spaces with underscores
+            algoname = [algoname stringByReplacingOccurrencesOfString:@" " withString:@"_"];
+        }
         NSBundle *bundle=[NSBundle mainBundle];
         NSString *filePath = [bundle pathForResource:algoname
                                               ofType:@"html"
@@ -328,7 +332,7 @@ static bool keepalgoindex = false;
 
 // -----------------------------------------------------------------------------
 
-static int globalButton;
+static NSInteger globalButton;
 
 - (void)doDelayedAction
 {
@@ -338,7 +342,7 @@ static int globalButton;
         curroffset[algoindex] = htmlView.scrollView.contentOffset;
         
         // save chosen algo for later use
-        algoindex = globalButton;
+        algoindex = (algo_type)globalButton;
         
         // display the chosen algo name
         [algoButton setTitle:[NSString stringWithCString:GetAlgoName(algoindex) encoding:NSUTF8StringEncoding]

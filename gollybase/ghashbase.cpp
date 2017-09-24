@@ -1362,7 +1362,7 @@ const char *ghashbase::readmacrocell(char *line) {
 	       p = line + 8 ;
 	       while (*p && *p <= ' ')
 		 p++ ;
-	       int cnt = atol(p) ;
+	       long cnt = atol(p) ;
 	       if (cnt < 0 || cnt > MAX_FRAME_COUNT)
 		  return "Bad FRAMES line" ;
 	       destroytimeline() ;
