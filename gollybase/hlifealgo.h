@@ -249,7 +249,7 @@ private:
    int node_depth(node *n) ;
    node *zeronode(int depth) ;
    node *pushroot(node *n) ;
-   node *setbit(node *n, int x, int y, int newstate, int depth) ;
+   node *gsetbit(node *n, int x, int y, int newstate, int depth) ;
    int getbit(node *n, int x, int y, int depth) ;
    int nextbit(node *n, int x, int y, int depth) ;
    node *hashpattern(node *root, int depth) ;

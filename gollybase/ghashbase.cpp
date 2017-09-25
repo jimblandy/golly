@@ -607,7 +607,7 @@ ghnode *ghashbase::pushroot(ghnode *n) {
  *   and has not been canonicalized, and that many of the pointers in
  *   the ghnodes can be null.  We'll patch this up in due course.
  */
-ghnode *ghashbase::setbit(ghnode *n, int x, int y, int newstate, int depth) {
+ghnode *ghashbase::gsetbit(ghnode *n, int x, int y, int newstate, int depth) {
    if (depth == 0) {
       ghleaf *l = (ghleaf *)n ;
       if (hashed) {
@@ -668,8 +668,8 @@ ghnode *ghashbase::setbit(ghnode *n, int x, int y, int newstate, int depth) {
          else
             *nptr = newclearedghnode() ;
       }
-      ghnode *s = setbit(*nptr, (x & (w - 1)) - wh,
-                         (y & (w - 1)) - wh, newstate, depth) ;
+      ghnode *s = gsetbit(*nptr, (x & (w - 1)) - wh,
+                                 (y & (w - 1)) - wh, newstate, depth) ;
       if (hashed) {
          ghnode *nw = n->nw ;
          ghnode *sw = n->sw ;
@@ -833,7 +833,7 @@ int ghashbase::setcell(int x, int y, int newstate) {
       sx >>= 1 ;
       sy >>= 1 ;
    }
-   root = setbit(root, x, y, newstate, depth) ;
+   root = gsetbit(root, x, y, newstate, depth) ;
    if (hashed) {
       okaytogc = 0 ;
    }
