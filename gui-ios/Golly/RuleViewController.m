@@ -244,10 +244,8 @@ static void CreateRuleLinks(std::string& htmldata, const std::string& dir,
                          baseURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] bundlePath]]];
                                  // the above base URL is needed for links like <img src='foo.png'> to work
     } else {
-        if ([algoname isEqualToString:@"Larger than Life"]) {
-            // replace spaces with underscores
-            algoname = [algoname stringByReplacingOccurrencesOfString:@" " withString:@"_"];
-        }
+        // replace any spaces with underscores
+        algoname = [algoname stringByReplacingOccurrencesOfString:@" " withString:@"_"];
         NSBundle *bundle=[NSBundle mainBundle];
         NSString *filePath = [bundle pathForResource:algoname
                                               ofType:@"html"
