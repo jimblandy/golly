@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 64
+local build = 65
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -238,7 +238,7 @@ local messages = {
 }
 
 -- music tracks
-local tracks = { "gamestart", "gameover", "gameloop", "lostball", "levelcomplete", "bonusloop" }
+local tracks = { "gamestart", "gameover", "gameloop", "lostball", "levelcompleteloop", "bonusloop" }
 
 --------------------------------------------------------------------------------
 
