@@ -680,16 +680,16 @@ There are five sound <i>commands</i>:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><b>play <i>soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-play the named <i>soundfile</i> asynchronously and return immediately</td></tr>
-<tr><td><b>loop <i>soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-play the named <i>soundfile</i> asynchronously and loop until the <a href="#stop">stop</a> command is used</td></tr>
+<tr><td><b>play <i>soundfile (level)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
+Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and return immediately. The volume is from 0.0 (silent) to 1.0 (maximum) and is set to maximum if not specified.</td></tr>
+<tr><td><b>loop <i>soundfile (level)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
+Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and loop until the <a href="#stop">stop</a> command is used.</td></tr>
 <tr><td><a name="stop"></a><b>stop <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-stop all sound playback or just the specified sound</td></tr>
+Stop all sound playback or just the specified <i>soundfile</i>.</td></tr>
 <tr><td><a name="volume"></a><b>volume <i>level soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum)</td></tr>
+Set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum). This is typically used to change the volume of a sound that is already playing.</td></tr>
 <tr><td><a name="state"></a><b>state <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, or <i>"stopped"</i> otherwise
+Returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, or <i>"stopped"</i> otherwise.
 </table>
 </dd>
 <p><dd>
@@ -703,10 +703,11 @@ Notes:
 </dd>
 </p>
 <p>
-<dd> Example: <b>ov("sound play beep.wav")</b></dd>
-<dd> Example: <b>ov("sound stop")</b></dd>
-<dd> Example: <b>ov("sound loop background.ogg")</b></dd>
-<dd> Example: <b>ov("sound volume 0.7 background.ogg")</b></dd>
+<dd> Example: <b>ov("sound play beep.wav 0.5") -- play beep.wav at half volume</b></dd>
+<dd> Example: <b>ov("sound play beep.wav") -- play beep.wav at full volume</b></dd>
+<dd> Example: <b>ov("sound stop") -- stop all sounds playing</b></dd>
+<dd> Example: <b>ov("sound loop background.ogg") -- play background.ogg in a loop</b></dd>
+<dd> Example: <b>ov("sound volume 0.7 background.ogg") -- set background.ogg volume to 0.7</b></dd>
 </p>
 
 <a name="target"></a><p><dt><b>target <i>(clipname)</i></b></dt>

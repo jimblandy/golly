@@ -2704,12 +2704,10 @@ function test_sound()
             running = false
         elseif event == "key p none" then
             command = "play"
-            result = ov("sound play "..soundname)
-            ov("sound volume "..(volume / 100).." "..soundname)
+            result = ov("sound play "..soundname.." "..(volume / 100))
         elseif event == "key l none" then
             command = "loop"
-            result = ov("sound loop "..soundname)
-            ov("sound volume "..(volume / 100).." "..soundname)
+            result = ov("sound loop "..soundname.. " "..(volume / 100))
         elseif event == "key s none" then
             command = "stop"
             ov("sound stop")

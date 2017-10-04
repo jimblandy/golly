@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 62
+local build = 63
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -237,6 +237,9 @@ local messages = {
     ["awarded"]    = { text = "No Bonus", size = 15, color = op.red }
 }
 
+-- music tracks
+local tracks = { "gamestart", "gameover", "gameloop", "lostball", "levelcomplete", "bonusloop" }
+
 --------------------------------------------------------------------------------
 
 local function showcursor()
@@ -344,14 +347,11 @@ local function setchannelvolume(channel, vol)
     else
         updatemessage(channel.."vol", vol.."%", op.green)
     end
-    if (channel == "fx") then
-    else
-        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/gamestart.ogg")
-        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/gameover.ogg")
-        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/gameloop.ogg")
-        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/lostball.ogg")
-        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/levelcompleteloop.ogg")
-        ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/bonusloop.ogg")
+    -- update the music volume immediately since it may be playing
+    if (channel == "music") then
+        for i = 1, #tracks do
+            ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/"..tracks[i]..".ogg")
+        end
     end
 end
 
@@ -364,23 +364,21 @@ end
 --------------------------------------------------------------------------------
 
 local function stopmusic()
-    ov("sound stop oplus/sounds/breakout/gamestart.ogg")
-    ov("sound stop oplus/sounds/breakout/gameover.ogg")
-    ov("sound stop oplus/sounds/breakout/gameloop.ogg")
-    ov("sound stop oplus/sounds/breakout/lostball.ogg")
-    ov("sound stop oplus/sounds/breakout/levelcompleteloop.ogg")
-    ov("sound stop oplus/sounds/breakout/bonusloop.ogg")
+    for i = 1, #tracks do
+        ov("sound stop oplus/sounds/breakout/"..tracks[i]..".ogg")
+    end
 end
 --------------------------------------------------------------------------------
 
 local function playsound(name, loop)
-    loop = loop or false
-    if loop then
-        ov("sound loop oplus/sounds/breakout/"..name..".ogg")
-    else
-        ov("sound play oplus/sounds/breakout/"..name..".ogg")
+    if soundvol > 0 then
+        loop = loop or false
+        if loop then
+            ov("sound loop oplus/sounds/breakout/"..name..".ogg "..(soundvol / 100))
+        else
+            ov("sound play oplus/sounds/breakout/"..name..".ogg "..(soundvol / 100))
+        end
     end
-    ov("sound volume "..(soundvol / 100).." oplus/sounds/breakout/"..name..".ogg")
 end
 
 --------------------------------------------------------------------------------
@@ -388,12 +386,13 @@ end
 local function playmusic(name, loop)
     loop = loop or false
     stopmusic()
-    if loop then
-        ov("sound loop oplus/sounds/breakout/"..name..".ogg")
-    else
-        ov("sound play oplus/sounds/breakout/"..name..".ogg")
+    if musicvol > 0 then
+        if loop then
+            ov("sound loop oplus/sounds/breakout/"..name..".ogg "..(musicvol / 100))
+        else
+            ov("sound play oplus/sounds/breakout/"..name..".ogg "..(musicvol / 100))
+        end
     end
-    ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/"..name..".ogg")
 end
 
 --------------------------------------------------------------------------------
