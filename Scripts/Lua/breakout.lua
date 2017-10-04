@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 63
+local build = 64
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -386,12 +386,10 @@ end
 local function playmusic(name, loop)
     loop = loop or false
     stopmusic()
-    if musicvol > 0 then
-        if loop then
-            ov("sound loop oplus/sounds/breakout/"..name..".ogg "..(musicvol / 100))
-        else
-            ov("sound play oplus/sounds/breakout/"..name..".ogg "..(musicvol / 100))
-        end
+    if loop then
+        ov("sound loop oplus/sounds/breakout/"..name..".ogg "..(musicvol / 100))
+    else
+        ov("sound play oplus/sounds/breakout/"..name..".ogg "..(musicvol / 100))
     end
 end
 
