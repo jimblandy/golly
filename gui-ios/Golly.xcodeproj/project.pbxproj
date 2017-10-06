@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		0D02E13E1568A14800581DCC /* PatternView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D02E13D1568A14800581DCC /* PatternView.m */; };
-		0D068EB715D93F4300A4EAB3 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D068EB415D93F4300A4EAB3 /* Icon@2x.png */; };
 		0D068EB815D93F4300A4EAB3 /* iTunesArtwork in Resources */ = {isa = PBXBuildFile; fileRef = 0D068EB515D93F4300A4EAB3 /* iTunesArtwork */; };
 		0D068EB915D93F4300A4EAB3 /* iTunesArtwork@2x in Resources */ = {isa = PBXBuildFile; fileRef = 0D068EB615D93F4300A4EAB3 /* iTunesArtwork@2x */; };
 		0D068EC115D9DD3A00A4EAB3 /* Default-Portrait~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D068EBF15D9DD3A00A4EAB3 /* Default-Portrait~ipad.png */; };
@@ -25,12 +24,12 @@
 		0D078742156881080051973C /* HelpViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D078741156881080051973C /* HelpViewController.m */; };
 		0D105F0F159EABDF006350CA /* InfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D105F0D159EABDF006350CA /* InfoViewController.m */; };
 		0D105F10159EABDF006350CA /* InfoViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0D105F0E159EABDF006350CA /* InfoViewController.xib */; };
-		0D10CE96156A3CF2001DC67F /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D10CE95156A3CF2001DC67F /* Icon.png */; };
 		0D1E9E6D17420EE2002C1270 /* triangle-right.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D1E9E6B17420EE2002C1270 /* triangle-right.png */; };
 		0D1E9E6E17420EE2002C1270 /* triangle-down.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D1E9E6C17420EE2002C1270 /* triangle-down.png */; };
 		0D2AA2F21C1C4B0B00484BB6 /* Patterns in Resources */ = {isa = PBXBuildFile; fileRef = 0D2AA2F11C1C4B0B00484BB6 /* Patterns */; };
 		0D2AA2F41C1C4B2400484BB6 /* Rules in Resources */ = {isa = PBXBuildFile; fileRef = 0D2AA2F31C1C4B2400484BB6 /* Rules */; };
 		0D2D9AAF156A00F3005B8D19 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D2D9AAE156A00F3005B8D19 /* libz.dylib */; };
+		0D2DB6E31F874DB300F56DC3 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0D2DB6E21F874DB300F56DC3 /* Images.xcassets */; };
 		0D41CD35157C225F0032B05A /* StateView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D41CD34157C225F0032B05A /* StateView.m */; };
 		0D602F38157320D200F51C02 /* beep.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 0D602F37157320D200F51C02 /* beep.aiff */; };
 		0D602F3A1573210000F51C02 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D602F391573210000F51C02 /* AudioToolbox.framework */; };
@@ -77,6 +76,8 @@
 		0DA5B35915F03654005EBBE8 /* writepattern.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA5B34515F03654005EBBE8 /* writepattern.cpp */; settings = {COMPILER_FLAGS = "-DZLIB"; }; };
 		0DB7062E1C1C163D008A57C8 /* Help in Resources */ = {isa = PBXBuildFile; fileRef = 0DB7062D1C1C163D008A57C8 /* Help */; };
 		0DBD205B1C131D9E007A70EF /* PatternViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0DBD205A1C131D9E007A70EF /* PatternViewController.xib */; };
+		0DBFA9121F8754E40004D7E3 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DBFA9101F8754E40004D7E3 /* Icon.png */; };
+		0DBFA9131F8754E40004D7E3 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0DBFA9111F8754E40004D7E3 /* Icon@2x.png */; };
 		0DCABC1D1F77319200C91FE0 /* ltlalgo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DCABC1A1F77319200C91FE0 /* ltlalgo.cpp */; };
 		0DCABC1E1F77319200C91FE0 /* ltldraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DCABC1C1F77319200C91FE0 /* ltldraw.cpp */; };
 		0DD0EF97178017020061E9A1 /* algos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD0EF81178017020061E9A1 /* algos.cpp */; };
@@ -98,7 +99,6 @@
 /* Begin PBXFileReference section */
 		0D02E13C1568A14800581DCC /* PatternView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PatternView.h; sourceTree = "<group>"; };
 		0D02E13D1568A14800581DCC /* PatternView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PatternView.m; sourceTree = "<group>"; };
-		0D068EB415D93F4300A4EAB3 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
 		0D068EB515D93F4300A4EAB3 /* iTunesArtwork */ = {isa = PBXFileReference; lastKnownFileType = file; path = iTunesArtwork; sourceTree = "<group>"; };
 		0D068EB615D93F4300A4EAB3 /* iTunesArtwork@2x */ = {isa = PBXFileReference; lastKnownFileType = file; path = "iTunesArtwork@2x"; sourceTree = "<group>"; };
 		0D068EBF15D9DD3A00A4EAB3 /* Default-Portrait~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-Portrait~ipad.png"; sourceTree = "<group>"; };
@@ -122,12 +122,12 @@
 		0D105F0C159EABDF006350CA /* InfoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InfoViewController.h; sourceTree = "<group>"; };
 		0D105F0D159EABDF006350CA /* InfoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InfoViewController.m; sourceTree = "<group>"; };
 		0D105F0E159EABDF006350CA /* InfoViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InfoViewController.xib; sourceTree = "<group>"; };
-		0D10CE95156A3CF2001DC67F /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		0D1E9E6B17420EE2002C1270 /* triangle-right.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "triangle-right.png"; sourceTree = "<group>"; };
 		0D1E9E6C17420EE2002C1270 /* triangle-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "triangle-down.png"; sourceTree = "<group>"; };
 		0D2AA2F11C1C4B0B00484BB6 /* Patterns */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Patterns; path = ../Patterns; sourceTree = "<group>"; };
 		0D2AA2F31C1C4B2400484BB6 /* Rules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Rules; path = ../Rules; sourceTree = "<group>"; };
 		0D2D9AAE156A00F3005B8D19 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		0D2DB6E21F874DB300F56DC3 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		0D41CD33157C225F0032B05A /* StateView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StateView.h; sourceTree = "<group>"; };
 		0D41CD34157C225F0032B05A /* StateView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StateView.m; sourceTree = "<group>"; };
 		0D602F37157320D200F51C02 /* beep.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = beep.aiff; sourceTree = "<group>"; };
@@ -203,6 +203,8 @@
 		0DA5B34615F03654005EBBE8 /* writepattern.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = writepattern.h; sourceTree = "<group>"; };
 		0DB7062D1C1C163D008A57C8 /* Help */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Help; path = "../gui-common/Help"; sourceTree = "<group>"; };
 		0DBD205A1C131D9E007A70EF /* PatternViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = PatternViewController.xib; sourceTree = "<group>"; };
+		0DBFA9101F8754E40004D7E3 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
+		0DBFA9111F8754E40004D7E3 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
 		0DCABC1A1F77319200C91FE0 /* ltlalgo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ltlalgo.cpp; sourceTree = "<group>"; };
 		0DCABC1B1F77319200C91FE0 /* ltlalgo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ltlalgo.h; sourceTree = "<group>"; };
 		0DCABC1C1F77319200C91FE0 /* ltldraw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ltldraw.cpp; sourceTree = "<group>"; };
@@ -325,6 +327,7 @@
 				0D078740156881080051973C /* HelpViewController.h */,
 				0D078741156881080051973C /* HelpViewController.m */,
 				0D8F770615D097CD00EF43AF /* HelpViewController.xib */,
+				0D2DB6E21F874DB300F56DC3 /* Images.xcassets */,
 				0D07872E156881080051973C /* Supporting Files */,
 			);
 			path = Golly;
@@ -333,8 +336,8 @@
 		0D07872E156881080051973C /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				0D10CE95156A3CF2001DC67F /* Icon.png */,
-				0D068EB415D93F4300A4EAB3 /* Icon@2x.png */,
+				0DBFA9101F8754E40004D7E3 /* Icon.png */,
+				0DBFA9111F8754E40004D7E3 /* Icon@2x.png */,
 				0D068EB515D93F4300A4EAB3 /* iTunesArtwork */,
 				0D068EB615D93F4300A4EAB3 /* iTunesArtwork@2x */,
 				0D068EBF15D9DD3A00A4EAB3 /* Default-Portrait~ipad.png */,
@@ -515,7 +518,6 @@
 				0D078732156881080051973C /* InfoPlist.strings in Resources */,
 				0D07873D156881080051973C /* pattern.png in Resources */,
 				0D07873F156881080051973C /* pattern@2x.png in Resources */,
-				0D10CE96156A3CF2001DC67F /* Icon.png in Resources */,
 				0D602F38157320D200F51C02 /* beep.aiff in Resources */,
 				0D96C6411575C652006C8EBC /* settings.png in Resources */,
 				0D96C6421575C652006C8EBC /* settings@2x.png in Resources */,
@@ -523,20 +525,22 @@
 				0D96C64C1575CBF8006C8EBC /* SettingsViewController.xib in Resources */,
 				0D64693F1599D04A00433025 /* OpenViewController.xib in Resources */,
 				0D62FCF4159BCDCC005506CA /* SaveViewController.xib in Resources */,
+				0D2DB6E31F874DB300F56DC3 /* Images.xcassets in Resources */,
 				0D105F10159EABDF006350CA /* InfoViewController.xib in Resources */,
 				0DD5D56715A3083700CF2627 /* open.png in Resources */,
 				0DD5D56815A3083700CF2627 /* open@2x.png in Resources */,
 				0D9D15B915B67E340081C8AB /* help.png in Resources */,
 				0D9D15BA15B67E340081C8AB /* help@2x.png in Resources */,
+				0DBFA9131F8754E40004D7E3 /* Icon@2x.png in Resources */,
 				0D62F87715B8355B002E3EF8 /* StatePickerController.xib in Resources */,
 				0D8F770715D097CD00EF43AF /* HelpViewController.xib in Resources */,
-				0D068EB715D93F4300A4EAB3 /* Icon@2x.png in Resources */,
 				0D068EB815D93F4300A4EAB3 /* iTunesArtwork in Resources */,
 				0D068EB915D93F4300A4EAB3 /* iTunesArtwork@2x in Resources */,
 				0D068EC115D9DD3A00A4EAB3 /* Default-Portrait~ipad.png in Resources */,
 				0D068EC215D9DD3A00A4EAB3 /* Default-Landscape~ipad.png in Resources */,
 				0D1E9E6D17420EE2002C1270 /* triangle-right.png in Resources */,
 				0D1E9E6E17420EE2002C1270 /* triangle-down.png in Resources */,
+				0DBFA9121F8754E40004D7E3 /* Icon.png in Resources */,
 				0DBD205B1C131D9E007A70EF /* PatternViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -711,6 +715,7 @@
 		0D078750156881080051973C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = UQZQF2G54F;
@@ -737,6 +742,7 @@
 		0D078751156881080051973C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = UQZQF2G54F;
@@ -796,6 +802,7 @@
 		0DBF0CFE15DA801A004A5509 /* AppStore */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = UQZQF2G54F;
