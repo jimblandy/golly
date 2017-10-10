@@ -19,11 +19,14 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.NavUtils;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -100,7 +103,12 @@ public class HelpActivity extends BaseActivity {
             return false;
         }
         
-        @Override  
+        @Override
+        public void onReceivedError(WebView webview, int errorCode, String description, String failingUrl) {
+            Toast.makeText(HelpActivity.this, "Web error! " + description, Toast.LENGTH_SHORT).show();
+        }
+        
+        @Override
         public void onPageFinished(WebView webview, String url) {
             super.onPageFinished(webview, url);
             
@@ -198,6 +206,17 @@ public class HelpActivity extends BaseActivity {
             // use bigger font size for high density screens (default size is 16)
             gwebview.getSettings().setDefaultFontSize(24);
         }
+        
+        
+        //!!!???
+        getWindow().requestFeature(Window.FEATURE_PROGRESS);
+        final Activity activity = this;
+        gwebview.setWebChromeClient(new WebChromeClient() {
+            public void onProgressChanged(WebView webview, int progress) {
+                activity.setProgress(progress * 1000);
+            }
+        });
+        
         
         if (firstcall) {
             firstcall = false;
