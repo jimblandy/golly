@@ -2423,6 +2423,7 @@ void ShowTextFile(const char* filepath)
 void ShowHelp(const char* filepath)
 {
     // switch to HelpActivity and display html file
+    // LOGI("ShowHelp: filepath=%s", filepath);
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
     if (env) {
