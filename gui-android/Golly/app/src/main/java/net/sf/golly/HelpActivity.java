@@ -263,7 +263,7 @@ public class HelpActivity extends BaseActivity {
             Log.i("onResume filepath", filepath);
             gwebview.loadUrl("file://" + filepath);
         } else {
-            gwebview.reload();
+            // no need: gwebview.reload();
         }
     }
 
