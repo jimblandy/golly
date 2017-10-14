@@ -45,6 +45,45 @@
 
 </center>
 <hr>
+<p><a name=macrocell>:</a><b>macrocell</b> A format used by <a href="lex_g.htm#golly">Golly</a> and its <a href="lex_h.htm#hashlife">hashlife</a> algorithm,
+capable of storing repetitive patterns very efficiently, even if they
+contain a large number of cells. For example, a filled square 2<sup>167</sup>
+cells on a side can be stored in less than three kilobytes in
+macrocell format, or about 800 bytes in compressed macrocell format.
+The square's total population is over a googol, 10<sup>100</sup>; the number of
+atoms in the observable universe is only about 10<sup>80</sup>.
+<p>This high level of compression is obtained by defining a tree
+structure composed of increasingly large cell "tiles" with
+power-of-two dimensions. Tile definitions of any size are re-used
+whenever they appear multiple times in a large pattern (at the same
+power-of-two offset). For example, the following is a macrocell
+encoding of a complex <a href="lex_p.htm#pseudostilllife">pseudo still life</a> arrangement of <a href="lex_s.htm#ship">ships</a>,
+with a total population over 2500 cells:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:[M2] (golly 3.0)$#R B3/S23$.OO.OO$O.O.O.O$OO...OO$$OO...OO$O.O.O.O$.OO.OO$$4 0 1 1 1$5 2 0 2 2$6 3 3 0 3$7 4 4 4 4$"
+>[M2] (golly 3.0)
+#R B3/S23
+.OO.OO$O.O.O.O$OO...OO$$OO...OO$O.O.O.O$.OO.OO$
+4 0 1 1 1
+5 2 0 2 2
+6 3 3 0 3
+7 4 4 4 4
+</a></pre></td></tr></table></center>
+<p>The first line after the #R rule line defines a quadtree tile at
+the lowest level - a level-3 tile in this case, meaning a 2<sup>3</sup> square
+area. At this level the pattern is encoded in a modified ASCII
+format with dollar signs as line separators. The next line, #2,
+defines a level-4 quadtree tile, made from one empty level-3 tile in
+the northwest corner (0), and three copies of the level-3 tile that
+was defined on the previous line (1). Lines 3, 4, and 5 similarly
+define level 5, 6, and 7 quadtree tiles by giving the line numbers of
+four tiles of the next lower size.
+<p>Many patterns are only moderately repetitive, so macrocell format
+is somewhat less successful at compressing them. Certainly most
+patterns are not nearly as regular as the artificial example above:
+there are usually many different tiles defined at each level, not
+just one. Chaotic patterns, such as <a href="lex_a.htm#ash">ash</a> from random <a href="lex_s.htm#soup">soups</a>,
+usually need so many different tile definitions that they can be
+stored more efficiently using <a href="lex_r.htm#rle">rle</a> format.
 <p><a name=macrospaceship>:</a><b>macro-spaceship</b> A <a href="lex_s.htm#selfconstructing">self-constructing</a> or <a href="lex_s.htm#selfsupporting">self-supporting</a>
 <a href="lex_s.htm#spaceship">spaceship</a>, such as the <a href="lex_c.htm#caterpillar">Caterpillar</a>, <a href="lex_c.htm#centipede">Centipede</a>,
 <a href="lex_h.htm#halfbakedknightship">half-baked knightship</a>, <a href="lex_w.htm#waterbear">waterbear</a>, <a href="lex_d.htm#demonoid">Demonoid</a>, <a href="lex_o.htm#orthogonoid">Orthogonoid</a>, and
@@ -91,6 +130,7 @@ O.....O
 ...O.O.
 ....O..
 </a></pre></td></tr></table></center>
+<p><a name=mc>:</a><b>mc</b> = <a href="#macrocell">macrocell</a>
 <p><a name=mediumfish>:</a><b>medium fish</b> = <a href="#mwss">MWSS</a>
 <p><a name=megacell>:</a><b>megacell</b> = <a href="lex_p.htm#p1megacell">p1 megacell</a>.
 <p><a name=metacatacryst>:</a><b>metacatacryst</b> A 52-cell pattern exhibiting quadratic growth. Found
@@ -106,8 +146,9 @@ adjustments. Known examples include David Bell's original 500x500
 <p><a name=metamorphosis>:</a><b>metamorphosis</b> An <a href="lex_o.htm#oscillator">oscillator</a> built by Robert Wainwright that uses
 the following reaction (found by Bill Gosper) to turn <a href="lex_g.htm#glider">gliders</a> into
 <a href="lex_l.htm#lwss">LWSS</a>, and converts these LWSS back into gliders by colliding them
-head on. (There are in fact two ways to do the following reaction,
-because the <a href="lex_s.htm#spark">spark</a> of the <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a> is symmetric.)
+head on using an <a href="lex_l.htm#lwsslwssbounce">LWSS-LWSS bounce</a>. There are two ways to do the
+following reaction, because the <a href="lex_t.htm#twinbeesshuttlespark">twin bees shuttle spark</a> is
+<a href="lex_s.htm#symmetric">symmetric</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:...................O.........$....................O........$..................OOO........$.............................$.............................$.............................$.............................$.............................$............O...O.....O.OO...$OO.........O.....O....O.O.O..$OO.........O.........O....O..$...........OO...O.....O.O.O..$.............OOO......O.OO...$.............................$.............OOO.............$...........OO...O............$OO.........O...............OO$OO.........O.....O.........OO$............O...O............$"
 >...................O.........
 ....................O........
@@ -311,6 +352,10 @@ growth, but it has since been superseded by <a href="lex_t.htm#teeth">teeth</a>,
 finite number generations. David Bell has constructed patterns of
 this type, with a <i>c</i>/2 front end and a <i>c</i>/3 back end.
 <p><a name=msmbreeder>:</a><b>MSM breeder</b> See <a href="lex_b.htm#breeder">breeder</a>.
+<p><a name=multiplicity>:</a><b>multiplicity</b> In a <a href="lex_r.htm#reflectorlessrotatingoscillator">reflectorless rotating oscillator</a>, the maximum
+number <i>n</i> of independent patterns that can orbit a single point, in a
+way that reduces the period of the combined oscillator by a factor of
+<i>n</i>.
 <p><a name=multistatelife>:</a><b>multi-state Life</b> = <a href="lex_c.htm#colourisedlife">colourised Life</a>
 <p><a name=multuminparvo>:</a><b>multum in parvo</b> (stabilizes at time 3933) A <a href="#methuselah">methuselah</a> found by
 Charles Corderman, but not as long-lasting as his <a href="lex_a.htm#acorn">acorn</a>.
@@ -356,6 +401,23 @@ See also <a href="lex_h.htm#hwss">HWSS</a>.
 O.....
 O....O
 OOOOO.
+</a></pre></td></tr></table></center>
+<p>The MWSS possesses both a <a href="lex_t.htm#tailspark">tail spark</a> and a <a href="lex_b.htm#bellyspark">belly spark</a> which
+can easily perturb other objects as it passes by. The spaceship can
+also perturb some objects in additional ways. For examples see
+<a href="lex_b.htm#blinkerpuffer">blinker puffer</a> and <a href="lex_g.htm#gliderturner">glider turner</a>.
+<p>Dave Buckingham found that the MWSS can be synthesized using three
+gliders, and can be constructed from two gliders and another small
+object in several more ways. Here is the three-glider <a href="lex_s.htm#synthesis">synthesis</a>:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:...........O..$...........O.O$...........OO.$..............$..............$.O......OO....$.OO.....O.O...$O.O.....O.....$"
+>...........O..
+...........O.O
+...........OO.
+..............
+..............
+.O......OO....
+.OO.....O.O...
+O.O.....O.....
 </a></pre></td></tr></table></center>
 <p><a name=mwssemulator>:</a><b>MWSS emulator</b> = <a href="#mwemulator">MW emulator</a>
 <p><a name=mwssoutoftheblue>:</a><b>MWSS out of the blue</b> The following reaction, found by Peter Rott in
@@ -427,11 +489,12 @@ O.OOO.O.OOOO.
 ..OO.........
 </a></pre></td></tr></table></center>
 <p><a name=myexperiencewithbheptominosinoscillators>:</a><b>My Experience with B-heptominos in Oscillators</b> An article by Dave
-Buckingham (October 1996) that describes his discovery of
-<a href="lex_h.htm#herschelconduit">Herschel conduits</a>, including sufficient (indeed ample) <a href="lex_s.htm#stable">stable</a>
-conduits to enable, for the first time, the construction of period <i>n</i>
-oscillators - and true period <i>n</i> guns - for every sufficiently large
-integer <i>n</i>. (See <a href="lex_h.htm#herschelloop">Herschel loop</a> and <a href="lex_e.htm#emu">emu</a>.)
+Buckingham (October 1996) available from
+<a href="http://conwaylife.com/ref/lifepage/patterns/bhept/bhept.html">http://conwaylife.com/ref/lifepage/patterns/bhept/bhept.html</a>. It
+describes his discovery of <a href="lex_h.htm#herschelconduit">Herschel conduits</a>, including sufficient
+(indeed ample) <a href="lex_s.htm#stable">stable</a> conduits to enable, for the first time, the
+construction of period <i>n</i> oscillators and <a href="lex_t.htm#true">true</a> period <i>n</i> guns for
+every sufficiently large integer <i>n</i>. See <a href="lex_h.htm#herschelloop">Herschel loop</a> and <a href="lex_e.htm#emu">emu</a>.
 <hr>
 <center>
 <b>

@@ -104,13 +104,14 @@ O.OOO..OO.O.
 has <a href="#oscillator">oscillators</a> of all <a href="lex_p.htm#period">periods</a>. It is not known if Life is
 omniperiodic, although this seems likely. Dave Buckingham's work on
 Herschel conduits in 1996 (see
-<a href="lex_m.htm#myexperiencewithbheptominosinoscillators">My Experience with B-heptominos in Oscillators</a>) left only a finite
-number of unresolved cases, further reduced by Noam Elkies between
-1999 and 2002. At the time of writing (August 2017) no oscillators
-are known for periods 19, 23, 38, or 41. If we insist that the
+<a href="lex_m.htm#myexperiencewithbheptominosinoscillators">My Experience with B-heptominos in Oscillators</a>) left only a short
+list of unresolved cases, all with periods of 58 or below. The list
+has been progressively reduced since then. Most recently, period 43
+and 53 oscillators were made possible in 2013 by Mike Playle's
+<a href="lex_s.htm#snark">Snark</a>. At the time of writing (October 2017) no oscillators are
+known for periods 19, 23, 38, or 41. If we insist that the
 oscillator must be <a href="lex_n.htm#nontrivial">non-trivial</a>, then 34 should be added to this
-list. Period 43 and 53 oscillators were made possible in 2013 by
-Mike Playle's <a href="lex_s.htm#snark">Snark</a>.
+list.
 <p>Note that if we were to allow infinite oscillators, then all
 periods are certainly possible, as any period of 14 or more can be
 obtained using a <a href="lex_g.htm#glider">glider</a> (or <a href="lex_l.htm#lwss">LWSS</a>) stream, or an infinitely long
@@ -125,8 +126,8 @@ that the reaction in question is not repeatable as it would be in a
 up in the course of the reaction, usually leaving nothing behind.
 <p><a name=onionrings>:</a><b>onion rings</b> For each integer <i>n</i>&gt;1 onion rings of order <i>n</i> is a <a href="lex_s.htm#stable">stable</a>
 <a href="lex_a.htm#agar">agar</a> of <a href="lex_d.htm#density">density</a> 1/2 obtained by tiling the plane with a certain
-4<i>n</i> x 4<i>n</i> pattern. The tile for order 3 onion rings is shown below -
-the reader should then be able to deduce the form of tiles of other
+4<i>n</i> x 4<i>n</i> pattern. The tile for order 3 onion rings is shown below.
+The reader should be able to deduce the form of tiles of other
 orders.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:......OOOOOO$.OOOO.O....O$.O..O.O.OO.O$.O..O.O.OO.O$.OOOO.O....O$......OOOOOO$OOOOOO......$O....O.OOOO.$O.OO.O.O..O.$O.OO.O.O..O.$O....O.OOOO.$OOOOOO......$"
 >......OOOOOO
@@ -192,14 +193,28 @@ OO...........
 ....OO.......
 </a></pre></td></tr></table></center>
 <p><a name=orphan>:</a><b>orphan</b> Conway's preferred term for a <a href="lex_g.htm#gardenofeden">Garden of Eden</a>. According to
-some definitions, a orphan consists of just the minimum living and
-dead cells needed to ensure that no parent is possible -- whereas a
-GoE is an entire infinite Life plane that contains an orphan.
-<p><a name=orthogonoid>:</a><b>Orthogonoid</b> (256<i>c</i>/3476016, p3476016) A <a href="lex_s.htm#selfconstructing">self-constructing</a> spaceship
-with a slow orthogonal direction of travel, analogous to the
-<a href="lex_d.htm#demonoid">Demonoids</a> but using <a href="lex_m.htm#mwss">MWSSes</a> instead of <a href="lex_g.htm#glider">gliders</a> in the
-construction recipe. The first example was completed by Dave Greene
-on 29 June 2017.
+some definitions, an orphan consists of just the minimum living and
+dead cells needed to ensure that no parent is possible, whereas a GoE
+is an entire infinite Life plane that contains an orphan.
+<p><a name=orthogonoid>:</a><b>Orthogonoid</b> (256<i>c</i>/3476016, p3476016) A <a href="lex_s.htm#selfconstructing">self-constructing</a>
+<a href="lex_s.htm#spaceship">spaceship</a> analogous to the <a href="lex_d.htm#demonoid">Demonoids</a>, with a slow orthogonal
+direction of travel. The first example was completed by Dave Greene
+on 29 June 2017, with a top speed of 16<i>c</i>/217251 (this is just
+256<i>c</i>/3476016 in lowest terms).
+<p>The construction recipe is a stream of MWSSes, with the recovery
+time limited to 90 ticks by the <a href="lex_l.htm#lx200">Lx200</a> <a href="lex_d.htm#dependentconduit">dependent conduit</a> that
+follows the initial <a href="lex_s.htm#syringe">syringe</a> converter. The design is
+<a href="lex_h.htm#hashlife">hashlife</a>-friendly, meaning that the spaceship can be trivially
+adjusted so that spatial and temporal offsets are exact powers of
+two; period 4194304 and period 8388608 versions have been
+constructed, with speeds of <i>c</i>/16384 and <i>c</i>/32768 respectively.
+<p>The MWSSes are converted to <a href="lex_h.htm#herschel">Herschels</a>, which produce a standard
+<a href="lex_s.htm#singlechannel">single-channel</a> glider stream that runs the Orthogonoid's single
+construction arm. After the child circuitry is complete, a <a href="lex_s.htm#snark">Snark</a>
+is built directly on the construction arm lane, converting it to a
+"destruction arm" that efficiently shoots down the previous
+constructor/reflector in the series as soon as it is no longer
+needed.
 <p><a name=oscillator>:</a><b>oscillator</b> Any pattern that is a <a href="lex_p.htm#predecessor">predecessor</a> of itself. The term
 is usually restricted to non-<a href="lex_s.htm#stable">stable</a> finite patterns. An oscillator
 is divided into a <a href="lex_r.htm#rotor">rotor</a> and a <a href="lex_s.htm#stator">stator</a>. See also <a href="#omniperiodic">omniperiodic</a>.
@@ -216,19 +231,18 @@ its initial minimum value (during carry operations from 11111...1 to
 100000...0, it can be considered to be an unusual form of <a href="lex_s.htm#sawtooth">sawtooth</a>.
 <p><a name=otcametapixel>:</a><b>OTCA metapixel</b> (p46 circuitry) A 2048 x 2048 period 35328 <a href="lex_m.htm#metacell">metacell</a>
 constructed by Brice Due in 2006. It contains a large "pixel" area
-that contains a large population of <a href="lex_l.htm#lwss">LWSS</a> spaceships when the cell
-state is ON, but is empty when the cell state is OFF. This allows
-the state of the cell to be visible at high zoom levels, unlike all
-previous unit cells where the state was signaled by the presence or
-absence of a single glider in a specific location.
+that contains a large population of <a href="lex_l.htm#lwss">LWSSes</a> when the metacell state
+is ON, but is empty when it is OFF. This allows the state of the
+metacell to be visible at high zoom levels, unlike previous
+<a href="lex_u.htm#unitcell">unit cells</a> where the state was signaled by the presence or absence
+of a single glider in a specific location.
+<p><a name=outoftheblue>:</a><b>out of the blue</b> See <a href="lex_n.htm#naturalheisenburp">natural Heisenburp</a>. Other similar mechanisms,
+particularly the method of <a href="lex_l.htm#lwss">LWSS</a> creation used in the pixel part of
+the <a href="#otcametapixel">OTCA metapixel</a>, may also be referred to as "out of the blue"
+reactions.
 <p><a name=overclocking>:</a><b>overclocking</b> A term used when a <a href="lex_c.htm#circuit">circuit</a> can accept a signal at a
 specific period which it cannot accept at a higher period. A
-<a href="lex_s.htm#syringe">syringe</a> is a simple example. A better example is a
-<a href="lex_s.htm#silverreflector">Silver reflector</a>, where overclocking creates a situation where the
-circuit can process input gliders much faster than the normal
-<a href="lex_r.htm#repeattime">repeat time</a> of 497 ticks, but the stream of gliders has to be
-continuous. Any interruption of the stream will cause the
-destruction of the reflector.
+<a href="lex_s.htm#syringe">syringe</a> is a simple example.
 <p>Some <a href="lex_s.htm#stagedrecovery">staged recovery</a> circuits also permit overclocking, and can
 function successfully at a rate faster than their <a href="lex_r.htm#recoverytime">recovery time</a>. A
 <a href="lex_s.htm#silverreflector">Silver reflector</a> has a recovery time of 497 ticks, but can be
@@ -241,6 +255,19 @@ bounded range.
 <p><a name=overexposure>:</a><b>over-exposure</b> = <a href="lex_u.htm#underpopulation">underpopulation</a>
 <p><a name=overpopulation>:</a><b>overpopulation</b> Death of a cell caused by it having more than three
 <a href="lex_n.htm#neighbour">neighbours</a>. See also <a href="lex_u.htm#underpopulation">underpopulation</a>.
+<p><a name=overunityreaction>:</a><b>over-unity reaction</b> An important concept in <a href="lex_g.htm#gun">gun</a> and
+<a href="lex_m.htm#macrospaceship">macro-spaceship</a> construction. To be a good candidate for building
+one of these types of patterns with a new period or speed, a
+stationary reaction (for a gun) or a moving reaction (for a
+macro-spaceship) must be able to produce some number of output
+<a href="lex_s.htm#signal">signals</a>, strictly greater than the number of input signals required
+to maintain the reaction. The extra signal becomes a gun's output
+<a href="lex_s.htm#stream">stream</a>, or may be used in a variety of ways to construct the
+supporting <a href="lex_t.htm#track">track</a> for a macro-spaceship. By implication,
+"over-unity" refers to the ratio of output signals to input signals.
+<p>If all signal outputs must be used up to sustain a stationary
+reaction, a high-period <a href="#oscillator">oscillator</a> may still be possible. See
+<a href="lex_e.htm#emu">emu</a> for example.
 <p><a name=overweightspaceship>:</a><b>overweight spaceship</b> = <a href="#owss">OWSS</a>
 <p><a name=owss>:</a><b>OWSS</b> A would-be <a href="lex_s.htm#spaceship">spaceship</a> similar to <a href="lex_l.htm#lwss">LWSS</a>, <a href="lex_m.htm#mwss">MWSS</a> and <a href="lex_h.htm#hwss">HWSS</a> but
 longer. On its own an OWSS is unstable, but it can be escorted by

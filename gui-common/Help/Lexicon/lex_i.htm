@@ -78,9 +78,10 @@ rooms has room for more guests even if it is already full, simply by
 shuffling the old guests around.
 <p>In this pattern, two pairs of <a href="lex_c.htm#cordership">Corderships</a> moving at <i>c</i>/12 are
 pulling apart such that there is an ever-lengthening <a href="lex_g.htm#glider">glider</a> track
-between them. Every 128 generations another glider is injected into
-the glider track, joining the gliders already circulating there. The
-number of gliders in the track therefore increases without limit.
+between them. Every 128 generations another glider is <a href="#inject">injected</a>
+into the glider track (see <a href="lex_l.htm#lwssgliderbounce">LWSS-glider bounce</a>), joining the gliders
+already circulating there. The number of gliders in the track
+therefore increases without limit.
 <p>The tricky part of this construction is that even though all the
 previously injected gliders are repeatedly flying through the
 injection point, that point is guaranteed to be empty when it is time
@@ -90,7 +91,15 @@ tends to infinity, or at least is unbounded. Sometimes the term is
 used for growth of something other than population (for example,
 length), but here we will only consider infinite population growth.
 The first known pattern with infinite growth in this sense was the
-<a href="lex_g.htm#gosperglidergun">Gosper glider gun</a>.
+<a href="lex_g.htm#gosperglidergun">Gosper glider gun</a>, created in a response to a $50 prize challenge
+by John Conway. Martin Gardner's October 1970 article described the
+challenge as "Conway conjectures that no pattern can grow without
+limit", but Conway later explained that he had always expected that
+this would be disproved. The original purpose in investigating CA
+rules including B3/S23 was to show that a very simple two-state rule
+could support a <a href="lex_u.htm#universalcomputer">universal computer</a> and/or <a href="lex_u.htm#universalconstructor">universal constructor</a>.
+If all finite patterns could be proven to be bounded, neither of
+these would be possible.
 <p>An interesting question is: What is the minimum population of a
 pattern that exhibits infinite growth? In 1971 Charles Corderman
 found that a <a href="lex_s.htm#switchengine">switch engine</a> could be stabilized by a <a href="lex_p.htm#preblock">pre-block</a> in
@@ -111,6 +120,10 @@ O.O.....
 Nick Gotts and Paul Callahan have also shown that there is no
 infinite growth pattern with fewer than 10 cells, so that the
 question has now been answered.
+<p>In October 2014, Michael Simkin discovered a three-glider collision
+that produces a glider-producing <a href="lex_s.htm#stabilizedswitchengine">stabilized switch engine</a> and thus
+produces infinite growth from the smallest possible number of gliders
+(since all 71 <a href="lex_1.htm#a-2glidercollision">2-glider collisions</a> have a finite limit population).
 <p>Also of interest is the following pattern (again found by
 Callahan), which is the only 5x5 pattern with infinite growth. This
 too emits a block-laying switch engine.
@@ -141,6 +154,45 @@ such as <a href="lex_s.htm#sawtooth">sawtooths</a> and a <a href="lex_c.htm#cabe
 superlinear but non-quadratic growth is <a href="lex_g.htm#gottsdots">Gotts dots</a>.
 <p>See also <a href="lex_f.htm#fermatprimecalculator">Fermat prime calculator</a>.
 <p><a name=initials>:</a><b>initials</b> = <a href="lex_m.htm#monogram">monogram</a>
+<p><a name=inject>:</a><b>inject</b> A reaction in which a hole in a regular spaceship stream is
+filled partially or fully by adding a new spaceship of the same type
+without affecting the existing spaceships in the stream. Depending
+on the period of the stream, different mechanisms can be used.
+<p>For large period glider streams, simple reactions such as
+<a href="lex_l.htm#lwsslwssbounce">LWSS-LWSS bounce</a> and <a href="lex_l.htm#lwssgliderbounce">LWSS-glider bounce</a> suffice. If <a href="lex_h.htm#herschel">Herschel</a>
+technology is used, a large number of <a href="lex_e.htm#edgeshooter">edge shooters</a> and
+<a href="lex_t.htm#transparent">transparent</a> conduits are known. Simple examples include the <a href="lex_n.htm#nw31">NW31</a>
+<a href="lex_h.htm#herscheltoglider">Herschel-to-glider</a> <a href="lex_c.htm#converter">converter</a> and the <a href="lex_f.htm#fx119inserter">Fx119 inserter</a>.
+<p>Shown below is an injector found by Dave Buckingham that can fill a
+hole in a p15 glider stream:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..O.O..................$...OO..................$...O.................O.$....................O..$....................OOO$.......................$.......................$..........O............$...........OO..........$..........OO...........$.......................$.OO....................$O.O..OO................$..O.OO.................$......O................$.......................$.......................$.......................$.....OO................$......OO...............$.....O.................$"
+>..O.O..................
+...OO..................
+...O.................O.
+....................O..
+....................OOO
+.......................
+.......................
+..........O............
+...........OO..........
+..........OO...........
+.......................
+.OO....................
+O.O..OO................
+..O.OO.................
+......O................
+.......................
+.......................
+.......................
+.....OO................
+......OO...............
+.....O.................
+</a></pre></td></tr></table></center>
+For very low-period glider streams, a <a href="lex_g.htm#gig">GIG</a> is a much more efficient
+insertion method, in the sense that fewer <a href="lex_s.htm#synchronized">synchronized</a> <a href="lex_s.htm#signal">signals</a>
+are needed. However, it has been shown that colliding gliders can
+complete an insertion even into a single-glider gap in a period-14
+stream.
 <p><a name=inlineinverter>:</a><b>inline inverter</b> The following reaction in which a p30 <a href="lex_g.htm#gun">gun</a> can be
 used to invert the presence or absence of gliders in a p30 stream,
 with the output glider stream being in the same direction as the

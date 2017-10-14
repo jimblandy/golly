@@ -1,4 +1,4 @@
-# Fix lexicon .htm files included with iGolly.
+# Fix lexicon .htm files included with iOS/Android/web Golly.
 # 
 # We replace this text:
 #
@@ -29,9 +29,7 @@ def fix_file(filename):
     
     # use re.DOTALL to include newlines in match
     for pattdata in re.findall('<a href="lexpatt:">\n(.*?)</a>', contents, re.DOTALL):
-        ### print pattdata
         newdata = pattdata.replace('\n','$')
-        ### print newdata
         contents = contents.replace('<a href="lexpatt:">\n'+pattdata+'</a>',
                                     '<a href="lexpatt:'+newdata+'"\n>'+pattdata+'</a>', 1)
     
