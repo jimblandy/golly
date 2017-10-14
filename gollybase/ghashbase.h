@@ -157,7 +157,7 @@ private:
    int ghnode_depth(ghnode *n) ;
    ghnode *zeroghnode(int depth) ;
    ghnode *pushroot(ghnode *n) ;
-   ghnode *setbit(ghnode *n, int x, int y, int newstate, int depth) ;
+   ghnode *gsetbit(ghnode *n, int x, int y, int newstate, int depth) ;
    int getbit(ghnode *n, int x, int y, int depth) ;
    int nextbit(ghnode *n, int x, int y, int depth, int &v) ;
    ghnode *hashpattern(ghnode *root, int depth) ;

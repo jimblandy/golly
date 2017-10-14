@@ -327,6 +327,8 @@ public class RuleActivity extends BaseActivity {
             htmldata += "</b></font></body></html>";
             gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);
         } else {
+            // replace any spaces with underscores
+            algoname = algoname.replaceAll(" ", "_");
             // display html data in supplieddir/Help/Algorithms/algoname.html
             String fullpath = baseapp.supplieddir.getAbsolutePath() + "/Help/Algorithms/" + algoname + ".html";
             File htmlfile = new File(fullpath);

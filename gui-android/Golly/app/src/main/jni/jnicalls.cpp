@@ -319,7 +319,7 @@ JNIEXPORT void JNICALL Java_net_sf_golly_BaseApp_nativeCreate(JNIEnv* env, jobje
     if (baseapp != NULL) env->DeleteGlobalRef(baseapp);
     baseapp = env->NewGlobalRef(obj);
 
-    SetMessage("This is Golly 1.2 for Android.  Copyright 2016 The Golly Gang.");
+    SetMessage("This is Golly 1.2 for Android.  Copyright 2017 The Golly Gang.");
     if (highdensity) {
         MAX_MAG = 6;            // maximum cell size = 64x64
     } else {
@@ -2423,6 +2423,7 @@ void ShowTextFile(const char* filepath)
 void ShowHelp(const char* filepath)
 {
     // switch to HelpActivity and display html file
+    // LOGI("ShowHelp: filepath=%s", filepath);
     bool attached;
     JNIEnv* env = getJNIenv(&attached);
     if (env) {

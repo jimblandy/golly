@@ -714,7 +714,7 @@ node *hlifealgo::pushroot(node *n) {
  *   and has not been canonicalized, and that many of the pointers in
  *   the nodes can be null.  We'll patch this up in due course.
  */
-node *hlifealgo::setbit(node *n, int x, int y, int newstate, int depth) {
+node *hlifealgo::gsetbit(node *n, int x, int y, int newstate, int depth) {
    if (depth == 2) {
       leaf *l = (leaf *)n ;
       if (hashed) {
@@ -799,8 +799,8 @@ node *hlifealgo::setbit(node *n, int x, int y, int newstate, int depth) {
          else
             *nptr = newclearednode() ;
       }
-      node *s = setbit(*nptr, (x & (w - 1)) - wh,
-                              (y & (w - 1)) - wh, newstate, depth) ;
+      node *s = gsetbit(*nptr, (x & (w - 1)) - wh,
+                               (y & (w - 1)) - wh, newstate, depth) ;
       if (hashed) {
          node *nw = n->nw ;
          node *sw = n->sw ;
@@ -966,7 +966,7 @@ int hlifealgo::setcell(int x, int y, int newstate) {
       sx >>= 1 ;
       sy >>= 1 ;
    }
-   root = setbit(root, x, y, newstate, depth) ;
+   root = gsetbit(root, x, y, newstate, depth) ;
    if (hashed) {
       okaytogc = 0 ;
    }
@@ -1533,7 +1533,7 @@ default:       return "Illegal character in readmacrocell." ;
 	       p = line + 8 ;
 	       while (*p && *p <= ' ')
 		 p++ ;
-	       int cnt = atol(p) ;
+	       long cnt = atol(p) ;
 	       if (cnt < 0 || cnt > MAX_FRAME_COUNT)
 		  return "Bad FRAMES line" ;
 	       destroytimeline() ;

@@ -333,7 +333,7 @@ static InfoViewController* callingVC;   // the view controller that called SaveT
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     // change selected file type
-    int newtype = [indexPath row];
+    int newtype = (int)[indexPath row];
     if (newtype < 0 || newtype >= NUM_TYPES) {
         Warning("Bug: unexpected row!");
     } else {

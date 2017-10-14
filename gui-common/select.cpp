@@ -1156,7 +1156,7 @@ void Selection::AddRun(int state,                // in: state of cell to write
 
     if ( run > 1 ) {
         sprintf(numstr, "%u", run);
-        numlen = strlen(numstr);
+        numlen = (unsigned int)strlen(numstr);
     } else {
         numlen = 0;                      // no run count shown if 1
     }
@@ -1226,7 +1226,7 @@ void Selection::CopyToClipboard(bool cut)
     chptr += strlen(textptr);
     AddEOL(chptr);
     // save start of data in case livecount is zero
-    int datastart = chptr - textptr;
+    int datastart = int(chptr - textptr);
 
     // add RLE pattern data
     unsigned int livecount = 0;

@@ -234,7 +234,7 @@ The width and height must be from 16 to 4096 and a multiple of 16.
 
 <a name="copy"></a><p><dt><b>copy <i>x y wd ht clipname</i></b></dt>
 <dd>
-Copy the pixels in the given rectangle from the current render target into the named
+Copy the pixels in the given rectangle from the current render <a href="#target">target</a> into the named
 <a href="#clips">clip</a> for later use in a command like <a href="#paste">paste</a>
 or <a href="#scale">scale</a>.
 If the given width or height is less than 1 then it is treated as an inset from
@@ -319,7 +319,7 @@ Also note that deleting the overlay will <a href="#stop">stop</a> any sound that
 
 <a name="drawcells"></a><p><dt><b>drawcells</b></dt>
 <dd>
-Draw the cells from the current <a href="#cellviewdesc">cell view</a> onto the render target.
+Draw the cells from the current <a href="#cellviewdesc">cell view</a> onto the render <a href="#target">target</a>.
 The cells will be drawn using the camera settings and colored using the current <a href="#theme">theme</a>.
 Further drawing commands can then be used to draw on top of the cell display. Pixels outside of the
 current <a href="#cellviewdesc">cell view</a> are drawn in the current <a href="prefs:color">grid border color</a>.
@@ -330,7 +330,7 @@ current <a href="#cellviewdesc">cell view</a> are drawn in the current <a href="
 <a name="ellipse"></a><p><dt><b>ellipse <i>x y wd ht</i></b></dt>
 <dd>
 Draw an ellipse inside the given rectangle using the current <a href="#rgba">rgba</a> values onto
-the render target.
+the render <a href="#target">target</a>.
 Any parts of the ellipse outside the render target are automatically clipped.
 A width or height less than 1 is relative to the render target's width or height.
 If the width equals the height (and both are positive) then the result is a circle.
@@ -343,7 +343,7 @@ of the ellipse.
 
 <a name="fill"></a><p><dt><b>fill <i>x y wd ht (...x y wd ht)</i></b></dt>
 <dd>
-Fill the given rectangles in the render target with the current <a href="#rgba">rgba</a> values.
+Fill the given rectangles in the render <a href="#target">target</a> with the current <a href="#rgba">rgba</a> values.
 Any parts of the rectangles outside the render target are automatically clipped.
 If no rectangle is given then the entire render target is filled.
 A width or height less than 1 is relative to the render target's width or height,
@@ -355,7 +355,7 @@ except for a 1 pixel border around the edges.
 
 <a name="flood"></a><p><dt><b>flood <i>x y</i></b></dt>
 <dd>
-Flood a connected region of pixels in the render target that match the given starting pixel
+Flood a connected region of pixels in the render <a href="#target">target</a> that match the given starting pixel
 with the current <a href="#rgba">rgba</a> values.
 </dd>
 <dd> Example: <b>ov("flood 10 20")</b></dd>
@@ -390,7 +390,7 @@ The previous font is returned as a string of the form "fontsize fontname".
 
 <a name="get"></a><p><dt><b>get <i>x y</i></b></dt>
 <dd>
-Return the RGBA values of the given pixel in the render target as a string of the form
+Return the RGBA values of the given pixel in the render <a href="#target">target</a> as a string of the form
 "red green blue alpha".  All values will be from 0 to 255.
 If the given pixel is outside the render target then "" is returned.
 </dd>
@@ -400,7 +400,7 @@ If the given pixel is outside the render target then "" is returned.
 <a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2 (...xn yn)</i></b></dt>
 <dd>
 Draw one or more lines of pixels between the supplied coordinates <i>x1 y1</i> to <i>xn yn</i>
-on the render target using the current <a href="#rgba">rgba</a> values.
+on the render <a href="#target">target</a> using the current <a href="#rgba">rgba</a> values.
 Any pixels outside the render target edges are automatically clipped.
 If alpha blending is turned on then the lines are antialiased.
 The <a href="#lineoption">lineoption width</a> command determines
@@ -440,7 +440,7 @@ The <a href="#create">create</a> command initializes the line width to 1.
 
 <a name="load"></a><p><dt><b>load <i>x y file</i></b></dt>
 <dd>
-Load the given BMP/GIF/PNG/TIFF file into the render target at the given location.
+Load the given BMP/GIF/PNG/TIFF file into the render <a href="#target">target</a> at the given location.
 Any pixels outside the render target edges are automatically clipped.
 Return the total size of the image (including any clipped portions) as a
 string of the form "width height".  Note that it's sometimes desirable to call
@@ -468,7 +468,7 @@ Especially effective for text rendering and used automatically by the
 <a name="paste"></a><p><dt><b>paste <i>x y clipname</i></b></dt>
 <dd>
 Paste the named clip (created by an earlier <a href="#create">create</a>, <a href="#copy">copy</a>
-or <a href="#text">text</a> command) into the render target at the given location.
+or <a href="#text">text</a> command) into the render <a href="#target">target</a> at the given location.
 Any pixels outside the render target edges are automatically clipped.
 </dd>
 <dd> Example: <b>ov("paste 10 20 tempbox")</b></dd>
@@ -495,7 +495,7 @@ The valid positions are:
 
 <a name="replace"></a><p><dt><b>replace <i>red green blue alpha</i></b></dt>
 <dd>
-Replace pixels with color <i>red green blue alpha</i> in the render target with the current
+Replace pixels with color <i>red green blue alpha</i> in the render <a href="#target">target</a> with the current
 <a href="#rgba">rgba</a> values.
 Returns the number of pixels replaced as a string.
 <dd> Example:</dd>
@@ -620,7 +620,7 @@ The commands that use the current RGBA values are:
 
 <a name="save"></a><p><dt><b>save <i>x y wd ht file</i></b></dt>
 <dd>
-Save the pixels in the given rectangle of the render target in the given PNG file.
+Save the pixels in the given rectangle of the render <a href="#target">target</a> in the given PNG file.
 An error will occur if any part of the rectangle is outside the render target.
 If the given width or height is less than 1 then it is treated as an inset from
 the render target's current width or height (this makes it easy to save the entire
@@ -631,7 +631,7 @@ render target with a command like <b>"save 0 0 0 0 overlay.png"</b>).
 
 <a name="set"></a><p><dt><b>set <i>x1 y1 (...xn yn)</i></b></dt>
 <dd>
-Set the specified pixels in the render target to the current <a href="#rgba">rgba</a> values.
+Set the specified pixels in the render <a href="#target">target</a> to the current <a href="#rgba">rgba</a> values.
 Pixels outside the render target are silently ignored.
 </dd>
 <dd>Examples:</dd>
@@ -643,7 +643,7 @@ Pixels outside the render target are silently ignored.
 
 <a name="scale"></a><p><dt><b>scale <i>quality x y wd ht clipname</i></b></dt>
 <dd>
-Paste the named clip into the current render target, scaling it so it fits into the
+Paste the named clip into the current render <a href="#target">target</a>, scaling it so it fits into the
 specified rectangle.  Any pixels outside the render target edges are automatically clipped.
 The given <i>quality</i> must be one of these strings:
 </dd>
@@ -680,16 +680,16 @@ There are five sound <i>commands</i>:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><b>play <i>soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-play the named <i>soundfile</i> asynchronously and return immediately</td></tr>
-<tr><td><b>loop <i>soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-play the named <i>soundfile</i> asynchronously and loop until the <a href="#stop">stop</a> command is used</td></tr>
+<tr><td><b>play <i>soundfile (level)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
+Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and return immediately. The volume is from 0.0 (silent) to 1.0 (maximum) and is set to maximum if not specified.</td></tr>
+<tr><td><b>loop <i>soundfile (level)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
+Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and loop until the <a href="#stop">stop</a> command is used.</td></tr>
 <tr><td><a name="stop"></a><b>stop <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-stop all sound playback or just the specified sound</td></tr>
+Stop all sound playback or just the specified <i>soundfile</i>.</td></tr>
 <tr><td><a name="volume"></a><b>volume <i>level soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum)</td></tr>
+Set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum). This is typically used to change the volume of a sound that is already playing.</td></tr>
 <tr><td><a name="state"></a><b>state <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, or <i>"stopped"</i> otherwise
+Returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, or <i>"stopped"</i> otherwise.
 </table>
 </dd>
 <p><dd>
@@ -703,10 +703,11 @@ Notes:
 </dd>
 </p>
 <p>
-<dd> Example: <b>ov("sound play beep.wav")</b></dd>
-<dd> Example: <b>ov("sound stop")</b></dd>
-<dd> Example: <b>ov("sound loop background.ogg")</b></dd>
-<dd> Example: <b>ov("sound volume 0.7 background.ogg")</b></dd>
+<dd> Example: <b>ov("sound play beep.wav 0.5") -- play beep.wav at half volume</b></dd>
+<dd> Example: <b>ov("sound play beep.wav") -- play beep.wav at full volume</b></dd>
+<dd> Example: <b>ov("sound stop") -- stop all sounds playing</b></dd>
+<dd> Example: <b>ov("sound loop background.ogg") -- play background.ogg in a loop</b></dd>
+<dd> Example: <b>ov("sound volume 0.7 background.ogg") -- set background.ogg volume to 0.7</b></dd>
 </p>
 
 <a name="target"></a><p><dt><b>target <i>(clipname)</i></b></dt>

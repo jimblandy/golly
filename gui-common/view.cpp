@@ -947,26 +947,17 @@ bool GetClipboardPattern(Layer* templayer, bigint* t, bigint* l, bigint* b, bigi
         }
     }
 
-    if (!err && canchangerule > 0) {
-        // set newrule for later use in PasteTemporaryToCurrent
-        if (canchangerule == 1 && !currlayer->algo->isEmpty()) {
-            // don't change rule if universe isn't empty
-            newrule = oldrule;
-        } else {
-            // remember rule set by readclipboard
-            newrule = templayer->algo->getrule();
-        }
-    }
-
     RemoveFile(clipfile);
 
     if (err) {
         // error probably due to bad rule string in clipboard data
         Warning("Could not load clipboard pattern\n(probably due to unknown rule).");
         return false;
+    } else {
+        // set newrule for later use in PasteTemporaryToCurrent
+        newrule = templayer->algo->getrule();
+        return true;
     }
-
-    return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -1123,7 +1114,7 @@ void PasteTemporaryToCurrent(bigint top, bigint left, bigint wd, bigint ht)
 
     // pasting clipboard pattern can cause a rule change
     int oldmaxstate = currlayer->algo->NumCellStates() - 1;
-    if (canchangerule > 0 && oldrule != newrule) {
+    if (canchangerule > 0 && currlayer->algo->isEmpty() && oldrule != newrule) {
         const char* err = currlayer->algo->setrule( newrule.c_str() );
         // setrule can fail if readclipboard loaded clipboard pattern into
         // a different type of algo

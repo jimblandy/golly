@@ -443,7 +443,8 @@ bool IsScriptFile(const std::string& filename)
     if (dotpos == std::string::npos) return false;
 
     std::string ext = filename.substr(dotpos+1);
-    return ( strcasecmp(ext.c_str(),"pl") == 0 ||
+    return ( strcasecmp(ext.c_str(),"lua") == 0 ||
+             strcasecmp(ext.c_str(),"pl") == 0 ||
              strcasecmp(ext.c_str(),"py") == 0 );
 }
 

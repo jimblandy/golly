@@ -465,7 +465,7 @@ bool ExtractZipEntry(const std::string& zippath, const std::string& entryname, c
                     oss << "Error opening current zip entry:\n" << entryname.c_str();
                     throw std::runtime_error(oss.str().c_str());
                 }
-                int bytesRead = unzReadCurrentFile(zfile, zipdata, file_info.uncompressed_size);
+                int bytesRead = unzReadCurrentFile(zfile, zipdata, (unsigned int)file_info.uncompressed_size);
                 if (bytesRead < 0) {
                     throw std::runtime_error("Error reading the zip entry data!");
                 }
@@ -585,7 +585,7 @@ static bool RuleInstalled(unzFile zfile, unz_file_info& info, const std::string&
         return false;
     }
     
-    int bytesRead = unzReadCurrentFile(zfile, zipdata, info.uncompressed_size);
+    int bytesRead = unzReadCurrentFile(zfile, zipdata, (unsigned int)info.uncompressed_size);
     if (bytesRead < 0) {
         // error is detected below
     }
@@ -687,7 +687,7 @@ void OpenZipFile(const char* zippath)
                 // indent depending on # of separators in name
                 unsigned int sepcount = 0;
                 unsigned int i = 0;
-                unsigned int len = name.length();
+                unsigned int len = (unsigned int)name.length();
                 while (i < len) {
                     if (name[i] == '/') sepcount++;
                     i++;

@@ -53,7 +53,7 @@ bigint::bigint(const char *s) {
       if (x < 31)
          fromint(1 << x) ;
       else {
-         int sz = 2 + (x + 1) / 31 ;
+         int sz = 2 + int((x + 1) / 31) ;
          int asz = sz ;
          while (asz & (asz - 1))
             asz &= asz - 1 ;

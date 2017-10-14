@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.NavUtils;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -67,6 +68,8 @@ public class HelpActivity extends BaseActivity {
         @Override
         public boolean shouldOverrideUrlLoading(WebView webview, String url) {
             // look for special prefixes used by Golly and return true if found
+            //!!!
+            Log.i("shouldOverrideUrlLoading URL", url);
             if (url.startsWith("open:")) {
                 openFile(url.substring(5));
                 return true;
@@ -100,7 +103,12 @@ public class HelpActivity extends BaseActivity {
             return false;
         }
         
-        @Override  
+        @Override
+        public void onReceivedError(WebView webview, int errorCode, String description, String failingUrl) {
+            Toast.makeText(HelpActivity.this, "Web error! " + description, Toast.LENGTH_SHORT).show();
+        }
+        
+        @Override
         public void onPageFinished(WebView webview, String url) {
             super.onPageFinished(webview, url);
             
@@ -114,7 +122,8 @@ public class HelpActivity extends BaseActivity {
 
             // need URL of this page for relative "get:" links
             pageurl = gwebview.getUrl();
-            // Log.i("URL", pageurl);
+            //!!!
+            Log.i("onPageFinished URL", pageurl);
         }  
     }
 
@@ -191,6 +200,9 @@ public class HelpActivity extends BaseActivity {
         
         // JavaScript is used to detect device type
         gwebview.getSettings().setJavaScriptEnabled(true);
+
+        // need???!!!
+        gwebview.getSettings().setDomStorageEnabled(true);
         
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         // my Nexus 7 has a density of 320
@@ -198,7 +210,7 @@ public class HelpActivity extends BaseActivity {
             // use bigger font size for high density screens (default size is 16)
             gwebview.getSettings().setDefaultFontSize(24);
         }
-        
+
         if (firstcall) {
             firstcall = false;
             backbutton.setEnabled(false);
@@ -234,20 +246,24 @@ public class HelpActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         gwebview.onResume();
-        
+
         // restore scroll position and back/forward history
         if (webbundle != null && !restarted) {
             gwebview.restoreState(webbundle);
         }
         restarted = false;
-        
+
         // check for messages sent by other activities
         Intent intent = getIntent();
         String filepath = intent.getStringExtra(SHOWHELP_MESSAGE);
         if (filepath != null) {
+            // replace any spaces with %20
+            filepath = filepath.replaceAll(" ", "%20");
+            //!!!
+            Log.i("onResume filepath", filepath);
             gwebview.loadUrl("file://" + filepath);
         } else {
-            gwebview.reload();
+            // no need: gwebview.reload();
         }
     }
 
@@ -374,8 +390,8 @@ public class HelpActivity extends BaseActivity {
             }
             
             long starttime = System.nanoTime();
-            
-            // Log.i("downloadURL: ", urlstring);
+            //!!!
+            Log.i("downloadURL", urlstring);
             URL url = new URL(urlstring);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setAllowUserInteraction(false);

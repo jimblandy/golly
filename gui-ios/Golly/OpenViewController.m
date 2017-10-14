@@ -84,7 +84,7 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
         std::string pstr = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
         // indent level is number of separators in path
-        int indents = std::count(pstr.begin(), pstr.end(), '/');
+        int indents = (int)std::count(pstr.begin(), pstr.end(), '/');
         
         if (indents <= closedlevel) {
             NSString *fullpath = [pattdir stringByAppendingPathComponent:path];
@@ -321,7 +321,7 @@ static void AppendHtmlData(std::string& htmldata, const std::string& dir,
     curroffset[curroption] = htmlView.scrollView.contentOffset;
     
     // display selected set of files
-    curroption = [indexPath row];
+    curroption = (int)[indexPath row];
     switch (curroption) {
         case 0: [self showSuppliedPatterns]; break;
         case 1: [self showRecentPatterns]; break;

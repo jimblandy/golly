@@ -157,7 +157,7 @@ static void InitPaths()
     static bool firstload = true;
     if (firstload) {
         firstload = false;          // only do the following once
-        SetMessage("This is Golly 1.2 for iOS.  Copyright 2016 The Golly Gang.");
+        SetMessage("This is Golly 1.2 for iOS.  Copyright 2017 The Golly Gang.");
         MAX_MAG = 5;                // maximum cell size = 32x32
         InitAlgorithms();           // must initialize algoinfo first
         InitPaths();                // init userdir, etc (must be before GetPrefs)

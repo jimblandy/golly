@@ -5360,12 +5360,39 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
                 return OverlayError("sound play requires an argument");
             }
         }
+
+	// check for the optional volume argument
+        float v = 1;
+        const char* name = args;
+
+        // skip name
+        char *scan = (char*)args;
+        while (*scan && *scan != ' ') {
+            scan++;
+        }
+
+        // check if there is a volume argument
+        if (*scan) {
+            if (sscanf(scan, " %f", &v) == 1) {
+                if (v < 0.0 || v > 1.0) {
+                    if (loop) {
+                        return OverlayError("sound loop volume must be in the range 0 to 1");
+                    }
+                    else {
+                        return OverlayError("sound play volume must be in the range 0 to 1");
+                    }
+                }
+            }
+
+            // null terminate name
+            *scan = 0;
+        }
     
         // lookup the sound source
-        ISoundSource* source = engine->getSoundSource(args, false);
+        ISoundSource* source = engine->getSoundSource(name, false);
         if (!source) {
             // create and preload the sound source
-            source = engine->addSoundSourceFromFile(args, ESM_AUTO_DETECT, true);
+            source = engine->addSoundSourceFromFile(name, ESM_AUTO_DETECT, true);
             if (!source) {
                 // don't throw error just return error message
                 return "could not find sound";
@@ -5375,7 +5402,7 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
         // check if the sound exists
         ISound* sound = NULL;
         std::map<std::string,ISound*>::iterator it;
-        it = sounds.find(args);
+        it = sounds.find(name);
         if (it != sounds.end()) {
             // sound exists so drop it
             sound = it->second;
@@ -5386,15 +5413,19 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
             sounds.erase(it);
         }
 
-        // play the sound
-        sound = engine->play2D(source, loop, false, true);
+        // prepare to play the sound (but pause it so we can adjust volume first)
+        sound = engine->play2D(source, loop, true);
         if (!sound) {
             // don't throw error just return error message
             return "could not play sound";
         }
 
+        // set the volume and then play
+        sound->setVolume(v);
+        sound->setIsPaused(false);
+        
         // cache the sound
-        sounds[args] = sound;
+        sounds[name] = sound;
     }
 
     return NULL;
