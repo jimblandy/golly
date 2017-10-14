@@ -3,15 +3,17 @@
 local g = golly()
 local gp = require "gplus"
 local gpo = require "gplus.objects"
+
+-- best to create empty universe before setting rule
+-- to avoid converting an existing pattern (slow if large)
+g.new("gun-demo")
+g.setrule("B3/S23")
+
+-- load gplus.guns AFTER setting rule to Life (for evolving phases)
 local gpg = require "gplus.guns"
 local gun24 = gpg.gun24
 local gun30 = gpg.gun30
 local gun46 = gpg.gun46
-
-g.new("gun-demo")
--- best to create empty universe before setting rule
--- to avoid converting an existing pattern (slow if large)
-g.setrule("B3/S23")
 
 --------------------------------------------------------------------------------
 
