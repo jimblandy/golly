@@ -51,47 +51,66 @@ patterns without suffering any permanent damage. (If it doesn't
 suffer even temporary damage then it may be referred to as a <a href="lex_r.htm#rock">rock</a>.)
 The <a href="#eater1">eater1</a> is a very common eater, and the term "eater" is often
 used specifically for this object. Other eaters include <a href="#eater2">eater2</a>,
-<a href="#eater3">eater3</a>, <a href="#eater4">eater4</a> and even the humble <a href="lex_b.htm#block">block</a>. (In fact the block
-was the first known eater, being found capable of eating beehives
-from a <a href="lex_q.htm#queenbee">queen bee</a>.) Another useful eater is shown below, feasting
-on a glider.
+<a href="#eater3">eater3</a>, <a href="#eater4">eater4</a>, and <a href="#eater5">eater5</a>, and many hundreds of others are
+known. Below is a complex eater found by Dean Hickerson in 1998
+using his <a href="lex_d.htm#dr">dr</a> <a href="lex_s.htm#searchprogram">search program</a>. It takes 25 <a href="lex_t.htm#tick">ticks</a> to recover
+after feasting on a glider:
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
-...O.....
-...O.O...
-...OO....
-.........
-.......OO
-...O...OO
-..O.O....
-.O.O.....
-.O.......
-OO.......
+.O.............
+..O............
+OOO............
+......OO.OO.O..
+.......O.O.OO..
+.......O.O.....
+........OO.....
+OO.............
+O..O.OO........
+..OO.O.........
+...O.O.....OO.O
+..O..OOO...O.OO
+...OO...O......
+.....OOOO......
+.....O.........
+...O.O.OO......
+...OO..O.......
+.......O.O.....
+........OO.....
 </a></pre></td></tr></table></center>
+<p>Some common <a href="lex_s.htm#stilllife">still lifes</a> can act as eaters in some situations,
+such as the <a href="lex_b.htm#block">block</a>, <a href="lex_s.htm#ship">ship</a>, and <a href="lex_t.htm#tub">tub</a>. In fact the block was the
+first known eater, being found capable of eating beehives from a
+<a href="lex_q.htm#queenbee">queen bee</a>.
 <p><a name=eater1>:</a><b>eater1</b> (p1) Usually simply called an <a href="#eater">eater</a>, and also called a
 fishhook. Its ability to eat various objects was discovered by Bill
 Gosper in 1971.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OO..
-O.O.
-..O.
-..OO
+O...
+.OOO
+...O
 </a></pre></td></tr></table></center>
+<p>This eater can be constructed using a simple two-glider collision,
+as shown in <a href="lex_s.htm#stampcollection">stamp collection</a>. It is often modified in various
+ways, or <a href="lex_w.htm#weld">welded</a> to other objects, to allow tighter packing of
+<a href="lex_c.htm#circuit">circuits</a> or to allow a <a href="lex_s.htm#signal">signal</a> <a href="lex_s.htm#stream">stream</a> to pass close by. See
+<a href="lex_c.htm#clearance">clearance</a> for an eater1 variant that is 1<a href="lex_h.htm#hd">hd</a> shorter to the
+southeast than the standard fishhook form.
 <p><a name=eater2>:</a><b>eater2</b> (p1) This <a href="#eater">eater</a> was found by Dave Buckingham in the 1970s.
-Mostly it works like the ordinary eater (see <a href="#eater1">eater1</a>) but with two
-slight differences that make it useful despite its size: it takes
-longer to recover from each bite, and it can eat objects appearing at
-two different positions.
+Mostly it works like the ordinary <a href="#eater1">eater1</a> but with two slight
+differences that make it useful despite its size: it takes longer to
+recover from each bite, and it can eat objects appearing at two
+different positions.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
-...O.OO
-.OOO.OO
-O......
-.OOO.OO
-...O.O.
-...O.O.
-....O..
+OO.O...
+OO.OOO.
+......O
+OO.OOO.
+.O.O...
+.O.O...
+..O....
 </a></pre></td></tr></table></center>
 The first property means that, among other things, it can eat a
-<a href="lex_g.htm#glider">glider</a> in a position that would destroy a fishhook. This novel
+<a href="lex_g.htm#glider">glider</a> in a position that would destroy an <a href="#eater1">eater1</a>. This novel
 glider-eating action is occasionally of use in itself, and combined
 with the symmetry means that an eater2 can eat gliders traveling
 along four adjacent glider <a href="lex_l.htm#lane">lanes</a>, as shown below.
@@ -161,9 +180,9 @@ O..OO.........
 .........O.O..
 ..........OO..
 </a></pre></td></tr></table></center>
-<p><a name=eater5>:</a><b>eater5</b> (p1) A compound eater that can eat gliders coming from two
+<p><a name=eater5>:</a><b>eater5</b> (p1) A compound <a href="#eater">eater</a> that can eat <a href="lex_g.htm#glider">gliders</a> coming from two
 different directions. Also called the tub-with-tail eater (TWIT), it
-is often placed along the edges of <a href="lex_g.htm#gliderlane">glider lanes</a> to suppress
+is often placed along the edges of glider <a href="lex_l.htm#lane">lanes</a> to suppress
 unwanted gliders in <a href="lex_c.htm#conduit">conduits</a>. Below is the standard form, a compact
 form with a <a href="lex_l.htm#longhook">long hook</a>, and an often-useful conjoined form found
 with <a href="lex_b.htm#bellman">Bellman</a>. The <a href="lex_s.htm#sidesnagger">sidesnagger</a> is a Spartan constellation that
@@ -291,11 +310,11 @@ O..O.........................
 O..O.........................
 .OO..........................
 </a></pre></td></tr></table></center>
-<p><a name=edgeshooter>:</a><b>edge shooter</b> A <a href="lex_g.htm#gun">gun</a> which fires its gliders (or whatever) right at
-the edge of the pattern, so that it can be used to fire them closely
-parallel to others. This is useful for constructing complex guns.
-Compare <a href="lex_g.htm#gliderpusher">glider pusher</a>, which can in fact be used for making edge
-shooters.
+<p><a name=edgeshooter>:</a><b>edge shooter</b> A <a href="lex_g.htm#gun">gun</a> or <a href="lex_s.htm#signal">signal</a> <a href="lex_c.htm#circuit">circuit</a> that fires its gliders (or
+whatever) right at the edge of the pattern, so that it can be used to
+fire them closely parallel to others. This is useful for
+constructing complex guns. Compare <a href="lex_g.htm#gliderpusher">glider pusher</a>, which can in
+fact be used for making edge shooters.
 <p>The following diagram shows a p46 edge shooter found by Paul
 Callahan in June 1994.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -354,7 +373,7 @@ in which one or more <a href="lex_g.htm#glider">gliders</a> shuttle back and for
 <p><a name=elbowoperation>:</a><b>elbow operation</b> A recipe, usually a <a href="lex_s.htm#salvo">salvo</a> of <a href="lex_g.htm#glider">gliders</a> traveling on
 one or more <a href="lex_c.htm#constructionlane">construction lanes</a>, that collides with an <a href="#elbow">elbow</a>
 <a href="lex_c.htm#constellation">constellation</a> and performs one of the standard transformations on
-it -- <a href="lex_p.htm#push">push</a>, <a href="lex_p.htm#pull">pull</a>, or <a href="lex_f.htm#fire">fire</a> for simple construction arms, along
+it: <a href="lex_p.htm#push">push</a>, <a href="lex_p.htm#pull">pull</a>, or <a href="lex_f.htm#fire">fire</a> for simple construction arms, along
 with possible construct, duplicate-elbow, or delete-elbow ops for
 more complicated systems. See <a href="lex_c.htm#constructionelbow">construction elbow</a>.
 <p><a name=electricfence>:</a><b>electric fence</b> (p5) A stabilization of <a href="lex_a.htm#ants">ants</a>. Dean Hickerson,
@@ -382,14 +401,28 @@ search programs, and they can't be subdivided into smaller
 spaceships, tagalongs, and supporting reactions, as contrasted with
 engineered <a href="lex_m.htm#macrospaceship">macro-spaceships</a>.
 <p><a name=elementaryconduit>:</a><b>elementary conduit</b> A <a href="lex_c.htm#conduit">conduit</a> with no recognizable active signal
-stage besides its input and output. Theoretically an elementary
-conduit may become a composite conduit, if another conduit can be
-found that shares the beginning or end of the conduit in question.
-In practice this happens only rarely, because many of the most likely
-branch points have already been identified: <a href="lex_g.htm#glider">glider</a>, standard *WSS
-<a href="lex_s.htm#spaceship">spaceship</a>, <a href="lex_h.htm#herschel">Herschel</a>, <a href="lex_b.htm#bheptomino">B-heptomino</a>, <a href="lex_r.htm#rpentomino">R-pentomino</a>,
-<a href="lex_p.htm#piheptomino">pi-heptomino</a>, <a href="lex_q.htm#queenbeeshuttle">queen bee shuttle</a>, <a href="lex_c.htm#century">century</a> or <a href="lex_b.htm#bookend">bookend</a>, <a href="lex_d.htm#dove">dove</a>,
-and <a href="lex_w.htm#wing">wing</a>.
+stage besides its input and output. An early example still very
+commonly used is Buckingham's <a href="lex_b.htm#bfx59h">BFx59H</a>, which transforms a
+<a href="lex_b.htm#bheptomino">B-heptomino</a> into an inverted <a href="lex_h.htm#herschel">Herschel</a> in 59 ticks. The BFx59H
+elementary conduit is a component in many of the original <a href="lex_u.htm#universal">universal</a>
+<a href="lex_t.htm#toolkit">toolkit</a> of Herschel conduits. An extension of the same naming
+convention is used for elementary conduits, with the first and last
+letters of the name specifying the input and output <a href="lex_s.htm#signal">signal</a> objects.
+As with Herschels, an arbitrary orientation and center point is
+chosen for each object. "Fx" means the signal moves forward and
+produces a mirror-image output. See <a href="lex_h.htm#herschelconduit">Herschel conduit</a> for further
+details.
+<p>Theoretically an elementary conduit may become a composite conduit,
+if another conduit can be found that shares the beginning or end of
+the conduit in question. In practice this happens only rarely,
+because many of the most likely branch points have already been
+identified: <a href="lex_g.htm#glider">glider</a> (G), <a href="lex_l.htm#lwss">LWSS</a> (L) or <a href="lex_m.htm#mwss">MWSS</a> (M), <a href="lex_h.htm#herschel">Herschel</a> (H),
+<a href="lex_b.htm#bheptomino">B-heptomino</a> (B), <a href="lex_r.htm#rpentomino">R-pentomino</a> (R), <a href="lex_p.htm#piheptomino">pi-heptomino</a> (P),
+<a href="lex_q.htm#queenbeeshuttle">queen bee shuttle</a> (Q), <a href="lex_c.htm#century">century</a> or <a href="lex_b.htm#bookend">bookend</a> (C), <a href="lex_d.htm#dove">dove</a> (D), and
+<a href="lex_w.htm#wing">wing</a> (W). A <a href="lex_h.htm#herscheldescendant">Herschel descendant</a> might qualify, due to the
+elementary conduit that can be seen in the <a href="lex_p.htm#p184gun">p184 gun</a>. However,
+there are very few simple conduits that produce Herschel descendants
+without Herschels, so in practice this is not a useful branch point.
 <p><a name=elevener>:</a><b>elevener</b> (p1)
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OO....
@@ -488,19 +521,27 @@ O.O....O.......O.O
 O.O....O.......O.O
 .O..............O.
 </a></pre></td></tr></table></center>
+<p><a name=evolution>:</a><b>evolution</b> The process or result of running one or more generations of
+an object. For example, a row of 10 cells evolves into a
+<a href="lex_p.htm#pentadecathlon">pentadecathlon</a>.
 <p><a name=evolutionaryfactor>:</a><b>evolutionary factor</b> For an unstable pattern, the time to
 stabilization divided by the initial <a href="lex_p.htm#population">population</a>. For example, the
 <a href="lex_r.htm#rpentomino">R-pentomino</a> has an evolutionary factor of 220.6, while <a href="lex_b.htm#bunnies">bunnies</a>
 has an evolutionary factor of 1925.777... The term is no longer in
 use.
-<p><a name=exponentialfilter>:</a><b>exponential filter</b> A toolkit developed by Gabriel Nivasch in 2006,
+<p><a name=exhaust>:</a><b>exhaust</b> The debris or <a href="lex_s.htm#smoke">smoke</a> left behind by a <a href="lex_p.htm#puffer">puffer</a>, especially
+if the debris is <a href="lex_d.htm#dirty">dirty</a> and takes many <a href="lex_g.htm#generation">generations</a> to settle. The
+term is not usually used for the objects created by <a href="lex_c.htm#clean">clean</a> puffers.
+<p><a name=exponentialfilter>:</a><b>exponential filter</b> A <a href="lex_t.htm#toolkit">toolkit</a> developed by Gabriel Nivasch in 2006,
 enabling the construction of patterns with asymptotic population
 growth matching O((log log ... log(<i>t</i>)) for any number of nested log
 operations. See also <a href="lex_q.htm#quadraticfilter">quadratic filter</a>, <a href="lex_r.htm#recursivefilter">recursive filter</a>.
 <p><a name=exposure>:</a><b>exposure</b> = <a href="lex_u.htm#underpopulation">underpopulation</a>
 <p><a name=extensible>:</a><b>extensible</b> A pattern is said to be extensible if arbitrarily large
 patterns of the same type can be made by repeating parts of the
-original pattern in a regular way.
+original pattern in a regular way. For examples, see <a href="lex_p.htm#p6shuttle">p6 shuttle</a>,
+<a href="lex_p.htm#pentoad">pentoad</a>, <a href="lex_p.htm#pufferfishspaceship">pufferfish spaceship</a>, <a href="lex_s.htm#snacker">snacker</a>, <a href="lex_w.htm#wavestretcher">wavestretcher</a>,
+<a href="lex_w.htm#wicktrailer">wicktrailer</a> and <a href="lex_b.htm#branchingspaceship">branching spaceship</a>.
 <p><a name=extraextralong>:</a><b>extra extra long</b> = <a href="lex_l.htm#long4">long^4</a>
 <p><a name=extralong>:</a><b>extra long</b> = <a href="lex_l.htm#long3">long^3</a>
 <p><a name=extremelyimpressive>:</a><b>extremely impressive</b> (p6) Found by Dave Buckingham, August 1976.

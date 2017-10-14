@@ -78,7 +78,7 @@ valid part of a Life pattern of a particular kind.
 consider 2x3 rectangular pieces and the de Bruijn graph would show
 which pairs of these can be overlapped to form 3x3 squares in which
 the centre cell remains unchanged in the next generation.
-<p>David Eppstein's search program <a href="lex_g.htm#gfind">gfind</a> is based on de Bruijn
+<p>David Eppstein's <a href="lex_s.htm#searchprogram">search program</a> <a href="lex_g.htm#gfind">gfind</a> is based on de Bruijn
 graphs.
 <p><a name=deepcell>:</a><b>Deep Cell</b> A pattern by Jared James Prince, based on David Bell's
 <a href="lex_u.htm#unitlifecell">unit Life cell</a>, in which each unit cell simulates two Life cells,
@@ -95,13 +95,20 @@ parallel with yet another universe of Deep Cells, and so on.
 <p>Deep Cell is available from <a href="http://psychoticdeath.com/life.htm">http://psychoticdeath.com/life.htm</a>.
 <p><a name=demonoid>:</a><b>Demonoid</b> The first self-constructing diagonal spaceship. A 0<a href="lex_h.htm#hd">hd</a>
 Demonoid was completed by Chris Cain in December 2015, shortly after
-a much larger 10<a href="lex_h.htm#hd">hd</a> version constructed the previous month in
+a much larger 10<a href="lex_h.htm#hd">hd</a> version was constructed the previous month in
 collaboration with Dave Greene. The 0hd spaceship fits in a bounding
 box about 55,000 cells square, and displaces itself by 65 cells
 diagonally every 438,852 generations.
-<p>The first 0hd Demonoid was fired by a gun. As of this writing
-(2017) this is the only case where a spaceship gun pattern was
-completed before the first appearance of the actual spaceship.
+<p>The first 0hd Demonoid was fired by a <a href="lex_g.htm#gun">gun</a>. No spaceship gun
+pattern had previously been completed completed before the first
+appearance of the actual spaceship.
+<p>In June 2017 Dave Greene completed a much simpler <a href="lex_s.htm#singlechannel">single-channel</a>
+Demonoid using a temporary <a href="lex_l.htm#losslesselbow">lossless elbow</a>, which displaces itself
+79 cells diagonally every 1,183,842 ticks. This was an improvement
+in terms of design complexity, but not in terms of speed, population,
+or bounding box. However, all of these could be further optimized.
+As of October 2017, a smaller Hashlife-friendly single-channel
+Demonoid is under construction.
 <p><a name=density>:</a><b>density</b> The density of a pattern is the limit of the proportion of
 live cells in a (2<i>n</i>+1)x(2<i>n</i>+1) square centred on a particular cell as
 <i>n</i> tends to infinity, when this limit exists. (Note that it does not
@@ -122,12 +129,12 @@ pattern is also unknown. An example with a density of 3/4 is known
 (see <a href="lex_a.htm#agar">agar</a>), but densities arbitrarily close to 1 may perhaps be
 possible.
 <p><a name=dependentconduit>:</a><b>dependent conduit</b> A <a href="lex_h.htm#herschelconduit">Herschel conduit</a> in which the input <a href="lex_h.htm#herschel">Herschel</a>
-interacts with catalysts in the first few ticks -- technically at
-T=-3, before the Herschel is completely formed. Compare
-<a href="lex_i.htm#independentconduit">independent conduit</a>. The Herschel is prevented from emitting its
-<a href="lex_f.htm#firstnaturalglider">first natural glider</a>. This is useful in cases where the previous
-conduit cannot survive a first natural glider emitted from its output
-Herschel.
+interacts with catalysts in the first few ticks. The standard
+interaction actually starts at T=-3, before the Herschel is
+completely formed. Compare <a href="lex_i.htm#independentconduit">independent conduit</a>. The Herschel is
+prevented from emitting its <a href="lex_f.htm#firstnaturalglider">first natural glider</a>. This is useful
+in cases where the previous conduit cannot survive a first natural
+glider emitted from its output Herschel.
 <p>This term is somewhat confusing, since it is actually the previous
 conduit that depends on the dependent conduit to suppress the
 problematic glider. Dependent conduits such as the <a href="lex_f.htm#f166">F166</a> and
@@ -162,7 +169,7 @@ O.O.OO.OO.O.O
 <p><a name=diehard>:</a><b>diehard</b> Any pattern that vanishes, but only after a long time. The
 following example vanishes in 130 generations, which is probably the
 limit for patterns of 7 or fewer cells. Note that there is no limit
-for higher numbers of cells - e.g., for 8 cells we could have a
+for higher numbers of cells. E.g., for 8 cells we could have a
 glider heading towards an arbitrarily distant blinker.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ......O.
@@ -279,7 +286,28 @@ OO........O...O............OO...........................
 OO........OOO..............OO...........................
 </a></pre></td></tr></table></center>
 <p><a name=doublebarrelled>:</a><b>double-barrelled</b> Of a <a href="lex_g.htm#gun">gun</a>, emitting two streams of <a href="lex_s.htm#spaceship">spaceships</a> (or
-<a href="lex_r.htm#rake">rakes</a>). See <a href="lex_b.htm#b52bomber">B-52 bomber</a> for an example.
+<a href="lex_r.htm#rake">rakes</a>) every period. For examples, see <a href="lex_b.htm#b52bomber">B-52 bomber</a>,
+<a href="lex_s.htm#simkinglidergun">Simkin glider gun</a>, and <a href="lex_p.htm#p246gun">p246 gun</a>. In most cases, the two streams
+are alternately emitted 1/2 period apart. It is also possible for
+the two streams to be emitted simultaneously, as in this
+double-barrelled glider gun by Bill Gosper:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.................O................................
+.................OO...............................
+..................OO..............................
+.................OO...............................
+................................O.................
+...............................OO...............OO
+..............................OO................OO
+.................OO............OO.................
+OO................OO..............................
+OO...............OO...............................
+.................O................................
+...............................OO.................
+..............................OO..................
+...............................OO.................
+................................O.................
+</a></pre></td></tr></table></center>
 <p><a name=doubleblockreaction>:</a><b>double block reaction</b> A certain reaction that can be used to
 stabilize the <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a> (qv). This was discovered by David
 Bell in October 1996.
@@ -373,16 +401,17 @@ O......OO.O......OO.OOO..O.OOO
 <p><a name=draintrap>:</a><b>drain trap</b> = <a href="lex_p.htm#paperclip">paperclip</a>. This term is no longer in use.
 <p><a name=dried>:</a><b>dried</b> = <a href="lex_f.htm#freezedried">freeze-dried</a>.
 <p><a name=drifter>:</a><b>drifter</b> A perturbation moving within a stable pattern. Dean
-Hickerson has written a program to search for drifters, with the hope
-of finding one which could be moved around a track. Because drifters
-can be very small, they could be packed more tightly than
+Hickerson has written a <a href="lex_s.htm#searchprogram">search program</a> to search for drifters, with
+the hope of finding one which could be moved around a track. Because
+drifters can be very small, they could be packed more tightly than
 <a href="lex_h.htm#herschel">Herschels</a>, and so allow the creation of <a href="lex_o.htm#oscillator">oscillators</a> of periods
 not yet attained, and possibly prove that Life is <a href="lex_o.htm#omniperiodic">omniperiodic</a>.
 Hickerson has found a number of components towards this end, but it
 has proved difficult to change the direction of movement of a
 drifter, and so far no complete track has been found. However,
-Hickerson has had success using the same search program to find
-<a href="lex_e.htm#eater">eaters</a> with novel properties, such as that used in <a href="#diuresis">diuresis</a>.
+Hickerson has had success using the same program to find <a href="lex_e.htm#eater">eaters</a>
+with novel properties, such as <a href="lex_s.htm#sparkingeater">sparking eaters</a> and the ones shown
+in <a href="#diuresis">diuresis</a>.
 <p><a name=dual1234>:</a><b>dual 1-2-3-4</b> = <a href="lex_a.htm#achimsp4">Achim's p4</a>
 <p><a name=duoplet>:</a><b>duoplet</b> A diagonal two-bit spark produced by many oscillators and
 eater reactions. Among other uses, it can reflect gliders 90

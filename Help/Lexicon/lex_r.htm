@@ -147,7 +147,7 @@ OO.OO..OO..............
 </a></pre></td></tr></table></center>
 R64 is one of the simplest known <a href="lex_s.htm#spartan">Spartan</a> conduits, one of the two
 known <a href="lex_b.htm#blockic">Blockic</a> conduits, and one of the few <a href="lex_e.htm#elementaryconduit">elementary conduits</a> in
-the original set of sixteen.
+the original set of sixteen. See also <a href="lex_p.htm#p256gun">p256 gun</a>.
 <p><a name=rabbits>:</a><b>rabbits</b> (stabilizes at time 17331) A 9-cell <a href="lex_m.htm#methuselah">methuselah</a> found by
 Andrew Trevorrow in 1986.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -162,6 +162,14 @@ the same number of cells and lasts two generations longer.
 OO......
 .OO.OOO.
 </a></pre></td></tr></table></center>
+<p><a name=racetrack>:</a><b>racetrack</b> A pattern in which a <a href="lex_s.htm#signal">signal</a> makes its way in a loop
+through an "obstacle course" of reactions in order to demonstrate
+various ways that the signal can be reflected, temporarily stored,
+and converted. The more different reactions that are used the better
+the racetrack. David Goodenough built racetracks for p30 and p46
+<a href="lex_t.htm#technology">technology</a> in 1995. Racetracks are also known for
+<a href="lex_h.htm#herschelconduit">Herschel conduit</a> <a href="lex_t.htm#technology">technology</a>, and simple ones are useful for
+building <a href="lex_o.htm#oscillator">oscillators</a> and <a href="lex_g.htm#glidergun">glider guns</a>.
 <p><a name=rake>:</a><b>rake</b> Any <a href="lex_p.htm#puffer">puffer</a> whose debris consists of <a href="lex_s.htm#spaceship">spaceships</a>. A rake is
 said to be forwards, backwards or sideways according to the direction
 of the spaceships relative to the direction of the rake. Originally
@@ -183,8 +191,8 @@ orthogonal rake in October 2000 (based largely on reactions found by
 David Bell).
 <p>The smallest possible period for a rake is probably 7, as this
 could be achieved by a 3<i>c</i>/7 orthogonal backwards glider puffer. The
-smallest period attained to date is 8 (Jason Summers, March 2001) -
-see <a href="lex_b.htm#backrake">backrake</a>.
+smallest period attained to date is 8 (Jason Summers' <a href="lex_b.htm#backrake">backrake</a>,
+March 2001).
 <p><a name=rats>:</a><b>$rats</b> (p6) Found by Dave Buckingham, 1972.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .....OO.....
@@ -213,12 +221,57 @@ to a single-cell protrusion like the tail of an <a href="lex_e.htm#eater1">eater
 of a <a href="lex_t.htm#tub">tub</a>. The difference depends on whether two orthogonally
 adjacent cells at the edge of the envelope are ever simultaneously
 alive, within the protruding cell's <a href="lex_z.htm#zoneofinfluence">zone of influence</a>.
+<p><a name=reanimation>:</a><b>reanimation</b> A reaction performed by a <a href="lex_c.htm#convoy">convoy</a> of <a href="lex_s.htm#spaceship">spaceships</a> (or
+other moving objects) which converts a common stationary object into
+gliders without harming the convoy. This provides one way for
+<a href="lex_s.htm#signal">signals</a> that have been frozen in place by some previous reaction to
+be released for use.
+<p>Simple reactions using period 4 <i>c</i>/2 spaceships have been found for
+reanimating a <a href="lex_b.htm#block">block</a>, <a href="lex_b.htm#boat">boat</a>, <a href="lex_b.htm#beehive">beehive</a>, <a href="lex_s.htm#ship">ship</a>, <a href="lex_l.htm#loaf">loaf</a>, <a href="lex_b.htm#biblock">bi-block</a>,
+or <a href="lex_t.htm#toad">toad</a>. The most interesting of these is for a <a href="lex_b.htm#beehive">beehive</a> since it
+seems to require an unusual p4 spaceship:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+..........O.......................
+.........O.O......................
+.........O.O......................
+..........O.......................
+..................................
+...............OOO.............OOO
+..............O..O.....OOO....O..O
+.................O....O..O.......O
+.............O...O....O...O..O...O
+.................O..O...O.O......O
+..OOO............O.O........OO..O.
+.O..O..............O........OOOOO.
+....O..........OOO...O......OO....
+O...O..........................OO.
+O...O.............................
+....O.............................
+.O.O...............O..............
+..................OOO.............
+.................OO.O.............
+....O............OOO..............
+...OOO...........OOO..............
+...O.OO..........OOO..............
+....OOO...........OO..............
+....OOO...........................
+....OO............................
+</a></pre></td></tr></table></center>
+<p>Reanimation of a <a href="lex_l.htm#loaf">loaf</a> is used many times in the <a href="lex_c.htm#caterloopillar">Caterloopillar</a>.
+It is also used in the <a href="lex_c.htm#caterpillar">Caterpillar</a> as part of its <a href="lex_c.htm#catchandthrow">catch and throw</a>
+mechanism. Finally, reanimation can produce <a href="#rake">rakes</a> from some
+<a href="lex_p.htm#puffer">puffers</a>. See <a href="lex_s.htm#stopandrestart">stop and restart</a> for a similar idea that applies to
+<a href="lex_h.htm#herschelconduit">Herschel conduits</a> and other <a href="lex_s.htm#signal">signal</a> <a href="lex_c.htm#circuit">circuitry</a>.
+<p>There are small objects which have no known reanimation reactions
+using <i>c</i>/2 ships other than the brute force method of hitting them
+with the output of <a href="#rake">rakes</a>.
 <p><a name=reburnablefuse>:</a><b>reburnable fuse</b> A very rare type of <a href="lex_f.htm#fuse">fuse</a> whose output is identical
-to its input, possibly with some spatial and/or temporal offset.
-Reburnable fuses are used primarily in the construction of
-fixed-speed <a href="lex_s.htm#selfsupporting">self-supporting</a> <a href="lex_m.htm#macrospaceship">macro-spaceships</a>, where the speed of
-the fuse's burning reaction becomes the speed of the spaceship.
-Examples include the <a href="lex_c.htm#caterpillar">Caterpillar</a>, <a href="lex_c.htm#centipede">Centipede</a>, and <a href="lex_w.htm#waterbear">waterbear</a>.
+to its input, possibly with some spatial and/or temporal offset. See
+<a href="lex_l.htm#lightspeedwire">lightspeed wire</a> for an example. Reburnable fuses are used
+primarily in the construction of fixed-speed <a href="lex_s.htm#selfsupporting">self-supporting</a>
+<a href="lex_m.htm#macrospaceship">macro-spaceships</a>, where the speed of the fuse's burning reaction
+becomes the speed of the spaceship. Examples include the
+<a href="lex_c.htm#caterpillar">Caterpillar</a>, <a href="lex_c.htm#centipede">Centipede</a>, and <a href="lex_w.htm#waterbear">waterbear</a>.
 <p><a name=receiver>:</a><b>receiver</b> See <a href="lex_h.htm#herschelreceiver">Herschel receiver</a>.
 <p><a name=recipe>:</a><b>recipe</b> = <a href="lex_g.htm#glidersynthesis">glider synthesis</a> or <a href="lex_c.htm#constructionrecipe">construction recipe</a>.
 <p><a name=recoverytime>:</a><b>recovery time</b> The number of <a href="lex_t.htm#tick">ticks</a> that must elapse after a <a href="lex_s.htm#signal">signal</a>
@@ -280,12 +333,12 @@ O.O.........................................
 ............................O...............
 .............................O..............
 </a></pre></td></tr></table></center>
-<p><a name=recursivefilter>:</a><b>recursive filter</b> A toolkit developed by Alexey Nigin in July 2015,
+<p><a name=recursivefilter>:</a><b>recursive filter</b> A <a href="lex_t.htm#toolkit">toolkit</a> developed by Alexey Nigin in July 2015,
 which enables the construction of patterns with population growth
 that asymptotically matches an infinite number of different
 superlinear functions. Toolkits enabling other, sublinear infinite
 series had been completed by Dean Hickerson and Gabriel Nivasch in
-2006 -- see <a href="lex_q.htm#quadraticfilter">quadratic filter</a>, <a href="lex_e.htm#exponentialfilter">exponential filter</a>.
+2006. See <a href="lex_q.htm#quadraticfilter">quadratic filter</a> and <a href="lex_e.htm#exponentialfilter">exponential filter</a>.
 <p>Sublinear functions are possible using the recursive-filter toolkit
 as well. It can be used to construct a glider-emitting pattern with
 a slowness rate <i>S</i>(X) = O(log***...*(<i>t</i>)), the nth-level iterated
@@ -300,15 +353,15 @@ oscillators based on the <a href="lex_t.htm#trafficjam">traffic jam</a> reaction
 also be made into reflectors, although these are mostly rather large.
 <p>In September 1998 Noam Elkies found some fast small-period glider
 reflectors, with <a href="lex_o.htm#oscillator">oscillators</a> supplying the required <a href="lex_d.htm#domino">domino</a>
-<a href="lex_s.htm#spark">sparks</a> at different periods -- a <a href="lex_f.htm#figure8">figure-8</a> produced a
+<a href="lex_s.htm#spark">sparks</a> at different periods. A <a href="lex_f.htm#figure8">figure-8</a> produced a
 <a href="lex_p.htm#p8reflector">p8 reflector</a>, and a <a href="lex_p.htm#p6pipsquirter">p6 pipsquirter</a> produced an equivalent
 <a href="lex_p.htm#p6reflector">p6 reflector</a>. A more complicated construction allows a
 <a href="lex_p.htm#p5reflector">p5 reflector</a> (which, as had been anticipated, soon led to a <a href="lex_t.htm#true">true</a>
-p55 gun - see <a href="lex_q.htm#quetzal">Quetzal</a>). And in August 1999 Elkies found a suitable
+p55 <a href="lex_q.htm#quetzal">Quetzal</a> gun). And in August 1999 Elkies found a suitable
 <a href="lex_s.htm#sparker">sparker</a> to produce a <a href="lex_p.htm#p7reflector">p7 reflector</a>, allowing the first p49
 oscillator to be constructed.
 <p>On 6 April 2016, Tanner Jacobi discovered an equally small and
-simple reaction -- see <a href="lex_b.htm#bumper">bumper</a> -- starting with a <a href="lex_l.htm#loaf">loaf</a> as <a href="lex_b.htm#bait">bait</a>
+simple reaction, the <a href="lex_b.htm#bumper">bumper</a>, starting with a <a href="lex_l.htm#loaf">loaf</a> as <a href="lex_b.htm#bait">bait</a>
 instead of a <a href="lex_b.htm#boat">boat</a>. This resulted in a series of periodic
 <a href="lex_c.htm#colourpreserving">colour-preserving</a> reflectors, whereas Elkies' reflectors are all
 <a href="lex_c.htm#colourchanging">colour-changing</a>.
@@ -326,17 +379,29 @@ method, and in October 1997 Stephen Silver reduced it to 623 by a
 method closer to the original. In November 1998 Callahan reduced
 this to 575 with a new initial reaction. A small modification by
 Silver a few days later brought this down to 497.
-<p>But in April 2001 Dave Greene found a 180-degree stable reflector
-with a repeat time of only 202 (see <a href="lex_b.htm#boojumreflector">boojum reflector</a>). This
-reflector won bounties offered by Dieter Leithner and Alan Hensel.
-Half of the prize money was recycled into a new prize for a small
-90-degree reflector, which in turn was won by Mike Playle's
-<a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_s.htm#snark">Snark</a> reflector. The Snark is currently the
-smallest known stable reflector, with a recovery time of 43. Playle
-has offered a $100 prize for a <a href="lex_c.htm#colourchanging">colour-changing</a> stable reflector
-contained within a 25 by 25 <a href="lex_b.htm#boundingbox">bounding box</a>, with a recovery time of
-50 generations or less.
+<p>In April 2001 Dave Greene found a 180-degree stable reflector with
+a repeat time of only 202 (see <a href="lex_b.htm#boojumreflector">boojum reflector</a>). This reflector
+won bounties offered by Dieter Leithner and Alan Hensel. Half of the
+prize money was recycled into a new prize for a small 90-degree
+reflector, which in turn was won by Mike Playle's <a href="lex_c.htm#colourpreserving">colour-preserving</a>
+<a href="lex_s.htm#snark">Snark</a> reflector. The Snark is currently the smallest known stable
+reflector, with a recovery time of 43. Playle has offered a $100
+prize for a <a href="lex_c.htm#colourchanging">colour-changing</a> stable reflector contained within a 25
+by 25 <a href="lex_b.htm#boundingbox">bounding box</a>, with a recovery time of 50 generations or less.
 <p>See also <a href="#rectifier">rectifier</a>, <a href="lex_g.htm#gliderturner">glider turner</a>.
+<p><a name=reflectorlessrotatingoscillator>:</a><b>reflectorless rotating oscillator</b> A pattern that rotates itself 90 or
+180 degrees after some number of <a href="lex_g.htm#generation">generations</a>, with the additional
+constraint that multiple non-interacting copies of the pattern can be
+combined into a new oscillator with a period equal to the appropriate
+fraction of the component oscillators' period. The second constraint
+disqualifies small time-symmetric <a href="lex_o.htm#oscillator">oscillators</a> such as the <a href="lex_b.htm#blinker">blinker</a>
+and <a href="lex_m.htm#monogram">monogram</a>.
+<p>A working RRO might look something like a <a href="lex_p.htm#piorbital">pi orbital</a> or
+<a href="lex_p.htm#p256gun">p256 gun</a> loop containing one or more <a href="lex_p.htm#pi">pis</a> or <a href="lex_h.htm#herschel">Herschels</a> in the
+same loop, but without any external stabilisation mechanism. Such
+patterns can be proven to exist (see <a href="lex_u.htm#universalconstructor">universal constructor</a>), but as
+of October 2017 none have been explicitly constructed in Life. There
+is no upper limit on <a href="lex_m.htm#multiplicity">multiplicity</a> for a constructor-based RRO.
 <p><a name=regulator>:</a><b>regulator</b> An object which converts input <a href="lex_g.htm#glider">gliders</a> aligned to some
 period to output gliders aligned to a different period. The most
 interesting case is a <a href="lex_u.htm#universalregulator">universal regulator</a>, of which several have
@@ -344,7 +409,7 @@ been constructed by Paul Chapman and others.
 <p><a name=relay>:</a><b>relay</b> Any <a href="lex_o.htm#oscillator">oscillator</a> in which <a href="lex_s.htm#spaceship">spaceships</a> (typically <a href="lex_g.htm#glider">gliders</a>)
 travel in a loop. The simplest example is the p60 one shown below
 using two <a href="lex_p.htm#pentadecathlon">pentadecathlons</a>. Pulling the pentadecathlons further
-apart allows any period of the form 60+120<i>n</i> to be achieved - this is
+apart allows any period of the form 60+120<i>n</i> to be achieved. This is
 the simplest proof of the existence of oscillators of arbitrarily
 large period.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -366,8 +431,8 @@ one will interact fatally with a disturbance caused by the other.
 For example, the repeat time of Dave Buckingham's 59-step B-heptomino
 to Herschel conduit (shown under <a href="lex_c.htm#conduit">conduit</a>) is 58.
 <p><a name=rephaser>:</a><b>rephaser</b> The following reaction that shifts the phase and path of a
-pair of gliders. There is another form of this reaction that
-reflects the gliders 180 degrees - see <a href="lex_g.htm#gliderblockcycle">glider-block cycle</a>.
+pair of gliders. There is another form of this reaction,
+<a href="lex_g.htm#gliderblockcycle">glider-block cycle</a>, that reflects the gliders 180 degrees.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..O..O..
 O.O..O.O
@@ -382,7 +447,7 @@ itself. Such objects are known to exist (see
 <a href="lex_u.htm#universalconstructor">universal constructor</a>), but no concrete example is known. The
 <a href="lex_l.htm#linearpropagator">linear propagator</a> may be considered to be the first example of a
 replicator built in Life, but this is debatable as each of its copies
-replicate themselves only once, allowing no possibility of
+replicates itself only once, allowing no possibility of
 <a href="lex_s.htm#superlineargrowth">superlinear growth</a>.
 <p><a name=reversefuse>:</a><b>reverse fuse</b> A <a href="lex_f.htm#fuse">fuse</a> that produces some initial debris, but then
 burns <a href="lex_c.htm#clean">cleanly</a>. The following is a simple example.
@@ -411,6 +476,21 @@ OOO....O...OOO
 ...O..O.O.O...
 OOO...O....OOO
 O............O
+</a></pre></td></tr></table></center>
+<p><a name=richsp16>:</a><b>Rich's p16</b> A period 16 oscillator found by Rich Holmes in July 2016,
+using <a href="lex_a.htm#apgsearch">apgsearch</a>. For its use as a <a href="lex_f.htm#filter">filter</a> see for example
+<a href="lex_p.htm#p48gun">p48 gun</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+....O...O....
+..OO.O.O.OO..
+.O...O.O...O.
+O...OO.OO...O
+O.O.......O.O
+.O.........O.
+.............
+....OO.OO....
+...O.O.O.O...
+....O...O....
 </a></pre></td></tr></table></center>
 <p><a name=ringoffire>:</a><b>ring of fire</b> (p2) The following <a href="lex_m.htm#mutteringmoat">muttering moat</a> found by Dean
 Hickerson in September 1992.
@@ -448,10 +528,22 @@ O...O.......................OOOO..
 </a></pre></td></tr></table></center>
 <p><a name=rle>:</a><b>rle</b> Run-length encoded. Run-length encoding is a simple (but not
 very efficient) method of file compression. In Life the term refers
-to a specific ASCII encoding used for Life patterns (and patterns for
-other similar cellular automata). This encoding was introduced by
-Dave Buckingham and is now the usual means of exchanging Life
-patterns by email or in online forum discussions.
+to a specific ASCII encoding used for patterns in Conway's Life and
+other similar cellular automata. This encoding was introduced by
+Dave Buckingham and is now the usual means of exchanging relatively
+small patterns by email or in online forum discussions.
+<p>As an example of the rle format, here is a representation of the
+<a href="lex_g.htm#gosperglidergun">Gosper glider gun</a>. The "run lengths" are the numbers, b's are dead
+cells, o's are live cells, and dollar signs signal new lines:
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+x = 36, y = 9, rule = B3/S23
+24bo$22bobo$12boo6boo12boo$11bo3bo4boo12boo$oo8bo
+5bo3boo$oo8bo3boboo4bobo$10bo5bo7bo$11bo3bo$12boo!
+</a></pre></td></tr></table></center>
+<p>Over the years RLE format has been extended to handle patterns with
+multiple states, neighborhoods, rules, and universe sizes. A
+completely different encoding, <a href="lex_m.htm#macrocell">macrocell</a> format, is used for
+repetitive patterns that may have very large <a href="lex_p.htm#population">populations</a>.
 <p><a name=rmango>:</a><b>R-mango</b> A small active reaction, so named because it is a single-cell
 modification of a <a href="lex_m.htm#mango">mango</a>, but now more commonly known as <a href="lex_d.htm#dove">dove</a>.
 <p><a name=rock>:</a><b>rock</b> Dean Hickerson's term for an <a href="lex_e.htm#eater">eater</a> which remains intact
@@ -489,6 +581,11 @@ it has a <a href="lex_p.htm#population">population</a> of 116, including six <a 
 OO.
 .O.
 </a></pre></td></tr></table></center>
+At generation 774, an R-pentomino produces a <a href="lex_q.htm#queenbee">queen bee</a> which lasts
+17 more generations before being destroyed, enough time for it to
+flip over. This observation led to the discovery of the
+<a href="lex_g.htm#gosperglidergun">Gosper glider gun</a>.
+<p><a name=rro>:</a><b>RRO</b> = <a href="#reflectorlessrotatingoscillator">reflectorless rotating oscillator</a>
 <p><a name=rule22>:</a><b>rule 22</b> Wolfram's rule 22 is the 2-state 1-D <a href="lex_c.htm#cellularautomaton">cellular automaton</a> in
 which a cell is ON in the next generation if and only if exactly one
 of its three neighbours is ON in the current generation (a cell being
