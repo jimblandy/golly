@@ -113,6 +113,8 @@ O..O.O.O..
 </a></pre></td></tr></table></center>
 <p>Steven Eker has since found several asymmetrical Gardens of Eden
 that are slightly smaller than this in terms of bounding box area.
+Patterns have also been found that have only Garden of Eden
+<a href="lex_p.htm#parent">parents</a>. For related results see <a href="#grandparent">grandparent</a>.
 <p><a name=gemini>:</a><b>Gemini</b> ((5120,1024)<i>c</i>/33699586 obliquely, p33699586) The first
 <a href="lex_s.htm#selfconstructing">self-constructing</a> spaceship, and also the first <a href="lex_o.htm#oblique">oblique</a>
 spaceship. It was made public by Andrew Wade on 18 May 2010. It was
@@ -177,13 +179,49 @@ O..
 OOO
 ..O
 </a></pre></td></tr></table></center>
-<p><a name=gig>:</a><b>GIG</b> A glider injection gate. This is a device for injecting a
-<a href="#glider">glider</a> into a glider stream. The injected glider is synthesized
+<p><a name=gig>:</a><b>GIG</b> A glider injection gate. This is a device for <a href="lex_i.htm#inject">injecting</a> a
+<a href="#glider">glider</a> into a glider <a href="lex_s.htm#stream">stream</a>. The injected glider is synthesized
 from one or more incoming <a href="lex_s.htm#spaceship">spaceships</a> assisted by the presence of
 the GIG. (This contrasts with some other glider injection reactions
-which do not require a GIG.) Gliders already in the glider stream
-pass through the GIG without interfering with it. A GIG usually
-consists of a small number of oscillators.
+which do not require a GIG, as in <a href="lex_i.htm#inject">inject</a>.) Gliders already in the
+glider stream pass through the GIG without interfering with it. A
+GIG usually consists of a small number of oscillators.
+<p>For example, in July 1996 Dieter Leithner found the following
+reaction which allows the construction of a pseudo-period 14 glider
+stream. It uses two <a href="lex_l.htm#lwss">LWSS</a> streams, a <a href="lex_p.htm#pentadecathlon">pentadecathlon</a> and a
+<a href="lex_v.htm#volcano">volcano</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.O...........................
+..O..........OO..............
+OOO.........OOO..............
+............OO.O.............
+.....O.......OOO.............
+...O.O........O..............
+....OO.......................
+.............................
+......................OOOO...
+.....................OOOOOO..
+....................OOOOOOOO.
+............O......OO......OO
+...OO.....O.O.......OOOOOOOO.
+.OO.OO.....OO........OOOOOO..
+.OOOO..........O......OOOO...
+..OO............O............
+..............OOO............
+.............................
+.............................
+.............................
+.....OOOOOOO.................
+...OOO.OOO.OOO...............
+..O....OOO....O..............
+...OOOO.O.OOO.O..............
+.............O...............
+..O.OO.O.O.O.................
+..OO.O.O.O.OO................
+......O..O.O.................
+.......OO..O.................
+...........OO................
+</a></pre></td></tr></table></center>
 <p>Glider injection gates are useful for building glider <a href="#gun">guns</a> with
 <a href="lex_p.htm#pseudo">pseudo</a>-periods that are of the form <i>nd</i>, where <i>n</i> is a positive
 integer, and <i>d</i> is a proper divisor of some convenient base gun period
@@ -204,7 +242,7 @@ OO.O...O..O...O.OO
 </a></pre></td></tr></table></center>
 <p><a name=glider>:</a><b>glider</b> (<i>c</i>/4 diagonally, p4) The smallest, most common and first
 discovered <a href="lex_s.htm#spaceship">spaceship</a>. This was found by Richard Guy in 1970 while
-Conway's group was attempting to track the evolution of the
+Conway's group was attempting to track the <a href="lex_e.htm#evolution">evolution</a> of the
 <a href="lex_r.htm#rpentomino">R-pentomino</a>. The name is due in part to the fact that it is
 <a href="#glidesymmetric">glide symmetric</a>. (It is often stated that Conway discovered the
 glider, but he himself has said it was Guy. See also the cryptic
@@ -276,11 +314,20 @@ OO...........O.O.....O.OO...........
 <p>Spaceship <a href="lex_c.htm#convoy">convoys</a> which can duplicate gliders are very useful
 since they (along with <a href="#gliderturner">glider turners</a>) provide a means to clean up
 many dirty puffers by duplicating and turning output gliders so as to
-impact into the exhaust to clean it up.
+impact into the <a href="lex_e.htm#exhaust">exhaust</a> to clean it up.
 <p>Glider duplicators (and turners) are known for backward gliders
 using p2 <i>c</i>/2 spaceships, and for forward gliders using p3 <i>c</i>/3
 spaceships. These are the most general duplicators for these speeds.
-<p><a name=glidergun>:</a><b>glider gun</b> A <a href="#gun">gun</a> which fires <a href="#glider">gliders</a>.
+<p><a name=glidergun>:</a><b>glider gun</b> A <a href="#gun">gun</a> that fires <a href="#glider">gliders</a>. For examples, see
+<a href="#gosperglidergun">Gosper glider gun</a>, <a href="lex_s.htm#simkinglidergun">Simkin glider gun</a>, <a href="lex_n.htm#newgun">new gun</a>, <a href="lex_p.htm#p45gun">p45 gun</a>.
+<p>True-period glider guns are known for some low periods, and for all
+periods over 53 using <a href="lex_h.htm#herschelconduit">Herschel conduit</a> <a href="lex_t.htm#technology">technology</a>. See <a href="lex_t.htm#true">true</a>
+for a list of known true-period guns. The lowest true-period gun
+possible is the <a href="lex_p.htm#p14gun">p14 gun</a> since that is the lowest possible period
+for any glider <a href="lex_s.htm#stream">stream</a>, but no example has yet been found.
+<p>Pseudo-period glider guns are known for every period above 13.
+These are made by using multiple true-period guns of some multiple of
+the period, and glider <a href="lex_i.htm#inject">injection</a> methods to fill in the gaps.
 <p><a name=gliderinjectiongate>:</a><b>glider injection gate</b> = <a href="#gig">GIG</a>
 <p><a name=gliderlane>:</a><b>glider lane</b> See <a href="lex_l.htm#lane">lane</a>.
 <p><a name=gliderless>:</a><b>gliderless</b> A <a href="#gun">gun</a> is said to be gliderless if it does not use
@@ -340,11 +387,14 @@ OO............OOO.................................
 ..OO...O.O....O...................................
 .......O..........................................
 </a></pre></td></tr></table></center>
-<p><a name=gliderpair>:</a><b>glider pair</b> Two gliders traveling in the same direction on fixed
-lanes, with a specific spacetime offset. In a <a href="lex_t.htm#transceiver">transceiver</a> the
-preferred term is <a href="lex_t.htm#tandemglider">tandem glider</a>. For several years, glider pairs
-were the standard building blocks in <a href="#geminoid">Geminoid</a> <a href="lex_c.htm#constructionarm">construction arms</a>,
-until the discovery of <a href="lex_s.htm#singlechannel">single-channel</a> construction toolkits.
+<p><a name=gliderpair>:</a><b>glider pair</b> Two gliders traveling in the same direction with a
+specific spacetime offset. In a <a href="lex_t.htm#transceiver">transceiver</a> the preferred term is
+<a href="lex_t.htm#tandemglider">tandem glider</a>. For several years, glider pairs on <a href="lex_l.htm#lane">lanes</a>
+separated by 9 or 10 <a href="lex_h.htm#halfdiagonal">half diagonals</a> were the standard building
+blocks in <a href="#geminoid">Geminoid</a> <a href="lex_c.htm#constructionarm">construction arm</a> <a href="lex_r.htm#recipe">recipes</a>. In more recent
+0hd and <a href="lex_s.htm#singlechannel">single-channel</a> construction toolkits, all gliders share the
+same lane, but glider pairs and <a href="lex_s.htm#singleton">singletons</a> are still important
+concepts.
 <p><a name=gliderpusher>:</a><b>glider pusher</b> An arrangement of a <a href="lex_q.htm#queenbeeshuttle">queen bee shuttle</a> and a
 <a href="lex_p.htm#pentadecathlon">pentadecathlon</a> that can push the path of a passing glider out by
 one half-diagonal space. This was found by Dieter Leithner in
@@ -383,13 +433,61 @@ OO..O
 O...O
 O..OO
 </a></pre></td></tr></table></center>
+<p><a name=gliderstopper>:</a><b>glider stopper</b> A <a href="lex_s.htm#spartan">Spartan</a> logic circuit discovered by Paul Callahan
+in 1996. It allows a <a href="#glider">glider</a> signal to pass through the circuit,
+leaving behind a beehive that can cleanly absorb a single glider from
+a perpendicular glider <a href="lex_s.htm#stream">stream</a>. Two optional glider outputs are
+also shown. The circuit can't be re-used until the beehive "bit" is
+cleared by the passage of at least one perpendicular input. A
+similar mechanism discovered more recently is shown in the
+<a href="lex_b.htm#beehivestopper">beehive stopper</a> entry.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.O...........................................
+..O..........................................
+OOO..........................................
+.............................................
+.............................................
+...................................O.........
+..................................O..........
+..................................OOO........
+.............................................
+...............................O.............
+...............................O.O...........
+...................OO..........OO............
+...................OO........................
+.............................................
+.............................................
+.............................................
+.............................................
+.............................................
+.............................................
+.............................................
+...................OO........................
+..................O..O.......................
+...................OO........................
+..........................OO.................
+..........................OO.................
+...........................................OO
+........OO.................................O.
+.......O.O...............................O.O.
+.......O.................................OO..
+......OO.....................................
+.............................................
+.............................................
+.............................................
+.................OO..........................
+................O.O..........................
+................O............................
+...............OO............................
+</a></pre></td></tr></table></center>
 <p><a name=glidersynthesis>:</a><b>glider synthesis</b> Construction of an object by means of <a href="#glider">glider</a>
 collisions. It is generally assumed that the gliders should be
-arranged so that they could come from infinity - that is, gliders
+arranged so that they could come from infinity. That is, gliders
 should not have had to pass through one another to achieve the
 initial arrangement.
 <p>Glider syntheses for all <a href="lex_s.htm#stilllife">still lifes</a> and known <a href="lex_o.htm#oscillator">oscillators</a> with
-at most 14 cells were found by Dave Buckingham.
+at most 14 cells were found by Dave Buckingham. As of October 2017,
+this limit has been increased to 18 cells.
 <p>Perhaps the most interesting glider syntheses are those of
 <a href="lex_s.htm#spaceship">spaceships</a>, because these can be used to create corresponding
 <a href="#gun">guns</a> and <a href="lex_r.htm#rake">rakes</a>. Many of the <i>c</i>/2 spaceships that are based on
@@ -492,7 +590,7 @@ send the output glider into any of the other three directions.
 glide symmetric <a href="lex_s.htm#spaceship">spaceship</a> is sometimes called a <a href="lex_f.htm#flipper">flipper</a>.
 <p><a name=gn>:</a><b>Gn</b> An abbreviation specific to <a href="lex_c.htm#converter">converters</a> that produce multiple
 <a href="#glider">gliders</a>. A "G" followed by any integer value means that the
-converter produces a <a href="lex_t.htm#tandemglider">tandem glider</a> -- two parallel glider outputs
+converter produces a <a href="lex_t.htm#tandemglider">tandem glider</a> - two parallel glider outputs
 with lanes separated by the specified number of <a href="lex_h.htm#halfdiagonal">half diagonals</a>.
 <p><a name=gnome>:</a><b>gnome</b> = <a href="lex_f.htm#fox">fox</a>
 <p><a name=goe>:</a><b>GoE</b> = <a href="#gardenofeden">Garden of Eden</a>
@@ -502,11 +600,12 @@ and Tomas Rokicki. Unlike most Life programs it includes the ability
 to run patterns using the <a href="lex_h.htm#hashlife">hashlife</a> algorithm. It is available from
 <a href="http://golly.sourceforge.net">http://golly.sourceforge.net</a>.
 <p><a name=gosperglidergun>:</a><b>Gosper glider gun</b> The first known <a href="#gun">gun</a>, and indeed the first known
-finite pattern with unbounded growth, found by Bill Gosper in
+finite pattern displaying <a href="lex_i.htm#infinitegrowth">infinite growth</a>, found by Bill Gosper in
 November 1970. This period 30 gun remains the smallest known gun in
 terms of its bounding box, though some variants of the p120
-<a href="lex_s.htm#simkinglidergun">Simkin glider gun</a> have a lower population. Gosper has since found
-other guns, see <a href="lex_n.htm#newgun">new gun</a> and the p144 gun shown under <a href="lex_f.htm#factory">factory</a>.
+<a href="lex_s.htm#simkinglidergun">Simkin glider gun</a> have a lower population. Gosper later constructed
+several other guns, such as <a href="lex_n.htm#newgun">new gun</a> and the p144 gun shown under
+<a href="lex_f.htm#factory">factory</a>. See also <a href="lex_p.htm#p30gun">p30 gun</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ........................O...........
 ......................O.O...........
@@ -552,11 +651,27 @@ OOO.......O.O...O...
 ........OO..........
 </a></pre></td></tr></table></center>
 <p><a name=gp>:</a><b>gp</b> = <a href="#gliderpair">glider pair</a>
-<p><a name=grammar>:</a><b>grammar</b> A set of rules for connecting components together to make an
-object such as a <a href="lex_s.htm#spaceship">spaceship</a>, <a href="lex_o.htm#oscillator">oscillator</a> or <a href="lex_s.htm#stilllife">still life</a>.
+<p><a name=grammar>:</a><b>grammar</b> A set of rules for connecting <a href="lex_c.htm#component">components</a> together to make
+an object such as a <a href="lex_s.htm#spaceship">spaceship</a>, <a href="lex_o.htm#oscillator">oscillator</a> or <a href="lex_s.htm#stilllife">still life</a>. For
+example, in August 1989 Dean Hickerson found a grammar for
+constructing an infinite number of short wide <i>c</i>/3 period 3
+spaceships, using 33 different components and a table showing the
+ways that they can be joined together.
 <p><a name=grandfather>:</a><b>grandfather</b> = <a href="#grandparent">grandparent</a>
+<p><a name=grandfatherless>:</a><b>grandfatherless</b> A traditional name for a pattern with one or more
+<a href="lex_p.htm#parent">parents</a> but no grandparent. This was a hypothetical designation
+until May 2016. See <a href="#grandparent">grandparent</a> for details.
 <p><a name=grandparent>:</a><b>grandparent</b> A pattern is said to be a grandparent of the pattern it
-gives rise to after two generations. See also <a href="lex_p.htm#parent">parent</a>.
+gives rise to after two generations. For over thirty years, a
+well-known open problem was the question of whether any pattern
+existed that had a parent but no grandparent. In 1972, <a href="lex_l.htm#lifeline">LifeLine</a>
+Volume 6 mentioned John Conway's offer of a $50 prize for a solution
+to the problem, but it remained open until May 2016 when a user with
+the conwaylife.com forum handle 'mtve' posted an example.
+<p>Other patterns have since been found that have a grandparent but no
+great-grandparent, or a great-grandparent but no
+great-great-grandparent. Further examples in this series almost
+certainly exist, but as of October 2017 none have yet been found.
 <p><a name=graycounter>:</a><b>Gray counter</b> (p4) Found in 1971. If you look at this in the right
 way you will see that it cycles through the Gray codes from 0 to 3.
 Compare with <a href="lex_r.htm#r2d2">R2D2</a>.
@@ -626,6 +741,12 @@ extends between the two. Put another way, a growing spaceship is a
 <a href="lex_p.htm#puffer">puffer</a> whose output is burning <a href="lex_c.htm#clean">cleanly</a> at a slower rate than the
 puffer is producing it. Examples include <a href="lex_b.htm#blinkership">blinker ships</a> and
 <a href="lex_p.htm#piship">pi ships</a>.
+<p><a name=gtoh>:</a><b>G-to-H</b> A <a href="lex_c.htm#converter">converter</a> that takes a <a href="#glider">glider</a> as an input <a href="lex_s.htm#signal">signal</a> and
+produces a <a href="lex_h.htm#herschel">Herschel</a> output, which can then be used by other
+<a href="lex_c.htm#conduit">conduits</a>. G-to-Hs are frequently used in <a href="lex_s.htm#stable">stable</a> logic circuitry.
+Early examples include <a href="lex_c.htm#callahangtoh">Callahan G-to-H</a>, <a href="lex_s.htm#silvergtoh">Silver G-to-H</a>, and
+<a href="lex_p.htm#p8gtoh">p8 G-to-H</a> for periodic circuits. A more compact recent example is
+the <a href="lex_s.htm#syringe">syringe</a>.
 <p><a name=gull>:</a><b>gull</b> = <a href="lex_e.htm#elevener">elevener</a>
 <p><a name=gun>:</a><b>gun</b> Any stationary pattern that emits <a href="lex_s.htm#spaceship">spaceships</a> (or <a href="lex_r.htm#rake">rakes</a>)
 forever. For examples see <a href="lex_d.htm#doublebarrelled">double-barrelled</a>, <a href="lex_e.htm#edgeshooter">edge shooter</a>,
@@ -635,6 +756,11 @@ forever. For examples see <a href="lex_d.htm#doublebarrelled">double-barrelled</
 non-negative integers <i>n</i>) constructed by Dave Buckingham in 1990 based
 on his <a href="lex_t.htm#transparentblockreaction">transparent block reaction</a> and Robert Wainwright's p72
 oscillator (shown under <a href="lex_f.htm#factory">factory</a>).
+<p><a name=gutter>:</a><b>gutter</b> A single straight line of cells along the axis of symmetry of
+a mirror-<a href="lex_s.htm#symmetric">symmetric</a> pattern. Most commonly this is an orthogonal
+line. The birth rule for Conway's Life trivially implies that if
+there are no live cells in the gutter of a symmetric pattern, new
+cells can never be born there.
 <hr>
 <center>
 <font size=-1><b>
