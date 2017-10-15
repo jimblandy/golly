@@ -479,7 +479,8 @@ the orientation shown above).
         <a href="lex_l.htm#lx200">Lx200</a>       Lf   -17  -40   PBC, Jun 1997
         <a href="lex_r.htm#rx202">Rx202</a>       Rf    -7   32   DJB, May 1997
         <a href="lex_b.htm#bx222">Bx222</a>       Bf     6  -16   PBC, Oct 1998
-        -----------------------------------------</pre>
+        -----------------------------------------
+</pre>
 <p>See also <a href="#herscheltransceiver">Herschel transceiver</a>.
 <p><a name=herscheldescendant>:</a><b>Herschel descendant</b> A common active pattern occurring at generation
 22 of a <a href="#herschel">Herschel</a>'s <a href="lex_e.htm#evolution">evolution</a>:
@@ -703,7 +704,7 @@ one generation this is the same as the <a href="lex_i.htm#iheptomino">I-heptomin
 ..O.
 </a></pre></td></tr></table></center>
 <p><a name=highbandwidthtelegraph>:</a><b>high-bandwidth telegraph</b> (p960, p30 circuitry) A variant of the
-<a href="lex_t.htm#telegraph">telegraph</a> constructed by Louis-François Handfield in February
+<a href="lex_t.htm#telegraph">telegraph</a> constructed by Louis-Fran&ccedil;ois Handfield in February
 2017, using periodic components to achieve a transmission rate of one
 bit per 192 ticks. The same ten signals are sent as in the original
 telegraph and the <a href="lex_p.htm#p1telegraph">p1 telegraph</a>, but information is encoded more
@@ -836,6 +837,55 @@ OOO...OOOO........O..O...OOOO.
 .................O.......O...O
 .................O...O...O....
 .................OOOO.....O..O
+</a></pre></td></tr></table></center>
+<p><a name=honeybit>:</a><b>honey bit</b> A block and pond <a href="lex_c.htm#constellation">constellation</a> used in the
+<a href="lex_o.htm#otcametapixel">OTCA metapixel</a> by Brice Due in 2006, to store and retrieve a bit of
+data - specifically, the presence or absence of a neighbor
+<a href="lex_m.htm#metacell">metacell</a>. The "0" state of the honey bit memory unit is a simple
+<a href="lex_b.htm#beehive">beehive</a>, which is also the source of the name.
+<p>An input glider collides with the beehive to convert it into the
+honey bit constellation, which can be thought of as a value of "1"
+stored in the memory unit. A passing LWSS can then test for the
+presence of the pond. If a collision occurs, the LWSS and the honey
+bit constellation are mutually annihilated, leaving just the original
+beehive. Below is the honeybit constellation with the two reactions
+occurring in the opposite order - test, then reset.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:.O...............$..O..............$OOO..............$.................$............OOOO.$............O...O$............O....$.............O..O$.................$..........OO.....$.........O..O....$.........O..O....$..........OO.....$.................$.................$.........OO......$.........OO......$"
+>.O...............
+..O..............
+OOO..............
+.................
+............OOOO.
+............O...O
+............O....
+.............O..O
+.................
+..........OO.....
+.........O..O....
+.........O..O....
+..........OO.....
+.................
+.................
+.........OO......
+.........OO......
+</a></pre></td></tr></table></center>
+If the pond is not present, the LWSS passes by the beehive without
+affecting it. Thus a test input has an output for the "0" case, but
+not for the "1" case. For an alternative memory-unit mechanism with
+both "0" and "1" outputs, see <a href="lex_d.htm#demultiplexer">demultiplexer</a>.
+<p>The honey bit is also an interesting <a href="lex_e.htm#eater">eater</a> for the <a href="#hwss">HWSS</a> as
+shown below. A HWSS colliding with the pond happens to create the
+exact same reset glider used in the above memory unit.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..OO...........$O....O......OO.$......O....O..O$O.....O....O..O$.OOOOOO.....OO.$...............$...............$...........OO..$...........OO..$"
+>..OO...........
+O....O......OO.
+......O....O..O
+O.....O....O..O
+.OOOOOO.....OO.
+...............
+...............
+...........OO..
+...........OO..
 </a></pre></td></tr></table></center>
 <p><a name=honeycomb>:</a><b>honeycomb</b> (p1)
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:..OO..$.O..O.$O.OO.O$.O..O.$..OO..$"
