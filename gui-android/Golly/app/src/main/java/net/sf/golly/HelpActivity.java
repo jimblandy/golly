@@ -14,12 +14,9 @@ import java.net.URL;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.support.v4.app.NavUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
+// import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -68,8 +65,6 @@ public class HelpActivity extends BaseActivity {
         @Override
         public boolean shouldOverrideUrlLoading(WebView webview, String url) {
             // look for special prefixes used by Golly and return true if found
-            //!!!
-            Log.i("shouldOverrideUrlLoading URL", url);
             if (url.startsWith("open:")) {
                 openFile(url.substring(5));
                 return true;
@@ -122,8 +117,7 @@ public class HelpActivity extends BaseActivity {
 
             // need URL of this page for relative "get:" links
             pageurl = gwebview.getUrl();
-            //!!!
-            Log.i("onPageFinished URL", pageurl);
+            // Log.i("onPageFinished URL", pageurl);
         }  
     }
 
@@ -201,8 +195,8 @@ public class HelpActivity extends BaseActivity {
         // JavaScript is used to detect device type
         gwebview.getSettings().setJavaScriptEnabled(true);
 
-        // need???!!!
-        gwebview.getSettings().setDomStorageEnabled(true);
+        // no need???
+        // gwebview.getSettings().setDomStorageEnabled(true);
         
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         // my Nexus 7 has a density of 320
@@ -259,8 +253,7 @@ public class HelpActivity extends BaseActivity {
         if (filepath != null) {
             // replace any spaces with %20
             filepath = filepath.replaceAll(" ", "%20");
-            //!!!
-            Log.i("onResume filepath", filepath);
+            // Log.i("onResume filepath", filepath);
             gwebview.loadUrl("file://" + filepath);
         } else {
             // no need: gwebview.reload();
@@ -390,8 +383,7 @@ public class HelpActivity extends BaseActivity {
             }
             
             long starttime = System.nanoTime();
-            //!!!
-            Log.i("downloadURL", urlstring);
+            // Log.i("downloadURL", urlstring);
             URL url = new URL(urlstring);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setAllowUserInteraction(false);
@@ -421,15 +413,18 @@ public class HelpActivity extends BaseActivity {
                     progbar.setProgress(percent);
                     lastpercent = percent;
                 }
+                /* this didn't work!!!
                 // show proglayout only if download takes more than 1 second
                 if (System.nanoTime() - starttime > 1000000000L) {
                     runOnUiThread(new Runnable() {
+                        @Override
                         public void run() {
                             proglayout.setVisibility(LinearLayout.VISIBLE);
                         }
                     });
                     starttime = Long.MAX_VALUE; // only show it once
                 }
+                */
                 if (cancelled) break;
             }
             outstream.close();
@@ -447,31 +442,25 @@ public class HelpActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
 
     private String dresult;
-    
-    static class LooperInterrupter extends Handler {
-    	public void handleMessage(Message msg) {
-            throw new RuntimeException();
-        }
-    }
-    
+
     // this method is called from C++ code (see jnicalls.cpp)
     private String DownloadFile(String urlstring, String filepath) {
         // we cannot do network connections on main thread, so we do the
         // download on a new thread, but we have to wait for it to finish
-        final Handler handler = new LooperInterrupter();
-        
+
         cancelled = false;
         progbar.setProgress(0);
-        // don't show proglayout immediately
-        // proglayout.setVisibility(LinearLayout.VISIBLE);
-        
+        // show proglayout immediately
+        // why not showing???!!!
+        proglayout.setVisibility(LinearLayout.VISIBLE);
+
         dresult = "";
         final String durl = urlstring;
         final String dfile = filepath;
         Thread download_thread = new Thread(new Runnable() {
+            @Override
             public void run() {
                 dresult = downloadURL(durl, dfile);
-                handler.sendMessage(handler.obtainMessage());
             }
         });
         
@@ -479,7 +468,7 @@ public class HelpActivity extends BaseActivity {
         download_thread.start();
         
         // wait for thread to finish
-        try { Looper.loop(); } catch(RuntimeException re) {}
+        try { download_thread.join(); } catch(InterruptedException ie) {}
         
         proglayout.setVisibility(LinearLayout.INVISIBLE);
         
