@@ -24,9 +24,6 @@ import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
-// this class (along with BaseActivity) allows our app to keep track of the current foreground activity
-// (thanks to http://stackoverflow.com/questions/11411395/how-to-get-current-foreground-activity-context-in-android)
-
 public class BaseApp extends Application {
 	
     // see jnicalls.cpp for these native routines:
@@ -41,12 +38,13 @@ public class BaseApp extends Application {
     public File userdir;        // directory for user-created data
     public File supplieddir;    // directory for supplied data
 
+    // keep track of the current foreground activity
     private Deque<Activity> activityStack = new ArrayDeque<Activity>();
 
     // -----------------------------------------------------------------------------
     
     static {
-    	System.loadLibrary("stlport_shared");   // must agree with Application.mk
+    	System.loadLibrary("stlport_shared");   // must agree with build.gradle
         System.loadLibrary("golly");            // loads libgolly.so
         nativeClassInit();                      // caches Java method IDs
     }
@@ -201,11 +199,6 @@ public class BaseApp extends Application {
     
     // this method is called from C++ code (see jnicalls.cpp)
     void Warning(String msg) {
-    	
-        // use a handler to get a modal dialog
-        //!!! final Handler handler = new LooperInterrupter();
-
-        //!!!
         Activity currentActivity = getCurrentActivity();
         if (currentActivity == null) {
             Log.i("Warning", "currentActivity is null!");
@@ -219,22 +212,15 @@ public class BaseApp extends Application {
             new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     dialog.cancel();
-                    //!!! handler.sendMessage(handler.obtainMessage());
                 }
             });
         alert.show();
-        
-        // loop until runtime exception is triggered
-        //!!! try { Looper.loop(); } catch(RuntimeException re) {}
     }
     
     // -----------------------------------------------------------------------------
 
     // this method is called from C++ code (see jnicalls.cpp)
     void Fatal(String msg) {
-        // use a handler to get a modal dialog
-        final Handler handler = new LooperInterrupter();
-
         Activity currentActivity = getCurrentActivity();
         // note that MainActivity might not be the current foreground activity
         AlertDialog.Builder alert = new AlertDialog.Builder(currentActivity);
@@ -244,14 +230,10 @@ public class BaseApp extends Application {
             new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     dialog.cancel();
-                    handler.sendMessage(handler.obtainMessage());
                 }
             });
         alert.show();
-        
-        // loop until runtime exception is triggered
-        try { Looper.loop(); } catch(RuntimeException re) {}
-        
+
         System.exit(1);
     }
     
@@ -262,6 +244,7 @@ public class BaseApp extends Application {
     // this method is called from C++ code (see jnicalls.cpp)
     String YesNo(String query) {
         // use a handler to get a modal dialog
+        // (this must be modal because it is used in an if test)
         final Handler handler = new LooperInterrupter();
 
         Activity currentActivity = getCurrentActivity();
