@@ -172,7 +172,12 @@ public class BaseApp extends Application {
     void Warning(String msg) {
     	
         // use a handler to get a modal dialog
-        final Handler handler = new LooperInterrupter();
+        //!!! final Handler handler = new LooperInterrupter();
+
+        //!!!
+        if (currentActivity == null) {
+            Log.i("Warning", "currentActivity is null!");
+        }
         
         // note that MainActivity might not be the current foreground activity
         AlertDialog.Builder alert = new AlertDialog.Builder(currentActivity);
@@ -182,13 +187,13 @@ public class BaseApp extends Application {
             new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     dialog.cancel();
-                    handler.sendMessage(handler.obtainMessage());
+                    //!!! handler.sendMessage(handler.obtainMessage());
                 }
             });
         alert.show();
         
         // loop until runtime exception is triggered
-        try { Looper.loop(); } catch(RuntimeException re) {}
+        //!!! try { Looper.loop(); } catch(RuntimeException re) {}
     }
     
     // -----------------------------------------------------------------------------
