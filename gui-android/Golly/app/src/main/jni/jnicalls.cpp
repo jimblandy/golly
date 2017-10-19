@@ -14,7 +14,7 @@
 #include "prefs.h"      // for GetPrefs, SavePrefs, userdir, etc
 #include "layer.h"      // for AddLayer, ResizeLayers, currlayer
 #include "control.h"    // for SetMinimumStepExponent
-#include "file.h"       // for NewPattern
+#include "file.h"       // for NewPattern, GetURL, ProcessDownload
 #include "render.h"     // for DrawPattern
 #include "view.h"       // for widescreen, fullscreen, TouchBegan, etc
 #include "status.h"     // for UpdateStatusLines, ClearMessage, etc
@@ -1616,7 +1616,7 @@ extern "C"
 JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeClassInit(JNIEnv* env, jclass klass)
 {
     // get IDs for Java methods in HelpActivity
-    help_DownloadFile = env->GetMethodID(klass, "DownloadFile", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    help_DownloadFile = env->GetMethodID(klass, "DownloadFile", "(Ljava/lang/String;Ljava/lang/String;)V");
 }
 
 // -----------------------------------------------------------------------------
@@ -1690,13 +1690,24 @@ JNIEXPORT bool JNICALL Java_net_sf_golly_HelpActivity_nativeDownloadedFile(JNIEn
         // download file to downloaddir and open it
         path = downloaddir + path;
         std::string url = ConvertJString(env, jurl);
-        if (DownloadFile(url, path)) {
-            OpenFile(path.c_str());
-        }
+        AndroidDownloadFile(url, path);
+        // if the async download succeeds then nativeProcessDownload will call
+        // ProcessDownload which calls OpenFile
         return true;
     } else {
         return false;
     }
+}
+
+// -----------------------------------------------------------------------------
+
+extern "C"
+JNIEXPORT void JNICALL Java_net_sf_golly_HelpActivity_nativeProcessDownload(JNIEnv* env, jobject obj, jstring jfilepath)
+{
+    std::string filepath = ConvertJString(env, jfilepath);
+
+    // AndroidDownloadFile has successfully downloaded and created a file
+    ProcessDownload(filepath);
 }
 
 // =============================================================================
@@ -2607,10 +2618,9 @@ void AndroidCheckEvents()
 
 // -----------------------------------------------------------------------------
 
-bool AndroidDownloadFile(const std::string& url, const std::string& filepath)
+void AndroidDownloadFile(const std::string& url, const std::string& filepath)
 {
     // LOGI("AndroidDownloadFile: url=%s file=%s", url.c_str(), filepath.c_str());
-    std::string error = "env is null";
 
     // call DownloadFile method in HelpActivity
     bool attached;
@@ -2618,13 +2628,9 @@ bool AndroidDownloadFile(const std::string& url, const std::string& filepath)
     if (env) {
         jstring jurl = env->NewStringUTF(url.c_str());
         jstring jfilepath = env->NewStringUTF(filepath.c_str());
-        jstring jresult = (jstring) env->CallObjectMethod(helpobj, help_DownloadFile, jurl, jfilepath);
-        error = ConvertJString(env, jresult);
+        env->CallVoidMethod(helpobj, help_DownloadFile, jurl, jfilepath);
         env->DeleteLocalRef(jurl);
         env->DeleteLocalRef(jfilepath);
-        env->DeleteLocalRef(jresult);
     }
     if (attached) javavm->DetachCurrentThread();
-
-    return error.length() == 0;
 }

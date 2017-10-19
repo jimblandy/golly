@@ -164,7 +164,7 @@ public class MainActivity extends BaseActivity {
         public void run() {
             Looper looper = Looper.myLooper();
             looper.quit();
-            evthandler.removeCallbacks(this);    
+            evthandler.removeCallbacks(this);
             evthandler = null;
         }
     };

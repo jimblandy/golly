@@ -24,6 +24,7 @@ const char* WritePattern(const char* path, pattern_format format, output_compres
 void UnzipFile(const std::string& zippath, const std::string& entry);
 void GetURL(const std::string& url, const std::string& pageurl);
 bool DownloadFile(const std::string& url, const std::string& filepath);
+void ProcessDownload(const std::string& filepath);
 void LoadLexiconPattern(const std::string& lexpattern);
 void LoadRule(const std::string& rulestring);
 std::string GetBaseName(const char* path);

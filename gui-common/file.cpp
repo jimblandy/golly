@@ -1007,36 +1007,6 @@ bool SavePattern(const std::string& path, pattern_format format, output_compress
 
 // -----------------------------------------------------------------------------
 
-bool DownloadFile(const std::string& url, const std::string& filepath)
-{
-#ifdef ANDROID_GUI
-    return AndroidDownloadFile(url, filepath);
-#endif
-
-#ifdef WEB_GUI
-    return WebDownloadFile(url, filepath);
-#endif
-
-#ifdef IOS_GUI
-    NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url.c_str() encoding:NSUTF8StringEncoding]];
-    if (nsurl == nil) {
-        std::string msg = "Bad URL: " + url;
-        Warning(msg.c_str());
-        return false;
-    }
-    NSData *urlData = [NSData dataWithContentsOfURL:nsurl];
-    if (urlData) {
-        [urlData writeToFile:[NSString stringWithCString:filepath.c_str() encoding:NSUTF8StringEncoding] atomically:YES];
-        return true;
-    } else {
-        Warning("Failed to download file!");
-        return false;
-    }
-#endif
-}
-
-// -----------------------------------------------------------------------------
-
 void GetURL(const std::string& url, const std::string& pageurl)
 {
     const char* HTML_PREFIX = "GET-";   // prepended to html filename
@@ -1102,8 +1072,51 @@ void GetURL(const std::string& url, const std::string& pageurl)
     }
 
     // download the file and store it in filepath
-    if (!DownloadFile(fullurl, filepath)) return;
+    if (DownloadFile(fullurl, filepath)) {
+        ProcessDownload(filepath);
+    }
+}
 
+// -----------------------------------------------------------------------------
+
+bool DownloadFile(const std::string& url, const std::string& filepath)
+{
+#ifdef ANDROID_GUI
+    AndroidDownloadFile(url, filepath);
+    // on Android the file is downloaded asynchronously, so we need to return false
+    // here so that GetURL won't call ProcessDownload immediately (it will be called
+    // later if the download succeeds)
+    return false;
+#endif
+
+#ifdef WEB_GUI
+    return WebDownloadFile(url, filepath);
+#endif
+
+#ifdef IOS_GUI
+    NSURL *nsurl = [NSURL URLWithString:[NSString stringWithCString:url.c_str() encoding:NSUTF8StringEncoding]];
+    if (nsurl == nil) {
+        std::string msg = "Bad URL: " + url;
+        Warning(msg.c_str());
+        return false;
+    }
+    NSData *urlData = [NSData dataWithContentsOfURL:nsurl];
+    if (urlData) {
+        [urlData writeToFile:[NSString stringWithCString:filepath.c_str() encoding:NSUTF8StringEncoding] atomically:YES];
+        return true;
+    } else {
+        Warning("Failed to download file!");
+        return false;
+    }
+#endif
+}
+
+// -----------------------------------------------------------------------------
+
+void ProcessDownload(const std::string& filepath)
+{
+    // process a successfully downloaded file
+    std::string filename = GetBaseName(filepath.c_str());
     if (IsHTMLFile(filename)) {
         // display html file in Help tab
         ShowHelp(filepath.c_str());

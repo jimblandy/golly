@@ -14,6 +14,7 @@ import java.net.URL;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.util.DisplayMetrics;
 // import android.util.Log;
@@ -34,6 +35,7 @@ public class HelpActivity extends BaseActivity {
     private native void nativeCreate();             // the rest must NOT be static
     private native void nativeDestroy();
     private native void nativeGetURL(String url, String pageurl);
+    private native void nativeProcessDownload(String filepath);
     private native void nativeUnzipFile(String zippath);
     private native boolean nativeDownloadedFile(String url);
 
@@ -413,7 +415,7 @@ public class HelpActivity extends BaseActivity {
                     progbar.setProgress(percent);
                     lastpercent = percent;
                 }
-                /* this didn't work!!!
+                /* do this???!!!
                 // show proglayout only if download takes more than 1 second
                 if (System.nanoTime() - starttime > 1000000000L) {
                     runOnUiThread(new Runnable() {
@@ -444,38 +446,38 @@ public class HelpActivity extends BaseActivity {
     private String dresult;
 
     // this method is called from C++ code (see jnicalls.cpp)
-    private String DownloadFile(String urlstring, String filepath) {
-        // we cannot do network connections on main thread, so we do the
-        // download on a new thread, but we have to wait for it to finish
-
+    private void DownloadFile(String urlstring, String filepath) {
         cancelled = false;
         progbar.setProgress(0);
-        // show proglayout immediately
-        // why not showing???!!!
+        // show proglayout immediately???!!!
         proglayout.setVisibility(LinearLayout.VISIBLE);
 
+        // we cannot do network connections on main thread
         dresult = "";
+        final Handler handler = new Handler();
         final String durl = urlstring;
         final String dfile = filepath;
         Thread download_thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 dresult = downloadURL(durl, dfile);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        proglayout.setVisibility(LinearLayout.INVISIBLE);
+                        if (dresult.length() == 0) {
+                            // download succeeded
+                            nativeProcessDownload(dfile);
+                        } else if (!cancelled) {
+                            Toast.makeText(HelpActivity.this, "Download failed! " + dresult, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
             }
         });
         
         download_thread.setPriority(Thread.MAX_PRIORITY);
         download_thread.start();
-        
-        // wait for thread to finish
-        try { download_thread.join(); } catch(InterruptedException ie) {}
-        
-        proglayout.setVisibility(LinearLayout.INVISIBLE);
-        
-        if (dresult.length() > 0 && !cancelled) {
-            Toast.makeText(this, "Download failed! " + dresult, Toast.LENGTH_SHORT).show();
-        }
-        return dresult;
     }
 
 } // HelpActivity class

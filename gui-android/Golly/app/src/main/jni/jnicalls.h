@@ -79,7 +79,7 @@ bool AndroidCopyTextToClipboard(const char* text);
 bool AndroidGetTextFromClipboard(std::string& text);
 // Get text from the clipboard.
 
-bool AndroidDownloadFile(const std::string& url, const std::string& filepath);
+void AndroidDownloadFile(const std::string& url, const std::string& filepath);
 // Download given url and create given file.
 
 #endif
