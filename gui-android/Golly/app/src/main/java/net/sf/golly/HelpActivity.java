@@ -412,10 +412,9 @@ public class HelpActivity extends BaseActivity {
                 downloaded += bufflen;
                 percent = (int) ((downloaded / (float)filesize) * 100);
                 if (percent > lastpercent) {
-                    progbar.setProgress(percent);
+                    progbar.setProgress(percent);   // do in runOnUIThread???!!!
                     lastpercent = percent;
                 }
-                /* do this???!!!
                 // show proglayout only if download takes more than 1 second
                 if (System.nanoTime() - starttime > 1000000000L) {
                     runOnUiThread(new Runnable() {
@@ -426,7 +425,7 @@ public class HelpActivity extends BaseActivity {
                     });
                     starttime = Long.MAX_VALUE; // only show it once
                 }
-                */
+
                 if (cancelled) break;
             }
             outstream.close();
@@ -449,11 +448,10 @@ public class HelpActivity extends BaseActivity {
     private void DownloadFile(String urlstring, String filepath) {
         cancelled = false;
         progbar.setProgress(0);
-        // show proglayout immediately???!!!
-        proglayout.setVisibility(LinearLayout.VISIBLE);
+        // don't show proglayout immediately
+        // proglayout.setVisibility(LinearLayout.VISIBLE);
 
         // we cannot do network connections on main thread
-        dresult = "";
         final Handler handler = new Handler();
         final String durl = urlstring;
         final String dfile = filepath;
