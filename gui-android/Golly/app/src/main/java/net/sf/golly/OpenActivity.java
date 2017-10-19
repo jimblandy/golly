@@ -6,7 +6,9 @@ package net.sf.golly;
 import java.io.File;
 import java.util.Arrays;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,7 +24,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-public class OpenActivity extends BaseActivity {
+public class OpenActivity extends Activity {
 
     // see jnicalls.cpp for these native routines:
     private native String nativeGetRecentPatterns();
@@ -143,6 +145,7 @@ public class OpenActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void removeFile(String filepath) {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         final String fullpath = baseapp.userdir.getAbsolutePath() + "/" + filepath;
         final File file = new File(fullpath);
         
@@ -183,8 +186,9 @@ public class OpenActivity extends BaseActivity {
                 Toast.makeText(this, "Editing a compressed file is not supported.", Toast.LENGTH_SHORT).show();
             }
             return;
-        }        
+        }
 
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         // let user read/edit given file
         if (currpatterns == PATTERNS.SUPPLIED) {
             // read contents of supplied file into a string
@@ -372,6 +376,7 @@ public class OpenActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void showSuppliedPatterns() {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         String paths = enumerateDirectory(new File(baseapp.supplieddir, "Patterns"), "");
         String htmldata = nativeGetSuppliedPatterns(paths);
         // use a special base URL so that <img src="foo.png"/> will extract foo.png from the assets folder
@@ -388,6 +393,7 @@ public class OpenActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void showSavedPatterns() {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         String paths = enumerateDirectory(new File(baseapp.userdir, "Saved"), "");
         String htmldata = nativeGetSavedPatterns(paths);
         gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);
@@ -396,6 +402,7 @@ public class OpenActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void showDownloadedPatterns() {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         String paths = enumerateDirectory(new File(baseapp.userdir, "Downloads"), "");
         String htmldata = nativeGetDownloadedPatterns(paths);
         gwebview.loadDataWithBaseURL(null, htmldata, "text/html", "utf-8", null);

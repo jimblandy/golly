@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
@@ -15,7 +16,7 @@ import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.TextView;
 
-public class InfoActivity extends BaseActivity {
+public class InfoActivity extends Activity {
     
 	private native String nativeGetInfo();             // the rest must NOT be static
 	

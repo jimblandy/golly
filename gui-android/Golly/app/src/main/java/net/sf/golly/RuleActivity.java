@@ -6,6 +6,7 @@ package net.sf.golly;
 import java.io.File;
 import java.util.Arrays;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,7 +28,7 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 
-public class RuleActivity extends BaseActivity {
+public class RuleActivity extends Activity {
 
     // see jnicalls.cpp for these native routines:
     private native void nativeSaveCurrentSelection();
@@ -124,6 +125,7 @@ public class RuleActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void removeFile(String filepath) {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         final String fullpath = baseapp.userdir.getAbsolutePath() + "/" + filepath;
         final File file = new File(fullpath);
         
@@ -151,6 +153,7 @@ public class RuleActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void editFile(String filepath) {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         // let user read/edit given file
         if (filepath.startsWith("Supplied/")) {
             // read contents of supplied .rule file into a string
@@ -307,6 +310,7 @@ public class RuleActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void showAlgoHelp() {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         String algoname = nativeGetAlgoName(algoindex);
         if (algoname.equals("RuleLoader")) {
             // create html data with links to the user's .rule files and the supplied .rule files

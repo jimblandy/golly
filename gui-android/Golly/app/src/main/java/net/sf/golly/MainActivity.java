@@ -5,6 +5,7 @@ package net.sf.golly;
 
 import java.io.File;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -34,7 +35,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-public class MainActivity extends BaseActivity {
+public class MainActivity extends Activity {
 
     // see jnicalls.cpp for these native routines:
     private static native void nativeClassInit();   // this MUST be static
@@ -1013,6 +1014,7 @@ public class MainActivity extends BaseActivity {
                         PlayBeepSound();
                         return;
                     }
+                    BaseApp baseapp = (BaseApp)getApplicationContext();
                     // check for valid extension
                     if (!nativeValidExtension(filename)) {
                         baseapp.Warning("Invalid file extension.");
@@ -1230,6 +1232,7 @@ public class MainActivity extends BaseActivity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private String GetTextFromClipboard() {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         String text = "";
         if (clipboard.hasPrimaryClip()) {
@@ -1247,6 +1250,7 @@ public class MainActivity extends BaseActivity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void ShowTextFile(String filepath) {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         // display file contents
         Intent intent = new Intent(baseapp.getCurrentActivity(), InfoActivity.class);
         intent.putExtra(InfoActivity.INFO_MESSAGE, filepath);
@@ -1281,6 +1285,7 @@ public class MainActivity extends BaseActivity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private boolean AbortProgress(int percentage, String message) {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         if (progresscount <= 0) baseapp.Fatal("Bug detected in AbortProgress!");
         long nanosecs = System.nanoTime() - progstart;
         if (proglayout.getVisibility() == LinearLayout.VISIBLE) {
@@ -1313,6 +1318,7 @@ public class MainActivity extends BaseActivity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void EndProgress() {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         if (progresscount <= 0) baseapp.Fatal("Bug detected in EndProgress!");
         progresscount--;
         if (progresscount == 0) {

@@ -6,6 +6,8 @@ package net.sf.golly;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -14,6 +16,7 @@ import android.app.AlertDialog;
 import android.app.Application;
 import android.content.DialogInterface;
 import android.content.res.AssetManager;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -37,9 +40,9 @@ public class BaseApp extends Application {
 	
     public File userdir;        // directory for user-created data
     public File supplieddir;    // directory for supplied data
-	
-    private Activity currentActivity = null;
-    
+
+    private Deque<Activity> activityStack = new ArrayDeque<Activity>();
+
     // -----------------------------------------------------------------------------
     
     static {
@@ -69,18 +72,46 @@ public class BaseApp extends Application {
         
         initPaths();        // sets userdir, supplieddir, etc (must be BEFORE nativeCreate)
         nativeCreate();     // cache this instance and initialize lots of Golly stuff
+
+        this.registerActivityLifecycleCallbacks(new MyActivityLifecycleCallbacks());
     }
     
     // -----------------------------------------------------------------------------
+
+    private class MyActivityLifecycleCallbacks implements ActivityLifecycleCallbacks {
+
+        @Override
+        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {}
+
+        @Override
+        public void onActivityDestroyed(Activity activity) {}
+
+        @Override
+        public void onActivityPaused(Activity activity) {
+            // MainActivity is special (singleTask) and can be called into with NewIntent
+            if (activity instanceof MainActivity) {
+                return;
+            }
+            activityStack.removeFirst();
+        }
+
+        @Override
+        public void onActivityResumed(Activity activity) {
+            activityStack.addFirst(activity);
+        }
+
+        @Override
+        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {}
+
+        @Override
+        public void onActivityStarted(Activity activity) {}
+
+        @Override
+        public void onActivityStopped(Activity activity) {}
+    }
 
     public Activity getCurrentActivity() {
-        return currentActivity;
-    }
-    
-    // -----------------------------------------------------------------------------
-
-    public void setCurrentActivity(Activity a) {
-        currentActivity = a;
+        return activityStack.peekFirst();
     }
     
     // -----------------------------------------------------------------------------
@@ -175,10 +206,11 @@ public class BaseApp extends Application {
         //!!! final Handler handler = new LooperInterrupter();
 
         //!!!
+        Activity currentActivity = getCurrentActivity();
         if (currentActivity == null) {
             Log.i("Warning", "currentActivity is null!");
         }
-        
+
         // note that MainActivity might not be the current foreground activity
         AlertDialog.Builder alert = new AlertDialog.Builder(currentActivity);
         alert.setTitle("Warning");
@@ -202,7 +234,8 @@ public class BaseApp extends Application {
     void Fatal(String msg) {
         // use a handler to get a modal dialog
         final Handler handler = new LooperInterrupter();
-        
+
+        Activity currentActivity = getCurrentActivity();
         // note that MainActivity might not be the current foreground activity
         AlertDialog.Builder alert = new AlertDialog.Builder(currentActivity);
         alert.setTitle("Fatal error!");
@@ -230,7 +263,8 @@ public class BaseApp extends Application {
     String YesNo(String query) {
         // use a handler to get a modal dialog
         final Handler handler = new LooperInterrupter();
-        
+
+        Activity currentActivity = getCurrentActivity();
         // note that MainActivity might not be the current foreground activity
         AlertDialog.Builder alert = new AlertDialog.Builder(currentActivity);
         alert.setTitle("A question...");

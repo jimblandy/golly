@@ -12,6 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,7 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-public class HelpActivity extends BaseActivity {
+public class HelpActivity extends Activity {
 
     // see jnicalls.cpp for these native routines:
     private static native void nativeClassInit();   // this MUST be static
@@ -135,6 +136,7 @@ public class HelpActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void editFile(String filepath) {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         // let user read/edit given file
         if (filepath.startsWith("Supplied/")) {
             // read contents of supplied .rule file into a string
@@ -325,6 +327,7 @@ public class HelpActivity extends BaseActivity {
     // -----------------------------------------------------------------------------
     
     private void showContentsPage() {
+        BaseApp baseapp = (BaseApp)getApplicationContext();
         // display html data in supplieddir/Help/index.html
         String fullpath = baseapp.supplieddir.getAbsolutePath() + "/Help/index.html";
         File htmlfile = new File(fullpath);

@@ -3,6 +3,7 @@
 
 package net.sf.golly;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -10,7 +11,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.CheckBox;
 
-public class StateActivity extends BaseActivity {
+public class StateActivity extends Activity {
 
     // see jnicalls.cpp for these native routines:
     private native int nativeNumStates();
