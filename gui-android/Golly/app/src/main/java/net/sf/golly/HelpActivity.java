@@ -415,7 +415,7 @@ public class HelpActivity extends Activity {
                 downloaded += bufflen;
                 percent = (int) ((downloaded / (float)filesize) * 100);
                 if (percent > lastpercent) {
-                    progbar.setProgress(percent);   // do in runOnUIThread???!!!
+                    progbar.setProgress(percent);
                     lastpercent = percent;
                 }
                 // show proglayout only if download takes more than 1 second
