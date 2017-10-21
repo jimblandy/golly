@@ -1285,8 +1285,10 @@ public class MainActivity extends Activity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private boolean AbortProgress(int percentage, String message) {
-        BaseApp baseapp = (BaseApp)getApplicationContext();
-        if (progresscount <= 0) baseapp.Fatal("Bug detected in AbortProgress!");
+        if (progresscount <= 0) {
+            Log.e("Golly","Bug detected in AbortProgress!");
+            return true;
+        }
         long nanosecs = System.nanoTime() - progstart;
         if (proglayout.getVisibility() == LinearLayout.VISIBLE) {
             if (nanosecs < prognext) return false;
@@ -1318,8 +1320,10 @@ public class MainActivity extends Activity {
 
     // this method is called from C++ code (see jnicalls.cpp)
     private void EndProgress() {
-        BaseApp baseapp = (BaseApp)getApplicationContext();
-        if (progresscount <= 0) baseapp.Fatal("Bug detected in EndProgress!");
+        if (progresscount <= 0) {
+            Log.e("Golly","Bug detected in EndProgress!");
+            return;
+        }
         progresscount--;
         if (progresscount == 0) {
             proglayout.setVisibility(LinearLayout.INVISIBLE);
