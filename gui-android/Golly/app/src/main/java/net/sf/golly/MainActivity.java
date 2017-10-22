@@ -143,7 +143,6 @@ public class MainActivity extends Activity {
     private TextView progtitle;                     // title above progress bar
     private ProgressBar progbar;                    // progress bar
     private LinearLayout proglayout;                // view containing progress bar
-    private Handler proghandler;                    // for showing/hiding proglayout
 
     // -----------------------------------------------------------------------------
     
@@ -187,10 +186,11 @@ public class MainActivity extends Activity {
     private void CheckMessageQueue() {
         // process any pending UI events in message queue
         if (!processingevents) {
-            Looper.myQueue().addIdleHandler(new IdleHandler(Looper.myLooper()));
+            Looper looper = Looper.myLooper();
+            looper.myQueue().addIdleHandler(new IdleHandler(looper));
             processingevents = true;
             try {
-                Looper.loop();
+                looper.loop();
             } catch (RuntimeException re) {
                 // looper.quit() in doevents causes an exception
             }
@@ -265,8 +265,7 @@ public class MainActivity extends Activity {
         
         restorebutton.setVisibility(View.INVISIBLE);
         proglayout.setVisibility(LinearLayout.INVISIBLE);
-        proghandler = new Handler();
-        
+
         // create handler and runnable for generating patterns
         geninterval = nativeCalculateSpeed();
         genhandler = new Handler();
@@ -1302,16 +1301,7 @@ public class MainActivity extends Activity {
             // the task will take, especially when we use nextcell for cut/copy
             if ( (nanosecs > 1000000000L && percentage < 30) || nanosecs > 2000000000L ) {
                 // task is probably going to take a while so show progress bar
-                
-                // maybe no need for proghandler!!! just use runOnUiThread???
-                // runOnUiThread(new Runnable() {
-                
-                proghandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        proglayout.setVisibility(LinearLayout.VISIBLE);
-                    }
-                });
+                proglayout.setVisibility(LinearLayout.VISIBLE);
                 updateProgressBar(percentage);
             }
             prognext = nanosecs + 10000000L;     // 0.01 sec delay until 1st progress update
@@ -1337,12 +1327,7 @@ public class MainActivity extends Activity {
         }
         progresscount--;
         if (progresscount == 0) {
-            proghandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    proglayout.setVisibility(LinearLayout.INVISIBLE);
-                }
-            });
+            proglayout.setVisibility(LinearLayout.INVISIBLE);
         }
     }
 
