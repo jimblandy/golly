@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 65
+local build = 66
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -1888,6 +1888,11 @@ local function breakout()
 
             -- draw bricks
             drawbricks()
+
+	    -- draw brick score
+            if brickscore == 1 then
+                drawpoints()
+            end
 
             -- check why game finished
             if showoptions then
