@@ -62,7 +62,7 @@ with a total population over 2500 cells:
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 [M2] (golly 3.0)
 #R B3/S23
-.**.**$*.*.*.*$**...**$$**...**$*.*.*.*$.**.**$
+.OO.OO$O.O.O.O$OO...OO$$OO...OO$O.O.O.O$.OO.OO$
 4 0 1 1 1
 5 2 0 2 2
 6 3 3 0 3
@@ -89,7 +89,8 @@ stored more efficiently using <a href="lex_r.htm#rle">rle</a> format.
 <a href="lex_h.htm#halfbakedknightship">half-baked knightship</a>, <a href="lex_w.htm#waterbear">waterbear</a>, <a href="lex_d.htm#demonoid">Demonoid</a>, <a href="lex_o.htm#orthogonoid">Orthogonoid</a>, and
 <a href="lex_c.htm#caterloopillar">Caterloopillar</a>. Engineered spaceships of these types tend to be
 much larger and more complex than <a href="lex_e.htm#elementary">elementary</a> spaceships.
-<p><a name=mango>:</a><b>mango</b> (p1)
+<p><a name=mango>:</a><b>mango</b> (p1) An uncommon 180-degree rotationally <a href="lex_s.htm#symmetric">symmetric</a> 8-<a href="lex_b.htm#bit">bit</a>
+<a href="lex_s.htm#stilllife">still life</a>. The <a href="lex_a.htm#acorn">acorn</a> produces a mango as part of its <a href="lex_a.htm#ash">ash</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .OO..
 O..O.
@@ -133,6 +134,15 @@ O.....O
 <p><a name=mc>:</a><b>mc</b> = <a href="#macrocell">macrocell</a>
 <p><a name=mediumfish>:</a><b>medium fish</b> = <a href="#mwss">MWSS</a>
 <p><a name=megacell>:</a><b>megacell</b> = <a href="lex_p.htm#p1megacell">p1 megacell</a>.
+<p><a name=memorycell>:</a><b>memory cell</b> A type of information storage <a href="lex_c.htm#circuit">circuit</a> useful in many
+patterns that perform complex logical operations. Most commonly a
+memory cell can store a single bit of information. See for example
+<a href="lex_d.htm#demultiplexer">demultiplexer</a>, <a href="lex_h.htm#honeybit">honey bit</a>, and <a href="lex_b.htm#boatbit">boat-bit</a>. Depending on the
+application, the circuit may be a <a href="lex_t.htm#togglecircuit">toggle circuit</a>, or it may be
+possible to send one or more signals to set the circuit to a "1"
+state, as can be done with a <a href="lex_k.htm#keeper">keeper</a> mechanism. In that case a
+different input signal must be used to test the current state,
+usually with a destructive read reaction.
 <p><a name=metacatacryst>:</a><b>metacatacryst</b> A 52-cell pattern exhibiting quadratic growth. Found
 by Nick Gotts, December 2000. This was for some time the smallest
 known pattern (in terms of initial population) with superlinear
@@ -349,8 +359,12 @@ growth, but it has since been superseded by <a href="lex_t.htm#teeth">teeth</a>,
 <a href="#metacatacryst">metacatacryst</a>, <a href="lex_g.htm#gottsdots">Gotts dots</a> and <a href="lex_w.htm#wedge">wedge</a>.
 <p><a name=mould>:</a><b>mould</b> = <a href="#mold">mold</a>
 <p><a name=movingsawtooth>:</a><b>moving sawtooth</b> A <a href="lex_s.htm#sawtooth">sawtooth</a> such that no cell is ON for more than a
-finite number generations. David Bell has constructed patterns of
-this type, with a <i>c</i>/2 front end and a <i>c</i>/3 back end.
+finite number generations. David Bell constructed the first pattern
+of this type, with a <i>c</i>/2 front end and a <i>c</i>/3 back end. The front end
+is a <a href="lex_b.htm#blinkerpuffer">blinker puffer</a>. The back end ignites the <a href="lex_b.htm#blinkerfuse">blinker fuse</a>. The
+smallest currently known moving sawtooth has a <i>c</i>/2 front end and a
+2<i>c</i>/5 back end. The front end is a <a href="lex_b.htm#biblockpuffer">bi-block puffer</a>. The back end
+ignites the <a href="lex_b.htm#biblockfuse">bi-block fuse</a>.
 <p><a name=msmbreeder>:</a><b>MSM breeder</b> See <a href="lex_b.htm#breeder">breeder</a>.
 <p><a name=multipleroteightors>:</a><b>multiple roteightors</b> (p8) An <a href="lex_e.htm#extensible">extensible</a> oscillator family
 consisting of one or more <a href="lex_r.htm#roteightor">roteightor</a> rotors, discovered by Dean

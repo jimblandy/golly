@@ -436,20 +436,52 @@ circuitry. <a href="lex_r.htm#rpentomino">R-pentominoes</a> and <a href="lex_b.h
 Herschels, and <a href="lex_c.htm#converter">converters</a> have also been found that change
 <a href="lex_p.htm#piheptomino">pi-heptominoes</a> and several other signal types into Herschels, and
 vice versa. See <a href="lex_e.htm#elementaryconduit">elementary conduit</a>.
+<p><a name=herschelcircuit>:</a><b>Herschel circuit</b> A series of <a href="#herschelconduit">Herschel conduits</a> or other components,
+connected by placing them so that the output <a href="#herschel">Herschels</a> from early
+conduits become the input Herschels for later conduits. Often the
+initial component is a <a href="lex_c.htm#converter">converter</a> accepting some other signal type
+as input -- usually a glider, in which case a <a href="lex_s.htm#syringe">syringe</a> is most
+commonly used. The <a href="lex_s.htm#silverreflector">Silver reflector</a> well-known early <a href="lex_s.htm#spartan">Spartan</a>
+Herschel circuit from before the syringe was discovered, where the
+initial converter is a <a href="lex_c.htm#callahangtoh">Callahan G-to-H</a>.
+<p>Sometimes a direct connection between two conduits is not possible
+due to unwanted gliders that destroy required <a href="lex_c.htm#catalyst">catalysts</a>, or wanted
+gliders that are not able to escape. In this case, small "spacer"
+conduits such as <a href="lex_f.htm#fx77">Fx77</a>, <a href="lex_r.htm#r64">R64</a>, <a href="lex_l.htm#l112">L112</a>, <a href="lex_f.htm#f116">F116</a> or <a href="lex_f.htm#f117">F117</a> can be
+inserted between the other conduits to solve the problem.
+<p>Some converter or <a href="lex_f.htm#factory">factory</a> conduits do not produce a Herschel as
+output, instead generating other useful results such as gliders,
+<a href="lex_b.htm#boat">boats</a> or <a href="lex_m.htm#mwss">MWSSes</a>. See <a href="#herscheltoglider">Herschel-to-glider</a>, <a href="lex_d.htm#demultiplexer">demultiplexer</a>, and
+<a href="#htomwss">H-to-MWSS</a> respectively for examples of these. For those conduits
+which do produce an unwanted Herschel, an <a href="lex_e.htm#eater">eater</a> such as <a href="lex_s.htm#sw2">SW-2</a> can
+be added to delete it.
+<p>If the first and last conduits of a chain connect to each other in
+a loop then there is no need for a syringe to generate the first
+Herschel, or an eater to consume the last one. The circuit becomes a
+self-supporting <a href="#herschelloop">Herschel loop</a>. A loop is also formed by a
+<a href="lex_s.htm#syringe">syringe</a> connected to a Herschel-to-glider converter, with the
+glider reflected back to the syringe's input with glider reflectors
+of the appropriate colour, usually <a href="lex_s.htm#snark">Snarks</a>. In either case, if the
+loop has a surplus <a href="lex_g.htm#glider">glider</a> output, it becomes a <a href="lex_g.htm#gun">gun</a>; if no output
+is available it is an <a href="lex_e.htm#emu">emu</a>.
 <p><a name=herschelclimber>:</a><b>Herschel climber</b> Any <a href="lex_r.htm#reburnablefuse">reburnable fuse</a> reaction involving
 <a href="#herschel">Herschels</a>. May refer specifically to the
 <a href="lex_1.htm#a-235c79herschelclimber">(23,5)c/79 Herschel climber</a> used in the <a href="lex_w.htm#waterbear">waterbear</a>, or one of
 several similar reactions with various velocities. See also
 <a href="#herschelpairclimber">Herschel-pair climber</a>.
+<p><a name=herschelcomponent>:</a><b>Herschel component</b> = <a href="#herschelconduit">Herschel conduit</a>
 <p><a name=herschelconduit>:</a><b>Herschel conduit</b> A <a href="lex_c.htm#conduit">conduit</a> that moves a <a href="#herschel">Herschel</a> from one place
 to another. See also <a href="#herschelloop">Herschel loop</a>.
 <p>Well over a hundred simple stable Herschel conduits are currently
-known. As of October 2017 the number is approximately 130, depending
-on the precise definition of "simple" - e.g., fitting inside a
-100x100 bounding box, and producing output in no more than 300
-<a href="lex_t.htm#tick">ticks</a>. In general a Herschel conduit can be called "simple" if its
-active reaction does not return to a Herschel stage except at its
-output. Compare <a href="lex_e.htm#elementaryconduit">elementary conduit</a>, <a href="lex_c.htm#compositeconduit">composite conduit</a>.
+known. As of November 2017 the number is approximately 130,
+depending on the precise definition of "simple" - e.g., fitting
+inside a 100x100 bounding box, and producing output in no more than
+300 <a href="lex_t.htm#tick">ticks</a>. In general a Herschel conduit can be called "simple" if
+its active reaction does not return to a Herschel stage except at
+its output. Compare <a href="lex_e.htm#elementaryconduit">elementary conduit</a>, <a href="lex_c.htm#compositeconduit">composite conduit</a>. A
+description of common usage in complex circuitry, using <a href="lex_s.htm#syringe">syringes</a>
+and <a href="lex_s.htm#snark">Snarks</a> to make compact connections, can be found in
+<a href="#herschelcircuit">Herschel circuit</a>.
 <p>The original <a href="lex_u.htm#universal">universal</a> set consisted of sixteen stable Herschel
 conduits, discovered between 1995 and 1998 by Dave Buckingham (DJB)
 and Paul Callahan (PBC). These are shown in the following table. In
@@ -532,14 +564,16 @@ of <a href="#herschel">Herschels</a>. May refer specifically to the
 several similar reactions with various velocities. See also
 <a href="#herschelclimber">Herschel climber</a>.
 <p><a name=herschelreceiver>:</a><b>Herschel receiver</b> Any <a href="lex_c.htm#circuit">circuit</a> that converts a <a href="lex_t.htm#tandemglider">tandem glider</a> into
-a Herschel signal. The following diagram shows a pattern found by
-Paul Callahan in 1996, as part of the first stable glider
+a <a href="#herschel">Herschel</a> <a href="lex_s.htm#signal">signal</a>. The following diagram shows a pattern found
+by Paul Callahan in 1996, as part of the first stable glider
 <a href="lex_r.htm#reflector">reflector</a>. Used as a receiver, it converts two parallel input
-gliders (with path separations of 2, 5, or 6) to an <a href="lex_r.htm#rpentomino">R-pentomino</a>,
-which is then converted to a Herschel by one of two known mechanisms
-(the first of which was found by Dave Buckingham way back in 1972,
-and the second by Stephen Silver in October 1997). The version using
-Buckingham's R-to-Herschel converter is shown below.
+gliders (with path separations of 2, 5, or 6) to an <a href="lex_r.htm#rpentomino">R-pentomino</a>.
+The signal is then converted to a Herschel by one of several known
+mechanisms, the first of which was found by Dave Buckingham way back
+in 1972. The second is <a href="lex_e.htm#elementaryconduit">elementary conduit</a> RF48H, found by Stephen
+Silver in October 1997. The receiver version shown below uses
+Buckingham's R-to-Herschel converter, which is made up of elementary
+conduit RF28B followed by <a href="lex_b.htm#bfx59h">BFx59H</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ...............................................O.O
 ......................................OO.......OO.
@@ -704,9 +738,9 @@ OO..
 ..O.
 </a></pre></td></tr></table></center>
 <p><a name=highbandwidthtelegraph>:</a><b>high-bandwidth telegraph</b> (p960, p30 circuitry) A variant of the
-<a href="lex_t.htm#telegraph">telegraph</a> constructed by Louis-Fran&ccedil;ois Handfield in February
-2017, using periodic components to achieve a transmission rate of one
-bit per 192 ticks. The same ten signals are sent as in the original
+<a href="lex_t.htm#telegraph">telegraph</a> constructed by Louis-Fran&ccedil;ois Handfield in February 2017,
+using periodic components to achieve a transmission rate of one bit
+per 192 ticks. The same ten signals are sent as in the original
 telegraph and the <a href="lex_p.htm#p1telegraph">p1 telegraph</a>, but information is encoded more
 efficiently in the timing of those signals. Specifically, the new
 transmitter sends five bits every 960 ticks by adjusting the relative
@@ -790,7 +824,7 @@ OOO.......O.................................
 <p><a name=hivenudger>:</a><b>hivenudger</b> (<i>c</i>/2 orthogonally, p4) A <a href="lex_s.htm#spaceship">spaceship</a> found by Hartmut
 Holzwart in July 1992. (The name is due to Bill Gosper.) It
 consists of a <a href="lex_p.htm#prebeehive">pre-beehive</a> escorted by four <a href="lex_l.htm#lwss">LWSS</a>. In fact any
-LWSS can be replaced by a <a href="lex_m.htm#mwss">MWSS</a> or a <a href="#hwss">HWSS</a>, so that there are 45
+LWSS can be replaced by a <a href="lex_m.htm#mwss">MWSS</a> or an <a href="#hwss">HWSS</a>, so that there are 45
 different single-hive hivenudgers.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OOOO.....O..O
@@ -874,7 +908,7 @@ affecting it. Thus a test input has an output for the "0" case, but
 not for the "1" case. For an alternative memory-unit mechanism with
 both "0" and "1" outputs, see <a href="lex_d.htm#demultiplexer">demultiplexer</a>.
 <p>The honey bit is also an interesting <a href="lex_e.htm#eater">eater</a> for the <a href="#hwss">HWSS</a> as
-shown below. A HWSS colliding with the pond happens to create the
+shown below. An HWSS colliding with the pond happens to create the
 exact same reset glider used in the above memory unit.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..OO...........

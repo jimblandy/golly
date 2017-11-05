@@ -107,7 +107,7 @@ Demonoid using a temporary <a href="lex_l.htm#losslesselbow">lossless elbow</a>,
 79 cells diagonally every 1,183,842 ticks. This was an improvement
 in terms of design complexity, but not in terms of speed, population,
 or bounding box. However, all of these could be further optimized.
-As of October 2017, a smaller Hashlife-friendly single-channel
+As of November 2017, a smaller Hashlife-friendly single-channel
 Demonoid is under construction.
 <p><a name=demultiplexer>:</a><b>demultiplexer</b> A simple <a href="lex_h.htm#herschel">Herschel</a> <a href="lex_c.htm#circuit">circuit</a> consisting of three
 <a href="lex_e.htm#eater1">eater1s</a>, found by Brice Due in August 2006. An input Herschel
@@ -141,7 +141,7 @@ OO...............................
 </a></pre></td></tr></table></center>
 If the Herschel and boat are removed from the above pattern, the
 glider passes cleanly through the circuit. It can be used as the "0"
-output of a one-bit memory circuit, where the 90-degree output would
+output of a one-bit <a href="lex_m.htm#memorycell">memory cell</a>, where the 90-degree output would
 be the "1" output. This was the method used to store presence or
 absence of neighbor <a href="lex_m.htm#metacell">metacells</a> in the <a href="lex_p.htm#p1megacell">p1 megacell</a>.
 <p><a name=demuxer>:</a><b>demuxer</b> = <a href="#demultiplexer">demultiplexer</a>
@@ -277,6 +277,11 @@ OO..OO
 </a></pre></td></tr></table></center>
 <p><a name=domino>:</a><b>domino</b> The 2-cell <a href="lex_p.htm#polyomino">polyomino</a>. A number of objects, such as the
 <a href="lex_h.htm#hwss">HWSS</a> and <a href="lex_p.htm#pentadecathlon">pentadecathlon</a>, produce domino <a href="lex_s.htm#spark">sparks</a>.
+<p><a name=dormant>:</a><b>dormant</b> An object that is either stable or oscillates without
+producing any output, until it is <a href="lex_t.htm#trigger">triggered</a> by an appropriate
+signal, which then produces some desired action. For example,
+<a href="lex_f.htm#freezedried">freeze-dried</a> objects are dormant until the arrival of a particular
+glider.
 <p><a name=doseedo>:</a><b>do-see-do</b> The following reaction, found by David Bell in 1996, in
 which two <a href="lex_g.htm#glider">gliders</a> appear to circle around each other as they are
 reflected 90 degrees by a <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a>. Four copies of the

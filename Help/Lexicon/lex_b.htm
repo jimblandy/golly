@@ -403,6 +403,56 @@ OOO.
 OO.OO
 OO.OO
 </a></pre></td></tr></table></center>
+<p><a name=biblockfuse>:</a><b>bi-block fuse</b> A <a href="lex_c.htm#clean">clean</a> <a href="lex_f.htm#fuse">fuse</a> made by a row of <a href="#biblock">bi-blocks</a> separated
+by 2 cell gaps. The bi-block row <a href="lex_w.htm#wick">wick</a> is usually created by a
+<a href="#biblockpuffer">bi-block puffer</a>. The <a href="#burn">burning</a> advances 8 cells every 12
+generations making its speed <a href="lex_1.htm#a-2c3">2c/3</a>.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO.
+OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO.O..O
+............................................OO.
+OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO.....
+OO..OO..OO..OO..OO..OO..OO..OO..OO..OO..OO.....
+</a></pre></td></tr></table></center>
+<p><a name=biblockpuffer>:</a><b>bi-block puffer</b> Any <a href="lex_p.htm#puffer">puffer</a> whose output is <a href="#biblock">bi-blocks</a>. The term
+is particularly used for p8 <i>c</i>/2 puffers, in which case a
+<a href="#biblockfuse">bi-block fuse</a> is created. A bi-block puffer is easily made using
+two <a href="#backrake">backrakes</a> whose gliders impact symmetrically. Jason Summers
+<a href="lex_w.htm#weld">welded</a> two backrakes to form a more compact puffer, as shown below.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+...........O.O............OO..............................
+..........O..O..........O....O............................
+.........OO.......O....O..................................
+........O......OO.O....O.....O............................
+.......OOOOOO..O.......OOOOOO.............................
+....OO.......O...OOOO.....................................
+...O...OOO.O....O.........................................
+..O...O...OO.O..OO.O..O...................................
+..O.....OO...O.....O......................................
+..OOO...OOOO.O.......O.OO.................................
+...........O.........O..O......O..........................
+..OOO......O.O.......O..O....O.O..........................
+.O.....O.....O........OO......OO.....O..OO..OO..OO..OO..OO
+O...OO.O...OO.......................OO..OO..OO..OO..OO..OO
+O...O......OOO............................................
+O...OO.O...OO.......................OO..OO..OO..OO..OO..OO
+.O.....O.....O........OO......OO.....O..OO..OO..OO..OO..OO
+..OOO......O.O.......O..O....O.O..........................
+...........O.........O..O......O..........................
+..OOO...OOOO.O.......O.OO.................................
+..O.....OO...O.....O......................................
+..O...O...OO.O..OO.O..O...................................
+...O...OOO.O....O.........................................
+....OO.......O...OOOO.....................................
+.......OOOOOO..O.......OOOOOO.............................
+........O......OO.O....O.....O............................
+.........OO.......O....O..................................
+..........O..O..........O....O............................
+...........O.O............OO..............................
+</a></pre></td></tr></table></center>
+By periodically burning the <a href="#biblockfuse">bi-block fuse</a> using perturbations by a
+following backrake and spaceships, <i>c</i>/2 rakes can be created for all
+periods that are a multiple of eight.
 <p><a name=biboat>:</a><b>bi-boat</b> = <a href="#boattie">boat-tie</a>
 <p><a name=biclock>:</a><b>biclock</b> The following <a href="lex_p.htm#pureglidergenerator">pure glider generator</a> consisting of two
 <a href="lex_c.htm#clock">clocks</a>.
@@ -505,7 +555,10 @@ O..O...
 ....OO.
 </a></pre></td></tr></table></center>
 <p><a name=biship>:</a><b>bi-ship</b> = <a href="lex_s.htm#shiptie">ship-tie</a>
-<p><a name=bit>:</a><b>bit</b> A live <a href="lex_c.htm#cell">cell</a>.
+<p><a name=bit>:</a><b>bit</b> A live <a href="lex_c.htm#cell">cell</a>, if used in reference to <a href="lex_s.htm#stilllife">still life</a> <a href="lex_p.htm#population">population</a>.
+For example, a <a href="#beehive">beehive</a> is a 6-bit still life. Other uses generally
+involve information storage: a <a href="lex_m.htm#memorycell">memory cell</a> such as a <a href="lex_h.htm#honeybit">honey bit</a>
+that can hold one binary bit of information for later retrieval.
 <p><a name=bitingoffmorethantheycanchew>:</a><b>biting off more than they can chew</b> (p3) Found by Peter Raynham, July
 1972.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -534,7 +587,8 @@ OOO
 by one cell gaps. The blinker row <a href="lex_w.htm#wick">wick</a> is usually created by a
 <a href="#blinkerpuffer">blinker puffer</a>. The fuse can <a href="#burn">burn</a> in at least three different
 ways at a speed of <a href="lex_1.htm#a-2c3">2c/3</a> depending on the method used to ignite the
-end of the row of blinkers. This variant has found the most use.
+end of the row of blinkers. This variant has found the most use. The
+burning advances 12 cells every 18 generations.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ....................................................O.
 .............................................OO.O..O.O
@@ -709,7 +763,9 @@ OO.O..O.OO
 <p><a name=blockic>:</a><b>Blockic</b> Adjective for <a href="lex_c.htm#constellation">constellations</a> consisting entirely of
 <a href="#block">blocks</a>. It's possible to arrange blocks in a way that can be
 <a href="lex_t.htm#trigger">triggered</a> by a single glider to produce any <a href="lex_g.htm#gliderconstructible">glider constructible</a>
-pattern. See <a href="lex_s.htm#seed">seed</a>.
+pattern. A simple example of a Blockic pattern is shown under
+<a href="lex_f.htm#fuse">fuse</a>. See also <a href="lex_s.htm#seed">seed</a>.
+<p><a name=blockkeeper>:</a><b>block keeper</b> See <a href="lex_k.htm#keeper">keeper</a>.
 <p><a name=blockonbigtable>:</a><b>block on big table</b> = <a href="#blockanddock">block and dock</a>
 <p><a name=blockontable>:</a><b>block on table</b> (p1)
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -720,7 +776,9 @@ OOOO
 O..O
 </a></pre></td></tr></table></center>
 <p><a name=blockpull>:</a><b>block pull</b> The following glider/block collision, which moves a block
-(2,1) toward the glider source:
+(2,1) toward the glider source. Performing this reaction twice using
+a <a href="lex_s.htm#salvo">salvo</a> of two gliders can move a block diagonally back by three
+cells, which can be of use for a <a href="lex_s.htm#slidingblockmemory">sliding block memory</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OO.
 OO.

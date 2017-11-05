@@ -79,7 +79,40 @@ O.O.O.....O.......O.....O.O.O
 </a></pre></td></tr></table></center>
 <p><a name=salvo>:</a><b>salvo</b> A collection of spaceships, usually gliders, all traveling in
 the same direction. Any valid glider construction <a href="lex_r.htm#recipe">recipe</a> can be
-partitioned into no more than four salvos. Compare <a href="lex_f.htm#flotilla">flotilla</a>.
+partitioned into no more than four salvos. Compare <a href="lex_f.htm#flotilla">flotilla</a>. In
+contrast with a <a href="lex_c.htm#convoy">convoy</a>, the spaceships in a salvo are usually
+consumed by the reactions that they cause. Simple examples include
+<a href="lex_b.htm#blockpusher">block pusher</a> and <a href="lex_b.htm#blockpull">block pull</a>.
+<p>Salvos may be <a href="#slow">slow</a> or <a href="#synchronized">synchronized</a>. The following partially
+<a href="#synchronized">synchronized</a> three-glider salvo produces an <a href="lex_l.htm#lwss">LWSS</a> from a block.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO........
+OO........
+..........
+..........
+OOO.......
+O.........
+.O........
+..........
+.......OOO
+.......O..
+........O.
+..........
+..........
+..........
+..........
+..........
+..........
+.......OOO
+.......O..
+........O.
+</a></pre></td></tr></table></center>
+The above is a synchronized salvo and not a slow salvo, because the
+second glider must follow the first with the exact separation shown.
+The third glider can be considered to be a slow glider, because it
+will still delete the temporary loaf no matter how many <a href="lex_t.htm#tick">ticks</a> it is
+delayed. The <a href="#slowgliderconstruction">slow glider construction</a> entry includes an example of
+a true slow salvo.
 <p><a name=sawtooth>:</a><b>sawtooth</b> Any finite pattern whose <a href="lex_p.htm#population">population</a> grows without bound
 but does not tend to infinity. (In other words, the population
 reaches new heights infinitely often, but also infinitely often
@@ -149,16 +182,18 @@ OO.....O......................................................
 .........................OO.OOOO.OO...........................
 ...........................O....O.............................
 </a></pre></td></tr></table></center>
-Moving sawtooth patterns combining a fast <a href="lex_p.htm#puffer">puffer</a> with a slower
-<a href="#spaceship">spaceship</a> have also been constructed. See also <a href="lex_t.htm#tractorbeam">tractor beam</a>.
+Patterns combining a fast <a href="lex_p.htm#puffer">puffer</a> with a slower <a href="#spaceship">spaceship</a> have
+also been constructed (see <a href="lex_m.htm#movingsawtooth">moving sawtooth</a>). See also
+<a href="lex_t.htm#tractorbeam">tractor beam</a>.
 <p><a name=sbm>:</a><b>SBM</b> = <a href="#slidingblockmemory">sliding block memory</a>
 <p><a name=schickengine>:</a><b>Schick engine</b> (<i>c</i>/2 orthogonally, p12) This <a href="#spaceship">spaceship</a>, found by Paul
 Schick in 1972, produces a large <a href="#spark">spark</a> (the 15 live cells at the
 rear in the <a href="lex_p.htm#phase">phase</a> shown below) which can be <a href="lex_p.htm#perturb">perturbed</a> by other
-<i>c</i>/2 spaceships to form a variety of <a href="lex_p.htm#puffer">puffers</a>. The diagram below
-shows the smallest form of the Schick engine, using two <a href="lex_l.htm#lwss">LWSS</a>. It
-is also possible to use two <a href="lex_m.htm#mwss">MWSS</a> or two <a href="lex_h.htm#hwss">HWSS</a>, or even a LWSS and
-a HWSS.
+<i>c</i>/2 spaceships to form a variety of <a href="lex_p.htm#puffer">puffers</a>. See <a href="lex_b.htm#blinkership">blinker ship</a>
+for an example perturbation of the spark. The diagram below shows
+the smallest form of the Schick engine, using two <a href="lex_l.htm#lwss">LWSS</a>. It is also
+possible to use two <a href="lex_m.htm#mwss">MWSSes</a> or two <a href="lex_h.htm#hwss">HWSSes</a>, or even an LWSS and an
+HWSS.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OOOO..............
 O...O.........O...
@@ -349,36 +384,21 @@ the Caterloopillars are exceptions, but their direction of travel is
 fixed, and a specific Caterloopillar can't be made to change its
 speed without completely rebuilding it. Compare <a href="#selfconstructing">self-constructing</a>,
 <a href="lex_e.htm#elementary">elementary</a>.
-<p><a name=semisnark>:</a><b>semi-Snark</b> A small 90-degree <a href="lex_g.htm#gliderreflector">glider reflector</a> requiring two input
-gliders on the same lane for each output glider. It was discovered
-by Sergei Petrov on 1 July 2013, using a custom-written search
-utility. It functions as a very compact <a href="lex_p.htm#perioddoubler">period doubler</a> in some
-<a href="#signal">signal</a> <a href="lex_c.htm#circuit">circuitry</a>, for example the <a href="lex_l.htm#linearpropagator">linear propagator</a>. The
-semi-Snark can period-double a regular glider <a href="#stream">stream</a> of period 51
-or more, or a staggered stream with two gliders every 67 ticks or
-more, since the block reset glider can be sent just 16 ticks before
-its partner.
-<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
-......O..........OO
-.......OO........O.
-......OO.......O.O.
-...............OO..
-..........O........
-OO.........OO......
-OO........OO.......
-...................
-...................
-.................OO
-..........OO.....OO
-..........OO.......
-...................
-.....O.............
-....O.O............
-....OO......OO.....
-............O......
-.............OOO...
-...............O...
-</a></pre></td></tr></table></center>
+<p><a name=semisnark>:</a><b>semi-Snark</b> Any small <a href="#stable">stable</a> <a href="#signal">signal</a> <a href="lex_c.htm#conduit">conduit</a> that produces one
+output glider for every two input gliders, with a 90 degree
+reflection. These can act as period-doublers for any glider stream
+whose period is at least equal to their repeat time, and so adding
+one of these to a single glider <a href="lex_g.htm#gun">gun</a> often results in a pattern much
+smaller than the older <a href="lex_t.htm#technology">technology</a> of crossing the output of two
+guns.
+<p>The available semi-Snarks differ in their complexity, size, repeat
+time, and the colour of their output gliders. The <a href="lex_c.htm#ccsemisnark">CC semi-Snark</a>
+was the first one found, and the term "semi-Snark" is often used
+specifically for this object. The "CC" prefix stands for
+<a href="lex_c.htm#colourchanging">colour-changing</a>, by contrast with the more recently discovered
+<a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_c.htm#cpsemisnark">CP semi-Snark</a>. There are also CC and CP
+variants of a semi-Snark discovered by Tanner Jacobi in November
+2017, based on a two-<a href="lex_g.htm#glider">glider</a> to <a href="lex_c.htm#century">century</a> <a href="lex_c.htm#converter">converter</a>.
 <p><a name=sesquihat>:</a><b>sesquihat</b> (p1) Halfway between a <a href="lex_h.htm#hat">hat</a> and a <a href="lex_t.htm#twinhat">twinhat</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ....O
@@ -492,7 +512,7 @@ OO...
 O.OOO
 ....O
 </a></pre></td></tr></table></center>
-<p><a name=sidecar>:</a><b>sidecar</b> A small <a href="lex_t.htm#tagalong">tagalong</a> for a <a href="lex_h.htm#hwss">HWSS</a> that was found by Hartmut
+<p><a name=sidecar>:</a><b>sidecar</b> A small <a href="lex_t.htm#tagalong">tagalong</a> for an <a href="lex_h.htm#hwss">HWSS</a> that was found by Hartmut
 Holzwart in 1992. The resulting <a href="#spaceship">spaceship</a> (shown below) has a
 <a href="lex_p.htm#phase">phase</a> with only 24 cells, making it in this respect the smallest
 known spaceship other than the <a href="#standardspaceship">standard spaceships</a> and some trivial
@@ -778,8 +798,8 @@ OO.....OO........................
 construction arm and <a href="#slowsalvo">slow salvo</a> techniques to construct, usually,
 <a href="#spartan">Spartan</a> or near-Spartan circuitry. Compare <a href="lex_t.htm#twoarm">two-arm</a>.
 <p><a name=singlechannel>:</a><b>single-channel</b> A type of <a href="lex_u.htm#universalconstructor">universal constructor</a> discovered and
-developed by Simon Ekstr&ouml;m and others starting in December 2015.
-The initial <a href="lex_e.htm#elbowoperation">elbow operation</a> toolkit was near-minimal, with just one
+developed by Simon Ekstr&ouml;m and others starting in December 2015. The
+initial <a href="lex_e.htm#elbowoperation">elbow operation</a> toolkit was near-minimal, with just one
 <a href="lex_p.htm#push">push</a>, one <a href="lex_p.htm#pull">pull</a>, and one output glider of each colour (see
 <a href="lex_c.htm#colourofaglider">colour of a glider</a>). Later searches produced a much larger and
 more efficient library.
@@ -793,7 +813,7 @@ a single <a href="lex_e.htm#elbow">elbow</a> <a href="lex_b.htm#block">block</a>
 efficiently around complex obstructions by bending itself through
 multiple <a href="lex_l.htm#losslesselbow">lossless elbows</a>. Known recipes can also remove an elbow
 when it is no longer needed, by controlled demolition of the Snark.
-<p>As of October 2017, almost all single-channel recipes are made up
+<p>As of November 2017, almost all single-channel recipes are made up
 of <a href="#singleton">singletons</a> and <a href="#synchronized">synchronized</a> pairs of gliders, but no
 synchronized triplets or larger groups. This is not an inherent
 limitation of single-channel construction, but rather a limitation in
@@ -933,17 +953,31 @@ O.O..............
 position of a <a href="lex_b.htm#block">block</a>. The block can be moved by means of <a href="lex_g.htm#glider">glider</a>
 collisions. See <a href="lex_b.htm#blockpusher">block pusher</a> for an example.
 <p>In Conway's original formulation (as part of his proof of the
-existence of a <a href="lex_u.htm#universalcomputer">universal computer</a> in Life) 2 gliders were used to
-pull the block inwards by three diagonal spaces, and 30 gliders were
-used to push it out by the same amount. Dean Hickerson later greatly
-improved on this, finding a way to pull a block inwards by one
-diagonal space using 2 gliders, and push it out using 3 gliders. In
-order for the memory to be of any use there also has to be a way to
-read the value held. It suffices to be able to check whether the
-value is zero (as Conway did), or to be able to detect the transition
-from one to zero (as Hickerson did).
+existence of a <a href="lex_u.htm#universalcomputer">universal computer</a> in Life) two gliders were used to
+pull the block inwards by three diagonal spaces, as shown below, and
+thirty gliders were used to push it out by the same amount.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO..........
+OO..........
+............
+............
+............
+.........OOO
+OOO......O..
+O.........O.
+.O..........
+</a></pre></td></tr></table></center>
+<p>Dean Hickerson later greatly improved on this, finding a way to
+pull a block inwards by one diagonal space using 2 gliders, and push
+it out the same distance using 3 gliders. In order for the memory to
+be of any use there also has to be a way to read the value held. It
+suffices to be able to check whether the value is zero (as Conway
+did), or to be able to detect the transition from one to zero (as
+Hickerson did).
 <p>Dean Hickerson's sliding block memory is used in Paul Chapman's
-<a href="lex_u.htm#urm">URM</a>.
+<a href="lex_u.htm#urm">URM</a>, and several other complex constructions such as Adam P.
+Goucher's <a href="lex_p.htm#picalculator">pi calculator</a> and <a href="#spartan">Spartan</a>
+<a href="lex_u.htm#universalcomputer">universal computer</a>-constructor.
 <p><a name=slmake>:</a><b>slmake</b> A <a href="#searchprogram">search program</a> published by Adam P. Goucher in May 2017.
 It accepts as input a <a href="lex_c.htm#constellation">constellation</a> of sufficiently widely
 separated <a href="#stilllife">still lifes</a>, and produces a <a href="lex_g.htm#glider">glider</a> <a href="#stream">stream</a> that will
@@ -955,6 +989,7 @@ patterns much easier to design and build. It is capable of finding
 other useful non-Spartan circuits such as <a href="#snark">Snarks</a>, <a href="#syringe">syringes</a>, and
 <a href="lex_h.htm#htomwss">H-to-MWSS</a> <a href="lex_c.htm#converter">converters</a>, provided that they are separated from other
 nearby objects by a sufficient amount of empty space.
+<p><a name=slow>:</a><b>slow</b> See <a href="#slowgliderconstruction">slow glider construction</a>.
 <p><a name=slowelbow>:</a><b>slow elbow</b> A movable <a href="lex_e.htm#elbow">elbow</a> in a <a href="lex_c.htm#constructionarm">construction arm</a> <a href="lex_t.htm#toolkit">toolkit</a> that
 is controlled by a <a href="#slowsalvo">slow salvo</a>, which most likely comes from a
 previous <a href="lex_c.htm#constructionelbow">construction elbow</a>. Unlike a standard <a href="lex_e.htm#elbow">elbow</a> which is
@@ -980,7 +1015,51 @@ is usually too restrictive, and it is desirable to allow
 constructions in which some gliders in the salvo are required to have
 a particular timing modulo 2 (a "p2 slow salvo"). This gives much
 greater flexibility, as <a href="lex_b.htm#blinker">blinkers</a> can now be freely used in the
-intermediate construction steps.
+intermediate construction steps. The <a href="#snarkmaker">Snarkmaker</a> is a very large p2
+slow salvo. A much smaller example is the following <a href="lex_e.htm#edgy">edgy</a>
+construction of an <a href="lex_e.htm#eater1">eater1</a> starting from a block.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OO..OOO...............................................
+OO..O.................................................
+.....O................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+................OOO...................................
+................O.....................................
+.................O....................................
+......................................................
+......................................................
+......................................................
+......................................................
+.......................OOO............................
+.......................O..............................
+........................O.............................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+......................................................
+..............................O.......................
+........................O....OO.......................
+.......................OO....O.O......................
+.......................O.O............................
+......................................................
+......................................................
+..........................O...........................
+.........................OO...........................
+.........................O.O..........................
+......................................................
+.............................OOO....................OO
+.............................O.....................OO.
+..............................O......................O
+</a></pre></td></tr></table></center>
 <p>Adam P. Goucher's <a href="#slmake">slmake</a> <a href="#searchprogram">search program</a>, made available in May
 2017, makes it much easier to find a slow glider construction for a
 wide variety of <a href="#stable">stable</a> <a href="lex_c.htm#circuit">circuitry</a>.
@@ -1151,7 +1230,7 @@ O.OO.OO
 utility he wrote called <a href="lex_b.htm#bellman">Bellman</a>. Compare <a href="lex_b.htm#boojumreflector">boojum reflector</a>. Four
 common Snark variants are shown below: Playle's original at the top,
 and variants by Heinrich Koenig, Simon Ekstr&ouml;m, and Shannon Omick to
-the left, bottom, and right, respectively. As of October 2017, only
+the left, bottom, and right, respectively. As of November 2017, only
 Playle's variant has a known <a href="#slowgliderconstruction">slow glider construction</a> <a href="lex_r.htm#recipe">recipe</a> for
 all orientations.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -1239,8 +1318,45 @@ O...O.O....O.O...O
 ...O.O......O.O...
 ...OO........OO...
 </a></pre></td></tr></table></center>
-<p><a name=soup>:</a><b>soup</b> A random initial pattern, often assumed to cover the whole Life
-universe.
+<p><a name=soup>:</a><b>soup</b> A random initial pattern, either contained within a small area,
+or alternatively filing the whole Life universe.
+<p>Finite soups probably have behaviors very different than infinite
+soups, but this is obviously unknown. Infinite soups may remain
+chaotic indefinitely since any reaction, no matter how rare, is bound
+to happen somewhere.
+<p>Soups can have an average density, with results varying based on
+that. See <a href="#sparselife">sparse Life</a> for a discussion of what can happen at a low
+density.
+<p>Finite soups for sizes such as 16x16 (asymmetric) have been
+examined by the billions by scripts such as <a href="lex_a.htm#apgsearch">apgsearch</a> to find
+interesting results. Many new <a href="lex_o.htm#oscillator">oscillators</a> and <a href="#synthesis">synthesis</a>
+<a href="lex_r.htm#recipe">recipes</a> have been discovered, as well as previously known rare
+patterns such as <a href="#stabilizedswitchengine">stabilized switch engines</a>. In addition, soups are
+used to generate statistical <a href="lex_c.htm#census">census</a> data, and to decide whether
+specific objects can be considered <a href="lex_n.htm#natural">natural</a>.
+<p>Soups can be fully random, or they can be forced to be <a href="#symmetric">symmetric</a>.
+The results for these two types of soups can differ since symmetric
+soups tend to create large symmetrical objects at a much higher rate.
+Shown below is an unusual mirror-symmetric soup that produces a
+<a href="lex_p.htm#pufferfish">pufferfish</a> and nothing else.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+OOOO..OO.OOO.O...O.OOO.OO..OOOO
+.O.O.OO.O.............O.OO.O.O.
+..OOO..O.O.O.......O.O.O..OOO..
+O.OO.OOO.O..O.....O..O.OOO.OO.O
+.OOOO.O...OO.OOOOO.OO...O.OOOO.
+.....OO...OO.O.O.O.OO...OO.....
+..OOO...OO...O...O...OO...OOO..
+O..O..O.OO...OO.OO...OO.O..O..O
+OO.O..O...O.........O...O..O.OO
+O.O.O...OOOO..OOO..OOOO...O.O.O
+O.OOO.OO..OO...O...OO..OO.OOO.O
+..O.....OO...O...O...OO.....O..
+OOOOO.O.OOO..O...O..OOO.O.OOOOO
+.O....O....O..OOO..O....O....O.
+.OO.O...OOOOOOOOOOOOOOO...O.OO.
+OOOO.OOO......O.O......OOO.OOOO
+</a></pre></td></tr></table></center>
 <p><a name=spacedust>:</a><b>space dust</b> A part of a <a href="#spaceship">spaceship</a> or <a href="lex_o.htm#oscillator">oscillator</a> which looks like a
 random mix of ON and OFF cells. It is usually very difficult to find
 a <a href="lex_g.htm#glidersynthesis">glider synthesis</a> for an object that consists wholly or partly of
@@ -1365,7 +1481,7 @@ people have continued these searches using tools such as <a href="lex_l.htm#life
 and <a href="lex_g.htm#gfind">gfind</a>, and as a result we now have a great variety of
 elementary spaceships travelling at fifteen different velocities.
 The following table details the discovery of elementary spaceships
-with new velocities as of October 2017.
+with new velocities as of November 2017.
 <pre>
 	--------------------------------------------------------------
 	Speed Direction  First Discovery   Discoverer             Date
@@ -1394,7 +1510,7 @@ widest range of possible speeds is Michael Simkin's <a href="lex_c.htm#caterloop
 from April 2016; in theory it supports any rational speed strictly
 less than <i>c</i>&lt;4. A somewhat similar design supporting any rational
 speed strictly less than <i>c</i>/2 has been shown to be feasible, but as of
-October 2017 no explicit examples have been constructed.
+November 2017 no explicit examples have been constructed.
 <p>A period <i>p</i> spaceship that displaces itself (<i>m</i>,<i>n</i>) during its period,
 where <i>m</i>&gt;=<i>n</i>, is said to be of type (<i>m</i>,<i>n</i>)/<i>p</i>. It was proved by Conway
 in 1970 that <i>p</i>&gt;=2<i>m</i>+2<i>n</i>. (This follows immediately from the
@@ -1413,8 +1529,8 @@ collection of cells periodically thrown off by an <a href="lex_o.htm#oscillator"
 <a href="#spaceship">spaceship</a>, but other dying patterns, particularly those consisting
 or only one or two cells (such as produced by certain glider
 collisions, for example), are also described as sparks. For examples
-of small sparks see <a href="lex_u.htm#unix">unix</a> and <a href="lex_h.htm#hwss">HWSS</a>. For an example of a much
-larger spark see <a href="#schickengine">Schick engine</a>.
+of small sparks see <a href="lex_u.htm#unix">unix</a> and <a href="lex_h.htm#hwss">HWSS</a>. Examples of much larger
+sparks are seen in <a href="#schickengine">Schick engine</a> and <a href="lex_t.htm#twinbeesshuttlespark">twin bees shuttle spark</a>.
 <p><a name=sparkcoil>:</a><b>spark coil</b> (p2) Found in 1971.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OO....OO
@@ -1445,11 +1561,11 @@ O.O........OO.......O.O..........O.O
 .....................OOO............
 .....................O..............
 </a></pre></td></tr></table></center>
-These can be used to build <a href="lex_i.htm#intermittingglidergun">intermitting glider guns</a>. The left-hand
-eater produces a spark nine ticks after a glider impact, with the
-result that the period of the constituent guns can't be a multiple of
-4. The right-hand eater produces the same spark ten ticks after
-impact, which allows p4<i>N</i> guns to be used.
+The above mechanisms can be used to build <a href="lex_i.htm#intermittingglidergun">intermitting glider guns</a>.
+The left-hand eater produces a spark nine ticks after a glider
+impact, with the result that the period of the constituent guns can't
+be a multiple of 4. The right-hand eater produces the same spark ten
+ticks after impact, which allows p4<i>N</i> guns to be used.
 <p>The separation of the spark also allows this reaction to perform
 other <a href="lex_p.htm#perturbation">perturbations</a> "around the corner" of some objects. For
 example, it was used by Jason Summers in 2004 to cap the ends of a
@@ -1606,13 +1722,16 @@ it prevents the engine from ever being destroyed.
 Charles Corderman soon after he discovered the switch engine itself.
 There is a p288 block-laying type (the more common of the two) and
 the p384 glider-producing type. These two puffers are the most
-<a href="lex_n.htm#natural">natural</a> infinite growth patterns in Life, being the only ones ever
-seen to occur from random starting patterns.
+<a href="lex_n.htm#natural">natural</a> infinite growth patterns in Life. As of November 2017 they
+are the basis for every infinite growth pattern ever seen to occur
+from a random asymmetric <a href="#soup">soup</a>, even after trillions of <a href="lex_c.htm#census">census</a>
+results by <a href="lex_a.htm#apgsearch">apgsearch</a> and similar projects.
 <p>Patterns giving rise to block-laying switch engines can be seen
 under <a href="lex_i.htm#infinitegrowth">infinite growth</a>, and one giving rise to a glider-producing
 switch engine is shown under <a href="lex_t.htm#timebomb">time bomb</a>.
 <p><a name=stable>:</a><b>stable</b> A pattern is said to be stable if it is a <a href="lex_p.htm#parent">parent</a> of itself.
-See <a href="#stilllife">still life</a>.
+Stable objects are oscillators with period 1 (p1), and are generally
+called <a href="#stilllife">still lifes</a>.
 <p><a name=stablepseudoheisenburp>:</a><b>stable pseudo-Heisenburp</b> A multi-stage <a href="lex_c.htm#converter">converter</a> constructed by
 Dave Greene in January 2007, using a complex recipe found by Noam
 Elkies to insert a signal into a <a href="lex_1.htm#a-2c3wire">2c/3 wire</a>. The wire's high
@@ -1764,6 +1883,39 @@ two. See the 32-bit <a href="lex_t.htm#triplepseudo">triple pseudo</a> (32 bits)
 lifes can be incrementally constructed using glider collisions. For
 a subset of small still lifes that have been found to be especially
 useful in <a href="#selfconstructing">self-constructing</a> circuitry, see also <a href="#spartan">Spartan</a>.
+<p>The smallest still life is the <a href="lex_b.htm#block">block</a>. Arbitrarily large still
+lifes are easy to construct, for example by extending a <a href="lex_c.htm#canoe">canoe</a> or
+<a href="lex_b.htm#barge">barge</a>. The maximum density of a large still life is 1/2, which can
+be achieved by an arbitrarily large patch of <a href="lex_z.htm#zebrastripes">zebra stripes</a> or
+<a href="lex_c.htm#chickenwire">chicken wire</a>, among many other options. See <a href="lex_d.htm#density">density</a> for more
+precise limits.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+...O..O..O..O..O..O...
+.OOOOOOOOOOOOOOOOOOOO.
+O....................O
+OOOOOOOOOOOOOOOOOOOOOO
+......................
+OOOOOOOOOOOOOOOOOOOOOO
+O....................O
+.OOOOOOOOOOOOOOOOOOOO.
+......................
+.OOOOOOOOOOOOOOOOOOOO.
+O....................O
+OOOOOOOOOOOOOOOOOOOOOO
+......................
+OOOOOOOOOOOOOOOOOOOOOO
+O....................O
+.OOOOOOOOOOOOOOOOOOOO.
+......................
+.OOOOOOOOOOOOOOOOOOOO.
+O....................O
+OOOOOOOOOOOOOOOOOOOOOO
+......................
+OOOOOOOOOOOOOOOOOOOOOO
+O....................O
+.OOOOOOOOOOOOOOOOOOOO.
+...O..O..O..O..O..O...
+</a></pre></td></tr></table></center>
 <p><a name=stilllifetagalong>:</a><b>still life tagalong</b> A <a href="lex_t.htm#tagalong">tagalong</a> which takes the form of a
 <a href="#stilllife">still life</a> in at least one <a href="lex_p.htm#phase">phase</a>. An example is shown below.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -1894,13 +2046,13 @@ neither of the <a href="lex_t.htm#table">tables</a> are stable by themselves. Se
 <a href="lex_t.htm#triplepseudo">triple pseudo</a>, <a href="lex_q.htm#quadpseudo">quad pseudo</a>.
 <p>Still lifes have been enumerated by Conway (4-7 bits), Robert
 Wainwright (8-10 bits), Dave Buckingham (11-13 bits), Peter Raynham
-(14 bits), Mark Niemiec (15-24 bits), and Simon Ekstr&ouml;m and
-Nathaniel Johnston (25-32 bits). The resulting figures are shown
-below; see also <a href="https://oeis.org/A019473">https://oeis.org/A019473</a>. The most recent search
-by Nathaniel Johnston has also confirmed that the <a href="lex_t.htm#triplepseudo">triple pseudo</a>
-pattern found by Gabriel Nivasch is the only such still life with 32
-bits or less. It is therefore included in the pseudo still life
-count and not in the table below.
+(14 bits), Mark Niemiec (15-24 bits), and Simon Ekstr&ouml;m and Nathaniel
+Johnston (25-32 bits). The resulting figures are shown below; see
+also <a href="https://oeis.org/A019473">https://oeis.org/A019473</a>. The most recent search by Nathaniel
+Johnston has also confirmed that the <a href="lex_t.htm#triplepseudo">triple pseudo</a> pattern found by
+Gabriel Nivasch is the only such still life with 32 bits or less. It
+is therefore included in the pseudo still life count and not in the
+table below.
 <pre>
         --------------
         Bits    Number
@@ -2060,6 +2212,33 @@ OO.O.OO..O
 .O..OOO...
 OO....O...
 </a></pre></td></tr></table></center>
+<p><a name=sw1t43>:</a><b>SW1T43</b> A <a href="lex_h.htm#herscheltoglider">Herschel-to-glider</a> converter that produces a
+<a href="lex_t.htm#tandemglider">tandem glider</a> useful in the <a href="lex_t.htm#tee">tee</a> reaction. It is classified as a
+"G3" converter because its two gliders are three <a href="lex_l.htm#lane">lanes</a> apart.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+.......OO........
+.......O.........
+.....O.O.........
+....O.O..........
+OO...O...........
+OO...............
+...........OO....
+...........O.O...
+.............O...
+.............O.OO
+..........OO.O.OO
+O........O..O....
+O.O.......OO.....
+OOO..............
+..O.......OOOO...
+...........O..O..
+.........O...OO..
+.........OO......
+</a></pre></td></tr></table></center>
+Besides the southwest-traveling glider on lane 1, the converter also
+emits the Herschel's standard <a href="lex_f.htm#firstnaturalglider">first natural glider</a>, <a href="#sw2">SW-2</a>. The
+converter's full standard name is therefore "HSW1T43_SW-2T21". See
+<a href="lex_n.htm#nw31t120">NW31T120</a> for an explanation of H-to-G naming conventions.
 <p><a name=sw2>:</a><b>SW-2</b> The simplest type of <a href="lex_h.htm#htog">H-to-G</a> <a href="lex_c.htm#converter">converter</a>, where the converter's
 effect is simply to suppress a Herschel cleanly after allowing its
 <a href="lex_f.htm#firstnaturalglider">first natural glider</a> to escape. The name should be read as "SW
@@ -2368,16 +2547,19 @@ non-symmetrical spaceships. Examples include <a href="lex_d.htm#dart">dart</a>, 
 <p><a name=synchronized>:</a><b>synchronized</b> Indicates that precise relative timing is required for
 two or more input <a href="#signal">signals</a> entering a <a href="lex_c.htm#circuit">circuit</a>, or two or more sets
 of <a href="lex_g.htm#glider">gliders</a> participating in a <a href="lex_g.htm#glidersynthesis">glider synthesis</a>. Compare
-<a href="lex_a.htm#asynchronous">asynchronous</a>.
+<a href="lex_a.htm#asynchronous">asynchronous</a>. See also <a href="#salvo">salvo</a> and <a href="#slowgliderconstruction">slow glider construction</a>.
 <p><a name=synchronous>:</a><b>synchronous</b> = <a href="#synchronized">synchronized</a>
 <p><a name=synthesis>:</a><b>synthesis</b> = <a href="lex_g.htm#glidersynthesis">glider synthesis</a>
-<p><a name=syringe>:</a><b>syringe</b> A small stable glider-to-Herschel converter found by Tanner
-Jacobi in March 2015. A second glider can safely follow the first
-any time after 78 ticks, but <a href="lex_o.htm#overclocking">overclocking</a> also allows the syringe
-to work at a <a href="lex_r.htm#repeattime">repeat time</a> of 74 or 75 ticks. If followed by a
-<a href="lex_d.htm#dependentconduit">dependent conduit</a> a simple <a href="lex_e.htm#eater2">eater2</a> can be used instead of the
-large <a href="lex_w.htm#weld">welded</a> <a href="lex_c.htm#catalyst">catalyst</a> shown here. A <a href="lex_g.htm#ghostherschel">ghost Herschel</a> marks the
-output location.
+<p><a name=syringe>:</a><b>syringe</b> A small stable <a href="lex_c.htm#converter">converter</a> found by Tanner Jacobi in March
+2015, accepting a glider as input and producing an output <a href="lex_h.htm#herschel">Herschel</a>
+As of November 2017 it is the smallest known converter of this type,
+so it is very often used to handle input gliders in complex <a href="#signal">signal</a>
+<a href="lex_c.htm#circuit">circuitry</a>, as described in <a href="lex_h.htm#herschelcircuit">Herschel circuit</a>. A second glider can
+safely follow the first any time after 78 ticks, but <a href="lex_o.htm#overclocking">overclocking</a>
+also allows the syringe to work at a <a href="lex_r.htm#repeattime">repeat time</a> of 74 or 75 ticks.
+If followed by a <a href="lex_d.htm#dependentconduit">dependent conduit</a> a simple <a href="lex_e.htm#eater2">eater2</a> can be used
+instead of the large <a href="lex_w.htm#weld">welded</a> <a href="lex_c.htm#catalyst">catalyst</a> shown here. A
+<a href="lex_g.htm#ghostherschel">ghost Herschel</a> marks the output location.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ....O.............................
 .....O............................
