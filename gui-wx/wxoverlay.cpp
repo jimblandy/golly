@@ -5560,6 +5560,84 @@ const char* Overlay::SoundVolume(const char* args)
 
 // -----------------------------------------------------------------------------
 
+#ifdef ENABLE_SOUND
+const char* Overlay::SoundPause(const char* args)
+{
+    // check for engine
+    if (engine) {
+        // check for argument
+        if (*args == 0) {
+            // pause all sounds
+            engine->setAllSoundsPaused();
+        }
+        else {
+            // skip whitespace
+            while (*args == ' ') {
+                args++;
+            }
+    
+            // pause named sound
+            ISoundSource* source = engine->getSoundSource(args, false);
+            if (source) {
+                // find the sound
+                std::map<std::string,ISound*>::iterator it;
+                it = sounds.find(args);
+                if (it != sounds.end()) {
+                   // pause the sound
+                   ISound* sound = it->second;
+                   if (!sound->isFinished()) {
+                       sound->setIsPaused();
+                   }
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* Overlay::SoundResume(const char* args)
+{
+    // check for engine
+    if (engine) {
+        // check for argument
+        if (*args == 0) {
+            // resume all paused sounds
+            engine->setAllSoundsPaused(false);
+        }
+        else {
+            // skip whitespace
+            while (*args == ' ') {
+                args++;
+            }
+    
+            // resume named sound
+            ISoundSource* source = engine->getSoundSource(args, false);
+            if (source) {
+                // find the sound
+                std::map<std::string,ISound*>::iterator it;
+                it = sounds.find(args);
+                if (it != sounds.end()) {
+                   // resume the sound
+                   ISound* sound = it->second;
+                   if (!sound->isFinished()) {
+                       sound->setIsPaused(false);
+                   }
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoSound(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -5588,6 +5666,8 @@ const char* Overlay::DoSound(const char* args)
     if (strncmp(args, "stop", 4) == 0)     return SoundStop(args+4);
     if (strncmp(args, "state", 5) == 0)    return SoundState(args+5);
     if (strncmp(args, "volume ", 7) == 0)  return SoundVolume(args+7);
+    if (strncmp(args, "pause", 5) == 0)    return SoundPause(args+5);
+    if (strncmp(args, "resume", 6) == 0)   return SoundResume(args+6);
 
     return OverlayError("unknown sound command");
     #else

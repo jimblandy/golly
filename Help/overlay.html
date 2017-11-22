@@ -676,20 +676,30 @@ If the command is invoked with no arguments then it returns a string indicating 
 </dd>
 </p>
 <p><dd>
-There are five sound <i>commands</i>:
+There are seven sound <i>commands</i>:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><b>play <i>soundfile (level)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and return immediately. The volume is from 0.0 (silent) to 1.0 (maximum) and is set to maximum if not specified.</td></tr>
-<tr><td><b>loop <i>soundfile (level)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and loop until the <a href="#stop">stop</a> command is used.</td></tr>
-<tr><td><a name="stop"></a><b>stop <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Stop all sound playback or just the specified <i>soundfile</i>.</td></tr>
-<tr><td><a name="volume"></a><b>volume <i>level soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum). This is typically used to change the volume of a sound that is already playing.</td></tr>
-<tr><td><a name="state"></a><b>state <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, or <i>"stopped"</i> otherwise.
+<tr><td><b>play <i>soundfile (level)</i></b></td></tr>
+<tr><td>Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and return immediately. The volume is from 0.0 (silent) to 1.0 (maximum) and is set to maximum if not specified.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><b>loop <i>soundfile (level)</i></b></td></tr>
+<tr><td>Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and loop until the <a href="#stop">stop</a> command is used.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="stop"></a><b>stop <i>(soundfile)</i></b></td></tr>
+<tr><td>Stop all sound playback or just the specified <i>soundfile</i>.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="pause"></a><b>pause <i>(soundfile)</i></b></td><td width=20></td></tr>
+<tr><td>Pause all sound playback or just the specified <i>soundfile</i>.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="stop"></a><b>resume <i>(soundfile)</i></b></td></tr>
+<tr><td>Resume all sound playback or just the specified <i>soundfile</i>.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="volume"></a><b>volume <i>level soundfile</i></b></td></tr>
+<tr><td>Set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum). This is typically used to change the volume of a sound that is already playing.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="state"></a><b>state <i>(soundfile)</i></b></td></tr>
+<tr><td>Returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, or <i>"stopped"</i> otherwise.
 </table>
 </dd>
 <p><dd>
@@ -699,7 +709,7 @@ Notes:
 <li>Deleting the overlay will stop any sounds that are playing.</li>
 <li>The <b>play</b> command returns the empty string "" if successful and an error message otherwise.</li>
 <li>The <b>state</b> command will return <i>"unknown"</i> if the specified sound is not found.</li>
-<li>If sound support is not available then the five sound commands will silently do nothing.</li>
+<li>If sound support is not available or failed to initialize then the sound commands will silently do nothing.</li>
 </dd>
 </p>
 <p>
@@ -708,6 +718,8 @@ Notes:
 <dd> Example: <b>ov("sound stop") -- stop all sounds playing</b></dd>
 <dd> Example: <b>ov("sound loop background.ogg") -- play background.ogg in a loop</b></dd>
 <dd> Example: <b>ov("sound volume 0.7 background.ogg") -- set background.ogg volume to 0.7</b></dd>
+<dd> Example: <b>ov("sound pause background.ogg") -- pause playback of background.ogg</b></dd>
+<dd> Example: <b>ov("sound resume") -- resume playback of all paused sounds</b></dd>
 </p>
 
 <a name="target"></a><p><dt><b>target <i>(clipname)</i></b></dt>

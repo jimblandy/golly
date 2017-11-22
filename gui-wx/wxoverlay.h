@@ -285,10 +285,16 @@ private:
 
     const char* SoundVolume(const char* args);
     // Sets the volume of the specified sound.
+
+    const char* SoundPause(const char* args);
+    // Pauses all or the specified sound.
+
+    const char* SoundResume(const char* args);
+    // Resumes all or the specified sound.
 #endif
 
     const char* DoSound(const char* args);
-    // Play a sound, stop playback, get playback status, or set volume.
+    // Play, stop, pause or resume playback, get playback status, or set volume.
 
     const char* OverlayError(const char* msg);
     // Return a string starting with "ERR:" followed by the given message.

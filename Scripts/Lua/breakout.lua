@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 66
+local build = 67
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -237,8 +237,8 @@ local messages = {
     ["awarded"]    = { text = "No Bonus", size = 15, color = op.red }
 }
 
--- music tracks
-local tracks = { "gamestart", "gameover", "gameloop", "lostball", "levelcompleteloop", "bonusloop" }
+-- current music track
+local currenttrack = ""
 
 --------------------------------------------------------------------------------
 
@@ -342,15 +342,15 @@ end
 --------------------------------------------------------------------------------
 
 local function setchannelvolume(channel, vol)
-    if (vol == 0) then
+    if vol == 0 then
         updatemessage(channel.."vol", "Off", op.red)
     else
         updatemessage(channel.."vol", vol.."%", op.green)
     end
     -- update the music volume immediately since it may be playing
-    if (channel == "music") then
-        for i = 1, #tracks do
-            ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/"..tracks[i]..".ogg")
+    if channel == "music" then
+        if currenttrack ~= "" then
+            ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/"..currenttrack..".ogg")
         end
     end
 end
@@ -364,8 +364,8 @@ end
 --------------------------------------------------------------------------------
 
 local function stopmusic()
-    for i = 1, #tracks do
-        ov("sound stop oplus/sounds/breakout/"..tracks[i]..".ogg")
+    if currenttrack ~= "" then
+        ov("sound stop oplus/sounds/breakout/"..currenttrack..".ogg")
     end
 end
 --------------------------------------------------------------------------------
@@ -386,6 +386,7 @@ end
 local function playmusic(name, loop)
     loop = loop or false
     stopmusic()
+    currenttrack = name
     if loop then
         ov("sound loop oplus/sounds/breakout/"..name..".ogg "..(musicvol / 100))
     else
@@ -790,7 +791,7 @@ local function initbricks()
     -- check for bonus level
     bonuscurrent = bonustime
     bonuslevel   = false
-    if (level  % bonusinterval) == 0 then
+    if (level % bonusinterval) == 0 then
        bonuslevel = true
     end
 
@@ -1029,6 +1030,21 @@ end
 
 --------------------------------------------------------------------------------
 
+local function pausegame(paused)
+    if paused ~= pause then
+        pause = paused
+        if currenttrack ~= "" then
+            if pause then
+                ov("sound pause")
+            else
+                ov("sound resume")
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function processinput()
     -- check for click, enter or return
     local event = g.getevent()
@@ -1061,9 +1077,9 @@ local function processinput()
 		    playmusic("gameloop", true)
                 end
                 newball = false
-                pause   = false
+                pausegame(false)
             else
-                pause = not pause
+                pausegame(not pause)
             end
         else
             processstandardkeys(event)
@@ -1374,7 +1390,7 @@ local function checkforsystemevent()
     -- check for overlay hidden
     if not pause then
         if g.getoption("showoverlay") == 0 then
-            pause = true
+            pausegame(true)
         end
     end
 end
@@ -1398,7 +1414,7 @@ local function updatebatposition()
         if offoverlay then
             -- check if paused
             if pause and autostart ~= 0 and autopause ~= 0 then
-                pause = false
+                pausegame(false)
             end
         end
         offoverlay = false
@@ -1407,7 +1423,7 @@ local function updatebatposition()
         offoverlay = true
         -- check for autopause
         if autopause ~= 0 then
-            pause = true
+            pausegame(true)
         end
     end
 end
@@ -1600,8 +1616,8 @@ local function breakout()
 
         -- whether alive
         newball    = true
-        pause      = false
         confirming = false
+        pausegame(false)
 
         -- whether mouse off overlay
         offoverlay = false

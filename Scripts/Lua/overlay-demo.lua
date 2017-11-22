@@ -1079,6 +1079,14 @@ for Python
 
 Roberto Ierusalimschy and all Lua developers
 for Lua
+]]
+
+    if sound_enabled then
+        creditstext = creditstext.."\nNikolaus Gebhardt @ Ambiera\nfor irrKlang\n"
+    end
+
+    creditstext = creditstext..
+[[
 
 
 
