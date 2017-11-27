@@ -5526,24 +5526,37 @@ const char* Overlay::SoundVolume(const char* args)
     // check for engine
     if (engine) {
         float v = 1;
-        char dummy;
-        int namepos;
-        if (sscanf(args, " %f %n%c", &v, &namepos, &dummy) != 2) {
-            return OverlayError("sound volume command requires two arguments");
+        const char* name = args;
+
+        // skip name
+        char *scan = (char*)args;
+        while (*scan && *scan != ' ') {
+            scan++;
         }
-        if (v < 0.0 || v > 1.0) {
-            return OverlayError("sound volume argument must be in the range 0 to 1");
+
+        // check if there is a volume argument
+        if (*scan) {
+            if (sscanf(scan, " %f", &v) == 1) {
+                if (v < 0.0 || v > 1.0) {
+                    return OverlayError("sound volume must be in the range 0 to 1");
+                }
+            } else {
+                return OverlayError("sound volume command requires two arguments");
+            }
+
+            // null terminate name
+            *scan = 0;
         }
-    
+
         // lookup the sound
-        ISoundSource* source = engine->getSoundSource(args + namepos, false);
+        ISoundSource* source = engine->getSoundSource(name, false);
         if (source) {
             // set the default volume for the source
             source->setDefaultVolume(v);
 
             // check if the sound is playing
             std::map<std::string,ISound*>::iterator it;
-            it = sounds.find(args + namepos);
+            it = sounds.find(name);
             if (it != sounds.end()) {
                // set the sound volume
                ISound* sound = it->second;

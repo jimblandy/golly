@@ -350,7 +350,7 @@ local function setchannelvolume(channel, vol)
     -- update the music volume immediately since it may be playing
     if channel == "music" then
         if currenttrack ~= "" then
-            ov("sound volume "..(musicvol / 100).." oplus/sounds/breakout/"..currenttrack..".ogg")
+            ov("sound volume oplus/sounds/breakout/"..currenttrack..".ogg "..(musicvol / 100))
         end
     end
 end

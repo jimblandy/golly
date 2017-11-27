@@ -2724,12 +2724,12 @@ function test_sound()
             volume = volume - 10
             if (volume < 0) then volume = 0 end
             command = "volume "..(volume / 100)
-            ov("sound volume "..(volume / 100).." "..soundname)
+            ov("sound volume "..soundname.." "..(volume / 100))
         elseif event == "key + none" or event == "key = none" then
             volume = volume + 10
             if (volume > 100) then volume = 100 end
             command = "volume "..(volume / 100)
-            ov("sound volume "..(volume / 100).." "..soundname)
+            ov("sound volume "..soundname.." "..(volume / 100))
         end
 
         -- draw background
@@ -2740,7 +2740,7 @@ function test_sound()
         ov("blend 1")
         ov(op.yellow)
         ov("font 22 mono")
-        w, h = maketext("sound volume "..(volume / 100), nil, nil, 2, 2)
+        w, h = maketext("sound volume audio.wav "..(volume / 100), nil, nil, 2, 2)
         pastetext(floor((wd - w) / 2), 400)
 
         -- draw last command
