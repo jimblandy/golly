@@ -1,7 +1,7 @@
 -- Breakout for Golly
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 
-local build = 67
+local build = 68
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -240,6 +240,12 @@ local messages = {
 -- current music track
 local currenttrack = ""
 
+-- volume for game over music fade
+local musicfade = 1
+
+-- game over music duration in ms
+local gameovermusictime = 1000 * 16
+
 --------------------------------------------------------------------------------
 
 local function showcursor()
@@ -341,6 +347,18 @@ end
 
 --------------------------------------------------------------------------------
 
+local function soundstate(sound)
+    return ov("sound state oplus/sounds/breakout/"..sound..".ogg")
+end
+
+--------------------------------------------------------------------------------
+
+local function setvolume(sound, vol)
+    ov("sound volume oplus/sounds/breakout/"..sound..".ogg "..vol)
+end
+
+--------------------------------------------------------------------------------
+
 local function setchannelvolume(channel, vol)
     if vol == 0 then
         updatemessage(channel.."vol", "Off", op.red)
@@ -350,7 +368,7 @@ local function setchannelvolume(channel, vol)
     -- update the music volume immediately since it may be playing
     if channel == "music" then
         if currenttrack ~= "" then
-            ov("sound volume oplus/sounds/breakout/"..currenttrack..".ogg "..(musicvol / 100))
+            setvolume(currenttrack, (musicvol * musicfade / 100))
         end
     end
 end
@@ -424,14 +442,17 @@ end
 
 local function updateballs(value)
     balls = value
-    updatemessage("balls", "Balls "..balls)
+    local color = op.white
     if balls == 1 then
         updatemessage("left", "Last ball!", op.red)
+        color = op.red
     elseif balls == 2 then
+        color = op.yellow
         updatemessage("left", balls.." balls left", op.yellow)
     else
         updatemessage("left", balls.." balls left", op.green)
     end
+    updatemessage("balls", "Balls "..balls, color)
 end
 
 --------------------------------------------------------------------------------
@@ -1072,9 +1093,9 @@ local function processinput()
                 showoptions = false
             elseif newball then
                 if bonuslevel then
-		    playmusic("bonusloop", true)
+                    playmusic("bonusloop", true)
                 else
-		    playmusic("gameloop", true)
+                    playmusic("gameloop", true)
                 end
                 newball = false
                 pausegame(false)
@@ -1421,8 +1442,8 @@ local function updatebatposition()
     else
         -- mouse off overlay
         offoverlay = true
-        -- check for autopause
-        if autopause ~= 0 then
+        -- check for autopause if in game
+        if autopause ~= 0 and not newball then
             pausegame(true)
         end
     end
@@ -1504,6 +1525,7 @@ local function playexit()
             n = n + 1
         end
     end
+    local fadestart = musicfade
     ov(op.black)
     for i = 0, 100 do
         t = g.millisecs()
@@ -1522,6 +1544,9 @@ local function playexit()
         if showtiming == 1 then
             drawtiming(g.millisecs() - t)
         end
+        -- fade the music
+        musicfade = fadestart * ((100 - i) / 100)
+        setvolume(currenttrack, (musicvol * musicfade / 100))
         ov("update")
         while g.millisecs() - t < 15 do end
     end
@@ -1698,10 +1723,8 @@ local function breakout()
                                 -- destroy bat if no balls left
                                 if balls == 0 then
                                     createparticles(batx + batwd, baty, batwd, batht, lostparticles)
-                                    playmusic("gameover")
-                                else
-                                    playmusic("lostball")
                                 end
+                                playmusic("lostball")
                             end
                             -- exit loop
                             i = framesteps + 1
@@ -1886,6 +1909,10 @@ local function breakout()
         -- loop until mouse button clicked or enter pressed
         bonuscurrent = -1
         finished = false
+        musicfade = 1
+        local musicplaytime = g.millisecs()
+        local fading = false
+
         while not finished do
             -- time frame
             local frametime = g.millisecs()
@@ -1905,7 +1932,7 @@ local function breakout()
             -- draw bricks
             drawbricks()
 
-	    -- draw brick score
+            -- draw brick score
             if brickscore == 1 then
                 drawpoints()
             end
@@ -1917,6 +1944,24 @@ local function breakout()
                 if balls == 0 then
                     -- game over
                     drawgameover()
+                    -- handle music
+                    if fading then
+                        -- fade music after one play through
+                        if frametime - musicplaytime > gameovermusictime then
+                            musicfade = musicfade - 0.0005
+                            if musicfade < 0 then
+                                musicfade = 0
+                            end
+                            setvolume("gamelostloop", (musicvol * musicfade / 100))
+                        end
+                    else
+                        -- wait for ball lost music to finish
+                        if soundstate("lostball") ~= "playing" then
+                            fading = true
+                            musicplaytime = g.millisecs()
+                            playmusic("gamelostloop", true)
+                        end
+                    end
                 else
                     -- draw bat
                     drawbat()
