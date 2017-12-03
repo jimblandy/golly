@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build = 69
+local build = 70
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -291,7 +291,7 @@ end
 local function readsettings()
     local f = io.open(settingsfile, "r")
     if f then
-        hiscore       = tonumber(f:read("*l")) or 0
+        hiscore               = tonumber(f:read("*l")) or 0
         options.fullscreen    = tonumber(f:read("*l")) or 0
         options.showtiming    = tonumber(f:read("*l")) or 0
         options.showparticles = tonumber(f:read("*l")) or 1
@@ -299,10 +299,10 @@ local function readsettings()
         options.autostart     = tonumber(f:read("*l")) or 0
         options.showmouse     = tonumber(f:read("*l")) or 1
         options.showshadows   = tonumber(f:read("*l")) or 1
-        maxcombo      = tonumber(f:read("*l")) or 2
+        maxcombo              = tonumber(f:read("*l")) or 2
         options.brickscore    = tonumber(f:read("*l")) or 1
         options.confirmquit   = tonumber(f:read("*l")) or 1
-        bestbonus     = tonumber(f:read("*l")) or 0
+        bestbonus             = tonumber(f:read("*l")) or 0
         options.comboscore    = tonumber(f:read("*l")) or 1
         options.soundvol      = tonumber(f:read("*l")) or 100
         options.musicvol      = tonumber(f:read("*l")) or 70
@@ -754,7 +754,7 @@ local function drawbricks()
     local xoff = shadow.x
     local yoff = shadow.y
     local startpass = 1
-    -- check whether the draw shadows
+    -- check whether to draw shadows
     if options.showshadows == 0 then
         xoff = 0
         yoff = 0
@@ -1493,7 +1493,7 @@ local function updatebatposition()
     else
         -- mouse off overlay
         offoverlay = true
-        -- check for options.autopause if in game
+        -- check for autopause if in game
         if options.autopause ~= 0 and not newball then
             pausegame(true)
         end
@@ -1960,15 +1960,15 @@ local function breakout()
         end
 
         -- draw best combo
-        notify("Best Combo x"..maxcombo - 1)
+        if balls == 0 then
+            notify("Best Combo x"..maxcombo - 1)
+        end
 
         -- loop until mouse button clicked or enter pressed
-        bonuscurrent = -1
-        finished     = false
-        musicfade    = 1
-        faderate     = -0.001
+        bonuscurrent        = -1
+        finished            = false
+        local fading        = false
         local musicplaytime = g.millisecs()
-        local fading = false
 
         while not finished do
             -- time frame
@@ -2028,9 +2028,13 @@ local function breakout()
                 else
                     -- wait for ball lost music to finish
                     if soundstate("lostball") ~= "playing" then
-                        fading = true
+                        fading        = true
                         musicplaytime = g.millisecs()
+                        musicfade     = 1
+                        faderate      = -0.001
                         playmusic("gamelostloop", true)
+                    else
+                        updatemusic()
                     end
                 end
             end
