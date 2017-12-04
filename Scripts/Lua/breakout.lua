@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build = 70
+local build = 71
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -44,13 +44,16 @@ local shadow = {
 
 -- brick settings
 local brick = {
-    numrows    = 6,
-    numcols    = 20,
-    rows       = {},
+    numrows     = 6,
+    numcols     = 20,
+    rows        = {},
     wd,
-    ht         = floor(ht / 40),
-    maxoffsety = 20,
-    offsety    = 0,
+    ht          = floor(ht / 40),
+    maxoffsety  = 20,
+    offsety     = 0,
+    startoffset = 0,
+    movedown    = 0,
+    movesteps   = 24,
     cols  = {
         [1] = op.red,
         [2] = op.yellow,
@@ -105,25 +108,27 @@ local particle = {
 local points = {}
 
 -- game settings
-local level      = 1
-local newball    = true
-local pause      = false
-local hiscore    = 0
-local score      = 0
-local combo      = 1
-local combomult  = 1
-local combofact  = 1.04
-local comboraw   = 0
-local comboextra = 0
-local gamecombo  = 1
-local maxcombo   = 2
-local balls      = 3
-local newhigh    = false
-local newcombo   = false
-local newbonus   = false
-local offoverlay = false
-local finished   = false
-local again      = true
+local game = {
+    level      = 1,
+    newball    = true,
+    pause      = false,
+    hiscore    = 0,
+    score      = 0,
+    combo      = 1,
+    combomult  = 1,
+    combofact  = 1.04,
+    comboraw   = 0,
+    comboextra = 0,
+    gamecombo  = 1,
+    maxcombo   = 2,
+    balls      = 3,
+    newhigh    = false,
+    newcombo   = false,
+    newbonus   = false,
+    offoverlay = false,
+    finished   = false,
+    again      = true
+}
 
 -- timing settings
 local timing = {
@@ -166,20 +171,22 @@ local notification = {
 
 -- bonus level
 local bonus = {
-    805203,
-    699732,
-    830290,
-    698705,
-    698705,
-    805158
+    bricks = {
+        805203,
+        699732,
+        830290,
+        698705,
+        698705,
+        805158
+    },
+    level    = false,
+    interval = 3,
+    time     = 60,
+    current  = 0,
+    green    = 10,
+    yellow   = 20,
+    best     = 0
 }
-local bonuslevel    = false
-local bonusinterval = 3
-local bonustime     = 60
-local bonuscurrent  = 0
-local bonusgreen    = 10
-local bonusyellow   = 20
-local bestbonus     = 0
 
 -- key highlight color and names
 local keycol   = "rgba 32 32 32 255"
@@ -201,6 +208,7 @@ local messages = {
     ["askright"]   = { text = "Right Click to Cancel", size = 10, color = op.white },
     ["resume"]     = { text = "Click or Enter to continue", size = 10, color = op.white },
     ["focus"]      = { text = "Move mouse onto overlay to continue", size = 10, color = op.white },
+    ["manfocus"]   = { text = "Move mouse onto overlay and", size = 10, color = op.white },
     ["quitgame"]   = { text = "Right Click to quit game", size = 10, color = op.white },
     ["option"]     = { text = "Tab for Game Settings", size = 10, color = op.white },
     ["restart"]    = { text = "Click or Enter to start again", size = 10, color = op.white },
@@ -259,15 +267,13 @@ local messages = {
     ["awarded"]    = { text = "No Bonus", size = 15, color = op.red }
 }
 
--- current music track
-local currenttrack = ""
-
--- volume for game over music fade
-local musicfade = 1
-local faderate  = -0.01
-
--- game over music duration in ms
-local gameovermusictime = 1000 * 48
+-- music
+local music = {
+    currenttrack = "",
+    fade         = 1,
+    faderate     = -0.01,
+    gameovertime = 1000 * 64
+}
 
 --------------------------------------------------------------------------------
 
@@ -291,7 +297,7 @@ end
 local function readsettings()
     local f = io.open(settingsfile, "r")
     if f then
-        hiscore               = tonumber(f:read("*l")) or 0
+        game.hiscore          = tonumber(f:read("*l")) or 0
         options.fullscreen    = tonumber(f:read("*l")) or 0
         options.showtiming    = tonumber(f:read("*l")) or 0
         options.showparticles = tonumber(f:read("*l")) or 1
@@ -299,10 +305,10 @@ local function readsettings()
         options.autostart     = tonumber(f:read("*l")) or 0
         options.showmouse     = tonumber(f:read("*l")) or 1
         options.showshadows   = tonumber(f:read("*l")) or 1
-        maxcombo              = tonumber(f:read("*l")) or 2
+        game.maxcombo         = tonumber(f:read("*l")) or 2
         options.brickscore    = tonumber(f:read("*l")) or 1
         options.confirmquit   = tonumber(f:read("*l")) or 1
-        bestbonus             = tonumber(f:read("*l")) or 0
+        bonus.best            = tonumber(f:read("*l")) or 0
         options.comboscore    = tonumber(f:read("*l")) or 1
         options.soundvol      = tonumber(f:read("*l")) or 100
         options.musicvol      = tonumber(f:read("*l")) or 70
@@ -322,7 +328,7 @@ end
 local function writesettings()
     local f = io.open(settingsfile, "w")
     if f then
-        f:write(tostring(hiscore).."\n")
+        f:write(tostring(game.hiscore).."\n")
         f:write(tostring(options.fullscreen).."\n")
         f:write(tostring(options.showtiming).."\n")
         f:write(tostring(options.showparticles).."\n")
@@ -330,10 +336,10 @@ local function writesettings()
         f:write(tostring(options.autostart).."\n")
         f:write(tostring(options.showmouse).."\n")
         f:write(tostring(options.showshadows).."\n")
-        f:write(tostring(maxcombo).."\n")
+        f:write(tostring(game.maxcombo).."\n")
         f:write(tostring(options.brickscore).."\n")
         f:write(tostring(options.confirmquit).."\n")
-        f:write(tostring(bestbonus).."\n")
+        f:write(tostring(bonus.best).."\n")
         f:write(tostring(options.comboscore).."\n")
         f:write(tostring(options.soundvol).."\n")
         f:write(tostring(options.musicvol).."\n")
@@ -390,8 +396,8 @@ local function setchannelvolume(channel, vol)
     end
     -- update the music volume immediately since it may be playing
     if channel == "music" then
-        if currenttrack ~= "" then
-            setvolume(currenttrack, (options.musicvol * musicfade / 100))
+        if music.currenttrack ~= "" then
+            setvolume(music.currenttrack, (options.musicvol * music.fade / 100))
         end
     end
 end
@@ -405,8 +411,8 @@ end
 --------------------------------------------------------------------------------
 
 local function stopmusic()
-    if currenttrack ~= "" then
-        ov("sound stop oplus/sounds/breakout/"..currenttrack..".ogg")
+    if music.currenttrack ~= "" then
+        ov("sound stop oplus/sounds/breakout/"..music.currenttrack..".ogg")
     end
 end
 --------------------------------------------------------------------------------
@@ -427,7 +433,7 @@ end
 local function playmusic(name, loop)
     loop = loop or false
     stopmusic()
-    currenttrack = name
+    music.currenttrack = name
     if loop then
         ov("sound loop oplus/sounds/breakout/"..name..".ogg "..(options.musicvol / 100))
     else
@@ -438,55 +444,55 @@ end
 --------------------------------------------------------------------------------
 
 local function updatelevel(value)
-    level = value
-    updatemessage("level", "Level "..level)
-    updatemessage("complete", "Level "..level.." complete!")
+    game.level = value
+    updatemessage("level", "Level "..game.level)
+    updatemessage("complete", "Level "..game.level.." complete!")
 end
 
 --------------------------------------------------------------------------------
 
 local function updatescore(value)
-    score = value
-    updatemessage("score", "Score "..score)
+    game.score = value
+    updatemessage("score", "Score "..game.score)
 end
 
 --------------------------------------------------------------------------------
 
 local function updatehighscore(value)
     local color = op.white
-    if newhigh then
+    if game.newhigh then
         color = op.green
     end
-    hiscore = value
-    updatemessage("high", "High Score "..hiscore, color)
+    game.hiscore = value
+    updatemessage("high", "High Score "..game.hiscore, color)
 end
 
 --------------------------------------------------------------------------------
 
 local function updateballs(value)
-    balls = value
+    game.balls = value
     local color = op.white
-    if balls == 1 then
+    if game.balls == 1 then
         updatemessage("left", "Last ball!", op.red)
         color = op.red
-    elseif balls == 2 then
+    elseif game.balls == 2 then
         color = op.yellow
-        updatemessage("left", balls.." balls left", op.yellow)
+        updatemessage("left", game.balls.." balls left", op.yellow)
     else
-        updatemessage("left", balls.." balls left", op.green)
+        updatemessage("left", game.balls.." balls left", op.green)
     end
-    updatemessage("balls", "Balls "..balls, color)
+    updatemessage("balls", "Balls "..game.balls, color)
 end
 
 --------------------------------------------------------------------------------
 
 local function updatecombo(value)
     local color = op.white
-    combo = value
-    if combo == maxcombo then
+    game.combo = value
+    if game.combo == game.maxcombo then
         color = op.green
     end
-    updatemessage("combo", "Combo x"..combo - 1, color)
+    updatemessage("combo", "Combo x"..game.combo - 1, color)
 end
 
 --------------------------------------------------------------------------------
@@ -767,7 +773,7 @@ local function drawbricks()
     for pass = startpass, 2 do
         for y = 1, brick.numrows do
             local bricks = rows[y]
-            brick.y = (y + brick.offsety) * brick.ht
+            brick.y = floor((y + brick.offsety) * brick.ht)
             if pass == 2 then
                 ov(brick.cols[y])
             end
@@ -811,7 +817,7 @@ local function drawbat()
     end
     ov("blend 0")
     -- draw the bat in red if mouse is off the overlay
-    if offoverlay then
+    if game.offoverlay then
         ov(op.red)
     else
         ov("rgba 192 192 192 255")
@@ -822,21 +828,22 @@ end
 --------------------------------------------------------------------------------
 
 local function initbricks()
-    rows        = {}
-    brick.wd     = floor(wd / brick.numcols)
-    brick.ht     = floor(ht / 40)
+    rows              = {}
+    brick.wd          = floor(wd / brick.numcols)
+    brick.ht          = floor(ht / 40)
     brick.bricksleft  = 0
     brick.totalbricks = 0
-    brick.offsety     = level + 1
+    brick.offsety     = game.level + 1
     if brick.offsety > brick.maxoffsety then
         brick.offsety = brick.maxoffsety
     end
+    brick.movedown    = 0
 
     -- check for bonus level
-    bonuscurrent = bonustime
-    bonuslevel   = false
-    if (level % bonusinterval) == 0 then
-       bonuslevel = true
+    bonus.current = bonus.time
+    bonus.level   = false
+    if (game.level % bonus.interval) == 0 then
+       bonus.level = true
     end
 
     -- distribute any gap left and right
@@ -848,8 +855,8 @@ local function initbricks()
     local match = 1
     for y = 1, brick.numrows do
         local bricks = {}
-        if bonuslevel then
-            local bonusrow = bonus[y]
+        if bonus.level then
+            local bonusrow = bonus.bricks[y]
             match = 1
             for x = brick.numcols - 1, 0, -1 do
                 if (bonusrow & match) == match then
@@ -1075,14 +1082,14 @@ end
 --------------------------------------------------------------------------------
 
 local function pausegame(paused)
-    if paused ~= pause then
-        pause = paused
-        if currenttrack ~= "" then
-            if pause then
-                musicfade = 1
-                faderate  = -0.05
+    if paused ~= game.pause then
+        game.pause = paused
+        if music.currenttrack ~= "" then
+            if game.pause then
+                music.fade = 1
+                music.faderate  = -0.05
             else
-                faderate = 0.05
+                music.faderate = 0.05
                 ov("sound resume")
             end
         end
@@ -1092,24 +1099,24 @@ end
 --------------------------------------------------------------------------------
 
 local function updatemusic()
-    if currenttrack ~= "" then
-        if pause then
-            if musicfade > 0 then
-                musicfade = musicfade + faderate
-                if musicfade <= 0 then
-                    musicfade = 0
+    if music.currenttrack ~= "" then
+        if game.pause then
+            if music.fade > 0 then
+                music.fade = music.fade + music.faderate
+                if music.fade <= 0 then
+                    music.fade = 0
                     ov("sound pause")
                 else
-                    setvolume(currenttrack, (options.musicvol * musicfade / 100))
+                    setvolume(music.currenttrack, (options.musicvol * music.fade / 100))
                 end
             end
         else
-            if musicfade < 1 then
-                musicfade = musicfade + faderate
-                if musicfade > 1 then
-                    musicfade = 1
+            if music.fade < 1 then
+                music.fade = music.fade + music.faderate
+                if music.fade > 1 then
+                    music.fade = 1
                 end
-                setvolume(currenttrack, (options.musicvol * musicfade / 100))
+                setvolume(music.currenttrack, (options.musicvol * music.fade / 100))
             end
         end
     end
@@ -1142,16 +1149,19 @@ local function processinput()
                 options.confirming = false
             elseif options.showoptions then
                 options.showoptions = false
-            elseif newball then
-                if bonuslevel then
+            elseif game.newball then
+                if bonus.level then
                     playmusic("bonusloop", true)
                 else
                     playmusic("gameloop", true)
                 end
-                newball = false
+                game.newball = false
                 pausegame(false)
             else
-                pausegame(not pause)
+                -- do not unpause if off overlay
+                if not (game.pause and game.offoverlay and options.autopause ~= 0) then
+                    pausegame(not game.pause)
+                end
             end
         else
             processstandardkeys(event)
@@ -1172,15 +1182,15 @@ local function processendinput()
         -- right click quits application
         if button == "right" then
             -- quit application
-            again       = false
-            finished    = true
+            game.again          = false
+            game.finished       = true
             options.showoptions = false
         elseif button == "left" or event == "key enter none" or event == "key return none" or event == "key space none" then
             -- left click, enter or space restarts game or dismisses settings
             if options.showoptions then
                 options.showoptions = false
             else
-                finished = true
+                game.finished = true
             end
         else
             processstandardkeys(event)
@@ -1209,15 +1219,15 @@ local function resizegame(newwd, newht)
     end
 
     -- scale bat, ball and bricks
-    brick.wd        = floor(wd / brick.numcols)
-    brick.ht        = floor(ht / 40)
+    brick.wd                = floor(wd / brick.numcols)
+    brick.ht                = floor(ht / 40)
     particle.brickparticles = floor(brick.wd * brick.ht / 10)
-    bat.wd          = floor(wd / 10)
-    bat.ht          = brick.ht
-    ball.size       = wd / 80
-    local edgegap  = wd - brick.wd * brick.numcols
-    edgegapl       = floor(edgegap / 2)
-    edgegapr       = edgegap - edgegapl
+    bat.wd                  = floor(wd / 10)
+    bat.ht                  = brick.ht
+    ball.size               = wd / 80
+    local edgegap           = wd - brick.wd * brick.numcols
+    edgegapl                = floor(edgegap / 2)
+    edgegapr                = edgegap - edgegapl
 
     -- reposition the bat and ball
     bat.x  = bat.x * xscale
@@ -1252,22 +1262,22 @@ local function drawscoreline()
     drawtextclip("score", 4, 4, text.alignleft)
     drawtextclip("balls", -4, 4, text.alignright)
     drawtextclip("high", 0, 4, text.aligncenter)
-    if combo > 2 then
+    if game.combo > 2 then
         drawtextclip("combo", 0, 0, text.aligncenter, text.alignbottom)
     end
-    if not newball and not pause and not options.showoptions and bonuslevel and bonuscurrent >= 0 then
+    if not game.newball and not game.pause and not options.showoptions and bonus.level and bonus.current >= 0 then
         local color = op.green
-        if bonuscurrent < 10 then
+        if bonus.current < 10 then
             color = op.red
-        elseif bonuscurrent < 20 then
+        elseif bonus.current < 20 then
             color = op.yellow
         end
-        updatemessage("time", "Time "..string.format("%.1f", bonuscurrent), color)
+        updatemessage("time", "Time "..string.format("%.1f", bonus.current), color)
         drawtextclip("time", 0, ht / 2, text.aligncenter)
         color = op.green
-        if brick.bricksleft > bonusyellow then
+        if brick.bricksleft > bonus.yellow then
             color = op.red
-        elseif brick.bricksleft > bonusgreen then
+        elseif brick.bricksleft > bonus.green then
             color = op.yellow
         end
         updatemessage("remain", "Bricks left "..brick.bricksleft, color)
@@ -1279,12 +1289,12 @@ end
 
 local function drawgameover()
     ov("blend 1")
-    if newhigh then
+    if game.newhigh then
         local highscorew = drawtextclip("newhigh", 0, ht / 2 + 96 * text.fontscale, text.aligncenter)
         createparticles(edgegapl + floor(wd / 2 + highscorew / 2), floor(ht / 2 + 96 * text.fontscale), highscorew, 1, particle.highparticles)
     end
-    updatecombo(gamecombo)
-    if newcombo then
+    updatecombo(game.gamecombo)
+    if game.newcombo then
         local combow = drawtextclip("newcombo", 0, ht / 2 + 118 * text.fontscale, text.aligncenter)
         createparticles(edgegapl + floor(wd / 2 + combow / 2), floor(ht / 2 + 118 * text.fontscale), combow, 1, particle.comboparticles)
     end
@@ -1311,15 +1321,15 @@ local function drawbonuscomplete(remainingtime, bonusscore)
     drawtextclip("bcomplete", 0, ht / 2 - 30 * text.fontscale, text.aligncenter)
 
     local w = drawtextclip("awarded", 0, ht / 2, text.aligncenter)
-    if brick.bricksleft <= bonusgreen then
+    if brick.bricksleft <= bonus.green then
         createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, particle.bonusparticlesg)
-    elseif brick.bricksleft <= bonusyellow then
+    elseif brick.bricksleft <= bonus.yellow then
         createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, particle.bonusparticlesy)
     end
     drawtextclip("continue", 0, ht / 2 + 30 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("quitgame", 0, ht / 2 + 52 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("option", 0, ht / 2 + 74 * text.fontscale, text.aligncenter, nil, true)
-    if newbonus then
+    if game.newbonus then
         local bonusw = drawtextclip("newbonus", 0, ht / 2 + 96 * text.fontscale, text.aligncenter)
         createparticles(edgegapl + floor(wd / 2 + bonusw / 2), floor(ht / 2 + 96 * text.fontscale), bonusw, 1, particle.bonusparticles)
     end
@@ -1339,8 +1349,15 @@ end
 local function drawpause()
     ov("blend 1")
     drawtextclip("pause", 0, ht / 2 - 15 * text.fontscale, text.aligncenter)
-    if offoverlay and options.autopause ~= 0 and options.autostart ~= 0 then
-        drawtextclip("focus", 0, ht / 2 + 22 * text.fontscale, text.aligncenter)
+    if game.offoverlay and options.autopause ~= 0 then
+        if options.autostart ~= 0 then
+            drawtextclip("focus", 0, ht / 2 + 22 * text.fontscale, text.aligncenter)
+        else
+            drawtextclip("manfocus", 0, ht / 2 + 22 * text.fontscale, text.aligncenter)
+            drawtextclip("resume", 0, ht / 2 + 44 * text.fontscale, text.aligncenter, nil, true)
+            drawtextclip("quitgame", 0, ht / 2 + 66 * text.fontscale, text.aligncenter, nil, true)
+            drawtextclip("option", 0, ht / 2 + 88 * text.fontscale, text.aligncenter, nil, true)
+        end
     else
         drawtextclip("resume", 0, ht / 2 + 22 * text.fontscale, text.aligncenter, nil, true)
         drawtextclip("quitgame", 0, ht / 2 + 44 * text.fontscale, text.aligncenter, nil, true)
@@ -1357,7 +1374,7 @@ local function drawnewball()
     drawtextclip("quitgame", 0, ht / 2 + 66 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("option", 0,  ht / 2 + 88 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("left", 0, ht / 2 - 15 * text.fontscale, text.aligncenter)
-    if bonuslevel then
+    if bonus.level then
         drawtextclip("bonus", 0, ht / 2 - 52 * text.fontscale, text.aligncenter)
     else
         drawtextclip("level", 0, ht / 2 - 52 * text.fontscale, text.aligncenter)
@@ -1444,7 +1461,7 @@ local function drawoptions()
 
     -- draw close options
     drawtextclip("close", 0, y + h, text.aligncenter, nil, true)
-    if balls == 0 then
+    if game.balls == 0 then
         drawtextclip("quit", 0, y + h * 2.5, text.aligncenter, nil, true)
     else
         drawtextclip("quitgame", 0, y + h * 2.5, text.aligncenter, nil, true)
@@ -1460,7 +1477,7 @@ local function checkforsystemevent()
         resizegame(newwd, newht)
     end
     -- check for overlay hidden
-    if not pause then
+    if not game.pause then
         if g.getoption("showoverlay") == 0 then
             pausegame(true)
         end
@@ -1483,18 +1500,18 @@ local function updatebatposition()
             end
         end
         -- check if mouse was off overlay
-        if offoverlay then
+        if game.offoverlay then
             -- check if paused
-            if pause and options.autostart ~= 0 and options.autopause ~= 0 then
+            if game.pause and options.autostart ~= 0 and options.autopause ~= 0 then
                 pausegame(false)
             end
         end
-        offoverlay = false
+        game.offoverlay = false
     else
         -- mouse off overlay
-        offoverlay = true
+        game.offoverlay = true
         -- check for autopause if in game
-        if options.autopause ~= 0 and not newball then
+        if options.autopause ~= 0 and not game.newball then
             pausegame(true)
         end
     end
@@ -1510,7 +1527,7 @@ local function clearbonusbricks()
         for x = 1, brick.numcols do
             if bricks[x] then
                 bricks[x] = false
-                createparticles(x * brick.wd + edgegapl, (y + brick.offsety) * brick.ht, brick.wd, brick.ht, clearparticles, brick.cols[y])
+                createparticles(x * brick.wd + edgegapl, floor((y + brick.offsety) * brick.ht), brick.wd, brick.ht, clearparticles, brick.cols[y])
             end
         end
     end
@@ -1520,24 +1537,24 @@ end
 
 local function computebonus()
     local bonusscore = 0
-    if brick.bricksleft <= bonusgreen then
-        bonusscore = (brick.totalbricks - brick.bricksleft) * (100 + (level - 1) * 10)
+    if brick.bricksleft <= bonus.green then
+        bonusscore = (brick.totalbricks - brick.bricksleft) * (100 + (game.level - 1) * 10)
         updatemessage("awarded", "Bricks left "..brick.bricksleft.." = "..bonusscore, op.green)
-    elseif brick.bricksleft <= bonusyellow then
-        bonusscore = (brick.totalbricks - brick.bricksleft) * (50 + (level - 1) * 10)
+    elseif brick.bricksleft <= bonus.yellow then
+        bonusscore = (brick.totalbricks - brick.bricksleft) * (50 + (game.level - 1) * 10)
         updatemessage("awarded", "Bricks left "..brick.bricksleft.." = "..bonusscore, op.yellow)
     else
         updatemessage("awarded", "Bricks left "..brick.bricksleft.." = ".."No Bonus", op.red)
     end
     playmusic("levelcompleteloop", true)
-    updatescore(score + bonusscore)
-    if score > hiscore then
-        newhigh = true
-        updatehighscore(score)
+    updatescore(game.score + bonusscore)
+    if game.score > game.hiscore then
+        game.newhigh = true
+        updatehighscore(game.score)
     end
-    if bonusscore > bestbonus then
-        newbonus = true
-        bestbonus = bonusscore
+    if bonusscore > bonus.best then
+        game.newbonus = true
+        bonus.best = bonusscore
     end
 
     return bonusscore
@@ -1547,9 +1564,9 @@ end
 
 local function resetcombo()
     updatecombo(1)
-    combomult  = 1
-    comboraw   = 0
-    comboextra = 0
+    game.combomult  = 1
+    game.comboraw   = 0
+    game.comboextra = 0
 end
 
 --------------------------------------------------------------------------------
@@ -1576,7 +1593,7 @@ local function playexit()
             n = n + 1
         end
     end
-    local fadestart = musicfade
+    local fadestart = music.fade
     ov(op.black)
     for i = 0, 100 do
         t = g.millisecs()
@@ -1596,8 +1613,8 @@ local function playexit()
             drawtiming(g.millisecs() - t)
         end
         -- fade the music
-        musicfade = fadestart * ((100 - i) / 100)
-        setvolume(currenttrack, (options.musicvol * musicfade / 100))
+        music.fade = fadestart * ((100 - i) / 100)
+        setvolume(music.currenttrack, (options.musicvol * music.fade / 100))
         ov("update")
         while g.millisecs() - t < 15 do end
     end
@@ -1629,13 +1646,13 @@ local function breakout()
     setchannelvolume("music", options.musicvol)
 
     -- play games until finished
-    balls    = 3
-    score    = 0
-    level    = 1
-    again    = true
-    newhigh  = false
-    newcombo = false
-    newbonus = false
+    game.balls    = 3
+    game.score    = 0
+    game.level    = 1
+    game.again    = true
+    game.newhigh  = false
+    game.newcombo = false
+    game.newbonus = false
 
     -- initialise the bat and ball
     initbat()
@@ -1648,14 +1665,14 @@ local function breakout()
     createstatictext()
 
     -- initialize dynamic text
-    updatescore(score)
-    updatehighscore(hiscore)
-    updateballs(balls)
-    updatelevel(level)
+    updatescore(game.score)
+    updatehighscore(game.hiscore)
+    updateballs(game.balls)
+    updatelevel(game.level)
 
     -- main loop
-    while again do
-        musicfade = 1
+    while game.again do
+        music.fade = 1
 
         -- initialize the bricks
         initbricks()
@@ -1669,14 +1686,14 @@ local function breakout()
         bat.lastx     = -1
 
         -- initialize the ball
-        local balldx    = 0.5
-        local balldy    = -1
-        local maxspeed  = 2.2 + (level - 1) * 0.1
+        local balldx   = 0.5
+        local balldy   = -1
+        local maxspeed = 2.2 + (game.level - 1) * 0.1
         if maxspeed > 3 then
             maxspeed = 3
         end
         local speedinc  = 0.02
-        local speeddef  = 1 + (level - 1) * speedinc * 4
+        local speeddef  = 1 + (game.level - 1) * speedinc * 4
         if speeddef > maxspeed then
             speeddef = maxspeed
         end
@@ -1693,19 +1710,19 @@ local function breakout()
         initpoints()
 
         -- whether alive
-        newball    = true
+        game.newball       = true
         options.confirming = false
         pausegame(false)
 
         -- whether mouse off overlay
-        offoverlay = false
+        game.offoverlay = false
 
         -- reset combo
         resetcombo()
 
         -- game loop
         playmusic("gamestart")
-        while balls > 0 and brick.bricksleft > 0 and bonuscurrent > 0 do
+        while game.balls > 0 and brick.bricksleft > 0 and bonus.current > 0 do
             -- time frame
             local frametime = g.millisecs()
 
@@ -1719,13 +1736,13 @@ local function breakout()
             drawbackground()
 
             -- check if paused
-            if not pause and not options.confirming and not options.showoptions and bonuscurrent > 0 then
+            if not game.pause and not options.confirming and not options.showoptions and bonus.current > 0 then
                 -- check for new ball
-                if not newball then
+                if not game.newball then
                     -- update ball position incrementally
                     local framesteps = floor(ball.numsteps * timing.framemult)
                     local i = 1
-                    while i <= framesteps and not newball do
+                    while i <= framesteps and not game.newball do
                         i = i + 1
                         local stepx = ((balldx * ballspeed * ball.size) / speeddiv) / ball.numsteps
                         local stepy = ((balldy * ballspeed * ball.size) / speeddiv) / ball.numsteps
@@ -1756,25 +1773,25 @@ local function breakout()
                         -- check for ball hitting bottom boundary
                         elseif ball.y >= ht then
                             -- check for bonus level
-                            if bonuslevel then
+                            if bonus.level then
                                 -- end bonus level
-                                bonuscurrent = 0
+                                bonus.current = 0
                             else
                                 -- ball lost!
-                                updateballs(balls - 1)
-                                balldy    = -1
-                                balldx    = 0.5
-                                ballspeed = speeddef
-                                newball   = true
+                                updateballs(game.balls - 1)
+                                balldy       = -1
+                                balldx       = 0.5
+                                ballspeed    = speeddef
+                                game.newball = true
                                 -- reset combo
-                                if comboextra - comboraw > 0 then
+                                if game.comboextra - game.comboraw > 0 then
                                     if options.comboscore == 1 then
-                                        notify("Combo x "..(combo - 1).." Score "..comboextra - comboraw.." (+"..(floor(100 * comboextra / comboraw) - 100).."%)")
+                                        notify("Combo x "..(game.combo - 1).." Score "..game.comboextra - game.comboraw.." (+"..(floor(100 * game.comboextra / game.comboraw) - 100).."%)")
                                     end
                                 end
                                 resetcombo()
                                 -- destroy bat if no balls left
-                                if balls == 0 then
+                                if game.balls == 0 then
                                     createparticles(bat.x + bat.wd, bat.y, bat.wd, bat.ht, particle.lostparticles)
                                 end
                                 playmusic("lostball")
@@ -1793,20 +1810,21 @@ local function breakout()
                                 balldx = -0.1
                             end
                             balldy  = -balldy
-                            ball.y   = bat.y
+                            ball.y  = bat.y
                             bathits = bathits + 1
                             -- move the bricks down after a number of bat hits
                             if bathits == maxhits then
                                 bathits = 0
                                 if brick.offsety < brick.maxoffsety then
-                                    brick.offsety = brick.offsety + 1
+                                    brick.movedown = brick.movesteps
+                                    brick.startoffset = brick.offsety
                                 end
                             end
                             createparticles(ball.x, ball.y - ball.size / 2, 1, 1, particle.batparticles)
                             -- reset combo
-                            if comboextra - comboraw > 0 then
+                            if game.comboextra - game.comboraw > 0 then
                                 if options.comboscore == 1 then
-                                    notify("Combo x "..(combo - 1).." Score "..comboextra - comboraw.." (+"..(floor(100 * comboextra / comboraw) - 100).."%)")
+                                    notify("Combo x "..(game.combo - 1).." Score "..game.comboextra - game.comboraw.." (+"..(floor(100 * game.comboextra / game.comboraw) - 100).."%)")
                                 end
                             end
                             resetcombo()
@@ -1814,37 +1832,37 @@ local function breakout()
                         end
 
                         -- check for ball hitting brick
-                        brick.y = floor(ball.y / brick.ht) - brick.offsety
+                        brick.y = floor((ball.y - (brick.offsety * brick.ht)) / brick.ht)
                         if brick.y >= 1 and brick.y <= brick.numrows then
                             brick.x = floor((ball.x - edgegapl) / brick.wd) + 1
                             if rows[brick.y][brick.x] then
                                 -- hit a brick!
                                 rows[brick.y][brick.x] = false
                                 -- adjust score
-                                local points = floor((level + 9) * (brick.numrows - brick.y + 1) * combomult)
-                                local rawpoints = floor((level + 9) * (brick.numrows - brick.y + 1))
-                                if combo > 1 then
-                                    comboraw = comboraw + rawpoints
-                                    comboextra = comboextra + points
+                                local points = floor((game.level + 9) * (brick.numrows - brick.y + 1) * game.combomult)
+                                local rawpoints = floor((game.level + 9) * (brick.numrows - brick.y + 1))
+                                if game.combo > 1 then
+                                    game.comboraw = game.comboraw + rawpoints
+                                    game.comboextra = game.comboextra + points
                                 end
-                                updatescore(score + points)
-                                if score > hiscore then
-                                    newhigh = true
-                                    updatehighscore(score)
+                                updatescore(game.score + points)
+                                if game.score > game.hiscore then
+                                    game.newhigh = true
+                                    updatehighscore(game.score)
                                 end
                                 createpoints((brick.x - 1) * brick.wd + edgegapl, brick.y * brick.ht, points)
                                 -- increment combo
-                                combomult = combomult * combofact
-                                if combo + 1 > maxcombo then
-                                    maxcombo = combo + 1
-                                    newcombo = true
+                                game.combomult = game.combomult * game.combofact
+                                if game.combo + 1 > game.maxcombo then
+                                    game.maxcombo = game.combo + 1
+                                    game.newcombo = true
                                 end
-                                updatecombo(combo + 1)
-                                if combo > gamecombo then
-                                    gamecombo = combo
+                                updatecombo(game.combo + 1)
+                                if game.combo > game.gamecombo then
+                                    game.gamecombo = game.combo
                                 end
                                 -- work out which axis to invert
-                                local lastbricky = floor((ball.y - stepy) / brick.ht) - brick.offsety
+                                local lastbricky = floor(((ball.y - stepy) - (brick.offsety * brick.ht)) / brick.ht)
                                 if lastbricky == brick.y then
                                     balldx = -balldx
                                 else
@@ -1856,7 +1874,7 @@ local function breakout()
                                     ballspeed = maxspeed
                                 end
                                 -- create particles
-                                createparticles(brick.x * brick.wd + edgegapl, (brick.y + brick.offsety) * brick.ht, brick.wd, brick.ht, particle.brickparticles, brick.cols[brick.y])
+                                createparticles(brick.x * brick.wd + edgegapl, floor((brick.y + brick.offsety) * brick.ht), brick.wd, brick.ht, particle.brickparticles, brick.cols[brick.y])
                                 -- one less brick
                                 brick.bricksleft = brick.bricksleft - 1
                                 playsound("brick"..brick.y)
@@ -1866,11 +1884,21 @@ local function breakout()
                 end
             end
 
+            -- update brick position
+            if brick.movedown > 0 then
+                brick.movedown = brick.movedown - 1
+                brick.offsety = brick.offsety + (1 / brick.movesteps)
+                if brick.movedown <= 0 then
+                    brick.movedown = 0
+                    brick.offsety = brick.startoffset + 1
+                end
+            end
+            
             -- update bat position
             updatebatposition()
 
             -- if new ball then set ball to sit on bat
-            if newball then
+            if game.newball then
                 ball.x = bat.x + bat.wd / 2
                 ball.y = bat.y - ball.size
             end
@@ -1887,7 +1915,7 @@ local function breakout()
             end
 
             -- draw the ball
-            if balls > 0 then
+            if game.balls > 0 then
                 drawball()
             end
 
@@ -1902,9 +1930,9 @@ local function breakout()
                 drawconfirm()
             elseif options.showoptions then
                 drawoptions()
-            elseif pause then
+            elseif game.pause then
                 drawpause()
-            elseif newball and balls > 0 then
+            elseif game.newball and game.balls > 0 then
                 drawnewball()
             end
 
@@ -1937,15 +1965,15 @@ local function breakout()
             end
 
             -- update bonus time if on bonus level
-            if bonuslevel and not pause and not newball and not options.showoptions then
-                bonuscurrent = bonuscurrent - (finaltime / 1000)
+            if bonus.level and not game.pause and not game.newball and not options.showoptions then
+                bonus.current = bonus.current - (finaltime / 1000)
             end
         end
 
         -- check for bonus level complete
-        local bonusfinal = bonuscurrent
+        local bonusfinal = bonus.current
         local bonusscore = 0
-        if bonuslevel then
+        if bonus.level then
             bonusscore = computebonus()
             clearbonusbricks()
         else
@@ -1955,22 +1983,22 @@ local function breakout()
         end
 
         -- save high score, max combo and best bonus
-        if newhigh or newcombo or newbonus then
+        if game.newhigh or game.newcombo or game.newbonus then
             writesettings()
         end
 
         -- draw best combo
-        if balls == 0 then
-            notify("Best Combo x"..maxcombo - 1)
+        if game.balls == 0 then
+            notify("Best Combo x"..game.maxcombo - 1)
         end
 
         -- loop until mouse button clicked or enter pressed
-        bonuscurrent        = -1
-        finished            = false
+        bonus.current       = -1
+        game.finished       = false
         local fading        = false
         local musicplaytime = g.millisecs()
 
-        while not finished do
+        while not game.finished do
             -- time frame
             local frametime = g.millisecs()
 
@@ -1998,13 +2026,13 @@ local function breakout()
             if options.showoptions then
                 drawoptions()
             else
-                if balls == 0 then
+                if game.balls == 0 then
                     -- game over
                     drawgameover()
                 else
                     -- draw bat
                     drawbat()
-                    if bonuslevel then
+                    if bonus.level then
                         -- end of bonus level
                         drawbonuscomplete(bonusfinal, bonusscore)
                     else
@@ -2015,23 +2043,23 @@ local function breakout()
             end
 
             -- handle music during game over
-            if balls == 0 then
+            if game.balls == 0 then
                 if fading then
                     -- fade music after one play through
-                    if frametime - musicplaytime > gameovermusictime then
-                        musicfade = musicfade + faderate
-                        if musicfade < 0 then
-                            musicfade = 0
+                    if frametime - musicplaytime > music.gameovertime then
+                        music.fade = music.fade + music.faderate
+                        if music.fade < 0 then
+                            music.fade = 0
                         end
-                        setvolume("gamelostloop", (options.musicvol * musicfade / 100))
+                        setvolume("gamelostloop", (options.musicvol * music.fade / 100))
                     end
                 else
                     -- wait for ball lost music to finish
                     if soundstate("lostball") ~= "playing" then
-                        fading        = true
-                        musicplaytime = g.millisecs()
-                        musicfade     = 1
-                        faderate      = -0.001
+                        fading         = true
+                        musicplaytime  = g.millisecs()
+                        music.fade     = 1
+                        music.faderate = -0.001
                         playmusic("gamelostloop", true)
                     else
                         updatemusic()
@@ -2072,20 +2100,20 @@ local function breakout()
         end
 
         -- check why game finished
-        if balls == 0 then
+        if game.balls == 0 then
             -- reset
             updatescore(0)
             updateballs(3)
             updatelevel(1)
-            newhigh   = false
-            updatehighscore(hiscore)
-            newcombo  = false
-            gamecombo = 1
+            game.newhigh   = false
+            updatehighscore(game.hiscore)
+            game.newcombo  = false
+            game.gamecombo = 1
         else
             -- level complete
-            updatelevel(level + 1)
+            updatelevel(game.level + 1)
         end
-        newbonus = false
+        game.newbonus = false
     end
 
     -- exit animation
