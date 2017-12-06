@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build = 71
+local build = 72
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -700,15 +700,17 @@ local function drawpoints()
         local item = points[i]
         -- check if item is still alive
         if item.duration > 0 then
-            local y = floor(item.y + brick.offsety * brick.ht)
-            if item.duration < 8 then
-                -- fade out by replacing clip alpha
-                ov("target point"..i)
-                ov("replace *# *# *# *#-16")
-                ov("target")
+            if options.brickscore == 1 then
+                local y = floor(item.y + brick.offsety * brick.ht)
+                if item.duration < 8 then
+                    -- fade out by replacing clip alpha
+                    ov("target point"..i)
+                    ov("replace *# *# *# *#-16")
+                    ov("target")
+                end
+                -- draw item
+                ov("paste "..item.x.." "..y.." point"..i)
             end
-            -- draw item
-            ov("paste "..item.x.." "..y.." point"..i)
             item.duration = item.duration - 1 * timing.framemult
             if item.duration < 0 then
                 item.duration = 0
@@ -1910,9 +1912,7 @@ local function breakout()
             drawbricks()
 
             -- draw the points
-            if options.brickscore == 1 then
-                drawpoints()
-            end
+            drawpoints()
 
             -- draw the ball
             if game.balls > 0 then
@@ -2018,9 +2018,7 @@ local function breakout()
             drawbricks()
 
             -- draw brick score
-            if options.brickscore == 1 then
-                drawpoints()
-            end
+            drawpoints()
 
             -- check why game finished
             if options.showoptions then
