@@ -5361,7 +5361,7 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
             }
         }
 
-	// check for the optional volume argument
+        // check for the optional volume argument
         float v = 1;
         const char* name = args;
 
@@ -5477,6 +5477,7 @@ const char* Overlay::SoundStop(const char* args)
 const char* Overlay::SoundState(const char* args)
 {
     bool playing = false;
+    bool paused = false;
 
     // check for engine
     if (engine) {
@@ -5501,19 +5502,32 @@ const char* Overlay::SoundState(const char* args)
                 return "unknown";
             }
             else {
-                if (engine->isCurrentlyPlaying(source)) {
-                    playing = true;
+                // find the sound
+                std::map<std::string,ISound*>::iterator it;
+                it = sounds.find(args);
+                if (it != sounds.end()) {
+                    ISound* sound = it->second;
+                    if (sound->getIsPaused()) {
+                        paused = true;
+                    }
+                    if (engine->isCurrentlyPlaying(source)) {
+                        playing = true;
+                    }
                 }       
             }
         }
     }
 
     // return status as string
-    if (playing) {
-        return "playing";
-    }
-    else {
-        return "stopped";
+    if (paused && playing) {
+        return "paused";
+    } else {
+        if (playing) {
+            return "playing";
+        }
+        else {
+            return "stopped";
+        }
     }
 }
 #endif

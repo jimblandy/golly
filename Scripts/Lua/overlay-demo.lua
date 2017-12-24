@@ -1331,7 +1331,7 @@ David Bell
         pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
 
         -- update display
-	ov("update")
+        ov("update")
         if firsttime then
             firsttime = false
             g.update()
@@ -2658,6 +2658,7 @@ end
 --------------------------------------------------------------------------------
 
 local volume = 70
+local paused = false
 
 function test_sound()
     local oldblend = ov("blend 0")
@@ -2676,23 +2677,23 @@ function test_sound()
     ov("font 22 mono")
     ov(op.yellow)
     local w, h = maketext("sound play audio.wav", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 100)
+    pastetext(floor((wd - w) / 2), 50)
     w, h = maketext("sound loop audio.wav", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 200)
+    pastetext(floor((wd - w) / 2), 150)
     w, h = maketext("sound stop", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 300)
+    pastetext(floor((wd - w) / 2), 250)
 
     -- draw controls
     ov("font 16 mono")
     ov(op.white)
     w, h = maketext("Press P to play sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 70)
+    pastetext(floor((wd - w) / 2), 20)
     w, h = maketext("Press L to loop sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 170)
+    pastetext(floor((wd - w) / 2), 120)
     w, h = maketext("Press S to stop sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 270)
+    pastetext(floor((wd - w) / 2), 220)
     w, h = maketext("Press - or + to adjust volume", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 370)
+    pastetext(floor((wd - w) / 2), 320)
 
     -- update screen then copy background
     ov("update")
@@ -2713,9 +2714,11 @@ function test_sound()
         elseif event == "key p none" then
             command = "play"
             result = ov("sound play "..soundname.." "..(volume / 100))
+            paused = false
         elseif event == "key l none" then
             command = "loop"
             result = ov("sound loop "..soundname.. " "..(volume / 100))
+            paused = false
         elseif event == "key s none" then
             command = "stop"
             ov("sound stop")
@@ -2730,18 +2733,45 @@ function test_sound()
             if (volume > 100) then volume = 100 end
             command = "volume "..(volume / 100)
             ov("sound volume "..soundname.." "..(volume / 100))
+        elseif event == "key q none" then
+            if paused then
+                paused = false
+                command = "resume"
+                ov("sound resume "..soundname)
+            else
+                paused = true
+                command = "pause"
+                ov("sound pause "..soundname)
+            end
         end
 
         -- draw background
         ov("blend 0")
         ov("paste 0 0 "..bgclip)
 
-        -- display volume
+        -- draw pause or resume
+        ov("font 16 mono")
         ov("blend 1")
+        ov(op.white)
+        if paused then
+            w, h = maketext("Press Q to resume playback", nil, nil, 2, 2)
+        else
+            w, h = maketext("Press Q to pause playback", nil, nil, 2, 2)
+        end
+        pastetext(floor((wd - w) / 2), 420)
         ov(op.yellow)
         ov("font 22 mono")
+        if paused then
+            w, h = maketext("sound resume audio.wav", nil, nil, 2, 2)
+        else
+            w, h = maketext("sound pause audio.wav", nil, nil, 2, 2)
+        end
+        pastetext(floor((wd - w) / 2), 450)
+
+        -- display volume
+        ov("blend 1")
         w, h = maketext("sound volume audio.wav "..(volume / 100), nil, nil, 2, 2)
-        pastetext(floor((wd - w) / 2), 400)
+        pastetext(floor((wd - w) / 2), 350)
 
         -- draw last command
         ov("blend 1")
@@ -2752,7 +2782,13 @@ function test_sound()
         else
             w, h = maketext("Last command: "..command, nil, nil, 2, 2)
         end
-        pastetext(floor((wd - w) / 2), 470)
+        pastetext(floor((wd - w) / 2), 500)
+
+        -- draw status
+        local state = ov("sound state "..soundname)
+        w, h = maketext("State: "..state, nil, nil, 2, 2)
+        pastetext(floor((wd - w) / 2), 540)
+
         ov("update")
     end
 
