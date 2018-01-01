@@ -134,29 +134,32 @@ void liferules::setTotalistic(int value, bool survival) {
    int j = 0 ;
    int offset = 0 ;
 
-   // update the rulebits
+   // check if this value has already been processed
    if (survival) {
       offset = survival_offset ;
    }
-   rulebits |= 1 << (value + offset) ;
+   if ((rulebits & (1 << (value + offset))) == 0) {
+       // update the rulebits
+       rulebits |= 1 << (value + offset) ;
 
-   // update the mask if survival
-   if (survival) {
-      mask = 0x10 ;
-   }
+       // update the mask if survival
+       if (survival) {
+          mask = 0x10 ;
+       }
 
-   // fill the array based on totalistic value
-   for (i = 0 ; i < ALL3X3 ; i += 32) {
-      for (j = 0 ; j < 16 ; j++) {
-         nbrs = 0 ;
-         nhood = (i+j) & neighbormask ;
-         while (nhood > 0) {
-            nbrs += (nhood & 1) ;
-            nhood >>= 1 ;
-         }
-         if (value == nbrs) {
-            rule3x3[i+j+mask] = 1 ;
-         }
+       // fill the array based on totalistic value
+       for (i = 0 ; i < ALL3X3 ; i += 32) {
+          for (j = 0 ; j < 16 ; j++) {
+             nbrs = 0 ;
+             nhood = (i+j) & neighbormask ;
+             while (nhood > 0) {
+                nbrs += (nhood & 1) ;
+                nhood >>= 1 ;
+             }
+             if (value == nbrs) {
+                rule3x3[i+j+mask] = 1 ;
+             }
+          }
       }
    }
 }
