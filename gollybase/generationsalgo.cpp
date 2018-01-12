@@ -764,7 +764,7 @@ const char *generationsalgo::setrule(const char *rulestring) {
       r += 3 ;
       bpos = r ;
 
-     // terminate at the colon if one is present
+      // terminate at the colon if one is present
       if (colonpos) *colonpos = 0 ;
 
       // check the length of the map
@@ -783,6 +783,12 @@ const char *generationsalgo::setrule(const char *rulestring) {
 
       // length is up to the final slash
       maplen = (int) (lastslash - r) ;
+
+      // check if there is base64 padding
+      if (maplen > 2 && !strncmp(r + maplen - 2, "==", 2)) {
+         // remove padding
+         maplen -= 2 ;
+      }
 
       // check if the map length is valid for Moore, Hexagonal or von Neumann neighborhoods
       if (!(maplen == MAP512LENGTH || maplen == MAP128LENGTH || maplen == MAP32LENGTH)) {
@@ -810,7 +816,7 @@ const char *generationsalgo::setrule(const char *rulestring) {
       }
 
       // read number of states
-      r++ ;
+      r = lastslash + 1 ;
       c = *r ;
       while (c) {
          if (c >= '0' && c <= '9') {

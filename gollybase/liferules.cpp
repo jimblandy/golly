@@ -810,6 +810,12 @@ const char *liferules::setrule(const char *rulestring, lifealgo *algo) {
       // replace the colon if one was present
       if (colonpos) *colonpos = ':' ;
       
+      // check if there is base64 padding
+      if (maplen > 2 && !strncmp(r + maplen - 2, "==", 2)) {
+         // remove padding
+         maplen -= 2 ;
+      }
+
       // check if the map length is valid for Moore, Hexagonal or von Neumann neighborhoods
       if (!(maplen == MAP512LENGTH || maplen == MAP128LENGTH || maplen == MAP32LENGTH)) {
           return "MAP rule needs 6, 22 or 86 base64 characters." ;
