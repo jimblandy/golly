@@ -643,24 +643,37 @@ ghnode *ghashbase::gsetbit(ghnode *n, int x, int y, int newstate, int depth) {
       if (depth > 31) {
          if (depth == 32)
             wh = 0x80000000 ;
+	 w = 0 ;
       } else {
          w = 1 << depth ;
          wh = 1 << (depth - 1) ;
       }
-      if (depth > 31)
-         w = 0 ;
       depth-- ;
       ghnode **nptr ;
-      if (x < 0) {
-         if (y < 0)
-            nptr = &(n->sw) ;
-         else
-            nptr = &(n->nw) ;
+      if (depth+1 == this->depth || depth < 31) {
+         if (x < 0) {
+            if (y < 0)
+               nptr = &(n->sw) ;
+            else
+               nptr = &(n->nw) ;
+         } else {
+            if (y < 0)
+               nptr = &(n->se) ;
+            else
+               nptr = &(n->ne) ;
+         }
       } else {
-         if (y < 0)
-            nptr = &(n->se) ;
-         else
-            nptr = &(n->ne) ;
+         if (x >= 0) {
+            if (y >= 0)
+               nptr = &(n->sw) ;
+            else
+               nptr = &(n->nw) ;
+         } else {
+            if (y >= 0)
+               nptr = &(n->se) ;
+            else
+               nptr = &(n->ne) ;
+         }
       }
       if (*nptr == 0) {
          if (depth == 0)
@@ -671,10 +684,10 @@ ghnode *ghashbase::gsetbit(ghnode *n, int x, int y, int newstate, int depth) {
       ghnode *s = gsetbit(*nptr, (x & (w - 1)) - wh,
                                  (y & (w - 1)) - wh, newstate, depth) ;
       if (hashed) {
-         ghnode *nw = n->nw ;
-         ghnode *sw = n->sw ;
-         ghnode *ne = n->ne ;
-         ghnode *se = n->se ;
+         ghnode *nw = (nptr == &(n->nw) ? s : n->nw) ;
+         ghnode *sw = (nptr == &(n->sw) ? s : n->sw) ;
+         ghnode *ne = (nptr == &(n->ne) ? s : n->ne) ;
+         ghnode *se = (nptr == &(n->se) ? s : n->se) ;
          if (x < 0) {
             if (y < 0)
                sw = s ;
@@ -699,6 +712,15 @@ ghnode *ghashbase::gsetbit(ghnode *n, int x, int y, int newstate, int depth) {
  *   but really not all that complicated.
  */
 int ghashbase::getbit(ghnode *n, int x, int y, int depth) {
+   struct ghnode tnode ;
+   while (depth >= 32) {
+      tnode.nw = n->nw->se ;
+      tnode.ne = n->ne->sw ;
+      tnode.sw = n->sw->ne ;
+      tnode.se = n->se->nw ;
+      n = &tnode ;
+      depth-- ;
+   }
    if (depth == 0) {
       ghleaf *l = (ghleaf *)n ;
       if (x < 0)

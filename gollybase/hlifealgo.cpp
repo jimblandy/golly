@@ -782,16 +782,30 @@ node *hlifealgo::gsetbit(node *n, int x, int y, int newstate, int depth) {
       }
       depth-- ;
       node **nptr ;
-      if (x < 0) {
-         if (y < 0)
-            nptr = &(n->sw) ;
-         else
-            nptr = &(n->nw) ;
+      if (depth+1 == this->depth || depth < 31) {
+         if (x < 0) {
+            if (y < 0)
+               nptr = &(n->sw) ;
+            else
+               nptr = &(n->nw) ;
+         } else {
+            if (y < 0)
+               nptr = &(n->se) ;
+            else
+               nptr = &(n->ne) ;
+         }
       } else {
-         if (y < 0)
-            nptr = &(n->se) ;
-         else
-            nptr = &(n->ne) ;
+         if (x >= 0) {
+            if (y >= 0)
+               nptr = &(n->sw) ;
+            else
+               nptr = &(n->nw) ;
+         } else {
+            if (y >= 0)
+               nptr = &(n->se) ;
+            else
+               nptr = &(n->ne) ;
+         }
       }
       if (*nptr == 0) {
          if (depth == 2)
@@ -802,21 +816,10 @@ node *hlifealgo::gsetbit(node *n, int x, int y, int newstate, int depth) {
       node *s = gsetbit(*nptr, (x & (w - 1)) - wh,
                                (y & (w - 1)) - wh, newstate, depth) ;
       if (hashed) {
-         node *nw = n->nw ;
-         node *sw = n->sw ;
-         node *ne = n->ne ;
-         node *se = n->se ;
-         if (x < 0) {
-            if (y < 0)
-               sw = s ;
-            else
-               nw = s ;
-         } else {
-            if (y < 0)
-               se = s ;
-            else
-               ne = s ;
-         }
+         node *nw = (nptr == &(n->nw) ? s : n->nw) ;
+         node *sw = (nptr == &(n->sw) ? s : n->sw) ;
+         node *ne = (nptr == &(n->ne) ? s : n->ne) ;
+         node *se = (nptr == &(n->se) ? s : n->se) ;
          n = save(find_node(nw, ne, sw, se)) ;
       } else {
          *nptr = s ;
@@ -830,6 +833,15 @@ node *hlifealgo::gsetbit(node *n, int x, int y, int newstate, int depth) {
  *   but really not all that complicated.
  */
 int hlifealgo::getbit(node *n, int x, int y, int depth) {
+   struct node tnode ;
+   while (depth >= 32) {
+      tnode.nw = n->nw->se ;
+      tnode.ne = n->ne->sw ;
+      tnode.sw = n->sw->ne ;
+      tnode.se = n->se->nw ;
+      n = &tnode ;
+      depth-- ;
+   }
    if (depth == 2) {
       leaf *l = (leaf *)n ;
       int test = 0 ;
