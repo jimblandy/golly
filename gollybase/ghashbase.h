@@ -37,6 +37,19 @@ struct ghleaf {
  *   returns a zero value.
  */
 #define is_ghnode(n) (((ghnode *)(n))->nw)
+/*
+ *   For explicit prefetching we retain some state for our lookup
+ *   routines.
+ */
+#ifdef USEPREFETCH
+struct ghsetup_t { 
+   g_uintptr_t h ;
+   struct ghnode *nw, *ne, *sw, *se ;
+   struct ghnode **addr ;
+   void prefetch() const { PREFETCH(addr) ; }
+} ;
+#endif
+
 /**
  *   Our ghashbase class.  Note that this is an abstract class; you need
  *   to expand specific methods to specialize it for a particular multi-state
@@ -146,6 +159,10 @@ private:
 //
    void resize() ;
    ghnode *find_ghnode(ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) ;
+#ifdef USEPREFETCH
+   ghnode *find_ghnode(ghsetup_t &su) ;
+   void setupprefetch(ghsetup_t &su, ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) ;
+#endif
    void unhash_ghnode(ghnode *n) ;
    void rehash_ghnode(ghnode *n) ;
    ghleaf *find_ghleaf(state nw, state ne, state sw, state se) ;

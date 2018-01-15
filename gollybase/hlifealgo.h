@@ -131,6 +131,19 @@ struct leaf {
  *   returns a zero value.
  */
 #define is_node(n) (((node *)(n))->nw)
+/*
+ *   For explicit prefetching we retain some state on our lookup
+ *   calculations.
+ */
+#ifdef USEPREFETCH
+struct setup_t { 
+   g_uintptr_t h ;
+   struct node *nw, *ne, *sw, *se ;
+   struct node **addr ;
+   void prefetch() const { PREFETCH(addr) ; }
+} ;
+#endif
+
 /**
  *   Our hlifealgo class.
  */
@@ -235,6 +248,10 @@ private:
    void leafres(leaf *n) ;
    void resize() ;
    node *find_node(node *nw, node *ne, node *sw, node *se) ;
+#ifdef USEPREFETCH
+   node *find_node(setup_t &su) ;
+   void setupprefetch(setup_t &su, node *nw, node *ne, node *sw, node *se) ;
+#endif
    void unhash_node(node *n) ;
    void rehash_node(node *n) ;
    leaf *find_leaf(unsigned short nw, unsigned short ne,

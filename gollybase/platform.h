@@ -38,3 +38,5 @@
    #define G_MAX UINT_MAX
    #undef GOLLY64BIT
 #endif
+#define USEPREFETCH (1)
+#define PREFETCH(a) __builtin_prefetch(a)

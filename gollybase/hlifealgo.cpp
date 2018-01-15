@@ -345,6 +345,85 @@ node *hlifealgo::getres(node *n, int depth) {
      n->res = res ;
    return res ;
 }
+#ifdef USEPREFETCH
+void hlifealgo::setupprefetch(setup_t &su, node *nw, node *ne, node *sw, node *se) {
+   su.h = node_hash(nw,ne,sw,se) ;
+   su.nw = nw ;
+   su.ne = ne ;
+   su.sw = sw ;
+   su.se = se ;
+   su.addr = hashtab + HASHMOD(su.h) ;
+}
+node *hlifealgo::find_node(setup_t &su) {
+   node *p ;
+   node *pred = 0 ;
+   g_uintptr_t h = HASHMOD(su.h) ;
+   for (p=hashtab[h]; p; p = p->next) { /* make sure to compare nw *first* */
+      if (su.nw == p->nw && su.ne == p->ne && su.sw == p->sw && su.se == p->se) {
+         if (pred) { /* move this one to the front */
+            pred->next = p->next ;
+            p->next = hashtab[h] ;
+            hashtab[h] = p ;
+         }
+         return save(p) ;
+      }
+      pred = p ;
+   }
+   p = newnode() ;
+   p->nw = su.nw ;
+   p->ne = su.ne ;
+   p->sw = su.sw ;
+   p->se = su.se ;
+   p->res = 0 ;
+   p->next = hashtab[h] ;
+   hashtab[h] = p ;
+   hashpop++ ;
+   save(p) ;
+   if (hashpop > hashlimit)
+      resize() ;
+   return p ;
+}
+node *hlifealgo::dorecurs(node *n, node *ne, node *t, node *e, int depth) {
+   int sp = gsp ;
+   setup_t su[5] ;
+   setupprefetch(su[2], n->se, ne->sw, t->ne, e->nw) ;
+   setupprefetch(su[0], n->ne, ne->nw, n->se, ne->sw) ;
+   setupprefetch(su[1], ne->sw, ne->se, e->nw, e->ne) ;
+   setupprefetch(su[3], n->sw, n->se, t->nw, t->ne) ;
+   setupprefetch(su[4], t->ne, e->nw, t->se, e->sw) ;
+   su[0].prefetch() ;
+   su[1].prefetch() ;
+   su[2].prefetch() ;
+   su[3].prefetch() ;
+   su[4].prefetch() ;
+   node
+   *t00 = getres(n, depth),
+   *t01 = getres(find_node(su[0]), depth),
+   *t02 = getres(ne, depth),
+   *t12 = getres(find_node(su[1]), depth),
+   *t11 = getres(find_node(su[2]), depth),
+   *t10 = getres(find_node(su[3]), depth),
+   *t20 = getres(t, depth),
+   *t21 = getres(find_node(su[4]), depth),
+   *t22 = getres(e, depth) ;
+   setupprefetch(su[0], t11, t12, t21, t22) ;
+   setupprefetch(su[1], t10, t11, t20, t21) ;
+   setupprefetch(su[2], t00, t01, t10, t11) ;
+   setupprefetch(su[3], t01, t02, t11, t12) ;
+   su[0].prefetch() ;
+   su[1].prefetch() ;
+   su[2].prefetch() ;
+   su[3].prefetch() ;
+   node
+   *t44 = getres(find_node(su[0]), depth),
+   *t43 = getres(find_node(su[1]), depth),
+   *t33 = getres(find_node(su[2]), depth),
+   *t34 = getres(find_node(su[3]), depth) ;
+   n = find_node(t33, t34, t43, t44) ;
+   pop(sp) ;
+   return save(n) ;
+}
+#else
 /*
  *   So let's say the cached way failed.  How do we do it the slow way?
  *   Recursively, of course.  For an n-square (composed of the four
@@ -360,11 +439,11 @@ node *hlifealgo::getres(node *n, int depth) {
 node *hlifealgo::dorecurs(node *n, node *ne, node *t, node *e, int depth) {
    int sp = gsp ;
    node
+   *t11 = getres(find_node(n->se, ne->sw, t->ne, e->nw), depth),
    *t00 = getres(n, depth),
    *t01 = getres(find_node(n->ne, ne->nw, n->se, ne->sw), depth),
    *t02 = getres(ne, depth),
    *t12 = getres(find_node(ne->sw, ne->se, e->nw, e->ne), depth),
-   *t11 = getres(find_node(n->se, ne->sw, t->ne, e->nw), depth),
    *t10 = getres(find_node(n->sw, n->se, t->nw, t->ne), depth),
    *t20 = getres(t, depth),
    *t21 = getres(find_node(t->ne, e->nw, t->se, e->sw), depth),
@@ -377,6 +456,7 @@ node *hlifealgo::dorecurs(node *n, node *ne, node *t, node *e, int depth) {
    pop(sp) ;
    return save(n) ;
 }
+#endif
 /*
  *   Same as above, but we only do one step instead of 2.
  */
