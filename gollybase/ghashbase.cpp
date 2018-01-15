@@ -19,9 +19,11 @@
 #include <string.h>
 using namespace std ;
 /*
- *   Prime hash sizes tend to work best.
+ *   Power of two hash sizes work fine.
  */
-static g_uintptr_t nextprime(g_uintptr_t i) {
+#ifdef PRIMEMOD
+#define HASHMOD(a) ((a)%hashprime)
+static g_uintptr_t nexthashsize(g_uintptr_t i) {
    g_uintptr_t j ;
    i |= 1 ;
    for (;; i+=2) {
@@ -32,17 +34,33 @@ static g_uintptr_t nextprime(g_uintptr_t i) {
          return i ;
    }
 }
+#else
+#define HASHMOD(a) ((a)&(hashmask))
+static g_uintptr_t nexthashsize(g_uintptr_t i) {
+   while ((i & (i - 1)))
+      i += (i & - i) ;
+   return i ;
+}
+#endif
 /*
  *   We do now support garbage collection, but there are some routines we
  *   call frequently to help us.
  */
+#ifdef PRIMEMOD
 #define ghnode_hash(a,b,c,d) (65537*(g_uintptr_t)(d)+257*(g_uintptr_t)(c)+17*(g_uintptr_t)(b)+5*(g_uintptr_t)(a))
+#else
+g_uintptr_t ghnode_hash(void *a, void *b, void *c, void *d) {
+   g_uintptr_t r = (65537*(g_uintptr_t)(d)+257*(g_uintptr_t)(c)+17*(g_uintptr_t)(b)+5*(g_uintptr_t)(a)) ;
+   r += (r >> 11) ;
+   return r ;
+}
+#endif
 #define ghleaf_hash(a,b,c,d) (65537*(d)+257*(c)+17*(b)+5*(a))
 /*
  *   Resize the hash.
  */
 void ghashbase::resize() {
-   g_uintptr_t i, nhashprime = nextprime(2 * hashprime) ;
+   g_uintptr_t i, nhashprime = nexthashsize(2 * hashprime) ;
    ghnode *p, **nhashtab ;
    if (alloced > maxmem ||
        nhashprime * sizeof(ghnode *) > (maxmem - alloced)) {
@@ -55,7 +73,7 @@ void ghashbase::resize() {
     *   fill up a bit more.
     */
    if (nhashprime > (maxmem/(25*sizeof(int *)))) {
-      nhashprime = nextprime(maxmem/(25*sizeof(int *))) ;
+      nhashprime = nexthashsize(maxmem/(25*sizeof(int *))) ;
       if (nhashprime == hashprime) {
          hashlimit = G_MAX ;
          return ;
@@ -73,7 +91,12 @@ void ghashbase::resize() {
      return ;
    }
    alloced += sizeof(ghnode *) * (nhashprime - hashprime) ;
-   for (i=0; i<hashprime; i++) {
+   g_uintptr_t ohashprime = hashprime ;
+   hashprime = nhashprime ;
+#ifndef PRIMEMOD
+   hashmask = hashprime - 1 ;
+#endif
+   for (i=0; i<ohashprime; i++) {
       for (p=hashtab[i]; p;) {
          ghnode *np = p->next ;
          g_uintptr_t h ;
@@ -83,7 +106,7 @@ void ghashbase::resize() {
             ghleaf *l = (ghleaf *)p ;
             h = ghleaf_hash(l->nw, l->ne, l->sw, l->se) ;
          }
-         h %= nhashprime ;
+         h = HASHMOD(h) ;
          p->next = nhashtab[h] ;
          nhashtab[h] = p ;
          p = np ;
@@ -91,7 +114,6 @@ void ghashbase::resize() {
    }
    free(hashtab) ;
    hashtab = nhashtab ;
-   hashprime = nhashprime ;
    hashlimit = hashprime ;
    if (verbose) {
      strcpy(statusline+strlen(statusline), " done.") ;
@@ -108,7 +130,7 @@ ghnode *ghashbase::find_ghnode(ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) {
    ghnode *p ;
    g_uintptr_t h = ghnode_hash(nw,ne,sw,se) ;
    ghnode *pred = 0 ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    for (p=hashtab[h]; p; p = p->next) { /* make sure to compare nw *first* */
       if (nw == p->nw && ne == p->ne && sw == p->sw && se == p->se) {
          if (pred) { /* move this one to the front */
@@ -129,15 +151,16 @@ ghnode *ghashbase::find_ghnode(ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) {
    p->next = hashtab[h] ;
    hashtab[h] = p ;
    hashpop++ ;
+   save(p) ;
    if (hashpop > hashlimit)
       resize() ;
-   return save(p) ;
+   return p ;
 }
 void ghashbase::unhash_ghnode(ghnode *n) {
    ghnode *p ;
    g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
    ghnode *pred = 0 ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    for (p=hashtab[h]; p; p = p->next) {
       if (p == n) {
          if (pred)
@@ -152,7 +175,7 @@ void ghashbase::unhash_ghnode(ghnode *n) {
 }
 void ghashbase::rehash_ghnode(ghnode *n) {
    g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    n->next = hashtab[h] ;
    hashtab[h] = n ;
 }
@@ -160,7 +183,7 @@ ghleaf *ghashbase::find_ghleaf(state nw, state ne, state sw, state se) {
    ghleaf *p ;
    ghleaf *pred = 0 ;
    g_uintptr_t h = ghleaf_hash(nw, ne, sw, se) ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    for (p=(ghleaf *)hashtab[h]; p; p = (ghleaf *)p->next) {
       if (nw == p->nw && ne == p->ne && sw == p->sw && se == p->se &&
           !is_ghnode(p)) {
@@ -183,9 +206,10 @@ ghleaf *ghashbase::find_ghleaf(state nw, state ne, state sw, state se) {
    p->next = hashtab[h] ;
    hashtab[h] = (ghnode *)p ;
    hashpop++ ;
+   save((ghnode *)p) ;
    if (hashpop > hashlimit)
       resize() ;
-   return (ghleaf *)save((ghnode *)p) ;
+   return p ;
 }
 /*
  *   The following routine does the same, but first it checks to see if
@@ -388,7 +412,10 @@ ghleaf *ghashbase::newclearedghleaf() {
    return (ghleaf *)memset(newghleaf(), 0, sizeof(ghleaf)) ;
 }
 ghashbase::ghashbase() {
-   hashprime = nextprime(1000) ;
+   hashprime = nexthashsize(1000) ;
+#ifndef PRIMEMOD
+   hashmask = hashprime - 1 ;
+#endif
    hashlimit = hashprime ;
    hashpop = 0 ;
    hashtab = (ghnode **)calloc(hashprime, sizeof(ghnode *)) ;
@@ -1162,10 +1189,10 @@ void ghashbase::do_gc(int invalidate) {
          if (marked(pp)) {
             g_uintptr_t h = 0 ;
             if (pp->nw) { /* yes, it's a ghnode */
-               h = ghnode_hash(pp->nw, pp->ne, pp->sw, pp->se) % hashprime ;
+               h = HASHMOD(ghnode_hash(pp->nw, pp->ne, pp->sw, pp->se)) ;
             } else {
                ghleaf *lp = (ghleaf *)pp ;
-               h = ghleaf_hash(lp->nw, lp->ne, lp->sw, lp->se) % hashprime ;
+               h = HASHMOD(ghleaf_hash(lp->nw, lp->ne, lp->sw, lp->se)) ;
             }
             pp->next = hashtab[h] ;
             hashtab[h] = pp ;

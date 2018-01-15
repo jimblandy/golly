@@ -109,6 +109,9 @@ private:
    ghnode **stack ;
    int stacksize ;
    g_uintptr_t hashpop, hashlimit, hashprime ;
+#ifndef PRIMEMOD
+   g_uintptr_t hashmask ;
+#endif
    ghnode **hashtab ;
    int halvesdone ;
    int gsp ;

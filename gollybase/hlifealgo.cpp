@@ -20,9 +20,11 @@
 #include <iostream>
 using namespace std ;
 /*
- *   Prime hash sizes tend to work best.
+ *   Power of two hash sizes work fine.
  */
-static g_uintptr_t nextprime(g_uintptr_t i) {
+#ifdef PRIMEMOD
+#define HASHMOD(a) ((a)%hashprime)
+static g_uintptr_t nexthashsize(g_uintptr_t i) {
    g_uintptr_t j ;
    i |= 1 ;
    for (;; i+=2) {
@@ -33,6 +35,14 @@ static g_uintptr_t nextprime(g_uintptr_t i) {
          return i ;
    }
 }
+#else
+#define HASHMOD(a) ((a)&(hashmask))
+static g_uintptr_t nexthashsize(g_uintptr_t i) {
+   while ((i & (i - 1)))
+      i += (i & - i) ;
+   return i ;
+}
+#endif
 /*
  *   Note that all the places we represent 4-squares by short, we use
  *   unsigned shorts; this is so we can directly index into these arrays.
@@ -96,13 +106,21 @@ void hlifealgo::leafres(leaf *n) {
  *   We do now support garbage collection, but there are some routines we
  *   call frequently to help us.
  */
+#ifdef PRIMEMOD
 #define node_hash(a,b,c,d) (65537*(g_uintptr_t)(d)+257*(g_uintptr_t)(c)+17*(g_uintptr_t)(b)+5*(g_uintptr_t)(a))
+#else
+g_uintptr_t node_hash(void *a, void *b, void *c, void *d) {
+   g_uintptr_t r = (65537*(g_uintptr_t)(d)+257*(g_uintptr_t)(c)+17*(g_uintptr_t)(b)+5*(g_uintptr_t)(a)) ;
+   r += (r >> 11) ;
+   return r ;
+}
+#endif
 #define leaf_hash(a,b,c,d) (65537*(d)+257*(c)+17*(b)+5*(a))
 /*
  *   Resize the hash.
  */
 void hlifealgo::resize() {
-   g_uintptr_t i, nhashprime = nextprime(2 * hashprime) ;
+   g_uintptr_t i, nhashprime = nexthashsize(2 * hashprime) ;
    node *p, **nhashtab ;
    if (alloced > maxmem ||
        nhashprime * sizeof(node *) > (maxmem - alloced)) {
@@ -115,7 +133,7 @@ void hlifealgo::resize() {
     *   fill up a bit more.
     */
    if (nhashprime > (maxmem/(25*sizeof(int *)))) {
-      nhashprime = nextprime(maxmem/(25*sizeof(int *))) ;
+      nhashprime = nexthashsize(maxmem/(25*sizeof(int *))) ;
       if (nhashprime == hashprime) {
          hashlimit = G_MAX ;
          return ;
@@ -133,7 +151,12 @@ void hlifealgo::resize() {
      return ;
    }
    alloced += sizeof(node *) * (nhashprime - hashprime) ;
-   for (i=0; i<hashprime; i++) {
+   g_uintptr_t ohashprime = hashprime ;
+   hashprime = nhashprime ;
+#ifndef PRIMEMOD
+   hashmask = hashprime - 1 ;
+#endif
+   for (i=0; i<ohashprime; i++) {
       for (p=hashtab[i]; p;) {
          node *np = p->next ;
          g_uintptr_t h ;
@@ -143,7 +166,7 @@ void hlifealgo::resize() {
             leaf *l = (leaf *)p ;
             h = leaf_hash(l->nw, l->ne, l->sw, l->se) ;
          }
-         h %= nhashprime ;
+         h = HASHMOD(h) ;
          p->next = nhashtab[h] ;
          nhashtab[h] = p ;
          p = np ;
@@ -151,7 +174,6 @@ void hlifealgo::resize() {
    }
    free(hashtab) ;
    hashtab = nhashtab ;
-   hashprime = nhashprime ;
    hashlimit = hashprime ;
    if (verbose) {
      strcpy(statusline+strlen(statusline), " done.") ;
@@ -168,7 +190,7 @@ node *hlifealgo::find_node(node *nw, node *ne, node *sw, node *se) {
    node *p ;
    g_uintptr_t h = node_hash(nw,ne,sw,se) ;
    node *pred = 0 ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    for (p=hashtab[h]; p; p = p->next) { /* make sure to compare nw *first* */
       if (nw == p->nw && ne == p->ne && sw == p->sw && se == p->se) {
          if (pred) { /* move this one to the front */
@@ -189,15 +211,16 @@ node *hlifealgo::find_node(node *nw, node *ne, node *sw, node *se) {
    p->next = hashtab[h] ;
    hashtab[h] = p ;
    hashpop++ ;
+   save(p) ;
    if (hashpop > hashlimit)
       resize() ;
-   return save(p) ;
+   return p ;
 }
 void hlifealgo::unhash_node(node *n) {
    node *p ;
    g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
    node *pred = 0 ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    for (p=hashtab[h]; p; p = p->next) {
       if (p == n) {
          if (pred)
@@ -212,7 +235,7 @@ void hlifealgo::unhash_node(node *n) {
 }
 void hlifealgo::rehash_node(node *n) {
    g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    n->next = hashtab[h] ;
    hashtab[h] = n ;
 }
@@ -221,7 +244,7 @@ leaf *hlifealgo::find_leaf(unsigned short nw, unsigned short ne,
    leaf *p ;
    leaf *pred = 0 ;
    g_uintptr_t h = leaf_hash(nw, ne, sw, se) ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    for (p=(leaf *)hashtab[h]; p; p = (leaf *)p->next) {
       if (nw == p->nw && ne == p->ne && sw == p->sw && se == p->se &&
           !is_node(p)) {
@@ -244,9 +267,10 @@ leaf *hlifealgo::find_leaf(unsigned short nw, unsigned short ne,
    p->next = hashtab[h] ;
    hashtab[h] = (node *)p ;
    hashpop++ ;
+   save((node *)p) ;
    if (hashpop > hashlimit)
       resize() ;
-   return (leaf *)save((node *)p) ;
+   return p ;
 }
 /*
  *   The following routine does the same, but first it checks to see if
@@ -494,7 +518,10 @@ hlifealgo::hlifealgo() {
    if (shortpop[1] == 0)
       for (i=1; i<65536; i++)
          shortpop[i] = shortpop[i & (i - 1)] + 1 ;
-   hashprime = nextprime(1000) ;
+   hashprime = nexthashsize(1000) ;
+#ifndef PRIMEMOD
+   hashmask = hashprime - 1 ;
+#endif
    hashlimit = hashprime ;
    hashpop = 0 ;
    hashtab = (node **)calloc(hashprime, sizeof(node *)) ;
@@ -1286,12 +1313,12 @@ void hlifealgo::do_gc(int invalidate) {
          if (marked(pp)) {
             g_uintptr_t h = 0 ;
             if (pp->nw) { /* yes, it's a node */
-               h = node_hash(pp->nw, pp->ne, pp->sw, pp->se) % hashprime ;
+               h = HASHMOD(node_hash(pp->nw, pp->ne, pp->sw, pp->se)) ;
             } else {
                leaf *lp = (leaf *)pp ;
                if (invalidate)
                   leafres(lp) ;
-               h = leaf_hash(lp->nw, lp->ne, lp->sw, lp->se) % hashprime ;
+               h = HASHMOD(leaf_hash(lp->nw, lp->ne, lp->sw, lp->se)) ;
             }
             pp->next = hashtab[h] ;
             hashtab[h] = pp ;
