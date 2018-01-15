@@ -117,8 +117,22 @@ g_uintptr_t node_hash(void *a, void *b, void *c, void *d) {
 #endif
 #define leaf_hash(a,b,c,d) (65537*(d)+257*(c)+17*(b)+5*(a))
 /*
- *   Resize the hash.
+ *   Resize the hash.  The max load factor defined here does not actually
+ *   yield the maximum load factor the hash will see, because when we
+ *   do the last resize before exhausting memory, we may find we are
+ *   not permitted (while keeping total memory consumption below the
+ *   limit) to do the resize, so the actual max load factor may be
+ *   somewhat higher.  Conversely, because we double the hash size
+ *   each time, the actual final max load factor may be less than this.
+ *   Additional code can be added to manage this, but after some
+ *   experimentation, it has been found that the impact is tiny, so
+ *   we are keeping the code simple.  Nonetheless, this factor can be
+ *   tweaked in the case where you absolutely want as many nodes as
+ *   possible in memory, and are willing to use a large load factor to
+ *   permit this; with the move-to-front heuristic, the code actually
+ *   handles a large load factor fairly well.
  */
+double hlifealgo::maxloadfactor = 0.7 ;
 void hlifealgo::resize() {
    g_uintptr_t i, nhashprime = nexthashsize(2 * hashprime) ;
    node *p, **nhashtab ;
@@ -174,7 +188,7 @@ void hlifealgo::resize() {
    }
    free(hashtab) ;
    hashtab = nhashtab ;
-   hashlimit = hashprime ;
+   hashlimit = maxloadfactor * hashprime ;
    if (verbose) {
      strcpy(statusline+strlen(statusline), " done.") ;
      lifestatus(statusline) ;
@@ -522,7 +536,7 @@ hlifealgo::hlifealgo() {
 #ifndef PRIMEMOD
    hashmask = hashprime - 1 ;
 #endif
-   hashlimit = hashprime ;
+   hashlimit = maxloadfactor * hashprime ;
    hashpop = 0 ;
    hashtab = (node **)calloc(hashprime, sizeof(node *)) ;
    if (hashtab == 0)
@@ -655,7 +669,7 @@ void hlifealgo::setMaxMemory(int newmemlimit) {
       return ;
    }
    maxmem = newlimit ;
-   hashlimit = hashprime ;
+   hashlimit = maxloadfactor * hashprime ;
 }
 /**
  *   Clear everything.

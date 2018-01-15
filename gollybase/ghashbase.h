@@ -112,6 +112,7 @@ private:
 #ifndef PRIMEMOD
    g_uintptr_t hashmask ;
 #endif
+   static double maxloadfactor ;
    ghnode **hashtab ;
    int halvesdone ;
    int gsp ;
