@@ -74,6 +74,11 @@ g_uintptr_t ghnode_hash(void *a, void *b, void *c, void *d) {
  */
 double ghashbase::maxloadfactor = 0.7 ;
 void ghashbase::resize() {
+#ifndef NOGCBEFORERESIZE
+   if (okaytogc) {
+      do_gc(0) ;
+   }
+#endif
    g_uintptr_t i, nhashprime = nexthashsize(2 * hashprime) ;
    ghnode *p, **nhashtab ;
    if (alloced > maxmem ||
@@ -1188,6 +1193,8 @@ void ghashbase::do_gc(int invalidate) {
          break ;
    if (i >= 0)
       gc_mark(zeroghnodea[i], 0) ; // never invalidate zeroghnode
+   if (root != 0)
+      gc_mark(root, invalidate) ; // pick up the root
    for (i=0; i<gsp; i++) {
       poller->poll() ;
       gc_mark((ghnode *)stack[i], invalidate) ;
@@ -1272,6 +1279,9 @@ void ghashbase::new_ngens(int newval) {
       ngens = newval ;
       return ;
    }
+#ifndef NOGCBEFOREINC
+   do_gc(0) ;
+#endif
    if (verbose) {
      strcpy(statusline, "Changing increment...") ;
      lifestatus(statusline) ;

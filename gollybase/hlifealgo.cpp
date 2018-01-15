@@ -134,6 +134,11 @@ g_uintptr_t node_hash(void *a, void *b, void *c, void *d) {
  */
 double hlifealgo::maxloadfactor = 0.7 ;
 void hlifealgo::resize() {
+#ifndef NOGCBEFORERESIZE
+   if (okaytogc) {
+      do_gc(0) ; // faster resizes if we do a gc first
+   }
+#endif
    g_uintptr_t i, nhashprime = nexthashsize(2 * hashprime) ;
    node *p, **nhashtab ;
    if (alloced > maxmem ||
@@ -1312,6 +1317,8 @@ void hlifealgo::do_gc(int invalidate) {
          break ;
    if (i >= 0)
       gc_mark(zeronodea[i], 0) ; // never invalidate zeronode
+   if (root != 0)
+      gc_mark(root, invalidate) ; // pick up the root
    for (i=0; i<gsp; i++) {
       poller->poll() ;
       gc_mark(stack[i], invalidate) ;
@@ -1399,6 +1406,9 @@ void hlifealgo::new_ngens(int newval) {
       ngens = newval ;
       return ;
    }
+#ifndef NOGCBEFOREINC
+   do_gc(0) ;
+#endif
    if (verbose) {
      strcpy(statusline, "Changing increment...") ;
      lifestatus(statusline) ;
