@@ -140,7 +140,7 @@ struct setup_t {
    g_uintptr_t h ;
    struct node *nw, *ne, *sw, *se ;
    struct node **addr ;
-   void prefetch() const { PREFETCH(*addr) ; }
+   void prefetch() const { PREFETCH(addr) ; }
 } ;
 #endif
 
