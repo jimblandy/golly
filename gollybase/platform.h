@@ -39,4 +39,6 @@
    #undef GOLLY64BIT
 #endif
 #define USEPREFETCH (1)
-#define PREFETCH(a) __builtin_prefetch(a)
+#include <mmintrin.h>
+#include <xmmintrin.h>
+#define PREFETCH(a) _mm_prefetch(a, _MM_HINT_T0)
