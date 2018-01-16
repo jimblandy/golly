@@ -340,7 +340,7 @@ void hlifealgo::setupprefetch(setup_t &su, node *nw, node *ne, node *sw, node *s
    su.ne = ne ;
    su.sw = sw ;
    su.se = se ;
-   su.addr = hashtab + HASHMOD(su.h) ;
+   su.prefetch(hashtab + HASHMOD(su.h)) ;
 }
 node *hlifealgo::find_node(setup_t &su) {
    node *p ;
@@ -379,11 +379,6 @@ node *hlifealgo::dorecurs(node *n, node *ne, node *t, node *e, int depth) {
    setupprefetch(su[1], ne->sw, ne->se, e->nw, e->ne) ;
    setupprefetch(su[3], n->sw, n->se, t->nw, t->ne) ;
    setupprefetch(su[4], t->ne, e->nw, t->se, e->sw) ;
-   su[0].prefetch() ;
-   su[1].prefetch() ;
-   su[2].prefetch() ;
-   su[3].prefetch() ;
-   su[4].prefetch() ;
    node
    *t00 = getres(n, depth),
    *t01 = getres(find_node(su[0]), depth),
@@ -398,10 +393,6 @@ node *hlifealgo::dorecurs(node *n, node *ne, node *t, node *e, int depth) {
    setupprefetch(su[1], t10, t11, t20, t21) ;
    setupprefetch(su[2], t00, t01, t10, t11) ;
    setupprefetch(su[3], t01, t02, t11, t12) ;
-   su[0].prefetch() ;
-   su[1].prefetch() ;
-   su[2].prefetch() ;
-   su[3].prefetch() ;
    node
    *t44 = getres(find_node(su[0]), depth),
    *t43 = getres(find_node(su[1]), depth),

@@ -274,7 +274,7 @@ void ghashbase::setupprefetch(ghsetup_t &su, ghnode *nw, ghnode *ne, ghnode *sw,
    su.ne = ne ;
    su.sw = sw ;
    su.se = se ;
-   su.addr = hashtab + HASHMOD(su.h) ;
+   su.prefetch(hashtab + HASHMOD(su.h)) ;
 }
 ghnode *ghashbase::find_ghnode(ghsetup_t &su) {
    ghnode *p ;
@@ -313,11 +313,6 @@ ghnode *ghashbase::dorecurs(ghnode *n, ghnode *ne, ghnode *t, ghnode *e, int dep
    setupprefetch(su[1], ne->sw, ne->se, e->nw, e->ne) ;
    setupprefetch(su[3], n->sw, n->se, t->nw, t->ne) ;
    setupprefetch(su[4], t->ne, e->nw, t->se, e->sw) ;
-   su[0].prefetch() ;
-   su[1].prefetch() ;
-   su[2].prefetch() ;
-   su[3].prefetch() ;
-   su[4].prefetch() ;
    ghnode
    *t00 = getres(n, depth),
    *t01 = getres(find_ghnode(su[0]), depth),
@@ -332,10 +327,6 @@ ghnode *ghashbase::dorecurs(ghnode *n, ghnode *ne, ghnode *t, ghnode *e, int dep
    setupprefetch(su[1], t10, t11, t20, t21) ;
    setupprefetch(su[2], t00, t01, t10, t11) ;
    setupprefetch(su[3], t01, t02, t11, t12) ;
-   su[0].prefetch() ;
-   su[1].prefetch() ;
-   su[2].prefetch() ;
-   su[3].prefetch() ;
    ghnode
    *t44 = getres(find_ghnode(su[0]), depth),
    *t43 = getres(find_ghnode(su[1]), depth),
