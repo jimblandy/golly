@@ -46,7 +46,7 @@ struct ghsetup_t {
    g_uintptr_t h ;
    struct ghnode *nw, *ne, *sw, *se ;
    struct ghnode **addr ;
-   void prefetch() const { PREFETCH(addr) ; }
+   void prefetch() const { PREFETCH(*addr) ; }
 } ;
 #endif
 
