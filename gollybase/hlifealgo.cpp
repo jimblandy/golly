@@ -39,7 +39,7 @@ static g_uintptr_t nexthashsize(g_uintptr_t i) {
 #define HASHMOD(a) ((a)&(hashmask))
 static g_uintptr_t nexthashsize(g_uintptr_t i) {
    while ((i & (i - 1)))
-      i += (i & - i) ;
+      i += (i & (1 + ~i)) ; // i & - i is more idiomatic but generates warning
    return i ;
 }
 #endif
@@ -181,7 +181,7 @@ void hlifealgo::resize() {
    }
    free(hashtab) ;
    hashtab = nhashtab ;
-   hashlimit = maxloadfactor * hashprime ;
+   hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
    if (verbose) {
      strcpy(statusline+strlen(statusline), " done.") ;
      lifestatus(statusline) ;
@@ -609,7 +609,7 @@ hlifealgo::hlifealgo() {
 #ifndef PRIMEMOD
    hashmask = hashprime - 1 ;
 #endif
-   hashlimit = maxloadfactor * hashprime ;
+   hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
    hashpop = 0 ;
    hashtab = (node **)calloc(hashprime, sizeof(node *)) ;
    if (hashtab == 0)
@@ -742,7 +742,7 @@ void hlifealgo::setMaxMemory(int newmemlimit) {
       return ;
    }
    maxmem = newlimit ;
-   hashlimit = maxloadfactor * hashprime ;
+   hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
 }
 /**
  *   Clear everything.

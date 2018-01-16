@@ -38,7 +38,7 @@ static g_uintptr_t nexthashsize(g_uintptr_t i) {
 #define HASHMOD(a) ((a)&(hashmask))
 static g_uintptr_t nexthashsize(g_uintptr_t i) {
    while ((i & (i - 1)))
-      i += (i & - i) ;
+      i += (i & (1 + ~i)) ; // i & - i is more idiomatic but generates warning
    return i ;
 }
 #endif
@@ -121,7 +121,7 @@ void ghashbase::resize() {
    }
    free(hashtab) ;
    hashtab = nhashtab ;
-   hashlimit = maxloadfactor * hashprime ;
+   hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
    if (verbose) {
      strcpy(statusline+strlen(statusline), " done.") ;
      lifestatus(statusline) ;
@@ -503,7 +503,7 @@ ghashbase::ghashbase() {
 #ifndef PRIMEMOD
    hashmask = hashprime - 1 ;
 #endif
-   hashlimit = maxloadfactor * hashprime ;
+   hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
    hashpop = 0 ;
    hashtab = (ghnode **)calloc(hashprime, sizeof(ghnode *)) ;
    if (hashtab == 0)
@@ -635,7 +635,7 @@ void ghashbase::setMaxMemory(int newmemlimit) {
       return ;
    }
    maxmem = newlimit ;
-   hashlimit = maxloadfactor * hashprime ;
+   hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
 }
 /**
  *   Clear everything.
