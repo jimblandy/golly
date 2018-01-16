@@ -2614,12 +2614,7 @@ void CellBoxes::OnMouseExit(wxMouseEvent& WXUNUSED(event))
     #define FIX_ALIGN_BUG wxALL,0
 #endif
 
-#ifdef __WXMSW__
-    // Vista needs more RAM for itself
-    const wxString HASH_MEM_NOTE = _("MB (best if ~70% of RAM)");
-#else
-    const wxString HASH_MEM_NOTE = _("MB (best if ~80% of RAM)");
-#endif
+const wxString HASH_MEM_NOTE = _("MB (best if ~50% of RAM)");
 const wxString HASH_STEP_NOTE = _("(best if power of 2)");
 const wxString NONHASH_MEM_NOTE = _("MB (0 means no limit)");
 const wxString NONHASH_STEP_NOTE = _(" ");
