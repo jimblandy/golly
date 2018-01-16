@@ -17,16 +17,25 @@
 #include <cstdio>
 #include <string.h>
 #include <cstdlib>
+#ifdef _WINDOWS
+#include <winbase.h>
+#else
 #include <sys/time.h>
+#endif
 
 using namespace std ;
 
 double start ;
 int maxtime = 0 ;
+#ifdef _WINDOWS
+double timestamp() {
+   double now = GetTickCount64() / 1000.0 ;
+#else
 double timestamp() {
    struct timeval tv ;
    gettimeofday(&tv, 0) ;
    double now = tv.tv_sec + 0.000001 * tv.tv_usec ;
+#endif
    double r = now - start ;
    if (start == 0)
       start = now ;
