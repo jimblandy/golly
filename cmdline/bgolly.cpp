@@ -17,23 +17,23 @@
 #include <cstdio>
 #include <string.h>
 #include <cstdlib>
-#ifdef TIMING
 #include <sys/time.h>
-#endif
 
 using namespace std ;
 
-#ifdef TIMING
 double start ;
+int maxtime = 0 ;
 double timestamp() {
    struct timeval tv ;
    gettimeofday(&tv, 0) ;
    double now = tv.tv_sec + 0.000001 * tv.tv_usec ;
    double r = now - start ;
-   start = now ;
+   if (start == 0)
+      start = now ;
+   else if (maxtime && r > maxtime)
+      exit(0) ;
    return r ;
 }
-#endif
 
 viewport viewport(1000, 1000) ;
 lifealgo *imp = 0 ;
@@ -60,6 +60,7 @@ nullrender renderer ;
 char* user_rules = (char *)"";              // can be changed by -s or --search
 char* supplied_rules = (char *)"Rules/";
 
+int benchmark ; // show timing?
 /*
  *   This lifeerrors is used to check rendering during a progress dialog.
  */
@@ -68,7 +69,14 @@ public:
    progerrors() {}
    virtual void fatal(const char *s) { cout << "Fatal error: " << s << endl ; exit(10) ; }
    virtual void warning(const char *s) { cout << "Warning: " << s << endl ; }
-   virtual void status(const char *s) { cout << s << endl ; }
+   virtual void status(const char *s) { 
+      if (benchmark)
+         cout << timestamp() << " " << s << endl ;
+      else {
+         timestamp() ;
+         cout << s << endl ;
+      }
+   }
    virtual void beginprogress(const char *s) { abortprogress(0, s) ; }
    virtual bool abortprogress(double, const char *) ;
    virtual void endprogress() { abortprogress(1, "") ; }
@@ -91,11 +99,12 @@ public:
    virtual void fatal(const char *s) { cout << "Fatal error: " << s << endl ; exit(10) ; }
    virtual void warning(const char *s) { cout << "Warning: " << s << endl ; }
    virtual void status(const char *s) {
-#ifdef TIMING
-      cout << timestamp() << " " << s << endl ;
-#else
-      cout << s << endl ;
-#endif
+      if (benchmark)
+         cout << timestamp() << " " << s << endl ;
+      else {
+         timestamp() ;
+         cout << s << endl ;
+      }
    }
    virtual void beginprogress(const char *) {}
    virtual bool abortprogress(double, const char *) { return 0 ; }
@@ -131,6 +140,8 @@ options options[] = {
   { "-m", "--generation", "How far to run", 'I', &maxgen },
   { "-i", "--stepsize", "Step size", 'I', &inc },
   { "-M", "--maxmemory", "Max memory to use in megabytes", 'i', &maxmem },
+  { "-T", "--maxtime", "Max duration", 'i', &maxtime },
+  { "-b", "--benchmark", "Show timestamps", 'b', &benchmark },
   { "-2", "--exponential", "Use exponentially increasing steps", 'b', &hyper },
   { "-q", "--quiet", "Don't show population; twice, don't show anything", 'b', &quiet },
   { "-r", "--rule", "Life rule to use", 's', &liferule },
@@ -584,9 +595,7 @@ case 's':
       hlifealgo::setVerbose(1) ;
    }
    imp->setMaxMemory(maxmem) ;
-#ifdef TIMING
    timestamp() ;
-#endif
    if (testscript) {
       if (argc > 1) {
          filename = argv[1] ;
@@ -620,11 +629,21 @@ case 's':
    }
    int fc = 0 ;
    for (;;) {
+   if (benchmark)
+      cout << timestamp() << " " ;
+   else
+      timestamp() ;
       if (quiet < 2) {
          cout << imp->getGeneration().tostring() ;
-         if (!quiet)
-            cout << ": " << imp->getPopulation().tostring() << endl ;
-         else
+         if (!quiet) {
+            const char *s = imp->getPopulation().tostring() ;
+            if (benchmark) {
+               cout << endl ;
+               cout << timestamp() << " pop " << s << endl ;
+            } else {
+               cout << ": " << s << endl ;
+            }
+         } else
             cout << endl ;
       }
       if (popcount)
