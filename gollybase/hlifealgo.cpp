@@ -146,18 +146,6 @@ void hlifealgo::resize() {
       hashlimit = G_MAX ;
       return ;
    }
-   /*
-    *   Don't let the hash table buckets take more than 4% of the
-    *   memory.  If we're starting to strain memory, let the buckets
-    *   fill up a bit more.
-    */
-   if (nhashprime > (maxmem/(25*sizeof(int *)))) {
-      nhashprime = nexthashsize(maxmem/(25*sizeof(int *))) ;
-      if (nhashprime == hashprime) {
-         hashlimit = G_MAX ;
-         return ;
-      }
-   }
    if (verbose) {
      strcpy(statusline, "Resizing hash...") ;
      lifestatus(statusline) ;
