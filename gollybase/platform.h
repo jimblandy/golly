@@ -41,4 +41,4 @@
 #define USEPREFETCH (1)
 #include <mmintrin.h>
 #include <xmmintrin.h>
-#define PREFETCH(a) _mm_prefetch(a, _MM_HINT_T0)
+#define PREFETCH(a) _mm_prefetch((const char *)a, _MM_HINT_T0)
