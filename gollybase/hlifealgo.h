@@ -284,6 +284,8 @@ private:
    void gc_mark(node *root, int invalidate) ;
    void do_gc(int invalidate) ;
    void clearcache(node *n, int depth, int clearto) ;
+   void clearcache_p1(node *n, int depth, int clearto) ;
+   void clearcache_p2(node *n, int depth, int clearto) ;
    void new_ngens(int newval) ;
    int log2(unsigned int n) ;
    node *runpattern() ;

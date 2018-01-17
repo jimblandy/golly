@@ -1320,6 +1320,44 @@ void ghashbase::clearcache(ghnode *n, int depth, int clearto) {
    }
 }
 /*
+ *   Mark the nodes we need to clear the result from.
+ */
+void ghashbase::clearcache_p1(ghnode *n, int depth, int clearto) {
+   if (depth < clearto || marked(n))
+      return ;
+   mark(n) ;
+   if (depth > clearto) {
+      depth-- ;
+      poller->poll() ;
+      clearcache_p1(n->nw, depth, clearto) ;
+      clearcache_p1(n->ne, depth, clearto) ;
+      clearcache_p1(n->sw, depth, clearto) ;
+      clearcache_p1(n->se, depth, clearto) ;
+      if (n->res)
+         clearcache_p1(n->res, depth, clearto) ;
+   }
+}
+/*
+ *   Unmark the nodes and clear the cached result.
+ */
+void ghashbase::clearcache_p2(ghnode *n, int depth, int clearto) {
+   if (depth < clearto || !marked(n))
+      return ;
+   clearmark(n) ;
+   if (depth > clearto) {
+      depth-- ;
+      poller->poll() ;
+      clearcache_p2(n->nw, depth, clearto) ;
+      clearcache_p2(n->ne, depth, clearto) ;
+      clearcache_p2(n->sw, depth, clearto) ;
+      clearcache_p2(n->se, depth, clearto) ;
+      if (n->res)
+         clearcache_p2(n->res, depth, clearto) ;
+   }
+   if (n->res)
+      n->res = 0 ;
+}
+/*
  *   Clear the entire cache of everything, and recalculate all leaves.
  *   This can be very expensive.
  */
