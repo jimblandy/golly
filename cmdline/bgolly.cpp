@@ -17,9 +17,7 @@
 #include <cstdio>
 #include <string.h>
 #include <cstdlib>
-#ifdef _WINDOWS
-#include <winbase.h>
-#else
+#ifndef _WIN32
 #include <sys/time.h>
 #endif
 
@@ -27,15 +25,20 @@ using namespace std ;
 
 double start ;
 int maxtime = 0 ;
-#ifdef _WINDOWS
+#ifdef _WIN32
+// define a stub so things compile, until we put in the real code that
+// we will use.  Note that we have also commented out the -T and -b
+// options below; once we make this work on Windows we can uncomment
+// those options.
 double timestamp() {
-   double now = GetTickCount64() / 1000.0 ;
+   // double now = GetTickCount64() / 1000.0 ;
+   return 0 ;
+}
 #else
 double timestamp() {
    struct timeval tv ;
    gettimeofday(&tv, 0) ;
    double now = tv.tv_sec + 0.000001 * tv.tv_usec ;
-#endif
    double r = now - start ;
    if (start == 0)
       start = now ;
@@ -43,6 +46,7 @@ double timestamp() {
       exit(0) ;
    return r ;
 }
+#endif
 
 viewport viewport(1000, 1000) ;
 lifealgo *imp = 0 ;
@@ -149,8 +153,10 @@ options options[] = {
   { "-m", "--generation", "How far to run", 'I', &maxgen },
   { "-i", "--stepsize", "Step size", 'I', &inc },
   { "-M", "--maxmemory", "Max memory to use in megabytes", 'i', &maxmem },
+#ifndef _WIN32
   { "-T", "--maxtime", "Max duration", 'i', &maxtime },
   { "-b", "--benchmark", "Show timestamps", 'b', &benchmark },
+#endif
   { "-2", "--exponential", "Use exponentially increasing steps", 'b', &hyper },
   { "-q", "--quiet", "Don't show population; twice, don't show anything", 'b', &quiet },
   { "-r", "--rule", "Life rule to use", 's', &liferule },
