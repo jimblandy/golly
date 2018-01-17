@@ -252,8 +252,6 @@ ghnode *ghashbase::getres(ghnode *n, int depth) {
                                        (ghleaf *)n->sw, (ghleaf *)n->se) ;
      }
    } else {
-     if (halvesdone < 1000)
-       halvesdone++ ;
      if (is_ghnode(n->nw)) {
        res = dorecurs_half(n->nw, n->ne, n->sw, n->se, depth) ;
      } else {
@@ -263,8 +261,11 @@ ghnode *ghashbase::getres(ghnode *n, int depth) {
    pop(sp) ;
    if (poller->isInterrupted()) // don't assign this to the cache field!
      res = zeroghnode(depth) ;
-   else
+   else {
+     if (ngens < depth && halvesdone < 1000)
+       halvesdone++ ;
      n->res = res ;
+   }
    return res ;
 }
 #ifdef USEPREFETCH
@@ -1438,7 +1439,7 @@ ghnode *ghashbase::runpattern() {
    n2 = getres(n, depth) ;
    okaytogc = 0 ;
    clearstack() ;
-   if (halvesdone == 1) {
+   if (halvesdone == 1 && n->res != 0) {
       n->res = 0 ;
       halvesdone = 0 ;
    }
