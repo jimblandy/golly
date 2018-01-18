@@ -125,6 +125,7 @@ bigint::bigint(const bigint &a, const bigint &b, const bigint &c, const bigint &
       v.i = a.v.i + b.v.i + c.v.i + d.v.i - 3 ;
       return ;
    }
+   v.i = 1 ;
    *this = a ;
    *this += b ;
    *this += c ;
