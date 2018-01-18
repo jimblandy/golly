@@ -18,19 +18,12 @@
 #include <string.h>
 #include <cstdlib>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/time.h>
-#endif
-
 using namespace std ;
 
 double start ;
 int maxtime = 0 ;
-#ifdef _WIN32
 double timestamp() {
-   double now = (double) GetTickCount64() / 1000.0 ;
+   double now = gollySecondCount() ;
    double r = now - start ;
    if (start == 0)
       start = now ;
@@ -38,19 +31,6 @@ double timestamp() {
       exit(0) ;   
    return r ;
 }
-#else
-double timestamp() {
-   struct timeval tv ;
-   gettimeofday(&tv, 0) ;
-   double now = tv.tv_sec + 0.000001 * tv.tv_usec ;
-   double r = now - start ;
-   if (start == 0)
-      start = now ;
-   else if (maxtime && r > maxtime)
-      exit(0) ;
-   return r ;
-}
-#endif
 
 viewport viewport(1000, 1000) ;
 lifealgo *imp = 0 ;

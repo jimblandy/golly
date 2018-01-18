@@ -50,4 +50,9 @@ public:
    static void seterrorhandler(lifeerrors *obj) ;
    bool aborted ;
 } ;
+/**
+ *   A routine to get the number of seconds elapsed since an arbitrary
+ *   point, as a double.
+ */
+double gollySecondCount() ;
 #endif

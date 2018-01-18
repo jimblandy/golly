@@ -5,6 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/time.h>
+#endif
+
 /**
  *   For now error just uses stderr.
  */
@@ -152,3 +158,15 @@ char *linereader::fgets(char *buf, int maxlen) {
       }
    }
 }
+
+#ifdef _WIN32
+double gollySecondCount() {
+   return (double) GetTickCount64() / 1000.0 ;
+}
+#else
+double gollySecondCount() {
+   struct timeval tv ;
+   gettimeofday(&tv, 0) ;
+   return tv.tv_sec + 0.000001 * tv.tv_usec ;
+}
+#endif
