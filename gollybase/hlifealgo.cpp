@@ -1367,9 +1367,9 @@ void hlifealgo::do_gc(int invalidate) {
    gcstep++ ;
    if (verbose) {
      if (gcstep > 1)
-       sprintf(statusline, "GC #%d(%d) ", gccount, gcstep) ;
+       sprintf(statusline, "GC #%d(%d)", gccount, gcstep) ;
      else
-       sprintf(statusline, "GC #%d ", gccount) ;
+       sprintf(statusline, "GC #%d", gccount) ;
      lifestatus(statusline) ;
    }
    for (i=nzeros-1; i>=0; i--)
