@@ -1413,9 +1413,9 @@ void hlifealgo::do_gc(int invalidate) {
    }
    inGC = 0 ;
    if (verbose) {
-     int perc = (int)(freed_nodes / (totalthings / 100)) ;
-     sprintf(statusline+strlen(statusline), " freed %d percent (%d).",
-                                                   perc, (int)freed_nodes) ;
+     double perc = (double)freed_nodes / (double)totalthings * 100.0 ;
+     sprintf(statusline+strlen(statusline), " freed %g percent (%" PRIuPTR ").",
+                                                   perc, freed_nodes) ;
      lifestatus(statusline) ;
    }
    if (needPop) {

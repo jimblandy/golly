@@ -1287,8 +1287,9 @@ void ghashbase::do_gc(int invalidate) {
    }
    inGC = 0 ;
    if (verbose) {
-     int perc = (int)(freed_ghnodes / (totalthings / 100)) ;
-     sprintf(statusline+strlen(statusline), " freed %d percent.", perc) ;
+     double perc = (double)freed_ghnodes / (double)totalthings * 100.0 ;
+     sprintf(statusline+strlen(statusline), " freed %g percent (%" PRIuPTR ").",
+                                                  perc, freed_ghnodes) ;
      lifestatus(statusline) ;
    }
    if (needPop) {
