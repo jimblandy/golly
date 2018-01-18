@@ -1274,7 +1274,7 @@ void hlifealgo::aftercalcpop2(node *root, int depth) {
          aftercalcpop2(root->sw, depth) ;
          aftercalcpop2(root->se, depth) ;
       }
-      *(bigint *)&(root->next) = bigint::zero ; // clean up; yuck!
+      ((bigint *)&(root->next))->~bigint() ;
       if (v == 3)
          root->next = 0 ;
       else
