@@ -147,7 +147,7 @@ void hlifealgo::resize() {
       return ;
    }
    if (verbose) {
-     strcpy(statusline, "Resizing hash...") ;
+     sprintf(statusline, "Resizing hash to %" PRIuPTR "...", nhashprime) ;
      lifestatus(statusline) ;
    }
    nhashtab = (node **)calloc(nhashprime, sizeof(node *)) ;

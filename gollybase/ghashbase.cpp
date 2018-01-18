@@ -87,7 +87,7 @@ void ghashbase::resize() {
       return ;
    }
    if (verbose) {
-     strcpy(statusline, "Resizing hash...") ;
+     sprintf(statusline, "Resizing hash to %" PRIuPTR "...", nhashprime) ;
      lifestatus(statusline) ;
    }
    nhashtab = (ghnode **)calloc(nhashprime, sizeof(ghnode *)) ;
