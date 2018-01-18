@@ -17,7 +17,10 @@
 #include <cstdio>
 #include <string.h>
 #include <cstdlib>
-#ifndef _WIN32
+
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <sys/time.h>
 #endif
 
@@ -26,13 +29,14 @@ using namespace std ;
 double start ;
 int maxtime = 0 ;
 #ifdef _WIN32
-// define a stub so things compile, until we put in the real code that
-// we will use.  Note that we have also commented out the -T and -b
-// options below; once we make this work on Windows we can uncomment
-// those options.
 double timestamp() {
-   // double now = GetTickCount64() / 1000.0 ;
-   return 0 ;
+   double now = (double) GetTickCount64() / 1000.0 ;
+   double r = now - start ;
+   if (start == 0)
+      start = now ;
+   else if (maxtime && r > maxtime)
+      exit(0) ;   
+   return r ;
 }
 #else
 double timestamp() {
@@ -137,7 +141,8 @@ struct options {
 } ;
 bigint maxgen = -1, inc = 0 ;
 int maxmem = 256 ;
-int hyper, render, autofit, quiet, popcount, progress ;
+int hyperxxx ;   // renamed hyper to avoid conflict with windows.h
+int render, autofit, quiet, popcount, progress ;
 int hashlife ;
 char *algoName = 0 ;
 int verbose ;
@@ -153,11 +158,9 @@ options options[] = {
   { "-m", "--generation", "How far to run", 'I', &maxgen },
   { "-i", "--stepsize", "Step size", 'I', &inc },
   { "-M", "--maxmemory", "Max memory to use in megabytes", 'i', &maxmem },
-#ifndef _WIN32
   { "-T", "--maxtime", "Max duration", 'i', &maxtime },
   { "-b", "--benchmark", "Show timestamps", 'b', &benchmark },
-#endif
-  { "-2", "--exponential", "Use exponentially increasing steps", 'b', &hyper },
+  { "-2", "--exponential", "Use exponentially increasing steps", 'b', &hyperxxx },
   { "-q", "--quiet", "Don't show population; twice, don't show anything", 'b', &quiet },
   { "-r", "--rule", "Life rule to use", 's', &liferule },
   { "-s", "--search", "Search directory for .rule files", 's', &user_rules },
@@ -603,7 +606,7 @@ case 's':
       if (strlen(outfilename) > 200)
          lifefatal("Output filename too long") ;
    }
-   if (timeline && hyper)
+   if (timeline && hyperxxx)
       lifefatal("Cannot use both timeline and exponentially increasing steps") ;
    imp = createUniverse() ;
    if (progress)
@@ -632,7 +635,7 @@ case 's':
    }
    bool boundedgrid = imp->unbounded && (imp->gridwd > 0 || imp->gridht > 0) ;
    if (boundedgrid) {
-      hyper = 0 ;
+      hyperxxx = 0 ;
       inc = 1 ;     // only step by 1
    }
    if (inc != 0)
@@ -673,7 +676,7 @@ case 's':
         imp->draw(viewport, renderer) ;
       if (maxgen >= 0 && imp->getGeneration() >= maxgen)
          break ;
-      if (!hyper && maxgen > 0 && inc == 0) {
+      if (!hyperxxx && maxgen > 0 && inc == 0) {
          bigint diff = maxgen ;
          diff -= imp->getGeneration() ;
          int bs = diff.lowbitset() ;
@@ -689,7 +692,7 @@ case 's':
          writepat(fc++) ;
       if (timeline && imp->getframecount() + 2 > MAX_FRAME_COUNT)
          imp->pruneframes() ;
-      if (hyper)
+      if (hyperxxx)
          imp->setIncrement(imp->getGeneration()) ;
    }
    if (maxgen >= 0 && outfilename != 0)
