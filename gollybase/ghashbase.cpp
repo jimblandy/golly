@@ -163,29 +163,6 @@ ghnode *ghashbase::find_ghnode(ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) {
       resize() ;
    return p ;
 }
-void ghashbase::unhash_ghnode(ghnode *n) {
-   ghnode *p ;
-   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
-   ghnode *pred = 0 ;
-   h = HASHMOD(h) ;
-   for (p=hashtab[h]; p; p = p->next) {
-      if (p == n) {
-         if (pred)
-            pred->next = p->next ;
-         else
-            hashtab[h] = p->next ;
-         return ;
-      }
-      pred = p ;
-   }
-   lifefatal("Didn't find ghnode to unhash") ;
-}
-void ghashbase::rehash_ghnode(ghnode *n) {
-   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
-   h = HASHMOD(h) ;
-   n->next = hashtab[h] ;
-   hashtab[h] = n ;
-}
 ghleaf *ghashbase::find_ghleaf(state nw, state ne, state sw, state se) {
    ghleaf *p ;
    ghleaf *pred = 0 ;
@@ -208,7 +185,7 @@ ghleaf *ghashbase::find_ghleaf(state nw, state ne, state sw, state se) {
    p->ne = ne ;
    p->sw = sw ;
    p->se = se ;
-   p->leafpop = (nw != 0) + (ne != 0) + (sw != 0) + (se != 0) ;
+   p->leafpop = bigint((short)((nw != 0) + (ne != 0) + (sw != 0) + (se != 0))) ;
    p->isghnode = 0 ;
    p->next = hashtab[h] ;
    hashtab[h] = (ghnode *)p ;
@@ -478,7 +455,9 @@ ghnode *ghashbase::newghnode() {
  *   Leaves are the same.
  */
 ghleaf *ghashbase::newghleaf() {
-   return (ghleaf *)newghnode() ;
+   ghleaf *r = (ghleaf *)newghnode() ;
+   new(&(r->leafpop))bigint ;
+   return r ;
 }
 /*
  *   Sometimes we want the new ghnode or ghleaf to be automatically cleared
@@ -488,7 +467,9 @@ ghnode *ghashbase::newclearedghnode() {
    return (ghnode *)memset(newghnode(), 0, sizeof(ghnode)) ;
 }
 ghleaf *ghashbase::newclearedghleaf() {
-   return (ghleaf *)memset(newghleaf(), 0, sizeof(ghleaf)) ;
+   ghleaf *r = (ghleaf *)newclearedghnode() ;
+   new(&(r->leafpop))bigint ;
+   return r ;
 }
 ghashbase::ghashbase() {
    hashprime = nexthashsize(1000) ;
@@ -1098,15 +1079,32 @@ ghnode *ghashbase::popzeros(ghnode *n) {
  *   Sometimes we want to use *res* instead of next to mark.  You cannot
  *   do this to leaves, though.
  */
-#define marked2(n) (1 & (g_uintptr_t)(n)->res)
+#define marked2(n) (3 & (g_uintptr_t)(n)->res)
 #define mark2(n) ((n)->res = (ghnode *)(1 | (g_uintptr_t)(n)->res))
-#define clearmark2(n) ((n)->res = (ghnode *)(~1 & (g_uintptr_t)(n)->res))
-static void sum4(bigint &dest, const bigint &a, const bigint &b,
-                 const bigint &c, const bigint &d) {
-   dest = a ;
-   dest += b ;
-   dest += c ;
-   dest += d ;
+#define mark2v(n, v) ((n)->res = (ghnode *)(v | (g_uintptr_t)(n)->res))
+#define clearmark2(n) ((n)->res = (ghnode *)(~3 & (g_uintptr_t)(n)->res))
+void ghashbase::unhash_ghnode(ghnode *n) {
+   ghnode *p ;
+   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
+   ghnode *pred = 0 ;
+   h = HASHMOD(h) ;
+   for (p=hashtab[h]; !marked2(p) && p; p = p->next) {
+      if (p == n) {
+         if (pred)
+            pred->next = p->next ;
+         else
+            hashtab[h] = p->next ;
+         return ;
+      }
+      pred = p ;
+   }
+   lifefatal("Didn't find ghnode to unhash") ;
+}
+void ghashbase::rehash_ghnode(ghnode *n) {
+   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
+   h = HASHMOD(h) ;
+   n->next = hashtab[h] ;
+   hashtab[h] = n ;
 }
 /*
  *   This recursive routine calculates the population by hanging the
@@ -1115,35 +1113,56 @@ static void sum4(bigint &dest, const bigint &a, const bigint &b,
 const bigint &ghashbase::calcpop(ghnode *root, int depth) {
    if (root == zeroghnode(depth))
       return bigint::zero ;
-   if (depth == 0) {
-      root->nw = 0 ;
-      bigint &r = *(bigint *)&(root->nw) ;
-      ghleaf *n = (ghleaf *)root ;
-      r = n->leafpop ;
-      return r ;
-   } else if (marked2(root)) {
+   if (depth == 0)
+      return ((ghleaf *)root)->leafpop ;
+   if (marked2(root))
       return *(bigint*)&(root->next) ;
-   } else {
-      depth-- ;
+   depth-- ;
+   if (root->next == 0)
+      mark2v(root, 3) ;
+   else {
       unhash_ghnode(root) ;
+      mark2(root) ;
+   }
 /**
  *   We use the memory in root->next as a value bigint.  But we want to
  *   make sure the copy constructor doesn't "clean up" something that
  *   doesn't exist.  So we clear it to zero here.
  */
-      root->next = (ghnode *)0 ; // I wish I could come up with a cleaner way
-      sum4(*(bigint *)&(root->next),
-           calcpop(root->nw, depth), calcpop(root->ne, depth),
-           calcpop(root->sw, depth), calcpop(root->se, depth)) ;
-      mark2(root) ;
-      return *(bigint *)&(root->next) ;
+   new(&(root->next))bigint(
+        calcpop(root->nw, depth), calcpop(root->ne, depth),
+        calcpop(root->sw, depth), calcpop(root->se, depth)) ;
+   return *(bigint *)&(root->next) ;
+}
+/*
+ *   Call this after doing something that unhashes ghnodes in order to
+ *   use the next field as a temp pointer.
+ */
+void ghashbase::aftercalcpop2(ghnode *root, int depth) {
+   if (depth == 0 || root == zeroghnode(depth))
+      return ;
+   int v = marked2(root) ;
+   if (v) {
+      clearmark2(root) ;
+      depth-- ;
+      if (depth > 0) {
+         aftercalcpop2(root->nw, depth) ;
+         aftercalcpop2(root->ne, depth) ;
+         aftercalcpop2(root->sw, depth) ;
+         aftercalcpop2(root->se, depth) ;
+      }
+      *(bigint *)&(root->next) = bigint::zero ; // clean up; yuck!
+      if (v == 3)
+         root->next = 0 ;
+      else
+         rehash_ghnode(root) ;
    }
 }
 /*
  *   Call this after doing something that unhashes ghnodes in order to
  *   use the next field as a temp pointer.
  */
-void ghashbase::aftercalcpop2(ghnode *root, int depth, int cleanbigints) {
+void ghashbase::afterwritemc(ghnode *root, int depth) {
    if (root == zeroghnode(depth))
       return ;
    if (depth == 0) {
@@ -1153,12 +1172,10 @@ void ghashbase::aftercalcpop2(ghnode *root, int depth, int cleanbigints) {
    if (marked2(root)) {
       clearmark2(root) ;
       depth-- ;
-      aftercalcpop2(root->nw, depth, cleanbigints) ;
-      aftercalcpop2(root->ne, depth, cleanbigints) ;
-      aftercalcpop2(root->sw, depth, cleanbigints) ;
-      aftercalcpop2(root->se, depth, cleanbigints) ;
-      if (cleanbigints)
-         *(bigint *)&(root->next) = bigint::zero ; // clean up; yuck!
+      afterwritemc(root->nw, depth) ;
+      afterwritemc(root->ne, depth) ;
+      afterwritemc(root->sw, depth) ;
+      afterwritemc(root->se, depth) ;
       rehash_ghnode(root) ;
    }
 }
@@ -1170,7 +1187,7 @@ void ghashbase::calcPopulation(ghnode *root) {
    ensure_hashed() ;
    depth = ghnode_depth(root) ;
    population = calcpop(root, depth) ;
-   aftercalcpop2(root, depth, 1) ;
+   aftercalcpop2(root, depth) ;
 }
 /*
  *   Is the universe empty?
@@ -1842,10 +1859,10 @@ const char *ghashbase::writeNativeFormat(std::ostream &os, char *comments) {
    if (framestosave) {
      for (int i=0; i<timeline.framecount; i++) {
        ghnode *frame = (ghnode*)timeline.frames[i] ;
-       aftercalcpop2(frame, depths[i], 0) ;
+       afterwritemc(frame, depths[i]) ;
      }
    }
-   aftercalcpop2(root, depth, 0) ;
+   afterwritemc(root, depth) ;
    inGC = 0 ;
    return 0 ;
 }

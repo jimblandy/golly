@@ -99,8 +99,8 @@ void hlifealgo::leafres(leaf *n) {
    (ruletable[(t01 << 10) | (t02 << 8) | (t11 << 2) | t12] << 8) |
    (ruletable[(t10 << 10) | (t11 << 8) | (t20 << 2) | t21] << 2) |
     ruletable[(t11 << 10) | (t12 << 8) | (t21 << 2) | t22] ;
-   n->leafpop = shortpop[n->nw] + shortpop[n->ne] +
-                shortpop[n->sw] + shortpop[n->se] ;
+   n->leafpop = bigint((short)(shortpop[n->nw] + shortpop[n->ne] +
+                               shortpop[n->sw] + shortpop[n->se])) ;
 }
 /*
  *   We do now support garbage collection, but there are some routines we
@@ -222,29 +222,6 @@ node *hlifealgo::find_node(node *nw, node *ne, node *sw, node *se) {
    if (hashpop > hashlimit)
       resize() ;
    return p ;
-}
-void hlifealgo::unhash_node(node *n) {
-   node *p ;
-   g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
-   node *pred = 0 ;
-   h = HASHMOD(h) ;
-   for (p=hashtab[h]; p; p = p->next) {
-      if (p == n) {
-         if (pred)
-            pred->next = p->next ;
-         else
-            hashtab[h] = p->next ;
-         return ;
-      }
-      pred = p ;
-   }
-   lifefatal("Didn't find node to unhash") ;
-}
-void hlifealgo::rehash_node(node *n) {
-   g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
-   h = HASHMOD(h) ;
-   n->next = hashtab[h] ;
-   hashtab[h] = n ;
 }
 leaf *hlifealgo::find_leaf(unsigned short nw, unsigned short ne,
                                   unsigned short sw, unsigned short se) {
@@ -574,7 +551,9 @@ node *hlifealgo::newnode() {
  *   Leaves are the same.
  */
 leaf *hlifealgo::newleaf() {
-   return (leaf *)newnode() ;
+   leaf *r = (leaf *)newnode() ;
+   new(&(r->leafpop))bigint ;
+   return r ;
 }
 /*
  *   Sometimes we want the new node or leaf to be automatically cleared
@@ -584,7 +563,9 @@ node *hlifealgo::newclearednode() {
    return (node *)memset(newnode(), 0, sizeof(node)) ;
 }
 leaf *hlifealgo::newclearedleaf() {
-   return (leaf *)memset(newleaf(), 0, sizeof(leaf)) ;
+   leaf *r = (leaf *)newclearednode() ;
+   new(&(r->leafpop))bigint ;
+   return r ;
 }
 hlifealgo::hlifealgo() {
    int i ;
@@ -1222,15 +1203,32 @@ node *hlifealgo::popzeros(node *n) {
  *   Sometimes we want to use *res* instead of next to mark.  You cannot
  *   do this to leaves, though.
  */
-#define marked2(n) (1 & (g_uintptr_t)(n)->res)
+#define marked2(n) (3 & (g_uintptr_t)(n)->res)
 #define mark2(n) ((n)->res = (node *)(1 | (g_uintptr_t)(n)->res))
-#define clearmark2(n) ((n)->res = (node *)(~1 & (g_uintptr_t)(n)->res))
-static void sum4(bigint &dest, const bigint &a, const bigint &b,
-                 const bigint &c, const bigint &d) {
-   dest = a ;
-   dest += b ;
-   dest += c ;
-   dest += d ;
+#define mark2v(n,v) ((n)->res = (node *)(v | (g_uintptr_t)(n)->res))
+#define clearmark2(n) ((n)->res = (node *)(~3 & (g_uintptr_t)(n)->res))
+void hlifealgo::unhash_node(node *n) {
+   node *p ;
+   g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
+   node *pred = 0 ;
+   h = HASHMOD(h) ;
+   for (p=hashtab[h]; !marked2(p) && p; p = p->next) {
+      if (p == n) {
+         if (pred)
+            pred->next = p->next ;
+         else
+            hashtab[h] = p->next ;
+         return ;
+      }
+      pred = p ;
+   }
+   lifefatal("Didn't find node to unhash") ;
+}
+void hlifealgo::rehash_node(node *n) {
+   g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
+   h = HASHMOD(h) ;
+   n->next = hashtab[h] ;
+   hashtab[h] = n ;
 }
 /*
  *   This recursive routine calculates the population by hanging the
@@ -1239,50 +1237,67 @@ static void sum4(bigint &dest, const bigint &a, const bigint &b,
 const bigint &hlifealgo::calcpop(node *root, int depth) {
    if (root == zeronode(depth))
       return bigint::zero ;
-   if (depth == 2) {
-      root->nw = 0 ;
-      bigint &r = *(bigint *)&(root->nw) ;
-      leaf *n = (leaf *)root ;
-      r = n->leafpop ;
-      return r ;
-   } else if (marked2(root)) {
+   if (depth == 2)
+      return ((leaf *)root)->leafpop ;
+   if (marked2(root))
       return *(bigint*)&(root->next) ;
-   } else {
-      depth-- ;
+   depth-- ;
+   if (root->next == 0)
+      mark2v(root, 3) ;
+   else {
       unhash_node(root) ;
-/**
- *   We use the memory in root->next as a value bigint.  But we want to
- *   make sure the copy constructor doesn't "clean up" something that
- *   doesn't exist.  So we clear it to zero here.
- */
-      root->next = (node *)0 ; // I wish I could come up with a cleaner way
-      sum4(*(bigint *)&(root->next),
-           calcpop(root->nw, depth), calcpop(root->ne, depth),
-           calcpop(root->sw, depth), calcpop(root->se, depth)) ;
       mark2(root) ;
-      return *(bigint *)&(root->next) ;
    }
+/**
+ *   We use allocate-in-place bigint constructor here to initialize the
+ *   node.  This should compile to a single instruction.
+ */
+   new(&(root->next))bigint(
+        calcpop(root->nw, depth), calcpop(root->ne, depth),
+        calcpop(root->sw, depth), calcpop(root->se, depth)) ;
+   return *(bigint *)&(root->next) ;
 }
 /*
  *   Call this after doing something that unhashes nodes in order to
  *   use the next field as a temp pointer.
  */
-void hlifealgo::aftercalcpop2(node *root, int depth, int cleanbigints) {
+void hlifealgo::aftercalcpop2(node *root, int depth) {
+   if (depth == 2 || root == zeronode(depth))
+      return ;
+   int v = marked2(root) ;
+   if (v) {
+      clearmark2(root) ;
+      depth-- ;
+      if (depth > 2) {
+         aftercalcpop2(root->nw, depth) ;
+         aftercalcpop2(root->ne, depth) ;
+         aftercalcpop2(root->sw, depth) ;
+         aftercalcpop2(root->se, depth) ;
+      }
+      *(bigint *)&(root->next) = bigint::zero ; // clean up; yuck!
+      if (v == 3)
+         root->next = 0 ;
+      else
+         rehash_node(root) ;
+   }
+}
+/*
+ *   Call this after writing macrocell.
+ */
+void hlifealgo::afterwritemc(node *root, int depth) {
    if (root == zeronode(depth))
       return ;
    if (depth == 2) {
-      root->nw = 0 ; // all these bigints are guaranteed to be small
+      root->nw = 0 ;
       return ;
    }
    if (marked2(root)) {
       clearmark2(root) ;
       depth-- ;
-      aftercalcpop2(root->nw, depth, cleanbigints) ;
-      aftercalcpop2(root->ne, depth, cleanbigints) ;
-      aftercalcpop2(root->sw, depth, cleanbigints) ;
-      aftercalcpop2(root->se, depth, cleanbigints) ;
-      if (cleanbigints)
-         *(bigint *)&(root->next) = bigint::zero ; // clean up; yuck!
+      afterwritemc(root->nw, depth) ;
+      afterwritemc(root->ne, depth) ;
+      afterwritemc(root->sw, depth) ;
+      afterwritemc(root->se, depth) ;
       rehash_node(root) ;
    }
 }
@@ -1294,7 +1309,7 @@ void hlifealgo::calcPopulation(node *root) {
    ensure_hashed() ;
    depth = node_depth(root) ;
    population = calcpop(root, depth) ;
-   aftercalcpop2(root, depth, 1) ;
+   aftercalcpop2(root, depth) ;
 }
 /*
  *   Is the universe empty?
@@ -2026,10 +2041,10 @@ const char *hlifealgo::writeNativeFormat(std::ostream &os, char *comments) {
    if (framestosave) {
      for (int i=0; i<timeline.framecount; i++) {
        node *frame = (node*)timeline.frames[i] ;
-       aftercalcpop2(frame, depths[i], 0) ;
+       afterwritemc(frame, depths[i]) ;
      }
    }
-   aftercalcpop2(root, depth, 0) ;
+   afterwritemc(root, depth) ;
    inGC = 0 ;
    return 0 ;
 }

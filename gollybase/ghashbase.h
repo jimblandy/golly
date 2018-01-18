@@ -30,7 +30,7 @@ struct ghleaf {
    ghnode *next ;              /* hash link */
    ghnode *isghnode ;          /* must always be zero for leaves */
    state nw, ne, sw, se ;      /* constant */
-   unsigned short leafpop ;    /* how many set bits */
+   bigint leafpop ;            /* how many set bits */
 } ;
 /*
  *   If it is a struct ghnode, this returns a non-zero value, otherwise it
@@ -183,7 +183,8 @@ private:
    ghnode *hashpattern(ghnode *root, int depth) ;
    ghnode *popzeros(ghnode *n) ;
    const bigint &calcpop(ghnode *root, int depth) ;
-   void aftercalcpop2(ghnode *root, int depth, int cleanbigints) ;
+   void aftercalcpop2(ghnode *root, int depth) ;
+   void afterwritemc(ghnode *root, int depth) ;
    void calcPopulation(ghnode *root) ;
    ghnode *save(ghnode *n) ;
    void pop(int n) ;

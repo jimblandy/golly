@@ -89,11 +89,13 @@
 
 class bigint {
 public:
-   bigint() ;
-   bigint(int i) ;
+   bigint() { v.i = 1 ; }
+   bigint(short i) { v.i = ((int)i << 1) + 1 ; }
+   bigint(int i) { fromint(i) ; }
    bigint(G_INT64 i) ;
    bigint(const char *s) ;
    bigint(const bigint &a) ;
+   bigint(const bigint &a, const bigint &b, const bigint &c, const bigint &d) ;
    ~bigint() ;
    bigint& operator=(const bigint &a) ;
    bigint& operator+=(const bigint &a) ;

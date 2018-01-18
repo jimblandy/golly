@@ -123,8 +123,8 @@ struct leaf {
    node *next ;              /* hash link */
    node *isnode ;            /* must always be zero for leaves */
    unsigned short nw, ne, sw, se ;  /* constant */
+   bigint leafpop ;         /* how many set bits */
    unsigned short res1, res2 ;      /* constant */
-   unsigned short leafpop ;         /* how many set bits */
 } ;
 /*
  *   If it is a struct node, this returns a non-zero value, otherwise it
@@ -275,7 +275,8 @@ private:
    node *hashpattern(node *root, int depth) ;
    node *popzeros(node *n) ;
    const bigint &calcpop(node *root, int depth) ;
-   void aftercalcpop2(node *root, int depth, int cleanbigints) ;
+   void aftercalcpop2(node *root, int depth) ;
+   void afterwritemc(node *root, int depth) ;
    void calcPopulation(node *root) ;
    node *save(node *n) ;
    void pop(int n) ;
