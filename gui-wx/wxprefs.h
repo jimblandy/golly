@@ -62,6 +62,7 @@ extern char initrule[];          // initial rule
 extern bool initautofit;         // initial autofit setting
 extern bool inithyperspeed;      // initial hyperspeed setting
 extern bool initshowhashinfo;    // initial showhashinfo setting
+extern bool showpopulation;      // show population counts while generating?
 extern bool savexrle;            // save RLE file using XRLE format?
 extern bool showtips;            // show button tips?
 extern bool showtool;            // show tool bar?
@@ -230,6 +231,7 @@ typedef enum {
     DO_HELP,                      // show help
     DO_SHOWLAYER,                 // show layer bar
     DO_SHOWOVERLAY,               // show overlay
+    DO_SHOWPOP,                   // show population
     DO_SHOWSTATUS,                // show status bar
     DO_SHOWTIME,                  // show timeline
     DO_TIMING,                    // show timing

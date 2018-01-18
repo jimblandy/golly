@@ -1127,6 +1127,15 @@ void MainFrame::ToggleHashInfo()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::ToggleShowPopulation()
+{
+    showpopulation = !showpopulation;
+    
+    if (generating) statusptr->Refresh(false);
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ClearOutsideGrid()
 {
     // check current pattern and clear any live cells outside bounded grid

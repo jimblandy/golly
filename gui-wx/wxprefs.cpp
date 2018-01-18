@@ -103,6 +103,7 @@ char initrule[256] = "B3/S23";   // initial rule
 bool initautofit = false;        // initial autofit setting
 bool inithyperspeed = false;     // initial hyperspeed setting
 bool initshowhashinfo = false;   // initial showhashinfo setting
+bool showpopulation = true;      // show population counts while generating?
 bool savexrle = true;            // save RLE file using XRLE format?
 bool showtips = true;            // show button tips?
 bool showtool = true;            // show tool bar?
@@ -563,6 +564,7 @@ const char* GetActionName(action_id action)
         case DO_HASHING:        return "Use Hashing";
         case DO_HYPER:          return "Hyperspeed";
         case DO_HASHINFO:       return "Show Hash Info";
+        case DO_SHOWPOP:        return "Show Population";
         case DO_RECORD:         return "Start/Stop Recording";
         case DO_DELTIME:        return "Delete Timeline";
         case DO_PLAYBACK:       return "Play Timeline Backwards";
@@ -1475,6 +1477,7 @@ void SavePrefs()
     fprintf(f, "auto_fit=%d\n", currlayer->autofit ? 1 : 0);
     fprintf(f, "hyperspeed=%d\n", currlayer->hyperspeed ? 1 : 0);
     fprintf(f, "hash_info=%d\n", currlayer->showhashinfo ? 1 : 0);
+    fprintf(f, "show_population=%d\n", showpopulation ? 1 : 0);
     
     fputs("\n", f);
     
@@ -2071,6 +2074,9 @@ void GetPrefs()
             
         } else if (strcmp(keyword, "hash_info") == 0) {
             initshowhashinfo = value[0] == '1';
+            
+        } else if (strcmp(keyword, "show_population") == 0) {
+            showpopulation = value[0] == '1';
             
         } else if (strcmp(keyword, "max_hash_mem") == 0) {       // deprecated
             int maxmem;

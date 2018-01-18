@@ -54,6 +54,7 @@ private:
     void OnEraseBackground(wxEraseEvent& event);
     
     bool ClickInGenBox(int x, int y);
+    bool ClickInPopBox(int x, int y);
     bool ClickInScaleBox(int x, int y);
     bool ClickInStepBox(int x, int y);
     void SetStatusFont(wxDC& dc);

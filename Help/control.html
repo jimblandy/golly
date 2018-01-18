@@ -136,6 +136,24 @@ extremely slow.  Reducing the step size may help, but it may need to
 be reduced substantially in order to have an impact.  Increasing the
 maximum memory that the algorithm can use may also help.
 
+<a name="showpop"></a>
+<p>
+<font size=+1><b>Show Population</b></font>
+
+<p>
+Displaying the population count can cause a significant slow-down when
+generating large patterns, especially when using HashLife or any of the
+other hash-based algorithms.  If you untick this option then Golly
+won't calculate the population count and will simply display
+"Population=disabled" in the status bar while generating a pattern.
+The correct count will be displayed when generating stops.
+
+<p>
+You can also toggle this option by clicking anywhere in the "Population=..."
+text, but you can only do this while a pattern is being generated.
+Or you might prefer to assign a <a href="prefs:keyboard">keyboard shortcut</a>
+to toggle the option.
+
 <a name="record"></a>
 <p>
 <font size=+1><b>Start</b>/<b>Stop Recording</b></font>
@@ -172,6 +190,18 @@ Deletes the existing timeline.  The currently displayed frame
 becomes the current generation (any later frames are lost), but
 Golly saves the first frame of the timeline so you can Reset/Undo
 back to that generation.
+
+<a name="convert"></a>
+<p>
+<font size=+1><b>Convert Old Rules</b></font>
+
+<p>
+Converts any .table/tree/colors/icons files into corresponding .rule files
+(but existing .rule files will not be changed).
+Golly looks in the supplied Rules folder first, then in
+<a href="prefs:control">your rules folder</a>.
+The results are displayed in the help window.  If the conversion succeeds
+you'll be asked if you want to delete the .table/tree/colors/icons files.
 
 <p>
 <font size=+1><b>Set Algorithm</b></font>
@@ -235,18 +265,6 @@ named rules.  You can add your own names to this list.
 By default, all algorithms create an unbounded universe, but it's also
 possible to create a bounded universe by adding a special suffix to
 the usual rule.  See <a href="bounded.html">here</a> for details.
-
-<a name="convert"></a>
-<p>
-<font size=+1><b>Convert Old Rules</b></font>
-
-<p>
-Converts any .table/tree/colors/icons files into corresponding .rule files
-(but existing .rule files will not be changed).
-Golly looks in the supplied Rules folder first, then in
-<a href="prefs:control">your rules folder</a>.
-The results are displayed in the help window.  If the conversion succeeds
-you'll be asked if you want to delete the .table/tree/colors/icons files.
 
 </body>
 </html>

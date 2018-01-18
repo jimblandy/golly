@@ -308,6 +308,8 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
             strbuf = _("Population = ");
             if (viewptr->nopattupdate) {
                 strbuf += _("0");
+            } else if (mainptr->generating && !showpopulation) {
+                strbuf += _("disabled");
             } else {
                 bigint popcount = currlayer->algo->getPopulation();
                 if (popcount.sign() < 0) {
@@ -370,6 +372,8 @@ void StatusBar::DrawStatusBar(wxDC& dc, wxRect& updaterect)
             strbuf = _("Population=");
             if (viewptr->nopattupdate) {
                 strbuf += _("0");
+            } else if (mainptr->generating && !showpopulation) {
+                strbuf += _("disabled");
             } else {
                 bigint popcount = currlayer->algo->getPopulation();
                 if (popcount.sign() < 0) {
@@ -473,6 +477,16 @@ bool StatusBar::ClickInGenBox(int x, int y)
 
 // -----------------------------------------------------------------------------
 
+bool StatusBar::ClickInPopBox(int x, int y)
+{
+    if (showexact)
+        return x >= 0 && y > (POPLINE+DESCHT-LINEHT) && y <= (POPLINE+DESCHT);
+    else
+        return x >= h_pop && x <= h_scale - 20 && y <= (BASELINE1+DESCHT);
+}
+
+// -----------------------------------------------------------------------------
+
 bool StatusBar::ClickInScaleBox(int x, int y)
 {
     if (showexact)
@@ -495,7 +509,7 @@ bool StatusBar::ClickInStepBox(int x, int y)
 
 void StatusBar::OnMouseDown(wxMouseEvent& event)
 {
-    if (inscript) return;    // let script control scale and step
+    if (inscript) return;    // let script control scale, step, etc
     ClearMessage();
     
     if ( ClickInGenBox(event.GetX(), event.GetY()) && !mainptr->generating ) {
@@ -503,6 +517,11 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
             ErrorMessage(_("You can't change the generation count if there is a timeline."));
         } else {
             mainptr->SetGeneration();
+        }
+        
+    } else if ( ClickInPopBox(event.GetX(), event.GetY()) ) {
+        if (mainptr->generating) {
+            mainptr->ToggleShowPopulation();
         }
         
     } else if ( ClickInScaleBox(event.GetX(), event.GetY()) ) {

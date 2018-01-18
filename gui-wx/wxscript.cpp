@@ -740,6 +740,13 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
         if (*oldval != newval)
             mainptr->ToggleHashInfo();
         
+    } else if (strcmp(optname, "showpopulation") == 0) {
+        *oldval = showpopulation ? 1 : 0;
+        if (*oldval != newval) {
+            mainptr->ToggleShowPopulation();
+            DoAutoUpdate();
+        }
+        
     } else if (strcmp(optname, "showicons") == 0) {
         *oldval = showicons ? 1 : 0;
         if (*oldval != newval) {
@@ -870,39 +877,40 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
 
 bool GSF_getoption(const char* optname, int* optval)
 {
-    if      (strcmp(optname, "autofit") == 0)       *optval = currlayer->autofit ? 1 : 0;
-    else if (strcmp(optname, "boldspacing") == 0)   *optval = boldspacing;
-    else if (strcmp(optname, "drawingstate") == 0)  *optval = currlayer->drawingstate;
-    else if (strcmp(optname, "fullscreen") == 0)    *optval = mainptr->fullscreen ? 1 : 0;
-    else if (strcmp(optname, "hyperspeed") == 0)    *optval = currlayer->hyperspeed ? 1 : 0;
-    else if (strcmp(optname, "mindelay") == 0)      *optval = mindelay;
-    else if (strcmp(optname, "maxdelay") == 0)      *optval = maxdelay;
-    else if (strcmp(optname, "opacity") == 0)       *optval = opacity;
-    else if (strcmp(optname, "restoreview") == 0)   *optval = restoreview ? 1 : 0;
-    else if (strcmp(optname, "savexrle") == 0)      *optval = savexrle ? 1 : 0;
-    else if (strcmp(optname, "showallstates") == 0) *optval = showallstates ? 1 : 0;
-    else if (strcmp(optname, "showboldlines") == 0) *optval = showboldlines ? 1 : 0;
-    else if (strcmp(optname, "showbuttons") == 0)   *optval = controlspos;
-    else if (strcmp(optname, "showeditbar") == 0)   *optval = showedit ? 1 : 0;
-    else if (strcmp(optname, "showexact") == 0)     *optval = showexact ? 1 : 0;
-    else if (strcmp(optname, "showgrid") == 0)      *optval = showgridlines ? 1 : 0;
-    else if (strcmp(optname, "showhashinfo") == 0)  *optval = currlayer->showhashinfo ? 1 : 0;
-    else if (strcmp(optname, "showicons") == 0)     *optval = showicons ? 1 : 0;
-    else if (strcmp(optname, "showlayerbar") == 0)  *optval = showlayer ? 1 : 0;
-    else if (strcmp(optname, "showoverlay") == 0)   *optval = showoverlay ? 1 : 0;
-    else if (strcmp(optname, "showprogress") == 0)  *optval = showprogress ? 1 : 0;
-    else if (strcmp(optname, "showfiles") == 0)     *optval = showfiles ? 1 : 0;
-    else if (strcmp(optname, "showpatterns") == 0)  *optval = showfiles ? 1 : 0;    // deprecated
-    else if (strcmp(optname, "showscripts") == 0)   *optval = 0;                    // ditto
-    else if (strcmp(optname, "showstatusbar") == 0) *optval = showstatus ? 1 : 0;
-    else if (strcmp(optname, "showtoolbar") == 0)   *optval = showtool ? 1 : 0;
-    else if (strcmp(optname, "smartscale") == 0)    *optval = smartscale ? 1 : 0;
-    else if (strcmp(optname, "stacklayers") == 0)   *optval = stacklayers ? 1 : 0;
-    else if (strcmp(optname, "swapcolors") == 0)    *optval = swapcolors ? 1 : 0;
-    else if (strcmp(optname, "switchlayers") == 0)  *optval = canswitch ? 1 : 0;
-    else if (strcmp(optname, "synccursors") == 0)   *optval = synccursors ? 1 : 0;
-    else if (strcmp(optname, "syncviews") == 0)     *optval = syncviews ? 1 : 0;
-    else if (strcmp(optname, "tilelayers") == 0)    *optval = tilelayers ? 1 : 0;
+    if      (strcmp(optname, "autofit") == 0)           *optval = currlayer->autofit ? 1 : 0;
+    else if (strcmp(optname, "boldspacing") == 0)       *optval = boldspacing;
+    else if (strcmp(optname, "drawingstate") == 0)      *optval = currlayer->drawingstate;
+    else if (strcmp(optname, "fullscreen") == 0)        *optval = mainptr->fullscreen ? 1 : 0;
+    else if (strcmp(optname, "hyperspeed") == 0)        *optval = currlayer->hyperspeed ? 1 : 0;
+    else if (strcmp(optname, "mindelay") == 0)          *optval = mindelay;
+    else if (strcmp(optname, "maxdelay") == 0)          *optval = maxdelay;
+    else if (strcmp(optname, "opacity") == 0)           *optval = opacity;
+    else if (strcmp(optname, "restoreview") == 0)       *optval = restoreview ? 1 : 0;
+    else if (strcmp(optname, "savexrle") == 0)          *optval = savexrle ? 1 : 0;
+    else if (strcmp(optname, "showallstates") == 0)     *optval = showallstates ? 1 : 0;
+    else if (strcmp(optname, "showboldlines") == 0)     *optval = showboldlines ? 1 : 0;
+    else if (strcmp(optname, "showbuttons") == 0)       *optval = controlspos;
+    else if (strcmp(optname, "showeditbar") == 0)       *optval = showedit ? 1 : 0;
+    else if (strcmp(optname, "showexact") == 0)         *optval = showexact ? 1 : 0;
+    else if (strcmp(optname, "showgrid") == 0)          *optval = showgridlines ? 1 : 0;
+    else if (strcmp(optname, "showhashinfo") == 0)      *optval = currlayer->showhashinfo ? 1 : 0;
+    else if (strcmp(optname, "showpopulation") == 0)    *optval = showpopulation ? 1 : 0;
+    else if (strcmp(optname, "showicons") == 0)         *optval = showicons ? 1 : 0;
+    else if (strcmp(optname, "showlayerbar") == 0)      *optval = showlayer ? 1 : 0;
+    else if (strcmp(optname, "showoverlay") == 0)       *optval = showoverlay ? 1 : 0;
+    else if (strcmp(optname, "showprogress") == 0)      *optval = showprogress ? 1 : 0;
+    else if (strcmp(optname, "showfiles") == 0)         *optval = showfiles ? 1 : 0;
+    else if (strcmp(optname, "showpatterns") == 0)      *optval = showfiles ? 1 : 0;    // deprecated
+    else if (strcmp(optname, "showscripts") == 0)       *optval = 0;                    // ditto
+    else if (strcmp(optname, "showstatusbar") == 0)     *optval = showstatus ? 1 : 0;
+    else if (strcmp(optname, "showtoolbar") == 0)       *optval = showtool ? 1 : 0;
+    else if (strcmp(optname, "smartscale") == 0)        *optval = smartscale ? 1 : 0;
+    else if (strcmp(optname, "stacklayers") == 0)       *optval = stacklayers ? 1 : 0;
+    else if (strcmp(optname, "swapcolors") == 0)        *optval = swapcolors ? 1 : 0;
+    else if (strcmp(optname, "switchlayers") == 0)      *optval = canswitch ? 1 : 0;
+    else if (strcmp(optname, "synccursors") == 0)       *optval = synccursors ? 1 : 0;
+    else if (strcmp(optname, "syncviews") == 0)         *optval = syncviews ? 1 : 0;
+    else if (strcmp(optname, "tilelayers") == 0)        *optval = tilelayers ? 1 : 0;
     // this option is deprecated (use getalgo command)
     else if (strcmp(optname, "hashing") == 0)
         *optval = (currlayer->algtype == HLIFE_ALGO) ? 1 : 0;

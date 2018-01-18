@@ -93,6 +93,7 @@ public:
     void ToggleAutoFit();
     void ToggleHyperspeed();
     void ToggleHashInfo();
+    void ToggleShowPopulation();
     void SetStepExponent(int newexpo);
     void SetGenIncrement();
     bool SaveStartingPattern();
@@ -298,6 +299,7 @@ enum {
     ID_AUTO,
     ID_HYPER,
     ID_HINFO,
+    ID_SHOW_POP,
     ID_RECORD,
     ID_DELTIME,
     ID_SETALGO,
