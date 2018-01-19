@@ -160,8 +160,17 @@ char *linereader::fgets(char *buf, int maxlen) {
 }
 
 #ifdef _WIN32
+static double freq = 0.0;
 double gollySecondCount() {
-   return (double) GetTickCount64() / 1000.0 ;
+   LARGE_INTEGER now;
+   if (freq == 0.0) {
+      LARGE_INTEGER f;
+      QueryPerformanceFrequency(&f);
+      freq = (double)f.QuadPart;
+      if (freq <= 0.0) freq = 1.0;	// play safe and avoid div by 0
+   }
+   QueryPerformanceCounter(&now);
+   return (now.QuadPart) / freq;
 }
 #else
 double gollySecondCount() {
