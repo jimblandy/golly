@@ -1182,7 +1182,7 @@ void ghashbase::afterwritemc(ghnode *root, int depth) {
 /*
  *   This top level routine calculates the population of a universe.
  */
-void ghashbase::calcPopulation(ghnode *root) {
+void ghashbase::calcPopulation() {
    int depth ;
    ensure_hashed() ;
    depth = ghnode_depth(root) ;
@@ -1310,7 +1310,7 @@ void ghashbase::do_gc(int invalidate) {
      lifestatus(statusline) ;
    }
    if (needPop) {
-      calcPopulation(root) ;
+      calcPopulation() ;
       popValid = 1 ;
       needPop = 0 ;
       poller->updatePop() ;
@@ -1421,7 +1421,7 @@ void ghashbase::new_ngens(int newval) {
    halvesdone = 0 ;
    inGC = 0 ;
    if (needPop) {
-      calcPopulation(root) ;
+      calcPopulation() ;
       popValid = 1 ;
       needPop = 0 ;
       poller->updatePop() ;
@@ -1457,7 +1457,7 @@ const bigint &ghashbase::getPopulation() {
         // AKT: avoid calling poller->bailIfCalculating
         return negone ;
       } else {
-        calcPopulation(root) ;
+        calcPopulation() ;
         popValid = 1 ;
         needPop = 0 ;
       }

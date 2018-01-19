@@ -277,7 +277,7 @@ private:
    const bigint &calcpop(node *root, int depth) ;
    void aftercalcpop2(node *root, int depth) ;
    void afterwritemc(node *root, int depth) ;
-   void calcPopulation(node *root) ;
+   void calcPopulation() ;
    node *save(node *n) ;
    void pop(int n) ;
    void clearstack() ;

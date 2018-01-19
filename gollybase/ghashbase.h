@@ -185,7 +185,7 @@ private:
    const bigint &calcpop(ghnode *root, int depth) ;
    void aftercalcpop2(ghnode *root, int depth) ;
    void afterwritemc(ghnode *root, int depth) ;
-   void calcPopulation(ghnode *root) ;
+   void calcPopulation() ;
    ghnode *save(ghnode *n) ;
    void pop(int n) ;
    void clearstack() ;
