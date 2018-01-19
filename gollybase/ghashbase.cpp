@@ -1088,7 +1088,7 @@ void ghashbase::unhash_ghnode(ghnode *n) {
    g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
    ghnode *pred = 0 ;
    h = HASHMOD(h) ;
-   for (p=hashtab[h]; !marked2(p) && p; p = p->next) {
+   for (p=hashtab[h]; (!is_ghnode(p) || !marked2(p)) && p; p = p->next) {
       if (p == n) {
          if (pred)
             pred->next = p->next ;

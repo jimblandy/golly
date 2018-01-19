@@ -1212,7 +1212,7 @@ void hlifealgo::unhash_node(node *n) {
    g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
    node *pred = 0 ;
    h = HASHMOD(h) ;
-   for (p=hashtab[h]; !marked2(p) && p; p = p->next) {
+   for (p=hashtab[h]; (!is_node(p) || !marked2(p)) && p; p = p->next) {
       if (p == n) {
          if (pred)
             pred->next = p->next ;
