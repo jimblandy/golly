@@ -522,6 +522,7 @@ void StatusBar::OnMouseDown(wxMouseEvent& event)
     } else if ( ClickInPopBox(event.GetX(), event.GetY()) ) {
         if (mainptr->generating) {
             mainptr->ToggleShowPopulation();
+            mainptr->UpdateMenuItems();
         }
         
     } else if ( ClickInScaleBox(event.GetX(), event.GetY()) ) {

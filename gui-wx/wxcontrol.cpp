@@ -1131,7 +1131,7 @@ void MainFrame::ToggleShowPopulation()
 {
     showpopulation = !showpopulation;
     
-    if (generating) statusptr->Refresh(false);
+    if (generating && showstatus) statusptr->Refresh(false);
 }
 
 // -----------------------------------------------------------------------------
