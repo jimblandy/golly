@@ -279,7 +279,7 @@ node *hlifealgo::getres(node *n, int depth) {
     *   calls here, one to prevent us going deeper, and another
     *   to prevent us from destroying the cache field.
     */
-   if (poller->poll())
+   if (poller->poll() || softinterrupt)
      return zeronode(depth-1) ;
    int sp = gsp ;
    if (running_hperf.fastinc(depth, ngens < depth))
@@ -304,7 +304,8 @@ node *hlifealgo::getres(node *n, int depth) {
      }
    }
    pop(sp) ;
-   if (poller->isInterrupted()) // don't assign this to the cache field!
+   if (softinterrupt ||
+       poller->isInterrupted()) // don't assign this to the cache field!
      res = zeronode(depth) ;
    else {
      if (ngens < depth && halvesdone < 1000)
@@ -627,6 +628,7 @@ hlifealgo::hlifealgo() {
    running_hperf.clear() ;
    inc_hperf = running_hperf ;
    step_hperf = running_hperf ;
+   softinterrupt = 0 ;
 }
 /**
  *   Destructor frees memory.
@@ -651,6 +653,8 @@ hlifealgo::~hlifealgo() {
  *   Set increment.
  */
 void hlifealgo::setIncrement(bigint inc) {
+   if (inc < increment)
+      softinterrupt = 1 ;
    increment = inc ;
 }
 /**
@@ -661,43 +665,48 @@ void hlifealgo::step() {
    // we use while here because the increment may be changed while we are
    // doing the hashtable sweep; if that happens, we may need to sweep
    // again.
-   int cleareddownto = 1000000000 ;
-   while (increment != setincrement) {
-      bigint pendingincrement = increment ;
-      int newpow2 = 0 ;
-      bigint t = pendingincrement ;
-      while (t > 0 && t.even()) {
-         newpow2++ ;
-         t.div2() ;
+   while (1) {
+      int cleareddownto = 1000000000 ;
+      softinterrupt = 0 ;
+      while (increment != setincrement) {
+         bigint pendingincrement = increment ;
+         int newpow2 = 0 ;
+         bigint t = pendingincrement ;
+         while (t > 0 && t.even()) {
+            newpow2++ ;
+            t.div2() ;
+         }
+         nonpow2 = t.low31() ;
+         if (t != nonpow2)
+            lifefatal("bad increment") ;
+         int downto = newpow2 ;
+         if (ngens < newpow2)
+            downto = ngens ;
+         if (newpow2 != ngens && cleareddownto > downto) {
+            new_ngens(newpow2) ;
+            cleareddownto = downto ;
+         } else {
+            ngens = newpow2 ;
+         }
+         setincrement = pendingincrement ;
+         pow2step = 1 ;
+         while (newpow2--)
+            pow2step += pow2step ;
       }
-      nonpow2 = t.low31() ;
-      if (t != nonpow2)
-         lifefatal("bad increment") ;
-      int downto = newpow2 ;
-      if (ngens < newpow2)
-         downto = ngens ;
-      if (newpow2 != ngens && cleareddownto > downto) {
-         new_ngens(newpow2) ;
-         cleareddownto = downto ;
-      } else {
-         ngens = newpow2 ;
+      gcstep = 0 ;
+      running_hperf.genval = generation.todouble() ;
+      for (int i=0; i<nonpow2; i++) {
+         node *newroot = runpattern() ;
+         if (newroot == 0 || softinterrupt || poller->isInterrupted()) // we *were* interrupted
+            break ;
+         popValid = 0 ;
+         root = newroot ;
+         depth = node_depth(root) ;
       }
-      setincrement = pendingincrement ;
-      pow2step = 1 ;
-      while (newpow2--)
-         pow2step += pow2step ;
-   }
-   gcstep = 0 ;
-   running_hperf.genval = generation.todouble() ;
-   for (int i=0; i<nonpow2; i++) {
-      node *newroot = runpattern() ;
-      if (newroot == 0 || poller->isInterrupted()) // we *were* interrupted
+      running_hperf.reportStep(step_hperf, inc_hperf, generation.todouble(), verbose) ;
+      if (poller->isInterrupted() || !softinterrupt)
          break ;
-      popValid = 0 ;
-      root = newroot ;
-      depth = node_depth(root) ;
    }
-   running_hperf.reportStep(step_hperf, inc_hperf, generation.todouble(), verbose) ;
 }
 void hlifealgo::setcurrentstate(void *n) {
    if (root != (node *)n) {

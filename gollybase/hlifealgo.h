@@ -243,6 +243,7 @@ private:
    int gccount ; // how many gcs total this pattern
    int gcstep ; // how many gcs this step
    hperf running_hperf, step_hperf, inc_hperf ;
+   int softinterrupt ;
    static char statusline[] ;
 //
    void leafres(leaf *n) ;
