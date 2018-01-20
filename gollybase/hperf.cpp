@@ -44,6 +44,7 @@ void hperf::report(hperf &mark, int verbose) {
 void hperf::reportStep(hperf &mark, hperf &ratemark, double newGen, int verbose) {
    nodesCalculated += fastNodeInc ;
    fastNodeInc = 0 ;
+   frames++ ;
    timeStamp = gollySecondCount() ;
    double elapsed = timeStamp - mark.timeStamp ;
    if (reportInterval == 0 || elapsed < reportInterval)
@@ -59,9 +60,10 @@ void hperf::reportStep(hperf &mark, hperf &ratemark, double newGen, int verbose)
       double depthDelta = depthSum - mark.depthSum ;
       double genspersec = inc / elapsed ;
       double nodespergen = nodeCount / inc ;
+      double fps = (frames - mark.frames) / elapsed ;
       sprintf(perfstatusline,
-          "PERF gps %g nps %g depth %g half %g npg %g nodes %g",
-          genspersec, nodeCount/elapsed, 1+depthDelta/nodeCount, halfFrac,
+          "PERF gps %g nps %g fps %g depth %g half %g npg %g nodes %g",
+          genspersec, nodeCount/elapsed, fps, 1+depthDelta/nodeCount, halfFrac,
           nodespergen, nodeCount) ;
       lifestatus(perfstatusline) ;
    }

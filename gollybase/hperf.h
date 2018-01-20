@@ -34,6 +34,7 @@ struct hperf {
       reportInterval = v ;
    }
    int fastNodeInc ;
+   double frames ;
    double nodesCalculated ;
    double halfNodes ;
    double depthSum ;
