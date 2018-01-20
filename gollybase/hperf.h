@@ -15,6 +15,8 @@ struct hperf {
       depthSum = 0 ;
       timeStamp = gollySecondCount() ;
       genval = 0 ;
+      frames = 0 ;
+      halfNodes = 0 ;
    }
    void report(hperf&, int verbose) ;
    void reportStep(hperf&, hperf&, double genval, int verbose) ;
