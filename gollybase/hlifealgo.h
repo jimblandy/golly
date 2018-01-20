@@ -5,6 +5,7 @@
 #define HLIFEALGO_H
 #include "lifealgo.h"
 #include "liferules.h"
+#include "util.h"
 /*
  *   Into instances of this node structure is where almost all of the
  *   memory allocated by this program goes.  Thus, it is imperative we
@@ -142,6 +143,26 @@ struct setup_t {
    void prefetch(node **addr) const { PREFETCH(addr) ; }
 } ;
 #endif
+/*
+ *   Performance data.  We keep running values here.  We can copy this
+ *   to mark, and then diff it against marked values.
+ */
+struct hperf {
+   void clear() {
+      fastNodeInc = 0 ;
+      nodesCalculated = 0 ;
+      depthSum = 0 ;
+      timeStamp = gollySecondCount() ;
+      genval = 0 ;
+   }
+   void report(hperf&) ;
+   void reportStep(hperf&, double) ;
+   int fastNodeInc ;
+   double nodesCalculated ;
+   double depthSum ;
+   double timeStamp ;
+   double genval ;
+} ;
 
 /**
  *   Our hlifealgo class.
@@ -242,6 +263,7 @@ private:
    g_uintptr_t writecells ; // how many to write
    int gccount ; // how many gcs total this pattern
    int gcstep ; // how many gcs this step
+   hperf running_hperf, step_hperf, inc_hperf ;
    static char statusline[] ;
 //
    void leafres(leaf *n) ;
