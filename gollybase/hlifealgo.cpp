@@ -282,9 +282,8 @@ node *hlifealgo::getres(node *n, int depth) {
    if (poller->poll())
      return zeronode(depth-1) ;
    int sp = gsp ;
-   running_hperf.depthSum += depth ;
-   if (0 == (++running_hperf.fastNodeInc & ((1 << 22) - 1)))
-      running_hperf.report(inc_hperf) ;
+   if (running_hperf.fastinc(depth, ngens < depth))
+      running_hperf.report(inc_hperf, verbose) ;
    depth-- ;
    if (ngens >= depth) {
      if (is_node(n->nw)) {
@@ -690,7 +689,6 @@ void hlifealgo::step() {
    }
    gcstep = 0 ;
    running_hperf.genval = generation.todouble() ;
-// step_hperf = running_hperf ;
    for (int i=0; i<nonpow2; i++) {
       node *newroot = runpattern() ;
       if (newroot == 0 || poller->isInterrupted()) // we *were* interrupted
@@ -699,7 +697,7 @@ void hlifealgo::step() {
       root = newroot ;
       depth = node_depth(root) ;
    }
-   running_hperf.reportStep(step_hperf, generation.todouble()) ;
+   running_hperf.reportStep(step_hperf, inc_hperf, generation.todouble(), verbose) ;
 }
 void hlifealgo::setcurrentstate(void *n) {
    if (root != (node *)n) {
@@ -2072,41 +2070,4 @@ void hlifealgo::doInitializeAlgoInfo(staticAlgoInfo &ai) {
    ai.defr2 = ai.defg2 = ai.defb2 = 255;        // end color = white
    ai.defr[0] = ai.defg[0] = ai.defb[0] = 48;   // 0 state = dark gray
    ai.defr[1] = ai.defg[1] = ai.defb[1] = 255;  // 1 state = white
-}
-/*
- *   Reporting.
- */
-char perfstatusline[200] ;
-void hperf::report(hperf &mark) {
-   nodesCalculated += fastNodeInc ;
-   fastNodeInc = 0 ;
-   timeStamp = gollySecondCount() ;
-   double elapsed = timeStamp - mark.timeStamp ;
-   double nodeCount = nodesCalculated - mark.nodesCalculated ;
-   double depthDelta = depthSum - mark.depthSum ;
-   sprintf(perfstatusline, "STAT noderate %g avg depth %g\n", nodeCount/elapsed,
-                                                 1+depthDelta/nodeCount) ;
-   lifestatus(perfstatusline) ;
-   mark = *this ;
-}
-void hperf::reportStep(hperf &mark, double newGen) {
-   nodesCalculated += fastNodeInc ;
-   fastNodeInc = 0 ;
-   timeStamp = gollySecondCount() ;
-   double elapsed = timeStamp - mark.timeStamp ;
-   if (elapsed < 1)
-      return ;
-   double inc = newGen - mark.genval ;
-   if (inc == 0)
-      inc = 1e30 ;
-   double nodeCount = nodesCalculated - mark.nodesCalculated ;
-   double depthDelta = depthSum - mark.depthSum ;
-   double genspersec = inc / elapsed ;
-   double nodespergen = nodeCount / inc ;
-   sprintf(perfstatusline,
-          "STEP nodes %g noderate %g avg depth %g gps %g npg %g\n", nodeCount,
-          nodeCount/elapsed, 1+depthDelta/nodeCount, genspersec, nodespergen) ;
-   lifestatus(perfstatusline) ;
-   genval = newGen ;
-   mark = *this ;
 }

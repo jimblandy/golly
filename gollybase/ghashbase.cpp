@@ -220,6 +220,8 @@ ghnode *ghashbase::getres(ghnode *n, int depth) {
     */
    if (poller->poll()) return zeroghnode(depth-1) ;
    int sp = gsp ;
+   if (running_hperf.fastinc(depth, ngens < depth))
+      running_hperf.report(inc_hperf, verbose) ;
    depth-- ;
    if (ngens >= depth) {
      if (is_ghnode(n->nw)) {
@@ -515,6 +517,9 @@ ghashbase::ghashbase() {
    cacheinvalid = 0 ;
    gccount = 0 ;
    gcstep = 0 ;
+   running_hperf.clear() ;
+   inc_hperf = running_hperf ;
+   step_hperf = running_hperf ;
 }
 /**
  *   Destructor frees memory.
@@ -576,6 +581,7 @@ void ghashbase::step() {
          pow2step += pow2step ;
    }
    gcstep = 0 ;
+   running_hperf.genval = generation.todouble() ;
    for (int i=0; i<nonpow2; i++) {
       ghnode *newroot = runpattern() ;
       if (newroot == 0 || poller->isInterrupted()) // we *were* interrupted
@@ -584,6 +590,7 @@ void ghashbase::step() {
       root = newroot ;
       depth = ghnode_depth(root) ;
    }
+   running_hperf.reportStep(step_hperf, inc_hperf, generation.todouble(), verbose) ;
 }
 void ghashbase::setcurrentstate(void *n) {
    if (root != (ghnode *)n) {
