@@ -5,7 +5,6 @@
 #define GHASHBASE_H
 #include "lifealgo.h"
 #include "liferules.h"
-#include "hperf.h"
 /*
  *   This class forms the basis of all hashlife-type algorithms except
  *   the highly-optimized hlifealgo (which is most appropriate for
