@@ -5,6 +5,7 @@
 #define HLIFEALGO_H
 #include "lifealgo.h"
 #include "liferules.h"
+#include "util.h"
 /*
  *   Into instances of this node structure is where almost all of the
  *   memory allocated by this program goes.  Thus, it is imperative we

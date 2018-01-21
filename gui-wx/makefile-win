@@ -92,7 +92,7 @@ CXXFLAGS = /M$(__RUNTIME_LIBS_8)$(__DEBUGRUNTIME_3) /DWIN32 \
 OBJDIR = ObjWin
 BASEH = $(BASEDIR)/bigint.h $(BASEDIR)/ghashbase.h $(BASEDIR)/hlifealgo.h $(BASEDIR)/jvnalgo.h \
     $(BASEDIR)/platform.h $(BASEDIR)/lifealgo.h $(BASEDIR)/lifepoll.h $(BASEDIR)/liferender.h $(BASEDIR)/liferules.h \
-    $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/hperf.h $(BASEDIR)/viewport.h \
+    $(BASEDIR)/qlifealgo.h $(BASEDIR)/ltlalgo.h $(BASEDIR)/readpattern.h $(BASEDIR)/util.h $(BASEDIR)/viewport.h \
     $(BASEDIR)/writepattern.h $(BASEDIR)/ruletreealgo.h $(BASEDIR)/generationsalgo.h $(BASEDIR)/ruletable_algo.h \
     $(BASEDIR)/ruleloaderalgo.h
 BASEO = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
@@ -100,7 +100,7 @@ BASEO = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
     $(OBJDIR)/ltlalgo.obj $(OBJDIR)/ltldraw.obj $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
     $(OBJDIR)/ruletable_algo.obj $(OBJDIR)/ghashbase.obj $(OBJDIR)/ruleloaderalgo.obj \
     $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
-    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj $(OBJDIR)/hperf.obj \
+    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
     $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
     $(OBJDIR)/generationsalgo.obj
 WXH = wxalgos.h wxedit.h wxgolly.h wxhelp.h wxinfo.h wxlayer.h wxmain.h wxprefs.h \
@@ -442,7 +442,7 @@ MBASEO = $(OBJDIR)/bigint.obj $(OBJDIR)/lifealgo.obj $(OBJDIR)/hlifealgo.obj \
     $(OBJDIR)/ltlalgo.obj $(OBJDIR)/ltldraw.obj $(OBJDIR)/jvnalgo.obj $(OBJDIR)/ruletreealgo.obj \
     $(OBJDIR)/ruletable_algo.obj $(OBJDIR)/ghashbase.obj $(OBJDIR)/ruleloaderalgo.obj \
     $(OBJDIR)/ghashdraw.obj $(OBJDIR)/readpattern.obj \
-    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj $(OBJDIR)/hperf.obj \
+    $(OBJDIR)/writepattern.obj $(OBJDIR)/liferules.obj $(OBJDIR)/util.obj \
     $(OBJDIR)/liferender.obj $(OBJDIR)/viewport.obj $(OBJDIR)/lifepoll.obj \
     $(OBJDIR)/generationsalgo.obj
 
@@ -451,7 +451,7 @@ MBASES = $(BASEDIR)/bigint.cpp $(BASEDIR)/lifealgo.cpp $(BASEDIR)/hlifealgo.cpp 
     $(BASEDIR)/ltlalgo.cpp $(BASEDIR)/ltldraw.cpp $(BASEDIR)/jvnalgo.cpp $(BASEDIR)/ruletreealgo.cpp \
     $(BASEDIR)/ruletable_algo.cpp $(BASEDIR)/ghashbase.cpp $(BASEDIR)/ruleloaderalgo.cpp \
     $(BASEDIR)/ghashdraw.cpp $(BASEDIR)/readpattern.cpp \
-    $(BASEDIR)/writepattern.cpp $(BASEDIR)/liferules.cpp $(BASEDIR)/util.cpp $(BASEDIR)/hperf.cpp \
+    $(BASEDIR)/writepattern.cpp $(BASEDIR)/liferules.cpp $(BASEDIR)/util.cpp \
     $(BASEDIR)/liferender.cpp $(BASEDIR)/viewport.cpp $(BASEDIR)/lifepoll.cpp \
     $(BASEDIR)/generationsalgo.cpp
 
