@@ -1115,6 +1115,23 @@ void ghashbase::unhash_ghnode(ghnode *n) {
    }
    lifefatal("Didn't find ghnode to unhash") ;
 }
+void ghashbase::unhash_ghnode2(ghnode *n) {
+   ghnode *p ;
+   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
+   ghnode *pred = 0 ;
+   h = HASHMOD(h) ;
+   for (p=hashtab[h]; p; p = p->next) {
+      if (p == n) {
+         if (pred)
+            pred->next = p->next ;
+         else
+            hashtab[h] = p->next ;
+         return ;
+      }
+      pred = p ;
+   }
+   lifefatal("Didn't find ghnode to unhash") ;
+}
 void ghashbase::rehash_ghnode(ghnode *n) {
    g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
    h = HASHMOD(h) ;
@@ -1695,7 +1712,7 @@ g_uintptr_t ghashbase::writecell(std::ostream &os, ghnode *root, int depth) {
    } else {
       if (marked2(root))
          return (g_uintptr_t)(root->next) ;
-      unhash_ghnode(root) ;
+      unhash_ghnode2(root) ;
       mark2(root) ;
    }
    thiscell = ++cellcounter ;
@@ -1730,7 +1747,7 @@ g_uintptr_t ghashbase::writecell_2p1(ghnode *root, int depth) {
    } else {
       if (marked2(root))
          return (g_uintptr_t)(root->next) ;
-      unhash_ghnode(root) ;
+      unhash_ghnode2(root) ;
       mark2(root) ;
    }
    if (depth == 0) {

@@ -166,6 +166,7 @@ private:
    void setupprefetch(ghsetup_t &su, ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) ;
 #endif
    void unhash_ghnode(ghnode *n) ;
+   void unhash_ghnode2(ghnode *n) ;
    void rehash_ghnode(ghnode *n) ;
    ghleaf *find_ghleaf(state nw, state ne, state sw, state se) ;
    ghnode *getres(ghnode *n, int depth) ;

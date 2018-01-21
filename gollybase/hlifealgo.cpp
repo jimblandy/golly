@@ -1240,6 +1240,23 @@ void hlifealgo::unhash_node(node *n) {
    }
    lifefatal("Didn't find node to unhash") ;
 }
+void hlifealgo::unhash_node2(node *n) {
+   node *p ;
+   g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
+   node *pred = 0 ;
+   h = HASHMOD(h) ;
+   for (p=hashtab[h]; p; p = p->next) {
+      if (p == n) {
+         if (pred)
+            pred->next = p->next ;
+         else
+            hashtab[h] = p->next ;
+         return ;
+      }
+      pred = p ;
+   }
+   lifefatal("Didn't find node to unhash 2") ;
+}
 void hlifealgo::rehash_node(node *n) {
    g_uintptr_t h = node_hash(n->nw,n->ne,n->sw,n->se) ;
    h = HASHMOD(h) ;
@@ -1853,7 +1870,7 @@ g_uintptr_t hlifealgo::writecell(std::ostream &os, node *root, int depth) {
    } else {
       if (marked2(root))
          return (g_uintptr_t)(root->next) ;
-      unhash_node(root) ;
+      unhash_node2(root) ;
       mark2(root) ;
    }
    if (depth == 2) {
@@ -1901,7 +1918,7 @@ g_uintptr_t hlifealgo::writecell_2p1(node *root, int depth) {
    } else {
       if (marked2(root))
          return (g_uintptr_t)(root->next) ;
-      unhash_node(root) ;
+      unhash_node2(root) ;
       mark2(root) ;
    }
    if (depth == 2) {

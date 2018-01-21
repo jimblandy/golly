@@ -254,6 +254,7 @@ private:
    void setupprefetch(setup_t &su, node *nw, node *ne, node *sw, node *se) ;
 #endif
    void unhash_node(node *n) ;
+   void unhash_node2(node *n) ;
    void rehash_node(node *n) ;
    leaf *find_leaf(unsigned short nw, unsigned short ne,
                    unsigned short sw, unsigned short se) ;
