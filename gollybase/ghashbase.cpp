@@ -483,14 +483,13 @@ ghashbase::ghashbase() {
    hashtab = (ghnode **)calloc(hashprime, sizeof(ghnode *)) ;
    if (hashtab == 0)
      lifefatal("Out of memory (1).") ;
-   alloced += hashprime * sizeof(ghnode *) ;
+   alloced = hashprime * sizeof(ghnode *) ;
    ngens = 0 ;
    stacksize = 0 ;
    halvesdone = 0 ;
    nzeros = 0 ;
    stack = 0 ;
    gsp = 0 ;
-   alloced = 0 ;
    maxmem = 256 * 1024 * 1024 ;
    freeghnodes = 0 ;
    okaytogc = 0 ;

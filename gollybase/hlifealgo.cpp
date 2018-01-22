@@ -590,14 +590,13 @@ hlifealgo::hlifealgo() {
    hashtab = (node **)calloc(hashprime, sizeof(node *)) ;
    if (hashtab == 0)
      lifefatal("Out of memory (1).") ;
-   alloced += hashprime * sizeof(node *) ;
+   alloced = hashprime * sizeof(node *) ;
    ngens = 0 ;
    stacksize = 0 ;
    halvesdone = 0 ;
    nzeros = 0 ;
    stack = 0 ;
    gsp = 0 ;
-   alloced = 0 ;
    maxmem = 256 * 1024 * 1024 ;
    freenodes = 0 ;
    okaytogc = 0 ;
