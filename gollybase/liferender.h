@@ -24,20 +24,39 @@
 #define LIFERENDER_H
 class liferender {
 public:
-   liferender() {}
+   liferender() : juststate(0) {}
+   liferender(int state) : juststate(state) {}
+   int justState() { return juststate ; }
    virtual ~liferender() ;
 
+   // First two methods (pixblit/getcolors) only called for normal
+   // display renderers.  For "getstate" renderers, these will never
+   // be called.
    // pixblit is used to draw a pixel map by passing data in two formats:
    // If pmscale == 1 then pm data contains 4*w*h bytes where each
    // byte quadruplet contains the RGBA values for the corresponding pixel.
    // If pmscale > 1 then pm data contains (w/pmscale)*(h/pmscale) bytes
    // where each byte is a cell state (0..255).  This allows the rendering
    // code to display either icons or colors.
-   virtual void pixblit(int x, int y, int w, int h, unsigned char* pm, int pmscale) = 0;
+   virtual void pixblit(int x, int y, int w, int h, unsigned char* pm, int pmscale) ;
 
    // the drawing code needs access to the current layer's colors,
    // and to the transparency values for dead pixels and live pixels
    virtual void getcolors(unsigned char** r, unsigned char** g, unsigned char** b,
-                          unsigned char* dead_alpha, unsigned char* live_alpha) = 0;
+                          unsigned char* dead_alpha, unsigned char* live_alpha) ;
+   // for state renderers, this just copies the cell state; no scaling is
+   // supported.  Only called for juststate renderers.
+   virtual void stateblit(int x, int y, int w, int h, unsigned char* pm) ;
+private:
+   int juststate ;
+} ;
+class staterender : public liferender {
+public:
+   staterender(unsigned char *_buf, int _vw, int _vh) :
+               liferender(1), buf(_buf), vw(_vw), vh(_vh) {}
+   virtual void stateblit(int x, int y, int w, int h, unsigned char* pm) ;
+private:
+   unsigned char *buf ;
+   int vw, vh ;
 } ;
 #endif

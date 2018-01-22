@@ -56,7 +56,7 @@ void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
                           int llx, int lly) {
    // sw,se,nw,ne contain cell states (0..255)
    int i = (pmsize-1+lly) * pmsize - llx;
-   if (pmag > 1) {
+   if (renderer->justState() || pmag > 1) {
       // store state info
       if (sw) pixbuf[i] = sw;
       if (se) pixbuf[i+1] = se;
@@ -102,7 +102,7 @@ void ghashbase::draw4x4_1(ghnode *n, ghnode *z, int llx, int lly) {
 
 // AKT: kill all cells in pixbuf
 void ghashbase::killpixels() {
-   if (pmag > 1) {
+   if (renderer->justState() || pmag > 1) {
       // pixblit assumes pixbuf contains pmsize*pmsize bytes where each byte
       // is a cell state, so it's easy to kill all cells
       memset(pixbuf, 0, pmsize*pmsize);
@@ -142,7 +142,10 @@ void ghashbase::renderbm(int x, int y) {
       rh *= pmag ;
    }
    ry = uviewh - ry - rh ;
-   renderer->pixblit(rx, ry, rw, rh, pixbuf, pmag);
+   if (renderer->justState())
+      renderer->stateblit(rx, ry, rw, rh, pixbuf) ;
+   else
+      renderer->pixblit(rx, ry, rw, rh, pixbuf, pmag);
    killpixels();
 }
 
@@ -234,30 +237,32 @@ void ghashbase::draw(viewport &viewarg, liferender &rendererarg) {
    
    ensure_hashed() ;
    renderer = &rendererarg ;
-   
-   // AKT: get cell colors and alpha values for dead and live pixels
-   renderer->getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea);
 
-   // rowett: create RGBA view
-   unsigned char *rgbaptr = (unsigned char *)cellRGBA;
+   if (!renderer->justState()) {
+      // AKT: get cell colors and alpha values for dead and live pixels
+      renderer->getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea);
 
-   // create dead color
-   *rgbaptr++ = cellred[0];
-   *rgbaptr++ = cellgreen[0];
-   *rgbaptr++ = cellblue[0];
-   *rgbaptr++ = deada;
+      // rowett: create RGBA view
+      unsigned char *rgbaptr = (unsigned char *)cellRGBA;
 
-   // create live colors
-   unsigned int livestates = NumCellStates() - 1;
-   for (unsigned int ui = 1; ui <= livestates; ui++) {
-       *rgbaptr++ = cellred[ui];
-       *rgbaptr++ = cellgreen[ui];
-       *rgbaptr++ = cellblue[ui];
-       *rgbaptr++ = livea;
+      // create dead color
+      *rgbaptr++ = cellred[0];
+      *rgbaptr++ = cellgreen[0];
+      *rgbaptr++ = cellblue[0];
+      *rgbaptr++ = deada;
+
+      // create live colors
+      unsigned int livestates = NumCellStates() - 1;
+      for (unsigned int ui = 1; ui <= livestates; ui++) {
+          *rgbaptr++ = cellred[ui];
+          *rgbaptr++ = cellgreen[ui];
+          *rgbaptr++ = cellblue[ui];
+          *rgbaptr++ = livea;
+      }
+
+      // remember the live state 1 color
+      state1RGBA = cellRGBA[1];
    }
-
-   // remember the live state 1 color
-   state1RGBA = cellRGBA[1];
 
    view = &viewarg ;
    uvieww = view->getwidth() ;

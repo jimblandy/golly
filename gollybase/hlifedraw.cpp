@@ -92,7 +92,7 @@ void hlifealgo::renderbm(int x, int y) {
    ry = uviewh - ry - rh ;
    
    unsigned char *bigptr = bigbuf;
-   if (pmag > 1) {
+   if (renderer->justState() || pmag > 1) {
       // convert each bigbuf byte into 8 bytes of state data
       unsigned char *pixptr = pixbuf;
 
@@ -124,7 +124,10 @@ void hlifealgo::renderbm(int x, int y) {
          *pixptr++ = (byte & 1) ? liveRGBA : deadRGBA;
       }
    }
-   renderer->pixblit(rx, ry, rw, rh, pixbuf, pmag);
+   if (renderer->justState())
+      renderer->stateblit(rx, ry, rw, rh, pixbuf) ;
+   else
+      renderer->pixblit(rx, ry, rw, rh, pixbuf, pmag);
    
    memset(bigbuf, 0, sizeof(ibigbuf)) ;
 }
@@ -234,31 +237,37 @@ void hlifealgo::draw(viewport &viewarg, liferender &rendererarg) {
    ensure_hashed() ;
    renderer = &rendererarg ;
 
-   // AKT: get cell colors and alpha values for dead and live pixels
-   unsigned char *r, *g, *b;
-   renderer->getcolors(&r, &g, &b, &deada, &livea);
-   deadr = r[0];
-   deadg = g[0];
-   deadb = b[0];
-   liver = r[1];
-   liveg = g[1];
-   liveb = b[1];
+   if (!renderer->justState()) {
+      // AKT: get cell colors and alpha values for dead and live pixels
+      unsigned char *r, *g, *b;
+      renderer->getcolors(&r, &g, &b, &deada, &livea);
+      deadr = r[0];
+      deadg = g[0];
+      deadb = b[0];
+      liver = r[1];
+      liveg = g[1];
+      liveb = b[1];
 
-   // create RGBA live color
-   unsigned char *colptr = (unsigned char *)&liveRGBA;
-   *colptr++ = liver;
-   *colptr++ = liveg;
-   *colptr++ = liveb;
-   *colptr++ = livea;
+      // create RGBA live color
+      unsigned char *colptr = (unsigned char *)&liveRGBA;
+      *colptr++ = liver;
+      *colptr++ = liveg;
+      *colptr++ = liveb;
+      *colptr++ = livea;
 
-   // create RGBA dead color
-   colptr = (unsigned char *)&deadRGBA;
-   *colptr++ = deadr;
-   *colptr++ = deadg;
-   *colptr++ = deadb;
-   *colptr++ = deada;
+      // create RGBA dead color
+      colptr = (unsigned char *)&deadRGBA;
+      *colptr++ = deadr;
+      *colptr++ = deadg;
+      *colptr++ = deadb;
+      *colptr++ = deada;
+   }
 
    view = &viewarg ;
+   if (renderer->justState()) {
+      if (view->getmag() != 0)
+         lifefatal("Can only call getstate renderer with mag of 0") ;
+   }
    uvieww = view->getwidth() ;
    uviewh = view->getheight() ;
    if (view->getmag() > 0) {
