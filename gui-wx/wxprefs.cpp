@@ -2612,14 +2612,6 @@ void CellBoxes::OnMouseExit(wxMouseEvent& WXUNUSED(event))
     #define ALL_TEXT -1,-1
 #endif
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0) && !wxCHECK_VERSION(2,9,0)
-    // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.x;
-    // eg. when a wxStaticText box is next to a wxChoice box
-    #define FIX_ALIGN_BUG wxBOTTOM,4
-#else
-    #define FIX_ALIGN_BUG wxALL,0
-#endif
-
 const wxString HASH_MEM_NOTE = _("MB (best if ~50% of RAM)");
 const wxString HASH_STEP_NOTE = _("(best if power of 2)");
 const wxString NONHASH_MEM_NOTE = _("MB (0 means no limit)");
@@ -3268,13 +3260,13 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     
     wxCheckBox* check1 = new wxCheckBox(panel, PREF_NEW_REM_SEL, _("Remove selection"));
     wxBoxSizer* check1box = new wxBoxSizer(wxHORIZONTAL);
-    check1box->Add(check1, 0, FIX_ALIGN_BUG);
+    check1box->Add(check1, 0, wxALL, 0);
     
     wxBoxSizer* setcurs1 = new wxBoxSizer(wxHORIZONTAL);
-    setcurs1->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, FIX_ALIGN_BUG);
+    setcurs1->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, wxALL, 0);
     
     wxBoxSizer* setscalebox = new wxBoxSizer(wxHORIZONTAL);
-    setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, FIX_ALIGN_BUG);
+    setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, wxALL, 0);
     
     wxChoice* choice3 = new wxChoice(panel, PREF_NEW_CURSOR,
                                      wxDefaultPosition, wxDefaultSize,
@@ -3308,14 +3300,14 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     
     wxCheckBox* check2 = new wxCheckBox(panel, PREF_OPEN_REM_SEL, _("Remove selection"));
     wxBoxSizer* check2box = new wxBoxSizer(wxHORIZONTAL);
-    check2box->Add(check2, 0, FIX_ALIGN_BUG);
+    check2box->Add(check2, 0, wxALL, 0);
     
     wxChoice* choice4 = new wxChoice(panel, PREF_OPEN_CURSOR,
                                      wxDefaultPosition, wxDefaultSize,
                                      opencursorChoices);
     
     wxBoxSizer* setcurs2 = new wxBoxSizer(wxHORIZONTAL);
-    setcurs2->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, FIX_ALIGN_BUG);
+    setcurs2->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, wxALL, 0);
     
     wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
     hbox4->Add(check2box, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -3397,7 +3389,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     spin1->SetFocus();
     spin1->SetSelection(ALL_TEXT);
     
-    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3487,7 +3479,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     check3->SetValue(scrollhand);
     check4->SetValue(allowbeep);
     
-    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3513,7 +3505,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     
     wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
     longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Settings for this algorithm:")),
-                 0, FIX_ALIGN_BUG);
+                 0, wxALL, 0);
     
     wxBoxSizer* menubox = new wxBoxSizer(wxHORIZONTAL);
     menubox->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -3630,7 +3622,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
         new_defbase[i] = algoinfo[i]->defbase;
     }
     
-    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3690,11 +3682,11 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     
     wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
     longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Minimum scale for grid:")),
-                 0, FIX_ALIGN_BUG);
+                 0, wxALL, 0);
     
     wxBoxSizer* shortbox = new wxBoxSizer(wxHORIZONTAL);
     shortbox->Add(new wxStaticText(panel, wxID_STATIC, _("Mouse wheel action:")),
-                  0, FIX_ALIGN_BUG);
+                  0, wxALL, 0);
     
     // align controls by setting shortbox same width as longbox
     shortbox->SetMinSize( longbox->GetMinSize() );
@@ -3832,7 +3824,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     radio3->SetValue(controlspos == 3);
     radio4->SetValue(controlspos == 4);
     
-    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3942,7 +3934,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     check4->SetValue(askonquit);
     check5->SetValue(warn_on_save);
     
-    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -4013,11 +4005,11 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     
     wxBoxSizer* algobox = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
-    algolabel->Add(new wxStaticText(panel, wxID_STATIC, _("Default colors for:")), 0, FIX_ALIGN_BUG);
+    algolabel->Add(new wxStaticText(panel, wxID_STATIC, _("Default colors for:")), 0, wxALL, 0);
     algobox->Add(algolabel, 0, wxALIGN_CENTER_VERTICAL, 0);
     algobox->Add(algomenu, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 6);
     algobox->AddStretchSpacer();
-    algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | FIX_ALIGN_BUG);
+    algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
     algobox->AddStretchSpacer();
     
     gradcheck = new wxCheckBox(panel, PREF_GRADIENT_CHECK, _("Use gradient from "));
@@ -4106,7 +4098,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     vbox->Add(ssizer2, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(2);
     
-    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -4152,9 +4144,6 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
     keybox->Add(keycombo, 0, wxALIGN_CENTER, 0);
     
     wxBoxSizer* actbox = new wxBoxSizer(wxVERTICAL);
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0) && !wxCHECK_VERSION(2,9,0)
-    actbox->AddSpacer(2);
-#endif
     actbox->Add(new wxStaticText(panel, wxID_STATIC, _("Action")), 0, wxALIGN_CENTER, 0);
     actbox->AddSpacer(5);
     actbox->Add(actionmenu, 0, wxALIGN_CENTER, 0);
@@ -4196,7 +4185,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
     keycombo->SetFocus();
     keycombo->SetSelection(ALL_TEXT);
     
-    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
