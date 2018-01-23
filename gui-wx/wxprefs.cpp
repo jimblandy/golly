@@ -3397,7 +3397,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     spin1->SetFocus();
     spin1->SetSelection(ALL_TEXT);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3487,7 +3487,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     check3->SetValue(scrollhand);
     check4->SetValue(allowbeep);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3630,7 +3630,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
         new_defbase[i] = algoinfo[i]->defbase;
     }
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3832,7 +3832,7 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     radio3->SetValue(controlspos == 3);
     radio4->SetValue(controlspos == 4);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3942,7 +3942,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     check4->SetValue(askonquit);
     check5->SetValue(warn_on_save);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -4106,7 +4106,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     vbox->Add(ssizer2, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(2);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -4196,7 +4196,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
     keycombo->SetFocus();
     keycombo->SetSelection(ALL_TEXT);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxALIGN_CENTER | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;

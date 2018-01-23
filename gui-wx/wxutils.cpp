@@ -128,7 +128,7 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
     
     // position the controls
     wxBoxSizer* stdhbox = new wxBoxSizer(wxHORIZONTAL);
-    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
+    stdhbox->Add(stdbutts, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
     wxSize minsize = stdhbox->GetMinSize();
     if (minsize.GetWidth() < 250) {
         minsize.SetWidth(250);
@@ -284,7 +284,7 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
     
     // position the controls
     wxBoxSizer* stdhbox = new wxBoxSizer(wxHORIZONTAL);
-    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
+    stdhbox->Add(stdbutts, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
     wxSize minsize = stdhbox->GetMinSize();
     if (minsize.GetWidth() < 250) {
         minsize.SetWidth(250);

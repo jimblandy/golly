@@ -3265,7 +3265,7 @@ void ColorDialog::CreateControls()
     wxSizer* stdbutts = CreateButtonSizer(wxOK | wxCANCEL);
     wxBoxSizer* stdhbox = new wxBoxSizer( wxHORIZONTAL );
     stdhbox->Add(defbutt, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, HGAP);
-    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
+    stdhbox->Add(stdbutts, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
     
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     topSizer->AddSpacer(10);
