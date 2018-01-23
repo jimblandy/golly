@@ -451,6 +451,7 @@ private:
     // cell view
     unsigned int cellRGBA[256];     // cell RGBA values
     unsigned char* cellview;        // cell state data (cellwd * cellht bytes)
+    unsigned char* cellview1;       // cell state data (cellwd * cellht bytes) double buffer
     unsigned char* zoomview;        // cell state data (cellwd * cellht bytes) for zoom out
     int cellwd, cellht;             // width and height of cell view
     int cellx, celly;               // x and y position of bottom left cell

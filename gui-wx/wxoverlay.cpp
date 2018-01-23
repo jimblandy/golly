@@ -179,6 +179,7 @@ Overlay::Overlay()
     pixmap = NULL;
     ovpixmap = NULL;
     cellview = NULL;
+    cellview1 = NULL;
     zoomview = NULL;
     starx = NULL;
     stary = NULL;
@@ -259,6 +260,10 @@ void Overlay::DeleteCellView()
         free(cellview);
         cellview = NULL;
     }
+    if (cellview1) {
+        free(cellview1);
+        cellview1 = NULL;
+    }
     if (zoomview) {
         free(zoomview);
         zoomview = NULL;
@@ -295,85 +300,36 @@ void Overlay::RefreshCellViewWithTheme()
     // refresh the cellview for a 2 state pattern using LifeViewer theme
     unsigned char *cellviewptr = cellview;
     unsigned char state;
-    int h, w, v = 0;
-    int skip;
+    unsigned char* cellviewptr1 = cellview1;
+    unsigned char *end = cellview + (cellwd * cellht);
+
+    // get the cells in the cell view
     lifealgo *algo = currlayer->algo;
+    algo->getcells(cellviewptr1, cellx, celly, cellwd, cellht);
 
-    int rightx = cellx + cellwd;
-    int bottomy = celly + cellht;
-
-    for (h = celly; h < bottomy; h++) {
-        w = cellx;
-        while (w < rightx) {
-            skip = algo->nextcell(w, h, v);
-            if (skip >= 0) {
-                skip += w;
-                if (skip >= rightx) skip = rightx;
-                while (w < skip) {
-                    // new cells are dead
-                    state = *cellviewptr;
-                    if (state) {
-                        if (state >= aliveStart) {
-                            // cell just died
-                            *cellviewptr = deadStart;
-                        }
-                        else {
-                            if (state > deadEnd) {
-                                // cell decaying
-                                *cellviewptr = state - 1;
-                            }
-                        }
-                    }
-                    cellviewptr++;
-
-                    // next dead cell
-                    w++;
-                }
-
-                // cell is alive
-                if (w < rightx) {
-                    state = *cellviewptr;
-                    if (state >= aliveStart) {
-                        // check for max length
-                        if (state < aliveEnd) {
-                            // cell living
-                            *cellviewptr = state + 1;
-                        }
-                    }
-                    else {
-                        // cell just born
-                        *cellviewptr = aliveStart;
-                    }
-                    cellviewptr++;
-
-                    // next cell
-                    w++;
-                }
+    // update based on the theme
+    while (cellviewptr < end) {
+        state = *cellviewptr;
+        if (*cellviewptr1++) {
+            // new cell is alive
+            if (state >= aliveStart) {
+                // cell was already alive
+                if (state < aliveEnd) *cellviewptr = state + 1;
+            } else {
+                // cell just born
+                *cellviewptr = aliveStart;
             }
-            else {
-                // dead to end of row
-                while (w < rightx) {
-                    // new cells are dead
-                    state = *cellviewptr;
-                    if (state) {
-                        if (state >= aliveStart) {
-                            // cell just died
-                            *cellviewptr = deadStart;
-                        }
-                        else {
-                            if (state > deadEnd) {
-                                // cell decaying
-                                *cellviewptr = state - 1;
-                            }
-                        }
-                    }
-                    cellviewptr++;
-
-                    // next dead cell
-                    w++;
-                }
+        } else {
+            // new cell is dead
+            if (state >= aliveStart) {
+                // cell just died
+                *cellviewptr = deadStart;
+            } else {
+                // cell is decaying
+                if (state > deadEnd) *cellviewptr = state - 1;
             }
         }
+        cellviewptr++;
     }
 }
 
@@ -381,53 +337,10 @@ void Overlay::RefreshCellViewWithTheme()
 
 void Overlay::RefreshCellView()
 {
-    bigint top, left, bottom, right;
-    int leftx, rightx, topy, bottomy;
-    int h, w, v = 0;
-    int skip;
     lifealgo *algo = currlayer->algo;
 
-    // find pattern bounding box
-    algo->findedges(&top, &left, &bottom, &right);
-    leftx = left.toint();
-    rightx = right.toint();
-    topy = top.toint();
-    bottomy = bottom.toint();
-
-    // clip to cell view
-    if (leftx < cellx) {
-        leftx = cellx;
-    }
-    if (rightx >= cellx + cellwd) {
-        rightx = cellx + cellwd - 1;
-    }
-    if (bottomy >= celly + cellht) {
-        bottomy = celly + cellht - 1;
-    }
-    if (topy < celly) {
-        topy = celly;
-    }
-
-    // clear the cell view
-    memset(cellview, 0, cellwd * cellht * sizeof(*cellview));
-
-    // copy live cells into the cell view
-    for (h = topy; h <= bottomy; h++) {
-        for (w = leftx; w <= rightx; w++) {
-            skip = algo->nextcell(w, h, v);
-            if (skip >= 0) {
-                // live cell found
-                w += skip;
-                if (w <= rightx) {
-                    cellview[(h - celly) * cellwd + w - cellx] = v;
-                }
-            }
-            else {
-                // end of row
-                w = rightx;
-            }
-        }
-    }
+    // read cells into the buffer
+    algo->getcells(cellview, cellx, celly, cellwd, cellht);
 }
 
 // -----------------------------------------------------------------------------
@@ -1541,6 +1454,8 @@ const char* Overlay::DoCellView(const char* args)
     // use calloc so all cells will be in state 0
     cellview = (unsigned char*) calloc(w * h, sizeof(*cellview));
     if (cellview == NULL) return OverlayError("not enough memory to create cellview");
+    cellview1 = (unsigned char*) calloc(w * h, sizeof(*cellview1));
+    if (cellview1 == NULL) return OverlayError("not enough memory to create cellview");
 
     // allocate the zoom view
     zoomview = (unsigned char*) calloc(w * h, sizeof(*zoomview));
