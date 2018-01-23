@@ -56,20 +56,13 @@ void ghashbase::draw4x4_1(state sw, state se, state nw, state ne,
                           int llx, int lly) {
    // sw,se,nw,ne contain cell states (0..255)
    int i = (pmsize-1+lly) * pmsize - llx;
-   if (renderer->justState()) {
+   if (renderer->justState() || pmag > 1) {
       // store state info
       pixbuf[i] = sw;
       pixbuf[i+1] = se;
       i -= pmsize;
       pixbuf[i] = nw;
       pixbuf[i+1] = ne;
-   } else if (pmag > 1) {
-      // store state info
-      if (sw) pixbuf[i] = sw;
-      if (se) pixbuf[i+1] = se;
-      i -= pmsize;
-      if (nw) pixbuf[i] = nw;
-      if (ne) pixbuf[i+1] = ne;
    } else {
       // store RGBA info
       if (sw) {
