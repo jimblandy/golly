@@ -141,10 +141,12 @@ void hlifealgo::resize() {
 #endif
    g_uintptr_t i, nhashprime = nexthashsize(2 * hashprime) ;
    node *p, **nhashtab ;
-   if (alloced > maxmem ||
-       nhashprime * sizeof(node *) > (maxmem - alloced)) {
-      hashlimit = G_MAX ;
-      return ;
+   if (hashprime > (totalthings >> 2)) {
+      if (alloced > maxmem ||
+          nhashprime * sizeof(node *) > (maxmem - alloced)) {
+         hashlimit = G_MAX ;
+         return ;
+      }
    }
    if (verbose) {
      sprintf(statusline, "Resizing hash to %" PRIuPTR "...", nhashprime) ;

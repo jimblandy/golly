@@ -81,10 +81,12 @@ void ghashbase::resize() {
 #endif
    g_uintptr_t i, nhashprime = nexthashsize(2 * hashprime) ;
    ghnode *p, **nhashtab ;
-   if (alloced > maxmem ||
-       nhashprime * sizeof(ghnode *) > (maxmem - alloced)) {
-      hashlimit = G_MAX ;
-      return ;
+   if (hashprime > (totalthings >> 2)) {
+      if (alloced > maxmem ||
+          nhashprime * sizeof(ghnode *) > (maxmem - alloced)) {
+         hashlimit = G_MAX ;
+         return ;
+      }
    }
    if (verbose) {
      sprintf(statusline, "Resizing hash to %" PRIuPTR "...", nhashprime) ;
