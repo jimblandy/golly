@@ -1103,6 +1103,71 @@ static int g_getcells(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+// maybe only use algo->getcells method if algo is hash-based???!!!
+
+static int g_getcells2(lua_State* L)
+{
+    CheckEvents(L);
+
+    luaL_checktype(L, 1, LUA_TTABLE);   // rect array with 0 or 4 ints
+
+    lua_newtable(L);
+    int arraylen = 0;
+    
+    int numints = luaL_len(L, 1);
+    if (numints == 0) {
+        // return empty cell array
+    } else if (numints == 4) {
+        lua_rawgeti(L, 1, 1); int ileft = luaL_checkinteger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, 2); int itop  = luaL_checkinteger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, 3); int wd    = luaL_checkinteger(L,-1); lua_pop(L,1);
+        lua_rawgeti(L, 1, 4); int ht    = luaL_checkinteger(L,-1); lua_pop(L,1);
+        
+        const char* err = GSF_checkrect(ileft, itop, wd, ht);
+        if (err) GollyError(L, err);
+        
+        int iright = ileft + wd - 1;
+        int ibottom = itop + ht - 1;
+        int cx, cy;
+        lifealgo* curralgo = currlayer->algo;
+        bool multistate = curralgo->NumCellStates() > 2;
+        
+        unsigned char* cellmem = (unsigned char*) malloc(wd * ht);
+        if (cellmem == NULL) {
+            GollyError(L, "getcells error: not enough memory.");
+        }
+        curralgo->getcells(cellmem, ileft, itop, wd, ht);
+        unsigned char* cellptr = cellmem;
+        
+        for ( cy=itop; cy<=ibottom; cy++ ) {
+            for ( cx=ileft; cx<=iright; cx++ ) {
+                unsigned char state = *cellptr++;
+                if (state > 0) {
+                    // found next live cell
+                    lua_pushinteger(L, cx); lua_rawseti(L, -2, ++arraylen);
+                    lua_pushinteger(L, cy); lua_rawseti(L, -2, ++arraylen);
+                    if (multistate) {
+                        lua_pushinteger(L, state); lua_rawseti(L, -2, ++arraylen);
+                    }
+                }
+            }
+        }
+        if (multistate && arraylen > 0 && (arraylen & 1) == 0) {
+            // add padding zero
+            lua_pushinteger(L, 0); lua_rawseti(L, -2, ++arraylen);
+        }
+        
+        free(cellmem);
+        
+    } else {
+        GollyError(L, "getcells error: array must be {} or {x,y,wd,ht}.");
+    }
+    
+    return 1;   // result is a cell array
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_join(lua_State* L)
 {
     CheckEvents(L);
@@ -2602,6 +2667,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "evolve",       g_evolve },       // generate pattern contained in given cell array
     { "putcells",     g_putcells },     // paste given cell array into current universe
     { "getcells",     g_getcells },     // return cell array in given rectangle
+    { "getcells2",     g_getcells2 },     // !!!
     { "join",         g_join },         // return concatenation of given cell arrays
     { "hash",         g_hash },         // return hash value for pattern in given rectangle
     { "getclip",      g_getclip },      // return pattern in clipboard (as wd, ht, cell array)
