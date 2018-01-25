@@ -694,6 +694,7 @@ ghnode *ghashbase::zeroghnode(int depth) {
  */
 ghnode *ghashbase::pushroot(ghnode *n) {
    int depth = ghnode_depth(n) ;
+   zeroghnode(depth+1) ; // ensure zeros are deep enough
    ghnode *z = zeroghnode(depth-1) ;
    return find_ghnode(find_ghnode(z, z, z, n->nw),
                     find_ghnode(z, z, n->ne, z),
@@ -1052,6 +1053,7 @@ void ghashbase::endofpattern() {
    poller->bailIfCalculating() ;
    if (!hashed) {
       root = hashpattern(root, depth) ;
+      zeroghnode(depth) ;
       hashed = 1 ;
    }
    popValid = 0 ;

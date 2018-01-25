@@ -802,6 +802,7 @@ node *hlifealgo::zeronode(int depth) {
  */
 node *hlifealgo::pushroot(node *n) {
    int depth = node_depth(n) ;
+   zeronode(depth+1) ; // ensure enough zero nodes for rendering
    node *z = zeronode(depth-1) ;
    return find_node(find_node(z, z, z, n->nw),
                     find_node(z, z, n->ne, z),
@@ -1177,6 +1178,7 @@ void hlifealgo::endofpattern() {
    poller->bailIfCalculating() ;
    if (!hashed) {
       root = hashpattern(root, depth) ;
+      zeronode(depth) ;
       hashed = 1 ;
    }
    popValid = 0 ;
