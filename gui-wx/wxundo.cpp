@@ -334,6 +334,9 @@ ChangeNode::~ChangeNode()
 
 void ChangeNode::ChangeCells(bool undo)
 {
+    // avoid possible pattern update during a setcell call (can happen if cellcount is large)
+    viewptr->nopattupdate = true;
+
     // change state of cell(s) stored in cellinfo array
     if (undo) {
         // we must undo the cell changes in reverse order in case
@@ -351,6 +354,8 @@ void ChangeNode::ChangeCells(bool undo)
         }
     }
     if (cellcount > 0) currlayer->algo->endofpattern();
+    
+    viewptr->nopattupdate = false;
 }
 
 // -----------------------------------------------------------------------------
