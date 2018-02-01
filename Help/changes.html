@@ -239,7 +239,7 @@
      run the script <a href="open:Scripts/Python/goto_expression.py">goto_expression.py</a>
      and enter &quot;f10^2000&quot;.
 <li> Added a new pattern:
-     <a href="open:Patterns/JvN/partial-constructor.mc.gz">partial-constructor.mc.gz</a>.
+     <a href="open:Patterns/Self-Rep/JvN/partial-constructor.mc.gz">partial-constructor.mc.gz</a>.
 <li> Patterns can now be displayed at scale 1:32.  If you want to use that scale when
      creating a new pattern then choose the appropriate pop-up menu option in
      <a href="prefs:file">Preferences > File</a>.
@@ -379,9 +379,9 @@
      <a href="open:Patterns/Turmites/WormTrails.rle">WormTrails.rle</a>.
 <li> Other new patterns: <a href="open:Patterns/Other-Rules/golly-ants.rle">golly-ants.rle</a>,
      <a href="open:Patterns/Other-Rules/Langtons-Ant.rle">Langtons-Ant.rle</a>,
-     <a href="open:Patterns/JvN/JvN-loop-replicator.rle.gz">JvN-loop-replicator.rle.gz</a>,
+     <a href="open:Patterns/Self-Rep/JvN/JvN-loop-replicator.rle.gz">JvN-loop-replicator.rle.gz</a>,
      <a href="open:Patterns/Life/Signal-Circuitry/h-to-h-collection-26Aug2017.zip">h-to-h-collection-26Aug2017.zip</a>,
-     <a href="open:Patterns/JvN/Boustrophedon-replicator.rle">Boustrophedon-replicator.rle</a>.
+     <a href="open:Patterns/Self-Rep/JvN/Boustrophedon-replicator.rle">Boustrophedon-replicator.rle</a>.
 <li> Increased the maximum base step from 10,000 to 2,000,000,000.
 <li> <a href="keyboard.html">Help > Keyboard Shortcuts</a> lists unassigned actions at the end.
 <li> The drawing state can be changed by creating keyboard shortcuts for two new actions called
@@ -423,8 +423,8 @@
      to specify any other corner or disable the buttons.
 <li> Layer bar buttons now show each layer's name rather than its numeric position.
 <li> New rules: Codd2, Devore, DLA, Ed-rep, LifeHistory, Perrier, Sand.
-<li> New patterns in Other-Rules/, Other-Rules/Codd/, Other-Rules/Codd/Devore/,
-     Other-Rules/Margolus/, Loops/.
+<li> New patterns in Other-Rules/, Self-Rep/Codd/, Self-Rep/Devore/,
+     Margolus/, Loops/.
 <li> New scripts: FredkinModN-gen.py, make-Devore-tape.py,
      Margolus/emulate-Margolus-table.py, Margolus/convert-MCell-string.py.
 <li> All Python scripts now need to explicitly import the golly module.
@@ -482,9 +482,9 @@
 <li> Golly now supports multiple algorithms and multi-state universes (up to 256 states).
 <li> The Generations algorithm supports an entire family of new rules, including
      Brian's Brain (/2/3), Star Wars (345/2/4), and Transers (345/26/5).
-<li> The JvN algorithm implements John von Neumann's classic 29-state CA,
+<li> The <a href="Algorithms/JvN.html">JvN</a> algorithm implements John von Neumann's classic 29-state CA,
      plus a couple of 32-state variants created by Renato Nobili and Tim Hutton.
-     See Patterns/JvN for a variety of self-replicators.
+     See Patterns/Self-Rep/JvN for a variety of self-replicators.
 <li> The RuleTable and RuleTree algorithms allow you to add new rules by creating
      .table and .tree files and storing them in the Rules folder or
      <a href="prefs:control">your rules folder</a>.
