@@ -1126,6 +1126,8 @@ Renato Nobili
 Adam P. Goucher
 
 David Bell
+
+Kenichi Morita
 ]]
 
     -- start music if sound enabled
