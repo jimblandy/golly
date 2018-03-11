@@ -66,7 +66,56 @@ m.themes = {
 
 --------------------------------------------------------------------------------
 
-local textclip = "textclip" -- default clip name for m.maketext and m.pastetext
+-- scripts can adjust these parameters:
+
+m.buttonht = 24     -- height of buttons (also used for check boxes and sliders)
+m.sliderwd = 16     -- width of slider button (best if even)
+m.checkgap = 5      -- gap between check box button and its label
+m.textgap = 10      -- gap between edge of button and its label
+m.radius = 3        -- curvature of button corners
+m.border = 0        -- thickness of button border (no border if 0)
+
+m.buttonrgba = "rgba 40 128 255 255"    -- light blue buttons
+m.darkerrgba = "rgba 20 64 255 255"     -- darker blue when buttons are clicked
+m.borderrgba = m.white                  -- white border around buttons (if m.border > 0)
+m.textrgba = m.white                    -- white button labels and tick mark on check box
+m.textfont = "font 12 default-bold"     -- font for labels
+m.textshadowx = 0                       -- label shadow x offset
+m.textshadowy = 0                       -- label shadow y offset
+m.textshadowrgba = m.black              -- black label color
+m.yoffset = 0                           -- for better y position of labels
+
+m.menubg = "rgba 40 128 255 255"        -- light blue background for menu bar and items
+m.selbg = "rgba 20 64 255 255"          -- darker background for selected menu/item
+m.discolor = "rgba 88 176 255 255"      -- lighter color for disabled items and separator lines
+m.menufont = "font 12 default-bold"     -- font for menu and item labels
+m.menutext = m.white                    -- white text for menu and item labels
+m.menugap = 10                          -- horizontal space around each menu label
+m.itemgap = 2                           -- vertical space above and below item labels
+
+if g.os() == "Windows" then
+    m.yoffset = -1
+end
+
+if g.os() == "Linux" then
+    m.textfont = "font 12 default"
+    m.menufont = "font 12 default"
+end
+
+--------------------------------------------------------------------------------
+
+local darken_button = false     -- tell draw_button to use m.darkerrgba
+local darken_slider = false     -- tell draw_slider to darken the slider button
+
+local button_tables = {}        -- for detecting click in a button
+local checkbox_tables = {}      -- for detecting click in a check box
+local slider_tables = {}        -- for detecting click in a slider
+local menubar_tables = {}       -- for detecting click in a menu bar
+
+local selmenu = 0               -- index of selected menu (if > 0)
+local selitem = 0               -- index of selected item in selmenu (if > 0)
+
+local textclip = "textclip"     -- default clip name for m.maketext and m.pastetext
 
 --------------------------------------------------------------------------------
 
@@ -87,7 +136,7 @@ end
 
 function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
     local oldrgba = ov(m.white)
-    -- set optional paramter defaults
+    -- set optional parameter defaults
     clipname  = clipname or textclip
     textcol   = textcol or "rgba "..oldrgba
     shadowx   = shadowx or 0
@@ -164,44 +213,6 @@ end
 
 --------------------------------------------------------------------------------
 
--- scripts can adjust these parameters:
-
-m.buttonht = 24     -- height of buttons (also used for check boxes and sliders)
-m.sliderwd = 16     -- width of slider button (best if even)
-m.checkgap = 5      -- gap between check box button and its label
-m.textgap = 10      -- gap between edge of button and its label
-m.radius = 3        -- curvature of button corners
-m.border = 0        -- thickness of button border (no border if 0)
-
-m.buttonrgba = "rgba 40 128 255 255"    -- light blue buttons
-m.darkerrgba = "rgba 20 64 255 255"     -- darker blue when buttons are clicked
-m.borderrgba = m.white                  -- white border around buttons (if m.border > 0)
-m.textrgba = m.white                    -- white button labels and tick mark on check box
-m.textfont = "font 12 default-bold"     -- font for labels
-m.textshadox = 0                        -- label shadow x offset
-m.textshadoy = 0                        -- label shadow y offset
-m.textshadowrgba = m.black              -- black label color
-m.yoffset = 0                           -- for better y position of labels
-
-if g.os() == "Windows" then
-    m.yoffset = -1
-end
-
-if g.os() == "Linux" then
-    m.textfont = "font 12 default"
-end
-
---------------------------------------------------------------------------------
-
-local darken_button = false     -- tell draw_button to use m.darkerrgba
-local darken_slider = false     -- tell draw_slider to darken the slider button
-
-local button_tables = {}        -- for detecting click in a button
-local checkbox_tables = {}      -- for detecting click in a check box
-local slider_tables = {}        -- for detecting click in a slider
-
---------------------------------------------------------------------------------
-
 function m.fill_ellipse(x, y, w, h, borderwd, fillrgba)
     -- draw an ellipse with the given border width (if > 0) using the current color
     -- and fill it with the given color (if fillrgba isn't "")
@@ -250,6 +261,18 @@ function m.fill_ellipse(x, y, w, h, borderwd, fillrgba)
     -- restore line width and blend state
     ov("lineoption width "..oldwidth)
     ov("blend "..oldblend)
+end
+
+--------------------------------------------------------------------------------
+
+function m.draw_line(x1, y1, x2, y2)
+    ov("line "..x1.." "..y1.." "..x2.." "..y2)
+end
+
+--------------------------------------------------------------------------------
+
+function m.fill_rect(x, y, wd, ht)
+    ov("fill "..x.." "..y.." "..wd.." "..ht)
 end
 
 --------------------------------------------------------------------------------
@@ -422,7 +445,7 @@ function m.button(label, onclick)
 	    b.x = x
 	    b.y = y
 	    if b.shown then
-	        -- remove old button in case it is moving to new position
+	        -- remove old button from button_tables
 	        b.hide()
 	    end
 	    -- remember position and save background pixels
@@ -481,8 +504,18 @@ local function draw_checkbox(x, y, w, h, ticked)
         local oldrgba = ov(m.textrgba)
         local oldblend = ov("blend 1")
         local oldwidth = ov("lineoption width 4")
-        ov("line "..int(x+w/2).." "..int(y+h*0.75).." "..int(x+w*0.75).." "..int(y+h*0.25))
-        ov("line "..int(x+w/2+1).." "..int(y+h*0.75).." "..int(x+w*0.25).." "..int(y+h*0.6))
+
+        local x1 = int(x+w/2)
+        local y1 = int(y+h*0.75)
+        local x2 = int(x+w*0.75)
+        local y2 = int(y+h*0.25)
+        local x3 = int(x+w/2+1)
+        local y3 = int(y+h*0.75)
+        local x4 = int(x+w*0.25)
+        local y4 = int(y+h*0.6)
+
+        ov("line "..x1.." "..y1.." "..x2.." "..y2)
+        ov("line "..x3.." "..y3.." "..x4.." "..y4)
         ov("lineoption width "..oldwidth)
         ov("blend "..oldblend)
         ov("rgba "..oldrgba)
@@ -526,7 +559,7 @@ function m.checkbox(label, labelrgba, onclick)
 	    c.y = y
 	    c.ticked = ticked
 	    if c.shown then
-	        -- remove old check box in case it is moving to new position
+	        -- remove old check box from checkbox_tables
 	        c.hide()
 	    end
 	    -- remember position and save background pixels
@@ -658,7 +691,7 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
 	    if s.pos < s.minval then s.pos = s.minval end
 	    if s.pos > s.maxval then s.pos = s.maxval end
 	    if s.shown then
-	        -- remove old slider in case it is moving to new position
+	        -- remove old slider from slider_tables
 	        s.hide()
 	    end
 	    -- remember slider location and save background pixels
@@ -713,7 +746,7 @@ local function release_in_rect(r, t)
     
     while true do
         local event = g.getevent()
-        if event:find("^mup left") then break end
+        if event == "mup left" then break end
         local xy = ov("xy")
         local wasinrect = inrect
         if #xy == 0 then
@@ -791,7 +824,7 @@ local function click_in_slider(x, y)
             -- track horizontal movement of mouse until button is released
             while true do
                 local event = g.getevent()
-                if event:find("^mup left") then break end
+                if event == "mup left" then break end
                 local xy = ov("xy")
                 if #xy > 0 then
                     local x, _ = split(xy)
@@ -837,14 +870,347 @@ end
 
 --------------------------------------------------------------------------------
 
+local function DrawMenuBar(mbar)
+    local oldrgba = ov(m.menubg)
+    m.fill_rect(mbar.r.x, mbar.r.y, mbar.r.wd, mbar.r.ht)
+    local oldblend = ov("blend 1")
+    local xpos = mbar.r.x + m.menugap
+    local ypos = mbar.r.y + m.yoffset + (mbar.r.ht - mbar.labelht) // 2
+    for i = 1, #mbar.menus do
+        local menu = mbar.menus[i]
+        if i == selmenu then
+            ov(m.selbg)
+            m.fill_rect(xpos, mbar.r.y, menu.labelwd + m.menugap*2, mbar.r.ht)
+        end
+        xpos = xpos + m.menugap
+        ov("paste "..xpos.." "..ypos.." "..menu.labelclip)
+        xpos = xpos + menu.labelwd + m.menugap
+    end
+    ov("blend "..oldblend)
+    ov("rgba "..oldrgba)
+end
+
+--------------------------------------------------------------------------------
+
+function m.menubar()
+    -- return a table that makes it easier to create and use a menu bar
+    local mbar = {}
+    
+    mbar.menus = {}
+    mbar.r = {}             -- menu bar's bounding rectangle
+    mbar.labelht = 0        -- height of label text
+    mbar.itemht = 0         -- height of a menu item
+    mbar.shown = false      -- mbar.show hasn't been called
+    
+    mbar.addmenu = function (menuname)
+        -- append a menu to the menu bar
+        local index = #mbar.menus+1
+        local clipname = string.gsub(tostring(mbar)..index," ","")
+        local oldfont = ov(m.menufont)
+        local oldblend = ov("blend 1")
+        local wd, ht = m.maketext(menuname, clipname, m.menutext, m.textshadowx, m.textshadowy, m.textshadowrgba)
+        ov("blend "..oldblend)
+        ov("font "..oldfont)
+        mbar.labelht = ht
+        mbar.itemht = ht + m.itemgap*2
+        mbar.menus[index] = { labelwd=wd, labelclip=clipname, items={}, maxwd=0 }
+    end
+    
+    local function check_width(menuindex, itemname)
+        local oldfont = ov(m.menufont)
+        local oldblend = ov("blend 1")
+        local wd, _ = m.maketext(itemname, nil, m.menutext, m.textshadowx, m.textshadowy, m.textshadowrgba)
+        ov("blend "..oldblend)
+        ov("font "..oldfont)
+        local itemwd = wd + m.menugap*2 + 20
+        if itemwd > mbar.menus[menuindex].maxwd then
+            mbar.menus[menuindex].maxwd = itemwd
+        end
+    end
+    
+    mbar.additem = function (menuindex, itemname, onclick, args)
+        -- append an item to given menu
+        args = args or {}
+        check_width(menuindex, itemname)
+        local items = mbar.menus[menuindex].items
+        items[#items+1] = { name=itemname, f=onclick, fargs=args, enabled=true, ticked=false }
+    end
+    
+    mbar.setitem = function (menuindex, itemindex, newname)
+        -- change name of given menu item
+        check_width(menuindex, newname)
+        mbar.menus[menuindex].items[itemindex].name = newname
+    end
+    
+    mbar.enableitem = function (menuindex, itemindex, bool)
+        -- enable/disable the given menu item
+        mbar.menus[menuindex].items[itemindex].enabled = bool
+    end
+
+    mbar.tickitem = function (menuindex, itemindex, bool)
+        -- tick/untick the given menu item
+        mbar.menus[menuindex].items[itemindex].ticked = bool
+    end
+
+    mbar.show = function (x, y, wd, ht)
+        if wd > 0 and ht > 0 then
+            if mbar.shown then
+                mbar.hide()     -- set menubar_tables[mbar.r] to nil
+            end
+            mbar.r = rect({x, y, wd, ht})
+            DrawMenuBar(mbar)
+            menubar_tables[mbar.r] = mbar
+            mbar.shown = true
+        end
+    end
+
+    mbar.hide = function ()
+        if mbar.shown then
+            menubar_tables[mbar.r] = nil
+            mbar.shown = false
+        end
+    end
+    
+    mbar.refresh = function ()
+        -- redraw menu bar
+        mbar.show(mbar.r.x, mbar.r.y, mbar.r.wd, mbar.r.ht)
+        g.update()
+    end
+
+    return mbar
+end
+
+--------------------------------------------------------------------------------
+
+local function GetMenu(x, y, oldmenu, mbar)
+    -- return menu index depending on given mouse location
+    if y < mbar.r.y then return oldmenu end
+    if y > mbar.r.y + mbar.r.ht - 1 then return oldmenu end
+    
+    if x < mbar.r.x + m.menugap then return 0 end
+    if x > mbar.r.x + mbar.r.wd - 1 then return 0 end
+
+    local endmenu = mbar.r.x + m.menugap
+    for i = 1, #mbar.menus do
+        endmenu = endmenu + mbar.menus[i].labelwd + m.menugap*2
+        if x < endmenu then
+            return i
+        end
+    end
+    
+    return 0
+end
+
+--------------------------------------------------------------------------------
+
+local function GetItem(x, y, menuindex, mbar)
+    -- return index of menu item at given mouse location
+    if menuindex == 0 then return 0 end
+    
+    if y < mbar.r.y + mbar.r.ht then return 0 end
+
+    local numitems = #mbar.menus[menuindex].items
+    local ht = numitems * mbar.itemht
+    if y > mbar.r.y + mbar.r.ht + ht then return 0 end
+    
+    local mleft = mbar.r.x + m.menugap
+    for i = 2, menuindex do
+        mleft = mleft + mbar.menus[i-1].labelwd + m.menugap*2
+    end
+    if x < mleft then return 0 end
+    if x > mleft + mbar.menus[menuindex].maxwd then return 0 end
+
+    -- x,y is somewhere in a menu item
+    local itemindex = math.floor( (y - (mbar.r.y + mbar.r.ht)) / mbar.itemht ) + 1
+    if itemindex > numitems then itemindex = numitems end
+
+    return itemindex
+end
+
+--------------------------------------------------------------------------------
+
+local function DrawMenuItems(mbar)
+    -- draw drop-down window showing all items in the currently selected menu
+    local numitems = #mbar.menus[selmenu].items
+    if numitems == 0 then return end
+    
+    local oldrgba = ov(m.menubg)
+    local x = mbar.r.x + m.menugap
+    for i = 2, selmenu do
+        x = x + mbar.menus[i-1].labelwd + m.menugap*2
+    end
+    local ht = numitems * mbar.itemht + 1
+    local wd = mbar.menus[selmenu].maxwd
+    local y = mbar.r.y + mbar.r.ht
+    m.fill_rect(x, y, wd, ht)
+
+    local oldfont = ov(m.menufont)
+    local oldblend = ov("blend 1")
+    
+    -- draw translucent gray shadows
+    ov("rgba 48 48 48 128")
+    local shadowsize = 2
+    m.fill_rect(x+shadowsize, y+ht, wd-shadowsize, shadowsize)
+    m.fill_rect(x+wd, y, shadowsize, ht+shadowsize)
+    
+    x = x + m.menugap
+    y = y + m.yoffset
+    for i = 1, numitems do
+        local item = mbar.menus[selmenu].items[i]
+        if item.f == nil then
+            -- item is a separator
+            ov(m.discolor)
+            m.draw_line(x-m.menugap, y+mbar.itemht//2, x-m.menugap+wd-1, y+mbar.itemht//2)
+        else
+            if i == selitem and item.enabled then
+                ov(m.selbg)
+                m.fill_rect(x-m.menugap, y, wd, mbar.itemht)
+            end
+            if item.enabled then
+                m.maketext(item.name, nil, m.menutext, m.textshadowx, m.textshadowy, m.textshadowrgba)
+                m.pastetext(x, y + m.itemgap)
+                ov(m.menutext)
+            else
+                m.maketext(item.name, nil, m.discolor)  -- no shadow if disabled
+                m.pastetext(x, y + m.itemgap)
+                ov(m.discolor)
+            end
+            if item.ticked then
+                -- draw tick mark at right edge
+                local x1 = x - m.menugap + wd - m.menugap
+                local y1 = y + 6
+                local x2 = x1 - 6
+                local y2 = y + mbar.itemht - 8
+                local oldwidth = ov("lineoption width 4")
+                if item.enabled and (m.textshadowx > 0 or m.textshadowy > 0) then
+                    local oldcolor = ov(m.textshadowrgba)
+                    m.draw_line(x1+m.textshadowx, y1+m.textshadowy, x2+m.textshadowx, y2+m.textshadowy)
+                    m.draw_line(x2+m.textshadowx, y2+m.textshadowy, x2+m.textshadowx-5, y2+m.textshadowy-3)
+                    ov("rgba "..oldcolor)
+                end
+                m.draw_line(x1, y1, x2, y2)
+                m.draw_line(x2, y2, x2-5, y2-3)
+                ov("lineoption width "..oldwidth)
+            end
+        end
+        y = y + mbar.itemht
+    end
+
+    ov("blend "..oldblend)
+    ov("font "..oldfont)
+    ov("rgba "..oldrgba)
+end
+
+--------------------------------------------------------------------------------
+
+local function release_in_item(x, y, mbar)
+    -- user clicked given point in menu bar so return the selected menu item
+    -- on release, or nil if the item is disabled or no item is selected
+    
+    local t0 = g.millisecs()
+
+    -- save entire overlay (including menu bar) in bgclip
+    local bgclip = string.gsub(tostring(mbar).."bg"," ","")
+    ov("copy 0 0 0 0 "..bgclip)
+    
+    selitem = 0
+    selmenu = GetMenu(x, y, 0, mbar)
+    if selmenu > 0 then
+        DrawMenuBar(mbar)       -- highlight selected menu
+        DrawMenuItems(mbar)
+        g.update()
+    end
+    
+    local prevx = x
+    local prevy = y
+    while true do
+        local event = g.getevent()
+        if event == "mup left" then
+            if g.millisecs() - t0 > 500 then
+                selmenu = GetMenu(x, y, selmenu, mbar)
+                break
+            end
+        elseif event:find("^oclick") then
+            local _, sx, sy, butt, mods = split(event)
+            if butt == "left" and mods == "none" then
+                x = tonumber(sx)
+                y = tonumber(sy)
+                selmenu = GetMenu(x, y, selmenu, mbar)
+                break
+            end
+        elseif event == "key enter none" or event == "key return none" then
+            break
+        end
+        local xy = ov("xy")
+        if #xy > 0 then
+            x, y = split(xy)
+            x = tonumber(x)
+            y = tonumber(y)
+            if x ~= prevx or y ~= prevy then
+                -- check if mouse moved into or out of a menu/item
+                local oldmenu = selmenu
+                local olditem = selitem
+                selmenu = GetMenu(x, y, selmenu, mbar)
+                selitem = GetItem(x, y, selmenu, mbar)
+                if selmenu ~= oldmenu or selitem ~= olditem then
+                    ov("paste 0 0 "..bgclip)
+                    DrawMenuBar(mbar)
+                    if selmenu > 0 then
+                        DrawMenuItems(mbar)
+                    end
+                    g.update()
+                end
+                prevx = x
+                prevy = y
+            end
+        end
+    end
+
+    local menuitem = nil
+    if selmenu > 0 then
+        selitem = GetItem(x, y, selmenu, mbar)
+        if selitem > 0 and mbar.menus[selmenu].items[selitem].enabled then
+            menuitem = mbar.menus[selmenu].items[selitem]
+        end
+    end
+    
+    -- restore overlay and menu bar
+    ov("paste 0 0 "..bgclip)
+    g.update()
+    ov("delete "..bgclip)
+    selmenu = 0
+    return menuitem
+end
+
+--------------------------------------------------------------------------------
+
+local function click_in_menubar(x, y)
+    for r, mbar in pairs(menubar_tables) do
+        if x >= r.left and x <= r.right and y >= r.top and y <= r.bottom then
+            local menuitem = release_in_item(x, y, mbar)
+            if menuitem and menuitem.f then
+                -- call this menu item's handler
+                menuitem.f( table.unpack(menuitem.fargs) )
+            end
+            return true
+        end
+    end
+    return false
+end
+
+--------------------------------------------------------------------------------
+
 function m.process(event)
     if #event > 0 then
         if event:find("^oclick") then
             local _, x, y, butt, mods = split(event)
             if butt == "left" and mods == "none" then
-                if click_in_button(tonumber(x), tonumber(y)) then return "" end
-                if click_in_checkbox(tonumber(x), tonumber(y)) then return "" end
-                if click_in_slider(tonumber(x), tonumber(y)) then return "" end
+                x = tonumber(x)
+                y = tonumber(y)
+                if click_in_button(x, y) then return "" end
+                if click_in_checkbox(x, y) then return "" end
+                if click_in_slider(x, y) then return "" end
+                if click_in_menubar(x, y) then return "" end
             end
         end
     end
@@ -863,8 +1229,8 @@ function m.hexrule()
         return (rule:sub(1, 3) == "MAP" and rule:len() == 25) or rule:sub(-1) == "H"
     elseif algo == "RuleLoader" then
         return rule:lower():find("hex") ~= nil
-        -- !!! or maybe look in the .rule file and see if the TABLE section specifies
-        -- neighborhood:hexagonal or the ICONS section specifies hexagons
+        -- or maybe look in the .rule file and see if the TABLE section specifies
+        -- neighborhood:hexagonal or the ICONS section specifies hexagons???
     end
     
     return false
