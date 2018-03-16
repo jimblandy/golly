@@ -10,6 +10,8 @@ scale and rotation).
 
 Author: Andrew Trevorrow (andrew@trevorrow.com), Feb 2018.
 
+Thanks to Tom Rokicki for optimizing the NextGeneration code.
+
 TODO: !!!
 
 - implement paste, undo, redo, flip/rotate selection...
@@ -40,6 +42,8 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 
 - fix unicode problems reported here:
   http://www.conwaylife.com/forums/viewtopic.php?f=7&t=3132#p52918
+
+- implement g.sleep(millisecs) for use in Lua scripts?
 --]]
 
 local g = golly()
@@ -1535,16 +1539,13 @@ function GetCells()
     local livecells = {}
     if popcount > 0 then
         local mid = N//2
-        for z = minz, maxz do
-            local zN = z * N
-            for y = miny, maxy do
-                local zyN = (zN + y) * N
-                for x = minx, maxx do
-                    if grid1[zyN + x] then
-                        livecells[#livecells+1] = {x-mid, y-mid, z-mid}
-                    end
-                end
-            end
+        local NN = N*N
+        for k,_ in pairs(grid1) do
+            -- grid1[k] is a live cell
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            livecells[#livecells+1] = {x-mid, y-mid, z-mid}
         end
     end
     return livecells
@@ -1593,192 +1594,6 @@ end
 
 ----------------------------------------------------------------------
 
-local function Alive(x, y, z)
-    -- wrap edges if necessary
-    if x < 0 then x = N-1 elseif x >= N then x = 0 end
-    if y < 0 then y = N-1 elseif y >= N then y = 0 end
-    if z < 0 then z = N-1 elseif z >= N then z = 0 end
-    -- return state if the given cell is alive, otherwise nil
-    return grid1[ x + N * (y + N * z) ]
-end
-
-----------------------------------------------------------------------
-
-local function WrapEmptyCell(emptycells, x, y, z)
-    -- at least one of x,y,z needs to be wrapped
-    if x < 0 then x = N-1 elseif x >= N then x = 0 end
-    if y < 0 then y = N-1 elseif y >= N then y = 0 end
-    if z < 0 then z = N-1 elseif z >= N then z = 0 end
-    emptycells[ x + N * (y + N * z) ] = true
-end
-
-----------------------------------------------------------------------
-
-local function SlowNeighborCount(x, y, z, emptycells)
-    -- return the number of live neighbors for the live cell at x,y,z
-    -- which might be at a grid edge (if so we need to do wrap checks)
-    -- and also remember the positions of the cell's empty neighbors
-    local c = 0
-    local xp1 = x+1
-    local xm1 = x-1
-    local yp1 = y+1
-    local ym1 = y-1
-    local zp1 = z+1
-    local zm1 = z-1
-    if xm1 >= 0 and xp1 < N and
-       ym1 >= 0 and yp1 < N and
-       zm1 >= 0 and zp1 < N then
-       -- no need for wrap checks
-        local NyzN     = N * (y +   z   * N)
-        local Nyzm1N   = N * (y +   zm1 * N)
-        local Nyzp1N   = N * (y +   zp1 * N)
-        local Nym1zN   = N * (ym1 + z   * N)
-        local Nyp1zN   = N * (yp1 + z   * N)
-        local Nym1zm1N = N * (ym1 + zm1 * N)
-        local Nym1zp1N = N * (ym1 + zp1 * N)
-        local Nyp1zm1N = N * (yp1 + zm1 * N)
-        local Nyp1zp1N = N * (yp1 + zp1 * N)
-        if grid1[xm1 + NyzN    ] then c = c + 1 else emptycells[xm1 + NyzN    ] = true end
-        if grid1[xp1 + NyzN    ] then c = c + 1 else emptycells[xp1 + NyzN    ] = true end
-        if grid1[x   + Nyzm1N  ] then c = c + 1 else emptycells[x   + Nyzm1N  ] = true end
-        if grid1[x   + Nyzp1N  ] then c = c + 1 else emptycells[x   + Nyzp1N  ] = true end
-        if grid1[x   + Nym1zN  ] then c = c + 1 else emptycells[x   + Nym1zN  ] = true end
-        if grid1[x   + Nyp1zN  ] then c = c + 1 else emptycells[x   + Nyp1zN  ] = true end
-        if grid1[xm1 + Nyzm1N  ] then c = c + 1 else emptycells[xm1 + Nyzm1N  ] = true end
-        if grid1[xm1 + Nyzp1N  ] then c = c + 1 else emptycells[xm1 + Nyzp1N  ] = true end
-        if grid1[xp1 + Nyzm1N  ] then c = c + 1 else emptycells[xp1 + Nyzm1N  ] = true end
-        if grid1[xp1 + Nyzp1N  ] then c = c + 1 else emptycells[xp1 + Nyzp1N  ] = true end
-        if grid1[xm1 + Nym1zN  ] then c = c + 1 else emptycells[xm1 + Nym1zN  ] = true end
-        if grid1[xm1 + Nyp1zN  ] then c = c + 1 else emptycells[xm1 + Nyp1zN  ] = true end
-        if grid1[xp1 + Nym1zN  ] then c = c + 1 else emptycells[xp1 + Nym1zN  ] = true end
-        if grid1[xp1 + Nyp1zN  ] then c = c + 1 else emptycells[xp1 + Nyp1zN  ] = true end
-        if grid1[x   + Nym1zm1N] then c = c + 1 else emptycells[x   + Nym1zm1N] = true end
-        if grid1[x   + Nym1zp1N] then c = c + 1 else emptycells[x   + Nym1zp1N] = true end
-        if grid1[x   + Nyp1zm1N] then c = c + 1 else emptycells[x   + Nyp1zm1N] = true end
-        if grid1[x   + Nyp1zp1N] then c = c + 1 else emptycells[x   + Nyp1zp1N] = true end
-        if grid1[xm1 + Nym1zm1N] then c = c + 1 else emptycells[xm1 + Nym1zm1N] = true end
-        if grid1[xm1 + Nym1zp1N] then c = c + 1 else emptycells[xm1 + Nym1zp1N] = true end
-        if grid1[xm1 + Nyp1zm1N] then c = c + 1 else emptycells[xm1 + Nyp1zm1N] = true end
-        if grid1[xm1 + Nyp1zp1N] then c = c + 1 else emptycells[xm1 + Nyp1zp1N] = true end
-        if grid1[xp1 + Nym1zm1N] then c = c + 1 else emptycells[xp1 + Nym1zm1N] = true end
-        if grid1[xp1 + Nym1zp1N] then c = c + 1 else emptycells[xp1 + Nym1zp1N] = true end
-        if grid1[xp1 + Nyp1zm1N] then c = c + 1 else emptycells[xp1 + Nyp1zm1N] = true end
-        if grid1[xp1 + Nyp1zp1N] then c = c + 1 else emptycells[xp1 + Nyp1zp1N] = true end
-    else
-        if Alive(xm1, y,   z  ) then c = c + 1 else WrapEmptyCell(emptycells, xm1, y,   z  ) end
-        if Alive(xp1, y,   z  ) then c = c + 1 else WrapEmptyCell(emptycells, xp1, y,   z  ) end
-        if Alive(x,   y,   zm1) then c = c + 1 else WrapEmptyCell(emptycells, x,   y,   zm1) end
-        if Alive(x,   y,   zp1) then c = c + 1 else WrapEmptyCell(emptycells, x,   y,   zp1) end
-        if Alive(x,   ym1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, x,   ym1, z  ) end
-        if Alive(x,   yp1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, x,   yp1, z  ) end
-        if Alive(xm1, y,   zm1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, y,   zm1) end
-        if Alive(xm1, y,   zp1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, y,   zp1) end
-        if Alive(xp1, y,   zm1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, y,   zm1) end
-        if Alive(xp1, y,   zp1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, y,   zp1) end
-        if Alive(xm1, ym1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, xm1, ym1, z  ) end
-        if Alive(xm1, yp1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, xm1, yp1, z  ) end
-        if Alive(xp1, ym1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, xp1, ym1, z  ) end
-        if Alive(xp1, yp1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, xp1, yp1, z  ) end
-        if Alive(x,   ym1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, x,   ym1, zm1) end
-        if Alive(x,   ym1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, x,   ym1, zp1) end
-        if Alive(x,   yp1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, x,   yp1, zm1) end
-        if Alive(x,   yp1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, x,   yp1, zp1) end
-        if Alive(xm1, ym1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, ym1, zm1) end
-        if Alive(xm1, ym1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, ym1, zp1) end
-        if Alive(xm1, yp1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, yp1, zm1) end
-        if Alive(xm1, yp1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, yp1, zp1) end
-        if Alive(xp1, ym1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, ym1, zm1) end
-        if Alive(xp1, ym1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, ym1, zp1) end
-        if Alive(xp1, yp1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, yp1, zm1) end
-        if Alive(xp1, yp1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, yp1, zp1) end
-    end
-    return c
-end
-
-----------------------------------------------------------------------
-
-local function FastNeighborCount(x, y, z)
-    -- return the number of live neighbors for the dead cell at x,y,z
-    -- which might be at a grid edge (if so we need to do wrap checks)
-    local c = 0
-    local xp1 = x+1
-    local xm1 = x-1
-    local yp1 = y+1
-    local ym1 = y-1
-    local zp1 = z+1
-    local zm1 = z-1
-    if xm1 >= 0 and xp1 < N and
-       ym1 >= 0 and yp1 < N and
-       zm1 >= 0 and zp1 < N then
-       -- no need for wrap checks
-        local NyzN     = N * (y +   z   * N)
-        local Nyzm1N   = N * (y +   zm1 * N)
-        local Nyzp1N   = N * (y +   zp1 * N)
-        local Nym1zN   = N * (ym1 + z   * N)
-        local Nyp1zN   = N * (yp1 + z   * N)
-        local Nym1zm1N = N * (ym1 + zm1 * N)
-        local Nym1zp1N = N * (ym1 + zp1 * N)
-        local Nyp1zm1N = N * (yp1 + zm1 * N)
-        local Nyp1zp1N = N * (yp1 + zp1 * N)
-        if grid1[xm1 + NyzN    ] then c = c + 1 end
-        if grid1[xp1 + NyzN    ] then c = c + 1 end
-        if grid1[x   + Nyzm1N  ] then c = c + 1 end
-        if grid1[x   + Nyzp1N  ] then c = c + 1 end
-        if grid1[x   + Nym1zN  ] then c = c + 1 end
-        if grid1[x   + Nyp1zN  ] then c = c + 1 end
-        if grid1[xm1 + Nyzm1N  ] then c = c + 1 end
-        if grid1[xm1 + Nyzp1N  ] then c = c + 1 end
-        if grid1[xp1 + Nyzm1N  ] then c = c + 1 end
-        if grid1[xp1 + Nyzp1N  ] then c = c + 1 end
-        if grid1[xm1 + Nym1zN  ] then c = c + 1 end
-        if grid1[xm1 + Nyp1zN  ] then c = c + 1 end
-        if grid1[xp1 + Nym1zN  ] then c = c + 1 end
-        if grid1[xp1 + Nyp1zN  ] then c = c + 1 end
-        if grid1[x   + Nym1zm1N] then c = c + 1 end
-        if grid1[x   + Nym1zp1N] then c = c + 1 end
-        if grid1[x   + Nyp1zm1N] then c = c + 1 end
-        if grid1[x   + Nyp1zp1N] then c = c + 1 end
-        if grid1[xm1 + Nym1zm1N] then c = c + 1 end
-        if grid1[xm1 + Nym1zp1N] then c = c + 1 end
-        if grid1[xm1 + Nyp1zm1N] then c = c + 1 end
-        if grid1[xm1 + Nyp1zp1N] then c = c + 1 end
-        if grid1[xp1 + Nym1zm1N] then c = c + 1 end
-        if grid1[xp1 + Nym1zp1N] then c = c + 1 end
-        if grid1[xp1 + Nyp1zm1N] then c = c + 1 end
-        if grid1[xp1 + Nyp1zp1N] then c = c + 1 end
-    else
-        if Alive(xm1, y,   z  ) then c = c + 1 end
-        if Alive(xp1, y,   z  ) then c = c + 1 end
-        if Alive(x,   y,   zm1) then c = c + 1 end
-        if Alive(x,   y,   zp1) then c = c + 1 end
-        if Alive(x,   ym1, z  ) then c = c + 1 end
-        if Alive(x,   yp1, z  ) then c = c + 1 end
-        if Alive(xm1, y,   zm1) then c = c + 1 end
-        if Alive(xm1, y,   zp1) then c = c + 1 end
-        if Alive(xp1, y,   zm1) then c = c + 1 end
-        if Alive(xp1, y,   zp1) then c = c + 1 end
-        if Alive(xm1, ym1, z  ) then c = c + 1 end
-        if Alive(xm1, yp1, z  ) then c = c + 1 end
-        if Alive(xp1, ym1, z  ) then c = c + 1 end
-        if Alive(xp1, yp1, z  ) then c = c + 1 end
-        if Alive(x,   ym1, zm1) then c = c + 1 end
-        if Alive(x,   ym1, zp1) then c = c + 1 end
-        if Alive(x,   yp1, zm1) then c = c + 1 end
-        if Alive(x,   yp1, zp1) then c = c + 1 end
-        if Alive(xm1, ym1, zm1) then c = c + 1 end
-        if Alive(xm1, ym1, zp1) then c = c + 1 end
-        if Alive(xm1, yp1, zm1) then c = c + 1 end
-        if Alive(xm1, yp1, zp1) then c = c + 1 end
-        if Alive(xp1, ym1, zm1) then c = c + 1 end
-        if Alive(xp1, ym1, zp1) then c = c + 1 end
-        if Alive(xp1, yp1, zm1) then c = c + 1 end
-        if Alive(xp1, yp1, zp1) then c = c + 1 end
-    end
-    return c
-end
-
-----------------------------------------------------------------------
-
 function SaveStart()
     -- save starting info for later Reset
     startN = N
@@ -1791,7 +1606,7 @@ function SaveStart()
     startselcount = selcount
     startselected = {}
     if selcount > 0 then
-        for k,v in pairs(selected) do
+        for k,_ in pairs(selected) do
             startselected[k] = true
         end
     end
@@ -1816,29 +1631,39 @@ function NextGeneration()
     
     popcount = 0            -- SetGrid2 will increment popcount
     InitBoundaries()        -- SetGrid2 will set new boundaries
-    local emptycells = {}   -- sparse array of empty neighbor positions
-    local NxN = N*N
 
-    -- calculate survivals in grid2 and remember the empty neighbors
-    -- around all live cells
+    local count1 = {}
+    local NN = N * N
+    local NNN = NN * N
     for k,_ in pairs(grid1) do
-        -- grid1[k] is a live cell
-        local x = k % N
-        local y = (k // N) % N
-        local z = (k // NxN) % N
-        if survivals[ SlowNeighborCount(x, y, z, emptycells) ] then
-            SetGrid2(k, x, y, z)
-        end
+        count1[k] = (count1[k] or 0) + 1
+        local y = k % NN
+        local k2 = k + (y + N) % NN - y
+        count1[k2] = (count1[k2] or 0) + 1
+        k2 = k + (y + NN - N) % NN - y
+        count1[k2] = (count1[k2] or 0) + 1
     end
-    
-    -- calculate births in grid2
-    for k,_ in pairs(emptycells) do
-        -- grid1[k] is a dead cell with at least 1 live neighbor
+    local count2 = {}
+    for k,v in pairs(count1) do
+        count2[k] = (count2[k] or 0) + v
         local x = k % N
-        local y = (k // N) % N
-        local z = (k // NxN) % N
-        if births[ FastNeighborCount(x, y, z) ] then
-            SetGrid2(k, x, y, z)
+        local k2 = k + (x + 1) % N - x
+        count2[k2] = (count2[k2] or 0) + v
+        k2 = k + (x + N - 1) % N - x
+        count2[k2] = (count2[k2] or 0) + v
+    end
+    count1 = {}
+    for k,v in pairs(count2) do
+        count1[k] = (count1[k] or 0) + v
+        local k2 = (k + NN) % NNN
+        count1[k2] = (count1[k2] or 0) + v
+        k2 = (k + NNN - NN) % NNN
+        count1[k2] = (count1[k2] or 0) + v
+    end
+    grid2 = {}
+    for k,v in pairs(count1) do
+        if (grid1[k] and survivals[v-1]) or (births[v] and not grid1[k]) then
+            SetGrid2(k, k % N, k // N % N, k // NN)
         end
     end
     
@@ -2080,25 +1905,22 @@ function WritePattern(filepath, comments)
         local prevy = math.maxinteger
         local prevz = math.maxinteger
         local mid = N//2
-        for z = minz, maxz do
-            local zN = z * N
-            for y = miny, maxy do
-                local zyN = (zN + y) * N
-                for x = minx, maxx do
-                    if grid1[zyN + x] then
-                        -- reduce file size by only writing y and z coords if they have changed
-                        if z == prevz and y == prevy then
-                            f:write((x-mid).."\n")
-                        elseif z == prevz then
-                            f:write((x-mid).." "..(y-mid).."\n")
-                            prevy = y
-                        else
-                            f:write((x-mid).." "..(y-mid).." "..(z-mid).."\n")
-                            prevy = y
-                            prevz = z
-                        end
-                    end
-                end
+        local NN = N*N
+        for k,_ in pairs(grid1) do
+            -- grid1[k] is a live cell
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            -- reduce file size by only writing y and z coords if they have changed
+            if z == prevz and y == prevy then
+                f:write((x-mid).."\n")
+            elseif z == prevz then
+                f:write((x-mid).." "..(y-mid).."\n")
+                prevy = y
+            else
+                f:write((x-mid).." "..(y-mid).." "..(z-mid).."\n")
+                prevy = y
+                prevz = z
             end
         end
     end
@@ -2290,16 +2112,13 @@ function GetSelectedCells()
     if selcount > 0 then
         local mid = N//2
         local M = N-1
-        for z = 0, M do
-            local zN = z * N
-            for y = 0, M do
-                local zyN = (zN + y) * N
-                for x = 0, M do
-                    if selected[zyN + x] then
-                        selcells[#selcells+1] = {x-mid, y-mid, z-mid}
-                    end
-                end
-            end
+        local NN = N*N
+        for k,_ in pairs(selected) do
+            -- selected[k] is a selected cell
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            selcells[#selcells+1] = {x-mid, y-mid, z-mid}
         end
     end
     return selcells
@@ -2313,15 +2132,14 @@ function GetSelectedLiveCells()
     if selcount > 0 then
         local mid = N//2
         local M = N-1
-        for z = minz, maxz do
-            local zN = z * N
-            for y = miny, maxy do
-                local zyN = (zN + y) * N
-                for x = minx, maxx do
-                    if selected[zyN + x] and grid1[zyN + x] then
-                        livecells[#livecells+1] = {x-mid, y-mid, z-mid}
-                    end
-                end
+        local NN = N*N
+        for k,_ in pairs(grid1) do
+            -- grid1[k] is a live cell
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            if selected[k] then
+                livecells[#livecells+1] = {x-mid, y-mid, z-mid}
             end
         end
     end
@@ -2480,9 +2298,10 @@ end
 function ClearSelection()
     if selcount > 0 then
         -- kill all selected live cells
-        for i = 0, N*N*N-1 do
-            if grid1[i] and selected[i] then
-                grid1[i] = nil
+        for k,_ in pairs(grid1) do
+            -- grid1[k] is a live cell
+            if selected[k] then
+                grid1[k] = nil
                 popcount = popcount - 1
             end
         end
@@ -2495,9 +2314,10 @@ end
 function ClearOutside()
     if selcount > 0 then
         -- kill all unselected live cells
-        for i = 0, N*N*N-1 do
-            if grid1[i] and not selected[i] then
-                grid1[i] = nil
+        for k,_ in pairs(grid1) do
+            -- grid1[k] is a live cell
+            if not selected[k] then
+                grid1[k] = nil
                 popcount = popcount - 1
             end
         end
@@ -3865,21 +3685,18 @@ function EraseLiveCells(mousex, mousey)
     -- erase all live cells whose projected mid points are close to mousex,mousey
     if popcount > 0 then
         local changes = 0
-        for z = minz, maxz do
-            local zN = z * N
-            for y = miny, maxy do
-                local zyN = (zN + y) * N
-                for x = minx, maxx do
-                    if grid1[zyN + x] then
-                        local px, py = GetMidPoint(x, y, z)
-                        if abs(px - mousex) < HALFCELL and
-                           abs(py - mousey) < HALFCELL then
-                            grid1[zyN + x] = nil
-                            popcount = popcount - 1
-                            changes = changes + 1
-                        end
-                    end
-                end
+        local NN = N*N
+        for k,_ in pairs(grid1) do
+            -- grid1[k] is a live cell
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            local px, py = GetMidPoint(x, y, z)
+            if abs(px - mousex) < HALFCELL and
+               abs(py - mousey) < HALFCELL then
+                grid1[k] = nil
+                popcount = popcount - 1
+                changes = changes + 1
             end
         end
         if changes > 0 then Refresh() end
@@ -3892,22 +3709,19 @@ function SelectLiveCells(mousex, mousey)
     -- select all live cells whose projected mid points are close to mousex,mousey
     if popcount > 0 then
         local changes = 0
-        for z = minz, maxz do
-            local zN = z * N
-            for y = miny, maxy do
-                local zyN = (zN + y) * N
-                for x = minx, maxx do
-                    if grid1[zyN + x] then
-                        local px, py = GetMidPoint(x, y, z)
-                        if abs(px - mousex) < HALFCELL and
-                           abs(py - mousey) < HALFCELL then
-                            if not selected[zyN + x] then
-                                selected[zyN + x] = true
-                                selcount = selcount + 1
-                                changes = changes + 1
-                            end
-                        end
-                    end
+        local NN = N*N
+        for k,_ in pairs(grid1) do
+            -- grid1[k] is a live cell
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            local px, py = GetMidPoint(x, y, z)
+            if abs(px - mousex) < HALFCELL and
+               abs(py - mousey) < HALFCELL then
+                if not selected[k] then
+                    selected[k] = true
+                    selcount = selcount + 1
+                    changes = changes + 1
                 end
             end
         end
