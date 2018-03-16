@@ -1651,7 +1651,6 @@ function NextGeneration()
     
     popcount = 0            -- SetGrid2 will increment popcount
     InitBoundaries()        -- SetGrid2 will set new boundaries
-    local NxN = N*N
 
     local count1 = {}
     local NNN = N * N * N ;
