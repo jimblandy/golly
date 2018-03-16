@@ -2558,15 +2558,18 @@ function GetBounds()
         for k,_ in pairs(grid1) do
             -- grid1[k] is a live cell
             local x = k % N
-            local y = (k // N) % N
-            local z = (k // NN) % N
+            local y = k % NN
             if x < minx then minx = x end
             if y < miny then miny = y end
-            if z < minz then minz = z end
+            if k < minz then minz = k end
             if x > maxx then maxx = x end
             if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            if k > maxz then maxz = k end
         end
+        miny = miny // N
+        maxy = maxy // N
+        minz = minz // NN
+        maxz = maxz // NN
         local mid = N//2
         return { minx-mid, maxx-mid, miny-mid, maxy-mid, minz-mid, maxz-mid }
     else
