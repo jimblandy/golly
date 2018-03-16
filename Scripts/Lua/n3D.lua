@@ -1657,11 +1657,13 @@ function NextGeneration()
     for k,_ in pairs(grid1) do
        count1[k] = 1
     end
+    local NNN = N * N * N ;
+    local NN = N * N ;
     for k,_ in pairs(grid1) do
-        local z = k // (N * N)
-        local k2 = k + N * N * ((z + 1) % N - z)
+        local y = k % NN
+        local k2 = k + (y + N) % NN - y
         count1[k2] = (count1[k2] or 0) + 1
-        k2 = k + N * N * ((z + N - 1) % N - z)
+        k2 = k + (y + NN - N) % NN - y
         count1[k2] = (count1[k2] or 0) + 1
     end
     local count2 = {}
@@ -1669,10 +1671,10 @@ function NextGeneration()
        count2[k] = v
     end
     for k,v in pairs(count1) do
-        local y = k // N % N
-        local k2 = k + N * ((y + 1) % N - y)
+        local x = k % N
+        local k2 = k + (x + 1) % N - x
         count2[k2] = (count2[k2] or 0) + v
-        k2 = k + N * ((y + N - 1) % N - y)
+        local k2 = k + (x + N - 1) % N - x
         count2[k2] = (count2[k2] or 0) + v
     end
     count1 = {}
@@ -1680,16 +1682,15 @@ function NextGeneration()
        count1[k] = v
     end
     for k,v in pairs(count2) do
-        local x = k % N
-        local k2 = k + (x + 1) % N - x
+        local k2 = (k + NN) % NNN
         count1[k2] = (count1[k2] or 0) + v
-        local k2 = k + (x + N - 1) % N - x
+        k2 = (k + NNN - NN) % NNN
         count1[k2] = (count1[k2] or 0) + v
     end
     grid2 = {}
     for k,v in pairs(count1) do
        if (grid1[k] and survivals[v-1]) or (births[v] and not grid1[k]) then
-          SetGrid2(k, k % N, k // N % N, k // (N * N))
+          SetGrid2(k, k % N, k // N % N, k // NN)
        end
     end
     
