@@ -1658,10 +1658,10 @@ function NextGeneration()
        count1[k] = 1
     end
     for k,_ in pairs(grid1) do
-        local x = k % N
-        local k2 = k + (x + 1) % N - x
+        local z = k // (N * N)
+        local k2 = k + N * N * ((z + 1) % N - z)
         count1[k2] = (count1[k2] or 0) + 1
-        local k2 = k + (x + N - 1) % N - x
+        k2 = k + N * N * ((z + N - 1) % N - z)
         count1[k2] = (count1[k2] or 0) + 1
     end
     local count2 = {}
@@ -1680,10 +1680,10 @@ function NextGeneration()
        count1[k] = v
     end
     for k,v in pairs(count2) do
-        local z = k // (N * N)
-        local k2 = k + N * N * ((z + 1) % N - z)
+        local x = k % N
+        local k2 = k + (x + 1) % N - x
         count1[k2] = (count1[k2] or 0) + v
-        k2 = k + N * N * ((z + N - 1) % N - z)
+        local k2 = k + (x + N - 1) % N - x
         count1[k2] = (count1[k2] or 0) + v
     end
     grid2 = {}
