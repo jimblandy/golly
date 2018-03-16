@@ -13,11 +13,7 @@ Author: Andrew Trevorrow (andrew@trevorrow.com), Feb 2018.
 TODO: !!!
 
 - implement paste, undo, redo, flip/rotate selection...
-- allow erasing live cells in move mode by option-clicking?
-- allow selecting live cells in move mode by shift-clicking?
 - shift-click and drag pencil/cross-hairs to move active plane
-- add option to display spheres instead of cubes/points
-- write oscar3d.lua
 - allow saving as .vti file for use by Ready?
 - add option for 6-face-neighbor rules (start or end rule with V?)
 - also option for 12-neighbor sphere packing rules?
@@ -67,6 +63,8 @@ local max = math.max
 local floor = math.floor
 local ceil = math.ceil
 
+math.randomseed(os.time())          -- init seed for math.random
+
 local N = 30                        -- initial grid size (N*N*N cells)
 local MINN = 3                      -- minimum grid size
 local MAXN = 64                     -- maximum grid size
@@ -100,16 +98,19 @@ local grid2 = {}                    -- sparse 3D matrix for the next generation
 local minx,maxx,miny,maxy,minz,maxz -- boundary for live cells
 local popcount = 0                  -- number of live cells
 local pattname = "untitled"         -- most recently saved/opened pattern
-local showpoints = false            -- draw mid points instead of solid cubes?
 local showaxes = true               -- draw axes and lattice lines?
 local generating = false            -- generate pattern?
 local gencount = 0                  -- current generation count
 local perc = 20                     -- initial percentage for random fill
-local message = nil                 -- displayed by Refresh if not nil
+local message = nil                 -- text message displayed by Refresh if not nil
 local selcount = 0                  -- number of selected cells (live or dead)
 local selected = {}                 -- grid positions of selected cells
+local pastecount = 0                -- number of cells in paste pattern
+local pastecell = {}                -- grid positions of cells in paste pattern
 local drawstate = 1                 -- for drawing/erasing cells
 local selstate = true               -- for selecting/deselecting cells
+local celltype = "cube"             -- draw live cell as cube/sphere/point
+local DrawLiveCell                  -- set to DrawCube or DrawSphere or DrawPoint
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -117,9 +118,13 @@ local activepos = 0                 -- active plane's cell position along 3rd ax
 local activecell = ""               -- "x,y,z" if mouse is inside an active cell
 local prevactive = ""               -- previous activecell
 
--- boundary cell coords for the active plane
+-- boundary grid coords for the active plane
 local minactivex, minactivey, minactivez
 local maxactivex, maxactivey, maxactivez
+
+-- boundary grid coords for the paste pattern
+local minpastex, minpastey, minpastez
+local maxpastex, maxpastey, maxpastez
 
 local startN = N                    -- starting grid size
 local startplane                    -- starting orientation of active plane
@@ -278,7 +283,7 @@ function ReadSettings()
         N = tonumber(f:read("*l")) or 30
         rulestring = f:read("*l") or DEFAULT_RULE
         showaxes = (f:read("*l") or "true") == "true"
-        showpoints = (f:read("*l") or "false") == "true"
+        celltype = f:read("*l") or "cube"
         perc = tonumber(f:read("*l")) or 20
         pattdir = f:read("*l") or g.getdir("data")
         scriptdir = f:read("*l") or g.getdir("app")
@@ -290,6 +295,13 @@ function ReadSettings()
         if not ParseRule(rulestring) then
             g.warn("Resetting bad rule ("..rulestring..") to default.")
             rulestring = DEFAULT_RULE
+        end
+        
+        -- celltype used to be true/false
+        if celltype == "true" then
+            celltype = "point"
+        elseif celltype == "false" then
+            celltype = "cube"
         end
     end
 end
@@ -304,7 +316,7 @@ function WriteSettings()
         f:write(tostring(N).."\n")
         f:write(rulestring.."\n")
         f:write(tostring(showaxes).."\n")
-        f:write(tostring(showpoints).."\n")
+        f:write(celltype.."\n")
         f:write(tostring(perc).."\n")
         f:write(pattdir.."\n")
         f:write(scriptdir.."\n")
@@ -314,33 +326,33 @@ end
 
 ----------------------------------------------------------------------
 
-function SaveView()
-    local oldview = {}
-    oldview.name = g.getname()
+function SaveGollyState()
+    local oldstate = {}
+    oldstate.name = g.getname()
     g.setname("3D")
     g.update()  -- see new title
-    oldview.files = g.setoption("showfiles", 0)
-    oldview.tool = g.setoption("showtoolbar", 0)
-    oldview.status = g.setoption("showstatusbar", 0)
-    oldview.layer = g.setoption("showlayerbar", 0)
-    oldview.edit = g.setoption("showeditbar", 0)
-    oldview.tile = g.setoption("tilelayers", 0)
-    oldview.stack = g.setoption("stacklayers", 0)
-    return oldview
+    oldstate.files = g.setoption("showfiles", 0)
+    oldstate.tool = g.setoption("showtoolbar", 0)
+    oldstate.status = g.setoption("showstatusbar", 0)
+    oldstate.layer = g.setoption("showlayerbar", 0)
+    oldstate.edit = g.setoption("showeditbar", 0)
+    oldstate.tile = g.setoption("tilelayers", 0)
+    oldstate.stack = g.setoption("stacklayers", 0)
+    return oldstate
 end
 
 ----------------------------------------------------------------------
 
-function RestoreView(oldview)
+function RestoreGollyState(oldstate)
     ov("delete")
-    g.setname(oldview.name)
-    g.setoption("showfiles", oldview.files)
-    g.setoption("showtoolbar", oldview.tool)
-    g.setoption("showstatusbar", oldview.status)
-    g.setoption("showlayerbar", oldview.layer)
-    g.setoption("showeditbar", oldview.edit)
-    g.setoption("tilelayers", oldview.tile)
-    g.setoption("stacklayers", oldview.stack)
+    g.setname(oldstate.name)
+    g.setoption("showfiles", oldstate.files)
+    g.setoption("showtoolbar", oldstate.tool)
+    g.setoption("showstatusbar", oldstate.status)
+    g.setoption("showlayerbar", oldstate.layer)
+    g.setoption("showeditbar", oldstate.edit)
+    g.setoption("tilelayers", oldstate.tile)
+    g.setoption("stacklayers", oldstate.stack)
 end
 
 --------------------------------------------------------------------------------
@@ -513,8 +525,7 @@ local function CreateCube(x, y, z)
     y = y * CELLSIZE + BORDER - MIDGRID
     z = z * CELLSIZE + BORDER - MIDGRID
     
-    -- WARNING: vertex order used here is assumed by other code
-    -- (DrawCube, DrawRearAxes, DisplayCells, etc):
+    -- WARNING: vertex order used here is assumed by other code:
     -- vertices 1,3,5,7 and 2,4,6,8 are front and back faces,
     -- vertices 1,2,8,7 and 3,4,6,5 are bottom and top faces,
     -- vertices 1,2,4,3 and 7,8,6,5 are left and right faces
@@ -542,105 +553,6 @@ local function CreateCube(x, y, z)
              {x+LEN, y    , z+LEN},     -- v7
              {x+LEN, y    , z    }      -- v8
            }
-end
-
-----------------------------------------------------------------------
-
-local function DrawCube()
-    -- draw up to 3 visible faces of cube, using cyclic vertex order set in CreateCube
-    CheckFaces(1,3,5,7, 2,4,6,8)    -- front or back
-    CheckFaces(1,2,8,7, 3,4,6,5)    -- bottom or top
-    CheckFaces(1,2,4,3, 7,8,6,5)    -- left or right
-    
-    if LEN > 4 then
-        -- draw anti-aliased edges around visible face(s)
-        if LEN == 5 then
-            ov("rgba 150 150 150 255")
-        elseif LEN == 6 then
-            ov("rgba 110 110 110 255")
-        elseif LEN == 7 then
-            ov("rgba 80 80 80 255")
-        else
-            ov("rgba 60 60 60 255")
-        end
-        ov("blend 1")
-        ov("lineoption width "..(1 + int(LEN / 40.0)))
-        
-        if rotz[1] < rotz[2] then
-            -- draw all edges around front face
-            DrawEdge(1,3)
-            DrawEdge(3,5)
-            DrawEdge(5,7)
-            DrawEdge(7,1)
-            if rotz[1] < rotz[3] then
-                -- draw remaining 3 edges around bottom face
-                DrawEdge(1,2)
-                DrawEdge(2,8)
-                DrawEdge(8,7)
-                if rotz[1] < rotz[7] then
-                    -- draw remaining 2 edges around left face
-                    DrawEdge(3,4)
-                    DrawEdge(4,2)
-                else
-                    -- draw remaining 2 edges around right face
-                    DrawEdge(5,6)
-                    DrawEdge(6,8)
-                end
-            else
-                -- draw 3 remaining edges around top face
-                DrawEdge(3,4)
-                DrawEdge(4,6)
-                DrawEdge(6,5)
-                if rotz[1] < rotz[7] then
-                    -- draw remaining 2 edges around left face
-                    DrawEdge(4,2)
-                    DrawEdge(2,1)
-                else
-                    -- draw remaining 2 edges around right face
-                    DrawEdge(6,8)
-                    DrawEdge(8,7)
-                end
-            end
-        else
-            -- draw all edges around back face
-            DrawEdge(2,4)
-            DrawEdge(4,6)
-            DrawEdge(6,8)
-            DrawEdge(8,2)
-            if rotz[1] < rotz[3] then
-                -- draw remaining 3 edges around bottom face
-                DrawEdge(2,1)
-                DrawEdge(1,7)
-                DrawEdge(7,8)
-                if rotz[1] < rotz[7] then
-                    -- draw remaining 2 edges around left face
-                    DrawEdge(1,3)
-                    DrawEdge(3,4)
-                else
-                    -- draw remaining 2 edges around right face
-                    DrawEdge(7,5)
-                    DrawEdge(5,6)
-                end
-            else
-                -- draw 3 remaining edges around top face
-                DrawEdge(6,5)
-                DrawEdge(5,3)
-                DrawEdge(3,4)
-                if rotz[1] < rotz[7] then
-                    -- draw remaining 2 edges around left face
-                    DrawEdge(2,1)
-                    DrawEdge(1,3)
-                else
-                    -- draw remaining 2 edges around right face
-                    DrawEdge(8,7)
-                    DrawEdge(7,5)
-                end
-            end
-        end
-        
-        ov("lineoption width 1")
-        ov("blend 0")
-    end
 end
 
 ----------------------------------------------------------------------
@@ -882,9 +794,9 @@ end
 
 ----------------------------------------------------------------------
 
-local function CreateLiveCell()
+local function CreateLiveCube()
     -- create a clip containing one rotated cube that will be used later
-    -- to draw all cubes (this only works because all cubes are identical
+    -- to draw all live cells (this only works because all cubes are identical
     -- in appearance when using orthographic projection)
     ov("create "..(LEN*2).." "..(LEN*2).." c")
     ov("target c")
@@ -899,7 +811,100 @@ local function CreateLiveCell()
         projectedy[i] = round( roty[i] ) + LEN
     end
     
-    DrawCube()
+    -- draw up to 3 visible faces of cube, using cyclic vertex order set in CreateCube
+    CheckFaces(1,3,5,7, 2,4,6,8)    -- front or back
+    CheckFaces(1,2,8,7, 3,4,6,5)    -- bottom or top
+    CheckFaces(1,2,4,3, 7,8,6,5)    -- left or right
+    
+    if LEN > 4 then
+        -- draw anti-aliased edges around visible face(s)
+        if LEN == 5 then
+            ov("rgba 150 150 150 255")
+        elseif LEN == 6 then
+            ov("rgba 110 110 110 255")
+        elseif LEN == 7 then
+            ov("rgba 80 80 80 255")
+        else
+            ov("rgba 60 60 60 255")
+        end
+        ov("blend 1")
+        ov("lineoption width "..(1 + int(LEN / 40.0)))
+        
+        if rotz[1] < rotz[2] then
+            -- draw all edges around front face
+            DrawEdge(1,3)
+            DrawEdge(3,5)
+            DrawEdge(5,7)
+            DrawEdge(7,1)
+            if rotz[1] < rotz[3] then
+                -- draw remaining 3 edges around bottom face
+                DrawEdge(1,2)
+                DrawEdge(2,8)
+                DrawEdge(8,7)
+                if rotz[1] < rotz[7] then
+                    -- draw remaining 2 edges around left face
+                    DrawEdge(3,4)
+                    DrawEdge(4,2)
+                else
+                    -- draw remaining 2 edges around right face
+                    DrawEdge(5,6)
+                    DrawEdge(6,8)
+                end
+            else
+                -- draw 3 remaining edges around top face
+                DrawEdge(3,4)
+                DrawEdge(4,6)
+                DrawEdge(6,5)
+                if rotz[1] < rotz[7] then
+                    -- draw remaining 2 edges around left face
+                    DrawEdge(4,2)
+                    DrawEdge(2,1)
+                else
+                    -- draw remaining 2 edges around right face
+                    DrawEdge(6,8)
+                    DrawEdge(8,7)
+                end
+            end
+        else
+            -- draw all edges around back face
+            DrawEdge(2,4)
+            DrawEdge(4,6)
+            DrawEdge(6,8)
+            DrawEdge(8,2)
+            if rotz[1] < rotz[3] then
+                -- draw remaining 3 edges around bottom face
+                DrawEdge(2,1)
+                DrawEdge(1,7)
+                DrawEdge(7,8)
+                if rotz[1] < rotz[7] then
+                    -- draw remaining 2 edges around left face
+                    DrawEdge(1,3)
+                    DrawEdge(3,4)
+                else
+                    -- draw remaining 2 edges around right face
+                    DrawEdge(7,5)
+                    DrawEdge(5,6)
+                end
+            else
+                -- draw 3 remaining edges around top face
+                DrawEdge(6,5)
+                DrawEdge(5,3)
+                DrawEdge(3,4)
+                if rotz[1] < rotz[7] then
+                    -- draw remaining 2 edges around left face
+                    DrawEdge(2,1)
+                    DrawEdge(1,3)
+                else
+                    -- draw remaining 2 edges around right face
+                    DrawEdge(8,7)
+                    DrawEdge(7,5)
+                end
+            end
+        end
+        
+        ov("lineoption width 1")
+        ov("blend 0")
+    end
     
     ov("optimize c")
     ov("target")
@@ -907,8 +912,44 @@ end
 
 ----------------------------------------------------------------------
 
-local function DrawLiveCell(x, y, z)
-    -- draw live cell at given grid position
+local function CreateLiveSphere()
+    -- create a clip containing one sphere that will be used later
+    -- to draw all live cells
+    local diameter = CELLSIZE-2
+    ov("create "..diameter.." "..diameter.." S")    -- s is used for selected cells
+    ov("target S")
+
+    local x = 0
+    local y = 0
+    local gray = 180 - diameter//10
+    local grayinc = 3
+    if diameter < 50 then grayinc = 8 - diameter//10 end
+    local r = (diameter+1)//2
+    ov("blend 1")
+    while true do
+        ov("rgba "..gray.." "..gray.." "..gray.." 255")
+        -- draw a solid circle by setting the line width to the radius
+        ov("lineoption width "..r)
+        ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
+        diameter = diameter - 2
+        r = r - 1
+        if r < 2 then break end
+        x = x + r%2
+        y = y + r%2
+        gray = gray + grayinc
+        if gray > 255 then gray = 255 end
+    end
+    ov("blend 0")
+    ov("lineoption width 1")
+
+    ov("optimize S")
+    ov("target")
+end
+
+----------------------------------------------------------------------
+
+local function DrawCube(x, y, z)
+    -- draw live cell as a cube at given grid position
     x = x * CELLSIZE + HALFCELL - MIDGRID
     y = y * CELLSIZE + HALFCELL - MIDGRID
     z = z * CELLSIZE + HALFCELL - MIDGRID
@@ -916,8 +957,37 @@ local function DrawLiveCell(x, y, z)
     -- use orthographic projection
     x = round(newx) + midx - LEN
     y = round(newy) + midy - LEN
-    -- draw the clip created by CreateLiveCell
+    -- draw the clip created by CreateLiveCube
     ov("paste "..x.." "..y.." c")
+end
+
+----------------------------------------------------------------------
+
+local function DrawSphere(x, y, z)
+    -- draw live cell as a sphere at given grid position
+    x = x * CELLSIZE + HALFCELL - MIDGRID
+    y = y * CELLSIZE + HALFCELL - MIDGRID
+    z = z * CELLSIZE + HALFCELL - MIDGRID
+    local newx, newy = TransformPoint({x, y, z})
+    -- use orthographic projection
+    x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
+    y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
+    -- draw the clip created by CreateLiveSphere
+    ov("paste "..x.." "..y.." S")
+end
+
+----------------------------------------------------------------------
+
+local function DrawPoint(x, y, z)
+    -- draw mid point of cell at given grid position
+    x = x * CELLSIZE + HALFCELL - MIDGRID
+    y = y * CELLSIZE + HALFCELL - MIDGRID
+    z = z * CELLSIZE + HALFCELL - MIDGRID
+    local newx, newy = TransformPoint({x, y, z})
+    -- use orthographic projection
+    x = round(newx) + midx
+    y = round(newy) + midy
+    ov("set "..x.." "..y)
 end
 
 ----------------------------------------------------------------------
@@ -950,63 +1020,23 @@ end
 
 ----------------------------------------------------------------------
 
-local function DrawMidPoint(x, y, z)
-    -- draw mid point of cube at given grid position
+local function DrawPasteCell(x, y, z)
     x = x * CELLSIZE + HALFCELL - MIDGRID
     y = y * CELLSIZE + HALFCELL - MIDGRID
     z = z * CELLSIZE + HALFCELL - MIDGRID
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
-    x = round(newx) + midx
-    y = round(newy) + midy
-    ov("set "..x.." "..y)
-end
-
-----------------------------------------------------------------------
-
-local function DisplayPoints(editing)
-    ov(op.white)
-    local M = N-1
-    local checkcell = editing or selcount > 0
-    if checkcell then ov("blend 1") end
-    for z = 0, M do
-        local zN = z * N
-        for y = 0, M do
-            local zyN = (zN + y) * N
-            for x = 0, M do
-                local zyxN = zyN + x
-                if grid1[zyxN] then
-                    DrawMidPoint(x, y, z)
-                end
-                if checkcell then
-                    if editing then
-                        if active[zyxN] then
-                            DrawActiveCell(x, y, z)
-                            if selected[zyxN] then
-                                DrawSelectedCell(x, y, z)
-                            end
-                        elseif selected[zyxN] then
-                            -- selected cell is outside active plane so
-                            -- draw translucent green point
-                            ov("rgba 0 255 0 128")
-                            DrawMidPoint(x, y, z)
-                            ov(op.white)
-                        end
-                    elseif selected[zyxN] then
-                        DrawSelectedCell(x, y, z)
-                    end
-                end
-            end
-        end
-    end
-    if checkcell then ov("blend 0") end
+    x = round(newx) + midx - CELLSIZE
+    y = round(newy) + midy - CELLSIZE
+    -- draw the clip created by CreateTranslucentCell
+    ov("paste "..x.." "..y.." p")
 end
 
 ----------------------------------------------------------------------
 
 local function TestCell(editing, gridpos, x, y, z)
-    -- called from DisplayCells to test if given cell is in active plane
-    -- or if it's selected
+    -- called from DisplayCells to test if given cell is in active plane,
+    -- or if it's selected, or if it's a paste cell, and to draw it accordingly
     if editing then
         if active[gridpos] then
             if grid1[gridpos] then
@@ -1022,21 +1052,26 @@ local function TestCell(editing, gridpos, x, y, z)
             if grid1[gridpos] then
                 -- live cell so draw white point
                 ov(op.white)
-                DrawMidPoint(x, y, z)
+                DrawPoint(x, y, z)
             end
             if selected[gridpos] then
                 -- draw translucent green point
                 ov("rgba 0 255 0 128")
-                DrawMidPoint(x, y, z)
+                DrawPoint(x, y, z)
             end
         end
     else
+        -- active plane is not displayed
         if grid1[gridpos] then
             DrawLiveCell(x, y, z)
         end
         if selected[gridpos] then
             DrawSelectedCell(x, y, z)
         end
+    end
+    if pastecell[gridpos] then
+        DrawLiveCell(x, y, z)
+        DrawPasteCell(x, y, z)
     end
 end
 
@@ -1055,7 +1090,7 @@ local function DisplayCells(editing)
     local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
     
     ov("blend 1")
-    local testcell = editing or selcount > 0
+    local testcell = editing or selcount > 0 or pastecount > 0
     
     -- draw cells from back to front (assumes vertex order set in CreateCube)
     local M = N-1
@@ -1253,7 +1288,11 @@ function Refresh()
     if showaxes then DrawRearAxes() end
     
     local editing = currcursor == drawcursor or currcursor == selectcursor
-    if popcount > 0 or selcount > 0 or editing then
+    if popcount > 0 or pastecount > 0 or selcount > 0 or editing then
+        if pastecount > 0 then
+            -- paste cells will be translucent red
+            CreateTranslucentCell("p", "255 0 0 64")
+        end
         if selcount > 0 then
             -- selected cells will be translucent green
             CreateTranslucentCell("s", "0 255 0 64")
@@ -1262,12 +1301,17 @@ function Refresh()
             -- cells in active plane will be translucent blue
             CreateTranslucentCell("a", "0 0 255 48")
         end
-        if showpoints then
-            DisplayPoints(editing)
-        else
-            CreateLiveCell()
-            DisplayCells(editing)
+        if celltype == "cube" then
+            CreateLiveCube()
+            DrawLiveCell = DrawCube
+        elseif celltype == "sphere" then
+            CreateLiveSphere()
+            DrawLiveCell = DrawSphere
+        else -- celltype == "point"
+            ov(op.white)
+            DrawLiveCell = DrawPoint
         end
+        DisplayCells(editing)
     end
     
     if showaxes then DrawFrontAxes() end
@@ -1323,6 +1367,9 @@ function ClearCells()
     -- remove selection
     selcount = 0
     selected = {}
+    -- remove paste pattern
+    pastecount = 0
+    pastecell = {}
     collectgarbage()    -- helps avoid long delay when script exits???!!! only on Mac OS 10.13???
 end
 
@@ -1551,15 +1598,107 @@ local function Alive(x, y, z)
     if x < 0 then x = N-1 elseif x >= N then x = 0 end
     if y < 0 then y = N-1 elseif y >= N then y = 0 end
     if z < 0 then z = N-1 elseif z >= N then z = 0 end
-    
     -- return state if the given cell is alive, otherwise nil
-    return grid1[ (z * N + y) * N + x ]
+    return grid1[ x + N * (y + N * z) ]
 end
 
 ----------------------------------------------------------------------
 
-local function NeighborCount(x, y, z)
-    -- return the number of live neighbors for the cell at x,y,z
+local function WrapEmptyCell(emptycells, x, y, z)
+    -- at least one of x,y,z needs to be wrapped
+    if x < 0 then x = N-1 elseif x >= N then x = 0 end
+    if y < 0 then y = N-1 elseif y >= N then y = 0 end
+    if z < 0 then z = N-1 elseif z >= N then z = 0 end
+    emptycells[ x + N * (y + N * z) ] = true
+end
+
+----------------------------------------------------------------------
+
+local function SlowNeighborCount(x, y, z, emptycells)
+    -- return the number of live neighbors for the live cell at x,y,z
+    -- which might be at a grid edge (if so we need to do wrap checks)
+    -- and also remember the positions of the cell's empty neighbors
+    local c = 0
+    local xp1 = x+1
+    local xm1 = x-1
+    local yp1 = y+1
+    local ym1 = y-1
+    local zp1 = z+1
+    local zm1 = z-1
+    if xm1 >= 0 and xp1 < N and
+       ym1 >= 0 and yp1 < N and
+       zm1 >= 0 and zp1 < N then
+       -- no need for wrap checks
+        local NyzN     = N * (y +   z   * N)
+        local Nyzm1N   = N * (y +   zm1 * N)
+        local Nyzp1N   = N * (y +   zp1 * N)
+        local Nym1zN   = N * (ym1 + z   * N)
+        local Nyp1zN   = N * (yp1 + z   * N)
+        local Nym1zm1N = N * (ym1 + zm1 * N)
+        local Nym1zp1N = N * (ym1 + zp1 * N)
+        local Nyp1zm1N = N * (yp1 + zm1 * N)
+        local Nyp1zp1N = N * (yp1 + zp1 * N)
+        if grid1[xm1 + NyzN    ] then c = c + 1 else emptycells[xm1 + NyzN    ] = true end
+        if grid1[xp1 + NyzN    ] then c = c + 1 else emptycells[xp1 + NyzN    ] = true end
+        if grid1[x   + Nyzm1N  ] then c = c + 1 else emptycells[x   + Nyzm1N  ] = true end
+        if grid1[x   + Nyzp1N  ] then c = c + 1 else emptycells[x   + Nyzp1N  ] = true end
+        if grid1[x   + Nym1zN  ] then c = c + 1 else emptycells[x   + Nym1zN  ] = true end
+        if grid1[x   + Nyp1zN  ] then c = c + 1 else emptycells[x   + Nyp1zN  ] = true end
+        if grid1[xm1 + Nyzm1N  ] then c = c + 1 else emptycells[xm1 + Nyzm1N  ] = true end
+        if grid1[xm1 + Nyzp1N  ] then c = c + 1 else emptycells[xm1 + Nyzp1N  ] = true end
+        if grid1[xp1 + Nyzm1N  ] then c = c + 1 else emptycells[xp1 + Nyzm1N  ] = true end
+        if grid1[xp1 + Nyzp1N  ] then c = c + 1 else emptycells[xp1 + Nyzp1N  ] = true end
+        if grid1[xm1 + Nym1zN  ] then c = c + 1 else emptycells[xm1 + Nym1zN  ] = true end
+        if grid1[xm1 + Nyp1zN  ] then c = c + 1 else emptycells[xm1 + Nyp1zN  ] = true end
+        if grid1[xp1 + Nym1zN  ] then c = c + 1 else emptycells[xp1 + Nym1zN  ] = true end
+        if grid1[xp1 + Nyp1zN  ] then c = c + 1 else emptycells[xp1 + Nyp1zN  ] = true end
+        if grid1[x   + Nym1zm1N] then c = c + 1 else emptycells[x   + Nym1zm1N] = true end
+        if grid1[x   + Nym1zp1N] then c = c + 1 else emptycells[x   + Nym1zp1N] = true end
+        if grid1[x   + Nyp1zm1N] then c = c + 1 else emptycells[x   + Nyp1zm1N] = true end
+        if grid1[x   + Nyp1zp1N] then c = c + 1 else emptycells[x   + Nyp1zp1N] = true end
+        if grid1[xm1 + Nym1zm1N] then c = c + 1 else emptycells[xm1 + Nym1zm1N] = true end
+        if grid1[xm1 + Nym1zp1N] then c = c + 1 else emptycells[xm1 + Nym1zp1N] = true end
+        if grid1[xm1 + Nyp1zm1N] then c = c + 1 else emptycells[xm1 + Nyp1zm1N] = true end
+        if grid1[xm1 + Nyp1zp1N] then c = c + 1 else emptycells[xm1 + Nyp1zp1N] = true end
+        if grid1[xp1 + Nym1zm1N] then c = c + 1 else emptycells[xp1 + Nym1zm1N] = true end
+        if grid1[xp1 + Nym1zp1N] then c = c + 1 else emptycells[xp1 + Nym1zp1N] = true end
+        if grid1[xp1 + Nyp1zm1N] then c = c + 1 else emptycells[xp1 + Nyp1zm1N] = true end
+        if grid1[xp1 + Nyp1zp1N] then c = c + 1 else emptycells[xp1 + Nyp1zp1N] = true end
+    else
+        if Alive(xm1, y,   z  ) then c = c + 1 else WrapEmptyCell(emptycells, xm1, y,   z  ) end
+        if Alive(xp1, y,   z  ) then c = c + 1 else WrapEmptyCell(emptycells, xp1, y,   z  ) end
+        if Alive(x,   y,   zm1) then c = c + 1 else WrapEmptyCell(emptycells, x,   y,   zm1) end
+        if Alive(x,   y,   zp1) then c = c + 1 else WrapEmptyCell(emptycells, x,   y,   zp1) end
+        if Alive(x,   ym1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, x,   ym1, z  ) end
+        if Alive(x,   yp1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, x,   yp1, z  ) end
+        if Alive(xm1, y,   zm1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, y,   zm1) end
+        if Alive(xm1, y,   zp1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, y,   zp1) end
+        if Alive(xp1, y,   zm1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, y,   zm1) end
+        if Alive(xp1, y,   zp1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, y,   zp1) end
+        if Alive(xm1, ym1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, xm1, ym1, z  ) end
+        if Alive(xm1, yp1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, xm1, yp1, z  ) end
+        if Alive(xp1, ym1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, xp1, ym1, z  ) end
+        if Alive(xp1, yp1, z  ) then c = c + 1 else WrapEmptyCell(emptycells, xp1, yp1, z  ) end
+        if Alive(x,   ym1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, x,   ym1, zm1) end
+        if Alive(x,   ym1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, x,   ym1, zp1) end
+        if Alive(x,   yp1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, x,   yp1, zm1) end
+        if Alive(x,   yp1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, x,   yp1, zp1) end
+        if Alive(xm1, ym1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, ym1, zm1) end
+        if Alive(xm1, ym1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, ym1, zp1) end
+        if Alive(xm1, yp1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, yp1, zm1) end
+        if Alive(xm1, yp1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, xm1, yp1, zp1) end
+        if Alive(xp1, ym1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, ym1, zm1) end
+        if Alive(xp1, ym1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, ym1, zp1) end
+        if Alive(xp1, yp1, zm1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, yp1, zm1) end
+        if Alive(xp1, yp1, zp1) then c = c + 1 else WrapEmptyCell(emptycells, xp1, yp1, zp1) end
+    end
+    return c
+end
+
+----------------------------------------------------------------------
+
+local function FastNeighborCount(x, y, z)
+    -- return the number of live neighbors for the dead cell at x,y,z
     -- which might be at a grid edge (if so we need to do wrap checks)
     local c = 0
     local xp1 = x+1
@@ -1661,7 +1800,10 @@ end
 ----------------------------------------------------------------------
 
 function NextGeneration()
-    -- calculate and display the next generation
+    -- calculate and display the next generation using an algorithm
+    -- described by Carter Bays (see Method B Option 2 on page 398 in
+    -- http://www.complex-systems.com/pdf/01-3-1.pdf)
+    
     if popcount == 0 then
         generating = false
         UpdateStartButton()
@@ -1672,48 +1814,31 @@ function NextGeneration()
     
     if gencount == startcount then SaveStart() end
     
-    -- check if boundary edges need to be wrapped
-    local M = N-1
-    if minx == 0 or maxx == M then minx = 0; maxx = M end
-    if miny == 0 or maxy == M then miny = 0; maxy = M end
-    if minz == 0 or maxz == M then minz = 0; maxz = M end
-    
-    -- expand boundary by 1 to allow for births
-    local minxm1 = minx - 1
-    local minym1 = miny - 1
-    local minzm1 = minz - 1
-    local maxxp1 = maxx + 1
-    local maxyp1 = maxy + 1
-    local maxzp1 = maxz + 1
-    -- but not if outside grid edges
-    if minxm1 < 0 then minxm1 = 0 end
-    if minym1 < 0 then minym1 = 0 end
-    if minzm1 < 0 then minzm1 = 0 end
-    if maxxp1 == N then maxxp1 = M end
-    if maxyp1 == N then maxyp1 = M end
-    if maxzp1 == N then maxzp1 = M end
-
     popcount = 0            -- SetGrid2 will increment popcount
     InitBoundaries()        -- SetGrid2 will set new boundaries
+    local emptycells = {}   -- sparse array of empty neighbor positions
+    local NxN = N*N
 
-    -- calculate next generation in grid2
-    for z = minzm1, maxzp1 do
-        local zN = z * N
-        for y = minym1, maxyp1 do
-            local zyN = (zN + y) * N
-            for x = minxm1, maxxp1 do
-                local ncount = NeighborCount(x, y, z)
-                local zyxN = zyN + x
-                if grid1[zyxN] then
-                    if survivals[ncount] then
-                        SetGrid2(zyxN, x, y, z)
-                    end
-                else
-                    if births[ncount] then
-                        SetGrid2(zyxN, x, y, z)
-                    end
-                end
-            end
+    -- calculate survivals in grid2 and remember the empty neighbors
+    -- around all live cells
+    for k,_ in pairs(grid1) do
+        -- grid1[k] is a live cell
+        local x = k % N
+        local y = (k // N) % N
+        local z = (k // NxN) % N
+        if survivals[ SlowNeighborCount(x, y, z, emptycells) ] then
+            SetGrid2(k, x, y, z)
+        end
+    end
+    
+    -- calculate births in grid2
+    for k,_ in pairs(emptycells) do
+        -- grid1[k] is a dead cell with at least 1 live neighbor
+        local x = k % N
+        local y = (k // N) % N
+        local z = (k // NxN) % N
+        if births[ FastNeighborCount(x, y, z) ] then
+            SetGrid2(k, x, y, z)
         end
     end
     
@@ -1767,6 +1892,8 @@ function ReadPattern(filepath)
     local tmaxy = math.mininteger
     local tmaxz = math.mininteger
     local tgrid = {}
+    
+    -- safer and faster to read header lines first, then data lines!!!
     
     local prevy = 0
     local prevz = 0
@@ -1897,37 +2024,46 @@ end
 
 ----------------------------------------------------------------------
 
-function OpenClipboard()
+function CopyClipboardToFile()
     -- create a temporary file containing clipboard text
     local filepath = g.getdir("temp").."clipboard.3d"
     local f = io.open(filepath,"w")
     if not f then
         g.warn("Failed to create temporary clipboard file!")
-        return
+        return nil
     end
     -- NOTE: we can't do f:write(string.gsub(g.getclipstr(),"\r","\n"))
     -- because gsub returns 2 results and we'd get count appended to file!
     local clip = string.gsub(g.getclipstr(),"\r","\n")
     f:write(clip)
     f:close()
-    
-    -- now try to read it
-    local err, newpattern = ReadPattern(filepath)
-    if err then
-        g.warn(err)
-    else
-        -- pattern ok so use info in newpattern to update current grid
-        pattname = "clipboard"
-        UpdateCurrentGrid(newpattern)
+    return filepath
+end
+
+----------------------------------------------------------------------
+
+function OpenClipboard()
+    local filepath = CopyClipboardToFile()
+    if filepath then
+        local err, newpattern = ReadPattern(filepath)
+        if err then
+            g.warn(err)
+        else
+            -- pattern ok so use info in newpattern to update current grid
+            pattname = "clipboard"
+            UpdateCurrentGrid(newpattern)
+        end
     end
 end
 
 ----------------------------------------------------------------------
 
-function PatternHeader()
+function PatternHeader(comments)
     -- return 3D pattern header lines
+    comments = comments or ""
     return
         "3D\n"..
+        comments..
         "version=1\n"..
         "gridsize="..N.."\n"..
         "rule="..rulestring.."\n"..
@@ -1936,10 +2072,10 @@ end
 
 ----------------------------------------------------------------------
 
-function WritePattern(filepath)
+function WritePattern(filepath, comments)
     local f = io.open(filepath,"w")
     if not f then return "Failed to create file:\n"..filepath end
-    f:write(PatternHeader().."\n")
+    f:write(PatternHeader(comments).."\n")
     if popcount > 0 then
         local prevy = math.maxinteger
         local prevz = math.maxinteger
@@ -1972,9 +2108,39 @@ end
 
 ----------------------------------------------------------------------
 
+function GetComments(f)
+    local comments = ""
+    local line = f:read("*l")
+    if line == nil or line ~= "3D" then return end
+    while true do
+        line = f:read("*l")
+        if not line then break end
+        local ch1 = line:sub(1,1)
+        if #ch1 == 0 then
+            -- ignore empty line
+        elseif ch1 == "#" then
+            comments = comments..line.."\n"
+        elseif ch1 < "a" or ch1 > "z" then
+            -- end of header info
+            break
+        end
+    end
+    return comments
+end
+
+----------------------------------------------------------------------
+
 function SavePattern(filepath)
     if filepath then
-        local err = WritePattern(filepath)
+        -- if filepath exists then extract any comment lines from the header
+        -- info and copy them into the new file
+        local comments = ""
+        local f = io.open(filepath,"r")
+        if f then
+            comments = GetComments(f)
+            f:close()
+        end
+        local err = WritePattern(filepath, comments)
         if err then
             g.warn(err)
         else
@@ -2009,11 +2175,16 @@ function RunScript(filepath)
             -- error if scriptlevel reaches 100???!!!
             local status, err = pcall(f)
             scriptlevel = scriptlevel-1
-            Refresh()
             if err then
                 g.continue("")
-                g.warn("Runtime error in script:\n\n"..err)
+                if err == "GOLLY: ABORT SCRIPT" then
+                    -- user hit escape
+                    message = "Script aborted."
+                else
+                    g.warn("Runtime error in script:\n\n"..err)
+                end
             end
+            Refresh()
         else
             g.warn("Syntax error in script:\n\n"..msg)
         end
@@ -2039,11 +2210,16 @@ function RunClipboard()
         -- error if scriptlevel reaches 100???!!!
         local status, err = pcall(f)
         scriptlevel = scriptlevel-1
-        Refresh()
         if err then
             g.continue("")
-            g.warn("Runtime error in clipboard script:\n\n"..err)
+            if err == "GOLLY: ABORT SCRIPT" then
+                -- user hit escape
+                message = "Script aborted."
+            else
+                g.warn("Runtime error in clipboard script:\n\n"..err)
+            end
         end
+        Refresh()
     else
         g.warn("Syntax error in clipboard script:\n\n"..msg)
     end
@@ -2131,6 +2307,29 @@ end
 
 ----------------------------------------------------------------------
 
+function GetSelectedLiveCells()
+    -- return an array of selected *live* cell positions relative to mid cell
+    local livecells = {}
+    if selcount > 0 then
+        local mid = N//2
+        local M = N-1
+        for z = minz, maxz do
+            local zN = z * N
+            for y = miny, maxy do
+                local zyN = (zN + y) * N
+                for x = minx, maxx do
+                    if selected[zyN + x] and grid1[zyN + x] then
+                        livecells[#livecells+1] = {x-mid, y-mid, z-mid}
+                    end
+                end
+            end
+        end
+    end
+    return livecells
+end
+
+----------------------------------------------------------------------
+
 function ChangeGridSize()
     local newN = N
     
@@ -2152,6 +2351,8 @@ function ChangeGridSize()
         g.continue("")  -- don't show error when script finishes
         return
     end
+    
+    if newN == N then return end
     
     -- save current pattern as an array of positions relative to mid cell
     local livecells = GetCells()
@@ -2193,14 +2394,16 @@ function ChangeGridSize()
         end
     end
     
-    FitGrid()   -- calls Refresh()
+    -- restore paste pattern, clipping any cells outside the new grid
+    --!!!
     
     if clipcount > 0 or selclipped > 0 then
         message = ""
         if clipcount > 0 then message = "Clipped live cells = "..clipcount.."\n" end
         if selclipped > 0 then message = message.."Clipped selection cells = "..selclipped end
-        Refresh()
     end
+    
+    FitGrid()   -- calls Refresh()
 end
 
 ----------------------------------------------------------------------
@@ -2235,7 +2438,7 @@ function SelectAll()
     if popcount > 0 then
         selcount = 0
         selected = {}
-        for k,v in pairs(grid1) do
+        for k,_ in pairs(grid1) do
             selected[k] = true
             selcount = selcount + 1
         end
@@ -2248,12 +2451,12 @@ end
 function CopySelection()
     if selcount > 0 then
         -- save the selected live cells as a 3D pattern in clipboard
-        local selcells = GetSelectedCells()
+        local livecells = GetSelectedLiveCells()
         local prevy = math.maxinteger
         local prevz = math.maxinteger
         local lines = {}
         lines[1] = PatternHeader()
-        for _, xyz in ipairs(selcells) do
+        for _, xyz in ipairs(livecells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             -- x,y,z are relative to middle cell in grid
             if z == prevz and y == prevy then
@@ -2326,13 +2529,49 @@ end
 ----------------------------------------------------------------------
 
 function Paste()
-    -- if the clipboard contains a valid 3D pattern then create a list
-    -- of paste cells and display them as translucent red
-    
-    -- copy clipboard data to temporary file and use ReadPattern???!!!
-    
-    message = "PASTE IS NOT YET IMPLEMENTED!!!"
-    Refresh()
+    -- check if a paste is already pending
+    if pastecount > 0 then return end
+
+    -- if the clipboard contains a valid 3D pattern then create a sparse array
+    -- of paste cells (to be displayed as translucent red)
+    local filepath = CopyClipboardToFile()
+    if filepath then
+        local err, newpattern = ReadPattern(filepath)
+        if err then
+            message = "Clipboard does not contain a valid 3D pattern."
+            Refresh()
+        elseif newpattern.newpop == 0 then
+            message = "Clipboard pattern is empty."
+            Refresh()
+        else
+            -- newpattern contains valid info so set set pastecount and pastecell array
+            minpastex = newpattern.newminx
+            minpastey = newpattern.newminy
+            minpastez = newpattern.newminz
+            maxpastex = newpattern.newmaxx
+            maxpastey = newpattern.newmaxy
+            maxpastez = newpattern.newmaxz
+            if newpattern.newsize == N then
+                -- put paste pattern in same location as the cut/copy
+                pastecount = newpattern.newpop
+                pastecell = newpattern.newgrid
+            else
+                -- put paste pattern in middle of grid, clipping any cells outside
+                --!!!
+            end
+            Refresh()
+        end
+    end
+end
+
+----------------------------------------------------------------------
+
+function CancelPaste()
+    if pastecount > 0 then
+        pastecount = 0
+        pastecell = {}
+        Refresh()
+    end
 end
 
 ----------------------------------------------------------------------
@@ -2476,7 +2715,7 @@ end
 
 ----------------------------------------------------------------------
 
-function GetMidPoint(x, y, z)
+local function GetMidPoint(x, y, z)
     -- return mid point of cube at given grid position
     x = x * CELLSIZE + HALFCELL - MIDGRID
     y = y * CELLSIZE + HALFCELL - MIDGRID
@@ -2490,7 +2729,7 @@ end
 
 ----------------------------------------------------------------------
 
-function Visible(x, y)
+local function Visible(x, y)
     -- return true if pixel at x,y is within area under tool bar
     if x < 0 or x >= ovwd then return false end
     if y <= toolbarht or y >= ovht then return false end
@@ -2530,9 +2769,34 @@ end
 
 -- getters for user scripts
 
-function GetRule() return rulestring end
+function GetGeneration() return gencount end
 function GetGridSize() return N end
 function GetPercentage() return perc end
+function GetPopulation() return popcount end
+function GetRule() return rulestring end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function GetBounds()
+    if popcount > 0 then
+        -- note that minx,maxx,miny,maxy,minz,maxz won't necessarily be
+        -- the minimal bounding box if a live cell was deleted, so maybe
+        -- set a flag if that happens and test it here (also reset the
+        -- flag elsewhere such as in NextGeneration)???!!!
+        local mid = N//2
+        return { minx-mid, maxx-mid, miny-mid, maxy-mid, minz-mid, maxz-mid }
+    else
+        return {}
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function Step()
+    if popcount > 0 then NextGeneration() end
+end
 
 ----------------------------------------------------------------------
 
@@ -2540,6 +2804,18 @@ function GetPercentage() return perc end
 function SetRule(newrule)
     if not ParseRule(newrule) then
         error("Bad rule in SetRule: "..newrule, 2)
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts (where 0,0,0 is middle cell in grid)
+function GetCell(x, y, z)
+    local mid = N//2
+    if grid1[ (x+mid) + N * ((y+mid) + N * (z+mid))] then
+        return 1
+    else
+        return 0
     end
 end
 
@@ -2607,7 +2883,7 @@ function ShowHelp()
 <p>
 3D.lua is a script that lets you explore three-dimensional cellular automata.
 The script uses overlay commands to completely replace Golly's usual
-interface.
+interface (note that all your Golly settings will be restored when 3D.lua exits).
 
 <p><a name="mouse"></a><br>
 <font size=+1><b>Mouse Controls</b></font>
@@ -2616,6 +2892,15 @@ interface.
 If the Move option is ticked then you can use the hand cursor
 to rotate the pattern by clicking and dragging.
 Rotation occurs around the middle cell in the grid.
+
+<p>
+It's also possible to do some editing with the hand cursor.
+You can alt-click on a live cell to erase it <em>and</em> any live cells
+behind it, as long as their mid points are within a half-cell radius of the
+mouse click.
+Or you can shift-click on a live cell to select it <em>and</em> any live cells
+behind it.
+This makes it easy to quickly erase or select isolated objects.
 
 <p>
 If the Draw option is ticked then you can use the pencil cursor
@@ -2661,6 +2946,7 @@ shortcuts):
 <tr><td align=right> ctrl-X &nbsp;</td><td>&nbsp; cut </td></tr>
 <tr><td align=right> ctrl-C &nbsp;</td><td>&nbsp; copy </td></tr>
 <tr><td align=right> ctrl-V &nbsp;</td><td>&nbsp; paste </td></tr>
+<tr><td align=right> alt-V &nbsp;</td><td>&nbsp; cancel paste </td></tr>
 <tr><td align=right> delete &nbsp;</td><td>&nbsp; kill selected live cells </td></tr>
 <tr><td align=right> shift-delete &nbsp;</td><td>&nbsp; kill unselected live cells </td></tr>
 <tr><td align=right> A &nbsp;</td><td>&nbsp; select all </td></tr>
@@ -2670,7 +2956,7 @@ shortcuts):
 <tr><td align=right> F &nbsp;</td><td>&nbsp; fit entire grid within view </td></tr>
 <tr><td align=right> [ &nbsp;</td><td>&nbsp; zoom out </td></tr>
 <tr><td align=right> ] &nbsp;</td><td>&nbsp; zoom in </td></tr>
-<tr><td align=right> P &nbsp;</td><td>&nbsp; toggle points or cubes </td></tr>
+<tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/points/spheres) </td></tr>
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lines </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the tool bar </td></tr>
 <tr><td align=right> 5 &nbsp;</td><td>&nbsp; fill grid with random pattern at given % </td></tr>
@@ -2740,16 +3026,129 @@ function HandleKey(event)
 end</pre></table></dd>
 
 <p>
-Here are all the functions in 3D.lua you can use in your own scripts:
+Here are descriptions of various functions in 3D.lua you might want to
+use in your own scripts (the functions are in alphabetical order):
 
 <p>
-!!!
+TO BE COMPLETED!!!
+
+<a name="DeselectCell"></a><p><dt><b>DeselectCell(<i>x, y, z</i>)</b></dt>
+<dd>
+Deselect the given cell.
+The x,y,z coordinates are relative to the middle cell in the grid.
+</dd>
+
+<a name="DrawMode"></a><p><dt><b>DrawMode()</b></dt>
+<dd>
+Switch to the pencil cursor and display the active plane.
+</dd>
+
+<a name="GetBounds"></a><p><dt><b>GetBounds()</b></dt>
+<dd>
+Return {} if the pattern is empty, otherwise return the bounding box
+of all live cells as an array with 6 values: {minx, maxx, miny, maxy, minz, maxz}.
+The boundary values are relative to the middle cell in the grid.
+</dd>
+
+<a name="GetCell"></a><p><dt><b>GetCell(<i>x, y, z</i>)</b></dt>
+<dd>
+Return the state (0 or 1) of the given cell.
+The x,y,z coordinates are relative to the middle cell in the grid.
+</dd>
+
+<a name="GetGeneration"></a><p><dt><b>GetGeneration()</b></dt>
+<dd>
+Return the generation count.
+</dd>
+
+<a name="GetGridSize"></a><p><dt><b>GetGridSize()</b></dt>
+<dd>
+Return the current grid size (3 to 64).
+</dd>
+
+<a name="GetPercentage"></a><p><dt><b>GetPercentage()</b></dt>
+<dd>
+Return the percentage (0 to 100) given in the most recent "Random..." dialog.
+</dd>
+
+<a name="GetPopulation"></a><p><dt><b>GetPopulation()</b></dt>
+<dd>
+Return the number of live cells in the current pattern.
+</dd>
+
+<a name="GetRule"></a><p><dt><b>GetRule()</b></dt>
+<dd>
+Return the current rule.
+</dd>
+
+<a name="MoveMode"></a><p><dt><b>MoveMode()</b></dt>
+<dd>
+Switch to the hand cursor.
+</dd>
+
+<a name="NewPattern"></a><p><dt><b>NewPattern()</b></dt>
+<dd>
+Create a new, empty pattern.  All undo/redo history is deleted.
+</dd>
+
+<a name="RunScript"></a><p><dt><b>RunScript(<i>filepath</i>)</b></dt>
+<dd>
+Run the specified .lua file.  If <i>filepath</i> is not supplied then
+the user will be prompted to select a .lua file.
+</dd>
+
+<a name="SelectCell"></a><p><dt><b>SelectCell(<i>x, y, z</i>)</b></dt>
+<dd>
+Select the given cell.
+The x,y,z coordinates are relative to the middle cell in the grid.
+</dd>
+
+<a name="SelectMode"></a><p><dt><b>SelectMode()</b></dt>
+<dd>
+Switch to the cross-hairs cursor and display the active plane.
+</dd>
+
+<a name="SetCell"></a><p><dt><b>SetCell(<i>x, y, z, state</i>)</b></dt>
+<dd>
+Set the given cell to the given state (0 or 1).
+The x,y,z coordinates are relative to the middle cell in the grid.
+</dd>
+
+<a name="SetMessage"></a><p><dt><b>SetMessage(<i>msg</i>)</b></dt>
+<dd>
+The given string will be displayed by the next Update call.
+Call SetMessage(nil) to clear the message.
+</dd>
+
+<a name="SetRule"></a><p><dt><b>SetRule(<i>rule</i>)</b></dt>
+<dd>
+Switch to the given rule.
+</dd>
+
+<a name="Step"></a><p><dt><b>Step()</b></dt>
+<dd>
+If the population is &gt; 0 then calculate the next generation.
+</dd>
+
+<a name="Update"></a><p><dt><b>Update()</b></dt>
+<dd>
+Update the display.  Note that 3D.lua automatically updates the display
+when a script finishes, so there's no need to call Update() at the
+end of a script.
+</dd>
 
 <p><a name="rules"></a><br>
 <font size=+1><b>Supported Rules</b></font>
 
 <p>
-!!!
+Use the "Rule..." button to change the current rule.
+Rules are strings of the form "S,S,S,.../B,B,B,...".
+The S values are the counts of neighboring live cells required
+for a live cell to survive in the next generation.
+The B values are the counts of neighboring live cells required for
+birth; ie. a dead cell will become a live cell in the next generation.
+Each cell has 26 neighbors so the S counts are from 0 to 26
+and the B counts are from 1 to 26 (birth on 0 is not allowed).
 
 <p><a name="files"></a><br>
 <font size=+1><b>The 3D File Format</b></font>
@@ -2764,6 +3163,16 @@ The format of such files is very simple:
 The first line must contain "3D" and nothing else.
 <li>
 Then comes a number of header lines of the form "keyword=value".
+The valid keywords are:
+
+<p><table border=0 cellspacing=0 cellpadding=0>
+<tr><td> version=<i>i</i> </td><td> &mdash; specifies the file format version (currently 1)</td></tr>
+<tr><td> gridsize=<i>N</i> </td><td> &mdash; specifies the grid dimensions (<i>N</i>x<i>N</i>x<i>N</i>)</td></tr>
+<tr><td> rule=<i>rulestring</i> </td><td> &mdash; specifies the 3D rule</td></tr>
+<tr><td> generation=<i>g</i> </td><td> &mdash; specifies the generation number (usually 0)</td></tr>
+<tr><td> &nbsp </td><tr>
+</table>
+
 <li>
 Then comes the coordinates for each live cell in the pattern,
 one cell per line.  Each line has the form "x y z".
@@ -2771,7 +3180,7 @@ The y and/or z coordinates are optional; if missing they take on
 the values from a previous line where the y/z values were supplied.
 All coordinates are relative to the middle cell in the grid.
 <li>
-Empty lines and lines starting with "#" are ignored.
+Empty lines or lines starting with "#" are ignored.
 </ul>
 
 <p>
@@ -2781,6 +3190,8 @@ and type shift-O (after returning to the 3D.lua window):
 
 <dd><table border=0><pre>
 3D
+# A 3-dimensional analog of Life's glider.
+# Discovered by Carter Bays in 1987.
 version=1
 gridsize=30
 rule=5,6,7/6
@@ -2800,7 +3211,31 @@ generation=0
 <font size=+1><b>Credits and References</b></font>
 
 <p>
-!!!
+3D.lua was inspired by the work of Carter Bays and his colleagues:
+
+<p>
+Candidates for the Game of Life in Three Dimensions<br>
+<a href="http://www.complex-systems.com/pdf/01-3-1.pdf">http://www.complex-systems.com/pdf/01-3-1.pdf</a>
+
+<p>
+Patterns for Simple Cellular Automata in a Universe of Dense-Packed Spheres<br>
+<a href="http://www.complex-systems.com/pdf/01-5-1.pdf">http://www.complex-systems.com/pdf/01-5-1.pdf</a>
+
+<p>
+Classification of Semitotalistic Cellular Automata in Three Dimensions<br>
+<a href="http://www.complex-systems.com/pdf/02-2-6.pdf">http://www.complex-systems.com/pdf/02-2-6.pdf</a>
+
+<p>
+A Note on the Discovery of a New Game of Three-dimensional Life<br>
+<a href="http://www.complex-systems.com/pdf/02-3-1.pdf">http://www.complex-systems.com/pdf/02-3-1.pdf</a>
+
+<p>
+The Discovery of a New Glider for the Game of Three-Dimensional Life<br>
+<a href="http://www.complex-systems.com/pdf/04-6-2.pdf">http://www.complex-systems.com/pdf/04-6-2.pdf</a>
+
+<p>
+Further Notes on the Game of Three-Dimensional Life<br>
+<a href="http://www.complex-systems.com/pdf/08-1-4.pdf">http://www.complex-systems.com/pdf/08-1-4.pdf</a>
 
 </body></html>
 ]]
@@ -2869,15 +3304,21 @@ end
 
 ----------------------------------------------------------------------
 
-function ToggleAxes()
-    showaxes = not showaxes
+function CycleCellType()
+    if celltype == "cube" then
+        celltype = "sphere"
+    elseif celltype == "sphere" then
+        celltype = "point"
+    else -- celltype == "point"
+        celltype = "cube"
+    end
     Refresh()
 end
 
 ----------------------------------------------------------------------
 
-function TogglePoints()
-    showpoints = not showpoints
+function ToggleAxes()
+    showaxes = not showaxes
     Refresh()
 end
 
@@ -2887,6 +3328,25 @@ function ToggleToolBar()
     if toolbarht > 0 then
         toolbarht = 0
         midy = int(ovht/2)
+        -- hide all the controls
+        newbutton.hide()
+        openbutton.hide()
+        savebutton.hide()
+        runbutton.hide()
+        gridbutton.hide()
+        randbutton.hide()
+        rulebutton.hide()
+        exitbutton.hide()
+        helpbutton.hide()
+        ssbutton.hide()
+        s1button.hide()
+        resetbutton.hide()
+        fitbutton.hide()
+        undobutton.hide()
+        redobutton.hide()
+        drawbox.hide()
+        selectbox.hide()
+        movebox.hide()
     else
         toolbarht = buttonht*2+gap*3
         midy = int(ovht/2 + toolbarht/2)
@@ -2938,7 +3398,7 @@ local function PointInTriangle(x, y, A, B, C)
     local cx, cy = projectedx[C], projectedy[C]
     local as_x = x - ax
     local as_y = y - ay
-    local s_ab = (bx-ax)*as_y - (by-ay)*as_x > 0
+    local s_ab = (bx-ax)*as_y - (by-ay)*as_x >= 0
     if (cx-ax)*as_y - (cy-ay)*as_x > 0 == s_ab then return false end
     if (cx-bx)*(y-by) - (cy-by)*(x-bx) > 0 ~= s_ab then return false end
     return true
@@ -2989,6 +3449,23 @@ local function FindActiveCell(x, y, face)
     local cx, cy, cz
 
     local function CalculateAaBb()
+        -- to find which cell contains x,y we need to calculate lengths A,a,B,b:
+        -- (in this diagram hcells is 5 and vcells is 3, but for the given face
+        -- the values are either 1 or N because the active plane is 1 cell thick)
+        --
+        --           S ___________________________________
+        --            /      /      /      /      /      /
+        --           /      /      /      /      /      /
+        --          /______/______/______/______/______/
+        --       J /------/------/------/-*x,y /      /
+        --     /  /      /      /      / /    /      /
+        --    /  /______/______/______/_/____/______/
+        --   B //      /      /      / /    /      /
+        --  / b/      /      /      / /    /      /
+        -- / //______/______/______/_/____/______/
+        --   P --a---                I           Q
+        --     ---------A------------
+        --
         Px, Py = projectedx[Pv], projectedy[Pv]
         Qx, Qy = projectedx[Qv], projectedy[Qv]
         Sx, Sy = projectedx[Sv], projectedy[Sv]
@@ -3039,8 +3516,10 @@ local function FindActiveCell(x, y, face)
             xoffset = N-1
         end
         CalculateAaBb()
-        cx = floor(A / a) + xoffset - mid
-        cy = floor(B / b) + yoffset - mid
+        cx = floor(A / a) + xoffset; if cx >= N then cx = N-1 end
+        cy = floor(B / b) + yoffset; if cy >= N then cy = N-1 end
+        cx = cx - mid
+        cy = cy - mid
         cz = activepos
         
     elseif activeplane == "YZ" then
@@ -3065,9 +3544,11 @@ local function FindActiveCell(x, y, face)
             hcells = 1
         end
         CalculateAaBb()
+        cy = floor(B / b) + yoffset; if cy >= N then cy = N-1 end
+        cz = floor(A / a) + zoffset; if cz >= N then cz = N-1 end
+        cy = cy - mid
+        cz = cz - mid
         cx = activepos
-        cy = floor(B / b) + yoffset - mid
-        cz = floor(A / a) + zoffset - mid
         
     else -- activeplane == "XZ"
         -- T and U faces have N*N cells, the other faces (FBLR) have N cells
@@ -3091,9 +3572,11 @@ local function FindActiveCell(x, y, face)
             xoffset = N-1
         end
         CalculateAaBb()
-        cx = floor(A / a) + xoffset - mid
+        cx = floor(A / a) + xoffset; if cx >= N then cx = N-1 end
+        cz = floor(B / b) + zoffset; if cz >= N then cz = N-1 end
+        cx = cx - mid
+        cz = cz - mid
         cy = activepos
-        cz = floor(B / b) + zoffset - mid
     end
     
     -- return user coordinates (displayed later by Refresh)
@@ -3378,6 +3861,62 @@ end
 
 ----------------------------------------------------------------------
 
+function EraseLiveCells(mousex, mousey)
+    -- erase all live cells whose projected mid points are close to mousex,mousey
+    if popcount > 0 then
+        local changes = 0
+        for z = minz, maxz do
+            local zN = z * N
+            for y = miny, maxy do
+                local zyN = (zN + y) * N
+                for x = minx, maxx do
+                    if grid1[zyN + x] then
+                        local px, py = GetMidPoint(x, y, z)
+                        if abs(px - mousex) < HALFCELL and
+                           abs(py - mousey) < HALFCELL then
+                            grid1[zyN + x] = nil
+                            popcount = popcount - 1
+                            changes = changes + 1
+                        end
+                    end
+                end
+            end
+        end
+        if changes > 0 then Refresh() end
+    end
+end
+
+----------------------------------------------------------------------
+
+function SelectLiveCells(mousex, mousey)
+    -- select all live cells whose projected mid points are close to mousex,mousey
+    if popcount > 0 then
+        local changes = 0
+        for z = minz, maxz do
+            local zN = z * N
+            for y = miny, maxy do
+                local zyN = (zN + y) * N
+                for x = minx, maxx do
+                    if grid1[zyN + x] then
+                        local px, py = GetMidPoint(x, y, z)
+                        if abs(px - mousex) < HALFCELL and
+                           abs(py - mousey) < HALFCELL then
+                            if not selected[zyN + x] then
+                                selected[zyN + x] = true
+                                selcount = selcount + 1
+                                changes = changes + 1
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        if changes > 0 then Refresh() end
+    end
+end
+
+----------------------------------------------------------------------
+
 function CreateOverlay()
     -- overlay covers entire viewport (more if viewport is too small)
     viewwd, viewht = g.getview(g.getlayer())
@@ -3602,13 +4141,14 @@ function HandleKey(event)
     elseif key == "z" and (mods == "shift" or mods == CMDCTRL.."shift") then Redo()
     elseif key == "x" and mods == CMDCTRL then CutSelection()
     elseif key == "c" and mods == CMDCTRL then CopySelection()
-    elseif key == "v" and mods == CMDCTRL then Paste()
+    elseif key == "v" and (mods == "none" or mods == CMDCTRL) then Paste()
+    elseif key == "v" and mods == "alt" then CancelPaste()
     elseif key == "[" then Zoom(CELLSIZE-1)
     elseif key == "]" then Zoom(CELLSIZE+1)
     elseif key == "i" then InitialView()
     elseif key == "f" then FitGrid()
+    elseif key == "p" then CycleCellType()
     elseif key == "l" then ToggleAxes()
-    elseif key == "p" then TogglePoints()
     elseif key == "t" then ToggleToolBar()
     elseif key == "," then MoveActivePlane(activepos+1)
     elseif key == "." then MoveActivePlane(activepos-1)
@@ -3632,29 +4172,48 @@ function MainLoop()
     local mousedown = false
     local drawing = false
     local selecting = false
+    local hand_erasing = false      -- erasing live cells with hand cursor?
+    local hand_selecting = false    -- selecting live cells with hand cursor?
     local prevx, prevy
     while true do
         CheckLayerSize()
+        
+        local event = g.getevent()
+        if event:find("^key") or event:find("^oclick") then
+            message = nil
+        end
       
-        local event = op.process( g.getevent() )
+        event = op.process(event)
         -- event is empty if op.process handled the given event
         if #event > 0 then
             if event:find("^key") then
-                message = nil
                 HandleKey(event)
             elseif event:find("^oclick") then
-                message = nil
                 local _, x, y, button, mods = split(event)
                 x = tonumber(x)
                 y = tonumber(y)
-                if y > toolbarht then
+                if y > toolbarht and button == "left" then
                     mousedown = true
                     prevx = x
                     prevy = y
                     if currcursor == drawcursor then
-                        drawing = StartDrawing(x, y)
+                        if mods == "none" then
+                            drawing = StartDrawing(x, y)
+                        elseif mods == "shift" then
+                            -- move active plane???!!!
+                        end
                     elseif currcursor == selectcursor then
-                        selecting = StartSelecting(x, y)
+                        if mods == "none" then
+                            selecting = StartSelecting(x, y)
+                        elseif mods == "shift" then
+                            -- move active plane???!!!
+                        end
+                    elseif currcursor == movecursor and mods == "alt" then
+                        hand_erasing = true
+                        EraseLiveCells(x, y)
+                    elseif currcursor == movecursor and mods == "shift" then
+                        hand_selecting = true
+                        SelectLiveCells(x, y)
                     end
                 end
             elseif event:find("^mup") then
@@ -3662,10 +4221,13 @@ function MainLoop()
                 if drawing then
                     StopDrawing()
                     drawing = false
-                end
-                if selecting then
+                elseif selecting then
                     StopSelecting()
                     selecting = false
+                elseif hand_erasing then
+                    hand_erasing = false
+                elseif hand_selecting then
+                    hand_selecting = false
                 end
             elseif event:find("^ozoomout") then
                 if not arrow_cursor then Zoom(CELLSIZE-1) end
@@ -3681,12 +4243,17 @@ function MainLoop()
                 x = tonumber(x)
                 y = tonumber(y)
                 if x ~= prevx or y ~= prevy then
+                    -- mouse has moved
                     if drawing then
                         DrawCells(x, y)
                     elseif selecting then
                         SelectCells(x, y)
+                    elseif hand_erasing then
+                        EraseLiveCells(x, y)
+                    elseif hand_selecting then
+                        SelectLiveCells(x, y)
                     else
-                        -- currcursor is movecursor or initial click was outside active plane
+                        -- rotate the view
                         local deltax = x - prevx
                         local deltay = y - prevy
                         Rotate(round(-deltay/2.0), round(deltax/2.0), 0)
@@ -3709,12 +4276,12 @@ end
 ----------------------------------------------------------------------
 
 ReadSettings()
-oldview = SaveView()
+local oldstate = SaveGollyState()
 Initialize()
 
 status, err = xpcall(MainLoop, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 
-RestoreView(oldview)
+RestoreGollyState(oldstate)
 WriteSettings()
