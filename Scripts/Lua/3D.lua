@@ -99,7 +99,6 @@ local zaxis = {}                    -- Z axis
 
 local grid1 = {}                    -- sparse 3D matrix with up to N*N*N live cells
 local grid2 = {}                    -- sparse 3D matrix for the next generation
-local minx,maxx,miny,maxy,minz,maxz -- boundary for live cells
 local popcount = 0                  -- number of live cells
 local pattname = "untitled"         -- most recently saved/opened pattern
 local showaxes = true               -- draw axes and lattice lines?
@@ -1351,23 +1350,10 @@ end
 
 ----------------------------------------------------------------------
 
-function InitBoundaries()
-    minx = math.maxinteger
-    miny = math.maxinteger
-    minz = math.maxinteger
-    maxx = math.mininteger
-    maxy = math.mininteger
-    maxz = math.mininteger
-    -- next SetLiveCell/SetGrid2 call will update all values
-end
-
-----------------------------------------------------------------------
-
 function ClearCells()
     grid1 = {}
     grid2 = {}
     popcount = 0
-    InitBoundaries()
     -- remove selection
     selcount = 0
     selected = {}
@@ -1481,13 +1467,6 @@ local function SetCellState(x, y, z, state)
         if not grid1[pos] then
             grid1[pos] = state
             popcount = popcount + 1
-            -- boundary might expand
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
         else
             grid1[pos] = state
         end
@@ -1497,7 +1476,6 @@ local function SetCellState(x, y, z, state)
             -- kill a live cell
             grid1[pos] = nil
             popcount = popcount - 1
-            -- don't test for boundary shrinkage here (too expensive)
         end
     end
 end
@@ -1508,28 +1486,6 @@ local function SetLiveCell(x, y, z)
     -- this must only be called to create a live cell
     grid1[ x + N * (y + N * z) ] = 1
     popcount = popcount + 1
-    -- boundary might expand
-    if x < minx then minx = x end
-    if y < miny then miny = y end
-    if z < minz then minz = z end
-    if x > maxx then maxx = x end
-    if y > maxy then maxy = y end
-    if z > maxz then maxz = z end
-end
-
-----------------------------------------------------------------------
-
-local function SetGrid2(pos, x, y, z)
-    -- create a live cell in grid2
-    grid2[pos] = 1
-    popcount = popcount + 1
-    -- boundary might expand
-    if x < minx then minx = x end
-    if y < miny then miny = y end
-    if z < minz then minz = z end
-    if x > maxx then maxx = x end
-    if y > maxy then maxy = y end
-    if z > maxz then maxz = z end
 end
 
 ----------------------------------------------------------------------
@@ -1629,8 +1585,7 @@ function NextGeneration()
     
     if gencount == startcount then SaveStart() end
     
-    popcount = 0            -- SetGrid2 will increment popcount
-    InitBoundaries()        -- SetGrid2 will set new boundaries
+    popcount = 0    -- incremented below
 
     local count1 = {}
     local NN = N * N
@@ -1660,10 +1615,12 @@ function NextGeneration()
         k2 = (k + NNN - NN) % NNN
         count1[k2] = (count1[k2] or 0) + v
     end
-    grid2 = {}
+    -- not necessary!!!??? grid2 = {}
     for k,v in pairs(count1) do
         if (grid1[k] and survivals[v-1]) or (births[v] and not grid1[k]) then
-            SetGrid2(k, k % N, k // N % N, k // NN)
+            -- create a live cell in grid2
+            grid2[k] = 1
+            popcount = popcount + 1
         end
     end
     
@@ -1710,12 +1667,6 @@ function ReadPattern(filepath)
     local trule = DEFAULT_RULE
     local tgens = 0
     local tpop = 0
-    local tminx = math.maxinteger
-    local tminy = math.maxinteger
-    local tminz = math.maxinteger
-    local tmaxx = math.mininteger
-    local tmaxy = math.mininteger
-    local tmaxz = math.mininteger
     local tgrid = {}
     
     -- safer and faster to read header lines first, then data lines!!!
@@ -1766,13 +1717,6 @@ function ReadPattern(filepath)
             -- set live cell
             tgrid[ x + tsize * (y + tsize * z) ] = 1
             tpop = tpop + 1
-            -- boundary might expand
-            if x < tminx then tminx = x end
-            if y < tminy then tminy = y end
-            if z < tminz then tminz = z end
-            if x > tmaxx then tmaxx = x end
-            if y > tmaxy then tmaxy = y end
-            if z > tmaxz then tmaxz = z end
         end
     end
     f:close()
@@ -1783,12 +1727,6 @@ function ReadPattern(filepath)
         newrule = trule,
         newgens = tgens,
         newpop = tpop,
-        newminx = tminx,
-        newminy = tminy,
-        newminz = tminz,
-        newmaxx = tmaxx,
-        newmaxy = tmaxy,
-        newmaxz = tmaxz,
         newgrid = tgrid
     }
     return nil, newpattern
@@ -1804,13 +1742,6 @@ function UpdateCurrentGrid(newpattern)
     
     grid1 = newpattern.newgrid
     popcount = newpattern.newpop
-    minx = newpattern.newminx
-    miny = newpattern.newminy
-    minz = newpattern.newminz
-    maxx = newpattern.newmaxx
-    maxy = newpattern.newmaxy
-    maxz = newpattern.newmaxz
-
     ParseRule(newpattern.newrule)   -- sets rulestring, survivals and births
     gencount = newpattern.newgens
     startcount = gencount           -- for Reset
@@ -2364,13 +2295,28 @@ function Paste()
             message = "Clipboard pattern is empty."
             Refresh()
         else
-            -- newpattern contains valid info so set set pastecount and pastecell array
-            minpastex = newpattern.newminx
-            minpastey = newpattern.newminy
-            minpastez = newpattern.newminz
-            maxpastex = newpattern.newmaxx
-            maxpastey = newpattern.newmaxy
-            maxpastez = newpattern.newmaxz
+            -- newpattern contains valid pattern so find its bounding box
+            minpastex = math.maxinteger
+            minpastey = math.maxinteger
+            minpastez = math.maxinteger
+            maxpastex = math.mininteger
+            maxpastey = math.mininteger
+            maxpastez = math.mininteger
+            local P = newpattern.newsize
+            local PP = P*P
+            for k,_ in pairs(newpattern.newgrid) do
+                -- newpattern.newgrid[k] is a live cell
+                local x = k % P
+                local y = (k // P) % P
+                local z = (k // PP) % P
+                if x < minpastex then minpastex = x end
+                if y < minpastey then minpastey = y end
+                if z < minpastez then minpastez = z end
+                if x > maxpastex then maxpastex = x end
+                if y > maxpastey then maxpastey = y end
+                if z > maxpastez then maxpastez = z end
+            end
+            -- now set pastecount and pastecell
             if newpattern.newsize == N then
                 -- put paste pattern in same location as the cut/copy
                 pastecount = newpattern.newpop
@@ -2600,10 +2546,27 @@ function GetRule() return rulestring end
 -- for user scripts
 function GetBounds()
     if popcount > 0 then
-        -- note that minx,maxx,miny,maxy,minz,maxz won't necessarily be
-        -- the minimal bounding box if a live cell was deleted, so maybe
-        -- set a flag if that happens and test it here (also reset the
-        -- flag elsewhere such as in NextGeneration)???!!!
+        -- find the pattern's minimal bounding box
+        -- (use a faster method!!!)
+        local minx = math.maxinteger
+        local miny = math.maxinteger
+        local minz = math.maxinteger
+        local maxx = math.mininteger
+        local maxy = math.mininteger
+        local maxz = math.mininteger
+        local NN = N*N
+        for k,_ in pairs(grid1) do
+            -- grid1[k] is a live cell
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
+        end
         local mid = N//2
         return { minx-mid, maxx-mid, miny-mid, maxy-mid, minz-mid, maxz-mid }
     else
@@ -2632,7 +2595,7 @@ end
 -- for user scripts (where 0,0,0 is middle cell in grid)
 function GetCell(x, y, z)
     local mid = N//2
-    if grid1[ (x+mid) + N * ((y+mid) + N * (z+mid))] then
+    if grid1[ (x+mid) + N * ((y+mid) + N * (z+mid)) ] then
         return 1
     else
         return 0
