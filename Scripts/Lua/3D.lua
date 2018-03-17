@@ -47,7 +47,8 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 --]]
 
 local g = golly()
---!!! require "gplus.strict"
+--!!!
+require "gplus.strict"
 local gp = require "gplus"
 local int = gp.int
 local validint = gp.validint
@@ -176,6 +177,8 @@ local exitbutton                    -- X
 local drawbox                       -- check box for draw mode
 local selectbox                     -- check box for select mode
 local movebox                       -- check box for move mode
+
+local pastemenu                     -- pop-up menu for choosing a paste action
 
 local buttonht = 20
 local gap = 10                      -- space around buttons
@@ -2287,42 +2290,61 @@ function Paste()
         if err then
             message = "Clipboard does not contain a valid 3D pattern."
             Refresh()
-        elseif newpattern.newpop == 0 then
+            return
+        end
+        
+        if newpattern.newpop == 0 then
             message = "Clipboard pattern is empty."
             Refresh()
+            return
+        end
+        
+        -- newpattern contains valid pattern so find its bounding box
+        minpastex = math.maxinteger
+        minpastey = math.maxinteger
+        minpastez = math.maxinteger
+        maxpastex = math.mininteger
+        maxpastey = math.mininteger
+        maxpastez = math.mininteger
+        local P = newpattern.newsize
+        local PP = P*P
+        for k,_ in pairs(newpattern.newgrid) do
+            -- newpattern.newgrid[k] is a live cell
+            local x = k % P
+            local y = (k // P) % P
+            local z = (k // PP) % P
+            if x < minpastex then minpastex = x end
+            if y < minpastey then minpastey = y end
+            if z < minpastez then minpastez = z end
+            if x > maxpastex then maxpastex = x end
+            if y > maxpastey then maxpastey = y end
+            if z > maxpastez then maxpastez = z end
+        end
+        local pwd = maxpastex - minpastex + 1
+        local pht = maxpastey - minpastey + 1
+        local pdp = maxpastez - minpastez + 1
+        if pwd > N or pht > N or pdp > N then
+            message = "Clipboard pattern is too big ("..pwd.." x "..pht.." x "..pdp..")."
+            Refresh()
+            return
+        end
+        
+        -- set pastecount and pastecell
+        pastecount = newpattern.newpop
+        if newpattern.newsize == N then
+            -- put paste pattern in same location as the cut/copy
+            pastecell = newpattern.newgrid
         else
-            -- newpattern contains valid pattern so find its bounding box
-            minpastex = math.maxinteger
-            minpastey = math.maxinteger
-            minpastez = math.maxinteger
-            maxpastex = math.mininteger
-            maxpastey = math.mininteger
-            maxpastez = math.mininteger
-            local P = newpattern.newsize
-            local PP = P*P
+            -- put paste pattern in middle of grid
             for k,_ in pairs(newpattern.newgrid) do
                 -- newpattern.newgrid[k] is a live cell
-                local x = k % P
-                local y = (k // P) % P
-                local z = (k // PP) % P
-                if x < minpastex then minpastex = x end
-                if y < minpastey then minpastey = y end
-                if z < minpastez then minpastez = z end
-                if x > maxpastex then maxpastex = x end
-                if y > maxpastey then maxpastey = y end
-                if z > maxpastez then maxpastez = z end
+                local x = (k % P)         - minpastex + (N - pwd) // 2
+                local y = ((k // P) % P)  - minpastey + (N - pht) // 2
+                local z = ((k // PP) % P) - minpastez + (N - pdp) // 2
+                pastecell[ x + N * (y + N * z) ] = 1
             end
-            -- now set pastecount and pastecell
-            if newpattern.newsize == N then
-                -- put paste pattern in same location as the cut/copy
-                pastecount = newpattern.newpop
-                pastecell = newpattern.newgrid
-            else
-                -- put paste pattern in middle of grid, clipping any cells outside
-                --!!!
-            end
-            Refresh()
         end
+        Refresh()
     end
 end
 
@@ -2334,6 +2356,344 @@ function CancelPaste()
         pastecell = {}
         Refresh()
     end
+end
+
+----------------------------------------------------------------------
+
+function PasteOR()
+    if pastecount > 0 then
+        for k,_ in pairs(pastecell) do
+            if not grid1[k] then
+                grid1[k] = 1
+                popcount = popcount + 1
+            end
+        end
+        pastecount = 0
+        pastecell = {}
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function PasteXOR()
+    if pastecount > 0 then
+        for k,_ in pairs(pastecell) do
+            if grid1[k] then
+                grid1[k] = nil
+                popcount = popcount - 1
+            else
+                grid1[k] = 1
+                popcount = popcount + 1
+            end
+        end
+        pastecount = 0
+        pastecell = {}
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function ReflectX()
+    if pastecount > 0 then
+        -- reflect X coords across YZ plane thru middle of paste pattern
+        local midx = minpastex + (maxpastex - minpastex) / 2
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(pastecell) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {round(midx*2) - x, y, z}
+            pastecell[k] = nil
+        end
+        for _,xyz in ipairs(cells) do
+            local x, y, z = xyz[1], xyz[2], xyz[3]
+            pastecell[x + N * (y + N * z)] = 1
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function ReflectY()
+    if pastecount > 0 then
+        -- reflect Y coords across XZ plane thru middle of paste pattern
+        local midy = minpastey + (maxpastey - minpastey) / 2
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(pastecell) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {x, round(midy*2) - y, z}
+            pastecell[k] = nil
+        end
+        for _,xyz in ipairs(cells) do
+            local x, y, z = xyz[1], xyz[2], xyz[3]
+            pastecell[x + N * (y + N * z)] = 1
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function ReflectZ()
+    if pastecount > 0 then
+        -- reflect Z coords across XY plane thru middle of paste pattern
+        local midz = minpastez + (maxpastez - minpastez) / 2
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(pastecell) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {x, y, round(midz*2) - z}
+            pastecell[k] = nil
+        end
+        for _,xyz in ipairs(cells) do
+            local x, y, z = xyz[1], xyz[2], xyz[3]
+            pastecell[x + N * (y + N * z)] = 1
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+-- move this stuff into oplus eventually!!! (and replace op. and some p. with m.)
+
+function draw_line(x1, y1, x2, y2) ov("line "..x1.." "..y1.." "..x2.." "..y2) end
+function fill_rect(x, y, wd, ht) ov("fill "..x.." "..y.." "..wd.." "..ht) end
+
+local function DrawPopUpMenu(p, chosenitem)
+    -- draw pop-up window showing all items
+    local numitems = #p.items
+    if numitems == 0 then return end
+    
+    local oldrgba = ov(p.menubg)
+    local ht = numitems * p.itemht + 1
+    local wd = p.menuwd
+    local x = p.x
+    local y = p.y
+    fill_rect(x, y, wd, ht)
+    
+    local oldfont = ov(p.menufont)
+    local oldblend = ov("blend 1")
+    
+    -- draw translucent gray shadows
+    ov("rgba 48 48 48 128")
+    local shadowsize = 2
+    fill_rect(x+shadowsize, y+ht, wd-shadowsize, shadowsize)
+    fill_rect(x+wd, y, shadowsize, ht+shadowsize)
+    
+    x = x + p.menugap
+    y = y + op.yoffset
+    for i = 1, numitems do
+        local item = p.items[i]
+        if item.f == nil then
+            -- item is a separator
+            ov(p.discolor)
+            draw_line(x-p.menugap, y+p.itemht//2, x-p.menugap+wd-1, y+p.itemht//2)
+        else
+            if i == chosenitem and item.enabled then
+                ov(p.selbg)
+                fill_rect(x-p.menugap, y, wd, p.itemht)
+            end
+            local oldtextbg = ov("textoption background 0 0 0 0")
+            if item.enabled then
+                op.maketext(item.name, nil, p.menutext, op.textshadowx, op.textshadowy, op.textshadowrgba)
+                op.pastetext(x, y + p.itemgap)
+                ov(p.menutext)
+            else
+                op.maketext(item.name, nil, p.discolor)  -- no shadow if disabled
+                op.pastetext(x, y + p.itemgap)
+                ov(p.discolor)
+            end
+            ov("textoption background "..oldtextbg)
+            if item.ticked then
+                -- draw tick mark at right edge
+                local x1 = x - p.menugap + wd - p.menugap
+                local y1 = y + 6
+                local x2 = x1 - 6
+                local y2 = y + p.itemht - 8
+                local oldwidth = ov("lineoption width 4")
+                if item.enabled and (op.textshadowx > 0 or op.textshadowy > 0) then
+                    local oldcolor = ov(op.textshadowrgba)
+                    draw_line(x1+op.textshadowx, y1+op.textshadowy, x2+op.textshadowx, y2+op.textshadowy)
+                    draw_line(x2+op.textshadowx, y2+op.textshadowy, x2+op.textshadowx-5, y2+op.textshadowy-3)
+                    ov("rgba "..oldcolor)
+                end
+                draw_line(x1, y1, x2, y2)
+                draw_line(x2, y2, x2-5, y2-3)
+                ov("lineoption width "..oldwidth)
+            end
+        end
+        y = y + p.itemht
+    end
+
+    ov("blend "..oldblend)
+    ov("font "..oldfont)
+    ov("rgba "..oldrgba)
+end
+
+----------------------------------------------------------------------
+
+local function GetPopUpItem(x, y, p)
+    -- return index of item at given mouse location
+    if x <= p.x or y <= p.y then return 0 end
+    local numitems = #p.items
+    local ht = numitems * p.itemht
+    if y > p.y + ht then return 0 end
+    if x > p.x + p.menuwd then return 0 end
+    
+    -- x,y is somewhere in a menu item
+    local itemindex = math.floor((y - p.y) / p.itemht) + 1
+    if itemindex > numitems then itemindex = numitems end
+
+    return itemindex
+end
+
+----------------------------------------------------------------------
+
+local function choose_popup_item(p)
+    -- return a chosen item from the given pop-up menu
+    -- or nil if the item is disabled or no item is selected
+    
+    local t0 = g.millisecs()
+
+    -- save entire overlay in bgclip
+    local bgclip = string.gsub(tostring(p).."bg"," ","")
+    ov("copy 0 0 0 0 "..bgclip)
+    
+    local chosenitem = 0
+    DrawPopUpMenu(p, chosenitem)
+    g.update()
+    
+    local x = p.x
+    local y = p.y
+    local prevx = x
+    local prevy = y
+    while true do
+        local event = g.getevent()
+        if event:find("^mup") then
+            if g.millisecs() - t0 > 500 then
+                break
+            end
+        elseif event:find("^oclick") then
+            local _, sx, sy, butt, mods = split(event)
+            if butt == "left" and mods == "none" then
+                x = tonumber(sx)
+                y = tonumber(sy)
+                break
+            end
+        elseif event == "key enter none" or event == "key return none" then
+            break
+        end
+        local xy = ov("xy")
+        if #xy > 0 then
+            x, y = split(xy)
+            x = tonumber(x)
+            y = tonumber(y)
+            if x ~= prevx or y ~= prevy then
+                -- check if mouse moved into or out of an item
+                local olditem = chosenitem
+                chosenitem = GetPopUpItem(x, y, p)
+                if chosenitem ~= olditem then
+                    ov("paste 0 0 "..bgclip)
+                    DrawPopUpMenu(p, chosenitem)
+                    g.update()
+                end
+                prevx = x
+                prevy = y
+            end
+        end
+    end
+
+    chosenitem = GetPopUpItem(x, y, p)
+    
+    -- restore overlay
+    ov("paste 0 0 "..bgclip)
+    g.update()
+    ov("delete "..bgclip)
+    
+    return chosenitem
+end
+
+--------------------------------------------------------------------------------
+
+function popupmenu()
+    -- return a table that makes it easy to create and use a pop-up menu
+    local p = {}
+    
+    p.items = {}    -- array of items
+    p.labelht = 0   -- height of label text
+    p.itemht = 0    -- height of an item
+    p.menuwd = 0    -- width of pop-up menu
+    p.x = 0         -- top left location of pop-up menu
+    p.y = 0
+
+    -- remove and replace these p. with m. !!!
+    p.menubg = "rgba 40 128 255 255"
+    p.selbg = "rgba 20 64 255 255"
+    p.discolor = "rgba 88 176 255 255"
+    p.menufont = "font 12 default-bold"
+    p.menutext = op.white
+    p.menugap = 10
+    p.itemgap = 2
+    
+    local function check_width(itemname)
+        local oldfont = ov(p.menufont)
+        local oldblend = ov("blend 1")
+        local wd, ht = op.maketext(itemname, nil, p.menutext, op.textshadowx, op.textshadowy, op.textshadowrgba)
+        ov("blend "..oldblend)
+        ov("font "..oldfont)
+        p.labelht = ht
+        p.itemht = ht + p.itemgap*2
+        local itemwd = wd + p.menugap*2 + 20
+        if itemwd > p.menuwd then p.menuwd = itemwd end
+    end
+    
+    p.additem = function (itemname, onselect, args)
+        args = args or {}
+        check_width(itemname)
+        p.items[#p.items+1] = { name=itemname, f=onselect, fargs=args, enabled=true, ticked=false }
+    end
+    
+    p.enableitem = function (itemindex, bool)
+        -- enable/disable the given item
+        p.items[itemindex].enabled = bool
+    end
+
+    p.tickitem = function (itemindex, bool)
+        -- tick/untick the given item
+        p.items[itemindex].ticked = bool
+    end
+    
+    p.show = function (x, y)
+        p.x = x
+        p.y = y
+        local itemindex = choose_popup_item(p)
+        if itemindex > 0 then
+            local item = p.items[itemindex]
+            if item and item.f and item.enabled then
+                -- call this item's handler
+                item.f( table.unpack(item.fargs) )
+            end
+        end
+    end
+    
+    return p
+end
+
+----------------------------------------------------------------------
+
+function ChoosePasteAction(mousex, mousey)
+    -- show pop-up menu at mousex,mousey and let user choose an action
+    pastemenu.show(mousex, mousey)
 end
 
 ----------------------------------------------------------------------
@@ -3744,6 +4104,17 @@ function CreateOverlay()
     selectbox = op.checkbox("Select", op.black, SelectMode)
     movebox = op.checkbox("Move", op.black, MoveMode)
     
+    -- create pop-up menu for paste actions (eventually from op!!!)
+    pastemenu = popupmenu()
+    pastemenu.additem("Cancel Paste", CancelPaste)
+    pastemenu.additem("Paste (OR)", PasteOR)
+    pastemenu.additem("Paste (XOR)", PasteXOR)
+    pastemenu.additem("---", nil)
+    pastemenu.additem("Reflect X", ReflectX)
+    pastemenu.additem("Reflect Y", ReflectY)
+    pastemenu.additem("Reflect Z", ReflectZ)
+    -- add rotate items!!!
+    
     ov("textoption background "..oldbg) -- see above!!!
 end
 
@@ -3956,7 +4327,10 @@ function MainLoop()
         
         local event = g.getevent()
         if event:find("^key") or event:find("^oclick") then
-            message = nil
+            if message then
+                message = nil
+                Refresh()
+            end
         end
       
         event = op.process(event)
@@ -3968,28 +4342,35 @@ function MainLoop()
                 local _, x, y, button, mods = split(event)
                 x = tonumber(x)
                 y = tonumber(y)
-                if y > toolbarht and button == "left" then
-                    mousedown = true
-                    prevx = x
-                    prevy = y
-                    if currcursor == drawcursor then
-                        if mods == "none" then
-                            drawing = StartDrawing(x, y)
-                        elseif mods == "shift" then
-                            -- move active plane???!!!
+                if y > toolbarht then
+                    if (button == "right" and (mods == "none" or mods == "ctrl")) or
+                       (button == "left" and mods == "ctrl") then
+                        if pastecount > 0 then
+                            ChoosePasteAction(x, y)
                         end
-                    elseif currcursor == selectcursor then
-                        if mods == "none" then
-                            selecting = StartSelecting(x, y)
-                        elseif mods == "shift" then
-                            -- move active plane???!!!
+                    elseif button == "left" then
+                        mousedown = true
+                        prevx = x
+                        prevy = y
+                        if currcursor == drawcursor then
+                            if mods == "none" then
+                                drawing = StartDrawing(x, y)
+                            elseif mods == "shift" then
+                                -- move active plane???!!!
+                            end
+                        elseif currcursor == selectcursor then
+                            if mods == "none" then
+                                selecting = StartSelecting(x, y)
+                            elseif mods == "shift" then
+                                -- move active plane???!!!
+                            end
+                        elseif currcursor == movecursor and mods == "alt" then
+                            hand_erasing = true
+                            EraseLiveCells(x, y)
+                        elseif currcursor == movecursor and mods == "shift" then
+                            hand_selecting = true
+                            SelectLiveCells(x, y)
                         end
-                    elseif currcursor == movecursor and mods == "alt" then
-                        hand_erasing = true
-                        EraseLiveCells(x, y)
-                    elseif currcursor == movecursor and mods == "shift" then
-                        hand_selecting = true
-                        SelectLiveCells(x, y)
                     end
                 end
             elseif event:find("^mup") then
