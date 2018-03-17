@@ -1615,7 +1615,6 @@ function NextGeneration()
         k2 = (k + NNN - NN) % NNN
         count1[k2] = (count1[k2] or 0) + v
     end
-    -- not necessary!!!??? grid2 = {}
     for k,v in pairs(count1) do
         if (grid1[k] and survivals[v-1]) or (births[v] and not grid1[k]) then
             -- create a live cell in grid2
@@ -1920,24 +1919,34 @@ end
 
 ----------------------------------------------------------------------
 
+function CallScript(func, fromclip)
+    scriptlevel = scriptlevel+1
+    -- error if scriptlevel reaches 100???!!!
+    local status, err = pcall(func)
+    scriptlevel = scriptlevel-1
+    if err then
+        g.continue("")
+        if err == "GOLLY: ABORT SCRIPT" then
+            -- user hit escape
+            message = "Script aborted."
+        else
+            if fromclip then
+                g.warn("Runtime error in clipboard script:\n\n"..err)
+            else
+                g.warn("Runtime error in script:\n\n"..err)
+            end
+        end
+    end
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
 function RunScript(filepath)
     if filepath then
         local f, msg = loadfile(filepath)
         if f then
-            scriptlevel = scriptlevel+1
-            -- error if scriptlevel reaches 100???!!!
-            local status, err = pcall(f)
-            scriptlevel = scriptlevel-1
-            if err then
-                g.continue("")
-                if err == "GOLLY: ABORT SCRIPT" then
-                    -- user hit escape
-                    message = "Script aborted."
-                else
-                    g.warn("Runtime error in script:\n\n"..err)
-                end
-            end
-            Refresh()
+            CallScript(f, false)
         else
             g.warn("Syntax error in script:\n\n"..msg)
         end
@@ -1959,20 +1968,7 @@ end
 function RunClipboard()
     local f, msg = load(g.getclipstr())
     if f then
-        scriptlevel = scriptlevel+1
-        -- error if scriptlevel reaches 100???!!!
-        local status, err = pcall(f)
-        scriptlevel = scriptlevel-1
-        if err then
-            g.continue("")
-            if err == "GOLLY: ABORT SCRIPT" then
-                -- user hit escape
-                message = "Script aborted."
-            else
-                g.warn("Runtime error in clipboard script:\n\n"..err)
-            end
-        end
-        Refresh()
+        CallScript(f, true)
     else
         g.warn("Syntax error in clipboard script:\n\n"..msg)
     end
