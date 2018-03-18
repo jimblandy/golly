@@ -2532,6 +2532,33 @@ function test_batch()
     local xylist   = table.concat(xy, " ").." "..xy[1].." "..xy[2]
     local xywhlist = table.concat(xywh, " ")
 
+    -- create paste clip
+    local clipname = "testclip"
+    ov("create 64 64 "..clipname)
+    ov("target "..clipname)
+    ov(op.blue)
+    ov("fill")
+    ov("optimize "..clipname)
+    ov("target")
+
+    -- time paste one at a time
+    local t7 = g.millisecs()
+    for i = 1, reps do
+        m = 1
+        for i = 1, items do
+            ov("paste "..xy[m].." "..xy[m + 1].." "..clipname)
+            m = m + 2
+        end
+    end
+    t7 = g.millisecs() - t7
+
+    -- time drawing all at once
+    local t8 = g.millisecs()
+    for i = 1, reps do
+        ov("paste "..xylist.." "..clipname)
+    end
+    t8 = g.millisecs() - t8
+
     -- draw random lines
     ov(op.green)
 
@@ -2600,7 +2627,10 @@ function test_batch()
     end
     t2 = g.millisecs() - t2
 
-    g.show("reps: "..reps.."  items: "..items.."  pixels: single "..ms(t1).." batch "..ms(t2).."  lines: single "..ms(t3).." batch "..ms(t4).."  rectangles: single "..ms(t5).." batch "..ms(t6))
+    g.show("reps: "..reps.."  items: "..items.."  pixels: single "..ms(t1).." batch "..ms(t2).."  lines: single "..ms(t3).." batch "..ms(t4).."  rectangles: single "..ms(t5).." batch "..ms(t6).."  paste: single "..ms(t7).." batch "..ms(t8))
+
+    -- delete the clip
+    ov("delete "..clipname)
 
     -- create batch string
     if repeat_test(" with a different batch size") then goto restart end

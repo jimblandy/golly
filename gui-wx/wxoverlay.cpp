@@ -2724,7 +2724,7 @@ void Overlay::DrawPixel(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::GetCoordinatePair(const char* args, int* x, int* y)
+const char* Overlay::GetCoordinatePair(char* args, int* x, int* y)
 {
     // attempt to decode integers
     char c = *args++;
@@ -2797,7 +2797,7 @@ const char* Overlay::DoSetPixel(const char* args)
     int x = 0;
     int y = 0;
     // get the first pixel coordinates (mandatory)
-    args = GetCoordinatePair(args, &x, &y);
+    args = GetCoordinatePair((char*)args, &x, &y);
     if (!args) return OverlayError("set command requires coordinate pairs");
 
     // mark target clip as changed
@@ -2808,7 +2808,7 @@ const char* Overlay::DoSetPixel(const char* args)
 
     // read any further coordinates
     while (*args) {
-        args = GetCoordinatePair(args, &x, &y);
+        args = GetCoordinatePair((char*)args, &x, &y);
         if (!args) return OverlayError("set command has illegal coordinates");
         if (PixelInTarget(x, y)) DrawPixel(x, y);
     }
@@ -3311,9 +3311,9 @@ const char* Overlay::DoLine(const char* args)
     if (pixmap == NULL) return OverlayError(no_overlay);
 
     int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-    args = GetCoordinatePair(args, &x1, &y1);
+    args = GetCoordinatePair((char*)args, &x1, &y1);
     if (!args) return OverlayError("line command requires at least two coordinate pairs");
-    args = GetCoordinatePair(args, &x2, &y2);
+    args = GetCoordinatePair((char*)args, &x2, &y2);
     if (!args) return OverlayError("line command requires at least two coordinate pairs");
 
     // mark target clip as changed
@@ -3326,7 +3326,7 @@ const char* Overlay::DoLine(const char* args)
     while (*args) {
         x1 = x2;
         y1 = y2;
-        args = GetCoordinatePair(args, &x2, &y2);
+        args = GetCoordinatePair((char*)args, &x2, &y2);
         if (!args) return OverlayError("line command has illegal coordinates");
         RenderLine(x1, y1, x2, y2);
     }
@@ -3804,9 +3804,9 @@ const char* Overlay::DoFill(const char* args)
 
     if (*args == ' ') {
         int x = 0, y = 0, w = 0, h = 0;
-        args = GetCoordinatePair(args, &x, &y);
+        args = GetCoordinatePair((char*)args, &x, &y);
         if (!args) return OverlayError("fill command requires 0 or at least 4 arguments");
-        args = GetCoordinatePair(args, &w, &h);
+        args = GetCoordinatePair((char*)args, &w, &h);
         if (!args) return OverlayError("fill command requires 0 or at least 4 arguments");
 
         // treat non-positive w/h as inset from overlay's width/height
@@ -3835,9 +3835,9 @@ const char* Overlay::DoFill(const char* args)
         }
         
         while (*args) {
-            args = GetCoordinatePair(args, &x, &y);
+            args = GetCoordinatePair((char*)args, &x, &y);
             if (!args) return OverlayError("fill command invalid arguments");
-            args = GetCoordinatePair(args, &w, &h);
+            args = GetCoordinatePair((char*)args, &w, &h);
             if (!args) return OverlayError("fill command invalid arguments");
 
             // treat non-positive w/h as inset from overlay's width/height
@@ -4025,14 +4025,42 @@ const char* Overlay::DoPaste(const char* args)
     if (pixmap == NULL) return OverlayError(no_overlay);
 
     int x, y;
-    int namepos;
-    char dummy;
-    if (sscanf(args, " %d %d %n%c", &x, &y, &namepos, &dummy) != 3) {
-        // note that %n is not included in the count
-        return OverlayError("paste command requires 3 arguments");
+
+    // find out the length of the argument string
+    int arglen = strlen(args);
+    if (arglen == 0) {
+        return OverlayError("paste command requires at least 3 arguments");
     }
 
-    std::string name = args + namepos;
+    // make a copy of the arguments so we can change them
+    char *buffer = (char*)malloc(arglen + 1);   // add 1 for the terminating nul
+    char *copy = buffer;
+    strcpy(copy, args);
+
+    // find the last argument which should be the clip name
+    char* lastarg = copy + arglen - 1;
+
+    // skip trailing whitespace
+    while (lastarg >= copy && *lastarg == ' ') {
+        lastarg--;
+    }
+
+    // skip until whitespace
+    while (lastarg >= copy && *lastarg != ' ') {
+        lastarg--;
+    }
+
+    // check if clip name was found
+    if (lastarg < copy) {
+        free(buffer);
+        return OverlayError("paste command requires at least 3 arguments");
+    }
+
+    // null terminate the arguments before the clip name
+    *lastarg++ = 0;
+
+    // lookup the named clip
+    std::string name = lastarg;
     std::map<std::string,Clip*>::iterator it;
     it = clips.find(name);
     if (it == clips.end()) {
@@ -4040,6 +4068,7 @@ const char* Overlay::DoPaste(const char* args)
         msg = "unknown paste clip (";
         msg += name;
         msg += ")";
+        free(buffer);
         return OverlayError(msg.c_str());
     }
 
@@ -4047,189 +4076,204 @@ const char* Overlay::DoPaste(const char* args)
     int w = clipptr->cwd;
     int h = clipptr->cht;
 
-    // do nothing if rect is completely outside target
-    if (RectOutsideTarget(x, y, w, h)) return NULL;
+    // read the first coordinate pair
+    copy = (char*)GetCoordinatePair(copy, &x, &y);
+    if (!copy) {
+        free(buffer);
+        return OverlayError("paste command requires a least one coordinate pair");
+    }
 
     // mark target clip as changed
     DisableTargetClipIndex();
-
-    // check for transformation
-    if (identity) {
-        // no transformation, check for clip and target the same size without alpha blending
-        if (!alphablend && x == 0 && y == 0 && w == wd && h == ht) {
-            // fast paste with single memcpy call
-            memcpy(pixmap, clipptr->cdata, w * h * 4);
-        }
-        else {
-            // get the clip data
-            unsigned int *ldata = (unsigned int*)clipptr->cdata;
-            int cliprowpixels = w;
-            int rowoffset = 0;
     
-            // check for clipping
-            int xmax = x + w - 1;
-            int ymax = y + h - 1;
-            if (x < 0) {
-                // skip pixels off left edge
-                ldata += -x;
-                x = 0;
+    // paste at each coordinate pair
+    do {
+        // do nothing if rect is completely outside target
+        if (RectOutsideTarget(x, y, w, h)) return NULL;
+    
+        // check for transformation
+        if (identity) {
+            // no transformation, check for clip and target the same size without alpha blending
+            if (!alphablend && x == 0 && y == 0 && w == wd && h == ht) {
+                // fast paste with single memcpy call
+                memcpy(pixmap, clipptr->cdata, w * h * 4);
             }
-            if (y < 0) {
-                // skip pixels off top edge
-                ldata += -y * cliprowpixels;
-                rowoffset = -y;
-                y = 0;
-            }
-            if (xmax >= wd) xmax = wd - 1;
-            if (ymax >= ht) ymax = ht - 1;
-            w = xmax - x + 1;
-            h = ymax - y + 1;
-    
-            // get the paste target data
-            int targetrowpixels = wd;
-            unsigned int* lp = (unsigned int*)pixmap;
-            lp += y * targetrowpixels + x;
-            
-            // check for alpha blending
-            if (alphablend) {
-                // alpha blending
-                unsigned char* p = (unsigned char*)lp;
-                bool hasindex = clipptr->hasindex;
-                unsigned char* rowindex = clipptr->rowindex;
-    
-                for (int j = 0; j < h; j++) {
-                    // if row index exists then skip row if blank (all pixels have alpha 0)
-                    if (hasindex && !rowindex[rowoffset + j]) {
-                        ldata += w;
-                        lp += w;
-                    } else {
-                        // if row index exists and all pixels opaque then use memcpy
-                        if (hasindex && rowindex[rowoffset + j] == 255) {
-                            memcpy(lp, ldata, w << 2);
+            else {
+                // get the clip data
+                unsigned int *ldata = (unsigned int*)clipptr->cdata;
+                int cliprowpixels = w;
+                int rowoffset = 0;
+        
+                // check for clipping
+                int xmax = x + w - 1;
+                int ymax = y + h - 1;
+                if (x < 0) {
+                    // skip pixels off left edge
+                    ldata += -x;
+                    x = 0;
+                }
+                if (y < 0) {
+                    // skip pixels off top edge
+                    ldata += -y * cliprowpixels;
+                    rowoffset = -y;
+                    y = 0;
+                }
+                if (xmax >= wd) xmax = wd - 1;
+                if (ymax >= ht) ymax = ht - 1;
+                w = xmax - x + 1;
+                h = ymax - y + 1;
+        
+                // get the paste target data
+                int targetrowpixels = wd;
+                unsigned int* lp = (unsigned int*)pixmap;
+                lp += y * targetrowpixels + x;
+                
+                // check for alpha blending
+                if (alphablend) {
+                    // alpha blending
+                    unsigned char* p = (unsigned char*)lp;
+                    bool hasindex = clipptr->hasindex;
+                    unsigned char* rowindex = clipptr->rowindex;
+        
+                    for (int j = 0; j < h; j++) {
+                        // if row index exists then skip row if blank (all pixels have alpha 0)
+                        if (hasindex && !rowindex[rowoffset + j]) {
                             ldata += w;
                             lp += w;
                         } else {
-                            for (int i = 0; i < w; i++) {
-                                // get the source pixel
-                                unsigned char* srcp = (unsigned char*)ldata;
-                                unsigned int rgba = *ldata++;
-                                unsigned char pa = srcp[3];
-            
-                                // draw the pixel
-                                if (pa < 255) {
-                                    if (pa > 0) {
-                                        // source pixel is translucent so blend with destination pixel;
-                                        // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
-                                        unsigned char pr = srcp[0];
-                                        unsigned char pg = srcp[1];
-                                        unsigned char pb = srcp[2];
-                                        unsigned char destr = p[0];
-                                        unsigned char destg = p[1];
-                                        unsigned char destb = p[2];
-                                        unsigned char desta = p[3];
-                                        if (desta == 255) {
-                                            // destination pixel is opaque
-                                            unsigned int alpha = pa + 1;
-                                            unsigned int invalpha = 256 - pa;
-                                            *p++ = (alpha * pr + invalpha * destr) >> 8;
-                                            *p++ = (alpha * pg + invalpha * destg) >> 8;
-                                            *p++ = (alpha * pb + invalpha * destb) >> 8;
-                                            p++;   // no need to change p[3] (alpha stays at 255)
-                                        } else {
-                                            // destination pixel is translucent
-                                            float alpha = pa / 255.0;
-                                            float inva = 1.0 - alpha;
-                                            float destalpha = desta / 255.0;
-                                            float outa = alpha + destalpha * inva;
-                                            p[3] = int(outa * 255);
-                                            if (p[3] > 0) {
-                                                *p++ = int((pr * alpha + destr * destalpha * inva) / outa);
-                                                *p++ = int((pg * alpha + destg * destalpha * inva) / outa);
-                                                *p++ = int((pb * alpha + destb * destalpha * inva) / outa);
-                                                p++;   // already set above
+                            // if row index exists and all pixels opaque then use memcpy
+                            if (hasindex && rowindex[rowoffset + j] == 255) {
+                                memcpy(lp, ldata, w << 2);
+                                ldata += w;
+                                lp += w;
+                            } else {
+                                for (int i = 0; i < w; i++) {
+                                    // get the source pixel
+                                    unsigned char* srcp = (unsigned char*)ldata;
+                                    unsigned int rgba = *ldata++;
+                                    unsigned char pa = srcp[3];
+                
+                                    // draw the pixel
+                                    if (pa < 255) {
+                                        if (pa > 0) {
+                                            // source pixel is translucent so blend with destination pixel;
+                                            // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                                            unsigned char pr = srcp[0];
+                                            unsigned char pg = srcp[1];
+                                            unsigned char pb = srcp[2];
+                                            unsigned char destr = p[0];
+                                            unsigned char destg = p[1];
+                                            unsigned char destb = p[2];
+                                            unsigned char desta = p[3];
+                                            if (desta == 255) {
+                                                // destination pixel is opaque
+                                                unsigned int alpha = pa + 1;
+                                                unsigned int invalpha = 256 - pa;
+                                                *p++ = (alpha * pr + invalpha * destr) >> 8;
+                                                *p++ = (alpha * pg + invalpha * destg) >> 8;
+                                                *p++ = (alpha * pb + invalpha * destb) >> 8;
+                                                p++;   // no need to change p[3] (alpha stays at 255)
                                             } else {
-                                                p += 4;
+                                                // destination pixel is translucent
+                                                float alpha = pa / 255.0;
+                                                float inva = 1.0 - alpha;
+                                                float destalpha = desta / 255.0;
+                                                float outa = alpha + destalpha * inva;
+                                                p[3] = int(outa * 255);
+                                                if (p[3] > 0) {
+                                                    *p++ = int((pr * alpha + destr * destalpha * inva) / outa);
+                                                    *p++ = int((pg * alpha + destg * destalpha * inva) / outa);
+                                                    *p++ = int((pb * alpha + destb * destalpha * inva) / outa);
+                                                    p++;   // already set above
+                                                } else {
+                                                    p += 4;
+                                                }
                                             }
+                                        } else {
+                                            // skip transparent pixel
+                                            p += 4;
                                         }
                                     } else {
-                                        // skip transparent pixel
+                                        // pixel is opaque so copy it
+                                        *lp = rgba;
                                         p += 4;
                                     }
-                                } else {
-                                    // pixel is opaque so copy it
-                                    *lp = rgba;
-                                    p += 4;
+                                    lp++;
                                 }
-                                lp++;
                             }
                         }
+                        // next clip and target row
+                        lp += targetrowpixels - w;
+                        p = (unsigned char*)lp;
+                        ldata += cliprowpixels - w;
                     }
-                    // next clip and target row
-                    lp += targetrowpixels - w;
-                    p = (unsigned char*)lp;
-                    ldata += cliprowpixels - w;
-                }
-            } else {
-                // no alpha blending
-                for (int j = 0; j < h; j++) {
-                    // copy each row with memcpy
-                    memcpy(lp, ldata, w << 2);
-                    lp += targetrowpixels;
-                    ldata += cliprowpixels;
+                } else {
+                    // no alpha blending
+                    for (int j = 0; j < h; j++) {
+                        // copy each row with memcpy
+                        memcpy(lp, ldata, w << 2);
+                        lp += targetrowpixels;
+                        ldata += cliprowpixels;
+                    }
                 }
             }
-        }
-    } else {
-        // do an affine transformation
-        unsigned char* data = clipptr->cdata;
-        int x0 = x - (x * axx + y * axy);
-        int y0 = y - (x * ayx + y * ayy);
-
-        // check for alpha blend
-        if (alphablend) {
-            // save RGBA values
-            unsigned char saver = r;
-            unsigned char saveg = g;
-            unsigned char saveb = b;
-            unsigned char savea = a;
-
-            for (int j = 0; j < h; j++) {
-                for (int i = 0; i < w; i++) {
-                    r = *data++;
-                    g = *data++;
-                    b = *data++;
-                    a = *data++;
-                    int newx = x0 + x * axx + y * axy;
-                    int newy = y0 + x * ayx + y * ayy;
-                    if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
-                    x++;
-                }
-                y++;
-                x -= w;
-            }
-
-            // restore saved RGBA values
-            r = saver;
-            g = saveg;
-            b = saveb;
-            a = savea;
         } else {
-            // no alpha blend
-            unsigned int* ldata = (unsigned int*)data;
-            unsigned int* lp = (unsigned int*)pixmap;
-            for (int j = 0; j < h; j++) {
-                for (int i = 0; i < w; i++) {
-                    int newx = x0 + x * axx + y * axy;
-                    int newy = y0 + x * ayx + y * ayy;
-                    if (PixelInTarget(newx, newy)) *(lp + newy * wd + newx) = *ldata;
-                    ldata++;
-                    x++;
+            // do an affine transformation
+            unsigned char* data = clipptr->cdata;
+            int x0 = x - (x * axx + y * axy);
+            int y0 = y - (x * ayx + y * ayy);
+    
+            // check for alpha blend
+            if (alphablend) {
+                // save RGBA values
+                unsigned char saver = r;
+                unsigned char saveg = g;
+                unsigned char saveb = b;
+                unsigned char savea = a;
+    
+                for (int j = 0; j < h; j++) {
+                    for (int i = 0; i < w; i++) {
+                        r = *data++;
+                        g = *data++;
+                        b = *data++;
+                        a = *data++;
+                        int newx = x0 + x * axx + y * axy;
+                        int newy = y0 + x * ayx + y * ayy;
+                        if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
+                        x++;
+                    }
+                    y++;
+                    x -= w;
                 }
-                y++;
-                x -= w;
+    
+                // restore saved RGBA values
+                r = saver;
+                g = saveg;
+                b = saveb;
+                a = savea;
+            } else {
+                // no alpha blend
+                unsigned int* ldata = (unsigned int*)data;
+                unsigned int* lp = (unsigned int*)pixmap;
+                for (int j = 0; j < h; j++) {
+                    for (int i = 0; i < w; i++) {
+                        int newx = x0 + x * axx + y * axy;
+                        int newy = y0 + x * ayx + y * ayy;
+                        if (PixelInTarget(newx, newy)) *(lp + newy * wd + newx) = *ldata;
+                        ldata++;
+                        x++;
+                    }
+                    y++;
+                    x -= w;
+                }
             }
         }
-    }
+        // read next coordinate pair
+        copy = (char*)GetCoordinatePair(copy, &x, &y);
+    } while (copy);
+
+    // free the buffer
+    free(buffer);
 
     return NULL;
 }

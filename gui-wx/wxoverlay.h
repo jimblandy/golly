@@ -86,7 +86,7 @@ public:
     // Save overlay in given PNG file.
 
 private:
-    const char* GetCoordinatePair(const char* args, int* x, int* y);
+    const char* GetCoordinatePair(char* args, int* x, int* y);
     // Decode a pair of integers from the supplied string.
     // Returns a pointer to the first non-space character after
     // the coordinate pair or NULL if decode failed.

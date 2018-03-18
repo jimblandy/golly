@@ -465,13 +465,17 @@ Especially effective for text rendering and used automatically by the
 <dd> Example: <b>local transparentrows = ov("optimize textclip")</b></dd>
 </p>
 
-<a name="paste"></a><p><dt><b>paste <i>x y clipname</i></b></dt>
+<a name="paste"></a><p><dt><b>paste <i>x1 y2 (...xn yn) clipname</i></b></dt>
 <dd>
 Paste the named clip (created by an earlier <a href="#create">create</a>, <a href="#copy">copy</a>
-or <a href="#text">text</a> command) into the render <a href="#target">target</a> at the given location.
+or <a href="#text">text</a> command) into the render <a href="#target">target</a> at the given location(s).
 Any pixels outside the render target edges are automatically clipped.
 </dd>
-<dd> Example: <b>ov("paste 10 20 tempbox")</b></dd>
+<dd> Examples:</dd>
+<dd><i>-- paste the tempbox clip at (10, 20)</i></dd>
+<dd><b>ov("paste 10 20 tempbox")</b></dd>
+<dd><i>-- paste the tempbox clip at (10, 20), (100, 20) and (100,50)</i></dd>
+<dd><b>ov("paste 10 20 100 20 100 50 tempbox")</b></dd>
 </p>
 
 <a name="position"></a><p><dt><b>position <i>pos</i></b></dt>
