@@ -209,6 +209,10 @@ local startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 -- user settings are stored in this file
 local settingsfile = g.getdir("data").."3D.ini"
 
+-- batch draw settings !BATCHDRAW!
+local xybatch = {}                  -- coordinates for each cell
+local usebatch = true               -- whether to use batch drawing (set to false to disable)
+
 ----------------------------------------------------------------------
 
 function AppendCounts(array, counts, bcount)
@@ -952,6 +956,35 @@ local function CreateLiveSphere()
     ov("target")
 end
 
+
+----------------------------------------------------------------------
+
+local function ResetBatch() -- !BATCHDRAW!
+    xybatch = {}
+end
+
+----------------------------------------------------------------------
+
+local function DrawBatch() -- !BATCHDRAW!
+    ov("paste "..table.concat(xybatch, " ").." c")
+end
+
+----------------------------------------------------------------------
+
+local function AddCubeToBatch(x, y, z) -- !BATCHDRAW!
+    -- add live cell as a cube at given grid position
+    x = x * CELLSIZE + HALFCELL - MIDGRID
+    y = y * CELLSIZE + HALFCELL - MIDGRID
+    z = z * CELLSIZE + HALFCELL - MIDGRID
+    local newx, newy = TransformPoint({x, y, z})
+    -- use orthographic projection
+    x = round(newx) + midx - LEN
+    y = round(newy) + midy - LEN
+    -- add to the list to draw
+    xybatch[#xybatch + 1] = x
+    xybatch[#xybatch + 1] = y
+end
+
 ----------------------------------------------------------------------
 
 local function DrawCube(x, y, z)
@@ -1094,7 +1127,16 @@ local function DisplayCells(editing)
     local z7 = rotrefz[7]
     local z8 = rotrefz[8]
     local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
-    
+
+-- test batch draw  !BATCHDRAW!
+local t1 = g.millisecs()
+local oldDraw
+if usebatch then
+    oldDraw = DrawLiveCell
+    ResetBatch()
+    DrawLiveCell = AddCubeToBatch
+end
+
     ov("blend 1")
     local testcell = editing or selcount > 0 or pastecount > 0
     
@@ -1215,6 +1257,15 @@ local function DisplayCells(editing)
     end
     
     ov("blend 0")
+
+-- test batch draw !BATCHDRAW!
+if usebatch then
+    DrawBatch()
+    DrawLiveCell = oldDraw
+end
+t1 = g.millisecs() - t1
+g.show(string.format("%.2fms", t1))
+
 end
 
 --------------------------------------------------------------------------------
