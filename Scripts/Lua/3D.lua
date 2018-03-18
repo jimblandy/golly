@@ -47,8 +47,7 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 --]]
 
 local g = golly()
---!!!
-require "gplus.strict"
+--!!! require "gplus.strict"
 local gp = require "gplus"
 local int = gp.int
 local validint = gp.validint
@@ -211,7 +210,7 @@ local settingsfile = g.getdir("data").."3D.ini"
 
 -- batch draw settings !BATCHDRAW!
 local xybatch = {}                  -- coordinates for each cell
-local usebatch = true               -- whether to use batch drawing (set to false to disable)
+local usebatch = false              -- whether to use batch drawing (enable in Golly 3.2b1!!!)
 
 ----------------------------------------------------------------------
 
@@ -1129,7 +1128,7 @@ local function DisplayCells(editing)
     local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
 
 -- test batch draw  !BATCHDRAW!
-local t1 = g.millisecs()
+-- local t1 = g.millisecs()
 local oldDraw
 if usebatch then
     oldDraw = DrawLiveCell
@@ -1263,8 +1262,8 @@ if usebatch then
     DrawBatch()
     DrawLiveCell = oldDraw
 end
-t1 = g.millisecs() - t1
-g.show(string.format("%.2fms", t1))
+-- t1 = g.millisecs() - t1
+-- g.show(string.format("%.2fms", t1))
 
 end
 
