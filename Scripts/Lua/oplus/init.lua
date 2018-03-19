@@ -407,7 +407,7 @@ end
 --------------------------------------------------------------------------------
 
 function m.button(label, onclick)
-    -- return a table that makes it easier to create and use buttons
+    -- return a table that makes it easy to create and use buttons
     local b = {}
     
     if type(label) ~= "string" then
@@ -525,7 +525,7 @@ end
 --------------------------------------------------------------------------------
 
 function m.checkbox(label, labelrgba, onclick)
-    -- return a table that makes it easier to create and use check boxes
+    -- return a table that makes it easy to create and use check boxes
     local c = {}
     
     if type(label) ~= "string" then
@@ -639,7 +639,7 @@ end
 --------------------------------------------------------------------------------
 
 function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
-    -- return a table that makes it easier to create and use sliders
+    -- return a table that makes it easy to create and use sliders
     local s = {}
     
     if type(label) ~= "string" then
@@ -893,7 +893,7 @@ end
 --------------------------------------------------------------------------------
 
 function m.menubar()
-    -- return a table that makes it easier to create and use a menu bar
+    -- return a table that makes it easy to create and use a menu bar
     local mbar = {}
     
     mbar.menus = {}
@@ -1196,6 +1196,219 @@ local function click_in_menubar(x, y)
         end
     end
     return false
+end
+
+----------------------------------------------------------------------
+
+local function DrawPopUpMenu(p, chosenitem)
+    -- draw pop-up window showing all items
+    local numitems = #p.items
+    if numitems == 0 then return end
+    
+    local oldrgba = ov(m.menubg)
+    local ht = numitems * p.itemht + 1
+    local wd = p.menuwd
+    local x = p.x
+    local y = p.y
+    m.fill_rect(x, y, wd, ht)
+    
+    local oldfont = ov(m.menufont)
+    local oldblend = ov("blend 1")
+    
+    -- draw translucent gray shadows
+    ov("rgba 48 48 48 128")
+    local shadowsize = 2
+    m.fill_rect(x+shadowsize, y+ht, wd-shadowsize, shadowsize)
+    m.fill_rect(x+wd, y, shadowsize, ht+shadowsize)
+    
+    x = x + m.menugap
+    y = y + m.yoffset
+    for i = 1, numitems do
+        local item = p.items[i]
+        if item.f == nil then
+            -- item is a separator
+            ov(m.discolor)
+            m.draw_line(x-m.menugap, y+p.itemht//2, x-m.menugap+wd-1, y+p.itemht//2)
+        else
+            if i == chosenitem and item.enabled then
+                ov(m.selbg)
+                m.fill_rect(x-m.menugap, y, wd, p.itemht)
+            end
+            local oldtextbg = ov("textoption background 0 0 0 0")
+            if item.enabled then
+                m.maketext(item.name, nil, m.menutext, m.textshadowx, m.textshadowy, m.textshadowrgba)
+                m.pastetext(x, y + m.itemgap)
+                ov(m.menutext)
+            else
+                m.maketext(item.name, nil, m.discolor)  -- no shadow if disabled
+                m.pastetext(x, y + m.itemgap)
+                ov(m.discolor)
+            end
+            ov("textoption background "..oldtextbg)
+            if item.ticked then
+                -- draw tick mark at right edge
+                local x1 = x - m.menugap + wd - m.menugap
+                local y1 = y + 6
+                local x2 = x1 - 6
+                local y2 = y + p.itemht - 8
+                local oldwidth = ov("lineoption width 4")
+                if item.enabled and (m.textshadowx > 0 or m.textshadowy > 0) then
+                    local oldcolor = ov(m.textshadowrgba)
+                    m.draw_line(x1+m.textshadowx, y1+m.textshadowy, x2+m.textshadowx, y2+m.textshadowy)
+                    m.draw_line(x2+m.textshadowx, y2+m.textshadowy, x2+m.textshadowx-5, y2+m.textshadowy-3)
+                    ov("rgba "..oldcolor)
+                end
+                m.draw_line(x1, y1, x2, y2)
+                m.draw_line(x2, y2, x2-5, y2-3)
+                ov("lineoption width "..oldwidth)
+            end
+        end
+        y = y + p.itemht
+    end
+
+    ov("blend "..oldblend)
+    ov("font "..oldfont)
+    ov("rgba "..oldrgba)
+end
+
+----------------------------------------------------------------------
+
+local function GetPopUpItem(x, y, p)
+    -- return index of item at given mouse location
+    if x <= p.x or y <= p.y then return 0 end
+    local numitems = #p.items
+    local ht = numitems * p.itemht
+    if y > p.y + ht then return 0 end
+    if x > p.x + p.menuwd then return 0 end
+    
+    -- x,y is somewhere in a menu item
+    local itemindex = math.floor((y - p.y) / p.itemht) + 1
+    if itemindex > numitems then itemindex = numitems end
+
+    return itemindex
+end
+
+----------------------------------------------------------------------
+
+local function choose_popup_item(p)
+    -- return a chosen item from the given pop-up menu
+    -- or nil if the item is disabled or no item is selected
+    
+    local t0 = g.millisecs()
+
+    -- save entire overlay in bgclip
+    local bgclip = string.gsub(tostring(p).."bg"," ","")
+    ov("copy 0 0 0 0 "..bgclip)
+    
+    local chosenitem = 0
+    DrawPopUpMenu(p, chosenitem)
+    g.update()
+    
+    local x = p.x
+    local y = p.y
+    local prevx = x
+    local prevy = y
+    while true do
+        local event = g.getevent()
+        if event:find("^mup") then
+            if g.millisecs() - t0 > 500 then
+                break
+            end
+        elseif event:find("^oclick") then
+            local _, sx, sy, butt, mods = split(event)
+            if butt == "left" and mods == "none" then
+                x = tonumber(sx)
+                y = tonumber(sy)
+                break
+            end
+        elseif event == "key enter none" or event == "key return none" then
+            break
+        end
+        local xy = ov("xy")
+        if #xy > 0 then
+            x, y = split(xy)
+            x = tonumber(x)
+            y = tonumber(y)
+            if x ~= prevx or y ~= prevy then
+                -- check if mouse moved into or out of an item
+                local olditem = chosenitem
+                chosenitem = GetPopUpItem(x, y, p)
+                if chosenitem ~= olditem then
+                    ov("paste 0 0 "..bgclip)
+                    DrawPopUpMenu(p, chosenitem)
+                    g.update()
+                end
+                prevx = x
+                prevy = y
+            end
+        end
+    end
+
+    chosenitem = GetPopUpItem(x, y, p)
+    
+    -- restore overlay
+    ov("paste 0 0 "..bgclip)
+    g.update()
+    ov("delete "..bgclip)
+    
+    return chosenitem
+end
+
+--------------------------------------------------------------------------------
+
+function m.popupmenu()
+    -- return a table that makes it easy to create and use a pop-up menu
+    local p = {}
+    
+    p.items = {}    -- array of items
+    p.labelht = 0   -- height of label text
+    p.itemht = 0    -- height of an item
+    p.menuwd = 0    -- width of pop-up menu
+    p.x = 0         -- top left location of pop-up menu
+    p.y = 0
+    
+    local function check_width(itemname)
+        local oldfont = ov(m.menufont)
+        local oldblend = ov("blend 1")
+        local wd, ht = m.maketext(itemname, nil, m.menutext, m.textshadowx, m.textshadowy, m.textshadowrgba)
+        ov("blend "..oldblend)
+        ov("font "..oldfont)
+        p.labelht = ht
+        p.itemht = ht + m.itemgap*2
+        local itemwd = wd + m.menugap*2 + 20
+        if itemwd > p.menuwd then p.menuwd = itemwd end
+    end
+    
+    p.additem = function (itemname, onselect, args)
+        args = args or {}
+        check_width(itemname)
+        p.items[#p.items+1] = { name=itemname, f=onselect, fargs=args, enabled=true, ticked=false }
+    end
+    
+    p.enableitem = function (itemindex, bool)
+        -- enable/disable the given item
+        p.items[itemindex].enabled = bool
+    end
+
+    p.tickitem = function (itemindex, bool)
+        -- tick/untick the given item
+        p.items[itemindex].ticked = bool
+    end
+    
+    p.show = function (x, y)
+        p.x = x
+        p.y = y
+        local itemindex = choose_popup_item(p)
+        if itemindex > 0 then
+            local item = p.items[itemindex]
+            if item and item.f and item.enabled then
+                -- call this item's handler
+                item.f( table.unpack(item.fargs) )
+            end
+        end
+    end
+    
+    return p
 end
 
 --------------------------------------------------------------------------------
