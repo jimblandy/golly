@@ -40,10 +40,14 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 
 - get round() from gplus
 
+- implement g.sleep(millisecs) for use in Lua scripts?
+
+- avoid "getclipstr error: no text in clipboard" (return empty string)
+
+- throttle ozoom* events (in here or in Golly)?
+
 - fix unicode problems reported here:
   http://www.conwaylife.com/forums/viewtopic.php?f=7&t=3132#p52918
-
-- implement g.sleep(millisecs) for use in Lua scripts?
 --]]
 
 local g = golly()
@@ -955,7 +959,6 @@ local function CreateLiveSphere()
     ov("target")
 end
 
-
 ----------------------------------------------------------------------
 
 local function ResetBatch() -- !BATCHDRAW!
@@ -1263,7 +1266,7 @@ if usebatch then
     DrawLiveCell = oldDraw
 end
 -- t1 = g.millisecs() - t1
--- g.show(string.format("%.2fms", t1))
+-- message = string.format("%.2fms", t1)
 
 end
 
@@ -1590,8 +1593,6 @@ function UpdateStartButton()
     local oldbg = ov("textoption background 0 0 0 0")
     
     -- change label in ssbutton without changing the button's width
-    op.textshadowx = 2
-    op.textshadowy = 2
     if generating then
         ssbutton.setlabel("Stop", false)
     else
@@ -2445,7 +2446,7 @@ end
 
 ----------------------------------------------------------------------
 
-function ReflectX()
+function FlipPasteX()
     if pastecount > 0 then
         -- reflect X coords across YZ plane thru middle of paste pattern
         local midx = minpastex + (maxpastex - minpastex) / 2
@@ -2456,8 +2457,8 @@ function ReflectX()
             local y = (k // N) % N
             local z = (k // NN) % N
             cells[#cells+1] = {round(midx*2) - x, y, z}
-            pastecell[k] = nil
         end
+        pastecell = {}
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastecell[x + N * (y + N * z)] = 1
@@ -2468,7 +2469,7 @@ end
 
 ----------------------------------------------------------------------
 
-function ReflectY()
+function FlipPasteY()
     if pastecount > 0 then
         -- reflect Y coords across XZ plane thru middle of paste pattern
         local midy = minpastey + (maxpastey - minpastey) / 2
@@ -2479,8 +2480,8 @@ function ReflectY()
             local y = (k // N) % N
             local z = (k // NN) % N
             cells[#cells+1] = {x, round(midy*2) - y, z}
-            pastecell[k] = nil
         end
+        pastecell = {}
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastecell[x + N * (y + N * z)] = 1
@@ -2491,7 +2492,7 @@ end
 
 ----------------------------------------------------------------------
 
-function ReflectZ()
+function FlipPasteZ()
     if pastecount > 0 then
         -- reflect Z coords across XY plane thru middle of paste pattern
         local midz = minpastez + (maxpastez - minpastez) / 2
@@ -2502,8 +2503,8 @@ function ReflectZ()
             local y = (k // N) % N
             local z = (k // NN) % N
             cells[#cells+1] = {x, y, round(midz*2) - z}
-            pastecell[k] = nil
         end
+        pastecell = {}
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastecell[x + N * (y + N * z)] = 1
@@ -2514,7 +2515,85 @@ end
 
 ----------------------------------------------------------------------
 
--- move this stuff into oplus eventually!!! (and replace op. and some p. with m.)
+function RotatePasteX()
+    if pastecount > 0 then
+        -- rotate paste pattern clockwise about its X axis by 90 degrees
+        local midy = minpastey + (maxpastey - minpastey) // 2
+        local midz = minpastez + (maxpastez - minpastez) // 2
+        local y0 = midy - midz
+        local z0 = midz + midy
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(pastecell) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {x, (y0+z) % N, (z0-y) % N}
+        end
+        pastecell = {}
+        for _,xyz in ipairs(cells) do
+            local x, y, z = xyz[1], xyz[2], xyz[3]
+            pastecell[x + N * (y + N * z)] = 1
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function RotatePasteY()
+    if pastecount > 0 then
+        -- rotate paste pattern clockwise about its Y axis by 90 degrees
+        local midx = minpastex + (maxpastex - minpastex) // 2
+        local midz = minpastez + (maxpastez - minpastez) // 2
+        local x0 = midx + midz
+        local z0 = midz - midx
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(pastecell) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {(x0-z) % N, y, (z0+x) % N}
+        end
+        pastecell = {}
+        for _,xyz in ipairs(cells) do
+            local x, y, z = xyz[1], xyz[2], xyz[3]
+            pastecell[x + N * (y + N * z)] = 1
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function RotatePasteZ()
+    if pastecount > 0 then
+        -- rotate paste pattern clockwise about its Z axis by 90 degrees
+        local midx = minpastex + (maxpastex - minpastex) // 2
+        local midy = minpastey + (maxpastey - minpastey) // 2
+        local x0 = midx - midy
+        local y0 = midy + midx
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(pastecell) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {(x0+y) % N, (y0-x) % N, z}
+        end
+        pastecell = {}
+        for _,xyz in ipairs(cells) do
+            local x, y, z = xyz[1], xyz[2], xyz[3]
+            pastecell[x + N * (y + N * z)] = 1
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+-- move this stuff into oplus for 3.2b1!!! (replace op. and some p. with m.)
 
 function draw_line(x1, y1, x2, y2) ov("line "..x1.." "..y1.." "..x2.." "..y2) end
 function fill_rect(x, y, wd, ht) ov("fill "..x.." "..y.." "..wd.." "..ht) end
@@ -4147,23 +4226,29 @@ function CreateOverlay()
     helpbutton = op.button("?", ShowHelp)
     exitbutton = op.button("X", ExitScript)
     
-    -- create check boxes
+    -- create check boxes (don't shadow text)
     op.textshadowx = 0
     op.textshadowy = 0
     drawbox = op.checkbox("Draw", op.black, DrawMode)
     selectbox = op.checkbox("Select", op.black, SelectMode)
     movebox = op.checkbox("Move", op.black, MoveMode)
+    op.textshadowx = 2
+    op.textshadowy = 2
     
     -- create pop-up menu for paste actions (eventually from op!!!)
     pastemenu = popupmenu()
-    pastemenu.additem("Cancel Paste", CancelPaste)
-    pastemenu.additem("Paste (OR)", PasteOR)
-    pastemenu.additem("Paste (XOR)", PasteXOR)
+    pastemenu.additem("Paste OR", PasteOR)
+    pastemenu.additem("Paste XOR", PasteXOR)
     pastemenu.additem("---", nil)
-    pastemenu.additem("Reflect X", ReflectX)
-    pastemenu.additem("Reflect Y", ReflectY)
-    pastemenu.additem("Reflect Z", ReflectZ)
-    -- add rotate items!!!
+    pastemenu.additem("Flip X Coords", FlipPasteX)
+    pastemenu.additem("Flip Y Coords", FlipPasteY)
+    pastemenu.additem("Flip Z Coords", FlipPasteZ)
+    pastemenu.additem("---", nil)
+    pastemenu.additem("Rotate X Axis", RotatePasteX)
+    pastemenu.additem("Rotate Y Axis", RotatePasteY)
+    pastemenu.additem("Rotate Z Axis", RotatePasteZ)
+    pastemenu.additem("---", nil)
+    pastemenu.additem("Cancel Paste", CancelPaste)
     
     ov("textoption background "..oldbg) -- see above!!!
 end
