@@ -14,8 +14,10 @@ Thanks to Tom Rokicki for optimizing the NextGeneration code.
 
 TODO: !!!
 
-- implement paste, undo, redo, flip/rotate selection...
 - shift-click and drag pencil/cross-hairs to move active plane
+- click and drag paste pattern using hand cursor (only move within
+  XY/XY/YZ plane depending on which face was clicked)
+- implement undo/redo
 - allow saving as .vti file for use by Ready?
 - add option for 6-face-neighbor rules (start or end rule with V?)
 - also option for 12-neighbor sphere packing rules?
@@ -36,11 +38,11 @@ NOTE: Do following changes for the Golly 3.2b1 release:
   g.note(msg, cancel=true)
   g.warn(msg, cancel=true)
 
-- add a menu bar (from gplus)
+- add menu bar and pop-up menus from oplus
 
 - get round() from gplus
 
-- implement g.sleep(millisecs) for use in Lua scripts?
+- implement g.sleep(millisecs) for use in Lua scripts
 
 - avoid "getclipstr error: no text in clipboard" (return empty string)
 
@@ -182,6 +184,7 @@ local selectbox                     -- check box for select mode
 local movebox                       -- check box for move mode
 
 local pastemenu                     -- pop-up menu for choosing a paste action
+local selmenu                       -- pop-up menu for choosing a selection action
 
 local buttonht = 20
 local gap = 10                      -- space around buttons
@@ -2092,7 +2095,6 @@ function GetSelectedCells()
     local selcells = {}
     if selcount > 0 then
         local mid = N//2
-        local M = N-1
         local NN = N*N
         for k,_ in pairs(selected) do
             -- selected[k] is a selected cell
@@ -2112,14 +2114,13 @@ function GetSelectedLiveCells()
     local livecells = {}
     if selcount > 0 then
         local mid = N//2
-        local M = N-1
         local NN = N*N
         for k,_ in pairs(grid1) do
             -- grid1[k] is a live cell
-            local x = k % N
-            local y = (k // N) % N
-            local z = (k // NN) % N
             if selected[k] then
+                local x = k % N
+                local y = (k // N) % N
+                local z = (k // NN) % N
                 livecells[#livecells+1] = {x-mid, y-mid, z-mid}
             end
         end
@@ -2249,8 +2250,14 @@ end
 
 function CopySelection()
     if selcount > 0 then
-        -- save the selected live cells as a 3D pattern in clipboard
+        -- save the selected live cells as a 3D pattern in clipboard,
+        -- but only if there is at least one live cell selected
         local livecells = GetSelectedLiveCells()
+        if #livecells == 0 then
+            message = "There are no live cells selected."
+            Refresh()
+            return false
+        end
         local prevy = math.maxinteger
         local prevz = math.maxinteger
         local lines = {}
@@ -2271,6 +2278,9 @@ function CopySelection()
         end
         lines[#lines+1] = "" -- so we get \n at end of last line
         g.setclipstr(table.concat(lines,"\n"))
+        return true
+    else
+        return false
     end
 end
 
@@ -2279,9 +2289,9 @@ end
 function ClearSelection()
     if selcount > 0 then
         -- kill all selected live cells
-        for k,_ in pairs(grid1) do
-            -- grid1[k] is a live cell
-            if selected[k] then
+        for k,_ in pairs(selected) do
+            -- selected[k] is a selected cell (live or dead)
+            if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
             end
@@ -2312,8 +2322,9 @@ function CutSelection()
     if selcount > 0 then
         -- save the selected live cells as a 3D pattern in clipboard
         -- then kill them
-        CopySelection()
-        ClearSelection()    -- calls Refresh
+        if CopySelection() then
+            ClearSelection()    -- calls Refresh
+        end
     end
 end
 
@@ -2323,6 +2334,245 @@ function RemoveSelection()
     if selcount > 0 then
         selcount = 0
         selected = {}
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function GetSelectionBounds()
+    if selcount == 0 then return nil end
+    -- return minimal bounding box of all selected cells
+    local minselx = math.maxinteger
+    local minsely = math.maxinteger
+    local minselz = math.maxinteger
+    local maxselx = math.mininteger
+    local maxsely = math.mininteger
+    local maxselz = math.mininteger
+    local NN = N*N
+    for k,_ in pairs(selected) do
+        local x = k % N
+        local y = (k // N) % N
+        local z = (k // NN) % N
+        if x < minselx then minselx = x end
+        if y < minsely then minsely = y end
+        if z < minselz then minselz = z end
+        if x > maxselx then maxselx = x end
+        if y > maxsely then maxsely = y end
+        if z > maxselz then maxselz = z end
+    end
+    return minselx, maxselx, minsely, maxsely, minselz, maxselz
+end
+
+----------------------------------------------------------------------
+
+function FlipSelectionX()
+    if selcount > 0 then
+        -- reflect selected cells' X coords across YZ plane thru middle of selection
+        local minselx, maxselx, minsely, maxsely, minselz, maxselz = GetSelectionBounds()
+        local midx = minselx + (maxselx - minselx) / 2
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(selected) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {round(midx*2) - x, y, z, grid1[k]}
+            if grid1[k] then
+                grid1[k] = nil
+                popcount = popcount - 1
+            end
+        end
+        selected = {}
+        for _,xyzs in ipairs(cells) do
+            local x, y, z, live = xyzs[1], xyzs[2], xyzs[3], xyzs[4]
+            local k = x + N * (y + N * z)
+            selected[k] = true
+            if live and not grid1[k] then
+                -- best to use OR mode for selection actions
+                grid1[k] = live
+                popcount = popcount + 1
+            end
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function FlipSelectionY()
+    if selcount > 0 then
+        -- reflect selected cells' Y coords across XZ plane thru middle of selection
+        local minselx, maxselx, minsely, maxsely, minselz, maxselz = GetSelectionBounds()
+        local midy = minsely + (maxsely - minsely) / 2
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(selected) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {x, round(midy*2) - y, z, grid1[k]}
+            if grid1[k] then
+                grid1[k] = nil
+                popcount = popcount - 1
+            end
+        end
+        selected = {}
+        for _,xyzs in ipairs(cells) do
+            local x, y, z, live = xyzs[1], xyzs[2], xyzs[3], xyzs[4]
+            local k = x + N * (y + N * z)
+            selected[k] = true
+            if live and not grid1[k] then
+                -- best to use OR mode for selection actions
+                grid1[k] = live
+                popcount = popcount + 1
+            end
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function FlipSelectionZ()
+    if selcount > 0 then
+        -- reflect selected cells' Z coords across XY plane thru middle of selection
+        local minselx, maxselx, minsely, maxsely, minselz, maxselz = GetSelectionBounds()
+        local midz = minselz + (maxselz - minselz) / 2
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(selected) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {x, y, round(midz*2) - z, grid1[k]}
+            if grid1[k] then
+                grid1[k] = nil
+                popcount = popcount - 1
+            end
+        end
+        selected = {}
+        for _,xyzs in ipairs(cells) do
+            local x, y, z, live = xyzs[1], xyzs[2], xyzs[3], xyzs[4]
+            local k = x + N * (y + N * z)
+            selected[k] = true
+            if live and not grid1[k] then
+                -- best to use OR mode for selection actions
+                grid1[k] = live
+                popcount = popcount + 1
+            end
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function RotateSelectionX()
+    if selcount > 0 then
+        -- rotate selection clockwise about its X axis by 90 degrees
+        local minselx, maxselx, minsely, maxsely, minselz, maxselz = GetSelectionBounds()
+        local midy = minsely + (maxsely - minsely) // 2
+        local midz = minselz + (maxselz - minselz) // 2
+        local y0 = midy - midz
+        local z0 = midz + midy
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(selected) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {x, (y0+z) % N, (z0-y) % N, grid1[k]}
+            if grid1[k] then
+                grid1[k] = nil
+                popcount = popcount - 1
+            end
+        end
+        selected = {}
+        for _,xyzs in ipairs(cells) do
+            local x, y, z, live = xyzs[1], xyzs[2], xyzs[3], xyzs[4]
+            local k = x + N * (y + N * z)
+            selected[k] = true
+            if live and not grid1[k] then
+                -- best to use OR mode for selection actions
+                grid1[k] = live
+                popcount = popcount + 1
+            end
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function RotateSelectionY()
+    if selcount > 0 then
+        -- rotate selection clockwise about its Y axis by 90 degrees
+        local minselx, maxselx, minsely, maxsely, minselz, maxselz = GetSelectionBounds()
+        local midx = minpastex + (maxpastex - minpastex) // 2
+        local midz = minpastez + (maxpastez - minpastez) // 2
+        local x0 = midx + midz
+        local z0 = midz - midx
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(selected) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {(x0-z) % N, y, (z0+x) % N, grid1[k]}
+            if grid1[k] then
+                grid1[k] = nil
+                popcount = popcount - 1
+            end
+        end
+        selected = {}
+        for _,xyzs in ipairs(cells) do
+            local x, y, z, live = xyzs[1], xyzs[2], xyzs[3], xyzs[4]
+            local k = x + N * (y + N * z)
+            selected[k] = true
+            if live and not grid1[k] then
+                -- best to use OR mode for selection actions
+                grid1[k] = live
+                popcount = popcount + 1
+            end
+        end
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function RotateSelectionZ()
+    if selcount > 0 then
+        -- rotate selection clockwise about its Z axis by 90 degrees
+        local minselx, maxselx, minsely, maxsely, minselz, maxselz = GetSelectionBounds()
+        local midx = minselx + (maxselx - minselx) // 2
+        local midy = minsely + (maxsely - minsely) // 2
+        local x0 = midx - midy
+        local y0 = midy + midx
+        local cells = {}
+        local NN = N*N
+        for k,_ in pairs(selected) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = (k // NN) % N
+            cells[#cells+1] = {(x0+y) % N, (y0-x) % N, z, grid1[k]}
+            if grid1[k] then
+                grid1[k] = nil
+                popcount = popcount - 1
+            end
+        end
+        selected = {}
+        for _,xyzs in ipairs(cells) do
+            local x, y, z, live = xyzs[1], xyzs[2], xyzs[3], xyzs[4]
+            local k = x + N * (y + N * z)
+            selected[k] = true
+            if live and not grid1[k] then
+                -- best to use OR mode for selection actions
+                grid1[k] = live
+                popcount = popcount + 1
+            end
+        end
         Refresh()
     end
 end
@@ -2531,9 +2781,18 @@ function RotatePasteX()
             cells[#cells+1] = {x, (y0+z) % N, (z0-y) % N}
         end
         pastecell = {}
+        minpastey = math.maxinteger
+        minpastez = math.maxinteger
+        maxpastey = math.mininteger
+        maxpastez = math.mininteger
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastecell[x + N * (y + N * z)] = 1
+            -- minpastex, maxpastex don't change
+            if y < minpastey then minpastey = y end
+            if y > maxpastey then maxpastey = y end
+            if z < minpastez then minpastez = z end
+            if z > maxpastez then maxpastez = z end
         end
         Refresh()
     end
@@ -2557,9 +2816,18 @@ function RotatePasteY()
             cells[#cells+1] = {(x0-z) % N, y, (z0+x) % N}
         end
         pastecell = {}
+        minpastex = math.maxinteger
+        minpastez = math.maxinteger
+        maxpastex = math.mininteger
+        maxpastez = math.mininteger
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastecell[x + N * (y + N * z)] = 1
+            -- minpastey, maxpastey don't change
+            if x < minpastex then minpastex = x end
+            if x > maxpastex then maxpastex = x end
+            if z < minpastez then minpastez = z end
+            if z > maxpastez then maxpastez = z end
         end
         Refresh()
     end
@@ -2583,9 +2851,18 @@ function RotatePasteZ()
             cells[#cells+1] = {(x0+y) % N, (y0-x) % N, z}
         end
         pastecell = {}
+        minpastex = math.maxinteger
+        minpastey = math.maxinteger
+        maxpastex = math.mininteger
+        maxpastey = math.mininteger
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastecell[x + N * (y + N * z)] = 1
+            -- minpastez, maxpastez don't change
+            if x < minpastex then minpastex = x end
+            if x > maxpastex then maxpastex = x end
+            if y < minpastey then minpastey = y end
+            if y > maxpastey then maxpastey = y end
         end
         Refresh()
     end
@@ -2593,7 +2870,7 @@ end
 
 ----------------------------------------------------------------------
 
--- move this stuff into oplus for 3.2b1!!! (replace op. and some p. with m.)
+-- get pop-up menu stuff from oplus in 3.2b1!!!
 
 function draw_line(x1, y1, x2, y2) ov("line "..x1.." "..y1.." "..x2.." "..y2) end
 function fill_rect(x, y, wd, ht) ov("fill "..x.." "..y.." "..wd.." "..ht) end
@@ -2603,21 +2880,21 @@ local function DrawPopUpMenu(p, chosenitem)
     local numitems = #p.items
     if numitems == 0 then return end
     
-    local oldrgba = ov(p.menubg)
-    local ht = numitems * p.itemht + 1
+    local oldfont = ov(p.menufont)
+    local oldblend = ov("blend 1")
+    local oldrgba = ov(p.bgcolor)
+
+    local ht = p.menuht + 1
     local wd = p.menuwd
     local x = p.x
     local y = p.y
     fill_rect(x, y, wd, ht)
     
-    local oldfont = ov(p.menufont)
-    local oldblend = ov("blend 1")
-    
     -- draw translucent gray shadows
     ov("rgba 48 48 48 128")
-    local shadowsize = 2
+    local shadowsize = 3
     fill_rect(x+shadowsize, y+ht, wd-shadowsize, shadowsize)
-    fill_rect(x+wd, y, shadowsize, ht+shadowsize)
+    fill_rect(x+wd, y+shadowsize, shadowsize, ht)
     
     x = x + p.menugap
     y = y + op.yoffset
@@ -2629,7 +2906,7 @@ local function DrawPopUpMenu(p, chosenitem)
             draw_line(x-p.menugap, y+p.itemht//2, x-p.menugap+wd-1, y+p.itemht//2)
         else
             if i == chosenitem and item.enabled then
-                ov(p.selbg)
+                ov(p.selcolor)
                 fill_rect(x-p.menugap, y, wd, p.itemht)
             end
             local oldtextbg = ov("textoption background 0 0 0 0")
@@ -2758,21 +3035,20 @@ function popupmenu()
     -- return a table that makes it easy to create and use a pop-up menu
     local p = {}
     
-    p.items = {}    -- array of items
-    p.labelht = 0   -- height of label text
-    p.itemht = 0    -- height of an item
-    p.menuwd = 0    -- width of pop-up menu
-    p.x = 0         -- top left location of pop-up menu
-    p.y = 0
+    p.items = {}        -- array of items
+    p.labelht = 0       -- height of label text
+    p.itemht = 0        -- height of an item
+    p.menuwd = 0        -- width of pop-up menu
+    p.menuht = 0        -- height of pop-up menu
+    p.x, p.y = 0, 0     -- top left location of pop-up menu
 
-    -- remove and replace these p. with m. !!!
-    p.menubg = "rgba 40 128 255 255"
-    p.selbg = "rgba 20 64 255 255"
-    p.discolor = "rgba 88 176 255 255"
     p.menufont = "font 12 default-bold"
     p.menutext = op.white
     p.menugap = 10
     p.itemgap = 2
+    p.bgcolor = "rgba 40 128 255 255"
+    p.selcolor = "rgba 20 64 255 255"
+    p.discolor = "rgba 88 176 255 255"
     
     local function check_width(itemname)
         local oldfont = ov(p.menufont)
@@ -2790,6 +3066,7 @@ function popupmenu()
         args = args or {}
         check_width(itemname)
         p.items[#p.items+1] = { name=itemname, f=onselect, fargs=args, enabled=true, ticked=false }
+        p.menuht = #p.items * p.itemht
     end
     
     p.enableitem = function (itemindex, bool)
@@ -2802,7 +3079,22 @@ function popupmenu()
         p.items[itemindex].ticked = bool
     end
     
-    p.show = function (x, y)
+    p.setbgcolor = function (rgba)
+        p.bgcolor = rgba
+        local _,R,G,B,A = split(rgba)
+        R = tonumber(R)
+        G = tonumber(G)
+        B = tonumber(B)
+        A = tonumber(A)
+        -- use a darker color when item is selected
+        p.selcolor = "rgba "..max(0,R-48).." "..max(0,G-48).." "..max(0,B-48).." "..A
+        -- use lighter color for disabled items and separator lines
+        p.discolor = "rgba "..min(255,R+48).." "..min(255,G+48).." "..min(255,B+48).." "..A
+    end
+    
+    p.show = function (x, y, ovwd, ovht)
+        if x + p.menuwd > ovwd then x = x - p.menuwd - 2 end
+        if y + p.menuht > ovht then y = ovht - p.menuht end
         p.x = x
         p.y = y
         local itemindex = choose_popup_item(p)
@@ -2821,8 +3113,17 @@ end
 ----------------------------------------------------------------------
 
 function ChoosePasteAction(mousex, mousey)
-    -- show pop-up menu at mousex,mousey and let user choose an action
-    pastemenu.show(mousex, mousey)
+    -- show red pop-up menu at mousex,mousey and let user choose a paste action
+    pastemenu.setbgcolor("rgba 176 48 48 255")
+    pastemenu.show(mousex, mousey, ovwd, ovht)
+end
+
+----------------------------------------------------------------------
+
+function ChooseSelectionAction(mousex, mousey)
+    -- show green pop-up menu at mousex,mousey and let user choose a selection action
+    selmenu.setbgcolor("rgba 0 128 0 255")
+    selmenu.show(mousex, mousey, ovwd, ovht)
 end
 
 ----------------------------------------------------------------------
@@ -4250,6 +4551,23 @@ function CreateOverlay()
     pastemenu.additem("---", nil)
     pastemenu.additem("Cancel Paste", CancelPaste)
     
+    -- create pop-up menu for selection actions (eventually from op!!!)
+    selmenu = popupmenu()
+    selmenu.additem("Cut", CutSelection)
+    selmenu.additem("Copy", CopySelection)
+    selmenu.additem("Clear", ClearSelection)
+    selmenu.additem("Clear Outside", ClearOutside)
+    selmenu.additem("---", nil)
+    selmenu.additem("Flip X Coords", FlipSelectionX)
+    selmenu.additem("Flip Y Coords", FlipSelectionY)
+    selmenu.additem("Flip Z Coords", FlipSelectionZ)
+    selmenu.additem("---", nil)
+    selmenu.additem("Rotate X Axis", RotateSelectionX)
+    selmenu.additem("Rotate Y Axis", RotateSelectionY)
+    selmenu.additem("Rotate Z Axis", RotateSelectionZ)
+    selmenu.additem("---", nil)
+    selmenu.additem("Remove Selection", RemoveSelection)
+    
     ov("textoption background "..oldbg) -- see above!!!
 end
 
@@ -4482,6 +4800,8 @@ function MainLoop()
                        (button == "left" and mods == "ctrl") then
                         if pastecount > 0 then
                             ChoosePasteAction(x, y)
+                        elseif selcount > 0 then
+                            ChooseSelectionAction(x, y)
                         end
                     elseif button == "left" then
                         mousedown = true
