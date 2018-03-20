@@ -86,7 +86,7 @@ m.textshadowrgba = m.black              -- black label color
 m.yoffset = 0                           -- for better y position of labels
 
 m.menubg = "rgba 40 128 255 255"        -- light blue background for menu bar and items
-m.selbg = "rgba 20 64 255 255"          -- darker background for selected menu/item
+m.selcolor = "rgba 20 64 255 255"       -- darker background for selected menu/item
 m.discolor = "rgba 88 176 255 255"      -- lighter color for disabled items and separator lines
 m.menufont = "font 12 default-bold"     -- font for menu and item labels
 m.menutext = m.white                    -- white text for menu and item labels
@@ -879,7 +879,7 @@ local function DrawMenuBar(mbar)
     for i = 1, #mbar.menus do
         local menu = mbar.menus[i]
         if i == selmenu then
-            ov(m.selbg)
+            ov(m.selcolor)
             m.fill_rect(xpos, mbar.r.y, menu.labelwd + m.menugap*2, mbar.r.ht)
         end
         xpos = xpos + m.menugap
@@ -1049,7 +1049,7 @@ local function DrawMenuItems(mbar)
     
     -- draw translucent gray shadows
     ov("rgba 48 48 48 128")
-    local shadowsize = 2
+    local shadowsize = 3
     m.fill_rect(x+shadowsize, y+ht, wd-shadowsize, shadowsize)
     m.fill_rect(x+wd, y, shadowsize, ht+shadowsize)
     
@@ -1063,7 +1063,7 @@ local function DrawMenuItems(mbar)
             m.draw_line(x-m.menugap, y+mbar.itemht//2, x-m.menugap+wd-1, y+mbar.itemht//2)
         else
             if i == selitem and item.enabled then
-                ov(m.selbg)
+                ov(m.selcolor)
                 m.fill_rect(x-m.menugap, y, wd, mbar.itemht)
             end
             if item.enabled then
@@ -1205,21 +1205,21 @@ local function DrawPopUpMenu(p, chosenitem)
     local numitems = #p.items
     if numitems == 0 then return end
     
-    local oldrgba = ov(m.menubg)
-    local ht = numitems * p.itemht + 1
+    local oldfont = ov(m.menufont)
+    local oldblend = ov("blend 1")
+    local oldrgba = ov(p.bgcolor)
+    
+    local ht = p.menuht + 1
     local wd = p.menuwd
     local x = p.x
     local y = p.y
     m.fill_rect(x, y, wd, ht)
     
-    local oldfont = ov(m.menufont)
-    local oldblend = ov("blend 1")
-    
     -- draw translucent gray shadows
     ov("rgba 48 48 48 128")
-    local shadowsize = 2
+    local shadowsize = 3
     m.fill_rect(x+shadowsize, y+ht, wd-shadowsize, shadowsize)
-    m.fill_rect(x+wd, y, shadowsize, ht+shadowsize)
+    m.fill_rect(x+wd, y+shadowsize, shadowsize, ht)
     
     x = x + m.menugap
     y = y + m.yoffset
@@ -1227,11 +1227,11 @@ local function DrawPopUpMenu(p, chosenitem)
         local item = p.items[i]
         if item.f == nil then
             -- item is a separator
-            ov(m.discolor)
+            ov(p.discolor)
             m.draw_line(x-m.menugap, y+p.itemht//2, x-m.menugap+wd-1, y+p.itemht//2)
         else
             if i == chosenitem and item.enabled then
-                ov(m.selbg)
+                ov(p.selcolor)
                 m.fill_rect(x-m.menugap, y, wd, p.itemht)
             end
             local oldtextbg = ov("textoption background 0 0 0 0")
@@ -1240,9 +1240,9 @@ local function DrawPopUpMenu(p, chosenitem)
                 m.pastetext(x, y + m.itemgap)
                 ov(m.menutext)
             else
-                m.maketext(item.name, nil, m.discolor)  -- no shadow if disabled
+                m.maketext(item.name, nil, p.discolor)  -- no shadow if disabled
                 m.pastetext(x, y + m.itemgap)
-                ov(m.discolor)
+                ov(p.discolor)
             end
             ov("textoption background "..oldtextbg)
             if item.ticked then
@@ -1277,8 +1277,7 @@ local function GetPopUpItem(x, y, p)
     -- return index of item at given mouse location
     if x <= p.x or y <= p.y then return 0 end
     local numitems = #p.items
-    local ht = numitems * p.itemht
-    if y > p.y + ht then return 0 end
+    if y > p.y + p.menuht then return 0 end
     if x > p.x + p.menuwd then return 0 end
     
     -- x,y is somewhere in a menu item
@@ -1360,13 +1359,18 @@ function m.popupmenu()
     -- return a table that makes it easy to create and use a pop-up menu
     local p = {}
     
-    p.items = {}    -- array of items
-    p.labelht = 0   -- height of label text
-    p.itemht = 0    -- height of an item
-    p.menuwd = 0    -- width of pop-up menu
-    p.x = 0         -- top left location of pop-up menu
-    p.y = 0
+    p.items = {}        -- array of items
+    p.labelht = 0       -- height of label text
+    p.itemht = 0        -- height of an item
+    p.menuwd = 0        -- width of pop-up menu
+    p.menuht = 0        -- height of pop-up menu
+    p.x, p.y = 0, 0     -- top left location of pop-up menu
     
+    -- default to menu bar colors
+    p.bgcolor = m.menubg
+    p.selcolor = m.selcolor
+    p.discolor = m.discolor
+
     local function check_width(itemname)
         local oldfont = ov(m.menufont)
         local oldblend = ov("blend 1")
@@ -1383,6 +1387,7 @@ function m.popupmenu()
         args = args or {}
         check_width(itemname)
         p.items[#p.items+1] = { name=itemname, f=onselect, fargs=args, enabled=true, ticked=false }
+        p.menuht = #p.items * p.itemht
     end
     
     p.enableitem = function (itemindex, bool)
@@ -1395,7 +1400,22 @@ function m.popupmenu()
         p.items[itemindex].ticked = bool
     end
     
-    p.show = function (x, y)
+    p.setbgcolor = function (rgba)
+        p.bgcolor = rgba
+        local _,R,G,B,A = split(rgba)
+        R = tonumber(R)
+        G = tonumber(G)
+        B = tonumber(B)
+        A = tonumber(A)
+        -- use a darker color when item is selected
+        p.selcolor = "rgba "..math.max(0,R-48).." "..math.max(0,G-48).." "..math.max(0,B-48).." "..A
+        -- use lighter color for disabled items and separator lines
+        p.discolor = "rgba "..math.min(255,R+48).." "..math.min(255,G+48).." "..math.min(255,B+48).." "..A
+    end
+    
+    p.show = function (x, y, ovwd, ovht)
+        if x + p.menuwd > ovwd then x = x - p.menuwd - 2 end
+        if y + p.menuht > ovht then y = ovht - p.menuht end
         p.x = x
         p.y = y
         local itemindex = choose_popup_item(p)
