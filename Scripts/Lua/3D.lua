@@ -2475,7 +2475,7 @@ function RotateSelectionX()
         local midy = minsely + (maxsely - minsely) // 2
         local midz = minselz + (maxselz - minselz) // 2
         local y0 = midy - midz
-        local z0 = midz + midy
+        local z0 = midz + midy + (maxselz - minselz) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
         for k,_ in pairs(selected) do
@@ -2509,9 +2509,9 @@ function RotateSelectionY()
     if selcount > 0 then
         -- rotate selection clockwise about its Y axis by 90 degrees
         local minselx, maxselx, minsely, maxsely, minselz, maxselz = GetSelectionBounds()
-        local midx = minpastex + (maxpastex - minpastex) // 2
-        local midz = minpastez + (maxpastez - minpastez) // 2
-        local x0 = midx + midz
+        local midx = minselx + (maxselx - minselx) // 2
+        local midz = minselz + (maxselz - minselz) // 2
+        local x0 = midx + midz + (maxselx - minselx) % 2    -- avoids drift
         local z0 = midz - midx
         local cells = {}
         local NN = N*N
@@ -2549,7 +2549,7 @@ function RotateSelectionZ()
         local midx = minselx + (maxselx - minselx) // 2
         local midy = minsely + (maxsely - minsely) // 2
         local x0 = midx - midy
-        local y0 = midy + midx
+        local y0 = midy + midx + (maxsely - minsely) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
         for k,_ in pairs(selected) do
@@ -2771,7 +2771,7 @@ function RotatePasteX()
         local midy = minpastey + (maxpastey - minpastey) // 2
         local midz = minpastez + (maxpastez - minpastez) // 2
         local y0 = midy - midz
-        local z0 = midz + midy
+        local z0 = midz + midy + (maxpastez - minpastez) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
         for k,_ in pairs(pastecell) do
@@ -2805,7 +2805,7 @@ function RotatePasteY()
         -- rotate paste pattern clockwise about its Y axis by 90 degrees
         local midx = minpastex + (maxpastex - minpastex) // 2
         local midz = minpastez + (maxpastez - minpastez) // 2
-        local x0 = midx + midz
+        local x0 = midx + midz + (maxpastex - minpastex) % 2    -- avoids drift
         local z0 = midz - midx
         local cells = {}
         local NN = N*N
@@ -2841,7 +2841,7 @@ function RotatePasteZ()
         local midx = minpastex + (maxpastex - minpastex) // 2
         local midy = minpastey + (maxpastey - minpastey) // 2
         local x0 = midx - midy
-        local y0 = midy + midx
+        local y0 = midy + midx + (maxpastey - minpastey) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
         for k,_ in pairs(pastecell) do
@@ -4536,6 +4536,8 @@ function CreateOverlay()
     op.textshadowx = 2
     op.textshadowy = 2
     
+    ov("textoption background "..oldbg) -- see above!!!
+    
     -- create pop-up menu for paste actions (eventually from op!!!)
     pastemenu = popupmenu()
     pastemenu.additem("Paste OR", PasteOR)
@@ -4567,8 +4569,6 @@ function CreateOverlay()
     selmenu.additem("Rotate Z Axis", RotateSelectionZ)
     selmenu.additem("---", nil)
     selmenu.additem("Remove Selection", RemoveSelection)
-    
-    ov("textoption background "..oldbg) -- see above!!!
 end
 
 ----------------------------------------------------------------------
@@ -4811,13 +4811,13 @@ function MainLoop()
                             if mods == "none" then
                                 drawing = StartDrawing(x, y)
                             elseif mods == "shift" then
-                                -- move active plane???!!!
+                                -- drag active plane???!!!
                             end
                         elseif currcursor == selectcursor then
                             if mods == "none" then
                                 selecting = StartSelecting(x, y)
                             elseif mods == "shift" then
-                                -- move active plane???!!!
+                                -- drag active plane???!!!
                             end
                         elseif currcursor == movecursor and mods == "alt" then
                             hand_erasing = true
