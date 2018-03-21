@@ -1538,23 +1538,23 @@ script to be aborted in a timely manner.
 
 <p>
 4.
-When writing a script that creates a pattern, make sure the script starts
-with a <b>new</b> command (or, less useful, an <b>open</b> command) otherwise
-the script might create lots of temporary files or use lots of memory.
-From the undo history's point of view there are two types of scripts:
+When writing a script that creates a pattern, make sure the script starts with
+a <b>new</b> call (or, less useful, an <b>open</b> call that loads a pattern,
+or a <b>save</b> call) otherwise the script might create lots of temporary files
+or use lots of memory.  From Golly's point of view there are two types of scripts:
 <p>
 <ul>
 <li>
-A script that calls <b>new</b> or <b>open</b> is assumed to be creating some
-sort of pattern, so when Golly sees these commands it clears any undo history and
-sets an internal flag that says "don't mark this layer as dirty and don't bother
+A script that calls <b>new</b> or <b>open</b> or <b>save</b> is assumed to be
+creating some sort of pattern, so when Golly sees these calls it clears any undo history
+and sets an internal flag that says "don't mark this layer as dirty and don't bother
 recording any further changes".
 <li>
-A script that doesn't call <b>new</b> or <b>open</b> is assumed to modify the
-current pattern. Golly must record <em>all</em> the script's changes so that
+A script that doesn't call <b>new</b> or <b>open</b> or <b>save</b> is assumed to
+modify the current pattern. Golly must record <em>all</em> the script's changes so that
 when it finishes you can select "Undo Script Changes" from the Edit menu.
-Generating changes (due to <b>run</b> calls) are stored in temporary files,
-while other changes are stored in memory.
+Generating changes (due to <b>run</b> or <b>step</b> calls) are stored in
+temporary files; all other changes are stored in memory.
 </ul>
 
 
