@@ -13,6 +13,8 @@ local floor = math.floor
 local rand  = math.random
 local abs   = math.abs
 
+math.randomseed(os.time())  -- init seed for math.random
+
 -- text alignment
 local text = {
     alignleft   = 0,
