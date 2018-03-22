@@ -4992,9 +4992,14 @@ function MainLoop()
             end
         else
             CheckCursor(mousepos)
+            if not generating then
+                -- don't hog the CPU
+                -- implement using wxMilliSleep!!!
+                -- g.sleep(5)
+            end
         end
         
-        if generating then NextGeneration() end
+        if generating and not mousedown then NextGeneration() end
     end
 end
 
