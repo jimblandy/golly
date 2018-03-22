@@ -195,13 +195,14 @@ local movecursor = "hand"           -- cursor for rotating grid
 local currcursor = movecursor       -- current cursor
 local arrow_cursor = false          -- true if cursor is in tool bar
 
-local DEFAULT_RULE = "4,5/5"        -- initial rule
+local DEFAULT_RULE = "5,6,7/6"      -- initial rule
 local rulestring = DEFAULT_RULE
 local survivals = {}
 local births = {}
-survivals[4] = true                 -- WARNING: must match DEFAULT_RULE
-survivals[5] = true                 -- ditto
-births[5] = true                    -- ditto
+survivals[5] = true                 -- WARNING: must match DEFAULT_RULE
+survivals[6] = true                 -- ditto
+survivals[7] = true                 -- ditto
+births[6] = true                    -- ditto
 
 local pattdir = g.getdir("data")    -- initial directory for OpenPattern/SavePattern
 local scriptdir = g.getdir("app")   -- initial directory for RunScript
@@ -4769,19 +4770,18 @@ function Initialize()
     
     ClearCells()
     if rulestring == DEFAULT_RULE then
-        -- initial pattern is glider #2 in rule 4,5/5
-        -- from http://www.cse.sc.edu/~bays/d4d4d4/
+        -- initial pattern is the Life-like glider in rule 5,6,7/6
         local mid = N//2
         SetLiveCell(mid,   mid,   mid)
-        SetLiveCell(mid+1, mid,   mid)
-        SetLiveCell(mid-1, mid+1, mid)
-        SetLiveCell(mid+2, mid+1, mid)
-        SetLiveCell(mid,   mid+2, mid)
-        SetLiveCell(mid+1, mid+2, mid)
+        SetLiveCell(mid-1, mid,   mid)
+        SetLiveCell(mid-2, mid,   mid)
+        SetLiveCell(mid,   mid+1, mid)
+        SetLiveCell(mid-1, mid+2, mid)
         SetLiveCell(mid,   mid,   mid-1)
-        SetLiveCell(mid+1, mid,   mid-1)
-        SetLiveCell(mid-1, mid+1, mid-1)
-        SetLiveCell(mid+2, mid+1, mid-1)
+        SetLiveCell(mid-1, mid,   mid-1)
+        SetLiveCell(mid-2, mid,   mid-1)
+        SetLiveCell(mid,   mid+1, mid-1)
+        SetLiveCell(mid-1, mid+2, mid-1)
     else
         --[[ do a random fill??? or let user decide via startup script???
         local M = N-1
