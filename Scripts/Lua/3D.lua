@@ -1132,17 +1132,15 @@ local function DisplayCells(editing)
     local z8 = rotrefz[8]
     local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
 
--- test batch draw  !BATCHDRAW!
--- local t1 = g.millisecs()
-local oldDraw
-if usebatch then
-    oldDraw = DrawLiveCell
-    ResetBatch()
-    DrawLiveCell = AddCubeToBatch
-end
-
     ov("blend 1")
     local testcell = editing or selcount > 0 or pastecount > 0
+
+    -- test batch draw  !BATCHDRAW!
+    -- local t1 = g.millisecs()
+    if usebatch and not testcell then
+        ResetBatch()
+        DrawLiveCell = AddCubeToBatch   -- or AddSphereToBatch or AddPointToBatch!!!
+    end
     
     -- draw cells from back to front (assumes vertex order set in CreateCube)
     local M = N-1
@@ -1259,17 +1257,15 @@ end
             end
         end
     end
+
+    -- test batch draw !BATCHDRAW!
+    if usebatch and not testcell then
+        DrawBatch()
+    end
+    -- t1 = g.millisecs() - t1
+    -- message = string.format("%.2fms", t1)
     
     ov("blend 0")
-
--- test batch draw !BATCHDRAW!
-if usebatch then
-    DrawBatch()
-    DrawLiveCell = oldDraw
-end
--- t1 = g.millisecs() - t1
--- message = string.format("%.2fms", t1)
-
 end
 
 --------------------------------------------------------------------------------
