@@ -978,7 +978,14 @@ end
 ----------------------------------------------------------------------
 
 local function DrawBatch() -- !BATCHDRAW!
-    ov("paste "..table.concat(xybatch, " ").." c")
+    if celltype == "cube" then
+        ov("paste "..table.concat(xybatch, " ").." c")
+    elseif celltype == "sphere" then
+        ov("paste "..table.concat(xybatch, " ").." S")
+    else -- celltype == "point"
+        ov(op.white)
+        ov("set "..table.concat(xybatch, " "))
+    end
 end
 
 ----------------------------------------------------------------------
@@ -1014,6 +1021,22 @@ end
 
 ----------------------------------------------------------------------
 
+local function AddSphereToBatch(x, y, z)
+    -- add live cell as a sphere at given grid position
+    x = x * CELLSIZE + HALFCELL - MIDGRID
+    y = y * CELLSIZE + HALFCELL - MIDGRID
+    z = z * CELLSIZE + HALFCELL - MIDGRID
+    local newx, newy = TransformPoint({x, y, z})
+    -- use orthographic projection
+    x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
+    y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
+    -- add to the list to draw
+    xybatch[#xybatch + 1] = x
+    xybatch[#xybatch + 1] = y
+end
+
+----------------------------------------------------------------------
+
 local function DrawSphere(x, y, z)
     -- draw live cell as a sphere at given grid position
     x = x * CELLSIZE + HALFCELL - MIDGRID
@@ -1025,6 +1048,23 @@ local function DrawSphere(x, y, z)
     y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
     -- draw the clip created by CreateLiveSphere
     ov("paste "..x.." "..y.." S")
+end
+
+
+----------------------------------------------------------------------
+
+local function AddPointToBatch(x, y, z)
+    -- add mid point of cell at given grid position
+    x = x * CELLSIZE + HALFCELL - MIDGRID
+    y = y * CELLSIZE + HALFCELL - MIDGRID
+    z = z * CELLSIZE + HALFCELL - MIDGRID
+    local newx, newy = TransformPoint({x, y, z})
+    -- use orthographic projection
+    x = round(newx) + midx
+    y = round(newy) + midy
+    -- add to the list to draw
+    xybatch[#xybatch + 1] = x
+    xybatch[#xybatch + 1] = y
 end
 
 ----------------------------------------------------------------------
@@ -1176,7 +1216,13 @@ function DisplayCells(editing)
     -- local t1 = g.millisecs()
     if usebatch and not testcell then
         ResetBatch()
-        DrawLiveCell = AddCubeToBatch   -- or AddSphereToBatch or AddPointToBatch!!!
+        if celltype == "cube" then
+            DrawLiveCell = AddCubeToBatch
+        elseif celltype == "sphere" then
+            DrawLiveCell = AddSphereToBatch
+        else -- celltype == "point"
+            DrawLiveCell = AddPointToBatch
+        end
     end
     
     -- draw cells from back to front (assumes vertex order set in CreateCube)
