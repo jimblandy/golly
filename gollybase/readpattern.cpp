@@ -254,6 +254,8 @@ const char *readrle(lifealgo &imp, char *line) {
             right = xoff + wd - 1;
          }
       } else {
+         int gwd = (int)imp.gridwd;
+         int ght = (int)imp.gridht;
          for (p=line; *p; p++) {
             char c = *p ;
             if ('0' <= c && c <= '9') {
@@ -288,9 +290,15 @@ const char *readrle(lifealgo &imp, char *line) {
                         p-- ;
                      }
                   }
-                  while (n-- > 0) {
-                     if (imp.setcell(xoff + x++, yoff + y, state) < 0)
-                        return "Cell state out of range for this algorithm" ;
+                  // write run of cells to grid checking cells are within any bounded grid
+                  if (ght == 0 || y < ght) {
+                     while (n-- > 0) {
+                        if (gwd == 0 || x < gwd) {  
+                           if (imp.setcell(xoff + x, yoff + y, state) < 0)
+                              return "Cell state out of range for this algorithm" ;
+                        }
+                        x++;
+                     }
                   }
                }
                n = 0 ;
