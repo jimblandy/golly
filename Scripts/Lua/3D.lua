@@ -17,6 +17,7 @@ TODO: !!!
 - click and drag paste pattern using hand cursor (only move within
   XY/XY/YZ plane depending on which face was clicked)
 - implement undo/redo
+- try probabilistic culling to speed up high-density rendering
 - allow saving as .vti file for use by Ready?
 - add option for 6-face-neighbor rules (start or end rule with V?)
 - also option for 12-neighbor sphere packing rules?
@@ -24,29 +25,20 @@ TODO: !!!
 
 NOTE: Do following changes for the Golly 3.2b1 release:
 
+- add menu bar and pop-up menus from oplus
+- get round() from gplus
 - fix textoption background problem in m.button code in oplus/init.lua
-
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
-
 - implement g.setoption("showtimeline",0)
 - implement g.setoption("showscrollbars",0)
-
 - implement optional parameter for g.note and g.warn so scripts can
   disable the Cancel button:
   g.note(msg, cancel=true)
   g.warn(msg, cancel=true)
-
-- add menu bar and pop-up menus from oplus
-
-- get round() from gplus
-
 - implement g.sleep(millisecs) for use in Lua scripts
-
 - avoid "getclipstr error: no text in clipboard" (return empty string)
-
 - throttle ozoom* events (in here or in Golly)?
-
 - fix unicode problems reported here:
   http://www.conwaylife.com/forums/viewtopic.php?f=7&t=3132#p52918
 --]]
@@ -126,19 +118,21 @@ local activepos = 0                 -- active plane's cell position along 3rd ax
 local activecell = ""               -- "x,y,z" if mouse is inside an active cell
 local prevactive = ""               -- previous activecell
 
--- boundary grid coords for live cells
+-- boundary grid coords for live cells (not always minimal)
 local minx, miny, minz
 local maxx, maxy, maxz
+local minimal_live_bounds = true    -- becomes false if a live cell is deleted
 
--- boundary grid coords for selected cells
+-- boundary grid coords for selected cells (not always minimal)
 local minselx, minsely, minselz
 local maxselx, maxsely, maxselz
+local minimal_sel_bounds = true     -- becomes false if a selected cell is deselected
 
--- boundary grid coords for the active plane
+-- boundary grid coords for the active plane (always minimal)
 local minactivex, minactivey, minactivez
 local maxactivex, maxactivey, maxactivez
 
--- boundary grid coords for the paste pattern
+-- boundary grid coords for the paste pattern (always minimal)
 local minpastex, minpastey, minpastez
 local maxpastex, maxpastey, maxpastez
 
@@ -1231,10 +1225,9 @@ function DisplayCells(editing)
         for z = MAXZ, MINZ, -1 do
             for y = MINY, MAXY do
                 for x = MINX, MAXX do
-                    local k = x + N * (y + N * z)
                     if testcell then
-                        TestCell(editing, k, x, y, z)
-                    elseif grid1[k] then
+                        TestCell(editing, x+N*(y+N*z), x, y, z)
+                    elseif grid1[x+N*(y+N*z)] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1245,10 +1238,9 @@ function DisplayCells(editing)
         for z = MINZ, MAXZ do
             for y = MINY, MAXY do
                 for x = MINX, MAXX do
-                    local k = x + N * (y + N * z)
                     if testcell then
-                        TestCell(editing, k, x, y, z)
-                    elseif grid1[k] then
+                        TestCell(editing, x+N*(y+N*z), x, y, z)
+                    elseif grid1[x+N*(y+N*z)] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1259,10 +1251,9 @@ function DisplayCells(editing)
         for z = MAXZ, MINZ, -1 do
             for y = MAXY, MINY, -1 do
                 for x = MINX, MAXX do
-                    local k = x + N * (y + N * z)
                     if testcell then
-                        TestCell(editing, k, x, y, z)
-                    elseif grid1[k] then
+                        TestCell(editing, x+N*(y+N*z), x, y, z)
+                    elseif grid1[x+N*(y+N*z)] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1273,10 +1264,9 @@ function DisplayCells(editing)
         for z = MINZ, MAXZ do
             for y = MAXY, MINY, -1 do
                 for x = MINX, MAXX do
-                    local k = x + N * (y + N * z)
                     if testcell then
-                        TestCell(editing, k, x, y, z)
-                    elseif grid1[k] then
+                        TestCell(editing, x+N*(y+N*z), x, y, z)
+                    elseif grid1[x+N*(y+N*z)] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1287,10 +1277,9 @@ function DisplayCells(editing)
         for z = MAXZ, MINZ, -1 do
             for y = MAXY, MINY, -1 do
                 for x = MAXX, MINX, -1 do
-                    local k = x + N * (y + N * z)
                     if testcell then
-                        TestCell(editing, k, x, y, z)
-                    elseif grid1[k] then
+                        TestCell(editing, x+N*(y+N*z), x, y, z)
+                    elseif grid1[x+N*(y+N*z)] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1301,10 +1290,9 @@ function DisplayCells(editing)
         for z = MINZ, MAXZ do
             for y = MAXY, MINY, -1 do
                 for x = MAXX, MINX, -1 do
-                    local k = x + N * (y + N * z)
                     if testcell then
-                        TestCell(editing, k, x, y, z)
-                    elseif grid1[k] then
+                        TestCell(editing, x+N*(y+N*z), x, y, z)
+                    elseif grid1[x+N*(y+N*z)] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1315,10 +1303,9 @@ function DisplayCells(editing)
         for z = MAXZ, MINZ, -1 do
             for y = MINY, MAXY do
                 for x = MAXX, MINX, -1 do
-                    local k = x + N * (y + N * z)
                     if testcell then
-                        TestCell(editing, k, x, y, z)
-                    elseif grid1[k] then
+                        TestCell(editing, x+N*(y+N*z), x, y, z)
+                    elseif grid1[x+N*(y+N*z)] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1329,10 +1316,9 @@ function DisplayCells(editing)
         for z = MINZ, MAXZ do
             for y = MINY, MAXY do
                 for x = MAXX, MINX, -1 do
-                    local k = x + N * (y + N * z)
                     if testcell then
-                        TestCell(editing, k, x, y, z)
-                    elseif grid1[k] then
+                        TestCell(editing, x+N*(y+N*z), x, y, z)
+                    elseif grid1[x+N*(y+N*z)] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1494,6 +1480,34 @@ function InitLiveBoundary()
     maxy = math.mininteger
     maxz = math.mininteger
     -- SetLiveCell/SetCellState/NextGeneration will update all values
+    
+    -- set the flag for MinimizeLiveBoundary
+    minimal_live_bounds = true
+end
+
+----------------------------------------------------------------------
+
+function MinimizeLiveBoundary()
+    if popcount > 0 and not minimal_live_bounds then
+        InitLiveBoundary()
+        -- minimal_live_bounds is now true
+        local NN = N*N
+        for k,_ in pairs(grid1) do
+            -- grid1[k] is a live cell
+            local x = k % N
+            local y = k % NN
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if k < minz then minz = k end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if k > maxz then maxz = k end
+        end
+        miny = miny // N
+        maxy = maxy // N
+        minz = minz // NN
+        maxz = maxz // NN
+    end
 end
 
 ----------------------------------------------------------------------
@@ -1505,6 +1519,9 @@ function InitSelectionBoundary()
     maxselx = math.mininteger
     maxsely = math.mininteger
     maxselz = math.mininteger
+    
+    -- set the flag for MinimizeSelectionBoundary
+    minimal_sel_bounds = true
 end
 
 ----------------------------------------------------------------------
@@ -1516,6 +1533,20 @@ local function UpdateSelectionBoundary(x, y, z)
     if x > maxselx then maxselx = x end
     if y > maxsely then maxsely = y end
     if z > maxselz then maxselz = z end
+end
+
+----------------------------------------------------------------------
+
+function MinimizeSelectionBoundary()
+    if selcount > 0 and not minimal_sel_bounds then
+        -- find minimal bounding box of all selected cells
+        InitSelectionBoundary()
+        -- minimal_sel_bounds is now true
+        local NN = N*N
+        for k,_ in pairs(selected) do
+            UpdateSelectionBoundary(k % N, (k // N) % N, k // NN)
+        end
+    end
 end
 
 ----------------------------------------------------------------------
@@ -1632,6 +1663,8 @@ local function SetSelection(x, y, z, sel)
     elseif selected[pos] then
         selected[pos] = nil
         selcount = selcount - 1
+        -- tell MinimizeSelectionBoundary that it needs to update the selection boundary
+        minimal_sel_bounds = false
     end
 end
 
@@ -1659,7 +1692,8 @@ local function SetCellState(x, y, z, state)
             -- kill a live cell
             grid1[pos] = nil
             popcount = popcount - 1
-            -- don't test for boundary shrinkage here (too expensive)
+            -- tell MinimizeLiveBoundary that it needs to update the live boundary
+            minimal_live_bounds = false
         end
     end
 end
@@ -2299,6 +2333,25 @@ end
 
 ----------------------------------------------------------------------
 
+function GetPasteCells()
+    -- return an array of paste cell positions relative to mid cell
+    local pcells = {}
+    if pastecount > 0 then
+        local mid = N//2
+        local NN = N*N
+        for k,_ in pairs(pastecell) do
+            -- pastecell[k] is in paste pattern
+            local x = k % N
+            local y = (k // N) % N
+            local z = k // NN
+            pcells[#pcells+1] = {x-mid, y-mid, z-mid}
+        end
+    end
+    return pcells
+end
+
+----------------------------------------------------------------------
+
 function ChangeGridSize()
     local newN = N
     
@@ -2329,6 +2382,10 @@ function ChangeGridSize()
     -- save any selected cells as an array of positions relative to mid cell
     local oldselcount = selcount
     local selcells = GetSelectedCells()
+    
+    -- save any paste cells as an array of positions relative to mid cell
+    local oldpastecount = pastecount
+    local pcells = GetPasteCells()
     
     N = newN
     MIDGRID = (N+1-(N%2))*HALFCELL
@@ -2366,12 +2423,40 @@ function ChangeGridSize()
     end
     
     -- restore paste pattern, clipping any cells outside the new grid
-    --!!!
+    local pclipped = 0
+    pastecount = 0
+    pastecell = {}
+    minpastex = math.maxinteger
+    minpastey = math.maxinteger
+    minpastez = math.maxinteger
+    maxpastex = math.mininteger
+    maxpastey = math.mininteger
+    maxpastez = math.mininteger
+    if oldpastecount > 0 then
+        for _, xyz in ipairs(pcells) do
+            local x, y, z = xyz[1]+mid, xyz[2]+mid, xyz[3]+mid
+            if x >= 0 and x < N and
+               y >= 0 and y < N and
+               z >= 0 and z < N then
+                pastecell[ x + N * (y + N * z) ] = true
+                pastecount = pastecount + 1
+                if x < minpastex then minpastex = x end
+                if y < minpastey then minpastey = y end
+                if z < minpastez then minpastez = z end
+                if x > maxpastex then maxpastex = x end
+                if y > maxpastey then maxpastey = y end
+                if z > maxpastez then maxpastez = z end
+            else
+                pclipped = pclipped + 1
+            end
+        end
+    end
     
-    if clipcount > 0 or selclipped > 0 then
+    if clipcount > 0 or selclipped > 0 or pclipped > 0 then
         message = ""
         if clipcount > 0 then message = "Clipped live cells = "..clipcount.."\n" end
-        if selclipped > 0 then message = message.."Clipped selection cells = "..selclipped end
+        if selclipped > 0 then message = message.."Clipped selection cells = "..selclipped.."\n" end
+        if pclipped > 0 then message = message.."Clipped paste cells = "..pclipped end
     end
     
     FitGrid()   -- calls Refresh()
@@ -2409,13 +2494,18 @@ function SelectAll()
     if popcount > 0 then
         selcount = 0
         selected = {}
-        InitSelectionBoundary()
-        local NN = N*N
         for k,_ in pairs(grid1) do
             selected[k] = true
             selcount = selcount + 1
-            UpdateSelectionBoundary(k % N, (k // N) % N, k // NN)
         end
+        -- selection boundary matches live cell boundary
+        minselx = minx
+        minsely = miny
+        minselz = minz
+        maxselx = maxx
+        maxsely = maxy
+        maxselz = maxz
+        minimal_sel_bounds = minimal_live_bounds
         Refresh()
     end
 end
@@ -2468,6 +2558,7 @@ function ClearSelection()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
             end
         end
         Refresh()
@@ -2484,6 +2575,7 @@ function ClearOutside()
             if not selected[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
             end
         end
         Refresh()
@@ -2515,21 +2607,6 @@ end
 
 ----------------------------------------------------------------------
 
-function MinimizeSelectionBoundary()
-    if selcount == 0 then return end
-    -- find minimal bounding box of all selected cells
-    
-    -- use similar idea as in GetBounds to avoid unnecessary work!!!???
-    
-    InitSelectionBoundary()
-    local NN = N*N
-    for k,_ in pairs(selected) do
-        UpdateSelectionBoundary(k % N, (k // N) % N, k // NN)
-    end
-end
-
-----------------------------------------------------------------------
-
 function FlipSelectionX()
     if selcount > 0 then
         -- reflect selected cells' X coords across YZ plane thru middle of selection
@@ -2545,15 +2622,16 @@ function FlipSelectionX()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
             end
         end
         selected = {}
-        InitSelectionBoundary()
+        -- flip doesn't change selection boundary so no need to call
+        -- InitSelectionBoundary and UpdateSelectionBoundary
         for _,xyzs in ipairs(cells) do
             local x, y, z, live = xyzs[1], xyzs[2], xyzs[3], xyzs[4]
             local k = x + N * (y + N * z)
             selected[k] = true
-            UpdateSelectionBoundary(x, y, z)
             if live and not grid1[k] then
                 -- best to use OR mode for selection actions
                 SetLiveCell(x, y, z)
@@ -2580,15 +2658,16 @@ function FlipSelectionY()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
             end
         end
         selected = {}
-        InitSelectionBoundary()
+        -- flip doesn't change selection boundary so no need to call
+        -- InitSelectionBoundary and UpdateSelectionBoundary
         for _,xyzs in ipairs(cells) do
             local x, y, z, live = xyzs[1], xyzs[2], xyzs[3], xyzs[4]
             local k = x + N * (y + N * z)
             selected[k] = true
-            UpdateSelectionBoundary(x, y, z)
             if live and not grid1[k] then
                 -- best to use OR mode for selection actions
                 SetLiveCell(x, y, z)
@@ -2615,15 +2694,16 @@ function FlipSelectionZ()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
             end
         end
         selected = {}
-        InitSelectionBoundary()
+        -- flip doesn't change selection boundary so no need to call
+        -- InitSelectionBoundary and UpdateSelectionBoundary
         for _,xyzs in ipairs(cells) do
             local x, y, z, live = xyzs[1], xyzs[2], xyzs[3], xyzs[4]
             local k = x + N * (y + N * z)
             selected[k] = true
-            UpdateSelectionBoundary(x, y, z)
             if live and not grid1[k] then
                 -- best to use OR mode for selection actions
                 SetLiveCell(x, y, z)
@@ -2653,6 +2733,7 @@ function RotateSelectionX()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
             end
         end
         selected = {}
@@ -2691,6 +2772,7 @@ function RotateSelectionY()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
             end
         end
         selected = {}
@@ -2729,6 +2811,7 @@ function RotateSelectionZ()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
             end
         end
         selected = {}
@@ -2769,7 +2852,7 @@ function Paste()
             return
         end
         
-        -- newpattern contains valid pattern
+        -- newpattern contains valid pattern, but might be too big
         minpastex = newpattern.newminx
         minpastey = newpattern.newminy
         minpastez = newpattern.newminz
@@ -2787,11 +2870,13 @@ function Paste()
         
         -- set pastecount and pastecell
         pastecount = newpattern.newpop
+        pastecell = {}
         if newpattern.newsize == N then
-            -- put paste pattern in same location as the cut/copy
+            -- just put paste pattern in same location as the cut/copy
             pastecell = newpattern.newgrid
         else
             -- put paste pattern in middle of grid and update paste boundary
+            local oldpx, oldpy, oldpz = minpastex, minpastey, minpastez
             minpastex = math.maxinteger
             minpastey = math.maxinteger
             minpastez = math.maxinteger
@@ -2802,9 +2887,9 @@ function Paste()
             local PP = P*P
             for k,_ in pairs(newpattern.newgrid) do
                 -- newpattern.newgrid[k] is a live cell
-                local x = (k % P)      - minpastex + (N - pwd) // 2
-                local y = (k // P % P) - minpastey + (N - pht) // 2
-                local z = (k // PP)    - minpastez + (N - pdp) // 2
+                local x = (k % P)      - oldpx + (N - pwd) // 2
+                local y = (k // P % P) - oldpy + (N - pht) // 2
+                local z = (k // PP)    - oldpz + (N - pdp) // 2
                 pastecell[ x + N * (y + N * z) ] = 1
                 if x < minpastex then minpastex = x end
                 if y < minpastey then minpastey = y end
@@ -2848,10 +2933,12 @@ end
 
 function PasteXOR()
     if pastecount > 0 then
+        local NN = N*N
         for k,_ in pairs(pastecell) do
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
             else
                 SetLiveCell(k % N, (k // N) % N, k // NN)
             end
@@ -2876,6 +2963,7 @@ function FlipPasteX()
             local z = k // NN
             cells[#cells+1] = {round(midx*2) - x, y, z}
         end
+        -- flip doesn't change paste boundary
         pastecell = {}
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
@@ -2899,6 +2987,7 @@ function FlipPasteY()
             local z = k // NN
             cells[#cells+1] = {x, round(midy*2) - y, z}
         end
+        -- flip doesn't change paste boundary
         pastecell = {}
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
@@ -2922,6 +3011,7 @@ function FlipPasteZ()
             local z = k // NN
             cells[#cells+1] = {x, y, round(midz*2) - z}
         end
+        -- flip doesn't change paste boundary
         pastecell = {}
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
@@ -2949,6 +3039,7 @@ function RotatePasteX()
             cells[#cells+1] = {x, (y0+z) % N, (z0-y) % N}
         end
         pastecell = {}
+        -- minpastex, maxpastex don't change
         minpastey = math.maxinteger
         minpastez = math.maxinteger
         maxpastey = math.mininteger
@@ -2956,7 +3047,6 @@ function RotatePasteX()
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastecell[x + N * (y + N * z)] = 1
-            -- minpastex, maxpastex don't change
             if y < minpastey then minpastey = y end
             if y > maxpastey then maxpastey = y end
             if z < minpastez then minpastez = z end
@@ -2984,6 +3074,7 @@ function RotatePasteY()
             cells[#cells+1] = {(x0-z) % N, y, (z0+x) % N}
         end
         pastecell = {}
+        -- minpastey, maxpastey don't change
         minpastex = math.maxinteger
         minpastez = math.maxinteger
         maxpastex = math.mininteger
@@ -2991,7 +3082,6 @@ function RotatePasteY()
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastecell[x + N * (y + N * z)] = 1
-            -- minpastey, maxpastey don't change
             if x < minpastex then minpastex = x end
             if x > maxpastex then maxpastex = x end
             if z < minpastez then minpastez = z end
@@ -3019,6 +3109,7 @@ function RotatePasteZ()
             cells[#cells+1] = {(x0+y) % N, (y0-x) % N, z}
         end
         pastecell = {}
+        -- minpastez, maxpastez don't change
         minpastex = math.maxinteger
         minpastey = math.maxinteger
         maxpastex = math.mininteger
@@ -3026,7 +3117,6 @@ function RotatePasteZ()
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastecell[x + N * (y + N * z)] = 1
-            -- minpastez, maxpastez don't change
             if x < minpastex then minpastex = x end
             if x > maxpastex then maxpastex = x end
             if y < minpastey then minpastey = y end
@@ -3502,29 +3592,7 @@ function GetRule() return rulestring end
 function GetBounds()
     if popcount > 0 then
         -- return the pattern's minimal bounding box
-
-        -- note that minx,maxx,miny,maxy,minz,maxz won't necessarily be
-        -- the minimal bounding box if a live cell was deleted, so maybe
-        -- set a flag if that happens and test it here (also reset the
-        -- flag in InitLiveBoundary)???!!!
-
-        InitLiveBoundary()
-        local NN = N*N
-        for k,_ in pairs(grid1) do
-            -- grid1[k] is a live cell
-            local x = k % N
-            local y = k % NN
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if k < minz then minz = k end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if k > maxz then maxz = k end
-        end
-        miny = miny // N
-        maxy = maxy // N
-        minz = minz // NN
-        maxz = maxz // NN
+        MinimizeLiveBoundary()
         local mid = N//2
         return { minx-mid, maxx-mid, miny-mid, maxy-mid, minz-mid, maxz-mid }
     else
@@ -4413,6 +4481,7 @@ function StartDrawing(mousex, mousey)
             -- death
             grid1[pos] = nil
             popcount = popcount - 1
+            minimal_live_bounds = false
             drawstate = 0
         else
             -- birth
@@ -4445,6 +4514,7 @@ function StartSelecting(mousex, mousey)
             -- deselect
             selected[pos] = nil
             selcount = selcount - 1
+            minimal_sel_bounds = false
             selstate = false
         else
             selected[pos] = true
@@ -4723,6 +4793,7 @@ function EraseLiveCells(mousex, mousey)
                abs(py - mousey) < HALFCELL then
                 grid1[k] = nil
                 popcount = popcount - 1
+                minimal_live_bounds = false
                 changes = changes + 1
             end
         end
@@ -5161,7 +5232,7 @@ function MainLoop()
             CheckCursor(mousepos)
             if not generating then
                 -- don't hog the CPU
-                -- implement using wxMilliSleep!!!
+                -- implement g.sleep using wxMilliSleep!!!
                 -- g.sleep(5)
             end
         end
