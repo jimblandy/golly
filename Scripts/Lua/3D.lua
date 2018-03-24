@@ -14,8 +14,8 @@ Thanks to Tom Rokicki for optimizing the NextGeneration code.
 
 TODO: !!!
 
-- click and drag paste pattern using hand cursor (only move within
-  XY/XY/YZ plane depending on which face was clicked)
+- click and drag selection or paste pattern using hand cursor
+  (only move within XY/XY/YZ plane depending on which face was clicked)
 - implement undo/redo
 - try probabilistic culling to speed up high-density rendering
 - allow saving as .vti file for use by Ready?
@@ -37,6 +37,8 @@ NOTE: Do following changes for the Golly 3.2b1 release:
   g.note(msg, cancel=true)
   g.warn(msg, cancel=true)
 - implement g.sleep(millisecs) for use in Lua scripts
+- implement "open filepath" event for g.getevent and get Golly to
+  automatically start up 3D.lua if user opens a .3d file
 - avoid "getclipstr error: no text in clipboard" (return empty string)
 - throttle ozoom* events (in here or in Golly)?
 - fix unicode problems reported here:
@@ -68,7 +70,7 @@ math.randomseed(os.time())          -- init seed for math.random
 
 local N = 30                        -- initial grid size (N*N*N cells)
 local MINN = 3                      -- minimum grid size
-local MAXN = 64                     -- maximum grid size
+local MAXN = 100                    -- maximum grid size
 local BORDER = 2                    -- space around live cubes
 local MINSIZE = 1+BORDER*2          -- minimum size of empty cells
 local MAXSIZE = 100                 -- maximum size of empty cells
@@ -2258,11 +2260,15 @@ end
 
 ----------------------------------------------------------------------
 
-function RandomFill()
+function RandomPattern()
+    -- make these menu options eventually!!!
+    local randomfill = false
+    local randomsphere = false
+
     local function getperc()
         ::try_again::
-        local s = g.getstring("Enter a percentage (from 0 to 100):",
-                              tostring(perc), "Random fill")
+        local s = g.getstring("Enter density as a percentage (from 0 to 100):",
+                              tostring(perc), "Random pattern")
         if validint(s) and (tonumber(s) >= 0) and (tonumber(s) <= 100) then
             perc = tonumber(s)
         else
@@ -2285,16 +2291,46 @@ function RandomFill()
     generating = false
     UpdateStartButton()
     ClearCells()
-    local M = N-1
-    for z = 0, M do
-        for y = 0, M do
-            for x = 0, M do
-                if rand(0,99) < perc then
-                    SetLiveCell(x, y, z)
+    
+    local minval, maxval
+    if randomfill or N < 8 then
+        minval = 0
+        maxval = N-1
+    else
+        minval = N//8
+        maxval = (N-1) - minval
+    end
+    if randomsphere then
+        local mid = N//2
+        local rsq = (maxval-minval)//2
+        rsq = rsq*rsq
+        for z = minval, maxval do
+            local dz = z-mid
+            local dz2 = dz*dz
+            for y = minval, maxval do
+                local dy = y-mid
+                local dy2 = dy*dy
+                for x = minval, maxval do
+                    local dx = x-mid
+                    local d = dx*dx + dy2 + dz2
+                    if d <= rsq and rand(0,99) < perc then
+                        SetLiveCell(x, y, z)
+                    end
+                end
+            end
+        end
+    else
+        for z = minval, maxval do
+            for y = minval, maxval do
+                for x = minval, maxval do
+                    if rand(0,99) < perc then
+                        SetLiveCell(x, y, z)
+                    end
                 end
             end
         end
     end
+    
     SetActivePlane()
     InitialView()       -- calls Refresh()
 end
@@ -3715,10 +3751,8 @@ Rotation occurs around the middle cell in the grid.
 <p>
 It's also possible to do some editing with the hand cursor.
 You can alt-click on a live cell to erase it <em>and</em> any live cells
-behind it, as long as their mid points are within a half-cell radius of the
-mouse click.
-Or you can shift-click on a live cell to select it <em>and</em> any live cells
-behind it.
+behind it, as long as their mid points are within a half-cell radius of the mouse click.
+Or you can shift-click on a live cell to select it <em>and</em> any live cells behind it.
 This makes it easy to quickly erase or select isolated objects.
 
 <p>
@@ -3732,6 +3766,19 @@ If the Select option is ticked then you can use the cross-hairs cursor
 to select or deselect cells in the active plane.
 Any selected cells outside the active plane are drawn as translucent green points.
 Click and drag outside the active plane to rotate the pattern.
+
+<p>
+To move the active plane to a different position, shift-click anywhere in the
+active plane and drag the mouse.  Or you can hit the "," or "." keys.
+Hit shift-A to change the active plane's orientation.
+
+<p>
+If a paste pattern is visible (its cells are red) then you can control-click or
+right-click anywhere (using any cursor) to get a red pop-up menu that lets
+you choose various paste actions.
+If a selection exists (green cells) then you can control-click or right-click
+to get a green pop-up menu with various selection actions.
+If a paste pattern and a selection both exist then the paste menu takes precedence.
 
 <p>
 Use the mouse wheel at any time to zoom in/out.
@@ -3778,11 +3825,11 @@ shortcuts):
 <tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/points/spheres) </td></tr>
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lines </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the tool bar </td></tr>
-<tr><td align=right> 5 &nbsp;</td><td>&nbsp; fill grid with random pattern at given % </td></tr>
+<tr><td align=right> 5 &nbsp;</td><td>&nbsp; create a random pattern with given density </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
 <tr><td align=right> R &nbsp;</td><td>&nbsp; change the rule </td></tr>
-<tr><td align=right> , &nbsp;</td><td>&nbsp; move active plane away from axes </td></tr>
-<tr><td align=right> . &nbsp;</td><td>&nbsp; move active plane closer to axes </td></tr>
+<tr><td align=right> , &nbsp;</td><td>&nbsp; move active plane closer (in initial view) </td></tr>
+<tr><td align=right> . &nbsp;</td><td>&nbsp; move active plane further away (in initial view) </td></tr>
 <tr><td align=right> shift-A &nbsp;</td><td>&nbsp; cycle active plane's orientation (XY/XZ/YZ) </td></tr>
 <tr><td align=right> D &nbsp;</td><td>&nbsp; switch cursor to draw mode </td></tr>
 <tr><td align=right> S &nbsp;</td><td>&nbsp; switch cursor to select mode </td></tr>
@@ -3882,7 +3929,7 @@ Return the generation count.
 
 <a name="GetGridSize"></a><p><dt><b>GetGridSize()</b></dt>
 <dd>
-Return the current grid size (3 to 64).
+Return the current grid size (3 to 100).
 </dd>
 
 <a name="GetPercentage"></a><p><dt><b>GetPercentage()</b></dt>
@@ -4865,7 +4912,7 @@ function CreateOverlay()
     savebutton = op.button("Save...", SavePattern)
     runbutton = op.button("Run...", RunScript)
     gridbutton = op.button("Grid...", ChangeGridSize)
-    randbutton = op.button("Random...", RandomFill)
+    randbutton = op.button("Random...", RandomPattern)
     rulebutton = op.button("Rule...", ChangeRule)
     ssbutton = op.button("Start", StartStop)
     s1button = op.button("+1", Step1)
@@ -5105,7 +5152,7 @@ function HandleKey(event)
     elseif key == "d" and mods == "none" then DrawMode()
     elseif key == "s" and mods == "none" then SelectMode()
     elseif key == "h" then ShowHelp()
-    elseif key == "5" then RandomFill()
+    elseif key == "5" then RandomPattern()
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)
