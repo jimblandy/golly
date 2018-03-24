@@ -1931,7 +1931,9 @@ function ReadPattern(filepath)
                     return "Unexpected version:\n"..value
                 end
             elseif keyword == "gridsize" then
-                tsize = tonumber(value)
+                tsize = tonumber(value) or MAXN
+                if tsize < MINN then tsize = MINN end
+                if tsize > MAXN then tsize = MAXN end
             elseif keyword == "rule" then
                 local saverule = rulestring
                 if not ParseRule(value) then
@@ -1939,30 +1941,36 @@ function ReadPattern(filepath)
                     return "Unknown rule:\n"..value
                 end
                 trule = rulestring
-                -- restore rulestring in case there is a later error
-                rulestring = saverule
+                -- restore rulestring etc in case there is a later error
+                -- or we're doing a paste and want to ignore the specified rule
+                ParseRule(saverule)
             elseif keyword == "generation" then
-                tgens = tonumber(value)
+                tgens = tonumber(value) or 0
+                if tgens < 0 then tgens = 0 end
             end
         else
-            -- line should contain "x y z" coords (but y and z might be missing)
-            local x, y, z = split(line)
-            local mid = tsize // 2
-            x = tonumber(x) + mid
-            if y then prevy = tonumber(y) end
-            if z then prevz = tonumber(z) end
-            y = prevy + mid
-            z = prevz + mid
-            -- set live cell
-            tgrid[ x + tsize * (y + tsize * z) ] = 1
-            tpop = tpop + 1
-            -- boundary might expand
-            if x < tminx then tminx = x end
-            if y < tminy then tminy = y end
-            if z < tminz then tminz = z end
-            if x > tmaxx then tmaxx = x end
-            if y > tmaxy then tmaxy = y end
-            if z > tmaxz then tmaxz = z end
+            -- line can contain one or more "x y z" coords separated by commas
+            -- (but y and z might be missing in deprecated format)
+            for cell in line:gmatch("[^,]+") do
+                local x, y, z = split(cell)
+                local mid = tsize // 2
+                x = tonumber(x) + mid
+                if y then prevy = tonumber(y) end
+                if z then prevz = tonumber(z) end
+                y = prevy + mid
+                z = prevz + mid
+                -- ensure x,y,z values are within 0..tsize-1???!!!
+                -- set live cell
+                tgrid[ x + tsize * (y + tsize * z) ] = 1
+                tpop = tpop + 1
+                -- boundary might expand
+                if x < tminx then tminx = x end
+                if y < tminy then tminy = y end
+                if z < tminz then tminz = z end
+                if x > tmaxx then tmaxx = x end
+                if y > tmaxy then tmaxy = y end
+                if z > tmaxz then tmaxz = z end
+            end
         end
     end
     f:close()
@@ -2092,27 +2100,27 @@ function WritePattern(filepath, comments)
     if not f then return "Failed to create file:\n"..filepath end
     f:write(PatternHeader(comments).."\n")
     if popcount > 0 then
-        local prevy = math.maxinteger
-        local prevz = math.maxinteger
         local mid = N//2
         local NN = N*N
+        local line = ""
+        local cellsonline = 0
         for k,_ in pairs(grid1) do
             -- grid1[k] is a live cell
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
-            -- reduce file size by only writing y and z coords if they have changed
-            if z == prevz and y == prevy then
-                f:write((x-mid).."\n")
-            elseif z == prevz then
-                f:write((x-mid).." "..(y-mid).."\n")
-                prevy = y
+            local cell = (x-mid).." "..(y-mid).." "..(z-mid)
+            if #line < 60 then
+                if cellsonline > 0 then line = line.."," end
+                line = line..cell
+                cellsonline = cellsonline + 1
             else
-                f:write((x-mid).." "..(y-mid).." "..(z-mid).."\n")
-                prevy = y
-                prevz = z
+                f:write(line..","..cell.."\n")
+                line = ""
+                cellsonline = 0
             end
         end
+        if #line > 0 then f:write(line.."\n") end
     end
     f:close()
     return nil  -- success
@@ -2522,25 +2530,27 @@ function CopySelection()
             Refresh()
             return false
         end
-        local prevy = math.maxinteger
-        local prevz = math.maxinteger
         local lines = {}
         lines[1] = PatternHeader()
+        local line = ""
+        local cellsonline = 0
         for _, xyz in ipairs(livecells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
             -- x,y,z are relative to middle cell in grid
-            if z == prevz and y == prevy then
-                lines[#lines+1] = tostring(x)
-            elseif z == prevz then
-                lines[#lines+1] = x.." "..y
-                prevy = y
+            local cell = x.." "..y.." "..z
+            if #line < 60 then
+                if cellsonline > 0 then line = line.."," end
+                line = line..cell
+                cellsonline = cellsonline + 1
             else
-                lines[#lines+1] = x.." "..y.." "..z
-                prevy = y
-                prevz = z
+                lines[#lines+1] = line..","..cell
+                line = ""
+                cellsonline = 0
             end
         end
-        lines[#lines+1] = "" -- so we get \n at end of last line
+        if #line > 0 then lines[#lines+1] = line end
+        -- append empty string so we get \n at end of last line
+        lines[#lines+1] = ""
         g.setclipstr(table.concat(lines,"\n"))
         return true
     else
@@ -3983,11 +3993,10 @@ The valid keywords are:
 </table>
 
 <li>
-Then comes the coordinates for each live cell in the pattern,
-one cell per line.  Each line has the form "x y z".
-The y and/or z coordinates are optional; if missing they take on
-the values from a previous line where the y/z values were supplied.
-All coordinates are relative to the middle cell in the grid.
+Then comes lines with the "x y z" coordinates for each live cell in the pattern.
+The coordinates are relative to the middle cell in the grid.
+Multiple cells on a line are separated by commas.
+The ordering of cells is essentially random.
 <li>
 Empty lines or lines starting with "#" are ignored.
 </ul>
@@ -3999,22 +4008,15 @@ and type shift-O (after returning to the 3D.lua window):
 
 <dd><table border=0><pre>
 3D
-# A 3-dimensional analog of Life's glider.
-# Discovered by Carter Bays in 1987.
+# A 30c/30 orthogonal spaceship.
+# Discovered by Andrew Trevorrow in March, 2018.
 version=1
-gridsize=30
-rule=5,6,7/6
+gridsize=64
+rule=4,7/5,8
 generation=0
--1 -1 -1
-0
--1 0
-0
--1 -2 0
-0
--1 0
-0
--1 0 1
-0</pre></table></dd>
+0 1 -1,-1 -1 -3,-2 1 -2,-3 1 0,0 0 -1,-3 -2 -1,0 0 -2,0 -1 -1,-1 -2 -1
+0 -2 -2,0 -2 -1,0 -1 0,-2 -1 1,0 0 0,-2 -3 -2,-2 -3 -1,0 -1 -2,0 0 -3
+0 1 -2,-2 1 0,0 -1 -3,-3 0 -2,-2 2 -1,-1 1 -2</pre></table></dd>
 
 <p><a name="refs"></a><br>
 <font size=+1><b>Credits and References</b></font>
