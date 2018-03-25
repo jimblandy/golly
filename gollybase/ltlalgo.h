@@ -31,6 +31,7 @@ public:
     virtual const char* getrule();
     virtual const char* DefaultRule();
     virtual int NumCellStates();
+    virtual int NumRandomizedCellStates() { return 2 ; }
     virtual void step();
     virtual void* getcurrentstate() { return 0; }
     virtual void setcurrentstate(void*) {}

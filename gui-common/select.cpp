@@ -1421,7 +1421,7 @@ void Selection::RandomFill()
     BeginProgress("Randomly filling selection");
     int cx, cy;
     lifealgo* curralgo = currlayer->algo;
-    int livestates = curralgo->NumCellStates() - 1;    // don't count dead state
+    int livestates = curralgo->NumRandomizedCellStates() - 1;    // don't count dead state
 
     for ( cy=itop; cy<=ibottom; cy++ ) {
         for ( cx=ileft; cx<=iright; cx++ ) {
