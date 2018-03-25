@@ -14,8 +14,6 @@ Thanks to Tom Rokicki for optimizing the NextGeneration code.
 
 TODO: !!!
 
-- click and drag selection or paste pattern using hand cursor
-  (only move within XY/XY/YZ plane depending on which face was clicked)
 - implement undo/redo
 - try probabilistic culling to speed up high-density rendering
 - allow saving as .vti file for use by Ready?
@@ -4790,6 +4788,7 @@ function MovePastePattern(deltax, deltay, deltaz)
         local z = xyz[3] + mid + deltaz
         pastecell[ x + N * (y + N * z) ] = true
     end
+    
     Refresh()
 end
 
@@ -4841,6 +4840,7 @@ end
 
 function StartDraggingSelection(mousex, mousey)
     -- test if mouse click is in a selected cell
+    MinimizeSelectionBoundary()
     local NN = N*N
     for k,_ in pairs(selected) do
         local px, py = GetMidPoint(k%N, (k//N)%N, k//NN)
@@ -4873,7 +4873,106 @@ end
 ----------------------------------------------------------------------
 
 function MoveSelection(deltax, deltay, deltaz)
-    -- careful!!! what if empty selected cell moves to unselected live cell???
+    -- move all selected cells by the given amounts, if possible
+    if minselx + deltax < 0 then deltax = -minselx end
+    if minsely + deltay < 0 then deltay = -minsely end
+    if minselz + deltaz < 0 then deltaz = -minselz end
+    if maxselx + deltax >= N then deltax = N-1 - maxselx end
+    if maxsely + deltay >= N then deltay = N-1 - maxsely end
+    if maxselz + deltaz >= N then deltaz = N-1 - maxselz end
+    
+    if deltax == 0 and deltay == 0 and deltaz == 0 then return end
+
+    minselx = minselx + deltax
+    minsely = minsely + deltay
+    minselz = minselz + deltaz
+    maxselx = maxselx + deltax
+    maxsely = maxsely + deltay
+    maxselz = maxselz + deltaz
+    
+    -- get array of currently selected cell positions
+    -- and kill and remember positions of any selected live cells
+    local savepop = popcount
+    local selcells = {}
+    local livecells = {}
+    local NN = N*N
+    for k,_ in pairs(selected) do
+        -- selected[k] is a selected cell
+        local x = k % N
+        local y = (k // N) % N
+        local z = k // NN
+        selcells[#selcells+1] = {x, y, z}
+        if grid1[k] then
+            -- selected cell is a live cell, so kill it
+            grid1[k] = nil
+            popcount = popcount - 1
+            minimal_live_bounds = false
+            livecells[#livecells+1] = {x, y, z}
+        end
+    end
+    
+    if popcount == 0 and selcount == savepop then
+        -- all live cells (and only those cells) were selected
+        -- so we can handle this common case much faster
+        
+        -- put the selected cells (all live) in their new positions
+        selected = {}
+        for _, xyz in ipairs(selcells) do
+            local x = xyz[1] + deltax
+            local y = xyz[2] + deltay
+            local z = xyz[3] + deltaz
+            local k = x + N * (y + N * z)
+            selected[k] = true
+            grid1[k] = 1
+        end
+        popcount = savepop
+        
+        -- new live boundary is same as new selection boundary
+        -- (and minimal because StartDraggingSelection called MinimizeSelectionBoundary)
+        minx = minselx
+        miny = minsely
+        minz = minselz
+        maxx = maxselx
+        maxy = maxsely
+        maxz = maxselz
+        minimal_live_bounds = true
+    else
+
+        -- use same logic as in move-selection.lua to avoid modifying
+        -- any live cells under the moving selection???!!!
+
+        -- put the selected cells in their new positions
+        selected = {}
+        for _, xyz in ipairs(selcells) do
+            local x = xyz[1] + deltax
+            local y = xyz[2] + deltay
+            local z = xyz[3] + deltaz
+            local k = x + N * (y + N * z)
+            selected[k] = true
+            -- grid1[k] might be a live cell here!!!
+        end
+        
+        -- restore the killed cells in their new positions
+        for _, xyz in ipairs(livecells) do
+            local x = xyz[1] + deltax
+            local y = xyz[2] + deltay
+            local z = xyz[3] + deltaz
+            local k = x + N * (y + N * z)
+            if not grid1[k] then
+                grid1[k] = 1
+                popcount = popcount + 1
+                -- boundary might expand
+                if x < minx then minx = x end
+                if y < miny then miny = y end
+                if z < minz then minz = z end
+                if x > maxx then maxx = x end
+                if y > maxy then maxy = y end
+                if z > maxz then maxz = z end
+            end
+        end
+    end
+    
+    Refresh()
 end
 
 ----------------------------------------------------------------------
