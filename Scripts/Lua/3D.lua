@@ -1414,7 +1414,7 @@ function Refresh()
     
     if showaxes then DrawRearAxes() end
     
-    local editing = currcursor == drawcursor or currcursor == selectcursor
+    local editing = currcursor ~= movecursor
     if popcount > 0 or pastecount > 0 or selcount > 0 or editing then
         if pastecount > 0 then
             -- paste cells will be translucent red
@@ -1623,7 +1623,7 @@ end
 ----------------------------------------------------------------------
 
 function MoveActivePlane(newpos, refresh)
-    if currcursor == drawcursor or currcursor == selectcursor then
+    if currcursor ~= movecursor then
         local mid = N//2
         if newpos + mid < 0 then
             newpos = -mid
@@ -1639,7 +1639,7 @@ end
 ----------------------------------------------------------------------
 
 function CycleActivePlane()
-    if currcursor == drawcursor or currcursor == selectcursor then
+    if currcursor ~= movecursor then
         -- cycle to next orientation of active plane
         if activeplane == "XY" then
             SetActivePlane("YZ", activepos)
@@ -3575,7 +3575,7 @@ end
 ----------------------------------------------------------------------
 
 local function GetMidPoint(x, y, z)
-    -- return mid point of cube at given grid position
+    -- return mid point of cell at given grid position
     x = x * CELLSIZE + HALFCELL - MIDGRID
     y = y * CELLSIZE + HALFCELL - MIDGRID
     z = z * CELLSIZE + HALFCELL - MIDGRID
@@ -4443,38 +4443,16 @@ end
 
 ----------------------------------------------------------------------
 
-local function InsideActiveCell(mousex, mousey)
-    -- if the given mouse position is inside the active plane then
-    -- return a string containing the cell coords in the format "x,y,z"
-    -- otherwise return an empty string
-
-    -- create a box enclosing all active cells using same vertex order as CreateCube
-    local x = minactivex * CELLSIZE - MIDGRID
-    local y = minactivey * CELLSIZE - MIDGRID
-    local z = minactivez * CELLSIZE - MIDGRID
-    local xlen = (maxactivex - minactivex + 1) * CELLSIZE
-    local ylen = (maxactivey - minactivey + 1) * CELLSIZE
-    local zlen = (maxactivez - minactivez + 1) * CELLSIZE
-    local activebox = {
-        {x     , y     , z+zlen},     -- v1
-        {x     , y     , z     },     -- v2
-        {x     , y+ylen, z+zlen},     -- v3
-        {x     , y+ylen, z     },     -- v4
-        {x+xlen, y+ylen, z+zlen},     -- v5
-        {x+xlen, y+ylen, z     },     -- v6
-        {x+xlen, y     , z+zlen},     -- v7
-        {x+xlen, y     , z     }      -- v8
-    }
-
-    -- create activebox's rotated and projected vertices
+function FindFace(mousex, mousey, box)
+    -- create given box's rotated and projected vertices
     for i = 1, 8 do
-        rotx[i], roty[i], rotz[i] = TransformPoint(activebox[i])
+        rotx[i], roty[i], rotz[i] = TransformPoint(box[i])
         projectedx[i] = round( rotx[i] ) + midx
         projectedy[i] = round( roty[i] ) + midy
     end
-
-    -- test if mousex,mousey is inside activebox;
-    -- up to 3 faces (all parallelograms) are visible
+    
+    -- find which face of given box contains mousex,mousey (if any);
+    -- note that up to 3 faces (all parallelograms) are visible
     local face = ""
     if rotz[1] < rotz[2] then
         -- front face is visible
@@ -4503,7 +4481,37 @@ local function InsideActiveCell(mousex, mousey)
             if PointInFace(mousex, mousey, 1,7,8,2) then face = "U" end
         end
     end
-    
+    return face     -- empty/F/B/R/L/T/U
+end
+
+----------------------------------------------------------------------
+
+local function InsideActiveCell(mousex, mousey)
+    -- if the given mouse position is inside the active plane then
+    -- return a string containing the cell coords in the format "x,y,z"
+    -- otherwise return an empty string
+
+    -- create a box enclosing all active cells using same vertex order as CreateCube
+    local x = minactivex * CELLSIZE - MIDGRID
+    local y = minactivey * CELLSIZE - MIDGRID
+    local z = minactivez * CELLSIZE - MIDGRID
+    local xlen = (maxactivex - minactivex + 1) * CELLSIZE
+    local ylen = (maxactivey - minactivey + 1) * CELLSIZE
+    local zlen = (maxactivez - minactivez + 1) * CELLSIZE
+    local activebox = {
+        {x     , y     , z+zlen},     -- v1
+        {x     , y     , z     },     -- v2
+        {x     , y+ylen, z+zlen},     -- v3
+        {x     , y+ylen, z     },     -- v4
+        {x+xlen, y+ylen, z+zlen},     -- v5
+        {x+xlen, y+ylen, z     },     -- v6
+        {x+xlen, y     , z+zlen},     -- v7
+        {x+xlen, y     , z     }      -- v8
+    }
+
+    -- test if mousex,mousey is inside a visible face of activebox
+    local face = FindFace(mousex, mousey, activebox)
+
     if #face > 0 then
         -- determine which active cell contains mousex,mousey
         local cx, cy, cz = FindActiveCell(mousex, mousey, face)
@@ -4722,6 +4730,198 @@ end
 
 ----------------------------------------------------------------------
 
+function StartDraggingPaste(mousex, mousey)
+    -- test if mouse click is in a paste cell
+    local NN = N*N
+    for k,_ in pairs(pastecell) do
+        local px, py = GetMidPoint(k%N, (k//N)%N, k//NN)
+        if abs(px - mousex) < HALFCELL and
+           abs(py - mousey) < HALFCELL then
+            -- create a box enclosing all paste cells using same vertex order as CreateCube
+            local x = minpastex * CELLSIZE - MIDGRID
+            local y = minpastey * CELLSIZE - MIDGRID
+            local z = minpastez * CELLSIZE - MIDGRID
+            local xlen = (maxpastex - minpastex + 1) * CELLSIZE
+            local ylen = (maxpastey - minpastey + 1) * CELLSIZE
+            local zlen = (maxpastez - minpastez + 1) * CELLSIZE
+            local pastebox = {
+                {x     , y     , z+zlen},     -- v1
+                {x     , y     , z     },     -- v2
+                {x     , y+ylen, z+zlen},     -- v3
+                {x     , y+ylen, z     },     -- v4
+                {x+xlen, y+ylen, z+zlen},     -- v5
+                {x+xlen, y+ylen, z     },     -- v6
+                {x+xlen, y     , z+zlen},     -- v7
+                {x+xlen, y     , z     }      -- v8
+            }
+            -- return the face containing mousex,mousey
+            return FindFace(mousex, mousey, pastebox)
+        end
+    end
+    return ""
+end
+
+----------------------------------------------------------------------
+
+function MovePastePattern(deltax, deltay, deltaz)
+    -- move the paste pattern by the given amounts, if possible
+    if minpastex + deltax < 0 then deltax = -minpastex end
+    if minpastey + deltay < 0 then deltay = -minpastey end
+    if minpastez + deltaz < 0 then deltaz = -minpastez end
+    if maxpastex + deltax >= N then deltax = N-1 - maxpastex end
+    if maxpastey + deltay >= N then deltay = N-1 - maxpastey end
+    if maxpastez + deltaz >= N then deltaz = N-1 - maxpastez end
+    
+    if deltax == 0 and deltay == 0 and deltaz == 0 then return end
+
+    minpastex = minpastex + deltax
+    minpastey = minpastey + deltay
+    minpastez = minpastez + deltaz
+    maxpastex = maxpastex + deltax
+    maxpastey = maxpastey + deltay
+    maxpastez = maxpastez + deltaz
+    
+    local pcells = GetPasteCells()
+    local mid = N//2
+    pastecell = {}
+    for _, xyz in ipairs(pcells) do
+        local x = xyz[1] + mid + deltax
+        local y = xyz[2] + mid + deltay
+        local z = xyz[3] + mid + deltaz
+        pastecell[ x + N * (y + N * z) ] = true
+    end
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
+function DragPaste(mousex, mousey, prevx, prevy, face)
+    -- create a large temporary active plane parallel to given face
+    local oldN = N
+    local oldplane = activeplane
+    local oldpos = activepos
+    N = N*3
+    MIDGRID = (N+1-(N%2))*HALFCELL
+    if face == "F" or face == "B" then
+        -- mouse in front/back face
+        SetActivePlane("XY", 0)
+    elseif face == "T" or face == "U" then
+        -- mouse in top/bottom face
+        SetActivePlane("XZ", 0)
+    else
+        -- mouse in left/right face
+        SetActivePlane("YZ", 0)
+    end
+    
+    -- find the cell locations of mousex,mousey and prevx,prevy in the temporary plane
+    local oldcell = InsideActiveCell(prevx, prevy)
+    local newcell = InsideActiveCell(mousex, mousey)
+    
+    -- restore the original active plane
+    N = oldN
+    MIDGRID = (N+1-(N%2))*HALFCELL
+    SetActivePlane(oldplane, oldpos)
+    
+    -- check if mouse stayed in same cell, or moved outside temporary plane
+    if oldcell == newcell or #oldcell == 0 or #newcell == 0 then
+        return
+    end
+    
+    -- calculate how many cells the mouse has moved
+    local oldx, oldy, oldz = split(oldcell,",")
+    local newx, newy, newz = split(newcell,",")
+    local deltax = tonumber(newx) - tonumber(oldx)
+    local deltay = tonumber(newy) - tonumber(oldy)
+    local deltaz = tonumber(newz) - tonumber(oldz)
+    
+    MovePastePattern(deltax, deltay, deltaz)
+end
+
+----------------------------------------------------------------------
+
+function StartDraggingSelection(mousex, mousey)
+    -- test if mouse click is in a selected cell
+    local NN = N*N
+    for k,_ in pairs(selected) do
+        local px, py = GetMidPoint(k%N, (k//N)%N, k//NN)
+        if abs(px - mousex) < HALFCELL and
+           abs(py - mousey) < HALFCELL then
+            -- create a box enclosing all selected cells using same vertex order as CreateCube
+            local x = minselx * CELLSIZE - MIDGRID
+            local y = minsely * CELLSIZE - MIDGRID
+            local z = minselz * CELLSIZE - MIDGRID
+            local xlen = (maxselx - minselx + 1) * CELLSIZE
+            local ylen = (maxsely - minsely + 1) * CELLSIZE
+            local zlen = (maxselz - minselz + 1) * CELLSIZE
+            local selbox = {
+                {x     , y     , z+zlen},     -- v1
+                {x     , y     , z     },     -- v2
+                {x     , y+ylen, z+zlen},     -- v3
+                {x     , y+ylen, z     },     -- v4
+                {x+xlen, y+ylen, z+zlen},     -- v5
+                {x+xlen, y+ylen, z     },     -- v6
+                {x+xlen, y     , z+zlen},     -- v7
+                {x+xlen, y     , z     }      -- v8
+            }
+            -- return the face containing mousex,mousey
+            return FindFace(mousex, mousey, selbox)
+        end
+    end
+    return ""
+end
+
+----------------------------------------------------------------------
+
+function MoveSelection(deltax, deltay, deltaz)
+    -- careful!!! what if empty selected cell moves to unselected live cell???
+end
+
+----------------------------------------------------------------------
+
+function DragSelection(mousex, mousey, prevx, prevy, face)
+    -- create a large temporary active plane parallel to given face
+    local oldN = N
+    local oldplane = activeplane
+    local oldpos = activepos
+    N = N*3
+    MIDGRID = (N+1-(N%2))*HALFCELL
+    if face == "F" or face == "B" then
+        -- mouse in front/back face
+        SetActivePlane("XY", 0)
+    elseif face == "T" or face == "U" then
+        -- mouse in top/bottom face
+        SetActivePlane("XZ", 0)
+    else
+        -- mouse in left/right face
+        SetActivePlane("YZ", 0)
+    end
+    
+    -- find the cell locations of mousex,mousey and prevx,prevy in the temporary plane
+    local oldcell = InsideActiveCell(prevx, prevy)
+    local newcell = InsideActiveCell(mousex, mousey)
+    
+    -- restore the original active plane
+    N = oldN
+    MIDGRID = (N+1-(N%2))*HALFCELL
+    SetActivePlane(oldplane, oldpos)
+    
+    -- check if mouse stayed in same cell, or moved outside temporary plane
+    if oldcell == newcell or #oldcell == 0 or #newcell == 0 then
+        return
+    end
+    
+    -- calculate how many cells the mouse has moved
+    local oldx, oldy, oldz = split(oldcell,",")
+    local newx, newy, newz = split(newcell,",")
+    local deltax = tonumber(newx) - tonumber(oldx)
+    local deltay = tonumber(newy) - tonumber(oldy)
+    local deltaz = tonumber(newz) - tonumber(oldz)
+    
+    MoveSelection(deltax, deltay, deltaz)
+end
+
+----------------------------------------------------------------------
+
 function StartDraggingPlane(mousex, mousey)
     local oldcell = activecell
     activecell = InsideActiveCell(mousex, mousey)
@@ -4761,7 +4961,7 @@ function DragActivePlane(mousex, mousey, prevx, prevy)
     local oldplane = activeplane
     local oldpos = activepos
     N = N*3
-    MIDGRID = (N+1-(N%2))*HALFCELL    
+    MIDGRID = (N+1-(N%2))*HALFCELL
     if activeplane == "XY" then
         if (rotz[5] <= rotz[1] and rotz[5] <= rotz[3] and rotz[7] <= rotz[3]) or
            (rotz[4] <= rotz[8] and rotz[4] <= rotz[6] and rotz[2] <= rotz[6]) then
@@ -5001,9 +5201,9 @@ end
 ----------------------------------------------------------------------
 
 function CheckCursor(xy)
-    -- update cursor if mouse moves in/out of tool bar
-    local editing = currcursor == drawcursor or currcursor == selectcursor
+    local editing = currcursor ~= movecursor
     if #xy > 0 then
+        -- update cursor if mouse moves in/out of tool bar
         local x, y = split(xy)
         x = tonumber(x)
         y = tonumber(y)
@@ -5026,9 +5226,7 @@ function CheckCursor(xy)
             if editing then
                 local oldcell = activecell
                 activecell = InsideActiveCell(x, y)
-                if activecell ~= oldcell then
-                    Refresh()
-                end
+                if activecell ~= oldcell then Refresh() end
             end
         end
     elseif #activecell > 0 and editing then
@@ -5163,21 +5361,24 @@ end
 ----------------------------------------------------------------------
 
 function MainLoop()
-    local mousedown = false
-    local drawing = false
-    local selecting = false
-    local dragplane = false         -- dragging active plane?
-    local hand_erasing = false      -- erasing live cells with hand cursor?
-    local hand_selecting = false    -- selecting live cells with hand cursor?
-    local prevx, prevy
+    local mousedown = false         -- mouse button is down?
+    local drawing = false           -- draw/erase cells with pencil cursor?
+    local selecting = false         -- (de)select cells with cross-hairs cursor?
+    local drag_paste = false        -- drag paste pattern with hand cursor?
+    local drag_selection = false    -- drag selected cells with hand cursor?
+    local drag_active = false       -- drag active plane with pencil/cross-hairs?
+    local hand_erase = false        -- erase live cells with hand cursor?
+    local hand_select = false       -- select live cells with hand cursor?
+    local dragface = ""             -- which paste/selection face is being dragged
+    local prevx, prevy              -- previous mouse position
     
     while true do
-        CheckLayerSize()
+        CheckLayerSize()            -- may need to resize the overlay
         
         local event = g.getevent()
         if event:find("^key") or event:find("^oclick") then
             if message then
-                message = nil
+                message = nil       -- remove the most recent message
                 Refresh()
             end
         end
@@ -5207,20 +5408,32 @@ function MainLoop()
                             if mods == "none" then
                                 drawing = StartDrawing(x, y)
                             elseif mods == "shift" then
-                                dragplane = StartDraggingPlane(x, y)
+                                drag_active = StartDraggingPlane(x, y)
                             end
                         elseif currcursor == selectcursor then
                             if mods == "none" then
                                 selecting = StartSelecting(x, y)
                             elseif mods == "shift" then
-                                dragplane = StartDraggingPlane(x, y)
+                                drag_active = StartDraggingPlane(x, y)
                             end
-                        elseif currcursor == movecursor and mods == "alt" then
-                            hand_erasing = true
-                            EraseLiveCells(x, y)
-                        elseif currcursor == movecursor and mods == "shift" then
-                            hand_selecting = true
-                            SelectLiveCells(x, y)
+                        else
+                            -- currcursor == movecursor
+                            if mods == "none" then
+                                if pastecount > 0 then
+                                    dragface = StartDraggingPaste(x, y)
+                                    drag_paste = #dragface > 0
+                                end
+                                if not drag_paste and selcount > 0 then
+                                    dragface= StartDraggingSelection(x, y)
+                                    drag_selection = #dragface > 0
+                                end
+                            elseif mods == "alt" then
+                                hand_erase = true
+                                EraseLiveCells(x, y)
+                            elseif mods == "shift" then
+                                hand_select = true
+                                SelectLiveCells(x, y)
+                            end
                         end
                     end
                 end
@@ -5232,12 +5445,16 @@ function MainLoop()
                 elseif selecting then
                     StopSelecting()
                     selecting = false
-                elseif dragplane then
-                    dragplane = false
-                elseif hand_erasing then
-                    hand_erasing = false
-                elseif hand_selecting then
-                    hand_selecting = false
+                elseif drag_paste then
+                    drag_paste = false
+                elseif drag_selection then
+                    drag_selection = false
+                elseif drag_active then
+                    drag_active = false
+                elseif hand_erase then
+                    hand_erase = false
+                elseif hand_select then
+                    hand_select = false
                 end
             elseif event:find("^ozoomout") then
                 if not arrow_cursor then Zoom(CELLSIZE-1) end
@@ -5258,11 +5475,15 @@ function MainLoop()
                         DrawCells(x, y)
                     elseif selecting then
                         SelectCells(x, y)
-                    elseif dragplane then
+                    elseif drag_paste then
+                        DragPaste(x, y, prevx, prevy, dragface)
+                    elseif drag_selection then
+                        DragSelection(x, y, prevx, prevy, dragface)
+                    elseif drag_active then
                         DragActivePlane(x, y, prevx, prevy)
-                    elseif hand_erasing then
+                    elseif hand_erase then
                         EraseLiveCells(x, y)
-                    elseif hand_selecting then
+                    elseif hand_select then
                         SelectLiveCells(x, y)
                     else
                         -- rotate the view
@@ -5273,7 +5494,7 @@ function MainLoop()
                     prevx = x
                     prevy = y
                 end
-            elseif #activecell > 0 and (currcursor == drawcursor or currcursor == selectcursor) then
+            elseif #activecell > 0 and currcursor ~= movecursor then
                 activecell = ""
                 Refresh()
             end
