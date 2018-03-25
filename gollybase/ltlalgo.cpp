@@ -77,7 +77,7 @@ void ltlalgo::allocate_colcounts()
             colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * sizeof(int));
             // if NULL then use fast_Neumann
         }
-    } else if (ntype == 'S') {
+    } else if (ntype == 'C') {
         colcounts = NULL ;
         // use fast_Shaped
     } else {
@@ -2185,7 +2185,7 @@ const char *ltlalgo::setrule(const char *s)
     
     if (r < 1) return "R value is too small";
     int r2 = r ;
-    if (n == 'S') { // slowly calculate a square root
+    if (n == 'C') { // slowly calculate a square root
        r = 1 ;
        while ((r + 1) * (r + 1) <= r2)
           r++ ;
@@ -2195,10 +2195,10 @@ const char *ltlalgo::setrule(const char *s)
     if (m < 0 || m > 1) return "M value must be 0 or 1";
     if (s1 > s2) return "S minimum must be <= S maximum";
     if (b1 > b2) return "B minimum must be <= B maximum";
-    if (n != 'M' && n != 'N' && n != 'S') return "N must be followed by M or N or S";
+    if (n != 'M' && n != 'N' && n != 'C') return "N must be followed by M or N or C";
     int maxn = n == 'M' ? (2*r+1)*(2*r+1) : 2*r*(r+1)+1;
     int tshape[2*MAXRANGE+1] ;
-    if (n == 'S') {
+    if (n == 'C') {
        int cnt = 0 ;
        for (int i=-r; i<=r; i++) {
           int w = 0 ;
@@ -2384,10 +2384,10 @@ const char *ltlalgo::setrule(const char *s)
     // set the canonical rule
     if (unbounded) {
         sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c",
-                           (ntype == 'S' ? rangec : range), scount, totalistic, minS, maxS, minB, maxB, ntype);
+                           (ntype == 'C' ? rangec : range), scount, totalistic, minS, maxS, minB, maxB, ntype);
     } else {
         sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c:%c%d,%d",
-                           (ntype == 'S' ? rangec : range), scount, totalistic, minS, maxS, minB, maxB, ntype,
+                           (ntype == 'C' ? rangec : range), scount, totalistic, minS, maxS, minB, maxB, ntype,
                            topology, gwd, ght);
     }
     

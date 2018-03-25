@@ -81,7 +81,7 @@ private:
     int totalistic;                     // include middle cell in neighborhood count? (1 or 0)
     int minS, maxS;                     // limits for survival
     int minB, maxB;                     // limits for birth
-    char ntype;                         // extended neighborhood type (M = Moore, N = von Neumann, S = shaped (circle))
+    char ntype;                         // extended neighborhood type (M = Moore, N = von Neumann, C = shaped (circle))
     char topology;                      // grid topology (T = torus, P = plane)
     
     void create_grids(int wd, int ht);  // create a bounded universe of given width and height
