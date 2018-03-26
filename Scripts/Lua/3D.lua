@@ -4838,6 +4838,10 @@ end
 
 ----------------------------------------------------------------------
 
+local save_cells    -- for restoring live cells under a moving selection
+local selxyz        -- store x,y,z positions of selected cells
+local livexyz       -- store x,y,z positions of selected live cells
+
 function StartDraggingSelection(mousex, mousey)
     -- test if mouse click is in a selected cell
     MinimizeSelectionBoundary()
@@ -4863,8 +4867,25 @@ function StartDraggingSelection(mousex, mousey)
                 {x+xlen, y     , z+zlen},     -- v7
                 {x+xlen, y     , z     }      -- v8
             }
-            -- return the face containing mousex,mousey
-            return FindFace(mousex, mousey, selbox)
+            local face = FindFace(mousex, mousey, selbox)
+            if #face > 0 then
+                -- initialize save_cells, selxyz and livexyz for use in MoveSelection
+                save_cells = {}
+                selxyz = {}
+                livexyz = {}
+                for k,_ in pairs(selected) do
+                    -- selected[k] is a selected cell
+                    local x = k % N
+                    local y = (k // N) % N
+                    local z = k // NN
+                    selxyz[#selxyz+1] = {x, y, z}
+                    if grid1[k] then
+                        -- selected cell is a live cell
+                        livexyz[#livexyz+1] = {x, y, z}
+                    end
+                end
+            end
+            return face
         end
     end
     return ""
@@ -4890,40 +4911,30 @@ function MoveSelection(deltax, deltay, deltaz)
     maxsely = maxsely + deltay
     maxselz = maxselz + deltaz
     
-    -- get array of currently selected cell positions
-    -- and kill and remember positions of any selected live cells
+    -- kill all live cells in the current selection
     local savepop = popcount
-    local selcells = {}
-    local livecells = {}
     local NN = N*N
     for k,_ in pairs(selected) do
-        -- selected[k] is a selected cell
-        local x = k % N
-        local y = (k // N) % N
-        local z = k // NN
-        selcells[#selcells+1] = {x, y, z}
         if grid1[k] then
-            -- selected cell is a live cell, so kill it
             grid1[k] = nil
             popcount = popcount - 1
             minimal_live_bounds = false
-            livecells[#livecells+1] = {x, y, z}
         end
     end
     
     if popcount == 0 and selcount == savepop then
         -- all live cells (and only those cells) were selected
-        -- so we can handle this common case much faster
-        
-        -- put the selected cells (all live) in their new positions
+        -- so we can handle this common case much faster by simply
+        -- putting the selected cells in their new positions
         selected = {}
-        for _, xyz in ipairs(selcells) do
+        for i, xyz in ipairs(livexyz) do
             local x = xyz[1] + deltax
             local y = xyz[2] + deltay
             local z = xyz[3] + deltaz
             local k = x + N * (y + N * z)
             selected[k] = true
             grid1[k] = 1
+            livexyz[i] = {x, y, z}
         end
         popcount = savepop
         
@@ -4937,23 +4948,41 @@ function MoveSelection(deltax, deltay, deltaz)
         maxz = maxselz
         minimal_live_bounds = true
     else
-
-        -- use same logic as in move-selection.lua to avoid modifying
-        -- any live cells under the moving selection???!!!
-
-        -- put the selected cells in their new positions
+        -- avoid modifying any live cells under the moving selection
+        -- by restoring the live cells in save_cells (if any)
+        for k,_ in pairs(save_cells) do
+            if not grid1[k] then
+                grid1[k] = 1
+                popcount = popcount + 1
+                -- boundary might expand
+                local x = k % N
+                local y = (k // N) % N
+                local z = k // NN
+                if x < minx then minx = x end
+                if y < miny then miny = y end
+                if z < minz then minz = z end
+                if x > maxx then maxx = x end
+                if y > maxy then maxy = y end
+                if z > maxz then maxz = z end
+            end
+        end
+        
+        -- move the selected cells to their new positions
+        -- and save any live cells in the new selection in save_cells
+        save_cells = {}
         selected = {}
-        for _, xyz in ipairs(selcells) do
+        for i, xyz in ipairs(selxyz) do
             local x = xyz[1] + deltax
             local y = xyz[2] + deltay
             local z = xyz[3] + deltaz
             local k = x + N * (y + N * z)
             selected[k] = true
-            -- grid1[k] might be a live cell here!!!
+            selxyz[i] = {x, y, z}
+            if grid1[k] then save_cells[k] = true end
         end
         
-        -- restore the killed cells in their new positions
-        for _, xyz in ipairs(livecells) do
+        -- put live cells saved in livexyz into their new positions
+        for i, xyz in ipairs(livexyz) do
             local x = xyz[1] + deltax
             local y = xyz[2] + deltay
             local z = xyz[3] + deltaz
@@ -4969,6 +4998,7 @@ function MoveSelection(deltax, deltay, deltaz)
                 if y > maxy then maxy = y end
                 if z > maxz then maxz = z end
             end
+            livexyz[i] = {x, y, z}
         end
     end
     
@@ -5017,6 +5047,14 @@ function DragSelection(mousex, mousey, prevx, prevy, face)
     local deltaz = tonumber(newz) - tonumber(oldz)
     
     MoveSelection(deltax, deltay, deltaz)
+end
+
+----------------------------------------------------------------------
+
+function StopDraggingSelection()
+    save_cells = {}
+    selxyz = {}
+    livexyz = {}
 end
 
 ----------------------------------------------------------------------
@@ -5547,6 +5585,7 @@ function MainLoop()
                 elseif drag_paste then
                     drag_paste = false
                 elseif drag_selection then
+                    StopDraggingSelection()
                     drag_selection = false
                 elseif drag_active then
                     drag_active = false
