@@ -107,7 +107,7 @@ local message = nil                 -- text message displayed by Refresh if not 
 local selcount = 0                  -- number of selected cells (live or dead)
 local selected = {}                 -- grid positions of selected cells
 local pastecount = 0                -- number of cells in paste pattern
-local pastecell = {}                -- grid positions of cells in paste pattern
+local pastepatt = {}                -- grid positions of cells in paste pattern
 local drawstate = 1                 -- for drawing/erasing cells
 local selstate = true               -- for selecting/deselecting cells
 local celltype = "cube"             -- draw live cell as cube/sphere/point
@@ -1161,7 +1161,7 @@ local function TestCell(editing, gridpos, x, y, z)
             DrawSelectedCell(x, y, z)
         end
     end
-    if pastecell[gridpos] then
+    if pastepatt[gridpos] then
         DrawLiveCell(x, y, z)
         DrawPasteCell(x, y, z)
     end
@@ -1569,7 +1569,7 @@ function ClearCells()
     InitSelectionBoundary()
     -- remove paste pattern
     pastecount = 0
-    pastecell = {}
+    pastepatt = {}
     collectgarbage()    -- helps avoid long delay when script exits???!!! only on Mac OS 10.13???
 end
 
@@ -2389,8 +2389,8 @@ function GetPasteCells()
     if pastecount > 0 then
         local mid = N//2
         local NN = N*N
-        for k,_ in pairs(pastecell) do
-            -- pastecell[k] is in paste pattern
+        for k,_ in pairs(pastepatt) do
+            -- pastepatt[k] is in paste pattern
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
@@ -2476,7 +2476,7 @@ function ChangeGridSize()
     -- restore paste pattern, clipping any cells outside the new grid
     local pclipped = 0
     pastecount = 0
-    pastecell = {}
+    pastepatt = {}
     minpastex = math.maxinteger
     minpastey = math.maxinteger
     minpastez = math.maxinteger
@@ -2489,7 +2489,7 @@ function ChangeGridSize()
             if x >= 0 and x < N and
                y >= 0 and y < N and
                z >= 0 and z < N then
-                pastecell[ x + N * (y + N * z) ] = true
+                pastepatt[ x + N * (y + N * z) ] = true
                 pastecount = pastecount + 1
                 if x < minpastex then minpastex = x end
                 if y < minpastey then minpastey = y end
@@ -2921,12 +2921,12 @@ function Paste()
             return
         end
         
-        -- set pastecount and pastecell
+        -- set pastecount and pastepatt
         pastecount = newpattern.newpop
-        pastecell = {}
+        pastepatt = {}
         if newpattern.newsize == N then
             -- just put paste pattern in same location as the cut/copy
-            pastecell = newpattern.newgrid
+            pastepatt = newpattern.newgrid
         else
             -- put paste pattern in middle of grid and update paste boundary
             local oldpx, oldpy, oldpz = minpastex, minpastey, minpastez
@@ -2943,7 +2943,7 @@ function Paste()
                 local x = (k % P)      - oldpx + (N - pwd) // 2
                 local y = (k // P % P) - oldpy + (N - pht) // 2
                 local z = (k // PP)    - oldpz + (N - pdp) // 2
-                pastecell[ x + N * (y + N * z) ] = 1
+                pastepatt[ x + N * (y + N * z) ] = 1
                 if x < minpastex then minpastex = x end
                 if y < minpastey then minpastey = y end
                 if z < minpastez then minpastez = z end
@@ -2961,7 +2961,7 @@ end
 function CancelPaste()
     if pastecount > 0 then
         pastecount = 0
-        pastecell = {}
+        pastepatt = {}
         Refresh()
     end
 end
@@ -2971,13 +2971,13 @@ end
 function PasteOR()
     if pastecount > 0 then
         local NN = N*N
-        for k,_ in pairs(pastecell) do
+        for k,_ in pairs(pastepatt) do
             if not grid1[k] then
                 SetLiveCell(k % N, (k // N) % N, k // NN)
             end
         end
         pastecount = 0
-        pastecell = {}
+        pastepatt = {}
         Refresh()
     end
 end
@@ -2987,7 +2987,7 @@ end
 function PasteXOR()
     if pastecount > 0 then
         local NN = N*N
-        for k,_ in pairs(pastecell) do
+        for k,_ in pairs(pastepatt) do
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
@@ -2997,7 +2997,7 @@ function PasteXOR()
             end
         end
         pastecount = 0
-        pastecell = {}
+        pastepatt = {}
         Refresh()
     end
 end
@@ -3010,17 +3010,17 @@ function FlipPasteX()
         local midx = minpastex + (maxpastex - minpastex) / 2
         local cells = {}
         local NN = N*N
-        for k,_ in pairs(pastecell) do
+        for k,_ in pairs(pastepatt) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
             cells[#cells+1] = {round(midx*2) - x, y, z}
         end
         -- flip doesn't change paste boundary
-        pastecell = {}
+        pastepatt = {}
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
-            pastecell[x + N * (y + N * z)] = 1
+            pastepatt[x + N * (y + N * z)] = 1
         end
         Refresh()
     end
@@ -3034,17 +3034,17 @@ function FlipPasteY()
         local midy = minpastey + (maxpastey - minpastey) / 2
         local cells = {}
         local NN = N*N
-        for k,_ in pairs(pastecell) do
+        for k,_ in pairs(pastepatt) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
             cells[#cells+1] = {x, round(midy*2) - y, z}
         end
         -- flip doesn't change paste boundary
-        pastecell = {}
+        pastepatt = {}
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
-            pastecell[x + N * (y + N * z)] = 1
+            pastepatt[x + N * (y + N * z)] = 1
         end
         Refresh()
     end
@@ -3058,17 +3058,17 @@ function FlipPasteZ()
         local midz = minpastez + (maxpastez - minpastez) / 2
         local cells = {}
         local NN = N*N
-        for k,_ in pairs(pastecell) do
+        for k,_ in pairs(pastepatt) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
             cells[#cells+1] = {x, y, round(midz*2) - z}
         end
         -- flip doesn't change paste boundary
-        pastecell = {}
+        pastepatt = {}
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
-            pastecell[x + N * (y + N * z)] = 1
+            pastepatt[x + N * (y + N * z)] = 1
         end
         Refresh()
     end
@@ -3085,13 +3085,13 @@ function RotatePasteX()
         local z0 = midz + midy + (maxpastez - minpastez) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
-        for k,_ in pairs(pastecell) do
+        for k,_ in pairs(pastepatt) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
             cells[#cells+1] = {x, (y0+z) % N, (z0-y) % N}
         end
-        pastecell = {}
+        pastepatt = {}
         -- minpastex, maxpastex don't change
         minpastey = math.maxinteger
         minpastez = math.maxinteger
@@ -3099,7 +3099,7 @@ function RotatePasteX()
         maxpastez = math.mininteger
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
-            pastecell[x + N * (y + N * z)] = 1
+            pastepatt[x + N * (y + N * z)] = 1
             if y < minpastey then minpastey = y end
             if y > maxpastey then maxpastey = y end
             if z < minpastez then minpastez = z end
@@ -3120,13 +3120,13 @@ function RotatePasteY()
         local z0 = midz - midx
         local cells = {}
         local NN = N*N
-        for k,_ in pairs(pastecell) do
+        for k,_ in pairs(pastepatt) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
             cells[#cells+1] = {(x0-z) % N, y, (z0+x) % N}
         end
-        pastecell = {}
+        pastepatt = {}
         -- minpastey, maxpastey don't change
         minpastex = math.maxinteger
         minpastez = math.maxinteger
@@ -3134,7 +3134,7 @@ function RotatePasteY()
         maxpastez = math.mininteger
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
-            pastecell[x + N * (y + N * z)] = 1
+            pastepatt[x + N * (y + N * z)] = 1
             if x < minpastex then minpastex = x end
             if x > maxpastex then maxpastex = x end
             if z < minpastez then minpastez = z end
@@ -3155,13 +3155,13 @@ function RotatePasteZ()
         local y0 = midy + midx + (maxpastey - minpastey) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
-        for k,_ in pairs(pastecell) do
+        for k,_ in pairs(pastepatt) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
             cells[#cells+1] = {(x0+y) % N, (y0-x) % N, z}
         end
-        pastecell = {}
+        pastepatt = {}
         -- minpastez, maxpastez don't change
         minpastex = math.maxinteger
         minpastey = math.maxinteger
@@ -3169,7 +3169,7 @@ function RotatePasteZ()
         maxpastey = math.mininteger
         for _,xyz in ipairs(cells) do
             local x, y, z = xyz[1], xyz[2], xyz[3]
-            pastecell[x + N * (y + N * z)] = 1
+            pastepatt[x + N * (y + N * z)] = 1
             if x < minpastex then minpastex = x end
             if x > maxpastex then maxpastex = x end
             if y < minpastey then minpastey = y end
@@ -3755,8 +3755,16 @@ interface (note that all your Golly settings will be restored when 3D.lua exits)
 
 <p>
 If the Move option is ticked then you can use the hand cursor
-to rotate the pattern by clicking and dragging.
+to rotate the view by clicking and dragging.
 Rotation occurs around the middle cell in the grid.
+
+<p>
+The hand cursor can also be used to move a paste pattern (red cells)
+or a selection (green cells) to a new location within the grid, but only
+within a certain plane, depending on where the initial click occurred.
+Imagine a box enclosing the paste pattern or all the selected cells.
+One of the faces of this box will contain the initial click.
+Movement is only allowed within the plane parallel to the clicked face.
 
 <p>
 It's also possible to do some editing with the hand cursor.
@@ -3769,13 +3777,13 @@ This makes it easy to quickly erase or select isolated objects.
 If the Draw option is ticked then you can use the pencil cursor
 to draw or erase cells in the active plane (shown as translucent blue).
 Note that any live cells outside the active plane are drawn as white points.
-Click and drag outside the active plane to rotate the pattern.
+Click and drag outside the active plane to rotate the view.
 
 <p>
 If the Select option is ticked then you can use the cross-hairs cursor
 to select or deselect cells in the active plane.
 Any selected cells outside the active plane are drawn as translucent green points.
-Click and drag outside the active plane to rotate the pattern.
+Click and drag outside the active plane to rotate the view.
 
 <p>
 To move the active plane to a different position, shift-click anywhere in the
@@ -3783,8 +3791,8 @@ active plane and drag the mouse.  Or you can hit the "," or "." keys.
 Hit shift-A to change the active plane's orientation.
 
 <p>
-If a paste pattern is visible (its cells are red) then you can control-click or
-right-click anywhere (using any cursor) to get a red pop-up menu that lets
+If a paste pattern is visible (red cells) then you can control-click or
+right-click anywhere, using any cursor, to get a red pop-up menu that lets
 you choose various paste actions.
 If a selection exists (green cells) then you can control-click or right-click
 to get a green pop-up menu with various selection actions.
@@ -3832,7 +3840,7 @@ shortcuts):
 <tr><td align=right> F &nbsp;</td><td>&nbsp; fit entire grid within view </td></tr>
 <tr><td align=right> [ &nbsp;</td><td>&nbsp; zoom out </td></tr>
 <tr><td align=right> ] &nbsp;</td><td>&nbsp; zoom in </td></tr>
-<tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/points/spheres) </td></tr>
+<tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/spheres/points) </td></tr>
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lines </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the tool bar </td></tr>
 <tr><td align=right> 5 &nbsp;</td><td>&nbsp; create a random pattern with given density </td></tr>
@@ -3844,6 +3852,7 @@ shortcuts):
 <tr><td align=right> D &nbsp;</td><td>&nbsp; switch cursor to draw mode </td></tr>
 <tr><td align=right> S &nbsp;</td><td>&nbsp; switch cursor to select mode </td></tr>
 <tr><td align=right> M &nbsp;</td><td>&nbsp; switch cursor to move mode </td></tr>
+<tr><td align=right> shift-M &nbsp;</td><td>&nbsp; move paste/selection/pattern to middle of grid </td></tr>
 <tr><td align=right> C &nbsp;</td><td>&nbsp; cycle cursor mode (draw/select/move) </td></tr>
 <tr><td align=right> H &nbsp;</td><td>&nbsp; show this help </td></tr>
 <tr><td align=right> Q &nbsp;</td><td>&nbsp; quit the script </td></tr>
@@ -4743,7 +4752,7 @@ end
 function StartDraggingPaste(mousex, mousey)
     -- test if mouse click is in a paste cell
     local NN = N*N
-    for k,_ in pairs(pastecell) do
+    for k,_ in pairs(pastepatt) do
         local px, py = GetMidPoint(k%N, (k//N)%N, k//NN)
         if abs(px - mousex) < HALFCELL and
            abs(py - mousey) < HALFCELL then
@@ -4793,12 +4802,12 @@ function MovePastePattern(deltax, deltay, deltaz)
     
     local pcells = GetPasteCells()
     local mid = N//2
-    pastecell = {}
+    pastepatt = {}
     for _, xyz in ipairs(pcells) do
         local x = xyz[1] + mid + deltax
         local y = xyz[2] + mid + deltay
         local z = xyz[3] + mid + deltaz
-        pastecell[ x + N * (y + N * z) ] = true
+        pastepatt[ x + N * (y + N * z) ] = true
     end
     
     Refresh()
@@ -5182,6 +5191,134 @@ end
 
 ----------------------------------------------------------------------
 
+function MoveToMiddle()
+    -- move paste pattern or selection or pattern to middle of grid
+    if pastecount > 0 then
+        -- calculate the delta amounts needed to move paste pattern to middle of grid
+        local deltax = (minpastex + (N-1-maxpastex) + 1) // 2 - minpastex
+        local deltay = (minpastey + (N-1-maxpastey) + 1) // 2 - minpastey
+        local deltaz = (minpastez + (N-1-maxpastez) + 1) // 2 - minpastez
+        if deltax == 0 and deltay == 0 and deltaz == 0 then return end
+        
+        local pcells = {}
+        local NN = N*N
+        for k,_ in pairs(pastepatt) do
+            pcells[#pcells+1] = {k % N, (k // N) % N, k // NN}
+        end
+        pastepatt = {}
+        for _,xyz in ipairs(pcells) do
+            local x = xyz[1] + deltax
+            local y = xyz[2] + deltay
+            local z = xyz[3] + deltaz
+            pastepatt[x + N * (y + N * z)] = true
+        end
+        
+        -- update the paste boundary
+        minpastex = minpastex + deltax
+        minpastey = minpastey + deltay
+        minpastez = minpastez + deltaz
+        maxpastex = maxpastex + deltax
+        maxpastey = maxpastey + deltay
+        maxpastez = maxpastez + deltaz
+        
+        Refresh()
+    
+    elseif selcount > 0 then
+        MinimizeSelectionBoundary()
+        -- calculate the delta amounts needed to move selection to middle of grid
+        local deltax = (minselx + (N-1-maxselx) + 1) // 2 - minselx
+        local deltay = (minsely + (N-1-maxsely) + 1) // 2 - minsely
+        local deltaz = (minselz + (N-1-maxselz) + 1) // 2 - minselz
+        if deltax == 0 and deltay == 0 and deltaz == 0 then return end
+        
+        local selcells = {}
+        local livecells = {}    -- for live cells in selection
+        local NN = N*N
+        for k,_ in pairs(selected) do
+            local x = k % N
+            local y = (k // N) % N
+            local z = k // NN
+            selcells[#selcells+1] = {x, y, z}
+            if grid1[k] then
+                grid1[k] = nil
+                popcount = popcount - 1
+                minimal_live_bounds = false
+                livecells[#livecells+1] = {x, y, z}
+            end
+        end
+        selected = {}
+        for _,xyz in ipairs(selcells) do
+            local x = xyz[1] + deltax
+            local y = xyz[2] + deltay
+            local z = xyz[3] + deltaz
+            selected[x + N * (y + N * z)] = true
+        end
+        -- move live cells that were selected
+        for _,xyz in ipairs(livecells) do
+            local x = xyz[1] + deltax
+            local y = xyz[2] + deltay
+            local z = xyz[3] + deltaz
+            local k = x + N * (y + N * z)
+            if not grid1[k] then
+                grid1[k] = 1
+                popcount = popcount + 1
+                -- boundary might expand
+                if x < minx then minx = x end
+                if y < miny then miny = y end
+                if z < minz then minz = z end
+                if x > maxx then maxx = x end
+                if y > maxy then maxy = y end
+                if z > maxz then maxz = z end
+            end
+        end
+        
+        -- update the selection boundary
+        minselx = minselx + deltax
+        minsely = minsely + deltay
+        minselz = minselz + deltaz
+        maxselx = maxselx + deltax
+        maxsely = maxsely + deltay
+        maxselz = maxselz + deltaz
+        -- MinimizeSelectionBoundary set minimal_sel_bounds to true
+        
+        Refresh()
+    
+    elseif popcount > 0 then
+        MinimizeLiveBoundary()
+        -- calculate the delta amounts needed to move pattern to middle of grid
+        local deltax = (minx + (N-1-maxx) + 1) // 2 - minx
+        local deltay = (miny + (N-1-maxy) + 1) // 2 - miny
+        local deltaz = (minz + (N-1-maxz) + 1) // 2 - minz
+        if deltax == 0 and deltay == 0 and deltaz == 0 then return end
+        
+        local livecells = {}
+        local NN = N*N
+        for k,_ in pairs(grid1) do
+            livecells[#livecells+1] = {k % N, (k // N) % N, k // NN}
+        end
+        grid1 = {}
+        for _,xyz in ipairs(livecells) do
+            local x = xyz[1] + deltax
+            local y = xyz[2] + deltay
+            local z = xyz[3] + deltaz
+            grid1[x + N * (y + N * z)] = 1
+        end
+        
+        -- update the live cell boundary
+        minx = minx + deltax
+        miny = miny + deltay
+        minz = minz + deltaz
+        maxx = maxx + deltax
+        maxy = maxy + deltay
+        maxz = maxz + deltaz
+        -- MinimizeLiveBoundary set minimal_live_bounds to true
+        
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
 function EraseLiveCells(mousex, mousey)
     -- erase all live cells whose projected mid points are close to mousex,mousey
     if popcount > 0 then
@@ -5472,6 +5609,7 @@ function HandleKey(event)
     elseif key == "left"  and mods == "alt"  then Rotate( 0,  0,  5)
     elseif key == "delete" and mods == "none" then ClearSelection()
     elseif key == "delete" and mods == "shift" then ClearOutside()
+    elseif key == "5" and mods == "none" then RandomPattern()
     elseif key == "n" and mods == CMDCTRL then NewPattern()
     elseif key == "o" and mods == CMDCTRL then OpenPattern()
     elseif key == "s" and mods == CMDCTRL then SavePattern()
@@ -5501,11 +5639,11 @@ function HandleKey(event)
     elseif key == "." then MoveActivePlane(activepos-1)
     elseif key == "a" and mods == "shift" then CycleActivePlane()
     elseif key == "c" and mods == "none" then CycleCursor()
-    elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "d" and mods == "none" then DrawMode()
     elseif key == "s" and mods == "none" then SelectMode()
+    elseif key == "m" and mods == "none" then MoveMode()
+    elseif key == "m" and mods == "shift" then MoveToMiddle()
     elseif key == "h" then ShowHelp()
-    elseif key == "5" then RandomPattern()
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)
@@ -5579,7 +5717,7 @@ function MainLoop()
                                     drag_paste = #dragface > 0
                                 end
                                 if not drag_paste and selcount > 0 then
-                                    dragface= StartDraggingSelection(x, y)
+                                    dragface = StartDraggingSelection(x, y)
                                     drag_selection = #dragface > 0
                                 end
                             elseif mods == "alt" then
