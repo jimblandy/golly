@@ -80,6 +80,7 @@ local DEGTORAD = math.pi/180.0      -- converts degrees to radians
 -- MIDGRID is used to ensure that rotation occurs about the
 -- mid point of the middle cube in the grid
 local MIDGRID = (N+1-(N%2))*HALFCELL
+local MIDCELL = HALFCELL-MIDGRID
 
 local BACK_COLOR = "0 0 65 255"     -- for drawing background
 local LINE_COLOR = "60 60 90 255"   -- for drawing lattice lines
@@ -309,6 +310,7 @@ function ReadSettings()
         
         -- update all parameters that depend on N
         MIDGRID = (N+1-(N%2))*HALFCELL
+        MIDCELL = HALFCELL-MIDGRID
         
         if not ParseRule(rulestring) then
             g.warn("Resetting bad rule ("..rulestring..") to default.")
@@ -811,11 +813,16 @@ end
 
 ----------------------------------------------------------------------
 
+local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
+
 function CreateLiveCube()
     -- create a clip containing one rotated cube that will be used later
     -- to draw all live cells (this only works because all cubes are identical
     -- in appearance when using orthographic projection)
-    ov("create "..(LEN*2).." "..(LEN*2).." c")
+    
+    -- largest size of a rotated cube with edge length L is sqrt(3)*L
+    HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
+    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." c")
     ov("target c")
     
     local midpos = N//2
@@ -824,8 +831,8 @@ function CreateLiveCube()
     -- create cube's projected vertices (within clip)
     for i = 1, 8 do
         rotx[i], roty[i], rotz[i] = TransformPoint(cube[i])
-        projectedx[i] = round( rotx[i] ) + LEN
-        projectedy[i] = round( roty[i] ) + LEN
+        projectedx[i] = round( rotx[i] ) + HALFCUBECLIP
+        projectedy[i] = round( roty[i] ) + HALFCUBECLIP
     end
     
     -- draw up to 3 visible faces of cube, using cyclic vertex order set in CreateCube
@@ -986,9 +993,9 @@ end
 
 local function AddCubeToBatch(x, y, z) -- !BATCHDRAW!
     -- add live cell as a cube at given grid position
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
     x = round(newx) + midx - LEN
@@ -1002,13 +1009,13 @@ end
 
 local function DrawCube(x, y, z)
     -- draw live cell as a cube at given grid position
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
-    x = round(newx) + midx - LEN
-    y = round(newy) + midy - LEN
+    x = round(newx) + midx - HALFCUBECLIP
+    y = round(newy) + midy - HALFCUBECLIP
     -- draw the clip created by CreateLiveCube
     ov("paste "..x.." "..y.." c")
 end
@@ -1017,9 +1024,9 @@ end
 
 local function AddSphereToBatch(x, y, z)
     -- add live cell as a sphere at given grid position
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
     x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
@@ -1033,9 +1040,9 @@ end
 
 local function DrawSphere(x, y, z)
     -- draw live cell as a sphere at given grid position
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
     x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
@@ -1049,9 +1056,9 @@ end
 
 local function AddPointToBatch(x, y, z)
     -- add mid point of cell at given grid position
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
     x = round(newx) + midx
@@ -1065,9 +1072,9 @@ end
 
 local function DrawPoint(x, y, z)
     -- draw mid point of cell at given grid position
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
     x = round(newx) + midx
@@ -1078,9 +1085,9 @@ end
 ----------------------------------------------------------------------
 
 local function DrawActiveCell(x, y, z)
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
     x = round(newx) + midx - CELLSIZE
@@ -1092,9 +1099,9 @@ end
 ----------------------------------------------------------------------
 
 local function DrawSelectedCell(x, y, z)
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
     x = round(newx) + midx - CELLSIZE
@@ -1106,9 +1113,9 @@ end
 ----------------------------------------------------------------------
 
 local function DrawPasteCell(x, y, z)
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
     x = round(newx) + midx - CELLSIZE
@@ -1997,6 +2004,7 @@ end
 function UpdateCurrentGrid(newpattern)
     N = newpattern.newsize
     MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
     CreateAxes()
     ClearCells()        -- resets grid1, grid2, popcount and selection info
     
@@ -2431,6 +2439,7 @@ function ChangeGridSize()
     
     N = newN
     MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
     CreateAxes()
     
     -- active plane may need adjusting
@@ -3502,6 +3511,7 @@ function Zoom(newsize)
     CELLSIZE = newsize
     HALFCELL = CELLSIZE/2.0
     MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
     LEN = CELLSIZE-BORDER*2
     CreateAxes()
     Refresh()
@@ -3533,6 +3543,7 @@ function Reset()
         if N ~= startN then
             N = startN
             MIDGRID = (N+1-(N%2))*HALFCELL
+            MIDCELL = HALFCELL-MIDGRID
             CreateAxes()
         end
         
@@ -3574,9 +3585,9 @@ end
 
 local function GetMidPoint(x, y, z)
     -- return mid point of cell at given grid position
-    x = x * CELLSIZE + HALFCELL - MIDGRID
-    y = y * CELLSIZE + HALFCELL - MIDGRID
-    z = z * CELLSIZE + HALFCELL - MIDGRID
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
     x = round(newx) + midx
@@ -3600,6 +3611,7 @@ function FitGrid()
         CELLSIZE = CELLSIZE-1
         HALFCELL = CELLSIZE/2.0
         MIDGRID = (N+1-(N%2))*HALFCELL
+        MIDCELL = HALFCELL-MIDGRID
         LEN = CELLSIZE-BORDER*2
         CreateAxes()
         if CELLSIZE == MINSIZE then break end
@@ -4801,6 +4813,7 @@ function DragPaste(mousex, mousey, prevx, prevy, face)
     local oldpos = activepos
     N = N*3
     MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
     if face == "F" or face == "B" then
         -- mouse in front/back face
         SetActivePlane("XY", 0)
@@ -4819,6 +4832,7 @@ function DragPaste(mousex, mousey, prevx, prevy, face)
     -- restore the original active plane
     N = oldN
     MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
     SetActivePlane(oldplane, oldpos)
     
     -- check if mouse stayed in same cell, or moved outside temporary plane
@@ -5014,6 +5028,7 @@ function DragSelection(mousex, mousey, prevx, prevy, face)
     local oldpos = activepos
     N = N*3
     MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
     if face == "F" or face == "B" then
         -- mouse in front/back face
         SetActivePlane("XY", 0)
@@ -5032,6 +5047,7 @@ function DragSelection(mousex, mousey, prevx, prevy, face)
     -- restore the original active plane
     N = oldN
     MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
     SetActivePlane(oldplane, oldpos)
     
     -- check if mouse stayed in same cell, or moved outside temporary plane
@@ -5099,6 +5115,7 @@ function DragActivePlane(mousex, mousey, prevx, prevy)
     local oldpos = activepos
     N = N*3
     MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
     if activeplane == "XY" then
         if (rotz[5] <= rotz[1] and rotz[5] <= rotz[3] and rotz[7] <= rotz[3]) or
            (rotz[4] <= rotz[8] and rotz[4] <= rotz[6] and rotz[2] <= rotz[6]) then
@@ -5135,6 +5152,7 @@ function DragActivePlane(mousex, mousey, prevx, prevy)
     -- restore the original active plane
     N = oldN
     MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
     SetActivePlane(oldplane, oldpos)
     
     -- check if mouse stayed in same cell, or moved outside temporary plane
