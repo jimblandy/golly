@@ -2184,12 +2184,7 @@ const char *ltlalgo::setrule(const char *s)
     }
     
     if (r < 1) return "R value is too small";
-    int r2 = r ;
-    if (n == 'C') { // slowly calculate a square root
-       r = 1 ;
-       while ((r + 1) * (r + 1) <= r2)
-          r++ ;
-    }
+    int r2 = r*r+r ;
     if (r > MAXRANGE) return "R value is too big";
     if (c < 0 || c > 255) return "C value must be from 0 to 255";
     if (m < 0 || m > 1) return "M value must be 0 or 1";
@@ -2384,10 +2379,10 @@ const char *ltlalgo::setrule(const char *s)
     // set the canonical rule
     if (unbounded) {
         sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c",
-                           (ntype == 'C' ? rangec : range), scount, totalistic, minS, maxS, minB, maxB, ntype);
+                           range, scount, totalistic, minS, maxS, minB, maxB, ntype);
     } else {
         sprintf(canonrule, "R%d,C%d,M%d,S%d..%d,B%d..%d,N%c:%c%d,%d",
-                           (ntype == 'C' ? rangec : range), scount, totalistic, minS, maxS, minB, maxB, ntype,
+                           range, scount, totalistic, minS, maxS, minB, maxB, ntype,
                            topology, gwd, ght);
     }
     
