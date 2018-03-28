@@ -2202,7 +2202,7 @@ const char *ltlalgo::setrule(const char *s)
        int cnt = 0 ;
        for (int i=-r; i<=r; i++) {
           int w = 0 ;
-          while ((w + 1) * (w + 1) + (i * i) < r2)
+          while ((w + 1) * (w + 1) + (i * i) <= r2)
              w++ ;
           tshape[i+r] = w ;
           cnt += 2 * w + 1 ;
