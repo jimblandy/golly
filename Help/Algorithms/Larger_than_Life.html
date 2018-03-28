@@ -28,11 +28,10 @@ This diagram shows the extended Moore and von Neumann neighborhoods for <i>r</i>
 <dd><img src="extended.png"></dd>
 
 <p>
-If the neighborhood is circular, then the <i>r</i> parameter is the square of the radius of the circle.  For instance, a Moore neighborhood with <i>r</i> of 5 has 120 pixels; a circular neighborhood with an <i>r</i> of 38 also ends up having 120 pixels.
-<p>
 The S and B limits must be from 0 to the neighborhood size:
-(2<i>r</i>+1)^2 when <i>n</i> = M, or 2<i>r</i>(<i>r</i>+1)+1 when <i>n</i> = N, or approximately 3.1416<i>r</i>^2 when <i>n</i> = C.
-
+(2<i>r</i>+1)^2 when <i>n</i> = M, or 2<i>r</i>(<i>r</i>+1)+1 when <i>n</i> = N, or approximately 3.14(<i>r</i>+0.5)^2 when <i>n</i> = C.
+The set of points in a circular neighborhood is those whose Euclidean distance
+from the center point is less than <i>r</i>+0.5.
 <p>
 If the number of states (specified after C) is greater than 2 then states 1 and above
 don't die immediately but gradually decay.  Note that state values above 1 are not
