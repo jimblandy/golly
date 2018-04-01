@@ -15,7 +15,6 @@ Thanks to Tom Rokicki for optimizing the NextGeneration code.
 TODO: !!!
 
 - implement undo/redo
-- try probabilistic culling to speed up high-density rendering
 - allow saving as .vti file for use by Ready?
 - add option for 6-face-neighbor rules (start or end rule with V?)
 - also option for 12-neighbor sphere packing rules?
@@ -98,6 +97,7 @@ local zaxis = {}                    -- Z axis
 local grid1 = {}                    -- sparse 3D matrix with up to N*N*N live cells
 local grid2 = {}                    -- sparse 3D matrix for the next generation
 local popcount = 0                  -- number of live cells
+local skip_hidden_cells = true      -- avoid rendering obscured live cells?
 local pattname = "untitled"         -- most recently saved/opened pattern
 local showaxes = true               -- draw axes and lattice lines?
 local generating = false            -- generate pattern?
@@ -972,25 +972,6 @@ end
 
 ----------------------------------------------------------------------
 
-local function ResetBatch() -- !BATCHDRAW!
-    xybatch = {}
-end
-
-----------------------------------------------------------------------
-
-local function DrawBatch() -- !BATCHDRAW!
-    if celltype == "cube" then
-        ov("paste "..table.concat(xybatch, " ").." c")
-    elseif celltype == "sphere" then
-        ov("paste "..table.concat(xybatch, " ").." S")
-    else -- celltype == "point"
-        ov(op.white)
-        ov("set "..table.concat(xybatch, " "))
-    end
-end
-
-----------------------------------------------------------------------
-
 local function AddCubeToBatch(x, y, z) -- !BATCHDRAW!
     -- add live cell as a cube at given grid position
     x = x * CELLSIZE + MIDCELL
@@ -1007,21 +988,6 @@ end
 
 ----------------------------------------------------------------------
 
-local function DrawCube(x, y, z)
-    -- draw live cell as a cube at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
-    -- use orthographic projection
-    x = round(newx) + midx - HALFCUBECLIP
-    y = round(newy) + midy - HALFCUBECLIP
-    -- draw the clip created by CreateLiveCube
-    ov("paste "..x.." "..y.." c")
-end
-
-----------------------------------------------------------------------
-
 local function AddSphereToBatch(x, y, z)
     -- add live cell as a sphere at given grid position
     x = x * CELLSIZE + MIDCELL
@@ -1034,6 +1000,35 @@ local function AddSphereToBatch(x, y, z)
     -- add to the list to draw
     xybatch[#xybatch + 1] = x
     xybatch[#xybatch + 1] = y
+end
+
+----------------------------------------------------------------------
+
+function DrawBatch() -- !BATCHDRAW!
+    if celltype == "cube" then
+        ov("paste "..table.concat(xybatch, " ").." c")
+    elseif celltype == "sphere" then
+        ov("paste "..table.concat(xybatch, " ").." S")
+    else -- celltype == "point"
+        ov(op.white)
+        ov("set "..table.concat(xybatch, " "))
+    end
+    xybatch = {}
+end
+
+----------------------------------------------------------------------
+
+local function DrawCube(x, y, z)
+    -- draw live cell as a cube at given grid position
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    local newx, newy = TransformPoint({x, y, z})
+    -- use orthographic projection
+    x = round(newx) + midx - HALFCUBECLIP
+    y = round(newy) + midy - HALFCUBECLIP
+    -- draw the clip created by CreateLiveCube
+    ov("paste "..x.." "..y.." c")
 end
 
 ----------------------------------------------------------------------
@@ -1213,10 +1208,9 @@ function DisplayCells(editing)
         end
     end
 
-    -- test batch draw  !BATCHDRAW!
+    -- test batch draw !BATCHDRAW!
     -- local t1 = g.millisecs()
     if usebatch and not testcell then
-        ResetBatch()
         if celltype == "cube" then
             DrawLiveCell = AddCubeToBatch
         elseif celltype == "sphere" then
@@ -1337,9 +1331,264 @@ function DisplayCells(editing)
     if usebatch and not testcell then
         DrawBatch()
     end
-    -- t1 = g.millisecs() - t1
-    -- message = string.format("%.2fms", t1)
+    -- message = string.format("%.2fms", g.millisecs() - t1)
     
+    ov("blend 0")
+end
+
+
+----------------------------------------------------------------------
+
+function DisplayVisibleCells(density, pattwd, pattht, pattdp)
+    -- this routine renders high-density patterns containing many thousands of
+    -- cells (cubes or spheres); it uses a "probabilistic culling" algorithm to
+    -- avoid drawing cells that will most likely be obscured by nearer cells
+
+    -- find the rotated reference cube vertex with maximum Z coordinate
+    local z1 = rotrefz[1]
+    local z2 = rotrefz[2]
+    local z3 = rotrefz[3]
+    local z4 = rotrefz[4]
+    local z5 = rotrefz[5]
+    local z6 = rotrefz[6]
+    local z7 = rotrefz[7]
+    local z8 = rotrefz[8]
+    local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
+
+    ov("blend 1")
+
+    -- test batch draw !BATCHDRAW!
+    -- local t1 = g.millisecs()
+    if usebatch then
+        if celltype == "cube" then
+            DrawLiveCell = AddCubeToBatch
+        else -- celltype == "sphere"
+            DrawLiveCell = AddSphereToBatch
+        end
+    end
+    
+    -- use the given density to calculate how many frontmost planes should be
+    -- rendered in each of the 1 to 3 visible faces; the higher the density the
+    -- fewer the number of planes
+    -- (for d=90% we want n=5% and for d=20% we want n=30%, so this gives the
+    -- equation n% = 260/7 - d% * 25/70)
+    local numplanes = round((2.6/7 - density*25/70) * max(pattwd, pattht, pattdp))
+    if numplanes < 2 then numplanes = 2 end
+    -- needs more work!!! (maybe randomly jiggle position of interior cells???)
+    -- also adjust numplanes depending on CELLSIZE???!!!
+    if celltype == "sphere" then
+        numplanes = numplanes + 1   -- spheres are smaller
+    end
+    numplanes = min(numplanes, pattwd, pattht, pattdp)
+
+    local npm1 = numplanes - 1
+    if maxZ == z1 then
+        -- rearmost cell is minx,miny,maxz so we need to render the frontmost planes
+        -- in the top, right and back faces (in that order)
+        for z = maxz, minz-numplanes, -1 do
+            for y = maxy-npm1, maxy do
+                for x = minx, maxx-numplanes do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = maxz, minz-numplanes, -1 do
+            for y = miny, maxy do
+                for x = maxx-npm1, maxx do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = minz+npm1, minz, -1 do
+            for y = miny, maxy do
+                for x = minx, maxx do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+
+    elseif maxZ == z2 then
+        -- rearmost cell is minx,miny,minz so we need to render the frontmost planes
+        -- in the top, right and front faces (in that order)
+        for z = minz, maxz-numplanes do
+            for y = maxy-npm1, maxy do
+                for x = minx, maxx-numplanes do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = minz, maxz-numplanes do
+            for y = miny, maxy do
+                for x = maxx-npm1, maxx do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = maxz-npm1, maxz do
+            for y = miny, maxy do
+                for x = minx, maxx do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+    
+    elseif maxZ == z3 then
+        -- rearmost cell is minx,maxy,maxz so we need to render the frontmost planes
+        -- in the bottom, right and back faces (in that order)
+        for z = maxz, minz, -1 do
+            for y = miny+npm1, miny, -1 do
+                for x = minx, maxx-numplanes do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = maxz, minz-numplanes, -1 do
+            for y = maxy, miny, -1 do
+                for x = maxx-npm1, maxx do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = minz+npm1, minz, -1 do
+            for y = maxy, miny, -1 do
+                for x = minx, maxx do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+    
+    elseif maxZ == z4 then
+        -- rearmost cell is minx,maxy,minz so we need to render the frontmost planes
+        -- in the bottom, right and front faces (in that order)
+        for z = minz, maxz-numplanes do
+            for y = miny+npm1, miny, -1 do
+                for x = minx, maxx-numplanes do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = minz, maxz-numplanes do
+            for y = maxy, miny, -1 do
+                for x = maxx-npm1, maxx do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = maxz-npm1, maxz do
+            for y = maxy, miny, -1 do
+                for x = minx, maxx do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+    
+    elseif maxZ == z5 then
+        -- rearmost cell is maxx,maxy,maxz so we need to render the frontmost planes
+        -- in the bottom, back and left faces (in that order)
+        for z = maxz, minz+numplanes, -1 do
+            for y = miny+npm1, miny, -1 do
+                for x = maxx, minx+numplanes, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = minz+npm1, minz, -1 do
+            for y = maxy, miny-numplanes, -1 do
+                for x = maxx, minx, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = maxz, minz, -1 do
+            for y = maxy, miny, -1 do
+                for x = minx+npm1, minx, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+    
+    elseif maxZ == z6 then
+        -- rearmost cell is maxx,maxy,minz so we need to render the frontmost planes
+        -- in the bottom, front and left faces (in that order)
+        for z = minz, maxz do
+            for y = miny+npm1, miny, -1 do
+                for x = maxx, minx+numplanes, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = maxz-npm1, maxz do
+            for y = maxy, miny-numplanes, -1 do
+                for x = maxx, minx, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = minz, maxz do
+            for y = maxy, miny, -1 do
+                for x = minx+npm1, minx, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+    
+    elseif maxZ == z7 then
+        -- rearmost cell is maxx,miny,maxz so we need to render the frontmost planes
+        -- in the top, back and left faces (in that order)
+        for z = maxz, minz+numplanes, -1 do
+            for y = maxy-npm1, maxy do
+                for x = maxx, minx+numplanes, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = minz+npm1, minz, -1 do
+            for y = miny, maxy do
+                for x = maxx, minx+numplanes, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = maxz, minz, -1 do
+            for y = miny, maxy do
+                for x = minx+npm1, minx, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+    
+    elseif maxZ == z8 then
+        -- rearmost cell is maxx,miny,minz so we need to render the frontmost planes
+        -- in the top, front and left faces (in that order)
+        for z = minz, maxz-numplanes do
+            for y = maxy-npm1, maxy do
+                for x = maxx, minx+numplanes, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = maxz-npm1, maxz do
+            for y = miny, maxy do
+                for x = maxx, minx+numplanes, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+        for z = minz, maxz do
+            for y = miny, maxy do
+                for x = minx+npm1, minx, -1 do
+                    if grid1[x+N*(y+N*z)] then DrawLiveCell(x, y, z) end
+                end
+            end
+        end
+    end
+
+    -- test batch draw !BATCHDRAW!
+    if usebatch then
+        DrawBatch()
+    end
+    -- message = string.format("%.2fms", g.millisecs() - t1)
+
     ov("blend 0")
 end
 
@@ -1443,7 +1692,20 @@ function Refresh()
             ov(op.white)
             DrawLiveCell = DrawPoint
         end
-        DisplayCells(editing)
+        local density = 0.0
+        local pattwd, pattht, pattdp
+        if popcount >= 10000 and celltype ~= "point" and not (editing or pastecount > 0 or selcount > 0) then
+            pattwd = maxx-minx+1
+            pattht = maxy-miny+1
+            pattdp = maxz-minz+1
+            density = popcount / (pattwd * pattht * pattdp)
+        end
+        if skip_hidden_cells and density >= 0.2 and pattwd > 2 and pattht > 2 and pattdp > 2 then
+            -- avoid drawing obscured cells
+            DisplayVisibleCells(density, pattwd, pattht, pattdp)
+        else
+            DisplayCells(editing)
+        end
     end
     
     if showaxes then DrawFrontAxes() end
@@ -4192,6 +4454,13 @@ function CycleCellType()
     Refresh()
 end
 
+--------------------------------------------------------------------------------
+
+function ToggleHiddenCells()
+    skip_hidden_cells = not skip_hidden_cells
+    Refresh()
+end
+
 ----------------------------------------------------------------------
 
 function ToggleAxes()
@@ -5643,7 +5912,8 @@ function HandleKey(event)
     elseif key == "s" and mods == "none" then SelectMode()
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MoveToMiddle()
-    elseif key == "h" then ShowHelp()
+    elseif key == "h" and mods == "alt" then ToggleHiddenCells()
+    elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)
