@@ -83,16 +83,12 @@ local MIDCELL = HALFCELL-MIDGRID
 
 local BACK_COLOR = "0 0 65 255"     -- for drawing background
 local LINE_COLOR = "60 60 90 255"   -- for drawing lattice lines
-local X_COLOR = op.red              -- for drawing X axis
-local Y_COLOR = op.green            -- for drawing Y axis
-local Z_COLOR = op.blue             -- for drawing Z axis
-
 local xylattice = {}                -- lattice lines between X,Y axes
 local xzlattice = {}                -- lattice lines between X,Z axes
 local yzlattice = {}                -- lattice lines between Y,Z axes
-local xaxis = {}                    -- X axis
-local yaxis = {}                    -- Y axis
-local zaxis = {}                    -- Z axis
+local xaxes = {}                    -- four X axes
+local yaxes = {}                    -- four Y axes
+local zaxes = {}                    -- four Z axes
 
 local grid1 = {}                    -- sparse 3D matrix with up to N*N*N live cells
 local grid2 = {}                    -- sparse 3D matrix for the next generation
@@ -100,6 +96,7 @@ local popcount = 0                  -- number of live cells
 local skip_hidden_cells = true      -- avoid rendering obscured live cells?
 local pattname = "untitled"         -- most recently saved/opened pattern
 local showaxes = true               -- draw axes and lattice lines?
+local showlines = true              -- draw lattice lines?
 local generating = false            -- generate pattern?
 local gencount = 0                  -- current generation count
 local perc = 20                     -- initial percentage for random fill
@@ -306,6 +303,7 @@ function ReadSettings()
         perc = tonumber(f:read("*l")) or 20
         pattdir = f:read("*l") or g.getdir("data")
         scriptdir = f:read("*l") or g.getdir("app")
+        showlines = (f:read("*l") or "true") == "true"
         f:close()
         
         -- update all parameters that depend on N
@@ -340,6 +338,7 @@ function WriteSettings()
         f:write(tostring(perc).."\n")
         f:write(pattdir.."\n")
         f:write(scriptdir.."\n")
+        f:write(tostring(showlines).."\n")
         f:close()
     end
 end
@@ -411,7 +410,7 @@ end
 ----------------------------------------------------------------------
 
 local function HorizontalLine(x1, x2, y)
-    -- draw a horizontal line of cells from x1,y to x2,y
+    -- draw a horizontal line of pixels from x1,y to x2,y
     ov("line "..x1.." "..y.." "..x2.." "..y)
 end
 
@@ -576,13 +575,13 @@ end
 
 ----------------------------------------------------------------------
 
-local function DisplayLine(line)
+local function DisplayLine(startpt, endpt)
     -- use orthographic projection to transform line's start and end points
-    local newx, newy = TransformPoint(line[1])
+    local newx, newy = TransformPoint(startpt)
     local x1 = round(newx) + midx
     local y1 = round(newy) + midy
     
-    newx, newy = TransformPoint(line[2])
+    newx, newy = TransformPoint(endpt)
     local x2 = round(newx) + midx
     local y2 = round(newy) + midy
     
@@ -599,26 +598,46 @@ function DrawRearAxes()
     local z3 = rotrefz[3]
     local z7 = rotrefz[7]
     
-    ov("rgba"..LINE_COLOR)
-    if z1 < z2 then
-        -- front face of rotated refcube is visible
-        for _, line in ipairs(xylattice) do DisplayLine(line) end
-    end
-    if z1 >= z7 then
-        -- right face of rotated refcube is visible
-        for _, line in ipairs(yzlattice) do DisplayLine(line) end
-    end
-    if z1 >= z3 then
-        -- top face of rotated refcube is visible
-        for _, line in ipairs(xzlattice) do DisplayLine(line) end
+    if showlines then
+        ov("rgba"..LINE_COLOR)
+        if z1 < z2 then
+            -- front face of rotated refcube is visible
+            for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
+        end
+        if z1 >= z7 then
+            -- right face of rotated refcube is visible
+            for _, pt in ipairs(yzlattice) do DisplayLine(pt[1], pt[2]) end
+        end
+        if z1 >= z3 then
+            -- top face of rotated refcube is visible
+            for _, pt in ipairs(xzlattice) do DisplayLine(pt[1], pt[2]) end
+        end
     end
     
-    -- draw thicker anti-aliased axes
+    -- draw darker anti-aliased lines for rear axes
+    local dark_red = "rgba 128 0 0 255"
+    local dark_green = "rgba 0 128 0 255"
+    local dark_blue = "rgba 0 0 128 255"
+
     ov("blend 1")
     ov("lineoption width 3")
-    if z1 < z2  or z1 >= z3 then ov(X_COLOR); DisplayLine(xaxis) end
-    if z1 < z2  or z1 >= z7 then ov(Y_COLOR); DisplayLine(yaxis) end
-    if z1 >= z7 or z1 >= z3 then ov(Z_COLOR); DisplayLine(zaxis) end
+    
+    if z1 <  z2 or z1 >= z3 then ov(dark_red);   DisplayLine(xaxes[1], xaxes[2]) end
+    if z1 <  z2 or z1 >= z7 then ov(dark_green); DisplayLine(yaxes[1], yaxes[2]) end
+    if z1 >= z7 or z1 >= z3 then ov(dark_blue);  DisplayLine(zaxes[1], zaxes[2]) end
+    
+    if z1 <  z2 or z1 <  z3 then ov(dark_red);   DisplayLine(xaxes[3], xaxes[4]) end
+    if z1 >= z2 or z1 >= z7 then ov(dark_green); DisplayLine(yaxes[3], yaxes[4]) end
+    if z1 <  z7 or z1 >= z3 then ov(dark_blue);  DisplayLine(zaxes[3], zaxes[4]) end
+    
+    if z1 >= z2 or z1 <  z3 then ov(dark_red);   DisplayLine(xaxes[5], xaxes[6]) end
+    if z1 >= z2 or z1 <  z7 then ov(dark_green); DisplayLine(yaxes[5], yaxes[6]) end
+    if z1 <  z3 or z1 <  z7 then ov(dark_blue);  DisplayLine(zaxes[5], zaxes[6]) end
+    
+    if z1 >= z2 or z1 >= z3 then ov(dark_red);   DisplayLine(xaxes[7], xaxes[8]) end
+    if z1 <  z2 or z1 <  z7 then ov(dark_green); DisplayLine(yaxes[7], yaxes[8]) end
+    if z1 >= z7 or z1 <  z3 then ov(dark_blue);  DisplayLine(zaxes[7], zaxes[8]) end
+    
     ov("lineoption width 1")
     ov("blend 0")
 end
@@ -633,26 +652,42 @@ function DrawFrontAxes()
     local z3 = rotrefz[3]
     local z7 = rotrefz[7]
     
-    ov("rgba"..LINE_COLOR)
-    if z1 >= z2 then
-        -- back face of rotated refcube is visible
-        for _, line in ipairs(xylattice) do DisplayLine(line) end
-    end
-    if z1 < z7 then
-        -- left face of rotated refcube is visible
-        for _, line in ipairs(yzlattice) do DisplayLine(line) end
-    end
-    if z1 < z3 then
-        -- bottom face of rotated refcube is visible
-        for _, line in ipairs(xzlattice) do DisplayLine(line) end
+    if showlines then
+        ov("rgba"..LINE_COLOR)
+        if z1 >= z2 then
+            -- back face of rotated refcube is visible
+            for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
+        end
+        if z1 < z7 then
+            -- left face of rotated refcube is visible
+            for _, pt in ipairs(yzlattice) do DisplayLine(pt[1], pt[2]) end
+        end
+        if z1 < z3 then
+            -- bottom face of rotated refcube is visible
+            for _, pt in ipairs(xzlattice) do DisplayLine(pt[1], pt[2]) end
+        end
     end
     
-    -- draw thicker anti-aliased axes
+    -- draw brighter anti-aliased lines for front axes
     ov("blend 1")
     ov("lineoption width 3")
-    if z1 >= z2 or z1 < z3 then ov(X_COLOR); DisplayLine(xaxis) end
-    if z1 >= z2 or z1 < z7 then ov(Y_COLOR); DisplayLine(yaxis) end
-    if z1 <  z7 or z1 < z3 then ov(Z_COLOR); DisplayLine(zaxis) end
+    
+    if z1 >= z2 or z1 < z3 then ov(op.red);   DisplayLine(xaxes[1], xaxes[2]) end
+    if z1 >= z2 or z1 < z7 then ov(op.green); DisplayLine(yaxes[1], yaxes[2]) end
+    if z1 <  z7 or z1 < z3 then ov(op.blue);  DisplayLine(zaxes[1], zaxes[2]) end
+    
+    if z1 >= z2 or z1 >= z3 then ov(op.red);   DisplayLine(xaxes[3], xaxes[4]) end
+    if z1 <  z2 or z1 <  z7 then ov(op.green); DisplayLine(yaxes[3], yaxes[4]) end
+    if z1 >= z7 or z1 <  z3 then ov(op.blue);  DisplayLine(zaxes[3], zaxes[4]) end
+    
+    if z1 <  z2 or z1 >= z3 then ov(op.red);   DisplayLine(xaxes[5], xaxes[6]) end
+    if z1 <  z2 or z1 >= z7 then ov(op.green); DisplayLine(yaxes[5], yaxes[6]) end
+    if z1 >= z3 or z1 >= z7 then ov(op.blue);  DisplayLine(zaxes[5], zaxes[6]) end
+    
+    if z1 <  z2 or z1 <  z3 then ov(op.red);   DisplayLine(xaxes[7], xaxes[8]) end
+    if z1 >= z2 or z1 >= z7 then ov(op.green); DisplayLine(yaxes[7], yaxes[8]) end
+    if z1 <  z7 or z1 >= z3 then ov(op.blue);  DisplayLine(zaxes[7], zaxes[8]) end
+    
     ov("lineoption width 1")
     ov("blend 0")
 end
@@ -666,11 +701,22 @@ function CreateAxes()
     local o = -MIDGRID
     local endpt = o + N*CELLSIZE
     
-    xaxis = {{o,o,o}, {endpt,o,o}}
-    yaxis = {{o,o,o}, {o,endpt,o}}
-    zaxis = {{o,o,o}, {o,o,endpt}}
+    xaxes = { {o,o,o},         {endpt,o,o},
+              {o,endpt,o},     {endpt,endpt,o},
+              {o,endpt,endpt}, {endpt,endpt,endpt},
+              {o,o,endpt},     {endpt,o,endpt}
+            }
+    yaxes = { {o,o,o},         {o,endpt,o},
+              {o,o,endpt},     {o,endpt,endpt},
+              {endpt,o,endpt}, {endpt,endpt,endpt},
+              {endpt,o,o},     {endpt,endpt,o}
+            }
+    zaxes = { {o,o,o},         {o,o,endpt},
+              {endpt,o,o},     {endpt,o,endpt},
+              {endpt,endpt,o}, {endpt,endpt,endpt},
+              {o,endpt,o},     {o,endpt,endpt}
+            }
     
-    -- x,y lattice
     xylattice = {}
     for i = 1, N do
         local offset = i*CELLSIZE
@@ -678,7 +724,6 @@ function CreateAxes()
         xylattice[#xylattice+1] = {{o,o+offset,o}, {endpt,o+offset,o}}
     end
     
-    -- x,z lattice
     xzlattice = {}
     for i = 1, N do
         local offset = i*CELLSIZE
@@ -686,7 +731,6 @@ function CreateAxes()
         xzlattice[#xzlattice+1] = {{o+offset,o,o}, {o+offset,o,endpt}}
     end
     
-    -- y,z lattice
     yzlattice = {}
     for i = 1, N do
         local offset = i*CELLSIZE
@@ -4103,7 +4147,8 @@ shortcuts):
 <tr><td align=right> [ &nbsp;</td><td>&nbsp; zoom out </td></tr>
 <tr><td align=right> ] &nbsp;</td><td>&nbsp; zoom in </td></tr>
 <tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/spheres/points) </td></tr>
-<tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lines </td></tr>
+<tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lattice lines </td></tr>
+<tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes and lattice lines </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the tool bar </td></tr>
 <tr><td align=right> 5 &nbsp;</td><td>&nbsp; create a random pattern with given density </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
@@ -4465,6 +4510,13 @@ end
 
 function ToggleAxes()
     showaxes = not showaxes
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
+function ToggleLines()
+    showlines = not showlines
     Refresh()
 end
 
@@ -5804,8 +5856,8 @@ function InitialView()
     xiyo = 0.0; yiyo = 1.0; ziyo = 0.0
     xizo = 0.0; yizo = 0.0; zizo = 1.0
 
-    -- rotate so all axes are behind pattern but don't call Refresh
-    Rotate(160, 45, 0, false)
+    -- rotate view but don't call Refresh
+    Rotate(160, 30, 0, false)
     
     FitGrid()   -- calls Refresh
 end
@@ -5902,7 +5954,8 @@ function HandleKey(event)
     elseif key == "i" then InitialView()
     elseif key == "f" then FitGrid()
     elseif key == "p" then CycleCellType()
-    elseif key == "l" then ToggleAxes()
+    elseif key == "l" and mods == "none" then ToggleLines()
+    elseif key == "l" and mods == "shift" then ToggleAxes()
     elseif key == "t" then ToggleToolBar()
     elseif key == "," then MoveActivePlane(activepos+1)
     elseif key == "." then MoveActivePlane(activepos-1)
