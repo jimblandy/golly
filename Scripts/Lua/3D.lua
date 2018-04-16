@@ -2572,7 +2572,7 @@ end
 
 ----------------------------------------------------------------------
 
-function RandomPattern()
+function RandomPattern(percentage)
     -- make these menu options eventually!!!
     local randomfill = false
     local randomsphere = false
@@ -2589,11 +2589,18 @@ function RandomPattern()
         end
     end
     
-    -- if user hits Cancel button we want to avoid aborting script
-    local status, err = pcall(getperc)
-    if err then
-        g.continue("")  -- don't show error when script finishes
-        return
+    if percentage then
+        perc = percentage
+        if perc < 0 then perc = 0 end
+        if perc > 100 then perc = 100 end
+    else
+        -- prompt user for the percentage;
+        -- if user hits Cancel button we want to avoid aborting script
+        local status, err = pcall(getperc)
+        if err then
+            g.continue("")  -- don't show error when script finishes
+            return
+        end
     end
     
     pattname = "untitled"
@@ -4283,6 +4290,13 @@ Switch to the hand cursor.
 Create a new, empty pattern.  All undo/redo history is deleted.
 </dd>
 
+<a name="RandomPattern"></a><p><dt><b>RandomPattern(<i>percentage</i>)</b></dt>
+<dd>
+Create a new, random pattern with the given percentage density (0 to 100) of live cells.
+If the <i>percentage</i> is not supplied then the user will be prompted to enter it.
+All undo/redo history is deleted.
+</dd>
+
 <a name="RunScript"></a><p><dt><b>RunScript(<i>filepath</i>)</b></dt>
 <dd>
 Run the specified .lua file.  If <i>filepath</i> is not supplied then
@@ -4381,15 +4395,14 @@ and type shift-O (after returning to the 3D.lua window):
 
 <dd><table border=0><pre>
 3D
-# A 30c/30 orthogonal spaceship.
-# Discovered by Andrew Trevorrow in March, 2018.
+# A 10c/10 orthogonal spaceship.
+# Found by Andrew Trevorrow in April, 2018.
 version=1
-gridsize=64
+gridsize=40
 rule=4,7/5,8
 generation=0
-0 1 -1,-1 -1 -3,-2 1 -2,-3 1 0,0 0 -1,-3 -2 -1,0 0 -2,0 -1 -1,-1 -2 -1
-0 -2 -2,0 -2 -1,0 -1 0,-2 -1 1,0 0 0,-2 -3 -2,-2 -3 -1,0 -1 -2,0 0 -3
-0 1 -2,-2 1 0,0 -1 -3,-3 0 -2,-2 2 -1,-1 1 -2</pre></table></dd>
+0 -2 0,-1 -2 0,0 0 0,0 0 1,0 0 -2,0 -1 -1,0 1 0,0 1 -1,0 -2 -1,-1 1 -1
+0 -1 1,0 -1 -2,0 0 -1,0 -1 0</pre></table></dd>
 
 <p><a name="refs"></a><br>
 <font size=+1><b>Credits and References</b></font>
