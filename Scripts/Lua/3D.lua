@@ -181,6 +181,7 @@ local exitbutton                    -- X
 local drawbox                       -- check box for draw mode
 local selectbox                     -- check box for select mode
 local movebox                       -- check box for move mode
+local rlebox                        -- check box to toggle saveasRLE3 option
 
 local pastemenu                     -- pop-up menu for choosing a paste action
 local selmenu                       -- pop-up menu for choosing a selection action
@@ -204,6 +205,7 @@ survivals[6] = true                 -- ditto
 survivals[7] = true                 -- ditto
 births[6] = true                    -- ditto
 
+local saveasRLE3 = true             -- save pattern/clipboard data in RLE3 format?
 local pattdir = g.getdir("data")    -- initial directory for OpenPattern/SavePattern
 local scriptdir = g.getdir("app")   -- initial directory for RunScript
 local scriptlevel = 0               -- greater than 0 if a user script is running
@@ -304,6 +306,7 @@ function ReadSettings()
         pattdir = f:read("*l") or g.getdir("data")
         scriptdir = f:read("*l") or g.getdir("app")
         showlines = (f:read("*l") or "true") == "true"
+        saveasRLE3 = (f:read("*l") or "true") == "true"
         f:close()
         
         -- update all parameters that depend on N
@@ -339,6 +342,7 @@ function WriteSettings()
         f:write(pattdir.."\n")
         f:write(scriptdir.."\n")
         f:write(tostring(showlines).."\n")
+        f:write(tostring(saveasRLE3).."\n")
         f:close()
     end
 end
@@ -1655,6 +1659,8 @@ function DrawToolBar()
     x = x + openbutton.wd + gap
     savebutton.show(x, y)
     x = x + savebutton.wd + gap
+    rlebox.show(x, y, saveasRLE3)
+    x = x + rlebox.wd + gap
     runbutton.show(x, y)
     x = x + runbutton.wd + gap
     gridbutton.show(x, y)
@@ -2198,17 +2204,145 @@ end
 
 ----------------------------------------------------------------------
 
+function ReadRLE3(f)
+    -- read RLE3 pattern into a temporary grid in case an error occurs
+    local tsize = N
+    local trule = DEFAULT_RULE
+    local tgens = 0
+    local tpop = 0
+    local tminx = math.maxinteger
+    local tminy = math.maxinteger
+    local tminz = math.maxinteger
+    local tmaxx = math.mininteger
+    local tmaxy = math.mininteger
+    local tmaxz = math.mininteger
+    local tgrid = {}
+
+    local wd, ht, dp
+    local x0, y0, z0
+    local x, y, z = 0, 0, 0
+    local runcount = 0
+    
+    while true do
+        local line = f:read("*l")
+        if not line then break end
+        local ch = line:sub(1,1)
+        if ch == "#" or #ch == 0 then
+            -- ignore comment line or blank line
+        elseif ch == "x" then
+            -- parse header
+            wd, ht, dp, trule = line:match("x = (.+), y = (.+), z = (.+), rule = (.+)$")
+            wd = tonumber(wd)
+            ht = tonumber(ht)
+            dp = tonumber(dp)
+            if wd and ht and dp then
+                local maxsize = max(wd, ht, dp)
+                if maxsize > N then
+                    tsize = maxsize
+                    if tsize > MAXN then
+                        f:close()
+                        return "Pattern size is too big:\n"..line
+                    end
+                end
+                -- adjust x,y,z so pattern will be in middle of grid
+                -- (note that we add 1 to match the result of MoveToMiddle)
+                x0 = (tsize - wd + 1) // 2
+                y0 = (tsize - ht + 1) // 2
+                z0 = (tsize - dp + 1) // 2
+                x = x0
+                y = y0
+                z = z0
+            else
+                f:close()
+                return "Bad number in header:\n"..line
+            end
+            local saverule = rulestring
+            if not ParseRule(trule) then
+                f:close()
+                return "Unknown rule:\n"..trule
+            end
+            trule = rulestring
+            -- restore rulestring etc in case there is a later error
+            -- or we're doing a paste and want to ignore the specified rule
+            ParseRule(saverule)
+        else
+            -- parse RLE3 data
+            for i = 1, #line do
+                ch = line:sub(i,i)
+                if ch >= "0" and ch <= "9" then
+                    runcount = runcount * 10 + tonumber(ch)
+                else
+                    if runcount == 0 then runcount = 1 end
+                    if ch == "b" then
+                        x = x + runcount
+                    elseif ch == "o" then
+                        repeat
+                            tgrid[ x + tsize * (y + tsize * z) ] = 1
+                            tpop = tpop + 1
+                            -- update boundary
+                            if x < tminx then tminx = x end
+                            if y < tminy then tminy = y end
+                            if z < tminz then tminz = z end
+                            if x > tmaxx then tmaxx = x end
+                            if y > tmaxy then tmaxy = y end
+                            if z > tmaxz then tmaxz = z end
+                            x = x + 1
+                            runcount = runcount - 1
+                        until runcount == 0
+                    elseif ch == "$" then
+                        x = x0
+                        y = y + runcount
+                    elseif ch == "/" then
+                        x = x0
+                        y = y0
+                        z = z + runcount
+                    elseif ch == "!" then
+                        break
+                    else
+                        f:close()
+                        return "Unexpected character: "..ch
+                    end
+                    runcount = 0
+                end
+            end
+        end
+    end
+    f:close()
+    
+    -- success
+    local newpattern = {
+        newsize = tsize,
+        newrule = trule,
+        newgens = tgens,
+        newpop = tpop,
+        newminx = tminx,
+        newminy = tminy,
+        newminz = tminz,
+        newmaxx = tmaxx,
+        newmaxy = tmaxy,
+        newmaxz = tmaxz,
+        newgrid = tgrid
+    }
+    return nil, newpattern
+end
+
+----------------------------------------------------------------------
+
 function ReadPattern(filepath)
     local f = io.open(filepath,"r")
     if not f then return "Failed to open file:\n"..filepath end
     
     local line = f:read("*l")
-    if line == nil or line ~= "3D" then
+    if line == nil or (line ~= "3D" and line ~= "[3D]") then
         f:close()
-        return "Invalid 3D pattern (first line must be 3D)."
+        return "Invalid 3D pattern (first line must be 3D or [3D])."
+    end
+    
+    if line == "[3D]" then
+        return ReadRLE3(f)
     end
 
-    -- read pattern into a temporary grid in case an error occurs
+    -- read 3D pattern into a temporary grid in case an error occurs
     local tsize = MAXN
     local trule = DEFAULT_RULE
     local tgens = 0
@@ -2221,17 +2355,17 @@ function ReadPattern(filepath)
     local tmaxz = math.mininteger
     local tgrid = {}
     
-    -- safer and faster to read header lines first, then data lines!!!
+    -- safer and faster to read header lines first, then data lines!!!???
     
     local prevy = 0
     local prevz = 0
     while true do
         line = f:read("*l")
         if not line then break end
-        local ch1 = line:sub(1,1)
-        if ch1 == "#" or #ch1 == 0 then
+        local ch = line:sub(1,1)
+        if ch == "#" or #ch == 0 then
             -- ignore comment line or blank line
-        elseif ch1 >= "a" and ch1 <= "z" then
+        elseif ch >= "a" and ch <= "z" then
             -- parse keyword=value (ignore unknown keyword)
             local keyword, value = split(line,"=")
             if not value then
@@ -2347,8 +2481,8 @@ function OpenPattern(filepath)
             UpdateCurrentGrid(newpattern)
         end
     else
-        -- prompt user for a .3d file to open
-        local filetype = "3D file (*.3d)|*.3d"
+        -- prompt user for a .3d or .rle3 file to open
+        local filetype = "3D file (*.3d;*.rle3)|*.3d;*.rle3"
         local path = g.opendialog("Open a 3D pattern", filetype, pattdir, "")
         if #path > 0 then
             -- update pattdir by stripping off the file name
@@ -2395,6 +2529,108 @@ end
 
 ----------------------------------------------------------------------
 
+function WriteRLE3Pattern(filepath, comments)
+    local f = io.open(filepath,"w")
+    if not f then return "Failed to create RLE3 file:\n"..filepath end
+    f:write("[3D]\n")
+    if #comments > 0 then
+        -- each comment line should start with # and end with \n
+        f:write(comments)
+    end
+    if popcount == 0 then
+        f:write(string.format("x = 1, y = 1, z = 1, rule = %s\n", rulestring))
+        f:write("!\n")
+    else
+        MinimizeLiveBoundary()
+        local wd = maxx - minx + 1
+        local ht = maxy - miny + 1
+        local dp = maxz - minz + 1
+        f:write(string.format("x = %d, y = %d, z = %d, rule = %s\n", wd, ht, dp, rulestring))
+    
+        local line = ""
+        local orun = 0
+        local brun = 0
+        local dollrun = 0
+        local slashrun = 0
+        
+        local function AddRun(count, ch)
+            if #line >= 67 then f:write(line.."\n"); line = "" end
+            if count > 2 then
+                line = line..count..ch
+            elseif count == 2 then
+                line = line..ch..ch
+            else
+                line = line..ch
+            end
+        end
+        
+        -- traverse all cells within live boundary sorted by Z,Y,X coords
+        for z = minz, maxz do
+            for y = miny, maxy do
+                for x = minx, maxx do
+                    if grid1[ x + N * (y + N * z) ] then
+                        -- live cell
+                        orun = orun + 1
+                        if slashrun > 0 then
+                            AddRun(slashrun, "/")
+                            slashrun = 0
+                        end
+                        if dollrun > 0 then
+                            AddRun(dollrun, "$")
+                            dollrun = 0
+                        end
+                        if brun > 0 then
+                            AddRun(brun, "b")
+                            brun = 0
+                        end
+                    else
+                        -- dead cell
+                        brun = brun + 1
+                        if orun > 0 then
+                            if slashrun > 0 then
+                                AddRun(slashrun, "/")
+                                slashrun = 0
+                            end
+                            if dollrun > 0 then
+                                AddRun(dollrun, "$")
+                                dollrun = 0
+                            end
+                            AddRun(orun, "o")
+                            orun = 0
+                        end
+                    end
+                end
+                if orun > 0 then
+                    if slashrun > 0 then
+                        AddRun(slashrun, "/")
+                        slashrun = 0
+                    end
+                    if dollrun > 0 then
+                        AddRun(dollrun, "$")
+                        dollrun = 0
+                    end
+                    AddRun(orun, "o")
+                    orun = 0
+                end
+                brun = 0
+                dollrun = dollrun + 1
+            end
+            dollrun = 0
+            if z < maxz then
+                slashrun = slashrun + 1
+            else
+                if #line >= 70 then f:write(line.."\n"); line = "" end
+                line = line.."!"
+            end
+        end
+        if #line > 0 then f:write(line.."\n") end
+    end
+    f:close()
+    return nil  -- success
+end
+
+----------------------------------------------------------------------
+
 function PatternHeader(comments)
     -- return 3D pattern header lines
     comments = comments or ""
@@ -2409,9 +2645,9 @@ end
 
 ----------------------------------------------------------------------
 
-function WritePattern(filepath, comments)
+function Write3DPattern(filepath, comments)
     local f = io.open(filepath,"w")
-    if not f then return "Failed to create file:\n"..filepath end
+    if not f then return "Failed to create 3D file:\n"..filepath end
     f:write(PatternHeader(comments).."\n")
     if popcount > 0 then
         local mid = N//2
@@ -2445,17 +2681,21 @@ end
 function GetComments(f)
     local comments = ""
     local line = f:read("*l")
-    if line == nil or line ~= "3D" then return end
+    -- line should be 3D or [3D] but play safe
+    if line == nil then return end
     while true do
         line = f:read("*l")
         if not line then break end
-        local ch1 = line:sub(1,1)
-        if #ch1 == 0 then
+        local ch = line:sub(1,1)
+        if #ch == 0 then
             -- ignore empty line
-        elseif ch1 == "#" then
+        elseif ch == "#" then
             comments = comments..line.."\n"
-        elseif ch1 < "a" or ch1 > "z" then
-            -- end of header info
+        elseif ch == "x" then
+            -- end of RLE3 header info
+            break
+        elseif ch < "a" or ch > "z" then
+            -- end of 3D header info
             break
         end
     end
@@ -2474,7 +2714,14 @@ function SavePattern(filepath)
             comments = GetComments(f)
             f:close()
         end
-        local err = WritePattern(filepath, comments)
+        local err
+        -- test filepath's extension rather than saveasRLE3 option so scripts
+        -- can save patterns in either format more easily
+        if filepath:find("%.rle3$") then
+            err = WriteRLE3Pattern(filepath, comments)
+        else
+            err = Write3DPattern(filepath, comments)
+        end
         if err then
             g.warn(err)
         else
@@ -2484,14 +2731,27 @@ function SavePattern(filepath)
         end
     else
         -- prompt user for file name and location
-        local filetype = "3D file (*.3d)|*.3d"
-        local path = g.savedialog("Save pattern", filetype, pattdir, pattname)
+        local initname = pattname
+        local filetype
+        if saveasRLE3 then
+            filetype = "RLE3 file (*.rle3)|*.rle3"
+            -- might need to change initname's extension
+            if initname:find("%.3d$") then initname = initname:sub(1,-3).."rle3" end
+        else
+            filetype = "3D file (*.3d)|*.3d"
+            -- might need to change initname's extension
+            if initname:find("%.rle3$") then initname = initname:sub(1,-5).."3d" end
+        end
+        local path = g.savedialog("Save pattern", filetype, pattdir, initname)
         if #path > 0 then
             -- update pattdir by stripping off the file name
             pattdir = path:gsub("[^"..pathsep.."]+$","")
-            -- ensure file name ends with ".3d"
-            if not path:find("%.3d$") then
-                path = path..".3d"
+            if saveasRLE3 then
+                -- ensure file name ends with ".rle3"
+                if not path:find("%.rle3$") then path = path..".rle3" end
+            else
+                -- ensure file name ends with ".3d"
+                if not path:find("%.3d$") then path = path..".3d" end
             end
             -- save the current pattern
             SavePattern(path)
@@ -2876,9 +3136,101 @@ end
 
 ----------------------------------------------------------------------
 
+function CreateRLE3Selection(lines)
+    -- convert selection to lines of RLE3 data
+    -- (note that selcount > 0 and at least one live cell is selected)
+    MinimizeSelectionBoundary()
+    local wd = maxselx - minselx + 1
+    local ht = maxsely - minsely + 1
+    local dp = maxselz - minselz + 1
+    lines[1] = "[3D]"
+    lines[2] = string.format("x = %d, y = %d, z = %d, rule = %s", wd, ht, dp, rulestring)
+    
+    local line = ""
+    local orun = 0
+    local brun = 0
+    local dollrun = 0
+    local slashrun = 0
+    
+    local function AddRun(count, ch)
+        if #line >= 67 then lines[#lines+1] = line; line = "" end
+        if count > 2 then
+            line = line..count..ch
+        elseif count == 2 then
+            line = line..ch..ch
+        else
+            line = line..ch
+        end
+    end
+    
+    -- traverse selected cells sorted by Z,Y,X coords
+    for z = minselz, maxselz do
+        for y = minsely, maxsely do
+            for x = minselx, maxselx do
+                local pos = x + N * (y + N * z)
+                if selected[pos] and grid1[pos] then
+                    -- this is a selected live cell
+                    orun = orun + 1
+                    if slashrun > 0 then
+                        AddRun(slashrun, "/")
+                        slashrun = 0
+                    end
+                    if dollrun > 0 then
+                        AddRun(dollrun, "$")
+                        dollrun = 0
+                    end
+                    if brun > 0 then
+                        AddRun(brun, "b")
+                        brun = 0
+                    end
+                else
+                    -- dead cell or unselected live cell
+                    brun = brun + 1
+                    if orun > 0 then
+                        if slashrun > 0 then
+                            AddRun(slashrun, "/")
+                            slashrun = 0
+                        end
+                        if dollrun > 0 then
+                            AddRun(dollrun, "$")
+                            dollrun = 0
+                        end
+                        AddRun(orun, "o")
+                        orun = 0
+                    end
+                end
+            end
+            if orun > 0 then
+                if slashrun > 0 then
+                    AddRun(slashrun, "/")
+                    slashrun = 0
+                end
+                if dollrun > 0 then
+                    AddRun(dollrun, "$")
+                    dollrun = 0
+                end
+                AddRun(orun, "o")
+                orun = 0
+            end
+            brun = 0
+            dollrun = dollrun + 1
+        end
+        dollrun = 0
+        if z < maxselz then
+            slashrun = slashrun + 1
+        else
+            if #line >= 70 then lines[#lines+1] = line; line = "" end
+            line = line.."!"
+        end
+    end
+    if #line > 0 then lines[#lines+1] = line end
+end
+
+----------------------------------------------------------------------
+
 function CopySelection()
     if selcount > 0 then
-        -- save the selected live cells as a 3D pattern in clipboard,
+        -- save the selected live cells as a 3D/RLE3 pattern in clipboard,
         -- but only if there is at least one live cell selected
         local livecells = GetSelectedLiveCells()
         if #livecells == 0 then
@@ -2887,24 +3239,30 @@ function CopySelection()
             return false
         end
         local lines = {}
-        lines[1] = PatternHeader()
-        local line = ""
-        local cellsonline = 0
-        for _, xyz in ipairs(livecells) do
-            local x, y, z = xyz[1], xyz[2], xyz[3]
-            -- x,y,z are relative to middle cell in grid
-            local cell = x.." "..y.." "..z
-            if #line < 60 then
-                if cellsonline > 0 then line = line.."," end
-                line = line..cell
-                cellsonline = cellsonline + 1
-            else
-                lines[#lines+1] = line..","..cell
-                line = ""
-                cellsonline = 0
+        if saveasRLE3 then
+            -- create lines of RLE3 data
+            CreateRLE3Selection(lines)
+        else
+            -- create lines of 3D data
+            lines[1] = PatternHeader()
+            local line = ""
+            local cellsonline = 0
+            for _, xyz in ipairs(livecells) do
+                local x, y, z = xyz[1], xyz[2], xyz[3]
+                -- x,y,z are relative to middle cell in grid
+                local cell = x.." "..y.." "..z
+                if #line < 60 then
+                    if cellsonline > 0 then line = line.."," end
+                    line = line..cell
+                    cellsonline = cellsonline + 1
+                else
+                    lines[#lines+1] = line..","..cell
+                    line = ""
+                    cellsonline = 0
+                end
             end
+            if #line > 0 then lines[#lines+1] = line end
         end
-        if #line > 0 then lines[#lines+1] = line end
         -- append empty string so we get \n at end of last line
         lines[#lines+1] = ""
         g.setclipstr(table.concat(lines,"\n"))
@@ -3237,33 +3595,29 @@ function Paste()
         -- set pastecount and pastepatt
         pastecount = newpattern.newpop
         pastepatt = {}
-        if newpattern.newsize == N then
-            -- just put paste pattern in same location as the cut/copy
-            pastepatt = newpattern.newgrid
-        else
-            -- put paste pattern in middle of grid and update paste boundary
-            local oldpx, oldpy, oldpz = minpastex, minpastey, minpastez
-            minpastex = math.maxinteger
-            minpastey = math.maxinteger
-            minpastez = math.maxinteger
-            maxpastex = math.mininteger
-            maxpastey = math.mininteger
-            maxpastez = math.mininteger
-            local P = newpattern.newsize
-            local PP = P*P
-            for k,_ in pairs(newpattern.newgrid) do
-                -- newpattern.newgrid[k] is a live cell
-                local x = (k % P)      - oldpx + (N - pwd) // 2
-                local y = (k // P % P) - oldpy + (N - pht) // 2
-                local z = (k // PP)    - oldpz + (N - pdp) // 2
-                pastepatt[ x + N * (y + N * z) ] = 1
-                if x < minpastex then minpastex = x end
-                if y < minpastey then minpastey = y end
-                if z < minpastez then minpastez = z end
-                if x > maxpastex then maxpastex = x end
-                if y > maxpastey then maxpastey = y end
-                if z > maxpastez then maxpastez = z end
-            end
+        -- put paste pattern in middle of grid and update paste boundary
+        local oldpx, oldpy, oldpz = minpastex, minpastey, minpastez
+        minpastex = math.maxinteger
+        minpastey = math.maxinteger
+        minpastez = math.maxinteger
+        maxpastex = math.mininteger
+        maxpastey = math.mininteger
+        maxpastez = math.mininteger
+        local P = newpattern.newsize
+        local PP = P*P
+        for k,_ in pairs(newpattern.newgrid) do
+            -- newpattern.newgrid[k] is a live cell
+            -- (note that we add 1 to match the result of MoveToMiddle)
+            local x = (k % P)      - oldpx + (N - pwd + 1) // 2
+            local y = (k // P % P) - oldpy + (N - pht + 1) // 2
+            local z = (k // PP)    - oldpz + (N - pdp + 1) // 2
+            pastepatt[ x + N * (y + N * z) ] = 1
+            if x < minpastex then minpastex = x end
+            if y < minpastey then minpastey = y end
+            if z < minpastez then minpastez = z end
+            if x > maxpastex then maxpastex = x end
+            if y > maxpastey then maxpastey = y end
+            if z > maxpastez then maxpastez = z end
         end
         Refresh()
     end
@@ -4051,7 +4405,9 @@ function ShowHelp()
 <dd><a href="#keyboard"><b>Keyboard Shortcuts</b></a></dd>
 <dd><a href="#scripts"><b>Running Scripts</b></a></dd>
 <dd><a href="#rules"><b>Supported Rules</b></a></dd>
-<dd><a href="#files"><b>The 3D File Format</b></a></dd>
+<dd><a href="#formats"><b>File Formats</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#3d"><b>3D Format</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#rle3"><b>RLE3 Format</b></a></dd>
 <dd><a href="#refs"><b>Credits and References</b></a></dd>
 </p>
 
@@ -4356,11 +4712,21 @@ birth; ie. a dead cell will become a live cell in the next generation.
 Each cell has 26 neighbors so the S counts are from 0 to 26
 and the B counts are from 1 to 26 (birth on 0 is not allowed).
 
-<p><a name="files"></a><br>
-<font size=+1><b>The 3D File Format</b></font>
+<p><a name="formats"></a><br>
+<font size=+1><b>File Formats</b></font>
 
 <p>
-3D.lua reads and writes 3D patterns in text files with a .3d extension.
+3D.lua can read and write patterns in two formats: 3D and RLE3.
+The latter format is typically more compact but can be slower to
+read and write, especially for very large but sparse patterns.
+The "Save as RLE3" check box determines what format will be used
+by the Save button and when you cut/copy a pattern to the clipboard.
+
+<p><a name="3d"></a><br>
+<font size=+1><b>3D Format</b></font>
+
+<p>
+3D files are text files with a .3d extension.
 The format of such files is very simple:
 
 <p>
@@ -4403,6 +4769,40 @@ rule=4,7/5,8
 generation=0
 0 -2 0,-1 -2 0,0 0 0,0 0 1,0 0 -2,0 -1 -1,0 1 0,0 1 -1,0 -2 -1,-1 1 -1
 0 -1 1,0 -1 -2,0 0 -1,0 -1 0</pre></table></dd>
+
+<p><a name="rle3"></a><br>
+<font size=+1><b>RLE3 Format</b></font>
+
+<p>
+RLE3 files are text files with a .rle3 extension.
+The format is a simple extension of the well-known RLE format:
+
+<p>
+<ul>
+<li>
+The first line must contain "[3D]" and nothing else.
+<li>
+This can be followed by optional comment lines starting with "#".
+<li>
+Then comes a header line of the form:<br>
+x = <i>width</i>, y = <i>height</i>, z = <i>depth</i>, rule=<i>rulestring</i>
+<li>
+Then comes lines containing the run-length encoded data.
+The only difference to the standard RLE format is the use of "/"
+to move to the next plane (ie. increase the z coordinate).
+<li>
+Empty lines are ignored.
+</ul>
+
+<p>
+Here is the RLE3 version of the above 3D example pattern:
+
+<dd><table border=0><pre>
+[3D]
+# A 10c/10 orthogonal spaceship.
+# Found by Andrew Trevorrow in April, 2018.
+x = 2, y = 4, z = 4, rule = 4,7/5,8
+$bo$bo/bo$bo$bo$oo/oo$bo$bo$bo/$bo$bo!</pre></table></dd>
 
 <p><a name="refs"></a><br>
 <font size=+1><b>Credits and References</b></font>
@@ -4533,6 +4933,14 @@ function ToggleLines()
     Refresh()
 end
 
+--------------------------------------------------------------------------------
+
+function ToggleRLE3()
+    -- called when rlebox is clicked
+    saveasRLE3 = not saveasRLE3
+    Refresh()
+end
+
 ----------------------------------------------------------------------
 
 function ToggleToolBar()
@@ -4558,6 +4966,7 @@ function ToggleToolBar()
         drawbox.hide()
         selectbox.hide()
         movebox.hide()
+        rlebox.hide()
     else
         toolbarht = buttonht*2+gap*3
         midy = int(ovht/2 + toolbarht/2)
@@ -5529,9 +5938,9 @@ function MoveToMiddle()
     -- move paste pattern or selection or pattern to middle of grid
     if pastecount > 0 then
         -- calculate the delta amounts needed to move paste pattern to middle of grid
-        local deltax = (minpastex + (N-1-maxpastex) + 1) // 2 - minpastex
-        local deltay = (minpastey + (N-1-maxpastey) + 1) // 2 - minpastey
-        local deltaz = (minpastez + (N-1-maxpastez) + 1) // 2 - minpastez
+        local deltax = (N - (maxpastex - minpastex)) // 2 - minpastex
+        local deltay = (N - (maxpastey - minpastey)) // 2 - minpastey
+        local deltaz = (N - (maxpastez - minpastez)) // 2 - minpastez
         if deltax == 0 and deltay == 0 and deltaz == 0 then return end
         
         local pcells = {}
@@ -5560,9 +5969,9 @@ function MoveToMiddle()
     elseif selcount > 0 then
         MinimizeSelectionBoundary()
         -- calculate the delta amounts needed to move selection to middle of grid
-        local deltax = (minselx + (N-1-maxselx) + 1) // 2 - minselx
-        local deltay = (minsely + (N-1-maxsely) + 1) // 2 - minsely
-        local deltaz = (minselz + (N-1-maxselz) + 1) // 2 - minselz
+        local deltax = (N - (maxselx - minselx)) // 2 - minselx
+        local deltay = (N - (maxsely - minsely)) // 2 - minsely
+        local deltaz = (N - (maxselz - minselz)) // 2 - minselz
         if deltax == 0 and deltay == 0 and deltaz == 0 then return end
         
         local selcells = {}
@@ -5620,9 +6029,9 @@ function MoveToMiddle()
     elseif popcount > 0 then
         MinimizeLiveBoundary()
         -- calculate the delta amounts needed to move pattern to middle of grid
-        local deltax = (minx + (N-1-maxx) + 1) // 2 - minx
-        local deltay = (miny + (N-1-maxy) + 1) // 2 - miny
-        local deltaz = (minz + (N-1-maxz) + 1) // 2 - minz
+        local deltax = (N - (maxx - minx)) // 2 - minx
+        local deltay = (N - (maxy - miny)) // 2 - miny
+        local deltaz = (N - (maxz - minz)) // 2 - minz
         if deltax == 0 and deltay == 0 and deltaz == 0 then return end
         
         local livecells = {}
@@ -5755,6 +6164,7 @@ function CreateOverlay()
     drawbox = op.checkbox("Draw", op.black, DrawMode)
     selectbox = op.checkbox("Select", op.black, SelectMode)
     movebox = op.checkbox("Move", op.black, MoveMode)
+    rlebox = op.checkbox("Save as RLE3", op.black, ToggleRLE3)
     op.textshadowx = 2
     op.textshadowy = 2
     
