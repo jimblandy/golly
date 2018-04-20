@@ -35,7 +35,7 @@ NOTE: Do following changes for the Golly 3.2b1 release:
   g.warn(msg, cancel=true)
 - implement g.sleep(millisecs) for use in Lua scripts
 - implement "open filepath" event for g.getevent and get Golly to
-  automatically start up 3D.lua if user opens a .3d file
+  automatically start up 3D.lua if user opens a .rle3 file
 - avoid "getclipstr error: no text in clipboard" (return empty string)
 - throttle ozoom* events (in here or in Golly)?
 - fix unicode problems reported here:
@@ -181,7 +181,6 @@ local exitbutton                    -- X
 local drawbox                       -- check box for draw mode
 local selectbox                     -- check box for select mode
 local movebox                       -- check box for move mode
-local rlebox                        -- check box to toggle saveasRLE3 option
 
 local pastemenu                     -- pop-up menu for choosing a paste action
 local selmenu                       -- pop-up menu for choosing a selection action
@@ -205,7 +204,6 @@ survivals[6] = true                 -- ditto
 survivals[7] = true                 -- ditto
 births[6] = true                    -- ditto
 
-local saveasRLE3 = true             -- save pattern/clipboard data in RLE3 format?
 local pattdir = g.getdir("data")    -- initial directory for OpenPattern/SavePattern
 local scriptdir = g.getdir("app")   -- initial directory for RunScript
 local scriptlevel = 0               -- greater than 0 if a user script is running
@@ -306,7 +304,6 @@ function ReadSettings()
         pattdir = f:read("*l") or g.getdir("data")
         scriptdir = f:read("*l") or g.getdir("app")
         showlines = (f:read("*l") or "true") == "true"
-        saveasRLE3 = (f:read("*l") or "true") == "true"
         f:close()
         
         -- update all parameters that depend on N
@@ -342,7 +339,6 @@ function WriteSettings()
         f:write(pattdir.."\n")
         f:write(scriptdir.."\n")
         f:write(tostring(showlines).."\n")
-        f:write(tostring(saveasRLE3).."\n")
         f:close()
     end
 end
@@ -1422,7 +1418,7 @@ function DisplayVisibleCells(density, pattwd, pattht, pattdp)
     -- equation n% = 260/7 - d% * 25/70)
     local numplanes = round((2.6/7 - density*25/70) * max(pattwd, pattht, pattdp))
     if numplanes < 2 then numplanes = 2 end
-    -- needs more work!!! (maybe randomly jiggle position of interior cells???)
+    -- needs more work!!! (maybe draw all exterior planes???)
     -- also adjust numplanes depending on CELLSIZE???!!!
     if celltype == "sphere" then
         numplanes = numplanes + 1   -- spheres are smaller
@@ -1659,8 +1655,6 @@ function DrawToolBar()
     x = x + openbutton.wd + gap
     savebutton.show(x, y)
     x = x + savebutton.wd + gap
-    rlebox.show(x, y, saveasRLE3)
-    x = x + rlebox.wd + gap
     runbutton.show(x, y)
     x = x + runbutton.wd + gap
     gridbutton.show(x, y)
@@ -2204,9 +2198,18 @@ end
 
 ----------------------------------------------------------------------
 
-function ReadRLE3(f)
-    -- read RLE3 pattern into a temporary grid in case an error occurs
-    local tsize = N
+function ReadPattern(filepath)
+    local f = io.open(filepath,"r")
+    if not f then return "Failed to open file:\n"..filepath end
+
+    local line = f:read("*l")
+    if line == nil or not line:find("^3D") then
+        f:close()
+        return "Invalid RLE3 file (first line must start with 3D)."
+    end
+
+    -- read pattern into a temporary grid in case an error occurs
+    local tsize = MAXN
     local trule = DEFAULT_RULE
     local tgens = 0
     local tpop = 0
@@ -2217,12 +2220,39 @@ function ReadRLE3(f)
     local tmaxy = math.mininteger
     local tmaxz = math.mininteger
     local tgrid = {}
+    local x0, y0, z0 = 0, 0, 0
+
+    -- parse 1st line (format is "3D key=val key=val key=val ...")
+    local keys_and_vals = { split(line) }
+    -- keys_and_vals[1] == "3D"
+    for i = 2, #keys_and_vals do
+        local keyword, value = split(keys_and_vals[i],"=")
+        if value == nil then
+            -- ignore keyword
+        elseif keyword == "version" then
+            if value ~= "1" then
+                f:close()
+                return "Unexpected version: "..value
+            end
+        elseif keyword == "size" then
+            tsize = tonumber(value) or MAXN
+            if tsize < MINN then tsize = MINN end
+            if tsize > MAXN then tsize = MAXN end
+        elseif keyword == "pos" then
+            x0, y0, z0 = split(value,",")
+            x0 = tonumber(x0) or 0
+            y0 = tonumber(y0) or 0
+            z0 = tonumber(z0) or 0
+        elseif keyword == "gen" then
+            tgens = tonumber(value) or 0
+            if tgens < 0 then tgens = 0 end
+        end
+    end
 
     local wd, ht, dp
-    local x0, y0, z0
     local x, y, z = 0, 0, 0
     local runcount = 0
-    
+
     while true do
         local line = f:read("*l")
         if not line then break end
@@ -2231,35 +2261,33 @@ function ReadRLE3(f)
             -- ignore comment line or blank line
         elseif ch == "x" then
             -- parse header
-            wd, ht, dp, trule = line:match("x = (.+), y = (.+), z = (.+), rule = (.+)$")
+            wd, ht, dp, trule = line:match("x=(.+) y=(.+) z=(.+) rule=(.+)$")
             wd = tonumber(wd)
             ht = tonumber(ht)
             dp = tonumber(dp)
             if wd and ht and dp then
-                local maxsize = max(wd, ht, dp)
-                if maxsize > N then
-                    tsize = maxsize
-                    if tsize > MAXN then
-                        f:close()
-                        return "Pattern size is too big:\n"..line
-                    end
+                if max(wd, ht, dp) > tsize then
+                    f:close()
+                    return "The pattern size is bigger than the grid size!"
                 end
-                -- adjust x,y,z so pattern will be in middle of grid
-                -- (note that we add 1 to match the result of MoveToMiddle)
-                x0 = (tsize - wd + 1) // 2
-                y0 = (tsize - ht + 1) // 2
-                z0 = (tsize - dp + 1) // 2
                 x = x0
                 y = y0
                 z = z0
+                -- check that pattern is positioned within given grid size
+                if x < 0 or x + wd > tsize or
+                   y < 0 or y + ht > tsize or
+                   z < 0 or z + dp > tsize then
+                    f:close()
+                    return "The pattern is positioned outside the grid!"
+                end
             else
                 f:close()
-                return "Bad number in header:\n"..line
+                return "Bad number in header line:\n"..line
             end
             local saverule = rulestring
             if not ParseRule(trule) then
                 f:close()
-                return "Unknown rule:\n"..trule
+                return "Unknown rule: "..trule
             end
             trule = rulestring
             -- restore rulestring etc in case there is a later error
@@ -2328,119 +2356,6 @@ end
 
 ----------------------------------------------------------------------
 
-function ReadPattern(filepath)
-    local f = io.open(filepath,"r")
-    if not f then return "Failed to open file:\n"..filepath end
-    
-    local line = f:read("*l")
-    if line == nil or (line ~= "3D" and line ~= "[3D]") then
-        f:close()
-        return "Invalid 3D pattern (first line must be 3D or [3D])."
-    end
-    
-    if line == "[3D]" then
-        return ReadRLE3(f)
-    end
-
-    -- read 3D pattern into a temporary grid in case an error occurs
-    local tsize = MAXN
-    local trule = DEFAULT_RULE
-    local tgens = 0
-    local tpop = 0
-    local tminx = math.maxinteger
-    local tminy = math.maxinteger
-    local tminz = math.maxinteger
-    local tmaxx = math.mininteger
-    local tmaxy = math.mininteger
-    local tmaxz = math.mininteger
-    local tgrid = {}
-    
-    -- safer and faster to read header lines first, then data lines!!!???
-    
-    local prevy = 0
-    local prevz = 0
-    while true do
-        line = f:read("*l")
-        if not line then break end
-        local ch = line:sub(1,1)
-        if ch == "#" or #ch == 0 then
-            -- ignore comment line or blank line
-        elseif ch >= "a" and ch <= "z" then
-            -- parse keyword=value (ignore unknown keyword)
-            local keyword, value = split(line,"=")
-            if not value then
-                f:close()
-                return "Line should be keyword=value:\n"..line
-            end
-            if keyword == "version" then
-                if value ~= "1" then
-                    f:close()
-                    return "Unexpected version:\n"..value
-                end
-            elseif keyword == "gridsize" then
-                tsize = tonumber(value) or MAXN
-                if tsize < MINN then tsize = MINN end
-                if tsize > MAXN then tsize = MAXN end
-            elseif keyword == "rule" then
-                local saverule = rulestring
-                if not ParseRule(value) then
-                    f:close()
-                    return "Unknown rule:\n"..value
-                end
-                trule = rulestring
-                -- restore rulestring etc in case there is a later error
-                -- or we're doing a paste and want to ignore the specified rule
-                ParseRule(saverule)
-            elseif keyword == "generation" then
-                tgens = tonumber(value) or 0
-                if tgens < 0 then tgens = 0 end
-            end
-        else
-            -- line can contain one or more "x y z" coords separated by commas
-            -- (but y and z might be missing in deprecated format)
-            for cell in line:gmatch("[^,]+") do
-                local x, y, z = split(cell)
-                local mid = tsize // 2
-                x = tonumber(x) + mid
-                if y then prevy = tonumber(y) end
-                if z then prevz = tonumber(z) end
-                y = prevy + mid
-                z = prevz + mid
-                -- ensure x,y,z values are within 0..tsize-1???!!!
-                -- set live cell
-                tgrid[ x + tsize * (y + tsize * z) ] = 1
-                tpop = tpop + 1
-                -- boundary might expand
-                if x < tminx then tminx = x end
-                if y < tminy then tminy = y end
-                if z < tminz then tminz = z end
-                if x > tmaxx then tmaxx = x end
-                if y > tmaxy then tmaxy = y end
-                if z > tmaxz then tmaxz = z end
-            end
-        end
-    end
-    f:close()
-    
-    -- success
-    local newpattern = {
-        newsize = tsize,
-        newrule = trule,
-        newgens = tgens,
-        newpop = tpop,
-        newminx = tminx,
-        newminy = tminy,
-        newminz = tminz,
-        newmaxx = tmaxx,
-        newmaxy = tmaxy,
-        newmaxz = tmaxz,
-        newgrid = tgrid
-    }
-    return nil, newpattern
-end
-
-----------------------------------------------------------------------
-
 function UpdateCurrentGrid(newpattern)
     N = newpattern.newsize
     MIDGRID = (N+1-(N%2))*HALFCELL
@@ -2481,9 +2396,9 @@ function OpenPattern(filepath)
             UpdateCurrentGrid(newpattern)
         end
     else
-        -- prompt user for a .3d or .rle3 file to open
-        local filetype = "3D file (*.3d;*.rle3)|*.3d;*.rle3"
-        local path = g.opendialog("Open a 3D pattern", filetype, pattdir, "")
+        -- prompt user for a .rle3 file to open
+        local filetype = "RLE3 file (*.rle3)|*.rle3"
+        local path = g.opendialog("Open a pattern", filetype, pattdir, "")
         if #path > 0 then
             -- update pattdir by stripping off the file name
             pattdir = path:gsub("[^"..pathsep.."]+$","")
@@ -2497,7 +2412,7 @@ end
 
 function CopyClipboardToFile()
     -- create a temporary file containing clipboard text
-    local filepath = g.getdir("temp").."clipboard.3d"
+    local filepath = g.getdir("temp").."clipboard.rle3"
     local f = io.open(filepath,"w")
     if not f then
         g.warn("Failed to create temporary clipboard file!")
@@ -2529,23 +2444,40 @@ end
 
 ----------------------------------------------------------------------
 
-function WriteRLE3Pattern(filepath, comments)
+function PatternHeader(xpos, ypos, zpos)
+    -- return RLE3 header line
+    local header = "3D version=1 size="..N
+    if popcount > 0 and (xpos ~= 0 or ypos ~= 0 or zpos ~= 0) then
+        header = header..string.format(" pos=%d,%d,%d", xpos, ypos, zpos)
+    end
+    if gencount > 0 then
+        header = header.." gen="..gencount
+    end
+    -- note that we let caller append \n if necessary
+    return header
+end
+
+----------------------------------------------------------------------
+
+function WritePattern(filepath, comments)
     local f = io.open(filepath,"w")
     if not f then return "Failed to create RLE3 file:\n"..filepath end
-    f:write("[3D]\n")
+    
+    MinimizeLiveBoundary()
+    f:write(PatternHeader(minx, miny, minz).."\n")
+    
     if #comments > 0 then
         -- each comment line should start with # and end with \n
         f:write(comments)
     end
     if popcount == 0 then
-        f:write(string.format("x = 1, y = 1, z = 1, rule = %s\n", rulestring))
+        f:write(string.format("x=0 y=0 z=0 rule=%s\n", rulestring))
         f:write("!\n")
     else
-        MinimizeLiveBoundary()
         local wd = maxx - minx + 1
         local ht = maxy - miny + 1
         local dp = maxz - minz + 1
-        f:write(string.format("x = %d, y = %d, z = %d, rule = %s\n", wd, ht, dp, rulestring))
+        f:write(string.format("x=%d y=%d z=%d rule=%s\n", wd, ht, dp, rulestring))
     
         local line = ""
         local orun = 0
@@ -2631,71 +2563,18 @@ end
 
 ----------------------------------------------------------------------
 
-function PatternHeader(comments)
-    -- return 3D pattern header lines
-    comments = comments or ""
-    return
-        "3D\n"..
-        comments..
-        "version=1\n"..
-        "gridsize="..N.."\n"..
-        "rule="..rulestring.."\n"..
-        "generation="..gencount         -- let caller append \n
-end
-
-----------------------------------------------------------------------
-
-function Write3DPattern(filepath, comments)
-    local f = io.open(filepath,"w")
-    if not f then return "Failed to create 3D file:\n"..filepath end
-    f:write(PatternHeader(comments).."\n")
-    if popcount > 0 then
-        local mid = N//2
-        local NN = N*N
-        local line = ""
-        local cellsonline = 0
-        for k,_ in pairs(grid1) do
-            -- grid1[k] is a live cell
-            local x = k % N
-            local y = (k // N) % N
-            local z = k // NN
-            local cell = (x-mid).." "..(y-mid).." "..(z-mid)
-            if #line < 60 then
-                if cellsonline > 0 then line = line.."," end
-                line = line..cell
-                cellsonline = cellsonline + 1
-            else
-                f:write(line..","..cell.."\n")
-                line = ""
-                cellsonline = 0
-            end
-        end
-        if #line > 0 then f:write(line.."\n") end
-    end
-    f:close()
-    return nil  -- success
-end
-
-----------------------------------------------------------------------
-
 function GetComments(f)
     local comments = ""
     local line = f:read("*l")
-    -- line should be 3D or [3D] but play safe
     if line == nil then return end
     while true do
         line = f:read("*l")
         if not line then break end
         local ch = line:sub(1,1)
-        if #ch == 0 then
-            -- ignore empty line
-        elseif ch == "#" then
+        if ch == "#" then
             comments = comments..line.."\n"
         elseif ch == "x" then
             -- end of RLE3 header info
-            break
-        elseif ch < "a" or ch > "z" then
-            -- end of 3D header info
             break
         end
     end
@@ -2714,14 +2593,7 @@ function SavePattern(filepath)
             comments = GetComments(f)
             f:close()
         end
-        local err
-        -- test filepath's extension rather than saveasRLE3 option so scripts
-        -- can save patterns in either format more easily
-        if filepath:find("%.rle3$") then
-            err = WriteRLE3Pattern(filepath, comments)
-        else
-            err = Write3DPattern(filepath, comments)
-        end
+        local err = WritePattern(filepath, comments)
         if err then
             g.warn(err)
         else
@@ -2731,28 +2603,13 @@ function SavePattern(filepath)
         end
     else
         -- prompt user for file name and location
-        local initname = pattname
-        local filetype
-        if saveasRLE3 then
-            filetype = "RLE3 file (*.rle3)|*.rle3"
-            -- might need to change initname's extension
-            if initname:find("%.3d$") then initname = initname:sub(1,-3).."rle3" end
-        else
-            filetype = "3D file (*.3d)|*.3d"
-            -- might need to change initname's extension
-            if initname:find("%.rle3$") then initname = initname:sub(1,-5).."3d" end
-        end
-        local path = g.savedialog("Save pattern", filetype, pattdir, initname)
+        local filetype = "RLE3 file (*.rle3)|*.rle3"
+        local path = g.savedialog("Save pattern", filetype, pattdir, pattname)
         if #path > 0 then
             -- update pattdir by stripping off the file name
             pattdir = path:gsub("[^"..pathsep.."]+$","")
-            if saveasRLE3 then
-                -- ensure file name ends with ".rle3"
-                if not path:find("%.rle3$") then path = path..".rle3" end
-            else
-                -- ensure file name ends with ".3d"
-                if not path:find("%.3d$") then path = path..".3d" end
-            end
+            -- ensure file name ends with ".rle3"
+            if not path:find("%.rle3$") then path = path..".rle3" end
             -- save the current pattern
             SavePattern(path)
         end
@@ -3136,15 +2993,17 @@ end
 
 ----------------------------------------------------------------------
 
-function CreateRLE3Selection(lines)
+function CreateRLE3Selection()
     -- convert selection to lines of RLE3 data
     -- (note that selcount > 0 and at least one live cell is selected)
     MinimizeSelectionBoundary()
     local wd = maxselx - minselx + 1
     local ht = maxsely - minsely + 1
     local dp = maxselz - minselz + 1
-    lines[1] = "[3D]"
-    lines[2] = string.format("x = %d, y = %d, z = %d, rule = %s", wd, ht, dp, rulestring)
+    
+    local lines = {}
+    lines[1] = PatternHeader(minselx, minsely, minselz)
+    lines[2] = string.format("x=%d y=%d z=%d rule=%s", wd, ht, dp, rulestring)
     
     local line = ""
     local orun = 0
@@ -3224,13 +3083,15 @@ function CreateRLE3Selection(lines)
         end
     end
     if #line > 0 then lines[#lines+1] = line end
+    
+    return lines
 end
 
 ----------------------------------------------------------------------
 
 function CopySelection()
     if selcount > 0 then
-        -- save the selected live cells as a 3D/RLE3 pattern in clipboard,
+        -- save the selected live cells as an RLE3 pattern in clipboard,
         -- but only if there is at least one live cell selected
         local livecells = GetSelectedLiveCells()
         if #livecells == 0 then
@@ -3238,31 +3099,7 @@ function CopySelection()
             Refresh()
             return false
         end
-        local lines = {}
-        if saveasRLE3 then
-            -- create lines of RLE3 data
-            CreateRLE3Selection(lines)
-        else
-            -- create lines of 3D data
-            lines[1] = PatternHeader()
-            local line = ""
-            local cellsonline = 0
-            for _, xyz in ipairs(livecells) do
-                local x, y, z = xyz[1], xyz[2], xyz[3]
-                -- x,y,z are relative to middle cell in grid
-                local cell = x.." "..y.." "..z
-                if #line < 60 then
-                    if cellsonline > 0 then line = line.."," end
-                    line = line..cell
-                    cellsonline = cellsonline + 1
-                else
-                    lines[#lines+1] = line..","..cell
-                    line = ""
-                    cellsonline = 0
-                end
-            end
-            if #line > 0 then lines[#lines+1] = line end
-        end
+        local lines = CreateRLE3Selection()
         -- append empty string so we get \n at end of last line
         lines[#lines+1] = ""
         g.setclipstr(table.concat(lines,"\n"))
@@ -4405,9 +4242,7 @@ function ShowHelp()
 <dd><a href="#keyboard"><b>Keyboard Shortcuts</b></a></dd>
 <dd><a href="#scripts"><b>Running Scripts</b></a></dd>
 <dd><a href="#rules"><b>Supported Rules</b></a></dd>
-<dd><a href="#formats"><b>File Formats</b></a></dd>
-<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#3d"><b>3D Format</b></a></dd>
-<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#rle3"><b>RLE3 Format</b></a></dd>
+<dd><a href="#rle3"><b>RLE3 File Format</b></a></dd>
 <dd><a href="#refs"><b>Credits and References</b></a></dd>
 </p>
 
@@ -4643,19 +4478,18 @@ Switch to the hand cursor.
 
 <a name="NewPattern"></a><p><dt><b>NewPattern()</b></dt>
 <dd>
-Create a new, empty pattern.  All undo/redo history is deleted.
+Create a new, empty pattern.
 </dd>
 
 <a name="RandomPattern"></a><p><dt><b>RandomPattern(<i>percentage</i>)</b></dt>
 <dd>
 Create a new, random pattern with the given percentage density (0 to 100) of live cells.
 If the <i>percentage</i> is not supplied then the user will be prompted to enter it.
-All undo/redo history is deleted.
 </dd>
 
 <a name="RunScript"></a><p><dt><b>RunScript(<i>filepath</i>)</b></dt>
 <dd>
-Run the specified .lua file.  If <i>filepath</i> is not supplied then
+Run the specified .lua file.  If the <i>filepath</i> is not supplied then
 the user will be prompted to select a .lua file.
 </dd>
 
@@ -4712,96 +4546,59 @@ birth; ie. a dead cell will become a live cell in the next generation.
 Each cell has 26 neighbors so the S counts are from 0 to 26
 and the B counts are from 1 to 26 (birth on 0 is not allowed).
 
-<p><a name="formats"></a><br>
-<font size=+1><b>File Formats</b></font>
+<p><a name="rle3"></a><br>
+<font size=+1><b>RLE3 File Format</b></font>
 
 <p>
-3D.lua can read and write patterns in two formats: 3D and RLE3.
-The latter format is typically more compact but can be slower to
-read and write, especially for very large but sparse patterns.
-The "Save as RLE3" check box determines what format will be used
-by the Save button and when you cut/copy a pattern to the clipboard.
-
-<p><a name="3d"></a><br>
-<font size=+1><b>3D Format</b></font>
-
-<p>
-3D files are text files with a .3d extension.
-The format of such files is very simple:
+3D.lua can read and write patterns as text files with a .rle3 extension.
+The format is known as RLE3 and is a simple extension of the well-known
+RLE format used by Golly:
 
 <p>
 <ul>
 <li>
-The first line must contain "3D" and nothing else.
-<li>
-Then comes a number of header lines of the form "keyword=value".
-The valid keywords are:
+The first line must start with "3D" and be followed by a number of "keyword=value"
+pairs separated by spaces.  The valid keywords are:
 
 <p><table border=0 cellspacing=0 cellpadding=0>
-<tr><td> version=<i>i</i> </td><td> &mdash; specifies the file format version (currently 1)</td></tr>
-<tr><td> gridsize=<i>N</i> </td><td> &mdash; specifies the grid dimensions (<i>N</i>x<i>N</i>x<i>N</i>)</td></tr>
-<tr><td> rule=<i>rulestring</i> </td><td> &mdash; specifies the 3D rule</td></tr>
-<tr><td> generation=<i>g</i> </td><td> &mdash; specifies the generation number (usually 0)</td></tr>
-<tr><td> &nbsp </td><tr>
+<tr><td> version=<i>i</i> </td> <td> &nbsp; &mdash; specifies the file format version (currently 1)</td></tr>
+<tr><td> size=<i>N</i> </td>    <td> &nbsp; &mdash; specifies the grid dimensions (<i>N</i>x<i>N</i>x<i>N</i>)</td></tr>
+<tr><td> pos=<i>x,y,z</i> </td> <td> &nbsp; &mdash; specifies the pattern's position within the grid</td></tr>
+<tr><td> gen=<i>g</i> </td>     <td> &nbsp; &mdash; specifies the generation number</td></tr>
+<tr><td> &nbsp; </td></tr>
 </table>
 
 <li>
-Then comes lines with the "x y z" coordinates for each live cell in the pattern.
-The coordinates are relative to the middle cell in the grid.
-Multiple cells on a line are separated by commas.
-The ordering of cells is essentially random.
+If the pos and gen keywords are not present then their values are set to 0.
+Any unknown keywords are simply ignored.
 <li>
-Empty lines or lines starting with "#" are ignored.
-</ul>
-
-<p>
-The following is a small example of the 3D file format.
-You can either save it in a .3d file, or copy it to the clipboard
-and type shift-O (after returning to the 3D.lua window):
-
-<dd><table border=0><pre>
-3D
-# A 10c/10 orthogonal spaceship.
-# Found by Andrew Trevorrow in April, 2018.
-version=1
-gridsize=40
-rule=4,7/5,8
-generation=0
-0 -2 0,-1 -2 0,0 0 0,0 0 1,0 0 -2,0 -1 -1,0 1 0,0 1 -1,0 -2 -1,-1 1 -1
-0 -1 1,0 -1 -2,0 0 -1,0 -1 0</pre></table></dd>
-
-<p><a name="rle3"></a><br>
-<font size=+1><b>RLE3 Format</b></font>
-
-<p>
-RLE3 files are text files with a .rle3 extension.
-The format is a simple extension of the well-known RLE format:
-
-<p>
-<ul>
+The first line can be followed by optional comment lines starting with "#".
 <li>
-The first line must contain "[3D]" and nothing else.
+Then comes a line specifying the pattern's size and the 3D rule string:
+
+<p><table border=0 cellspacing=0 cellpadding=0>
+<tr><td> x=<i>width</i> y=<i>height</i> z=<i>depth</i> rule=<i>string</i></td></tr>
+<tr><td> &nbsp; </td></tr>
+</table>
+
 <li>
-This can be followed by optional comment lines starting with "#".
-<li>
-Then comes a header line of the form:<br>
-x = <i>width</i>, y = <i>height</i>, z = <i>depth</i>, rule=<i>rulestring</i>
-<li>
-Then comes lines containing the run-length encoded data.
+The remaining lines contain the pattern data in a run-length encoded format.
 The only difference to the standard RLE format is the use of "/"
 to move to the next plane (ie. increase the z coordinate).
 <li>
-Empty lines are ignored.
+Any empty lines (after the first line) are ignored.
 </ul>
 
 <p>
-Here is the RLE3 version of the above 3D example pattern:
+The following is a small example of the RLE3 file format.
+You can either save it in a .rle3 file, or copy it to the clipboard
+and type shift-O (after returning to the 3D.lua window):
 
 <dd><table border=0><pre>
-[3D]
+3D version=1 size=40 pos=19,18,18
 # A 10c/10 orthogonal spaceship.
 # Found by Andrew Trevorrow in April, 2018.
-x = 2, y = 4, z = 4, rule = 4,7/5,8
+x=2 y=4 z=4 rule=4,7/5,8
 $bo$bo/bo$bo$bo$oo/oo$bo$bo$bo/$bo$bo!</pre></table></dd>
 
 <p><a name="refs"></a><br>
@@ -4933,14 +4730,6 @@ function ToggleLines()
     Refresh()
 end
 
---------------------------------------------------------------------------------
-
-function ToggleRLE3()
-    -- called when rlebox is clicked
-    saveasRLE3 = not saveasRLE3
-    Refresh()
-end
-
 ----------------------------------------------------------------------
 
 function ToggleToolBar()
@@ -4966,7 +4755,6 @@ function ToggleToolBar()
         drawbox.hide()
         selectbox.hide()
         movebox.hide()
-        rlebox.hide()
     else
         toolbarht = buttonht*2+gap*3
         midy = int(ovht/2 + toolbarht/2)
@@ -6164,7 +5952,6 @@ function CreateOverlay()
     drawbox = op.checkbox("Draw", op.black, DrawMode)
     selectbox = op.checkbox("Select", op.black, SelectMode)
     movebox = op.checkbox("Move", op.black, MoveMode)
-    rlebox = op.checkbox("Save as RLE3", op.black, ToggleRLE3)
     op.textshadowx = 2
     op.textshadowy = 2
     
