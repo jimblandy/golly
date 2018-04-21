@@ -195,7 +195,7 @@ local movecursor = "hand"           -- cursor for rotating grid
 local currcursor = movecursor       -- current cursor
 local arrow_cursor = false          -- true if cursor is in tool bar
 
-local DEFAULT_RULE = "5,6,7/6"      -- initial rule
+local DEFAULT_RULE = "3D5,6,7/6"    -- initial rule
 local rulestring = DEFAULT_RULE
 local survivals = {}
 local births = {}
@@ -250,8 +250,15 @@ end
 function ParseRule(newrule)
     -- parse newrule and set rulestring, survivals and births if ok
     if #newrule == 0 then newrule = DEFAULT_RULE end
+    if not newrule:find("^3[dD]") then
+        g.warn("Rule must start with 3D.")
+        return false
+    else
+        -- strip off the 3D
+        newrule = newrule:sub(3)
+    end
     if not newrule:find("/") then
-        g.warn("Rule has no / separator.")
+        g.warn("Rule must have a / separator.")
         return false
     end
     local s,b = split(newrule,"/")
@@ -271,10 +278,11 @@ function ParseRule(newrule)
     for _, i in ipairs(newb) do births[i] = true end
     
     -- set rulestring to canonical form
-    rulestring = ""
+    rulestring = "3D"
+    local initlen = #rulestring
     for i = 0, 26 do
         if survivals[i] then
-            if #rulestring > 0 then rulestring = rulestring.."," end
+            if #rulestring > initlen then rulestring = rulestring.."," end
             rulestring = rulestring..i
         end
     end
@@ -310,6 +318,9 @@ function ReadSettings()
         MIDGRID = (N+1-(N%2))*HALFCELL
         MIDCELL = HALFCELL-MIDGRID
         
+        if not rulestring:find("^3D") then
+            rulestring = "3D"..rulestring
+        end
         if not ParseRule(rulestring) then
             g.warn("Resetting bad rule ("..rulestring..") to default.")
             rulestring = DEFAULT_RULE
@@ -2946,13 +2957,13 @@ end
 ----------------------------------------------------------------------
 
 function ChangeRule()
-    -- let user enter new rule as a string of the form s,s,.../b,b,...
+    -- let user enter new rule as a string of the form 3Ds,s,.../b,b,...
     -- (the notation used at http://www.cse.sc.edu/~bays/d4d4d4/)
     
     local function getrule()
         local newrule = rulestring
         ::try_again::
-        newrule = g.getstring("Enter the new rule in the form s,s,s,.../b,b,b,...\n" ..
+        newrule = g.getstring("Enter the new rule in the form 3Ds,s,s,.../b,b,b,...\n" ..
                               "where s values are the neighbor counts for survival\n" ..
                               "and b values are the neighbor counts for birth:",
                               newrule, "Change rule")
@@ -3147,7 +3158,7 @@ end
 
 function CutSelection()
     if selcount > 0 then
-        -- save the selected live cells as a 3D pattern in clipboard
+        -- save the selected live cells as an RLE3 pattern in clipboard
         -- then kill them
         if CopySelection() then
             ClearSelection()    -- calls Refresh
@@ -3397,13 +3408,13 @@ function Paste()
     -- check if a paste is already pending
     if pastecount > 0 then return end
 
-    -- if the clipboard contains a valid 3D pattern then create a sparse array
+    -- if the clipboard contains a valid RLE3 pattern then create a sparse array
     -- of paste cells (to be displayed as translucent red)
     local filepath = CopyClipboardToFile()
     if filepath then
         local err, newpattern = ReadPattern(filepath)
         if err then
-            message = "Clipboard does not contain a valid 3D pattern."
+            message = "Clipboard does not contain a valid RLE3 pattern."
             Refresh()
             return
         end
@@ -4538,7 +4549,7 @@ end of a script.
 
 <p>
 Use the "Rule..." button to change the current rule.
-Rules are strings of the form "S,S,S,.../B,B,B,...".
+Rules are strings of the form "3DS,S,S,.../B,B,B,...".
 The S values are the counts of neighboring live cells required
 for a live cell to survive in the next generation.
 The B values are the counts of neighboring live cells required for
@@ -4598,7 +4609,7 @@ and type shift-O (after returning to the 3D.lua window):
 3D version=1 size=40 pos=19,18,18
 # A 10c/10 orthogonal spaceship.
 # Found by Andrew Trevorrow in April, 2018.
-x=2 y=4 z=4 rule=4,7/5,8
+x=2 y=4 z=4 rule=3D4,7/5,8
 $bo$bo/bo$bo$bo$oo/oo$bo$bo$bo/$bo$bo!</pre></table></dd>
 
 <p><a name="refs"></a><br>
@@ -6083,18 +6094,18 @@ function Initialize()
     
     ClearCells()
     if rulestring == DEFAULT_RULE then
-        -- initial pattern is the Life-like glider in rule 5,6,7/6
+        -- initial pattern is the Life-like glider in rule 3D5,6,7/6
         local mid = N//2
-        SetLiveCell(mid,   mid,   mid)
-        SetLiveCell(mid-1, mid,   mid)
-        SetLiveCell(mid-2, mid,   mid)
         SetLiveCell(mid,   mid+1, mid)
-        SetLiveCell(mid-1, mid+2, mid)
-        SetLiveCell(mid,   mid,   mid-1)
-        SetLiveCell(mid-1, mid,   mid-1)
-        SetLiveCell(mid-2, mid,   mid-1)
+        SetLiveCell(mid+1, mid,   mid)
+        SetLiveCell(mid-1, mid-1, mid)
+        SetLiveCell(mid,   mid-1, mid)
+        SetLiveCell(mid+1, mid-1, mid)
         SetLiveCell(mid,   mid+1, mid-1)
-        SetLiveCell(mid-1, mid+2, mid-1)
+        SetLiveCell(mid+1, mid,   mid-1)
+        SetLiveCell(mid-1, mid-1, mid-1)
+        SetLiveCell(mid,   mid-1, mid-1)
+        SetLiveCell(mid+1, mid-1, mid-1)
     else
         --[[ do a random fill??? or let user decide via startup script???
         local M = N-1
