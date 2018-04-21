@@ -4309,6 +4309,9 @@ Hit shift-A to change the active plane's orientation.
 If a paste pattern is visible (red cells) then you can control-click or
 right-click anywhere, using any cursor, to get a red pop-up menu that lets
 you choose various paste actions.
+The paste pattern can also be dragged to a different location using any cursor.
+
+<p>
 If a selection exists (green cells) then you can control-click or right-click
 to get a green pop-up menu with various selection actions.
 If a paste pattern and a selection both exist then the paste menu takes precedence.
@@ -6201,7 +6204,7 @@ function MainLoop()
     local mousedown = false         -- mouse button is down?
     local drawing = false           -- draw/erase cells with pencil cursor?
     local selecting = false         -- (de)select cells with cross-hairs cursor?
-    local drag_paste = false        -- drag paste pattern with hand cursor?
+    local drag_paste = false        -- drag paste pattern with any cursor?
     local drag_selection = false    -- drag selected cells with hand cursor?
     local drag_active = false       -- drag active plane with pencil/cross-hairs?
     local hand_erase = false        -- erase live cells with hand cursor?
@@ -6241,7 +6244,14 @@ function MainLoop()
                         mousedown = true
                         prevx = x
                         prevy = y
-                        if currcursor == drawcursor then
+                        if pastecount > 0 then
+                            -- paste pattern can be dragged using any cursor
+                            dragface = StartDraggingPaste(x, y)
+                            drag_paste = #dragface > 0
+                        end
+                        if drag_paste then
+                            -- ignore currcursor
+                        elseif currcursor == drawcursor then
                             if mods == "none" then
                                 drawing = StartDrawing(x, y)
                             elseif mods == "shift" then
@@ -6256,11 +6266,7 @@ function MainLoop()
                         else
                             -- currcursor == movecursor
                             if mods == "none" then
-                                if pastecount > 0 then
-                                    dragface = StartDraggingPaste(x, y)
-                                    drag_paste = #dragface > 0
-                                end
-                                if not drag_paste and selcount > 0 then
+                                if selcount > 0 then
                                     dragface = StartDraggingSelection(x, y)
                                     drag_selection = #dragface > 0
                                 end
@@ -6337,6 +6343,7 @@ function MainLoop()
                 Refresh()
             end
         else
+            -- mouse button is not down
             CheckCursor(mousepos)
             if not generating then
                 -- don't hog the CPU
