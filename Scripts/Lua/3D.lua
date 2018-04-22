@@ -2493,10 +2493,14 @@ end
 ----------------------------------------------------------------------
 
 function CallScript(func, fromclip)
-    scriptlevel = scriptlevel+1
-    -- error if scriptlevel reaches 100???!!!
+    -- avoid infinite recursion
+    if scriptlevel == 100 then
+        g.warn("Script is too recursive!")
+        return
+    end
+    scriptlevel = scriptlevel + 1
     local status, err = pcall(func)
-    scriptlevel = scriptlevel-1
+    scriptlevel = scriptlevel - 1
     if err then
         g.continue("")
         if err == "GOLLY: ABORT SCRIPT" then
