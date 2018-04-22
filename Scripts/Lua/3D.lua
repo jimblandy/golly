@@ -133,15 +133,9 @@ local maxactivex, maxactivey, maxactivez
 local minpastex, minpastey, minpastez
 local maxpastex, maxpastey, maxpastez
 
-local startN = N                    -- starting grid size
-local startplane                    -- starting orientation of active plane
-local startpos                      -- starting position of active plane
-local startrule                     -- starting rule
+-- for undo/redo
 local startcount = 0                -- starting gencount (can be > 0)
-local startname                     -- starting pattern name
-local startcells                    -- starting pattern
-local startselcount                 -- starting selcount
-local startselected                 -- starting selection
+local startstate = {}               -- starting state for Reset
 
 local refcube = {}                  -- invisible reference cube
 local rotrefz = {}                  -- Z coords of refcube's rotated vertices
@@ -1827,22 +1821,157 @@ end
 
 ----------------------------------------------------------------------
 
-function SaveStart()
-    -- save starting info for later Reset
-    startN = N
-    startplane = activeplane
-    startpos = activepos
-    startrule = rulestring
-    startcount = gencount
-    startname = pattname
-    startcells = GetCells()
-    startselcount = selcount
-    startselected = {}
+function SaveState()
+    -- return a table containing current state
+    local state = {}
+    
+    -- save current grid size
+    state.saveN = N
+    
+    -- save current orientation and position of active plane
+    state.saveplane = activeplane
+    state.savepos = activepos
+    
+    -- save current rule
+    state.saverule = rulestring
+    
+    -- save current pattern
+    state.savename = pattname
+    state.savegencount = gencount
+    state.savepopcount = popcount
+    state.savecells = {}
+    if popcount > 0 then
+        for k,_ in pairs(grid1) do state.savecells[k] = true end
+    end
+    state.saveminx = minx
+    state.saveminy = miny
+    state.saveminz = minz
+    state.savemaxx = maxx
+    state.savemaxy = maxy
+    state.savemaxz = maxz
+    state.saveminimallive = minimal_live_bounds
+    
+    -- save current selection
+    state.saveselcount = selcount
+    state.saveselected = {}
     if selcount > 0 then
-        for k,_ in pairs(selected) do
-            startselected[k] = true
+        for k,_ in pairs(selected) do state.saveselected[k] = true end
+    end
+    state.saveminselx = minselx
+    state.saveminsely = minsely
+    state.saveminselz = minselz
+    state.savemaxselx = maxselx
+    state.savemaxsely = maxsely
+    state.savemaxselz = maxselz
+    state.saveminimalsel = minimal_sel_bounds
+    
+    -- save current paste pattern
+    state.savepcount = pastecount
+    state.savepaste = {}
+    if pastecount > 0 then
+        for k,_ in pairs(pastepatt) do state.savepaste[k] = true end
+    end
+    state.saveminpastex = minpastex
+    state.saveminpastey = minpastey
+    state.saveminpastez = minpastez
+    state.savemaxpastex = maxpastex
+    state.savemaxpastey = maxpastey
+    state.savemaxpastez = maxpastez
+    
+    -- save current view
+    state.savexixo = xixo
+    state.savexiyo = xiyo
+    state.savexizo = xizo
+    state.saveyixo = yixo
+    state.saveyiyo = yiyo
+    state.saveyizo = yizo
+    state.savezixo = zixo
+    state.saveziyo = ziyo
+    state.savezizo = zizo
+    state.savecellsize = CELLSIZE
+    
+    return state
+end
+
+----------------------------------------------------------------------
+
+function RestoreState(state)
+    -- restore state from given info (created earlier by SaveState)
+    
+    -- restore grid size
+    N = state.saveN
+    
+    -- restore active plane
+    SetActivePlane(state.saveplane, state.savepos)
+    
+    -- restore rule
+    ParseRule(state.saverule)
+    
+    -- restore pattern
+    pattname = state.savename
+    gencount = state.savegencount
+    popcount = state.savepopcount
+    grid1 = {}
+    if popcount > 0 then
+        for k,_ in pairs(state.savecells) do
+            grid1[k] = true
         end
     end
+    minx = state.saveminx
+    miny = state.saveminy
+    minz = state.saveminz
+    maxx = state.savemaxx
+    maxy = state.savemaxy
+    maxz = state.savemaxz
+    minimal_live_bounds = state.saveminimallive
+    
+    -- restore selection
+    selcount = state.saveselcount
+    selected = {}
+    if selcount > 0 then
+        for k,_ in pairs(state.saveselected) do
+            selected[k] = true
+        end
+    end
+    minselx = state.saveminselx
+    minsely = state.saveminsely
+    minselz = state.saveminselz
+    maxselx = state.savemaxselx
+    maxsely = state.savemaxsely
+    maxselz = state.savemaxselz
+    minimal_sel_bounds = state.saveminimalsel
+    
+    -- restore paste pattern
+    pastecount = state.savepcount
+    pastepatt = {}
+    if pastecount > 0 then
+        for k,_ in pairs(state.savepaste) do
+            pastepatt[k] = true
+        end
+    end
+    minpastex = state.saveminpastex
+    minpastey = state.saveminpastey
+    minpastez = state.saveminpastez
+    maxpastex = state.savemaxpastex
+    maxpastey = state.savemaxpastey
+    maxpastez = state.savemaxpastez
+    
+    -- restore view but don't call Refresh
+    xixo = state.savexixo
+    xiyo = state.savexiyo
+    xizo = state.savexizo
+    yixo = state.saveyixo
+    yiyo = state.saveyiyo
+    yizo = state.saveyizo
+    zixo = state.savezixo
+    ziyo = state.saveziyo
+    zizo = state.savezizo
+    CELLSIZE = state.savecellsize
+    HALFCELL = CELLSIZE/2.0
+    MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
+    LEN = CELLSIZE-BORDER*2
+    CreateAxes()
 end
 
 ----------------------------------------------------------------------
@@ -1860,7 +1989,10 @@ function NextGeneration()
         return
     end
     
-    if gencount == startcount then SaveStart() end
+    if gencount == startcount then
+        -- save starting info for later Reset
+        startstate = SaveState()
+    end
     
     popcount = 0        -- incremented below
     InitLiveBoundary()  -- updated below
@@ -2112,6 +2244,7 @@ function UpdateCurrentGrid(newpattern)
     maxx = newpattern.newmaxx
     maxy = newpattern.newmaxy
     maxz = newpattern.newmaxz
+    -- note that ClearCells has set minimal_live_bounds = true
     
     ParseRule(newpattern.newrule)   -- sets rulestring, survivals and births
     gencount = newpattern.newgens
@@ -3698,57 +3831,6 @@ end
 
 ----------------------------------------------------------------------
 
-function Rotate(xangle, yangle, zangle, display)
-    if display == nil then display = true end
-    local x = xangle * DEGTORAD
-    local y = yangle * DEGTORAD
-    local z = zangle * DEGTORAD
-    local cosrx = cos(x)
-    local sinrx = sin(x)
-    local cosry = cos(y)
-    local sinry = sin(y)
-    local cosrz = cos(z)
-    local sinrz = sin(z)
-    
-    -- calculate transformation matrix for rotation
-    -- (note that rotation is about fixed *screen* axes)
-    local a = cosry*cosrz
-    local b = cosry*sinrz
-    local c = -sinry
-    local d = sinrx*sinry*cosrz - cosrx*sinrz
-    local e = sinrx*sinry*sinrz + cosrx*cosrz
-    local f = sinrx*cosry
-    local g = cosrx*sinry*cosrz + sinrx*sinrz
-    local h = cosrx*sinry*sinrz - sinrx*cosrz
-    local i = cosrx*cosry
-    
-    -- rotate global matrix by new matrix
-    local anew = a*xixo + b*yixo + c*zixo
-    local bnew = a*xiyo + b*yiyo + c*ziyo
-    local cnew = a*xizo + b*yizo + c*zizo
-    local dnew = d*xixo + e*yixo + f*zixo
-    local enew = d*xiyo + e*yiyo + f*ziyo
-    local fnew = d*xizo + e*yizo + f*zizo
-    local gnew = g*xixo + h*yixo + i*zixo
-    local hnew = g*xiyo + h*yiyo + i*ziyo
-    local inew = g*xizo + h*yizo + i*zizo
-    
-    -- update global transformation matrix
-    xixo = anew
-    xiyo = bnew
-    xizo = cnew
-    yixo = dnew
-    yiyo = enew
-    yizo = fnew
-    zixo = gnew
-    ziyo = hnew
-    zizo = inew
-
-    if display then Refresh() end
-end
-
-----------------------------------------------------------------------
-
 function Zoom(newsize)
     -- zoom in/out by changing size of cells
     if newsize < MINSIZE then return end
@@ -3784,44 +3866,9 @@ end
 
 function Reset()
     if gencount > startcount then
-        -- restore starting grid size if necessary
-        if N ~= startN then
-            N = startN
-            MIDGRID = (N+1-(N%2))*HALFCELL
-            MIDCELL = HALFCELL-MIDGRID
-            CreateAxes()
-        end
-        
-        -- restore active plane
-        SetActivePlane(startplane, startpos)
-        
-        -- restore starting rule
-        ParseRule(startrule)
-        
-        -- restore starting pattern
-        pattname = startname
-        gencount = startcount
+        RestoreState(startstate)
         generating = false
         UpdateStartButton()
-        ClearCells()
-        local clipcount = PutCells(startcells)
-        if clipcount > 0 then
-            -- should never happen
-            g.warn("Bug in Reset! clipped cells = "..clipcount)
-        end
-        
-        -- restore starting selection
-        selcount = startselcount
-        selected = {}
-        InitSelectionBoundary()
-        if selcount > 0 then
-            local NN = N*N
-            for k,_ in pairs(startselected) do
-                selected[k] = true
-                UpdateSelectionBoundary(k % N, (k // N) % N, k // NN)
-            end
-        end
-        
         Refresh()
     end
 end
@@ -5797,13 +5844,64 @@ end
 
 ----------------------------------------------------------------------
 
+function Rotate(xangle, yangle, zangle, display)
+    if display == nil then display = true end    
+    local x = xangle * DEGTORAD
+    local y = yangle * DEGTORAD
+    local z = zangle * DEGTORAD
+    local cosrx = cos(x)
+    local sinrx = sin(x)
+    local cosry = cos(y)
+    local sinry = sin(y)
+    local cosrz = cos(z)
+    local sinrz = sin(z)
+    
+    -- calculate transformation matrix for rotation
+    -- (note that rotation is about fixed *screen* axes)
+    local a = cosry*cosrz
+    local b = cosry*sinrz
+    local c = -sinry
+    local d = sinrx*sinry*cosrz - cosrx*sinrz
+    local e = sinrx*sinry*sinrz + cosrx*cosrz
+    local f = sinrx*cosry
+    local g = cosrx*sinry*cosrz + sinrx*sinrz
+    local h = cosrx*sinry*sinrz - sinrx*cosrz
+    local i = cosrx*cosry
+    
+    -- rotate global matrix by new matrix
+    local anew = a*xixo + b*yixo + c*zixo
+    local bnew = a*xiyo + b*yiyo + c*ziyo
+    local cnew = a*xizo + b*yizo + c*zizo
+    local dnew = d*xixo + e*yixo + f*zixo
+    local enew = d*xiyo + e*yiyo + f*ziyo
+    local fnew = d*xizo + e*yizo + f*zizo
+    local gnew = g*xixo + h*yixo + i*zixo
+    local hnew = g*xiyo + h*yiyo + i*ziyo
+    local inew = g*xizo + h*yizo + i*zizo
+    
+    -- update the transformation matrix
+    xixo = anew
+    xiyo = bnew
+    xizo = cnew
+    yixo = dnew
+    yiyo = enew
+    yizo = fnew
+    zixo = gnew
+    ziyo = hnew
+    zizo = inew
+
+    if display then Refresh() end
+end
+
+----------------------------------------------------------------------
+
 function InitialView()
-    -- initialize our transformation matrix
+    -- initialize the transformation matrix
     xixo = 1.0; yixo = 0.0; zixo = 0.0
     xiyo = 0.0; yiyo = 1.0; ziyo = 0.0
     xizo = 0.0; yizo = 0.0; zizo = 1.0
 
-    -- rotate view but don't call Refresh
+    -- rotate to a nice view but don't call Refresh
     Rotate(160, 30, 0, false)
     
     FitGrid()   -- calls Refresh
