@@ -14,9 +14,9 @@ Thanks to Tom Rokicki for optimizing the NextGeneration code.
 
 TODO: !!!
 
-- allow saving as .vti file for use by Ready?
-- add option for 6-face-neighbor rules (start or end rule with V?)
-- also option for 12-neighbor sphere packing rules?
+- allow saving pattern as .vti file for use by Ready?
+- add support for 6-face-neighbor rules (via rules ending with V?)
+- also support for 12-neighbor sphere packing rules?
 - support Busy Boxes (via rules starting with BB?)
 
 NOTE: Do following changes for the Golly 3.2b1 release:
@@ -407,6 +407,8 @@ local function TransformPoint(point)
 end
 
 ----------------------------------------------------------------------
+
+-- use op.draw_line in 3.2b1!!!
 
 local function DrawLine(x1, y1, x2, y2)
     ov("line "..x1.." "..y1.." "..x2.." "..y2)
@@ -1630,19 +1632,6 @@ function SaveState()
     state.savemaxpastey = maxpastey
     state.savemaxpastez = maxpastez
     
-    --[[ save current view ???!!! (probably not a good idea)
-    state.savexixo = xixo
-    state.savexiyo = xiyo
-    state.savexizo = xizo
-    state.saveyixo = yixo
-    state.saveyiyo = yiyo
-    state.saveyizo = yizo
-    state.savezixo = zixo
-    state.saveziyo = ziyo
-    state.savezizo = zizo
-    state.savecellsize = CELLSIZE
-    --]]
-    
     return state
 end
 
@@ -1711,24 +1700,6 @@ function RestoreState(state)
     maxpastex = state.savemaxpastex
     maxpastey = state.savemaxpastey
     maxpastez = state.savemaxpastez
-    
-    --[[ restore view ???!!!
-    xixo = state.savexixo
-    xiyo = state.savexiyo
-    xizo = state.savexizo
-    yixo = state.saveyixo
-    yiyo = state.saveyiyo
-    yizo = state.saveyizo
-    zixo = state.savezixo
-    ziyo = state.saveziyo
-    zizo = state.savezizo
-    CELLSIZE = state.savecellsize
-    HALFCELL = CELLSIZE/2.0
-    MIDGRID = (N+1-(N%2))*HALFCELL
-    MIDCELL = HALFCELL-MIDGRID
-    LEN = CELLSIZE-BORDER*2
-    CreateAxes()
-    --]]
 end
 
 ----------------------------------------------------------------------
@@ -1760,6 +1731,15 @@ function Redo()
         RestoreState( table.remove(redostack) )
         Refresh()
     end
+end
+
+----------------------------------------------------------------------
+
+function RememberCurrentState()
+    -- do nothing if user script is running
+    if scriptlevel > 0 then return end
+    redostack = {}
+    undostack[#undostack+1] = SaveState()
 end
 
 ----------------------------------------------------------------------
@@ -2128,7 +2108,7 @@ function NewPattern()
     ClearCells()
     SetActivePlane()
     ClearUndoRedo()
-    InitialView()       -- calls Refresh()
+    InitialView()       -- calls Refresh
 end
 
 ----------------------------------------------------------------------
@@ -2561,9 +2541,17 @@ function CallScript(func, fromclip)
         g.warn("Script is too recursive!")
         return
     end
+    
+    if scriptlevel == 0 then RememberCurrentState() end
+    
     scriptlevel = scriptlevel + 1
     local status, err = pcall(func)
     scriptlevel = scriptlevel - 1
+    
+    -- note that if the script called NewPattern/RandomPattern/OpenPattern
+    -- or any other function that called ClearUndoRedo then all the
+    -- undo/redo history is deleted
+    
     if err then
         g.continue("")
         if err == "GOLLY: ABORT SCRIPT" then
@@ -2710,7 +2698,7 @@ function RandomPattern(percentage)
     
     SetActivePlane()
     ClearUndoRedo()
-    InitialView()       -- calls Refresh()
+    InitialView()       -- calls Refresh
 end
 
 ----------------------------------------------------------------------
@@ -2882,7 +2870,7 @@ function ChangeGridSize()
         if pclipped > 0 then message = message.."Clipped paste cells = "..pclipped end
     end
     
-    FitGrid()   -- calls Refresh()
+    FitGrid()   -- calls Refresh
 end
 
 ----------------------------------------------------------------------
@@ -3914,9 +3902,10 @@ function Step1()
         UpdateStartButton()
     end
     
+    -- note that NextGeneration does nothing if popcount is 0,
+    -- otherwise it calls SaveStartingGen if gencount == startcount
     if popcount > 0 and gencount > startcount then
-        redostack = {}
-        undostack[#undostack+1] = SaveState()
+        RememberCurrentState()
     end
 
     NextGeneration()
@@ -4330,18 +4319,41 @@ Switch to the hand cursor.
 <a name="NewPattern"></a><p><dt><b>NewPattern()</b></dt>
 <dd>
 Create a new, empty pattern.
+All undo/redo history is deleted.
+</dd>
+
+<a name="OpenPattern"></a><p><dt><b>OpenPattern(<i>filepath</i>)</b></dt>
+<dd>
+Open the specified RLE3 pattern file.  If the <i>filepath</i> is not supplied then
+the user will be prompted to select a .rle3 file.
+All undo/redo history is deleted.
 </dd>
 
 <a name="RandomPattern"></a><p><dt><b>RandomPattern(<i>percentage</i>)</b></dt>
 <dd>
 Create a new, random pattern with the given percentage density (0 to 100) of live cells.
 If the <i>percentage</i> is not supplied then the user will be prompted to enter it.
+All undo/redo history is deleted.
+</dd>
+
+<a name="RestoreState"></a><p><dt><b>RestoreState(<i>state</i>)</b></dt>
+<dd>
+Restore the state saved earlier by <a href="#SaveState">SaveState</a>.
 </dd>
 
 <a name="RunScript"></a><p><dt><b>RunScript(<i>filepath</i>)</b></dt>
 <dd>
 Run the specified .lua file.  If the <i>filepath</i> is not supplied then
 the user will be prompted to select a .lua file.
+</dd>
+
+<a name="SaveState"></a><p><dt><b>SaveState()</b></dt>
+<dd>
+Return an object representing the current state.  The object can be given
+later to <a href="#RestoreState">RestoreState</a> to restore the saved state.
+The saved information includes the grid size, the position and orientation of
+the active plane, the rule, the pattern and its generation count, the selection,
+and the paste pattern.
 </dd>
 
 <a name="SelectCell"></a><p><dt><b>SelectCell(<i>x, y, z</i>)</b></dt>
