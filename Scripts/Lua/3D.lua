@@ -14,7 +14,6 @@ Thanks to Tom Rokicki for optimizing the NextGeneration code.
 
 TODO: !!!
 
-- implement undo/redo
 - allow saving as .vti file for use by Ready?
 - add option for 6-face-neighbor rules (start or end rule with V?)
 - also option for 12-neighbor sphere packing rules?
@@ -134,8 +133,10 @@ local minpastex, minpastey, minpastez
 local maxpastex, maxpastey, maxpastez
 
 -- for undo/redo
+local undostack = {}                -- stack of states that can be undone
+local redostack = {}                -- stack of states that can be redone
 local startcount = 0                -- starting gencount (can be > 0)
-local startstate = {}               -- starting state for Reset
+local startindex = 0                -- index of starting state in undostack
 
 local refcube = {}                  -- invisible reference cube
 local rotrefz = {}                  -- Z coords of refcube's rotated vertices
@@ -1520,6 +1521,273 @@ end
 
 ----------------------------------------------------------------------
 
+function SetActivePlane(orientation, pos)
+    -- set the active plane; default is an XY plane half way along the Z axis
+    activeplane = orientation or "XY"
+    activepos = pos or 0
+    active = {}
+    local M = N-1
+    if activeplane == "XY" then
+        local z = N//2 + activepos
+        local zNN = z * N * N
+        for y = 0, M do
+            local yN = y * N
+            for x = 0, M do
+                active[ x + yN + zNN ] = true
+            end
+        end
+        minactivex = 0
+        maxactivex = M
+        minactivey = 0
+        maxactivey = M
+        minactivez = z
+        maxactivez = z
+    elseif activeplane == "YZ" then
+        local x = N//2 + activepos
+        for z = 0, M do
+            for y = 0, M do
+                active[ x + N * (y + N * z) ] = true
+            end
+        end
+        minactivex = x
+        maxactivex = x
+        minactivey = 0
+        maxactivey = M
+        minactivez = 0
+        maxactivez = M
+    else -- activeplane == "XZ"
+        local y = N//2 + activepos
+        for z = 0, M do
+            for x = 0, M do
+                active[ x + N * (y + N * z) ] = true
+            end
+        end
+        minactivex = 0
+        maxactivex = M
+        minactivey = y
+        maxactivey = y
+        minactivez = 0
+        maxactivez = M
+    end
+end
+
+----------------------------------------------------------------------
+
+function SaveState()
+    -- return a table containing current state
+    local state = {}
+    
+    -- save current grid size
+    state.saveN = N
+    
+    -- save current orientation and position of active plane
+    state.saveplane = activeplane
+    state.savepos = activepos
+    
+    -- save current rule
+    state.saverule = rulestring
+    
+    -- save current pattern
+    state.savename = pattname
+    state.savegencount = gencount
+    state.savepopcount = popcount
+    state.savecells = {}
+    if popcount > 0 then
+        for k,_ in pairs(grid1) do state.savecells[k] = true end
+    end
+    state.saveminx = minx
+    state.saveminy = miny
+    state.saveminz = minz
+    state.savemaxx = maxx
+    state.savemaxy = maxy
+    state.savemaxz = maxz
+    state.saveminimallive = minimal_live_bounds
+    
+    -- save current selection
+    state.saveselcount = selcount
+    state.saveselected = {}
+    if selcount > 0 then
+        for k,_ in pairs(selected) do state.saveselected[k] = true end
+    end
+    state.saveminselx = minselx
+    state.saveminsely = minsely
+    state.saveminselz = minselz
+    state.savemaxselx = maxselx
+    state.savemaxsely = maxsely
+    state.savemaxselz = maxselz
+    state.saveminimalsel = minimal_sel_bounds
+    
+    -- save current paste pattern
+    state.savepcount = pastecount
+    state.savepaste = {}
+    if pastecount > 0 then
+        for k,_ in pairs(pastepatt) do state.savepaste[k] = true end
+    end
+    state.saveminpastex = minpastex
+    state.saveminpastey = minpastey
+    state.saveminpastez = minpastez
+    state.savemaxpastex = maxpastex
+    state.savemaxpastey = maxpastey
+    state.savemaxpastez = maxpastez
+    
+    --[[ save current view ???!!! (probably not a good idea)
+    state.savexixo = xixo
+    state.savexiyo = xiyo
+    state.savexizo = xizo
+    state.saveyixo = yixo
+    state.saveyiyo = yiyo
+    state.saveyizo = yizo
+    state.savezixo = zixo
+    state.saveziyo = ziyo
+    state.savezizo = zizo
+    state.savecellsize = CELLSIZE
+    --]]
+    
+    return state
+end
+
+----------------------------------------------------------------------
+
+function RestoreState(state)
+    -- restore state from given info (created earlier by SaveState)
+    
+    -- restore grid size
+    N = state.saveN
+    MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
+    CreateAxes()
+    
+    -- restore active plane
+    SetActivePlane(state.saveplane, state.savepos)
+    
+    -- restore rule
+    ParseRule(state.saverule)
+    
+    -- restore pattern
+    pattname = state.savename
+    gencount = state.savegencount
+    popcount = state.savepopcount
+    grid1 = {}
+    if popcount > 0 then
+        for k,_ in pairs(state.savecells) do
+            grid1[k] = true
+        end
+    end
+    minx = state.saveminx
+    miny = state.saveminy
+    minz = state.saveminz
+    maxx = state.savemaxx
+    maxy = state.savemaxy
+    maxz = state.savemaxz
+    minimal_live_bounds = state.saveminimallive
+    
+    -- restore selection
+    selcount = state.saveselcount
+    selected = {}
+    if selcount > 0 then
+        for k,_ in pairs(state.saveselected) do
+            selected[k] = true
+        end
+    end
+    minselx = state.saveminselx
+    minsely = state.saveminsely
+    minselz = state.saveminselz
+    maxselx = state.savemaxselx
+    maxsely = state.savemaxsely
+    maxselz = state.savemaxselz
+    minimal_sel_bounds = state.saveminimalsel
+    
+    -- restore paste pattern
+    pastecount = state.savepcount
+    pastepatt = {}
+    if pastecount > 0 then
+        for k,_ in pairs(state.savepaste) do
+            pastepatt[k] = true
+        end
+    end
+    minpastex = state.saveminpastex
+    minpastey = state.saveminpastey
+    minpastez = state.saveminpastez
+    maxpastex = state.savemaxpastex
+    maxpastey = state.savemaxpastey
+    maxpastez = state.savemaxpastez
+    
+    --[[ restore view ???!!!
+    xixo = state.savexixo
+    xiyo = state.savexiyo
+    xizo = state.savexizo
+    yixo = state.saveyixo
+    yiyo = state.saveyiyo
+    yizo = state.saveyizo
+    zixo = state.savezixo
+    ziyo = state.saveziyo
+    zizo = state.savezizo
+    CELLSIZE = state.savecellsize
+    HALFCELL = CELLSIZE/2.0
+    MIDGRID = (N+1-(N%2))*HALFCELL
+    MIDCELL = HALFCELL-MIDGRID
+    LEN = CELLSIZE-BORDER*2
+    CreateAxes()
+    --]]
+end
+
+----------------------------------------------------------------------
+
+function ClearUndoRedo()
+    undostack = {}
+    redostack = {}
+end
+
+----------------------------------------------------------------------
+
+function Undo()
+    if #undostack > 0 then
+        -- push current state onto redostack
+        redostack[#redostack+1] = SaveState()
+        -- pop state off undostack and restore it
+        RestoreState( table.remove(undostack) )
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function Redo()
+    if #redostack > 0 then
+        -- push current state onto undostack
+        undostack[#undostack+1] = SaveState()
+        -- pop state off redostack and restore it
+        RestoreState( table.remove(redostack) )
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function SaveStartingGen()
+    redostack = {}
+    undostack[#undostack+1] = SaveState()
+    startindex = #undostack
+end
+
+----------------------------------------------------------------------
+
+function RestoreStartingGen()
+    -- push current state onto redostack
+    redostack[#redostack+1] = SaveState()
+    
+    -- unwind undostack until we get to startindex
+    while #undostack > startindex do
+        local state = table.remove(undostack)
+        redostack[#redostack+1] = state
+    end
+    
+    -- restore state saved by SaveStartingGen
+    RestoreState( table.remove(undostack) )
+end
+
+----------------------------------------------------------------------
+
 function InitLiveBoundary()
     minx = math.maxinteger
     miny = math.maxinteger
@@ -1612,58 +1880,6 @@ function ClearCells()
     pastecount = 0
     pastepatt = {}
     collectgarbage()    -- helps avoid long delay when script exits???!!! only on Mac OS 10.13???
-end
-
-----------------------------------------------------------------------
-
-function SetActivePlane(orientation, pos)
-    -- set the active plane; default is an XY plane half way along the Z axis
-    activeplane = orientation or "XY"
-    activepos = pos or 0
-    active = {}
-    local M = N-1
-    if activeplane == "XY" then
-        local z = N//2 + activepos
-        local zNN = z * N * N
-        for y = 0, M do
-            local yN = y * N
-            for x = 0, M do
-                active[ x + yN + zNN ] = true
-            end
-        end
-        minactivex = 0
-        maxactivex = M
-        minactivey = 0
-        maxactivey = M
-        minactivez = z
-        maxactivez = z
-    elseif activeplane == "YZ" then
-        local x = N//2 + activepos
-        for z = 0, M do
-            for y = 0, M do
-                active[ x + N * (y + N * z) ] = true
-            end
-        end
-        minactivex = x
-        maxactivex = x
-        minactivey = 0
-        maxactivey = M
-        minactivez = 0
-        maxactivez = M
-    else -- activeplane == "XZ"
-        local y = N//2 + activepos
-        for z = 0, M do
-            for x = 0, M do
-                active[ x + N * (y + N * z) ] = true
-            end
-        end
-        minactivex = 0
-        maxactivex = M
-        minactivey = y
-        maxactivey = y
-        minactivez = 0
-        maxactivez = M
-    end
 end
 
 ----------------------------------------------------------------------
@@ -1821,161 +2037,6 @@ end
 
 ----------------------------------------------------------------------
 
-function SaveState()
-    -- return a table containing current state
-    local state = {}
-    
-    -- save current grid size
-    state.saveN = N
-    
-    -- save current orientation and position of active plane
-    state.saveplane = activeplane
-    state.savepos = activepos
-    
-    -- save current rule
-    state.saverule = rulestring
-    
-    -- save current pattern
-    state.savename = pattname
-    state.savegencount = gencount
-    state.savepopcount = popcount
-    state.savecells = {}
-    if popcount > 0 then
-        for k,_ in pairs(grid1) do state.savecells[k] = true end
-    end
-    state.saveminx = minx
-    state.saveminy = miny
-    state.saveminz = minz
-    state.savemaxx = maxx
-    state.savemaxy = maxy
-    state.savemaxz = maxz
-    state.saveminimallive = minimal_live_bounds
-    
-    -- save current selection
-    state.saveselcount = selcount
-    state.saveselected = {}
-    if selcount > 0 then
-        for k,_ in pairs(selected) do state.saveselected[k] = true end
-    end
-    state.saveminselx = minselx
-    state.saveminsely = minsely
-    state.saveminselz = minselz
-    state.savemaxselx = maxselx
-    state.savemaxsely = maxsely
-    state.savemaxselz = maxselz
-    state.saveminimalsel = minimal_sel_bounds
-    
-    -- save current paste pattern
-    state.savepcount = pastecount
-    state.savepaste = {}
-    if pastecount > 0 then
-        for k,_ in pairs(pastepatt) do state.savepaste[k] = true end
-    end
-    state.saveminpastex = minpastex
-    state.saveminpastey = minpastey
-    state.saveminpastez = minpastez
-    state.savemaxpastex = maxpastex
-    state.savemaxpastey = maxpastey
-    state.savemaxpastez = maxpastez
-    
-    -- save current view
-    state.savexixo = xixo
-    state.savexiyo = xiyo
-    state.savexizo = xizo
-    state.saveyixo = yixo
-    state.saveyiyo = yiyo
-    state.saveyizo = yizo
-    state.savezixo = zixo
-    state.saveziyo = ziyo
-    state.savezizo = zizo
-    state.savecellsize = CELLSIZE
-    
-    return state
-end
-
-----------------------------------------------------------------------
-
-function RestoreState(state)
-    -- restore state from given info (created earlier by SaveState)
-    
-    -- restore grid size
-    N = state.saveN
-    
-    -- restore active plane
-    SetActivePlane(state.saveplane, state.savepos)
-    
-    -- restore rule
-    ParseRule(state.saverule)
-    
-    -- restore pattern
-    pattname = state.savename
-    gencount = state.savegencount
-    popcount = state.savepopcount
-    grid1 = {}
-    if popcount > 0 then
-        for k,_ in pairs(state.savecells) do
-            grid1[k] = true
-        end
-    end
-    minx = state.saveminx
-    miny = state.saveminy
-    minz = state.saveminz
-    maxx = state.savemaxx
-    maxy = state.savemaxy
-    maxz = state.savemaxz
-    minimal_live_bounds = state.saveminimallive
-    
-    -- restore selection
-    selcount = state.saveselcount
-    selected = {}
-    if selcount > 0 then
-        for k,_ in pairs(state.saveselected) do
-            selected[k] = true
-        end
-    end
-    minselx = state.saveminselx
-    minsely = state.saveminsely
-    minselz = state.saveminselz
-    maxselx = state.savemaxselx
-    maxsely = state.savemaxsely
-    maxselz = state.savemaxselz
-    minimal_sel_bounds = state.saveminimalsel
-    
-    -- restore paste pattern
-    pastecount = state.savepcount
-    pastepatt = {}
-    if pastecount > 0 then
-        for k,_ in pairs(state.savepaste) do
-            pastepatt[k] = true
-        end
-    end
-    minpastex = state.saveminpastex
-    minpastey = state.saveminpastey
-    minpastez = state.saveminpastez
-    maxpastex = state.savemaxpastex
-    maxpastey = state.savemaxpastey
-    maxpastez = state.savemaxpastez
-    
-    -- restore view but don't call Refresh
-    xixo = state.savexixo
-    xiyo = state.savexiyo
-    xizo = state.savexizo
-    yixo = state.saveyixo
-    yiyo = state.saveyiyo
-    yizo = state.saveyizo
-    zixo = state.savezixo
-    ziyo = state.saveziyo
-    zizo = state.savezizo
-    CELLSIZE = state.savecellsize
-    HALFCELL = CELLSIZE/2.0
-    MIDGRID = (N+1-(N%2))*HALFCELL
-    MIDCELL = HALFCELL-MIDGRID
-    LEN = CELLSIZE-BORDER*2
-    CreateAxes()
-end
-
-----------------------------------------------------------------------
-
 function NextGeneration()
     -- calculate and display the next generation using an algorithm
     -- described by Carter Bays (see Method B Option 2 on page 398 in
@@ -1991,7 +2052,7 @@ function NextGeneration()
     
     if gencount == startcount then
         -- save starting info for later Reset
-        startstate = SaveState()
+        SaveStartingGen()
     end
     
     popcount = 0        -- incremented below
@@ -2066,6 +2127,7 @@ function NewPattern()
     UpdateStartButton()
     ClearCells()
     SetActivePlane()
+    ClearUndoRedo()
     InitialView()       -- calls Refresh()
 end
 
@@ -2253,6 +2315,7 @@ function UpdateCurrentGrid(newpattern)
     UpdateStartButton()
     SetCursor(movecursor)
     SetActivePlane()
+    ClearUndoRedo()
     InitialView()       -- calls Refresh
 end
 
@@ -2646,6 +2709,7 @@ function RandomPattern(percentage)
     end
     
     SetActivePlane()
+    ClearUndoRedo()
     InitialView()       -- calls Refresh()
 end
 
@@ -3821,20 +3885,6 @@ end
 
 ----------------------------------------------------------------------
 
-function Undo()
-    message = "UNDO IS NOT YET IMPLEMENTED!!!"
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
-function Redo()
-    message = "REDO IS NOT YET IMPLEMENTED!!!"
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
 function Zoom(newsize)
     -- zoom in/out by changing size of cells
     if newsize < MINSIZE then return end
@@ -3863,6 +3913,12 @@ function Step1()
         generating = false
         UpdateStartButton()
     end
+    
+    if popcount > 0 and gencount > startcount then
+        redostack = {}
+        undostack[#undostack+1] = SaveState()
+    end
+
     NextGeneration()
 end
 
@@ -3870,7 +3926,7 @@ end
 
 function Reset()
     if gencount > startcount then
-        RestoreState(startstate)
+        RestoreStartingGen()
         generating = false
         UpdateStartButton()
         Refresh()
@@ -5958,6 +6014,7 @@ function Initialize()
     if f then
         f:close()
         RunScript(startup)
+        ClearUndoRedo()
     end
 end
 
