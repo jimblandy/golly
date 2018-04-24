@@ -1729,6 +1729,7 @@ end
 ----------------------------------------------------------------------
 
 function ClearUndoRedo()
+    -- this might be called if a user script is running (eg. if it calls NewPattern)
     undostack = {}
     redostack = {}
     dirty = false
@@ -1737,6 +1738,10 @@ end
 ----------------------------------------------------------------------
 
 function Undo()
+    -- ignore if user script is running
+    -- (scripts can call SaveState and RestoreState if they need to undo stuff)
+    if scriptlevel > 0 then return end
+    
     if #undostack > 0 then
         StopGenerating()
         -- push current state onto redostack
@@ -1750,6 +1755,9 @@ end
 ----------------------------------------------------------------------
 
 function Redo()
+    -- ignore if user script is running
+    if scriptlevel > 0 then return end
+    
     if #redostack > 0 then
         StopGenerating()
         -- push current state onto undostack
@@ -1765,6 +1773,7 @@ end
 function RememberCurrentState()
     -- ignore if user script is running
     if scriptlevel > 0 then return end
+    
     redostack = {}
     undostack[#undostack+1] = SaveState()
 end
@@ -1772,6 +1781,9 @@ end
 ----------------------------------------------------------------------
 
 function SaveStartingGen()
+    -- ignore if user script is running
+    if scriptlevel > 0 then return end
+    
     redostack = {}
     undostack[#undostack+1] = SaveState()
     startindex = #undostack
@@ -1780,6 +1792,9 @@ end
 ----------------------------------------------------------------------
 
 function RestoreStartingGen()
+    -- ignore if user script is running
+    if scriptlevel > 0 then return end
+
     -- push current state onto redostack
     redostack[#redostack+1] = SaveState()
     
@@ -2560,7 +2575,10 @@ function CallScript(func, fromclip)
         return
     end
     
-    if scriptlevel == 0 then RememberCurrentState() end
+    if scriptlevel == 0 then
+        RememberCurrentState()
+        -- #undostack is now > 0
+    end
     
     scriptlevel = scriptlevel + 1
     local status, err = pcall(func)
@@ -2568,7 +2586,13 @@ function CallScript(func, fromclip)
     
     -- note that if the script called NewPattern/RandomPattern/OpenPattern
     -- or any other function that called ClearUndoRedo then all the
-    -- undo/redo history is deleted
+    -- undo/redo history is deleted and dirty is set to false,
+    -- but a later SetCell call might then set dirty to true,
+    -- so the following test fixes that
+    if scriptlevel == 0 and #undostack == 0 and dirty then
+        -- ClearUndoRedo was called so we don't want dirty to be true
+        dirty = false
+    end
     
     if err then
         g.continue("")
@@ -2583,7 +2607,7 @@ function CallScript(func, fromclip)
             end
         end
     end
-    Refresh()
+    if scriptlevel == 0 then Refresh() end
 end
 
 ----------------------------------------------------------------------
