@@ -1610,10 +1610,6 @@ function SaveState()
     -- save current grid size
     state.saveN = N
     
-    -- save current orientation and position of active plane
-    state.saveplane = activeplane
-    state.savepos = activepos
-    
     -- save current rule
     state.saverule = rulestring
     
@@ -1674,9 +1670,6 @@ function RestoreState(state)
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
     CreateAxes()
-    
-    -- restore active plane
-    SetActivePlane(state.saveplane, state.savepos)
     
     -- restore rule
     ParseRule(state.saverule)
@@ -1914,14 +1907,6 @@ function MoveActivePlane(newpos, refresh)
         elseif newpos + mid >= N then
             newpos = N-1-mid
         end
-        
-        -- note that refresh is false if called from DragActivePlane
-        -- (in which case RememberCurrentState has already been called
-        -- by StartDraggingPlane)
-        if refresh and newpos ~= activepos then
-            RememberCurrentState()
-        end
-        
         -- use the same orientation
         SetActivePlane(activeplane, newpos)
         if refresh then Refresh() end
@@ -1932,7 +1917,6 @@ end
 
 function CycleActivePlane()
     if currcursor ~= movecursor then
-        RememberCurrentState()
         -- cycle to next orientation of active plane
         if activeplane == "XY" then
             SetActivePlane("YZ", activepos)
@@ -3159,7 +3143,7 @@ end
 
 ----------------------------------------------------------------------
 
-function RemoveSelection()
+function CancelSelection()
     if selcount > 0 then
         RememberCurrentState()
         selcount = 0
@@ -3408,9 +3392,26 @@ end
 
 ----------------------------------------------------------------------
 
+function CancelPaste()
+    if pastecount > 0 then
+        RememberCurrentState()
+        pastecount = 0
+        pastepatt = {}
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
 function Paste()
-    -- check if a paste is already pending
-    if pastecount > 0 then return end
+    -- if a paste is already pending then cancel it
+    local savedstate = false
+    if pastecount > 0 then
+        RememberCurrentState()
+        savedstate = true
+        pastecount = 0
+        pastepatt = {}
+    end
 
     -- if the clipboard contains a valid RLE3 pattern then create a sparse array
     -- of paste cells (to be displayed as translucent red)
@@ -3420,12 +3421,12 @@ function Paste()
         if err then
             message = "Clipboard does not contain a valid RLE3 pattern."
             Refresh()
-            return
+            return false
         end
         if newpattern.newpop == 0 then
             message = "Clipboard pattern is empty."
             Refresh()
-            return
+            return false
         end
         
         -- newpattern contains valid pattern, but might be too big
@@ -3438,10 +3439,10 @@ function Paste()
         if pwd > N or pht > N or pdp > N then
             message = "Clipboard pattern is too big ("..pwd.." x "..pht.." x "..pdp..")"
             Refresh()
-            return
+            return false
         end
         
-        RememberCurrentState()
+        if not savedstate then RememberCurrentState() end
         
         -- set pastecount and pastepatt
         pastecount = newpattern.newpop
@@ -3470,17 +3471,10 @@ function Paste()
             if z > maxpastez then maxpastez = z end
         end
         Refresh()
-    end
-end
-
-----------------------------------------------------------------------
-
-function CancelPaste()
-    if pastecount > 0 then
-        RememberCurrentState()
-        pastecount = 0
-        pastepatt = {}
-        Refresh()
+        return true
+    else
+        -- filepath is nil
+        return false
     end
 end
 
@@ -4151,6 +4145,99 @@ end
 ----------------------------------------------------------------------
 
 -- for user scripts
+function PasteExists()
+    return pastecount > 0
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function SelectionExists()
+    return selcount > 0
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function PasteClipboard()
+    return Paste()
+    -- if success then paste pattern is in middle of grid
+    -- where it can be flipped/rotated etc
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function DoPaste(x, y, z, mode)
+    if PasteExists() then
+        -- move paste pattern to x,y,z
+        local mid = N//2
+        local deltax = x+mid - minpastex
+        local deltay = y+mid - minpastey
+        local deltaz = z+mid - minpastez
+        MovePastePattern(deltax, deltay, deltaz)
+        -- now do the paste using the given mode
+        if mode == "or" then
+            PasteOR()
+        elseif mode == "xor" then
+            PasteXOR()
+        else
+            error("Bad mode in DoPaste!", 2)
+        end
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function FlipPaste(axis)
+    if     axis == "x" then FlipPasteX()
+    elseif axis == "y" then FlipPasteY()
+    elseif axis == "z" then FlipPasteZ()
+    else
+        error("Bad axis in FlipPaste!", 2)
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function RotatePaste(axis)
+    if     axis == "x" then RotatePasteX()
+    elseif axis == "y" then RotatePasteY()
+    elseif axis == "z" then RotatePasteZ()
+    else
+        error("Bad axis in RotatePaste!", 2)
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function FlipSelection(axis)
+    if     axis == "x" then FlipSelectionX()
+    elseif axis == "y" then FlipSelectionY()
+    elseif axis == "z" then FlipSelectionZ()
+    else
+        error("Bad axis in FlipSelection!", 2)
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function RotateSelection(axis)
+    if     axis == "x" then RotateSelectionX()
+    elseif axis == "y" then RotateSelectionY()
+    elseif axis == "z" then RotateSelectionZ()
+    else
+        error("Bad axis in RotateSelection!", 2)
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
 function Update()
     local savelevel = scriptlevel
     scriptlevel = 0
@@ -4170,6 +4257,7 @@ function ShowHelp()
 <dd><a href="#mouse"><b>Mouse Controls</b></a></dd>
 <dd><a href="#keyboard"><b>Keyboard Shortcuts</b></a></dd>
 <dd><a href="#scripts"><b>Running Scripts</b></a></dd>
+<dd><a href="#functions"><b>Script Functions</b></a></dd>
 <dd><a href="#rules"><b>Supported Rules</b></a></dd>
 <dd><a href="#rle3"><b>RLE3 File Format</b></a></dd>
 <dd><a href="#refs"><b>Credits and References</b></a></dd>
@@ -4347,12 +4435,97 @@ function HandleKey(event)
     end
 end</pre></table></dd>
 
+<p><a name="functions"></a><br>
+<font size=+1><b>Script Functions</b></font>
+
 <p>
-Here are descriptions of various functions in 3D.lua you might want to
-use in your own scripts (the functions are in alphabetical order):
+Here is an alphabetical list of the various functions in 3D.lua you might
+want to call from your own scripts:
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top>
+<a href="#CancelPaste"><b>CancelPaste</b></a><br>
+<a href="#CancelSelection"><b>CancelSelection</b></a><br>
+<a href="#ClearOutside"><b>ClearOutside</b></a><br>
+<a href="#ClearSelection"><b>ClearSelection</b></a><br>
+<a href="#CopySelection"><b>CopySelection</b></a><br>
+<a href="#CutSelection"><b>CutSelection</b></a><br>
+<a href="#DeselectCell"><b>DeselectCell</b></a><br>
+<a href="#DoPaste"><b>DoPaste</b></a><br>
+<a href="#DrawMode"><b>DrawMode</b></a><br>
+<a href="#FitGrid"><b>FitGrid</b></a><br>
+<a href="#FlipPaste"><b>FlipPaste</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#FlipSelection"><b>FlipSelection</b></a><br>
+<a href="#GetBounds"><b>GetBounds</b></a><br>
+<a href="#GetCell"><b>GetCell</b></a><br>
+<a href="#GetGeneration"><b>GetGeneration</b></a><br>
+<a href="#GetGridSize"><b>GetGridSize</b></a><br>
+<a href="#GetPercentage"><b>GetPercentage</b></a><br>
+<a href="#GetPopulation"><b>GetPopulation</b></a><br>
+<a href="#GetRule"><b>GetRule</b></a><br>
+<a href="#InitialView"><b>InitialView</b></a><br>
+<a href="#MoveMode"><b>MoveMode</b></a><br>
+<a href="#NewPattern"><b>NewPattern</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#OpenPattern"><b>OpenPattern</b></a><br>
+<a href="#PasteClipboard"><b>PasteClipboard</b></a><br>
+<a href="#PasteExists"><b>PasteExists</b></a><br>
+<a href="#RandomPattern"><b>RandomPattern</b></a><br>
+<a href="#RestoreState"><b>RestoreState</b></a><br>
+<a href="#Rotate"><b>Rotate</b></a><br>
+<a href="#RotatePaste"><b>RotatePaste</b></a><br>
+<a href="#RotateSelection"><b>RotateSelection</b></a><br>
+<a href="#RunScript"><b>RunScript</b></a><br>
+<a href="#SavePattern"><b>SavePattern</b></a><br>
+<a href="#SaveState"><b>SaveState</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#SelectAll"><b>SelectAll</b></a><br>
+<a href="#SelectCell"><b>SelectCell</b></a><br>
+<a href="#SelectionExists"><b>SelectionExists</b></a><br>
+<a href="#SelectMode"><b>SelectMode</b></a><br>
+<a href="#SetCell"><b>SetCell</b></a><br>
+<a href="#SetGridSize"><b>SetGridSize</b></a><br>
+<a href="#SetMessage"><b>SetMessage</b></a><br>
+<a href="#SetRule"><b>SetRule</b></a><br>
+<a href="#Step"><b>Step</b></a><br>
+<a href="#Update"><b>Update</b></a>
+</td>
+</tr>
+</table>
+</dd>
+</p>
 
 <p>
 TO BE COMPLETED!!!
+
+CancelPaste
+CancelSelection
+ClearOutside
+ClearSelection
+CopySelection
+CutSelection
+DoPaste
+FitGrid
+FlipPaste
+FlipSelection
+InitialView
+PasteClipboard
+PasteExists
+Rotate
+RotatePaste
+RotateSelection
+SavePattern
+SelectAll
+SelectionExists
 
 <a name="DeselectCell"></a><p><dt><b>DeselectCell(<i>x, y, z</i>)</b></dt>
 <dd>
@@ -4362,7 +4535,7 @@ The x,y,z coordinates are relative to the middle cell in the grid.
 
 <a name="DrawMode"></a><p><dt><b>DrawMode()</b></dt>
 <dd>
-Switch to the pencil cursor and display the active plane.
+Switch to the pencil cursor.  The next Update call will display the active plane.
 </dd>
 
 <a name="GetBounds"></a><p><dt><b>GetBounds()</b></dt>
@@ -4424,7 +4597,7 @@ All undo/redo history is deleted.
 <a name="RandomPattern"></a><p><dt><b>RandomPattern(<i>percentage</i>)</b></dt>
 <dd>
 Create a new, random pattern with the given percentage density (0 to 100) of live cells.
-If the <i>percentage</i> is not supplied then the user will be prompted to enter it.
+If the <i>percentage</i> is not supplied then the user will be prompted for it.
 All undo/redo history is deleted.
 </dd>
 
@@ -4443,9 +4616,8 @@ the user will be prompted to select a .lua file.
 <dd>
 Return an object representing the current state.  The object can be given
 later to <a href="#RestoreState">RestoreState</a> to restore the saved state.
-The saved information includes the grid size, the position and orientation of
-the active plane, the rule, the pattern and its generation count, the selection,
-and the paste pattern.
+The saved information includes the grid size, the rule, the pattern and its
+generation count, the selection, and the paste pattern.
 </dd>
 
 <a name="SelectCell"></a><p><dt><b>SelectCell(<i>x, y, z</i>)</b></dt>
@@ -4456,7 +4628,7 @@ The x,y,z coordinates are relative to the middle cell in the grid.
 
 <a name="SelectMode"></a><p><dt><b>SelectMode()</b></dt>
 <dd>
-Switch to the cross-hairs cursor and display the active plane.
+Switch to the cross-hairs cursor.  The next Update call will display the active plane.
 </dd>
 
 <a name="SetCell"></a><p><dt><b>SetCell(<i>x, y, z, state</i>)</b></dt>
@@ -4468,7 +4640,7 @@ The x,y,z coordinates are relative to the middle cell in the grid.
 <a name="SetGridSize"></a><p><dt><b>SetGridSize(<i>newsize</i>)</b></dt>
 <dd>
 Change the grid size to the new value (3 to 100).
-If the <i>newsize</i> is not supplied then the user will be prompted to enter a value.
+If the <i>newsize</i> is not supplied then the user will be prompted for a value.
 </dd>
 
 <a name="SetMessage"></a><p><dt><b>SetMessage(<i>msg</i>)</b></dt>
@@ -5568,12 +5740,7 @@ function StartDraggingPlane(mousex, mousey)
     local oldcell = activecell
     activecell = InsideActiveCell(mousex, mousey)
     if activecell ~= oldcell then Refresh() end
-    if #activecell > 0 then
-        RememberCurrentState()
-        return true
-    else
-        return false
-    end
+    return #activecell > 0
 end
 
 ----------------------------------------------------------------------
@@ -5963,7 +6130,7 @@ function CreateOverlay()
     selmenu.additem("Rotate Y Axis", RotateSelectionY)
     selmenu.additem("Rotate Z Axis", RotateSelectionZ)
     selmenu.additem("---", nil)
-    selmenu.additem("Remove Selection", RemoveSelection)
+    selmenu.additem("Cancel Selection", CancelSelection)
 end
 
 ----------------------------------------------------------------------
@@ -6095,6 +6262,8 @@ function InitialView()
 
     -- rotate to a nice view but don't call Refresh
     Rotate(160, 30, 0, false)
+    -- user can hit the up arrow 4 times and the right arrow 6 times
+    -- to see an XY plane fully facing the screen
     
     FitGrid()   -- calls Refresh
 end
@@ -6181,7 +6350,7 @@ function HandleKey(event)
     elseif key == "r" and mods == "none" then ChangeRule()
     elseif key == "g" and (mods == "none" or mods == CMDCTRL) then SetGridSize()
     elseif key == "a" and (mods == "none" or mods == CMDCTRL) then SelectAll()
-    elseif key == "k" and (mods == "none" or mods == CMDCTRL) then RemoveSelection()
+    elseif key == "k" and (mods == "none" or mods == CMDCTRL) then CancelSelection()
     elseif key == "b" then Rotate(0, 180, 0)
     elseif key == "z" and (mods == "none" or mods == CMDCTRL) then Undo()
     elseif key == "z" and (mods == "shift" or mods == CMDCTRL.."shift") then Redo()
