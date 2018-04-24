@@ -92,7 +92,7 @@ local zaxes = {}                    -- four Z axes
 local grid1 = {}                    -- sparse 3D matrix with up to N*N*N live cells
 local grid2 = {}                    -- sparse 3D matrix for the next generation
 local popcount = 0                  -- number of live cells
-local pattname = "untitled"         -- most recently saved/opened pattern
+local pattname = "untitled"         -- pattern name
 local showaxes = true               -- draw axes and lattice lines?
 local showlines = true              -- draw lattice lines?
 local generating = false            -- generate pattern?
@@ -137,6 +137,7 @@ local undostack = {}                -- stack of states that can be undone
 local redostack = {}                -- stack of states that can be redone
 local startcount = 0                -- starting gencount (can be > 0)
 local startindex = 0                -- index of starting state in undostack
+local dirty = false                 -- pattern has been modified by user/script?
 
 local refcube = {}                  -- invisible reference cube
 local rotrefz = {}                  -- Z coords of refcube's rotated vertices
@@ -1493,8 +1494,10 @@ function Refresh()
     if showaxes then DrawFrontAxes() end
     
     -- show info in top left corner
+    local name = pattname
+    if dirty then name = "*"..name end
     local info =
-        "Pattern = "..pattname.."\n"..
+        "Pattern = "..name.."\n"..
         "Rule = "..rulestring.."\n"..
         "Generation = "..gencount.."\n"..
         "Population = "..popcount
@@ -1573,6 +1576,31 @@ function SetActivePlane(orientation, pos)
     end
 end
 
+--------------------------------------------------------------------------------
+
+function UpdateStartButton()
+    -- fix m.button code in oplus/init.lua to avoid need to do this!!!
+    local oldbg = ov("textoption background 0 0 0 0")
+    
+    -- change label in ssbutton without changing the button's width
+    if generating then
+        ssbutton.setlabel("Stop", false)
+    else
+        ssbutton.setlabel("Start", false)
+    end
+    
+    ov("textoption background "..oldbg) -- see above!!!
+end
+
+----------------------------------------------------------------------
+
+function StopGenerating()
+    if generating then
+        generating = false
+        UpdateStartButton()
+    end
+end
+
 ----------------------------------------------------------------------
 
 function SaveState()
@@ -1590,6 +1618,7 @@ function SaveState()
     state.saverule = rulestring
     
     -- save current pattern
+    state.savedirty = dirty
     state.savename = pattname
     state.savegencount = gencount
     state.savepopcount = popcount
@@ -1653,14 +1682,13 @@ function RestoreState(state)
     ParseRule(state.saverule)
     
     -- restore pattern
+    dirty = state.savedirty
     pattname = state.savename
     gencount = state.savegencount
     popcount = state.savepopcount
     grid1 = {}
     if popcount > 0 then
-        for k,_ in pairs(state.savecells) do
-            grid1[k] = true
-        end
+        for k,_ in pairs(state.savecells) do grid1[k] = true end
     end
     minx = state.saveminx
     miny = state.saveminy
@@ -1674,9 +1702,7 @@ function RestoreState(state)
     selcount = state.saveselcount
     selected = {}
     if selcount > 0 then
-        for k,_ in pairs(state.saveselected) do
-            selected[k] = true
-        end
+        for k,_ in pairs(state.saveselected) do selected[k] = true end
     end
     minselx = state.saveminselx
     minsely = state.saveminsely
@@ -1690,9 +1716,7 @@ function RestoreState(state)
     pastecount = state.savepcount
     pastepatt = {}
     if pastecount > 0 then
-        for k,_ in pairs(state.savepaste) do
-            pastepatt[k] = true
-        end
+        for k,_ in pairs(state.savepaste) do pastepatt[k] = true end
     end
     minpastex = state.saveminpastex
     minpastey = state.saveminpastey
@@ -1707,12 +1731,14 @@ end
 function ClearUndoRedo()
     undostack = {}
     redostack = {}
+    dirty = false
 end
 
 ----------------------------------------------------------------------
 
 function Undo()
     if #undostack > 0 then
+        StopGenerating()
         -- push current state onto redostack
         redostack[#redostack+1] = SaveState()
         -- pop state off undostack and restore it
@@ -1725,6 +1751,7 @@ end
 
 function Redo()
     if #redostack > 0 then
+        StopGenerating()
         -- push current state onto undostack
         undostack[#undostack+1] = SaveState()
         -- pop state off redostack and restore it
@@ -1736,7 +1763,7 @@ end
 ----------------------------------------------------------------------
 
 function RememberCurrentState()
-    -- do nothing if user script is running
+    -- ignore if user script is running
     if scriptlevel > 0 then return end
     redostack = {}
     undostack[#undostack+1] = SaveState()
@@ -1872,9 +1899,17 @@ function MoveActivePlane(newpos, refresh)
         elseif newpos + mid >= N then
             newpos = N-1-mid
         end
+        
+        -- note that refresh is false if called from DragActivePlane
+        -- (in which case RememberCurrentState has already been called
+        -- by StartDraggingPlane)
+        if refresh and newpos ~= activepos then
+            RememberCurrentState()
+        end
+        
         -- use the same orientation
         SetActivePlane(activeplane, newpos)
-        if refresh == nil or refresh then Refresh() end
+        if refresh then Refresh() end
     end
 end
 
@@ -1882,6 +1917,7 @@ end
 
 function CycleActivePlane()
     if currcursor ~= movecursor then
+        RememberCurrentState()
         -- cycle to next orientation of active plane
         if activeplane == "XY" then
             SetActivePlane("YZ", activepos)
@@ -1920,6 +1956,7 @@ local function SetCellState(x, y, z, state)
         if not grid1[pos] then
             grid1[pos] = state
             popcount = popcount + 1
+            dirty = true
             -- boundary might expand
             if x < minx then minx = x end
             if y < miny then miny = y end
@@ -1927,8 +1964,6 @@ local function SetCellState(x, y, z, state)
             if x > maxx then maxx = x end
             if y > maxy then maxy = y end
             if z > maxz then maxz = z end
-        else
-            grid1[pos] = state
         end
     else
         -- state is 0
@@ -1936,6 +1971,7 @@ local function SetCellState(x, y, z, state)
             -- kill a live cell
             grid1[pos] = nil
             popcount = popcount - 1
+            dirty = true
             -- tell MinimizeLiveBoundary that it needs to update the live boundary
             minimal_live_bounds = false
         end
@@ -1948,6 +1984,7 @@ local function SetLiveCell(x, y, z)
     -- this must only be called to create a live cell
     grid1[ x + N * (y + N * z) ] = 1
     popcount = popcount + 1
+    dirty = true
     -- boundary might expand
     if x < minx then minx = x end
     if y < miny then miny = y end
@@ -1999,22 +2036,6 @@ function PutCells(livecells)
     return clipped
 end
 
---------------------------------------------------------------------------------
-
-function UpdateStartButton()
-    -- fix m.button code in oplus/init.lua to avoid need to do this!!!
-    local oldbg = ov("textoption background 0 0 0 0")
-    
-    -- change label in ssbutton without changing the button's width
-    if generating then
-        ssbutton.setlabel("Stop", false)
-    else
-        ssbutton.setlabel("Start", false)
-    end
-    
-    ov("textoption background "..oldbg) -- see above!!!
-end
-
 ----------------------------------------------------------------------
 
 function NextGeneration()
@@ -2023,8 +2044,7 @@ function NextGeneration()
     -- http://www.complex-systems.com/pdf/01-3-1.pdf)
     
     if popcount == 0 then
-        generating = false
-        UpdateStartButton()
+        StopGenerating()
         message = "All cells are dead."
         Refresh()
         return
@@ -2071,10 +2091,11 @@ function NextGeneration()
             -- create a live cell in grid2
             grid2[k] = 1
             popcount = popcount + 1
-            -- boundary might expand
+            -- don't set dirty flag here!
             local x = k % N
             local y = k // N % N
             local z = k // NN
+            -- update boundary
             if x < minx then minx = x end
             if y < miny then miny = y end
             if z < minz then minz = z end
@@ -2089,8 +2110,7 @@ function NextGeneration()
     grid1, grid2 = grid2, grid1
     
     if popcount == 0 then
-        generating = false
-        UpdateStartButton()
+        StopGenerating()
     end
     gencount = gencount + 1
     Refresh()
@@ -2103,8 +2123,7 @@ function NewPattern()
     SetCursor(drawcursor)
     gencount = 0
     startcount = 0
-    generating = false
-    UpdateStartButton()
+    StopGenerating()
     ClearCells()
     SetActivePlane()
     ClearUndoRedo()
@@ -2291,8 +2310,7 @@ function UpdateCurrentGrid(newpattern)
     ParseRule(newpattern.newrule)   -- sets rulestring, survivals and births
     gencount = newpattern.newgens
     startcount = gencount           -- for Reset
-    generating = false
-    UpdateStartButton()
+    StopGenerating()
     SetCursor(movecursor)
     SetActivePlane()
     ClearUndoRedo()
@@ -2653,8 +2671,7 @@ function RandomPattern(percentage)
     SetCursor(movecursor)
     gencount = 0
     startcount = 0
-    generating = false
-    UpdateStartButton()
+    StopGenerating()
     ClearCells()
     
     local minval, maxval
@@ -2762,29 +2779,36 @@ end
 
 ----------------------------------------------------------------------
 
-function ChangeGridSize()
-    local newN = N
+function SetGridSize(newsize)
+    -- change grid size to newsize or prompt user if newsize is nil
     
     local function getsize()
         ::try_again::
         local s = g.getstring("Enter the new size (from "..MINN.." to "..MAXN.."):",
                               tostring(N), "Grid size")
         if validint(s) and (tonumber(s) >= MINN) and (tonumber(s) <= MAXN) then
-            newN = tonumber(s)
+            newsize = tonumber(s)
         else
             g.warn("Grid size must be an integer from "..MINN.." to "..MAXN..".")
             goto try_again
         end
     end
     
-    -- if user hits Cancel button we want to avoid aborting script
-    local status, err = pcall(getsize)
-    if err then
-        g.continue("")  -- don't show error when script finishes
-        return
+    if newsize then
+        if newsize < MINN then newsize = MINN end
+        if newsize > MAXN then newsize = MAXN end
+    else
+        -- if user hits Cancel button we want to avoid aborting script
+        local status, err = pcall(getsize)
+        if err then
+            g.continue("")  -- don't show error when script finishes
+            return
+        end
     end
     
-    if newN == N then return end
+    if newsize == N then return end
+    
+    RememberCurrentState()
     
     -- save current pattern as an array of positions relative to mid cell
     local livecells = GetCells()
@@ -2797,7 +2821,7 @@ function ChangeGridSize()
     local oldpastecount = pastecount
     local pcells = GetPasteCells()
     
-    N = newN
+    N = newsize
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
     CreateAxes()
@@ -2810,8 +2834,16 @@ function ChangeGridSize()
     SetActivePlane(activeplane, activepos)
     
     -- restore pattern, clipping any cells outside the new grid
-    ClearCells()    
+    ClearCells()
+    local olddirty = dirty
     local clipcount = PutCells(livecells)
+    if clipcount > 0 then
+        dirty = true
+    else
+        -- PutCells sets dirty true if there are live cells,
+        -- but pattern hasn't really changed if no cells were clipped
+        dirty = olddirty
+    end
     
     -- restore selection, clipping any cells outside the new grid
     local selclipped = 0
@@ -2889,11 +2921,22 @@ function ChangeRule()
         if not ParseRule(newrule) then goto try_again end
     end
     
+    local oldrule = rulestring
+    
     -- if user hits Cancel button we want to avoid aborting script
     local status, err = pcall(getrule)
     if err then
         g.continue("")  -- don't show error when script finishes
         return
+    end
+    
+    if oldrule ~= rulestring then
+        -- ParseRule has set rulestring so we need to temporarily switch
+        -- it back to oldrule and call RememberCurrentState
+        local newrule = rulestring
+        rulestring = oldrule
+        RememberCurrentState()
+        rulestring = newrule
     end
     
     Refresh()
@@ -2903,6 +2946,7 @@ end
 
 function SelectAll()
     if popcount > 0 then
+        RememberCurrentState()
         selcount = 0
         selected = {}
         for k,_ in pairs(grid1) do
@@ -3043,12 +3087,14 @@ end
 
 function ClearSelection()
     if selcount > 0 then
+        RememberCurrentState()
         -- kill all selected live cells
         for k,_ in pairs(selected) do
             -- selected[k] is a selected cell (live or dead)
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                dirty = true
                 minimal_live_bounds = false
             end
         end
@@ -3060,12 +3106,14 @@ end
 
 function ClearOutside()
     if selcount > 0 then
+        RememberCurrentState()
         -- kill all unselected live cells
         for k,_ in pairs(grid1) do
             -- grid1[k] is a live cell
             if not selected[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                dirty = true
                 minimal_live_bounds = false
             end
         end
@@ -3080,7 +3128,7 @@ function CutSelection()
         -- save the selected live cells as an RLE3 pattern in clipboard
         -- then kill them
         if CopySelection() then
-            ClearSelection()    -- calls Refresh
+            ClearSelection()    -- calls RememberCurrentState and Refresh
         end
     end
 end
@@ -3089,6 +3137,7 @@ end
 
 function RemoveSelection()
     if selcount > 0 then
+        RememberCurrentState()
         selcount = 0
         selected = {}
         InitSelectionBoundary()
@@ -3100,6 +3149,7 @@ end
 
 function FlipSelectionX()
     if selcount > 0 then
+        RememberCurrentState()
         -- reflect selected cells' X coords across YZ plane thru middle of selection
         MinimizeSelectionBoundary()
         local midx = minselx + (maxselx - minselx) / 2
@@ -3113,6 +3163,7 @@ function FlipSelectionX()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                -- SetLiveCell below will set dirty = true
                 minimal_live_bounds = false
             end
         end
@@ -3136,6 +3187,7 @@ end
 
 function FlipSelectionY()
     if selcount > 0 then
+        RememberCurrentState()
         -- reflect selected cells' Y coords across XZ plane thru middle of selection
         MinimizeSelectionBoundary()
         local midy = minsely + (maxsely - minsely) / 2
@@ -3149,6 +3201,7 @@ function FlipSelectionY()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                -- SetLiveCell below will set dirty = true
                 minimal_live_bounds = false
             end
         end
@@ -3172,6 +3225,7 @@ end
 
 function FlipSelectionZ()
     if selcount > 0 then
+        RememberCurrentState()
         -- reflect selected cells' Z coords across XY plane thru middle of selection
         MinimizeSelectionBoundary()
         local midz = minselz + (maxselz - minselz) / 2
@@ -3185,6 +3239,7 @@ function FlipSelectionZ()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                -- SetLiveCell below will set dirty = true
                 minimal_live_bounds = false
             end
         end
@@ -3208,6 +3263,7 @@ end
 
 function RotateSelectionX()
     if selcount > 0 then
+        RememberCurrentState()
         -- rotate selection clockwise about its X axis by 90 degrees
         MinimizeSelectionBoundary()
         local midy = minsely + (maxsely - minsely) // 2
@@ -3224,6 +3280,7 @@ function RotateSelectionX()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                -- SetLiveCell below will set dirty = true
                 minimal_live_bounds = false
             end
         end
@@ -3247,6 +3304,7 @@ end
 
 function RotateSelectionY()
     if selcount > 0 then
+        RememberCurrentState()
         -- rotate selection clockwise about its Y axis by 90 degrees
         MinimizeSelectionBoundary()
         local midx = minselx + (maxselx - minselx) // 2
@@ -3263,6 +3321,7 @@ function RotateSelectionY()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                -- SetLiveCell below will set dirty = true
                 minimal_live_bounds = false
             end
         end
@@ -3286,6 +3345,7 @@ end
 
 function RotateSelectionZ()
     if selcount > 0 then
+        RememberCurrentState()
         -- rotate selection clockwise about its Z axis by 90 degrees
         MinimizeSelectionBoundary()
         local midx = minselx + (maxselx - minselx) // 2
@@ -3302,6 +3362,7 @@ function RotateSelectionZ()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                -- SetLiveCell below will set dirty = true
                 minimal_live_bounds = false
             end
         end
@@ -3344,26 +3405,24 @@ function Paste()
         end
         
         -- newpattern contains valid pattern, but might be too big
-        minpastex = newpattern.newminx
-        minpastey = newpattern.newminy
-        minpastez = newpattern.newminz
-        maxpastex = newpattern.newmaxx
-        maxpastey = newpattern.newmaxy
-        maxpastez = newpattern.newmaxz
-        local pwd = maxpastex - minpastex + 1
-        local pht = maxpastey - minpastey + 1
-        local pdp = maxpastez - minpastez + 1
+        local minpx = newpattern.newminx
+        local minpy = newpattern.newminy
+        local minpz = newpattern.newminz
+        local pwd = newpattern.newmaxx - minpx + 1
+        local pht = newpattern.newmaxy - minpy + 1
+        local pdp = newpattern.newmaxz - minpz + 1
         if pwd > N or pht > N or pdp > N then
             message = "Clipboard pattern is too big ("..pwd.." x "..pht.." x "..pdp..")"
             Refresh()
             return
         end
         
+        RememberCurrentState()
+        
         -- set pastecount and pastepatt
         pastecount = newpattern.newpop
         pastepatt = {}
         -- put paste pattern in middle of grid and update paste boundary
-        local oldpx, oldpy, oldpz = minpastex, minpastey, minpastez
         minpastex = math.maxinteger
         minpastey = math.maxinteger
         minpastez = math.maxinteger
@@ -3375,9 +3434,9 @@ function Paste()
         for k,_ in pairs(newpattern.newgrid) do
             -- newpattern.newgrid[k] is a live cell
             -- (note that we add 1 to match the result of MoveToMiddle)
-            local x = (k % P)      - oldpx + (N - pwd + 1) // 2
-            local y = (k // P % P) - oldpy + (N - pht + 1) // 2
-            local z = (k // PP)    - oldpz + (N - pdp + 1) // 2
+            local x = (k % P)      - minpx + (N - pwd + 1) // 2
+            local y = (k // P % P) - minpy + (N - pht + 1) // 2
+            local z = (k // PP)    - minpz + (N - pdp + 1) // 2
             pastepatt[ x + N * (y + N * z) ] = 1
             if x < minpastex then minpastex = x end
             if y < minpastey then minpastey = y end
@@ -3394,6 +3453,7 @@ end
 
 function CancelPaste()
     if pastecount > 0 then
+        RememberCurrentState()
         pastecount = 0
         pastepatt = {}
         Refresh()
@@ -3404,6 +3464,8 @@ end
 
 function PasteOR()
     if pastecount > 0 then
+        RememberCurrentState()
+        -- SetLiveCell will set dirty = true
         local NN = N*N
         for k,_ in pairs(pastepatt) do
             if not grid1[k] then
@@ -3420,11 +3482,13 @@ end
 
 function PasteXOR()
     if pastecount > 0 then
+        RememberCurrentState()
         local NN = N*N
         for k,_ in pairs(pastepatt) do
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                dirty = true
                 minimal_live_bounds = false
             else
                 SetLiveCell(k % N, (k // N) % N, k // NN)
@@ -3440,6 +3504,7 @@ end
 
 function FlipPasteX()
     if pastecount > 0 then
+        RememberCurrentState()
         -- reflect X coords across YZ plane thru middle of paste pattern
         local midx = minpastex + (maxpastex - minpastex) / 2
         local cells = {}
@@ -3464,6 +3529,7 @@ end
 
 function FlipPasteY()
     if pastecount > 0 then
+        RememberCurrentState()
         -- reflect Y coords across XZ plane thru middle of paste pattern
         local midy = minpastey + (maxpastey - minpastey) / 2
         local cells = {}
@@ -3488,6 +3554,7 @@ end
 
 function FlipPasteZ()
     if pastecount > 0 then
+        RememberCurrentState()
         -- reflect Z coords across XY plane thru middle of paste pattern
         local midz = minpastez + (maxpastez - minpastez) / 2
         local cells = {}
@@ -3512,6 +3579,7 @@ end
 
 function RotatePasteX()
     if pastecount > 0 then
+        RememberCurrentState()
         -- rotate paste pattern clockwise about its X axis by 90 degrees
         local midy = minpastey + (maxpastey - minpastey) // 2
         local midz = minpastez + (maxpastez - minpastez) // 2
@@ -3547,6 +3615,7 @@ end
 
 function RotatePasteY()
     if pastecount > 0 then
+        RememberCurrentState()
         -- rotate paste pattern clockwise about its Y axis by 90 degrees
         local midx = minpastex + (maxpastex - minpastex) // 2
         local midz = minpastez + (maxpastez - minpastez) // 2
@@ -3582,6 +3651,7 @@ end
 
 function RotatePasteZ()
     if pastecount > 0 then
+        RememberCurrentState()
         -- rotate paste pattern clockwise about its Z axis by 90 degrees
         local midx = minpastex + (maxpastex - minpastex) // 2
         local midy = minpastey + (maxpastey - minpastey) // 2
@@ -3892,22 +3962,21 @@ function StartStop()
     generating = not generating
     UpdateStartButton()
     Refresh()
+    if generating and popcount > 0 and gencount > startcount then
+        RememberCurrentState()
+        -- MainLoop will call NextGeneration
+    end
 end
 
 ----------------------------------------------------------------------
 
 function Step1()
-    if generating then
-        generating = false
-        UpdateStartButton()
-    end
-    
+    StopGenerating()
     -- note that NextGeneration does nothing if popcount is 0,
-    -- otherwise it calls SaveStartingGen if gencount == startcount
+    -- or it calls SaveStartingGen if gencount == startcount
     if popcount > 0 and gencount > startcount then
         RememberCurrentState()
     end
-
     NextGeneration()
 end
 
@@ -3916,8 +3985,7 @@ end
 function Reset()
     if gencount > startcount then
         RestoreStartingGen()
-        generating = false
-        UpdateStartButton()
+        StopGenerating()
         Refresh()
     end
 end
@@ -4371,6 +4439,12 @@ Switch to the cross-hairs cursor and display the active plane.
 <dd>
 Set the given cell to the given state (0 or 1).
 The x,y,z coordinates are relative to the middle cell in the grid.
+</dd>
+
+<a name="SetGridSize"></a><p><dt><b>SetGridSize(<i>newsize</i>)</b></dt>
+<dd>
+Change the grid size to the new value (3 to 100).
+If the <i>newsize</i> is not supplied then the user will be prompted to enter a value.
 </dd>
 
 <a name="SetMessage"></a><p><dt><b>SetMessage(<i>msg</i>)</b></dt>
@@ -4933,6 +5007,7 @@ function StartDrawing(mousex, mousey)
     local oldcell = activecell
     activecell = InsideActiveCell(mousex, mousey)
     if #activecell > 0 then
+        RememberCurrentState()
         -- toggle the state of the clicked cell
         local x, y, z = split(activecell, ",")
         local mid = N//2
@@ -4944,11 +5019,12 @@ function StartDrawing(mousex, mousey)
             -- death
             grid1[pos] = nil
             popcount = popcount - 1
+            dirty = true
             minimal_live_bounds = false
             drawstate = 0
         else
             -- birth
-            SetLiveCell(x, y, z)
+            SetLiveCell(x, y, z)    -- sets dirty = true
             drawstate = 1
         end
         Refresh()
@@ -4966,6 +5042,7 @@ function StartSelecting(mousex, mousey)
     local oldcell = activecell
     activecell = InsideActiveCell(mousex, mousey)
     if #activecell > 0 then
+        RememberCurrentState()
         -- toggle the selection state of the clicked cell
         local x, y, z = split(activecell, ",")
         local mid = N//2
@@ -5118,20 +5195,6 @@ function SelectCells(mousex, mousey)
     else
         if activecell ~= oldcell then Refresh() end
     end
-end
-
-----------------------------------------------------------------------
-
-function StopDrawing()
-    -- add cell changes to undo list
-    --!!!
-end
-
-----------------------------------------------------------------------
-
-function StopSelecting()
-    -- add selection changes to undo list
-    --!!!
 end
 
 ----------------------------------------------------------------------
@@ -5294,6 +5357,7 @@ function StartDraggingSelection(mousex, mousey)
                         livexyz[#livexyz+1] = {x, y, z}
                     end
                 end
+                RememberCurrentState()
             end
             return face
         end
@@ -5313,6 +5377,8 @@ function MoveSelection(deltax, deltay, deltaz)
     if maxselz + deltaz >= N then deltaz = N-1 - maxselz end
     
     if deltax == 0 and deltay == 0 and deltaz == 0 then return end
+    
+    -- RememberCurrentState was called in StartDraggingSelection
 
     minselx = minselx + deltax
     minsely = minsely + deltay
@@ -5328,6 +5394,7 @@ function MoveSelection(deltax, deltay, deltaz)
         if grid1[k] then
             grid1[k] = nil
             popcount = popcount - 1
+            dirty = true
             minimal_live_bounds = false
         end
     end
@@ -5364,6 +5431,7 @@ function MoveSelection(deltax, deltay, deltaz)
             if not grid1[k] then
                 grid1[k] = 1
                 popcount = popcount + 1
+                dirty = true
                 -- boundary might expand
                 local x = k % N
                 local y = (k // N) % N
@@ -5400,6 +5468,7 @@ function MoveSelection(deltax, deltay, deltaz)
             if not grid1[k] then
                 grid1[k] = 1
                 popcount = popcount + 1
+                dirty = true
                 -- boundary might expand
                 if x < minx then minx = x end
                 if y < miny then miny = y end
@@ -5475,7 +5544,12 @@ function StartDraggingPlane(mousex, mousey)
     local oldcell = activecell
     activecell = InsideActiveCell(mousex, mousey)
     if activecell ~= oldcell then Refresh() end
-    return #activecell > 0
+    if #activecell > 0 then
+        RememberCurrentState()
+        return true
+    else
+        return false
+    end
 end
 
 ----------------------------------------------------------------------
@@ -5587,6 +5661,7 @@ function MoveToMiddle()
         local deltaz = (N - (maxpastez - minpastez)) // 2 - minpastez
         if deltax == 0 and deltay == 0 and deltaz == 0 then return end
         
+        RememberCurrentState()
         local pcells = {}
         local NN = N*N
         for k,_ in pairs(pastepatt) do
@@ -5618,6 +5693,8 @@ function MoveToMiddle()
         local deltaz = (N - (maxselz - minselz)) // 2 - minselz
         if deltax == 0 and deltay == 0 and deltaz == 0 then return end
         
+        RememberCurrentState()
+        -- only set dirty = true if live cells are selected
         local selcells = {}
         local livecells = {}    -- for live cells in selection
         local NN = N*N
@@ -5629,6 +5706,7 @@ function MoveToMiddle()
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
+                dirty = true
                 minimal_live_bounds = false
                 livecells[#livecells+1] = {x, y, z}
             end
@@ -5649,6 +5727,7 @@ function MoveToMiddle()
             if not grid1[k] then
                 grid1[k] = 1
                 popcount = popcount + 1
+                -- dirty set to true above
                 -- boundary might expand
                 if x < minx then minx = x end
                 if y < miny then miny = y end
@@ -5678,6 +5757,8 @@ function MoveToMiddle()
         local deltaz = (N - (maxz - minz)) // 2 - minz
         if deltax == 0 and deltay == 0 and deltaz == 0 then return end
         
+        RememberCurrentState()
+        dirty = true
         local livecells = {}
         local NN = N*N
         for k,_ in pairs(grid1) do
@@ -5706,9 +5787,14 @@ end
 
 ----------------------------------------------------------------------
 
-function EraseLiveCells(mousex, mousey)
+-- use this flag in EraseLiveCells and SelectLiveCells to call
+-- RememberCurrentState just before the first change (if any)
+local firstchange = false
+
+function EraseLiveCells(mousex, mousey, firstcall)
     -- erase all live cells whose projected mid points are close to mousex,mousey
     if popcount > 0 then
+        if firstcall then firstchange = false end
         local changes = 0
         local NN = N*N
         for k,_ in pairs(grid1) do
@@ -5719,6 +5805,11 @@ function EraseLiveCells(mousex, mousey)
             local px, py = GetMidPoint(x, y, z)
             if abs(px - mousex) < HALFCELL and
                abs(py - mousey) < HALFCELL then
+                if not firstchange then
+                    RememberCurrentState()
+                    dirty = true
+                    firstchange = true
+                end
                 grid1[k] = nil
                 popcount = popcount - 1
                 minimal_live_bounds = false
@@ -5731,9 +5822,10 @@ end
 
 ----------------------------------------------------------------------
 
-function SelectLiveCells(mousex, mousey)
+function SelectLiveCells(mousex, mousey, firstcall)
     -- select all live cells whose projected mid points are close to mousex,mousey
     if popcount > 0 then
+        if firstcall then firstchange = false end
         local changes = 0
         local NN = N*N
         for k,_ in pairs(grid1) do
@@ -5745,6 +5837,10 @@ function SelectLiveCells(mousex, mousey)
             if abs(px - mousex) < HALFCELL and
                abs(py - mousey) < HALFCELL then
                 if not selected[k] then
+                    if not firstchange then
+                        RememberCurrentState()
+                        firstchange = true
+                    end
                     selected[k] = true
                     selcount = selcount + 1
                     UpdateSelectionBoundary(x, y, z)
@@ -5790,7 +5886,7 @@ function CreateOverlay()
     openbutton = op.button("Open...", OpenPattern)
     savebutton = op.button("Save...", SavePattern)
     runbutton = op.button("Run...", RunScript)
-    gridbutton = op.button("Grid...", ChangeGridSize)
+    gridbutton = op.button("Grid...", SetGridSize)
     randbutton = op.button("Random...", RandomPattern)
     rulebutton = op.button("Rule...", ChangeRule)
     ssbutton = op.button("Start", StartStop)
@@ -6002,6 +6098,7 @@ function Initialize()
         SetLiveCell(mid-1, mid-1, mid-1)
         SetLiveCell(mid,   mid-1, mid-1)
         SetLiveCell(mid+1, mid-1, mid-1)
+        dirty = false
     else
         --[[ do a random fill??? or let user decide via startup script???
         local M = N-1
@@ -6014,6 +6111,7 @@ function Initialize()
                 end
             end
         end
+        dirty = false
         --]]
     end
     
@@ -6057,7 +6155,7 @@ function HandleKey(event)
     elseif key == "r" and mods == "shift" then RunClipboard()
     elseif key == "r" and mods == CMDCTRL then Reset()
     elseif key == "r" and mods == "none" then ChangeRule()
-    elseif key == "g" and (mods == "none" or mods == CMDCTRL) then ChangeGridSize()
+    elseif key == "g" and (mods == "none" or mods == CMDCTRL) then SetGridSize()
     elseif key == "a" and (mods == "none" or mods == CMDCTRL) then SelectAll()
     elseif key == "k" and (mods == "none" or mods == CMDCTRL) then RemoveSelection()
     elseif key == "b" then Rotate(0, 180, 0)
@@ -6075,8 +6173,8 @@ function HandleKey(event)
     elseif key == "l" and mods == "none" then ToggleLines()
     elseif key == "l" and mods == "shift" then ToggleAxes()
     elseif key == "t" then ToggleToolBar()
-    elseif key == "," then MoveActivePlane(activepos+1)
-    elseif key == "." then MoveActivePlane(activepos-1)
+    elseif key == "," then MoveActivePlane(activepos+1, true)
+    elseif key == "." then MoveActivePlane(activepos-1, true)
     elseif key == "a" and mods == "shift" then CycleActivePlane()
     elseif key == "c" and mods == "none" then CycleCursor()
     elseif key == "d" and mods == "none" then DrawMode()
@@ -6144,6 +6242,7 @@ function MainLoop()
                         end
                         if drag_paste then
                             -- ignore currcursor
+                            RememberCurrentState()
                         elseif currcursor == drawcursor then
                             if mods == "none" then
                                 drawing = StartDrawing(x, y)
@@ -6165,10 +6264,10 @@ function MainLoop()
                                 end
                             elseif mods == "alt" then
                                 hand_erase = true
-                                EraseLiveCells(x, y)
+                                EraseLiveCells(x, y, true)
                             elseif mods == "shift" then
                                 hand_select = true
-                                SelectLiveCells(x, y)
+                                SelectLiveCells(x, y, true)
                             end
                         end
                     end
@@ -6176,10 +6275,8 @@ function MainLoop()
             elseif event:find("^mup") then
                 mousedown = false
                 if drawing then
-                    StopDrawing()
                     drawing = false
                 elseif selecting then
-                    StopSelecting()
                     selecting = false
                 elseif drag_paste then
                     drag_paste = false
@@ -6219,9 +6316,9 @@ function MainLoop()
                     elseif drag_active then
                         DragActivePlane(x, y, prevx, prevy)
                     elseif hand_erase then
-                        EraseLiveCells(x, y)
+                        EraseLiveCells(x, y, false)
                     elseif hand_select then
-                        SelectLiveCells(x, y)
+                        SelectLiveCells(x, y, false)
                     else
                         -- rotate the view
                         local deltax = x - prevx
