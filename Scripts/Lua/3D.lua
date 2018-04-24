@@ -297,36 +297,36 @@ end
 function ReadSettings()
     local f = io.open(settingsfile, "r")
     if f then
-        -- must match order in WriteSettings
-        startup = f:read("*l") or "3D-start.lua"
-        N = tonumber(f:read("*l")) or 30
-        rulestring = f:read("*l") or DEFAULT_RULE
-        showaxes = (f:read("*l") or "true") == "true"
-        celltype = f:read("*l") or "cube"
-        perc = tonumber(f:read("*l")) or 20
-        pattdir = f:read("*l") or g.getdir("data")
-        scriptdir = f:read("*l") or g.getdir("app")
-        showlines = (f:read("*l") or "true") == "true"
+        while true do
+            local line = f:read("*l")
+            if not line then break end
+            local keyword, value = split(line,"=")
+            -- look for a keyword used in WriteSettings
+            if not value then
+                -- ignore keyword
+            elseif keyword == "startup" then startup = tostring(value)
+            elseif keyword == "pattdir" then pattdir = tostring(value)
+            elseif keyword == "scriptdir" then scriptdir = tostring(value)
+            elseif keyword == "celltype" then celltype = tostring(value)
+            elseif keyword == "perc" then perc = tonumber(value) or 20
+            elseif keyword == "lines" then showlines = tostring(value) == "true"
+            elseif keyword == "axes" then showaxes = tostring(value) == "true"
+            elseif keyword == "gridsize" then
+                N = tonumber(value) or 30
+                if N < MINN then N = MINN end
+                if N > MAXN then N = MAXN end
+                -- update parameters that depend on N
+                MIDGRID = (N+1-(N%2))*HALFCELL
+                MIDCELL = HALFCELL-MIDGRID
+            elseif keyword == "rule" then
+                rulestring = tostring(value)
+                if not ParseRule(rulestring) then
+                    g.warn("Resetting bad rule ("..rulestring..") to default.")
+                    rulestring = DEFAULT_RULE
+                end
+            end
+        end
         f:close()
-        
-        -- update all parameters that depend on N
-        MIDGRID = (N+1-(N%2))*HALFCELL
-        MIDCELL = HALFCELL-MIDGRID
-        
-        if not rulestring:find("^3D") then
-            rulestring = "3D"..rulestring
-        end
-        if not ParseRule(rulestring) then
-            g.warn("Resetting bad rule ("..rulestring..") to default.")
-            rulestring = DEFAULT_RULE
-        end
-        
-        -- celltype used to be true/false
-        if celltype == "true" then
-            celltype = "point"
-        elseif celltype == "false" then
-            celltype = "cube"
-        end
     end
 end
 
@@ -335,16 +335,16 @@ end
 function WriteSettings()
     local f = io.open(settingsfile, "w")
     if f then
-        -- must match order in ReadSettings
-        f:write(startup.."\n")
-        f:write(tostring(N).."\n")
-        f:write(rulestring.."\n")
-        f:write(tostring(showaxes).."\n")
-        f:write(celltype.."\n")
-        f:write(tostring(perc).."\n")
-        f:write(pattdir.."\n")
-        f:write(scriptdir.."\n")
-        f:write(tostring(showlines).."\n")
+        -- keywords must match those in ReadSettings (but order doesn't matter)
+        f:write("startup="..startup.."\n")
+        f:write("pattdir="..pattdir.."\n")
+        f:write("scriptdir="..scriptdir.."\n")
+        f:write("gridsize="..N.."\n")
+        f:write("celltype="..celltype.."\n")
+        f:write("rule="..rulestring.."\n")
+        f:write("perc="..perc.."\n")
+        f:write("lines="..tostring(showlines).."\n")
+        f:write("axes="..tostring(showaxes).."\n")
         f:close()
     end
 end
