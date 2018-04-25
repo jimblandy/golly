@@ -139,6 +139,7 @@ local redostack = {}                -- stack of states that can be redone
 local startcount = 0                -- starting gencount (can be > 0)
 local startindex = 0                -- index of starting state in undostack
 local dirty = false                 -- pattern has been modified by user/script?
+local undo_cleared = false          -- was ClearUndoRedo called?
 
 local refcube = {}                  -- invisible reference cube
 local rotrefz = {}                  -- Z coords of refcube's rotated vertices
@@ -1741,6 +1742,7 @@ function ClearUndoRedo()
     undostack = {}
     redostack = {}
     dirty = false
+    undo_cleared = true
 end
 
 ----------------------------------------------------------------------
@@ -1788,31 +1790,19 @@ end
 
 ----------------------------------------------------------------------
 
-function SaveStartingGen()
-    -- ignore if user script is running
-    if scriptlevel > 0 then return end
-    
-    redostack = {}
-    undostack[#undostack+1] = SaveState()
-    startindex = #undostack
-end
-
-----------------------------------------------------------------------
-
 function RestoreStartingGen()
-    -- ignore if user script is running
-    if scriptlevel > 0 then return end
+    -- called from Reset to restore starting state
 
     -- push current state onto redostack
     redostack[#redostack+1] = SaveState()
     
     -- unwind undostack until we get to startindex
-    while #undostack > startindex do
+    while startindex < #undostack do
         local state = table.remove(undostack)
         redostack[#redostack+1] = state
     end
     
-    -- restore state saved by SaveStartingGen
+    -- pop starting state off undostack and restore it
     RestoreState( table.remove(undostack) )
 end
 
@@ -2073,8 +2063,9 @@ function NextGeneration()
     end
     
     if gencount == startcount then
-        -- save starting info for later Reset
-        SaveStartingGen()
+        -- remember position in undo stack that stores the starting state
+        -- (for later use by Reset)
+        startindex = #undostack
     end
     
     popcount = 0        -- incremented below
@@ -2584,7 +2575,7 @@ function CallScript(func, fromclip)
     
     if scriptlevel == 0 then
         RememberCurrentState()
-        -- #undostack is now > 0
+        undo_cleared = false    -- becomes true if ClearUndoRedo is called
     end
     
     scriptlevel = scriptlevel + 1
@@ -2596,9 +2587,13 @@ function CallScript(func, fromclip)
     -- undo/redo history is deleted and dirty is set to false,
     -- but a later SetCell call might then set dirty to true,
     -- so the following test fixes that
-    if scriptlevel == 0 and #undostack == 0 and dirty then
-        -- ClearUndoRedo was called so we don't want dirty to be true
+    if scriptlevel == 0 and undo_cleared then
+        -- ensure the dirty flag is false
         dirty = false
+        -- if the script called NextGeneration (via Step) after calling ClearUndoRedo
+        -- (or vice versa) then startindex won't be valid, so set startcount to gencount
+        -- to ensure Reset does nothing
+        startcount = gencount
     end
     
     if err then
@@ -4001,7 +3996,7 @@ function StartStop()
     generating = not generating
     UpdateStartButton()
     Refresh()
-    if generating and popcount > 0 and gencount > startcount then
+    if generating and popcount > 0 then
         RememberCurrentState()
         -- MainLoop will call NextGeneration
     end
@@ -4011,9 +4006,8 @@ end
 
 function Step1()
     StopGenerating()
-    -- note that NextGeneration does nothing if popcount is 0,
-    -- or it calls SaveStartingGen if gencount == startcount
-    if popcount > 0 and gencount > startcount then
+    -- note that NextGeneration does nothing if popcount is 0
+    if popcount > 0 then
         RememberCurrentState()
     end
     NextGeneration()
@@ -4022,6 +4016,9 @@ end
 ----------------------------------------------------------------------
 
 function Reset()
+    -- user scripts cannot call Reset (they can use SaveState and RestoreState)
+    if scriptlevel > 0 then return end
+    
     if gencount > startcount then
         RestoreStartingGen()
         StopGenerating()
