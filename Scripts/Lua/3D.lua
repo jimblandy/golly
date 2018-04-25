@@ -21,6 +21,7 @@ TODO: !!!
 
 NOTE: Do following changes for the Golly 3.2b1 release:
 
+- enable batch draw code
 - add menu bar and pop-up menus from oplus
 - get round() from gplus
 - fix textoption background problem in m.button code in oplus/init.lua
@@ -1610,6 +1611,13 @@ function SaveState()
     -- save current grid size
     state.saveN = N
     
+    -- save current active plane
+    state.saveplane = activeplane
+    state.savepos = activepos
+    
+    -- save current cursor
+    state.savecursor = currcursor
+    
     -- save current rule
     state.saverule = rulestring
     
@@ -1670,6 +1678,13 @@ function RestoreState(state)
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
     CreateAxes()
+    
+    -- restore active plane (depends on N)
+    SetActivePlane(state.saveplane, state.savepos)
+    
+    -- restore cursor (determines whether active plane is displayed)
+    currcursor = state.savecursor
+    if not arrow_cursor then ov("cursor "..currcursor) end
     
     -- restore rule
     ParseRule(state.saverule)
@@ -1907,6 +1922,13 @@ function MoveActivePlane(newpos, refresh)
         elseif newpos + mid >= N then
             newpos = N-1-mid
         end
+        if newpos == activepos then return end
+
+        -- note that refresh is false if called from DragActivePlane
+        -- (in which case RememberCurrentState has already been called
+        -- by StartDraggingPlane)
+        if refresh then RememberCurrentState() end
+
         -- use the same orientation
         SetActivePlane(activeplane, newpos)
         if refresh then Refresh() end
@@ -1917,6 +1939,7 @@ end
 
 function CycleActivePlane()
     if currcursor ~= movecursor then
+        RememberCurrentState()
         -- cycle to next orientation of active plane
         if activeplane == "XY" then
             SetActivePlane("YZ", activepos)
@@ -3404,17 +3427,15 @@ end
 ----------------------------------------------------------------------
 
 function Paste()
-    -- if a paste is already pending then cancel it
+    -- if a paste pattern already exists then cancel it
     local savedstate = false
     if pastecount > 0 then
-        RememberCurrentState()
+        CancelPaste()
         savedstate = true
-        pastecount = 0
-        pastepatt = {}
     end
 
-    -- if the clipboard contains a valid RLE3 pattern then create a sparse array
-    -- of paste cells (to be displayed as translucent red)
+    -- if the clipboard contains a valid RLE3 pattern then create a paste pattern
+    -- in middle of grid
     local filepath = CopyClipboardToFile()
     if filepath then
         local err, newpattern = ReadPattern(filepath)
@@ -4077,7 +4098,40 @@ function GetBounds()
         -- return the pattern's minimal bounding box
         MinimizeLiveBoundary()
         local mid = N//2
-        return { minx-mid, maxx-mid, miny-mid, maxy-mid, minz-mid, maxz-mid }
+        return { minx-mid, maxx-mid,
+                 miny-mid, maxy-mid,
+                 minz-mid, maxz-mid }
+    else
+        return {}
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function GetSelectionBounds()
+    if selcount > 0 then
+        -- return the selection's minimal bounding box
+        MinimizeSelectionBoundary()
+        local mid = N//2
+        return { minselx-mid, maxselx-mid,
+                 minsely-mid, maxsely-mid,
+                 minselz-mid, maxselz-mid }
+    else
+        return {}
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function GetPasteBounds()
+    if pastecount > 0 then
+        -- return the paste pattern's minimal bounding box
+        local mid = N//2
+        return { minpastex-mid, maxpastex-mid,
+                 minpastey-mid, maxpastey-mid,
+                 minpastez-mid, maxpastez-mid }
     else
         return {}
     end
@@ -4154,15 +4208,6 @@ end
 -- for user scripts
 function SelectionExists()
     return selcount > 0
-end
-
-----------------------------------------------------------------------
-
--- for user scripts
-function PasteClipboard()
-    return Paste()
-    -- if success then paste pattern is in middle of grid
-    -- where it can be flipped/rotated etc
 end
 
 ----------------------------------------------------------------------
@@ -4258,6 +4303,7 @@ function ShowHelp()
 <dd><a href="#keyboard"><b>Keyboard Shortcuts</b></a></dd>
 <dd><a href="#scripts"><b>Running Scripts</b></a></dd>
 <dd><a href="#functions"><b>Script Functions</b></a></dd>
+<dd><a href="#coords"><b>Cell Coordinates</b></a></dd>
 <dd><a href="#rules"><b>Supported Rules</b></a></dd>
 <dd><a href="#rle3"><b>RLE3 File Format</b></a></dd>
 <dd><a href="#refs"><b>Credits and References</b></a></dd>
@@ -4456,26 +4502,28 @@ want to call from your own scripts:
 <a href="#DoPaste"><b>DoPaste</b></a><br>
 <a href="#DrawMode"><b>DrawMode</b></a><br>
 <a href="#FitGrid"><b>FitGrid</b></a><br>
-<a href="#FlipPaste"><b>FlipPaste</b></a>
+<a href="#FlipPaste"><b>FlipPaste</b></a><br>
+<a href="#FlipSelection"><b>FlipSelection</b></a>
 </td>
-<td valign=top width=40> </td>
+<td valign=top width=30> </td>
 <td valign=top>
-<a href="#FlipSelection"><b>FlipSelection</b></a><br>
 <a href="#GetBounds"><b>GetBounds</b></a><br>
 <a href="#GetCell"><b>GetCell</b></a><br>
 <a href="#GetGeneration"><b>GetGeneration</b></a><br>
 <a href="#GetGridSize"><b>GetGridSize</b></a><br>
+<a href="#GetPasteBounds"><b>GetPasteBounds</b></a><br>
 <a href="#GetPercentage"><b>GetPercentage</b></a><br>
 <a href="#GetPopulation"><b>GetPopulation</b></a><br>
 <a href="#GetRule"><b>GetRule</b></a><br>
+<a href="#GetSelectionBounds"><b>GetSelectionBounds</b></a><br>
 <a href="#InitialView"><b>InitialView</b></a><br>
 <a href="#MoveMode"><b>MoveMode</b></a><br>
 <a href="#NewPattern"><b>NewPattern</b></a>
 </td>
-<td valign=top width=40> </td>
+<td valign=top width=30> </td>
 <td valign=top>
 <a href="#OpenPattern"><b>OpenPattern</b></a><br>
-<a href="#PasteClipboard"><b>PasteClipboard</b></a><br>
+<a href="#Paste"><b>Paste</b></a><br>
 <a href="#PasteExists"><b>PasteExists</b></a><br>
 <a href="#RandomPattern"><b>RandomPattern</b></a><br>
 <a href="#RestoreState"><b>RestoreState</b></a><br>
@@ -4484,12 +4532,13 @@ want to call from your own scripts:
 <a href="#RotateSelection"><b>RotateSelection</b></a><br>
 <a href="#RunScript"><b>RunScript</b></a><br>
 <a href="#SavePattern"><b>SavePattern</b></a><br>
-<a href="#SaveState"><b>SaveState</b></a>
+<a href="#SaveState"><b>SaveState</b></a><br>
+<a href="#SelectAll"><b>SelectAll</b></a>
 </td>
-<td valign=top width=40> </td>
+<td valign=top width=30> </td>
 <td valign=top>
-<a href="#SelectAll"><b>SelectAll</b></a><br>
 <a href="#SelectCell"><b>SelectCell</b></a><br>
+<a href="#SelectedCell"><b>SelectedCell</b></a><br>
 <a href="#SelectionExists"><b>SelectionExists</b></a><br>
 <a href="#SelectMode"><b>SelectMode</b></a><br>
 <a href="#SetCell"><b>SetCell</b></a><br>
@@ -4517,14 +4566,17 @@ DoPaste
 FitGrid
 FlipPaste
 FlipSelection
+GetPasteBounds
+GetSelectionBounds
 InitialView
-PasteClipboard
+Paste
 PasteExists
 Rotate
 RotatePaste
 RotateSelection
 SavePattern
 SelectAll
+SelectedCell
 SelectionExists
 
 <a name="DeselectCell"></a><p><dt><b>DeselectCell(<i>x, y, z</i>)</b></dt>
@@ -4616,8 +4668,9 @@ the user will be prompted to select a .lua file.
 <dd>
 Return an object representing the current state.  The object can be given
 later to <a href="#RestoreState">RestoreState</a> to restore the saved state.
-The saved information includes the grid size, the rule, the pattern and its
-generation count, the selection, and the paste pattern.
+The saved information includes the grid size, the active plane's orientation
+and position, the cursor mode, the rule, the pattern and its generation count,
+the selection, and the paste pattern.
 </dd>
 
 <a name="SelectCell"></a><p><dt><b>SelectCell(<i>x, y, z</i>)</b></dt>
@@ -4665,6 +4718,25 @@ Update the display.  Note that 3D.lua automatically updates the display
 when a script finishes, so there's no need to call Update() at the
 end of a script.
 </dd>
+
+<p><a name="coords"></a><br>
+<font size=+1><b>Cell Coordinates</b></font>
+
+<p>
+Many of the above script functions accept or return cell coordinates.
+All coordinates are relative to the middle cell in the grid, so a call
+like SetCell(0,0,0,1) will turn on the middle cell.
+
+<p>
+The following snippet creates a diagonal line of cells from the
+grid corner with the minimum cell coordinates to the corner with
+the maximum cell coordinates:
+
+<dd><table border=0><pre>
+local N = GetGridSize()
+for c = -(N//2), (N-1)//2 do
+    SetCell(c, c, c, 1)
+end</pre></table></dd>
 
 <p><a name="rules"></a><br>
 <font size=+1><b>Supported Rules</b></font>
@@ -4788,8 +4860,9 @@ end
 --------------------------------------------------------------------------------
 
 function SetCursor(cursor)
+    RememberCurrentState()
     currcursor = cursor
-    if not arrow_cursor then ov("cursor "..cursor) end
+    if not arrow_cursor then ov("cursor "..currcursor) end
 end
 
 --------------------------------------------------------------------------------
@@ -5740,7 +5813,12 @@ function StartDraggingPlane(mousex, mousey)
     local oldcell = activecell
     activecell = InsideActiveCell(mousex, mousey)
     if activecell ~= oldcell then Refresh() end
-    return #activecell > 0
+    if #activecell > 0 then
+        RememberCurrentState()
+        return true
+    else
+        return false
+    end
 end
 
 ----------------------------------------------------------------------
