@@ -2326,7 +2326,7 @@ function UpdateCurrentGrid(newpattern)
     StopGenerating()
     SetCursor(movecursor)
     SetActivePlane()
-    ClearUndoRedo()
+    ClearUndoRedo()     -- dirty = false
     InitialView()       -- calls Refresh
 end
 
@@ -2547,6 +2547,7 @@ function SavePattern(filepath)
         else
             -- set pattname to file name at end of filepath
             pattname = filepath:match("^.+"..pathsep.."(.+)$")
+            dirty = false
             Refresh()
         end
     else
@@ -4961,6 +4962,22 @@ end
 ----------------------------------------------------------------------
 
 function ExitScript()
+    if dirty then
+        -- ask user if they really want to exit
+        local function savechanges()
+            g.note("There are unsaved changes.\n" ..
+                   "Do you want to save the current pattern?")
+        end
+        local status, err = pcall(savechanges)
+        if err then
+            -- user hit Cancel
+            g.continue("")
+        else
+            -- user hit OK
+            SavePattern()
+            return          
+        end
+    end
     g.exit()
 end
 
@@ -6336,9 +6353,9 @@ function InitialView()
     xizo = 0.0; yizo = 0.0; zizo = 1.0
 
     -- rotate to a nice view but don't call Refresh
-    Rotate(160, 30, 0, false)
-    -- user can hit the up arrow 4 times and the right arrow 6 times
-    -- to see an XY plane fully facing the screen
+    Rotate(160, 20, 0, false)
+    -- user can hit the up arrow 4 times and the right arrow 4 times
+    -- to see an untilted XY plane parallel with the screen
     
     FitGrid()   -- calls Refresh
 end
@@ -6385,14 +6402,15 @@ function Initialize()
     
     SetCursor(movecursor)
     SetActivePlane()
-    InitialView()       -- calls Refresh
+    InitialView()           -- calls Refresh
     
     -- run the user's startup script if it exists
     local f = io.open(startup, "r")
     if f then
         f:close()
         RunScript(startup)
-        ClearUndoRedo()
+        ClearUndoRedo()     -- don't want to undo startup script
+        Refresh()
     end
 end
 
@@ -6603,14 +6621,14 @@ function MainLoop()
         else
             -- mouse button is not down
             CheckCursor(mousepos)
-            if not generating then
+            if generating then
+                NextGeneration()
+            else
                 -- don't hog the CPU
                 -- implement g.sleep using wxMilliSleep!!!
                 -- g.sleep(5)
             end
         end
-        
-        if generating and not mousedown then NextGeneration() end
     end
 end
 
