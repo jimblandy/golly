@@ -2971,29 +2971,6 @@ end
 
 ----------------------------------------------------------------------
 
-function SelectAll()
-    if popcount > 0 then
-        RememberCurrentState()
-        selcount = 0
-        selected = {}
-        for k,_ in pairs(grid1) do
-            selected[k] = true
-            selcount = selcount + 1
-        end
-        -- selection boundary matches live cell boundary
-        minselx = minx
-        minsely = miny
-        minselz = minz
-        maxselx = maxx
-        maxsely = maxy
-        maxselz = maxz
-        minimal_sel_bounds = minimal_live_bounds
-        Refresh()
-    end
-end
-
-----------------------------------------------------------------------
-
 function CreateRLE3Selection()
     -- convert selection to lines of RLE3 data
     -- (note that selcount > 0 and at least one live cell is selected)
@@ -3156,8 +3133,10 @@ function CutSelection()
         -- then kill them
         if CopySelection() then
             ClearSelection()    -- calls RememberCurrentState and Refresh
+            return true
         end
     end
+    return false
 end
 
 ----------------------------------------------------------------------
@@ -3169,6 +3148,32 @@ function CancelSelection()
         selected = {}
         InitSelectionBoundary()
         Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function SelectAll()
+    if popcount > 0 then
+        RememberCurrentState()
+        selcount = 0
+        selected = {}
+        for k,_ in pairs(grid1) do
+            selected[k] = true
+            selcount = selcount + 1
+        end
+        -- selection boundary matches live cell boundary
+        minselx = minx
+        minsely = miny
+        minselz = minz
+        maxselx = maxx
+        maxsely = maxy
+        maxselz = maxz
+        minimal_sel_bounds = minimal_live_bounds
+        Refresh()
+    else
+        -- there are no live cells so remove any existing selection
+        CancelSelection()
     end
 end
 
@@ -4153,7 +4158,7 @@ end
 
 ----------------------------------------------------------------------
 
--- for user scripts (where 0,0,0 is middle cell in grid)
+-- for user scripts
 function GetCell(x, y, z)
     local mid = N//2
     if grid1[ (x+mid) + N * ((y+mid) + N * (z+mid)) ] then
@@ -4165,7 +4170,7 @@ end
 
 ----------------------------------------------------------------------
 
--- for user scripts (where 0,0,0 is middle cell in grid)
+-- for user scripts
 function SetCell(x, y, z, state)
     local mid = N//2
     SetCellState(x+mid, y+mid, z+mid, state)
@@ -4173,7 +4178,7 @@ end
 
 ----------------------------------------------------------------------
 
--- for user scripts (where 0,0,0 is middle cell in grid)
+-- for user scripts
 function SelectCell(x, y, z)
     local mid = N//2
     SetSelection(x+mid, y+mid, z+mid, true)
@@ -4181,7 +4186,19 @@ end
 
 ----------------------------------------------------------------------
 
--- for user scripts (where 0,0,0 is middle cell in grid)
+-- for user scripts
+function SelectedCell(x, y, z)
+    if selcount == 0 then
+        return false
+    else
+        local mid = N//2
+        return selected[x+mid + N * (y+mid + N * (z+mid))]
+    end
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
 function DeselectCell(x, y, z)
     local mid = N//2
     SetSelection(x+mid, y+mid, z+mid, false)
@@ -4233,12 +4250,12 @@ end
 ----------------------------------------------------------------------
 
 -- for user scripts
-function FlipPaste(axis)
-    if     axis == "x" then FlipPasteX()
-    elseif axis == "y" then FlipPasteY()
-    elseif axis == "z" then FlipPasteZ()
+function FlipPaste(coordinates)
+    if     coordinates == "x" then FlipPasteX()
+    elseif coordinates == "y" then FlipPasteY()
+    elseif coordinates == "z" then FlipPasteZ()
     else
-        error("Bad axis in FlipPaste!", 2)
+        error("Bad coordinates in FlipPaste!", 2)
     end
 end
 
@@ -4257,12 +4274,12 @@ end
 ----------------------------------------------------------------------
 
 -- for user scripts
-function FlipSelection(axis)
-    if     axis == "x" then FlipSelectionX()
-    elseif axis == "y" then FlipSelectionY()
-    elseif axis == "z" then FlipSelectionZ()
+function FlipSelection(coordinates)
+    if     coordinates == "x" then FlipSelectionX()
+    elseif coordinates == "y" then FlipSelectionY()
+    elseif coordinates == "z" then FlipSelectionZ()
     else
-        error("Bad axis in FlipSelection!", 2)
+        error("Bad coordinates in FlipSelection!", 2)
     end
 end
 
@@ -4297,14 +4314,15 @@ function ShowHelp()
 
 <p>
 <dd><a href="#intro"><b>Introduction</b></a></dd>
-<dd><a href="#mouse"><b>Mouse Controls</b></a></dd>
-<dd><a href="#keyboard"><b>Keyboard Shortcuts</b></a></dd>
-<dd><a href="#scripts"><b>Running Scripts</b></a></dd>
-<dd><a href="#functions"><b>Script Functions</b></a></dd>
-<dd><a href="#coords"><b>Cell Coordinates</b></a></dd>
-<dd><a href="#rules"><b>Supported Rules</b></a></dd>
-<dd><a href="#rle3"><b>RLE3 File Format</b></a></dd>
-<dd><a href="#refs"><b>Credits and References</b></a></dd>
+<dd><a href="#mouse"><b>Mouse controls</b></a></dd>
+<dd><a href="#keyboard"><b>Keyboard shortcuts</b></a></dd>
+<dd><a href="#scripts"><b>Running scripts</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#shortcuts"><b>Creating your own keyboard shortcuts</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#functions"><b>Script functions</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#coords"><b>Cell coordinates</b></a></dd>
+<dd><a href="#rules"><b>Supported rules</b></a></dd>
+<dd><a href="#rle3"><b>RLE3 file format</b></a></dd>
+<dd><a href="#refs"><b>Credits and references</b></a></dd>
 </p>
 
 <p><a name="intro"></a><br>
@@ -4316,7 +4334,7 @@ The script uses overlay commands to completely replace Golly's usual
 interface (note that all your Golly settings will be restored when 3D.lua exits).
 
 <p><a name="mouse"></a><br>
-<font size=+1><b>Mouse Controls</b></font>
+<font size=+1><b>Mouse controls</b></font>
 
 <p>
 If the Move option is ticked then you can use the hand cursor
@@ -4371,10 +4389,10 @@ Use the mouse wheel at any time to zoom in/out.
 The zoom is always centered on the middle cell in the grid.
 
 <p><a name="keyboard"></a><br>
-<font size=+1><b>Keyboard Shortcuts</b></font>
+<font size=+1><b>Keyboard shortcuts</b></font>
 
 <p>
-You can use the following keyboard shortcuts (but see <a href="#HandleKey">below</a>
+You can use the following keyboard shortcuts (but see <a href="#shortcuts">below</a>
 how you can write a script to create new shortcuts or override any of the supplied
 shortcuts):
 
@@ -4429,7 +4447,7 @@ shortcuts):
 </center>
 
 <p><a name="scripts"></a><br>
-<font size=+1><b>Running Scripts</b></font>
+<font size=+1><b>Running scripts</b></font>
 
 <p>
 3D.lua can run other Lua scripts, either by clicking the "Run..." button
@@ -4457,7 +4475,10 @@ Any syntax or runtime errors in a script won't abort 3D.lua.
 The script will terminate and you'll get a warning message, hopefully
 with enough information that lets you fix the error.
 
-<p><a name="HandleKey"></a>
+<p><a name="shortcuts"></a><br>
+<font size=+1><b>Creating your own keyboard shortcuts</b></font>
+
+<p>
 It's possible to override any of the global functions in 3D.lua.
 The following script shows how to override the HandleKey function in 3D.lua
 to create a keyboard shortcut for running a particular script.
@@ -4480,7 +4501,7 @@ function HandleKey(event)
 end</pre></table></dd>
 
 <p><a name="functions"></a><br>
-<font size=+1><b>Script Functions</b></font>
+<font size=+1><b>Script functions</b></font>
 
 <p>
 Here is an alphabetical list of the various functions in 3D.lua you might
@@ -4551,31 +4572,40 @@ want to call from your own scripts:
 </dd>
 </p>
 
-<p>
-TO BE COMPLETED!!!
+<a name="CancelPaste"></a><p><dt><b>CancelPaste()</b></dt>
+<dd>
+Remove any existing paste pattern.
+</dd>
 
-CancelPaste
-CancelSelection
-ClearOutside
-ClearSelection
-CopySelection
-CutSelection
-DoPaste
-FitGrid
-FlipPaste
-FlipSelection
-GetPasteBounds
-GetSelectionBounds
-InitialView
-Paste
-PasteExists
-Rotate
-RotatePaste
-RotateSelection
-SavePattern
-SelectAll
-SelectedCell
-SelectionExists
+<a name="CancelSelection"></a><p><dt><b>CancelSelection()</b></dt>
+<dd>
+Deselect all selected cells.
+</dd>
+
+<a name="ClearOutside"></a><p><dt><b>ClearOutside()</b></dt>
+<dd>
+Delete all live cells that are not selected.
+</dd>
+
+<a name="ClearSelection"></a><p><dt><b>ClearSelection()</b></dt>
+<dd>
+Delete all live cells that are selected.
+Note that the cells remain selected.
+</dd>
+
+<a name="CopySelection"></a><p><dt><b>CopySelection()</b></dt>
+<dd>
+Return true if all the selected live cells can be saved in the clipboard
+as an RLE3 pattern.
+Return false if there are no selected live cells.
+</dd>
+
+<a name="CutSelection"></a><p><dt><b>CutSelection()</b></dt>
+<dd>
+Return true if all the selected live cells can be saved in the clipboard
+as an RLE3 pattern.  If so then all the selected live cells are deleted.
+Return false if there are no selected live cells.
+</dd>
 
 <a name="DeselectCell"></a><p><dt><b>DeselectCell(<i>x, y, z</i>)</b></dt>
 <dd>
@@ -4583,9 +4613,38 @@ Deselect the given cell.
 The x,y,z coordinates are relative to the middle cell in the grid.
 </dd>
 
+<a name="DoPaste"></a><p><dt><b>DoPaste(<i>x, y, z, mode</i>)</b></dt>
+<dd>
+If a paste pattern exists then move it to the given position
+and paste it into the grid using the given mode ("or" or "xor").
+The x,y,z coordinates are relative to the middle cell in the grid
+and specify the desired position of the paste boundary's minimum corner.
+</dd>
+
 <a name="DrawMode"></a><p><dt><b>DrawMode()</b></dt>
 <dd>
-Switch to the pencil cursor.  The next Update call will display the active plane.
+Switch to the pencil cursor.
+The next <a href="#Update">Update</a> call will display the active plane.
+</dd>
+
+<a name="FitGrid"></a><p><dt><b>FitGrid()</b></dt>
+<dd>
+Zoom in or out so that the entire grid will be visible.
+Call <a href="#Update">Update</a> to see the result.
+</dd>
+
+<a name="FlipPaste"></a><p><dt><b>FlipPaste(<i>coordinates</i>)</b></dt>
+<dd>
+If the paste pattern exists then flip the given coordinates ("x", "y" or "z").
+For example, if given "x" then the X coordinates of all cells in the paste pattern will be
+reflected across the YZ plane running through the middle of the paste pattern.
+</dd>
+
+<a name="FlipSelection"></a><p><dt><b>FlipSelection(<i>coordinates</i>)</b></dt>
+<dd>
+If a selection exists then flip the given coordinates ("x", "y" or "z").
+For example, if given "x" then the X coordinates of all selected cells will be
+reflected across the YZ plane running through the middle of the selection.
 </dd>
 
 <a name="GetBounds"></a><p><dt><b>GetBounds()</b></dt>
@@ -4611,6 +4670,13 @@ Return the generation count.
 Return the current grid size (3 to 100).
 </dd>
 
+<a name="GetPasteBounds"></a><p><dt><b>GetPasteBounds()</b></dt>
+<dd>
+Return {} if there is no paste pattern, otherwise return its minimal bounding box
+as an array with 6 values: {minx, maxx, miny, maxy, minz, maxz}.
+The boundary values are relative to the middle cell in the grid.
+</dd>
+
 <a name="GetPercentage"></a><p><dt><b>GetPercentage()</b></dt>
 <dd>
 Return the percentage (0 to 100) given in the most recent "Random..." dialog.
@@ -4624,6 +4690,19 @@ Return the number of live cells in the current pattern.
 <a name="GetRule"></a><p><dt><b>GetRule()</b></dt>
 <dd>
 Return the current rule.
+</dd>
+
+<a name="GetSelectionBounds"></a><p><dt><b>GetSelectionBounds()</b></dt>
+<dd>
+Return {} if there are no selected cells, otherwise return the minimal bounding box
+of all selected cells (live or dead) as an array with 6 values: {minx, maxx, miny, maxy, minz, maxz}.
+The boundary values are relative to the middle cell in the grid.
+</dd>
+
+<a name="InitialView"></a><p><dt><b>InitialView()</b></dt>
+<dd>
+Restore the initial view displayed by 3D.lua when it first starts up.
+Call <a href="#Update">Update</a> to see the result.
 </dd>
 
 <a name="MoveMode"></a><p><dt><b>MoveMode()</b></dt>
@@ -4644,6 +4723,20 @@ the user will be prompted to select a .rle3 file.
 All undo/redo history is deleted.
 </dd>
 
+<a name="Paste"></a><p><dt><b>Paste()</b></dt>
+<dd>
+Return true if the clipboard contains a valid, non-empty RLE3 pattern that fits
+within the current grid.  If so then a paste pattern is created in the middle
+of the grid.  You can then call <a href="#FlipPaste">FlipPaste</a> or
+<a href="#RotatePaste">RotatePaste</a> to modify the paste pattern.
+Call <a href="#DoPaste">DoPaste</a> when you want to actually paste the pattern into the grid.
+</dd>
+
+<a name="PasteExists"></a><p><dt><b>PasteExists()</b></dt>
+<dd>
+Return true if a paste pattern exists.
+</dd>
+
 <a name="RandomPattern"></a><p><dt><b>RandomPattern(<i>percentage</i>)</b></dt>
 <dd>
 Create a new, random pattern with the given percentage density (0 to 100) of live cells.
@@ -4656,10 +4749,34 @@ All undo/redo history is deleted.
 Restore the state saved earlier by <a href="#SaveState">SaveState</a>.
 </dd>
 
+<a name="Rotate"></a><p><dt><b>Rotate(<i>xdegrees, ydegrees, zdegrees</i>)</b></dt>
+<dd>
+Rotate the grid axes by the given amounts (integers from -359 to +359).
+Call <a href="#Update">Update</a> to see the result.
+</dd>
+
+<a name="RotatePaste"></a><p><dt><b>RotatePaste(<i>axis</i>)</b></dt>
+<dd>
+If the paste pattern exists then rotate it 90 degrees clockwise
+about the given axis ("x", "y" or "z").
+</dd>
+
+<a name="RotateSelection"></a><p><dt><b>RotateSelection(<i>axis</i>)</b></dt>
+<dd>
+If a selection exists then rotate it 90 degrees clockwise
+about the given axis ("x", "y" or "z").
+</dd>
+
 <a name="RunScript"></a><p><dt><b>RunScript(<i>filepath</i>)</b></dt>
 <dd>
 Run the specified .lua file.  If the <i>filepath</i> is not supplied then
 the user will be prompted to select a .lua file.
+</dd>
+
+<a name="SavePattern"></a><p><dt><b>SavePattern(<i>filepath</i>)</b></dt>
+<dd>
+Save the current pattern in a specified RLE3 file.  If the <i>filepath</i>
+is not supplied then the user will be prompted for its name and location.
 </dd>
 
 <a name="SaveState"></a><p><dt><b>SaveState()</b></dt>
@@ -4671,15 +4788,32 @@ and position, the cursor mode, the rule, the pattern and its generation count,
 the selection, and the paste pattern.
 </dd>
 
+<a name="SelectAll"></a><p><dt><b>SelectAll()</b></dt>
+<dd>
+Select all live cells.  If there are no live cells then any existing selection
+is removed.
+</dd>
+
 <a name="SelectCell"></a><p><dt><b>SelectCell(<i>x, y, z</i>)</b></dt>
 <dd>
 Select the given cell.
 The x,y,z coordinates are relative to the middle cell in the grid.
 </dd>
 
+<a name="SelectedCell"></a><p><dt><b>SelectedCell(<i>x, y, z</i>)</b></dt>
+<dd>
+Return true if the given cell is selected (live or dead).
+</dd>
+
+<a name="SelectionExists"></a><p><dt><b>SelectionExists()</b></dt>
+<dd>
+Return true if at least one cell is selected (live or dead).
+</dd>
+
 <a name="SelectMode"></a><p><dt><b>SelectMode()</b></dt>
 <dd>
-Switch to the cross-hairs cursor.  The next Update call will display the active plane.
+Switch to the cross-hairs cursor.
+The next <a href="#Update">Update</a> call will display the active plane.
 </dd>
 
 <a name="SetCell"></a><p><dt><b>SetCell(<i>x, y, z, state</i>)</b></dt>
@@ -4696,7 +4830,7 @@ If the <i>newsize</i> is not supplied then the user will be prompted for a value
 
 <a name="SetMessage"></a><p><dt><b>SetMessage(<i>msg</i>)</b></dt>
 <dd>
-The given string will be displayed by the next Update call.
+The given string will be displayed by the next <a href="#Update">Update</a> call.
 Call SetMessage(nil) to clear the message.
 </dd>
 
@@ -4718,12 +4852,14 @@ end of a script.
 </dd>
 
 <p><a name="coords"></a><br>
-<font size=+1><b>Cell Coordinates</b></font>
+<font size=+1><b>Cell coordinates</b></font>
 
 <p>
 Many of the above script functions accept or return cell coordinates.
 All coordinates are relative to the middle cell in the grid, so a call
 like SetCell(0,0,0,1) will turn on the middle cell.
+If N is the grid size then the minimum coordinate value is -floor(N/2)
+and the maximum coordinate value is floor((N-1)/2).
 
 <p>
 The following snippet creates a diagonal line of cells from the
@@ -4737,7 +4873,7 @@ for c = -(N//2), (N-1)//2 do
 end</pre></table></dd>
 
 <p><a name="rules"></a><br>
-<font size=+1><b>Supported Rules</b></font>
+<font size=+1><b>Supported rules</b></font>
 
 <p>
 Use the "Rule..." button to change the current rule.
@@ -4750,7 +4886,7 @@ Each cell has 26 neighbors so the S counts are from 0 to 26
 and the B counts are from 1 to 26 (birth on 0 is not allowed).
 
 <p><a name="rle3"></a><br>
-<font size=+1><b>RLE3 File Format</b></font>
+<font size=+1><b>RLE3 file format</b></font>
 
 <p>
 3D.lua can read and write patterns as text files with a .rle3 extension.
@@ -4805,7 +4941,7 @@ x=2 y=4 z=4 rule=3D4,7/5,8
 $bo$bo/bo$bo$bo$oo/oo$bo$bo$bo/$bo$bo!</pre></table></dd>
 
 <p><a name="refs"></a><br>
-<font size=+1><b>Credits and References</b></font>
+<font size=+1><b>Credits and references</b></font>
 
 <p>
 3D.lua was inspired by the work of Carter Bays and his colleagues:
