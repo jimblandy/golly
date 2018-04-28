@@ -2823,6 +2823,8 @@ function SetGridSize(newsize)
             newsize = tonumber(s)
         else
             g.warn("Grid size must be an integer from "..MINN.." to "..MAXN..".")
+            -- note that if user hit the Cancel button then the next g.* call
+            -- (in this case g.getstring) will cause pcall to abort with an error
             goto try_again
         end
     end
@@ -5104,20 +5106,21 @@ end
 ----------------------------------------------------------------------
 
 function ExitScript()
+    local function savechanges()
+        -- probably need a g.savechanges command so user sees the proper dialog!!!
+        g.warn("There are unsaved changes.\n" ..
+               "Do you really want to exit 3D.lua?")
+        -- need to call a g.* command so an error is returned
+        -- by pcall if user hit Cancel button
+        g.doevent("")
+    end
+
     if dirty then
         -- ask user if they really want to exit
-        local function savechanges()
-            g.note("There are unsaved changes.\n" ..
-                   "Do you want to save the current pattern?")
-        end
         local status, err = pcall(savechanges)
         if err then
-            -- user hit Cancel
             g.continue("")
-        else
-            -- user hit OK
-            SavePattern()
-            return          
+            return          -- user hit Cancel
         end
     end
     g.exit()
