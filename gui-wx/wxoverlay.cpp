@@ -46,29 +46,6 @@ public:
     int cy;
     CullNode *cnext;
     CullNode *cprev;
-    CullIndex *ctile;
-};
-
-// -----------------------------------------------------------------------------
-
-class CullIndex {
-public:
-    CullIndex(CullNode *node, CullIndex *prev) {
-        inode = node;
-        iprev = prev;
-        if (prev) prev->inext = this;
-        if (node) node->ctile = this;
-    }
-
-    CullIndex() {
-    }
-
-    ~CullIndex() {
-    }
-
-    CullNode *inode;
-    CullIndex *inext;
-    CullIndex *iprev;
 };
 
 // -----------------------------------------------------------------------------
@@ -2030,9 +2007,6 @@ const char* Overlay::DoCreate(const char* args)
 
         // default width for lines and ellipses
         linewidth = 1;
-
-	// default batch paste cull range
-	cullrange = 0;
 
         // make sure the Show Overlay option is ticked
         if (!showoverlay) {
@@ -4070,36 +4044,6 @@ const char* Overlay::DoOptimize(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::PasteOptionCull(const char* args)
-{
-    int c, oldcull;
-    if (sscanf(args, " %d", &c) != 1) {
-        return OverlayError("pasteoption cull command requires 1 argument");
-    }
-
-    if (c < -1 || c > 25) return OverlayError("line width must be -1 or 0 to 25");
-
-    oldcull = cullrange;
-    cullrange = c;
-
-    static char result[32];
-    sprintf(result, "%d", oldcull);
-    return result;
-}
-
-// -----------------------------------------------------------------------------
-
-const char* Overlay::DoPasteOption(const char* args)
-{
-    if (pixmap == NULL) return OverlayError(no_overlay);
-
-    if (strncmp(args, "cull ", 5) == 0)       return PasteOptionCull(args+5);
-
-    return OverlayError("unknown pasteoption command");
-}
-
-// -----------------------------------------------------------------------------
-
 const char* Overlay::DoPaste(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -4112,7 +4056,7 @@ const char* Overlay::DoPaste(const char* args)
         return OverlayError("paste command requires at least 3 arguments");
     }
 
-//int ttotal = stopwatch->Time();
+    //int ttotal = stopwatch->Time();
 
     // make a copy of the arguments so we can change them
     char *buffer = (char*)malloc(arglen + 1);   // add 1 for the terminating nul
@@ -4137,6 +4081,25 @@ const char* Overlay::DoPaste(const char* args)
     if (lastarg < copy) {
         free(buffer);
         return OverlayError("paste command requires at least 3 arguments");
+    }
+
+    // check if the last argument is "cull"
+    bool cull = false;
+    if (strcmp(lastarg, " cull") == 0) {
+        cull = true;
+        *lastarg = 0;
+ 
+        lastarg--;
+        while (lastarg >= copy && *lastarg == ' ') {
+            lastarg--;
+        }
+        while (lastarg >= copy && *lastarg != ' ') {
+            lastarg--;
+        }
+        if (lastarg < copy) {
+            free(buffer);
+            return OverlayError("paste command requires at least 3 arguments");
+        }
     }
 
     // null terminate the arguments before the clip name
@@ -4169,123 +4132,87 @@ const char* Overlay::DoPaste(const char* args)
     // mark target clip as changed
     DisableTargetClipIndex();
     
-    // group coordinates into tiles by proximity
-    const int culitems = 1000000;        // TBD needs to by dynamic
-    static CullNode culbuf[culitems];    // memory buffer for nodes
-    CullNode *bufptr = culbuf;
     CullNode *current = NULL;
     CullNode *prev = NULL;
     CullNode *head = NULL;
-    CullNode *search = NULL;
-    static CullIndex indbuf[culitems];   // memory buffer for index items
-    CullIndex *indptr = indbuf;
-    const int tilerows = 64;             // divide target into this many rows
-    const int tilecols = 64;             // divide target into this many columns
-    const int numtiles = tilerows * tilecols;
-    static CullIndex *indtile[numtiles]; // each tile has a list of nodes contained in it
-    CullIndex *currentidx = NULL;
-    CullIndex *searchtile = NULL;
-    int curind;
+    const int culitems = 1000000;     // TBD make dynamic
+    static CullNode culbuf[culitems];
+    CullNode *bufptr = culbuf;
+    const int zrows = 512;
+    const int zcols = 512;
+    const int zitems = zrows * zcols;
+    static unsigned char zbuffer[zitems];
+    int z;
 
-    int nclipped = 0;
-    int nculled = 0;
-    int nnodes = 0;
+    //int nclipped = 0;
+    //int nculled = 0;
+    //int nnodes = 0;
 
-    // clear the index tiles
-    memset(indtile, 0, sizeof(*indtile) * numtiles);
-
-    // read each coordinate pair into list
+    // read each coordinate pair into the list removing those outside the target
     do {
         // discard if location is completely outside target
         if (RectOutsideTarget(x, y, w, h)) {
-            nclipped++;
+            //nclipped++;
         } else {
-            // compute which tile this node belongs to
-            curind = tilecols * ((y * tilerows) / ht) + ((x * tilecols) / wd);
-
-            // if the paste is partially clipped then in may fall outside the tiles so ensure not
-            if (curind < 0) curind = 0;
-            if (curind >= numtiles) curind = numtiles - 1;
-
-            // create a node for the location and add to list
+            // add node to list
             current = new(bufptr++) CullNode(x, y, prev); 
-            if (head == NULL) head = current;
             prev = current;
 
-            // create an index entry in the tile for the node and add to list
-            currentidx = new(indptr++) CullIndex(current, indtile[curind]);
-            indtile[curind] = currentidx;
+            // set the head to point to the first in the list
+            if (head == NULL) head = current;
 
-            // increment node count
-            nnodes++;
+            //nnodes++;
         }
     }
     while ((copy = (char*)GetCoordinatePair(copy, &x, &y)) != 0);
 
-    // convert cull range percentage into pixels
-    int range = ((w + h) * cullrange) / 200;
+    //int tcull = stopwatch->Time();
 
-    // ensure non-zero percent ranges are at least 1 pixel
-    if (cullrange > 0 && range == 0) range = 1;
+    // check whether cull is requested
+    if (cull) {
+        // clear the z-buffer
+        memset(zbuffer, 0, sizeof(*zbuffer) * zitems);
 
-//int tcull = stopwatch->Time();
-
-    // check for culling
-    if (cullrange > -1) {
-        int dx, dy;
-        // process each tile
-        for (int i = 0; i < numtiles; i++) {
-            currentidx = indtile[i];
-            // check if there are nodes in the tile
-            while (currentidx) {
-                // get the first node
-                current = currentidx->inode;
-                x = current->cx;
-                y = current->cy;
-
-                // search previous nodes in this tile
-                searchtile = currentidx->iprev;
-                while (searchtile) {
-                    search = searchtile->inode;
-                    dx = x - search->cx;
-                    dy = y - search->cy;
-                    // check if the search node is close enough to be a duplicate
-                    if (dx >= -range && dx <= range && dy >= -range && dy <= range) {
-                        nculled++;
-                        // remove from node list
-                        if (search->cprev) {
-                            search->cprev->cnext = search->cnext;
-                            search->cnext->cprev = search->cprev;
-                        } else {
-                            // remove the head so update
-                            search->cnext->cprev = NULL;
-                            head = search->cnext;
-                        }
-                        // remove from tile
-                        if (searchtile->iprev) {
-                            searchtile->iprev->inext = searchtile->inext;
-                            searchtile->inext->iprev = searchtile->iprev;
-                        } else {
-                            searchtile->inext->iprev = NULL;
-                        }
-                    }
-                    searchtile = searchtile->iprev;
+        // cull items using z-buffer starting at the end of the list and working backwards
+        while (current) {
+            // compute z-buffer location
+            z = zcols * ((current->cy * zrows) / ht) + ((current->cx * zcols) / wd);
+            if (z < 0) z = 0;
+            if (z >= zitems) z = zitems - 1;
+            if (zbuffer[z]) {
+                // remove item
+                if (current->cprev) {
+                    current->cprev->cnext = current->cnext;
+                    current->cnext->cprev = current->cprev;
+                } else {
+                    current->cnext->cprev = NULL;
                 }
-                currentidx = currentidx->iprev;
-            }
-        }
-    }
 
-//int tpaste = stopwatch->Time();
+                //nculled++;
+            } else {
+                // set in z-buffer
+                zbuffer[z] = 255;
+            }
+            prev = current;
+            current = current->cprev;
+        }
+        // set current to last used item which will now be the head of the list
+        current = prev;
+    } else {
+        // no culling so set current to head of list
+        current = head;
+    }
+        
+    //int tpaste = stopwatch->Time();
 
     // paste at each coordinate pair
     const int ow = w;
     const int oh = h;
-    current = head;
     while (current) {
+        // get the coordinates
         x = current->cx;
         y = current->cy;
-        // set original width and height
+        // set original width and height since these can be changed below if clipping required
         w = ow;
         h = oh;
 
@@ -4474,7 +4401,7 @@ const char* Overlay::DoPaste(const char* args)
     //ttotal = stopwatch->Time() - ttotal;
 
     //if (nnodes > 1) {
-        //fprintf(stderr, "batch: %d\tculled: %d (%d%%)\tclipped: %d\trange: %d\tcull: %d\tpaste: %d\ttotal: %d\n", nnodes, nculled, (100 * nculled) / nnodes, nclipped, range, tcull, tpaste, ttotal);
+        //fprintf(stderr, "batch: %d\tculled: %d (%d%%)\tclipped: %d\tcull: %d\tpaste: %d\ttotal: %d\n", nnodes, nculled, (100 * nculled) / nnodes, nclipped, , tcull, tpaste, ttotal);
     //}
 
     // free the buffer
@@ -5968,7 +5895,6 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "blend", 5) == 0)         return DoBlend(cmd+5);
     if (strncmp(cmd, "fill", 4) == 0)          return DoFill(cmd+4);
     if (strncmp(cmd, "copy", 4) == 0)          return DoCopy(cmd+4);
-    if (strncmp(cmd, "pasteoption ", 12) == 0) return DoPasteOption(cmd+12);
     if (strncmp(cmd, "paste", 5) == 0)         return DoPaste(cmd+5);
     if (strncmp(cmd, "optimize", 8) == 0)      return DoOptimize(cmd+8);
     if (strncmp(cmd, "lineoption ", 11) == 0)  return DoLineOption(cmd+11);

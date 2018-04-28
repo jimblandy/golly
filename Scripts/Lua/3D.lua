@@ -216,7 +216,7 @@ local settingsfile = g.getdir("data").."3D.ini"
 -- batch draw settings !BATCHDRAW!
 local xybatch = {}                  -- coordinates for each cell
 local usebatch = false              -- whether to use batch drawing (enable in Golly 3.2b1!!!)
-local cullrange = -1                -- disable batch draw cull
+local usecull  = false              -- disable batch draw cull
 
 ----------------------------------------------------------------------
 
@@ -1016,8 +1016,8 @@ local function AddCubeToBatch(x, y, z) -- !BATCHDRAW!
     z = z * CELLSIZE + MIDCELL
     local newx, newy = TransformPoint({x, y, z})
     -- use orthographic projection
-    x = round(newx) + midx - LEN
-    y = round(newy) + midy - LEN
+    x = round(newx) + midx - HALFCUBECLIP
+    y = round(newy) + midy - HALFCUBECLIP
     -- add to the list to draw
     xybatch[#xybatch + 1] = x
     xybatch[#xybatch + 1] = y
@@ -1042,17 +1042,22 @@ end
 ----------------------------------------------------------------------
 
 function DrawBatch() -- !BATCHDRAW!
-    local oldcr = ov("pasteoption cull "..cullrange)
+    local command
     if celltype == "cube" then
-        ov("paste "..table.concat(xybatch, " ").." c")
+        command = "paste "..table.concat(xybatch, " ").." c"
     elseif celltype == "sphere" then
-        ov("paste "..table.concat(xybatch, " ").." S")
+        command = "paste "..table.concat(xybatch, " ").." S"
     else -- celltype == "point"
         ov(op.white)
-        ov("set "..table.concat(xybatch, " "))
+        command = "set "..table.concat(xybatch, " ")
     end
     xybatch = {}
-    ov("pasteoption cull "..oldcr)
+
+     -- execute command
+     if usecull then
+         command = command.." cull"
+     end
+     ov(command)
 end
 
 ----------------------------------------------------------------------
@@ -1373,7 +1378,7 @@ function DisplayCells(editing)
     message = string.format("%.2fms", g.millisecs() - t1)
     if usebatch then
        message = message.." batch"
-       if cullrange ~= -1 then
+       if usecull then
            message = message.." cull"
        end
     end
@@ -1447,6 +1452,8 @@ function Refresh()
     -- turn off event checking to avoid partial updates of overlay
     -- (eg. due to user resizing window while a pattern is generating)
     g.check(false)
+
+local ttotal = g.millisecs()
 
     -- fill overlay with background color
     ov("rgba "..BACK_COLOR)
@@ -4855,14 +4862,9 @@ end
 ----------------------------------------------------------------------
 
 function ToggleCull() -- !BATCHDRAW!
-    if cullrange == -1 then
-       cullrange = 10
-    else
-       cullrange = -1
-    end
+    usecull = not usecull
     Refresh()
 end
-
 
 ----------------------------------------------------------------------
 

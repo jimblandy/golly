@@ -38,9 +38,6 @@ class Clip;
 // The CullNode class is used by the paste command when batch draw is culling
 class CullNode;
 
-// The CullIndex class is used by the paste command when batch draw is culling
-class CullIndex;
-
 class Overlay {
 public:
     Overlay();
@@ -214,12 +211,6 @@ private:
     // Paste the named Clip data into the render target at the given location.
     // Automatically clips any pixels outside the render target.
     
-    const char* DoPasteOption(const char* args);
-    // Set a paste option.
-
-    const char* PasteOptionCull(const char* args);
-    // Set paste cull range.
-
     const char* DoScale(const char* args);
     // Scale the named Clip data into the render target using the given rectangle.
     // Automatically clips any pixels outside the render target.
@@ -443,7 +434,6 @@ private:
     int axx, axy, ayx, ayy;         // affine transformation values
     bool identity;                  // true if transformation values are 1,0,0,1
     int linewidth;                  // for lines and ellipses
-    int cullrange;                  // cull range for batch paste
     
     std::map<std::string,Clip*> clips;
     // named Clip data created by DoCopy or DoText and used by DoPaste
