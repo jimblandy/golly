@@ -1054,7 +1054,7 @@ function DrawBatch() -- !BATCHDRAW!
     xybatch = {}
 
      -- execute command
-     if usecull then
+     if usecull and celltype ~= "point" then
          command = command.." cull"
      end
      ov(command)
@@ -1372,12 +1372,14 @@ function DisplayCells(editing)
     end
 
     -- test batch draw !BATCHDRAW!
+local tb = g.millisecs()
     if usebatch and not testcell then
         DrawBatch()
     end
+tb = g.millisecs() - tb
     message = string.format("%.2fms", g.millisecs() - t1)
     if usebatch then
-       message = message.." batch"
+       message = message.." batch "..string.format("%.2fms", tb)
        if usecull then
            message = message.." cull"
        end
