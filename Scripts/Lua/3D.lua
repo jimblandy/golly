@@ -1270,15 +1270,18 @@ function DisplayCells(editing)
         end
     end
     
+    local i
+
     -- draw cells from back to front (assumes vertex order set in CreateCube)
     if maxZ == z1 then
         -- draw cell at MINX,MINY,MAXZ first
         for z = MAXZ, MINZ, -1 do
             for y = MINY, MAXY do
+                i = N*(y+N*z)
                 for x = MINX, MAXX do
                     if testcell then
-                        TestCell(editing, x+N*(y+N*z), x, y, z)
-                    elseif grid1[x+N*(y+N*z)] then
+                        TestCell(editing, i + x, x, y, z)
+                    elseif grid1[i + x] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1288,10 +1291,11 @@ function DisplayCells(editing)
         -- draw cell at MINX,MINY,MINZ first
         for z = MINZ, MAXZ do
             for y = MINY, MAXY do
+                i = N*(y+N*z)
                 for x = MINX, MAXX do
                     if testcell then
-                        TestCell(editing, x+N*(y+N*z), x, y, z)
-                    elseif grid1[x+N*(y+N*z)] then
+                        TestCell(editing, i + x, x, y, z)
+                    elseif grid1[i + x] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1301,10 +1305,11 @@ function DisplayCells(editing)
         -- draw cell at MINX,MAXY,MAXZ first
         for z = MAXZ, MINZ, -1 do
             for y = MAXY, MINY, -1 do
+                i = N*(y+N*z)
                 for x = MINX, MAXX do
                     if testcell then
-                        TestCell(editing, x+N*(y+N*z), x, y, z)
-                    elseif grid1[x+N*(y+N*z)] then
+                        TestCell(editing, i + x, x, y, z)
+                    elseif grid1[i + x] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1314,10 +1319,11 @@ function DisplayCells(editing)
         -- draw cell at MINX,MAXY,MINZ first
         for z = MINZ, MAXZ do
             for y = MAXY, MINY, -1 do
+                i = N*(y+N*z)
                 for x = MINX, MAXX do
                     if testcell then
-                        TestCell(editing, x+N*(y+N*z), x, y, z)
-                    elseif grid1[x+N*(y+N*z)] then
+                        TestCell(editing, i + x, x, y, z)
+                    elseif grid1[i + x] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1327,10 +1333,11 @@ function DisplayCells(editing)
         -- draw cell at MAXX,MAXY,MAXZ first
         for z = MAXZ, MINZ, -1 do
             for y = MAXY, MINY, -1 do
+                i = N*(y+N*z)
                 for x = MAXX, MINX, -1 do
                     if testcell then
-                        TestCell(editing, x+N*(y+N*z), x, y, z)
-                    elseif grid1[x+N*(y+N*z)] then
+                        TestCell(editing, i + x, x, y, z)
+                    elseif grid1[i + x] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1340,10 +1347,11 @@ function DisplayCells(editing)
         -- draw cell at MAXX,MAXY,MINZ first
         for z = MINZ, MAXZ do
             for y = MAXY, MINY, -1 do
+                i = N*(y+N*z)
                 for x = MAXX, MINX, -1 do
                     if testcell then
-                        TestCell(editing, x+N*(y+N*z), x, y, z)
-                    elseif grid1[x+N*(y+N*z)] then
+                        TestCell(editing, i + x, x, y, z)
+                    elseif grid1[i + x] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1353,10 +1361,11 @@ function DisplayCells(editing)
         -- draw cell at MAXX,MINY,MAXZ first
         for z = MAXZ, MINZ, -1 do
             for y = MINY, MAXY do
+                i = N*(y+N*z)
                 for x = MAXX, MINX, -1 do
                     if testcell then
-                        TestCell(editing, x+N*(y+N*z), x, y, z)
-                    elseif grid1[x+N*(y+N*z)] then
+                        TestCell(editing, i + x, x, y, z)
+                    elseif grid1[i + x] then
                         DrawLiveCell(x, y, z)
                     end
                 end
@@ -1366,10 +1375,11 @@ function DisplayCells(editing)
         -- draw cell at MAXX,MINY,MINZ first
         for z = MINZ, MAXZ do
             for y = MINY, MAXY do
+                i = N*(y+N*z)
                 for x = MAXX, MINX, -1 do
                     if testcell then
-                        TestCell(editing, x+N*(y+N*z), x, y, z)
-                    elseif grid1[x+N*(y+N*z)] then
+                        TestCell(editing, i + x, x, y, z)
+                    elseif grid1[i + x] then
                         DrawLiveCell(x, y, z)
                     end
                 end
