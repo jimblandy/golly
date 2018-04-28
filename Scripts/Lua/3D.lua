@@ -1452,6 +1452,10 @@ function Refresh()
         -- scripts call Update() when they want to refresh
         return
     end
+    
+    -- turn off event checking to avoid partial updates of overlay
+    -- (eg. due to user resizing window while a pattern is generating)
+    g.check(false)
 
     -- fill overlay with background color
     ov("rgba "..BACK_COLOR)
@@ -1524,6 +1528,8 @@ function Refresh()
     -- the overlay is 100% opaque and covers entire viewport
     -- so we can call ov("update") rather than slower g.update()
     ov("update")
+    
+    g.check(true)   -- restore event checking
 end
 
 ----------------------------------------------------------------------
@@ -4004,7 +4010,7 @@ function StartStop()
     Refresh()
     if generating and popcount > 0 then
         RememberCurrentState()
-        -- MainLoop will call NextGeneration
+        -- EventLoop will call NextGeneration
     end
 end
 
@@ -6613,7 +6619,7 @@ end
 
 ----------------------------------------------------------------------
 
-function MainLoop()
+function EventLoop()
     local mousedown = false         -- mouse button is down?
     local drawing = false           -- draw/erase cells with pencil cursor?
     local selecting = false         -- (de)select cells with cross-hairs cursor?
@@ -6626,21 +6632,29 @@ function MainLoop()
     local prevx, prevy              -- previous mouse position
     
     while true do
-        CheckLayerSize()            -- may need to resize the overlay
-        
         local event = g.getevent()
-        if event:find("^key") or event:find("^oclick") then
-            if message then
-                message = nil       -- remove the most recent message
-                Refresh()
+        if #event == 0 then
+            if not mousedown then
+                if not generating then
+                    -- don't hog the CPU when idle
+                    -- implement g.sleep using wxMilliSleep!!!
+                    -- g.sleep(5)
+                end
+                CheckLayerSize()    -- may need to resize the overlay
             end
-        end
-      
-        event = op.process(event)
-        -- event is empty if op.process handled the given event
-        if #event > 0 then
-            if event:find("^key") then
-                HandleKey(event)
+        else
+            if message and (event:find("^key") or event:find("^oclick")) then
+                message = nil
+                Refresh()           -- remove the most recent message
+            end
+            event = op.process(event)
+            if #event == 0 then
+                -- op.process handled the given event
+            elseif event:find("^key") then
+                -- don't do key action if mouse button is down (can clobber undo history)
+                if not mousedown then
+                    HandleKey(event)
+                end
             elseif event:find("^oclick") then
                 local _, x, y, button, mods = split(event)
                 x = tonumber(x)
@@ -6757,13 +6771,7 @@ function MainLoop()
         else
             -- mouse button is not down
             CheckCursor(mousepos)
-            if generating then
-                NextGeneration()
-            else
-                -- don't hog the CPU
-                -- implement g.sleep using wxMilliSleep!!!
-                -- g.sleep(5)
-            end
+            if generating then NextGeneration() end
         end
     end
 end
@@ -6774,7 +6782,7 @@ ReadSettings()
 local oldstate = SaveGollyState()
 Initialize()
 
-status, err = xpcall(MainLoop, gp.trace)
+status, err = xpcall(EventLoop, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 
