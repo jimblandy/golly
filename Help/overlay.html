@@ -1181,6 +1181,14 @@ the implementation details).
 
 <p><b><a name="oplusgraphics"></a>Graphics commands</b>
 
+<a name="draw_line"></a>
+<p><dt><b>op.draw_line(<i>x1, y1, x2, y2</i>)</b></dt>
+<dd>
+Draw a line from x1,y1 to x2,y2.
+</dd>
+<dd> Example: <b>op.draw_line(0, 0, 10, 10)</b></dd>
+</p>
+
 <a name="fill_ellipse"></a>
 <p><dt><b>op.fill_ellipse(<i>x, y, w, h, borderwd, fillrgba</i>)</b></dt>
 <dd>
@@ -1190,6 +1198,14 @@ is drawn using the current color.
 If fillrgba is not an empty string then the ellipse is filled with the given color.
 </dd>
 <dd> Example: <b>op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 200")</b></dd>
+</p>
+
+<a name="fill_rect"></a>
+<p><dt><b>op.fill_rect(<i>x, y, wd, ht</i>)</b></dt>
+<dd>
+Draw a filled rectangle with its top left corner at x,y and of the given width and height.
+</dd>
+<dd> Example: <b>op.fill_rect(0, 0, 40, 30)</b></dd>
 </p>
 
 <a name="round_rect"></a>
@@ -1256,7 +1272,7 @@ Paste text onto the current render target. Only the first two arguments <i>x, y<
 <dd>
 The <i>transform</i> argument can be used to specify an <a href="#affine">affine transformation</a>. The <i>clipname</i> may
 be used to specify a non-default clipname.
-<dd> Example:</b></dd>
+<dd> Example:</dd>
 <dd> <i>-- paste the clip named "hello" at 0, 0 and rotated clockwise on the current render target</i>
 <dd> <b>op.pastetext(0, 0, op.rcw, "hello")</b></dd>
 </dd>
@@ -1325,6 +1341,30 @@ indicate the event was handled, otherwise it returns a copy of the given string
 so the caller can process the event.
 </dd>
 <dd> Example: <b>local event = op.process( g.getevent() )</b></dd>
+</p>
+
+<p><dt><b>op.popupmenu()</b></dt>
+<dd>
+Create a pop-up menu.  You can then use its additem function to
+append an item with a given label and a callback function that will
+be called if the user selects the item.
+</dd>
+<dd> Example:</dd>
+<dd> <b>editmenu = op.popupmenu()</b></dd>
+<dd> <b>editmenu.additem("Cut", CutSelection)</b></dd>
+<dd> <b>editmenu.additem("Copy", CopySelection)</b></dd>
+<dd> <b>editmenu.additem("Clear", ClearSelection)</b></dd>
+<dd> <b>editmenu.additem("separator", nil)</b></dd>
+<dd> <b>editmenu.additem("Paste", PasteClipboard)</b></dd>
+</p>
+<p>
+<dd>
+The pop-up menu will appear when its show function is called
+(note that you need to pass in the overlay's width and height).
+</dd>
+<dd> Example:</dd>
+<dd> <b>editmenu.setbgcolor("rgba 0 128 0 255")</b> <i>-- dark green background</i></dd>
+<dd> <b>editmenu.show(mousex, mousey, ovwd, ovht)</b></dd>
 </p>
 
 <p><b><a name="oplusutil"></a>Utility commands</b>

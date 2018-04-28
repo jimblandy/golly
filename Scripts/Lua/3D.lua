@@ -22,7 +22,7 @@ TODO: !!!
 NOTE: Do following changes for the Golly 3.2b1 release:
 
 - enable batch draw code
-- add menu bar from oplus
+- create a menu bar from oplus
 - fix textoption background problem in m.button code in oplus/init.lua
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
@@ -51,6 +51,7 @@ local split = gp.split
 
 local ov = g.overlay
 local op = require "oplus"
+local DrawLine = op.draw_line
 
 local sin = math.sin
 local cos = math.cos
@@ -396,14 +397,6 @@ local function TransformPoint(point)
     local newz = (x*xizo + y*yizo + z*zizo)
     --]]
     return newx, newy, newz
-end
-
-----------------------------------------------------------------------
-
--- use op.draw_line in 3.2b1!!!
-
-local function DrawLine(x1, y1, x2, y2)
-    ov("line "..x1.." "..y1.." "..x2.." "..y2)
 end
 
 ----------------------------------------------------------------------
@@ -3722,248 +3715,6 @@ end
 
 ----------------------------------------------------------------------
 
--- get pop-up menu stuff from oplus in 3.2b1!!!
-
-function draw_line(x1, y1, x2, y2) ov("line "..x1.." "..y1.." "..x2.." "..y2) end
-function fill_rect(x, y, wd, ht) ov("fill "..x.." "..y.." "..wd.." "..ht) end
-
-function DrawPopUpMenu(p, chosenitem)
-    -- draw pop-up window showing all items
-    local numitems = #p.items
-    if numitems == 0 then return end
-    
-    local oldfont = ov(p.menufont)
-    local oldblend = ov("blend 1")
-    local oldrgba = ov(p.bgcolor)
-
-    local ht = p.menuht + 1
-    local wd = p.menuwd
-    local x = p.x
-    local y = p.y
-    fill_rect(x, y, wd, ht)
-    
-    -- draw translucent gray shadows
-    ov("rgba 48 48 48 128")
-    local shadowsize = 3
-    fill_rect(x+shadowsize, y+ht, wd-shadowsize, shadowsize)
-    fill_rect(x+wd, y+shadowsize, shadowsize, ht)
-    
-    x = x + p.menugap
-    y = y + op.yoffset
-    for i = 1, numitems do
-        local item = p.items[i]
-        if item.f == nil then
-            -- item is a separator
-            ov(p.discolor)
-            draw_line(x-p.menugap, y+p.itemht//2, x-p.menugap+wd-1, y+p.itemht//2)
-        else
-            if i == chosenitem and item.enabled then
-                ov(p.selcolor)
-                fill_rect(x-p.menugap, y, wd, p.itemht)
-            end
-            local oldtextbg = ov("textoption background 0 0 0 0")
-            if item.enabled then
-                op.maketext(item.name, nil, p.menutext, op.textshadowx, op.textshadowy, op.textshadowrgba)
-                op.pastetext(x, y + p.itemgap)
-                ov(p.menutext)
-            else
-                op.maketext(item.name, nil, p.discolor)  -- no shadow if disabled
-                op.pastetext(x, y + p.itemgap)
-                ov(p.discolor)
-            end
-            ov("textoption background "..oldtextbg)
-            if item.ticked then
-                -- draw tick mark at right edge
-                local x1 = x - p.menugap + wd - p.menugap
-                local y1 = y + 6
-                local x2 = x1 - 6
-                local y2 = y + p.itemht - 8
-                local oldwidth = ov("lineoption width 4")
-                if item.enabled and (op.textshadowx > 0 or op.textshadowy > 0) then
-                    local oldcolor = ov(op.textshadowrgba)
-                    draw_line(x1+op.textshadowx, y1+op.textshadowy, x2+op.textshadowx, y2+op.textshadowy)
-                    draw_line(x2+op.textshadowx, y2+op.textshadowy, x2+op.textshadowx-5, y2+op.textshadowy-3)
-                    ov("rgba "..oldcolor)
-                end
-                draw_line(x1, y1, x2, y2)
-                draw_line(x2, y2, x2-5, y2-3)
-                ov("lineoption width "..oldwidth)
-            end
-        end
-        y = y + p.itemht
-    end
-
-    ov("blend "..oldblend)
-    ov("font "..oldfont)
-    ov("rgba "..oldrgba)
-end
-
-----------------------------------------------------------------------
-
-function GetPopUpItem(x, y, p)
-    -- return index of item at given mouse location
-    if x <= p.x or y <= p.y then return 0 end
-    local numitems = #p.items
-    local ht = numitems * p.itemht
-    if y > p.y + ht then return 0 end
-    if x > p.x + p.menuwd then return 0 end
-    
-    -- x,y is somewhere in a menu item
-    local itemindex = math.floor((y - p.y) / p.itemht) + 1
-    if itemindex > numitems then itemindex = numitems end
-
-    return itemindex
-end
-
-----------------------------------------------------------------------
-
-function choose_popup_item(p)
-    -- return a chosen item from the given pop-up menu
-    -- or nil if the item is disabled or no item is selected
-    
-    local t0 = g.millisecs()
-
-    -- save entire overlay in bgclip
-    local bgclip = string.gsub(tostring(p).."bg"," ","")
-    ov("copy 0 0 0 0 "..bgclip)
-    
-    local chosenitem = 0
-    DrawPopUpMenu(p, chosenitem)
-    g.update()
-    
-    local x = p.x
-    local y = p.y
-    local prevx = x
-    local prevy = y
-    while true do
-        local event = g.getevent()
-        if event:find("^mup") then
-            if g.millisecs() - t0 > 500 then
-                break
-            end
-        elseif event:find("^oclick") then
-            local _, sx, sy, butt, mods = split(event)
-            if butt == "left" and mods == "none" then
-                x = tonumber(sx)
-                y = tonumber(sy)
-                break
-            end
-        elseif event == "key enter none" or event == "key return none" then
-            break
-        end
-        local xy = ov("xy")
-        if #xy > 0 then
-            x, y = split(xy)
-            x = tonumber(x)
-            y = tonumber(y)
-            if x ~= prevx or y ~= prevy then
-                -- check if mouse moved into or out of an item
-                local olditem = chosenitem
-                chosenitem = GetPopUpItem(x, y, p)
-                if chosenitem ~= olditem then
-                    ov("paste 0 0 "..bgclip)
-                    DrawPopUpMenu(p, chosenitem)
-                    g.update()
-                end
-                prevx = x
-                prevy = y
-            end
-        end
-    end
-
-    chosenitem = GetPopUpItem(x, y, p)
-    
-    -- restore overlay
-    ov("paste 0 0 "..bgclip)
-    g.update()
-    ov("delete "..bgclip)
-    
-    return chosenitem
-end
-
---------------------------------------------------------------------------------
-
-function popupmenu()
-    -- return a table that makes it easy to create and use a pop-up menu
-    local p = {}
-    
-    p.items = {}        -- array of items
-    p.labelht = 0       -- height of label text
-    p.itemht = 0        -- height of an item
-    p.menuwd = 0        -- width of pop-up menu
-    p.menuht = 0        -- height of pop-up menu
-    p.x, p.y = 0, 0     -- top left location of pop-up menu
-
-    p.menufont = "font 12 default-bold"
-    p.menutext = op.white
-    p.menugap = 10
-    p.itemgap = 2
-    p.bgcolor = "rgba 40 128 255 255"
-    p.selcolor = "rgba 20 64 255 255"
-    p.discolor = "rgba 88 176 255 255"
-    
-    local function check_width(itemname)
-        local oldfont = ov(p.menufont)
-        local oldblend = ov("blend 1")
-        local wd, ht = op.maketext(itemname, nil, p.menutext, op.textshadowx, op.textshadowy, op.textshadowrgba)
-        ov("blend "..oldblend)
-        ov("font "..oldfont)
-        p.labelht = ht
-        p.itemht = ht + p.itemgap*2
-        local itemwd = wd + p.menugap*2 + 20
-        if itemwd > p.menuwd then p.menuwd = itemwd end
-    end
-    
-    p.additem = function (itemname, onselect, args)
-        args = args or {}
-        check_width(itemname)
-        p.items[#p.items+1] = { name=itemname, f=onselect, fargs=args, enabled=true, ticked=false }
-        p.menuht = #p.items * p.itemht
-    end
-    
-    p.enableitem = function (itemindex, bool)
-        -- enable/disable the given item
-        p.items[itemindex].enabled = bool
-    end
-
-    p.tickitem = function (itemindex, bool)
-        -- tick/untick the given item
-        p.items[itemindex].ticked = bool
-    end
-    
-    p.setbgcolor = function (rgba)
-        p.bgcolor = rgba
-        local _,R,G,B,A = split(rgba)
-        R = tonumber(R)
-        G = tonumber(G)
-        B = tonumber(B)
-        A = tonumber(A)
-        -- use a darker color when item is selected
-        p.selcolor = "rgba "..max(0,R-48).." "..max(0,G-48).." "..max(0,B-48).." "..A
-        -- use lighter color for disabled items and separator lines
-        p.discolor = "rgba "..min(255,R+48).." "..min(255,G+48).." "..min(255,B+48).." "..A
-    end
-    
-    p.show = function (x, y, ovwd, ovht)
-        if x + p.menuwd > ovwd then x = x - p.menuwd - 2 end
-        if y + p.menuht > ovht then y = ovht - p.menuht end
-        p.x = x
-        p.y = y
-        local itemindex = choose_popup_item(p)
-        if itemindex > 0 then
-            local item = p.items[itemindex]
-            if item and item.f and item.enabled then
-                -- call this item's handler
-                item.f( table.unpack(item.fargs) )
-            end
-        end
-    end
-    
-    return p
-end
-
-----------------------------------------------------------------------
-
 function ChoosePasteAction(mousex, mousey)
     -- show red pop-up menu at mousex,mousey and let user choose a paste action
     pastemenu.setbgcolor("rgba 176 48 48 255")
@@ -6326,8 +6077,8 @@ function CreateOverlay()
     
     ov("textoption background "..oldbg) -- see above!!!
     
-    -- create pop-up menu for paste actions (eventually from op!!!)
-    pastemenu = popupmenu()
+    -- create a pop-up menu for paste actions
+    pastemenu = op.popupmenu()
     pastemenu.additem("Paste OR", PasteOR)
     pastemenu.additem("Paste XOR", PasteXOR)
     pastemenu.additem("---", nil)
@@ -6341,8 +6092,8 @@ function CreateOverlay()
     pastemenu.additem("---", nil)
     pastemenu.additem("Cancel Paste", CancelPaste)
     
-    -- create pop-up menu for selection actions (eventually from op!!!)
-    selmenu = popupmenu()
+    -- create a pop-up menu for selection actions
+    selmenu = op.popupmenu()
     selmenu.additem("Cut", CutSelection)
     selmenu.additem("Copy", CopySelection)
     selmenu.additem("Clear", ClearSelection)
