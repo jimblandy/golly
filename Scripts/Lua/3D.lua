@@ -22,8 +22,7 @@ TODO: !!!
 NOTE: Do following changes for the Golly 3.2b1 release:
 
 - enable batch draw code
-- add menu bar and pop-up menus from oplus
-- get round() from gplus
+- add menu bar from oplus
 - fix textoption background problem in m.button code in oplus/init.lua
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
@@ -46,6 +45,7 @@ local g = golly()
 --!!! require "gplus.strict"
 local gp = require "gplus"
 local int = gp.int
+local round = gp.round
 local validint = gp.validint
 local split = gp.split
 
@@ -380,17 +380,6 @@ function RestoreGollyState(oldstate)
     g.setoption("showeditbar", oldstate.edit)
     g.setoption("tilelayers", oldstate.tile)
     g.setoption("stacklayers", oldstate.stack)
-end
-
---------------------------------------------------------------------------------
-
-local function round(r)
-    -- return same result as Python's round function
-    if r >= 0 then
-        return floor(r+0.5)
-    else
-        return ceil(r-0.5)
-    end
 end
 
 ----------------------------------------------------------------------

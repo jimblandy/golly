@@ -2,13 +2,30 @@
 
 local g = golly()
 
+local floor = math.floor
+local ceil = math.ceil
+local abs = math.abs
+local mmin = math.min
+local mmax = math.max
+
 local m = {}
 
 --------------------------------------------------------------------------------
 
 function m.int(x)
     -- return integer part of given floating point number
-    return x < 0 and math.ceil(x) or math.floor(x)
+    return x < 0 and ceil(x) or floor(x)
+end
+
+--------------------------------------------------------------------------------
+
+function m.round(x)
+    -- return same result as Python's round function
+    if x >= 0 then
+        return floor(x+0.5)
+    else
+        return ceil(x-0.5)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -19,7 +36,7 @@ function m.min(a)
     if alen == 0 then return nil end
     if alen < 100000 then
         -- use faster math.min call
-        return math.min( table.unpack(a) )
+        return mmin( table.unpack(a) )
     else
         -- slower code but no danger of exceeding stack limit
         local n = a[1]
@@ -38,7 +55,7 @@ function m.max(a)
     if alen == 0 then return nil end
     if alen < 100000 then
         -- use faster math.max call
-        return math.max( table.unpack(a) )
+        return mmax( table.unpack(a) )
     else
         -- slower code but no danger of exceeding stack limit
         local n = a[1]
@@ -58,12 +75,12 @@ function m.drawline(x1, y1, x2, y2, state)
     if x1 == x2 and y1 == y2 then return end
     
     local dx = x2 - x1
-    local ax = math.abs(dx) * 2
+    local ax = abs(dx) * 2
     local sx = 1
     if dx < 0 then sx = -1 end
     
     local dy = y2 - y1
-    local ay = math.abs(dy) * 2
+    local ay = abs(dy) * 2
     local sy = 1
     if dy < 0 then sy = -1 end
     

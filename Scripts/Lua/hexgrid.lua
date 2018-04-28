@@ -10,6 +10,7 @@ local g = golly()
 local gp = require "gplus"
 local op = require "oplus"
 local int = gp.int
+local round = gp.round
 local split = gp.split
 
 local ov = g.overlay
@@ -158,16 +159,6 @@ local function create_hextile()
     -- draw horizontal edge from right-most vertex
     draw_line(x0, y0, x0 + edgelen, y0)
     ov("copy "..x3.." "..y4.." "..hextilewd.." "..hextileht.." hextile")
-end
-
---------------------------------------------------------------------------------
-
-local function round(x)
-    if x < 0 then
-        return ceil(x - 0.5)
-    else
-        return floor(x + 0.5)
-    end
 end
 
 --------------------------------------------------------------------------------
