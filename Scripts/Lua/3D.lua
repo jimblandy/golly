@@ -216,6 +216,7 @@ local settingsfile = g.getdir("data").."3D.ini"
 -- batch draw settings !BATCHDRAW!
 local xybatch = {}                  -- coordinates for each cell
 local usebatch = false              -- whether to use batch drawing (enable in Golly 3.2b1!!!)
+local cullrange = -1                -- disable batch draw cull
 
 ----------------------------------------------------------------------
 
@@ -1041,6 +1042,7 @@ end
 ----------------------------------------------------------------------
 
 function DrawBatch() -- !BATCHDRAW!
+    local oldcr = ov("pasteoption cull "..cullrange)
     if celltype == "cube" then
         ov("paste "..table.concat(xybatch, " ").." c")
     elseif celltype == "sphere" then
@@ -1050,6 +1052,7 @@ function DrawBatch() -- !BATCHDRAW!
         ov("set "..table.concat(xybatch, " "))
     end
     xybatch = {}
+    ov("pasteoption cull "..oldcr)
 end
 
 ----------------------------------------------------------------------
@@ -1245,7 +1248,7 @@ function DisplayCells(editing)
     end
 
     -- test batch draw !BATCHDRAW!
-    -- local t1 = g.millisecs()
+    local t1 = g.millisecs()
     if usebatch and not testcell then
         if celltype == "cube" then
             DrawLiveCell = AddCubeToBatch
@@ -1367,8 +1370,14 @@ function DisplayCells(editing)
     if usebatch and not testcell then
         DrawBatch()
     end
-    -- message = string.format("%.2fms", g.millisecs() - t1)
-    
+    message = string.format("%.2fms", g.millisecs() - t1)
+    if usebatch then
+       message = message.." batch"
+       if cullrange ~= -1 then
+           message = message.." cull"
+       end
+    end
+
     ov("blend 0")
 end
 
@@ -4845,6 +4854,25 @@ end
 
 ----------------------------------------------------------------------
 
+function ToggleCull() -- !BATCHDRAW!
+    if cullrange == -1 then
+       cullrange = 10
+    else
+       cullrange = -1
+    end
+    Refresh()
+end
+
+
+----------------------------------------------------------------------
+
+function ToggleBatch() -- !BATCHDRAW!
+    usebatch = not usebatch
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
 function ExitScript()
     local function savechanges()
         -- probably need a g.savechanges command so user sees the proper dialog!!!
@@ -6353,6 +6381,8 @@ function HandleKey(event)
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MoveToMiddle()
     elseif key == "h" and mods == "none" then ShowHelp()
+    elseif key == "9" and mods == "none" then ToggleBatch() -- !BATCHDRAW!
+    elseif key == "0" and mods == "none" then ToggleCull()  -- !BATCHDRAW!
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)

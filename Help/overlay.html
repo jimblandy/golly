@@ -93,28 +93,32 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#load"><b>load</b></a><br>
 <a href="#optimize"><b>optimize</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
-<a href="#position"><b>position</b></a><br>
-<a href="#replace"><b>replace</b></a>
+<a href="#pasteoption"><b>pasteoption</b></a><br>
+<a href="#position"><b>position</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#replace"><b>replace</b></a><br>
 <a href="#resize"><b>resize</b></a><br>
 <a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#scale"><b>scale</b></a><br>
 <a href="#set"><b>set</b></a><br>
-<a href="#sound"><b>sound</b></a><br>
-<a href="#target"><b>target</b></a>
+<a href="#sound"><b>sound</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#target"><b>target</b></a><br>
 <a href="#text"><b>text</b></a><br>
 <a href="#textoption"><b>textoption</b></a><br>
 <a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
-<a href="#updatecells"><b>updatecells</b></a><br>
-<a href="#xy"><b>xy</b></a>
+<a href="#updatecells"><b>updatecells</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#xy"><b>xy</b></a><br>
 </td>
 </tr>
 </table>
@@ -476,6 +480,51 @@ Any pixels outside the render target edges are automatically clipped.
 <dd><b>ov("paste 10 20 tempbox")</b></dd>
 <dd><i>-- paste the tempbox clip at (10, 20), (100, 20) and (100,50)</i></dd>
 <dd><b>ov("paste 10 20 100 20 100 50 tempbox")</b></dd>
+</p>
+<p>
+<dd>
+If multiple locations are given then the clip is drawn at the locations in the order specified.
+If there are any sets of duplicate locations then the clip is drawn once per set at the last
+occurrence of the location.
+You can disable this optimization with the <a href="#pasteoption">pasteoption cull</a> command.
+</dd>
+</p>
+
+<a name="pasteoption"></a><p><dt><b>pasteoption <i>option value</i></b></dt>
+<dd>
+Set an option used by the <a href="#paste">paste</a> command.
+There is currently one valid option:
+</dd>
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr><td><b><a name="cull"></a>cull</b> <i>r</i></td><td width=20></td><td>&ndash;
+set the cull range to a percentage (0 to 25) of the clip size (or -1 to disable)
+</table>
+<p>
+<dd>
+The previous cull range is returned as a string.
+The <a href="#create">create</a> command initializes the cull range to 0.
+</dd>
+</p>
+<p>
+<dd>The <a href="#paste">paste</a> command can be used to draw the same clip at multiple locations. By default
+if the same location is specified more than once then the duplicate locations will be removed so that
+the clip is only drawn once at each location.
+You can change how close two locations have to be to each other to be considered duplicates by specifying a
+cull range greather than 0. The value is specified as an integer percentage (of the clip size) with a maximum
+of 25.
+<dd> Example:</dd>
+<dd><i>-- set the cull range to 10% of the clip size</i></dd>
+<dd><b>local oldrange = ov("pasteoption cull 10")</b></dd>
+</p>
+<p>
+<dd>You can also disable the optimization by specifying a cull range of -1. A reason to do this might be that
+you want to create an effect by using alpha blending and drawing a clip at the same location multiple times.
+<dd> Example:</dd>
+<dd><i>-- disable culling</i></dd>
+<dd><b>local oldrange = ov("pasteoption cull -1")</b></dd>
+</dd>
 </p>
 
 <a name="position"></a><p><dt><b>position <i>pos</i></b></dt>

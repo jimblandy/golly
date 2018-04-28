@@ -26,6 +26,53 @@
 
 // -----------------------------------------------------------------------------
 
+class CullNode {
+public:
+    CullNode(int x, int y, CullNode *prev) {
+        cx = x;
+        cy = y;
+        cnext = NULL;
+        cprev = prev;
+        if (prev) prev->cnext = this;
+    }
+
+    CullNode() {
+    }
+
+    ~CullNode() {
+    }
+
+    int cx;
+    int cy;
+    CullNode *cnext;
+    CullNode *cprev;
+    CullIndex *ctile;
+};
+
+// -----------------------------------------------------------------------------
+
+class CullIndex {
+public:
+    CullIndex(CullNode *node, CullIndex *prev) {
+        inode = node;
+        iprev = prev;
+        if (prev) prev->inext = this;
+        if (node) node->ctile = this;
+    }
+
+    CullIndex() {
+    }
+
+    ~CullIndex() {
+    }
+
+    CullNode *inode;
+    CullIndex *inext;
+    CullIndex *iprev;
+};
+
+// -----------------------------------------------------------------------------
+
 class Clip {
 public:
     Clip(int w, int h, bool use_calloc = false) {
@@ -1983,6 +2030,9 @@ const char* Overlay::DoCreate(const char* args)
 
         // default width for lines and ellipses
         linewidth = 1;
+
+	// default batch paste cull range
+	cullrange = 0;
 
         // make sure the Show Overlay option is ticked
         if (!showoverlay) {
@@ -4020,6 +4070,36 @@ const char* Overlay::DoOptimize(const char* args)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::PasteOptionCull(const char* args)
+{
+    int c, oldcull;
+    if (sscanf(args, " %d", &c) != 1) {
+        return OverlayError("pasteoption cull command requires 1 argument");
+    }
+
+    if (c < -1 || c > 25) return OverlayError("line width must be -1 or 0 to 25");
+
+    oldcull = cullrange;
+    cullrange = c;
+
+    static char result[32];
+    sprintf(result, "%d", oldcull);
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoPasteOption(const char* args)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    if (strncmp(args, "cull ", 5) == 0)       return PasteOptionCull(args+5);
+
+    return OverlayError("unknown pasteoption command");
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoPaste(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -4032,8 +4112,11 @@ const char* Overlay::DoPaste(const char* args)
         return OverlayError("paste command requires at least 3 arguments");
     }
 
+//int ttotal = stopwatch->Time();
+
     // make a copy of the arguments so we can change them
     char *buffer = (char*)malloc(arglen + 1);   // add 1 for the terminating nul
+    if (buffer == NULL) return OverlayError("not enough memory for paste");
     char *copy = buffer;
     strcpy(copy, args);
 
@@ -4086,11 +4169,126 @@ const char* Overlay::DoPaste(const char* args)
     // mark target clip as changed
     DisableTargetClipIndex();
     
-    // paste at each coordinate pair
+    // group coordinates into tiles by proximity
+    const int culitems = 1000000;        // TBD needs to by dynamic
+    static CullNode culbuf[culitems];    // memory buffer for nodes
+    CullNode *bufptr = culbuf;
+    CullNode *current = NULL;
+    CullNode *prev = NULL;
+    CullNode *head = NULL;
+    CullNode *search = NULL;
+    static CullIndex indbuf[culitems];   // memory buffer for index items
+    CullIndex *indptr = indbuf;
+    const int tilerows = 64;             // divide target into this many rows
+    const int tilecols = 64;             // divide target into this many columns
+    const int numtiles = tilerows * tilecols;
+    static CullIndex *indtile[numtiles]; // each tile has a list of nodes contained in it
+    CullIndex *currentidx = NULL;
+    CullIndex *searchtile = NULL;
+    int curind;
+
+    int nclipped = 0;
+    int nculled = 0;
+    int nnodes = 0;
+
+    // clear the index tiles
+    memset(indtile, 0, sizeof(*indtile) * numtiles);
+
+    // read each coordinate pair into list
     do {
-        // do nothing if rect is completely outside target
-        if (RectOutsideTarget(x, y, w, h)) return NULL;
-    
+        // discard if location is completely outside target
+        if (RectOutsideTarget(x, y, w, h)) {
+            nclipped++;
+        } else {
+            // compute which tile this node belongs to
+            curind = tilecols * ((y * tilerows) / ht) + ((x * tilecols) / wd);
+
+            // if the paste is partially clipped then in may fall outside the tiles so ensure not
+            if (curind < 0) curind = 0;
+            if (curind >= numtiles) curind = numtiles - 1;
+
+            // create a node for the location and add to list
+            current = new(bufptr++) CullNode(x, y, prev); 
+            if (head == NULL) head = current;
+            prev = current;
+
+            // create an index entry in the tile for the node and add to list
+            currentidx = new(indptr++) CullIndex(current, indtile[curind]);
+            indtile[curind] = currentidx;
+
+            // increment node count
+            nnodes++;
+        }
+    }
+    while ((copy = (char*)GetCoordinatePair(copy, &x, &y)) != 0);
+
+    // convert cull range percentage into pixels
+    int range = ((w + h) * cullrange) / 200;
+
+    // ensure non-zero percent ranges are at least 1 pixel
+    if (cullrange > 0 && range == 0) range = 1;
+
+//int tcull = stopwatch->Time();
+
+    // check for culling
+    if (cullrange > -1) {
+        int dx, dy;
+        // process each tile
+        for (int i = 0; i < numtiles; i++) {
+            currentidx = indtile[i];
+            // check if there are nodes in the tile
+            while (currentidx) {
+                // get the first node
+                current = currentidx->inode;
+                x = current->cx;
+                y = current->cy;
+
+                // search previous nodes in this tile
+                searchtile = currentidx->iprev;
+                while (searchtile) {
+                    search = searchtile->inode;
+                    dx = x - search->cx;
+                    dy = y - search->cy;
+                    // check if the search node is close enough to be a duplicate
+                    if (dx >= -range && dx <= range && dy >= -range && dy <= range) {
+                        nculled++;
+                        // remove from node list
+                        if (search->cprev) {
+                            search->cprev->cnext = search->cnext;
+                            search->cnext->cprev = search->cprev;
+                        } else {
+                            // remove the head so update
+                            search->cnext->cprev = NULL;
+                            head = search->cnext;
+                        }
+                        // remove from tile
+                        if (searchtile->iprev) {
+                            searchtile->iprev->inext = searchtile->inext;
+                            searchtile->inext->iprev = searchtile->iprev;
+                        } else {
+                            searchtile->inext->iprev = NULL;
+                        }
+                    }
+                    searchtile = searchtile->iprev;
+                }
+                currentidx = currentidx->iprev;
+            }
+        }
+    }
+
+//int tpaste = stopwatch->Time();
+
+    // paste at each coordinate pair
+    const int ow = w;
+    const int oh = h;
+    current = head;
+    while (current) {
+        x = current->cx;
+        y = current->cy;
+        // set original width and height
+        w = ow;
+        h = oh;
+
         // check for transformation
         if (identity) {
             // no transformation, check for clip and target the same size without alpha blending
@@ -4268,9 +4466,16 @@ const char* Overlay::DoPaste(const char* args)
                 }
             }
         }
-        // read next coordinate pair
-        copy = (char*)GetCoordinatePair(copy, &x, &y);
-    } while (copy);
+        current = current->cnext;
+    }
+
+    //tcull = tpaste - tcull;
+    //tpaste = stopwatch->Time() - tpaste;
+    //ttotal = stopwatch->Time() - ttotal;
+
+    //if (nnodes > 1) {
+        //fprintf(stderr, "batch: %d\tculled: %d (%d%%)\tclipped: %d\trange: %d\tcull: %d\tpaste: %d\ttotal: %d\n", nnodes, nculled, (100 * nculled) / nnodes, nclipped, range, tcull, tpaste, ttotal);
+    //}
 
     // free the buffer
     free(buffer);
@@ -5756,40 +5961,41 @@ const char* Overlay::OverlayError(const char* msg)
 const char* Overlay::DoOverlayCommand(const char* cmd)
 {
     // determine which command to run
-    if (strncmp(cmd, "set ", 4) == 0)         return DoSetPixel(cmd+4);
-    if (strncmp(cmd, "get ", 4) == 0)         return DoGetPixel(cmd+4);
-    if (strcmp(cmd,  "xy") == 0)              return DoGetXY();
-    if (strncmp(cmd, "rgba", 4) == 0)         return DoSetRGBA(cmd+4);
-    if (strncmp(cmd, "blend", 5) == 0)        return DoBlend(cmd+5);
-    if (strncmp(cmd, "fill", 4) == 0)         return DoFill(cmd+4);
-    if (strncmp(cmd, "copy", 4) == 0)         return DoCopy(cmd+4);
-    if (strncmp(cmd, "paste", 5) == 0)        return DoPaste(cmd+5);
-    if (strncmp(cmd, "optimize", 8) == 0)     return DoOptimize(cmd+8);
-    if (strncmp(cmd, "lineoption ", 11) == 0) return DoLineOption(cmd+11);
-    if (strncmp(cmd, "line", 4) == 0)         return DoLine(cmd+4);
-    if (strncmp(cmd, "ellipse", 7) == 0)      return DoEllipse(cmd+7);
-    if (strncmp(cmd, "flood", 5) == 0)        return DoFlood(cmd+5);
-    if (strncmp(cmd, "textoption ", 11) == 0) return DoTextOption(cmd+11);
-    if (strncmp(cmd, "text", 4) == 0)         return DoText(cmd+4);
-    if (strncmp(cmd, "font", 4) == 0)         return DoFont(cmd+4);
-    if (strncmp(cmd, "transform", 9) == 0)    return DoTransform(cmd+9);
-    if (strncmp(cmd, "position", 8) == 0)     return DoPosition(cmd+8);
-    if (strncmp(cmd, "load", 4) == 0)         return DoLoad(cmd+4);
-    if (strncmp(cmd, "save", 4) == 0)         return DoSave(cmd+4);
-    if (strncmp(cmd, "scale", 5) == 0)        return DoScale(cmd+5);
-    if (strncmp(cmd, "cursor", 6) == 0)       return DoCursor(cmd+6);
-    if (strcmp(cmd,  "update") == 0)          return DoUpdate();
-    if (strncmp(cmd, "create", 6) == 0)       return DoCreate(cmd+6);
-    if (strncmp(cmd, "resize", 6) == 0)       return DoResize(cmd+6);
-    if (strncmp(cmd, "cellview ", 9) == 0)    return DoCellView(cmd+9);
-    if (strncmp(cmd, "celloption ", 11) == 0) return DoCellOption(cmd+11);
-    if (strncmp(cmd, "camera ", 7) == 0)      return DoCamera(cmd+7);
-    if (strncmp(cmd, "theme ", 6) == 0)       return DoTheme(cmd+6);
-    if (strncmp(cmd, "target", 6) == 0)       return DoTarget(cmd+6);
-    if (strncmp(cmd, "replace ", 8) == 0)     return DoReplace(cmd+8);
-    if (strncmp(cmd, "sound", 5) == 0)        return DoSound(cmd+5);
-    if (strcmp(cmd,  "updatecells") == 0)     return DoUpdateCells();
-    if (strcmp(cmd,  "drawcells") == 0)       return DoDrawCells();
-    if (strncmp(cmd, "delete", 6) == 0)       return DoDelete(cmd+6);
+    if (strncmp(cmd, "set ", 4) == 0)          return DoSetPixel(cmd+4);
+    if (strncmp(cmd, "get ", 4) == 0)          return DoGetPixel(cmd+4);
+    if (strcmp(cmd,  "xy") == 0)               return DoGetXY();
+    if (strncmp(cmd, "rgba", 4) == 0)          return DoSetRGBA(cmd+4);
+    if (strncmp(cmd, "blend", 5) == 0)         return DoBlend(cmd+5);
+    if (strncmp(cmd, "fill", 4) == 0)          return DoFill(cmd+4);
+    if (strncmp(cmd, "copy", 4) == 0)          return DoCopy(cmd+4);
+    if (strncmp(cmd, "pasteoption ", 12) == 0) return DoPasteOption(cmd+12);
+    if (strncmp(cmd, "paste", 5) == 0)         return DoPaste(cmd+5);
+    if (strncmp(cmd, "optimize", 8) == 0)      return DoOptimize(cmd+8);
+    if (strncmp(cmd, "lineoption ", 11) == 0)  return DoLineOption(cmd+11);
+    if (strncmp(cmd, "line", 4) == 0)          return DoLine(cmd+4);
+    if (strncmp(cmd, "ellipse", 7) == 0)       return DoEllipse(cmd+7);
+    if (strncmp(cmd, "flood", 5) == 0)         return DoFlood(cmd+5);
+    if (strncmp(cmd, "textoption ", 11) == 0)  return DoTextOption(cmd+11);
+    if (strncmp(cmd, "text", 4) == 0)          return DoText(cmd+4);
+    if (strncmp(cmd, "font", 4) == 0)          return DoFont(cmd+4);
+    if (strncmp(cmd, "transform", 9) == 0)     return DoTransform(cmd+9);
+    if (strncmp(cmd, "position", 8) == 0)      return DoPosition(cmd+8);
+    if (strncmp(cmd, "load", 4) == 0)          return DoLoad(cmd+4);
+    if (strncmp(cmd, "save", 4) == 0)          return DoSave(cmd+4);
+    if (strncmp(cmd, "scale", 5) == 0)         return DoScale(cmd+5);
+    if (strncmp(cmd, "cursor", 6) == 0)        return DoCursor(cmd+6);
+    if (strcmp(cmd,  "update") == 0)           return DoUpdate();
+    if (strncmp(cmd, "create", 6) == 0)        return DoCreate(cmd+6);
+    if (strncmp(cmd, "resize", 6) == 0)        return DoResize(cmd+6);
+    if (strncmp(cmd, "cellview ", 9) == 0)     return DoCellView(cmd+9);
+    if (strncmp(cmd, "celloption ", 11) == 0)  return DoCellOption(cmd+11);
+    if (strncmp(cmd, "camera ", 7) == 0)       return DoCamera(cmd+7);
+    if (strncmp(cmd, "theme ", 6) == 0)        return DoTheme(cmd+6);
+    if (strncmp(cmd, "target", 6) == 0)        return DoTarget(cmd+6);
+    if (strncmp(cmd, "replace ", 8) == 0)      return DoReplace(cmd+8);
+    if (strncmp(cmd, "sound", 5) == 0)         return DoSound(cmd+5);
+    if (strcmp(cmd,  "updatecells") == 0)      return DoUpdateCells();
+    if (strcmp(cmd,  "drawcells") == 0)        return DoDrawCells();
+    if (strncmp(cmd, "delete", 6) == 0)        return DoDelete(cmd+6);
     return OverlayError("unknown command");
 }
