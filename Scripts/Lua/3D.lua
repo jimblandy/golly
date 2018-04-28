@@ -1014,7 +1014,9 @@ local function AddCubeToBatch(x, y, z) -- !BATCHDRAW!
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx) + midx - HALFCUBECLIP
     y = round(newy) + midy - HALFCUBECLIP
@@ -1030,7 +1032,9 @@ local function AddSphereToBatch(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
     y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
@@ -1098,7 +1102,9 @@ local function AddPointToBatch(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx) + midx
     y = round(newy) + midy
