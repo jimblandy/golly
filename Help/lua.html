@@ -27,6 +27,10 @@ The Scripts folder supplied with Golly contains a number of example Lua scripts:
 <dd>
 <table cellspacing=0 cellpadding=0 width=520>
 <tr>
+   <td><b>3D.lua</b></td><td width=10> </td>
+   <td> &mdash; for exploring three-dimensional cellular automata</td>
+</tr>
+<tr>
    <td><b>breakout.lua</b></td><td width=10> </td>
    <td> &mdash; shows how to use the <a href="overlay.html">overlay</a> to create a game</td>
 </tr>
@@ -295,6 +299,7 @@ or you can search for individual commands alphabetically:
 <a href="#setview"><b>setview</b></a><br>
 <a href="#show"><b>show</b></a><br>
 <a href="#shrink"><b>shrink</b></a><br>
+<a href="#sleep"><b>sleep</b></a><br>
 <a href="#step"><b>step</b></a><br>
 <a href="#store"><b>store</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
@@ -1140,6 +1145,15 @@ Return the number of milliseconds that have elapsed since Golly started up.
 The returned value is a floating point number.
 </dd>
 <dd> Example: <b>local t1 = g.millisecs()</b></dd>
+</p>
+
+<a name="sleep"></a><p><dt><b>sleep(<i>millisecs</i>)</b></dt>
+<dd>
+Sleep for the given number of millisecs.
+Scripts with an event loop can call this command to avoid hogging the CPU
+when the script is idle.
+</dd>
+<dd> Example: <b>g.sleep(5)</b></dd>
 </p>
 
 <a name="setoption"></a><p><dt><b>setoption(<i>name, value</i>)</b></dt>

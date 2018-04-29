@@ -2336,6 +2336,18 @@ static int g_millisecs(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_sleep(lua_State* L)
+{
+    CheckEvents(L);
+
+    int ms = luaL_checkinteger(L, 1);
+    wxMilliSleep(ms);
+    
+    return 0;   // no result
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_setoption(lua_State* L)
 {
     CheckEvents(L);
@@ -2729,6 +2741,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     // miscellaneous
     { "os",           g_os },           // return the current OS (Windows/Mac/Linux)
     { "millisecs",    g_millisecs },    // return elapsed time since Golly started, in millisecs
+    { "sleep",        g_sleep },        // sleep for the given number of millisecs
     { "setoption",    g_setoption },    // set given option to new value (and return old value)
     { "getoption",    g_getoption },    // return current value of given option
     { "setcolor",     g_setcolor },     // set given color to new r,g,b (returns old r,g,b)

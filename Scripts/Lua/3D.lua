@@ -6433,9 +6433,7 @@ function EventLoop()
         if #event == 0 then
             if not mousedown then
                 if not generating then
-                    -- don't hog the CPU when idle
-                    -- implement g.sleep using wxMilliSleep!!!
-                    -- g.sleep(5)
+                    g.sleep(5)      -- don't hog the CPU when idle
                 end
                 CheckLayerSize()    -- may need to resize the overlay
             end
