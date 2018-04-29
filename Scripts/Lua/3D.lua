@@ -25,7 +25,6 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 - create a menu bar from oplus
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
-- avoid "getclipstr error: no text in clipboard" (return empty string)
 - implement g.setoption("showtimeline",0)
 - implement g.setoption("showscrollbars",0)
 - implement optional parameter for g.note and g.warn so scripts can

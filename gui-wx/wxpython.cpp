@@ -2657,7 +2657,9 @@ static PyObject* py_getclipstr(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
     wxTextDataObject data;
-    if ( !mainptr->GetTextFromClipboard(&data) ) return NULL;
+    if (!mainptr->GetTextFromClipboard(&data)) {
+        data.SetText(wxEmptyString);
+    }
     
     wxString wxs_clipstr = data.GetText();
     return Py_BuildValue((char*)"s", (const char*)wxs_clipstr.mb_str(wxConvLocal));

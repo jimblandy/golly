@@ -1104,6 +1104,9 @@ static int g_getcells(lua_State* L)
 // -----------------------------------------------------------------------------
 
 // maybe only use algo->getcells method if algo is hash-based???!!!
+// (needs more thought and more testing)
+
+#if 0
 
 static int g_getcells2(lua_State* L)
 {
@@ -1165,6 +1168,8 @@ static int g_getcells2(lua_State* L)
     
     return 1;   // result is a cell array
 }
+
+#endif // #if 0
 
 // -----------------------------------------------------------------------------
 
@@ -2452,7 +2457,7 @@ static int g_getclipstr(lua_State* L)
 
     wxTextDataObject data;
     if (!mainptr->GetTextFromClipboard(&data)) {
-        GollyError(L, "getclipstr error: no text in clipboard.");
+        data.SetText(wxEmptyString);
     }
     
     wxString clipstr = data.GetText();
@@ -2679,7 +2684,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "evolve",       g_evolve },       // generate pattern contained in given cell array
     { "putcells",     g_putcells },     // paste given cell array into current universe
     { "getcells",     g_getcells },     // return cell array in given rectangle
-    { "getcells2",     g_getcells2 },     // !!!
+    // { "getcells2",     g_getcells2 },     // experimental version (needs more thought!!!)
     { "join",         g_join },         // return concatenation of given cell arrays
     { "hash",         g_hash },         // return hash value for pattern in given rectangle
     { "getclip",      g_getclip },      // return pattern in clipboard (as wd, ht, cell array)
