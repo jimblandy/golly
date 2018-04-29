@@ -423,7 +423,9 @@ function m.button(label, onclick)
 
 	b.setlabel = function (newlabel, changesize)
         local oldfont = ov(m.textfont)
+        local oldtextbg = ov("textoption background 0 0 0 0")
         local w, h = m.maketext(newlabel, b.labelclip, m.textrgba, m.textshadowx, m.textshadowy, m.textshadowrgba)
+        ov("textoption background "..oldtextbg)
         ov("font "..oldfont)
         b.labelwd = tonumber(w);
         b.labelht = tonumber(h);
@@ -542,7 +544,9 @@ function m.checkbox(label, labelrgba, onclick)
     c.clipname = tostring(c).."+checkbox"
     c.clipname = string.gsub(c.clipname, " ", "")   -- remove any spaces
     local oldfont = ov(m.textfont)
+    local oldtextbg = ov("textoption background 0 0 0 0")
     local w, h = m.maketext(label, c.clipname, labelrgba, m.textshadowx, m.textshadowy, m.textshadowrgba)
+    ov("textoption background "..oldtextbg)
     ov("font "..oldfont)
     
     -- use label size to set check box size
@@ -667,6 +671,7 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
     s.clipname = tostring(s).."+slider"
     s.clipname = string.gsub(s.clipname, " ", "")   -- remove any spaces
     local oldfont = ov(m.textfont)
+    local oldtextbg = ov("textoption background 0 0 0 0")
     local w, h
     if #label == 0 then
         w, h = split(ov("text "..s.clipname.." "..label.." "))
@@ -675,6 +680,7 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
     else
         w, h = m.maketext(label, s.clipname, labelrgba, m.textshadowx, m.textshadowy, m.textshadowrgba)
     end
+    ov("textoption background "..oldtextbg)
     ov("font "..oldfont)
     
     -- set total slider size (including label)
@@ -1066,6 +1072,7 @@ local function DrawMenuItems(mbar)
                 ov(m.selcolor)
                 m.fill_rect(x-m.menugap, y, wd, mbar.itemht)
             end
+            local oldtextbg = ov("textoption background 0 0 0 0")
             if item.enabled then
                 m.maketext(item.name, nil, m.menutext, m.textshadowx, m.textshadowy, m.textshadowrgba)
                 m.pastetext(x, y + m.itemgap)
@@ -1075,6 +1082,7 @@ local function DrawMenuItems(mbar)
                 m.pastetext(x, y + m.itemgap)
                 ov(m.discolor)
             end
+            ov("textoption background "..oldtextbg)
             if item.ticked then
                 -- draw tick mark at right edge
                 local x1 = x - m.menugap + wd - m.menugap

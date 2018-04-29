@@ -23,7 +23,6 @@ TODO: !!!
 NOTE: Do following changes for the Golly 3.2b1 release:
 
 - create a menu bar from oplus
-- fix textoption background problem in m.button code in oplus/init.lua
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
 - implement g.setoption("showtimeline",0)
@@ -1614,17 +1613,12 @@ end
 --------------------------------------------------------------------------------
 
 function UpdateStartButton()
-    -- fix m.button code in oplus/init.lua to avoid need to do this!!!
-    local oldbg = ov("textoption background 0 0 0 0")
-    
     -- change label in ssbutton without changing the button's width
     if generating then
         ssbutton.setlabel("Stop", false)
     else
         ssbutton.setlabel("Start", false)
     end
-    
-    ov("textoption background "..oldbg) -- see above!!!
 end
 
 ----------------------------------------------------------------------
@@ -6108,9 +6102,6 @@ function CreateOverlay()
     op.textshadowy = 2
     if g.os() == "Mac" then op.yoffset = -1 end
     if g.os() == "Linux" then op.textfont = "font 10 default" end
-
-    -- fix m.button code in oplus/init.lua to avoid need to do this!!!
-    local oldbg = ov("textoption background 0 0 0 0")
     
     -- create tool bar buttons
     newbutton = op.button("New", NewPattern)
@@ -6137,8 +6128,6 @@ function CreateOverlay()
     movebox = op.checkbox("Move", op.black, MoveMode)
     op.textshadowx = 2
     op.textshadowy = 2
-    
-    ov("textoption background "..oldbg) -- see above!!!
     
     -- create a pop-up menu for paste actions
     pastemenu = op.popupmenu()
