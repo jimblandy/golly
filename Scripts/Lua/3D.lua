@@ -25,16 +25,15 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 - create a menu bar from oplus
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
+- avoid "getclipstr error: no text in clipboard" (return empty string)
 - implement g.setoption("showtimeline",0)
 - implement g.setoption("showscrollbars",0)
 - implement optional parameter for g.note and g.warn so scripts can
   disable the Cancel button:
   g.note(msg, cancel=true)
   g.warn(msg, cancel=true)
-- implement g.sleep(millisecs) for use in Lua scripts
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
-- avoid "getclipstr error: no text in clipboard" (return empty string)
 - throttle ozoom* events (in here or in Golly)?
 - fix unicode problems reported here:
   http://www.conwaylife.com/forums/viewtopic.php?f=7&t=3132#p52918
@@ -73,7 +72,7 @@ local MINSIZE = 1+BORDER*2          -- minimum size of empty cells
 local MAXSIZE = 100                 -- maximum size of empty cells
 local CELLSIZE = 15                 -- initial size of empty cells
 local HALFCELL = CELLSIZE/2.0       -- for drawing mid points of cells
-local LEN = CELLSIZE-BORDER*2       -- size of live cubes
+local LEN = CELLSIZE-BORDER*2       -- edge length of live cubes
 local DEGTORAD = math.pi/180.0      -- converts degrees to radians
 
 -- MIDGRID is used to ensure that rotation occurs about the
@@ -107,7 +106,8 @@ local pastepatt = {}                -- grid positions of cells in paste pattern
 local drawstate = 1                 -- for drawing/erasing cells
 local selstate = true               -- for selecting/deselecting cells
 local celltype = "cube"             -- draw live cell as cube/sphere/point
-local DrawLiveCell                  -- set to DrawCube or DrawSphere or DrawPoint
+local DrawLiveCell                  -- set to Draw{Cube/Sphere/Point} or Add{Cube/Sphere/Point}ToBatch
+local xybatch = {}                  -- coordinates for each cell when batch drawing
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -211,10 +211,6 @@ local startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 
 -- user settings are stored in this file
 local settingsfile = g.getdir("data").."3D.ini"
-
--- batch draw settings !BATCHDRAW!
-local xybatch = {}                  -- coordinates for each cell
-local usebatch = true               -- whether to use batch drawing
 
 ----------------------------------------------------------------------
 
@@ -1007,7 +1003,7 @@ end
 
 ----------------------------------------------------------------------
 
-local function AddCubeToBatch(x, y, z) -- !BATCHDRAW!
+local function AddCubeToBatch(x, y, z)
     -- add live cell as a cube at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1043,7 +1039,25 @@ end
 
 ----------------------------------------------------------------------
 
-function DrawBatch() -- !BATCHDRAW!
+local function AddPointToBatch(x, y, z)
+    -- add mid point of cell at given grid position
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
+    -- use orthographic projection
+    x = round(newx) + midx
+    y = round(newy) + midy
+    -- add to the list to draw
+    xybatch[#xybatch + 1] = x
+    xybatch[#xybatch + 1] = y
+end
+
+----------------------------------------------------------------------
+
+function DrawBatch()
     if celltype == "cube" then
         ov("paste "..table.concat(xybatch, " ").." c")
     elseif celltype == "sphere" then
@@ -1087,25 +1101,6 @@ local function DrawSphere(x, y, z)
     y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
     -- draw the clip created by CreateLiveSphere
     ov("paste "..x.." "..y.." S")
-end
-
-
-----------------------------------------------------------------------
-
-local function AddPointToBatch(x, y, z)
-    -- add mid point of cell at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = round(newx) + midx
-    y = round(newy) + midy
-    -- add to the list to draw
-    xybatch[#xybatch + 1] = x
-    xybatch[#xybatch + 1] = y
 end
 
 ----------------------------------------------------------------------
@@ -1261,9 +1256,8 @@ function DisplayCells(editing)
         end
     end
 
-    -- test batch draw !BATCHDRAW!
-    --!!! local t1 = g.millisecs()
-    if usebatch and not testcell then
+    if not testcell then
+        -- use batch drawing
         if celltype == "cube" then
             DrawLiveCell = AddCubeToBatch
         elseif celltype == "sphere" then
@@ -1389,18 +1383,7 @@ function DisplayCells(editing)
         end
     end
 
-    -- test batch draw !BATCHDRAW!
-    --!!! local tb = g.millisecs()
-    if usebatch and not testcell then
-        DrawBatch()
-    end
-    --[[ remove eventually!!!
-    tb = g.millisecs() - tb
-    message = string.format("%.2fms", g.millisecs() - t1)
-    if usebatch then
-       message = message.." batch "..string.format("%.2fms", tb)
-    end
-    --]]
+    if not testcell then DrawBatch() end
 
     ov("blend 0")
 end
@@ -4875,14 +4858,6 @@ end
 
 ----------------------------------------------------------------------
 
--- remove eventually!!!
-function ToggleBatch() -- !BATCHDRAW!
-    usebatch = not usebatch
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
 function ExitScript()
     local function savechanges()
         -- probably need a g.savechanges command so user sees the proper dialog!!!
@@ -6386,7 +6361,6 @@ function HandleKey(event)
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MoveToMiddle()
     elseif key == "h" and mods == "none" then ShowHelp()
-    elseif key == "9" and mods == "none" then ToggleBatch() -- !BATCHDRAW!
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)
