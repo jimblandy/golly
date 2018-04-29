@@ -25,6 +25,7 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 - create a menu bar from oplus
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
+- avoid "getclipstr error: no text in clipboard" (return empty string)
 - implement g.setoption("showtimeline",0)
 - implement g.setoption("showscrollbars",0)
 - implement optional parameter for g.note and g.warn so scripts can
@@ -107,6 +108,9 @@ local selstate = true               -- for selecting/deselecting cells
 local celltype = "cube"             -- draw live cell as cube/sphere/point
 local DrawLiveCell                  -- set to Draw{Cube/Sphere/Point} or Add{Cube/Sphere/Point}ToBatch
 local xybatch = {}                  -- coordinates for each cell when batch drawing
+local layer                         -- layer number when depth shading
+local depthshading = false          -- whether depth shading
+local depthlayers = 32              -- number of shading layers
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -843,6 +847,22 @@ end
 
 ----------------------------------------------------------------------
 
+function CreateLayers(clip)
+    local adjust = floor(192 / depthlayers)
+    ov("target "..clip)
+    ov("copy 0 0 0 0 "..clip.."1")
+    ov("target "..clip.."1")
+    ov("optimize "..clip.."1")
+    for i = 2, depthlayers do
+        ov("copy 0 0 0 0 "..clip..i)
+        ov("target "..clip..i)
+        ov("replace *#-"..adjust.." *#-"..adjust.." *#-"..adjust.." *#")
+        ov("optimize "..clip..i)
+    end
+end
+
+----------------------------------------------------------------------
+
 local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
 
 function CreateLiveCube()
@@ -961,6 +981,12 @@ function CreateLiveCube()
     end
     
     ov("optimize c")
+
+    -- create faded versions of the clip if depth shading
+    if depthshading then
+        CreateLayers("c")
+    end
+
     ov("target")
 end
 
@@ -997,12 +1023,25 @@ function CreateLiveSphere()
     ov("lineoption width 1")
 
     ov("optimize S")
+
+    -- create faded versions of the clip if depth shading
+    if depthshading then
+        CreateLayers("S")
+    end
+
     ov("target")
 end
 
 ----------------------------------------------------------------------
 
 local function AddCubeToBatch(x, y, z)
+    if depthshading then
+        if #xybatch >= (2 * popcount / depthlayers) then
+            layer = layer - 1
+            DrawBatch()
+        end
+    end
+
     -- add live cell as a cube at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1021,6 +1060,13 @@ end
 ----------------------------------------------------------------------
 
 local function AddSphereToBatch(x, y, z)
+    if depthshading then
+        if #xybatch >= (2 * popcount / depthlayers) then
+            layer = layer - 1
+            DrawBatch()
+        end
+    end
+
     -- add live cell as a sphere at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1057,10 +1103,15 @@ end
 ----------------------------------------------------------------------
 
 function DrawBatch()
+    if depthshading then
+        depth = layer
+    else
+        depth = ""
+    end
     if celltype == "cube" then
-        ov("paste "..table.concat(xybatch, " ").." c")
+        ov("paste "..table.concat(xybatch, " ").." c"..depth)
     elseif celltype == "sphere" then
-        ov("paste "..table.concat(xybatch, " ").." S")
+        ov("paste "..table.concat(xybatch, " ").." S"..depth)
     else -- celltype == "point"
         ov(op.white)
         ov("set "..table.concat(xybatch, " "))
@@ -1275,9 +1326,17 @@ function DisplayCells(editing)
         fromx, fromy, fromz = MAXX, MINY, MINZ
     end
 
-    if fromx == MINX then tox, stepx = MAXX, 1 else tox, stepx = MINX, -1 end
-    if fromy == MINY then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
-    if fromz == MINZ then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
+    if (fromx == MINX) then tox, stepx = MAXX, 1 else tox, stepx = MINX, -1 end
+    if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
+    if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
+
+    -- check for depth shading
+    if depthshading then
+        layer = depthlayers + 1
+        if popcount < layer then
+            layer = popcount
+        end
+    end
 
     -- draw cells from back to front (assumes vertex order set in CreateCube)
     local i, j
@@ -4761,6 +4820,13 @@ end
 
 ----------------------------------------------------------------------
 
+function ToggleDepthShading()
+    depthshading = not depthshading
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
 function ToggleToolBar()
     if toolbarht > 0 then
         toolbarht = 0
@@ -6296,6 +6362,7 @@ function HandleKey(event)
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MoveToMiddle()
     elseif key == "h" and mods == "none" then ShowHelp()
+    elseif key == "0" and mods == "none" then ToggleDepthShading()
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)
