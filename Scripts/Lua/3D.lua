@@ -11,6 +11,7 @@ scale and rotation).
 Author: Andrew Trevorrow (andrew@trevorrow.com), Feb 2018.
 
 Thanks to Tom Rokicki for optimizing the NextGeneration code.
+Thanks to Chris Rowett for optimizing the DisplayCells code.
 
 TODO: !!!
 
@@ -21,7 +22,6 @@ TODO: !!!
 
 NOTE: Do following changes for the Golly 3.2b1 release:
 
-- enable batch draw code
 - create a menu bar from oplus
 - fix textoption background problem in m.button code in oplus/init.lua
 - implement g.settitle(string) so we can put pattname and 3D rule in
@@ -215,7 +215,7 @@ local settingsfile = g.getdir("data").."3D.ini"
 
 -- batch draw settings !BATCHDRAW!
 local xybatch = {}                  -- coordinates for each cell
-local usebatch = false              -- whether to use batch drawing (enable in Golly 3.2b1!!!)
+local usebatch = true               -- whether to use batch drawing
 local usecull  = false              -- disable batch draw cull
 
 ----------------------------------------------------------------------
@@ -1071,7 +1071,9 @@ local function DrawCube(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx) + midx - HALFCUBECLIP
     y = round(newy) + midy - HALFCUBECLIP
@@ -1086,7 +1088,9 @@ local function DrawSphere(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
     y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
@@ -1120,7 +1124,9 @@ local function DrawPoint(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx) + midx
     y = round(newy) + midy
@@ -1133,7 +1139,9 @@ local function DrawActiveCell(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx) + midx - CELLSIZE
     y = round(newy) + midy - CELLSIZE
@@ -1147,7 +1155,9 @@ local function DrawSelectedCell(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx) + midx - CELLSIZE
     y = round(newy) + midy - CELLSIZE
@@ -1161,7 +1171,9 @@ local function DrawPasteCell(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx) + midx - CELLSIZE
     y = round(newy) + midy - CELLSIZE
@@ -1259,7 +1271,7 @@ function DisplayCells(editing)
     end
 
     -- test batch draw !BATCHDRAW!
-    local t1 = g.millisecs()
+    --!!! local t1 = g.millisecs()
     if usebatch and not testcell then
         if celltype == "cube" then
             DrawLiveCell = AddCubeToBatch
@@ -1269,10 +1281,9 @@ function DisplayCells(editing)
             DrawLiveCell = AddPointToBatch
         end
     end
-    
-    local i
 
     -- draw cells from back to front (assumes vertex order set in CreateCube)
+    local i
     if maxZ == z1 then
         -- draw cell at MINX,MINY,MAXZ first
         for z = MAXZ, MINZ, -1 do
@@ -1388,11 +1399,12 @@ function DisplayCells(editing)
     end
 
     -- test batch draw !BATCHDRAW!
-local tb = g.millisecs()
+    --!!! local tb = g.millisecs()
     if usebatch and not testcell then
         DrawBatch()
     end
-tb = g.millisecs() - tb
+    --[[ remove eventually!!!
+    tb = g.millisecs() - tb
     message = string.format("%.2fms", g.millisecs() - t1)
     if usebatch then
        message = message.." batch "..string.format("%.2fms", tb)
@@ -1400,6 +1412,7 @@ tb = g.millisecs() - tb
            message = message.." cull"
        end
     end
+    --]]
 
     ov("blend 0")
 end
@@ -1470,8 +1483,6 @@ function Refresh()
     -- turn off event checking to avoid partial updates of overlay
     -- (eg. due to user resizing window while a pattern is generating)
     g.check(false)
-
-local ttotal = g.millisecs()
 
     -- fill overlay with background color
     ov("rgba "..BACK_COLOR)
@@ -3821,7 +3832,9 @@ local function GetMidPoint(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
-    local newx, newy = TransformPoint({x, y, z})
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
     x = round(newx) + midx
     y = round(newy) + midy
@@ -4879,6 +4892,7 @@ end
 
 ----------------------------------------------------------------------
 
+-- remove eventually!!!???
 function ToggleCull() -- !BATCHDRAW!
     usecull = not usecull
     Refresh()
@@ -4886,6 +4900,7 @@ end
 
 ----------------------------------------------------------------------
 
+-- remove eventually!!!
 function ToggleBatch() -- !BATCHDRAW!
     usebatch = not usebatch
     Refresh()
