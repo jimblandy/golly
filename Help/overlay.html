@@ -1337,6 +1337,43 @@ The slider will only appear after its show function is called.
 <dd> Example: <b>red_slider.show(10, 70, 255)</b></dd>
 </p>
 
+<p><dt><b>op.menubar()</b></dt>
+<dd>
+Create and return a table representing a menu bar.
+You can then use its addmenu function to add menus to the menu bar,
+then the additem function to append items to these menus.
+If the <a href="#process">op.process</a> function detects a click in this menu bar
+then it will track the mouse and call the specified callback function if a menu item
+is selected.
+</dd>
+</dd>
+<dd> Example:</dd>
+<dd> <b>mbar = op.menubar()</b></dd>
+<dd> <i>-- add some menus</i></dd>
+<dd> <b>mbar.addmenu("File")</b></dd>
+<dd> <b>mbar.addmenu("Edit")</b></dd>
+<dd> <i>-- add items to File menu</i></dd>
+<dd> <b>mbar.additem(1, "New Pattern", NewPattern)</b></dd>
+<dd> <b>mbar.additem(1, "Open Pattern...", OpenPattern)</b></dd>
+<dd> <b>mbar.additem(1, "Save Pattern...", SavePattern)</b></dd>
+<dd> <b>mbar.additem(1, "---", nil) <i>-- separator</i></dd>
+<dd> <b>mbar.additem(1, "Exit", g.exit)</b></dd>
+<dd> <i>-- add items to Edit menu</i></dd>
+<dd> <b>mbar.additem(2, "Undo", Undo)</b></dd>
+<dd> <b>mbar.additem(2, "Redo", Redo)</b></dd>
+</p>
+<p>
+<dd>
+The menu bar will appear when its show function is called.
+Menu items can be enabled or disabled using the enableitem function,
+and ticked or unticked using the tickitem function.
+</dd>
+<dd> Example:</dd>
+<dd> <b>mbar.enableitem(2, 1, CanUndo())</b></dd>
+<dd> <b>mbar.enableitem(2, 2, CanRedo())</b></dd>
+<dd> <b>mbar.show(0, 0, 600, 30)</b></dd>
+</p>
+
 <a name="process"></a>
 <p><dt><b>op.process(<i>event</i>)</b></dt>
 <dd>
@@ -1352,16 +1389,16 @@ so the caller can process the event.
 
 <p><dt><b>op.popupmenu()</b></dt>
 <dd>
-Create a pop-up menu.  You can then use its additem function to
-append an item with a given label and a callback function that will
-be called if the user selects the item.
+Create and return a table representing a pop-up menu.
+You can then use its additem function to append an item with a given label
+and a callback function that will be called if the user selects the item.
 </dd>
 <dd> Example:</dd>
 <dd> <b>editmenu = op.popupmenu()</b></dd>
 <dd> <b>editmenu.additem("Cut", CutSelection)</b></dd>
 <dd> <b>editmenu.additem("Copy", CopySelection)</b></dd>
 <dd> <b>editmenu.additem("Clear", ClearSelection)</b></dd>
-<dd> <b>editmenu.additem("separator", nil)</b></dd>
+<dd> <b>editmenu.additem("---", nil)</b></dd>
 <dd> <b>editmenu.additem("Paste", PasteClipboard)</b></dd>
 </p>
 <p>
@@ -1441,7 +1478,7 @@ Themes:
 
 <p>
 For a good example of how to use the <b>oplus</b> package,
-see the <a href="edit:Scripts/Lua/pop-plot.lua">pop-plot.lua</a> script.
+see the <a href="edit:Scripts/Lua/3D.lua">3D.lua</a> script.
 
 </body>
 </html>
