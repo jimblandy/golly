@@ -1256,17 +1256,6 @@ function DisplayCells(editing)
         end
     end
 
-    if not testcell then
-        -- use batch drawing
-        if celltype == "cube" then
-            DrawLiveCell = AddCubeToBatch
-        elseif celltype == "sphere" then
-            DrawLiveCell = AddSphereToBatch
-        else -- celltype == "point"
-            DrawLiveCell = AddPointToBatch
-        end
-    end
-
     -- determine order to traverse x, y and z in the grid
     local fromz, toz, stepz, fromy, toy, stepy, fromx, tox, stepx
     if maxZ == z1 then
@@ -1287,9 +1276,9 @@ function DisplayCells(editing)
         fromx, fromy, fromz = MAXX, MINY, MINZ
     end
 
-    if (fromx == MINX) then tox, stepx = MAXX, 1 else tox, stepx = MINX, -1 end
-    if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
-    if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
+    if fromx == MINX then tox, stepx = MAXX, 1 else tox, stepx = MINX, -1 end
+    if fromy == MINY then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
+    if fromz == MINZ then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
 
     -- draw cells from back to front (assumes vertex order set in CreateCube)
     local i, j
@@ -1308,6 +1297,14 @@ function DisplayCells(editing)
             j = j+stepj
         end
     else
+        -- only live cells need to be drawn so use batch mode
+        if celltype == "cube" then
+            DrawLiveCell = AddCubeToBatch
+        elseif celltype == "sphere" then
+            DrawLiveCell = AddSphereToBatch
+        else -- celltype == "point"
+            DrawLiveCell = AddPointToBatch
+        end
         j = N*fromz
         for z = fromz, toz, stepz do
             i = N*(fromy+j)
@@ -1321,9 +1318,8 @@ function DisplayCells(editing)
             end
             j = j+stepj
         end
+        DrawBatch()
     end
-
-    if not testcell then DrawBatch() end
 
     ov("blend 0")
 end
