@@ -1267,119 +1267,59 @@ function DisplayCells(editing)
         end
     end
 
-    -- draw cells from back to front (assumes vertex order set in CreateCube)
-    local i
+    -- determine order to traverse x, y and z in the grid
+    local fromz, toz, stepz, fromy, toy, stepy, fromx, tox, stepx
     if maxZ == z1 then
-        -- draw cell at MINX,MINY,MAXZ first
-        for z = MAXZ, MINZ, -1 do
-            for y = MINY, MAXY do
-                i = N*(y+N*z)
-                for x = MINX, MAXX do
-                    if testcell then
-                        TestCell(editing, i + x, x, y, z)
-                    elseif grid1[i + x] then
-                        DrawLiveCell(x, y, z)
-                    end
-                end
-            end
-        end
+        fromx, fromy, fromz = MINX, MINY, MAXZ
     elseif maxZ == z2 then
-        -- draw cell at MINX,MINY,MINZ first
-        for z = MINZ, MAXZ do
-            for y = MINY, MAXY do
-                i = N*(y+N*z)
-                for x = MINX, MAXX do
-                    if testcell then
-                        TestCell(editing, i + x, x, y, z)
-                    elseif grid1[i + x] then
-                        DrawLiveCell(x, y, z)
-                    end
-                end
-            end
-        end
+        fromx, fromy, fromz = MINX, MINY, MINZ
     elseif maxZ == z3 then
-        -- draw cell at MINX,MAXY,MAXZ first
-        for z = MAXZ, MINZ, -1 do
-            for y = MAXY, MINY, -1 do
-                i = N*(y+N*z)
-                for x = MINX, MAXX do
-                    if testcell then
-                        TestCell(editing, i + x, x, y, z)
-                    elseif grid1[i + x] then
-                        DrawLiveCell(x, y, z)
-                    end
-                end
-            end
-        end
+        fromx, fromy, fromz = MINX, MAXY, MAXZ
     elseif maxZ == z4 then
-        -- draw cell at MINX,MAXY,MINZ first
-        for z = MINZ, MAXZ do
-            for y = MAXY, MINY, -1 do
-                i = N*(y+N*z)
-                for x = MINX, MAXX do
-                    if testcell then
-                        TestCell(editing, i + x, x, y, z)
-                    elseif grid1[i + x] then
-                        DrawLiveCell(x, y, z)
-                    end
-                end
-            end
-        end
+        fromx, fromy, fromz = MINX, MAXY, MINZ
     elseif maxZ == z5 then
-        -- draw cell at MAXX,MAXY,MAXZ first
-        for z = MAXZ, MINZ, -1 do
-            for y = MAXY, MINY, -1 do
-                i = N*(y+N*z)
-                for x = MAXX, MINX, -1 do
-                    if testcell then
-                        TestCell(editing, i + x, x, y, z)
-                    elseif grid1[i + x] then
-                        DrawLiveCell(x, y, z)
-                    end
-                end
-            end
-        end
+        fromx, fromy, fromz = MAXX, MAXY, MAXZ
     elseif maxZ == z6 then
-        -- draw cell at MAXX,MAXY,MINZ first
-        for z = MINZ, MAXZ do
-            for y = MAXY, MINY, -1 do
-                i = N*(y+N*z)
-                for x = MAXX, MINX, -1 do
-                    if testcell then
-                        TestCell(editing, i + x, x, y, z)
-                    elseif grid1[i + x] then
-                        DrawLiveCell(x, y, z)
-                    end
-                end
-            end
-        end
+        fromx, fromy, fromz = MAXX, MAXY, MINZ
     elseif maxZ == z7 then
-        -- draw cell at MAXX,MINY,MAXZ first
-        for z = MAXZ, MINZ, -1 do
-            for y = MINY, MAXY do
-                i = N*(y+N*z)
-                for x = MAXX, MINX, -1 do
-                    if testcell then
-                        TestCell(editing, i + x, x, y, z)
-                    elseif grid1[i + x] then
-                        DrawLiveCell(x, y, z)
-                    end
-                end
-            end
-        end
+        fromx, fromy, fromz = MAXX, MINY, MAXZ
     elseif maxZ == z8 then
-        -- draw cell at MAXX,MINY,MINZ first
-        for z = MINZ, MAXZ do
-            for y = MINY, MAXY do
-                i = N*(y+N*z)
-                for x = MAXX, MINX, -1 do
-                    if testcell then
-                        TestCell(editing, i + x, x, y, z)
-                    elseif grid1[i + x] then
+        fromx, fromy, fromz = MAXX, MINY, MINZ
+    end
+
+    if (fromx == MINX) then tox, stepx = MAXX, 1 else tox, stepx = MINX, -1 end
+    if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
+    if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
+
+    -- draw cells from back to front (assumes vertex order set in CreateCube)
+    local i, j
+    local stepi, stepj = N*stepy, N*stepz
+
+    if testcell then
+        j = N*fromz
+        for z = fromz, toz, stepz do
+            i = N*(fromy+j)
+            for y = fromy, toy, stepy do
+                for x = fromx, tox, stepx do
+                    TestCell(editing, i+x, x, y, z)
+                end
+                i = i+stepi
+            end
+            j = j+stepj
+        end
+    else
+        j = N*fromz
+        for z = fromz, toz, stepz do
+            i = N*(fromy+j)
+            for y = fromy, toy, stepy do
+                for x = fromx, tox, stepx do
+                    if grid1[i+x] then
                         DrawLiveCell(x, y, z)
                     end
                 end
+                i = i+stepi
             end
+            j = j+stepj
         end
     end
 
