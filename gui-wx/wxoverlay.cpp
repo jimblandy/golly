@@ -26,30 +26,6 @@
 
 // -----------------------------------------------------------------------------
 
-class CullNode {
-public:
-    CullNode(int x, int y, CullNode *prev) {
-        cx = x;
-        cy = y;
-        cnext = NULL;
-        cprev = prev;
-        if (prev) prev->cnext = this;
-    }
-
-    CullNode() {
-    }
-
-    ~CullNode() {
-    }
-
-    int cx;
-    int cy;
-    CullNode *cnext;
-    CullNode *cprev;
-};
-
-// -----------------------------------------------------------------------------
-
 class Clip {
 public:
     Clip(int w, int h, bool use_calloc = false) {
@@ -4056,8 +4032,6 @@ const char* Overlay::DoPaste(const char* args)
         return OverlayError("paste command requires at least 3 arguments");
     }
 
-    //int ttotal = stopwatch->Time();
-
     // make a copy of the arguments so we can change them
     char *buffer = (char*)malloc(arglen + 1);   // add 1 for the terminating nul
     if (buffer == NULL) return OverlayError("not enough memory for paste");
@@ -4081,25 +4055,6 @@ const char* Overlay::DoPaste(const char* args)
     if (lastarg < copy) {
         free(buffer);
         return OverlayError("paste command requires at least 3 arguments");
-    }
-
-    // check if the last argument is "cull"
-    bool cull = false;
-    if (strcmp(lastarg, " cull") == 0) {
-        cull = true;
-        *lastarg = 0;
- 
-        lastarg--;
-        while (lastarg >= copy && *lastarg == ' ') {
-            lastarg--;
-        }
-        while (lastarg >= copy && *lastarg != ' ') {
-            lastarg--;
-        }
-        if (lastarg < copy) {
-            free(buffer);
-            return OverlayError("paste command requires at least 3 arguments");
-        }
     }
 
     // null terminate the arguments before the clip name
@@ -4132,277 +4087,196 @@ const char* Overlay::DoPaste(const char* args)
     // mark target clip as changed
     DisableTargetClipIndex();
     
-    CullNode *current = NULL;
-    CullNode *prev = NULL;
-    CullNode *head = NULL;
-    const int culitems = 1000000;     // TBD make dynamic
-    static CullNode culbuf[culitems];
-    CullNode *bufptr = culbuf;
-    const int zrows = 512;
-    const int zcols = 512;
-    const int zitems = zrows * zcols;
-    static unsigned char zbuffer[zitems];
-    int z;
-
-    //int nclipped = 0;
-    //int nculled = 0;
-    //int nnodes = 0;
-
-    // read each coordinate pair into the list removing those outside the target
-    do {
-        // discard if location is completely outside target
-        if (RectOutsideTarget(x, y, w, h)) {
-            //nclipped++;
-        } else {
-            // add node to list
-            current = new(bufptr++) CullNode(x, y, prev); 
-            prev = current;
-
-            // set the head to point to the first in the list
-            if (head == NULL) head = current;
-
-            //nnodes++;
-        }
-    }
-    while ((copy = (char*)GetCoordinatePair(copy, &x, &y)) != 0);
-
-    //int tcull = stopwatch->Time();
-
-    // check whether cull is requested
-    if (cull) {
-        // clear the z-buffer
-        memset(zbuffer, 0, sizeof(*zbuffer) * zitems);
-
-        // cull items using z-buffer starting at the end of the list and working backwards
-        while (current) {
-            // compute z-buffer location
-            z = zcols * ((current->cy * zrows) / ht) + ((current->cx * zcols) / wd);
-            if (z < 0) z = 0;
-            if (z >= zitems) z = zitems - 1;
-            if (zbuffer[z]) {
-                // remove item
-                if (current->cprev) {
-                    current->cprev->cnext = current->cnext;
-                    current->cnext->cprev = current->cprev;
-                } else {
-                    current->cnext->cprev = NULL;
-                }
-
-                //nculled++;
-            } else {
-                // set in z-buffer
-                zbuffer[z] = 255;
-            }
-            prev = current;
-            current = current->cprev;
-        }
-        // set current to last used item which will now be the head of the list
-        current = prev;
-    } else {
-        // no culling so set current to head of list
-        current = head;
-    }
-        
-    //int tpaste = stopwatch->Time();
-
     // paste at each coordinate pair
     const int ow = w;
     const int oh = h;
-    while (current) {
-        // get the coordinates
-        x = current->cx;
-        y = current->cy;
+    do {
         // set original width and height since these can be changed below if clipping required
         w = ow;
         h = oh;
 
-        // check for transformation
-        if (identity) {
-            // no transformation, check for clip and target the same size without alpha blending
-            if (!alphablend && x == 0 && y == 0 && w == wd && h == ht) {
-                // fast paste with single memcpy call
-                memcpy(pixmap, clipptr->cdata, w * h * 4);
-            }
-            else {
-                // get the clip data
-                unsigned int *ldata = (unsigned int*)clipptr->cdata;
-                int cliprowpixels = w;
-                int rowoffset = 0;
-        
-                // check for clipping
-                int xmax = x + w - 1;
-                int ymax = y + h - 1;
-                if (x < 0) {
-                    // skip pixels off left edge
-                    ldata += -x;
-                    x = 0;
+        // discard if location is completely outside target
+        if (!RectOutsideTarget(x, y, w, h)) {
+            // check for transformation
+            if (identity) {
+                // no transformation, check for clip and target the same size without alpha blending
+                if (!alphablend && x == 0 && y == 0 && w == wd && h == ht) {
+                    // fast paste with single memcpy call
+                    memcpy(pixmap, clipptr->cdata, w * h * 4);
                 }
-                if (y < 0) {
-                    // skip pixels off top edge
-                    ldata += -y * cliprowpixels;
-                    rowoffset = -y;
-                    y = 0;
-                }
-                if (xmax >= wd) xmax = wd - 1;
-                if (ymax >= ht) ymax = ht - 1;
-                w = xmax - x + 1;
-                h = ymax - y + 1;
-        
-                // get the paste target data
-                int targetrowpixels = wd;
-                unsigned int* lp = (unsigned int*)pixmap;
-                lp += y * targetrowpixels + x;
-                
-                // check for alpha blending
-                if (alphablend) {
-                    // alpha blending
-                    unsigned char* p = (unsigned char*)lp;
-                    bool hasindex = clipptr->hasindex;
-                    unsigned char* rowindex = clipptr->rowindex;
-        
-                    for (int j = 0; j < h; j++) {
-                        // if row index exists then skip row if blank (all pixels have alpha 0)
-                        if (hasindex && !rowindex[rowoffset + j]) {
-                            ldata += w;
-                            lp += w;
-                        } else {
-                            // if row index exists and all pixels opaque then use memcpy
-                            if (hasindex && rowindex[rowoffset + j] == 255) {
-                                memcpy(lp, ldata, w << 2);
+                else {
+                    // get the clip data
+                    unsigned int *ldata = (unsigned int*)clipptr->cdata;
+                    int cliprowpixels = w;
+                    int rowoffset = 0;
+            
+                    // check for clipping
+                    int xmax = x + w - 1;
+                    int ymax = y + h - 1;
+                    if (x < 0) {
+                        // skip pixels off left edge
+                        ldata += -x;
+                        x = 0;
+                    }
+                    if (y < 0) {
+                        // skip pixels off top edge
+                        ldata += -y * cliprowpixels;
+                        rowoffset = -y;
+                        y = 0;
+                    }
+                    if (xmax >= wd) xmax = wd - 1;
+                    if (ymax >= ht) ymax = ht - 1;
+                    w = xmax - x + 1;
+                    h = ymax - y + 1;
+            
+                    // get the paste target data
+                    int targetrowpixels = wd;
+                    unsigned int* lp = (unsigned int*)pixmap;
+                    lp += y * targetrowpixels + x;
+                    
+                    // check for alpha blending
+                    if (alphablend) {
+                        // alpha blending
+                        unsigned char* p = (unsigned char*)lp;
+                        bool hasindex = clipptr->hasindex;
+                        unsigned char* rowindex = clipptr->rowindex;
+            
+                        for (int j = 0; j < h; j++) {
+                            // if row index exists then skip row if blank (all pixels have alpha 0)
+                            if (hasindex && !rowindex[rowoffset + j]) {
                                 ldata += w;
                                 lp += w;
                             } else {
-                                for (int i = 0; i < w; i++) {
-                                    // get the source pixel
-                                    unsigned char* srcp = (unsigned char*)ldata;
-                                    unsigned int rgba = *ldata++;
-                                    unsigned char pa = srcp[3];
-                
-                                    // draw the pixel
-                                    if (pa < 255) {
-                                        if (pa > 0) {
-                                            // source pixel is translucent so blend with destination pixel;
-                                            // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
-                                            unsigned char pr = srcp[0];
-                                            unsigned char pg = srcp[1];
-                                            unsigned char pb = srcp[2];
-                                            unsigned char destr = p[0];
-                                            unsigned char destg = p[1];
-                                            unsigned char destb = p[2];
-                                            unsigned char desta = p[3];
-                                            if (desta == 255) {
-                                                // destination pixel is opaque
-                                                unsigned int alpha = pa + 1;
-                                                unsigned int invalpha = 256 - pa;
-                                                *p++ = (alpha * pr + invalpha * destr) >> 8;
-                                                *p++ = (alpha * pg + invalpha * destg) >> 8;
-                                                *p++ = (alpha * pb + invalpha * destb) >> 8;
-                                                p++;   // no need to change p[3] (alpha stays at 255)
-                                            } else {
-                                                // destination pixel is translucent
-                                                float alpha = pa / 255.0;
-                                                float inva = 1.0 - alpha;
-                                                float destalpha = desta / 255.0;
-                                                float outa = alpha + destalpha * inva;
-                                                p[3] = int(outa * 255);
-                                                if (p[3] > 0) {
-                                                    *p++ = int((pr * alpha + destr * destalpha * inva) / outa);
-                                                    *p++ = int((pg * alpha + destg * destalpha * inva) / outa);
-                                                    *p++ = int((pb * alpha + destb * destalpha * inva) / outa);
-                                                    p++;   // already set above
+                                // if row index exists and all pixels opaque then use memcpy
+                                if (hasindex && rowindex[rowoffset + j] == 255) {
+                                    memcpy(lp, ldata, w << 2);
+                                    ldata += w;
+                                    lp += w;
+                                } else {
+                                    for (int i = 0; i < w; i++) {
+                                        // get the source pixel
+                                        unsigned char* srcp = (unsigned char*)ldata;
+                                        unsigned int rgba = *ldata++;
+                                        unsigned char pa = srcp[3];
+                    
+                                        // draw the pixel
+                                        if (pa < 255) {
+                                            if (pa > 0) {
+                                                // source pixel is translucent so blend with destination pixel;
+                                                // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                                                unsigned char pr = srcp[0];
+                                                unsigned char pg = srcp[1];
+                                                unsigned char pb = srcp[2];
+                                                unsigned char destr = p[0];
+                                                unsigned char destg = p[1];
+                                                unsigned char destb = p[2];
+                                                unsigned char desta = p[3];
+                                                if (desta == 255) {
+                                                    // destination pixel is opaque
+                                                    unsigned int alpha = pa + 1;
+                                                    unsigned int invalpha = 256 - pa;
+                                                    *p++ = (alpha * pr + invalpha * destr) >> 8;
+                                                    *p++ = (alpha * pg + invalpha * destg) >> 8;
+                                                    *p++ = (alpha * pb + invalpha * destb) >> 8;
+                                                    p++;   // no need to change p[3] (alpha stays at 255)
                                                 } else {
-                                                    p += 4;
+                                                    // destination pixel is translucent
+                                                    float alpha = pa / 255.0;
+                                                    float inva = 1.0 - alpha;
+                                                    float destalpha = desta / 255.0;
+                                                    float outa = alpha + destalpha * inva;
+                                                    p[3] = int(outa * 255);
+                                                    if (p[3] > 0) {
+                                                        *p++ = int((pr * alpha + destr * destalpha * inva) / outa);
+                                                        *p++ = int((pg * alpha + destg * destalpha * inva) / outa);
+                                                        *p++ = int((pb * alpha + destb * destalpha * inva) / outa);
+                                                        p++;   // already set above
+                                                    } else {
+                                                        p += 4;
+                                                    }
                                                 }
+                                            } else {
+                                                // skip transparent pixel
+                                                p += 4;
                                             }
                                         } else {
-                                            // skip transparent pixel
+                                            // pixel is opaque so copy it
+                                            *lp = rgba;
                                             p += 4;
                                         }
-                                    } else {
-                                        // pixel is opaque so copy it
-                                        *lp = rgba;
-                                        p += 4;
+                                        lp++;
                                     }
-                                    lp++;
                                 }
                             }
+                            // next clip and target row
+                            lp += targetrowpixels - w;
+                            p = (unsigned char*)lp;
+                            ldata += cliprowpixels - w;
                         }
-                        // next clip and target row
-                        lp += targetrowpixels - w;
-                        p = (unsigned char*)lp;
-                        ldata += cliprowpixels - w;
-                    }
-                } else {
-                    // no alpha blending
-                    for (int j = 0; j < h; j++) {
-                        // copy each row with memcpy
-                        memcpy(lp, ldata, w << 2);
-                        lp += targetrowpixels;
-                        ldata += cliprowpixels;
+                    } else {
+                        // no alpha blending
+                        for (int j = 0; j < h; j++) {
+                            // copy each row with memcpy
+                            memcpy(lp, ldata, w << 2);
+                            lp += targetrowpixels;
+                            ldata += cliprowpixels;
+                        }
                     }
                 }
-            }
-        } else {
-            // do an affine transformation
-            unsigned char* data = clipptr->cdata;
-            int x0 = x - (x * axx + y * axy);
-            int y0 = y - (x * ayx + y * ayy);
-    
-            // check for alpha blend
-            if (alphablend) {
-                // save RGBA values
-                unsigned char saver = r;
-                unsigned char saveg = g;
-                unsigned char saveb = b;
-                unsigned char savea = a;
-    
-                for (int j = 0; j < h; j++) {
-                    for (int i = 0; i < w; i++) {
-                        r = *data++;
-                        g = *data++;
-                        b = *data++;
-                        a = *data++;
-                        int newx = x0 + x * axx + y * axy;
-                        int newy = y0 + x * ayx + y * ayy;
-                        if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
-                        x++;
-                    }
-                    y++;
-                    x -= w;
-                }
-    
-                // restore saved RGBA values
-                r = saver;
-                g = saveg;
-                b = saveb;
-                a = savea;
             } else {
-                // no alpha blend
-                unsigned int* ldata = (unsigned int*)data;
-                unsigned int* lp = (unsigned int*)pixmap;
-                for (int j = 0; j < h; j++) {
-                    for (int i = 0; i < w; i++) {
-                        int newx = x0 + x * axx + y * axy;
-                        int newy = y0 + x * ayx + y * ayy;
-                        if (PixelInTarget(newx, newy)) *(lp + newy * wd + newx) = *ldata;
-                        ldata++;
-                        x++;
+                // do an affine transformation
+                unsigned char* data = clipptr->cdata;
+                int x0 = x - (x * axx + y * axy);
+                int y0 = y - (x * ayx + y * ayy);
+        
+                // check for alpha blend
+                if (alphablend) {
+                    // save RGBA values
+                    unsigned char saver = r;
+                    unsigned char saveg = g;
+                    unsigned char saveb = b;
+                    unsigned char savea = a;
+        
+                    for (int j = 0; j < h; j++) {
+                        for (int i = 0; i < w; i++) {
+                            r = *data++;
+                            g = *data++;
+                            b = *data++;
+                            a = *data++;
+                            int newx = x0 + x * axx + y * axy;
+                            int newy = y0 + x * ayx + y * ayy;
+                            if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
+                            x++;
+                        }
+                        y++;
+                        x -= w;
                     }
-                    y++;
-                    x -= w;
+        
+                    // restore saved RGBA values
+                    r = saver;
+                    g = saveg;
+                    b = saveb;
+                    a = savea;
+                } else {
+                    // no alpha blend
+                    unsigned int* ldata = (unsigned int*)data;
+                    unsigned int* lp = (unsigned int*)pixmap;
+                    for (int j = 0; j < h; j++) {
+                        for (int i = 0; i < w; i++) {
+                            int newx = x0 + x * axx + y * axy;
+                            int newy = y0 + x * ayx + y * ayy;
+                            if (PixelInTarget(newx, newy)) *(lp + newy * wd + newx) = *ldata;
+                            ldata++;
+                            x++;
+                        }
+                        y++;
+                        x -= w;
+                    }
                 }
             }
         }
-        current = current->cnext;
     }
-
-    //tcull = tpaste - tcull;
-    //tpaste = stopwatch->Time() - tpaste;
-    //ttotal = stopwatch->Time() - ttotal;
-
-    //if (nnodes > 1) {
-        //fprintf(stderr, "batch: %d\tculled: %d (%d%%)\tclipped: %d\tcull: %d\tpaste: %d\ttotal: %d\n", nnodes, nculled, (100 * nculled) / nnodes, nclipped, , tcull, tpaste, ttotal);
-    //}
+    while ((copy = (char*)GetCoordinatePair(copy, &x, &y)) != 0);
 
     // free the buffer
     free(buffer);

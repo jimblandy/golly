@@ -215,7 +215,6 @@ local settingsfile = g.getdir("data").."3D.ini"
 -- batch draw settings !BATCHDRAW!
 local xybatch = {}                  -- coordinates for each cell
 local usebatch = true               -- whether to use batch drawing
-local usecull  = false              -- disable batch draw cull
 
 ----------------------------------------------------------------------
 
@@ -1045,22 +1044,15 @@ end
 ----------------------------------------------------------------------
 
 function DrawBatch() -- !BATCHDRAW!
-    local command
     if celltype == "cube" then
-        command = "paste "..table.concat(xybatch, " ").." c"
+        ov("paste "..table.concat(xybatch, " ").." c")
     elseif celltype == "sphere" then
-        command = "paste "..table.concat(xybatch, " ").." S"
+        ov("paste "..table.concat(xybatch, " ").." S")
     else -- celltype == "point"
         ov(op.white)
-        command = "set "..table.concat(xybatch, " ")
+        ov("set "..table.concat(xybatch, " "))
     end
     xybatch = {}
-
-     -- execute command
-     if usecull and celltype ~= "point" then
-         command = command.." cull"
-     end
-     ov(command)
 end
 
 ----------------------------------------------------------------------
@@ -1407,9 +1399,6 @@ function DisplayCells(editing)
     message = string.format("%.2fms", g.millisecs() - t1)
     if usebatch then
        message = message.." batch "..string.format("%.2fms", tb)
-       if usecull then
-           message = message.." cull"
-       end
     end
     --]]
 
@@ -4886,14 +4875,6 @@ end
 
 ----------------------------------------------------------------------
 
--- remove eventually!!!???
-function ToggleCull() -- !BATCHDRAW!
-    usecull = not usecull
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
 -- remove eventually!!!
 function ToggleBatch() -- !BATCHDRAW!
     usebatch = not usebatch
@@ -6406,7 +6387,6 @@ function HandleKey(event)
     elseif key == "m" and mods == "shift" then MoveToMiddle()
     elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "9" and mods == "none" then ToggleBatch() -- !BATCHDRAW!
-    elseif key == "0" and mods == "none" then ToggleCull()  -- !BATCHDRAW!
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)

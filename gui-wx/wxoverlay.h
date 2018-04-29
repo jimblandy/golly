@@ -35,9 +35,6 @@ typedef enum {
 // in a named "clipboard" for later use by other commands (eg. paste, replace):
 class Clip;
 
-// The CullNode class is used by the paste command when batch draw is culling
-class CullNode;
-
 class Overlay {
 public:
     Overlay();
