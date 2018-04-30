@@ -499,9 +499,10 @@ local function CheckFaces(f1v1, f1v2, f1v3, f1v4,
                           f2v1, f2v2, f2v3, f2v4)
 
     local function ComputeShade(v1, v2)
+        -- return a shade of gray assuming a light source in front of grid
         local x1, y1, z1 = rotx[v1], roty[v1], rotz[v1]
         local x2, y2, z2 = rotx[v2], roty[v2], rotz[v2]
-        local costheta = (x1-x2) / sqrt( (x1-x2)*(x1-x2) +
+        local costheta = (z1-z2) / sqrt( (x1-x2)*(x1-x2) +
                                          (y1-y2)*(y1-y2) +
                                          (z1-z2)*(z1-z2) )
         -- costheta ranges from -1.0 to 1.0
