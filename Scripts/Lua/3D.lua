@@ -107,9 +107,11 @@ local selstate = true               -- for selecting/deselecting cells
 local celltype = "cube"             -- draw live cell as cube/sphere/point
 local DrawLiveCell                  -- set to Draw{Cube/Sphere/Point} or Add{Cube/Sphere/Point}ToBatch
 local xybatch = {}                  -- coordinates for each cell when batch drawing
+local layercoords = {}              -- coordinates for each cell in each layer
 local layer                         -- layer number when depth shading
 local depthshading = false          -- whether depth shading
 local depthlayers = 32              -- number of shading layers
+local depthrange = 128              -- rgb adjustment at maximum depth
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -847,7 +849,7 @@ end
 ----------------------------------------------------------------------
 
 function CreateLayers(clip)
-    local adjust = floor(192 / depthlayers)
+    local adjust = floor(depthrange / depthlayers)
     ov("target "..clip)
     ov("copy 0 0 0 0 "..clip.."1")
     ov("target "..clip.."1")
@@ -1034,13 +1036,6 @@ end
 ----------------------------------------------------------------------
 
 local function AddCubeToBatch(x, y, z)
-    if depthshading then
-        if #xybatch >= (2 * popcount / depthlayers) then
-            layer = layer - 1
-            DrawBatch()
-        end
-    end
-
     -- add live cell as a cube at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1048,24 +1043,31 @@ local function AddCubeToBatch(x, y, z)
     -- transform point
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
+    local newz
+    if depthshading then
+        newz = (x*zixo + y*ziyo + z*zizo)
+    end
     -- use orthographic projection
     x = round(newx) + midx - HALFCUBECLIP
     y = round(newy) + midy - HALFCUBECLIP
     -- add to the list to draw
-    xybatch[#xybatch + 1] = x
-    xybatch[#xybatch + 1] = y
+    if depthshading then
+        local midz = N*CELLSIZE*0.8
+        local layer = floor(depthlayers * (newz + midz) / (midz * 2.1)) + 1
+        if layer < 1 then layer = 1 end
+        if layer > depthlayers then layer = depthlayers end
+        local xylist = layercoords[layer]
+        xylist[#xylist + 1] = x
+        xylist[#xylist + 1] = y
+    else
+        xybatch[#xybatch + 1] = x
+        xybatch[#xybatch + 1] = y
+    end
 end
 
 ----------------------------------------------------------------------
 
 local function AddSphereToBatch(x, y, z)
-    if depthshading then
-        if #xybatch >= (2 * popcount / depthlayers) then
-            layer = layer - 1
-            DrawBatch()
-        end
-    end
-
     -- add live cell as a sphere at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1073,12 +1075,26 @@ local function AddSphereToBatch(x, y, z)
     -- transform point
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
+    local newz
+    if depthshading then
+        newz = (x*zixo + y*ziyo + z*zizo)
+    end
     -- use orthographic projection
     x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
     y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
     -- add to the list to draw
-    xybatch[#xybatch + 1] = x
-    xybatch[#xybatch + 1] = y
+    if depthshading then
+        local midz = N*CELLSIZE*0.8
+        local layer = floor(depthlayers * (newz + midz) / (midz * 2)) + 1
+        if layer < 1 then layer = 1 end
+        if layer > depthlayers then layer = depthlayers end
+        local xylist = layercoords[layer]
+        xylist[#xylist + 1] = x
+        xylist[#xylist + 1] = y
+    else
+        xybatch[#xybatch + 1] = x
+        xybatch[#xybatch + 1] = y
+    end
 end
 
 ----------------------------------------------------------------------
@@ -1101,21 +1117,31 @@ end
 
 ----------------------------------------------------------------------
 
-function DrawBatch()
-    if depthshading then
-        depth = layer
-    else
-        depth = ""
-    end
+function DrawBatchLayer(depth, coordlist)
     if celltype == "cube" then
-        ov("paste "..table.concat(xybatch, " ").." c"..depth)
+        ov("paste "..table.concat(coordlist, " ").." c"..depth)
     elseif celltype == "sphere" then
-        ov("paste "..table.concat(xybatch, " ").." S"..depth)
+        ov("paste "..table.concat(coordlist, " ").." S"..depth)
     else -- celltype == "point"
         ov(op.white)
-        ov("set "..table.concat(xybatch, " "))
+        ov("set "..table.concat(coordlist, " "))
     end
-    xybatch = {}
+end
+
+----------------------------------------------------------------------
+
+function DrawBatch()
+    if depthshading and celltype ~= "point" then
+        for i = depthlayers, 1, -1 do
+            if #layercoords[i] > 0 then
+                DrawBatchLayer(i, layercoords[i])
+                layercoords[i] = {}
+            end
+        end
+    else
+        DrawBatchLayer("", xybatch)
+        xybatch = {}
+    end
 end
 
 ----------------------------------------------------------------------
@@ -1328,14 +1354,6 @@ function DisplayCells(editing)
     if (fromx == MINX) then tox, stepx = MAXX, 1 else tox, stepx = MINX, -1 end
     if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
     if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
-
-    -- check for depth shading
-    if depthshading then
-        layer = depthlayers + 1
-        if popcount < layer then
-            layer = popcount
-        end
-    end
 
     -- draw cells from back to front (assumes vertex order set in CreateCube)
     local i, j
@@ -6259,6 +6277,11 @@ function Initialize()
     CreateOverlay()
     CreateAxes()
     
+    -- clear depth shading lists
+    for i = 1, depthlayers do
+        layercoords[i] = {}
+    end
+
     -- create reference cube (never displayed)
     refcube = CreateCube(0,0,0)
     
