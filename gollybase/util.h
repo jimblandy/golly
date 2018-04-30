@@ -51,6 +51,19 @@ public:
    bool aborted ;
 } ;
 /**
+ *   If a fast popcount routine is available, this macro indicates its
+ *   availability.  The popcount should be a 32-bit popcount.  The
+ *   __builtin_popcount by gcc and clang works fine on any platform.
+ *   The __popcount intrinsic on Visual Studio does *not* without a
+ *   CPUID check, so we don't do fast popcounts yet on Windows.
+ */
+#ifdef __GNUC__
+#define FASTPOPCOUNT __builtin_popcount
+#endif
+#ifdef __clang__
+#define FASTPOPCOUNT __builtin_popcount
+#endif
+/**
  *   A routine to get the number of seconds elapsed since an arbitrary
  *   point, as a double.
  */
