@@ -1053,7 +1053,7 @@ local function AddCubeToBatch(x, y, z)
     -- add to the list to draw
     if depthshading then
         local midz = N*CELLSIZE*0.8
-        local layer = floor(depthlayers * (newz + midz) / (midz * 2.1)) + 1
+        local layer = floor(depthlayers * (newz + midz) / (midz * 2)) + 1
         if layer < 1 then layer = 1 end
         if layer > depthlayers then layer = depthlayers end
         local xylist = layercoords[layer]
