@@ -1052,7 +1052,7 @@ local function AddCubeToBatch(x, y, z)
     y = round(newy) + midy - HALFCUBECLIP
     -- add to the list to draw
     if depthshading then
-        local midz = N*CELLSIZE*0.2
+        local midz = N*CELLSIZE*0.5
         local layer = floor(depthlayers * (newz + midz) / (midz * 2)) + 1
         if layer < 1 then layer = 1 end
         if layer > depthlayers then layer = depthlayers end
@@ -1084,7 +1084,7 @@ local function AddSphereToBatch(x, y, z)
     y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
     -- add to the list to draw
     if depthshading then
-        local midz = N*CELLSIZE*0.2
+        local midz = N*CELLSIZE*0.5
         local layer = floor(depthlayers * (newz + midz) / (midz * 2)) + 1
         if layer < 1 then layer = 1 end
         if layer > depthlayers then layer = depthlayers end
