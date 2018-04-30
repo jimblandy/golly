@@ -108,10 +108,9 @@ local celltype = "cube"             -- draw live cell as cube/sphere/point
 local DrawLiveCell                  -- set to Draw{Cube/Sphere/Point} or Add{Cube/Sphere/Point}ToBatch
 local xybatch = {}                  -- coordinates for each cell when batch drawing
 local layercoords = {}              -- coordinates for each cell in each layer
-local layer                         -- layer number when depth shading
 local depthshading = false          -- whether depth shading
 local depthlayers = 32              -- number of shading layers
-local depthrange = 128              -- rgb adjustment at maximum depth
+local depthrange = 96               -- rgb adjustment at maximum depth
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -1052,7 +1051,7 @@ local function AddCubeToBatch(x, y, z)
     y = round(newy) + midy - HALFCUBECLIP
     -- add to the list to draw
     if depthshading then
-        local midz = N*CELLSIZE*0.8
+        local midz = N*CELLSIZE*0.2
         local layer = floor(depthlayers * (newz + midz) / (midz * 2)) + 1
         if layer < 1 then layer = 1 end
         if layer > depthlayers then layer = depthlayers end
@@ -1084,7 +1083,7 @@ local function AddSphereToBatch(x, y, z)
     y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
     -- add to the list to draw
     if depthshading then
-        local midz = N*CELLSIZE*0.8
+        local midz = N*CELLSIZE*0.2
         local layer = floor(depthlayers * (newz + midz) / (midz * 2)) + 1
         if layer < 1 then layer = 1 end
         if layer > depthlayers then layer = depthlayers end
