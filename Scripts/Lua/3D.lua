@@ -110,6 +110,7 @@ local xybatch = {}                  -- coordinates for each cell when batch draw
 local layercoords = {}              -- coordinates for each cell in each layer
 local depthshading = false          -- using depth shading?
 local depthlayers = 32              -- number of shading layers
+local zdepth, zdepth2               -- coefficients for z to depth layer mapping
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -1053,8 +1054,7 @@ local function AddCubeToBatch(x, y, z)
     y = round(newy) + midy - HALFCUBECLIP
     -- add to the list to draw
     if depthshading then
-        local midz = N*CELLSIZE*0.5
-        local layer = floor(depthlayers * (newz + midz) / (midz * 2)) + 1
+        local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
         if layer < 1 then layer = 1 end
         if layer > depthlayers then layer = depthlayers end
         local xylist = layercoords[layer]
@@ -1085,8 +1085,7 @@ local function AddSphereToBatch(x, y, z)
     y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
     -- add to the list to draw
     if depthshading then
-        local midz = N*CELLSIZE*0.5
-        local layer = floor(depthlayers * (newz + midz) / (midz * 2)) + 1
+        local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
         if layer < 1 then layer = 1 end
         if layer > depthlayers then layer = depthlayers end
         local xylist = layercoords[layer]
@@ -1380,6 +1379,10 @@ function DisplayCells(editing)
             DrawLiveCell = AddSphereToBatch
         else -- celltype == "point"
             DrawLiveCell = AddPointToBatch
+        end
+        if depthshading then
+            zdepth = N*CELLSIZE*0.5
+            zdepth2 = zdepth + zdepth
         end
         j = N*fromz
         for z = fromz, toz, stepz do
