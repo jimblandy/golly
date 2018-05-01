@@ -108,9 +108,8 @@ local celltype = "cube"             -- draw live cell as cube/sphere/point
 local DrawLiveCell                  -- set to Draw{Cube/Sphere/Point} or Add{Cube/Sphere/Point}ToBatch
 local xybatch = {}                  -- coordinates for each cell when batch drawing
 local layercoords = {}              -- coordinates for each cell in each layer
-local depthshading = false          -- whether depth shading
+local depthshading = false          -- using depth shading?
 local depthlayers = 32              -- number of shading layers
-local depthrange = 96               -- rgb adjustment at maximum depth
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -312,6 +311,7 @@ function ReadSettings()
             elseif keyword == "perc" then perc = tonumber(value) or 20
             elseif keyword == "lines" then showlines = tostring(value) == "true"
             elseif keyword == "axes" then showaxes = tostring(value) == "true"
+            elseif keyword == "shading" then depthshading = tostring(value) == "true"
             elseif keyword == "gridsize" then
                 N = tonumber(value) or 30
                 if N < MINN then N = MINN end
@@ -346,6 +346,7 @@ function WriteSettings()
         f:write("perc="..perc.."\n")
         f:write("lines="..tostring(showlines).."\n")
         f:write("axes="..tostring(showaxes).."\n")
+        f:write("shading="..tostring(depthshading).."\n")
         f:close()
     end
 end
@@ -849,7 +850,7 @@ end
 ----------------------------------------------------------------------
 
 function CreateLayers(clip)
-    local adjust = floor(depthrange / depthlayers)
+    local adjust = floor(96 / depthlayers)
     ov("target "..clip)
     ov("copy 0 0 0 0 "..clip.."1")
     ov("target "..clip.."1")
@@ -1015,8 +1016,8 @@ function CreateLiveSphere()
         diameter = diameter - 2
         r = r - 1
         if r < 2 then break end
-        x = x + r%2
-        y = y + r%2
+        x = x + 1
+        y = y + 1
         gray = gray + grayinc
         if gray > 255 then gray = 255 end
     end
@@ -4201,6 +4202,7 @@ shortcuts):
 <tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/spheres/points) </td></tr>
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lattice lines </td></tr>
 <tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes and lattice lines </td></tr>
+<tr><td align=right> alt-D &nbsp;</td><td>&nbsp; toggle depth shading </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the tool bar </td></tr>
 <tr><td align=right> 5 &nbsp;</td><td>&nbsp; create a random pattern with given density </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
@@ -6374,6 +6376,7 @@ function HandleKey(event)
     elseif key == "p" then CycleCellType()
     elseif key == "l" and mods == "none" then ToggleLines()
     elseif key == "l" and mods == "shift" then ToggleAxes()
+    elseif key == "d" and mods == "alt" then ToggleDepthShading()
     elseif key == "t" then ToggleToolBar()
     elseif key == "," then MoveActivePlane(activepos+1, true)
     elseif key == "." then MoveActivePlane(activepos-1, true)
@@ -6384,7 +6387,6 @@ function HandleKey(event)
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MoveToMiddle()
     elseif key == "h" and mods == "none" then ShowHelp()
-    elseif key == "0" and mods == "none" then ToggleDepthShading()
     elseif key == "q" then ExitScript()
     else
         -- could be a keyboard shortcut (eg. for full screen)
