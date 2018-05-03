@@ -22,7 +22,6 @@ TODO: !!!
 
 NOTE: Do following changes for the Golly 3.2b1 release:
 
-- create a menu bar from oplus
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
 - implement g.setoption("showtimeline",0)
@@ -162,14 +161,10 @@ local ovwd, ovht                    -- current size of overlay
 local minwd, minht = 600, 100       -- minimum size of overlay
 local midx, midy                    -- overlay's middle pixel
 
+local mbar                          -- the menu bar
+local mbarht = 28                   -- height of menu bar
+
 -- tool bar controls
-local newbutton                     -- New
-local openbutton                    -- Open...
-local savebutton                    -- Save...
-local runbutton                     -- Run...
-local gridbutton                    -- Grid...
-local randbutton                    -- Random...
-local rulebutton                    -- Rule...
 local ssbutton                      -- Start/Stop
 local s1button                      -- +1
 local resetbutton                   -- Reset
@@ -187,7 +182,9 @@ local selmenu                       -- pop-up menu for choosing a selection acti
 
 local buttonht = 20
 local gap = 10                      -- space around buttons
-local toolbarht = buttonht*2+gap*3  -- two rows of buttons
+
+-- tool bar height includes menu bar
+local toolbarht = mbarht+buttonht+gap*2
 
 local drawcursor = "pencil"         -- cursor for drawing cells
 local selectcursor = "cross"        -- cursor for selecting cells
@@ -310,8 +307,8 @@ function ReadSettings()
             elseif keyword == "scriptdir" then scriptdir = tostring(value)
             elseif keyword == "celltype" then celltype = tostring(value)
             elseif keyword == "perc" then perc = tonumber(value) or 20
-            elseif keyword == "lines" then showlines = tostring(value) == "true"
             elseif keyword == "axes" then showaxes = tostring(value) == "true"
+            elseif keyword == "lines" then showlines = tostring(value) == "true"
             elseif keyword == "shading" then depthshading = tostring(value) == "true"
             elseif keyword == "gridsize" then
                 N = tonumber(value) or 30
@@ -345,8 +342,8 @@ function WriteSettings()
         f:write("celltype="..celltype.."\n")
         f:write("rule="..rulestring.."\n")
         f:write("perc="..perc.."\n")
-        f:write("lines="..tostring(showlines).."\n")
         f:write("axes="..tostring(showaxes).."\n")
+        f:write("lines="..tostring(showlines).."\n")
         f:write("shading="..tostring(depthshading).."\n")
         f:close()
     end
@@ -1046,7 +1043,6 @@ local function AddCubeToBatchDepth(x, y, z)
     -- transform point
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
-    local newz
     local newz = (x*zixo + y*ziyo + z*zizo)
     -- use orthographic projection
     x = round(newx) + midx - HALFCUBECLIP
@@ -1435,39 +1431,44 @@ end
 
 --------------------------------------------------------------------------------
 
+function DrawMenuBar()
+    mbar.enableitem(2,  1, #undostack > 0)  -- Undo
+    mbar.enableitem(2,  2, #redostack > 0)  -- Redo
+    mbar.enableitem(2,  4, selcount > 0)    -- Cut
+    mbar.enableitem(2,  5, selcount > 0)    -- Copy
+    mbar.enableitem(2,  7, pastecount > 0)  -- Cancel Paste
+    mbar.enableitem(2,  8, selcount > 0)    -- Clear
+    mbar.enableitem(2,  9, selcount > 0)    -- Clear Outside
+    mbar.enableitem(2, 11, popcount > 0)    -- Select All
+    mbar.enableitem(2, 12, selcount > 0)    -- Cancel Selection
+    mbar.enableitem(2, 14, pastecount > 0 or selcount > 0 or popcount > 0)  -- Move to Middle
+    
+    mbar.enableitem(3, 3, gencount > startcount)    -- Reset
+    
+    mbar.tickitem(4,  5, celltype == "cube")
+    mbar.tickitem(4,  6, celltype == "sphere")
+    mbar.tickitem(4,  7, celltype == "point")
+    mbar.tickitem(4,  9, showaxes)
+    mbar.tickitem(4, 10, showlines)
+    mbar.tickitem(4, 11, depthshading)
+    
+    mbar.show(0, 0, ovwd, mbarht)
+end
+
+--------------------------------------------------------------------------------
+
 function DrawToolBar()
     ov("rgba 230 230 230 255")
     ov("fill 0 0 "..ovwd.." "..toolbarht)
+    
+    DrawMenuBar()
     
     -- draw line at bottom edge of tool bar
     ov(op.gray)
     DrawLine(0, toolbarht-1, ovwd-1, toolbarht-1)
 
     local x = gap
-    local y = gap
-
-    newbutton.show(x, y)
-    x = x + newbutton.wd + gap
-    openbutton.show(x, y)
-    x = x + openbutton.wd + gap
-    savebutton.show(x, y)
-    x = x + savebutton.wd + gap
-    runbutton.show(x, y)
-    x = x + runbutton.wd + gap
-    gridbutton.show(x, y)
-    x = x + gridbutton.wd + gap
-    randbutton.show(x, y)
-    x = x + randbutton.wd + gap
-    rulebutton.show(x, y)
-    -- next 2 buttons are at right end of tool bar
-    x = ovwd - gap - exitbutton.wd
-    exitbutton.show(x, y)
-    x = x - gap - helpbutton.wd
-    helpbutton.show(x, y)
-
-    -- move to 2nd row of buttons
-    x = gap
-    y = buttonht + gap * 2
+    local y = mbarht + gap
     
     ssbutton.show(x, y)
     x = x + ssbutton.wd + gap
@@ -1486,6 +1487,12 @@ function DrawToolBar()
     selectbox.show(x, y, currcursor == selectcursor)
     x = x + selectbox.wd + gap
     movebox.show(x, y, currcursor == movecursor)
+
+    -- last 2 buttons are at right end of tool bar
+    x = ovwd - gap - exitbutton.wd
+    exitbutton.show(x, y)
+    x = x - gap - helpbutton.wd
+    helpbutton.show(x, y)
 end
 
 ----------------------------------------------------------------------
@@ -1633,8 +1640,10 @@ function UpdateStartButton()
     -- change label in ssbutton without changing the button's width
     if generating then
         ssbutton.setlabel("Stop", false)
+        mbar.setitem(3, 1, "Stop")
     else
         ssbutton.setlabel("Start", false)
+        mbar.setitem(3, 1, "Start")
     end
 end
 
@@ -4858,6 +4867,19 @@ end
 
 ----------------------------------------------------------------------
 
+function SetCellType(newtype)
+    if newtype == "cube" then
+        celltype = newtype
+    elseif newtype == "sphere" then
+        celltype = newtype
+    elseif newtype == "point" then
+        celltype = newtype
+    end
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
 function ToggleAxes()
     showaxes = not showaxes
     Refresh()
@@ -4884,15 +4906,7 @@ function ToggleToolBar()
         toolbarht = 0
         midy = int(ovht/2)
         -- hide all the controls
-        newbutton.hide()
-        openbutton.hide()
-        savebutton.hide()
-        runbutton.hide()
-        gridbutton.hide()
-        randbutton.hide()
-        rulebutton.hide()
-        exitbutton.hide()
-        helpbutton.hide()
+        mbar.hide()
         ssbutton.hide()
         s1button.hide()
         resetbutton.hide()
@@ -4902,8 +4916,10 @@ function ToggleToolBar()
         drawbox.hide()
         selectbox.hide()
         movebox.hide()
+        exitbutton.hide()
+        helpbutton.hide()
     else
-        toolbarht = buttonht*2+gap*3
+        toolbarht = mbarht+buttonht+gap*2
         midy = int(ovht/2 + toolbarht/2)
     end
     Refresh()
@@ -6103,23 +6119,78 @@ function CreateOverlay()
     ov("font 11 default-bold")
     ov("textoption background "..BACK_COLOR)
 
-    -- parameters for tool bar buttons
+    -- parameters for menu bar and tool bar buttons
     op.buttonht = buttonht
     op.textgap = 8                          -- gap between edge of button and its label
-    op.textfont = "font 10 default-bold"    -- font for labels
+    op.textfont = "font 10 default-bold"    -- font for button labels
+    op.menufont = "font 11 default-bold"    -- font for menu and item labels
     op.textshadowx = 2
     op.textshadowy = 2
     if g.os() == "Mac" then op.yoffset = -1 end
-    if g.os() == "Linux" then op.textfont = "font 10 default" end
+    if g.os() == "Linux" then
+        op.textfont = "font 10 default"
+        op.menufont = "font 11 default"
+    end
+
+    -- create the menu bar and add some menus
+    mbar = op.menubar()
+    mbar.addmenu("File")
+    mbar.addmenu("Edit")
+    mbar.addmenu("Control")
+    mbar.addmenu("View")
+    
+    -- add items to File menu
+    mbar.additem(1, "New Pattern", NewPattern)
+    mbar.additem(1, "Random Pattern...", RandomPattern)
+    mbar.additem(1, "Open Pattern...", OpenPattern)
+    mbar.additem(1, "Open Clipboard", OpenClipboard)
+    mbar.additem(1, "Save Pattern...", SavePattern)
+    mbar.additem(1, "---", nil)
+    mbar.additem(1, "Run Script...", RunScript)
+    mbar.additem(1, "Run Clipboard", RunClipboard)
+    mbar.additem(1, "Set Startup Script...", SetStartupScript)
+    mbar.additem(1, "---", nil)
+    mbar.additem(1, "Exit 3D.lua", ExitScript)
+    
+    -- add items to Edit menu
+    mbar.additem(2, "Undo", Undo)
+    mbar.additem(2, "Redo", Redo)
+    mbar.additem(2, "---", nil)
+    mbar.additem(2, "Cut", CutSelection)
+    mbar.additem(2, "Copy", CopySelection)
+    mbar.additem(2, "Paste", Paste)
+    mbar.additem(2, "Cancel Paste", CancelPaste)
+    mbar.additem(2, "Clear", ClearSelection)
+    mbar.additem(2, "Clear Outside", ClearOutside)
+    mbar.additem(2, "---", nil)
+    mbar.additem(2, "Select All", SelectAll)
+    mbar.additem(2, "Cancel Selection", CancelSelection)
+    mbar.additem(2, "---", nil)
+    mbar.additem(2, "Move to Middle", MoveToMiddle)
+
+    -- add items to Control menu
+    mbar.additem(3, "Start", StartStop)
+    mbar.additem(3, "Next Generation", Step1)
+    mbar.additem(3, "Reset", Reset)
+    mbar.additem(3, "---", nil)
+    mbar.additem(3, "Set Rule...", ChangeRule)
+    
+    -- add items to View menu
+    mbar.additem(4, "Initial View", InitialView)
+    mbar.additem(4, "Fit Grid", FitGrid)
+    mbar.additem(4, "Set Grid Size...", SetGridSize)
+    mbar.additem(4, "---", nil)
+    mbar.additem(4, "Cubes", SetCellType, {"cube"})
+    mbar.additem(4, "Spheres", SetCellType, {"sphere"})
+    mbar.additem(4, "Points", SetCellType, {"point"})
+    mbar.additem(4, "---", nil)
+    mbar.additem(4, "Show Axes", ToggleAxes)
+    mbar.additem(4, "Show Lattice Lines", ToggleLines)
+    mbar.additem(4, "Use Depth Shading", ToggleDepthShading)
+    mbar.additem(4, "---", nil)
+    mbar.additem(4, "Help", ShowHelp)
     
     -- create tool bar buttons
-    newbutton = op.button("New", NewPattern)
-    openbutton = op.button("Open...", OpenPattern)
-    savebutton = op.button("Save...", SavePattern)
-    runbutton = op.button("Run...", RunScript)
-    gridbutton = op.button("Grid...", SetGridSize)
-    randbutton = op.button("Random...", RandomPattern)
-    rulebutton = op.button("Rule...", ChangeRule)
     ssbutton = op.button("Start", StartStop)
     s1button = op.button("+1", Step1)
     resetbutton = op.button("Reset", Reset)
@@ -6191,7 +6262,7 @@ function CheckLayerSize()
         elseif fullscreen == 0 and showtoolbar then
             if toolbarht == 0 then
                 -- restore tool bar
-                toolbarht = buttonht*2+gap*3
+                toolbarht = mbarht+buttonht+gap*2
             end
             showtoolbar = false
         end
