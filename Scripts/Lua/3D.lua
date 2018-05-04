@@ -80,9 +80,9 @@ local MIDCELL = HALFCELL-MIDGRID
 
 local BACK_COLOR = "0 0 65 255"     -- for drawing background
 local LINE_COLOR = "60 60 90 255"   -- for drawing lattice lines
-local xylattice = {}                -- lattice lines between X,Y axes
-local xzlattice = {}                -- lattice lines between X,Z axes
-local yzlattice = {}                -- lattice lines between Y,Z axes
+local xylattice = {}                -- lattice lines between XY axes
+local xzlattice = {}                -- lattice lines between XZ axes
+local yzlattice = {}                -- lattice lines between YZ axes
 local xaxes = {}                    -- four X axes
 local yaxes = {}                    -- four Y axes
 local zaxes = {}                    -- four Z axes
@@ -1442,7 +1442,8 @@ function DrawMenuBar()
     mbar.enableitem(2, 11, popcount > 0)    -- Select All
     mbar.enableitem(2, 12, selcount > 0)    -- Cancel Selection
     mbar.enableitem(2, 14, pastecount > 0 or selcount > 0 or popcount > 0)  -- Move to Middle
-    
+    mbar.enableitem(3, 1, popcount > 0)     -- Start Generating
+    mbar.enableitem(3, 2, popcount > 0)     -- Next Generation
     mbar.enableitem(3, 3, gencount > startcount)    -- Reset
     
     mbar.tickitem(4,  5, celltype == "cube")
@@ -1637,13 +1638,14 @@ end
 --------------------------------------------------------------------------------
 
 function UpdateStartButton()
-    -- change label in ssbutton without changing the button's width
+    -- change label in ssbutton without changing the button's width,
+    -- and also update 1st item in Control menu
     if generating then
         ssbutton.setlabel("Stop", false)
-        mbar.setitem(3, 1, "Stop")
+        mbar.setitem(3, 1, "Stop Generating")
     else
         ssbutton.setlabel("Start", false)
-        mbar.setitem(3, 1, "Start")
+        mbar.setitem(3, 1, "Start Generating")
     end
 end
 
@@ -2705,7 +2707,7 @@ end
 function SetStartupScript()
     -- prompt user for a .lua file to run automatically when 3D.lua starts up
     local filetype = "Lua file (*.lua)|*.lua"
-    local path = g.opendialog("Select your start-up script", filetype, scriptdir, "")
+    local path = g.opendialog("Select your startup script", filetype, scriptdir, "")
     if #path > 0 then
         -- update scriptdir by stripping off the file name
         scriptdir = path:gsub("[^"..pathsep.."]+$","")
@@ -4131,6 +4133,11 @@ function ShowHelp()
 <dd><a href="#intro"><b>Introduction</b></a></dd>
 <dd><a href="#mouse"><b>Mouse controls</b></a></dd>
 <dd><a href="#keyboard"><b>Keyboard shortcuts</b></a></dd>
+<dd><a href="#menus"><b>Menus</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#file"><b>File menu</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#edit"><b>Edit menu</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#control"><b>Control menu</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#view"><b>View menu</b></a></dd>
 <dd><a href="#scripts"><b>Running scripts</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#shortcuts"><b>Creating your own keyboard shortcuts</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#functions"><b>Script functions</b></a></dd>
@@ -4222,7 +4229,6 @@ shortcuts):
 <tr><td align=right> ctrl-N &nbsp;</td><td>&nbsp; create a new, empty pattern </td></tr>
 <tr><td align=right> ctrl-O &nbsp;</td><td>&nbsp; open a selected pattern file </td></tr>
 <tr><td align=right> ctrl-S &nbsp;</td><td>&nbsp; save the current pattern in a file </td></tr>
-<tr><td align=right> alt-S &nbsp;</td><td>&nbsp; select a start-up script </td></tr>
 <tr><td align=right> shift-O &nbsp;</td><td>&nbsp; open pattern in clipboard </td></tr>
 <tr><td align=right> shift-R &nbsp;</td><td>&nbsp; run script in clipboard </td></tr>
 <tr><td align=right> ctrl-R &nbsp;</td><td>&nbsp; reset to the starting pattern </td></tr>
@@ -4245,7 +4251,7 @@ shortcuts):
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lattice lines </td></tr>
 <tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes and lattice lines </td></tr>
 <tr><td align=right> alt-D &nbsp;</td><td>&nbsp; toggle depth shading </td></tr>
-<tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the tool bar </td></tr>
+<tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the menu bar and tool bar </td></tr>
 <tr><td align=right> 5 &nbsp;</td><td>&nbsp; create a random pattern with given density </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
 <tr><td align=right> R &nbsp;</td><td>&nbsp; change the rule </td></tr>
@@ -4262,14 +4268,223 @@ shortcuts):
 </table>
 </center>
 
+<p><a name="menus"></a><br>
+<font size=+1><b>Menus</b></font>
+
+<p>
+3D.lua has its own menu bar.  It contains menus with items that are
+somewhat similar to those in Golly's menu bar.
+
+<p><a name="file"></a><br>
+<font size=+1><b>File menu</b></font>
+
+<a name="new"></a><p><dt><b>New Pattern</b></dt>
+<dd>
+Create a new, empty pattern.
+All undo/redo history is deleted.
+The active plane is displayed, ready to be edited using the pencil cursor.
+</dd>
+
+<a name="rand"></a><p><dt><b>Random Pattern...</b></dt>
+<dd>
+Create a new pattern randomly filled with live cells at a given density.
+All undo/redo history is deleted.
+</dd>
+
+<a name="open"></a><p><dt><b>Open Pattern...</b></dt>
+<dd>
+Open a selected <a href="#rle3">RLE3</a> pattern file.
+All undo/redo history is deleted.
+</dd>
+
+<a name="openclip"></a><p><dt><b>Open Clipboard</b></dt>
+<dd>
+Open the <a href="#rle3">RLE3</a> pattern stored in the clipboard.
+All undo/redo history is deleted.
+</dd>
+
+<a name="save"></a><p><dt><b>Save Pattern...</b></dt>
+<dd>
+Save the current pattern in a file using the <a href="#rle3">RLE3</a> format.
+</dd>
+
+<a name="run"></a><p><dt><b>Run Script...</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="runclip"></a><p><dt><b>Run Clipboard</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="startup"></a><p><dt><b>Set Startup Script...</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="exit"></a><p><dt><b>Exit 3D.lua</b></dt>
+<dd>
+!!!
+</dd>
+
+<p><a name="edit"></a><br>
+<font size=+1><b>Edit menu</b></font>
+
+<a name="undo"></a><p><dt><b>Undo</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="redo"></a><p><dt><b>Redo</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="cut"></a><p><dt><b>Cut</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="copy"></a><p><dt><b>Copy</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="paste"></a><p><dt><b>Paste</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="cancelpaste"></a><p><dt><b>Cancel Paste</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="clear"></a><p><dt><b>Clear</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="outside"></a><p><dt><b>Clear Outside</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="selall"></a><p><dt><b>Select All</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="cancelsel"></a><p><dt><b>Cancel Selection</b></dt>
+<dd>
+!!!
+</dd>
+
+<a name="middle"></a><p><dt><b>Move to Middle</b></dt>
+<dd>
+!!!
+</dd>
+
+<p><a name="control"></a><br>
+<font size=+1><b>Control menu</b></font>
+
+<a name="startstop"></a><p><dt><b>Start/Stop Generating</b></dt>
+<dd>
+Start or stop generating the current pattern.
+You can only start generating if there is at least one live cell.
+Generating stops automatically if the pattern dies out.
+</dd>
+
+<a name="next"></a><p><dt><b>Next Generation</b></dt>
+<dd>
+Calculate and display the next generation (but only if there
+is at least one live cell).
+</dd>
+
+<a name="reset"></a><p><dt><b>Reset</b></dt>
+<dd>
+Restore the starting generation.
+The undo history is automatically rewound to the correct place.
+</dd>
+
+<a name="setrule"></a><p><dt><b>Set Rule</b></dt>
+<dd>
+Show a dialog box that lets you change the current <a href="#rules">rule</a>.
+</dd>
+
+<p><a name="view"></a><br>
+<font size=+1><b>View menu</b></font>
+
+<a name="initial"></a><p><dt><b>Initial View</b></dt>
+<dd>
+Restore the scale and rotation used when 3D.lua started up.
+Note that if you hit the up arrow 4 times and the right arrow 4 times
+then you'll see a single XY face parallel with the screen.
+</dd>
+
+<a name="fit"></a><p><dt><b>Fit Grid</b></dt>
+<dd>
+Change the scale so the entire grid just fits within the window.
+</dd>
+
+<a name="gridsize"></a><p><dt><b>Set Grid Size</b></dt>
+<dd>
+Show a dialog box that lets you change the grid size.
+If the current pattern doesn't fit inside the new size then
+you'll see a message stating how many live cells were clipped.
+</dd>
+
+<a name="cubes"></a><p><dt><b>Cubes</b></dt>
+<dd>
+If ticked then live cells are displayed as cubes.
+</dd>
+
+<a name="spheres"></a><p><dt><b>Spheres</b></dt>
+<dd>
+If ticked then live cells are displayed as spheres.
+</dd>
+
+<a name="points"></a><p><dt><b>Points</b></dt>
+<dd>
+If ticked then live cells are displayed as points.
+Note that if the active plane is shown then any live cells outside
+that plane are always displayed as points.
+</dd>
+
+<a name="axes"></a><p><dt><b>Show Axes</b></dt>
+<dd>
+If ticked then the edges of the grid are displayed
+(X axes are red, Y axes are green, Z axes are blue).
+</dd>
+
+<a name="lines"></a><p><dt><b>Show Lattice Lines</b></dt>
+<dd>
+If ticked (and Show Axes is ticked) then lattice lines are displayed
+on the three faces of the grid that intersect at the corner with
+minimum <a href="#coords">cell coordinates</a>
+(the far, bottom left corner in the initial view).
+</dd>
+
+<a name="shading"></a><p><dt><b>Use Depth Shading</b></dt>
+<dd>
+If ticked then live cells are drawn slightly darker the further
+away they are from the front of the screen.
+</dd>
+
+<a name="help"></a><p><dt><b>Help</b></dt>
+<dd>
+Show this help.
+</dd>
+
 <p><a name="scripts"></a><br>
 <font size=+1><b>Running scripts</b></font>
 
 <p>
-3D.lua can run other Lua scripts, either by clicking the "Run..." button
-and selecting a .lua file, or by copying Lua code to the clipboard and
-typing shift-R.  Try the latter method with this example that creates
-a small random pattern in the middle of the grid:
+3D.lua can run other Lua scripts, either by selecting File > Run Script
+and choosing a .lua file, or by copying Lua code to the clipboard and
+selecting File > Run Clipboard.  Try the latter method with this example
+that creates a small random pattern in the middle of the grid:
 
 <dd><table border=0><pre>
 NewPattern()
@@ -4296,11 +4511,11 @@ with enough information that lets you fix the error.
 
 <p>
 It's possible to override any of the global functions in 3D.lua.
-The following script shows how to override the HandleKey function in 3D.lua
+The following script shows how to override the HandleKey function
 to create a keyboard shortcut for running a particular script.
-Even more useful, you can get 3D.lua to automatically run this script
-when it starts up by typing alt-S and selecting a .lua file containing
-this code:
+Even more useful, you can get 3D.lua to run this script automatically
+when it starts up by going to File > Set Startup Script and selecting
+a .lua file containing this code:
 
 <dd><table border=0><pre>
 local g = golly()
@@ -4692,7 +4907,6 @@ end</pre></table></dd>
 <font size=+1><b>Supported rules</b></font>
 
 <p>
-Use the "Rule..." button to change the current rule.
 Rules are strings of the form "3DS,S,S,.../B,B,B,...".
 The S values are the counts of neighboring live cells required
 for a live cell to survive in the next generation.
@@ -4700,6 +4914,7 @@ The B values are the counts of neighboring live cells required for
 birth; ie. a dead cell will become a live cell in the next generation.
 Each cell has 26 neighbors so the S counts are from 0 to 26
 and the B counts are from 1 to 26 (birth on 0 is not allowed).
+Use Control > Set Rule to change the current rule.
 
 <p><a name="rle3"></a><br>
 <font size=+1><b>RLE3 file format</b></font>
@@ -6169,7 +6384,7 @@ function CreateOverlay()
     mbar.additem(2, "Move to Middle", MoveToMiddle)
 
     -- add items to Control menu
-    mbar.additem(3, "Start", StartStop)
+    mbar.additem(3, "Start Generating", StartStop)
     mbar.additem(3, "Next Generation", Step1)
     mbar.additem(3, "Reset", Reset)
     mbar.additem(3, "---", nil)
@@ -6458,7 +6673,6 @@ function HandleKey(event)
     elseif key == "n" and mods == CMDCTRL then NewPattern()
     elseif key == "o" and mods == CMDCTRL then OpenPattern()
     elseif key == "s" and mods == CMDCTRL then SavePattern()
-    elseif key == "s" and mods == "alt" then SetStartupScript()
     elseif key == "o" and mods == "shift" then OpenClipboard()
     elseif key == "r" and mods == "shift" then RunClipboard()
     elseif key == "r" and mods == CMDCTRL then Reset()
@@ -6466,7 +6680,7 @@ function HandleKey(event)
     elseif key == "g" and (mods == "none" or mods == CMDCTRL) then SetGridSize()
     elseif key == "a" and (mods == "none" or mods == CMDCTRL) then SelectAll()
     elseif key == "k" and (mods == "none" or mods == CMDCTRL) then CancelSelection()
-    elseif key == "b" then Rotate(0, 180, 0)
+    elseif key == "b" and mods == "none" then Rotate(0, 180, 0)
     elseif key == "z" and (mods == "none" or mods == CMDCTRL) then Undo()
     elseif key == "z" and (mods == "shift" or mods == CMDCTRL.."shift") then Redo()
     elseif key == "x" and mods == CMDCTRL then CutSelection()
