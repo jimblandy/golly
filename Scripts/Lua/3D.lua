@@ -298,6 +298,8 @@ function ReadSettings()
         while true do
             local line = f:read("*l")
             if not line then break end
+            -- if line ended with CRLF then remove the CR
+            line = line:gsub("\r", "")
             local keyword, value = split(line,"=")
             -- look for a keyword used in WriteSettings
             if not value then
@@ -335,16 +337,16 @@ function WriteSettings()
     local f = io.open(settingsfile, "w")
     if f then
         -- keywords must match those in ReadSettings (but order doesn't matter)
-        f:write("startup="..startup.."\n")
-        f:write("pattdir="..pattdir.."\n")
-        f:write("scriptdir="..scriptdir.."\n")
-        f:write("gridsize="..N.."\n")
-        f:write("celltype="..celltype.."\n")
-        f:write("rule="..rulestring.."\n")
-        f:write("perc="..perc.."\n")
-        f:write("axes="..tostring(showaxes).."\n")
-        f:write("lines="..tostring(showlines).."\n")
-        f:write("shading="..tostring(depthshading).."\n")
+        f:write("startup=", startup, "\n")
+        f:write("pattdir=", pattdir, "\n")
+        f:write("scriptdir=", scriptdir, "\n")
+        f:write("gridsize=", tostring(N), "\n")
+        f:write("celltype=", celltype, "\n")
+        f:write("rule=", rulestring, "\n")
+        f:write("perc=", tostring(perc), "\n")
+        f:write("axes="..tostring(showaxes), "\n")
+        f:write("lines="..tostring(showlines), "\n")
+        f:write("shading="..tostring(depthshading), "\n")
         f:close()
     end
 end
@@ -2209,6 +2211,8 @@ function ReadPattern(filepath)
         f:close()
         return "Invalid RLE3 file (first line must start with 3D)."
     end
+    -- if line ended with CRLF then remove the CR
+    line = line:gsub("\r", "")
 
     -- read pattern into a temporary grid in case an error occurs
     local tsize = MAXN
@@ -2258,6 +2262,8 @@ function ReadPattern(filepath)
     while true do
         local line = f:read("*l")
         if not line then break end
+        -- if line ended with CRLF then remove the CR
+        line = line:gsub("\r", "")
         local ch = line:sub(1,1)
         if ch == "#" or #ch == 0 then
             -- ignore comment line or blank line
@@ -2467,7 +2473,7 @@ function WritePattern(filepath, comments)
     if not f then return "Failed to create RLE3 file:\n"..filepath end
     
     MinimizeLiveBoundary()
-    f:write(PatternHeader(minx, miny, minz).."\n")
+    f:write(PatternHeader(minx, miny, minz), "\n")
     
     if #comments > 0 then
         -- each comment line should start with # and end with \n
@@ -2489,7 +2495,7 @@ function WritePattern(filepath, comments)
         local slashrun = 0
         
         local function AddRun(count, ch)
-            if #line >= 67 then f:write(line.."\n"); line = "" end
+            if #line >= 67 then f:write(line,"\n"); line = "" end
             if count > 2 then
                 line = line..count..ch
             elseif count == 2 then
@@ -2554,11 +2560,11 @@ function WritePattern(filepath, comments)
             if z < maxz then
                 slashrun = slashrun + 1
             else
-                if #line >= 70 then f:write(line.."\n"); line = "" end
+                if #line >= 70 then f:write(line,"\n"); line = "" end
                 line = line.."!"
             end
         end
-        if #line > 0 then f:write(line.."\n") end
+        if #line > 0 then f:write(line,"\n") end
     end
     f:close()
     return nil  -- success
@@ -2569,10 +2575,12 @@ end
 function GetComments(f)
     local comments = ""
     local line = f:read("*l")
-    if line == nil then return end
+    if line == nil then return comments end
     while true do
         line = f:read("*l")
         if not line then break end
+        -- if line ended with CRLF then remove the CR
+        line = line:gsub("\r", "")
         local ch = line:sub(1,1)
         if ch == "#" then
             comments = comments..line.."\n"
