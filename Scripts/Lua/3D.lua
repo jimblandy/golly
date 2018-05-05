@@ -1434,24 +1434,26 @@ end
 --------------------------------------------------------------------------------
 
 function DrawMenuBar()
-    mbar.enableitem(2,  1, #undostack > 0)  -- Undo
-    mbar.enableitem(2,  2, #redostack > 0)  -- Redo
-    mbar.enableitem(2,  4, selcount > 0)    -- Cut
-    mbar.enableitem(2,  5, selcount > 0)    -- Copy
-    mbar.enableitem(2,  7, pastecount > 0)  -- Cancel Paste
-    mbar.enableitem(2,  8, selcount > 0)    -- Clear
-    mbar.enableitem(2,  9, selcount > 0)    -- Clear Outside
+    mbar.enableitem(2, 1, #undostack > 0)   -- Undo
+    mbar.enableitem(2, 2, #redostack > 0)   -- Redo
+    mbar.enableitem(2, 4, selcount > 0)     -- Cut
+    mbar.enableitem(2, 5, selcount > 0)     -- Copy
+    mbar.enableitem(2, 7, pastecount > 0)   -- Cancel Paste
+    mbar.enableitem(2, 8, selcount > 0)     -- Clear
+    mbar.enableitem(2, 9, selcount > 0)     -- Clear Outside
     mbar.enableitem(2, 11, popcount > 0)    -- Select All
     mbar.enableitem(2, 12, selcount > 0)    -- Cancel Selection
-    mbar.enableitem(2, 14, pastecount > 0 or selcount > 0 or popcount > 0)  -- Move to Middle
-    mbar.enableitem(3, 1, popcount > 0)     -- Start Generating
+    mbar.enableitem(2, 14, popcount > 0)    -- Middle Pattern
+    mbar.enableitem(2, 15, selcount > 0)    -- Middle Selection
+    mbar.enableitem(2, 16, pastecount > 0)  -- Middle Paste
+    mbar.enableitem(3, 1, popcount > 0)     -- Start/Stop Generating
     mbar.enableitem(3, 2, popcount > 0)     -- Next Generation
     mbar.enableitem(3, 3, gencount > startcount)    -- Reset
     
-    mbar.tickitem(4,  5, celltype == "cube")
-    mbar.tickitem(4,  6, celltype == "sphere")
-    mbar.tickitem(4,  7, celltype == "point")
-    mbar.tickitem(4,  9, showaxes)
+    mbar.tickitem(4, 5, celltype == "cube")
+    mbar.tickitem(4, 6, celltype == "sphere")
+    mbar.tickitem(4, 7, celltype == "point")
+    mbar.tickitem(4, 9, showaxes)
     mbar.tickitem(4, 10, showlines)
     mbar.tickitem(4, 11, depthshading)
     
@@ -3545,7 +3547,7 @@ function Paste()
         local PP = P*P
         for k,_ in pairs(newpattern.newgrid) do
             -- newpattern.newgrid[k] is a live cell
-            -- (note that we add 1 to match the result of MoveToMiddle)
+            -- (note that we add 1 to match the result of MiddlePaste)
             local x = (k % P)      - minpx + (N - pwd + 1) // 2
             local y = (k // P % P) - minpy + (N - pht + 1) // 2
             local z = (k // PP)    - minpz + (N - pdp + 1) // 2
@@ -4269,7 +4271,6 @@ shortcuts):
 <tr><td align=right> D &nbsp;</td><td>&nbsp; switch cursor to draw mode </td></tr>
 <tr><td align=right> S &nbsp;</td><td>&nbsp; switch cursor to select mode </td></tr>
 <tr><td align=right> M &nbsp;</td><td>&nbsp; switch cursor to move mode </td></tr>
-<tr><td align=right> shift-M &nbsp;</td><td>&nbsp; move paste/selection/pattern to middle of grid </td></tr>
 <tr><td align=right> C &nbsp;</td><td>&nbsp; cycle cursor mode (draw/select/move) </td></tr>
 <tr><td align=right> H &nbsp;</td><td>&nbsp; show this help </td></tr>
 <tr><td align=right> Q &nbsp;</td><td>&nbsp; quit the script </td></tr>
@@ -4313,27 +4314,30 @@ All undo/redo history is deleted.
 
 <a name="save"></a><p><dt><b>Save Pattern...</b></dt>
 <dd>
-Save the current pattern in a file using the <a href="#rle3">RLE3</a> format.
+Save the current pattern in a <a href="#rle3">.rle3</a> file.
 </dd>
 
 <a name="run"></a><p><dt><b>Run Script...</b></dt>
 <dd>
-!!!
+Run a selected Lua script.
 </dd>
 
 <a name="runclip"></a><p><dt><b>Run Clipboard</b></dt>
 <dd>
-!!!
+Run the Lua code stored in the clipboard.
 </dd>
 
 <a name="startup"></a><p><dt><b>Set Startup Script...</b></dt>
 <dd>
-!!!
+Select a Lua script that will be run automatically every time 3D.lua starts up.
 </dd>
 
 <a name="exit"></a><p><dt><b>Exit 3D.lua</b></dt>
 <dd>
-!!!
+Terminate 3D.lua.  If there are any unsaved changes (indicated by an asterisk at
+the start of the pattern name) then you'll be asked if you really want to exit.
+Note that hitting the escape key will immediately abort 3D.lua without
+doing any check for unsaved changes.
 </dd>
 
 <p><a name="edit"></a><br>
@@ -4341,57 +4345,74 @@ Save the current pattern in a file using the <a href="#rle3">RLE3</a> format.
 
 <a name="undo"></a><p><dt><b>Undo</b></dt>
 <dd>
-!!!
+Undo the most recent change.  This could be an editing change or a generating change.
 </dd>
 
 <a name="redo"></a><p><dt><b>Redo</b></dt>
 <dd>
-!!!
+Redo the most recently undone change.
 </dd>
 
 <a name="cut"></a><p><dt><b>Cut</b></dt>
 <dd>
-!!!
+Copy all selected live cells to the clipboard in <a href="#rle3">RLE3</a> format,
+then delete those cells (but they remain selected).
 </dd>
 
 <a name="copy"></a><p><dt><b>Copy</b></dt>
 <dd>
-!!!
+Copy all selected live cells to the clipboard in <a href="#rle3">RLE3</a> format.
 </dd>
 
 <a name="paste"></a><p><dt><b>Paste</b></dt>
 <dd>
-!!!
+If the clipboard contains a valid, non-empty <a href="#rle3">RLE3</a> pattern that fits
+within the current grid then a paste pattern (comprised of red cells) is created in the
+middle of the grid.  You can use any cursor to drag the paste pattern to any position
+within the grid, then control-click or right-click anywhere to get a pop-up menu that lets
+you flip/rotate the paste pattern or paste it into the grid using either OR mode or XOR mode.
 </dd>
 
 <a name="cancelpaste"></a><p><dt><b>Cancel Paste</b></dt>
 <dd>
-!!!
+Remove the paste pattern.
 </dd>
 
 <a name="clear"></a><p><dt><b>Clear</b></dt>
 <dd>
-!!!
+Delete all the selected live cells.
 </dd>
 
 <a name="outside"></a><p><dt><b>Clear Outside</b></dt>
 <dd>
-!!!
+Delete all the live cells that are not selected.
 </dd>
 
 <a name="selall"></a><p><dt><b>Select All</b></dt>
 <dd>
-!!!
+Select all the live cells.  Selected cells appear green.
+Assuming there is no paste pattern, you can control-click or right-click anywhere to get
+a pop-up menu that lets you perform various actions on the selection.
 </dd>
 
 <a name="cancelsel"></a><p><dt><b>Cancel Selection</b></dt>
 <dd>
-!!!
+Remove the selection.
 </dd>
 
-<a name="middle"></a><p><dt><b>Move to Middle</b></dt>
+<a name="midpatt"></a><p><dt><b>Middle Pattern</b></dt>
 <dd>
-!!!
+Move the pattern to the middle of the grid.
+</dd>
+
+<a name="midsel"></a><p><dt><b>Middle Selection</b></dt>
+<dd>
+Move the selection to the middle of the grid.
+</dd>
+
+<a name="midpaste"></a><p><dt><b>Middle Paste</b></dt>
+<dd>
+Move the paste pattern to the middle of the grid.
 </dd>
 
 <p><a name="control"></a><br>
@@ -6125,8 +6146,8 @@ end
 
 ----------------------------------------------------------------------
 
-function MoveToMiddle()
-    -- move paste pattern or selection or pattern to middle of grid
+function MiddlePaste()
+    -- move paste pattern to middle of grid
     if pastecount > 0 then
         -- calculate the delta amounts needed to move paste pattern to middle of grid
         local deltax = (N - (maxpastex - minpastex)) // 2 - minpastex
@@ -6157,8 +6178,14 @@ function MoveToMiddle()
         maxpastez = maxpastez + deltaz
         
         Refresh()
-    
-    elseif selcount > 0 then
+    end
+end
+
+----------------------------------------------------------------------
+
+function MiddleSelection()
+    -- move selection to middle of grid
+    if selcount > 0 then
         MinimizeSelectionBoundary()
         -- calculate the delta amounts needed to move selection to middle of grid
         local deltax = (N - (maxselx - minselx)) // 2 - minselx
@@ -6221,8 +6248,14 @@ function MoveToMiddle()
         -- MinimizeSelectionBoundary set minimal_sel_bounds to true
         
         Refresh()
-    
-    elseif popcount > 0 then
+    end
+end
+
+----------------------------------------------------------------------
+
+function MiddlePattern()
+    -- move pattern to middle of grid
+    if popcount > 0 then
         MinimizeLiveBoundary()
         -- calculate the delta amounts needed to move pattern to middle of grid
         local deltax = (N - (maxx - minx)) // 2 - minx
@@ -6389,7 +6422,9 @@ function CreateOverlay()
     mbar.additem(2, "Select All", SelectAll)
     mbar.additem(2, "Cancel Selection", CancelSelection)
     mbar.additem(2, "---", nil)
-    mbar.additem(2, "Move to Middle", MoveToMiddle)
+    mbar.additem(2, "Middle Pattern", MiddlePattern)
+    mbar.additem(2, "Middle Selection", MiddleSelection)
+    mbar.additem(2, "Middle Paste", MiddlePaste)
 
     -- add items to Control menu
     mbar.additem(3, "Start Generating", StartStop)
@@ -6711,7 +6746,6 @@ function HandleKey(event)
     elseif key == "d" and mods == "none" then DrawMode()
     elseif key == "s" and mods == "none" then SelectMode()
     elseif key == "m" and mods == "none" then MoveMode()
-    elseif key == "m" and mods == "shift" then MoveToMiddle()
     elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "q" then ExitScript()
     else
