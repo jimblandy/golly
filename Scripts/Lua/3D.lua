@@ -1433,22 +1433,67 @@ end
 
 --------------------------------------------------------------------------------
 
+function EnableMenuItems(bool)
+    -- disable/enable unsafe menu items so that user scripts can call op.process
+    -- File menu:
+    mbar.enableitem(1, 1, bool)     -- New Pattern
+    mbar.enableitem(1, 2, bool)     -- Random Pattern
+    mbar.enableitem(1, 3, bool)     -- Open Pattern
+    mbar.enableitem(1, 4, bool)     -- Open Clipboard
+    mbar.enableitem(1, 5, bool)     -- Save Pattern
+    mbar.enableitem(1, 7, bool)     -- Run Script
+    mbar.enableitem(1, 8, bool)     -- Run Clipboard
+    mbar.enableitem(1, 9, bool)     -- Set Startup Script
+    if bool then
+        -- ExitScript will abort 3D.lua
+        mbar.setitem(1, 11, "Exit 3D.lua")
+    else
+        -- ExitScript will abort the user script
+        mbar.setitem(1, 11, "Exit Script")
+    end
+    -- Edit menu:
+    mbar.enableitem(2, 1, bool)     -- Undo
+    mbar.enableitem(2, 2, bool)     -- Redo
+    mbar.enableitem(2, 4, bool)     -- Cut
+    mbar.enableitem(2, 5, bool)     -- Copy
+    mbar.enableitem(2, 6, bool)     -- Paste
+    mbar.enableitem(2, 7, bool)     -- Cancel Paste
+    mbar.enableitem(2, 8, bool)     -- Clear
+    mbar.enableitem(2, 9, bool)     -- Clear Outside
+    mbar.enableitem(2, 11, bool)    -- Select All
+    mbar.enableitem(2, 12, bool)    -- Cancel Selection
+    mbar.enableitem(2, 14, bool)    -- Middle Pattern
+    mbar.enableitem(2, 15, bool)    -- Middle Selection
+    mbar.enableitem(2, 16, bool)    -- Middle Paste
+    -- Control menu:
+    mbar.enableitem(3, 1, bool)     -- Start/Stop Generating
+    mbar.enableitem(3, 2, bool)     -- Next Generation
+    mbar.enableitem(3, 3, bool)     -- Reset
+    mbar.enableitem(3, 5, bool)     -- Set Rule
+    -- View menu:
+    mbar.enableitem(4, 3, bool)     -- Set Grid Size
+end
+
+--------------------------------------------------------------------------------
+
 function DrawMenuBar()
-    mbar.enableitem(2, 1, #undostack > 0)   -- Undo
-    mbar.enableitem(2, 2, #redostack > 0)   -- Redo
-    mbar.enableitem(2, 4, selcount > 0)     -- Cut
-    mbar.enableitem(2, 5, selcount > 0)     -- Copy
-    mbar.enableitem(2, 7, pastecount > 0)   -- Cancel Paste
-    mbar.enableitem(2, 8, selcount > 0)     -- Clear
-    mbar.enableitem(2, 9, selcount > 0)     -- Clear Outside
-    mbar.enableitem(2, 11, popcount > 0)    -- Select All
-    mbar.enableitem(2, 12, selcount > 0)    -- Cancel Selection
-    mbar.enableitem(2, 14, popcount > 0)    -- Middle Pattern
-    mbar.enableitem(2, 15, selcount > 0)    -- Middle Selection
-    mbar.enableitem(2, 16, pastecount > 0)  -- Middle Paste
-    mbar.enableitem(3, 1, popcount > 0)     -- Start/Stop Generating
-    mbar.enableitem(3, 2, popcount > 0)     -- Next Generation
-    mbar.enableitem(3, 3, gencount > startcount)    -- Reset
+    if scriptlevel == 0 then
+        mbar.enableitem(2, 1, #undostack > 0)   -- Undo
+        mbar.enableitem(2, 2, #redostack > 0)   -- Redo
+        mbar.enableitem(2, 4, selcount > 0)     -- Cut
+        mbar.enableitem(2, 5, selcount > 0)     -- Copy
+        mbar.enableitem(2, 7, pastecount > 0)   -- Cancel Paste
+        mbar.enableitem(2, 8, selcount > 0)     -- Clear
+        mbar.enableitem(2, 9, selcount > 0)     -- Clear Outside
+        mbar.enableitem(2, 11, popcount > 0)    -- Select All
+        mbar.enableitem(2, 12, selcount > 0)    -- Cancel Selection
+        mbar.enableitem(2, 14, popcount > 0)    -- Middle Pattern
+        mbar.enableitem(2, 15, selcount > 0)    -- Middle Selection
+        mbar.enableitem(2, 16, pastecount > 0)  -- Middle Paste
+        mbar.enableitem(3, 1, popcount > 0)     -- Start/Stop Generating
+        mbar.enableitem(3, 2, popcount > 0)     -- Next Generation
+        mbar.enableitem(3, 3, gencount > startcount)    -- Reset
+    end
     
     mbar.tickitem(4, 5, celltype == "cube")
     mbar.tickitem(4, 6, celltype == "sphere")
@@ -1502,9 +1547,9 @@ end
 
 ----------------------------------------------------------------------
 
-function Refresh()
-    if scriptlevel > 0 then
-        -- scripts call Update() when they want to refresh
+function Refresh(update)
+    if scriptlevel > 0 and not update then
+        -- user scripts need to call Update() when they want to refresh
         return
     end
     
@@ -2642,6 +2687,7 @@ function CallScript(func, fromclip)
     if scriptlevel == 0 then
         RememberCurrentState()
         undo_cleared = false    -- becomes true if ClearUndoRedo is called
+        EnableMenuItems(false)  -- disable most menu items
     end
     
     scriptlevel = scriptlevel + 1
@@ -2675,7 +2721,11 @@ function CallScript(func, fromclip)
             end
         end
     end
-    if scriptlevel == 0 then Refresh() end
+    
+    if scriptlevel == 0 then
+        EnableMenuItems(true)   -- enable menu items that were disabled above
+        Refresh()               -- calls DrawMenuBar
+    end
 end
 
 ----------------------------------------------------------------------
@@ -4126,10 +4176,7 @@ end
 
 -- for user scripts
 function Update()
-    local savelevel = scriptlevel
-    scriptlevel = 0
-    Refresh()
-    scriptlevel = savelevel
+    Refresh(true)
 end
 
 ----------------------------------------------------------------------
@@ -4273,7 +4320,7 @@ shortcuts):
 <tr><td align=right> M &nbsp;</td><td>&nbsp; switch cursor to move mode </td></tr>
 <tr><td align=right> C &nbsp;</td><td>&nbsp; cycle cursor mode (draw/select/move) </td></tr>
 <tr><td align=right> H &nbsp;</td><td>&nbsp; show this help </td></tr>
-<tr><td align=right> Q &nbsp;</td><td>&nbsp; quit the script </td></tr>
+<tr><td align=right> Q &nbsp;</td><td>&nbsp; quit 3D.lua </td></tr>
 </table>
 </center>
 
@@ -5054,9 +5101,11 @@ end
 --------------------------------------------------------------------------------
 
 function SetCursor(cursor)
-    RememberCurrentState()
-    currcursor = cursor
-    if not arrow_cursor then ov("cursor "..currcursor) end
+    if currcursor ~= cursor then
+        RememberCurrentState()
+        currcursor = cursor
+        if not arrow_cursor then ov("cursor "..currcursor) end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -5181,7 +5230,7 @@ function ExitScript()
         g.doevent("")
     end
 
-    if dirty then
+    if dirty and scriptlevel == 0 then
         -- ask user if they really want to exit
         local status, err = pcall(savechanges)
         if err then
@@ -6389,6 +6438,8 @@ function CreateOverlay()
     end
 
     -- create the menu bar and add some menus
+    -- (note that changes to the order of menus or their items will require
+    -- changes to DrawMenuBar and EnableMenuItems)
     mbar = op.menubar()
     mbar.addmenu("File")
     mbar.addmenu("Edit")
@@ -6680,7 +6731,6 @@ function Initialize()
         --]]
     end
     
-    SetCursor(movecursor)
     SetActivePlane()
     InitialView()           -- calls Refresh
     
