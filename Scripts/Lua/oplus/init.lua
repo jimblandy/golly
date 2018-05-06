@@ -78,7 +78,8 @@ m.border = 0        -- thickness of button border (no border if 0)
 m.buttonrgba = "rgba 40 128 255 255"    -- light blue buttons
 m.darkerrgba = "rgba 20 64 255 255"     -- darker blue when buttons are clicked
 m.borderrgba = m.white                  -- white border around buttons (if m.border > 0)
-m.textrgba = m.white                    -- white button labels and tick mark on check box
+m.textrgba = m.white                    -- white button labels and tick marks on check boxes
+m.distext = "rgba 100 192 255 255"      -- lighter blue for disabled button labels and tick marks
 m.textfont = "font 12 default-bold"     -- font for labels
 m.textshadowx = 0                       -- label shadow x offset
 m.textshadowy = 0                       -- label shadow y offset
@@ -87,7 +88,7 @@ m.yoffset = 0                           -- for better y position of labels
 
 m.menubg = "rgba 40 128 255 255"        -- light blue background for menu bar and items
 m.selcolor = "rgba 20 64 255 255"       -- darker background for selected menu/item
-m.discolor = "rgba 88 176 255 255"      -- lighter color for disabled items and separator lines
+m.discolor = "rgba 100 192 255 255"     -- lighter blue for disabled items and separator lines
 m.menufont = "font 12 default-bold"     -- font for menu and item labels
 m.menutext = m.white                    -- white text for menu and item labels
 m.menugap = 10                          -- horizontal space around each menu label
@@ -419,12 +420,18 @@ function m.button(label, onclick)
     
     b.onclick = onclick     -- remember click handler
     b.shown = false         -- b.show hasn't been called
+    b.enabled = true
     b.ht = m.buttonht;
 
 	b.setlabel = function (newlabel, changesize)
         local oldfont = ov(m.textfont)
         local oldtextbg = ov("textoption background 0 0 0 0")
-        local w, h = m.maketext(newlabel, b.labelclip, m.textrgba, m.textshadowx, m.textshadowy, m.textshadowrgba)
+        local w, h
+        if b.enabled then
+            w, h = m.maketext(newlabel, b.labelclip, m.textrgba, m.textshadowx, m.textshadowy, m.textshadowrgba)
+        else
+            w, h = m.maketext(newlabel, b.labelclip, m.distext)   -- no shadow if disabled
+        end
         ov("textoption background "..oldtextbg)
         ov("font "..oldfont)
         b.labelwd = tonumber(w);
@@ -488,6 +495,13 @@ function m.button(label, onclick)
         end
 	end
 
+	b.enable = function (bool)
+	    if b.enabled ~= bool then
+	        b.enabled = bool
+	        b.setlabel(b.savelabel, false)
+	    end
+    end
+    
     b.refresh = function ()
         -- redraw button
         b.show(b.x, b.y)
@@ -499,11 +513,16 @@ end
 
 --------------------------------------------------------------------------------
 
-local function draw_checkbox(x, y, w, h, ticked)
+local function draw_checkbox(x, y, w, h, ticked, enabled)
     draw_button(x, y, w, h)
     if ticked then
         -- draw a tick mark
-        local oldrgba = ov(m.textrgba)
+        local oldrgba
+        if enabled then
+            oldrgba = ov(m.textrgba)
+        else
+            oldrgba = ov(m.distext)
+        end
         local oldblend = ov("blend 1")
         local oldwidth = ov("lineoption width 4")
 
@@ -557,6 +576,7 @@ function m.checkbox(label, labelrgba, onclick)
     
     c.onclick = onclick     -- remember click handler
     c.shown = false         -- c.show hasn't been called
+    c.enabled = true
 
 	c.show = function (x, y, ticked)
 	    c.x = x
@@ -571,7 +591,7 @@ function m.checkbox(label, labelrgba, onclick)
 	    ov("copy "..c.x.." "..c.y.." "..c.wd.." "..c.ht.." "..c.background)
         
         -- draw the check box (excluding label) at the given location
-        draw_checkbox(x+1, y+1, c.ht-2, c.ht-2, ticked)
+        draw_checkbox(x+1, y+1, c.ht-2, c.ht-2, ticked, c.enabled)
         
         -- draw the label
         local oldblend = ov("blend 1")
@@ -595,6 +615,10 @@ function m.checkbox(label, labelrgba, onclick)
             c.shown = false
         end
 	end
+
+	c.enable = function (bool)
+	    c.enabled = bool
+    end
 
     c.refresh = function ()
         -- redraw checkbox
@@ -787,7 +811,7 @@ end
 local function click_in_button(x, y)
     for r, button in pairs(button_tables) do
         if x >= r.left and x <= r.right and y >= r.top and y <= r.bottom then
-            if release_in_rect(r, button) then
+            if button.enabled and release_in_rect(r, button) then
                 -- call this button's handler
                 button.onclick()
             end
@@ -802,7 +826,7 @@ end
 local function click_in_checkbox(x, y)
     for r, checkbox in pairs(checkbox_tables) do
         if x >= r.left and x <= r.right and y >= r.top and y <= r.bottom then
-            if release_in_rect(r, checkbox) then
+            if checkbox.enabled and release_in_rect(r, checkbox) then
                 checkbox.show(checkbox.x, checkbox.y, not checkbox.ticked)
                 -- call this checkbox's handler
                 checkbox.onclick()

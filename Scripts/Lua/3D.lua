@@ -1433,7 +1433,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function EnableMenuItems(bool)
+function EnableControls(bool)
     -- disable/enable unsafe menu items so that user scripts can call op.process
     -- File menu:
     mbar.enableitem(1, 1, bool)     -- New Pattern
@@ -1472,6 +1472,18 @@ function EnableMenuItems(bool)
     mbar.enableitem(3, 5, bool)     -- Set Rule
     -- View menu:
     mbar.enableitem(4, 3, bool)     -- Set Grid Size
+    
+    -- disable/enable unsafe buttons
+    ssbutton.enable(bool)
+    s1button.enable(bool)
+    resetbutton.enable(bool)
+    undobutton.enable(bool)
+    redobutton.enable(bool)
+
+    -- disable/enable unsafe check boxes
+    drawbox.enable(bool)
+    selectbox.enable(bool)
+    movebox.enable(bool)
 end
 
 --------------------------------------------------------------------------------
@@ -1516,7 +1528,16 @@ function DrawToolBar()
     -- draw line at bottom edge of tool bar
     ov(op.gray)
     DrawLine(0, toolbarht-1, ovwd-1, toolbarht-1)
-
+    
+    if scriptlevel == 0 then
+        -- enable/disable buttons
+        ssbutton.enable(popcount > 0)
+        s1button.enable(popcount > 0)
+        resetbutton.enable(gencount > startcount)
+        undobutton.enable(#undostack > 0)
+        redobutton.enable(#redostack > 0)
+    end
+    
     local x = gap
     local y = mbarht + gap
     
@@ -2687,7 +2708,7 @@ function CallScript(func, fromclip)
     if scriptlevel == 0 then
         RememberCurrentState()
         undo_cleared = false    -- becomes true if ClearUndoRedo is called
-        EnableMenuItems(false)  -- disable most menu items
+        EnableControls(false)   -- disable most menu items and buttons
     end
     
     scriptlevel = scriptlevel + 1
@@ -2723,8 +2744,8 @@ function CallScript(func, fromclip)
     end
     
     if scriptlevel == 0 then
-        EnableMenuItems(true)   -- enable menu items that were disabled above
-        Refresh()               -- calls DrawMenuBar
+        EnableControls(true)    -- enable menu items and buttons that were disabled above
+        Refresh()               -- calls DrawToolBar
     end
 end
 
@@ -6439,7 +6460,7 @@ function CreateOverlay()
 
     -- create the menu bar and add some menus
     -- (note that changes to the order of menus or their items will require
-    -- changes to DrawMenuBar and EnableMenuItems)
+    -- changes to DrawMenuBar and EnableControls)
     mbar = op.menubar()
     mbar.addmenu("File")
     mbar.addmenu("Edit")
