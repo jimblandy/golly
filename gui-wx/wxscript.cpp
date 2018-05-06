@@ -22,7 +22,7 @@
 #include "wxundo.h"        // for undoredo->...
 #include "wxalgos.h"       // for *_ALGO, algoinfo
 #include "wxlayer.h"       // for currlayer, SyncClones
-#include "wxtimeline.h"    // for TimelineExists
+#include "wxtimeline.h"    // for TimelineExists, ToggleTimelineBar
 #include "wxlua.h"         // for RunLuaScript, AbortLuaScript
 #include "wxperl.h"        // for RunPerlScript, AbortPerlScript
 #include "wxpython.h"      // for RunPythonScript, AbortPythonScript
@@ -797,6 +797,13 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             DoAutoUpdate();
         }
         
+    } else if (strcmp(optname, "showtimeline") == 0) {
+        *oldval = showtimeline ? 1 : 0;
+        if (*oldval != newval) {
+            ToggleTimelineBar();
+            DoAutoUpdate();
+        }
+        
     } else if (strcmp(optname, "showtoolbar") == 0) {
         *oldval = showtool ? 1 : 0;
         if (*oldval != newval) {
@@ -903,6 +910,7 @@ bool GSF_getoption(const char* optname, int* optval)
     else if (strcmp(optname, "showpatterns") == 0)      *optval = showfiles ? 1 : 0;    // deprecated
     else if (strcmp(optname, "showscripts") == 0)       *optval = 0;                    // ditto
     else if (strcmp(optname, "showstatusbar") == 0)     *optval = showstatus ? 1 : 0;
+    else if (strcmp(optname, "showtimeline") == 0)      *optval = showtimeline ? 1 : 0;
     else if (strcmp(optname, "showtoolbar") == 0)       *optval = showtool ? 1 : 0;
     else if (strcmp(optname, "smartscale") == 0)        *optval = smartscale ? 1 : 0;
     else if (strcmp(optname, "stacklayers") == 0)       *optval = stacklayers ? 1 : 0;

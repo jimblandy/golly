@@ -24,7 +24,6 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
-- implement g.setoption("showtimeline",0)
 - implement g.setoption("showscrollbars",0)
 - implement optional parameter for g.note and g.warn so scripts can
   disable the Cancel button:
@@ -359,6 +358,7 @@ function SaveGollyState()
     g.setname("3D")
     g.update()  -- see new title
     oldstate.files = g.setoption("showfiles", 0)
+    oldstate.time = g.setoption("showtimeline", 0)
     oldstate.tool = g.setoption("showtoolbar", 0)
     oldstate.status = g.setoption("showstatusbar", 0)
     oldstate.layer = g.setoption("showlayerbar", 0)
@@ -374,6 +374,7 @@ function RestoreGollyState(oldstate)
     ov("delete")
     g.setname(oldstate.name)
     g.setoption("showfiles", oldstate.files)
+    g.setoption("showtimeline", oldstate.time)
     g.setoption("showtoolbar", oldstate.tool)
     g.setoption("showstatusbar", oldstate.status)
     g.setoption("showlayerbar", oldstate.layer)
