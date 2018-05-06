@@ -48,7 +48,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function create_anim_bg(clipname, wd, ht)
+local function create_anim_bg(clipname)
     local level
 
     -- create a clip the size of the overlay and make it the render target
@@ -69,7 +69,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function animate_credits()
+local function animate_credits()
     -- create the overlay
     ov("create "..wd.." "..ht)
 
@@ -98,7 +98,7 @@ function animate_credits()
     local camzoom = cammaxzoom
     local camhold = 1000
     local camcount = camhold
-    local smoothzoom = camzoom
+    local smoothzoom
 
     -- update the pattern every n frames
     local patternupdateframe = 4
@@ -291,7 +291,7 @@ Kenichi Morita
     end
 
     -- create credits clip
-    local oldalign = ov("textoption align center")
+    ov("textoption align center")
     ov("font 14 roman")
 
     local creditsclip = "credits"
@@ -299,7 +299,7 @@ Kenichi Morita
 
     -- create graduated background
     local bgclip = "bg"
-    create_anim_bg(bgclip, wd, ht)
+    create_anim_bg(bgclip)
 
     -- create stars
     local starx = {}
@@ -315,9 +315,7 @@ Kenichi Morita
     local textx = wd
     local texty
     local running = true
-    local patternframe = patternupdateframe
     local x, y
-    local lastframe = -1
     local credity = ht
     local creditx = floor((wd - credwidth) / 2)
     local credpos
@@ -336,7 +334,6 @@ Kenichi Morita
             if newht < 1 then newht = 1 end
 
             -- scale stars
-            local i = 1
             for i = 1, numstars do
                 starx[i] = floor(starx[i] * newwd / wd)
                 stary[i] = floor(stary[i] * newht / ht)
@@ -353,7 +350,7 @@ Kenichi Morita
             ov("resize "..wd.." "..ht.." pattern")
 
             -- recreate background
-            create_anim_bg(bgclip, wd, ht)
+            create_anim_bg(bgclip)
 
             -- recenter credits text
             creditx = floor((wd - credwidth) / 2)
@@ -375,9 +372,8 @@ Kenichi Morita
 
         -- draw stars
         local level = 50
-        local i = 1
         ov("rgba "..level.." "..level.." "..level.." 255")
-        local lastd = stard[i]
+        local lastd = stard[1]
         local coords = ""
 
         for i = 1, numstars do
@@ -438,7 +434,7 @@ Kenichi Morita
             end
         end
         smoothzoom = bezierx((camzoom - camminzoom) / (cammaxzoom - camminzoom), 0, 0, 1, 1) * (cammaxzoom - camminzoom) + camminzoom
-        
+
         -- update cell view
         ov("target pattern")
         ov("camera zoom "..lineartoreal(smoothzoom))
@@ -509,14 +505,11 @@ Kenichi Morita
     -- delete the layer
     g.dellayer()
     extra_layer = false
-
-    -- no point calling repeat_test()
-    return_to_main_menu = true
 end
 
 --------------------------------------------------------------------------------
 
-function main()
+local function main()
     -- draw animated credits
     animate_credits()
 end

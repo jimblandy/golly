@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build = 72
+local build = 73
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -11,7 +11,6 @@ local op    = require "oplus"
 local ov    = g.overlay
 local floor = math.floor
 local rand  = math.random
-local abs   = math.abs
 
 math.randomseed(os.time())  -- init seed for math.random
 
@@ -64,22 +63,22 @@ local brick = {
         [5] = op.cyan,
         [6] = op.blue
     },
-    bricksleft,
-    totalbricks,
-    x,
-    y
+    bricksleft  = 0,
+    totalbricks = 0,
+    x           = 0,
+    y           = 0
 }
 brick.wd = floor(wd / brick.numcols)
 brick.bricksleft = brick.numrows * brick.numcols
-brick.totalbricks = bricksleft
+brick.totalbricks = brick.bricksleft
 
 -- bat settings
 local bat = {
-    x,
-    y,
-    wd,
-    ht,
-    lastx
+    x      = 0,
+    y      = 0,
+    wd     = floor(wd / 10),
+    ht     = brick.ht,
+    lastx  = 0
 }
 
 -- ball settings
@@ -365,7 +364,7 @@ local function updatemessage(name, s, color)
     -- save the clip width and height
     message.width  = w
     message.height = h
-end   
+end
 
 --------------------------------------------------------------------------------
 
@@ -499,10 +498,10 @@ end
 
 --------------------------------------------------------------------------------
 
-local function highlightkey(text, x, y, w, h, token, color)
-    local t1, t2 = text:find(token)
+local function highlightkey(textstr, x, y, w, h, token, color)
+    local t1, t2 = textstr:find(token)
     if t1 ~= nil then
-        local charw = w / text:len()
+        local charw = w / textstr:len()
         local x1 = x + (t1 - 1) * charw
         local oldblend = ov("blend 0")
         local oldrgba = ov(op.black)
@@ -539,8 +538,8 @@ local function drawtextclip(name, x, y, xalign, yalign, highlight)
     -- check for highlight text
     if highlight == true then
         for color, list in pairs(keynames) do
-            for i, name in pairs(list) do
-                highlightkey(message.text, floor(x + xoffset) + edgegapl, floor(y + yoffset), w, h, name, color)
+            for _, textstr in pairs(list) do
+                highlightkey(message.text, floor(x + xoffset) + edgegapl, floor(y + yoffset), w, h, textstr, color)
             end
         end
     end
@@ -555,7 +554,7 @@ end
 local function updatenotification()
     -- check if there is a message to display
     if notification.message ~= "" then
-        local y = 0
+        local y
         -- check if notification finished
         if notification.current >= notification.duration then
             notification.message = ""
@@ -611,7 +610,7 @@ local function createparticles(x, y, areawd, areaht, howmany, color)
     while i <= #particle.particles and particle.particles[i].alpha > 0 do
         i = i + 1
     end
-    for j = 1, howmany do
+    for _ = 1, howmany do
         local item = { alpha = 255, x = x - rand(floor(areawd)), y = y + rand(floor(areaht)), dx = rand() - 0.5, dy = rand() - 0.5, color = color }
         particle.particles[i] = item
         i = i + 1
@@ -729,7 +728,7 @@ local function createbackground()
     ov("target "..bgclip)
     -- create background gradient
     ov("blend 0")
-    local y, c
+    local c
     local level = 96
     for y = 0, ht - 1 do
         c = floor((y / ht) * level)
@@ -746,7 +745,7 @@ local function createbackground()
         ov(op.black)
         ov("fill "..(wd - edgegapr).." 0 "..edgegapr.." "..(ht - 1))
     end
-    
+
     -- reset target
     ov("target")
 end
@@ -776,7 +775,7 @@ local function drawbricks()
     end
     for pass = startpass, 2 do
         for y = 1, brick.numrows do
-            local bricks = rows[y]
+            local bricks = brick.rows[y]
             brick.y = floor((y + brick.offsety) * brick.ht)
             if pass == 2 then
                 ov(brick.cols[y])
@@ -832,7 +831,7 @@ end
 --------------------------------------------------------------------------------
 
 local function initbricks()
-    rows              = {}
+    brick.rows        = {}
     brick.wd          = floor(wd / brick.numcols)
     brick.ht          = floor(ht / 40)
     brick.bricksleft  = 0
@@ -856,7 +855,7 @@ local function initbricks()
     edgegapr = edgegap - edgegapl
 
     -- set the required bricks alive
-    local match = 1
+    local match
     for y = 1, brick.numrows do
         local bricks = {}
         if bonus.level then
@@ -877,7 +876,7 @@ local function initbricks()
                 brick.bricksleft = brick.bricksleft + 1
             end
         end
-        rows[y] = bricks
+        brick.rows[y] = bricks
     end
     brick.totalbricks = brick.bricksleft
 end
@@ -1059,7 +1058,7 @@ local function processstandardkeys(event)
             -- toggle particle display
             toggleparticles()
         elseif event == "key q none" then
-            -- toggle confirm quit 
+            -- toggle confirm quit
             toggleconfirmquit()
         elseif event == "key s none" then
             -- toggle autostart when mouse moves onto overlay
@@ -1132,10 +1131,10 @@ local function processinput()
     -- check for click, enter or return
     local event = g.getevent()
     if #event > 0 then
-        local _, x, y, button, mods
+        local button, _
         button = ""
         if event:find("^oclick") then
-            _, x, y, button, mods = split(event)
+            _, _, _, button, _= split(event)
         end
         -- right click quits game
         if button == "right" then
@@ -1178,10 +1177,10 @@ end
 local function processendinput()
     local event = g.getevent()
     if #event > 0 then
-        local _, x, y, button, mods
+        local button, _
         button = ""
         if event:find("^oclick") then
-            _, x, y, button, mods = split(event)
+            _, _, _, button, _ = split(event)
         end
         -- right click quits application
         if button == "right" then
@@ -1320,7 +1319,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function drawbonuscomplete(remainingtime, bonusscore)
+local function drawbonuscomplete()
     ov("blend 1")
     drawtextclip("bcomplete", 0, ht / 2 - 30 * text.fontscale, text.aligncenter)
 
@@ -1493,7 +1492,7 @@ end
 local function updatebatposition()
     local mousepos = ov("xy")
     if mousepos ~= "" then
-        local mousex, mousey = split(mousepos)
+        local mousex, _ = split(mousepos)
         if mousex ~= bat.lastx then
             bat.lastx = mousex
             bat.x = tonumber(mousex) - bat.wd / 2
@@ -1524,10 +1523,10 @@ end
 --------------------------------------------------------------------------------
 
 local function clearbonusbricks()
-    local bricks = {}
+    local bricks
     local clearparticles = particle.brickparticles / 4
     for y = 1, brick.numrows do
-        bricks = rows[y]
+        bricks = brick.rows[y]
         for x = 1, brick.numcols do
             if bricks[x] then
                 bricks[x] = false
@@ -1560,8 +1559,6 @@ local function computebonus()
         game.newbonus = true
         bonus.best = bonusscore
     end
-
-    return bonusscore
 end
 
 --------------------------------------------------------------------------------
@@ -1600,17 +1597,17 @@ local function playexit()
     local fadestart = music.fade
     ov(op.black)
     for i = 0, 100 do
-        t = g.millisecs()
+        local t = g.millisecs()
         local a = i / 100
         local x, y
         ov("fill")
         -- update each tile
-        for n = 1, #box do
-            x = box[n][1]
-            y = box[n][2]
-            tx = box[n][3]
-            ty = box[n][4]
-            ov("paste "..floor(x * (1 - a) + tx * a).." "..floor(y * (1 - a) + ty * a).." sprite"..n)
+        for j = 1, #box do
+            x = box[j][1]
+            y = box[j][2]
+            tx = box[j][3]
+            ty = box[j][4]
+            ov("paste "..floor(x * (1 - a) + tx * a).." "..floor(y * (1 - a) + ty * a).." sprite"..j)
         end
         -- draw timing if on
         if options.showtiming == 1 then
@@ -1622,13 +1619,9 @@ local function playexit()
         ov("update")
         while g.millisecs() - t < 15 do end
     end
-    n = 1
     -- delete tiles
-    for y = 0, ht, tilesize do
-        for x = 0, wd, tilesize do
-            ov("delete sprite"..n)
-            n = n + 1
-        end
+    for i = 1, #box do
+        ov("delete sprite"..i)
     end
 end
 
@@ -1839,22 +1832,22 @@ local function breakout()
                         brick.y = floor((ball.y - (brick.offsety * brick.ht)) / brick.ht)
                         if brick.y >= 1 and brick.y <= brick.numrows then
                             brick.x = floor((ball.x - edgegapl) / brick.wd) + 1
-                            if rows[brick.y][brick.x] then
+                            if brick.rows[brick.y][brick.x] then
                                 -- hit a brick!
-                                rows[brick.y][brick.x] = false
+                                brick.rows[brick.y][brick.x] = false
                                 -- adjust score
-                                local points = floor((game.level + 9) * (brick.numrows - brick.y + 1) * game.combomult)
+                                local pointval = floor((game.level + 9) * (brick.numrows - brick.y + 1) * game.combomult)
                                 local rawpoints = floor((game.level + 9) * (brick.numrows - brick.y + 1))
                                 if game.combo > 1 then
                                     game.comboraw = game.comboraw + rawpoints
-                                    game.comboextra = game.comboextra + points
+                                    game.comboextra = game.comboextra + pointval
                                 end
-                                updatescore(game.score + points)
+                                updatescore(game.score + pointval)
                                 if game.score > game.hiscore then
                                     game.newhigh = true
                                     updatehighscore(game.score)
                                 end
-                                createpoints((brick.x - 1) * brick.wd + edgegapl, brick.y * brick.ht, points)
+                                createpoints((brick.x - 1) * brick.wd + edgegapl, brick.y * brick.ht, pointval)
                                 -- increment combo
                                 game.combomult = game.combomult * game.combofact
                                 if game.combo + 1 > game.maxcombo then
@@ -1897,7 +1890,7 @@ local function breakout()
                     brick.offsety = brick.startoffset + 1
                 end
             end
-            
+
             -- update bat position
             updatebatposition()
 
@@ -1973,10 +1966,8 @@ local function breakout()
         end
 
         -- check for bonus level complete
-        local bonusfinal = bonus.current
-        local bonusscore = 0
         if bonus.level then
-            bonusscore = computebonus()
+            computebonus()
             clearbonusbricks()
         else
             if brick.bricksleft == 0 then
@@ -2034,7 +2025,7 @@ local function breakout()
                     drawbat()
                     if bonus.level then
                         -- end of bonus level
-                        drawbonuscomplete(bonusfinal, bonusscore)
+                        drawbonuscomplete()
                     else
                         -- level complete
                         drawlevelcomplete()
@@ -2129,7 +2120,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function main()
+local function main()
     -- get size of overlay
     wd, ht = g.getview(g.getlayer())
     if wd < minwd then
