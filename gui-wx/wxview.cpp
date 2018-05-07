@@ -1768,6 +1768,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_SHOWLAYER:   ToggleLayerBar(); break;
         case DO_SHOWEDIT:    ToggleEditBar(); break;
         case DO_SHOWSTATES:  ToggleAllStates(); break;
+        case DO_SHOWSCROLL:  mainptr->ToggleScrollBars(); break;
         case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
         case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
         case DO_SHOWICONS:   ToggleCellIcons(); break;

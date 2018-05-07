@@ -24,12 +24,6 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
-- implement g.setoption("showtimeline",0)
-- implement g.setoption("showscrollbars",0)
-- implement optional parameter for g.note and g.warn so scripts can
-  disable the Cancel button:
-  g.note(msg, cancel=true)
-  g.warn(msg, cancel=true)
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - throttle ozoom* events (in here or in Golly)?
@@ -322,7 +316,7 @@ function ReadSettings()
             elseif keyword == "rule" then
                 rulestring = tostring(value)
                 if not ParseRule(rulestring) then
-                    g.warn("Resetting bad rule ("..rulestring..") to default.")
+                    g.warn("Resetting bad rule ("..rulestring..") to default.", false)
                     rulestring = DEFAULT_RULE
                 end
             end
@@ -359,6 +353,8 @@ function SaveGollyState()
     g.setname("3D")
     g.update()  -- see new title
     oldstate.files = g.setoption("showfiles", 0)
+    oldstate.scroll = g.setoption("showscrollbars", 0)
+    oldstate.time = g.setoption("showtimeline", 0)
     oldstate.tool = g.setoption("showtoolbar", 0)
     oldstate.status = g.setoption("showstatusbar", 0)
     oldstate.layer = g.setoption("showlayerbar", 0)
@@ -374,6 +370,8 @@ function RestoreGollyState(oldstate)
     ov("delete")
     g.setname(oldstate.name)
     g.setoption("showfiles", oldstate.files)
+    g.setoption("showscrollbars", oldstate.scroll)
+    g.setoption("showtimeline", oldstate.time)
     g.setoption("showtoolbar", oldstate.tool)
     g.setoption("showstatusbar", oldstate.status)
     g.setoption("showlayerbar", oldstate.layer)
@@ -1931,6 +1929,15 @@ function RestoreStartingGen()
     RestoreState( table.remove(undostack) )
 end
 
+--------------------------------------------------------------------------------
+
+function CheckIfGenerating()
+    if generating and popcount > 0 and gencount > startcount then
+        -- NextGeneration will be called soon
+        RememberCurrentState()
+    end
+end
+
 ----------------------------------------------------------------------
 
 function InitLiveBoundary()
@@ -2046,7 +2053,11 @@ function MoveActivePlane(newpos, refresh)
 
         -- use the same orientation
         SetActivePlane(activeplane, newpos)
-        if refresh then Refresh() end
+        
+        if refresh then
+            CheckIfGenerating()
+            Refresh()
+        end
     end
 end
 
@@ -2063,6 +2074,7 @@ function CycleActivePlane()
         else -- activeplane == "XZ"
             SetActivePlane("XY", activepos)
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -2156,7 +2168,7 @@ function PutCells(livecells)
     -- restore pattern saved earlier by GetCells
     -- (note that grid must currently be empty)
     if popcount > 0 then
-        g.note("Bug in PutCells: grid is not empty!")
+        g.warn("Bug in PutCells: grid is not empty!")
     end
     local clipped = 0
     local mid = N//2
@@ -2465,7 +2477,7 @@ function OpenPattern(filepath)
     if filepath then
         local err, newpattern = ReadPattern(filepath)
         if err then
-            g.warn(err)
+            g.warn(err, false)
         else
             -- pattern ok so use info in newpattern to update current grid;
             -- set pattname to file name at end of filepath
@@ -2492,7 +2504,7 @@ function CopyClipboardToFile()
     local filepath = g.getdir("temp").."clipboard.rle3"
     local f = io.open(filepath,"w")
     if not f then
-        g.warn("Failed to create temporary clipboard file!")
+        g.warn("Failed to create temporary clipboard file!", false)
         return nil
     end
     -- NOTE: we can't do f:write(string.gsub(g.getclipstr(),"\r","\n"))
@@ -2510,7 +2522,7 @@ function OpenClipboard()
     if filepath then
         local err, newpattern = ReadPattern(filepath)
         if err then
-            g.warn(err)
+            g.warn(err, false)
         else
             -- pattern ok so use info in newpattern to update current grid
             pattname = "clipboard"
@@ -2674,7 +2686,7 @@ function SavePattern(filepath)
         end
         local err = WritePattern(filepath, comments)
         if err then
-            g.warn(err)
+            g.warn(err, false)
         else
             -- set pattname to file name at end of filepath
             pattname = filepath:match("^.+"..pathsep.."(.+)$")
@@ -2701,7 +2713,7 @@ end
 function CallScript(func, fromclip)
     -- avoid infinite recursion
     if scriptlevel == 100 then
-        g.warn("Script is too recursive!")
+        g.warn("Script is too recursive!", false)
         return
     end
     
@@ -2736,15 +2748,16 @@ function CallScript(func, fromclip)
             message = "Script aborted."
         else
             if fromclip then
-                g.warn("Runtime error in clipboard script:\n\n"..err)
+                g.warn("Runtime error in clipboard script:\n\n"..err, false)
             else
-                g.warn("Runtime error in script:\n\n"..err)
+                g.warn("Runtime error in script:\n\n"..err, false)
             end
         end
     end
     
     if scriptlevel == 0 then
         EnableControls(true)    -- enable menu items and buttons that were disabled above
+        CheckIfGenerating()
         Refresh()               -- calls DrawToolBar
     end
 end
@@ -2757,7 +2770,7 @@ function RunScript(filepath)
         if f then
             CallScript(f, false)
         else
-            g.warn("Syntax error in script:\n\n"..msg)
+            g.warn("Syntax error in script:\n\n"..msg, false)
         end
     else
         -- prompt user for a .lua file to run
@@ -2779,7 +2792,7 @@ function RunClipboard()
     if f then
         CallScript(f, true)
     else
-        g.warn("Syntax error in clipboard script:\n\n"..msg)
+        g.warn("Syntax error in clipboard script:\n\n"..msg, false)
     end
 end
 
@@ -3067,6 +3080,7 @@ function SetGridSize(newsize)
         if pclipped > 0 then message = message.."Clipped paste cells = "..pclipped end
     end
     
+    CheckIfGenerating()
     FitGrid()   -- calls Refresh
 end
 
@@ -3102,9 +3116,10 @@ function ChangeRule()
         rulestring = oldrule
         RememberCurrentState()
         rulestring = newrule
+        
+        CheckIfGenerating()
+        Refresh()
     end
-    
-    Refresh()
 end
 
 ----------------------------------------------------------------------
@@ -3240,6 +3255,7 @@ function ClearSelection()
                 minimal_live_bounds = false
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3259,6 +3275,7 @@ function ClearOutside()
                 minimal_live_bounds = false
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3285,6 +3302,7 @@ function CancelSelection()
         selcount = 0
         selected = {}
         InitSelectionBoundary()
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3308,6 +3326,7 @@ function SelectAll()
         maxsely = maxy
         maxselz = maxz
         minimal_sel_bounds = minimal_live_bounds
+        CheckIfGenerating()
         Refresh()
     else
         -- there are no live cells so remove any existing selection
@@ -3349,6 +3368,7 @@ function FlipSelectionX()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3387,6 +3407,7 @@ function FlipSelectionY()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3425,6 +3446,7 @@ function FlipSelectionZ()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3466,6 +3488,7 @@ function RotateSelectionX()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3507,6 +3530,7 @@ function RotateSelectionY()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3548,6 +3572,7 @@ function RotateSelectionZ()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3559,6 +3584,7 @@ function CancelPaste()
         RememberCurrentState()
         pastecount = 0
         pastepatt = {}
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3630,6 +3656,7 @@ function Paste()
             if y > maxpastey then maxpastey = y end
             if z > maxpastez then maxpastez = z end
         end
+        CheckIfGenerating()
         Refresh()
         return true
     else
@@ -3652,6 +3679,7 @@ function PasteOR()
         end
         pastecount = 0
         pastepatt = {}
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3674,6 +3702,7 @@ function PasteXOR()
         end
         pastecount = 0
         pastepatt = {}
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3699,6 +3728,7 @@ function FlipPasteX()
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastepatt[x + N * (y + N * z)] = 1
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3724,6 +3754,7 @@ function FlipPasteY()
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastepatt[x + N * (y + N * z)] = 1
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3749,6 +3780,7 @@ function FlipPasteZ()
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastepatt[x + N * (y + N * z)] = 1
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3785,6 +3817,7 @@ function RotatePasteX()
             if z < minpastez then minpastez = z end
             if z > maxpastez then maxpastez = z end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3821,6 +3854,7 @@ function RotatePasteY()
             if z < minpastez then minpastez = z end
             if z > maxpastez then maxpastez = z end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3857,6 +3891,7 @@ function RotatePasteZ()
             if y < minpastey then minpastey = y end
             if y > maxpastey then maxpastey = y end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -5110,7 +5145,7 @@ Further Notes on the Game of Three-Dimensional Life<br>
     local htmlfile = g.getdir("temp").."3D.html"
     local f = io.open(htmlfile,"w")
     if not f then
-        g.warn("Failed to create 3D.html!")
+        g.warn("Failed to create 3D.html!", false)
         return
     end
     f:write(htmldata)
@@ -5126,6 +5161,7 @@ function SetCursor(cursor)
         RememberCurrentState()
         currcursor = cursor
         if not arrow_cursor then ov("cursor "..currcursor) end
+        CheckIfGenerating()
     end
 end
 
@@ -5246,8 +5282,7 @@ function ExitScript()
         -- probably need a g.savechanges command so user sees the proper dialog!!!
         g.warn("There are unsaved changes.\n" ..
                "Do you really want to exit 3D.lua?")
-        -- need to call a g.* command so an error is returned
-        -- by pcall if user hit Cancel button
+        -- need to call a g.* command so error is returned by pcall if user hit Cancel
         g.doevent("")
     end
 
@@ -6247,6 +6282,7 @@ function MiddlePaste()
         maxpastey = maxpastey + deltay
         maxpastez = maxpastez + deltaz
         
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -6317,6 +6353,7 @@ function MiddleSelection()
         maxselz = maxselz + deltaz
         -- MinimizeSelectionBoundary set minimal_sel_bounds to true
         
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -6357,6 +6394,7 @@ function MiddlePattern()
         maxz = maxz + deltaz
         -- MinimizeLiveBoundary set minimal_live_bounds to true
         
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -6918,19 +6956,26 @@ function EventLoop()
                 mousedown = false
                 if drawing then
                     drawing = false
+                    CheckIfGenerating()
                 elseif selecting then
                     selecting = false
+                    CheckIfGenerating()
                 elseif drag_paste then
                     drag_paste = false
+                    CheckIfGenerating()
                 elseif drag_selection then
-                    StopDraggingSelection()
                     drag_selection = false
+                    StopDraggingSelection()
+                    CheckIfGenerating()
                 elseif drag_active then
                     drag_active = false
+                    CheckIfGenerating()
                 elseif hand_erase then
                     hand_erase = false
+                    CheckIfGenerating()
                 elseif hand_select then
                     hand_select = false
+                    CheckIfGenerating()
                 end
             elseif event:find("^ozoomout") then
                 if not arrow_cursor then Zoom(CELLSIZE-1) end

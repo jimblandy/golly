@@ -1131,7 +1131,9 @@ Here are all the valid option names and their possible values:
 <tr><td><b>"showoverlay"</b></td><td width=20>   </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"showpopulation"</b></td><td width=20> </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"showprogress"</b></td><td width=20>  </td><td>1 or 0 (True or False)</td></tr>
+<tr><td><b>"showscrollbars"</b></td><td width=20> </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"showstatusbar"</b></td><td width=20> </td><td>1 or 0 (True or False)</td></tr>
+<tr><td><b>"showtimeline"</b></td><td width=20>  </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"showtoolbar"</b></td><td width=20>   </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"smartscale"</b></td><td width=20>    </td><td>1 or 0 (True or False)</td></tr>
 <tr><td><b>"stacklayers"</b></td><td width=20>   </td><td>1 or 0 (True or False)</td></tr>
@@ -1344,24 +1346,26 @@ The status bar is automatically shown if necessary.
 <dd> Example: <b>g.error("The pattern is empty.")</b></dd>
 </p>
 
-<a name="warn"></a><p><dt><b>warn(<i>message</i>)</b></dt>
+<a name="warn"></a><p><dt><b>warn(<i>message, showCancel=True</i>)</b></dt>
 <dd>
 Beep and show the given string in a modal warning dialog.
 Useful for debugging Python scripts or displaying error messages.
-The dialog has two buttons: clicking OK will close the dialog and continue;
-clicking Cancel will close the dialog and abort the script.
+If showCancel is True (the default) then the dialog has a Cancel button
+as well as the usual OK button.  Clicking OK will close the dialog and
+continue; clicking Cancel will close the dialog and abort the script.
 </dd>
 <dd> Example: <b>g.warn("xxx = " + str(xxx))</b></dd>
 </p>
 
-<a name="note"></a><p><dt><b>note(<i>message</i>)</b></dt>
+<a name="note"></a><p><dt><b>note(<i>message, showCancel=True</i>)</b></dt>
 <dd>
 Show the given string in a modal information dialog.
 Useful for displaying multi-line results.
-The dialog has two buttons: clicking OK will close the dialog and continue;
-clicking Cancel will close the dialog and abort the script.
+If showCancel is True (the default) then the dialog has a Cancel button
+as well as the usual OK button.  Clicking OK will close the dialog and
+continue; clicking Cancel will close the dialog and abort the script.
 </dd>
-<dd> Example: <b>g.note("Line 1\nLine 2\nLine 3")</b></dd>
+<dd> Example: <b>g.note("Line 1\nLine 2\nLine 3", False)</b></dd>
 </p>
 
 <a name="check"></a><p><dt><b>check(<i>bool</i>)</b></dt>

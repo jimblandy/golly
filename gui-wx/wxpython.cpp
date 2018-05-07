@@ -2814,10 +2814,11 @@ static PyObject* py_warn(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     const char* s = NULL;
+    int showCancel = 1;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
+    if (!PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
     
-    Warning(wxString(s,wxConvLocal));
+    Warning(wxString(s,wxConvLocal), showCancel != 0);
     
     RETURN_NONE;
 }
@@ -2829,10 +2830,11 @@ static PyObject* py_note(PyObject* self, PyObject* args)
     if (PythonScriptAborted()) return NULL;
     wxUnusedVar(self);
     const char* s = NULL;
+    int showCancel = 1;
     
-    if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
+    if (!PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
     
-    Note(wxString(s,wxConvLocal));
+    Note(wxString(s,wxConvLocal), showCancel != 0);
     
     RETURN_NONE;
 }

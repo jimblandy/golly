@@ -46,7 +46,7 @@ enum {
     DELETE_BUTT,
     NUM_BUTTONS,        // must be after all buttons
     ID_SLIDER,          // for slider
-    ID_SCROLL,          // for scroll bar
+    ID_SCROLLBAR,       // for scroll bar
     ID_AUTOTIMER        // for autotimer
 };
 
@@ -121,7 +121,7 @@ EVT_PAINT            (              TimelineBar::OnPaint)
 EVT_LEFT_DOWN        (              TimelineBar::OnMouseDown)
 EVT_BUTTON           (wxID_ANY,     TimelineBar::OnButton)
 EVT_COMMAND_SCROLL   (ID_SLIDER,    TimelineBar::OnSlider)
-EVT_COMMAND_SCROLL   (ID_SCROLL,    TimelineBar::OnScroll)
+EVT_COMMAND_SCROLL   (ID_SCROLLBAR, TimelineBar::OnScroll)
 EVT_TIMER            (ID_AUTOTIMER, TimelineBar::OnAutoTimer)
 END_EVENT_TABLE()
 
@@ -271,7 +271,7 @@ TimelineBar::TimelineBar(wxWindow* parent, wxCoord xorg, wxCoord yorg, int wd, i
 #endif
     x = xpos + 20;
     y = (TBARHT - (scrollbarht + 1)) / 2;
-    framebar = new wxScrollBar(this, ID_SCROLL, wxPoint(x, y),
+    framebar = new wxScrollBar(this, ID_SCROLLBAR, wxPoint(x, y),
                                wxSize(scrollbarwd, scrollbarht),
                                wxSB_HORIZONTAL);
     if (framebar == NULL) Fatal(_("Failed to create timeline scroll bar!"));
