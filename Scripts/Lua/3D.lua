@@ -1928,6 +1928,15 @@ function RestoreStartingGen()
     RestoreState( table.remove(undostack) )
 end
 
+--------------------------------------------------------------------------------
+
+function CheckIfGenerating()
+    if generating and popcount > 0 and gencount > startcount then
+        -- NextGeneration will be called soon
+        RememberCurrentState()
+    end
+end
+
 ----------------------------------------------------------------------
 
 function InitLiveBoundary()
@@ -2043,7 +2052,11 @@ function MoveActivePlane(newpos, refresh)
 
         -- use the same orientation
         SetActivePlane(activeplane, newpos)
-        if refresh then Refresh() end
+        
+        if refresh then
+            CheckIfGenerating()
+            Refresh()
+        end
     end
 end
 
@@ -2060,6 +2073,7 @@ function CycleActivePlane()
         else -- activeplane == "XZ"
             SetActivePlane("XY", activepos)
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -2742,6 +2756,7 @@ function CallScript(func, fromclip)
     
     if scriptlevel == 0 then
         EnableControls(true)    -- enable menu items and buttons that were disabled above
+        CheckIfGenerating()
         Refresh()               -- calls DrawToolBar
     end
 end
@@ -3064,6 +3079,7 @@ function SetGridSize(newsize)
         if pclipped > 0 then message = message.."Clipped paste cells = "..pclipped end
     end
     
+    CheckIfGenerating()
     FitGrid()   -- calls Refresh
 end
 
@@ -3099,9 +3115,10 @@ function ChangeRule()
         rulestring = oldrule
         RememberCurrentState()
         rulestring = newrule
+        
+        CheckIfGenerating()
+        Refresh()
     end
-    
-    Refresh()
 end
 
 ----------------------------------------------------------------------
@@ -3237,6 +3254,7 @@ function ClearSelection()
                 minimal_live_bounds = false
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3256,6 +3274,7 @@ function ClearOutside()
                 minimal_live_bounds = false
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3282,6 +3301,7 @@ function CancelSelection()
         selcount = 0
         selected = {}
         InitSelectionBoundary()
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3305,6 +3325,7 @@ function SelectAll()
         maxsely = maxy
         maxselz = maxz
         minimal_sel_bounds = minimal_live_bounds
+        CheckIfGenerating()
         Refresh()
     else
         -- there are no live cells so remove any existing selection
@@ -3346,6 +3367,7 @@ function FlipSelectionX()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3384,6 +3406,7 @@ function FlipSelectionY()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3422,6 +3445,7 @@ function FlipSelectionZ()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3463,6 +3487,7 @@ function RotateSelectionX()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3504,6 +3529,7 @@ function RotateSelectionY()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3545,6 +3571,7 @@ function RotateSelectionZ()
                 SetLiveCell(x, y, z)
             end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3556,6 +3583,7 @@ function CancelPaste()
         RememberCurrentState()
         pastecount = 0
         pastepatt = {}
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3627,6 +3655,7 @@ function Paste()
             if y > maxpastey then maxpastey = y end
             if z > maxpastez then maxpastez = z end
         end
+        CheckIfGenerating()
         Refresh()
         return true
     else
@@ -3649,6 +3678,7 @@ function PasteOR()
         end
         pastecount = 0
         pastepatt = {}
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3671,6 +3701,7 @@ function PasteXOR()
         end
         pastecount = 0
         pastepatt = {}
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3696,6 +3727,7 @@ function FlipPasteX()
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastepatt[x + N * (y + N * z)] = 1
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3721,6 +3753,7 @@ function FlipPasteY()
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastepatt[x + N * (y + N * z)] = 1
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3746,6 +3779,7 @@ function FlipPasteZ()
             local x, y, z = xyz[1], xyz[2], xyz[3]
             pastepatt[x + N * (y + N * z)] = 1
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3782,6 +3816,7 @@ function RotatePasteX()
             if z < minpastez then minpastez = z end
             if z > maxpastez then maxpastez = z end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3818,6 +3853,7 @@ function RotatePasteY()
             if z < minpastez then minpastez = z end
             if z > maxpastez then maxpastez = z end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -3854,6 +3890,7 @@ function RotatePasteZ()
             if y < minpastey then minpastey = y end
             if y > maxpastey then maxpastey = y end
         end
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -5123,6 +5160,7 @@ function SetCursor(cursor)
         RememberCurrentState()
         currcursor = cursor
         if not arrow_cursor then ov("cursor "..currcursor) end
+        CheckIfGenerating()
     end
 end
 
@@ -6243,6 +6281,7 @@ function MiddlePaste()
         maxpastey = maxpastey + deltay
         maxpastez = maxpastez + deltaz
         
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -6313,6 +6352,7 @@ function MiddleSelection()
         maxselz = maxselz + deltaz
         -- MinimizeSelectionBoundary set minimal_sel_bounds to true
         
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -6353,6 +6393,7 @@ function MiddlePattern()
         maxz = maxz + deltaz
         -- MinimizeLiveBoundary set minimal_live_bounds to true
         
+        CheckIfGenerating()
         Refresh()
     end
 end
@@ -6914,19 +6955,26 @@ function EventLoop()
                 mousedown = false
                 if drawing then
                     drawing = false
+                    CheckIfGenerating()
                 elseif selecting then
                     selecting = false
+                    CheckIfGenerating()
                 elseif drag_paste then
                     drag_paste = false
+                    CheckIfGenerating()
                 elseif drag_selection then
-                    StopDraggingSelection()
                     drag_selection = false
+                    StopDraggingSelection()
+                    CheckIfGenerating()
                 elseif drag_active then
                     drag_active = false
+                    CheckIfGenerating()
                 elseif hand_erase then
                     hand_erase = false
+                    CheckIfGenerating()
                 elseif hand_select then
                     hand_select = false
+                    CheckIfGenerating()
                 end
             elseif event:find("^ozoomout") then
                 if not arrow_cursor then Zoom(CELLSIZE-1) end
