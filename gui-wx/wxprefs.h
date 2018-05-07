@@ -71,6 +71,7 @@ extern bool showedit;            // show edit bar?
 extern bool showallstates;       // show all cell states in edit bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
+extern bool showscrollbars;      // show scroll bars?
 extern bool showtimeline;        // show timeline bar?
 extern bool showgridlines;       // display grid lines?
 extern bool showoverlay;         // display the current overlay?
@@ -232,6 +233,7 @@ typedef enum {
     DO_SHOWLAYER,                 // show layer bar
     DO_SHOWOVERLAY,               // show overlay
     DO_SHOWPOP,                   // show population
+    DO_SHOWSCROLL,                // show scroll bars
     DO_SHOWSTATUS,                // show status bar
     DO_SHOWTIME,                  // show timeline
     DO_TIMING,                    // show timing

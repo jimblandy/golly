@@ -115,6 +115,7 @@ public:
     void ToggleStatusBar();
     void ToggleExactNumbers();
     void ToggleToolBar();
+    void ToggleScrollBars();
     void ToggleFullScreen();
     void ShowPatternInfo();
     void ResizeSplitWindow(int wd, int ht);
@@ -330,6 +331,7 @@ enum {
     ID_INVERT,
     ID_SMARTSCALE,
     ID_TIMELINE,
+    ID_SCROLL,
     ID_INFO,
     
     // Set Scale submenu

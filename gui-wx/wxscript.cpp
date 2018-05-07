@@ -790,6 +790,13 @@ bool GSF_setoption(const char* optname, int newval, int* oldval)
             DoAutoUpdate();
         }
         
+    } else if (strcmp(optname, "showscrollbars") == 0) {
+        *oldval = showscrollbars ? 1 : 0;
+        if (*oldval != newval) {
+            mainptr->ToggleScrollBars();
+            DoAutoUpdate();
+        }
+        
     } else if (strcmp(optname, "showstatusbar") == 0) {
         *oldval = showstatus ? 1 : 0;
         if (*oldval != newval) {
@@ -907,8 +914,9 @@ bool GSF_getoption(const char* optname, int* optval)
     else if (strcmp(optname, "showoverlay") == 0)       *optval = showoverlay ? 1 : 0;
     else if (strcmp(optname, "showprogress") == 0)      *optval = showprogress ? 1 : 0;
     else if (strcmp(optname, "showfiles") == 0)         *optval = showfiles ? 1 : 0;
-    else if (strcmp(optname, "showpatterns") == 0)      *optval = showfiles ? 1 : 0;    // deprecated
-    else if (strcmp(optname, "showscripts") == 0)       *optval = 0;                    // ditto
+    else if (strcmp(optname, "showpatterns") == 0)      *optval = showfiles ? 1 : 0;        // deprecated
+    else if (strcmp(optname, "showscripts") == 0)       *optval = 0;                        // ditto
+    else if (strcmp(optname, "showscrollbars") == 0)    *optval = showscrollbars ? 1 : 0;
     else if (strcmp(optname, "showstatusbar") == 0)     *optval = showstatus ? 1 : 0;
     else if (strcmp(optname, "showtimeline") == 0)      *optval = showtimeline ? 1 : 0;
     else if (strcmp(optname, "showtoolbar") == 0)       *optval = showtool ? 1 : 0;

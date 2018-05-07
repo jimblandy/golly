@@ -715,6 +715,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_INVERT,       active);
         mbar->Enable(ID_SMARTSCALE,   active);
         mbar->Enable(ID_TIMELINE,     active);
+        mbar->Enable(ID_SCROLL,       active);
         mbar->Enable(ID_INFO,         !currlayer->currfile.IsEmpty());
         
         mbar->Enable(ID_SAVE_OVERLAY, active && showoverlay && curroverlay->GetOverlayData());
@@ -754,6 +755,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Check(ID_INVERT,        swapcolors);
         mbar->Check(ID_SMARTSCALE,    smartscale);
         mbar->Check(ID_TIMELINE,      showtimeline);
+        mbar->Check(ID_SCROLL,        showscrollbars);
         mbar->Check(ID_PL_TL,         plocation == TopLeft);
         mbar->Check(ID_PL_TR,         plocation == TopRight);
         mbar->Check(ID_PL_BR,         plocation == BottomRight);
@@ -1019,7 +1021,7 @@ void MainFrame::ResizeBigView()
         }
 
 #ifdef __WXMAC__
-        if (!fullscreen) {
+        if (!fullscreen && showscrollbars) {
             // make room for hbar and vbar
             wd -= 15;
             ht -= 15;
@@ -1111,6 +1113,35 @@ void MainFrame::ToggleToolBar()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::ToggleScrollBars()
+{
+    showscrollbars = !showscrollbars;
+    if (showscrollbars) {
+        #ifdef __WXMAC__
+            hbar->Show(true);
+            vbar->Show(true);
+        #else
+            bigview->UpdateScrollBars();
+        #endif
+    } else {
+        // hide scroll bars
+        #ifdef __WXMAC__
+            hbar->Show(false);
+            vbar->Show(false);
+        #else
+            bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
+            bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
+        #endif
+    }
+    // adjust size of viewport
+    int wd, ht;
+    GetClientSize(&wd, &ht);
+    ResizeSplitWindow(wd, ht);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ToggleFullScreen()
 {
     static bool restorestatusbar;    // restore status bar at end of full screen mode?
@@ -1133,14 +1164,16 @@ void MainFrame::ToggleFullScreen()
     ShowFullScreen(fullscreen, wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
     
     if (fullscreen) {
-        // hide scroll bars
-#ifdef __WXMAC__
-        hbar->Show(false);
-        vbar->Show(false);
-#else
-        bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-        bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-#endif
+        if (showscrollbars) {
+            // hide scroll bars
+            #ifdef __WXMAC__
+                hbar->Show(false);
+                vbar->Show(false);
+            #else
+                bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
+                bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
+            #endif
+        }
 
         // hide status bar if necessary
         restorestatusbar = showstatus;
@@ -1215,16 +1248,16 @@ void MainFrame::ToggleFullScreen()
             splitwin->SplitVertically(filectrl, RightPane(), dirwinwd);
             showfiles = true;
         }
-    }
-    
-    if (!fullscreen) {
-        // restore scroll bars BEFORE setting viewport size
-#ifdef __WXMAC__
-        hbar->Show(true);
-        vbar->Show(true);
-#else
-        bigview->UpdateScrollBars();
-#endif
+        
+        if (showscrollbars) {
+            // restore scroll bars
+            #ifdef __WXMAC__
+                hbar->Show(true);
+                vbar->Show(true);
+            #else
+                bigview->UpdateScrollBars();
+            #endif
+        }
     }
     
     // adjust size of viewport (and file directory if visible)
@@ -1407,6 +1440,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_INVERT:         viewptr->ToggleCellColors(); break;
         case ID_SMARTSCALE:     viewptr->ToggleSmarterScaling(); break;
         case ID_TIMELINE:       ToggleTimelineBar(); break;
+        case ID_SCROLL:         ToggleScrollBars(); break;
         case ID_INFO:           ShowPatternInfo(); break;
             
         // Layer menu
@@ -2251,6 +2285,7 @@ void MainFrame::CreateMenus()
     viewMenu->AppendCheckItem(ID_INVERT,         _("Invert Colors") + GetAccelerator(DO_INVERT));
     viewMenu->AppendCheckItem(ID_SMARTSCALE,     _("Smarter Scaling") + GetAccelerator(DO_SMARTSCALE));
     viewMenu->AppendCheckItem(ID_TIMELINE,       _("Show Timeline") + GetAccelerator(DO_SHOWTIME));
+    viewMenu->AppendCheckItem(ID_SCROLL,         _("Show Scroll Bars") + GetAccelerator(DO_SHOWSCROLL));
     viewMenu->AppendSeparator();
     viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
     
@@ -2425,6 +2460,7 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_INVERT,          DO_INVERT);
         SetAccelerator(mbar, ID_SMARTSCALE,      DO_SMARTSCALE);
         SetAccelerator(mbar, ID_TIMELINE,        DO_SHOWTIME);
+        SetAccelerator(mbar, ID_SCROLL,          DO_SHOWSCROLL);
         SetAccelerator(mbar, ID_INFO,            DO_INFO);
         
         SetAccelerator(mbar, ID_SAVE_OVERLAY,    DO_SAVEOVERLAY);
