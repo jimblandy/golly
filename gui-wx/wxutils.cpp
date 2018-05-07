@@ -30,13 +30,13 @@
 
 // -----------------------------------------------------------------------------
 
-void Note(const wxString& msg)
+void Note(const wxString& msg, bool showCancel)
 {
     wxString title = wxGetApp().GetAppName() + _(" note:");
 #ifdef __WXMAC__
     wxSetCursor(*wxSTANDARD_CURSOR);
 #endif
-    if (inscript) {
+    if (inscript && showCancel) {
         // add a Cancel button so user can abort script
         int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_INFORMATION,
                                   wxGetActiveWindow());
@@ -50,14 +50,14 @@ void Note(const wxString& msg)
 
 // -----------------------------------------------------------------------------
 
-void Warning(const wxString& msg)
+void Warning(const wxString& msg, bool showCancel)
 {
     Beep();
     wxString title = wxGetApp().GetAppName() + _(" warning:");
 #ifdef __WXMAC__
     wxSetCursor(*wxSTANDARD_CURSOR);
 #endif
-    if (inscript) {
+    if (inscript && showCancel) {
         // add a Cancel button so user can abort script
         int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_EXCLAMATION,
                                   wxGetActiveWindow());

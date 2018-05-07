@@ -2573,8 +2573,12 @@ static int g_error(lua_State* L)
 static int g_warn(lua_State* L)
 {
     CheckEvents(L);
+    
+    const char* msg = luaL_checkstring(L, 1);
+    bool showCancel = true;
+    if (lua_gettop(L) > 1) showCancel = CheckBoolean(L, 2);
         
-    Warning(wxString(luaL_checkstring(L, 1), LUA_ENC));
+    Warning(wxString(msg, LUA_ENC), showCancel);
     
     return 0;   // no result
 }
@@ -2585,7 +2589,11 @@ static int g_note(lua_State* L)
 {
     CheckEvents(L);
     
-    Note(wxString(luaL_checkstring(L, 1), LUA_ENC));
+    const char* msg = luaL_checkstring(L, 1);
+    bool showCancel = true;
+    if (lua_gettop(L) > 1) showCancel = CheckBoolean(L, 2);
+    
+    Note(wxString(msg, LUA_ENC), showCancel);
     
     return 0;   // no result
 }

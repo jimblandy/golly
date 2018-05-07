@@ -25,10 +25,6 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 - implement g.settitle(string) so we can put pattname and 3D rule in
   window title and avoid using g.setname (which adds an undo item)
 - implement g.setoption("showscrollbars",0)
-- implement optional parameter for g.note and g.warn so scripts can
-  disable the Cancel button:
-  g.note(msg, cancel=true)
-  g.warn(msg, cancel=true)
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - throttle ozoom* events (in here or in Golly)?
@@ -321,7 +317,7 @@ function ReadSettings()
             elseif keyword == "rule" then
                 rulestring = tostring(value)
                 if not ParseRule(rulestring) then
-                    g.warn("Resetting bad rule ("..rulestring..") to default.")
+                    g.warn("Resetting bad rule ("..rulestring..") to default.", false)
                     rulestring = DEFAULT_RULE
                 end
             end
@@ -2157,7 +2153,7 @@ function PutCells(livecells)
     -- restore pattern saved earlier by GetCells
     -- (note that grid must currently be empty)
     if popcount > 0 then
-        g.note("Bug in PutCells: grid is not empty!")
+        g.warn("Bug in PutCells: grid is not empty!")
     end
     local clipped = 0
     local mid = N//2
@@ -2466,7 +2462,7 @@ function OpenPattern(filepath)
     if filepath then
         local err, newpattern = ReadPattern(filepath)
         if err then
-            g.warn(err)
+            g.warn(err, false)
         else
             -- pattern ok so use info in newpattern to update current grid;
             -- set pattname to file name at end of filepath
@@ -2493,7 +2489,7 @@ function CopyClipboardToFile()
     local filepath = g.getdir("temp").."clipboard.rle3"
     local f = io.open(filepath,"w")
     if not f then
-        g.warn("Failed to create temporary clipboard file!")
+        g.warn("Failed to create temporary clipboard file!", false)
         return nil
     end
     -- NOTE: we can't do f:write(string.gsub(g.getclipstr(),"\r","\n"))
@@ -2511,7 +2507,7 @@ function OpenClipboard()
     if filepath then
         local err, newpattern = ReadPattern(filepath)
         if err then
-            g.warn(err)
+            g.warn(err, false)
         else
             -- pattern ok so use info in newpattern to update current grid
             pattname = "clipboard"
@@ -2675,7 +2671,7 @@ function SavePattern(filepath)
         end
         local err = WritePattern(filepath, comments)
         if err then
-            g.warn(err)
+            g.warn(err, false)
         else
             -- set pattname to file name at end of filepath
             pattname = filepath:match("^.+"..pathsep.."(.+)$")
@@ -2702,7 +2698,7 @@ end
 function CallScript(func, fromclip)
     -- avoid infinite recursion
     if scriptlevel == 100 then
-        g.warn("Script is too recursive!")
+        g.warn("Script is too recursive!", false)
         return
     end
     
@@ -2737,9 +2733,9 @@ function CallScript(func, fromclip)
             message = "Script aborted."
         else
             if fromclip then
-                g.warn("Runtime error in clipboard script:\n\n"..err)
+                g.warn("Runtime error in clipboard script:\n\n"..err, false)
             else
-                g.warn("Runtime error in script:\n\n"..err)
+                g.warn("Runtime error in script:\n\n"..err, false)
             end
         end
     end
@@ -2758,7 +2754,7 @@ function RunScript(filepath)
         if f then
             CallScript(f, false)
         else
-            g.warn("Syntax error in script:\n\n"..msg)
+            g.warn("Syntax error in script:\n\n"..msg, false)
         end
     else
         -- prompt user for a .lua file to run
@@ -2780,7 +2776,7 @@ function RunClipboard()
     if f then
         CallScript(f, true)
     else
-        g.warn("Syntax error in clipboard script:\n\n"..msg)
+        g.warn("Syntax error in clipboard script:\n\n"..msg, false)
     end
 end
 
@@ -5111,7 +5107,7 @@ Further Notes on the Game of Three-Dimensional Life<br>
     local htmlfile = g.getdir("temp").."3D.html"
     local f = io.open(htmlfile,"w")
     if not f then
-        g.warn("Failed to create 3D.html!")
+        g.warn("Failed to create 3D.html!", false)
         return
     end
     f:write(htmldata)
@@ -5247,8 +5243,7 @@ function ExitScript()
         -- probably need a g.savechanges command so user sees the proper dialog!!!
         g.warn("There are unsaved changes.\n" ..
                "Do you really want to exit 3D.lua?")
-        -- need to call a g.* command so an error is returned
-        -- by pcall if user hit Cancel button
+        -- need to call a g.* command so error is returned by pcall if user hit Cancel
         g.doevent("")
     end
 
