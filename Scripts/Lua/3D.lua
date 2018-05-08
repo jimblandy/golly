@@ -24,7 +24,6 @@ NOTE: Do following changes for the Golly 3.2b1 release:
 
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
-- throttle ozoom* events (in here or in Golly)?
 - fix unicode problems reported here:
   http://www.conwaylife.com/forums/viewtopic.php?f=7&t=3132#p52918
 --]]

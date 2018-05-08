@@ -2970,7 +2970,7 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
     // wheelpos should be persistent, because in theory we should keep track of
     // the remainder if the amount scrolled was not an even number of deltas
     static int wheelpos = 0;
-    int delta, x, y;
+    int delta, rot, x, y;
     
     if (mousewheelmode == 0) {
         // ignore wheel, according to user preference
@@ -2980,13 +2980,21 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
     
     // delta is the amount that represents one "step" of rotation. Normally 120.
     delta = event.GetWheelDelta();
+    #ifdef __WXMAC__
+        // delta is always 10 on a Mac so we multiply by 5 so mouse wheel is less sensitive
+        delta *= 5;
+    #endif
+    rot = event.GetWheelRotation();
     x = event.GetX();
     y = event.GetY();
     
     if (mousewheelmode == 2)
-        wheelpos -= event.GetWheelRotation();
+        wheelpos -= rot;
     else
-        wheelpos += event.GetWheelRotation();
+        wheelpos += rot;
+    
+    // DEBUG:
+    // statusptr->DisplayMessage(wxString::Format(_("delta=%d rot=%d wheelpos=%d"), delta, rot, wheelpos));
     
     while (wheelpos >= delta) {
         wheelpos -= delta;
