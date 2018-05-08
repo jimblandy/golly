@@ -2978,12 +2978,10 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
         return;
     }
     
-    // delta is the amount that represents one "step" of rotation. Normally 120.
-    delta = event.GetWheelDelta();
-    #ifdef __WXMAC__
-        // delta is always 10 on a Mac so we multiply by 5 so mouse wheel is less sensitive
-        delta *= 5;
-    #endif
+    // delta is the amount that represents one "step" of rotation.
+    // Normally 120 on Win/Linux but 10 on Mac.
+    // We multiply delta by 5 so mouse wheel is less sensitive.
+    delta = event.GetWheelDelta() * 5;
     rot = event.GetWheelRotation();
     x = event.GetX();
     y = event.GetY();
