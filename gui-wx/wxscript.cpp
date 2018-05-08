@@ -42,6 +42,7 @@ bool allowcheck;           // allow event checking?
 bool showprogress;         // script can display the progress dialog?
 wxString scripterr;        // Lua/Perl/Python error message
 wxString mousepos;         // current mouse position
+wxString scripttitle;      // window title set by settitle command
 
 // local globals:
 static bool luascript = false;      // a Lua script is running?
@@ -52,7 +53,7 @@ static bool updateedit;             // need to update edit bar?
 static bool exitcalled;             // GSF_exit was called?
 static wxString scriptchars;        // non-escape chars saved by PassKeyToScript
 static wxString scriptloc;          // location of script file
-static wxArrayString eventqueue;    // FIFO queue for keyboard/mouse events 
+static wxArrayString eventqueue;    // FIFO queue for keyboard/mouse events
 
 // constants:
 const int maxcomments = 128 * 1024; // maximum comment size
@@ -1496,6 +1497,7 @@ void RunScript(const wxString& filename)
     } else {
         mainptr->showbanner = false;
         statusptr->ClearMessage();
+        scripttitle.Clear();
         scripterr.Clear();
         scriptchars.Clear();
         eventqueue.Clear();
@@ -1647,6 +1649,11 @@ void RunScript(const wxString& filename)
         
         // display any error message
         CheckScriptError(ext);
+        
+        if (!scripttitle.IsEmpty()) {
+            scripttitle.Clear();
+            showtitle = true;
+        }
         
         // update title, menu bar, cursor, viewport, status bar, tool bar, etc
         if (showtitle) mainptr->SetWindowTitle(wxEmptyString);

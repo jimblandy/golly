@@ -28,7 +28,7 @@
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
-#include "wxscript.h"      // for RunScript, inscript
+#include "wxscript.h"      // for RunScript, inscript, scripttitle
 #include "wxmain.h"        // for MainFrame, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxalgos.h"       // for CreateNewUniverse, algo_type, algoinfo, etc
@@ -64,6 +64,11 @@ wxString MainFrame::GetBaseName(const wxString& path)
 
 void MainFrame::SetWindowTitle(const wxString& filename)
 {
+    if ( !scripttitle.IsEmpty() ) {
+        // script has called settitle command
+        return;
+    }
+
     if ( !filename.IsEmpty() ) {
         // remember current file name
         currlayer->currname = filename;

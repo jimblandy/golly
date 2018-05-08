@@ -2440,6 +2440,20 @@ static int g_getcolor(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_settitle(lua_State* L)
+{
+    CheckEvents(L);
+    
+    // set scripttitle to avoid MainFrame::SetWindowTitle changing title
+    scripttitle = wxString(luaL_checkstring(L, 1), LUA_ENC);
+    
+    mainptr->SetTitle(scripttitle);
+    
+    return 0;   // no result
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_setclipstr(lua_State* L)
 {
     CheckEvents(L);
@@ -2755,6 +2769,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "os",           g_os },           // return the current OS (Windows/Mac/Linux)
     { "millisecs",    g_millisecs },    // return elapsed time since Golly started, in millisecs
     { "sleep",        g_sleep },        // sleep for the given number of millisecs
+    { "settitle",     g_settitle },     // set window title to given string
     { "setoption",    g_setoption },    // set given option to new value (and return old value)
     { "getoption",    g_getoption },    // return current value of given option
     { "setcolor",     g_setcolor },     // set given color to new r,g,b (returns old r,g,b)

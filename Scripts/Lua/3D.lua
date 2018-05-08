@@ -22,8 +22,6 @@ TODO: !!!
 
 NOTE: Do following changes for the Golly 3.2b1 release:
 
-- implement g.settitle(string) so we can put pattname and 3D rule in
-  window title and avoid using g.setname (which adds an undo item)
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - throttle ozoom* events (in here or in Golly)?
@@ -85,6 +83,7 @@ local grid1 = {}                    -- sparse 3D matrix with up to N*N*N live ce
 local grid2 = {}                    -- sparse 3D matrix for the next generation
 local popcount = 0                  -- number of live cells
 local pattname = "untitled"         -- pattern name
+local currtitle = ""                -- current window title
 local showaxes = true               -- draw axes and lattice lines?
 local showlines = true              -- draw lattice lines?
 local generating = false            -- generate pattern?
@@ -255,7 +254,7 @@ function ParseRule(newrule)
     local newb = {}
     if not AppendCounts(s, news, false) then return false end
     if not AppendCounts(b, newb, true) then return false end
-       
+
     -- newrule is okay so set survivals and births
     for i = 0, 26 do
         survivals[i] = false
@@ -263,7 +262,7 @@ function ParseRule(newrule)
     end
     for _, i in ipairs(news) do survivals[i] = true end
     for _, i in ipairs(newb) do births[i] = true end
-    
+
     -- set rulestring to canonical form
     rulestring = "3D"
     local initlen = #rulestring
@@ -279,8 +278,8 @@ function ParseRule(newrule)
             if rulestring:sub(-1) ~= "/" then rulestring = rulestring.."," end
             rulestring = rulestring..i
         end
-    end    
-    
+    end
+
     return true
 end
 
@@ -349,9 +348,6 @@ end
 
 function SaveGollyState()
     local oldstate = {}
-    oldstate.name = g.getname()
-    g.setname("3D")
-    g.update()  -- see new title
     oldstate.files = g.setoption("showfiles", 0)
     oldstate.scroll = g.setoption("showscrollbars", 0)
     oldstate.time = g.setoption("showtimeline", 0)
@@ -368,7 +364,6 @@ end
 
 function RestoreGollyState(oldstate)
     ov("delete")
-    g.setname(oldstate.name)
     g.setoption("showfiles", oldstate.files)
     g.setoption("showscrollbars", oldstate.scroll)
     g.setoption("showtimeline", oldstate.time)
@@ -415,7 +410,7 @@ end
 local function FillFace(ax, ay, bx, by, cx, cy, dx, dy, shade)
     -- fill given convex quadrilateral using modified code from here:
     -- http://www-users.mat.uni.torun.pl/~wrona/3d_tutor/tri_fillers.html
-      
+
     -- relabel points so that ay <= by <= cy <= dy;
     -- note that given vertices are in cyclic order, so a is opposite c
     -- and b is opposite d
@@ -440,7 +435,7 @@ local function FillFace(ax, ay, bx, by, cx, cy, dx, dy, shade)
         cx, dx = dx, cx
         cy, dy = dy, cy
     end
-    
+
     -- if top and/or bottom line is horizontal then we need to ensure
     -- that lines a->c and b->d don't intersect
     if ay == by then
@@ -454,7 +449,7 @@ local function FillFace(ax, ay, bx, by, cx, cy, dx, dy, shade)
             cx, dx = dx, cx
         end
     end
-    
+
     -- calculate deltas for interpolation
     local delta1 = 0.0
     local delta2 = 0.0
@@ -464,7 +459,7 @@ local function FillFace(ax, ay, bx, by, cx, cy, dx, dy, shade)
     if cy-ay > 0 then delta2 = (cx-ax) / (cy-ay) end
     if dy-by > 0 then delta3 = (dx-bx) / (dy-by) end
     if dy-cy > 0 then delta4 = (dx-cx) / (dy-cy) end
-    
+
     -- draw horizontal segments from sx to ex (start and end X coords)
     ov(shade)
     local sx = ax
@@ -532,7 +527,7 @@ local function CreateCube(x, y, z)
     x = x * CELLSIZE + BORDER - MIDGRID
     y = y * CELLSIZE + BORDER - MIDGRID
     z = z * CELLSIZE + BORDER - MIDGRID
-    
+
     -- WARNING: vertex order used here is assumed by other code:
     -- vertices 1,3,5,7 and 2,4,6,8 are front and back faces,
     -- vertices 1,2,8,7 and 3,4,6,5 are bottom and top faces,
@@ -570,11 +565,11 @@ local function DisplayLine(startpt, endpt)
     local newx, newy = TransformPoint(startpt)
     local x1 = round(newx) + midx
     local y1 = round(newy) + midy
-    
+
     newx, newy = TransformPoint(endpt)
     local x2 = round(newx) + midx
     local y2 = round(newy) + midy
-    
+
     DrawLine(x1, y1, x2, y2)
 end
 
@@ -587,7 +582,7 @@ function DrawRearAxes()
     local z2 = rotrefz[2]
     local z3 = rotrefz[3]
     local z7 = rotrefz[7]
-    
+
     if showlines then
         ov("rgba"..LINE_COLOR)
         if z1 < z2 then
@@ -603,7 +598,7 @@ function DrawRearAxes()
             for _, pt in ipairs(xzlattice) do DisplayLine(pt[1], pt[2]) end
         end
     end
-    
+
     -- draw darker anti-aliased lines for rear axes
     local dark_red = "rgba 128 0 0 255"
     local dark_green = "rgba 0 128 0 255"
@@ -611,23 +606,23 @@ function DrawRearAxes()
 
     ov("blend 1")
     ov("lineoption width 3")
-    
+
     if z1 <  z2 or z1 >= z3 then ov(dark_red);   DisplayLine(xaxes[1], xaxes[2]) end
     if z1 <  z2 or z1 >= z7 then ov(dark_green); DisplayLine(yaxes[1], yaxes[2]) end
     if z1 >= z7 or z1 >= z3 then ov(dark_blue);  DisplayLine(zaxes[1], zaxes[2]) end
-    
+
     if z1 <  z2 or z1 <  z3 then ov(dark_red);   DisplayLine(xaxes[3], xaxes[4]) end
     if z1 >= z2 or z1 >= z7 then ov(dark_green); DisplayLine(yaxes[3], yaxes[4]) end
     if z1 <  z7 or z1 >= z3 then ov(dark_blue);  DisplayLine(zaxes[3], zaxes[4]) end
-    
+
     if z1 >= z2 or z1 <  z3 then ov(dark_red);   DisplayLine(xaxes[5], xaxes[6]) end
     if z1 >= z2 or z1 <  z7 then ov(dark_green); DisplayLine(yaxes[5], yaxes[6]) end
     if z1 <  z3 or z1 <  z7 then ov(dark_blue);  DisplayLine(zaxes[5], zaxes[6]) end
-    
+
     if z1 >= z2 or z1 >= z3 then ov(dark_red);   DisplayLine(xaxes[7], xaxes[8]) end
     if z1 <  z2 or z1 <  z7 then ov(dark_green); DisplayLine(yaxes[7], yaxes[8]) end
     if z1 >= z7 or z1 <  z3 then ov(dark_blue);  DisplayLine(zaxes[7], zaxes[8]) end
-    
+
     ov("lineoption width 1")
     ov("blend 0")
 end
@@ -641,7 +636,7 @@ function DrawFrontAxes()
     local z2 = rotrefz[2]
     local z3 = rotrefz[3]
     local z7 = rotrefz[7]
-    
+
     if showlines then
         ov("rgba"..LINE_COLOR)
         if z1 >= z2 then
@@ -657,27 +652,27 @@ function DrawFrontAxes()
             for _, pt in ipairs(xzlattice) do DisplayLine(pt[1], pt[2]) end
         end
     end
-    
+
     -- draw brighter anti-aliased lines for front axes
     ov("blend 1")
     ov("lineoption width 3")
-    
+
     if z1 >= z2 or z1 < z3 then ov(op.red);   DisplayLine(xaxes[1], xaxes[2]) end
     if z1 >= z2 or z1 < z7 then ov(op.green); DisplayLine(yaxes[1], yaxes[2]) end
     if z1 <  z7 or z1 < z3 then ov(op.blue);  DisplayLine(zaxes[1], zaxes[2]) end
-    
+
     if z1 >= z2 or z1 >= z3 then ov(op.red);   DisplayLine(xaxes[3], xaxes[4]) end
     if z1 <  z2 or z1 <  z7 then ov(op.green); DisplayLine(yaxes[3], yaxes[4]) end
     if z1 >= z7 or z1 <  z3 then ov(op.blue);  DisplayLine(zaxes[3], zaxes[4]) end
-    
+
     if z1 <  z2 or z1 >= z3 then ov(op.red);   DisplayLine(xaxes[5], xaxes[6]) end
     if z1 <  z2 or z1 >= z7 then ov(op.green); DisplayLine(yaxes[5], yaxes[6]) end
     if z1 >= z3 or z1 >= z7 then ov(op.blue);  DisplayLine(zaxes[5], zaxes[6]) end
-    
+
     if z1 <  z2 or z1 <  z3 then ov(op.red);   DisplayLine(xaxes[7], xaxes[8]) end
     if z1 >= z2 or z1 >= z7 then ov(op.green); DisplayLine(yaxes[7], yaxes[8]) end
     if z1 <  z7 or z1 >= z3 then ov(op.blue);  DisplayLine(zaxes[7], zaxes[8]) end
-    
+
     ov("lineoption width 1")
     ov("blend 0")
 end
@@ -686,11 +681,11 @@ end
 
 function CreateAxes()
     -- create axes and lattice lines
-        
+
     -- put axes origin at most -ve corner of grid
     local o = -MIDGRID
     local endpt = o + N*CELLSIZE
-    
+
     xaxes = { {o,o,o},         {endpt,o,o},
               {o,endpt,o},     {endpt,endpt,o},
               {o,endpt,endpt}, {endpt,endpt,endpt},
@@ -706,21 +701,21 @@ function CreateAxes()
               {endpt,endpt,o}, {endpt,endpt,endpt},
               {o,endpt,o},     {o,endpt,endpt}
             }
-    
+
     xylattice = {}
     for i = 1, N do
         local offset = i*CELLSIZE
         xylattice[#xylattice+1] = {{o+offset,o,o}, {o+offset,endpt,o}}
         xylattice[#xylattice+1] = {{o,o+offset,o}, {endpt,o+offset,o}}
     end
-    
+
     xzlattice = {}
     for i = 1, N do
         local offset = i*CELLSIZE
         xzlattice[#xzlattice+1] = {{o,o,o+offset}, {endpt,o,o+offset}}
         xzlattice[#xzlattice+1] = {{o+offset,o,o}, {o+offset,o,endpt}}
     end
-    
+
     yzlattice = {}
     for i = 1, N do
         local offset = i*CELLSIZE
@@ -733,17 +728,17 @@ end
 
 function CreateTranslucentCell(clipname, color)
     -- create a clip containing a translucent cube with given color
-    
+
     ov("create "..(CELLSIZE*2).." "..(CELLSIZE*2).." "..clipname)
     ov("target "..clipname)
     ov("rgba "..color)
-    
+
     -- temporarily change BORDER and LEN so CreateCube fills cell
     local oldBORDER = BORDER
     local oldLEN = LEN
     BORDER = 1
     LEN = CELLSIZE-2 - (CELLSIZE%2)
-    
+
     local midpos = N//2
     local cube = CreateCube(midpos, midpos, midpos)
 
@@ -753,7 +748,7 @@ function CreateTranslucentCell(clipname, color)
         projectedx[i] = round( rotx[i] ) + CELLSIZE
         projectedy[i] = round( roty[i] ) + CELLSIZE
     end
-    
+
     -- draw outer edges of cube then flood from center
     if rotz[1] < rotz[2] then
         -- front face is visible
@@ -836,11 +831,11 @@ function CreateTranslucentCell(clipname, color)
     end
 
     ov("flood "..CELLSIZE.." "..CELLSIZE)
-    
+
     -- restore BORDER and LEN
     BORDER = oldBORDER
     LEN = oldLEN
-    
+
     ov("optimize "..clipname)
     ov("target")
 end
@@ -869,12 +864,12 @@ function CreateLiveCube()
     -- create a clip containing one rotated cube that will be used later
     -- to draw all live cells (this only works because all cubes are identical
     -- in appearance when using orthographic projection)
-    
+
     -- largest size of a rotated cube with edge length L is sqrt(3)*L
     HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
     ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." c")
     ov("target c")
-    
+
     local midpos = N//2
     local cube = CreateCube(midpos, midpos, midpos)
 
@@ -884,12 +879,12 @@ function CreateLiveCube()
         projectedx[i] = round( rotx[i] ) + HALFCUBECLIP
         projectedy[i] = round( roty[i] ) + HALFCUBECLIP
     end
-    
+
     -- draw up to 3 visible faces of cube, using cyclic vertex order set in CreateCube
     CheckFaces(1,3,5,7, 2,4,6,8)    -- front or back
     CheckFaces(1,2,8,7, 3,4,6,5)    -- bottom or top
     CheckFaces(1,2,4,3, 7,8,6,5)    -- left or right
-    
+
     if LEN > 4 then
         -- draw anti-aliased edges around visible face(s)
         if LEN == 5 then
@@ -903,7 +898,7 @@ function CreateLiveCube()
         end
         ov("blend 1")
         ov("lineoption width "..(1 + int(LEN / 40.0)))
-        
+
         if rotz[1] < rotz[2] then
             -- draw all edges around front face
             DrawEdge(1,3)
@@ -975,11 +970,11 @@ function CreateLiveCube()
                 end
             end
         end
-        
+
         ov("lineoption width 1")
         ov("blend 0")
     end
-    
+
     ov("optimize c")
 
     -- create faded versions of the clip if depth shading
@@ -1319,7 +1314,7 @@ function DisplayCells(editing)
 
     ov("blend 1")
     local testcell = editing or selcount > 0 or pastecount > 0
-    
+
     -- find the extended boundary of all live/active/selected/paste cells
     local MINX, MINY, MINZ, MAXX, MAXY, MAXZ = minx, miny, minz, maxx, maxy, maxz
     if testcell then
@@ -1470,7 +1465,7 @@ function EnableControls(bool)
     mbar.enableitem(3, 5, bool)     -- Set Rule
     -- View menu:
     mbar.enableitem(4, 3, bool)     -- Set Grid Size
-    
+
     -- disable/enable unsafe buttons
     ssbutton.enable(bool)
     s1button.enable(bool)
@@ -1504,14 +1499,14 @@ function DrawMenuBar()
         mbar.enableitem(3, 2, popcount > 0)     -- Next Generation
         mbar.enableitem(3, 3, gencount > startcount)    -- Reset
     end
-    
+
     mbar.tickitem(4, 5, celltype == "cube")
     mbar.tickitem(4, 6, celltype == "sphere")
     mbar.tickitem(4, 7, celltype == "point")
     mbar.tickitem(4, 9, showaxes)
     mbar.tickitem(4, 10, showlines)
     mbar.tickitem(4, 11, depthshading)
-    
+
     mbar.show(0, 0, ovwd, mbarht)
 end
 
@@ -1520,13 +1515,13 @@ end
 function DrawToolBar()
     ov("rgba 230 230 230 255")
     ov("fill 0 0 "..ovwd.." "..toolbarht)
-    
+
     DrawMenuBar()
-    
+
     -- draw line at bottom edge of tool bar
     ov(op.gray)
     DrawLine(0, toolbarht-1, ovwd-1, toolbarht-1)
-    
+
     if scriptlevel == 0 then
         -- enable/disable buttons
         ssbutton.enable(popcount > 0)
@@ -1535,10 +1530,10 @@ function DrawToolBar()
         undobutton.enable(#undostack > 0)
         redobutton.enable(#redostack > 0)
     end
-    
+
     local x = gap
     local y = mbarht + gap
-    
+
     ssbutton.show(x, y)
     x = x + ssbutton.wd + gap
     s1button.show(x, y)
@@ -1566,12 +1561,25 @@ end
 
 ----------------------------------------------------------------------
 
+function UpdateWindowTitle()
+    -- set window title if it has changed
+    local newtitle = string.format("%s [%s]", pattname, rulestring)
+    if dirty then newtitle = "*"..newtitle end
+    if g.os() ~= "Mac" then newtitle = newtitle.." - Golly" end
+    if newtitle ~= currtitle then
+        g.settitle(newtitle)
+        currtitle = newtitle
+    end
+end
+
+----------------------------------------------------------------------
+
 function Refresh(update)
     if scriptlevel > 0 and not update then
         -- user scripts need to call Update() when they want to refresh
         return
     end
-    
+
     -- turn off event checking to avoid partial updates of overlay
     -- (eg. due to user resizing window while a pattern is generating)
     g.check(false)
@@ -1579,16 +1587,16 @@ function Refresh(update)
     -- fill overlay with background color
     ov("rgba "..BACK_COLOR)
     ov("fill")
-    
+
     -- get Z coordinates of the vertices of a rotated reference cube
     -- (for doing various depth tests)
     for i = 1, 8 do
         local x, y, z = TransformPoint(refcube[i])
         rotrefz[i] = z
     end
-    
+
     if showaxes then DrawRearAxes() end
-    
+
     local editing = currcursor ~= movecursor
     if popcount > 0 or pastecount > 0 or selcount > 0 or editing then
         if pastecount > 0 then
@@ -1615,15 +1623,11 @@ function Refresh(update)
         end
         DisplayCells(editing)
     end
-    
+
     if showaxes then DrawFrontAxes() end
-    
+
     -- show info in top left corner
-    local name = pattname
-    if dirty then name = "*"..name end
     local info =
-        "Pattern = "..name.."\n"..
-        "Rule = "..rulestring.."\n"..
         "Generation = "..gencount.."\n"..
         "Population = "..popcount
     if selcount > 0 then
@@ -1641,13 +1645,15 @@ function Refresh(update)
         op.maketext(message)
         op.pastetext(10, toolbarht + 10 + ht + 10)
     end
-    
+
     if toolbarht > 0 then DrawToolBar() end
-    
+
     -- the overlay is 100% opaque and covers entire viewport
     -- so we can call ov("update") rather than slower g.update()
     ov("update")
-    
+
+    UpdateWindowTitle()
+
     g.check(true)   -- restore event checking
 end
 
@@ -1731,20 +1737,20 @@ end
 function SaveState()
     -- return a table containing current state
     local state = {}
-    
+
     -- save current grid size
     state.saveN = N
-    
+
     -- save current active plane
     state.saveplane = activeplane
     state.savepos = activepos
-    
+
     -- save current cursor
     state.savecursor = currcursor
-    
+
     -- save current rule
     state.saverule = rulestring
-    
+
     -- save current pattern
     state.savedirty = dirty
     state.savename = pattname
@@ -1761,7 +1767,7 @@ function SaveState()
     state.savemaxy = maxy
     state.savemaxz = maxz
     state.saveminimallive = minimal_live_bounds
-    
+
     -- save current selection
     state.saveselcount = selcount
     state.saveselected = {}
@@ -1775,7 +1781,7 @@ function SaveState()
     state.savemaxsely = maxsely
     state.savemaxselz = maxselz
     state.saveminimalsel = minimal_sel_bounds
-    
+
     -- save current paste pattern
     state.savepcount = pastecount
     state.savepaste = {}
@@ -1788,7 +1794,7 @@ function SaveState()
     state.savemaxpastex = maxpastex
     state.savemaxpastey = maxpastey
     state.savemaxpastez = maxpastez
-    
+
     return state
 end
 
@@ -1796,23 +1802,23 @@ end
 
 function RestoreState(state)
     -- restore state from given info (created earlier by SaveState)
-    
+
     -- restore grid size
     N = state.saveN
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
     CreateAxes()
-    
+
     -- restore active plane (depends on N)
     SetActivePlane(state.saveplane, state.savepos)
-    
+
     -- restore cursor (determines whether active plane is displayed)
     currcursor = state.savecursor
     if not arrow_cursor then ov("cursor "..currcursor) end
-    
+
     -- restore rule
     ParseRule(state.saverule)
-    
+
     -- restore pattern
     dirty = state.savedirty
     pattname = state.savename
@@ -1829,7 +1835,7 @@ function RestoreState(state)
     maxy = state.savemaxy
     maxz = state.savemaxz
     minimal_live_bounds = state.saveminimallive
-    
+
     -- restore selection
     selcount = state.saveselcount
     selected = {}
@@ -1843,7 +1849,7 @@ function RestoreState(state)
     maxsely = state.savemaxsely
     maxselz = state.savemaxselz
     minimal_sel_bounds = state.saveminimalsel
-    
+
     -- restore paste pattern
     pastecount = state.savepcount
     pastepatt = {}
@@ -1874,7 +1880,7 @@ function Undo()
     -- ignore if user script is running
     -- (scripts can call SaveState and RestoreState if they need to undo stuff)
     if scriptlevel > 0 then return end
-    
+
     if #undostack > 0 then
         StopGenerating()
         -- push current state onto redostack
@@ -1890,7 +1896,7 @@ end
 function Redo()
     -- ignore if user script is running
     if scriptlevel > 0 then return end
-    
+
     if #redostack > 0 then
         StopGenerating()
         -- push current state onto undostack
@@ -1906,7 +1912,7 @@ end
 function RememberCurrentState()
     -- ignore if user script is running
     if scriptlevel > 0 then return end
-    
+
     redostack = {}
     undostack[#undostack+1] = SaveState()
 end
@@ -1918,13 +1924,13 @@ function RestoreStartingGen()
 
     -- push current state onto redostack
     redostack[#redostack+1] = SaveState()
-    
+
     -- unwind undostack until we get to startindex
     while startindex < #undostack do
         local state = table.remove(undostack)
         redostack[#redostack+1] = state
     end
-    
+
     -- pop starting state off undostack and restore it
     RestoreState( table.remove(undostack) )
 end
@@ -1948,7 +1954,7 @@ function InitLiveBoundary()
     maxy = math.mininteger
     maxz = math.mininteger
     -- SetLiveCell/SetCellState/NextGeneration will update all values
-    
+
     -- set the flag for MinimizeLiveBoundary
     minimal_live_bounds = true
 end
@@ -1987,7 +1993,7 @@ function InitSelectionBoundary()
     maxselx = math.mininteger
     maxsely = math.mininteger
     maxselz = math.mininteger
-    
+
     -- set the flag for MinimizeSelectionBoundary
     minimal_sel_bounds = true
 end
@@ -2053,7 +2059,7 @@ function MoveActivePlane(newpos, refresh)
 
         -- use the same orientation
         SetActivePlane(activeplane, newpos)
-        
+
         if refresh then
             CheckIfGenerating()
             Refresh()
@@ -2191,20 +2197,20 @@ function NextGeneration()
     -- calculate and display the next generation using an algorithm
     -- described by Carter Bays (see Method B Option 2 on page 398 in
     -- http://www.complex-systems.com/pdf/01-3-1.pdf)
-    
+
     if popcount == 0 then
         StopGenerating()
         message = "All cells are dead."
         Refresh()
         return
     end
-    
+
     if gencount == startcount then
         -- remember position in undo stack that stores the starting state
         -- (for later use by Reset)
         startindex = #undostack
     end
-    
+
     popcount = 0        -- incremented below
     InitLiveBoundary()  -- updated below
 
@@ -2254,11 +2260,11 @@ function NextGeneration()
             if z > maxz then maxz = z end
         end
     end
-    
+
     -- clear all live cells in grid1 and swap grids
     grid1 = {}
     grid1, grid2 = grid2, grid1
-    
+
     if popcount == 0 then
         StopGenerating()
     end
@@ -2424,7 +2430,7 @@ function ReadPattern(filepath)
         end
     end
     f:close()
-    
+
     -- success
     local newpattern = {
         newsize = tsize,
@@ -2450,7 +2456,7 @@ function UpdateCurrentGrid(newpattern)
     MIDCELL = HALFCELL-MIDGRID
     CreateAxes()
     ClearCells()        -- resets grid1, grid2, popcount and selection info
-    
+
     grid1 = newpattern.newgrid
     popcount = newpattern.newpop
     minx = newpattern.newminx
@@ -2460,7 +2466,7 @@ function UpdateCurrentGrid(newpattern)
     maxy = newpattern.newmaxy
     maxz = newpattern.newmaxz
     -- note that ClearCells has set minimal_live_bounds = true
-    
+
     ParseRule(newpattern.newrule)   -- sets rulestring, survivals and births
     gencount = newpattern.newgens
     startcount = gencount           -- for Reset
@@ -2551,10 +2557,10 @@ end
 function WritePattern(filepath, comments)
     local f = io.open(filepath,"w")
     if not f then return "Failed to create RLE3 file:\n"..filepath end
-    
+
     MinimizeLiveBoundary()
     f:write(PatternHeader(minx, miny, minz), "\n")
-    
+
     if #comments > 0 then
         -- each comment line should start with # and end with \n
         f:write(comments)
@@ -2567,13 +2573,13 @@ function WritePattern(filepath, comments)
         local ht = maxy - miny + 1
         local dp = maxz - minz + 1
         f:write(string.format("x=%d y=%d z=%d rule=%s\n", wd, ht, dp, rulestring))
-    
+
         local line = ""
         local orun = 0
         local brun = 0
         local dollrun = 0
         local slashrun = 0
-        
+
         local function AddRun(count, ch)
             if #line >= 67 then f:write(line,"\n"); line = "" end
             if count > 2 then
@@ -2584,7 +2590,7 @@ function WritePattern(filepath, comments)
                 line = line..ch
             end
         end
-        
+
         -- traverse all cells within live boundary sorted by Z,Y,X coords
         for z = minz, maxz do
             for y = miny, maxy do
@@ -2716,17 +2722,17 @@ function CallScript(func, fromclip)
         g.warn("Script is too recursive!", false)
         return
     end
-    
+
     if scriptlevel == 0 then
         RememberCurrentState()
         undo_cleared = false    -- becomes true if ClearUndoRedo is called
         EnableControls(false)   -- disable most menu items and buttons
     end
-    
+
     scriptlevel = scriptlevel + 1
     local status, err = pcall(func)
     scriptlevel = scriptlevel - 1
-    
+
     -- note that if the script called NewPattern/RandomPattern/OpenPattern
     -- or any other function that called ClearUndoRedo then all the
     -- undo/redo history is deleted and dirty is set to false,
@@ -2740,7 +2746,7 @@ function CallScript(func, fromclip)
         -- to ensure Reset does nothing
         startcount = gencount
     end
-    
+
     if err then
         g.continue("")
         if err == "GOLLY: ABORT SCRIPT" then
@@ -2754,7 +2760,7 @@ function CallScript(func, fromclip)
             end
         end
     end
-    
+
     if scriptlevel == 0 then
         EnableControls(true)    -- enable menu items and buttons that were disabled above
         CheckIfGenerating()
@@ -2828,7 +2834,7 @@ function RandomPattern(percentage)
             goto try_again
         end
     end
-    
+
     if percentage then
         perc = percentage
         if perc < 0 then perc = 0 end
@@ -2842,14 +2848,14 @@ function RandomPattern(percentage)
             return
         end
     end
-    
+
     pattname = "untitled"
     SetCursor(movecursor)
     gencount = 0
     startcount = 0
     StopGenerating()
     ClearCells()
-    
+
     local minval, maxval
     if randomfill or N < 8 then
         minval = 0
@@ -2888,7 +2894,7 @@ function RandomPattern(percentage)
             end
         end
     end
-    
+
     SetActivePlane()
     ClearUndoRedo()
     InitialView()       -- calls Refresh
@@ -2957,7 +2963,7 @@ end
 
 function SetGridSize(newsize)
     -- change grid size to newsize or prompt user if newsize is nil
-    
+
     local function getsize()
         ::try_again::
         local s = g.getstring("Enter the new size (from "..MINN.." to "..MAXN.."):",
@@ -2971,7 +2977,7 @@ function SetGridSize(newsize)
             goto try_again
         end
     end
-    
+
     if newsize then
         if newsize < MINN then newsize = MINN end
         if newsize > MAXN then newsize = MAXN end
@@ -2983,34 +2989,34 @@ function SetGridSize(newsize)
             return
         end
     end
-    
+
     if newsize == N then return end
-    
+
     RememberCurrentState()
-    
+
     -- save current pattern as an array of positions relative to mid cell
     local livecells = GetCells()
-    
+
     -- save any selected cells as an array of positions relative to mid cell
     local oldselcount = selcount
     local selcells = GetSelectedCells()
-    
+
     -- save any paste cells as an array of positions relative to mid cell
     local oldpastecount = pastecount
     local pcells = GetPasteCells()
-    
+
     N = newsize
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
     CreateAxes()
-    
+
     -- active plane may need adjusting
     local mid = N//2
     if (mid + activepos >= N) or (mid + activepos < 0) then
         activepos = 0
     end
     SetActivePlane(activeplane, activepos)
-    
+
     -- restore pattern, clipping any cells outside the new grid
     ClearCells()
     local olddirty = dirty
@@ -3022,7 +3028,7 @@ function SetGridSize(newsize)
         -- but pattern hasn't really changed if no cells were clipped
         dirty = olddirty
     end
-    
+
     -- restore selection, clipping any cells outside the new grid
     local selclipped = 0
     selcount = 0
@@ -3042,7 +3048,7 @@ function SetGridSize(newsize)
             end
         end
     end
-    
+
     -- restore paste pattern, clipping any cells outside the new grid
     local pclipped = 0
     pastecount = 0
@@ -3072,14 +3078,14 @@ function SetGridSize(newsize)
             end
         end
     end
-    
+
     if clipcount > 0 or selclipped > 0 or pclipped > 0 then
         message = ""
         if clipcount > 0 then message = "Clipped live cells = "..clipcount.."\n" end
         if selclipped > 0 then message = message.."Clipped selection cells = "..selclipped.."\n" end
         if pclipped > 0 then message = message.."Clipped paste cells = "..pclipped end
     end
-    
+
     CheckIfGenerating()
     FitGrid()   -- calls Refresh
 end
@@ -3089,7 +3095,7 @@ end
 function ChangeRule()
     -- let user enter new rule as a string of the form 3Ds,s,.../b,b,...
     -- (the notation used at http://www.cse.sc.edu/~bays/d4d4d4/)
-    
+
     local function getrule()
         local newrule = rulestring
         ::try_again::
@@ -3099,16 +3105,16 @@ function ChangeRule()
                               newrule, "Change rule")
         if not ParseRule(newrule) then goto try_again end
     end
-    
+
     local oldrule = rulestring
-    
+
     -- if user hits Cancel button we want to avoid aborting script
     local status, err = pcall(getrule)
     if err then
         g.continue("")  -- don't show error when script finishes
         return
     end
-    
+
     if oldrule ~= rulestring then
         -- ParseRule has set rulestring so we need to temporarily switch
         -- it back to oldrule and call RememberCurrentState
@@ -3116,7 +3122,7 @@ function ChangeRule()
         rulestring = oldrule
         RememberCurrentState()
         rulestring = newrule
-        
+
         CheckIfGenerating()
         Refresh()
     end
@@ -3131,17 +3137,17 @@ function CreateRLE3Selection()
     local wd = maxselx - minselx + 1
     local ht = maxsely - minsely + 1
     local dp = maxselz - minselz + 1
-    
+
     local lines = {}
     lines[1] = PatternHeader(minselx, minsely, minselz)
     lines[2] = string.format("x=%d y=%d z=%d rule=%s", wd, ht, dp, rulestring)
-    
+
     local line = ""
     local orun = 0
     local brun = 0
     local dollrun = 0
     local slashrun = 0
-    
+
     local function AddRun(count, ch)
         if #line >= 67 then lines[#lines+1] = line; line = "" end
         if count > 2 then
@@ -3152,7 +3158,7 @@ function CreateRLE3Selection()
             line = line..ch
         end
     end
-    
+
     -- traverse selected cells sorted by Z,Y,X coords
     for z = minselz, maxselz do
         for y = minsely, maxsely do
@@ -3214,7 +3220,7 @@ function CreateRLE3Selection()
         end
     end
     if #line > 0 then lines[#lines+1] = line end
-    
+
     return lines
 end
 
@@ -3614,7 +3620,7 @@ function Paste()
             Refresh()
             return false
         end
-        
+
         -- newpattern contains valid pattern, but might be too big
         local minpx = newpattern.newminx
         local minpy = newpattern.newminy
@@ -3627,9 +3633,9 @@ function Paste()
             Refresh()
             return false
         end
-        
+
         if not savedstate then RememberCurrentState() end
-        
+
         -- set pastecount and pastepatt
         pastecount = newpattern.newpop
         pastepatt = {}
@@ -3955,7 +3961,7 @@ end
 function Reset()
     -- user scripts cannot call Reset (they can use SaveState and RestoreState)
     if scriptlevel > 0 then return end
-    
+
     if gencount > startcount then
         RestoreStartingGen()
         StopGenerating()
@@ -5141,7 +5147,7 @@ Further Notes on the Game of Three-Dimensional Life<br>
         htmldata = htmldata:gsub(" alt", " option")
         htmldata = htmldata:gsub("ctrl", "cmd")
     end
-    
+
     local htmlfile = g.getdir("temp").."3D.html"
     local f = io.open(htmlfile,"w")
     if not f then
@@ -5150,7 +5156,7 @@ Further Notes on the Game of Three-Dimensional Life<br>
     end
     f:write(htmldata)
     f:close()
-    
+
     g.open(htmlfile)
 end
 
@@ -5356,12 +5362,12 @@ local function IntersectionPoint(x1,y1, x2,y2, x3,y3, x4,y4)
     local denom  = (y4-y3) * (x2-x1) - (x4-x3) * (y2-y1)
     local numera = (x4-x3) * (y1-y3) - (y4-y3) * (x1-x3)
     local numerb = (x2-x1) * (y1-y3) - (y2-y1) * (x1-x3)
-    
+
     -- check if the lines are coincident
     if abs(numera) < 0.0001 and abs(numerb) < 0.0001 and abs(denom) < 0.0001 then
         return (x1 + x2) / 2, (y1 + y2) / 2
     end
-    
+
     local mua = numera / denom
     return x1 + mua * (x2 - x1), y1 + mua * (y2 - y1)
 end
@@ -5406,7 +5412,7 @@ local function FindActiveCell(x, y, face)
         Px, Py = projectedx[Pv], projectedy[Pv]
         Qx, Qy = projectedx[Qv], projectedy[Qv]
         Sx, Sy = projectedx[Sv], projectedy[Sv]
-        
+
         -- find intersection point of PQ and line containing x,y parallel to PS
         -- (we must ensure x1,y1 and x2,y2 are outside the face's edges)
         x1 = x - (Sx - Px) * shift
@@ -5414,7 +5420,7 @@ local function FindActiveCell(x, y, face)
         x2 = x + (Sx - Px) * shift
         y2 = y + (Sy - Py) * shift
         Ix, Iy = IntersectionPoint(Px, Py, Qx, Qy, x1, y1, x2, y2)
-        
+
         -- find intersection point of PS and line containing x,y parallel to PQ
         -- (we must ensure x1,y1 and x2,y2 are outside the face's edges)
         x1 = x - (Qx - Px) * shift
@@ -5422,7 +5428,7 @@ local function FindActiveCell(x, y, face)
         x2 = x + (Qx - Px) * shift
         y2 = y + (Qy - Py) * shift
         Jx, Jy = IntersectionPoint(Px, Py, Sx, Sy, x1, y1, x2, y2)
-        
+
         A = sqrt( (Ix-Px)^2 + (Iy-Py)^2 )
         B = sqrt( (Jx-Px)^2 + (Jy-Py)^2 )
         a = sqrt( (Qx-Px)^2 + (Qy-Py)^2 ) / hcells
@@ -5447,7 +5453,7 @@ local function FindActiveCell(x, y, face)
         elseif face == "L" then
             Pv, Qv, Sv = 1, 2, 3    -- left vertices
             hcells = 1
-        elseif face == "R" then     
+        elseif face == "R" then
             Pv, Qv, Sv = 7, 8, 5    -- right vertices
             hcells = 1
             xoffset = N-1
@@ -5458,12 +5464,12 @@ local function FindActiveCell(x, y, face)
         cx = cx - mid
         cy = cy - mid
         cz = activepos
-        
+
     elseif activeplane == "YZ" then
         -- L and R faces have N*N cells, the other faces (TUFB) have N cells
         if face == "L" then
             Pv, Qv, Sv = 2, 1, 4    -- left vertices
-        elseif face == "R" then     
+        elseif face == "R" then
             Pv, Qv, Sv = 8, 7, 6    -- right vertices
         elseif face == "T" then
             Pv, Qv, Sv = 6, 5, 4    -- top vertices
@@ -5486,7 +5492,7 @@ local function FindActiveCell(x, y, face)
         cy = cy - mid
         cz = cz - mid
         cx = activepos
-        
+
     else -- activeplane == "XZ"
         -- T and U faces have N*N cells, the other faces (FBLR) have N cells
         if face == "T" then
@@ -5503,7 +5509,7 @@ local function FindActiveCell(x, y, face)
         elseif face == "L" then
             Pv, Qv, Sv = 4, 2, 3    -- left vertices
             hcells = 1
-        elseif face == "R" then     
+        elseif face == "R" then
             Pv, Qv, Sv = 6, 8, 5    -- right vertices
             hcells = 1
             xoffset = N-1
@@ -5515,7 +5521,7 @@ local function FindActiveCell(x, y, face)
         cz = cz - mid
         cy = activepos
     end
-    
+
     -- return user coordinates (displayed later by Refresh)
     return cx, cy, cz
 end
@@ -5529,7 +5535,7 @@ function FindFace(mousex, mousey, box)
         projectedx[i] = round( rotx[i] ) + midx
         projectedy[i] = round( roty[i] ) + midy
     end
-    
+
     -- find which face of given box contains mousex,mousey (if any);
     -- note that up to 3 faces (all parallelograms) are visible
     local face = ""
@@ -5688,7 +5694,7 @@ function SetLine(x1, y1, z1, x2, y2, z2, setfunction, state)
     local dx2 = ax * 2
     local dy2 = ay * 2
     local dz2 = az * 2
-    
+
     if ax >= ay and ax >= az then
         local e1 = dy2 - ax
         local e2 = dz2 - ax
@@ -5839,7 +5845,7 @@ function MovePastePattern(deltax, deltay, deltaz)
     if maxpastex + deltax >= N then deltax = N-1 - maxpastex end
     if maxpastey + deltay >= N then deltay = N-1 - maxpastey end
     if maxpastez + deltaz >= N then deltaz = N-1 - maxpastez end
-    
+
     if deltax == 0 and deltay == 0 and deltaz == 0 then return end
 
     minpastex = minpastex + deltax
@@ -5848,7 +5854,7 @@ function MovePastePattern(deltax, deltay, deltaz)
     maxpastex = maxpastex + deltax
     maxpastey = maxpastey + deltay
     maxpastez = maxpastez + deltaz
-    
+
     local pcells = GetPasteCells()
     local mid = N//2
     pastepatt = {}
@@ -5858,7 +5864,7 @@ function MovePastePattern(deltax, deltay, deltaz)
         local z = xyz[3] + mid + deltaz
         pastepatt[ x + N * (y + N * z) ] = true
     end
-    
+
     Refresh()
 end
 
@@ -5882,29 +5888,29 @@ function DragPaste(mousex, mousey, prevx, prevy, face)
         -- mouse in left/right face
         SetActivePlane("YZ", 0)
     end
-    
+
     -- find the cell locations of mousex,mousey and prevx,prevy in the temporary plane
     local oldcell = InsideActiveCell(prevx, prevy)
     local newcell = InsideActiveCell(mousex, mousey)
-    
+
     -- restore the original active plane
     N = oldN
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
     SetActivePlane(oldplane, oldpos)
-    
+
     -- check if mouse stayed in same cell, or moved outside temporary plane
     if oldcell == newcell or #oldcell == 0 or #newcell == 0 then
         return
     end
-    
+
     -- calculate how many cells the mouse has moved
     local oldx, oldy, oldz = split(oldcell,",")
     local newx, newy, newz = split(newcell,",")
     local deltax = tonumber(newx) - tonumber(oldx)
     local deltay = tonumber(newy) - tonumber(oldy)
     local deltaz = tonumber(newz) - tonumber(oldz)
-    
+
     MovePastePattern(deltax, deltay, deltaz)
 end
 
@@ -5974,9 +5980,9 @@ function MoveSelection(deltax, deltay, deltaz)
     if maxselx + deltax >= N then deltax = N-1 - maxselx end
     if maxsely + deltay >= N then deltay = N-1 - maxsely end
     if maxselz + deltaz >= N then deltaz = N-1 - maxselz end
-    
+
     if deltax == 0 and deltay == 0 and deltaz == 0 then return end
-    
+
     -- RememberCurrentState was called in StartDraggingSelection
 
     minselx = minselx + deltax
@@ -5985,7 +5991,7 @@ function MoveSelection(deltax, deltay, deltaz)
     maxselx = maxselx + deltax
     maxsely = maxsely + deltay
     maxselz = maxselz + deltaz
-    
+
     -- kill all live cells in the current selection
     local savepop = popcount
     local NN = N*N
@@ -5997,7 +6003,7 @@ function MoveSelection(deltax, deltay, deltaz)
             minimal_live_bounds = false
         end
     end
-    
+
     if popcount == 0 and selcount == savepop then
         -- all live cells (and only those cells) were selected
         -- so we can handle this common case much faster by simply
@@ -6013,7 +6019,7 @@ function MoveSelection(deltax, deltay, deltaz)
             livexyz[i] = {x, y, z}
         end
         popcount = savepop
-        
+
         -- new live boundary is same as new selection boundary
         -- (and minimal because StartDraggingSelection called MinimizeSelectionBoundary)
         minx = minselx
@@ -6043,7 +6049,7 @@ function MoveSelection(deltax, deltay, deltaz)
                 if z > maxz then maxz = z end
             end
         end
-        
+
         -- move the selected cells to their new positions
         -- and save any live cells in the new selection in save_cells
         save_cells = {}
@@ -6057,7 +6063,7 @@ function MoveSelection(deltax, deltay, deltaz)
             selxyz[i] = {x, y, z}
             if grid1[k] then save_cells[k] = true end
         end
-        
+
         -- put live cells saved in livexyz into their new positions
         for i, xyz in ipairs(livexyz) do
             local x = xyz[1] + deltax
@@ -6079,7 +6085,7 @@ function MoveSelection(deltax, deltay, deltaz)
             livexyz[i] = {x, y, z}
         end
     end
-    
+
     Refresh()
 end
 
@@ -6103,29 +6109,29 @@ function DragSelection(mousex, mousey, prevx, prevy, face)
         -- mouse in left/right face
         SetActivePlane("YZ", 0)
     end
-    
+
     -- find the cell locations of mousex,mousey and prevx,prevy in the temporary plane
     local oldcell = InsideActiveCell(prevx, prevy)
     local newcell = InsideActiveCell(mousex, mousey)
-    
+
     -- restore the original active plane
     N = oldN
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
     SetActivePlane(oldplane, oldpos)
-    
+
     -- check if mouse stayed in same cell, or moved outside temporary plane
     if oldcell == newcell or #oldcell == 0 or #newcell == 0 then
         return
     end
-    
+
     -- calculate how many cells the mouse has moved
     local oldx, oldy, oldz = split(oldcell,",")
     local newx, newy, newz = split(newcell,",")
     local deltax = tonumber(newx) - tonumber(oldx)
     local deltay = tonumber(newy) - tonumber(oldy)
     local deltaz = tonumber(newz) - tonumber(oldz)
-    
+
     MoveSelection(deltax, deltay, deltaz)
 end
 
@@ -6176,7 +6182,7 @@ function DragActivePlane(mousex, mousey, prevx, prevy)
     for i = 1, 8 do
         rotx[i], roty[i], rotz[i] = TransformPoint(activebox[i])
     end
-    
+
     -- create a temporary active plane perpendicular to the nearest thin face
     -- and 3 times larger (to ensure all of the real active plane is enclosed)
     local oldN = N
@@ -6213,29 +6219,29 @@ function DragActivePlane(mousex, mousey, prevx, prevy)
             SetActivePlane("YZ", 0)
         end
     end
-    
+
     -- find the cell locations of mousex,mousey and prevx,prevy in the temporary plane
     local oldcell = InsideActiveCell(prevx, prevy)
     local newcell = InsideActiveCell(mousex, mousey)
-    
+
     -- restore the original active plane
     N = oldN
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
     SetActivePlane(oldplane, oldpos)
-    
+
     -- check if mouse stayed in same cell, or moved outside temporary plane
     if oldcell == newcell or #oldcell == 0 or #newcell == 0 then
         return
     end
-    
+
     -- calculate how many cells the mouse has moved
     local oldx, oldy, oldz = split(oldcell,",")
     local newx, newy, newz = split(newcell,",")
     local deltax = tonumber(newx) - tonumber(oldx)
     local deltay = tonumber(newy) - tonumber(oldy)
     local deltaz = tonumber(newz) - tonumber(oldz)
-    
+
     -- move the active plane by the appropriate delta but don't call Refresh yet
     if activeplane == "XY" then
         MoveActivePlane(activepos + deltaz, false)
@@ -6244,7 +6250,7 @@ function DragActivePlane(mousex, mousey, prevx, prevy)
     else -- activeplane == "XZ"
         MoveActivePlane(activepos + deltay, false)
     end
-    
+
     activecell = InsideActiveCell(mousex, mousey)
     Refresh()
 end
@@ -6259,7 +6265,7 @@ function MiddlePaste()
         local deltay = (N - (maxpastey - minpastey)) // 2 - minpastey
         local deltaz = (N - (maxpastez - minpastez)) // 2 - minpastez
         if deltax == 0 and deltay == 0 and deltaz == 0 then return end
-        
+
         RememberCurrentState()
         local pcells = {}
         local NN = N*N
@@ -6273,7 +6279,7 @@ function MiddlePaste()
             local z = xyz[3] + deltaz
             pastepatt[x + N * (y + N * z)] = true
         end
-        
+
         -- update the paste boundary
         minpastex = minpastex + deltax
         minpastey = minpastey + deltay
@@ -6281,7 +6287,7 @@ function MiddlePaste()
         maxpastex = maxpastex + deltax
         maxpastey = maxpastey + deltay
         maxpastez = maxpastez + deltaz
-        
+
         CheckIfGenerating()
         Refresh()
     end
@@ -6298,7 +6304,7 @@ function MiddleSelection()
         local deltay = (N - (maxsely - minsely)) // 2 - minsely
         local deltaz = (N - (maxselz - minselz)) // 2 - minselz
         if deltax == 0 and deltay == 0 and deltaz == 0 then return end
-        
+
         RememberCurrentState()
         -- only set dirty = true if live cells are selected
         local selcells = {}
@@ -6343,7 +6349,7 @@ function MiddleSelection()
                 if z > maxz then maxz = z end
             end
         end
-        
+
         -- update the selection boundary
         minselx = minselx + deltax
         minsely = minsely + deltay
@@ -6352,7 +6358,7 @@ function MiddleSelection()
         maxsely = maxsely + deltay
         maxselz = maxselz + deltaz
         -- MinimizeSelectionBoundary set minimal_sel_bounds to true
-        
+
         CheckIfGenerating()
         Refresh()
     end
@@ -6369,7 +6375,7 @@ function MiddlePattern()
         local deltay = (N - (maxy - miny)) // 2 - miny
         local deltaz = (N - (maxz - minz)) // 2 - minz
         if deltax == 0 and deltay == 0 and deltaz == 0 then return end
-        
+
         RememberCurrentState()
         dirty = true
         local livecells = {}
@@ -6384,7 +6390,7 @@ function MiddlePattern()
             local z = xyz[3] + deltaz
             grid1[x + N * (y + N * z)] = 1
         end
-        
+
         -- update the live cell boundary
         minx = minx + deltax
         miny = miny + deltay
@@ -6393,7 +6399,7 @@ function MiddlePattern()
         maxy = maxy + deltay
         maxz = maxz + deltaz
         -- MinimizeLiveBoundary set minimal_live_bounds to true
-        
+
         CheckIfGenerating()
         Refresh()
     end
@@ -6504,7 +6510,7 @@ function CreateOverlay()
     mbar.addmenu("Edit")
     mbar.addmenu("Control")
     mbar.addmenu("View")
-    
+
     -- add items to File menu
     mbar.additem(1, "New Pattern", NewPattern)
     mbar.additem(1, "Random Pattern...", RandomPattern)
@@ -6517,7 +6523,7 @@ function CreateOverlay()
     mbar.additem(1, "Set Startup Script...", SetStartupScript)
     mbar.additem(1, "---", nil)
     mbar.additem(1, "Exit 3D.lua", ExitScript)
-    
+
     -- add items to Edit menu
     mbar.additem(2, "Undo", Undo)
     mbar.additem(2, "Redo", Redo)
@@ -6542,7 +6548,7 @@ function CreateOverlay()
     mbar.additem(3, "Reset", Reset)
     mbar.additem(3, "---", nil)
     mbar.additem(3, "Set Rule...", ChangeRule)
-    
+
     -- add items to View menu
     mbar.additem(4, "Initial View", InitialView)
     mbar.additem(4, "Fit Grid", FitGrid)
@@ -6557,7 +6563,7 @@ function CreateOverlay()
     mbar.additem(4, "Use Depth Shading", ToggleDepthShading)
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Help", ShowHelp)
-    
+
     -- create tool bar buttons
     ssbutton = op.button("Start", StartStop)
     s1button = op.button("+1", Step1)
@@ -6567,7 +6573,7 @@ function CreateOverlay()
     redobutton = op.button("Redo", Redo)
     helpbutton = op.button("?", ShowHelp)
     exitbutton = op.button("X", ExitScript)
-    
+
     -- create check boxes (don't shadow text)
     op.textshadowx = 0
     op.textshadowy = 0
@@ -6576,7 +6582,7 @@ function CreateOverlay()
     movebox = op.checkbox("Move", op.black, MoveMode)
     op.textshadowx = 2
     op.textshadowy = 2
-    
+
     -- create a pop-up menu for paste actions
     pastemenu = op.popupmenu()
     pastemenu.additem("Paste OR", PasteOR)
@@ -6591,7 +6597,7 @@ function CreateOverlay()
     pastemenu.additem("Rotate Z Axis", RotatePasteZ)
     pastemenu.additem("---", nil)
     pastemenu.additem("Cancel Paste", CancelPaste)
-    
+
     -- create a pop-up menu for selection actions
     selmenu = op.popupmenu()
     selmenu.additem("Cut", CutSelection)
@@ -6681,7 +6687,7 @@ end
 ----------------------------------------------------------------------
 
 function Rotate(xangle, yangle, zangle, display)
-    if display == nil then display = true end    
+    if display == nil then display = true end
     local x = xangle * DEGTORAD
     local y = yangle * DEGTORAD
     local z = zangle * DEGTORAD
@@ -6691,7 +6697,7 @@ function Rotate(xangle, yangle, zangle, display)
     local sinry = sin(y)
     local cosrz = cos(z)
     local sinrz = sin(z)
-    
+
     -- calculate transformation matrix for rotation
     -- (note that rotation is about fixed *screen* axes)
     local a = cosry*cosrz
@@ -6703,7 +6709,7 @@ function Rotate(xangle, yangle, zangle, display)
     local g = cosrx*sinry*cosrz + sinrx*sinrz
     local h = cosrx*sinry*sinrz - sinrx*cosrz
     local i = cosrx*cosry
-    
+
     -- rotate global matrix by new matrix
     local anew = a*xixo + b*yixo + c*zixo
     local bnew = a*xiyo + b*yiyo + c*ziyo
@@ -6714,7 +6720,7 @@ function Rotate(xangle, yangle, zangle, display)
     local gnew = g*xixo + h*yixo + i*zixo
     local hnew = g*xiyo + h*yiyo + i*ziyo
     local inew = g*xizo + h*yizo + i*zizo
-    
+
     -- update the transformation matrix
     xixo = anew
     xiyo = bnew
@@ -6741,7 +6747,7 @@ function InitialView()
     Rotate(160, 20, 0, false)
     -- user can hit the up arrow 4 times and the right arrow 4 times
     -- to see an untilted XY plane parallel with the screen
-    
+
     FitGrid()   -- calls Refresh
 end
 
@@ -6750,7 +6756,7 @@ end
 function Initialize()
     CreateOverlay()
     CreateAxes()
-    
+
     -- clear depth shading lists
     for i = 1, depthlayers do
         layercoords[i] = {}
@@ -6758,7 +6764,7 @@ function Initialize()
 
     -- create reference cube (never displayed)
     refcube = CreateCube(0,0,0)
-    
+
     ClearCells()
     if rulestring == DEFAULT_RULE then
         -- initial pattern is the Life-like glider in rule 3D5,6,7/6
@@ -6789,10 +6795,10 @@ function Initialize()
         dirty = false
         --]]
     end
-    
+
     SetActivePlane()
     InitialView()           -- calls Refresh
-    
+
     -- run the user's startup script if it exists
     local f = io.open(startup, "r")
     if f then
@@ -6876,7 +6882,7 @@ function EventLoop()
     local hand_select = false       -- select live cells with hand cursor?
     local dragface = ""             -- which paste/selection face is being dragged
     local prevx, prevy              -- previous mouse position
-    
+
     while true do
         local event = g.getevent()
         if #event == 0 then
@@ -6983,7 +6989,7 @@ function EventLoop()
                 if not arrow_cursor then Zoom(CELLSIZE+1) end
             end
         end
-        
+
         local mousepos = ov("xy")
         if mousedown then
             if #mousepos > 0 then
