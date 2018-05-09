@@ -1208,6 +1208,48 @@ end
 
 ----------------------------------------------------------------------
 
+local function DrawCubeDepth(x, y, z)
+    -- add live cell as a cube at given grid position
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newz = (x*zixo + y*ziyo + z*zizo)
+    -- use orthographic projection
+    x = round(newx) + midx - HALFCUBECLIP
+    y = round(newy) + midy - HALFCUBECLIP
+    -- add to the list to draw
+    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
+    if layer < 1 then layer = 1 end
+    if layer > depthlayers then layer = depthlayers end
+    ov("paste "..x.." "..y.." c"..layer)
+end
+
+----------------------------------------------------------------------
+
+local function DrawSphereDepth(x, y, z)
+    -- draw live cell as a sphere at given grid position
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newz = (x*zixo + y*ziyo + z*zizo)
+    -- use orthographic projection
+    x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
+    y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
+    -- add to the list to draw
+    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
+    if layer < 1 then layer = 1 end
+    if layer > depthlayers then layer = depthlayers end
+    ov("paste "..x.." "..y.." S"..layer)
+end
+
+----------------------------------------------------------------------
+
 local function DrawActiveCell(x, y, z)
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1370,8 +1412,19 @@ function DisplayCells(editing)
     -- draw cells from back to front (assumes vertex order set in CreateCube)
     local i, j
     local stepi, stepj = N*stepy, N*stepz
+    if depthshading then
+        zdepth = N*CELLSIZE*0.5
+        zdepth2 = zdepth+zdepth
+    end
 
     if testcell then
+        if depthshading then
+            if celltype == "cube" then
+                DrawLiveCell = DrawCubeDepth
+            elseif celltype == "sphere" then
+                DrawLiveCell = DrawSphereDepth
+            end
+        end
         j = N*fromz
         for z = fromz, toz, stepz do
             i = N*(fromy+j)
@@ -1386,8 +1439,6 @@ function DisplayCells(editing)
     else
         -- only live cells need to be drawn so use batch mode
         if depthshading then
-            zdepth = N*CELLSIZE*0.5
-            zdepth2 = zdepth+zdepth
             if celltype == "cube" then
                 DrawLiveCell = AddCubeToBatchDepth
             elseif celltype == "sphere" then
