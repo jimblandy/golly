@@ -390,7 +390,6 @@ void CurrentLayerChanged()
 
     mainptr->UpdateUserInterface(mainptr->IsActive());
     mainptr->UpdatePatternAndStatus();
-    bigview->UpdateScrollBars();
 }
 
 !!!*/

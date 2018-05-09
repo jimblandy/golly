@@ -1592,19 +1592,11 @@ void PatternView::UpdateScrollBars()
         // avoid scroll bar disappearing
         if (range < 3) range = 3;
         hthumb = currlayer->view->x.toint() + range / 2;
-#ifdef __WXMAC__
         mainptr->hbar->SetScrollbar(hthumb, 1, range, 1, true);
-#else
-        bigview->SetScrollbar(wxHORIZONTAL, hthumb, 1, range, true);
-#endif
     } else {
         // keep thumb box in middle of scroll bar if grid width is infinite
         hthumb = (thumbrange - 1) * viewwd / 2;
-#ifdef __WXMAC__
         mainptr->hbar->SetScrollbar(hthumb, viewwd, thumbrange * viewwd, viewwd, true);
-#else
-        bigview->SetScrollbar(wxHORIZONTAL, hthumb, viewwd, thumbrange * viewwd, true);
-#endif
     }
     
     if (currlayer->algo->gridht > 0) {
@@ -1613,19 +1605,11 @@ void PatternView::UpdateScrollBars()
         // avoid scroll bar disappearing
         if (range < 3) range = 3;
         vthumb = currlayer->view->y.toint() + range / 2;
-#ifdef __WXMAC__
         mainptr->vbar->SetScrollbar(vthumb, 1, range, 1, true);
-#else
-        bigview->SetScrollbar(wxVERTICAL, vthumb, 1, range, true);
-#endif
     } else {
         // keep thumb box in middle of scroll bar if grid height is infinite
         vthumb = (thumbrange - 1) * viewht / 2;
-#ifdef __WXMAC__
         mainptr->vbar->SetScrollbar(vthumb, viewht, thumbrange * viewht, viewht, true);
-#else
-        bigview->SetScrollbar(wxVERTICAL, vthumb, viewht, thumbrange * viewht, true);
-#endif
     }
 }
 

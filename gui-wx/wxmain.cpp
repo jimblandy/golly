@@ -1020,7 +1020,6 @@ void MainFrame::ResizeBigView()
             ResizeTimelineBar(y + ht, wd);
         }
 
-#ifdef __WXMAC__
         if (!fullscreen && showscrollbars) {
             // make room for hbar and vbar
             wd -= 15;
@@ -1031,7 +1030,6 @@ void MainFrame::ResizeBigView()
             hbar->SetSize(0, y + ht, wd, 15);
             vbar->SetSize(wd, y, 15, ht);
         }
-#endif
 
         if (wd < 0) wd = 0;
         if (ht < 0) ht = 0;
@@ -1117,21 +1115,12 @@ void MainFrame::ToggleScrollBars()
 {
     showscrollbars = !showscrollbars;
     if (showscrollbars) {
-        #ifdef __WXMAC__
-            hbar->Show(true);
-            vbar->Show(true);
-        #else
-            bigview->UpdateScrollBars();
-        #endif
+        hbar->Show(true);
+        vbar->Show(true);
     } else {
         // hide scroll bars
-        #ifdef __WXMAC__
-            hbar->Show(false);
-            vbar->Show(false);
-        #else
-            bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-            bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-        #endif
+        hbar->Show(false);
+        vbar->Show(false);
     }
     // adjust size of viewport
     int wd, ht;
@@ -1166,13 +1155,8 @@ void MainFrame::ToggleFullScreen()
     if (fullscreen) {
         if (showscrollbars) {
             // hide scroll bars
-            #ifdef __WXMAC__
-                hbar->Show(false);
-                vbar->Show(false);
-            #else
-                bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-                bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-            #endif
+            hbar->Show(false);
+            vbar->Show(false);
         }
 
         // hide status bar if necessary
@@ -1251,12 +1235,8 @@ void MainFrame::ToggleFullScreen()
         
         if (showscrollbars) {
             // restore scroll bars
-            #ifdef __WXMAC__
-                hbar->Show(true);
-                vbar->Show(true);
-            #else
-                bigview->UpdateScrollBars();
-            #endif
+            hbar->Show(true);
+            vbar->Show(true);
         }
     }
     
@@ -1330,9 +1310,7 @@ EVT_TREE_SEL_CHANGED    (wxID_TREECTRL, MainFrame::OnDirTreeSelection)
 EVT_SPLITTER_DCLICK     (wxID_ANY,      MainFrame::OnSashDblClick)
 EVT_TIMER               (ID_GENTIMER,   MainFrame::OnGenTimer)
 EVT_CLOSE               (               MainFrame::OnClose)
-#ifdef __WXMAC__
 EVT_COMMAND_SCROLL      (wxID_ANY,      MainFrame::OnScroll)
-#endif
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -1824,8 +1802,6 @@ void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-#ifdef __WXMAC__
-
 void MainFrame::OnScroll(wxScrollEvent& event)
 {
     WXTYPE type = event.GetEventType();
@@ -1844,8 +1820,6 @@ void MainFrame::OnScroll(wxScrollEvent& event)
     wxScrollWinEvent newevt(newtype, event.GetPosition(), event.GetOrientation());
     wxPostEvent(bigview->GetEventHandler(), newevt);
 }
-
-#endif // __WXMAC__
 
 // -----------------------------------------------------------------------------
 
@@ -2622,30 +2596,30 @@ MainFrame::MainFrame()
     
     CreateTranslucentControls();        // must be done BEFORE creating viewport
     
-    // create viewport at minimum size to avoid scroll bars being clipped on Mac
+    // create viewport at minimum size
     int y = 0;
     if (showlayer) y += LayerBarHeight();
     if (showedit) y += EditBarHeight();
     viewptr = new PatternView(rightpane, 0, y, 40, 40,
                               wxNO_BORDER |
                               wxWANTS_CHARS |              // receive all keyboard events
-#ifndef __WXMAC__
-// avoid Mac bug if wxGLCanvas has built-in scroll bars
-                              wxVSCROLL | wxHSCROLL |
-#endif
                               wxFULL_REPAINT_ON_RESIZE);
     
     // this is the main viewport window (tile windows have a tileindex >= 0)
     viewptr->tileindex = -1;
     bigview = viewptr;
 
-#ifdef __WXMAC__
-    // manually create scroll bars to avoid wxGLCanvas bug on Mac
+    // create the scroll bars
     hbar = new wxScrollBar(rightpane, wxID_ANY, wxPoint(0,0), wxSize(-1, 15), wxSB_HORIZONTAL);
     vbar = new wxScrollBar(rightpane, wxID_ANY, wxPoint(0,0), wxSize(15, -1), wxSB_VERTICAL);
     hbar->SetMinSize(wxDefaultSize);
     vbar->SetMinSize(wxDefaultSize);
-#endif
+    
+    if (!showscrollbars) {
+        // hide scroll bars
+        hbar->Show(false);
+        vbar->Show(false);
+    }
 
 #if wxUSE_DRAG_AND_DROP
     // let users drop files onto viewport
@@ -2666,10 +2640,8 @@ MainFrame::MainFrame()
 
 MainFrame::~MainFrame()
 {
-#ifdef __WXMAC__
     delete hbar;
     delete vbar;
-#endif
     delete curroverlay;
     delete gentimer;
     DestroyDrawingData();

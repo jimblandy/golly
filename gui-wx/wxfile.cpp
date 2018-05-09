@@ -1714,12 +1714,6 @@ void MainFrame::SaveOverlay()
 void MainFrame::ToggleShowFiles()
 {
     if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
-#ifndef __WXMAC__
-    // hide scroll bars
-    bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-    bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-#endif
-    
     showfiles = !showfiles;
     if (splitwin->IsSplit()) {
         // hide left pane
@@ -1728,11 +1722,6 @@ void MainFrame::ToggleShowFiles()
         splitwin->SplitVertically(filectrl, RightPane(), dirwinwd);
     }
     viewptr->SetFocus();
-
-#ifndef __WXMAC__
-    // restore scroll bars
-    bigview->UpdateScrollBars();
-#endif
 }
 
 // -----------------------------------------------------------------------------
