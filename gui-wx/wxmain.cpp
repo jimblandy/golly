@@ -1027,7 +1027,13 @@ void MainFrame::ResizeBigView()
             if (wd < 0) wd = 0;
             if (ht < 0) ht = 0;
             // resize hbar and vbar
-            hbar->SetSize(0, y + ht, wd, 15);
+			#ifdef __WXMSW__
+			    // extend scroll bar to right edge to avoid seeing junk
+				// in bottom right corner (need to figure out how to create a gripper!!!)
+                hbar->SetSize(0, y + ht, wd+15, 15);
+			#else
+		        hbar->SetSize(0, y + ht, wd, 15);
+			#endif
             vbar->SetSize(wd, y, 15, ht);
         }
 
