@@ -842,15 +842,20 @@ end
 ----------------------------------------------------------------------
 
 function CreateLayers(clip)
-    local adjust = floor(96 / depthlayers)
+    local adjust = 96 / depthlayers
+    local total = 0
+    local rgb
     ov("target "..clip)
     ov("copy 0 0 0 0 "..clip.."1")
     ov("target "..clip.."1")
     ov("optimize "..clip.."1")
     for i = 2, depthlayers do
+        total = total + adjust
+        rgb = floor(total)
+        ov("target "..clip)
         ov("copy 0 0 0 0 "..clip..i)
         ov("target "..clip..i)
-        ov("replace *#-"..adjust.." *#-"..adjust.." *#-"..adjust.." *#")
+        ov("replace *#-"..rgb.." *#-"..rgb.." *#-"..rgb.." *#")
         ov("optimize "..clip..i)
     end
 end
@@ -1026,7 +1031,6 @@ function CreateLiveSphere()
     ov("target")
 end
 
-
 ----------------------------------------------------------------------
 
 local function AddCubeToBatchDepth(x, y, z)
@@ -1130,13 +1134,15 @@ end
 ----------------------------------------------------------------------
 
 function DrawBatchLayer(depth, coordlist)
-    if celltype == "cube" then
-        ov("paste "..table.concat(coordlist, " ").." c"..depth)
-    elseif celltype == "sphere" then
-        ov("paste "..table.concat(coordlist, " ").." S"..depth)
-    else -- celltype == "point"
-        ov(op.white)
-        ov("set "..table.concat(coordlist, " "))
+    if #coordlist > 0 then
+        if celltype == "cube" then
+            ov("paste "..table.concat(coordlist, " ").." c"..depth)
+        elseif celltype == "sphere" then
+            ov("paste "..table.concat(coordlist, " ").." S"..depth)
+        else -- celltype == "point"
+            ov(op.white)
+            ov("set "..table.concat(coordlist, " "))
+        end
     end
 end
 
@@ -1158,40 +1164,6 @@ end
 
 ----------------------------------------------------------------------
 
-local function DrawCube(x, y, z)
-    -- draw live cell as a cube at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = round(newx) + midx - HALFCUBECLIP
-    y = round(newy) + midy - HALFCUBECLIP
-    -- draw the clip created by CreateLiveCube
-    ov("paste "..x.." "..y.." c")
-end
-
-----------------------------------------------------------------------
-
-local function DrawSphere(x, y, z)
-    -- draw live cell as a sphere at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
-    y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
-    -- draw the clip created by CreateLiveSphere
-    ov("paste "..x.." "..y.." S")
-end
-
-----------------------------------------------------------------------
-
 local function DrawPoint(x, y, z)
     -- draw mid point of cell at given grid position
     x = x * CELLSIZE + MIDCELL
@@ -1204,48 +1176,6 @@ local function DrawPoint(x, y, z)
     x = round(newx) + midx
     y = round(newy) + midy
     ov("set "..x.." "..y)
-end
-
-----------------------------------------------------------------------
-
-local function DrawCubeDepth(x, y, z)
-    -- add live cell as a cube at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = round(newx) + midx - HALFCUBECLIP
-    y = round(newy) + midy - HALFCUBECLIP
-    -- add to the list to draw
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
-    if layer < 1 then layer = 1 end
-    if layer > depthlayers then layer = depthlayers end
-    ov("paste "..x.." "..y.." c"..layer)
-end
-
-----------------------------------------------------------------------
-
-local function DrawSphereDepth(x, y, z)
-    -- draw live cell as a sphere at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
-    y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
-    -- add to the list to draw
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
-    if layer < 1 then layer = 1 end
-    if layer > depthlayers then layer = depthlayers end
-    ov("paste "..x.." "..y.." S"..layer)
 end
 
 ----------------------------------------------------------------------
@@ -1306,6 +1236,7 @@ local function TestCell(editing, gridpos, x, y, z)
             if grid1[gridpos] then
                 -- draw live cell within active plane
                 DrawLiveCell(x, y, z)
+                DrawBatch()
             end
             DrawActiveCell(x, y, z)
             if selected[gridpos] then
@@ -1330,11 +1261,13 @@ local function TestCell(editing, gridpos, x, y, z)
             DrawLiveCell(x, y, z)
         end
         if selected[gridpos] then
+            DrawBatch()
             DrawSelectedCell(x, y, z)
         end
     end
     if pastepatt[gridpos] then
         DrawLiveCell(x, y, z)
+        DrawBatch()
         DrawPasteCell(x, y, z)
     end
 end
@@ -1412,19 +1345,29 @@ function DisplayCells(editing)
     -- draw cells from back to front (assumes vertex order set in CreateCube)
     local i, j
     local stepi, stepj = N*stepy, N*stepz
+
+    -- select the cell drawing functions based on whether depth shading is required
     if depthshading then
         zdepth = N*CELLSIZE*0.5
         zdepth2 = zdepth+zdepth
+        if celltype == "cube" then
+            DrawLiveCell = AddCubeToBatchDepth
+        elseif celltype == "sphere" then
+            DrawLiveCell = AddSphereToBatchDepth
+        else -- celltype == "point"
+            DrawLiveCell = AddPointToBatch
+        end
+    else
+        if celltype == "cube" then
+            DrawLiveCell = AddCubeToBatch
+        elseif celltype == "sphere" then
+            DrawLiveCell = AddSphereToBatch
+        else -- celltype == "point"
+            DrawLiveCell = AddPointToBatch
+        end
     end
 
     if testcell then
-        if depthshading then
-            if celltype == "cube" then
-                DrawLiveCell = DrawCubeDepth
-            elseif celltype == "sphere" then
-                DrawLiveCell = DrawSphereDepth
-            end
-        end
         j = N*fromz
         for z = fromz, toz, stepz do
             i = N*(fromy+j)
@@ -1438,23 +1381,6 @@ function DisplayCells(editing)
         end
     else
         -- only live cells need to be drawn so use batch mode
-        if depthshading then
-            if celltype == "cube" then
-                DrawLiveCell = AddCubeToBatchDepth
-            elseif celltype == "sphere" then
-                DrawLiveCell = AddSphereToBatchDepth
-            else -- celltype == "point"
-                DrawLiveCell = AddPointToBatch
-            end
-        else
-            if celltype == "cube" then
-                DrawLiveCell = AddCubeToBatch
-            elseif celltype == "sphere" then
-                DrawLiveCell = AddSphereToBatch
-            else -- celltype == "point"
-                DrawLiveCell = AddPointToBatch
-            end
-        end
         j = N*fromz
         for z = fromz, toz, stepz do
             i = N*(fromy+j)
@@ -1468,8 +1394,8 @@ function DisplayCells(editing)
             end
             j = j+stepj
         end
-        DrawBatch()
     end
+    DrawBatch()
 
     ov("blend 0")
 end
@@ -1663,13 +1589,13 @@ function Refresh(update)
         end
         if celltype == "cube" then
             CreateLiveCube()
-            DrawLiveCell = DrawCube
+            --DrawLiveCell = DrawCube
         elseif celltype == "sphere" then
             CreateLiveSphere()
-            DrawLiveCell = DrawSphere
+            --DrawLiveCell = DrawSphere
         else -- celltype == "point"
             ov(op.white)
-            DrawLiveCell = DrawPoint
+            --DrawLiveCell = DrawPoint
         end
         DisplayCells(editing)
     end
@@ -6803,14 +6729,19 @@ end
 
 ----------------------------------------------------------------------
 
-function Initialize()
-    CreateOverlay()
-    CreateAxes()
-
+function InitDepthShading()
     -- clear depth shading lists
     for i = 1, depthlayers do
         layercoords[i] = {}
     end
+end
+
+----------------------------------------------------------------------
+
+function Initialize()
+    CreateOverlay()
+    CreateAxes()
+    InitDepthShading()
 
     -- create reference cube (never displayed)
     refcube = CreateCube(0,0,0)
