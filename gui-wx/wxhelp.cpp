@@ -955,12 +955,8 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
         }
         
     } else if ( url.StartsWith(wxT("prefs:")) ) {
-        if (inscript) {
-            Warning(_("Cannot change preferences while a script is running."));
-        } else {
-            // user clicked on link to Preferences dialog
-            mainptr->ShowPrefsDialog( url.AfterFirst(':') );
-        }
+        // user clicked on link to Preferences dialog
+        mainptr->ShowPrefsDialog( url.AfterFirst(':') );
         
     } else if ( url.StartsWith(wxT("open:")) ) {
         if (inscript) {
