@@ -99,6 +99,7 @@ local celltype = "cube"             -- draw live cell as cube/sphere/point
 local DrawLiveCell                  -- set to Draw{Cube/Sphere/Point} or Add{Cube/Sphere/Point}ToBatch
 local xybatch = {}                  -- coordinates for each cell when batch drawing
 local layercoords = {}              -- coordinates for each cell in each layer
+local layerpointcols = {}           -- rgb values for each points in each layer
 local depthshading = false          -- using depth shading?
 local depthlayers = 32              -- number of shading layers
 local zdepth, zdepth2               -- coefficients for z to depth layer mapping
@@ -1045,10 +1046,11 @@ local function AddCubeToBatchDepth(x, y, z)
     -- use orthographic projection
     x = round(newx) + midx - HALFCUBECLIP
     y = round(newy) + midy - HALFCUBECLIP
-    -- add to the list to draw
+    -- compute the depth layer
     local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
     if layer < 1 then layer = 1 end
     if layer > depthlayers then layer = depthlayers end
+    -- add to the layer's list to draw
     local xylist = layercoords[layer]
     xylist[#xylist + 1] = x
     xylist[#xylist + 1] = y
@@ -1086,10 +1088,11 @@ local function AddSphereToBatchDepth(x, y, z)
     -- use orthographic projection
     x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
     y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
-    -- add to the list to draw
+    -- compute the depth layer
     local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
     if layer < 1 then layer = 1 end
     if layer > depthlayers then layer = depthlayers end
+    -- add to the layer's list to draw
     local xylist = layercoords[layer]
     xylist[#xylist + 1] = x
     xylist[#xylist + 1] = y
@@ -1115,6 +1118,29 @@ end
 
 ----------------------------------------------------------------------
 
+local function AddPointToBatchDepth(x, y, z)
+    -- add mid point of cell at given grid position
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newz = (x*zixo + y*ziyo + z*zizo)
+    -- use orthographic projection
+    x = round(newx) + midx
+    y = round(newy) + midy
+    -- compute the depth layer
+    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
+    if layer < 1 then layer = 1 end
+    if layer > depthlayers then layer = depthlayers end
+    -- add to the layer's list to draw
+    local xylist = layercoords[layer]
+    xylist[#xylist + 1] = x
+    xylist[#xylist + 1] = y
+end
+----------------------------------------------------------------------
+
 local function AddPointToBatch(x, y, z)
     -- add mid point of cell at given grid position
     x = x * CELLSIZE + MIDCELL
@@ -1133,14 +1159,18 @@ end
 
 ----------------------------------------------------------------------
 
-function DrawBatchLayer(depth, coordlist)
+local function DrawBatchLayer(depth, coordlist)
     if #coordlist > 0 then
         if celltype == "cube" then
             ov("paste "..table.concat(coordlist, " ").." c"..depth)
         elseif celltype == "sphere" then
             ov("paste "..table.concat(coordlist, " ").." S"..depth)
         else -- celltype == "point"
-            ov(op.white)
+            if depth == "" then
+                ov(op.white)
+            else
+                ov(layerpointcols[depth])
+            end
             ov("set "..table.concat(coordlist, " "))
         end
     end
@@ -1148,8 +1178,8 @@ end
 
 ----------------------------------------------------------------------
 
-function DrawBatch()
-    if depthshading and celltype ~= "point" then
+local function DrawBatch()
+    if depthshading then
         for i = depthlayers, 1, -1 do
             if #layercoords[i] > 0 then
                 DrawBatchLayer(i, layercoords[i])
@@ -1355,7 +1385,7 @@ function DisplayCells(editing)
         elseif celltype == "sphere" then
             DrawLiveCell = AddSphereToBatchDepth
         else -- celltype == "point"
-            DrawLiveCell = AddPointToBatch
+            DrawLiveCell = AddPointToBatchDepth
         end
     else
         if celltype == "cube" then
@@ -1589,13 +1619,9 @@ function Refresh(update)
         end
         if celltype == "cube" then
             CreateLiveCube()
-            --DrawLiveCell = DrawCube
         elseif celltype == "sphere" then
             CreateLiveSphere()
-            --DrawLiveCell = DrawSphere
         else -- celltype == "point"
-            ov(op.white)
-            --DrawLiveCell = DrawPoint
         end
         DisplayCells(editing)
     end
@@ -6730,9 +6756,17 @@ end
 ----------------------------------------------------------------------
 
 function InitDepthShading()
-    -- clear depth shading lists
+    local adjust = 96 / depthlayers
+    local total = 255
+    local rgb
+    -- initialize each depth shading layer
     for i = 1, depthlayers do
+        -- clear depth shading list
         layercoords[i] = {}
+        -- create point rgb values
+        rgb = floor(total)
+        layerpointcols[i] = "rgba "..rgb.." "..rgb.." "..rgb.." 255"
+        total = total - adjust
     end
 end
 
