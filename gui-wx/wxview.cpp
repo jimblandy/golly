@@ -2964,8 +2964,8 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
     
     // delta is the amount that represents one "step" of rotation.
     // Normally 120 on Win/Linux but 10 on Mac.
-    // We multiply delta by 5 so mouse wheel is less sensitive.
-    delta = event.GetWheelDelta() * 5;
+    // If wheelsens < MAX_SENSITIVITY then mouse wheel will be less sensitive.
+    delta = event.GetWheelDelta() * (MAX_SENSITIVITY + 1 - wheelsens);
     rot = event.GetWheelRotation();
     x = event.GetX();
     y = event.GetY();
