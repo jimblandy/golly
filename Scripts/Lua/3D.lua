@@ -1586,7 +1586,7 @@ function Refresh(update)
         return
     end
 
-    -- turn off event checking to avoid partial updates of overlay
+    -- turn off event checking temporarily to avoid partial updates of overlay
     -- (eg. due to user resizing window while a pattern is generating)
     g.check(false)
 
@@ -7057,6 +7057,9 @@ Initialize()
 status, err = xpcall(EventLoop, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
+
+-- try to ensure the following code *completes*, even if user quits Golly
+g.check(false)
 
 RestoreGollyState(oldstate)
 WriteSettings()
