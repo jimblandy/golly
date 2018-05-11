@@ -412,6 +412,10 @@ end
 
 --------------------------------------------------------------------------------
 
+-- avoid calling any g.* command in m.trace otherwise we'll get a Lua error
+-- message saying "error in error handling" if user aborts the script
+local Windows = g.os() == "Windows"
+
 function m.trace(msg)
     -- this function can be passed into xpcall so that a nice stack trace gets
     -- appended to a runtime error message
@@ -422,7 +426,7 @@ function m.trace(msg)
         result = result:gsub("\t", "")
         result = result:gsub("in upvalue ", "in function ") -- local function
         -- strip off paths that don't start with "." then remove ".\" or "./"
-        if g.os() == "Windows" then
+        if Windows then
             result = result:gsub("\n[^%.][^<\n]+\\", "\n")
             result = result:gsub("%.\\", "")
         else
