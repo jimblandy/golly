@@ -186,7 +186,7 @@ local movecursor = "hand"           -- cursor for rotating grid
 local currcursor = movecursor       -- current cursor
 local arrow_cursor = false          -- true if cursor is in tool bar
 
-local DEFAULT_RULE = "3D5,6,7/6"    -- initial rule
+local DEFAULT_RULE = "3D5..7/6"     -- initial rule
 local rulestring = DEFAULT_RULE
 local survivals = {}
 local births = {}
@@ -216,9 +216,9 @@ function AddCount(item, counts, bcount)
         counts[#counts+1] = i
     else
         if bcount then
-            g.warn("Birth count must be from 1 to 26.")
+            g.warn("Birth count ("..i..") must be from 1 to 26.")
         else
-            g.warn("Survival count must be from 0 to 26.")
+            g.warn("Survival count ("..i..") must be from 0 to 26.")
         end
         return false
     end
@@ -314,14 +314,14 @@ function CanonicalForm(counts)
             if startrun == -1 then startrun = i end
         else
             if startrun ~= -1 then
-                result = result..AddCanonicalPart(result, startrun, i)
+                result = AddCanonicalPart(result, startrun, i)
                 startrun = -1
             end
         end
     end
     -- check for unfinished run
     if startrun ~= -1 then
-        result = result..AddCanonicalPart(result, startrun, 27)
+        result = AddCanonicalPart(result, startrun, 27)
     end
     return result
 end
