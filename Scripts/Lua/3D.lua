@@ -10,8 +10,9 @@ scale and rotation).
 
 Author: Andrew Trevorrow (andrew@trevorrow.com), Feb 2018.
 
-Thanks to Tom Rokicki for optimizing the NextGeneration code.
-Thanks to Chris Rowett for optimizing the DisplayCells code.
+Thanks to Tom Rokicki for optimizing the generating code.
+Thanks to Chris Rowett for optimizing the rendering code and many
+other improvements.
 
 TODO: !!!
 
@@ -96,7 +97,7 @@ local pastepatt = {}                -- grid positions of cells in paste pattern
 local drawstate = 1                 -- for drawing/erasing cells
 local selstate = true               -- for selecting/deselecting cells
 local celltype = "cube"             -- draw live cell as cube/sphere/point
-local DrawLiveCell                  -- set to Draw{Cube/Sphere/Point} or Add{Cube/Sphere/Point}ToBatch
+local DrawLiveCell                  -- set to Add{Cube/Sphere/Point}ToBatch{Depth}
 local xybatch = {}                  -- coordinates for each cell when batch drawing
 local layercoords = {}              -- coordinates for each cell in each layer
 local layerpointcols = {}           -- rgb values for each points in each layer
@@ -1034,7 +1035,7 @@ end
 
 ----------------------------------------------------------------------
 
-local function AddCubeToBatchDepth(x, y, z)
+function AddCubeToBatchDepth(x, y, z)
     -- add live cell as a cube at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1058,7 +1059,7 @@ end
 
 ----------------------------------------------------------------------
 
-local function AddCubeToBatch(x, y, z)
+function AddCubeToBatch(x, y, z)
     -- add live cell as a cube at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1076,7 +1077,7 @@ end
 
 ----------------------------------------------------------------------
 
-local function AddSphereToBatchDepth(x, y, z)
+function AddSphereToBatchDepth(x, y, z)
     -- add live cell as a sphere at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1100,7 +1101,7 @@ end
 
 ----------------------------------------------------------------------
 
-local function AddSphereToBatch(x, y, z)
+function AddSphereToBatch(x, y, z)
     -- add live cell as a sphere at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1118,7 +1119,7 @@ end
 
 ----------------------------------------------------------------------
 
-local function AddPointToBatchDepth(x, y, z)
+function AddPointToBatchDepth(x, y, z)
     -- add mid point of cell at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1141,7 +1142,7 @@ local function AddPointToBatchDepth(x, y, z)
 end
 ----------------------------------------------------------------------
 
-local function AddPointToBatch(x, y, z)
+function AddPointToBatch(x, y, z)
     -- add mid point of cell at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1348,7 +1349,9 @@ function DisplayCells(editing)
         end
     end
 
-    -- determine order to traverse x, y and z in the grid
+    -- determine order to traverse x, y and z in the grid;
+    -- note that we need to draw cells from back to front
+    -- (assumes vertex order set in CreateCube)
     local fromz, toz, stepz, fromy, toy, stepy, fromx, tox, stepx
     if maxZ == z1 then
         fromx, fromy, fromz = MINX, MINY, MAXZ
@@ -1372,10 +1375,6 @@ function DisplayCells(editing)
     if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
     if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
 
-    -- draw cells from back to front (assumes vertex order set in CreateCube)
-    local i, j
-    local stepi, stepj = N*stepy, N*stepz
-
     -- select the cell drawing functions based on whether depth shading is required
     if depthshading then
         zdepth = N*CELLSIZE*0.5
@@ -1397,6 +1396,8 @@ function DisplayCells(editing)
         end
     end
 
+    local i, j
+    local stepi, stepj = N*stepy, N*stepz
     if testcell then
         j = N*fromz
         for z = fromz, toz, stepz do
@@ -1410,7 +1411,7 @@ function DisplayCells(editing)
             j = j+stepj
         end
     else
-        -- only live cells need to be drawn so use batch mode
+        -- only live cells need to be drawn
         j = N*fromz
         for z = fromz, toz, stepz do
             i = N*(fromy+j)
@@ -7058,7 +7059,7 @@ status, err = xpcall(EventLoop, gp.trace)
 if err then g.continue(err) end
 -- the following code is always executed
 
--- try to ensure the following code *completes*, even if user quits Golly
+-- ensure the following code *completes*, even if user quits Golly
 g.check(false)
 
 RestoreGollyState(oldstate)
