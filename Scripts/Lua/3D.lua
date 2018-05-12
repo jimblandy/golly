@@ -208,28 +208,122 @@ local settingsfile = g.getdir("data").."3D.ini"
 
 ----------------------------------------------------------------------
 
-function AppendCounts(array, counts, bcount)
+function AddCount(item, counts, bcount)
     local mincount = 0
     if bcount then mincount = 1 end
+    local i = tonumber(item)
+    if (i >= mincount) and (i <= 26) then
+        counts[#counts+1] = i
+    else
+        if bcount then
+            g.warn("Birth count must be from 1 to 26.")
+        else
+            g.warn("Survival count must be from 0 to 26.")
+        end
+        return false
+    end
+    return true
+end
+
+----------------------------------------------------------------------
+
+function AddCountRange(low, high, counts, bcount)
+    local mincount = 0
+    local what = "Survival"
+    if bcount then
+        mincount = 1
+        what = "Birth"
+    end
+    local l = tonumber(low)
+    local h = tonumber(high)
+
+    -- check range is in ascending order
+    if l > h then
+        g.warn("End of "..what.." range ("..h..") must be higher than start ("..l..")")
+        return false
+    end
+
+    -- check start of range is valid
+    if (l < mincount or l > 26) then
+        g.warn("Start of "..what.." range ("..l..") must be from "..mincount.." to 26")
+        return false
+    end
+
+    -- check end of range is valid
+    if (h < mincount or h > 26) then
+        g.warn("End of "..what.." range ("..h..") must be from "..mincount.." to 26")
+        return false
+    end
+
+    -- add range to counts
+    for i = l, h do
+        counts[#counts+1] = i
+    end
+    return true
+end
+
+----------------------------------------------------------------------
+
+function AppendCounts(array, counts, bcount)
     for _, item in ipairs(array) do
         if validint(item) then
-            local i = tonumber(item)
-            if (i >= mincount) and (i <= 26) then
-                counts[#counts+1] = i
+            -- check for single number
+            if not AddCount(item, counts, bcount) then return false end
+        else
+            -- check for range e.g. 5..7
+            local l, h = split(item, "..")
+            if h == nil then h = "" end
+            if #l > 0 and #h > 0 and validint(l) and validint(h) then
+                if not AddCountRange(l, h, counts, bcount) then return false end
             else
-                if bcount then
-                    g.warn("Birth count must be from 1 to 26.")
-                else
-                    g.warn("Survival count must be from 0 to 26.")
-                end
+                g.warn("Illegal number in rule: "..item)
                 return false
             end
-        else
-            g.warn("Illegal number in rule: "..item)
-            return false
         end
     end
     return true
+end
+
+--------------------------------------------------------------------------------
+
+function AddCanonicalPart(canonstr, startrun, i)
+    if #canonstr > 0 then canonstr = canonstr.."," end
+    -- add the start value
+    canonstr = canonstr..startrun
+    -- check for a run
+    if i > startrun + 1 then
+        if i == startrun + 2 then
+            -- run of two becomes a,b
+            canonstr = canonstr..","..i-1
+        else
+            -- run of more than two becomes a..b
+            canonstr = canonstr..".."..i-1
+        end
+    end
+
+    return canonstr
+end
+
+--------------------------------------------------------------------------------
+
+function CanonicalForm(counts)
+    local result = ""
+    local startrun = -1
+    for i = 0, 26 do
+        if counts[i] then
+            if startrun == -1 then startrun = i end
+        else
+            if startrun ~= -1 then
+                result = result..AddCanonicalPart(result, startrun, i)
+                startrun = -1
+            end
+        end
+    end
+    -- check for unfinished run
+    if startrun ~= -1 then
+        result = result..AddCanonicalPart(result, startrun, 27)
+    end
+    return result
 end
 
 --------------------------------------------------------------------------------
@@ -248,7 +342,7 @@ function ParseRule(newrule)
         g.warn("Rule must have a / separator.")
         return false
     end
-    local s,b = split(newrule,"/")
+    local s, b = split(newrule,"/")
     if #s == 0 then s = {} else s = {split(s,",")} end
     if b == nil or #b == 0 then b = {} else b = {split(b,",")} end
     local news = {}
@@ -261,25 +355,12 @@ function ParseRule(newrule)
         survivals[i] = false
         births[i] = false
     end
+
     for _, i in ipairs(news) do survivals[i] = true end
     for _, i in ipairs(newb) do births[i] = true end
 
     -- set rulestring to canonical form
-    rulestring = "3D"
-    local initlen = #rulestring
-    for i = 0, 26 do
-        if survivals[i] then
-            if #rulestring > initlen then rulestring = rulestring.."," end
-            rulestring = rulestring..i
-        end
-    end
-    rulestring = rulestring.."/"
-    for i = 1, 26 do
-        if births[i] then
-            if rulestring:sub(-1) ~= "/" then rulestring = rulestring.."," end
-            rulestring = rulestring..i
-        end
-    end
+    rulestring = "3D"..CanonicalForm(survivals).."/"..CanonicalForm(births)
 
     return true
 end
@@ -3104,7 +3185,10 @@ function ChangeRule()
         ::try_again::
         newrule = g.getstring("Enter the new rule in the form 3Ds,s,s,.../b,b,b,...\n" ..
                               "where s values are the neighbor counts for survival\n" ..
-                              "and b values are the neighbor counts for birth:",
+                              "and b values are the neighbor counts for birth.\n\n" ..
+                              "Contiguous counts can be specified as a range,\n" ..
+                              "so a rule like 3D4,5,6,7,9/4,5,7 can be entered as\n" ..
+                              "3D4..7,9/4,5,7 (this is the canonical version).\n",
                               newrule, "Change rule")
         if not ParseRule(newrule) then goto try_again end
     end
@@ -5055,6 +5139,13 @@ The B values are the counts of neighboring live cells required for
 birth; ie. a dead cell will become a live cell in the next generation.
 Each cell has 26 neighbors so the S counts are from 0 to 26
 and the B counts are from 1 to 26 (birth on 0 is not allowed).
+
+<p>
+Contiguous counts can be specified as a range, so a rule like
+3D4,5,6,7,9/4,5,7 can be entered as 3D4..7,9/4,5,7 (this is the
+canonical version).
+
+<p>
 Use Control > Set Rule to change the current rule.
 
 <p><a name="rle3"></a><br>
