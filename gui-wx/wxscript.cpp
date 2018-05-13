@@ -1760,6 +1760,7 @@ void PassKeyUpToScript(int key)
     wxString keyinfo = wxT("kup ");
     if (key > ' ' && key <= '~') {
         // displayable ASCII
+        if (key >= 'A' && key <= 'Z') key += 32;  // convert A..Z to a..z to match case in key event
         keyinfo += wxChar(key);
     } else if (key >= WXK_F1 && key <= WXK_F24) {
         // function key
