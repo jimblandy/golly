@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build = 73
+local build = 74
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -38,9 +38,12 @@ local bgclip = "bg"
 local shadow = {
     x     = floor(-wd / 100),
     y     = floor(ht / 100),
-    col   = "rgba 0 0 0 128",
+    rgb   = "0 0 0",  -- shadow colour
+    alpha = 128,      -- default alpha for shadows
+    delta = 8,        -- brick shadow fade rate
     txtx  = -2,
-    txty  = 2
+    txty  = 2,
+    col   = ""
 }
 
 -- brick settings
@@ -66,7 +69,8 @@ local brick = {
     bricksleft  = 0,
     totalbricks = 0,
     x           = 0,
-    y           = 0
+    y           = 0,
+    shadows     = {}
 }
 brick.wd = floor(wd / brick.numcols)
 brick.bricksleft = brick.numrows * brick.numcols
@@ -722,6 +726,40 @@ end
 
 --------------------------------------------------------------------------------
 
+local function createbrickshadow(x, y)
+    local shadows = brick.shadows
+    local i = 1
+    while i <= #shadows and shadows[i].alpha > 0 do
+        i = i + 1
+    end
+    shadows[i] = { alpha = shadow.alpha, x = x, y = y }
+end
+
+--------------------------------------------------------------------------------
+
+local function drawfadingshadows()
+    local shadows = brick.shadows
+    for i = 1, #shadows do
+        local alpha = shadows[i].alpha
+        -- find each shadow that hasn't fully faded
+        if alpha > 0 then
+            -- increase transparency
+            alpha = alpha - shadow.delta
+            if alpha < 0 then alpha = 0 end
+            shadows[i].alpha = alpha
+            if alpha > 0 then
+                -- draw shadow
+                local y = floor((shadows[i].y + brick.offsety) * brick.ht) + shadow.y
+                local x = (shadows[i].x - 1) * brick.wd + shadow.x + edgegapl
+                ov("rgba "..shadow.rgb.." "..alpha)
+                ov("fill "..x.." "..y.." "..(brick.wd - 1).." "..(brick.ht - 1))
+            end
+        end
+    end
+end
+
+--------------------------------------------------------------------------------
+
 local function createbackground()
     -- create background clip
     ov("create "..wd.." "..ht.." "..bgclip)
@@ -771,6 +809,9 @@ local function drawbricks()
         ov("blend 0")
     else
         ov("blend 1")
+        -- draw all fading shadows first
+        drawfadingshadows()
+        -- now draw normal shadows
         ov(shadow.col)
     end
     for pass = startpass, 2 do
@@ -854,6 +895,9 @@ local function initbricks()
     edgegapl = floor(edgegap / 2)
     edgegapr = edgegap - edgegapl
 
+    -- clear the shadows (used to fade shadow when brick hit)
+    brick.shadows = {}
+
     -- set the required bricks alive
     local match
     for y = 1, brick.numrows do
@@ -903,7 +947,7 @@ end
 local function initshadow()
     shadow.x   = floor(-wd / 100)
     shadow.y   = floor(ht / 100)
-    shadow.col = "rgba 0 0 0 128"
+    shadow.col = "rgba "..shadow.rgb.." "..shadow.alpha
 end
 
 --------------------------------------------------------------------------------
@@ -1531,6 +1575,7 @@ local function clearbonusbricks()
             if bricks[x] then
                 bricks[x] = false
                 createparticles(x * brick.wd + edgegapl, floor((y + brick.offsety) * brick.ht), brick.wd, brick.ht, clearparticles, brick.cols[y])
+                createbrickshadow(x, y)
             end
         end
     end
@@ -1848,6 +1893,7 @@ local function breakout()
                                     updatehighscore(game.score)
                                 end
                                 createpoints((brick.x - 1) * brick.wd + edgegapl, brick.y * brick.ht, pointval)
+                                createbrickshadow(brick.x, brick.y)
                                 -- increment combo
                                 game.combomult = game.combomult * game.combofact
                                 if game.combo + 1 > game.maxcombo then
