@@ -275,6 +275,7 @@ or you can search for individual commands alphabetically:
 <a href="#rotate"><b>rotate</b></a><br>
 <a href="#run"><b>run</b></a><br>
 <a href="#save"><b>save</b></a><br>
+<a href="#savechanges"><b>savechanges</b></a><br>
 <a href="#savedialog"><b>savedialog</b></a><br>
 <a href="#select"><b>select</b></a><br>
 <a href="#setalgo"><b>setalgo</b></a><br>
@@ -285,11 +286,11 @@ or you can search for individual commands alphabetically:
 <a href="#setcolors"><b>setcolors</b></a><br>
 <a href="#setcursor"><b>setcursor</b></a><br>
 <a href="#setdir"><b>setdir</b></a><br>
-<a href="#setgen"><b>setgen</b></a><br>
-<a href="#setlayer"><b>setlayer</b></a>
+<a href="#setgen"><b>setgen</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
+<a href="#setlayer"><b>setlayer</b></a><br>
 <a href="#setmag"><b>setmag</b></a><br>
 <a href="#setname"><b>setname</b></a><br>
 <a href="#setoption"><b>setoption</b></a><br>
@@ -1432,6 +1433,15 @@ as well as the usual OK button.  Clicking OK will close the dialog and
 continue; clicking Cancel will close the dialog and abort the script.
 </dd>
 <dd> Example: <b>g.note("Line 1\nLine 2\nLine 3", false)</b></dd>
+</p>
+
+<a name="savechanges"></a><p><dt><b>savechanges(<i>query, message</i>)</b></dt>
+<dd>
+Show a standard "save changes" dialog and return "yes", "no" or "cancel"
+depending on which button the user clicked.
+</dd>
+<dd> Example: <b>local answer = g.savechanges("Save your changes?",</b></dd>
+<dd> <b>"If you don't save, the changes will be lost.")</b></dd>
 </p>
 
 <a name="check"></a><p><dt><b>check(<i>bool</i>)</b></dt>

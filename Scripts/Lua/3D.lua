@@ -4542,7 +4542,7 @@ Select a Lua script that will be run automatically every time 3D.lua starts up.
 <a name="exit"></a><p><dt><b>Exit 3D.lua</b></dt>
 <dd>
 Terminate 3D.lua.  If there are any unsaved changes (indicated by an asterisk at
-the start of the pattern name) then you'll be asked if you really want to exit.
+the start of the pattern name) then you'll be asked if you want to save them.
 Note that hitting the escape key will immediately abort 3D.lua without
 doing any check for unsaved changes.
 </dd>
@@ -5392,20 +5392,19 @@ end
 ----------------------------------------------------------------------
 
 function ExitScript()
-    local function savechanges()
-        -- probably need a g.savechanges command so user sees the proper dialog!!!
-        g.warn("There are unsaved changes.\n" ..
-               "Do you really want to exit 3D.lua?")
-        -- need to call a g.* command so error is returned by pcall if user hit Cancel
-        g.doevent("")
-    end
-
     if dirty and scriptlevel == 0 then
-        -- ask user if they really want to exit
-        local status, err = pcall(savechanges)
-        if err then
-            g.continue("")
-            return          -- user hit Cancel
+        local answer = g.savechanges("Save your changes?",
+                                     "If you don't save, the changes will be lost.")
+        if answer == "yes" then
+            SavePattern()
+            if dirty then
+                -- error occurred or user hit Cancel in g.savedialog
+                return
+            end
+        elseif answer == "no" then
+            g.exit()
+        else -- answer == "cancel"
+            return
         end
     end
     g.exit()

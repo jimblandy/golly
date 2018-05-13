@@ -46,7 +46,7 @@
 #include "wxselect.h"       // for Selection
 #include "wxview.h"         // for viewptr->...
 #include "wxstatus.h"       // for statusptr->...
-#include "wxutils.h"        // for Warning, Note, GetString, etc
+#include "wxutils.h"        // for Warning, Note, GetString, SaveChanges, etc
 #include "wxprefs.h"        // for gollydir, etc
 #include "wxinfo.h"         // for ShowInfo
 #include "wxhelp.h"         // for ShowHelp
@@ -2440,6 +2440,36 @@ static int g_getcolor(lua_State* L)
 
 // -----------------------------------------------------------------------------
 
+static int g_savechanges(lua_State* L)
+{
+    CheckEvents(L);
+    
+    wxString query = wxString(luaL_checkstring(L, 1), LUA_ENC);
+    wxString msg = wxString(luaL_checkstring(L, 2), LUA_ENC);
+
+    int answer = SaveChanges(query, msg);
+    switch (answer) {
+        case 2: {
+            // user selected Yes (or Save on Mac)
+            lua_pushstring(L, "yes");
+            break;
+        }
+        case 1: {
+            // user selected No (or Don't Save on Mac)
+            lua_pushstring(L, "no");
+            break;
+        }
+        default: {
+            // answer == 0 (user selected Cancel)
+            lua_pushstring(L, "cancel");
+        }
+    }
+    
+    return 1;   // result is a string
+}
+
+// -----------------------------------------------------------------------------
+
 static int g_settitle(lua_State* L)
 {
     CheckEvents(L);
@@ -2764,6 +2794,7 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "os",           g_os },           // return the current OS (Windows/Mac/Linux)
     { "millisecs",    g_millisecs },    // return elapsed time since Golly started, in millisecs
     { "sleep",        g_sleep },        // sleep for the given number of millisecs
+    { "savechanges",  g_savechanges },  // show standard save changes dialog and return answer
     { "settitle",     g_settitle },     // set window title to given string
     { "setoption",    g_setoption },    // set given option to new value (and return old value)
     { "getoption",    g_getoption },    // return current value of given option
