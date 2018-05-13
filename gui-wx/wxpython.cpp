@@ -329,12 +329,8 @@ static bool LoadPythonLib()
     #define FILENAME filename
 #endif
 
-#ifdef __WXMSW__
-    // encoding conversion from Python string to wxString is different on Windows???!!!
-    #define PY_ENC wxConvLocal
-#else
-    #define PY_ENC wxConvUTF8
-#endif
+// use UTF8 for the encoding conversion from Python string to wxString
+#define PY_ENC wxConvUTF8
 
 // -----------------------------------------------------------------------------
 
