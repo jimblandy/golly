@@ -329,6 +329,13 @@ static bool LoadPythonLib()
     #define FILENAME filename
 #endif
 
+#ifdef __WXMSW__
+    // encoding conversion from Python string to wxString is different on Windows???!!!
+    #define PY_ENC wxConvLocal
+#else
+    #define PY_ENC wxConvUTF8
+#endif
+
 // -----------------------------------------------------------------------------
 
 bool PythonScriptAborted()
@@ -464,7 +471,7 @@ static PyObject* py_open(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s|i", &filename, &remember)) return NULL;
     
-    const char* err = GSF_open(wxString(filename,wxConvLocal), remember);
+    const char* err = GSF_open(wxString(filename,PY_ENC), remember);
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -482,7 +489,7 @@ static PyObject* py_save(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"ss|i", &filename, &format, &remember)) return NULL;
     
-    const char* err = GSF_save(wxString(filename,wxConvLocal), format, remember);
+    const char* err = GSF_save(wxString(filename,PY_ENC), format, remember);
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -503,10 +510,10 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
                           &initialdir, &initialfname, &mustexist)) return NULL;
     
-    wxString wxs_title(title, wxConvLocal);
-    wxString wxs_filetypes(filetypes, wxConvLocal);
-    wxString wxs_initialdir(initialdir, wxConvLocal);
-    wxString wxs_initialfname(initialfname, wxConvLocal);
+    wxString wxs_title(title, PY_ENC);
+    wxString wxs_filetypes(filetypes, PY_ENC);
+    wxString wxs_initialdir(initialdir, PY_ENC);
+    wxString wxs_initialfname(initialfname, PY_ENC);
     wxString wxs_result = wxEmptyString;
     
     if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
@@ -525,7 +532,7 @@ static PyObject* py_opendialog(PyObject* self, PyObject* args)
         if (opendlg.ShowModal() == wxID_OK) wxs_result = opendlg.GetPath();
     }
     
-    return Py_BuildValue((char*)"s", (const char*)wxs_result.mb_str(wxConvLocal));
+    return Py_BuildValue((char*)"s", (const char*)wxs_result.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -543,10 +550,10 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"|ssssi", &title, &filetypes,
                           &initialdir, &initialfname, &suppressprompt)) return NULL;
     
-    wxString wxs_title(title, wxConvLocal);
-    wxString wxs_filetypes(filetypes, wxConvLocal);
-    wxString wxs_initialdir(initialdir, wxConvLocal);
-    wxString wxs_initialfname(initialfname, wxConvLocal);
+    wxString wxs_title(title, PY_ENC);
+    wxString wxs_filetypes(filetypes, PY_ENC);
+    wxString wxs_initialdir(initialdir, PY_ENC);
+    wxString wxs_initialfname(initialfname, PY_ENC);
     
     if (wxs_initialdir.IsEmpty()) wxs_initialdir = wxFileName::GetCwd();
     
@@ -556,7 +563,7 @@ static PyObject* py_savedialog(PyObject* self, PyObject* args)
     wxString wxs_savefname = wxEmptyString;
     if ( savedlg.ShowModal() == wxID_OK ) wxs_savefname = savedlg.GetPath();
     
-    return Py_BuildValue((char*)"s", (const char*)wxs_savefname.mb_str(wxConvLocal));
+    return Py_BuildValue((char*)"s", (const char*)wxs_savefname.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -676,7 +683,7 @@ static PyObject* py_appdir(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"s", (const char*)gollydir.mb_str(wxConvLocal));
+    return Py_BuildValue((char*)"s", (const char*)gollydir.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -689,7 +696,7 @@ static PyObject* py_datadir(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"")) return NULL;
     
-    return Py_BuildValue((char*)"s", (const char*)datadir.mb_str(wxConvLocal));
+    return Py_BuildValue((char*)"s", (const char*)datadir.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -703,7 +710,7 @@ static PyObject* py_setdir(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"ss", &dirname, &newdir)) return NULL;
     
-    const char* err = GSF_setdir(dirname, wxString(newdir,wxConvLocal));
+    const char* err = GSF_setdir(dirname, wxString(newdir,PY_ENC));
     if (err) PYTHON_ERROR(err);
     
     RETURN_NONE;
@@ -735,7 +742,7 @@ static PyObject* py_new(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &title)) return NULL;
     
-    mainptr->NewPattern(wxString(title,wxConvLocal));
+    mainptr->NewPattern(wxString(title,PY_ENC));
     DoAutoUpdate();
     
     RETURN_NONE;
@@ -1164,7 +1171,7 @@ static PyObject* py_putcells(PyObject* self, PyObject* args)
                           &x0, &y0, &axx, &axy, &ayx, &ayy, &mode))
         return NULL;
     
-    wxString modestr = wxString(mode, wxConvLocal);
+    wxString modestr = wxString(mode, PY_ENC);
     if ( !(  modestr.IsSameAs(wxT("or"), false)
            || modestr.IsSameAs(wxT("xor"), false)
            || modestr.IsSameAs(wxT("copy"), false)
@@ -2410,7 +2417,7 @@ static PyObject* py_setname(PyObject* self, PyObject* args)
         PYTHON_ERROR(msg);
     }
     
-    GSF_setname(wxString(name,wxConvLocal), index);
+    GSF_setname(wxString(name,PY_ENC), index);
     
     RETURN_NONE;
 }
@@ -2431,7 +2438,7 @@ static PyObject* py_getname(PyObject* self, PyObject* args)
         PYTHON_ERROR(msg);
     }
     
-    return Py_BuildValue((char*)"s", (const char*)GetLayer(index)->currname.mb_str(wxConvLocal));
+    return Py_BuildValue((char*)"s", (const char*)GetLayer(index)->currname.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2641,7 +2648,7 @@ static PyObject* py_setclipstr(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &clipstr)) return NULL;
     
-    wxString wxs_clip(clipstr, wxConvLocal);
+    wxString wxs_clip(clipstr, PY_ENC);
     mainptr->CopyTextToClipboard(wxs_clip);
     
     RETURN_NONE;
@@ -2662,7 +2669,7 @@ static PyObject* py_getclipstr(PyObject* self, PyObject* args)
     }
     
     wxString wxs_clipstr = data.GetText();
-    return Py_BuildValue((char*)"s", (const char*)wxs_clipstr.mb_str(wxConvLocal));
+    return Py_BuildValue((char*)"s", (const char*)wxs_clipstr.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2679,14 +2686,14 @@ static PyObject* py_getstring(PyObject* self, PyObject* args)
         return NULL;
     
     wxString result;
-    if ( !GetString(wxString(title,wxConvLocal), wxString(prompt,wxConvLocal),
-                    wxString(initial,wxConvLocal), result) ) {
+    if ( !GetString(wxString(title,PY_ENC), wxString(prompt,PY_ENC),
+                    wxString(initial,PY_ENC), result) ) {
         // user hit Cancel button
         AbortPythonScript();
         return NULL;
     }
     
-    return Py_BuildValue((char*)"s", (const char*)result.mb_str(wxConvLocal));
+    return Py_BuildValue((char*)"s", (const char*)result.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2701,7 +2708,7 @@ static PyObject* py_getxy(PyObject* self, PyObject* args)
     statusptr->CheckMouseLocation(mainptr->infront);   // sets mousepos
     if (viewptr->showcontrols) mousepos = wxEmptyString;
     
-    return Py_BuildValue((char*)"s", (const char*)mousepos.mb_str(wxConvLocal));
+    return Py_BuildValue((char*)"s", (const char*)mousepos.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2717,7 +2724,7 @@ static PyObject* py_getevent(PyObject* self, PyObject* args)
     wxString event;
     GSF_getevent(event, get);
     
-    return Py_BuildValue((char*)"s", (const char*)event.mb_str(wxConvLocal));
+    return Py_BuildValue((char*)"s", (const char*)event.mb_str(PY_ENC));
 }
 
 // -----------------------------------------------------------------------------
@@ -2731,7 +2738,7 @@ static PyObject* py_doevent(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"s", &event)) return NULL;
     
     if (event[0]) {
-        const char* err = GSF_doevent(wxString(event,wxConvLocal));
+        const char* err = GSF_doevent(wxString(event,PY_ENC));
         if (err) PYTHON_ERROR(err);
     }
     
@@ -2780,7 +2787,7 @@ static PyObject* py_show(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
     inscript = false;
-    statusptr->DisplayMessage(wxString(s,wxConvLocal));
+    statusptr->DisplayMessage(wxString(s,PY_ENC));
     inscript = true;
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
@@ -2799,7 +2806,7 @@ static PyObject* py_error(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
     inscript = false;
-    statusptr->ErrorMessage(wxString(s,wxConvLocal));
+    statusptr->ErrorMessage(wxString(s,PY_ENC));
     inscript = true;
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
@@ -2818,7 +2825,7 @@ static PyObject* py_warn(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
     
-    Warning(wxString(s,wxConvLocal), showCancel != 0);
+    Warning(wxString(s,PY_ENC), showCancel != 0);
     
     RETURN_NONE;
 }
@@ -2834,7 +2841,7 @@ static PyObject* py_note(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s|i", &s, &showCancel)) return NULL;
     
-    Note(wxString(s,wxConvLocal), showCancel != 0);
+    Note(wxString(s,PY_ENC), showCancel != 0);
     
     RETURN_NONE;
 }
@@ -2849,7 +2856,7 @@ static PyObject* py_help(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"s", &htmlfile)) return NULL;
     
-    ShowHelp(wxString(htmlfile,wxConvLocal));
+    ShowHelp(wxString(htmlfile,PY_ENC));
     
     RETURN_NONE;
 }
@@ -2884,7 +2891,7 @@ static PyObject* py_exit(PyObject* self, PyObject* args)
     
     if (!PyArg_ParseTuple(args, (char*)"|s", &err)) return NULL;
     
-    GSF_exit(wxString(err, wxConvLocal));
+    GSF_exit(wxString(err, PY_ENC));
     AbortPythonScript();
     
     // exception raised so must return NULL
@@ -2903,7 +2910,7 @@ static PyObject* py_stderr(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, (char*)"s", &s)) return NULL;
     
     // accumulate stderr messages in global string (shown after script finishes)
-    scripterr = wxString(s, wxConvLocal);
+    scripterr = wxString(s, PY_ENC);
     
     RETURN_NONE;
 }
@@ -3113,7 +3120,7 @@ bool InitPython()
     } else {
         // Py_Initialize has already been successfully called;
         // Py_Finalize is not used to close stderr so reset it here
-        if ( PyRun_SimpleString("sys.stderr.data = ''\n") < 0 )
+        if ( PyRun_SimpleString("import sys ; sys.stderr.data = ''\n") < 0 )
             Warning(_("PyRun_SimpleString failed!"));
     }
     
@@ -3138,6 +3145,8 @@ void RunPythonScript(const wxString& filepath)
     // is re-entrant)
     wxString command = wxT("execfile('") + fpath + wxT("',{})");
     PyRun_SimpleString(command.mb_str(wxConvLocal));
+    // don't use wxConvUTF8 in above line because caller has already converted
+    // filepath to decomposed UTF8 if on a Mac
     
     // note that PyRun_SimpleString returns -1 if an exception occurred;
     // the error message (in scripterr) is checked at the end of RunScript

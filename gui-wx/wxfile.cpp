@@ -1193,7 +1193,7 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
     int linelen = 0;
     
     // need to be careful converting Unicode wxString to char*
-    wxCharBuffer buff = text.mb_str(wxConvLocal);
+    wxCharBuffer buff = text.mb_str(wxConvUTF8);
     const char* p = (const char*) buff;
     while (*p) {
         switch (*p) {

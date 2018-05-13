@@ -14,19 +14,18 @@ Thanks to Tom Rokicki for optimizing the generating code.
 Thanks to Chris Rowett for optimizing the rendering code and many
 other improvements.
 
-TODO: !!!
-
-- allow saving pattern as .vti file for use by Ready?
-- add support for 6-face-neighbor rules (via rules ending with V?)
-- also support for 12-neighbor sphere packing rules?
-- support Busy Boxes (via rules starting with BB?)
-
-NOTE: Do following changes for the Golly 3.2b1 release:
+TODO (for Golly 3.2 or later):
 
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
-- fix unicode problems reported here:
-  http://www.conwaylife.com/forums/viewtopic.php?f=7&t=3132#p52918
+- allow saving pattern as .vti file for use by Ready?
+- add support for 6-face-neighbor rules (via rules ending with V?)
+- add support for 12-neighbor sphere packing rules?
+- add support for Busy Boxes (via rules starting with BB?)
+- if Paste fails to load an RLE3 pattern then try loading
+  a 2D pattern using g.getclip (via a pcall)
+- add View > Pattern Info to display comments, or always show when
+  pattern is opened?
 --]]
 
 local g = golly()
