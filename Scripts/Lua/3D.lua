@@ -88,7 +88,8 @@ local showaxes = true               -- draw axes and lattice lines?
 local showlines = true              -- draw lattice lines?
 local generating = false            -- generate pattern?
 local gencount = 0                  -- current generation count
-local perc = 20                     -- initial percentage for random fill
+local perc = 20                     -- initial percentage for RandomPattern
+local randstring = "20"             -- initial string for RandomPattern
 local message = nil                 -- text message displayed by Refresh if not nil
 local selcount = 0                  -- number of selected cells (live or dead)
 local selected = {}                 -- grid positions of selected cells
@@ -383,7 +384,7 @@ function ReadSettings()
             elseif keyword == "pattdir" then pattdir = tostring(value)
             elseif keyword == "scriptdir" then scriptdir = tostring(value)
             elseif keyword == "celltype" then celltype = tostring(value)
-            elseif keyword == "perc" then perc = tonumber(value) or 20
+            elseif keyword == "perc" then randstring = tostring(value)
             elseif keyword == "axes" then showaxes = tostring(value) == "true"
             elseif keyword == "lines" then showlines = tostring(value) == "true"
             elseif keyword == "shading" then depthshading = tostring(value) == "true"
@@ -418,7 +419,7 @@ function WriteSettings()
         f:write("gridsize=", tostring(N), "\n")
         f:write("celltype=", celltype, "\n")
         f:write("rule=", rulestring, "\n")
-        f:write("perc=", tostring(perc), "\n")
+        f:write("perc=", randstring, "\n")
         f:write("axes="..tostring(showaxes), "\n")
         f:write("lines="..tostring(showlines), "\n")
         f:write("shading="..tostring(depthshading), "\n")
@@ -2902,19 +2903,27 @@ end
 
 ----------------------------------------------------------------------
 
-function RandomPattern(percentage)
-    -- make these menu options eventually!!!
-    local randomfill = false
-    local randomsphere = false
-
+function RandomPattern(percentage, fill, sphere)
     local function getperc()
+        local initstring = randstring
         ::try_again::
-        local s = g.getstring("Enter density as a percentage (from 0 to 100):",
-                              tostring(perc), "Random pattern")
+        local s = g.getstring("Enter density as a percentage (from 0 to 100).\n"..
+                              "Append \"f\" to fill the grid.\n"..
+                              "Append \"s\" to create a sphere.",
+                              initstring, "Random pattern")
+        initstring = s
+        fill = s:find("f")
+        sphere = s:find("s")
+        s = s:gsub("[fs]","")
+        if s:find("[^%d]") then
+            g.warn("Only digits and the letters f and s are allowed.\nTry again.")
+            goto try_again
+        end
         if validint(s) and (tonumber(s) >= 0) and (tonumber(s) <= 100) then
             perc = tonumber(s)
+            randstring = initstring
         else
-            g.warn("Percentage must be an integer from 0 to 100.")
+            g.warn("Percentage must be an integer from 0 to 100.\nTry again.")
             goto try_again
         end
     end
@@ -2924,7 +2933,7 @@ function RandomPattern(percentage)
         if perc < 0 then perc = 0 end
         if perc > 100 then perc = 100 end
     else
-        -- prompt user for the percentage;
+        -- prompt user for the percentage and fill/sphere options;
         -- if user hits Cancel button we want to avoid aborting script
         local status, err = pcall(getperc)
         if err then
@@ -2941,26 +2950,27 @@ function RandomPattern(percentage)
     ClearCells()
 
     local minval, maxval
-    if randomfill or N < 8 then
+    if fill or N < 8 then
         minval = 0
         maxval = N-1
     else
         minval = N//8
         maxval = (N-1) - minval
     end
-    if randomsphere then
+    if sphere then
         local mid = N//2
-        local rsq = (maxval-minval)//2
-        rsq = rsq*rsq
+        if N % 2 == 0 then mid = mid - 0.5 end  -- ensure symmetry for even N
+        local rsq = (maxval-minval+1)/2.0
+        rsq = round(rsq*rsq)
         for z = minval, maxval do
             local dz = z-mid
-            local dz2 = dz*dz
+            local dz2 = round(dz*dz)
             for y = minval, maxval do
                 local dy = y-mid
-                local dy2 = dy*dy
+                local dy2 = round(dy*dy)
                 for x = minval, maxval do
                     local dx = x-mid
-                    local d = dx*dx + dy2 + dz2
+                    local d = round(dx*dx) + dy2 + dz2
                     if d <= rsq and rand(0,99) < perc then
                         SetLiveCell(x, y, z)
                     end
@@ -3189,7 +3199,7 @@ function ChangeRule()
                               "Contiguous counts can be specified as a range,\n" ..
                               "so a rule like 3D4,5,6,7,9/4,5,7 can be entered as\n" ..
                               "3D4..7,9/4,5,7 (this is the canonical version).\n",
-                              newrule, "Change rule")
+                              newrule, "Set rule")
         if not ParseRule(newrule) then goto try_again end
     end
 
@@ -4493,6 +4503,7 @@ The active plane is displayed, ready to be edited using the pencil cursor.
 <a name="rand"></a><p><dt><b>Random Pattern...</b></dt>
 <dd>
 Create a new pattern randomly filled with live cells at a given density.
+You have the option of filling the grid and creating a cube or a sphere.
 All undo/redo history is deleted.
 </dd>
 
@@ -4935,7 +4946,7 @@ The boundary values are relative to the middle cell in the grid.
 
 <a name="GetPercentage"></a><p><dt><b>GetPercentage()</b></dt>
 <dd>
-Return the percentage (0 to 100) given in the most recent "Random..." dialog.
+Return the percentage (0 to 100) given in the most recent File > Random Pattern dialog.
 </dd>
 
 <a name="GetPopulation"></a><p><dt><b>GetPopulation()</b></dt>
@@ -4993,10 +5004,13 @@ Call <a href="#DoPaste">DoPaste</a> when you want to actually paste the pattern 
 Return true if a paste pattern exists.
 </dd>
 
-<a name="RandomPattern"></a><p><dt><b>RandomPattern(<i>percentage</i>)</b></dt>
+<a name="RandomPattern"></a><p><dt><b>RandomPattern(<i>percentage, fill, sphere</i>)</b></dt>
 <dd>
 Create a new, random pattern with the given percentage density (0 to 100) of live cells.
-If the <i>percentage</i> is not supplied then the user will be prompted for it.
+If fill is true then the grid is filled, otherwise there will be a gap around
+the random object (this makes it easier to detect an explosive rule).
+If sphere is true then a spherical object is created rather than a cube.
+If no parameters are supplied then the user will be prompted for them.
 All undo/redo history is deleted.
 </dd>
 
