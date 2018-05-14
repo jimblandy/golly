@@ -1083,7 +1083,7 @@ function CreateLiveSphere()
 
     local x = 0
     local y = 0
-    local gray = 180 - diameter//10
+    local gray = 0     -- start with outline
     local grayinc = 3
     if diameter < 50 then grayinc = 8 - diameter//10 end
     local r = (diameter+1)//2
@@ -1098,6 +1098,7 @@ function CreateLiveSphere()
         if r < 2 then break end
         x = x + 1
         y = y + 1
+        if gray == 0 then gray = 180 - diameter//10 end
         gray = gray + grayinc
         if gray > 255 then gray = 255 end
     end
