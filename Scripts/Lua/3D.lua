@@ -947,7 +947,13 @@ end
 
 local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
 
+local lastCubeSize = -1
+
 function CreateLiveCube()
+    -- only create bitmaps if cell size has changed
+    if CELLSIZE == lastCubeSize then return end
+    lastCubeSize = CELLSIZE
+
     -- create a clip containing one rotated cube that will be used later
     -- to draw all live cells (this only works because all cubes are identical
     -- in appearance when using orthographic projection)
@@ -1074,7 +1080,13 @@ end
 
 ----------------------------------------------------------------------
 
+local lastSphereSize = -1
+
 function CreateLiveSphere()
+    -- only create bitmaps if cell size has changed
+    if CELLSIZE == lastSphereSize then return end
+    lastSphereSize = CELLSIZE
+
     -- create a clip containing one sphere that will be used later
     -- to draw all live cells
     local diameter = CELLSIZE-2
@@ -5365,6 +5377,7 @@ end
 
 function ToggleDepthShading()
     depthshading = not depthshading
+    ViewChanged(false)
     Refresh()
 end
 
@@ -6798,6 +6811,17 @@ end
 
 ----------------------------------------------------------------------
 
+function ViewChanged(rotate)
+    -- cube needs recreating on rotate or depth shade toggle
+    lastCubeSize = -1
+    if not rotate then
+        -- sphere only needs recreating on depth shade toggle
+        lastSphereSize = -1
+    end
+end
+
+----------------------------------------------------------------------
+
 function Rotate(xangle, yangle, zangle, display)
     if display == nil then display = true end
     local x = xangle * DEGTORAD
@@ -6832,6 +6856,13 @@ function Rotate(xangle, yangle, zangle, display)
     local gnew = g*xixo + h*yixo + i*zixo
     local hnew = g*xiyo + h*yiyo + i*ziyo
     local inew = g*xizo + h*yizo + i*zizo
+
+    -- check if the view changed
+    if (xixo ~= anew) or (xiyo ~= bnew) or (xozo ~= cnew) or
+        (yixo ~= dnew) or (yiyo ~= enew) or (yizo ~= fnew) or
+        (zixo ~= gnew) or (ziyo ~= hnew) or (zizo ~= inew) then
+        ViewChanged(true)
+    end
 
     -- update the transformation matrix
     xixo = anew
