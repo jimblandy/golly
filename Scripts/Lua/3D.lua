@@ -6858,7 +6858,7 @@ function Rotate(xangle, yangle, zangle, display)
     local inew = g*xizo + h*yizo + i*zizo
 
     -- check if the view changed
-    if (xixo ~= anew) or (xiyo ~= bnew) or (xozo ~= cnew) or
+    if (xixo ~= anew) or (xiyo ~= bnew) or (xizo ~= cnew) or
         (yixo ~= dnew) or (yiyo ~= enew) or (yizo ~= fnew) or
         (zixo ~= gnew) or (ziyo ~= hnew) or (zizo ~= inew) then
         ViewChanged(true)
