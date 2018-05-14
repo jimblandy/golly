@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build = 74
+local build = 75
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -70,7 +70,8 @@ local brick = {
     totalbricks = 0,
     x           = 0,
     y           = 0,
-    shadows     = {}
+    fading      = {},
+    rgbcols     = {}
 }
 brick.wd = floor(wd / brick.numcols)
 brick.bricksleft = brick.numrows * brick.numcols
@@ -726,36 +727,52 @@ end
 
 --------------------------------------------------------------------------------
 
-local function createbrickshadow(x, y)
-    local shadows = brick.shadows
+local function createfadingbrick(x, y)
+    local fading = brick.fading
     local i = 1
-    while i <= #shadows and shadows[i].alpha > 0 do
+    while i <= #fading and fading[i].alpha > 0 do
         i = i + 1
     end
-    shadows[i] = { alpha = shadow.alpha, x = x, y = y }
+    fading[i] = { alpha = shadow.alpha, x = x, y = y }
 end
 
 --------------------------------------------------------------------------------
 
-local function drawfadingshadows()
-    local shadows = brick.shadows
-    for i = 1, #shadows do
-        local alpha = shadows[i].alpha
+local function drawfadingbricks(pass, xoff, yoff)
+    -- save current drawing colour
+    local oldrgba = ov(op.white)
+    local oldblend = ov("blend 1")
+    -- get the list of fading bricks
+    local fading = brick.fading
+    local rgbcols = brick.rgbcols
+    for i = 1, #fading do
+        local alpha = fading[i].alpha
         -- find each shadow that hasn't fully faded
         if alpha > 0 then
-            -- increase transparency
-            alpha = alpha - shadow.delta
-            if alpha < 0 then alpha = 0 end
-            shadows[i].alpha = alpha
+            -- increase transparency if this is the brick (not shadow)
+            if pass == 2 then
+                alpha = alpha - shadow.delta
+                if alpha < 0 then alpha = 0 end
+                fading[i].alpha = alpha
+            end
             if alpha > 0 then
-                -- draw shadow
-                local y = floor((shadows[i].y + brick.offsety) * brick.ht) + shadow.y
-                local x = (shadows[i].x - 1) * brick.wd + shadow.x + edgegapl
-                ov("rgba "..shadow.rgb.." "..alpha)
-                ov("fill "..x.." "..y.." "..(brick.wd - 1).." "..(brick.ht - 1))
+                -- draw brick or shadow
+                local fy = fading[i].y
+                local y = floor((fy + brick.offsety) * brick.ht)
+                local x = (fading[i].x - 1) * brick.wd + edgegapl
+                -- pick the colour depending on drawing brick or shadow
+                if (pass == 1) then
+                    ov("rgba "..shadow.rgb.." "..alpha)
+                else
+                    ov(rgbcols[fy].." "..(alpha * 2))
+                end
+                ov("fill "..(x + xoff).." "..(y + yoff).." "..(brick.wd - 1).." "..(brick.ht - 1))
             end
         end
     end
+    -- restore current drawing colour
+    ov("rgba "..oldrgba)
+    ov("blend "..oldblend)
 end
 
 --------------------------------------------------------------------------------
@@ -809,12 +826,11 @@ local function drawbricks()
         ov("blend 0")
     else
         ov("blend 1")
-        -- draw all fading shadows first
-        drawfadingshadows()
         -- now draw normal shadows
         ov(shadow.col)
     end
     for pass = startpass, 2 do
+        drawfadingbricks(pass, xoff, yoff)
         for y = 1, brick.numrows do
             local bricks = brick.rows[y]
             brick.y = floor((y + brick.offsety) * brick.ht)
@@ -895,8 +911,13 @@ local function initbricks()
     edgegapl = floor(edgegap / 2)
     edgegapr = edgegap - edgegapl
 
-    -- clear the shadows (used to fade shadow when brick hit)
-    brick.shadows = {}
+    -- clear the fading bricks (used when brick hit)
+    brick.fading = {}
+
+    -- create the rgb colours from the brick colours
+    for i = 1, #brick.cols do
+        brick.rgbcols[i] = brick.cols[i]:sub(1, -4)
+    end
 
     -- set the required bricks alive
     local match
@@ -1575,7 +1596,7 @@ local function clearbonusbricks()
             if bricks[x] then
                 bricks[x] = false
                 createparticles(x * brick.wd + edgegapl, floor((y + brick.offsety) * brick.ht), brick.wd, brick.ht, clearparticles, brick.cols[y])
-                createbrickshadow(x, y)
+                createfadingbrick(x, y)
             end
         end
     end
@@ -1893,7 +1914,7 @@ local function breakout()
                                     updatehighscore(game.score)
                                 end
                                 createpoints((brick.x - 1) * brick.wd + edgegapl, brick.y * brick.ht, pointval)
-                                createbrickshadow(brick.x, brick.y)
+                                createfadingbrick(brick.x, brick.y)
                                 -- increment combo
                                 game.combomult = game.combomult * game.combofact
                                 if game.combo + 1 > game.maxcombo then
