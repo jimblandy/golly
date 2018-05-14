@@ -4034,17 +4034,32 @@ end
 
 ----------------------------------------------------------------------
 
-function Zoom(newsize)
-    -- zoom in/out by changing size of cells
-    if newsize < MINSIZE then return end
-    if newsize > MAXSIZE then return end
-    CELLSIZE = newsize
-    HALFCELL = CELLSIZE/2.0
-    MIDGRID = (N+1-(N%2))*HALFCELL
-    MIDCELL = HALFCELL-MIDGRID
-    LEN = CELLSIZE-BORDER*2
-    CreateAxes()
-    Refresh()
+function ZoomIn()
+    if CELLSIZE < MAXSIZE then
+        -- zoom in by increasing size of cells
+        CELLSIZE = CELLSIZE+1
+        HALFCELL = CELLSIZE/2.0
+        MIDGRID = (N+1-(N%2))*HALFCELL
+        MIDCELL = HALFCELL-MIDGRID
+        LEN = CELLSIZE-BORDER*2
+        CreateAxes()
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function ZoomOut()
+    if CELLSIZE > MINSIZE then
+        -- zoom out by decreasing size of cells
+        CELLSIZE = CELLSIZE-1
+        HALFCELL = CELLSIZE/2.0
+        MIDGRID = (N+1-(N%2))*HALFCELL
+        MIDCELL = HALFCELL-MIDGRID
+        LEN = CELLSIZE-BORDER*2
+        CreateAxes()
+        Refresh()
+    end
 end
 
 ----------------------------------------------------------------------
@@ -6859,8 +6874,8 @@ function Rotate(xangle, yangle, zangle, display)
 
     -- check if the view changed
     if (xixo ~= anew) or (xiyo ~= bnew) or (xizo ~= cnew) or
-        (yixo ~= dnew) or (yiyo ~= enew) or (yizo ~= fnew) or
-        (zixo ~= gnew) or (ziyo ~= hnew) or (zizo ~= inew) then
+       (yixo ~= dnew) or (yiyo ~= enew) or (yizo ~= fnew) or
+       (zixo ~= gnew) or (ziyo ~= hnew) or (zizo ~= inew) then
         ViewChanged(true)
     end
 
@@ -7001,8 +7016,8 @@ function HandleKey(event)
     elseif key == "c" and mods == CMDCTRL then CopySelection()
     elseif key == "v" and (mods == "none" or mods == CMDCTRL) then Paste()
     elseif key == "v" and mods == "alt" then CancelPaste()
-    elseif key == "[" then Zoom(CELLSIZE-1)
-    elseif key == "]" then Zoom(CELLSIZE+1)
+    elseif key == "[" then ZoomOut()
+    elseif key == "]" then ZoomIn()
     elseif key == "i" then InitialView()
     elseif key == "f" then FitGrid()
     elseif key == "p" then CycleCellType()
@@ -7140,9 +7155,9 @@ function EventLoop()
                     CheckIfGenerating()
                 end
             elseif event:find("^ozoomout") then
-                if not arrow_cursor then Zoom(CELLSIZE-1) end
+                if not arrow_cursor then ZoomOut() end
             elseif event:find("^ozoomin") then
-                if not arrow_cursor then Zoom(CELLSIZE+1) end
+                if not arrow_cursor then ZoomIn() end
             end
         end
 
