@@ -2583,9 +2583,13 @@ static int g_doevent(lua_State* L)
 static int g_show(lua_State* L)
 {
     CheckEvents(L);
+    
+    // do NOT call luaL_checkstring when inscript is false
+    // (chaos will ensue if an error is detected)
+    const char* msg = luaL_checkstring(L, 1);
 
     inscript = false;
-    statusptr->DisplayMessage(wxString(luaL_checkstring(L, 1), LUA_ENC));
+    statusptr->DisplayMessage(wxString(msg, LUA_ENC));
     inscript = true;
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();
@@ -2599,8 +2603,12 @@ static int g_error(lua_State* L)
 {
     CheckEvents(L);
     
+    // do NOT call luaL_checkstring when inscript is false
+    // (chaos will ensue if an error is detected)
+    const char* msg = luaL_checkstring(L, 1);
+    
     inscript = false;
-    statusptr->ErrorMessage(wxString(luaL_checkstring(L, 1), LUA_ENC));
+    statusptr->ErrorMessage(wxString(msg, LUA_ENC));
     inscript = true;
     // make sure status bar is visible
     if (!showstatus) mainptr->ToggleStatusBar();

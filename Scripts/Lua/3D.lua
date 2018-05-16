@@ -4240,6 +4240,7 @@ end
 
 -- for user scripts
 function SetCell(x, y, z, state)
+    state = state or 1  -- default state is 1
     local mid = N//2
     SetCellState(x+mid, y+mid, z+mid, state)
 end
@@ -5121,6 +5122,7 @@ The next <a href="#Update">Update</a> call will display the active plane.
 <a name="SetCell"></a><p><dt><b>SetCell(<i>x, y, z, state</i>)</b></dt>
 <dd>
 Set the given cell to the given state (0 or 1).
+If the state is not supplied then it defaults to 1.
 The x,y,z coordinates are relative to the middle cell in the grid.
 </dd>
 
