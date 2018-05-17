@@ -2874,7 +2874,19 @@ end
 
 function RunScript(filepath)
     if filepath then
-        local f, msg = loadfile(filepath)
+        local f = io.open(filepath, "r")
+        if f then
+            local line1 = f:read("*l")
+            f:close()
+            if not (line1 and line1:find("3D.lua")) then
+                g.warn("3D.lua was not found on first line of script.", false)
+                return
+            end
+        else
+            g.warn("Script file could not be opened:\n"..filepath, false)
+            return
+        end
+        f, msg = loadfile(filepath)
         if f then
             CallScript(f, false)
         else
@@ -2896,7 +2908,13 @@ end
 ----------------------------------------------------------------------
 
 function RunClipboard()
-    local f, msg = load(g.getclipstr())
+    local cliptext = g.getclipstr()
+    local eol = cliptext:find("\n")
+    if not (eol and cliptext:sub(1,eol):find("3D.lua")) then
+        g.warn("3D.lua was not found on first line of clipboard.", false)
+        return
+    end
+    local f, msg = load(cliptext)
     if f then
         CallScript(f, true)
     else
@@ -4211,14 +4229,19 @@ end
 ----------------------------------------------------------------------
 
 -- for user scripts
-function Step()
-    if popcount > 0 then NextGeneration() end
+function Step(n)
+    n = n or 1
+    while popcount > 0 and n > 0 do
+        NextGeneration()
+        n = n - 1
+    end
 end
 
 ----------------------------------------------------------------------
 
 -- for user scripts
 function SetRule(newrule)
+    newrule = newrule or DEFAULT_RULE
     if not ParseRule(newrule) then
         error("Bad rule in SetRule: "..newrule, 2)
     end
@@ -4756,6 +4779,7 @@ selecting File > Run Clipboard.  Try the latter method with this example
 that creates a small random pattern in the middle of the grid:
 
 <dd><table border=0><pre>
+-- for 3D.lua (make sure you copy this line)
 NewPattern()
 local perc = GetPercentage()
 local quarter = GetGridSize()//4
@@ -4769,6 +4793,11 @@ for z = -quarter, quarter do
     end
 end
 MoveMode() -- sets the hand cursor</pre></table></dd>
+
+<p>
+Note that 3D.lua will only run a script if the clipboard or the file
+has "3D.lua" somewhere in the first line.  This avoids nasty problems
+that can occur if you run a script not written for 3D.lua.
 
 <p>
 Any syntax or runtime errors in a script won't abort 3D.lua.
@@ -4787,6 +4816,7 @@ when it starts up by going to File > Set Startup Script and selecting
 a .lua file containing this code:
 
 <dd><table border=0><pre>
+-- for 3D.lua
 local g = golly()
 local gp = require "gplus"
 local savedHandler = HandleKey
@@ -5072,8 +5102,10 @@ about the given axis ("x", "y" or "z").
 
 <a name="RunScript"></a><p><dt><b>RunScript(<i>filepath</i>)</b></dt>
 <dd>
-Run the specified .lua file.  If the <i>filepath</i> is not supplied then
-the user will be prompted to select a .lua file.
+Run the specified .lua file, but only if the string "3D.lua" occurs
+somewhere in a comment on the first line of the file.
+If the <i>filepath</i> is not supplied then the user will be prompted
+to select a .lua file.
 </dd>
 
 <a name="SavePattern"></a><p><dt><b>SavePattern(<i>filepath</i>)</b></dt>
@@ -5140,12 +5172,14 @@ Call SetMessage(nil) to clear the message.
 
 <a name="SetRule"></a><p><dt><b>SetRule(<i>rule</i>)</b></dt>
 <dd>
-Switch to the given rule.
+Switch to the given rule.  If <i>rule</i> is not supplied the default rule
+is used (3D5..7/6).
 </dd>
 
-<a name="Step"></a><p><dt><b>Step()</b></dt>
+<a name="Step"></a><p><dt><b>Step(<i>n</i>)</b></dt>
 <dd>
-If the population is &gt; 0 then calculate the next generation.
+While the population is &gt; 0 calculate the next <i>n</i> generations.
+If <i>n</i> is not supplied it defaults to 1.
 </dd>
 
 <a name="Update"></a><p><dt><b>Update()</b></dt>
@@ -5171,6 +5205,7 @@ grid corner with the minimum cell coordinates to the corner with
 the maximum cell coordinates:
 
 <dd><table border=0><pre>
+-- for 3D.lua
 local N = GetGridSize()
 for c = -(N//2), (N-1)//2 do
     SetCell(c, c, c, 1)
@@ -5195,13 +5230,15 @@ canonical version).
 
 <p>
 Use Control > Set Rule to change the current rule.
+You can quickly restore 3D.lua's default rule (3D5..7/6) by simply deleting
+the current rule and hitting OK.
 
 <p><a name="rle3"></a><br>
 <font size=+1><b>RLE3 file format</b></font>
 
 <p>
 3D.lua can read and write patterns as text files with a .rle3 extension.
-The format is known as RLE3 and is a simple extension of the well-known
+The file format is known as RLE3 and is a simple extension of the well-known
 RLE format used by Golly:
 
 <p>
@@ -5280,6 +5317,10 @@ The Discovery of a New Glider for the Game of Three-Dimensional Life<br>
 <p>
 Further Notes on the Game of Three-Dimensional Life<br>
 <a href="http://www.complex-systems.com/pdf/08-1-4.pdf">http://www.complex-systems.com/pdf/08-1-4.pdf</a>
+
+<p>
+A Note About the Discovery of Many New Rules for the Game of Three-Dimensional Life<br>
+<a href="http://wpmedia.wolfram.com/uploads/sites/13/2018/02/16-4-7.pdf">http://wpmedia.wolfram.com/uploads/sites/13/2018/02/16-4-7.pdf</a>
 
 </body></html>
 ]]
