@@ -19,11 +19,12 @@ TODO (for Golly 3.2 or later):
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - allow saving pattern as .vti file for use by Ready?
-- add support for 6-face-neighbor rules (via rules ending with V?)
 - add support for 12-neighbor sphere packing rules?
-- add support for Busy Boxes (via rules starting with BB?)
+- add support for Busy Boxes (just 2 rules: 3DBB and 3DBBM?)
 - if Paste fails to load an RLE3 pattern then try loading
-  a 2D pattern using g.getclip (via a pcall)
+  a 2D pattern using g.getclip (via a pcall in case error occurs)
+- if active plane is visible when Paste is called and the clipboard pattern
+  is 1 cell thick in any plane then show paste pattern in active plane
 - add View > Pattern Info to display comments, or always show when
   pattern is opened?
 --]]
@@ -194,6 +195,7 @@ survivals[5] = true                 -- WARNING: must match DEFAULT_RULE
 survivals[6] = true                 -- ditto
 survivals[7] = true                 -- ditto
 births[6] = true                    -- ditto
+local NextGeneration                -- set to NextGenMoore or NextGenVonNeumann
 
 local pattdir = g.getdir("data")    -- initial directory for OpenPattern/SavePattern
 local scriptdir = g.getdir("app")   -- initial directory for RunScript
@@ -208,17 +210,17 @@ local settingsfile = g.getdir("data").."3D.ini"
 
 ----------------------------------------------------------------------
 
-function AddCount(item, counts, bcount)
+function AddCount(item, counts, maxcount, bcount)
     local mincount = 0
     if bcount then mincount = 1 end
     local i = tonumber(item)
-    if (i >= mincount) and (i <= 26) then
+    if (i >= mincount) and (i <= maxcount) then
         counts[#counts+1] = i
     else
         if bcount then
-            g.warn("Birth count ("..i..") must be from 1 to 26.")
+            g.warn("Birth count ("..i..") must be from 1 to "..maxcount)
         else
-            g.warn("Survival count ("..i..") must be from 0 to 26.")
+            g.warn("Survival count ("..i..") must be from 0 to "..maxcount)
         end
         return false
     end
@@ -227,7 +229,7 @@ end
 
 ----------------------------------------------------------------------
 
-function AddCountRange(low, high, counts, bcount)
+function AddCountRange(low, high, counts, maxcount, bcount)
     local mincount = 0
     local what = "Survival"
     if bcount then
@@ -244,14 +246,14 @@ function AddCountRange(low, high, counts, bcount)
     end
 
     -- check start of range is valid
-    if (l < mincount or l > 26) then
-        g.warn("Start of "..what.." range ("..l..") must be from "..mincount.." to 26")
+    if (l < mincount or l > maxcount) then
+        g.warn("Start of "..what.." range ("..l..") must be from "..mincount.." to "..maxcount)
         return false
     end
 
     -- check end of range is valid
-    if (h < mincount or h > 26) then
-        g.warn("End of "..what.." range ("..h..") must be from "..mincount.." to 26")
+    if (h < mincount or h > maxcount) then
+        g.warn("End of "..what.." range ("..h..") must be from "..mincount.." to "..maxcount)
         return false
     end
 
@@ -264,17 +266,17 @@ end
 
 ----------------------------------------------------------------------
 
-function AppendCounts(array, counts, bcount)
+function AppendCounts(array, counts, maxcount, bcount)
     for _, item in ipairs(array) do
         if validint(item) then
             -- check for single number
-            if not AddCount(item, counts, bcount) then return false end
+            if not AddCount(item, counts, maxcount, bcount) then return false end
         else
             -- check for range e.g. 5..7
             local l, h = split(item, "..")
             if h == nil then h = "" end
             if #l > 0 and #h > 0 and validint(l) and validint(h) then
-                if not AddCountRange(l, h, counts, bcount) then return false end
+                if not AddCountRange(l, h, counts, maxcount, bcount) then return false end
             else
                 g.warn("Illegal number in rule: "..item)
                 return false
@@ -300,16 +302,15 @@ function AddCanonicalPart(canonstr, startrun, i)
             canonstr = canonstr..".."..i-1
         end
     end
-
     return canonstr
 end
 
 --------------------------------------------------------------------------------
 
-function CanonicalForm(counts)
+function CanonicalForm(counts, maxcount)
     local result = ""
     local startrun = -1
-    for i = 0, 26 do
+    for i = 0, maxcount do
         if counts[i] then
             if startrun == -1 then startrun = i end
         else
@@ -321,7 +322,7 @@ function CanonicalForm(counts)
     end
     -- check for unfinished run
     if startrun ~= -1 then
-        result = AddCanonicalPart(result, startrun, 27)
+        result = AddCanonicalPart(result, startrun, maxcount+1)
     end
     return result
 end
@@ -329,7 +330,7 @@ end
 --------------------------------------------------------------------------------
 
 function ParseRule(newrule)
-    -- parse newrule and set rulestring, survivals and births if ok
+    -- parse newrule and if ok set rulestring, survivals, births and NextGeneration
     if #newrule == 0 then newrule = DEFAULT_RULE end
     if not newrule:find("^3[dD]") then
         g.warn("Rule must start with 3D.")
@@ -342,16 +343,26 @@ function ParseRule(newrule)
         g.warn("Rule must have a / separator.")
         return false
     end
+    
+    -- use 3D Moore neighborhood unless rule ends with v/V
+    local maxcount = 26
+    if newrule:find("[vV]$") then
+        -- 3D von Neumann neighborhood
+        maxcount = 6
+        newrule = newrule:sub(1,-2)
+    end
+    
     local s, b = split(newrule,"/")
     if #s == 0 then s = {} else s = {split(s,",")} end
     if b == nil or #b == 0 then b = {} else b = {split(b,",")} end
+    
     local news = {}
     local newb = {}
-    if not AppendCounts(s, news, false) then return false end
-    if not AppendCounts(b, newb, true) then return false end
+    if not AppendCounts(s, news, maxcount, false) then return false end
+    if not AppendCounts(b, newb, maxcount, true) then return false end
 
     -- newrule is okay so set survivals and births
-    for i = 0, 26 do
+    for i = 0, maxcount do
         survivals[i] = false
         births[i] = false
     end
@@ -359,8 +370,14 @@ function ParseRule(newrule)
     for _, i in ipairs(news) do survivals[i] = true end
     for _, i in ipairs(newb) do births[i] = true end
 
-    -- set rulestring to canonical form
-    rulestring = "3D"..CanonicalForm(survivals).."/"..CanonicalForm(births)
+    -- set rulestring to the canonical form and NextGeneration to the appropriate function
+    rulestring = "3D"..CanonicalForm(survivals,maxcount).."/"..CanonicalForm(births,maxcount)
+    if maxcount == 6 then
+        rulestring = rulestring.."V"
+        NextGeneration = NextGenVonNeumann
+    else
+        NextGeneration = NextGenMoore
+    end
 
     return true
 end
@@ -2295,24 +2312,33 @@ end
 
 ----------------------------------------------------------------------
 
-function NextGeneration()
-    -- calculate and display the next generation using an algorithm
-    -- described by Carter Bays (see Method B Option 2 on page 398 in
-    -- http://www.complex-systems.com/pdf/01-3-1.pdf)
-
+function AllDead()
     if popcount == 0 then
         StopGenerating()
         message = "All cells are dead."
         Refresh()
-        return
+        return true
     end
+    return false
+end
 
+----------------------------------------------------------------------
+
+function RememberStart()
     if gencount == startcount then
         -- remember position in undo stack that stores the starting state
         -- (for later use by Reset)
         startindex = #undostack
     end
+end
 
+----------------------------------------------------------------------
+
+function NextGenMoore()
+    -- calculate and display the next generation for 3D Moore neighborhood rules
+    if AllDead() then return end
+
+    RememberStart()
     popcount = 0        -- incremented below
     InitLiveBoundary()  -- updated below
 
@@ -2367,9 +2393,101 @@ function NextGeneration()
     grid1 = {}
     grid1, grid2 = grid2, grid1
 
-    if popcount == 0 then
-        StopGenerating()
+    if popcount == 0 then StopGenerating() end
+    gencount = gencount + 1
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
+function NextGenVonNeumann()
+    -- calculate and display the next generation for 3D von Neumann neighborhood rules
+    if AllDead() then return end
+
+    RememberStart()
+    popcount = 0        -- incremented below
+    InitLiveBoundary()  -- updated below
+
+    local lcount = {}   -- neighbor counts (0..6) for live cells
+    local ecount = {}   -- neighbor counts (1..6) for adjacent empty cells
+    local NN = N * N
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
+        local z = k // NN
+        lcount[k] = 0
+        
+        local Ny = N*y
+        local NNz = NN*z
+        local NypNNz = Ny + NNz
+        local xpNNz = x + NNz
+        local xpNy = x + Ny
+        
+        -- the 3D von Neumann neighborhood consists of the 6 cells next to each face of a cube
+        local xp1 = (x+1)%N + NypNNz
+        local xm1 = (x-1)%N + NypNNz
+        
+        local yp1 = N*((y+1)%N) + xpNNz
+        local ym1 = N*((y-1)%N) + xpNNz
+        
+        local zp1 = NN*((z+1)%N) + xpNy
+        local zm1 = NN*((z-1)%N) + xpNy
+        
+        if grid1[xp1] then lcount[k] = lcount[k] + 1 else ecount[xp1] = (ecount[xp1] or 0) + 1 end
+        if grid1[xm1] then lcount[k] = lcount[k] + 1 else ecount[xm1] = (ecount[xm1] or 0) + 1 end
+        
+        if grid1[yp1] then lcount[k] = lcount[k] + 1 else ecount[yp1] = (ecount[yp1] or 0) + 1 end
+        if grid1[ym1] then lcount[k] = lcount[k] + 1 else ecount[ym1] = (ecount[ym1] or 0) + 1 end
+        
+        if grid1[zp1] then lcount[k] = lcount[k] + 1 else ecount[zp1] = (ecount[zp1] or 0) + 1 end
+        if grid1[zm1] then lcount[k] = lcount[k] + 1 else ecount[zm1] = (ecount[zm1] or 0) + 1 end
     end
+    
+    -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    for k,v in pairs(lcount) do
+        if survivals[v] then
+            -- create a survivor cell in grid2
+            grid2[k] = 1
+            popcount = popcount + 1
+            -- don't set dirty flag here!
+            local x = k % N
+            local y = k // N % N
+            local z = k // NN
+            -- update boundary
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
+        end
+    end
+    
+    -- use ecounts and births to put live cells in grid2
+    for k,v in pairs(ecount) do
+        if births[v] then
+            -- create a birth cell in grid2
+            grid2[k] = 1
+            popcount = popcount + 1
+            -- don't set dirty flag here!
+            local x = k % N
+            local y = k // N % N
+            local z = k // NN
+            -- update boundary
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
+        end
+    end
+
+    -- clear all live cells in grid1 and swap grids
+    grid1 = {}
+    grid1, grid2 = grid2, grid1
+
+    if popcount == 0 then StopGenerating() end
     gencount = gencount + 1
     Refresh()
 end
@@ -3230,10 +3348,13 @@ function ChangeRule()
         ::try_again::
         newrule = g.getstring("Enter the new rule in the form 3Ds,s,s,.../b,b,b,...\n" ..
                               "where s values are the neighbor counts for survival\n" ..
-                              "and b values are the neighbor counts for birth.\n\n" ..
+                              "and b values are the neighbor counts for birth.\n" ..
+                              "\n" ..
                               "Contiguous counts can be specified as a range,\n" ..
                               "so a rule like 3D4,5,6,7,9/4,5,7 can be entered as\n" ..
-                              "3D4..7,9/4,5,7 (this is the canonical version).\n",
+                              "3D4..7,9/4,5,7 (this is the canonical version).\n" ..
+                              "\n" ..
+                              "Append V for the von Neumann neighborhood.\n",
                               newrule, "Set rule")
         if not ParseRule(newrule) then goto try_again end
     end
@@ -4415,6 +4536,8 @@ function ShowHelp()
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#functions"><b>Script functions</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#coords"><b>Cell coordinates</b></a></dd>
 <dd><a href="#rules"><b>Supported rules</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#moore"><b>Moore neighborhood</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#von"><b>Von Neumann neighborhood</b></a></dd>
 <dd><a href="#rle3"><b>RLE3 file format</b></a></dd>
 <dd><a href="#refs"><b>Credits and references</b></a></dd>
 </p>
@@ -5215,7 +5338,16 @@ end</pre></table></dd>
 <font size=+1><b>Supported rules</b></font>
 
 <p>
-Rules are strings of the form "3DS,S,S,.../B,B,B,...".
+3D.lua supports rules that use either the 3D Moore neighborhood
+(consisting of 26 cells forming a cube around the central cell)
+or the 3D von Neumann neighborhood (consisting of 6 cells adjacent
+to the faces of a cube).
+
+<p><a name="moore"></a><br>
+<font size=+1><b>Moore neighborhood</b></font>
+
+<p>
+Rules in this neighborhood are strings of the form "3DS,S,S,.../B,B,B,...".
 The S values are the counts of neighboring live cells required
 for a live cell to survive in the next generation.
 The B values are the counts of neighboring live cells required for
@@ -5227,6 +5359,15 @@ and the B counts are from 1 to 26 (birth on 0 is not allowed).
 Contiguous counts can be specified as a range, so a rule like
 3D4,5,6,7,9/4,5,7 can be entered as 3D4..7,9/4,5,7 (this is the
 canonical version).
+
+<p><a name="von"></a><br>
+<font size=+1><b>Von Neumann neighborhood</b></font>
+
+<p>
+Rules in this neighborhood use the same syntax as above but with a "V"
+appended.  For example: 3D0..6/1,3V.
+Each cell has only 6 neighbors so the S counts are from 0 to 6 and the
+B counts are from 1 to 6 (again, birth on 0 is not allowed).
 
 <p>
 Use Control > Set Rule to change the current rule.
