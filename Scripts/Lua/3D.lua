@@ -16,17 +16,16 @@ other improvements.
 
 TODO (for Golly 3.2 or later):
 
+- if Paste fails to load an RLE3 pattern then try loading a 2D pattern using
+  g.getclip (via a pcall in case error occurs)
+- if active plane is visible when Paste is called and the clipboard pattern
+  is 1 cell thick in any plane then show paste pattern in active plane
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - allow saving pattern as .vti file for use by Ready?
 - add support for 12-neighbor sphere packing rules?
-- add support for Busy Boxes (just 2 rules: 3DBB and 3DBBM?)
-- if Paste fails to load an RLE3 pattern then try loading
-  a 2D pattern using g.getclip (via a pcall in case error occurs)
-- if active plane is visible when Paste is called and the clipboard pattern
-  is 1 cell thick in any plane then show paste pattern in active plane
-- add View > Pattern Info to display comments, or always show when
-  pattern is opened?
+- add support for Busy Boxes (just 2 rules: BusyBoxes and BusyBoxesM? (M for mirror))
+- add View > Pattern Info to display comments, or always show when pattern is opened?
 --]]
 
 local g = golly()
@@ -195,7 +194,7 @@ survivals[5] = true                 -- WARNING: must match DEFAULT_RULE
 survivals[6] = true                 -- ditto
 survivals[7] = true                 -- ditto
 births[6] = true                    -- ditto
-local NextGeneration                -- set to NextGenMoore or NextGenVonNeumann
+local NextGeneration                -- set to NextGenMoore, NextGen6Faces, etc
 
 local pattdir = g.getdir("data")    -- initial directory for OpenPattern/SavePattern
 local scriptdir = g.getdir("app")   -- initial directory for RunScript
@@ -344,11 +343,19 @@ function ParseRule(newrule)
         return false
     end
     
-    -- use 3D Moore neighborhood unless rule ends with v/V
+    -- use 3D Moore neighborhood unless rule ends with a special letter
     local maxcount = 26
-    if newrule:find("[vV]$") then
-        -- 3D von Neumann neighborhood
+    if newrule:find("[fF]$") or newrule:find("[vV]$") then
+        -- 6-cell face neighborhood (aka von Neumann neighborhood)
         maxcount = 6
+        newrule = newrule:sub(1,-2)
+    elseif newrule:find("[cC]$") then
+        -- 8-cell corner neighborhood
+        maxcount = 8
+        newrule = newrule:sub(1,-2)
+    elseif newrule:find("[eE]$") then
+        -- 12-cell edge neighborhood
+        maxcount = 12
         newrule = newrule:sub(1,-2)
     end
     
@@ -373,9 +380,15 @@ function ParseRule(newrule)
     -- set rulestring to the canonical form and NextGeneration to the appropriate function
     rulestring = "3D"..CanonicalForm(survivals,maxcount).."/"..CanonicalForm(births,maxcount)
     if maxcount == 6 then
-        rulestring = rulestring.."V"
-        NextGeneration = NextGenVonNeumann
-    else
+        rulestring = rulestring.."F"
+        NextGeneration = NextGen6Faces
+    elseif maxcount == 8 then
+        rulestring = rulestring.."C"
+        NextGeneration = NextGen8Corners
+    elseif maxcount == 12 then
+        rulestring = rulestring.."E"
+        NextGeneration = NextGen12Edges
+    else -- maxcount == 26
         NextGeneration = NextGenMoore
     end
 
@@ -2335,7 +2348,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGenMoore()
-    -- calculate and display the next generation for 3D Moore neighborhood rules
+    -- calculate and display the next generation for rules using the 3D Moore neighborhood
     if AllDead() then return end
 
     RememberStart()
@@ -2400,8 +2413,9 @@ end
 
 ----------------------------------------------------------------------
 
-function NextGenVonNeumann()
-    -- calculate and display the next generation for 3D von Neumann neighborhood rules
+function NextGen6Faces()
+    -- calculate and display the next generation for rules using the 6-cell face neighborhood
+    -- (aka the von Neumann neighborhood)
     if AllDead() then return end
 
     RememberStart()
@@ -2423,24 +2437,224 @@ function NextGenVonNeumann()
         local xpNNz = x + NNz
         local xpNy = x + Ny
         
-        -- the 3D von Neumann neighborhood consists of the 6 cells next to each face of a cube
+        -- calculate the positions of the 6 cells next to each face of this cell
         local xp1 = (x+1)%N + NypNNz
         local xm1 = (x-1)%N + NypNNz
-        
         local yp1 = N*((y+1)%N) + xpNNz
         local ym1 = N*((y-1)%N) + xpNNz
-        
         local zp1 = NN*((z+1)%N) + xpNy
         local zm1 = NN*((z-1)%N) + xpNy
         
         if grid1[xp1] then lcount[k] = lcount[k] + 1 else ecount[xp1] = (ecount[xp1] or 0) + 1 end
         if grid1[xm1] then lcount[k] = lcount[k] + 1 else ecount[xm1] = (ecount[xm1] or 0) + 1 end
-        
         if grid1[yp1] then lcount[k] = lcount[k] + 1 else ecount[yp1] = (ecount[yp1] or 0) + 1 end
         if grid1[ym1] then lcount[k] = lcount[k] + 1 else ecount[ym1] = (ecount[ym1] or 0) + 1 end
-        
         if grid1[zp1] then lcount[k] = lcount[k] + 1 else ecount[zp1] = (ecount[zp1] or 0) + 1 end
         if grid1[zm1] then lcount[k] = lcount[k] + 1 else ecount[zm1] = (ecount[zm1] or 0) + 1 end
+    end
+    
+    -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    for k,v in pairs(lcount) do
+        if survivals[v] then
+            -- create a survivor cell in grid2
+            grid2[k] = 1
+            popcount = popcount + 1
+            -- don't set dirty flag here!
+            local x = k % N
+            local y = k // N % N
+            local z = k // NN
+            -- update boundary
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
+        end
+    end
+    
+    -- use ecounts and births to put live cells in grid2
+    for k,v in pairs(ecount) do
+        if births[v] then
+            -- create a birth cell in grid2
+            grid2[k] = 1
+            popcount = popcount + 1
+            -- don't set dirty flag here!
+            local x = k % N
+            local y = k // N % N
+            local z = k // NN
+            -- update boundary
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
+        end
+    end
+
+    -- clear all live cells in grid1 and swap grids
+    grid1 = {}
+    grid1, grid2 = grid2, grid1
+
+    if popcount == 0 then StopGenerating() end
+    gencount = gencount + 1
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
+function NextGen8Corners()
+    -- calculate and display the next generation for rules using the 8-cell corner neighborhood
+    if AllDead() then return end
+
+    RememberStart()
+    popcount = 0        -- incremented below
+    InitLiveBoundary()  -- updated below
+
+    local lcount = {}   -- neighbor counts (0..8) for live cells
+    local ecount = {}   -- neighbor counts (1..8) for adjacent empty cells
+    local NN = N * N
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
+        local z = k // NN
+        lcount[k] = 0
+        
+        local xp1 = (x+1)%N
+        local xm1 = (x-1)%N
+        local yp1 = N*((y+1)%N)
+        local ym1 = N*((y-1)%N)
+        local zp1 = NN*((z+1)%N)
+        local zm1 = NN*((z-1)%N)
+        
+        -- calculate the positions of the 8 cells touching each corner of this cell
+        local ppp = xp1 + yp1 + zp1
+        local mmm = xm1 + ym1 + zm1
+        local ppm = xp1 + yp1 + zm1
+        local mmp = xm1 + ym1 + zp1
+        local mpp = xm1 + yp1 + zp1
+        local pmm = xp1 + ym1 + zm1
+        local pmp = xp1 + ym1 + zp1
+        local mpm = xm1 + yp1 + zm1
+        
+        if grid1[ppp] then lcount[k] = lcount[k] + 1 else ecount[ppp] = (ecount[ppp] or 0) + 1 end
+        if grid1[mmm] then lcount[k] = lcount[k] + 1 else ecount[mmm] = (ecount[mmm] or 0) + 1 end
+        if grid1[ppm] then lcount[k] = lcount[k] + 1 else ecount[ppm] = (ecount[ppm] or 0) + 1 end
+        if grid1[mmp] then lcount[k] = lcount[k] + 1 else ecount[mmp] = (ecount[mmp] or 0) + 1 end
+        if grid1[mpp] then lcount[k] = lcount[k] + 1 else ecount[mpp] = (ecount[mpp] or 0) + 1 end
+        if grid1[pmm] then lcount[k] = lcount[k] + 1 else ecount[pmm] = (ecount[pmm] or 0) + 1 end
+        if grid1[pmp] then lcount[k] = lcount[k] + 1 else ecount[pmp] = (ecount[pmp] or 0) + 1 end
+        if grid1[mpm] then lcount[k] = lcount[k] + 1 else ecount[mpm] = (ecount[mpm] or 0) + 1 end
+    end
+    
+    -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    for k,v in pairs(lcount) do
+        if survivals[v] then
+            -- create a survivor cell in grid2
+            grid2[k] = 1
+            popcount = popcount + 1
+            -- don't set dirty flag here!
+            local x = k % N
+            local y = k // N % N
+            local z = k // NN
+            -- update boundary
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
+        end
+    end
+    
+    -- use ecounts and births to put live cells in grid2
+    for k,v in pairs(ecount) do
+        if births[v] then
+            -- create a birth cell in grid2
+            grid2[k] = 1
+            popcount = popcount + 1
+            -- don't set dirty flag here!
+            local x = k % N
+            local y = k // N % N
+            local z = k // NN
+            -- update boundary
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
+        end
+    end
+
+    -- clear all live cells in grid1 and swap grids
+    grid1 = {}
+    grid1, grid2 = grid2, grid1
+
+    if popcount == 0 then StopGenerating() end
+    gencount = gencount + 1
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
+function NextGen12Edges()
+    -- calculate and display the next generation for rules using the 12-cell edge neighborhood
+    if AllDead() then return end
+
+    RememberStart()
+    popcount = 0        -- incremented below
+    InitLiveBoundary()  -- updated below
+
+    local lcount = {}   -- neighbor counts (0..12) for live cells
+    local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
+    local NN = N * N
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
+        local z = k // NN
+        lcount[k] = 0
+        
+        local xp1 = (x+1)%N
+        local xm1 = (x-1)%N
+        local yp1 = N*((y+1)%N)
+        local ym1 = N*((y-1)%N)
+        local zp1 = NN*((z+1)%N)
+        local zm1 = NN*((z-1)%N)
+        local Ny = N*y
+        local NNz = NN*z
+        
+        -- calculate the positions of the 12 cells next to each edge of this cell
+        local xpp = x + yp1 + zp1
+        local xmm = x + ym1 + zm1
+        local xpm = x + yp1 + zm1
+        local xmp = x + ym1 + zp1
+
+        local pyp = xp1 + Ny + zp1
+        local mym = xm1 + Ny + zm1
+        local pym = xp1 + Ny + zm1
+        local myp = xm1 + Ny + zp1
+        
+        local ppz = xp1 + yp1 + NNz
+        local mmz = xm1 + ym1 + NNz
+        local pmz = xp1 + ym1 + NNz
+        local mpz = xm1 + yp1 + NNz
+        
+        if grid1[xpp] then lcount[k] = lcount[k] + 1 else ecount[xpp] = (ecount[xpp] or 0) + 1 end
+        if grid1[xmm] then lcount[k] = lcount[k] + 1 else ecount[xmm] = (ecount[xmm] or 0) + 1 end
+        if grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
+        if grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
+        
+        if grid1[pyp] then lcount[k] = lcount[k] + 1 else ecount[pyp] = (ecount[pyp] or 0) + 1 end
+        if grid1[mym] then lcount[k] = lcount[k] + 1 else ecount[mym] = (ecount[mym] or 0) + 1 end
+        if grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
+        if grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
+        
+        if grid1[ppz] then lcount[k] = lcount[k] + 1 else ecount[ppz] = (ecount[ppz] or 0) + 1 end
+        if grid1[mmz] then lcount[k] = lcount[k] + 1 else ecount[mmz] = (ecount[mmz] or 0) + 1 end
+        if grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
+        if grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
     end
     
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
@@ -3354,7 +3568,9 @@ function ChangeRule()
                               "so a rule like 3D4,5,6,7,9/4,5,7 can be entered as\n" ..
                               "3D4..7,9/4,5,7 (this is the canonical version).\n" ..
                               "\n" ..
-                              "Append V for the von Neumann neighborhood.\n",
+                              "Append F for the 6-cell face neighborhood,\n" ..
+                              "or C for the 8-cell corner neighborhood,\n" ..
+                              "or E for the 12-cell edge neighborhood.\n",
                               newrule, "Set rule")
         if not ParseRule(newrule) then goto try_again end
     end
@@ -4537,7 +4753,9 @@ function ShowHelp()
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#coords"><b>Cell coordinates</b></a></dd>
 <dd><a href="#rules"><b>Supported rules</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#moore"><b>Moore neighborhood</b></a></dd>
-<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#von"><b>Von Neumann neighborhood</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#face"><b>Face neighborhood</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#corner"><b>Corner neighborhood</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#edge"><b>Edge neighborhood</b></a></dd>
 <dd><a href="#rle3"><b>RLE3 file format</b></a></dd>
 <dd><a href="#refs"><b>Credits and references</b></a></dd>
 </p>
@@ -5338,10 +5556,21 @@ end</pre></table></dd>
 <font size=+1><b>Supported rules</b></font>
 
 <p>
-3D.lua supports rules that use either the 3D Moore neighborhood
-(consisting of 26 cells forming a cube around the central cell)
-or the 3D von Neumann neighborhood (consisting of 6 cells adjacent
-to the faces of a cube).
+3D.lua supports rules that use a number of different neighborhoods:
+
+<p><ul>
+<li>
+The Moore neighborhood consists of the 26 cells that form a cube around the central cell.
+<li>
+The Face neighborhood consists of the 6 cells adjacent to the faces of a cube.
+<li>
+The Corner neighborhood consists of the 8 cells adjacent to the corners of a cube.
+<li>
+The Edge neighborhood consists of the 12 cells adjacent to the edges of a cube.
+</ul>
+
+<p>
+Note that the Moore neighborhood is the combination of the Face+Corner+Edge neighborhoods.
 
 <p><a name="moore"></a><br>
 <font size=+1><b>Moore neighborhood</b></font>
@@ -5360,14 +5589,30 @@ Contiguous counts can be specified as a range, so a rule like
 3D4,5,6,7,9/4,5,7 can be entered as 3D4..7,9/4,5,7 (this is the
 canonical version).
 
-<p><a name="von"></a><br>
-<font size=+1><b>Von Neumann neighborhood</b></font>
+<p><a name="face"></a><br>
+<font size=+1><b>Face neighborhood</b></font>
 
 <p>
-Rules in this neighborhood use the same syntax as above but with a "V"
-appended.  For example: 3D0..6/1,3V.
-Each cell has only 6 neighbors so the S counts are from 0 to 6 and the
+Rules in this neighborhood use the same syntax as the Moore neighborhood
+but with "F" appended.  For example: 3D0..6/1,3F.
+Each cell has 6 neighbors so the S counts are from 0 to 6 and the
 B counts are from 1 to 6 (again, birth on 0 is not allowed).
+
+<p><a name="corner"></a><br>
+<font size=+1><b>Corner neighborhood</b></font>
+
+<p>
+Rules use the same syntax as the Moore neighborhood but with "C" appended.
+Each cell has 8 neighbors so the S counts are from 0 to 8 and the
+B counts are from 1 to 8.
+
+<p><a name="edge"></a><br>
+<font size=+1><b>Edge neighborhood</b></font>
+
+<p>
+Rules use the same syntax as the Moore neighborhood but with "E" appended.
+Each cell has 12 neighbors so the S counts are from 0 to 12 and the
+B counts are from 1 to 12.
 
 <p>
 Use Control > Set Rule to change the current rule.
