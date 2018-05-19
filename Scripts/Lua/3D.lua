@@ -23,7 +23,6 @@ TODO (for Golly 3.2 or later):
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - allow saving pattern as .vti file for use by Ready?
-- add support for 12-neighbor sphere packing rules?
 - add support for Busy Boxes (just 2 rules: BusyBoxes and BusyBoxesM? (M for mirror))
 - add View > Pattern Info to display comments, or always show when pattern is opened?
 --]]
@@ -344,17 +343,23 @@ function ParseRule(newrule)
     end
     
     -- use 3D Moore neighborhood unless rule ends with a special letter
+    local lastchar = newrule:sub(-1):upper()
     local maxcount = 26
-    if newrule:find("[fF]$") or newrule:find("[vV]$") then
+    if lastchar == "F" or lastchar == "V" then
         -- 6-cell face neighborhood (aka von Neumann neighborhood)
+        lastchar = "F"
         maxcount = 6
         newrule = newrule:sub(1,-2)
-    elseif newrule:find("[cC]$") then
+    elseif lastchar == "C" then
         -- 8-cell corner neighborhood
         maxcount = 8
         newrule = newrule:sub(1,-2)
-    elseif newrule:find("[eE]$") then
+    elseif lastchar == "E" then
         -- 12-cell edge neighborhood
+        maxcount = 12
+        newrule = newrule:sub(1,-2)
+    elseif lastchar == "H" then
+        -- 12-cell hexahedral neighborhood
         maxcount = 12
         newrule = newrule:sub(1,-2)
     end
@@ -379,16 +384,19 @@ function ParseRule(newrule)
 
     -- set rulestring to the canonical form and NextGeneration to the appropriate function
     rulestring = "3D"..CanonicalForm(survivals,maxcount).."/"..CanonicalForm(births,maxcount)
-    if maxcount == 6 then
+    if lastchar == "F" then
         rulestring = rulestring.."F"
         NextGeneration = NextGen6Faces
-    elseif maxcount == 8 then
+    elseif lastchar == "C" then
         rulestring = rulestring.."C"
         NextGeneration = NextGen8Corners
-    elseif maxcount == 12 then
+    elseif lastchar == "E" then
         rulestring = rulestring.."E"
         NextGeneration = NextGen12Edges
-    else -- maxcount == 26
+    elseif lastchar == "H" then
+        rulestring = rulestring.."H"
+        NextGeneration = NextGenHexahedral
+    else
         NextGeneration = NextGenMoore
     end
 
@@ -2708,6 +2716,114 @@ end
 
 ----------------------------------------------------------------------
 
+function NextGenHexahedral()
+    -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
+    if AllDead() then return end
+
+    RememberStart()
+    popcount = 0        -- incremented below
+    InitLiveBoundary()  -- updated below
+
+    local lcount = {}   -- neighbor counts (0..12) for live cells
+    local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
+    local NN = N * N
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
+        local z = k // NN
+        lcount[k] = 0
+        
+        local xp1 = (x+1)%N
+        local xm1 = (x-1)%N
+        local yp1 = N*((y+1)%N)
+        local ym1 = N*((y-1)%N)
+        local zp1 = NN*((z+1)%N)
+        local zm1 = NN*((z-1)%N)
+        local Ny = N*y
+        local NNz = NN*z
+        
+        -- calculate the positions of the 12 neighboring cells (using the top offsets given
+        -- on page 872 in http://www.complex-systems.com/pdf/01-5-1.pdf)
+        local xym = x + Ny + zm1
+        local xyp = x + Ny + zp1
+        local xpm = x + yp1 + zm1
+        local xpz = x + yp1 + NNz
+        local xmp = x + ym1 + zp1
+        local xmz = x + ym1 + NNz
+        local pym = xp1 + Ny + zm1
+        local pyz = xp1 + Ny + NNz
+        local myp = xm1 + Ny + zp1
+        local myz = xm1 + Ny + NNz
+        local pmz = xp1 + ym1 + NNz
+        local mpz = xm1 + yp1 + NNz
+        
+        if grid1[xym] then lcount[k] = lcount[k] + 1 else ecount[xym] = (ecount[xym] or 0) + 1 end
+        if grid1[xyp] then lcount[k] = lcount[k] + 1 else ecount[xyp] = (ecount[xyp] or 0) + 1 end
+        if grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
+        if grid1[xpz] then lcount[k] = lcount[k] + 1 else ecount[xpz] = (ecount[xpz] or 0) + 1 end
+
+        if grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
+        if grid1[xmz] then lcount[k] = lcount[k] + 1 else ecount[xmz] = (ecount[xmz] or 0) + 1 end
+        if grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
+        if grid1[pyz] then lcount[k] = lcount[k] + 1 else ecount[pyz] = (ecount[pyz] or 0) + 1 end
+
+        if grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
+        if grid1[myz] then lcount[k] = lcount[k] + 1 else ecount[myz] = (ecount[myz] or 0) + 1 end
+        if grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
+        if grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
+    end
+    
+    -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    for k,v in pairs(lcount) do
+        if survivals[v] then
+            -- create a survivor cell in grid2
+            grid2[k] = 1
+            popcount = popcount + 1
+            -- don't set dirty flag here!
+            local x = k % N
+            local y = k // N % N
+            local z = k // NN
+            -- update boundary
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
+        end
+    end
+    
+    -- use ecounts and births to put live cells in grid2
+    for k,v in pairs(ecount) do
+        if births[v] then
+            -- create a birth cell in grid2
+            grid2[k] = 1
+            popcount = popcount + 1
+            -- don't set dirty flag here!
+            local x = k % N
+            local y = k // N % N
+            local z = k // NN
+            -- update boundary
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
+        end
+    end
+
+    -- clear all live cells in grid1 and swap grids
+    grid1 = {}
+    grid1, grid2 = grid2, grid1
+
+    if popcount == 0 then StopGenerating() end
+    gencount = gencount + 1
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
 function NewPattern()
     pattname = "untitled"
     SetCursor(drawcursor)
@@ -3570,7 +3686,8 @@ function ChangeRule()
                               "\n" ..
                               "Append F for the 6-cell face neighborhood,\n" ..
                               "or C for the 8-cell corner neighborhood,\n" ..
-                              "or E for the 12-cell edge neighborhood.\n",
+                              "or E for the 12-cell edge neighborhood,\n" ..
+                              "or H for the 12-cell hexahedral neighborhood.\n",
                               newrule, "Set rule")
         if not ParseRule(newrule) then goto try_again end
     end
@@ -4756,6 +4873,7 @@ function ShowHelp()
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#face"><b>Face neighborhood</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#corner"><b>Corner neighborhood</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#edge"><b>Edge neighborhood</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#hex"><b>Hexahedral neighborhood</b></a></dd>
 <dd><a href="#rle3"><b>RLE3 file format</b></a></dd>
 <dd><a href="#refs"><b>Credits and references</b></a></dd>
 </p>
@@ -5567,6 +5685,8 @@ The Face neighborhood consists of the 6 cells adjacent to the faces of a cube.
 The Corner neighborhood consists of the 8 cells adjacent to the corners of a cube.
 <li>
 The Edge neighborhood consists of the 12 cells adjacent to the edges of a cube.
+<li>
+The Hexahedral neighborhood consists of the 12 cells packed around a central sphere.
 </ul>
 
 <p>
@@ -5611,6 +5731,14 @@ B counts are from 1 to 8.
 
 <p>
 Rules use the same syntax as the Moore neighborhood but with "E" appended.
+Each cell has 12 neighbors so the S counts are from 0 to 12 and the
+B counts are from 1 to 12.
+
+<p><a name="hex"></a><br>
+<font size=+1><b>Hexahedral neighborhood</b></font>
+
+<p>
+Rules use the same syntax as the Moore neighborhood but with "H" appended.
 Each cell has 12 neighbors so the S counts are from 0 to 12 and the
 B counts are from 1 to 12.
 
