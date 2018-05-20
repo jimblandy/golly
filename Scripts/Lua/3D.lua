@@ -18,16 +18,14 @@ TODO (for Golly 3.2 or later):
 
 - if Paste fails to load an RLE3 pattern then try loading a 2D pattern using
   g.getclip (via a pcall in case error occurs)
-- if active plane is visible when Paste is called and the clipboard pattern
-  is 1 cell thick in any plane then show paste pattern in active plane
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - add support for Busy Boxes (just 2 rules: BusyBoxes and BusyBoxesM? (M for mirror))
 - add View > Pattern Info to display comments, or always show when pattern is opened?
 - allow saving pattern as .vti file for use by Ready?
 - oplus fixes:
-- ignore initial click in menu bar if left/right of labels
 - on Win/Linux ignore click or release in a disabled menu item
+- and ignore initial click in menu bar if left/right of labels (also on Mac?)
 --]]
 
 local g = golly()
@@ -365,12 +363,13 @@ function ParseRule(newrule)
         -- 12-cell hexahedral neighborhood
         maxcount = 12
         newrule = newrule:sub(1,-2)
+    else
+        lastchar = ""   -- for Moore neighborhood
     end
     
     local s, b = split(newrule,"/")
     if #s == 0 then s = {} else s = {split(s,",")} end
     if b == nil or #b == 0 then b = {} else b = {split(b,",")} end
-    
     local news = {}
     local newb = {}
     if not AppendCounts(s, news, maxcount, false) then return false end
@@ -381,23 +380,20 @@ function ParseRule(newrule)
         survivals[i] = false
         births[i] = false
     end
-
     for _, i in ipairs(news) do survivals[i] = true end
     for _, i in ipairs(newb) do births[i] = true end
 
-    -- set rulestring to the canonical form and NextGeneration to the appropriate function
-    rulestring = "3D"..CanonicalForm(survivals,maxcount).."/"..CanonicalForm(births,maxcount)
+    -- set rulestring to the canonical form
+    rulestring = "3D"..CanonicalForm(survivals,maxcount).."/"..CanonicalForm(births,maxcount)..lastchar
+    
+    -- set NextGeneration to the appropriate NextGen* function
     if lastchar == "F" then
-        rulestring = rulestring.."F"
         NextGeneration = NextGen6Faces
     elseif lastchar == "C" then
-        rulestring = rulestring.."C"
         NextGeneration = NextGen8Corners
     elseif lastchar == "E" then
-        rulestring = rulestring.."E"
         NextGeneration = NextGen12Edges
     elseif lastchar == "H" then
-        rulestring = rulestring.."H"
         NextGeneration = NextGenHexahedral
     else
         NextGeneration = NextGenMoore
@@ -3323,7 +3319,7 @@ end
 
 function RunClipboard()
     local cliptext = g.getclipstr()
-    local eol = cliptext:find("\n")
+    local eol = cliptext:find("[\n\r]")
     if not (eol and cliptext:sub(1,eol):find("3D.lua")) then
         g.warn("3D.lua was not found on first line of clipboard.", false)
         return
@@ -4191,7 +4187,6 @@ function Paste()
         -- set pastecount and pastepatt
         pastecount = newpattern.newpop
         pastepatt = {}
-        -- put paste pattern in middle of grid and update paste boundary
         minpastex = math.maxinteger
         minpastey = math.maxinteger
         minpastez = math.maxinteger
@@ -4200,19 +4195,130 @@ function Paste()
         maxpastez = math.mininteger
         local P = newpattern.newsize
         local PP = P*P
-        for k,_ in pairs(newpattern.newgrid) do
-            -- newpattern.newgrid[k] is a live cell
-            -- (note that we add 1 to match the result of MiddlePaste)
-            local x = (k % P)      - minpx + (N - pwd + 1) // 2
-            local y = (k // P % P) - minpy + (N - pht + 1) // 2
-            local z = (k // PP)    - minpz + (N - pdp + 1) // 2
-            pastepatt[ x + N * (y + N * z) ] = 1
-            if x < minpastex then minpastex = x end
-            if y < minpastey then minpastey = y end
-            if z < minpastez then minpastez = z end
-            if x > maxpastex then maxpastex = x end
-            if y > maxpastey then maxpastey = y end
-            if z > maxpastez then maxpastez = z end
+        if currcursor ~= movecursor and (pwd == 1 or pht == 1 or pdp == 1) then
+            -- put 1-cell thick paste pattern in middle of active plane,
+            -- rotating pattern if necessary to match orientation
+            local xx, xy, xz = 1, 0, 0
+            local yx, yy, yz = 0, 1, 0
+            local zx, zy, zz = 0, 0, 1
+            local mid = N//2
+            local xoffset = 0
+            local yoffset = 0
+            local zoffset = 0
+            if pdp == 1 then
+                if activeplane == "XY" then
+                    -- no rotation needed
+                    xoffset = (N - pwd + 1) // 2
+                    yoffset = (N - pht + 1) // 2
+                    zoffset = mid + activepos
+                elseif activeplane == "YZ" then
+                    -- rotate pattern about its Y axis
+                    xx, xy, xz =  0,  0,  1
+                    yx, yy, yz =  0,  1,  0
+                    zx, zy, zz = -1,  0,  0
+                    xoffset = mid + activepos
+                    yoffset = (N - pht + 1) // 2
+                    zoffset = (N - pwd + 1) // 2 + pwd - 1
+                else -- activeplane == "XZ"
+                    -- rotate pattern about its X axis
+                    xx, xy, xz =  1,  0,  0
+                    yx, yy, yz =  0,  0, -1
+                    zx, zy, zz =  0,  1,  0
+                    xoffset = (N - pwd + 1) // 2
+                    yoffset = mid + activepos
+                    zoffset = (N - pht + 1) // 2
+                end
+            elseif pht == 1 then
+                if activeplane == "XY" then
+                    -- rotate pattern about its X axis
+                    xx, xy, xz =  1,  0,  0
+                    yx, yy, yz =  0,  0, -1
+                    zx, zy, zz =  0,  1,  0
+                    xoffset = (N - pwd + 1) // 2
+                    yoffset = (N - pdp + 1) // 2 + pdp - 1
+                    zoffset = mid + activepos
+                elseif activeplane == "YZ" then
+                    -- rotate pattern about its Z axis
+                    xx, xy, xz =  0, -1,  0
+                    yx, yy, yz =  1,  0,  0
+                    zx, zy, zz =  0,  0,  1
+                    xoffset = mid + activepos
+                    yoffset = (N - pwd + 1) // 2
+                    zoffset = (N - pdp + 1) // 2
+                else -- activeplane == "XZ"
+                    -- no rotation needed
+                    xoffset = (N - pwd + 1) // 2
+                    yoffset = mid + activepos
+                    zoffset = (N - pdp + 1) // 2
+                end
+            else -- pwd == 1
+                if activeplane == "XY" then
+                    -- rotate pattern about its Y axis
+                    xx, xy, xz =  0,  0,  1
+                    yx, yy, yz =  0,  1,  0
+                    zx, zy, zz = -1,  0,  0
+                    xoffset = (N - pdp + 1) // 2
+                    yoffset = (N - pht + 1) // 2
+                    zoffset = mid + activepos
+                elseif activeplane == "YZ" then
+                    -- no rotation needed
+                    xoffset = mid + activepos
+                    yoffset = (N - pht + 1) // 2
+                    zoffset = (N - pdp + 1) // 2
+                else -- activeplane == "XZ"
+                    -- rotate pattern about its Z axis
+                    xx, xy, xz =  0, -1,  0
+                    yx, yy, yz =  1,  0,  0
+                    zx, zy, zz =  0,  0,  1
+                    xoffset = (N - pht + 1) // 2 + pht - 1
+                    yoffset = mid + activepos
+                    zoffset = (N - pdp + 1) // 2
+                end
+            end
+            for k,_ in pairs(newpattern.newgrid) do
+                -- move pattern to origin
+                local x = (k % P)      - minpx
+                local y = (k // P % P) - minpy
+                local z = (k // PP)    - minpz
+
+                -- do the rotation (if any)
+                local newx = x*xx + y*xy + z*xz
+                local newy = x*yx + y*yy + z*yz
+                local newz = x*zx + y*zy + z*zz
+                
+                -- now shift to middle of active plane
+                x = newx + xoffset
+                y = newy + yoffset
+                z = newz + zoffset
+
+                pastepatt[ x + N * (y + N * z) ] = 1
+                -- update paste boundary
+                if x < minpastex then minpastex = x end
+                if y < minpastey then minpastey = y end
+                if z < minpastez then minpastez = z end
+                if x > maxpastex then maxpastex = x end
+                if y > maxpastey then maxpastey = y end
+                if z > maxpastez then maxpastez = z end
+            end
+        else
+            -- put paste pattern in middle of grid
+            local xoffset = minpx - (N - pwd + 1) // 2
+            local yoffset = minpy - (N - pht + 1) // 2
+            local zoffset = minpz - (N - pdp + 1) // 2
+            for k,_ in pairs(newpattern.newgrid) do
+                -- newpattern.newgrid[k] is a live cell
+                local x = (k % P)      - xoffset
+                local y = (k // P % P) - yoffset
+                local z = (k // PP)    - zoffset
+                pastepatt[ x + N * (y + N * z) ] = 1
+                -- update paste boundary
+                if x < minpastex then minpastex = x end
+                if y < minpastey then minpastey = y end
+                if z < minpastez then minpastez = z end
+                if x > maxpastex then maxpastex = x end
+                if y > maxpastey then maxpastey = y end
+                if z > maxpastez then maxpastez = z end
+            end
         end
         CheckIfGenerating()
         Refresh()
@@ -5055,8 +5161,10 @@ Copy all selected live cells to the clipboard in <a href="#rle3">RLE3</a> format
 <a name="paste"></a><p><dt><b>Paste</b></dt>
 <dd>
 If the clipboard contains a valid, non-empty <a href="#rle3">RLE3</a> pattern that fits
-within the current grid then a paste pattern (comprised of red cells) is created in the
-middle of the grid.  You can use any cursor to drag the paste pattern to any position
+within the current grid then a paste pattern (comprised of red cells) will appear.
+If the active plane is visible and the clipboard pattern is one cell thick (in any direction)
+then the paste pattern appears in the middle of the active plane, otherwise it will appear
+in the middle of the grid.  You can use any cursor to drag the paste pattern to any position
 within the grid, then control-click or right-click anywhere to get a pop-up menu that lets
 you flip/rotate the paste pattern or paste it into the grid using either OR mode or XOR mode.
 </dd>
@@ -5481,8 +5589,10 @@ All undo/redo history is deleted.
 <a name="Paste"></a><p><dt><b>Paste()</b></dt>
 <dd>
 Return true if the clipboard contains a valid, non-empty RLE3 pattern that fits
-within the current grid.  If so then a paste pattern is created in the middle
-of the grid.  You can then call <a href="#FlipPaste">FlipPaste</a> or
+within the current grid.  If the active plane exists and the clipboard pattern is
+one cell thick (in any direction) then the paste pattern is located in the middle
+of the active plane, otherwise it is located in the middle of the grid.
+You can then call <a href="#FlipPaste">FlipPaste</a> or
 <a href="#RotatePaste">RotatePaste</a> to modify the paste pattern.
 Call <a href="#DoPaste">DoPaste</a> when you want to actually paste the pattern into the grid.
 </dd>
