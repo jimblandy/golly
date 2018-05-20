@@ -22,9 +22,12 @@ TODO (for Golly 3.2 or later):
   is 1 cell thick in any plane then show paste pattern in active plane
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
-- allow saving pattern as .vti file for use by Ready?
 - add support for Busy Boxes (just 2 rules: BusyBoxes and BusyBoxesM? (M for mirror))
 - add View > Pattern Info to display comments, or always show when pattern is opened?
+- allow saving pattern as .vti file for use by Ready?
+- oplus fixes:
+- ignore initial click in menu bar if left/right of labels
+- on Win/Linux ignore click or release in a disabled menu item
 --]]
 
 local g = golly()
@@ -2334,35 +2337,44 @@ end
 ----------------------------------------------------------------------
 
 function AllDead()
+    -- this function is called at the start of every NextGen* function
     if popcount == 0 then
         StopGenerating()
         message = "All cells are dead."
         Refresh()
-        return true
+        return true         -- return from NextGen*
+    else
+        if gencount == startcount then
+            -- remember position in undo stack that stores the starting state
+            -- (for later use by Reset)
+            startindex = #undostack
+        end
+        popcount = 0        -- incremented in NextGen*
+        InitLiveBoundary()  -- updated in NextGen*
+        return false        -- calculate the next generation
     end
-    return false
 end
 
 ----------------------------------------------------------------------
 
-function RememberStart()
-    if gencount == startcount then
-        -- remember position in undo stack that stores the starting state
-        -- (for later use by Reset)
-        startindex = #undostack
-    end
+function DisplayGeneration()
+    -- this function is called at the end of every NextGen* function
+    gencount = gencount + 1
+
+    -- clear all live cells in grid1 and swap grids
+    grid1 = {}
+    grid1, grid2 = grid2, grid1
+
+    if popcount == 0 then StopGenerating() end
+    Refresh()
 end
 
 ----------------------------------------------------------------------
 
 function NextGenMoore()
-    -- calculate and display the next generation for rules using the 3D Moore neighborhood
     if AllDead() then return end
 
-    RememberStart()
-    popcount = 0        -- incremented below
-    InitLiveBoundary()  -- updated below
-
+    -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local count1 = {}
     local NN = N * N
     local NNN = NN * N
@@ -2410,26 +2422,16 @@ function NextGenMoore()
         end
     end
 
-    -- clear all live cells in grid1 and swap grids
-    grid1 = {}
-    grid1, grid2 = grid2, grid1
-
-    if popcount == 0 then StopGenerating() end
-    gencount = gencount + 1
-    Refresh()
+    DisplayGeneration()
 end
 
 ----------------------------------------------------------------------
 
 function NextGen6Faces()
-    -- calculate and display the next generation for rules using the 6-cell face neighborhood
-    -- (aka the von Neumann neighborhood)
     if AllDead() then return end
 
-    RememberStart()
-    popcount = 0        -- incremented below
-    InitLiveBoundary()  -- updated below
-
+    -- calculate and display the next generation for rules using the 6-cell face neighborhood
+    -- (aka the von Neumann neighborhood)
     local lcount = {}   -- neighbor counts (0..6) for live cells
     local ecount = {}   -- neighbor counts (1..6) for adjacent empty cells
     local NN = N * N
@@ -2501,25 +2503,15 @@ function NextGen6Faces()
         end
     end
 
-    -- clear all live cells in grid1 and swap grids
-    grid1 = {}
-    grid1, grid2 = grid2, grid1
-
-    if popcount == 0 then StopGenerating() end
-    gencount = gencount + 1
-    Refresh()
+    DisplayGeneration()
 end
 
 ----------------------------------------------------------------------
 
 function NextGen8Corners()
-    -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     if AllDead() then return end
 
-    RememberStart()
-    popcount = 0        -- incremented below
-    InitLiveBoundary()  -- updated below
-
+    -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     local lcount = {}   -- neighbor counts (0..8) for live cells
     local ecount = {}   -- neighbor counts (1..8) for adjacent empty cells
     local NN = N * N
@@ -2596,25 +2588,15 @@ function NextGen8Corners()
         end
     end
 
-    -- clear all live cells in grid1 and swap grids
-    grid1 = {}
-    grid1, grid2 = grid2, grid1
-
-    if popcount == 0 then StopGenerating() end
-    gencount = gencount + 1
-    Refresh()
+    DisplayGeneration()
 end
 
 ----------------------------------------------------------------------
 
 function NextGen12Edges()
-    -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     if AllDead() then return end
 
-    RememberStart()
-    popcount = 0        -- incremented below
-    InitLiveBoundary()  -- updated below
-
+    -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
     local NN = N * N
@@ -2705,25 +2687,15 @@ function NextGen12Edges()
         end
     end
 
-    -- clear all live cells in grid1 and swap grids
-    grid1 = {}
-    grid1, grid2 = grid2, grid1
-
-    if popcount == 0 then StopGenerating() end
-    gencount = gencount + 1
-    Refresh()
+    DisplayGeneration()
 end
 
 ----------------------------------------------------------------------
 
 function NextGenHexahedral()
-    -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     if AllDead() then return end
 
-    RememberStart()
-    popcount = 0        -- incremented below
-    InitLiveBoundary()  -- updated below
-
+    -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
     local NN = N * N
@@ -2813,13 +2785,7 @@ function NextGenHexahedral()
         end
     end
 
-    -- clear all live cells in grid1 and swap grids
-    grid1 = {}
-    grid1, grid2 = grid2, grid1
-
-    if popcount == 0 then StopGenerating() end
-    gencount = gencount + 1
-    Refresh()
+    DisplayGeneration()
 end
 
 ----------------------------------------------------------------------
@@ -5680,17 +5646,25 @@ end</pre></table></dd>
 <li>
 The Moore neighborhood consists of the 26 cells that form a cube around the central cell.
 <li>
-The Face neighborhood consists of the 6 cells adjacent to the faces of a cube.
+The Face neighborhood consists of the 6 cells adjacent to the faces of a cube
+(this is the 3D version of the von Neumann neighborhood).
 <li>
 The Corner neighborhood consists of the 8 cells adjacent to the corners of a cube.
 <li>
 The Edge neighborhood consists of the 12 cells adjacent to the edges of a cube.
 <li>
-The Hexahedral neighborhood consists of the 12 cells packed around a central sphere.
+The Hexahedral neighborhood simulates 12 cells packed around a central sphere.
+Because it is simulating a hexahedral tesselation in a cubic grid, this neighborhood
+is not orthogonally symmetric, so flipping or rotating a pattern can change the way it evolves.
 </ul>
 
 <p>
 Note that the Moore neighborhood is the combination of the Face+Corner+Edge neighborhoods.
+
+<p>
+Use Control > Set Rule to change the current rule.
+You can quickly restore 3D.lua's default rule (3D5..7/6) by simply deleting
+the current rule and hitting OK.
 
 <p><a name="moore"></a><br>
 <font size=+1><b>Moore neighborhood</b></font>
@@ -5741,11 +5715,6 @@ B counts are from 1 to 12.
 Rules use the same syntax as the Moore neighborhood but with "H" appended.
 Each cell has 12 neighbors so the S counts are from 0 to 12 and the
 B counts are from 1 to 12.
-
-<p>
-Use Control > Set Rule to change the current rule.
-You can quickly restore 3D.lua's default rule (3D5..7/6) by simply deleting
-the current rule and hitting OK.
 
 <p><a name="rle3"></a><br>
 <font size=+1><b>RLE3 file format</b></font>
