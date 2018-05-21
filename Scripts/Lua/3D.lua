@@ -16,11 +16,9 @@ other improvements.
 
 TODO (for Golly 3.2 or later):
 
-- if Paste fails to load an RLE3 pattern then try loading a 2D pattern using
-  g.getclip (via a pcall in case error occurs)
+- add support for Busy Boxes (just 2 rules: BusyBoxes and BusyBoxesM? (M for mirror))
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
-- add support for Busy Boxes (just 2 rules: BusyBoxes and BusyBoxesM? (M for mirror))
 - add View > Pattern Info to display comments, or always show when pattern is opened?
 - allow saving pattern as .vti file for use by Ready?
 - oplus fixes:
@@ -4145,6 +4143,79 @@ end
 
 ----------------------------------------------------------------------
 
+function Read2DPattern(filepath)
+    -- call g.load via pcall to catch any error
+    local cellarray
+    local function loadcells()
+        cellarray = g.load(filepath)
+        -- if g.load detected an error then force pcall to abort
+        g.doevent("")
+    end
+    local status, err = pcall(loadcells)
+    if err then
+        g.continue("")
+        return err
+    end
+
+    -- copy cells from cellarray into a temporary grid
+    local tsize = MAXN
+    local trule = rulestring
+    local tgens = 0
+    local tpop = 0
+    local tminx = math.maxinteger
+    local tminy = math.maxinteger
+    local tminz = 0
+    local tmaxx = math.mininteger
+    local tmaxy = math.mininteger
+    local tmaxz = 0
+    local tgrid = {}
+
+    -- determine if cellarray is one-state or multi-state
+    local len = #cellarray
+    local inc = 2
+    if (len & 1) == 1 then
+        inc = 3
+        -- ignore padding int if present
+        if len % 3 == 1 then len = len - 1 end
+    end
+
+    local M = tsize-1
+    for i = 1, len, inc do
+        local x = cellarray[i]
+        local y = M - cellarray[i+1]    -- invert y coord
+        if x < 0 or x >= tsize or
+           y < 0 or y >= tsize then
+            return "too big"            -- detected by caller
+        end
+        -- note that z is 0
+        tgrid[x + tsize * y] = 1
+        tpop = tpop + 1
+        -- update boundary (tminz = tmaxz = 0)
+        if x < tminx then tminx = x end
+        if y < tminy then tminy = y end
+        if x > tmaxx then tmaxx = x end
+        if y > tmaxy then tmaxy = y end
+    end
+
+    -- success
+    local newpattern = {
+        newsize = tsize,
+        newrule = trule,
+        newgens = tgens,
+        newpop = tpop,
+        newminx = tminx,
+        newminy = tminy,
+        newminz = tminz,
+        newmaxx = tmaxx,
+        newmaxy = tmaxy,
+        newmaxz = tmaxz,
+        newgrid = tgrid
+    }
+    return nil, newpattern
+end
+
+----------------------------------------------------------------------
+
 function Paste()
     -- if a paste pattern already exists then cancel it
     local savedstate = false
@@ -4153,180 +4224,186 @@ function Paste()
         savedstate = true
     end
 
-    -- if the clipboard contains a valid RLE3 pattern then create a paste pattern
-    -- in middle of grid
+    -- if the clipboard contains a valid RLE3 or 2D pattern then create a paste pattern
     local filepath = CopyClipboardToFile()
-    if filepath then
-        local err, newpattern = ReadPattern(filepath)
-        if err then
-            message = "Clipboard does not contain a valid RLE3 pattern."
-            Refresh()
-            return false
-        end
-        if newpattern.newpop == 0 then
-            message = "Clipboard pattern is empty."
-            Refresh()
-            return false
-        end
-
-        -- newpattern contains valid pattern, but might be too big
-        local minpx = newpattern.newminx
-        local minpy = newpattern.newminy
-        local minpz = newpattern.newminz
-        local pwd = newpattern.newmaxx - minpx + 1
-        local pht = newpattern.newmaxy - minpy + 1
-        local pdp = newpattern.newmaxz - minpz + 1
-        if pwd > N or pht > N or pdp > N then
-            message = "Clipboard pattern is too big ("..pwd.." x "..pht.." x "..pdp..")"
-            Refresh()
-            return false
-        end
-
-        if not savedstate then RememberCurrentState() end
-
-        -- set pastecount and pastepatt
-        pastecount = newpattern.newpop
-        pastepatt = {}
-        minpastex = math.maxinteger
-        minpastey = math.maxinteger
-        minpastez = math.maxinteger
-        maxpastex = math.mininteger
-        maxpastey = math.mininteger
-        maxpastez = math.mininteger
-        local P = newpattern.newsize
-        local PP = P*P
-        if currcursor ~= movecursor and (pwd == 1 or pht == 1 or pdp == 1) then
-            -- put 1-cell thick paste pattern in middle of active plane,
-            -- rotating pattern if necessary to match orientation
-            local xx, xy, xz = 1, 0, 0
-            local yx, yy, yz = 0, 1, 0
-            local zx, zy, zz = 0, 0, 1
-            local mid = N//2
-            local xoffset = 0
-            local yoffset = 0
-            local zoffset = 0
-            if pdp == 1 then
-                if activeplane == "XY" then
-                    -- no rotation needed
-                    xoffset = (N - pwd + 1) // 2
-                    yoffset = (N - pht + 1) // 2
-                    zoffset = mid + activepos
-                elseif activeplane == "YZ" then
-                    -- rotate pattern about its Y axis
-                    xx, xy, xz =  0,  0,  1
-                    yx, yy, yz =  0,  1,  0
-                    zx, zy, zz = -1,  0,  0
-                    xoffset = mid + activepos
-                    yoffset = (N - pht + 1) // 2
-                    zoffset = (N - pwd + 1) // 2 + pwd - 1
-                else -- activeplane == "XZ"
-                    -- rotate pattern about its X axis
-                    xx, xy, xz =  1,  0,  0
-                    yx, yy, yz =  0,  0, -1
-                    zx, zy, zz =  0,  1,  0
-                    xoffset = (N - pwd + 1) // 2
-                    yoffset = mid + activepos
-                    zoffset = (N - pht + 1) // 2
-                end
-            elseif pht == 1 then
-                if activeplane == "XY" then
-                    -- rotate pattern about its X axis
-                    xx, xy, xz =  1,  0,  0
-                    yx, yy, yz =  0,  0, -1
-                    zx, zy, zz =  0,  1,  0
-                    xoffset = (N - pwd + 1) // 2
-                    yoffset = (N - pdp + 1) // 2 + pdp - 1
-                    zoffset = mid + activepos
-                elseif activeplane == "YZ" then
-                    -- rotate pattern about its Z axis
-                    xx, xy, xz =  0, -1,  0
-                    yx, yy, yz =  1,  0,  0
-                    zx, zy, zz =  0,  0,  1
-                    xoffset = mid + activepos
-                    yoffset = (N - pwd + 1) // 2
-                    zoffset = (N - pdp + 1) // 2
-                else -- activeplane == "XZ"
-                    -- no rotation needed
-                    xoffset = (N - pwd + 1) // 2
-                    yoffset = mid + activepos
-                    zoffset = (N - pdp + 1) // 2
-                end
-            else -- pwd == 1
-                if activeplane == "XY" then
-                    -- rotate pattern about its Y axis
-                    xx, xy, xz =  0,  0,  1
-                    yx, yy, yz =  0,  1,  0
-                    zx, zy, zz = -1,  0,  0
-                    xoffset = (N - pdp + 1) // 2
-                    yoffset = (N - pht + 1) // 2
-                    zoffset = mid + activepos
-                elseif activeplane == "YZ" then
-                    -- no rotation needed
-                    xoffset = mid + activepos
-                    yoffset = (N - pht + 1) // 2
-                    zoffset = (N - pdp + 1) // 2
-                else -- activeplane == "XZ"
-                    -- rotate pattern about its Z axis
-                    xx, xy, xz =  0, -1,  0
-                    yx, yy, yz =  1,  0,  0
-                    zx, zy, zz =  0,  0,  1
-                    xoffset = (N - pht + 1) // 2 + pht - 1
-                    yoffset = mid + activepos
-                    zoffset = (N - pdp + 1) // 2
-                end
-            end
-            for k,_ in pairs(newpattern.newgrid) do
-                -- move pattern to origin
-                local x = (k % P)      - minpx
-                local y = (k // P % P) - minpy
-                local z = (k // PP)    - minpz
-
-                -- do the rotation (if any)
-                local newx = x*xx + y*xy + z*xz
-                local newy = x*yx + y*yy + z*yz
-                local newz = x*zx + y*zy + z*zz
-                
-                -- now shift to middle of active plane
-                x = newx + xoffset
-                y = newy + yoffset
-                z = newz + zoffset
-
-                pastepatt[ x + N * (y + N * z) ] = 1
-                -- update paste boundary
-                if x < minpastex then minpastex = x end
-                if y < minpastey then minpastey = y end
-                if z < minpastez then minpastez = z end
-                if x > maxpastex then maxpastex = x end
-                if y > maxpastey then maxpastey = y end
-                if z > maxpastez then maxpastez = z end
-            end
-        else
-            -- put paste pattern in middle of grid
-            local xoffset = minpx - (N - pwd + 1) // 2
-            local yoffset = minpy - (N - pht + 1) // 2
-            local zoffset = minpz - (N - pdp + 1) // 2
-            for k,_ in pairs(newpattern.newgrid) do
-                -- newpattern.newgrid[k] is a live cell
-                local x = (k % P)      - xoffset
-                local y = (k // P % P) - yoffset
-                local z = (k // PP)    - zoffset
-                pastepatt[ x + N * (y + N * z) ] = 1
-                -- update paste boundary
-                if x < minpastex then minpastex = x end
-                if y < minpastey then minpastey = y end
-                if z < minpastez then minpastez = z end
-                if x > maxpastex then maxpastex = x end
-                if y > maxpastey then maxpastey = y end
-                if z > maxpastez then maxpastez = z end
-            end
-        end
-        CheckIfGenerating()
-        Refresh()
-        return true
-    else
-        -- filepath is nil
+    if not filepath then
         return false
     end
+
+    local err, newpattern = ReadPattern(filepath)
+    if err then
+        -- invalid RLE3 pattern so try loading a 2D pattern
+        err, newpattern = Read2DPattern(filepath)
+        if err then
+            if err == "too big" then
+                message = "2D pattern in clipboard is too big."
+            else
+                message = "Clipboard does not contain a valid pattern."
+            end
+            Refresh()
+            return false
+        end
+    end
+    if newpattern.newpop == 0 then
+        message = "Clipboard pattern is empty."
+        Refresh()
+        return false
+    end
+
+    -- newpattern contains valid pattern, but might be too big
+    local minpx = newpattern.newminx
+    local minpy = newpattern.newminy
+    local minpz = newpattern.newminz
+    local pwd = newpattern.newmaxx - minpx + 1
+    local pht = newpattern.newmaxy - minpy + 1
+    local pdp = newpattern.newmaxz - minpz + 1
+    if pwd > N or pht > N or pdp > N then
+        message = "Clipboard pattern is too big ("..pwd.." x "..pht.." x "..pdp..")."
+        Refresh()
+        return false
+    end
+
+    if not savedstate then RememberCurrentState() end
+
+    -- set pastecount and pastepatt
+    pastecount = newpattern.newpop
+    pastepatt = {}
+    minpastex = math.maxinteger
+    minpastey = math.maxinteger
+    minpastez = math.maxinteger
+    maxpastex = math.mininteger
+    maxpastey = math.mininteger
+    maxpastez = math.mininteger
+    local P = newpattern.newsize
+    local PP = P*P
+    if currcursor ~= movecursor and min(pwd,pht,pdp) == 1 then
+        -- put 1-cell thick paste pattern in middle of active plane,
+        -- rotating pattern if necessary to match orientation
+        local xx, xy, xz = 1, 0, 0
+        local yx, yy, yz = 0, 1, 0
+        local zx, zy, zz = 0, 0, 1
+        local mid = N//2
+        local xoffset = 0
+        local yoffset = 0
+        local zoffset = 0
+        if pdp == 1 then
+            if activeplane == "XY" then
+                -- no rotation needed
+                xoffset = (N - pwd + 1) // 2
+                yoffset = (N - pht + 1) // 2
+                zoffset = mid + activepos
+            elseif activeplane == "YZ" then
+                -- rotate pattern about its Y axis
+                xx, xy, xz =  0,  0,  1
+                yx, yy, yz =  0,  1,  0
+                zx, zy, zz = -1,  0,  0
+                xoffset = mid + activepos
+                yoffset = (N - pht + 1) // 2
+                zoffset = (N - pwd + 1) // 2 + pwd - 1
+            else -- activeplane == "XZ"
+                -- rotate pattern about its X axis
+                xx, xy, xz =  1,  0,  0
+                yx, yy, yz =  0,  0, -1
+                zx, zy, zz =  0,  1,  0
+                xoffset = (N - pwd + 1) // 2
+                yoffset = mid + activepos
+                zoffset = (N - pht + 1) // 2
+            end
+        elseif pht == 1 then
+            if activeplane == "XY" then
+                -- rotate pattern about its X axis
+                xx, xy, xz =  1,  0,  0
+                yx, yy, yz =  0,  0, -1
+                zx, zy, zz =  0,  1,  0
+                xoffset = (N - pwd + 1) // 2
+                yoffset = (N - pdp + 1) // 2 + pdp - 1
+                zoffset = mid + activepos
+            elseif activeplane == "YZ" then
+                -- rotate pattern about its Z axis
+                xx, xy, xz =  0, -1,  0
+                yx, yy, yz =  1,  0,  0
+                zx, zy, zz =  0,  0,  1
+                xoffset = mid + activepos
+                yoffset = (N - pwd + 1) // 2
+                zoffset = (N - pdp + 1) // 2
+            else -- activeplane == "XZ"
+                -- no rotation needed
+                xoffset = (N - pwd + 1) // 2
+                yoffset = mid + activepos
+                zoffset = (N - pdp + 1) // 2
+            end
+        else -- pwd == 1
+            if activeplane == "XY" then
+                -- rotate pattern about its Y axis
+                xx, xy, xz =  0,  0,  1
+                yx, yy, yz =  0,  1,  0
+                zx, zy, zz = -1,  0,  0
+                xoffset = (N - pdp + 1) // 2
+                yoffset = (N - pht + 1) // 2
+                zoffset = mid + activepos
+            elseif activeplane == "YZ" then
+                -- no rotation needed
+                xoffset = mid + activepos
+                yoffset = (N - pht + 1) // 2
+                zoffset = (N - pdp + 1) // 2
+            else -- activeplane == "XZ"
+                -- rotate pattern about its Z axis
+                xx, xy, xz =  0, -1,  0
+                yx, yy, yz =  1,  0,  0
+                zx, zy, zz =  0,  0,  1
+                xoffset = (N - pht + 1) // 2 + pht - 1
+                yoffset = mid + activepos
+                zoffset = (N - pdp + 1) // 2
+            end
+        end
+        for k,_ in pairs(newpattern.newgrid) do
+            -- move pattern to origin
+            local x = (k % P)      - minpx
+            local y = (k // P % P) - minpy
+            local z = (k // PP)    - minpz
+
+            -- do the rotation (if any)
+            local newx = x*xx + y*xy + z*xz
+            local newy = x*yx + y*yy + z*yz
+            local newz = x*zx + y*zy + z*zz
+            
+            -- now shift to middle of active plane
+            x = newx + xoffset
+            y = newy + yoffset
+            z = newz + zoffset
+
+            pastepatt[ x + N * (y + N * z) ] = 1
+            -- update paste boundary
+            if x < minpastex then minpastex = x end
+            if y < minpastey then minpastey = y end
+            if z < minpastez then minpastez = z end
+            if x > maxpastex then maxpastex = x end
+            if y > maxpastey then maxpastey = y end
+            if z > maxpastez then maxpastez = z end
+        end
+    else
+        -- put paste pattern in middle of grid
+        local xoffset = minpx - (N - pwd + 1) // 2
+        local yoffset = minpy - (N - pht + 1) // 2
+        local zoffset = minpz - (N - pdp + 1) // 2
+        for k,_ in pairs(newpattern.newgrid) do
+            -- newpattern.newgrid[k] is a live cell
+            local x = (k % P)      - xoffset
+            local y = (k // P % P) - yoffset
+            local z = (k // PP)    - zoffset
+            pastepatt[ x + N * (y + N * z) ] = 1
+            -- update paste boundary
+            if x < minpastex then minpastex = x end
+            if y < minpastey then minpastey = y end
+            if z < minpastez then minpastez = z end
+            if x > maxpastex then maxpastex = x end
+            if y > maxpastey then maxpastey = y end
+            if z > maxpastez then maxpastez = z end
+        end
+    end
+    CheckIfGenerating()
+    Refresh()
+    return true
 end
 
 ----------------------------------------------------------------------
@@ -5160,7 +5237,7 @@ Copy all selected live cells to the clipboard in <a href="#rle3">RLE3</a> format
 
 <a name="paste"></a><p><dt><b>Paste</b></dt>
 <dd>
-If the clipboard contains a valid, non-empty <a href="#rle3">RLE3</a> pattern that fits
+If the clipboard contains a valid, non-empty pattern (<a href="#rle3">RLE3</a> or 2D) that fits
 within the current grid then a paste pattern (comprised of red cells) will appear.
 If the active plane is visible and the clipboard pattern is one cell thick (in any direction)
 then the paste pattern appears in the middle of the active plane, otherwise it will appear
@@ -5588,7 +5665,7 @@ All undo/redo history is deleted.
 
 <a name="Paste"></a><p><dt><b>Paste()</b></dt>
 <dd>
-Return true if the clipboard contains a valid, non-empty RLE3 pattern that fits
+Return true if the clipboard contains a valid, non-empty pattern (RLE3 or 2D) that fits
 within the current grid.  If the active plane exists and the clipboard pattern is
 one cell thick (in any direction) then the paste pattern is located in the middle
 of the active plane, otherwise it is located in the middle of the grid.
