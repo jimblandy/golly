@@ -2786,9 +2786,12 @@ function NewPattern()
     startcount = 0
     StopGenerating()
     ClearCells()
-    SetActivePlane()
     ClearUndoRedo()
-    InitialView()       -- calls Refresh
+    -- avoid unnecessary work if user script calls NewPattern
+    if scriptlevel == 0 then
+        SetActivePlane()        -- restore default active plane
+        InitialView()           -- calls Refresh
+    end
 end
 
 ----------------------------------------------------------------------
@@ -2977,9 +2980,11 @@ function UpdateCurrentGrid(newpattern)
     startcount = gencount           -- for Reset
     StopGenerating()
     SetCursor(movecursor)
-    SetActivePlane()
-    ClearUndoRedo()     -- dirty = false
-    InitialView()       -- calls Refresh
+    ClearUndoRedo()         -- dirty = false
+    if scriptlevel == 0 then
+        SetActivePlane()
+        InitialView()       -- calls Refresh
+    end
 end
 
 ----------------------------------------------------------------------
@@ -3427,9 +3432,11 @@ function RandomPattern(percentage, fill, sphere)
         end
     end
 
-    SetActivePlane()
     ClearUndoRedo()
-    InitialView()       -- calls Refresh
+    if scriptlevel == 0 then
+        SetActivePlane()
+        InitialView()       -- calls Refresh
+    end
 end
 
 ----------------------------------------------------------------------
@@ -5835,7 +5842,7 @@ The Corner neighborhood consists of the 8 cells adjacent to the corners of a cub
 <li>
 The Edge neighborhood consists of the 12 cells adjacent to the edges of a cube.
 <li>
-The Hexahedral neighborhood simulates 12 cells packed around a central sphere.
+The Hexahedral neighborhood simulates 12 spheres packed around a central sphere.
 Because it is simulating a hexahedral tesselation in a cubic grid, this neighborhood
 is not orthogonally symmetric, so flipping or rotating a pattern can change the way it evolves.
 </ul>
