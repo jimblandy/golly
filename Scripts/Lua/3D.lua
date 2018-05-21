@@ -1124,18 +1124,13 @@ function CreateLiveSphere()
 
     -- create a clip containing one sphere that will be used later
     -- to draw all live cells
-    local diameter = CELLSIZE-2
+    local diameter = CELLSIZE+1                     -- so orthogonally adjacent spheres touch
     ov("create "..diameter.." "..diameter.." S")    -- s is used for selected cells
     ov("target S")
 
     local x = 0
     local y = 0
-    local gray
-    if LEN > 2 then
-        gray = 0     -- start with black outline
-    else
-        gray = 128   -- start with gray outline
-    end
+    local gray = 0      -- start with black outline
     local grayinc = 3
     if diameter < 50 then grayinc = 8 - diameter//10 end
     local r = (diameter+1)//2
@@ -1221,8 +1216,8 @@ function AddSphereToBatchDepth(x, y, z)
     local newy = (x*yixo + y*yiyo + z*yizo)
     local newz = (x*zixo + y*ziyo + z*zizo)
     -- use orthographic projection
-    x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
-    y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
+    x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
+    y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
     -- compute the depth layer
     local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
     if layer < 1 then layer = 1 end
@@ -1244,8 +1239,8 @@ function AddSphereToBatch(x, y, z)
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
-    x = round(newx + midx - HALFCELL+1)     -- clip wd = CELLSIZE-2
-    y = round(newy + midy - HALFCELL+1)     -- clip ht = CELLSIZE-2
+    x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
+    y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
     -- add to the list to draw
     xybatch[#xybatch + 1] = x
     xybatch[#xybatch + 1] = y
