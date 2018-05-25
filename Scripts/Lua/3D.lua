@@ -16,11 +16,11 @@ other improvements.
 
 TODO (for Golly 3.2 or later):
 
-- add support for Busy Boxes (just 2 rules: BusyBoxes and BusyBoxesM? (M for mirror))
+- add a slider to control step size (1..100), new items in Control menu
+  (Faster, Slower, Set Step...) and keyboard shortcuts for faster/slower
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - add View > Pattern Info to display comments, or always show when pattern is opened?
-- allow saving pattern as .vti file for use by Ready?
 - oplus fixes:
 - on Win/Linux ignore click or release in a disabled menu item
 - and ignore initial click in menu bar if left/right of labels (also on Mac?)
@@ -53,7 +53,7 @@ math.randomseed(os.time())          -- init seed for math.random
 
 local N = 30                        -- initial grid size (N*N*N cells)
 local MINN = 3                      -- minimum grid size
-local MAXN = 100                    -- maximum grid size
+local MAXN = 100                    -- maximum grid size (must be even for BusyBoxes)
 local BORDER = 2                    -- space around live cubes
 local MINSIZE = 1+BORDER*2          -- minimum size of empty cells
 local MAXSIZE = 100                 -- maximum size of empty cells
@@ -67,7 +67,7 @@ local DEGTORAD = math.pi/180.0      -- converts degrees to radians
 local MIDGRID = (N+1-(N%2))*HALFCELL
 local MIDCELL = HALFCELL-MIDGRID
 
-local BACK_COLOR = "0 0 65 255"     -- for drawing background
+local BACK_COLOR = "0 0 80 255"     -- for drawing background
 local LINE_COLOR = "60 60 90 255"   -- for drawing lattice lines
 local xylattice = {}                -- lattice lines between XY axes
 local xzlattice = {}                -- lattice lines between XZ axes
@@ -96,6 +96,7 @@ local drawstate = 1                 -- for drawing/erasing cells
 local selstate = true               -- for selecting/deselecting cells
 local celltype = "cube"             -- draw live cell as cube/sphere/point
 local DrawLiveCell                  -- set to Add{Cube/Sphere/Point}ToBatch{Depth}
+local DrawBusyBox                   -- set to DrawBusy{Cube/Sphere/Point}
 local xybatch = {}                  -- coordinates for each cell when batch drawing
 local layercoords = {}              -- coordinates for each cell in each layer
 local layerpointcols = {}           -- rgb values for each points in each layer
@@ -328,8 +329,21 @@ end
 
 function ParseRule(newrule)
     -- parse newrule and if ok set rulestring, survivals, births and NextGeneration
-    if #newrule == 0 then newrule = DEFAULT_RULE end
-    if not newrule:find("^3[dD]") then
+    if #newrule == 0 then
+        newrule = DEFAULT_RULE
+    else
+        newrule = newrule:upper()
+    end
+
+    -- first check for BusyBoxes
+    if newrule == "BUSYBOXES" or newrule == "BB" then
+        rulestring = "BusyBoxes"
+        -- survivals and births are not used
+        NextGeneration = NextGenBusyBoxes
+        return true
+    end
+    
+    if not newrule:find("^3D") then
         g.warn("Rule must start with 3D.")
         return false
     else
@@ -342,7 +356,7 @@ function ParseRule(newrule)
     end
     
     -- use 3D Moore neighborhood unless rule ends with a special letter
-    local lastchar = newrule:sub(-1):upper()
+    local lastchar = newrule:sub(-1)
     local maxcount = 26
     if lastchar == "F" or lastchar == "V" then
         -- 6-cell face neighborhood (aka von Neumann neighborhood)
@@ -374,10 +388,8 @@ function ParseRule(newrule)
     if not AppendCounts(b, newb, maxcount, true) then return false end
 
     -- newrule is okay so set survivals and births
-    for i = 0, maxcount do
-        survivals[i] = false
-        births[i] = false
-    end
+    survivals = {}
+    births = {}
     for _, i in ipairs(news) do survivals[i] = true end
     for _, i in ipairs(newb) do births[i] = true end
 
@@ -980,39 +992,7 @@ end
 
 ----------------------------------------------------------------------
 
-local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
-
-local lastCubeSize = -1
-
-function CreateLiveCube()
-    -- only create bitmaps if cell size has changed
-    if CELLSIZE == lastCubeSize then return end
-    lastCubeSize = CELLSIZE
-
-    -- create a clip containing one rotated cube that will be used later
-    -- to draw all live cells (this only works because all cubes are identical
-    -- in appearance when using orthographic projection)
-
-    -- largest size of a rotated cube with edge length L is sqrt(3)*L
-    HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
-    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." c")
-    ov("target c")
-
-    local midpos = N//2
-    local cube = CreateCube(midpos, midpos, midpos)
-
-    -- create cube's projected vertices (within clip)
-    for i = 1, 8 do
-        rotx[i], roty[i], rotz[i] = TransformPoint(cube[i])
-        projectedx[i] = round( rotx[i] ) + HALFCUBECLIP
-        projectedy[i] = round( roty[i] ) + HALFCUBECLIP
-    end
-
-    -- draw up to 3 visible faces of cube, using cyclic vertex order set in CreateCube
-    CheckFaces(1,3,5,7, 2,4,6,8)    -- front or back
-    CheckFaces(1,2,8,7, 3,4,6,5)    -- bottom or top
-    CheckFaces(1,2,4,3, 7,8,6,5)    -- left or right
-
+function DrawCubeEdges()
     if LEN > 4 then
         -- draw anti-aliased edges around visible face(s)
         if LEN == 5 then
@@ -1102,6 +1082,44 @@ function CreateLiveCube()
         ov("lineoption width 1")
         ov("blend 0")
     end
+end
+
+----------------------------------------------------------------------
+
+local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
+
+local lastCubeSize = -1
+
+function CreateLiveCube()
+    -- only create bitmaps if cell size has changed
+    if CELLSIZE == lastCubeSize then return end
+    lastCubeSize = CELLSIZE
+
+    -- create a clip containing one rotated cube that will be used later
+    -- to draw all live cells (this only works because all cubes are identical
+    -- in appearance when using orthographic projection)
+
+    -- largest size of a rotated cube with edge length L is sqrt(3)*L
+    HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
+    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." c")
+    ov("target c")
+
+    local midpos = N//2
+    local cube = CreateCube(midpos, midpos, midpos)
+
+    -- create cube's projected vertices (within clip)
+    for i = 1, 8 do
+        rotx[i], roty[i], rotz[i] = TransformPoint(cube[i])
+        projectedx[i] = round( rotx[i] ) + HALFCUBECLIP
+        projectedy[i] = round( roty[i] ) + HALFCUBECLIP
+    end
+
+    -- draw up to 3 visible faces of cube, using cyclic vertex order set in CreateCube
+    CheckFaces(1,3,5,7, 2,4,6,8)    -- front or back
+    CheckFaces(1,2,8,7, 3,4,6,5)    -- bottom or top
+    CheckFaces(1,2,4,3, 7,8,6,5)    -- left or right
+    
+    DrawCubeEdges()
 
     ov("optimize c")
 
@@ -1560,6 +1578,316 @@ function DisplayCells(editing)
     ov("blend 0")
 end
 
+----------------------------------------------------------------------
+
+function CreateBusyCube(clipname, R, G, B)
+    -- create a clip containing a cube with given color
+    
+    -- largest size of a rotated cube with edge length L is sqrt(3)*L
+    HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
+    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." "..clipname)
+    ov("target "..clipname)
+
+    local midpos = N//2
+    local cube = CreateCube(midpos, midpos, midpos)
+
+    -- create cube's projected vertices (within clip)
+    for i = 1, 8 do
+        rotx[i], roty[i], rotz[i] = TransformPoint(cube[i])
+        projectedx[i] = round( rotx[i] ) + HALFCUBECLIP
+        projectedy[i] = round( roty[i] ) + HALFCUBECLIP
+    end
+
+    -- draw up to 3 visible faces of cube, using cyclic vertex order set in CreateCube
+    CheckFaces(1,3,5,7, 2,4,6,8)    -- front or back
+    CheckFaces(1,2,8,7, 3,4,6,5)    -- bottom or top
+    CheckFaces(1,2,4,3, 7,8,6,5)    -- left or right
+    
+    -- or pass R, G, B into CheckFaces???
+    if R == 255 then
+        ov("replace *# *#-150 *#-150 *#") --!!!???
+    else
+        ov("replace *#-150 *#-150 *# *#") --!!!???
+    end
+    
+    DrawCubeEdges()
+
+    ov("optimize "..clipname)
+
+    -- create faded versions of the clip if depth shading
+    if depthshading then
+        CreateLayers(clipname)
+    end
+
+    ov("target")    
+end
+
+----------------------------------------------------------------------
+
+function CreateBusySphere(clipname, R, G, B)
+    -- create a clip containing a sphere with given color
+    
+    local diameter = CELLSIZE+1
+    local d1 = diameter
+    ov("create "..diameter.." "..diameter.." "..clipname)
+    ov("target "..clipname)
+    ov("blend 1")
+
+    local x = 0
+    local y = 0
+    local inc = 6
+    local r = (diameter+1)//2
+    while true do
+        ov("rgba "..R.." "..G.." "..B.." 255")
+        -- draw a solid circle by setting the line width to the radius
+        ov("lineoption width "..r)
+        ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
+        diameter = diameter - 2
+        r = r - 1
+        if r < 2 then break end
+        x = x + 1
+        y = y + 1
+        R = R + inc
+        G = G + inc
+        B = B + inc
+        if R > 255 then R = 255 end
+        if G > 255 then G = 255 end
+        if B > 255 then B = 255 end
+    end
+    
+    -- draw black outline
+    ov("rgba 0 0 0 255")
+    ov("lineoption width 1")
+    ov("ellipse 0 0 "..d1.." "..d1)
+    ov("blend 0")
+
+    ov("optimize "..clipname)
+
+    -- create faded versions of the clip if depth shading
+    if depthshading then
+        CreateLayers(clipname)
+    end
+
+    ov("target")
+end
+
+----------------------------------------------------------------------
+
+function DrawBusyCube(x, y, z, color, clipname)
+    -- draw odd/even cube at given grid position (color is ignored)
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
+    -- use orthographic projection
+    x = round(newx) + midx - HALFCUBECLIP
+    y = round(newy) + midy - HALFCUBECLIP
+    ov("paste "..x.." "..y.." "..clipname)
+end
+
+----------------------------------------------------------------------
+
+function DrawBusySphere(x, y, z, color, clipname)
+    -- draw odd/even sphere at given grid position (color is ignored)
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
+    -- use orthographic projection
+    x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
+    y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
+    ov("paste "..x.." "..y.." "..clipname)
+end
+
+----------------------------------------------------------------------
+
+local function DrawBusyPoint(x, y, z, color)
+    -- draw mid point of busy box at given grid position
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
+    -- use orthographic projection
+    x = round(newx) + midx
+    y = round(newy) + midy
+    ov(color)
+    ov("set "..x.." "..y)
+end
+
+----------------------------------------------------------------------
+
+local function TestBusyBox(editing, gridpos, x, y, z, color, clipname)
+    -- called from DisplayBusyBoxes to test if given cell is in active plane,
+    -- or if it's selected, or if it's a paste cell, and to draw it accordingly
+    if editing then
+        if active[gridpos] then
+            if grid1[gridpos] then
+                -- draw live cell within active plane
+                -- (note that DrawBusyBox might be set to DrawBusyPoint)
+                DrawBusyBox(x, y, z, color, clipname)
+            end
+            DrawActiveCell(x, y, z)
+            if selected[gridpos] then
+                DrawSelectedCell(x, y, z)
+            end
+        else
+            -- cell is outside active plane
+            if grid1[gridpos] then
+                DrawBusyPoint(x, y, z, color)
+            end
+            if selected[gridpos] then
+                -- draw translucent green point
+                ov("rgba 0 255 0 128")
+                DrawPoint(x, y, z)
+            end
+        end
+    else
+        -- active plane is not displayed
+        if grid1[gridpos] then
+            DrawBusyBox(x, y, z, color, clipname)
+        end
+        if selected[gridpos] then
+            DrawSelectedCell(x, y, z)
+        end
+    end
+    if pastepatt[gridpos] then
+        DrawBusyBox(x, y, z, color, clipname)
+        DrawPasteCell(x, y, z)
+    end
+end
+
+----------------------------------------------------------------------
+
+function DisplayBusyBoxes(editing)
+    -- find the rotated reference cube vertex with maximum Z coordinate
+    local z1 = rotrefz[1]
+    local z2 = rotrefz[2]
+    local z3 = rotrefz[3]
+    local z4 = rotrefz[4]
+    local z5 = rotrefz[5]
+    local z6 = rotrefz[6]
+    local z7 = rotrefz[7]
+    local z8 = rotrefz[8]
+    local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
+
+    ov("blend 1")
+    local testcell = editing or selcount > 0 or pastecount > 0
+
+    -- find the extended boundary of all live/active/selected/paste cells
+    local MINX, MINY, MINZ, MAXX, MAXY, MAXZ = minx, miny, minz, maxx, maxy, maxz
+    if testcell then
+        if editing then
+            if minactivex < MINX then MINX = minactivex end
+            if minactivey < MINY then MINY = minactivey end
+            if minactivez < MINZ then MINZ = minactivez end
+            if maxactivex > MAXX then MAXX = maxactivex end
+            if maxactivey > MAXY then MAXY = maxactivey end
+            if maxactivez > MAXZ then MAXZ = maxactivez end
+        end
+        if selcount > 0 then
+            if minselx < MINX then MINX = minselx end
+            if minsely < MINY then MINY = minsely end
+            if minselz < MINZ then MINZ = minselz end
+            if maxselx > MAXX then MAXX = maxselx end
+            if maxsely > MAXY then MAXY = maxsely end
+            if maxselz > MAXZ then MAXZ = maxselz end
+        end
+        if pastecount > 0 then
+            if minpastex < MINX then MINX = minpastex end
+            if minpastey < MINY then MINY = minpastey end
+            if minpastez < MINZ then MINZ = minpastez end
+            if maxpastex > MAXX then MAXX = maxpastex end
+            if maxpastey > MAXY then MAXY = maxpastey end
+            if maxpastez > MAXZ then MAXZ = maxpastez end
+        end
+    end
+
+    -- determine order to traverse x, y and z in the grid;
+    -- note that we need to draw cells from back to front
+    -- (assumes vertex order set in CreateCube)
+    local fromz, toz, stepz, fromy, toy, stepy, fromx, tox, stepx
+    if maxZ == z1 then
+        fromx, fromy, fromz = MINX, MINY, MAXZ
+    elseif maxZ == z2 then
+        fromx, fromy, fromz = MINX, MINY, MINZ
+    elseif maxZ == z3 then
+        fromx, fromy, fromz = MINX, MAXY, MAXZ
+    elseif maxZ == z4 then
+        fromx, fromy, fromz = MINX, MAXY, MINZ
+    elseif maxZ == z5 then
+        fromx, fromy, fromz = MAXX, MAXY, MAXZ
+    elseif maxZ == z6 then
+        fromx, fromy, fromz = MAXX, MAXY, MINZ
+    elseif maxZ == z7 then
+        fromx, fromy, fromz = MAXX, MINY, MAXZ
+    elseif maxZ == z8 then
+        fromx, fromy, fromz = MAXX, MINY, MINZ
+    end
+
+    if (fromx == MINX) then tox, stepx = MAXX, 1 else tox, stepx = MINX, -1 end
+    if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
+    if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
+
+    -- colors for points (should match colors used in CreateBusyCube/Sphere)
+    local evencolor = "rgba 255 60 60 255"
+    local oddcolor = "rgba 80 80 255 255"
+
+    -- clip names for cubes/spheres
+    local evenclip = "E"
+    local oddclip = "O"
+
+    local i, j, ypz
+    local stepi, stepj = N*stepy, N*stepz
+    if testcell then
+        j = N*fromz
+        for z = fromz, toz, stepz do
+            i = N*(fromy+j)
+            for y = fromy, toy, stepy do
+                ypz = y + z
+                for x = fromx, tox, stepx do
+                    if (x + ypz) % 2 == 0 then
+                        TestBusyBox(editing, i+x, x, y, z, evencolor, evenclip)
+                    else
+                        TestBusyBox(editing, i+x, x, y, z, oddcolor, oddclip)
+                    end
+                end
+                i = i+stepi
+            end
+            j = j+stepj
+        end
+    else
+        -- only live cells need to be drawn
+        j = N*fromz
+        for z = fromz, toz, stepz do
+            i = N*(fromy+j)
+            for y = fromy, toy, stepy do
+                ypz = y + z
+                for x = fromx, tox, stepx do
+                    if grid1[i+x] then
+                        -- evenclip and oddclip are ignored if DrawBusyBox = DrawBusyPoint;
+                        -- evencolor and oddcolor are ignored if DrawBusyBox = DrawBusyCube/Sphere
+                        if (x + ypz) % 2 == 0 then
+                            DrawBusyBox(x, y, z, evencolor, evenclip)
+                        else
+                            DrawBusyBox(x, y, z, oddcolor, oddclip)
+                        end
+                    end
+                end
+                i = i+stepi
+            end
+            j = j+stepj
+        end
+    end
+
+    ov("blend 0")
+end
+
 --------------------------------------------------------------------------------
 
 function EnableControls(bool)
@@ -1747,13 +2075,27 @@ function Refresh(update)
             -- cells in active plane will be translucent blue
             CreateTranslucentCell("a", "0 0 255 48")
         end
-        if celltype == "cube" then
-            CreateLiveCube()
-        elseif celltype == "sphere" then
-            CreateLiveSphere()
-        else -- celltype == "point"
+        if rulestring == "BusyBoxes" then
+            if celltype == "cube" then
+                CreateBusyCube("E", 255, 60, 60)
+                CreateBusyCube("O", 80, 80, 255)
+                DrawBusyBox = DrawBusyCube
+            elseif celltype == "sphere" then
+                CreateBusySphere("E", 255, 60, 60)
+                CreateBusySphere("O", 80, 80, 255)
+                DrawBusyBox = DrawBusySphere
+            else
+                DrawBusyBox = DrawBusyPoint
+            end
+            DisplayBusyBoxes(editing)
+        else
+            if celltype == "cube" then
+                CreateLiveCube()
+            elseif celltype == "sphere" then
+                CreateLiveSphere()
+            end
+            DisplayCells(editing)
         end
-        DisplayCells(editing)
     end
 
     if showaxes then DrawFrontAxes() end
@@ -2779,6 +3121,136 @@ end
 
 ----------------------------------------------------------------------
 
+function NextGenBusyBoxes()
+    if N%2 == 1 then
+        -- BusyBoxes requires an even numbered grid size
+        SetGridSize(N+1)    -- test!!! (also do at end of ChangeRule???)
+    end
+
+    if AllDead() then return end
+
+    -- calculate and display the next generation for the BusyBoxes rule
+    -- (see http://www.busyboxes.org/faq.html)
+
+    -- the algorithm used below is a slightly modified (and corrected!)
+    -- version of the kernel code in Ready's Salt 3D example
+    -- (see Patterns/CellularAutomata/Salt/salt3D_circular330.vti);
+    -- it uses a rule based on 28 cells in a 7x7 neighborhood for each live cell
+    local coords = {
+        -- 1 to 4 are the coordinates for the 4 potential swap sites:
+        {1,1},{-1,1},{-1,-1},{1,-1},
+        -- 5 to 12 are activators:
+        {2,-1},{2,1},{1,2},{-1,2},{-2,1},{-2,-1},{-1,-2},{1,-2},
+        -- 13 to 28 are inhibitors:
+        {-2,-3},{0,-3},{2,-3},
+        {-3,-2},{3,-2},
+        {0,-1},
+        {-3,0},{-1,0},{1,0},{3,0},
+        {0,1},
+        {-3,2},{3,2},
+        {-2,3},{0,3},{2,3}
+    }
+    -- numbers are indices into the coords array
+    local activators = { {5,8}, {7,10}, {9,12}, {6,11} }
+    local inhibitors = { {18,25,22,27,20,28, 9,12},
+                         {18,24,19,27,21,26, 6,11}, 
+                         {16,23,14,19,13,21, 5,8},
+                         {20,15,14,22,17,23, 7,10} }
+
+    local phase = gencount % 6
+    local NN = N * N
+    local swaps = {}
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
+        local z = k // NN
+        if (x + y + z) % 2 == phase % 2 then
+            -- this live cell has the right parity so get values for its 28 neighbors
+            local val = {}
+            local sx, sy, sz
+            for i = 1, 28 do
+                if phase == 0 or phase == 3 then
+                    -- use XY plane
+                    sx = (x + coords[i][1]) % N
+                    sy = (y + coords[i][2]) % N
+                    sz = z
+                elseif phase == 1 or phase == 4 then
+                    -- use YZ plane
+                    sx = x
+                    sy = (y + coords[i][1]) % N
+                    sz = (z + coords[i][2]) % N
+                else
+                    -- phase == 2 or 5 so use XZ plane
+                    sx = (x + coords[i][1]) % N
+                    sy = y
+                    sz = (z + coords[i][2]) % N
+                end
+                val[i] = grid1[sx + N * (sy + N * sz)]
+            end
+    
+            -- find the potential swaps
+            local numswaps = 0
+            local swapi
+            for i = 1, 4 do
+                -- if either activator is a live cell then the swap is possible,
+                -- but if any inhibitor is a live cell then the swap is forbidden
+                if (val[activators[i][1]] or val[activators[i][2]])
+                    and not (val[inhibitors[i][1]] or val[inhibitors[i][2]] or
+                             val[inhibitors[i][3]] or val[inhibitors[i][4]] or
+                             val[inhibitors[i][5]] or val[inhibitors[i][6]] or
+                             val[inhibitors[i][7]] or val[inhibitors[i][8]]) then
+                    numswaps = numswaps + 1
+                    if numswaps > 1 then break end
+                    swapi = i   -- index of swap location in coords array (1..4)
+                end
+            end
+            
+            -- if only one swap, and only to an empty cell, then do it
+            if numswaps == 1 and not val[swapi] then
+                -- swap live cell from grid1 into diagonally opposite cell in grid2
+                if phase == 0 or phase == 3 then
+                    -- use XY plane
+                    x = (x + coords[swapi][1]) % N
+                    y = (y + coords[swapi][2]) % N
+                elseif phase == 1 or phase == 4 then
+                    -- use YZ plane
+                    y = (y + coords[swapi][1]) % N
+                    z = (z + coords[swapi][2]) % N
+                else
+                    -- phase == 2 or 5 so use XZ plane
+                    x = (x + coords[swapi][1]) % N
+                    z = (z + coords[swapi][2]) % N
+                end
+                grid2[x + N * (y + N * z)] = 1
+                popcount = popcount + 1
+                -- don't set dirty flag here!
+            else
+                -- don't swap this live cell
+                grid2[k] = 1
+                popcount = popcount + 1
+                -- don't set dirty flag here!
+            end
+        else
+            -- live cell with wrong parity
+            grid2[k] = 1
+            popcount = popcount + 1
+            -- don't set dirty flag here!
+        end
+        
+        -- update boundary
+        if x < minx then minx = x end
+        if y < miny then miny = y end
+        if z < minz then minz = z end
+        if x > maxx then maxx = x end
+        if y > maxy then maxy = y end
+        if z > maxz then maxz = z end
+    end
+
+    DisplayGeneration()
+end
+
+----------------------------------------------------------------------
+
 function NewPattern()
     pattname = "untitled"
     SetCursor(drawcursor)
@@ -3294,7 +3766,7 @@ function RunScript(filepath)
             g.warn("Script file could not be opened:\n"..filepath, false)
             return
         end
-        f, msg = loadfile(filepath)
+        local f, msg = loadfile(filepath)
         if f then
             CallScript(f, false)
         else
@@ -3649,7 +4121,10 @@ function ChangeRule()
                               "Append F for the 6-cell face neighborhood,\n" ..
                               "or C for the 8-cell corner neighborhood,\n" ..
                               "or E for the 12-cell edge neighborhood,\n" ..
-                              "or H for the 12-cell hexahedral neighborhood.\n",
+                              "or H for the 12-cell hexahedral neighborhood.\n" ..
+                              "\n" ..
+                              "Another rule you might like to try is BusyBoxes\n" ..
+                              "(just enter BB for short).\n",
                               newrule, "Set rule")
         if not ParseRule(newrule) then goto try_again end
     end
@@ -4839,6 +5314,7 @@ function Step(n)
     while popcount > 0 and n > 0 do
         NextGeneration()
         n = n - 1
+        g.doevent("")   -- null op to let user abort script
     end
 end
 
@@ -5097,7 +5573,7 @@ The zoom is always centered on the middle cell in the grid.
 
 <p>
 You can use the following keyboard shortcuts (but see <a href="#shortcuts">below</a>
-how you can write a script to create new shortcuts or override any of the supplied
+for how you can write a script to create new shortcuts or override any of the supplied
 shortcuts):
 
 <p>
@@ -5144,6 +5620,7 @@ shortcuts):
 <tr><td align=right> S &nbsp;</td><td>&nbsp; switch cursor to select mode </td></tr>
 <tr><td align=right> M &nbsp;</td><td>&nbsp; switch cursor to move mode </td></tr>
 <tr><td align=right> C &nbsp;</td><td>&nbsp; cycle cursor mode (draw/select/move) </td></tr>
+<tr><td align=right> shift-M &nbsp;</td><td>&nbsp; move pattern to middle of grid </td></tr>
 <tr><td align=right> H &nbsp;</td><td>&nbsp; show this help </td></tr>
 <tr><td align=right> Q &nbsp;</td><td>&nbsp; quit 3D.lua </td></tr>
 </table>
@@ -5428,7 +5905,7 @@ when it starts up by going to File > Set Startup Script and selecting
 a .lua file containing this code:
 
 <dd><table border=0><pre>
--- for 3D.lua
+-- a startup script for 3D.lua
 local g = golly()
 local gp = require "gplus"
 local savedHandler = HandleKey
@@ -7747,6 +8224,7 @@ function HandleKey(event)
     elseif key == "d" and mods == "none" then DrawMode()
     elseif key == "s" and mods == "none" then SelectMode()
     elseif key == "m" and mods == "none" then MoveMode()
+    elseif key == "m" and mods == "shift" then MiddlePattern()
     elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "q" then ExitScript()
     else
