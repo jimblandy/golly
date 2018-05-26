@@ -3226,10 +3226,10 @@ function NextGenBusyBoxes()
     }
     -- numbers are indices into the coords array
     local activators = { {5,8}, {7,10}, {9,12}, {6,11} }
-    local inhibitors = { {18,25,22,27,20,28, 9,12},
-                         {18,24,19,27,21,26, 6,11}, 
-                         {16,23,14,19,13,21, 5,8},
-                         {20,15,14,22,17,23, 7,10} }
+    local inhibitors = { {18,25,22,27,20,28, 7,10, 9,12, 6,11},
+                         {18,24,19,27,21,26, 5,8,  9,12, 6,11},
+                         {16,23,14,19,13,21, 5,8,  7,10, 6,11},
+                         {20,15,14,22,17,23, 5,8,  7,10, 9,12} }
 
     local phase = gencount % 6
     local NN = N * N
@@ -3272,7 +3272,9 @@ function NextGenBusyBoxes()
                     and not (val[inhibitors[i][1]] or val[inhibitors[i][2]] or
                              val[inhibitors[i][3]] or val[inhibitors[i][4]] or
                              val[inhibitors[i][5]] or val[inhibitors[i][6]] or
-                             val[inhibitors[i][7]] or val[inhibitors[i][8]]) then
+                             val[inhibitors[i][7]] or val[inhibitors[i][8]] or
+                             val[inhibitors[i][9]] or val[inhibitors[i][10]] or
+                             val[inhibitors[i][11]] or val[inhibitors[i][12]]) then
                     numswaps = numswaps + 1
                     if numswaps > 1 then break end
                     swapi = i   -- index of swap location in coords array (1..4)
