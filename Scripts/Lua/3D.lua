@@ -341,8 +341,8 @@ function ParseRule(newrule)
         -- survivals and births are not used
         NextGeneration = NextGenBusyBoxes
         return true
-    elseif newrule == "BUSYBOXESM" or newrule == "BBM" then
-        rulestring = "BusyBoxesM"
+    elseif newrule == "BUSYBOXESW" or newrule == "BBW" then
+        rulestring = "BusyBoxesW"
         -- survivals and births are not used
         NextGeneration = NextGenBusyBoxes
         return true
@@ -3236,7 +3236,7 @@ function NextGenBusyBoxes()
                          {16,23,14,19,13,21, 5,8,  7,10, 6,11},
                          {20,15,14,22,17,23, 5,8,  7,10, 9,12} }
 
-    local mirror_mode = rulestring:sub(-1) == "M"
+    local mirror_mode = rulestring:sub(-1) ~= "W"
     local phase = gencount % 6
     local NN = N * N
     local swaps = {}
@@ -3307,7 +3307,7 @@ function NextGenBusyBoxes()
                     newy = y
                     newz = z + coords[swapi][2]
                 end
-                -- if rule specifies mirror mode then don't wrap
+                -- if using mirror mode then don't wrap
                 if mirror_mode and
                     ( newx < 0 or newx >= N or
                       newy < 0 or newy >= N or
@@ -4225,7 +4225,7 @@ function ChangeRule()
                               "or H for the 12-cell hexahedral neighborhood.\n" ..
                               "\n" ..
                               "Another rule you might like to try is BusyBoxes\n" ..
-                              "(just enter BB, or BBM for mirror mode).\n",
+                              "(just enter \"bb\", or \"bbw\" to wrap edges).\n",
                               newrule, "Set rule")
         if not ParseRule(newrule) then goto try_again end
     end
