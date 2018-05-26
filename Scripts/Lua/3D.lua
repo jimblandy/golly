@@ -1145,6 +1145,7 @@ function CreateLiveSphere()
     local diameter = CELLSIZE+1                     -- so orthogonally adjacent spheres touch
     ov("create "..diameter.." "..diameter.." S")    -- s is used for selected cells
     ov("target S")
+    ov("blend 1")
 
     local x = 0
     local y = 0
@@ -1152,7 +1153,6 @@ function CreateLiveSphere()
     local grayinc = 3
     if diameter < 50 then grayinc = 8 - diameter//10 end
     local r = (diameter+1)//2
-    ov("blend 1")
     while true do
         ov("rgba "..gray.." "..gray.." "..gray.." 255")
         -- draw a solid circle by setting the line width to the radius
@@ -1167,9 +1167,9 @@ function CreateLiveSphere()
         gray = gray + grayinc
         if gray > 255 then gray = 255 end
     end
+
     ov("blend 0")
     ov("lineoption width 1")
-
     ov("optimize S")
 
     -- create faded versions of the clip if depth shading
@@ -1580,8 +1580,8 @@ end
 
 ----------------------------------------------------------------------
 
-function CreateBusyCube(clipname, R, G, B)
-    -- create a clip containing a cube with given color
+function CreateBusyCube(clipname)
+    -- create a clip containing a cube for odd/even cells
     
     -- largest size of a rotated cube with edge length L is sqrt(3)*L
     HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
@@ -1603,11 +1603,11 @@ function CreateBusyCube(clipname, R, G, B)
     CheckFaces(1,2,8,7, 3,4,6,5)    -- bottom or top
     CheckFaces(1,2,4,3, 7,8,6,5)    -- left or right
     
-    -- or pass R, G, B into CheckFaces???
-    if R == 255 then
-        ov("replace *# *#-150 *#-150 *#") --!!!???
+    -- we can't use red and blue (clashes with colors for paste cells and active cells)
+    if clipname == "E" then
+        ov("replace *# *# *#-90 *#")    -- pale yellow
     else
-        ov("replace *#-150 *#-150 *# *#") --!!!???
+        ov("replace *#-90 *# *# *#")    -- pale cyan
     end
     
     DrawCubeEdges()
@@ -1624,18 +1624,26 @@ end
 
 ----------------------------------------------------------------------
 
-function CreateBusySphere(clipname, R, G, B)
-    -- create a clip containing a sphere with given color
+function CreateBusySphere(clipname)
+    -- create a clip containing a sphere for odd/even cells
     
     local diameter = CELLSIZE+1
     local d1 = diameter
     ov("create "..diameter.." "..diameter.." "..clipname)
     ov("target "..clipname)
     ov("blend 1")
+    
+    local R, G, B
+    if clipname == "E" then
+        R, G, B = 255, 255, 140     -- pale yellow
+    else
+        R, G, B = 140, 255, 255     -- pale cyan
+    end
 
     local x = 0
     local y = 0
-    local inc = 6
+    local inc = 3
+    if diameter < 50 then inc = 8 - diameter//10 end
     local r = (diameter+1)//2
     while true do
         ov("rgba "..R.." "..G.." "..B.." 255")
@@ -1660,7 +1668,6 @@ function CreateBusySphere(clipname, R, G, B)
     ov("lineoption width 1")
     ov("ellipse 0 0 "..d1.." "..d1)
     ov("blend 0")
-
     ov("optimize "..clipname)
 
     -- create faded versions of the clip if depth shading
@@ -1689,6 +1696,27 @@ end
 
 ----------------------------------------------------------------------
 
+function DrawBusyCubeDepth(x, y, z, color, clipname)
+    -- draw odd/even cube at given grid position with shading (color is ignored)
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newz = (x*zixo + y*ziyo + z*zizo)
+    -- use orthographic projection
+    x = round(newx) + midx - HALFCUBECLIP
+    y = round(newy) + midy - HALFCUBECLIP
+    -- compute the depth layer
+    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
+    if layer < 1 then layer = 1 end
+    if layer > depthlayers then layer = depthlayers end
+    ov("paste "..x.." "..y.." "..clipname..layer)
+end
+
+----------------------------------------------------------------------
+
 function DrawBusySphere(x, y, z, color, clipname)
     -- draw odd/even sphere at given grid position (color is ignored)
     x = x * CELLSIZE + MIDCELL
@@ -1701,6 +1729,27 @@ function DrawBusySphere(x, y, z, color, clipname)
     x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
     y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
     ov("paste "..x.." "..y.." "..clipname)
+end
+
+----------------------------------------------------------------------
+
+function DrawBusySphereDepth(x, y, z, color, clipname)
+    -- draw odd/even sphere at given grid position with shading (color is ignored)
+    x = x * CELLSIZE + MIDCELL
+    y = y * CELLSIZE + MIDCELL
+    z = z * CELLSIZE + MIDCELL
+    -- transform point
+    local newx = (x*xixo + y*xiyo + z*xizo)
+    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newz = (x*zixo + y*ziyo + z*zizo)
+    -- use orthographic projection
+    x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
+    y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
+    -- compute the depth layer
+    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
+    if layer < 1 then layer = 1 end
+    if layer > depthlayers then layer = depthlayers end
+    ov("paste "..x.." "..y.." "..clipname..layer)
 end
 
 ----------------------------------------------------------------------
@@ -1834,9 +1883,30 @@ function DisplayBusyBoxes(editing)
     if (fromy == MINY) then toy, stepy = MAXY, 1 else toy, stepy = MINY, -1 end
     if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
 
+    -- select the cell drawing functions based on whether depth shading is required
+    if depthshading then
+        zdepth = N*CELLSIZE*0.5
+        zdepth2 = zdepth+zdepth
+        if celltype == "cube" then
+            DrawBusyBox = DrawBusyCubeDepth
+        elseif celltype == "sphere" then
+            DrawBusyBox = DrawBusySphereDepth
+        else -- celltype == "point"
+            DrawBusyBox = DrawBusyPoint     -- shading is not done for points
+        end
+    else
+        if celltype == "cube" then
+            DrawBusyBox = DrawBusyCube
+        elseif celltype == "sphere" then
+            DrawBusyBox = DrawBusySphere
+        else -- celltype == "point"
+            DrawBusyBox = DrawBusyPoint
+        end
+    end
+
     -- colors for points (should match colors used in CreateBusyCube/Sphere)
-    local evencolor = "rgba 255 60 60 255"
-    local oddcolor = "rgba 80 80 255 255"
+    local evencolor = "rgba 255 255 140 255"
+    local oddcolor = "rgba 140 255 255 255"
 
     -- clip names for cubes/spheres
     local evenclip = "E"
@@ -1851,6 +1921,7 @@ function DisplayBusyBoxes(editing)
             for y = fromy, toy, stepy do
                 ypz = y + z
                 for x = fromx, tox, stepx do
+                    -- note that TestBusyBox might use colors *and* clip names
                     if (x + ypz) % 2 == 0 then
                         TestBusyBox(editing, i+x, x, y, z, evencolor, evenclip)
                     else
@@ -1863,6 +1934,15 @@ function DisplayBusyBoxes(editing)
         end
     else
         -- only live cells need to be drawn
+        if celltype == "point" then
+            -- evenclip and oddclip are ignored if DrawBusyBox = DrawBusyPoint
+            evenclip = nil
+            oddclip = nil
+        else
+            -- evencolor and oddcolor are ignored if DrawBusyBox = DrawBusyCube/Sphere
+            evencolor = nil
+            oddcolor = nil
+        end
         j = N*fromz
         for z = fromz, toz, stepz do
             i = N*(fromy+j)
@@ -1870,8 +1950,6 @@ function DisplayBusyBoxes(editing)
                 ypz = y + z
                 for x = fromx, tox, stepx do
                     if grid1[i+x] then
-                        -- evenclip and oddclip are ignored if DrawBusyBox = DrawBusyPoint;
-                        -- evencolor and oddcolor are ignored if DrawBusyBox = DrawBusyCube/Sphere
                         if (x + ypz) % 2 == 0 then
                             DrawBusyBox(x, y, z, evencolor, evenclip)
                         else
@@ -2077,15 +2155,11 @@ function Refresh(update)
         end
         if rulestring == "BusyBoxes" then
             if celltype == "cube" then
-                CreateBusyCube("E", 255, 60, 60)
-                CreateBusyCube("O", 80, 80, 255)
-                DrawBusyBox = DrawBusyCube
+                CreateBusyCube("E")
+                CreateBusyCube("O")
             elseif celltype == "sphere" then
-                CreateBusySphere("E", 255, 60, 60)
-                CreateBusySphere("O", 80, 80, 255)
-                DrawBusyBox = DrawBusySphere
-            else
-                DrawBusyBox = DrawBusyPoint
+                CreateBusySphere("E")
+                CreateBusySphere("O")
             end
             DisplayBusyBoxes(editing)
         else
