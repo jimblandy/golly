@@ -99,7 +99,6 @@ local DrawLiveCell                  -- set to Add{Cube/Sphere/Point}ToBatch{Dept
 local DrawBusyBox                   -- set to DrawBusy{Cube/Sphere/Point}
 local xybatch = {}                  -- coordinates for each cell when batch drawing
 local layercoords = {}              -- coordinates for each cell in each layer
-local layerpointcols = {}           -- rgb values for each points in each layer
 local depthshading = false          -- using depth shading?
 local depthlayers = 32              -- number of shading layers
 local zdepth, zdepth2               -- coefficients for z to depth layer mapping
@@ -1271,29 +1270,6 @@ end
 
 ----------------------------------------------------------------------
 
-function AddPointToBatchDepth(x, y, z)
-    -- add mid point of cell at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = round(newx) + midx
-    y = round(newy) + midy
-    -- compute the depth layer
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
-    if layer < 1 then layer = 1 end
-    if layer > depthlayers then layer = depthlayers end
-    -- add to the layer's list to draw
-    local xylist = layercoords[layer]
-    xylist[#xylist + 1] = x
-    xylist[#xylist + 1] = y
-end
-----------------------------------------------------------------------
-
 function AddPointToBatch(x, y, z)
     -- add mid point of cell at given grid position
     x = x * CELLSIZE + MIDCELL
@@ -1312,35 +1288,28 @@ end
 
 ----------------------------------------------------------------------
 
-local function DrawBatchLayer(depth, coordlist)
-    if #coordlist > 0 then
-        if celltype == "cube" then
-            ov("paste "..table.concat(coordlist, " ").." c"..depth)
-        elseif celltype == "sphere" then
-            ov("paste "..table.concat(coordlist, " ").." S"..depth)
-        else -- celltype == "point"
-            if depth == "" then
-                ov(op.white)
-            else
-                ov(layerpointcols[depth])
-            end
-            ov("set "..table.concat(coordlist, " "))
-        end
-    end
-end
-
-----------------------------------------------------------------------
-
 local function DrawBatch()
-    if depthshading then
+    if celltype == "point" then
+        if #xybatch > 0 then
+            ov(op.white)
+            ov("set "..table.concat(xybatch, " "))
+            xybatch = {}
+        end
+    elseif depthshading then
+        local clipprefix = " c"
+        if celltype == "sphere" then clipprefix = " S" end
         for i = depthlayers, 1, -1 do
             if #layercoords[i] > 0 then
-                DrawBatchLayer(i, layercoords[i])
+                ov("paste "..table.concat(layercoords[i], " ")..clipprefix..i)
                 layercoords[i] = {}
             end
         end
-    else
-        DrawBatchLayer("", xybatch)
+    elseif #xybatch > 0 then
+        if celltype == "cube" then
+            ov("paste "..table.concat(xybatch, " ").." c")
+        else -- celltype == "sphere"
+            ov("paste "..table.concat(xybatch, " ").." S")
+        end
         xybatch = {}
     end
 end
@@ -1536,7 +1505,7 @@ function DisplayCells(editing)
         elseif celltype == "sphere" then
             DrawLiveCell = AddSphereToBatchDepth
         else -- celltype == "point"
-            DrawLiveCell = AddPointToBatchDepth
+            DrawLiveCell = AddPointToBatch      -- shading is not done for points
         end
     else
         if celltype == "cube" then
@@ -1917,21 +1886,22 @@ function DisplayBusyBoxes(editing)
     local evenclip = "E"
     local oddclip = "O"
 
-    local i, j, ypz
+    local i, j, evencell
     local stepi, stepj = N*stepy, N*stepz
     if testcell then
         j = N*fromz
         for z = fromz, toz, stepz do
             i = N*(fromy+j)
             for y = fromy, toy, stepy do
-                ypz = y + z
+                evencell = (fromx + y + z) % 2 == 0
                 for x = fromx, tox, stepx do
                     -- note that TestBusyBox might use colors *and* clip names
-                    if (x + ypz) % 2 == 0 then
+                    if evencell then
                         TestBusyBox(editing, i+x, x, y, z, evencolor, evenclip)
                     else
                         TestBusyBox(editing, i+x, x, y, z, oddcolor, oddclip)
                     end
+                    evencell = not evencell
                 end
                 i = i+stepi
             end
@@ -1952,15 +1922,16 @@ function DisplayBusyBoxes(editing)
         for z = fromz, toz, stepz do
             i = N*(fromy+j)
             for y = fromy, toy, stepy do
-                ypz = y + z
+                evencell = (fromx + y + z) % 2 == 0
                 for x = fromx, tox, stepx do
                     if grid1[i+x] then
-                        if (x + ypz) % 2 == 0 then
+                        if evencell then
                             DrawBusyBox(x, y, z, evencolor, evenclip)
                         else
                             DrawBusyBox(x, y, z, oddcolor, oddclip)
                         end
                     end
+                    evencell = not evencell
                 end
                 i = i+stepi
             end
@@ -5955,8 +5926,9 @@ minimum <a href="#coords">cell coordinates</a>
 
 <a name="shading"></a><p><dt><b>Use Depth Shading</b></dt>
 <dd>
-If ticked then live cells are drawn slightly darker the further
-away they are from the front of the screen.
+If ticked then cubes and spheres are drawn slightly darker the further
+away they are from the front of the screen.  Depth shading is not done
+when displaying points.
 </dd>
 
 <a name="help"></a><p><dt><b>Help</b></dt>
@@ -8210,17 +8182,9 @@ end
 ----------------------------------------------------------------------
 
 function InitDepthShading()
-    local adjust = 96 / depthlayers
-    local total = 255
-    local rgb
     -- initialize each depth shading layer
     for i = 1, depthlayers do
-        -- clear depth shading list
         layercoords[i] = {}
-        -- create point rgb values
-        rgb = floor(total)
-        layerpointcols[i] = "rgba "..rgb.." "..rgb.." "..rgb.." 255"
-        total = total - adjust
     end
 end
 
