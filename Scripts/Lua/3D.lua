@@ -335,9 +335,14 @@ function ParseRule(newrule)
         newrule = newrule:upper()
     end
 
-    -- first check for BusyBoxes
+    -- first check for BusyBoxes or BusyBoxesM
     if newrule == "BUSYBOXES" or newrule == "BB" then
         rulestring = "BusyBoxes"
+        -- survivals and births are not used
+        NextGeneration = NextGenBusyBoxes
+        return true
+    elseif newrule == "BUSYBOXESM" or newrule == "BBM" then
+        rulestring = "BusyBoxesM"
         -- survivals and births are not used
         NextGeneration = NextGenBusyBoxes
         return true
@@ -2153,7 +2158,7 @@ function Refresh(update)
             -- cells in active plane will be translucent blue
             CreateTranslucentCell("a", "0 0 255 48")
         end
-        if rulestring == "BusyBoxes" then
+        if rulestring:find("^BusyBoxes") then
             if celltype == "cube" then
                 CreateBusyCube("E")
                 CreateBusyCube("O")
@@ -3231,6 +3236,7 @@ function NextGenBusyBoxes()
                          {16,23,14,19,13,21, 5,8,  7,10, 6,11},
                          {20,15,14,22,17,23, 5,8,  7,10, 9,12} }
 
+    local mirror_mode = rulestring:sub(-1) == "M"
     local phase = gencount % 6
     local NN = N * N
     local swaps = {}
@@ -3283,23 +3289,42 @@ function NextGenBusyBoxes()
             
             -- if only one swap, and only to an empty cell, then do it
             if numswaps == 1 and not val[swapi] then
-                -- swap live cell from grid1 into diagonally opposite cell in grid2
+                -- calculate the swap position
+                local newx, newy, newz
                 if phase == 0 or phase == 3 then
                     -- use XY plane
-                    x = (x + coords[swapi][1]) % N
-                    y = (y + coords[swapi][2]) % N
+                    newx = x + coords[swapi][1]
+                    newy = y + coords[swapi][2]
+                    newz = z
                 elseif phase == 1 or phase == 4 then
                     -- use YZ plane
-                    y = (y + coords[swapi][1]) % N
-                    z = (z + coords[swapi][2]) % N
+                    newx = x
+                    newy = y + coords[swapi][1]
+                    newz = z + coords[swapi][2]
                 else
                     -- phase == 2 or 5 so use XZ plane
-                    x = (x + coords[swapi][1]) % N
-                    z = (z + coords[swapi][2]) % N
+                    newx = x + coords[swapi][1]
+                    newy = y
+                    newz = z + coords[swapi][2]
                 end
-                grid2[x + N * (y + N * z)] = 1
-                popcount = popcount + 1
-                -- don't set dirty flag here!
+                -- if rule specifies mirror mode then don't wrap
+                if mirror_mode and
+                    ( newx < 0 or newx >= N or
+                      newy < 0 or newy >= N or
+                      newz < 0 or newz >= N ) then
+                    -- swap position is outside grid so don't do it
+                    grid2[k] = 1
+                    popcount = popcount + 1
+                    -- don't set dirty flag here!
+                else
+                    -- do the swap, wrapping if necessary
+                    x = newx % N
+                    y = newy % N
+                    z = newz % N
+                    grid2[x + N * (y + N * z)] = 1
+                    popcount = popcount + 1
+                    -- don't set dirty flag here!
+                end
             else
                 -- don't swap this live cell
                 grid2[k] = 1
@@ -4200,7 +4225,7 @@ function ChangeRule()
                               "or H for the 12-cell hexahedral neighborhood.\n" ..
                               "\n" ..
                               "Another rule you might like to try is BusyBoxes\n" ..
-                              "(just enter BB for short).\n",
+                              "(just enter BB, or BBM for mirror mode).\n",
                               newrule, "Set rule")
         if not ParseRule(newrule) then goto try_again end
     end
@@ -4219,7 +4244,7 @@ function ChangeRule()
         -- it back to oldrule and call RememberCurrentState
         local newrule = rulestring
         rulestring = oldrule
-        if newrule == "BusyBoxes" and N%2 == 1 then
+        if newrule:find("^BusyBoxes") and N%2 == 1 then
             -- BusyBoxes requires an even numbered grid size
             SetGridSize(N+1)
             -- above calls RememberCurrentState()
