@@ -1605,9 +1605,9 @@ function CreateBusyCube(clipname)
     
     -- we can't use red and blue (clashes with colors for paste cells and active cells)
     if clipname == "E" then
-        ov("replace *# *# *#-90 *#")    -- pale yellow
+        ov("replace *# *#-50 *# *#")    -- pale magenta
     else
-        ov("replace *#-90 *# *# *#")    -- pale cyan
+        ov("replace *#-110 *# *# *#")   -- pale cyan
     end
     
     DrawCubeEdges()
@@ -1635,7 +1635,7 @@ function CreateBusySphere(clipname)
     
     local R, G, B
     if clipname == "E" then
-        R, G, B = 255, 255, 140     -- pale yellow
+        R, G, B = 255, 180, 255     -- pale magenta
     else
         R, G, B = 140, 255, 255     -- pale cyan
     end
@@ -1905,8 +1905,8 @@ function DisplayBusyBoxes(editing)
     end
 
     -- colors for points (should match colors used in CreateBusyCube/Sphere)
-    local evencolor = "rgba 255 255 140 255"
-    local oddcolor = "rgba 140 255 255 255"
+    local evencolor = "rgba 255 180 255 255"    -- pale magenta
+    local oddcolor = "rgba 140 255 255 255"     -- pale cyan
 
     -- clip names for cubes/spheres
     local evenclip = "E"
@@ -3198,7 +3198,7 @@ end
 function NextGenBusyBoxes()
     if N%2 == 1 then
         -- BusyBoxes requires an even numbered grid size
-        SetGridSize(N+1)    -- test!!! (also do at end of ChangeRule???)
+        SetGridSize(N+1)
     end
 
     if AllDead() then return end
@@ -4217,9 +4217,14 @@ function ChangeRule()
         -- it back to oldrule and call RememberCurrentState
         local newrule = rulestring
         rulestring = oldrule
-        RememberCurrentState()
+        if newrule == "BusyBoxes" and N%2 == 1 then
+            -- BusyBoxes requires an even numbered grid size
+            SetGridSize(N+1)
+            -- above calls RememberCurrentState()
+        else
+            RememberCurrentState()
+        end
         rulestring = newrule
-
         CheckIfGenerating()
         Refresh()
     end
