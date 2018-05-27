@@ -5578,6 +5578,7 @@ function ShowHelp()
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#corner"><b>Corner neighborhood</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#edge"><b>Edge neighborhood</b></a></dd>
 <dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#hex"><b>Hexahedral neighborhood</b></a></dd>
+<dd>&nbsp;&nbsp;&nbsp;&nbsp; <a href="#busy"><b>Busy Boxes</b></a></dd>
 <dd><a href="#rle3"><b>RLE3 file format</b></a></dd>
 <dd><a href="#refs"><b>Credits and references</b></a></dd>
 </p>
@@ -6400,6 +6401,9 @@ The Edge neighborhood consists of the 12 cells adjacent to the edges of a cube.
 The Hexahedral neighborhood simulates 12 spheres packed around a central sphere.
 Because it is simulating a hexahedral tesselation in a cubic grid, this neighborhood
 is not orthogonally symmetric, so flipping or rotating a pattern can change the way it evolves.
+<li>
+The Busy Boxes neighborhood is rather complicated.  Follow the links below if you
+want to know all the gory details.
 </ul>
 
 <p>
@@ -6459,6 +6463,44 @@ B counts are from 1 to 12.
 Rules use the same syntax as the Moore neighborhood but with "H" appended.
 Each cell has 12 neighbors so the S counts are from 0 to 12 and the
 B counts are from 1 to 12.
+
+<p><a name="busy"></a><br>
+<font size=+1><b>Busy Boxes</b></font>
+
+<p>
+Busy Boxes is a 3D reversible CA created by Ed Fredkin and Daniel B. Miller.
+3D.lua supports two rules: BusyBoxes and BusyBoxesW.  The first rule uses a
+"mirror" mode where gliders are reflected back when they reach a grid boundary.
+The second rule is for "wrap" mode where gliders can cross a boundary and appear
+in the opposite side of the grid.
+
+<p>
+Each cell in the grid is either odd or even, depending on whether the sum of the
+cell's x,y,z coordinates is odd or even.
+3D.lua uses cyan for odd cells and magenta for even cells (Fredkin and Miller use
+blue and red but these colors are used by 3D.lua to display paste patterns
+and the active plane).
+
+<p>
+Each generation of a Busy Boxes pattern is in one of six phases, numbered 0 to 5.
+In even phases, only even (magenta) cells can move.
+In odd phases, only odd (cyan) cells can move.
+In phases 0 and 3, movement can only occur in the XY plane.
+In phases 1 and 4 movement can only occur in the YZ plane.
+In phases 2 and 5, movement can only occur in the XZ plane.
+For each diagonally opposite pair of cells in the current plane, if a live cell exists
+at either of the pair's knight move positions, then the states of the two cells can be swapped.
+However, this only happens if there is no other possible swap for either cell.
+
+<p>
+For a pattern with a sparse or small population it's quite likely that no swaps
+are possible in a particular phase.  Or the only valid swaps might be between
+two empty cells or two live cells.  Either way, the pattern won't change.
+At each generation, a live cell can only move into a diagonally opposite empty cell
+(and only in the same orthogonal plane).
+This also means that the initial population never changes.
+For more details see the <a href="http://www.busyboxes.org/faq.html">Busy Boxes FAQ</a>
+and the papers listed in the <a href="#refs">references</a>.
 
 <p><a name="rle3"></a><br>
 <font size=+1><b>RLE3 file format</b></font>
@@ -6548,6 +6590,20 @@ Further Notes on the Game of Three-Dimensional Life<br>
 <p>
 A Note About the Discovery of Many New Rules for the Game of Three-Dimensional Life<br>
 <a href="http://wpmedia.wolfram.com/uploads/sites/13/2018/02/16-4-7.pdf">http://wpmedia.wolfram.com/uploads/sites/13/2018/02/16-4-7.pdf</a>
+
+<p>
+References for Busy Boxes:
+
+<p>
+Website: <a href="http://www.busyboxes.org">http://www.busyboxes.org</a>
+
+<p>
+Two State, Reversible, Universal Cellular Automata In Three Dimensions<br>
+<a href="https://arxiv.org/ftp/nlin/papers/0501/0501022.pdf">https://arxiv.org/ftp/nlin/papers/0501/0501022.pdf</a>
+
+<p>
+Circular Motion of Strings in Cellular Automata, and Other Surprises<br>
+<a href="https://arxiv.org/abs/1206.2060">https://arxiv.org/abs/1206.2060</a>
 
 </body></html>
 ]]
