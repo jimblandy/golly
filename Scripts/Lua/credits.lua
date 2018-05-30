@@ -201,6 +201,8 @@ Mark Jeronimus
 
 Eric Goldstein
 
+Arie Paap
+
 
 
 
@@ -215,6 +217,9 @@ for QuickLife ideas and non-totalistic algorithm
 
 David Eppstein
 for the B0 rule emulation idea
+
+Adam P. Goucher and Dean Hickerson
+for clever ideas to speed up Larger than Life
 
 Eugene Langvagen
 for inspiring Golly's scripting capabilities
@@ -518,6 +523,7 @@ end
 
 local oldoverlay = g.setoption("showoverlay", 1)
 local oldbuttons = g.setoption("showbuttons", 0) -- disable translucent buttons
+local oldscroll = g.setoption("showscrollbars", 0)
 local oldtile = g.setoption("tilelayers", 0)
 local oldstack = g.setoption("stacklayers", 0)
 
@@ -530,6 +536,7 @@ g.check(false)
 ov("delete")
 g.setoption("showoverlay", oldoverlay)
 g.setoption("showbuttons", oldbuttons)
+g.setoption("showscrollbars", oldscroll)
 g.setoption("tilelayers", oldtile)
 g.setoption("stacklayers", oldstack)
 if extra_layer then g.dellayer() end
