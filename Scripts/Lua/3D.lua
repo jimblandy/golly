@@ -3417,7 +3417,6 @@ function NextGenBusyBoxes()
     local grid2 = {}
     local l_N = N
     local NN = l_N * l_N
-    local swaps = {}   -- not used?  !!!
     local l_popcount = popcount
     local l_minx, l_miny, l_minz = minx, miny, minz
     local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
