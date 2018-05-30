@@ -1044,6 +1044,8 @@ Mark Jeronimus
 
 Eric Goldstein
 
+Aire Paap
+
 
 
 
@@ -1058,6 +1060,9 @@ for QuickLife ideas and non-totalistic algorithm
 
 David Eppstein
 for the B0 rule emulation idea
+
+Adam P. Goucher and Dean Hickerson
+for clever ideas to speed up Larger than Life
 
 Eugene Langvagen
 for inspiring Golly's scripting capabilities
