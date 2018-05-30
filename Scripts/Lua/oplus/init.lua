@@ -1228,7 +1228,9 @@ local function release_in_item(x, y, mbar)
             local event = g.getevent()
             if event == "mup left" then
                 if g.millisecs() - t0 > 500 then
+                    local oldmenu = selmenu
                     selmenu = GetMenu(x, y, selmenu, mbar)
+                    if selmenu == 0 then selmenu = oldmenu end
                     break
                 end
             elseif event:find("^oclick") then
@@ -1236,7 +1238,9 @@ local function release_in_item(x, y, mbar)
                 if butt == "left" and mods == "none" then
                     x = tonumber(sx)
                     y = tonumber(sy)
+                    local oldmenu = selmenu
                     selmenu = GetMenu(x, y, selmenu, mbar)
+                    if selmenu == 0 then selmenu = oldmenu end
                     break
                 end
             elseif event == "key enter none" or event == "key return none" then
@@ -1252,13 +1256,12 @@ local function release_in_item(x, y, mbar)
                     local oldmenu = selmenu
                     local olditem = selitem
                     selmenu = GetMenu(x, y, selmenu, mbar)
+                    if selmenu == 0 then selmenu = oldmenu end
                     selitem = GetItem(x, y, selmenu, mbar)
                     if selmenu ~= oldmenu or selitem ~= olditem then
                         ov("paste 0 0 "..bgclip)
                         DrawMenuBar(mbar)
-                        if selmenu > 0 then
-                            DrawMenuItems(mbar)
-                        end
+                        DrawMenuItems(mbar)
                         g.update()
                     end
                     prevx = x
