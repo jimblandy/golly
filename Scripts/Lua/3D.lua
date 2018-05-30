@@ -40,14 +40,12 @@ local DrawLine = op.draw_line
 
 local sin = math.sin
 local cos = math.cos
---local acos = math.acos
 local sqrt = math.sqrt
 local rand = math.random
 local abs = math.abs
 local min = math.min
 local max = math.max
 local floor = math.floor
---local ceil = math.ceil
 
 math.randomseed(os.time())          -- init seed for math.random
 
@@ -1199,8 +1197,9 @@ function CreateLiveSphere()
     local x = 0
     local y = 0
     local gray = 0      -- start with black outline
+    local grayinc = 127
     local r = (diameter+1)//2
-    if r > 2 then grayinc = 127/(r-2) else grayinc = 127 end
+    if r > 2 then grayinc = 127/(r-2) end
     while true do
         local grayrgb = floor(gray)
         l_ov("rgba "..grayrgb.." "..grayrgb.." "..grayrgb.." 255")
@@ -4056,9 +4055,9 @@ function RunScript(filepath)
             g.warn("Script file could not be opened:\n"..filepath, false)
             return
         end
-        f, msg = loadfile(filepath)
-        if f then
-            CallScript(f, false)
+        local func, msg = loadfile(filepath)
+        if func then
+            CallScript(func, false)
         else
             g.warn("Syntax error in script:\n\n"..msg, false)
         end
@@ -4084,9 +4083,9 @@ function RunClipboard()
         g.warn("3D.lua was not found on first line of clipboard.", false)
         return
     end
-    local f, msg = load(cliptext)
-    if f then
-        CallScript(f, true)
+    local func, msg = load(cliptext)
+    if func then
+        CallScript(func, true)
     else
         g.warn("Syntax error in clipboard script:\n\n"..msg, false)
     end
@@ -8278,7 +8277,7 @@ function CreateOverlay()
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Shading Off", SetDepthRange, {depthoptions[1]})
     mbar.additem(4, "Shading Low", SetDepthRange, {depthoptions[2]})
-    mbar.additem(4, "Shading Hight", SetDepthRange, {depthoptions[3]})
+    mbar.additem(4, "Shading High", SetDepthRange, {depthoptions[3]})
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Help", ShowHelp)
 
