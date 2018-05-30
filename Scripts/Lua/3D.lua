@@ -1254,6 +1254,7 @@ function AddCellToBatchDepth(x, y, z, mx, my)
         layerindices[layerlast] = layerindex
         layerlast = layer
         layercurrent = layercoords[layer]
+        layerindex = layerindices[layer]
     end
     -- add to the layer's list to draw
     layercurrent[layerindex] = x
@@ -1319,6 +1320,7 @@ local function DrawBatch()
         -- draw each layer in reverse order (furthest away first = darkest)
         local l_layerindices = layerindices
         local l_layercoords = layercoords
+        l_layerindices[layerlast] = layerindex    -- save current layer index (may have been updated in TestCell)
         for i = depthlayers, 1, -1 do
             if l_layerindices[i] > 1 then
                 DrawBatchLayer(i, l_layercoords[i], l_layerindices[i] - 1)
@@ -1348,8 +1350,8 @@ local function DrawPoint(x, y, z)
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
-    x = round(newx) + midx
-    y = round(newy) + midy
+    x = floor(newx + midx + 0.5)
+    y = floor(newy + midy + 0.5)
     ov("set "..x.." "..y)
 end
 
@@ -1363,8 +1365,8 @@ local function DrawActiveCell(x, y, z)
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
-    x = round(newx) + midx - CELLSIZE
-    y = round(newy) + midy - CELLSIZE
+    x = floor(newx + midx - CELLSIZE + 0.5)
+    y = floor(newy + midy - CELLSIZE + 0.5)
     -- draw the clip created by CreateTranslucentCell
     ov("paste "..x.." "..y.." a")
 end
@@ -1379,8 +1381,8 @@ local function DrawSelectedCell(x, y, z)
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
-    x = round(newx) + midx - CELLSIZE
-    y = round(newy) + midy - CELLSIZE
+    x = floor(newx + midx - CELLSIZE + 0.5)
+    y = floor(newy + midy - CELLSIZE + 0.5)
     -- draw the clip created by CreateTranslucentCell
     ov("paste "..x.." "..y.." s")
 end
@@ -1395,8 +1397,8 @@ local function DrawPasteCell(x, y, z)
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
-    x = round(newx) + midx - CELLSIZE
-    y = round(newy) + midy - CELLSIZE
+    x = floor(newx + midx - CELLSIZE + 0.5)
+    y = floor(newy + midy - CELLSIZE + 0.5)
     -- draw the clip created by CreateTranslucentCell
     ov("paste "..x.." "..y.." p")
 end
@@ -1603,7 +1605,7 @@ function DisplayCells(editing)
                             -- check if the layer has changed since the last call
                             if layer ~= l_layerlast then
                                 -- save the previous layer and switch to the new one
-                                l_layerindices[l_layerlast] = l_layerindex  -- first call ll will be -1 but will be ignored during drawing
+                                l_layerindices[l_layerlast] = l_layerindex  -- first time layerlast will be -1 but will be ignored during drawing
                                 l_layerlast = layer
                                 l_layercurrent = l_layercoords[layer]
                                 l_layerindex = l_layerindices[layer]
