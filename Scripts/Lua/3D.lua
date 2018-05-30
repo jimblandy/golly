@@ -40,14 +40,14 @@ local DrawLine = op.draw_line
 
 local sin = math.sin
 local cos = math.cos
-local acos = math.acos
+--local acos = math.acos
 local sqrt = math.sqrt
 local rand = math.random
 local abs = math.abs
 local min = math.min
 local max = math.max
 local floor = math.floor
-local ceil = math.ceil
+--local ceil = math.ceil
 
 math.randomseed(os.time())          -- init seed for math.random
 
@@ -77,7 +77,6 @@ local yaxes = {}                    -- four Y axes
 local zaxes = {}                    -- four Z axes
 
 local grid1 = {}                    -- sparse 3D matrix with up to N*N*N live cells
-local grid2 = {}                    -- sparse 3D matrix for the next generation
 local popcount = 0                  -- number of live cells
 local pattname = "untitled"         -- pattern name
 local currtitle = ""                -- current window title
@@ -98,9 +97,15 @@ local celltype = "cube"             -- draw live cell as cube/sphere/point
 local DrawLiveCell                  -- set to Add{Cube/Sphere/Point}ToBatch{Depth}
 local DrawBusyBox                   -- set to DrawBusy{Cube/Sphere/Point}
 local xybatch = {}                  -- coordinates for each cell when batch drawing
+local xyindex = 1                   -- index of next position in xybatch
 local layercoords = {}              -- coordinates for each cell in each layer
-local depthshading = false          -- using depth shading?
-local depthlayers = 32              -- number of shading layers
+local layerindices = {}             -- index of last entry in each layer
+local layercurrent = {}             -- current layer
+local layerindex = 1                -- current layer last entry index
+local layerlast = -1                -- last layer used
+local depthoptions = {0, 96, 144}   -- depth shading off, low and high values
+local depthlayers = 64              -- number of shading layers
+local depthrange = 0                -- rgb level range for depth shading (0 = off)
 local zdepth, zdepth2               -- coefficients for z to depth layer mapping
 
 local active = {}                   -- grid positions of cells in active plane
@@ -194,16 +199,37 @@ survivals[7] = true                 -- ditto
 births[6] = true                    -- ditto
 local NextGeneration                -- set to NextGenMoore, NextGen6Faces, etc
 
-local pattdir = g.getdir("data")    -- initial directory for OpenPattern/SavePattern
-local scriptdir = g.getdir("app")   -- initial directory for RunScript
+pattdir = g.getdir("data")          -- initial directory for OpenPattern/SavePattern
+scriptdir = g.getdir("app")         -- initial directory for RunScript
 local scriptlevel = 0               -- greater than 0 if a user script is running
 
 -- the default path for the script to run when 3D.lua starts up
-local pathsep = g.getdir("app"):sub(-1)
-local startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
+pathsep = g.getdir("app"):sub(-1)
+startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 
 -- user settings are stored in this file
-local settingsfile = g.getdir("data").."3D.ini"
+settingsfile = g.getdir("data").."3D.ini"
+
+----------------------------------------------------------------------
+
+local function TimerDummy()  -- remove when gplus/init.lua 3.2b2 available  !!!
+    return ""
+end
+
+-- timing functions
+local timingenabled = false
+local timerstart, timersave, timervalueall, timerresetall
+if gp.timerstart then  -- remove when gplus.init.lua 3.2b2 available  !!!
+    timerstart = gp.timerstart
+    timersave = gp.timersave
+    timervalueall = gp.timervalueall
+    timerresetall = gp.timerresetall
+else
+    timerstart = TimerDummy
+    timersave = TimerDummy
+    timervalueall = TimerDummy
+    timerresetall = TimerDummy
+end
 
 ----------------------------------------------------------------------
 
@@ -346,7 +372,7 @@ function ParseRule(newrule)
         NextGeneration = NextGenBusyBoxes
         return true
     end
-    
+
     if not newrule:find("^3D") then
         g.warn("Rule must start with 3D.")
         return false
@@ -358,7 +384,7 @@ function ParseRule(newrule)
         g.warn("Rule must have a / separator.")
         return false
     end
-    
+
     -- use 3D Moore neighborhood unless rule ends with a special letter
     local lastchar = newrule:sub(-1)
     local maxcount = 26
@@ -382,7 +408,7 @@ function ParseRule(newrule)
     else
         lastchar = ""   -- for Moore neighborhood
     end
-    
+
     local s, b = split(newrule,"/")
     if #s == 0 then s = {} else s = {split(s,",")} end
     if b == nil or #b == 0 then b = {} else b = {split(b,",")} end
@@ -399,7 +425,7 @@ function ParseRule(newrule)
 
     -- set rulestring to the canonical form
     rulestring = "3D"..CanonicalForm(survivals,maxcount).."/"..CanonicalForm(births,maxcount)..lastchar
-    
+
     -- set NextGeneration to the appropriate NextGen* function
     if lastchar == "F" then
         NextGeneration = NextGen6Faces
@@ -437,7 +463,15 @@ function ReadSettings()
             elseif keyword == "perc" then randstring = tostring(value)
             elseif keyword == "axes" then showaxes = tostring(value) == "true"
             elseif keyword == "lines" then showlines = tostring(value) == "true"
-            elseif keyword == "shading" then depthshading = tostring(value) == "true"
+            elseif keyword == "shading" then
+                depthrange = tonumber(value) or depthoptions[1]
+                if depthrange ~= depthoptions[1] then
+                    if depthrange < depthoptions[2] then
+                        depthrange = depthoptions[2]
+                    elseif depthrange > depthoptions[3] then
+                        depthrange = depthoptions[3]
+                    end
+                end
             elseif keyword == "gridsize" then
                 N = tonumber(value) or 30
                 if N < MINN then N = MINN end
@@ -472,7 +506,7 @@ function WriteSettings()
         f:write("perc=", randstring, "\n")
         f:write("axes="..tostring(showaxes), "\n")
         f:write("lines="..tostring(showlines), "\n")
-        f:write("shading="..tostring(depthshading), "\n")
+        f:write("shading="..tostring(depthrange), "\n")
         f:close()
     end
 end
@@ -716,8 +750,10 @@ function DrawRearAxes()
     local z3 = rotrefz[3]
     local z7 = rotrefz[7]
 
+    local l_ov = ov
+
     if showlines then
-        ov("rgba"..LINE_COLOR)
+        l_ov("rgba"..LINE_COLOR)
         if z1 < z2 then
             -- front face of rotated refcube is visible
             for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
@@ -737,27 +773,27 @@ function DrawRearAxes()
     local dark_green = "rgba 0 128 0 255"
     local dark_blue = "rgba 0 0 128 255"
 
-    ov("blend 1")
-    ov("lineoption width 3")
+    l_ov("blend 1")
+    l_ov("lineoption width 3")
 
-    if z1 <  z2 or z1 >= z3 then ov(dark_red);   DisplayLine(xaxes[1], xaxes[2]) end
-    if z1 <  z2 or z1 >= z7 then ov(dark_green); DisplayLine(yaxes[1], yaxes[2]) end
-    if z1 >= z7 or z1 >= z3 then ov(dark_blue);  DisplayLine(zaxes[1], zaxes[2]) end
+    if z1 <  z2 or z1 >= z3 then l_ov(dark_red);   DisplayLine(xaxes[1], xaxes[2]) end
+    if z1 <  z2 or z1 >= z7 then l_ov(dark_green); DisplayLine(yaxes[1], yaxes[2]) end
+    if z1 >= z7 or z1 >= z3 then l_ov(dark_blue);  DisplayLine(zaxes[1], zaxes[2]) end
 
-    if z1 <  z2 or z1 <  z3 then ov(dark_red);   DisplayLine(xaxes[3], xaxes[4]) end
-    if z1 >= z2 or z1 >= z7 then ov(dark_green); DisplayLine(yaxes[3], yaxes[4]) end
-    if z1 <  z7 or z1 >= z3 then ov(dark_blue);  DisplayLine(zaxes[3], zaxes[4]) end
+    if z1 <  z2 or z1 <  z3 then l_ov(dark_red);   DisplayLine(xaxes[3], xaxes[4]) end
+    if z1 >= z2 or z1 >= z7 then l_ov(dark_green); DisplayLine(yaxes[3], yaxes[4]) end
+    if z1 <  z7 or z1 >= z3 then l_ov(dark_blue);  DisplayLine(zaxes[3], zaxes[4]) end
 
-    if z1 >= z2 or z1 <  z3 then ov(dark_red);   DisplayLine(xaxes[5], xaxes[6]) end
-    if z1 >= z2 or z1 <  z7 then ov(dark_green); DisplayLine(yaxes[5], yaxes[6]) end
-    if z1 <  z3 or z1 <  z7 then ov(dark_blue);  DisplayLine(zaxes[5], zaxes[6]) end
+    if z1 >= z2 or z1 <  z3 then l_ov(dark_red);   DisplayLine(xaxes[5], xaxes[6]) end
+    if z1 >= z2 or z1 <  z7 then l_ov(dark_green); DisplayLine(yaxes[5], yaxes[6]) end
+    if z1 <  z3 or z1 <  z7 then l_ov(dark_blue);  DisplayLine(zaxes[5], zaxes[6]) end
 
-    if z1 >= z2 or z1 >= z3 then ov(dark_red);   DisplayLine(xaxes[7], xaxes[8]) end
-    if z1 <  z2 or z1 <  z7 then ov(dark_green); DisplayLine(yaxes[7], yaxes[8]) end
-    if z1 >= z7 or z1 <  z3 then ov(dark_blue);  DisplayLine(zaxes[7], zaxes[8]) end
+    if z1 >= z2 or z1 >= z3 then l_ov(dark_red);   DisplayLine(xaxes[7], xaxes[8]) end
+    if z1 <  z2 or z1 <  z7 then l_ov(dark_green); DisplayLine(yaxes[7], yaxes[8]) end
+    if z1 >= z7 or z1 <  z3 then l_ov(dark_blue);  DisplayLine(zaxes[7], zaxes[8]) end
 
-    ov("lineoption width 1")
-    ov("blend 0")
+    l_ov("lineoption width 1")
+    l_ov("blend 0")
 end
 
 ----------------------------------------------------------------------
@@ -770,8 +806,10 @@ function DrawFrontAxes()
     local z3 = rotrefz[3]
     local z7 = rotrefz[7]
 
+    local l_ov = ov
+
     if showlines then
-        ov("rgba"..LINE_COLOR)
+        l_ov("rgba"..LINE_COLOR)
         if z1 >= z2 then
             -- back face of rotated refcube is visible
             for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
@@ -787,27 +825,27 @@ function DrawFrontAxes()
     end
 
     -- draw brighter anti-aliased lines for front axes
-    ov("blend 1")
-    ov("lineoption width 3")
+    l_ov("blend 1")
+    l_ov("lineoption width 3")
 
-    if z1 >= z2 or z1 < z3 then ov(op.red);   DisplayLine(xaxes[1], xaxes[2]) end
-    if z1 >= z2 or z1 < z7 then ov(op.green); DisplayLine(yaxes[1], yaxes[2]) end
-    if z1 <  z7 or z1 < z3 then ov(op.blue);  DisplayLine(zaxes[1], zaxes[2]) end
+    if z1 >= z2 or z1 < z3 then l_ov(op.red);   DisplayLine(xaxes[1], xaxes[2]) end
+    if z1 >= z2 or z1 < z7 then l_ov(op.green); DisplayLine(yaxes[1], yaxes[2]) end
+    if z1 <  z7 or z1 < z3 then l_ov(op.blue);  DisplayLine(zaxes[1], zaxes[2]) end
 
-    if z1 >= z2 or z1 >= z3 then ov(op.red);   DisplayLine(xaxes[3], xaxes[4]) end
-    if z1 <  z2 or z1 <  z7 then ov(op.green); DisplayLine(yaxes[3], yaxes[4]) end
-    if z1 >= z7 or z1 <  z3 then ov(op.blue);  DisplayLine(zaxes[3], zaxes[4]) end
+    if z1 >= z2 or z1 >= z3 then l_ov(op.red);   DisplayLine(xaxes[3], xaxes[4]) end
+    if z1 <  z2 or z1 <  z7 then l_ov(op.green); DisplayLine(yaxes[3], yaxes[4]) end
+    if z1 >= z7 or z1 <  z3 then l_ov(op.blue);  DisplayLine(zaxes[3], zaxes[4]) end
 
-    if z1 <  z2 or z1 >= z3 then ov(op.red);   DisplayLine(xaxes[5], xaxes[6]) end
-    if z1 <  z2 or z1 >= z7 then ov(op.green); DisplayLine(yaxes[5], yaxes[6]) end
-    if z1 >= z3 or z1 >= z7 then ov(op.blue);  DisplayLine(zaxes[5], zaxes[6]) end
+    if z1 <  z2 or z1 >= z3 then l_ov(op.red);   DisplayLine(xaxes[5], xaxes[6]) end
+    if z1 <  z2 or z1 >= z7 then l_ov(op.green); DisplayLine(yaxes[5], yaxes[6]) end
+    if z1 >= z3 or z1 >= z7 then l_ov(op.blue);  DisplayLine(zaxes[5], zaxes[6]) end
 
-    if z1 <  z2 or z1 <  z3 then ov(op.red);   DisplayLine(xaxes[7], xaxes[8]) end
-    if z1 >= z2 or z1 >= z7 then ov(op.green); DisplayLine(yaxes[7], yaxes[8]) end
-    if z1 <  z7 or z1 >= z3 then ov(op.blue);  DisplayLine(zaxes[7], zaxes[8]) end
+    if z1 <  z2 or z1 <  z3 then l_ov(op.red);   DisplayLine(xaxes[7], xaxes[8]) end
+    if z1 >= z2 or z1 >= z7 then l_ov(op.green); DisplayLine(yaxes[7], yaxes[8]) end
+    if z1 <  z7 or z1 >= z3 then l_ov(op.blue);  DisplayLine(zaxes[7], zaxes[8]) end
 
-    ov("lineoption width 1")
-    ov("blend 0")
+    l_ov("lineoption width 1")
+    l_ov("blend 0")
 end
 
 ----------------------------------------------------------------------
@@ -861,10 +899,11 @@ end
 
 function CreateTranslucentCell(clipname, color)
     -- create a clip containing a translucent cube with given color
+    local l_ov = ov
 
-    ov("create "..(CELLSIZE*2).." "..(CELLSIZE*2).." "..clipname)
-    ov("target "..clipname)
-    ov("rgba "..color)
+    l_ov("create "..(CELLSIZE*2).." "..(CELLSIZE*2).." "..clipname)
+    l_ov("target "..clipname)
+    l_ov("rgba "..color)
 
     -- temporarily change BORDER and LEN so CreateCube fills cell
     local oldBORDER = BORDER
@@ -963,53 +1002,34 @@ function CreateTranslucentCell(clipname, color)
         end
     end
 
-    ov("flood "..CELLSIZE.." "..CELLSIZE)
+    l_ov("flood "..CELLSIZE.." "..CELLSIZE)
 
     -- restore BORDER and LEN
     BORDER = oldBORDER
     LEN = oldLEN
 
-    ov("optimize "..clipname)
-    ov("target")
-end
-
-----------------------------------------------------------------------
-
-function CreateLayers(clip)
-    local adjust = 96 / depthlayers
-    local total = 0
-    local rgb
-    ov("target "..clip)
-    ov("copy 0 0 0 0 "..clip.."1")
-    ov("target "..clip.."1")
-    ov("optimize "..clip.."1")
-    for i = 2, depthlayers do
-        total = total + adjust
-        rgb = floor(total)
-        ov("target "..clip)
-        ov("copy 0 0 0 0 "..clip..i)
-        ov("target "..clip..i)
-        ov("replace *#-"..rgb.." *#-"..rgb.." *#-"..rgb.." *#")
-        ov("optimize "..clip..i)
-    end
+    l_ov("optimize "..clipname)
+    l_ov("target")
 end
 
 ----------------------------------------------------------------------
 
 function DrawCubeEdges()
+    local l_ov = ov
+
     if LEN > 4 then
         -- draw anti-aliased edges around visible face(s)
         if LEN == 5 then
-            ov("rgba 150 150 150 255")
+            l_ov("rgba 150 150 150 255")
         elseif LEN == 6 then
-            ov("rgba 110 110 110 255")
+            l_ov("rgba 110 110 110 255")
         elseif LEN == 7 then
-            ov("rgba 80 80 80 255")
+            l_ov("rgba 80 80 80 255")
         else
-            ov("rgba 60 60 60 255")
+            l_ov("rgba 60 60 60 255")
         end
-        ov("blend 1")
-        ov("lineoption width "..(1 + int(LEN / 40.0)))
+        l_ov("blend 1")
+        l_ov("lineoption width "..(1 + int(LEN / 40.0)))
 
         if rotz[1] < rotz[2] then
             -- draw all edges around front face
@@ -1083,9 +1103,32 @@ function DrawCubeEdges()
             end
         end
 
-        ov("lineoption width 1")
-        ov("blend 0")
+        l_ov("lineoption width 1")
+        l_ov("blend 0")
     end
+end
+
+----------------------------------------------------------------------
+
+function CreateLayers(clip)
+    local l_ov = ov
+    local adjust = depthrange / depthlayers
+    local total = 0
+    local rgb
+    l_ov("target "..clip)
+    l_ov("copy 0 0 0 0 "..clip.."1")
+    l_ov("target "..clip.."1")
+    l_ov("optimize "..clip.."1")
+    for i = 2, depthlayers do
+        total = total + adjust
+        rgb = floor(total)
+        l_ov("target "..clip)
+        l_ov("copy 0 0 0 0 "..clip..i)
+        l_ov("target "..clip..i)
+        l_ov("replace *#-"..rgb.." *#-"..rgb.." *#-"..rgb.." *#")
+        l_ov("optimize "..clip..i)
+    end
+    l_ov("target")
 end
 
 ----------------------------------------------------------------------
@@ -1104,9 +1147,10 @@ function CreateLiveCube()
     -- in appearance when using orthographic projection)
 
     -- largest size of a rotated cube with edge length L is sqrt(3)*L
+    local l_ov = ov
     HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
-    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." c")
-    ov("target c")
+    l_ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." c")
+    l_ov("target c")
 
     local midpos = N//2
     local cube = CreateCube(midpos, midpos, midpos)
@@ -1122,17 +1166,17 @@ function CreateLiveCube()
     CheckFaces(1,3,5,7, 2,4,6,8)    -- front or back
     CheckFaces(1,2,8,7, 3,4,6,5)    -- bottom or top
     CheckFaces(1,2,4,3, 7,8,6,5)    -- left or right
-    
+
     DrawCubeEdges()
 
-    ov("optimize c")
+    l_ov("optimize c")
 
     -- create faded versions of the clip if depth shading
-    if depthshading then
+    if depthlayers > 0 then
         CreateLayers("c")
     end
 
-    ov("target")
+    l_ov("target")
 end
 
 ----------------------------------------------------------------------
@@ -1146,10 +1190,11 @@ function CreateLiveSphere()
 
     -- create a clip containing one sphere that will be used later
     -- to draw all live cells
+    local l_ov = ov
     local diameter = CELLSIZE+1                     -- so orthogonally adjacent spheres touch
-    ov("create "..diameter.." "..diameter.." S")    -- s is used for selected cells
-    ov("target S")
-    ov("blend 1")
+    l_ov("create "..diameter.." "..diameter.." S")    -- s is used for selected cells
+    l_ov("target S")
+    l_ov("blend 1")
 
     local x = 0
     local y = 0
@@ -1158,10 +1203,10 @@ function CreateLiveSphere()
     if diameter < 50 then grayinc = 8 - diameter//10 end
     local r = (diameter+1)//2
     while true do
-        ov("rgba "..gray.." "..gray.." "..gray.." 255")
+        l_ov("rgba "..gray.." "..gray.." "..gray.." 255")
         -- draw a solid circle by setting the line width to the radius
-        ov("lineoption width "..r)
-        ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
+        l_ov("lineoption width "..r)
+        l_ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
         diameter = diameter - 2
         r = r - 1
         if r < 2 then break end
@@ -1172,148 +1217,127 @@ function CreateLiveSphere()
         if gray > 255 then gray = 255 end
     end
 
-    ov("blend 0")
-    ov("lineoption width 1")
-    ov("optimize S")
+    l_ov("blend 0")
+    l_ov("lineoption width 1")
+    l_ov("optimize S")
 
     -- create faded versions of the clip if depth shading
-    if depthshading then
+    if depthlayers > 0 then
         CreateLayers("S")
     end
 
-    ov("target")
+    l_ov("target")
 end
 
 ----------------------------------------------------------------------
 
-function AddCubeToBatchDepth(x, y, z)
+function AddCellToBatchDepth(x, y, z, mx, my)
+    local c = CELLSIZE
+    local m = MIDCELL
     -- add live cell as a cube at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     local newz = (x*zixo + y*ziyo + z*zizo)
     -- use orthographic projection
-    x = round(newx) + midx - HALFCUBECLIP
-    y = round(newy) + midy - HALFCUBECLIP
+    x = round(newx + mx)
+    y = round(newy + my)
     -- compute the depth layer
     local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
     if layer < 1 then layer = 1 end
     if layer > depthlayers then layer = depthlayers end
+    -- check if the layer has changed since the last call
+    if layer ~= layerlast then
+        -- save the previous layer and switch to the new one
+        layerindices[layerlast] = layerindex
+        layerlast = layer
+        layercurrent = layercoords[layer]
+    end
     -- add to the layer's list to draw
-    local xylist = layercoords[layer]
-    xylist[#xylist + 1] = x
-    xylist[#xylist + 1] = y
+    layercurrent[layerindex] = x
+    layerindex = layerindex + 1
+    layercurrent[layerindex] = y
+    layerindex = layerindex + 1
 end
 
 ----------------------------------------------------------------------
 
-function AddCubeToBatch(x, y, z)
+function AddCellToBatch(x, y, z, mx, my)
+    local c = CELLSIZE
+    local m = MIDCELL
+    local xyi = xyindex
     -- add live cell as a cube at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
-    x = round(newx) + midx - HALFCUBECLIP
-    y = round(newy) + midy - HALFCUBECLIP
+    x = round(newx + mx)
+    y = round(newy + my)
     -- add to the list to draw
-    xybatch[#xybatch + 1] = x
-    xybatch[#xybatch + 1] = y
+    xybatch[xyi] = x
+    xyi = xyi + 1
+    xybatch[xyi] = y
+    xyindex = xyi + 1  -- update global index
 end
 
 ----------------------------------------------------------------------
 
-function AddSphereToBatchDepth(x, y, z)
-    -- add live cell as a sphere at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
-    y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
-    -- compute the depth layer
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
-    if layer < 1 then layer = 1 end
-    if layer > depthlayers then layer = depthlayers end
-    -- add to the layer's list to draw
-    local xylist = layercoords[layer]
-    xylist[#xylist + 1] = x
-    xylist[#xylist + 1] = y
-end
+local function DrawBatchLayer(depth, coordlist, length)
+    -- ignore if layer is empty
+    if length > 0 then
+        local l_ov = ov
 
-----------------------------------------------------------------------
-
-function AddSphereToBatch(x, y, z)
-    -- add live cell as a sphere at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
-    y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
-    -- add to the list to draw
-    xybatch[#xybatch + 1] = x
-    xybatch[#xybatch + 1] = y
-end
-
-----------------------------------------------------------------------
-
-function AddPointToBatch(x, y, z)
-    -- add mid point of cell at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = round(newx) + midx
-    y = round(newy) + midy
-    -- add to the list to draw
-    xybatch[#xybatch + 1] = x
-    xybatch[#xybatch + 1] = y
+        local coords = table.concat(coordlist, " ", 1, length)
+        local command = {"paste ", coords, "", depth}
+        -- select drawing method based on cell type
+        if celltype == "cube" then
+            command[3] = " c"
+        elseif celltype == "sphere" then
+            command[3] = " S"
+        else -- celltype == "point" then
+            l_ov(op.white)
+            command[1] = "set "
+        end
+        -- execute the drawing command
+        l_ov(table.concat(command))
+    end
 end
 
 ----------------------------------------------------------------------
 
 local function DrawBatch()
-    if celltype == "point" then
-        if #xybatch > 0 then
-            ov(op.white)
-            ov("set "..table.concat(xybatch, " "))
-            xybatch = {}
-        end
-    elseif depthshading then
-        local clipprefix = " c"
-        if celltype == "sphere" then clipprefix = " S" end
+
+    if timingenabled then timerstart("DrawBatch") end
+
+    -- check for depth shading for cubes or spheres
+    if depthrange > 0 and celltype ~= "point" then
+        -- draw each layer in reverse order (furthest away first = darkest)
+        local l_layerindices = layerindices
+        local l_layercoords = layercoords
         for i = depthlayers, 1, -1 do
-            if #layercoords[i] > 0 then
-                ov("paste "..table.concat(layercoords[i], " ")..clipprefix..i)
-                layercoords[i] = {}
+            if l_layerindices[i] > 1 then
+                DrawBatchLayer(i, l_layercoords[i], l_layerindices[i] - 1)
+                -- reset the layer once drawn
+                l_layerindices[i] = 1
             end
         end
-    elseif #xybatch > 0 then
-        if celltype == "cube" then
-            ov("paste "..table.concat(xybatch, " ").." c")
-        else -- celltype == "sphere"
-            ov("paste "..table.concat(xybatch, " ").." S")
-        end
-        xybatch = {}
+        layerlast = -1
+    else
+        -- no depth shading so draw all
+        DrawBatchLayer("", xybatch, xyindex - 1)
+        -- reset the batch
+        xyindex = 1
     end
-end
 
+    if timingenabled then timersave("DrawBatch") end
+
+end
 ----------------------------------------------------------------------
 
 local function DrawPoint(x, y, z)
@@ -1380,14 +1404,14 @@ end
 
 ----------------------------------------------------------------------
 
-local function TestCell(editing, gridpos, x, y, z)
+local function TestCell(editing, gridpos, x, y, z, mx, my)
     -- called from DisplayCells to test if given cell is in active plane,
     -- or if it's selected, or if it's a paste cell, and to draw it accordingly
     if editing then
         if active[gridpos] then
             if grid1[gridpos] then
                 -- draw live cell within active plane
-                DrawLiveCell(x, y, z)
+                DrawLiveCell(x, y, z, mx, my)
                 DrawBatch()
             end
             DrawActiveCell(x, y, z)
@@ -1410,7 +1434,7 @@ local function TestCell(editing, gridpos, x, y, z)
     else
         -- active plane is not displayed
         if grid1[gridpos] then
-            DrawLiveCell(x, y, z)
+            DrawLiveCell(x, y, z, mx, my)
         end
         if selected[gridpos] then
             DrawBatch()
@@ -1418,7 +1442,7 @@ local function TestCell(editing, gridpos, x, y, z)
         end
     end
     if pastepatt[gridpos] then
-        DrawLiveCell(x, y, z)
+        DrawLiveCell(x, y, z, mx, my)
         DrawBatch()
         DrawPasteCell(x, y, z)
     end
@@ -1427,6 +1451,11 @@ end
 ----------------------------------------------------------------------
 
 function DisplayCells(editing)
+
+    if timingenabled then timerstart("DisplayCells") end
+
+    if timingenabled then timerstart("AddCoords") end
+
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -1438,7 +1467,9 @@ function DisplayCells(editing)
     local z8 = rotrefz[8]
     local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
 
-    ov("blend 1")
+    local l_ov = ov
+    l_ov("blend 1")
+
     local testcell = editing or selcount > 0 or pastecount > 0
 
     -- find the extended boundary of all live/active/selected/paste cells
@@ -1497,35 +1528,40 @@ function DisplayCells(editing)
     if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
 
     -- select the cell drawing functions based on whether depth shading is required
-    if depthshading then
+    if depthrange > 0 and celltype ~= "point" then
         zdepth = N*CELLSIZE*0.5
         zdepth2 = zdepth+zdepth
-        if celltype == "cube" then
-            DrawLiveCell = AddCubeToBatchDepth
-        elseif celltype == "sphere" then
-            DrawLiveCell = AddSphereToBatchDepth
-        else -- celltype == "point"
-            DrawLiveCell = AddPointToBatch      -- shading is not done for points
-        end
+        DrawLiveCell = AddCellToBatchDepth
     else
-        if celltype == "cube" then
-            DrawLiveCell = AddCubeToBatch
-        elseif celltype == "sphere" then
-            DrawLiveCell = AddSphereToBatch
-        else -- celltype == "point"
-            DrawLiveCell = AddPointToBatch
-        end
+        DrawLiveCell = AddCellToBatch
     end
 
+    -- compute mid point
+    local mx, my
+    if celltype == "cube" then
+        mx = midx - HALFCUBECLIP
+        my = midy - HALFCUBECLIP
+    elseif celltype == "sphere" then
+        mx = midx - HALFCELL
+        my = midy - HALFCELL
+    else -- celltype == "point"
+        mx = midx
+        my = midy
+    end
+    -- add 0.5 so floor behaves like round
+    mx = mx + 0.5
+    my = my + 0.5
+
     local i, j
+    local l_N =N
     local stepi, stepj = N*stepy, N*stepz
     if testcell then
-        j = N*fromz
+        j = l_N*fromz
         for z = fromz, toz, stepz do
-            i = N*(fromy+j)
+            i = l_N*(fromy+j)
             for y = fromy, toy, stepy do
                 for x = fromx, tox, stepx do
-                    TestCell(editing, i+x, x, y, z)
+                    TestCell(editing, i+x, x, y, z, mx, my)
                 end
                 i = i+stepi
             end
@@ -1533,34 +1569,108 @@ function DisplayCells(editing)
         end
     else
         -- only live cells need to be drawn
-        j = N*fromz
-        for z = fromz, toz, stepz do
-            i = N*(fromy+j)
-            for y = fromy, toy, stepy do
-                for x = fromx, tox, stepx do
-                    if grid1[i+x] then
-                        DrawLiveCell(x, y, z)
+        local c = CELLSIZE
+        local m = MIDCELL
+        local xc, yc, zc
+        local l_grid1 = grid1
+        local l_xixo, l_xiyo, l_xizo = xixo, xiyo, xizo
+        local l_yixo, l_yiyo, l_yizo = yixo, yiyo, yizo
+        if depthrange > 0 and celltype ~= "point" then
+            -- draw with depth shading and/or perspective
+            local layer, zval
+            local l_layerlast = layerlast
+            local l_depthlayers = depthlayers
+            local l_layerindex = layerindex
+            local l_layercurrent = layercurrent
+            local l_layerindices = layerindices
+            local l_layercoords = layercoords
+            local l_zixo, l_ziyo, l_zizo = zixo, ziyo, zizo
+            local l_zdepth, l_zdepth2 = zdepth, zdepth2
+            j = l_N*fromz
+            for z = fromz, toz, stepz do
+                i = l_N*(fromy+j)
+                for y = fromy, toy, stepy do
+                    for x = fromx, tox, stepx do
+                        if l_grid1[i+x] then
+                            -- add live cell at given grid position
+                            xc = x * c + m
+                            yc = y * c + m
+                            zc = z * c + m
+                            -- compute the depth layer and clamp to allowed range 1..depthlayers
+                            zval = xc*l_zixo + yc*l_ziyo + zc*l_zizo
+                            layer = (l_depthlayers * (zval + l_zdepth) // l_zdepth2) + 1
+                            if layer < 1 then layer = 1 end
+                            if layer > l_depthlayers then layer = l_depthlayers end
+                            -- check if the layer has changed since the last call
+                            if layer ~= l_layerlast then
+                                -- save the previous layer and switch to the new one
+                                l_layerindices[l_layerlast] = l_layerindex  -- first call ll will be -1 but will be ignored during drawing
+                                l_layerlast = layer
+                                l_layercurrent = l_layercoords[layer]
+                                l_layerindex = l_layerindices[layer]
+                            end
+                            -- add cell position to the layer's list to draw
+                            -- floor divide by 1 (// 1) then bitwise or 0 (| 0) converts result into integer
+                            l_layercurrent[l_layerindex] = ((xc*l_xixo + yc*l_xiyo + zc*l_xizo) + mx) // 1 | 0
+                            l_layerindex = l_layerindex + 1
+                            l_layercurrent[l_layerindex] = ((xc*l_yixo + yc*l_yiyo + zc*l_yizo) + my) // 1 | 0
+                            l_layerindex = l_layerindex + 1
+                        end
                     end
+                    i = i+stepi
                 end
-                i = i+stepi
+                j = j+stepj
             end
-            j = j+stepj
+            l_layerindices[l_layerlast] = l_layerindex
+        else
+            -- draw without depth shading
+            local xyi = xyindex
+            local xyb = xybatch
+            j = l_N*fromz
+            for z = fromz, toz, stepz do
+                i = l_N*(fromy+j)
+                for y = fromy, toy, stepy do
+                    for x = fromx, tox, stepx do
+                        if l_grid1[i+x] then
+                            -- add live cell at given grid position
+                            xc = x * c + m
+                            yc = y * c + m
+                            zc = z * c + m
+                            -- transform point using othographic projection
+                            -- and add to the list to draw
+                            xyb[xyi] = (mx + xc*l_xixo + yc*l_xiyo + zc*l_xizo) // 1 | 0
+                            xyi = xyi + 1
+                            xyb[xyi] = (my + xc*l_yixo + yc*l_yiyo + zc*l_yizo) // 1 | 0
+                            xyi = xyi + 1
+                        end
+                    end
+                    i = i+stepi
+                end
+                j = j+stepj
+            end
+            xyindex = xyi
         end
     end
+
+    if timingenabled then timersave("AddCoords") end
+
     DrawBatch()
 
-    ov("blend 0")
+    l_ov("blend 0")
+
+    if timingenabled then timersave("DisplayCells") end
 end
 
 ----------------------------------------------------------------------
 
 function CreateBusyCube(clipname)
     -- create a clip containing a cube for odd/even cells
-    
+    local l_ov = ov
+
     -- largest size of a rotated cube with edge length L is sqrt(3)*L
     HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
-    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." "..clipname)
-    ov("target "..clipname)
+    l_ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." "..clipname)
+    l_ov("target "..clipname)
 
     local midpos = N//2
     local cube = CreateCube(midpos, midpos, midpos)
@@ -1576,37 +1686,38 @@ function CreateBusyCube(clipname)
     CheckFaces(1,3,5,7, 2,4,6,8)    -- front or back
     CheckFaces(1,2,8,7, 3,4,6,5)    -- bottom or top
     CheckFaces(1,2,4,3, 7,8,6,5)    -- left or right
-    
+
     -- we can't use red and blue (clashes with colors for paste cells and active cells)
     if clipname == "E" then
-        ov("replace *# *#-50 *# *#")    -- pale magenta
+        l_ov("replace *# *#-50 *# *#")    -- pale magenta
     else
-        ov("replace *#-110 *# *# *#")   -- pale cyan
+        l_ov("replace *#-110 *# *# *#")   -- pale cyan
     end
-    
+
     DrawCubeEdges()
 
-    ov("optimize "..clipname)
+    l_ov("optimize "..clipname)
 
     -- create faded versions of the clip if depth shading
-    if depthshading then
+    if depthlayers > 0 then
         CreateLayers(clipname)
     end
 
-    ov("target")    
+    l_ov("target")
 end
 
 ----------------------------------------------------------------------
 
 function CreateBusySphere(clipname)
     -- create a clip containing a sphere for odd/even cells
-    
+    local l_ov = ov
+
     local diameter = CELLSIZE+1
     local d1 = diameter
-    ov("create "..diameter.." "..diameter.." "..clipname)
-    ov("target "..clipname)
-    ov("blend 1")
-    
+    l_ov("create "..diameter.." "..diameter.." "..clipname)
+    l_ov("target "..clipname)
+    l_ov("blend 1")
+
     local R, G, B
     if clipname == "E" then
         R, G, B = 255, 180, 255     -- pale magenta
@@ -1620,10 +1731,10 @@ function CreateBusySphere(clipname)
     if diameter < 50 then inc = 8 - diameter//10 end
     local r = (diameter+1)//2
     while true do
-        ov("rgba "..R.." "..G.." "..B.." 255")
+        l_ov("rgba "..R.." "..G.." "..B.." 255")
         -- draw a solid circle by setting the line width to the radius
-        ov("lineoption width "..r)
-        ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
+        l_ov("lineoption width "..r)
+        l_ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
         diameter = diameter - 2
         r = r - 1
         if r < 2 then break end
@@ -1636,20 +1747,20 @@ function CreateBusySphere(clipname)
         if G > 255 then G = 255 end
         if B > 255 then B = 255 end
     end
-    
+
     -- draw black outline
-    ov("rgba 0 0 0 255")
-    ov("lineoption width 1")
-    ov("ellipse 0 0 "..d1.." "..d1)
-    ov("blend 0")
-    ov("optimize "..clipname)
+    l_ov("rgba 0 0 0 255")
+    l_ov("lineoption width 1")
+    l_ov("ellipse 0 0 "..d1.." "..d1)
+    l_ov("blend 0")
+    l_ov("optimize "..clipname)
 
     -- create faded versions of the clip if depth shading
-    if depthshading then
+    if depthlayers > 0 then
         CreateLayers(clipname)
     end
 
-    ov("target")
+    l_ov("target")
 end
 
 ----------------------------------------------------------------------
@@ -1788,6 +1899,9 @@ end
 ----------------------------------------------------------------------
 
 function DisplayBusyBoxes(editing)
+
+    if timingenabled then timerstart("DisplayBusyBoxes") end
+
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -1858,7 +1972,7 @@ function DisplayBusyBoxes(editing)
     if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
 
     -- select the cell drawing functions based on whether depth shading is required
-    if depthshading then
+    if depthlayers > 0 then
         zdepth = N*CELLSIZE*0.5
         zdepth2 = zdepth+zdepth
         if celltype == "cube" then
@@ -1940,6 +2054,8 @@ function DisplayBusyBoxes(editing)
     end
 
     ov("blend 0")
+
+    if timingenabled then timersave("DisplayBusyBoxes") end
 end
 
 --------------------------------------------------------------------------------
@@ -2018,12 +2134,17 @@ function DrawMenuBar()
         mbar.enableitem(3, 3, gencount > startcount)    -- Reset
     end
 
-    mbar.tickitem(4, 5, celltype == "cube")
-    mbar.tickitem(4, 6, celltype == "sphere")
-    mbar.tickitem(4, 7, celltype == "point")
+    local selectitem = mbar.tickitem  -- remove when oplus/init.lua 3.2b2 available  !!!
+    if mbar.radioitem then selectitem = mbar.radioitem end
+
+    selectitem(4, 5, celltype == "cube")
+    selectitem(4, 6, celltype == "sphere")
+    selectitem(4, 7, celltype == "point")
     mbar.tickitem(4, 9, showaxes)
     mbar.tickitem(4, 10, showlines)
-    mbar.tickitem(4, 11, depthshading)
+    selectitem(4, 12, depthrange == depthoptions[1])
+    selectitem(4, 13, depthrange == depthoptions[2])
+    selectitem(4, 14, depthrange == depthoptions[3])
 
     mbar.show(0, 0, ovwd, mbarht)
 end
@@ -2160,6 +2281,10 @@ function Refresh(update)
     if editing then
         -- show cell coords of mouse if it's inside the active plane
         info = info.."\nx,y,z = "..activecell
+    end
+    if timingenabled then
+        info = info.."\n"..timervalueall()
+        timerresetall()
     end
     ov(op.white)
     local wd, ht = op.maketext(info)
@@ -2551,7 +2676,6 @@ end
 
 function ClearCells()
     grid1 = {}
-    grid2 = {}
     popcount = 0
     InitLiveBoundary()
     -- remove selection
@@ -2738,13 +2862,12 @@ end
 
 ----------------------------------------------------------------------
 
-function DisplayGeneration()
+function DisplayGeneration(newgrid)
     -- this function is called at the end of every NextGen* function
     gencount = gencount + 1
 
-    -- clear all live cells in grid1 and swap grids
-    grid1 = {}
-    grid1, grid2 = grid2, grid1
+    -- save the new grid
+    grid1 = newgrid
 
     if popcount == 0 then StopGenerating() end
     Refresh()
@@ -2755,25 +2878,35 @@ end
 function NextGenMoore()
     if AllDead() then return end
 
+    if timingenabled then timerstart("NextGenMoore") end
+
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
+    local l_grid1 = grid1
+    local grid2 = {}
     local count1 = {}
-    local NN = N * N
-    local NNN = NN * N
-    for k,_ in pairs(grid1) do
+    local l_N = N
+    local NN = l_N * l_N
+    local NNN = NN * l_N
+    local l_births, l_survivals = births, survivals
+    local l_popcount = popcount
+    local l_minx, l_miny, l_minz = minx, miny, minz
+    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+
+    for k,_ in pairs(l_grid1) do
         count1[k] = (count1[k] or 0) + 1
         local y = k % NN
-        local k2 = k + (y + N) % NN - y
+        local k2 = k + (y + l_N) % NN - y
         count1[k2] = (count1[k2] or 0) + 1
-        k2 = k + (y + NN - N) % NN - y
+        k2 = k + (y + NN - l_N) % NN - y
         count1[k2] = (count1[k2] or 0) + 1
     end
     local count2 = {}
     for k,v in pairs(count1) do
         count2[k] = (count2[k] or 0) + v
-        local x = k % N
-        local k2 = k + (x + 1) % N - x
+        local x = k % l_N
+        local k2 = k + (x + 1) % l_N - x
         count2[k2] = (count2[k2] or 0) + v
-        k2 = k + (x + N - 1) % N - x
+        k2 = k + (x + l_N - 1) % N - x
         count2[k2] = (count2[k2] or 0) + v
     end
     count1 = {}
@@ -2785,25 +2918,31 @@ function NextGenMoore()
         count1[k2] = (count1[k2] or 0) + v
     end
     for k,v in pairs(count1) do
-        if (grid1[k] and survivals[v-1]) or (births[v] and not grid1[k]) then
+        if (l_grid1[k] and l_survivals[v-1]) or (l_births[v] and not l_grid1[k]) then
             -- create a live cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            l_popcount = l_popcount + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
+            local x = k % l_N
+            local y = k // l_N % l_N
             local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            if x < l_minx then l_minx = x end
+            if y < l_miny then l_miny = y end
+            if z < l_minz then l_minz = z end
+            if x > l_maxx then l_maxx = x end
+            if y > l_maxy then l_maxy = y end
+            if z > l_maxz then l_maxz = z end
         end
     end
 
-    DisplayGeneration()
+    minx, miny, minz = l_minx, l_miny, l_minz
+    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
+    popcount = l_popcount
+
+    if timingenabled then timersave("NextGenMoore") end
+
+    DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
@@ -2811,80 +2950,96 @@ end
 function NextGen6Faces()
     if AllDead() then return end
 
+    if timingenabled then timerstart("NextGen6Faces") end
+
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
+    local l_grid1 = grid1
+    local grid2 = {}
     local lcount = {}   -- neighbor counts (0..6) for live cells
     local ecount = {}   -- neighbor counts (1..6) for adjacent empty cells
-    local NN = N * N
-    for k,_ in pairs(grid1) do
-        local x = k % N
-        local y = k // N % N
+    local l_N = N
+    local NN = l_N * l_N
+    local l_births, l_survivals = births, survivals
+    local l_popcount = popcount
+    local l_minx, l_miny, l_minz = minx, miny, minz
+    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+
+    for k,_ in pairs(l_grid1) do
+        local x = k % l_N
+        local y = k // l_N % l_N
         local z = k // NN
         lcount[k] = 0
-        
-        local Ny = N*y
+
+        local Ny = l_N*y
         local NNz = NN*z
         local NypNNz = Ny + NNz
         local xpNNz = x + NNz
         local xpNy = x + Ny
-        
+
         -- calculate the positions of the 6 cells next to each face of this cell
-        local xp1 = (x+1)%N + NypNNz
-        local xm1 = (x-1)%N + NypNNz
-        local yp1 = N*((y+1)%N) + xpNNz
-        local ym1 = N*((y-1)%N) + xpNNz
-        local zp1 = NN*((z+1)%N) + xpNy
-        local zm1 = NN*((z-1)%N) + xpNy
-        
-        if grid1[xp1] then lcount[k] = lcount[k] + 1 else ecount[xp1] = (ecount[xp1] or 0) + 1 end
-        if grid1[xm1] then lcount[k] = lcount[k] + 1 else ecount[xm1] = (ecount[xm1] or 0) + 1 end
-        if grid1[yp1] then lcount[k] = lcount[k] + 1 else ecount[yp1] = (ecount[yp1] or 0) + 1 end
-        if grid1[ym1] then lcount[k] = lcount[k] + 1 else ecount[ym1] = (ecount[ym1] or 0) + 1 end
-        if grid1[zp1] then lcount[k] = lcount[k] + 1 else ecount[zp1] = (ecount[zp1] or 0) + 1 end
-        if grid1[zm1] then lcount[k] = lcount[k] + 1 else ecount[zm1] = (ecount[zm1] or 0) + 1 end
+        local xp1 = (x+1)%l_N + NypNNz
+        local xm1 = (x-1)%l_N + NypNNz
+        local yp1 = l_N*((y+1)%l_N) + xpNNz
+        local ym1 = l_N*((y-1)%l_N) + xpNNz
+        local zp1 = NN*((z+1)%l_N) + xpNy
+        local zm1 = NN*((z-1)%l_N) + xpNy
+
+        if l_grid1[xp1] then lcount[k] = lcount[k] + 1 else ecount[xp1] = (ecount[xp1] or 0) + 1 end
+        if l_grid1[xm1] then lcount[k] = lcount[k] + 1 else ecount[xm1] = (ecount[xm1] or 0) + 1 end
+        if l_grid1[yp1] then lcount[k] = lcount[k] + 1 else ecount[yp1] = (ecount[yp1] or 0) + 1 end
+        if l_grid1[ym1] then lcount[k] = lcount[k] + 1 else ecount[ym1] = (ecount[ym1] or 0) + 1 end
+        if l_grid1[zp1] then lcount[k] = lcount[k] + 1 else ecount[zp1] = (ecount[zp1] or 0) + 1 end
+        if l_grid1[zm1] then lcount[k] = lcount[k] + 1 else ecount[zm1] = (ecount[zm1] or 0) + 1 end
     end
-    
+
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
     for k,v in pairs(lcount) do
-        if survivals[v] then
+        if l_survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            l_popcount = l_popcount + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
+            local x = k % l_N
+            local y = k // l_N % l_N
             local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
-        end
-    end
-    
-    -- use ecounts and births to put live cells in grid2
-    for k,v in pairs(ecount) do
-        if births[v] then
-            -- create a birth cell in grid2
-            grid2[k] = 1
-            popcount = popcount + 1
-            -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
-            -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            if x < l_minx then l_minx = x end
+            if y < l_miny then l_miny = y end
+            if z < l_minz then l_minz = z end
+            if x > l_maxx then l_maxx = x end
+            if y > l_maxy then l_maxy = y end
+            if z > l_maxz then l_maxz = z end
         end
     end
 
-    DisplayGeneration()
+    -- use ecounts and births to put live cells in grid2
+    for k,v in pairs(ecount) do
+        if l_births[v] then
+            -- create a birth cell in grid2
+            grid2[k] = 1
+            l_popcount = l_popcount + 1
+            -- don't set dirty flag here!
+            local x = k % l_N
+            local y = k // l_N % l_N
+            local z = k // NN
+            -- update boundary
+            if x < l_minx then l_minx = x end
+            if y < l_miny then l_miny = y end
+            if z < l_minz then l_minz = z end
+            if x > l_maxx then l_maxx = x end
+            if y > l_maxy then l_maxy = y end
+            if z > l_maxz then l_maxz = z end
+        end
+    end
+
+    minx, miny, minz = l_minx, l_miny, l_minz
+    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
+    popcount = l_popcount
+
+    if timingenabled then timersave("NextGen6Faces") end
+
+    DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
@@ -2892,23 +3047,33 @@ end
 function NextGen8Corners()
     if AllDead() then return end
 
+    if timingenabled then timerstart("NextGen8Corners") end
+
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
+    local l_grid1 = grid1
+    local grid2 = {}
     local lcount = {}   -- neighbor counts (0..8) for live cells
     local ecount = {}   -- neighbor counts (1..8) for adjacent empty cells
-    local NN = N * N
-    for k,_ in pairs(grid1) do
-        local x = k % N
-        local y = k // N % N
+    local l_N = N
+    local NN = l_N * l_N
+    local l_births, l_survivals = births, survivals
+    local l_popcount = popcount
+    local l_minx, l_miny, l_minz = minx, miny, minz
+    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+
+    for k,_ in pairs(l_grid1) do
+        local x = k % l_N
+        local y = k // l_N % l_N
         local z = k // NN
         lcount[k] = 0
-        
-        local xp1 = (x+1)%N
-        local xm1 = (x-1)%N
-        local yp1 = N*((y+1)%N)
-        local ym1 = N*((y-1)%N)
-        local zp1 = NN*((z+1)%N)
-        local zm1 = NN*((z-1)%N)
-        
+
+        local xp1 = (x+1)%l_N
+        local xm1 = (x-1)%l_N
+        local yp1 = l_N*((y+1)%l_N)
+        local ym1 = l_N*((y-1)%l_N)
+        local zp1 = NN*((z+1)%l_N)
+        local zm1 = NN*((z-1)%l_N)
+
         -- calculate the positions of the 8 cells touching each corner of this cell
         local ppp = xp1 + yp1 + zp1
         local mmm = xm1 + ym1 + zm1
@@ -2918,58 +3083,64 @@ function NextGen8Corners()
         local pmm = xp1 + ym1 + zm1
         local pmp = xp1 + ym1 + zp1
         local mpm = xm1 + yp1 + zm1
-        
-        if grid1[ppp] then lcount[k] = lcount[k] + 1 else ecount[ppp] = (ecount[ppp] or 0) + 1 end
-        if grid1[mmm] then lcount[k] = lcount[k] + 1 else ecount[mmm] = (ecount[mmm] or 0) + 1 end
-        if grid1[ppm] then lcount[k] = lcount[k] + 1 else ecount[ppm] = (ecount[ppm] or 0) + 1 end
-        if grid1[mmp] then lcount[k] = lcount[k] + 1 else ecount[mmp] = (ecount[mmp] or 0) + 1 end
-        if grid1[mpp] then lcount[k] = lcount[k] + 1 else ecount[mpp] = (ecount[mpp] or 0) + 1 end
-        if grid1[pmm] then lcount[k] = lcount[k] + 1 else ecount[pmm] = (ecount[pmm] or 0) + 1 end
-        if grid1[pmp] then lcount[k] = lcount[k] + 1 else ecount[pmp] = (ecount[pmp] or 0) + 1 end
-        if grid1[mpm] then lcount[k] = lcount[k] + 1 else ecount[mpm] = (ecount[mpm] or 0) + 1 end
+
+        if l_grid1[ppp] then lcount[k] = lcount[k] + 1 else ecount[ppp] = (ecount[ppp] or 0) + 1 end
+        if l_grid1[mmm] then lcount[k] = lcount[k] + 1 else ecount[mmm] = (ecount[mmm] or 0) + 1 end
+        if l_grid1[ppm] then lcount[k] = lcount[k] + 1 else ecount[ppm] = (ecount[ppm] or 0) + 1 end
+        if l_grid1[mmp] then lcount[k] = lcount[k] + 1 else ecount[mmp] = (ecount[mmp] or 0) + 1 end
+        if l_grid1[mpp] then lcount[k] = lcount[k] + 1 else ecount[mpp] = (ecount[mpp] or 0) + 1 end
+        if l_grid1[pmm] then lcount[k] = lcount[k] + 1 else ecount[pmm] = (ecount[pmm] or 0) + 1 end
+        if l_grid1[pmp] then lcount[k] = lcount[k] + 1 else ecount[pmp] = (ecount[pmp] or 0) + 1 end
+        if l_grid1[mpm] then lcount[k] = lcount[k] + 1 else ecount[mpm] = (ecount[mpm] or 0) + 1 end
     end
-    
+
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
     for k,v in pairs(lcount) do
-        if survivals[v] then
+        if l_survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            l_popcount = l_popcount + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
+            local x = k % l_N
+            local y = k // l_N % l_N
             local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
-        end
-    end
-    
-    -- use ecounts and births to put live cells in grid2
-    for k,v in pairs(ecount) do
-        if births[v] then
-            -- create a birth cell in grid2
-            grid2[k] = 1
-            popcount = popcount + 1
-            -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
-            -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            if x < l_minx then l_minx = x end
+            if y < l_miny then l_miny = y end
+            if z < l_minz then l_minz = z end
+            if x > l_maxx then l_maxx = x end
+            if y > l_maxy then l_maxy = y end
+            if z > l_maxz then l_maxz = z end
         end
     end
 
-    DisplayGeneration()
+    -- use ecounts and births to put live cells in grid2
+    for k,v in pairs(ecount) do
+        if l_births[v] then
+            -- create a birth cell in grid2
+            grid2[k] = 1
+            l_popcount = l_popcount + 1
+            -- don't set dirty flag here!
+            local x = k % l_N
+            local y = k // l_N % l_N
+            local z = k // NN
+            -- update boundary
+            if x < l_minx then l_minx = x end
+            if y < l_miny then l_miny = y end
+            if z < l_minz then l_minz = z end
+            if x > l_maxx then l_maxx = x end
+            if y > l_maxy then l_maxy = y end
+            if z > l_maxz then l_maxz = z end
+        end
+    end
+
+    minx, miny, minz = l_minx, l_miny, l_minz
+    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
+    popcount = l_popcount
+
+    if timingenabled then timersave("NextGen8Corners") end
+
+    DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
@@ -2977,25 +3148,35 @@ end
 function NextGen12Edges()
     if AllDead() then return end
 
+    if timingenabled then timerstart("NextGen12Edges") end
+
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
+    local l_grid1 = grid1
+    local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
-    local NN = N * N
-    for k,_ in pairs(grid1) do
-        local x = k % N
-        local y = k // N % N
+    local l_N = N
+    local NN = l_N * l_N
+    local l_births, l_survivals = births, survivals
+    local l_popcount = popcount
+    local l_minx, l_miny, l_minz = minx, miny, minz
+    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+
+    for k,_ in pairs(l_grid1) do
+        local x = k % l_N
+        local y = k // l_N % l_N
         local z = k // NN
         lcount[k] = 0
-        
-        local xp1 = (x+1)%N
-        local xm1 = (x-1)%N
-        local yp1 = N*((y+1)%N)
-        local ym1 = N*((y-1)%N)
-        local zp1 = NN*((z+1)%N)
-        local zm1 = NN*((z-1)%N)
-        local Ny = N*y
+
+        local xp1 = (x+1)%l_N
+        local xm1 = (x-1)%l_N
+        local yp1 = l_N*((y+1)%l_N)
+        local ym1 = l_N*((y-1)%l_N)
+        local zp1 = NN*((z+1)%l_N)
+        local zm1 = NN*((z-1)%l_N)
+        local Ny = l_N*y
         local NNz = NN*z
-        
+
         -- calculate the positions of the 12 cells next to each edge of this cell
         local xpp = x + yp1 + zp1
         local xmm = x + ym1 + zm1
@@ -3006,69 +3187,75 @@ function NextGen12Edges()
         local mym = xm1 + Ny + zm1
         local pym = xp1 + Ny + zm1
         local myp = xm1 + Ny + zp1
-        
+
         local ppz = xp1 + yp1 + NNz
         local mmz = xm1 + ym1 + NNz
         local pmz = xp1 + ym1 + NNz
         local mpz = xm1 + yp1 + NNz
-        
-        if grid1[xpp] then lcount[k] = lcount[k] + 1 else ecount[xpp] = (ecount[xpp] or 0) + 1 end
-        if grid1[xmm] then lcount[k] = lcount[k] + 1 else ecount[xmm] = (ecount[xmm] or 0) + 1 end
-        if grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
-        if grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
-        
-        if grid1[pyp] then lcount[k] = lcount[k] + 1 else ecount[pyp] = (ecount[pyp] or 0) + 1 end
-        if grid1[mym] then lcount[k] = lcount[k] + 1 else ecount[mym] = (ecount[mym] or 0) + 1 end
-        if grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
-        if grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
-        
-        if grid1[ppz] then lcount[k] = lcount[k] + 1 else ecount[ppz] = (ecount[ppz] or 0) + 1 end
-        if grid1[mmz] then lcount[k] = lcount[k] + 1 else ecount[mmz] = (ecount[mmz] or 0) + 1 end
-        if grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
-        if grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
+
+        if l_grid1[xpp] then lcount[k] = lcount[k] + 1 else ecount[xpp] = (ecount[xpp] or 0) + 1 end
+        if l_grid1[xmm] then lcount[k] = lcount[k] + 1 else ecount[xmm] = (ecount[xmm] or 0) + 1 end
+        if l_grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
+        if l_grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
+
+        if l_grid1[pyp] then lcount[k] = lcount[k] + 1 else ecount[pyp] = (ecount[pyp] or 0) + 1 end
+        if l_grid1[mym] then lcount[k] = lcount[k] + 1 else ecount[mym] = (ecount[mym] or 0) + 1 end
+        if l_grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
+        if l_grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
+
+        if l_grid1[ppz] then lcount[k] = lcount[k] + 1 else ecount[ppz] = (ecount[ppz] or 0) + 1 end
+        if l_grid1[mmz] then lcount[k] = lcount[k] + 1 else ecount[mmz] = (ecount[mmz] or 0) + 1 end
+        if l_grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
+        if l_grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
     end
-    
+
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
     for k,v in pairs(lcount) do
-        if survivals[v] then
+        if l_survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            l_popcount = l_popcount + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
+            local x = k % l_N
+            local y = k // l_N % l_N
             local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
-        end
-    end
-    
-    -- use ecounts and births to put live cells in grid2
-    for k,v in pairs(ecount) do
-        if births[v] then
-            -- create a birth cell in grid2
-            grid2[k] = 1
-            popcount = popcount + 1
-            -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
-            -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            if x < l_minx then l_minx = x end
+            if y < l_miny then l_miny = y end
+            if z < l_minz then l_minz = z end
+            if x > l_maxx then l_maxx = x end
+            if y > l_maxy then l_maxy = y end
+            if z > l_maxz then l_maxz = z end
         end
     end
 
-    DisplayGeneration()
+    -- use ecounts and births to put live cells in grid2
+    for k,v in pairs(ecount) do
+        if l_births[v] then
+            -- create a birth cell in grid2
+            grid2[k] = 1
+            l_popcount = l_popcount + 1
+            -- don't set dirty flag here!
+            local x = k % l_N
+            local y = k // l_N % l_N
+            local z = k // NN
+            -- update boundary
+            if x < l_minx then l_minx = x end
+            if y < l_miny then l_miny = y end
+            if z < l_minz then l_minz = z end
+            if x > l_maxx then l_maxx = x end
+            if y > l_maxy then l_maxy = y end
+            if z > l_maxz then l_maxz = z end
+        end
+    end
+
+    minx, miny, minz = l_minx, l_miny, l_minz
+    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
+    popcount = l_popcount
+
+    if timingenabled then timersave("NextGen12Edges") end
+
+    DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
@@ -3076,25 +3263,35 @@ end
 function NextGenHexahedral()
     if AllDead() then return end
 
+    if timingenabled then timerstart("NextGenHexahedral") end
+
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
+    local l_grid1 = grid1
+    local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
-    local NN = N * N
-    for k,_ in pairs(grid1) do
-        local x = k % N
-        local y = k // N % N
+    local l_N = N
+    local NN = l_N * l_N
+    local l_births, l_survivals = births, survivals
+    local l_popcount = popcount
+    local l_minx, l_miny, l_minz = minx, miny, minz
+    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+
+    for k,_ in pairs(l_grid1) do
+        local x = k % l_N
+        local y = k // l_N % l_N
         local z = k // NN
         lcount[k] = 0
-        
-        local xp1 = (x+1)%N
-        local xm1 = (x-1)%N
-        local yp1 = N*((y+1)%N)
-        local ym1 = N*((y-1)%N)
-        local zp1 = NN*((z+1)%N)
-        local zm1 = NN*((z-1)%N)
-        local Ny = N*y
+
+        local xp1 = (x+1)%l_N
+        local xm1 = (x-1)%l_N
+        local yp1 = l_N*((y+1)%l_N)
+        local ym1 = l_N*((y-1)%l_N)
+        local zp1 = NN*((z+1)%l_N)
+        local zm1 = NN*((z-1)%l_N)
+        local Ny = l_N*y
         local NNz = NN*z
-        
+
         -- calculate the positions of the 12 neighboring cells (using the top offsets given
         -- on page 872 in http://www.complex-systems.com/pdf/01-5-1.pdf)
         local xym = x + Ny + zm1
@@ -3109,64 +3306,70 @@ function NextGenHexahedral()
         local myz = xm1 + Ny + NNz
         local pmz = xp1 + ym1 + NNz
         local mpz = xm1 + yp1 + NNz
-        
-        if grid1[xym] then lcount[k] = lcount[k] + 1 else ecount[xym] = (ecount[xym] or 0) + 1 end
-        if grid1[xyp] then lcount[k] = lcount[k] + 1 else ecount[xyp] = (ecount[xyp] or 0) + 1 end
-        if grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
-        if grid1[xpz] then lcount[k] = lcount[k] + 1 else ecount[xpz] = (ecount[xpz] or 0) + 1 end
 
-        if grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
-        if grid1[xmz] then lcount[k] = lcount[k] + 1 else ecount[xmz] = (ecount[xmz] or 0) + 1 end
-        if grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
-        if grid1[pyz] then lcount[k] = lcount[k] + 1 else ecount[pyz] = (ecount[pyz] or 0) + 1 end
+        if l_grid1[xym] then lcount[k] = lcount[k] + 1 else ecount[xym] = (ecount[xym] or 0) + 1 end
+        if l_grid1[xyp] then lcount[k] = lcount[k] + 1 else ecount[xyp] = (ecount[xyp] or 0) + 1 end
+        if l_grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
+        if l_grid1[xpz] then lcount[k] = lcount[k] + 1 else ecount[xpz] = (ecount[xpz] or 0) + 1 end
 
-        if grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
-        if grid1[myz] then lcount[k] = lcount[k] + 1 else ecount[myz] = (ecount[myz] or 0) + 1 end
-        if grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
-        if grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
+        if l_grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
+        if l_grid1[xmz] then lcount[k] = lcount[k] + 1 else ecount[xmz] = (ecount[xmz] or 0) + 1 end
+        if l_grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
+        if l_grid1[pyz] then lcount[k] = lcount[k] + 1 else ecount[pyz] = (ecount[pyz] or 0) + 1 end
+
+        if l_grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
+        if l_grid1[myz] then lcount[k] = lcount[k] + 1 else ecount[myz] = (ecount[myz] or 0) + 1 end
+        if l_grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
+        if l_grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
     end
-    
+
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
     for k,v in pairs(lcount) do
-        if survivals[v] then
+        if l_survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            l_popcount = l_popcount + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
+            local x = k % l_N
+            local y = k // l_N % l_N
             local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
-        end
-    end
-    
-    -- use ecounts and births to put live cells in grid2
-    for k,v in pairs(ecount) do
-        if births[v] then
-            -- create a birth cell in grid2
-            grid2[k] = 1
-            popcount = popcount + 1
-            -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
-            -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            if x < l_minx then l_minx = x end
+            if y < l_miny then l_miny = y end
+            if z < l_minz then l_minz = z end
+            if x > l_maxx then l_maxx = x end
+            if y > l_maxy then l_maxy = y end
+            if z > l_maxz then l_maxz = z end
         end
     end
 
-    DisplayGeneration()
+    -- use ecounts and births to put live cells in grid2
+    for k,v in pairs(ecount) do
+        if l_births[v] then
+            -- create a birth cell in grid2
+            grid2[k] = 1
+            l_popcount = l_popcount + 1
+            -- don't set dirty flag here!
+            local x = k % l_N
+            local y = k // l_N % l_N
+            local z = k // NN
+            -- update boundary
+            if x < l_minx then l_minx = x end
+            if y < l_miny then l_miny = y end
+            if z < l_minz then l_minz = z end
+            if x > l_maxx then l_maxx = x end
+            if y > l_maxy then l_maxy = y end
+            if z > l_maxz then l_maxz = z end
+        end
+    end
+
+    minx, miny, minz = l_minx, l_miny, l_minz
+    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
+    popcount = l_popcount
+
+    if timingenabled then timersave("NextGenHexahedral") end
+
+    DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
@@ -3178,6 +3381,8 @@ function NextGenBusyBoxes()
     end
 
     if AllDead() then return end
+
+    if timingenabled then timerstart("NextGenBusyBoxes") end
 
     -- calculate and display the next generation for the BusyBoxes rule
     -- (see http://www.busyboxes.org/faq.html)
@@ -3209,11 +3414,18 @@ function NextGenBusyBoxes()
 
     local mirror_mode = rulestring:sub(-1) ~= "W"
     local phase = gencount % 6
-    local NN = N * N
-    local swaps = {}
-    for k,_ in pairs(grid1) do
-        local x = k % N
-        local y = k // N % N
+    local l_grid1 = grid1
+    local grid2 = {}
+    local l_N = N
+    local NN = l_N * l_N
+    local swaps = {}   -- not used?  !!!
+    local l_popcount = popcount
+    local l_minx, l_miny, l_minz = minx, miny, minz
+    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+
+    for k,_ in pairs(l_grid1) do
+        local x = k % l_N
+        local y = k // l_N % l_N
         local z = k // NN
         if (x + y + z) % 2 == phase % 2 then
             -- this live cell has the right parity so get values for its 28 neighbors
@@ -3222,23 +3434,23 @@ function NextGenBusyBoxes()
             for i = 1, 28 do
                 if phase == 0 or phase == 3 then
                     -- use XY plane
-                    sx = (x + coords[i][1]) % N
-                    sy = (y + coords[i][2]) % N
+                    sx = (x + coords[i][1]) % l_N
+                    sy = (y + coords[i][2]) % l_N
                     sz = z
                 elseif phase == 1 or phase == 4 then
                     -- use YZ plane
                     sx = x
-                    sy = (y + coords[i][1]) % N
-                    sz = (z + coords[i][2]) % N
+                    sy = (y + coords[i][1]) % l_N
+                    sz = (z + coords[i][2]) % l_N
                 else
                     -- phase == 2 or 5 so use XZ plane
-                    sx = (x + coords[i][1]) % N
+                    sx = (x + coords[i][1]) % l_N
                     sy = y
-                    sz = (z + coords[i][2]) % N
+                    sz = (z + coords[i][2]) % l_N
                 end
-                val[i] = grid1[sx + N * (sy + N * sz)]
+                val[i] = grid1[sx + l_N * (sy + l_N * sz)]
             end
-    
+
             -- find the potential swaps
             local numswaps = 0
             local swapi
@@ -3257,7 +3469,7 @@ function NextGenBusyBoxes()
                     swapi = i   -- index of swap location in coords array (1..4)
                 end
             end
-            
+
             -- if only one swap, and only to an empty cell, then do it
             if numswaps == 1 and not val[swapi] then
                 -- calculate the swap position
@@ -3280,45 +3492,51 @@ function NextGenBusyBoxes()
                 end
                 -- if using mirror mode then don't wrap
                 if mirror_mode and
-                    ( newx < 0 or newx >= N or
-                      newy < 0 or newy >= N or
-                      newz < 0 or newz >= N ) then
+                    ( newx < 0 or newx >= l_N or
+                      newy < 0 or newy >= l_N or
+                      newz < 0 or newz >= l_N ) then
                     -- swap position is outside grid so don't do it
                     grid2[k] = 1
-                    popcount = popcount + 1
+                    l_popcount = l_popcount + 1
                     -- don't set dirty flag here!
                 else
                     -- do the swap, wrapping if necessary
-                    x = newx % N
-                    y = newy % N
-                    z = newz % N
-                    grid2[x + N * (y + N * z)] = 1
-                    popcount = popcount + 1
+                    x = newx % l_N
+                    y = newy % l_N
+                    z = newz % l_N
+                    grid2[x + l_N * (y + l_N * z)] = 1
+                    l_popcount = l_popcount + 1
                     -- don't set dirty flag here!
                 end
             else
                 -- don't swap this live cell
                 grid2[k] = 1
-                popcount = popcount + 1
+                l_popcount = l_popcount + 1
                 -- don't set dirty flag here!
             end
         else
             -- live cell with wrong parity
             grid2[k] = 1
-            popcount = popcount + 1
+            l_popcount = l_popcount + 1
             -- don't set dirty flag here!
         end
-        
+
         -- update boundary
-        if x < minx then minx = x end
-        if y < miny then miny = y end
-        if z < minz then minz = z end
-        if x > maxx then maxx = x end
-        if y > maxy then maxy = y end
-        if z > maxz then maxz = z end
+        if x < l_minx then l_minx = x end
+        if y < l_miny then l_miny = y end
+        if z < l_minz then l_minz = z end
+        if x > l_maxx then l_maxx = x end
+        if y > l_maxy then l_maxy = y end
+        if z > l_maxz then l_maxz = z end
     end
 
-    DisplayGeneration()
+    minx, miny, minz = l_minx, l_miny, l_minz
+    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
+    popcount = l_popcount
+
+    if timingenabled then timersave("NextGenBusyBoxes") end
+
+    DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
@@ -3398,7 +3616,7 @@ function ReadPattern(filepath)
     local runcount = 0
 
     while true do
-        local line = f:read("*l")
+        line = f:read("*l")
         if not line then break end
         -- if line ended with CRLF then remove the CR
         line = line:gsub("\r", "")
@@ -3507,7 +3725,7 @@ function UpdateCurrentGrid(newpattern)
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
     CreateAxes()
-    ClearCells()        -- resets grid1, grid2, popcount and selection info
+    ClearCells()        -- resets grid1, popcount and selection info
 
     grid1 = newpattern.newgrid
     popcount = newpattern.newpop
@@ -3838,7 +4056,7 @@ function RunScript(filepath)
             g.warn("Script file could not be opened:\n"..filepath, false)
             return
         end
-        local f, msg = loadfile(filepath)
+        f, msg = loadfile(filepath)
         if f then
             CallScript(f, false)
         else
@@ -4447,14 +4665,14 @@ function FlipSelectionX()
         RememberCurrentState()
         -- reflect selected cells' X coords across YZ plane thru middle of selection
         MinimizeSelectionBoundary()
-        local midx = minselx + (maxselx - minselx) / 2
+        local fmidx = minselx + (maxselx - minselx) / 2
         local cells = {}
         local NN = N*N
         for k,_ in pairs(selected) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
-            cells[#cells+1] = {round(midx*2) - x, y, z, grid1[k]}
+            cells[#cells+1] = {round(fmidx*2) - x, y, z, grid1[k]}
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
@@ -4486,14 +4704,14 @@ function FlipSelectionY()
         RememberCurrentState()
         -- reflect selected cells' Y coords across XZ plane thru middle of selection
         MinimizeSelectionBoundary()
-        local midy = minsely + (maxsely - minsely) / 2
+        local fmidy = minsely + (maxsely - minsely) / 2
         local cells = {}
         local NN = N*N
         for k,_ in pairs(selected) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
-            cells[#cells+1] = {x, round(midy*2) - y, z, grid1[k]}
+            cells[#cells+1] = {x, round(fmidy*2) - y, z, grid1[k]}
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
@@ -4525,14 +4743,14 @@ function FlipSelectionZ()
         RememberCurrentState()
         -- reflect selected cells' Z coords across XY plane thru middle of selection
         MinimizeSelectionBoundary()
-        local midz = minselz + (maxselz - minselz) / 2
+        local fmidz = minselz + (maxselz - minselz) / 2
         local cells = {}
         local NN = N*N
         for k,_ in pairs(selected) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
-            cells[#cells+1] = {x, y, round(midz*2) - z, grid1[k]}
+            cells[#cells+1] = {x, y, round(fmidz*2) - z, grid1[k]}
             if grid1[k] then
                 grid1[k] = nil
                 popcount = popcount - 1
@@ -4564,10 +4782,10 @@ function RotateSelectionX()
         RememberCurrentState()
         -- rotate selection clockwise about its X axis by 90 degrees
         MinimizeSelectionBoundary()
-        local midy = minsely + (maxsely - minsely) // 2
-        local midz = minselz + (maxselz - minselz) // 2
-        local y0 = midy - midz
-        local z0 = midz + midy + (maxselz - minselz) % 2    -- avoids drift
+        local fmidy = minsely + (maxsely - minsely) // 2
+        local fmidz = minselz + (maxselz - minselz) // 2
+        local y0 = fmidy - fmidz
+        local z0 = fmidz + fmidy + (maxselz - minselz) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
         for k,_ in pairs(selected) do
@@ -4606,10 +4824,10 @@ function RotateSelectionY()
         RememberCurrentState()
         -- rotate selection clockwise about its Y axis by 90 degrees
         MinimizeSelectionBoundary()
-        local midx = minselx + (maxselx - minselx) // 2
-        local midz = minselz + (maxselz - minselz) // 2
-        local x0 = midx + midz + (maxselx - minselx) % 2    -- avoids drift
-        local z0 = midz - midx
+        local fmidx = minselx + (maxselx - minselx) // 2
+        local fmidz = minselz + (maxselz - minselz) // 2
+        local x0 = fmidx + fmidz + (maxselx - minselx) % 2    -- avoids drift
+        local z0 = fmidz - fmidx
         local cells = {}
         local NN = N*N
         for k,_ in pairs(selected) do
@@ -4648,10 +4866,10 @@ function RotateSelectionZ()
         RememberCurrentState()
         -- rotate selection clockwise about its Z axis by 90 degrees
         MinimizeSelectionBoundary()
-        local midx = minselx + (maxselx - minselx) // 2
-        local midy = minsely + (maxsely - minsely) // 2
-        local x0 = midx - midy
-        local y0 = midy + midx + (maxsely - minsely) % 2    -- avoids drift
+        local fmidx = minselx + (maxselx - minselx) // 2
+        local fmidy = minsely + (maxsely - minsely) // 2
+        local x0 = fmidx - fmidy
+        local y0 = fmidy + fmidx + (maxsely - minsely) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
         for k,_ in pairs(selected) do
@@ -4920,7 +5138,7 @@ function Paste()
             local newx = x*xx + y*xy + z*xz
             local newy = x*yx + y*yy + z*yz
             local newz = x*zx + y*zy + z*zz
-            
+
             -- now shift to middle of active plane
             x = newx + xoffset
             y = newy + yoffset
@@ -5008,14 +5226,14 @@ function FlipPasteX()
     if pastecount > 0 then
         RememberCurrentState()
         -- reflect X coords across YZ plane thru middle of paste pattern
-        local midx = minpastex + (maxpastex - minpastex) / 2
+        local fmidx = minpastex + (maxpastex - minpastex) / 2
         local cells = {}
         local NN = N*N
         for k,_ in pairs(pastepatt) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
-            cells[#cells+1] = {round(midx*2) - x, y, z}
+            cells[#cells+1] = {round(fmidx*2) - x, y, z}
         end
         -- flip doesn't change paste boundary
         pastepatt = {}
@@ -5034,14 +5252,14 @@ function FlipPasteY()
     if pastecount > 0 then
         RememberCurrentState()
         -- reflect Y coords across XZ plane thru middle of paste pattern
-        local midy = minpastey + (maxpastey - minpastey) / 2
+        local fmidy = minpastey + (maxpastey - minpastey) / 2
         local cells = {}
         local NN = N*N
         for k,_ in pairs(pastepatt) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
-            cells[#cells+1] = {x, round(midy*2) - y, z}
+            cells[#cells+1] = {x, round(fmidy*2) - y, z}
         end
         -- flip doesn't change paste boundary
         pastepatt = {}
@@ -5060,14 +5278,14 @@ function FlipPasteZ()
     if pastecount > 0 then
         RememberCurrentState()
         -- reflect Z coords across XY plane thru middle of paste pattern
-        local midz = minpastez + (maxpastez - minpastez) / 2
+        local fmidz = minpastez + (maxpastez - minpastez) / 2
         local cells = {}
         local NN = N*N
         for k,_ in pairs(pastepatt) do
             local x = k % N
             local y = (k // N) % N
             local z = k // NN
-            cells[#cells+1] = {x, y, round(midz*2) - z}
+            cells[#cells+1] = {x, y, round(fmidz*2) - z}
         end
         -- flip doesn't change paste boundary
         pastepatt = {}
@@ -5086,10 +5304,10 @@ function RotatePasteX()
     if pastecount > 0 then
         RememberCurrentState()
         -- rotate paste pattern clockwise about its X axis by 90 degrees
-        local midy = minpastey + (maxpastey - minpastey) // 2
-        local midz = minpastez + (maxpastez - minpastez) // 2
-        local y0 = midy - midz
-        local z0 = midz + midy + (maxpastez - minpastez) % 2    -- avoids drift
+        local fmidy = minpastey + (maxpastey - minpastey) // 2
+        local fmidz = minpastez + (maxpastez - minpastez) // 2
+        local y0 = fmidy - fmidz
+        local z0 = fmidz + fmidy + (maxpastez - minpastez) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
         for k,_ in pairs(pastepatt) do
@@ -5123,10 +5341,10 @@ function RotatePasteY()
     if pastecount > 0 then
         RememberCurrentState()
         -- rotate paste pattern clockwise about its Y axis by 90 degrees
-        local midx = minpastex + (maxpastex - minpastex) // 2
-        local midz = minpastez + (maxpastez - minpastez) // 2
-        local x0 = midx + midz + (maxpastex - minpastex) % 2    -- avoids drift
-        local z0 = midz - midx
+        local fmidx = minpastex + (maxpastex - minpastex) // 2
+        local fmidz = minpastez + (maxpastez - minpastez) // 2
+        local x0 = fmidx + fmidz + (maxpastex - minpastex) % 2    -- avoids drift
+        local z0 = fmidz - fmidx
         local cells = {}
         local NN = N*N
         for k,_ in pairs(pastepatt) do
@@ -5160,10 +5378,10 @@ function RotatePasteZ()
     if pastecount > 0 then
         RememberCurrentState()
         -- rotate paste pattern clockwise about its Z axis by 90 degrees
-        local midx = minpastex + (maxpastex - minpastex) // 2
-        local midy = minpastey + (maxpastey - minpastey) // 2
-        local x0 = midx - midy
-        local y0 = midy + midx + (maxpastey - minpastey) % 2    -- avoids drift
+        local fmidx = minpastex + (maxpastex - minpastex) // 2
+        local fmidy = minpastey + (maxpastey - minpastey) // 2
+        local x0 = fmidx - fmidy
+        local y0 = fmidy + fmidx + (maxpastey - minpastey) % 2    -- avoids drift
         local cells = {}
         local NN = N*N
         for k,_ in pairs(pastepatt) do
@@ -5686,7 +5904,7 @@ shortcuts):
 <tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/spheres/points) </td></tr>
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lattice lines </td></tr>
 <tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes and lattice lines </td></tr>
-<tr><td align=right> alt-D &nbsp;</td><td>&nbsp; toggle depth shading </td></tr>
+<tr><td align=right> alt-D &nbsp;</td><td>&nbsp; cycle depth shading (off, low, high) </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the menu bar and tool bar </td></tr>
 <tr><td align=right> 5 &nbsp;</td><td>&nbsp; create a random pattern with given density </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
@@ -5925,11 +6143,22 @@ minimum <a href="#coords">cell coordinates</a>
 (the far, bottom left corner in the initial view).
 </dd>
 
-<a name="shading"></a><p><dt><b>Use Depth Shading</b></dt>
+<a name="shadingoff"></a><p><dt><b>Shading Off</b></dt>
 <dd>
-If ticked then cubes and spheres are drawn slightly darker the further
-away they are from the front of the screen.  Depth shading is not done
-when displaying points.
+If selected then live cells are drawn at the same brightness regardless
+of how far away they are from the front of the screen.
+</dd>
+
+<a name="shadinglow"></a><p><dt><b>Shading Low</b></dt>
+<dd>
+If selected then live cells are drawn slightly darker the further
+away they are from the front of the screen.
+</dd>
+
+<a name="shadinghigh"></a><p><dt><b>Shading High</b></dt>
+<dd>
+If selected then live cells are drawn much darker the further
+away they are from the front of the screen.
 </dd>
 
 <a name="help"></a><p><dt><b>Help</b></dt>
@@ -6684,7 +6913,7 @@ function CycleCellType()
     else -- celltype == "point"
         celltype = "cube"
     end
-    Refresh()
+    if not generating then Refresh() end
 end
 
 ----------------------------------------------------------------------
@@ -6697,7 +6926,7 @@ function SetCellType(newtype)
     elseif newtype == "point" then
         celltype = newtype
     end
-    Refresh()
+    if not generating then Refresh() end
 end
 
 ----------------------------------------------------------------------
@@ -6709,6 +6938,13 @@ end
 
 ----------------------------------------------------------------------
 
+function ToggleTiming()
+    timingenabled = not timingenabled
+    if timingenabled then timerresetall() end
+end
+
+----------------------------------------------------------------------
+
 function ToggleLines()
     showlines = not showlines
     Refresh()
@@ -6716,14 +6952,27 @@ end
 
 ----------------------------------------------------------------------
 
-function ToggleDepthShading()
-    depthshading = not depthshading
+function SetDepthRange(newrange)
+    depthrange = newrange
+    InitDepthShading()
     ViewChanged(false)
-    Refresh()
+    if not generating then Refresh() end
 end
 
 ----------------------------------------------------------------------
 
+function CycleDepthRange()
+    if depthrange == depthoptions[1] then
+        depthrange = depthoptions[2]
+    elseif depthrange == depthoptions[2] then
+        depthrange = depthoptions[3]
+    elseif depthrange == depthoptions[3] then
+        depthrange = depthoptions[1]
+    end
+    SetDepthRange(depthrange)
+end
+
+----------------------------------------------------------------------
 function ToggleToolBar()
     if toolbarht > 0 then
         toolbarht = 0
@@ -8026,7 +8275,10 @@ function CreateOverlay()
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Show Axes", ToggleAxes)
     mbar.additem(4, "Show Lattice Lines", ToggleLines)
-    mbar.additem(4, "Use Depth Shading", ToggleDepthShading)
+    mbar.additem(4, "---", nil)
+    mbar.additem(4, "Shading Off", SetDepthRange, {depthoptions[1]})
+    mbar.additem(4, "Shading Low", SetDepthRange, {depthoptions[2]})
+    mbar.additem(4, "Shading Hight", SetDepthRange, {depthoptions[3]})
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Help", ShowHelp)
 
@@ -8043,9 +8295,12 @@ function CreateOverlay()
     -- create check boxes (don't shadow text)
     op.textshadowx = 0
     op.textshadowy = 0
-    drawbox = op.checkbox("Draw", op.black, DrawMode)
-    selectbox = op.checkbox("Select", op.black, SelectMode)
-    movebox = op.checkbox("Move", op.black, MoveMode)
+
+    local selectbutton = op.checkbox   -- remove when oplus/init.lua 3.2b2 available  !!!
+    if op.radiobutton then selectbutton = op.radiobutton end
+    drawbox = selectbutton("Draw", op.black, DrawMode)
+    selectbox = selectbutton("Select", op.black, SelectMode)
+    movebox = selectbutton("Move", op.black, MoveMode)
     op.textshadowx = 2
     op.textshadowy = 2
 
@@ -8238,9 +8493,14 @@ end
 ----------------------------------------------------------------------
 
 function InitDepthShading()
-    -- initialize each depth shading layer
-    for i = 1, depthlayers do
-        layercoords[i] = {}
+    if depthrange > 0 then
+        -- initialize each depth shading layer
+        for i = 1, depthlayers do
+            -- clear depth shading list
+            layercoords[i] = {}
+            layerindices[i] = 1
+        end
+        layerlast = -1
     end
 end
 
@@ -8341,7 +8601,8 @@ function HandleKey(event)
     elseif key == "p" then CycleCellType()
     elseif key == "l" and mods == "none" then ToggleLines()
     elseif key == "l" and mods == "shift" then ToggleAxes()
-    elseif key == "d" and mods == "alt" then ToggleDepthShading()
+    elseif key == "d" and mods == "alt" then CycleDepthRange()
+    elseif key == "t" and mods == "alt" then ToggleTiming()
     elseif key == "t" then ToggleToolBar()
     elseif key == "," then MoveActivePlane(activepos+1, true)
     elseif key == "." then MoveActivePlane(activepos-1, true)
