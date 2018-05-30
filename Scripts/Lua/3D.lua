@@ -1199,11 +1199,11 @@ function CreateLiveSphere()
     local x = 0
     local y = 0
     local gray = 0      -- start with black outline
-    local grayinc = 3
-    if diameter < 50 then grayinc = 8 - diameter//10 end
     local r = (diameter+1)//2
+    if r > 2 then grayinc = 127/(r-2) else grayinc = 127 end
     while true do
-        l_ov("rgba "..gray.." "..gray.." "..gray.." 255")
+        local grayrgb = floor(gray)
+        l_ov("rgba "..grayrgb.." "..grayrgb.." "..grayrgb.." 255")
         -- draw a solid circle by setting the line width to the radius
         l_ov("lineoption width "..r)
         l_ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
@@ -1212,7 +1212,7 @@ function CreateLiveSphere()
         if r < 2 then break end
         x = x + 1
         y = y + 1
-        if gray == 0 then gray = 180 - diameter//10 end
+        if gray == 0 then gray = 128 end
         gray = gray + grayinc
         if gray > 255 then gray = 255 end
     end
@@ -1576,7 +1576,7 @@ function DisplayCells(editing)
         local l_xixo, l_xiyo, l_xizo = xixo, xiyo, xizo
         local l_yixo, l_yiyo, l_yizo = yixo, yiyo, yizo
         if depthrange > 0 and celltype ~= "point" then
-            -- draw with depth shading and/or perspective
+            -- draw with depth shading
             local layer, zval
             local l_layerlast = layerlast
             local l_depthlayers = depthlayers
