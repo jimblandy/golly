@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build = 75
+local build = 76
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -2212,6 +2212,7 @@ end
 
 local oldoverlay = g.setoption("showoverlay", 1)
 local oldbuttons = g.setoption("showbuttons", 0) -- disable translucent buttons
+local oldscroll  = g.setoption("showscrollbars", 0)
 local oldfs      = g.getoption("fullscreen")
 
 local status, err = xpcall(main, gp.trace)
@@ -2223,4 +2224,5 @@ stopallsound()
 ov("delete")
 g.setoption("showoverlay", oldoverlay)
 g.setoption("showbuttons", oldbuttons)
+g.setoption("showscrollbars", oldscroll)
 g.setoption("fullscreen", oldfs)
