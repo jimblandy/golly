@@ -100,9 +100,10 @@ local layercoords = {}              -- coordinates for each cell in each layer
 local layerindices = {}             -- index of last entry in each layer
 local layercurrent = {}             -- current layer
 local layerindex = 1                -- current layer last entry index
-local layerlast = -1                -- last layer used
-local depthoptions = {0, 96, 144}   -- depth shading off, low and high values
+local depthoptions = {0, 128, 224}  -- depth shading off, low and high values
 local depthlayers = 64              -- number of shading layers
+local layerlast                     -- last layer used
+local mindepth, maxdepth            -- minimum and maximum depth (with corner pointing at screen)
 local depthrange = 0                -- rgb level range for depth shading (0 = off)
 local zdepth, zdepth2               -- coefficients for z to depth layer mapping
 
@@ -187,7 +188,7 @@ local movecursor = "hand"           -- cursor for rotating grid
 local currcursor = movecursor       -- current cursor
 local arrow_cursor = false          -- true if cursor is in tool bar
 
-local DEFAULT_RULE = "3D5..7/6"     -- initial rule
+DEFAULT_RULE = "3D5..7/6"           -- initial rule
 local rulestring = DEFAULT_RULE
 local survivals = {}
 local births = {}
@@ -468,6 +469,8 @@ function ReadSettings()
                         depthrange = depthoptions[2]
                     elseif depthrange > depthoptions[3] then
                         depthrange = depthoptions[3]
+                    else
+                        depthrange = depthoptions[2]
                     end
                 end
             elseif keyword == "gridsize" then
@@ -1110,20 +1113,30 @@ end
 
 function CreateLayers(clip)
     local l_ov = ov
-    local adjust = depthrange / depthlayers
+    local adjust = depthrange / (maxdepth - mindepth + 1)
     local total = 0
     local rgb
     l_ov("target "..clip)
     l_ov("copy 0 0 0 0 "..clip.."1")
     l_ov("target "..clip.."1")
     l_ov("optimize "..clip.."1")
-    for i = 2, depthlayers do
+    for i = 2, maxdepth do
         total = total + adjust
         rgb = floor(total)
         l_ov("target "..clip)
         l_ov("copy 0 0 0 0 "..clip..i)
         l_ov("target "..clip..i)
         l_ov("replace *#-"..rgb.." *#-"..rgb.." *#-"..rgb.." *#")
+        l_ov("optimize "..clip..i)
+    end
+    total = 0
+    for i = 1, mindepth, -1 do
+        total = total + adjust
+        rgb = floor(total)
+        l_ov("target "..clip)
+        l_ov("copy 0 0 0 0 "..clip..i)
+        l_ov("target "..clip..i)
+        l_ov("replace *#+"..rgb.." *#+"..rgb.." *#+"..rgb.." *#")
         l_ov("optimize "..clip..i)
     end
     l_ov("target")
@@ -1245,9 +1258,7 @@ function AddCellToBatchDepth(x, y, z, mx, my)
     x = round(newx + mx)
     y = round(newy + my)
     -- compute the depth layer
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
-    if layer < 1 then layer = 1 end
-    if layer > depthlayers then layer = depthlayers end
+    local layer = floor(depthlayers * (newz + zdepth) / zdepth2)
     -- check if the layer has changed since the last call
     if layer ~= layerlast then
         -- save the previous layer and switch to the new one
@@ -1320,15 +1331,16 @@ local function DrawBatch()
         -- draw each layer in reverse order (furthest away first = darkest)
         local l_layerindices = layerindices
         local l_layercoords = layercoords
+        local l_mindepth, l_maxdepth = mindepth, maxdepth
         l_layerindices[layerlast] = layerindex    -- save current layer index (may have been updated in TestCell)
-        for i = depthlayers, 1, -1 do
+        for i = l_maxdepth, l_mindepth, -1 do
             if l_layerindices[i] > 1 then
                 DrawBatchLayer(i, l_layercoords[i], l_layerindices[i] - 1)
                 -- reset the layer once drawn
                 l_layerindices[i] = 1
             end
         end
-        layerlast = -1
+        layerlast = l_mindepth - 1
     else
         -- no depth shading so draw all
         DrawBatchLayer("", xybatch, xyindex - 1)
@@ -1597,15 +1609,14 @@ function DisplayCells(editing)
                             xc = x * c + m
                             yc = y * c + m
                             zc = z * c + m
-                            -- compute the depth layer and clamp to allowed range 1..depthlayers
                             zval = xc*l_zixo + yc*l_ziyo + zc*l_zizo
-                            layer = (l_depthlayers * (zval + l_zdepth) // l_zdepth2) + 1
-                            if layer < 1 then layer = 1 end
-                            if layer > l_depthlayers then layer = l_depthlayers end
+                            -- compute the depth layer
+                            -- floor divide // creates a real number e.g. 5.0 that can be used as an array index
+                            layer = l_depthlayers * (zval + l_zdepth) // l_zdepth2
                             -- check if the layer has changed since the last call
                             if layer ~= l_layerlast then
                                 -- save the previous layer and switch to the new one
-                                l_layerindices[l_layerlast] = l_layerindex  -- first time layerlast will be -1 but will be ignored during drawing
+                                l_layerindices[l_layerlast] = l_layerindex  -- first l_layerlast value is ignored
                                 l_layerlast = layer
                                 l_layercurrent = l_layercoords[layer]
                                 l_layerindex = l_layerindices[layer]
@@ -1795,9 +1806,7 @@ function DrawBusyCubeDepth(x, y, z, color, clipname)
     x = round(newx) + midx - HALFCUBECLIP
     y = round(newy) + midy - HALFCUBECLIP
     -- compute the depth layer
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
-    if layer < 1 then layer = 1 end
-    if layer > depthlayers then layer = depthlayers end
+    local layer = floor(depthlayers * (newz + zdepth) / zdepth2)
     ov("paste "..x.." "..y.." "..clipname..layer)
 end
 
@@ -1832,9 +1841,7 @@ function DrawBusySphereDepth(x, y, z, color, clipname)
     x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
     y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
     -- compute the depth layer
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2) + 1
-    if layer < 1 then layer = 1 end
-    if layer > depthlayers then layer = depthlayers end
+    local layer = floor(depthlayers * (newz + zdepth) / zdepth2)
     ov("paste "..x.." "..y.." "..clipname..layer)
 end
 
@@ -6941,6 +6948,7 @@ end
 function ToggleTiming()
     timingenabled = not timingenabled
     if timingenabled then timerresetall() end
+    if not generating then Refresh() end
 end
 
 ----------------------------------------------------------------------
@@ -8493,15 +8501,16 @@ end
 ----------------------------------------------------------------------
 
 function InitDepthShading()
-    if depthrange > 0 then
-        -- initialize each depth shading layer
-        for i = 1, depthlayers do
-            -- clear depth shading list
-            layercoords[i] = {}
-            layerindices[i] = 1
-        end
-        layerlast = -1
+    -- initialize each depth shading layer
+    local extradepth = round(depthlayers * sqrt(3))
+    mindepth = -extradepth // 2
+    maxdepth = depthlayers + extradepth // 2
+    for i = mindepth, maxdepth do
+        -- clear depth shading list
+        layercoords[i] = {}
+        layerindices[i] = 1
     end
+    layerlast = mindepth - 1
 end
 
 ----------------------------------------------------------------------
@@ -8787,7 +8796,7 @@ end
 ----------------------------------------------------------------------
 
 ReadSettings()
-local oldstate = SaveGollyState()
+oldstate = SaveGollyState()
 Initialize()
 
 status, err = xpcall(EventLoop, gp.trace)
