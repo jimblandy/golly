@@ -1218,10 +1218,12 @@ local function release_in_item(x, y, mbar)
         g.update()
     end
 
+    local MacOS = g.os() == "Mac"
     local prevx = x
     local prevy = y
-    -- loop until enabled menu item clicked
     local menuitem = nil
+    -- on Windows/Linux we loop until an enabled item is clicked;
+    -- on Mac we loop until an enabled or disabled item is clicked
     while true do
         -- loop until click or keypress
         while true do
@@ -1230,7 +1232,7 @@ local function release_in_item(x, y, mbar)
                 if g.millisecs() - t0 > 500 then
                     local oldmenu = selmenu
                     selmenu = GetMenu(x, y, selmenu, mbar)
-                    if selmenu == 0 then selmenu = oldmenu end
+                    if selmenu == 0 and not MacOS then selmenu = oldmenu end
                     break
                 end
             elseif event:find("^oclick") then
@@ -1240,7 +1242,7 @@ local function release_in_item(x, y, mbar)
                     y = tonumber(sy)
                     local oldmenu = selmenu
                     selmenu = GetMenu(x, y, selmenu, mbar)
-                    if selmenu == 0 then selmenu = oldmenu end
+                    if selmenu == 0 and not MacOS then selmenu = oldmenu end
                     break
                 end
             elseif event == "key enter none" or event == "key return none" then
@@ -1256,12 +1258,16 @@ local function release_in_item(x, y, mbar)
                     local oldmenu = selmenu
                     local olditem = selitem
                     selmenu = GetMenu(x, y, selmenu, mbar)
-                    if selmenu == 0 then selmenu = oldmenu end
+                    if selmenu == 0 and not MacOS then selmenu = oldmenu end
                     selitem = GetItem(x, y, selmenu, mbar)
                     if selmenu ~= oldmenu or selitem ~= olditem then
                         ov("paste 0 0 "..bgclip)
                         DrawMenuBar(mbar)
-                        DrawMenuItems(mbar)
+                        if MacOS then
+                            if selmenu > 0 then DrawMenuItems(mbar) end
+                        else
+                            DrawMenuItems(mbar)
+                        end
                         g.update()
                     end
                     prevx = x
@@ -1269,13 +1275,27 @@ local function release_in_item(x, y, mbar)
                 end
             end
         end
-        if selmenu > 0 then
-            selitem = GetItem(x, y, selmenu, mbar)
-            if selitem > 0 and mbar.menus[selmenu].items[selitem].enabled then
-                menuitem = mbar.menus[selmenu].items[selitem]
-                break
-            elseif selitem == 0 then
-                break
+        
+        if MacOS then
+            -- on Mac we can return nil if user clicked a disabled item
+            menuitem = nil
+            if selmenu > 0 then
+                selitem = GetItem(x, y, selmenu, mbar)
+                if selitem > 0 and mbar.menus[selmenu].items[selitem].enabled then
+                    menuitem = mbar.menus[selmenu].items[selitem]
+                end
+            end
+            break
+        else
+            -- Windows/Linux
+            if selmenu > 0 then
+                selitem = GetItem(x, y, selmenu, mbar)
+                if selitem > 0 and mbar.menus[selmenu].items[selitem].enabled then
+                    menuitem = mbar.menus[selmenu].items[selitem]
+                    break
+                elseif selitem == 0 then
+                    break
+                end
             end
         end
     end
@@ -1291,14 +1311,16 @@ end
 --------------------------------------------------------------------------------
 
 local function click_in_menubar(x, y)
+    local MacOS = g.os() == "Mac"
     for r, mbar in pairs(menubar_tables) do
         if x >= r.left and x <= r.right and y >= r.top and y <= r.bottom then
             local menuitem = release_in_item(x, y, mbar)
             if menuitem and menuitem.f then
                 -- call this menu item's handler
                 menuitem.f( table.unpack(menuitem.fargs) )
-                return true
+                if not MacOS then return true end
             end
+            if MacOS then return true end
         end
     end
     return false
