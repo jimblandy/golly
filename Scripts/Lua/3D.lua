@@ -21,9 +21,6 @@ TODO (for Golly 3.2 or later):
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - add View > Pattern Info to display comments, or always show when pattern is opened?
-- oplus fixes:
-- on Win/Linux ignore click or release in a disabled menu item
-- and ignore initial click in menu bar if left/right of labels (also on Mac?)
 --]]
 
 local g = golly()

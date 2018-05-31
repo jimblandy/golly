@@ -1206,20 +1206,25 @@ local function release_in_item(x, y, mbar)
     -- on release, or nil if the item is disabled or no item is selected
 
     local t0 = g.millisecs()
+    local MacOS = g.os() == "Mac"
+
+    selitem = 0
+    selmenu = GetMenu(x, y, 0, mbar)
+    if selmenu == 0 and not MacOS then
+        -- if initial click is not in any menu then ignore it on Windows/Linux
+        return nil
+    end
 
     -- save entire overlay (including menu bar) in bgclip
     local bgclip = string.gsub(tostring(mbar).."bg"," ","")
     ov("copy 0 0 0 0 "..bgclip)
 
-    selitem = 0
-    selmenu = GetMenu(x, y, 0, mbar)
     if selmenu > 0 then
         DrawMenuBar(mbar)       -- highlight selected menu
         DrawMenuItems(mbar)
         g.update()
     end
 
-    local MacOS = g.os() == "Mac"
     local prevx = x
     local prevy = y
     local menuitem = nil
@@ -1312,16 +1317,14 @@ end
 --------------------------------------------------------------------------------
 
 local function click_in_menubar(x, y)
-    local MacOS = g.os() == "Mac"
     for r, mbar in pairs(menubar_tables) do
         if x >= r.left and x <= r.right and y >= r.top and y <= r.bottom then
             local menuitem = release_in_item(x, y, mbar)
             if menuitem and menuitem.f then
                 -- call this menu item's handler
                 menuitem.f( table.unpack(menuitem.fargs) )
-                if not MacOS then return true end
             end
-            if MacOS then return true end
+            return true
         end
     end
     return false
