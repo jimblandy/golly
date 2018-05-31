@@ -100,11 +100,11 @@ local layercoords = {}              -- coordinates for each cell in each layer
 local layerindices = {}             -- index of last entry in each layer
 local layercurrent = {}             -- current layer
 local layerindex = 1                -- current layer last entry index
-local depthoptions = {0, 128, 224}  -- depth shading off, low and high values
+local depthshading = true           -- whether using depth shading
 local depthlayers = 64              -- number of shading layers
+local depthrange = 224              -- rgb levels for depth shading
 local layerlast                     -- last layer used
 local mindepth, maxdepth            -- minimum and maximum depth (with corner pointing at screen)
-local depthrange = 0                -- rgb level range for depth shading (0 = off)
 local zdepth, zdepth2               -- coefficients for z to depth layer mapping
 
 local active = {}                   -- grid positions of cells in active plane
@@ -462,17 +462,7 @@ function ReadSettings()
             elseif keyword == "perc" then randstring = tostring(value)
             elseif keyword == "axes" then showaxes = tostring(value) == "true"
             elseif keyword == "lines" then showlines = tostring(value) == "true"
-            elseif keyword == "shading" then
-                depthrange = tonumber(value) or depthoptions[1]
-                if depthrange ~= depthoptions[1] then
-                    if depthrange < depthoptions[2] then
-                        depthrange = depthoptions[2]
-                    elseif depthrange > depthoptions[3] then
-                        depthrange = depthoptions[3]
-                    else
-                        depthrange = depthoptions[2]
-                    end
-                end
+            elseif keyword == "shading" then depthshading = tostring(value) == "true"
             elseif keyword == "gridsize" then
                 N = tonumber(value) or 30
                 if N < MINN then N = MINN end
@@ -507,7 +497,7 @@ function WriteSettings()
         f:write("perc=", randstring, "\n")
         f:write("axes="..tostring(showaxes), "\n")
         f:write("lines="..tostring(showlines), "\n")
-        f:write("shading="..tostring(depthrange), "\n")
+        f:write("shading="..tostring(depthshading), "\n")
         f:close()
     end
 end
@@ -1183,7 +1173,7 @@ function CreateLiveCube()
     l_ov("optimize c")
 
     -- create faded versions of the clip if depth shading
-    if depthlayers > 0 then
+    if depthshading then
         CreateLayers("c")
     end
 
@@ -1234,7 +1224,7 @@ function CreateLiveSphere()
     l_ov("optimize S")
 
     -- create faded versions of the clip if depth shading
-    if depthlayers > 0 then
+    if depthshading then
         CreateLayers("S")
     end
 
@@ -1255,8 +1245,8 @@ function AddCellToBatchDepth(x, y, z, mx, my)
     local newy = (x*yixo + y*yiyo + z*yizo)
     local newz = (x*zixo + y*ziyo + z*zizo)
     -- use orthographic projection
-    x = round(newx + mx)
-    y = round(newy + my)
+    x = (newx + mx) // 1 | 0
+    y = (newy + my) // 1 | 0
     -- compute the depth layer
     local layer = floor(depthlayers * (newz + zdepth) / zdepth2)
     -- check if the layer has changed since the last call
@@ -1288,8 +1278,8 @@ function AddCellToBatch(x, y, z, mx, my)
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
-    x = round(newx + mx)
-    y = round(newy + my)
+    x = (newx + mx) // 1 | 0
+    y = (newy + my) // 1 | 0
     -- add to the list to draw
     xybatch[xyi] = x
     xyi = xyi + 1
@@ -1327,7 +1317,7 @@ local function DrawBatch()
     if timingenabled then timerstart("DrawBatch") end
 
     -- check for depth shading for cubes or spheres
-    if depthrange > 0 and celltype ~= "point" then
+    if depthshading and celltype ~= "point" then
         -- draw each layer in reverse order (furthest away first = darkest)
         local l_layerindices = layerindices
         local l_layercoords = layercoords
@@ -1541,7 +1531,7 @@ function DisplayCells(editing)
     if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
 
     -- select the cell drawing functions based on whether depth shading is required
-    if depthrange > 0 and celltype ~= "point" then
+    if depthshading and celltype ~= "point" then
         zdepth = N*CELLSIZE*0.5
         zdepth2 = zdepth+zdepth
         DrawLiveCell = AddCellToBatchDepth
@@ -1588,7 +1578,7 @@ function DisplayCells(editing)
         local l_grid1 = grid1
         local l_xixo, l_xiyo, l_xizo = xixo, xiyo, xizo
         local l_yixo, l_yiyo, l_yizo = yixo, yiyo, yizo
-        if depthrange > 0 and celltype ~= "point" then
+        if depthshading and celltype ~= "point" then
             -- draw with depth shading
             local layer, zval
             local l_layerlast = layerlast
@@ -1711,7 +1701,7 @@ function CreateBusyCube(clipname)
     l_ov("optimize "..clipname)
 
     -- create faded versions of the clip if depth shading
-    if depthlayers > 0 then
+    if depthshading then
         CreateLayers(clipname)
     end
 
@@ -1768,7 +1758,7 @@ function CreateBusySphere(clipname)
     l_ov("optimize "..clipname)
 
     -- create faded versions of the clip if depth shading
-    if depthlayers > 0 then
+    if depthshading then
         CreateLayers(clipname)
     end
 
@@ -1980,7 +1970,7 @@ function DisplayBusyBoxes(editing)
     if (fromz == MINZ) then toz, stepz = MAXZ, 1 else toz, stepz = MINZ, -1 end
 
     -- select the cell drawing functions based on whether depth shading is required
-    if depthlayers > 0 then
+    if depthshading then
         zdepth = N*CELLSIZE*0.5
         zdepth2 = zdepth+zdepth
         if celltype == "cube" then
@@ -2150,9 +2140,7 @@ function DrawMenuBar()
     selectitem(4, 7, celltype == "point")
     mbar.tickitem(4, 9, showaxes)
     mbar.tickitem(4, 10, showlines)
-    selectitem(4, 12, depthrange == depthoptions[1])
-    selectitem(4, 13, depthrange == depthoptions[2])
-    selectitem(4, 14, depthrange == depthoptions[3])
+    mbar.tickitem(4, 11, depthshading)
 
     mbar.show(0, 0, ovwd, mbarht)
 end
@@ -5911,7 +5899,7 @@ shortcuts):
 <tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/spheres/points) </td></tr>
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lattice lines </td></tr>
 <tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes and lattice lines </td></tr>
-<tr><td align=right> alt-D &nbsp;</td><td>&nbsp; cycle depth shading (off, low, high) </td></tr>
+<tr><td align=right> alt-D &nbsp;</td><td>&nbsp; toggle depth shading </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the menu bar and tool bar </td></tr>
 <tr><td align=right> 5 &nbsp;</td><td>&nbsp; create a random pattern with given density </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
@@ -6150,22 +6138,11 @@ minimum <a href="#coords">cell coordinates</a>
 (the far, bottom left corner in the initial view).
 </dd>
 
-<a name="shadingoff"></a><p><dt><b>Shading Off</b></dt>
+<a name="shading"></a><p><dt><b>Use Depth Shading</b></dt>
 <dd>
-If selected then live cells are drawn at the same brightness regardless
-of how far away they are from the front of the screen.
-</dd>
-
-<a name="shadinglow"></a><p><dt><b>Shading Low</b></dt>
-<dd>
-If selected then live cells are drawn slightly darker the further
-away they are from the front of the screen.
-</dd>
-
-<a name="shadinghigh"></a><p><dt><b>Shading High</b></dt>
-<dd>
-If selected then live cells are drawn much darker the further
-away they are from the front of the screen.
+If ticked then cubes and spheres are drawn slightly darker the further
+away they are from the front of the screen.  Depth shading is not done
+when displaying points.
 </dd>
 
 <a name="help"></a><p><dt><b>Help</b></dt>
@@ -6960,24 +6937,11 @@ end
 
 ----------------------------------------------------------------------
 
-function SetDepthRange(newrange)
-    depthrange = newrange
+function ToggleDepthShading()
+    depthshading = not depthshading
     InitDepthShading()
     ViewChanged(false)
     if not generating then Refresh() end
-end
-
-----------------------------------------------------------------------
-
-function CycleDepthRange()
-    if depthrange == depthoptions[1] then
-        depthrange = depthoptions[2]
-    elseif depthrange == depthoptions[2] then
-        depthrange = depthoptions[3]
-    elseif depthrange == depthoptions[3] then
-        depthrange = depthoptions[1]
-    end
-    SetDepthRange(depthrange)
 end
 
 ----------------------------------------------------------------------
@@ -8283,10 +8247,7 @@ function CreateOverlay()
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Show Axes", ToggleAxes)
     mbar.additem(4, "Show Lattice Lines", ToggleLines)
-    mbar.additem(4, "---", nil)
-    mbar.additem(4, "Shading Off", SetDepthRange, {depthoptions[1]})
-    mbar.additem(4, "Shading Low", SetDepthRange, {depthoptions[2]})
-    mbar.additem(4, "Shading High", SetDepthRange, {depthoptions[3]})
+    mbar.additem(4, "Use Depth Shading", ToggleDepthShading)
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Help", ShowHelp)
 
@@ -8610,7 +8571,7 @@ function HandleKey(event)
     elseif key == "p" then CycleCellType()
     elseif key == "l" and mods == "none" then ToggleLines()
     elseif key == "l" and mods == "shift" then ToggleAxes()
-    elseif key == "d" and mods == "alt" then CycleDepthRange()
+    elseif key == "d" and mods == "alt" then ToggleDepthShading()
     elseif key == "t" and mods == "alt" then ToggleTiming()
     elseif key == "t" then ToggleToolBar()
     elseif key == "," then MoveActivePlane(activepos+1, true)
