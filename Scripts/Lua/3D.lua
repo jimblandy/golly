@@ -1556,8 +1556,8 @@ function DisplayCells(editing)
     my = my + 0.5
 
     local i, j
-    local l_N =N
-    local stepi, stepj = N*stepy, N*stepz
+    local l_N = N
+    local stepi, stepj = l_N*stepy, l_N*stepz
     if testcell then
         j = l_N*fromz
         for z = fromz, toz, stepz do
@@ -2360,13 +2360,12 @@ function UpdateStartButton()
     -- change label in ssbutton without changing the button's width,
     -- and also update 1st item in Control menu
     if generating then
+        ssbutton.customcolor = "rgba 224 0 0 255"   -- make button background red
         ssbutton.setlabel("Stop", false)
-        -- enable customcolor in 3.2b2!!!
-        --ssbutton.customcolor = "rgba 224 0 0 255"   -- make button background red
         mbar.setitem(3, 1, "Stop Generating")
     else
+        ssbutton.customcolor = nil                  -- use default background
         ssbutton.setlabel("Start", false)
-        --ssbutton.customcolor = nil                  -- use default background
         mbar.setitem(3, 1, "Start Generating")
     end
 end
@@ -2892,7 +2891,7 @@ function NextGenMoore()
     local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
 
     for k,_ in pairs(l_grid1) do
-        count1[k] = (count1[k] or 0) + 1
+        count1[k] = 1
         local y = k % NN
         local k2 = k + (y + l_N) % NN - y
         count1[k2] = (count1[k2] or 0) + 1
@@ -2901,7 +2900,7 @@ function NextGenMoore()
     end
     local count2 = {}
     for k,v in pairs(count1) do
-        count2[k] = (count2[k] or 0) + v
+        count2[k] = v
         local x = k % l_N
         local k2 = k + (x + 1) % l_N - x
         count2[k2] = (count2[k2] or 0) + v
@@ -2910,7 +2909,7 @@ function NextGenMoore()
     end
     count1 = {}
     for k,v in pairs(count2) do
-        count1[k] = (count1[k] or 0) + v
+        count1[k] = v
         local k2 = (k + NN) % NNN
         count1[k2] = (count1[k2] or 0) + v
         k2 = (k + NNN - NN) % NNN
