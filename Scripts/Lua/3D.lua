@@ -2891,7 +2891,7 @@ function NextGenMoore()
     local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
 
     for k,_ in pairs(l_grid1) do
-        count1[k] = 1
+        count1[k] = (count1[k] or 0) + 1
         local y = k % NN
         local k2 = k + (y + l_N) % NN - y
         count1[k2] = (count1[k2] or 0) + 1
@@ -2900,7 +2900,7 @@ function NextGenMoore()
     end
     local count2 = {}
     for k,v in pairs(count1) do
-        count2[k] = v
+        count2[k] = (count2[k] or 0) + v
         local x = k % l_N
         local k2 = k + (x + 1) % l_N - x
         count2[k2] = (count2[k2] or 0) + v
@@ -2909,7 +2909,7 @@ function NextGenMoore()
     end
     count1 = {}
     for k,v in pairs(count2) do
-        count1[k] = v
+        count1[k] = (count1[k] or 0) + v
         local k2 = (k + NN) % NNN
         count1[k2] = (count1[k2] or 0) + v
         k2 = (k + NNN - NN) % NNN
