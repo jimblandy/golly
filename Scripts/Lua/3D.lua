@@ -2902,7 +2902,7 @@ function NextGenMoore()
         local x = k % l_N
         local k2 = k + (x + 1) % l_N - x
         count2[k2] = (count2[k2] or 0) + v
-        k2 = k + (x + l_N - 1) % N - x
+        k2 = k + (x + l_N - 1) % l_N - x
         count2[k2] = (count2[k2] or 0) + v
     end
     count1 = {}
