@@ -374,7 +374,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function draw_button(x, y, w, h)
+local function draw_button(x, y, w, h, color)
     local oldblend = ov("blend 0")
     local buttrect = " "..x.." "..y.." "..w.." "..h
 
@@ -385,7 +385,7 @@ local function draw_button(x, y, w, h)
     local oldrgba = ov("rgba 0 0 0 0")
     ov("fill"..buttrect)
 
-    local butt_rgba = m.buttonrgba
+    local butt_rgba = color or m.buttonrgba
     if darken_button then
         butt_rgba = m.darkerrgba
     end
@@ -427,6 +427,7 @@ function m.button(label, onclick)
     b.shown = false         -- b.show hasn't been called
     b.enabled = true
     b.ht = m.buttonht;
+    b.customcolor = nil
 
     b.setlabel = function (newlabel, changesize)
         local oldfont = ov(m.textfont)
@@ -467,7 +468,7 @@ function m.button(label, onclick)
         ov("copy "..b.x.." "..b.y.." "..b.wd.." "..b.ht.." "..b.background)
 
         -- draw the button at the given location
-        draw_button(x, y, b.wd, b.ht)
+        draw_button(x, y, b.wd, b.ht, b.customcolor)
 
         -- if m.textrgba or m.textfont has changed then recreate b.labelclip
         if b.savetextrgba ~= m.textrgba or b.savetextfont ~= m.textfont then
