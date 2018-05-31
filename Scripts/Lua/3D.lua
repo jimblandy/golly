@@ -2361,9 +2361,11 @@ function UpdateStartButton()
     -- and also update 1st item in Control menu
     if generating then
         ssbutton.setlabel("Stop", false)
+        ssbutton.customcolor = "rgba 224 0 0 255"   -- make button background red
         mbar.setitem(3, 1, "Stop Generating")
     else
         ssbutton.setlabel("Start", false)
+        ssbutton.customcolor = nil                  -- use default background
         mbar.setitem(3, 1, "Start Generating")
     end
 end
