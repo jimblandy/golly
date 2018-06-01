@@ -1094,8 +1094,6 @@ end
 ----------------------------------------------------------------------
 
 function CreateLayers(clip)
-    if timingenabled then timerstart("CreateLayers") end
-
     local adjust = depthrange / (maxdepth - mindepth + 1)
     local total = 0
     local rgb
@@ -1123,8 +1121,6 @@ function CreateLayers(clip)
         ov("optimize "..clip..i)
     end
     ov("target")
-
-    if timingenabled then timersave("CreateLayers") end
 end
 
 ----------------------------------------------------------------------
