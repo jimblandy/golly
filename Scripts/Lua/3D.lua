@@ -1306,18 +1306,15 @@ local function DrawBatch()
     -- check for depth shading for cubes or spheres
     if depthshading and celltype ~= "point" then
         -- draw each layer in reverse order (furthest away first = darkest)
-        local l_layerindices = layerindices
-        local l_layercoords = layercoords
-        local l_mindepth, l_maxdepth = mindepth, maxdepth
-        l_layerindices[layerlast] = layerindex    -- save current layer index (may have been updated in TestCell)
-        for i = l_maxdepth, l_mindepth, -1 do
-            if l_layerindices[i] > 1 then
-                DrawBatchLayer(i, l_layercoords[i], l_layerindices[i] - 1)
+        layerindices[layerlast] = layerindex    -- save current layer index (may have been updated in TestCell)
+        for i = maxdepth, mindepth, -1 do
+            if layerindices[i] > 1 then
+                DrawBatchLayer(i, layercoords[i], layerindices[i] - 1)
                 -- reset the layer once drawn
-                l_layerindices[i] = 1
+                layerindices[i] = 1
             end
         end
-        layerlast = l_mindepth - 1
+        layerlast = mindepth - 1
     else
         -- no depth shading so draw all
         DrawBatchLayer("", xybatch, xyindex - 1)
