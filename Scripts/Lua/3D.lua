@@ -2879,35 +2879,29 @@ function NextGenMoore()
     if timingenabled then timerstart("NextGenMoore") end
 
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
-    local l_grid1 = grid1
     local grid2 = {}
-    local count1 = {}
-    local l_N = N
-    local NN = l_N * l_N
-    local NNN = NN * l_N
-    local l_births, l_survivals = births, survivals
-    local l_popcount = popcount
-    local l_minx, l_miny, l_minz = minx, miny, minz
-    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+    local NN = N * N
+    local NNN = NN * N
 
-    local NNmN = NN - l_N
-    for k,_ in pairs(l_grid1) do
+    local count1 = {}
+    local NNmN = NN - N
+    for k,_ in pairs(grid1) do
         count1[k] = (count1[k] or 0) + 1
         local y = k % NN
-        local k2 = k + (y + l_N) % NN - y
+        local k2 = k + (y + N) % NN - y
         count1[k2] = (count1[k2] or 0) + 1
         k2 = k + (y + NNmN) % NN - y
         count1[k2] = (count1[k2] or 0) + 1
     end
 
     local count2 = {}
-    local Nm1 = l_N - 1
+    local Nm1 = N - 1
     for k,v in pairs(count1) do
         count2[k] = (count2[k] or 0) + v
-        local x = k % l_N
-        local k2 = k + (x + 1) % l_N - x
+        local x = k % N
+        local k2 = k + (x + 1) % N - x
         count2[k2] = (count2[k2] or 0) + v
-        k2 = k + (x + Nm1) % l_N - x
+        k2 = k + (x + Nm1) % N - x
         count2[k2] = (count2[k2] or 0) + v
     end
 
@@ -2921,27 +2915,24 @@ function NextGenMoore()
         count1[k2] = (count1[k2] or 0) + v
     end
     for k,v in pairs(count1) do
-        if (l_grid1[k] and l_survivals[v-1]) or (l_births[v] and not l_grid1[k]) then
+        local alive = grid1[k]
+        if (alive and survivals[v-1]) or (births[v] and not alive) then
             -- create a live cell in grid2
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
-            local x = k % l_N
-            local y = k // l_N % l_N
+            local x = k % N
+            local y = k // N % N
             local z = k // NN
             -- update boundary
-            if x < l_minx then l_minx = x end
-            if y < l_miny then l_miny = y end
-            if z < l_minz then l_minz = z end
-            if x > l_maxx then l_maxx = x end
-            if y > l_maxy then l_maxy = y end
-            if z > l_maxz then l_maxz = z end
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
         end
     end
-
-    minx, miny, minz = l_minx, l_miny, l_minz
-    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
-    popcount = l_popcount
 
     if timingenabled then timersave("NextGenMoore") end
 
@@ -2957,88 +2948,78 @@ function NextGen6Faces()
 
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
-    local l_grid1 = grid1
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..6) for live cells
     local ecount = {}   -- neighbor counts (1..6) for adjacent empty cells
-    local l_N = N
-    local NN = l_N * l_N
-    local l_births, l_survivals = births, survivals
-    local l_popcount = popcount
-    local l_minx, l_miny, l_minz = minx, miny, minz
-    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+    local NN = N * N
 
-    for k,_ in pairs(l_grid1) do
-        local x = k % l_N
-        local y = k // l_N % l_N
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
         local z = k // NN
         lcount[k] = 0
 
-        local Ny = l_N*y
+        local Ny = N*y
         local NNz = NN*z
         local NypNNz = Ny + NNz
         local xpNNz = x + NNz
         local xpNy = x + Ny
 
         -- calculate the positions of the 6 cells next to each face of this cell
-        local xp1 = (x+1)%l_N + NypNNz
-        local xm1 = (x-1)%l_N + NypNNz
-        local yp1 = l_N*((y+1)%l_N) + xpNNz
-        local ym1 = l_N*((y-1)%l_N) + xpNNz
-        local zp1 = NN*((z+1)%l_N) + xpNy
-        local zm1 = NN*((z-1)%l_N) + xpNy
+        local xp1 = (x+1)%N + NypNNz
+        local xm1 = (x-1)%N + NypNNz
+        local yp1 = N*((y+1)%N) + xpNNz
+        local ym1 = N*((y-1)%N) + xpNNz
+        local zp1 = NN*((z+1)%N) + xpNy
+        local zm1 = NN*((z-1)%N) + xpNy
 
-        if l_grid1[xp1] then lcount[k] = lcount[k] + 1 else ecount[xp1] = (ecount[xp1] or 0) + 1 end
-        if l_grid1[xm1] then lcount[k] = lcount[k] + 1 else ecount[xm1] = (ecount[xm1] or 0) + 1 end
-        if l_grid1[yp1] then lcount[k] = lcount[k] + 1 else ecount[yp1] = (ecount[yp1] or 0) + 1 end
-        if l_grid1[ym1] then lcount[k] = lcount[k] + 1 else ecount[ym1] = (ecount[ym1] or 0) + 1 end
-        if l_grid1[zp1] then lcount[k] = lcount[k] + 1 else ecount[zp1] = (ecount[zp1] or 0) + 1 end
-        if l_grid1[zm1] then lcount[k] = lcount[k] + 1 else ecount[zm1] = (ecount[zm1] or 0) + 1 end
+        if grid1[xp1] then lcount[k] = lcount[k] + 1 else ecount[xp1] = (ecount[xp1] or 0) + 1 end
+        if grid1[xm1] then lcount[k] = lcount[k] + 1 else ecount[xm1] = (ecount[xm1] or 0) + 1 end
+        if grid1[yp1] then lcount[k] = lcount[k] + 1 else ecount[yp1] = (ecount[yp1] or 0) + 1 end
+        if grid1[ym1] then lcount[k] = lcount[k] + 1 else ecount[ym1] = (ecount[ym1] or 0) + 1 end
+        if grid1[zp1] then lcount[k] = lcount[k] + 1 else ecount[zp1] = (ecount[zp1] or 0) + 1 end
+        if grid1[zm1] then lcount[k] = lcount[k] + 1 else ecount[zm1] = (ecount[zm1] or 0) + 1 end
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
     for k,v in pairs(lcount) do
-        if l_survivals[v] then
+        if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
-            local x = k % l_N
-            local y = k // l_N % l_N
+            local x = k % N
+            local y = k // N % N
             local z = k // NN
             -- update boundary
-            if x < l_minx then l_minx = x end
-            if y < l_miny then l_miny = y end
-            if z < l_minz then l_minz = z end
-            if x > l_maxx then l_maxx = x end
-            if y > l_maxy then l_maxy = y end
-            if z > l_maxz then l_maxz = z end
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
         end
     end
 
     -- use ecounts and births to put live cells in grid2
     for k,v in pairs(ecount) do
-        if l_births[v] then
+        if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
-            local x = k % l_N
-            local y = k // l_N % l_N
+            local x = k % N
+            local y = k // N % N
             local z = k // NN
             -- update boundary
-            if x < l_minx then l_minx = x end
-            if y < l_miny then l_miny = y end
-            if z < l_minz then l_minz = z end
-            if x > l_maxx then l_maxx = x end
-            if y > l_maxy then l_maxy = y end
-            if z > l_maxz then l_maxz = z end
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
         end
     end
-
-    minx, miny, minz = l_minx, l_miny, l_minz
-    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
-    popcount = l_popcount
 
     if timingenabled then timersave("NextGen6Faces") end
 
@@ -3053,29 +3034,23 @@ function NextGen8Corners()
     if timingenabled then timerstart("NextGen8Corners") end
 
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
-    local l_grid1 = grid1
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..8) for live cells
     local ecount = {}   -- neighbor counts (1..8) for adjacent empty cells
-    local l_N = N
-    local NN = l_N * l_N
-    local l_births, l_survivals = births, survivals
-    local l_popcount = popcount
-    local l_minx, l_miny, l_minz = minx, miny, minz
-    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+    local NN = N * N
 
-    for k,_ in pairs(l_grid1) do
-        local x = k % l_N
-        local y = k // l_N % l_N
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
         local z = k // NN
         lcount[k] = 0
 
-        local xp1 = (x+1)%l_N
-        local xm1 = (x-1)%l_N
-        local yp1 = l_N*((y+1)%l_N)
-        local ym1 = l_N*((y-1)%l_N)
-        local zp1 = NN*((z+1)%l_N)
-        local zm1 = NN*((z-1)%l_N)
+        local xp1 = (x+1)%N
+        local xm1 = (x-1)%N
+        local yp1 = N*((y+1)%N)
+        local ym1 = N*((y-1)%N)
+        local zp1 = NN*((z+1)%N)
+        local zm1 = NN*((z-1)%N)
 
         -- calculate the positions of the 8 cells touching each corner of this cell
         local ppp = xp1 + yp1 + zp1
@@ -3087,59 +3062,55 @@ function NextGen8Corners()
         local pmp = xp1 + ym1 + zp1
         local mpm = xm1 + yp1 + zm1
 
-        if l_grid1[ppp] then lcount[k] = lcount[k] + 1 else ecount[ppp] = (ecount[ppp] or 0) + 1 end
-        if l_grid1[mmm] then lcount[k] = lcount[k] + 1 else ecount[mmm] = (ecount[mmm] or 0) + 1 end
-        if l_grid1[ppm] then lcount[k] = lcount[k] + 1 else ecount[ppm] = (ecount[ppm] or 0) + 1 end
-        if l_grid1[mmp] then lcount[k] = lcount[k] + 1 else ecount[mmp] = (ecount[mmp] or 0) + 1 end
-        if l_grid1[mpp] then lcount[k] = lcount[k] + 1 else ecount[mpp] = (ecount[mpp] or 0) + 1 end
-        if l_grid1[pmm] then lcount[k] = lcount[k] + 1 else ecount[pmm] = (ecount[pmm] or 0) + 1 end
-        if l_grid1[pmp] then lcount[k] = lcount[k] + 1 else ecount[pmp] = (ecount[pmp] or 0) + 1 end
-        if l_grid1[mpm] then lcount[k] = lcount[k] + 1 else ecount[mpm] = (ecount[mpm] or 0) + 1 end
+        if grid1[ppp] then lcount[k] = lcount[k] + 1 else ecount[ppp] = (ecount[ppp] or 0) + 1 end
+        if grid1[mmm] then lcount[k] = lcount[k] + 1 else ecount[mmm] = (ecount[mmm] or 0) + 1 end
+        if grid1[ppm] then lcount[k] = lcount[k] + 1 else ecount[ppm] = (ecount[ppm] or 0) + 1 end
+        if grid1[mmp] then lcount[k] = lcount[k] + 1 else ecount[mmp] = (ecount[mmp] or 0) + 1 end
+        if grid1[mpp] then lcount[k] = lcount[k] + 1 else ecount[mpp] = (ecount[mpp] or 0) + 1 end
+        if grid1[pmm] then lcount[k] = lcount[k] + 1 else ecount[pmm] = (ecount[pmm] or 0) + 1 end
+        if grid1[pmp] then lcount[k] = lcount[k] + 1 else ecount[pmp] = (ecount[pmp] or 0) + 1 end
+        if grid1[mpm] then lcount[k] = lcount[k] + 1 else ecount[mpm] = (ecount[mpm] or 0) + 1 end
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
     for k,v in pairs(lcount) do
-        if l_survivals[v] then
+        if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
-            local x = k % l_N
-            local y = k // l_N % l_N
+            local x = k % N
+            local y = k // N % N
             local z = k // NN
             -- update boundary
-            if x < l_minx then l_minx = x end
-            if y < l_miny then l_miny = y end
-            if z < l_minz then l_minz = z end
-            if x > l_maxx then l_maxx = x end
-            if y > l_maxy then l_maxy = y end
-            if z > l_maxz then l_maxz = z end
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
         end
     end
 
     -- use ecounts and births to put live cells in grid2
     for k,v in pairs(ecount) do
-        if l_births[v] then
+        if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
-            local x = k % l_N
-            local y = k // l_N % l_N
+            local x = k % N
+            local y = k // N % N
             local z = k // NN
             -- update boundary
-            if x < l_minx then l_minx = x end
-            if y < l_miny then l_miny = y end
-            if z < l_minz then l_minz = z end
-            if x > l_maxx then l_maxx = x end
-            if y > l_maxy then l_maxy = y end
-            if z > l_maxz then l_maxz = z end
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
         end
     end
-
-    minx, miny, minz = l_minx, l_miny, l_minz
-    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
-    popcount = l_popcount
 
     if timingenabled then timersave("NextGen8Corners") end
 
@@ -3154,30 +3125,24 @@ function NextGen12Edges()
     if timingenabled then timerstart("NextGen12Edges") end
 
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
-    local l_grid1 = grid1
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
-    local l_N = N
-    local NN = l_N * l_N
-    local l_births, l_survivals = births, survivals
-    local l_popcount = popcount
-    local l_minx, l_miny, l_minz = minx, miny, minz
-    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+    local NN = N * N
 
-    for k,_ in pairs(l_grid1) do
-        local x = k % l_N
-        local y = k // l_N % l_N
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
         local z = k // NN
         lcount[k] = 0
 
-        local xp1 = (x+1)%l_N
-        local xm1 = (x-1)%l_N
-        local yp1 = l_N*((y+1)%l_N)
-        local ym1 = l_N*((y-1)%l_N)
-        local zp1 = NN*((z+1)%l_N)
-        local zm1 = NN*((z-1)%l_N)
-        local Ny = l_N*y
+        local xp1 = (x+1)%N
+        local xm1 = (x-1)%N
+        local yp1 = N*((y+1)%N)
+        local ym1 = N*((y-1)%N)
+        local zp1 = NN*((z+1)%N)
+        local zm1 = NN*((z-1)%N)
+        local Ny = N*y
         local NNz = NN*z
 
         -- calculate the positions of the 12 cells next to each edge of this cell
@@ -3196,65 +3161,61 @@ function NextGen12Edges()
         local pmz = xp1 + ym1 + NNz
         local mpz = xm1 + yp1 + NNz
 
-        if l_grid1[xpp] then lcount[k] = lcount[k] + 1 else ecount[xpp] = (ecount[xpp] or 0) + 1 end
-        if l_grid1[xmm] then lcount[k] = lcount[k] + 1 else ecount[xmm] = (ecount[xmm] or 0) + 1 end
-        if l_grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
-        if l_grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
+        if grid1[xpp] then lcount[k] = lcount[k] + 1 else ecount[xpp] = (ecount[xpp] or 0) + 1 end
+        if grid1[xmm] then lcount[k] = lcount[k] + 1 else ecount[xmm] = (ecount[xmm] or 0) + 1 end
+        if grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
+        if grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
 
-        if l_grid1[pyp] then lcount[k] = lcount[k] + 1 else ecount[pyp] = (ecount[pyp] or 0) + 1 end
-        if l_grid1[mym] then lcount[k] = lcount[k] + 1 else ecount[mym] = (ecount[mym] or 0) + 1 end
-        if l_grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
-        if l_grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
+        if grid1[pyp] then lcount[k] = lcount[k] + 1 else ecount[pyp] = (ecount[pyp] or 0) + 1 end
+        if grid1[mym] then lcount[k] = lcount[k] + 1 else ecount[mym] = (ecount[mym] or 0) + 1 end
+        if grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
+        if grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
 
-        if l_grid1[ppz] then lcount[k] = lcount[k] + 1 else ecount[ppz] = (ecount[ppz] or 0) + 1 end
-        if l_grid1[mmz] then lcount[k] = lcount[k] + 1 else ecount[mmz] = (ecount[mmz] or 0) + 1 end
-        if l_grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
-        if l_grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
+        if grid1[ppz] then lcount[k] = lcount[k] + 1 else ecount[ppz] = (ecount[ppz] or 0) + 1 end
+        if grid1[mmz] then lcount[k] = lcount[k] + 1 else ecount[mmz] = (ecount[mmz] or 0) + 1 end
+        if grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
+        if grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
     for k,v in pairs(lcount) do
-        if l_survivals[v] then
+        if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
-            local x = k % l_N
-            local y = k // l_N % l_N
+            local x = k % N
+            local y = k // N % N
             local z = k // NN
             -- update boundary
-            if x < l_minx then l_minx = x end
-            if y < l_miny then l_miny = y end
-            if z < l_minz then l_minz = z end
-            if x > l_maxx then l_maxx = x end
-            if y > l_maxy then l_maxy = y end
-            if z > l_maxz then l_maxz = z end
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
         end
     end
 
     -- use ecounts and births to put live cells in grid2
     for k,v in pairs(ecount) do
-        if l_births[v] then
+        if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
-            local x = k % l_N
-            local y = k // l_N % l_N
+            local x = k % N
+            local y = k // N % N
             local z = k // NN
             -- update boundary
-            if x < l_minx then l_minx = x end
-            if y < l_miny then l_miny = y end
-            if z < l_minz then l_minz = z end
-            if x > l_maxx then l_maxx = x end
-            if y > l_maxy then l_maxy = y end
-            if z > l_maxz then l_maxz = z end
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
         end
     end
-
-    minx, miny, minz = l_minx, l_miny, l_minz
-    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
-    popcount = l_popcount
 
     if timingenabled then timersave("NextGen12Edges") end
 
@@ -3269,30 +3230,24 @@ function NextGenHexahedral()
     if timingenabled then timerstart("NextGenHexahedral") end
 
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
-    local l_grid1 = grid1
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
-    local l_N = N
-    local NN = l_N * l_N
-    local l_births, l_survivals = births, survivals
-    local l_popcount = popcount
-    local l_minx, l_miny, l_minz = minx, miny, minz
-    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+    local NN = N * N
 
-    for k,_ in pairs(l_grid1) do
-        local x = k % l_N
-        local y = k // l_N % l_N
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
         local z = k // NN
         lcount[k] = 0
 
-        local xp1 = (x+1)%l_N
-        local xm1 = (x-1)%l_N
-        local yp1 = l_N*((y+1)%l_N)
-        local ym1 = l_N*((y-1)%l_N)
-        local zp1 = NN*((z+1)%l_N)
-        local zm1 = NN*((z-1)%l_N)
-        local Ny = l_N*y
+        local xp1 = (x+1)%N
+        local xm1 = (x-1)%N
+        local yp1 = N*((y+1)%N)
+        local ym1 = N*((y-1)%N)
+        local zp1 = NN*((z+1)%N)
+        local zm1 = NN*((z-1)%N)
+        local Ny = N*y
         local NNz = NN*z
 
         -- calculate the positions of the 12 neighboring cells (using the top offsets given
@@ -3310,65 +3265,61 @@ function NextGenHexahedral()
         local pmz = xp1 + ym1 + NNz
         local mpz = xm1 + yp1 + NNz
 
-        if l_grid1[xym] then lcount[k] = lcount[k] + 1 else ecount[xym] = (ecount[xym] or 0) + 1 end
-        if l_grid1[xyp] then lcount[k] = lcount[k] + 1 else ecount[xyp] = (ecount[xyp] or 0) + 1 end
-        if l_grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
-        if l_grid1[xpz] then lcount[k] = lcount[k] + 1 else ecount[xpz] = (ecount[xpz] or 0) + 1 end
+        if grid1[xym] then lcount[k] = lcount[k] + 1 else ecount[xym] = (ecount[xym] or 0) + 1 end
+        if grid1[xyp] then lcount[k] = lcount[k] + 1 else ecount[xyp] = (ecount[xyp] or 0) + 1 end
+        if grid1[xpm] then lcount[k] = lcount[k] + 1 else ecount[xpm] = (ecount[xpm] or 0) + 1 end
+        if grid1[xpz] then lcount[k] = lcount[k] + 1 else ecount[xpz] = (ecount[xpz] or 0) + 1 end
 
-        if l_grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
-        if l_grid1[xmz] then lcount[k] = lcount[k] + 1 else ecount[xmz] = (ecount[xmz] or 0) + 1 end
-        if l_grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
-        if l_grid1[pyz] then lcount[k] = lcount[k] + 1 else ecount[pyz] = (ecount[pyz] or 0) + 1 end
+        if grid1[xmp] then lcount[k] = lcount[k] + 1 else ecount[xmp] = (ecount[xmp] or 0) + 1 end
+        if grid1[xmz] then lcount[k] = lcount[k] + 1 else ecount[xmz] = (ecount[xmz] or 0) + 1 end
+        if grid1[pym] then lcount[k] = lcount[k] + 1 else ecount[pym] = (ecount[pym] or 0) + 1 end
+        if grid1[pyz] then lcount[k] = lcount[k] + 1 else ecount[pyz] = (ecount[pyz] or 0) + 1 end
 
-        if l_grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
-        if l_grid1[myz] then lcount[k] = lcount[k] + 1 else ecount[myz] = (ecount[myz] or 0) + 1 end
-        if l_grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
-        if l_grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
+        if grid1[myp] then lcount[k] = lcount[k] + 1 else ecount[myp] = (ecount[myp] or 0) + 1 end
+        if grid1[myz] then lcount[k] = lcount[k] + 1 else ecount[myz] = (ecount[myz] or 0) + 1 end
+        if grid1[pmz] then lcount[k] = lcount[k] + 1 else ecount[pmz] = (ecount[pmz] or 0) + 1 end
+        if grid1[mpz] then lcount[k] = lcount[k] + 1 else ecount[mpz] = (ecount[mpz] or 0) + 1 end
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
     for k,v in pairs(lcount) do
-        if l_survivals[v] then
+        if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
-            local x = k % l_N
-            local y = k // l_N % l_N
+            local x = k % N
+            local y = k // N % N
             local z = k // NN
             -- update boundary
-            if x < l_minx then l_minx = x end
-            if y < l_miny then l_miny = y end
-            if z < l_minz then l_minz = z end
-            if x > l_maxx then l_maxx = x end
-            if y > l_maxy then l_maxy = y end
-            if z > l_maxz then l_maxz = z end
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
         end
     end
 
     -- use ecounts and births to put live cells in grid2
     for k,v in pairs(ecount) do
-        if l_births[v] then
+        if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
-            local x = k % l_N
-            local y = k // l_N % l_N
+            local x = k % N
+            local y = k // N % N
             local z = k // NN
             -- update boundary
-            if x < l_minx then l_minx = x end
-            if y < l_miny then l_miny = y end
-            if z < l_minz then l_minz = z end
-            if x > l_maxx then l_maxx = x end
-            if y > l_maxy then l_maxy = y end
-            if z > l_maxz then l_maxz = z end
+            if x < minx then minx = x end
+            if y < miny then miny = y end
+            if z < minz then minz = z end
+            if x > maxx then maxx = x end
+            if y > maxy then maxy = y end
+            if z > maxz then maxz = z end
         end
     end
-
-    minx, miny, minz = l_minx, l_miny, l_minz
-    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
-    popcount = l_popcount
 
     if timingenabled then timersave("NextGenHexahedral") end
 
@@ -3417,17 +3368,12 @@ function NextGenBusyBoxes()
 
     local mirror_mode = rulestring:sub(-1) ~= "W"
     local phase = gencount % 6
-    local l_grid1 = grid1
     local grid2 = {}
-    local l_N = N
-    local NN = l_N * l_N
-    local l_popcount = popcount
-    local l_minx, l_miny, l_minz = minx, miny, minz
-    local l_maxx, l_maxy, l_maxz = maxx, maxy, maxz
+    local NN = N * N
 
-    for k,_ in pairs(l_grid1) do
-        local x = k % l_N
-        local y = k // l_N % l_N
+    for k,_ in pairs(grid1) do
+        local x = k % N
+        local y = k // N % N
         local z = k // NN
         if (x + y + z) % 2 == phase % 2 then
             -- this live cell has the right parity so get values for its 28 neighbors
@@ -3436,21 +3382,21 @@ function NextGenBusyBoxes()
             for i = 1, 28 do
                 if phase == 0 or phase == 3 then
                     -- use XY plane
-                    sx = (x + coords[i][1]) % l_N
-                    sy = (y + coords[i][2]) % l_N
+                    sx = (x + coords[i][1]) % N
+                    sy = (y + coords[i][2]) % N
                     sz = z
                 elseif phase == 1 or phase == 4 then
                     -- use YZ plane
                     sx = x
-                    sy = (y + coords[i][1]) % l_N
-                    sz = (z + coords[i][2]) % l_N
+                    sy = (y + coords[i][1]) % N
+                    sz = (z + coords[i][2]) % N
                 else
                     -- phase == 2 or 5 so use XZ plane
-                    sx = (x + coords[i][1]) % l_N
+                    sx = (x + coords[i][1]) % N
                     sy = y
-                    sz = (z + coords[i][2]) % l_N
+                    sz = (z + coords[i][2]) % N
                 end
-                val[i] = grid1[sx + l_N * (sy + l_N * sz)]
+                val[i] = grid1[sx + N * (sy + N * sz)]
             end
 
             -- find the potential swaps
@@ -3494,47 +3440,43 @@ function NextGenBusyBoxes()
                 end
                 -- if using mirror mode then don't wrap
                 if mirror_mode and
-                    ( newx < 0 or newx >= l_N or
-                      newy < 0 or newy >= l_N or
-                      newz < 0 or newz >= l_N ) then
+                    ( newx < 0 or newx >= N or
+                      newy < 0 or newy >= N or
+                      newz < 0 or newz >= N ) then
                     -- swap position is outside grid so don't do it
                     grid2[k] = 1
-                    l_popcount = l_popcount + 1
+                    popcount = popcount + 1
                     -- don't set dirty flag here!
                 else
                     -- do the swap, wrapping if necessary
-                    x = newx % l_N
-                    y = newy % l_N
-                    z = newz % l_N
-                    grid2[x + l_N * (y + l_N * z)] = 1
-                    l_popcount = l_popcount + 1
+                    x = newx % N
+                    y = newy % N
+                    z = newz % N
+                    grid2[x + N * (y + N * z)] = 1
+                    popcount = popcount + 1
                     -- don't set dirty flag here!
                 end
             else
                 -- don't swap this live cell
                 grid2[k] = 1
-                l_popcount = l_popcount + 1
+                popcount = popcount + 1
                 -- don't set dirty flag here!
             end
         else
             -- live cell with wrong parity
             grid2[k] = 1
-            l_popcount = l_popcount + 1
+            popcount = popcount + 1
             -- don't set dirty flag here!
         end
 
         -- update boundary
-        if x < l_minx then l_minx = x end
-        if y < l_miny then l_miny = y end
-        if z < l_minz then l_minz = z end
-        if x > l_maxx then l_maxx = x end
-        if y > l_maxy then l_maxy = y end
-        if z > l_maxz then l_maxz = z end
+        if x < minx then minx = x end
+        if y < miny then miny = y end
+        if z < minz then minz = z end
+        if x > maxx then maxx = x end
+        if y > maxy then maxy = y end
+        if z > maxz then maxz = z end
     end
-
-    minx, miny, minz = l_minx, l_miny, l_minz
-    maxx, maxy, maxz = l_maxx, l_maxy, l_maxz
-    popcount = l_popcount
 
     if timingenabled then timersave("NextGenBusyBoxes") end
 
