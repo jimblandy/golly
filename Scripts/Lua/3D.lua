@@ -741,10 +741,8 @@ function DrawRearAxes()
     local z3 = rotrefz[3]
     local z7 = rotrefz[7]
 
-    local l_ov = ov
-
     if showlines then
-        l_ov(LINE_COLOR)
+        ov(LINE_COLOR)
         if z1 < z2 then
             -- front face of rotated refcube is visible
             for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
@@ -764,27 +762,27 @@ function DrawRearAxes()
     local dark_green = "rgba 0 128 0 255"
     local dark_blue = "rgba 0 0 128 255"
 
-    l_ov("blend 1")
-    l_ov("lineoption width 3")
+    ov("blend 1")
+    ov("lineoption width 3")
 
-    if z1 <  z2 or z1 >= z3 then l_ov(dark_red);   DisplayLine(xaxes[1], xaxes[2]) end
-    if z1 <  z2 or z1 >= z7 then l_ov(dark_green); DisplayLine(yaxes[1], yaxes[2]) end
-    if z1 >= z7 or z1 >= z3 then l_ov(dark_blue);  DisplayLine(zaxes[1], zaxes[2]) end
+    if z1 <  z2 or z1 >= z3 then ov(dark_red);   DisplayLine(xaxes[1], xaxes[2]) end
+    if z1 <  z2 or z1 >= z7 then ov(dark_green); DisplayLine(yaxes[1], yaxes[2]) end
+    if z1 >= z7 or z1 >= z3 then ov(dark_blue);  DisplayLine(zaxes[1], zaxes[2]) end
 
-    if z1 <  z2 or z1 <  z3 then l_ov(dark_red);   DisplayLine(xaxes[3], xaxes[4]) end
-    if z1 >= z2 or z1 >= z7 then l_ov(dark_green); DisplayLine(yaxes[3], yaxes[4]) end
-    if z1 <  z7 or z1 >= z3 then l_ov(dark_blue);  DisplayLine(zaxes[3], zaxes[4]) end
+    if z1 <  z2 or z1 <  z3 then ov(dark_red);   DisplayLine(xaxes[3], xaxes[4]) end
+    if z1 >= z2 or z1 >= z7 then ov(dark_green); DisplayLine(yaxes[3], yaxes[4]) end
+    if z1 <  z7 or z1 >= z3 then ov(dark_blue);  DisplayLine(zaxes[3], zaxes[4]) end
 
-    if z1 >= z2 or z1 <  z3 then l_ov(dark_red);   DisplayLine(xaxes[5], xaxes[6]) end
-    if z1 >= z2 or z1 <  z7 then l_ov(dark_green); DisplayLine(yaxes[5], yaxes[6]) end
-    if z1 <  z3 or z1 <  z7 then l_ov(dark_blue);  DisplayLine(zaxes[5], zaxes[6]) end
+    if z1 >= z2 or z1 <  z3 then ov(dark_red);   DisplayLine(xaxes[5], xaxes[6]) end
+    if z1 >= z2 or z1 <  z7 then ov(dark_green); DisplayLine(yaxes[5], yaxes[6]) end
+    if z1 <  z3 or z1 <  z7 then ov(dark_blue);  DisplayLine(zaxes[5], zaxes[6]) end
 
-    if z1 >= z2 or z1 >= z3 then l_ov(dark_red);   DisplayLine(xaxes[7], xaxes[8]) end
-    if z1 <  z2 or z1 <  z7 then l_ov(dark_green); DisplayLine(yaxes[7], yaxes[8]) end
-    if z1 >= z7 or z1 <  z3 then l_ov(dark_blue);  DisplayLine(zaxes[7], zaxes[8]) end
+    if z1 >= z2 or z1 >= z3 then ov(dark_red);   DisplayLine(xaxes[7], xaxes[8]) end
+    if z1 <  z2 or z1 <  z7 then ov(dark_green); DisplayLine(yaxes[7], yaxes[8]) end
+    if z1 >= z7 or z1 <  z3 then ov(dark_blue);  DisplayLine(zaxes[7], zaxes[8]) end
 
-    l_ov("lineoption width 1")
-    l_ov("blend 0")
+    ov("lineoption width 1")
+    ov("blend 0")
 end
 
 ----------------------------------------------------------------------
@@ -797,10 +795,8 @@ function DrawFrontAxes()
     local z3 = rotrefz[3]
     local z7 = rotrefz[7]
 
-    local l_ov = ov
-
     if showlines then
-        l_ov(LINE_COLOR)
+        ov(LINE_COLOR)
         if z1 >= z2 then
             -- back face of rotated refcube is visible
             for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
@@ -816,27 +812,27 @@ function DrawFrontAxes()
     end
 
     -- draw brighter anti-aliased lines for front axes
-    l_ov("blend 1")
-    l_ov("lineoption width 3")
+    ov("blend 1")
+    ov("lineoption width 3")
 
-    if z1 >= z2 or z1 < z3 then l_ov(op.red);   DisplayLine(xaxes[1], xaxes[2]) end
-    if z1 >= z2 or z1 < z7 then l_ov(op.green); DisplayLine(yaxes[1], yaxes[2]) end
-    if z1 <  z7 or z1 < z3 then l_ov(op.blue);  DisplayLine(zaxes[1], zaxes[2]) end
+    if z1 >= z2 or z1 < z3 then ov(op.red);   DisplayLine(xaxes[1], xaxes[2]) end
+    if z1 >= z2 or z1 < z7 then ov(op.green); DisplayLine(yaxes[1], yaxes[2]) end
+    if z1 <  z7 or z1 < z3 then ov(op.blue);  DisplayLine(zaxes[1], zaxes[2]) end
 
-    if z1 >= z2 or z1 >= z3 then l_ov(op.red);   DisplayLine(xaxes[3], xaxes[4]) end
-    if z1 <  z2 or z1 <  z7 then l_ov(op.green); DisplayLine(yaxes[3], yaxes[4]) end
-    if z1 >= z7 or z1 <  z3 then l_ov(op.blue);  DisplayLine(zaxes[3], zaxes[4]) end
+    if z1 >= z2 or z1 >= z3 then ov(op.red);   DisplayLine(xaxes[3], xaxes[4]) end
+    if z1 <  z2 or z1 <  z7 then ov(op.green); DisplayLine(yaxes[3], yaxes[4]) end
+    if z1 >= z7 or z1 <  z3 then ov(op.blue);  DisplayLine(zaxes[3], zaxes[4]) end
 
-    if z1 <  z2 or z1 >= z3 then l_ov(op.red);   DisplayLine(xaxes[5], xaxes[6]) end
-    if z1 <  z2 or z1 >= z7 then l_ov(op.green); DisplayLine(yaxes[5], yaxes[6]) end
-    if z1 >= z3 or z1 >= z7 then l_ov(op.blue);  DisplayLine(zaxes[5], zaxes[6]) end
+    if z1 <  z2 or z1 >= z3 then ov(op.red);   DisplayLine(xaxes[5], xaxes[6]) end
+    if z1 <  z2 or z1 >= z7 then ov(op.green); DisplayLine(yaxes[5], yaxes[6]) end
+    if z1 >= z3 or z1 >= z7 then ov(op.blue);  DisplayLine(zaxes[5], zaxes[6]) end
 
-    if z1 <  z2 or z1 <  z3 then l_ov(op.red);   DisplayLine(xaxes[7], xaxes[8]) end
-    if z1 >= z2 or z1 >= z7 then l_ov(op.green); DisplayLine(yaxes[7], yaxes[8]) end
-    if z1 <  z7 or z1 >= z3 then l_ov(op.blue);  DisplayLine(zaxes[7], zaxes[8]) end
+    if z1 <  z2 or z1 <  z3 then ov(op.red);   DisplayLine(xaxes[7], xaxes[8]) end
+    if z1 >= z2 or z1 >= z7 then ov(op.green); DisplayLine(yaxes[7], yaxes[8]) end
+    if z1 <  z7 or z1 >= z3 then ov(op.blue);  DisplayLine(zaxes[7], zaxes[8]) end
 
-    l_ov("lineoption width 1")
-    l_ov("blend 0")
+    ov("lineoption width 1")
+    ov("blend 0")
 end
 
 ----------------------------------------------------------------------
@@ -890,11 +886,9 @@ end
 
 function CreateTranslucentCell(clipname, color)
     -- create a clip containing a translucent cube with given color
-    local l_ov = ov
-
-    l_ov("create "..(CELLSIZE*2).." "..(CELLSIZE*2).." "..clipname)
-    l_ov("target "..clipname)
-    l_ov("rgba "..color)
+    ov("create "..(CELLSIZE*2).." "..(CELLSIZE*2).." "..clipname)
+    ov("target "..clipname)
+    ov("rgba "..color)
 
     -- temporarily change BORDER and LEN so CreateCube fills cell
     local oldBORDER = BORDER
@@ -993,34 +987,32 @@ function CreateTranslucentCell(clipname, color)
         end
     end
 
-    l_ov("flood "..CELLSIZE.." "..CELLSIZE)
+    ov("flood "..CELLSIZE.." "..CELLSIZE)
 
     -- restore BORDER and LEN
     BORDER = oldBORDER
     LEN = oldLEN
 
-    l_ov("optimize "..clipname)
-    l_ov("target")
+    ov("optimize "..clipname)
+    ov("target")
 end
 
 ----------------------------------------------------------------------
 
 function DrawCubeEdges()
-    local l_ov = ov
-
     if LEN > 4 then
         -- draw anti-aliased edges around visible face(s)
         if LEN == 5 then
-            l_ov("rgba 150 150 150 255")
+            ov("rgba 150 150 150 255")
         elseif LEN == 6 then
-            l_ov("rgba 110 110 110 255")
+            ov("rgba 110 110 110 255")
         elseif LEN == 7 then
-            l_ov("rgba 80 80 80 255")
+            ov("rgba 80 80 80 255")
         else
-            l_ov("rgba 60 60 60 255")
+            ov("rgba 60 60 60 255")
         end
-        l_ov("blend 1")
-        l_ov("lineoption width "..(1 + int(LEN / 40.0)))
+        ov("blend 1")
+        ov("lineoption width "..(1 + int(LEN / 40.0)))
 
         if rotz[1] < rotz[2] then
             -- draw all edges around front face
@@ -1094,42 +1086,45 @@ function DrawCubeEdges()
             end
         end
 
-        l_ov("lineoption width 1")
-        l_ov("blend 0")
+        ov("lineoption width 1")
+        ov("blend 0")
     end
 end
 
 ----------------------------------------------------------------------
 
 function CreateLayers(clip)
-    local l_ov = ov
+    if timingenabled then timerstart("CreateLayers") end
+
     local adjust = depthrange / (maxdepth - mindepth + 1)
     local total = 0
     local rgb
-    l_ov("target "..clip)
-    l_ov("copy 0 0 0 0 "..clip.."1")
-    l_ov("target "..clip.."1")
-    l_ov("optimize "..clip.."1")
+    ov("target "..clip)
+    ov("copy 0 0 0 0 "..clip.."1")
+    ov("target "..clip.."1")
+    ov("optimize "..clip.."1")
     for i = 2, maxdepth do
         total = total + adjust
         rgb = floor(total)
-        l_ov("target "..clip)
-        l_ov("copy 0 0 0 0 "..clip..i)
-        l_ov("target "..clip..i)
-        l_ov("replace *#-"..rgb.." *#-"..rgb.." *#-"..rgb.." *#")
-        l_ov("optimize "..clip..i)
+        ov("target "..clip)
+        ov("copy 0 0 0 0 "..clip..i)
+        ov("target "..clip..i)
+        ov("replace *#-"..rgb.." *#-"..rgb.." *#-"..rgb.." *#")
+        ov("optimize "..clip..i)
     end
     total = 0
     for i = 1, mindepth, -1 do
         total = total + adjust
         rgb = floor(total)
-        l_ov("target "..clip)
-        l_ov("copy 0 0 0 0 "..clip..i)
-        l_ov("target "..clip..i)
-        l_ov("replace *#+"..rgb.." *#+"..rgb.." *#+"..rgb.." *#")
-        l_ov("optimize "..clip..i)
+        ov("target "..clip)
+        ov("copy 0 0 0 0 "..clip..i)
+        ov("target "..clip..i)
+        ov("replace *#+"..rgb.." *#+"..rgb.." *#+"..rgb.." *#")
+        ov("optimize "..clip..i)
     end
-    l_ov("target")
+    ov("target")
+
+    if timingenabled then timersave("CreateLayers") end
 end
 
 ----------------------------------------------------------------------
@@ -1148,10 +1143,9 @@ function CreateLiveCube()
     -- in appearance when using orthographic projection)
 
     -- largest size of a rotated cube with edge length L is sqrt(3)*L
-    local l_ov = ov
     HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
-    l_ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." c")
-    l_ov("target c")
+    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." c")
+    ov("target c")
 
     local midpos = N//2
     local cube = CreateCube(midpos, midpos, midpos)
@@ -1170,14 +1164,14 @@ function CreateLiveCube()
 
     DrawCubeEdges()
 
-    l_ov("optimize c")
+    ov("optimize c")
 
     -- create faded versions of the clip if depth shading
     if depthshading then
         CreateLayers("c")
     end
 
-    l_ov("target")
+    ov("target")
 end
 
 ----------------------------------------------------------------------
@@ -1191,11 +1185,10 @@ function CreateLiveSphere()
 
     -- create a clip containing one sphere that will be used later
     -- to draw all live cells
-    local l_ov = ov
     local diameter = CELLSIZE+1                     -- so orthogonally adjacent spheres touch
-    l_ov("create "..diameter.." "..diameter.." S")    -- s is used for selected cells
-    l_ov("target S")
-    l_ov("blend 1")
+    ov("create "..diameter.." "..diameter.." S")    -- s is used for selected cells
+    ov("target S")
+    ov("blend 1")
 
     local x = 0
     local y = 0
@@ -1205,10 +1198,10 @@ function CreateLiveSphere()
     if r > 2 then grayinc = 127/(r-2) end
     while true do
         local grayrgb = floor(gray)
-        l_ov("rgba "..grayrgb.." "..grayrgb.." "..grayrgb.." 255")
+        ov("rgba "..grayrgb.." "..grayrgb.." "..grayrgb.." 255")
         -- draw a solid circle by setting the line width to the radius
-        l_ov("lineoption width "..r)
-        l_ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
+        ov("lineoption width "..r)
+        ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
         diameter = diameter - 2
         r = r - 1
         if r < 2 then break end
@@ -1219,16 +1212,16 @@ function CreateLiveSphere()
         if gray > 255 then gray = 255 end
     end
 
-    l_ov("blend 0")
-    l_ov("lineoption width 1")
-    l_ov("optimize S")
+    ov("blend 0")
+    ov("lineoption width 1")
+    ov("optimize S")
 
     -- create faded versions of the clip if depth shading
     if depthshading then
         CreateLayers("S")
     end
 
-    l_ov("target")
+    ov("target")
 end
 
 ----------------------------------------------------------------------
@@ -1292,8 +1285,6 @@ end
 local function DrawBatchLayer(depth, coordlist, length)
     -- ignore if layer is empty
     if length > 0 then
-        local l_ov = ov
-
         local coords = table.concat(coordlist, " ", 1, length)
         local command = {"paste ", coords, "", depth}
         -- select drawing method based on cell type
@@ -1302,11 +1293,11 @@ local function DrawBatchLayer(depth, coordlist, length)
         elseif celltype == "sphere" then
             command[3] = " S"
         else -- celltype == "point" then
-            l_ov(op.white)
+            ov(op.white)
             command[1] = "set "
         end
         -- execute the drawing command
-        l_ov(table.concat(command))
+        ov(table.concat(command))
     end
 end
 
@@ -1470,8 +1461,7 @@ function DisplayCells(editing)
     local z8 = rotrefz[8]
     local maxZ = max(z1,z2,z3,z4,z5,z6,z7,z8)
 
-    local l_ov = ov
-    l_ov("blend 1")
+    ov("blend 1")
 
     local testcell = editing or selcount > 0 or pastecount > 0
 
@@ -1658,7 +1648,7 @@ function DisplayCells(editing)
 
     DrawBatch()
 
-    l_ov("blend 0")
+    ov("blend 0")
 
     if timingenabled then timersave("DisplayCells") end
 end
@@ -1667,12 +1657,10 @@ end
 
 function CreateBusyCube(clipname)
     -- create a clip containing a cube for odd/even cells
-    local l_ov = ov
-
     -- largest size of a rotated cube with edge length L is sqrt(3)*L
     HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
-    l_ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." "..clipname)
-    l_ov("target "..clipname)
+    ov("create "..(HALFCUBECLIP*2).." "..(HALFCUBECLIP*2).." "..clipname)
+    ov("target "..clipname)
 
     local midpos = N//2
     local cube = CreateCube(midpos, midpos, midpos)
@@ -1691,34 +1679,32 @@ function CreateBusyCube(clipname)
 
     -- we can't use red and blue (clashes with colors for paste cells and active cells)
     if clipname == "E" then
-        l_ov("replace *# *#-50 *# *#")    -- pale magenta
+        ov("replace *# *#-50 *# *#")    -- pale magenta
     else
-        l_ov("replace *#-110 *# *# *#")   -- pale cyan
+        ov("replace *#-110 *# *# *#")   -- pale cyan
     end
 
     DrawCubeEdges()
 
-    l_ov("optimize "..clipname)
+    ov("optimize "..clipname)
 
     -- create faded versions of the clip if depth shading
     if depthshading then
         CreateLayers(clipname)
     end
 
-    l_ov("target")
+    ov("target")
 end
 
 ----------------------------------------------------------------------
 
 function CreateBusySphere(clipname)
     -- create a clip containing a sphere for odd/even cells
-    local l_ov = ov
-
     local diameter = CELLSIZE+1
     local d1 = diameter
-    l_ov("create "..diameter.." "..diameter.." "..clipname)
-    l_ov("target "..clipname)
-    l_ov("blend 1")
+    ov("create "..diameter.." "..diameter.." "..clipname)
+    ov("target "..clipname)
+    ov("blend 1")
 
     local R, G, B
     if clipname == "E" then
@@ -1733,10 +1719,10 @@ function CreateBusySphere(clipname)
     if diameter < 50 then inc = 8 - diameter//10 end
     local r = (diameter+1)//2
     while true do
-        l_ov("rgba "..R.." "..G.." "..B.." 255")
+        ov("rgba "..R.." "..G.." "..B.." 255")
         -- draw a solid circle by setting the line width to the radius
-        l_ov("lineoption width "..r)
-        l_ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
+        ov("lineoption width "..r)
+        ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
         diameter = diameter - 2
         r = r - 1
         if r < 2 then break end
@@ -1751,18 +1737,18 @@ function CreateBusySphere(clipname)
     end
 
     -- draw black outline
-    l_ov("rgba 0 0 0 255")
-    l_ov("lineoption width 1")
-    l_ov("ellipse 0 0 "..d1.." "..d1)
-    l_ov("blend 0")
-    l_ov("optimize "..clipname)
+    ov("rgba 0 0 0 255")
+    ov("lineoption width 1")
+    ov("ellipse 0 0 "..d1.." "..d1)
+    ov("blend 0")
+    ov("optimize "..clipname)
 
     -- create faded versions of the clip if depth shading
     if depthshading then
         CreateLayers(clipname)
     end
 
-    l_ov("target")
+    ov("target")
 end
 
 ----------------------------------------------------------------------
