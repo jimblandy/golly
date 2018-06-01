@@ -2455,21 +2455,26 @@ end
 function RestoreState(state)
     -- restore state from given info (created earlier by SaveState)
 
-    -- restore grid size
-    N = state.saveN
-    MIDGRID = (N+1-(N%2))*HALFCELL
-    MIDCELL = HALFCELL-MIDGRID
-    CreateAxes()
-
-    -- restore active plane (depends on N)
-    SetActivePlane(state.saveplane, state.savepos)
+    -- restore grid size and active plane if necessary
+    if N ~= state.saveN then
+        N = state.saveN
+        MIDGRID = (N+1-(N%2))*HALFCELL
+        MIDCELL = HALFCELL-MIDGRID
+        CreateAxes()
+        -- active plane also depends on N
+        SetActivePlane(state.saveplane, state.savepos)
+    elseif activeplane ~= state.saveplane or activepos ~= state.savepos then
+        SetActivePlane(state.saveplane, state.savepos)
+    end
 
     -- restore cursor (determines whether active plane is displayed)
     currcursor = state.savecursor
     if not arrow_cursor then ov("cursor "..currcursor) end
 
-    -- restore rule
-    ParseRule(state.saverule)
+    -- restore rule if necessary
+    if rulestring ~= state.saverule then
+        ParseRule(state.saverule)
+    end
 
     -- restore pattern
     dirty = state.savedirty
