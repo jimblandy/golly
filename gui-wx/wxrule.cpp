@@ -282,7 +282,7 @@ void AlgoHelp::DisplayFile(const wxString& filepath)
     } else {
         #if defined(__WXMSW__) && wxCHECK_VERSION(3,1,0)
         if (filepath.StartsWith("file:")) {
-            LoadFile(filepath.Mid(6));
+            LoadFile(filepath.Mid(8));
         }
         else {
             LoadFile(filepath);
