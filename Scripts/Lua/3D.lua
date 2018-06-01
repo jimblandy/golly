@@ -62,8 +62,11 @@ local DEGTORAD = math.pi/180.0      -- converts degrees to radians
 local MIDGRID = (N+1-(N%2))*HALFCELL
 local MIDCELL = HALFCELL-MIDGRID
 
-local BACK_COLOR = "0 0 80 255"     -- for drawing background
-local LINE_COLOR = "60 60 90 255"   -- for drawing lattice lines
+BACK_COLOR = "0 0 80 255"           -- for drawing background
+LINE_COLOR = "rgba 60 60 90 255"    -- for drawing lattice lines
+START_COLOR = "rgba 0 150 0 255"    -- Start button's background is dark green
+STOP_COLOR = "rgba 210 0 0 255"     -- Stop button's background is dark red
+
 local xylattice = {}                -- lattice lines between XY axes
 local xzlattice = {}                -- lattice lines between XZ axes
 local yzlattice = {}                -- lattice lines between YZ axes
@@ -89,8 +92,8 @@ local pastepatt = {}                -- grid positions of cells in paste pattern
 local drawstate = 1                 -- for drawing/erasing cells
 local selstate = true               -- for selecting/deselecting cells
 local celltype = "cube"             -- draw live cell as cube/sphere/point
-local DrawLiveCell                  -- set to Add{Cube/Sphere/Point}ToBatch{Depth}
-local DrawBusyBox                   -- set to DrawBusy{Cube/Sphere/Point}
+local DrawLiveCell                  -- set to AddCellToBatch, etc
+local DrawBusyBox                   -- set to DrawBusyCube, etc
 local xybatch = {}                  -- coordinates for each cell when batch drawing
 local xyindex = 1                   -- index of next position in xybatch
 local layercoords = {}              -- coordinates for each cell in each layer
@@ -741,7 +744,7 @@ function DrawRearAxes()
     local l_ov = ov
 
     if showlines then
-        l_ov("rgba"..LINE_COLOR)
+        l_ov(LINE_COLOR)
         if z1 < z2 then
             -- front face of rotated refcube is visible
             for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
@@ -797,7 +800,7 @@ function DrawFrontAxes()
     local l_ov = ov
 
     if showlines then
-        l_ov("rgba"..LINE_COLOR)
+        l_ov(LINE_COLOR)
         if z1 >= z2 then
             -- back face of rotated refcube is visible
             for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
@@ -1233,7 +1236,7 @@ end
 function AddCellToBatchDepth(x, y, z, mx, my)
     local c = CELLSIZE
     local m = MIDCELL
-    -- add live cell as a cube at given grid position
+    -- add live cell at given grid position
     x = x * c + m
     y = y * c + m
     z = z * c + m
@@ -1267,7 +1270,7 @@ function AddCellToBatch(x, y, z, mx, my)
     local c = CELLSIZE
     local m = MIDCELL
     local xyi = xyindex
-    -- add live cell as a cube at given grid position
+    -- add live cell at given grid position
     x = x * c + m
     y = y * c + m
     z = z * c + m
@@ -2357,11 +2360,11 @@ function UpdateStartButton()
     -- change label in ssbutton without changing the button's width,
     -- and also update 1st item in Control menu
     if generating then
-        ssbutton.customcolor = "rgba 224 0 0 255"   -- make button background red
+        ssbutton.customcolor = STOP_COLOR
         ssbutton.setlabel("Stop", false)
         mbar.setitem(3, 1, "Stop Generating")
     else
-        ssbutton.customcolor = nil                  -- use default background
+        ssbutton.customcolor = START_COLOR
         ssbutton.setlabel("Start", false)
         mbar.setitem(3, 1, "Start Generating")
     end
@@ -8257,6 +8260,7 @@ function CreateOverlay()
 
     -- create tool bar buttons
     ssbutton = op.button("Start", StartStop)
+    ssbutton.customcolor = START_COLOR
     s1button = op.button("+1", Step1)
     resetbutton = op.button("Reset", Reset)
     fitbutton = op.button("Fit", FitGrid)
