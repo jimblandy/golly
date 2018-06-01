@@ -209,6 +209,9 @@ startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 -- user settings are stored in this file
 settingsfile = g.getdir("data").."3D.ini"
 
+local memoryenabled = false         -- whether to show memory usage
+local manualgcenabled = false       -- whether to use manual vs automatic gc
+
 ----------------------------------------------------------------------
 
 local function TimerDummy()  -- remove when gplus/init.lua 3.2b2 available  !!!
@@ -1443,6 +1446,8 @@ function DisplayCells(editing)
 
     if timingenabled then timerstart("AddCoords") end
 
+    if manualgcenabled then collectgarbage("stop") end
+
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -1642,6 +1647,11 @@ function DisplayCells(editing)
     DrawBatch()
 
     ov("blend 0")
+
+    if manualgcenabled then
+        collectgarbage("restart")
+        collectgarbage()
+    end
 
     if timingenabled then timersave("DisplayCells") end
 end
@@ -1879,6 +1889,8 @@ function DisplayBusyBoxes(editing)
 
     if timingenabled then timerstart("DisplayBusyBoxes") end
 
+    if manualgcenabled then collectgarbage("stop") end
+
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -2031,6 +2043,11 @@ function DisplayBusyBoxes(editing)
     end
 
     ov("blend 0")
+
+    if manualgcenabled then
+        collectgarbage("restart")
+        collectgarbage()
+    end
 
     if timingenabled then timersave("DisplayBusyBoxes") end
 end
@@ -2257,7 +2274,16 @@ function Refresh(update)
         -- show cell coords of mouse if it's inside the active plane
         info = info.."\nx,y,z = "..activecell
     end
+    if memoryenabled then
+        -- show memory used
+        local kbytes = floor(collectgarbage("count"))
+        info = info.."\nMemory used = "..kbytes.."K"
+        local mode = "Automatic"
+        if manualgcenabled then mode = "Manual" end
+        info = info.."\nGC = "..mode
+    end
     if timingenabled then
+        -- show timing
         info = info.."\n"..timervalueall()
         timerresetall()
     end
@@ -2857,6 +2883,8 @@ function NextGenMoore()
 
     if timingenabled then timerstart("NextGenMoore") end
 
+    if manualgcenabled then collectgarbage("stop") end
+
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local grid2 = {}
     local NN = N * N
@@ -2911,6 +2939,11 @@ function NextGenMoore()
             if y > maxy then maxy = y end
             if z > maxz then maxz = z end
         end
+    end
+
+    if manualgcenabled then
+        collectgarbage("restart")
+        collectgarbage()
     end
 
     if timingenabled then timersave("NextGenMoore") end
@@ -3317,6 +3350,8 @@ function NextGenBusyBoxes()
 
     if timingenabled then timerstart("NextGenBusyBoxes") end
 
+    if manualgcenabled then collectgarbage("stop") end
+
     -- calculate and display the next generation for the BusyBoxes rule
     -- (see http://www.busyboxes.org/faq.html)
 
@@ -3455,6 +3490,11 @@ function NextGenBusyBoxes()
         if x > maxx then maxx = x end
         if y > maxy then maxy = y end
         if z > maxz then maxz = z end
+    end
+
+    if manualgcenabled then
+        collectgarbage("restart")
+        collectgarbage()
     end
 
     if timingenabled then timersave("NextGenBusyBoxes") end
@@ -6850,6 +6890,20 @@ end
 
 ----------------------------------------------------------------------
 
+function ToggleGCMode()
+    manualgcenabled = not manualgcenabled
+    if not generating then Refresh() end
+end
+
+----------------------------------------------------------------------
+
+function ToggleMemory()
+    memoryenabled = not memoryenabled
+    if not generating then Refresh() end
+end
+
+----------------------------------------------------------------------
+
 function ToggleTiming()
     timingenabled = not timingenabled
     if timingenabled then timerresetall() end
@@ -8483,6 +8537,7 @@ function HandleKey(event)
     elseif key == "r" and mods == "shift" then RunClipboard()
     elseif key == "r" and mods == CMDCTRL then Reset()
     elseif key == "r" and mods == "none" then ChangeRule()
+    elseif key == "g" and mods == "alt" then ToggleGCMode()
     elseif key == "g" and (mods == "none" or mods == CMDCTRL) then SetGridSize()
     elseif key == "a" and (mods == "none" or mods == CMDCTRL) then SelectAll()
     elseif key == "k" and (mods == "none" or mods == CMDCTRL) then CancelSelection()
@@ -8511,6 +8566,7 @@ function HandleKey(event)
     elseif key == "s" and mods == "none" then SelectMode()
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MiddlePattern()
+    elseif key == "m" and mods == "alt" then ToggleMemory()
     elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "q" then ExitScript()
     else
