@@ -16,8 +16,8 @@ other improvements.
 
 TODO (for Golly 3.2 or later):
 
-- add a slider to control step size (1..100), new items in Control menu
-  (Faster, Slower, Set Step...) and keyboard shortcuts for faster/slower
+- add new items in Control menu (Next Step, Faster, Slower, Set Step...)
+  and use tab as shortcut for Next Step
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - add View > Pattern Info to display comments, or always show when pattern is opened?
@@ -62,6 +62,7 @@ local DEGTORAD = math.pi/180.0      -- converts degrees to radians
 local MIDGRID = (N+1-(N%2))*HALFCELL
 local MIDCELL = HALFCELL-MIDGRID
 
+-- add more global color strings so startup script can customize colors!!!
 BACK_COLOR = "0 0 80 255"           -- for drawing background
 LINE_COLOR = "rgba 60 60 90 255"    -- for drawing lattice lines
 START_COLOR = "rgba 0 150 0 255"    -- Start button's background is dark green
@@ -82,6 +83,7 @@ local showaxes = true               -- draw axes and lattice lines?
 local showlines = true              -- draw lattice lines?
 local generating = false            -- generate pattern?
 local gencount = 0                  -- current generation count
+local stepsize = 1                  -- display each generation
 local perc = 20                     -- initial percentage for RandomPattern
 local randstring = "20"             -- initial string for RandomPattern
 local message = nil                 -- text message displayed by Refresh if not nil
@@ -154,7 +156,7 @@ local xizo, yizo, zizo
 
 local viewwd, viewht                -- current size of viewport
 local ovwd, ovht                    -- current size of overlay
-local minwd, minht = 600, 100       -- minimum size of overlay
+local minwd, minht = 900, 400       -- minimum size of overlay
 local midx, midy                    -- overlay's middle pixel
 
 local mbar                          -- the menu bar
@@ -172,6 +174,7 @@ local exitbutton                    -- X
 local drawbox                       -- check box for draw mode
 local selectbox                     -- check box for select mode
 local movebox                       -- check box for move mode
+local stepslider                    -- slider for adjusting stepsize
 
 local pastemenu                     -- pop-up menu for choosing a paste action
 local selmenu                       -- pop-up menu for choosing a selection action
@@ -209,12 +212,13 @@ startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 -- user settings are stored in this file
 settingsfile = g.getdir("data").."3D.ini"
 
-local memoryenabled = false         -- whether to show memory usage
-local manualgcenabled = false       -- whether to use manual vs automatic gc
+-- remove eventually???!!!
+memoryenabled = false         -- whether to show memory usage
+manualgcenabled = false       -- whether to use manual vs automatic gc
 
 ----------------------------------------------------------------------
 
-local function TimerDummy()  -- remove when gplus/init.lua 3.2b2 available  !!!
+function TimerDummy()  -- remove when gplus/init.lua 3.2b2 available  !!!
     return ""
 end
 
@@ -2164,6 +2168,7 @@ function DrawToolBar()
 
     local x = gap
     local y = mbarht + gap
+    local biggap = gap * 3
 
     ssbutton.show(x, y)
     x = x + ssbutton.wd + gap
@@ -2172,16 +2177,33 @@ function DrawToolBar()
     resetbutton.show(x, y)
     x = x + resetbutton.wd + gap
     fitbutton.show(x, y)
-    x = x + fitbutton.wd + gap * 3
+    x = x + fitbutton.wd + biggap
     undobutton.show(x, y)
     x = x + undobutton.wd + gap
     redobutton.show(x, y)
-    x = x + redobutton.wd + gap * 3
+    x = x + redobutton.wd + biggap
     drawbox.show(x, y, currcursor == drawcursor)
     x = x + drawbox.wd + gap
     selectbox.show(x, y, currcursor == selectcursor)
     x = x + selectbox.wd + gap
     movebox.show(x, y, currcursor == movecursor)
+    
+    -- show slider to right of checkboxes
+    stepslider.show(x + movebox.wd + biggap, y, stepsize)
+    
+    -- show stepsize at right end of slider
+    ov(op.black)
+    local oldfont
+    if g.os() == "Linux" then
+        oldfont = ov("font 10 default")
+    else
+        oldfont = ov("font 10 default-bold")
+    end
+    local oldbg = ov("textoption background 230 230 230 255")
+    local wd, ht = op.maketext("Step="..stepsize)
+    op.pastetext(stepslider.x + stepslider.wd + 2, y + 1)
+    ov("textoption background "..oldbg)
+    ov("font "..oldfont)
 
     -- last 2 buttons are at right end of tool bar
     x = ovwd - gap - exitbutton.wd
@@ -2854,7 +2876,10 @@ function AllDead()
     if popcount == 0 then
         StopGenerating()
         message = "All cells are dead."
-        Refresh()
+        -- stepsize is 0 if called from Step1
+        if stepsize > 0 then
+            Refresh()
+        end
         return true         -- return from NextGen*
     else
         if gencount == startcount then
@@ -2878,7 +2903,11 @@ function DisplayGeneration(newgrid)
     grid1 = newgrid
 
     if popcount == 0 then StopGenerating() end
-    Refresh()
+    
+    -- stepsize is 0 if called from Step1
+    if stepsize > 0 and (gencount % stepsize == 0 or popcount == 0) then
+        Refresh()
+    end
 end
 
 ----------------------------------------------------------------------
@@ -5439,11 +5468,45 @@ end
 
 function Step1()
     StopGenerating()
-    -- note that NextGeneration does nothing if popcount is 0
+    
+    -- NextGeneration does nothing (except display a message) if popcount is 0
     if popcount > 0 then
         RememberCurrentState()
     end
+    
+    -- temporarily change stepsize to tell AllDead and DisplayGeneration not to call Refresh
+    local savestep = stepsize
+    stepsize = 0
     NextGeneration()
+    stepsize = savestep
+    
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
+function Faster()
+    if stepsize < 100 then
+        stepsize = stepsize + 1
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function Slower()
+    if stepsize > 1 then
+        stepsize = stepsize - 1
+        Refresh()
+    end
+end
+
+--------------------------------------------------------------------------------
+
+function StepChange(newval)
+    -- called if stepslider position has changed
+    stepsize = newval
+    Refresh()
 end
 
 ----------------------------------------------------------------------
@@ -6870,7 +6933,7 @@ function CycleCellType()
     else -- celltype == "point"
         celltype = "cube"
     end
-    if not generating then Refresh() end
+    Refresh()
 end
 
 ----------------------------------------------------------------------
@@ -6883,7 +6946,7 @@ function SetCellType(newtype)
     elseif newtype == "point" then
         celltype = newtype
     end
-    if not generating then Refresh() end
+    Refresh()
 end
 
 ----------------------------------------------------------------------
@@ -6897,14 +6960,14 @@ end
 
 function ToggleGCMode()
     manualgcenabled = not manualgcenabled
-    if not generating then Refresh() end
+    Refresh()
 end
 
 ----------------------------------------------------------------------
 
 function ToggleMemory()
     memoryenabled = not memoryenabled
-    if not generating then Refresh() end
+    Refresh()
 end
 
 ----------------------------------------------------------------------
@@ -6912,7 +6975,7 @@ end
 function ToggleTiming()
     timingenabled = not timingenabled
     if timingenabled then timerresetall() end
-    if not generating then Refresh() end
+    Refresh()
 end
 
 ----------------------------------------------------------------------
@@ -6928,7 +6991,7 @@ function ToggleDepthShading()
     depthshading = not depthshading
     InitDepthShading()
     ViewChanged(false)
-    if not generating then Refresh() end
+    Refresh()
 end
 
 ----------------------------------------------------------------------
@@ -6947,6 +7010,7 @@ function ToggleToolBar()
         drawbox.hide()
         selectbox.hide()
         movebox.hide()
+        stepslider.hide()
         exitbutton.hide()
         helpbutton.hide()
     else
@@ -8249,7 +8313,7 @@ function CreateOverlay()
     helpbutton = op.button("?", ShowHelp)
     exitbutton = op.button("X", ExitScript)
 
-    -- create check boxes (don't shadow text)
+    -- create check boxes and slider (don't shadow text)
     op.textshadowx = 0
     op.textshadowy = 0
 
@@ -8258,6 +8322,10 @@ function CreateOverlay()
     drawbox = selectbutton("Draw", op.black, DrawMode)
     selectbox = selectbutton("Select", op.black, SelectMode)
     movebox = selectbutton("Move", op.black, MoveMode)
+        
+    -- create a slider for adjusting stepsize
+    stepslider = op.slider("", op.black, 100, 1, 100, StepChange)
+
     op.textshadowx = 2
     op.textshadowy = 2
 
@@ -8534,6 +8602,8 @@ function HandleKey(event)
     elseif key == "left"  and mods == "alt"  then Rotate( 0,  0,  5)
     elseif key == "delete" and mods == "none" then ClearSelection()
     elseif key == "delete" and mods == "shift" then ClearOutside()
+    elseif key == "=" and mods == "none" then Faster()
+    elseif key == "-" and mods == "none" then Slower()
     elseif key == "5" and mods == "none" then RandomPattern()
     elseif key == "n" and mods == CMDCTRL then NewPattern()
     elseif key == "o" and mods == CMDCTRL then OpenPattern()
