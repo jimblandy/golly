@@ -17,7 +17,6 @@ other improvements.
 TODO (for Golly 3.2 or later):
 
 - add new items in Control menu (Next Step, Faster, Slower, Set Step...)
-  and use tab as shortcut for Next Step
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - add View > Pattern Info to display comments, or always show when pattern is opened?
@@ -2876,7 +2875,7 @@ function AllDead()
     if popcount == 0 then
         StopGenerating()
         message = "All cells are dead."
-        -- stepsize is 0 if called from Step1
+        -- stepsize is 0 if called from Step1 or NextStep
         if stepsize > 0 then
             Refresh()
         end
@@ -2904,7 +2903,7 @@ function DisplayGeneration(newgrid)
 
     if popcount == 0 then StopGenerating() end
     
-    -- stepsize is 0 if called from Step1
+    -- stepsize is 0 if called from Step1 or NextStep
     if stepsize > 0 and (gencount % stepsize == 0 or popcount == 0) then
         Refresh()
     end
@@ -5474,12 +5473,32 @@ function Step1()
         RememberCurrentState()
     end
     
-    -- temporarily change stepsize to tell AllDead and DisplayGeneration not to call Refresh
+    -- temporarily change stepsize to 0 so AllDead and DisplayGeneration don't call Refresh
     local savestep = stepsize
     stepsize = 0
     NextGeneration()
     stepsize = savestep
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
+function NextStep()
+    StopGenerating()
     
+    -- NextGeneration does nothing (except display a message) if popcount is 0
+    if popcount > 0 then
+        RememberCurrentState()
+    end
+    
+    -- advance pattern to next multiple of stepsize
+    repeat
+        -- temporarily change stepsize to 0 so AllDead and DisplayGeneration don't call Refresh
+        local savestep = stepsize
+        stepsize = 0
+        NextGeneration()
+        stepsize = savestep
+    until gencount % stepsize == 0 or popcount == 0
     Refresh()
 end
 
@@ -5909,6 +5928,7 @@ shortcuts):
 <tr><td align=center>Keys</td><td align=center>Actions</td></tr>
 <tr><td align=right> enter &nbsp;</td><td>&nbsp; start/stop generating pattern </td></tr>
 <tr><td align=right> space &nbsp;</td><td>&nbsp; advance pattern by one generation </td></tr>
+<tr><td align=right> tab &nbsp;</td><td>&nbsp; advance pattern to next multiple of step size </td></tr>
 <tr><td align=right> arrows &nbsp;</td><td>&nbsp; rotate about X/Y screen axes </td></tr>
 <tr><td align=right> alt-arrows &nbsp;</td><td>&nbsp; rotate about Z screen axis </td></tr>
 <tr><td align=right> ctrl-N &nbsp;</td><td>&nbsp; create a new, empty pattern </td></tr>
@@ -8591,7 +8611,8 @@ function HandleKey(event)
     if g.os() ~= "Mac" then CMDCTRL = "ctrl" end
     local _, key, mods = split(event)
     if key == "enter" or key == "return" then StartStop()
-    elseif key == "space" then Step1()
+    elseif key == "space" and mods == "none" then Step1()
+    elseif key == "tab"   and mods == "none" then NextStep()
     elseif key == "down"  and mods == "none" then Rotate(-5,  0,  0)
     elseif key == "up"    and mods == "none" then Rotate( 5,  0,  0)
     elseif key == "left"  and mods == "none" then Rotate( 0, -5,  0)
