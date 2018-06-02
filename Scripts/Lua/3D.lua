@@ -16,7 +16,6 @@ other improvements.
 
 TODO (for Golly 3.2 or later):
 
-- add new items in Control menu (Next Step, Faster, Slower, Set Step...)
 - implement "open filepath" event for g.getevent and get Golly to
   automatically start up 3D.lua if user opens a .rle3 file
 - add View > Pattern Info to display comments, or always show when pattern is opened?
@@ -2092,8 +2091,9 @@ function EnableControls(bool)
     -- Control menu:
     mbar.enableitem(3, 1, bool)     -- Start/Stop Generating
     mbar.enableitem(3, 2, bool)     -- Next Generation
-    mbar.enableitem(3, 3, bool)     -- Reset
-    mbar.enableitem(3, 5, bool)     -- Set Rule
+    mbar.enableitem(3, 3, bool)     -- Next Step
+    mbar.enableitem(3, 4, bool)     -- Reset
+    mbar.enableitem(3, 6, bool)     -- Set Rule
     -- View menu:
     mbar.enableitem(4, 3, bool)     -- Set Grid Size
 
@@ -2128,7 +2128,8 @@ function DrawMenuBar()
         mbar.enableitem(2, 16, pastecount > 0)  -- Middle Paste
         mbar.enableitem(3, 1, popcount > 0)     -- Start/Stop Generating
         mbar.enableitem(3, 2, popcount > 0)     -- Next Generation
-        mbar.enableitem(3, 3, gencount > startcount)    -- Reset
+        mbar.enableitem(3, 3, popcount > 0)     -- Next Step
+        mbar.enableitem(3, 4, gencount > startcount)    -- Reset
     end
 
     local selectitem = mbar.tickitem  -- remove when oplus/init.lua 3.2b2 available  !!!
@@ -5491,13 +5492,16 @@ function NextStep()
         RememberCurrentState()
     end
     
-    -- advance pattern to next multiple of stepsize
+    -- advance pattern to next multiple of stepsize, or until empty
     repeat
         -- temporarily change stepsize to 0 so AllDead and DisplayGeneration don't call Refresh
         local savestep = stepsize
         stepsize = 0
         NextGeneration()
         stepsize = savestep
+        -- allow any key to abort a lengthy step
+        local event = g.getevent()
+        if event:find("^key") then break end
     until gencount % stepsize == 0 or popcount == 0
     Refresh()
 end
@@ -5929,6 +5933,8 @@ shortcuts):
 <tr><td align=right> enter &nbsp;</td><td>&nbsp; start/stop generating pattern </td></tr>
 <tr><td align=right> space &nbsp;</td><td>&nbsp; advance pattern by one generation </td></tr>
 <tr><td align=right> tab &nbsp;</td><td>&nbsp; advance pattern to next multiple of step size </td></tr>
+<tr><td align=right> - &nbsp;</td><td>&nbsp; decrease step size </td></tr>
+<tr><td align=right> = &nbsp;</td><td>&nbsp; increase step size </td></tr>
 <tr><td align=right> arrows &nbsp;</td><td>&nbsp; rotate about X/Y screen axes </td></tr>
 <tr><td align=right> alt-arrows &nbsp;</td><td>&nbsp; rotate about Z screen axis </td></tr>
 <tr><td align=right> ctrl-N &nbsp;</td><td>&nbsp; create a new, empty pattern </td></tr>
@@ -6126,8 +6132,13 @@ Generating stops automatically if the pattern dies out.
 
 <a name="next"></a><p><dt><b>Next Generation</b></dt>
 <dd>
-Calculate and display the next generation (but only if there
-is at least one live cell).
+If the pattern isn't empty then advance to the next generation.
+</dd>
+
+<a name="nextstep"></a><p><dt><b>Next Step</b></dt>
+<dd>
+Advance the pattern to the next multiple of the current step size,
+or until the pattern is empty.  Only the final generation is displayed.
 </dd>
 
 <a name="reset"></a><p><dt><b>Reset</b></dt>
@@ -8303,6 +8314,7 @@ function CreateOverlay()
     -- add items to Control menu
     mbar.additem(3, "Start Generating", StartStop)
     mbar.additem(3, "Next Generation", Step1)
+    mbar.additem(3, "Next Step", NextStep)
     mbar.additem(3, "Reset", Reset)
     mbar.additem(3, "---", nil)
     mbar.additem(3, "Set Rule...", ChangeRule)
