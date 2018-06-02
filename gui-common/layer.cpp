@@ -770,7 +770,7 @@ void NameLayerDialog()
 {
     wxString oldname = currlayer->currname;
     wxString newname;
-    if ( GetString(_("Name Layer"), _("Enter a new name for the current layer:"),
+    if ( GetString("Name Layer", "Enter a new name for the current layer:",
                    oldname, newname) &&
         !newname.IsEmpty() && oldname != newname ) {
 
@@ -1217,14 +1217,26 @@ static void ParseIcons(const std::string& rulename, linereader& reader, char* li
                 if (xpmstrings > 0 && xpmstrings <= numcolors) {
                     // build colormap so we can validate chars in pixel data
                     std::string pixel;
-                    char ch1, ch2;
+                    char ch1, ch2, ch3;
+                    bool badline = false;
                     if (chars_per_pixel == 1) {
-                        sscanf(linebuf+1, "%c ", &ch1);
+                        badline = sscanf(linebuf+1, "%c%c", &ch1, &ch2) != 2 || ch2 != ' ';
                         pixel += ch1;
                     } else {
-                        sscanf(linebuf+1, "%c%c ", &ch1, &ch2);
+                        badline = sscanf(linebuf+1, "%c%c%c", &ch1, &ch2, &ch3) != 3 || ch3 != ' ';
                         pixel += ch1;
                         pixel += ch2;
+                    }
+                    if (badline) {
+                        DeleteXPMData(xpmdata, maxstrings);
+                        char s[128];
+                        sprintf(s, "The XPM data string on line %d in ", *linenum);
+                        std::string msg(s);
+                        msg += rulename;
+                        msg += ".rule is incorrect.";
+                        Warning(msg.c_str());
+                        *eof = true;
+                        return;
                     }
                     colormap[pixel] = xpmstrings;
                 } else if (xpmstrings > numcolors) {
