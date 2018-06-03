@@ -5922,14 +5922,14 @@ The zoom is always centered on the middle cell in the grid.
 <font size=+1><b>Keyboard shortcuts</b></font>
 
 <p>
-You can use the following keyboard shortcuts (but see <a href="#shortcuts">below</a>
+The following keyboard shortcuts are provided (but see <a href="#shortcuts">below</a>
 for how you can write a script to create new shortcuts or override any of the supplied
 shortcuts):
 
 <p>
 <center>
 <table cellspacing=1 border=2 cols=2 width="90%">
-<tr><td align=center>Keys</td><td align=center>Actions</td></tr>
+<tr><td align=right> Keys &nbsp;</td><td>&nbsp; Actions </td></tr>
 <tr><td align=right> enter &nbsp;</td><td>&nbsp; start/stop generating pattern </td></tr>
 <tr><td align=right> space &nbsp;</td><td>&nbsp; advance pattern by one generation </td></tr>
 <tr><td align=right> tab &nbsp;</td><td>&nbsp; advance pattern to next multiple of step size </td></tr>
@@ -5947,8 +5947,10 @@ shortcuts):
 <tr><td align=right> shift-Z &nbsp;</td><td>&nbsp; redo </td></tr>
 <tr><td align=right> ctrl-X &nbsp;</td><td>&nbsp; cut </td></tr>
 <tr><td align=right> ctrl-C &nbsp;</td><td>&nbsp; copy </td></tr>
-<tr><td align=right> ctrl-V &nbsp;</td><td>&nbsp; paste </td></tr>
-<tr><td align=right> alt-V &nbsp;</td><td>&nbsp; cancel paste </td></tr>
+<tr><td align=right> ctrl-V &nbsp;</td><td>&nbsp; show paste pattern </td></tr>
+<tr><td align=right> alt-V &nbsp;</td><td>&nbsp; cancel paste pattern </td></tr>
+<tr><td align=right> ctrl-B &nbsp;</td><td>&nbsp; do the paste using OR mode </td></tr>
+<tr><td align=right> ctrl-shift-B &nbsp;</td><td>&nbsp; do the paste using XOR mode </td></tr>
 <tr><td align=right> delete &nbsp;</td><td>&nbsp; kill selected live cells </td></tr>
 <tr><td align=right> shift-delete &nbsp;</td><td>&nbsp; kill unselected live cells </td></tr>
 <tr><td align=right> A &nbsp;</td><td>&nbsp; select all </td></tr>
@@ -8622,7 +8624,7 @@ function HandleKey(event)
     local CMDCTRL = "cmd"
     if g.os() ~= "Mac" then CMDCTRL = "ctrl" end
     local _, key, mods = split(event)
-    if key == "enter" or key == "return" then StartStop()
+    if (key == "enter" or key == "return") and mods == "none" then StartStop()
     elseif key == "space" and mods == "none" then Step1()
     elseif key == "tab"   and mods == "none" then NextStep()
     elseif key == "down"  and mods == "none" then Rotate(-5,  0,  0)
@@ -8645,36 +8647,39 @@ function HandleKey(event)
     elseif key == "r" and mods == "shift" then RunClipboard()
     elseif key == "r" and mods == CMDCTRL then Reset()
     elseif key == "r" and mods == "none" then ChangeRule()
-    elseif key == "g" and mods == "alt" then ToggleGCMode()
     elseif key == "g" and (mods == "none" or mods == CMDCTRL) then SetGridSize()
     elseif key == "a" and (mods == "none" or mods == CMDCTRL) then SelectAll()
     elseif key == "k" and (mods == "none" or mods == CMDCTRL) then CancelSelection()
-    elseif key == "b" and mods == "none" then Rotate(0, 180, 0)
     elseif key == "z" and (mods == "none" or mods == CMDCTRL) then Undo()
     elseif key == "z" and (mods == "shift" or mods == CMDCTRL.."shift") then Redo()
     elseif key == "x" and mods == CMDCTRL then CutSelection()
     elseif key == "c" and mods == CMDCTRL then CopySelection()
     elseif key == "v" and (mods == "none" or mods == CMDCTRL) then Paste()
     elseif key == "v" and mods == "alt" then CancelPaste()
-    elseif key == "[" then ZoomOut()
-    elseif key == "]" then ZoomIn()
-    elseif key == "i" then InitialView()
-    elseif key == "f" then FitGrid()
-    elseif key == "p" then CycleCellType()
+    elseif key == "b" and mods == CMDCTRL then PasteOR()
+    elseif key == "b" and mods == CMDCTRL.."shift" then PasteXOR()
+    elseif key == "b" and mods == "none" then Rotate(0, 180, 0)
+    elseif key == "[" and mods == "none" then ZoomOut()
+    elseif key == "]" and mods == "none" then ZoomIn()
+    elseif key == "i" and mods == "none" then InitialView()
+    elseif key == "f" and mods == "none" then FitGrid()
+    elseif key == "p" and mods == "none" then CycleCellType()
     elseif key == "l" and mods == "none" then ToggleLines()
     elseif key == "l" and mods == "shift" then ToggleAxes()
     elseif key == "d" and mods == "alt" then ToggleDepthShading()
-    elseif key == "t" and mods == "alt" then ToggleTiming()
-    elseif key == "t" then ToggleToolBar()
-    elseif key == "," then MoveActivePlane(activepos+1, true)
-    elseif key == "." then MoveActivePlane(activepos-1, true)
+    elseif key == "t" and mods == "none" then ToggleToolBar()
+    elseif key == "," and mods == "none" then MoveActivePlane(activepos+1, true)
+    elseif key == "." and mods == "none" then MoveActivePlane(activepos-1, true)
     elseif key == "a" and mods == "shift" then CycleActivePlane()
     elseif key == "c" and mods == "none" then CycleCursor()
     elseif key == "d" and mods == "none" then DrawMode()
     elseif key == "s" and mods == "none" then SelectMode()
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MiddlePattern()
+    -- eventually remove the next 3???!!!
+    elseif key == "t" and mods == "alt" then ToggleTiming()
     elseif key == "m" and mods == "alt" then ToggleMemory()
+    elseif key == "g" and mods == "alt" then ToggleGCMode()
     elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "q" then ExitScript()
     else
