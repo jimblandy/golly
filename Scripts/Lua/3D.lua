@@ -8740,6 +8740,9 @@ end
 ----------------------------------------------------------------------
 
 function EventLoop()
+    -- best to call Initialize here so any error is caught by xpcall
+    Initialize()
+
     local mousedown = false         -- mouse button is down?
     local drawing = false           -- draw/erase cells with pencil cursor?
     local selecting = false         -- (de)select cells with cross-hairs cursor?
@@ -8905,7 +8908,6 @@ end
 
 ReadSettings()
 oldstate = SaveGollyState()
-Initialize()
 
 status, err = xpcall(EventLoop, gp.trace)
 if err then g.continue(err) end
