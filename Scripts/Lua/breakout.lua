@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build = 76
+local build = 77
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -83,7 +83,8 @@ local bat = {
     y      = 0,
     wd     = floor(wd / 10),
     ht     = brick.ht,
-    lastx  = 0
+    lastx  = 0,
+    fade   = 128
 }
 
 -- ball settings
@@ -869,18 +870,19 @@ end
 
 --------------------------------------------------------------------------------
 
-local function drawbat()
+local function drawbat(alpha)
+    alpha = alpha or 256
+    ov("blend 1")
     if options.showshadows == 1 then
-        ov(shadow.col)
-        ov("blend 1")
+        ov("rgba "..shadow.rgb.." "..(alpha//2))
         ov("fill "..(floor(bat.x) + shadow.x).." "..(floor(bat.y) + shadow.y).." "..bat.wd.." "..bat.ht)
     end
-    ov("blend 0")
     -- draw the bat in red if mouse is off the overlay
     if game.offoverlay then
         ov(op.red)
     else
-        ov("rgba 192 192 192 255")
+        if alpha == 256 then alpha = 255 end
+        ov("rgba 192 192 192 "..alpha)
     end
     ov("fill "..floor(bat.x).." "..floor(bat.y).." "..bat.wd.." "..bat.ht)
 end
@@ -1370,6 +1372,11 @@ local function drawgameover()
     drawtextclip("restart", 0, ht / 2 + 30 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("quit", 0, ht / 2 + 52 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("option", 0, ht / 2 + 74 * text.fontscale, text.aligncenter, nil, true)
+    if bat.fade > 0 then
+        bat.fade = bat.fade - shadow.delta
+        if bat.fade < 0 then bat.fade = 0 end
+        drawbat(bat.fade)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -1856,6 +1863,7 @@ local function breakout()
                                 -- destroy bat if no balls left
                                 if game.balls == 0 then
                                     createparticles(bat.x + bat.wd, bat.y, bat.wd, bat.ht, particle.lostparticles)
+                                    bat.fade = shadow.alpha
                                 end
                                 playmusic("lostball")
                             end
