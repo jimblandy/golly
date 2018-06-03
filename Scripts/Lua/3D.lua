@@ -60,7 +60,7 @@ local DEGTORAD = math.pi/180.0      -- converts degrees to radians
 local MIDGRID = (N+1-(N%2))*HALFCELL
 local MIDCELL = HALFCELL-MIDGRID
 
--- add more global color strings so startup script can customize colors!!!
+-- add more global color strings so a startup script can customize colors!!!
 BACK_COLOR = "0 0 80 255"           -- for drawing background
 LINE_COLOR = "rgba 60 60 90 255"    -- for drawing lattice lines
 START_COLOR = "rgba 0 150 0 255"    -- Start button's background is dark green
@@ -2834,7 +2834,7 @@ end
 
 ----------------------------------------------------------------------
 
-function GetCells()
+function SaveCells()
     -- return an array of live cell positions relative to mid cell
     local livecells = {}
     if popcount > 0 then
@@ -2853,11 +2853,11 @@ end
 
 ----------------------------------------------------------------------
 
-function PutCells(livecells)
-    -- restore pattern saved earlier by GetCells
+function RestoreCells(livecells)
+    -- restore pattern saved earlier by SaveCells
     -- (note that grid must currently be empty)
     if popcount > 0 then
-        g.warn("Bug in PutCells: grid is not empty!")
+        g.warn("Bug in RestoreCells: grid is not empty!")
     end
     local clipped = 0
     local mid = N//2
@@ -4301,7 +4301,7 @@ function SetGridSize(newsize)
     RememberCurrentState()
 
     -- save current pattern as an array of positions relative to mid cell
-    local livecells = GetCells()
+    local livecells = SaveCells()
 
     -- save any selected cells as an array of positions relative to mid cell
     local oldselcount = selcount
@@ -4326,11 +4326,11 @@ function SetGridSize(newsize)
     -- restore pattern, clipping any cells outside the new grid
     ClearCells()
     local olddirty = dirty
-    local clipcount = PutCells(livecells)
+    local clipcount = RestoreCells(livecells)
     if clipcount > 0 then
         dirty = true
     else
-        -- PutCells sets dirty true if there are live cells,
+        -- RestoreCells sets dirty true if there are live cells,
         -- but pattern hasn't really changed if no cells were clipped
         dirty = olddirty
     end
@@ -5498,7 +5498,7 @@ function NextStep()
     else
         StopGenerating()
         StartStop()
-        -- advance pattern to next multiple of stepsize, or until empty
+        -- stop at next multiple of stepsize (or if pattern becomes empty)
         stopgen = gencount + stepsize - (gencount % stepsize)
     end
 end
@@ -5517,6 +5517,15 @@ end
 function Slower()
     if stepsize > 1 then
         stepsize = stepsize - 1
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
+function SetStepSize(newval)
+    if newval >= 1 and newval <= 100 then
+        stepsize = newval
         Refresh()
     end
 end
@@ -5604,6 +5613,57 @@ function GetGridSize() return N end
 function GetPercentage() return perc end
 function GetPopulation() return popcount end
 function GetRule() return rulestring end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function GetCells(selected)
+    -- return an array of live cell coordinates;
+    -- if selected is true then only selected live cells will be returned
+    local cellarray = {}
+    if popcount > 0 then
+        if selected then
+            cellarray = GetSelectedLiveCells()
+        else
+            -- get all live cells
+            local mid = N//2
+            local NN = N*N
+            for k,_ in pairs(grid1) do
+                -- grid1[k] is a live cell
+                local x = k % N
+                local y = (k // N) % N
+                local z = k // NN
+                cellarray[#cellarray+1] = {x-mid, y-mid, z-mid}
+            end
+        end
+    end
+    return cellarray
+end
+
+----------------------------------------------------------------------
+
+-- for user scripts
+function PutCells(cellarray, xoffset, yoffset, zoffset)
+    -- use given array of live cell coordinates and offsets to set cells in grid
+    -- (any cells outside the grid are silently clipped)
+    xoffset = xoffset or 0
+    yoffset = yoffset or 0
+    zoffset = zoffset or 0
+    local mid = N//2
+    local midx = mid + xoffset
+    local midy = mid + yoffset
+    local midz = mid + zoffset
+    for _, xyz in ipairs(cellarray) do
+        local x = xyz[1] + midx
+        local y = xyz[2] + midy
+        local z = xyz[3] + midz
+        if x >= 0 and x < N and
+           y >= 0 and y < N and
+           z >= 0 and z < N then
+            SetCellState(x, y, z, 1)
+        end
+    end
+end
 
 ----------------------------------------------------------------------
 
@@ -5932,9 +5992,11 @@ shortcuts):
 <tr><td align=right> tab &nbsp;</td><td>&nbsp; advance pattern to next multiple of step size </td></tr>
 <tr><td align=right> - &nbsp;</td><td>&nbsp; decrease step size </td></tr>
 <tr><td align=right> = &nbsp;</td><td>&nbsp; increase step size </td></tr>
+<tr><td align=right> 1 &nbsp;</td><td>&nbsp; reset step size to 1 </td></tr>
 <tr><td align=right> arrows &nbsp;</td><td>&nbsp; rotate about X/Y screen axes </td></tr>
 <tr><td align=right> alt-arrows &nbsp;</td><td>&nbsp; rotate about Z screen axis </td></tr>
 <tr><td align=right> ctrl-N &nbsp;</td><td>&nbsp; create a new, empty pattern </td></tr>
+<tr><td align=right> 5 &nbsp;</td><td>&nbsp; create a new, random pattern </td></tr>
 <tr><td align=right> ctrl-O &nbsp;</td><td>&nbsp; open a selected pattern file </td></tr>
 <tr><td align=right> ctrl-S &nbsp;</td><td>&nbsp; save the current pattern in a file </td></tr>
 <tr><td align=right> shift-O &nbsp;</td><td>&nbsp; open pattern in clipboard </td></tr>
@@ -5962,7 +6024,6 @@ shortcuts):
 <tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes and lattice lines </td></tr>
 <tr><td align=right> alt-D &nbsp;</td><td>&nbsp; toggle depth shading </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the menu bar and tool bar </td></tr>
-<tr><td align=right> 5 &nbsp;</td><td>&nbsp; create a random pattern with given density </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
 <tr><td align=right> R &nbsp;</td><td>&nbsp; change the rule </td></tr>
 <tr><td align=right> , &nbsp;</td><td>&nbsp; move active plane closer (in initial view) </td></tr>
@@ -6305,6 +6366,7 @@ want to call from your own scripts:
 <td valign=top>
 <a href="#GetBounds"><b>GetBounds</b></a><br>
 <a href="#GetCell"><b>GetCell</b></a><br>
+<a href="#GetCells"><b>GetCells</b></a><br>
 <a href="#GetGeneration"><b>GetGeneration</b></a><br>
 <a href="#GetGridSize"><b>GetGridSize</b></a><br>
 <a href="#GetPasteBounds"><b>GetPasteBounds</b></a><br>
@@ -6313,26 +6375,27 @@ want to call from your own scripts:
 <a href="#GetRule"><b>GetRule</b></a><br>
 <a href="#GetSelectionBounds"><b>GetSelectionBounds</b></a><br>
 <a href="#InitialView"><b>InitialView</b></a><br>
-<a href="#MoveMode"><b>MoveMode</b></a><br>
-<a href="#NewPattern"><b>NewPattern</b></a>
+<a href="#MoveMode"><b>MoveMode</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#NewPattern"><b>NewPattern</b></a><br>
 <a href="#OpenPattern"><b>OpenPattern</b></a><br>
 <a href="#Paste"><b>Paste</b></a><br>
 <a href="#PasteExists"><b>PasteExists</b></a><br>
+<a href="#PutCells"><b>PutCells</b></a><br>
 <a href="#RandomPattern"><b>RandomPattern</b></a><br>
 <a href="#RestoreState"><b>RestoreState</b></a><br>
 <a href="#Rotate"><b>Rotate</b></a><br>
 <a href="#RotatePaste"><b>RotatePaste</b></a><br>
 <a href="#RotateSelection"><b>RotateSelection</b></a><br>
 <a href="#RunScript"><b>RunScript</b></a><br>
-<a href="#SavePattern"><b>SavePattern</b></a><br>
-<a href="#SaveState"><b>SaveState</b></a><br>
-<a href="#SelectAll"><b>SelectAll</b></a>
+<a href="#SavePattern"><b>SavePattern</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#SaveState"><b>SaveState</b></a><br>
+<a href="#SelectAll"><b>SelectAll</b></a><br>
 <a href="#SelectCell"><b>SelectCell</b></a><br>
 <a href="#SelectedCell"><b>SelectedCell</b></a><br>
 <a href="#SelectionExists"><b>SelectionExists</b></a><br>
@@ -6437,6 +6500,15 @@ Return the state (0 or 1) of the given cell.
 The x,y,z coordinates are relative to the middle cell in the grid.
 </dd>
 
+<a name="GetCells"></a><p><dt><b>GetCells(<i>selected</i>)</b></dt>
+<dd>
+Return an array of live cell coordinates in the format
+{ {x1,y1,z1}, {x2,y2,z2}, ... {xn,yn,zn} }.
+All coordinates are relative to the middle cell in the grid.
+If there are no live cells then {} is returned.
+If selected is true then only the coordinates of selected live cells will be returned.
+</dd>
+
 <a name="GetGeneration"></a><p><dt><b>GetGeneration()</b></dt>
 <dd>
 Return the generation count.
@@ -6514,6 +6586,13 @@ Call <a href="#DoPaste">DoPaste</a> when you want to actually paste the pattern 
 <a name="PasteExists"></a><p><dt><b>PasteExists()</b></dt>
 <dd>
 Return true if a paste pattern exists.
+</dd>
+
+<a name="PutCells"></a><p><dt><b>PutCells(<i>cellarray, xoffset, yoffset, zoffset</i>)</b></dt>
+<dd>
+Use the given array of live cell coordinates and offsets to set cells in the grid.
+The array must have the same format as the one returned by <a href="#GetCells">GetCells</a>.
+Any cells outside the grid are silently clipped.
 </dd>
 
 <a name="RandomPattern"></a><p><dt><b>RandomPattern(<i>percentage, fill, sphere</i>)</b></dt>
@@ -6668,7 +6747,7 @@ end</pre></table></dd>
 
 <p><ul>
 <li>
-The Moore neighborhood consists of the 26 cells that form a cube around the central cell.
+The Moore neighborhood consists of the 26 cells that form a cube around a central cell.
 <li>
 The Face neighborhood consists of the 6 cells adjacent to the faces of a cube
 (this is the 3D version of the von Neumann neighborhood).
@@ -6678,15 +6757,12 @@ The Corner neighborhood consists of the 8 cells adjacent to the corners of a cub
 The Edge neighborhood consists of the 12 cells adjacent to the edges of a cube.
 <li>
 The Hexahedral neighborhood simulates 12 spheres packed around a central sphere.
-Because it is simulating a hexahedral tesselation in a cubic grid, this neighborhood
+Because it is simulating a hexahedral tessellation in a cubic grid, this neighborhood
 is not orthogonally symmetric, so flipping or rotating a pattern can change the way it evolves.
 <li>
 The Busy Boxes neighborhood is rather complicated.  Follow the links below if you
 want to know all the gory details.
 </ul>
-
-<p>
-Note that the Moore neighborhood is the combination of the Face+Corner+Edge neighborhoods.
 
 <p>
 Use Control > Set Rule to change the current rule.
@@ -6704,6 +6780,7 @@ The B values are the counts of neighboring live cells required for
 birth; ie. a dead cell will become a live cell in the next generation.
 Each cell has 26 neighbors so the S counts are from 0 to 26
 and the B counts are from 1 to 26 (birth on 0 is not allowed).
+Note that the Moore neighborhood is the combination of the Face+Corner+Edge neighborhoods.
 
 <p>
 Contiguous counts can be specified as a range, so a rule like
@@ -8636,6 +8713,7 @@ function HandleKey(event)
     elseif key == "delete" and mods == "shift" then ClearOutside()
     elseif key == "=" and mods == "none" then Faster()
     elseif key == "-" and mods == "none" then Slower()
+    elseif key == "1" and mods == "none" then SetStepSize(1)
     elseif key == "5" and mods == "none" then RandomPattern()
     elseif key == "n" and mods == CMDCTRL then NewPattern()
     elseif key == "o" and mods == CMDCTRL then OpenPattern()
