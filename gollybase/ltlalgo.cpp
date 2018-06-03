@@ -35,6 +35,7 @@ static const int MAXNCOLS = 2 * MAXRANGE + 1;
 
 ltlalgo::ltlalgo()
 {
+    shape = NULL ;
     // create a bounded universe with the default grid size, range and neighborhood
     unbounded = false;
     range = 1;
@@ -55,6 +56,7 @@ ltlalgo::~ltlalgo()
     free(outergrid1);
     if (outergrid2) free(outergrid2);
     if (colcounts) free(colcounts);
+    if (shape) free(shape) ;
 }
 
 // -----------------------------------------------------------------------------
@@ -75,6 +77,9 @@ void ltlalgo::allocate_colcounts()
             colcounts = (int*) malloc(outerwd * (outerht + (outerwd-1)/2) * sizeof(int));
             // if NULL then use fast_Neumann
         }
+    } else if (ntype == 'C') {
+        colcounts = NULL ;
+        // use fast_Shaped
     } else {
         lifefatal("Unexpected ntype!");
     }
@@ -1445,6 +1450,47 @@ void ltlalgo::fast_Moore(int mincol, int minrow, int maxcol, int maxrow)
 
 // -----------------------------------------------------------------------------
 
+void ltlalgo::fast_Shaped(int mincol, int minrow, int maxcol, int maxrow)
+{
+     for (int y = minrow; y <= maxrow; y++) {
+         int yoffset = y * outerwd;
+         int ymrange = y - range;
+         int yprange = y + range;
+         
+         // for the 1st cell in this row we count the state-1 cells in the
+         // shaped neighborhood and remember the column counts
+         int ncount = 0;
+         unsigned char* cellptr = currgrid + ymrange * outerwd ;
+         for (int j = ymrange; j <= yprange; j++, cellptr += outerwd) {
+             int xmrange = mincol - shape[j-ymrange] ;
+             int xprange = mincol + shape[j-ymrange] ;
+             for (int i = xmrange; i <= xprange; i++)
+                 if (cellptr[i] == 1) ncount++ ;
+         }
+            
+         update_next_grid(mincol, y, yoffset+mincol, ncount);
+         
+         // for the remaining cells in this row we only need subtract
+         // points in relevant rows and add points in other relevant
+         // rows according to the shape.
+         cellptr = currgrid + ymrange * outerwd ;
+         for (int x = mincol+1; x <= maxcol; x++) {
+             unsigned char* cp = cellptr ;
+             for (int j = ymrange; j <= yprange; j++, cp += outerwd) {
+                int xmrange = x - shape[j-ymrange] ;
+                int xprange = x + shape[j-ymrange] ;
+                if (cp[xmrange-1] == 1)
+                   ncount-- ;
+                if (cp[xprange] == 1)
+                   ncount++ ;
+             }
+             update_next_grid(x, y, yoffset+x, ncount);
+         }
+     }
+}
+
+// -----------------------------------------------------------------------------
+
 int ltlalgo::getcount(int i, int j)
 {
     // From Dean Hickerson:
@@ -1866,12 +1912,14 @@ void ltlalgo::do_bounded_gen()
         } else {
             fast_Moore(mincol, minrow, maxcol, maxrow);
         }
-    } else {
+    } else if (ntype == 'N') {
         if (colcounts) {
             faster_Neumann_bounded(mincol, minrow, maxcol, maxrow);
         } else {
             fast_Neumann(mincol, minrow, maxcol, maxrow);
         }
+    } else {
+        fast_Shaped(mincol, minrow, maxcol, maxrow);
     }
 
     // if using one grid with a torus then clear border cells copied above
@@ -2012,12 +2060,14 @@ bool ltlalgo::do_unbounded_gen()
         } else {
             fast_Moore(mincol, minrow, maxcol, maxrow);
         }
-    } else {
+    } else if (ntype == 'N') {
         if (colcounts) {
             faster_Neumann_unbounded(mincol, minrow, maxcol, maxrow);
         } else {
             fast_Neumann(mincol, minrow, maxcol, maxrow);
         }
+    } else {
+        fast_Shaped(mincol, minrow, maxcol, maxrow);
     }
     return true;
 }
@@ -2134,13 +2184,26 @@ const char *ltlalgo::setrule(const char *s)
     }
     
     if (r < 1) return "R value is too small";
+    int r2 = r*r+r ;
     if (r > MAXRANGE) return "R value is too big";
     if (c < 0 || c > 255) return "C value must be from 0 to 255";
     if (m < 0 || m > 1) return "M value must be 0 or 1";
     if (s1 > s2) return "S minimum must be <= S maximum";
     if (b1 > b2) return "B minimum must be <= B maximum";
-    if (n != 'M' && n != 'N') return "N must be followed by M or N";
+    if (n != 'M' && n != 'N' && n != 'C') return "N must be followed by M or N or C";
     int maxn = n == 'M' ? (2*r+1)*(2*r+1) : 2*r*(r+1)+1;
+    int tshape[2*MAXRANGE+1] ;
+    if (n == 'C') {
+       int cnt = 0 ;
+       for (int i=-r; i<=r; i++) {
+          int w = 0 ;
+          while ((w + 1) * (w + 1) + (i * i) <= r2)
+             w++ ;
+          tshape[i+r] = w ;
+          cnt += 2 * w + 1 ;
+       }
+       maxn = cnt ;
+    }
     if (s1 < 0 || s1 > maxn || s2 < 0 || s2 > maxn) return "S value must be from 0 to max neighbors";
     if (b1 < 0 || b1 > maxn || b2 < 0 || b2 > maxn) return "B value must be from 0 to max neighbors";
     if (s[endpos] != 0 && s[endpos] != ':') return "bad suffix";
@@ -2190,6 +2253,7 @@ const char *ltlalgo::setrule(const char *s)
     int oldrange = range;
     char oldtype = ntype;
     range = r;
+    rangec = r2;
     scount = c;
     totalistic = m;
     minS = s1;
@@ -2198,9 +2262,15 @@ const char *ltlalgo::setrule(const char *s)
     maxB = b2;
     ntype = n;
     topology = t;
-    
+    if (shape)
+       free(shape) ;
+    shape = (int *)calloc(sizeof(int), 2*r+1) ;
+    for (int i=0; i<2*r+1; i++)
+       shape[i] = tshape[i] ;
     // set the grid_type so the GUI code can display circles or diamonds in icon mode
-    grid_type = ntype == 'M' ? SQUARE_GRID : VN_GRID;
+// no circular grid, so adopt a square grid for now
+#define CIRC_GRID SQUARE_GRID
+    grid_type = ntype == 'M' ? SQUARE_GRID : (ntype == 'N' ? VN_GRID : CIRC_GRID) ;
     
     if (suffix) {
         // use a bounded universe

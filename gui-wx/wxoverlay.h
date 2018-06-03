@@ -86,7 +86,7 @@ public:
     // Save overlay in given PNG file.
 
 private:
-    const char* GetCoordinatePair(const char* args, int* x, int* y);
+    const char* GetCoordinatePair(char* args, int* x, int* y);
     // Decode a pair of integers from the supplied string.
     // Returns a pointer to the first non-space character after
     // the coordinate pair or NULL if decode failed.
@@ -285,10 +285,16 @@ private:
 
     const char* SoundVolume(const char* args);
     // Sets the volume of the specified sound.
+
+    const char* SoundPause(const char* args);
+    // Pauses all or the specified sound.
+
+    const char* SoundResume(const char* args);
+    // Resumes all or the specified sound.
 #endif
 
     const char* DoSound(const char* args);
-    // Play a sound, stop playback, get playback status, or set volume.
+    // Play, stop, pause or resume playback, get playback status, or set volume.
 
     const char* OverlayError(const char* msg);
     // Return a string starting with "ERR:" followed by the given message.
@@ -445,6 +451,7 @@ private:
     // cell view
     unsigned int cellRGBA[256];     // cell RGBA values
     unsigned char* cellview;        // cell state data (cellwd * cellht bytes)
+    unsigned char* cellview1;       // cell state data (cellwd * cellht bytes) double buffer
     unsigned char* zoomview;        // cell state data (cellwd * cellht bytes) for zoom out
     int cellwd, cellht;             // width and height of cell view
     int cellx, celly;               // x and y position of bottom left cell

@@ -5,6 +5,7 @@
 #define GHASHBASE_H
 #include "lifealgo.h"
 #include "liferules.h"
+#include "util.h"
 /*
  *   This class forms the basis of all hashlife-type algorithms except
  *   the highly-optimized hlifealgo (which is most appropriate for
@@ -30,13 +31,25 @@ struct ghleaf {
    ghnode *next ;              /* hash link */
    ghnode *isghnode ;          /* must always be zero for leaves */
    state nw, ne, sw, se ;      /* constant */
-   unsigned short leafpop ;    /* how many set bits */
+   bigint leafpop ;            /* how many set bits */
 } ;
 /*
  *   If it is a struct ghnode, this returns a non-zero value, otherwise it
  *   returns a zero value.
  */
 #define is_ghnode(n) (((ghnode *)(n))->nw)
+/*
+ *   For explicit prefetching we retain some state for our lookup
+ *   routines.
+ */
+#ifdef USEPREFETCH
+struct ghsetup_t { 
+   g_uintptr_t h ;
+   struct ghnode *nw, *ne, *sw, *se ;
+   void prefetch(struct ghnode **addr) const { PREFETCH(addr) ; }
+} ;
+#endif
+
 /**
  *   Our ghashbase class.  Note that this is an abstract class; you need
  *   to expand specific methods to specialize it for a particular multi-state
@@ -109,6 +122,10 @@ private:
    ghnode **stack ;
    int stacksize ;
    g_uintptr_t hashpop, hashlimit, hashprime ;
+#ifndef PRIMEMOD
+   g_uintptr_t hashmask ;
+#endif
+   static double maxloadfactor ;
    ghnode **hashtab ;
    int halvesdone ;
    int gsp ;
@@ -138,11 +155,18 @@ private:
    g_uintptr_t writecells ; // how many to write
    int gccount ; // how many gcs total this pattern
    int gcstep ; // how many gcs this step
+   hperf running_hperf, step_hperf, inc_hperf ;
+   int softinterrupt ;
    static char statusline[] ;
 //
    void resize() ;
    ghnode *find_ghnode(ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) ;
+#ifdef USEPREFETCH
+   ghnode *find_ghnode(ghsetup_t &su) ;
+   void setupprefetch(ghsetup_t &su, ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) ;
+#endif
    void unhash_ghnode(ghnode *n) ;
+   void unhash_ghnode2(ghnode *n) ;
    void rehash_ghnode(ghnode *n) ;
    ghleaf *find_ghleaf(state nw, state ne, state sw, state se) ;
    ghnode *getres(ghnode *n, int depth) ;
@@ -163,8 +187,9 @@ private:
    ghnode *hashpattern(ghnode *root, int depth) ;
    ghnode *popzeros(ghnode *n) ;
    const bigint &calcpop(ghnode *root, int depth) ;
-   void aftercalcpop2(ghnode *root, int depth, int cleanbigints) ;
-   void calcPopulation(ghnode *root) ;
+   void aftercalcpop2(ghnode *root, int depth) ;
+   void afterwritemc(ghnode *root, int depth) ;
+   void calcPopulation() ;
    ghnode *save(ghnode *n) ;
    void pop(int n) ;
    void clearstack() ;
@@ -172,6 +197,8 @@ private:
    void gc_mark(ghnode *root, int invalidate) ;
    void do_gc(int invalidate) ;
    void clearcache(ghnode *n, int depth, int clearto) ;
+   void clearcache_p1(ghnode *n, int depth, int clearto) ;
+   void clearcache_p2(ghnode *n, int depth, int clearto) ;
    void new_ngens(int newval) ;
    int log2(unsigned int n) ;
    ghnode *runpattern() ;

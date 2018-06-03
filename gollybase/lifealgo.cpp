@@ -876,6 +876,14 @@ bool lifealgo::DeleteBorderCells()
     return true;
 }
 
+void lifealgo::getcells(unsigned char *buf, int x, int y, int w, int h) {
+   viewport vp(w, h) ;
+   vp.setpositionmag(x+(w>>1), y+(h>>1), 0) ;
+   staterender hsr(buf, w, h) ;
+   memset(buf, 0, w*h) ;
+   draw(vp, hsr) ;
+}
+
 // -----------------------------------------------------------------------------
 
 int staticAlgoInfo::nextAlgoId = 0 ;

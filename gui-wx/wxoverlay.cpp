@@ -179,6 +179,7 @@ Overlay::Overlay()
     pixmap = NULL;
     ovpixmap = NULL;
     cellview = NULL;
+    cellview1 = NULL;
     zoomview = NULL;
     starx = NULL;
     stary = NULL;
@@ -259,6 +260,10 @@ void Overlay::DeleteCellView()
         free(cellview);
         cellview = NULL;
     }
+    if (cellview1) {
+        free(cellview1);
+        cellview1 = NULL;
+    }
     if (zoomview) {
         free(zoomview);
         zoomview = NULL;
@@ -295,85 +300,36 @@ void Overlay::RefreshCellViewWithTheme()
     // refresh the cellview for a 2 state pattern using LifeViewer theme
     unsigned char *cellviewptr = cellview;
     unsigned char state;
-    int h, w, v = 0;
-    int skip;
+    unsigned char* cellviewptr1 = cellview1;
+    unsigned char *end = cellview + (cellwd * cellht);
+
+    // get the cells in the cell view
     lifealgo *algo = currlayer->algo;
+    algo->getcells(cellviewptr1, cellx, celly, cellwd, cellht);
 
-    int rightx = cellx + cellwd;
-    int bottomy = celly + cellht;
-
-    for (h = celly; h < bottomy; h++) {
-        w = cellx;
-        while (w < rightx) {
-            skip = algo->nextcell(w, h, v);
-            if (skip >= 0) {
-                skip += w;
-                if (skip >= rightx) skip = rightx;
-                while (w < skip) {
-                    // new cells are dead
-                    state = *cellviewptr;
-                    if (state) {
-                        if (state >= aliveStart) {
-                            // cell just died
-                            *cellviewptr = deadStart;
-                        }
-                        else {
-                            if (state > deadEnd) {
-                                // cell decaying
-                                *cellviewptr = state - 1;
-                            }
-                        }
-                    }
-                    cellviewptr++;
-
-                    // next dead cell
-                    w++;
-                }
-
-                // cell is alive
-                if (w < rightx) {
-                    state = *cellviewptr;
-                    if (state >= aliveStart) {
-                        // check for max length
-                        if (state < aliveEnd) {
-                            // cell living
-                            *cellviewptr = state + 1;
-                        }
-                    }
-                    else {
-                        // cell just born
-                        *cellviewptr = aliveStart;
-                    }
-                    cellviewptr++;
-
-                    // next cell
-                    w++;
-                }
+    // update based on the theme
+    while (cellviewptr < end) {
+        state = *cellviewptr;
+        if (*cellviewptr1++) {
+            // new cell is alive
+            if (state >= aliveStart) {
+                // cell was already alive
+                if (state < aliveEnd) *cellviewptr = state + 1;
+            } else {
+                // cell just born
+                *cellviewptr = aliveStart;
             }
-            else {
-                // dead to end of row
-                while (w < rightx) {
-                    // new cells are dead
-                    state = *cellviewptr;
-                    if (state) {
-                        if (state >= aliveStart) {
-                            // cell just died
-                            *cellviewptr = deadStart;
-                        }
-                        else {
-                            if (state > deadEnd) {
-                                // cell decaying
-                                *cellviewptr = state - 1;
-                            }
-                        }
-                    }
-                    cellviewptr++;
-
-                    // next dead cell
-                    w++;
-                }
+        } else {
+            // new cell is dead
+            if (state >= aliveStart) {
+                // cell just died
+                *cellviewptr = deadStart;
+            } else {
+                // cell is decaying
+                if (state > deadEnd) *cellviewptr = state - 1;
             }
         }
+        cellviewptr++;
     }
 }
 
@@ -381,53 +337,10 @@ void Overlay::RefreshCellViewWithTheme()
 
 void Overlay::RefreshCellView()
 {
-    bigint top, left, bottom, right;
-    int leftx, rightx, topy, bottomy;
-    int h, w, v = 0;
-    int skip;
     lifealgo *algo = currlayer->algo;
 
-    // find pattern bounding box
-    algo->findedges(&top, &left, &bottom, &right);
-    leftx = left.toint();
-    rightx = right.toint();
-    topy = top.toint();
-    bottomy = bottom.toint();
-
-    // clip to cell view
-    if (leftx < cellx) {
-        leftx = cellx;
-    }
-    if (rightx >= cellx + cellwd) {
-        rightx = cellx + cellwd - 1;
-    }
-    if (bottomy >= celly + cellht) {
-        bottomy = celly + cellht - 1;
-    }
-    if (topy < celly) {
-        topy = celly;
-    }
-
-    // clear the cell view
-    memset(cellview, 0, cellwd * cellht * sizeof(*cellview));
-
-    // copy live cells into the cell view
-    for (h = topy; h <= bottomy; h++) {
-        for (w = leftx; w <= rightx; w++) {
-            skip = algo->nextcell(w, h, v);
-            if (skip >= 0) {
-                // live cell found
-                w += skip;
-                if (w <= rightx) {
-                    cellview[(h - celly) * cellwd + w - cellx] = v;
-                }
-            }
-            else {
-                // end of row
-                w = rightx;
-            }
-        }
-    }
+    // read cells into the buffer
+    algo->getcells(cellview, cellx, celly, cellwd, cellht);
 }
 
 // -----------------------------------------------------------------------------
@@ -1541,6 +1454,8 @@ const char* Overlay::DoCellView(const char* args)
     // use calloc so all cells will be in state 0
     cellview = (unsigned char*) calloc(w * h, sizeof(*cellview));
     if (cellview == NULL) return OverlayError("not enough memory to create cellview");
+    cellview1 = (unsigned char*) calloc(w * h, sizeof(*cellview1));
+    if (cellview1 == NULL) return OverlayError("not enough memory to create cellview");
 
     // allocate the zoom view
     zoomview = (unsigned char*) calloc(w * h, sizeof(*zoomview));
@@ -2809,7 +2724,7 @@ void Overlay::DrawPixel(int x, int y)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::GetCoordinatePair(const char* args, int* x, int* y)
+const char* Overlay::GetCoordinatePair(char* args, int* x, int* y)
 {
     // attempt to decode integers
     char c = *args++;
@@ -2882,7 +2797,7 @@ const char* Overlay::DoSetPixel(const char* args)
     int x = 0;
     int y = 0;
     // get the first pixel coordinates (mandatory)
-    args = GetCoordinatePair(args, &x, &y);
+    args = GetCoordinatePair((char*)args, &x, &y);
     if (!args) return OverlayError("set command requires coordinate pairs");
 
     // mark target clip as changed
@@ -2893,7 +2808,7 @@ const char* Overlay::DoSetPixel(const char* args)
 
     // read any further coordinates
     while (*args) {
-        args = GetCoordinatePair(args, &x, &y);
+        args = GetCoordinatePair((char*)args, &x, &y);
         if (!args) return OverlayError("set command has illegal coordinates");
         if (PixelInTarget(x, y)) DrawPixel(x, y);
     }
@@ -3396,9 +3311,9 @@ const char* Overlay::DoLine(const char* args)
     if (pixmap == NULL) return OverlayError(no_overlay);
 
     int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-    args = GetCoordinatePair(args, &x1, &y1);
+    args = GetCoordinatePair((char*)args, &x1, &y1);
     if (!args) return OverlayError("line command requires at least two coordinate pairs");
-    args = GetCoordinatePair(args, &x2, &y2);
+    args = GetCoordinatePair((char*)args, &x2, &y2);
     if (!args) return OverlayError("line command requires at least two coordinate pairs");
 
     // mark target clip as changed
@@ -3411,7 +3326,7 @@ const char* Overlay::DoLine(const char* args)
     while (*args) {
         x1 = x2;
         y1 = y2;
-        args = GetCoordinatePair(args, &x2, &y2);
+        args = GetCoordinatePair((char*)args, &x2, &y2);
         if (!args) return OverlayError("line command has illegal coordinates");
         RenderLine(x1, y1, x2, y2);
     }
@@ -3889,9 +3804,9 @@ const char* Overlay::DoFill(const char* args)
 
     if (*args == ' ') {
         int x = 0, y = 0, w = 0, h = 0;
-        args = GetCoordinatePair(args, &x, &y);
+        args = GetCoordinatePair((char*)args, &x, &y);
         if (!args) return OverlayError("fill command requires 0 or at least 4 arguments");
-        args = GetCoordinatePair(args, &w, &h);
+        args = GetCoordinatePair((char*)args, &w, &h);
         if (!args) return OverlayError("fill command requires 0 or at least 4 arguments");
 
         // treat non-positive w/h as inset from overlay's width/height
@@ -3920,9 +3835,9 @@ const char* Overlay::DoFill(const char* args)
         }
         
         while (*args) {
-            args = GetCoordinatePair(args, &x, &y);
+            args = GetCoordinatePair((char*)args, &x, &y);
             if (!args) return OverlayError("fill command invalid arguments");
-            args = GetCoordinatePair(args, &w, &h);
+            args = GetCoordinatePair((char*)args, &w, &h);
             if (!args) return OverlayError("fill command invalid arguments");
 
             // treat non-positive w/h as inset from overlay's width/height
@@ -4110,14 +4025,43 @@ const char* Overlay::DoPaste(const char* args)
     if (pixmap == NULL) return OverlayError(no_overlay);
 
     int x, y;
-    int namepos;
-    char dummy;
-    if (sscanf(args, " %d %d %n%c", &x, &y, &namepos, &dummy) != 3) {
-        // note that %n is not included in the count
-        return OverlayError("paste command requires 3 arguments");
+
+    // find out the length of the argument string
+    int arglen = strlen(args);
+    if (arglen == 0) {
+        return OverlayError("paste command requires at least 3 arguments");
     }
 
-    std::string name = args + namepos;
+    // make a copy of the arguments so we can change them
+    char *buffer = (char*)malloc(arglen + 1);   // add 1 for the terminating nul
+    if (buffer == NULL) return OverlayError("not enough memory for paste");
+    char *copy = buffer;
+    strcpy(copy, args);
+
+    // find the last argument which should be the clip name
+    char* lastarg = copy + arglen - 1;
+
+    // skip trailing whitespace
+    while (lastarg >= copy && *lastarg == ' ') {
+        lastarg--;
+    }
+
+    // skip until whitespace
+    while (lastarg >= copy && *lastarg != ' ') {
+        lastarg--;
+    }
+
+    // check if clip name was found
+    if (lastarg < copy) {
+        free(buffer);
+        return OverlayError("paste command requires at least 3 arguments");
+    }
+
+    // null terminate the arguments before the clip name
+    *lastarg++ = 0;
+
+    // lookup the named clip
+    std::string name = lastarg;
     std::map<std::string,Clip*>::iterator it;
     it = clips.find(name);
     if (it == clips.end()) {
@@ -4125,6 +4069,7 @@ const char* Overlay::DoPaste(const char* args)
         msg = "unknown paste clip (";
         msg += name;
         msg += ")";
+        free(buffer);
         return OverlayError(msg.c_str());
     }
 
@@ -4132,189 +4077,209 @@ const char* Overlay::DoPaste(const char* args)
     int w = clipptr->cwd;
     int h = clipptr->cht;
 
-    // do nothing if rect is completely outside target
-    if (RectOutsideTarget(x, y, w, h)) return NULL;
+    // read the first coordinate pair
+    copy = (char*)GetCoordinatePair(copy, &x, &y);
+    if (!copy) {
+        free(buffer);
+        return OverlayError("paste command requires a least one coordinate pair");
+    }
 
     // mark target clip as changed
     DisableTargetClipIndex();
+    
+    // paste at each coordinate pair
+    const int ow = w;
+    const int oh = h;
+    do {
+        // set original width and height since these can be changed below if clipping required
+        w = ow;
+        h = oh;
 
-    // check for transformation
-    if (identity) {
-        // no transformation, check for clip and target the same size without alpha blending
-        if (!alphablend && x == 0 && y == 0 && w == wd && h == ht) {
-            // fast paste with single memcpy call
-            memcpy(pixmap, clipptr->cdata, w * h * 4);
-        }
-        else {
-            // get the clip data
-            unsigned int *ldata = (unsigned int*)clipptr->cdata;
-            int cliprowpixels = w;
-            int rowoffset = 0;
-    
-            // check for clipping
-            int xmax = x + w - 1;
-            int ymax = y + h - 1;
-            if (x < 0) {
-                // skip pixels off left edge
-                ldata += -x;
-                x = 0;
-            }
-            if (y < 0) {
-                // skip pixels off top edge
-                ldata += -y * cliprowpixels;
-                rowoffset = -y;
-                y = 0;
-            }
-            if (xmax >= wd) xmax = wd - 1;
-            if (ymax >= ht) ymax = ht - 1;
-            w = xmax - x + 1;
-            h = ymax - y + 1;
-    
-            // get the paste target data
-            int targetrowpixels = wd;
-            unsigned int* lp = (unsigned int*)pixmap;
-            lp += y * targetrowpixels + x;
+        // discard if location is completely outside target
+        if (!RectOutsideTarget(x, y, w, h)) {
+            // check for transformation
+            if (identity) {
+                // no transformation, check for clip and target the same size without alpha blending
+                if (!alphablend && x == 0 && y == 0 && w == wd && h == ht) {
+                    // fast paste with single memcpy call
+                    memcpy(pixmap, clipptr->cdata, w * h * 4);
+                }
+                else {
+                    // get the clip data
+                    unsigned int *ldata = (unsigned int*)clipptr->cdata;
+                    int cliprowpixels = w;
+                    int rowoffset = 0;
             
-            // check for alpha blending
-            if (alphablend) {
-                // alpha blending
-                unsigned char* p = (unsigned char*)lp;
-                bool hasindex = clipptr->hasindex;
-                unsigned char* rowindex = clipptr->rowindex;
-    
-                for (int j = 0; j < h; j++) {
-                    // if row index exists then skip row if blank (all pixels have alpha 0)
-                    if (hasindex && !rowindex[rowoffset + j]) {
-                        ldata += w;
-                        lp += w;
-                    } else {
-                        // if row index exists and all pixels opaque then use memcpy
-                        if (hasindex && rowindex[rowoffset + j] == 255) {
-                            memcpy(lp, ldata, w << 2);
-                            ldata += w;
-                            lp += w;
-                        } else {
-                            for (int i = 0; i < w; i++) {
-                                // get the source pixel
-                                unsigned char* srcp = (unsigned char*)ldata;
-                                unsigned int rgba = *ldata++;
-                                unsigned char pa = srcp[3];
+                    // check for clipping
+                    int xmax = x + w - 1;
+                    int ymax = y + h - 1;
+                    if (x < 0) {
+                        // skip pixels off left edge
+                        ldata += -x;
+                        x = 0;
+                    }
+                    if (y < 0) {
+                        // skip pixels off top edge
+                        ldata += -y * cliprowpixels;
+                        rowoffset = -y;
+                        y = 0;
+                    }
+                    if (xmax >= wd) xmax = wd - 1;
+                    if (ymax >= ht) ymax = ht - 1;
+                    w = xmax - x + 1;
+                    h = ymax - y + 1;
             
-                                // draw the pixel
-                                if (pa < 255) {
-                                    if (pa > 0) {
-                                        // source pixel is translucent so blend with destination pixel;
-                                        // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
-                                        unsigned char pr = srcp[0];
-                                        unsigned char pg = srcp[1];
-                                        unsigned char pb = srcp[2];
-                                        unsigned char destr = p[0];
-                                        unsigned char destg = p[1];
-                                        unsigned char destb = p[2];
-                                        unsigned char desta = p[3];
-                                        if (desta == 255) {
-                                            // destination pixel is opaque
-                                            unsigned int alpha = pa + 1;
-                                            unsigned int invalpha = 256 - pa;
-                                            *p++ = (alpha * pr + invalpha * destr) >> 8;
-                                            *p++ = (alpha * pg + invalpha * destg) >> 8;
-                                            *p++ = (alpha * pb + invalpha * destb) >> 8;
-                                            p++;   // no need to change p[3] (alpha stays at 255)
-                                        } else {
-                                            // destination pixel is translucent
-                                            float alpha = pa / 255.0;
-                                            float inva = 1.0 - alpha;
-                                            float destalpha = desta / 255.0;
-                                            float outa = alpha + destalpha * inva;
-                                            p[3] = int(outa * 255);
-                                            if (p[3] > 0) {
-                                                *p++ = int((pr * alpha + destr * destalpha * inva) / outa);
-                                                *p++ = int((pg * alpha + destg * destalpha * inva) / outa);
-                                                *p++ = int((pb * alpha + destb * destalpha * inva) / outa);
-                                                p++;   // already set above
+                    // get the paste target data
+                    int targetrowpixels = wd;
+                    unsigned int* lp = (unsigned int*)pixmap;
+                    lp += y * targetrowpixels + x;
+                    
+                    // check for alpha blending
+                    if (alphablend) {
+                        // alpha blending
+                        unsigned char* p = (unsigned char*)lp;
+                        bool hasindex = clipptr->hasindex;
+                        unsigned char* rowindex = clipptr->rowindex;
+            
+                        for (int j = 0; j < h; j++) {
+                            // if row index exists then skip row if blank (all pixels have alpha 0)
+                            if (hasindex && !rowindex[rowoffset + j]) {
+                                ldata += w;
+                                lp += w;
+                            } else {
+                                // if row index exists and all pixels opaque then use memcpy
+                                if (hasindex && rowindex[rowoffset + j] == 255) {
+                                    memcpy(lp, ldata, w << 2);
+                                    ldata += w;
+                                    lp += w;
+                                } else {
+                                    for (int i = 0; i < w; i++) {
+                                        // get the source pixel
+                                        unsigned char* srcp = (unsigned char*)ldata;
+                                        unsigned int rgba = *ldata++;
+                                        unsigned char pa = srcp[3];
+                    
+                                        // draw the pixel
+                                        if (pa < 255) {
+                                            if (pa > 0) {
+                                                // source pixel is translucent so blend with destination pixel;
+                                                // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                                                unsigned char pr = srcp[0];
+                                                unsigned char pg = srcp[1];
+                                                unsigned char pb = srcp[2];
+                                                unsigned char destr = p[0];
+                                                unsigned char destg = p[1];
+                                                unsigned char destb = p[2];
+                                                unsigned char desta = p[3];
+                                                if (desta == 255) {
+                                                    // destination pixel is opaque
+                                                    unsigned int alpha = pa + 1;
+                                                    unsigned int invalpha = 256 - pa;
+                                                    *p++ = (alpha * pr + invalpha * destr) >> 8;
+                                                    *p++ = (alpha * pg + invalpha * destg) >> 8;
+                                                    *p++ = (alpha * pb + invalpha * destb) >> 8;
+                                                    p++;   // no need to change p[3] (alpha stays at 255)
+                                                } else {
+                                                    // destination pixel is translucent
+                                                    float alpha = pa / 255.0;
+                                                    float inva = 1.0 - alpha;
+                                                    float destalpha = desta / 255.0;
+                                                    float outa = alpha + destalpha * inva;
+                                                    p[3] = int(outa * 255);
+                                                    if (p[3] > 0) {
+                                                        *p++ = int((pr * alpha + destr * destalpha * inva) / outa);
+                                                        *p++ = int((pg * alpha + destg * destalpha * inva) / outa);
+                                                        *p++ = int((pb * alpha + destb * destalpha * inva) / outa);
+                                                        p++;   // already set above
+                                                    } else {
+                                                        p += 4;
+                                                    }
+                                                }
                                             } else {
+                                                // skip transparent pixel
                                                 p += 4;
                                             }
+                                        } else {
+                                            // pixel is opaque so copy it
+                                            *lp = rgba;
+                                            p += 4;
                                         }
-                                    } else {
-                                        // skip transparent pixel
-                                        p += 4;
+                                        lp++;
                                     }
-                                } else {
-                                    // pixel is opaque so copy it
-                                    *lp = rgba;
-                                    p += 4;
                                 }
-                                lp++;
                             }
+                            // next clip and target row
+                            lp += targetrowpixels - w;
+                            p = (unsigned char*)lp;
+                            ldata += cliprowpixels - w;
+                        }
+                    } else {
+                        // no alpha blending
+                        for (int j = 0; j < h; j++) {
+                            // copy each row with memcpy
+                            memcpy(lp, ldata, w << 2);
+                            lp += targetrowpixels;
+                            ldata += cliprowpixels;
                         }
                     }
-                    // next clip and target row
-                    lp += targetrowpixels - w;
-                    p = (unsigned char*)lp;
-                    ldata += cliprowpixels - w;
                 }
             } else {
-                // no alpha blending
-                for (int j = 0; j < h; j++) {
-                    // copy each row with memcpy
-                    memcpy(lp, ldata, w << 2);
-                    lp += targetrowpixels;
-                    ldata += cliprowpixels;
+                // do an affine transformation
+                unsigned char* data = clipptr->cdata;
+                int x0 = x - (x * axx + y * axy);
+                int y0 = y - (x * ayx + y * ayy);
+        
+                // check for alpha blend
+                if (alphablend) {
+                    // save RGBA values
+                    unsigned char saver = r;
+                    unsigned char saveg = g;
+                    unsigned char saveb = b;
+                    unsigned char savea = a;
+        
+                    for (int j = 0; j < h; j++) {
+                        for (int i = 0; i < w; i++) {
+                            r = *data++;
+                            g = *data++;
+                            b = *data++;
+                            a = *data++;
+                            int newx = x0 + x * axx + y * axy;
+                            int newy = y0 + x * ayx + y * ayy;
+                            if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
+                            x++;
+                        }
+                        y++;
+                        x -= w;
+                    }
+        
+                    // restore saved RGBA values
+                    r = saver;
+                    g = saveg;
+                    b = saveb;
+                    a = savea;
+                } else {
+                    // no alpha blend
+                    unsigned int* ldata = (unsigned int*)data;
+                    unsigned int* lp = (unsigned int*)pixmap;
+                    for (int j = 0; j < h; j++) {
+                        for (int i = 0; i < w; i++) {
+                            int newx = x0 + x * axx + y * axy;
+                            int newy = y0 + x * ayx + y * ayy;
+                            if (PixelInTarget(newx, newy)) *(lp + newy * wd + newx) = *ldata;
+                            ldata++;
+                            x++;
+                        }
+                        y++;
+                        x -= w;
+                    }
                 }
-            }
-        }
-    } else {
-        // do an affine transformation
-        unsigned char* data = clipptr->cdata;
-        int x0 = x - (x * axx + y * axy);
-        int y0 = y - (x * ayx + y * ayy);
-
-        // check for alpha blend
-        if (alphablend) {
-            // save RGBA values
-            unsigned char saver = r;
-            unsigned char saveg = g;
-            unsigned char saveb = b;
-            unsigned char savea = a;
-
-            for (int j = 0; j < h; j++) {
-                for (int i = 0; i < w; i++) {
-                    r = *data++;
-                    g = *data++;
-                    b = *data++;
-                    a = *data++;
-                    int newx = x0 + x * axx + y * axy;
-                    int newy = y0 + x * ayx + y * ayy;
-                    if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
-                    x++;
-                }
-                y++;
-                x -= w;
-            }
-
-            // restore saved RGBA values
-            r = saver;
-            g = saveg;
-            b = saveb;
-            a = savea;
-        } else {
-            // no alpha blend
-            unsigned int* ldata = (unsigned int*)data;
-            unsigned int* lp = (unsigned int*)pixmap;
-            for (int j = 0; j < h; j++) {
-                for (int i = 0; i < w; i++) {
-                    int newx = x0 + x * axx + y * axy;
-                    int newy = y0 + x * ayx + y * ayy;
-                    if (PixelInTarget(newx, newy)) *(lp + newy * wd + newx) = *ldata;
-                    ldata++;
-                    x++;
-                }
-                y++;
-                x -= w;
             }
         }
     }
+    while ((copy = (char*)GetCoordinatePair(copy, &x, &y)) != 0);
+
+    // free the buffer
+    free(buffer);
 
     return NULL;
 }
@@ -5361,7 +5326,7 @@ const char* Overlay::SoundPlay(const char* args, bool loop)
             }
         }
 
-	// check for the optional volume argument
+        // check for the optional volume argument
         float v = 1;
         const char* name = args;
 
@@ -5477,6 +5442,7 @@ const char* Overlay::SoundStop(const char* args)
 const char* Overlay::SoundState(const char* args)
 {
     bool playing = false;
+    bool paused = false;
 
     // check for engine
     if (engine) {
@@ -5501,19 +5467,32 @@ const char* Overlay::SoundState(const char* args)
                 return "unknown";
             }
             else {
-                if (engine->isCurrentlyPlaying(source)) {
-                    playing = true;
+                // find the sound
+                std::map<std::string,ISound*>::iterator it;
+                it = sounds.find(args);
+                if (it != sounds.end()) {
+                    ISound* sound = it->second;
+                    if (sound->getIsPaused()) {
+                        paused = true;
+                    }
+                    if (engine->isCurrentlyPlaying(source)) {
+                        playing = true;
+                    }
                 }       
             }
         }
     }
 
     // return status as string
-    if (playing) {
-        return "playing";
-    }
-    else {
-        return "stopped";
+    if (paused && playing) {
+        return "paused";
+    } else {
+        if (playing) {
+            return "playing";
+        }
+        else {
+            return "stopped";
+        }
     }
 }
 #endif
@@ -5526,24 +5505,37 @@ const char* Overlay::SoundVolume(const char* args)
     // check for engine
     if (engine) {
         float v = 1;
-        char dummy;
-        int namepos;
-        if (sscanf(args, " %f %n%c", &v, &namepos, &dummy) != 2) {
-            return OverlayError("sound volume command requires two arguments");
+        const char* name = args;
+
+        // skip name
+        char *scan = (char*)args;
+        while (*scan && *scan != ' ') {
+            scan++;
         }
-        if (v < 0.0 || v > 1.0) {
-            return OverlayError("sound volume argument must be in the range 0 to 1");
+
+        // check if there is a volume argument
+        if (*scan) {
+            if (sscanf(scan, " %f", &v) == 1) {
+                if (v < 0.0 || v > 1.0) {
+                    return OverlayError("sound volume must be in the range 0 to 1");
+                }
+            } else {
+                return OverlayError("sound volume command requires two arguments");
+            }
+
+            // null terminate name
+            *scan = 0;
         }
-    
+
         // lookup the sound
-        ISoundSource* source = engine->getSoundSource(args + namepos, false);
+        ISoundSource* source = engine->getSoundSource(name, false);
         if (source) {
             // set the default volume for the source
             source->setDefaultVolume(v);
 
             // check if the sound is playing
             std::map<std::string,ISound*>::iterator it;
-            it = sounds.find(args + namepos);
+            it = sounds.find(name);
             if (it != sounds.end()) {
                // set the sound volume
                ISound* sound = it->second;
@@ -5554,6 +5546,84 @@ const char* Overlay::SoundVolume(const char* args)
         }
     }
     
+    return NULL;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* Overlay::SoundPause(const char* args)
+{
+    // check for engine
+    if (engine) {
+        // check for argument
+        if (*args == 0) {
+            // pause all sounds
+            engine->setAllSoundsPaused();
+        }
+        else {
+            // skip whitespace
+            while (*args == ' ') {
+                args++;
+            }
+    
+            // pause named sound
+            ISoundSource* source = engine->getSoundSource(args, false);
+            if (source) {
+                // find the sound
+                std::map<std::string,ISound*>::iterator it;
+                it = sounds.find(args);
+                if (it != sounds.end()) {
+                   // pause the sound
+                   ISound* sound = it->second;
+                   if (!sound->isFinished()) {
+                       sound->setIsPaused();
+                   }
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+#endif
+
+// -----------------------------------------------------------------------------
+
+#ifdef ENABLE_SOUND
+const char* Overlay::SoundResume(const char* args)
+{
+    // check for engine
+    if (engine) {
+        // check for argument
+        if (*args == 0) {
+            // resume all paused sounds
+            engine->setAllSoundsPaused(false);
+        }
+        else {
+            // skip whitespace
+            while (*args == ' ') {
+                args++;
+            }
+    
+            // resume named sound
+            ISoundSource* source = engine->getSoundSource(args, false);
+            if (source) {
+                // find the sound
+                std::map<std::string,ISound*>::iterator it;
+                it = sounds.find(args);
+                if (it != sounds.end()) {
+                   // resume the sound
+                   ISound* sound = it->second;
+                   if (!sound->isFinished()) {
+                       sound->setIsPaused(false);
+                   }
+                }
+            }
+        }
+    }
+
     return NULL;
 }
 #endif
@@ -5588,6 +5658,8 @@ const char* Overlay::DoSound(const char* args)
     if (strncmp(args, "stop", 4) == 0)     return SoundStop(args+4);
     if (strncmp(args, "state", 5) == 0)    return SoundState(args+5);
     if (strncmp(args, "volume ", 7) == 0)  return SoundVolume(args+7);
+    if (strncmp(args, "pause", 5) == 0)    return SoundPause(args+5);
+    if (strncmp(args, "resume", 6) == 0)   return SoundResume(args+6);
 
     return OverlayError("unknown sound command");
     #else
@@ -5690,40 +5762,40 @@ const char* Overlay::OverlayError(const char* msg)
 const char* Overlay::DoOverlayCommand(const char* cmd)
 {
     // determine which command to run
-    if (strncmp(cmd, "set ", 4) == 0)         return DoSetPixel(cmd+4);
-    if (strncmp(cmd, "get ", 4) == 0)         return DoGetPixel(cmd+4);
-    if (strcmp(cmd,  "xy") == 0)              return DoGetXY();
-    if (strncmp(cmd, "rgba", 4) == 0)         return DoSetRGBA(cmd+4);
-    if (strncmp(cmd, "blend", 5) == 0)        return DoBlend(cmd+5);
-    if (strncmp(cmd, "fill", 4) == 0)         return DoFill(cmd+4);
-    if (strncmp(cmd, "copy", 4) == 0)         return DoCopy(cmd+4);
-    if (strncmp(cmd, "paste", 5) == 0)        return DoPaste(cmd+5);
-    if (strncmp(cmd, "optimize", 8) == 0)     return DoOptimize(cmd+8);
-    if (strncmp(cmd, "lineoption ", 11) == 0) return DoLineOption(cmd+11);
-    if (strncmp(cmd, "line", 4) == 0)         return DoLine(cmd+4);
-    if (strncmp(cmd, "ellipse", 7) == 0)      return DoEllipse(cmd+7);
-    if (strncmp(cmd, "flood", 5) == 0)        return DoFlood(cmd+5);
-    if (strncmp(cmd, "textoption ", 11) == 0) return DoTextOption(cmd+11);
-    if (strncmp(cmd, "text", 4) == 0)         return DoText(cmd+4);
-    if (strncmp(cmd, "font", 4) == 0)         return DoFont(cmd+4);
-    if (strncmp(cmd, "transform", 9) == 0)    return DoTransform(cmd+9);
-    if (strncmp(cmd, "position", 8) == 0)     return DoPosition(cmd+8);
-    if (strncmp(cmd, "load", 4) == 0)         return DoLoad(cmd+4);
-    if (strncmp(cmd, "save", 4) == 0)         return DoSave(cmd+4);
-    if (strncmp(cmd, "scale", 5) == 0)        return DoScale(cmd+5);
-    if (strncmp(cmd, "cursor", 6) == 0)       return DoCursor(cmd+6);
-    if (strcmp(cmd,  "update") == 0)          return DoUpdate();
-    if (strncmp(cmd, "create", 6) == 0)       return DoCreate(cmd+6);
-    if (strncmp(cmd, "resize", 6) == 0)       return DoResize(cmd+6);
-    if (strncmp(cmd, "cellview ", 9) == 0)    return DoCellView(cmd+9);
-    if (strncmp(cmd, "celloption ", 11) == 0) return DoCellOption(cmd+11);
-    if (strncmp(cmd, "camera ", 7) == 0)      return DoCamera(cmd+7);
-    if (strncmp(cmd, "theme ", 6) == 0)       return DoTheme(cmd+6);
-    if (strncmp(cmd, "target", 6) == 0)       return DoTarget(cmd+6);
-    if (strncmp(cmd, "replace ", 8) == 0)     return DoReplace(cmd+8);
-    if (strncmp(cmd, "sound", 5) == 0)        return DoSound(cmd+5);
-    if (strcmp(cmd,  "updatecells") == 0)     return DoUpdateCells();
-    if (strcmp(cmd,  "drawcells") == 0)       return DoDrawCells();
-    if (strncmp(cmd, "delete", 6) == 0)       return DoDelete(cmd+6);
+    if (strncmp(cmd, "set ", 4) == 0)          return DoSetPixel(cmd+4);
+    if (strncmp(cmd, "get ", 4) == 0)          return DoGetPixel(cmd+4);
+    if (strcmp(cmd,  "xy") == 0)               return DoGetXY();
+    if (strncmp(cmd, "rgba", 4) == 0)          return DoSetRGBA(cmd+4);
+    if (strncmp(cmd, "blend", 5) == 0)         return DoBlend(cmd+5);
+    if (strncmp(cmd, "fill", 4) == 0)          return DoFill(cmd+4);
+    if (strncmp(cmd, "copy", 4) == 0)          return DoCopy(cmd+4);
+    if (strncmp(cmd, "paste", 5) == 0)         return DoPaste(cmd+5);
+    if (strncmp(cmd, "optimize", 8) == 0)      return DoOptimize(cmd+8);
+    if (strncmp(cmd, "lineoption ", 11) == 0)  return DoLineOption(cmd+11);
+    if (strncmp(cmd, "line", 4) == 0)          return DoLine(cmd+4);
+    if (strncmp(cmd, "ellipse", 7) == 0)       return DoEllipse(cmd+7);
+    if (strncmp(cmd, "flood", 5) == 0)         return DoFlood(cmd+5);
+    if (strncmp(cmd, "textoption ", 11) == 0)  return DoTextOption(cmd+11);
+    if (strncmp(cmd, "text", 4) == 0)          return DoText(cmd+4);
+    if (strncmp(cmd, "font", 4) == 0)          return DoFont(cmd+4);
+    if (strncmp(cmd, "transform", 9) == 0)     return DoTransform(cmd+9);
+    if (strncmp(cmd, "position", 8) == 0)      return DoPosition(cmd+8);
+    if (strncmp(cmd, "load", 4) == 0)          return DoLoad(cmd+4);
+    if (strncmp(cmd, "save", 4) == 0)          return DoSave(cmd+4);
+    if (strncmp(cmd, "scale", 5) == 0)         return DoScale(cmd+5);
+    if (strncmp(cmd, "cursor", 6) == 0)        return DoCursor(cmd+6);
+    if (strcmp(cmd,  "update") == 0)           return DoUpdate();
+    if (strncmp(cmd, "create", 6) == 0)        return DoCreate(cmd+6);
+    if (strncmp(cmd, "resize", 6) == 0)        return DoResize(cmd+6);
+    if (strncmp(cmd, "cellview ", 9) == 0)     return DoCellView(cmd+9);
+    if (strncmp(cmd, "celloption ", 11) == 0)  return DoCellOption(cmd+11);
+    if (strncmp(cmd, "camera ", 7) == 0)       return DoCamera(cmd+7);
+    if (strncmp(cmd, "theme ", 6) == 0)        return DoTheme(cmd+6);
+    if (strncmp(cmd, "target", 6) == 0)        return DoTarget(cmd+6);
+    if (strncmp(cmd, "replace ", 8) == 0)      return DoReplace(cmd+8);
+    if (strncmp(cmd, "sound", 5) == 0)         return DoSound(cmd+5);
+    if (strcmp(cmd,  "updatecells") == 0)      return DoUpdateCells();
+    if (strcmp(cmd,  "drawcells") == 0)        return DoDrawCells();
+    if (strncmp(cmd, "delete", 6) == 0)        return DoDelete(cmd+6);
     return OverlayError("unknown command");
 }

@@ -2,13 +2,96 @@
 
 local g = golly()
 
+local floor = math.floor
+local ceil = math.ceil
+local abs = math.abs
+local mmin = math.min
+local mmax = math.max
+local millisecs = g.millisecs
+
 local m = {}
+
+m.timing = {}      -- timing information
+m.timingorder = {} -- index to order timers
+
+--------------------------------------------------------------------------------
+
+function m.timerstart(name)
+    -- start the named timer
+    local timenow = millisecs()
+    local timing, timingorder = m.timing, m.timingorder
+    if timing[name] == nil then
+        timing[name] = { start=0, last=0 }
+        timingorder[#timingorder + 1] = name
+    end
+    timing[name].start = timenow
+end
+
+--------------------------------------------------------------------------------
+
+function m.timersave(name)
+    -- return time in milliseconds since last request or timer start
+    local timenow = millisecs()
+    local timing = m.timing
+    if timing[name] then
+        timing[name].last = timenow - timing[name].start
+        timing[name].start = timenow
+        return timing[name].last
+    else
+        -- if timer never started return 0
+        return 0
+    end
+end
+
+--------------------------------------------------------------------------------
+
+function m.timervalue(name)
+    -- return last measured value of the named timer in milliseconds
+    local timing = m.timing
+    if timing[name] then
+        return timing[name].last
+    else
+        return 0
+    end
+end
+
+--------------------------------------------------------------------------------
+
+function m.timerresetall()
+    -- reset all timers
+    m.timing = {}
+    m.timingorder = {}
+end
+
+--------------------------------------------------------------------------------
+
+function m.timervalueall()
+    -- return a string containing all timer name value pairs in the order they were created
+    local timing, timingorder = m.timing, m.timingorder
+    local result = {}
+    for i = 1, #timingorder do
+        local name = timingorder[i]
+        result[#result + 1] = name.." "..string.format("%.1fms", timing[name].last)
+    end
+    return table.concat(result, " ")
+end
 
 --------------------------------------------------------------------------------
 
 function m.int(x)
     -- return integer part of given floating point number
-    return x < 0 and math.ceil(x) or math.floor(x)
+    return x < 0 and ceil(x) or floor(x)
+end
+
+--------------------------------------------------------------------------------
+
+function m.round(x)
+    -- return same result as Python's round function
+    if x >= 0 then
+        return floor(x+0.5)
+    else
+        return ceil(x-0.5)
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -19,7 +102,7 @@ function m.min(a)
     if alen == 0 then return nil end
     if alen < 100000 then
         -- use faster math.min call
-        return math.min( table.unpack(a) )
+        return mmin( table.unpack(a) )
     else
         -- slower code but no danger of exceeding stack limit
         local n = a[1]
@@ -38,7 +121,7 @@ function m.max(a)
     if alen == 0 then return nil end
     if alen < 100000 then
         -- use faster math.max call
-        return math.max( table.unpack(a) )
+        return mmax( table.unpack(a) )
     else
         -- slower code but no danger of exceeding stack limit
         local n = a[1]
@@ -56,17 +139,17 @@ function m.drawline(x1, y1, x2, y2, state)
     state = state or 1
     g.setcell(x1, y1, state)
     if x1 == x2 and y1 == y2 then return end
-    
+
     local dx = x2 - x1
-    local ax = math.abs(dx) * 2
+    local ax = abs(dx) * 2
     local sx = 1
     if dx < 0 then sx = -1 end
-    
+
     local dy = y2 - y1
-    local ay = math.abs(dy) * 2
+    local ay = abs(dy) * 2
     local sy = 1
     if dy < 0 then sy = -1 end
-    
+
     if ax > ay then
         local d = ay - (ax / 2)
         while x1 ~= x2 do
@@ -110,7 +193,7 @@ function m.getminbox(cells)
     end
     local len = #cells
     if len < 2 then return m.rect( {} ) end
-    
+
     local minx = cells[1]
     local miny = cells[2]
     local maxx = minx
@@ -119,10 +202,10 @@ function m.getminbox(cells)
     -- determine if cell array is one-state or multi-state
     local inc = 2
     if (len & 1) == 1 then inc = 3 end
-    
+
     -- ignore padding int if present
     if (inc == 3) and (len % 3 == 1) then len = len - 1 end
-    
+
     for x = 1, len, inc do
         if cells[x] < minx then minx = cells[x] end
         if cells[x] > maxx then maxx = cells[x] end
@@ -131,7 +214,7 @@ function m.getminbox(cells)
         if cells[y] < miny then miny = cells[y] end
         if cells[y] > maxy then maxy = cells[y] end
     end
-    
+
     return m.rect( {minx, miny, maxx - minx + 1, maxy - miny + 1} )
 end
 
@@ -235,7 +318,7 @@ function m.rect(a)
     else
         error("rect arg must be {} or {x,y,wd,ht}", 2)
     end
-    
+
     return r
 end
 
@@ -303,14 +386,14 @@ function m.pattern(arg, x0, y0, A)
     -- return a table that makes it easier to manipulate patterns
     -- (emulates glife's pattern class)
     local p = {}
-    
+
     setmetatable(p, mtp)
-    
+
     arg = arg or {}
     x0 = x0 or 0
     y0 = y0 or 0
     A = A or m.identity
-    
+
     if type(arg) == "table" then
         p.array = {}
         if getmetatable(arg) == mtp then
@@ -336,10 +419,10 @@ function m.pattern(arg, x0, y0, A)
         newp.array = g.transform(p.array, x, y, table.unpack(A))
         return newp
     end
-    
+
     -- there's no need to implement p.translate and p.apply as they
     -- are just trivial variants of p.t
-    
+
     p.put = function (x, y, A, mode)
         -- paste pattern into current universe
         x = x or 0
@@ -363,12 +446,12 @@ function m.pattern(arg, x0, y0, A)
         g.fit()
         g.setcursor(m.zoomin)
     end
-    
+
     p.save = function (filepath)
         -- save the pattern to given file in RLE format
         g.store(p.array, filepath)
     end
-    
+
     p.add = function (p1, p2)
         local newp = m.pattern()
         newp.array = g.join(p1.array, p2.array)
@@ -377,13 +460,13 @@ function m.pattern(arg, x0, y0, A)
         -- return m.pattern( g.join(p1.array, p2.array) )
         -- because it avoids calling g.join again
     end
-    
+
     p.evolve = function (p1, n)
         local newp = m.pattern()
         newp.array = g.evolve(p1.array, n)
         return newp
     end
-    
+
     -- set metamethod so scripts can do pattern1 + pattern2
     mtp.__add = p.add
 
@@ -395,6 +478,10 @@ end
 
 --------------------------------------------------------------------------------
 
+-- avoid calling any g.* command in m.trace otherwise we'll get a Lua error
+-- message saying "error in error handling" if user aborts the script
+local Windows = g.os() == "Windows"
+
 function m.trace(msg)
     -- this function can be passed into xpcall so that a nice stack trace gets
     -- appended to a runtime error message
@@ -405,7 +492,7 @@ function m.trace(msg)
         result = result:gsub("\t", "")
         result = result:gsub("in upvalue ", "in function ") -- local function
         -- strip off paths that don't start with "." then remove ".\" or "./"
-        if g.os() == "Windows" then
+        if Windows then
             result = result:gsub("\n[^%.][^<\n]+\\", "\n")
             result = result:gsub("%.\\", "")
         else

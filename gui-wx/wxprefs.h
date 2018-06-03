@@ -62,6 +62,7 @@ extern char initrule[];          // initial rule
 extern bool initautofit;         // initial autofit setting
 extern bool inithyperspeed;      // initial hyperspeed setting
 extern bool initshowhashinfo;    // initial showhashinfo setting
+extern bool showpopulation;      // show population counts while generating?
 extern bool savexrle;            // save RLE file using XRLE format?
 extern bool showtips;            // show button tips?
 extern bool showtool;            // show tool bar?
@@ -70,6 +71,7 @@ extern bool showedit;            // show edit bar?
 extern bool showallstates;       // show all cell states in edit bar?
 extern bool showstatus;          // show status bar?
 extern bool showexact;           // show exact numbers in status bar?
+extern bool showscrollbars;      // show scroll bars?
 extern bool showtimeline;        // show timeline bar?
 extern bool showgridlines;       // display grid lines?
 extern bool showoverlay;         // display the current overlay?
@@ -108,6 +110,7 @@ extern wxCursor* newcurs;        // cursor after creating new pattern
 extern wxCursor* opencurs;       // cursor after opening pattern
 extern int mousewheelmode;       // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
 extern int thumbrange;           // thumb box scrolling range in terms of view wd/ht
+extern int wheelsens;            // mouse wheel sensitivity
 extern int mindelay;             // minimum millisec delay
 extern int maxdelay;             // maximum millisec delay
 extern wxString opensavedir;     // directory for Open/Save Pattern dialogs
@@ -230,6 +233,8 @@ typedef enum {
     DO_HELP,                      // show help
     DO_SHOWLAYER,                 // show layer bar
     DO_SHOWOVERLAY,               // show overlay
+    DO_SHOWPOP,                   // show population
+    DO_SHOWSCROLL,                // show scroll bars
     DO_SHOWSTATUS,                // show status bar
     DO_SHOWTIME,                  // show timeline
     DO_TIMING,                    // show timing
@@ -303,6 +308,7 @@ const int MAX_MEM_MB =           // maximum value of maximum memory
 const int MAX_BASESTEP = 2000000000;    // maximum base step
 const int MAX_DELAY = 5000;      // maximum mindelay or maxdelay
 const int MAX_THUMBRANGE = 500;  // maximum thumbrange
+const int MAX_SENSITIVITY = 10;  // maximum wheelsens
 const int MIN_DIRWD = 10;        // minimum dirwinwd
 
 // Golly uses wxTimers to control the speed of generating patterns, drawing cells,

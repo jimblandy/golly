@@ -28,7 +28,7 @@
 #include "wxinfo.h"        // for GetInfoFrame
 #include "wxstatus.h"      // for statusptr->...
 #include "wxview.h"        // for viewptr->...
-#include "wxscript.h"      // for RunScript, inscript
+#include "wxscript.h"      // for RunScript, inscript, scripttitle
 #include "wxmain.h"        // for MainFrame, etc
 #include "wxundo.h"        // for currlayer->undoredo->...
 #include "wxalgos.h"       // for CreateNewUniverse, algo_type, algoinfo, etc
@@ -64,6 +64,11 @@ wxString MainFrame::GetBaseName(const wxString& path)
 
 void MainFrame::SetWindowTitle(const wxString& filename)
 {
+    if ( !scripttitle.IsEmpty() ) {
+        // script has called settitle command
+        return;
+    }
+
     if ( !filename.IsEmpty() ) {
         // remember current file name
         currlayer->currname = filename;
@@ -1188,7 +1193,7 @@ wxString MainFrame::GetScriptFileName(const wxString& text)
     int linelen = 0;
     
     // need to be careful converting Unicode wxString to char*
-    wxCharBuffer buff = text.mb_str(wxConvLocal);
+    wxCharBuffer buff = text.mb_str(wxConvUTF8);
     const char* p = (const char*) buff;
     while (*p) {
         switch (*p) {
@@ -1709,12 +1714,6 @@ void MainFrame::SaveOverlay()
 void MainFrame::ToggleShowFiles()
 {
     if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
-#ifndef __WXMAC__
-    // hide scroll bars
-    bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-    bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-#endif
-    
     showfiles = !showfiles;
     if (splitwin->IsSplit()) {
         // hide left pane
@@ -1723,11 +1722,6 @@ void MainFrame::ToggleShowFiles()
         splitwin->SplitVertically(filectrl, RightPane(), dirwinwd);
     }
     viewptr->SetFocus();
-
-#ifndef __WXMAC__
-    // restore scroll bars
-    bigview->UpdateScrollBars();
-#endif
 }
 
 // -----------------------------------------------------------------------------

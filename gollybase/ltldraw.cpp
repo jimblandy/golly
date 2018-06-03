@@ -69,25 +69,27 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
 {
     if (population == 0) return;
 
-    // get cell colors and alpha values for dead and live pixels
-    renderer.getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea);
+    if (!renderer.justState()) {
+       // get cell colors and alpha values for dead and live pixels
+       renderer.getcolors(&cellred, &cellgreen, &cellblue, &deada, &livea);
     
-    // create RGBA view
-    unsigned char *rgbaptr = (unsigned char *)cellRGBA;
+       // create RGBA view
+       unsigned char *rgbaptr = (unsigned char *)cellRGBA;
     
-    // create dead color
-    *rgbaptr++ = cellred[0];
-    *rgbaptr++ = cellgreen[0];
-    *rgbaptr++ = cellblue[0];
-    *rgbaptr++ = deada;
+       // create dead color
+       *rgbaptr++ = cellred[0];
+       *rgbaptr++ = cellgreen[0];
+       *rgbaptr++ = cellblue[0];
+       *rgbaptr++ = deada;
     
-    // create live colors
-    unsigned int livestates = NumCellStates() - 1;
-    for (unsigned int ui = 1; ui <= livestates; ui++) {
-        *rgbaptr++ = cellred[ui];
-        *rgbaptr++ = cellgreen[ui];
-        *rgbaptr++ = cellblue[ui];
-        *rgbaptr++ = livea;
+       // create live colors
+       unsigned int livestates = NumCellStates() - 1;
+       for (unsigned int ui = 1; ui <= livestates; ui++) {
+           *rgbaptr++ = cellred[ui];
+           *rgbaptr++ = cellgreen[ui];
+           *rgbaptr++ = cellblue[ui];
+           *rgbaptr++ = livea;
+       }
     }
     
     int mag, pmag;
@@ -104,14 +106,17 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
     // get pixel position in view of grid's top left cell
     pair<int,int> ltpxl = view.screenPosOf(gridleft, gridtop, this);
     
-    if (pmag > 1) {
+    if (renderer.justState() || pmag > 1) {
         if (unbounded) {
             // simply display the entire grid -- ie. no need to use pixbuf
             int x = ltpxl.first;        // already multiplied by pmag
             int y = ltpxl.second;       // ditto
             int wd = gwd * pmag;
             int ht = ght * pmag;
-            renderer.pixblit(x, y, wd, ht, currgrid, pmag);
+            if (renderer.justState())
+               renderer.stateblit(x, y, wd, ht, currgrid) ;
+            else
+               renderer.pixblit(x, y, wd, ht, currgrid, pmag);
         } else {
             // the universe is bounded so we need to include the outer border
             bigint outerleft = gridleft;
@@ -123,7 +128,10 @@ void ltlalgo::draw(viewport &view, liferender &renderer)
             int y = ltpxl.second;
             int wd = outerwd * pmag;
             int ht = outerht * pmag;
-            renderer.pixblit(x, y, wd, ht, outergrid1, pmag);
+            if (renderer.justState())
+               renderer.stateblit(x, y, wd, ht, outergrid1) ;
+            else
+               renderer.pixblit(x, y, wd, ht, outergrid1, pmag);
         }
     } else {
         // pmag is 1 so first fill pixbuf with dead cells

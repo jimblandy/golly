@@ -6,7 +6,7 @@
 #include "writepattern.h"   // for MC_format, XRLE_format
 
 #include "select.h"         // for Selection
-#include "view.h"           // for OutsideLimits, etc
+#include "view.h"           // for OutsideLimits, nopattupdate, etc
 #include "utils.h"          // for Warning, Fatal, etc
 #include "algos.h"          // for algo_type
 #include "layer.h"          // for currlayer, numclones, MarkLayerDirty, etc
@@ -318,6 +318,9 @@ ChangeNode::~ChangeNode()
 
 void ChangeNode::ChangeCells(bool undo)
 {
+    // avoid possible pattern update during a setcell call (can happen if cellcount is large)
+    nopattupdate = true;
+
     // change state of cell(s) stored in cellinfo array
     if (undo) {
         // we must undo the cell changes in reverse order in case
@@ -335,6 +338,8 @@ void ChangeNode::ChangeCells(bool undo)
         }
     }
     if (cellcount > 0) currlayer->algo->endofpattern();
+
+    nopattupdate = false;
 }
 
 // -----------------------------------------------------------------------------

@@ -1592,19 +1592,11 @@ void PatternView::UpdateScrollBars()
         // avoid scroll bar disappearing
         if (range < 3) range = 3;
         hthumb = currlayer->view->x.toint() + range / 2;
-#ifdef __WXMAC__
         mainptr->hbar->SetScrollbar(hthumb, 1, range, 1, true);
-#else
-        bigview->SetScrollbar(wxHORIZONTAL, hthumb, 1, range, true);
-#endif
     } else {
         // keep thumb box in middle of scroll bar if grid width is infinite
         hthumb = (thumbrange - 1) * viewwd / 2;
-#ifdef __WXMAC__
         mainptr->hbar->SetScrollbar(hthumb, viewwd, thumbrange * viewwd, viewwd, true);
-#else
-        bigview->SetScrollbar(wxHORIZONTAL, hthumb, viewwd, thumbrange * viewwd, true);
-#endif
     }
     
     if (currlayer->algo->gridht > 0) {
@@ -1613,19 +1605,11 @@ void PatternView::UpdateScrollBars()
         // avoid scroll bar disappearing
         if (range < 3) range = 3;
         vthumb = currlayer->view->y.toint() + range / 2;
-#ifdef __WXMAC__
         mainptr->vbar->SetScrollbar(vthumb, 1, range, 1, true);
-#else
-        bigview->SetScrollbar(wxVERTICAL, vthumb, 1, range, true);
-#endif
     } else {
         // keep thumb box in middle of scroll bar if grid height is infinite
         vthumb = (thumbrange - 1) * viewht / 2;
-#ifdef __WXMAC__
         mainptr->vbar->SetScrollbar(vthumb, viewht, thumbrange * viewht, viewht, true);
-#else
-        bigview->SetScrollbar(wxVERTICAL, vthumb, viewht, thumbrange * viewht, true);
-#endif
     }
 }
 
@@ -1726,6 +1710,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_AUTOFIT:     mainptr->ToggleAutoFit(); break;
         case DO_HYPER:       if (!timeline) mainptr->ToggleHyperspeed(); break;
         case DO_HASHINFO:    mainptr->ToggleHashInfo(); break;
+        case DO_SHOWPOP:     mainptr->ToggleShowPopulation(); break;
         case DO_RECORD:      StartStopRecording(); break;
         case DO_DELTIME:     DeleteTimeline(); break;
         case DO_PLAYBACK:    if (!inscript && timeline) PlayTimeline(-1); break;
@@ -1767,6 +1752,7 @@ void PatternView::ProcessKey(int key, int modifiers)
         case DO_SHOWLAYER:   ToggleLayerBar(); break;
         case DO_SHOWEDIT:    ToggleEditBar(); break;
         case DO_SHOWSTATES:  ToggleAllStates(); break;
+        case DO_SHOWSCROLL:  mainptr->ToggleScrollBars(); break;
         case DO_SHOWSTATUS:  mainptr->ToggleStatusBar(); break;
         case DO_SHOWEXACT:   mainptr->ToggleExactNumbers(); break;
         case DO_SHOWICONS:   ToggleCellIcons(); break;
@@ -2968,7 +2954,7 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
     // wheelpos should be persistent, because in theory we should keep track of
     // the remainder if the amount scrolled was not an even number of deltas
     static int wheelpos = 0;
-    int delta, x, y;
+    int delta, rot, x, y;
     
     if (mousewheelmode == 0) {
         // ignore wheel, according to user preference
@@ -2976,15 +2962,21 @@ void PatternView::OnMouseWheel(wxMouseEvent& event)
         return;
     }
     
-    // delta is the amount that represents one "step" of rotation. Normally 120.
-    delta = event.GetWheelDelta();
+    // delta is the amount that represents one "step" of rotation.
+    // Normally 120 on Win/Linux but 10 on Mac.
+    // If wheelsens < MAX_SENSITIVITY then mouse wheel will be less sensitive.
+    delta = event.GetWheelDelta() * (MAX_SENSITIVITY + 1 - wheelsens);
+    rot = event.GetWheelRotation();
     x = event.GetX();
     y = event.GetY();
     
     if (mousewheelmode == 2)
-        wheelpos -= event.GetWheelRotation();
+        wheelpos -= rot;
     else
-        wheelpos += event.GetWheelRotation();
+        wheelpos += rot;
+    
+    // DEBUG:
+    // statusptr->DisplayMessage(wxString::Format(_("delta=%d rot=%d wheelpos=%d"), delta, rot, wheelpos));
     
     while (wheelpos >= delta) {
         wheelpos -= delta;

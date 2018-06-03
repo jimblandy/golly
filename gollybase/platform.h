@@ -38,3 +38,12 @@
    #define G_MAX UINT_MAX
    #undef GOLLY64BIT
 #endif
+#define USEPREFETCH (1)
+// note that _WIN32 is also defined when compiling for 64-bit Windows
+#ifdef _WIN32
+#include <mmintrin.h>
+#include <xmmintrin.h>
+#define PREFETCH(a) _mm_prefetch((const char *)a, _MM_HINT_T0)
+#else
+#define PREFETCH(a) __builtin_prefetch(a)
+#endif

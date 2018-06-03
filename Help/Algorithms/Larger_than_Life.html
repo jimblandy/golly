@@ -19,17 +19,30 @@ C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 255).<br>
 M<i>m</i> - specifies if the middle cell is included in the neighborhood count (<i>m</i> is 0 or 1).<br>
 S<i>smin</i>..<i>smax</i> - specifies the count limits for a state 1 cell to survive.<br>
 B<i>bmin</i>..<i>bmax</i> - specifies the count limits for a dead cell to become a birth.<br>
-N<i>n</i> - specifies the extended neighborhood type (<i>n</i> is M for Moore or N for von Neumann).
+N<i>n</i> - specifies the extended neighborhood type (<i>n</i> is M for Moore, N for von Neumann, and C is for circular).
 
 <p>
-This diagram shows the extended Moore and von Neumann neighborhoods for <i>r</i> = 3:
+These diagrams show the NM, NN and NC neighborhoods for <i>r</i> = 3
+(the NC diagram also shows the circle used to determine which cells are
+within the circular neighborhood):
 
 <p>
-<dd><img src="extended.png"></dd>
+<dd>
+<img src="NM.png"> &nbsp;&nbsp;&nbsp;
+<img src="NN.png"> &nbsp;&nbsp;&nbsp;
+<img src="NC.png">
+</dd>
 
 <p>
 The S and B limits must be from 0 to the neighborhood size:
-(2<i>r</i>+1)^2 when <i>n</i> = M, or 2<i>r</i>(<i>r</i>+1)+1 when <i>n</i> = N.
+(2<i>r</i>+1)^2 when <i>n</i> = M, or 2<i>r</i>(<i>r</i>+1)+1 when <i>n</i> = N,
+or approximately 3.14(<i>r</i>+0.5)^2 when <i>n</i> = C.
+The set of points in a circular neighborhood is those whose Euclidean distance
+from the center point is less than <i>r</i>+0.5.
+A quick way to see the circular neighborhood for a given <i>r</i> and <i>n</i>
+is to use a rule with only B1 set.  For example, switch to
+<b><a href="rule:R6,C0,M0,S1..1,B1..1,NC">R6,C0,M0,S1..1,B1..1,NC</a></b>,
+turn on a single cell and hit the space bar.
 
 <p>
 If the number of states (specified after C) is greater than 2 then states 1 and above

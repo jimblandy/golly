@@ -190,29 +190,32 @@ void generationsalgo::setTotalistic(int value, bool survival) {
    int j = 0 ;
    int offset = 0 ;
 
-   // update the rulebits
+   // check if this value has already been processed
    if (survival) {
       offset = survival_offset ;
    }
-   rulebits |= 1 << (value + offset) ;
+   if ((rulebits & (1 << (value + offset))) == 0) {
+       // update the rulebits
+       rulebits |= 1 << (value + offset) ;
 
-   // update the mask if survival
-   if (survival) {
-      mask = 0x10 ;
-   }
+       // update the mask if survival
+       if (survival) {
+          mask = 0x10 ;
+       }
 
-   // fill the array based on totalistic value
-   for (i = 0 ; i < ALL3X3 ; i += 32) {
-      for (j = 0 ; j < 16 ; j++) {
-         nbrs = 0 ;
-         nhood = (i+j) & neighbormask ;
-         while (nhood > 0) {
-            nbrs += (nhood & 1) ;
-            nhood >>= 1 ;
-         }
-         if (value == nbrs) {
-            rule3x3[i+j+mask] = 1 ;
-         }
+       // fill the array based on totalistic value
+       for (i = 0 ; i < ALL3X3 ; i += 32) {
+          for (j = 0 ; j < 16 ; j++) {
+             nbrs = 0 ;
+             nhood = (i+j) & neighbormask ;
+             while (nhood > 0) {
+                nbrs += (nhood & 1) ;
+                nhood >>= 1 ;
+             }
+             if (value == nbrs) {
+                rule3x3[i+j+mask] = 1 ;
+             }
+          }
       }
    }
 }
@@ -761,7 +764,7 @@ const char *generationsalgo::setrule(const char *rulestring) {
       r += 3 ;
       bpos = r ;
 
-     // terminate at the colon if one is present
+      // terminate at the colon if one is present
       if (colonpos) *colonpos = 0 ;
 
       // check the length of the map
@@ -780,6 +783,12 @@ const char *generationsalgo::setrule(const char *rulestring) {
 
       // length is up to the final slash
       maplen = (int) (lastslash - r) ;
+
+      // check if there is base64 padding
+      if (maplen > 2 && !strncmp(r + maplen - 2, "==", 2)) {
+         // remove padding
+         maplen -= 2 ;
+      }
 
       // check if the map length is valid for Moore, Hexagonal or von Neumann neighborhoods
       if (!(maplen == MAP512LENGTH || maplen == MAP128LENGTH || maplen == MAP32LENGTH)) {
@@ -807,7 +816,7 @@ const char *generationsalgo::setrule(const char *rulestring) {
       }
 
       // read number of states
-      r++ ;
+      r = lastslash + 1 ;
       c = *r ;
       while (c) {
          if (c >= '0' && c <= '9') {

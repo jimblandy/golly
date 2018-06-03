@@ -93,6 +93,7 @@ public:
     void ToggleAutoFit();
     void ToggleHyperspeed();
     void ToggleHashInfo();
+    void ToggleShowPopulation();
     void SetStepExponent(int newexpo);
     void SetGenIncrement();
     bool SaveStartingPattern();
@@ -114,6 +115,7 @@ public:
     void ToggleStatusBar();
     void ToggleExactNumbers();
     void ToggleToolBar();
+    void ToggleScrollBars();
     void ToggleFullScreen();
     void ShowPatternInfo();
     void ResizeSplitWindow(int wd, int ht);
@@ -155,11 +157,10 @@ public:
 
     bool infront;               // main window is active?
 
-#ifdef __WXMAC__
     // these scroll bars are needed to avoid bug in wxGLCanvas on Mac
+    // and to allow showing/hiding them on all platforms
     wxScrollBar* hbar;
     wxScrollBar* vbar;
-#endif
     
 private:
     // any class wishing to process wxWidgets events must use this macro
@@ -175,9 +176,7 @@ private:
     void OnSashDblClick(wxSplitterEvent& event);
     void OnGenTimer(wxTimerEvent& event);
     void OnClose(wxCloseEvent& event);
-#ifdef __WXMAC__
     void OnScroll(wxScrollEvent& event);
-#endif
     
     // file functions
     bool LoadImage(const wxString& path);
@@ -298,6 +297,7 @@ enum {
     ID_AUTO,
     ID_HYPER,
     ID_HINFO,
+    ID_SHOW_POP,
     ID_RECORD,
     ID_DELTIME,
     ID_SETALGO,
@@ -328,6 +328,7 @@ enum {
     ID_INVERT,
     ID_SMARTSCALE,
     ID_TIMELINE,
+    ID_SCROLL,
     ID_INFO,
     
     // Set Scale submenu

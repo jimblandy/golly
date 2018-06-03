@@ -19,9 +19,11 @@
 #include <string.h>
 using namespace std ;
 /*
- *   Prime hash sizes tend to work best.
+ *   Power of two hash sizes work fine.
  */
-static g_uintptr_t nextprime(g_uintptr_t i) {
+#ifdef PRIMEMOD
+#define HASHMOD(a) ((a)%hashprime)
+static g_uintptr_t nexthashsize(g_uintptr_t i) {
    g_uintptr_t j ;
    i |= 1 ;
    for (;; i+=2) {
@@ -32,37 +34,62 @@ static g_uintptr_t nextprime(g_uintptr_t i) {
          return i ;
    }
 }
+#else
+#define HASHMOD(a) ((a)&(hashmask))
+static g_uintptr_t nexthashsize(g_uintptr_t i) {
+   while ((i & (i - 1)))
+      i += (i & (1 + ~i)) ; // i & - i is more idiomatic but generates warning
+   return i ;
+}
+#endif
 /*
  *   We do now support garbage collection, but there are some routines we
  *   call frequently to help us.
  */
+#ifdef PRIMEMOD
 #define ghnode_hash(a,b,c,d) (65537*(g_uintptr_t)(d)+257*(g_uintptr_t)(c)+17*(g_uintptr_t)(b)+5*(g_uintptr_t)(a))
+#else
+g_uintptr_t ghnode_hash(void *a, void *b, void *c, void *d) {
+   g_uintptr_t r = (65537*(g_uintptr_t)(d)+257*(g_uintptr_t)(c)+17*(g_uintptr_t)(b)+5*(g_uintptr_t)(a)) ;
+   r += (r >> 11) ;
+   return r ;
+}
+#endif
 #define ghleaf_hash(a,b,c,d) (65537*(d)+257*(c)+17*(b)+5*(a))
 /*
- *   Resize the hash.
+ *   Resize the hash.  The max load factor defined here does not actually
+ *   yield the maximum load factor the hash will see, because when we
+ *   do the last resize before exhausting memory, we may find we are
+ *   not permitted (while keeping total memory consumption below the
+ *   limit) to do the resize, so the actual max load factor may be
+ *   somewhat higher.  Conversely, because we double the hash size
+ *   each time, the actual final max load factor may be less than this.
+ *   Additional code can be added to manage this, but after some
+ *   experimentation, it has been found that the impact is tiny, so
+ *   we are keeping the code simple.  Nonetheless, this factor can be
+ *   tweaked in the case where you absolutely want as many nodes as
+ *   possible in memory, and are willing to use a large load factor to
+ *   permit this; with the move-to-front heuristic, the code actually
+ *   handles a large load factor fairly well.
  */
+double ghashbase::maxloadfactor = 0.7 ;
 void ghashbase::resize() {
-   g_uintptr_t i, nhashprime = nextprime(2 * hashprime) ;
-   ghnode *p, **nhashtab ;
-   if (alloced > maxmem ||
-       nhashprime * sizeof(ghnode *) > (maxmem - alloced)) {
-      hashlimit = G_MAX ;
-      return ;
+#ifndef NOGCBEFORERESIZE
+   if (okaytogc) {
+      do_gc(0) ;
    }
-   /*
-    *   Don't let the hash table buckets take more than 4% of the
-    *   memory.  If we're starting to strain memory, let the buckets
-    *   fill up a bit more.
-    */
-   if (nhashprime > (maxmem/(25*sizeof(int *)))) {
-      nhashprime = nextprime(maxmem/(25*sizeof(int *))) ;
-      if (nhashprime == hashprime) {
+#endif
+   g_uintptr_t i, nhashprime = nexthashsize(2 * hashprime) ;
+   ghnode *p, **nhashtab ;
+   if (hashprime > (totalthings >> 2)) {
+      if (alloced > maxmem ||
+          nhashprime * sizeof(ghnode *) > (maxmem - alloced)) {
          hashlimit = G_MAX ;
          return ;
       }
    }
    if (verbose) {
-     strcpy(statusline, "Resizing hash...") ;
+     sprintf(statusline, "Resizing hash to %" PRIuPTR "...", nhashprime) ;
      lifestatus(statusline) ;
    }
    nhashtab = (ghnode **)calloc(nhashprime, sizeof(ghnode *)) ;
@@ -73,7 +100,12 @@ void ghashbase::resize() {
      return ;
    }
    alloced += sizeof(ghnode *) * (nhashprime - hashprime) ;
-   for (i=0; i<hashprime; i++) {
+   g_uintptr_t ohashprime = hashprime ;
+   hashprime = nhashprime ;
+#ifndef PRIMEMOD
+   hashmask = hashprime - 1 ;
+#endif
+   for (i=0; i<ohashprime; i++) {
       for (p=hashtab[i]; p;) {
          ghnode *np = p->next ;
          g_uintptr_t h ;
@@ -83,7 +115,7 @@ void ghashbase::resize() {
             ghleaf *l = (ghleaf *)p ;
             h = ghleaf_hash(l->nw, l->ne, l->sw, l->se) ;
          }
-         h %= nhashprime ;
+         h = HASHMOD(h) ;
          p->next = nhashtab[h] ;
          nhashtab[h] = p ;
          p = np ;
@@ -91,8 +123,7 @@ void ghashbase::resize() {
    }
    free(hashtab) ;
    hashtab = nhashtab ;
-   hashprime = nhashprime ;
-   hashlimit = hashprime ;
+   hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
    if (verbose) {
      strcpy(statusline+strlen(statusline), " done.") ;
      lifestatus(statusline) ;
@@ -108,7 +139,7 @@ ghnode *ghashbase::find_ghnode(ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) {
    ghnode *p ;
    g_uintptr_t h = ghnode_hash(nw,ne,sw,se) ;
    ghnode *pred = 0 ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    for (p=hashtab[h]; p; p = p->next) { /* make sure to compare nw *first* */
       if (nw == p->nw && ne == p->ne && sw == p->sw && se == p->se) {
          if (pred) { /* move this one to the front */
@@ -129,38 +160,16 @@ ghnode *ghashbase::find_ghnode(ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) {
    p->next = hashtab[h] ;
    hashtab[h] = p ;
    hashpop++ ;
+   save(p) ;
    if (hashpop > hashlimit)
       resize() ;
-   return save(p) ;
-}
-void ghashbase::unhash_ghnode(ghnode *n) {
-   ghnode *p ;
-   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
-   ghnode *pred = 0 ;
-   h = h % hashprime ;
-   for (p=hashtab[h]; p; p = p->next) {
-      if (p == n) {
-         if (pred)
-            pred->next = p->next ;
-         else
-            hashtab[h] = p->next ;
-         return ;
-      }
-      pred = p ;
-   }
-   lifefatal("Didn't find ghnode to unhash") ;
-}
-void ghashbase::rehash_ghnode(ghnode *n) {
-   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
-   h = h % hashprime ;
-   n->next = hashtab[h] ;
-   hashtab[h] = n ;
+   return p ;
 }
 ghleaf *ghashbase::find_ghleaf(state nw, state ne, state sw, state se) {
    ghleaf *p ;
    ghleaf *pred = 0 ;
    g_uintptr_t h = ghleaf_hash(nw, ne, sw, se) ;
-   h = h % hashprime ;
+   h = HASHMOD(h) ;
    for (p=(ghleaf *)hashtab[h]; p; p = (ghleaf *)p->next) {
       if (nw == p->nw && ne == p->ne && sw == p->sw && se == p->se &&
           !is_ghnode(p)) {
@@ -178,14 +187,15 @@ ghleaf *ghashbase::find_ghleaf(state nw, state ne, state sw, state se) {
    p->ne = ne ;
    p->sw = sw ;
    p->se = se ;
-   p->leafpop = (nw != 0) + (ne != 0) + (sw != 0) + (se != 0) ;
+   p->leafpop = bigint((short)((nw != 0) + (ne != 0) + (sw != 0) + (se != 0))) ;
    p->isghnode = 0 ;
    p->next = hashtab[h] ;
    hashtab[h] = (ghnode *)p ;
    hashpop++ ;
+   save((ghnode *)p) ;
    if (hashpop > hashlimit)
       resize() ;
-   return (ghleaf *)save((ghnode *)p) ;
+   return p ;
 }
 /*
  *   The following routine does the same, but first it checks to see if
@@ -210,8 +220,10 @@ ghnode *ghashbase::getres(ghnode *n, int depth) {
     *   calls here, one to prevent us going deeper, and another
     *   to prevent us from destroying the cache field.
     */
-   if (poller->poll()) return zeroghnode(depth-1) ;
+   if (poller->poll() || softinterrupt) return zeroghnode(depth-1) ;
    int sp = gsp ;
+   if (running_hperf.fastinc(depth, ngens < depth))
+      running_hperf.report(inc_hperf, verbose) ;
    depth-- ;
    if (ngens >= depth) {
      if (is_ghnode(n->nw)) {
@@ -221,8 +233,6 @@ ghnode *ghashbase::getres(ghnode *n, int depth) {
                                        (ghleaf *)n->sw, (ghleaf *)n->se) ;
      }
    } else {
-     if (halvesdone < 1000)
-       halvesdone++ ;
      if (is_ghnode(n->nw)) {
        res = dorecurs_half(n->nw, n->ne, n->sw, n->se, depth) ;
      } else {
@@ -230,12 +240,85 @@ ghnode *ghashbase::getres(ghnode *n, int depth) {
      }
    }
    pop(sp) ;
-   if (poller->isInterrupted()) // don't assign this to the cache field!
+   if (softinterrupt || poller->isInterrupted()) // don't assign this to the cache field!
      res = zeroghnode(depth) ;
-   else
+   else {
+     if (ngens < depth && halvesdone < 1000)
+       halvesdone++ ;
      n->res = res ;
+   }
    return res ;
 }
+#ifdef USEPREFETCH
+void ghashbase::setupprefetch(ghsetup_t &su, ghnode *nw, ghnode *ne, ghnode *sw, ghnode *se) {
+   su.h = ghnode_hash(nw,ne,sw,se) ;
+   su.nw = nw ;
+   su.ne = ne ;
+   su.sw = sw ;
+   su.se = se ;
+   su.prefetch(hashtab + HASHMOD(su.h)) ;
+}
+ghnode *ghashbase::find_ghnode(ghsetup_t &su) {
+   ghnode *p ;
+   ghnode *pred = 0 ;
+   g_uintptr_t h = HASHMOD(su.h) ;
+   for (p=hashtab[h]; p; p = p->next) { /* make sure to compare nw *first* */
+      if (su.nw == p->nw && su.ne == p->ne && su.sw == p->sw && su.se == p->se) {
+         if (pred) { /* move this one to the front */
+            pred->next = p->next ;
+            p->next = hashtab[h] ;
+            hashtab[h] = p ;
+         }
+         return save(p) ;
+      }
+      pred = p ;
+   }
+   p = newghnode() ;
+   p->nw = su.nw ;
+   p->ne = su.ne ;
+   p->sw = su.sw ;
+   p->se = su.se ;
+   p->res = 0 ;
+   p->next = hashtab[h] ;
+   hashtab[h] = p ;
+   hashpop++ ;
+   save(p) ;
+   if (hashpop > hashlimit)
+      resize() ;
+   return p ;
+}
+ghnode *ghashbase::dorecurs(ghnode *n, ghnode *ne, ghnode *t, ghnode *e, int depth) {
+   int sp = gsp ;
+   ghsetup_t su[5] ;
+   setupprefetch(su[2], n->se, ne->sw, t->ne, e->nw) ;
+   setupprefetch(su[0], n->ne, ne->nw, n->se, ne->sw) ;
+   setupprefetch(su[1], ne->sw, ne->se, e->nw, e->ne) ;
+   setupprefetch(su[3], n->sw, n->se, t->nw, t->ne) ;
+   setupprefetch(su[4], t->ne, e->nw, t->se, e->sw) ;
+   ghnode
+   *t00 = getres(n, depth),
+   *t01 = getres(find_ghnode(su[0]), depth),
+   *t02 = getres(ne, depth),
+   *t12 = getres(find_ghnode(su[1]), depth),
+   *t11 = getres(find_ghnode(su[2]), depth),
+   *t10 = getres(find_ghnode(su[3]), depth),
+   *t20 = getres(t, depth),
+   *t21 = getres(find_ghnode(su[4]), depth),
+   *t22 = getres(e, depth) ;
+   setupprefetch(su[0], t11, t12, t21, t22) ;
+   setupprefetch(su[1], t10, t11, t20, t21) ;
+   setupprefetch(su[2], t00, t01, t10, t11) ;
+   setupprefetch(su[3], t01, t02, t11, t12) ;
+   ghnode
+   *t44 = getres(find_ghnode(su[0]), depth),
+   *t43 = getres(find_ghnode(su[1]), depth),
+   *t33 = getres(find_ghnode(su[2]), depth),
+   *t34 = getres(find_ghnode(su[3]), depth) ;
+   n = find_ghnode(t33, t34, t43, t44) ;
+   pop(sp) ;
+   return save(n) ;
+}
+#else
 /*
  *   So let's say the cached way failed.  How do we do it the slow way?
  *   Recursively, of course.  For an n-square (composed of the four
@@ -252,11 +335,11 @@ ghnode *ghashbase::dorecurs(ghnode *n, ghnode *ne, ghnode *t,
                             ghnode *e, int depth) {
    int sp = gsp ;
    ghnode
+   *t11 = getres(find_ghnode(n->se, ne->sw, t->ne, e->nw), depth),
    *t00 = getres(n, depth),
    *t01 = getres(find_ghnode(n->ne, ne->nw, n->se, ne->sw), depth),
    *t02 = getres(ne, depth),
    *t12 = getres(find_ghnode(ne->sw, ne->se, e->nw, e->ne), depth),
-   *t11 = getres(find_ghnode(n->se, ne->sw, t->ne, e->nw), depth),
    *t10 = getres(find_ghnode(n->sw, n->se, t->nw, t->ne), depth),
    *t20 = getres(t, depth),
    *t21 = getres(find_ghnode(t->ne, e->nw, t->se, e->sw), depth),
@@ -269,6 +352,7 @@ ghnode *ghashbase::dorecurs(ghnode *n, ghnode *ne, ghnode *t,
    pop(sp) ;
    return save(n) ;
 }
+#endif
 /*
  *   Same as above, but we only do one step instead of 2.
  */
@@ -375,7 +459,9 @@ ghnode *ghashbase::newghnode() {
  *   Leaves are the same.
  */
 ghleaf *ghashbase::newghleaf() {
-   return (ghleaf *)newghnode() ;
+   ghleaf *r = (ghleaf *)newghnode() ;
+   new(&(r->leafpop))bigint ;
+   return r ;
 }
 /*
  *   Sometimes we want the new ghnode or ghleaf to be automatically cleared
@@ -385,23 +471,27 @@ ghnode *ghashbase::newclearedghnode() {
    return (ghnode *)memset(newghnode(), 0, sizeof(ghnode)) ;
 }
 ghleaf *ghashbase::newclearedghleaf() {
-   return (ghleaf *)memset(newghleaf(), 0, sizeof(ghleaf)) ;
+   ghleaf *r = (ghleaf *)newclearedghnode() ;
+   new(&(r->leafpop))bigint ;
+   return r ;
 }
 ghashbase::ghashbase() {
-   hashprime = nextprime(1000) ;
-   hashlimit = hashprime ;
+   hashprime = nexthashsize(1000) ;
+#ifndef PRIMEMOD
+   hashmask = hashprime - 1 ;
+#endif
+   hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
    hashpop = 0 ;
    hashtab = (ghnode **)calloc(hashprime, sizeof(ghnode *)) ;
    if (hashtab == 0)
      lifefatal("Out of memory (1).") ;
-   alloced += hashprime * sizeof(ghnode *) ;
+   alloced = hashprime * sizeof(ghnode *) ;
    ngens = 0 ;
    stacksize = 0 ;
    halvesdone = 0 ;
    nzeros = 0 ;
    stack = 0 ;
    gsp = 0 ;
-   alloced = 0 ;
    maxmem = 256 * 1024 * 1024 ;
    freeghnodes = 0 ;
    okaytogc = 0 ;
@@ -428,6 +518,10 @@ ghashbase::ghashbase() {
    cacheinvalid = 0 ;
    gccount = 0 ;
    gcstep = 0 ;
+   running_hperf.clear() ;
+   inc_hperf = running_hperf ;
+   step_hperf = running_hperf ;
+   softinterrupt = 0 ;
 }
 /**
  *   Destructor frees memory.
@@ -452,6 +546,8 @@ ghashbase::~ghashbase() {
  *   Set increment.
  */
 void ghashbase::setIncrement(bigint inc) {
+   if (inc < increment)
+      softinterrupt = 1 ;
    increment = inc ;
 }
 /**
@@ -462,40 +558,47 @@ void ghashbase::step() {
    // we use while here because the increment may be changed while we are
    // doing the hashtable sweep; if that happens, we may need to sweep
    // again.
-   int cleareddownto = 1000000000 ;
-   while (increment != setincrement) {
-      bigint pendingincrement = increment ;
-      int newpow2 = 0 ;
-      bigint t = pendingincrement ;
-      while (t > 0 && t.even()) {
-         newpow2++ ;
-         t.div2() ;
+   while (1) {
+      int cleareddownto = 1000000000 ;
+      softinterrupt = 0 ;
+      while (increment != setincrement) {
+         bigint pendingincrement = increment ;
+         int newpow2 = 0 ;
+         bigint t = pendingincrement ;
+         while (t > 0 && t.even()) {
+            newpow2++ ;
+            t.div2() ;
+         }
+         nonpow2 = t.low31() ;
+         if (t != nonpow2)
+            lifefatal("bad increment") ;
+         int downto = newpow2 ;
+         if (ngens < newpow2)
+            downto = ngens ;
+         if (newpow2 != ngens && cleareddownto > downto) {
+            new_ngens(newpow2) ;
+            cleareddownto = downto ;
+         } else {
+            ngens = newpow2 ;
+         }
+         setincrement = pendingincrement ;
+         pow2step = 1 ;
+         while (newpow2--)
+            pow2step += pow2step ;
       }
-      nonpow2 = t.low31() ;
-      if (t != nonpow2)
-         lifefatal("bad increment") ;
-      int downto = newpow2 ;
-      if (ngens < newpow2)
-         downto = ngens ;
-      if (newpow2 != ngens && cleareddownto > downto) {
-         new_ngens(newpow2) ;
-         cleareddownto = downto ;
-      } else {
-         ngens = newpow2 ;
+      gcstep = 0 ;
+      running_hperf.genval = generation.todouble() ;
+      for (int i=0; i<nonpow2; i++) {
+         ghnode *newroot = runpattern() ;
+         if (newroot == 0 || softinterrupt || poller->isInterrupted()) // we *were* interrupted
+            break ;
+         popValid = 0 ;
+         root = newroot ;
+         depth = ghnode_depth(root) ;
       }
-      setincrement = pendingincrement ;
-      pow2step = 1 ;
-      while (newpow2--)
-         pow2step += pow2step ;
-   }
-   gcstep = 0 ;
-   for (int i=0; i<nonpow2; i++) {
-      ghnode *newroot = runpattern() ;
-      if (newroot == 0 || poller->isInterrupted()) // we *were* interrupted
+      running_hperf.reportStep(step_hperf, inc_hperf, generation.todouble(), verbose) ;
+      if (poller->isInterrupted() || !softinterrupt)
          break ;
-      popValid = 0 ;
-      root = newroot ;
-      depth = ghnode_depth(root) ;
    }
 }
 void ghashbase::setcurrentstate(void *n) {
@@ -521,7 +624,7 @@ void ghashbase::setMaxMemory(int newmemlimit) {
       return ;
    }
    maxmem = newlimit ;
-   hashlimit = hashprime ;
+   hashlimit = (g_uintptr_t)(maxloadfactor * hashprime) ;
 }
 /**
  *   Clear everything.
@@ -591,6 +694,7 @@ ghnode *ghashbase::zeroghnode(int depth) {
  */
 ghnode *ghashbase::pushroot(ghnode *n) {
    int depth = ghnode_depth(n) ;
+   zeroghnode(depth+1) ; // ensure zeros are deep enough
    ghnode *z = zeroghnode(depth-1) ;
    return find_ghnode(find_ghnode(z, z, z, n->nw),
                     find_ghnode(z, z, n->ne, z),
@@ -643,24 +747,37 @@ ghnode *ghashbase::gsetbit(ghnode *n, int x, int y, int newstate, int depth) {
       if (depth > 31) {
          if (depth == 32)
             wh = 0x80000000 ;
+	 w = 0 ;
       } else {
          w = 1 << depth ;
          wh = 1 << (depth - 1) ;
       }
-      if (depth > 31)
-         w = 0 ;
       depth-- ;
       ghnode **nptr ;
-      if (x < 0) {
-         if (y < 0)
-            nptr = &(n->sw) ;
-         else
-            nptr = &(n->nw) ;
+      if (depth+1 == this->depth || depth < 31) {
+         if (x < 0) {
+            if (y < 0)
+               nptr = &(n->sw) ;
+            else
+               nptr = &(n->nw) ;
+         } else {
+            if (y < 0)
+               nptr = &(n->se) ;
+            else
+               nptr = &(n->ne) ;
+         }
       } else {
-         if (y < 0)
-            nptr = &(n->se) ;
-         else
-            nptr = &(n->ne) ;
+         if (x >= 0) {
+            if (y >= 0)
+               nptr = &(n->sw) ;
+            else
+               nptr = &(n->nw) ;
+         } else {
+            if (y >= 0)
+               nptr = &(n->se) ;
+            else
+               nptr = &(n->ne) ;
+         }
       }
       if (*nptr == 0) {
          if (depth == 0)
@@ -671,10 +788,10 @@ ghnode *ghashbase::gsetbit(ghnode *n, int x, int y, int newstate, int depth) {
       ghnode *s = gsetbit(*nptr, (x & (w - 1)) - wh,
                                  (y & (w - 1)) - wh, newstate, depth) ;
       if (hashed) {
-         ghnode *nw = n->nw ;
-         ghnode *sw = n->sw ;
-         ghnode *ne = n->ne ;
-         ghnode *se = n->se ;
+         ghnode *nw = (nptr == &(n->nw) ? s : n->nw) ;
+         ghnode *sw = (nptr == &(n->sw) ? s : n->sw) ;
+         ghnode *ne = (nptr == &(n->ne) ? s : n->ne) ;
+         ghnode *se = (nptr == &(n->se) ? s : n->se) ;
          if (x < 0) {
             if (y < 0)
                sw = s ;
@@ -699,6 +816,15 @@ ghnode *ghashbase::gsetbit(ghnode *n, int x, int y, int newstate, int depth) {
  *   but really not all that complicated.
  */
 int ghashbase::getbit(ghnode *n, int x, int y, int depth) {
+   struct ghnode tnode ;
+   while (depth >= 32) {
+      tnode.nw = n->nw->se ;
+      tnode.ne = n->ne->sw ;
+      tnode.sw = n->sw->ne ;
+      tnode.se = n->se->nw ;
+      n = &tnode ;
+      depth-- ;
+   }
    if (depth == 0) {
       ghleaf *l = (ghleaf *)n ;
       if (x < 0)
@@ -927,6 +1053,7 @@ void ghashbase::endofpattern() {
    poller->bailIfCalculating() ;
    if (!hashed) {
       root = hashpattern(root, depth) ;
+      zeroghnode(depth) ;
       hashed = 1 ;
    }
    popValid = 0 ;
@@ -970,15 +1097,49 @@ ghnode *ghashbase::popzeros(ghnode *n) {
  *   Sometimes we want to use *res* instead of next to mark.  You cannot
  *   do this to leaves, though.
  */
-#define marked2(n) (1 & (g_uintptr_t)(n)->res)
+#define marked2(n) (3 & (g_uintptr_t)(n)->res)
 #define mark2(n) ((n)->res = (ghnode *)(1 | (g_uintptr_t)(n)->res))
-#define clearmark2(n) ((n)->res = (ghnode *)(~1 & (g_uintptr_t)(n)->res))
-static void sum4(bigint &dest, const bigint &a, const bigint &b,
-                 const bigint &c, const bigint &d) {
-   dest = a ;
-   dest += b ;
-   dest += c ;
-   dest += d ;
+#define mark2v(n, v) ((n)->res = (ghnode *)(v | (g_uintptr_t)(n)->res))
+#define clearmark2(n) ((n)->res = (ghnode *)(~3 & (g_uintptr_t)(n)->res))
+void ghashbase::unhash_ghnode(ghnode *n) {
+   ghnode *p ;
+   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
+   ghnode *pred = 0 ;
+   h = HASHMOD(h) ;
+   for (p=hashtab[h]; (!is_ghnode(p) || !marked2(p)) && p; p = p->next) {
+      if (p == n) {
+         if (pred)
+            pred->next = p->next ;
+         else
+            hashtab[h] = p->next ;
+         return ;
+      }
+      pred = p ;
+   }
+   lifefatal("Didn't find ghnode to unhash") ;
+}
+void ghashbase::unhash_ghnode2(ghnode *n) {
+   ghnode *p ;
+   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
+   ghnode *pred = 0 ;
+   h = HASHMOD(h) ;
+   for (p=hashtab[h]; p; p = p->next) {
+      if (p == n) {
+         if (pred)
+            pred->next = p->next ;
+         else
+            hashtab[h] = p->next ;
+         return ;
+      }
+      pred = p ;
+   }
+   lifefatal("Didn't find ghnode to unhash") ;
+}
+void ghashbase::rehash_ghnode(ghnode *n) {
+   g_uintptr_t h = ghnode_hash(n->nw,n->ne,n->sw,n->se) ;
+   h = HASHMOD(h) ;
+   n->next = hashtab[h] ;
+   hashtab[h] = n ;
 }
 /*
  *   This recursive routine calculates the population by hanging the
@@ -987,35 +1148,56 @@ static void sum4(bigint &dest, const bigint &a, const bigint &b,
 const bigint &ghashbase::calcpop(ghnode *root, int depth) {
    if (root == zeroghnode(depth))
       return bigint::zero ;
-   if (depth == 0) {
-      root->nw = 0 ;
-      bigint &r = *(bigint *)&(root->nw) ;
-      ghleaf *n = (ghleaf *)root ;
-      r = n->leafpop ;
-      return r ;
-   } else if (marked2(root)) {
+   if (depth == 0)
+      return ((ghleaf *)root)->leafpop ;
+   if (marked2(root))
       return *(bigint*)&(root->next) ;
-   } else {
-      depth-- ;
+   depth-- ;
+   if (root->next == 0)
+      mark2v(root, 3) ;
+   else {
       unhash_ghnode(root) ;
+      mark2(root) ;
+   }
 /**
  *   We use the memory in root->next as a value bigint.  But we want to
  *   make sure the copy constructor doesn't "clean up" something that
  *   doesn't exist.  So we clear it to zero here.
  */
-      root->next = (ghnode *)0 ; // I wish I could come up with a cleaner way
-      sum4(*(bigint *)&(root->next),
-           calcpop(root->nw, depth), calcpop(root->ne, depth),
-           calcpop(root->sw, depth), calcpop(root->se, depth)) ;
-      mark2(root) ;
-      return *(bigint *)&(root->next) ;
+   new(&(root->next))bigint(
+        calcpop(root->nw, depth), calcpop(root->ne, depth),
+        calcpop(root->sw, depth), calcpop(root->se, depth)) ;
+   return *(bigint *)&(root->next) ;
+}
+/*
+ *   Call this after doing something that unhashes ghnodes in order to
+ *   use the next field as a temp pointer.
+ */
+void ghashbase::aftercalcpop2(ghnode *root, int depth) {
+   if (depth == 0 || root == zeroghnode(depth))
+      return ;
+   int v = marked2(root) ;
+   if (v) {
+      clearmark2(root) ;
+      depth-- ;
+      if (depth > 0) {
+         aftercalcpop2(root->nw, depth) ;
+         aftercalcpop2(root->ne, depth) ;
+         aftercalcpop2(root->sw, depth) ;
+         aftercalcpop2(root->se, depth) ;
+      }
+      ((bigint *)&(root->next))->~bigint() ;
+      if (v == 3)
+         root->next = 0 ;
+      else
+         rehash_ghnode(root) ;
    }
 }
 /*
  *   Call this after doing something that unhashes ghnodes in order to
  *   use the next field as a temp pointer.
  */
-void ghashbase::aftercalcpop2(ghnode *root, int depth, int cleanbigints) {
+void ghashbase::afterwritemc(ghnode *root, int depth) {
    if (root == zeroghnode(depth))
       return ;
    if (depth == 0) {
@@ -1025,24 +1207,22 @@ void ghashbase::aftercalcpop2(ghnode *root, int depth, int cleanbigints) {
    if (marked2(root)) {
       clearmark2(root) ;
       depth-- ;
-      aftercalcpop2(root->nw, depth, cleanbigints) ;
-      aftercalcpop2(root->ne, depth, cleanbigints) ;
-      aftercalcpop2(root->sw, depth, cleanbigints) ;
-      aftercalcpop2(root->se, depth, cleanbigints) ;
-      if (cleanbigints)
-         *(bigint *)&(root->next) = bigint::zero ; // clean up; yuck!
+      afterwritemc(root->nw, depth) ;
+      afterwritemc(root->ne, depth) ;
+      afterwritemc(root->sw, depth) ;
+      afterwritemc(root->se, depth) ;
       rehash_ghnode(root) ;
    }
 }
 /*
  *   This top level routine calculates the population of a universe.
  */
-void ghashbase::calcPopulation(ghnode *root) {
+void ghashbase::calcPopulation() {
    int depth ;
    ensure_hashed() ;
    depth = ghnode_depth(root) ;
    population = calcpop(root, depth) ;
-   aftercalcpop2(root, depth, 1) ;
+   aftercalcpop2(root, depth) ;
 }
 /*
  *   Is the universe empty?
@@ -1115,9 +1295,9 @@ void ghashbase::do_gc(int invalidate) {
    gcstep++ ;
    if (verbose) {
      if (gcstep > 1)
-       sprintf(statusline, "GC #%d(%d) ", gccount, gcstep) ;
+       sprintf(statusline, "GC #%d(%d)", gccount, gcstep) ;
      else
-       sprintf(statusline, "GC #%d ", gccount) ;
+       sprintf(statusline, "GC #%d", gccount) ;
      lifestatus(statusline) ;
    }
    for (i=nzeros-1; i>=0; i--)
@@ -1125,6 +1305,8 @@ void ghashbase::do_gc(int invalidate) {
          break ;
    if (i >= 0)
       gc_mark(zeroghnodea[i], 0) ; // never invalidate zeroghnode
+   if (root != 0)
+      gc_mark(root, invalidate) ; // pick up the root
    for (i=0; i<gsp; i++) {
       poller->poll() ;
       gc_mark((ghnode *)stack[i], invalidate) ;
@@ -1140,10 +1322,10 @@ void ghashbase::do_gc(int invalidate) {
          if (marked(pp)) {
             g_uintptr_t h = 0 ;
             if (pp->nw) { /* yes, it's a ghnode */
-               h = ghnode_hash(pp->nw, pp->ne, pp->sw, pp->se) % hashprime ;
+               h = HASHMOD(ghnode_hash(pp->nw, pp->ne, pp->sw, pp->se)) ;
             } else {
                ghleaf *lp = (ghleaf *)pp ;
-               h = ghleaf_hash(lp->nw, lp->ne, lp->sw, lp->se) % hashprime ;
+               h = HASHMOD(ghleaf_hash(lp->nw, lp->ne, lp->sw, lp->se)) ;
             }
             pp->next = hashtab[h] ;
             hashtab[h] = pp ;
@@ -1157,12 +1339,13 @@ void ghashbase::do_gc(int invalidate) {
    }
    inGC = 0 ;
    if (verbose) {
-     int perc = (int)(freed_ghnodes / (totalthings / 100)) ;
-     sprintf(statusline+strlen(statusline), " freed %d percent.", perc) ;
+     double perc = (double)freed_ghnodes / (double)totalthings * 100.0 ;
+     sprintf(statusline+strlen(statusline), " freed %g percent (%" PRIuPTR ").",
+                                                  perc, freed_ghnodes) ;
      lifestatus(statusline) ;
    }
    if (needPop) {
-      calcPopulation(root) ;
+      calcPopulation() ;
       popValid = 1 ;
       needPop = 0 ;
       poller->updatePop() ;
@@ -1190,6 +1373,44 @@ void ghashbase::clearcache(ghnode *n, int depth, int clearto) {
    }
 }
 /*
+ *   Mark the nodes we need to clear the result from.
+ */
+void ghashbase::clearcache_p1(ghnode *n, int depth, int clearto) {
+   if (depth < clearto || marked(n))
+      return ;
+   mark(n) ;
+   if (depth > clearto) {
+      depth-- ;
+      poller->poll() ;
+      clearcache_p1(n->nw, depth, clearto) ;
+      clearcache_p1(n->ne, depth, clearto) ;
+      clearcache_p1(n->sw, depth, clearto) ;
+      clearcache_p1(n->se, depth, clearto) ;
+      if (n->res)
+         clearcache_p1(n->res, depth, clearto) ;
+   }
+}
+/*
+ *   Unmark the nodes and clear the cached result.
+ */
+void ghashbase::clearcache_p2(ghnode *n, int depth, int clearto) {
+   if (depth < clearto || !marked(n))
+      return ;
+   clearmark(n) ;
+   if (depth > clearto) {
+      depth-- ;
+      poller->poll() ;
+      clearcache_p2(n->nw, depth, clearto) ;
+      clearcache_p2(n->ne, depth, clearto) ;
+      clearcache_p2(n->sw, depth, clearto) ;
+      clearcache_p2(n->se, depth, clearto) ;
+      if (n->res)
+         clearcache_p2(n->res, depth, clearto) ;
+   }
+   if (n->res)
+      n->res = 0 ;
+}
+/*
  *   Clear the entire cache of everything, and recalculate all leaves.
  *   This can be very expensive.
  */
@@ -1209,6 +1430,9 @@ void ghashbase::new_ngens(int newval) {
       ngens = newval ;
       return ;
    }
+#ifndef NOGCBEFOREINC
+   do_gc(0) ;
+#endif
    if (verbose) {
      strcpy(statusline, "Changing increment...") ;
      lifestatus(statusline) ;
@@ -1232,7 +1456,7 @@ void ghashbase::new_ngens(int newval) {
    halvesdone = 0 ;
    inGC = 0 ;
    if (needPop) {
-      calcPopulation(root) ;
+      calcPopulation() ;
       popValid = 1 ;
       needPop = 0 ;
       poller->updatePop() ;
@@ -1268,7 +1492,7 @@ const bigint &ghashbase::getPopulation() {
         // AKT: avoid calling poller->bailIfCalculating
         return negone ;
       } else {
-        calcPopulation(root) ;
+        calcPopulation() ;
         popValid = 1 ;
         needPop = 0 ;
       }
@@ -1306,7 +1530,7 @@ ghnode *ghashbase::runpattern() {
    n2 = getres(n, depth) ;
    okaytogc = 0 ;
    clearstack() ;
-   if (halvesdone == 1) {
+   if (halvesdone == 1 && n->res != 0) {
       n->res = 0 ;
       halvesdone = 0 ;
    }
@@ -1491,7 +1715,7 @@ g_uintptr_t ghashbase::writecell(std::ostream &os, ghnode *root, int depth) {
    } else {
       if (marked2(root))
          return (g_uintptr_t)(root->next) ;
-      unhash_ghnode(root) ;
+      unhash_ghnode2(root) ;
       mark2(root) ;
    }
    thiscell = ++cellcounter ;
@@ -1526,7 +1750,7 @@ g_uintptr_t ghashbase::writecell_2p1(ghnode *root, int depth) {
    } else {
       if (marked2(root))
          return (g_uintptr_t)(root->next) ;
-      unhash_ghnode(root) ;
+      unhash_ghnode2(root) ;
       mark2(root) ;
    }
    if (depth == 0) {
@@ -1670,10 +1894,10 @@ const char *ghashbase::writeNativeFormat(std::ostream &os, char *comments) {
    if (framestosave) {
      for (int i=0; i<timeline.framecount; i++) {
        ghnode *frame = (ghnode*)timeline.frames[i] ;
-       aftercalcpop2(frame, depths[i], 0) ;
+       afterwritemc(frame, depths[i]) ;
      }
    }
-   aftercalcpop2(root, depth, 0) ;
+   afterwritemc(root, depth) ;
    inGC = 0 ;
    return 0 ;
 }

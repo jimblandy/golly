@@ -103,6 +103,7 @@ char initrule[256] = "B3/S23";   // initial rule
 bool initautofit = false;        // initial autofit setting
 bool inithyperspeed = false;     // initial hyperspeed setting
 bool initshowhashinfo = false;   // initial showhashinfo setting
+bool showpopulation = true;      // show population counts while generating?
 bool savexrle = true;            // save RLE file using XRLE format?
 bool showtips = true;            // show button tips?
 bool showtool = true;            // show tool bar?
@@ -111,6 +112,7 @@ bool showedit = true;            // show edit bar?
 bool showallstates = false;      // show all cell states in edit bar?
 bool showstatus = true;          // show status bar?
 bool showexact = false;          // show exact numbers in status bar?
+bool showscrollbars = true;      // show scroll bars?
 bool showtimeline = false;       // show timeline bar?
 bool showgridlines = true;       // display grid lines?
 bool showoverlay = false;        // display the current overlay?
@@ -148,6 +150,7 @@ bool openremovesel = true;       // opening pattern removes selection?
 wxCursor* newcurs = NULL;        // cursor after creating new pattern (if not NULL)
 wxCursor* opencurs = NULL;       // cursor after opening pattern (if not NULL)
 int mousewheelmode = 2;          // 0:Ignore, 1:forward=ZoomOut, 2:forward=ZoomIn
+int wheelsens = MAX_SENSITIVITY; // mouse wheel sensitivity
 int thumbrange = 10;             // thumb box scrolling range in terms of view wd/ht
 int mindelay = 250;              // minimum millisec delay
 int maxdelay = 2000;             // maximum millisec delay
@@ -563,6 +566,7 @@ const char* GetActionName(action_id action)
         case DO_HASHING:        return "Use Hashing";
         case DO_HYPER:          return "Hyperspeed";
         case DO_HASHINFO:       return "Show Hash Info";
+        case DO_SHOWPOP:        return "Show Population";
         case DO_RECORD:         return "Start/Stop Recording";
         case DO_DELTIME:        return "Delete Timeline";
         case DO_PLAYBACK:       return "Play Timeline Backwards";
@@ -598,6 +602,7 @@ const char* GetActionName(action_id action)
         case DO_SHOWLAYER:      return "Show Layer Bar";
         case DO_SHOWEDIT:       return "Show Edit Bar";
         case DO_SHOWSTATES:     return "Show All States";
+        case DO_SHOWSCROLL:     return "Show Scroll Bars";
         case DO_SHOWSTATUS:     return "Show Status Bar";
         case DO_SHOWEXACT:      return "Show Exact Numbers";
         case DO_SETCOLORS:      return "Set Layer Colors...";
@@ -1475,6 +1480,7 @@ void SavePrefs()
     fprintf(f, "auto_fit=%d\n", currlayer->autofit ? 1 : 0);
     fprintf(f, "hyperspeed=%d\n", currlayer->hyperspeed ? 1 : 0);
     fprintf(f, "hash_info=%d\n", currlayer->showhashinfo ? 1 : 0);
+    fprintf(f, "show_population=%d\n", showpopulation ? 1 : 0);
     
     fputs("\n", f);
     
@@ -1520,6 +1526,7 @@ void SavePrefs()
     fprintf(f, "show_states=%d\n", showallstates ? 1 : 0);
     fprintf(f, "show_status=%d\n", showstatus ? 1 : 0);
     fprintf(f, "show_exact=%d\n", showexact ? 1 : 0);
+    fprintf(f, "show_scrollbars=%d\n", showscrollbars ? 1 : 0);
     fprintf(f, "show_timeline=%d\n", showtimeline ? 1 : 0);
     fprintf(f, "grid_lines=%d\n", showgridlines ? 1 : 0);
     fprintf(f, "overlay=%d\n", showoverlay ? 1 : 0);
@@ -1555,6 +1562,7 @@ void SavePrefs()
     fputs("\n", f);
     
     fprintf(f, "mouse_wheel_mode=%d\n", mousewheelmode);
+    fprintf(f, "wheel_sensitivity=%d (1..%d)\n", wheelsens, MAX_SENSITIVITY);
     fprintf(f, "thumb_range=%d (2..%d)\n", thumbrange, MAX_THUMBRANGE);
     fprintf(f, "new_mag=%d (0..%d)\n", newmag, MAX_MAG);
     fprintf(f, "new_remove_sel=%d\n", newremovesel ? 1 : 0);
@@ -2072,6 +2080,9 @@ void GetPrefs()
         } else if (strcmp(keyword, "hash_info") == 0) {
             initshowhashinfo = value[0] == '1';
             
+        } else if (strcmp(keyword, "show_population") == 0) {
+            showpopulation = value[0] == '1';
+            
         } else if (strcmp(keyword, "max_hash_mem") == 0) {       // deprecated
             int maxmem;
             sscanf(value, "%d", &maxmem);
@@ -2124,6 +2135,9 @@ void GetPrefs()
             
         } else if (strcmp(keyword, "show_exact") == 0) {
             showexact = value[0] == '1';
+            
+        } else if (strcmp(keyword, "show_scrollbars") == 0) {
+            showscrollbars = value[0] == '1';
             
         } else if (strcmp(keyword, "show_timeline") == 0) {
             showtimeline = value[0] == '1';
@@ -2215,6 +2229,11 @@ void GetPrefs()
             sscanf(value, "%d", &mousewheelmode);
             if (mousewheelmode < 0) mousewheelmode = 0;
             if (mousewheelmode > 2) mousewheelmode = 2;
+            
+        } else if (strcmp(keyword, "wheel_sensitivity") == 0) {
+            sscanf(value, "%d", &wheelsens);
+            if (wheelsens < 1) wheelsens = 1;
+            if (wheelsens > MAX_SENSITIVITY) wheelsens = MAX_SENSITIVITY;
             
         } else if (strcmp(keyword, "thumb_range") == 0) {
             sscanf(value, "%d", &thumbrange);
@@ -2606,20 +2625,7 @@ void CellBoxes::OnMouseExit(wxMouseEvent& WXUNUSED(event))
     #define ALL_TEXT -1,-1
 #endif
 
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0) && !wxCHECK_VERSION(2,9,0)
-    // fix wxALIGN_CENTER_VERTICAL bug in wxMac 2.8.x;
-    // eg. when a wxStaticText box is next to a wxChoice box
-    #define FIX_ALIGN_BUG wxBOTTOM,4
-#else
-    #define FIX_ALIGN_BUG wxALL,0
-#endif
-
-#ifdef __WXMSW__
-    // Vista needs more RAM for itself
-    const wxString HASH_MEM_NOTE = _("MB (best if ~70% of RAM)");
-#else
-    const wxString HASH_MEM_NOTE = _("MB (best if ~80% of RAM)");
-#endif
+const wxString HASH_MEM_NOTE = _("MB (best if ~50% of RAM)");
 const wxString HASH_STEP_NOTE = _("(best if power of 2)");
 const wxString NONHASH_MEM_NOTE = _("MB (0 means no limit)");
 const wxString NONHASH_STEP_NOTE = _(" ");
@@ -2689,12 +2695,9 @@ enum {
     PREF_BOLD_SPACING,
     PREF_MIN_GRID_SCALE,
     PREF_MOUSE_WHEEL,
+    PREF_SENSITIVITY,
     PREF_THUMB_RANGE,
-    PREF_NO_CONTROLS,
-    PREF_TL_CONTROLS,
-    PREF_TR_CONTROLS,
-    PREF_BR_CONTROLS,
-    PREF_BL_CONTROLS,
+    PREF_CONTROLS,
     // Layer prefs
     PREF_OPACITY,
     PREF_TILE_BORDER,
@@ -3044,17 +3047,21 @@ void PrefsDialog::OnSpinCtrlChar(wxKeyEvent& event)
             if ( focus == t4 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
         } else if ( currpage == VIEW_PAGE ) {
             wxSpinCtrl* s1 = (wxSpinCtrl*) FindWindowById(PREF_BOLD_SPACING);
-            wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_THUMB_RANGE);
+            wxSpinCtrl* s2 = (wxSpinCtrl*) FindWindowById(PREF_SENSITIVITY);
+            wxSpinCtrl* s3 = (wxSpinCtrl*) FindWindowById(PREF_THUMB_RANGE);
             wxTextCtrl* t1 = s1->GetText();
             wxTextCtrl* t2 = s2->GetText();
+            wxTextCtrl* t3 = s3->GetText();
             wxWindow* focus = FindFocus();
             wxCheckBox* checkbox = (wxCheckBox*) FindWindowById(PREF_SHOW_BOLD);
             if (checkbox) {
                 if (checkbox->GetValue()) {
                     if ( focus == t1 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
-                    if ( focus == t2 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
+                    if ( focus == t2 ) { s3->SetFocus(); s3->SetSelection(ALL_TEXT); }
+                    if ( focus == t3 ) { s1->SetFocus(); s1->SetSelection(ALL_TEXT); }
                 } else {
-                    if ( s2 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
+                    if ( focus == t2 ) { s3->SetFocus(); s3->SetSelection(ALL_TEXT); }
+                    if ( focus == t3 ) { s2->SetFocus(); s2->SetSelection(ALL_TEXT); }
                 }
             } else {
                 Beep();
@@ -3164,7 +3171,7 @@ void PrefsDialog::OnOneTimer(wxTimerEvent& WXUNUSED(event))
         s1 = (MySpinCtrl*) FindWindowById(PREF_MAX_MEM);
         
     } else if (currpage == VIEW_PAGE) {
-        s1 = (MySpinCtrl*) FindWindowById(showgridlines ? PREF_BOLD_SPACING : PREF_THUMB_RANGE);
+        s1 = (MySpinCtrl*) FindWindowById(showgridlines ? PREF_BOLD_SPACING : PREF_SENSITIVITY);
         
     } else if (currpage == LAYER_PAGE) {
         s1 = (MySpinCtrl*) FindWindowById(PREF_OPACITY);
@@ -3267,13 +3274,13 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     
     wxCheckBox* check1 = new wxCheckBox(panel, PREF_NEW_REM_SEL, _("Remove selection"));
     wxBoxSizer* check1box = new wxBoxSizer(wxHORIZONTAL);
-    check1box->Add(check1, 0, FIX_ALIGN_BUG);
+    check1box->Add(check1, 0, wxALL, 0);
     
     wxBoxSizer* setcurs1 = new wxBoxSizer(wxHORIZONTAL);
-    setcurs1->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, FIX_ALIGN_BUG);
+    setcurs1->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, wxALL, 0);
     
     wxBoxSizer* setscalebox = new wxBoxSizer(wxHORIZONTAL);
-    setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, FIX_ALIGN_BUG);
+    setscalebox->Add(new wxStaticText(panel, wxID_STATIC, _("Set scale:")), 0, wxALL, 0);
     
     wxChoice* choice3 = new wxChoice(panel, PREF_NEW_CURSOR,
                                      wxDefaultPosition, wxDefaultSize,
@@ -3307,14 +3314,14 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     
     wxCheckBox* check2 = new wxCheckBox(panel, PREF_OPEN_REM_SEL, _("Remove selection"));
     wxBoxSizer* check2box = new wxBoxSizer(wxHORIZONTAL);
-    check2box->Add(check2, 0, FIX_ALIGN_BUG);
+    check2box->Add(check2, 0, wxALL, 0);
     
     wxChoice* choice4 = new wxChoice(panel, PREF_OPEN_CURSOR,
                                      wxDefaultPosition, wxDefaultSize,
                                      opencursorChoices);
     
     wxBoxSizer* setcurs2 = new wxBoxSizer(wxHORIZONTAL);
-    setcurs2->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, FIX_ALIGN_BUG);
+    setcurs2->Add(new wxStaticText(panel, wxID_STATIC, _("Set cursor:")), 0, wxALL, 0);
     
     wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
     hbox4->Add(check2box, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -3396,7 +3403,7 @@ wxPanel* PrefsDialog::CreateFilePrefs(wxWindow* parent)
     spin1->SetFocus();
     spin1->SetSelection(ALL_TEXT);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3486,7 +3493,7 @@ wxPanel* PrefsDialog::CreateEditPrefs(wxWindow* parent)
     check3->SetValue(scrollhand);
     check4->SetValue(allowbeep);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3512,7 +3519,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
     
     wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
     longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Settings for this algorithm:")),
-                 0, FIX_ALIGN_BUG);
+                 0, wxALL, 0);
     
     wxBoxSizer* menubox = new wxBoxSizer(wxHORIZONTAL);
     menubox->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -3629,7 +3636,7 @@ wxPanel* PrefsDialog::CreateControlPrefs(wxWindow* parent)
         new_defbase[i] = algoinfo[i]->defbase;
     }
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3689,32 +3696,43 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     
     wxBoxSizer* longbox = new wxBoxSizer(wxHORIZONTAL);
     longbox->Add(new wxStaticText(panel, wxID_STATIC, _("Minimum scale for grid:")),
-                 0, FIX_ALIGN_BUG);
-    
-    wxBoxSizer* shortbox = new wxBoxSizer(wxHORIZONTAL);
-    shortbox->Add(new wxStaticText(panel, wxID_STATIC, _("Mouse wheel action:")),
-                  0, FIX_ALIGN_BUG);
-    
-    // align controls by setting shortbox same width as longbox
-    shortbox->SetMinSize( longbox->GetMinSize() );
+                 0, wxALL, 0);
     
     hbox3->Add(longbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox3->Add(choice3, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
     
     // mouse_wheel_mode
     
-    wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer* wheelbox = new wxBoxSizer(wxHORIZONTAL);
+    wheelbox->Add(new wxStaticText(panel, wxID_STATIC, _("Mouse wheel action:")), 0, wxALL, 0);
+    
+    // align by setting wheelbox same width as longbox
+    wheelbox->SetMinSize( longbox->GetMinSize() );
     
     wxArrayString mousewheelChoices;
-    mousewheelChoices.Add(wxT("Disabled"));
-    mousewheelChoices.Add(wxT("Forward zooms out"));
-    mousewheelChoices.Add(wxT("Forward zooms in"));
-    wxChoice* choice4 = new wxChoice(panel, PREF_MOUSE_WHEEL,
-                                     wxDefaultPosition, wxDefaultSize,
+    mousewheelChoices.Add(_("Disabled"));
+    mousewheelChoices.Add(_("Forward zooms out"));
+    mousewheelChoices.Add(_("Forward zooms in"));
+    wxChoice* choice4 = new wxChoice(panel, PREF_MOUSE_WHEEL, wxDefaultPosition, wxDefaultSize,
                                      mousewheelChoices);
     
-    hbox4->Add(shortbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+    wxBoxSizer* hbox4 = new wxBoxSizer(wxHORIZONTAL);
+    hbox4->Add(wheelbox, 0, wxALIGN_CENTER_VERTICAL, 0);
     hbox4->Add(choice4, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
+    
+    // wheel_sensitivity
+    
+    wxBoxSizer* senslabel = new wxBoxSizer(wxHORIZONTAL);
+    senslabel->Add(new wxStaticText(panel, wxID_STATIC, _("Wheel sensitivity:")),
+                   0, wxALIGN_CENTER_VERTICAL, 0);
+    
+    senslabel->SetMinSize( longbox->GetMinSize() );
+    
+    wxBoxSizer* hbox7 = new wxBoxSizer(wxHORIZONTAL);
+    hbox7->Add(senslabel, 0, wxALIGN_CENTER_VERTICAL, 0);
+    wxSpinCtrl* spin4 = new MySpinCtrl(panel, PREF_SENSITIVITY, wxEmptyString,
+                                       wxDefaultPosition, wxSize(70, wxDefaultCoord));
+    hbox7->Add(spin4, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, SPINGAP);
     
     // thumb_range
     
@@ -3734,50 +3752,24 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     
     // controls_pos
     
-    wxStaticBox* sbox1 = new wxStaticBox(panel, wxID_ANY, _("Position of translucent buttons:"));
-    wxBoxSizer* ssizer1 = new wxStaticBoxSizer(sbox1, wxVERTICAL);
+    wxBoxSizer* posbox = new wxBoxSizer(wxHORIZONTAL);
+    posbox->Add(new wxStaticText(panel, wxID_STATIC, _("Translucent buttons:")), 0, wxALL, 0);
     
-    wxRadioButton* radio0 = new wxRadioButton(panel, PREF_NO_CONTROLS, _("Disabled"),
-                                              wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-    wxRadioButton* radio1 = new wxRadioButton(panel, PREF_TL_CONTROLS, _("Top left corner"));
-    wxRadioButton* radio2 = new wxRadioButton(panel, PREF_TR_CONTROLS, _("Top right corner"));
-    wxRadioButton* radio3 = new wxRadioButton(panel, PREF_BR_CONTROLS, _("Bottom right corner"));
-    wxRadioButton* radio4 = new wxRadioButton(panel, PREF_BL_CONTROLS, _("Bottom left corner"));
+    // align by setting posbox same width as longbox
+    posbox->SetMinSize( longbox->GetMinSize() );
     
-    wxBoxSizer* b1 = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer* b4 = new wxBoxSizer(wxHORIZONTAL);
-    b1->Add(radio1, 0, wxALL, 0);
-    b4->Add(radio4, 0, wxALL, 0);
-    wxSize wd1 = b1->GetMinSize();
-    wxSize wd4 = b4->GetMinSize();
-    if (wd1.GetWidth() > wd4.GetWidth())
-        b4->SetMinSize(wd1);
-    else
-        b1->SetMinSize(wd4);
+    wxArrayString posChoices;
+    posChoices.Add(_("Disabled"));
+    posChoices.Add(_("Top left corner"));
+    posChoices.Add(_("Top right corner"));
+    posChoices.Add(_("Bottom right corner"));
+    posChoices.Add(_("Bottom left corner"));
+    wxChoice* choice5 = new wxChoice(panel, PREF_CONTROLS, wxDefaultPosition, wxDefaultSize,
+                                     posChoices);
     
-    wxBoxSizer* toprow = new wxBoxSizer(wxHORIZONTAL);
-    toprow->Add(b1, 0, wxLEFT | wxRIGHT, LRGAP);
-    // don't use AddSpacer(20) because that will also add 20 *vertical* units!
-    toprow->AddSpacer(10);
-    toprow->AddSpacer(10);
-    toprow->Add(radio2, 0, wxLEFT | wxRIGHT, LRGAP);
-    toprow->AddStretchSpacer(20);
-    toprow->Add(radio0, 0, wxLEFT | wxRIGHT, 0);
-    toprow->AddStretchSpacer(10);
-    
-    wxBoxSizer* botrow = new wxBoxSizer(wxHORIZONTAL);
-    botrow->Add(b4, 0, wxLEFT | wxRIGHT, LRGAP);
-    // don't use AddSpacer(20) because that will also add 20 *vertical* units!
-    botrow->AddSpacer(10);
-    botrow->AddSpacer(10);
-    botrow->Add(radio3, 0, wxLEFT | wxRIGHT, LRGAP);
-    botrow->AddStretchSpacer(10);
-    
-    ssizer1->AddSpacer(SBTOPGAP);
-    ssizer1->Add(toprow, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
-    ssizer1->AddSpacer(CH2VGAP);
-    ssizer1->Add(botrow, 1, wxGROW | wxLEFT | wxRIGHT, LRGAP);
-    ssizer1->AddSpacer(SBBOTGAP);
+    wxBoxSizer* hbox6 = new wxBoxSizer(wxHORIZONTAL);
+    hbox6->Add(posbox, 0, wxALIGN_CENTER_VERTICAL, 0);
+    hbox6->Add(choice5, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, CHOICEGAP);
     
     // position things
     vbox->AddSpacer(5);
@@ -3800,9 +3792,11 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     vbox->AddSpacer(CVGAP);
     vbox->Add(hbox4, 0, wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(SVGAP);
+    vbox->Add(hbox7, 0, wxLEFT | wxRIGHT, LRGAP);
+    vbox->AddSpacer(SVGAP);
     vbox->Add(hbox5, 0, wxLEFT | wxRIGHT, LRGAP);
-    vbox->AddSpacer(GROUPGAP);
-    vbox->Add(ssizer1, 0, wxGROW | wxALL, 2);
+    vbox->AddSpacer(SVGAP);
+    vbox->Add(hbox6, 0, wxLEFT | wxRIGHT, LRGAP);
     
     // init control values
 #if wxUSE_TOOLTIPS
@@ -3812,26 +3806,23 @@ wxPanel* PrefsDialog::CreateViewPrefs(wxWindow* parent)
     check1->SetValue(mathcoords);
     check5->SetValue(cellborders);
     check2->SetValue(showboldlines);
-    spin5->SetRange(2, MAX_THUMBRANGE); spin5->SetValue(thumbrange);
-    spin2->SetRange(2, MAX_SPACING);    spin2->SetValue(boldspacing);
+    spin4->SetRange(1, MAX_SENSITIVITY); spin4->SetValue(wheelsens);
+    spin5->SetRange(2, MAX_THUMBRANGE);  spin5->SetValue(thumbrange);
+    spin2->SetRange(2, MAX_SPACING);     spin2->SetValue(boldspacing);
     spin2->Enable(showboldlines);
     if (showboldlines) {
         spin2->SetFocus();
         spin2->SetSelection(ALL_TEXT);
     } else {
-        spin5->SetFocus();
-        spin5->SetSelection(ALL_TEXT);
+        spin4->SetFocus();
+        spin4->SetSelection(ALL_TEXT);
     }
     mingridindex = mingridmag - 2;
     choice3->SetSelection(mingridindex);
     choice4->SetSelection(mousewheelmode);
-    radio0->SetValue(controlspos == 0);
-    radio1->SetValue(controlspos == 1);
-    radio2->SetValue(controlspos == 2);
-    radio3->SetValue(controlspos == 3);
-    radio4->SetValue(controlspos == 4);
+    choice5->SetSelection(controlspos);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -3941,7 +3932,7 @@ wxPanel* PrefsDialog::CreateLayerPrefs(wxWindow* parent)
     check4->SetValue(askonquit);
     check5->SetValue(warn_on_save);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -4012,11 +4003,11 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     
     wxBoxSizer* algobox = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* algolabel = new wxBoxSizer(wxHORIZONTAL);
-    algolabel->Add(new wxStaticText(panel, wxID_STATIC, _("Default colors for:")), 0, FIX_ALIGN_BUG);
+    algolabel->Add(new wxStaticText(panel, wxID_STATIC, _("Default colors for:")), 0, wxALL, 0);
     algobox->Add(algolabel, 0, wxALIGN_CENTER_VERTICAL, 0);
     algobox->Add(algomenu, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 6);
     algobox->AddStretchSpacer();
-    algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | FIX_ALIGN_BUG);
+    algobox->Add(statusbox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
     algobox->AddStretchSpacer();
     
     gradcheck = new wxCheckBox(panel, PREF_GRADIENT_CHECK, _("Use gradient from "));
@@ -4105,7 +4096,7 @@ wxPanel* PrefsDialog::CreateColorPrefs(wxWindow* parent)
     vbox->Add(ssizer2, 0, wxGROW | wxLEFT | wxRIGHT, LRGAP);
     vbox->AddSpacer(2);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -4151,9 +4142,6 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
     keybox->Add(keycombo, 0, wxALIGN_CENTER, 0);
     
     wxBoxSizer* actbox = new wxBoxSizer(wxVERTICAL);
-#if defined(__WXMAC__) && wxCHECK_VERSION(2,8,0) && !wxCHECK_VERSION(2,9,0)
-    actbox->AddSpacer(2);
-#endif
     actbox->Add(new wxStaticText(panel, wxID_STATIC, _("Action")), 0, wxALIGN_CENTER, 0);
     actbox->AddSpacer(5);
     actbox->Add(actionmenu, 0, wxALIGN_CENTER, 0);
@@ -4195,7 +4183,7 @@ wxPanel* PrefsDialog::CreateKeyboardPrefs(wxWindow* parent)
     keycombo->SetFocus();
     keycombo->SetSelection(ALL_TEXT);
     
-    topSizer->Add(vbox, 1, wxGROW | wxALIGN_CENTER | wxALL, 5);
+    topSizer->Add(vbox, 1, wxGROW | wxLEFT | wxALL, 5);
     panel->SetSizer(topSizer);
     topSizer->Fit(panel);
     return panel;
@@ -4686,6 +4674,8 @@ bool PrefsDialog::ValidatePage()
     } else if (currpage == VIEW_PAGE) {
         if ( BadSpinVal(PREF_BOLD_SPACING, 2, MAX_SPACING, _("Spacing of bold grid lines")) )
             return false;
+        if ( BadSpinVal(PREF_SENSITIVITY, 1, MAX_SENSITIVITY, _("Wheel sensitivity")) )
+            return false;
         if ( BadSpinVal(PREF_THUMB_RANGE, 2, MAX_THUMBRANGE, _("Thumb scrolling range")) )
             return false;
         
@@ -4787,8 +4777,9 @@ bool PrefsDialog::TransferDataFromWindow()
     boldspacing    = GetSpinVal(PREF_BOLD_SPACING);
     mingridindex   = GetChoiceVal(PREF_MIN_GRID_SCALE);
     mousewheelmode = GetChoiceVal(PREF_MOUSE_WHEEL);
+    wheelsens      = GetSpinVal(PREF_SENSITIVITY);
     thumbrange     = GetSpinVal(PREF_THUMB_RANGE);
-    controlspos    = GetRadioVal(PREF_NO_CONTROLS, 5);
+    controlspos    = GetChoiceVal(PREF_CONTROLS);
     
     // LAYER_PAGE
     opacity         = GetSpinVal(PREF_OPACITY);

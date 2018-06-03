@@ -23,6 +23,7 @@ extern bool allowcheck;         // allow event checking?
 extern bool showprogress;       // script can display the progress dialog?
 extern wxString scripterr;      // error message
 extern wxString mousepos;       // current mouse position
+extern wxString scripttitle;    // window title set by settitle command
 
 void RunScript(const wxString& filename);
 // Run the given script.

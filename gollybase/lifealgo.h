@@ -55,6 +55,7 @@ public:
    virtual int setcell(int x, int y, int newstate) = 0 ;
    virtual int getcell(int x, int y) = 0 ;
    virtual int nextcell(int x, int y, int &v) = 0 ;
+   void getcells(unsigned char *buf, int x, int y, int w, int h) ;
    // call after setcell/clearcell calls
    virtual void endofpattern() = 0 ;
    virtual void setIncrement(bigint inc) = 0 ;
@@ -87,6 +88,8 @@ public:
    virtual const char* DefaultRule() { return "B3/S23"; }
    // return number of cell states in this universe (2..256)
    virtual int NumCellStates() { return 2; }
+   // return number of states to use when setting random cells
+   virtual int NumRandomizedCellStates() { return NumCellStates() ; }
 
    // timeline support
    virtual void* getcurrentstate() = 0 ;

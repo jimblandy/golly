@@ -5,6 +5,7 @@
 #define HLIFEALGO_H
 #include "lifealgo.h"
 #include "liferules.h"
+#include "util.h"
 /*
  *   Into instances of this node structure is where almost all of the
  *   memory allocated by this program goes.  Thus, it is imperative we
@@ -123,14 +124,25 @@ struct leaf {
    node *next ;              /* hash link */
    node *isnode ;            /* must always be zero for leaves */
    unsigned short nw, ne, sw, se ;  /* constant */
+   bigint leafpop ;         /* how many set bits */
    unsigned short res1, res2 ;      /* constant */
-   unsigned short leafpop ;         /* how many set bits */
 } ;
 /*
  *   If it is a struct node, this returns a non-zero value, otherwise it
  *   returns a zero value.
  */
 #define is_node(n) (((node *)(n))->nw)
+/*
+ *   For explicit prefetching we retain some state on our lookup
+ *   calculations.
+ */
+#ifdef USEPREFETCH
+struct setup_t { 
+   g_uintptr_t h ;
+   struct node *nw, *ne, *sw, *se ;
+   void prefetch(node **addr) const { PREFETCH(addr) ; }
+} ;
+#endif
 /**
  *   Our hlifealgo class.
  */
@@ -196,6 +208,10 @@ private:
    node **stack ;
    int stacksize ;
    g_uintptr_t hashpop, hashlimit, hashprime ;
+#ifndef PRIMEMOD
+   g_uintptr_t hashmask ;
+#endif
+   static double maxloadfactor ;
    node **hashtab ;
    int halvesdone ;
    int gsp ;
@@ -226,12 +242,19 @@ private:
    g_uintptr_t writecells ; // how many to write
    int gccount ; // how many gcs total this pattern
    int gcstep ; // how many gcs this step
+   hperf running_hperf, step_hperf, inc_hperf ;
+   int softinterrupt ;
    static char statusline[] ;
 //
    void leafres(leaf *n) ;
    void resize() ;
    node *find_node(node *nw, node *ne, node *sw, node *se) ;
+#ifdef USEPREFETCH
+   node *find_node(setup_t &su) ;
+   void setupprefetch(setup_t &su, node *nw, node *ne, node *sw, node *se) ;
+#endif
    void unhash_node(node *n) ;
+   void unhash_node2(node *n) ;
    void rehash_node(node *n) ;
    leaf *find_leaf(unsigned short nw, unsigned short ne,
                    unsigned short sw, unsigned short se) ;
@@ -255,8 +278,9 @@ private:
    node *hashpattern(node *root, int depth) ;
    node *popzeros(node *n) ;
    const bigint &calcpop(node *root, int depth) ;
-   void aftercalcpop2(node *root, int depth, int cleanbigints) ;
-   void calcPopulation(node *root) ;
+   void aftercalcpop2(node *root, int depth) ;
+   void afterwritemc(node *root, int depth) ;
+   void calcPopulation() ;
    node *save(node *n) ;
    void pop(int n) ;
    void clearstack() ;
@@ -264,6 +288,8 @@ private:
    void gc_mark(node *root, int invalidate) ;
    void do_gc(int invalidate) ;
    void clearcache(node *n, int depth, int clearto) ;
+   void clearcache_p1(node *n, int depth, int clearto) ;
+   void clearcache_p2(node *n, int depth, int clearto) ;
    void new_ngens(int newval) ;
    int log2(unsigned int n) ;
    node *runpattern() ;

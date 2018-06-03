@@ -27,6 +27,10 @@ The Scripts folder supplied with Golly contains a number of example Lua scripts:
 <dd>
 <table cellspacing=0 cellpadding=0 width=520>
 <tr>
+   <td><b>3D.lua</b></td><td width=10> </td>
+   <td> &mdash; for exploring three-dimensional cellular automata</td>
+</tr>
+<tr>
    <td><b>breakout.lua</b></td><td width=10> </td>
    <td> &mdash; shows how to use the <a href="overlay.html">overlay</a> to create a game</td>
 </tr>
@@ -209,11 +213,11 @@ or you can search for individual commands alphabetically:
 <a href="#fit"><b>fit</b></a><br>
 <a href="#fitsel"><b>fitsel</b></a><br>
 <a href="#flip"><b>flip</b></a><br>
-<a href="#getalgo"><b>getalgo</b></a>
+<a href="#getalgo"><b>getalgo</b></a><br>
+<a href="#getbase"><b>getbase</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#getbase"><b>getbase</b></a><br>
 <a href="#getcell"><b>getcell</b></a><br>
 <a href="#getcells"><b>getcells</b></a><br>
 <a href="#getclip"><b>getclip</b></a><br>
@@ -232,12 +236,12 @@ or you can search for individual commands alphabetically:
 <a href="#getname"><b>getname</b></a><br>
 <a href="#getoption"><b>getoption</b></a><br>
 <a href="#getpath"><b>getpath</b></a><br>
-<a href="#getpop"><b>getpop</b></a>
+<a href="#getpop"><b>getpop</b></a><br>
+<a href="#getpos"><b>getpos</b></a><br>
+<a href="#getrect"><b>getrect</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#getpos"><b>getpos</b></a><br>
-<a href="#getrect"><b>getrect</b></a><br>
 <a href="#getrule"><b>getrule</b></a><br>
 <a href="#getselrect"><b>getselrect</b></a><br>
 <a href="#getstep"><b>getstep</b></a><br>
@@ -255,13 +259,13 @@ or you can search for individual commands alphabetically:
 <a href="#note"><b>note</b></a><br>
 <a href="#numalgos"><b>numalgos</b></a><br>
 <a href="#numlayers"><b>numlayers</b></a><br>
-<a href="#numstates"><b>numstates</b></a>
+<a href="#numstates"><b>numstates</b></a><br>
+<a href="#open"><b>open</b></a><br>
+<a href="#opendialog"><b>opendialog</b></a><br>
+<a href="#overlay"><b>overlay</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#open"><b>open</b></a><br>
-<a href="#opendialog"><b>opendialog</b></a><br>
-<a href="#overlay"><b>overlay</b></a><br>
 <a href="#os"><b>os</b></a><br>
 <a href="#parse"><b>parse</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
@@ -271,6 +275,7 @@ or you can search for individual commands alphabetically:
 <a href="#rotate"><b>rotate</b></a><br>
 <a href="#run"><b>run</b></a><br>
 <a href="#save"><b>save</b></a><br>
+<a href="#savechanges"><b>savechanges</b></a><br>
 <a href="#savedialog"><b>savedialog</b></a><br>
 <a href="#select"><b>select</b></a><br>
 <a href="#setalgo"><b>setalgo</b></a><br>
@@ -278,13 +283,13 @@ or you can search for individual commands alphabetically:
 <a href="#setcell"><b>setcell</b></a><br>
 <a href="#setclipstr"><b>setclipstr</b></a><br>
 <a href="#setcolor"><b>setcolor</b></a><br>
-<a href="#setcolors"><b>setcolors</b></a>
+<a href="#setcolors"><b>setcolors</b></a><br>
+<a href="#setcursor"><b>setcursor</b></a><br>
+<a href="#setdir"><b>setdir</b></a><br>
+<a href="#setgen"><b>setgen</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#setcursor"><b>setcursor</b></a><br>
-<a href="#setdir"><b>setdir</b></a><br>
-<a href="#setgen"><b>setgen</b></a><br>
 <a href="#setlayer"><b>setlayer</b></a><br>
 <a href="#setmag"><b>setmag</b></a><br>
 <a href="#setname"><b>setname</b></a><br>
@@ -292,9 +297,11 @@ or you can search for individual commands alphabetically:
 <a href="#setpos"><b>setpos</b></a><br>
 <a href="#setrule"><b>setrule</b></a><br>
 <a href="#setstep"><b>setstep</b></a><br>
+<a href="#settitle"><b>settitle</b></a><br>
 <a href="#setview"><b>setview</b></a><br>
 <a href="#show"><b>show</b></a><br>
 <a href="#shrink"><b>shrink</b></a><br>
+<a href="#sleep"><b>sleep</b></a><br>
 <a href="#step"><b>step</b></a><br>
 <a href="#store"><b>store</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
@@ -1142,6 +1149,23 @@ The returned value is a floating point number.
 <dd> Example: <b>local t1 = g.millisecs()</b></dd>
 </p>
 
+<a name="sleep"></a><p><dt><b>sleep(<i>millisecs</i>)</b></dt>
+<dd>
+Sleep for the given number of millisecs.
+Scripts with an event loop can call this command to avoid hogging the CPU
+when the script is idle.
+</dd>
+<dd> Example: <b>g.sleep(5)</b></dd>
+</p>
+
+<a name="settitle"></a><p><dt><b>settitle(<i>string</i>)</b></dt>
+<dd>
+Set the window title to the given string.
+The original title will be restored when the script terminates.
+</dd>
+<dd> Example: <b>g.settitle("running a search...")</b></dd>
+</p>
+
 <a name="setoption"></a><p><dt><b>setoption(<i>name, value</i>)</b></dt>
 <dd>
 Set the given option to the given value.
@@ -1172,8 +1196,11 @@ Here are all the valid option names and their possible values:
 <tr><td><b>"showicons"</b></td><td width=20>     </td><td>1 or 0</td></tr>
 <tr><td><b>"showlayerbar"</b></td><td width=20>  </td><td>1 or 0</td></tr>
 <tr><td><b>"showoverlay"</b></td><td width=20>   </td><td>1 or 0</td></tr>
+<tr><td><b>"showpopulation"</b></td><td width=20> </td><td>1 or 0</td></tr>
 <tr><td><b>"showprogress"</b></td><td width=20>  </td><td>1 or 0</td></tr>
+<tr><td><b>"showscrollbars"</b></td><td width=20> </td><td>1 or 0</td></tr>
 <tr><td><b>"showstatusbar"</b></td><td width=20> </td><td>1 or 0</td></tr>
+<tr><td><b>"showtimeline"</b></td><td width=20>  </td><td>1 or 0</td></tr>
 <tr><td><b>"showtoolbar"</b></td><td width=20>   </td><td>1 or 0</td></tr>
 <tr><td><b>"smartscale"</b></td><td width=20>    </td><td>1 or 0</td></tr>
 <tr><td><b>"stacklayers"</b></td><td width=20>   </td><td>1 or 0</td></tr>
@@ -1386,24 +1413,35 @@ The status bar is automatically shown if necessary.
 <dd> Example: <b>g.error("The pattern is empty.")</b></dd>
 </p>
 
-<a name="warn"></a><p><dt><b>warn(<i>message</i>)</b></dt>
+<a name="warn"></a><p><dt><b>warn(<i>message, showCancel=true</i>)</b></dt>
 <dd>
 Beep and show the given string in a modal warning dialog.
 Useful for debugging Lua scripts or displaying error messages.
-The dialog has two buttons: clicking OK will close the dialog and continue;
-clicking Cancel will close the dialog and abort the script.
+If showCancel is true (the default) then the dialog has a Cancel button
+as well as the usual OK button.  Clicking OK will close the dialog and
+continue; clicking Cancel will close the dialog and abort the script.
 </dd>
 <dd> Example: <b>g.warn("xxx = "..xxx)</b></dd>
 </p>
 
-<a name="note"></a><p><dt><b>note(<i>message</i>)</b></dt>
+<a name="note"></a><p><dt><b>note(<i>message, showCancel=true</i>)</b></dt>
 <dd>
 Show the given string in a modal information dialog.
 Useful for displaying multi-line results.
-The dialog has two buttons: clicking OK will close the dialog and continue;
-clicking Cancel will close the dialog and abort the script.
+If showCancel is true (the default) then the dialog has a Cancel button
+as well as the usual OK button.  Clicking OK will close the dialog and
+continue; clicking Cancel will close the dialog and abort the script.
 </dd>
-<dd> Example: <b>g.note("Line 1\nLine 2\nLine 3")</b></dd>
+<dd> Example: <b>g.note("Line 1\nLine 2\nLine 3", false)</b></dd>
+</p>
+
+<a name="savechanges"></a><p><dt><b>savechanges(<i>query, message</i>)</b></dt>
+<dd>
+Show a standard "save changes" dialog and return "yes", "no" or "cancel"
+depending on which button the user clicked.
+</dd>
+<dd> Example: <b>local answer = g.savechanges("Save your changes?",</b></dd>
+<dd> <b>"If you don't save, the changes will be lost.")</b></dd>
 </p>
 
 <a name="check"></a><p><dt><b>check(<i>bool</i>)</b></dt>
@@ -1540,6 +1578,10 @@ the implementation details):
    <td> &mdash; return integer part of given floating point number</td>
 </tr>
 <tr>
+   <td><b>gp.round(x)</b></td><td width=10> </td>
+   <td> &mdash; return rounded integer for given floating point number</td>
+</tr>
+<tr>
    <td><b>gp.min(a)</b></td><td width=10> </td>
    <td> &mdash; return minimum value in given array</td>
 </tr>
@@ -1649,21 +1691,21 @@ script to be aborted in a timely manner.
 <p>
 3.
 When writing a script that creates a pattern, make sure the script starts with
-a <b>g.new</b> call (or, less useful, a <b>g.open</b> call that loads a pattern)
-otherwise the script might create lots of temporary files or use lots of memory.
-From Golly's point of view there are two types of scripts:
+a <b>new</b> call (or, less useful, an <b>open</b> call that loads a pattern,
+or a <b>save</b> call) otherwise the script might create lots of temporary files
+or use lots of memory.  From Golly's point of view there are two types of scripts:
 <p>
 <ul>
 <li>
-A script that calls <b>g.new</b> or <b>g.open</b> is assumed to be creating some
-sort of pattern, so when Golly sees these calls it clears any undo history and
-sets an internal flag that says "don't mark this layer as dirty and don't bother
+A script that calls <b>new</b> or <b>open</b> or <b>save</b> is assumed to be
+creating some sort of pattern, so when Golly sees these calls it clears any undo history
+and sets an internal flag that says "don't mark this layer as dirty and don't bother
 recording any further changes".
 <li>
-A script that doesn't call <b>g.new</b> or <b>g.open</b> is assumed to modify the
-current pattern. Golly must record <em>all</em> the script's changes so that
+A script that doesn't call <b>new</b> or <b>open</b> or <b>save</b> is assumed to
+modify the current pattern. Golly must record <em>all</em> the script's changes so that
 when it finishes you can select "Undo Script Changes" from the Edit menu.
-Generating changes (due to <b>g.run</b> or <b>g.step</b> calls) are stored in
+Generating changes (due to <b>run</b> or <b>step</b> calls) are stored in
 temporary files; all other changes are stored in memory.
 </ul>
 

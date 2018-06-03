@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 24   -- build number
+local build = 25   -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -26,7 +26,6 @@ local viewwd, viewht = g.getview(g.getlayer())
 local overlaycreated = false
 
 local pathsep = g.getdir("app"):sub(-1)
-local busy = "Finding patterns, please wait..."
 local controls = "[Page Up] previous, [Page Down] next, [Home] select folder, [O] options, [Esc] exit."
 
 -- pattern list
@@ -59,7 +58,6 @@ local guiwd        = 0           -- computed width of toolbar (from control widt
 local optht        = 0           -- height of options panel
 local gapx         = 10          -- horitzonal gap between controls
 local gapy         = 4           -- vertical gap between controls
-local slidertextx  = 0           -- text position following slider
 local maxsliderval = 22          -- maxmimum slider value
 local sliderpower  = 1.32        -- slider power
 local textrect     = "textrect"  -- clip name for clipping info text
@@ -184,7 +182,7 @@ end
 local function getpatternlist(dir)
     local result = true
 
-    -- save current list    
+    -- save current list
     local currentpatterns = numpatterns
 
     -- search for patterns in the specified folder
@@ -202,7 +200,7 @@ local function getpatternlist(dir)
         result = false
     end
 
-    return result  
+    return result
 end
 
 --------------------------------------------------------------------------------
@@ -333,7 +331,7 @@ local function drawgui()
         ov("blend 0")
         ov("rgba "..toolbarbgcolor)
         ov("fill 0 0 "..guiwd.." "..guiht)
-    
+
         -- draw main buttons
         local y = floor((guiht - prevbutton.ht) / 2)
         local x = gapx
@@ -568,7 +566,7 @@ local function selectfolder()
     local dirname = current:sub(1, current:find(pathsep.."[^"..pathsep.."/]*$"))
 
     -- ask for a folder
-    local dirname = g.opendialog("Choose a folder", "dir", dirname)
+    dirname = g.opendialog("Choose a folder", "dir", dirname)
     if dirname ~= "" then
         if getpatternlist(dirname) then
             whichpattern = 1
@@ -709,7 +707,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function checkforresize()
+local function checkforresize()
     local newwd, newht = g.getview(g.getlayer())
     if newwd ~= viewwd or newht ~= viewht then
         -- hide controls so show draws correct background
@@ -740,10 +738,10 @@ end
 --------------------------------------------------------------------------------
 
 local function browsepatterns(startpattern)
-    local generating = 0
+    local generating
     local now = g.millisecs()
     local target = 15
-    local delay = target
+    local delay
 
     -- if start pattern is supplied then find it in the list
     whichpattern = 1
@@ -877,11 +875,11 @@ end
 
 --------------------------------------------------------------------------------
 
-function browse()
+local function browse()
     -- try to get the current open pattern folder
     local pathname = g.getpath()
-    local dirname = ""
-    
+    local dirname
+
     -- check for no saved pattern or a pattern from the clipboard
     if pathname == "" or pathname:sub(1, pathname:find(pathsep.."[^"..pathsep.."/]*$")) == temppath then
         -- ask for a folder

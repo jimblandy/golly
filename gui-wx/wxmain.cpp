@@ -687,6 +687,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_AUTO,         active);
         mbar->Enable(ID_HYPER,        active && !timeline);
         mbar->Enable(ID_HINFO,        active);
+        mbar->Enable(ID_SHOW_POP,     active);
         mbar->Enable(ID_RECORD,       active && !inscript && currlayer->algo->hyperCapable());
         mbar->Enable(ID_DELTIME,      active && !inscript && timeline && !currlayer->algo->isrecording());
         mbar->Enable(ID_CONVERT,      active && !timeline && !inscript);
@@ -714,6 +715,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Enable(ID_INVERT,       active);
         mbar->Enable(ID_SMARTSCALE,   active);
         mbar->Enable(ID_TIMELINE,     active);
+        mbar->Enable(ID_SCROLL,       active);
         mbar->Enable(ID_INFO,         !currlayer->currfile.IsEmpty());
         
         mbar->Enable(ID_SAVE_OVERLAY, active && showoverlay && curroverlay->GetOverlayData());
@@ -741,6 +743,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Check(ID_AUTO,          currlayer->autofit);
         mbar->Check(ID_HYPER,         currlayer->hyperspeed);
         mbar->Check(ID_HINFO,         currlayer->showhashinfo);
+        mbar->Check(ID_SHOW_POP,      showpopulation);
         mbar->Check(ID_TOOL_BAR,      showtool);
         mbar->Check(ID_LAYER_BAR,     showlayer);
         mbar->Check(ID_EDIT_BAR,      showedit);
@@ -752,6 +755,7 @@ void MainFrame::UpdateMenuItems()
         mbar->Check(ID_INVERT,        swapcolors);
         mbar->Check(ID_SMARTSCALE,    smartscale);
         mbar->Check(ID_TIMELINE,      showtimeline);
+        mbar->Check(ID_SCROLL,        showscrollbars);
         mbar->Check(ID_PL_TL,         plocation == TopLeft);
         mbar->Check(ID_PL_TR,         plocation == TopRight);
         mbar->Check(ID_PL_BR,         plocation == BottomRight);
@@ -1016,18 +1020,22 @@ void MainFrame::ResizeBigView()
             ResizeTimelineBar(y + ht, wd);
         }
 
-#ifdef __WXMAC__
-        if (!fullscreen) {
+        if (!fullscreen && showscrollbars) {
             // make room for hbar and vbar
             wd -= 15;
             ht -= 15;
             if (wd < 0) wd = 0;
             if (ht < 0) ht = 0;
             // resize hbar and vbar
-            hbar->SetSize(0, y + ht, wd, 15);
+			#ifdef __WXMSW__
+			    // extend scroll bar to right edge to avoid seeing junk
+				// in bottom right corner (need to figure out how to create a gripper!!!)
+                hbar->SetSize(0, y + ht, wd+15, 15);
+			#else
+		        hbar->SetSize(0, y + ht, wd, 15);
+			#endif
             vbar->SetSize(wd, y, 15, ht);
         }
-#endif
 
         if (wd < 0) wd = 0;
         if (ht < 0) ht = 0;
@@ -1109,6 +1117,26 @@ void MainFrame::ToggleToolBar()
 
 // -----------------------------------------------------------------------------
 
+void MainFrame::ToggleScrollBars()
+{
+    showscrollbars = !showscrollbars;
+    if (showscrollbars) {
+        hbar->Show(true);
+        vbar->Show(true);
+    } else {
+        // hide scroll bars
+        hbar->Show(false);
+        vbar->Show(false);
+    }
+    // adjust size of viewport
+    int wd, ht;
+    GetClientSize(&wd, &ht);
+    ResizeSplitWindow(wd, ht);
+    UpdateEverything();
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::ToggleFullScreen()
 {
     static bool restorestatusbar;    // restore status bar at end of full screen mode?
@@ -1131,14 +1159,11 @@ void MainFrame::ToggleFullScreen()
     ShowFullScreen(fullscreen, wxFULLSCREEN_NOMENUBAR | wxFULLSCREEN_NOBORDER | wxFULLSCREEN_NOCAPTION);
     
     if (fullscreen) {
-        // hide scroll bars
-#ifdef __WXMAC__
-        hbar->Show(false);
-        vbar->Show(false);
-#else
-        bigview->SetScrollbar(wxHORIZONTAL, 0, 0, 0, true);
-        bigview->SetScrollbar(wxVERTICAL, 0, 0, 0, true);
-#endif
+        if (showscrollbars) {
+            // hide scroll bars
+            hbar->Show(false);
+            vbar->Show(false);
+        }
 
         // hide status bar if necessary
         restorestatusbar = showstatus;
@@ -1213,16 +1238,12 @@ void MainFrame::ToggleFullScreen()
             splitwin->SplitVertically(filectrl, RightPane(), dirwinwd);
             showfiles = true;
         }
-    }
-    
-    if (!fullscreen) {
-        // restore scroll bars BEFORE setting viewport size
-#ifdef __WXMAC__
-        hbar->Show(true);
-        vbar->Show(true);
-#else
-        bigview->UpdateScrollBars();
-#endif
+        
+        if (showscrollbars) {
+            // restore scroll bars
+            hbar->Show(true);
+            vbar->Show(true);
+        }
     }
     
     // adjust size of viewport (and file directory if visible)
@@ -1295,9 +1316,7 @@ EVT_TREE_SEL_CHANGED    (wxID_TREECTRL, MainFrame::OnDirTreeSelection)
 EVT_SPLITTER_DCLICK     (wxID_ANY,      MainFrame::OnSashDblClick)
 EVT_TIMER               (ID_GENTIMER,   MainFrame::OnGenTimer)
 EVT_CLOSE               (               MainFrame::OnClose)
-#ifdef __WXMAC__
 EVT_COMMAND_SCROLL      (wxID_ANY,      MainFrame::OnScroll)
-#endif
 END_EVENT_TABLE()
 
 // -----------------------------------------------------------------------------
@@ -1374,6 +1393,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_AUTO:           ToggleAutoFit(); break;
         case ID_HYPER:          ToggleHyperspeed(); break;
         case ID_HINFO:          ToggleHashInfo(); break;
+        case ID_SHOW_POP:       ToggleShowPopulation(); break;
         case ID_RECORD:         StartStopRecording(); break;
         case ID_DELTIME:        DeleteTimeline(); break;
         case ID_CONVERT:        ConvertOldRules(); break;
@@ -1404,6 +1424,7 @@ void MainFrame::OnMenu(wxCommandEvent& event)
         case ID_INVERT:         viewptr->ToggleCellColors(); break;
         case ID_SMARTSCALE:     viewptr->ToggleSmarterScaling(); break;
         case ID_TIMELINE:       ToggleTimelineBar(); break;
+        case ID_SCROLL:         ToggleScrollBars(); break;
         case ID_INFO:           ShowPatternInfo(); break;
             
         // Layer menu
@@ -1787,8 +1808,6 @@ void MainFrame::OnSashDblClick(wxSplitterEvent& WXUNUSED(event))
 
 // -----------------------------------------------------------------------------
 
-#ifdef __WXMAC__
-
 void MainFrame::OnScroll(wxScrollEvent& event)
 {
     WXTYPE type = event.GetEventType();
@@ -1807,8 +1826,6 @@ void MainFrame::OnScroll(wxScrollEvent& event)
     wxScrollWinEvent newevt(newtype, event.GetPosition(), event.GetOrientation());
     wxPostEvent(bigview->GetEventHandler(), newevt);
 }
-
-#endif // __WXMAC__
 
 // -----------------------------------------------------------------------------
 
@@ -2216,6 +2233,7 @@ void MainFrame::CreateMenus()
     controlMenu->AppendCheckItem(ID_AUTO,        _("Auto Fit") + GetAccelerator(DO_AUTOFIT));
     controlMenu->AppendCheckItem(ID_HYPER,       _("Hyperspeed") + GetAccelerator(DO_HYPER));
     controlMenu->AppendCheckItem(ID_HINFO,       _("Show Hash Info") + GetAccelerator(DO_HASHINFO));
+    controlMenu->AppendCheckItem(ID_SHOW_POP,    _("Show Population") + GetAccelerator(DO_SHOWPOP));
     controlMenu->AppendSeparator();
     controlMenu->Append(ID_RECORD,               _("Start Recording") + GetAccelerator(DO_RECORD));
     controlMenu->Append(ID_DELTIME,              _("Delete Timeline") + GetAccelerator(DO_DELTIME));
@@ -2247,6 +2265,7 @@ void MainFrame::CreateMenus()
     viewMenu->AppendCheckItem(ID_INVERT,         _("Invert Colors") + GetAccelerator(DO_INVERT));
     viewMenu->AppendCheckItem(ID_SMARTSCALE,     _("Smarter Scaling") + GetAccelerator(DO_SMARTSCALE));
     viewMenu->AppendCheckItem(ID_TIMELINE,       _("Show Timeline") + GetAccelerator(DO_SHOWTIME));
+    viewMenu->AppendCheckItem(ID_SCROLL,         _("Show Scroll Bars") + GetAccelerator(DO_SHOWSCROLL));
     viewMenu->AppendSeparator();
     viewMenu->Append(ID_INFO,                    _("Pattern Info") + GetAccelerator(DO_INFO));
     
@@ -2398,6 +2417,7 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_AUTO,            DO_AUTOFIT);
         SetAccelerator(mbar, ID_HYPER,           DO_HYPER);
         SetAccelerator(mbar, ID_HINFO,           DO_HASHINFO);
+        SetAccelerator(mbar, ID_SHOW_POP,        DO_SHOWPOP);
         SetAccelerator(mbar, ID_RECORD,          DO_RECORD);
         SetAccelerator(mbar, ID_DELTIME,         DO_DELTIME);
         SetAccelerator(mbar, ID_SETRULE,         DO_SETRULE);
@@ -2420,6 +2440,7 @@ void MainFrame::UpdateMenuAccelerators()
         SetAccelerator(mbar, ID_INVERT,          DO_INVERT);
         SetAccelerator(mbar, ID_SMARTSCALE,      DO_SMARTSCALE);
         SetAccelerator(mbar, ID_TIMELINE,        DO_SHOWTIME);
+        SetAccelerator(mbar, ID_SCROLL,          DO_SHOWSCROLL);
         SetAccelerator(mbar, ID_INFO,            DO_INFO);
         
         SetAccelerator(mbar, ID_SAVE_OVERLAY,    DO_SAVEOVERLAY);
@@ -2581,30 +2602,30 @@ MainFrame::MainFrame()
     
     CreateTranslucentControls();        // must be done BEFORE creating viewport
     
-    // create viewport at minimum size to avoid scroll bars being clipped on Mac
+    // create viewport at minimum size
     int y = 0;
     if (showlayer) y += LayerBarHeight();
     if (showedit) y += EditBarHeight();
     viewptr = new PatternView(rightpane, 0, y, 40, 40,
                               wxNO_BORDER |
                               wxWANTS_CHARS |              // receive all keyboard events
-#ifndef __WXMAC__
-// avoid Mac bug if wxGLCanvas has built-in scroll bars
-                              wxVSCROLL | wxHSCROLL |
-#endif
                               wxFULL_REPAINT_ON_RESIZE);
     
     // this is the main viewport window (tile windows have a tileindex >= 0)
     viewptr->tileindex = -1;
     bigview = viewptr;
 
-#ifdef __WXMAC__
-    // manually create scroll bars to avoid wxGLCanvas bug on Mac
+    // create the scroll bars
     hbar = new wxScrollBar(rightpane, wxID_ANY, wxPoint(0,0), wxSize(-1, 15), wxSB_HORIZONTAL);
     vbar = new wxScrollBar(rightpane, wxID_ANY, wxPoint(0,0), wxSize(15, -1), wxSB_VERTICAL);
     hbar->SetMinSize(wxDefaultSize);
     vbar->SetMinSize(wxDefaultSize);
-#endif
+    
+    if (!showscrollbars) {
+        // hide scroll bars
+        hbar->Show(false);
+        vbar->Show(false);
+    }
 
 #if wxUSE_DRAG_AND_DROP
     // let users drop files onto viewport
@@ -2625,10 +2646,8 @@ MainFrame::MainFrame()
 
 MainFrame::~MainFrame()
 {
-#ifdef __WXMAC__
     delete hbar;
     delete vbar;
-#endif
     delete curroverlay;
     delete gentimer;
     DestroyDrawingData();

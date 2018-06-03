@@ -24,12 +24,6 @@ int bigint::sepcount = 3 ;
 /**
  *   Routines.
  */
-bigint::bigint() {
-   v.i = 1 ;
-}
-bigint::bigint(int i) {
-   fromint(i) ;
-}
 bigint::bigint(G_INT64 i) {
    if (i <= INT_MAX && i >= INT_MIN)
       fromint((int)i) ;
@@ -122,6 +116,20 @@ bigint &bigint::operator=(const bigint &b) {
 bigint::~bigint() {
    if (0 == (v.i & 1))
       delete [] v.p ;
+}
+bigint::bigint(const bigint &a, const bigint &b, const bigint &c, const bigint &d) {
+   const int checkmask = 0xf0000001 ;
+   if ((a.v.i & checkmask) == 1 && (b.v.i & checkmask) == 1 &&
+       (c.v.i & checkmask) == 1 && (d.v.i & checkmask) == 1) {
+      // hot path
+      v.i = a.v.i + b.v.i + c.v.i + d.v.i - 3 ;
+      return ;
+   }
+   v.i = 1 ;
+   *this = a ;
+   *this += b ;
+   *this += c ;
+   *this += d ;
 }
 const char *bigint::tostring(char sep) const {
    int lenreq = 32 ;

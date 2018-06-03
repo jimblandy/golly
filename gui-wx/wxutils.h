@@ -6,11 +6,15 @@
 
 // Various utility routines:
 
-void Note(const wxString& msg);
+void Note(const wxString& msg, bool showCancel = true);
 // Display given message in a modal dialog.
+// If called from a script then an optional Cancel button
+// can be used to abort the script.
 
-void Warning(const wxString& msg);
+void Warning(const wxString& msg, bool showCancel = true);
 // Beep and display message in a modal dialog.
+// If called from a script then an optional Cancel button
+// can be used to abort the script.
 
 void Fatal(const wxString& msg);
 // Beep, display message in a modal dialog, then exit app.

@@ -103,12 +103,12 @@ local function repeat_test(extratext, palebg)
     if palebg then
         -- draw black text
         ov(op.black)
-        local w, h = maketext(text)
+        local _, h = maketext(text)
         pastetext(10, ht - 10 - h)
     else
         -- draw white text with a black shadow
         ov(op.white)
-        local w, h = maketext(text, nil, op.white, 2, 2)
+        local _, h = maketext(text, nil, op.white, 2, 2)
         local x = 10
         local y = ht - 10 - h
         pastetext(x, y)
@@ -144,7 +144,7 @@ end
 
 local day = 1
 
-function test_transitions()
+local function test_transitions()
     -- create a clip from the menu screen
     local oldblend = ov("blend 0")
     ov(op.black)
@@ -251,7 +251,7 @@ function test_transitions()
     -- saturday: through the square window
     elseif day == 6 then
         for x = 1, wd / 2, 4 do
-            t = g.millisecs()           
+            t = g.millisecs()
             local y = x * (ht / wd)
             ov("blend 0")
             ov("paste 0 0 bg")
@@ -290,22 +290,18 @@ function test_transitions()
             local a = i / 100
             local x, y
             ov("paste 0 0 fg")
-            for n = 1, #box do
-                x = box[n][1]
-                y = box[n][2]
-                tx = box[n][3]
-                ty = box[n][4]
-                ov("paste "..floor(x * (1 - a) + tx * a).." "..floor(y * (1 - a) + ty * a).." sprite"..n)
+            for j = 1, #box do
+                x = box[j][1]
+                y = box[j][2]
+                tx = box[j][3]
+                ty = box[j][4]
+                ov("paste "..floor(x * (1 - a) + tx * a).." "..floor(y * (1 - a) + ty * a).." sprite"..j)
             end
             ov("update")
             while g.millisecs() - t < 15 do end
         end
-        n = 1
-        for y = 0, ht, 16 do
-            for x = 0, wd, 16 do
-                ov("delete sprite"..n)
-                n = n + 1
-            end
+        for i = 1, #box do
+            ov("delete sprite"..i)
         end
 
     -- bonus day: objects in the mirror are closer than they appear
@@ -341,7 +337,7 @@ end
 
 local curs = 0
 
-function test_cursors()
+local function test_cursors()
     ::restart::
 
     local cmd
@@ -381,7 +377,7 @@ end
 
 local pos = 0
 
-function test_positions()
+local function test_positions()
     ::restart::
 
     pos = pos + 1
@@ -446,10 +442,11 @@ local replacements = {
     [17] = { col = "", cmd = "replace *#-4 *#-4 *#-4 *#", desc = "fast fade to black", overlay = true, loop = true }
 }
 
-function test_replace()
+local function test_replace()
     ::restart::
 
     -- create clip
+    local _
     local oldblend = ov("blend 0")
     ov("rgba 0 0 0 0")
     ov("fill")
@@ -504,7 +501,7 @@ function test_replace()
         ov(drawcol)
     end
     -- execute replace and draw clip
-    local replaced = 0
+    local replaced
     local t1 = g.millisecs()
     if replacements[replace].overlay ~= true then
         ov("target clip")
@@ -532,18 +529,18 @@ function test_replace()
             ov("font 14 mono")
             ov(op.white)
             local testname = "Test "..replace..": "..replacements[replace].desc
-            w, h = maketext(testname, nil, nil, 2, 2)
+            w, _ = maketext(testname, nil, nil, 2, 2)
             pastetext(floor((wd - w) / 2), 310)
             ov("font 22 mono")
             if drawcol ~= "" then
                 ov(op.yellow)
-                w, h = maketext(drawcol, nil, nil, 2, 2)
+                w, _ = maketext(drawcol, nil, nil, 2, 2)
                 pastetext(floor((wd - w) / 2), 340)
             end
             ov(op.yellow)
-            w, h = maketext(replacecmd, nil, nil, 2, 2)
+            w, _ = maketext(replacecmd, nil, nil, 2, 2)
             pastetext(floor((wd - w) / 2), 390)
-        
+
             -- update display
             g.show("Test "..replace..": pixels replaced in step "..count..": "..replaced)
             ov("update")
@@ -568,18 +565,18 @@ function test_replace()
         ov("font 14 mono")
         ov(op.white)
         local testname = "Test "..replace..": "..replacements[replace].desc
-        w, h = maketext(testname, nil, nil, 2, 2)
+        w, _ = maketext(testname, nil, nil, 2, 2)
         pastetext(floor((wd - w) / 2), 310)
 
         -- draw test commands
         ov("font 22 mono")
         if drawcol ~= "" then
             ov(op.yellow)
-            w, h = maketext(drawcol, nil, nil, 2, 2)
+            w, _ = maketext(drawcol, nil, nil, 2, 2)
             pastetext(floor((wd - w) / 2), 340)
         end
         ov(op.yellow)
-        w, h = maketext(replacecmd, nil, nil, 2, 2)
+        w, _ = maketext(replacecmd, nil, nil, 2, 2)
         pastetext(floor((wd - w) / 2), 390)
     end
 
@@ -606,7 +603,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function test_copy_paste()
+local function test_copy_paste()
     ::restart::
 
     local t1 = g.millisecs()
@@ -661,7 +658,7 @@ end
 
 local themenum = 1
 
-function test_cellview()
+local function test_cellview()
     -- create a new layer
     g.addlayer()
     extra_layer = true
@@ -893,7 +890,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function create_anim_bg(clipname, wd, ht)
+local function create_anim_bg(clipname)
     local level
 
     -- create a clip the size of the overlay and make it the render target
@@ -914,7 +911,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function test_animation()
+local function test_animation()
     -- resize overlay to cover entire layer
     wd, ht = g.getview(g.getlayer())
     ov("resize "..wd.." "..ht)
@@ -942,7 +939,7 @@ function test_animation()
     local camzoom = cammaxzoom
     local camhold = 1000
     local camcount = camhold
-    local smoothzoom = camzoom
+    local smoothzoom
 
     -- update the pattern every n frames
     local patternupdateframe = 4
@@ -1047,6 +1044,8 @@ Mark Jeronimus
 
 Eric Goldstein
 
+Aire Paap
+
 
 
 
@@ -1061,6 +1060,9 @@ for QuickLife ideas and non-totalistic algorithm
 
 David Eppstein
 for the B0 rule emulation idea
+
+Adam P. Goucher and Dean Hickerson
+for clever ideas to speed up Larger than Life
 
 Eugene Langvagen
 for inspiring Golly's scripting capabilities
@@ -1079,6 +1081,14 @@ for Python
 
 Roberto Ierusalimschy and all Lua developers
 for Lua
+]]
+
+    if sound_enabled then
+        creditstext = creditstext.."\nNikolaus Gebhardt @ Ambiera\nfor irrKlang\n"
+    end
+
+    creditstext = creditstext..
+[[
 
 
 
@@ -1118,6 +1128,8 @@ Renato Nobili
 Adam P. Goucher
 
 David Bell
+
+Kenichi Morita
 ]]
 
     -- start music if sound enabled
@@ -1127,7 +1139,7 @@ David Bell
     end
 
     -- create credits clip
-    local oldalign = ov("textoption align center")
+    ov("textoption align center")
     ov("font 14 roman")
 
     local creditsclip = "credits"
@@ -1135,7 +1147,7 @@ David Bell
 
     -- create graduated background
     local bgclip = "bg"
-    create_anim_bg(bgclip, wd, ht)
+    create_anim_bg(bgclip)
 
     -- create stars
     local starx = {}
@@ -1151,9 +1163,7 @@ David Bell
     local textx = wd
     local texty
     local running = true
-    local patternframe = patternupdateframe
     local x, y
-    local lastframe = -1
     local credity = ht
     local creditx = floor((wd - credwidth) / 2)
     local credpos
@@ -1174,7 +1184,6 @@ David Bell
             if newht < 1 then newht = 1 end
 
             -- scale stars
-            local i = 1
             for i = 1, numstars do
                 starx[i] = floor(starx[i] * newwd / wd)
                 stary[i] = floor(stary[i] * newht / ht)
@@ -1191,7 +1200,7 @@ David Bell
             ov("resize "..wd.." "..ht.." pattern")
 
             -- recreate background
-            create_anim_bg(bgclip, wd, ht)
+            create_anim_bg(bgclip)
 
             -- recenter credits text
             creditx = floor((wd - credwidth) / 2)
@@ -1216,9 +1225,8 @@ David Bell
 
         -- draw stars
         local level = 50
-        local i = 1
         ov("rgba "..level.." "..level.." "..level.." 255")
-        local lastd = stard[i]
+        local lastd = stard[1]
         local coords = ""
 
         for i = 1, numstars do
@@ -1282,7 +1290,7 @@ David Bell
             end
         end
         smoothzoom = bezierx((camzoom - camminzoom) / (cammaxzoom - camminzoom), 0, 0, 1, 1) * (cammaxzoom - camminzoom) + camminzoom
-        
+
         -- update cell view
         ov("target pattern")
         ov("camera zoom "..lineartoreal(smoothzoom))
@@ -1323,7 +1331,7 @@ David Bell
         pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
 
         -- update display
-	ov("update")
+        ov("update")
         if firsttime then
             firsttime = false
             g.update()
@@ -1385,14 +1393,14 @@ end
 
 local loaddir = g.getdir("app").."Help/images/"
 
-function test_scale()
+local function test_scale()
     local loaded = false
     local iw, ih
     local quality = "best"
     local minscale = 0.1
     local maxscale = 8.0
     local scale = 1.0         -- no scaling
-    
+
     ::restart::
 
     ov(op.yellow)
@@ -1407,12 +1415,12 @@ function test_scale()
     local oldfont = ov(demofont)
     local oldblend = ov("blend 1")
     ov(op.black)
-    local w, h = maketext(text)
+    local _, h = maketext(text)
     pastetext(10, ht - 10 - h)
     maketext("Hit [ to scale down, ] to scale up, 1 to reset scale to 1.0, Q to toggle quality.")
     pastetext(10, 10)
     ov("font "..oldfont)
-    
+
     if not loaded then
         -- prompt user to load a BMP/GIF/PNG/TIFF file
         g.update()
@@ -1422,14 +1430,14 @@ function test_scale()
             -- update loaddir by stripping off the file name
             local pathsep = g.getdir("app"):sub(-1)
             loaddir = filepath:gsub("[^"..pathsep.."]+$","")
-    
+
             -- center image in overlay by first loading the file completely outside it
             -- so we get the image dimensions without changing the overlay
             local imgsize = ov("load "..wd.." "..ht.." "..filepath)
             iw, ih = split(imgsize)
             iw = tonumber(iw)
             ih = tonumber(ih)
-            
+
             -- now load image into a clip
             ov("create "..iw.." "..ih.." img")
             ov("target img")
@@ -1438,7 +1446,7 @@ function test_scale()
             loaded = true
         end
     end
-    
+
     if loaded then
         -- draw image at current scale
         local scaledw = int(iw*scale+0.5)
@@ -1491,7 +1499,7 @@ end
 
 local savedir = g.getdir("data")
 
-function test_save()
+local function test_save()
     ::restart::
 
     -- create gradient from one random pale color to another
@@ -1539,7 +1547,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function test_set()
+local function test_set()
     local maxx = wd - 1
     local maxy = ht - 1
     local flakes = 10000
@@ -1589,8 +1597,8 @@ function test_set()
         else
             for j = 0, wd - 1 do
                 rgba = ov("get "..j.." "..i)
-                local r, g, b = split(rgba)
-                if tonumber(r) == 0 and tonumber(g) == 0 then
+                local rv, gv, _ = split(rgba)
+                if tonumber(rv) == 0 and tonumber(gv) == 0 then
                     row[j] = true
                 else
                     row[j] = false
@@ -1609,7 +1617,7 @@ function test_set()
     for i = 1, flakes do
         x[i] = rand(0, maxx)
         local yval = 0
-        for j = 1, 10 do
+        for _ = 1, 10 do
             yval = yval + rand(0, 20 * maxy)
         end
         y[i] = floor(-(yval / 10))
@@ -1832,9 +1840,9 @@ local function show_magnified_pixels(x, y)
         for j = 1, numcols do
             if #color[i][j] > 0 then
                 ov("rgba "..color[i][j])
-                local x = xpos+1+(j-1)*(magsize+1)
-                local y = ypos+1+(i-1)*(magsize+1)
-                ov("fill "..x.." "..y.." "..magsize.." "..magsize)
+                local xv = xpos+1+(j-1)*(magsize+1)
+                local yv = ypos+1+(i-1)*(magsize+1)
+                ov("fill "..xv.." "..yv.." "..magsize.." "..magsize)
             end
         end
     end
@@ -1872,7 +1880,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function test_lines()
+local function test_lines()
     -- this test requires a bigger overlay
     local owd = 800
     local oht = 600
@@ -1884,6 +1892,7 @@ function test_lines()
 
     local oldblend = ov("blend 0")
     local oldwidth = ov("lineoption width 1")
+    local _
 
     -- non-antialiased lines (line width = 1)
     radial_lines(80, 90, 45)
@@ -1996,7 +2005,7 @@ function test_lines()
     draw_ellipse(x, y, w, h)
     ov("lineoption width 1")
     local a = 0
-    for i = 1, 63 do
+    for _ = 1, 63 do
         a = a + 4
         ov("rgba 255 255 255 "..a)
         -- we need to draw 2 offset ellipses to ensure all pixels are altered
@@ -2020,7 +2029,7 @@ function test_lines()
         text = "Click or hit the enter key to return to the main menu."
     end
     ov(op.black)
-    local w,h = maketext(text)
+    _, h = maketext(text)
     pastetext(10, oht - h - 10)
     maketext("Hit the M key to toggle the magnifying glass.")
     pastetext(10, 10)
@@ -2064,17 +2073,17 @@ function test_lines()
         -- track mouse and magnify pixels under cursor
         local xy = ov("xy")
         if #xy > 0 then
-            local x, y = split(xy)
-            x = tonumber(x)
-            y = tonumber(y)
-            if x ~= prevx or y ~= prevy then
-                prevx = x
-                prevy = y
+            local xv, yv = split(xy)
+            xv = tonumber(xv)
+            yv = tonumber(yv)
+            if xv ~= prevx or yv ~= prevy then
+                prevx = xv
+                prevy = yv
                 ov("paste 0 0 bg")
                 if display_magnifier then
                     -- first show position and color of x,y pixel in status bar
-                    g.show("xy: "..x.." "..y.."  rgba: "..ov("get "..x.." "..y))
-                    show_magnified_pixels(x, y)
+                    g.show("xy: "..xv.." "..yv.."  rgba: "..ov("get "..xv.." "..yv))
+                    show_magnified_pixels(xv, yv)
                     g.update()
                     showing_magnifier = true
                 end
@@ -2090,7 +2099,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function test_multiline_text()
+local function test_multiline_text()
     ::restart::
 
     -- resize overlay to cover entire layer
@@ -2149,7 +2158,7 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     -- toggle the column alignments and transparency
     if align == "left" then
        align = "center"
-    else 
+    else
         if align == "center" then
             align = "right"
         else
@@ -2219,12 +2228,12 @@ end
 
 --------------------------------------------------------------------------------
 
-function test_text()
+local function test_text()
     ::restart::
 
     local t1 = g.millisecs()
 
-    local oldfont, oldblend, w, h, descent, nextx
+    local oldfont, oldblend, w, h, descent, nextx, _
 
     oldblend = ov("blend 0")
     ov(op.white) -- white background
@@ -2271,7 +2280,7 @@ function test_text()
     nextx = nextx + w + 5
 
     ov("font 20 default-bold")
-    w, h, descent = maketext("Big")
+    _, h, descent = maketext("Big")
     pastetext(nextx, 30 - h + descent)
 
     ov("font 10 default-bold")
@@ -2289,11 +2298,11 @@ function test_text()
     nextx = 300 + w + 5
 
     ov("font 12")   -- just change font size
-    w, h, descent = maketext("mono12")
+    _, h, descent = maketext("mono12")
     pastetext(nextx, 80 - h + descent)
 
     ov("font 10 mono-bold")
-    w = maketext("mono-bold")
+    maketext("mono-bold")
     pastetext(300, 90)
 
     ov("font 10 mono-italic")
@@ -2305,7 +2314,7 @@ function test_text()
     pastetext(300, 130)
 
     ov("font 10 roman-bold")
-    w = maketext("roman-bold")
+    maketext("roman-bold")
     pastetext(300, 145)
 
     ov("font 10 roman-italic")
@@ -2325,7 +2334,7 @@ function test_text()
     nextx = nextx + w + 5
 
     ov(op.blue)
-    w, h, descent = maketext("BLUE")
+    _, h, descent = maketext("BLUE")
     pastetext(nextx, 200 - h + descent)
 
     ov(op.yellow)
@@ -2376,7 +2385,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function test_fill()
+local function test_fill()
     ::restart::
 
     ov(op.white)
@@ -2390,7 +2399,7 @@ function test_fill()
     local maxx = wd-1
     local maxy = ht-1
     local t1 = g.millisecs()
-    for i = 1, 1000 do
+    for _ = 1, 1000 do
         ov("rgba "..rand(0,255).." "..rand(0,255).." "..rand(0,255).." "..rand(0,255))
         ov("fill "..rand(0,maxx).." "..rand(0,maxy).." "..rand(100).." "..rand(100))
     end
@@ -2409,7 +2418,7 @@ end
 
 local target = 1
 
-function test_target()
+local function test_target()
     -- set overlay as the rendering target
     local oldtarget = ov("target")
     local oldfont = ov("font 16 mono")
@@ -2490,7 +2499,7 @@ end
 local batchsize = 2
 local maxbatch  = 512
 
-function test_batch()
+local function test_batch()
     ::restart::
 
     ov(op.black)
@@ -2510,7 +2519,7 @@ function test_batch()
 
     -- create random positions
     local m = 1
-    for i = 1, items do
+    for _ = 1, items do
         xy[m] = rand(0, wd - 1)
         xy[m + 1] = rand(0, ht - 1)
         xywh[m] = xy[m] - 2
@@ -2522,12 +2531,39 @@ function test_batch()
     local xylist   = table.concat(xy, " ").." "..xy[1].." "..xy[2]
     local xywhlist = table.concat(xywh, " ")
 
+    -- create paste clip
+    local clipname = "testclip"
+    ov("create 64 64 "..clipname)
+    ov("target "..clipname)
+    ov(op.blue)
+    ov("fill")
+    ov("optimize "..clipname)
+    ov("target")
+
+    -- time paste one at a time
+    local t7 = g.millisecs()
+    for _ = 1, reps do
+        m = 1
+        for _ = 1, items do
+            ov("paste "..xy[m].." "..xy[m + 1].." "..clipname)
+            m = m + 2
+        end
+    end
+    t7 = g.millisecs() - t7
+
+    -- time drawing all at once
+    local t8 = g.millisecs()
+    for _ = 1, reps do
+        ov("paste "..xylist.." "..clipname)
+    end
+    t8 = g.millisecs() - t8
+
     -- draw random lines
     ov(op.green)
 
     -- time draw one at a time
     local t3 = g.millisecs()
-    for i = 1, reps do
+    for _ = 1, reps do
         m = 1
         for i = 1, items do
             if i == items then
@@ -2542,7 +2578,7 @@ function test_batch()
 
     -- time drawing all at once
     local t4 = g.millisecs()
-    for i = 1, reps do
+    for _ = 1, reps do
         ov("line "..xylist)
     end
     t4 = g.millisecs() - t4
@@ -2552,9 +2588,9 @@ function test_batch()
 
     -- time draw one at a time
     local t5 = g.millisecs()
-    for i = 1, reps do
+    for _ = 1, reps do
         m = 1
-        for i = 1, items do
+        for _ = 1, items do
             ov("fill "..xywh[m].." "..xywh[m + 1])
             m = m + 2
         end
@@ -2563,7 +2599,7 @@ function test_batch()
 
     -- time drawing all at once
     local t6 = g.millisecs()
-    for i = 1, reps do
+    for _ = 1, reps do
         ov("fill "..xywhlist)
     end
     t6 = g.millisecs() - t6
@@ -2574,9 +2610,9 @@ function test_batch()
     -- time drawing one at a time
     ov(op.white)
     local t1 = g.millisecs()
-    for i = 1, reps do
+    for _ = 1, reps do
         m = 1
-        for i = 1, items do
+        for _ = 1, items do
             ov("set "..xy[m].." "..xy[m + 1])
             m = m + 2
         end
@@ -2585,20 +2621,23 @@ function test_batch()
 
     -- time drawing all at once
     local t2 = g.millisecs()
-    for i = 1, reps do
+    for _ = 1, reps do
         ov("set "..xylist)
     end
     t2 = g.millisecs() - t2
 
-    g.show("reps: "..reps.."  items: "..items.."  pixels: single "..ms(t1).." batch "..ms(t2).."  lines: single "..ms(t3).." batch "..ms(t4).."  rectangles: single "..ms(t5).." batch "..ms(t6))
+    g.show("reps: "..reps.."  items: "..items.."  pixels: single "..ms(t1).." batch "..ms(t2).."  lines: single "..ms(t3).." batch "..ms(t4).."  rectangles: single "..ms(t5).." batch "..ms(t6).."  paste: single "..ms(t7).." batch "..ms(t8))
+
+    -- delete the clip
+    ov("delete "..clipname)
 
     -- create batch string
     if repeat_test(" with a different batch size") then goto restart end
 end
- 
+
 --------------------------------------------------------------------------------
 
-function test_blending()
+local function test_blending()
     ::restart::
 
     ov(op.white)
@@ -2650,8 +2689,9 @@ end
 --------------------------------------------------------------------------------
 
 local volume = 70
+local paused = false
 
-function test_sound()
+local function test_sound()
     local oldblend = ov("blend 0")
     ov(op.blue)
     ov("fill")
@@ -2667,24 +2707,24 @@ function test_sound()
     -- draw commands
     ov("font 22 mono")
     ov(op.yellow)
-    local w, h = maketext("sound play audio.wav", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 100)
-    w, h = maketext("sound loop audio.wav", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 200)
-    w, h = maketext("sound stop", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 300)
+    local w, _ = maketext("sound play audio.wav", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 50)
+    w, _ = maketext("sound loop audio.wav", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 150)
+    w, _ = maketext("sound stop", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 250)
 
     -- draw controls
     ov("font 16 mono")
     ov(op.white)
-    w, h = maketext("Press P to play sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 70)
-    w, h = maketext("Press L to loop sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 170)
-    w, h = maketext("Press S to stop sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 270)
-    w, h = maketext("Press - or + to adjust volume", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 370)
+    w, _ = maketext("Press P to play sound", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 20)
+    w, _ = maketext("Press L to loop sound", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 120)
+    w, _ = maketext("Press S to stop sound", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 220)
+    w, _ = maketext("Press - or + to adjust volume", nil, nil, 2, 2)
+    pastetext(floor((wd - w) / 2), 320)
 
     -- update screen then copy background
     ov("update")
@@ -2705,9 +2745,11 @@ function test_sound()
         elseif event == "key p none" then
             command = "play"
             result = ov("sound play "..soundname.." "..(volume / 100))
+            paused = false
         elseif event == "key l none" then
             command = "loop"
             result = ov("sound loop "..soundname.. " "..(volume / 100))
+            paused = false
         elseif event == "key s none" then
             command = "stop"
             ov("sound stop")
@@ -2716,35 +2758,68 @@ function test_sound()
             volume = volume - 10
             if (volume < 0) then volume = 0 end
             command = "volume "..(volume / 100)
-            ov("sound volume "..(volume / 100).." "..soundname)
+            ov("sound volume "..soundname.." "..(volume / 100))
         elseif event == "key + none" or event == "key = none" then
             volume = volume + 10
             if (volume > 100) then volume = 100 end
             command = "volume "..(volume / 100)
-            ov("sound volume "..(volume / 100).." "..soundname)
+            ov("sound volume "..soundname.." "..(volume / 100))
+        elseif event == "key q none" then
+            if paused then
+                paused = false
+                command = "resume"
+                ov("sound resume "..soundname)
+            else
+                paused = true
+                command = "pause"
+                ov("sound pause "..soundname)
+            end
         end
 
         -- draw background
         ov("blend 0")
         ov("paste 0 0 "..bgclip)
 
-        -- display volume
+        -- draw pause or resume
+        ov("font 16 mono")
         ov("blend 1")
+        ov(op.white)
+        if paused then
+            w, _ = maketext("Press Q to resume playback", nil, nil, 2, 2)
+        else
+            w, _ = maketext("Press Q to pause playback", nil, nil, 2, 2)
+        end
+        pastetext(floor((wd - w) / 2), 420)
         ov(op.yellow)
         ov("font 22 mono")
-        w, h = maketext("sound volume "..(volume / 100), nil, nil, 2, 2)
-        pastetext(floor((wd - w) / 2), 400)
+        if paused then
+            w, _ = maketext("sound resume audio.wav", nil, nil, 2, 2)
+        else
+            w, _ = maketext("sound pause audio.wav", nil, nil, 2, 2)
+        end
+        pastetext(floor((wd - w) / 2), 450)
+
+        -- display volume
+        ov("blend 1")
+        w, _ = maketext("sound volume audio.wav "..(volume / 100), nil, nil, 2, 2)
+        pastetext(floor((wd - w) / 2), 350)
 
         -- draw last command
         ov("blend 1")
         ov(op.cyan)
         ov("font 16 mono")
         if (result ~= "" and result ~= nil) then
-            w, h = maketext("Last command: "..command.." ("..result..")", nil, nil, 2, 2)
+            w, _ = maketext("Last command: "..command.." ("..result..")", nil, nil, 2, 2)
         else
-            w, h = maketext("Last command: "..command, nil, nil, 2, 2)
+            w, _ = maketext("Last command: "..command, nil, nil, 2, 2)
         end
-        pastetext(floor((wd - w) / 2), 470)
+        pastetext(floor((wd - w) / 2), 500)
+
+        -- draw status
+        local state = ov("sound state "..soundname)
+        w, _ = maketext("State: "..state, nil, nil, 2, 2)
+        pastetext(floor((wd - w) / 2), 540)
+
         ov("update")
     end
 
@@ -2760,7 +2835,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function test_mouse()
+local function test_mouse()
     ::restart::
 
     ov(op.black)
@@ -2769,18 +2844,18 @@ function test_mouse()
 
     local oldfont = ov(demofont)
     local oldblend = ov("blend 1")
-    local w, h
+    local _, h
     if g.os() == "Mac" then
         maketext("Click and drag to draw.\n"..
                  "Option-click to flood.\n"..
                  "Control-click or right-click to change the color.")
-        w, h = maketext("Hit the space bar to restart this test.\n"..
+        _, h = maketext("Hit the space bar to restart this test.\n"..
                         "Hit the return key to return to the main menu.", "botlines")
     else
         maketext("Click and drag to draw.\n"..
                  "Alt-click to flood. "..
                  "Control-click or right-click to change the color.")
-        w, h = maketext("Hit the space bar to restart this test.\n"..
+        _, h = maketext("Hit the space bar to restart this test.\n"..
                         "Hit the enter key to return to the main menu.", "botlines")
     end
     pastetext(10, 10)
@@ -2840,7 +2915,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function create_menu_buttons()
+local function create_menu_buttons()
     op.buttonht = 22
     op.radius = 12
     op.textgap = 15
@@ -2899,7 +2974,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function main_menu()
+local function main_menu()
     local numbutts = 19
     local buttwd = blend_button.wd
     local buttht = blend_button.ht
@@ -2985,7 +3060,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function main()
+local function main()
     -- create overlay
     create_overlay()
 

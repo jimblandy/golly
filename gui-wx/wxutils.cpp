@@ -30,13 +30,13 @@
 
 // -----------------------------------------------------------------------------
 
-void Note(const wxString& msg)
+void Note(const wxString& msg, bool showCancel)
 {
     wxString title = wxGetApp().GetAppName() + _(" note:");
 #ifdef __WXMAC__
     wxSetCursor(*wxSTANDARD_CURSOR);
 #endif
-    if (inscript) {
+    if (inscript && showCancel) {
         // add a Cancel button so user can abort script
         int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_INFORMATION,
                                   wxGetActiveWindow());
@@ -50,14 +50,14 @@ void Note(const wxString& msg)
 
 // -----------------------------------------------------------------------------
 
-void Warning(const wxString& msg)
+void Warning(const wxString& msg, bool showCancel)
 {
     Beep();
     wxString title = wxGetApp().GetAppName() + _(" warning:");
 #ifdef __WXMAC__
     wxSetCursor(*wxSTANDARD_CURSOR);
 #endif
-    if (inscript) {
+    if (inscript && showCancel) {
         // add a Cancel button so user can abort script
         int button = wxMessageBox(msg, title, wxOK | wxCANCEL | wxICON_EXCLAMATION,
                                   wxGetActiveWindow());
@@ -128,7 +128,7 @@ StringDialog::StringDialog(wxWindow* parent, const wxString& title,
     
     // position the controls
     wxBoxSizer* stdhbox = new wxBoxSizer(wxHORIZONTAL);
-    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
+    stdhbox->Add(stdbutts, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
     wxSize minsize = stdhbox->GetMinSize();
     if (minsize.GetWidth() < 250) {
         minsize.SetWidth(250);
@@ -284,7 +284,7 @@ IntegerDialog::IntegerDialog(wxWindow* parent,
     
     // position the controls
     wxBoxSizer* stdhbox = new wxBoxSizer(wxHORIZONTAL);
-    stdhbox->Add(stdbutts, 1, wxGROW | wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
+    stdhbox->Add(stdbutts, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, STDHGAP);
     wxSize minsize = stdhbox->GetMinSize();
     if (minsize.GetWidth() < 250) {
         minsize.SetWidth(250);

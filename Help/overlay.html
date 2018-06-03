@@ -24,6 +24,8 @@ that illustrate how the overlay can be used:
 
 <p>
 <ul>
+<li><a href="open:Scripts/Lua/3D.lua"><b>3D.lua</b></a> lets people explore
+three-dimensional cellular automata.
 <li><a href="open:Scripts/Lua/breakout.lua"><b>breakout.lua</b></a> shows how to use
 the overlay functions to create a working game.
 <li><a href="open:Scripts/Lua/browse-patterns.lua"><b>browse-patterns.lua</b></a> browses
@@ -465,13 +467,22 @@ Especially effective for text rendering and used automatically by the
 <dd> Example: <b>local transparentrows = ov("optimize textclip")</b></dd>
 </p>
 
-<a name="paste"></a><p><dt><b>paste <i>x y clipname</i></b></dt>
+<a name="paste"></a><p><dt><b>paste <i>x1 y1 (...xn yn) clipname</i></b></dt>
 <dd>
 Paste the named clip (created by an earlier <a href="#create">create</a>, <a href="#copy">copy</a>
-or <a href="#text">text</a> command) into the render <a href="#target">target</a> at the given location.
+or <a href="#text">text</a> command) into the render <a href="#target">target</a> at the given location(s).
 Any pixels outside the render target edges are automatically clipped.
 </dd>
-<dd> Example: <b>ov("paste 10 20 tempbox")</b></dd>
+<dd> Examples:</dd>
+<dd><i>-- paste the tempbox clip at (10, 20)</i></dd>
+<dd><b>ov("paste 10 20 tempbox")</b></dd>
+<dd><i>-- paste the tempbox clip at (10, 20), (100, 20) and (100,50)</i></dd>
+<dd><b>ov("paste 10 20 100 20 100 50 tempbox")</b></dd>
+</p>
+<p>
+<dd>
+If multiple locations are given then the clip is drawn at the locations in the order specified.
+</dd>
 </p>
 
 <a name="position"></a><p><dt><b>position <i>pos</i></b></dt>
@@ -676,20 +687,30 @@ If the command is invoked with no arguments then it returns a string indicating 
 </dd>
 </p>
 <p><dd>
-There are five sound <i>commands</i>:
+There are seven sound <i>commands</i>:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>
-<tr><td><b>play <i>soundfile (level)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and return immediately. The volume is from 0.0 (silent) to 1.0 (maximum) and is set to maximum if not specified.</td></tr>
-<tr><td><b>loop <i>soundfile (level)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and loop until the <a href="#stop">stop</a> command is used.</td></tr>
-<tr><td><a name="stop"></a><b>stop <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Stop all sound playback or just the specified <i>soundfile</i>.</td></tr>
-<tr><td><a name="volume"></a><b>volume <i>level soundfile</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum). This is typically used to change the volume of a sound that is already playing.</td></tr>
-<tr><td><a name="state"></a><b>state <i>(soundfile)</i></b></td><td width=20></td><td>&ndash;&nbsp;</td><td>
-Returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, or <i>"stopped"</i> otherwise.
+<tr><td><b>play <i>soundfile (level)</i></b></td></tr>
+<tr><td>Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and return immediately. The volume is from 0.0 (silent) to 1.0 (maximum) and is set to maximum if not specified.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><b>loop <i>soundfile (level)</i></b></td></tr>
+<tr><td>Play the named <i>soundfile</i> at volume <i>level</i> asynchronously and loop until the <a href="#stop">stop</a> command is used.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="stop"></a><b>stop <i>(soundfile)</i></b></td></tr>
+<tr><td>Stop all sound playback or just the specified <i>soundfile</i>.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="pause"></a><b>pause <i>(soundfile)</i></b></td><td width=20></td></tr>
+<tr><td>Pause all sound playback or just the specified <i>soundfile</i>.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="stop"></a><b>resume <i>(soundfile)</i></b></td></tr>
+<tr><td>Resume all sound playback or just the specified <i>soundfile</i>.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="volume"></a><b>volume <i>soundfile level</i></b></td></tr>
+<tr><td>Set the named <i>soundfile</i> volume <i>level</i> from 0.0 (silent) to 1.0 (maximum). This is typically used to change the volume of a sound that is already playing.</td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td><a name="state"></a><b>state <i>(soundfile)</i></b></td></tr>
+<tr><td>Returns the playback state of <i>"playing"</i> if any sound (or the specified sound) is playing, <i>"paused"</i> if the specified sound is paused or <i>"stopped"</i> otherwise.
 </table>
 </dd>
 <p><dd>
@@ -699,15 +720,17 @@ Notes:
 <li>Deleting the overlay will stop any sounds that are playing.</li>
 <li>The <b>play</b> command returns the empty string "" if successful and an error message otherwise.</li>
 <li>The <b>state</b> command will return <i>"unknown"</i> if the specified sound is not found.</li>
-<li>If sound support is not available then the five sound commands will silently do nothing.</li>
+<li>If sound support is not available or failed to initialize then the sound commands will silently do nothing.</li>
 </dd>
 </p>
 <p>
 <dd> Example: <b>ov("sound play beep.wav 0.5") -- play beep.wav at half volume</b></dd>
 <dd> Example: <b>ov("sound play beep.wav") -- play beep.wav at full volume</b></dd>
 <dd> Example: <b>ov("sound stop") -- stop all sounds playing</b></dd>
-<dd> Example: <b>ov("sound loop background.ogg") -- play background.ogg in a loop</b></dd>
-<dd> Example: <b>ov("sound volume 0.7 background.ogg") -- set background.ogg volume to 0.7</b></dd>
+<dd> Example: <b>ov("sound loop background.ogg") -- play background.ogg in a loop at full volume</b></dd>
+<dd> Example: <b>ov("sound volume background.ogg 0.7") -- set background.ogg volume to 0.7</b></dd>
+<dd> Example: <b>ov("sound pause background.ogg") -- pause playback of background.ogg</b></dd>
+<dd> Example: <b>ov("sound resume") -- resume playback of all paused sounds</b></dd>
 </p>
 
 <a name="target"></a><p><dt><b>target <i>(clipname)</i></b></dt>
@@ -1165,6 +1188,14 @@ the implementation details).
 
 <p><b><a name="oplusgraphics"></a>Graphics commands</b>
 
+<a name="draw_line"></a>
+<p><dt><b>op.draw_line(<i>x1, y1, x2, y2</i>)</b></dt>
+<dd>
+Draw a line from x1,y1 to x2,y2.
+</dd>
+<dd> Example: <b>op.draw_line(0, 0, 10, 10)</b></dd>
+</p>
+
 <a name="fill_ellipse"></a>
 <p><dt><b>op.fill_ellipse(<i>x, y, w, h, borderwd, fillrgba</i>)</b></dt>
 <dd>
@@ -1174,6 +1205,14 @@ is drawn using the current color.
 If fillrgba is not an empty string then the ellipse is filled with the given color.
 </dd>
 <dd> Example: <b>op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 200")</b></dd>
+</p>
+
+<a name="fill_rect"></a>
+<p><dt><b>op.fill_rect(<i>x, y, wd, ht</i>)</b></dt>
+<dd>
+Draw a filled rectangle with its top left corner at x,y and of the given width and height.
+</dd>
+<dd> Example: <b>op.fill_rect(0, 0, 40, 30)</b></dd>
 </p>
 
 <a name="round_rect"></a>
@@ -1240,7 +1279,7 @@ Paste text onto the current render target. Only the first two arguments <i>x, y<
 <dd>
 The <i>transform</i> argument can be used to specify an <a href="#affine">affine transformation</a>. The <i>clipname</i> may
 be used to specify a non-default clipname.
-<dd> Example:</b></dd>
+<dd> Example:</dd>
 <dd> <i>-- paste the clip named "hello" at 0, 0 and rotated clockwise on the current render target</i>
 <dd> <b>op.pastetext(0, 0, op.rcw, "hello")</b></dd>
 </dd>
@@ -1298,6 +1337,43 @@ The slider will only appear after its show function is called.
 <dd> Example: <b>red_slider.show(10, 70, 255)</b></dd>
 </p>
 
+<p><dt><b>op.menubar()</b></dt>
+<dd>
+Create and return a table representing a menu bar.
+You can then use its addmenu function to add menus to the menu bar,
+then the additem function to append items to these menus.
+If the <a href="#process">op.process</a> function detects a click in this menu bar
+then it will track the mouse and call the specified callback function if a menu item
+is selected.
+</dd>
+</dd>
+<dd> Example:</dd>
+<dd> <b>mbar = op.menubar()</b></dd>
+<dd> <i>-- add some menus</i></dd>
+<dd> <b>mbar.addmenu("File")</b></dd>
+<dd> <b>mbar.addmenu("Edit")</b></dd>
+<dd> <i>-- add items to File menu</i></dd>
+<dd> <b>mbar.additem(1, "New Pattern", NewPattern)</b></dd>
+<dd> <b>mbar.additem(1, "Open Pattern...", OpenPattern)</b></dd>
+<dd> <b>mbar.additem(1, "Save Pattern...", SavePattern)</b></dd>
+<dd> <b>mbar.additem(1, "---", nil) <i>-- separator</i></dd>
+<dd> <b>mbar.additem(1, "Exit", g.exit)</b></dd>
+<dd> <i>-- add items to Edit menu</i></dd>
+<dd> <b>mbar.additem(2, "Undo", Undo)</b></dd>
+<dd> <b>mbar.additem(2, "Redo", Redo)</b></dd>
+</p>
+<p>
+<dd>
+The menu bar will appear when its show function is called.
+Menu items can be enabled or disabled using the enableitem function,
+and ticked or unticked using the tickitem function.
+</dd>
+<dd> Example:</dd>
+<dd> <b>mbar.enableitem(2, 1, CanUndo())</b></dd>
+<dd> <b>mbar.enableitem(2, 2, CanRedo())</b></dd>
+<dd> <b>mbar.show(0, 0, 600, 30)</b></dd>
+</p>
+
 <a name="process"></a>
 <p><dt><b>op.process(<i>event</i>)</b></dt>
 <dd>
@@ -1309,6 +1385,30 @@ indicate the event was handled, otherwise it returns a copy of the given string
 so the caller can process the event.
 </dd>
 <dd> Example: <b>local event = op.process( g.getevent() )</b></dd>
+</p>
+
+<p><dt><b>op.popupmenu()</b></dt>
+<dd>
+Create and return a table representing a pop-up menu.
+You can then use its additem function to append an item with a given label
+and a callback function that will be called if the user selects the item.
+</dd>
+<dd> Example:</dd>
+<dd> <b>editmenu = op.popupmenu()</b></dd>
+<dd> <b>editmenu.additem("Cut", CutSelection)</b></dd>
+<dd> <b>editmenu.additem("Copy", CopySelection)</b></dd>
+<dd> <b>editmenu.additem("Clear", ClearSelection)</b></dd>
+<dd> <b>editmenu.additem("---", nil)</b></dd>
+<dd> <b>editmenu.additem("Paste", PasteClipboard)</b></dd>
+</p>
+<p>
+<dd>
+The pop-up menu will appear when its show function is called
+(note that you need to pass in the overlay's width and height).
+</dd>
+<dd> Example:</dd>
+<dd> <b>editmenu.setbgcolor("rgba 0 128 0 255")</b> <i>-- dark green background</i></dd>
+<dd> <b>editmenu.show(mousex, mousey, ovwd, ovht)</b></dd>
 </p>
 
 <p><b><a name="oplusutil"></a>Utility commands</b>
@@ -1378,7 +1478,7 @@ Themes:
 
 <p>
 For a good example of how to use the <b>oplus</b> package,
-see the <a href="edit:Scripts/Lua/pop-plot.lua">pop-plot.lua</a> script.
+see the <a href="edit:Scripts/Lua/3D.lua">3D.lua</a> script.
 
 </body>
 </html>

@@ -31,6 +31,7 @@ public:
     virtual const char* getrule();
     virtual const char* DefaultRule();
     virtual int NumCellStates();
+    virtual int NumRandomizedCellStates() { return 2 ; }
     virtual void step();
     virtual void* getcurrentstate() { return 0; }
     virtual void setcurrentstate(void*) {}
@@ -66,6 +67,7 @@ private:
     int outerbytes;                     // outerwd*outerht
     unsigned char* outergrid1;          // points to outerwd*outerht cells for current generation
     unsigned char* outergrid2;          // points to outerwd*outerht cells for next generation
+    int *shape ;                        // for shaped neighborhoods, this is the shape
 
     // these variables are used in getcount and faster_Neumann_*
     int ccht;                           // height of colcounts array when ntype = N
@@ -74,11 +76,12 @@ private:
     
     // rule parameters (set by setrule)
     int range;                          // neighborhood radius
+    int rangec;                         // squared radius of circle
     int scount;                         // count of states (0..255; values > 2 activate history)
     int totalistic;                     // include middle cell in neighborhood count? (1 or 0)
     int minS, maxS;                     // limits for survival
     int minB, maxB;                     // limits for birth
-    char ntype;                         // extended neighborhood type (M = Moore, N = von Neumann)
+    char ntype;                         // extended neighborhood type (M = Moore, N = von Neumann, C = shaped (circle))
     char topology;                      // grid topology (T = torus, P = plane)
     
     void create_grids(int wd, int ht);  // create a bounded universe of given width and height
@@ -102,6 +105,7 @@ private:
     void fast_Neumann(int mincol, int minrow, int maxcol, int maxrow);
     void faster_Neumann_bounded(int mincol, int minrow, int maxcol, int maxrow);
     void faster_Neumann_unbounded(int mincol, int minrow, int maxcol, int maxrow);
+    void fast_Shaped(int mincol, int minrow, int maxcol, int maxrow);
     // these routines are called from do_*_gen to process a rectangular region of cells
     
     void update_current_grid(unsigned char &state, int ncount);

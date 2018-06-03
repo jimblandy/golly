@@ -52,6 +52,19 @@ Help, Patterns, Rules and Scripts folders before dragging in the new
 folders to avoid ending up with merged versions.
 </li>
 <li>
+For better performance you should consider opening
+<a href="prefs:control">Preferences > Control</a> and increasing the
+maximum memory size used by the various hash-based algorithms.
+The maximum size depends on the amount of physical memory in your
+machine and the typical usage of that machine while Golly is running.
+A good place to start is 50% of your physical memory.  If your machine has less RAM
+or is used for internet browsing or other memory-hungry applications, you might
+lower this to 25% of physical memory; if your machine is a server and Golly
+will usually be running by itself, then 80% of physical memory may be
+appropriate.  More memory is better, but your machine should never go into
+swap or start using automatic memory compression.
+</li>
+<li>
 To view a pattern file you can drop it onto the Golly app or onto the
 Golly window if the app is already running.
 </li>
@@ -66,9 +79,11 @@ If either script is found then it is automatically executed.
 <li>
 Displaying the population count can cause a significant slow-down when
 generating large patterns, especially when using HashLife.
-If you want to generate at maximum speed then just hit ";" to hide
-the status bar.  You can toggle the status bar at any time,
-even in full screen mode.
+You can disable the population count by unticking the
+<a href="control.html#showpop">Show Population</a> option in the Control menu,
+or you can toggle it by clicking in the "Population=..." text.
+Another alternative is to hit ";" to hide the status bar.
+You can toggle the status bar at any time, even in full screen mode.
 </li>
 <li>
 Editing operations are fastest in QuickLife.
