@@ -108,10 +108,9 @@ Herschel conduits in 1996 (see
 list of unresolved cases, all with periods of 58 or below. The list
 has been progressively reduced since then. Most recently, period 43
 and 53 oscillators were made possible in 2013 by Mike Playle's
-<a href="lex_s.htm#snark">Snark</a>. At the time of writing (November 2017) no oscillators are
-known for periods 19, 23, 38, or 41. If we insist that the
-oscillator must be <a href="lex_n.htm#nontrivial">non-trivial</a>, then 34 should be added to this
-list.
+<a href="lex_s.htm#snark">Snark</a>. As of the end of 2017, no oscillators are known for periods
+19, 23, 38, or 41. If we insist that the oscillator must be
+<a href="lex_n.htm#nontrivial">non-trivial</a>, then 34 should be added to this list.
 <p>Note that if we were to allow infinite oscillators, then all
 periods are certainly possible, as any period of 14 or more can be
 obtained using a <a href="lex_g.htm#glider">glider</a> (or <a href="lex_l.htm#lwss">LWSS</a>) stream, or an infinitely long
@@ -234,11 +233,10 @@ two; period 4194304 and period 8388608 versions have been
 constructed, with speeds of <i>c</i>/16384 and <i>c</i>/32768 respectively.
 <p>The MWSSes are converted to <a href="lex_h.htm#herschel">Herschels</a>, which produce a standard
 <a href="lex_s.htm#singlechannel">single-channel</a> glider stream that runs the Orthogonoid's single
-construction arm. After the child circuitry is complete, a <a href="lex_s.htm#snark">Snark</a>
-is built directly on the construction arm lane, converting it to a
-"destruction arm" that efficiently shoots down the previous
-constructor/reflector in the series as soon as it is no longer
-needed.
+construction arm. After the child circuitry is complete, a
+previously constructed <a href="lex_s.htm#snark">Snark</a> in the parent is removed from the
+construction arm lane, converting it to a "destruction arm" that
+shoots down the previous constructor/reflector in the series.
 <p><a name=oscillator>:</a><b>oscillator</b> Any pattern that is a <a href="lex_p.htm#predecessor">predecessor</a> of itself. The term
 is usually restricted to non-<a href="lex_s.htm#stable">stable</a> finite patterns; period 1
 oscillators are <a href="lex_s.htm#stable">stable</a> and are usually just called <a href="lex_s.htm#stilllife">still lifes</a>.
@@ -280,11 +278,12 @@ normal universe and supported there by added <a href="lex_c.htm#catalyst">cataly
 <a href="lex_a.htm#achimsp144">Achim's p144</a> is an example.
 <p><a name=osqrtlogt>:</a><b>Osqrtlogt</b> (p1 circuitry) A pattern constructed by Adam P. Goucher in
 2010, which uses an unbounded triangular region as memory for a
-binary counter. Empty space is read as a zero, and a boat is a 1.
-The pattern's diametric growth rate is O(sqrt(log(<i>t</i>))), which is the
-slowest possible for any Life pattern, or indeed any 2D Euclidean
-cellular automaton. Since the population returns infinitely often to
-its initial minimum value (during carry operations from 11111...1 to
+binary counter. Empty space is read as a zero, and a boat as a one,
+as shown in the example pattern in <a href="lex_m.htm#memorycell">memory cell</a>. The pattern's
+diametric growth rate is O(sqrt(log(<i>t</i>))), which is the slowest
+possible for any Life pattern, or indeed any 2D Euclidean cellular
+automaton. Since the population returns infinitely often to its
+initial minimum value (during carry operations from 11111...1 to
 100000...0, it can be considered to be an unusual form of <a href="lex_s.htm#sawtooth">sawtooth</a>.
 <p><a name=otcametapixel>:</a><b>OTCA metapixel</b> (p46 circuitry) A 2048 x 2048 period 35328 <a href="lex_m.htm#metacell">metacell</a>
 constructed by Brice Due in 2006. It contains a large "pixel" area

@@ -85,7 +85,7 @@ OOO.............................O..
 </a></pre></td></tr></table></center>
 <p><a name=f117>:</a><b>F117</b> A <a href="lex_c.htm#compositeconduit">composite conduit</a>, one of the original sixteen
 <a href="lex_h.htm#herschelconduit">Herschel conduits</a>, discovered by Dave Buckingham in July 1996. It
-is made up of two <a href="lex_e.htm#elementaryconduit">elementary conduits</a>, HFx58B + <a href="lex_b.htm#bfx59h">BFx59H</a>. After
+is made up of two <a href="lex_e.htm#elementaryconduit">elementary conduits</a>, <a href="lex_h.htm#hfx58b">HFx58B</a> + <a href="lex_b.htm#bfx59h">BFx59H</a>. After
 117 ticks, it produces a <a href="lex_h.htm#herschel">Herschel</a> at (40, -6) relative to the
 input. Its <a href="lex_r.htm#recoverytime">recovery time</a> is 63 ticks. It can be made <a href="lex_s.htm#spartan">Spartan</a> by
 replacing the <a href="lex_s.htm#snake">snake</a> with an <a href="lex_e.htm#eater1">eater1</a> in one of two orientations. A
@@ -114,9 +114,10 @@ OO..........OO...............................
 .................OOO.........................
 ...................O.........................
 </a></pre></td></tr></table></center>
-<p><a name=f166>:</a><b>F166</b> An <a href="lex_e.htm#elementaryconduit">elementary conduit</a>, one of the original sixteen
-<a href="lex_h.htm#herschelconduit">Herschel conduits</a>, discovered by Paul Callahan in May 1997. The
-F166 and <a href="lex_l.htm#lx200">Lx200</a> conduits are the two original <a href="lex_d.htm#dependentconduit">dependent conduits</a>
+<p><a name=f166>:</a><b>F166</b> A <a href="lex_c.htm#compositeconduit">composite conduit</a>, one of the original sixteen
+<a href="lex_h.htm#herschelconduit">Herschel conduits</a>, discovered by Paul Callahan in May 1997. It is
+composed of two <a href="lex_e.htm#elementaryconduit">elementary conduits</a>, HFx107B + <a href="lex_b.htm#bfx59h">BFx59H</a>. The F166
+and <a href="lex_l.htm#lx200">Lx200</a> conduits are the two original <a href="lex_d.htm#dependentconduit">dependent conduits</a>
 (several more have since been discovered). After 166 ticks, it
 produces a <a href="lex_h.htm#herschel">Herschel</a> at (49, 3) relative to the input. Its
 <a href="lex_r.htm#recoverytime">recovery time</a> is 116 ticks. A <a href="lex_g.htm#ghostherschel">ghost Herschel</a> in the pattern
@@ -247,7 +248,8 @@ OO..OO.OOO..........OO....OOOO.....................
 This gun is David Bell's improvement of the one Bill Gosper found in
 July 1994. The p72 oscillator is by Robert Wainwright in 1990, and
 the block factory is <a href="lex_a.htm#achimsp144">Achim's p144</a> minus one of its stabilizing
-blocks.
+blocks. For a block factory using stable components and triggered by
+an input <a href="lex_h.htm#herschel">Herschel</a>, see also <a href="lex_k.htm#keeper">keeper</a>.
 <p><a name=familiarfours>:</a><b>familiar fours</b> Common patterns of four identical objects. The five
 commonest are <a href="lex_t.htm#trafficlight">traffic light</a> (4 blinkers), <a href="lex_h.htm#honeyfarm">honey farm</a> (4
 beehives), <a href="lex_b.htm#blockade">blockade</a> (4 blocks), <a href="#fleet">fleet</a> (4 ships, although really 2
@@ -846,6 +848,20 @@ O.......O.....................
 ..........OOO.....OO.......OOO
 ..........O..................O
 </a></pre></td></tr></table></center>
+<p>This edge shooter has an unusually high 27<a href="lex_h.htm#hd">hd</a> clearance, one of
+the highest known for a single small component. The only known
+higher-clearance edge shooters are injectors making use of multiple
+interacting spaceships. This makes the Fx119 inserter ideal for the
+construction of wide <a href="lex_c.htm#convoy">convoys</a> whose total width can fit within its
+clearance distance.
+<p>The component creates a large cloud of <a href="lex_s.htm#smoke">smoke</a> behind its emitted
+glider which lasts for over 90 generations. In spite of this, many
+tightly packed convoys can be made by injecting later gliders behind
+others in the convoy, helped along by the insertion reaction which is
+able to catch up to the existing gliders. The Fx119 inserter can
+place a glider on the same lane as a passing glider and as close as
+15 ticks behind, which is only one step away from the minimum
+possible following distance.
 <p><a name=fx153>:</a><b>Fx153</b> A <a href="lex_c.htm#compositeconduit">composite conduit</a>, one of the original sixteen
 <a href="lex_h.htm#herschelconduit">Herschel conduits</a>, discovered by Paul Callahan in February 1997.
 It is made up of two <a href="lex_e.htm#elementaryconduit">elementary conduits</a>, HF94B + <a href="lex_b.htm#bfx59h">BFx59H</a>. After
@@ -923,8 +939,10 @@ OOO...........................
 <a href="lex_h.htm#herschelconduit">Herschel conduits</a>, discovered by Paul Callahan in October 1997. It
 is made up of three <a href="lex_e.htm#elementaryconduit">elementary conduits</a>, HF95P + PF35W + WFx46H.
 After 176 ticks, it produces an inverted <a href="lex_h.htm#herschel">Herschel</a> at (45, 0)
-relative to the input. Its <a href="lex_r.htm#recoverytime">recovery time</a> is 92 ticks. A
-<a href="lex_g.htm#ghostherschel">ghost Herschel</a> in the pattern below marks the output location:
+relative to the input. The <a href="lex_r.htm#recoverytime">recovery time</a> of the standard form
+shown here is 92 ticks, but see the <a href="lex_p.htm#pf35w">PF35W</a> entry for a variant
+discovered in November 2017 that lowers the repeat time to 73 ticks.
+A <a href="lex_g.htm#ghostherschel">ghost Herschel</a> in the pattern below marks the output location.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..............................OO..................
 ..............................OO..................

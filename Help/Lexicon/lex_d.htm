@@ -93,9 +93,9 @@ of <i>P</i><sub>2</sub> in parallel with another simulation of a universe filled
 Deep Cells, with these doubly simulated Deep Cells simulating <i>P</i><sub>3</sub> in
 parallel with yet another universe of Deep Cells, and so on.
 <p>Deep Cell is available from <a href="http://psychoticdeath.com/life.htm">http://psychoticdeath.com/life.htm</a>.
-<p><a name=demonoid>:</a><b>Demonoid</b> The first self-constructing diagonal spaceship. A 0<a href="lex_h.htm#hd">hd</a>
+<p><a name=demonoid>:</a><b>Demonoid</b> The first <a href="lex_s.htm#selfconstructing">self-constructing</a> diagonal spaceship. A 0<a href="lex_h.htm#hd">hd</a>
 Demonoid was completed by Chris Cain in December 2015, shortly after
-a much larger 10<a href="lex_h.htm#hd">hd</a> version was constructed the previous month in
+a much larger 10hd version was constructed the previous month in
 collaboration with Dave Greene. The 0hd spaceship fits in a bounding
 box about 55,000 cells square, and displaces itself by 65 cells
 diagonally every 438,852 generations.
@@ -107,8 +107,8 @@ Demonoid using a temporary <a href="lex_l.htm#losslesselbow">lossless elbow</a>,
 79 cells diagonally every 1,183,842 ticks. This was an improvement
 in terms of design complexity, but not in terms of speed, population,
 or bounding box. However, all of these could be further optimized.
-As of November 2017, a smaller Hashlife-friendly single-channel
-Demonoid is under construction.
+As of the end of 2017, a smaller Hashlife-friendly single-channel
+Demonoid is under construction but not yet complete.
 <p><a name=demultiplexer>:</a><b>demultiplexer</b> A simple <a href="lex_h.htm#herschel">Herschel</a> <a href="lex_c.htm#circuit">circuit</a> consisting of three
 <a href="lex_e.htm#eater1">eater1s</a>, found by Brice Due in August 2006. An input Herschel
 places a boat in a location accessible to an input glider. If the
@@ -180,6 +180,20 @@ Herschel evolves from its standard great-grandparent. As of this
 writing, the <a href="lex_f.htm#fx158">Fx158</a> is the only known case where a conduit's output
 Herschel has an alternate great-grandparent, which is incompatible
 with dependent conduits' initial transparent block.
+<p><a name=destructiveread>:</a><b>destructive read</b> The most common type of test reaction in
+<a href="lex_m.htm#memorycell">memory cell</a> circuitry. Information is stored in a memory cell by
+placing objects in known positions, or by changing the state of a
+stable or periodic <a href="lex_t.htm#togglecircuit">toggle circuit</a>. A destructive-read test
+consists of sending one or more <a href="lex_s.htm#signal">signals</a> to the memory cell. A
+distinct output signal is produced for each possible state of the
+memory cell, which is reset to a known "zero" or "rest" state. See
+for example <a href="lex_b.htm#boatbit">boat-bit</a>, <a href="lex_k.htm#keeper">keeper</a>, and <a href="#demultiplexer">demultiplexer</a>.
+<p>To permanently store information in a destructive-read memory cell,
+the output signal(s) must be used, in part, to send appropriate
+signals back to the memory cell to restore its state to its previous
+value. With output looped back to input, this larger composite
+circuit then effectively becomes a <a href="lex_n.htm#nondestructiveread">non-destructive read</a> memory
+cell.
 <p><a name=destructorarm>:</a><b>destructor arm</b> A dedicated <a href="lex_c.htm#constructionarm">construction arm</a> in the <a href="lex_g.htm#gemini">Gemini</a>
 spaceship, used only for removing previously active <a href="lex_c.htm#circuit">circuitry</a> once
 it is no longer needed. More generally, any circuitry in a
@@ -440,6 +454,7 @@ O......OO.O......OO.OOO..O.OOO
 .............O..OO......O..OOO
 </a></pre></td></tr></table></center>
 <p><a name=draintrap>:</a><b>drain trap</b> = <a href="lex_p.htm#paperclip">paperclip</a>. This term is no longer in use.
+<p><a name=dread>:</a><b>D read</b> = <a href="#destructiveread">destructive read</a>
 <p><a name=dried>:</a><b>dried</b> = <a href="lex_f.htm#freezedried">freeze-dried</a>.
 <p><a name=drifter>:</a><b>drifter</b> A perturbation moving within a stable pattern. Dean
 Hickerson has written a <a href="lex_s.htm#searchprogram">search program</a> to search for drifters, with
