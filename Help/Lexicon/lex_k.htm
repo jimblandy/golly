@@ -64,13 +64,13 @@ O........O
 </a></pre></td></tr></table></center>
 <p><a name=keeper>:</a><b>keeper</b> A type of <a href="lex_f.htm#factory">factory</a> <a href="lex_c.htm#circuit">circuit</a> that always results in the
 presence of an object in the output location, whether or not the
-object was previously present. It is easy to construct these by
-connecting multiple circuits to shoot down an object with a <a href="lex_g.htm#glider">glider</a>,
-then rebuild the object again later. The smallest keeper circuits
-accomplish the same thing more directly with a lucky <a href="lex_s.htm#spark">spark</a> that
-removes any existing object, just before the active reaction
-reconstructs it. Below is a useful block keeper with a <a href="lex_h.htm#herschel">Herschel</a>
-input.
+object was previously present. In many cases it is easy to construct
+examples by connecting multiple circuits to shoot down an object with
+a <a href="lex_g.htm#glider">glider</a>, then rebuild the object again later. The smallest keeper
+circuits accomplish the same thing more directly with a lucky
+preliminary <a href="lex_s.htm#spark">spark</a> from the active reaction, which removes the
+existing object (if any) just before the construction occurs. Below
+is a useful block keeper with a <a href="lex_h.htm#herschel">Herschel</a> input.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ................O..............................
 ................OOO.....OO.....................
@@ -149,9 +149,9 @@ Conway's Life knightship was a variant of Andrew Wade's <a href="lex_g.htm#gemin
 spaceship, constructed in May 2010. The next was an even slower
 knightship based on the <a href="lex_h.htm#halfbakeryreaction">half-bakery reaction</a>. A knightship must be
 asymmetric and its period must be at least 6. This is barely within
-the range of current <a href="lex_s.htm#searchprogram">search programs</a>, but even though promising
-pieces of such a ship have been found, as of November 2017 a complete
-period 6 knightship is still unknown. See <a href="lex_p.htm#partialresult">partial result</a>.
+the range of current <a href="lex_s.htm#searchprogram">search programs</a>; an elementary knightship,
+<a href="lex_s.htm#sirrobin">Sir Robin</a>, was found on March 6, 2018 by Adam P. Goucher and Tomas
+Rokicki.
 <p>By analogy with the corresponding fairy chess pieces, spaceships of
 types (3<i>m</i>,<i>m</i>)/<i>n</i>, (3<i>m</i>,2<i>m</i>)/<i>n</i> and (4<i>m</i>,<i>m</i>)/<i>n</i> would presumably be called
 camelships, zebraships and giraffeships, respectively. Such
@@ -159,7 +159,7 @@ spaceships do exist (see <a href="lex_u.htm#universalconstructor">universal cons
 elementary versions are even more difficult to search for. Any of
 these ship types could be constructed by trivially modifying a Gemini
 spaceship, or less trivially by reprogramming one of the more recent
-small <a href="lex_g.htm#geminoid">Geminoid</a> <a href="lex_c.htm#constructionarm">construction arms</a>, but as of November 2017 a
+small <a href="lex_g.htm#geminoid">Geminoid</a> <a href="lex_c.htm#constructionarm">construction arms</a>, but as of the end of 2017 a
 camelship Gemini is the only example that has been explicitly built.
 <p>Alternatively, the term "knightship" is regularly used to refer to
 any <a href="lex_o.htm#oblique">oblique</a> spaceship, such as the original <a href="lex_g.htm#gemini">Gemini</a> or the
