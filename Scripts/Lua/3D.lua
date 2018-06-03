@@ -82,6 +82,7 @@ local showlines = true              -- draw lattice lines?
 local generating = false            -- generate pattern?
 local gencount = 0                  -- current generation count
 local stepsize = 1                  -- display each generation
+local stopgen = 0                   -- when to stop generating (if > 0)
 local perc = 20                     -- initial percentage for RandomPattern
 local randstring = "20"             -- initial string for RandomPattern
 local message = nil                 -- text message displayed by Refresh if not nil
@@ -2394,6 +2395,10 @@ function UpdateStartButton()
         ssbutton.customcolor = START_COLOR
         ssbutton.setlabel("Start", false)
         mbar.setitem(3, 1, "Start Generating")
+        if stopgen > 0 then
+            -- terminate NextStep
+            stopgen = 0
+        end
     end
 end
 
@@ -2876,7 +2881,7 @@ function AllDead()
     if popcount == 0 then
         StopGenerating()
         message = "All cells are dead."
-        -- stepsize is 0 if called from Step1 or NextStep
+        -- stepsize is 0 if called from Step1
         if stepsize > 0 then
             Refresh()
         end
@@ -2902,9 +2907,12 @@ function DisplayGeneration(newgrid)
     -- save the new grid
     grid1 = newgrid
 
-    if popcount == 0 then StopGenerating() end
+    -- stopgen is > 0 if NextStep was called
+    if popcount == 0 or gencount == stopgen then
+        StopGenerating()
+    end
     
-    -- stepsize is 0 if called from Step1 or NextStep
+    -- stepsize is 0 if called from Step1
     if stepsize > 0 and (gencount % stepsize == 0 or popcount == 0) then
         Refresh()
     end
@@ -5485,25 +5493,14 @@ end
 ----------------------------------------------------------------------
 
 function NextStep()
-    StopGenerating()
-    
-    -- NextGeneration does nothing (except display a message) if popcount is 0
-    if popcount > 0 then
-        RememberCurrentState()
+    if popcount == 0 or stepsize == 1 then
+        Step1()
+    else
+        StopGenerating()
+        StartStop()
+        -- advance pattern to next multiple of stepsize, or until empty
+        stopgen = gencount + stepsize - (gencount % stepsize)
     end
-    
-    -- advance pattern to next multiple of stepsize, or until empty
-    repeat
-        -- temporarily change stepsize to 0 so AllDead and DisplayGeneration don't call Refresh
-        local savestep = stepsize
-        stepsize = 0
-        NextGeneration()
-        stepsize = savestep
-        -- allow any key to abort a lengthy step
-        local event = g.getevent()
-        if event:find("^key") then break end
-    until gencount % stepsize == 0 or popcount == 0
-    Refresh()
 end
 
 ----------------------------------------------------------------------
