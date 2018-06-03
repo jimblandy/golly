@@ -62,7 +62,7 @@ local MIDCELL = HALFCELL-MIDGRID
 
 -- these global strings can be changed by a startup script to customize colors
 BACK_COLOR = "rgba 0 0 80 255"      -- for background
-LINE_COLOR = "rgba 60 60 90 255"    -- for lattice lines (should be close to BACK_COLOR)
+LINE_COLOR = "rgba 70 70 100 255"   -- for lattice lines (should be close to BACK_COLOR)
 INFO_COLOR = op.white               -- for info text
 MSG_COLOR = op.yellow               -- for message text
 POINT_COLOR = op.white              -- for drawing points
@@ -97,7 +97,7 @@ local grid1 = {}                    -- sparse 3D matrix with up to N*N*N live ce
 local popcount = 0                  -- number of live cells
 local pattname = "untitled"         -- pattern name
 local currtitle = ""                -- current window title
-local showaxes = true               -- draw axes and lattice lines?
+local showaxes = true               -- draw axes?
 local showlines = true              -- draw lattice lines?
 local generating = false            -- generate pattern?
 local gencount = 0                  -- current generation count
@@ -759,7 +759,7 @@ end
 ----------------------------------------------------------------------
 
 function DrawRearAxes()
-    -- draw lattice lines and axes that are behind rotated reference cube
+    -- draw lattice lines and/or axes that are behind rotated reference cube
     -- assuming vertex order set in CreateCube
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -782,34 +782,36 @@ function DrawRearAxes()
         end
     end
 
-    -- draw darker anti-aliased lines for rear axes
-    ov("blend 1")
-    ov("lineoption width 3")
-
-    if z1 <  z2 or z1 >= z3 then ov(REARX_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
-    if z1 <  z2 or z1 >= z7 then ov(REARY_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
-    if z1 >= z7 or z1 >= z3 then ov(REARZ_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
-
-    if z1 <  z2 or z1 <  z3 then ov(REARX_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
-    if z1 >= z2 or z1 >= z7 then ov(REARY_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
-    if z1 <  z7 or z1 >= z3 then ov(REARZ_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
-
-    if z1 >= z2 or z1 <  z3 then ov(REARX_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
-    if z1 >= z2 or z1 <  z7 then ov(REARY_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
-    if z1 <  z3 or z1 <  z7 then ov(REARZ_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
-
-    if z1 >= z2 or z1 >= z3 then ov(REARX_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
-    if z1 <  z2 or z1 <  z7 then ov(REARY_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
-    if z1 >= z7 or z1 <  z3 then ov(REARZ_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
-
-    ov("lineoption width 1")
-    ov("blend 0")
+    if showaxes then
+        -- draw darker anti-aliased lines for rear axes
+        ov("blend 1")
+        ov("lineoption width 3")
+    
+        if z1 <  z2 or z1 >= z3 then ov(REARX_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
+        if z1 <  z2 or z1 >= z7 then ov(REARY_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
+        if z1 >= z7 or z1 >= z3 then ov(REARZ_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
+    
+        if z1 <  z2 or z1 <  z3 then ov(REARX_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
+        if z1 >= z2 or z1 >= z7 then ov(REARY_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
+        if z1 <  z7 or z1 >= z3 then ov(REARZ_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
+    
+        if z1 >= z2 or z1 <  z3 then ov(REARX_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
+        if z1 >= z2 or z1 <  z7 then ov(REARY_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
+        if z1 <  z3 or z1 <  z7 then ov(REARZ_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
+    
+        if z1 >= z2 or z1 >= z3 then ov(REARX_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
+        if z1 <  z2 or z1 <  z7 then ov(REARY_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
+        if z1 >= z7 or z1 <  z3 then ov(REARZ_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
+    
+        ov("lineoption width 1")
+        ov("blend 0")
+    end
 end
 
 ----------------------------------------------------------------------
 
 function DrawFrontAxes()
-    -- draw lattice lines and axes that are in front of rotated reference cube
+    -- draw lattice lines and/or axes that are in front of rotated reference cube
     -- assuming vertex order set in CreateCube
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -832,28 +834,30 @@ function DrawFrontAxes()
         end
     end
 
-    -- draw brighter anti-aliased lines for front axes
-    ov("blend 1")
-    ov("lineoption width 3")
-
-    if z1 >= z2 or z1 < z3 then ov(X_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
-    if z1 >= z2 or z1 < z7 then ov(Y_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
-    if z1 <  z7 or z1 < z3 then ov(Z_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
-
-    if z1 >= z2 or z1 >= z3 then ov(X_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
-    if z1 <  z2 or z1 <  z7 then ov(Y_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
-    if z1 >= z7 or z1 <  z3 then ov(Z_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
-
-    if z1 <  z2 or z1 >= z3 then ov(X_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
-    if z1 <  z2 or z1 >= z7 then ov(Y_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
-    if z1 >= z3 or z1 >= z7 then ov(Z_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
-
-    if z1 <  z2 or z1 <  z3 then ov(X_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
-    if z1 >= z2 or z1 >= z7 then ov(Y_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
-    if z1 <  z7 or z1 >= z3 then ov(Z_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
-
-    ov("lineoption width 1")
-    ov("blend 0")
+    if showaxes then
+        -- draw brighter anti-aliased lines for front axes
+        ov("blend 1")
+        ov("lineoption width 3")
+    
+        if z1 >= z2 or z1 < z3 then ov(X_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
+        if z1 >= z2 or z1 < z7 then ov(Y_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
+        if z1 <  z7 or z1 < z3 then ov(Z_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
+    
+        if z1 >= z2 or z1 >= z3 then ov(X_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
+        if z1 <  z2 or z1 <  z7 then ov(Y_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
+        if z1 >= z7 or z1 <  z3 then ov(Z_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
+    
+        if z1 <  z2 or z1 >= z3 then ov(X_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
+        if z1 <  z2 or z1 >= z7 then ov(Y_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
+        if z1 >= z3 or z1 >= z7 then ov(Z_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
+    
+        if z1 <  z2 or z1 <  z3 then ov(X_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
+        if z1 >= z2 or z1 >= z7 then ov(Y_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
+        if z1 <  z7 or z1 >= z3 then ov(Z_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
+    
+        ov("lineoption width 1")
+        ov("blend 0")
+    end
 end
 
 ----------------------------------------------------------------------
@@ -882,21 +886,21 @@ function CreateAxes()
             }
 
     xylattice = {}
-    for i = 1, N do
+    for i = 0, N do
         local offset = i*CELLSIZE
         xylattice[#xylattice+1] = {{o+offset,o,o}, {o+offset,endpt,o}}
         xylattice[#xylattice+1] = {{o,o+offset,o}, {endpt,o+offset,o}}
     end
 
     xzlattice = {}
-    for i = 1, N do
+    for i = 0, N do
         local offset = i*CELLSIZE
         xzlattice[#xzlattice+1] = {{o,o,o+offset}, {endpt,o,o+offset}}
         xzlattice[#xzlattice+1] = {{o+offset,o,o}, {o+offset,o,endpt}}
     end
 
     yzlattice = {}
-    for i = 1, N do
+    for i = 0, N do
         local offset = i*CELLSIZE
         yzlattice[#yzlattice+1] = {{o,o+offset,o}, {o,o+offset,endpt}}
         yzlattice[#yzlattice+1] = {{o,o,o+offset}, {o,endpt,o+offset}}
@@ -2256,7 +2260,7 @@ function Refresh(update)
         rotrefz[i] = z
     end
 
-    if showaxes then DrawRearAxes() end
+    if showaxes or showlines then DrawRearAxes() end
 
     local editing = currcursor ~= movecursor
     if popcount > 0 or pastecount > 0 or selcount > 0 or editing then
@@ -2291,7 +2295,7 @@ function Refresh(update)
         end
     end
 
-    if showaxes then DrawFrontAxes() end
+    if showaxes or showlines then DrawFrontAxes() end
 
     -- show info in top left corner
     local info =
@@ -6229,17 +6233,17 @@ you'll see a message stating how many live cells were clipped.
 
 <a name="cubes"></a><p><dt><b>Cubes</b></dt>
 <dd>
-If ticked then live cells are displayed as cubes.
+If selected then live cells are displayed as cubes.
 </dd>
 
 <a name="spheres"></a><p><dt><b>Spheres</b></dt>
 <dd>
-If ticked then live cells are displayed as spheres.
+If selected then live cells are displayed as spheres.
 </dd>
 
 <a name="points"></a><p><dt><b>Points</b></dt>
 <dd>
-If ticked then live cells are displayed as points.
+If selected then live cells are displayed as points.
 Note that if the active plane is shown then any live cells outside
 that plane are always displayed as points.
 </dd>
@@ -6252,9 +6256,8 @@ If ticked then the edges of the grid are displayed
 
 <a name="lines"></a><p><dt><b>Show Lattice Lines</b></dt>
 <dd>
-If ticked (and Show Axes is ticked) then lattice lines are displayed
-on the three faces of the grid that intersect at the corner with
-minimum <a href="#coords">cell coordinates</a>
+If ticked then lattice lines are displayed on the three faces of the grid
+that intersect at the corner with minimum <a href="#coords">cell coordinates</a>
 (the far, bottom left corner in the initial view).
 </dd>
 
