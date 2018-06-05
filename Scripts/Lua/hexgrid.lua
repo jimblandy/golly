@@ -1369,7 +1369,7 @@ end
 
 local function do_key(event)
     local key = event:sub(5)
-    if key == "enter none" or key == "return none" then
+    if key == "return none" then
         start_stop()
     elseif key == "space none" then
         step1()
