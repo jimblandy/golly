@@ -1874,7 +1874,7 @@ end
 
 ----------------------------------------------------------------------
 
-local function DrawBusyPoint(x, y, z, color)
+local function DrawBusyPoint(x, y, z, color, clip)
     -- draw mid point of busy box at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1885,7 +1885,7 @@ local function DrawBusyPoint(x, y, z, color)
     -- use orthographic projection
     x = round(newx) + midx
     y = round(newy) + midy
-    if brightpoints then
+    if brightpoints and clip then
         x = x - 1
         y = y - 1
         if color == EVEN_COLOR then
@@ -2069,9 +2069,11 @@ function DisplayBusyBoxes(editing)
     else
         -- only live cells need to be drawn
         if celltype == "point" then
-            -- evenclip and oddclip are ignored if DrawBusyBox = DrawBusyPoint
-            evenclip = nil
-            oddclip = nil
+            -- evenclip and oddclip are ignored if DrawBusyBox = DrawBusyPoint and bright points are not used
+            if not brightpoints then
+                evenclip = nil
+                oddclip = nil
+            end
         else
             -- evencolor and oddcolor are ignored if DrawBusyBox = DrawBusyCube/Sphere
             evencolor = nil
