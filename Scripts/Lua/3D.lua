@@ -6125,6 +6125,7 @@ function GetGridSize() return N end
 function GetPercentage() return perc end
 function GetPopulation() return popcount end
 function GetRule() return rulestring end
+function GetCellType() return celltype end
 
 ----------------------------------------------------------------------
 
