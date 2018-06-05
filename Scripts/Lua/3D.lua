@@ -127,6 +127,7 @@ local depthrange = 224              -- rgb levels for depth shading
 local layerlast                     -- last layer used
 local mindepth, maxdepth            -- minimum and maximum depth (with corner pointing at screen)
 local zdepth, zdepth2               -- coefficients for z to depth layer mapping
+brightpoints = false                -- whether to use brighter points (for high DPI displays)
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -489,6 +490,7 @@ function ReadSettings()
             elseif keyword == "axes" then showaxes = tostring(value) == "true"
             elseif keyword == "lines" then showlines = tostring(value) == "true"
             elseif keyword == "shading" then depthshading = tostring(value) == "true"
+            elseif keyword == "brightpoints" then brightpoints = tostring(value) == "true"
             elseif keyword == "gridsize" then
                 N = tonumber(value) or 30
                 if N < MINN then N = MINN end
@@ -524,6 +526,7 @@ function WriteSettings()
         f:write("axes="..tostring(showaxes), "\n")
         f:write("lines="..tostring(showlines), "\n")
         f:write("shading="..tostring(depthshading), "\n")
+        f:write("brightpoints="..tostring(brightpoints), "\n")
         f:close()
     end
 end
@@ -787,23 +790,23 @@ function DrawRearAxes()
         -- draw darker anti-aliased lines for rear axes
         ov("blend 1")
         ov("lineoption width 3")
-    
+
         if z1 <  z2 or z1 >= z3 then ov(REARX_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
         if z1 <  z2 or z1 >= z7 then ov(REARY_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
         if z1 >= z7 or z1 >= z3 then ov(REARZ_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
-    
+
         if z1 <  z2 or z1 <  z3 then ov(REARX_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
         if z1 >= z2 or z1 >= z7 then ov(REARY_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
         if z1 <  z7 or z1 >= z3 then ov(REARZ_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
-    
+
         if z1 >= z2 or z1 <  z3 then ov(REARX_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
         if z1 >= z2 or z1 <  z7 then ov(REARY_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
         if z1 <  z3 or z1 <  z7 then ov(REARZ_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
-    
+
         if z1 >= z2 or z1 >= z3 then ov(REARX_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
         if z1 <  z2 or z1 <  z7 then ov(REARY_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
         if z1 >= z7 or z1 <  z3 then ov(REARZ_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
-    
+
         ov("lineoption width 1")
         ov("blend 0")
     end
@@ -839,23 +842,23 @@ function DrawFrontAxes()
         -- draw brighter anti-aliased lines for front axes
         ov("blend 1")
         ov("lineoption width 3")
-    
+
         if z1 >= z2 or z1 < z3 then ov(X_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
         if z1 >= z2 or z1 < z7 then ov(Y_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
         if z1 <  z7 or z1 < z3 then ov(Z_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
-    
+
         if z1 >= z2 or z1 >= z3 then ov(X_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
         if z1 <  z2 or z1 <  z7 then ov(Y_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
         if z1 >= z7 or z1 <  z3 then ov(Z_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
-    
+
         if z1 <  z2 or z1 >= z3 then ov(X_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
         if z1 <  z2 or z1 >= z7 then ov(Y_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
         if z1 >= z3 or z1 >= z7 then ov(Z_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
-    
+
         if z1 <  z2 or z1 <  z3 then ov(X_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
         if z1 >= z2 or z1 >= z7 then ov(Y_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
         if z1 <  z7 or z1 >= z3 then ov(Z_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
-    
+
         ov("lineoption width 1")
         ov("blend 0")
     end
@@ -1151,6 +1154,20 @@ end
 
 ----------------------------------------------------------------------
 
+function CreateBrighterPoints(clip, color)
+    ov("create 3 3 "..clip)
+    ov("target "..clip)
+    -- set middle pixel in the given color
+    ov(color)
+    ov("set 1 1")
+    -- set N, S, E and W pixels at half opacity
+    ov(color:match"^.* "..128)
+    ov("set 1 0 0 1 2 1 1 2")
+    ov("target")
+end
+
+----------------------------------------------------------------------
+
 local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
 
 local lastCubeSize = -1
@@ -1315,8 +1332,12 @@ local function DrawBatchLayer(depth, coordlist, length)
         elseif celltype == "sphere" then
             command[3] = " S"
         else -- celltype == "point" then
-            ov(POINT_COLOR)
-            command[1] = "set "
+            if brightpoints then
+                command[3] = " p"
+            else
+                ov(POINT_COLOR)
+                command[1] = "set "
+            end
         end
         -- execute the drawing command
         ov(table.concat(command))
@@ -1557,8 +1578,13 @@ function DisplayCells(editing)
         mx = midx - HALFCELL
         my = midy - HALFCELL
     else -- celltype == "point"
-        mx = midx
-        my = midy
+        if brightpoints then
+            mx = midx - 1
+            my = midy - 1
+        else
+            mx = midx
+            my = midy
+        end
     end
     -- add 0.5 so floor behaves like round
     mx = mx + 0.5
@@ -1859,8 +1885,18 @@ local function DrawBusyPoint(x, y, z, color)
     -- use orthographic projection
     x = round(newx) + midx
     y = round(newy) + midy
-    ov(color)
-    ov("set "..x.." "..y)
+    if brightpoints then
+        x = x - 1
+        y = y - 1
+        if color == EVEN_COLOR then
+            ov("paste "..x.." "..y.." E")
+        else
+            ov("paste "..x.." "..y.." O")
+        end
+    else
+        ov(color)
+        ov("set "..x.." "..y)
+    end
 end
 
 ----------------------------------------------------------------------
@@ -2154,6 +2190,7 @@ function DrawMenuBar()
     mbar.tickitem(4, 9, showaxes)
     mbar.tickitem(4, 10, showlines)
     mbar.tickitem(4, 11, depthshading)
+    mbar.tickitem(4, 12, brightpoints)
 
     mbar.show(0, 0, ovwd, mbarht)
 end
@@ -2200,10 +2237,10 @@ function DrawToolBar()
     selectbox.show(x, y, currcursor == selectcursor)
     x = x + selectbox.wd + gap
     movebox.show(x, y, currcursor == movecursor)
-    
+
     -- show slider to right of checkboxes
     stepslider.show(x + movebox.wd + biggap, y, stepsize)
-    
+
     -- show stepsize at right end of slider
     ov(op.black)
     local oldfont
@@ -2284,6 +2321,9 @@ function Refresh(update)
             elseif celltype == "sphere" then
                 CreateBusySphere("E")
                 CreateBusySphere("O")
+            elseif celltype == "point" and brightpoints then
+                CreateBrighterPoints("E", EVEN_COLOR)
+                CreateBrighterPoints("O", ODD_COLOR)
             end
             DisplayBusyBoxes(editing)
         else
@@ -2291,6 +2331,8 @@ function Refresh(update)
                 CreateLiveCube()
             elseif celltype == "sphere" then
                 CreateLiveSphere()
+            elseif celltype == "point" and brightpoints then
+                CreateBrighterPoints("p", POINT_COLOR)
             end
             DisplayCells(editing)
         end
@@ -2924,7 +2966,7 @@ function DisplayGeneration(newgrid)
     if popcount == 0 or gencount == stopgen then
         StopGenerating()
     end
-    
+
     -- stepsize is 0 if called from Step1
     if stepsize > 0 and (gencount % stepsize == 0 or popcount == 0) then
         Refresh()
@@ -5941,12 +5983,12 @@ end
 
 function Step1()
     StopGenerating()
-    
+
     -- NextGeneration does nothing (except display a message) if popcount is 0
     if popcount > 0 then
         RememberCurrentState()
     end
-    
+
     -- temporarily change stepsize to 0 so AllDead and DisplayGeneration don't call Refresh
     local savestep = stepsize
     stepsize = 0
@@ -6036,7 +6078,7 @@ end
 
 function FitGrid(display)
     if display == nil then display = true end
-    
+
     local function Visible(x, y)
         -- return true if pixel at x,y is within area under tool bar
         if x < 0 or x >= ovwd then return false end
@@ -6488,6 +6530,7 @@ shortcuts):
 <tr><td align=right> [ &nbsp;</td><td>&nbsp; zoom out </td></tr>
 <tr><td align=right> ] &nbsp;</td><td>&nbsp; zoom in </td></tr>
 <tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/spheres/points) </td></tr>
+<tr><td align=right> alt-P &nbsp;</td><td>&nbsp; toggle brighter points </td></tr>
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lattice lines </td></tr>
 <tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes and lattice lines </td></tr>
 <tr><td align=right> alt-D &nbsp;</td><td>&nbsp; toggle depth shading </td></tr>
@@ -6737,6 +6780,12 @@ that intersect at the corner with minimum <a href="#coords">cell coordinates</a>
 If ticked then cubes and spheres are drawn slightly darker the further
 away they are from the front of the screen.  Depth shading is not done
 when displaying points.
+</dd>
+
+<a name="brighterpoints"></a><p><dt><b>Use Brighter Points</b></dt>
+<dd>
+If ticked then points are drawn with extra brightness so they are
+easier to see on high DPI displays.
 </dd>
 
 <a name="help"></a><p><dt><b>Help</b></dt>
@@ -7549,6 +7598,13 @@ end
 
 function ToggleLines()
     showlines = not showlines
+    Refresh()
+end
+
+----------------------------------------------------------------------
+
+function ToggleBrighterPoints()
+    brightpoints = not brightpoints
     Refresh()
 end
 
@@ -8863,6 +8919,7 @@ function CreateOverlay()
     mbar.additem(4, "Show Axes", ToggleAxes)
     mbar.additem(4, "Show Lattice Lines", ToggleLines)
     mbar.additem(4, "Use Depth Shading", ToggleDepthShading)
+    mbar.additem(4, "Use Brighter Points", ToggleBrighterPoints)
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Help", ShowHelp)
 
@@ -8885,7 +8942,7 @@ function CreateOverlay()
     drawbox = selectbutton("Draw", op.black, DrawMode)
     selectbox = selectbutton("Select", op.black, SelectMode)
     movebox = selectbutton("Move", op.black, MoveMode)
-        
+
     -- create a slider for adjusting stepsize
     stepslider = op.slider("", op.black, 100, 1, 100, StepChange)
 
@@ -9066,7 +9123,7 @@ end
 
 function InitialView(display)
     if display == nil then display = true end
-    
+
     -- initialize the transformation matrix
     xixo = 1.0; yixo = 0.0; zixo = 0.0
     xiyo = 0.0; yiyo = 1.0; ziyo = 0.0
@@ -9137,7 +9194,7 @@ function Initialize()
     ov("font 11 default-bold")
     ov("textoption background "..BACK_COLOR:sub(6))
     ssbutton.customcolor = START_COLOR
-    
+
     Refresh()
 end
 
@@ -9188,6 +9245,7 @@ function HandleKey(event)
     elseif key == "i" and mods == "none" then InitialView()
     elseif key == "f" and mods == "none" then FitGrid()
     elseif key == "p" and mods == "none" then CycleCellType()
+    elseif key == "p" and mods == "alt" then ToggleBrighterPoints()
     elseif key == "l" and mods == "none" then ToggleLines()
     elseif key == "l" and mods == "shift" then ToggleAxes()
     elseif key == "d" and mods == "alt" then ToggleDepthShading()
