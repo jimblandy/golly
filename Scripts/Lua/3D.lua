@@ -127,7 +127,6 @@ local depthrange = 224              -- rgb levels for depth shading
 local layerlast                     -- last layer used
 local mindepth, maxdepth            -- minimum and maximum depth (with corner pointing at screen)
 local zdepth, zdepth2               -- coefficients for z to depth layer mapping
-brightpoints = false                -- whether to use brighter points (for high DPI displays)
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -243,7 +242,7 @@ function TimerDummy()  -- remove when gplus/init.lua 3.2b2 available  !!!
 end
 
 -- timing functions
-timingenabled = false
+local timingenabled = false
 local timerstart, timersave, timervalueall, timerresetall
 if gp.timerstart then  -- remove when gplus.init.lua 3.2b2 available  !!!
     timerstart = gp.timerstart
@@ -490,7 +489,6 @@ function ReadSettings()
             elseif keyword == "axes" then showaxes = tostring(value) == "true"
             elseif keyword == "lines" then showlines = tostring(value) == "true"
             elseif keyword == "shading" then depthshading = tostring(value) == "true"
-            elseif keyword == "brightpoints" then brightpoints = tostring(value) == "true"
             elseif keyword == "gridsize" then
                 N = tonumber(value) or 30
                 if N < MINN then N = MINN end
@@ -526,7 +524,6 @@ function WriteSettings()
         f:write("axes="..tostring(showaxes), "\n")
         f:write("lines="..tostring(showlines), "\n")
         f:write("shading="..tostring(depthshading), "\n")
-        f:write("brightpoints="..tostring(brightpoints), "\n")
         f:close()
     end
 end
@@ -1154,22 +1151,6 @@ end
 
 ----------------------------------------------------------------------
 
-function CreatePoints(clip, color)
-    ov("create 3 3 "..clip)
-    ov("target "..clip)
-    -- set middle pixel in the given color
-    ov(color)
-    ov("set 1 1")
-    -- if bright points then then set N, S, E and W pixels at half opacity
-    if brightpoints then
-        ov(color:match"^.* "..128)
-        ov("set 1 0 0 1 2 1 1 2")
-    end
-    ov("target")
-end
-
-----------------------------------------------------------------------
-
 local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
 
 local lastCubeSize = -1
@@ -1334,12 +1315,8 @@ local function DrawBatchLayer(depth, coordlist, length)
         elseif celltype == "sphere" then
             command[3] = " S"
         else -- celltype == "point" then
-            if brightpoints then
-                command[3] = " p"
-            else
-                ov(POINT_COLOR)
-                command[1] = "set "
-            end
+            ov(POINT_COLOR)
+            command[1] = "set "
         end
         -- execute the drawing command
         ov(table.concat(command))
@@ -1580,13 +1557,8 @@ function DisplayCells(editing)
         mx = midx - HALFCELL
         my = midy - HALFCELL
     else -- celltype == "point"
-        if brightpoints then
-            mx = midx - 1
-            my = midy - 1
-        else
-            mx = midx
-            my = midy
-        end
+        mx = midx
+        my = midy
     end
     -- add 0.5 so floor behaves like round
     mx = mx + 0.5
@@ -1806,8 +1778,8 @@ end
 
 ----------------------------------------------------------------------
 
-function DrawBusyCube(x, y, z, color, clipname)
-    -- draw odd/even cube at given grid position (color is ignored)
+function DrawBusyCube(x, y, z, clipname)
+    -- draw odd/even cube at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
@@ -1822,8 +1794,8 @@ end
 
 ----------------------------------------------------------------------
 
-function DrawBusyCubeDepth(x, y, z, color, clipname)
-    -- draw odd/even cube at given grid position with shading (color is ignored)
+function DrawBusyCubeDepth(x, y, z, clipname)
+    -- draw odd/even cube at given grid position with shading
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
@@ -1841,8 +1813,8 @@ end
 
 ----------------------------------------------------------------------
 
-function DrawBusySphere(x, y, z, color, clipname)
-    -- draw odd/even sphere at given grid position (color is ignored)
+function DrawBusySphere(x, y, z, clipname)
+    -- draw odd/even sphere at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
@@ -1857,8 +1829,8 @@ end
 
 ----------------------------------------------------------------------
 
-function DrawBusySphereDepth(x, y, z, color, clipname)
-    -- draw odd/even sphere at given grid position with shading (color is ignored)
+function DrawBusySphereDepth(x, y, z, clipname)
+    -- draw odd/even sphere at given grid position with shading
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
     z = z * CELLSIZE + MIDCELL
@@ -1876,7 +1848,18 @@ end
 
 ----------------------------------------------------------------------
 
-local function DrawBusyPoint(x, y, z, color, clip)
+function CreateBusyPoint(clipname, color)
+    ov("create 1 1 "..clipname)
+    ov("target "..clipname)
+    -- set pixel to the given color
+    ov(color)
+    ov("set 0 0")
+    ov("target")
+end
+
+----------------------------------------------------------------------
+
+local function DrawBusyPoint(x, y, z, clipprefix)
     -- draw mid point of busy box at given grid position
     x = x * CELLSIZE + MIDCELL
     y = y * CELLSIZE + MIDCELL
@@ -1885,22 +1868,22 @@ local function DrawBusyPoint(x, y, z, color, clip)
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
-    x = round(newx) + midx - 1
-    y = round(newy) + midy - 1
-    ov("paste "..x.." "..y.." "..clip)
+    x = round(newx) + midx
+    y = round(newy) + midy
+    -- clipprefix is "E" or "O"
+    ov("paste "..x.." "..y.." "..clipprefix.."p")
 end
 
 ----------------------------------------------------------------------
 
-local function TestBusyBox(editing, gridpos, x, y, z, color, clipname)
+local function TestBusyBox(editing, gridpos, x, y, z, clipname)
     -- called from DisplayBusyBoxes to test if given cell is in active plane,
     -- or if it's selected, or if it's a paste cell, and to draw it accordingly
     if editing then
         if active[gridpos] then
             if grid1[gridpos] then
                 -- draw live cell within active plane
-                -- (note that DrawBusyBox might be set to DrawBusyPoint)
-                DrawBusyBox(x, y, z, color, clipname)
+                DrawBusyBox(x, y, z, clipname)
             end
             DrawActiveCell(x, y, z)
             if selected[gridpos] then
@@ -1909,8 +1892,7 @@ local function TestBusyBox(editing, gridpos, x, y, z, color, clipname)
         else
             -- cell is outside active plane
             if grid1[gridpos] then
-                ov(color)
-                DrawPoint(x, y, z)
+                DrawBusyPoint(x, y, z, clipname)
             end
             if selected[gridpos] then
                 -- draw translucent point
@@ -1921,14 +1903,14 @@ local function TestBusyBox(editing, gridpos, x, y, z, color, clipname)
     else
         -- active plane is not displayed
         if grid1[gridpos] then
-            DrawBusyBox(x, y, z, color, clipname)
+            DrawBusyBox(x, y, z, clipname)
         end
         if selected[gridpos] then
             DrawSelectedCell(x, y, z)
         end
     end
     if pastepatt[gridpos] then
-        DrawBusyBox(x, y, z, color, clipname)
+        DrawBusyBox(x, y, z, clipname)
         DrawPasteCell(x, y, z)
     end
 end
@@ -2029,11 +2011,7 @@ function DisplayBusyBoxes(editing)
         end
     end
 
-    -- colors for points (same colors are used in CreateBusySphere)
-    local evencolor = EVEN_COLOR
-    local oddcolor = ODD_COLOR
-
-    -- clip names
+    -- clip names for cubes/spheres ("p" will be appended if drawing points)
     local evenclip = "E"
     local oddclip = "O"
 
@@ -2046,11 +2024,10 @@ function DisplayBusyBoxes(editing)
             for y = fromy, toy, stepy do
                 evencell = (fromx + y + z) % 2 == 0
                 for x = fromx, tox, stepx do
-                    -- note that TestBusyBox might use colors *and* clip names
                     if evencell then
-                        TestBusyBox(editing, i+x, x, y, z, evencolor, evenclip)
+                        TestBusyBox(editing, i+x, x, y, z, evenclip)
                     else
-                        TestBusyBox(editing, i+x, x, y, z, oddcolor, oddclip)
+                        TestBusyBox(editing, i+x, x, y, z, oddclip)
                     end
                     evencell = not evencell
                 end
@@ -2068,9 +2045,9 @@ function DisplayBusyBoxes(editing)
                 for x = fromx, tox, stepx do
                     if grid1[i+x] then
                         if evencell then
-                            DrawBusyBox(x, y, z, evencolor, evenclip)
+                            DrawBusyBox(x, y, z, evenclip)
                         else
-                            DrawBusyBox(x, y, z, oddcolor, oddclip)
+                            DrawBusyBox(x, y, z, oddclip)
                         end
                     end
                     evencell = not evencell
@@ -2173,7 +2150,6 @@ function DrawMenuBar()
     mbar.tickitem(4, 9, showaxes)
     mbar.tickitem(4, 10, showlines)
     mbar.tickitem(4, 11, depthshading)
-    mbar.tickitem(4, 12, brightpoints)
 
     mbar.show(0, 0, ovwd, mbarht)
 end
@@ -2304,9 +2280,11 @@ function Refresh(update)
             elseif celltype == "sphere" then
                 CreateBusySphere("E")
                 CreateBusySphere("O")
-            elseif celltype == "point" then
-                CreatePoints("E", EVEN_COLOR)
-                CreatePoints("O", ODD_COLOR)
+            end
+            if celltype == "point" or editing then
+                -- 1st char must match the above clip names
+                CreateBusyPoint("Ep", EVEN_COLOR)
+                CreateBusyPoint("Op", ODD_COLOR)
             end
             DisplayBusyBoxes(editing)
         else
@@ -2314,8 +2292,6 @@ function Refresh(update)
                 CreateLiveCube()
             elseif celltype == "sphere" then
                 CreateLiveSphere()
-            elseif celltype == "point" then
-                CreatePoints("p", POINT_COLOR)
             end
             DisplayCells(editing)
         end
@@ -7587,13 +7563,6 @@ end
 
 ----------------------------------------------------------------------
 
-function ToggleBrighterPoints()
-    brightpoints = not brightpoints
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
 function ToggleDepthShading()
     depthshading = not depthshading
     InitDepthShading()
@@ -8903,7 +8872,6 @@ function CreateOverlay()
     mbar.additem(4, "Show Axes", ToggleAxes)
     mbar.additem(4, "Show Lattice Lines", ToggleLines)
     mbar.additem(4, "Use Depth Shading", ToggleDepthShading)
-    mbar.additem(4, "Use Brighter Points", ToggleBrighterPoints)
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Help", ShowHelp)
 
@@ -9229,7 +9197,6 @@ function HandleKey(event)
     elseif key == "i" and mods == "none" then InitialView()
     elseif key == "f" and mods == "none" then FitGrid()
     elseif key == "p" and mods == "none" then CycleCellType()
-    elseif key == "p" and mods == "alt" then ToggleBrighterPoints()
     elseif key == "l" and mods == "none" then ToggleLines()
     elseif key == "l" and mods == "shift" then ToggleAxes()
     elseif key == "d" and mods == "alt" then ToggleDepthShading()
