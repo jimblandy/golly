@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 25   -- build number
+local build = 26   -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -794,7 +794,7 @@ local function browsepatterns(startpattern)
                 previouspattern()
             elseif event == "key home none" then
                 selectfolder()
-            elseif event == "key enter none" or event == "key return none" then
+            elseif event == "key return none" then
                 generating = 1 - generating
             elseif event == "key o none" then
                 toggleoptions()

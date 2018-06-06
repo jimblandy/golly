@@ -17,7 +17,7 @@
 -- Patterns/Life/Rakes/c2-Cordership-rake.rle, then run lifeviewer.lua.
 
 -- build number
-local buildnumber = 29
+local buildnumber = 30
 
 local g = golly()
 local ov = g.overlay
@@ -1890,10 +1890,10 @@ function main()
             ov("resize "..viewwd.." "..viewht)
             update.dorefresh = true
         end
-        
+
         -- check for user input
         local event = op.process(g.getevent())
-        if event == "key enter none" or event == "key return none" then
+        if event == "key return none" then
             generating = not generating
             if generating then
                 timing.genstarttime = g.millisecs()

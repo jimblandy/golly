@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build = 77
+local build = 78
 local g = golly()
 -- require "gplus.strict"
 local gp    = require "gplus"
@@ -1211,7 +1211,7 @@ local function processinput()
             else
                 options.confirming = not options.confirming
             end
-        elseif button == "left" or event == "key enter none" or event == "key return none" or event == "key space none" then
+        elseif button == "left" or event == "key return none" or event == "key space none" then
             -- left click, enter or space starts game, toggles pause or dismisses settings
             if options.confirming then
                 updateballs(0)
@@ -1255,7 +1255,7 @@ local function processendinput()
             game.again          = false
             game.finished       = true
             options.showoptions = false
-        elseif button == "left" or event == "key enter none" or event == "key return none" or event == "key space none" then
+        elseif button == "left" or event == "key return none" or event == "key space none" then
             -- left click, enter or space restarts game or dismisses settings
             if options.showoptions then
                 options.showoptions = false
