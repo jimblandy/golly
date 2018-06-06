@@ -243,7 +243,7 @@ function TimerDummy()  -- remove when gplus/init.lua 3.2b2 available  !!!
 end
 
 -- timing functions
-local timingenabled = false
+timingenabled = false
 local timerstart, timersave, timervalueall, timerresetall
 if gp.timerstart then  -- remove when gplus.init.lua 3.2b2 available  !!!
     timerstart = gp.timerstart
@@ -1154,15 +1154,17 @@ end
 
 ----------------------------------------------------------------------
 
-function CreateBrighterPoints(clip, color)
+function CreatePoints(clip, color)
     ov("create 3 3 "..clip)
     ov("target "..clip)
     -- set middle pixel in the given color
     ov(color)
     ov("set 1 1")
-    -- set N, S, E and W pixels at half opacity
-    ov(color:match"^.* "..128)
-    ov("set 1 0 0 1 2 1 1 2")
+    -- if bright points then then set N, S, E and W pixels at half opacity
+    if brightpoints then
+        ov(color:match"^.* "..128)
+        ov("set 1 0 0 1 2 1 1 2")
+    end
     ov("target")
 end
 
@@ -1883,20 +1885,9 @@ local function DrawBusyPoint(x, y, z, color, clip)
     local newx = (x*xixo + y*xiyo + z*xizo)
     local newy = (x*yixo + y*yiyo + z*yizo)
     -- use orthographic projection
-    x = round(newx) + midx
-    y = round(newy) + midy
-    if brightpoints and clip then
-        x = x - 1
-        y = y - 1
-        if color == EVEN_COLOR then
-            ov("paste "..x.." "..y.." E")
-        else
-            ov("paste "..x.." "..y.." O")
-        end
-    else
-        ov(color)
-        ov("set "..x.." "..y)
-    end
+    x = round(newx) + midx - 1
+    y = round(newy) + midy - 1
+    ov("paste "..x.." "..y.." "..clip)
 end
 
 ----------------------------------------------------------------------
@@ -1918,7 +1909,8 @@ local function TestBusyBox(editing, gridpos, x, y, z, color, clipname)
         else
             -- cell is outside active plane
             if grid1[gridpos] then
-                DrawBusyPoint(x, y, z, color)
+                ov(color)
+                DrawPoint(x, y, z)
             end
             if selected[gridpos] then
                 -- draw translucent point
@@ -2041,7 +2033,7 @@ function DisplayBusyBoxes(editing)
     local evencolor = EVEN_COLOR
     local oddcolor = ODD_COLOR
 
-    -- clip names for cubes/spheres
+    -- clip names
     local evenclip = "E"
     local oddclip = "O"
 
@@ -2068,17 +2060,6 @@ function DisplayBusyBoxes(editing)
         end
     else
         -- only live cells need to be drawn
-        if celltype == "point" then
-            -- evenclip and oddclip are ignored if DrawBusyBox = DrawBusyPoint and bright points are not used
-            if not brightpoints then
-                evenclip = nil
-                oddclip = nil
-            end
-        else
-            -- evencolor and oddcolor are ignored if DrawBusyBox = DrawBusyCube/Sphere
-            evencolor = nil
-            oddcolor = nil
-        end
         j = N*fromz
         for z = fromz, toz, stepz do
             i = N*(fromy+j)
@@ -2323,9 +2304,9 @@ function Refresh(update)
             elseif celltype == "sphere" then
                 CreateBusySphere("E")
                 CreateBusySphere("O")
-            elseif celltype == "point" and brightpoints then
-                CreateBrighterPoints("E", EVEN_COLOR)
-                CreateBrighterPoints("O", ODD_COLOR)
+            elseif celltype == "point" then
+                CreatePoints("E", EVEN_COLOR)
+                CreatePoints("O", ODD_COLOR)
             end
             DisplayBusyBoxes(editing)
         else
@@ -2333,8 +2314,8 @@ function Refresh(update)
                 CreateLiveCube()
             elseif celltype == "sphere" then
                 CreateLiveSphere()
-            elseif celltype == "point" and brightpoints then
-                CreateBrighterPoints("p", POINT_COLOR)
+            elseif celltype == "point" then
+                CreatePoints("p", POINT_COLOR)
             end
             DisplayCells(editing)
         end
