@@ -13,11 +13,6 @@ Author: Andrew Trevorrow (andrew@trevorrow.com), Feb 2018.
 Thanks to Tom Rokicki for optimizing the generating code.
 Thanks to Chris Rowett for optimizing the rendering code and many
 other improvements.
-
-TODO (for Golly 3.2 or later):
-
-- add View > Pattern Info to display comments (in help window?)
-  or show as message text when file is opened?
 --]]
 
 local g = golly()
@@ -4071,13 +4066,16 @@ function ReadPattern(filepath)
     local wd, ht, dp
     local x, y, z = 0, 0, 0
     local runcount = 0
+    local comments = ""
 
     while true do
         line = nextline()
         if not line then break end
         local ch = line:sub(1,1)
-        if ch == "#" or #ch == 0 then
-            -- ignore comment line or blank line
+        if #ch == 0 then
+            -- ignore blank line
+        elseif ch == "#" then
+            comments = comments..line.."\n"
         elseif ch == "x" then
             -- parse header
             wd, ht, dp, trule = line:match("x=(.+) y=(.+) z=(.+) rule=(.+)$")
@@ -4164,7 +4162,7 @@ function ReadPattern(filepath)
         newmaxz = tmaxz,
         newgrid = tgrid
     }
-    return nil, newpattern
+    return nil, newpattern, comments
 end
 
 ----------------------------------------------------------------------
@@ -4202,13 +4200,16 @@ end
 
 function OpenPattern(filepath)
     if filepath then
-        local err, newpattern = ReadPattern(filepath)
+        local err, newpattern, comments = ReadPattern(filepath)
         if err then
             g.warn(err, false)
         else
             -- pattern ok so use info in newpattern to update current grid;
             -- set pattname to file name at end of filepath
             pattname = filepath:match("^.+"..pathsep.."(.+)$")
+            if #comments > 0 then
+                message = comments
+            end
             UpdateCurrentGrid(newpattern)
         end
     else
@@ -4247,12 +4248,15 @@ end
 function OpenClipboard()
     local filepath = CopyClipboardToFile()
     if filepath then
-        local err, newpattern = ReadPattern(filepath)
+        local err, newpattern, comments = ReadPattern(filepath)
         if err then
             g.warn(err, false)
         else
             -- pattern ok so use info in newpattern to update current grid
             pattname = "clipboard"
+            if #comments > 0 then
+                message = comments
+            end
             UpdateCurrentGrid(newpattern)
         end
     end
