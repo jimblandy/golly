@@ -190,9 +190,9 @@ local undobutton                    -- Undo
 local redobutton                    -- Redo
 local helpbutton                    -- ?
 local exitbutton                    -- X
-local drawbox                       -- check box for draw mode
-local selectbox                     -- check box for select mode
-local movebox                       -- check box for move mode
+local drawbox                       -- radio button for draw mode
+local selectbox                     -- radio button for select mode
+local movebox                       -- radio button for move mode
 local stepslider                    -- slider for adjusting stepsize
 
 local pastemenu                     -- pop-up menu for choosing a paste action
@@ -235,25 +235,11 @@ settingsfile = g.getdir("data").."3D.ini"
 memoryenabled = false       -- show memory usage?
 timingenabled = false       -- show timing messages?
 
-----------------------------------------------------------------------
-
-function TimerDummy()  -- remove when gplus/init.lua 3.2b2 available  !!!
-    return ""
-end
-
 -- timing functions
-local timerstart, timersave, timervalueall, timerresetall
-if gp.timerstart then  -- remove when gplus.init.lua 3.2b2 available  !!!
-    timerstart = gp.timerstart
-    timersave = gp.timersave
-    timervalueall = gp.timervalueall
-    timerresetall = gp.timerresetall
-else
-    timerstart = TimerDummy
-    timersave = TimerDummy
-    timervalueall = TimerDummy
-    timerresetall = TimerDummy
-end
+local timerstart = gp.timerstart
+local timersave = gp.timersave
+local timervalueall = gp.timervalueall
+local timerresetall = gp.timerresetall
 
 ----------------------------------------------------------------------
 
@@ -2113,7 +2099,7 @@ function EnableControls(bool)
     undobutton.enable(bool)
     redobutton.enable(bool)
 
-    -- disable/enable unsafe check boxes
+    -- disable/enable unsafe radio buttons
     drawbox.enable(bool)
     selectbox.enable(bool)
     movebox.enable(bool)
@@ -2141,12 +2127,9 @@ function DrawMenuBar()
         mbar.enableitem(3, 4, gencount > startcount)    -- Reset
     end
 
-    local selectitem = mbar.tickitem  -- remove when oplus/init.lua 3.2b2 available  !!!
-    if mbar.radioitem then selectitem = mbar.radioitem end
-
-    selectitem(4, 5, celltype == "cube")
-    selectitem(4, 6, celltype == "sphere")
-    selectitem(4, 7, celltype == "point")
+    mbar.radioitem(4, 5, celltype == "cube")
+    mbar.radioitem(4, 6, celltype == "sphere")
+    mbar.radioitem(4, 7, celltype == "point")
     mbar.tickitem(4, 9, showaxes)
     mbar.tickitem(4, 10, showlines)
     mbar.tickitem(4, 11, depthshading)
@@ -2197,7 +2180,7 @@ function DrawToolBar()
     x = x + selectbox.wd + gap
     movebox.show(x, y, currcursor == movecursor)
 
-    -- show slider to right of checkboxes
+    -- show slider to right of radio buttons
     stepslider.show(x + movebox.wd + biggap, y, stepsize)
 
     -- show stepsize at right end of slider
@@ -8910,15 +8893,13 @@ function CreateToolBar()
     helpbutton = op.button("?", ShowHelp)
     exitbutton = op.button("X", ExitScript)
 
-    -- create check boxes and slider (don't shadow text)
+    -- create radio buttons and slider (don't shadow text)
     op.textshadowx = 0
     op.textshadowy = 0
 
-    local selectbutton = op.checkbox   -- remove when oplus/init.lua 3.2b2 available  !!!
-    if op.radiobutton then selectbutton = op.radiobutton end
-    drawbox = selectbutton("Draw", op.black, DrawMode)
-    selectbox = selectbutton("Select", op.black, SelectMode)
-    movebox = selectbutton("Move", op.black, MoveMode)
+    drawbox = op.radiobutton("Draw", op.black, DrawMode)
+    selectbox = op.radiobutton("Select", op.black, SelectMode)
+    movebox = op.radiobutton("Move", op.black, MoveMode)
 
     -- create a slider for adjusting stepsize
     stepslider = op.slider("", op.black, 100, 1, 100, StepChange)
