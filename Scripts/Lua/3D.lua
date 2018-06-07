@@ -232,7 +232,8 @@ startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 settingsfile = g.getdir("data").."3D.ini"
 
 -- remove eventually???!!!
-memoryenabled = false         -- whether to show memory usage
+memoryenabled = false       -- show memory usage?
+timingenabled = false       -- show timing messages?
 
 ----------------------------------------------------------------------
 
@@ -241,7 +242,6 @@ function TimerDummy()  -- remove when gplus/init.lua 3.2b2 available  !!!
 end
 
 -- timing functions
-local timingenabled = false
 local timerstart, timersave, timervalueall, timerresetall
 if gp.timerstart then  -- remove when gplus.init.lua 3.2b2 available  !!!
     timerstart = gp.timerstart
@@ -472,10 +472,9 @@ function ReadSettings()
     local f = io.open(settingsfile, "r")
     if f then
         while true do
+            -- no need to worry about CRs here because file was created by WriteSettings
             local line = f:read("*l")
             if not line then break end
-            -- if line ended with CRLF then remove the CR
-            line = line:gsub("\r", "")
             local keyword, value = split(line,"=")
             -- look for a keyword used in WriteSettings
             if not value then
@@ -4034,13 +4033,17 @@ function ReadPattern(filepath)
     local f = io.open(filepath,"r")
     if not f then return "Failed to open file:\n"..filepath end
 
-    local line = f:read("*l")
+    -- Lua's f:read("*l") doesn't detect CR as EOL so we do this ugly stuff:
+    -- read entire file and convert any CRs to LFs
+    local all = f:read("*a"):gsub("\r", "\n").."\n"
+    local nextline = all:gmatch("(.-)\n")
+    
+    f:close()
+
+    local line = nextline()
     if line == nil or not line:find("^3D") then
-        f:close()
         return "Invalid RLE3 file (first line must start with 3D)."
     end
-    -- if line ended with CRLF then remove the CR
-    line = line:gsub("\r", "")
 
     -- read pattern into a temporary grid in case an error occurs
     local tsize = MAXN
@@ -4065,7 +4068,6 @@ function ReadPattern(filepath)
             -- ignore keyword
         elseif keyword == "version" then
             if value ~= "1" then
-                f:close()
                 return "Unexpected version: "..value
             end
         elseif keyword == "size" then
@@ -4088,10 +4090,8 @@ function ReadPattern(filepath)
     local runcount = 0
 
     while true do
-        line = f:read("*l")
+        line = nextline()
         if not line then break end
-        -- if line ended with CRLF then remove the CR
-        line = line:gsub("\r", "")
         local ch = line:sub(1,1)
         if ch == "#" or #ch == 0 then
             -- ignore comment line or blank line
@@ -4103,7 +4103,6 @@ function ReadPattern(filepath)
             dp = tonumber(dp)
             if wd and ht and dp then
                 if max(wd, ht, dp) > tsize then
-                    f:close()
                     return "The pattern size is bigger than the grid size!"
                 end
                 x = x0
@@ -4113,16 +4112,13 @@ function ReadPattern(filepath)
                 if x < 0 or x + wd > tsize or
                    y < 0 or y + ht > tsize or
                    z < 0 or z + dp > tsize then
-                    f:close()
                     return "The pattern is positioned outside the grid!"
                 end
             else
-                f:close()
                 return "Bad number in header line:\n"..line
             end
             local saverule = rulestring
             if not ParseRule(trule) then
-                f:close()
                 return "Unknown rule: "..trule
             end
             trule = rulestring
@@ -4163,7 +4159,6 @@ function ReadPattern(filepath)
                     elseif ch == "!" then
                         break
                     else
-                        f:close()
                         return "Unexpected character: "..ch
                     end
                     runcount = 0
@@ -4171,7 +4166,6 @@ function ReadPattern(filepath)
             end
         end
     end
-    f:close()
 
     -- success
     local newpattern = {
@@ -4404,13 +4398,15 @@ end
 
 function GetComments(f)
     local comments = ""
-    local line = f:read("*l")
-    if line == nil then return comments end
+
+    -- Lua's f:read("*l") doesn't detect CR as EOL so we do this ugly stuff:
+    -- read entire file and convert any CRs to LFs
+    local all = f:read("*a"):gsub("\r", "\n").."\n"
+    local nextline = all:gmatch("(.-)\n")
+
     while true do
-        line = f:read("*l")
+        local line = nextline()
         if not line then break end
-        -- if line ended with CRLF then remove the CR
-        line = line:gsub("\r", "")
         local ch = line:sub(1,1)
         if ch == "#" then
             comments = comments..line.."\n"
@@ -4419,6 +4415,7 @@ function GetComments(f)
             break
         end
     end
+
     return comments
 end
 
@@ -4518,7 +4515,11 @@ function RunScript(filepath)
     if filepath then
         local f = io.open(filepath, "r")
         if f then
-            local line1 = f:read("*l")
+            -- Lua's f:read("*l") doesn't detect CR as EOL so we do this ugly stuff:
+            -- read entire file and convert any CRs to LFs
+            local all = f:read("*a"):gsub("\r", "\n").."\n"
+            local nextline = all:gmatch("(.-)\n")
+            local line1 = nextline()
             f:close()
             if not (line1 and line1:find("3D.lua")) then
                 g.warn("3D.lua was not found on first line of script.", false)
