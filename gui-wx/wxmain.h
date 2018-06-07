@@ -38,6 +38,7 @@ public:
     bool CopyTextToClipboard(const wxString& text);
     bool GetTextFromClipboard(wxTextDataObject* data);
     bool ClipboardContainsRule();
+    bool ClipboardContainsRLE3();
     void OpenClipboard();
     void RunClipboard();
     

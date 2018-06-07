@@ -25,6 +25,7 @@ extern bool showprogress;       // script can display the progress dialog?
 extern wxString scripterr;      // error message
 extern wxString mousepos;       // current mouse position
 extern wxString scripttitle;    // window title set by settitle command
+extern wxString rle3path;       // path of .rle3 file to be sent to 3D.lua
 
 void RunScript(const wxString& filename);
 // Run the given script.

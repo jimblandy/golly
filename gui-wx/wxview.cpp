@@ -793,6 +793,10 @@ void PatternView::PasteClipboard(bool toselection)
     // and switch to that rule
     if (mainptr->ClipboardContainsRule()) return;
     
+    // if clipboard text starts with "3D version" then start up 3D.lua
+    // and load the RLE3 pattern
+    if (mainptr->ClipboardContainsRLE3()) return;
+
     // create a temporary layer for storing the clipboard pattern
     pastelayer = CreateTemporaryLayer();
     if (pastelayer) {

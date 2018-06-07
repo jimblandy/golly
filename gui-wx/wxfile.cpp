@@ -766,16 +766,6 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
         return;
     }
 
-    // note that pass_file_events is false if OpenFile was called from GSF_open
-    if (inscript && pass_file_events) {
-        // ensure path is a full path
-        wxString newpath = path;
-        wxFileName fname(newpath);
-        if (!fname.IsAbsolute()) newpath = gollydir + path;
-        PassFileToScript(newpath);
-        return;
-    }
-
     if (generating) {
         command_pending = true;
         // assume remember is true (should only be false if called from a script)
@@ -790,6 +780,34 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
         return;
     }
 
+    // note that pass_file_events is false if OpenFile was called from GSF_open
+    if (inscript && pass_file_events) {
+        // ensure path is a full path
+        wxString newpath = path;
+        wxFileName fname(newpath);
+        if (!fname.IsAbsolute()) newpath = gollydir + path;
+        PassFileToScript(newpath);
+        return;
+    }
+    
+    if (!inscript && path.EndsWith(wxT(".rle3"))) {
+        if (remember) AddRecentPattern(path);
+        
+        // create a full path in rle3path for GSF_getevent to use
+        rle3path = path;
+        wxFileName fname(rle3path);
+        if (!fname.IsAbsolute()) rle3path = gollydir + path;
+        
+        // start up 3D.lua (it will get a file event containing rle3path)
+        wxString path3D = gollydir + wxT("Scripts");
+        path3D += wxFILE_SEP_PATH;
+        path3D += wxT("Lua");
+        path3D += wxFILE_SEP_PATH;
+        path3D += wxT("3D.lua");
+        RunScript(path3D);
+        return;
+    }
+
     if (IsScriptFile(path)) {
         // execute script
         if (remember) AddRecentScript(path);
@@ -797,7 +815,7 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
 
     } else if (IsZipFile(path)) {
         // process zip file
-        if (remember) AddRecentPattern(path);     // treat it like a pattern
+        if (remember) AddRecentPattern(path);   // treat it like a pattern
         OpenZipFile(path);
 
     } else if (IsRuleFile(path)) {
@@ -962,6 +980,7 @@ void MainFrame::OpenPattern()
     
     wxString filetypes = _("All files (*)|*");
     filetypes +=         _("|RLE (*.rle)|*.rle");
+    filetypes +=         _("|RLE3 (*.rle3)|*.rle3");
     filetypes +=         _("|Macrocell (*.mc)|*.mc");
     filetypes +=         _("|Gzip (*.gz)|*.gz");
     filetypes +=         _("|Life 1.05/1.06 (*.lif)|*.lif");
@@ -1157,6 +1176,44 @@ bool MainFrame::ClipboardContainsRule()
 
 // -----------------------------------------------------------------------------
 
+bool MainFrame::ClipboardContainsRLE3()
+{
+    wxTextDataObject data;
+    if (!GetTextFromClipboard(&data)) return false;
+
+    wxString cliptext = data.GetText();
+    if (!cliptext.StartsWith(wxT("3D version"))) return false;
+
+    // copy clipboard data to a temporary .rle3 file
+    wxString filepath = tempdir + wxT("clipboard.rle3");
+    wxFile rle3file(filepath, wxFile::write);
+    if (!rle3file.IsOpened()) {
+        Warning(_("Could not open clipboard.rle3 for writing!"));
+        return true;
+    }
+    if (!rle3file.Write(data.GetText())) {
+        Warning(_("Could not write clipboard data to file!"));
+        rle3file.Close();
+        return true;
+    }
+    rle3file.Close();
+
+    // set rle3path for GSF_getevent
+    rle3path = filepath;
+
+    // start up 3D.lua (it will get a file event containing rle3path)
+    wxString path3D = gollydir + wxT("Scripts");
+    path3D += wxFILE_SEP_PATH;
+    path3D += wxT("Lua");
+    path3D += wxFILE_SEP_PATH;
+    path3D += wxT("3D.lua");
+    RunScript(path3D);
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+
 void MainFrame::OpenClipboard()
 {
     if (generating) {
@@ -1169,6 +1226,10 @@ void MainFrame::OpenClipboard()
     // if clipboard text starts with "@RULE rulename" then install rulename.rule
     // and switch to that rule
     if (ClipboardContainsRule()) return;
+    
+    // if clipboard text starts with "3D version" then start up 3D.lua
+    // and load the RLE3 pattern
+    if (ClipboardContainsRLE3()) return;
     
     // load and view pattern data stored in clipboard
     wxTextDataObject data;

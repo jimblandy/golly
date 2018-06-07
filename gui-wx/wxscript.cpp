@@ -44,6 +44,7 @@ bool showprogress;         // script can display the progress dialog?
 wxString scripterr;        // Lua/Perl/Python error message
 wxString mousepos;         // current mouse position
 wxString scripttitle;      // window title set by settitle command
+wxString rle3path;         // path of .rle3 file to be sent to 3D.lua via GSF_getevent
 
 // local globals:
 static bool luascript = false;      // a Lua script is running?
@@ -1073,6 +1074,14 @@ void GSF_getevent(wxString& event, int get)
         pass_key_events = true;     // future keyboard events will call PassKeyToScript
         pass_mouse_events = true;   // future mouse events will call PassClickToScript
         pass_file_events = true;    // future open file evenst will call PassFileToScript
+        
+        // rle3path is non-empty if Golly has just seen a .rle3 file and started up 3D.lua
+        if (rle3path[0]) {
+            event = wxT("file ") + rle3path;
+            rle3path = wxEmptyString;
+            return;
+        }
+        
     } else {
         // tell Golly to handle future keyboard/mouse/file events
         pass_key_events = false;
@@ -1904,7 +1913,7 @@ void PassKeyToScript(int key, int modifiers)
 
 void PassFileToScript(const wxString& filepath)
 {
-    wxString fileinfo = _("file ");
+    wxString fileinfo = wxT("file ");
     fileinfo += filepath;
     eventqueue.Add(fileinfo);
 }

@@ -16,8 +16,8 @@ other improvements.
 
 TODO (for Golly 3.2 or later):
 
-- get Golly to automatically start up 3D.lua if user opens a .rle3 file
-- add View > Pattern Info to display comments, or always show when pattern is opened?
+- add View > Pattern Info to display comments (in help window?)
+  or show as message text when file is opened?
 --]]
 
 local g = golly()
