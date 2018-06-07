@@ -296,7 +296,7 @@ void MainFrame::LoadPattern(const wxString& path, const wxString& newtitle,
     delete currlayer->algo;
     currlayer->algo = CreateNewUniverse(currlayer->algtype);
     
-    if (!newtitle.IsEmpty()) {
+    if (!newtitle.IsEmpty() && !inscript) {
         // show new file name in window title but no rule (which readpattern can change);
         // nicer if user can see file name while loading a very large pattern
         SetTitle(_("Loading ") + newtitle);
@@ -759,13 +759,23 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
         ShowHelp(path);
         return;
     }
-    
+
     if (IsTextFile(path)) {
         // open text file in user's preferred text editor
         EditFile(path);
         return;
     }
-    
+
+    // note that pass_file_events is false if OpenFile was called from GSF_open
+    if (inscript && pass_file_events) {
+        // ensure path is a full path
+        wxString newpath = path;
+        wxFileName fname(newpath);
+        if (!fname.IsAbsolute()) newpath = gollydir + path;
+        PassFileToScript(newpath);
+        return;
+    }
+
     if (generating) {
         command_pending = true;
         // assume remember is true (should only be false if called from a script)
@@ -779,22 +789,22 @@ void MainFrame::OpenFile(const wxString& path, bool remember)
         Stop();
         return;
     }
-    
+
     if (IsScriptFile(path)) {
         // execute script
         if (remember) AddRecentScript(path);
         RunScript(path);
-        
+
     } else if (IsZipFile(path)) {
         // process zip file
         if (remember) AddRecentPattern(path);     // treat it like a pattern
         OpenZipFile(path);
-    
+
     } else if (IsRuleFile(path)) {
         // switch to rule, but only if it's in rulesdir or userrules
         if (RuleCanBeFound(path))
             LoadRule(path.AfterLast(wxFILE_SEP_PATH).BeforeLast('.'));
-        
+
     } else {
         // load pattern
         if (remember) AddRecentPattern(path);
@@ -1711,6 +1721,8 @@ void MainFrame::SaveOverlay()
 
 // -----------------------------------------------------------------------------
 
+static wxString oldfiledir;
+
 void MainFrame::ToggleShowFiles()
 {
     if (splitwin->IsSplit()) dirwinwd = splitwin->GetSashPosition();
@@ -1718,8 +1730,13 @@ void MainFrame::ToggleShowFiles()
     if (splitwin->IsSplit()) {
         // hide left pane
         splitwin->Unsplit(filectrl);
+        oldfiledir = filedir;
     } else {
         splitwin->SplitVertically(filectrl, RightPane(), dirwinwd);
+    }
+    if (showfiles && filedir != oldfiledir) {
+        // show new file directory
+        SimplifyTree(filedir, filectrl->GetTreeCtrl(), filectrl->GetRootId());
     }
     viewptr->SetFocus();
 }

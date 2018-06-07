@@ -1209,7 +1209,7 @@ The script will be aborted if the user hits the dialog's Cancel button.
 
 <a name="getevent"></a><p><dt><b>getevent(<i>get=True</i>)</b></dt>
 <dd>
-When Golly runs a script it initially handles all keyboard and mouse events, but
+When Golly runs a script it initially handles all user events, but
 if the script calls <b>getevent()</b> then future events are put into a queue
 for retrieval via later calls.  These events are returned in
 the form of strings (see below for the syntax).  If there are no events in the queue
@@ -1271,6 +1271,16 @@ where <i>x</i> and <i>y</i> are the mouse's pixel position in the overlay.
 </dd>
 <p>
 <dd>
+File events are strings of the form "file <i>filepath</i>"
+where <i>filepath</i> is an absolute path.
+File events can be triggered in a number of ways: by clicking on a file
+in the left panel, by clicking an "open:" link in the Help window,
+by double-clicking a Golly-associated file, or by dropping a file onto
+the Golly window.
+It is up to the script to decide what to do with the file.
+</dd>
+<p>
+<dd>
 The following examples show the strings returned after various user events:
 </dd>
 <p>
@@ -1298,6 +1308,8 @@ The following examples show the strings returned after various user events:
         </td><td>mouse wheel was used to zoom out from pixel in viewport</td></tr>
 <tr><td>"ozoomin 10 20"</td><td width=15>
         </td><td>mouse wheel was used to zoom in to pixel in overlay</td></tr>
+<tr><td>"file /path/to/foo.rle"</td><td width=15>
+        </td><td>user tried to open the given file</td></tr>
 </table>
 </dd>
 <p>

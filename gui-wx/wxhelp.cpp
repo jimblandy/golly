@@ -20,7 +20,7 @@
 #include "wxview.h"        // for viewptr->...
 #include "wxutils.h"       // for Warning, BeginProgress, etc
 #include "wxprefs.h"       // for GetShortcutTable, helpfontsize, gollydir, etc
-#include "wxscript.h"      // for inscript
+#include "wxscript.h"      // for inscript, pass_file_events, etc
 #include "wxlayer.h"       // for numlayers, GetLayer, etc
 #include "wxalgos.h"       // for QLIFE_ALGO
 #include "wxhelp.h"
@@ -959,16 +959,18 @@ void HtmlView::OnLinkClicked(const wxHtmlLinkInfo& link)
         mainptr->ShowPrefsDialog( url.AfterFirst(':') );
         
     } else if ( url.StartsWith(wxT("open:")) ) {
+        wxString path = url.AfterFirst(':');
+#ifdef __WXMSW__
+        path.Replace(wxT("/"), wxT("\\"));
+#endif
+        wxFileName fname(path);
+        if (!fname.IsAbsolute()) path = gollydir + path;
         if (inscript) {
-            Warning(_("Cannot open file while a script is running."));
+            if (pass_file_events) {
+                PassFileToScript(path);
+            }
         } else {
             // open clicked file
-            wxString path = url.AfterFirst(':');
-#ifdef __WXMSW__
-            path.Replace(wxT("/"), wxT("\\"));
-#endif
-            wxFileName fname(path);
-            if (!fname.IsAbsolute()) path = gollydir + path;
             if (editlink) {
                 mainptr->EditFile(path);
             } else {

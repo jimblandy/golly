@@ -1748,26 +1748,22 @@ void MainFrame::OnDirTreeSelection(wxTreeEvent& event)
         
     } else {
         // user clicked on a file name
-        if ( inscript ) {
-            // use Warning because statusptr->ErrorMessage does nothing if inscript
-            if ( IsScriptFile(filepath) )
-                Warning(_("Cannot run script while another script is running."));
-            else
-                Warning(_("Cannot open file while a script is running."));
-        } else {
-            
 #ifdef __WXMAC__
-            if ( !wxFileName::FileExists(filepath) ) {
-                // avoid wxMac bug in wxGenericDirCtrl::GetFilePath; ie. file name
-                // can contain "/" rather than ":" (but directory path is okay)
-                wxFileName fullpath(filepath);
-                wxString dir = fullpath.GetPath();
-                wxString name = fullpath.GetFullName();
-                wxString newpath = dir + wxT(":") + name;
-                if ( wxFileName::FileExists(newpath) ) filepath = newpath;
-            }
+        if ( !wxFileName::FileExists(filepath) ) {
+            // avoid wxMac bug in wxGenericDirCtrl::GetFilePath; ie. file name
+            // can contain "/" rather than ":" (but directory path is okay)
+            wxFileName fullpath(filepath);
+            wxString dir = fullpath.GetPath();
+            wxString name = fullpath.GetFullName();
+            wxString newpath = dir + wxT(":") + name;
+            if ( wxFileName::FileExists(newpath) ) filepath = newpath;
+        }
 #endif
-            
+        if ( inscript ) {
+            if (pass_file_events) {
+                PassFileToScript(filepath);
+            }
+        } else {
             if (generating) {
                 command_pending = true;
                 if ( IsScriptFile(filepath) ) {

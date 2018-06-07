@@ -12,8 +12,9 @@ extern bool inscript;
 
 extern bool pass_key_events;
 extern bool pass_mouse_events;
-// Pass keyboard and/or mouse events to script?  Both flags are initially false
-// at the start of a script; both become true if the script calls getevent.
+extern bool pass_file_events;
+// Pass keyboard/mouse/file events to script?  All flags are initially false
+// at the start of a script; all become true if the script calls getevent().
 // If the script calls getkey (deprecated) then only pass_key_events becomes true.
 
 extern bool canswitch;          // can user switch layers while a script is running?
@@ -51,6 +52,9 @@ void PassKeyToScript(int key, int modifiers = 0);
 
 void PassKeyUpToScript(int key);
 // Called if a script is running and user releases a key.
+
+void PassFileToScript(const wxString& filepath);
+// Called if a script is running and user opens a file.
 
 void ShowTitleLater();
 // Called if a script is running and window title has changed.

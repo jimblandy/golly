@@ -16,8 +16,7 @@ other improvements.
 
 TODO (for Golly 3.2 or later):
 
-- implement "open filepath" event for g.getevent and get Golly to
-  automatically start up 3D.lua if user opens a .rle3 file
+- get Golly to automatically start up 3D.lua if user opens a .rle3 file
 - add View > Pattern Info to display comments, or always show when pattern is opened?
 --]]
 
@@ -532,7 +531,6 @@ end
 
 function SaveGollyState()
     local oldstate = {}
-    oldstate.files = g.setoption("showfiles", 0)
     oldstate.scroll = g.setoption("showscrollbars", 0)
     oldstate.time = g.setoption("showtimeline", 0)
     oldstate.tool = g.setoption("showtoolbar", 0)
@@ -541,6 +539,8 @@ function SaveGollyState()
     oldstate.edit = g.setoption("showeditbar", 0)
     oldstate.tile = g.setoption("tilelayers", 0)
     oldstate.stack = g.setoption("stacklayers", 0)
+    oldstate.files = g.setoption("showfiles", 0)
+    oldstate.filesdir = g.getdir("files")
     return oldstate
 end
 
@@ -548,7 +548,6 @@ end
 
 function RestoreGollyState(oldstate)
     ov("delete")
-    g.setoption("showfiles", oldstate.files)
     g.setoption("showscrollbars", oldstate.scroll)
     g.setoption("showtimeline", oldstate.time)
     g.setoption("showtoolbar", oldstate.tool)
@@ -557,6 +556,8 @@ function RestoreGollyState(oldstate)
     g.setoption("showeditbar", oldstate.edit)
     g.setoption("tilelayers", oldstate.tile)
     g.setoption("stacklayers", oldstate.stack)
+    g.setdir("files", oldstate.filesdir)
+    g.setoption("showfiles", oldstate.files)
 end
 
 ----------------------------------------------------------------------
@@ -5928,6 +5929,19 @@ end
 
 ----------------------------------------------------------------------
 
+function OpenFile(filepath)
+    if filepath:find("%.rle3$") then
+        OpenPattern(filepath)
+    elseif filepath:find("%.lua$") then
+        RunScript(filepath)
+    else
+        g.warn("Unexpected file:\n"..filepath.."\n\n"..
+               "3D.lua can only handle files ending with .rle3 or .lua.", false)
+    end
+end
+
+----------------------------------------------------------------------
+
 function StartStop()
     generating = not generating
     UpdateStartButton()
@@ -8798,6 +8812,8 @@ function CreateOverlay()
     midy = int(ovht/2 + toolbarht/2)
     ov("create "..ovwd.." "..ovht)
     ov("cursor "..currcursor)
+    
+    ov("font 11 default-bold")              -- for info text
 
     -- parameters for menu bar and tool bar buttons
     op.buttonht = buttonht
@@ -9141,9 +9157,8 @@ function Initialize()
         RunScript(startup)
         ClearUndoRedo()     -- don't want to undo startup script
     end
-
-    -- for info text (note that startup script might have changed BACK_COLOR etc)
-    ov("font 11 default-bold")
+    
+    -- note that startup script might have changed BACK_COLOR etc
     ov("textoption background "..BACK_COLOR:sub(6))
     ssbutton.customcolor = START_COLOR
 
@@ -9247,7 +9262,7 @@ function EventLoop()
                 CheckLayerSize()    -- may need to resize the overlay
             end
         else
-            if message and (event:find("^key") or event:find("^oclick")) then
+            if message and (event:find("^key") or event:find("^oclick") or event:find("^file")) then
                 message = nil
                 Refresh()           -- remove the most recent message
             end
@@ -9341,6 +9356,8 @@ function EventLoop()
                 if not arrow_cursor then ZoomOut() end
             elseif event:find("^ozoomin") then
                 if not arrow_cursor then ZoomIn() end
+            elseif event:find("^file") then
+                OpenFile(event:sub(6))
             end
         end
 

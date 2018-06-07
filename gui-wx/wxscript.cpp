@@ -35,6 +35,7 @@
 bool inscript = false;     // a script is running?
 bool pass_key_events;      // pass keyboard events to script?
 bool pass_mouse_events;    // pass mouse events to script?
+bool pass_file_events;     // pass file events to script?
 bool canswitch;            // can user switch layers while script is running?
 bool stop_after_script;    // stop generating pattern after running script?
 bool autoupdate;           // update display after each change to current universe?
@@ -124,9 +125,17 @@ const char* GSF_open(const wxString& filename, int remember)
         return "open error: given file does not exist.";
     }
     
+    // temporarily set pass_file_events to false so OpenFile won't pass
+    // a file event back to this script
+    bool savepass = pass_file_events;
+    pass_file_events = false;
+    
     // only add file to Open Recent submenu if remember flag is non-zero
     mainptr->OpenFile(fullpath, remember != 0);
     DoAutoUpdate();
+    
+    // restore pass_file_events
+    pass_file_events = savepass;
     
     return NULL;
 }
@@ -1063,10 +1072,12 @@ void GSF_getevent(wxString& event, int get)
     if (get) {
         pass_key_events = true;     // future keyboard events will call PassKeyToScript
         pass_mouse_events = true;   // future mouse events will call PassClickToScript
+        pass_file_events = true;    // future open file evenst will call PassFileToScript
     } else {
-        // tell Golly to handle future keyboard and mouse events
+        // tell Golly to handle future keyboard/mouse/file events
         pass_key_events = false;
         pass_mouse_events = false;
+        pass_file_events = false;
         // clear any pending events so event is set to empty string below
         eventqueue.Clear();
     }
@@ -1243,6 +1254,10 @@ const char* GSF_doevent(const wxString& event)
 
         } else if (event.StartsWith(wxT("mup "))) {
             // ignore mouse up event
+            return NULL;
+
+        } else if (event.StartsWith(wxT("file "))) {
+            // ignore file event (scripts can call GSF_open)
             return NULL;
 
         } else if (event.StartsWith(wxT("o"))) {
@@ -1511,6 +1526,7 @@ void RunScript(const wxString& filename)
         updateedit = false;
         pass_key_events = false;
         pass_mouse_events = false;
+        pass_file_events = false;
         wxGetApp().PollerReset();
     }
     
@@ -1882,6 +1898,15 @@ void PassKeyToScript(int key, int modifiers)
         // save ascii char for possible consumption by GSF_getkey
         scriptchars += ascii;
     }
+}
+
+// -----------------------------------------------------------------------------
+
+void PassFileToScript(const wxString& filepath)
+{
+    wxString fileinfo = _("file ");
+    fileinfo += filepath;
+    eventqueue.Add(fileinfo);
 }
 
 // -----------------------------------------------------------------------------
