@@ -6492,9 +6492,8 @@ shortcuts):
 <tr><td align=right> [ &nbsp;</td><td>&nbsp; zoom out </td></tr>
 <tr><td align=right> ] &nbsp;</td><td>&nbsp; zoom in </td></tr>
 <tr><td align=right> P &nbsp;</td><td>&nbsp; cycle live cells (cubes/spheres/points) </td></tr>
-<tr><td align=right> alt-P &nbsp;</td><td>&nbsp; toggle brighter points </td></tr>
 <tr><td align=right> L &nbsp;</td><td>&nbsp; toggle lattice lines </td></tr>
-<tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes and lattice lines </td></tr>
+<tr><td align=right> shift-L &nbsp;</td><td>&nbsp; toggle axes </td></tr>
 <tr><td align=right> alt-D &nbsp;</td><td>&nbsp; toggle depth shading </td></tr>
 <tr><td align=right> T &nbsp;</td><td>&nbsp; toggle the menu bar and tool bar </td></tr>
 <tr><td align=right> G &nbsp;</td><td>&nbsp; change the grid size </td></tr>
@@ -6742,12 +6741,6 @@ that intersect at the corner with minimum <a href="#coords">cell coordinates</a>
 If ticked then cubes and spheres are drawn slightly darker the further
 away they are from the front of the screen.  Depth shading is not done
 when displaying points.
-</dd>
-
-<a name="brighterpoints"></a><p><dt><b>Use Brighter Points</b></dt>
-<dd>
-If ticked then points are drawn with extra brightness so they are
-easier to see on high DPI displays.
 </dd>
 
 <a name="help"></a><p><dt><b>Help</b></dt>
