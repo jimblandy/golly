@@ -8813,9 +8813,9 @@ function CreateOverlay()
     ov("create "..ovwd.." "..ovht)
     ov("cursor "..currcursor)
     
-    ov("font 11 default-bold")              -- for info text
+    ov("font 11 default-bold")              -- font for info text
 
-    -- parameters for menu bar and tool bar buttons
+    -- set parameters for menu bar and tool bar buttons
     op.buttonht = buttonht
     op.textgap = 8                          -- gap between edge of button and its label
     op.textfont = "font 10 default-bold"    -- font for button labels
@@ -8827,7 +8827,11 @@ function CreateOverlay()
         op.textfont = "font 10 default"
         op.menufont = "font 11 default"
     end
+end
 
+----------------------------------------------------------------------
+
+function CreateMenuBar()
     -- create the menu bar and add some menus
     -- (note that changes to the order of menus or their items will require
     -- changes to DrawMenuBar and EnableControls)
@@ -8890,7 +8894,11 @@ function CreateOverlay()
     mbar.additem(4, "Use Depth Shading", ToggleDepthShading)
     mbar.additem(4, "---", nil)
     mbar.additem(4, "Help", ShowHelp)
+end
 
+----------------------------------------------------------------------
+
+function CreateToolBar()
     -- create tool bar buttons
     ssbutton = op.button("Start", StartStop)
     s1button = op.button("+1", Step1)
@@ -8913,7 +8921,12 @@ function CreateOverlay()
 
     -- create a slider for adjusting stepsize
     stepslider = op.slider("", op.black, 100, 1, 100, StepChange)
+end
 
+----------------------------------------------------------------------
+
+function CreatePopUpMenus()
+    -- text in pop-up menus is shadowed
     op.textshadowx = 2
     op.textshadowy = 2
 
@@ -9124,6 +9137,9 @@ end
 
 function Initialize()
     CreateOverlay()
+    CreateMenuBar()
+    CreateToolBar()
+    CreatePopUpMenus()
     CreateAxes()
     InitDepthShading()
 
@@ -9237,25 +9253,139 @@ end
 
 ----------------------------------------------------------------------
 
+function MouseDown(x, y, mods, mouseinfo)
+    -- mouse button has been pressed
+    mouseinfo.mousedown = true
+    mouseinfo.prevx = x
+    mouseinfo.prevy = y
+    if pastecount > 0 then
+        -- paste pattern can be dragged using any cursor
+        mouseinfo.dragface = StartDraggingPaste(x, y)
+        mouseinfo.drag_paste = #mouseinfo.dragface > 0
+    end
+    if mouseinfo.drag_paste then
+        -- ignore currcursor
+        RememberCurrentState()
+    elseif currcursor == drawcursor then
+        if mods == "none" then
+            mouseinfo.drawing = StartDrawing(x, y)
+        elseif mods == "shift" then
+            mouseinfo.drag_active = StartDraggingPlane(x, y)
+        end
+    elseif currcursor == selectcursor then
+        if mods == "none" then
+            mouseinfo.selecting = StartSelecting(x, y)
+        elseif mods == "shift" then
+            mouseinfo.drag_active = StartDraggingPlane(x, y)
+        end
+    else
+        -- currcursor == movecursor
+        if mods == "none" then
+            if selcount > 0 then
+                mouseinfo.dragface = StartDraggingSelection(x, y)
+                mouseinfo.drag_selection = #mouseinfo.dragface > 0
+            end
+        elseif mods == "alt" then
+            mouseinfo.hand_erase = true
+            EraseLiveCells(x, y, true)
+        elseif mods == "shift" then
+            mouseinfo.hand_select = true
+            SelectLiveCells(x, y, true)
+        end
+    end
+end
+
+----------------------------------------------------------------------
+
+function MouseUp(mouseinfo)
+    -- mouse button has been released
+    mouseinfo.mousedown = false
+    if mouseinfo.drawing then
+        mouseinfo.drawing = false
+        CheckIfGenerating()
+    elseif mouseinfo.selecting then
+        mouseinfo.selecting = false
+        CheckIfGenerating()
+    elseif mouseinfo.drag_paste then
+        mouseinfo.drag_paste = false
+        CheckIfGenerating()
+    elseif mouseinfo.drag_selection then
+        mouseinfo.drag_selection = false
+        StopDraggingSelection()
+        CheckIfGenerating()
+    elseif mouseinfo.drag_active then
+        mouseinfo.drag_active = false
+        CheckIfGenerating()
+    elseif mouseinfo.hand_erase then
+        mouseinfo.hand_erase = false
+        CheckIfGenerating()
+    elseif mouseinfo.hand_select then
+        mouseinfo.hand_select = false
+        CheckIfGenerating()
+    end
+end
+
+----------------------------------------------------------------------
+
+function CheckMousePosition(mousepos, mouseinfo)
+    if #mousepos > 0 then
+        local x, y = split(mousepos)
+        x = tonumber(x)
+        y = tonumber(y)
+        if x ~= mouseinfo.prevx or y ~= mouseinfo.prevy then
+            -- mouse has moved
+            if mouseinfo.drawing then
+                DrawCells(x, y)
+            elseif mouseinfo.selecting then
+                SelectCells(x, y)
+            elseif mouseinfo.drag_paste then
+                DragPaste(x, y, mouseinfo.prevx, mouseinfo.prevy, mouseinfo.dragface)
+            elseif mouseinfo.drag_selection then
+                DragSelection(x, y, mouseinfo.prevx, mouseinfo.prevy, mouseinfo.dragface)
+            elseif mouseinfo.drag_active then
+                DragActivePlane(x, y, mouseinfo.prevx, mouseinfo.prevy)
+            elseif mouseinfo.hand_erase then
+                EraseLiveCells(x, y, false)
+            elseif mouseinfo.hand_select then
+                SelectLiveCells(x, y, false)
+            else
+                -- rotate the view
+                local deltax = x - mouseinfo.prevx
+                local deltay = y - mouseinfo.prevy
+                Rotate(round(-deltay/2.0), round(deltax/2.0), 0)
+            end
+            mouseinfo.prevx = x
+            mouseinfo.prevy = y
+        end
+    elseif #activecell > 0 and currcursor ~= movecursor then
+        activecell = ""
+        Refresh()
+    end
+end
+
+----------------------------------------------------------------------
+
 function EventLoop()
     -- best to call Initialize here so any error is caught by xpcall
     Initialize()
 
-    local mousedown = false         -- mouse button is down?
-    local drawing = false           -- draw/erase cells with pencil cursor?
-    local selecting = false         -- (de)select cells with cross-hairs cursor?
-    local drag_paste = false        -- drag paste pattern with any cursor?
-    local drag_selection = false    -- drag selected cells with hand cursor?
-    local drag_active = false       -- drag active plane with pencil/cross-hairs?
-    local hand_erase = false        -- erase live cells with hand cursor?
-    local hand_select = false       -- select live cells with hand cursor?
-    local dragface = ""             -- which paste/selection face is being dragged
-    local prevx, prevy              -- previous mouse position
+    local mouseinfo = {
+        mousedown = false,          -- mouse button is down?
+        drawing = false,            -- draw/erase cells with pencil cursor?
+        selecting = false,          -- (de)select cells with cross-hairs cursor?
+        drag_paste = false,         -- drag paste pattern with any cursor?
+        drag_selection = false,     -- drag selected cells with hand cursor?
+        drag_active = false,        -- drag active plane with pencil/cross-hairs?
+        hand_erase = false,         -- erase live cells with hand cursor?
+        hand_select = false,        -- select live cells with hand cursor?
+        dragface = "",              -- which paste/selection face is being dragged
+        prevx = nil, prevy = nil    -- previous mouse position
+    }
 
     while true do
         local event = g.getevent()
         if #event == 0 then
-            if not mousedown then
+            if not mouseinfo.mousedown then
                 if not generating then
                     g.sleep(5)      -- don't hog the CPU when idle
                 end
@@ -9271,7 +9401,7 @@ function EventLoop()
                 -- op.process handled the given event
             elseif event:find("^key") then
                 -- don't do key action if mouse button is down (can clobber undo history)
-                if not mousedown then
+                if not mouseinfo.mousedown then
                     HandleKey(event)
                 end
             elseif event:find("^oclick") then
@@ -9287,71 +9417,11 @@ function EventLoop()
                             ChooseSelectionAction(x, y)
                         end
                     elseif button == "left" then
-                        mousedown = true
-                        prevx = x
-                        prevy = y
-                        if pastecount > 0 then
-                            -- paste pattern can be dragged using any cursor
-                            dragface = StartDraggingPaste(x, y)
-                            drag_paste = #dragface > 0
-                        end
-                        if drag_paste then
-                            -- ignore currcursor
-                            RememberCurrentState()
-                        elseif currcursor == drawcursor then
-                            if mods == "none" then
-                                drawing = StartDrawing(x, y)
-                            elseif mods == "shift" then
-                                drag_active = StartDraggingPlane(x, y)
-                            end
-                        elseif currcursor == selectcursor then
-                            if mods == "none" then
-                                selecting = StartSelecting(x, y)
-                            elseif mods == "shift" then
-                                drag_active = StartDraggingPlane(x, y)
-                            end
-                        else
-                            -- currcursor == movecursor
-                            if mods == "none" then
-                                if selcount > 0 then
-                                    dragface = StartDraggingSelection(x, y)
-                                    drag_selection = #dragface > 0
-                                end
-                            elseif mods == "alt" then
-                                hand_erase = true
-                                EraseLiveCells(x, y, true)
-                            elseif mods == "shift" then
-                                hand_select = true
-                                SelectLiveCells(x, y, true)
-                            end
-                        end
+                        MouseDown(x, y, mods, mouseinfo)
                     end
                 end
             elseif event:find("^mup") then
-                mousedown = false
-                if drawing then
-                    drawing = false
-                    CheckIfGenerating()
-                elseif selecting then
-                    selecting = false
-                    CheckIfGenerating()
-                elseif drag_paste then
-                    drag_paste = false
-                    CheckIfGenerating()
-                elseif drag_selection then
-                    drag_selection = false
-                    StopDraggingSelection()
-                    CheckIfGenerating()
-                elseif drag_active then
-                    drag_active = false
-                    CheckIfGenerating()
-                elseif hand_erase then
-                    hand_erase = false
-                    CheckIfGenerating()
-                elseif hand_select then
-                    hand_select = false
-                    CheckIfGenerating()
-                end
+                MouseUp(mouseinfo)
             elseif event:find("^ozoomout") then
                 if not arrow_cursor then ZoomOut() end
             elseif event:find("^ozoomin") then
@@ -9362,42 +9432,9 @@ function EventLoop()
         end
 
         local mousepos = ov("xy")
-        if mousedown then
-            if #mousepos > 0 then
-                local x, y = split(mousepos)
-                x = tonumber(x)
-                y = tonumber(y)
-                if x ~= prevx or y ~= prevy then
-                    -- mouse has moved
-                    if drawing then
-                        DrawCells(x, y)
-                    elseif selecting then
-                        SelectCells(x, y)
-                    elseif drag_paste then
-                        DragPaste(x, y, prevx, prevy, dragface)
-                    elseif drag_selection then
-                        DragSelection(x, y, prevx, prevy, dragface)
-                    elseif drag_active then
-                        DragActivePlane(x, y, prevx, prevy)
-                    elseif hand_erase then
-                        EraseLiveCells(x, y, false)
-                    elseif hand_select then
-                        SelectLiveCells(x, y, false)
-                    else
-                        -- rotate the view
-                        local deltax = x - prevx
-                        local deltay = y - prevy
-                        Rotate(round(-deltay/2.0), round(deltax/2.0), 0)
-                    end
-                    prevx = x
-                    prevy = y
-                end
-            elseif #activecell > 0 and currcursor ~= movecursor then
-                activecell = ""
-                Refresh()
-            end
+        if mouseinfo.mousedown then
+            CheckMousePosition(mousepos, mouseinfo)
         else
-            -- mouse button is not down
             CheckCursor(mousepos)
             if generating then NextGeneration() end
         end
