@@ -1,5 +1,5 @@
 #C A period p spaceship which displaces itself (m,n) during its
-#C  period, where m >= n, is said to be of type (m,n)/p.  It can be
+#C  period, where m >= n, is said to be of type (m,n)c/p.  It can be
 #C  shown that p >= 2m+2n. The number of possible types of spaceship
 #C  of period p is therefore [k(k+4)/4], where k = [p/2].
 #C  (Here, [x] denotes the floor of x, i.e., the greatest integer
@@ -10,44 +10,44 @@
 #C  spaceships of all types with period < 10.  Those marked [*] are
 #C  known to be best possible.
 #C
-#C  (1,0)/2  64 cells                Dean Hickerson       28 Jul 1989
-#C  (1,0)/3  25 cells [*]            Dean Hickerson          Aug 1989
-#C  (1,0)/4  37 cells                Josh Ball            15 Apr 2012
-#C  (1,1)/4  5 cells [*]             Richard Guy                 1970
-#C  (2,0)/4  9 cells [*]             John Conway                 1970
-#C  (1,0)/5  58 cells                David Bell           14 Apr 1997
-#C  (1,1)/5  58 cells                Matthias Merzenich    5 Sep 2010
-#C  (2,0)/5  30 cells                Paul Tooke            7 Dec 2000
-#C  (1,0)/6  56 cells                Hartmut Holzwart     19 May 2009
-#C  (1,1)/6  77 cells                Josh Ball            25 Mar 2011
-#C  (2,0)/6  72 cells                Jason Summers        22 Oct 2000
-#C  (2,1)/6  (no known example)
-#C  (3,0)/6  86 cells                Matthias Merzenich    4 Feb 2012
-#C  (1,0)/7  20 cells                Josh Ball            17 Feb 2013
-#C  (1,1)/7  83 cells                Matthias Merzenich   19 Aug 2011
-#C  (2,0)/7  36 cells                David Eppstein       12 Jan 2000
-#C  (2,1)/7  (no known example)
-#C  (3,0)/7  702 cells               Tim Coe              11 Jun 2016
-#C  (1,0)/8  (no known example)
-#C  (1,1)/8  (no known example)
-#C  (2,0)/8  74 cells                Josh Ball               Mar 2010
-#C  (2,1)/8  (no known example)
-#C  (2,2)/8  117 cells               Jason Summers         2 Dec 2000
-#C  (3,0)/8  (no known example)
-#C  (3,1)/8  (no known example)
-#C  (4,0)/8  31 cells                Jason Summers        29 Oct 2000
-#C  (1,0)/9  (no known example)
-#C  (1,1)/9  (no known example)
-#C  (2,0)/9  (no known example)
-#C  (2,1)/9  (no known example)
-#C  (2,2)/9  (no known example)
-#C  (3,0)/9  55 cells                Paul Tooke            7 Jun 2001
-#C  (3,1)/9  (no known example)
-#C  (4,0)/9  (no known example)
+#C  (1,0)c/2  64 cells                Dean Hickerson       28 Jul 1989
+#C  (1,0)c/3  25 cells [*]            Dean Hickerson          Aug 1989
+#C  (1,0)c/4  37 cells                Josh Ball            15 Apr 2012
+#C  (1,1)c/4  5 cells [*]             Richard Guy                 1970
+#C  (2,0)c/4  9 cells [*]             John Conway                 1970
+#C  (1,0)c/5  58 cells                David Bell           14 Apr 1997
+#C  (1,1)c/5  58 cells                Matthias Merzenich    5 Sep 2010
+#C  (2,0)c/5  30 cells                Paul Tooke            7 Dec 2000
+#C  (1,0)c/6  56 cells                Hartmut Holzwart     19 May 2009
+#C  (1,1)c/6  77 cells                Josh Ball            25 Mar 2011
+#C  (2,0)c/6  72 cells                Jason Summers        22 Oct 2000
+#C  (2,1)c/6  282 cells               Adam P. Goucher       6 Mar 2018
+#C  (3,0)c/6  86 cells                Matthias Merzenich    4 Feb 2012
+#C  (1,0)c/7  20 cells                Josh Ball            17 Feb 2013
+#C  (1,1)c/7  83 cells                Matthias Merzenich   19 Aug 2011
+#C  (2,0)c/7  36 cells                David Eppstein       12 Jan 2000
+#C  (2,1)c/7  (no known example)
+#C  (3,0)c/7  702 cells               Tim Coe              11 Jun 2016
+#C  (1,0)c/8  (no known example)
+#C  (1,1)c/8  (no known example)
+#C  (2,0)c/8  74 cells                Josh Ball               Mar 2010
+#C  (2,1)c/8  (no known example)
+#C  (2,2)c/8  117 cells               Jason Summers         2 Dec 2000
+#C  (3,0)c/8  (no known example)
+#C  (3,1)c/8  (no known example)
+#C  (4,0)c/8  31 cells                Jason Summers        29 Oct 2000
+#C  (1,0)c/9  (no known example)
+#C  (1,1)c/9  (no known example)
+#C  (2,0)c/9  (no known example)
+#C  (2,1)c/9  (no known example)
+#C  (2,2)c/9  (no known example)
+#C  (3,0)c/9  55 cells                Paul Tooke            7 Jun 2001
+#C  (3,1)c/9  (no known example)
+#C  (4,0)c/9  (no known example)
 #C
 #C types.rle from Stephen Silver's 12 Jan 2004 'ships' collection.
-#C Updated on 1 Sep 2017.
-x = 400, y = 265, rule = B3/S23
+#C Updated on 5 Apr 2018.
+x = 400, y = 368, rule = B3/S23
 346b5o$346bo4bo$346bo$347bo4bo$349bo$350b2o2bo$348bo2bo3bo$346bo7bo$
 345bo5bo2bo$345bo3b2o$345b4o2b2o25$135bobo$134bo2bo$133b2o$132bo85b2o
 9b2obo$131b4o82b2o3b3o3bo3bo$130bo4bo72bo9bobo6bo5b4o4b4obo64bobo$130b
@@ -108,4 +108,15 @@ o$152bobo$153bo18$344bo$344b2o2$345b3o$345b3o$362bo$361bo$346b3o14bo$
 347b2o8b3o3bo$342bob3o2bo5bo6bo$342bo3bob2o9b2o$342b2ob2ob2o7bo$347b3o
 5bo3bo$348b2o6bo2bo$349bo6b3o$348b2o$346bobo$344bo$343bo2bo$342bo2bo$
 345bo7b7o$342bo9b2ob4ob2o$342b3o11bo3b2o2b2o$350bobo4b3obo2b2o$348b2o
-7bobo4b2obo$346bo4bo7bo7b2o$346bo3bo6bo$346b2obo7b3o!
+7bobo4b2obo$346bo4bo7bo7b2o$346bo3bo6bo$346b2obo7b3o25$146bo$144b2o2$
+145bo$145b2o$144b2ob2o$143b2o3b3o$142b3o4bo$142b3o4bo$146b2o$144bobo2b
+2o$142b2obo2bo$141bo2b3obobo$144b2o2bobo$141b3o5bo$142b2o$145b3o$144bo
+2b2o$148bo$144bobo$137b3o4bo$140b4ob2o$136bo4b4o$140bo$138bo$138bob5o$
+138b3ob3o$139bo4bo$139b5o$140bo$141b2obo$141bo$142b2o3bo$140b4o2bo2bo$
+139b2o3bo3b2o$138bo6bob3o$139bo3b2o$139bo3bo3bo$140bobo3bobo$139b3o6bo
+$145b2o$141b5o$140b2o$140bo2b2o$139bo$133bob4o4b2o$133b4obo4b2o$131bo
+4b2ob3o$130bo3bo2bo$131bob3obo$133b3o2bo$136b2o$132b3o$132bo5b5o$131bo
+3bo6bo$131bo9bo2$131bo6b3o$134b2obobo$131bobobo3bo$130b3o6bo$130bo2bob
+obo$130bobo2b2o$130b2o3bo2bo$131b2ob3obo$130b2o6bo$133bob2o$122b2o7bo
+4bo$126b3o2b2o2bo$121bo3bo$120bo9b2o$122b4o4b2o3bo$121bo4bo6b3o$122bob
+2o4b4o$122b2o6b4o$126b3o$124bo3bo$124bo2bo$124b2o!
