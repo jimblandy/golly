@@ -151,9 +151,8 @@ local maxpastex, maxpastey, maxpastez
 local undostack = {}                -- stack of states that can be undone
 local redostack = {}                -- stack of states that can be redone
 local startcount = 0                -- starting gencount (can be > 0)
-local startindex = 0                -- index of starting state in undostack
-local dirty = false                 -- pattern has been modified by user/script?
-local undo_cleared = false          -- was ClearUndoRedo called?
+local startstate = {}               -- starting state (used by Reset)
+local dirty = false                 -- pattern has been modified?
 
 local refcube = {}                  -- invisible reference cube
 local rotrefz = {}                  -- Z coords of refcube's rotated vertices
@@ -217,7 +216,7 @@ local NextGeneration                -- set to NextGenMoore, NextGen6Faces, etc
 
 pattdir = g.getdir("data")          -- initial directory for OpenPattern/SavePattern
 scriptdir = g.getdir("app")         -- initial directory for RunScript
-scriptlevel = 0                     -- greater than 0 if a user script is running
+local scriptlevel = 0               -- greater than 0 if a user script is running
 
 -- the default path for the script to run when 3D.lua starts up
 pathsep = g.getdir("app"):sub(-1)
@@ -229,12 +228,6 @@ settingsfile = g.getdir("data").."3D.ini"
 -- remove eventually???!!!
 memoryenabled = false       -- show memory usage?
 timingenabled = false       -- show timing messages?
-
--- timing functions
-local timerstart = gp.timerstart
-local timersave = gp.timersave
-local timervalueall = gp.timervalueall
-local timerresetall = gp.timerresetall
 
 ----------------------------------------------------------------------
 
@@ -1308,7 +1301,7 @@ end
 
 local function DrawBatch()
 
-    if timingenabled then timerstart("DrawBatch") end
+    if timingenabled then gp.timerstart("DrawBatch") end
 
     -- check for depth shading for cubes or spheres
     if depthshading and celltype ~= "point" then
@@ -1329,7 +1322,7 @@ local function DrawBatch()
         xyindex = 1
     end
 
-    if timingenabled then timersave("DrawBatch") end
+    if timingenabled then gp.timersave("DrawBatch") end
 
 end
 ----------------------------------------------------------------------
@@ -1446,9 +1439,9 @@ end
 
 function DisplayCells(editing)
 
-    if timingenabled then timerstart("DisplayCells") end
+    if timingenabled then gp.timerstart("DisplayCells") end
 
-    if timingenabled then timerstart("AddCoords") end
+    if timingenabled then gp.timerstart("AddCoords") end
 
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
@@ -1644,13 +1637,13 @@ function DisplayCells(editing)
         end
     end
 
-    if timingenabled then timersave("AddCoords") end
+    if timingenabled then gp.timersave("AddCoords") end
 
     DrawBatch()
 
     ov("blend 0")
 
-    if timingenabled then timersave("DisplayCells") end
+    if timingenabled then gp.timersave("DisplayCells") end
 end
 
 ----------------------------------------------------------------------
@@ -1900,7 +1893,7 @@ end
 
 function DisplayBusyBoxes(editing)
 
-    if timingenabled then timerstart("DisplayBusyBoxes") end
+    if timingenabled then gp.timerstart("DisplayBusyBoxes") end
 
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
@@ -2041,7 +2034,7 @@ function DisplayBusyBoxes(editing)
 
     ov("blend 0")
 
-    if timingenabled then timersave("DisplayBusyBoxes") end
+    if timingenabled then gp.timersave("DisplayBusyBoxes") end
 end
 
 --------------------------------------------------------------------------------
@@ -2295,8 +2288,8 @@ function Refresh(update)
     end
     if timingenabled then
         -- show timing
-        info = info.."\n"..timervalueall()
-        timerresetall()
+        info = info.."\n"..gp.timervalueall()
+        gp.timerresetall()
     end
     ov(INFO_COLOR)
     local wd, ht = op.maketext(info)
@@ -2425,7 +2418,7 @@ function SaveState()
     state.savepopcount = popcount
     state.savecells = {}
     if popcount > 0 then
-        for k,_ in pairs(grid1) do state.savecells[k] = true end
+        for k,_ in pairs(grid1) do state.savecells[k] = 1 end
     end
     state.saveminx = minx
     state.saveminy = miny
@@ -2498,7 +2491,7 @@ function RestoreState(state)
     popcount = state.savepopcount
     grid1 = {}
     if popcount > 0 then
-        for k,_ in pairs(state.savecells) do grid1[k] = true end
+        for k,_ in pairs(state.savecells) do grid1[k] = 1 end
     end
     minx = state.saveminx
     miny = state.saveminy
@@ -2538,12 +2531,34 @@ end
 
 ----------------------------------------------------------------------
 
+function SameState(state)
+    -- return true if given state matches the current state
+    if N ~= state.saveN then return false end
+    if activeplane ~= state.saveplane then return false end
+    if activepos ~= state.savepos then return false end
+    if currcursor ~= state.savecursor then return false end
+    if rulestring ~= state.saverule then return false end
+    if dirty ~= state.savedirty then return false end
+    if pattname ~= state.savename then return false end
+    if gencount ~= state.savegencount then return false end
+    if popcount ~= state.savepopcount then return false end
+    if selcount ~= state.saveselcount then return false end
+    if pastecount ~= state.savepcount then return false end
+    
+    for k,_ in pairs(state.savecells) do if not grid1[k] then return false end end
+    for k,_ in pairs(state.saveselected) do if not selected[k] then return false end end
+    for k,_ in pairs(state.savepaste) do if not pastepatt[k] then return false end end
+    
+    return true
+end
+
+----------------------------------------------------------------------
+
 function ClearUndoRedo()
     -- this might be called if a user script is running (eg. if it calls NewPattern)
     undostack = {}
     redostack = {}
     dirty = false
-    undo_cleared = true
 end
 
 ----------------------------------------------------------------------
@@ -2587,24 +2602,6 @@ function RememberCurrentState()
 
     redostack = {}
     undostack[#undostack+1] = SaveState()
-end
-
-----------------------------------------------------------------------
-
-function RestoreStartingGen()
-    -- called from Reset to restore starting state
-
-    -- push current state onto redostack
-    redostack[#redostack+1] = SaveState()
-
-    -- unwind undostack until we get to startindex
-    while startindex < #undostack do
-        local state = table.remove(undostack)
-        redostack[#redostack+1] = state
-    end
-
-    -- pop starting state off undostack and restore it
-    RestoreState( table.remove(undostack) )
 end
 
 --------------------------------------------------------------------------------
@@ -2873,16 +2870,18 @@ function AllDead()
     if popcount == 0 then
         StopGenerating()
         message = "All cells are dead."
-        -- stepsize is 0 if called from Step1
-        if stepsize > 0 then
-            Refresh()
-        end
+        Refresh()
         return true         -- return from NextGen*
     else
         if gencount == startcount then
-            -- remember position in undo stack that stores the starting state
-            -- (for later use by Reset)
-            startindex = #undostack
+            -- remember starting state and step size for later use in Reset()
+            if scriptlevel > 0 then
+                -- can't use undostack if user script is running
+                startstate = SaveState()
+            else
+                startstate = undostack[#undostack]
+            end
+            startstate.savestep = stepsize
         end
         popcount = 0        -- incremented in NextGen*
         InitLiveBoundary()  -- updated in NextGen*
@@ -2904,8 +2903,7 @@ function DisplayGeneration(newgrid)
         StopGenerating()
     end
 
-    -- stepsize is 0 if called from Step1
-    if stepsize > 0 and (gencount % stepsize == 0 or popcount == 0) then
+    if gencount % stepsize == 0 or popcount == 0 then
         Refresh()
     end
 end
@@ -2913,7 +2911,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGenMooreNoWrap()
-    if timingenabled then timerstart("NextGenMooreNoWrap") end
+    if timingenabled then gp.timerstart("NextGenMooreNoWrap") end
 
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local source = grid1
@@ -2967,7 +2965,7 @@ function NextGenMooreNoWrap()
         end
     end
 
-    if timingenabled then timersave("NextGenMooreNoWrap") end
+    if timingenabled then gp.timersave("NextGenMooreNoWrap") end
 
     DisplayGeneration(dest)
 end
@@ -2975,7 +2973,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGenMooreWrap()
-    if timingenabled then timerstart("NextGenMooreWrap") end
+    if timingenabled then gp.timerstart("NextGenMooreWrap") end
 
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local source = grid1
@@ -3038,7 +3036,7 @@ function NextGenMooreWrap()
         end
     end
 
-    if timingenabled then timersave("NextGenMooreWrap") end
+    if timingenabled then gp.timersave("NextGenMooreWrap") end
 
     DisplayGeneration(dest)
 end
@@ -3059,7 +3057,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGen6FacesNoWrap()
-    if timingenabled then timerstart("NextGen6FacesNoWrap") end
+    if timingenabled then gp.timerstart("NextGen6FacesNoWrap") end
 
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
@@ -3127,7 +3125,7 @@ function NextGen6FacesNoWrap()
         end
     end
 
-    if timingenabled then timersave("NextGen6FacesNoWrap") end
+    if timingenabled then gp.timersave("NextGen6FacesNoWrap") end
 
     DisplayGeneration(grid2)
 end
@@ -3135,7 +3133,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGen6FacesWrap()
-    if timingenabled then timerstart("NextGen6FacesWrap") end
+    if timingenabled then gp.timerstart("NextGen6FacesWrap") end
 
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
@@ -3213,7 +3211,7 @@ function NextGen6FacesWrap()
         end
     end
 
-    if timingenabled then timersave("NextGen6FacesWrap") end
+    if timingenabled then gp.timersave("NextGen6FacesWrap") end
 
     DisplayGeneration(grid2)
 end
@@ -3235,7 +3233,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGen8CornersNoWrap()
-    if timingenabled then timerstart("NextGen8CornersNoWrap") end
+    if timingenabled then gp.timerstart("NextGen8CornersNoWrap") end
 
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     local grid2 = {}
@@ -3307,7 +3305,7 @@ function NextGen8CornersNoWrap()
         end
     end
 
-    if timingenabled then timersave("NextGen8CornersNoWrap") end
+    if timingenabled then gp.timersave("NextGen8CornersNoWrap") end
 
     DisplayGeneration(grid2)
 end
@@ -3315,7 +3313,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGen8CornersWrap()
-    if timingenabled then timerstart("NextGen8CornersWrap") end
+    if timingenabled then gp.timerstart("NextGen8CornersWrap") end
 
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     local grid2 = {}
@@ -3397,7 +3395,7 @@ function NextGen8CornersWrap()
         end
     end
 
-    if timingenabled then timersave("NextGen8CornersWrap") end
+    if timingenabled then gp.timersave("NextGen8CornersWrap") end
 
     DisplayGeneration(grid2)
 end
@@ -3418,7 +3416,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGen12EdgesNoWrap()
-    if timingenabled then timerstart("NextGen12EdgesNoWrap") end
+    if timingenabled then gp.timerstart("NextGen12EdgesNoWrap") end
 
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     local grid2 = {}
@@ -3502,14 +3500,14 @@ function NextGen12EdgesNoWrap()
         end
     end
 
-    if timingenabled then timersave("NextGen12EdgesNoWrap") end
+    if timingenabled then gp.timersave("NextGen12EdgesNoWrap") end
 
     DisplayGeneration(grid2)
 end
 ----------------------------------------------------------------------
 
 function NextGen12EdgesWrap()
-    if timingenabled then timerstart("NextGen12EdgesWrap") end
+    if timingenabled then gp.timerstart("NextGen12EdgesWrap") end
 
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     local grid2 = {}
@@ -3605,7 +3603,7 @@ function NextGen12EdgesWrap()
         end
     end
 
-    if timingenabled then timersave("NextGen12EdgesWrap") end
+    if timingenabled then gp.timersave("NextGen12EdgesWrap") end
 
     DisplayGeneration(grid2)
 end
@@ -3626,7 +3624,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGenHexahedralNoWrap()
-    if timingenabled then timerstart("NextGenHexahedralNoWrap") end
+    if timingenabled then gp.timerstart("NextGenHexahedralNoWrap") end
 
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     local grid2 = {}
@@ -3709,7 +3707,7 @@ function NextGenHexahedralNoWrap()
         end
     end
 
-    if timingenabled then timersave("NextGenHexahedralNoWrap") end
+    if timingenabled then gp.timersave("NextGenHexahedralNoWrap") end
 
     DisplayGeneration(grid2)
 end
@@ -3717,7 +3715,7 @@ end
 ----------------------------------------------------------------------
 
 function NextGenHexahedralWrap()
-    if timingenabled then timerstart("NextGenHexahedralWrap") end
+    if timingenabled then gp.timerstart("NextGenHexahedralWrap") end
 
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     local grid2 = {}
@@ -3812,7 +3810,7 @@ function NextGenHexahedralWrap()
         end
     end
 
-    if timingenabled then timersave("NextGenHexahedralWrap") end
+    if timingenabled then gp.timersave("NextGenHexahedralWrap") end
 
     DisplayGeneration(grid2)
 end
@@ -3840,7 +3838,7 @@ function NextGenBusyBoxes()
 
     if AllDead() then return end
 
-    if timingenabled then timerstart("NextGenBusyBoxes") end
+    if timingenabled then gp.timerstart("NextGenBusyBoxes") end
 
     -- calculate and display the next generation for the BusyBoxes rule
     -- (see http://www.busyboxes.org/faq.html)
@@ -3983,7 +3981,7 @@ function NextGenBusyBoxes()
         if z > maxz then maxz = z end
     end
 
-    if timingenabled then timersave("NextGenBusyBoxes") end
+    if timingenabled then gp.timersave("NextGenBusyBoxes") end
 
     DisplayGeneration(grid2)
 end
@@ -3995,6 +3993,7 @@ function NewPattern()
     SetCursor(drawcursor)
     gencount = 0
     startcount = 0
+    stepsize = 1
     StopGenerating()
     ClearCells()
     ClearUndoRedo()
@@ -4168,6 +4167,7 @@ end
 ----------------------------------------------------------------------
 
 function UpdateCurrentGrid(newpattern)
+    -- called by OpenPattern/OpenClipboard
     N = newpattern.newsize
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
@@ -4187,6 +4187,7 @@ function UpdateCurrentGrid(newpattern)
     ParseRule(newpattern.newrule)   -- sets rulestring, survivals and births
     gencount = newpattern.newgens
     startcount = gencount           -- for Reset
+    stepsize = 1
     StopGenerating()
     SetCursor(movecursor)
     ClearUndoRedo()         -- dirty = false
@@ -4452,8 +4453,7 @@ function CallScript(func, fromclip)
     end
 
     if scriptlevel == 0 then
-        RememberCurrentState()
-        undo_cleared = false    -- becomes true if ClearUndoRedo is called
+        RememberCurrentState()  -- #undostack is > 0
         EnableControls(false)   -- disable most menu items and buttons
     end
 
@@ -4461,18 +4461,23 @@ function CallScript(func, fromclip)
     local status, err = pcall(func)
     scriptlevel = scriptlevel - 1
 
-    -- note that if the script called NewPattern/RandomPattern/OpenPattern
-    -- or any other function that called ClearUndoRedo then all the
-    -- undo/redo history is deleted and dirty is set to false,
-    -- but a later SetCell call might then set dirty to true,
-    -- so the following test fixes that
-    if scriptlevel == 0 and undo_cleared then
-        -- ensure the dirty flag is false
-        dirty = false
-        -- if the script called NextGeneration (via Step) after calling ClearUndoRedo
-        -- (or vice versa) then startindex won't be valid, so set startcount to gencount
-        -- to ensure Reset does nothing
-        startcount = gencount
+    if scriptlevel == 0 then
+        -- note that if the script called NewPattern/RandomPattern/OpenPattern
+        -- or any other function that called ClearUndoRedo then the undostack
+        -- is empty and dirty should be false
+        if #undostack == 0 then
+            -- a later SetCell call might have set dirty to true, so reset it
+            dirty = false
+            if gencount > startcount then
+                -- script called Step after NewPattern/RandomPattern/OpenPattern
+                -- so push startstate onto undostack so user can Reset/Undo
+                undostack[1] = startstate
+                startstate.savedirty = false
+            end
+        elseif SameState(undostack[#undostack]) then
+            -- script didn't change the current state so pop undostack
+            table.remove(undostack)
+        end
     end
 
     if err then
@@ -4611,6 +4616,7 @@ function RandomPattern(percentage, fill, sphere)
     SetCursor(movecursor)
     gencount = 0
     startcount = 0
+    stepsize = 1
     StopGenerating()
     ClearCells()
 
@@ -5950,12 +5956,13 @@ function Step1()
         RememberCurrentState()
     end
 
-    -- temporarily change stepsize to 0 so AllDead and DisplayGeneration don't call Refresh
-    local savestep = stepsize
-    stepsize = 0
     NextGeneration()
-    stepsize = savestep
-    Refresh()
+    
+    if gencount % stepsize == 0 or popcount == 0 then
+        -- NextGeneration called Refresh()
+    else
+        Refresh()
+    end
 end
 
 ----------------------------------------------------------------------
@@ -6009,11 +6016,34 @@ end
 ----------------------------------------------------------------------
 
 function Reset()
-    -- user scripts cannot call Reset (they can use SaveState and RestoreState)
-    if scriptlevel > 0 then return end
-
     if gencount > startcount then
-        RestoreStartingGen()
+        -- restore the starting state
+        if scriptlevel > 0 then
+            -- Reset called by user script so don't modify undo/redo stacks
+            RestoreState(startstate)
+        else
+            -- push current state onto redostack
+            redostack[#redostack+1] = SaveState()
+        
+            -- unwind undostack until gencount == startcount
+            while true do
+                local state = table.remove(undostack)
+                if state.savegencount == startcount then
+                    break
+                elseif #undostack == 0 then
+                    g.warn("Bug in Reset!")
+                    break
+                end
+                redostack[#redostack+1] = state
+            end
+
+            -- restore starting state
+            RestoreState(startstate)
+        end
+        
+        -- also restore step size to value when starting state was saved
+        stepsize = startstate.savestep
+        
         StopGenerating()
         Refresh()
     end
@@ -6524,7 +6554,7 @@ somewhat similar to those in Golly's menu bar.
 <a name="new"></a><p><dt><b>New Pattern</b></dt>
 <dd>
 Create a new, empty pattern.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 The active plane is displayed, ready to be edited using the pencil cursor.
 </dd>
 
@@ -6532,19 +6562,19 @@ The active plane is displayed, ready to be edited using the pencil cursor.
 <dd>
 Create a new pattern randomly filled with live cells at a given density.
 You have the option of filling the grid and creating a cube or a sphere.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="open"></a><p><dt><b>Open Pattern...</b></dt>
 <dd>
 Open a selected <a href="#rle3">RLE3</a> pattern file.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="openclip"></a><p><dt><b>Open Clipboard</b></dt>
 <dd>
 Open the <a href="#rle3">RLE3</a> pattern stored in the clipboard.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="save"></a><p><dt><b>Save Pattern...</b></dt>
@@ -6675,8 +6705,7 @@ or until the pattern is empty.  Only the final generation is displayed.
 
 <a name="reset"></a><p><dt><b>Reset</b></dt>
 <dd>
-Restore the starting generation.
-The undo history is automatically rewound to the correct place.
+Restore the starting generation and step size.
 </dd>
 
 <a name="setrule"></a><p><dt><b>Set Rule</b></dt>
@@ -6831,11 +6860,11 @@ want to call from your own scripts:
 <a href="#DrawMode"><b>DrawMode</b></a><br>
 <a href="#FitGrid"><b>FitGrid</b></a><br>
 <a href="#FlipPaste"><b>FlipPaste</b></a><br>
-<a href="#FlipSelection"><b>FlipSelection</b></a>
+<a href="#FlipSelection"><b>FlipSelection</b></a><br>
+<a href="#GetBounds"><b>GetBounds</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
-<a href="#GetBounds"><b>GetBounds</b></a><br>
 <a href="#GetCell"><b>GetCell</b></a><br>
 <a href="#GetCells"><b>GetCells</b></a><br>
 <a href="#GetGeneration"><b>GetGeneration</b></a><br>
@@ -6846,27 +6875,28 @@ want to call from your own scripts:
 <a href="#GetRule"><b>GetRule</b></a><br>
 <a href="#GetSelectionBounds"><b>GetSelectionBounds</b></a><br>
 <a href="#InitialView"><b>InitialView</b></a><br>
-<a href="#MoveMode"><b>MoveMode</b></a>
+<a href="#MoveMode"><b>MoveMode</b></a><br>
+<a href="#NewPattern"><b>NewPattern</b></a><br>
+<a href="#OpenPattern"><b>OpenPattern</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
-<a href="#NewPattern"><b>NewPattern</b></a><br>
-<a href="#OpenPattern"><b>OpenPattern</b></a><br>
 <a href="#Paste"><b>Paste</b></a><br>
 <a href="#PasteExists"><b>PasteExists</b></a><br>
 <a href="#PutCells"><b>PutCells</b></a><br>
 <a href="#RandomPattern"><b>RandomPattern</b></a><br>
+<a href="#Reset"><b>Reset</b></a><br>
 <a href="#RestoreState"><b>RestoreState</b></a><br>
 <a href="#Rotate"><b>Rotate</b></a><br>
 <a href="#RotatePaste"><b>RotatePaste</b></a><br>
 <a href="#RotateSelection"><b>RotateSelection</b></a><br>
 <a href="#RunScript"><b>RunScript</b></a><br>
-<a href="#SavePattern"><b>SavePattern</b></a>
+<a href="#SavePattern"><b>SavePattern</b></a><br>
+<a href="#SaveState"><b>SaveState</b></a><br>
+<a href="#SelectAll"><b>SelectAll</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
-<a href="#SaveState"><b>SaveState</b></a><br>
-<a href="#SelectAll"><b>SelectAll</b></a><br>
 <a href="#SelectCell"><b>SelectCell</b></a><br>
 <a href="#SelectedCell"><b>SelectedCell</b></a><br>
 <a href="#SelectionExists"><b>SelectionExists</b></a><br>
@@ -7033,14 +7063,14 @@ Switch to the hand cursor.
 <a name="NewPattern"></a><p><dt><b>NewPattern()</b></dt>
 <dd>
 Create a new, empty pattern.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="OpenPattern"></a><p><dt><b>OpenPattern(<i>filepath</i>)</b></dt>
 <dd>
 Open the specified RLE3 pattern file.  If the <i>filepath</i> is not supplied then
 the user will be prompted to select a .rle3 file.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="Paste"></a><p><dt><b>Paste()</b></dt>
@@ -7073,7 +7103,12 @@ If fill is true then the grid is filled, otherwise there will be a gap around
 the random object (this makes it easier to detect an explosive rule).
 If sphere is true then a spherical object is created rather than a cube.
 If no parameters are supplied then the user will be prompted for them.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
+</dd>
+
+<a name="Reset"></a><p><dt><b>Reset()</b></dt>
+<dd>
+Restore the starting generation and step size.
 </dd>
 
 <a name="RestoreState"></a><p><dt><b>RestoreState(<i>state</i>)</b></dt>
@@ -7545,7 +7580,7 @@ end
 
 function ToggleTiming()
     timingenabled = not timingenabled
-    if timingenabled then timerresetall() end
+    if timingenabled then gp.timerresetall() end
     Refresh()
 end
 
