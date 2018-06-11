@@ -73,7 +73,10 @@ REARX_COLOR = "rgba 128 0 0 255"    -- for rear X axes (should be darker than fr
 REARY_COLOR = "rgba 0 128 0 255"    -- for rear Y axes (ditto)
 REARZ_COLOR = "rgba 0 0 128 255"    -- for rear Z axes (ditto)
 START_COLOR = "rgba 0 150 0 255"    -- for Start button's background
+SELSTART_COLOR = "rgba 0 90 0 255"  -- for Start button's selected background
 STOP_COLOR = "rgba 210 0 0 255"     -- for Stop button's background
+SELSTOP_COLOR = "rgba 150 0 0 255"  -- for Stop button's selected background
+
 -- following are for BusyBoxes
 EVEN_COLOR = "rgba 255 180 255 255"     -- for even cell points and spheres (pale magenta)
 ODD_COLOR = "rgba 140 255 255 255"      -- for odd cell points and spheres (pale cyan)
@@ -2370,10 +2373,12 @@ function UpdateStartButton()
     -- and also update 1st item in Control menu
     if generating then
         ssbutton.customcolor = STOP_COLOR
+        ssbutton.darkcustomcolor = SELSTOP_COLOR
         ssbutton.setlabel("Stop", false)
         mbar.setitem(3, 1, "Stop Generating")
     else
         ssbutton.customcolor = START_COLOR
+        ssbutton.darkcustomcolor = SELSTART_COLOR
         ssbutton.setlabel("Start", false)
         mbar.setitem(3, 1, "Start Generating")
         if stopgen > 0 then
@@ -9191,6 +9196,7 @@ function Initialize()
     -- note that startup script might have changed BACK_COLOR etc
     ov("textoption background "..BACK_COLOR:sub(6))
     ssbutton.customcolor = START_COLOR
+    ssbutton.darkcustomcolor = SELSTART_COLOR
 
     Refresh()
 end

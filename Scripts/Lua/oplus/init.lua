@@ -84,7 +84,10 @@ m.distext = "rgba 100 192 255 255"      -- lighter blue for disabled button labe
 m.textfont = "font 12 default-bold"     -- font for labels
 m.textshadowx = 0                       -- label shadow x offset
 m.textshadowy = 0                       -- label shadow y offset
-m.textshadowrgba = m.black              -- black label color
+m.textshadowrgba = m.black              -- black label shadow color
+m.buttonshadowx = 0                     -- button shadow x offset
+m.buttonshadowy = 0                     -- button shadow y offset
+m.buttonshadowrgba = m.black            -- black button shadow color
 m.yoffset = 0                           -- for better y position of labels
 
 m.menubg = "rgba 40 128 255 255"        -- light blue background for menu bar and items
@@ -374,7 +377,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function draw_button(x, y, w, h, color)
+local function draw_buttonlayer(x, y, w, h, color)
     local oldblend = ov("blend 0")
     local buttrect = " "..x.." "..y.." "..w.." "..h
 
@@ -385,16 +388,11 @@ local function draw_button(x, y, w, h, color)
     local oldrgba = ov("rgba 0 0 0 0")
     ov("fill"..buttrect)
 
-    local butt_rgba = color or m.buttonrgba
-    if darken_button then
-        butt_rgba = m.darkerrgba
-    end
-
     -- draw button with rounded corners
     if m.border > 0 then
         ov(m.borderrgba)
     end
-    m.round_rect(x, y, w, h, m.radius, m.border, butt_rgba)
+    m.round_rect(x, y, w, h, m.radius, m.border, color)
 
     -- copy rect to temp_button
     ov("copy"..buttrect.." temp_button")
@@ -408,6 +406,21 @@ local function draw_button(x, y, w, h, color)
 
     ov("rgba "..oldrgba)
     ov("blend "..oldblend)
+end
+
+--------------------------------------------------------------------------------
+
+local function draw_button(x, y, w, h, color, darkcolor)
+    if m.buttonshadowx ~= 0 or m.buttonshadowy ~= 0 then
+        draw_buttonlayer(x + m.buttonshadowx, y + m.buttonshadowy, w, h, m.buttonshadowrgba)
+    end
+
+    local butt_rgba = color or m.buttonrgba
+    if darken_button then
+        butt_rgba = darkcolor or m.darkerrgba
+    end
+
+    draw_buttonlayer(x, y, w, h, butt_rgba)
 end
 
 --------------------------------------------------------------------------------
@@ -428,6 +441,7 @@ function m.button(label, onclick)
     b.enabled = true
     b.ht = m.buttonht;
     b.customcolor = nil
+    b.darkcustomcolor = nil
 
     b.setlabel = function (newlabel, changesize)
         local oldfont = ov(m.textfont)
@@ -468,7 +482,7 @@ function m.button(label, onclick)
         ov("copy "..b.x.." "..b.y.." "..b.wd.." "..b.ht.." "..b.background)
 
         -- draw the button at the given location
-        draw_button(x, y, b.wd, b.ht, b.customcolor)
+        draw_button(x, y, b.wd, b.ht, b.customcolor, b.darkcustomcolor)
 
         -- if m.textrgba or m.textfont has changed then recreate b.labelclip
         if b.savetextrgba ~= m.textrgba or b.savetextfont ~= m.textfont then
