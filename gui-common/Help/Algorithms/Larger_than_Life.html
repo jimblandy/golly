@@ -19,17 +19,30 @@ C<i>c</i> - specifies the number of states (<i>c</i> is from 0 to 255).<br>
 M<i>m</i> - specifies if the middle cell is included in the neighborhood count (<i>m</i> is 0 or 1).<br>
 S<i>smin</i>..<i>smax</i> - specifies the count limits for a state 1 cell to survive.<br>
 B<i>bmin</i>..<i>bmax</i> - specifies the count limits for a dead cell to become a birth.<br>
-N<i>n</i> - specifies the extended neighborhood type (<i>n</i> is M for Moore or N for von Neumann).
+N<i>n</i> - specifies the extended neighborhood type (<i>n</i> is M for Moore, N for von Neumann, and C is for circular).
 
 <p>
-This diagram shows the extended Moore and von Neumann neighborhoods for <i>r</i> = 3:
+These diagrams show the NM, NN and NC neighborhoods for <i>r</i> = 3
+(the NC diagram also shows the circle used to determine which cells are
+within the circular neighborhood):
 
 <p>
-<dd><img src="extended.png"></dd>
+<dd>
+<img src="NM.png"> &nbsp;&nbsp;&nbsp;
+<img src="NN.png"> &nbsp;&nbsp;&nbsp;
+<img src="NC.png">
+</dd>
 
 <p>
 The S and B limits must be from 0 to the neighborhood size:
-(2<i>r</i>+1)^2 when <i>n</i> = M, or 2<i>r</i>(<i>r</i>+1)+1 when <i>n</i> = N.
+(2<i>r</i>+1)^2 when <i>n</i> = M, or 2<i>r</i>(<i>r</i>+1)+1 when <i>n</i> = N,
+or approximately 3.14(<i>r</i>+0.5)^2 when <i>n</i> = C.
+The set of points in a circular neighborhood is those whose Euclidean distance
+from the center point is less than <i>r</i>+0.5.
+A quick way to see the circular neighborhood for a given <i>r</i> and <i>n</i>
+is to use a rule with only B1 set.  For example, switch to
+<b><a href="rule:R6,C0,M0,S1..1,B1..1,NC">R6,C0,M0,S1..1,B1..1,NC</a></b>,
+turn on a single cell and hit the space bar.
 
 <p>
 If the number of states (specified after C) is greater than 2 then states 1 and above
@@ -167,6 +180,10 @@ were modest, but the software was able to implement LtL rules to range 200 and i
 speed increased together with the hardware on which it ran.  In those early days of
 Windows, Griffeath's Primordial Soup Kitchen shared graphics and other discoveries
 via weekly "soup recipes" [<a href="#6">6</a>].
+WinCA still runs on 32-bit Windows and allows for colorful LtL and other cellular automata
+images [<a href="#10">10</a>], [<a href="#11">11</a>].
+Just before LtL was implemented in Golly, a virtual machine was used to run WinCA on
+64-bit Windows and some new discoveries were made [<a href="#12">12</a>].
 
 <p>
 In 1999 Mirek Wojtowicz developed Mirek's Cellebration (MCell) [<a href="#9">9</a>],
@@ -215,7 +232,7 @@ Volume AA, 2001, 177-192<br>
 
 <a name="7"></a><p>
 [7] K. Evans, <i>Is Bosco's rule universal?</i>, in "Lecture Notes in Computer Science," Vol. 3354,
-ed. Maurice Margenstern. Springer-Verlag GmbH (2005), 188–199. WWW companion page to paper<br>
+ed. Maurice Margenstern. Springer-Verlag GmbH (2005), 188&ndash;199. WWW companion page to paper<br>
 <a href="http://www.csun.edu/~kme52026/bosco/bosco.html">http://www.csun.edu/~kme52026/bosco/bosco.html</a>
 
 <a name="8"></a><p>
@@ -225,6 +242,19 @@ In "New Constructions in Cellular Automata", eds. David Griffeath and Cris Moore
 <a name="9"></a><p>
 [9] MCell rules lexicon for Larger than Life:<br>
 <a href="http://www.mirekw.com/ca/rullex_lgtl.html">http://www.mirekw.com/ca/rullex_lgtl.html</a>
+
+<a name="10"></a><p>
+[10] D. Griffeath. Self-organizing two-dimensional cellular automata: 10 still frames.
+In "Designing Beauty: the Art of Cellular Automata," eds. Andrew Adamatzky and Genaro Martinez. Springer (2016) 1-12.
+
+<a name="11"></a><p>
+[11] K. Evans. Larger than Life. In "Designing Beauty: the Art of Cellular Automata,"
+eds. Andrew Adamatzky and Genaro Martinez. Springer (2016) 27-34.
+
+<a name="12"></a><p>
+[12] A. Tantoushian. "Scaling Larger than Life Bugs: to range 25 and beyond", 2017 Master's thesis,
+California State University, Northridge.<br>
+<a href="http://scholarworks.csun.edu/handle/10211.3/192639">http://scholarworks.csun.edu/handle/10211.3/192639</a>
 
 </body>
 </html>
