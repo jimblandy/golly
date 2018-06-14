@@ -63,8 +63,8 @@
 
 // some useful macros
 
-#define CHECK_RGB(r,g,b,cmd)                                                 \
-    if (r < 0 || r > 255 || g < 0 || g > 255 || g < 0 || g > 255) {         \
+#define CHECK_RGB(r,g,b,cmd)                                                \
+    if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {         \
         char msg[128];                                                      \
         sprintf(msg, "%s error: bad rgb value (%d,%d,%d)", cmd, r, g, b);   \
         GollyError(L, msg);                                                 \
