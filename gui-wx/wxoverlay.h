@@ -47,6 +47,10 @@ public:
     // If no error then return either a string containing the results
     // of the command, or NULL if there are no results.
     
+    const char* DoOverlayCommand(const char* cmd, const double* coords, int n, const char* clip);
+    // Parse and execute the given command.
+    // Used for table API commands: fill, get, line, lines, paste, rgba and set
+
     void DeleteOverlay();
     // Deallocate all memory used by the overlay and reset pixmap to NULL.
 
@@ -159,8 +163,8 @@ private:
     void RenderLine(int x0, int y0, int x1, int y1);
     // Called by DoLine to render a line.
 
-    const char* DoLine(const char* args);
-    // Draw a line using the current RGBA values.
+    const char* DoLine(const char* args, bool connected);
+    // Draw a one or more optionally connected lines using the current RGBA values.
     // Automatically clips any parts of the line outside the render target.
     
     void DrawThickLine(int x0, int y0, int x1, int y1);
@@ -412,6 +416,15 @@ private:
 
     void DeleteStars();
     // Free the memory used by the stars.
+
+    // overlay table API calls
+
+    const char* DoFillTable(const double* coords, int n);
+    const char* DoGetTable(const double* coords, int n);
+    const char* DoLineTable(const double* coords, int n, bool connected);
+    const char* DoPasteTable(const double* coords, int n, const char* clip);
+    const char* DoSetTable(const double* coords, int n);
+    const char* DoSetRGBATable(const double* coords, int n);
 
     // render target
     unsigned char* pixmap;          // current render target RGBA data (wd * ht * 4 bytes)

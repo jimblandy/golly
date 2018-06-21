@@ -4,6 +4,7 @@
 local g = golly()
 -- require "gplus.strict"
 local ov = g.overlay
+local ovt = g.ovtable
 
 local gp = require "gplus"
 local int = gp.int
@@ -134,7 +135,7 @@ function m.pastetext(x, y, transform, clipname)
     clipname  = clipname or textclip
     -- apply transform and paste text clip
     local oldtransform = ov(transform)
-    ov("paste "..x.." "..y.." "..clipname)
+    ovt {"paste", x, y, clipname}
     -- restore settings
     ov("transform "..oldtransform)
 
@@ -192,7 +193,7 @@ function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
         local oldtarget = ov("target "..clipname)
         if oldbg ~= "0 0 0 0" then
             ov("rgba "..oldbg)
-            ov("fill")
+            ovt {"fill"}
         end
         m.pastetext(sx, sy, nil, tempclip)
         -- build normal text clip
@@ -275,13 +276,13 @@ end
 --------------------------------------------------------------------------------
 
 function m.draw_line(x1, y1, x2, y2)
-    ov("line "..x1.." "..y1.." "..x2.." "..y2)
+    ovt {"line", x1, y1, x2, y2}
 end
 
 --------------------------------------------------------------------------------
 
 function m.fill_rect(x, y, wd, ht)
-    ov("fill "..x.." "..y.." "..wd.." "..ht)
+    ovt {"fill", x, y, wd, ht}
 end
 
 --------------------------------------------------------------------------------
@@ -296,15 +297,15 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
         local oldblend = ov("blend 1")
         if borderwd > 0 then
             -- draw border lines using current color
-            ov("fill "..x.." "..y.." "..w.." "..borderwd)
-            ov("fill "..x.." "..(y+h-borderwd).." "..w.." "..borderwd)
-            ov("fill "..x.." "..(y+borderwd).." "..borderwd.." "..(h-borderwd*2))
-            ov("fill "..(x+w-borderwd).." "..(y+borderwd).." "..borderwd.." "..(h-borderwd*2))
+            ovt {"fill", x, y, w, borderwd}
+            ovt {"fill", x, (y+h-borderwd), w, borderwd}
+            ovt {"fill", x, (y+borderwd), borderwd, (h-borderwd*2)}
+            ovt {"fill", (x+w-borderwd), (y+borderwd), borderwd, (h-borderwd*2)}
         end
         if #fillrgba > 0 then
             -- draw interior of rectangle
             local oldrgba = ov(fillrgba)
-            ov("fill "..(x+borderwd).." "..(y+borderwd).." "..(w-borderwd*2).." "..(h-borderwd*2))
+            ovt {"fill", (x+borderwd), (y+borderwd), (w-borderwd*2), (h-borderwd*2)}
             ov("rgba "..oldrgba)
         end
         ov("blend "..oldblend)
@@ -318,7 +319,7 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
     ov("copy 0 0 "..w.." "..h.." rectbg")
     local oldrgba = ov("rgba 0 0 0 0")
     local oldblend = ov("blend 0")
-    ov("fill 0 0 "..w.." "..h)
+    ovt {"fill", 0, 0, w, h}
     ov("rgba "..oldrgba)
 
     -- create bottom right quarter circle in top left corner of overlay
@@ -326,13 +327,13 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
     ov("copy 0 0 "..radius.." "..radius.." qcircle")
 
     -- draw corners
-    ov("paste "..(w-radius).." "..(h-radius).." qcircle")
+    ovt {"paste", (w-radius), (h-radius), "qcircle"}
     ov(m.flip_y)
-    ov("paste "..(w-radius).." "..(radius-1).." qcircle")
+    ovt {"paste", (w-radius), (radius-1), "qcircle"}
     ov(m.flip_x)
-    ov("paste "..(radius-1).." "..(h-radius).." qcircle")
+    ovt {"paste", (radius-1), (h-radius), "qcircle"}
     ov(m.flip)
-    ov("paste "..(radius-1).." "..(radius-1).." qcircle")
+    ovt {"paste", (radius-1), (radius-1), "qcircle"}
     ov(m.identity)
     ov("delete qcircle")
 
@@ -340,11 +341,11 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
         -- draw non-corner portions of rectangle
         ov(fillrgba)
         if radius < w/2 then
-            ov("fill "..radius.." 0 "..(w-radius*2).." "..h)
+            ovt {"fill", radius, 0, (w-radius*2), h}
         end
         if radius < h/2 then
-            ov("fill 0 "..radius.." "..radius.." "..(h-radius*2))
-            ov("fill "..(w-radius).." "..radius.." "..radius.." "..(h-radius*2))
+            ovt {"fill", 0, radius, radius, (h-radius*2)}
+            ovt {"fill", (w-radius), radius, radius, (h-radius*2)}
         end
         ov("rgba "..oldrgba)
     end
@@ -352,12 +353,12 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
     if borderwd > 0 then
         -- draw border lines using current color
         if radius < w/2 then
-            ov("fill "..radius.." 0 "..(w-radius*2).." "..borderwd)
-            ov("fill "..radius.." "..(h-borderwd).." "..(w-radius*2).." "..borderwd)
+            ovt {"fill", radius, 0, (w-radius*2), borderwd}
+            ovt {"fill", radius, (h-borderwd), (w-radius*2), borderwd}
         end
         if radius < h/2 then
-            ov("fill 0 "..radius.." "..borderwd.." "..(h-radius*2))
-            ov("fill "..(w-borderwd).." "..radius.." "..borderwd.." "..(h-radius*2))
+            ovt {"fill", 0, radius, borderwd, (h-radius*2)}
+            ovt {"fill", (w-borderwd), radius, borderwd, (h-radius*2)}
         end
     end
 
@@ -365,10 +366,10 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
     ov("copy 0 0 "..w.." "..h.." roundedrect")
 
     -- restore top left corner of overlay and draw rounded rectangle
-    ov("paste 0 0 rectbg")
+    ovt {"paste", 0, 0, "rectbg"}
     ov("delete rectbg")
     ov("blend 1")
-    ov("paste "..x.." "..y.." roundedrect")
+    ovt {"paste", x, y, "roundedrect"}
     ov("delete roundedrect")
 
     -- restore blend setting
@@ -386,7 +387,7 @@ local function draw_buttonlayer(x, y, w, h, color)
 
     -- clear rect under button
     local oldrgba = ov("rgba 0 0 0 0")
-    ov("fill"..buttrect)
+    ovt {"fill", x, y, w, h}
 
     -- draw button with rounded corners
     if m.border > 0 then
@@ -398,11 +399,11 @@ local function draw_buttonlayer(x, y, w, h, color)
     ov("copy"..buttrect.." temp_button")
 
     -- paste temp_bg back to rect
-    ov("paste "..x.." "..y.." ".." temp_bg")
+    ovt {"paste", x, y, "temp_bg"}
 
     -- turn on blending and paste temp_button
     ov("blend 1")
-    ov("paste "..x.." "..y.." ".." temp_button")
+    ovt {"paste", x, y, "temp_button"}
 
     ov("rgba "..oldrgba)
     ov("blend "..oldblend)
@@ -493,7 +494,7 @@ function m.button(label, onclick)
         local oldblend = ov("blend 1")
         x = int(x + (b.wd - b.labelwd) / 2)
         y = int(y + m.yoffset + (b.ht - b.labelht) / 2)
-        ov("paste "..x.." "..y.." "..b.labelclip)
+        ovt {"paste", x, y, b.labelclip}
         ov("blend "..oldblend)
 
         -- store this table using the button's rectangle as key
@@ -506,7 +507,7 @@ function m.button(label, onclick)
         if b.shown then
             -- restore background pixels saved in b.show
             local oldblend = ov("blend 0")
-            ov("paste "..b.x.." "..b.y.." "..b.background)
+            ovt {"paste", b.x, b.y, b.background}
             ov("blend "..oldblend)
 
             -- remove the table entry
@@ -572,12 +573,12 @@ local function draw_selectbutton(x, y, w, h, ticked, enabled, multi)
 
             if enabled and (m.textshadowx > 0 or m.textshadowy > 0) then
                 local oldcol = ov(m.textshadowrgba)
-                ov("line "..x1+m.textshadowx.." "..y1+m.textshadowy.." "..x2+m.textshadowx.." "..y2+m.textshadowy)
-                ov("line "..x3+m.textshadowx.." "..y3+m.textshadowy.." "..x4+m.textshadowx.." "..y4+m.textshadowy)
+                ovt {"line", x1+m.textshadowx, y1+m.textshadowy, x2+m.textshadowx, y2+m.textshadowy}
+                ovt {"line", x3+m.textshadowx, y3+m.textshadowy, x4+m.textshadowx, y4+m.textshadowy}
                 ov("rgba "..oldcol)
             end
-            ov("line "..x1.." "..y1.." "..x2.." "..y2)
-            ov("line "..x3.." "..y3.." "..x4.." "..y4)
+            ovt {"line", x1, y1, x2, y2}
+            ovt {"line", x3, y3, x4, y4}
             ov("lineoption width "..oldwidth)
             ov("blend "..oldblend)
             ov("rgba "..oldrgba)
@@ -652,7 +653,7 @@ function m.selectbutton(label, labelrgba, onclick, multi)
 
         -- draw the label
         local oldblend = ov("blend 1")
-        ov("paste "..(x+c.ht+m.selectgap).." "..int(y+m.yoffset+(c.ht-c.labelht)/2).." "..c.clipname)
+        ovt {"paste", (x+c.ht+m.selectgap), int(y+m.yoffset+(c.ht-c.labelht)/2), c.clipname}
         ov("blend "..oldblend)
 
         -- store this table using the select button's rectangle as key
@@ -665,7 +666,7 @@ function m.selectbutton(label, labelrgba, onclick, multi)
         if c.shown then
             -- restore background pixels saved in c.show
             local oldblend = ov("blend 0")
-            ov("paste "..c.x.." "..c.y.." "..c.background)
+            ovt {"paste", c.x, c.y, c.background}
             ov("blend "..oldblend)
             -- remove the table entry
             selectbutton_tables[c.rect] = nil
@@ -697,15 +698,15 @@ local function draw_slider(s, barpos)
     -- draw horizontal bar
     local oldrgba = ov("rgba 100 100 100 255")
     local midy = int(y+h/2)
-    ov("fill "..x.." "..(midy-3).." "..w.." 6")
+    ovt {"fill", x, (midy-3), w, 6}
     ov("rgba 110 110 110 255")
-    ov("fill "..(x+1).." "..(midy-2).." "..(w-2).." 1")
+    ovt {"fill", (x+1), (midy-2), (w-2), 1}
     ov("rgba 120 120 120 255")
-    ov("fill "..(x+1).." "..(midy-1).." "..(w-2).." 1")
+    ovt {"fill", (x+1), (midy-1), (w-2), 1}
     ov("rgba 130 130 130 255")
-    ov("fill "..(x+1).." "..midy.." "..(w-2).." 1")
+    ovt {"fill", (x+1), midy, (w-2), 1}
     ov("rgba 140 140 140 255")
-    ov("fill "..(x+1).." "..(midy+1).." "..(w-2).." 1")
+    ovt {"fill", (x+1), (midy+1), (w-2), 1}
 
     if darken_slider then darken_button = true end
 
@@ -717,7 +718,7 @@ local function draw_slider(s, barpos)
 
     -- draw the label
     local oldblend = ov("blend 1")
-    ov("paste "..s.x.." "..int(y+m.yoffset+(h-s.labelht)/2).." "..s.clipname)
+    ovt {"paste", s.x, int(y+m.yoffset+(h-s.labelht)/2), s.clipname}
     ov("blend "..oldblend)
 end
 
@@ -802,7 +803,7 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
         if s.shown then
             -- restore background pixels saved in previous s.show
             local oldblend = ov("blend 0")
-            ov("paste "..s.x.." "..s.y.." "..s.background)
+            ovt {"paste", s.x, s.y, s.background}
             ov("blend "..oldblend)
             -- remove the table entry
             slider_tables[s.rect] = nil
@@ -924,7 +925,7 @@ local function click_in_slider(x, y)
                         -- draw new position of slider button immediately;
                         -- first restore background pixels saved in previous slider.show
                         local oldblend = ov("blend 0")
-                        ov("paste "..slider.x.." "..slider.y.." "..slider.background)
+                        ovt {"paste", slider.x, slider.y, slider.background}
                         ov("blend "..oldblend)
                         draw_slider(slider, x - slider.startbar)
                         g.update()
@@ -970,7 +971,7 @@ local function DrawMenuBar(mbar)
             m.fill_rect(xpos, mbar.r.y, menu.labelwd + m.menugap*2, mbar.r.ht)
         end
         xpos = xpos + m.menugap
-        ov("paste "..xpos.." "..ypos.." "..menu.labelclip)
+        ovt {"paste", xpos, ypos, menu.labelclip}
         xpos = xpos + menu.labelwd + m.menugap
     end
     ov("blend "..oldblend)
@@ -1281,7 +1282,7 @@ local function release_in_item(x, y, mbar)
                     if selmenu == 0 and not MacOS then selmenu = oldmenu end
                     selitem = GetItem(x, y, selmenu, mbar)
                     if selmenu ~= oldmenu or selitem ~= olditem then
-                        ov("paste 0 0 "..bgclip)
+                        ovt {"paste", 0, 0, bgclip}
                         DrawMenuBar(mbar)
                         if MacOS then
                             if selmenu > 0 then DrawMenuItems(mbar) end
@@ -1295,7 +1296,7 @@ local function release_in_item(x, y, mbar)
                 end
             end
         end
-        
+
         if MacOS then
             -- on Mac we can return nil if user clicked a disabled item
             menuitem = nil
@@ -1321,7 +1322,7 @@ local function release_in_item(x, y, mbar)
     end
 
     -- restore overlay and menu bar
-    ov("paste 0 0 "..bgclip)
+    ovt {"paste", 0, 0, bgclip}
     g.update()
     ov("delete "..bgclip)
     selmenu = 0
@@ -1494,7 +1495,7 @@ local function choose_popup_item(p)
                 local olditem = chosenitem
                 chosenitem = GetPopUpItem(x, y, p)
                 if chosenitem ~= olditem then
-                    ov("paste 0 0 "..bgclip)
+                    ovt {"paste", 0, 0, bgclip}
                     DrawPopUpMenu(p, chosenitem)
                     g.update()
                 end
@@ -1507,7 +1508,7 @@ local function choose_popup_item(p)
     chosenitem = GetPopUpItem(x, y, p)
 
     -- restore overlay
-    ov("paste 0 0 "..bgclip)
+    ovt {"paste", 0, 0, bgclip}
     g.update()
     ov("delete "..bgclip)
 
@@ -1649,7 +1650,7 @@ function m.minbox(clipname, wd, ht)
     local oldtarget = ov("target "..clipname)
     for row = 0, ht-1 do
         for col = 0, wd-1 do
-            local _, _, _, a = split(ov("get "..col.." "..row))
+            local _, _, _, a = split(ovt {"get", col, row})
             if a ~= "0" then
                 ymin = row
                 goto found_top
@@ -1667,7 +1668,7 @@ function m.minbox(clipname, wd, ht)
     -- find the bottom edge (ymax)
     for row = ht-1, ymin, -1 do
         for col = 0, wd-1 do
-            local _, _, _, a = split(ov("get "..col.." "..row))
+            local _, _, _, a = split(ovt {"get", col, row})
             if a ~= "0" then
                 ymax = row
                 goto found_bottom
@@ -1679,7 +1680,7 @@ function m.minbox(clipname, wd, ht)
     -- find the left edge (xmin)
     for col = 0, wd-1 do
         for row = ymin, ymax do
-            local _, _, _, a = split(ov("get "..col.." "..row))
+            local _, _, _, a = split(ovt {"get", col, row})
             if a ~= "0" then
                 xmin = col
                 goto found_left
@@ -1691,7 +1692,7 @@ function m.minbox(clipname, wd, ht)
     -- find the right edge (xmax)
     for col = wd-1, xmin, -1 do
         for row = ymin, ymax do
-            local _, _, _, a = split(ov("get "..col.." "..row))
+            local _, _, _, a = split(ovt {"get", col, row})
             if a ~= "0" then
                 xmax = col
                 goto found_right

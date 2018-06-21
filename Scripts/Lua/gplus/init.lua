@@ -11,31 +11,41 @@ local millisecs = g.millisecs
 
 local m = {}
 
-m.timing = {}      -- timing information
-m.timingorder = {} -- index to order timers
+m.timing = {}       -- timing information
+m.timingorder = {}  -- index to order timers
+m.timingstack = 0   -- used for grouping output into dependent timers
 
 --------------------------------------------------------------------------------
 
 function m.timerstart(name)
-    -- start the named timer
-    local timenow = millisecs()
+    name = name or ""
+
+    -- pause GC if running
+    if collectgarbage("isrunning") then collectgarbage("stop") end
+
     local timing, timingorder = m.timing, m.timingorder
     if timing[name] == nil then
-        timing[name] = { start=0, last=0 }
+        timing[name] = { start=0, last=0, stack=m.timingstack }
         timingorder[#timingorder + 1] = name
     end
-    timing[name].start = timenow
+    m.timingstack = m.timingstack + 1
+
+    -- start the timer
+    timing[name].start = millisecs()
 end
 
 --------------------------------------------------------------------------------
 
 function m.timersave(name)
+    name = name or ""
     -- return time in milliseconds since last request or timer start
     local timenow = millisecs()
     local timing = m.timing
     if timing[name] then
+        m.timingstack = m.timingstack - 1
         timing[name].last = timenow - timing[name].start
         timing[name].start = timenow
+        timing[name].stack = m.timingstack
         return timing[name].last
     else
         -- if timer never started return 0
@@ -46,6 +56,7 @@ end
 --------------------------------------------------------------------------------
 
 function m.timervalue(name)
+    name = name or ""
     -- return last measured value of the named timer in milliseconds
     local timing = m.timing
     if timing[name] then
@@ -61,18 +72,42 @@ function m.timerresetall()
     -- reset all timers
     m.timing = {}
     m.timingorder = {}
+    m.timingstack = 0
+
+    -- restart GC if paused
+    if not collectgarbage("isrunning") then
+        collectgarbage("restart")
+        collectgarbage()
+    end
 end
 
 --------------------------------------------------------------------------------
 
-function m.timervalueall()
+function m.timervalueall(precision)
+    precision = precision or 1
+    if precision < 0 then precision = 0 end
     -- return a string containing all timer name value pairs in the order they were created
     local timing, timingorder = m.timing, m.timingorder
     local result = {}
-    for i = 1, #timingorder do
+    local laststack = 0
+    local ntimers = #timingorder
+    for i = 1, ntimers do
         local name = timingorder[i]
-        result[#result + 1] = name.." "..string.format("%.1fms", timing[name].last)
+        local timer = timing[name]
+        local output = ""
+        if timer.stack > laststack then output = "{ "
+        elseif timer.stack < laststack then output = "} " end
+        laststack = timer.stack
+        output = output..name.." "..string.format("%."..precision.."fms", timing[name].last)
+        if i == ntimers then
+            while laststack > 0 do
+                output = output.." }"
+                laststack = laststack - 1
+            end
+        end
+        result[#result + 1] = output
     end
+    m.timerresetall()
     return table.concat(result, " ")
 end
 
@@ -242,6 +277,36 @@ function m.setposint(x,y)
     g.setpos(tostring(x), tostring(y))
 end
 
+--------------------------------------------------------------------------------
+
+function m.tsplit(s, sep)
+    -- split given string into substrings that are separated by given sep
+    -- (emulates Python's split function)
+    sep = sep or " "
+    local t = {}
+    local start = 1
+    while true do
+        local i = s:find(sep, start, true)  -- find string, not pattern
+        if i == nil then
+            if start <= #s then
+                t[#t+1] = s:sub(start, -1)
+            end
+            break
+        end
+        if i > start then
+            t[#t+1] = s:sub(start, i-1)
+        elseif i == start then
+            t[#t+1] = ""
+        end
+        start = i + #sep
+    end
+    if #t == 0 then
+        -- sep does not exist in s so return s in a table
+        return {s}
+    else
+        return t
+    end
+end
 --------------------------------------------------------------------------------
 
 function m.split(s, sep)

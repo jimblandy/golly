@@ -57,11 +57,18 @@ standard builds.
 <font size=+1><b>The overlay commands</b></font>
 
 <p>
-The overlay is manipulated using a single script command called
-<a href="lua.html#overlay">overlay</a>.
-It takes a single string parameter that contains an overlay command followed
+The overlay is manipulated using two scripts commands called
+<a href="lua.html#overlay">overlay</a> and <a href="lua.html#ovtable">ovtable</a>.
+<p>
+The first, <a href="lua.html#overlay">overlay</a>, takes a single string parameter that contains an overlay command followed
 by zero or more arguments separated by spaces.  Some overlay commands can
 also return a single string as their result.
+<p>
+The second, <a href="lua.html#ovtable">ovtable</a>, takes a single table parameter rather than a string and only supports a subset
+of the overlay commands. It is typically faster to use <a href="lua.html#ovtable">ovtable</a> than <a href="lua.html#overlay">overlay</a>.
+In all other ways it is identical to the <a href="lua.html#overlay">overlay</a> script command. If the overlay command has a result it
+will be returned as a string.
+
 </p>
 <p>
 Here is an alphabetical list of all the valid overlay commands:
@@ -76,47 +83,77 @@ Here is an alphabetical list of all the valid overlay commands:
 <a href="#cellview"><b>cellview</b></a><br>
 <a href="#copy"><b>copy</b></a><br>
 <a href="#create"><b>create</b></a><br>
-<a href="#cursor"><b>cursor</b></a>
+<a href="#cursor"><b>cursor</b></a><br>
+<a href="#delete"><b>delete</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#delete"><b>delete</b></a><br>
 <a href="#drawcells"><b>drawcells</b></a><br>
 <a href="#ellipse"><b>ellipse</b></a><br>
 <a href="#fill"><b>fill</b></a><br>
 <a href="#flood"><b>flood</b></a><br>
 <a href="#font"><b>font</b></a><br>
-<a href="#get"><b>get</b></a>
+<a href="#get"><b>get</b></a><br>
+<a href="#line"><b>line</b></a><br>
+<a href="#lines"><b>lines</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#line"><b>line</b></a><br>
 <a href="#lineoption"><b>lineoption</b></a><br>
 <a href="#load"><b>load</b></a><br>
 <a href="#optimize"><b>optimize</b></a><br>
 <a href="#paste"><b>paste</b></a><br>
 <a href="#position"><b>position</b></a><br>
-<a href="#replace"><b>replace</b></a>
+<a href="#replace"><b>replace</b></a><br>
+<a href="#resize"><b>resize</b></a><br>
+<a href="#rgba"><b>rgba</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#resize"><b>resize</b></a><br>
-<a href="#rgba"><b>rgba</b></a><br>
 <a href="#save"><b>save</b></a><br>
 <a href="#scale"><b>scale</b></a><br>
 <a href="#set"><b>set</b></a><br>
 <a href="#sound"><b>sound</b></a><br>
-<a href="#target"><b>target</b></a>
+<a href="#target"><b>target</b></a><br>
+<a href="#text"><b>text</b></a><br>
+<a href="#textoption"><b>textoption</b></a><br>
+<a href="#theme"><b>theme</b></a>
 </td>
 <td valign=top width=40> </td>
 <td valign=top>
-<a href="#text"><b>text</b></a><br>
-<a href="#textoption"><b>textoption</b></a><br>
-<a href="#theme"><b>theme</b></a><br>
 <a href="#transform"><b>transform</b></a><br>
 <a href="#update"><b>update</b></a><br>
 <a href="#updatecells"><b>updatecells</b></a><br>
 <a href="#xy"><b>xy</b></a>
+</td>
+</tr>
+</table>
+</dd>
+</p>
+
+<p>
+Here is an alphabetical list of the subset of overlay commands supported by <a href="lua.html#ovtable">ovtable</a>:
+<p>
+<dd>
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td valign=top>
+<a href="#fill"><b>fill</b></a><br>
+<a href="#get"><b>get</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#line"><b>line</b></a><br>
+<a href="#lines"><b>lines</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#paste"><b>paste</b></a><br>
+<a href="#rgba"><b>rgba</b></a>
+</td>
+<td valign=top width=40> </td>
+<td valign=top>
+<a href="#set"><b>set</b></a>
 </td>
 </tr>
 </table>
@@ -135,6 +172,7 @@ The examples given below assume a script has started with these lines:
 <p>
 <dd><b>local g = golly()</b></dd>
 <dd><b>local ov = g.overlay</b></dd>
+<dd><b>local ovt = g.ovtable</b></dd>
 </p>
 
 <a name="blend"></a><p><dt><b>blend <i>i</i></b></dt>
@@ -146,6 +184,7 @@ The commands affected by alpha blending are:
 <a href="#fill">fill</a>,
 <a href="#flood">flood</a>,
 <a href="#line">line</a>,
+<a href="#lines">lines</a>,
 <a href="#load">load</a>,
 <a href="#paste">paste</a>,
 <a href="#scale">scale</a> and
@@ -264,9 +303,9 @@ The initial font for drawing text is the default system font at a size of 10pt
 (see the <a href="#font">font</a> command).
 The <a href="#textoption">text options</a> are set to left alignment
 (for multi-line text) and a transparent background.
-The initial line width (used by the <a href="#ellipse">ellipse</a> and
-<a href="#line">line</a> commands) is set to 1. The render <a href="#target">target</a>
-is set to be the overlay.
+The initial line width (used by the <a href="#ellipse">ellipse</a>, 
+<a href="#line">line</a> and <a href="#lines">lines</a> commands) is set to 1.
+The render <a href="#target">target</a> is set to be the overlay.
 </dd>
 </p>
 <dd> Example: <b>ov("create 400 300")</b></dd>
@@ -353,6 +392,8 @@ so a command like <b>ov("fill 1 1 -2 -2")</b> would fill all of the render targe
 except for a 1 pixel border around the edges.
 </dd>
 <dd> Example: <b>ov("fill 10 10 30 50")</b></dd>
+<dd> &nbsp;or
+<dd> Example: <b>ovt{"fill", 10, 10, 30, 50}</b></dd>
 </p>
 
 <a name="flood"></a><p><dt><b>flood <i>x y</i></b></dt>
@@ -397,11 +438,13 @@ Return the RGBA values of the given pixel in the render <a href="#target">target
 If the given pixel is outside the render target then "" is returned.
 </dd>
 <dd> Example: <b>local rgba = ov("get 10 20")</b></dd>
+<dd> &nbsp;or
+<dd> Example: <b>local rgba = ovt{"get", 10, 20}</b></dd>
 </p>
 
 <a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2 (...xn yn)</i></b></dt>
 <dd>
-Draw one or more lines of pixels between the supplied coordinates <i>x1 y1</i> to <i>xn yn</i>
+Draw one or more connected lines of pixels between the supplied coordinates <i>x1 y1</i> to <i>xn yn</i>
 on the render <a href="#target">target</a> using the current <a href="#rgba">rgba</a> values.
 Any pixels outside the render target edges are automatically clipped.
 If alpha blending is turned on then the lines are antialiased.
@@ -411,13 +454,37 @@ the thickness of the lines.
 <dd>Examples:</dd>
 <dd><i>-- draw line from (10, 20) to (50, 60)</i></dd>
 <dd><b>ov("line 10 20 50 60")</b></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"line", 10, 20, 50, 60}</b></dd>
 <dd><i>-- draw triangle with vertices at (0, 0), (100, 0) and (50, 100)</i></dd>
 <dd><b>ov("line 0 0 100 0 50 100 0 0")</b></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"line", 0, 0, 100, 0, 50, 100, 0, 0}</b></dd>
+</p>
+
+<a name="lines"></a><p><dt><b>lines <i>x1 y1 x2 y2 (...xn1 yn1 xn2 yn2)</i></b></dt>
+<dd>
+Draw one or more separate lines of pixels between the supplied pairs of coordinates <i>x1 y1</i> to <i>x2 y2</i>
+on the render <a href="#target">target</a> using the current <a href="#rgba">rgba</a> values.
+Any pixels outside the render target edges are automatically clipped.
+If alpha blending is turned on then the lines are antialiased.
+The <a href="#lineoption">lineoption width</a> command determines
+the thickness of the lines.
+</dd>
+<dd>Examples:</dd>
+<dd><i>-- draw line from (10, 20) to (50, 60)</i></dd>
+<dd><b>ov("lines 10 20 50 60")</b></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"lines", 10, 20, 50, 60}</b></dd>
+<dd><i>-- draw line from (0, 0) to (100, 0) and another line from (50, 25) to (150, 25)</i></dd>
+<dd><b>ov("lines 0 0 100 0 50 25 150 25")</b></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"lines", 0, 0, 100, 0, 50, 25, 150, 25}</b></dd>
 </p>
 
 <a name="lineoption"></a><p><dt><b>lineoption <i>option value</i></b></dt>
 <dd>
-Set an option used by the <a href="#ellipse">ellipse</a> and <a href="#line">line</a> commands.
+Set an option used by the <a href="#ellipse">ellipse</a>, <a href="#line">line</a> and <a href="#lines">lines</a> commands.
 There is currently one valid option:
 </dd>
 <p>
@@ -476,8 +543,12 @@ Any pixels outside the render target edges are automatically clipped.
 <dd> Examples:</dd>
 <dd><i>-- paste the tempbox clip at (10, 20)</i></dd>
 <dd><b>ov("paste 10 20 tempbox")</b></dd>
-<dd><i>-- paste the tempbox clip at (10, 20), (100, 20) and (100,50)</i></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"paste", 10, 20, "tempbox"}</b></dd>
+<dd><i>-- paste the tempbox clip at (10, 20), (100, 20) and (100, 50)</i></dd>
 <dd><b>ov("paste 10 20 100 20 100 50 tempbox")</b></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"paste", 10, 20, 100, 20, 100, 50, "tempbox"}</b></dd>
 </p>
 <p>
 <dd>
@@ -622,11 +693,14 @@ The commands that use the current RGBA values are:
 <a href="#fill">fill</a>,
 <a href="#flood">flood</a>,
 <a href="#line">line</a>,
+<a href="#lines">lines</a>,
 <a href="#replace">replace</a>,
 <a href="#set">set</a> and
 <a href="#text">text</a>.
 </dd>
 <dd> Example: <b>local oldrgba = ov("rgba 255 0 0 255")</b></dd>
+<dd> &nbsp;or
+<dd> Example: <b>local oldrgba = ovt{"rgba", 255, 0, 0, 255}</b></dd>
 </p>
 
 <a name="save"></a><p><dt><b>save <i>x y wd ht file</i></b></dt>
@@ -648,8 +722,12 @@ Pixels outside the render target are silently ignored.
 <dd>Examples:</dd>
 <dd><i>-- set pixel at (10, 20)</i></dd>
 <dd><b>ov("set 10 20")</b></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"set", 10, 20}</b></dd>
 <dd><i>-- set pixels at (10, 20), (15, 25) and (16, 25)</i></dd>
 <dd><b>ov("set 10 20 15 25 16 25")</b></dd>
+<dd> &nbsp;or
+<dd><b>ovt{"set", 10, 20, 15, 25, 16, 25}</b></dd>
 </p>
 
 <a name="scale"></a><p><dt><b>scale <i>quality x y wd ht clipname</i></b></dt>
@@ -748,6 +826,7 @@ The commands that use the render target are:
 <a href="#flood">flood</a>,
 <a href="#get">get</a> (as the source),
 <a href="#line">line</a>,
+<a href="#lines">lines</a>,
 <a href="#load">load</a>,
 <a href="#paste">paste</a>,
 <a href="#replace">replace</a>,
@@ -974,6 +1053,7 @@ The overlay commands that can do alpha blending are:
 <a href="#fill">fill</a>,
 <a href="#flood">flood</a>,
 <a href="#line">line</a>,
+<a href="#lines">lines</a>,
 <a href="#load">load</a>,
 <a href="#paste">paste</a>,
 <a href="#scale">scale</a>,

@@ -1926,9 +1926,9 @@ static int g_setview(lua_State* L)
     if (currwd < 0) currwd = 0;
     if (currht < 0) currht = 0;
     
-    int mainwd, mainht;
-    mainptr->GetSize(&mainwd, &mainht);
-    mainptr->SetSize(mainwd + (wd - currwd), mainht + (ht - currht));
+    int mnwd, mnht;
+    mainptr->GetSize(&mnwd, &mnht);
+    mainptr->SetSize(mnwd + (wd - currwd), mnht + (ht - currht));
     
     return 0;   // no result
 }
@@ -2282,6 +2282,128 @@ static int g_getcolors(lua_State* L)
     }
     
     return 1;   // result is a table
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_overlaytable(lua_State* L)
+{
+    CheckEvents(L);
+    
+    const char* result = NULL;
+
+    // check the argument is a table
+    luaL_checktype(L, 1, LUA_TTABLE);
+    
+    // get the size of the table
+    int n = (int)lua_rawlen(L, 1);
+
+    // check if the table contains any elements
+    if (n > 0) {
+        // get the command name
+        lua_rawgeti(L, -1, 1);
+        const char* cmd = lua_tostring(L, -1);
+        lua_pop(L, 1);
+
+        // check if it is a supported command
+        if (cmd && ((strcmp(cmd, "fill") == 0) ||
+            (strcmp(cmd, "get") == 0) ||
+            (strcmp(cmd, "line") == 0) ||
+            (strcmp(cmd, "lines") == 0) ||
+            (strcmp(cmd, "paste") == 0 ) ||
+            (strcmp(cmd, "rgba") == 0 ) ||
+            (strcmp(cmd, "set") == 0))) {
+
+            // clip name for paste command
+            const char* clipname = NULL;
+            int clipi = 0;
+
+            // allocate space for coordinate values
+            if (n > 1) {
+                double* coords = (double*)malloc((n - 1) * sizeof(double));
+                int j = 0;
+
+                // get the array of coordinates
+                int valid = true;
+                int i = 2;
+                while (i <= n && valid) {
+                    // read the element at the next index
+                    lua_rawgeti(L, -1, i);
+                    // attempt to decode as a number
+                    lua_Number value = lua_tonumberx(L, -1, &valid);
+                    if (valid) {
+                        // store the number
+                        coords[j++] = (double)value;
+                    }
+                    else {
+                        // was not a number so check the type
+                        int type = lua_type(L, -1);
+                        if (type == LUA_TSTRING) {
+                            // first time decode as a string after that it's an error
+                            if (clipname == NULL) {
+                                clipname = lua_tostring(L, -1);
+                                clipi = i;
+                                valid = true;
+                            }
+                        }
+                        else {
+                            if (type == LUA_TNIL) {
+                                // if it's nil then stop
+                                n = i - 1;
+                                valid = true;
+                            }
+                        }
+                    }
+                    lua_pop(L, 1);
+                    i++;
+                }
+
+                // only paste command is allowed a string argument
+                if (clipname && strcmp(cmd, "paste") != 0) {
+                    valid = false;
+                }
+
+                // clip name must be last argument
+                if (clipname && (clipi != n)) {
+                    valid = false;
+                }
+
+                // check if the coordinates were all numbers
+                if (valid) {
+                    // call the required function
+                    result = curroverlay->DoOverlayCommand(cmd, coords, j, clipname);
+                }
+                else {
+                    result = "ERR:array command has invalid arguments";
+                }
+    
+                // free argument list
+                free(coords);
+            }
+            else {
+                // call the required function with no arguments
+                result = curroverlay->DoOverlayCommand(cmd, NULL, 0, NULL);
+            }
+        }
+        else {
+            result = "ERR:unknown or unsupported array command";
+        }
+    }
+    else {
+        result = "ERR:missing array command";
+    }
+
+    if (result == NULL) return 0;   // no error and no result
+    
+    if (result[0] == 'E' && result[1] == 'R' && result[2] == 'R' ) {
+        std::string msg = "overlay error: ";
+        msg += result + 4;  // skip past "ERR:"
+        GollyError(L, msg.c_str());
+    }
+    
+    lua_pushstring(L, result);
+    
+    return 1;   // result is a string
 }
 
 // -----------------------------------------------------------------------------
@@ -2793,7 +2915,8 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "getname",      g_getname },      // get name of given layer
     { "setcolors",    g_setcolors },    // set color(s) used in current layer
     { "getcolors",    g_getcolors },    // get color(s) used in current layer
-    { "overlay",      g_overlay },      // do an overlay command
+    { "overlay",      g_overlay },      // do an overlay command from a string
+    { "ovtable",      g_overlaytable }, // do an overlay command from a table
     // miscellaneous
     { "os",           g_os },           // return the current OS (Windows/Mac/Linux)
     { "millisecs",    g_millisecs },    // return elapsed time since Golly started, in millisecs
