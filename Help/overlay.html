@@ -64,7 +64,7 @@ The first, <a href="lua.html#overlay">overlay</a>, takes a single string paramet
 by zero or more arguments separated by spaces.  Some overlay commands can
 also return a single string as their result.
 <p>
-The second, <a href="lua.html#ovtable">ovtable</a>, takes a single table parameter rather than a string and only supports a subset
+The second, <a href="lua.html#ovtable">ovtable</a>, takes a single table parameter rather than a string and only supports a <a href="subset">subset</a>
 of the overlay commands. It is typically faster to use <a href="lua.html#ovtable">ovtable</a> than <a href="lua.html#overlay">overlay</a>.
 In all other ways it is identical to the <a href="lua.html#overlay">overlay</a> script command. If the overlay command has a result it
 will be returned as a string.
@@ -131,8 +131,7 @@ Here is an alphabetical list of all the valid overlay commands:
 </dd>
 </p>
 
-<p>
-Here is an alphabetical list of the subset of overlay commands supported by <a href="lua.html#ovtable">ovtable</a>:
+<a name="subset"></a><p>Here is an alphabetical list of the subset of overlay commands supported by <a href="lua.html#ovtable">ovtable</a>:
 <p>
 <dd>
 <table cellspacing=0 cellpadding=0>

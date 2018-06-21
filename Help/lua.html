@@ -986,7 +986,15 @@ a rectangular area of pixels that can be displayed on top of the current layer.
 <dd>
 Call a command to modify the <a href="overlay.html">overlay</a>,
 a rectangular area of pixels that can be displayed on top of the current layer.
-This command takes a table as a parameter rather than a string.
+This command takes a table as a parameter rather than a string (for improved performance)
+and supports the following <a href="overlay.html">overlay</a> commands:
+<a href="overlay.html#fill">fill</a>,
+<a href="overlay.html#get">get</a>,
+<a href="overlay.html#line">line</a>,
+<a href="overlay.html#lines">lines</a>,
+<a href="overlay.html#paste">paste</a>,
+<a href="overlay.html#rgba">rgba</a> and
+<a href="overlay.html#set">set</a>.
 </dd>
 <dd> Example: <b>g.ovtable{"line", 0, 0, 200, 300}</b></dd>
 </p>
@@ -1658,6 +1666,26 @@ the implementation details):
 <tr>
    <td><b>gp.trace(msg)</b></td><td width=10> </td>
    <td> &mdash; pass into xpcall so a runtime error will have a stack trace</td>
+</tr>
+<tr>
+   <td><b>gp.timerstart(name)</b></td><td width=10> </td>
+   <td> &mdash; start a named timer</td>
+</tr>
+<tr>
+   <td><b>gp.timersave(name)</b></td><td width=10> </td>
+   <td> &mdash; save the current elapsed time of the named timer</td>
+</tr>
+<tr>
+   <td><b>gp.timervalue(name)</b></td><td width=10> </td>
+   <td> &mdash; get the last saved value of the named timer in milliseconds</td>
+</tr>
+<tr>
+   <td><b>gp.timervalueall(precision)</b></td><td width=10> </td>
+   <td> &mdash; get a string with a list of all saved timer names and values in milliseconds and then reset all timers
+</tr>
+<tr>
+   <td><b>gp.timerresetall()</b></td><td width=10> </td>
+   <td> &mdash; reset all of the timers
 </tr>
 </table>
 </dd>
