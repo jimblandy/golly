@@ -279,36 +279,6 @@ end
 
 --------------------------------------------------------------------------------
 
-function m.tsplit(s, sep)
-    -- split given string into substrings that are separated by given sep
-    -- (emulates Python's split function)
-    sep = sep or " "
-    local t = {}
-    local start = 1
-    while true do
-        local i = s:find(sep, start, true)  -- find string, not pattern
-        if i == nil then
-            if start <= #s then
-                t[#t+1] = s:sub(start, -1)
-            end
-            break
-        end
-        if i > start then
-            t[#t+1] = s:sub(start, i-1)
-        elseif i == start then
-            t[#t+1] = ""
-        end
-        start = i + #sep
-    end
-    if #t == 0 then
-        -- sep does not exist in s so return s in a table
-        return {s}
-    else
-        return t
-    end
-end
---------------------------------------------------------------------------------
-
 function m.split(s, sep)
     -- split given string into substrings that are separated by given sep
     -- (emulates Python's split function)
