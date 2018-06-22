@@ -299,10 +299,14 @@ local function create_overlay()
     ov("position middle")
 
     -- create the Save and Cancel buttons
+    op.textshadowx = 2
+    op.textshadowy = 2
     sbutt = op.button("Save as PNG", do_save)
     cbutt = op.button("Cancel", g.exit)
 
     -- create a check box for showing lines or dots
+    op.textshadowx = 0
+    op.textshadowy = 0
     lbox = op.checkbox("Lines", op.black, toggle_lines)
 
     -- create a slider for adjusting opacity of background
