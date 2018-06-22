@@ -1397,6 +1397,28 @@ The check box will only appear after its show function is called.
 <dd> Example: <b>line_box.show(10, 40, true)</b></dd>
 </p>
 
+<p><dt><b>op.radiobutton(<i>label, labelrgba, onclick</i>)</b></dt>
+<dd>
+Create and return a table representing a radio button.
+The label text will be drawn using the given color to the right of a radio button.
+If the <a href="#process">op.process</a> function detects a click in this
+radio button (including the label) then the given onclick function will be called.
+</dd>
+<dd> Example:</dd>
+<dd> <b>draw_option = op.radiobutton("Draw", op.black, set_draw_mode)</b></dd>
+<dd> <b>select_option = op.radiobutton("Select", op.black, set_select_mode)</b></dd>
+<dd> <b>move_option = op.radiobutton("Move", op.black, set_move_mode)</b></dd>
+</p>
+<p>
+<dd>
+The radio button will only appear after its show function is called.
+</dd>
+<dd> Example:</dd>
+<dd> <b>draw_option.show(10, 40, mode == "draw")</b></dd>
+<dd> <b>select_option.show(10, 40, mode == "select")</b></dd>
+<dd> <b>move_option.show(10, 40, mode == "move")</b></dd>
+</p>
+
 <p><dt><b>op.slider(<i>label, labelrgba, barwidth, minval, maxval, onclick</i>)</b></dt>
 <dd>
 Create and return a table representing a slider.
