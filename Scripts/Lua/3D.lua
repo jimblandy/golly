@@ -84,6 +84,11 @@ ODD_COLOR = "rgba 140 255 255 255"      -- for odd cell points and spheres (pale
 EVEN_CUBE = "replace *# *#-50 *# *#"    -- for even cell cubes (change white to pale magenta)
 ODD_CUBE = "replace *#-110 *# *# *#"    -- for odd cell cubes (change white to pale cyan)
 
+-- table versions of point and select point colors
+pointcol = {split(POINT_COLOR)}
+selpointcol = {split(SELPT_COLOR)}
+usingpointcol = false
+
 local xylattice = {}                -- lattice lines between XY axes
 local xzlattice = {}                -- lattice lines between XZ axes
 local yzlattice = {}                -- lattice lines between YZ axes
@@ -1157,8 +1162,7 @@ end
 ----------------------------------------------------------------------
 
 local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
-
-local lastCubeSize = -1
+lastCubeSize = -1
 
 function CreateLiveCube()
     -- only create bitmaps if cell size has changed
@@ -1203,7 +1207,7 @@ end
 
 ----------------------------------------------------------------------
 
-local lastSphereSize = -1
+lastSphereSize = -1
 
 function CreateLiveSphere()
     -- only create bitmaps if cell size has changed
@@ -1253,58 +1257,85 @@ end
 
 ----------------------------------------------------------------------
 
-function AddCellToBatchDepth(x, y, z, mx, my)
-    local c = CELLSIZE
-    local m = MIDCELL
+function DrawCellDepth(x, y, z, mx, my, addtobatch)
+    local c, m = CELLSIZE, MIDCELL
     -- add live cell at given grid position
     x = x * c + m
     y = y * c + m
     z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + mx
+    local newy = (x*yixo + y*yiyo + z*yizo) + my
     local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = (newx + mx) // 1
-    y = (newy + my) // 1
     -- compute the depth layer
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2)
-    -- check if the layer has changed since the last call
-    if layer ~= layerlast then
-        -- save the previous layer and switch to the new one
-        layerindices[layerlast] = layerindex
-        layerlast = layer
-        layercurrent = layercoords[layer]
-        layerindex = layerindices[layer]
+    local layer = depthlayers * (newz + zdepth) // zdepth2 | 0
+    if addtobatch then
+        -- add cell to batch
+        if layer ~= layerlast then
+            -- save the previous layer and switch to the new one
+            layerindices[layerlast] = layerindex
+            layerlast = layer
+            layercurrent = layercoords[layer]
+            layerindex = layerindices[layer]
+        end
+        -- add to the layer's list to draw
+        layercurrent[layerindex] = newx
+        layerindex = layerindex + 1
+        layercurrent[layerindex] = newy
+        layerindex = layerindex + 1
+    else
+        -- draw immediately
+        local cmd = {"paste", newx, newy}
+        if celltype == "cube" then
+            cmd[4] = "c"..layer
+        elseif celltype == "sphere" then
+            cmd[4] = "S"..layer
+        else -- celltype == "point"
+            if not usingpointcol then
+                usingpointcol = true
+                ovt(pointcol)
+            end
+            cmd[1] = "set"
+        end
+        -- draw the cell
+        ovt(cmd)
     end
-    -- add to the layer's list to draw
-    layercurrent[layerindex] = x
-    layerindex = layerindex + 1
-    layercurrent[layerindex] = y
-    layerindex = layerindex + 1
 end
 
 ----------------------------------------------------------------------
 
-function AddCellToBatch(x, y, z, mx, my)
-    local c = CELLSIZE
-    local m = MIDCELL
-    local xyi = xyindex
+function DrawCell(x, y, z, mx, my, addtobatch)
+    local c, m = CELLSIZE, MIDCELL
     -- add live cell at given grid position
     x = x * c + m
     y = y * c + m
     z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = (newx + mx) // 1
-    y = (newy + my) // 1
-    -- add to the list to draw
-    xybatch[xyi] = x
-    xyi = xyi + 1
-    xybatch[xyi] = y
-    xyindex = xyi + 1  -- update global index
+    local newx = (x*xixo + y*xiyo + z*xizo) + mx
+    local newy = (x*yixo + y*yiyo + z*yizo) + my
+    if addtobatch then
+        local xyi = xyindex
+        xybatch[xyi] = newx
+        xyi = xyi + 1
+        xybatch[xyi] = newy
+        xyindex = xyi + 1 -- update global index
+    else
+        -- draw immediately
+        local cmd = {"paste", newx, newy}
+        if celltype == "cube" then
+            cmd[4] = "c"
+        elseif celltype == "sphere" then
+            cmd[4] = "S"
+        else -- celltype == "point"
+            if not usingpointcol then
+                usingpointcol = true
+                ovt(pointcol)
+            end
+            cmd[1] = "set"
+        end
+        -- draw the cell
+        ovt(cmd)
+    end
 end
 
 ----------------------------------------------------------------------
@@ -1321,7 +1352,7 @@ local function DrawBatchLayer(depth, coordlist, length)
             length = length + 1
             coordlist[length] = "S"..depth
         else -- celltype == "point" then
-            ov(POINT_COLOR)
+            ovt(pointcol)
             coordlist[1] = "set"
         end
         length = length + 1
@@ -1331,6 +1362,8 @@ local function DrawBatchLayer(depth, coordlist, length)
 end
 
 ----------------------------------------------------------------------
+
+lastBatchSize = MAXN*MAXN*MAXN*2
 
 local function DrawBatch()
 
@@ -1354,6 +1387,10 @@ local function DrawBatch()
         -- no depth shading so draw all
         DrawBatchLayer("", xybatch, xyindex - 1)
         -- reset the batch to after the command name
+        if xyindex < lastBatchSize then
+            xybatch = {}
+        end
+        lastBatchSize = xyindex
         xyindex = 2
     end
 
@@ -1363,65 +1400,58 @@ end
 ----------------------------------------------------------------------
 
 local function DrawPoint(x, y, z)
+    local c, m = CELLSIZE, MIDCELL
     -- draw mid point of cell at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx + 0.5
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy + 0.5
     -- use orthographic projection
-    x = floor(newx + midx + 0.5)
-    y = floor(newy + midy + 0.5)
-    ovt {"set", x, y}
+    ovt {"set", newx, newy}
 end
 
 ----------------------------------------------------------------------
 
 local function DrawActiveCell(x, y, z)
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = floor(newx + midx - CELLSIZE + 0.5)
-    y = floor(newy + midy - CELLSIZE + 0.5)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - CELLSIZE + 0.5
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - CELLSIZE + 0.5
     -- draw the clip created by CreateTranslucentCell
-    ovt {"paste", x, y, "a"}
+    ovt {"paste", newx, newy, "a"}
 end
 
 ----------------------------------------------------------------------
 
 local function DrawSelectedCell(x, y, z)
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = floor(newx + midx - CELLSIZE + 0.5)
-    y = floor(newy + midy - CELLSIZE + 0.5)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - CELLSIZE + 0.5
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - CELLSIZE + 0.5
     -- draw the clip created by CreateTranslucentCell
-    ovt {"paste", x, y, "s"}
+    ovt {"paste", newx, newy, "s"}
 end
 
 ----------------------------------------------------------------------
 
 local function DrawPasteCell(x, y, z)
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = floor(newx + midx - CELLSIZE + 0.5)
-    y = floor(newy + midy - CELLSIZE + 0.5)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - CELLSIZE + 0.5
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - CELLSIZE + 0.5
     -- draw the clip created by CreateTranslucentCell
-    ovt {"paste", x, y, "p"}
+    ovt {"paste", newx, newy, "p"}
 end
 
 ----------------------------------------------------------------------
@@ -1434,7 +1464,6 @@ local function TestCell(editing, gridpos, x, y, z, mx, my)
             if grid1[gridpos] then
                 -- draw live cell within active plane
                 DrawLiveCell(x, y, z, mx, my)
-                DrawBatch()
             end
             DrawActiveCell(x, y, z)
             if selected[gridpos] then
@@ -1444,19 +1473,23 @@ local function TestCell(editing, gridpos, x, y, z, mx, my)
             -- cell is outside active plane
             if grid1[gridpos] then
                 -- live cell so draw a point
-                ov(POINT_COLOR)
+                if not usingpointcol then
+                    usingpointcol = true
+                    ovt(pointcol)
+                end
                 DrawPoint(x, y, z)
             end
             if selected[gridpos] then
                 -- draw translucent point
-                ov(SELPT_COLOR)
+                ovt(selpointcol)
+                usingpointcol = false
                 DrawPoint(x, y, z)
             end
         end
     else
         -- active plane is not displayed
         if grid1[gridpos] then
-            DrawLiveCell(x, y, z, mx, my)
+            DrawLiveCell(x, y, z, mx, my, true)
         end
         if selected[gridpos] then
             DrawBatch()
@@ -1464,7 +1497,7 @@ local function TestCell(editing, gridpos, x, y, z, mx, my)
         end
     end
     if pastepatt[gridpos] then
-        DrawLiveCell(x, y, z, mx, my)
+        DrawLiveCell(x, y, z, mx, my, true)
         DrawBatch()
         DrawPasteCell(x, y, z)
     end
@@ -1552,9 +1585,9 @@ function DisplayCells(editing)
     if depthshading and celltype ~= "point" then
         zdepth = N*CELLSIZE*0.5
         zdepth2 = zdepth+zdepth
-        DrawLiveCell = AddCellToBatchDepth
+        DrawLiveCell = DrawCellDepth
     else
-        DrawLiveCell = AddCellToBatch
+        DrawLiveCell = DrawCell
     end
 
     -- compute mid point
@@ -1577,6 +1610,14 @@ function DisplayCells(editing)
     local l_N = N
     local stepi, stepj = l_N*stepy, l_N*stepz
     if testcell then
+        -- disable timing
+        local oldtiming = timingenabled
+        timingenabled = false
+        -- setup the point colors
+        pointcol = {split(POINT_COLOR)}
+        selpointcol = {split(SELPT_COLOR)}
+        usingpointcol = false
+        -- draw each cell
         j = l_N*fromz
         for z = fromz, toz, stepz do
             i = l_N*(fromy+j)
@@ -1588,10 +1629,12 @@ function DisplayCells(editing)
             end
             j = j+stepj
         end
+        DrawBatch()  -- complete any pending batch
+        -- restore timing
+        timingenabled = oldtiming
     else
         -- only live cells need to be drawn
-        local c = CELLSIZE
-        local m = MIDCELL
+        local c, m = CELLSIZE, MIDCELL
         local xc, yc, zc
         local l_grid1 = grid1
         local l_xixo, l_xiyo, l_xizo = xixo, xiyo, xizo
@@ -1673,7 +1716,7 @@ function DisplayCells(editing)
 
     if timingenabled then gp.timersave("AddCoords") end
 
-    DrawBatch()
+    if not testcell then DrawBatch() end
 
     ov("blend 0")
 
@@ -1793,12 +1836,10 @@ function DrawBusyCube(x, y, z, clipname)
     y = y * c + m
     z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCUBECLIP
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCUBECLIP
     -- use orthographic projection
-    x = newx + midx - HALFCUBECLIP
-    y = newy + midy - HALFCUBECLIP
-    ovt {"paste", x, y, clipname}
+    ovt {"paste", newx, newy, clipname}
 end
 
 ----------------------------------------------------------------------
@@ -1810,15 +1851,13 @@ function DrawBusyCubeDepth(x, y, z, clipname)
     y = y * c + m
     z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCUBECLIP
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCUBECLIP
     local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = newx + midx - HALFCUBECLIP
-    y = newy + midy - HALFCUBECLIP
     -- compute the depth layer
     local layer = depthlayers * (newz + zdepth) // zdepth2 | 0
-    ovt {"paste", x, y, clipname..layer}
+    -- use orthographic projection
+    ovt {"paste", newx, newy, clipname..layer}
 end
 
 ----------------------------------------------------------------------
@@ -1830,12 +1869,10 @@ function DrawBusySphere(x, y, z, clipname)
     y = y * c + m
     z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCELL -- clip wd = CELLSIZE + 1
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCELL -- clip ht = CELLSIZE + 1
     -- use orthographic projection
-    x = (newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
-    y = (newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
-    ovt {"paste", x, y, clipname}
+    ovt {"paste", newx, newy, clipname}
 end
 
 ----------------------------------------------------------------------
@@ -1847,15 +1884,13 @@ function DrawBusySphereDepth(x, y, z, clipname)
     y = y * c + m
     z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCELL -- clip wd = CELLSIZE+1
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCELL -- clip ht = CELLSIZE+1
     local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = (newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
-    y = (newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
     -- compute the depth layer
     local layer = depthlayers * (newz + zdepth) // zdepth2 | 0
-    ovt {"paste", x, y, clipname..layer}
+    -- use orthographic projection
+    ovt {"paste", newx, newy, clipname..layer}
 end
 
 ----------------------------------------------------------------------
@@ -1906,7 +1941,7 @@ local function TestBusyBox(editing, gridpos, x, y, z, clipname)
             end
             if selected[gridpos] then
                 -- draw translucent point
-                ov(SELPT_COLOR)
+                ovt(selpointcol)
                 DrawPoint(x, y, z)
             end
         end
@@ -2952,33 +2987,36 @@ end
 ----------------------------------------------------------------------
 
 function UpdateBoundary(xlive, ylive, zlive, newpop)
-    local xlist = {}
-    local ylist = {}
-    local zlist = {}
-    local ind = 1
-    -- convert axis live cells into ordered list of keys
-    for k, _ in pairs(xlive) do
-        xlist[ind] = k
-        ind = ind + 1
+    if newpop > 0 then
+        local xlist = {}
+        local ylist = {}
+        local zlist = {}
+        local ind = 1
+        -- convert axis live cells into ordered list of keys
+        for k, _ in pairs(xlive) do
+            xlist[ind] = k
+            ind = ind + 1
+        end
+        ind = 1
+        for k, _ in pairs(ylive) do
+            ylist[ind] = k
+            ind = ind + 1
+        end
+        ind = 1
+        for k, _ in pairs(zlive) do
+            zlist[ind] = k
+            ind = ind + 1
+        end
+        -- sort into ascending order
+        table.sort(xlist)
+        table.sort(ylist)
+        table.sort(zlist)
+        -- min is first value in ordered list, max is last value
+        minx, maxx = xlist[1], xlist[#xlist]
+        miny, maxy = ylist[1], ylist[#ylist]
+        minz, maxz = zlist[1], zlist[#zlist]
+        -- save the population count
     end
-    ind = 1
-    for k, _ in pairs(ylive) do
-        ylist[ind] = k
-        ind = ind + 1
-    end
-    ind = 1
-    for k, _ in pairs(zlive) do
-        zlist[ind] = k
-        ind = ind + 1
-    end
-    table.sort(xlist)
-    table.sort(ylist)
-    table.sort(zlist)
-    -- min is first value in ordered list, max is last value
-    minx, maxx = xlist[1], xlist[#xlist]
-    miny, maxy = ylist[1], ylist[#ylist]
-    minz, maxz = zlist[1], zlist[#zlist]
-    -- save the population count
     popcount = newpop
 end
 
