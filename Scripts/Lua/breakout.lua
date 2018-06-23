@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build     = 80
+local build     = 81
 local g         = golly()
 -- require "gplus.strict"
 local gp        = require "gplus"
@@ -293,7 +293,8 @@ local music = {
     currenttrack = "",
     fade         = 1,
     faderate     = -0.01,
-    gameovertime = 1000 * 64
+    gameovertime = 1000 * 64,
+    folder       = "oplus/sounds/breakout/"
 }
 
 --------------------------------------------------------------------------------
@@ -400,13 +401,13 @@ end
 --------------------------------------------------------------------------------
 
 local function soundstate(sound)
-    return ov("sound state oplus/sounds/breakout/"..sound..".ogg")
+    return ov("sound state "..music.folder..sound..".ogg")
 end
 
 --------------------------------------------------------------------------------
 
 local function setvolume(sound, vol)
-    ov("sound volume oplus/sounds/breakout/"..sound..".ogg "..vol)
+    ov("sound volume "..music.folder..sound..".ogg "..vol)
 end
 
 --------------------------------------------------------------------------------
@@ -435,7 +436,7 @@ end
 
 local function stopmusic()
     if music.currenttrack ~= "" then
-        ov("sound stop oplus/sounds/breakout/"..music.currenttrack..".ogg")
+        ov("sound stop "..music.folder..music.currenttrack..".ogg")
     end
 end
 --------------------------------------------------------------------------------
@@ -444,9 +445,9 @@ local function playsound(name, loop)
     if options.soundvol > 0 then
         loop = loop or false
         if loop then
-            ov("sound loop oplus/sounds/breakout/"..name..".ogg "..(options.soundvol / 100))
+            ov("sound loop "..music.folder..name..".ogg "..(options.soundvol / 100))
         else
-            ov("sound play oplus/sounds/breakout/"..name..".ogg "..(options.soundvol / 100))
+            ov("sound play "..music.folder..name..".ogg "..(options.soundvol / 100))
         end
     end
 end
@@ -458,9 +459,9 @@ local function playmusic(name, loop)
     stopmusic()
     music.currenttrack = name
     if loop then
-        ov("sound loop oplus/sounds/breakout/"..name..".ogg "..(options.musicvol / 100))
+        ov("sound loop "..music.folder..name..".ogg "..(options.musicvol / 100))
     else
-        ov("sound play oplus/sounds/breakout/"..name..".ogg "..(options.musicvol / 100))
+        ov("sound play "..music.folder..name..".ogg "..(options.musicvol / 100))
     end
 end
 
@@ -1919,7 +1920,7 @@ local function breakout()
                         end
 
                         -- check for ball hitting brick
-                        brick.y = (ball.y - (brick.offsety * brick.ht)) // brick.ht | 0
+                        brick.y = (ball.y - (brick.offsety * brick.ht)) // brick.ht
                         if brick.y >= 1 and brick.y <= brick.numrows then
                             brick.x = ((ball.x - edgegapl) // brick.wd) + 1
                             if brick.rows[brick.y][brick.x] then
@@ -1965,7 +1966,7 @@ local function breakout()
                                 createparticles(brick.x * brick.wd + edgegapl, ((brick.y + brick.offsety) * brick.ht), brick.wd, brick.ht, particle.brickparticles, brick.cols[brick.y])
                                 -- one less brick
                                 brick.bricksleft = brick.bricksleft - 1
-                                playsound("brick"..brick.y)
+                                playsound("brick"..(brick.y | 0))
                             end
                         end
                     end
@@ -2231,7 +2232,7 @@ local function main()
     -- create overlay
     ov("create "..wd.." "..ht)
     text.fontscale = wd / minwd
-    if (ht /minht) < text.fontscale then
+    if (ht / minht) < text.fontscale then
         text.fontscale = ht / minht
     end
 
