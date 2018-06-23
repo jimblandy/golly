@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build     = 79
+local build     = 80
 local g         = golly()
 -- require "gplus.strict"
 local gp        = require "gplus"
@@ -37,8 +37,8 @@ local bgclip = "bg"
 
 -- shadow settings
 local shadow = {
-    x     = floor(-wd / 100),
-    y     = floor(ht / 100),
+    x     = -wd // 100,
+    y     = ht // 100,
     rgb   = "0 0 0",  -- shadow colour
     alpha = 128,      -- default alpha for shadows
     delta = 8,        -- brick fade rate when hit
@@ -53,7 +53,7 @@ local brick = {
     numcols     = 20,
     rows        = {},
     wd,
-    ht          = floor(ht / 40),
+    ht          = ht // 40,
     maxoffsety  = 20,
     offsety     = 0,
     startoffset = 0,
@@ -74,7 +74,7 @@ local brick = {
     fading      = {},
     rgbcols     = {}
 }
-brick.wd = floor(wd / brick.numcols)
+brick.wd = wd // brick.numcols
 brick.bricksleft = brick.numrows * brick.numcols
 brick.totalbricks = brick.bricksleft
 
@@ -82,7 +82,7 @@ brick.totalbricks = brick.bricksleft
 local bat = {
     x      = 0,
     y      = 0,
-    wd     = floor(wd / 10),
+    wd     = wd // 10,
     ht     = brick.ht,
     lastx  = 0,
     fade   = 128
@@ -99,7 +99,7 @@ local ball = {
 -- particle settings
 local particle = {
     particles       = {},
-    brickparticles  = floor(brick.wd * brick.ht / 10),
+    brickparticles  = brick.wd * brick.ht // 10,
     ballparticles   = 1,
     ballpartchance  = 0.25,
     wallparticles   = 20,
@@ -527,9 +527,9 @@ local function highlightkey(textstr, x, y, w, h, token, color)
         local x1 = x + (t1 - 1) * charw
         local oldblend = ov("blend 0")
         local oldrgba = ovt(colors.black)
-        ovt {"fill", floor(x1 + shadow.txtx), floor(y + shadow.txty), floor(charw * (t2 - t1 + 1) + 5), floor(h - 4)}
+        ovt {"fill", x1 + shadow.txtx, y + shadow.txty, (charw * (t2 - t1 + 1) + 5), h - 4}
         ov(color)
-        ovt {"fill", floor(x1), floor(y), floor(charw * (t2 - t1 + 1) + 5), floor(h - 4)}
+        ovt {"fill", x1, y, (charw * (t2 - t1 + 1) + 5), h - 4}
         ov("rgba "..oldrgba)
         ov("blend "..oldblend)
     end
@@ -667,8 +667,8 @@ local function drawparticles()
                     ov(color)
                     lastcol = color
                 end
-                xy[m] = floor(item.x)
-                xy[m + 1] = floor(item.y)
+                xy[m] = item.x
+                xy[m + 1] = item.y
                 xy[m + 2] = 2
                 xy[m + 3] = 2
                 m = m + 4
@@ -712,7 +712,7 @@ local function createpoints(x, y, value)
     local w, h = op.maketext(value, "point"..i, op.white, shadow.txtx, shadow.txty)
 
     -- save the item
-    local item = { duration = 60, x = floor(x + brick.wd / 2 - w / 2), y = floor(y + brick.ht / 2 - h / 2) }
+    local item = { duration = 60, x = (x + brick.wd / 2 - w / 2), y = (y + brick.ht / 2 - h / 2) }
     points[i] = item
 end
 
@@ -725,7 +725,7 @@ local function drawpoints()
         -- check if item is still alive
         if item.duration > 0 then
             if options.brickscore == 1 then
-                local y = floor(item.y + brick.offsety * brick.ht)
+                local y = item.y + brick.offsety * brick.ht
                 if item.duration < 8 then
                     -- fade out by replacing clip alpha
                     ov("target point"..i)
@@ -774,7 +774,7 @@ local function drawfadingbricks(pass, xoff, yoff)
             if alpha > 0 then
                 -- draw brick or shadow
                 local fy = fading[i].y
-                local y = floor((fy + brick.offsety) * brick.ht)
+                local y = (fy + brick.offsety) * brick.ht
                 local x = (fading[i].x - 1) * brick.wd + edgegapl
                 -- pick the colour depending on drawing brick or shadow
                 if (pass == 1) then
@@ -842,6 +842,8 @@ local function drawbricks()
     -- check whether to draw shadows
     if options.showshadows == 0 then
         startpass = 2
+        xoff = 0
+        yoff = 0
     end
     for pass = startpass, 2 do
         drawfadingbricks(pass, xoff, yoff)
@@ -873,7 +875,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawball()
-    local oldwidth = ov("lineoption width "..floor(ball.size / 2))
+    local oldwidth = ov("lineoption width "..(ball.size // 2))
     ov("blend 1")
     if options.showshadows == 1 then
         ov(shadow.col)
@@ -894,7 +896,7 @@ local function drawbat(alpha)
     ov("blend 1")
     if options.showshadows == 1 then
         ov("rgba "..shadow.rgb.." "..(alpha//2))
-        ovt {"fill", (floor(bat.x) + shadow.x), (floor(bat.y) + shadow.y), bat.wd, bat.ht}
+        ovt {"fill", bat.x + shadow.x, bat.y + shadow.y, bat.wd, bat.ht}
     end
     -- draw the bat in red if mouse is off the overlay
     if game.offoverlay then
@@ -903,15 +905,15 @@ local function drawbat(alpha)
         if alpha == 256 then alpha = 255 end
         ovt {"rgba", 192, 192, 192, alpha}
     end
-    ovt {"fill", floor(bat.x), floor(bat.y), bat.wd, bat.ht}
+    ovt {"fill", bat.x, bat.y, bat.wd, bat.ht}
 end
 
 --------------------------------------------------------------------------------
 
 local function initbricks()
     brick.rows        = {}
-    brick.wd          = floor(wd / brick.numcols)
-    brick.ht          = floor(ht / 40)
+    brick.wd          = wd // brick.numcols
+    brick.ht          = ht // 40
     brick.bricksleft  = 0
     brick.totalbricks = 0
     brick.offsety     = game.level + 1
@@ -929,7 +931,7 @@ local function initbricks()
 
     -- distribute any gap left and right
     local edgegap = wd - brick.wd * brick.numcols
-    edgegapl = floor(edgegap / 2)
+    edgegapl = edgegap // 2
     edgegapr = edgegap - edgegapl
 
     -- clear the fading bricks (used when brick hit)
@@ -970,8 +972,8 @@ end
 --------------------------------------------------------------------------------
 
 local function initbat()
-    bat.wd = floor(wd / 10)
-    bat.x  = floor((wd - bat.wd) / 2)
+    bat.wd = wd // 10
+    bat.x  = (wd - bat.wd) // 2
     bat.ht = brick.ht
     bat.y  = ht - bat.ht * 4
 end
@@ -987,8 +989,8 @@ end
 --------------------------------------------------------------------------------
 
 local function initshadow()
-    shadow.x   = floor(-wd / 100)
-    shadow.y   = floor(ht / 100)
+    shadow.x   = -wd // 100
+    shadow.y   = ht // 100
     shadow.col = "rgba "..shadow.rgb.." "..shadow.alpha
 end
 
@@ -1308,14 +1310,14 @@ local function resizegame(newwd, newht)
     end
 
     -- scale bat, ball and bricks
-    brick.wd                = floor(wd / brick.numcols)
-    brick.ht                = floor(ht / 40)
-    particle.brickparticles = floor(brick.wd * brick.ht / 10)
-    bat.wd                  = floor(wd / 10)
+    brick.wd                = wd // brick.numcols
+    brick.ht                = ht // 40
+    particle.brickparticles = brick.wd * brick.ht // 10
+    bat.wd                  = wd // 10
     bat.ht                  = brick.ht
     ball.size               = wd / 80
     local edgegap           = wd - brick.wd * brick.numcols
-    edgegapl                = floor(edgegap / 2)
+    edgegapl                = edgegap // 2
     edgegapr                = edgegap - edgegapl
 
     -- reposition the bat and ball
@@ -1380,12 +1382,12 @@ local function drawgameover()
     ov("blend 1")
     if game.newhigh then
         local highscorew = drawtextclip("newhigh", 0, ht / 2 + 96 * text.fontscale, text.aligncenter)
-        createparticles(edgegapl + floor(wd / 2 + highscorew / 2), floor(ht / 2 + 96 * text.fontscale), highscorew, 1, particle.highparticles)
+        createparticles(edgegapl + (wd / 2 + highscorew / 2), (ht / 2 + 96 * text.fontscale), highscorew, 1, particle.highparticles)
     end
     updatecombo(game.gamecombo)
     if game.newcombo then
         local combow = drawtextclip("newcombo", 0, ht / 2 + 118 * text.fontscale, text.aligncenter)
-        createparticles(edgegapl + floor(wd / 2 + combow / 2), floor(ht / 2 + 118 * text.fontscale), combow, 1, particle.comboparticles)
+        createparticles(edgegapl + (wd / 2 + combow / 2), (ht / 2 + 118 * text.fontscale), combow, 1, particle.comboparticles)
     end
     drawtextclip("gameover", 0, ht / 2 - 30 * text.fontscale, text.aligncenter)
     drawtextclip("restart", 0, ht / 2 + 30 * text.fontscale, text.aligncenter, nil, true)
@@ -1416,16 +1418,16 @@ local function drawbonuscomplete()
 
     local w = drawtextclip("awarded", 0, ht / 2, text.aligncenter)
     if brick.bricksleft <= bonus.green then
-        createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, particle.bonusparticlesg)
+        createparticles(edgegapl + (wd / 2 + w / 2), ht / 2, w, 1, particle.bonusparticlesg)
     elseif brick.bricksleft <= bonus.yellow then
-        createparticles(edgegapl + floor(wd / 2 + w / 2), floor(ht / 2), w, 1, particle.bonusparticlesy)
+        createparticles(edgegapl + (wd / 2 + w / 2), ht / 2, w, 1, particle.bonusparticlesy)
     end
     drawtextclip("continue", 0, ht / 2 + 30 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("quitgame", 0, ht / 2 + 52 * text.fontscale, text.aligncenter, nil, true)
     drawtextclip("option", 0, ht / 2 + 74 * text.fontscale, text.aligncenter, nil, true)
     if game.newbonus then
         local bonusw = drawtextclip("newbonus", 0, ht / 2 + 96 * text.fontscale, text.aligncenter)
-        createparticles(edgegapl + floor(wd / 2 + bonusw / 2), floor(ht / 2 + 96 * text.fontscale), bonusw, 1, particle.bonusparticles)
+        createparticles(edgegapl + (wd / 2 + bonusw / 2), (ht / 2 + 96 * text.fontscale), bonusw, 1, particle.bonusparticles)
     end
 end
 
@@ -1530,13 +1532,13 @@ end
 --------------------------------------------------------------------------------
 
 local function drawoptions()
-    local leftx = floor(wd / 6)
+    local leftx = wd // 6
     local state = {[0] = "off", [1] = "on"}
 
     -- draw header
     ov("blend 1")
     local h = messages["key"].height
-    local y = floor((ht - 14 * h) / 2)
+    local y = (ht - 14 * h) // 2
     y = drawoption("key", "function", "state", leftx, h, y)
 
     -- draw options
@@ -1621,7 +1623,7 @@ local function clearbonusbricks()
         for x = 1, brick.numcols do
             if bricks[x] then
                 bricks[x] = false
-                createparticles(x * brick.wd + edgegapl, floor((y + brick.offsety) * brick.ht), brick.wd, brick.ht, clearparticles, brick.cols[y])
+                createparticles(x * brick.wd + edgegapl, ((y + brick.offsety) * brick.ht), brick.wd, brick.ht, clearparticles, brick.cols[y])
                 createfadingbrick(x, y)
             end
         end
@@ -1668,14 +1670,14 @@ local function playexit()
     local box = {}
     local n = 1
     local tx, ty
-    local tilesize = math.floor(wd / 32)
+    local tilesize = wd // 32
     ov("blend 0")
 
     -- copy the screen into tiles
     for y = 0, ht, tilesize do
         for x = 0, wd, tilesize do
-            tx = x + rand(0, floor(wd / 8)) - wd / 16
-            ty = ht + rand(0, floor(ht / 2))
+            tx = x + rand(0, wd // 8) - wd / 16
+            ty = ht + rand(0, ht // 2)
             local entry = {}
             entry[1] = x
             entry[2] = y
@@ -1699,7 +1701,7 @@ local function playexit()
             y = box[j][2]
             tx = box[j][3]
             ty = box[j][4]
-            ovt {"paste", floor(x * (1 - a) + tx * a), floor(y * (1 - a) + ty * a), "sprite"..j}
+            ovt {"paste", (x * (1 - a) + tx * a), (y * (1 - a) + ty * a), "sprite"..j}
         end
         -- draw timing if on
         if options.showtiming == 1 then
@@ -1849,7 +1851,7 @@ local function breakout()
 
                         -- check for ball hitting top boundary
                         if ball.y < ball.size / 2 then
-                            createparticles(ball.x, floor(ball.y - ball.size / 2), 1, 1, particle.wallparticles)
+                            createparticles(ball.x, (ball.y - ball.size / 2), 1, 1, particle.wallparticles)
                             -- ball hit top so speed up a little bit
                             balldy    = -balldy
                             ball.y     = ball.y - stepy
@@ -1879,11 +1881,6 @@ local function breakout()
                                     end
                                 end
                                 resetcombo()
-                                -- destroy bat if no balls left
-                                if game.balls == 0 then
-                                    createparticles(bat.x + bat.wd, bat.y, bat.wd, bat.ht, particle.lostparticles)
-                                    bat.fade = shadow.alpha
-                                end
                                 playmusic("lostball")
                             end
                             -- exit loop
@@ -1922,9 +1919,9 @@ local function breakout()
                         end
 
                         -- check for ball hitting brick
-                        brick.y = floor((ball.y - (brick.offsety * brick.ht)) / brick.ht)
+                        brick.y = (ball.y - (brick.offsety * brick.ht)) // brick.ht | 0
                         if brick.y >= 1 and brick.y <= brick.numrows then
-                            brick.x = floor((ball.x - edgegapl) / brick.wd) + 1
+                            brick.x = ((ball.x - edgegapl) // brick.wd) + 1
                             if brick.rows[brick.y][brick.x] then
                                 -- hit a brick!
                                 brick.rows[brick.y][brick.x] = false
@@ -1953,7 +1950,7 @@ local function breakout()
                                     game.gamecombo = game.combo
                                 end
                                 -- work out which axis to invert
-                                local lastbricky = floor(((ball.y - stepy) - (brick.offsety * brick.ht)) / brick.ht)
+                                local lastbricky = ((ball.y - stepy) - (brick.offsety * brick.ht)) // brick.ht
                                 if lastbricky == brick.y then
                                     balldx = -balldx
                                 else
@@ -1965,7 +1962,7 @@ local function breakout()
                                     ballspeed = maxspeed
                                 end
                                 -- create particles
-                                createparticles(brick.x * brick.wd + edgegapl, floor((brick.y + brick.offsety) * brick.ht), brick.wd, brick.ht, particle.brickparticles, brick.cols[brick.y])
+                                createparticles(brick.x * brick.wd + edgegapl, ((brick.y + brick.offsety) * brick.ht), brick.wd, brick.ht, particle.brickparticles, brick.cols[brick.y])
                                 -- one less brick
                                 brick.bricksleft = brick.bricksleft - 1
                                 playsound("brick"..brick.y)
@@ -2074,8 +2071,13 @@ local function breakout()
             writesettings()
         end
 
-        -- draw best combo
+        -- if game is over destroy bat and display best game combo
         if game.balls == 0 then
+            -- destroy bat
+            if game.balls == 0 then
+                createparticles(bat.x + bat.wd, bat.y, bat.wd, bat.ht, particle.lostparticles)
+                bat.fade = shadow.alpha
+            end
             notify("Best Combo x"..game.maxcombo - 1)
         end
 
@@ -2095,8 +2097,10 @@ local function breakout()
             -- draw background
             drawbackground()
 
-            -- update bat position
-            updatebatposition()
+            -- update bat position if game is not over
+            if game.balls > 0 then
+                updatebatposition()
+            end
 
             -- draw particles
             drawparticles()
