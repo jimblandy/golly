@@ -1364,6 +1364,7 @@ end
 ----------------------------------------------------------------------
 
 lastBatchSize = MAXN*MAXN*MAXN*2
+lastDepthBatchSize = {}
 
 local function DrawBatch()
 
@@ -1376,9 +1377,14 @@ local function DrawBatch()
 
         -- draw each layer in reverse order (furthest away first = darkest)
         for i = maxdepth, mindepth, -1 do
-            if layerindices[i] > 2 then
-                DrawBatchLayer(i, layercoords[i], layerindices[i] - 1)
+            local batchsize = layerindices[i]
+            if batchsize > 2 then
+                DrawBatchLayer(i, layercoords[i], batchsize - 1)
                 -- reset the layer once drawn to after the command name
+                if batchsize < lastDepthBatchSize[i] then
+                    layercoords[i] = {}
+                end
+                lastDepthBatchSize[i] = batchsize
                 layerindices[i] = 2
             end
         end
@@ -1725,7 +1731,13 @@ end
 
 ----------------------------------------------------------------------
 
+lastBusyCubeSize = {E = -1, O = -1}
+
 function CreateBusyCube(clipname)
+    -- only create bitmaps if cell size has changed
+    if CELLSIZE == lastBusyCubeSize[clipname] then return end
+    lastBusyCubeSize[clipname] = CELLSIZE
+
     -- create a clip containing a cube for odd/even cells
     -- largest size of a rotated cube with edge length L is sqrt(3)*L
     HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
@@ -1768,7 +1780,13 @@ end
 
 ----------------------------------------------------------------------
 
+lastBusySphereSize = { E = -1, O = -1 }
+
 function CreateBusySphere(clipname)
+    -- only create bitmaps if cell size has changed
+    if CELLSIZE == lastBusySphereSize[clipname] then return end
+    lastBusySphereSize[clipname] = CELLSIZE
+
     -- create a clip containing a sphere for odd/even cells
     local diameter = CELLSIZE+1
     local d1 = diameter
@@ -2305,6 +2323,9 @@ function Refresh(update)
 
     local editing = currcursor ~= movecursor
     if popcount > 0 or pastecount > 0 or selcount > 0 or editing then
+
+        if timingenabled then gp.timerstart("PrepareCells") end
+
         if pastecount > 0 then
             -- paste cells will be translucent
             CreateTranslucentCell("p", PASTE_COLOR)
@@ -2330,6 +2351,9 @@ function Refresh(update)
                 CreateBusyPoint("Ep", EVEN_COLOR)
                 CreateBusyPoint("Op", ODD_COLOR)
             end
+
+            if timingenabled then gp.timersave("PrepareCells") end
+
             DisplayBusyBoxes(editing)
         else
             if celltype == "cube" then
@@ -2337,6 +2361,9 @@ function Refresh(update)
             elseif celltype == "sphere" then
                 CreateLiveSphere()
             end
+
+            if timingenabled then gp.timersave("PrepareCells") end
+
             DisplayCells(editing)
         end
     end
@@ -7580,6 +7607,7 @@ function CycleCellType()
     else -- celltype == "point"
         celltype = "cube"
     end
+    ViewChanged(false)
     Refresh()
 end
 
@@ -7593,6 +7621,7 @@ function SetCellType(newtype)
     elseif newtype == "point" then
         celltype = newtype
     end
+    ViewChanged(false)
     Refresh()
 end
 
@@ -9084,9 +9113,13 @@ end
 function ViewChanged(rotate)
     -- cube needs recreating on rotate or depth shade toggle
     lastCubeSize = -1
+    lastBusyCubeSize["E"] = -1
+    lastBusyCubeSize["O"] = -1
     if not rotate then
         -- sphere only needs recreating on depth shade toggle
         lastSphereSize = -1
+        lastBusySphereSize["E"] = -1
+        lastBusySphereSize["O"] = -1
     end
 end
 
@@ -9178,6 +9211,7 @@ function InitDepthShading()
         layercoords[i] = {}
         -- set index to position after draw command
         layerindices[i] = 2
+        lastDepthBatchSize[i] = MAXN * MAXN * MAXN * 2
     end
     layerlast = mindepth - 1
 end
