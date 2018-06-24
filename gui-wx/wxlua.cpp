@@ -2305,77 +2305,83 @@ static int g_overlaytable(lua_State* L)
         const char* cmd = lua_tostring(L, -1);
         lua_pop(L, 1);
 
-        // DoOverlayCommand will check if cmd is a supported command
+        // check the command name was a string
+        if (cmd) {
+            // DoOverlayCommand will check if cmd is a supported command
 
-        // clip name for paste command
-        const char* clipname = NULL;
-        int clipi = 0;
+            // clip name for paste command
+            const char* clipname = NULL;
+            int clipi = 0;
 
-        // allocate space for coordinate values
-        if (n > 1) {
-            double* coords = (double*)malloc((n - 1) * sizeof(double));
-            int j = 0;
+            // allocate space for coordinate values
+            if (n > 1) {
+                double* coords = (double*)malloc((n - 1) * sizeof(double));
+                int j = 0;
 
-            // get the array of coordinates
-            int valid = true;
-            int i = 2;
-            while (i <= n && valid) {
-                // read the element at the next index
-                lua_rawgeti(L, -1, i);
-                // attempt to decode as a number
-                lua_Number value = lua_tonumberx(L, -1, &valid);
-                if (valid) {
-                    // store the number
-                    coords[j++] = (double)value;
-                }
-                else {
-                    // was not a number so check the type
-                    int type = lua_type(L, -1);
-                    if (type == LUA_TSTRING) {
-                        // first time decode as a string after that it's an error
-                        if (clipname == NULL) {
-                            clipname = lua_tostring(L, -1);
-                            clipi = i;
-                            valid = true;
-                        }
+                // get the array of coordinates
+                int valid = true;
+                int i = 2;
+                while (i <= n && valid) {
+                    // read the element at the next index
+                    lua_rawgeti(L, -1, i);
+                    // attempt to decode as a number
+                    lua_Number value = lua_tonumberx(L, -1, &valid);
+                    if (valid) {
+                        // store the number
+                        coords[j++] = (double)value;
                     }
                     else {
-                        if (type == LUA_TNIL) {
-                            // if it's nil then stop
-                            n = i - 1;
-                            valid = true;
+                        // was not a number so check the type
+                        int type = lua_type(L, -1);
+                        if (type == LUA_TSTRING) {
+                            // first time decode as a string after that it's an error
+                            if (clipname == NULL) {
+                                clipname = lua_tostring(L, -1);
+                                clipi = i;
+                                valid = true;
+                            }
+                        }
+                        else {
+                            if (type == LUA_TNIL) {
+                                // if it's nil then stop
+                                n = i - 1;
+                                valid = true;
+                            }
                         }
                     }
+                    lua_pop(L, 1);
+                    i++;
                 }
-                lua_pop(L, 1);
-                i++;
-            }
 
-            // only paste command is allowed a string argument
-            if (clipname && strcmp(cmd, "paste") != 0) {
-                valid = false;
-            }
+                // only paste command is allowed a string argument
+                if (clipname && strcmp(cmd, "paste") != 0) {
+                    valid = false;
+                }
 
-            // clip name must be last argument
-            if (clipname && (clipi != n)) {
-                valid = false;
-            }
+                // clip name must be last argument
+                if (clipname && (clipi != n)) {
+                    valid = false;
+                }
 
-            // check if the coordinates were all numbers
-            if (valid) {
-                // call the required function
-                result = curroverlay->DoOverlayCommand(cmd, coords, j, clipname);
+                // check if the coordinates were all numbers
+                if (valid) {
+                    // call the required function
+                    result = curroverlay->DoOverlayCommand(cmd, coords, j, clipname);
+                }
+                else {
+                    result = "ERR:ovtable command has invalid arguments";
+                }
+
+                // free argument list
+                free(coords);
             }
             else {
-                result = "ERR:ovtable command has invalid arguments";
+                // call the required function with no arguments
+                result = curroverlay->DoOverlayCommand(cmd, NULL, 0, NULL);
             }
-
-            // free argument list
-            free(coords);
         }
         else {
-            // call the required function with no arguments
-            result = curroverlay->DoOverlayCommand(cmd, NULL, 0, NULL);
+            result = "ERR:ovtable command name must be a string";
         }
     }
     else {
