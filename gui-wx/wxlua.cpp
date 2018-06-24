@@ -2305,98 +2305,87 @@ static int g_overlaytable(lua_State* L)
         const char* cmd = lua_tostring(L, -1);
         lua_pop(L, 1);
 
-        // check if it is a supported command
-        if (cmd && ((strcmp(cmd, "fill") == 0) ||
-            (strcmp(cmd, "get") == 0) ||
-            (strcmp(cmd, "line") == 0) ||
-            (strcmp(cmd, "lines") == 0) ||
-            (strcmp(cmd, "paste") == 0 ) ||
-            (strcmp(cmd, "rgba") == 0 ) ||
-            (strcmp(cmd, "set") == 0))) {
+        // DoOverlayCommand will check if cmd is a supported command
 
-            // clip name for paste command
-            const char* clipname = NULL;
-            int clipi = 0;
+        // clip name for paste command
+        const char* clipname = NULL;
+        int clipi = 0;
 
-            // allocate space for coordinate values
-            if (n > 1) {
-                double* coords = (double*)malloc((n - 1) * sizeof(double));
-                int j = 0;
+        // allocate space for coordinate values
+        if (n > 1) {
+            double* coords = (double*)malloc((n - 1) * sizeof(double));
+            int j = 0;
 
-                // get the array of coordinates
-                int valid = true;
-                int i = 2;
-                while (i <= n && valid) {
-                    // read the element at the next index
-                    lua_rawgeti(L, -1, i);
-                    // attempt to decode as a number
-                    lua_Number value = lua_tonumberx(L, -1, &valid);
-                    if (valid) {
-                        // store the number
-                        coords[j++] = (double)value;
-                    }
-                    else {
-                        // was not a number so check the type
-                        int type = lua_type(L, -1);
-                        if (type == LUA_TSTRING) {
-                            // first time decode as a string after that it's an error
-                            if (clipname == NULL) {
-                                clipname = lua_tostring(L, -1);
-                                clipi = i;
-                                valid = true;
-                            }
-                        }
-                        else {
-                            if (type == LUA_TNIL) {
-                                // if it's nil then stop
-                                n = i - 1;
-                                valid = true;
-                            }
-                        }
-                    }
-                    lua_pop(L, 1);
-                    i++;
-                }
-
-                // only paste command is allowed a string argument
-                if (clipname && strcmp(cmd, "paste") != 0) {
-                    valid = false;
-                }
-
-                // clip name must be last argument
-                if (clipname && (clipi != n)) {
-                    valid = false;
-                }
-
-                // check if the coordinates were all numbers
+            // get the array of coordinates
+            int valid = true;
+            int i = 2;
+            while (i <= n && valid) {
+                // read the element at the next index
+                lua_rawgeti(L, -1, i);
+                // attempt to decode as a number
+                lua_Number value = lua_tonumberx(L, -1, &valid);
                 if (valid) {
-                    // call the required function
-                    result = curroverlay->DoOverlayCommand(cmd, coords, j, clipname);
+                    // store the number
+                    coords[j++] = (double)value;
                 }
                 else {
-                    result = "ERR:array command has invalid arguments";
+                    // was not a number so check the type
+                    int type = lua_type(L, -1);
+                    if (type == LUA_TSTRING) {
+                        // first time decode as a string after that it's an error
+                        if (clipname == NULL) {
+                            clipname = lua_tostring(L, -1);
+                            clipi = i;
+                            valid = true;
+                        }
+                    }
+                    else {
+                        if (type == LUA_TNIL) {
+                            // if it's nil then stop
+                            n = i - 1;
+                            valid = true;
+                        }
+                    }
                 }
-    
-                // free argument list
-                free(coords);
+                lua_pop(L, 1);
+                i++;
+            }
+
+            // only paste command is allowed a string argument
+            if (clipname && strcmp(cmd, "paste") != 0) {
+                valid = false;
+            }
+
+            // clip name must be last argument
+            if (clipname && (clipi != n)) {
+                valid = false;
+            }
+
+            // check if the coordinates were all numbers
+            if (valid) {
+                // call the required function
+                result = curroverlay->DoOverlayCommand(cmd, coords, j, clipname);
             }
             else {
-                // call the required function with no arguments
-                result = curroverlay->DoOverlayCommand(cmd, NULL, 0, NULL);
+                result = "ERR:ovtable command has invalid arguments";
             }
+
+            // free argument list
+            free(coords);
         }
         else {
-            result = "ERR:unknown or unsupported array command";
+            // call the required function with no arguments
+            result = curroverlay->DoOverlayCommand(cmd, NULL, 0, NULL);
         }
     }
     else {
-        result = "ERR:missing array command";
+        result = "ERR:missing ovtable command";
     }
 
     if (result == NULL) return 0;   // no error and no result
     
     if (result[0] == 'E' && result[1] == 'R' && result[2] == 'R' ) {
-        std::string msg = "overlay error: ";
+        std::string msg = "ovtable error: ";
         msg += result + 4;  // skip past "ERR:"
         GollyError(L, msg.c_str());
     }

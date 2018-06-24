@@ -3042,8 +3042,8 @@ function UpdateBoundary(xlive, ylive, zlive, newpop)
         minx, maxx = xlist[1], xlist[#xlist]
         miny, maxy = ylist[1], ylist[#ylist]
         minz, maxz = zlist[1], zlist[#zlist]
-        -- save the population count
     end
+    -- save the population count
     popcount = newpop
 end
 

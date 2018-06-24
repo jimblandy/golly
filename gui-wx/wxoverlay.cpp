@@ -6262,11 +6262,11 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "set ", 4) == 0)          return DoSetPixel(cmd+4);
     if (strncmp(cmd, "get ", 4) == 0)          return DoGetPixel(cmd+4);
     if (strcmp(cmd,  "xy") == 0)               return DoGetXY();
+    if (strncmp(cmd, "paste", 5) == 0)         return DoPaste(cmd+5);
     if (strncmp(cmd, "rgba", 4) == 0)          return DoSetRGBA(cmd+4);
     if (strncmp(cmd, "blend", 5) == 0)         return DoBlend(cmd+5);
     if (strncmp(cmd, "fill", 4) == 0)          return DoFill(cmd+4);
     if (strncmp(cmd, "copy", 4) == 0)          return DoCopy(cmd+4);
-    if (strncmp(cmd, "paste", 5) == 0)         return DoPaste(cmd+5);
     if (strncmp(cmd, "optimize", 8) == 0)      return DoOptimize(cmd+8);
     if (strncmp(cmd, "lineoption ", 11) == 0)  return DoLineOption(cmd+11);
     if (strncmp(cmd, "lines", 5) == 0)         return DoLine(cmd+5, false);
@@ -6303,12 +6303,12 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
 const char* Overlay::DoOverlayCommand(const char* cmd, const double* coords, int n, const char* clip)
 {
     // determine which command to run
-    if ((strcmp(cmd, "fill")) == 0)     return DoFillTable(coords, n);
+    if ((strcmp(cmd, "set")) == 0)      return DoSetTable(coords, n);
     if ((strcmp(cmd, "get")) == 0)      return DoGetTable(coords, n);
-    if ((strcmp(cmd, "line")) == 0)     return DoLineTable(coords, n, true);
-    if ((strcmp(cmd, "lines")) == 0)    return DoLineTable(coords, n, false);
     if ((strcmp(cmd, "paste")) == 0)    return DoPasteTable(coords, n, clip);
     if ((strcmp(cmd, "rgba")) == 0)     return DoSetRGBATable(coords, n);
-    if ((strcmp(cmd, "set")) == 0)      return DoSetTable(coords, n);
-    return OverlayError("unknown array command");
+    if ((strcmp(cmd, "line")) == 0)     return DoLineTable(coords, n, true);
+    if ((strcmp(cmd, "lines")) == 0)    return DoLineTable(coords, n, false);
+    if ((strcmp(cmd, "fill")) == 0)     return DoFillTable(coords, n);
+    return OverlayError("unknown command");
 }
