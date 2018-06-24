@@ -2,7 +2,7 @@
 -- Author: Chris Rowett (crowett@gmail.com), November 2016
 -- Use F12 to save a screenshot
 
-local build     = 81
+local build     = 82
 local g         = golly()
 -- require "gplus.strict"
 local gp        = require "gplus"
@@ -10,8 +10,9 @@ local split     = gp.split
 local op        = require "oplus"
 local ov        = g.overlay
 local ovt       = g.ovtable
-local floor     = math.floor
 local rand      = math.random
+local maketext  = op.maketext
+local pastetext = op.pastetext
 
 math.randomseed(os.time())  -- init seed for math.random
 
@@ -39,12 +40,24 @@ local bgclip = "bg"
 local shadow = {
     x     = -wd // 100,
     y     = ht // 100,
-    rgb   = "0 0 0",  -- shadow colour
     alpha = 128,      -- default alpha for shadows
     delta = 8,        -- brick fade rate when hit
     txtx  = -2,
     txty  = 2,
-    col   = ""
+}
+shadow.color     = {"rgba", 0, 0, 0, shadow.alpha}
+shadow.fadecolor = {"rgba", 0, 0, 0, shadow.alpha}
+
+-- colors as tables
+local colors = {
+    white     = {"rgba", 255, 255, 255, 255},
+    black     = {"rgba", 0, 0, 0, 255},
+    red       = {"rgba", 255, 0, 0, 255},
+    green     = {"rgba", 0, 255, 0, 255},
+    blue      = {"rgba", 0, 0, 255, 255},
+    cyan      = {"rgba", 0, 255, 255, 255},
+    magenta   = {"rgba", 255, 0, 255, 255},
+    yellow    = {"rgba", 255, 255, 0, 255}
 }
 
 -- brick settings
@@ -60,19 +73,19 @@ local brick = {
     movedown    = 0,
     movesteps   = 24,
     cols  = {
-        [1] = op.red,
-        [2] = op.yellow,
-        [3] = op.magenta,
-        [4] = op.green,
-        [5] = op.cyan,
-        [6] = op.blue
+        [1] = colors.red,
+        [2] = colors.yellow,
+        [3] = colors.magenta,
+        [4] = colors.green,
+        [5] = colors.cyan,
+        [6] = colors.blue
     },
     bricksleft  = 0,
     totalbricks = 0,
     x           = 0,
     y           = 0,
     fading      = {},
-    rgbcols     = {}
+    fadecols    = {}
 }
 brick.wd = wd // brick.numcols
 brick.bricksleft = brick.numrows * brick.numcols
@@ -90,7 +103,7 @@ local bat = {
 
 -- ball settings
 local ball = {
-    size      = wd / 80,
+    size      = wd // 80,
     x         = 0,
     y         = 0,
     numsteps  = 80
@@ -197,24 +210,17 @@ local bonus = {
 }
 
 -- key highlight color and names
-local keycol   = "rgba 32 32 32 255"
-local mousecol = "rgba 48 0 0 255"
-local keynames = {
-     [keycol]   = { "Esc", "Tab", "Enter" },
-     [mousecol] = { "Click", "Right Click", "Mouse" }
+local keys       = "keys"
+local buttons    = "buttons"
+local keycolor   = {"rgba", 32, 32, 32, 255}
+local mousecolor = {"rgba", 48, 0, 0, 255}
+local keynames   = {
+     [keys]      = { "Esc", "Tab", "Enter" },
+     [buttons]   = { "Click", "Right Click", "Mouse" }
 }
-
--- colors as tables
-local colors = {
-    white     = {"rgba", 255, 255, 255, 255},
-    gray      = {"rgba", 128, 128, 128, 255},
-    black     = {"rgba", 0, 0, 0, 255},
-    red       = {"rgba", 255, 0, 0, 255},
-    green     = {"rgba", 0, 255, 0, 255},
-    blue      = {"rgba", 0, 0, 255, 255},
-    cyan      = {"rgba", 0, 255, 255, 255},
-    magenta   = {"rgba", 255, 0, 255, 255},
-    yellow    = {"rgba", 255, 255, 0, 255}
+local keycols    = {
+    [keys]       = keycolor,
+    [buttons]    = mousecolor
 }
 
 -- static messages and clip names
@@ -378,12 +384,12 @@ local function updatemessage(name, s, color)
         message.color = color
     end
     -- get the font size for this message
-    ov("font "..floor(message.size * text.fontscale))
+    ov("font "..((message.size * text.fontscale) // 1 | 0))
     -- create the text message clips
     message.text = s
     local textcol = message.color
     if type(textcol) == "table" then textcol = table.concat(textcol, " ") end
-    local w, h = op.maketext(message.text, name, textcol, shadow.txtx, shadow.txty)
+    local w, h = maketext(message.text, name, textcol, shadow.txtx, shadow.txty)
     -- save the clip width and height
     message.width  = w
     message.height = h
@@ -498,9 +504,9 @@ local function updateballs(value)
     local color = colors.white
     if game.balls == 1 then
         updatemessage("left", "Last ball!", colors.red)
-        color = op.red
+        color = colors.red
     elseif game.balls == 2 then
-        color = op.yellow
+        color = colors.yellow
         updatemessage("left", game.balls.." balls left", colors.yellow)
     else
         updatemessage("left", game.balls.." balls left", colors.green)
@@ -529,7 +535,7 @@ local function highlightkey(textstr, x, y, w, h, token, color)
         local oldblend = ov("blend 0")
         local oldrgba = ovt(colors.black)
         ovt {"fill", x1 + shadow.txtx, y + shadow.txty, (charw * (t2 - t1 + 1) + 5), h - 4}
-        ov(color)
+        ovt(color)
         ovt {"fill", x1, y, (charw * (t2 - t1 + 1) + 5), h - 4}
         ov("rgba "..oldrgba)
         ov("blend "..oldblend)
@@ -560,14 +566,14 @@ local function drawtextclip(name, x, y, xalign, yalign, highlight)
     end
     -- check for highlight text
     if highlight == true then
-        for color, list in pairs(keynames) do
+        for colkey, list in pairs(keynames) do
             for _, textstr in pairs(list) do
-                highlightkey(message.text, floor(x + xoffset) + edgegapl, floor(y + yoffset), w, h, textstr, color)
+                highlightkey(message.text, x + xoffset + edgegapl, y + yoffset, w, h, textstr, keycols[colkey])
             end
         end
     end
     -- draw the text clip
-    op.pastetext(floor(x + xoffset) + edgegapl, floor(y + yoffset), nil, name)
+    pastetext(x + xoffset + edgegapl, y + yoffset, nil, name)
     -- return clip dimensions
     return w, h
 end
@@ -627,14 +633,14 @@ end
 --------------------------------------------------------------------------------
 
 local function createparticles(x, y, areawd, areaht, howmany, color)
-    color = color or op.white
+    color = color or colors.white
     -- find the first free slot
     local i = 1
     while i <= #particle.particles and particle.particles[i].alpha > 0 do
         i = i + 1
     end
     for _ = 1, howmany do
-        local item = { alpha = 255, x = x - rand(floor(areawd)), y = y + rand(floor(areaht)), dx = rand() - 0.5, dy = rand() - 0.5, color = color }
+        local item = { alpha = 255, x = x - rand(areawd // 1), y = y + rand(areaht // 1), dx = rand() - 0.5, dy = rand() - 0.5, color = color }
         particle.particles[i] = item
         i = i + 1
         -- find the next free slot
@@ -648,26 +654,31 @@ end
 
 local function drawparticles()
     ov("blend 1")
-    local xy = { "fill" }
+    local xy = {"fill"}
     local m = 2
-    local lastcol = ""
-    local color
+    local color = {"rgba", 0, 0, 0, -1}
+
     for i = 1, #particle.particles do
         local item  = particle.particles[i]
         local scale = ht / 1000
         -- check if particle is still alive
-        if item.alpha > 0 then
+        local alpha = item.alpha
+        if alpha > 0 then
             if options.showparticles ~= 0 then
-                color = item.color:sub(1, -4)..floor(item.alpha)
-                if color ~= lastcol then
+                local itemcol = item.color
+                -- check if this item has a different color than the current batch
+                if alpha ~= color[5] or itemcol[2] ~= color[2] or itemcol[3] ~= color[3] or itemcol[4] ~= color[4] then
+                    -- draw the current batch
                     if m > 2 then
                         ovt(xy)
                         m = 2
-                        xy = { "fill" }
+                        xy = {"fill"}
                     end
-                    ov(color)
-                    lastcol = color
+                    -- start a new batch with the new color
+                    color = {"rgba", itemcol[2], itemcol[3], itemcol[4], alpha}
+                    ovt(color)
                 end
+                -- add the item to the batch to draw
                 xy[m] = item.x
                 xy[m + 1] = item.y
                 xy[m + 2] = 2
@@ -675,10 +686,11 @@ local function drawparticles()
                 m = m + 4
             end
             -- fade item
-            item.alpha = item.alpha - 4 * timing.framemult
-            if item.alpha < 0 then
-                item.alpha = 0
+            alpha = alpha - 4 * timing.framemult
+            if alpha < 0 then
+                alpha = 0
             end
+            item.alpha = alpha
             item.x = item.x + item.dx * timing.framemult * scale
             item.y = item.y + item.dy * timing.framemult * scale
             item.dx = item.dx * 0.99
@@ -689,6 +701,7 @@ local function drawparticles()
             end
         end
     end
+    -- draw any unfinished batch
     if m > 2 then
         ovt(xy)
     end
@@ -709,8 +722,8 @@ local function createpoints(x, y, value)
         i = i + 1
     end
     -- create the clip
-    ov("font "..floor(7 * text.fontscale).." mono")
-    local w, h = op.maketext(value, "point"..i, op.white, shadow.txtx, shadow.txty)
+    ov("font "..((7 * text.fontscale) // 1 | 0).." mono")
+    local w, h = maketext(value, "point"..i, op.white, shadow.txtx, shadow.txty)
 
     -- save the item
     local item = { duration = 60, x = (x + brick.wd / 2 - w / 2), y = (y + brick.ht / 2 - h / 2) }
@@ -761,7 +774,8 @@ local function drawfadingbricks(pass, xoff, yoff)
     ov("blend 1")
     -- get the list of fading bricks
     local fading = brick.fading
-    local rgbcols = brick.rgbcols
+    local fadecols = brick.fadecols
+    local fadecolor = shadow.fadecolor
     for i = 1, #fading do
         local alpha = fading[i].alpha
         -- find each shadow that hasn't fully faded
@@ -777,11 +791,13 @@ local function drawfadingbricks(pass, xoff, yoff)
                 local fy = fading[i].y
                 local y = (fy + brick.offsety) * brick.ht
                 local x = (fading[i].x - 1) * brick.wd + edgegapl
-                -- pick the colour depending on drawing brick or shadow
+                -- pick the color depending on drawing brick or shadow
                 if (pass == 1) then
-                    ov("rgba "..shadow.rgb.." "..alpha)
+                    fadecolor[5] = alpha
+                    ovt(fadecolor)
                 else
-                    ov(rgbcols[fy].." "..(alpha * 2))
+                    fadecols[fy][5] = alpha * 2
+                    ovt(fadecols[fy])
                 end
                 ovt {"fill", (x + xoff), (y + yoff), (brick.wd - 1), (brick.ht - 1)}
             end
@@ -850,20 +866,20 @@ local function drawbricks()
         drawfadingbricks(pass, xoff, yoff)
         if pass == 1 then
             ov("blend 1")
-            ov(shadow.col)
+            ovt(shadow.color)
         else
             ov("blend 0")
         end
         for y = 1, brick.numrows do
             local bricks = brick.rows[y]
             if pass == 2 then
-                ov(brick.cols[y])
+                ovt(brick.cols[y])
             end
             local by = ((y + brick.offsety) * bht) // 1 + yoff
             local bx = edgegapl + xoff
             for x = 1, ncols do
                 if bricks[x] then
-                    ovt({"fill", bx, by, bwdm1, bhtm1})
+                    ovt {"fill", bx, by, bwdm1, bhtm1}
                 end
                 bx = bx + bwd
             end
@@ -879,13 +895,13 @@ local function drawball()
     local oldwidth = ov("lineoption width "..(ball.size // 2))
     ov("blend 1")
     if options.showshadows == 1 then
-        ov(shadow.col)
-        ov("ellipse "..(floor(ball.x - ball.size / 2) + shadow.x).." "..(floor(ball.y - ball.size / 2) + shadow.y).." "..floor(ball.size).." "..floor(ball.size))
+        ovt(shadow.color)
+        ov("ellipse "..(((ball.x - ball.size // 2) + shadow.x) // 1 | 0).." "..(((ball.y - ball.size // 2) + shadow.y) // 1 | 0).." "..ball.size.." "..ball.size)
     end
     ovt(colors.white)
-    ov("ellipse "..floor(ball.x - ball.size / 2).." "..floor(ball.y - ball.size / 2).." "..floor(ball.size).." "..floor(ball.size))
+    ov("ellipse "..((ball.x - ball.size // 2) // 1 | 0).." "..((ball.y - ball.size // 2) // 1 | 0).." "..ball.size.." "..ball.size)
     if rand() < particle.ballpartchance * timing.framemult then
-        createparticles(ball.x + ball.size / 2, ball.y - ball.size / 2, ball.size, ball.size, particle.ballparticles)
+        createparticles(ball.x + ball.size // 2, ball.y - ball.size // 2, ball.size, ball.size, particle.ballparticles)
     end
     ov("lineoption width "..oldwidth)
 end
@@ -896,7 +912,8 @@ local function drawbat(alpha)
     alpha = alpha or 256
     ov("blend 1")
     if options.showshadows == 1 then
-        ov("rgba "..shadow.rgb.." "..(alpha//2))
+        shadow.fadecolor[5] = alpha // 2
+        ovt(shadow.fadecolor)
         ovt {"fill", bat.x + shadow.x, bat.y + shadow.y, bat.wd, bat.ht}
     end
     -- draw the bat in red if mouse is off the overlay
@@ -938,9 +955,10 @@ local function initbricks()
     -- clear the fading bricks (used when brick hit)
     brick.fading = {}
 
-    -- create the rgb colours from the brick colours
+    -- create the brick fade colors from the brick colors
     for i = 1, #brick.cols do
-        brick.rgbcols[i] = brick.cols[i]:sub(1, -4)
+        local col = brick.cols[i]
+        brick.fadecols[i] = {"rgba", col[2], col[3], col[4], col[5]}
     end
 
     -- set the required bricks alive
@@ -982,7 +1000,7 @@ end
 --------------------------------------------------------------------------------
 
 local function initball()
-    ball.size = wd / 80
+    ball.size = wd // 80
     ball.x    = (wd - ball.size) / 2
     ball.y    = bat.y - ball.size
 end
@@ -990,9 +1008,9 @@ end
 --------------------------------------------------------------------------------
 
 local function initshadow()
-    shadow.x   = -wd // 100
-    shadow.y   = ht // 100
-    shadow.col = "rgba "..shadow.rgb.." "..shadow.alpha
+    shadow.x      = -wd // 100
+    shadow.y      = ht // 100
+    shadow.color = {"rgba", 0, 0, 0, shadow.alpha}
 end
 
 --------------------------------------------------------------------------------
@@ -1316,7 +1334,7 @@ local function resizegame(newwd, newht)
     particle.brickparticles = brick.wd * brick.ht // 10
     bat.wd                  = wd // 10
     bat.ht                  = brick.ht
-    ball.size               = wd / 80
+    ball.size               = wd // 80
     local edgegap           = wd - brick.wd * brick.numcols
     edgegapl                = edgegap // 2
     edgegapr                = edgegap - edgegapl
@@ -1503,7 +1521,7 @@ local function drawoption(key, setting, state, leftx, h, y)
     if key ~= "key" then
         ovt(colors.black)
         ovt {"fill", (leftx + edgegapl + shadow.txtx), (y + shadow.txty), (messages[key].width + 3), (messages[key].height - 4)}
-        ov(keycol)
+        ovt(keycolor)
         ovt {"fill", (leftx + edgegapl), y, (messages[key].width + 3), (messages[key].height - 4)}
     end
     drawtextclip(key, leftx, y, text.alignleft)
@@ -1520,7 +1538,7 @@ local function drawpercent(downkey, upkey, setting, valname, leftx, h, y)
     ovt(colors.black)
     ovt {"fill", (leftx + edgegapl + shadow.txtx), (y + shadow.txty), (width + 3), (height - 4)}
     ovt {"fill", (leftx + width * 2 + edgegapl + shadow.txtx), (y + shadow.txty), (width + 3), (height - 4)}
-    ov(keycol)
+    ovt(keycolor)
     ovt {"fill", (leftx + edgegapl), y, (width + 3), (height - 4)}
     ovt {"fill", (leftx + width * 2 + edgegapl), y, (width + 3), (height - 4)}
     drawtextclip(downkey, leftx, y, text.alignleft)
@@ -1832,7 +1850,7 @@ local function breakout()
                 -- check for new ball
                 if not game.newball then
                     -- update ball position incrementally
-                    local framesteps = floor(ball.numsteps * timing.framemult)
+                    local framesteps = (ball.numsteps * timing.framemult) // 1
                     local i = 1
                     while i <= framesteps and not game.newball do
                         i = i + 1
@@ -1878,7 +1896,7 @@ local function breakout()
                                 -- reset combo
                                 if game.comboextra - game.comboraw > 0 then
                                     if options.comboscore == 1 then
-                                        notify("Combo x "..(game.combo - 1).." Score "..game.comboextra - game.comboraw.." (+"..(floor(100 * game.comboextra / game.comboraw) - 100).."%)")
+                                        notify("Combo x "..(game.combo - 1).." Score "..game.comboextra - game.comboraw.." (+"..(((100 * game.comboextra // game.comboraw) - 100) // 1 | 0).."%)")
                                     end
                                 end
                                 resetcombo()
@@ -1912,7 +1930,7 @@ local function breakout()
                             -- reset combo
                             if game.comboextra - game.comboraw > 0 then
                                 if options.comboscore == 1 then
-                                    notify("Combo x "..(game.combo - 1).." Score "..game.comboextra - game.comboraw.." (+"..(floor(100 * game.comboextra / game.comboraw) - 100).."%)")
+                                    notify("Combo x "..(game.combo - 1).." Score "..game.comboextra - game.comboraw.." (+"..(((100 * game.comboextra / game.comboraw) - 100) // 1 | 0).."%)")
                                 end
                             end
                             resetcombo()
@@ -1927,8 +1945,8 @@ local function breakout()
                                 -- hit a brick!
                                 brick.rows[brick.y][brick.x] = false
                                 -- adjust score
-                                local pointval = floor((game.level + 9) * (brick.numrows - brick.y + 1) * game.combomult)
-                                local rawpoints = floor((game.level + 9) * (brick.numrows - brick.y + 1))
+                                local pointval = ((game.level + 9) * (brick.numrows - brick.y + 1) * game.combomult) // 1 | 0
+                                local rawpoints = ((game.level + 9) * (brick.numrows - brick.y + 1)) // 1 | 0
                                 if game.combo > 1 then
                                     game.comboraw = game.comboraw + rawpoints
                                     game.comboextra = game.comboextra + pointval
