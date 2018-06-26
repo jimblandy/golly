@@ -102,7 +102,7 @@ end
 --------------------------------------------------------------------------------
 
 local function draw_line(x1, y1, x2, y2)
-    ovt {"line", x1, y1, x2, y2}
+    ovt{"line", x1, y1, x2, y2}
 end
 
 --------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ local function create_hextile()
     hextilewd = hexwd + edgelen
     hextileht = hexht
     ov("rgba "..state_rgba[0])
-    ovt {"fill", x3, y4, hextilewd, hextileht}
+    ovt{"fill", x3, y4, hextilewd, hextileht}
     ov("rgba "..grid_rgba)
     draw_line(x0, y0, x1, y1)
     -- skip bottom edge
@@ -258,11 +258,11 @@ local function fill_hexagon(xc, yc, state)
 
     if edgelen < mingrid then
         if edgelen == 1 then
-            ovt {"set", xc, yc}
+            ovt{"set", xc, yc}
         else
             local x = int(xc - edgelen/2 + 0.5)
             local y = int(yc - edgelen/2 + 0.5)
-            ovt {"fill", x, y, edgelen, edgelen}
+            ovt{"fill", x, y, edgelen, edgelen}
         end
     else
         -- adjust xc and/or yc if they are outside overlay but hexagon is partially visible
@@ -299,7 +299,7 @@ local function fill_hexagon(xc, yc, state)
         end
         if check_pixel then
             -- avoid filling grid line
-            if ovt {"get", xc, yc} == grid_rgba then return end
+            if ovt{"get", xc, yc} == grid_rgba then return end
         end
         ov("flood "..xc.." "..yc)
     end
@@ -404,7 +404,7 @@ end
 local function draw_boundary_line(x1, y1, x2, y2)
     x1, y1 = cell_to_hexagon(x1, y1)
     x2, y2 = cell_to_hexagon(x2, y2)
-    ovt {"line", x1, y1, x2, y2}
+    ovt{"line", x1, y1, x2, y2}
 end
 
 --------------------------------------------------------------------------------
@@ -589,8 +589,8 @@ end
 --------------------------------------------------------------------------------
 
 local function draw_tool_bar()
-    ov(op.white)
-    ovt {"fill", 0, 0, viewwd, toolbarht}
+    ovt(op.twhite)
+    ovt{"fill", 0, 0, viewwd, toolbarht}
 
     -- must draw line at bottom edge of tool bar in case a cell color is white
     ov("rgba "..show_grid_rgba)
@@ -636,13 +636,13 @@ local function refresh()
     if (gridwd > 0 or gridht > 0) and border_visible() then
         -- fill overlay with border color
         local br, bg, bb = g.getcolor("border")
-        ov("rgba "..br.." "..bg.." "..bb.." 255")
-        ovt {"fill"}
+        ovt{"rgba", br, bg, bb, 255}
+        ovt{"fill"}
         draw_bounded_grid()
     else
         -- fill overlay with state 0 color
         ov("rgba "..state_rgba[0])
-        ovt {"fill"}
+        ovt{"fill"}
         if edgelen >= mingrid then
             draw_hex_grid()
         end
@@ -1037,7 +1037,7 @@ local function click_in_overlay(event)
         edit_hexagons(x, y)
 
     elseif g.getcursor() == "Pick" then
-        local state = get_state( ovt {"get", x, y} )
+        local state = get_state( ovt{"get", x, y} )
         if state >= 0 then
             g.setoption("drawingstate", state)
             g.update()  -- updates edit bar
@@ -1277,18 +1277,18 @@ r             - reset to starting pattern
                (click or hit any key to close help)]]
 
     ov("font 11 mono-bold")
-    ov(op.black)
+    ovt(op.tblack)
     local w, h = split(ov("text temp "..helptext))
     w = tonumber(w) + 20
     h = tonumber(h) + 20
     local x = int((viewwd - w) / 2)
     local y = int((viewht - h) / 2)
-    ov(op.gray)
-    ovt {"fill", x, y, w, h}
-    ov("rgba 255 253 217 255") -- pale yellow (matches Help window)
-    ovt {"fill", (x+2), (y+2), (w-4), (h-4)}
+    ovt(op.tgray)
+    ovt{"fill", x, y, w, h}
+    ovt{"rgba", 255, 253, 217, 255} -- pale yellow (matches Help window)
+    ovt{"fill", (x+2), (y+2), (w-4), (h-4)}
     local oldblend = ov("blend 1")
-    ovt {"paste", (x+10), (y+10), "temp"}
+    ovt{"paste", (x+10), (y+10), "temp"}
     ov("blend "..oldblend)
     ov("update")
 
@@ -1340,7 +1340,7 @@ local function create_overlay()
     ebutton = op.button("X", exit_script)
 
     -- create a slider for zooming in/out
-    zslider = op.slider("", op.black, (maxedge-minedge+1)*3, minedge, maxedge, zoom_slider)
+    zslider = op.slider("", op.tblack, (maxedge-minedge+1)*3, minedge, maxedge, zoom_slider)
 
     toolbarht = 20 + ssbutton.ht
     midy = int(viewht/2 + toolbarht/2)

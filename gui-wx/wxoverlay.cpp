@@ -2645,39 +2645,67 @@ const char* Overlay::DoReplace(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSetRGBATable(const double* coords, int n)
+const char* Overlay::DoSetRGBATable(const char* cmd, lua_State* L, int n, int* nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
-    // check that the arguments are supplied
-    if (n != 4) return OverlayError("rgba command requires 4 arguments");
+    // check if there are arguments
+    int valid = false;
+    int i = 2;
 
-    int a1 = (int)coords[0];
-    int a2 = (int)coords[1];
-    int a3 = (int)coords[2];
-    int a4 = (int)coords[3];
+    if (n > 1) {
+        // attempt to read the arguments
+        lua_rawgeti(L, 1, i++);
+        int a1 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) return OverlayError("rgba command has illegal red argument");
+        lua_rawgeti(L, 1, i++);
+        int a2 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) return OverlayError("rgba command has illegal green argument");
+        lua_rawgeti(L, 1, i++);
+        int a3 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) return OverlayError("rgba command has illegal blue argument");
+        lua_rawgeti(L, 1, i++);
+        int a4 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) return OverlayError("rgba command has illegal alpha argument");
 
-    if (a1 < 0 || a1 > 255 ||
-        a2 < 0 || a2 > 255 ||
-        a3 < 0 || a3 > 255 ||
-        a4 < 0 || a4 > 255) {
-        return OverlayError("rgba values must be from 0 to 255");
+        // validate argument range
+        if (a1 < 0 || a1 > 255 ||
+            a2 < 0 || a2 > 255 ||
+            a3 < 0 || a3 > 255 ||
+            a4 < 0 || a4 > 255) {
+            return OverlayError("rgba values must be from 0 to 255");
+        }
+
+        // return the current rgba values as a table on the Lua stack
+        // {"rgba", r, g, b, a}
+        lua_newtable(L);
+        i = 1;
+        lua_pushstring(L, cmd);
+        lua_rawseti(L, -2, i++);
+        lua_pushinteger(L, r);
+        lua_rawseti(L, -2, i++);
+        lua_pushinteger(L, g);
+        lua_rawseti(L, -2, i++);
+        lua_pushinteger(L, b);
+        lua_rawseti(L, -2, i++);
+        lua_pushinteger(L, a);
+        lua_rawseti(L, -2, i++);
+        *nresults = 1;  // 1 result: the table
+
+        // set the new values
+        r = (unsigned char)a1;
+        g = (unsigned char)a2;
+        b = (unsigned char)a3;
+        a = (unsigned char)a4;
+    } else {
+        return OverlayError("rgba command requires 4 arguments");
     }
 
-    unsigned char oldr = r;
-    unsigned char oldg = g;
-    unsigned char oldb = b;
-    unsigned char olda = a;
-
-    r = (unsigned char) a1;
-    g = (unsigned char) a2;
-    b = (unsigned char) a3;
-    a = (unsigned char) a4;
-
-    // return old values
-    static char result[16];
-    sprintf(result, "%hhu %hhu %hhu %hhu", oldr, oldg, oldb, olda);
-    return result;
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -2827,19 +2855,18 @@ const char* Overlay::GetCoordinatePair(char* args, int* x, int* y)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoSetTable(const double* coords, int n)
+const char* Overlay::DoSetTable(lua_State* L, int n, int* nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
-    // check that coordinates are supplied and that there are an even number
-    if (n < 2) return OverlayError("set command requires coordinate pairs");
-    if ((n & 1) != 0) return OverlayError("set command has illegal coordinates");
+    // check if there are arguments
+    // note: it is possible that n > 1 and arguments have nil values
+    int valid = false;
+    int i = 2;
+    int type = -1;
 
     // mark target clip as changed
     DisableTargetClipIndex();
-
-    // draw each pixel in the list
-    int j = 0;
 
     // check for alpha blending
     if (alphablend && a < 255) {
@@ -2848,8 +2875,14 @@ const char* Overlay::DoSetTable(const double* coords, int n)
         if (a > 0) {
             do {
                 // get next pixel coordinate
-                int x = (int)coords[j++];
-                int y = (int)coords[j++];
+                lua_rawgeti(L, 1, i++);
+                int x = (int)lua_tonumberx(L, -1, &valid);
+                if (!valid) break;
+                lua_pop(L, 1);
+                lua_rawgeti(L, 1, i++);
+                int y = (int)lua_tonumberx(L, -1, &valid);
+                if (!valid) break;
+                lua_pop(L, 1);
 
                 // ignore pixel if outside pixmap edges
                 if (PixelInTarget(x, y)) {
@@ -2882,7 +2915,14 @@ const char* Overlay::DoSetTable(const double* coords, int n)
                         }
                     }
                 }
-            } while (j < n);
+            } while (i <= n);
+
+            // check if loop terminated because of failed number conversion
+            if (!valid) {
+                // get the type of the argument
+                type = lua_type(L, -1);
+                lua_pop(L, 1);
+            }
         }
     }
     else {
@@ -2892,16 +2932,49 @@ const char* Overlay::DoSetTable(const double* coords, int n)
         unsigned int* lpixmap = (unsigned int*)pixmap;
         do {
             // get next pixel coordinate
-            int x = (int)coords[j++];
-            int y = (int)coords[j++];
+            lua_rawgeti(L, 1, i++);
+            int x = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            int y = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
 
             // ignore pixel if outside pixmap edges
             if (PixelInTarget(x, y)) {
                 *(lpixmap + y*wd + x) = rgba;
             }
-        } while (j < n);
+        } while (i <= n);
+
+        // check if loop terminated because of failed number conversion
+        if (!valid) {
+            // get the type of the argument
+            type = lua_type(L, -1);
+            lua_pop(L, 1);
+        }
     }
 
+    // check if there were errors
+    if (!valid) {
+        // check if the argument number is a multiple of 2 and the argument is nil
+        if ((((i - 3) & 1) == 0) && (type == LUA_TNIL)) {
+            // command was valid
+            valid = true;
+        }
+    }
+
+    if (!valid) {
+        // return appropriate error message
+        switch ((i - 3) & 1) {
+            case 0:
+                return OverlayError("set command has illegal x");
+                break;
+            case 1:
+                return OverlayError("set command has illegal y");
+                break;
+        }
+    }
     return NULL;
 }
 
@@ -2935,23 +3008,45 @@ const char* Overlay::DoSetPixel(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoGetTable(const double* coords, int n)
+const char* Overlay::DoGetTable(lua_State* L, int n, int* nresults)
 {
     if (pixmap == NULL) return "";
 
-    // check that coordinates are supplied
-    if (n != 2) return OverlayError("get command requires 2 arguments");
+    // check if there are arguments
+    int valid = false;
+    int i = 2;
 
-    int x = (int)coords[0];
-    int y = (int)coords[1];
+    if (n > 1) {
+        // attempt to read the arguments
+        lua_rawgeti(L, 1, i++);
+        int x = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L,1);
+        if (!valid) return OverlayError("get command has illegal x argument");
+        lua_rawgeti(L, 1, i++);
+        int y = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L,1);
+        if (!valid) return OverlayError("get command has illegal y argument");
 
-    // check if x,y is outside pixmap
-    if (!PixelInTarget(x, y)) return "";
-
-    unsigned char* p = pixmap + y*wd*4 + x*4;
-    static char result[16];
-    sprintf(result, "%hhu %hhu %hhu %hhu", p[0], p[1], p[2], p[3]);
-    return result;
+        // check if x,y is outside pixmap
+        if (!PixelInTarget(x, y)) {
+            // return -1 for all components to indicate outside pixmap
+            lua_pushinteger(L, -1);
+            lua_pushinteger(L, -1);
+            lua_pushinteger(L, -1);
+            lua_pushinteger(L, -1);
+        } else {
+            // get and return the pixel rgba values
+            unsigned char* p = pixmap + y*wd*4 + x*4;
+            lua_pushinteger(L, p[0]);
+            lua_pushinteger(L, p[1]);
+            lua_pushinteger(L, p[2]);
+            lua_pushinteger(L, p[3]);
+        }
+        *nresults = 4;
+    } else {
+        return OverlayError("get command requires 2 arguments");
+    }
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -3444,47 +3539,148 @@ void Overlay::DrawAntialiasedLine(int x0, int y0, int x1, int y1)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoLineTable(const double* coords, int n, bool connected)
+const char* Overlay::DoLineTable(lua_State* L, int n, bool connected, int* nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
-    // check that coordinates are supplied and that there are an even number
-    if (connected) {
-        if (n < 4) return OverlayError("line command requires at least two coordinate pairs");
-        if ((n & 1) != 0) return OverlayError("line command has illegal coordinates");
+    // check if there are arguments
+    // note: it is possible that n > 1 and arguments have nil values
+    int valid = false;
+    int i = 2;
+    int type = -1;
+
+    if (n > 1) {
+        // get line start coordinate pair
+        lua_rawgeti(L, 1, i++);
+        int x1 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) {
+            if (connected) {
+                return OverlayError("line command has illegal start x");
+            } else {
+                return OverlayError("lines command has illegal start x");
+            }
+        }
+        lua_rawgeti(L, 1, i++);
+        int y1 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) {
+            if (connected) {
+                return OverlayError("line command has illegal start y");
+            } else {
+                return OverlayError("lines command has illegal start y");
+            }
+        }
+        // get line end coordinate pair
+        lua_rawgeti(L, 1, i++);
+        int x2 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) {
+            if (connected) {
+                return OverlayError("line command has illegal end x");
+            } else {
+                return OverlayError("lines command has illegal end x");
+            }
+        }
+        lua_rawgeti(L, 1, i++);
+        int y2 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) {
+            if (connected) {
+                return OverlayError("line command has illegal end y");
+            } else {
+                return OverlayError("lines command has illegal end y");
+            }
+        }
+
+        // mark target clip as changed
+        DisableTargetClipIndex();
+
+        // draw the first line
+        RenderLine(x1, y1, x2, y2);
+
+        // draw any follow on lines
+        while (i <= n) {
+            if (connected) {
+                // start point is previous line's end point
+                x1 = x2;
+                y1 = y2;
+            } else {
+                // read the next start point
+                lua_rawgeti(L, 1, i++);
+                x1 = (int)lua_tonumberx(L, -1, &valid);
+                if (!valid) break;
+                lua_pop(L, 1);
+                lua_rawgeti(L, 1, i++);
+                y1 = (int)lua_tonumberx(L, -1, &valid);
+                if (!valid) break;
+                lua_pop(L, 1);
+            }
+            // read the next end point
+            lua_rawgeti(L, 1, i++);
+            x2 = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            y2 = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+
+            // draw the line
+            RenderLine(x1, y1, x2, y2);
+        }
+
+        // check if loop terminated because of failed number conversion
+        if (!valid) {
+            // get the type of the argument
+            type = lua_type(L, -1);
+            lua_pop(L, 1);
+        }
     }
     else {
-        if (n < 4) return OverlayError("lines command requires at least two coordinate pairs");
-        if ((n & 3) != 0) return OverlayError("lines command has illegal coordinates");
-    }
-
-    // get the first coordinate pairs
-    int j = 0;
-    int x1 = (int)coords[j++];
-    int y1 = (int)coords[j++];
-    int x2 = (int)coords[j++];
-    int y2 = (int)coords[j++];
-
-    // mark target clip as changed
-    DisableTargetClipIndex();
-
-    // draw the line
-    RenderLine(x1, y1, x2, y2);
-
-    // read any further coordinates
-    while (j < n) {
+        // no arguments supplied
         if (connected) {
-            x1 = x2;
-            y1 = y2;
+            return OverlayError("line command requires at least two coordinate pairs");
+        } else {
+            return OverlayError("lines command requires at least two coordinate pairs");
         }
-        else {
-            x1 = (int)coords[j++];
-            y1 = (int)coords[j++];
-        }
-        x2 = (int)coords[j++];
-        y2 = (int)coords[j++];
-        RenderLine(x1, y1, x2, y2);
     }
+
+    // check if there were errors
+    if (!valid) {
+        if (connected) {
+            // check if the argument number is a multiple of 2 and the argument is nil
+            if (!((((i - 3) & 1) == 0) && (type == LUA_TNIL))) {
+                switch ((i - 3) & 1) {
+                    case 0:
+                        return OverlayError("line command has illegal end x");
+                        break;
+                    case 1:
+                        return OverlayError("line command has illegal end y");
+                        break;
+                }
+            }
+        } else{
+            // check if the argument number is a multiple of 4 and the argument is nil
+            if (!((((i - 3) & 3) == 0) && (type == LUA_TNIL))) {
+                switch ((i - 3) & 1) {
+                    case 0:
+                        return OverlayError("lines command has illegal start x");
+                        break;
+                    case 1:
+                        return OverlayError("lines command has illegal start y");
+                        break;
+                    case 2:
+                        return OverlayError("lines command has illegal end x");
+                        break;
+                    case 3:
+                        return OverlayError("lines command has illegal end y");
+                        break;
+                }
+            }
+        }
+    }
+
     return NULL;
 }
 
@@ -4006,26 +4202,39 @@ void Overlay::FillRect(int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoFillTable(const double* coords, int n)
+const char* Overlay::DoFillTable(lua_State* L, int n, int* nresults)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
-    // check that coordinates are supplied and that there a multiple of 4
-    if (n != 0 && n < 4) return OverlayError("fill command requires 0 or at least 4 arguments");
-    if ((n & 3) != 0) return OverlayError("fill command has illegal coordinates");
+    // check if there are arguments
+    // note: it is possible that n > 1 and arguments have nil values
+    int valid = false;
+    int i = 2;
+    int type = -1;
 
-    if (n > 0) {
-        int j = 0;
-        int x = 0, y = 0, w = 0, h = 0;
-
+    if (n > 1) {
         // mark target clip as changed
         DisableTargetClipIndex();
 
+        // draw each rectangle
         do {
-            x = (int)coords[j++];
-            y = (int)coords[j++];
-            w = (int)coords[j++];
-            h = (int)coords[j++];
+            // get the coordinates
+            lua_rawgeti(L, 1, i++);
+            int x = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            int y = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            int w = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            int h = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
 
             // treat non-positive w/h as inset from overlay's width/height
             if (w <= 0) w = wd + w;
@@ -4048,13 +4257,49 @@ const char* Overlay::DoFillTable(const double* coords, int n)
                 // fill visible rect with current RGBA values
                 FillRect(x, y, w, h);
             }
-        } while (j < n);
-    } else {
-        // mark target clip as changed
-        DisableTargetClipIndex();
+        } while (i <= n);
 
+        // check if loop terminated because of failed number conversion
+        if (!valid) {
+            // get the type of the argument
+            type = lua_type(L, -1);
+            lua_pop(L, 1);
+        }
+    }
+
+    // check if there were no arguments
+    // either none supplied, or the first argument value was nil
+    if (n == 1 || (i == 3 && type == LUA_TNIL)) {
         // fill entire target with current RGBA values
         FillRect(0, 0, wd, ht);
+        valid = true;
+    }
+
+    // check if there were errors
+    if (!valid) {
+        // check if the argument number is a multiple of 4 and the argument is nil
+        if ((((i - 3) & 3) == 0) && (type == LUA_TNIL)) {
+            // command was valid
+            valid = true;
+        }
+    }
+
+    if (!valid) {
+        // return appropriate error message
+        switch ((i - 3) & 3) {
+            case 0:
+                return OverlayError("fill command has illegal x");
+                break;
+            case 1:
+                return OverlayError("fill command has illegal y");
+                break;
+            case 2:
+                return OverlayError("fill command has illegal width");
+                break;
+            case 3:
+                return OverlayError("fill command has illegal height");
+                break;
+        }
     }
 
     return NULL;
@@ -4287,7 +4532,79 @@ const char* Overlay::DoOptimize(const char* args)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoPasteTable(const double* coords, int n, const char* clip)
+const char* Overlay::DoPasteTable(lua_State* L, int n, int* nresults)
+{
+    const char* result = NULL;
+
+    // clip name
+    const char* clipname = NULL;
+    int clipi = 0;
+
+    // allocate space for coordinate values
+    if (n > 1) {
+        int* coords = (int*)malloc((n - 1) * sizeof(int));
+        int j = 0;
+
+        // get the array of coordinates
+        int valid = true;
+        int i = 2;
+        while (i <= n && valid) {
+            // read the element at the next index
+            lua_rawgeti(L, 1, i);
+            // attempt to decode as a number
+            lua_Number value = lua_tonumberx(L, -1, &valid);
+            if (valid) {
+                // store the number
+                coords[j++] = (int)value;
+            }
+            else {
+                // was not a number so check the type
+                int type = lua_type(L, -1);
+                if (type == LUA_TSTRING) {
+                    // first time decode as a string after that it's an error
+                    if (clipname == NULL) {
+                        clipname = lua_tostring(L, -1);
+                        clipi = i;
+                        valid = true;
+                    }
+                }
+                else {
+                    if (type == LUA_TNIL) {
+                        // if it's nil then stop
+                        n = i - 1;
+                        valid = true;
+                    }
+                }
+            }
+            lua_pop(L, 1);
+            i++;
+        }
+
+        // clip name must be last argument
+        if (clipname && (clipi != n)) {
+            valid = false;
+        }
+
+        // check if the coordinates were all numbers
+        if (valid) {
+            // call the required function
+            result = DoPasteTableInternal(coords, j, clipname);
+        }
+
+        // free argument list
+        free(coords);
+
+        if (!valid) {
+            result = OverlayError("paste command has invalid arguments");
+        }
+    }
+
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoPasteTableInternal(const int* coords, int n, const char* clip)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
@@ -4322,8 +4639,8 @@ const char* Overlay::DoPasteTable(const double* coords, int n, const char* clip)
     // get the first coordinate pair
     int ci = 0;
     do {
-        int x = (int)coords[ci++];
-        int y = (int)coords[ci++];
+        int x = coords[ci++];
+        int y = coords[ci++];
 
         // set original width and height since these can be changed below if clipping required
         w = ow;
@@ -6300,15 +6617,15 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoOverlayCommand(const char* cmd, const double* coords, int n, const char* clip)
+const char* Overlay::DoOverlayTable(const char* cmd, lua_State* L, int n, int* nresults)
 {
     // determine which command to run
-    if ((strcmp(cmd, "set")) == 0)      return DoSetTable(coords, n);
-    if ((strcmp(cmd, "get")) == 0)      return DoGetTable(coords, n);
-    if ((strcmp(cmd, "paste")) == 0)    return DoPasteTable(coords, n, clip);
-    if ((strcmp(cmd, "rgba")) == 0)     return DoSetRGBATable(coords, n);
-    if ((strcmp(cmd, "line")) == 0)     return DoLineTable(coords, n, true);
-    if ((strcmp(cmd, "lines")) == 0)    return DoLineTable(coords, n, false);
-    if ((strcmp(cmd, "fill")) == 0)     return DoFillTable(coords, n);
+    if ((strcmp(cmd, "set")) == 0)      return DoSetTable(L, n, nresults);
+    if ((strcmp(cmd, "get")) == 0)      return DoGetTable(L, n, nresults);
+    if ((strcmp(cmd, "paste")) == 0)    return DoPasteTable(L, n, nresults);
+    if ((strcmp(cmd, "rgba")) == 0)     return DoSetRGBATable(cmd, L, n, nresults);
+    if ((strcmp(cmd, "line")) == 0)     return DoLineTable(L, n, true, nresults);
+    if ((strcmp(cmd, "lines")) == 0)    return DoLineTable(L, n, false, nresults);
+    if ((strcmp(cmd, "fill")) == 0)     return DoFillTable(L, n, nresults);
     return OverlayError("unknown command");
 }

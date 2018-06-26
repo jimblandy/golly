@@ -279,13 +279,13 @@ $(OBJDIR)/wxstatus.o: wxstatus.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxstatus.cpp
 
 $(OBJDIR)/wxview.o: wxview.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxview.cpp
+	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxview.cpp
 
 $(OBJDIR)/wxoverlay.o: wxoverlay.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxoverlay.cpp
+	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxoverlay.cpp
 
 $(OBJDIR)/wxrender.o: wxrender.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
+	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxrender.cpp
 
 $(OBJDIR)/wxlua.o: wxlua.cpp
 	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxlua.cpp
@@ -297,10 +297,10 @@ $(OBJDIR)/wxpython.o: wxpython.cpp
 	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp
 
 $(OBJDIR)/wxscript.o: wxscript.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxscript.cpp
+	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxfile.cpp
+	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxfile.cpp
 
 $(OBJDIR)/wxedit.o: wxedit.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxedit.cpp
@@ -321,7 +321,7 @@ $(OBJDIR)/wxlayer.o: wxlayer.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp
 
 $(OBJDIR)/wxmain.o: wxmain.cpp
-	$(CXXC) $(CXXFLAGS) -c -o $@ wxmain.cpp
+	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxmain.cpp
 
 $(OBJDIR)/wxgolly.o: wxgolly.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxgolly.cpp

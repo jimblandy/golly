@@ -25,4 +25,4 @@ PYTHON_INCLUDE = -I"C:\Python27-64\include"
 #ENABLE_SOUND = 1
 
 # Change the next line to specify where you installed IrrKLang
-IRRKLANGDIR = C:\irrKlang-64bit-1.5.0
+IRRKLANGDIR = C:\irrKlang-64bit-1.6.0

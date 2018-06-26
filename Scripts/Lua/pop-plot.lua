@@ -102,7 +102,7 @@ local function pastetext(x, y, transform)
     -- text background is transparent so paste needs to use alpha blending
     ov("blend 1")
     ov(transform)
-    ovt {"paste", (x+originx), (y+originy), "textclip"}
+    ovt{"paste", (x+originx), (y+originy), "textclip"}
     ov(op.identity)
     ov("blend 0")
 end
@@ -118,7 +118,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawline(x1, y1, x2, y2)
-    ovt {"line", (x1+originx), (y1+originy), (x2+originx), (y2+originy)}
+    ovt{"line", (x1+originx), (y1+originy), (x2+originx), (y2+originy)}
 end
 
 --------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ local function drawdot(x, y)
     -- draw a small "+" mark
     x = x + originx
     y = y + originy
-    ovt {"set", x, y, x-1, y, x+1, y, x, y-1, x, y+1}
+    ovt{"set", x, y, x-1, y, x+1, y, x, y-1, x, y+1}
 end
 
 --------------------------------------------------------------------------------
@@ -171,7 +171,7 @@ end
 local function draw_plot()
     -- fill area above control bar with background color
     ov(bgcolor..int(255*opacity/100+0.5))
-    ovt {"fill", 0, 0, owd, (oht-controlht)}
+    ovt{"fill", 0, 0, owd, (oht-controlht)}
 
     local minpop = min(pops)
     local maxpop = max(pops)
@@ -278,7 +278,7 @@ local function show_opacity()
     ov(bgcolor..255)
     local x = oslider.x + oslider.wd + 2
     local y = oht-oslider.ht-10 + int((oslider.ht-ht)/2)
-    ovt {"fill", x, y, 50, ht}
+    ovt{"fill", x, y, 50, ht}
     pastetext(x - originx, y - originy)
 end
 
@@ -307,10 +307,10 @@ local function create_overlay()
     -- create a check box for showing lines or dots
     op.textshadowx = 0
     op.textshadowy = 0
-    lbox = op.checkbox("Lines", op.black, toggle_lines)
+    lbox = op.checkbox("Lines", op.tblack, toggle_lines)
 
     -- create a slider for adjusting opacity of background
-    oslider = op.slider("Opacity:", op.black, 101, 0, 100, do_slider)
+    oslider = op.slider("Opacity:", op.tblack, 101, 0, 100, do_slider)
 
     controlht = 20 + sbutt.ht
 end
@@ -319,7 +319,7 @@ end
 
 local function draw_controls()
     ov(bgcolor..255)
-    ovt {"fill", 0, (oht-controlht), owd, controlht}
+    ovt{"fill", 0, (oht-controlht), owd, controlht}
 
     -- show the Save and Cancel buttons at bottom right corner of overlay
     sbutt.show(owd-cbutt.wd-sbutt.wd-20, oht-sbutt.ht-10)

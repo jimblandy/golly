@@ -44,7 +44,7 @@ LDFLAGS := -Wl,--as-needed $(LDFLAGS)
 #ENABLE_SOUND = 1
 
 ifdef ENABLE_SOUND
-    IRRKLANGDIR = /home/chris/irrKlang-64bit-1.5.0
+    IRRKLANGDIR = /home/chris/irrKlang-64bit-1.6.0
     IRRKLANG_INCLUDE = -I$(IRRKLANGDIR)/include
     IRRKLANG_LINK = $(IRRKLANGDIR)/bin/linux-gcc-64/libIrrKlang.so
     CXXFLAGS += -DENABLE_SOUND
@@ -228,13 +228,13 @@ $(OBJDIR)/wxstatus.o: wxstatus.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxstatus.cpp
 
 $(OBJDIR)/wxview.o: wxview.cpp
-	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxview.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -I$(LUADIR) -c -o $@ wxview.cpp
 
 $(OBJDIR)/wxoverlay.o: wxoverlay.cpp
-	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxoverlay.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -I$(LUADIR) -c -o $@ wxoverlay.cpp
 
 $(OBJDIR)/wxrender.o: wxrender.cpp
-	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxrender.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -I$(LUADIR) -c -o $@ wxrender.cpp
 
 $(OBJDIR)/wxlua.o: wxlua.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -I$(LUADIR) -c -o $@ wxlua.cpp
@@ -246,10 +246,10 @@ $(OBJDIR)/wxpython.o: wxpython.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp
 
 $(OBJDIR)/wxscript.o: wxscript.cpp
-	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxscript.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -I$(LUADIR) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp
-	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxfile.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -I$(LUADIR) -c -o $@ wxfile.cpp
 
 $(OBJDIR)/wxedit.o: wxedit.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxedit.cpp
@@ -270,7 +270,7 @@ $(OBJDIR)/wxlayer.o: wxlayer.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxlayer.cpp
 
 $(OBJDIR)/wxmain.o: wxmain.cpp
-	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxmain.cpp
+	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -I$(LUADIR) -c -o $@ wxmain.cpp
 
 $(OBJDIR)/wxgolly.o: wxgolly.cpp
 	$(CXXC) $(CXXFLAGS) $(WX_CXXFLAGS) -c -o $@ wxgolly.cpp

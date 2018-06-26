@@ -432,13 +432,19 @@ The previous font is returned as a string of the form "fontsize fontname".
 
 <a name="get"></a><p><dt><b>get <i>x y</i></b></dt>
 <dd>
-Return the RGBA values of the given pixel in the render <a href="#target">target</a> as a string of the form
-"red green blue alpha".  All values will be from 0 to 255.
+Return the RGBA values of the given pixel in the render <a href="#target">target</a>.
+All vadlues will be from 0 to 255.
+</dd>
+<dd>
+For the string version the values are returned as a string of the form "red green blue alpha".
 If the given pixel is outside the render target then "" is returned.
 </dd>
 <dd> Example: <b>local rgba = ov("get 10 20")</b></dd>
-<dd> &nbsp;or
-<dd> Example: <b>local rgba = ovt{"get", 10, 20}</b></dd>
+<dd>
+For the table version the values are returned individually.
+If the given pixel is outside the render target then -1 is returned for each component.
+</dd>
+<dd> Example: <b>local r, g, b, a = ovt{"get", 10, 20}</b></dd>
 </p>
 
 <a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2 (...xn yn)</i></b></dt>
@@ -685,8 +691,7 @@ Note that all pixels in the resized overlay/clip become transparent
 <a name="rgba"></a><p><dt><b>rgba <i>red green blue alpha</i></b></dt>
 <dd>
 Set the current RGBA values used by later drawing commands
-and return the old values as a string of the form "red green blue alpha".
-All values are from 0 to 255.
+and return the old values. All values are from 0 to 255.
 The commands that use the current RGBA values are:
 <a href="#ellipse">ellipse</a>,
 <a href="#fill">fill</a>,
@@ -697,9 +702,14 @@ The commands that use the current RGBA values are:
 <a href="#set">set</a> and
 <a href="#text">text</a>.
 </dd>
+<dd>
+For the string version the values are returned as a string of the form "red green blue alpha".
+</dd>
 <dd> Example: <b>local oldrgba = ov("rgba 255 0 0 255")</b></dd>
-<dd> &nbsp;or
-<dd> Example: <b>local oldrgba = ovt{"rgba", 255, 0, 0, 255}</b></dd>
+<dd>
+For the table version the values are returned as a table of the form {"rgba", red, green, blue, alpha}.
+</dd>
+<dd> Example: <b>local oldrgba  = ovt{"rgba", 255, 0, 0, 255}</b></dd>
 </p>
 
 <a name="save"></a><p><dt><b>save <i>x y wd ht file</i></b></dt>

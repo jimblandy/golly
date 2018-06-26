@@ -59,9 +59,9 @@ local function create_anim_bg(clipname)
     -- create the graduated background
     for y = 0, ht / 2 do
         level = 32 + floor(128 * (y * 2 / ht))
-        ovt {"rgba", 0, 0, level, 255}
-        ovt {"line", 0, y, wd, y}
-        ovt {"line", 0 , (ht - y), wd, (ht - y)}
+        ovt{"rgba", 0, 0, level, 255}
+        ovt{"line", 0, y, wd, y}
+        ovt{"line", 0 , (ht - y), wd, (ht - y)}
     end
 
     -- make the overlay the render target
@@ -117,9 +117,9 @@ local function animate_credits()
     local gollytranslucentclip = "clip2"
     ov("font 200 mono")
     local bannertext = "Golly"
-    ovt {"rgba", 255, 192, 32, 144}
+    ovt{"rgba", 255, 192, 32, 144}
     local w, h = maketext(bannertext, gollyopaqueclip)
-    ovt {"rgba", 255, 192, 32, 255}
+    ovt{"rgba", 255, 192, 32, 255}
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext = [[
@@ -373,11 +373,11 @@ Kenichi Morita
 
         -- draw background
         ov("blend 0")
-        ovt {"paste", 0, 0, bgclip}
+        ovt{"paste", 0, 0, bgclip}
 
         -- draw stars
         local level = 50
-        ovt {"rgba", level, level, level, 255}
+        ovt{"rgba", level, level, level, 255}
         local lastd = stard[1]
         local coords = { "set" }
         local ci = 2
@@ -389,7 +389,7 @@ Kenichi Morita
                     ci = 2
                     coords = { "set" }
                 end
-                ovt {"rgba", level, level, level, 255}
+                ovt{"rgba", level, level, level, 255}
                 level = level + 2
                 lastd = stard[i]
             end
@@ -450,7 +450,7 @@ Kenichi Morita
         -- paste the pattern onto the background
         ov("target")
         ov("blend 1")
-        ovt {"paste", 0, 0, "pattern"}
+        ovt{"paste", 0, 0, "pattern"}
 
         -- draw bouncing scrolling text
         ov("blend 1")

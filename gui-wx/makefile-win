@@ -50,10 +50,8 @@ LUADIR = ..\lua
 !if "$(ENABLE_SOUND)" == "1"
 # sound library
 IRRKLANG_INCLUDE = $(IRRKLANGDIR)\include
-IRRKLANG_CXXFLAGS = /I$(IRRKLANG_INCLUDE) /DENABLE_SOUND
-IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlang.lib
-IRRKLANG_DLL_DEST = $(EXEDIR)\irrKlang.dll
-IRRKLANG_DLL_SRC = $(IRRKLANGDIR)\bin\winx64-visualStudio\irrKlang.dll
+IRRKLANG_CXXFLAGS = /I$(IRRKLANG_INCLUDE) /DENABLE_SOUND /DIRRKLANG_STATIC
+IRRKLANG_LIBS = $(IRRKLANGDIR)\lib\Winx64-visualStudio\irrKlangPro.lib
 !endif
 
 # for building binary and source distributions:
@@ -401,11 +399,6 @@ clean:
 	-if exist golly.pdb del golly.pdb
 	-if exist $(LUADIR)\*.obj del $(LUADIR)\*.obj
 
-!if "$(ENABLE_SOUND)" == "1"
-$(IRRKLANG_DLL_DEST):
-	copy $(IRRKLANG_DLL_SRC) $(IRRKLANG_DLL_DEST)
-!endif
-
 $(EXEDIR)\Golly.exe: $(BASEO) $(WXO) $(LUAO) golly.res $(IRRKLANG_DLL_DEST)
 	link /LARGEADDRESSAWARE /NOLOGO /OUT:$(EXEDIR)\Golly.exe $(LDFLAGS) $(__DEBUGINFO_1) /pdb:"golly.pdb" \
 	/MANIFEST:NO /LIBPATH:$(LIBDIRNAME) /SUBSYSTEM:WINDOWS $(BASEO) $(WXO) $(LUAO) golly.res \
@@ -456,31 +449,34 @@ MBASES = $(BASEDIR)/bigint.cpp $(BASEDIR)/lifealgo.cpp $(BASEDIR)/hlifealgo.cpp 
     $(BASEDIR)/generationsalgo.cpp
 
 $(MBASEO): $(MBASES)
-	-$(CXX) /MP8 /c /nologo $(CXXFLAGS) $(MBASES)
-	move *.obj $(OBJDIR)
+	-$(CXX) /MP8 /Fo$(OBJDIR)/ /c /nologo $(CXXFLAGS) $(MBASES)
 
 MWXO = $(OBJDIR)/wxutils.obj $(OBJDIR)/wxprefs.obj $(OBJDIR)/wxalgos.obj \
     $(OBJDIR)/wxrule.obj $(OBJDIR)/wxinfo.obj $(OBJDIR)/wxhelp.obj \
-    $(OBJDIR)/wxstatus.obj $(OBJDIR)/wxview.obj $(OBJDIR)/wxoverlay.obj $(OBJDIR)/wxrender.obj \
-    $(OBJDIR)/wxscript.obj \
-    $(OBJDIR)/wxfile.obj $(OBJDIR)/wxedit.obj $(OBJDIR)/wxcontrol.obj \
+    $(OBJDIR)/wxstatus.obj \
+    $(OBJDIR)/wxedit.obj $(OBJDIR)/wxcontrol.obj \
     $(OBJDIR)/wxtimeline.obj $(OBJDIR)/wxundo.obj $(OBJDIR)/wxlayer.obj \
-    $(OBJDIR)/wxmain.obj $(OBJDIR)/wxselect.obj
+    $(OBJDIR)/wxselect.obj
 
 MWXS = wxutils.cpp wxprefs.cpp wxalgos.cpp \
     wxrule.cpp wxinfo.cpp wxhelp.cpp \
-    wxstatus.cpp wxview.cpp wxoverlay.cpp wxrender.cpp \
-    wxscript.cpp \
-    wxfile.cpp wxedit.cpp wxcontrol.cpp \
+    wxstatus.cpp \
+    wxedit.cpp wxcontrol.cpp \
     wxtimeline.cpp wxundo.cpp wxlayer.cpp \
-    wxmain.cpp wxselect.cpp
+    wxselect.cpp
 
 $(MWXO): $(MWXS)
-	-$(CXX) /MP8 /c /nologo $(CXXFLAGS) $(MWXS)
-	move *.obj $(OBJDIR)
+	-$(CXX) /MP8 /Fo$(OBJDIR)/ /c /nologo $(CXXFLAGS) $(MWXS)
 
-$(OBJDIR)/wxlua.obj: wxlua.cpp
-	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(LUA_DEFS) /I$(LUADIR) wxlua.cpp
+MWXLUAO = $(OBJDIR)/wxoverlay.obj $(OBJDIR)/wxlua.obj $(OBJDIR)/wxfile.obj \
+	$(OBJDIR)/wxmain.obj $(OBJDIR)/wxrender.obj $(OBJDIR)/wxscript.obj \
+	$(OBJDIR)/wxview.obj
+
+MWXLUAS = wxoverlay.cpp wxlua.cpp wxfile.cpp wxmain.cpp \
+	wxrender.cpp wxscript.cpp wxview.cpp
+
+$(MWXLUAO): $(MWXLUAS)
+	-$(CXX) /MP8 /Fo$(OBJDIR)/ /c /nologo $(CXXFLAGS) $(LUA_DEFS) /I$(LUADIR) $(MWXLUAS)
 
 $(OBJDIR)/wxperl.obj: wxperl.cpp
 	$(CXX) /c /nologo /Fo$@ $(CXXFLAGS) $(PERL_INCLUDE) wxperl.cpp

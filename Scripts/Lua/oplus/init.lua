@@ -17,16 +17,27 @@ local m = {}
 
 -- synonyms for some common overlay commands:
 
+-- opaque colors in table format
+m.twhite     = {"rgba", 255, 255, 255, 255}
+m.tgray      = {"rgba", 128, 128, 128, 255}
+m.tblack     = {"rgba", 0, 0, 0, 255}
+m.tred       = {"rgba", 255, 0, 0, 255}
+m.tgreen     = {"rgba", 0, 255, 0, 255}
+m.tblue      = {"rgba", 0, 0, 255, 255}
+m.tcyan      = {"rgba", 0, 255, 255, 255}
+m.tmagenta   = {"rgba", 255, 0, 255, 255}
+m.tyellow    = {"rgba", 255, 255, 0, 255}
+
 -- opaque colors
-m.white     = "rgba 255 255 255 255"
-m.gray      = "rgba 128 128 128 255"
-m.black     = "rgba 0 0 0 255"
-m.red       = "rgba 255 0 0 255"
-m.green     = "rgba 0 255 0 255"
-m.blue      = "rgba 0 0 255 255"
-m.cyan      = "rgba 0 255 255 255"
-m.magenta   = "rgba 255 0 255 255"
-m.yellow    = "rgba 255 255 0 255"
+m.white     = table.concat(m.twhite, " ")
+m.gray      = table.concat(m.tgray, " ")
+m.black     = table.concat(m.tblack, " ")
+m.red       = table.concat(m.tred, " ")
+m.green     = table.concat(m.tgreen, " ")
+m.blue      = table.concat(m.tblue, " ")
+m.cyan      = table.concat(m.tcyan, " ")
+m.magenta   = table.concat(m.tmagenta, " ")
+m.yellow    = table.concat(m.tyellow, " ")
 
 -- affine transformations
 m.identity     = "transform  1  0  0  1"
@@ -77,27 +88,27 @@ m.textgap = 10      -- gap between edge of button and its label
 m.radius = 3        -- curvature of button corners
 m.border = 0        -- thickness of button border (no border if 0)
 
-m.buttonrgba = "rgba 40 128 255 255"    -- light blue buttons
-m.darkerrgba = "rgba 20 64 255 255"     -- darker blue when buttons are clicked
-m.borderrgba = m.white                  -- white border around buttons (if m.border > 0)
-m.textrgba = m.white                    -- white button labels, marks on select buttons
-m.distext = "rgba 100 192 255 255"      -- lighter blue for disabled button labels and marks on select buttons
-m.textfont = "font 12 default-bold"     -- font for labels
-m.textshadowx = 0                       -- label shadow x offset
-m.textshadowy = 0                       -- label shadow y offset
-m.textshadowrgba = m.black              -- black label shadow color
-m.buttonshadowx = 0                     -- button shadow x offset
-m.buttonshadowy = 0                     -- button shadow y offset
-m.buttonshadowrgba = m.black            -- black button shadow color
-m.yoffset = 0                           -- for better y position of labels
+m.buttonrgba = {"rgba", 40, 128, 255, 255} -- light blue buttons
+m.darkerrgba = {"rgba", 20, 64, 255, 255}  -- darker blue when buttons are clicked
+m.borderrgba = m.twhite                    -- white border around buttons (if m.border > 0)
+m.textrgba = m.twhite                      -- white button labels, marks on select buttons
+m.distext = {"rgba", 100, 192, 255, 255}   -- lighter blue for disabled button labels and marks on select buttons
+m.textfont = "font 12 default-bold"        -- font for labels
+m.textshadowx = 0                          -- label shadow x offset
+m.textshadowy = 0                          -- label shadow y offset
+m.textshadowrgba = m.tblack                -- black label shadow color
+m.buttonshadowx = 0                        -- button shadow x offset
+m.buttonshadowy = 0                        -- button shadow y offset
+m.buttonshadowrgba = m.tblack              -- black button shadow color
+m.yoffset = 0                              -- for better y position of labels
 
-m.menubg = "rgba 40 128 255 255"        -- light blue background for menu bar and items
-m.selcolor = "rgba 20 64 255 255"       -- darker background for selected menu/item
-m.discolor = "rgba 100 192 255 255"     -- lighter blue for disabled items and separator lines
-m.menufont = "font 12 default-bold"     -- font for menu and item labels
-m.menutext = m.white                    -- white text for menu and item labels
-m.menugap = 10                          -- horizontal space around each menu label
-m.itemgap = 2                           -- vertical space above and below item labels
+m.menubg = {"rgba", 40, 128, 255, 255}     -- light blue background for menu bar and items
+m.selcolor = {"rgba", 20, 64, 255, 255}    -- darker background for selected menu/item
+m.discolor = {"rgba", 100, 192, 255, 255}  -- lighter blue for disabled items and separator lines
+m.menufont = "font 12 default-bold"        -- font for menu and item labels
+m.menutext = m.twhite                      -- white text for menu and item labels
+m.menugap = 10                             -- horizontal space around each menu label
+m.itemgap = 2                              -- vertical space above and below item labels
 
 if g.os() == "Windows" then
     m.yoffset = -1
@@ -135,7 +146,7 @@ function m.pastetext(x, y, transform, clipname)
     clipname  = clipname or textclip
     -- apply transform and paste text clip
     local oldtransform = ov(transform)
-    ovt {"paste", x, y, clipname}
+    ovt{"paste", x, y, clipname}
     -- restore settings
     ov("transform "..oldtransform)
 
@@ -145,21 +156,24 @@ end
 --------------------------------------------------------------------------------
 
 function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
-    local oldrgba = ov(m.white)
+    local oldrgba = ovt(m.twhite)
     -- set optional parameter defaults
     clipname  = clipname or textclip
-    textcol   = textcol or "rgba "..oldrgba
+    textcol   = textcol or oldrgba
     shadowx   = shadowx or 0
     shadowy   = shadowy or 0
-    shadowcol = shadowcol or m.black
+    shadowcol = shadowcol or m.tblack
     local w, h, d
+    -- check for string format colors and convert to tables
+    if type(textcol) == "string" then textcol = {split(textcol)} end
+    if type(shadowcol) == "string" then shadowcol = {split(shadowcol)} end
     -- check if shadow required
     if shadowx == 0 and shadowy == 0 then
-        ov(textcol)
+        ovt(textcol)
         w, h, d = split(ov("text "..clipname.." "..s))
     else
         -- build shadow clip
-        ov(shadowcol)
+        ovt(shadowcol)
         local oldbg = ov("textoption background 0 0 0 0")
         local oldblend
         if oldbg == "0 0 0 0" then
@@ -193,11 +207,11 @@ function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
         local oldtarget = ov("target "..clipname)
         if oldbg ~= "0 0 0 0" then
             ov("rgba "..oldbg)
-            ovt {"fill"}
+            ovt{"fill"}
         end
         m.pastetext(sx, sy, nil, tempclip)
         -- build normal text clip
-        ov(textcol)
+        ovt(textcol)
         if oldbg ~= "0 0 0 0" then
             ov("textoption background 0 0 0 0")
             ov("blend 1")
@@ -216,7 +230,7 @@ function m.maketext(s, clipname, textcol, shadowx, shadowy, shadowcol)
     ov("optimize "..clipname)
 
     -- restore color
-    ov("rgba "..oldrgba)
+    ovt(oldrgba)
 
     return tonumber(w), tonumber(h), tonumber(d)
 end
@@ -227,14 +241,17 @@ function m.fill_ellipse(x, y, w, h, borderwd, fillrgba)
     -- draw an ellipse with the given border width (if > 0) using the current color
     -- and fill it with the given color (if fillrgba isn't "")
 
+    -- check for string format color and convert to table
+    if type(fillrgba) == "string" then fillrgba = {split(fillrgba)} end
+
     if borderwd == 0 then
-        if #fillrgba > 0 then
+        if #fillrgba > 1 then  -- empty color will be {""}
             -- just draw solid anti-aliased ellipse using fillrgba
             local oldwidth = ov("lineoption width "..int(math.min(w,h)/2 + 0.5))
             local oldblend = ov("blend 1")
-            local oldrgba = ov(fillrgba)
+            local oldrgba = ovt(fillrgba)
             ov("ellipse "..x.." "..y.." "..w.." "..h)
-            ov("rgba "..oldrgba)
+            ovt(oldrgba)
             ov("blend "..oldblend)
             ov("lineoption width "..oldwidth)
         end
@@ -253,14 +270,14 @@ function m.fill_ellipse(x, y, w, h, borderwd, fillrgba)
 
     local oldblend = ov("blend 1")
 
-    if #fillrgba > 0 then
+    if #fillrgba > 1 then -- empty color will be {""}
         -- draw smaller filled ellipse using fillrgba
-        local oldrgba = ov(fillrgba)
+        local oldrgba = ovt(fillrgba)
         local smallw = w - borderwd*2
         local smallh = h - borderwd*2
         local oldwidth = ov("lineoption width "..int(math.min(smallw,smallh)/2 + 0.5))
         ov("ellipse "..(x+borderwd).." "..(y+borderwd).." "..smallw.." "..smallh)
-        ov("rgba "..oldrgba)
+        ovt(oldrgba)
         ov("lineoption width "..oldwidth)
     end
 
@@ -276,13 +293,13 @@ end
 --------------------------------------------------------------------------------
 
 function m.draw_line(x1, y1, x2, y2)
-    ovt {"line", x1, y1, x2, y2}
+    ovt{"line", x1, y1, x2, y2}
 end
 
 --------------------------------------------------------------------------------
 
 function m.fill_rect(x, y, wd, ht)
-    ovt {"fill", x, y, wd, ht}
+    ovt{"fill", x, y, wd, ht}
 end
 
 --------------------------------------------------------------------------------
@@ -292,21 +309,24 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
     -- with a border in the current color using the given width (if > 0)
     -- and filled with the given color (if fillrgba isn't "")
 
+    -- check for string format color and convert to table
+    if type(fillrgba) == "string" then fillrgba = {split(fillrgba)} end
+
     if radius == 0 then
         -- draw a non-rounded rectangle (possibly translucent)
         local oldblend = ov("blend 1")
         if borderwd > 0 then
             -- draw border lines using current color
-            ovt {"fill", x, y, w, borderwd}
-            ovt {"fill", x, (y+h-borderwd), w, borderwd}
-            ovt {"fill", x, (y+borderwd), borderwd, (h-borderwd*2)}
-            ovt {"fill", (x+w-borderwd), (y+borderwd), borderwd, (h-borderwd*2)}
+            ovt{"fill", x, y, w, borderwd}
+            ovt{"fill", x, (y+h-borderwd), w, borderwd}
+            ovt{"fill", x, (y+borderwd), borderwd, (h-borderwd*2)}
+            ovt{"fill", (x+w-borderwd), (y+borderwd), borderwd, (h-borderwd*2)}
         end
-        if #fillrgba > 0 then
+        if #fillrgba > 1 then -- empty color will be {""}
             -- draw interior of rectangle
-            local oldrgba = ov(fillrgba)
-            ovt {"fill", (x+borderwd), (y+borderwd), (w-borderwd*2), (h-borderwd*2)}
-            ov("rgba "..oldrgba)
+            local oldrgba = ovt(fillrgba)
+            ovt{"fill", (x+borderwd), (y+borderwd), (w-borderwd*2), (h-borderwd*2)}
+            ovt(oldrgba)
         end
         ov("blend "..oldblend)
         return
@@ -317,48 +337,48 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
 
     -- construct rounded rectangle in top left corner of overlay
     ov("copy 0 0 "..w.." "..h.." rectbg")
-    local oldrgba = ov("rgba 0 0 0 0")
+    local oldrgba = ovt{"rgba", 0, 0, 0, 0}
     local oldblend = ov("blend 0")
-    ovt {"fill", 0, 0, w, h}
-    ov("rgba "..oldrgba)
+    ovt{"fill", 0, 0, w, h}
+    ovt(oldrgba)
 
     -- create bottom right quarter circle in top left corner of overlay
     m.fill_ellipse(-radius, -radius, radius*2, radius*2, borderwd, fillrgba)
     ov("copy 0 0 "..radius.." "..radius.." qcircle")
 
     -- draw corners
-    ovt {"paste", (w-radius), (h-radius), "qcircle"}
+    ovt{"paste", (w-radius), (h-radius), "qcircle"}
     ov(m.flip_y)
-    ovt {"paste", (w-radius), (radius-1), "qcircle"}
+    ovt{"paste", (w-radius), (radius-1), "qcircle"}
     ov(m.flip_x)
-    ovt {"paste", (radius-1), (h-radius), "qcircle"}
+    ovt{"paste", (radius-1), (h-radius), "qcircle"}
     ov(m.flip)
-    ovt {"paste", (radius-1), (radius-1), "qcircle"}
+    ovt{"paste", (radius-1), (radius-1), "qcircle"}
     ov(m.identity)
     ov("delete qcircle")
 
-    if #fillrgba > 0 then
+    if #fillrgba > 1 then -- empty color will be {""}
         -- draw non-corner portions of rectangle
-        ov(fillrgba)
+        ovt(fillrgba)
         if radius < w/2 then
-            ovt {"fill", radius, 0, (w-radius*2), h}
+            ovt{"fill", radius, 0, (w-radius*2), h}
         end
         if radius < h/2 then
-            ovt {"fill", 0, radius, radius, (h-radius*2)}
-            ovt {"fill", (w-radius), radius, radius, (h-radius*2)}
+            ovt{"fill", 0, radius, radius, (h-radius*2)}
+            ovt{"fill", (w-radius), radius, radius, (h-radius*2)}
         end
-        ov("rgba "..oldrgba)
+        ovt(oldrgba)
     end
 
     if borderwd > 0 then
         -- draw border lines using current color
         if radius < w/2 then
-            ovt {"fill", radius, 0, (w-radius*2), borderwd}
-            ovt {"fill", radius, (h-borderwd), (w-radius*2), borderwd}
+            ovt{"fill", radius, 0, (w-radius*2), borderwd}
+            ovt{"fill", radius, (h-borderwd), (w-radius*2), borderwd}
         end
         if radius < h/2 then
-            ovt {"fill", 0, radius, borderwd, (h-radius*2)}
-            ovt {"fill", (w-borderwd), radius, borderwd, (h-radius*2)}
+            ovt{"fill", 0, radius, borderwd, (h-radius*2)}
+            ovt{"fill", (w-borderwd), radius, borderwd, (h-radius*2)}
         end
     end
 
@@ -366,10 +386,10 @@ function m.round_rect(x, y, w, h, radius, borderwd, fillrgba)
     ov("copy 0 0 "..w.." "..h.." roundedrect")
 
     -- restore top left corner of overlay and draw rounded rectangle
-    ovt {"paste", 0, 0, "rectbg"}
+    ovt{"paste", 0, 0, "rectbg"}
     ov("delete rectbg")
     ov("blend 1")
-    ovt {"paste", x, y, "roundedrect"}
+    ovt{"paste", x, y, "roundedrect"}
     ov("delete roundedrect")
 
     -- restore blend setting
@@ -386,12 +406,12 @@ local function draw_buttonlayer(x, y, w, h, color)
     ov("copy"..buttrect.." temp_bg")
 
     -- clear rect under button
-    local oldrgba = ov("rgba 0 0 0 0")
-    ovt {"fill", x, y, w, h}
+    local oldrgba = ovt{"rgba", 0, 0, 0, 0}
+    ovt{"fill", x, y, w, h}
 
     -- draw button with rounded corners
     if m.border > 0 then
-        ov(m.borderrgba)
+        ovt(m.borderrgba)
     end
     m.round_rect(x, y, w, h, m.radius, m.border, color)
 
@@ -399,13 +419,13 @@ local function draw_buttonlayer(x, y, w, h, color)
     ov("copy"..buttrect.." temp_button")
 
     -- paste temp_bg back to rect
-    ovt {"paste", x, y, "temp_bg"}
+    ovt{"paste", x, y, "temp_bg"}
 
     -- turn on blending and paste temp_button
     ov("blend 1")
-    ovt {"paste", x, y, "temp_button"}
+    ovt{"paste", x, y, "temp_button"}
 
-    ov("rgba "..oldrgba)
+    ovt(oldrgba)
     ov("blend "..oldblend)
 end
 
@@ -494,7 +514,7 @@ function m.button(label, onclick)
         local oldblend = ov("blend 1")
         x = int(x + (b.wd - b.labelwd) / 2)
         y = int(y + m.yoffset + (b.ht - b.labelht) / 2)
-        ovt {"paste", x, y, b.labelclip}
+        ovt{"paste", x, y, b.labelclip}
         ov("blend "..oldblend)
 
         -- store this table using the button's rectangle as key
@@ -507,7 +527,7 @@ function m.button(label, onclick)
         if b.shown then
             -- restore background pixels saved in b.show
             local oldblend = ov("blend 0")
-            ovt {"paste", b.x, b.y, b.background}
+            ovt{"paste", b.x, b.y, b.background}
             ov("blend "..oldblend)
 
             -- remove the table entry
@@ -555,9 +575,9 @@ local function draw_selectbutton(x, y, w, h, ticked, enabled, multi)
             -- draw a tick mark
             local oldrgba
             if enabled then
-                oldrgba = ov(m.textrgba)
+                oldrgba = ovt(m.textrgba)
             else
-                oldrgba = ov(m.distext)
+                oldrgba = ovt(m.distext)
             end
             local oldblend = ov("blend 1")
             local oldwidth = ov("lineoption width 4")
@@ -572,16 +592,16 @@ local function draw_selectbutton(x, y, w, h, ticked, enabled, multi)
             local y4 = int(y+h*0.6)
 
             if enabled and (m.textshadowx > 0 or m.textshadowy > 0) then
-                local oldcol = ov(m.textshadowrgba)
-                ovt {"line", x1+m.textshadowx, y1+m.textshadowy, x2+m.textshadowx, y2+m.textshadowy}
-                ovt {"line", x3+m.textshadowx, y3+m.textshadowy, x4+m.textshadowx, y4+m.textshadowy}
-                ov("rgba "..oldcol)
+                local oldcol = ovt(m.textshadowrgba)
+                ovt{"line", x1+m.textshadowx, y1+m.textshadowy, x2+m.textshadowx, y2+m.textshadowy}
+                ovt{"line", x3+m.textshadowx, y3+m.textshadowy, x4+m.textshadowx, y4+m.textshadowy}
+                ovt(oldcol)
             end
-            ovt {"line", x1, y1, x2, y2}
-            ovt {"line", x3, y3, x4, y4}
+            ovt{"line", x1, y1, x2, y2}
+            ovt{"line", x3, y3, x4, y4}
             ov("lineoption width "..oldwidth)
             ov("blend "..oldblend)
-            ov("rgba "..oldrgba)
+            ovt(oldrgba)
         end
     end
 end
@@ -609,8 +629,8 @@ function m.selectbutton(label, labelrgba, onclick, multi)
     if type(label) ~= "string" then
         error("1st arg of "..what.." must be a string", 2)
     end
-    if type(labelrgba) ~= "string" then
-        error("2nd arg of "..what.." must be a string", 2)
+    if type(labelrgba) ~= "string" and type(labelrgba) ~= "table" then
+        error("2nd arg of "..what.." must be a string or table", 2)
     end
     if type(onclick) ~= "function" then
         error("3rd arg of "..what.." must be a function", 2)
@@ -653,7 +673,7 @@ function m.selectbutton(label, labelrgba, onclick, multi)
 
         -- draw the label
         local oldblend = ov("blend 1")
-        ovt {"paste", (x+c.ht+m.selectgap), int(y+m.yoffset+(c.ht-c.labelht)/2), c.clipname}
+        ovt{"paste", (x+c.ht+m.selectgap), int(y+m.yoffset+(c.ht-c.labelht)/2), c.clipname}
         ov("blend "..oldblend)
 
         -- store this table using the select button's rectangle as key
@@ -666,7 +686,7 @@ function m.selectbutton(label, labelrgba, onclick, multi)
         if c.shown then
             -- restore background pixels saved in c.show
             local oldblend = ov("blend 0")
-            ovt {"paste", c.x, c.y, c.background}
+            ovt{"paste", c.x, c.y, c.background}
             ov("blend "..oldblend)
             -- remove the table entry
             selectbutton_tables[c.rect] = nil
@@ -696,29 +716,29 @@ local function draw_slider(s, barpos)
     local h = s.ht
 
     -- draw horizontal bar
-    local oldrgba = ov("rgba 100 100 100 255")
+    local oldrgba = ovt{"rgba", 100, 100, 100, 255}
     local midy = int(y+h/2)
-    ovt {"fill", x, (midy-3), w, 6}
-    ov("rgba 110 110 110 255")
-    ovt {"fill", (x+1), (midy-2), (w-2), 1}
-    ov("rgba 120 120 120 255")
-    ovt {"fill", (x+1), (midy-1), (w-2), 1}
-    ov("rgba 130 130 130 255")
-    ovt {"fill", (x+1), midy, (w-2), 1}
-    ov("rgba 140 140 140 255")
-    ovt {"fill", (x+1), (midy+1), (w-2), 1}
+    ovt{"fill", x, (midy-3), w, 6}
+    ovt{"rgba", 110, 110, 110, 255}
+    ovt{"fill", (x+1), (midy-2), (w-2), 1}
+    ovt{"rgba", 120, 120, 120, 255}
+    ovt{"fill", (x+1), (midy-1), (w-2), 1}
+    ovt{"rgba", 130, 130, 130, 255}
+    ovt{"fill", (x+1), midy, (w-2), 1}
+    ovt{"rgba", 140, 140, 140, 255}
+    ovt{"fill", (x+1), (midy+1), (w-2), 1}
 
     if darken_slider then darken_button = true end
 
     -- draw slider button on top of horizontal bar
     draw_button(x + barpos - int(m.sliderwd/2), y, m.sliderwd, h)
-    ov("rgba "..oldrgba)
+    ovt(oldrgba)
 
     if darken_slider then darken_button = false end
 
     -- draw the label
     local oldblend = ov("blend 1")
-    ovt {"paste", s.x, int(y+m.yoffset+(h-s.labelht)/2), s.clipname}
+    ovt{"paste", s.x, int(y+m.yoffset+(h-s.labelht)/2), s.clipname}
     ov("blend "..oldblend)
 end
 
@@ -731,8 +751,8 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
     if type(label) ~= "string" then
         error("1st arg of slider must be a string", 2)
     end
-    if type(labelrgba) ~= "string" then
-        error("2nd arg of slider must be a string", 2)
+    if type(labelrgba) ~= "string" and type(labelrgba) ~= "table" then
+        error("2nd arg of slider must be a string or table", 2)
     end
     if type(onclick) ~= "function" then
         error("6th arg of slider must be a function", 2)
@@ -803,7 +823,7 @@ function m.slider(label, labelrgba, barwidth, minval, maxval, onclick)
         if s.shown then
             -- restore background pixels saved in previous s.show
             local oldblend = ov("blend 0")
-            ovt {"paste", s.x, s.y, s.background}
+            ovt{"paste", s.x, s.y, s.background}
             ov("blend "..oldblend)
             -- remove the table entry
             slider_tables[s.rect] = nil
@@ -925,7 +945,7 @@ local function click_in_slider(x, y)
                         -- draw new position of slider button immediately;
                         -- first restore background pixels saved in previous slider.show
                         local oldblend = ov("blend 0")
-                        ovt {"paste", slider.x, slider.y, slider.background}
+                        ovt{"paste", slider.x, slider.y, slider.background}
                         ov("blend "..oldblend)
                         draw_slider(slider, x - slider.startbar)
                         g.update()
@@ -959,7 +979,7 @@ end
 --------------------------------------------------------------------------------
 
 local function DrawMenuBar(mbar)
-    local oldrgba = ov(m.menubg)
+    local oldrgba = ovt(m.menubg)
     m.fill_rect(mbar.r.x, mbar.r.y, mbar.r.wd, mbar.r.ht)
     local oldblend = ov("blend 1")
     local xpos = mbar.r.x + m.menugap
@@ -967,15 +987,15 @@ local function DrawMenuBar(mbar)
     for i = 1, #mbar.menus do
         local menu = mbar.menus[i]
         if i == selmenu then
-            ov(m.selcolor)
+            ovt(m.selcolor)
             m.fill_rect(xpos, mbar.r.y, menu.labelwd + m.menugap*2, mbar.r.ht)
         end
         xpos = xpos + m.menugap
-        ovt {"paste", xpos, ypos, menu.labelclip}
+        ovt{"paste", xpos, ypos, menu.labelclip}
         xpos = xpos + menu.labelwd + m.menugap
     end
     ov("blend "..oldblend)
-    ov("rgba "..oldrgba)
+    ovt(oldrgba)
 end
 
 --------------------------------------------------------------------------------
@@ -1130,7 +1150,7 @@ local function DrawMenuItems(mbar)
     local numitems = #mbar.menus[selmenu].items
     if numitems == 0 then return end
 
-    local oldrgba = ov(m.menubg)
+    local oldrgba = ovt(m.menubg)
     local x = mbar.r.x + m.menugap
     for i = 2, selmenu do
         x = x + mbar.menus[i-1].labelwd + m.menugap*2
@@ -1144,7 +1164,7 @@ local function DrawMenuItems(mbar)
     local oldblend = ov("blend 1")
 
     -- draw translucent gray shadows
-    ov("rgba 48 48 48 128")
+    ovt{"rgba", 48, 48, 48, 128}
     local shadowsize = 3
     m.fill_rect(x+shadowsize, y+ht, wd-shadowsize, shadowsize)
     m.fill_rect(x+wd, y, shadowsize, ht+shadowsize)
@@ -1155,22 +1175,22 @@ local function DrawMenuItems(mbar)
         local item = mbar.menus[selmenu].items[i]
         if item.f == nil then
             -- item is a separator
-            ov(m.discolor)
+            ovt(m.discolor)
             m.draw_line(x-m.menugap, y+mbar.itemht//2, x-m.menugap+wd-1, y+mbar.itemht//2)
         else
             if i == selitem and item.enabled then
-                ov(m.selcolor)
+                ovt(m.selcolor)
                 m.fill_rect(x-m.menugap, y, wd, mbar.itemht)
             end
             local oldtextbg = ov("textoption background 0 0 0 0")
             if item.enabled then
                 m.maketext(item.name, nil, m.menutext, m.textshadowx, m.textshadowy, m.textshadowrgba)
                 m.pastetext(x, y + m.itemgap)
-                ov(m.menutext)
+                ovt(m.menutext)
             else
                 m.maketext(item.name, nil, m.discolor)  -- no shadow if disabled
                 m.pastetext(x, y + m.itemgap)
-                ov(m.discolor)
+                ovt(m.discolor)
             end
             ov("textoption background "..oldtextbg)
             if item.type == item_tick then
@@ -1182,10 +1202,10 @@ local function DrawMenuItems(mbar)
                     local y2 = y + mbar.itemht - 8
                     local oldwidth = ov("lineoption width 4")
                     if item.enabled and (m.textshadowx > 0 or m.textshadowy > 0) then
-                        local oldcolor = ov(m.textshadowrgba)
+                        local oldcolor = ovt(m.textshadowrgba)
                         m.draw_line(x1+m.textshadowx, y1+m.textshadowy, x2+m.textshadowx, y2+m.textshadowy)
                         m.draw_line(x2+m.textshadowx, y2+m.textshadowy, x2+m.textshadowx-5, y2+m.textshadowy-3)
-                        ov("rgba "..oldcolor)
+                        ovt(oldcolor)
                     end
                     m.draw_line(x1, y1, x2, y2)
                     m.draw_line(x2, y2, x2-5, y2-3)
@@ -1211,7 +1231,7 @@ local function DrawMenuItems(mbar)
 
     ov("blend "..oldblend)
     ov("font "..oldfont)
-    ov("rgba "..oldrgba)
+    ovt(oldrgba)
 end
 
 --------------------------------------------------------------------------------
@@ -1282,7 +1302,7 @@ local function release_in_item(x, y, mbar)
                     if selmenu == 0 and not MacOS then selmenu = oldmenu end
                     selitem = GetItem(x, y, selmenu, mbar)
                     if selmenu ~= oldmenu or selitem ~= olditem then
-                        ovt {"paste", 0, 0, bgclip}
+                        ovt{"paste", 0, 0, bgclip}
                         DrawMenuBar(mbar)
                         if MacOS then
                             if selmenu > 0 then DrawMenuItems(mbar) end
@@ -1322,7 +1342,7 @@ local function release_in_item(x, y, mbar)
     end
 
     -- restore overlay and menu bar
-    ovt {"paste", 0, 0, bgclip}
+    ovt{"paste", 0, 0, bgclip}
     g.update()
     ov("delete "..bgclip)
     selmenu = 0
@@ -1354,7 +1374,7 @@ local function DrawPopUpMenu(p, chosenitem)
 
     local oldfont = ov(m.menufont)
     local oldblend = ov("blend 1")
-    local oldrgba = ov(p.bgcolor)
+    local oldrgba = ovt(p.bgcolor)
 
     local ht = p.menuht + 1
     local wd = p.menuwd
@@ -1363,7 +1383,7 @@ local function DrawPopUpMenu(p, chosenitem)
     m.fill_rect(x, y, wd, ht)
 
     -- draw translucent gray shadows
-    ov("rgba 48 48 48 128")
+    ovt{"rgba", 48, 48, 48, 128}
     local shadowsize = 3
     m.fill_rect(x+shadowsize, y+ht, wd-shadowsize, shadowsize)
     m.fill_rect(x+wd, y+shadowsize, shadowsize, ht)
@@ -1374,22 +1394,22 @@ local function DrawPopUpMenu(p, chosenitem)
         local item = p.items[i]
         if item.f == nil then
             -- item is a separator
-            ov(p.discolor)
+            ovt(p.discolor)
             m.draw_line(x-m.menugap, y+p.itemht//2, x-m.menugap+wd-1, y+p.itemht//2)
         else
             if i == chosenitem and item.enabled then
-                ov(p.selcolor)
+                ovt(p.selcolor)
                 m.fill_rect(x-m.menugap, y, wd, p.itemht)
             end
             local oldtextbg = ov("textoption background 0 0 0 0")
             if item.enabled then
                 m.maketext(item.name, nil, m.menutext, m.textshadowx, m.textshadowy, m.textshadowrgba)
                 m.pastetext(x, y + m.itemgap)
-                ov(m.menutext)
+                ovt(m.menutext)
             else
                 m.maketext(item.name, nil, p.discolor)  -- no shadow if disabled
                 m.pastetext(x, y + m.itemgap)
-                ov(p.discolor)
+                ovt(p.discolor)
             end
             ov("textoption background "..oldtextbg)
             if item.type == item_tick then
@@ -1401,10 +1421,10 @@ local function DrawPopUpMenu(p, chosenitem)
                     local y2 = y + p.itemht - 8
                     local oldwidth = ov("lineoption width 4")
                     if item.enabled and (m.textshadowx > 0 or m.textshadowy > 0) then
-                        local oldcolor = ov(m.textshadowrgba)
+                        local oldcolor = ovt(m.textshadowrgba)
                         m.draw_line(x1+m.textshadowx, y1+m.textshadowy, x2+m.textshadowx, y2+m.textshadowy)
                         m.draw_line(x2+m.textshadowx, y2+m.textshadowy, x2+m.textshadowx-5, y2+m.textshadowy-3)
-                        ov("rgba "..oldcolor)
+                        ovt(oldcolor)
                     end
                     m.draw_line(x1, y1, x2, y2)
                     m.draw_line(x2, y2, x2-5, y2-3)
@@ -1430,7 +1450,7 @@ local function DrawPopUpMenu(p, chosenitem)
 
     ov("blend "..oldblend)
     ov("font "..oldfont)
-    ov("rgba "..oldrgba)
+    ovt(oldrgba)
 end
 
 ----------------------------------------------------------------------
@@ -1495,7 +1515,7 @@ local function choose_popup_item(p)
                 local olditem = chosenitem
                 chosenitem = GetPopUpItem(x, y, p)
                 if chosenitem ~= olditem then
-                    ovt {"paste", 0, 0, bgclip}
+                    ovt{"paste", 0, 0, bgclip}
                     DrawPopUpMenu(p, chosenitem)
                     g.update()
                 end
@@ -1508,7 +1528,7 @@ local function choose_popup_item(p)
     chosenitem = GetPopUpItem(x, y, p)
 
     -- restore overlay
-    ovt {"paste", 0, 0, bgclip}
+    ovt{"paste", 0, 0, bgclip}
     g.update()
     ov("delete "..bgclip)
 
@@ -1572,15 +1592,14 @@ function m.popupmenu()
 
     p.setbgcolor = function (rgba)
         p.bgcolor = rgba
-        local _,R,G,B,A = split(rgba)
-        R = tonumber(R)
-        G = tonumber(G)
-        B = tonumber(B)
-        A = tonumber(A)
+        R = rgba[2]
+        G = rgba[3]
+        B = rgba[4]
+        A = rgba[5]
         -- use a darker color when item is selected
-        p.selcolor = "rgba "..math.max(0,R-48).." "..math.max(0,G-48).." "..math.max(0,B-48).." "..A
+        p.selcolor = {"rgba", math.max(0,R-48), math.max(0,G-48), math.max(0,B-48), A}
         -- use lighter color for disabled items and separator lines
-        p.discolor = "rgba "..math.min(255,R+48).." "..math.min(255,G+48).." "..math.min(255,B+48).." "..A
+        p.discolor = {"rgba", math.min(255,R+48), math.min(255,G+48), math.min(255,B+48), A}
     end
 
     p.show = function (x, y, ovwd, ovht)
@@ -1650,8 +1669,8 @@ function m.minbox(clipname, wd, ht)
     local oldtarget = ov("target "..clipname)
     for row = 0, ht-1 do
         for col = 0, wd-1 do
-            local _, _, _, a = split(ovt {"get", col, row})
-            if a ~= "0" then
+            local _, _, _, a = ovt{"get", col, row}
+            if a ~= 0 then
                 ymin = row
                 goto found_top
             end
@@ -1668,8 +1687,8 @@ function m.minbox(clipname, wd, ht)
     -- find the bottom edge (ymax)
     for row = ht-1, ymin, -1 do
         for col = 0, wd-1 do
-            local _, _, _, a = split(ovt {"get", col, row})
-            if a ~= "0" then
+            local _, _, _, a = ovt{"get", col, row}
+            if a ~= 0 then
                 ymax = row
                 goto found_bottom
             end
@@ -1680,8 +1699,8 @@ function m.minbox(clipname, wd, ht)
     -- find the left edge (xmin)
     for col = 0, wd-1 do
         for row = ymin, ymax do
-            local _, _, _, a = split(ovt {"get", col, row})
-            if a ~= "0" then
+            local _, _, _, a = ovt{"get", col, row}
+            if a ~= 0 then
                 xmin = col
                 goto found_left
             end
@@ -1692,8 +1711,8 @@ function m.minbox(clipname, wd, ht)
     -- find the right edge (xmax)
     for col = wd-1, xmin, -1 do
         for row = ymin, ymax do
-            local _, _, _, a = split(ovt {"get", col, row})
-            if a ~= "0" then
+            local _, _, _, a = ovt{"get", col, row}
+            if a ~= 0 then
                 xmax = col
                 goto found_right
             end
