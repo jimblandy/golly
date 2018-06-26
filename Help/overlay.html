@@ -67,8 +67,10 @@ Some overlay commands can also return a single string as their result.
 The second, <a href="lua.html#ovtable">ovtable</a>, takes a single table parameter
 rather than a string and only supports a <a href="#subset">subset</a>
 of the overlay commands. It is typically faster to use ovtable than overlay.
-In all other ways it is identical to the overlay command.
-If the ovtable command has a result it will be returned as a string.
+The supported ovtable commands that return a result are <a href="#get">get</a>,
+which returns individual values, and <a href="#rgba">rgba</a>, which returns
+a table.
+In all other ways ovtable is identical to the overlay command.
 
 </p>
 <p>
