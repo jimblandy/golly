@@ -299,7 +299,7 @@ local function fill_hexagon(xc, yc, state)
         end
         if check_pixel then
             -- avoid filling grid line
-            if ovt{"get", xc, yc} == grid_rgba then return end
+            if ov("get "..xc.." "..yc) == grid_rgba then return end
         end
         ov("flood "..xc.." "..yc)
     end
@@ -1037,7 +1037,7 @@ local function click_in_overlay(event)
         edit_hexagons(x, y)
 
     elseif g.getcursor() == "Pick" then
-        local state = get_state( ovt{"get", x, y} )
+        local state = get_state( ov("get "..x.." "..y) )
         if state >= 0 then
             g.setoption("drawingstate", state)
             g.update()  -- updates edit bar
