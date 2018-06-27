@@ -1346,43 +1346,42 @@ local function show_magnified_pixels(x, y)
     for i = 1, numrows do
         color[i] = {}
         for j = 1, numcols do
-            local rv, gv, bv, av = ovt{"get", (x-radius-1+j), (y-radius-1+i)}
-            color[i][j] = {"rgba", rv, gv, bv, av}
+            color[i][j] = ov("get "..(x-radius-1+j).." "..(y-radius-1+i))
         end
     end
 
     -- save area in top left corner big enough to draw the magnifying glass
     local outersize = int(math.sqrt(boxsize*boxsize+boxsize*boxsize) + 0.5)
     ov("copy 0 0 "..outersize.." "..outersize.." outer_bg")
-    local oldrgba = ovt{"rgba", 0, 0, 0, 0}
+    local oldrgba = ov("rgba 0 0 0 0")
     local oldblend = ov("blend 0")
-    ovt{"fill", 0, 0, outersize, outersize}
+    ov("fill 0 0 "..outersize.." "..outersize)
 
     -- draw gray background (ie. grid lines around pixels)
-    ovt(op.tgray)
+    ov(op.gray)
     local xpos = int((outersize-boxsize)/2)
     local ypos = int((outersize-boxsize)/2)
-    ovt{"fill", xpos, ypos, boxsize, boxsize}
+    ov("fill "..xpos.." "..ypos.." "..boxsize.." "..boxsize)
 
     -- draw magnified pixels
     for i = 1, numrows do
         for j = 1, numcols do
-            if color[i][j][2] > 0 then
-                ovt(color[i][j])
+            if #color[i][j] > 0 then
+                ov("rgba "..color[i][j])
                 local xv = xpos+1+(j-1)*(magsize+1)
                 local yv = ypos+1+(i-1)*(magsize+1)
-                ovt{"fill", xv, yv, magsize, magsize}
+                ov("fill "..xv.." "..yv.." "..magsize.." "..magsize)
             end
         end
     end
 
     -- erase outer ring
     local oldwidth = ov("lineoption width "..int((outersize-boxsize)/2))
-    ovt{"rgba", 0, 0, 0, 0}
+    ov("rgba 0 0 0 0")
     draw_ellipse(0, 0, outersize, outersize)
 
     -- surround with a gray circle
-    ovt(op.tgray)
+    ov(op.gray)
     ov("lineoption width 4")
     ov("blend 1")
     draw_ellipse(xpos-2, ypos-2, boxsize+4, boxsize+4)
@@ -1391,18 +1390,18 @@ local function show_magnified_pixels(x, y)
     ov("copy 0 0 "..outersize.." "..outersize.." mag_box")
 
     -- restore background saved above
-    ovt{"paste", 0, 0, "outer_bg"}
+    ov("paste 0 0 outer_bg")
     ov("delete outer_bg")
 
     -- draw magnified circle with center at x,y
     xpos = int(x-outersize/2)
     ypos = int(y-outersize/2)
     ov("blend 1")
-    ovt{"paste", xpos, ypos, "mag_box"}
+    ov("paste "..xpos.." "..ypos.." mag_box")
     ov("delete mag_box")
 
     -- restore settings
-    ovt(oldrgba)
+    ov("rgba "..oldrgba)
     ov("blend "..oldblend)
     ov("lineoption width "..oldwidth)
 end
@@ -2500,9 +2499,7 @@ local function test_mouse()
         local xy = ov("xy")
         if #xy > 0 then
             local x, y = split(xy)
-            local rv, gv, bv, av = ovt{"get", x, y}
-            local rgbav = rv.." "..gv.." "..bv.." "..av
-            g.show("pixel at "..x..","..y.." = "..rgbav)
+            g.show("pixel at "..x..","..y.." = "..ov("get "..x.." "..y))
             if mousedown and (x ~= prevx or y ~= prevy) then
                 ovt{"line", prevx, prevy, x, y}
                 prevx = x
