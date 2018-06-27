@@ -443,12 +443,12 @@ All values will be from 0 to 255.
 For the string version the values are returned as a string of the form "red green blue alpha".
 If the given pixel is outside the render target then "" is returned.
 </dd>
-<dd> Example: <b>local rgba = ov("get 10 20")</b></dd>
+<dd> Example: <b>local RGBA = ov("get 10 20")</b></dd>
 <dd>
 For the table version the values are returned individually.
 If the given pixel is outside the render target then -1 is returned for each component.
 </dd>
-<dd> Example: <b>local r, g, b, a = ovt{"get", 10, 20}</b></dd>
+<dd> Example: <b>local R, G, B, A = ovt{"get", 10, 20}</b></dd>
 </p>
 
 <a name="line"></a><p><dt><b>line <i>x1 y1 x2 y2 (...xn yn)</i></b></dt>
