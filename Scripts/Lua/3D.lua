@@ -56,35 +56,37 @@ local MIDGRID = (N+1-(N%2))*HALFCELL
 local MIDCELL = HALFCELL-MIDGRID
 
 -- these global strings can be changed by a startup script to customize colors
-BACK_COLOR = {"rgba", 0, 0, 80, 255}      -- for background
-LINE_COLOR = {"rgba", 70, 70, 100, 255}   -- for lattice lines (should be close to BACK_COLOR)
-INFO_COLOR = op.twhite               -- for info text
-MSG_COLOR = op.tyellow               -- for message text
-POINT_COLOR = op.twhite              -- for drawing points
-SELPT_COLOR = {"rgba", 0, 255, 0, 128}    -- for selected points (should be translucent)
-PASTE_COLOR = {"rgba", 255, 0, 0, 64}     -- for paste pattern (must be translucent)
-SELECT_COLOR = {"rgba", 0, 255, 0, 64}    -- for selected cells (ditto)
-ACTIVE_COLOR = {"rgba", 0, 0, 255, 48}    -- for active plane (ditto)
-PASTE_MENU = {"rgba", 176, 48, 48, 255}   -- for paste menu background (should match PASTE_COLOR)
-SELECT_MENU = {"rgba", 0, 128, 0, 255}    -- for select menu background (should match SELECT_COLOR)
-X_COLOR = op.tred                    -- for front X axes
-Y_COLOR = op.tgreen                  -- for front Y axes
-Z_COLOR = op.tblue                   -- for front Z axes
-REARX_COLOR = {"rgba", 128, 0, 0, 255}    -- for rear X axes (should be darker than front axes)
-REARY_COLOR = {"rgba", 0, 128, 0, 255}    -- for rear Y axes (ditto)
-REARZ_COLOR = {"rgba", 0, 0, 128, 255}    -- for rear Z axes (ditto)
-START_COLOR = {"rgba", 0, 150, 0, 255}    -- for Start button's background
-SELSTART_COLOR = {"rgba", 0, 90, 0, 255}  -- for Start button's selected background
-STOP_COLOR = {"rgba", 210, 0, 0, 255}     -- for Stop button's background
-SELSTOP_COLOR = {"rgba", 150, 0, 0, 255}  -- for Stop button's selected background
+BACK_COLOR = "rgba 0 0 80 255"      -- for background
+LINE_COLOR = "rgba 70 70 100 255"   -- for lattice lines (should be close to BACK_COLOR)
+INFO_COLOR = op.white               -- for info text
+MSG_COLOR = op.yellow               -- for message text
+POINT_COLOR = op.white              -- for drawing points
+SELPT_COLOR = "rgba 0 255 0 128"    -- for selected points (should be translucent)
+PASTE_COLOR = "rgba 255 0 0 64"     -- for paste pattern (must be translucent)
+SELECT_COLOR = "rgba 0 255 0 64"    -- for selected cells (ditto)
+ACTIVE_COLOR = "rgba 0 0 255 48"    -- for active plane (ditto)
+PASTE_MENU = "rgba 176 48 48 255"   -- for paste menu background (should match PASTE_COLOR)
+SELECT_MENU = "rgba 0 128 0 255"    -- for select menu background (should match SELECT_COLOR)
+X_COLOR = op.red                    -- for front X axes
+Y_COLOR = op.green                  -- for front Y axes
+Z_COLOR = op.blue                   -- for front Z axes
+REARX_COLOR = "rgba 128 0 0 255"    -- for rear X axes (should be darker than front axes)
+REARY_COLOR = "rgba 0 128 0 255"    -- for rear Y axes (ditto)
+REARZ_COLOR = "rgba 0 0 128 255"    -- for rear Z axes (ditto)
+START_COLOR = "rgba 0 150 0 255"    -- for Start button's background
+SELSTART_COLOR = "rgba 0 90 0 255"  -- for Start button's selected background
+STOP_COLOR = "rgba 210 0 0 255"     -- for Stop button's background
+SELSTOP_COLOR = "rgba 150 0 0 255"  -- for Stop button's selected background
 
 -- following are for BusyBoxes
-EVEN_COLOR = {"rgba", 255, 180, 255, 255}     -- for even cell points and spheres (pale magenta)
-ODD_COLOR = {"rgba", 140, 255, 255, 255}      -- for odd cell points and spheres (pale cyan)
+EVEN_COLOR = "rgba 255 180 255 255"     -- for even cell points and spheres (pale magenta)
+ODD_COLOR = "rgba 140 255 255 255"      -- for odd cell points and spheres (pale cyan)
 EVEN_CUBE = "replace *# *#-50 *# *#"    -- for even cell cubes (change white to pale magenta)
 ODD_CUBE = "replace *#-110 *# *# *#"    -- for odd cell cubes (change white to pale cyan)
 
 -- table versions of point and select point colors
+pointcol = {split(POINT_COLOR)}
+selpointcol = {split(SELPT_COLOR)}
 usingpointcol = false
 
 local xylattice = {}                -- lattice lines between XY axes
@@ -628,7 +630,7 @@ local function FillFace(ax, ay, bx, by, cx, cy, dx, dy, shade)
     if dy-cy > 0 then delta4 = (dx-cx) / (dy-cy) end
 
     -- draw horizontal segments from sx to ex (start and end X coords)
-    ovt(shade)
+    ov(shade)
     local sx = ax
     local sy = ay
     local ex = sx
@@ -668,7 +670,7 @@ local function CheckFaces(f1v1, f1v2, f1v3, f1v4,
                                          (z1-z2)*(z1-z2) )
         -- costheta ranges from -1.0 to 1.0
         local shade = 255 - int((costheta + 1.0) / 2.0 * 128)
-        return {"rgba", shade, shade, shade, 255}
+        return "rgba "..shade.." "..shade.." "..shade.." 255"
     end
 
     -- test rotated z coords to see which face is in front
@@ -774,7 +776,7 @@ function DrawRearAxes()
     local z7 = rotrefz[7]
 
     if showlines then
-        ovt(LINE_COLOR)
+        ov(LINE_COLOR)
         if z1 < z2 then
             -- front face of rotated refcube is visible
             for _, pt in ipairs(xylattice) do AddLineToBatch(pt[1], pt[2]) end
@@ -795,21 +797,21 @@ function DrawRearAxes()
         ov("blend 1")
         ov("lineoption width 3")
 
-        if z1 <  z2 or z1 >= z3 then ovt(REARX_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
-        if z1 <  z2 or z1 >= z7 then ovt(REARY_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
-        if z1 >= z7 or z1 >= z3 then ovt(REARZ_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
+        if z1 <  z2 or z1 >= z3 then ov(REARX_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
+        if z1 <  z2 or z1 >= z7 then ov(REARY_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
+        if z1 >= z7 or z1 >= z3 then ov(REARZ_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
 
-        if z1 <  z2 or z1 <  z3 then ovt(REARX_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
-        if z1 >= z2 or z1 >= z7 then ovt(REARY_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
-        if z1 <  z7 or z1 >= z3 then ovt(REARZ_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
+        if z1 <  z2 or z1 <  z3 then ov(REARX_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
+        if z1 >= z2 or z1 >= z7 then ov(REARY_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
+        if z1 <  z7 or z1 >= z3 then ov(REARZ_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
 
-        if z1 >= z2 or z1 <  z3 then ovt(REARX_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
-        if z1 >= z2 or z1 <  z7 then ovt(REARY_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
-        if z1 <  z3 or z1 <  z7 then ovt(REARZ_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
+        if z1 >= z2 or z1 <  z3 then ov(REARX_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
+        if z1 >= z2 or z1 <  z7 then ov(REARY_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
+        if z1 <  z3 or z1 <  z7 then ov(REARZ_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
 
-        if z1 >= z2 or z1 >= z3 then ovt(REARX_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
-        if z1 <  z2 or z1 <  z7 then ovt(REARY_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
-        if z1 >= z7 or z1 <  z3 then ovt(REARZ_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
+        if z1 >= z2 or z1 >= z3 then ov(REARX_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
+        if z1 <  z2 or z1 <  z7 then ov(REARY_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
+        if z1 >= z7 or z1 <  z3 then ov(REARZ_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
 
         ov("lineoption width 1")
         ov("blend 0")
@@ -827,7 +829,7 @@ function DrawFrontAxes()
     local z7 = rotrefz[7]
 
     if showlines then
-        ovt(LINE_COLOR)
+        ov(LINE_COLOR)
         if z1 >= z2 then
             -- back face of rotated refcube is visible
             for _, pt in ipairs(xylattice) do AddLineToBatch(pt[1], pt[2]) end
@@ -848,21 +850,21 @@ function DrawFrontAxes()
         ov("blend 1")
         ov("lineoption width 3")
 
-        if z1 >= z2 or z1 < z3 then ovt(X_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
-        if z1 >= z2 or z1 < z7 then ovt(Y_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
-        if z1 <  z7 or z1 < z3 then ovt(Z_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
+        if z1 >= z2 or z1 < z3 then ov(X_COLOR); DisplayLine(xaxes[1], xaxes[2]) end
+        if z1 >= z2 or z1 < z7 then ov(Y_COLOR); DisplayLine(yaxes[1], yaxes[2]) end
+        if z1 <  z7 or z1 < z3 then ov(Z_COLOR); DisplayLine(zaxes[1], zaxes[2]) end
 
-        if z1 >= z2 or z1 >= z3 then ovt(X_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
-        if z1 <  z2 or z1 <  z7 then ovt(Y_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
-        if z1 >= z7 or z1 <  z3 then ovt(Z_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
+        if z1 >= z2 or z1 >= z3 then ov(X_COLOR); DisplayLine(xaxes[3], xaxes[4]) end
+        if z1 <  z2 or z1 <  z7 then ov(Y_COLOR); DisplayLine(yaxes[3], yaxes[4]) end
+        if z1 >= z7 or z1 <  z3 then ov(Z_COLOR); DisplayLine(zaxes[3], zaxes[4]) end
 
-        if z1 <  z2 or z1 >= z3 then ovt(X_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
-        if z1 <  z2 or z1 >= z7 then ovt(Y_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
-        if z1 >= z3 or z1 >= z7 then ovt(Z_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
+        if z1 <  z2 or z1 >= z3 then ov(X_COLOR); DisplayLine(xaxes[5], xaxes[6]) end
+        if z1 <  z2 or z1 >= z7 then ov(Y_COLOR); DisplayLine(yaxes[5], yaxes[6]) end
+        if z1 >= z3 or z1 >= z7 then ov(Z_COLOR); DisplayLine(zaxes[5], zaxes[6]) end
 
-        if z1 <  z2 or z1 <  z3 then ovt(X_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
-        if z1 >= z2 or z1 >= z7 then ovt(Y_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
-        if z1 <  z7 or z1 >= z3 then ovt(Z_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
+        if z1 <  z2 or z1 <  z3 then ov(X_COLOR); DisplayLine(xaxes[7], xaxes[8]) end
+        if z1 >= z2 or z1 >= z7 then ov(Y_COLOR); DisplayLine(yaxes[7], yaxes[8]) end
+        if z1 <  z7 or z1 >= z3 then ov(Z_COLOR); DisplayLine(zaxes[7], zaxes[8]) end
 
         ov("lineoption width 1")
         ov("blend 0")
@@ -922,7 +924,7 @@ function CreateTranslucentCell(clipname, color)
     -- create a clip containing a translucent cube with given color
     ov("create "..(CELLSIZE*2).." "..(CELLSIZE*2).." "..clipname)
     ov("target "..clipname)
-    ovt(color)
+    ov(color)
 
     -- temporarily change BORDER and LEN so CreateCube fills cell
     local oldBORDER = BORDER
@@ -1291,7 +1293,7 @@ function DrawCellDepth(x, y, z, mx, my, addtobatch)
         else -- celltype == "point"
             if not usingpointcol then
                 usingpointcol = true
-                ovt(POINT_COLOR)
+                ovt(pointcol)
             end
             cmd[1] = "set"
         end
@@ -1327,7 +1329,7 @@ function DrawCell(x, y, z, mx, my, addtobatch)
         else -- celltype == "point"
             if not usingpointcol then
                 usingpointcol = true
-                ovt(POINT_COLOR)
+                ovt(pointcol)
             end
             cmd[1] = "set"
         end
@@ -1350,7 +1352,7 @@ local function DrawBatchLayer(depth, coordlist, length)
             length = length + 1
             coordlist[length] = "S"..depth
         else -- celltype == "point" then
-            ovt(POINT_COLOR)
+            ovt(pointcol)
             coordlist[1] = "set"
         end
         length = length + 1
@@ -1479,13 +1481,13 @@ local function TestCell(editing, gridpos, x, y, z, mx, my)
                 -- live cell so draw a point
                 if not usingpointcol then
                     usingpointcol = true
-                    ovt(POINT_COLOR)
+                    ovt(pointcol)
                 end
                 DrawPoint(x, y, z)
             end
             if selected[gridpos] then
                 -- draw translucent point
-                ovt(SELPT_COLOR)
+                ovt(selpointcol)
                 usingpointcol = false
                 DrawPoint(x, y, z)
             end
@@ -1618,6 +1620,8 @@ function DisplayCells(editing)
         local oldtiming = timingenabled
         timingenabled = false
         -- setup the point colors
+        pointcol = {split(POINT_COLOR)}
+        selpointcol = {split(SELPT_COLOR)}
         usingpointcol = false
         -- draw each cell
         j = l_N*fromz
@@ -1792,13 +1796,15 @@ function CreateBusySphere(clipname)
 
     local R, G, B
     if clipname == "E" then
-        R = EVEN_COLOR[2]
-        G = EVEN_COLOR[3]
-        B = EVEN_COLOR[4]
+        local _, red, green, blue = split(EVEN_COLOR)
+        R = tonumber(red)
+        G = tonumber(green)
+        B = tonumber(blue)
     else
-        R = ODD_COLOR[2]
-        G = ODD_COLOR[3]
-        B = ODD_COLOR[4]
+        local _, red, green, blue = split(ODD_COLOR)
+        R = tonumber(red)
+        G = tonumber(green)
+        B = tonumber(blue)
     end
 
     local x = 0
@@ -1911,7 +1917,7 @@ function CreateBusyPoint(clipname, color)
     ov("create 1 1 "..clipname)
     ov("target "..clipname)
     -- set pixel to the given color
-    ovt(color)
+    ov(color)
     ovt{"set", 0, 0}
     ov("target")
 end
@@ -1953,7 +1959,7 @@ local function TestBusyBox(editing, gridpos, x, y, z, clipname)
             end
             if selected[gridpos] then
                 -- draw translucent point
-                ovt(SELPT_COLOR)
+                ovt(selpointcol)
                 DrawPoint(x, y, z)
             end
         end
@@ -2217,7 +2223,7 @@ function DrawToolBar()
     DrawMenuBar()
 
     -- draw line at bottom edge of tool bar
-    ovt(op.tgray)
+    ov(op.gray)
     DrawLine(0, toolbarht-1, ovwd-1, toolbarht-1)
 
     if scriptlevel == 0 then
@@ -2255,7 +2261,7 @@ function DrawToolBar()
     stepslider.show(x + movebox.wd + biggap, y, stepsize)
 
     -- show stepsize at right end of slider
-    ovt(op.tblack)
+    ov(op.black)
     local oldfont
     if g.os() == "Linux" then
         oldfont = ov("font 10 default")
@@ -2303,7 +2309,7 @@ function Refresh(update)
     if timingenabled then gp.timerstart("Refresh") end
 
     -- fill overlay with background color
-    ovt(BACK_COLOR)
+    ov(BACK_COLOR)
     ovt{"fill"}
 
     -- get Z coordinates of the vertices of a rotated reference cube
@@ -2386,11 +2392,11 @@ function Refresh(update)
         -- show timing
         info = info.."\n"..gp.timervalueall()
     end
-    ovt(INFO_COLOR)
+    ov(INFO_COLOR)
     local _, ht = op.maketext(info)
     op.pastetext(10, toolbarht + 10)
     if message then
-        ovt(MSG_COLOR)
+        ov(MSG_COLOR)
         op.maketext(message)
         op.pastetext(10, toolbarht + 10 + ht + 10)
     end
@@ -8986,12 +8992,12 @@ function CreateToolBar()
     op.textshadowx = 0
     op.textshadowy = 0
 
-    drawbox = op.radiobutton("Draw", op.tblack, DrawMode)
-    selectbox = op.radiobutton("Select", op.tblack, SelectMode)
-    movebox = op.radiobutton("Move", op.tblack, MoveMode)
+    drawbox = op.radiobutton("Draw", op.black, DrawMode)
+    selectbox = op.radiobutton("Select", op.black, SelectMode)
+    movebox = op.radiobutton("Move", op.black, MoveMode)
 
     -- create a slider for adjusting stepsize
-    stepslider = op.slider("", op.tblack, 100, 1, 100, StepChange)
+    stepslider = op.slider("", op.black, 100, 1, 100, StepChange)
 end
 
 ----------------------------------------------------------------------
@@ -9252,7 +9258,7 @@ function Initialize()
     end
 
     -- note that startup script might have changed BACK_COLOR etc
-    ov("textoption background "..table.concat(BACK_COLOR, " ", 2))
+    ov("textoption background "..BACK_COLOR:sub(6))
     ssbutton.customcolor = START_COLOR
     ssbutton.darkcustomcolor = SELSTART_COLOR
 

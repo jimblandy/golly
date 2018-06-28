@@ -589,7 +589,7 @@ end
 --------------------------------------------------------------------------------
 
 local function draw_tool_bar()
-    ovt(op.twhite)
+    ov(op.white)
     ovt{"fill", 0, 0, viewwd, toolbarht}
 
     -- must draw line at bottom edge of tool bar in case a cell color is white
@@ -1277,15 +1277,15 @@ r             - reset to starting pattern
                (click or hit any key to close help)]]
 
     ov("font 11 mono-bold")
-    ovt(op.tblack)
+    ov(op.black)
     local w, h = split(ov("text temp "..helptext))
     w = tonumber(w) + 20
     h = tonumber(h) + 20
     local x = int((viewwd - w) / 2)
     local y = int((viewht - h) / 2)
-    ovt(op.tgray)
+    ov(op.gray)
     ovt{"fill", x, y, w, h}
-    ovt{"rgba", 255, 253, 217, 255} -- pale yellow (matches Help window)
+    ov("rgba 255 253 217 255") -- pale yellow (matches Help window)
     ovt{"fill", (x+2), (y+2), (w-4), (h-4)}
     local oldblend = ov("blend 1")
     ovt{"paste", (x+10), (y+10), "temp"}
@@ -1340,7 +1340,7 @@ local function create_overlay()
     ebutton = op.button("X", exit_script)
 
     -- create a slider for zooming in/out
-    zslider = op.slider("", op.tblack, (maxedge-minedge+1)*3, minedge, maxedge, zoom_slider)
+    zslider = op.slider("", op.black, (maxedge-minedge+1)*3, minedge, maxedge, zoom_slider)
 
     toolbarht = 20 + ssbutton.ht
     midy = int(viewht/2 + toolbarht/2)

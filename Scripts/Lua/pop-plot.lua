@@ -307,10 +307,10 @@ local function create_overlay()
     -- create a check box for showing lines or dots
     op.textshadowx = 0
     op.textshadowy = 0
-    lbox = op.checkbox("Lines", op.tblack, toggle_lines)
+    lbox = op.checkbox("Lines", op.black, toggle_lines)
 
     -- create a slider for adjusting opacity of background
-    oslider = op.slider("Opacity:", op.tblack, 101, 0, 100, do_slider)
+    oslider = op.slider("Opacity:", op.black, 101, 0, 100, do_slider)
 
     controlht = 20 + sbutt.ht
 end

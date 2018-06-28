@@ -12,7 +12,7 @@
 -- Author:
 --   Chris Rowett (crowett@gmail.com)
 
-local build = 27   -- build number
+local build = 26   -- build number
 
 local g = golly()
 local gp = require "gplus"
@@ -64,7 +64,7 @@ local sliderpower  = 1.32        -- slider power
 local textrect     = "textrect"  -- clip name for clipping info text
 
 -- style
-local toolbarbgcolor = {"rgba", 0, 0, 0, 192}
+local toolbarbgcolor = "0 0 0 192"
 
 -- flags
 local loadnew      = false  -- whether to load a new pattern
@@ -229,7 +229,7 @@ local function updatenextbutton()
             -- shade a proportion of the next button in green
             ov("copy "..x.." "..y.." "..wd.." "..ht.." "..clipname)
             ov("target "..clipname)
-            ovt{"rgba", 40, 192, 0, 255}
+            ov("rgba 40 192 0 255")
             ov("replace 40 128 255 255")
             ov("target")
             ov("blend 0")
@@ -275,7 +275,7 @@ local function drawspeed(x, y)
 
     -- update the label
     if showoptions then
-        op.maketext(message, "label", op.twhite, 2, 2, op.tblack)
+        op.maketext(message, "label", op.white, 2, 2, op.black)
         ov("blend 1")
         op.pastetext(x, y, op.identity, "label")
         ov("blend 0")
@@ -301,7 +301,7 @@ local function drawinfo()
     -- draw the info text
     ov("target "..textrect)
     ov("blend 0")
-    ovt(toolbarbgcolor)
+    ov("rgba "..toolbarbgcolor)
     ovt{"fill"}
     ov("blend 1")
     local x = floor(infox)
@@ -330,7 +330,7 @@ local function drawgui()
 
         -- draw toolbar background
         ov("blend 0")
-        ovt(toolbarbgcolor)
+        ov("rgba "..toolbarbgcolor)
         ovt{"fill", 0, 0, guiwd, guiht}
 
         -- draw main buttons
@@ -358,7 +358,7 @@ local function drawgui()
         if showoptions then
             -- draw options background
             ovt{"fill", 0, (guiht + infoy), guiwd, optht}
-            ovt{"rgba", 0, 0, 0, 0}
+            ov("rgba 0 0 0 0")
             ovt{"fill", 0, (guiht + infoy + optht), guiwd, infoy}
 
             -- draw option controls
@@ -406,9 +406,9 @@ local function drawgui()
             end
         else
             -- not showing options so clear the area under the toolbar
-            local oldrgba = ovt{"rgba", 0, 0, 0, 0}
+            local oldrgba = ov("rgba 0 0 0 0")
             ovt{"fill", 0, (guiht + infoy), guiwd, optht}
-            ovt(oldrgba)
+            ov("rgba "..oldrgba)
         end
     end
 
@@ -460,15 +460,15 @@ Ctrl-T    - toggle autofit during playback
 
     -- draw help text
     ov("font 11 mono-bold")
-    ovt(op.tblack)
+    ov(op.black)
     local w, h = gp.split(ov("text temp "..helptext))
     w = tonumber(w) + 20
     h = tonumber(h) + 20
     local x = floor((viewwd - w) / 2)
     local y = floor((viewht - h) / 2)
-    ovt(op.tgray)
+    ov(op.gray)
     ovt{"fill", x, y, w, h}
-    ovt{"rgba", 255, 253, 217, 255} -- pale yellow (matches Help window)
+    ov("rgba 255 253 217 255") -- pale yellow (matches Help window)
     ovt{"fill", (x+2), (y+2), (w-4), (h-4)}
     local oldblend = ov("blend 1")
     ovt{"paste", (x+10), (y+10), "temp"}
@@ -488,7 +488,7 @@ Ctrl-T    - toggle autofit during playback
     end
 
     -- clear help
-    ovt{"rgba", 0, 0, 0, 0}
+    ov("rgba 0 0 0 0")
     ov("blend 0")
     ovt{"fill", x, y, w, h}
     refreshgui = true
@@ -650,21 +650,19 @@ local function createoverlay()
     -- create gui buttons
     op.textshadowx = 2
     op.textshadowy = 2
-    op.buttonshadowx = 1
-    op.buttonshadowy = 1
     prevbutton = op.button("Previous", previouspattern)
     nextbutton = op.button("Next", nextpattern)
     exitbutton = op.button("X", exitbrowser)
     helpbutton = op.button("?", showhelp)
     folderbutton = op.button("Folder", selectfolder)
-    startcheck = op.checkbox("Start playback on pattern load", op.twhite, toggleautostart)
-    fitcheck = op.checkbox("Fit pattern to display", op.twhite, toggleautofit)
-    speedslider = op.slider("Advance: ", op.twhite, 81, 0, maxsliderval, updatespeed)
+    startcheck = op.checkbox("Start playback on pattern load", op.white, toggleautostart)
+    fitcheck = op.checkbox("Fit pattern to display", op.white, toggleautofit)
+    speedslider = op.slider("Advance: ", op.white, 81, 0, maxsliderval, updatespeed)
     optionsbutton = op.button("Options", toggleoptions)
-    subdircheck = op.checkbox("Include subdirectories", op.twhite, togglesubdirs)
-    keepspeedcheck = op.checkbox("Maintain step speed across patterns", op.twhite, togglespeed)
-    loopcheck = op.checkbox("Loop pattern list", op.twhite, toggleloop)
-    infocheck = op.checkbox("Show pattern information", op.twhite, toggleinfo)
+    subdircheck = op.checkbox("Include subdirectories", op.white, togglesubdirs)
+    keepspeedcheck = op.checkbox("Maintain step speed across patterns", op.white, togglespeed)
+    loopcheck = op.checkbox("Loop pattern list", op.white, toggleloop)
+    infocheck = op.checkbox("Show pattern information", op.white, toggleinfo)
 
     -- get the size of the gui controls
     optht = startcheck.ht + fitcheck.ht + infocheck.ht + subdircheck.ht + speedslider.ht
@@ -699,7 +697,7 @@ local function loadinfo()
              for i = 1, infonum do
                  local i1 = (i - 1) * infochunk + 1
                  local i2 = i1 + infochunk - 1
-                 infowd[i], infoht[i] = op.maketext(clean:sub(i1, i2), infoclip..i, op.twhite, 2, 2, op.tblack)
+                 infowd[i], infoht[i] = op.maketext(clean:sub(i1, i2), infoclip..i, op.white, 2, 2, op.black)
                  infowdtotal = infowdtotal + infowd[i]
              end
              infox = guiwd

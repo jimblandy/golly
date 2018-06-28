@@ -98,13 +98,13 @@ local function repeat_test(extratext, palebg)
     local oldblend = ov("blend 1")
     if palebg then
         -- draw black text
-        ovt(op.tblack)
+        ov(op.black)
         local _, h = maketext(text)
         pastetext(10, ht - 10 - h)
     else
         -- draw white text with a black shadow
-        ovt(op.twhite)
-        local _, h = maketext(text, nil, op.twhite, 2, 2)
+        ov(op.white)
+        local _, h = maketext(text, nil, op.white, 2, 2)
         local x = 10
         local y = ht - 10 - h
         pastetext(x, y)
@@ -143,15 +143,15 @@ local day = 1
 local function test_transitions()
     -- create a clip from the menu screen
     local oldblend = ov("blend 0")
-    ovt(op.tblack)
+    ov(op.black)
     ovt{"line", 0, 0, (wd - 1), 0, (wd - 1), (ht - 1), 0, (ht - 1), 0, 0}
     ov("copy 0 0 "..wd.." "..ht.." bg")
 
     -- create the background clip
-    ovt(op.tblue)
+    ov(op.blue)
     ovt{"fill"}
     local oldfont = ov("font 100 mono")
-    ovt(op.tyellow)
+    ov(op.yellow)
     local w,h = maketext("Golly")
     ov("blend 1")
     pastetext(floor((wd - w) / 2), floor((ht - h) / 2))
@@ -177,7 +177,7 @@ local function test_transitions()
 
     -- tuesday: duck and cover
     elseif day == 2 then
-        ovt(op.twhite)
+        ov(op.white)
         for y = 0, ht, 10 do
             t = g.millisecs()
             ovt{"paste", 0, 0, "fg"}
@@ -350,7 +350,7 @@ local function test_cursors()
     if curs == 10 then cmd = "cursor hidden" curs = 0 end
     ov(cmd)
 
-    ovt(op.twhite)
+    ov(op.white)
     ovt{"fill"}
     -- create a transparent hole
     ovt{"rgba", 0, 0, 0, 0}
@@ -362,7 +362,7 @@ local function test_cursors()
         cmd = cmd.."\n\n".."The overlay cursor will change to Golly's current cursor\n"..
                            "if it moves outside the overlay or over a transparent pixel:"
     end
-    ovt(op.tblack)
+    ov(op.black)
     demotext(10, 10, cmd)
 
     if repeat_test(" using a different cursor", true) then goto restart end
@@ -383,7 +383,7 @@ local function test_positions()
     if pos == 4 then ov("position bottomleft") end
     if pos == 5 then ov("position middle") pos = 0 end
 
-    ovt(op.twhite)
+    ov(op.white)
     ovt{"fill"}
     ovt{"rgba", 0, 0, 255, 128}
     ovt{"fill", 1, 1, -2, -2}
@@ -395,14 +395,14 @@ of the current layer, or at any corner.]]
     local oldblend = ov("blend 1")
     local w, h
     local fontsize = 30
-    ovt(op.twhite)
+    ov(op.white)
     -- reduce fontsize until text nearly fills overlay width
     repeat
         fontsize = fontsize - 1
         ov("font "..fontsize)
         w, h = maketext(text)
     until w <= wd - 10
-    ovt(op.tblack)
+    ov(op.black)
     maketext(text, "shadow")
     local x = int((wd - w) / 2)
     local y = int((ht - h) / 2)
@@ -447,11 +447,11 @@ local function test_replace()
     ovt{"rgba", 0, 0, 0, 0}
     ovt{"fill"}
     ov("blend 1")
-    ovt(op.tblack)
+    ov(op.black)
     ovt{"fill", 20, 20, 192, 256}
-    ovt(op.tred)
+    ov(op.red)
     ovt{"fill", 84, 84, 128, 128}
-    ovt(op.tblue)
+    ov(op.blue)
     ovt{"fill", 148, 148, 64, 64}
     ovt{"rgba", 0, 255, 0, 128}
     ovt{"fill", 64, 64, 104, 104}
@@ -469,7 +469,7 @@ local function test_replace()
     ovt{"rgba", 0, 255, 0, 128}
     ovt{"fill", 20, 212, 64, 64}
     ov("blend 1")
-    ovt(op.twhite)
+    ov(op.white)
     ovt{"line", 20, 20, 275, 20, 275, 275, 20, 275, 20, 20}
     ov("copy 20 20 256 256 clip")
 
@@ -523,17 +523,17 @@ local function test_replace()
 
             -- draw test name
             ov("font 14 mono")
-            ovt(op.twhite)
+            ov(op.white)
             local testname = "Test "..replace..": "..replacements[replace].desc
             w, _ = maketext(testname, nil, nil, 2, 2)
             pastetext(floor((wd - w) / 2), 310)
             ov("font 22 mono")
             if #drawcol ~= 0 then
-                ovt(op.tyellow)
+                ov(op.yellow)
                 w, _ = maketext(table.concat(drawcol, " "), nil, nil, 2, 2)
                 pastetext(floor((wd - w) / 2), 340)
             end
-            ovt(op.tyellow)
+            ov(op.yellow)
             w, _ = maketext(replacecmd, nil, nil, 2, 2)
             pastetext(floor((wd - w) / 2), 390)
 
@@ -559,7 +559,7 @@ local function test_replace()
 
         -- draw test name
         ov("font 14 mono")
-        ovt(op.twhite)
+        ov(op.white)
         local testname = "Test "..replace..": "..replacements[replace].desc
         w, _ = maketext(testname, nil, nil, 2, 2)
         pastetext(floor((wd - w) / 2), 310)
@@ -567,11 +567,11 @@ local function test_replace()
         -- draw test commands
         ov("font 22 mono")
         if #drawcol ~= 0 then
-            ovt(op.tyellow)
+            ov(op.yellow)
             w, _ = maketext(table.concat(drawcol, " "), nil, nil, 2, 2)
             pastetext(floor((wd - w) / 2), 340)
         end
-        ovt(op.tyellow)
+        ov(op.yellow)
         w, _ = maketext(replacecmd, nil, nil, 2, 2)
         pastetext(floor((wd - w) / 2), 390)
     end
@@ -609,12 +609,12 @@ local function test_copy_paste()
     local tilesize = sqsize * 2
 
     -- create the 1st tile (2x2 squares) in the top left corner
-    ovt(op.twhite)
+    ov(op.white)
     ovt{"fill", 0, 0, tilesize, tilesize}
-    ovt(op.tred)
+    ov(op.red)
     ovt{"fill", 1, 1, (sqsize-1), (sqsize-1)}
     ovt{"fill", (sqsize+1), (sqsize+1), (sqsize-1), (sqsize-1)}
-    ovt(op.tblack)
+    ov(op.black)
     ovt{"fill", (sqsize+1), 1, (sqsize-1), (sqsize-1)}
     ovt{"fill", 1, (sqsize+1), (sqsize-1), (sqsize-1)}
     ov("copy 0 0 "..tilesize.." "..tilesize.." tile")
@@ -679,7 +679,7 @@ local function test_cellview()
     -- create text clips
     local exitclip = "exit"
     local oldfont = ov("font 16 roman")
-    local exitw = maketext("Click or press any key to return to the main menu.", exitclip, op.twhite, 2, 2)
+    local exitw = maketext("Click or press any key to return to the main menu.", exitclip, op.white, 2, 2)
     ov("blend 1")
 
     -- create a cellview (width and height must be multiples of 16)
@@ -730,9 +730,7 @@ local function test_cellview()
     -- animate the cells
     local running = true
     while running do
-
-        local t1 = g.millisecs()  -- for pausing for a frame
-        tstart("frame")
+        local t1 = g.millisecs()
 
         -- check for resize
         local newwd, newht = g.getview(g.getlayer())
@@ -760,16 +758,11 @@ local function test_cellview()
         end
 
         -- next generation
-        tstart("nextgen")
         g.run(1)
-        tsave("nextgen")
 
         -- update cell view from pattern
-        tstart("updatecells")
         ov("updatecells")
-        tsave("updatecells")
 
-        tstart("camera")
         -- set the camera
         ov("camera angle "..angle)
         ov("camera zoom "..zoom)
@@ -846,16 +839,12 @@ local function test_cellview()
             depth = startdepth + bezierx(depthstep / depthsteps, 0, 0, 1, 1) * (targetdepth - startdepth)
             depthstep = depthstep + 1
         end
-        tsave("camera")
 
         -- draw the cell view
-        tstart("drawcells")
         ov("blend 0")
         ov("drawcells")
-        tsave("drawcells")
 
         -- draw the world view
-        tstart("worldview")
         ov("target world")
         ov("camera angle 0")
         ov("camera zoom 1")
@@ -867,14 +856,12 @@ local function test_cellview()
         ovt{"line", 0, 0, 0, (worldsize - 1)}
         ov("target")
         ovt{"paste", (wd - worldsize), (ht - worldsize), "world"}
-        tsave("worldview")
 
         -- draw exit message
         ov("blend 1")
         pastetext(floor((wd - exitw) / 2), 20, op.identity, exitclip)
 
-        tsave("frame")
-        g.show("Time to test cellview: "..tvalueall())
+        g.show("Time to test cellview: "..ms(g.millisecs()-t1))
 
         -- update the overlay
         ov("update")
@@ -911,7 +898,7 @@ local function test_scale()
 
     ::restart::
 
-    ovt(op.tyellow)
+    ov(op.yellow)
     ovt{"fill"}
 
     local text = "Hit the space bar to load another image.\n"
@@ -922,7 +909,7 @@ local function test_scale()
     end
     local oldfont = ov(demofont)
     local oldblend = ov("blend 1")
-    ovt(op.tblack)
+    ov(op.black)
     local _, h = maketext(text)
     pastetext(10, ht - 10 - h)
     maketext("Hit [ to scale down, ] to scale up, 1 to reset scale to 1.0, Q to toggle quality.")
@@ -1068,11 +1055,11 @@ local function test_set()
     else
         text = "Click or hit the enter key to return to the main menu."
     end
-    local w, h = maketext(text, nil, op.twhite, 2, 2)
+    local w, h = maketext(text, nil, op.white, 2, 2)
 
     -- create the golly text in yellow (which has no blue component for r g b)
     ov("font 100 mono")
-    ovt(op.tyellow)
+    ov(op.yellow)
     local gw, gh = maketext("Golly", "gollyclip")
 
     -- fill the background with graduated blue to black
@@ -1141,7 +1128,7 @@ local function test_set()
     local xy = {"set"}
 
     -- set white for flake colour
-    ovt(op.twhite)
+    ov(op.white)
 
     -- loop until key pressed or mouse clicked
     while not return_to_main_menu do
@@ -1246,18 +1233,18 @@ end
 --------------------------------------------------------------------------------
 
 local function dot(x, y)
-    local oldrgba = ovt(op.tgreen)
+    local oldrgba = ov(op.green)
     ovt{"set", x, y}
-    ovt(oldrgba)
+    ov("rgba "..oldrgba)
 end
 
 --------------------------------------------------------------------------------
 
 local function draw_rect(x0, y0, x1, y1)
-    local oldrgba = ovt(op.tred)
+    local oldrgba = ov(op.red)
     local oldwidth = ov("lineoption width 1")
     ovt{"line", x0, y0, x1, y0, x1, y1, x0, y1, x0, y0}
-    ovt(oldrgba)
+    ov("rgba "..oldrgba)
     ov("lineoption width "..oldwidth)
 end
 
@@ -1414,9 +1401,9 @@ local function test_lines()
     local oht = 600
     ov("resize "..owd.." "..oht)
 
-    ovt(op.twhite)
+    ov(op.white)
     ovt{"fill"}
-    ovt(op.tblack)
+    ov(op.black)
 
     local oldblend = ov("blend 0")
     local oldwidth = ov("lineoption width 1")
@@ -1477,7 +1464,7 @@ local function test_lines()
     -- test overlapping translucent colors
     ov("blend 1")
     ov("lineoption width 20")
-    local oldrgba = ovt{"rgba", 0, 255, 0, 128}
+    local oldrgba = ov("rgba 0 255 0 128")
     draw_ellipse(50, 450, 100, 100)
     ovt{"rgba", 255, 0, 0, 128}
     draw_line(50, 450, 150, 550)
@@ -1485,28 +1472,28 @@ local function test_lines()
     draw_line(150, 450, 50, 550)
     ov("blend 0")
     ov("lineoption width 1")
-    ovt(oldrgba)
+    ov("rgba "..oldrgba)
 
     -- draw filled ellipses using fill_ellipse function from oplus
     -- (no border if given border width is 0)
-    op.fill_ellipse(370, 450, 50, 100, 0, {"rgba", 0, 0, 255, 128})
+    op.fill_ellipse(370, 450, 50, 100, 0, "rgba 0 0 255 128")
     ovt{"rgba", 200, 200, 200, 128} -- translucent gray border
-    op.fill_ellipse(300, 450, 100, 80, 15, op.tgreen)
-    ovt(oldrgba)
-    op.fill_ellipse(200, 450, 140, 99, 2, {"rgba", 255, 255, 0, 128})
+    op.fill_ellipse(300, 450, 100, 80, 15, op.green)
+    ov("rgba "..oldrgba)
+    op.fill_ellipse(200, 450, 140, 99, 2, "rgba 255 255 0 128")
 
     -- draw rounded rectangles using round_rect function from oplus
     op.round_rect(670, 50, 60, 40,  10,  3, "")
-    op.round_rect(670, 100, 60, 40, 20,  0, {"rgba", 0, 0, 255, 128})
-    op.round_rect(670, 150, 60, 21,  3,  0, op.tblue)
+    op.round_rect(670, 100, 60, 40, 20,  0, "rgba 0 0 255 128")
+    op.round_rect(670, 150, 60, 21,  3,  0, op.blue)
     ovt{"rgba", 200, 200, 200, 128} -- translucent gray border
-    op.round_rect(700, 30, 70, 200, 35, 10, {"rgba", 255, 255, 0, 128})
-    ovt(oldrgba)
+    op.round_rect(700, 30, 70, 200, 35, 10, "rgba 255 255 0 128")
+    ov("rgba "..oldrgba)
 
     -- draw some non-rounded rectangles (radius is 0)
     op.round_rect(670, 200, 10, 8, 0, 3, "")
-    op.round_rect(670, 210, 10, 8, 0, 1, op.tred)
-    op.round_rect(670, 220, 10, 8, 0, 0, op.tgreen)
+    op.round_rect(670, 210, 10, 8, 0, 1, op.red)
+    op.round_rect(670, 220, 10, 8, 0, 0, op.green)
     op.round_rect(670, 230, 10, 8, 0, 0, "")        -- nothing is drawn
 
     -- draw solid circles (non-antialiased and antialiased)
@@ -1545,7 +1532,7 @@ local function test_lines()
         draw_ellipse(x, y, w, h)
     end
     ov("lineoption width 1")
-    ovt(oldrgba)
+    ov("rgba "..oldrgba)
 
     -- create and draw the exit message
     local oldfont = ov(demofont)
@@ -1556,7 +1543,7 @@ local function test_lines()
     else
         text = "Click or hit the enter key to return to the main menu."
     end
-    ovt(op.tblack)
+    ov(op.black)
     _, h = maketext(text)
     pastetext(10, oht - h - 10)
     maketext("Hit the M key to toggle the magnifying glass.")
@@ -1610,10 +1597,7 @@ local function test_lines()
                 ovt{"paste", 0, 0, "bg"}
                 if display_magnifier then
                     -- first show position and color of x,y pixel in status bar
-                    local rgbav = ""
-                    local rv, gv, bv, av = ovt({"get", xv, yv})
-                    if rv ~= -1 then rgbav = rv.." "..gv.." "..bv.." "..av end
-                    g.show("xy: "..xv.." "..yv.."  rgba: "..rgbav)
+                    g.show("xy: "..xv.." "..yv.."  rgba: "..ov("get "..xv.." "..yv))
                     show_magnified_pixels(xv, yv)
                     g.update()
                     showing_magnifier = true
@@ -1641,7 +1625,7 @@ local function test_multiline_text()
 
     -- draw solid background
     local oldblend = ov("blend 0")
-    ovt(op.tblue)
+    ov(op.blue)
     ovt{"fill"}
 
     local textstr =
@@ -1707,7 +1691,7 @@ Test non-ASCII: áàâäãåçéèêëíìîïñóòôöõúùûüæøœÿ
     local oldalign = ov("textoption align "..align)
 
     -- set the text foreground color
-    ovt(op.twhite)
+    ov(op.white)
 
     -- set the text background color
     local oldbackground
@@ -1767,9 +1751,9 @@ local function test_text()
     local oldfont, oldblend, w, h, descent, nextx, _
 
     oldblend = ov("blend 0")
-    ovt(op.twhite) -- white background
+    ov(op.white) -- white background
     ovt{"fill"}
-    ovt(op.tblack) -- black text
+    ov(op.black) -- black text
 
     ov("blend 1")
     maketext("FLIP Y")
@@ -1854,38 +1838,38 @@ local function test_text()
 
     ov("font "..oldfont)    -- restore previous font
 
-    ovt(op.tred)
+    ov(op.red)
     w, h, descent = maketext("RED")
     pastetext(300, 200 - h + descent)
     nextx = 300 + w + 5
 
-    ovt(op.tgreen)
+    ov(op.green)
     w, h, descent = maketext("GREEN")
     pastetext(nextx, 200 - h + descent)
     nextx = nextx + w + 5
 
-    ovt(op.tblue)
+    ov(op.blue)
     _, h, descent = maketext("BLUE")
     pastetext(nextx, 200 - h + descent)
 
-    ovt(op.tyellow)
+    ov(op.yellow)
     w, h = maketext("Yellow on black [] gjpqy")
-    ovt(op.tblack)
+    ov(op.black)
     ovt{"fill", 300, 210, w, h}
     pastetext(300, 210)
 
     ov("blend 0")
-    ovt(op.tyellow)          ovt{"fill", 0,   250, 100, 100}
-    ovt(op.tcyan)            ovt{"fill", 100, 250, 100, 100}
-    ovt(op.tmagenta)         ovt{"fill", 200, 250, 100, 100}
+    ov(op.yellow)             ovt{"fill", 0,   250, 100, 100}
+    ov(op.cyan)               ovt{"fill", 100, 250, 100, 100}
+    ov(op.magenta)            ovt{"fill", 200, 250, 100, 100}
     ovt{"rgba", 0, 0, 0, 0}  ovt{"fill", 300, 250, 100, 100}
     ov("blend 1")
 
-    ovt(op.tblack)
+    ov(op.black)
     maketext("The quick brown fox jumps over 123 dogs.")
     pastetext(10, 270)
 
-    ovt(op.twhite)
+    ov(op.white)
     maketext("SPOOKY")
     pastetext(310, 270)
 
@@ -1907,7 +1891,7 @@ local function test_text()
     -- restore blend state and font
     ov("blend "..oldblend)
     ov("font "..oldfont)
-    ovt(op.tblack)
+    ov(op.black)
 
     g.show("Time to test text: "..ms(g.millisecs()-t1))
 
@@ -1919,7 +1903,7 @@ end
 local function test_fill()
     ::restart::
 
-    ovt(op.twhite)
+    ov(op.white)
     ovt{"fill"}
 
     toggle = 1 - toggle
@@ -1962,7 +1946,7 @@ local function test_target()
 
     -- fill the overlay with black
     ov("blend 0")
-    ovt(op.tblack)
+    ov(op.black)
     ovt{"fill"}
 
     -- create a 300x300 clip
@@ -1970,7 +1954,7 @@ local function test_target()
 
     -- change the clip contents to yellow
     ov("target clip")
-    ovt(op.tyellow)
+    ov(op.yellow)
     ovt{"fill"}
 
     -- either draw to the overlay or clip
@@ -1981,22 +1965,22 @@ local function test_target()
     end
 
     -- draw red, green and blue squares
-    ovt(op.tred)
+    ov(op.red)
     ovt{"fill", 0, 0, wd, 50}
 
-    ovt(op.tgreen)
+    ov(op.green)
     ovt{"fill", 0, 50, wd, 50}
 
-    ovt(op.tblue)
+    ov(op.blue)
     ovt{"fill", 0, 100, wd, 50}
 
     -- draw circle
     ov("blend 1")
-    ovt(op.twhite)
-    op.fill_ellipse(0, 0, 100, 100, 1, op.tmagenta)
+    ov(op.white)
+    op.fill_ellipse(0, 0, 100, 100, 1, op.magenta)
 
     -- draw some lines
-    ovt(op.tcyan)
+    ov(op.cyan)
     for x = 0, wd, 20 do
         ovt{"line", 0, 0 ,x, ht}
     end
@@ -2006,8 +1990,8 @@ local function test_target()
     if target ~= 0 then
         textstring = "Overlay"
     end
-    ovt(op.tblack)
-    maketext(textstring, nil, op.twhite, 2, 2)
+    ov(op.black)
+    maketext(textstring, nil, op.white, 2, 2)
     pastetext(0, 0)
 
     -- set overlay as the target
@@ -2034,7 +2018,7 @@ local maxbatch  = 16384
 local function test_batch()
     ::restart::
 
-    ovt(op.tblack)
+    ov(op.black)
     ovt{"fill"}
 
     -- udpate the batch size
@@ -2079,7 +2063,7 @@ local function test_batch()
     local clipname = "testclip"
     ov("create 32 32 "..clipname)
     ov("target "..clipname)
-    ovt(op.tblue)
+    ov(op.blue)
     ovt{"fill"}
     ov("optimize "..clipname)
     ov("target")
@@ -2118,7 +2102,7 @@ local function test_batch()
     tsave("pastearray")
 
     -- draw random lines
-    ovt(op.tgreen)
+    ov(op.green)
 
     -- time draw one at a time
     tstart("line")
@@ -2155,7 +2139,7 @@ local function test_batch()
     tsave("linearray")
 
     -- draw random rectangles
-    ovt(op.tred)
+    ov(op.red)
 
     -- time draw one at a time
     tstart("rectangle")
@@ -2192,7 +2176,7 @@ local function test_batch()
     tsave("rectanglearray")
 
     -- draw random pixels
-    ovt(op.twhite)
+    ov(op.white)
 
     -- time drawing one at a time
     tstart("pixel")
@@ -2240,7 +2224,7 @@ end
 local function test_blending()
     ::restart::
 
-    ovt(op.twhite)
+    ov(op.white)
     ovt{"fill"}
 
     toggle = 1 - toggle
@@ -2250,7 +2234,7 @@ local function test_blending()
 
     local oldfont = ov(demofont)
     local oldblend = ov("blend 1")
-    ovt(op.tblack)
+    ov(op.black)
     maketext("Alpha blending is turned on or off using the blend command:")
     pastetext(10, 10)
     maketext("blend "..oldblend)
@@ -2269,7 +2253,7 @@ local function test_blending()
     ovt{"rgba", 0, 0, 255, 128}      -- 50% translucent blue
     ovt{"fill", 120, 150, 100, 100}
 
-    ovt(op.tblack)
+    ov(op.black)
     radial_lines(100, 400, 50)
     draw_ellipse(200, 350, 200, 100)
     draw_ellipse(260, 360, 80, 80)
@@ -2293,19 +2277,19 @@ local paused = false
 
 local function test_sound()
     local oldblend = ov("blend 0")
-    ovt(op.tblue)
+    ov(op.blue)
     ovt{"fill"}
 
     -- draw exit message
     ov("blend 1")
-    ovt(op.twhite)
+    ov(op.white)
     local oldfont = ov(demofont)
     local exitw = maketext("Click or press enter to return to the main menu.", nil, nil, 2, 2)
     pastetext(floor((wd - exitw) / 2), 570)
 
     -- draw commands
     ov("font 22 mono")
-    ovt(op.tyellow)
+    ov(op.yellow)
     local w, _ = maketext("sound play audio.wav", nil, nil, 2, 2)
     pastetext(floor((wd - w) / 2), 50)
     w, _ = maketext("sound loop audio.wav", nil, nil, 2, 2)
@@ -2315,7 +2299,7 @@ local function test_sound()
 
     -- draw controls
     ov("font 16 mono")
-    ovt(op.twhite)
+    ov(op.white)
     w, _ = maketext("Press P to play sound", nil, nil, 2, 2)
     pastetext(floor((wd - w) / 2), 20)
     w, _ = maketext("Press L to loop sound", nil, nil, 2, 2)
@@ -2382,14 +2366,14 @@ local function test_sound()
         -- draw pause or resume
         ov("font 16 mono")
         ov("blend 1")
-        ovt(op.twhite)
+        ov(op.white)
         if paused then
             w, _ = maketext("Press Q to resume playback", nil, nil, 2, 2)
         else
             w, _ = maketext("Press Q to pause playback", nil, nil, 2, 2)
         end
         pastetext(floor((wd - w) / 2), 420)
-        ovt(op.tyellow)
+        ov(op.yellow)
         ov("font 22 mono")
         if paused then
             w, _ = maketext("sound resume audio.wav", nil, nil, 2, 2)
@@ -2405,7 +2389,7 @@ local function test_sound()
 
         -- draw last command
         ov("blend 1")
-        ovt(op.tcyan)
+        ov(op.cyan)
         ov("font 16 mono")
         if (result ~= "" and result ~= nil) then
             w, _ = maketext("Last command: "..command.." ("..result..")", nil, nil, 2, 2)
@@ -2437,9 +2421,9 @@ end
 local function test_mouse()
     ::restart::
 
-    ovt(op.tblack)
+    ov(op.black)
     ovt{"fill"}
-    ovt(op.twhite)
+    ov(op.white)
 
     local oldfont = ov(demofont)
     local oldblend = ov("blend 1")
@@ -2580,7 +2564,7 @@ local function main_menu()
     local textgap = 10
 
     local oldfont = ov("font 24 default-bold")
-    ovt(op.tblack)
+    ov(op.black)
     local w1, h1 = maketext("Welcome to the overlay!", "bigtext")
     ov(demofont)
     local w2, h2 = maketext("Click on a button to see what's possible.", "smalltext")
@@ -2596,9 +2580,9 @@ local function main_menu()
 
     ov("position middle")
     ov("cursor arrow")
-    ovt(op.tgray)
+    ov(op.gray)
     ovt{"fill"}
-    ovt(op.twhite)
+    ov(op.white)
     ovt{"fill", 2, 2, -4, -4}
 
     local x = hgap
