@@ -2514,6 +2514,9 @@ function SaveState()
     -- save current rule
     state.saverule = rulestring
 
+    -- save current step size
+    state.savestep = stepsize
+
     -- save current pattern
     state.savedirty = dirty
     state.savename = pattname
@@ -2587,6 +2590,9 @@ function RestoreState(state)
         ParseRule(state.saverule)
     end
 
+    -- restore step size
+    stepsize = state.savestep
+
     -- restore pattern
     dirty = state.savedirty
     pattname = state.savename
@@ -2647,6 +2653,9 @@ function SameState(state)
     if popcount ~= state.savepopcount then return false end
     if selcount ~= state.saveselcount then return false end
     if pastecount ~= state.savepcount then return false end
+    
+    -- note that we don't compare stepsize with state.savestep
+    -- (we don't call RememberCurrentState when the user changes the step size)
 
     for k,_ in pairs(state.savecells) do if not grid1[k] then return false end end
     for k,_ in pairs(state.saveselected) do if not selected[k] then return false end end
@@ -2977,14 +2986,13 @@ function AllDead()
         return true         -- return from NextGen*
     else
         if gencount == startcount then
-            -- remember starting state and step size for later use in Reset()
+            -- remember starting state for later use in Reset()
             if scriptlevel > 0 then
                 -- can't use undostack if user script is running
                 startstate = SaveState()
             else
                 startstate = undostack[#undostack]
             end
-            startstate.savestep = stepsize
         end
         popcount = 0        -- incremented in NextGen*
         InitLiveBoundary()  -- updated in NextGen*
@@ -6101,10 +6109,6 @@ function Reset()
             -- restore starting state
             RestoreState(startstate)
         end
-
-        -- also restore step size to value when starting state was saved
-        stepsize = startstate.savestep
-
         StopGenerating()
         Refresh()
     end
@@ -7215,7 +7219,7 @@ Return an object representing the current state.  The object can be given
 later to <a href="#RestoreState">RestoreState</a> to restore the saved state.
 The saved information includes the grid size, the active plane's orientation
 and position, the cursor mode, the rule, the pattern and its generation count,
-the selection, and the paste pattern.
+the step size, the selection, and the paste pattern.
 </dd>
 
 <a name="SelectAll"></a><p><dt><b>SelectAll()</b></dt>
