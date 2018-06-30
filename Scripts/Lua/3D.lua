@@ -2821,7 +2821,7 @@ function ClearCells()
     -- remove paste pattern
     pastecount = 0
     pastepatt = {}
-    collectgarbage()    -- helps avoid long delay when script exits???!!! only on Mac OS 10.13???
+    collectgarbage()    -- might help avoid long delay when script exits (only on Mac OS 10.13???)
 end
 
 ----------------------------------------------------------------------
@@ -2991,6 +2991,7 @@ function AllDead()
                 -- can't use undostack if user script is running
                 startstate = SaveState()
             else
+                -- starting state is on top of undostack
                 startstate = undostack[#undostack]
             end
         end
@@ -6088,26 +6089,16 @@ function Reset()
     if gencount > startcount then
         -- restore the starting state
         if scriptlevel > 0 then
-            -- Reset called by user script so don't modify undo/redo stacks
+            -- Reset was called by user script so don't modify undo/redo stacks
             RestoreState(startstate)
         else
-            -- push current state onto redostack
-            redostack[#redostack+1] = SaveState()
-
             -- unwind undostack until gencount == startcount
-            while true do
-                local state = table.remove(undostack)
-                if state.savegencount == startcount then
-                    break
-                elseif #undostack == 0 then
-                    g.warn("Bug in Reset!")
-                    break
-                end
-                redostack[#redostack+1] = state
-            end
-
-            -- restore starting state
-            RestoreState(startstate)
+            repeat
+                -- push current state onto redostack
+                redostack[#redostack+1] = SaveState()
+                -- pop state off undostack and restore it
+                RestoreState( table.remove(undostack) )
+            until gencount == startcount
         end
         StopGenerating()
         Refresh()
