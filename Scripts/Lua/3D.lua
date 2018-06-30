@@ -16,7 +16,7 @@ other improvements.
 --]]
 
 local g = golly()
---!!! require "gplus.strict"
+-- require "gplus.strict"
 local gp = require "gplus"
 local int = gp.int
 local round = gp.round
@@ -235,10 +235,6 @@ startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 
 -- user settings are stored in this file
 settingsfile = g.getdir("data").."3D.ini"
-
--- remove eventually???!!!
-memoryenabled = false       -- show memory usage?
-timingenabled = false       -- show timing messages?
 
 ----------------------------------------------------------------------
 
@@ -1367,9 +1363,6 @@ lastBatchSize = MAXN*MAXN*MAXN*2
 lastDepthBatchSize = {}
 
 local function DrawBatch()
-
-    if timingenabled then gp.timerstart("DrawBatch") end
-
     -- check for depth shading for cubes or spheres
     if depthshading and celltype ~= "point" then
         -- save current layer index (may have been updated in TestCell)
@@ -1399,9 +1392,6 @@ local function DrawBatch()
         lastBatchSize = xyindex
         xyindex = 2
     end
-
-    if timingenabled then gp.timersave("DrawBatch") end
-
 end
 ----------------------------------------------------------------------
 
@@ -1512,11 +1502,6 @@ end
 ----------------------------------------------------------------------
 
 function DisplayCells(editing)
-
-    if timingenabled then gp.timerstart("DisplayCells") end
-
-    if timingenabled then gp.timerstart("AddCoords") end
-
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -1616,9 +1601,6 @@ function DisplayCells(editing)
     local l_N = N
     local stepi, stepj = l_N*stepy, l_N*stepz
     if testcell then
-        -- disable timing
-        local oldtiming = timingenabled
-        timingenabled = false
         -- setup the point colors
         pointcol = {split(POINT_COLOR)}
         selpointcol = {split(SELPT_COLOR)}
@@ -1635,9 +1617,6 @@ function DisplayCells(editing)
             end
             j = j+stepj
         end
-        DrawBatch()  -- complete any pending batch
-        -- restore timing
-        timingenabled = oldtiming
     else
         -- only live cells need to be drawn
         local c, m = CELLSIZE, MIDCELL
@@ -1719,14 +1698,9 @@ function DisplayCells(editing)
             xyindex = xyi
         end
     end
-
-    if timingenabled then gp.timersave("AddCoords") end
-
-    if not testcell then DrawBatch() end
+    DrawBatch()  -- complete any pending batch
 
     ov("blend 0")
-
-    if timingenabled then gp.timersave("DisplayCells") end
 end
 
 ----------------------------------------------------------------------
@@ -1981,9 +1955,6 @@ end
 ----------------------------------------------------------------------
 
 function DisplayBusyBoxes(editing)
-
-    if timingenabled then gp.timerstart("DisplayBusyBoxes") end
-
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -2122,8 +2093,6 @@ function DisplayBusyBoxes(editing)
     end
 
     ov("blend 0")
-
-    if timingenabled then gp.timersave("DisplayBusyBoxes") end
 end
 
 --------------------------------------------------------------------------------
@@ -2306,8 +2275,6 @@ function Refresh(update)
     -- (eg. due to user resizing window while a pattern is generating)
     g.check(false)
 
-    if timingenabled then gp.timerstart("Refresh") end
-
     -- fill overlay with background color
     ov(BACK_COLOR)
     ovt{"fill"}
@@ -2323,9 +2290,6 @@ function Refresh(update)
 
     local editing = currcursor ~= movecursor
     if popcount > 0 or pastecount > 0 or selcount > 0 or editing then
-
-        if timingenabled then gp.timerstart("PrepareCells") end
-
         if pastecount > 0 then
             -- paste cells will be translucent
             CreateTranslucentCell("p", PASTE_COLOR)
@@ -2351,9 +2315,6 @@ function Refresh(update)
                 CreateBusyPoint("Ep", EVEN_COLOR)
                 CreateBusyPoint("Op", ODD_COLOR)
             end
-
-            if timingenabled then gp.timersave("PrepareCells") end
-
             DisplayBusyBoxes(editing)
         else
             if celltype == "cube" then
@@ -2361,16 +2322,11 @@ function Refresh(update)
             elseif celltype == "sphere" then
                 CreateLiveSphere()
             end
-
-            if timingenabled then gp.timersave("PrepareCells") end
-
             DisplayCells(editing)
         end
     end
 
     if showaxes or showlines then DrawFrontAxes() end
-
-    if timingenabled then gp.timersave("Refresh") end
 
     -- show info in top left corner
     local info =
@@ -2382,15 +2338,6 @@ function Refresh(update)
     if editing then
         -- show cell coords of mouse if it's inside the active plane
         info = info.."\nx,y,z = "..activecell
-    end
-    if memoryenabled then
-        -- show memory used
-        local kbytes = floor(collectgarbage("count"))
-        info = info.."\nMemory used = "..kbytes.."K"
-    end
-    if timingenabled then
-        -- show timing
-        info = info.."\n"..gp.timervalueall()
     end
     ov(INFO_COLOR)
     local _, ht = op.maketext(info)
@@ -3059,8 +3006,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGenMooreNoWrap()
-    if timingenabled then gp.timerstart("NextGenMooreNoWrap") end
-
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local source = grid1
     local dest = {}
@@ -3109,17 +3054,12 @@ function NextGenMooreNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenMooreNoWrap") end
-
     DisplayGeneration(dest)
 end
 
 ----------------------------------------------------------------------
 
 function NextGenMooreWrap()
-    if timingenabled then gp.timerstart("NextGenMooreWrap") end
-
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local source = grid1
     local dest = {}
@@ -3177,9 +3117,6 @@ function NextGenMooreWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenMooreWrap") end
-
     DisplayGeneration(dest)
 end
 
@@ -3199,8 +3136,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGen6FacesNoWrap()
-    if timingenabled then gp.timerstart("NextGen6FacesNoWrap") end
-
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
     local grid2 = {}
@@ -3257,17 +3192,12 @@ function NextGen6FacesNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen6FacesNoWrap") end
-
     DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
 
 function NextGen6FacesWrap()
-    if timingenabled then gp.timerstart("NextGen6FacesWrap") end
-
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
     local grid2 = {}
@@ -3334,9 +3264,6 @@ function NextGen6FacesWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen6FacesWrap") end
-
     DisplayGeneration(grid2)
 end
 
@@ -3357,8 +3284,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGen8CornersNoWrap()
-    if timingenabled then gp.timerstart("NextGen8CornersNoWrap") end
-
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..8) for live cells
@@ -3419,17 +3344,12 @@ function NextGen8CornersNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen8CornersNoWrap") end
-
     DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
 
 function NextGen8CornersWrap()
-    if timingenabled then gp.timerstart("NextGen8CornersWrap") end
-
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..8) for live cells
@@ -3500,9 +3420,6 @@ function NextGen8CornersWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen8CornersWrap") end
-
     DisplayGeneration(grid2)
 end
 
@@ -3522,8 +3439,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGen12EdgesNoWrap()
-    if timingenabled then gp.timerstart("NextGen12EdgesNoWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
@@ -3596,16 +3511,11 @@ function NextGen12EdgesNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen12EdgesNoWrap") end
-
     DisplayGeneration(grid2)
 end
 ----------------------------------------------------------------------
 
 function NextGen12EdgesWrap()
-    if timingenabled then gp.timerstart("NextGen12EdgesWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
@@ -3690,9 +3600,6 @@ function NextGen12EdgesWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen12EdgesWrap") end
-
     DisplayGeneration(grid2)
 end
 
@@ -3712,8 +3619,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGenHexahedralNoWrap()
-    if timingenabled then gp.timerstart("NextGenHexahedralNoWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
@@ -3785,17 +3690,12 @@ function NextGenHexahedralNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenHexahedralNoWrap") end
-
     DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
 
 function NextGenHexahedralWrap()
-    if timingenabled then gp.timerstart("NextGenHexahedralWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
@@ -3879,9 +3779,6 @@ function NextGenHexahedralWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenHexahedralWrap") end
-
     DisplayGeneration(grid2)
 end
 
@@ -3901,17 +3798,14 @@ end
 ----------------------------------------------------------------------
 
 function NextGenBusyBoxes()
+    -- calculate and display the next generation for the BusyBoxes rule
+    -- (see http://www.busyboxes.org/faq.html)
     if N%2 == 1 then
         -- BusyBoxes requires an even numbered grid size
         SetGridSize(N+1)
     end
 
     if AllDead() then return end
-
-    if timingenabled then gp.timerstart("NextGenBusyBoxes") end
-
-    -- calculate and display the next generation for the BusyBoxes rule
-    -- (see http://www.busyboxes.org/faq.html)
 
     -- the algorithm used below is a slightly modified (and corrected!)
     -- version of the kernel code in Ready's Salt 3D example
@@ -4050,9 +3944,6 @@ function NextGenBusyBoxes()
         zlive[z] = 1
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenBusyBoxes") end
-
     DisplayGeneration(grid2)
 end
 
@@ -7692,21 +7583,6 @@ end
 
 ----------------------------------------------------------------------
 
-function ToggleMemory()
-    memoryenabled = not memoryenabled
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
-function ToggleTiming()
-    timingenabled = not timingenabled
-    if timingenabled then gp.timerresetall() end
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
 function ToggleLines()
     showlines = not showlines
     Refresh()
@@ -9382,9 +9258,6 @@ function HandleKey(event)
     elseif key == "s" and mods == "none" then SelectMode()
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MiddlePattern()
-    -- eventually remove the next 2???!!!
-    elseif key == "t" and mods == "alt" then ToggleTiming()
-    elseif key == "m" and mods == "alt" then ToggleMemory()
     elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "q" then ExitScript()
     else
