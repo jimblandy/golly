@@ -16,7 +16,7 @@ other improvements.
 --]]
 
 local g = golly()
---!!! require "gplus.strict"
+-- require "gplus.strict"
 local gp = require "gplus"
 local int = gp.int
 local round = gp.round
@@ -235,10 +235,6 @@ startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 
 -- user settings are stored in this file
 settingsfile = g.getdir("data").."3D.ini"
-
--- remove eventually???!!!
-memoryenabled = false       -- show memory usage?
-timingenabled = false       -- show timing messages?
 
 ----------------------------------------------------------------------
 
@@ -1367,9 +1363,6 @@ lastBatchSize = MAXN*MAXN*MAXN*2
 lastDepthBatchSize = {}
 
 local function DrawBatch()
-
-    if timingenabled then gp.timerstart("DrawBatch") end
-
     -- check for depth shading for cubes or spheres
     if depthshading and celltype ~= "point" then
         -- save current layer index (may have been updated in TestCell)
@@ -1399,9 +1392,6 @@ local function DrawBatch()
         lastBatchSize = xyindex
         xyindex = 2
     end
-
-    if timingenabled then gp.timersave("DrawBatch") end
-
 end
 ----------------------------------------------------------------------
 
@@ -1512,11 +1502,6 @@ end
 ----------------------------------------------------------------------
 
 function DisplayCells(editing)
-
-    if timingenabled then gp.timerstart("DisplayCells") end
-
-    if timingenabled then gp.timerstart("AddCoords") end
-
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -1616,9 +1601,6 @@ function DisplayCells(editing)
     local l_N = N
     local stepi, stepj = l_N*stepy, l_N*stepz
     if testcell then
-        -- disable timing
-        local oldtiming = timingenabled
-        timingenabled = false
         -- setup the point colors
         pointcol = {split(POINT_COLOR)}
         selpointcol = {split(SELPT_COLOR)}
@@ -1635,9 +1617,6 @@ function DisplayCells(editing)
             end
             j = j+stepj
         end
-        DrawBatch()  -- complete any pending batch
-        -- restore timing
-        timingenabled = oldtiming
     else
         -- only live cells need to be drawn
         local c, m = CELLSIZE, MIDCELL
@@ -1719,14 +1698,9 @@ function DisplayCells(editing)
             xyindex = xyi
         end
     end
-
-    if timingenabled then gp.timersave("AddCoords") end
-
-    if not testcell then DrawBatch() end
+    DrawBatch()  -- complete any pending batch
 
     ov("blend 0")
-
-    if timingenabled then gp.timersave("DisplayCells") end
 end
 
 ----------------------------------------------------------------------
@@ -1981,9 +1955,6 @@ end
 ----------------------------------------------------------------------
 
 function DisplayBusyBoxes(editing)
-
-    if timingenabled then gp.timerstart("DisplayBusyBoxes") end
-
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -2122,8 +2093,6 @@ function DisplayBusyBoxes(editing)
     end
 
     ov("blend 0")
-
-    if timingenabled then gp.timersave("DisplayBusyBoxes") end
 end
 
 --------------------------------------------------------------------------------
@@ -2306,8 +2275,6 @@ function Refresh(update)
     -- (eg. due to user resizing window while a pattern is generating)
     g.check(false)
 
-    if timingenabled then gp.timerstart("Refresh") end
-
     -- fill overlay with background color
     ov(BACK_COLOR)
     ovt{"fill"}
@@ -2323,9 +2290,6 @@ function Refresh(update)
 
     local editing = currcursor ~= movecursor
     if popcount > 0 or pastecount > 0 or selcount > 0 or editing then
-
-        if timingenabled then gp.timerstart("PrepareCells") end
-
         if pastecount > 0 then
             -- paste cells will be translucent
             CreateTranslucentCell("p", PASTE_COLOR)
@@ -2351,9 +2315,6 @@ function Refresh(update)
                 CreateBusyPoint("Ep", EVEN_COLOR)
                 CreateBusyPoint("Op", ODD_COLOR)
             end
-
-            if timingenabled then gp.timersave("PrepareCells") end
-
             DisplayBusyBoxes(editing)
         else
             if celltype == "cube" then
@@ -2361,16 +2322,11 @@ function Refresh(update)
             elseif celltype == "sphere" then
                 CreateLiveSphere()
             end
-
-            if timingenabled then gp.timersave("PrepareCells") end
-
             DisplayCells(editing)
         end
     end
 
     if showaxes or showlines then DrawFrontAxes() end
-
-    if timingenabled then gp.timersave("Refresh") end
 
     -- show info in top left corner
     local info =
@@ -2382,15 +2338,6 @@ function Refresh(update)
     if editing then
         -- show cell coords of mouse if it's inside the active plane
         info = info.."\nx,y,z = "..activecell
-    end
-    if memoryenabled then
-        -- show memory used
-        local kbytes = floor(collectgarbage("count"))
-        info = info.."\nMemory used = "..kbytes.."K"
-    end
-    if timingenabled then
-        -- show timing
-        info = info.."\n"..gp.timervalueall()
     end
     ov(INFO_COLOR)
     local _, ht = op.maketext(info)
@@ -2821,7 +2768,7 @@ function ClearCells()
     -- remove paste pattern
     pastecount = 0
     pastepatt = {}
-    collectgarbage()    -- helps avoid long delay when script exits???!!! only on Mac OS 10.13???
+    collectgarbage()    -- might help avoid long delay when script exits (only on Mac OS 10.13???)
 end
 
 ----------------------------------------------------------------------
@@ -2991,6 +2938,7 @@ function AllDead()
                 -- can't use undostack if user script is running
                 startstate = SaveState()
             else
+                -- starting state is on top of undostack
                 startstate = undostack[#undostack]
             end
         end
@@ -3058,8 +3006,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGenMooreNoWrap()
-    if timingenabled then gp.timerstart("NextGenMooreNoWrap") end
-
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local source = grid1
     local dest = {}
@@ -3108,17 +3054,12 @@ function NextGenMooreNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenMooreNoWrap") end
-
     DisplayGeneration(dest)
 end
 
 ----------------------------------------------------------------------
 
 function NextGenMooreWrap()
-    if timingenabled then gp.timerstart("NextGenMooreWrap") end
-
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local source = grid1
     local dest = {}
@@ -3176,9 +3117,6 @@ function NextGenMooreWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenMooreWrap") end
-
     DisplayGeneration(dest)
 end
 
@@ -3198,8 +3136,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGen6FacesNoWrap()
-    if timingenabled then gp.timerstart("NextGen6FacesNoWrap") end
-
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
     local grid2 = {}
@@ -3256,17 +3192,12 @@ function NextGen6FacesNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen6FacesNoWrap") end
-
     DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
 
 function NextGen6FacesWrap()
-    if timingenabled then gp.timerstart("NextGen6FacesWrap") end
-
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
     local grid2 = {}
@@ -3333,9 +3264,6 @@ function NextGen6FacesWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen6FacesWrap") end
-
     DisplayGeneration(grid2)
 end
 
@@ -3356,8 +3284,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGen8CornersNoWrap()
-    if timingenabled then gp.timerstart("NextGen8CornersNoWrap") end
-
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..8) for live cells
@@ -3418,17 +3344,12 @@ function NextGen8CornersNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen8CornersNoWrap") end
-
     DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
 
 function NextGen8CornersWrap()
-    if timingenabled then gp.timerstart("NextGen8CornersWrap") end
-
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..8) for live cells
@@ -3499,9 +3420,6 @@ function NextGen8CornersWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen8CornersWrap") end
-
     DisplayGeneration(grid2)
 end
 
@@ -3521,8 +3439,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGen12EdgesNoWrap()
-    if timingenabled then gp.timerstart("NextGen12EdgesNoWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
@@ -3595,16 +3511,11 @@ function NextGen12EdgesNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen12EdgesNoWrap") end
-
     DisplayGeneration(grid2)
 end
 ----------------------------------------------------------------------
 
 function NextGen12EdgesWrap()
-    if timingenabled then gp.timerstart("NextGen12EdgesWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
@@ -3689,9 +3600,6 @@ function NextGen12EdgesWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGen12EdgesWrap") end
-
     DisplayGeneration(grid2)
 end
 
@@ -3711,8 +3619,6 @@ end
 ----------------------------------------------------------------------
 
 function NextGenHexahedralNoWrap()
-    if timingenabled then gp.timerstart("NextGenHexahedralNoWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
@@ -3784,17 +3690,12 @@ function NextGenHexahedralNoWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenHexahedralNoWrap") end
-
     DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
 
 function NextGenHexahedralWrap()
-    if timingenabled then gp.timerstart("NextGenHexahedralWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
@@ -3878,9 +3779,6 @@ function NextGenHexahedralWrap()
         end
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenHexahedralWrap") end
-
     DisplayGeneration(grid2)
 end
 
@@ -3900,17 +3798,14 @@ end
 ----------------------------------------------------------------------
 
 function NextGenBusyBoxes()
+    -- calculate and display the next generation for the BusyBoxes rule
+    -- (see http://www.busyboxes.org/faq.html)
     if N%2 == 1 then
         -- BusyBoxes requires an even numbered grid size
         SetGridSize(N+1)
     end
 
     if AllDead() then return end
-
-    if timingenabled then gp.timerstart("NextGenBusyBoxes") end
-
-    -- calculate and display the next generation for the BusyBoxes rule
-    -- (see http://www.busyboxes.org/faq.html)
 
     -- the algorithm used below is a slightly modified (and corrected!)
     -- version of the kernel code in Ready's Salt 3D example
@@ -4049,9 +3944,6 @@ function NextGenBusyBoxes()
         zlive[z] = 1
     end
     UpdateBoundary(xlive, ylive, zlive, newpop)
-
-    if timingenabled then gp.timersave("NextGenBusyBoxes") end
-
     DisplayGeneration(grid2)
 end
 
@@ -6088,26 +5980,16 @@ function Reset()
     if gencount > startcount then
         -- restore the starting state
         if scriptlevel > 0 then
-            -- Reset called by user script so don't modify undo/redo stacks
+            -- Reset was called by user script so don't modify undo/redo stacks
             RestoreState(startstate)
         else
-            -- push current state onto redostack
-            redostack[#redostack+1] = SaveState()
-
             -- unwind undostack until gencount == startcount
-            while true do
-                local state = table.remove(undostack)
-                if state.savegencount == startcount then
-                    break
-                elseif #undostack == 0 then
-                    g.warn("Bug in Reset!")
-                    break
-                end
-                redostack[#redostack+1] = state
-            end
-
-            -- restore starting state
-            RestoreState(startstate)
+            repeat
+                -- push current state onto redostack
+                redostack[#redostack+1] = SaveState()
+                -- pop state off undostack and restore it
+                RestoreState( table.remove(undostack) )
+            until gencount == startcount
         end
         StopGenerating()
         Refresh()
@@ -6180,6 +6062,8 @@ function GetPercentage() return perc end
 function GetPopulation() return popcount end
 function GetRule() return rulestring end
 function GetCellType() return celltype end
+function GetStepSize() return stepsize end
+function GetBarHeight() return toolbarht end
 
 ----------------------------------------------------------------------
 
@@ -6916,6 +6800,7 @@ want to call from your own scripts:
 <td valign=top>
 <a href="#CancelPaste"><b>CancelPaste</b></a><br>
 <a href="#CancelSelection"><b>CancelSelection</b></a><br>
+<a href="#CheckWindowSize"><b>CheckWindowSize</b></a><br>
 <a href="#ClearOutside"><b>ClearOutside</b></a><br>
 <a href="#ClearSelection"><b>ClearSelection</b></a><br>
 <a href="#CopySelection"><b>CopySelection</b></a><br>
@@ -6926,12 +6811,14 @@ want to call from your own scripts:
 <a href="#FitGrid"><b>FitGrid</b></a><br>
 <a href="#FlipPaste"><b>FlipPaste</b></a><br>
 <a href="#FlipSelection"><b>FlipSelection</b></a><br>
+<a href="#GetBarHeight"><b>GetBarHeight</b></a><br>
 <a href="#GetBounds"><b>GetBounds</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
 <a href="#GetCell"><b>GetCell</b></a><br>
 <a href="#GetCells"><b>GetCells</b></a><br>
+<a href="#GetCellType"><b>GetCellType</b></a><br>
 <a href="#GetGeneration"><b>GetGeneration</b></a><br>
 <a href="#GetGridSize"><b>GetGridSize</b></a><br>
 <a href="#GetPasteBounds"><b>GetPasteBounds</b></a><br>
@@ -6939,13 +6826,15 @@ want to call from your own scripts:
 <a href="#GetPopulation"><b>GetPopulation</b></a><br>
 <a href="#GetRule"><b>GetRule</b></a><br>
 <a href="#GetSelectionBounds"><b>GetSelectionBounds</b></a><br>
+<a href="#GetStepSize"><b>GetStepSize</b></a><br>
+<a href="#HandleKey"><b>HandleKey</b></a><br>
 <a href="#InitialView"><b>InitialView</b></a><br>
 <a href="#MoveMode"><b>MoveMode</b></a><br>
-<a href="#NewPattern"><b>NewPattern</b></a><br>
-<a href="#OpenPattern"><b>OpenPattern</b></a>
+<a href="#NewPattern"><b>NewPattern</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#OpenPattern"><b>OpenPattern</b></a><br>
 <a href="#Paste"><b>Paste</b></a><br>
 <a href="#PasteExists"><b>PasteExists</b></a><br>
 <a href="#PutCells"><b>PutCells</b></a><br>
@@ -6958,20 +6847,24 @@ want to call from your own scripts:
 <a href="#RunScript"><b>RunScript</b></a><br>
 <a href="#SavePattern"><b>SavePattern</b></a><br>
 <a href="#SaveState"><b>SaveState</b></a><br>
-<a href="#SelectAll"><b>SelectAll</b></a>
+<a href="#SelectAll"><b>SelectAll</b></a><br>
+<a href="#SelectCell"><b>SelectCell</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
-<a href="#SelectCell"><b>SelectCell</b></a><br>
 <a href="#SelectedCell"><b>SelectedCell</b></a><br>
 <a href="#SelectionExists"><b>SelectionExists</b></a><br>
 <a href="#SelectMode"><b>SelectMode</b></a><br>
 <a href="#SetCell"><b>SetCell</b></a><br>
+<a href="#SetCellType"><b>SetCellType</b></a><br>
 <a href="#SetGridSize"><b>SetGridSize</b></a><br>
 <a href="#SetMessage"><b>SetMessage</b></a><br>
 <a href="#SetRule"><b>SetRule</b></a><br>
+<a href="#SetStepSize"><b>SetStepSize</b></a><br>
 <a href="#Step"><b>Step</b></a><br>
-<a href="#Update"><b>Update</b></a>
+<a href="#Update"><b>Update</b></a><br>
+<a href="#ZoomIn"><b>ZoomIn</b></a><br>
+<a href="#ZoomOut"><b>ZoomOut</b></a>
 </td>
 </tr>
 </table>
@@ -6986,6 +6879,12 @@ Remove any existing paste pattern.
 <a name="CancelSelection"></a><p><dt><b>CancelSelection()</b></dt>
 <dd>
 Deselect all selected cells.
+</dd>
+
+<a name="CheckWindowSize"></a><p><dt><b>CheckWindowSize()</b></dt>
+<dd>
+If the Golly window size has changed then this function resizes the overlay.
+Useful in scripts that allow user interaction.
 </dd>
 
 <a name="ClearOutside"></a><p><dt><b>ClearOutside()</b></dt>
@@ -7053,6 +6952,14 @@ For example, if given "x" then the X coordinates of all selected cells will be
 reflected across the YZ plane running through the middle of the selection.
 </dd>
 
+<a name="GetBarHeight"></a><p><dt><b>GetBarHeight()</b></dt>
+<dd>
+Return the combined height of the menu bar and tool bar.
+The value will be 0 if the user has turned them off (by hitting the "T" key)
+or switched to full screen mode.
+Useful in scripts that allow user interaction.
+</dd>
+
 <a name="GetBounds"></a><p><dt><b>GetBounds()</b></dt>
 <dd>
 Return {} if the pattern is empty, otherwise return the minimal bounding box
@@ -7073,6 +6980,11 @@ Return an array of live cell coordinates in the format
 All coordinates are relative to the middle cell in the grid.
 If there are no live cells then {} is returned.
 If selected is true then only the coordinates of selected live cells will be returned.
+</dd>
+
+<a name="GetCellType"></a><p><dt><b>GetCellType()</b></dt>
+<dd>
+Return the current cell type: "cube", "sphere" or "point".
 </dd>
 
 <a name="GetGeneration"></a><p><dt><b>GetGeneration()</b></dt>
@@ -7112,6 +7024,17 @@ Return the current rule.
 Return {} if there are no selected cells, otherwise return the minimal bounding box
 of all selected cells (live or dead) as an array with 6 values: {minx, maxx, miny, maxy, minz, maxz}.
 The boundary values are relative to the middle cell in the grid.
+</dd>
+
+<a name="GetStepSize"></a><p><dt><b>GetStepSize()</b></dt>
+<dd>
+Return the current step size (1 to 100).
+</dd>
+
+<a name="HandleKey"></a><p><dt><b>HandleKey(<i>event</i>)</b></dt>
+<dd>
+Process the given keyboard event.
+Useful in scripts that allow user interaction.
 </dd>
 
 <a name="InitialView"></a><p><dt><b>InitialView()</b></dt>
@@ -7257,6 +7180,11 @@ If the state is not supplied then it defaults to 1.
 The x,y,z coordinates are relative to the middle cell in the grid.
 </dd>
 
+<a name="SetCellType"></a><p><dt><b>SetCellType(<i>string</i>)</b></dt>
+<dd>
+Set the cell type to "cube", "sphere" or "point".
+</dd>
+
 <a name="SetGridSize"></a><p><dt><b>SetGridSize(<i>newsize</i>)</b></dt>
 <dd>
 Change the grid size to the new value (3 to 100).
@@ -7275,6 +7203,11 @@ Switch to the given rule.  If <i>rule</i> is not supplied the default rule
 is used (3D5..7/6).
 </dd>
 
+<a name="SetStepSize"></a><p><dt><b>SetStepSize(<i>newsize</i>)</b></dt>
+<dd>
+Set the step size to the given value (1 to 100).
+</dd>
+
 <a name="Step"></a><p><dt><b>Step(<i>n</i>)</b></dt>
 <dd>
 While the population is &gt; 0 calculate the next <i>n</i> generations.
@@ -7286,6 +7219,18 @@ If <i>n</i> is not supplied it defaults to 1.
 Update the display.  Note that 3D.lua automatically updates the display
 when a script finishes, so there's no need to call Update() at the
 end of a script.
+</dd>
+
+<a name="ZoomIn"></a><p><dt><b>ZoomIn()</b></dt>
+<dd>
+Zoom in by incrementing the cell size.
+Useful in scripts that allow user interaction.
+</dd>
+
+<a name="ZoomOut"></a><p><dt><b>ZoomOut()</b></dt>
+<dd>
+Zoom out by decrementing the cell size.
+Useful in scripts that allow user interaction.
 </dd>
 
 <p><a name="coords"></a><br>
@@ -7633,21 +7578,6 @@ end
 
 function ToggleAxes()
     showaxes = not showaxes
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
-function ToggleMemory()
-    memoryenabled = not memoryenabled
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
-function ToggleTiming()
-    timingenabled = not timingenabled
-    if timingenabled then gp.timerresetall() end
     Refresh()
 end
 
@@ -9048,7 +8978,7 @@ end
 
 local showtoolbar = false   -- restore tool bar?
 
-function CheckLayerSize()
+function CheckWindowSize()
     -- if viewport size has changed then resize the overlay
     local newwd, newht = g.getview(g.getlayer())
     if newwd ~= viewwd or newht ~= viewht then
@@ -9328,9 +9258,6 @@ function HandleKey(event)
     elseif key == "s" and mods == "none" then SelectMode()
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MiddlePattern()
-    -- eventually remove the next 2???!!!
-    elseif key == "t" and mods == "alt" then ToggleTiming()
-    elseif key == "m" and mods == "alt" then ToggleMemory()
     elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "q" then ExitScript()
     else
@@ -9477,7 +9404,7 @@ function EventLoop()
                 if not generating then
                     g.sleep(5)      -- don't hog the CPU when idle
                 end
-                CheckLayerSize()    -- may need to resize the overlay
+                CheckWindowSize()   -- may need to resize the overlay
             end
         else
             if message and (event:find("^key") or event:find("^oclick") or event:find("^file")) then
