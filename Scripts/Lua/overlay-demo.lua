@@ -2276,7 +2276,7 @@ local paused = false
 
 local function test_sound()
     local oldblend = ov("blend 0")
-    ov(op.blue)
+    ov("rgba 0 0 128 255")
     ovt{"fill"}
 
     -- draw exit message
@@ -2284,7 +2284,7 @@ local function test_sound()
     ov(op.white)
     local oldfont = ov(demofont)
     local exitw = maketext("Click or press enter to return to the main menu.", nil, nil, 2, 2)
-    pastetext(floor((wd - exitw) / 2), 570)
+    pastetext(floor((wd - exitw) / 2), 550)
 
     -- draw commands
     ov("font 22 mono")
@@ -2292,9 +2292,9 @@ local function test_sound()
     local w, _ = maketext("sound play audio.wav", nil, nil, 2, 2)
     pastetext(floor((wd - w) / 2), 50)
     w, _ = maketext("sound loop audio.wav", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 150)
+    pastetext(floor((wd - w) / 2), 140)
     w, _ = maketext("sound stop", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 250)
+    pastetext(floor((wd - w) / 2), 230)
 
     -- draw controls
     ov("font 16 mono")
@@ -2302,11 +2302,11 @@ local function test_sound()
     w, _ = maketext("Press P to play sound", nil, nil, 2, 2)
     pastetext(floor((wd - w) / 2), 20)
     w, _ = maketext("Press L to loop sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 120)
+    pastetext(floor((wd - w) / 2), 110)
     w, _ = maketext("Press S to stop sound", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 220)
+    pastetext(floor((wd - w) / 2), 200)
     w, _ = maketext("Press - or + to adjust volume", nil, nil, 2, 2)
-    pastetext(floor((wd - w) / 2), 320)
+    pastetext(floor((wd - w) / 2), 290)
 
     -- update screen then copy background
     ov("update")
@@ -2371,7 +2371,7 @@ local function test_sound()
         else
             w, _ = maketext("Press Q to pause playback", nil, nil, 2, 2)
         end
-        pastetext(floor((wd - w) / 2), 420)
+        pastetext(floor((wd - w) / 2), 380)
         ov(op.yellow)
         ov("font 22 mono")
         if paused then
@@ -2379,12 +2379,12 @@ local function test_sound()
         else
             w, _ = maketext("sound pause audio.wav", nil, nil, 2, 2)
         end
-        pastetext(floor((wd - w) / 2), 450)
+        pastetext(floor((wd - w) / 2), 420)
 
         -- display volume
         ov("blend 1")
         w, _ = maketext("sound volume audio.wav "..(volume / 100), nil, nil, 2, 2)
-        pastetext(floor((wd - w) / 2), 350)
+        pastetext(floor((wd - w) / 2), 320)
 
         -- draw last command
         ov("blend 1")
@@ -2395,12 +2395,12 @@ local function test_sound()
         else
             w, _ = maketext("Last command: "..command, nil, nil, 2, 2)
         end
-        pastetext(floor((wd - w) / 2), 500)
+        pastetext(floor((wd - w) / 2), 480)
 
         -- draw status
         local state = ov("sound state "..soundname)
         w, _ = maketext("State: "..state, nil, nil, 2, 2)
-        pastetext(floor((wd - w) / 2), 540)
+        pastetext(floor((wd - w) / 2), 510)
 
         ov("update")
     end
@@ -2633,6 +2633,8 @@ local function main_menu()
         if #event > 0 then
             -- might be a keyboard shortcut
             g.doevent(event)
+        else
+            g.sleep(5)  -- don't hog the CPU when idle
         end
     end
 end

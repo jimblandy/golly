@@ -117,9 +117,9 @@ local function animate_credits()
     local gollytranslucentclip = "clip2"
     ov("font 200 mono")
     local bannertext = "Golly"
-    ovt{"rgba", 255, 192, 32, 144}
-    local w, h = maketext(bannertext, gollyopaqueclip)
     ovt{"rgba", 255, 192, 32, 255}
+    local w, h = maketext(bannertext, gollyopaqueclip)
+    ovt{"rgba", 255, 192, 32, 144}
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext = [[
@@ -454,11 +454,11 @@ Kenichi Morita
 
         -- draw bouncing scrolling text
         ov("blend 1")
-        texty = floor(((ht - h) / 2 + (100 * sin(textx / 100))))
-        pastetext(textx, texty, op.identity, gollytranslucentclip)
-
         texty = floor(((ht - h) / 2 - (100 * sin(textx / 100))))
         pastetext(textx, texty, op.identity, gollyopaqueclip)
+
+        texty = floor(((ht - h) / 2 + (100 * sin(textx / 100))))
+        pastetext(textx, texty, op.identity, gollytranslucentclip)
 
         -- draw credits
         credpos = floor(credity)
