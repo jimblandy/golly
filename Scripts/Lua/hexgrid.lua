@@ -12,6 +12,7 @@ local op = require "oplus"
 local int = gp.int
 local round = gp.round
 local split = gp.split
+local draw_line = op.draw_line
 
 local ov = g.overlay
 local ovt = g.ovtable
@@ -97,12 +98,6 @@ end
 
 local function get_vertex(xc, yc, i)
     return int(xc + xrad[i] + 0.5), int(yc + yrad[i] + 0.5)
-end
-
---------------------------------------------------------------------------------
-
-local function draw_line(x1, y1, x2, y2)
-    ovt{"line", x1, y1, x2, y2}
 end
 
 --------------------------------------------------------------------------------
