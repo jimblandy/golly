@@ -11,6 +11,7 @@ local int = gp.int
 local op = require "oplus"
 local maketext = op.maketext
 local pastetext = op.pastetext
+local draw_line = op.draw_line
 
 local ov = g.overlay
 local ovt = g.ovtable
@@ -1245,12 +1246,6 @@ local function draw_rect(x0, y0, x1, y1)
     ovt{"line", x0, y0, x1, y0, x1, y1, x0, y1, x0, y0}
     ov("rgba "..oldrgba)
     ov("lineoption width "..oldwidth)
-end
-
---------------------------------------------------------------------------------
-
-local function draw_line(x0, y0, x1, y1)
-    ovt{"line", x0, y0, x1, y1}
 end
 
 --------------------------------------------------------------------------------
