@@ -76,7 +76,7 @@ CXXC += $(call osx_ge,9,"-mmacosx-version-min=10.9","-mmacosx-version-min=10.6")
 
 CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
    -I${WXINC_DIR} -I${WX_DIR}/include \
-   -I$(BASEDIR)
+   -I$(BASEDIR) -I$(LUADIR)
 
 CXXFLAGS = -arch x86_64 \
    -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
@@ -279,16 +279,16 @@ $(OBJDIR)/wxstatus.o: wxstatus.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxstatus.cpp
 
 $(OBJDIR)/wxview.o: wxview.cpp
-	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxview.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxview.cpp
 
 $(OBJDIR)/wxoverlay.o: wxoverlay.cpp
-	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxoverlay.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxoverlay.cpp
 
 $(OBJDIR)/wxrender.o: wxrender.cpp
-	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxrender.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
 
 $(OBJDIR)/wxlua.o: wxlua.cpp
-	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxlua.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxlua.cpp
 
 $(OBJDIR)/wxperl.o: wxperl.cpp
 	$(CXXC) $(CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp
@@ -297,10 +297,10 @@ $(OBJDIR)/wxpython.o: wxpython.cpp
 	$(CXXC) $(CXXFLAGS) $(PYTHON_INCLUDE) -c -o $@ wxpython.cpp
 
 $(OBJDIR)/wxscript.o: wxscript.cpp
-	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxscript.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxscript.cpp
 
 $(OBJDIR)/wxfile.o: wxfile.cpp
-	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxfile.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxfile.cpp
 
 $(OBJDIR)/wxedit.o: wxedit.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxedit.cpp
@@ -321,7 +321,7 @@ $(OBJDIR)/wxlayer.o: wxlayer.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxlayer.cpp
 
 $(OBJDIR)/wxmain.o: wxmain.cpp
-	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxmain.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxmain.cpp
 
 $(OBJDIR)/wxgolly.o: wxgolly.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxgolly.cpp
