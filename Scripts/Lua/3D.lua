@@ -6171,6 +6171,8 @@ function GetPercentage() return perc end
 function GetPopulation() return popcount end
 function GetRule() return rulestring end
 function GetCellType() return celltype end
+function GetStepSize() return stepsize end
+function GetBarHeight() return toolbarht end
 
 ----------------------------------------------------------------------
 
@@ -6907,6 +6909,7 @@ want to call from your own scripts:
 <td valign=top>
 <a href="#CancelPaste"><b>CancelPaste</b></a><br>
 <a href="#CancelSelection"><b>CancelSelection</b></a><br>
+<a href="#CheckWindowSize"><b>CheckWindowSize</b></a><br>
 <a href="#ClearOutside"><b>ClearOutside</b></a><br>
 <a href="#ClearSelection"><b>ClearSelection</b></a><br>
 <a href="#CopySelection"><b>CopySelection</b></a><br>
@@ -6917,12 +6920,14 @@ want to call from your own scripts:
 <a href="#FitGrid"><b>FitGrid</b></a><br>
 <a href="#FlipPaste"><b>FlipPaste</b></a><br>
 <a href="#FlipSelection"><b>FlipSelection</b></a><br>
+<a href="#GetBarHeight"><b>GetBarHeight</b></a><br>
 <a href="#GetBounds"><b>GetBounds</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
 <a href="#GetCell"><b>GetCell</b></a><br>
 <a href="#GetCells"><b>GetCells</b></a><br>
+<a href="#GetCellType"><b>GetCellType</b></a><br>
 <a href="#GetGeneration"><b>GetGeneration</b></a><br>
 <a href="#GetGridSize"><b>GetGridSize</b></a><br>
 <a href="#GetPasteBounds"><b>GetPasteBounds</b></a><br>
@@ -6930,13 +6935,15 @@ want to call from your own scripts:
 <a href="#GetPopulation"><b>GetPopulation</b></a><br>
 <a href="#GetRule"><b>GetRule</b></a><br>
 <a href="#GetSelectionBounds"><b>GetSelectionBounds</b></a><br>
+<a href="#GetStepSize"><b>GetStepSize</b></a><br>
+<a href="#HandleKey"><b>HandleKey</b></a><br>
 <a href="#InitialView"><b>InitialView</b></a><br>
 <a href="#MoveMode"><b>MoveMode</b></a><br>
-<a href="#NewPattern"><b>NewPattern</b></a><br>
-<a href="#OpenPattern"><b>OpenPattern</b></a>
+<a href="#NewPattern"><b>NewPattern</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
+<a href="#OpenPattern"><b>OpenPattern</b></a><br>
 <a href="#Paste"><b>Paste</b></a><br>
 <a href="#PasteExists"><b>PasteExists</b></a><br>
 <a href="#PutCells"><b>PutCells</b></a><br>
@@ -6949,20 +6956,24 @@ want to call from your own scripts:
 <a href="#RunScript"><b>RunScript</b></a><br>
 <a href="#SavePattern"><b>SavePattern</b></a><br>
 <a href="#SaveState"><b>SaveState</b></a><br>
-<a href="#SelectAll"><b>SelectAll</b></a>
+<a href="#SelectAll"><b>SelectAll</b></a><br>
+<a href="#SelectCell"><b>SelectCell</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
-<a href="#SelectCell"><b>SelectCell</b></a><br>
 <a href="#SelectedCell"><b>SelectedCell</b></a><br>
 <a href="#SelectionExists"><b>SelectionExists</b></a><br>
 <a href="#SelectMode"><b>SelectMode</b></a><br>
 <a href="#SetCell"><b>SetCell</b></a><br>
+<a href="#SetCellType"><b>SetCellType</b></a><br>
 <a href="#SetGridSize"><b>SetGridSize</b></a><br>
 <a href="#SetMessage"><b>SetMessage</b></a><br>
 <a href="#SetRule"><b>SetRule</b></a><br>
+<a href="#SetStepSize"><b>SetStepSize</b></a><br>
 <a href="#Step"><b>Step</b></a><br>
-<a href="#Update"><b>Update</b></a>
+<a href="#Update"><b>Update</b></a><br>
+<a href="#ZoomIn"><b>ZoomIn</b></a><br>
+<a href="#ZoomOut"><b>ZoomOut</b></a>
 </td>
 </tr>
 </table>
@@ -6977,6 +6988,12 @@ Remove any existing paste pattern.
 <a name="CancelSelection"></a><p><dt><b>CancelSelection()</b></dt>
 <dd>
 Deselect all selected cells.
+</dd>
+
+<a name="CheckWindowSize"></a><p><dt><b>CheckWindowSize()</b></dt>
+<dd>
+If the Golly window size has changed then this function resizes the overlay.
+Useful in scripts that allow user interaction.
 </dd>
 
 <a name="ClearOutside"></a><p><dt><b>ClearOutside()</b></dt>
@@ -7044,6 +7061,14 @@ For example, if given "x" then the X coordinates of all selected cells will be
 reflected across the YZ plane running through the middle of the selection.
 </dd>
 
+<a name="GetBarHeight"></a><p><dt><b>GetBarHeight()</b></dt>
+<dd>
+Return the combined height of the menu bar and tool bar.
+The value will be 0 if the user has turned them off (by hitting the "T" key)
+or switched to full screen mode.
+Useful in scripts that allow user interaction.
+</dd>
+
 <a name="GetBounds"></a><p><dt><b>GetBounds()</b></dt>
 <dd>
 Return {} if the pattern is empty, otherwise return the minimal bounding box
@@ -7064,6 +7089,11 @@ Return an array of live cell coordinates in the format
 All coordinates are relative to the middle cell in the grid.
 If there are no live cells then {} is returned.
 If selected is true then only the coordinates of selected live cells will be returned.
+</dd>
+
+<a name="GetCellType"></a><p><dt><b>GetCellType()</b></dt>
+<dd>
+Return the current cell type: "cube", "sphere" or "point".
 </dd>
 
 <a name="GetGeneration"></a><p><dt><b>GetGeneration()</b></dt>
@@ -7103,6 +7133,17 @@ Return the current rule.
 Return {} if there are no selected cells, otherwise return the minimal bounding box
 of all selected cells (live or dead) as an array with 6 values: {minx, maxx, miny, maxy, minz, maxz}.
 The boundary values are relative to the middle cell in the grid.
+</dd>
+
+<a name="GetStepSize"></a><p><dt><b>GetStepSize()</b></dt>
+<dd>
+Return the current step size (1 to 100).
+</dd>
+
+<a name="HandleKey"></a><p><dt><b>HandleKey(<i>event</i>)</b></dt>
+<dd>
+Process the given keyboard event.
+Useful in scripts that allow user interaction.
 </dd>
 
 <a name="InitialView"></a><p><dt><b>InitialView()</b></dt>
@@ -7248,6 +7289,11 @@ If the state is not supplied then it defaults to 1.
 The x,y,z coordinates are relative to the middle cell in the grid.
 </dd>
 
+<a name="SetCellType"></a><p><dt><b>SetCellType(<i>string</i>)</b></dt>
+<dd>
+Set the cell type to "cube", "sphere" or "point".
+</dd>
+
 <a name="SetGridSize"></a><p><dt><b>SetGridSize(<i>newsize</i>)</b></dt>
 <dd>
 Change the grid size to the new value (3 to 100).
@@ -7266,6 +7312,11 @@ Switch to the given rule.  If <i>rule</i> is not supplied the default rule
 is used (3D5..7/6).
 </dd>
 
+<a name="SetStepSize"></a><p><dt><b>SetStepSize(<i>newsize</i>)</b></dt>
+<dd>
+Set the step size to the given value (1 to 100).
+</dd>
+
 <a name="Step"></a><p><dt><b>Step(<i>n</i>)</b></dt>
 <dd>
 While the population is &gt; 0 calculate the next <i>n</i> generations.
@@ -7277,6 +7328,18 @@ If <i>n</i> is not supplied it defaults to 1.
 Update the display.  Note that 3D.lua automatically updates the display
 when a script finishes, so there's no need to call Update() at the
 end of a script.
+</dd>
+
+<a name="ZoomIn"></a><p><dt><b>ZoomIn()</b></dt>
+<dd>
+Zoom in by incrementing the cell size.
+Useful in scripts that allow user interaction.
+</dd>
+
+<a name="ZoomOut"></a><p><dt><b>ZoomOut()</b></dt>
+<dd>
+Zoom out by decrementing the cell size.
+Useful in scripts that allow user interaction.
 </dd>
 
 <p><a name="coords"></a><br>
@@ -9039,7 +9102,7 @@ end
 
 local showtoolbar = false   -- restore tool bar?
 
-function CheckLayerSize()
+function CheckWindowSize()
     -- if viewport size has changed then resize the overlay
     local newwd, newht = g.getview(g.getlayer())
     if newwd ~= viewwd or newht ~= viewht then
@@ -9468,7 +9531,7 @@ function EventLoop()
                 if not generating then
                     g.sleep(5)      -- don't hog the CPU when idle
                 end
-                CheckLayerSize()    -- may need to resize the overlay
+                CheckWindowSize()   -- may need to resize the overlay
             end
         else
             if message and (event:find("^key") or event:find("^oclick") or event:find("^file")) then
