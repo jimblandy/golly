@@ -1094,9 +1094,8 @@ local function test_set()
             row = {table.unpack(fullrow)}
         else
             for j = 0, wd - 1 do
-                -- ignore pixels that don't have red or green components
-                local rv, gv = ovt{"get", j, i}
-                row[j] = (rv == 0 and gv == 0)
+                -- ignore pixels that don't have a red component
+                row[j] = (ovt{"get", j, i} == 0)
             end
         end
         screen[i] = row
@@ -1201,9 +1200,9 @@ local function test_set()
 
         -- check if there are pixels to draw
         if m > 2 then
-            tstart("drawovt")
+            tstart("draw")
             ovt(xy)
-            tsave("drawovt")
+            tsave("draw")
         end
 
         -- draw the exit message

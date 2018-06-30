@@ -1662,7 +1662,7 @@ function m.minbox(clipname, wd, ht)
     for row = 0, ht-1 do
         for col = 0, wd-1 do
             local _, _, _, a = ovt{"get", col, row}
-            if a ~= "0" then
+            if a ~= 0 then
                 ymin = row
                 goto found_top
             end
@@ -1680,7 +1680,7 @@ function m.minbox(clipname, wd, ht)
     for row = ht-1, ymin, -1 do
         for col = 0, wd-1 do
             local _, _, _, a = ovt{"get", col, row}
-            if a ~= "0" then
+            if a ~= 0 then
                 ymax = row
                 goto found_bottom
             end
@@ -1692,7 +1692,7 @@ function m.minbox(clipname, wd, ht)
     for col = 0, wd-1 do
         for row = ymin, ymax do
             local _, _, _, a = ovt{"get", col, row}
-            if a ~= "0" then
+            if a ~= 0 then
                 xmin = col
                 goto found_left
             end
@@ -1704,7 +1704,7 @@ function m.minbox(clipname, wd, ht)
     for col = wd-1, xmin, -1 do
         for row = ymin, ymax do
             local _, _, _, a = ovt{"get", col, row}
-            if a ~= "0" then
+            if a ~= 0 then
                 xmax = col
                 goto found_right
             end
