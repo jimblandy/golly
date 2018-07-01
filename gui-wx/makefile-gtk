@@ -10,7 +10,7 @@
 # sudo make install
 # sudo ldconfig
 
-APP_VERSION = 3.2b2
+APP_VERSION = 3.2
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
