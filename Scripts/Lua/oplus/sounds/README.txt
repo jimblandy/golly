@@ -17,8 +17,9 @@ breakout/brick5.ogg
 breakout/brick6.ogg
 breakout/edge.ogg
 breakout/gameloop.ogg
+breakout/gamelostloop.ogg
 breakout/gamestart.ogg
-breakout/levelcomplete.ogg
+breakout/levelcompleteloop.ogg
 breakout/lostball.ogg
 breakout/top.ogg
 overlay-demo/animation.ogg

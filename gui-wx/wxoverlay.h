@@ -18,6 +18,8 @@
 using namespace irrklang;
 #endif
 
+#include "lua.hpp"
+
 // The overlay is a scriptable graphics layer that is (optionally) drawn
 // on top of Golly's current layer.  See Help/overlay.html for details.
 
@@ -47,6 +49,10 @@ public:
     // If no error then return either a string containing the results
     // of the command, or NULL if there are no results.
     
+    const char* DoOverlayTable(const char* cmd, lua_State* L, int n, int* nresults);
+    // Parse and execute the given command.
+    // Used for table API commands: fill, get, line, lines, paste, rgba and set
+
     void DeleteOverlay();
     // Deallocate all memory used by the overlay and reset pixmap to NULL.
 
@@ -159,8 +165,8 @@ private:
     void RenderLine(int x0, int y0, int x1, int y1);
     // Called by DoLine to render a line.
 
-    const char* DoLine(const char* args);
-    // Draw a line using the current RGBA values.
+    const char* DoLine(const char* args, bool connected);
+    // Draw a one or more optionally connected lines using the current RGBA values.
     // Automatically clips any parts of the line outside the render target.
     
     void DrawThickLine(int x0, int y0, int x1, int y1);
@@ -412,6 +418,16 @@ private:
 
     void DeleteStars();
     // Free the memory used by the stars.
+
+    // overlay table API calls
+
+    const char* DoFillTable(lua_State* L, int n, int* nresults);
+    const char* DoGetTable(lua_State* L, int n, int* nresults);
+    const char* DoLineTable(lua_State* L, int n, bool connected, int* nresults);
+    const char* DoPasteTable(lua_State* L, int n, int* nresults);
+    const char* DoPasteTableInternal(const int* coords, int n, const char* clip);
+    const char* DoSetTable(lua_State* L, int n, int* nresults);
+    const char* DoSetRGBATable(const char* cmd, lua_State* L, int n, int* nresults);
 
     // render target
     unsigned char* pixmap;          // current render target RGBA data (wd * ht * 4 bytes)

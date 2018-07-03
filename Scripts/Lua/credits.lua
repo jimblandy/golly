@@ -11,6 +11,7 @@ local maketext = op.maketext
 local pastetext = op.pastetext
 
 local ov = g.overlay
+local ovt = g.ovtable
 
 math.randomseed(os.time())  -- init seed for math.random
 
@@ -58,9 +59,9 @@ local function create_anim_bg(clipname)
     -- create the graduated background
     for y = 0, ht / 2 do
         level = 32 + floor(128 * (y * 2 / ht))
-        ov("rgba 0 0 "..level.." 255")
-        ov("line 0 "..y.." "..wd.." "..y)
-        ov("line 0 "..(ht - y).." "..wd.." "..(ht - y))
+        ovt{"rgba", 0, 0, level, 255}
+        ovt{"line", 0, y, wd, y}
+        ovt{"line", 0 , (ht - y), wd, (ht - y)}
     end
 
     -- make the overlay the render target
@@ -116,9 +117,9 @@ local function animate_credits()
     local gollytranslucentclip = "clip2"
     ov("font 200 mono")
     local bannertext = "Golly"
-    ov("rgba 255 192 32 144")
+    ovt{"rgba", 255, 192, 32, 255}
     local w, h = maketext(bannertext, gollyopaqueclip)
-    ov("rgba 255 192 32 255")
+    ovt{"rgba", 255, 192, 32, 144}
     maketext(bannertext, gollytranslucentclip)
 
     local creditstext = [[
@@ -320,7 +321,6 @@ Kenichi Morita
     local textx = wd
     local texty
     local running = true
-    local x, y
     local credity = ht
     local creditx = floor((wd - credwidth) / 2)
     local credpos
@@ -373,21 +373,23 @@ Kenichi Morita
 
         -- draw background
         ov("blend 0")
-        ov("paste 0 0 "..bgclip)
+        ovt{"paste", 0, 0, bgclip}
 
         -- draw stars
         local level = 50
-        ov("rgba "..level.." "..level.." "..level.." 255")
+        ovt{"rgba", level, level, level, 255}
         local lastd = stard[1]
-        local coords = ""
+        local coords = { "set" }
+        local ci = 2
 
         for i = 1, numstars do
             if (stard[i] ~= lastd) then
-                if coords ~= "" then
-                    ov("set"..coords)
-                    coords = ""
+                if ci > 2 then
+                    ovt(coords)
+                    ci = 2
+                    coords = { "set" }
                 end
-                ov("rgba "..level.." "..level.." "..level.." 255")
+                ovt{"rgba", level, level, level, 255}
                 level = level + 2
                 lastd = stard[i]
             end
@@ -396,12 +398,12 @@ Kenichi Morita
                 starx[i] = 0
                 stary[i] = rand(0, ht - 1)
             end
-            x = floor(starx[i])
-            y = floor(stary[i])
-            coords = coords.." "..x.." "..y
+            coords[ci] = starx[i]
+            coords[ci + 1] = stary[i]
+            ci = ci + 2
         end
-        if coords ~= "" then
-            ov("set"..coords)
+        if ci > 2 then
+            ovt(coords)
         end
 
         -- update pattern every few frames
@@ -448,15 +450,15 @@ Kenichi Morita
         -- paste the pattern onto the background
         ov("target")
         ov("blend 1")
-        ov("paste 0 0 pattern")
+        ovt{"paste", 0, 0, "pattern"}
 
         -- draw bouncing scrolling text
         ov("blend 1")
-        texty = floor(((ht - h) / 2 + (100 * sin(textx / 100))))
-        pastetext(textx, texty, op.identity, gollytranslucentclip)
-
         texty = floor(((ht - h) / 2 - (100 * sin(textx / 100))))
         pastetext(textx, texty, op.identity, gollyopaqueclip)
+
+        texty = floor(((ht - h) / 2 + (100 * sin(textx / 100))))
+        pastetext(textx, texty, op.identity, gollytranslucentclip)
 
         -- draw credits
         credpos = floor(credity)

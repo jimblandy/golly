@@ -25,7 +25,7 @@ WXINC_DIR = $(WXLIB_DIR)/lib/wx/include/osx_cocoa-unicode-static-$(WX_RELEASE)
 WXUNICODEFLAG = u
 
 APP_NAME = Golly
-APP_VERSION = 3.2b2
+APP_VERSION = 3.2
 
 # these directory paths are relative to the location of this makefile:
 EXEDIR = ..
@@ -76,7 +76,7 @@ CXXC += $(call osx_ge,9,"-mmacosx-version-min=10.9","-mmacosx-version-min=10.6")
 
 CPPFLAGS = -DWX_PRECOMP -DNO_GCC_PRAGMA -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES \
    -I${WXINC_DIR} -I${WX_DIR}/include \
-   -I$(BASEDIR)
+   -I$(BASEDIR) -I$(LUADIR)
 
 CXXFLAGS = -arch x86_64 \
    -D__WX$(TOOLKIT)__ -DVERSION=$(APP_VERSION) $(CPPFLAGS) \
@@ -288,7 +288,7 @@ $(OBJDIR)/wxrender.o: wxrender.cpp
 	$(CXXC) $(CXXFLAGS) -c -o $@ wxrender.cpp
 
 $(OBJDIR)/wxlua.o: wxlua.cpp
-	$(CXXC) $(CXXFLAGS) -I$(LUADIR) -c -o $@ wxlua.cpp
+	$(CXXC) $(CXXFLAGS) -c -o $@ wxlua.cpp
 
 $(OBJDIR)/wxperl.o: wxperl.cpp
 	$(CXXC) $(CXXFLAGS) $(PERL_INCLUDE) -c -o $@ wxperl.cpp

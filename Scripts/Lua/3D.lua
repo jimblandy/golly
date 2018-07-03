@@ -16,7 +16,7 @@ other improvements.
 --]]
 
 local g = golly()
---!!! require "gplus.strict"
+-- require "gplus.strict"
 local gp = require "gplus"
 local int = gp.int
 local round = gp.round
@@ -24,6 +24,7 @@ local validint = gp.validint
 local split = gp.split
 
 local ov = g.overlay
+local ovt = g.ovtable
 local op = require "oplus"
 local DrawLine = op.draw_line
 
@@ -73,12 +74,20 @@ REARX_COLOR = "rgba 128 0 0 255"    -- for rear X axes (should be darker than fr
 REARY_COLOR = "rgba 0 128 0 255"    -- for rear Y axes (ditto)
 REARZ_COLOR = "rgba 0 0 128 255"    -- for rear Z axes (ditto)
 START_COLOR = "rgba 0 150 0 255"    -- for Start button's background
+SELSTART_COLOR = "rgba 0 90 0 255"  -- for Start button's selected background
 STOP_COLOR = "rgba 210 0 0 255"     -- for Stop button's background
+SELSTOP_COLOR = "rgba 150 0 0 255"  -- for Stop button's selected background
+
 -- following are for BusyBoxes
 EVEN_COLOR = "rgba 255 180 255 255"     -- for even cell points and spheres (pale magenta)
 ODD_COLOR = "rgba 140 255 255 255"      -- for odd cell points and spheres (pale cyan)
 EVEN_CUBE = "replace *# *#-50 *# *#"    -- for even cell cubes (change white to pale magenta)
 ODD_CUBE = "replace *#-110 *# *# *#"    -- for odd cell cubes (change white to pale cyan)
+
+-- table versions of point and select point colors
+pointcol = {split(POINT_COLOR)}
+selpointcol = {split(SELPT_COLOR)}
+usingpointcol = false
 
 local xylattice = {}                -- lattice lines between XY axes
 local xzlattice = {}                -- lattice lines between XZ axes
@@ -110,17 +119,19 @@ local celltype = "cube"             -- draw live cell as cube/sphere/point
 local DrawLiveCell                  -- set to AddCellToBatch, etc
 local DrawBusyBox                   -- set to DrawBusyCube, etc
 local xybatch = {}                  -- coordinates for each cell when batch drawing
-local xyindex = 1                   -- index of next position in xybatch
+local xyindex = 2                   -- index of next position in xybatch
 local layercoords = {}              -- coordinates for each cell in each layer
 local layerindices = {}             -- index of last entry in each layer
 local layercurrent = {}             -- current layer
-local layerindex = 1                -- current layer last entry index
+local layerindex = 2                -- current layer last entry index
 local depthshading = true           -- whether using depth shading
 local depthlayers = 64              -- number of shading layers
 local depthrange = 224              -- rgb levels for depth shading
 local layerlast                     -- last layer used
 local mindepth, maxdepth            -- minimum and maximum depth (with corner pointing at screen)
 local zdepth, zdepth2               -- coefficients for z to depth layer mapping
+local xyline = { "lines" }          -- coordinates for batch line draw
+local xyln = 2                      -- index of next position in xyline
 
 local active = {}                   -- grid positions of cells in active plane
 local activeplane = "XY"            -- orientation of active plane (XY/XZ/YZ)
@@ -151,9 +162,8 @@ local maxpastex, maxpastey, maxpastez
 local undostack = {}                -- stack of states that can be undone
 local redostack = {}                -- stack of states that can be redone
 local startcount = 0                -- starting gencount (can be > 0)
-local startindex = 0                -- index of starting state in undostack
-local dirty = false                 -- pattern has been modified by user/script?
-local undo_cleared = false          -- was ClearUndoRedo called?
+local startstate = {}               -- starting state (used by Reset)
+local dirty = false                 -- pattern has been modified?
 
 local refcube = {}                  -- invisible reference cube
 local rotrefz = {}                  -- Z coords of refcube's rotated vertices
@@ -217,7 +227,7 @@ local NextGeneration                -- set to NextGenMoore, NextGen6Faces, etc
 
 pattdir = g.getdir("data")          -- initial directory for OpenPattern/SavePattern
 scriptdir = g.getdir("app")         -- initial directory for RunScript
-scriptlevel = 0                     -- greater than 0 if a user script is running
+local scriptlevel = 0               -- greater than 0 if a user script is running
 
 -- the default path for the script to run when 3D.lua starts up
 pathsep = g.getdir("app"):sub(-1)
@@ -225,16 +235,6 @@ startup = g.getdir("app").."My-scripts"..pathsep.."3D-start.lua"
 
 -- user settings are stored in this file
 settingsfile = g.getdir("data").."3D.ini"
-
--- remove eventually???!!!
-memoryenabled = false       -- show memory usage?
-timingenabled = false       -- show timing messages?
-
--- timing functions
-local timerstart = gp.timerstart
-local timersave = gp.timersave
-local timervalueall = gp.timervalueall
-local timerresetall = gp.timerresetall
 
 ----------------------------------------------------------------------
 
@@ -560,7 +560,7 @@ end
 
 local function HorizontalLine(x1, x2, y)
     -- draw a horizontal line of pixels from x1,y to x2,y
-    ov("line "..x1.." "..y.." "..x2.." "..y)
+    ovt{"line", x1, y, x2, y}
 end
 
 ----------------------------------------------------------------------
@@ -739,6 +739,29 @@ local function DisplayLine(startpt, endpt)
 end
 
 ----------------------------------------------------------------------
+local function AddLineToBatch(startpt, endpt)
+    -- use orthographic projection to transform line's start and end points
+    local x, y, z = startpt[1], startpt[2], startpt[3]
+    xyline[xyln] = (x*xixo + y*xiyo + z*xizo) + midx
+    xyline[xyln + 1] = (x*yixo + y*yiyo + z*yizo) + midy
+    xyln = xyln + 2
+    x, y, z = endpt[1], endpt[2], endpt[3]
+    xyline[xyln] = (x*xixo + y*xiyo + z*xizo) + midx
+    xyline[xyln + 1] = (x*yixo + y*yiyo + z*yizo) + midy
+    xyln = xyln + 2
+end
+
+----------------------------------------------------------------------
+
+local function DrawBatchLines()
+    if xyln > 2 then
+        xyline[xyln] = nil
+        ovt(xyline)
+        xyln = 2
+    end
+end
+
+----------------------------------------------------------------------
 
 function DrawRearAxes()
     -- draw lattice lines and/or axes that are behind rotated reference cube
@@ -752,16 +775,17 @@ function DrawRearAxes()
         ov(LINE_COLOR)
         if z1 < z2 then
             -- front face of rotated refcube is visible
-            for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
+            for _, pt in ipairs(xylattice) do AddLineToBatch(pt[1], pt[2]) end
         end
         if z1 >= z7 then
             -- right face of rotated refcube is visible
-            for _, pt in ipairs(yzlattice) do DisplayLine(pt[1], pt[2]) end
+            for _, pt in ipairs(yzlattice) do AddLineToBatch(pt[1], pt[2]) end
         end
         if z1 >= z3 then
             -- top face of rotated refcube is visible
-            for _, pt in ipairs(xzlattice) do DisplayLine(pt[1], pt[2]) end
+            for _, pt in ipairs(xzlattice) do AddLineToBatch(pt[1], pt[2]) end
         end
+        DrawBatchLines()
     end
 
     if showaxes then
@@ -804,16 +828,17 @@ function DrawFrontAxes()
         ov(LINE_COLOR)
         if z1 >= z2 then
             -- back face of rotated refcube is visible
-            for _, pt in ipairs(xylattice) do DisplayLine(pt[1], pt[2]) end
+            for _, pt in ipairs(xylattice) do AddLineToBatch(pt[1], pt[2]) end
         end
         if z1 < z7 then
             -- left face of rotated refcube is visible
-            for _, pt in ipairs(yzlattice) do DisplayLine(pt[1], pt[2]) end
+            for _, pt in ipairs(yzlattice) do AddLineToBatch(pt[1], pt[2]) end
         end
         if z1 < z3 then
             -- bottom face of rotated refcube is visible
-            for _, pt in ipairs(xzlattice) do DisplayLine(pt[1], pt[2]) end
+            for _, pt in ipairs(xzlattice) do AddLineToBatch(pt[1], pt[2]) end
         end
+        DrawBatchLines()
     end
 
     if showaxes then
@@ -1010,13 +1035,13 @@ function DrawCubeEdges()
     if LEN > 4 then
         -- draw anti-aliased edges around visible face(s)
         if LEN == 5 then
-            ov("rgba 150 150 150 255")
+            ovt{"rgba", 150, 150, 150, 255}
         elseif LEN == 6 then
-            ov("rgba 110 110 110 255")
+            ovt{"rgba", 110, 110, 110, 255}
         elseif LEN == 7 then
-            ov("rgba 80 80 80 255")
+            ovt{"rgba",  80, 80, 80, 255}
         else
-            ov("rgba 60 60 60 255")
+            ovt{"rgba", 60, 60, 60, 255}
         end
         ov("blend 1")
         ov("lineoption width "..(1 + int(LEN / 40.0)))
@@ -1133,8 +1158,7 @@ end
 ----------------------------------------------------------------------
 
 local HALFCUBECLIP  -- half the wd/ht of the clip containing a live cube
-
-local lastCubeSize = -1
+lastCubeSize = -1
 
 function CreateLiveCube()
     -- only create bitmaps if cell size has changed
@@ -1179,7 +1203,7 @@ end
 
 ----------------------------------------------------------------------
 
-local lastSphereSize = -1
+lastSphereSize = -1
 
 function CreateLiveSphere()
     -- only create bitmaps if cell size has changed
@@ -1201,7 +1225,7 @@ function CreateLiveSphere()
     if r > 2 then grayinc = 127/(r-2) end
     while true do
         local grayrgb = floor(gray)
-        ov("rgba "..grayrgb.." "..grayrgb.." "..grayrgb.." 255")
+        ovt{"rgba", grayrgb, grayrgb, grayrgb, 255}
         -- draw a solid circle by setting the line width to the radius
         ov("lineoption width "..r)
         ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
@@ -1229,171 +1253,201 @@ end
 
 ----------------------------------------------------------------------
 
-function AddCellToBatchDepth(x, y, z, mx, my)
-    local c = CELLSIZE
-    local m = MIDCELL
+function DrawCellDepth(x, y, z, mx, my, addtobatch)
+    local c, m = CELLSIZE, MIDCELL
     -- add live cell at given grid position
     x = x * c + m
     y = y * c + m
     z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + mx
+    local newy = (x*yixo + y*yiyo + z*yizo) + my
     local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = (newx + mx) // 1 | 0
-    y = (newy + my) // 1 | 0
     -- compute the depth layer
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2)
-    -- check if the layer has changed since the last call
-    if layer ~= layerlast then
-        -- save the previous layer and switch to the new one
-        layerindices[layerlast] = layerindex
-        layerlast = layer
-        layercurrent = layercoords[layer]
-        layerindex = layerindices[layer]
+    local layer = depthlayers * (newz + zdepth) // zdepth2 | 0
+    if addtobatch then
+        -- add cell to batch
+        if layer ~= layerlast then
+            -- save the previous layer and switch to the new one
+            layerindices[layerlast] = layerindex
+            layerlast = layer
+            layercurrent = layercoords[layer]
+            layerindex = layerindices[layer]
+        end
+        -- add to the layer's list to draw
+        layercurrent[layerindex] = newx
+        layerindex = layerindex + 1
+        layercurrent[layerindex] = newy
+        layerindex = layerindex + 1
+    else
+        -- draw immediately
+        local cmd = {"paste", newx, newy}
+        if celltype == "cube" then
+            cmd[4] = "c"..layer
+        elseif celltype == "sphere" then
+            cmd[4] = "S"..layer
+        else -- celltype == "point"
+            if not usingpointcol then
+                usingpointcol = true
+                ovt(pointcol)
+            end
+            cmd[1] = "set"
+        end
+        -- draw the cell
+        ovt(cmd)
     end
-    -- add to the layer's list to draw
-    layercurrent[layerindex] = x
-    layerindex = layerindex + 1
-    layercurrent[layerindex] = y
-    layerindex = layerindex + 1
 end
 
 ----------------------------------------------------------------------
 
-function AddCellToBatch(x, y, z, mx, my)
-    local c = CELLSIZE
-    local m = MIDCELL
-    local xyi = xyindex
+function DrawCell(x, y, z, mx, my, addtobatch)
+    local c, m = CELLSIZE, MIDCELL
     -- add live cell at given grid position
     x = x * c + m
     y = y * c + m
     z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = (newx + mx) // 1 | 0
-    y = (newy + my) // 1 | 0
-    -- add to the list to draw
-    xybatch[xyi] = x
-    xyi = xyi + 1
-    xybatch[xyi] = y
-    xyindex = xyi + 1  -- update global index
+    local newx = (x*xixo + y*xiyo + z*xizo) + mx
+    local newy = (x*yixo + y*yiyo + z*yizo) + my
+    if addtobatch then
+        local xyi = xyindex
+        xybatch[xyi] = newx
+        xyi = xyi + 1
+        xybatch[xyi] = newy
+        xyindex = xyi + 1 -- update global index
+    else
+        -- draw immediately
+        local cmd = {"paste", newx, newy}
+        if celltype == "cube" then
+            cmd[4] = "c"
+        elseif celltype == "sphere" then
+            cmd[4] = "S"
+        else -- celltype == "point"
+            if not usingpointcol then
+                usingpointcol = true
+                ovt(pointcol)
+            end
+            cmd[1] = "set"
+        end
+        -- draw the cell
+        ovt(cmd)
+    end
 end
 
 ----------------------------------------------------------------------
 
 local function DrawBatchLayer(depth, coordlist, length)
     -- ignore if layer is empty
-    if length > 0 then
-        local coords = table.concat(coordlist, " ", 1, length)
-        local command = {"paste ", coords, "", depth}
+    if length > 1 then
+        coordlist[1] = "paste"
         -- select drawing method based on cell type
         if celltype == "cube" then
-            command[3] = " c"
+            length = length + 1
+            coordlist[length] = "c"..depth
         elseif celltype == "sphere" then
-            command[3] = " S"
+            length = length + 1
+            coordlist[length] = "S"..depth
         else -- celltype == "point" then
-            ov(POINT_COLOR)
-            command[1] = "set "
+            ovt(pointcol)
+            coordlist[1] = "set"
         end
-        -- execute the drawing command
-        ov(table.concat(command))
+        length = length + 1
+        coordlist[length] = nil
+        ovt(coordlist)
     end
 end
 
 ----------------------------------------------------------------------
 
+lastBatchSize = MAXN*MAXN*MAXN*2
+lastDepthBatchSize = {}
+
 local function DrawBatch()
-
-    if timingenabled then timerstart("DrawBatch") end
-
     -- check for depth shading for cubes or spheres
     if depthshading and celltype ~= "point" then
+        -- save current layer index (may have been updated in TestCell)
+        layerindices[layerlast] = layerindex
+
         -- draw each layer in reverse order (furthest away first = darkest)
-        layerindices[layerlast] = layerindex    -- save current layer index (may have been updated in TestCell)
         for i = maxdepth, mindepth, -1 do
-            if layerindices[i] > 1 then
-                DrawBatchLayer(i, layercoords[i], layerindices[i] - 1)
-                -- reset the layer once drawn
-                layerindices[i] = 1
+            local batchsize = layerindices[i]
+            if batchsize > 2 then
+                DrawBatchLayer(i, layercoords[i], batchsize - 1)
+                -- reset the layer once drawn to after the command name
+                if batchsize < lastDepthBatchSize[i] then
+                    layercoords[i] = {}
+                end
+                lastDepthBatchSize[i] = batchsize
+                layerindices[i] = 2
             end
         end
         layerlast = mindepth - 1
     else
         -- no depth shading so draw all
         DrawBatchLayer("", xybatch, xyindex - 1)
-        -- reset the batch
-        xyindex = 1
+        -- reset the batch to after the command name
+        if xyindex < lastBatchSize then
+            xybatch = {}
+        end
+        lastBatchSize = xyindex
+        xyindex = 2
     end
-
-    if timingenabled then timersave("DrawBatch") end
-
 end
 ----------------------------------------------------------------------
 
 local function DrawPoint(x, y, z)
+    local c, m = CELLSIZE, MIDCELL
     -- draw mid point of cell at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx + 0.5
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy + 0.5
     -- use orthographic projection
-    x = floor(newx + midx + 0.5)
-    y = floor(newy + midy + 0.5)
-    ov("set "..x.." "..y)
+    ovt{"set", newx, newy}
 end
 
 ----------------------------------------------------------------------
 
 local function DrawActiveCell(x, y, z)
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = floor(newx + midx - CELLSIZE + 0.5)
-    y = floor(newy + midy - CELLSIZE + 0.5)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - CELLSIZE + 0.5
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - CELLSIZE + 0.5
     -- draw the clip created by CreateTranslucentCell
-    ov("paste "..x.." "..y.." a")
+    ovt{"paste", newx, newy, "a"}
 end
 
 ----------------------------------------------------------------------
 
 local function DrawSelectedCell(x, y, z)
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = floor(newx + midx - CELLSIZE + 0.5)
-    y = floor(newy + midy - CELLSIZE + 0.5)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - CELLSIZE + 0.5
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - CELLSIZE + 0.5
     -- draw the clip created by CreateTranslucentCell
-    ov("paste "..x.." "..y.." s")
+    ovt{"paste", newx, newy, "s"}
 end
 
 ----------------------------------------------------------------------
 
 local function DrawPasteCell(x, y, z)
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = floor(newx + midx - CELLSIZE + 0.5)
-    y = floor(newy + midy - CELLSIZE + 0.5)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - CELLSIZE + 0.5
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - CELLSIZE + 0.5
     -- draw the clip created by CreateTranslucentCell
-    ov("paste "..x.." "..y.." p")
+    ovt{"paste", newx, newy, "p"}
 end
 
 ----------------------------------------------------------------------
@@ -1406,7 +1460,6 @@ local function TestCell(editing, gridpos, x, y, z, mx, my)
             if grid1[gridpos] then
                 -- draw live cell within active plane
                 DrawLiveCell(x, y, z, mx, my)
-                DrawBatch()
             end
             DrawActiveCell(x, y, z)
             if selected[gridpos] then
@@ -1416,19 +1469,23 @@ local function TestCell(editing, gridpos, x, y, z, mx, my)
             -- cell is outside active plane
             if grid1[gridpos] then
                 -- live cell so draw a point
-                ov(POINT_COLOR)
+                if not usingpointcol then
+                    usingpointcol = true
+                    ovt(pointcol)
+                end
                 DrawPoint(x, y, z)
             end
             if selected[gridpos] then
                 -- draw translucent point
-                ov(SELPT_COLOR)
+                ovt(selpointcol)
+                usingpointcol = false
                 DrawPoint(x, y, z)
             end
         end
     else
         -- active plane is not displayed
         if grid1[gridpos] then
-            DrawLiveCell(x, y, z, mx, my)
+            DrawLiveCell(x, y, z, mx, my, true)
         end
         if selected[gridpos] then
             DrawBatch()
@@ -1436,7 +1493,7 @@ local function TestCell(editing, gridpos, x, y, z, mx, my)
         end
     end
     if pastepatt[gridpos] then
-        DrawLiveCell(x, y, z, mx, my)
+        DrawLiveCell(x, y, z, mx, my, true)
         DrawBatch()
         DrawPasteCell(x, y, z)
     end
@@ -1445,11 +1502,6 @@ end
 ----------------------------------------------------------------------
 
 function DisplayCells(editing)
-
-    if timingenabled then timerstart("DisplayCells") end
-
-    if timingenabled then timerstart("AddCoords") end
-
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -1524,9 +1576,9 @@ function DisplayCells(editing)
     if depthshading and celltype ~= "point" then
         zdepth = N*CELLSIZE*0.5
         zdepth2 = zdepth+zdepth
-        DrawLiveCell = AddCellToBatchDepth
+        DrawLiveCell = DrawCellDepth
     else
-        DrawLiveCell = AddCellToBatch
+        DrawLiveCell = DrawCell
     end
 
     -- compute mid point
@@ -1549,6 +1601,11 @@ function DisplayCells(editing)
     local l_N = N
     local stepi, stepj = l_N*stepy, l_N*stepz
     if testcell then
+        -- setup the point colors
+        pointcol = {split(POINT_COLOR)}
+        selpointcol = {split(SELPT_COLOR)}
+        usingpointcol = false
+        -- draw each cell
         j = l_N*fromz
         for z = fromz, toz, stepz do
             i = l_N*(fromy+j)
@@ -1562,8 +1619,7 @@ function DisplayCells(editing)
         end
     else
         -- only live cells need to be drawn
-        local c = CELLSIZE
-        local m = MIDCELL
+        local c, m = CELLSIZE, MIDCELL
         local xc, yc, zc
         local l_grid1 = grid1
         local l_xixo, l_xiyo, l_xizo = xixo, xiyo, xizo
@@ -1602,10 +1658,9 @@ function DisplayCells(editing)
                                 l_layerindex = l_layerindices[layer]
                             end
                             -- add cell position to the layer's list to draw
-                            -- floor divide by 1 (// 1) then bitwise or 0 (| 0) converts result into integer
-                            l_layercurrent[l_layerindex] = ((xc*l_xixo + yc*l_xiyo + zc*l_xizo) + mx) // 1 | 0
+                            l_layercurrent[l_layerindex] = ((xc*l_xixo + yc*l_xiyo + zc*l_xizo) + mx)
                             l_layerindex = l_layerindex + 1
-                            l_layercurrent[l_layerindex] = ((xc*l_yixo + yc*l_yiyo + zc*l_yizo) + my) // 1 | 0
+                            l_layercurrent[l_layerindex] = ((xc*l_yixo + yc*l_yiyo + zc*l_yizo) + my)
                             l_layerindex = l_layerindex + 1
                         end
                     end
@@ -1630,9 +1685,9 @@ function DisplayCells(editing)
                             zc = z * c + m
                             -- transform point using othographic projection
                             -- and add to the list to draw
-                            xyb[xyi] = (mx + xc*l_xixo + yc*l_xiyo + zc*l_xizo) // 1 | 0
+                            xyb[xyi] = (mx + xc*l_xixo + yc*l_xiyo + zc*l_xizo)
                             xyi = xyi + 1
-                            xyb[xyi] = (my + xc*l_yixo + yc*l_yiyo + zc*l_yizo) // 1 | 0
+                            xyb[xyi] = (my + xc*l_yixo + yc*l_yiyo + zc*l_yizo)
                             xyi = xyi + 1
                         end
                     end
@@ -1643,19 +1698,20 @@ function DisplayCells(editing)
             xyindex = xyi
         end
     end
-
-    if timingenabled then timersave("AddCoords") end
-
-    DrawBatch()
+    DrawBatch()  -- complete any pending batch
 
     ov("blend 0")
-
-    if timingenabled then timersave("DisplayCells") end
 end
 
 ----------------------------------------------------------------------
 
+lastBusyCubeSize = {E = -1, O = -1}
+
 function CreateBusyCube(clipname)
+    -- only create bitmaps if cell size has changed
+    if CELLSIZE == lastBusyCubeSize[clipname] then return end
+    lastBusyCubeSize[clipname] = CELLSIZE
+
     -- create a clip containing a cube for odd/even cells
     -- largest size of a rotated cube with edge length L is sqrt(3)*L
     HALFCUBECLIP = round(sqrt(3) * LEN / 2.0)
@@ -1698,7 +1754,13 @@ end
 
 ----------------------------------------------------------------------
 
+lastBusySphereSize = { E = -1, O = -1 }
+
 function CreateBusySphere(clipname)
+    -- only create bitmaps if cell size has changed
+    if CELLSIZE == lastBusySphereSize[clipname] then return end
+    lastBusySphereSize[clipname] = CELLSIZE
+
     -- create a clip containing a sphere for odd/even cells
     local diameter = CELLSIZE+1
     local d1 = diameter
@@ -1708,12 +1770,12 @@ function CreateBusySphere(clipname)
 
     local R, G, B
     if clipname == "E" then
-        local rgba, red, green, blue, alpha  = split(EVEN_COLOR)
+        local _, red, green, blue = split(EVEN_COLOR)
         R = tonumber(red)
         G = tonumber(green)
         B = tonumber(blue)
     else
-        local rgba, red, green, blue, alpha  = split(ODD_COLOR)
+        local _, red, green, blue = split(ODD_COLOR)
         R = tonumber(red)
         G = tonumber(green)
         B = tonumber(blue)
@@ -1725,7 +1787,7 @@ function CreateBusySphere(clipname)
     if diameter < 50 then inc = 8 - diameter//10 end
     local r = (diameter+1)//2
     while true do
-        ov("rgba "..R.." "..G.." "..B.." 255")
+        ovt{"rgba", R, G, B, 255}
         -- draw a solid circle by setting the line width to the radius
         ov("lineoption width "..r)
         ov("ellipse "..x.." "..y.." "..diameter.." "..diameter)
@@ -1743,7 +1805,7 @@ function CreateBusySphere(clipname)
     end
 
     -- draw black outline
-    ov("rgba 0 0 0 255")
+    ovt{"rgba", 0, 0, 0, 255}
     ov("lineoption width 1")
     ov("ellipse 0 0 "..d1.." "..d1)
     ov("blend 0")
@@ -1761,70 +1823,66 @@ end
 
 function DrawBusyCube(x, y, z, clipname)
     -- draw odd/even cube at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCUBECLIP
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCUBECLIP
     -- use orthographic projection
-    x = round(newx) + midx - HALFCUBECLIP
-    y = round(newy) + midy - HALFCUBECLIP
-    ov("paste "..x.." "..y.." "..clipname)
+    ovt{"paste", newx, newy, clipname}
 end
 
 ----------------------------------------------------------------------
 
 function DrawBusyCubeDepth(x, y, z, clipname)
     -- draw odd/even cube at given grid position with shading
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCUBECLIP
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCUBECLIP
     local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = round(newx) + midx - HALFCUBECLIP
-    y = round(newy) + midy - HALFCUBECLIP
     -- compute the depth layer
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2)
-    ov("paste "..x.." "..y.." "..clipname..layer)
+    local layer = depthlayers * (newz + zdepth) // zdepth2 | 0
+    -- use orthographic projection
+    ovt{"paste", newx, newy, clipname..layer}
 end
 
 ----------------------------------------------------------------------
 
 function DrawBusySphere(x, y, z, clipname)
     -- draw odd/even sphere at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCELL -- clip wd = CELLSIZE + 1
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCELL -- clip ht = CELLSIZE + 1
     -- use orthographic projection
-    x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
-    y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
-    ov("paste "..x.." "..y.." "..clipname)
+    ovt{"paste", newx, newy, clipname}
 end
 
 ----------------------------------------------------------------------
 
 function DrawBusySphereDepth(x, y, z, clipname)
     -- draw odd/even sphere at given grid position with shading
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
     -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx - HALFCELL -- clip wd = CELLSIZE+1
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy - HALFCELL -- clip ht = CELLSIZE+1
     local newz = (x*zixo + y*ziyo + z*zizo)
-    -- use orthographic projection
-    x = round(newx + midx - HALFCELL)   -- clip wd = CELLSIZE+1
-    y = round(newy + midy - HALFCELL)   -- clip ht = CELLSIZE+1
     -- compute the depth layer
-    local layer = floor(depthlayers * (newz + zdepth) / zdepth2)
-    ov("paste "..x.." "..y.." "..clipname..layer)
+    local layer = depthlayers * (newz + zdepth) // zdepth2 | 0
+    -- use orthographic projection
+    ovt{"paste", newx, newy, clipname..layer}
 end
 
 ----------------------------------------------------------------------
@@ -1834,7 +1892,7 @@ function CreateBusyPoint(clipname, color)
     ov("target "..clipname)
     -- set pixel to the given color
     ov(color)
-    ov("set 0 0")
+    ovt{"set", 0, 0}
     ov("target")
 end
 
@@ -1842,17 +1900,15 @@ end
 
 local function DrawBusyPoint(x, y, z, clipprefix)
     -- draw mid point of busy box at given grid position
-    x = x * CELLSIZE + MIDCELL
-    y = y * CELLSIZE + MIDCELL
-    z = z * CELLSIZE + MIDCELL
-    -- transform point
-    local newx = (x*xixo + y*xiyo + z*xizo)
-    local newy = (x*yixo + y*yiyo + z*yizo)
-    -- use orthographic projection
-    x = round(newx) + midx
-    y = round(newy) + midy
+    local c, m = CELLSIZE, MIDCELL
+    x = x * c + m
+    y = y * c + m
+    z = z * c + m
+    -- transform point using orthographic projection
+    local newx = (x*xixo + y*xiyo + z*xizo) + midx
+    local newy = (x*yixo + y*yiyo + z*yizo) + midy
     -- clipprefix is "E" or "O"
-    ov("paste "..x.." "..y.." "..clipprefix.."p")
+    ovt{"paste", newx, newy, clipprefix.."p"}
 end
 
 ----------------------------------------------------------------------
@@ -1877,7 +1933,7 @@ local function TestBusyBox(editing, gridpos, x, y, z, clipname)
             end
             if selected[gridpos] then
                 -- draw translucent point
-                ov(SELPT_COLOR)
+                ovt(selpointcol)
                 DrawPoint(x, y, z)
             end
         end
@@ -1899,9 +1955,6 @@ end
 ----------------------------------------------------------------------
 
 function DisplayBusyBoxes(editing)
-
-    if timingenabled then timerstart("DisplayBusyBoxes") end
-
     -- find the rotated reference cube vertex with maximum Z coordinate
     local z1 = rotrefz[1]
     local z2 = rotrefz[2]
@@ -2040,8 +2093,6 @@ function DisplayBusyBoxes(editing)
     end
 
     ov("blend 0")
-
-    if timingenabled then timersave("DisplayBusyBoxes") end
 end
 
 --------------------------------------------------------------------------------
@@ -2135,8 +2186,8 @@ end
 --------------------------------------------------------------------------------
 
 function DrawToolBar()
-    ov("rgba 230 230 230 255")
-    ov("fill 0 0 "..ovwd.." "..toolbarht)
+    ovt{"rgba", 230, 230, 230, 255}
+    ovt{"fill", 0, 0, ovwd, toolbarht}
 
     DrawMenuBar()
 
@@ -2187,7 +2238,7 @@ function DrawToolBar()
         oldfont = ov("font 10 default-bold")
     end
     local oldbg = ov("textoption background 230 230 230 255")
-    local wd, ht = op.maketext("Step="..stepsize)
+    local _, _ = op.maketext("Step="..stepsize)
     op.pastetext(stepslider.x + stepslider.wd + 2, y + 1)
     ov("textoption background "..oldbg)
     ov("font "..oldfont)
@@ -2226,12 +2277,12 @@ function Refresh(update)
 
     -- fill overlay with background color
     ov(BACK_COLOR)
-    ov("fill")
+    ovt{"fill"}
 
     -- get Z coordinates of the vertices of a rotated reference cube
     -- (for doing various depth tests)
     for i = 1, 8 do
-        local x, y, z = TransformPoint(refcube[i])
+        local _, _, z = TransformPoint(refcube[i])
         rotrefz[i] = z
     end
 
@@ -2288,18 +2339,8 @@ function Refresh(update)
         -- show cell coords of mouse if it's inside the active plane
         info = info.."\nx,y,z = "..activecell
     end
-    if memoryenabled then
-        -- show memory used
-        local kbytes = floor(collectgarbage("count"))
-        info = info.."\nMemory used = "..kbytes.."K"
-    end
-    if timingenabled then
-        -- show timing
-        info = info.."\n"..timervalueall()
-        timerresetall()
-    end
     ov(INFO_COLOR)
-    local wd, ht = op.maketext(info)
+    local _, ht = op.maketext(info)
     op.pastetext(10, toolbarht + 10)
     if message then
         ov(MSG_COLOR)
@@ -2377,10 +2418,12 @@ function UpdateStartButton()
     -- and also update 1st item in Control menu
     if generating then
         ssbutton.customcolor = STOP_COLOR
+        ssbutton.darkcustomcolor = SELSTOP_COLOR
         ssbutton.setlabel("Stop", false)
         mbar.setitem(3, 1, "Stop Generating")
     else
         ssbutton.customcolor = START_COLOR
+        ssbutton.darkcustomcolor = SELSTART_COLOR
         ssbutton.setlabel("Start", false)
         mbar.setitem(3, 1, "Start Generating")
         if stopgen > 0 then
@@ -2418,6 +2461,9 @@ function SaveState()
     -- save current rule
     state.saverule = rulestring
 
+    -- save current step size
+    state.savestep = stepsize
+
     -- save current pattern
     state.savedirty = dirty
     state.savename = pattname
@@ -2425,7 +2471,7 @@ function SaveState()
     state.savepopcount = popcount
     state.savecells = {}
     if popcount > 0 then
-        for k,_ in pairs(grid1) do state.savecells[k] = true end
+        for k,_ in pairs(grid1) do state.savecells[k] = 1 end
     end
     state.saveminx = minx
     state.saveminy = miny
@@ -2491,6 +2537,9 @@ function RestoreState(state)
         ParseRule(state.saverule)
     end
 
+    -- restore step size
+    stepsize = state.savestep
+
     -- restore pattern
     dirty = state.savedirty
     pattname = state.savename
@@ -2498,7 +2547,7 @@ function RestoreState(state)
     popcount = state.savepopcount
     grid1 = {}
     if popcount > 0 then
-        for k,_ in pairs(state.savecells) do grid1[k] = true end
+        for k,_ in pairs(state.savecells) do grid1[k] = 1 end
     end
     minx = state.saveminx
     miny = state.saveminy
@@ -2538,12 +2587,37 @@ end
 
 ----------------------------------------------------------------------
 
+function SameState(state)
+    -- return true if given state matches the current state
+    if N ~= state.saveN then return false end
+    if activeplane ~= state.saveplane then return false end
+    if activepos ~= state.savepos then return false end
+    if currcursor ~= state.savecursor then return false end
+    if rulestring ~= state.saverule then return false end
+    if dirty ~= state.savedirty then return false end
+    if pattname ~= state.savename then return false end
+    if gencount ~= state.savegencount then return false end
+    if popcount ~= state.savepopcount then return false end
+    if selcount ~= state.saveselcount then return false end
+    if pastecount ~= state.savepcount then return false end
+    
+    -- note that we don't compare stepsize with state.savestep
+    -- (we don't call RememberCurrentState when the user changes the step size)
+
+    for k,_ in pairs(state.savecells) do if not grid1[k] then return false end end
+    for k,_ in pairs(state.saveselected) do if not selected[k] then return false end end
+    for k,_ in pairs(state.savepaste) do if not pastepatt[k] then return false end end
+
+    return true
+end
+
+----------------------------------------------------------------------
+
 function ClearUndoRedo()
     -- this might be called if a user script is running (eg. if it calls NewPattern)
     undostack = {}
     redostack = {}
     dirty = false
-    undo_cleared = true
 end
 
 ----------------------------------------------------------------------
@@ -2587,24 +2661,6 @@ function RememberCurrentState()
 
     redostack = {}
     undostack[#undostack+1] = SaveState()
-end
-
-----------------------------------------------------------------------
-
-function RestoreStartingGen()
-    -- called from Reset to restore starting state
-
-    -- push current state onto redostack
-    redostack[#redostack+1] = SaveState()
-
-    -- unwind undostack until we get to startindex
-    while startindex < #undostack do
-        local state = table.remove(undostack)
-        redostack[#redostack+1] = state
-    end
-
-    -- pop starting state off undostack and restore it
-    RestoreState( table.remove(undostack) )
 end
 
 --------------------------------------------------------------------------------
@@ -2712,7 +2768,7 @@ function ClearCells()
     -- remove paste pattern
     pastecount = 0
     pastepatt = {}
-    collectgarbage()    -- helps avoid long delay when script exits???!!! only on Mac OS 10.13???
+    collectgarbage()    -- might help avoid long delay when script exits (only on Mac OS 10.13???)
 end
 
 ----------------------------------------------------------------------
@@ -2873,16 +2929,18 @@ function AllDead()
     if popcount == 0 then
         StopGenerating()
         message = "All cells are dead."
-        -- stepsize is 0 if called from Step1
-        if stepsize > 0 then
-            Refresh()
-        end
+        Refresh()
         return true         -- return from NextGen*
     else
         if gencount == startcount then
-            -- remember position in undo stack that stores the starting state
-            -- (for later use by Reset)
-            startindex = #undostack
+            -- remember starting state for later use in Reset()
+            if scriptlevel > 0 then
+                -- can't use undostack if user script is running
+                startstate = SaveState()
+            else
+                -- starting state is on top of undostack
+                startstate = undostack[#undostack]
+            end
         end
         popcount = 0        -- incremented in NextGen*
         InitLiveBoundary()  -- updated in NextGen*
@@ -2904,20 +2962,54 @@ function DisplayGeneration(newgrid)
         StopGenerating()
     end
 
-    -- stepsize is 0 if called from Step1
-    if stepsize > 0 and (gencount % stepsize == 0 or popcount == 0) then
+    if gencount % stepsize == 0 or popcount == 0 then
         Refresh()
     end
 end
 
 ----------------------------------------------------------------------
 
-function NextGenMooreNoWrap()
-    if timingenabled then timerstart("NextGenMooreNoWrap") end
+function UpdateBoundary(xlive, ylive, zlive, newpop)
+    if newpop > 0 then
+        local xlist = {}
+        local ylist = {}
+        local zlist = {}
+        local ind = 1
+        -- convert axis live cells into ordered list of keys
+        for k, _ in pairs(xlive) do
+            xlist[ind] = k
+            ind = ind + 1
+        end
+        ind = 1
+        for k, _ in pairs(ylive) do
+            ylist[ind] = k
+            ind = ind + 1
+        end
+        ind = 1
+        for k, _ in pairs(zlive) do
+            zlist[ind] = k
+            ind = ind + 1
+        end
+        -- sort into ascending order
+        table.sort(xlist)
+        table.sort(ylist)
+        table.sort(zlist)
+        -- min is first value in ordered list, max is last value
+        minx, maxx = xlist[1], xlist[#xlist]
+        miny, maxy = ylist[1], ylist[#ylist]
+        minz, maxz = zlist[1], zlist[#zlist]
+    end
+    -- save the population count
+    popcount = newpop
+end
 
+----------------------------------------------------------------------
+
+function NextGenMooreNoWrap()
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local source = grid1
     local dest = {}
+    local xlive, ylive, zlive = {}, {}, {}
 
     -- compute neighbor counts
     local count1 = {}
@@ -2948,38 +3040,30 @@ function NextGenMooreNoWrap()
     end
 
     -- apply rule to neighbour counts to create next generation
+    local newpop = 0
     for k,v in pairs(count1) do
         if (source[k] and survivals[v-1]) or (births[v] and not source[k]) then
             -- create a live cell in grid2
             dest[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGenMooreNoWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(dest)
 end
 
 ----------------------------------------------------------------------
 
 function NextGenMooreWrap()
-    if timingenabled then timerstart("NextGenMooreWrap") end
-
     -- calculate and display the next generation for rules using the 3D Moore neighborhood
     local source = grid1
     local dest = {}
+    local xlive, ylive, zlive = {}, {}, {}
 
     -- compute neighbor counts
     local N = N
@@ -3019,27 +3103,20 @@ function NextGenMooreWrap()
     end
 
     -- apply rule to neighbour counts to create next generation
+    local newpop = 0
     for k,v in pairs(count1) do
         if (source[k] and survivals[v-1]) or (births[v] and not source[k]) then
             -- create a live cell in grid2
             dest[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGenMooreWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(dest)
 end
 
@@ -3059,13 +3136,12 @@ end
 ----------------------------------------------------------------------
 
 function NextGen6FacesNoWrap()
-    if timingenabled then timerstart("NextGen6FacesNoWrap") end
-
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..6) for live cells
     local ecount = {}   -- neighbor counts (1..6) for adjacent empty cells
+    local xlive, ylive, zlive = {}, {}, {}
     local N = N
     local NN = N * N
 
@@ -3088,22 +3164,17 @@ function NextGen6FacesNoWrap()
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    local newpop = 0
     for k,v in pairs(lcount) do
         if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
 
@@ -3112,36 +3183,27 @@ function NextGen6FacesNoWrap()
         if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGen6FacesNoWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
 
 function NextGen6FacesWrap()
-    if timingenabled then timerstart("NextGen6FacesWrap") end
-
     -- calculate and display the next generation for rules using the 6-cell face neighborhood
     -- (aka the von Neumann neighborhood)
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..6) for live cells
     local ecount = {}   -- neighbor counts (1..6) for adjacent empty cells
+    local xlive, ylive, zlive = {}, {}, {}
     local N = N
     local NN = N * N
 
@@ -3174,22 +3236,17 @@ function NextGen6FacesWrap()
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    local newpop = 0
     for k,v in pairs(lcount) do
         if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
 
@@ -3198,23 +3255,15 @@ function NextGen6FacesWrap()
         if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGen6FacesWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(grid2)
 end
 
@@ -3235,12 +3284,11 @@ end
 ----------------------------------------------------------------------
 
 function NextGen8CornersNoWrap()
-    if timingenabled then timerstart("NextGen8CornersNoWrap") end
-
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..8) for live cells
     local ecount = {}   -- neighbor counts (1..8) for adjacent empty cells
+    local xlive, ylive, zlive = {}, {}, {}
     local N = N
     local NN = N * N
 
@@ -3268,22 +3316,17 @@ function NextGen8CornersNoWrap()
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    local newpop = 0
     for k,v in pairs(lcount) do
         if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
 
@@ -3292,35 +3335,26 @@ function NextGen8CornersNoWrap()
         if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGen8CornersNoWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
 
 function NextGen8CornersWrap()
-    if timingenabled then timerstart("NextGen8CornersWrap") end
-
     -- calculate and display the next generation for rules using the 8-cell corner neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..8) for live cells
     local ecount = {}   -- neighbor counts (1..8) for adjacent empty cells
+    local xlive, ylive, zlive = {}, {}, {}
     local N = N
     local NN = N * N
 
@@ -3358,22 +3392,17 @@ function NextGen8CornersWrap()
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    local newpop = 0
     for k,v in pairs(lcount) do
         if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
 
@@ -3382,23 +3411,15 @@ function NextGen8CornersWrap()
         if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGen8CornersWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(grid2)
 end
 
@@ -3418,12 +3439,11 @@ end
 ----------------------------------------------------------------------
 
 function NextGen12EdgesNoWrap()
-    if timingenabled then timerstart("NextGen12EdgesNoWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
+    local xlive, ylive, zlive = {}, {}, {}
     local N = N
     local NN = N * N
 
@@ -3463,22 +3483,17 @@ function NextGen12EdgesNoWrap()
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    local newpop = 0
     for k,v in pairs(lcount) do
         if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
 
@@ -3487,34 +3502,25 @@ function NextGen12EdgesNoWrap()
         if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGen12EdgesNoWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(grid2)
 end
 ----------------------------------------------------------------------
 
 function NextGen12EdgesWrap()
-    if timingenabled then timerstart("NextGen12EdgesWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell edge neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
+    local xlive, ylive, zlive = {}, {}, {}
     local N = N
     local NN = N * N
 
@@ -3566,22 +3572,17 @@ function NextGen12EdgesWrap()
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    local newpop = 0
     for k,v in pairs(lcount) do
         if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
 
@@ -3590,23 +3591,15 @@ function NextGen12EdgesWrap()
         if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGen12EdgesWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(grid2)
 end
 
@@ -3626,12 +3619,11 @@ end
 ----------------------------------------------------------------------
 
 function NextGenHexahedralNoWrap()
-    if timingenabled then timerstart("NextGenHexahedralNoWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
+    local xlive, ylive, zlive = {}, {}, {}
     local N = N
     local NN = N * N
 
@@ -3670,22 +3662,17 @@ function NextGenHexahedralNoWrap()
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    local newpop = 0
     for k,v in pairs(lcount) do
         if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
 
@@ -3694,35 +3681,26 @@ function NextGenHexahedralNoWrap()
         if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGenHexahedralNoWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(grid2)
 end
 
 ----------------------------------------------------------------------
 
 function NextGenHexahedralWrap()
-    if timingenabled then timerstart("NextGenHexahedralWrap") end
-
     -- calculate and display the next generation for rules using the 12-cell hexahedral neighborhood
     local grid2 = {}
     local lcount = {}   -- neighbor counts (0..12) for live cells
     local ecount = {}   -- neighbor counts (1..12) for adjacent empty cells
+    local xlive, ylive, zlive = {}, {}, {}
     local N = N
     local NN = N * N
 
@@ -3773,22 +3751,17 @@ function NextGenHexahedralWrap()
     end
 
     -- use lcounts and survivals to put live cells in grid2 (currently empty)
+    local newpop = 0
     for k,v in pairs(lcount) do
         if survivals[v] then
             -- create a survivor cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
 
@@ -3797,23 +3770,15 @@ function NextGenHexahedralWrap()
         if births[v] then
             -- create a birth cell in grid2
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
-            local x = k % N
-            local y = k // N % N
-            local z = k // NN
             -- update boundary
-            if x < minx then minx = x end
-            if y < miny then miny = y end
-            if z < minz then minz = z end
-            if x > maxx then maxx = x end
-            if y > maxy then maxy = y end
-            if z > maxz then maxz = z end
+            xlive[k % N] = 1
+            ylive[k // N % N] = 1
+            zlive[k // NN] = 1
         end
     end
-
-    if timingenabled then timersave("NextGenHexahedralWrap") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(grid2)
 end
 
@@ -3833,17 +3798,14 @@ end
 ----------------------------------------------------------------------
 
 function NextGenBusyBoxes()
+    -- calculate and display the next generation for the BusyBoxes rule
+    -- (see http://www.busyboxes.org/faq.html)
     if N%2 == 1 then
         -- BusyBoxes requires an even numbered grid size
         SetGridSize(N+1)
     end
 
     if AllDead() then return end
-
-    if timingenabled then timerstart("NextGenBusyBoxes") end
-
-    -- calculate and display the next generation for the BusyBoxes rule
-    -- (see http://www.busyboxes.org/faq.html)
 
     -- the algorithm used below is a slightly modified (and corrected!)
     -- version of the kernel code in Ready's Salt 3D example
@@ -3873,9 +3835,11 @@ function NextGenBusyBoxes()
     local mirror_mode = rulestring:sub(-1) ~= "W"
     local phase = gencount % 6
     local grid2 = {}
+    local xlive, ylive, zlive = {}, {}, {}
     local N = N
     local NN = N * N
 
+    local newpop = 0
     for k,_ in pairs(grid1) do
         local x = k % N
         local y = k // N % N
@@ -3950,7 +3914,7 @@ function NextGenBusyBoxes()
                       newz < 0 or newz >= N ) then
                     -- swap position is outside grid so don't do it
                     grid2[k] = 1
-                    popcount = popcount + 1
+                    newpop = newpop + 1
                     -- don't set dirty flag here!
                 else
                     -- do the swap, wrapping if necessary
@@ -3958,33 +3922,28 @@ function NextGenBusyBoxes()
                     y = newy % N
                     z = newz % N
                     grid2[x + N * (y + N * z)] = 1
-                    popcount = popcount + 1
+                    newpop = newpop + 1
                     -- don't set dirty flag here!
                 end
             else
                 -- don't swap this live cell
                 grid2[k] = 1
-                popcount = popcount + 1
+                newpop = newpop + 1
                 -- don't set dirty flag here!
             end
         else
             -- live cell with wrong parity
             grid2[k] = 1
-            popcount = popcount + 1
+            newpop = newpop + 1
             -- don't set dirty flag here!
         end
 
         -- update boundary
-        if x < minx then minx = x end
-        if y < miny then miny = y end
-        if z < minz then minz = z end
-        if x > maxx then maxx = x end
-        if y > maxy then maxy = y end
-        if z > maxz then maxz = z end
+        xlive[x] = 1
+        ylive[y] = 1
+        zlive[z] = 1
     end
-
-    if timingenabled then timersave("NextGenBusyBoxes") end
-
+    UpdateBoundary(xlive, ylive, zlive, newpop)
     DisplayGeneration(grid2)
 end
 
@@ -3995,6 +3954,7 @@ function NewPattern()
     SetCursor(drawcursor)
     gencount = 0
     startcount = 0
+    stepsize = 1
     StopGenerating()
     ClearCells()
     ClearUndoRedo()
@@ -4015,7 +3975,7 @@ function ReadPattern(filepath)
     -- read entire file and convert any CRs to LFs
     local all = f:read("*a"):gsub("\r", "\n").."\n"
     local nextline = all:gmatch("(.-)\n")
-    
+
     f:close()
 
     local line = nextline()
@@ -4168,6 +4128,7 @@ end
 ----------------------------------------------------------------------
 
 function UpdateCurrentGrid(newpattern)
+    -- called by OpenPattern/OpenClipboard
     N = newpattern.newsize
     MIDGRID = (N+1-(N%2))*HALFCELL
     MIDCELL = HALFCELL-MIDGRID
@@ -4187,6 +4148,7 @@ function UpdateCurrentGrid(newpattern)
     ParseRule(newpattern.newrule)   -- sets rulestring, survivals and births
     gencount = newpattern.newgens
     startcount = gencount           -- for Reset
+    stepsize = 1
     StopGenerating()
     SetCursor(movecursor)
     ClearUndoRedo()         -- dirty = false
@@ -4452,8 +4414,7 @@ function CallScript(func, fromclip)
     end
 
     if scriptlevel == 0 then
-        RememberCurrentState()
-        undo_cleared = false    -- becomes true if ClearUndoRedo is called
+        RememberCurrentState()  -- #undostack is > 0
         EnableControls(false)   -- disable most menu items and buttons
     end
 
@@ -4461,18 +4422,23 @@ function CallScript(func, fromclip)
     local status, err = pcall(func)
     scriptlevel = scriptlevel - 1
 
-    -- note that if the script called NewPattern/RandomPattern/OpenPattern
-    -- or any other function that called ClearUndoRedo then all the
-    -- undo/redo history is deleted and dirty is set to false,
-    -- but a later SetCell call might then set dirty to true,
-    -- so the following test fixes that
-    if scriptlevel == 0 and undo_cleared then
-        -- ensure the dirty flag is false
-        dirty = false
-        -- if the script called NextGeneration (via Step) after calling ClearUndoRedo
-        -- (or vice versa) then startindex won't be valid, so set startcount to gencount
-        -- to ensure Reset does nothing
-        startcount = gencount
+    if scriptlevel == 0 then
+        -- note that if the script called NewPattern/RandomPattern/OpenPattern
+        -- or any other function that called ClearUndoRedo then the undostack
+        -- is empty and dirty should be false
+        if #undostack == 0 then
+            -- a later SetCell call might have set dirty to true, so reset it
+            dirty = false
+            if gencount > startcount then
+                -- script called Step after NewPattern/RandomPattern/OpenPattern
+                -- so push startstate onto undostack so user can Reset/Undo
+                undostack[1] = startstate
+                startstate.savedirty = false
+            end
+        elseif SameState(undostack[#undostack]) then
+            -- script didn't change the current state so pop undostack
+            table.remove(undostack)
+        end
     end
 
     if err then
@@ -4611,6 +4577,7 @@ function RandomPattern(percentage, fill, sphere)
     SetCursor(movecursor)
     gencount = 0
     startcount = 0
+    stepsize = 1
     StopGenerating()
     ClearCells()
 
@@ -5950,12 +5917,13 @@ function Step1()
         RememberCurrentState()
     end
 
-    -- temporarily change stepsize to 0 so AllDead and DisplayGeneration don't call Refresh
-    local savestep = stepsize
-    stepsize = 0
     NextGeneration()
-    stepsize = savestep
-    Refresh()
+
+    if gencount % stepsize == 0 or popcount == 0 then
+        -- NextGeneration called Refresh()
+    else
+        Refresh()
+    end
 end
 
 ----------------------------------------------------------------------
@@ -6009,11 +5977,20 @@ end
 ----------------------------------------------------------------------
 
 function Reset()
-    -- user scripts cannot call Reset (they can use SaveState and RestoreState)
-    if scriptlevel > 0 then return end
-
     if gencount > startcount then
-        RestoreStartingGen()
+        -- restore the starting state
+        if scriptlevel > 0 then
+            -- Reset was called by user script so don't modify undo/redo stacks
+            RestoreState(startstate)
+        else
+            -- unwind undostack until gencount == startcount
+            repeat
+                -- push current state onto redostack
+                redostack[#redostack+1] = SaveState()
+                -- pop state off undostack and restore it
+                RestoreState( table.remove(undostack) )
+            until gencount == startcount
+        end
         StopGenerating()
         Refresh()
     end
@@ -6085,16 +6062,18 @@ function GetPercentage() return perc end
 function GetPopulation() return popcount end
 function GetRule() return rulestring end
 function GetCellType() return celltype end
+function GetStepSize() return stepsize end
+function GetBarHeight() return toolbarht end
 
 ----------------------------------------------------------------------
 
 -- for user scripts
-function GetCells(selected)
+function GetCells(selectedonly)
     -- return an array of live cell coordinates;
     -- if selected is true then only selected live cells will be returned
     local cellarray = {}
     if popcount > 0 then
-        if selected then
+        if selectedonly then
             cellarray = GetSelectedLiveCells()
         else
             -- get all live cells
@@ -6524,7 +6503,7 @@ somewhat similar to those in Golly's menu bar.
 <a name="new"></a><p><dt><b>New Pattern</b></dt>
 <dd>
 Create a new, empty pattern.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 The active plane is displayed, ready to be edited using the pencil cursor.
 </dd>
 
@@ -6532,19 +6511,19 @@ The active plane is displayed, ready to be edited using the pencil cursor.
 <dd>
 Create a new pattern randomly filled with live cells at a given density.
 You have the option of filling the grid and creating a cube or a sphere.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="open"></a><p><dt><b>Open Pattern...</b></dt>
 <dd>
 Open a selected <a href="#rle3">RLE3</a> pattern file.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="openclip"></a><p><dt><b>Open Clipboard</b></dt>
 <dd>
 Open the <a href="#rle3">RLE3</a> pattern stored in the clipboard.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="save"></a><p><dt><b>Save Pattern...</b></dt>
@@ -6675,8 +6654,7 @@ or until the pattern is empty.  Only the final generation is displayed.
 
 <a name="reset"></a><p><dt><b>Reset</b></dt>
 <dd>
-Restore the starting generation.
-The undo history is automatically rewound to the correct place.
+Restore the starting generation and step size.
 </dd>
 
 <a name="setrule"></a><p><dt><b>Set Rule</b></dt>
@@ -6822,6 +6800,7 @@ want to call from your own scripts:
 <td valign=top>
 <a href="#CancelPaste"><b>CancelPaste</b></a><br>
 <a href="#CancelSelection"><b>CancelSelection</b></a><br>
+<a href="#CheckWindowSize"><b>CheckWindowSize</b></a><br>
 <a href="#ClearOutside"><b>ClearOutside</b></a><br>
 <a href="#ClearSelection"><b>ClearSelection</b></a><br>
 <a href="#CopySelection"><b>CopySelection</b></a><br>
@@ -6831,13 +6810,15 @@ want to call from your own scripts:
 <a href="#DrawMode"><b>DrawMode</b></a><br>
 <a href="#FitGrid"><b>FitGrid</b></a><br>
 <a href="#FlipPaste"><b>FlipPaste</b></a><br>
-<a href="#FlipSelection"><b>FlipSelection</b></a>
+<a href="#FlipSelection"><b>FlipSelection</b></a><br>
+<a href="#GetBarHeight"><b>GetBarHeight</b></a><br>
+<a href="#GetBounds"><b>GetBounds</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
-<a href="#GetBounds"><b>GetBounds</b></a><br>
 <a href="#GetCell"><b>GetCell</b></a><br>
 <a href="#GetCells"><b>GetCells</b></a><br>
+<a href="#GetCellType"><b>GetCellType</b></a><br>
 <a href="#GetGeneration"><b>GetGeneration</b></a><br>
 <a href="#GetGridSize"><b>GetGridSize</b></a><br>
 <a href="#GetPasteBounds"><b>GetPasteBounds</b></a><br>
@@ -6845,38 +6826,45 @@ want to call from your own scripts:
 <a href="#GetPopulation"><b>GetPopulation</b></a><br>
 <a href="#GetRule"><b>GetRule</b></a><br>
 <a href="#GetSelectionBounds"><b>GetSelectionBounds</b></a><br>
+<a href="#GetStepSize"><b>GetStepSize</b></a><br>
+<a href="#HandleKey"><b>HandleKey</b></a><br>
 <a href="#InitialView"><b>InitialView</b></a><br>
-<a href="#MoveMode"><b>MoveMode</b></a>
+<a href="#MoveMode"><b>MoveMode</b></a><br>
+<a href="#NewPattern"><b>NewPattern</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
-<a href="#NewPattern"><b>NewPattern</b></a><br>
 <a href="#OpenPattern"><b>OpenPattern</b></a><br>
 <a href="#Paste"><b>Paste</b></a><br>
 <a href="#PasteExists"><b>PasteExists</b></a><br>
 <a href="#PutCells"><b>PutCells</b></a><br>
 <a href="#RandomPattern"><b>RandomPattern</b></a><br>
+<a href="#Reset"><b>Reset</b></a><br>
 <a href="#RestoreState"><b>RestoreState</b></a><br>
 <a href="#Rotate"><b>Rotate</b></a><br>
 <a href="#RotatePaste"><b>RotatePaste</b></a><br>
 <a href="#RotateSelection"><b>RotateSelection</b></a><br>
 <a href="#RunScript"><b>RunScript</b></a><br>
-<a href="#SavePattern"><b>SavePattern</b></a>
+<a href="#SavePattern"><b>SavePattern</b></a><br>
+<a href="#SaveState"><b>SaveState</b></a><br>
+<a href="#SelectAll"><b>SelectAll</b></a><br>
+<a href="#SelectCell"><b>SelectCell</b></a>
 </td>
 <td valign=top width=30> </td>
 <td valign=top>
-<a href="#SaveState"><b>SaveState</b></a><br>
-<a href="#SelectAll"><b>SelectAll</b></a><br>
-<a href="#SelectCell"><b>SelectCell</b></a><br>
 <a href="#SelectedCell"><b>SelectedCell</b></a><br>
 <a href="#SelectionExists"><b>SelectionExists</b></a><br>
 <a href="#SelectMode"><b>SelectMode</b></a><br>
 <a href="#SetCell"><b>SetCell</b></a><br>
+<a href="#SetCellType"><b>SetCellType</b></a><br>
 <a href="#SetGridSize"><b>SetGridSize</b></a><br>
 <a href="#SetMessage"><b>SetMessage</b></a><br>
 <a href="#SetRule"><b>SetRule</b></a><br>
+<a href="#SetStepSize"><b>SetStepSize</b></a><br>
 <a href="#Step"><b>Step</b></a><br>
-<a href="#Update"><b>Update</b></a>
+<a href="#Update"><b>Update</b></a><br>
+<a href="#ZoomIn"><b>ZoomIn</b></a><br>
+<a href="#ZoomOut"><b>ZoomOut</b></a>
 </td>
 </tr>
 </table>
@@ -6891,6 +6879,12 @@ Remove any existing paste pattern.
 <a name="CancelSelection"></a><p><dt><b>CancelSelection()</b></dt>
 <dd>
 Deselect all selected cells.
+</dd>
+
+<a name="CheckWindowSize"></a><p><dt><b>CheckWindowSize()</b></dt>
+<dd>
+If the Golly window size has changed then this function resizes the overlay.
+Useful in scripts that allow user interaction.
 </dd>
 
 <a name="ClearOutside"></a><p><dt><b>ClearOutside()</b></dt>
@@ -6958,6 +6952,14 @@ For example, if given "x" then the X coordinates of all selected cells will be
 reflected across the YZ plane running through the middle of the selection.
 </dd>
 
+<a name="GetBarHeight"></a><p><dt><b>GetBarHeight()</b></dt>
+<dd>
+Return the combined height of the menu bar and tool bar.
+The value will be 0 if the user has turned them off (by hitting the "T" key)
+or switched to full screen mode.
+Useful in scripts that allow user interaction.
+</dd>
+
 <a name="GetBounds"></a><p><dt><b>GetBounds()</b></dt>
 <dd>
 Return {} if the pattern is empty, otherwise return the minimal bounding box
@@ -6978,6 +6980,11 @@ Return an array of live cell coordinates in the format
 All coordinates are relative to the middle cell in the grid.
 If there are no live cells then {} is returned.
 If selected is true then only the coordinates of selected live cells will be returned.
+</dd>
+
+<a name="GetCellType"></a><p><dt><b>GetCellType()</b></dt>
+<dd>
+Return the current cell type: "cube", "sphere" or "point".
 </dd>
 
 <a name="GetGeneration"></a><p><dt><b>GetGeneration()</b></dt>
@@ -7019,6 +7026,17 @@ of all selected cells (live or dead) as an array with 6 values: {minx, maxx, min
 The boundary values are relative to the middle cell in the grid.
 </dd>
 
+<a name="GetStepSize"></a><p><dt><b>GetStepSize()</b></dt>
+<dd>
+Return the current step size (1 to 100).
+</dd>
+
+<a name="HandleKey"></a><p><dt><b>HandleKey(<i>event</i>)</b></dt>
+<dd>
+Process the given keyboard event.
+Useful in scripts that allow user interaction.
+</dd>
+
 <a name="InitialView"></a><p><dt><b>InitialView()</b></dt>
 <dd>
 Restore the initial view displayed by 3D.lua when it first starts up.
@@ -7033,14 +7051,14 @@ Switch to the hand cursor.
 <a name="NewPattern"></a><p><dt><b>NewPattern()</b></dt>
 <dd>
 Create a new, empty pattern.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="OpenPattern"></a><p><dt><b>OpenPattern(<i>filepath</i>)</b></dt>
 <dd>
 Open the specified RLE3 pattern file.  If the <i>filepath</i> is not supplied then
 the user will be prompted to select a .rle3 file.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
 </dd>
 
 <a name="Paste"></a><p><dt><b>Paste()</b></dt>
@@ -7073,7 +7091,12 @@ If fill is true then the grid is filled, otherwise there will be a gap around
 the random object (this makes it easier to detect an explosive rule).
 If sphere is true then a spherical object is created rather than a cube.
 If no parameters are supplied then the user will be prompted for them.
-All undo/redo history is deleted.
+All undo/redo history is deleted and the step size is reset to 1.
+</dd>
+
+<a name="Reset"></a><p><dt><b>Reset()</b></dt>
+<dd>
+Restore the starting generation and step size.
 </dd>
 
 <a name="RestoreState"></a><p><dt><b>RestoreState(<i>state</i>)</b></dt>
@@ -7119,7 +7142,7 @@ Return an object representing the current state.  The object can be given
 later to <a href="#RestoreState">RestoreState</a> to restore the saved state.
 The saved information includes the grid size, the active plane's orientation
 and position, the cursor mode, the rule, the pattern and its generation count,
-the selection, and the paste pattern.
+the step size, the selection, and the paste pattern.
 </dd>
 
 <a name="SelectAll"></a><p><dt><b>SelectAll()</b></dt>
@@ -7157,6 +7180,11 @@ If the state is not supplied then it defaults to 1.
 The x,y,z coordinates are relative to the middle cell in the grid.
 </dd>
 
+<a name="SetCellType"></a><p><dt><b>SetCellType(<i>string</i>)</b></dt>
+<dd>
+Set the cell type to "cube", "sphere" or "point".
+</dd>
+
 <a name="SetGridSize"></a><p><dt><b>SetGridSize(<i>newsize</i>)</b></dt>
 <dd>
 Change the grid size to the new value (3 to 100).
@@ -7175,6 +7203,11 @@ Switch to the given rule.  If <i>rule</i> is not supplied the default rule
 is used (3D5..7/6).
 </dd>
 
+<a name="SetStepSize"></a><p><dt><b>SetStepSize(<i>newsize</i>)</b></dt>
+<dd>
+Set the step size to the given value (1 to 100).
+</dd>
+
 <a name="Step"></a><p><dt><b>Step(<i>n</i>)</b></dt>
 <dd>
 While the population is &gt; 0 calculate the next <i>n</i> generations.
@@ -7186,6 +7219,18 @@ If <i>n</i> is not supplied it defaults to 1.
 Update the display.  Note that 3D.lua automatically updates the display
 when a script finishes, so there's no need to call Update() at the
 end of a script.
+</dd>
+
+<a name="ZoomIn"></a><p><dt><b>ZoomIn()</b></dt>
+<dd>
+Zoom in by incrementing the cell size.
+Useful in scripts that allow user interaction.
+</dd>
+
+<a name="ZoomOut"></a><p><dt><b>ZoomOut()</b></dt>
+<dd>
+Zoom out by decrementing the cell size.
+Useful in scripts that allow user interaction.
 </dd>
 
 <p><a name="coords"></a><br>
@@ -7511,6 +7556,7 @@ function CycleCellType()
     else -- celltype == "point"
         celltype = "cube"
     end
+    ViewChanged(false)
     Refresh()
 end
 
@@ -7524,6 +7570,7 @@ function SetCellType(newtype)
     elseif newtype == "point" then
         celltype = newtype
     end
+    ViewChanged(false)
     Refresh()
 end
 
@@ -7531,21 +7578,6 @@ end
 
 function ToggleAxes()
     showaxes = not showaxes
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
-function ToggleMemory()
-    memoryenabled = not memoryenabled
-    Refresh()
-end
-
-----------------------------------------------------------------------
-
-function ToggleTiming()
-    timingenabled = not timingenabled
-    if timingenabled then timerresetall() end
     Refresh()
 end
 
@@ -8793,7 +8825,7 @@ function CreateOverlay()
     midy = int(ovht/2 + toolbarht/2)
     ov("create "..ovwd.." "..ovht)
     ov("cursor "..currcursor)
-    
+
     ov("font 11 default-bold")              -- font for info text
 
     -- set parameters for menu bar and tool bar buttons
@@ -8946,7 +8978,7 @@ end
 
 local showtoolbar = false   -- restore tool bar?
 
-function CheckLayerSize()
+function CheckWindowSize()
     -- if viewport size has changed then resize the overlay
     local newwd, newht = g.getview(g.getlayer())
     if newwd ~= viewwd or newht ~= viewht then
@@ -9015,9 +9047,13 @@ end
 function ViewChanged(rotate)
     -- cube needs recreating on rotate or depth shade toggle
     lastCubeSize = -1
+    lastBusyCubeSize["E"] = -1
+    lastBusyCubeSize["O"] = -1
     if not rotate then
         -- sphere only needs recreating on depth shade toggle
         lastSphereSize = -1
+        lastBusySphereSize["E"] = -1
+        lastBusySphereSize["O"] = -1
     end
 end
 
@@ -9107,7 +9143,9 @@ function InitDepthShading()
     for i = mindepth, maxdepth do
         -- clear depth shading list
         layercoords[i] = {}
-        layerindices[i] = 1
+        -- set index to position after draw command
+        layerindices[i] = 2
+        lastDepthBatchSize[i] = MAXN * MAXN * MAXN * 2
     end
     layerlast = mindepth - 1
 end
@@ -9152,10 +9190,11 @@ function Initialize()
         RunScript(startup)
         ClearUndoRedo()     -- don't want to undo startup script
     end
-    
+
     -- note that startup script might have changed BACK_COLOR etc
     ov("textoption background "..BACK_COLOR:sub(6))
     ssbutton.customcolor = START_COLOR
+    ssbutton.darkcustomcolor = SELSTART_COLOR
 
     Refresh()
 end
@@ -9219,9 +9258,6 @@ function HandleKey(event)
     elseif key == "s" and mods == "none" then SelectMode()
     elseif key == "m" and mods == "none" then MoveMode()
     elseif key == "m" and mods == "shift" then MiddlePattern()
-    -- eventually remove the next 2???!!!
-    elseif key == "t" and mods == "alt" then ToggleTiming()
-    elseif key == "m" and mods == "alt" then ToggleMemory()
     elseif key == "h" and mods == "none" then ShowHelp()
     elseif key == "q" then ExitScript()
     else
@@ -9368,7 +9404,7 @@ function EventLoop()
                 if not generating then
                     g.sleep(5)      -- don't hog the CPU when idle
                 end
-                CheckLayerSize()    -- may need to resize the overlay
+                CheckWindowSize()   -- may need to resize the overlay
             end
         else
             if message and (event:find("^key") or event:find("^oclick") or event:find("^file")) then

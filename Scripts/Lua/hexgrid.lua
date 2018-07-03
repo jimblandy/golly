@@ -12,13 +12,13 @@ local op = require "oplus"
 local int = gp.int
 local round = gp.round
 local split = gp.split
+local draw_line = op.draw_line
 
 local ov = g.overlay
+local ovt = g.ovtable
 
 -- minor optimizations
 local abs = math.abs
-local ceil = math.ceil
-local floor = math.floor
 
 -- the following are set in create_overlay()
 local state_rgba = {}   -- table of RGBA strings for each state
@@ -98,12 +98,6 @@ end
 
 local function get_vertex(xc, yc, i)
     return int(xc + xrad[i] + 0.5), int(yc + yrad[i] + 0.5)
-end 
-
---------------------------------------------------------------------------------
-
-local function draw_line(x1, y1, x2, y2)
-    ov("line "..x1.." "..y1.." "..x2.." "..y2)
 end
 
 --------------------------------------------------------------------------------
@@ -119,7 +113,7 @@ local function create_hextile()
            {3   0}---
             \2 1/
     --]]
-    
+
     -- these arrays are used in get_vertex
     xrad = {}
     yrad = {}
@@ -128,26 +122,26 @@ local function create_hextile()
         xrad[i] = edgelen * math.cos(angle_rad)
         yrad[i] = edgelen * math.sin(angle_rad)
     end
-    
+
     local x0, y0 = get_vertex(midx, midy, 0) -- E
     local x1, y1 = get_vertex(midx, midy, 1) -- SE
     local x2, y2 = get_vertex(midx, midy, 2) -- SW
     local x3, y3 = get_vertex(midx, midy, 3) -- W
     local x4, y4 = get_vertex(midx, midy, 4) -- NW
     local x5, y5 = get_vertex(midx, midy, 5) -- NE
-    
+
     hexwd = x0 - x3
     hexht = y1 - y5
-    
+
     -- these values are used to find the x,y coords of a hexagon's center
     hextox = edgelen * 3/2
     hextoy = hexht
-    
+
     -- create the clip
     hextilewd = hexwd + edgelen
     hextileht = hexht
     ov("rgba "..state_rgba[0])
-    ov("fill "..x3.." "..y4.." "..hextilewd.." "..hextileht)
+    ovt{"fill", x3, y4, hextilewd, hextileht}
     ov("rgba "..grid_rgba)
     draw_line(x0, y0, x1, y1)
     -- skip bottom edge
@@ -188,7 +182,7 @@ end
 local function pixel_to_hex(x, y)
     local q = (x - midx) / hextox
     local r = (y - midy) / hextoy - q / 2
-    
+
     return cube_round(q, -q-r, r)
 end
 
@@ -206,7 +200,7 @@ local function get_visible_rect()
     local maxx = qmax + rmax + xpos
     local miny = rmin + ypos
     local maxy = rmax + ypos
-    
+
     -- adjust limits if current layer's grid is bounded
     if gridwd > 0 then
         local bminx = -int(gridwd / 2)
@@ -244,11 +238,11 @@ local function cell_to_hexagon(x, y)
     --]]
     local r = y - ypos
     local q = x - xpos - r
-    
+
     -- return central pixel position of corresponding hexagon in overlay
     x = int(hextox * q + midx + 0.5)
     y = int(hextoy * (r + q/2) + midy + 0.5)
-    
+
     return x, y
 end
 
@@ -259,11 +253,11 @@ local function fill_hexagon(xc, yc, state)
 
     if edgelen < mingrid then
         if edgelen == 1 then
-            ov("set "..xc.." "..yc)
+            ovt{"set", xc, yc}
         else
             local x = int(xc - edgelen/2 + 0.5)
             local y = int(yc - edgelen/2 + 0.5)
-            ov("fill "..x.." "..y.." "..edgelen.." "..edgelen)
+            ovt{"fill", x, y, edgelen, edgelen}
         end
     else
         -- adjust xc and/or yc if they are outside overlay but hexagon is partially visible
@@ -311,11 +305,11 @@ end
 local function draw_live_cells()
     livehexagons = {}
     if g.empty() then return end
-    
+
     -- get live cells that will be visible in current hex grid
     local cells = g.getcells( get_visible_rect() )
     if #cells == 0 then return end
-    
+
     local len = #cells
     local inc = 2
     if len & 1 == 1 then
@@ -323,17 +317,17 @@ local function draw_live_cells()
         inc = 3
         if len % 3 == 1 then len = len - 1 end
     end
-    
+
     for i = 1, len, inc do
         local x = cells[i]
         local y = cells[i+1]
         local state = 1
         if inc == 3 then state = cells[i+2] end
-        
+
         -- calculate pixel at center of hexagon and fill it with current state
         local xc, yc = cell_to_hexagon(x, y)
         fill_hexagon(xc, yc, state)
-        
+
         livehexagons[#livehexagons + 1] = {xc, yc}
     end
 end
@@ -354,30 +348,50 @@ local function draw_hex_grid()
     -- draw middle hexagon
     local x = int(midx - edgelen + 0.5)
     local y = int(midy - hextileht/2 + 0.5)
-    ov("paste "..x.." "..y.." hextile")
-    
+
+    local xy = {"paste"}
+    local xyi = 2
+
+    xy[xyi] = x
+    xy[xyi + 1] = y
+    xyi = xyi + 2
+
     -- draw middle row of hexagons
     while x > 0 do
         x = x - hextilewd
-        ov("paste "..x.." "..y.." hextile")
+        xy[xyi] = x
+        xy[xyi + 1] = y
+        xyi = xyi + 2
     end
     x = int(midx - edgelen + 0.5) + hextilewd
     while x < viewwd do
-        ov("paste "..x.." "..y.." hextile")
+        xy[xyi] = x
+        xy[xyi + 1] = y
+        xyi = xyi + 2
         x = x + hextilewd
     end
-    
+    xy[xyi] = "hextile"
+    ovt(xy)
+
     -- copy middle row and paste above and below until overlay is tiled
     ov("copy 0 "..y.." "..viewwd.." "..hextileht.." row")
+    xy = {"paste"}
+    xyi = 2
     while y > 0 do
         y = y - hextileht
-        ov("paste 0 "..y.." row")
+        xy[xyi] = 0
+        xy[xyi + 1] = y
+        xyi = xyi + 2
     end
     y = int(midy - hextileht/2 + 0.5) + hextileht
     while y < viewht do
-        ov("paste 0 "..y.." row")
+        xy[xyi] = 0
+        xy[xyi + 1] = y
+        xyi = xyi + 2
         y = y + hextileht
     end
+    xy[xyi] = "row"
+    ovt(xy)
 end
 
 --------------------------------------------------------------------------------
@@ -385,7 +399,7 @@ end
 local function draw_boundary_line(x1, y1, x2, y2)
     x1, y1 = cell_to_hexagon(x1, y1)
     x2, y2 = cell_to_hexagon(x2, y2)
-    ov("line "..x1.." "..y1.." "..x2.." "..y2)
+    ovt{"line", x1, y1, x2, y2}
 end
 
 --------------------------------------------------------------------------------
@@ -477,7 +491,7 @@ local function outside_grid(q, r)
             return true
         end
     end
-    
+
     return false
 end
 
@@ -504,7 +518,7 @@ local function draw_bounded_grid()
     local minx, miny, wd, ht = table.unpack( get_visible_rect() )
     local maxx = minx+wd-1
     local maxy = miny+ht-1
-    
+
     if edgelen < mingrid then
         -- fill bounded diamond or strip with state 0 color
         ov("rgba "..state_rgba[0])
@@ -534,7 +548,7 @@ local function draw_bounded_grid()
                 end
             end
         end
-        
+
         -- flood the interior with state 0 color
         ov("rgba "..state_rgba[0])
         local xc, yc = cell_to_hexagon(minx + int(wd/2), miny + int(ht/2))
@@ -555,7 +569,7 @@ local function draw_bounded_grid()
             end
             ::done::
         end
-        
+
         -- draw the inner hexagon edges
         ov("rgba "..grid_rgba)
         for y = miny, maxy do
@@ -571,8 +585,8 @@ end
 
 local function draw_tool_bar()
     ov(op.white)
-    ov("fill 0 0 "..viewwd.." "..toolbarht)
-    
+    ovt{"fill", 0, 0, viewwd, toolbarht}
+
     -- must draw line at bottom edge of tool bar in case a cell color is white
     ov("rgba "..show_grid_rgba)
     draw_line(0, toolbarht-1, viewwd-1, toolbarht-1)
@@ -580,9 +594,9 @@ local function draw_tool_bar()
     local gap = 10
     local x = gap
     local y = int((toolbarht - ssbutton.ht) / 2)
-    
+
     if y < 10 then return end
-    
+
     if x >= viewwd then return end
     ssbutton.show(x, y)
     x = x + ssbutton.wd + gap
@@ -613,28 +627,26 @@ end
 
 local function refresh()
     create_hextile()
-    
+
     if (gridwd > 0 or gridht > 0) and border_visible() then
         -- fill overlay with border color
         local br, bg, bb = g.getcolor("border")
-        ov("rgba "..br.." "..bg.." "..bb.." 255")
-        ov("fill")
+        ovt{"rgba", br, bg, bb, 255}
+        ovt{"fill"}
         draw_bounded_grid()
     else
         -- fill overlay with state 0 color
         ov("rgba "..state_rgba[0])
-        ov("fill")
+        ovt{"fill"}
         if edgelen >= mingrid then
-            -- local t1 = g.millisecs()
             draw_hex_grid()
-            -- g.show(string.format("hex grid: %.2fms", (g.millisecs() - t1)))
         end
     end
-    
+
     draw_live_cells()
-    
+
     -- if selection exists then draw translucent selection color over selected cells???!!!
-    
+
     draw_tool_bar()
     ov("update")
 end
@@ -644,7 +656,7 @@ end
 local function set_hex_size()
     -- get current layer's magnification
     currmag = g.getmag()
-    
+
     -- set edgelen so hexagons are roughly the same size as cells
     if currmag <= 0 then
         edgelen = 1
@@ -673,10 +685,10 @@ end
 
 local function fit_pattern()
     g.fit()
-    
+
     -- update currmag and edgelen
     set_hex_size()
-    
+
     if not g.empty() then
         -- may need to reduce edgelen further to see live cells at left/right edges
         local x, y, w, h = table.unpack(g.getrect())
@@ -694,9 +706,9 @@ local function fit_pattern()
             sync_layer_scale()
         end
     end
-    
+
     refresh()
-    
+
     -- update the status bar to show scale
     g.update()
 end
@@ -737,9 +749,9 @@ local function zoom_hexagons(event)
     local direction, x, y = split(event)
     x = tonumber(x)
     y = tonumber(y)
-    
+
     if y < toolbarht then return end
-    
+
     if direction == "ozoomin" then
         -- try to zoom in to hexagon at x,y???!!!
         zoom_in()
@@ -755,10 +767,10 @@ local function click_in_layer(event)
     -- process a mouse click in current layer like "click 100 20 left none"
     local _, x, y, button, mods = split(event)
     local state = g.getcell(x, y)
-    
+
     if button ~= "left" then return end
     if mods ~= "none" and mods ~= "shift" then return end
-    
+
     if g.getcursor() == "Draw" then
         local drawstate = g.getoption("drawingstate")
         if state == 0 and drawstate == 0 then
@@ -773,15 +785,15 @@ local function click_in_layer(event)
             g.update()
             refresh()   -- updates overlay (currently not shown)
         end
-    
+
     elseif g.getcursor() == "Pick" then
         g.setoption("drawingstate", state)
         g.update()      -- updates edit bar
-    
+
     elseif g.getcursor() == "Select" then
         -- don't allow selections???!!!
         -- g.doevent(event)
-    
+
     else
         -- g.getcursor() == "Move" or "Zoom In" or "Zoom Out"
         g.doevent(event)
@@ -793,7 +805,7 @@ end
 local function edit_hexagons(x, y)
     -- get axial coords of hexagon containing clicked pixel
     local q, r = pixel_to_hex(x, y)
-    
+
     -- check if hexagon is outside bounded grid
     if outside_grid(q, r) then return end
 
@@ -808,11 +820,11 @@ local function edit_hexagons(x, y)
     else
         g.setcell(xcell, ycell, drawstate)
     end
-    
+
     -- get central pixel of hexagon
     local xc = int(hextox * q + midx + 0.5)
     local yc = int(hextoy * (r + q/2) + midy + 0.5)
-    
+
     -- update hexagon
     if state == drawstate then
         -- erase hexagon
@@ -823,7 +835,7 @@ local function edit_hexagons(x, y)
             livehexagons[#livehexagons + 1] = {xc, yc}
         end
     end
-    
+
     -- display overlay and show new population count in status bar
     g.update()
 end
@@ -874,20 +886,20 @@ end
 local function check_position_and_scale()
     -- refresh overlay if current layer's position or scale has changed
     local call_refresh = false
-    
+
     local x0, y0 = gp.getposint()
     if x0 ~= xpos or y0 ~= ypos then
         xpos = x0
         ypos = y0
         call_refresh = true
     end
-    
+
     local newmag = g.getmag()
     if newmag ~= currmag then
         set_hex_size()
         call_refresh = true
     end
-    
+
     if call_refresh then refresh() end
 end
 
@@ -896,10 +908,10 @@ end
 local function move_hexagons(x, y)
     -- get axial coords of hexagon containing clicked pixel
     local q, r = pixel_to_hex(x, y)
-    
+
     -- check if hexagon is outside bounded grid
     if outside_grid(q, r) then return end
-    
+
     -- drag clicked hexagon to new position
     local prevq, prevr = q, r
     while true do
@@ -920,7 +932,7 @@ local function move_hexagons(x, y)
                                  }____{             _
                                 /      \            /|
                          }-----{  q,r-1 }-----{   |/_  move NE/SW if deltaq == -deltar
-                        /       \      /       \ 
+                        /       \      /       \
                        { q-1,r   }----{ q+1,r-1 }
                         \       /      \       /
                          }-----{  q,r   }-----{
@@ -949,7 +961,7 @@ local function move_hexagons(x, y)
                         ypos = ypos + deltaq
                         set_position(xpos, ypos)
                         prevq = prevq + deltaq
-                        
+
                         -- now move hexagons NW/SE until prevq = q
                         deltaq = q - prevq
                         set_position(xpos - deltaq, ypos)
@@ -1010,9 +1022,9 @@ local function click_in_overlay(event)
     local _, x, y, button, mods = split(event)
     x = tonumber(x)
     y = tonumber(y)
-    
+
     if y < toolbarht then return end
-    
+
     if button ~= "left" then return end
     if mods ~= "none" and mods ~= "shift" then return end
 
@@ -1090,7 +1102,7 @@ local function check_layer_size()
         if viewht < 1 then viewht = 1 end
         midx, midy = int(viewwd/2), int(viewht/2 + toolbarht/2)
         ov("resize "..viewwd.." "..viewht)
-        
+
         -- hide tool bar controls so show calls will use correct background
         ssbutton.hide()
         sbutton.hide()
@@ -1100,7 +1112,7 @@ local function check_layer_size()
         hbutton.hide()
         ebutton.hide()
         zslider.hide()
-        
+
         refresh()
     end
 end
@@ -1153,17 +1165,17 @@ local function advance(by1)
         update_start_button()
         return
     end
-    
+
     if by1 then
         g.run(1)
     else
         g.step()
     end
-    
+
     -- erase live hexagons and draw new ones
     kill_live_cells()
     draw_live_cells()
-    
+
     draw_tool_bar()
     g.update()
 end
@@ -1195,11 +1207,11 @@ end
 
 local function reset()
     g.reset()
-    
+
     -- erase live hexagons and draw new ones
     kill_live_cells()
     draw_live_cells()
-    
+
     generating = false
     update_start_button()
     draw_tool_bar()
@@ -1222,7 +1234,7 @@ local function show_help()
         g.setoption("showoverlay", 1)
         g.update()
     end
-    
+
     local helptext =
 [[
 Features:
@@ -1267,14 +1279,14 @@ r             - reset to starting pattern
     local x = int((viewwd - w) / 2)
     local y = int((viewht - h) / 2)
     ov(op.gray)
-    ov("fill "..x.." "..y.." "..w.." "..h)
+    ovt{"fill", x, y, w, h}
     ov("rgba 255 253 217 255") -- pale yellow (matches Help window)
-    ov("fill "..(x+2).." "..(y+2).." "..(w-4).." "..(h-4))
+    ovt{"fill", (x+2), (y+2), (w-4), (h-4)}
     local oldblend = ov("blend 1")
-    ov("paste "..(x+10).." "..(y+10).." temp")
+    ovt{"paste", (x+10), (y+10), "temp"}
     ov("blend "..oldblend)
     ov("update")
-    
+
     while true do
         local event = g.getevent()
         if event:find("^key") or event:find("^oclick") then
@@ -1296,7 +1308,7 @@ end
 local function create_overlay()
     -- overlay covers entire viewport
     ov("create "..viewwd.." "..viewht)
-    
+
     ov("cursor current")    -- use current Golly cursor
 
     -- use smaller buttons in our tool bar
@@ -1321,18 +1333,18 @@ local function create_overlay()
     fbutton = op.button("Fit", fit_pattern)
     hbutton = op.button("?", show_help)
     ebutton = op.button("X", exit_script)
-    
+
     -- create a slider for zooming in/out
     zslider = op.slider("", op.black, (maxedge-minedge+1)*3, minedge, maxedge, zoom_slider)
-    
+
     toolbarht = 20 + ssbutton.ht
     midy = int(viewht/2 + toolbarht/2)
-    
+
     local currcolors = g.getcolors()
     for i = 0, g.numstates()-1 do
         state_rgba[i] = currcolors[2+i*4].." "..currcolors[3+i*4].." "..currcolors[4+i*4].." 255"
     end
-    
+
     -- set grid colors based on current background color
     local gridr, gridg, gridb = currcolors[2], currcolors[3], currcolors[4]
     local diff = 48
@@ -1360,7 +1372,7 @@ local function create_overlay()
     else
         grid_rgba = hide_grid_rgba
     end
-    
+
     -- initialize edgelen
     set_hex_size()
 end
@@ -1404,15 +1416,15 @@ function main()
     check_rule()
     create_overlay()
     refresh()
-    
+
     g.show("Hit escape key to abort script...")
     while true do
         -- if size of layer has changed then resize the overlay
         check_layer_size()
-        
+
         -- update cursor if mouse moves in/out of tool bar
         check_cursor()
-        
+
         -- check for user input
         local event = op.process( g.getevent() )
         -- event is empty if op.process handled the given event
@@ -1430,7 +1442,7 @@ function main()
                 g.doevent(event)
             end
         end
-        
+
         if g.getoption("showoverlay") == 1 then
             -- check if current layer's position or scale has changed
             check_position_and_scale()
@@ -1438,7 +1450,7 @@ function main()
 
         -- check if user toggled grid lines (possibly via View menu)
         check_grid()
-        
+
         if generating then advance(false) end
     end
 end

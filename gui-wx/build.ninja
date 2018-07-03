@@ -10,7 +10,7 @@
 # % ninja -t clean
 
 # golly version
-app_version = 3.2b2
+app_version = 3.2
 
 # build directories
 basedir = ../gollybase
@@ -21,7 +21,7 @@ exedir = ..
 gollydir = 
 
 # uncomment the next three lines to enable Golly sound support
-#irrklangdir = /home/chris/irrKlang-64bit-1.5.0
+#irrklangdir = /home/chris/irrKlang-64bit-1.6.0
 #irrklang_cxxflags = -I$irrklangdir/include -DENABLE_SOUND
 #irrklang_ldflags = $irrklangdir/bin/linux-gcc-64/libIrrKlang.so
 
@@ -150,6 +150,7 @@ build $objdir/writepattern.o: cxxc $basedir/writepattern.cpp
 
 # wx build
 build $objdir/wxrender.o: cxxc_wx wxrender.cpp
+   extra_cxxflags = $lua_cxxflags
 build $objdir/wxutils.o: cxxc_wx wxutils.cpp
 build $objdir/wxprefs.o: cxxc_wx wxprefs.cpp
 build $objdir/wxalgos.o: cxxc_wx wxalgos.cpp
@@ -158,9 +159,13 @@ build $objdir/wxinfo.o: cxxc_wx wxinfo.cpp
 build $objdir/wxhelp.o: cxxc_wx wxhelp.cpp
 build $objdir/wxstatus.o: cxxc_wx wxstatus.cpp
 build $objdir/wxview.o: cxxc_wx wxview.cpp
+   extra_cxxflags = $lua_cxxflags
 build $objdir/wxoverlay.o: cxxc_wx wxoverlay.cpp
+   extra_cxxflags = $lua_cxxflags
 build $objdir/wxscript.o: cxxc_wx wxscript.cpp
+   extra_cxxflags = $lua_cxxflags
 build $objdir/wxfile.o: cxxc_wx wxfile.cpp
+   extra_cxxflags = $lua_cxxflags
 build $objdir/wxedit.o: cxxc_wx wxedit.cpp
 build $objdir/wxselect.o: cxxc_wx wxselect.cpp
 build $objdir/wxcontrol.o: cxxc_wx wxcontrol.cpp
@@ -168,6 +173,7 @@ build $objdir/wxtimeline.o: cxxc_wx wxtimeline.cpp
 build $objdir/wxundo.o: cxxc_wx wxundo.cpp
 build $objdir/wxlayer.o: cxxc_wx wxlayer.cpp
 build $objdir/wxmain.o: cxxc_wx wxmain.cpp
+   extra_cxxflags = $lua_cxxflags
 build $objdir/wxgolly.o: cxxc_wx wxgolly.cpp
 build $objdir/wxlua.o: cxxc_wx wxlua.cpp
    extra_cxxflags = $lua_cxxflags

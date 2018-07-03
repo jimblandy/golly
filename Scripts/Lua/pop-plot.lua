@@ -13,6 +13,7 @@ local max = gp.max
 
 local op = require "oplus"
 local ov = g.overlay
+local ovt = g.ovtable
 
 local opacity = 80                      -- initial opacity for bgcolor (as a percentage)
 local bgcolor = "rgba 255 255 255 "     -- white background (alpha will be appended)
@@ -101,7 +102,7 @@ local function pastetext(x, y, transform)
     -- text background is transparent so paste needs to use alpha blending
     ov("blend 1")
     ov(transform)
-    ov("paste "..(x+originx).." "..(y+originy).." textclip")
+    ovt{"paste", (x+originx), (y+originy), "textclip"}
     ov(op.identity)
     ov("blend 0")
 end
@@ -117,8 +118,7 @@ end
 --------------------------------------------------------------------------------
 
 local function drawline(x1, y1, x2, y2)
-    ov("line "..(x1+originx).." "..(y1+originy).." "
-              ..(x2+originx).." "..(y2+originy))
+    ovt{"line", (x1+originx), (y1+originy), (x2+originx), (y2+originy)}
 end
 
 --------------------------------------------------------------------------------
@@ -127,24 +127,14 @@ local function drawdot(x, y)
     -- draw a small "+" mark
     x = x + originx
     y = y + originy
-    ov("set "..x.." "..y)
-    ov("set "..(x-1).." "..y)
-    ov("set "..(x+1).." "..y)
-    ov("set "..x.." "..(y-1))
-    ov("set "..x.." "..(y+1))
-    --[[ enable these calls to draw a square
-    ov("set "..(x-1).." "..(y-1))
-    ov("set "..(x+1).." "..(y-1))
-    ov("set "..(x-1).." "..(y+1))
-    ov("set "..(x+1).." "..(y+1))
-    --]]
+    ovt{"set", x, y, x-1, y, x+1, y, x, y-1, x, y+1}
 end
 
 --------------------------------------------------------------------------------
 
 local function run_pattern()
     if g.empty() then g.exit("There is no pattern.") end
-    
+
     -- prompt user for number of steps
     local s = g.getstring("Enter the number of steps:", numsteps, "Population plotter")
     if #s == 0 then g.exit() end
@@ -154,7 +144,7 @@ local function run_pattern()
     else
         g.exit("Number of steps must be > zero.")
     end
-    
+
     -- generate pattern for given number of steps
     pops[#pops+1] = tonumber(g.getpop())
     gens[#gens+1] = tonumber(g.getgen())
@@ -171,7 +161,7 @@ local function run_pattern()
             g.show(string.format("Step %d of %d", i, numsteps))
         end
     end
-    
+
     fit_if_not_visible()
     g.show(" ")
 end
@@ -181,8 +171,8 @@ end
 local function draw_plot()
     -- fill area above control bar with background color
     ov(bgcolor..int(255*opacity/100+0.5))
-    ov("fill 0 0 "..owd.." "..(oht-controlht))
-    
+    ovt{"fill", 0, 0, owd, (oht-controlht)}
+
     local minpop = min(pops)
     local maxpop = max(pops)
     if minpop == maxpop then
@@ -190,40 +180,40 @@ local function draw_plot()
         minpop = minpop - 1
     end
     local popscale = (maxpop - minpop) / ylen
-    
+
     local mingen = min(gens)
     local maxgen = max(gens)
     local genscale = (maxgen - mingen) / xlen
-    
+
     -- draw axes
     ov(axiscolor)
     drawline(0, 0, xlen, 0)
     drawline(0, 0, 0, -ylen)
-    
+
     -- add annotation using the overlay's default font
     ov(textcolor)
     local wd, ht = maketext(string.upper(pattname))
     pastetext(int((xlen - wd) / 2), -ylen - 10 - ht)
-    
+
     wd, ht = maketext("POPULATION")
     -- rotate this text 90 degrees anticlockwise
     pastetext(-10 - ht, int(-(ylen - wd) / 2), op.racw)
-    
+
     wd, ht = maketext(""..minpop)
     pastetext(-wd - 10, int(-ht / 2))
-    
+
     wd, ht = maketext(""..maxpop)
     pastetext(-wd - 10, -ylen - int(ht / 2))
-    
+
     wd, ht = maketext("GENERATION (step="..stepsize..")")
     pastetext(int((xlen - wd) / 2), 10)
-    
+
     wd, ht = maketext(""..mingen)
     pastetext(int(-wd / 2), 10)
-    
+
     wd, ht = maketext(""..maxgen)
     pastetext(xlen - int(wd / 2), 10)
-    
+
     -- plot the data (it could take a while if numsteps is huge)
     ov(plotcolor)
     local x = int((gens[1] - mingen) / genscale)
@@ -245,7 +235,7 @@ local function draw_plot()
             g.update()
         end
     end
-    
+
     g.update()
 end
 
@@ -253,10 +243,10 @@ end
 
 local function do_save()
     -- called if Save button is clicked
-    
+
     -- remove any existing extension from pattern name and append .png
     local initfile = gp.split(pattname,"%.")..".png"
-    
+
     -- prompt for file name and location
     local pngpath = g.savedialog("Save as PNG file", "PNG (*.png)|*.png",
                                  initdir, initfile)
@@ -264,7 +254,7 @@ local function do_save()
         -- save overlay (minus controls) in given file
         ov("save 0 0 "..owd.." "..(oht-controlht).." "..pngpath)
         g.show("Population plot was saved in "..pngpath)
-        
+
         -- update initdir by stripping off the file name
         local pathsep = g.getdir("app"):sub(-1)
         initdir = pngpath:gsub("[^"..pathsep.."]+$","")
@@ -288,7 +278,7 @@ local function show_opacity()
     ov(bgcolor..255)
     local x = oslider.x + oslider.wd + 2
     local y = oht-oslider.ht-10 + int((oslider.ht-ht)/2)
-    ov("fill "..x.." "..y.." 50 "..ht)
+    ovt{"fill", x, y, 50, ht}
     pastetext(x - originx, y - originy)
 end
 
@@ -309,15 +299,19 @@ local function create_overlay()
     ov("position middle")
 
     -- create the Save and Cancel buttons
+    op.textshadowx = 2
+    op.textshadowy = 2
     sbutt = op.button("Save as PNG", do_save)
     cbutt = op.button("Cancel", g.exit)
-    
+
     -- create a check box for showing lines or dots
+    op.textshadowx = 0
+    op.textshadowy = 0
     lbox = op.checkbox("Lines", op.black, toggle_lines)
-    
+
     -- create a slider for adjusting opacity of background
     oslider = op.slider("Opacity:", op.black, 101, 0, 100, do_slider)
-    
+
     controlht = 20 + sbutt.ht
 end
 
@@ -325,18 +319,18 @@ end
 
 local function draw_controls()
     ov(bgcolor..255)
-    ov("fill 0 "..(oht-controlht).." "..owd.." "..controlht)
-    
+    ovt{"fill", 0, (oht-controlht), owd, controlht}
+
     -- show the Save and Cancel buttons at bottom right corner of overlay
     sbutt.show(owd-cbutt.wd-sbutt.wd-20, oht-sbutt.ht-10)
     cbutt.show(owd-cbutt.wd-10, oht-cbutt.ht-10)
-    
+
     -- show the check box at bottom left corner of overlay
     lbox.show(10, oht-lbox.ht-10, lines)
-    
+
     -- show slider to right of check box
     oslider.show(10+lbox.wd+70, oht-oslider.ht-10, opacity)
-    
+
     show_opacity()
 end
 

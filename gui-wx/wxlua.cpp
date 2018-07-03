@@ -63,8 +63,8 @@
 
 // some useful macros
 
-#define CHECK_RGB(r,g,b,cmd)                                                 \
-    if (r < 0 || r > 255 || g < 0 || g > 255 || g < 0 || g > 255) {         \
+#define CHECK_RGB(r,g,b,cmd)                                                \
+    if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {         \
         char msg[128];                                                      \
         sprintf(msg, "%s error: bad rgb value (%d,%d,%d)", cmd, r, g, b);   \
         GollyError(L, msg);                                                 \
@@ -1926,9 +1926,9 @@ static int g_setview(lua_State* L)
     if (currwd < 0) currwd = 0;
     if (currht < 0) currht = 0;
     
-    int mainwd, mainht;
-    mainptr->GetSize(&mainwd, &mainht);
-    mainptr->SetSize(mainwd + (wd - currwd), mainht + (ht - currht));
+    int mnwd, mnht;
+    mainptr->GetSize(&mnwd, &mnht);
+    mainptr->SetSize(mnwd + (wd - currwd), mnht + (ht - currht));
     
     return 0;   // no result
 }
@@ -2282,6 +2282,49 @@ static int g_getcolors(lua_State* L)
     }
     
     return 1;   // result is a table
+}
+
+// -----------------------------------------------------------------------------
+
+static int g_overlaytable(lua_State* L)
+{
+    CheckEvents(L);
+    
+    const char* result = NULL;
+    int nresults = 0;
+
+    // check the argument is a table
+    luaL_checktype(L, 1, LUA_TTABLE);
+    
+    // get the size of the table
+    int n = (int)lua_rawlen(L, 1);
+
+    // check if the table contains any elements
+    if (n > 0) {
+        // get the command name
+        lua_rawgeti(L, 1, 1);
+        const char* cmd = lua_tostring(L, -1);
+        lua_pop(L, 1);
+
+        // check the command name was a string
+        if (cmd) {
+            result = curroverlay->DoOverlayTable(cmd, L, n, &nresults);
+        } else {
+            result = "ERR:ovtable command name must be a string";
+        }
+    } else {
+        result = "ERR:missing ovtable command";
+    }
+
+    if (result == NULL) return nresults;   // no error so return any results
+    
+    if (result[0] == 'E' && result[1] == 'R' && result[2] == 'R' ) {
+        std::string msg = "ovtable error: ";
+        msg += result + 4;  // skip past "ERR:"
+        GollyError(L, msg.c_str());
+    }
+    
+    return 0;  // error so return nothing
 }
 
 // -----------------------------------------------------------------------------
@@ -2793,7 +2836,8 @@ static const struct luaL_Reg gollyfuncs [] = {
     { "getname",      g_getname },      // get name of given layer
     { "setcolors",    g_setcolors },    // set color(s) used in current layer
     { "getcolors",    g_getcolors },    // get color(s) used in current layer
-    { "overlay",      g_overlay },      // do an overlay command
+    { "overlay",      g_overlay },      // do an overlay command from a string
+    { "ovtable",      g_overlaytable }, // do an overlay command from a table
     // miscellaneous
     { "os",           g_os },           // return the current OS (Windows/Mac/Linux)
     { "millisecs",    g_millisecs },    // return elapsed time since Golly started, in millisecs

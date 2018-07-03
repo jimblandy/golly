@@ -22,6 +22,7 @@ local op = require "oplus"
 
 -- overlay
 local ov = g.overlay
+local ovt = g.ovtable
 local viewwd, viewht = g.getview(g.getlayer())
 local overlaycreated = false
 
@@ -232,7 +233,7 @@ local function updatenextbutton()
             ov("replace 40 128 255 255")
             ov("target")
             ov("blend 0")
-            ov("paste "..x.." "..y.." "..clipname)
+            ovt{"paste", x, y, clipname}
         end
     end
 end
@@ -301,7 +302,7 @@ local function drawinfo()
     ov("target "..textrect)
     ov("blend 0")
     ov("rgba "..toolbarbgcolor)
-    ov("fill")
+    ovt{"fill"}
     ov("blend 1")
     local x = floor(infox)
     local y = infoht[1]
@@ -311,7 +312,7 @@ local function drawinfo()
     end
     ov("target")
     ov("blend 0")
-    ov("paste 0 "..guiht.." "..textrect)
+    ovt{"paste", 0, guiht, textrect}
 end
 
 --------------------------------------------------------------------------------
@@ -330,7 +331,7 @@ local function drawgui()
         -- draw toolbar background
         ov("blend 0")
         ov("rgba "..toolbarbgcolor)
-        ov("fill 0 0 "..guiwd.." "..guiht)
+        ovt{"fill", 0, 0, guiwd, guiht}
 
         -- draw main buttons
         local y = floor((guiht - prevbutton.ht) / 2)
@@ -356,9 +357,9 @@ local function drawgui()
         -- check for options
         if showoptions then
             -- draw options background
-            ov("fill 0 "..(guiht + infoy).." "..guiwd.." "..optht)
+            ovt{"fill", 0, (guiht + infoy), guiwd, optht}
             ov("rgba 0 0 0 0")
-            ov("fill 0 "..(guiht + infoy + optht).." "..guiwd.." "..infoy)
+            ovt{"fill", 0, (guiht + infoy + optht), guiwd, infoy}
 
             -- draw option controls
             x = gapx
@@ -406,7 +407,7 @@ local function drawgui()
         else
             -- not showing options so clear the area under the toolbar
             local oldrgba = ov("rgba 0 0 0 0")
-            ov("fill 0 "..(guiht + infoy).." "..guiwd.." "..optht)
+            ovt{"fill", 0, (guiht + infoy), guiwd, optht}
             ov("rgba "..oldrgba)
         end
     end
@@ -466,11 +467,11 @@ Ctrl-T    - toggle autofit during playback
     local x = floor((viewwd - w) / 2)
     local y = floor((viewht - h) / 2)
     ov(op.gray)
-    ov("fill "..x.." "..y.." "..w.." "..h)
+    ovt{"fill", x, y, w, h}
     ov("rgba 255 253 217 255") -- pale yellow (matches Help window)
-    ov("fill "..(x+2).." "..(y+2).." "..(w-4).." "..(h-4))
+    ovt{"fill", (x+2), (y+2), (w-4), (h-4)}
     local oldblend = ov("blend 1")
-    ov("paste "..(x+10).." "..(y+10).." temp")
+    ovt{"paste", (x+10), (y+10), "temp"}
     ov("blend "..oldblend)
     ov("update")
 
@@ -489,7 +490,7 @@ Ctrl-T    - toggle autofit during playback
     -- clear help
     ov("rgba 0 0 0 0")
     ov("blend 0")
-    ov("fill "..x.." "..y.." "..w.." "..h)
+    ovt{"fill", x, y, w, h}
     refreshgui = true
 
     -- reset font

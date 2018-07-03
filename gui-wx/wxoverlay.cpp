@@ -218,9 +218,9 @@ void Overlay::DeleteOverlay()
     // stop any sound playback and delete cached sounds
     if (engine) {
         // delete sounds
-        std::map<std::string,ISound*>::iterator it;
-        for (it = sounds.begin(); it != sounds.end(); ++it) {
-            it->second->drop();
+        std::map<std::string,ISound*>::iterator itsnd;
+        for (itsnd = sounds.begin(); itsnd != sounds.end(); ++itsnd) {
+            itsnd->second->drop();
         }
         sounds.clear();
 
@@ -2645,6 +2645,71 @@ const char* Overlay::DoReplace(const char* args)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::DoSetRGBATable(const char* cmd, lua_State* L, int n, int* nresults)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    // check if there are arguments
+    int valid = false;
+    int i = 2;
+
+    if (n > 1) {
+        // attempt to read the arguments
+        lua_rawgeti(L, 1, i++);
+        int a1 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) return OverlayError("rgba command has illegal red argument");
+        lua_rawgeti(L, 1, i++);
+        int a2 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) return OverlayError("rgba command has illegal green argument");
+        lua_rawgeti(L, 1, i++);
+        int a3 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) return OverlayError("rgba command has illegal blue argument");
+        lua_rawgeti(L, 1, i++);
+        int a4 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) return OverlayError("rgba command has illegal alpha argument");
+
+        // validate argument range
+        if (a1 < 0 || a1 > 255 ||
+            a2 < 0 || a2 > 255 ||
+            a3 < 0 || a3 > 255 ||
+            a4 < 0 || a4 > 255) {
+            return OverlayError("rgba values must be from 0 to 255");
+        }
+
+        // return the current rgba values as a table on the Lua stack
+        // {"rgba", r, g, b, a}
+        lua_newtable(L);
+        i = 1;
+        lua_pushstring(L, cmd);
+        lua_rawseti(L, -2, i++);
+        lua_pushinteger(L, r);
+        lua_rawseti(L, -2, i++);
+        lua_pushinteger(L, g);
+        lua_rawseti(L, -2, i++);
+        lua_pushinteger(L, b);
+        lua_rawseti(L, -2, i++);
+        lua_pushinteger(L, a);
+        lua_rawseti(L, -2, i++);
+        *nresults = 1;  // 1 result: the table
+
+        // set the new values
+        r = (unsigned char)a1;
+        g = (unsigned char)a2;
+        b = (unsigned char)a3;
+        a = (unsigned char)a4;
+    } else {
+        return OverlayError("rgba command requires 4 arguments");
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoSetRGBA(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -2790,6 +2855,131 @@ const char* Overlay::GetCoordinatePair(char* args, int* x, int* y)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::DoSetTable(lua_State* L, int n, int* nresults)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    // check if there are arguments
+    // note: it is possible that n > 1 and arguments have nil values
+    int valid = false;
+    int i = 2;
+    int type = -1;
+
+    // mark target clip as changed
+    DisableTargetClipIndex();
+
+    // check for alpha blending
+    if (alphablend && a < 255) {
+        // use alpha blending
+        // do nothing if source pixel is transparent
+        if (a > 0) {
+            do {
+                // get next pixel coordinate
+                lua_rawgeti(L, 1, i++);
+                int x = (int)lua_tonumberx(L, -1, &valid);
+                if (!valid) break;
+                lua_pop(L, 1);
+                lua_rawgeti(L, 1, i++);
+                int y = (int)lua_tonumberx(L, -1, &valid);
+                if (!valid) break;
+                lua_pop(L, 1);
+
+                // ignore pixel if outside pixmap edges
+                if (PixelInTarget(x, y)) {
+                    unsigned char* p = pixmap + y*wd*4 + x*4;
+                    // source pixel is translucent so blend with destination pixel;
+                    // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                    unsigned char destr = p[0];
+                    unsigned char destg = p[1];
+                    unsigned char destb = p[2];
+                    unsigned char desta = p[3];
+                    if (desta == 255) {
+                        // destination pixel is opaque
+                        unsigned int alpha = a + 1;
+                        unsigned int invalpha = 256 - a;
+                        p[0] = (alpha * r + invalpha * destr) >> 8;
+                        p[1] = (alpha * g + invalpha * destg) >> 8;
+                        p[2] = (alpha * b + invalpha * destb) >> 8;
+                        // no need to change p[3] (alpha stays at 255)
+                    } else {
+                        // destination pixel is translucent
+                        float alpha = a / 255.0;
+                        float inva = 1.0 - alpha;
+                        float destalpha = desta / 255.0;
+                        float outa = alpha + destalpha * inva;
+                        p[3] = int(outa * 255);
+                        if (p[3] > 0) {
+                            p[0] = int((r * alpha + destr * destalpha * inva) / outa);
+                            p[1] = int((g * alpha + destg * destalpha * inva) / outa);
+                            p[2] = int((b * alpha + destb * destalpha * inva) / outa);
+                        }
+                    }
+                }
+            } while (i <= n);
+
+            // check if loop terminated because of failed number conversion
+            if (!valid) {
+                // get the type of the argument
+                type = lua_type(L, -1);
+                lua_pop(L, 1);
+            }
+        }
+    }
+    else {
+        // use fast copy
+        unsigned int rgba = 0;
+        SetRGBA(r, g, b, a, &rgba);
+        unsigned int* lpixmap = (unsigned int*)pixmap;
+        do {
+            // get next pixel coordinate
+            lua_rawgeti(L, 1, i++);
+            int x = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            int y = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+
+            // ignore pixel if outside pixmap edges
+            if (PixelInTarget(x, y)) {
+                *(lpixmap + y*wd + x) = rgba;
+            }
+        } while (i <= n);
+
+        // check if loop terminated because of failed number conversion
+        if (!valid) {
+            // get the type of the argument
+            type = lua_type(L, -1);
+            lua_pop(L, 1);
+        }
+    }
+
+    // check if there were errors
+    if (!valid) {
+        // check if the argument number is a multiple of 2 and the argument is nil
+        if ((((i - 3) & 1) == 0) && (type == LUA_TNIL)) {
+            // command was valid
+            valid = true;
+        }
+    }
+
+    if (!valid) {
+        // return appropriate error message
+        switch ((i - 3) & 1) {
+            case 0:
+                return OverlayError("set command has illegal x");
+                break;
+            case 1:
+                return OverlayError("set command has illegal y");
+                break;
+        }
+    }
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoSetPixel(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -2813,6 +3003,49 @@ const char* Overlay::DoSetPixel(const char* args)
         if (PixelInTarget(x, y)) DrawPixel(x, y);
     }
 
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoGetTable(lua_State* L, int n, int* nresults)
+{
+    if (pixmap == NULL) return "";
+
+    // check if there are arguments
+    int valid = false;
+    int i = 2;
+
+    if (n > 1) {
+        // attempt to read the arguments
+        lua_rawgeti(L, 1, i++);
+        int x = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L,1);
+        if (!valid) return OverlayError("get command has illegal x argument");
+        lua_rawgeti(L, 1, i++);
+        int y = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L,1);
+        if (!valid) return OverlayError("get command has illegal y argument");
+
+        // check if x,y is outside pixmap
+        if (!PixelInTarget(x, y)) {
+            // return -1 for all components to indicate outside pixmap
+            lua_pushinteger(L, -1);
+            lua_pushinteger(L, -1);
+            lua_pushinteger(L, -1);
+            lua_pushinteger(L, -1);
+        } else {
+            // get and return the pixel rgba values
+            unsigned char* p = pixmap + y*wd*4 + x*4;
+            lua_pushinteger(L, p[0]);
+            lua_pushinteger(L, p[1]);
+            lua_pushinteger(L, p[2]);
+            lua_pushinteger(L, p[3]);
+        }
+        *nresults = 4;
+    } else {
+        return OverlayError("get command requires 2 arguments");
+    }
     return NULL;
 }
 
@@ -2977,10 +3210,10 @@ const char* Overlay::DoLineOption(const char* args)
 
 // -----------------------------------------------------------------------------
 
-void Overlay::DrawAAPixel(int x, int y, double opacity)
+void Overlay::DrawAAPixel(int x, int y, double opac)
 {
     if (PixelInTarget(x, y)) {
-        unsigned char newalpha = 255-int(opacity);
+        unsigned char newalpha = 255-int(opac);
         if (newalpha == 0) return;
 
         if (!alphablend) {
@@ -3306,15 +3539,174 @@ void Overlay::DrawAntialiasedLine(int x0, int y0, int x1, int y1)
 
 // -----------------------------------------------------------------------------
 
-const char* Overlay::DoLine(const char* args)
+const char* Overlay::DoLineTable(lua_State* L, int n, bool connected, int* nresults)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    // check if there are arguments
+    // note: it is possible that n > 1 and arguments have nil values
+    int valid = false;
+    int i = 2;
+    int type = -1;
+
+    if (n > 1) {
+        // get line start coordinate pair
+        lua_rawgeti(L, 1, i++);
+        int x1 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) {
+            if (connected) {
+                return OverlayError("line command has illegal start x");
+            } else {
+                return OverlayError("lines command has illegal start x");
+            }
+        }
+        lua_rawgeti(L, 1, i++);
+        int y1 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) {
+            if (connected) {
+                return OverlayError("line command has illegal start y");
+            } else {
+                return OverlayError("lines command has illegal start y");
+            }
+        }
+        // get line end coordinate pair
+        lua_rawgeti(L, 1, i++);
+        int x2 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) {
+            if (connected) {
+                return OverlayError("line command has illegal end x");
+            } else {
+                return OverlayError("lines command has illegal end x");
+            }
+        }
+        lua_rawgeti(L, 1, i++);
+        int y2 = (int)lua_tonumberx(L, -1, &valid);
+        lua_pop(L, 1);
+        if (!valid) {
+            if (connected) {
+                return OverlayError("line command has illegal end y");
+            } else {
+                return OverlayError("lines command has illegal end y");
+            }
+        }
+
+        // mark target clip as changed
+        DisableTargetClipIndex();
+
+        // draw the first line
+        RenderLine(x1, y1, x2, y2);
+
+        // draw any follow on lines
+        while (i <= n) {
+            if (connected) {
+                // start point is previous line's end point
+                x1 = x2;
+                y1 = y2;
+            } else {
+                // read the next start point
+                lua_rawgeti(L, 1, i++);
+                x1 = (int)lua_tonumberx(L, -1, &valid);
+                if (!valid) break;
+                lua_pop(L, 1);
+                lua_rawgeti(L, 1, i++);
+                y1 = (int)lua_tonumberx(L, -1, &valid);
+                if (!valid) break;
+                lua_pop(L, 1);
+            }
+            // read the next end point
+            lua_rawgeti(L, 1, i++);
+            x2 = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            y2 = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+
+            // draw the line
+            RenderLine(x1, y1, x2, y2);
+        }
+
+        // check if loop terminated because of failed number conversion
+        if (!valid) {
+            // get the type of the argument
+            type = lua_type(L, -1);
+            lua_pop(L, 1);
+        }
+    }
+    else {
+        // no arguments supplied
+        if (connected) {
+            return OverlayError("line command requires at least two coordinate pairs");
+        } else {
+            return OverlayError("lines command requires at least two coordinate pairs");
+        }
+    }
+
+    // check if there were errors
+    if (!valid) {
+        if (connected) {
+            // check if the argument number is a multiple of 2 and the argument is nil
+            if (!((((i - 3) & 1) == 0) && (type == LUA_TNIL))) {
+                switch ((i - 3) & 1) {
+                    case 0:
+                        return OverlayError("line command has illegal end x");
+                        break;
+                    case 1:
+                        return OverlayError("line command has illegal end y");
+                        break;
+                }
+            }
+        } else{
+            // check if the argument number is a multiple of 4 and the argument is nil
+            if (!((((i - 3) & 3) == 0) && (type == LUA_TNIL))) {
+                switch ((i - 3) & 1) {
+                    case 0:
+                        return OverlayError("lines command has illegal start x");
+                        break;
+                    case 1:
+                        return OverlayError("lines command has illegal start y");
+                        break;
+                    case 2:
+                        return OverlayError("lines command has illegal end x");
+                        break;
+                    case 3:
+                        return OverlayError("lines command has illegal end y");
+                        break;
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoLine(const char* args, bool connected)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
 
     int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
     args = GetCoordinatePair((char*)args, &x1, &y1);
-    if (!args) return OverlayError("line command requires at least two coordinate pairs");
+    if (!args) {
+        if (connected) {
+            return OverlayError("line command requires at least two coordinate pairs");
+        } else {
+            return OverlayError("lines command requires at least two coordinate pairs");
+        }
+    }
     args = GetCoordinatePair((char*)args, &x2, &y2);
-    if (!args) return OverlayError("line command requires at least two coordinate pairs");
+    if (!args) {
+        if (connected) {
+            return OverlayError("line command requires at least two coordinate pairs");
+        } else {
+            return OverlayError("lines command requires at least two coordinate pairs");
+        }
+    }
 
     // mark target clip as changed
     DisableTargetClipIndex();
@@ -3324,10 +3716,17 @@ const char* Overlay::DoLine(const char* args)
 
     // read any further coordinates
     while (*args) {
-        x1 = x2;
-        y1 = y2;
-        args = GetCoordinatePair((char*)args, &x2, &y2);
-        if (!args) return OverlayError("line command has illegal coordinates");
+        if (connected) {
+            x1 = x2;
+            y1 = y2;
+            args = GetCoordinatePair((char*)args, &x2, &y2);
+            if (!args) return OverlayError("line command has illegal coordinates");
+        } else {
+            args = GetCoordinatePair((char*)args, &x1, &y1);
+            if (!args) return OverlayError("lines command has illegal coordinates");
+            args = GetCoordinatePair((char*)args, &x2, &y2);
+            if (!args) return OverlayError("lines command has illegal coordinates");
+        }
         RenderLine(x1, y1, x2, y2);
     }
     return NULL;
@@ -3352,6 +3751,11 @@ void Overlay::RenderLine(int x0, int y0, int x1, int y1) {
         return;
     }
 
+    // no alpha blending so use fast copy
+    unsigned int rgba = 0;
+    SetRGBA(r, g, b, a, &rgba);
+    unsigned int* lpixmap = (unsigned int*)pixmap;
+
     // draw a line of pixels from x0,y0 to x1,y1 using Bresenham's algorithm
     int dx = x1 - x0;
     int ax = abs(dx) * 2;
@@ -3364,7 +3768,7 @@ void Overlay::RenderLine(int x0, int y0, int x1, int y1) {
     if (ax > ay) {
         int d = ay - (ax / 2);
         while (x0 != x1) {
-            if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
+        if (PixelInTarget(x0, y0)) *(lpixmap + y0*wd + x0) = rgba;
             if (d >= 0) {
                 y0 = y0 + sy;
                 d = d - ax;
@@ -3375,7 +3779,7 @@ void Overlay::RenderLine(int x0, int y0, int x1, int y1) {
     } else {
         int d = ax - (ay / 2);
         while (y0 != y1) {
-            if (PixelInTarget(x0, y0)) DrawPixel(x0, y0);
+            if (PixelInTarget(x0, y0)) *(lpixmap + y0*wd + x0) = rgba;
             if (d >= 0) {
                 x0 = x0 + sx;
                 d = d - ay;
@@ -3384,7 +3788,7 @@ void Overlay::RenderLine(int x0, int y0, int x1, int y1) {
             d = d + ax;
         }
     }
-    if (PixelInTarget(x1, y1)) DrawPixel(x1, y1);
+    if (PixelInTarget(x1, y1)) *(lpixmap + y1*wd + x1) = rgba;
 }
 
 // -----------------------------------------------------------------------------
@@ -3798,6 +4202,111 @@ void Overlay::FillRect(int x, int y, int w, int h)
 
 // -----------------------------------------------------------------------------
 
+const char* Overlay::DoFillTable(lua_State* L, int n, int* nresults)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    // check if there are arguments
+    // note: it is possible that n > 1 and arguments have nil values
+    int valid = false;
+    int i = 2;
+    int type = -1;
+
+    if (n > 1) {
+        // mark target clip as changed
+        DisableTargetClipIndex();
+
+        // draw each rectangle
+        do {
+            // get the coordinates
+            lua_rawgeti(L, 1, i++);
+            int x = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            int y = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            int w = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+            lua_rawgeti(L, 1, i++);
+            int h = (int)lua_tonumberx(L, -1, &valid);
+            if (!valid) break;
+            lua_pop(L, 1);
+
+            // treat non-positive w/h as inset from overlay's width/height
+            if (w <= 0) w = wd + w;
+            if (h <= 0) h = ht + h;
+            if (w <= 0) return OverlayError("fill width must be > 0");
+            if (h <= 0) return OverlayError("fill height must be > 0");
+
+            // ignore rect if completely outside target edges
+            if (!RectOutsideTarget(x, y, w, h)) {
+                // clip any part of rect outside target edges
+                int xmax = x + w - 1;
+                int ymax = y + h - 1;
+                if (x < 0) x = 0;
+                if (y < 0) y = 0;
+                if (xmax >= wd) xmax = wd - 1;
+                if (ymax >= ht) ymax = ht - 1;
+                w = xmax - x + 1;
+                h = ymax - y + 1;
+    
+                // fill visible rect with current RGBA values
+                FillRect(x, y, w, h);
+            }
+        } while (i <= n);
+
+        // check if loop terminated because of failed number conversion
+        if (!valid) {
+            // get the type of the argument
+            type = lua_type(L, -1);
+            lua_pop(L, 1);
+        }
+    }
+
+    // check if there were no arguments
+    // either none supplied, or the first argument value was nil
+    if (n == 1 || (i == 3 && type == LUA_TNIL)) {
+        // fill entire target with current RGBA values
+        FillRect(0, 0, wd, ht);
+        valid = true;
+    }
+
+    // check if there were errors
+    if (!valid) {
+        // check if the argument number is a multiple of 4 and the argument is nil
+        if ((((i - 3) & 3) == 0) && (type == LUA_TNIL)) {
+            // command was valid
+            valid = true;
+        }
+    }
+
+    if (!valid) {
+        // return appropriate error message
+        switch ((i - 3) & 3) {
+            case 0:
+                return OverlayError("fill command has illegal x");
+                break;
+            case 1:
+                return OverlayError("fill command has illegal y");
+                break;
+            case 2:
+                return OverlayError("fill command has illegal width");
+                break;
+            case 3:
+                return OverlayError("fill command has illegal height");
+                break;
+        }
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------
+
 const char* Overlay::DoFill(const char* args)
 {
     if (pixmap == NULL) return OverlayError(no_overlay);
@@ -3863,6 +4372,9 @@ const char* Overlay::DoFill(const char* args)
             }
         }
     } else {
+        // mark target clip as changed
+        DisableTargetClipIndex();
+
         // fill entire target with current RGBA values
         FillRect(0, 0, wd, ht);
     }
@@ -4016,6 +4528,308 @@ const char* Overlay::DoOptimize(const char* args)
     static char result[12];
     sprintf(result, "%d", numtrans);
     return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoPasteTable(lua_State* L, int n, int* nresults)
+{
+    const char* result = NULL;
+
+    // clip name
+    const char* clipname = NULL;
+    int clipi = 0;
+
+    // allocate space for coordinate values
+    if (n > 1) {
+        int* coords = (int*)malloc((n - 1) * sizeof(int));
+        int j = 0;
+
+        // get the array of coordinates
+        int valid = true;
+        int i = 2;
+        while (i <= n && valid) {
+            // read the element at the next index
+            lua_rawgeti(L, 1, i);
+            // attempt to decode as a number
+            lua_Number value = lua_tonumberx(L, -1, &valid);
+            if (valid) {
+                // store the number
+                coords[j++] = (int)value;
+            }
+            else {
+                // was not a number so check the type
+                int type = lua_type(L, -1);
+                if (type == LUA_TSTRING) {
+                    // first time decode as a string after that it's an error
+                    if (clipname == NULL) {
+                        clipname = lua_tostring(L, -1);
+                        clipi = i;
+                        valid = true;
+                    }
+                }
+                else {
+                    if (type == LUA_TNIL) {
+                        // if it's nil then stop
+                        n = i - 1;
+                        valid = true;
+                    }
+                }
+            }
+            lua_pop(L, 1);
+            i++;
+        }
+
+        // clip name must be last argument
+        if (clipname && (clipi != n)) {
+            valid = false;
+        }
+
+        // check if the coordinates were all numbers
+        if (valid) {
+            // call the required function
+            result = DoPasteTableInternal(coords, j, clipname);
+        }
+
+        // free argument list
+        free(coords);
+
+        if (!valid) {
+            result = OverlayError("paste command has invalid arguments");
+        }
+    }
+
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoPasteTableInternal(const int* coords, int n, const char* clip)
+{
+    if (pixmap == NULL) return OverlayError(no_overlay);
+
+    // check that coordinates are supplied and that there are an even number
+    if (clip == NULL) return OverlayError("paste command requires a clip name");
+    if (n < 2) return OverlayError("paste command requires coordinate pairs");
+    if ((n & 1) != 0) return OverlayError("paste command has illegal coordinates");
+
+    // lookup the named clip
+    std::string name = clip;
+    std::map<std::string,Clip*>::iterator it;
+    it = clips.find(name);
+    if (it == clips.end()) {
+        static std::string msg;
+        msg = "unknown paste clip (";
+        msg += name;
+        msg += ")";
+        return OverlayError(msg.c_str());
+    }
+
+    Clip* clipptr = it->second;
+    int w = clipptr->cwd;
+    int h = clipptr->cht;
+
+    // mark target clip as changed
+    DisableTargetClipIndex();
+    
+    // paste at each coordinate pair
+    const int ow = w;
+    const int oh = h;
+
+    // get the first coordinate pair
+    int ci = 0;
+    do {
+        int x = coords[ci++];
+        int y = coords[ci++];
+
+        // set original width and height since these can be changed below if clipping required
+        w = ow;
+        h = oh;
+
+        // discard if location is completely outside target
+        if (!RectOutsideTarget(x, y, w, h)) {
+            // check for transformation
+            if (identity) {
+                // no transformation, check for clip and target the same size without alpha blending
+                if (!alphablend && x == 0 && y == 0 && w == wd && h == ht) {
+                    // fast paste with single memcpy call
+                    memcpy(pixmap, clipptr->cdata, w * h * 4);
+                }
+                else {
+                    // get the clip data
+                    unsigned int *ldata = (unsigned int*)clipptr->cdata;
+                    int cliprowpixels = w;
+                    int rowoffset = 0;
+            
+                    // check for clipping
+                    int xmax = x + w - 1;
+                    int ymax = y + h - 1;
+                    if (x < 0) {
+                        // skip pixels off left edge
+                        ldata += -x;
+                        x = 0;
+                    }
+                    if (y < 0) {
+                        // skip pixels off top edge
+                        ldata += -y * cliprowpixels;
+                        rowoffset = -y;
+                        y = 0;
+                    }
+                    if (xmax >= wd) xmax = wd - 1;
+                    if (ymax >= ht) ymax = ht - 1;
+                    w = xmax - x + 1;
+                    h = ymax - y + 1;
+            
+                    // get the paste target data
+                    int targetrowpixels = wd;
+                    unsigned int* lp = (unsigned int*)pixmap;
+                    lp += y * targetrowpixels + x;
+                    
+                    // check for alpha blending
+                    if (alphablend) {
+                        // alpha blending
+                        unsigned char* p = (unsigned char*)lp;
+                        bool hasindex = clipptr->hasindex;
+                        unsigned char* rowindex = clipptr->rowindex;
+            
+                        for (int j = 0; j < h; j++) {
+                            // if row index exists then skip row if blank (all pixels have alpha 0)
+                            if (hasindex && !rowindex[rowoffset + j]) {
+                                ldata += w;
+                                lp += w;
+                            } else {
+                                // if row index exists and all pixels opaque then use memcpy
+                                if (hasindex && rowindex[rowoffset + j] == 255) {
+                                    memcpy(lp, ldata, w << 2);
+                                    ldata += w;
+                                    lp += w;
+                                } else {
+                                    for (int i = 0; i < w; i++) {
+                                        // get the source pixel
+                                        unsigned char* srcp = (unsigned char*)ldata;
+                                        unsigned int rgba = *ldata++;
+                                        unsigned char pa = srcp[3];
+                    
+                                        // draw the pixel
+                                        if (pa < 255) {
+                                            if (pa > 0) {
+                                                // source pixel is translucent so blend with destination pixel;
+                                                // see https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
+                                                unsigned char pr = srcp[0];
+                                                unsigned char pg = srcp[1];
+                                                unsigned char pb = srcp[2];
+                                                unsigned char destr = p[0];
+                                                unsigned char destg = p[1];
+                                                unsigned char destb = p[2];
+                                                unsigned char desta = p[3];
+                                                if (desta == 255) {
+                                                    // destination pixel is opaque
+                                                    unsigned int alpha = pa + 1;
+                                                    unsigned int invalpha = 256 - pa;
+                                                    *p++ = (alpha * pr + invalpha * destr) >> 8;
+                                                    *p++ = (alpha * pg + invalpha * destg) >> 8;
+                                                    *p++ = (alpha * pb + invalpha * destb) >> 8;
+                                                    p++;   // no need to change p[3] (alpha stays at 255)
+                                                } else {
+                                                    // destination pixel is translucent
+                                                    float alpha = pa / 255.0;
+                                                    float inva = 1.0 - alpha;
+                                                    float destalpha = desta / 255.0;
+                                                    float outa = alpha + destalpha * inva;
+                                                    p[3] = int(outa * 255);
+                                                    if (p[3] > 0) {
+                                                        *p++ = int((pr * alpha + destr * destalpha * inva) / outa);
+                                                        *p++ = int((pg * alpha + destg * destalpha * inva) / outa);
+                                                        *p++ = int((pb * alpha + destb * destalpha * inva) / outa);
+                                                        p++;   // already set above
+                                                    } else {
+                                                        p += 4;
+                                                    }
+                                                }
+                                            } else {
+                                                // skip transparent pixel
+                                                p += 4;
+                                            }
+                                        } else {
+                                            // pixel is opaque so copy it
+                                            *lp = rgba;
+                                            p += 4;
+                                        }
+                                        lp++;
+                                    }
+                                }
+                            }
+                            // next clip and target row
+                            lp += targetrowpixels - w;
+                            p = (unsigned char*)lp;
+                            ldata += cliprowpixels - w;
+                        }
+                    } else {
+                        // no alpha blending
+                        for (int j = 0; j < h; j++) {
+                            // copy each row with memcpy
+                            memcpy(lp, ldata, w << 2);
+                            lp += targetrowpixels;
+                            ldata += cliprowpixels;
+                        }
+                    }
+                }
+            } else {
+                // do an affine transformation
+                unsigned char* data = clipptr->cdata;
+                int x0 = x - (x * axx + y * axy);
+                int y0 = y - (x * ayx + y * ayy);
+        
+                // check for alpha blend
+                if (alphablend) {
+                    // save RGBA values
+                    unsigned char saver = r;
+                    unsigned char saveg = g;
+                    unsigned char saveb = b;
+                    unsigned char savea = a;
+        
+                    for (int j = 0; j < h; j++) {
+                        for (int i = 0; i < w; i++) {
+                            r = *data++;
+                            g = *data++;
+                            b = *data++;
+                            a = *data++;
+                            int newx = x0 + x * axx + y * axy;
+                            int newy = y0 + x * ayx + y * ayy;
+                            if (PixelInTarget(newx, newy)) DrawPixel(newx, newy);
+                            x++;
+                        }
+                        y++;
+                        x -= w;
+                    }
+        
+                    // restore saved RGBA values
+                    r = saver;
+                    g = saveg;
+                    b = saveb;
+                    a = savea;
+                } else {
+                    // no alpha blend
+                    unsigned int* ldata = (unsigned int*)data;
+                    unsigned int* lp = (unsigned int*)pixmap;
+                    for (int j = 0; j < h; j++) {
+                        for (int i = 0; i < w; i++) {
+                            int newx = x0 + x * axx + y * axy;
+                            int newy = y0 + x * ayx + y * ayy;
+                            if (PixelInTarget(newx, newy)) *(lp + newy * wd + newx) = *ldata;
+                            ldata++;
+                            x++;
+                        }
+                        y++;
+                        x -= w;
+                    }
+                }
+            }
+        }
+    }
+    while (ci < n - 1);
+
+    return NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -5765,14 +6579,15 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strncmp(cmd, "set ", 4) == 0)          return DoSetPixel(cmd+4);
     if (strncmp(cmd, "get ", 4) == 0)          return DoGetPixel(cmd+4);
     if (strcmp(cmd,  "xy") == 0)               return DoGetXY();
+    if (strncmp(cmd, "paste", 5) == 0)         return DoPaste(cmd+5);
     if (strncmp(cmd, "rgba", 4) == 0)          return DoSetRGBA(cmd+4);
     if (strncmp(cmd, "blend", 5) == 0)         return DoBlend(cmd+5);
     if (strncmp(cmd, "fill", 4) == 0)          return DoFill(cmd+4);
     if (strncmp(cmd, "copy", 4) == 0)          return DoCopy(cmd+4);
-    if (strncmp(cmd, "paste", 5) == 0)         return DoPaste(cmd+5);
     if (strncmp(cmd, "optimize", 8) == 0)      return DoOptimize(cmd+8);
     if (strncmp(cmd, "lineoption ", 11) == 0)  return DoLineOption(cmd+11);
-    if (strncmp(cmd, "line", 4) == 0)          return DoLine(cmd+4);
+    if (strncmp(cmd, "lines", 5) == 0)         return DoLine(cmd+5, false);
+    if (strncmp(cmd, "line", 4) == 0)          return DoLine(cmd+4, true);
     if (strncmp(cmd, "ellipse", 7) == 0)       return DoEllipse(cmd+7);
     if (strncmp(cmd, "flood", 5) == 0)         return DoFlood(cmd+5);
     if (strncmp(cmd, "textoption ", 11) == 0)  return DoTextOption(cmd+11);
@@ -5797,5 +6612,20 @@ const char* Overlay::DoOverlayCommand(const char* cmd)
     if (strcmp(cmd,  "updatecells") == 0)      return DoUpdateCells();
     if (strcmp(cmd,  "drawcells") == 0)        return DoDrawCells();
     if (strncmp(cmd, "delete", 6) == 0)        return DoDelete(cmd+6);
+    return OverlayError("unknown command");
+}
+
+// -----------------------------------------------------------------------------
+
+const char* Overlay::DoOverlayTable(const char* cmd, lua_State* L, int n, int* nresults)
+{
+    // determine which command to run
+    if ((strcmp(cmd, "set")) == 0)      return DoSetTable(L, n, nresults);
+    if ((strcmp(cmd, "get")) == 0)      return DoGetTable(L, n, nresults);
+    if ((strcmp(cmd, "paste")) == 0)    return DoPasteTable(L, n, nresults);
+    if ((strcmp(cmd, "rgba")) == 0)     return DoSetRGBATable(cmd, L, n, nresults);
+    if ((strcmp(cmd, "line")) == 0)     return DoLineTable(L, n, true, nresults);
+    if ((strcmp(cmd, "lines")) == 0)    return DoLineTable(L, n, false, nresults);
+    if ((strcmp(cmd, "fill")) == 0)     return DoFillTable(L, n, nresults);
     return OverlayError("unknown command");
 }
