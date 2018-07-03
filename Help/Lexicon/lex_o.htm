@@ -108,8 +108,8 @@ Herschel conduits in 1996 (see
 list of unresolved cases, all with periods of 58 or below. The list
 has been progressively reduced since then. Most recently, period 43
 and 53 oscillators were made possible in 2013 by Mike Playle's
-<a href="lex_s.htm#snark">Snark</a>. As of the end of 2017, no oscillators are known for periods
-19, 23, 38, or 41. If we insist that the oscillator must be
+<a href="lex_s.htm#snark">Snark</a>. As of June 2018, no oscillators are known for periods 19,
+23, 38, or 41. If we insist that the oscillator must be
 <a href="lex_n.htm#nontrivial">non-trivial</a>, then 34 should be added to this list.
 <p>Note that if we were to allow infinite oscillators, then all
 periods are certainly possible, as any period of 14 or more can be
@@ -146,7 +146,8 @@ OOO......
 <p><a name=onetime>:</a><b>one-time</b> A term used for <a href="lex_t.htm#turner">turners</a> and <a href="lex_s.htm#splitter">splitters</a>, specifying that
 the reaction in question is not repeatable as it would be in a
 <a href="lex_r.htm#reflector">reflector</a> or <a href="lex_f.htm#fanout">fanout</a> device. Instead, the <a href="lex_c.htm#constellation">constellation</a> is used
-up in the course of the reaction, usually leaving nothing behind.
+up, usually in a <a href="lex_c.htm#clean">clean</a> reaction, but the much more common <a href="lex_d.htm#dirty">dirty</a>
+turners and splitters are also very useful in some situations.
 <p><a name=onionrings>:</a><b>onion rings</b> For each integer <i>n</i>&gt;1 onion rings of order <i>n</i> is a <a href="lex_s.htm#stable">stable</a>
 <a href="lex_a.htm#agar">agar</a> of <a href="lex_d.htm#density">density</a> 1/2 obtained by tiling the plane with a certain
 4<i>n</i> x 4<i>n</i> pattern. The tile for order 3 onion rings is shown below.
@@ -247,17 +248,20 @@ There are oscillators of almost all higher periods (see
 not normal in Life.
 <p>Oscillators consisting of separate objects which do not react in
 any phase are usually ignored. For example, a separated <a href="lex_b.htm#blinker">blinker</a>
-and <a href="lex_p.htm#pulsar">pulsar</a> makes a period 6 oscillator, but is considered trivial.
+and <a href="lex_p.htm#pulsar">pulsar</a> makes a period 6 oscillator, but is considered
+<a href="lex_t.htm#trivial">trivial</a>.
 <p>An oscillator can be divided into a <a href="lex_r.htm#rotor">rotor</a> and a <a href="lex_s.htm#stator">stator</a>, and the
 stator can be further subdivided into <a href="lex_b.htm#bushing">bushing</a> and <a href="lex_c.htm#casing">casing</a>. Some
 oscillators have no casing cells, and a few 100%-<a href="lex_v.htm#volatility">volatility</a>
 oscillators also have no bushing cells.
-<p>An oscillator can be constructed from any <a href="lex_g.htm#gun">gun</a> by adding <a href="lex_e.htm#eater">eaters</a>
-to consume its output, and if it is a <a href="lex_t.htm#true">true</a> <a href="lex_g.htm#gun">gun</a> then the period of
-the oscillator will be the same as the gun.
+<p>An oscillator can be constructed from any <a href="lex_g.htm#gun">gun</a> as long as <a href="lex_e.htm#eater">eaters</a>
+can be added to consume its output. If it is a <a href="lex_t.htm#true">true</a> <a href="lex_g.htm#gun">gun</a> then the
+period of the oscillator will be the same as the gun - unless the
+eating mechanism multiplies the period, as in the case of gliders
+caught by a <a href="lex_b.htm#boatbit">boat-bit</a>.
 <p>With the discovery of <a href="lex_r.htm#reflector">reflectors</a>, <a href="lex_r.htm#relay">relays</a> provide an easy way to
 create oscillators of all large periods. For example, eight gliders
-traveling in a loop created by four <a href="lex_s.htm#snark">Snarks</a> can create any period
+travelling in a loop created by four <a href="lex_s.htm#snark">Snarks</a> can create any period
 above 42, with a population never exceeding 356 live cells.
 <p>For the very lowest periods, whole families of <a href="lex_e.htm#extensible">extensible</a>
 oscillators are known. Examples of this are <a href="lex_b.htm#barberpole">barberpole</a>, <a href="lex_c.htm#cross">cross</a>,
@@ -282,9 +286,9 @@ binary counter. Empty space is read as a zero, and a boat as a one,
 as shown in the example pattern in <a href="lex_m.htm#memorycell">memory cell</a>. The pattern's
 diametric growth rate is O(sqrt(log(<i>t</i>))), which is the slowest
 possible for any Life pattern, or indeed any 2D Euclidean cellular
-automaton. Since the population returns infinitely often to its
-initial minimum value (during carry operations from 11111...1 to
-100000...0, it can be considered to be an unusual form of <a href="lex_s.htm#sawtooth">sawtooth</a>.
+automaton. The population returns infinitely often to its initial
+minimum value (during carry operations from 11111...1 to 100000...0,
+so it can be considered to be an unusual form of <a href="lex_s.htm#sawtooth">sawtooth</a>.
 <p><a name=otcametapixel>:</a><b>OTCA metapixel</b> (p46 circuitry) A 2048 x 2048 period 35328 <a href="lex_m.htm#metacell">metacell</a>
 constructed by Brice Due in 2006. It contains a large "pixel" area
 that contains a large population of <a href="lex_l.htm#lwss">LWSSes</a> when the metacell state

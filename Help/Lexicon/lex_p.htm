@@ -49,6 +49,12 @@
 <p><a name=p1>:</a><b>p1</b> Period 1, i.e., <a href="lex_s.htm#stable">stable</a>. In the context of logic <a href="lex_c.htm#circuit">circuitry</a>,
 this tends to mean that a mechanism is constructed from
 <a href="lex_h.htm#herschelconduit">Herschel conduits</a> that contain only <a href="lex_s.htm#stilllife">still lifes</a> as <a href="lex_c.htm#catalyst">catalysts</a>.
+In the context of <a href="lex_s.htm#slowgliderconstruction">slow glider construction</a>, a P1 <a href="lex_s.htm#slowsalvo">slow salvo</a> is
+one in which there are no constraints on the <a href="#parity">parity</a> of gliders in
+the salvo, because the <a href="lex_i.htm#intermediatetarget">intermediate targets</a> are all stable
+constellations. (The usual alternative is a "P2 slow salvo", where
+the relative timing between adjacent gliders can be increased
+arbitrarily, but only by multiples of two ticks.)
 <p><a name=p104gun>:</a><b>p104 gun</b> A <a href="lex_g.htm#glidergun">glider gun</a> with period 104, found by Noam Elkies on 21
 March 1996. It is based on an <a href="lex_r.htm#rpentomino">R-pentomino</a> <a href="lex_s.htm#shuttle">shuttle</a> reaction.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -74,6 +80,51 @@ O.O.........................OO.....O.O.
 ..................O.................OO.
 ....................................OO.
 </a></pre></td></tr></table></center>
+<p><a name=p11bumper>:</a><b>p11 bumper</b> (p11) A periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflector</a>
+with a minimum <a href="lex_r.htm#repeattime">repeat time</a> of 44 ticks. Unlike the p5 through p8
+cases where Noam Elkies' <a href="lex_d.htm#domino">domino</a>-spark based reflectors are
+available, no small period-22 <a href="lex_c.htm#colourchanging">colour-changing</a> reflector is known.
+A <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a> reflector can be substituted for any <a href="lex_b.htm#bumper">bumper</a>.
+This changes the timing of the output glider, which can be useful for
+rephasing periodic glider streams.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+............................O..
+............................O.O
+............................OO.
+...............................
+...............................
+...............................
+...............................
+...............................
+...............................
+...............................
+...............................
+.................O.............
+.................O.O...........
+.................OO............
+...............................
+.........OO....OO..............
+.........OO...O..O.............
+...OO....OO....O.O.............
+....O.....OO....O..............
+..O.....O.OO...................
+..OO..OOO...........OO.........
+.....O....O.O.......O..........
+..OOO.OO.OO.OOO......OOO.......
+.O....O....O...O.......O.......
+O.O.O...OO.O..O................
+O.O......O.O.O.................
+.O..OOOOO..OO..................
+..OO....O.O....................
+....OOOO..O....................
+..OO......OO...................
+..O..O.........................
+....OO.........................
+</a></pre></td></tr></table></center>
+<p>In practice this reflector is not useful with input streams below
+period 121, because lower-period bumpers can be used to reflect all
+smaller multiples of 11 for which the bumper reaction can be made to
+work.
 <p><a name=p130shuttle>:</a><b>p130 shuttle</b> A <a href="lex_s.htm#shuttle">shuttle</a> found in March 2004 by David Eppstein, which
 originally needed several period 5 oscillators for support. David
 Bell found a reaction between two of the shuttles to produce a p130
@@ -124,7 +175,8 @@ still much too large to show here. The essential mechanism used by
 them is demonstrated in <a href="lex_g.htm#gig">GIG</a>.
 <p><a name=p15bouncer>:</a><b>p15 bouncer</b> Noam Elkies' <a href="lex_c.htm#colourchanging">colour-changing</a> glider reflector, with
 <a href="lex_k.htm#karelsp15">Karel's p15</a> providing the necessary <a href="lex_d.htm#domino">domino</a> <a href="lex_s.htm#spark">spark</a>. Compare to
-the <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_s.htm#snark">Snark</a>. Minimum <a href="lex_r.htm#repeattime">repeat time</a> is 30 ticks.
+the <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_s.htm#snark">Snark</a>. The minimum <a href="lex_r.htm#repeattime">repeat time</a> is 30
+ticks.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ........................O..
 ........................O.O
@@ -152,7 +204,7 @@ OO..O....O..OO.............
 <p><a name=p15bumper>:</a><b>p15 bumper</b> A periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflector</a> with
 <a href="lex_k.htm#karelsp15">Karel's p15</a> providing the necessary <a href="lex_s.htm#spark">spark</a>. The minimum
 <a href="lex_r.htm#repeattime">repeat time</a> is 45 ticks. For an equivalent <a href="lex_c.htm#colourchanging">colour-changing</a>
-periodic glider reflector see <a href="#p15reflector">p15 reflector</a>. A <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a>
+periodic glider reflector see <a href="#p15bouncer">p15 bouncer</a>. A <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a>
 reflector can be substituted for any <a href="lex_b.htm#bumper">bumper</a>. This changes the
 timing of the output glider, which can be useful for rephasing
 periodic glider streams.
@@ -187,9 +239,9 @@ O........O.....................
 ..O....O.......................
 ....OO.........................
 </a></pre></td></tr></table></center>
-<p><a name=p15reflector>:</a><b>p15 reflector</b> Traditional name for <a href="#p15bouncer">p15 bouncer</a> before 2016, but
-with the discovery of the <a href="#p15bumper">p15 bumper</a> this has become an ambiguous
-reference.
+<p><a name=p15reflector>:</a><b>p15 reflector</b> An ambiguous term that may refer to
+<a href="#pdpairreflector">PD-pair reflector</a>, <a href="#p15bouncer">p15 bouncer</a>, or the more recently discovered
+<a href="#p15bumper">p15 bumper</a>.
 <p><a name=p184gun>:</a><b>p184 gun</b> A <a href="lex_t.htm#true">true</a> period 184 <a href="lex_d.htm#doublebarrelled">double-barrelled</a> glider gun found by
 Dave Buckingham in July 1996. The <a href="lex_e.htm#engine">engine</a> in this gun is a
 <a href="lex_h.htm#herscheldescendant">Herschel descendant</a>. Unlike previous glider guns, the reaction
@@ -245,53 +297,7 @@ at the other end of the telegraph and converted back into a single
 output signal. This simplification came at the cost of a much slower
 transmission speed, one bit per 91080 ticks. In this mechanism,
 sending the entire ten-part signal constitutes a '1' bit, and not
-sending the signal means '0'.
-<p><a name=p22bumper>:</a><b>p22 bumper</b> A periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflector</a> with a
-<a href="lex_r.htm#repeattime">repeat time</a> of 44 ticks. Unlike the p5 through p8 cases where Noam
-Elkies' <a href="lex_d.htm#domino">domino</a>-spark based reflectors are available, no small
-period-22 <a href="lex_c.htm#colourchanging">colour-changing</a> reflector is known. A <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a>
-reflector can be substituted for any <a href="lex_b.htm#bumper">bumper</a>. This changes the
-timing of the output glider, which can be useful for rephasing
-periodic glider streams.
-<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
-............................O..
-............................O.O
-............................OO.
-...............................
-...............................
-...............................
-...............................
-...............................
-...............................
-...............................
-O..............................
-OOO..............O.............
-...O.............O.O...........
-..OO.............OO............
-...............................
-....OOO........OO..............
-...O...O......O..O.............
-........O......O.O.............
-........O.......O..............
-...OO...O......................
-.....OO.............OO.........
-....................O..........
-.....................OOO.......
-.......................O.......
-...............................
-...............................
-...OO..........................
-.O...OO........................
-.O.............................
-.O.............................
-..O...O........................
-...OOO.........................
-...............................
-......OO.......................
-......O........................
-.......OOO.....................
-.........O.....................
-</a></pre></td></tr></table></center>
+sending the signal means '0'. See also <a href="lex_h.htm#highbandwidthtelegraph">high-bandwidth telegraph</a>.
 <p><a name=p22gun>:</a><b>p22 gun</b> A <a href="lex_t.htm#true">true</a> period 22 <a href="lex_g.htm#glidergun">glider gun</a> constructed by David Eppstein
 in August 2000, using two interacting copies of a p22 oscillator
 found earlier the same day by Jason Summers.
@@ -318,8 +324,8 @@ OO...........................................
 .........................O...................
 .........................OO..................
 </a></pre></td></tr></table></center>
-<p><a name=p246gun>:</a><b>p246 gun</b> A <a href="lex_t.htm#true">true</a> <a href="lex_g.htm#glidergun">glider gun</a> with period 246, discovered by Dave
-Buckingham in June 1996. The 180-degree mod-123 symmetry of its
+<p><a name=p246gun>:</a><b>p246 gun</b> A <a href="lex_t.htm#true">true</a> period <a href="lex_g.htm#glidergun">glider gun</a> with period 246, discovered by
+Dave Buckingham in June 1996. The 180-degree mod-123 symmetry of its
 <a href="lex_b.htm#bookend">bookend</a>-based <a href="lex_e.htm#engine">engine</a> makes it trivial to modify it into a
 <a href="lex_d.htm#doublebarrelled">double-barrelled</a> gun. Its single-barreled form is shown below.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -912,12 +918,12 @@ O.......O.........O.....
 </a></pre></td></tr></table></center>
 <p><a name=p4reflector>:</a><b>p4 reflector</b> The following <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflector</a>, discovered by Karel
 Suhajda in October 2012. Its minimum repeat time is 52 ticks.
-Unlike the <a href="#pipsquirter">pipsquirter</a>-based reflectors it is a <a href="lex_c.htm#colourpreserving">colour-preserving</a>
-reflector, so it was made obsolete the following year by the
-discovery of the much smaller stable <a href="lex_s.htm#snark">Snark</a>, which uses the same
-initial <a href="lex_b.htm#bait">bait</a> reaction and so produces an output glider with the
-same timing. For a small periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a> glider
-reflector, see <a href="#p4bumper">p4 bumper</a>.
+Unlike the various <a href="lex_b.htm#bouncer">bouncers</a> discovered many years earlier, it is a
+<a href="lex_c.htm#colourpreserving">colour-preserving</a> reflector, so it was made obsolete the following
+year by the discovery of the much smaller stable <a href="lex_s.htm#snark">Snark</a>, which uses
+the same initial <a href="lex_b.htm#bait">bait</a> reaction and so produces an output glider
+with the same timing. For a smaller periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a>
+glider reflector with a different output timing, see <a href="#p4bumper">p4 bumper</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ................................O.........................
 ...............................O..........................
@@ -978,10 +984,10 @@ OO.........................OO
 OO.........................OO
 </a></pre></td></tr></table></center>
 <p><a name=p5bouncer>:</a><b>p5 bouncer</b> (p5) A <a href="lex_c.htm#colourchanging">colour-changing</a> glider reflector constructed by
-Noam Elkies in September 1998, by welding together two
-special-purpose period-5 <a href="lex_s.htm#sparker">sparkers</a>. Minimum <a href="lex_r.htm#repeattime">repeat time</a> is 25
-ticks. For <a href="lex_c.htm#colourpreserving">colour-preserving</a> glider reflectors see <a href="#p5bumper">p5 bumper</a> and
-the <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a> reflector.
+Noam Elkies in September 1998 by welding together two special-purpose
+period-5 <a href="lex_s.htm#sparker">sparkers</a>. The minimum <a href="lex_r.htm#repeattime">repeat time</a> is 25 ticks. For
+<a href="lex_c.htm#colourpreserving">colour-preserving</a> glider reflectors see <a href="#p5bumper">p5 bumper</a> and the
+<a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a> reflector.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..........................O..
 ........................OO...
@@ -1014,7 +1020,7 @@ O.O....OOO..O.....OO..OO.....
 ...............OO............
 </a></pre></td></tr></table></center>
 <p><a name=p5bumper>:</a><b>p5 bumper</b> A periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflector</a> with a
-<a href="lex_m.htm#middleweightvolcano">middleweight volcano</a> producing the necessary <a href="lex_s.htm#spark">spark</a>. Minimum
+<a href="lex_m.htm#middleweightvolcano">middleweight volcano</a> producing the necessary <a href="lex_s.htm#spark">spark</a>. The minimum
 <a href="lex_r.htm#repeattime">repeat time</a> is 35 ticks. For an equivalent <a href="lex_c.htm#colourchanging">colour-changing</a>
 periodic glider reflector see <a href="#p5bouncer">p5 bouncer</a>. A <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a>
 reflector can be substituted for any <a href="lex_b.htm#bumper">bumper</a>. This changes the
@@ -1139,11 +1145,12 @@ OO.O.O.O..O.....OO..OO...
 .....................O...
 </a></pre></td></tr></table></center>
 <p><a name=p6bumper>:</a><b>p6 bumper</b> (p6) A periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflector</a>
-with a <a href="lex_u.htm#unix">unix</a> providing the necessary <a href="lex_s.htm#spark">spark</a>. Minimum <a href="lex_r.htm#repeattime">repeat time</a>
-is 36 ticks. For an equivalent <a href="lex_c.htm#colourchanging">colour-changing</a> periodic glider
-reflector see <a href="#p6bouncer">p6 bouncer</a>. A <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a> reflector can be
-substituted for any <a href="lex_b.htm#bumper">bumper</a>. This changes the timing of the output
-glider, which can be useful for rephasing periodic glider streams.
+with a <a href="lex_u.htm#unix">unix</a> providing the necessary <a href="lex_s.htm#spark">spark</a>. The minimum
+<a href="lex_r.htm#repeattime">repeat time</a> is 36 ticks. For an equivalent <a href="lex_c.htm#colourchanging">colour-changing</a>
+periodic glider reflector see <a href="#p6bouncer">p6 bouncer</a>. A <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a>
+reflector can be substituted for any <a href="lex_b.htm#bumper">bumper</a>. This changes the
+timing of the output glider, which can be useful for rephasing
+periodic glider streams.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .......................O..
 .......................O.O
@@ -1301,9 +1308,8 @@ O..OOO.O..O.........O....
 ........OO...............
 </a></pre></td></tr></table></center>
 <p><a name=p7bumper>:</a><b>p7 bumper</b> (p7) A periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflector</a>
-with a <a href="#p7pipsquirter">p7 pipsquirter</a> attached to provide the necessary <a href="lex_s.htm#spark">spark</a>.
-Minimum <a href="lex_r.htm#repeattime">repeat time</a> is 35 ticks. For an equivalent
-<a href="lex_c.htm#colourchanging">colour-changing</a> periodic glider reflector see <a href="#p7reflector">p7 reflector</a>. A
+with a minimum <a href="lex_r.htm#repeattime">repeat time</a> of 35 ticks. For an equivalent
+<a href="lex_c.htm#colourchanging">colour-changing</a> periodic glider reflector see <a href="#p7bouncer">p7 bouncer</a>. A
 <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a> reflector can be substituted for any <a href="lex_b.htm#bumper">bumper</a>. This
 changes the timing of the output glider, which can be useful for
 rephasing periodic glider streams.
@@ -1402,7 +1408,7 @@ O...O.............
 ..O...............
 </a></pre></td></tr></table></center>
 <p><a name=p8bumper>:</a><b>p8 bumper</b> A periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflector</a> with a
-<a href="lex_b.htm#blocker">blocker</a> attached to provide the necessary spark. Minimum
+<a href="lex_b.htm#blocker">blocker</a> attached to provide the necessary spark. The minimum
 <a href="lex_r.htm#repeattime">repeat time</a> is 40 ticks. For an equivalent <a href="lex_c.htm#colourchanging">colour-changing</a>
 periodic glider reflector see <a href="#p8bouncer">p8 bouncer</a>. A <a href="lex_s.htm#stable">stable</a> <a href="lex_s.htm#snark">Snark</a>
 reflector can be substituted for any <a href="lex_b.htm#bumper">bumper</a>. This changes the
@@ -1437,10 +1443,10 @@ OO.O.........O.........
 </a></pre></td></tr></table></center>
 <p><a name=p8gtoh>:</a><b>p8 G-to-H</b> A small periodic variant of a stable two-glider-to-Herschel
 component found by Paul Callahan in November 1998 and used in the
-<a href="lex_c.htm#callahangtoh">Callahan G-to-H</a>, <a href="lex_s.htm#silverreflector">Silver reflector</a> and <a href="lex_s.htm#silvergtoh">Silver G-to-H</a>. Minimum
-<a href="lex_r.htm#repeattime">repeat time</a> is 192 ticks, though some lower periods such as 96 are
-possible via <a href="lex_o.htm#overclocking">overclocking</a>. Here a <a href="lex_g.htm#ghostherschel">ghost Herschel</a> marks the
-output signal location:
+<a href="lex_c.htm#callahangtoh">Callahan G-to-H</a>, <a href="lex_s.htm#silverreflector">Silver reflector</a> and <a href="lex_s.htm#silvergtoh">Silver G-to-H</a>. The
+minimum <a href="lex_r.htm#repeattime">repeat time</a> is 192 ticks, though some lower periods such as
+96 are possible via <a href="lex_o.htm#overclocking">overclocking</a>. Here a <a href="lex_g.htm#ghostherschel">ghost Herschel</a> marks
+the output signal location:
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ....O.........O...................
 ....OOO.....OOO...................
@@ -1514,8 +1520,8 @@ OO..OO......O........O.....O...........O.O......................
 <p><a name=p92gun>:</a><b>p92 gun</b> A glider gun with a <a href="lex_t.htm#true">true</a> period of 92. The first one was
 found by Bill Gosper in 1971 using a period doubling reaction using
 two p46 guns. Many different p92 guns are known that use multiple
-<a href="lex_t.htm#twinbeesshuttle">twin bees shuttles</a>. Period 92 guns can also be made by adding a
-<a href="lex_s.htm#semisnark">semi-Snark</a> to any period 46 glider gun.
+<a href="lex_t.htm#twinbeesshuttle">twin bees shuttles</a>. A period 92 gun can also be made by adding a
+<a href="lex_s.htm#semicenark">semi-cenark</a> to any period 46 glider gun.
 <p>On 18 November 2017, Martin Grant found a new gun using one twin
 bees shuttle and one <a href="lex_t.htm#tannersp46">Tanner's p46</a> oscillator, making it the
 smallest known p92 gun.
@@ -1580,7 +1586,7 @@ OOO..O.O......O............
 </a></pre></td></tr></table></center>
 <p><a name=pairofbookends>:</a><b>pair of bookends</b> = <a href="lex_b.htm#bookends">bookends</a>
 <p><a name=pairoftables>:</a><b>pair of tables</b> = <a href="lex_t.htm#tableontable">table on table</a>
-<p><a name=paperclip>:</a><b>paperclip</b> (p1) An uncommon 180-degree rotationally <a href="lex_s.htm#symmetric">symmetric</a>
+<p><a name=paperclip>:</a><b>paperclip</b> (p1) A relatively 180-degree rotationally <a href="lex_s.htm#symmetric">symmetric</a>
 14-<a href="lex_b.htm#bit">bit</a> <a href="lex_s.htm#stilllife">still life</a>. The <a href="lex_i.htm#iwona">Iwona</a> <a href="lex_m.htm#methuselah">methuselah</a> contains a paperclip
 in its <a href="lex_a.htm#ash">ash</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -1661,8 +1667,7 @@ to after one generation. Some patterns have infinitely many parents,
 but others have none at all (see <a href="lex_g.htm#gardenofeden">Garden of Eden</a>). Typically
 parents are considered trivial if they contain groups of cells that
 can be removed without changing the result, such as isolated faraway
-cells. Finite patterns have only a finite number of non-trivial
-parents.
+cells.
 <p><a name=parentcells>:</a><b>parent cells</b> The three cells that cause a new cell to be born.
 <p><a name=parity>:</a><b>parity</b> Even or odd, particularly as applied to the <a href="#phase">phase</a> of an
 oscillator or spaceship. For example, in <a href="lex_s.htm#slowsalvo">slow salvo</a> constructions,
@@ -1670,8 +1675,9 @@ the <a href="lex_i.htm#intermediatetarget">intermediate targets</a> are frequent
 because they contain <a href="lex_b.htm#blinker">blinkers</a> or <a href="lex_t.htm#trafficlight">traffic lights</a>. A glider
 striking a P2 constellation will generally produce a different result
 depending on its parity. Period-4 intermediate targets are rare (or
-not used), so it doesn't matter if an incoming glider is in phase 1
-or phase 3. Only the even/odd parity is important.
+not used), so it doesn't matter for example whether an odd-parity
+glider in a slow salvo is phase 1 or phase 3. Only the even/odd
+parity is important.
 <p><a name=partialresult>:</a><b>partial result</b> An intermediate object found by a <a href="lex_s.htm#searchprogram">search program</a>
 which might be a substantial part of a complete <a href="lex_s.htm#spaceship">spaceship</a> or
 <a href="lex_o.htm#oscillator">oscillator</a>, but which isn't complete.
@@ -1679,7 +1685,7 @@ which might be a substantial part of a complete <a href="lex_s.htm#spaceship">sp
 <a href="lex_s.htm#speedoflight">speed of light</a> corruption from any unfinished edge destroys the
 whole object. But a partial result can still be used to see whether
 the object (if ever finished) would provide a desired <a href="lex_s.htm#spark">spark</a> or
-<a href="#perturbation">perturbation</a>. If no partial results are found than it is likely
+<a href="#perturbation">perturbation</a>. If no partial results are found then it is likely
 that no such object exists under the constraints of the search.
 <p>Very large partial results can indicate that there is a good chance
 that the object being searched for might actually exist (but this is
@@ -1688,41 +1694,48 @@ base and relaxing some constraints, widening or adjusting the search
 area, or splitting the object into multiple <a href="lex_a.htm#arm">arms</a> might result in
 finding a complete working object.
 <p>As an example, here is a large partial result for a period 6
-<a href="lex_k.htm#knightship">knightship</a> found by Josh Ball in April 2017. See also
-<a href="lex_a.htm#almostknightship">almost knightship</a> for an earlier small example by Eugene Langvagen.
+<a href="lex_k.htm#knightship">knightship</a> found by Josh Ball in April 2017. The first 22 columns
+were rediscovered in 2018 as part of the successful search for
+<a href="lex_s.htm#sirrobin">Sir Robin</a>. See also <a href="lex_a.htm#almostknightship">almost knightship</a> for an earlier small
+example by Eugene Langvagen.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
-.......OO......................
-.....O...O.....................
-.....O.........................
-.OO.O.OO.OO....................
-O...OO...OO....................
-O...O...OO.....................
-OO...OO...O....................
-.O.............................
-..O.....OOO....................
-....O...OOOOO..................
-....O......O...OO..............
-.....OO...O....OO..O.O.........
-....O..OO..O.O...O.O..O........
-....OO...O.O.O.O.OO...O........
-....OOO..O.O.O..OOOOO..O.......
-......O.O.O.O.O..O.....O.......
-..................OO....OO.....
-.............OOOO......OOOO....
-.............OOOO..O....O..O...
-.............O.O.OO..OO....OOO.
-.....................OO....OOO.
-........................OO.O...
-...........................O...
-........................O...O.O
-...........................OO.O
-............................OO.
+....OOO...................
+...O..OO..................
+...O....O.................
+..........................
+...OOO...OO.OOO...........
+.OO.O.O....O.OO...........
+...O..O....O..OO..........
+O..O........O.............
+O....O..OO..O..O..........
+.O.OOO..OO...OO...........
+...OO.O.OO.O...O..........
+.........OO.OOO...........
+.........O.....O..........
+............OOO..OOO......
+...............O.OO.......
+..........OO.O...OOO......
+..........OO..O..OO.......
+............OOOO...O......
+.............OO.O..O......
+...........OO.O.O.O.......
+..............O...........
+...........O.......OO.....
+............OO.....OO.....
+..............OO.O........
+................OOO..O.O..
+................OO...O....
+.................O........
+..................OOOOO.O.
+...................OO..OOO
+...................OO....O
+.......................OO.
 </a></pre></td></tr></table></center>
 <p><a name=pd>:</a><b>PD</b> = <a href="#pentadecathlon">pentadecathlon</a>
 <p><a name=pdhassler>:</a><b>PD hassler</b> = <a href="#p29pentadecathlonhassler">p29 pentadecathlon hassler</a>
 <p><a name=pdpairreflector>:</a><b>PD-pair reflector</b> A pair of <a href="#pentadecathlon">pentadecathlons</a> arranged so that their
-<a href="lex_v.htm#vspark">V sparks</a> turn a glider by 90 degrees. Minimum <a href="lex_r.htm#repeattime">repeat time</a> is 45
-ticks.
+<a href="lex_v.htm#vspark">V sparks</a> turn a glider by 90 degrees. The minimum <a href="lex_r.htm#repeattime">repeat time</a> is
+45 ticks.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..............OOO......
 .......................
@@ -1746,7 +1759,7 @@ O..O.OO.O..O...........
 </a></pre></td></tr></table></center>
 This was found by Mark Niemiec on 6 January 1996, which is relatively
 recent considering how old <a href="#pentadecathlon">pentadecathlon</a> <a href="lex_t.htm#technology">technology</a> is.
-<p><a name=pedestle>:</a><b>pedestle</b> (p5)
+<p><a name=pedestle>:</a><b>pedestle</b> (p5) An <a href="lex_o.htm#oscillator">oscillator</a> found by Dave Buckingham in 1973.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .....O.....
 ....O.O....
@@ -1782,10 +1795,11 @@ OO.O.OOOOO.O.OO
 <p><a name=pentadecathlon>:</a><b>pentadecathlon</b> (p15) Found in 1970 by Conway while tracking the
 history of short rows of cells, 10 cells giving this object, which is
 the most <a href="lex_n.htm#natural">natural</a> <a href="lex_o.htm#oscillator">oscillator</a> of period greater than 3. In fact it
-is the fifth or sixth most common <a href="lex_o.htm#oscillator">oscillator</a> overall, being about
-as frequent as the <a href="lex_c.htm#clock">clock</a>, but much less frequent than the
-<a href="lex_b.htm#blinker">blinker</a>, <a href="lex_t.htm#toad">toad</a>, <a href="lex_b.htm#beacon">beacon</a> or <a href="#pulsar">pulsar</a>. The pentadecathlon can be
-constructed using just three gliders, as shown in <a href="lex_g.htm#glidersynthesis">glider synthesis</a>.
+is the fifth most common <a href="lex_o.htm#oscillator">oscillator</a> overall, appearing in random
+soups slightly more frequently than the <a href="lex_c.htm#clock">clock</a>, but much less
+frequently than the <a href="lex_b.htm#blinker">blinker</a>, <a href="lex_t.htm#toad">toad</a>, <a href="lex_b.htm#beacon">beacon</a> or <a href="#pulsar">pulsar</a>. The
+pentadecathlon can be constructed using just three gliders, as shown
+in <a href="lex_g.htm#glidersynthesis">glider synthesis</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..O....O..
 OO.OOOO.OO
@@ -1859,8 +1873,8 @@ and therefore they can generally only accept input <a href="lex_s.htm#signal">si
 <a href="lex_u.htm#universalregulator">universal regulator</a>).
 <p>For <a href="lex_s.htm#signal">signal</a> <a href="lex_s.htm#stream">streams</a>, "periodic" means that signals will only be
 present in the stream at one out of every <i>n</i> ticks, where <i>n</i> is the
-<a href="#period">period</a> of the stream. In an intermittent periodic stream there may
-be gaps, so that signals do not always appear at every nth tick.
+<a href="#period">period</a> of the stream. In a periodic <a href="lex_i.htm#intermittentstream">intermittent stream</a> there
+may be gaps, so that signals do not always appear at every nth tick.
 However, if a signal does appear, its distance measured in ticks from
 previous and future signals will always be an exact multiple of <i>n</i>.
 <p><a name=periodmultiplier>:</a><b>period multiplier</b> A term commonly used for a <a href="#pulsedivider">pulse divider</a>, because
@@ -1912,7 +1926,7 @@ O.O..........................................
 .......OO....................................
 </a></pre></td></tr></table></center>
 <p>See <a href="lex_s.htm#semisnark">semi-Snark</a> and <a href="lex_t.htm#tremisnark">tremi-Snark</a> for additional examples using
-<a href="lex_g.htm#glider">glider</a> streams. As of the end of 2017 no stable period-multiplying
+<a href="lex_g.htm#glider">glider</a> streams. As of June 2018 no stable period-multiplying
 <a href="lex_e.htm#elementaryconduit">elementary conduits</a> are known for a multiplication factor of five
 or higher, though it is easy to construct composite ones.
 <p><a name=permanentswitch>:</a><b>permanent switch</b> A <a href="lex_s.htm#signal">signal</a>-carrying <a href="lex_c.htm#circuit">circuit</a> that can be modified
@@ -2007,7 +2021,7 @@ O..............
 Several variants of the key catalyst are known, including <a href="lex_w.htm#weld">welded</a>
 additions for the Fx176 that absorb the following Herschel's first
 natural glider, since a standard fishhook eater doesn't quite fit.
-The following is a complete [[Fx176]] conduit incorporating the new
+The following is a complete <a href="lex_f.htm#fx176">Fx176</a> conduit incorporating the new
 PF45W:
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
    ......................O...........................
@@ -2105,6 +2119,7 @@ spaceships having periods that were otherwise unknown, and also allow
 the construction of period-doubling and period-tripling <a href="lex_c.htm#convoy">convoys</a> to
 easily produce very high period rakes.
 <p>See also <a href="lex_b.htm#blinkerpuffer">blinker puffer</a>.
+<p><a name=phaseshift>:</a><b>phase shift</b> = <a href="#phasechange">phase change</a>
 <p><a name=phi>:</a><b>phi</b> The following common <a href="lex_s.htm#spark">spark</a>. The name comes from the shape in
 the generation after the one shown here.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -2169,8 +2184,8 @@ for an example of an infinite phoenix.
 <p><a name=pianolabreeder>:</a><b>Pianola breeder</b> A series of patterns by Paul Tooke in 2010, based on
 a simplification and extension of the <a href="lex_g.htm#gemini">Gemini</a> spaceship's
 construction mechanism. Tooke produced a number of
-slow-salvo-constructed patterns with superlinear growth, including a
-series of breeder patterns of previously unknown types. For some
+slow-salvo-constructed patterns with <a href="lex_s.htm#superlineargrowth">superlinear growth</a>, including
+a series of breeder patterns of previously unknown types. For some
 patterns, the Gemini's two <a href="lex_c.htm#constructionarm">construction arms</a> were moved to a
 permanent stationary platform, using fourteen glider-loop channels
 instead of twelve.
@@ -2204,7 +2219,7 @@ Golden Ratio.
 "climbing" a chain of blinkers, moving 17 cells every 45 ticks, and
 leaving behind an identical chain of blinkers, shifted downward by 6
 cells. A single pi climber does not produce any gliders or other
-output, but two or more of them traveling on nearby blinker chains
+output, but two or more of them travelling on nearby blinker chains
 can be arranged to emit gliders every 45 ticks. Compare
 <a href="lex_h.htm#herschelpairclimber">Herschel-pair climber</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -2526,7 +2541,7 @@ OOO...OOO
 </a></pre></td></tr></table></center>
 <p>A pair of <a href="lex_t.htm#tub">tubs</a> can be placed to eat half the pre-pulsar as it
 replicates; this gives the p30 oscillator <a href="lex_e.htm#eureka">Eureka</a> where the
-pre-pulsar's replication becomes a movement back and forth. (See
+pre-pulsar's replication becomes a movement back and forth. See
 <a href="lex_t.htm#twirlingttetsonsii">twirling T-tetsons II</a> for a variation on this idea. By other means
 the replication of the pre-pulsar can be made to occur in just 14
 generations as half of it is eaten; this allows the construction of
@@ -2554,6 +2569,7 @@ OO.O.O.O.OO
 1991 that emits a stream of <a href="lex_l.htm#lwss">LWSSs</a> representing the prime numbers.
 Some improvements were found by Jason Summers in October 2005.
 <p><a name=prng>:</a><b>PRNG</b> = <a href="#pseudorandomnumbergenerator">pseudo-random number generator</a>
+<p><a name=propagator>:</a><b>propagator</b> = <a href="lex_l.htm#linearpropagator">linear propagator</a>
 <p><a name=protein>:</a><b>protein</b> (p3) Found by Dave Buckingham, November 1972.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ....OO.......
@@ -2685,39 +2701,43 @@ which have more than 3 neighbours in total, but fewer than 3 in any
 component still life. These patterns are called pseudo still lifes,
 and have been enumerated up to 32 bits, as shown in the table below.
 <pre>
-        --------------
-        Bits    Number
-        --------------
-         8           1
-         9           1
-        10           7
-        11          16
-        12          55
-        13         110
-        14         279
-        15         620
-        16        1645
-        17        4067
-        18       10843
-        19       27250
-        20       70637
-        21      179011
-        22      462086
-        23     1184882
-        24     3068984
-        25     7906676
-        26    20463274
-        27    52816265
-        28   136655095
-        29   353198379
-        30   914075620
-        31  2364815358
-        32  6123084116
-        --------------
+  --------------
+  Bits    Number
+  --------------
+   8           1
+   9           1
+  10           7
+  11          16
+  12          55
+  13         110
+  14         279
+  15         620
+  16        1645
+  17        4067
+  18       10843
+  19       27250
+  20       70637
+  21      179011
+  22      462086
+  23     1184882
+  24     3068984
+  25     7906676
+  26    20463274
+  27    52816265
+  28   136655095
+  29   353198379
+  30   914075620
+  31  2364815358
+  32  6123084116
+  --------------
 </pre>
 <p>Attribution of these counts is given in <a href="lex_s.htm#strictstilllife">strict still life</a>; see
 also <a href="https://oeis.org/A056613">https://oeis.org/A056613</a>. The unique 32-bit <a href="lex_t.htm#triplepseudo">triple pseudo</a>
-still life is included in the last count in the table.
+still life is included in the last count in the table. As the number
+of bits increases, the pseudo still life count goes up exponentially
+by approximately O(2.56<sup><i>n</i></sup>). By comparison, the rate for
+<a href="lex_s.htm#strictstilllife">strict still lifes</a> is about O(2.46<sup><i>n</i></sup>) while for <a href="lex_q.htm#quasistilllife">quasi still lifes</a>
+it's around O(3.04<sup><i>n</i></sup>).
 <p>If a stable pattern's live cells plus its overpopulated dead cells
 do not form a single mutually adjacent group, the pattern is usually
 referred to as a <a href="lex_c.htm#constellation">constellation</a>. It is also a <a href="lex_s.htm#stilllife">still life</a> in the
@@ -2748,8 +2768,11 @@ spaceships to create debris from an approaching standard spaceship
 such that a new standard spaceship is recreated on the same path as
 the original one. This forms a closed loop, resulting in a
 high-period puffer for the new speed.
-<p>As of the end of 2017, puffers have been found matching every known
-velocity of <a href="lex_e.htm#elementary">elementary</a> spaceship, except for <i>c</i>/6 and <i>c</i>/7 diagonal.
+<p>As of June 2018, puffers have been found matching every known
+velocity of <a href="lex_e.htm#elementary">elementary</a> spaceship, except for <i>c</i>/6 and <i>c</i>/7 diagonal
+and (2,1)<i>c</i>/6. It is also generally easy to create puffers based on
+<a href="lex_m.htm#macrospaceship">macro-spaceships</a>, simply by removing some part of the trailing
+cleanup mechanism.
 <p><a name=pufferengine>:</a><b>puffer engine</b> A pattern which can be used as the main component of a
 <a href="#puffer">puffer</a>. The pattern may itself be a puffer (e.g. the classic
 <a href="#puffertrain">puffer train</a>), it may be a spaceship (e.g. the <a href="lex_s.htm#schickengine">Schick engine</a>), or
@@ -2888,8 +2911,8 @@ closer to the source of the reaction. See <a href="lex_b.htm#blockpull">block pu
 <a href="lex_b.htm#blinkerpull">blinker pull</a>, <a href="lex_l.htm#loafpull">loaf pull</a>; also <a href="lex_e.htm#elbow">elbow</a>.
 <p><a name=pulsar>:</a><b>pulsar</b> (p3) Despite its size, this is the fourth most common
 <a href="lex_o.htm#oscillator">oscillator</a> (and by far the most common of period greater than 2)
-and was found very early on by Conway. See also <a href="#prepulsar">pre-pulsar</a> and
-<a href="#pulsarquadrant">pulsar quadrant</a>.
+and was found very early on by Conway. See also <a href="#prepulsar">pre-pulsar</a>,
+<a href="#pulsarquadrant">pulsar quadrant</a>, and <a href="lex_q.htm#quasar">quasar</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..OOO...OOO..
 .............

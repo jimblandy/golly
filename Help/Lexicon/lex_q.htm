@@ -97,9 +97,9 @@ O.......O..
 analogous objects requiring decomposition into five or more pieces.
 By convention, patterns like this and the <a href="lex_t.htm#triplepseudo">triple pseudo</a> are
 considered to be <a href="lex_p.htm#pseudostilllife">pseudo still lifes</a>, not <a href="lex_s.htm#strictstilllife">strict still lifes</a>. As
-of the end of 2017, it has been shown that no quad pseudo patterns
-exist with 32 or fewer bits, but a 33-bit pattern with this property
-may theoretically still be found.
+of June 2018, it has been shown that no quad pseudo patterns exist
+with 32 or fewer bits, but a 33-bit pattern with this property may
+theoretically still be found.
 <p><a name=quadraticfilter>:</a><b>quadratic filter</b> A <a href="lex_t.htm#toolkit">toolkit</a> developed by Dean Hickerson and Gabriel
 Nivasch in 2006, enabling the construction of patterns with
 asymptotic population growth matching an infinite number of different
@@ -108,7 +108,7 @@ also <a href="lex_e.htm#exponentialfilter">exponential filter</a>, <a href="lex_
 <p><a name=quadraticgrowth>:</a><b>quadratic growth</b> The fastest possible asymptotic rate of population
 growth for any Life pattern - O(<i>t</i><sup>2</sup>) in big-O notation, where <i>t</i> is
 the number of ticks. The first quadratic-growth pattern found was
-Bill Gosper's <a href="lex_b.htm#breeder">breeder</a>, in 1971; many other types of breeders and
+Bill Gosper's 1971 <a href="lex_b.htm#breeder">breeder</a>. Many other types of breeders and
 <a href="lex_s.htm#spacefiller">spacefillers</a> have been constructed since.
 <p>In April 2011, Stephen Silver gave an example of a one-cell-thick
 pattern over a million cells long that exhibited quadratic growth.
@@ -117,25 +117,25 @@ a reduced bounding box of 2596x1, improving on a series of previous
 longer results. The smallest known quadratic growth pattern by
 initial population is the 23-cell <a href="lex_s.htm#switchenginepingpong">switch-engine ping-pong</a> by
 Michael Simkin.
-<p>There are an infinite number of possible growth rates for Life
-patterns, between linear and quadratic growth. See
-<a href="lex_s.htm#superlineargrowth">superlinear growth</a>.
+<p>There are an infinite number of possible growth rates between
+linear and quadratic growth. See <a href="lex_s.htm#superlineargrowth">superlinear growth</a>.
 <p><a name=quadraticreplicator>:</a><b>quadratic replicator</b> A pattern that fills all or part of the Life
 plane by making copies of itself in a nonlinear way. Small quadratic
-replicators are known in other Life-like rules, but as of the end of
-2017 no example has been found or constructed in Conway's Life.
+replicators are known in other Life-like rules, but as of July 2018
+no example has been found or constructed in Conway's Life.
 <p><a name=quadraticsawtooth>:</a><b>quadratic sawtooth</b> Any <a href="lex_s.htm#sawtooth">sawtooth</a> pattern with a quadratic envelope,
 or specifically a pattern assembled by Martin Grant in May 2015,
-consisting of two caber tossers with period multipliers for timing
-which activate and deactivate two toggle rake guns. The gliders
-emitted by those rakes annihilate on the diagonal while the rakes are
-eaten by 2<i>c</i>/5 ships. All the rakes and gliders are destroyed before
-the next cycle. See also <a href="lex_o.htm#osqrtlogt">Osqrtlogt</a>.
+consisting of two <a href="lex_c.htm#cabertosser">caber tossers</a> with period multipliers for timing
+which activate and deactivate two toggleable rake guns (see
+<a href="lex_t.htm#toggleablegun">toggleable gun</a>). The gliders emitted by those rakes annihilate on
+the diagonal while the rakes are eaten by 2<i>c</i>/5 ships. All the rakes
+and gliders are destroyed before the next cycle. See also
+<a href="lex_o.htm#osqrtlogt">Osqrtlogt</a>.
 <p><a name=quadrisnark>:</a><b>quadri-Snark</b> A period-multiplying <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_s.htm#signal">signal</a>
 <a href="lex_c.htm#conduit">conduit</a> found by Tanner Jacobi in October 2017, producing one
 output <a href="lex_g.htm#glider">glider</a> for every four input gliders. It is made by
 replacing one of the eaters in a <a href="lex_t.htm#tremisnark">tremi-Snark</a> with a <a href="lex_c.htm#catalyst">catalyst</a>
-found using <a href="lex_b.htm#bellman">Bellman</a>. The catalyst cause the formation of a <a href="lex_t.htm#tub">tub</a>
+found using <a href="lex_b.htm#bellman">Bellman</a>. The catalyst causes the formation of a <a href="lex_t.htm#tub">tub</a>
 which then requires an additional glider to delete. However, this
 adds 5 ticks to the repeat time, so that it becomes 48. If period
 quadrupling is needed with a <a href="lex_c.htm#colourchanging">colour-changing</a> reaction, a
@@ -309,30 +309,30 @@ diagonal neighbor) or when single protruding cells in two objects
 such as <a href="lex_t.htm#tub">tubs</a> share multiple neighbors. The term is due to Mark
 Niemiec.
 <pre>
-        ----------------
-        Bits       Count
-        ----------------
-         8             6
-         9            13
-        10            57
-        11           141
-        12           465
-        13          1224
-        14          3956
-        15         11599
-        16         36538
-        17        107415
-        18        327250
-        19        972040
-        20       2957488
-        21       8879327
-        22      26943317
-        ----------------
+  ----------------
+  Bits       Count
+  ----------------
+   8             6
+   9            13
+  10            57
+  11           141
+  12           465
+  13          1224
+  14          3956
+  15         11599
+  16         36538
+  17        107415
+  18        327250
+  19        972040
+  20       2957488
+  21       8879327
+  22      26943317
+  ----------------
 </pre>
 <p>As the number of bits increases, the quasi still life count goes up
-exponentially by approximately O(3.04<sup><i>n</i></sup>), slightly more than a
-factor of three. By comparison, the rate for <a href="lex_s.htm#strictstilllife">strict still lifes</a> is
-about O(2.46<sup><i>n</i></sup>) while for <a href="lex_p.htm#pseudostilllife">pseudo still lifes</a> it's around O(2.56<sup><i>n</i></sup>).
+exponentially by approximately O(3.04<sup><i>n</i></sup>), slightly more than a factor
+of three. By comparison, the rate for <a href="lex_s.htm#strictstilllife">strict still lifes</a> is about
+O(2.46<sup><i>n</i></sup>) while for <a href="lex_p.htm#pseudostilllife">pseudo still lifes</a> it's around O(2.56<sup><i>n</i></sup>).
 <p><a name=queenbee>:</a><b>queen bee</b> See <a href="#queenbeeshuttle">queen bee shuttle</a>.
 <p><a name=queenbeeshuttle>:</a><b>queen bee shuttle</b> (p30) Found by Bill Gosper in 1970. There are a
 number of ways to stabilize the ends. Gosper originally stabilized
@@ -392,13 +392,16 @@ OO...............O...O...
 ..............O..........
 </a></pre></td></tr></table></center>
 See <a href="lex_p.htm#p690gun">p690 gun</a> and <a href="lex_m.htm#metamorphosisii">metamorphosis II</a> for two more examples.
-<p><a name=quetzal>:</a><b>Quetzal</b> Dieter Leithner's name for the <a href="lex_t.htm#true">true</a> p54 glider gun he built
-in January 1998. (This is short for <a href="#quetzalcoatlus">Quetzalcoatlus</a> and expresses
-the fact that the gun was a very large <a href="lex_h.htm#herschelloop">Herschel loop</a> that was not
-an <a href="lex_e.htm#emu">emu</a>.) Shortly afterwards Leithner also built a p56 Quetzal
-using a mechanism found by Noam Elkies for this purpose. In October
-1998 Stephen Silver constructed a p55 Quetzal using Elkies' p5
-<a href="lex_r.htm#reflector">reflector</a> of the previous month.
+<p><a name=quetzal>:</a><b>Quetzal</b> Any Herschel track-based gun with a period below 62, which is
+the lowest period with a stable glider-emitting conduit. This was
+Dieter Leithner's name for the <a href="lex_t.htm#true">true</a> p54 glider gun he built in
+January 1998 - a short form of <a href="#quetzalcoatlus">Quetzalcoatlus</a>, which expresses the
+fact that the gun was a very large <a href="lex_h.htm#herschelloop">Herschel loop</a> that was not an
+<a href="lex_e.htm#emu">emu</a>. Shortly afterwards Leithner also built a p56 Quetzal using a
+mechanism found by Noam Elkies for this purpose. In October 1998
+Stephen Silver constructed a p55 Quetzal using Elkies' p5 <a href="lex_r.htm#reflector">reflector</a>
+of the previous month. Quetzals of periods 57-61 have since been
+constructed.
 <p>Some of the more recent Quetzals are not Herschel loops, but are
 instead short Herschel tracks firing several glider streams all but
 one of which is reflected back to the beginning of the track to

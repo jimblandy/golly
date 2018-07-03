@@ -126,7 +126,7 @@ OO.OOO.
 The first property means that, among other things, it can eat a
 <a href="lex_g.htm#glider">glider</a> in a position that would destroy an <a href="#eater1">eater1</a>. This novel
 glider-eating action is occasionally of use in itself, and combined
-with the symmetry means that an eater2 can eat gliders traveling
+with the symmetry means that an eater2 can eat gliders travelling
 along four adjacent glider <a href="lex_l.htm#lane">lanes</a>, as shown below.
 <p>The following eater2 variant (Stephen Silver, May 1998) can be
 useful for obtaining smaller <a href="lex_b.htm#boundingbox">bounding boxes</a>. A more compact
@@ -223,6 +223,10 @@ OOO.......OOO.......OOO..........
 ...........................O..O.O
 ..........................OO...O.
 </a></pre></td></tr></table></center>
+<p>With gliders from either direction, the eater5's eating reaction
+creates a <a href="lex_s.htm#spark">spark</a> that can be used to reflect other gliders. See the
+example pattern in <a href="lex_d.htm#duoplet">duoplet</a>, or advance any of the topmost three
+gliders in the above pattern by two <a href="lex_t.htm#tick">ticks</a>.
 <p><a name=eaterblockfrob>:</a><b>eater/block frob</b> (p4) Found by Dave Buckingham in 1976 or earlier.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 .OO.......
@@ -393,8 +397,8 @@ or a <a href="lex_c.htm#constructionelbow">construction elbow</a>. See also <a h
 in which one or more <a href="lex_g.htm#glider">gliders</a> shuttle back and forth (using the
 <a href="lex_k.htm#kickbackreaction">kickback reaction</a>) deleting the output gliders from a pair of
 <a href="lex_s.htm#slidegun">slide guns</a>.
-<p><a name=elbowoperation>:</a><b>elbow operation</b> A recipe, usually a <a href="lex_s.htm#salvo">salvo</a> of <a href="lex_g.htm#glider">gliders</a> traveling on
-one or more <a href="lex_c.htm#constructionlane">construction lanes</a>, that collides with an <a href="#elbow">elbow</a>
+<p><a name=elbowoperation>:</a><b>elbow operation</b> A recipe, usually a <a href="lex_s.htm#salvo">salvo</a> of <a href="lex_g.htm#glider">gliders</a> travelling
+on one or more <a href="lex_c.htm#constructionlane">construction lanes</a>, that collides with an <a href="#elbow">elbow</a>
 <a href="lex_c.htm#constellation">constellation</a> and performs one of the standard transformations on
 it: <a href="lex_p.htm#push">push</a>, <a href="lex_p.htm#pull">pull</a>, or <a href="lex_f.htm#fire">fire</a> for simple construction arms, along
 with possible construct, duplicate-elbow, or delete-elbow ops for
@@ -468,7 +472,7 @@ O..OOO...
 </a></pre></td></tr></table></center>
 <p><a name=emu>:</a><b>emu</b> Dave Buckingham's term for a <a href="lex_h.htm#herschelloop">Herschel loop</a> that does not emit
 <a href="lex_g.htm#glider">gliders</a> (and so is "flightless"). All known Herschel loops of
-periods 57, 58, 59 and 61 are emus. See also <a href="lex_q.htm#quetzal">Quetzal</a>.
+periods 52, 57, 58, 59 and 61 are emus. See also <a href="lex_q.htm#quetzal">Quetzal</a>.
 <p><a name=emulator>:</a><b>emulator</b> Any one of three p4 oscillators that produce <a href="lex_s.htm#spark">sparks</a>
 similar to those produced by <a href="lex_l.htm#lwss">LWSS</a>, <a href="lex_m.htm#mwss">MWSS</a> and <a href="lex_h.htm#hwss">HWSS</a>. See
 <a href="lex_l.htm#lwemulator">LW emulator</a>, <a href="lex_m.htm#mwemulator">MW emulator</a> and <a href="lex_h.htm#hwemulator">HW emulator</a>. Larger emulators are
@@ -557,7 +561,7 @@ if the debris is <a href="lex_d.htm#dirty">dirty</a> and takes many <a href="lex
 term is not usually used for the objects created by <a href="lex_c.htm#clean">clean</a> puffers.
 <p><a name=exponentialfilter>:</a><b>exponential filter</b> A <a href="lex_t.htm#toolkit">toolkit</a> developed by Gabriel Nivasch in 2006,
 enabling the construction of patterns with asymptotic population
-growth matching O((log log ... log(<i>t</i>)) for any number of nested log
+growth matching O((log log ... log(<i>t</i>))) for any number of nested log
 operations. See also <a href="lex_q.htm#quadraticfilter">quadratic filter</a>, <a href="lex_r.htm#recursivefilter">recursive filter</a>.
 <p><a name=exposure>:</a><b>exposure</b> = <a href="lex_u.htm#underpopulation">underpopulation</a>
 <p><a name=extensible>:</a><b>extensible</b> A pattern is said to be extensible if arbitrarily large

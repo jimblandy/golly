@@ -207,6 +207,25 @@ OO.O.....O.O
 ......O.....
 ......OO....
 </a></pre></td></tr></table></center>
+<p><a name=rattlesnake>:</a><b>rattlesnake</b> (p11) Found by Dean Hickerson in January 2016 and named
+by Jeremy Tan.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+........OO...
+........O....
+.........O...
+........OO...
+.............
+.............
+.............
+.....O.......
+.....OO......
+OO.O.O.OOO...
+O.OO.O.O.O...
+......O..OOO.
+.......OO...O
+.........OOO.
+.........O...
+</a></pre></td></tr></table></center>
 <p><a name=rbee>:</a><b>R-bee</b> = <a href="lex_b.htm#bun">bun</a>. This name is due to the fact that the pattern is a
 single-cell modification of a <a href="lex_b.htm#beehive">beehive</a>.
 <p><a name=reactionenvelope>:</a><b>reaction envelope</b> The collection of <a href="lex_c.htm#cell">cells</a> that are alive during
@@ -392,11 +411,11 @@ reflector, which in turn was won by Mike Playle's <a href="lex_c.htm#colourprese
 reflector, with a recovery time of 43. Playle has offered a $100
 prize for a <a href="lex_c.htm#colourchanging">colour-changing</a> stable reflector contained within a 25
 by 25 <a href="lex_b.htm#boundingbox">bounding box</a>, with a recovery time of 50 generations or less.
-<p>As of the end of 2017, the following <a href="lex_s.htm#splitter">splitter</a> is among the
-smallest known 90-degree <a href="lex_c.htm#colourchanging">colour-changing</a> <a href="#reflector">reflectors</a>. The top
-output can be blocked off by an <a href="lex_e.htm#eater">eater</a> if needed. For small
-180-degree colour-changing reflectors see <a href="#rectifier">rectifier</a>, and also the
-sample pattern in <a href="lex_s.htm#splitter">splitter</a>.
+<p>As of June 2018, the following <a href="lex_s.htm#splitter">splitter</a> is among the smallest
+known 90-degree <a href="lex_c.htm#colourchanging">colour-changing</a> <a href="#reflector">reflectors</a>. The top output can
+be blocked off by an <a href="lex_e.htm#eater">eater</a> if needed. For small 180-degree
+colour-changing reflectors see <a href="#rectifier">rectifier</a>, and also the sample
+pattern in <a href="lex_s.htm#splitter">splitter</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ................OO...........O......OO..................
 ................OO..........O.O....O..O.................
@@ -447,9 +466,8 @@ and <a href="lex_m.htm#monogram">monogram</a>.
 <a href="lex_p.htm#p256gun">p256 gun</a> loop containing one or more <a href="lex_p.htm#pi">pis</a> or <a href="lex_h.htm#herschel">Herschels</a> in the
 same loop, but without any external stabilisation mechanism. Such
 patterns can be proven to exist (see <a href="lex_u.htm#universalconstructor">universal constructor</a>), but as
-of the end of 2017 none have been explicitly constructed in Life.
-There is no upper limit on <a href="lex_m.htm#multiplicity">multiplicity</a> for a constructor-based
-RRO.
+of June 2018 none have been explicitly constructed in Life. There is
+no upper limit on <a href="lex_m.htm#multiplicity">multiplicity</a> for a constructor-based RRO.
 <p><a name=regulator>:</a><b>regulator</b> An object which converts input <a href="lex_g.htm#glider">gliders</a> aligned to some
 period to output gliders aligned to a different period. The most
 interesting case is a <a href="lex_u.htm#universalregulator">universal regulator</a>, of which several have
@@ -497,6 +515,24 @@ itself. Such objects are known to exist (see
 replicator built in Life, but this is debatable as each of its copies
 replicates itself only once, allowing no possibility of
 <a href="lex_s.htm#superlineargrowth">superlinear growth</a>.
+<p><a name=reversecabertosser>:</a><b>reverse caber tosser</b> A storage mechanism for data feeding a
+<a href="lex_u.htm#universalconstructor">universal constructor</a> designed by Adam P. Goucher in 2018. A very
+large integer can be encoded in the position of a very faraway
+object. If the distance to that object is measured using <a href="lex_c.htm#circuit">circuitry</a>
+designed to be as simple as possible, a complete decoder and
+universal constructor can be created by colliding a small number of
+gliders - no more than 329 according to a June 2018
+<a href="lex_g.htm#glidersynthesis">glider synthesis</a>, and exactly 43 according to a July 1 redesign by
+Chris Cain using eight far-distant <a href="lex_g.htm#gpse">GPSEs</a> and, amazingly, no
+stationary circuitry except for a single <a href="lex_c.htm#catalyst">catalyst</a> <a href="lex_b.htm#block">block</a>. Some
+intermediate designs with 50+ gliders need no stationary circuitry at
+all.
+<p>With the correct placement of the faraway object, the complete
+pattern is theoretically capable of building any glider-constructible
+object. This means that 43 is the maximum number of gliders required
+to build any constructible object, no matter what size. However, it
+is not possible to determine in practice what the locations of these
+43 gliders should be, even for a relatively simple construction.
 <p><a name=reversefuse>:</a><b>reverse fuse</b> A <a href="lex_f.htm#fuse">fuse</a> that produces some initial debris, but then
 burns <a href="lex_c.htm#clean">cleanly</a>. The following is a simple example.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -528,10 +564,10 @@ O............O
 <p><a name=rf28b>:</a><b>RF28B</b> A <a href="lex_c.htm#converter">converter</a> with several known forms, many of which found by
 Dave Buckingham in 1972 and in the early 1980s. It accepts an
 <a href="#rpentomino">R-pentomino</a> as input and produces an output <a href="lex_b.htm#bheptomino">B-heptomino</a> 28 ticks
-later. Of nine major variants known as of the end of 2017, four
-versions are shown below. For each version, the R-pentomino inputs
-are shown near the left and right edges, along with the B-heptomino
-output locations near the center.
+later. Of nine major variants known as of July 2018, four versions
+are shown below. For each version, the R-pentomino inputs are shown
+near the left and right edges, along with the B-heptomino output
+locations near the center.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ........O..........................O........
 .......O.O.......O................O.O......O
@@ -573,9 +609,9 @@ O..O............................O.O.........
 can be replaced by the variant in the northeast which produces a
 forward glider output.
 <p><a name=rf48h>:</a><b>RF48H</b> Stephen Silver's alternate completion of Paul Callahan's
-<a href="lex_h.htm#herschelreceiver">Herschel receiver</a>. As of the end of 2017 there are four known
-variants. The original version consists of a single <a href="lex_l.htm#loaf">loaf</a>. A
-<a href="lex_g.htm#ghostherschel">ghost Herschel</a> marks the output location.
+<a href="lex_h.htm#herschelreceiver">Herschel receiver</a>. As of June 2018 there are four known variants.
+The original version consists of a single <a href="lex_l.htm#loaf">loaf</a>. A <a href="lex_g.htm#ghostherschel">ghost Herschel</a>
+marks the output location.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ......O..................O..
 ......OO.................O..

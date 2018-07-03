@@ -104,24 +104,25 @@ emulating a complete 8-bit programmable computer.
 <p>See also <a href="#universalconstructor">universal constructor</a>.
 <p><a name=universalconstructor>:</a><b>universal constructor</b> A pattern that is capable of constructing
 almost any pattern that has a <a href="lex_g.htm#glidersynthesis">glider synthesis</a>. This definition is
-a bit vague. A precise definition seems impossible because it has
-not been proved that all possible glider fleets are constructible. In
+a bit vague. A precise definition seems impossible because it is not
+known, for example, whether all <a href="lex_s.htm#stilllife">still lifes</a> are constructible. In
 any case, a universal constructor ought to be able to construct
-itself in order to qualify as such. An outline of Conway's proof
-that such a pattern exists can be found in <a href="lex_w.htm#winningways">Winning Ways</a>, and also
-in <a href="lex_t.htm#therecursiveuniverse">The Recursive Universe</a>. The key mechanism for the production of
-gliders with any given path and timing is known as side-tracking, and
-is based on the <a href="lex_k.htm#kickbackreaction">kickback reaction</a>. A universal constructor
-designed in this way can also function as a universal destructor: it
-can delete almost any pattern that can be deleted by gliders.
+itself in order to qualify as such.
+<p>An outline of Conway's proof that such a pattern exists can be
+found in <a href="lex_w.htm#winningways">Winning Ways</a>, and also in <a href="lex_t.htm#therecursiveuniverse">The Recursive Universe</a>. The
+key mechanism for the production of gliders with any given path and
+timing is known as side-tracking, and is based on the
+<a href="lex_k.htm#kickbackreaction">kickback reaction</a>. A universal constructor designed in this way
+can also function as a universal destructor: it can delete almost
+any pattern that can be deleted by gliders.
 <p>In May 2004, Paul Chapman and Dave Greene produced a prototype
 programmable universal constructor. This is able to construct
 objects by means of <a href="lex_s.htm#slowgliderconstruction">slow glider constructions</a>. It likely that it
 could be programmed to construct itself, but the necessary program
 would be very large; moreover an additional mechanism would be needed
 in order to copy the program.
-<p>A universal constructor is most useful when attached to a
-<a href="#universalcomputer">universal computer</a>, which can be programmed to control the
+<p>A universal constructor is theoretically most useful when attached
+to a <a href="#universalcomputer">universal computer</a>, which can be programmed to control the
 constructor to produce the desired pattern of gliders. In what
 follows I will assume that a universal constructor always includes
 this computer.
@@ -145,22 +146,20 @@ thus making a <a href="lex_p.htm#puffer">puffer</a>.
 constructor implies the existence of a <a href="lex_s.htm#stable">stable</a> <a href="lex_r.htm#reflector">reflector</a>. This
 proof is not so easy, however, and is no longer of much significance
 now that explicit examples of such reflectors are known.
-<p>Progressively smaller universal-constructor mechanisms have been
-used in the <a href="lex_l.htm#linearpropagator">linear propagator</a>, <a href="lex_s.htm#spiralgrowth">spiral growth</a> pattern, and the
-<a href="lex_d.htm#demonoid">Demonoids</a> and <a href="lex_o.htm#orthogonoid">Orthogonoid</a>. See also <a href="lex_s.htm#singlechannel">single-channel</a>.
+<p>Progressively smaller universal-constructor mechanisms without an
+attached universal computer have been used in the
+<a href="lex_l.htm#linearpropagator">linear propagator</a>, <a href="lex_s.htm#spiralgrowth">spiral growth</a> pattern, and the <a href="lex_d.htm#demonoid">Demonoids</a> and
+<a href="lex_o.htm#orthogonoid">Orthogonoid</a>. See also <a href="lex_s.htm#singlechannel">single-channel</a>.
 <p>Another strange consequence of the existence of universal
-constructors was pointed out by Adam P. Goucher in 2015. Any
-glider-constructible pattern, no matter how large, can be constructed
-with a fixed number of gliders, probably less than ten thousand.
-This can be done by working out a construction recipe for some type
-of <a href="lex_s.htm#slidingblockmemory">sliding block memory</a> with a faraway block, attached to a
-universal constructor. The block's position encodes an integer value
-that can be processed to retrieve as many bits of information as are
-needed to build a <a href="lex_1.htm#a-1gseed">1G seed</a>. Eventually, after a completely
-unreasonable number of ticks, the seed can be <a href="lex_t.htm#trigger">triggered</a> to produce
-glider salvos which interact to construct the actual target object,
-after sending a self-destruct signal to the sliding block memory
-unit.
+constructors was pointed out by Adam P. Goucher and Tanner Jacobi in
+2015. Any glider-constructible pattern, no matter how large, can be
+constructed with a fixed number of gliders, by working out a
+construction recipe for a universal constructor attached to a decoder
+that measures the distance to a faraway object. The object's
+position encodes a numeric value that can be processed to retrieve as
+many bits of information as are needed to build a <a href="lex_s.htm#slowsalvo">slow salvo</a> to
+construct any given target pattern. The simplest design, requiring
+less than a hundred gliders, is described in <a href="lex_r.htm#reversecabertosser">reverse caber tosser</a>.
 <p><a name=universaldestructor>:</a><b>universal destructor</b> See <a href="#universalconstructor">universal constructor</a>.
 <p><a name=universalregistermachine>:</a><b>universal register machine</b> = <a href="#urm">URM</a>
 <p><a name=universalregulator>:</a><b>universal regulator</b> A <a href="lex_r.htm#regulator">regulator</a> in which the incoming gliders are
@@ -217,13 +216,13 @@ can be unknown involves the question of whether or not it exhibits
 infinite growth. For example, the fate of the
 <a href="lex_f.htm#fermatprimecalculator">Fermat prime calculator</a> is currently unknown, but its behaviour is
 otherwise predictable.
-A different type of unknown fate is that of the
+<p>A different type of unknown fate is that of the
 <a href="lex_c.htm#collatz5n1simulator">Collatz 5N+1 simulator</a>, which may become stable, or an oscillator,
 or have an indefinitely growing bounding box. Its behavior is
 otherwise predictable, and unlike the Fermat prime calculator the
 population is known to be bounded.
 <p>Life objects having even worse behaviour (e.g. <a href="lex_c.htm#chaoticgrowth">chaotic growth</a>)
-are not known as of the end of 2017.
+are not known as of July 2018.
 <p><a name=upboatwithtail>:</a><b>up boat with tail</b> = <a href="lex_t.htm#transboatwithtail">trans-boat with tail</a>
 <p><a name=upentomino>:</a><b>U-pentomino</b> Conway's name for the following <a href="lex_p.htm#pentomino">pentomino</a>, which
 rapidly dies.

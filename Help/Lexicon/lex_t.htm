@@ -103,7 +103,7 @@ make it <a href="lex_c.htm#clean">clean</a> and hopefully useful. Or to make a r
 which would otherwise fail due to unwanted products which interfere
 with the reaction.
 <p><a name=taming>:</a><b>taming</b> See <a href="#tame">tame</a>.
-<p><a name=tandemglider>:</a><b>tandem glider</b> Two gliders traveling on parallel lanes at a fixed
+<p><a name=tandemglider>:</a><b>tandem glider</b> Two gliders travelling on parallel lanes at a fixed
 spacetime offset, usually as a single signal in a
 <a href="lex_h.htm#herscheltransceiver">Herschel transceiver</a>. See also <a href="lex_g.htm#gliderpair">glider pair</a>.
 <p><a name=tannersp46>:</a><b>Tanner's p46</b> (p46) An <a href="lex_o.htm#oscillator">oscillator</a> found by Tanner Jacobi on 20
@@ -195,8 +195,10 @@ O.O..............
 <p><a name=teeth>:</a><b>teeth</b> A 65-cell quadratic growth pattern found by Nick Gotts in March
 2000. This (and a related 65-cell pattern which Gotts found at about
 the same time) beat the record previously held by <a href="lex_m.htm#mosquito5">mosquito5</a> for
-smallest population known to have superlinear growth. Now superseded
-by <a href="lex_c.htm#catacryst">catacryst</a>, <a href="lex_m.htm#metacatacryst">metacatacryst</a>, <a href="lex_g.htm#gottsdots">Gotts dots</a> and <a href="lex_w.htm#wedge">wedge</a>.
+smallest population known to have superlinear growth, but was later
+superseded by <a href="lex_c.htm#catacryst">catacryst</a>. See <a href="lex_s.htm#switchenginepingpong">switch-engine ping-pong</a> for the
+lowest-population <a href="lex_s.htm#superlineargrowth">superlinear growth</a> pattern as of July 2018, along
+with a list of the record-holders.
 <p><a name=telegraph>:</a><b>telegraph</b> A pattern created by Jason Summers in February 2003. It
 transmits and receives information using a rare type of
 <a href="lex_r.htm#reburnablefuse">reburnable fuse</a>, a <a href="lex_l.htm#lightspeedwire">lightspeed wire</a> made from a chain of beehives,
@@ -1007,15 +1009,46 @@ OO...O......
 ...O........
 ...O........
 </a></pre></td></tr></table></center>
-"Trivial" is also used to describe a <a href="lex_p.htm#parent">parent</a> of an object which has
-groups of cells that can be removed without changing the result, such
-as isolated faraway cells. For example, here is a trivial parent of
-a block.
+However, there are trivial oscillators that meet this requirement,
+but may still be considered to be <a href="lex_n.htm#nontrivial">non-trivial</a> because the
+different-period <a href="lex_r.htm#rotor">rotors</a> are not separated by <a href="lex_s.htm#stator">stator</a> cells. An
+example is Dean Hickerson's <a href="#trivialp6">trivial p6</a>. Conversely, there are
+oscillators formed by trivial combinations of high-period <a href="lex_g.htm#gun">guns</a> or
+<a href="lex_s.htm#sparker">sparkers</a> that are only technically non-trivial, because the
+lower-period components overlap but do not interact in any way.
+<p>"Trivial" is also used to describe a <a href="lex_p.htm#parent">parent</a> of an object which
+has groups of cells that can be removed without changing the result,
+such as isolated faraway cells. For example, here is a trivial
+parent of a block.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 O......
 .O....O
 .O.....
 O......
+</a></pre></td></tr></table></center>
+<p><a name=trivialp6>:</a><b>trivial p6</b> (p6) An <a href="lex_o.htm#oscillator">oscillator</a> found by Dean Hickerson in December
+1994. Every cell has period less than 6, so this is a <a href="#trivial">trivial</a>
+oscillator. It is unusual because it has period-2 cells in contact
+with period-3 cells.
+<center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
+...........OO..............
+...........O......OO.......
+........OO.O......O..O.....
+........O.O.OO.OO.O.OO..O..
+.O........O..O.O..O..O.O.O.
+.O.O.....OO..O.O.O.OO..O..O
+.O.O.O........OO.O.O.OO.OO.
+.......O.O.OOO...O....OO...
+..O...O....O.OO........O...
+....O...OOO..OO.OOO.O.O.OO.
+OO..O......O..........O.O..
+..O...........OO.OO...O.O..
+........O.OOOOO...O....O...
+........OO...O..O..O.......
+...........OOOO.OOO........
+........OOO....O...........
+........O..O..O..OO........
+..........OO...OO.O........
 </a></pre></td></tr></table></center>
 <p><a name=tromboneslide>:</a><b>trombone slide</b> An arrangement of four 90-degree <a href="lex_r.htm#reflector">reflectors</a> that can
 be placed into the path of a <a href="lex_g.htm#glider">glider</a> so as to delay it by an
@@ -1110,42 +1143,42 @@ few smaller periods have been achieved, namely 20, 22, 24, 30, 36,
 40, 44, 45, 46, 48, 50, and 54 through 61. See also <a href="lex_q.htm#quetzal">Quetzal</a> for
 the 54-61 range.
 <pre>
-        ------------------------------------
-        Period  Discoverers            Date
-        ------------------------------------
-        20      Matthias Merzenich  May 2013
-                Noam Elkies
-        22      David Eppstein      Aug 2000
-                Jason Summers
-        24      Noam Elkies         Jun 1997
-        30      Bill Gosper         Nov 1970
-        36      Jason Summers       Jul 2004
-        40      Adam P. Goucher     Mar 2013
-                Matthias Merzenich
-                Jason Summers
-        44      Dave Buckingham     Apr 1992
-        45      Matthias Merzenich  Apr 2010
-        46      Bill Gosper             1971
-        48      Noam Elkies         Jun 1997
-        50      Dean Hickerson      Oct 1996
-                Noam Elkies
-                Dave Buckingham
-        54      Dieter Leithner     Jan 1998
-                Noam Elkies
-                Dave Buckingham
-        55      Stephen Silver      Oct 1998
-        56      Dieter Leithner     Jan 1998
-                Dave Buckingham
-                Noam Elkies
-        57      Matthias Merzenich  Apr 2016
-        58      'thunk'             Apr 2016
-                Matthias Merzenich
-                Chris Cain
-        59      Adam P. Goucher     Dec 2009
-                Jason Summers
-        60      Bill Gosper         Nov 1970
-        61      Luka Okanishi       Apr 2016
-        ------------------------------------
+  ------------------------------------
+  Period  Discoverers            Date
+  ------------------------------------
+  20      Matthias Merzenich  May 2013
+          Noam Elkies
+  22      David Eppstein      Aug 2000
+          Jason Summers
+  24      Noam Elkies         Jun 1997
+  30      Bill Gosper         Nov 1970
+  36      Jason Summers       Jul 2004
+  40      Adam P. Goucher     Mar 2013
+          Matthias Merzenich
+          Jason Summers
+  44      Dave Buckingham     Apr 1992
+  45      Matthias Merzenich  Apr 2010
+  46      Bill Gosper             1971
+  48      Noam Elkies         Jun 1997
+  50      Dean Hickerson      Oct 1996
+          Noam Elkies
+          Dave Buckingham
+  54      Dieter Leithner     Jan 1998
+          Noam Elkies
+          Dave Buckingham
+  55      Stephen Silver      Oct 1998
+  56      Dieter Leithner     Jan 1998
+          Dave Buckingham
+          Noam Elkies
+  57      Matthias Merzenich  Apr 2016
+  58      'thunk'             Apr 2016
+          Matthias Merzenich
+          Chris Cain
+  59      Adam P. Goucher     Dec 2009
+          Jason Summers
+  60      Bill Gosper         Nov 1970
+  61      Luka Okanishi       Apr 2016
+  ------------------------------------
 </pre>
 <p><a name=ttetromino>:</a><b>T-tetromino</b> The following common <a href="lex_p.htm#predecessor">predecessor</a> of a <a href="#trafficlight">traffic light</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -1325,7 +1358,7 @@ turner. The third row shows an <a href="lex_a.htm#aircraftcarrier">aircraft carr
 row. The <a href="lex_b.htm#blockic">Blockic</a> 180-degree turner is colour-preserving. The
 <a href="lex_l.htm#longboat">long boat</a> and <a href="lex_l.htm#longship">long ship</a> are again colour-changing; this is
 somewhat counterintuitive as the output glider is on exactly the same
-<a href="lex_l.htm#lane">lane</a> as the input glider, but gliders traveling in opposite
+<a href="lex_l.htm#lane">lane</a> as the input glider, but gliders travelling in opposite
 directions on the same lane always have opposite colours.
 <p>Many small one-time turner <a href="lex_c.htm#constellation">constellations</a> have also been
 catalogued. The 90-degree two-block turner on the right, directly
@@ -1498,6 +1531,7 @@ recipes for two-arm constructors are much more efficient in general,
 but they require many more <a href="lex_c.htm#circuit">circuits</a> and multiple independent data
 streams, which both tend to increase the complexity of
 <a href="lex_s.htm#selfconstructing">self-constructing</a> circuitry. Compare <a href="lex_s.htm#singlearm">single-arm</a>.
+<p><a name=twobitspark>:</a><b>two-bit spark</b> = <a href="lex_d.htm#duoplet">duoplet</a>.
 <p><a name=twoeaters>:</a><b>two eaters</b> (p3) Found by Bill Gosper, September 1971.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 OO.......

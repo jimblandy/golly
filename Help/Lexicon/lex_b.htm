@@ -470,9 +470,10 @@ OO..OO...............O..
 .O.....................O
 O.......................
 </a></pre></td></tr></table></center>
-<p><a name=bheptomino>:</a><b>B-heptomino</b> (stabilizes at time 148) This is a very common pattern.
-It often arises with the cell at top left shifted one space to the
-left, which does not affect the subsequent <a href="lex_e.htm#evolution">evolution</a>. B-heptominoes
+<p><a name=bheptomino>:</a><b>B-heptomino</b> (stabilizes at time 148) This is a very common
+<a href="lex_m.htm#methuselah">methuselah</a> that evolves into three <a href="#block">blocks</a>, two <a href="lex_g.htm#glider">gliders</a> and a
+<a href="lex_s.htm#ship">ship</a> after 148 generations. Compare with <a href="lex_h.htm#herschel">Herschel</a>, which appears
+at generation 20 of the B-heptomino's evolution. B-heptominoes
 acquired particular importance in 1996 due to Dave Buckingham's work
 on <a href="#btrack">B tracks</a>. See in particular
 <a href="lex_m.htm#myexperiencewithbheptominosinoscillators">My Experience with B-heptominos in Oscillators</a>.
@@ -481,11 +482,18 @@ O.OO
 OOO.
 .O..
 </a></pre></td></tr></table></center>
-<p>Lexicon patterns such as <a href="#bfx59h">BFx59H</a> and <a href="#brx46b">BRx46B</a> show the alternate
-form of the B-heptomino, a seven-bit <a href="lex_p.htm#polyplet">polyplet</a> that shares the same
-eight-bit descendant but is not technically a heptomino at all. This
-is standard practice for elementary conduits, since many of these
-conduits do in fact produce this alternate form as output.
+<p>This pattern often arises with the cell at top left shifted one
+space to the left, producing a seven-bit <a href="lex_p.htm#polyplet">polyplet</a> that shares the
+same eight-bit descendant but is not technically a heptomino at all.
+This alternate form is shown as the input for <a href="lex_e.htm#elementary">elementary</a>
+<a href="lex_c.htm#converter">converter</a> patterns such as <a href="#bfx59h">BFx59H</a> and <a href="#brx46b">BRx46B</a>. This is standard
+practice for elementary <a href="lex_c.htm#conduit">conduits</a>, since many of these conduits do
+in fact produce this alternate form as output.
+<p>The B-heptomino is considered a failed <a href="lex_p.htm#puffer">puffer</a> or failed
+<a href="lex_s.htm#spaceship">spaceship</a>, since on its own it travels at <i>c</i>/2 for only a short time
+before being affected by its own trailing debris. However, it can be
+stabilized into a <i>c</i>/2 puffer or into a <a href="lex_c.htm#clean">clean</a> <i>c</i>/2 rake or spaceship.
+See, e.g., <a href="lex_e.htm#ecologist">ecologist</a>.
 <p><a name=bheptominoshuttle>:</a><b>B-heptomino shuttle</b> = <a href="lex_t.htm#twinbeesshuttle">twin bees shuttle</a>
 <p><a name=biblock>:</a><b>bi-block</b> (p1) The smallest <a href="lex_p.htm#pseudostilllife">pseudo still life</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -653,10 +661,10 @@ is already in are ignored with the glider passing through with no
 reaction. This makes it easy to reset the memory cell to a known
 state. Which of the two states is considered the SET and which
 considered the RESET is just a matter of convention.
-<p>The pattern below shows the "boat" state of the the memory cell in
-its original 1994 form. Two gliders are also shown to indicate the
-input paths used to change the states. A smaller version is shown
-under <a href="lex_c.htm#centuryeater">century eater</a>, with the circuit in its "block" state.
+<p>The pattern below shows the "boat" state of the memory cell in its
+original 1994 form. Two gliders are also shown to indicate the input
+paths used to change the states. A smaller version is shown under
+<a href="lex_c.htm#centuryeater">century eater</a>, with the circuit in its "block" state.
 <p>As shown, the rightmost glider changes the state from a boat to a
 block and emits a glider to the upper right, while the leftmost
 glider passes through unchanged. Alternatively, when the state
@@ -927,6 +935,7 @@ see <a href="lex_k.htm#keeper">keeper</a>.
 pattern. A simple example of a Blockic pattern is shown under
 <a href="lex_f.htm#fuse">fuse</a>. See also <a href="lex_s.htm#seed">seed</a>.
 <p><a name=blockkeeper>:</a><b>block keeper</b> See <a href="lex_k.htm#keeper">keeper</a>.
+<p><a name=blocklayingswitchengine>:</a><b>block-laying switch engine</b> See <a href="lex_s.htm#stabilizedswitchengine">stabilized switch engine</a>.
 <p><a name=blockonbigtable>:</a><b>block on big table</b> = <a href="#blockanddock">block and dock</a>
 <p><a name=blockontable>:</a><b>block on table</b> (p1)
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -1001,6 +1010,7 @@ OO..O.OO.O..
 .........O.O
 ..........O.
 </a></pre></td></tr></table></center>
+<p><a name=blse>:</a><b>BLSE</b> = <a href="#blocklayingswitchengine">block-laying switch engine</a>
 <p><a name=bne14t30>:</a><b>BNE14T30</b> A <a href="#bheptomino">B-heptomino</a> to <a href="lex_g.htm#glider">glider</a> <a href="lex_c.htm#converter">converter</a> found by Tanner
 Jacobi on 26 May 2016. This converter has the unusual property of
 being an <a href="lex_e.htm#edgeshooter">edge shooter</a> where no part of the reaction's <a href="lex_e.htm#envelope">envelope</a>
@@ -1240,8 +1250,8 @@ O......O..O......O
 </a></pre></td></tr></table></center>
 <p><a name=bouncer>:</a><b>bouncer</b> A label used for the small periodic <a href="lex_c.htm#colourchanging">colour-changing</a>
 <a href="lex_g.htm#glider">glider</a> <a href="lex_r.htm#reflector">reflectors</a> discovered mainly by Noam Elkies in the late
-1990s. See <a href="lex_p.htm#p5bouncer">p5 bouncer</a>, <a href="lex_p.htm#p6bouncer">p6 bouncer</a>, <a href="lex_p.htm#p7bouncer">p7 bouncer</a>, and
-<a href="lex_p.htm#p8bouncer">p8 bouncer</a>.
+1990s. See <a href="lex_p.htm#p5bouncer">p5 bouncer</a>, <a href="lex_p.htm#p6bouncer">p6 bouncer</a>, <a href="lex_p.htm#p7bouncer">p7 bouncer</a>, <a href="lex_p.htm#p8bouncer">p8 bouncer</a>,
+or <a href="lex_p.htm#p15bouncer">p15 bouncer</a>.
 <p><a name=boundingbox>:</a><b>bounding box</b> The smallest rectangular array of cells that contains
 the whole of a given pattern. For <a href="lex_o.htm#oscillator">oscillators</a> and <a href="lex_g.htm#gun">guns</a> this
 usually is meant to include all <a href="lex_p.htm#phase">phases</a> of the pattern, but in the
@@ -1329,7 +1339,7 @@ although it is usual to exclude <a href="lex_s.htm#spacefiller">spacefillers</a>
 that this is the fastest possible growth rate.
 <p>The term is also sometimes used to mean specifically the breeder
 created by Bill Gosper's group at MIT, which was the first known
-pattern exhibiting superlinear growth.
+pattern exhibiting <a href="lex_s.htm#superlineargrowth">superlinear growth</a>.
 <p>There are four common types of breeder, known as MMM, MMS, MSM and
 SMM (where M=moving and S=stationary). Typically an MMM breeder is a
 <a href="lex_r.htm#rake">rake</a> <a href="lex_p.htm#puffer">puffer</a>, an MMS breeder is a puffer producing puffers which
@@ -1390,7 +1400,7 @@ OO.....
 eater in such a way that it can turn a glider, as shown below. The
 glider turning reaction uses a <a href="#bananaspark">banana spark</a> and is
 <a href="lex_c.htm#colourpreserving">colour-preserving</a>. The mechanism was found by Dave Buckingham in
-the 1970s. The name is due to Bill Gosper. .
+the 1970s. The name is due to Bill Gosper.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
 ..O.....................
 O.O.....................
@@ -1412,9 +1422,9 @@ OOO
 OOO
 </a></pre></td></tr></table></center>
 <p><a name=bumper>:</a><b>bumper</b> One of several periodic <a href="lex_c.htm#colourpreserving">colour-preserving</a> <a href="lex_g.htm#glider">glider</a>
-<a href="lex_r.htm#reflector">reflector</a> discovered by Tanner Jacobi on 6 April 2016. See
+<a href="lex_r.htm#reflector">reflectors</a> discovered by Tanner Jacobi on 6 April 2016. See
 <a href="lex_p.htm#p3bumper">p3 bumper</a>, <a href="lex_p.htm#p4bumper">p4 bumper</a>, <a href="lex_p.htm#p5bumper">p5 bumper</a>, <a href="lex_p.htm#p6bumper">p6 bumper</a>, <a href="lex_p.htm#p7bumper">p7 bumper</a>,
-<a href="lex_p.htm#p8bumper">p8 bumper</a>, <a href="lex_p.htm#p9bumper">p9 bumper</a>, <a href="lex_p.htm#p15bumper">p15 bumper</a>, and <a href="lex_p.htm#p22bumper">p22 bumper</a>.
+<a href="lex_p.htm#p8bumper">p8 bumper</a>, <a href="lex_p.htm#p9bumper">p9 bumper</a>, <a href="lex_p.htm#p11bumper">p11 bumper</a>, and <a href="lex_p.htm#p15bumper">p15 bumper</a>.
 <p><a name=bun>:</a><b>bun</b> The following <a href="lex_i.htm#inductioncoil">induction coil</a>. By itself this is a common
 <a href="lex_p.htm#predecessor">predecessor</a> of the <a href="lex_h.htm#honeyfarm">honey farm</a>. See also <a href="lex_c.htm#cismirroredrbee">cis-mirrored R-bee</a>.
 <center><table cellspacing=0 cellpadding=0><tr><td><pre><a href="lexpatt:">
@@ -1450,7 +1460,7 @@ OO.O....O.
 <p><a name=burn>:</a><b>burn</b> A reaction which travels indefinitely as a <a href="lex_w.htm#wave">wave</a> through the
 components of a <a href="lex_w.htm#wick">wick</a> or an <a href="lex_a.htm#agar">agar</a>. A burning wick is known as a
 <a href="lex_f.htm#fuse">fuse</a>.
-<p>If the object being burned has a spatial periodocity, then the
+<p>If the object being burned has a spatial periodicity, then the
 active area of the burning usually remains bounded and so eventually
 develops a periodicity too. It is unknown whether this will always
 occur.
